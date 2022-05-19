@@ -4,9 +4,9 @@
 #include "refs.h"
 #include "parse-options.h"
 
-static const char * const git_symbolic_ref_usage[] = {
-	N_("git symbolic-ref [<options>] <name> [<ref>]"),
-	N_("git symbolic-ref -d [-q] <name>"),
+static const char * const but_symbolic_ref_usage[] = {
+	N_("but symbolic-ref [<options>] <name> [<ref>]"),
+	N_("but symbolic-ref -d [-q] <name>"),
 	NULL
 };
 
@@ -46,15 +46,15 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options,
-			     git_symbolic_ref_usage, 0);
+			     but_symbolic_ref_usage, 0);
 	if (msg && !*msg)
 		die("Refusing to perform update with empty message");
 
 	if (delete) {
 		if (argc != 1)
-			usage_with_options(git_symbolic_ref_usage, options);
+			usage_with_options(but_symbolic_ref_usage, options);
 		ret = check_symref(argv[0], 1, 0, 0);
 		if (ret)
 			die("Cannot delete %s, not a symbolic ref", argv[0]);
@@ -74,7 +74,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		ret = !!create_symref(argv[0], argv[1], msg);
 		break;
 	default:
-		usage_with_options(git_symbolic_ref_usage, options);
+		usage_with_options(but_symbolic_ref_usage, options);
 	}
 	return ret;
 }

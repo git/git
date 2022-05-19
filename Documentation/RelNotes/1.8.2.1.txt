@@ -12,10 +12,10 @@ Fixes since v1.8.2
  * Verification of signed tags were not done correctly when not in C
    or en/US locale.
 
- * 'git cummit -m "$msg"' used to add an extra newline even when
+ * 'but cummit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
 
- * The "--match=<pattern>" option of "git describe", when used with
+ * The "--match=<pattern>" option of "but describe", when used with
    "--all" to allow refs that are not annotated tags to be used as a
    base of description, did not restrict the output from the command
    to those that match the given pattern.
@@ -27,14 +27,14 @@ Fixes since v1.8.2
    it incorrectly applied rfc2047 and chopped a single character in
    the middle of it.
 
- * "git archive" reports a failure when asked to create an archive out
+ * "but archive" reports a failure when asked to create an archive out
    of an empty tree.  It would be more intuitive to give an empty
    archive back in such a case.
 
- * "git tag -f <tag>" always said "Updated tag '<tag>'" even when
+ * "but tag -f <tag>" always said "Updated tag '<tag>'" even when
    creating a new tag (i.e. not overwriting nor updating).
 
- * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+ * "but cmd -- ':(top'" was not diagnosed as an invalid syntax, and
    instead the parser kept reading beyond the end of the string.
 
  * Annotated tags outside refs/tags/ hierarchy were not advertised
@@ -44,14 +44,14 @@ Fixes since v1.8.2
    platforms with case insensitive filesystems can get confused upon a
    hash collision between these pathnames and looped forever.
 
- * The logic used by "git diff -M --stat" to shorten the names of
+ * The logic used by "but diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
    common prefix and suffix between the two filenames overlapped.
 
- * "git submodule update", when recursed into sub-submodules, did not
+ * "but submodule update", when recursed into sub-submodules, did not
    accumulate the prefix paths.
 
- * "git am $maildir/" applied messages in an unexpected order; sort
+ * "but am $maildir/" applied messages in an unexpected order; sort
    filenames read from the maildir/ in a way that is more likely to
    sort messages in the order the writing MUA meant to, by sorting
    numeric segment in numeric order and non-numeric segment in
@@ -65,26 +65,26 @@ Fixes since v1.8.2
    user-supplied encoding name that are the common alternative
    spellings of UTF-8.
 
- * "git branch" did not bother to check nonsense command line
+ * "but branch" did not bother to check nonsense command line
    parameters and issue errors in many cases.
 
- * "git update-index -h" did not do the usual "-h(elp)" thing.
+ * "but update-index -h" did not do the usual "-h(elp)" thing.
 
  * perl/Git.pm::cat_blob slurped everything in core only to write it
    out to a file descriptor, which was not a very smart thing to do.
 
- * The SSL peer verification done by "git imap-send" did not ask for
+ * The SSL peer verification done by "but imap-send" did not ask for
    Server Name Indication (RFC 4366), failing to connect SSL/TLS
    sites that serve multiple hostnames on a single IP.
 
- * "git index-pack" had a buffer-overflow while preparing an
+ * "but index-pack" had a buffer-overflow while preparing an
    informational message when the translated version of it was too
    long.
 
  * Clarify in the documentation "what" gets pushed to "where" when the
-   command line to "git push" does not say these explicitly.
+   command line to "but push" does not say these explicitly.
 
- * In "git reflog expire", REACHABLE bit was not cleared from the
+ * In "but reflog expire", REACHABLE bit was not cleared from the
    correct objects.
 
  * The "--color=<when>" argument to the commands in the diff family
@@ -94,7 +94,7 @@ Fixes since v1.8.2
 
  * The v4 index format was not documented.
 
- * The "--match=<pattern>" argument "git describe" takes uses glob
+ * The "--match=<pattern>" argument "but describe" takes uses glob
    pattern but it wasn't obvious from the documentation.
 
  * Some sources failed to compile on systems that lack NI_MAXHOST in
@@ -103,7 +103,7 @@ Fixes since v1.8.2
  * Add an example use of "--env-filter" in "filter-branch"
    documentation.
 
- * "git bundle verify" did not say "records a complete history" for a
+ * "but bundle verify" did not say "records a complete history" for a
    bundle that does not have any prerequisites.
 
  * In the v1.8.0 era, we changed symbols that do not have to be global
@@ -111,5 +111,5 @@ Fixes since v1.8.2
    CGit from sideways bypassing the entry points of the API the
    in-tree users use.
 
- * "git merge-tree" had a typo in the logic to detect d/f conflicts,
+ * "but merge-tree" had a typo in the logic to detect d/f conflicts,
    which caused it to segfault in some cases.

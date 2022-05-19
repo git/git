@@ -8,9 +8,9 @@ test_expect_success "setup proc-receive hook (unexpected ref, $PROTOCOL)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/a/b/c/my/topic
+# but push         :                       refs/for/a/b/c/my/topic
 test_expect_success "proc-receive: report unknown reference ($PROTOCOL)" '
-	test_must_fail git -C workbench push origin \
+	test_must_fail but -C workbench push origin \
 		HEAD:refs/for/a/b/c/my/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -21,7 +21,7 @@ test_expect_success "proc-receive: report unknown reference ($PROTOCOL)" '
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/a/b/c/my/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: error: proc-receive reported status on unknown ref: refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  ! [remote rejected] HEAD -> refs/for/a/b/c/my/topic (proc-receive failed to report status)
 	EOF
 	test_cmp expect actual &&

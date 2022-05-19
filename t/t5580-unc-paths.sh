@@ -21,7 +21,7 @@ fi
 UNCPATH="$(winpwd)"
 case "$UNCPATH" in
 [A-Z]:*)
-	# Use administrative share e.g. \\localhost\C$\git-sdk-64\usr\src\git
+	# Use administrative share e.g. \\localhost\C$\but-sdk-64\usr\src\but
 	# (we use forward slashes here because MSYS2 and Git accept them, and
 	# they are easier on the eyes)
 	UNCPATH="//localhost/${UNCPATH%%:*}\$/${UNCPATH#?:}"
@@ -41,52 +41,52 @@ test_expect_success setup '
 '
 
 test_expect_success clone '
-	git clone "file://$UNCPATH" clone
+	but clone "file://$UNCPATH" clone
 '
 
 test_expect_success 'clone without file://' '
-	git clone "$UNCPATH" clone-without-file
+	but clone "$UNCPATH" clone-without-file
 '
 
 test_expect_success 'clone with backslashed path' '
 	BACKSLASHED="$(echo "$UNCPATH" | tr / \\\\)" &&
-	git clone "$BACKSLASHED" backslashed
+	but clone "$BACKSLASHED" backslashed
 '
 
 test_expect_success fetch '
-	git init to-fetch &&
+	but init to-fetch &&
 	(
 		cd to-fetch &&
-		git fetch "$UNCPATH" main
+		but fetch "$UNCPATH" main
 	)
 '
 
 test_expect_success push '
 	(
 		cd clone &&
-		git checkout -b to-push &&
+		but checkout -b to-push &&
 		test_cummit to-push &&
-		git push origin HEAD
+		but push origin HEAD
 	) &&
-	rev="$(git -C clone rev-parse --verify refs/heads/to-push)" &&
-	test "$rev" = "$(git rev-parse --verify refs/heads/to-push)"
+	rev="$(but -C clone rev-parse --verify refs/heads/to-push)" &&
+	test "$rev" = "$(but rev-parse --verify refs/heads/to-push)"
 '
 
 test_expect_success MINGW 'remote nick cannot contain backslashes' '
 	BACKSLASHED="$(winpwd | tr / \\\\)" &&
-	git ls-remote "$BACKSLASHED" 2>err &&
+	but ls-remote "$BACKSLASHED" 2>err &&
 	test_i18ngrep ! "unable to access" err
 '
 
 test_expect_success 'unc alternates' '
-	tree="$(git rev-parse HEAD:)" &&
+	tree="$(but rev-parse HEAD:)" &&
 	mkdir test-unc-alternate &&
 	(
 		cd test-unc-alternate &&
-		git init &&
-		test_must_fail git show $tree &&
-		echo "$UNCPATH/.git/objects" >.git/objects/info/alternates &&
-		git show $tree
+		but init &&
+		test_must_fail but show $tree &&
+		echo "$UNCPATH/.but/objects" >.but/objects/info/alternates &&
+		but show $tree
 	)
 '
 

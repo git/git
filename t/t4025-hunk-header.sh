@@ -18,7 +18,7 @@ test_expect_success setup '
 		echo "L  $NS" &&
 		printf "  %s\n" M N O P Q R S T U V
 	) >file &&
-	git add file &&
+	but add file &&
 
 	sed -e "/^  [EP]/s/$/ modified/" <file >file+ &&
 	mv file+ file
@@ -27,7 +27,7 @@ test_expect_success setup '
 
 test_expect_success 'hunk header truncation with an overly long line' '
 
-	git diff | sed -n -e "s/^.*@@//p" >actual &&
+	but diff | sed -n -e "s/^.*@@//p" >actual &&
 	(
 		echo " A $N$N$N$N$N$N$N$N$N2" &&
 		echo " L  $N$N$N$N$N$N$N$N$N1"

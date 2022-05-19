@@ -1,7 +1,7 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "strbuf.h"
 #include "cache.h"
 #include "cummit.h"
@@ -23,7 +23,7 @@
  *
  * . Add the external declaration for the function to `builtin.h`.
  *
- * . Add the command to the `commands[]` table defined in `git.c`.
+ * . Add the command to the `commands[]` table defined in `but.c`.
  *   The entry should look like:
  *
  *	{ "foo", cmd_foo, <options> },
@@ -57,8 +57,8 @@
  *
  * `DELAY_PAGER_CONFIG`:
  *
- *	If RUN_SETUP or RUN_SETUP_GENTLY is set, git.c normally handles
- *	the `pager.<cmd>`-configuration. If this flag is used, git.c
+ *	If RUN_SETUP or RUN_SETUP_GENTLY is set, but.c normally handles
+ *	the `pager.<cmd>`-configuration. If this flag is used, but.c
  *	will skip that step, instead allowing the built-in to make a
  *	more informed decision, e.g., by ignoring `pager.<cmd>` for
  *	certain subcommands.
@@ -69,11 +69,11 @@
  *
  * . Add tests to `t/` directory.
  *
- * . Write documentation in `Documentation/git-foo.txt`.
+ * . Write documentation in `Documentation/but-foo.txt`.
  *
- * . Add an entry for `git-foo` to `command-list.txt`.
+ * . Add an entry for `but-foo` to `command-list.txt`.
  *
- * . Add an entry for `/git-foo` to `.gitignore`.
+ * . Add an entry for `/but-foo` to `.butignore`.
  *
  *
  * How a built-in is called
@@ -94,8 +94,8 @@
  * command.
  */
 
-extern const char git_usage_string[];
-extern const char git_more_info_string[];
+extern const char but_usage_string[];
+extern const char but_more_info_string[];
 
 /**
  * If a built-in has DELAY_PAGER_CONFIG set, the built-in should call this early

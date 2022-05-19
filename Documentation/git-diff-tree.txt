@@ -1,15 +1,15 @@
-git-diff-tree(1)
+but-diff-tree(1)
 ================
 
 NAME
 ----
-git-diff-tree - Compares the content and mode of blobs found via two tree objects
+but-diff-tree - Compares the content and mode of blobs found via two tree objects
 
 
 SYNOPSIS
 --------
 [verse]
-'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-cummit-id] [--pretty]
+'but diff-tree' [--stdin] [-m] [-s] [-v] [--no-cummit-id] [--pretty]
 	      [-t] [-r] [-c | --cc] [--combined-all-paths] [--root] [--merge-base]
 	      [<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]
 
@@ -20,7 +20,7 @@ Compares the content and mode of the blobs found via two tree objects.
 If there is only one <tree-ish> given, the cummit is compared with its parents
 (see --stdin below).
 
-Note that 'git diff-tree' can use the tree encapsulated in a cummit object.
+Note that 'but diff-tree' can use the tree encapsulated in a cummit object.
 
 OPTIONS
 -------
@@ -69,25 +69,25 @@ The following flags further affect the behavior when comparing
 cummits (but not trees).
 
 -m::
-	By default, 'git diff-tree --stdin' does not show
+	By default, 'but diff-tree --stdin' does not show
 	differences for merge cummits.  With this flag, it shows
 	differences to that cummit from all of its parents. See
 	also `-c`.
 
 -s::
-	By default, 'git diff-tree --stdin' shows differences,
+	By default, 'but diff-tree --stdin' shows differences,
 	either in machine-readable form (without `-p`) or in patch
 	form (with `-p`).  This output can be suppressed.  It is
 	only useful with `-v` flag.
 
 -v::
-	This flag causes 'git diff-tree --stdin' to also show
+	This flag causes 'but diff-tree --stdin' to also show
 	the cummit message before the differences.
 
 include::pretty-options.txt[]
 
 --no-cummit-id::
-	'git diff-tree' outputs a line with the cummit ID when
+	'but diff-tree' outputs a line with the cummit ID when
 	applicable.  This flag suppressed the cummit ID output.
 
 -c::
@@ -128,4 +128,4 @@ include::diff-format.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

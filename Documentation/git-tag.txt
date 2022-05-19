@@ -1,22 +1,22 @@
-git-tag(1)
+but-tag(1)
 ==========
 
 NAME
 ----
-git-tag - Create, list, delete or verify a tag object signed with GPG
+but-tag - Create, list, delete or verify a tag object signed with GPG
 
 
 SYNOPSIS
 --------
 [verse]
-'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
+'but tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
 	<tagname> [<cummit> | <object>]
-'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <cummit>] [--no-contains <cummit>]
+'but tag' -d <tagname>...
+'but tag' [-n[<num>]] -l [--contains <cummit>] [--no-contains <cummit>]
 	[--points-at <object>] [--column[=<options>] | --no-column]
 	[--create-reflog] [--sort=<key>] [--format=<format>]
 	[--merged <cummit>] [--no-merged <cummit>] [<pattern>...]
-'git tag' -v [--format=<format>] <tagname>...
+'but tag' -v [--format=<format>] <tagname>...
 
 DESCRIPTION
 -----------
@@ -50,8 +50,8 @@ tagging message, and an optional GnuPG signature. Whereas a
 object).
 
 Annotated tags are meant for release while lightweight tags are meant
-for private or temporary object labels. For this reason, some git
-commands for naming objects (like `git describe`) will ignore
+for private or temporary object labels. For this reason, some but
+commands for naming objects (like `but describe`) will ignore
 lightweight tags by default.
 
 
@@ -66,7 +66,7 @@ OPTIONS
 	Make a GPG-signed tag, using the default e-mail address's key.
 	The default behavior of tag GPG-signing is controlled by `tag.gpgSign`
 	configuration variable if it exists, or disabled otherwise.
-	See linkgit:git-config[1].
+	See linkbut:but-config[1].
 
 --no-sign::
 	Override `tag.gpgSign` configuration variable that is
@@ -98,10 +98,10 @@ If the tag is not annotated, the cummit message is displayed instead.
 
 -l::
 --list::
-	List tags. With optional `<pattern>...`, e.g. `git tag --list
+	List tags. With optional `<pattern>...`, e.g. `but tag --list
 	'v-*'`, list only the tags that match the pattern(s).
 +
-Running "git tag" without arguments also lists all tags. The pattern
+Running "but tag" without arguments also lists all tags. The pattern
 is a shell wildcard (i.e., matched using fnmatch(3)). Multiple
 patterns may be given; if any of them matches, the tag is shown.
 +
@@ -117,10 +117,10 @@ options for details.
 	names are treated as versions). The "version:refname" sort
 	order can also be affected by the "versionsort.suffix"
 	configuration variable.
-	The keys supported are the same as those in `git for-each-ref`.
+	The keys supported are the same as those in `but for-each-ref`.
 	Sort order defaults to the value configured for the `tag.sort`
 	variable if it exists, or lexicographic order otherwise. See
-	linkgit:git-config[1].
+	linkbut:but-config[1].
 
 --color[=<when>]::
 	Respect any colors specified in the `--format` option. The
@@ -189,7 +189,7 @@ This option is only applicable when listing tags without annotation lines.
 
 --create-reflog::
 	Create a reflog for the tag. To globally enable reflogs for tags, see
-	`core.logAllRefUpdates` in linkgit:git-config[1].
+	`core.logAllRefUpdates` in linkbut:but-config[1].
 	The negated form `--no-create-reflog` only overrides an earlier
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
@@ -197,13 +197,13 @@ This option is only applicable when listing tags without annotation lines.
 --format=<format>::
 	A string that interpolates `%(fieldname)` from a tag ref being shown
 	and the object it points at.  The format is the same as
-	that of linkgit:git-for-each-ref[1].  When unspecified,
+	that of linkbut:but-for-each-ref[1].  When unspecified,
 	defaults to `%(refname:strip=2)`.
 
 <tagname>::
 	The name of the tag to create, delete, or describe.
 	The new tag name must pass all checks defined by
-	linkgit:git-check-ref-format[1].  Some of these checks
+	linkbut:but-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a tag name.
 
 <cummit>::
@@ -213,7 +213,7 @@ This option is only applicable when listing tags without annotation lines.
 
 CONFIGURATION
 -------------
-By default, 'git tag' in sign-with-default mode (-s) will use your
+By default, 'but tag' in sign-with-default mode (-s) will use your
 cummitter identity (of the form `Your Name <your@email.address>`) to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
@@ -225,7 +225,7 @@ it in the repository configuration as follows:
 
 `pager.tag` is only respected when listing tags, i.e., when `-l` is
 used or implied. The default is to use a pager.
-See linkgit:git-config[1].
+See linkbut:but-config[1].
 
 DISCUSSION
 ----------
@@ -252,12 +252,12 @@ the old tag. In that case you can do one of two things:
 
 . The insane thing.
   You really want to call the new version "X" too, 'even though'
-  others have already seen the old one. So just use 'git tag -f'
+  others have already seen the old one. So just use 'but tag -f'
   again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
-'git pull' on your tree shouldn't just make them overwrite the old
+'but pull' on your tree shouldn't just make them overwrite the old
 one.
 
 If somebody got a release tag from you, you cannot just change
@@ -274,14 +274,14 @@ then fixed something, and retagged the *fixed* tree as X again.
 If you got the wrong tag, and want the new one, please delete
 the old one and fetch the new one by doing:
 
-	git tag -d X
-	git fetch origin tag X
+	but tag -d X
+	but fetch origin tag X
 
 to get my updated tag.
 
 You can test which tag you have by doing
 
-	git rev-parse X
+	but rev-parse X
 
 which should return 0123456789abcdef.. if you have the new version.
 
@@ -309,13 +309,13 @@ private anchor point tags from the other person.
 
 Often, "please pull" messages on the mailing list just provide
 two pieces of information: a repo URL and a branch name; this
-is designed to be easily cut&pasted at the end of a 'git fetch'
+is designed to be easily cut&pasted at the end of a 'but fetch'
 command line:
 
 ------------
 Linus, please pull from
 
-	git://git..../proj.git master
+	but://but..../proj.but master
 
 to get the following updates...
 ------------
@@ -323,7 +323,7 @@ to get the following updates...
 becomes:
 
 ------------
-$ git pull git://git..../proj.git master
+$ but pull but://but..../proj.but master
 ------------
 
 In such a case, you do not want to automatically follow the other
@@ -363,7 +363,7 @@ If you have imported some changes from another VCS and would like
 to add tags for major releases of your work, it is useful to be able
 to specify the date to embed inside of the tag object; such data in
 the tag object affects, for example, the ordering of tags in the
-gitweb interface.
+butweb interface.
 
 To set the date used in future tag objects, set the environment
 variable GIT_CUMMITTER_DATE (see the later discussion of possible
@@ -372,7 +372,7 @@ values; the most common form is "YYYY-MM-DD HH:MM").
 For example:
 
 ------------
-$ GIT_CUMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
+$ GIT_CUMMITTER_DATE="2006-10-02 10:31" but tag -s v1.0.1
 ------------
 
 include::date-formats.txt[]
@@ -384,9 +384,9 @@ include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------
-linkgit:git-check-ref-format[1].
-linkgit:git-config[1].
+linkbut:but-check-ref-format[1].
+linkbut:but-config[1].
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

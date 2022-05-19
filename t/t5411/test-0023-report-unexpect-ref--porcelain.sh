@@ -8,9 +8,9 @@ test_expect_success "setup proc-receive hook (unexpected ref, $PROTOCOL/porcelai
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         : (B)                   refs/for/main/topic
+# but push         : (B)                   refs/for/main/topic
 test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		$B:refs/heads/main \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
@@ -25,7 +25,7 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" 
 	> remote: error: proc-receive reported status on unexpected ref: refs/heads/main        Z
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  	<CUMMIT-B>:refs/heads/main	<CUMMIT-A>..<CUMMIT-B>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
 	> Done
@@ -40,5 +40,5 @@ test_expect_success "proc-receive: report unexpected ref ($PROTOCOL/porcelain)" 
 # Refs of upstream : main(B)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
-	git -C "$upstream" update-ref refs/heads/main $A
+	but -C "$upstream" update-ref refs/heads/main $A
 '

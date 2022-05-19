@@ -1,22 +1,22 @@
-git-subtree(1)
+but-subtree(1)
 ==============
 
 NAME
 ----
-git-subtree - Merge subtrees together and split repository into subtrees
+but-subtree - Merge subtrees together and split repository into subtrees
 
 
 SYNOPSIS
 --------
 [verse]
-'git subtree' [<options>] -P <prefix> add <local-cummit>
-'git subtree' [<options>] -P <prefix> add <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> merge <local-cummit>
-'git subtree' [<options>] -P <prefix> split [<local-cummit>]
+'but subtree' [<options>] -P <prefix> add <local-cummit>
+'but subtree' [<options>] -P <prefix> add <repository> <remote-ref>
+'but subtree' [<options>] -P <prefix> merge <local-cummit>
+'but subtree' [<options>] -P <prefix> split [<local-cummit>]
 
 [verse]
-'git subtree' [<options>] -P <prefix> pull <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> push <repository> <refspec>
+'but subtree' [<options>] -P <prefix> pull <repository> <remote-ref>
+'but subtree' [<options>] -P <prefix> push <repository> <refspec>
 
 DESCRIPTION
 -----------
@@ -29,7 +29,7 @@ as a subdirectory of your application.
 
 Subtrees are not to be confused with submodules, which are meant for
 the same task. Unlike submodules, subtrees do not need any special
-constructions (like '.gitmodules' files or gitlinks) be present in
+constructions (like '.butmodules' files or butlinks) be present in
 your repository, and do not force end-users of your
 repository to do anything special or to understand how subtrees
 work. A subtree is just a subdirectory that can be
@@ -50,7 +50,7 @@ project.
 
 For example, if a library you made for one application ends up being
 useful elsewhere, you can extract its entire history and publish
-that as its own git repository, without accidentally
+that as its own but repository, without accidentally
 intermingling the history of your application project.
 
 [TIP]
@@ -60,7 +60,7 @@ project as much as possible.  That is, if you make a change that
 affects both the library and the main application, cummit it in
 two pieces.  That way, when you split the library cummits out
 later, their descriptions will still make sense.  But if this
-isn't important to you, it's not *necessary*.  'git subtree' will
+isn't important to you, it's not *necessary*.  'but subtree' will
 simply leave out the non-library-related parts of the cummit
 when it splits it out into the subproject later.
 
@@ -78,7 +78,7 @@ add <repository> <remote-ref>::
 
 merge <local-cummit>::
 	Merge recent changes up to <local-cummit> into the <prefix>
-	subtree.  As with normal 'git merge', this doesn't
+	subtree.  As with normal 'but merge', this doesn't
 	remove your own local changes; it just merges those
 	changes into the latest <local-cummit>.  With '--squash',
 	create only one cummit that contains all the changes,
@@ -97,7 +97,7 @@ split [<local-cummit>]::
 	affected <prefix>, and each of those cummits now has the
 	contents of <prefix> at the root of the project instead
 	of in a subdirectory.  Thus, the newly created history
-	is suitable for export as a separate git repository.
+	is suitable for export as a separate but repository.
 +
 After splitting successfully, a single cummit ID is printed to stdout.
 This corresponds to the HEAD of the newly created tree, which you can
@@ -108,16 +108,16 @@ identical (i.e. to produce the same cummit IDs) as long as the
 settings passed to 'split' (such as '--annotate') are the same.
 Because of this, if you add new cummits and then re-split, the new
 cummits will be attached as cummits on top of the history you
-generated last time, so 'git merge' and friends will work as expected.
+generated last time, so 'but merge' and friends will work as expected.
 
 pull <repository> <remote-ref>::
-	Exactly like 'merge', but parallels 'git pull' in that
+	Exactly like 'merge', but parallels 'but pull' in that
 	it fetches the given ref from the specified remote
 	repository.
 
 push <repository> [+][<local-cummit>:]<remote-ref>::
 	Does a 'split' using the <prefix> subtree of <local-cummit>
-	and then does a 'git push' to push the result to the
+	and then does a 'but push' to push the result to the
 	<repository> and <remote-ref>.  This can be used to push your
 	subtree to different branches of the remote repository.  Just
 	as with 'split', if no <local-cummit> is given, then HEAD is
@@ -162,7 +162,7 @@ histories anyway, since it's unclear which part of the history belongs
 to which subtree.
 +
 Furthermore, with '--squash', you can switch back and forth between
-different versions of a subtree, rather than strictly forward.  'git
+different versions of a subtree, rather than strictly forward.  'but
 subtree merge --squash' always adjusts the subtree to match the exactly
 specified cummit, even if getting to that cummit would require undoing
 some changes that were added earlier.
@@ -188,7 +188,7 @@ These options for 'split' may also be given to 'push' (which wraps
 +
 Whenever you split, you need to use the same <annotation>, or else you
 don't have a guarantee that the new re-created history will be identical
-to the old one.  That will prevent merging from working correctly.  git
+to the old one.  That will prevent merging from working correctly.  but
 subtree tries to make it work anyway, particularly if you use '--rejoin',
 but it may not always be effective.
 
@@ -199,20 +199,20 @@ but it may not always be effective.
 	pushing upstream.  <branch> must not already exist.
 
 --ignore-joins::
-	If you use '--rejoin', git subtree attempts to optimize its history
+	If you use '--rejoin', but subtree attempts to optimize its history
 	reconstruction to generate only the new cummits since the last
 	'--rejoin'.  '--ignore-joins' disables this behavior, forcing it to
 	regenerate the entire history.  In a large project, this can take a long
 	time.
 
 --onto=<onto>::
-	If your subtree was originally imported using something other than git
-	subtree, its history may not match what git subtree is expecting.  In
+	If your subtree was originally imported using something other than but
+	subtree, its history may not match what but subtree is expecting.  In
 	that case, you can specify the cummit ID <onto> that corresponds to the
 	first revision of the subproject's history that was imported into your
-	project, and git subtree will attempt to build its history from there.
+	project, and but subtree will attempt to build its history from there.
 +
-If you used 'git subtree add', you should never need this option.
+If you used 'but subtree add', you should never need this option.
 
 --rejoin::
 	After splitting, merge the newly created synthetic history back into
@@ -220,11 +220,11 @@ If you used 'git subtree add', you should never need this option.
 	history that has been added since the most recent '--rejoin'.
 +
 If your split cummits end up merged into the upstream subproject, and
-then you want to get the latest upstream version, this will allow git's
+then you want to get the latest upstream version, this will allow but's
 merge algorithm to more intelligently avoid conflicts (since it knows
 these synthetic cummits are already part of the upstream repository).
 +
-Unfortunately, using this option results in 'git log' showing an extra
+Unfortunately, using this option results in 'but log' showing an extra
 copy of every new cummit that was created (the original, and the
 synthetic one).
 +
@@ -236,11 +236,11 @@ EXAMPLE 1. 'add' command
 ------------------------
 Let's assume that you have a local repository that you would like
 to add an external vendor library to. In this case we will add the
-git-subtree repository as a subdirectory of your already existing
-git-extensions repository in ~/git-extensions/:
+but-subtree repository as a subdirectory of your already existing
+but-extensions repository in ~/but-extensions/:
 
-	$ git subtree add --prefix=git-subtree --squash \
-		git://github.com/apenwarr/git-subtree.git master
+	$ but subtree add --prefix=but-subtree --squash \
+		but://buthub.com/apenwarr/but-subtree.but master
 
 'master' needs to be a valid remote ref and can be a different branch
 name
@@ -248,89 +248,89 @@ name
 You can omit the '--squash' flag, but doing so will increase the number
 of cummits that are included in your local repository.
 
-We now have a ~/git-extensions/git-subtree directory containing code
-from the master branch of git://github.com/apenwarr/git-subtree.git
-in our git-extensions repository.
+We now have a ~/but-extensions/but-subtree directory containing code
+from the master branch of but://buthub.com/apenwarr/but-subtree.but
+in our but-extensions repository.
 
 EXAMPLE 2. Extract a subtree using 'cummit', 'merge' and 'pull'
 ---------------------------------------------------------------
-Let's use the repository for the git source code as an example.
-First, get your own copy of the git.git repository:
+Let's use the repository for the but source code as an example.
+First, get your own copy of the but.but repository:
 
-	$ git clone git://git.kernel.org/pub/scm/git/git.git test-git
-	$ cd test-git
+	$ but clone but://but.kernel.org/pub/scm/but/but.but test-but
+	$ cd test-but
 
-gitweb (cummit 1130ef3) was merged into git as of cummit
+butweb (cummit 1130ef3) was merged into but as of cummit
 0a8f4f0, after which it was no longer maintained separately.
 But imagine it had been maintained separately, and we wanted to
-extract git's changes to gitweb since that time, to share with
+extract but's changes to butweb since that time, to share with
 the upstream.  You could do this:
 
-	$ git subtree split --prefix=gitweb --annotate='(split) ' \
+	$ but subtree split --prefix=butweb --annotate='(split) ' \
         	0a8f4f0^.. --onto=1130ef3 --rejoin \
-        	--branch gitweb-latest
-        $ gitk gitweb-latest
-        $ git push git@github.com:whatever/gitweb.git gitweb-latest:master
+        	--branch butweb-latest
+        $ butk butweb-latest
+        $ but push but@buthub.com:whatever/butweb.but butweb-latest:master
 
 (We use '0a8f4f0^..' because that means "all the changes from
 0a8f4f0 to the current version, including 0a8f4f0 itself.")
 
-If gitweb had originally been merged using 'git subtree add' (or
+If butweb had originally been merged using 'but subtree add' (or
 a previous split had already been done with '--rejoin' specified)
 then you can do all your splits without having to remember any
 weird cummit IDs:
 
-	$ git subtree split --prefix=gitweb --annotate='(split) ' --rejoin \
-		--branch gitweb-latest2
+	$ but subtree split --prefix=butweb --annotate='(split) ' --rejoin \
+		--branch butweb-latest2
 
 And you can merge changes back in from the upstream project just
 as easily:
 
-	$ git subtree pull --prefix=gitweb \
-		git@github.com:whatever/gitweb.git master
+	$ but subtree pull --prefix=butweb \
+		but@buthub.com:whatever/butweb.but master
 
 Or, using '--squash', you can actually rewind to an earlier
-version of gitweb:
+version of butweb:
 
-	$ git subtree merge --prefix=gitweb --squash gitweb-latest~10
+	$ but subtree merge --prefix=butweb --squash butweb-latest~10
 
 Then make some changes:
 
-	$ date >gitweb/myfile
-	$ git add gitweb/myfile
-	$ git cummit -m 'created myfile'
+	$ date >butweb/myfile
+	$ but add butweb/myfile
+	$ but cummit -m 'created myfile'
 
 And fast forward again:
 
-	$ git subtree merge --prefix=gitweb --squash gitweb-latest
+	$ but subtree merge --prefix=butweb --squash butweb-latest
 
 And notice that your change is still intact:
 
-	$ ls -l gitweb/myfile
+	$ ls -l butweb/myfile
 
 And you can split it out and look at your changes versus
-the standard gitweb:
+the standard butweb:
 
-	git log gitweb-latest..$(git subtree split --prefix=gitweb)
+	but log butweb-latest..$(but subtree split --prefix=butweb)
 
 EXAMPLE 3. Extract a subtree using a branch
 -------------------------------------------
 Suppose you have a source directory with many files and
 subdirectories, and you want to extract the lib directory to its own
-git project. Here's a short way to do it:
+but project. Here's a short way to do it:
 
 First, make the new repository wherever you want:
 
 	$ <go to the new location>
-	$ git init --bare
+	$ but init --bare
 
 Back in your original directory:
 
-	$ git subtree split --prefix=lib --annotate="(split)" -b split
+	$ but subtree split --prefix=lib --annotate="(split)" -b split
 
 Then push the new branch onto the new empty repository:
 
-	$ git push <new-repo> split:master
+	$ but push <new-repo> split:master
 
 
 AUTHOR
@@ -340,4 +340,4 @@ Written by Avery Pennarun <apenwarr@gmail.com>
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

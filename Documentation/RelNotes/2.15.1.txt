@@ -23,21 +23,21 @@ Fixes since v2.15
  * Some codepaths did not check for errors when asking what branch the
    HEAD points at, which have been fixed.
 
- * "git cummit", after making a cummit, did not check for errors when
+ * "but cummit", after making a cummit, did not check for errors when
    asking on what branch it made the cummit, which has been corrected.
 
- * "git status --ignored -u" did not stop at a working tree of a
+ * "but status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and
    listed files in that other project, instead of just showing the
    directory itself as ignored.
 
- * A broken access to object databases in recent update to "git grep
+ * A broken access to object databases in recent update to "but grep
    --recurse-submodules" has been fixed.
 
- * A recent regression in "git rebase -i" that broke execution of git
+ * A recent regression in "but rebase -i" that broke execution of but
    commands from subdirectories via "exec" instruction has been fixed.
 
- * "git check-ref-format --branch @{-1}" bit a "BUG()" when run
+ * "but check-ref-format --branch @{-1}" bit a "BUG()" when run
    outside a repository for obvious reasons; clarify the documentation
    and make sure we do not even try to expand the at-mark magic in
    such a case, but still call the validation logic for branch names.
@@ -45,7 +45,7 @@ Fixes since v2.15
  * Command line completion (in contrib/) update.
 
  * Description of blame.{showroot,blankboundary,showemail,date}
-   configuration variables have been added to "git config --help".
+   configuration variables have been added to "but config --help".
 
  * After an error from lstat(), diff_populate_filespec() function
    sometimes still went ahead and used invalid data in struct stat,
@@ -64,7 +64,7 @@ Fixes since v2.15
 
  * Updates from GfW project.
 
- * "git rebase -i" recently started misbehaving when a submodule that
+ * "but rebase -i" recently started misbehaving when a submodule that
    is configured with 'submodule.<name>.ignore' is dirty; this has
    been corrected.
 
@@ -76,10 +76,10 @@ Fixes since v2.15
  * We used to add an empty alternate object database to the system
    that does not help anything; it has been corrected.
 
- * Error checking in "git imap-send" for empty response has been
+ * Error checking in "but imap-send" for empty response has been
    improved.
 
- * An ancient bug in "git apply --ignore-space-change" codepath has
+ * An ancient bug in "but apply --ignore-space-change" codepath has
    been fixed.
 
  * There was a recent semantic mismerge in the codepath to write out a

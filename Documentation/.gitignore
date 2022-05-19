@@ -4,8 +4,8 @@
 *.made
 *.texi
 *.pdf
-git.info
-gitman.info
+but.info
+butman.info
 howto-index.txt
 doc.dep
 cmds-*.txt

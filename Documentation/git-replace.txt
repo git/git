@@ -1,19 +1,19 @@
-git-replace(1)
+but-replace(1)
 ==============
 
 NAME
 ----
-git-replace - Create, list, delete refs to replace objects
+but-replace - Create, list, delete refs to replace objects
 
 SYNOPSIS
 --------
 [verse]
-'git replace' [-f] <object> <replacement>
-'git replace' [-f] --edit <object>
-'git replace' [-f] --graft <cummit> [<parent>...]
-'git replace' [-f] --convert-graft-file
-'git replace' -d <object>...
-'git replace' [--format=<format>] [-l [<pattern>]]
+'but replace' [-f] <object> <replacement>
+'but replace' [-f] --edit <object>
+'but replace' [-f] --graft <cummit> [<parent>...]
+'but replace' [-f] --convert-graft-file
+'but replace' -d <object>...
+'but replace' [--format=<format>] [-l [<pattern>]]
 
 DESCRIPTION
 -----------
@@ -36,18 +36,18 @@ except those doing reachability traversal (prune, pack transfer and
 fsck).
 
 It is possible to disable use of replacement references for any
-command using the `--no-replace-objects` option just after 'git'.
+command using the `--no-replace-objects` option just after 'but'.
 
 For example if cummit 'foo' has been replaced by cummit 'bar':
 
 ------------------------------------------------
-$ git --no-replace-objects cat-file cummit foo
+$ but --no-replace-objects cat-file cummit foo
 ------------------------------------------------
 
 shows information about cummit 'foo', while:
 
 ------------------------------------------------
-$ git cat-file cummit foo
+$ but cat-file cummit foo
 ------------------------------------------------
 
 shows information about cummit 'bar'.
@@ -72,7 +72,7 @@ OPTIONS
 	editor is launched on the file, and the result is parsed to
 	create a new object of the same type as <object>. A
 	replacement ref is then created to replace <object> with the
-	newly created object. See linkgit:git-var[1] for details about
+	newly created object. See linkbut:but-var[1] for details about
 	how the editor will be chosen.
 
 --raw::
@@ -100,7 +100,7 @@ OPTIONS
 --list <pattern>::
 	List replace refs for objects that match the given pattern (or
 	all if no pattern is given).
-	Typing "git replace" without arguments, also lists all replace
+	Typing "but replace" without arguments, also lists all replace
 	refs.
 
 --format=<format>::
@@ -123,10 +123,10 @@ The following format are available:
 CREATING REPLACEMENT OBJECTS
 ----------------------------
 
-linkgit:git-hash-object[1], linkgit:git-rebase[1], and
-https://github.com/newren/git-filter-repo[git-filter-repo], among other git commands, can be used to
+linkbut:but-hash-object[1], linkbut:but-rebase[1], and
+https://buthub.com/newren/but-filter-repo[but-filter-repo], among other but commands, can be used to
 create replacement objects from existing objects. The `--edit` option
-can also be used with 'git replace' to create a replacement object by
+can also be used with 'but replace' to create a replacement object by
 editing an existing object.
 
 If you want to replace many blobs, trees or cummits that are part of a
@@ -138,24 +138,24 @@ of cummits.
 BUGS
 ----
 Comparing blobs or trees that have been replaced with those that
-replace them will not work properly. And using `git reset --hard` to
+replace them will not work properly. And using `but reset --hard` to
 go back to a replaced cummit will move the branch to the replacement
 cummit instead of the replaced cummit.
 
-There may be other problems when using 'git rev-list' related to
+There may be other problems when using 'but rev-list' related to
 pending objects.
 
 SEE ALSO
 --------
-linkgit:git-hash-object[1]
-linkgit:git-rebase[1]
-linkgit:git-tag[1]
-linkgit:git-branch[1]
-linkgit:git-cummit[1]
-linkgit:git-var[1]
-linkgit:git[1]
-https://github.com/newren/git-filter-repo[git-filter-repo]
+linkbut:but-hash-object[1]
+linkbut:but-rebase[1]
+linkbut:but-tag[1]
+linkbut:but-branch[1]
+linkbut:but-cummit[1]
+linkbut:but-var[1]
+linkbut:but[1]
+https://buthub.com/newren/but-filter-repo[but-filter-repo]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,4 +1,4 @@
-# git-gui misc. cummit reading/writing support
+# but-gui misc. cummit reading/writing support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc load_last_cummit {} {
@@ -27,7 +27,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set name ""
 			set email ""
-			set fd [git_read cat-file cummit $curHEAD]
+			set fd [but_read cat-file cummit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
 			# By default cummits are assumed to be in utf-8
 			set enc utf-8
@@ -79,7 +79,7 @@ proc cummitter_ident {} {
 	global GIT_CUMMITTER_IDENT
 
 	if {$GIT_CUMMITTER_IDENT eq {}} {
-		if {[catch {set me [git var GIT_CUMMITTER_IDENT]} err]} {
+		if {[catch {set me [but var GIT_CUMMITTER_IDENT]} err]} {
 			error_popup [strcat [mc "Unable to obtain your identity:"] "\n\n$err"]
 			return {}
 		}
@@ -224,7 +224,7 @@ A good cummit message has the following format:
 
 	# -- Build the message file.
 	#
-	set msg_p [gitdir GITGUI_EDITMSG]
+	set msg_p [butdir GITGUI_EDITMSG]
 	set msg_wt [open $msg_p w]
 	fconfigure $msg_wt -translation lf
 	setup_cummit_encoding $msg_wt
@@ -235,7 +235,7 @@ A good cummit message has the following format:
 
 	# -- Run the pre-commit hook.
 	#
-	set fd_ph [githook_read pre-cummit]
+	set fd_ph [buthook_read pre-cummit]
 	if {$fd_ph eq {}} {
 		cummit_cummitmsg $curHEAD $msg_p
 		return
@@ -273,7 +273,7 @@ proc cummit_cummitmsg {curHEAD msg_p} {
 	global pch_error
 
 	if {$is_detached
-	    && ![file exists [gitdir rebase-merge head-name]]
+	    && ![file exists [butdir rebase-merge head-name]]
 	    && 	[is_config_true gui.warndetachedcummit]} {
 		set msg [mc "You are about to cummit on a detached head.\
 This is a potentially dangerous thing to do because if you switch\
@@ -290,7 +290,7 @@ Do you really want to proceed with your cummit?"]
 
 	# -- Run the cummit-msg hook.
 	#
-	set fd_ph [githook_read cummit-msg $msg_p]
+	set fd_ph [buthook_read cummit-msg $msg_p]
 	if {$fd_ph eq {}} {
 		cummit_writetree $curHEAD $msg_p
 		return
@@ -325,7 +325,7 @@ proc cummit_cummitmsg_wait {fd_ph curHEAD msg_p} {
 
 proc cummit_writetree {curHEAD msg_p} {
 	ui_status [mc "cummitting changes..."]
-	set fd_wt [git_read write-tree]
+	set fd_wt [but_read write-tree]
 	fileevent $fd_wt readable \
 		[list cummit_cummittree $fd_wt $curHEAD $msg_p]
 }
@@ -350,7 +350,7 @@ proc cummit_cummittree {fd_wt curHEAD msg_p} {
 	# -- Verify this wasn't an empty change.
 	#
 	if {$cummit_type eq {normal}} {
-		set fd_ot [git_read cat-file cummit $PARENT]
+		set fd_ot [but_read cat-file cummit $PARENT]
 		fconfigure $fd_ot -encoding binary -translation lf
 		set old_tree [gets $fd_ot]
 		close $fd_ot
@@ -389,7 +389,7 @@ A rescan will be automatically started now.
 		lappend cmd -p $p
 	}
 	lappend cmd <$msg_p
-	if {[catch {set cmt_id [eval git $cmd]} err]} {
+	if {[catch {set cmt_id [eval but $cmd]} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "cummit-tree failed:"] "\n\n$err"]
 		ui_status [mc "cummit failed."]
@@ -415,7 +415,7 @@ A rescan will be automatically started now.
 	close $msg_fd
 	append reflogm {: } $subject
 	if {[catch {
-			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
+			but update-ref -m $reflogm HEAD $cmt_id $curHEAD
 		} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "update-ref failed:"] "\n\n$err"]
@@ -427,26 +427,26 @@ A rescan will be automatically started now.
 	# -- Cleanup after ourselves.
 	#
 	catch {file delete $msg_p}
-	catch {file delete [gitdir MERGE_HEAD]}
-	catch {file delete [gitdir MERGE_MSG]}
-	catch {file delete [gitdir SQUASH_MSG]}
-	catch {file delete [gitdir GITGUI_MSG]}
-	catch {file delete [gitdir CHERRY_PICK_HEAD]}
+	catch {file delete [butdir MERGE_HEAD]}
+	catch {file delete [butdir MERGE_MSG]}
+	catch {file delete [butdir SQUASH_MSG]}
+	catch {file delete [butdir GITGUI_MSG]}
+	catch {file delete [butdir CHERRY_PICK_HEAD]}
 
 	# -- Let rerere do its thing.
 	#
 	if {[get_config rerere.enabled] eq {}} {
-		set rerere [file isdirectory [gitdir rr-cache]]
+		set rerere [file isdirectory [butdir rr-cache]]
 	} else {
 		set rerere [is_config_true rerere.enabled]
 	}
 	if {$rerere} {
-		catch {git rerere}
+		catch {but rerere}
 	}
 
 	# -- Run the post-commit hook.
 	#
-	set fd_ph [githook_read post-cummit]
+	set fd_ph [buthook_read post-cummit]
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
@@ -460,7 +460,7 @@ A rescan will be automatically started now.
 	$ui_comm edit reset
 	$ui_comm edit modified false
 	if {$::GITGUI_BCK_exists} {
-		catch {file delete [gitdir GITGUI_BCK]}
+		catch {file delete [butdir GITGUI_BCK]}
 		set ::GITGUI_BCK_exists 0
 	}
 

@@ -145,11 +145,11 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	if (filter && !ref_filter_match(refname, filter))
 		return 0;
 
-	if (starts_with(refname, git_replace_ref_base)) {
+	if (starts_with(refname, but_replace_ref_base)) {
 		struct object_id original_oid;
 		if (!read_replace_refs)
 			return 0;
-		if (get_oid_hex(refname + strlen(git_replace_ref_base),
+		if (get_oid_hex(refname + strlen(but_replace_ref_base),
 				&original_oid)) {
 			warning("invalid replace ref %s", refname);
 			return 0;
@@ -356,7 +356,7 @@ void show_decorations(struct rev_info *opt, struct cummit *cummit)
 	strbuf_release(&sb);
 }
 
-static unsigned int digits_in_number(unsigned int number)
+static unsigned int dibuts_in_number(unsigned int number)
 {
 	unsigned int i = 10, result = 1;
 	while (i <= number) {
@@ -408,7 +408,7 @@ void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
 		strbuf_addf(sb, "Subject: [%s%s%0*d/%d] ",
 			    opt->subject_prefix,
 			    *opt->subject_prefix ? " " : "",
-			    digits_in_number(opt->total),
+			    dibuts_in_number(opt->total),
 			    opt->nr, opt->total);
 	} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
 		strbuf_addf(sb, "Subject: [%s] ",

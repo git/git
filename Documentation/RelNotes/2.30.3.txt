@@ -13,9 +13,9 @@ Fixes since v2.30.2
  * CVE-2022-24765:
    On multi-user machines, Git users might find themselves
    unexpectedly in a Git worktree, e.g. when another user created a
-   repository in `C:\.git`, in a mounted network drive or in a
-   scratch space. Merely having a Git-aware prompt that runs `git
-   status` (or `git diff`) and navigating to a directory which is
+   repository in `C:\.but`, in a mounted network drive or in a
+   scratch space. Merely having a Git-aware prompt that runs `but
+   status` (or `but diff`) and navigating to a directory which is
    supposedly not a Git worktree, or opening such a directory in an
    editor or IDE such as VS Code or Atom, will potentially run
    commands defined by that other user.

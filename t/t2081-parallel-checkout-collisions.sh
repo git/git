@@ -18,16 +18,16 @@ TEST_PASSES_SANITIZE_LEAK=true
 TEST_ROOT="$PWD"
 
 test_expect_success CASE_INSENSITIVE_FS 'setup' '
-	empty_oid=$(git hash-object -w --stdin </dev/null) &&
+	empty_oid=$(but hash-object -w --stdin </dev/null) &&
 	cat >objs <<-EOF &&
 	100644 $empty_oid	FILE_X
 	100644 $empty_oid	FILE_x
 	100644 $empty_oid	file_X
 	100644 $empty_oid	file_x
 	EOF
-	git update-index --index-info <objs &&
-	git cummit -m "colliding files" &&
-	git tag basename_collision &&
+	but update-index --index-info <objs &&
+	but cummit -m "colliding files" &&
+	but tag basename_collision &&
 
 	write_script "$TEST_ROOT"/logger_script <<-\EOF
 	echo "$@" >>filter.log
@@ -40,7 +40,7 @@ test_workers_in_event_trace ()
 }
 
 test_expect_success CASE_INSENSITIVE_FS 'worker detects basename collision' '
-	GIT_TRACE2_EVENT="$(pwd)/trace" git \
+	GIT_TRACE2_EVENT="$(pwd)/trace" but \
 		-c checkout.workers=2 -c checkout.thresholdForParallelism=0 \
 		checkout . &&
 
@@ -51,25 +51,25 @@ test_expect_success CASE_INSENSITIVE_FS 'worker detects basename collision' '
 
 test_expect_success CASE_INSENSITIVE_FS 'worker detects dirname collision' '
 	test_config filter.logger.smudge "\"$TEST_ROOT/logger_script\" %f" &&
-	empty_oid=$(git hash-object -w --stdin </dev/null) &&
+	empty_oid=$(but hash-object -w --stdin </dev/null) &&
 
 	# By setting a filter command to "a", we make it ineligible for parallel
 	# checkout, and thus it is checked out *first*. This way we can ensure
 	# that "A/B" and "A/C" will both collide with the regular file "a".
 	#
-	attr_oid=$(echo "a filter=logger" | git hash-object -w --stdin) &&
+	attr_oid=$(echo "a filter=logger" | but hash-object -w --stdin) &&
 
 	cat >objs <<-EOF &&
 	100644 $empty_oid	A/B
 	100644 $empty_oid	A/C
 	100644 $empty_oid	a
-	100644 $attr_oid	.gitattributes
+	100644 $attr_oid	.butattributes
 	EOF
-	git rm -rf . &&
-	git update-index --index-info <objs &&
+	but rm -rf . &&
+	but update-index --index-info <objs &&
 
 	rm -f trace filter.log &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" git \
+	GIT_TRACE2_EVENT="$(pwd)/trace" but \
 		-c checkout.workers=2 -c checkout.thresholdForParallelism=0 \
 		checkout . &&
 
@@ -84,8 +84,8 @@ test_expect_success CASE_INSENSITIVE_FS 'worker detects dirname collision' '
 '
 
 test_expect_success SYMLINKS,CASE_INSENSITIVE_FS 'do not follow symlinks colliding with leading dir' '
-	empty_oid=$(git hash-object -w --stdin </dev/null) &&
-	symlink_oid=$(echo "./e" | git hash-object -w --stdin) &&
+	empty_oid=$(but hash-object -w --stdin </dev/null) &&
+	symlink_oid=$(echo "./e" | but hash-object -w --stdin) &&
 	mkdir e &&
 
 	cat >objs <<-EOF &&
@@ -93,11 +93,11 @@ test_expect_success SYMLINKS,CASE_INSENSITIVE_FS 'do not follow symlinks collidi
 	100644 $empty_oid	d/x
 	100644 $empty_oid	e/y
 	EOF
-	git rm -rf . &&
-	git update-index --index-info <objs &&
+	but rm -rf . &&
+	but update-index --index-info <objs &&
 
 	set_checkout_config 2 0 &&
-	test_checkout_workers 2 git checkout . &&
+	test_checkout_workers 2 but checkout . &&
 	test_path_is_dir e &&
 	test_path_is_missing e/x
 '
@@ -112,9 +112,9 @@ test_expect_success SYMLINKS,CASE_INSENSITIVE_FS 'do not follow symlinks collidi
 # - A colliding entry might appear in the second half of the cache_entry array.
 #
 test_expect_success CASE_INSENSITIVE_FS 'collision report on clone (w/ racy file creation)' '
-	git reset --hard basename_collision &&
+	but reset --hard basename_collision &&
 	set_checkout_config 2 0 &&
-	test_checkout_workers 2 git clone . clone-repo 2>stderr &&
+	test_checkout_workers 2 but clone . clone-repo 2>stderr &&
 
 	grep FILE_X stderr &&
 	grep FILE_x stderr &&
@@ -139,15 +139,15 @@ test_expect_success CASE_INSENSITIVE_FS,!MINGW,!CYGWIN \
 	'collision report on clone (w/ colliding peer after the detected entry)' '
 
 	test_config_global filter.logger.smudge "\"$TEST_ROOT/logger_script\" %f" &&
-	git reset --hard basename_collision &&
-	echo "file_x filter=logger" >.gitattributes &&
-	git add .gitattributes &&
-	git cummit -m "filter for file_x" &&
+	but reset --hard basename_collision &&
+	echo "file_x filter=logger" >.butattributes &&
+	but add .butattributes &&
+	but cummit -m "filter for file_x" &&
 
 	rm -rf clone-repo &&
 	set_checkout_config 2 0 &&
 	test_checkout_workers 2 \
-		git -c core.ignoreCase=false clone . clone-repo 2>stderr &&
+		but -c core.ignoreCase=false clone . clone-repo 2>stderr &&
 
 	grep FILE_X stderr &&
 	grep FILE_x stderr &&

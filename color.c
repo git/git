@@ -2,7 +2,7 @@
 #include "config.h"
 #include "color.h"
 
-static int git_use_color_default = GIT_COLOR_AUTO;
+static int but_use_color_default = GIT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
 
 /*
@@ -355,7 +355,7 @@ bad:
 #undef OUT
 }
 
-int git_config_colorbool(const char *var, const char *value)
+int but_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
@@ -370,7 +370,7 @@ int git_config_colorbool(const char *var, const char *value)
 		return -1;
 
 	/* Missing or explicit false to turn off colorization */
-	if (!git_config_bool(var, value))
+	if (!but_config_bool(var, value))
 		return 0;
 
 	/* any normal truth value defaults to 'auto' */
@@ -405,7 +405,7 @@ int want_color_fd(int fd, int var)
 		BUG("file descriptor out of range: %d", fd);
 
 	if (var < 0)
-		var = git_use_color_default;
+		var = but_use_color_default;
 
 	if (var == GIT_COLOR_AUTO) {
 		if (want_auto[fd] < 0)
@@ -415,22 +415,22 @@ int want_color_fd(int fd, int var)
 	return var;
 }
 
-int git_color_config(const char *var, const char *value, void *cb)
+int but_color_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.ui")) {
-		git_use_color_default = git_config_colorbool(var, value);
+		but_use_color_default = but_config_colorbool(var, value);
 		return 0;
 	}
 
 	return 0;
 }
 
-int git_color_default_config(const char *var, const char *value, void *cb)
+int but_color_default_config(const char *var, const char *value, void *cb)
 {
-	if (git_color_config(var, value, cb) < 0)
+	if (but_color_config(var, value, cb) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)

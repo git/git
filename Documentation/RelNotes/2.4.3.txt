@@ -4,14 +4,14 @@ Git v2.4.3 Release Notes
 Fixes since v2.4.3
 ------------------
 
- * Error messages from "git branch" called remote-tracking branches as
+ * Error messages from "but branch" called remote-tracking branches as
    "remote branches".
 
- * "git rerere forget" in a repository without rerere enabled gave a
+ * "but rerere forget" in a repository without rerere enabled gave a
    cryptic error message; it should be a silent no-op instead.
 
- * "git pull --log" and "git pull --no-log" worked as expected, but
-   "git pull --log=20" did not.
+ * "but pull --log" and "but pull --no-log" worked as expected, but
+   "but pull --log=20" did not.
 
  * The pull.ff configuration was supposed to override the merge.ff
    configuration, but it didn't.
@@ -25,7 +25,7 @@ Fixes since v2.4.3
    consistent in general and also make AsciiDoctor (an alternative
    formatter) happier.
 
- * "git bundle verify" did not diagnose extra parameters on the
+ * "but bundle verify" did not diagnose extra parameters on the
    command line.
 
  * Multi-ref transaction support we merged a few releases ago
@@ -44,8 +44,8 @@ Fixes since v2.4.3
    failure) test that documented a breakage that was fixed since the
    test was written; turn it into a proper test.
 
- * core.excludesfile (defaulting to $XDG_HOME/git/ignore) is supposed
-   to be overridden by repository-specific .git/info/exclude file, but
+ * core.excludesfile (defaulting to $XDG_HOME/but/ignore) is supposed
+   to be overridden by repository-specific .but/info/exclude file, but
    the order was swapped from the beginning. This belatedly fixes it.
 
  * The connection initiation code for "ssh" transport tried to absorb
@@ -54,16 +54,16 @@ Fixes since v2.4.3
    variants were too loose and falsely triggered when "plink" appeared
    anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
 
- * "git rebase -i" moved the "current" command from "todo" to "done" a
+ * "but rebase -i" moved the "current" command from "todo" to "done" a
    bit too prematurely, losing a step when a "pick" did not even start.
 
- * "git add -e" did not allow the user to abort the operation by
+ * "but add -e" did not allow the user to abort the operation by
    killing the editor.
 
- * Git 2.4 broke setting verbosity and progress levels on "git clone"
+ * Git 2.4 broke setting verbosity and progress levels on "but clone"
    with native transports.
 
- * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+ * Some time ago, "but blame" (incorrectly) lost the convert_to_but()
    call when synthesizing a fake "tip" cummit that represents the
    state in the working tree, which broke folks who record the history
    with LF line ending to make their project portable across

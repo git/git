@@ -1,6 +1,6 @@
 #!/bin/sh
-test_description='git svn globbing refspecs with prefixed globs'
-. ./lib-git-svn.sh
+test_description='but svn globbing refspecs with prefixed globs'
+. ./lib-but-svn.sh
 
 test_expect_success 'prepare test refspec prefixed globbing' '
 	cat >expect.end <<EOF
@@ -40,22 +40,22 @@ test_expect_success 'test refspec prefixed globbing' '
 		poke tags/t_end/src/b/readme &&
 		svn_cmd cummit -m "nothing to see here"
 	) &&
-	git config --add svn-remote.svn.url "$svnrepo" &&
-	git config --add svn-remote.svn.fetch \
+	but config --add svn-remote.svn.url "$svnrepo" &&
+	but config --add svn-remote.svn.fetch \
 			 "trunk/src/a:refs/remotes/trunk" &&
-	git config --add svn-remote.svn.branches \
+	but config --add svn-remote.svn.branches \
 			 "branches/b_*/src/a:refs/remotes/branches/b_*" &&
-	git config --add svn-remote.svn.tags\
+	but config --add svn-remote.svn.tags\
 			 "tags/t_*/src/a:refs/remotes/tags/t_*" &&
-	git svn multi-fetch &&
-	git log --pretty=oneline refs/remotes/tags/t_end >actual &&
+	but svn multi-fetch &&
+	but log --pretty=oneline refs/remotes/tags/t_end >actual &&
 	cut -d" " -f2- actual >output.end &&
 	test_cmp expect.end output.end &&
-	test "$(git rev-parse refs/remotes/tags/t_end~1)" = \
-		"$(git rev-parse refs/remotes/branches/b_start)" &&
-	test "$(git rev-parse refs/remotes/branches/b_start~2)" = \
-		"$(git rev-parse refs/remotes/trunk)" &&
-	test_must_fail git rev-parse refs/remotes/tags/t_end@3
+	test "$(but rev-parse refs/remotes/tags/t_end~1)" = \
+		"$(but rev-parse refs/remotes/branches/b_start)" &&
+	test "$(but rev-parse refs/remotes/branches/b_start~2)" = \
+		"$(but rev-parse refs/remotes/trunk)" &&
+	test_must_fail but rev-parse refs/remotes/tags/t_end@3
 	'
 
 test_expect_success 'prepare test left-hand-side only prefixed globbing' '
@@ -65,11 +65,11 @@ test_expect_success 'prepare test left-hand-side only prefixed globbing' '
 	'
 
 test_expect_success 'test left-hand-side only prefixed globbing' '
-	git config --add svn-remote.two.url "$svnrepo" &&
-	git config --add svn-remote.two.fetch trunk:refs/remotes/two/trunk &&
-	git config --add svn-remote.two.branches \
+	but config --add svn-remote.two.url "$svnrepo" &&
+	but config --add svn-remote.two.fetch trunk:refs/remotes/two/trunk &&
+	but config --add svn-remote.two.branches \
 			 "branches/b_*:refs/remotes/two/branches/*" &&
-	git config --add svn-remote.two.tags \
+	but config --add svn-remote.two.tags \
 			 "tags/t_*:refs/remotes/two/tags/*" &&
 	(
 		cd tmp &&
@@ -77,16 +77,16 @@ test_expect_success 'test left-hand-side only prefixed globbing' '
 		poke tags/t_end/src/b/readme &&
 		svn_cmd cummit -m "try to try"
 	) &&
-	git svn fetch two &&
-	git rev-list refs/remotes/two/tags/t_end >actual &&
+	but svn fetch two &&
+	but rev-list refs/remotes/two/tags/t_end >actual &&
 	test_line_count = 6 actual &&
-	git rev-list refs/remotes/two/branches/b_start >actual &&
+	but rev-list refs/remotes/two/branches/b_start >actual &&
 	test_line_count = 3 actual &&
-	test $(git rev-parse refs/remotes/two/branches/b_start~2) = \
-	     $(git rev-parse refs/remotes/two/trunk) &&
-	test $(git rev-parse refs/remotes/two/tags/t_end~3) = \
-	     $(git rev-parse refs/remotes/two/branches/b_start) &&
-	git log --pretty=oneline refs/remotes/two/tags/t_end >actual &&
+	test $(but rev-parse refs/remotes/two/branches/b_start~2) = \
+	     $(but rev-parse refs/remotes/two/trunk) &&
+	test $(but rev-parse refs/remotes/two/tags/t_end~3) = \
+	     $(but rev-parse refs/remotes/two/branches/b_start) &&
+	but log --pretty=oneline refs/remotes/two/tags/t_end >actual &&
 	cut -d" " -f2- actual >output.two &&
 	test_cmp expect.two output.two
 	'
@@ -100,12 +100,12 @@ EOF
 	'
 
 test_expect_success 'test prefixed globs match just prefix' '
-	git config --add svn-remote.three.url "$svnrepo" &&
-	git config --add svn-remote.three.fetch \
+	but config --add svn-remote.three.url "$svnrepo" &&
+	but config --add svn-remote.three.fetch \
 			 trunk:refs/remotes/three/trunk &&
-	git config --add svn-remote.three.branches \
+	but config --add svn-remote.three.branches \
 			 "branches/b_*:refs/remotes/three/branches/*" &&
-	git config --add svn-remote.three.tags \
+	but config --add svn-remote.three.tags \
 			 "tags/t_*:refs/remotes/three/tags/*" &&
 	(
 		cd tmp &&
@@ -119,16 +119,16 @@ test_expect_success 'test prefixed globs match just prefix' '
 		svn_cmd cummit -m "Tag cummit to t_" &&
 		svn_cmd up
 	) &&
-	git svn fetch three &&
-	git rev-list refs/remotes/three/branches/b_ >actual &&
+	but svn fetch three &&
+	but rev-list refs/remotes/three/branches/b_ >actual &&
 	test_line_count = 2 actual &&
-	git rev-list refs/remotes/three/tags/t_ >actual &&
+	but rev-list refs/remotes/three/tags/t_ >actual &&
 	test_line_count = 3 actual &&
-	test $(git rev-parse refs/remotes/three/branches/b_~1) = \
-	     $(git rev-parse refs/remotes/three/trunk) &&
-	test $(git rev-parse refs/remotes/three/tags/t_~1) = \
-	     $(git rev-parse refs/remotes/three/branches/b_) &&
-	git log --pretty=oneline refs/remotes/three/tags/t_ >actual &&
+	test $(but rev-parse refs/remotes/three/branches/b_~1) = \
+	     $(but rev-parse refs/remotes/three/trunk) &&
+	test $(but rev-parse refs/remotes/three/tags/t_~1) = \
+	     $(but rev-parse refs/remotes/three/branches/b_) &&
+	but log --pretty=oneline refs/remotes/three/tags/t_ >actual &&
 	cut -d" " -f2- actual >output.three &&
 	test_cmp expect.three output.three
 	'
@@ -141,12 +141,12 @@ EOF
 	"
 
 test_expect_success 'test disallow prefixed multi-globs' '
-	git config --add svn-remote.four.url "$svnrepo" &&
-	git config --add svn-remote.four.fetch \
+	but config --add svn-remote.four.url "$svnrepo" &&
+	but config --add svn-remote.four.fetch \
 			 trunk:refs/remotes/four/trunk &&
-	git config --add svn-remote.four.branches \
+	but config --add svn-remote.four.branches \
 			 "branches/b_*/t/*:refs/remotes/four/branches/*" &&
-	git config --add svn-remote.four.tags \
+	but config --add svn-remote.four.tags \
 			 "tags/t_*/*:refs/remotes/four/tags/*" &&
 	(
 		cd tmp &&
@@ -154,10 +154,10 @@ test_expect_success 'test disallow prefixed multi-globs' '
 		poke tags/t_end/src/b/readme &&
 		svn_cmd cummit -m "try to try"
 	) &&
-	test_must_fail git svn fetch four 2>stderr.four &&
+	test_must_fail but svn fetch four 2>stderr.four &&
 	test_cmp expect.four stderr.four &&
-	git config --unset svn-remote.four.branches &&
-	git config --unset svn-remote.four.tags
+	but config --unset svn-remote.four.branches &&
+	but config --unset svn-remote.four.tags
 	'
 
 test_expect_success 'prepare test globbing in the middle of the word' '
@@ -169,12 +169,12 @@ EOF
 	'
 
 test_expect_success 'test globbing in the middle of the word' '
-	git config --add svn-remote.five.url "$svnrepo" &&
-	git config --add svn-remote.five.fetch \
+	but config --add svn-remote.five.url "$svnrepo" &&
+	but config --add svn-remote.five.fetch \
 			 trunk:refs/remotes/five/trunk &&
-	git config --add svn-remote.five.branches \
+	but config --add svn-remote.five.branches \
 			 "branches/a*e:refs/remotes/five/branches/*" &&
-	git config --add svn-remote.five.tags \
+	but config --add svn-remote.five.tags \
 			 "tags/f*j:refs/remotes/five/tags/*" &&
 	(
 		cd tmp &&
@@ -189,16 +189,16 @@ test_expect_success 'test globbing in the middle of the word' '
 		svn_cmd cummit -m "Tag cummit to fghij" &&
 		svn_cmd up
 	) &&
-	git svn fetch five &&
-	git rev-list refs/remotes/five/branches/abcde >actual &&
+	but svn fetch five &&
+	but rev-list refs/remotes/five/branches/abcde >actual &&
 	test_line_count = 2 actual &&
-	git rev-list refs/remotes/five/tags/fghij >actual &&
+	but rev-list refs/remotes/five/tags/fghij >actual &&
 	test_line_count = 3 actual &&
-	test $(git rev-parse refs/remotes/five/branches/abcde~1) = \
-	     $(git rev-parse refs/remotes/five/trunk) &&
-	test $(git rev-parse refs/remotes/five/tags/fghij~1) = \
-	     $(git rev-parse refs/remotes/five/branches/abcde) &&
-	git log --pretty=oneline refs/remotes/five/tags/fghij >actual &&
+	test $(but rev-parse refs/remotes/five/branches/abcde~1) = \
+	     $(but rev-parse refs/remotes/five/trunk) &&
+	test $(but rev-parse refs/remotes/five/tags/fghij~1) = \
+	     $(but rev-parse refs/remotes/five/branches/abcde) &&
+	but log --pretty=oneline refs/remotes/five/tags/fghij >actual &&
 	cut -d" " -f2- actual >output.five &&
 	test_cmp expect.five output.five
 	'
@@ -209,12 +209,12 @@ test_expect_success 'prepare test disallow multiple asterisks in one word' "
 	"
 
 test_expect_success 'test disallow multiple asterisks in one word' '
-	git config --add svn-remote.six.url "$svnrepo" &&
-	git config --add svn-remote.six.fetch \
+	but config --add svn-remote.six.url "$svnrepo" &&
+	but config --add svn-remote.six.fetch \
 			 trunk:refs/remotes/six/trunk &&
-	git config --add svn-remote.six.branches \
+	but config --add svn-remote.six.branches \
 			 "branches/a*c*e:refs/remotes/six/branches/*" &&
-	git config --add svn-remote.six.tags \
+	but config --add svn-remote.six.tags \
 			 "tags/f*h*j:refs/remotes/six/tags/*" &&
 	(
 		cd tmp &&
@@ -222,7 +222,7 @@ test_expect_success 'test disallow multiple asterisks in one word' '
 		poke tags/fghij/src/b/readme &&
 		svn_cmd cummit -m "try to try"
 	) &&
-	test_must_fail git svn fetch six 2>stderr.six &&
+	test_must_fail but svn fetch six 2>stderr.six &&
 	test_cmp expect.six stderr.six
 	'
 

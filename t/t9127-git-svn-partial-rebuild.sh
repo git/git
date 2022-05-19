@@ -3,8 +3,8 @@
 # Copyright (c) 2008 Deskin Miller
 #
 
-test_description='git svn partial-rebuild tests'
-. ./lib-git-svn.sh
+test_description='but svn partial-rebuild tests'
+. ./lib-but-svn.sh
 
 test_expect_success 'initialize svnrepo' '
 	mkdir import &&
@@ -14,7 +14,7 @@ test_expect_success 'initialize svnrepo' '
 		(cd trunk &&
 		echo foo > foo
 		) &&
-		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null &&
+		svn_cmd import -m "import for but-svn" . "$svnrepo" >/dev/null &&
 		svn_cmd copy "$svnrepo"/trunk "$svnrepo"/branches/a \
 			-m "created branch a"
 		) &&
@@ -30,30 +30,30 @@ test_expect_success 'initialize svnrepo' '
 		svn_cmd add a &&
 		svn_cmd ci -m "updated a"
 		) &&
-		git svn init --stdlayout "$svnrepo"
+		but svn init --stdlayout "$svnrepo"
 	)
 '
 
-test_expect_success 'import an early SVN revision into git' '
-	git svn fetch -r1:2
+test_expect_success 'import an early SVN revision into but' '
+	but svn fetch -r1:2
 '
 
-test_expect_success 'make full git mirror of SVN' '
+test_expect_success 'make full but mirror of SVN' '
 	mkdir mirror &&
 	(
 		(cd mirror &&
-		git init &&
-		git svn init --stdlayout "$svnrepo" &&
-		git svn fetch
+		but init &&
+		but svn init --stdlayout "$svnrepo" &&
+		but svn fetch
 		)
 	)
 '
 
-test_expect_success 'fetch from git mirror and partial-rebuild' '
-	git config --add remote.origin.url "file://$PWD/mirror/.git" &&
-	git config --add remote.origin.fetch refs/remotes/*:refs/remotes/* &&
-	git fetch origin &&
-	git svn fetch
+test_expect_success 'fetch from but mirror and partial-rebuild' '
+	but config --add remote.origin.url "file://$PWD/mirror/.but" &&
+	but config --add remote.origin.fetch refs/remotes/*:refs/remotes/* &&
+	but fetch origin &&
+	but svn fetch
 '
 
 test_done

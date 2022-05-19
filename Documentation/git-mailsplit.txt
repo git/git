@@ -1,14 +1,14 @@
-git-mailsplit(1)
+but-mailsplit(1)
 ================
 
 NAME
 ----
-git-mailsplit - Simple UNIX mbox splitter program
+but-mailsplit - Simple UNIX mbox splitter program
 
 SYNOPSIS
 --------
 [verse]
-'git mailsplit' [-b] [-f<nn>] [-d<prec>] [--keep-cr] [--mboxrd]
+'but mailsplit' [-b] [-f<nn>] [-d<prec>] [--keep-cr] [--mboxrd]
 		-o<directory> [--] [(<mbox>|<Maildir>)...]
 
 DESCRIPTION
@@ -37,7 +37,7 @@ OPTIONS
 	single mail message instead of signaling error.
 
 -d<prec>::
-	Instead of the default 4 digits with leading zeros,
+	Instead of the default 4 dibuts with leading zeros,
 	different precision can be specified for the generated
 	filenames.
 
@@ -54,4 +54,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

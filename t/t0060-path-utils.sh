@@ -21,14 +21,14 @@ relative_path() {
 
 test_submodule_relative_url() {
 	test_expect_success "test_submodule_relative_url: $1 $2 $3 => $4" "
-		actual=\$(git submodule--helper resolve-relative-url-test '$1' '$2' '$3') &&
+		actual=\$(but submodule--helper resolve-relative-url-test '$1' '$2' '$3') &&
 		test \"\$actual\" = '$4'
 	"
 }
 
-test_git_path() {
-	test_expect_success "git-path $1 $2 => $3" "
-		$1 git rev-parse --git-path $2 >actual &&
+test_but_path() {
+	test_expect_success "but-path $1 $2 => $3" "
+		$1 but rev-parse --but-path $2 >actual &&
 		echo $3 >expect &&
 		test_cmp expect actual
 	"
@@ -165,8 +165,8 @@ ancestor D:/Users/me C:/ -1 MINGW
 ancestor //server/share/my-directory //server/share/ 14 MINGW
 
 test_expect_success 'strip_path_suffix' '
-	test c:/msysgit = $(test-tool path-utils strip_path_suffix \
-		c:/msysgit/libexec//git-core libexec/git-core)
+	test c:/msysbut = $(test-tool path-utils strip_path_suffix \
+		c:/msysbut/libexec//but-core libexec/but-core)
 '
 
 test_expect_success 'absolute path rejects the empty string' '
@@ -220,18 +220,18 @@ test_expect_success 'real path removes other extra slashes' '
 
 test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir first &&
-	ln -s ../.git first/.git &&
+	ln -s ../.but first/.but &&
 	mkdir second &&
 	ln -s ../first second/other &&
 	mkdir third &&
-	dir="$(cd .git && pwd -P)" &&
-	dir2=third/../second/other/.git &&
+	dir="$(cd .but && pwd -P)" &&
+	dir2=third/../second/other/.but &&
 	test "$dir" = "$(test-tool path-utils real_path $dir2)" &&
 	file="$dir"/index &&
 	test "$file" = "$(test-tool path-utils real_path $dir2/index)" &&
 	basename=blub &&
-	test "$dir/$basename" = "$(cd .git && test-tool path-utils real_path "$basename")" &&
-	ln -s ../first/file .git/syml &&
+	test "$dir/$basename" = "$(cd .but && test-tool path-utils real_path "$basename")" &&
+	ln -s ../first/file .but/syml &&
 	sym="$(cd first && pwd -P)"/file &&
 	test "$sym" = "$(test-tool path-utils real_path "$dir2/syml")"
 '
@@ -252,7 +252,7 @@ test_expect_success 'prefix_path rejects absolute path to dir with same beginnin
 '
 
 test_expect_success SYMLINKS 'prefix_path works with absolute path to a symlink to work tree having  same beginning as work tree' '
-	git init repo &&
+	but init repo &&
 	ln -s repo repolink &&
 	test "a" = "$(cd repo && test-tool path-utils prefix_path prefix "$(pwd)/../repolink/a")"
 '
@@ -290,45 +290,45 @@ relative_path "<null>"		"<empty>"	./
 relative_path "<null>"		"<null>"	./
 relative_path "<null>"		/foo/a/b	./
 
-test_git_path A=B                info/grafts .git/info/grafts
-test_git_path GIT_GRAFT_FILE=foo info/grafts foo
-test_git_path GIT_GRAFT_FILE=foo info/////grafts foo
-test_git_path GIT_INDEX_FILE=foo index foo
-test_git_path GIT_INDEX_FILE=foo index/foo .git/index/foo
-test_git_path GIT_INDEX_FILE=foo index2 .git/index2
+test_but_path A=B                info/grafts .but/info/grafts
+test_but_path GIT_GRAFT_FILE=foo info/grafts foo
+test_but_path GIT_GRAFT_FILE=foo info/////grafts foo
+test_but_path GIT_INDEX_FILE=foo index foo
+test_but_path GIT_INDEX_FILE=foo index/foo .but/index/foo
+test_but_path GIT_INDEX_FILE=foo index2 .but/index2
 test_expect_success 'setup fake objects directory foo' 'mkdir foo'
-test_git_path GIT_OBJECT_DIRECTORY=foo objects foo
-test_git_path GIT_OBJECT_DIRECTORY=foo objects/foo foo/foo
-test_git_path GIT_OBJECT_DIRECTORY=foo objects2 .git/objects2
-test_expect_success 'setup common repository' 'git --git-dir=bar init'
-test_git_path GIT_COMMON_DIR=bar index                    .git/index
-test_git_path GIT_COMMON_DIR=bar index.lock               .git/index.lock
-test_git_path GIT_COMMON_DIR=bar HEAD                     .git/HEAD
-test_git_path GIT_COMMON_DIR=bar logs/HEAD                .git/logs/HEAD
-test_git_path GIT_COMMON_DIR=bar logs/HEAD.lock           .git/logs/HEAD.lock
-test_git_path GIT_COMMON_DIR=bar logs/refs/bisect/foo     .git/logs/refs/bisect/foo
-test_git_path GIT_COMMON_DIR=bar logs/refs                bar/logs/refs
-test_git_path GIT_COMMON_DIR=bar logs/refs/               bar/logs/refs/
-test_git_path GIT_COMMON_DIR=bar logs/refs/bisec/foo      bar/logs/refs/bisec/foo
-test_git_path GIT_COMMON_DIR=bar logs/refs/bisec          bar/logs/refs/bisec
-test_git_path GIT_COMMON_DIR=bar logs/refs/bisectfoo      bar/logs/refs/bisectfoo
-test_git_path GIT_COMMON_DIR=bar objects                  bar/objects
-test_git_path GIT_COMMON_DIR=bar objects/bar              bar/objects/bar
-test_git_path GIT_COMMON_DIR=bar info/exclude             bar/info/exclude
-test_git_path GIT_COMMON_DIR=bar info/grafts              bar/info/grafts
-test_git_path GIT_COMMON_DIR=bar info/sparse-checkout     .git/info/sparse-checkout
-test_git_path GIT_COMMON_DIR=bar info//sparse-checkout    .git/info//sparse-checkout
-test_git_path GIT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
-test_git_path GIT_COMMON_DIR=bar branches/bar             bar/branches/bar
-test_git_path GIT_COMMON_DIR=bar logs/refs/heads/main     bar/logs/refs/heads/main
-test_git_path GIT_COMMON_DIR=bar refs/heads/main          bar/refs/heads/main
-test_git_path GIT_COMMON_DIR=bar refs/bisect/foo          .git/refs/bisect/foo
-test_git_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
-test_git_path GIT_COMMON_DIR=bar config                   bar/config
-test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
-test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
-test_git_path GIT_COMMON_DIR=bar common                   bar/common
-test_git_path GIT_COMMON_DIR=bar common/file              bar/common/file
+test_but_path GIT_OBJECT_DIRECTORY=foo objects foo
+test_but_path GIT_OBJECT_DIRECTORY=foo objects/foo foo/foo
+test_but_path GIT_OBJECT_DIRECTORY=foo objects2 .but/objects2
+test_expect_success 'setup common repository' 'but --but-dir=bar init'
+test_but_path GIT_COMMON_DIR=bar index                    .but/index
+test_but_path GIT_COMMON_DIR=bar index.lock               .but/index.lock
+test_but_path GIT_COMMON_DIR=bar HEAD                     .but/HEAD
+test_but_path GIT_COMMON_DIR=bar logs/HEAD                .but/logs/HEAD
+test_but_path GIT_COMMON_DIR=bar logs/HEAD.lock           .but/logs/HEAD.lock
+test_but_path GIT_COMMON_DIR=bar logs/refs/bisect/foo     .but/logs/refs/bisect/foo
+test_but_path GIT_COMMON_DIR=bar logs/refs                bar/logs/refs
+test_but_path GIT_COMMON_DIR=bar logs/refs/               bar/logs/refs/
+test_but_path GIT_COMMON_DIR=bar logs/refs/bisec/foo      bar/logs/refs/bisec/foo
+test_but_path GIT_COMMON_DIR=bar logs/refs/bisec          bar/logs/refs/bisec
+test_but_path GIT_COMMON_DIR=bar logs/refs/bisectfoo      bar/logs/refs/bisectfoo
+test_but_path GIT_COMMON_DIR=bar objects                  bar/objects
+test_but_path GIT_COMMON_DIR=bar objects/bar              bar/objects/bar
+test_but_path GIT_COMMON_DIR=bar info/exclude             bar/info/exclude
+test_but_path GIT_COMMON_DIR=bar info/grafts              bar/info/grafts
+test_but_path GIT_COMMON_DIR=bar info/sparse-checkout     .but/info/sparse-checkout
+test_but_path GIT_COMMON_DIR=bar info//sparse-checkout    .but/info//sparse-checkout
+test_but_path GIT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
+test_but_path GIT_COMMON_DIR=bar branches/bar             bar/branches/bar
+test_but_path GIT_COMMON_DIR=bar logs/refs/heads/main     bar/logs/refs/heads/main
+test_but_path GIT_COMMON_DIR=bar refs/heads/main          bar/refs/heads/main
+test_but_path GIT_COMMON_DIR=bar refs/bisect/foo          .but/refs/bisect/foo
+test_but_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
+test_but_path GIT_COMMON_DIR=bar config                   bar/config
+test_but_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
+test_but_path GIT_COMMON_DIR=bar shallow                  bar/shallow
+test_but_path GIT_COMMON_DIR=bar common                   bar/common
+test_but_path GIT_COMMON_DIR=bar common/file              bar/common/file
 
 # In the tests below, $(pwd) must be used because it is a native path on
 # Windows and avoids MSYS's path mangling (which simplifies "foo/../bar" and
@@ -385,25 +385,25 @@ test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user
 test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
 test_submodule_relative_url "(null)" "user@host:repo" "../../subrepo" ".:subrepo"
 
-test_expect_success 'match .gitmodules' '
-	test-tool path-utils is_dotgitmodules \
-		.gitmodules \
+test_expect_success 'match .butmodules' '
+	test-tool path-utils is_dotbutmodules \
+		.butmodules \
 		\
-		.git${u200c}modules \
+		.but${u200c}modules \
 		\
 		.Gitmodules \
-		.gitmoduleS \
+		.butmoduleS \
 		\
-		".gitmodules " \
-		".gitmodules." \
-		".gitmodules  " \
-		".gitmodules. " \
-		".gitmodules ." \
-		".gitmodules.." \
-		".gitmodules   " \
-		".gitmodules.  " \
-		".gitmodules . " \
-		".gitmodules  ." \
+		".butmodules " \
+		".butmodules." \
+		".butmodules  " \
+		".butmodules. " \
+		".butmodules ." \
+		".butmodules.." \
+		".butmodules   " \
+		".butmodules.  " \
+		".butmodules . " \
+		".butmodules  ." \
 		\
 		".Gitmodules " \
 		".Gitmodules." \
@@ -417,19 +417,19 @@ test_expect_success 'match .gitmodules' '
 		".Gitmodules  ." \
 		\
 		GITMOD~1 \
-		gitmod~1 \
+		butmod~1 \
 		GITMOD~2 \
-		gitmod~3 \
+		butmod~3 \
 		GITMOD~4 \
 		\
 		"GITMOD~1 " \
-		"gitmod~2." \
+		"butmod~2." \
 		"GITMOD~3  " \
-		"gitmod~4. " \
+		"butmod~4. " \
 		"GITMOD~1 ." \
-		"gitmod~2   " \
+		"butmod~2   " \
 		"GITMOD~3.  " \
-		"gitmod~4 . " \
+		"butmod~4 . " \
 		\
 		GI7EBA~1 \
 		gi7eba~9 \
@@ -444,23 +444,23 @@ test_expect_success 'match .gitmodules' '
 		~1000000 \
 		~9999999 \
 		\
-		.gitmodules:\$DATA \
-		"gitmod~4 . :\$DATA" \
+		.butmodules:\$DATA \
+		"butmod~4 . :\$DATA" \
 		\
 		--not \
-		".gitmodules x"  \
-		".gitmodules .x" \
+		".butmodules x"  \
+		".butmodules .x" \
 		\
-		" .gitmodules" \
+		" .butmodules" \
 		\
-		..gitmodules \
+		..butmodules \
 		\
-		gitmodules \
+		butmodules \
 		\
-		.gitmodule \
+		.butmodule \
 		\
-		".gitmodules x " \
-		".gitmodules .x" \
+		".butmodules x " \
+		".butmodules .x" \
 		\
 		GI7EBA~ \
 		GI7EBA~0 \
@@ -473,25 +473,25 @@ test_expect_success 'match .gitmodules' '
 		GI7EB~01 \
 		GI7EB~1X \
 		\
-		.gitmodules,:\$DATA
+		.butmodules,:\$DATA
 '
 
-test_expect_success 'match .gitattributes' '
-	test-tool path-utils is_dotgitattributes \
-		.gitattributes \
-		.git${u200c}attributes \
+test_expect_success 'match .butattributes' '
+	test-tool path-utils is_dotbutattributes \
+		.butattributes \
+		.but${u200c}attributes \
 		.Gitattributes \
-		.gitattributeS \
+		.butattributeS \
 		GITATT~1 \
 		GI7D29~1
 '
 
-test_expect_success 'match .gitignore' '
-	test-tool path-utils is_dotgitignore \
-		.gitignore \
-		.git${u200c}ignore \
+test_expect_success 'match .butignore' '
+	test-tool path-utils is_dotbutignore \
+		.butignore \
+		.but${u200c}ignore \
 		.Gitignore \
-		.gitignorE \
+		.butignorE \
 		GITIGN~1 \
 		GI250A~1
 '
@@ -511,7 +511,7 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		win32 \
 		"win32 x" \
 		../hello.txt \
-		C:\\git \
+		C:\\but \
 		comm \
 		conout.c \
 		com0.c \
@@ -538,23 +538,23 @@ test_lazy_prereq RUNTIME_PREFIX '
 '
 
 test_lazy_prereq CAN_EXEC_IN_PWD '
-	cp "$GIT_EXEC_PATH"/git$X ./ &&
-	./git rev-parse
+	cp "$GIT_EXEC_PATH"/but$X ./ &&
+	./but rev-parse
 '
 
 test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD 'RUNTIME_PREFIX works' '
-	mkdir -p pretend/bin pretend/libexec/git-core &&
-	echo "echo HERE" | write_script pretend/libexec/git-core/git-here &&
-	cp "$GIT_EXEC_PATH"/git$X pretend/bin/ &&
-	GIT_EXEC_PATH= ./pretend/bin/git here >actual &&
+	mkdir -p pretend/bin pretend/libexec/but-core &&
+	echo "echo HERE" | write_script pretend/libexec/but-core/but-here &&
+	cp "$GIT_EXEC_PATH"/but$X pretend/bin/ &&
+	GIT_EXEC_PATH= ./pretend/bin/but here >actual &&
 	echo HERE >expect &&
 	test_cmp expect actual'
 
 test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' '
 	mkdir -p pretend/bin &&
-	cp "$GIT_EXEC_PATH"/git$X pretend/bin/ &&
-	git config yes.path "%(prefix)/yes" &&
-	GIT_EXEC_PATH= ./pretend/bin/git config --path yes.path >actual &&
+	cp "$GIT_EXEC_PATH"/but$X pretend/bin/ &&
+	but config yes.path "%(prefix)/yes" &&
+	GIT_EXEC_PATH= ./pretend/bin/but config --path yes.path >actual &&
 	echo "$(pwd)/pretend/yes" >expect &&
 	test_cmp expect actual
 '

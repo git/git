@@ -60,16 +60,16 @@ immediately after the lookup for "dummy".
 # by marking $2 as a preferred-base edge. That results in $1:file as a thin
 # delta, and index-pack completes it by adding $2:file as a base.
 #
-# Note that the two variants of "file" must be similar enough to convince git
+# Note that the two variants of "file" must be similar enough to convince but
 # to create the delta.
 make_pack () {
 	{
-		printf '%s\n' "-$(git rev-parse $2)"
-		printf '%s dummy\n' "$(git rev-parse $1:dummy)"
-		printf '%s file\n' "$(git rev-parse $1:file)"
+		printf '%s\n' "-$(but rev-parse $2)"
+		printf '%s dummy\n' "$(but rev-parse $1:dummy)"
+		printf '%s file\n' "$(but rev-parse $1:file)"
 	} |
-	git pack-objects --stdout |
-	git index-pack --stdin --fix-thin
+	but pack-objects --stdout |
+	but index-pack --stdin --fix-thin
 }
 
 test_expect_success 'setup' '
@@ -84,9 +84,9 @@ test_expect_success 'setup' '
 		# deltas that would create duplicates when we --fix-thin
 		echo $i >dummy &&
 
-		git add file dummy &&
+		but add file dummy &&
 		test_tick &&
-		git cummit -m $i ||
+		but cummit -m $i ||
 		return 1
 	done &&
 
@@ -98,15 +98,15 @@ test_expect_success 'repack' '
 	# We first want to check that we do not have any internal errors,
 	# and also that we do not hit the last-ditch cycle-breaking code
 	# in write_object(), which will issue a warning to stderr.
-	git repack -ad 2>stderr &&
+	but repack -ad 2>stderr &&
 	test_must_be_empty stderr &&
 
 	# And then double-check that the resulting pack is usable (i.e.,
 	# we did not fail to notice any cycles). We know we are accessing
 	# the objects via the new pack here, because "repack -d" will have
 	# removed the others.
-	git cat-file blob HEAD:file >/dev/null &&
-	git cat-file blob HEAD^:file >/dev/null
+	but cat-file blob HEAD:file >/dev/null &&
+	but cat-file blob HEAD^:file >/dev/null
 '
 
 test_done

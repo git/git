@@ -5,7 +5,7 @@
 
 test_description='Test submodules set-url subcommand
 
-This test verifies that the set-url subcommand of git-submodule is working
+This test verifies that the set-url subcommand of but-submodule is working
 as expected.
 '
 
@@ -16,17 +16,17 @@ test_expect_success 'submodule config cache setup' '
 	mkdir submodule &&
 	(
 		cd submodule &&
-		git init &&
+		but init &&
 		echo a >file &&
-		git add file &&
-		git cummit -ma
+		but add file &&
+		but cummit -ma
 	) &&
 	mkdir super &&
 	(
 		cd super &&
-		git init &&
-		git submodule add ../submodule &&
-		git cummit -m "add submodule"
+		but init &&
+		but submodule add ../submodule &&
+		but cummit -m "add submodule"
 	)
 '
 
@@ -35,20 +35,20 @@ test_expect_success 'test submodule set-url' '
 	(
 		cd submodule &&
 		echo b >>file &&
-		git add file &&
-		git cummit -mb
+		but add file &&
+		but cummit -mb
 	) &&
 	mv submodule newsubmodule &&
 
-	git -C newsubmodule show >expect &&
+	but -C newsubmodule show >expect &&
 	(
 		cd super &&
-		test_must_fail git submodule update --remote &&
-		git submodule set-url submodule ../newsubmodule &&
-		grep -F "url = ../newsubmodule" .gitmodules &&
-		git submodule update --remote
+		test_must_fail but submodule update --remote &&
+		but submodule set-url submodule ../newsubmodule &&
+		grep -F "url = ../newsubmodule" .butmodules &&
+		but submodule update --remote
 	) &&
-	git -C super/submodule show >actual &&
+	but -C super/submodule show >actual &&
 	test_cmp expect actual
 '
 

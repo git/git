@@ -43,16 +43,16 @@ For example
 
 ------------
 $ export GIT_TRACE2=~/log.normal
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 or
 
 ------------
-$ git config --global trace2.normalTarget ~/log.normal
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but config --global trace2.normalTarget ~/log.normal
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 yields
@@ -60,9 +60,9 @@ yields
 ------------
 $ cat ~/log.normal
 12:28:42.620009 common-main.c:38                  version 2.20.1.155.g426c96fcdb
-12:28:42.620989 common-main.c:39                  start git version
-12:28:42.621101 git.c:432                         cmd_name version (version)
-12:28:42.621215 git.c:662                         exit elapsed:0.001227 code:0
+12:28:42.620989 common-main.c:39                  start but version
+12:28:42.621101 but.c:432                         cmd_name version (version)
+12:28:42.621215 but.c:662                         exit elapsed:0.001227 code:0
 12:28:42.621250 trace2/tr2_tgt_normal.c:124       atexit elapsed:0.001265 code:0
 ------------
 
@@ -78,16 +78,16 @@ For example
 
 ------------
 $ export GIT_TRACE2_PERF=~/log.perf
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 or
 
 ------------
-$ git config --global trace2.perfTarget ~/log.perf
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but config --global trace2.perfTarget ~/log.perf
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 yields
@@ -95,9 +95,9 @@ yields
 ------------
 $ cat ~/log.perf
 12:28:42.620675 common-main.c:38                  | d0 | main                     | version      |     |           |           |            | 2.20.1.155.g426c96fcdb
-12:28:42.621001 common-main.c:39                  | d0 | main                     | start        |     |  0.001173 |           |            | git version
-12:28:42.621111 git.c:432                         | d0 | main                     | cmd_name     |     |           |           |            | version (version)
-12:28:42.621225 git.c:662                         | d0 | main                     | exit         |     |  0.001227 |           |            | code:0
+12:28:42.621001 common-main.c:39                  | d0 | main                     | start        |     |  0.001173 |           |            | but version
+12:28:42.621111 but.c:432                         | d0 | main                     | cmd_name     |     |           |           |            | version (version)
+12:28:42.621225 but.c:662                         | d0 | main                     | exit         |     |  0.001227 |           |            | code:0
 12:28:42.621259 trace2/tr2_tgt_perf.c:211         | d0 | main                     | atexit       |     |  0.001265 |           |            | code:0
 ------------
 
@@ -112,16 +112,16 @@ For example
 
 ------------
 $ export GIT_TRACE2_EVENT=~/log.event
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 or
 
 ------------
-$ git config --global trace2.eventTarget ~/log.event
-$ git version
-git version 2.20.1.155.g426c96fcdb
+$ but config --global trace2.eventTarget ~/log.event
+$ but version
+but version 2.20.1.155.g426c96fcdb
 ------------
 
 yields
@@ -129,9 +129,9 @@ yields
 ------------
 $ cat ~/log.event
 {"event":"version","sid":"sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"3","exe":"2.20.1.155.g426c96fcdb"}
-{"event":"start","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621027Z","file":"common-main.c","line":39,"t_abs":0.001173,"argv":["git","version"]}
-{"event":"cmd_name","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621122Z","file":"git.c","line":432,"name":"version","hierarchy":"version"}
-{"event":"exit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621236Z","file":"git.c","line":662,"t_abs":0.001227,"code":0}
+{"event":"start","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621027Z","file":"common-main.c","line":39,"t_abs":0.001173,"argv":["but","version"]}
+{"event":"cmd_name","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621122Z","file":"but.c","line":432,"name":"version","hierarchy":"version"}
+{"event":"exit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621236Z","file":"but.c","line":662,"t_abs":0.001227,"code":0}
 {"event":"atexit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621268Z","file":"trace2/tr2_tgt_event.c","line":163,"t_abs":0.001265,"code":0}
 ------------
 
@@ -187,7 +187,7 @@ purposes.
 
 === Basic Command Messages
 
-These are concerned with the lifetime of the overall git process.
+These are concerned with the lifetime of the overall but process.
 e.g: `void trace2_initialize_clock()`, `void trace2_initialize()`,
 `int trace2_is_enabled()`, `void trace2_cmd_start(int argc, const char **argv)`.
 
@@ -201,7 +201,7 @@ e.g: `void trace2_cmd_name(const char *name)`,
 === Child Process Messages
 
 These are concerned with the various spawned child processes,
-including shell scripts, git commands, editors, pagers, and hooks.
+including shell scripts, but commands, editors, pagers, and hooks.
 
 e.g: `void trace2_child_start(struct child_process *cmd)`.
 
@@ -264,8 +264,8 @@ Events are written as lines of the form:
 ------------
 
 `<depth>`::
-	is the git process depth.  This is the number of parent
-	git processes.  A top-level git command has depth value "d0".
+	is the but process depth.  This is the number of parent
+	but processes.  A top-level but command has depth value "d0".
 	A child of it has depth value "d1".  A second level child
 	has depth value "d2" and so on.
 
@@ -352,8 +352,8 @@ The following key/value pairs are common to all events:
 	is the session-id.  This is a unique string to identify the
 	process instance to allow all events emitted by a process to
 	be identified.  A session-id is used instead of a PID because
-	PIDs are recycled by the OS.  For child git processes, the
-	session-id is prepended with the session-id of the parent git
+	PIDs are recycled by the OS.  For child but processes, the
+	session-id is prepended with the session-id of the parent but
 	process to allow parent-child relationships to be identified
 	during post-processing.
 
@@ -392,12 +392,12 @@ only present on the "start" and "atexit" events.
 	"event":"version",
 	...
 	"evt":"3",		       # EVENT format version
-	"exe":"2.20.1.155.g426c96fcdb" # git version
+	"exe":"2.20.1.155.g426c96fcdb" # but version
 }
 ------------
 
 `"too_many_files"`::
-	This event is written to the git-trace2-discard sentinel file if there
+	This event is written to the but-trace2-discard sentinel file if there
 	are too many files in the target trace directory (see the
 	trace2.maxFiles config option).
 +
@@ -416,12 +416,12 @@ only present on the "start" and "atexit" events.
 	"event":"start",
 	...
 	"t_abs":0.001227, # elapsed time in seconds
-	"argv":["git","version"]
+	"argv":["but","version"]
 }
 ------------
 
 `"exit"`::
-	This event is emitted when git calls `exit()`.
+	This event is emitted when but calls `exit()`.
 +
 ------------
 {
@@ -482,14 +482,14 @@ allows post-processors to group errors by type without worrying
 about specific error arguments.
 
 `"cmd_path"`::
-	This event contains the discovered full path of the git
+	This event contains the discovered full path of the but
 	executable (on platforms that are configured to resolve it).
 +
 ------------
 {
 	"event":"cmd_path",
 	...
-	"path":"C:/work/gfw/git.exe"
+	"path":"C:/work/gfw/but.exe"
 }
 ------------
 
@@ -508,8 +508,8 @@ about specific error arguments.
 ------------
 
 `"cmd_name"`::
-	This event contains the command name for this git process
-	and the hierarchy of commands from parent git processes.
+	This event contains the command name for this but process
+	and the hierarchy of commands from parent but processes.
 +
 ------------
 {
@@ -525,10 +525,10 @@ command.  When a canonical name is not available, one of
 these special values are used:
 +
 ------------
-"_query_"            # "git --html-path"
-"_run_dashed_"       # when "git foo" tries to run "git-foo"
+"_query_"            # "but --html-path"
+"_run_dashed_"       # when "but foo" tries to run "but-foo"
 "_run_shell_alias_"  # alias expansion to a shell command
-"_run_git_alias_"    # alias expansion to a git command
+"_run_but_alias_"    # alias expansion to a but command
 "_usage_"            # usage error
 ------------
 
@@ -572,7 +572,7 @@ characteristics that are not comparable.
 	"child_id":2,
 	"child_class":"?",
 	"use_shell":false,
-	"argv":["git","rev-list","--objects","--stdin","--not","--all","--quiet"]
+	"argv":["but","rev-list","--objects","--stdin","--not","--all","--quiet"]
 
 	"hook_name":"<hook_name>"  # present when child_class is "hook"
 	"cd":"<path>"		   # present when cd is required
@@ -654,7 +654,7 @@ outlive the parent process.  So the parent's child event times should
 not be compared to the child's atexit times.
 
 `"exec"`::
-	This event is generated before git attempts to `exec()`
+	This event is generated before but attempts to `exec()`
 	another command rather than starting a child process.
 +
 ------------
@@ -662,7 +662,7 @@ not be compared to the child's atexit times.
 	"event":"exec",
 	...
 	"exec_id":0,
-	"exe":"git",
+	"exe":"but",
 	"argv":["foo", "bar"]
 }
 ------------
@@ -672,7 +672,7 @@ The "exec_id" field is a command-unique id and is only useful if the
 
 `"exec_result"`::
 	This event is generated if the `exec()` fails and control
-	returns to the current git command.
+	returns to the current but command.
 +
 ------------
 {
@@ -751,7 +751,7 @@ visited.
 	"nesting":1,             # current region stack depth
 	"category":"index",      # optional
 	"label":"do_read_index", # optional
-	"msg":".git/index"       # optional
+	"msg":".but/index"       # optional
 }
 ------------
 +
@@ -773,7 +773,7 @@ filter deeply nested regions and data events.  It defaults to "2".
 	"nesting":1,             # region stack depth
 	"category":"index",      # optional
 	"label":"do_read_index", # optional
-	"msg":".git/index"       # optional
+	"msg":".but/index"       # optional
 }
 ------------
 
@@ -888,33 +888,33 @@ rev-list, and gc.  This example also shows that fetch took
 ----------------
 $ export GIT_TRACE2_BRIEF=1
 $ export GIT_TRACE2=~/log.normal
-$ git fetch origin
+$ but fetch origin
 ...
 ----------------
 +
 ----------------
 $ cat ~/log.normal
 version 2.20.1.vfs.1.1.47.g534dbe1ad1
-start git fetch origin
+start but fetch origin
 worktree /Users/jeffhost/work/gfw
 cmd_name fetch (fetch)
-child_start[0] ssh git@github.com ...
-child_start[1] git index-pack ...
+child_start[0] ssh but@buthub.com ...
+child_start[1] but index-pack ...
 ... (Trace2 events from child processes omitted)
 child_exit[1] pid:14707 code:0 elapsed:0.076353
 child_exit[0] pid:14706 code:0 elapsed:4.931869
-child_start[2] git rev-list ...
+child_start[2] but rev-list ...
 ... (Trace2 events from child process omitted)
 child_exit[2] pid:14708 code:0 elapsed:0.110605
-child_start[3] git gc --auto
+child_start[3] but gc --auto
 ... (Trace2 events from child process omitted)
 child_exit[3] pid:14709 code:0 elapsed:0.006240
 exit elapsed:5.198503 code:0
 atexit elapsed:5.198541 code:0
 ----------------
 +
-When a git process is a (direct or indirect) child of another
-git process, it inherits Trace2 context information.  This
+When a but process is a (direct or indirect) child of another
+but process, it inherits Trace2 context information.  This
 allows the child to print the command hierarchy.  This example
 shows gc as child[3] of fetch.  When the gc process reports
 its name as "gc", it also reports the hierarchy as "fetch/gc".
@@ -924,20 +924,20 @@ indented for clarity.)
 ----------------
 $ export GIT_TRACE2_BRIEF=1
 $ export GIT_TRACE2=~/log.normal
-$ git fetch origin
+$ but fetch origin
 ...
 ----------------
 +
 ----------------
 $ cat ~/log.normal
 version 2.20.1.160.g5676107ecd.dirty
-start git fetch official
+start but fetch official
 worktree /Users/jeffhost/work/gfw
 cmd_name fetch (fetch)
 ...
-child_start[3] git gc --auto
+child_start[3] but gc --auto
     version 2.20.1.160.g5676107ecd.dirty
-    start /Users/jeffhost/work/gfw/git gc --auto
+    start /Users/jeffhost/work/gfw/but gc --auto
     worktree /Users/jeffhost/work/gfw
     cmd_name gc (fetch/gc)
     exit elapsed:0.001959 code:0
@@ -983,12 +983,12 @@ In this example, scanning for untracked files ran from +0.012568 to
 ----------------
 $ export GIT_TRACE2_PERF_BRIEF=1
 $ export GIT_TRACE2_PERF=~/log.perf
-$ git status
+$ but status
 ...
 
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.160.g5676107ecd.dirty
-d0 | main                     | start        |     |  0.001173 |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | but status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
 ...
@@ -1029,11 +1029,11 @@ We can further investigate the time spent scanning for untracked files.
 ----------------
 $ export GIT_TRACE2_PERF_BRIEF=1
 $ export GIT_TRACE2_PERF=~/log.perf
-$ git status
+$ but status
 ...
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.162.gb4ccea44db.dirty
-d0 | main                     | start        |     |  0.001173 |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | but status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
 ...
@@ -1043,10 +1043,10 @@ d0 | main                     | region_enter |     |  0.016341 |           | dir
 d0 | main                     | region_leave |     |  0.016422 |  0.000081 | dir        | ....label:read_recursive vcs-svn/
 d0 | main                     | region_enter |     |  0.016446 |           | dir        | ....label:read_recursive xdiff/
 d0 | main                     | region_leave |     |  0.016522 |  0.000076 | dir        | ....label:read_recursive xdiff/
-d0 | main                     | region_enter |     |  0.016612 |           | dir        | ....label:read_recursive git-gui/
-d0 | main                     | region_enter |     |  0.016698 |           | dir        | ......label:read_recursive git-gui/po/
-d0 | main                     | region_enter |     |  0.016810 |           | dir        | ........label:read_recursive git-gui/po/glossary/
-d0 | main                     | region_leave |     |  0.016863 |  0.000053 | dir        | ........label:read_recursive git-gui/po/glossary/
+d0 | main                     | region_enter |     |  0.016612 |           | dir        | ....label:read_recursive but-gui/
+d0 | main                     | region_enter |     |  0.016698 |           | dir        | ......label:read_recursive but-gui/po/
+d0 | main                     | region_enter |     |  0.016810 |           | dir        | ........label:read_recursive but-gui/po/glossary/
+d0 | main                     | region_leave |     |  0.016863 |  0.000053 | dir        | ........label:read_recursive but-gui/po/glossary/
 ...
 d0 | main                     | region_enter |     |  0.031876 |           | dir        | ....label:read_recursive builtin/
 d0 | main                     | region_leave |     |  0.032270 |  0.000394 | dir        | ....label:read_recursive builtin/
@@ -1067,7 +1067,7 @@ Data Messages::
 +
 ----------------
 int read_index_from(struct index_state *istate, const char *path,
-	const char *gitdir)
+	const char *butdir)
 {
 	trace2_region_enter_printf("index", "do_read_index", the_repository, "%s", path);
 
@@ -1085,17 +1085,17 @@ This example shows that the index contained 3552 entries.
 ----------------
 $ export GIT_TRACE2_PERF_BRIEF=1
 $ export GIT_TRACE2_PERF=~/log.perf
-$ git status
+$ but status
 ...
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.156.gf9916ae094.dirty
-d0 | main                     | start        |     |  0.001173 |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | but status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
-d0 | main                     | region_enter | r1  |  0.001791 |           | index      | label:do_read_index .git/index
+d0 | main                     | region_enter | r1  |  0.001791 |           | index      | label:do_read_index .but/index
 d0 | main                     | data         | r1  |  0.002494 |  0.000703 | index      | ..read/version:2
 d0 | main                     | data         | r1  |  0.002520 |  0.000729 | index      | ..read/cache_nr:3552
-d0 | main                     | region_leave | r1  |  0.002539 |  0.000748 | index      | label:do_read_index .git/index
+d0 | main                     | region_leave | r1  |  0.002539 |  0.000748 | index      | label:do_read_index .but/index
 ...
 ----------------
 
@@ -1159,7 +1159,7 @@ to report the per-thread parameters.
 ----------------
 $ export GIT_TRACE2_PERF_BRIEF=1
 $ export GIT_TRACE2_PERF=~/log.perf
-$ git status
+$ but status
 ...
 $ cat ~/log.perf
 ...

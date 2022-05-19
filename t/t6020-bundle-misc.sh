@@ -3,7 +3,7 @@
 # Copyright (c) 2021 Jiang Xin
 #
 
-test_description='Test git-bundle'
+test_description='Test but-bundle'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -63,19 +63,19 @@ test_cummit_setvar () {
 	fi &&
 	if test -n "$merge"
 	then
-		git ${indir:+ -C "$indir"} merge --no-edit --no-ff \
+		but ${indir:+ -C "$indir"} merge --no-edit --no-ff \
 			${2:+-m "$2"} "$1" &&
-		oid=$(git ${indir:+ -C "$indir"} rev-parse HEAD)
+		oid=$(but ${indir:+ -C "$indir"} rev-parse HEAD)
 	elif test -n "$tag"
 	then
-		git ${indir:+ -C "$indir"} tag -m "$1" "$1" "${2:-HEAD}" &&
-		oid=$(git ${indir:+ -C "$indir"} rev-parse "$1")
+		but ${indir:+ -C "$indir"} tag -m "$1" "$1" "${2:-HEAD}" &&
+		oid=$(but ${indir:+ -C "$indir"} rev-parse "$1")
 	else
 		file=${2:-"$1.t"} &&
 		echo "${3-$1}" >"$indir$file" &&
-		git ${indir:+ -C "$indir"} add "$file" &&
-		git ${indir:+ -C "$indir"} cummit $signoff -m "$1" &&
-		oid=$(git ${indir:+ -C "$indir"} rev-parse HEAD)
+		but ${indir:+ -C "$indir"} add "$file" &&
+		but ${indir:+ -C "$indir"} cummit $signoff -m "$1" &&
+		oid=$(but ${indir:+ -C "$indir"} rev-parse HEAD)
 	fi &&
 	eval $var=$oid
 }
@@ -92,7 +92,7 @@ get_abbrev_oid () {
 	fi
 }
 
-# Format the output of git commands to make a user-friendly and stable
+# Format the output of but commands to make a user-friendly and stable
 # text.  We can easily prepare the expect text without having to worry
 # about future changes of the cummit ID.
 make_user_friendly_and_stable_output () {
@@ -137,41 +137,41 @@ HASH_MESSAGE="The bundle uses this hash algorithm: $GIT_DEFAULT_HASH"
 test_expect_success 'setup' '
 	# Try to make a stable fixed width for abbreviated cummit ID,
 	# this fixed-width oid will be replaced with "<OID>".
-	git config core.abbrev 7 &&
+	but config core.abbrev 7 &&
 
 	# branch main: cummit A & B
 	test_cummit_setvar A "cummit A" main.txt &&
 	test_cummit_setvar B "cummit B" main.txt &&
 
 	# branch topic/1: cummit C & D, refs/pull/1/head
-	git checkout -b topic/1 &&
+	but checkout -b topic/1 &&
 	test_cummit_setvar C "cummit C" topic-1.txt &&
 	test_cummit_setvar D "cummit D" topic-1.txt &&
-	git update-ref refs/pull/1/head HEAD &&
+	but update-ref refs/pull/1/head HEAD &&
 
 	# branch topic/1: cummit E, tag v1
-	git checkout main &&
+	but checkout main &&
 	test_cummit_setvar E "cummit E" main.txt &&
 	test_cummit_setvar --tag TAG1 v1 &&
 
 	# branch topic/2: cummit F & G, refs/pull/2/head
-	git checkout -b topic/2 &&
+	but checkout -b topic/2 &&
 	test_cummit_setvar F "cummit F" topic-2.txt &&
 	test_cummit_setvar G "cummit G" topic-2.txt &&
-	git update-ref refs/pull/2/head HEAD &&
+	but update-ref refs/pull/2/head HEAD &&
 	test_cummit_setvar H "Commit H" topic-2.txt &&
 
 	# branch main: merge cummit I & J
-	git checkout main &&
+	but checkout main &&
 	test_cummit_setvar --merge I topic/1 "Merge cummit I" &&
 	test_cummit_setvar --merge J refs/pull/2/head "Merge cummit J" &&
 
 	# branch main: cummit K
-	git checkout main &&
+	but checkout main &&
 	test_cummit_setvar K "cummit K" main.txt &&
 
 	# branch release:
-	git checkout -b release &&
+	but checkout -b release &&
 	test_cummit_setvar L "cummit L" release.txt &&
 	test_cummit_setvar M "cummit M" release.txt &&
 	test_cummit_setvar --tag TAG2 v2 &&
@@ -179,22 +179,22 @@ test_expect_success 'setup' '
 	test_cummit_setvar --tag TAG3 v3 &&
 
 	# branch main: merge cummit O, cummit P
-	git checkout main &&
+	but checkout main &&
 	test_cummit_setvar --merge O tags/v2 "Merge cummit O" &&
 	test_cummit_setvar P "cummit P" main.txt
 '
 
 test_expect_success 'create bundle from special rev: main^!' '
-	git bundle create special-rev.bdl "main^!" &&
+	but bundle create special-rev.bdl "main^!" &&
 
-	git bundle list-heads special-rev.bdl |
+	but bundle list-heads special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
 	<CUMMIT-P> refs/heads/main
 	EOF
 	test_cmp expect actual &&
 
-	git bundle verify special-rev.bdl |
+	but bundle verify special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
@@ -209,14 +209,14 @@ test_expect_success 'create bundle from special rev: main^!' '
 '
 
 test_expect_success 'create bundle with --max-count option' '
-	git bundle create max-count.bdl --max-count 1 \
+	but bundle create max-count.bdl --max-count 1 \
 		main \
 		"^release" \
 		refs/tags/v1 \
 		refs/pull/1/head \
 		refs/pull/2/head &&
 
-	git bundle verify max-count.bdl |
+	but bundle verify max-count.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
@@ -232,17 +232,17 @@ test_expect_success 'create bundle with --max-count option' '
 '
 
 test_expect_success 'create bundle with --since option' '
-	git log -1 --pretty="%ad" $M >actual &&
+	but log -1 --pretty="%ad" $M >actual &&
 	cat >expect <<-\EOF &&
 	Thu Apr 7 15:26:13 2005 -0700
 	EOF
 	test_cmp expect actual &&
 
-	git bundle create since.bdl \
+	but bundle create since.bdl \
 		--since "Thu Apr 7 15:27:00 2005 -0700" \
 		--all &&
 
-	git bundle verify since.bdl |
+	but bundle verify since.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 5 refs:
@@ -263,14 +263,14 @@ test_expect_success 'create bundle with --since option' '
 
 test_expect_success 'create bundle 1 - no prerequisites' '
 	# create bundle from args
-	git bundle create 1.bdl topic/1 topic/2 &&
+	but bundle create 1.bdl topic/1 topic/2 &&
 
 	# create bundle from stdin
 	cat >input <<-\EOF &&
 	topic/1
 	topic/2
 	EOF
-	git bundle create stdin-1.bdl --stdin <input &&
+	but bundle create stdin-1.bdl --stdin <input &&
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
@@ -281,11 +281,11 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 	EOF
 
 	# verify bundle, which has no prerequisites
-	git bundle verify 1.bdl |
+	but bundle verify 1.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
-	git bundle verify stdin-1.bdl |
+	but bundle verify stdin-1.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
@@ -295,7 +295,7 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 
 test_expect_success 'create bundle 2 - has prerequisites' '
 	# create bundle from args
-	git bundle create 2.bdl \
+	but bundle create 2.bdl \
 		--ignore-missing \
 		^topic/deleted \
 		^$D \
@@ -309,7 +309,7 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 	^$D
 	^topic/2
 	EOF
-	git bundle create stdin-2.bdl \
+	but bundle create stdin-2.bdl \
 		--ignore-missing \
 		--stdin \
 		release <input &&
@@ -324,11 +324,11 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 	$HASH_MESSAGE
 	EOF
 
-	git bundle verify 2.bdl |
+	but bundle verify 2.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
-	git bundle verify stdin-2.bdl |
+	but bundle verify stdin-2.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
@@ -337,7 +337,7 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 '
 
 test_expect_success 'fail to verify bundle without prerequisites' '
-	git init --bare test1.git &&
+	but init --bare test1.but &&
 
 	format_and_save_expect <<-\EOF &&
 	error: Repository lacks these prerequisite cummits:
@@ -346,18 +346,18 @@ test_expect_success 'fail to verify bundle without prerequisites' '
 	error: <CUMMIT-G> Z
 	EOF
 
-	test_must_fail git -C test1.git bundle verify ../2.bdl 2>&1 |
+	test_must_fail but -C test1.but bundle verify ../2.bdl 2>&1 |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
-	test_must_fail git -C test1.git bundle verify ../stdin-2.bdl 2>&1 |
+	test_must_fail but -C test1.but bundle verify ../stdin-2.bdl 2>&1 |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'create bundle 3 - two refs, same object' '
 	# create bundle from args
-	git bundle create --version=3 3.bdl \
+	but bundle create --version=3 3.bdl \
 		^release \
 		^topic/1 \
 		^topic/2 \
@@ -370,7 +370,7 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 	^topic/1
 	^topic/2
 	EOF
-	git bundle create --version=3 stdin-3.bdl \
+	but bundle create --version=3 stdin-3.bdl \
 		--stdin \
 		main HEAD <input &&
 
@@ -384,11 +384,11 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 	$HASH_MESSAGE
 	EOF
 
-	git bundle verify 3.bdl |
+	but bundle verify 3.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
-	git bundle verify stdin-3.bdl |
+	but bundle verify stdin-3.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
@@ -398,7 +398,7 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 
 test_expect_success 'create bundle 4 - with tags' '
 	# create bundle from args
-	git bundle create 4.bdl \
+	but bundle create 4.bdl \
 		^main \
 		^release \
 		^topic/1 \
@@ -412,7 +412,7 @@ test_expect_success 'create bundle 4 - with tags' '
 	^topic/1
 	^topic/2
 	EOF
-	git bundle create stdin-4.bdl \
+	but bundle create stdin-4.bdl \
 		--ignore-missing \
 		--stdin \
 		--all <input &&
@@ -426,11 +426,11 @@ test_expect_success 'create bundle 4 - with tags' '
 	$HASH_MESSAGE
 	EOF
 
-	git bundle verify 4.bdl |
+	but bundle verify 4.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
-	git bundle verify stdin-4.bdl |
+	but bundle verify stdin-4.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	test_cmp expect actual &&
 
@@ -439,8 +439,8 @@ test_expect_success 'create bundle 4 - with tags' '
 '
 
 test_expect_success 'clone from bundle' '
-	git clone --mirror 1.bdl mirror.git &&
-	git -C mirror.git show-ref |
+	but clone --mirror 1.bdl mirror.but &&
+	but -C mirror.but show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
 	<CUMMIT-D> refs/heads/topic/1
@@ -448,8 +448,8 @@ test_expect_success 'clone from bundle' '
 	EOF
 	test_cmp expect actual &&
 
-	git -C mirror.git fetch ../2.bdl "+refs/*:refs/*" &&
-	git -C mirror.git show-ref |
+	but -C mirror.but fetch ../2.bdl "+refs/*:refs/*" &&
+	but -C mirror.but show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
 	<CUMMIT-N> refs/heads/release
@@ -458,8 +458,8 @@ test_expect_success 'clone from bundle' '
 	EOF
 	test_cmp expect actual &&
 
-	git -C mirror.git fetch ../3.bdl "+refs/*:refs/*" &&
-	git -C mirror.git show-ref |
+	but -C mirror.but fetch ../3.bdl "+refs/*:refs/*" &&
+	but -C mirror.but show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
 	<CUMMIT-P> refs/heads/main
@@ -469,8 +469,8 @@ test_expect_success 'clone from bundle' '
 	EOF
 	test_cmp expect actual &&
 
-	git -C mirror.git fetch ../4.bdl "+refs/*:refs/*" &&
-	git -C mirror.git show-ref |
+	but -C mirror.but fetch ../4.bdl "+refs/*:refs/*" &&
+	but -C mirror.but show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
 	<CUMMIT-P> refs/heads/main
@@ -485,9 +485,9 @@ test_expect_success 'clone from bundle' '
 '
 
 test_expect_success 'unfiltered bundle with --objects' '
-	git bundle create all-objects.bdl \
+	but bundle create all-objects.bdl \
 		--all --objects &&
-	git bundle create all.bdl \
+	but bundle create all.bdl \
 		--all &&
 
 	# Compare the headers of these files.
@@ -499,12 +499,12 @@ test_expect_success 'unfiltered bundle with --objects' '
 for filter in "blob:none" "tree:0" "tree:1" "blob:limit=100"
 do
 	test_expect_success "filtered bundle: $filter" '
-		test_when_finished rm -rf .git/objects/pack cloned unbundled &&
-		git bundle create partial.bdl \
+		test_when_finished rm -rf .but/objects/pack cloned unbundled &&
+		but bundle create partial.bdl \
 			--all \
 			--filter=$filter &&
 
-		git bundle verify partial.bdl >unfiltered &&
+		but bundle verify partial.bdl >unfiltered &&
 		make_user_friendly_and_stable_output <unfiltered >actual &&
 
 		cat >expect <<-EOF &&
@@ -527,35 +527,35 @@ do
 
 		test_config uploadpack.allowfilter 1 &&
 		test_config uploadpack.allowanysha1inwant 1 &&
-		git clone --no-local --filter=$filter --bare "file://$(pwd)" cloned &&
+		but clone --no-local --filter=$filter --bare "file://$(pwd)" cloned &&
 
-		git init unbundled &&
-		git -C unbundled bundle unbundle ../partial.bdl >ref-list.txt &&
-		ls unbundled/.git/objects/pack/pack-*.promisor >promisor &&
+		but init unbundled &&
+		but -C unbundled bundle unbundle ../partial.bdl >ref-list.txt &&
+		ls unbundled/.but/objects/pack/pack-*.promisor >promisor &&
 		test_line_count = 1 promisor &&
 
 		# Count the same number of reachable objects.
-		reflist=$(git for-each-ref --format="%(objectname)") &&
-		git rev-list --objects --filter=$filter --missing=allow-any \
+		reflist=$(but for-each-ref --format="%(objectname)") &&
+		but rev-list --objects --filter=$filter --missing=allow-any \
 			$reflist >expect &&
 		for repo in cloned unbundled
 		do
-			git -C $repo rev-list --objects --missing=allow-any \
+			but -C $repo rev-list --objects --missing=allow-any \
 				$reflist >actual &&
 			test_cmp expect actual || return 1
 		done
 	'
 done
 
-# NEEDSWORK: 'git clone --bare' should be able to clone from a filtered
+# NEEDSWORK: 'but clone --bare' should be able to clone from a filtered
 # bundle, but that requires a change to promisor/filter config options.
 # For now, we fail gracefully with a helpful error. This behavior can be
 # changed in the future to succeed as much as possible.
 test_expect_success 'cloning from filtered bundle has useful error' '
-	git bundle create partial.bdl \
+	but bundle create partial.bdl \
 		--all \
 		--filter=blob:none &&
-	test_must_fail git clone --bare partial.bdl partial 2>err &&
+	test_must_fail but clone --bare partial.bdl partial 2>err &&
 	grep "cannot clone from filtered bundle" err
 '
 

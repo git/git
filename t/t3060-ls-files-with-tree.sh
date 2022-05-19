@@ -3,10 +3,10 @@
 # Copyright (c) 2007 Carl D. Worth
 #
 
-test_description='git ls-files test (--with-tree).
+test_description='but ls-files test (--with-tree).
 
-This test runs git ls-files --with-tree and in particular in
-a scenario known to trigger a crash with some versions of git.
+This test runs but ls-files --with-tree and in particular in
+a scenario known to trigger a crash with some versions of but.
 '
 . ./test-lib.sh
 
@@ -28,14 +28,14 @@ test_expect_success setup '
 			return 1
 		done
 	done &&
-	git add . &&
-	git cummit -m "add a bunch of files" &&
+	but add . &&
+	but cummit -m "add a bunch of files" &&
 
 	# We remove them all so that we will have something to add
 	# back with --with-tree and so that we will definitely be
 	# under the realloc size to trigger the bug.
 	rm -rf sub &&
-	git cummit -a -m "remove them all" &&
+	but cummit -a -m "remove them all" &&
 
 	# The bug also requires some entry before our directory so that
 	# prune_path will modify the_index.cache
@@ -44,30 +44,30 @@ test_expect_success setup '
 	>a_directory_that_sorts_before_sub/file &&
 	mkdir sub &&
 	>sub/file &&
-	git add .
+	but add .
 '
 
 test_expect_success 'usage' '
-	test_expect_code 128 git ls-files --with-tree=HEAD -u &&
-	test_expect_code 128 git ls-files --with-tree=HEAD -s &&
-	test_expect_code 128 git ls-files --recurse-submodules --with-tree=HEAD
+	test_expect_code 128 but ls-files --with-tree=HEAD -u &&
+	test_expect_code 128 but ls-files --with-tree=HEAD -s &&
+	test_expect_code 128 but ls-files --recurse-submodules --with-tree=HEAD
 '
 
-test_expect_success 'git ls-files --with-tree should succeed from subdir' '
+test_expect_success 'but ls-files --with-tree should succeed from subdir' '
 	# We have to run from a sub-directory to trigger prune_path
 	# Then we finally get to run our --with-tree test
 	(
 		cd sub &&
-		git ls-files --with-tree=HEAD~1 >../output
+		but ls-files --with-tree=HEAD~1 >../output
 	)
 '
 
 test_expect_success \
-    'git ls-files --with-tree should add entries from named tree.' \
+    'but ls-files --with-tree should add entries from named tree.' \
     'test_cmp expected output'
 
 test_expect_success 'no duplicates in --with-tree output' '
-	git ls-files --with-tree=HEAD >actual &&
+	but ls-files --with-tree=HEAD >actual &&
 	sort -u actual >expected &&
 	test_cmp expected actual
 '
@@ -76,28 +76,28 @@ test_expect_success 'setup: output in a conflict' '
 	test_create_repo conflict &&
 	test_cummit -C conflict BASE file &&
 	test_cummit -C conflict A file foo &&
-	git -C conflict reset --hard BASE &&
+	but -C conflict reset --hard BASE &&
 	test_cummit -C conflict B file bar
 '
 
 test_expect_success 'output in a conflict' '
-	test_must_fail git -C conflict merge A B &&
+	test_must_fail but -C conflict merge A B &&
 	cat >expected <<-\EOF &&
 	file
 	file
 	file
 	file
 	EOF
-	git -C conflict ls-files --with-tree=HEAD >actual &&
+	but -C conflict ls-files --with-tree=HEAD >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'output with removed .git/index' '
+test_expect_success 'output with removed .but/index' '
 	cat >expected <<-\EOF &&
 	file
 	EOF
-	rm conflict/.git/index &&
-	git -C conflict ls-files --with-tree=HEAD >actual &&
+	rm conflict/.but/index &&
+	but -C conflict ls-files --with-tree=HEAD >actual &&
 	test_cmp expected actual
 '
 

@@ -44,7 +44,7 @@ static int get_trace_fd(struct trace_key *key, const char *override_envvar)
 		key->fd = 0;
 	else if (!strcmp(trace, "1") || !strcasecmp(trace, "true"))
 		key->fd = STDERR_FILENO;
-	else if (strlen(trace) == 1 && isdigit(*trace))
+	else if (strlen(trace) == 1 && isdibut(*trace))
 		key->fd = atoi(trace);
 	else if (is_absolute_path(trace)) {
 		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
@@ -110,7 +110,7 @@ static int prepare_trace_line(const char *file, int line,
 	localtime_r(&secs, &tm);
 	strbuf_addf(buf, "%02d:%02d:%02d.%06ld %s:%d", tm.tm_hour, tm.tm_min,
 		    tm.tm_sec, (long) tv.tv_usec, file, line);
-	/* align trace output (column 40 catches most files names in git) */
+	/* align trace output (column 40 catches most files names in but) */
 	while (buf->len < 40)
 		strbuf_addch(buf, ' ');
 
@@ -294,7 +294,7 @@ static const char *quote_crnl(const char *path)
 /* FIXME: move prefix to startup_info struct and get rid of this arg */
 void trace_repo_setup(const char *prefix)
 {
-	const char *git_work_tree;
+	const char *but_work_tree;
 	char *cwd;
 
 	if (!trace_want(&trace_setup_key))
@@ -302,15 +302,15 @@ void trace_repo_setup(const char *prefix)
 
 	cwd = xgetcwd();
 
-	if (!(git_work_tree = get_git_work_tree()))
-		git_work_tree = "(null)";
+	if (!(but_work_tree = get_but_work_tree()))
+		but_work_tree = "(null)";
 
 	if (!prefix)
 		prefix = "(null)";
 
-	trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
-	trace_printf_key(&trace_setup_key, "setup: git_common_dir: %s\n", quote_crnl(get_git_common_dir()));
-	trace_printf_key(&trace_setup_key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
+	trace_printf_key(&trace_setup_key, "setup: but_dir: %s\n", quote_crnl(get_but_dir()));
+	trace_printf_key(&trace_setup_key, "setup: but_common_dir: %s\n", quote_crnl(get_but_common_dir()));
+	trace_printf_key(&trace_setup_key, "setup: worktree: %s\n", quote_crnl(but_work_tree));
 	trace_printf_key(&trace_setup_key, "setup: cwd: %s\n", quote_crnl(cwd));
 	trace_printf_key(&trace_setup_key, "setup: prefix: %s\n", quote_crnl(prefix));
 
@@ -408,7 +408,7 @@ static struct strbuf command_line = STRBUF_INIT;
 
 static void print_command_performance_atexit(void)
 {
-	trace_performance_leave("git command:%s", command_line.buf);
+	trace_performance_leave("but command:%s", command_line.buf);
 }
 
 void trace_command_performance(const char **argv)

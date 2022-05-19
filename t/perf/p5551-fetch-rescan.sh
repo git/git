@@ -16,16 +16,16 @@ noticeable slowdown.
 . "$TEST_DIRECTORY"/perf/lib-pack.sh
 
 test_expect_success 'create parent and child' '
-	git init parent &&
-	git clone parent child
+	but init parent &&
+	but clone parent child
 '
 
 
 test_expect_success 'create refs in the parent' '
 	(
 		cd parent &&
-		git cummit --allow-empty -m foo &&
-		head=$(git rev-parse HEAD) &&
+		but cummit --allow-empty -m foo &&
+		head=$(but rev-parse HEAD) &&
 		test_seq 1000 |
 		sed "s,.*,update refs/heads/& $head," |
 		$MODERN_GIT update-ref --stdin
@@ -46,9 +46,9 @@ test_perf 'fetch' '
 		cd child &&
 		$MODERN_GIT for-each-ref --format="delete %(refname)" refs/remotes |
 		$MODERN_GIT update-ref --stdin &&
-		rm -vf .git/objects/$(echo $obj | sed "s|^..|&/|") &&
+		rm -vf .but/objects/$(echo $obj | sed "s|^..|&/|") &&
 
-		git fetch
+		but fetch
 	)
 '
 

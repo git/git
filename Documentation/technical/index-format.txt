@@ -73,12 +73,12 @@ Git index format
 
     4-bit object type
       valid values in binary are 1000 (regular file), 1010 (symbolic link)
-      and 1110 (gitlink)
+      and 1110 (butlink)
 
     3-bit unused
 
     9-bit unix permission. Only 0755 and 0644 are valid for regular files.
-    Symbolic links and gitlinks have value 0 in this field.
+    Symbolic links and butlinks have value 0 in this field.
 
   32-bit uid
     this is stat(2) data
@@ -109,13 +109,13 @@ Git index format
 
     1-bit skip-worktree flag (used by sparse checkout)
 
-    1-bit intent-to-add flag (used by "git add -N")
+    1-bit intent-to-add flag (used by "but add -N")
 
     13-bit unused, must be zero
 
   Entry path name (variable length) relative to top level directory
     (without leading slash). '/' is used as path separator. The special
-    path components ".", ".." and ".git" (without quotes) are disallowed.
+    path components ".", ".." and ".but" (without quotes) are disallowed.
     Trailing slash is also disallowed.
 
     The exact encoding is undefined, but the '.' and '/' characters
@@ -208,13 +208,13 @@ Git index format
 === Resolve undo
 
   A conflict is represented in the index as a set of higher stage entries.
-  When a conflict is resolved (e.g. with "git add path"), these higher
+  When a conflict is resolved (e.g. with "but add path"), these higher
   stage entries will be removed and a stage-0 entry with proper resolution
   is added.
 
   When these higher stage entries are removed, they are saved in the
   resolve undo extension, so that conflicts can be recreated (e.g. with
-  "git checkout -m"), in case users want to redo a conflict resolution
+  "but checkout -m"), in case users want to redo a conflict resolution
   from scratch.
 
   The signature for this extension is { 'R', 'E', 'U', 'C' }.
@@ -291,7 +291,7 @@ Git index format
     not exist.
 
   - NUL-terminated string of per-dir exclude file name. This usually
-    is ".gitignore".
+    is ".butignore".
 
   - The number of following directory blocks, variable width
     encoding. If this number is zero, the extension ends here with a

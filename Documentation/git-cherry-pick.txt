@@ -1,16 +1,16 @@
-git-cherry-pick(1)
+but-cherry-pick(1)
 ==================
 
 NAME
 ----
-git-cherry-pick - Apply the changes introduced by some existing cummits
+but-cherry-pick - Apply the changes introduced by some existing cummits
 
 SYNOPSIS
 --------
 [verse]
-'git cherry-pick' [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]
+'but cherry-pick' [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]
 		  [-S[<keyid>]] <cummit>...
-'git cherry-pick' (--continue | --skip | --abort | --quit)
+'but cherry-pick' (--continue | --skip | --abort | --quit)
 
 DESCRIPTION
 -----------
@@ -30,12 +30,12 @@ happens:
    in the index file and in your working tree.
 4. For conflicting paths, the index file records up to three
    versions, as described in the "TRUE MERGE" section of
-   linkgit:git-merge[1].  The working tree files will include
+   linkbut:but-merge[1].  The working tree files will include
    a description of the conflict bracketed by the usual
    conflict markers `<<<<<<<` and `>>>>>>>`.
 5. No other modifications are made.
 
-See linkgit:git-merge[1] for some hints on resolving such
+See linkbut:but-merge[1] for some hints on resolving such
 conflicts.
 
 OPTIONS
@@ -43,21 +43,21 @@ OPTIONS
 <cummit>...::
 	cummits to cherry-pick.
 	For a more complete list of ways to spell cummits, see
-	linkgit:gitrevisions[7].
+	linkbut:butrevisions[7].
 	Sets of cummits can be passed but no traversal is done by
 	default, as if the `--no-walk` option was specified, see
-	linkgit:git-rev-list[1]. Note that specifying a range will
+	linkbut:but-rev-list[1]. Note that specifying a range will
 	feed all <cummit>... arguments to a single revision walk
 	(see a later example that uses 'maint master..next').
 
 -e::
 --edit::
-	With this option, 'git cherry-pick' will let you edit the cummit
+	With this option, 'but cherry-pick' will let you edit the cummit
 	message prior to cummitting.
 
 --cleanup=<mode>::
 	This option determines how the cummit message will be cleaned up before
-	being passed on to the cummit machinery. See linkgit:git-cummit[1] for more
+	being passed on to the cummit machinery. See linkbut:but-cummit[1] for more
 	details. In particular, if the '<mode>' is given a value of `scissors`,
 	scissors will be appended to `MERGE_MSG` before being passed on in the case
 	of a conflict.
@@ -105,7 +105,7 @@ effect to your index in a row.
 -s::
 --signoff::
 	Add a `Signed-off-by` trailer at the end of the cummit message.
-	See the signoff option in linkgit:git-cummit[1] for more information.
+	See the signoff option in linkbut:but-cummit[1] for more information.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
@@ -123,7 +123,7 @@ effect to your index in a row.
 
 --allow-empty::
 	By default, cherry-picking an empty cummit will fail,
-	indicating that an explicit invocation of `git cummit
+	indicating that an explicit invocation of `but cummit
 	--allow-empty` is required. This option overrides that
 	behavior, allowing empty cummits to be preserved automatically
 	in a cherry-pick. Note that when "--ff" is in effect, empty
@@ -148,13 +148,13 @@ effect to your index in a row.
 
 --strategy=<strategy>::
 	Use the given merge strategy.  Should only be used once.
-	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	See the MERGE STRATEGIES section in linkbut:but-merge[1]
 	for details.
 
 -X<option>::
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
-	merge strategy.  See linkgit:git-merge[1] for details.
+	merge strategy.  See linkbut:but-merge[1] for details.
 
 --rerere-autoupdate::
 --no-rerere-autoupdate::
@@ -167,19 +167,19 @@ include::sequencer.txt[]
 
 EXAMPLES
 --------
-`git cherry-pick master`::
+`but cherry-pick master`::
 
 	Apply the change introduced by the cummit at the tip of the
 	master branch and create a new cummit with this change.
 
-`git cherry-pick ..master`::
-`git cherry-pick ^HEAD master`::
+`but cherry-pick ..master`::
+`but cherry-pick ^HEAD master`::
 
 	Apply the changes introduced by all cummits that are ancestors
 	of master but not of HEAD to produce new cummits.
 
-`git cherry-pick maint next ^master`::
-`git cherry-pick maint master..next`::
+`but cherry-pick maint next ^master`::
+`but cherry-pick maint master..next`::
 
 	Apply the changes introduced by all cummits that are
 	ancestors of maint or next, but not master or any of its
@@ -187,20 +187,20 @@ EXAMPLES
 	everything between `master` and `next`; specifically,
 	`maint` will not be used if it is included in `master`.
 
-`git cherry-pick master~4 master~2`::
+`but cherry-pick master~4 master~2`::
 
 	Apply the changes introduced by the fifth and third last
 	cummits pointed to by master and create 2 new cummits with
 	these changes.
 
-`git cherry-pick -n master~1 next`::
+`but cherry-pick -n master~1 next`::
 
 	Apply to the working tree and the index the changes introduced
 	by the second last cummit pointed to by master and by the last
 	cummit pointed to by next, but do not create any cummit with
 	these changes.
 
-`git cherry-pick --ff ..next`::
+`but cherry-pick --ff ..next`::
 
 	If history is linear and HEAD is an ancestor of next, update
 	the working tree and advance the HEAD pointer to match next.
@@ -208,7 +208,7 @@ EXAMPLES
 	are in next but not HEAD to the current branch, creating a new
 	cummit for each new change.
 
-`git rev-list --reverse master -- README | git cherry-pick -n --stdin`::
+`but rev-list --reverse master -- README | but cherry-pick -n --stdin`::
 
 	Apply the changes introduced by all cummits on the master
 	branch that touched README to the working tree and index,
@@ -220,12 +220,12 @@ the code the patch applies to has changed too much, and then tries
 again, this time exercising more care about matching up context lines.
 
 ------------
-$ git cherry-pick topic^             <1>
-$ git diff                           <2>
-$ git reset --merge ORIG_HEAD        <3>
-$ git cherry-pick -Xpatience topic^  <4>
+$ but cherry-pick topic^             <1>
+$ but diff                           <2>
+$ but reset --merge ORIG_HEAD        <3>
+$ but cherry-pick -Xpatience topic^  <4>
 ------------
-<1> apply the change that would be shown by `git show topic^`.
+<1> apply the change that would be shown by `but show topic^`.
     In this example, the patch does not apply cleanly, so
     information about the conflict is written to the index and
     working tree and no new cummit results.
@@ -239,8 +239,8 @@ $ git cherry-pick -Xpatience topic^  <4>
 
 SEE ALSO
 --------
-linkgit:git-revert[1]
+linkbut:but-revert[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

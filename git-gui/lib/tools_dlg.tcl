@@ -1,4 +1,4 @@
-# git-gui Tools menu dialogs
+# but-gui Tools menu dialogs
 
 class tools_add {
 
@@ -128,7 +128,7 @@ method _add {} {
 		return
 	}
 
-	set cmd [list git config]
+	set cmd [list but config]
 	if {$add_global} { lappend cmd --global }
 	set items {}
 	if {$no_console} { lappend items "guitool.$name.noconsole" }
@@ -242,8 +242,8 @@ method _remove {} {
 	foreach i [$w_names curselection] {
 		set name [$w_names get $i]
 
-		catch { git config --remove-section guitool.$name }
-		catch { git config --global --remove-section guitool.$name }
+		catch { but config --remove-section guitool.$name }
+		catch { but config --global --remove-section guitool.$name }
 	}
 
 	load_config 0
@@ -388,7 +388,7 @@ method _visualize {} {
 	global current_branch
 	set rev [_rev $this]
 	if {$rev ne {}} {
-		do_gitk [list --left-right "$current_branch...$rev"]
+		do_butk [list --left-right "$current_branch...$rev"]
 	}
 }
 

@@ -23,17 +23,17 @@
 #include "apply.h"
 #include "entry.h"
 
-struct gitdiff_data {
+struct butdiff_data {
 	struct strbuf *root;
 	int linenr;
 	int p_value;
 };
 
-static void git_apply_config(void)
+static void but_apply_config(void)
 {
-	git_config_get_string("apply.whitespace", &apply_default_whitespace);
-	git_config_get_string("apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	git_config(git_xmerge_config, NULL);
+	but_config_get_string("apply.whitespace", &apply_default_whitespace);
+	but_config_get_string("apply.ignorewhitespace", &apply_default_ignorewhitespace);
+	but_config(but_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)
@@ -64,7 +64,7 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 		return 0;
 	}
 	/*
-	 * Please update $__git_whitespacelist in git-completion.bash
+	 * Please update $__but_whitespacelist in but-completion.bash
 	 * when you add new options.
 	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
@@ -107,7 +107,7 @@ int init_apply_state(struct apply_state *state,
 	strset_init(&state->kept_symlinks);
 	strbuf_init(&state->root, 0);
 
-	git_apply_config();
+	but_apply_config();
 	if (apply_default_whitespace && parse_whitespace_option(state, apply_default_whitespace))
 		return -1;
 	if (apply_default_ignorewhitespace && parse_ignorewhitespace_option(state, apply_default_ignorewhitespace))
@@ -132,12 +132,12 @@ static void mute_routine(const char *msg, va_list params)
 
 int check_apply_state(struct apply_state *state, int force_apply)
 {
-	int is_not_gitdir = !startup_info->have_repository;
+	int is_not_butdir = !startup_info->have_repository;
 
 	if (state->apply_with_reject && state->threeway)
 		return error(_("options '%s' and '%s' cannot be used together"), "--reject", "--3way");
 	if (state->threeway) {
-		if (is_not_gitdir)
+		if (is_not_butdir)
 			return error(_("'%s' outside a repository"), "--3way");
 		state->check_index = 1;
 	}
@@ -148,14 +148,14 @@ int check_apply_state(struct apply_state *state, int force_apply)
 	}
 	if (!force_apply && (state->diffstat || state->numstat || state->summary || state->check || state->fake_ancestor))
 		state->apply = 0;
-	if (state->check_index && is_not_gitdir)
+	if (state->check_index && is_not_butdir)
 		return error(_("'%s' outside a repository"), "--index");
 	if (state->cached) {
-		if (is_not_gitdir)
+		if (is_not_butdir)
 			return error(_("'%s' outside a repository"), "--cached");
 		state->check_index = 1;
 	}
-	if (state->ita_only && (state->check_index || is_not_gitdir))
+	if (state->ita_only && (state->check_index || is_not_butdir))
 		state->ita_only = 0;
 	if (state->check_index)
 		state->unsafe_paths = 0;
@@ -389,7 +389,7 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 static int read_patch_file(struct strbuf *sb, int fd)
 {
 	if (strbuf_read(sb, fd, 0) < 0)
-		return error_errno("git apply: failed to read");
+		return error_errno("but apply: failed to read");
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -456,7 +456,7 @@ static char *find_name_gnu(struct strbuf *root,
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * https://lore.kernel.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
+	 * https://lore.kernel.org/but/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);
@@ -490,7 +490,7 @@ static size_t sane_tz_len(const char *line, size_t len)
 		return 0;
 
 	for (p = tz + 2; p != line + len; p++)
-		if (!isdigit(*p))
+		if (!isdibut(*p))
 			return 0;
 
 	return line + len - tz;
@@ -507,8 +507,8 @@ static size_t tz_with_colon_len(const char *line, size_t len)
 	if (tz[0] != ' ' || (tz[1] != '+' && tz[1] != '-'))
 		return 0;
 	p = tz + 2;
-	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))
+	if (!isdibut(*p++) || !isdibut(*p++) || *p++ != ':' ||
+	    !isdibut(*p++) || !isdibut(*p++))
 		return 0;
 
 	return line + len - tz;
@@ -522,13 +522,13 @@ static size_t date_len(const char *line, size_t len)
 		return 0;
 	p = date = line + len - strlen("72-02-05");
 
-	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
-	    !isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
-	    !isdigit(*p++) || !isdigit(*p++))	/* Not a date. */
+	if (!isdibut(*p++) || !isdibut(*p++) || *p++ != '-' ||
+	    !isdibut(*p++) || !isdibut(*p++) || *p++ != '-' ||
+	    !isdibut(*p++) || !isdibut(*p++))	/* Not a date. */
 		return 0;
 
 	if (date - line >= strlen("19") &&
-	    isdigit(date[-1]) && isdigit(date[-2]))	/* 4-digit year */
+	    isdibut(date[-1]) && isdibut(date[-2]))	/* 4-dibut year */
 		date -= strlen("19");
 
 	return line + len - date;
@@ -542,11 +542,11 @@ static size_t short_time_len(const char *line, size_t len)
 		return 0;
 	p = time = line + len - strlen(" 07:01:32");
 
-	/* Permit 1-digit hours? */
+	/* Permit 1-dibut hours? */
 	if (*p++ != ' ' ||
-	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))	/* Not a time. */
+	    !isdibut(*p++) || !isdibut(*p++) || *p++ != ':' ||
+	    !isdibut(*p++) || !isdibut(*p++) || *p++ != ':' ||
+	    !isdibut(*p++) || !isdibut(*p++))	/* Not a time. */
 		return 0;
 
 	return line + len - time;
@@ -558,12 +558,12 @@ static size_t fractional_time_len(const char *line, size_t len)
 	size_t n;
 
 	/* Expected format: 19:41:17.620000023 */
-	if (!len || !isdigit(line[len - 1]))
+	if (!len || !isdibut(line[len - 1]))
 		return 0;
 	p = line + len - 1;
 
 	/* Fractional seconds. */
-	while (p > line && isdigit(*p))
+	while (p > line && isdibut(*p))
 		p--;
 	if (*p != '.')
 		return 0;
@@ -605,7 +605,7 @@ static size_t diff_timestamp_len(const char *line, size_t len)
 	 * GNU: 2010-07-05 19:41:17.620000023 -0500
 	 */
 
-	if (!isdigit(end[-1]))
+	if (!isdibut(end[-1]))
 		return 0;
 
 	n = sane_tz_len(line, end - line);
@@ -892,7 +892,7 @@ static int parse_traditional_patch(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_hdrend(struct gitdiff_data *state,
+static int butdiff_hdrend(struct butdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
@@ -904,14 +904,14 @@ static int gitdiff_hdrend(struct gitdiff_data *state,
  * sure that we don't end up having strange ambiguous
  * patches floating around.
  *
- * As a result, gitdiff_{old|new}name() will check
+ * As a result, butdiff_{old|new}name() will check
  * their names against any previous information, just
  * to make sure..
  */
 #define DIFF_OLD_NAME 0
 #define DIFF_NEW_NAME 1
 
-static int gitdiff_verify_name(struct gitdiff_data *state,
+static int butdiff_verify_name(struct butdiff_data *state,
 			       const char *line,
 			       int isnull,
 			       char **name,
@@ -925,38 +925,38 @@ static int gitdiff_verify_name(struct gitdiff_data *state,
 	if (*name) {
 		char *another;
 		if (isnull)
-			return error(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
+			return error(_("but apply: bad but-diff - expected /dev/null, got %s on line %d"),
 				     *name, state->linenr);
 		another = find_name(state->root, line, NULL, state->p_value, TERM_TAB);
 		if (!another || strcmp(another, *name)) {
 			free(another);
 			return error((side == DIFF_NEW_NAME) ?
-			    _("git apply: bad git-diff - inconsistent new filename on line %d") :
-			    _("git apply: bad git-diff - inconsistent old filename on line %d"), state->linenr);
+			    _("but apply: bad but-diff - inconsistent new filename on line %d") :
+			    _("but apply: bad but-diff - inconsistent old filename on line %d"), state->linenr);
 		}
 		free(another);
 	} else {
 		if (!is_dev_null(line))
-			return error(_("git apply: bad git-diff - expected /dev/null on line %d"), state->linenr);
+			return error(_("but apply: bad but-diff - expected /dev/null on line %d"), state->linenr);
 	}
 
 	return 0;
 }
 
-static int gitdiff_oldname(struct gitdiff_data *state,
+static int butdiff_oldname(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	return gitdiff_verify_name(state, line,
+	return butdiff_verify_name(state, line,
 				   patch->is_new, &patch->old_name,
 				   DIFF_OLD_NAME);
 }
 
-static int gitdiff_newname(struct gitdiff_data *state,
+static int butdiff_newname(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	return gitdiff_verify_name(state, line,
+	return butdiff_verify_name(state, line,
 				   patch->is_delete, &patch->new_name,
 				   DIFF_NEW_NAME);
 }
@@ -970,41 +970,41 @@ static int parse_mode_line(const char *line, int linenr, unsigned int *mode)
 	return 0;
 }
 
-static int gitdiff_oldmode(struct gitdiff_data *state,
+static int butdiff_oldmode(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->old_mode);
 }
 
-static int gitdiff_newmode(struct gitdiff_data *state,
+static int butdiff_newmode(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->new_mode);
 }
 
-static int gitdiff_delete(struct gitdiff_data *state,
+static int butdiff_delete(struct butdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
 	patch->is_delete = 1;
 	free(patch->old_name);
 	patch->old_name = xstrdup_or_null(patch->def_name);
-	return gitdiff_oldmode(state, line, patch);
+	return butdiff_oldmode(state, line, patch);
 }
 
-static int gitdiff_newfile(struct gitdiff_data *state,
+static int butdiff_newfile(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	patch->is_new = 1;
 	free(patch->new_name);
 	patch->new_name = xstrdup_or_null(patch->def_name);
-	return gitdiff_newmode(state, line, patch);
+	return butdiff_newmode(state, line, patch);
 }
 
-static int gitdiff_copysrc(struct gitdiff_data *state,
+static int butdiff_copysrc(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -1014,7 +1014,7 @@ static int gitdiff_copysrc(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_copydst(struct gitdiff_data *state,
+static int butdiff_copydst(struct butdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -1024,7 +1024,7 @@ static int gitdiff_copydst(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_renamesrc(struct gitdiff_data *state,
+static int butdiff_renamesrc(struct butdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
@@ -1034,7 +1034,7 @@ static int gitdiff_renamesrc(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_renamedst(struct gitdiff_data *state,
+static int butdiff_renamedst(struct butdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
@@ -1044,7 +1044,7 @@ static int gitdiff_renamedst(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_similarity(struct gitdiff_data *state,
+static int butdiff_similarity(struct butdiff_data *state,
 			      const char *line,
 			      struct patch *patch)
 {
@@ -1054,7 +1054,7 @@ static int gitdiff_similarity(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_dissimilarity(struct gitdiff_data *state,
+static int butdiff_dissimilarity(struct butdiff_data *state,
 				 const char *line,
 				 struct patch *patch)
 {
@@ -1064,7 +1064,7 @@ static int gitdiff_dissimilarity(struct gitdiff_data *state,
 	return 0;
 }
 
-static int gitdiff_index(struct gitdiff_data *state,
+static int butdiff_index(struct butdiff_data *state,
 			 const char *line,
 			 struct patch *patch)
 {
@@ -1096,7 +1096,7 @@ static int gitdiff_index(struct gitdiff_data *state,
 	memcpy(patch->new_oid_prefix, line, len);
 	patch->new_oid_prefix[len] = 0;
 	if (*ptr == ' ')
-		return gitdiff_oldmode(state, ptr + 1, patch);
+		return butdiff_oldmode(state, ptr + 1, patch);
 	return 0;
 }
 
@@ -1104,7 +1104,7 @@ static int gitdiff_index(struct gitdiff_data *state,
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(struct gitdiff_data *state,
+static int butdiff_unrecognized(struct butdiff_data *state,
 				const char *line,
 				struct patch *patch)
 {
@@ -1135,14 +1135,14 @@ static const char *skip_tree_prefix(int p_value,
 }
 
 /*
- * This is to extract the same name that appears on "diff --git"
+ * This is to extract the same name that appears on "diff --but"
  * line.  We do not find and return anything if it is a rename
  * patch, and it is OK because we will find the name elsewhere.
  * We need to reliably find name only when it is mode-change only,
  * creation or deletion of an empty file.  In any of these cases,
  * both sides are the same name under a/ and b/ respectively.
  */
-static char *git_header_name(int p_value,
+static char *but_header_name(int p_value,
 			     const char *line,
 			     int llen)
 {
@@ -1150,8 +1150,8 @@ static char *git_header_name(int p_value,
 	const char *second = NULL;
 	size_t len, line_len;
 
-	line += strlen("diff --git ");
-	llen -= strlen("diff --git ");
+	line += strlen("diff --but ");
+	llen -= strlen("diff --but ");
 
 	if (*line == '"') {
 		const char *cp;
@@ -1292,7 +1292,7 @@ static int check_header_line(int linenr, struct patch *patch)
 	return 0;
 }
 
-int parse_git_diff_header(struct strbuf *root,
+int parse_but_diff_header(struct strbuf *root,
 			  int *linenr,
 			  int p_value,
 			  const char *line,
@@ -1301,9 +1301,9 @@ int parse_git_diff_header(struct strbuf *root,
 			  struct patch *patch)
 {
 	unsigned long offset;
-	struct gitdiff_data parse_hdr_state;
+	struct butdiff_data parse_hdr_state;
 
-	/* A git diff has explicit new/delete information, so we don't guess */
+	/* A but diff has explicit new/delete information, so we don't guess */
 	patch->is_new = 0;
 	patch->is_delete = 0;
 
@@ -1313,7 +1313,7 @@ int parse_git_diff_header(struct strbuf *root,
 	 * or removing or adding empty files), so we get
 	 * the default name from the header.
 	 */
-	patch->def_name = git_header_name(p_value, line, len);
+	patch->def_name = but_header_name(p_value, line, len);
 	if (patch->def_name && root->len) {
 		char *s = xstrfmt("%s%s", root->buf, patch->def_name);
 		free(patch->def_name);
@@ -1330,25 +1330,25 @@ int parse_git_diff_header(struct strbuf *root,
 	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, (*linenr)++) {
 		static const struct opentry {
 			const char *str;
-			int (*fn)(struct gitdiff_data *, const char *, struct patch *);
+			int (*fn)(struct butdiff_data *, const char *, struct patch *);
 		} optable[] = {
-			{ "@@ -", gitdiff_hdrend },
-			{ "--- ", gitdiff_oldname },
-			{ "+++ ", gitdiff_newname },
-			{ "old mode ", gitdiff_oldmode },
-			{ "new mode ", gitdiff_newmode },
-			{ "deleted file mode ", gitdiff_delete },
-			{ "new file mode ", gitdiff_newfile },
-			{ "copy from ", gitdiff_copysrc },
-			{ "copy to ", gitdiff_copydst },
-			{ "rename old ", gitdiff_renamesrc },
-			{ "rename new ", gitdiff_renamedst },
-			{ "rename from ", gitdiff_renamesrc },
-			{ "rename to ", gitdiff_renamedst },
-			{ "similarity index ", gitdiff_similarity },
-			{ "dissimilarity index ", gitdiff_dissimilarity },
-			{ "index ", gitdiff_index },
-			{ "", gitdiff_unrecognized },
+			{ "@@ -", butdiff_hdrend },
+			{ "--- ", butdiff_oldname },
+			{ "+++ ", butdiff_newname },
+			{ "old mode ", butdiff_oldmode },
+			{ "new mode ", butdiff_newmode },
+			{ "deleted file mode ", butdiff_delete },
+			{ "new file mode ", butdiff_newfile },
+			{ "copy from ", butdiff_copysrc },
+			{ "copy to ", butdiff_copydst },
+			{ "rename old ", butdiff_renamesrc },
+			{ "rename new ", butdiff_renamedst },
+			{ "rename from ", butdiff_renamesrc },
+			{ "rename to ", butdiff_renamedst },
+			{ "similarity index ", butdiff_similarity },
+			{ "dissimilarity index ", butdiff_dissimilarity },
+			{ "index ", butdiff_index },
+			{ "", butdiff_unrecognized },
 		};
 		int i;
 
@@ -1375,9 +1375,9 @@ int parse_git_diff_header(struct strbuf *root,
 done:
 	if (!patch->old_name && !patch->new_name) {
 		if (!patch->def_name) {
-			error(Q_("git diff header lacks filename information when removing "
+			error(Q_("but diff header lacks filename information when removing "
 				 "%d leading pathname component (line %d)",
-				 "git diff header lacks filename information when removing "
+				 "but diff header lacks filename information when removing "
 				 "%d leading pathname components (line %d)",
 				 parse_hdr_state.p_value),
 			      parse_hdr_state.p_value, *linenr);
@@ -1388,7 +1388,7 @@ done:
 	}
 	if ((!patch->new_name && !patch->is_delete) ||
 	    (!patch->old_name && !patch->is_new)) {
-		error(_("git diff header lacks filename information "
+		error(_("but diff header lacks filename information "
 			"(line %d)"), *linenr);
 		return -128;
 	}
@@ -1400,7 +1400,7 @@ static int parse_num(const char *line, unsigned long *p)
 {
 	char *ptr;
 
-	if (!isdigit(*line))
+	if (!isdibut(*line))
 		return 0;
 	*p = strtoul(line, &ptr, 10);
 	return ptr - line;
@@ -1409,30 +1409,30 @@ static int parse_num(const char *line, unsigned long *p)
 static int parse_range(const char *line, int len, int offset, const char *expect,
 		       unsigned long *p1, unsigned long *p2)
 {
-	int digits, ex;
+	int dibuts, ex;
 
 	if (offset < 0 || offset >= len)
 		return -1;
 	line += offset;
 	len -= offset;
 
-	digits = parse_num(line, p1);
-	if (!digits)
+	dibuts = parse_num(line, p1);
+	if (!dibuts)
 		return -1;
 
-	offset += digits;
-	line += digits;
-	len -= digits;
+	offset += dibuts;
+	line += dibuts;
+	len -= dibuts;
 
 	*p2 = 1;
 	if (*line == ',') {
-		digits = parse_num(line+1, p2);
-		if (!digits)
+		dibuts = parse_num(line+1, p2);
+		if (!dibuts)
 			return -1;
 
-		offset += digits+1;
-		line += digits+1;
-		len -= digits+1;
+		offset += dibuts+1;
+		line += dibuts+1;
+		len -= dibuts+1;
 	}
 
 	ex = strlen(expect);
@@ -1565,15 +1565,15 @@ static int find_header(struct apply_state *state,
 		 * Git patch? It might not have a real patch, just a rename
 		 * or mode change, so we handle that specially
 		 */
-		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_diff_header(&state->root, &state->linenr,
+		if (!memcmp("diff --but ", line, 11)) {
+			int but_hdr_len = parse_but_diff_header(&state->root, &state->linenr,
 								state->p_value, line, len,
 								size, patch);
-			if (git_hdr_len < 0)
+			if (but_hdr_len < 0)
 				return -128;
-			if (git_hdr_len <= len)
+			if (but_hdr_len <= len)
 				continue;
-			*hdrsize = git_hdr_len;
+			*hdrsize = but_hdr_len;
 			return offset;
 		}
 
@@ -1763,7 +1763,7 @@ static int parse_fragment(struct apply_state *state,
 }
 
 /*
- * We have seen "diff --git a/... b/..." header (or a traditional patch
+ * We have seen "diff --but a/... b/..." header (or a traditional patch
  * header).  Read hunks that belong to this patch into fragments and hang
  * them to the given patch structure.
  *
@@ -1854,7 +1854,7 @@ static inline int metadata_changes(struct patch *patch)
 static char *inflate_it(const void *data, unsigned long size,
 			unsigned long inflated_size)
 {
-	git_zstream stream;
+	but_zstream stream;
 	void *out;
 	int st;
 
@@ -1864,9 +1864,9 @@ static char *inflate_it(const void *data, unsigned long size,
 	stream.avail_in = size;
 	stream.next_out = out = xmalloc(inflated_size);
 	stream.avail_out = inflated_size;
-	git_inflate_init(&stream);
-	st = git_inflate(&stream, Z_FINISH);
-	git_inflate_end(&stream);
+	but_inflate_init(&stream);
+	st = but_inflate(&stream, Z_FINISH);
+	but_inflate_end(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
 		free(out);
 		return NULL;
@@ -2139,12 +2139,12 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 		return -128;
 
 	if (!patchsize) {
-		static const char git_binary[] = "GIT binary patch\n";
+		static const char but_binary[] = "GIT binary patch\n";
 		int hd = hdrsize + offset;
 		unsigned long llen = linelen(buffer + hd, size - hd);
 
-		if (llen == sizeof(git_binary) - 1 &&
-		    !memcmp(git_binary, buffer + hd, llen)) {
+		if (llen == sizeof(but_binary) - 1 &&
+		    !memcmp(but_binary, buffer + hd, llen)) {
 			int used;
 			state->linenr++;
 			used = parse_binary(state, buffer + hd + llen,
@@ -2273,14 +2273,14 @@ static int read_old_data(struct stat *st, struct patch *patch,
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
 			return error(_("unable to open or read %s"), path);
 		/*
-		 * "git apply" without "--index/--cached" should never look
+		 * "but apply" without "--index/--cached" should never look
 		 * at the index; the target file may not have been added to
 		 * the index yet, and we may not even be in any Git repository.
-		 * Pass NULL to convert_to_git() to stress this; the function
+		 * Pass NULL to convert_to_but() to stress this; the function
 		 * should never look at the index when explicit crlf option
 		 * is given.
 		 */
-		convert_to_git(NULL, path, buf->buf, buf->len, buf, conv_flags);
+		convert_to_but(NULL, path, buf->buf, buf->len, buf, conv_flags);
 		return 0;
 	default:
 		return -1;
@@ -3263,7 +3263,7 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 	return 0;
 }
 
-static int read_file_or_gitlink(const struct cache_entry *ce, struct strbuf *buf)
+static int read_file_or_butlink(const struct cache_entry *ce, struct strbuf *buf)
 {
 	if (!ce)
 		return 0;
@@ -3369,7 +3369,7 @@ static struct patch *previous_patch(struct apply_state *state,
 
 	*gone = 0;
 	if (patch->is_copy || patch->is_rename)
-		return NULL; /* "git" patches do not depend on the order */
+		return NULL; /* "but" patches do not depend on the order */
 
 	previous = in_fn_table(state, patch->old_name);
 	if (!previous)
@@ -3408,12 +3408,12 @@ static int load_patch_target(struct apply_state *state,
 			     unsigned expected_mode)
 {
 	if (state->cached || state->check_index) {
-		if (read_file_or_gitlink(ce, buf))
+		if (read_file_or_butlink(ce, buf))
 			return error(_("failed to read %s"), name);
 	} else if (name) {
 		if (S_ISGITLINK(expected_mode)) {
 			if (ce)
-				return read_file_or_gitlink(ce, buf);
+				return read_file_or_butlink(ce, buf);
 			else
 				return SUBMODULE_PATCH_WITHOUT_INDEX;
 		} else if (has_symlink_leading_path(name, strlen(name))) {
@@ -3430,7 +3430,7 @@ static int load_patch_target(struct apply_state *state,
  * We are about to apply "patch"; populate the "image" with the
  * current version we have, from the working tree or from the index,
  * depending on the situation e.g. --cached/--index.  If we are
- * applying a non-git patch that incrementally updates the tree,
+ * applying a non-but patch that incrementally updates the tree,
  * we read from the result of a previous diff.
  */
 static int load_preimage(struct apply_state *state,
@@ -3695,7 +3695,7 @@ static int apply_data(struct apply_state *state, struct patch *patch,
  * we would want it not to lose any local modification we have, either
  * in the working tree or in the index.
  *
- * This also decides if a non-git patch is a creation patch or a
+ * This also decides if a non-but patch is a creation patch or a
  * modification to an existing empty file.  We do not check the state
  * of the current tree for a creation patch in this function; the caller
  * check_patch() separately makes sure (and errors out otherwise) that
@@ -3812,7 +3812,7 @@ static int check_to_create(struct apply_state *state,
 		 * that is going to be removed with this patch, but
 		 * still pointing at somewhere that has the path.
 		 * In such a case, path "new_name" does not exist as
-		 * far as git is concerned.
+		 * far as but is concerned.
 		 */
 		if (has_symlink_leading_path(new_name, strlen(new_name)))
 			return 0;
@@ -4037,7 +4037,7 @@ static int read_apply_cache(struct apply_state *state)
 {
 	if (state->index_file)
 		return read_index_from(state->repo->index, state->index_file,
-				       get_git_dir());
+				       get_but_dir());
 	else
 		return repo_read_index(state->repo);
 }
@@ -4057,10 +4057,10 @@ static int get_current_oid(struct apply_state *state, const char *path,
 	return 0;
 }
 
-static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
+static int preimage_oid_in_butlink_patch(struct patch *p, struct object_id *oid)
 {
 	/*
-	 * A usable gitlink patch has only one fragment (hunk) that looks like:
+	 * A usable butlink patch has only one fragment (hunk) that looks like:
 	 * @@ -1 +1 @@
 	 * -Subproject cummit <old sha1>
 	 * +Subproject cummit <new sha1>
@@ -4112,7 +4112,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			continue;
 
 		if (S_ISGITLINK(patch->old_mode)) {
-			if (!preimage_oid_in_gitlink_patch(patch, &oid))
+			if (!preimage_oid_in_butlink_patch(patch, &oid))
 				; /* ok, the textual part looks sane */
 			else
 				return error(_("sha1 information is lacking or "
@@ -4583,8 +4583,8 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	if (!rej)
 		return error_errno(_("cannot open %s"), namebuf);
 
-	/* Normal git tools never deal with .rej, so do not pretend
-	 * this is a git patch by saying --git or giving extended
+	/* Normal but tools never deal with .rej, so do not pretend
+	 * this is a but patch by saying --but or giving extended
 	 * headers.  While at it, maybe please "kompare" that wants
 	 * the trailing TAB and some garbage at the end of line ;-).
 	 */
@@ -5023,7 +5023,7 @@ int apply_parse_options(int argc, const char **argv,
 		OPT_BOOL(0, "index", &state->check_index,
 			N_("make sure the patch is applicable to the current index")),
 		OPT_BOOL('N', "intent-to-add", &state->ita_only,
-			N_("mark new files with `git add --intent-to-add`")),
+			N_("mark new files with `but add --intent-to-add`")),
 		OPT_BOOL(0, "cached", &state->cached,
 			N_("apply a patch without touching the working tree")),
 		OPT_BOOL_F(0, "unsafe-paths", &state->unsafe_paths,

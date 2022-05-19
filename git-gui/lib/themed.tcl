@@ -1,4 +1,4 @@
-# Functions for supporting the use of themed Tk widgets in git-gui.
+# Functions for supporting the use of themed Tk widgets in but-gui.
 # Copyright (C) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
 

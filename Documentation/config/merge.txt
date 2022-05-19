@@ -35,7 +35,7 @@ merge.ff::
 
 merge.verifySignatures::
 	If true, this is equivalent to the --verify-signatures command
-	line option. See linkgit:git-merge[1] for details.
+	line option. See linkbut:but-merge[1] for details.
 
 include::fmt-merge-msg.txt[]
 
@@ -73,7 +73,7 @@ merge.renormalize::
 	recorded in cummits to a canonical form before performing a
 	merge to reduce unnecessary conflicts.  For more information,
 	see section "Merging branches with differing checkin/checkout
-	attributes" in linkgit:gitattributes[5].
+	attributes" in linkbut:butattributes[5].
 
 merge.stat::
 	Whether to print the diffstat between ORIG_HEAD and the merge result
@@ -86,17 +86,17 @@ merge.autoStash::
 	However, use with care: the final stash application after a
 	successful merge might result in non-trivial conflicts.
 	This option can be overridden by the `--no-autostash` and
-	`--autostash` options of linkgit:git-merge[1].
+	`--autostash` options of linkbut:but-merge[1].
 	Defaults to false.
 
 merge.tool::
-	Controls which merge tool is used by linkgit:git-mergetool[1].
+	Controls which merge tool is used by linkbut:but-mergetool[1].
 	The list below shows the valid built-in values.
 	Any other value is treated as a custom merge tool and requires
 	that a corresponding mergetool.<tool>.cmd variable is defined.
 
 merge.guitool::
-	Controls which merge tool is used by linkgit:git-mergetool[1] when the
+	Controls which merge tool is used by linkbut:but-mergetool[1] when the
 	-g/--gui flag is specified. The list below shows the valid built-in values.
 	Any other value is treated as a custom merge tool and requires that a
 	corresponding mergetool.<guitool>.cmd variable is defined.
@@ -113,13 +113,13 @@ merge.verbosity::
 
 merge.<driver>.name::
 	Defines a human-readable name for a custom low-level
-	merge driver.  See linkgit:gitattributes[5] for details.
+	merge driver.  See linkbut:butattributes[5] for details.
 
 merge.<driver>.driver::
 	Defines the command that implements a custom low-level
-	merge driver.  See linkgit:gitattributes[5] for details.
+	merge driver.  See linkbut:butattributes[5] for details.
 
 merge.<driver>.recursive::
 	Names a low-level merge driver to be used when
 	performing an internal merge between common ancestors.
-	See linkgit:gitattributes[5] for details.
+	See linkbut:butattributes[5] for details.

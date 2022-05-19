@@ -9,9 +9,9 @@
 	<key>CFBundleGetInfoString</key>
 	<string>Git Gui @@GITGUI_VERSION@@ © 2006-2007 Shawn Pearce, et. al.</string>
 	<key>CFBundleIconFile</key>
-	<string>git-gui.icns</string>
+	<string>but-gui.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>cz.or.repo.git-gui</string>
+	<string>cz.or.repo.but-gui</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

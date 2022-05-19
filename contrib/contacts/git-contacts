@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 
 # List people who might be interested in a patch.  Useful as the argument to
-# git-send-email --cc-cmd option, and in other situations.
+# but-send-email --cc-cmd option, and in other situations.
 #
-# Usage: git contacts <file | rev-list option> ...
+# Usage: but contacts <file | rev-list option> ...
 
 use strict;
 use warnings;
@@ -39,7 +39,7 @@ sub parse_cummit {
 sub import_cummits {
 	my ($cummits) = @_;
 	return unless %$cummits;
-	my $pid = open2 my $reader, my $writer, qw(git cat-file --batch);
+	my $pid = open2 my $reader, my $writer, qw(but cat-file --batch);
 	for my $id (keys(%$cummits)) {
 		print $writer "$id\n";
 		my $line = <$reader>;
@@ -55,14 +55,14 @@ sub import_cummits {
 	close $reader;
 	close $writer;
 	waitpid($pid, 0);
-	die "git-cat-file error: $?\n" if $?;
+	die "but-cat-file error: $?\n" if $?;
 }
 
 sub get_blame {
 	my ($cummits, $source, $from, $ranges) = @_;
 	return unless @$ranges;
 	open my $f, '-|',
-		qw(git blame --porcelain -C),
+		qw(but blame --porcelain -C),
 		map({"-L$_->[0],+$_->[1]"} @$ranges),
 		'--since', $since, "$from^", '--', $source or die;
 	while (<$f>) {
@@ -113,7 +113,7 @@ sub scan_patch_file {
 sub parse_rev_args {
 	my @args = @_;
 	open my $f, '-|',
-		qw(git rev-parse --revs-only --default HEAD --symbolic), @args
+		qw(but rev-parse --revs-only --default HEAD --symbolic), @args
 		or die;
 	my @revs;
 	while (<$f>) {
@@ -129,12 +129,12 @@ sub parse_rev_args {
 sub scan_rev_args {
 	my ($cummits, $args) = @_;
 	my @revs = parse_rev_args(@$args);
-	open my $f, '-|', qw(git rev-list --reverse), @revs or die;
+	open my $f, '-|', qw(but rev-list --reverse), @revs or die;
 	while (<$f>) {
 		chomp;
 		my $id = $_;
 		$seen{$id} = 1;
-		open my $g, '-|', qw(git show -C --oneline), $id or die;
+		open my $g, '-|', qw(but show -C --oneline), $id or die;
 		scan_patches($cummits, $id, $g);
 		close $g;
 	}
@@ -144,7 +144,7 @@ sub scan_rev_args {
 sub mailmap_contacts {
 	my ($contacts) = @_;
 	my %mapped;
-	my $pid = open2 my $reader, my $writer, qw(git check-mailmap --stdin);
+	my $pid = open2 my $reader, my $writer, qw(but check-mailmap --stdin);
 	for my $contact (keys(%$contacts)) {
 		print $writer "$contact\n";
 		my $canonical = <$reader>;
@@ -154,7 +154,7 @@ sub mailmap_contacts {
 	close $reader;
 	close $writer;
 	waitpid($pid, 0);
-	die "git-check-mailmap error: $?\n" if $?;
+	die "but-check-mailmap error: $?\n" if $?;
 	return \%mapped;
 }
 
@@ -179,7 +179,7 @@ if (@rev_args) {
 	scan_rev_args(\%sources, \@rev_args)
 }
 
-my $toplevel = `git rev-parse --show-toplevel`;
+my $toplevel = `but rev-parse --show-toplevel`;
 chomp $toplevel;
 chdir($toplevel) or die "chdir failure: $toplevel: $!\n";
 

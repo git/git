@@ -1,4 +1,4 @@
-# git-gui status bar mega-widget
+# but-gui status bar mega-widget
 # Copyright (C) 2007 Shawn Pearce
 
 # The status_bar class manages the entire status bar. It is possible for
@@ -229,7 +229,7 @@ field status   {}; # single line of text we show
 field progress {}; # current progress (0 to 100)
 field prefix   {}; # text we format into status
 field units    {}; # unit of progress
-field meter    {}; # current core git progress meter (if active)
+field meter    {}; # current core but progress meter (if active)
 
 constructor new {owner msg uds} {
 	set status_bar $owner

@@ -39,19 +39,19 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'setup: populate index and tree' '
-	git update-index --add "$p0" "$p2" &&
-	t0=$(git write-tree)
+	but update-index --add "$p0" "$p2" &&
+	t0=$(but write-tree)
 '
 
 test_expect_success 'ls-files prints space in filename verbatim' '
 	printf "%s\n" "just space" no-funny >expected &&
-	git ls-files >current &&
+	but ls-files >current &&
 	test_cmp expected current
 '
 
 test_expect_success 'setup: add funny filename' '
-	git update-index --add "$p1" &&
-	t1=$(git write-tree)
+	but update-index --add "$p1" &&
+	t1=$(but write-tree)
 '
 
 test_expect_success 'ls-files quotes funny filename' '
@@ -60,7 +60,7 @@ test_expect_success 'ls-files quotes funny filename' '
 	no-funny
 	"tabs\t,\" (dq) and spaces"
 	EOF
-	git ls-files >current &&
+	but ls-files >current &&
 	test_cmp expected current
 '
 
@@ -70,7 +70,7 @@ test_expect_success 'ls-files -z does not quote funny filename' '
 	no-funny
 	tabs	," (dq) and spaces
 	EOF
-	git ls-files -z >ls-files.z &&
+	but ls-files -z >ls-files.z &&
 	perl -pe "y/\000/\012/" <ls-files.z >current &&
 	test_cmp expected current
 '
@@ -81,7 +81,7 @@ test_expect_success 'ls-tree quotes funny filename' '
 	no-funny
 	"tabs\t,\" (dq) and spaces"
 	EOF
-	git ls-tree -r $t1 >ls-tree &&
+	but ls-tree -r $t1 >ls-tree &&
 	sed -e "s/^[^	]*	//" <ls-tree >current &&
 	test_cmp expected current
 '
@@ -90,7 +90,7 @@ test_expect_success 'diff-index --name-status quotes funny filename' '
 	cat >expected <<-\EOF &&
 	A	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index --name-status $t0 >current &&
+	but diff-index --name-status $t0 >current &&
 	test_cmp expected current
 '
 
@@ -98,7 +98,7 @@ test_expect_success 'diff-tree --name-status quotes funny filename' '
 	cat >expected <<-\EOF &&
 	A	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-tree --name-status $t0 $t1 >current &&
+	but diff-tree --name-status $t0 $t1 >current &&
 	test_cmp expected current
 '
 
@@ -107,7 +107,7 @@ test_expect_success 'diff-index -z does not quote funny filename' '
 	A
 	tabs	," (dq) and spaces
 	EOF
-	git diff-index -z --name-status $t0 >diff-index.z &&
+	but diff-index -z --name-status $t0 >diff-index.z &&
 	perl -pe "y/\000/\012/" <diff-index.z >current &&
 	test_cmp expected current
 '
@@ -117,7 +117,7 @@ test_expect_success 'diff-tree -z does not quote funny filename' '
 	A
 	tabs	," (dq) and spaces
 	EOF
-	git diff-tree -z --name-status $t0 $t1 >diff-tree.z &&
+	but diff-tree -z --name-status $t0 $t1 >diff-tree.z &&
 	perl -pe y/\\000/\\012/ <diff-tree.z >current &&
 	test_cmp expected current
 '
@@ -126,32 +126,32 @@ test_expect_success 'diff-tree --find-copies-harder quotes funny filename' '
 	cat >expected <<-\EOF &&
 	CNUM	no-funny	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-tree -C --find-copies-harder --name-status $t0 $t1 >out &&
+	but diff-tree -C --find-copies-harder --name-status $t0 $t1 >out &&
 	sed -e "s/^C[0-9]*/CNUM/" <out >current &&
 	test_cmp expected current
 '
 
 test_expect_success 'setup: remove unfunny index entry' '
-	git update-index --force-remove "$p0"
+	but update-index --force-remove "$p0"
 '
 
 test_expect_success 'diff-tree -M quotes funny filename' '
 	cat >expected <<-\EOF &&
 	RNUM	no-funny	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -M --name-status $t0 >out &&
+	but diff-index -M --name-status $t0 >out &&
 	sed -e "s/^R[0-9]*/RNUM/" <out >current &&
 	test_cmp expected current
 '
 
 test_expect_success 'diff-index -M -p quotes funny filename' '
 	cat >expected <<-\EOF &&
-	diff --git a/no-funny "b/tabs\t,\" (dq) and spaces"
+	diff --but a/no-funny "b/tabs\t,\" (dq) and spaces"
 	similarity index NUM%
 	rename from no-funny
 	rename to "tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -M -p $t0 >diff &&
+	but diff-index -M -p $t0 >diff &&
 	sed -e "s/index [0-9]*%/index NUM%/" <diff >current &&
 	test_cmp expected current
 '
@@ -162,14 +162,14 @@ test_expect_success 'setup: mode change' '
 
 test_expect_success 'diff-index -M -p with mode change quotes funny filename' '
 	cat >expected <<-\EOF &&
-	diff --git a/no-funny "b/tabs\t,\" (dq) and spaces"
+	diff --but a/no-funny "b/tabs\t,\" (dq) and spaces"
 	old mode 100644
 	new mode 100755
 	similarity index NUM%
 	rename from no-funny
 	rename to "tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -M -p $t0 >diff &&
+	but diff-index -M -p $t0 >diff &&
 	sed -e "s/index [0-9]*%/index NUM%/" <diff >current &&
 	test_cmp expected current
 '
@@ -179,8 +179,8 @@ test_expect_success 'diffstat for rename quotes funny filename' '
 	 "tabs\t,\" (dq) and spaces"
 	 1 file changed, 0 insertions(+), 0 deletions(-)
 	EOF
-	git diff-index -M -p $t0 >diff &&
-	git apply --stat <diff >diffstat &&
+	but diff-index -M -p $t0 >diff &&
+	but apply --stat <diff >diffstat &&
 	sed -e "s/|.*//" -e "s/ *\$//" <diffstat >current &&
 	test_cmp expected current
 '
@@ -189,8 +189,8 @@ test_expect_success 'numstat for rename quotes funny filename' '
 	cat >expected <<-\EOF &&
 	0	0	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -M -p $t0 >diff &&
-	git apply --numstat <diff >current &&
+	but diff-index -M -p $t0 >diff &&
+	but apply --numstat <diff >current &&
 	test_cmp expected current
 '
 
@@ -199,19 +199,19 @@ test_expect_success 'numstat without -M quotes funny filename' '
 	0	3	no-funny
 	3	0	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -p $t0 >diff &&
-	git apply --numstat <diff >current &&
+	but diff-index -p $t0 >diff &&
+	but apply --numstat <diff >current &&
 	test_cmp expected current
 '
 
-test_expect_success 'numstat for non-git rename diff quotes funny filename' '
+test_expect_success 'numstat for non-but rename diff quotes funny filename' '
 	cat >expected <<-\EOF &&
 	0	3	no-funny
 	3	0	"tabs\t,\" (dq) and spaces"
 	EOF
-	git diff-index -p $t0 >git-diff &&
-	sed -ne "/^[-+@]/p" <git-diff >diff &&
-	git apply --numstat <diff >current &&
+	but diff-index -p $t0 >but-diff &&
+	sed -ne "/^[-+@]/p" <but-diff >diff &&
+	but apply --numstat <diff >current &&
 	test_cmp expected current
 '
 

@@ -1,32 +1,32 @@
-git-rev-list(1)
+but-rev-list(1)
 ===============
 
 NAME
 ----
-git-rev-list - Lists cummit objects in reverse chronological order
+but-rev-list - Lists cummit objects in reverse chronological order
 
 
 SYNOPSIS
 --------
 [verse]
-'git rev-list' [<options>] <cummit>... [[--] <path>...]
+'but rev-list' [<options>] <cummit>... [[--] <path>...]
 
 DESCRIPTION
 -----------
 
-:git-rev-list: 1
+:but-rev-list: 1
 include::rev-list-description.txt[]
 
 'rev-list' is a very essential Git command, since it
 provides the ability to build and traverse cummit ancestry graphs. For
 this reason, it has a lot of different options that enables it to be
-used by commands as different as 'git bisect' and
-'git repack'.
+used by commands as different as 'but bisect' and
+'but repack'.
 
 OPTIONS
 -------
 
-:git-rev-list: 1
+:but-rev-list: 1
 include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
@@ -37,67 +37,67 @@ EXAMPLES
 * Print the list of cummits reachable from the current branch.
 +
 ----------
-git rev-list HEAD
+but rev-list HEAD
 ----------
 
 * Print the list of cummits on this branch, but not present in the
   upstream branch.
 +
 ----------
-git rev-list @{upstream}..HEAD
+but rev-list @{upstream}..HEAD
 ----------
 
 * Format cummits with their author and cummit message (see also the
-  porcelain linkgit:git-log[1]).
+  porcelain linkbut:but-log[1]).
 +
 ----------
-git rev-list --format=medium HEAD
+but rev-list --format=medium HEAD
 ----------
 
 * Format cummits along with their diffs (see also the porcelain
-  linkgit:git-log[1], which can do this in a single process).
+  linkbut:but-log[1], which can do this in a single process).
 +
 ----------
-git rev-list HEAD |
-git diff-tree --stdin --format=medium -p
+but rev-list HEAD |
+but diff-tree --stdin --format=medium -p
 ----------
 
 * Print the list of cummits on the current branch that touched any
   file in the `Documentation` directory.
 +
 ----------
-git rev-list HEAD -- Documentation/
+but rev-list HEAD -- Documentation/
 ----------
 
 * Print the list of cummits authored by you in the past year, on
   any branch, tag, or other ref.
 +
 ----------
-git rev-list --author=you@example.com --since=1.year.ago --all
+but rev-list --author=you@example.com --since=1.year.ago --all
 ----------
 
 * Print the list of objects reachable from the current branch (i.e., all
   cummits and the blobs and trees they contain).
 +
 ----------
-git rev-list --objects HEAD
+but rev-list --objects HEAD
 ----------
 
 * Compare the disk size of all reachable objects, versus those
   reachable from reflogs, versus the total packed size. This can tell
-  you whether running `git repack -ad` might reduce the repository size
+  you whether running `but repack -ad` might reduce the repository size
   (by dropping unreachable objects), and whether expiring reflogs might
   help.
 +
 ----------
 # reachable objects
-git rev-list --disk-usage --objects --all
+but rev-list --disk-usage --objects --all
 # plus reflogs
-git rev-list --disk-usage --objects --all --reflog
+but rev-list --disk-usage --objects --all --reflog
 # total disk size used
-du -c .git/objects/pack/*.pack .git/objects/??/*
+du -c .but/objects/pack/*.pack .but/objects/??/*
 # alternative to du: add up "size" and "size-pack" fields
-git count-objects -v
+but count-objects -v
 ----------
 
 * Report the disk size of each branch, not including objects used by the
@@ -106,10 +106,10 @@ git count-objects -v
   large build artifacts).
 +
 ----------
-git for-each-ref --format='%(refname)' |
+but for-each-ref --format='%(refname)' |
 while read branch
 do
-	size=$(git rev-list --disk-usage --objects HEAD..$branch)
+	size=$(but rev-list --disk-usage --objects HEAD..$branch)
 	echo "$size $branch"
 done |
 sort -n
@@ -121,9 +121,9 @@ sort -n
   repository size (taking the size of `origin` as a baseline).
 +
 ----------
-git rev-list --disk-usage --objects --remotes=$suspect --not --remotes=origin
+but rev-list --disk-usage --objects --remotes=$suspect --not --remotes=origin
 ----------
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,4 +1,4 @@
-From: Junio C Hamano <gitster@pobox.com>
+From: Junio C Hamano <butster@pobox.com>
 Date: Tue, 17 Jan 2011 13:00:00 -0800
 Subject: Using signed tag in pull requests
 Abstract: Beginning v1.7.9, a contributor can push a signed tag to her
@@ -14,7 +14,7 @@ A typical distributed workflow using Git is for a contributor to fork a
 project, build on it, publish the result to her public repository, and ask
 the "upstream" person (often the owner of the project where she forked
 from) to pull from her public repository. Requesting such a "pull" is made
-easy by the `git request-pull` command.
+easy by the `but request-pull` command.
 
 Earlier, a typical pull request may have started like this:
 
@@ -25,7 +25,7 @@ Earlier, a typical pull request may have started like this:
 
  are available in the Git repository at:
 
-   example.com:/git/froboz.git for-xyzzy
+   example.com:/but/froboz.but for-xyzzy
 ------------
 
 followed by a shortlog of the changes and a diffstat.
@@ -42,7 +42,7 @@ history.
 
 Starting from Git release v1.7.9, a contributor can add a signed tag to
 the cummit at the tip of the history and ask the integrator to pull that
-signed tag. When the integrator runs `git pull`, the signed tag is
+signed tag. When the integrator runs `but pull`, the signed tag is
 automatically verified to assure that the history is not tampered with.
 In addition, the resulting merge cummit records the content of the signed
 tag, so that other people can verify that the branch merged by the
@@ -57,13 +57,13 @@ integrator, using Git v1.7.9 or later.
 A contributor or a lieutenant
 -----------------------------
 
-After preparing her work to be pulled, the contributor uses `git tag -s`
+After preparing her work to be pulled, the contributor uses `but tag -s`
 to create a signed tag:
 
 ------------
- $ git checkout work
- $ ... "git pull" from sublieutenants, "git cummit" your own work ...
- $ git tag -s -m "Completed frotz feature" frotz-for-xyzzy work
+ $ but checkout work
+ $ ... "but pull" from sublieutenants, "but cummit" your own work ...
+ $ but tag -s -m "Completed frotz feature" frotz-for-xyzzy work
 ------------
 
 Note that this example uses the `-m` option to create a signed tag with
@@ -76,7 +76,7 @@ integrator responds to the pull request (as we will see later).
 Then she pushes the tag out to her public repository:
 
 ------------
- $ git push example.com:/git/froboz.git/ +frotz-for-xyzzy
+ $ but push example.com:/but/froboz.but/ +frotz-for-xyzzy
 ------------
 
 There is no need to push the `work` branch or anything else.
@@ -89,7 +89,7 @@ previous pull request has already been responded to.
 The contributor then prepares a message to request a "pull":
 
 ------------
- $ git request-pull v3.2 example.com:/git/froboz.git/ frotz-for-xyzzy >msg.txt
+ $ but request-pull v3.2 example.com:/but/froboz.but/ frotz-for-xyzzy >msg.txt
 ------------
 
 The arguments are:
@@ -109,7 +109,7 @@ The resulting msg.txt file begins like so:
 
  are available in the Git repository at:
 
-   example.com:/git/froboz.git tags/frotz-for-xyzzy
+   example.com:/but/froboz.but tags/frotz-for-xyzzy
 
  for you to fetch changes up to 703f05ad5835c...:
 
@@ -121,7 +121,7 @@ The resulting msg.txt file begins like so:
 ------------
 
 followed by a shortlog of the changes and a diffstat.  Comparing this with
-the earlier illustration of the output from the traditional `git request-pull`
+the earlier illustration of the output from the traditional `but request-pull`
 command, the reader should notice that:
 
 . The tip cummit to expect is shown to the integrator; and
@@ -141,7 +141,7 @@ After receiving such a pull request message, the integrator fetches and
 integrates the tag named in the request, with:
 
 ------------
- $ git pull example.com:/git/froboz.git/ tags/frotz-for-xyzzy
+ $ but pull example.com:/but/froboz.but/ tags/frotz-for-xyzzy
 ------------
 
 This operation will always open an editor to allow the integrator to fine
@@ -154,7 +154,7 @@ about and why it was made.
 In the editor, the integrator will see something like this:
 
 ------------
- Merge tag 'frotz-for-xyzzy' of example.com:/git/froboz.git/
+ Merge tag 'frotz-for-xyzzy' of example.com:/but/froboz.but/
 
  Completed frotz feature
  # gpg: Signature made Fri 02 Dec 2011 10:03:01 AM PST using RSA key ID 96AFE6CB
@@ -169,7 +169,7 @@ As usual, the lines commented with `#` are stripped out. The resulting
 cummit records the signed tag used for this validation in a hidden field
 so that it can later be used by others to audit the history. There is no
 need for the integrator to keep a separate copy of the tag in his
-repository (i.e. `git tag -l` won't list the `frotz-for-xyzzy` tag in the
+repository (i.e. `but tag -l` won't list the `frotz-for-xyzzy` tag in the
 above example), and there is no need to publish the tag to his public
 repository, either.
 
@@ -179,21 +179,21 @@ her public repository, if she chooses, in order to keep the tag namespace
 of her public repository clean, with:
 
 ------------
- $ git push example.com:/git/froboz.git :frotz-for-xyzzy
+ $ but push example.com:/but/froboz.but :frotz-for-xyzzy
 ------------
 
 
 Auditors
 --------
 
-The `--show-signature` option can be given to `git log` or `git show` and
+The `--show-signature` option can be given to `but log` or `but show` and
 shows the verification status of the embedded signed tag in merge cummits
 created when the integrator responded to a pull request of a signed tag.
 
-A typical output from `git show --show-signature` may look like this:
+A typical output from `but show --show-signature` may look like this:
 
 ------------
- $ git show --show-signature
+ $ but show --show-signature
  cummit 02306ef6a3498a39118aef9df7975bdb50091585
  merged tag 'frotz-for-xyzzy'
  gpg: Signature made Fri 06 Jan 2012 12:41:49 PM PST using RSA key ID 96AFE6CB
@@ -202,7 +202,7 @@ A typical output from `git show --show-signature` may look like this:
  Author: Inte Grator <xyzzy@example.com>
  Date:   Tue Jan 17 13:49:41 2012 -0800
 
-     Merge tag 'frotz-for-xyzzy' of example.com:/git/froboz.git/
+     Merge tag 'frotz-for-xyzzy' of example.com:/but/froboz.but/
 
      Completed frotz feature
 

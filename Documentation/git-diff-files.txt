@@ -1,22 +1,22 @@
-git-diff-files(1)
+but-diff-files(1)
 =================
 
 NAME
 ----
-git-diff-files - Compares files in the working tree and the index
+but-diff-files - Compares files in the working tree and the index
 
 
 SYNOPSIS
 --------
 [verse]
-'git diff-files' [-q] [-0|-1|-2|-3|-c|--cc] [<common-diff-options>] [<path>...]
+'but diff-files' [-q] [-0|-1|-2|-3|-c|--cc] [<common-diff-options>] [<path>...]
 
 DESCRIPTION
 -----------
 Compares the files in the working tree and the index.  When paths
 are specified, compares only those named paths.  Otherwise all
 entries in the index are compared.  The output format is the
-same as for 'git diff-index' and 'git diff-tree'.
+same as for 'but diff-index' and 'but diff-tree'.
 
 OPTIONS
 -------
@@ -49,4 +49,4 @@ include::diff-format.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

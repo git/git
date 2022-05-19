@@ -5,7 +5,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-	struct packed_git p;
+	struct packed_but p;
 
 	load_idx("fuzz-input", GIT_SHA1_RAWSZ, (void *)data, size, &p);
 

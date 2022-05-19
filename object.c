@@ -506,7 +506,7 @@ struct raw_object_store *raw_object_store_new(void)
 	struct raw_object_store *o = xmalloc(sizeof(*o));
 
 	memset(o, 0, sizeof(*o));
-	INIT_LIST_HEAD(&o->packed_git_mru);
+	INIT_LIST_HEAD(&o->packed_but_mru);
 	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	return o;
@@ -548,9 +548,9 @@ void raw_object_store_clear(struct raw_object_store *o)
 	o->odb_tail = NULL;
 	o->loaded_alternates = 0;
 
-	INIT_LIST_HEAD(&o->packed_git_mru);
+	INIT_LIST_HEAD(&o->packed_but_mru);
 	close_object_store(o);
-	o->packed_git = NULL;
+	o->packed_but = NULL;
 
 	hashmap_clear(&o->pack_map);
 }

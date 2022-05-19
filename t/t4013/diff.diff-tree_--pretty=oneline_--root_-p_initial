@@ -1,6 +1,6 @@
-$ git diff-tree --pretty=oneline --root -p initial
+$ but diff-tree --pretty=oneline --root -p initial
 444ac553ac7612cc88969031b02b3767fb8a353a Initial
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 new file mode 100644
 index 0000000..35d242b
 --- /dev/null
@@ -8,7 +8,7 @@ index 0000000..35d242b
 @@ -0,0 +1,2 @@
 +A
 +B
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 new file mode 100644
 index 0000000..01e79c3
 --- /dev/null
@@ -17,7 +17,7 @@ index 0000000..01e79c3
 +1
 +2
 +3
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 new file mode 100644
 index 0000000..01e79c3
 --- /dev/null

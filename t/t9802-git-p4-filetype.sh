@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 filetype tests'
+test_description='but p4 filetype tests'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -10,7 +10,7 @@ test_expect_success 'start p4d' '
 
 #
 # This series of tests checks newline handling  Both p4 and
-# git store newlines as \n, and have options to choose how
+# but store newlines as \n, and have options to choose how
 # newlines appear in checked-out files.
 #
 test_expect_success 'p4 client newlines, unix' '
@@ -68,48 +68,48 @@ test_expect_success 'p4 client newlines, win' '
 '
 
 test_expect_success 'ensure blobs store only lf newlines' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init &&
-		git p4 sync //depot@all &&
+		cd "$but" &&
+		but init &&
+		but p4 sync //depot@all &&
 
-		# verify the files in .git are stored only with newlines
-		o=$(git ls-tree p4/master -- f-unix | cut -f1 | cut -d\  -f3) &&
-		git cat-file blob $o >f-unix-blob &&
+		# verify the files in .but are stored only with newlines
+		o=$(but ls-tree p4/master -- f-unix | cut -f1 | cut -d\  -f3) &&
+		but cat-file blob $o >f-unix-blob &&
 		test_cmp "$cli"/f-unix-orig f-unix-blob &&
 
-		o=$(git ls-tree p4/master -- f-win | cut -f1 | cut -d\  -f3) &&
-		git cat-file blob $o >f-win-blob &&
+		o=$(but ls-tree p4/master -- f-win | cut -f1 | cut -d\  -f3) &&
+		but cat-file blob $o >f-win-blob &&
 		test_cmp "$cli"/f-win-as-lf f-win-blob &&
 
 		rm f-unix-blob f-win-blob
 	)
 '
 
-test_expect_success 'gitattributes setting eol=lf produces lf newlines' '
-	test_when_finished cleanup_git &&
+test_expect_success 'butattributes setting eol=lf produces lf newlines' '
+	test_when_finished cleanup_but &&
 	(
 		# checkout the files and make sure core.eol works as planned
-		cd "$git" &&
-		git init &&
-		echo "* eol=lf" >.gitattributes &&
-		git p4 sync //depot@all &&
-		git checkout -b master p4/master &&
+		cd "$but" &&
+		but init &&
+		echo "* eol=lf" >.butattributes &&
+		but p4 sync //depot@all &&
+		but checkout -b master p4/master &&
 		test_cmp "$cli"/f-unix-orig f-unix &&
 		test_cmp "$cli"/f-win-as-lf f-win
 	)
 '
 
-test_expect_success 'gitattributes setting eol=crlf produces crlf newlines' '
-	test_when_finished cleanup_git &&
+test_expect_success 'butattributes setting eol=crlf produces crlf newlines' '
+	test_when_finished cleanup_but &&
 	(
 		# checkout the files and make sure core.eol works as planned
-		cd "$git" &&
-		git init &&
-		echo "* eol=crlf" >.gitattributes &&
-		git p4 sync //depot@all &&
-		git checkout -b master p4/master &&
+		cd "$but" &&
+		but init &&
+		echo "* eol=crlf" >.butattributes &&
+		but p4 sync //depot@all &&
+		but checkout -b master p4/master &&
 		test_cmp "$cli"/f-unix-as-crlf f-unix &&
 		test_cmp "$cli"/f-win-orig f-win
 	)
@@ -153,10 +153,10 @@ test_expect_success 'utf-16 file create' '
 '
 
 test_expect_success 'utf-16 file test' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 
 		test_cmp "$cli/f-ascii" f-ascii &&
 		test_cmp "$cli/f-ascii-as-utf16" f-ascii-as-utf16 &&
@@ -200,10 +200,10 @@ build_smush() {
 test_expect_success 'keyword file test' '
 	build_smush &&
 	test_when_finished rm -f k_smush.py ko_smush.py &&
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 
 		# text, ensure unexpanded
 		"$PYTHON_PATH" "$TRASH_DIRECTORY/k_smush.py" <"$cli/k-text-k" >cli-k-text-k-smush &&
@@ -211,7 +211,7 @@ test_expect_success 'keyword file test' '
 		"$PYTHON_PATH" "$TRASH_DIRECTORY/ko_smush.py" <"$cli/k-text-ko" >cli-k-text-ko-smush &&
 		test_cmp cli-k-text-ko-smush k-text-ko &&
 
-		# utf16, even though p4 expands keywords, git p4 does not
+		# utf16, even though p4 expands keywords, but p4 does not
 		# try to undo that
 		test_cmp "$cli/k-utf16-k" k-utf16-k &&
 		test_cmp "$cli/k-utf16-ko" k-utf16-ko
@@ -242,10 +242,10 @@ test_expect_success 'ignore apple' '
 		p4 add -t apple double.png &&
 		p4 submit -d appledouble
 	) &&
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test ! -f double.png
 	)
 '
@@ -258,10 +258,10 @@ test_expect_success SYMLINKS 'create p4 symlink' '
 '
 
 test_expect_success SYMLINKS 'ensure p4 symlink parsed correctly' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test -L symlink &&
 		test $(test_readlink symlink) = symlink-target
 	)
@@ -312,10 +312,10 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		p4 print -q //depot/empty-symlink#2 >out &&
 		test_must_be_empty out
 	) &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 
-	# make sure git p4 handles it without error
-	git p4 clone --dest="$git" //depot@all &&
+	# make sure but p4 handles it without error
+	but p4 clone --dest="$but" //depot@all &&
 
 	# fix the symlink, make it point to "target2"
 	(
@@ -325,10 +325,10 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		ln -s target2 empty-symlink &&
 		p4 submit -d "make empty-symlink point to target2"
 	) &&
-	cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test $(test_readlink empty-symlink) = target2
 	)
 '

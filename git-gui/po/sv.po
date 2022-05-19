@@ -1,6 +1,6 @@
-# Swedish translation of git-gui.
+# Swedish translation of but-gui.
 # Copyright (C) 2007-2008 Shawn Pearce, et al.
-# This file is distributed under the same license as the git-gui package.
+# This file is distributed under the same license as the but-gui package.
 #
 # Mikael Magnusson <mikachu@gmail.com>, 2008.
 # Peter Krefting <peter@softwolves.pp.se>, 2007-2008, 2015.
@@ -20,33 +20,33 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Gtranslator 2.91.6\n"
 
-#: git-gui.sh:861
+#: but-gui.sh:861
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Ogiltigt teckensnitt angivet i %s:"
 
-#: git-gui.sh:915
+#: but-gui.sh:915
 msgid "Main Font"
 msgstr "Huvudteckensnitt"
 
-#: git-gui.sh:916
+#: but-gui.sh:916
 msgid "Diff/Console Font"
 msgstr "Diff/konsolteckensnitt"
 
-#: git-gui.sh:931 git-gui.sh:945 git-gui.sh:958 git-gui.sh:1048
-#: git-gui.sh:1067 git-gui.sh:3125
-msgid "git-gui: fatal error"
-msgstr "git-gui: ödesdigert fel"
+#: but-gui.sh:931 but-gui.sh:945 but-gui.sh:958 but-gui.sh:1048
+#: but-gui.sh:1067 but-gui.sh:3125
+msgid "but-gui: fatal error"
+msgstr "but-gui: ödesdigert fel"
 
-#: git-gui.sh:932
-msgid "Cannot find git in PATH."
-msgstr "Hittar inte git i PATH."
+#: but-gui.sh:932
+msgid "Cannot find but in PATH."
+msgstr "Hittar inte but i PATH."
 
-#: git-gui.sh:959
+#: but-gui.sh:959
 msgid "Cannot parse Git version string:"
 msgstr "Kan inte tolka versionssträng från Git:"
 
-#: git-gui.sh:984
+#: but-gui.sh:984
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -65,47 +65,47 @@ msgstr ""
 "\n"
 "Anta att \"%s\" är version 1.5.0?\n"
 
-#: git-gui.sh:1281
+#: but-gui.sh:1281
 msgid "Git directory not found:"
 msgstr "Git-katalogen hittades inte:"
 
-#: git-gui.sh:1315
+#: but-gui.sh:1315
 msgid "Cannot move to top of working directory:"
 msgstr "Kan inte gå till början på arbetskatalogen:"
 
-#: git-gui.sh:1323
+#: but-gui.sh:1323
 msgid "Cannot use bare repository:"
 msgstr "Kan inte använda naket arkiv:"
 
-#: git-gui.sh:1331
+#: but-gui.sh:1331
 msgid "No working directory"
 msgstr "Ingen arbetskatalog"
 
-#: git-gui.sh:1503 lib/checkout_op.tcl:306
+#: but-gui.sh:1503 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr "Uppdaterar filstatus..."
 
-#: git-gui.sh:1563
+#: but-gui.sh:1563
 msgid "Scanning for modified files ..."
 msgstr "Söker efter ändrade filer..."
 
-#: git-gui.sh:1639
+#: but-gui.sh:1639
 msgid "Calling prepare-cummit-msg hook..."
 msgstr ""
 "Anropar kroken för förberedelse av incheckningsmeddelande (prepare-cummit-"
 "msg)..."
 
-#: git-gui.sh:1656
+#: but-gui.sh:1656
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr ""
 "Incheckningen avvisades av kroken för förberedelse av incheckningsmeddelande "
 "(prepare-cummit-msg)."
 
-#: git-gui.sh:1814 lib/browser.tcl:252
+#: but-gui.sh:1814 lib/browser.tcl:252
 msgid "Ready."
 msgstr "Klar."
 
-#: git-gui.sh:1978
+#: but-gui.sh:1978
 #, tcl-format
 msgid ""
 "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
@@ -113,457 +113,457 @@ msgstr ""
 "Visningsgräns (gui.maxfilesdisplayed = %s) nådd, visare inte samtliga %s "
 "filer."
 
-#: git-gui.sh:2101
+#: but-gui.sh:2101
 msgid "Unmodified"
 msgstr "Oförändrade"
 
-#: git-gui.sh:2103
+#: but-gui.sh:2103
 msgid "Modified, not staged"
 msgstr "Förändrade, ej köade"
 
-#: git-gui.sh:2104 git-gui.sh:2116
+#: but-gui.sh:2104 but-gui.sh:2116
 msgid "Staged for cummit"
 msgstr "Köade för incheckning"
 
-#: git-gui.sh:2105 git-gui.sh:2117
+#: but-gui.sh:2105 but-gui.sh:2117
 msgid "Portions staged for cummit"
 msgstr "Delar köade för incheckning"
 
-#: git-gui.sh:2106 git-gui.sh:2118
+#: but-gui.sh:2106 but-gui.sh:2118
 msgid "Staged for cummit, missing"
 msgstr "Köade för incheckning, saknade"
 
-#: git-gui.sh:2108
+#: but-gui.sh:2108
 msgid "File type changed, not staged"
 msgstr "Filtyp ändrad, ej köade"
 
-#: git-gui.sh:2109 git-gui.sh:2110
+#: but-gui.sh:2109 but-gui.sh:2110
 msgid "File type changed, old type staged for cummit"
 msgstr "Filtyp ändrad, gammal typ köade för incheckning"
 
-#: git-gui.sh:2111
+#: but-gui.sh:2111
 msgid "File type changed, staged"
 msgstr "Filtyp ändrad, köade"
 
-#: git-gui.sh:2112
+#: but-gui.sh:2112
 msgid "File type change staged, modification not staged"
 msgstr "Filtypsändringar köade, innehållsändringar ej köade"
 
-#: git-gui.sh:2113
+#: but-gui.sh:2113
 msgid "File type change staged, file missing"
 msgstr "Filtypsändringar köade, fil saknas"
 
-#: git-gui.sh:2115
+#: but-gui.sh:2115
 msgid "Untracked, not staged"
 msgstr "Ej spårade, ej köade"
 
-#: git-gui.sh:2120
+#: but-gui.sh:2120
 msgid "Missing"
 msgstr "Saknade"
 
-#: git-gui.sh:2121
+#: but-gui.sh:2121
 msgid "Staged for removal"
 msgstr "Köade för borttagning"
 
-#: git-gui.sh:2122
+#: but-gui.sh:2122
 msgid "Staged for removal, still present"
 msgstr "Köade för borttagning, fortfarande närvarande"
 
-#: git-gui.sh:2124 git-gui.sh:2125 git-gui.sh:2126 git-gui.sh:2127
-#: git-gui.sh:2128 git-gui.sh:2129
+#: but-gui.sh:2124 but-gui.sh:2125 but-gui.sh:2126 but-gui.sh:2127
+#: but-gui.sh:2128 but-gui.sh:2129
 msgid "Requires merge resolution"
 msgstr "Kräver konflikthantering efter sammanslagning"
 
-#: git-gui.sh:2164
-msgid "Starting gitk... please wait..."
-msgstr "Startar gitk... vänta..."
+#: but-gui.sh:2164
+msgid "Starting butk... please wait..."
+msgstr "Startar butk... vänta..."
 
-#: git-gui.sh:2176
-msgid "Couldn't find gitk in PATH"
-msgstr "Hittade inte gitk i PATH."
+#: but-gui.sh:2176
+msgid "Couldn't find butk in PATH"
+msgstr "Hittade inte butk i PATH."
 
-#: git-gui.sh:2235
-msgid "Couldn't find git gui in PATH"
-msgstr "Hittade inte git gui i PATH."
+#: but-gui.sh:2235
+msgid "Couldn't find but gui in PATH"
+msgstr "Hittade inte but gui i PATH."
 
-#: git-gui.sh:2654 lib/choose_repository.tcl:41
+#: but-gui.sh:2654 lib/choose_repository.tcl:41
 msgid "Repository"
 msgstr "Arkiv"
 
-#: git-gui.sh:2655
+#: but-gui.sh:2655
 msgid "Edit"
 msgstr "Redigera"
 
-#: git-gui.sh:2657 lib/choose_rev.tcl:567
+#: but-gui.sh:2657 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr "Gren"
 
-#: git-gui.sh:2660 lib/choose_rev.tcl:554
+#: but-gui.sh:2660 lib/choose_rev.tcl:554
 msgid "cummit@@noun"
 msgstr "Incheckning"
 
-#: git-gui.sh:2663 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
+#: but-gui.sh:2663 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
 msgid "Merge"
 msgstr "Slå ihop"
 
-#: git-gui.sh:2664 lib/choose_rev.tcl:563
+#: but-gui.sh:2664 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr "Fjärrarkiv"
 
-#: git-gui.sh:2667
+#: but-gui.sh:2667
 msgid "Tools"
 msgstr "Verktyg"
 
-#: git-gui.sh:2676
+#: but-gui.sh:2676
 msgid "Explore Working Copy"
 msgstr "Utforska arbetskopia"
 
-#: git-gui.sh:2682
+#: but-gui.sh:2682
 msgid "Git Bash"
 msgstr "Git Bash"
 
-#: git-gui.sh:2692
+#: but-gui.sh:2692
 msgid "Browse Current Branch's Files"
 msgstr "Bläddra i grenens filer"
 
-#: git-gui.sh:2696
+#: but-gui.sh:2696
 msgid "Browse Branch Files..."
 msgstr "Bläddra filer på gren..."
 
-#: git-gui.sh:2701
+#: but-gui.sh:2701
 msgid "Visualize Current Branch's History"
 msgstr "Visualisera grenens historik"
 
-#: git-gui.sh:2705
+#: but-gui.sh:2705
 msgid "Visualize All Branch History"
 msgstr "Visualisera alla grenars historik"
 
-#: git-gui.sh:2712
+#: but-gui.sh:2712
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "Bläddra i filer för %s"
 
-#: git-gui.sh:2714
+#: but-gui.sh:2714
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "Visualisera historik för %s"
 
-#: git-gui.sh:2719 lib/database.tcl:40 lib/database.tcl:66
+#: but-gui.sh:2719 lib/database.tcl:40 lib/database.tcl:66
 msgid "Database Statistics"
 msgstr "Databasstatistik"
 
-#: git-gui.sh:2722 lib/database.tcl:33
+#: but-gui.sh:2722 lib/database.tcl:33
 msgid "Compress Database"
 msgstr "Komprimera databas"
 
-#: git-gui.sh:2725
+#: but-gui.sh:2725
 msgid "Verify Database"
 msgstr "Verifiera databas"
 
-#: git-gui.sh:2732 git-gui.sh:2736 git-gui.sh:2740 lib/shortcut.tcl:8
+#: but-gui.sh:2732 but-gui.sh:2736 but-gui.sh:2740 lib/shortcut.tcl:8
 #: lib/shortcut.tcl:40 lib/shortcut.tcl:72
 msgid "Create Desktop Icon"
 msgstr "Skapa skrivbordsikon"
 
-#: git-gui.sh:2748 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
+#: but-gui.sh:2748 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
 msgid "Quit"
 msgstr "Avsluta"
 
-#: git-gui.sh:2756
+#: but-gui.sh:2756
 msgid "Undo"
 msgstr "Ångra"
 
-#: git-gui.sh:2759
+#: but-gui.sh:2759
 msgid "Redo"
 msgstr "Gör om"
 
-#: git-gui.sh:2763 git-gui.sh:3368
+#: but-gui.sh:2763 but-gui.sh:3368
 msgid "Cut"
 msgstr "Klipp ut"
 
-#: git-gui.sh:2766 git-gui.sh:3371 git-gui.sh:3445 git-gui.sh:3530
+#: but-gui.sh:2766 but-gui.sh:3371 but-gui.sh:3445 but-gui.sh:3530
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Kopiera"
 
-#: git-gui.sh:2769 git-gui.sh:3374
+#: but-gui.sh:2769 but-gui.sh:3374
 msgid "Paste"
 msgstr "Klistra in"
 
-#: git-gui.sh:2772 git-gui.sh:3377 lib/remote_branch_delete.tcl:39
+#: but-gui.sh:2772 but-gui.sh:3377 lib/remote_branch_delete.tcl:39
 #: lib/branch_delete.tcl:28
 msgid "Delete"
 msgstr "Ta bort"
 
-#: git-gui.sh:2776 git-gui.sh:3381 git-gui.sh:3534 lib/console.tcl:71
+#: but-gui.sh:2776 but-gui.sh:3381 but-gui.sh:3534 lib/console.tcl:71
 msgid "Select All"
 msgstr "Markera alla"
 
-#: git-gui.sh:2785
+#: but-gui.sh:2785
 msgid "Create..."
 msgstr "Skapa..."
 
-#: git-gui.sh:2791
+#: but-gui.sh:2791
 msgid "Checkout..."
 msgstr "Checka ut..."
 
-#: git-gui.sh:2797
+#: but-gui.sh:2797
 msgid "Rename..."
 msgstr "Byt namn..."
 
-#: git-gui.sh:2802
+#: but-gui.sh:2802
 msgid "Delete..."
 msgstr "Ta bort..."
 
-#: git-gui.sh:2807
+#: but-gui.sh:2807
 msgid "Reset..."
 msgstr "Återställ..."
 
-#: git-gui.sh:2817
+#: but-gui.sh:2817
 msgid "Done"
 msgstr "Färdig"
 
-#: git-gui.sh:2819
+#: but-gui.sh:2819
 msgid "cummit@@verb"
 msgstr "Checka in"
 
-#: git-gui.sh:2828 git-gui.sh:3309
+#: but-gui.sh:2828 but-gui.sh:3309
 msgid "New cummit"
 msgstr "Ny incheckning"
 
-#: git-gui.sh:2836 git-gui.sh:3316
+#: but-gui.sh:2836 but-gui.sh:3316
 msgid "Amend Last cummit"
 msgstr "Lägg till föregående incheckning"
 
-#: git-gui.sh:2846 git-gui.sh:3270 lib/remote_branch_delete.tcl:101
+#: but-gui.sh:2846 but-gui.sh:3270 lib/remote_branch_delete.tcl:101
 msgid "Rescan"
 msgstr "Sök på nytt"
 
-#: git-gui.sh:2852
+#: but-gui.sh:2852
 msgid "Stage To cummit"
 msgstr "Köa för incheckning"
 
-#: git-gui.sh:2858
+#: but-gui.sh:2858
 msgid "Stage Changed Files To cummit"
 msgstr "Köa ändrade filer för incheckning"
 
-#: git-gui.sh:2864
+#: but-gui.sh:2864
 msgid "Unstage From cummit"
 msgstr "Ta bort från incheckningskö"
 
-#: git-gui.sh:2870 lib/index.tcl:442
+#: but-gui.sh:2870 lib/index.tcl:442
 msgid "Revert Changes"
 msgstr "Återställ ändringar"
 
-#: git-gui.sh:2878 git-gui.sh:3581 git-gui.sh:3612
+#: but-gui.sh:2878 but-gui.sh:3581 but-gui.sh:3612
 msgid "Show Less Context"
 msgstr "Visa mindre sammanhang"
 
-#: git-gui.sh:2882 git-gui.sh:3585 git-gui.sh:3616
+#: but-gui.sh:2882 but-gui.sh:3585 but-gui.sh:3616
 msgid "Show More Context"
 msgstr "Visa mer sammanhang"
 
-#: git-gui.sh:2889 git-gui.sh:3283 git-gui.sh:3392
+#: but-gui.sh:2889 but-gui.sh:3283 but-gui.sh:3392
 msgid "Sign Off"
 msgstr "Skriv under"
 
-#: git-gui.sh:2905
+#: but-gui.sh:2905
 msgid "Local Merge..."
 msgstr "Lokal sammanslagning..."
 
-#: git-gui.sh:2910
+#: but-gui.sh:2910
 msgid "Abort Merge..."
 msgstr "Avbryt sammanslagning..."
 
-#: git-gui.sh:2922 git-gui.sh:2950
+#: but-gui.sh:2922 but-gui.sh:2950
 msgid "Add..."
 msgstr "Lägg till..."
 
-#: git-gui.sh:2926
+#: but-gui.sh:2926
 msgid "Push..."
 msgstr "Sänd..."
 
-#: git-gui.sh:2930
+#: but-gui.sh:2930
 msgid "Delete Branch..."
 msgstr "Ta bort gren..."
 
-#: git-gui.sh:2940 git-gui.sh:3563
+#: but-gui.sh:2940 but-gui.sh:3563
 msgid "Options..."
 msgstr "Alternativ..."
 
-#: git-gui.sh:2951
+#: but-gui.sh:2951
 msgid "Remove..."
 msgstr "Ta bort..."
 
-#: git-gui.sh:2960 lib/choose_repository.tcl:55
+#: but-gui.sh:2960 lib/choose_repository.tcl:55
 msgid "Help"
 msgstr "Hjälp"
 
-#: git-gui.sh:2964 git-gui.sh:2968 lib/choose_repository.tcl:49
+#: but-gui.sh:2964 but-gui.sh:2968 lib/choose_repository.tcl:49
 #: lib/choose_repository.tcl:58 lib/about.tcl:14
 #, tcl-format
 msgid "About %s"
 msgstr "Om %s"
 
-#: git-gui.sh:2992
+#: but-gui.sh:2992
 msgid "Online Documentation"
 msgstr "Webbdokumentation"
 
-#: git-gui.sh:2995 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
+#: but-gui.sh:2995 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
 msgid "Show SSH Key"
 msgstr "Visa SSH-nyckel"
 
-#: git-gui.sh:3014 git-gui.sh:3146
+#: but-gui.sh:3014 but-gui.sh:3146
 msgid "Usage"
 msgstr "Användning"
 
-#: git-gui.sh:3095 lib/blame.tcl:573
+#: but-gui.sh:3095 lib/blame.tcl:573
 msgid "Error"
 msgstr "Fel"
 
-#: git-gui.sh:3126
+#: but-gui.sh:3126
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "ödesdigert: kunde inte ta status på sökvägen %s: Fil eller katalog saknas"
 
-#: git-gui.sh:3159
+#: but-gui.sh:3159
 msgid "Current Branch:"
 msgstr "Aktuell gren:"
 
-#: git-gui.sh:3185
+#: but-gui.sh:3185
 msgid "Staged Changes (Will cummit)"
 msgstr "Köade ändringar (kommer att checkas in)"
 
-#: git-gui.sh:3205
+#: but-gui.sh:3205
 msgid "Unstaged Changes"
 msgstr "Oköade ändringar"
 
-#: git-gui.sh:3276
+#: but-gui.sh:3276
 msgid "Stage Changed"
 msgstr "Köa ändrade"
 
-#: git-gui.sh:3295 lib/transport.tcl:137 lib/transport.tcl:229
+#: but-gui.sh:3295 lib/transport.tcl:137 lib/transport.tcl:229
 msgid "Push"
 msgstr "Sänd"
 
-#: git-gui.sh:3330
+#: but-gui.sh:3330
 msgid "Initial cummit Message:"
 msgstr "Inledande incheckningsmeddelande:"
 
-#: git-gui.sh:3331
+#: but-gui.sh:3331
 msgid "Amended cummit Message:"
 msgstr "Utökat incheckningsmeddelande:"
 
-#: git-gui.sh:3332
+#: but-gui.sh:3332
 msgid "Amended Initial cummit Message:"
 msgstr "Utökat inledande incheckningsmeddelande:"
 
-#: git-gui.sh:3333
+#: but-gui.sh:3333
 msgid "Amended Merge cummit Message:"
 msgstr "Utökat incheckningsmeddelande för sammanslagning:"
 
-#: git-gui.sh:3334
+#: but-gui.sh:3334
 msgid "Merge cummit Message:"
 msgstr "Incheckningsmeddelande för sammanslagning:"
 
-#: git-gui.sh:3335
+#: but-gui.sh:3335
 msgid "cummit Message:"
 msgstr "Incheckningsmeddelande:"
 
-#: git-gui.sh:3384 git-gui.sh:3538 lib/console.tcl:73
+#: but-gui.sh:3384 but-gui.sh:3538 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Kopiera alla"
 
-#: git-gui.sh:3408 lib/blame.tcl:105
+#: but-gui.sh:3408 lib/blame.tcl:105
 msgid "File:"
 msgstr "Fil:"
 
-#: git-gui.sh:3526
+#: but-gui.sh:3526
 msgid "Refresh"
 msgstr "Uppdatera"
 
-#: git-gui.sh:3547
+#: but-gui.sh:3547
 msgid "Decrease Font Size"
 msgstr "Minska teckensnittsstorlek"
 
-#: git-gui.sh:3551
+#: but-gui.sh:3551
 msgid "Increase Font Size"
 msgstr "Öka teckensnittsstorlek"
 
-#: git-gui.sh:3559 lib/blame.tcl:294
+#: but-gui.sh:3559 lib/blame.tcl:294
 msgid "Encoding"
 msgstr "Teckenkodning"
 
-#: git-gui.sh:3570
+#: but-gui.sh:3570
 msgid "Apply/Reverse Hunk"
 msgstr "Använd/återställ del"
 
-#: git-gui.sh:3575
+#: but-gui.sh:3575
 msgid "Apply/Reverse Line"
 msgstr "Använd/återställ rad"
 
-#: git-gui.sh:3594
+#: but-gui.sh:3594
 msgid "Run Merge Tool"
 msgstr "Starta verktyg för sammanslagning"
 
-#: git-gui.sh:3599
+#: but-gui.sh:3599
 msgid "Use Remote Version"
 msgstr "Använd versionen från fjärrarkivet"
 
-#: git-gui.sh:3603
+#: but-gui.sh:3603
 msgid "Use Local Version"
 msgstr "Använd lokala versionen"
 
-#: git-gui.sh:3607
+#: but-gui.sh:3607
 msgid "Revert To Base"
 msgstr "Återställ till basversionen"
 
-#: git-gui.sh:3625
+#: but-gui.sh:3625
 msgid "Visualize These Changes In The Submodule"
 msgstr "Visualisera ändringarna i undermodulen"
 
-#: git-gui.sh:3629
+#: but-gui.sh:3629
 msgid "Visualize Current Branch History In The Submodule"
 msgstr "Visualisera grenens historik i undermodulen"
 
-#: git-gui.sh:3633
+#: but-gui.sh:3633
 msgid "Visualize All Branch History In The Submodule"
 msgstr "Visualisera alla grenars historik i undermodulen"
 
-#: git-gui.sh:3638
-msgid "Start git gui In The Submodule"
-msgstr "Starta git gui i undermodulen"
+#: but-gui.sh:3638
+msgid "Start but gui In The Submodule"
+msgstr "Starta but gui i undermodulen"
 
-#: git-gui.sh:3673
+#: but-gui.sh:3673
 msgid "Unstage Hunk From cummit"
 msgstr "Ta bort del ur incheckningskö"
 
-#: git-gui.sh:3675
+#: but-gui.sh:3675
 msgid "Unstage Lines From cummit"
 msgstr "Ta bort rader ur incheckningskö"
 
-#: git-gui.sh:3677
+#: but-gui.sh:3677
 msgid "Unstage Line From cummit"
 msgstr "Ta bort rad ur incheckningskö"
 
-#: git-gui.sh:3680
+#: but-gui.sh:3680
 msgid "Stage Hunk For cummit"
 msgstr "Ställ del i incheckningskö"
 
-#: git-gui.sh:3682
+#: but-gui.sh:3682
 msgid "Stage Lines For cummit"
 msgstr "Ställ rader i incheckningskö"
 
-#: git-gui.sh:3684
+#: but-gui.sh:3684
 msgid "Stage Line For cummit"
 msgstr "Ställ rad i incheckningskö"
 
-#: git-gui.sh:3709
+#: but-gui.sh:3709
 msgid "Initializing..."
 msgstr "Initierar..."
 
-#: git-gui.sh:3852
+#: but-gui.sh:3852
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -580,7 +580,7 @@ msgstr ""
 "av %s:\n"
 "\n"
 
-#: git-gui.sh:3881
+#: but-gui.sh:3881
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -590,7 +590,7 @@ msgstr ""
 "Detta beror på ett känt problem med\n"
 "Tcl-binären som följer med Cygwin."
 
-#: git-gui.sh:3886
+#: but-gui.sh:3886
 #, tcl-format
 msgid ""
 "\n"
@@ -598,14 +598,14 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 "\n"
 "\n"
 "Du kan ersätta %s\n"
 "med att lägga in värden för inställningarna\n"
 "user.name och user.email i din personliga\n"
-"~/.gitconfig-fil.\n"
+"~/.butconfig-fil.\n"
 
 #: lib/line.tcl:17
 msgid "Goto Line:"
@@ -649,8 +649,8 @@ msgstr "Grenen \"%s\" finns inte."
 
 #: lib/checkout_op.tcl:194
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
-msgstr "Kunde inte konfigurera förenklad git-pull för '%s'."
+msgid "Failed to configure simplified but-pull for '%s'."
+msgstr "Kunde inte konfigurera förenklad but-pull för '%s'."
 
 #: lib/checkout_op.tcl:202 lib/branch_rename.tcl:102
 #, tcl-format
@@ -807,7 +807,7 @@ msgstr "fjärrborttagning %s"
 #: lib/transport.tcl:19
 #, tcl-format
 msgid "Pruning tracking branches deleted from %s"
-msgstr "Tar bort spårande grenar som tagits bort från %s"
+msgstr "Tar bort spårande grenar som tabuts bort från %s"
 
 #: lib/transport.tcl:25
 msgid "fetch all remotes"
@@ -823,7 +823,7 @@ msgstr "rensa alla fjärrarkiv"
 
 #: lib/transport.tcl:41
 msgid "Pruning tracking branches deleted from all remotes"
-msgstr "Rensar spårande grenar som tagits bort, från alla fjärrarkiv"
+msgstr "Rensar spårande grenar som tabuts bort, från alla fjärrarkiv"
 
 #: lib/transport.tcl:54 lib/transport.tcl:92 lib/transport.tcl:110
 #: lib/remote_add.tcl:162
@@ -1788,7 +1788,7 @@ msgid ""
 "\n"
 " - %s"
 msgstr ""
-"Följande grenar har inte helt slagits samman i %s:\n"
+"Följande grenar har inte helt slabuts samman i %s:\n"
 "\n"
 " - %s"
 
@@ -2073,8 +2073,8 @@ msgid "Failed to open repository %s:"
 msgstr "Kunde inte öppna arkivet %s:"
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - ett grafiskt användargränssnitt för Git."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui - ett grafiskt användargränssnitt för Git."
 
 #: lib/blame.tcl:73
 msgid "File Viewer"
@@ -2556,10 +2556,10 @@ msgstr "Indexfel"
 #: lib/index.tcl:19
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "Misslyckades med att uppdatera Gitindexet. En omsökning kommer att startas "
-"automatiskt för att synkronisera om git-gui."
+"automatiskt för att synkronisera om but-gui."
 
 #: lib/index.tcl:30
 msgid "Continue"
@@ -2705,8 +2705,8 @@ msgstr "Du måste rätta till felen ovan innan du checkar in."
 #~ msgid "Case-Sensitive"
 #~ msgstr "Skilj på VERSALER/gemener"
 
-#~ msgid "Cannot use funny .git directory:"
-#~ msgstr "Kan inte använda underlig .git-katalog:"
+#~ msgid "Cannot use funny .but directory:"
+#~ msgstr "Kan inte använda underlig .but-katalog:"
 
 #~ msgid "Preferences..."
 #~ msgstr "Inställningar..."
@@ -2721,11 +2721,11 @@ msgstr "Du måste rätta till felen ovan innan du checkar in."
 #~ msgstr "Ta bort fjärrgren"
 
 #~ msgid ""
-#~ "Unable to start gitk:\n"
+#~ "Unable to start butk:\n"
 #~ "\n"
 #~ "%s does not exist"
 #~ msgstr ""
-#~ "Kan inte starta gitk:\n"
+#~ "Kan inte starta butk:\n"
 #~ "\n"
 #~ "%s finns inte"
 

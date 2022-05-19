@@ -95,7 +95,7 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 {
 	struct notes_rewrite_cfg *c = cb;
 	if (starts_with(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
-		c->enabled = git_config_bool(k, v);
+		c->enabled = but_config_bool(k, v);
 		return 0;
 	} else if (!c->mode_from_env && !strcmp(k, "notes.rewritemode")) {
 		if (!v)
@@ -149,7 +149,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 		c->refs_from_env = 1;
 		string_list_add_refs_from_colon_sep(c->refs, rewrite_refs_env);
 	}
-	git_config(notes_rewrite_config, c);
+	but_config(notes_rewrite_config, c);
 	if (!c->enabled || !c->refs->nr) {
 		string_list_clear(c->refs, 0);
 		free(c->refs);

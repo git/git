@@ -1,14 +1,14 @@
-git-range-diff(1)
+but-range-diff(1)
 =================
 
 NAME
 ----
-git-range-diff - Compare two cummit ranges (e.g. two versions of a branch)
+but-range-diff - Compare two cummit ranges (e.g. two versions of a branch)
 
 SYNOPSIS
 --------
 [verse]
-'git range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
+'but range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
 	[--no-dual-color] [--creation-factor=<factor>]
 	[--left-only | --right-only]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
@@ -33,7 +33,7 @@ There are three ways to specify the cummit ranges:
 
 - `<range1> <range2>`: Either cummit range can be of the form
   `<base>..<rev>`, `<rev>^!` or `<rev>^-<n>`. See `SPECIFYING RANGES`
-  in linkgit:gitrevisions[7] for more details.
+  in linkbut:butrevisions[7] for more details.
 
 - `<rev1>...<rev2>`. This is equivalent to
   `<rev2>..<rev1> <rev1>..<rev2>`.
@@ -44,7 +44,7 @@ There are three ways to specify the cummit ranges:
 OPTIONS
 -------
 --no-dual-color::
-	When the cummit diffs differ, `git range-diff` recreates the
+	When the cummit diffs differ, `but range-diff` recreates the
 	original diffs' coloring, and adds outer -/+ diff markers with
 	the *background* being red/green to make it easier to see e.g.
 	when there was a change in what exact lines were added.
@@ -63,7 +63,7 @@ to revert to color all lines according to the outer diff markers
 
 --creation-factor=<percent>::
 	Set the creation/deletion cost fudge factor to `<percent>`.
-	Defaults to 60. Try a larger value if `git range-diff` erroneously
+	Defaults to 60. Try a larger value if `but range-diff` erroneously
 	considers a large change a total rewrite (deletion of one cummit
 	and addition of another), and a smaller one in the reverse case.
 	See the ``Algorithm`` section below for an explanation why this is
@@ -78,8 +78,8 @@ to revert to color all lines according to the outer diff markers
 	(or the "right range" when using the `<rev1>...<rev2>` format).
 
 --[no-]notes[=<ref>]::
-	This flag is passed to the `git log` program
-	(see linkgit:git-log[1]) that generates the patches.
+	This flag is passed to the `but log` program
+	(see linkbut:but-log[1]) that generates the patches.
 
 <range1> <range2>::
 	Compare the cummits specified by the two ranges, where
@@ -92,15 +92,15 @@ to revert to color all lines according to the outer diff markers
 	Equivalent to passing `<base>..<rev1>` and `<base>..<rev2>`.
 	Note that `<base>` does not need to be the exact branch point
 	of the branches. Example: after rebasing a branch `my-topic`,
-	`git range-diff my-topic@{u} my-topic@{1} my-topic` would
+	`but range-diff my-topic@{u} my-topic@{1} my-topic` would
 	show the differences introduced by the rebase.
 
-`git range-diff` also accepts the regular diff options (see
-linkgit:git-diff[1]), most notably the `--color=[<when>]` and
+`but range-diff` also accepts the regular diff options (see
+linkbut:but-diff[1]), most notably the `--color=[<when>]` and
 `--no-color` options. These options are used when generating the "diff
 between patches", i.e. to compare the author, cummit message and diff of
 corresponding old/new cummits. There is currently no means to tweak most of the
-diff options passed to `git log` when generating those patches.
+diff options passed to `but log` when generating those patches.
 
 OUTPUT STABILITY
 ----------------
@@ -109,8 +109,8 @@ The output of the `range-diff` command is subject to change. It is
 intended to be human-readable porcelain output, not something that can
 be used across versions of Git to get a textually stable `range-diff`
 (as opposed to something like the `--stable` option to
-linkgit:git-patch-id[1]). There's also no equivalent of
-linkgit:git-apply[1] for `range-diff`, the output is not intended to
+linkbut:but-patch-id[1]). There's also no equivalent of
+linkbut:but-apply[1] for `range-diff`, the output is not intended to
 be machine-readable.
 
 This is particularly true when passing in diff options. Currently some
@@ -124,7 +124,7 @@ CONFIGURATION
 -------------
 This command uses the `diff.color.*` and `pager.range-diff` settings
 (the latter is on by default).
-See linkgit:git-config[1].
+See linkbut:but-config[1].
 
 
 EXAMPLES
@@ -134,11 +134,11 @@ When a rebase required merge conflicts to be resolved, compare the changes
 introduced by the rebase directly afterwards using:
 
 ------------
-$ git range-diff @{u} @{1} @
+$ but range-diff @{u} @{1} @
 ------------
 
 
-A typical output of `git range-diff` would look like this:
+A typical output of `but range-diff` would look like this:
 
 ------------
 -:  ------- > 1:  0ddba11 Prepare for the inevitable!
@@ -165,11 +165,11 @@ removed the 3rd, added a new one before the first two, and modified the
 cummit message of the 2nd cummit as well its diff.
 
 When the output goes to a terminal, it is color-coded by default, just
-like regular `git diff`'s output. In addition, the first line (adding a
+like regular `but diff`'s output. In addition, the first line (adding a
 cummit) is green, the last line (deleting a cummit) is red, the second
-line (with a perfect match) is yellow like the commit header of `git
+line (with a perfect match) is yellow like the commit header of `but
 show`'s output, and the third line colors the old cummit red, the new
-one green and the rest like `git show`'s commit header.
+one green and the rest like `but show`'s commit header.
 
 A naive color-coded diff of diffs is actually a bit hard to read,
 though, as it colors the entire lines red or green. The line that added
@@ -286,8 +286,8 @@ found in this case will look like this:
 
 SEE ALSO
 --------
-linkgit:git-log[1]
+linkbut:but-log[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

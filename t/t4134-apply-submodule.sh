@@ -3,7 +3,7 @@
 # Copyright (c) 2010 Peter Collingbourne
 #
 
-test_description='git apply submodule tests'
+test_description='but apply submodule tests'
 
 
 TEST_PASSES_SANITIZE_LEAK=true
@@ -11,7 +11,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 	cat > create-sm.patch <<EOF &&
-diff --git a/dir/sm b/dir/sm
+diff --but a/dir/sm b/dir/sm
 new file mode 160000
 index 0000000..0123456
 --- /dev/null
@@ -20,7 +20,7 @@ index 0000000..0123456
 +Subproject cummit $(test_oid numeric)
 EOF
 	cat > remove-sm.patch <<EOF
-diff --git a/dir/sm b/dir/sm
+diff --but a/dir/sm b/dir/sm
 deleted file mode 160000
 index 0123456..0000000
 --- a/dir/sm
@@ -31,9 +31,9 @@ EOF
 '
 
 test_expect_success 'removing a submodule also removes all leading subdirectories' '
-	git apply --index create-sm.patch &&
+	but apply --index create-sm.patch &&
 	test -d dir/sm &&
-	git apply --index remove-sm.patch &&
+	but apply --index remove-sm.patch &&
 	test \! -d dir
 '
 

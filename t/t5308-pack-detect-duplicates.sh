@@ -26,7 +26,7 @@ HI_SHA1=$EMPTY_BLOB
 # duplicate runs).
 MISSING_SHA1=$(test_oid missing_oid)
 
-# git will never intentionally create packfiles with
+# but will never intentionally create packfiles with
 # duplicate objects, so we have to construct them by hand.
 #
 # $1 is the name of the packfile to create
@@ -44,13 +44,13 @@ create_pack () {
 # double-check that create_pack actually works
 test_expect_success 'pack with no duplicates' '
 	create_pack no-dups.pack 1 &&
-	git index-pack --stdin <no-dups.pack
+	but index-pack --stdin <no-dups.pack
 '
 
 test_expect_success 'index-pack will allow duplicate objects by default' '
 	clear_packs &&
 	create_pack dups.pack 100 &&
-	git index-pack --stdin <dups.pack
+	but index-pack --stdin <dups.pack
 '
 
 test_expect_success 'create batch-check test vectors' '
@@ -67,15 +67,15 @@ test_expect_success 'create batch-check test vectors' '
 '
 
 test_expect_success 'lookup in duplicated pack' '
-	git cat-file --batch-check <input >actual &&
+	but cat-file --batch-check <input >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'index-pack can reject packs with duplicates' '
 	clear_packs &&
 	create_pack dups.pack 2 &&
-	test_must_fail git index-pack --strict --stdin <dups.pack &&
-	test_expect_code 1 git cat-file -e $LO_SHA1
+	test_must_fail but index-pack --strict --stdin <dups.pack &&
+	test_expect_code 1 but cat-file -e $LO_SHA1
 '
 
 test_done

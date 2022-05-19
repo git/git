@@ -1,16 +1,16 @@
-git-index-pack(1)
+but-index-pack(1)
 =================
 
 NAME
 ----
-git-index-pack - Build pack index file for an existing packed archive
+but-index-pack - Build pack index file for an existing packed archive
 
 
 SYNOPSIS
 --------
 [verse]
-'git index-pack' [-v] [-o <index-file>] [--[no-]rev-index] <pack-file>
-'git index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>]
+'but index-pack' [-v] [-o <index-file>] [--[no-]rev-index] <pack-file>
+'but index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>]
 		  [--[no-]rev-index] [<pack-file>]
 
 
@@ -51,11 +51,11 @@ OPTIONS
 	a default name determined from the pack content.  If
 	<pack-file> is not specified consider using --keep to
 	prevent a race condition between this process and
-	'git repack'.
+	'but repack'.
 
 --fix-thin::
-	Fix a "thin" pack produced by `git pack-objects --thin` (see
-	linkgit:git-pack-objects[1] for details) by adding the
+	Fix a "thin" pack produced by `but pack-objects --thin` (see
+	linkbut:but-pack-objects[1] for details) by adding the
 	excluded objects the deltified objects are based on to the
 	pack. This option only makes sense in conjunction with --stdin.
 
@@ -63,7 +63,7 @@ OPTIONS
 	Before moving the index into its final destination
 	create an empty .keep file for the associated pack file.
 	This option is usually necessary with --stdin to prevent a
-	simultaneous 'git repack' process from deleting
+	simultaneous 'but repack' process from deleting
 	the newly constructed pack and index before refs can be
 	updated to use objects contained in the pack.
 
@@ -95,7 +95,7 @@ default and "Indexing objects" when `--stdin` is specified.
 	For internal use only.
 +
 Die if the pack contains broken objects. If the pack contains a tree
-pointing to a .gitmodules blob that does not exist, prints the hash of
+pointing to a .butmodules blob that does not exist, prints the hash of
 that blob (for the caller to check) after the hash that goes into the
 name of the pack/idx file (see "Notes").
 
@@ -137,9 +137,9 @@ Once the index has been created, the hash that goes into the name of
 the pack/idx file is printed to stdout. If --stdin was
 also used then this is prefixed by either "pack\t", or "keep\t" if a
 new .keep file was successfully created. This is useful to remove a
-.keep file used as a lock to prevent the race with 'git repack'
+.keep file used as a lock to prevent the race with 'but repack'
 mentioned above.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

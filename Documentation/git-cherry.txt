@@ -1,14 +1,14 @@
-git-cherry(1)
+but-cherry(1)
 =============
 
 NAME
 ----
-git-cherry - Find cummits yet to be applied to upstream
+but-cherry - Find cummits yet to be applied to upstream
 
 SYNOPSIS
 --------
 [verse]
-'git cherry' [-v] [<upstream> [<head> [<limit>]]]
+'but cherry' [-v] [<upstream> [<head> [<limit>]]]
 
 DESCRIPTION
 -----------
@@ -16,9 +16,9 @@ Determine whether there are cummits in `<head>..<upstream>` that are
 equivalent to those in the range `<limit>..<head>`.
 
 The equivalence test is based on the diff, after removing whitespace
-and line numbers.  git-cherry therefore detects when cummits have been
-"copied" by means of linkgit:git-cherry-pick[1], linkgit:git-am[1] or
-linkgit:git-rebase[1].
+and line numbers.  but-cherry therefore detects when cummits have been
+"copied" by means of linkbut:but-cherry-pick[1], linkbut:but-am[1] or
+linkbut:but-rebase[1].
 
 Outputs the SHA1 of every cummit in `<limit>..<head>`, prefixed with
 `-` for cummits that have an equivalent in <upstream>, and `+` for
@@ -45,24 +45,24 @@ EXAMPLES
 Patch workflows
 ~~~~~~~~~~~~~~~
 
-git-cherry is frequently used in patch-based workflows (see
-linkgit:gitworkflows[7]) to determine if a series of patches has been
+but-cherry is frequently used in patch-based workflows (see
+linkbut:butworkflows[7]) to determine if a series of patches has been
 applied by the upstream maintainer.  In such a workflow you might
 create and send a topic branch like this:
 
 ------------
-$ git checkout -b topic origin/master
+$ but checkout -b topic origin/master
 # work and create some cummits
-$ git format-patch origin/master
-$ git send-email ... 00*
+$ but format-patch origin/master
+$ but send-email ... 00*
 ------------
 
 Later, you can see whether your changes have been applied by saying
 (still on `topic`):
 
 ------------
-$ git fetch  # update your notion of origin/master
-$ git cherry -v
+$ but fetch  # update your notion of origin/master
+$ but cherry -v
 ------------
 
 Concrete example
@@ -72,7 +72,7 @@ In a situation where topic consisted of three cummits, and the
 maintainer applied two of them, the situation might look like:
 
 ------------
-$ git log --graph --oneline --decorate --boundary origin/master...topic
+$ but log --graph --oneline --decorate --boundary origin/master...topic
 * 7654321 (origin/master) upstream tip cummit
 [... snip some other cummits ...]
 * cccc111 cherry-pick of C
@@ -85,11 +85,11 @@ $ git log --graph --oneline --decorate --boundary origin/master...topic
 o 1234567 branch point
 ------------
 
-In such cases, git-cherry shows a concise summary of what has yet to
+In such cases, but-cherry shows a concise summary of what has yet to
 be applied:
 
 ------------
-$ git cherry origin/master topic
+$ but cherry origin/master topic
 - cccc000... cummit C
 + bbbb000... cummit B
 - aaaa000... cummit A
@@ -109,7 +109,7 @@ other work that is not in upstream.  Expanding on the previous
 example, this might look like:
 
 ------------
-$ git log --graph --oneline --decorate --boundary origin/master...topic
+$ but log --graph --oneline --decorate --boundary origin/master...topic
 * 7654321 (origin/master) upstream tip cummit
 [... snip some other cummits ...]
 * cccc111 cherry-pick of C
@@ -129,7 +129,7 @@ By specifying `base` as the limit, you can avoid listing cummits
 between `base` and `topic`:
 
 ------------
-$ git cherry origin/master topic base
+$ but cherry origin/master topic base
 - cccc000... cummit C
 + bbbb000... cummit B
 - aaaa000... cummit A
@@ -138,8 +138,8 @@ $ git cherry origin/master topic base
 
 SEE ALSO
 --------
-linkgit:git-patch-id[1]
+linkbut:but-patch-id[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

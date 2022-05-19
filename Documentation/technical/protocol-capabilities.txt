@@ -171,7 +171,7 @@ optionally return its own agent string by responding with an `agent=Y`
 capability (but it MUST NOT do so if the server did not mention the
 agent capability). The `X` and `Y` strings may contain any printable
 ASCII characters except space (i.e., the byte range 32 < x < 127), and
-are typically of the form "package/version" (e.g., "git/1.8.3.1"). The
+are typically of the form "package/version" (e.g., "but/1.8.3.1"). The
 agent strings are purely informative for statistics and debugging
 purposes, and MUST NOT be used to programmatically assume the presence
 or absence of particular features.
@@ -240,7 +240,7 @@ the current shallow boundary, instead of the depth from remote refs.
 no-progress
 -----------
 
-The client was started with "git clone -q" or something, and doesn't
+The client was started with "but clone -q" or something, and doesn't
 want that side band 2.  Basically the client just says "I do not
 wish to receive stream 2 on sideband, so do not send it to me, and if
 you did, I will drop it on the floor anyway".  However, the sideband

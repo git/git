@@ -1,25 +1,25 @@
 receive.advertiseAtomic::
-	By default, git-receive-pack will advertise the atomic push
+	By default, but-receive-pack will advertise the atomic push
 	capability to its clients. If you don't want to advertise this
 	capability, set this variable to false.
 
 receive.advertisePushOptions::
-	When set to true, git-receive-pack will advertise the push options
+	When set to true, but-receive-pack will advertise the push options
 	capability to its clients. False by default.
 
 receive.autogc::
-	By default, git-receive-pack will run "git-gc --auto" after
-	receiving data from git-push and updating refs.  You can stop
+	By default, but-receive-pack will run "but-gc --auto" after
+	receiving data from but-push and updating refs.  You can stop
 	it by setting this variable to false.
 
 receive.certNonceSeed::
-	By setting this variable to a string, `git receive-pack`
-	will accept a `git push --signed` and verifies it by using
+	By setting this variable to a string, `but receive-pack`
+	will accept a `but push --signed` and verifies it by using
 	a "nonce" protected by HMAC using this string as a secret
 	key.
 
 receive.certNonceSlop::
-	When a `git push --signed` sent a push certificate with a
+	When a `but push --signed` sent a push certificate with a
 	"nonce" that was issued by a receive-pack serving the same
 	repository within this many seconds, export the "nonce"
 	found in the certificate to `GIT_PUSH_CERT_NONCE` to the
@@ -32,21 +32,21 @@ receive.certNonceSlop::
 	can check `GIT_PUSH_CERT_NONCE_STATUS` is `OK`.
 
 receive.fsckObjects::
-	If it is set to true, git-receive-pack will check all received
+	If it is set to true, but-receive-pack will check all received
 	objects. See `transfer.fsckObjects` for what's checked.
 	Defaults to false. If not set, the value of
 	`transfer.fsckObjects` is used instead.
 
 receive.fsck.<msg-id>::
 	Acts like `fsck.<msg-id>`, but is used by
-	linkgit:git-receive-pack[1] instead of
-	linkgit:git-fsck[1]. See the `fsck.<msg-id>` documentation for
+	linkbut:but-receive-pack[1] instead of
+	linkbut:but-fsck[1]. See the `fsck.<msg-id>` documentation for
 	details.
 
 receive.fsck.skipList::
 	Acts like `fsck.skipList`, but is used by
-	linkgit:git-receive-pack[1] instead of
-	linkgit:git-fsck[1]. See the `fsck.skipList` documentation for
+	linkbut:but-receive-pack[1] instead of
+	linkbut:but-fsck[1]. See the `fsck.skipList` documentation for
 	details.
 
 receive.keepAlive::
@@ -70,20 +70,20 @@ receive.unpackLimit::
 
 receive.maxInputSize::
 	If the size of the incoming pack stream is larger than this
-	limit, then git-receive-pack will error out, instead of
+	limit, then but-receive-pack will error out, instead of
 	accepting the pack file. If not set or set to 0, then the size
 	is unlimited.
 
 receive.denyDeletes::
-	If set to true, git-receive-pack will deny a ref update that deletes
+	If set to true, but-receive-pack will deny a ref update that deletes
 	the ref. Use this to prevent such a ref deletion via a push.
 
 receive.denyDeleteCurrent::
-	If set to true, git-receive-pack will deny a ref update that
+	If set to true, but-receive-pack will deny a ref update that
 	deletes the currently checked out branch of a non-bare repository.
 
 receive.denyCurrentBranch::
-	If set to true or "refuse", git-receive-pack will deny a ref update
+	If set to true or "refuse", but-receive-pack will deny a ref update
 	to the currently checked out branch of a non-bare repository.
 	Such a push is potentially dangerous because it brings the HEAD
 	out of sync with the index and working tree. If set to "warn",
@@ -100,10 +100,10 @@ developing inside a VM to test and fix code on different Operating Systems.
 +
 By default, "updateInstead" will refuse the push if the working tree or
 the index have any difference from the HEAD, but the `push-to-checkout`
-hook can be used to customize this.  See linkgit:githooks[5].
+hook can be used to customize this.  See linkbut:buthooks[5].
 
 receive.denyNonFastForwards::
-	If set to true, git-receive-pack will deny a ref update which is
+	If set to true, but-receive-pack will deny a ref update which is
 	not a fast-forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
@@ -111,7 +111,7 @@ receive.denyNonFastForwards::
 receive.hideRefs::
 	This variable is the same as `transfer.hideRefs`, but applies
 	only to `receive-pack` (and so affects pushes, but not fetches).
-	An attempt to update or delete a hidden ref by `git push` is
+	An attempt to update or delete a hidden ref by `but push` is
 	rejected.
 
 receive.procReceiveRefs::
@@ -133,13 +133,13 @@ commands for specific actions: create (a), modify (m), delete (d).
 A `!` can be included in the modifiers to negate the reference prefix entry.
 E.g.:
 +
-	git config --system --add receive.procReceiveRefs ad:refs/heads
-	git config --system --add receive.procReceiveRefs !:refs/heads
+	but config --system --add receive.procReceiveRefs ad:refs/heads
+	but config --system --add receive.procReceiveRefs !:refs/heads
 
 receive.updateServerInfo::
-	If set to true, git-receive-pack will run git-update-server-info
-	after receiving data from git-push and updating refs.
+	If set to true, but-receive-pack will run but-update-server-info
+	after receiving data from but-push and updating refs.
 
 receive.shallowUpdate::
-	If set to true, .git/shallow can be updated when new refs
+	If set to true, .but/shallow can be updated when new refs
 	require new shallow roots. Otherwise those refs are rejected.

@@ -1,18 +1,18 @@
-diff a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
---- a/Documentation/git-ls-tree.txt
-+++ b/Documentation/git-ls-tree.txt
+diff a/Documentation/but-ls-tree.txt b/Documentation/but-ls-tree.txt
+--- a/Documentation/but-ls-tree.txt
++++ b/Documentation/but-ls-tree.txt
 @@ -4,23 +4,26 @@ v0.1, May 2005
  
  NAME
  ----
--git-ls-tree - Displays a tree object in human readable form
-+git-ls-tree - Lists the contents of a tree object.
+-but-ls-tree - Displays a tree object in human readable form
++but-ls-tree - Lists the contents of a tree object.
  
  
  SYNOPSIS
  --------
--'git-ls-tree' [-r] [-z] <tree-ish> [paths...]
-+'git-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
+-'but-ls-tree' [-r] [-z] <tree-ish> [paths...]
++'but-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
  
  DESCRIPTION
  -----------
@@ -36,7 +36,7 @@ diff a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
  	\0 line termination on output
  
  paths::
--	Optionally, restrict the output of git-ls-tree to specific
+-	Optionally, restrict the output of but-ls-tree to specific
 -	paths. Directories will only list their tree blob ids.
 -	Implies -r.
 +	When paths are given, shows them.  Otherwise implicitly
@@ -413,9 +413,9 @@ diff a/ls-tree.c b/ls-tree.c
 +	return err;
  }
  
--static const char *ls_tree_usage = "git-ls-tree [-r] [-z] <key> [paths...]";
+-static const char *ls_tree_usage = "but-ls-tree [-r] [-z] <key> [paths...]";
 +static const char *ls_tree_usage =
-+	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
++	"but-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
  
  int main(int argc, char **argv)
  {
@@ -453,7 +453,7 @@ diff a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
 +++ b/t/t3100-ls-tree-restrict.sh
 @@ -74,8 +74,8 @@ test_expect_success \
      'ls-tree filtered' \
-     'git-ls-tree $tree path1 path0 >current &&
+     'but-ls-tree $tree path1 path0 >current &&
       cat >expected <<\EOF &&
 -100644 blob X	path0
  120000 blob X	path1

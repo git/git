@@ -19,21 +19,21 @@ test_description='check bitmap operation with shallow repositories'
 # us the tree for file=1.
 test_expect_success 'setup shallow repo' '
 	echo 1 >file &&
-	git add file &&
-	git cummit -m orig &&
+	but add file &&
+	but cummit -m orig &&
 	echo 2 >file &&
-	git cummit -a -m update &&
-	git clone --no-local --bare --depth=1 . shallow.git &&
+	but cummit -a -m update &&
+	but clone --no-local --bare --depth=1 . shallow.but &&
 	echo 1 >file &&
-	git cummit -a -m repeat
+	but cummit -a -m repeat
 '
 
 test_expect_success 'turn on bitmaps in the parent' '
-	git repack -adb
+	but repack -adb
 '
 
 test_expect_success 'shallow fetch from bitmapped repo' '
-	(cd shallow.git && git fetch)
+	(cd shallow.but && but fetch)
 '
 
 test_done

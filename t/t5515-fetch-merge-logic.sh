@@ -66,47 +66,47 @@ test_expect_success setup '
 	EOF
 
 	echo >file original &&
-	git add file &&
-	git cummit -a -m One &&
-	git tag tag-one &&
-	git tag tag-one-tree HEAD^{tree} &&
-	git branch one &&
+	but add file &&
+	but cummit -a -m One &&
+	but tag tag-one &&
+	but tag tag-one-tree HEAD^{tree} &&
+	but branch one &&
 
 	echo two >> file &&
-	git cummit -a -m Two &&
-	git tag -a -m "Tag Two" tag-two &&
-	git branch two &&
+	but cummit -a -m Two &&
+	but tag -a -m "Tag Two" tag-two &&
+	but branch two &&
 
 	echo three >> file &&
-	git cummit -a -m Three &&
-	git tag -a -m "Tag Three" tag-three &&
-	git tag -a -m "Tag Three file" tag-three-file HEAD^{tree}:file &&
-	git branch three &&
+	but cummit -a -m Three &&
+	but tag -a -m "Tag Three" tag-three &&
+	but tag -a -m "Tag Three file" tag-three-file HEAD^{tree}:file &&
+	but branch three &&
 
 	echo main >> file &&
-	git cummit -a -m Main &&
-	git tag -a -m "Tag Main" tag-main &&
+	but cummit -a -m Main &&
+	but tag -a -m "Tag Main" tag-main &&
 
-	git checkout three &&
+	but checkout three &&
 
-	git clone . cloned &&
+	but clone . cloned &&
 	cd cloned &&
-	git config remote.origin.url ../.git/ &&
+	but config remote.origin.url ../.but/ &&
 
-	git config remote.config-explicit.url ../.git/ &&
-	git config remote.config-explicit.fetch refs/heads/main:remotes/rem/main &&
-	git config --add remote.config-explicit.fetch refs/heads/one:remotes/rem/one &&
-	git config --add remote.config-explicit.fetch two:remotes/rem/two &&
-	git config --add remote.config-explicit.fetch refs/heads/three:remotes/rem/three &&
+	but config remote.config-explicit.url ../.but/ &&
+	but config remote.config-explicit.fetch refs/heads/main:remotes/rem/main &&
+	but config --add remote.config-explicit.fetch refs/heads/one:remotes/rem/one &&
+	but config --add remote.config-explicit.fetch two:remotes/rem/two &&
+	but config --add remote.config-explicit.fetch refs/heads/three:remotes/rem/three &&
 	remotes="config-explicit" &&
 
-	git config remote.config-glob.url ../.git/ &&
-	git config remote.config-glob.fetch refs/heads/*:refs/remotes/rem/* &&
+	but config remote.config-glob.url ../.but/ &&
+	but config remote.config-glob.fetch refs/heads/*:refs/remotes/rem/* &&
 	remotes="$remotes config-glob" &&
 
-	mkdir -p .git/remotes &&
-	cat >.git/remotes/remote-explicit <<-\EOF &&
-	URL: ../.git/
+	mkdir -p .but/remotes &&
+	cat >.but/remotes/remote-explicit <<-\EOF &&
+	URL: ../.but/
 	Pull: refs/heads/main:remotes/rem/main
 	Pull: refs/heads/one:remotes/rem/one
 	Pull: two:remotes/rem/two
@@ -114,26 +114,26 @@ test_expect_success setup '
 	EOF
 	remotes="$remotes remote-explicit" &&
 
-	cat >.git/remotes/remote-glob <<-\EOF &&
-	URL: ../.git/
+	cat >.but/remotes/remote-glob <<-\EOF &&
+	URL: ../.but/
 	Pull: refs/heads/*:refs/remotes/rem/*
 	EOF
 	remotes="$remotes remote-glob" &&
 
-	mkdir -p .git/branches &&
-	echo "../.git" > .git/branches/branches-default &&
+	mkdir -p .but/branches &&
+	echo "../.but" > .but/branches/branches-default &&
 	remotes="$remotes branches-default" &&
 
-	echo "../.git#one" > .git/branches/branches-one &&
+	echo "../.but#one" > .but/branches/branches-one &&
 	remotes="$remotes branches-one" &&
 
 	for remote in $remotes ; do
-		git config branch.br-$remote.remote $remote &&
-		git config branch.br-$remote-merge.remote $remote &&
-		git config branch.br-$remote-merge.merge refs/heads/three &&
-		git config branch.br-$remote-octopus.remote $remote &&
-		git config branch.br-$remote-octopus.merge refs/heads/one &&
-		git config --add branch.br-$remote-octopus.merge two || return 1
+		but config branch.br-$remote.remote $remote &&
+		but config branch.br-$remote-merge.remote $remote &&
+		but config branch.br-$remote-merge.merge refs/heads/three &&
+		but config branch.br-$remote-octopus.remote $remote &&
+		but config branch.br-$remote-octopus.merge refs/heads/one &&
+		but config --add branch.br-$remote-octopus.merge two || return 1
 	done &&
 	build_script sed_script
 '
@@ -163,13 +163,13 @@ done >> tests
 # neither in the Pull: or .fetch config
 for branch in main br-unconfig ; do
     cat <<EOF
-$branch ../.git
-$branch ../.git one
-$branch ../.git one two
-$branch --tags ../.git
-$branch ../.git tag tag-one tag tag-three
-$branch ../.git tag tag-one-tree tag tag-three-file
-$branch ../.git one tag tag-one tag tag-three-file
+$branch ../.but
+$branch ../.but one
+$branch ../.but one two
+$branch --tags ../.but
+$branch ../.but tag tag-one tag tag-three
+$branch ../.but tag tag-one-tree tag tag-three-file
+$branch ../.but one tag tag-one tag tag-three-file
 EOF
 done >> tests
 
@@ -193,18 +193,18 @@ do
 		{
 			echo "# $cmd" &&
 			set x $cmd && shift &&
-			git symbolic-ref HEAD refs/heads/$1 && shift &&
-			rm -f .git/FETCH_HEAD &&
-			git for-each-ref \
+			but symbolic-ref HEAD refs/heads/$1 && shift &&
+			rm -f .but/FETCH_HEAD &&
+			but for-each-ref \
 				refs/heads refs/remotes/rem refs/tags |
 			while read val type refname
 			do
-				git update-ref -d "$refname" "$val" || return 1
+				but update-ref -d "$refname" "$val" || return 1
 			done &&
-			git fetch "$@" >/dev/null &&
-			cat .git/FETCH_HEAD
+			but fetch "$@" >/dev/null &&
+			cat .but/FETCH_HEAD
 		} >"$actual_f" &&
-		git show-ref >"$actual_r" &&
+		but show-ref >"$actual_r" &&
 		if test -f "expect_f"
 		then
 			test_cmp "expect_f" "$actual_f" &&

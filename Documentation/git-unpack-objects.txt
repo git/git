@@ -1,15 +1,15 @@
-git-unpack-objects(1)
+but-unpack-objects(1)
 =====================
 
 NAME
 ----
-git-unpack-objects - Unpack objects from a packed archive
+but-unpack-objects - Unpack objects from a packed archive
 
 
 SYNOPSIS
 --------
 [verse]
-'git unpack-objects' [-n] [-q] [-r] [--strict]
+'but unpack-objects' [-n] [-q] [-r] [--strict]
 
 
 DESCRIPTION
@@ -22,7 +22,7 @@ Objects that already exist in the repository will *not* be unpacked
 from the packfile.  Therefore, nothing will be unpacked if you use
 this command on a packfile that exists within the target repository.
 
-See linkgit:git-repack[1] for options to generate
+See linkbut:but-repack[1] for options to generate
 new packs and replace existing ones.
 
 OPTIONS
@@ -49,4 +49,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

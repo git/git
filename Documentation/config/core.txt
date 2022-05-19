@@ -5,7 +5,7 @@ core.fileMode::
 Some filesystems lose the executable bit when a file that is
 marked as executable is checked out, or checks out a
 non-executable file with executable bit on.
-linkgit:git-clone[1] or linkgit:git-init[1] probe the filesystem
+linkbut:but-clone[1] or linkbut:but-init[1] probe the filesystem
 to see if it handles the executable bit correctly
 and this variable is automatically set as necessary.
 +
@@ -16,13 +16,13 @@ environment that loses the filemode (e.g. exporting ext4 via
 CIFS mount, visiting a Cygwin created repository with
 Git for Windows or Eclipse).
 In such a case it may be necessary to set this variable to 'false'.
-See linkgit:git-update-index[1].
+See linkbut:but-update-index[1].
 +
 The default is true (when core.filemode is not specified in the config file).
 
 core.hideDotFiles::
 	(Windows-only) If true, mark newly-created directories and files whose
-	name starts with a dot as hidden.  If 'dotGitOnly', only the `.git/`
+	name starts with a dot as hidden.  If 'dotGitOnly', only the `.but/`
 	directory is hidden, but no other files starting with a dot.  The
 	default mode is 'dotGitOnly'.
 
@@ -34,7 +34,7 @@ core.ignoreCase::
 	it is really the same file, and continue to remember it as
 	"Makefile".
 +
-The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
+The default is false, except linkbut:but-clone[1] or linkbut:but-init[1]
 will probe and set core.ignoreCase true if appropriate when the repository
 is created.
 +
@@ -52,7 +52,7 @@ core.precomposeUnicode::
 
 core.protectHFS::
 	If set to true, do not allow checkout of paths that would
-	be considered equivalent to `.git` on an HFS+ filesystem.
+	be considered equivalent to `.but` on an HFS+ filesystem.
 	Defaults to `true` on Mac OS, and `false` elsewhere.
 
 core.protectNTFS::
@@ -63,11 +63,11 @@ core.protectNTFS::
 
 core.fsmonitor::
 	If set to true, enable the built-in file system monitor
-	daemon for this working directory (linkgit:git-fsmonitor{litdd}daemon[1]).
+	daemon for this working directory (linkbut:but-fsmonitor{litdd}daemon[1]).
 +
 Like hook-based file system monitors, the built-in file system monitor
 can speed up Git commands that need to refresh the Git index
-(e.g. `git status`) in a working directory with many files.  The
+(e.g. `but status`) in a working directory with many files.  The
 built-in monitor eliminates the need to install and maintain an
 external third-party tool.
 +
@@ -80,9 +80,9 @@ and MacOS.
 +
 This hook command is used to identify all files that may have changed
 since the requested date/time. This information is used to speed up
-git by avoiding unnecessary scanning of files that have not changed.
+but by avoiding unnecessary scanning of files that have not changed.
 +
-See the "fsmonitor-watchman" section of linkgit:githooks[5].
+See the "fsmonitor-watchman" section of linkbut:buthooks[5].
 +
 Note that if you concurrently use multiple versions of Git, such
 as one version on the command line and another version in an IDE
@@ -116,11 +116,11 @@ core.trustctime::
 	working tree are ignored; useful when the inode change time
 	is regularly modified by something outside Git (file system
 	crawlers and some backup systems).
-	See linkgit:git-update-index[1]. True by default.
+	See linkbut:but-update-index[1]. True by default.
 
 core.splitIndex::
 	If true, the split-index feature of the index will be used.
-	See linkgit:git-update-index[1]. False by default.
+	See linkbut:but-update-index[1]. False by default.
 
 core.untrackedCache::
 	Determines what to do about the untracked cache feature of the
@@ -129,7 +129,7 @@ core.untrackedCache::
 	it will automatically be removed, if set to `false`. Before
 	setting it to `true`, you should check that mtime is working
 	properly on your system.
-	See linkgit:git-update-index[1]. `keep` by default, unless
+	See linkbut:but-update-index[1]. `keep` by default, unless
 	`feature.manyFiles` is enabled which sets this setting to
 	`true` by default.
 
@@ -171,7 +171,7 @@ core.eol::
 	the contents as text).
 	Alternatives are 'lf', 'crlf' and 'native', which uses the platform's
 	native line ending.  The default value is `native`.  See
-	linkgit:gitattributes[5] for more information on end-of-line
+	linkbut:butattributes[5] for more information on end-of-line
 	conversion. Note that this value is ignored if `core.autocrlf`
 	is set to `true` or `input`.
 
@@ -196,7 +196,7 @@ But for binary files that are accidentally classified as text the
 conversion can corrupt data.
 +
 If you recognize such corruption early you can easily fix it by
-setting the conversion type explicitly in .gitattributes.  Right
+setting the conversion type explicitly in .butattributes.  Right
 after cummitting you still have the original file in your work
 tree and this file is not yet corrupted.  You can explicitly tell
 Git that this file is binary and Git will handle the file
@@ -231,21 +231,21 @@ core.autocrlf::
 core.checkRoundtripEncoding::
 	A comma and/or whitespace separated list of encodings that Git
 	performs UTF-8 round trip checks on if they are used in an
-	`working-tree-encoding` attribute (see linkgit:gitattributes[5]).
+	`working-tree-encoding` attribute (see linkbut:butattributes[5]).
 	The default value is `SHIFT-JIS`.
 
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
-	contain the link text. linkgit:git-update-index[1] and
-	linkgit:git-add[1] will not change the recorded type to regular
+	contain the link text. linkbut:but-update-index[1] and
+	linkbut:but-add[1] will not change the recorded type to regular
 	file. Useful on filesystems like FAT that do not support
 	symbolic links.
 +
-The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+The default is true, except linkbut:but-clone[1] or linkbut:but-init[1]
 will probe and set core.symlinks false if appropriate when the repository
 is created.
 
-core.gitProxy::
+core.butProxy::
 	A "proxy command" to execute (as 'command host port') instead
 	of establishing direct connection to the remote server when
 	using the Git protocol for fetching. If the variable value is
@@ -264,7 +264,7 @@ This is useful for excluding servers inside a firewall from
 proxy use, while defaulting to a common proxy for external domains.
 
 core.sshCommand::
-	If this variable is set, `git fetch` and `git push` will
+	If this variable is set, `but fetch` and `but push` will
 	use the specified command instead of `ssh` when they need to
 	connect to a remote system. The command is in the same form as
 	the `GIT_SSH_COMMAND` environment variable and is overridden
@@ -277,7 +277,7 @@ core.ignoreStat::
 +
 When files are modified outside of Git, the user will need to stage
 the modified files explicitly (e.g. see 'Examples' section in
-linkgit:git-update-index[1]).
+linkbut:but-update-index[1]).
 Git will not normally detect changes to those files.
 +
 This is useful on systems where lstat() calls are very slow, such as
@@ -293,19 +293,19 @@ core.preferSymlinkRefs::
 
 core.alternateRefsCommand::
 	When advertising tips of available history from an alternate, use the shell to
-	execute the specified command instead of linkgit:git-for-each-ref[1]. The
+	execute the specified command instead of linkbut:but-for-each-ref[1]. The
 	first argument is the absolute path of the alternate. Output must contain one
-	hex object id per line (i.e., the same as produced by `git for-each-ref
+	hex object id per line (i.e., the same as produced by `but for-each-ref
 	--format='%(objectname)'`).
 +
-Note that you cannot generally put `git for-each-ref` directly into the config
+Note that you cannot generally put `but for-each-ref` directly into the config
 value, as it does not take a repository path as an argument (but you can wrap
 the command above in a shell script).
 
 core.alternateRefsPrefixes::
 	When listing references from an alternate, list only references that begin
 	with the given prefix. Prefixes match as if they were given as arguments to
-	linkgit:git-for-each-ref[1]. To list multiple prefixes, separate them with
+	linkbut:but-for-each-ref[1]. To list multiple prefixes, separate them with
 	whitespace. If `core.alternateRefsCommand` is set, setting
 	`core.alternateRefsPrefixes` has no effect.
 
@@ -313,11 +313,11 @@ core.bare::
 	If true this repository is assumed to be 'bare' and has no
 	working directory associated with it.  If this is the case a
 	number of commands that require a working directory will be
-	disabled, such as linkgit:git-add[1] or linkgit:git-merge[1].
+	disabled, such as linkbut:but-add[1] or linkbut:but-merge[1].
 +
-This setting is automatically guessed by linkgit:git-clone[1] or
-linkgit:git-init[1] when the repository was created.  By default a
-repository that ends in "/.git" is assumed to be not bare (bare =
+This setting is automatically guessed by linkbut:but-clone[1] or
+linkbut:but-init[1] when the repository was created.  By default a
+repository that ends in "/.but" is assumed to be not bare (bare =
 false), while all other repositories are assumed to be bare (bare
 = true).
 
@@ -328,16 +328,16 @@ core.worktree::
 	This can be overridden by the `GIT_WORK_TREE` environment
 	variable and the `--work-tree` command-line option.
 	The value can be an absolute path or relative to the path to
-	the .git directory, which is either specified by --git-dir
+	the .but directory, which is either specified by --but-dir
 	or GIT_DIR, or automatically discovered.
-	If --git-dir or GIT_DIR is specified but none of
+	If --but-dir or GIT_DIR is specified but none of
 	--work-tree, GIT_WORK_TREE and core.worktree is specified,
 	the current working directory is regarded as the top level
 	of your working tree.
 +
 Note that this variable is honored even when set in a configuration
-file in a ".git" subdirectory of a directory and its value differs
-from the latter directory (e.g. "/path/to/.git/config" has
+file in a ".but" subdirectory of a directory and its value differs
+from the latter directory (e.g. "/path/to/.but/config" has
 core.worktree set to "/different/path"), which is most likely a
 misconfiguration.  Running Git commands in the "/path/to" directory will
 still use "/different/path" as the root of the work tree and can cause
@@ -381,7 +381,7 @@ core.sharedRepository::
 	the repo read/write-able for the owner and group, but inaccessible to
 	others (equivalent to 'group' unless umask is e.g. '0022'). '0640' is a
 	repository that is group-readable but not group-writable.
-	See linkgit:git-init[1]. False by default.
+	See linkbut:but-init[1]. False by default.
 
 core.warnAmbiguousRefs::
 	If true, Git will warn you if the ref name you passed it is ambiguous
@@ -459,10 +459,10 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 core.excludesFile::
 	Specifies the pathname to the file that contains patterns to
 	describe paths that are not meant to be tracked, in addition
-	to `.gitignore` (per-directory) and `.git/info/exclude`.
-	Defaults to `$XDG_CONFIG_HOME/git/ignore`.
-	If `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`
-	is used instead. See linkgit:gitignore[5].
+	to `.butignore` (per-directory) and `.but/info/exclude`.
+	Defaults to `$XDG_CONFIG_HOME/but/ignore`.
+	If `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/but/ignore`
+	is used instead. See linkbut:butignore[5].
 
 core.askPass::
 	Some commands (e.g. svn and http interfaces) that interactively
@@ -474,23 +474,23 @@ core.askPass::
 	command-line argument and write the password on its STDOUT.
 
 core.attributesFile::
-	In addition to `.gitattributes` (per-directory) and
-	`.git/info/attributes`, Git looks into this file for attributes
-	(see linkgit:gitattributes[5]). Path expansions are made the same
+	In addition to `.butattributes` (per-directory) and
+	`.but/info/attributes`, Git looks into this file for attributes
+	(see linkbut:butattributes[5]). Path expansions are made the same
 	way as for `core.excludesFile`. Its default value is
-	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
-	set or empty, `$HOME/.config/git/attributes` is used instead.
+	`$XDG_CONFIG_HOME/but/attributes`. If `$XDG_CONFIG_HOME` is either not
+	set or empty, `$HOME/.config/but/attributes` is used instead.
 
 core.hooksPath::
 	By default Git will look for your hooks in the
 	`$GIT_DIR/hooks` directory. Set this to different path,
-	e.g. `/etc/git/hooks`, and Git will try to find your hooks in
-	that directory, e.g. `/etc/git/hooks/pre-receive` instead of
+	e.g. `/etc/but/hooks`, and Git will try to find your hooks in
+	that directory, e.g. `/etc/but/hooks/pre-receive` instead of
 	in `$GIT_DIR/hooks/pre-receive`.
 +
 The path can be either absolute or relative. A relative path is
 taken as relative to the directory where the hooks are run (see
-the "DESCRIPTION" section of linkgit:githooks[5]).
+the "DESCRIPTION" section of linkbut:buthooks[5]).
 +
 This configuration variable is useful in cases where you'd like to
 centrally configure your Git hooks instead of configuring them on a
@@ -502,7 +502,7 @@ core.editor::
 	Commands such as `cummit` and `tag` that let you edit
 	messages by launching an editor use the value of this
 	variable when it is set, and the environment variable
-	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
+	`GIT_EDITOR` is not set.  See linkbut:but-var[1].
 
 core.commentChar::
 	Commands such as `cummit` and `tag` that let you edit
@@ -510,7 +510,7 @@ core.commentChar::
 	commented, and removes them after the editor returns
 	(default '#').
 +
-If set to "auto", `git-cummit` would select a character that is not
+If set to "auto", `but-cummit` would select a character that is not
 the beginning character of any line in existing cummit messages.
 
 core.filesRefLockTimeout::
@@ -544,7 +544,7 @@ deactivate the `F` option specified by the environment from the
 command-line, deactivating the "quit if one screen" behavior of
 `less`.  One can specifically activate some flags for particular
 commands: for example, setting `pager.blame` to `less -S` enables
-line truncation only for `git blame`.
+line truncation only for `but blame`.
 +
 Likewise, when the `LV` environment variable is unset, Git sets it
 to `-c`.  You can override this setting by exporting `LV` with
@@ -552,8 +552,8 @@ another value or setting `core.pager` to `lv +c`.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
-	notice.  'git diff' will use `color.diff.whitespace` to
-	highlight them, and 'git apply --whitespace=error' will
+	notice.  'but diff' will use `color.diff.whitespace` to
+	highlight them, and 'but apply --whitespace=error' will
 	consider them as errors.  You can prefix `-` to disable
 	any of them (e.g. `-trailing-space`):
 +
@@ -612,11 +612,11 @@ but risks losing recent work in the event of an unclean system shutdown.
   `pack-metadata,cummit-graph`.
 * `cummitted` is an aggregate option that is currently equivalent to
   `objects`. This mode sacrifices some performance to ensure that work
-  that is cummitted to the repository with `git cummit` or similar commands
+  that is cummitted to the repository with `but cummit` or similar commands
   is hardened.
 * `added` is an aggregate option that is currently equivalent to
   `cummitted,index`. This mode sacrifices additional performance to
-  ensure that the results of commands like `git add` and similar operations
+  ensure that the results of commands like `but add` and similar operations
   are hardened.
 * `all` is an aggregate option that syncs all individual components above.
 
@@ -639,9 +639,9 @@ to flush caches so that loose-objects remain consistent in the face
 of a unclean system shutdown.
 
 core.preloadIndex::
-	Enable parallel index preload for operations like 'git diff'
+	Enable parallel index preload for operations like 'but diff'
 +
-This can speed up operations like 'git diff' and 'git status' especially
+This can speed up operations like 'but diff' and 'but status' especially
 on filesystems like NFS that have weak caching semantics and thus
 relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
@@ -675,32 +675,32 @@ core.notesRef::
 	notes should be printed.
 +
 This setting defaults to "refs/notes/cummits", and it can be overridden by
-the `GIT_NOTES_REF` environment variable.  See linkgit:git-notes[1].
+the `GIT_NOTES_REF` environment variable.  See linkbut:but-notes[1].
 
 core.cummitGraph::
-	If true, then git will read the cummit-graph file (if it exists)
+	If true, then but will read the cummit-graph file (if it exists)
 	to parse the graph structure of cummits. Defaults to true. See
-	linkgit:git-cummit-graph[1] for more information.
+	linkbut:but-cummit-graph[1] for more information.
 
 core.useReplaceRefs::
 	If set to `false`, behave as if the `--no-replace-objects`
-	option was given on the command line. See linkgit:git[1] and
-	linkgit:git-replace[1] for more information.
+	option was given on the command line. See linkbut:but[1] and
+	linkbut:but-replace[1] for more information.
 
 core.multiPackIndex::
 	Use the multi-pack-index file to track multiple packfiles using a
-	single index. See linkgit:git-multi-pack-index[1] for more
+	single index. See linkbut:but-multi-pack-index[1] for more
 	information. Defaults to true.
 
 core.sparseCheckout::
-	Enable "sparse checkout" feature. See linkgit:git-sparse-checkout[1]
+	Enable "sparse checkout" feature. See linkbut:but-sparse-checkout[1]
 	for more information.
 
 core.sparseCheckoutCone::
 	Enables the "cone mode" of the sparse checkout feature. When the
 	sparse-checkout file contains a limited set of patterns, then this
 	mode provides significant performance advantages. See
-	linkgit:git-sparse-checkout[1] for more information.
+	linkbut:but-sparse-checkout[1] for more information.
 
 core.abbrev::
 	Set the length object names are abbreviated to.  If

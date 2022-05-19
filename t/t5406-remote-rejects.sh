@@ -9,15 +9,15 @@ test_expect_success 'setup' '
 	exit 1
 	EOF
 	echo 1 >file &&
-	git add file &&
-	git cummit -m 1 &&
-	git clone . child &&
+	but add file &&
+	but cummit -m 1 &&
+	but clone . child &&
 	cd child &&
 	echo 2 >file &&
-	git cummit -a -m 2
+	but cummit -a -m 2
 '
 
-test_expect_success 'push reports error' 'test_must_fail git push 2>stderr'
+test_expect_success 'push reports error' 'test_must_fail but push 2>stderr'
 
 test_expect_success 'individual ref reports error' 'grep rejected stderr'
 

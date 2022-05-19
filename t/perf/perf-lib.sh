@@ -37,7 +37,7 @@ then
 
 Instead use:
 
-    ./run <path-to-git> -- <tests>
+    ./run <path-to-but> -- <tests>
 
 See t/perf/README for details."
 fi
@@ -46,7 +46,7 @@ fi
 # need to export them for test_perf subshells
 export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP
 
-MODERN_GIT=$GIT_BUILD_DIR/bin-wrappers/git
+MODERN_GIT=$GIT_BUILD_DIR/bin-wrappers/but
 export MODERN_GIT
 
 perf_results_dir=$TEST_RESULTS_DIR
@@ -56,7 +56,7 @@ rm -f "$perf_results_dir"/$(basename "$0" .sh).subtests
 
 die_if_build_dir_not_repo () {
 	if ! ( cd "$TEST_DIRECTORY/.." &&
-		    git rev-parse --build-dir >/dev/null 2>&1 ); then
+		    but rev-parse --build-dir >/dev/null 2>&1 ); then
 		error "No $1 defined, and your build directory is not a repo"
 	fi
 }
@@ -71,17 +71,17 @@ if test -z "$GIT_PERF_LARGE_REPO"; then
 fi
 
 test_perf_do_repo_symlink_config_ () {
-	test_have_prereq SYMLINKS || git config core.symlinks false
+	test_have_prereq SYMLINKS || but config core.symlinks false
 }
 
 test_perf_copy_repo_contents () {
 	for stuff in "$1"/*
 	do
 		case "$stuff" in
-		*/objects|*/hooks|*/config|*/commondir|*/gitdir|*/worktrees|*/fsmonitor--daemon*)
+		*/objects|*/hooks|*/config|*/commondir|*/butdir|*/worktrees|*/fsmonitor--daemon*)
 			;;
 		*)
-			cp -R "$stuff" "$repo/.git/" || exit 1
+			cp -R "$stuff" "$repo/.but/" || exit 1
 			;;
 		esac
 	done
@@ -92,34 +92,34 @@ test_perf_create_repo_from () {
 	BUG "not 2 parameters to test-create-repo"
 	repo="$1"
 	source="$2"
-	source_git="$("$MODERN_GIT" -C "$source" rev-parse --git-dir)"
-	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
-	common_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-common-dir)"
-	mkdir -p "$repo/.git"
+	source_but="$("$MODERN_GIT" -C "$source" rev-parse --but-dir)"
+	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --but-path objects)"
+	common_dir="$("$MODERN_GIT" -C "$source" rev-parse --but-common-dir)"
+	mkdir -p "$repo/.but"
 	(
 		cd "$source" &&
-		{ cp -Rl "$objects_dir" "$repo/.git/" 2>/dev/null ||
-			cp -R "$objects_dir" "$repo/.git/"; } &&
+		{ cp -Rl "$objects_dir" "$repo/.but/" 2>/dev/null ||
+			cp -R "$objects_dir" "$repo/.but/"; } &&
 
-		# common_dir must come first here, since we want source_git to
+		# common_dir must come first here, since we want source_but to
 		# take precedence and overwrite any overlapping files
 		test_perf_copy_repo_contents "$common_dir"
-		if test "$source_git" != "$common_dir"
+		if test "$source_but" != "$common_dir"
 		then
-			test_perf_copy_repo_contents "$source_git"
+			test_perf_copy_repo_contents "$source_but"
 		fi
 	) &&
 	(
 		cd "$repo" &&
 		"$MODERN_GIT" init -q &&
 		test_perf_do_repo_symlink_config_ &&
-		mv .git/hooks .git/hooks-disabled 2>/dev/null &&
-		if test -f .git/index.lock
+		mv .but/hooks .but/hooks-disabled 2>/dev/null &&
+		if test -f .but/index.lock
 		then
-			# We may be copying a repo that can't run "git
+			# We may be copying a repo that can't run "but
 			# status" due to a locked index. Since we have
 			# a copy it's fine to remove the lock.
-			rm .git/index.lock
+			rm .but/index.lock
 		fi
 	) || error "failed to copy repository '$source' to '$repo'"
 }
@@ -146,8 +146,8 @@ test_perf_large_repo () {
 	test_perf_create_repo_from "${1:-$TRASH_DIRECTORY}" "$GIT_PERF_LARGE_REPO"
 }
 test_checkout_worktree () {
-	git checkout-index -u -a ||
-	error "git checkout-index failed"
+	but checkout-index -u -a ||
+	error "but checkout-index failed"
 }
 
 # Performance tests should never fail.  If they do, stop immediately

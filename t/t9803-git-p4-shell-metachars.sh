@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 transparency to shell metachars in filenames'
+test_description='but p4 transparency to shell metachars in filenames'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -18,17 +18,17 @@ test_expect_success 'init depot' '
 '
 
 test_expect_success 'shell metachars in filenames' '
-	git p4 clone --dest="$git" //depot &&
-	test_when_finished cleanup_git &&
+	but p4 clone --dest="$but" //depot &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEditCheck true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEditCheck true &&
 		echo f1 >foo\$bar &&
-		git add foo\$bar &&
+		but add foo\$bar &&
 		echo f2 >"file with spaces" &&
-		git add "file with spaces" &&
-		git cummit -m "add files" &&
-		P4EDITOR="test-tool chmtime +5" git p4 submit
+		but add "file with spaces" &&
+		but cummit -m "add files" &&
+		P4EDITOR="test-tool chmtime +5" but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -39,15 +39,15 @@ test_expect_success 'shell metachars in filenames' '
 '
 
 test_expect_success 'deleting with shell metachars' '
-	git p4 clone --dest="$git" //depot &&
-	test_when_finished cleanup_git &&
+	but p4 clone --dest="$but" //depot &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEditCheck true &&
-		git rm foo\$bar &&
-		git rm file\ with\ spaces &&
-		git cummit -m "remove files" &&
-		P4EDITOR="test-tool chmtime +5" git p4 submit
+		cd "$but" &&
+		but config but-p4.skipSubmitEditCheck true &&
+		but rm foo\$bar &&
+		but rm file\ with\ spaces &&
+		but cummit -m "remove files" &&
+		P4EDITOR="test-tool chmtime +5" but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -63,8 +63,8 @@ test_expect_success 'deleting with shell metachars' '
 # 2. //depot/branch$3
 
 test_expect_success 'branch with shell char' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
 		cd "$cli" &&
 
@@ -94,12 +94,12 @@ test_expect_success 'branch with shell char' '
 		p4 resolve -am branch\$3/... &&
 		p4 submit -d "integrate main to branch\$3" &&
 
-		cd "$git" &&
+		cd "$but" &&
 
-		git config git-p4.branchList main:branch\$3 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch\$3 &&
+		but config but-p4.branchList main:branch\$3 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch\$3 &&
 		test -f shell_char_branch_file &&
 		test -f f1
 	)

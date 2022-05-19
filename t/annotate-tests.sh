@@ -63,9 +63,9 @@ get_progress_result () {
 test_expect_success 'setup A lines' '
 	echo "1A quick brown fox jumps over the" >file &&
 	echo "lazy dog" >>file &&
-	git add file &&
-	GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.git" \
-	git cummit -a -m "Initial."
+	but add file &&
+	GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.but" \
+	but cummit -a -m "Initial."
 '
 
 test_expect_success 'blame 1 author' '
@@ -73,16 +73,16 @@ test_expect_success 'blame 1 author' '
 '
 
 test_expect_success 'blame in a bare repo without starting cummit' '
-	git clone --bare . bare.git &&
+	but clone --bare . bare.but &&
 	(
-		cd bare.git &&
+		cd bare.but &&
 		check_count A 2
 	)
 '
 
 test_expect_success 'blame by tag objects' '
-	git tag -m "test tag" testTag &&
-	git tag -m "test tag #2" testTag2 testTag &&
+	but tag -m "test tag" testTag &&
+	but tag -m "test tag #2" testTag2 testTag &&
 	check_count -h testTag A 2 &&
 	check_count -h testTag2 A 2
 '
@@ -90,8 +90,8 @@ test_expect_success 'blame by tag objects' '
 test_expect_success 'setup B lines' '
 	echo "2A quick brown fox jumps over the" >>file &&
 	echo "lazy dog" >>file &&
-	GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.git" \
-	git cummit -a -m "Second."
+	GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.but" \
+	but cummit -a -m "Second."
 '
 
 test_expect_success 'blame 2 authors' '
@@ -99,11 +99,11 @@ test_expect_success 'blame 2 authors' '
 '
 
 test_expect_success 'setup B1 lines (branch1)' '
-	git checkout -b branch1 main &&
+	but checkout -b branch1 main &&
 	echo "3A slow green fox jumps into the" >>file &&
 	echo "well." >>file &&
-	GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.git" \
-	git cummit -a -m "Branch1-1"
+	GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.but" \
+	but cummit -a -m "Branch1-1"
 '
 
 test_expect_success 'blame 2 authors + 1 branch1 author' '
@@ -111,11 +111,11 @@ test_expect_success 'blame 2 authors + 1 branch1 author' '
 '
 
 test_expect_success 'setup B2 lines (branch2)' '
-	git checkout -b branch2 main &&
+	but checkout -b branch2 main &&
 	sed -e "s/2A quick brown/4A quick brown lazy dog/" <file >file.new &&
 	mv file.new file &&
-	GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.git" \
-	git cummit -a -m "Branch2-1"
+	GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.but" \
+	but cummit -a -m "Branch2-1"
 '
 
 test_expect_success 'blame 2 authors + 1 branch2 author' '
@@ -123,7 +123,7 @@ test_expect_success 'blame 2 authors + 1 branch2 author' '
 '
 
 test_expect_success 'merge branch1 & branch2' '
-	git merge branch1
+	but merge branch1
 '
 
 test_expect_success 'blame 2 authors + 2 merged-in authors' '
@@ -144,7 +144,7 @@ test_expect_success 'blame great-ancestor' '
 
 test_expect_success 'setup evil merge' '
 	echo "evil merge." >>file &&
-	git cummit -a --amend
+	but cummit -a --amend
 '
 
 test_expect_success 'blame evil merge' '
@@ -152,30 +152,30 @@ test_expect_success 'blame evil merge' '
 '
 
 test_expect_success 'blame huge graft' '
-	test_when_finished "git checkout branch2" &&
-	test_when_finished "rm -f .git/info/grafts" &&
+	test_when_finished "but checkout branch2" &&
+	test_when_finished "rm -f .but/info/grafts" &&
 	graft= &&
 	for i in 0 1 2
 	do
 		for j in 0 1 2 3 4 5 6 7 8 9
 		do
-			git checkout --orphan "$i$j" &&
+			but checkout --orphan "$i$j" &&
 			printf "%s\n" "$i" "$j" >file &&
 			test_tick &&
-			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.git \
-			git cummit -a -m "$i$j" &&
-			cummit=$(git rev-parse --verify HEAD) &&
+			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.but \
+			but cummit -a -m "$i$j" &&
+			cummit=$(but rev-parse --verify HEAD) &&
 			graft="$graft$cummit " || return 1
 		done
 	done &&
-	printf "%s " $graft >.git/info/grafts &&
+	printf "%s " $graft >.but/info/grafts &&
 	check_count -h 00 01 1 10 1
 '
 
 test_expect_success 'setup incomplete line' '
 	echo "incomplete" | tr -d "\\012" >>file &&
-	GIT_AUTHOR_NAME="C" GIT_AUTHOR_EMAIL="C@test.git" \
-	git cummit -a -m "Incomplete"
+	GIT_AUTHOR_NAME="C" GIT_AUTHOR_EMAIL="C@test.but" \
+	but cummit -a -m "Incomplete"
 '
 
 test_expect_success 'blame incomplete line' '
@@ -189,8 +189,8 @@ test_expect_success 'setup edits' '
 		echo
 	} | sed -e "s/^3A/99/" -e "/^1A/d" -e "/^incomplete/d" >file &&
 	echo "incomplete" | tr -d "\\012" >>file &&
-	GIT_AUTHOR_NAME="D" GIT_AUTHOR_EMAIL="D@test.git" \
-	git cummit -a -m "edit"
+	GIT_AUTHOR_NAME="D" GIT_AUTHOR_EMAIL="D@test.but" \
+	but cummit -a -m "edit"
 '
 
 test_expect_success 'blame edits' '
@@ -201,8 +201,8 @@ test_expect_success 'setup obfuscated email' '
 	echo "No robots allowed" >file.new &&
 	cat file >>file.new &&
 	mv file.new file &&
-	GIT_AUTHOR_NAME="E" GIT_AUTHOR_EMAIL="E at test dot git" \
-	git cummit -a -m "norobots"
+	GIT_AUTHOR_NAME="E" GIT_AUTHOR_EMAIL="E at test dot but" \
+	but cummit -a -m "norobots"
 '
 
 test_expect_success 'blame obfuscated email' '
@@ -310,7 +310,7 @@ test_expect_success 'blame -L /RE/,-N' '
 '
 
 # 'file' ends with an incomplete line, so 'wc' reports one fewer lines than
-# git-blame sees, hence the last line is actually $(wc...)+1.
+# but-blame sees, hence the last line is actually $(wc...)+1.
 test_expect_success 'blame -L X (X == nlines)' '
 	n=$(expr $(wc -l <file) + 1) &&
 	check_count -L$n C 1
@@ -415,15 +415,15 @@ test_expect_success 'setup -L :regex' '
 	Qputs("hello");
 	}
 	EOF
-	git add hello.c &&
-	GIT_AUTHOR_NAME="F" GIT_AUTHOR_EMAIL="F@test.git" \
-	git cummit -m "hello" &&
+	but add hello.c &&
+	GIT_AUTHOR_NAME="F" GIT_AUTHOR_EMAIL="F@test.but" \
+	but cummit -m "hello" &&
 
 	mv hello.c hello.orig &&
 	sed -e "/}/ {x; s/$/Qputs(\"goodbye\");/; G;}" <hello.orig |
 	tr Q "\\t" >hello.c &&
-	GIT_AUTHOR_NAME="G" GIT_AUTHOR_EMAIL="G@test.git" \
-	git cummit -a -m "goodbye" &&
+	GIT_AUTHOR_NAME="G" GIT_AUTHOR_EMAIL="G@test.but" \
+	but cummit -a -m "goodbye" &&
 
 	mv hello.c hello.orig &&
 	echo "#include <stdio.h>" >hello.c &&
@@ -434,8 +434,8 @@ test_expect_success 'setup -L :regex' '
 	Qputs("mail");
 	}
 	EOF
-	GIT_AUTHOR_NAME="H" GIT_AUTHOR_EMAIL="H@test.git" \
-	git cummit -a -m "mail"
+	GIT_AUTHOR_NAME="H" GIT_AUTHOR_EMAIL="H@test.but" \
+	but cummit -a -m "mail"
 '
 
 test_expect_success 'blame -L :literal' '
@@ -493,13 +493,13 @@ test_expect_success 'blame -L :funcname with userdiff driver' '
 	EOF
 
 	fortran_file=file.f03 &&
-	test_when_finished "rm .gitattributes" &&
-	echo "$fortran_file diff=fortran" >.gitattributes &&
+	test_when_finished "rm .butattributes" &&
+	echo "$fortran_file diff=fortran" >.butattributes &&
 
-	test_cummit --author "A <A@test.git>" \
+	test_cummit --author "A <A@test.but>" \
 		"add" "$fortran_file" \
 		"$(cat file.template)" &&
-	test_cummit --author "B <B@test.git>" \
+	test_cummit --author "B <B@test.but>" \
 		"change" "$fortran_file" \
 		"$(cat file.template | sed -e s/ChangeMe/IWasChanged/)" &&
 	check_count -f "$fortran_file" -L:RIGHT A 3 B 1
@@ -509,15 +509,15 @@ test_expect_success 'setup incremental' '
 	(
 	GIT_AUTHOR_NAME=I &&
 	export GIT_AUTHOR_NAME &&
-	GIT_AUTHOR_EMAIL=I@test.git &&
+	GIT_AUTHOR_EMAIL=I@test.but &&
 	export GIT_AUTHOR_EMAIL &&
 	>incremental &&
-	git add incremental &&
-	git cummit -m "step 0" &&
+	but add incremental &&
+	but cummit -m "step 0" &&
 	printf "partial" >>incremental &&
-	git cummit -a -m "step 0.5" &&
+	but cummit -a -m "step 0.5" &&
 	echo >>incremental &&
-	git cummit -a -m "step 1"
+	but cummit -a -m "step 1"
 	)
 '
 
@@ -615,7 +615,7 @@ test_expect_success 'blame progress on a full file' '
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress hello.c 2>stderr &&
+	but blame --progress hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual
@@ -627,7 +627,7 @@ test_expect_success 'blame progress on a single range' '
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress -L 3,6 hello.c 2>stderr &&
+	but blame --progress -L 3,6 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual
@@ -639,7 +639,7 @@ test_expect_success 'blame progress on multiple ranges' '
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
+	but blame --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual

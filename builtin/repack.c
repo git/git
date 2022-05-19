@@ -25,8 +25,8 @@ static int use_delta_islands;
 static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
 
-static const char *const git_repack_usage[] = {
-	N_("git repack [<options>]"),
+static const char *const but_repack_usage[] = {
+	N_("but repack [<options>]"),
 	NULL
 };
 
@@ -39,27 +39,27 @@ static const char incremental_bitmap_conflict_error[] = N_(
 static int repack_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "repack.usedeltabaseoffset")) {
-		delta_base_offset = git_config_bool(var, value);
+		delta_base_offset = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "repack.packkeptobjects")) {
-		pack_kept_objects = git_config_bool(var, value);
+		pack_kept_objects = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "repack.writebitmaps") ||
 	    !strcmp(var, "pack.writebitmaps")) {
-		write_bitmaps = git_config_bool(var, value);
+		write_bitmaps = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "repack.usedeltaislands")) {
-		use_delta_islands = git_config_bool(var, value);
+		use_delta_islands = but_config_bool(var, value);
 		return 0;
 	}
 	if (strcmp(var, "repack.updateserverinfo") == 0) {
-		run_update_server_info = git_config_bool(var, value);
+		run_update_server_info = but_config_bool(var, value);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 /*
@@ -188,7 +188,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 	if (delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
 	strvec_push(&cmd->args, packtmp);
-	cmd->git_cmd = 1;
+	cmd->but_cmd = 1;
 	cmd->out = -1;
 }
 
@@ -196,7 +196,7 @@ static void prepare_pack_objects(struct child_process *cmd,
  * Write oid to the given struct child_process's stdin, starting it first if
  * necessary.
  */
-static int write_oid(const struct object_id *oid, struct packed_git *pack,
+static int write_oid(const struct object_id *oid, struct packed_but *pack,
 		     uint32_t pos, void *data)
 {
 	struct child_process *cmd = data;
@@ -308,12 +308,12 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 #define LOOSEN_UNREACHABLE 2
 
 struct pack_geometry {
-	struct packed_git **pack;
+	struct packed_but **pack;
 	uint32_t pack_nr, pack_alloc;
 	uint32_t split;
 };
 
-static uint32_t geometry_pack_weight(struct packed_git *p)
+static uint32_t geometry_pack_weight(struct packed_but *p)
 {
 	if (open_pack_index(p))
 		die(_("cannot open index for %s"), p->pack_name);
@@ -322,8 +322,8 @@ static uint32_t geometry_pack_weight(struct packed_git *p)
 
 static int geometry_cmp(const void *va, const void *vb)
 {
-	uint32_t aw = geometry_pack_weight(*(struct packed_git **)va),
-		 bw = geometry_pack_weight(*(struct packed_git **)vb);
+	uint32_t aw = geometry_pack_weight(*(struct packed_but **)va),
+		 bw = geometry_pack_weight(*(struct packed_but **)vb);
 
 	if (aw < bw)
 		return -1;
@@ -334,7 +334,7 @@ static int geometry_cmp(const void *va, const void *vb)
 
 static void init_pack_geometry(struct pack_geometry **geometry_p)
 {
-	struct packed_git *p;
+	struct packed_but *p;
 	struct pack_geometry *geometry;
 
 	*geometry_p = xcalloc(1, sizeof(struct pack_geometry));
@@ -371,8 +371,8 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	 * already form a geometric progression.
 	 */
 	for (i = geometry->pack_nr - 1; i > 0; i--) {
-		struct packed_git *ours = geometry->pack[i];
-		struct packed_git *prev = geometry->pack[i - 1];
+		struct packed_but *ours = geometry->pack[i];
+		struct packed_but *prev = geometry->pack[i - 1];
 
 		if (unsigned_mult_overflows(factor, geometry_pack_weight(prev)))
 			die(_("pack %s too large to consider in geometric "
@@ -405,14 +405,14 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	 * the geometric progression.
 	 */
 	for (i = 0; i < split; i++) {
-		struct packed_git *p = geometry->pack[i];
+		struct packed_but *p = geometry->pack[i];
 
 		if (unsigned_add_overflows(total_size, geometry_pack_weight(p)))
 			die(_("pack %s too large to roll up"), p->pack_name);
 		total_size += geometry_pack_weight(p);
 	}
 	for (i = split; i < geometry->pack_nr; i++) {
-		struct packed_git *ours = geometry->pack[i];
+		struct packed_but *ours = geometry->pack[i];
 
 		if (unsigned_mult_overflows(factor, total_size))
 			die(_("pack %s too large to roll up"), ours->pack_name);
@@ -432,7 +432,7 @@ static void split_pack_geometry(struct pack_geometry *geometry, int factor)
 	geometry->split = split;
 }
 
-static struct packed_git *get_largest_active_pack(struct pack_geometry *geometry)
+static struct packed_but *get_largest_active_pack(struct pack_geometry *geometry)
 {
 	if (!geometry) {
 		/*
@@ -540,7 +540,7 @@ static void midx_included_packs(struct string_list *include,
 		struct strbuf buf = STRBUF_INIT;
 		uint32_t i;
 		for (i = geometry->split; i < geometry->pack_nr; i++) {
-			struct packed_git *p = geometry->pack[i];
+			struct packed_but *p = geometry->pack[i];
 
 			strbuf_addstr(&buf, pack_basename(p));
 			strbuf_strip_suffix(&buf, ".pack");
@@ -564,7 +564,7 @@ static int write_midx_included_packs(struct string_list *include,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct packed_git *largest = get_largest_active_pack(geometry);
+	struct packed_but *largest = get_largest_active_pack(geometry);
 	FILE *in;
 	int ret;
 
@@ -572,7 +572,7 @@ static int write_midx_included_packs(struct string_list *include,
 		return 0;
 
 	cmd.in = -1;
-	cmd.git_cmd = 1;
+	cmd.but_cmd = 1;
 
 	strvec_push(&cmd.args, "multi-pack-index");
 	strvec_pushl(&cmd.args, "write", "--stdin-packs", NULL);
@@ -636,20 +636,20 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("same as -a, and turn unreachable objects loose"),
 				   LOOSEN_UNREACHABLE | ALL_INTO_ONE),
 		OPT_BOOL('d', NULL, &delete_redundant,
-				N_("remove redundant packs, and run git-prune-packed")),
+				N_("remove redundant packs, and run but-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
-				N_("pass --no-reuse-delta to git-pack-objects")),
+				N_("pass --no-reuse-delta to but-pack-objects")),
 		OPT_BOOL('F', NULL, &po_args.no_reuse_object,
-				N_("pass --no-reuse-object to git-pack-objects")),
+				N_("pass --no-reuse-object to but-pack-objects")),
 		OPT_NEGBIT('n', NULL, &run_update_server_info,
-				N_("do not run git-update-server-info"), 1),
+				N_("do not run but-update-server-info"), 1),
 		OPT__QUIET(&po_args.quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &po_args.local,
-				N_("pass --local to git-pack-objects")),
+				N_("pass --local to but-pack-objects")),
 		OPT_BOOL('b', "write-bitmap-index", &write_bitmaps,
 				N_("write bitmap index")),
 		OPT_BOOL('i', "delta-islands", &use_delta_islands,
-				N_("pass --delta-islands to git-pack-objects")),
+				N_("pass --delta-islands to but-pack-objects")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
 				N_("with -A, do not loosen objects older than this")),
 		OPT_BOOL('k', "keep-unreachable", &keep_unreachable,
@@ -675,10 +675,10 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(repack_config, NULL);
+	but_config(repack_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_repack_options,
-				git_repack_usage, 0);
+				but_repack_usage, 0);
 
 	if (delete_redundant && repository_format_precious_objects)
 		die(_("cannot delete packs in a precious-objects repo"));
@@ -692,8 +692,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		    (!(pack_everything & ALL_INTO_ONE) || !is_bare_repository()))
 			write_bitmaps = 0;
 	} else if (write_bitmaps &&
-		   git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0) &&
-		   git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0)) {
+		   but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0) &&
+		   but_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0)) {
 		write_bitmaps = 0;
 	}
 	if (pack_kept_objects < 0)
@@ -744,7 +744,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		 * are reachable from reflogs and the index.
 		 *
 		 * When repacking into a geometric progression of packs,
-		 * however, we ask 'git pack-objects --stdin-packs', and it is
+		 * however, we ask 'but pack-objects --stdin-packs', and it is
 		 * not about packing objects based on reachability but about
 		 * repacking all the objects in specified packs and loose ones
 		 * (indeed, --stdin-packs is incompatible with these options).
@@ -904,7 +904,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			return ret;
 	}
 
-	reprepare_packed_git(the_repository);
+	reprepare_packed_but(the_repository);
 
 	if (delete_redundant) {
 		int opts = 0;
@@ -919,7 +919,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 			uint32_t i;
 			for (i = 0; i < geometry->split; i++) {
-				struct packed_git *p = geometry->pack[i];
+				struct packed_but *p = geometry->pack[i];
 				if (string_list_has_string(&names,
 							   hash_to_hex(p->hash)))
 					continue;
@@ -947,9 +947,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		update_server_info(0);
 	remove_temporary_files();
 
-	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
+	if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
 		unsigned flags = 0;
-		if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0))
+		if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0))
 			flags |= MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX;
 		write_midx_file(get_object_directory(), NULL, NULL, flags);
 	}

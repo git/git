@@ -1,4 +1,4 @@
-# Library of git-bundle related functions.
+# Library of but-bundle related functions.
 
 # Display the pack data contained in the bundle file, bypassing the
 # header that contains the signature, prerequisites and references.
@@ -12,7 +12,7 @@ convert_bundle_to_pack () {
 
 # Check count of objects in a bundle file.
 # We can use "--thin" opiton to check thin pack, which must be fixed by
-# command `git-index-pack --fix-thin --stdin`.
+# command `but-index-pack --fix-thin --stdin`.
 test_bundle_object_count () {
 	thin=
 	if test "$1" = "--thin"
@@ -31,11 +31,11 @@ test_bundle_object_count () {
 	if test -n "$thin"
 	then
 		mv "$pack" "$bundle.thin.pack" &&
-		git index-pack --stdin --fix-thin "$pack" <"$bundle.thin.pack"
+		but index-pack --stdin --fix-thin "$pack" <"$bundle.thin.pack"
 	else
-		git index-pack "$pack"
+		but index-pack "$pack"
 	fi || return 1
-	count=$(git show-index <"${pack%pack}idx" | wc -l) &&
+	count=$(but show-index <"${pack%pack}idx" | wc -l) &&
 	test $2 = $count && return 0
 	echo >&2 "error: object count for $bundle is $count, not $2"
 	return 1

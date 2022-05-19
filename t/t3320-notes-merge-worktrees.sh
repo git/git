@@ -15,63 +15,63 @@ test_expect_success 'setup cummit' '
 	test_cummit tantrum
 '
 
-cummit_tantrum=$(git rev-parse tantrum^{cummit})
+cummit_tantrum=$(but rev-parse tantrum^{cummit})
 
 test_expect_success 'setup notes ref (x)' '
-	git config core.notesRef refs/notes/x &&
-	git notes add -m "x notes on tantrum" tantrum
+	but config core.notesRef refs/notes/x &&
+	but notes add -m "x notes on tantrum" tantrum
 '
 
 test_expect_success 'setup local branch (y)' '
-	git update-ref refs/notes/y refs/notes/x &&
-	git config core.notesRef refs/notes/y &&
-	git notes remove tantrum
+	but update-ref refs/notes/y refs/notes/x &&
+	but config core.notesRef refs/notes/y &&
+	but notes remove tantrum
 '
 
 test_expect_success 'setup remote branch (z)' '
-	git update-ref refs/notes/z refs/notes/x &&
-	git config core.notesRef refs/notes/z &&
-	git notes add -f -m "conflicting notes on tantrum" tantrum
+	but update-ref refs/notes/z refs/notes/x &&
+	but config core.notesRef refs/notes/z &&
+	but notes add -f -m "conflicting notes on tantrum" tantrum
 '
 
 test_expect_success 'modify notes ref ourselves (x)' '
-	git config core.notesRef refs/notes/x &&
-	git notes add -f -m "more conflicting notes on tantrum" tantrum
+	but config core.notesRef refs/notes/x &&
+	but notes add -f -m "more conflicting notes on tantrum" tantrum
 '
 
 test_expect_success 'create some new worktrees' '
-	git worktree add -b newbranch worktree main &&
-	git worktree add -b newbranch2 worktree2 main
+	but worktree add -b newbranch worktree main &&
+	but worktree add -b newbranch2 worktree2 main
 '
 
 test_expect_success 'merge z into y fails and sets NOTES_MERGE_REF' '
-	git config core.notesRef refs/notes/y &&
-	test_must_fail git notes merge z &&
+	but config core.notesRef refs/notes/y &&
+	test_must_fail but notes merge z &&
 	echo "refs/notes/y" >expect &&
-	git symbolic-ref NOTES_MERGE_REF >actual &&
+	but symbolic-ref NOTES_MERGE_REF >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'merge z into y while mid-merge in another workdir fails' '
 	(
 		cd worktree &&
-		git config core.notesRef refs/notes/y &&
-		test_must_fail git notes merge z 2>err &&
+		but config core.notesRef refs/notes/y &&
+		test_must_fail but notes merge z 2>err &&
 		test_i18ngrep "a notes merge into refs/notes/y is already in-progress at" err
 	) &&
-	test_must_fail git -C worktree symbolic-ref NOTES_MERGE_REF
+	test_must_fail but -C worktree symbolic-ref NOTES_MERGE_REF
 '
 
 test_expect_success 'merge z into x while mid-merge on y succeeds' '
 	(
 		cd worktree2 &&
-		git config core.notesRef refs/notes/x &&
-		test_must_fail git notes merge z >out 2>&1 &&
+		but config core.notesRef refs/notes/x &&
+		test_must_fail but notes merge z >out 2>&1 &&
 		test_i18ngrep "Automatic notes merge failed" out &&
 		grep -v "A notes merge into refs/notes/x is already in-progress in" out
 	) &&
 	echo "refs/notes/x" >expect &&
-	git -C worktree2 symbolic-ref NOTES_MERGE_REF >actual &&
+	but -C worktree2 symbolic-ref NOTES_MERGE_REF >actual &&
 	test_cmp expect actual
 '
 

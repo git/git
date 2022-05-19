@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "test-tool.h"
 #include "trace2.h"
 #include "parse-options.h"

@@ -18,7 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if defined __TANDEM
- /* This is currently duplicated from git-compat-utils.h */
+ /* This is currently duplicated from but-compat-utils.h */
 # ifdef NO_INTPTR_T
  typedef long intptr_t;
  typedef unsigned long uintptr_t;
@@ -3586,8 +3586,8 @@ build_charclass (RE_TRANSLATE_TYPE trans, bitset_t sbcset,
     BUILD_CHARCLASS_LOOP (isspace);
   else if (strcmp (class_name, "alpha") == 0)
     BUILD_CHARCLASS_LOOP (isalpha);
-  else if (strcmp (class_name, "digit") == 0)
-    BUILD_CHARCLASS_LOOP (isdigit);
+  else if (strcmp (class_name, "dibut") == 0)
+    BUILD_CHARCLASS_LOOP (isdibut);
   else if (strcmp (class_name, "print") == 0)
     BUILD_CHARCLASS_LOOP (isprint);
   else if (strcmp (class_name, "upper") == 0)
@@ -3603,8 +3603,8 @@ build_charclass (RE_TRANSLATE_TYPE trans, bitset_t sbcset,
     BUILD_CHARCLASS_LOOP (isgraph);
   else if (strcmp (class_name, "punct") == 0)
     BUILD_CHARCLASS_LOOP (ispunct);
-  else if (strcmp (class_name, "xdigit") == 0)
-    BUILD_CHARCLASS_LOOP (isxdigit);
+  else if (strcmp (class_name, "xdibut") == 0)
+    BUILD_CHARCLASS_LOOP (isxdibut);
   else
     return REG_ECTYPE;
 

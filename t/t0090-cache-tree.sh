@@ -20,8 +20,8 @@ cmp_cache_tree () {
 generate_expected_cache_tree () {
 	pathspec="$1" &&
 	dir="$2${2:+/}" &&
-	git ls-tree --name-only HEAD -- "$pathspec" >files &&
-	git ls-tree --name-only -d HEAD -- "$pathspec" >subtrees &&
+	but ls-tree --name-only HEAD -- "$pathspec" >files &&
+	but ls-tree --name-only -d HEAD -- "$pathspec" >subtrees &&
 	printf "SHA %s (%d entries, %d subtrees)\n" "$dir" $(wc -l <files) $(wc -l <subtrees) &&
 	while read subtree
 	do
@@ -33,7 +33,7 @@ test_cache_tree () {
 	generate_expected_cache_tree "." >expect &&
 	cmp_cache_tree expect &&
 	rm expect actual files subtrees &&
-	git status --porcelain -- ':!status' ':!expected.status' >status &&
+	but status --porcelain -- ':!status' ':!expected.status' >status &&
 	if test -n "$1"
 	then
 		test_cmp "$1" status
@@ -60,28 +60,28 @@ test_expect_success 'initial commit has cache-tree' '
 '
 
 test_expect_success 'read-tree HEAD establishes cache-tree' '
-	git read-tree HEAD &&
+	but read-tree HEAD &&
 	test_cache_tree
 '
 
-test_expect_success 'git-add invalidates cache-tree' '
-	test_when_finished "git reset --hard; git read-tree HEAD" &&
+test_expect_success 'but-add invalidates cache-tree' '
+	test_when_finished "but reset --hard; but read-tree HEAD" &&
 	echo "I changed this file" >foo &&
-	git add foo &&
+	but add foo &&
 	test_invalid_cache_tree
 '
 
-test_expect_success 'git-add in subdir invalidates cache-tree' '
-	test_when_finished "git reset --hard; git read-tree HEAD" &&
+test_expect_success 'but-add in subdir invalidates cache-tree' '
+	test_when_finished "but reset --hard; but read-tree HEAD" &&
 	mkdir dirx &&
 	echo "I changed this file" >dirx/foo &&
-	git add dirx/foo &&
+	but add dirx/foo &&
 	test_invalid_cache_tree
 '
 
-test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
-	git tag no-children &&
-	test_when_finished "git reset --hard no-children; git read-tree HEAD" &&
+test_expect_success 'but-add in subdir does not invalidate sibling cache-tree' '
+	but tag no-children &&
+	test_when_finished "but reset --hard no-children; but read-tree HEAD" &&
 	mkdir dir1 dir2 &&
 	test_cummit dir1/a &&
 	test_cummit dir2/b &&
@@ -94,7 +94,7 @@ test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	EOF
 	cmp_cache_tree before &&
 	echo "I changed this file" >dir1/a &&
-	git add dir1/a &&
+	but add dir1/a &&
 	cat >expect <<-\EOF &&
 	invalid                                   (2 subtrees)
 	invalid                                  dir1/ (0 subtrees)
@@ -104,20 +104,20 @@ test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 '
 
 test_expect_success 'update-index invalidates cache-tree' '
-	test_when_finished "git reset --hard; git read-tree HEAD" &&
+	test_when_finished "but reset --hard; but read-tree HEAD" &&
 	echo "I changed this file" >foo &&
-	git update-index --add foo &&
+	but update-index --add foo &&
 	test_invalid_cache_tree
 '
 
 test_expect_success 'write-tree establishes cache-tree' '
 	test-tool scrap-cache-tree &&
-	git write-tree &&
+	but write-tree &&
 	test_cache_tree
 '
 
 test_expect_success 'test-tool scrap-cache-tree works' '
-	git read-tree HEAD &&
+	but read-tree HEAD &&
 	test-tool scrap-cache-tree &&
 	test_no_cache_tree
 '
@@ -128,7 +128,7 @@ test_expect_success 'second commit has cache-tree' '
 '
 
 test_expect_success PERL 'cummit --interactive gives cache-tree on partial cummit' '
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	cat <<-\EOT >foo.c &&
 	int foo()
 	{
@@ -139,9 +139,9 @@ test_expect_success PERL 'cummit --interactive gives cache-tree on partial cummi
 		return 42;
 	}
 	EOT
-	git add foo.c &&
+	but add foo.c &&
 	test_invalid_cache_tree &&
-	git cummit -m "add a file" &&
+	but cummit -m "add a file" &&
 	test_cache_tree &&
 	cat <<-\EOT >foo.c &&
 	int foo()
@@ -154,7 +154,7 @@ test_expect_success PERL 'cummit --interactive gives cache-tree on partial cummi
 	}
 	EOT
 	test_write_lines p 1 "" s n y q |
-	git cummit --interactive -m foo &&
+	but cummit --interactive -m foo &&
 	cat <<-\EOF >expected.status &&
 	 M foo.c
 	EOF
@@ -164,92 +164,92 @@ test_expect_success PERL 'cummit --interactive gives cache-tree on partial cummi
 test_expect_success PERL 'cummit -p with shrinking cache-tree' '
 	mkdir -p deep/very-long-subdir &&
 	echo content >deep/very-long-subdir/file &&
-	git add deep &&
-	git cummit -m add &&
-	git rm -r deep &&
+	but add deep &&
+	but cummit -m add &&
+	but rm -r deep &&
 
-	before=$(wc -c <.git/index) &&
-	git cummit -m delete -p &&
-	after=$(wc -c <.git/index) &&
+	before=$(wc -c <.but/index) &&
+	but cummit -m delete -p &&
+	after=$(wc -c <.but/index) &&
 
 	# double check that the index shrank
 	test $before -gt $after &&
 
 	# and that our index was not corrupted
-	git fsck
+	but fsck
 '
 
 test_expect_success 'cummit in child dir has cache-tree' '
 	mkdir dir &&
 	>dir/child.t &&
-	git add dir/child.t &&
-	git cummit -m dir/child.t &&
+	but add dir/child.t &&
+	but cummit -m dir/child.t &&
 	test_cache_tree
 '
 
 test_expect_success 'reset --hard gives cache-tree' '
 	test-tool scrap-cache-tree &&
-	git reset --hard &&
+	but reset --hard &&
 	test_cache_tree
 '
 
 test_expect_success 'reset --hard without index gives cache-tree' '
-	rm -f .git/index &&
-	git clean -fd &&
-	git reset --hard &&
+	rm -f .but/index &&
+	but clean -fd &&
+	but reset --hard &&
 	test_cache_tree
 '
 
 test_expect_success 'checkout gives cache-tree' '
-	git tag current &&
-	git checkout HEAD^ &&
+	but tag current &&
+	but checkout HEAD^ &&
 	test_cache_tree
 '
 
 test_expect_success 'checkout -b gives cache-tree' '
-	git checkout current &&
-	git checkout -b prev HEAD^ &&
+	but checkout current &&
+	but checkout -b prev HEAD^ &&
 	test_cache_tree
 '
 
 test_expect_success 'checkout -B gives cache-tree' '
-	git checkout current &&
-	git checkout -B prev HEAD^ &&
+	but checkout current &&
+	but checkout -B prev HEAD^ &&
 	test_cache_tree
 '
 
 test_expect_success 'merge --ff-only maintains cache-tree' '
-	git checkout current &&
-	git checkout -b changes &&
+	but checkout current &&
+	but checkout -b changes &&
 	test_cummit llamas &&
 	test_cummit pachyderm &&
 	test_cache_tree &&
-	git checkout current &&
+	but checkout current &&
 	test_cache_tree &&
-	git merge --ff-only changes &&
+	but merge --ff-only changes &&
 	test_cache_tree
 '
 
 test_expect_success 'merge maintains cache-tree' '
-	git checkout current &&
-	git checkout -b changes2 &&
+	but checkout current &&
+	but checkout -b changes2 &&
 	test_cummit alpacas &&
 	test_cache_tree &&
-	git checkout current &&
+	but checkout current &&
 	test_cummit struthio &&
 	test_cache_tree &&
-	git merge changes2 &&
+	but merge changes2 &&
 	test_cache_tree
 '
 
 test_expect_success 'partial cummit gives cache-tree' '
-	git checkout -b partial no-children &&
+	but checkout -b partial no-children &&
 	test_cummit one &&
 	test_cummit two &&
 	echo "some change" >one.t &&
-	git add one.t &&
+	but add one.t &&
 	echo "some other change" >two.t &&
-	git cummit two.t -m partial &&
+	but cummit two.t -m partial &&
 	cat <<-\EOF >expected.status &&
 	M  one.t
 	EOF
@@ -259,20 +259,20 @@ test_expect_success 'partial cummit gives cache-tree' '
 test_expect_success 'no phantom error when switching trees' '
 	mkdir newdir &&
 	>newdir/one &&
-	git add newdir/one &&
-	git checkout 2>errors &&
+	but add newdir/one &&
+	but checkout 2>errors &&
 	test_must_be_empty errors
 '
 
 test_expect_success 'switching trees does not invalidate shared index' '
 	(
 		sane_unset GIT_TEST_SPLIT_INDEX &&
-		git update-index --split-index &&
+		but update-index --split-index &&
 		>split &&
-		git add split &&
-		test-tool dump-split-index .git/index | grep -v ^own >before &&
-		git cummit -m "as-is" &&
-		test-tool dump-split-index .git/index | grep -v ^own >after &&
+		but add split &&
+		test-tool dump-split-index .but/index | grep -v ^own >before &&
+		but cummit -m "as-is" &&
+		test-tool dump-split-index .but/index | grep -v ^own >after &&
 		test_cmp before after
 	)
 '

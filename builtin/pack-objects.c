@@ -179,14 +179,14 @@ static inline void oe_set_delta_size(struct packing_data *pack,
 #define SET_DELTA_SIBLING(obj, val) oe_set_delta_sibling(&to_pack, obj, val)
 
 static const char *pack_usage[] = {
-	N_("git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"),
-	N_("git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"),
+	N_("but pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"),
+	N_("but pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"),
 	NULL
 };
 
 static struct pack_idx_entry **written_list;
 static uint32_t nr_result, nr_written, nr_seen;
-static struct bitmap_index *bitmap_git;
+static struct bitmap_index *bitmap_but;
 static uint32_t write_layer;
 
 static int non_empty;
@@ -213,7 +213,7 @@ static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
 
-static struct packed_git *reuse_packfile;
+static struct packed_but *reuse_packfile;
 static uint32_t reuse_packfile_objects;
 static struct bitmap *reuse_packfile_bitmap;
 
@@ -309,12 +309,12 @@ static void *get_delta(struct object_entry *entry)
 
 static unsigned long do_compress(void **pptr, unsigned long size)
 {
-	git_zstream stream;
+	but_zstream stream;
 	void *in, *out;
 	unsigned long maxsize;
 
-	git_deflate_init(&stream, pack_compression_level);
-	maxsize = git_deflate_bound(&stream, size);
+	but_deflate_init(&stream, pack_compression_level);
+	maxsize = but_deflate_bound(&stream, size);
 
 	in = *pptr;
 	out = xmalloc(maxsize);
@@ -324,23 +324,23 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	stream.avail_in = size;
 	stream.next_out = out;
 	stream.avail_out = maxsize;
-	while (git_deflate(&stream, Z_FINISH) == Z_OK)
+	while (but_deflate(&stream, Z_FINISH) == Z_OK)
 		; /* nothing */
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 
 	free(in);
 	return stream.total_out;
 }
 
-static unsigned long write_large_blob_data(struct git_istream *st, struct hashfile *f,
+static unsigned long write_large_blob_data(struct but_istream *st, struct hashfile *f,
 					   const struct object_id *oid)
 {
-	git_zstream stream;
+	but_zstream stream;
 	unsigned char ibuf[1024 * 16];
 	unsigned char obuf[1024 * 16];
 	unsigned long olen = 0;
 
-	git_deflate_init(&stream, pack_compression_level);
+	but_deflate_init(&stream, pack_compression_level);
 
 	for (;;) {
 		ssize_t readlen;
@@ -355,7 +355,7 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct hashfi
 		       (zret == Z_OK || zret == Z_BUF_ERROR)) {
 			stream.next_out = obuf;
 			stream.avail_out = sizeof(obuf);
-			zret = git_deflate(&stream, readlen ? 0 : Z_FINISH);
+			zret = but_deflate(&stream, readlen ? 0 : Z_FINISH);
 			hashwrite(f, obuf, stream.next_out - obuf);
 			olen += stream.next_out - obuf;
 		}
@@ -367,7 +367,7 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct hashfi
 			break;
 		}
 	}
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 	return olen;
 }
 
@@ -375,34 +375,34 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct hashfi
  * we are going to reuse the existing object data as is.  make
  * sure it is not corrupt.
  */
-static int check_pack_inflate(struct packed_git *p,
+static int check_pack_inflate(struct packed_but *p,
 		struct pack_window **w_curs,
 		off_t offset,
 		off_t len,
 		unsigned long expect)
 {
-	git_zstream stream;
+	but_zstream stream;
 	unsigned char fakebuf[4096], *in;
 	int st;
 
 	memset(&stream, 0, sizeof(stream));
-	git_inflate_init(&stream);
+	but_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, offset, &stream.avail_in);
 		stream.next_in = in;
 		stream.next_out = fakebuf;
 		stream.avail_out = sizeof(fakebuf);
-		st = git_inflate(&stream, Z_FINISH);
+		st = but_inflate(&stream, Z_FINISH);
 		offset += stream.next_in - in;
 	} while (st == Z_OK || st == Z_BUF_ERROR);
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 	return (st == Z_STREAM_END &&
 		stream.total_out == expect &&
 		stream.total_in == len) ? 0 : -1;
 }
 
 static void copy_pack_data(struct hashfile *f,
-		struct packed_git *p,
+		struct packed_but *p,
 		struct pack_window **w_curs,
 		off_t offset,
 		off_t len)
@@ -441,7 +441,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	unsigned hdrlen;
 	enum object_type type;
 	void *buf;
-	struct git_istream *st = NULL;
+	struct but_istream *st = NULL;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
 	if (!usable_delta) {
@@ -547,7 +547,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 				unsigned long limit, int usable_delta)
 {
-	struct packed_git *p = IN_PACK(entry);
+	struct packed_but *p = IN_PACK(entry);
 	struct pack_window *w_curs = NULL;
 	uint32_t pos;
 	off_t offset;
@@ -1311,7 +1311,7 @@ static int no_try_delta(const char *path)
 
 	if (!check)
 		check = attr_check_initl("delta", NULL);
-	git_check_attr(the_repository->index, path, check);
+	but_check_attr(the_repository->index, path, check);
 	if (ATTR_FALSE(check->items[0].value))
 		return 1;
 	return 0;
@@ -1333,7 +1333,7 @@ static int have_duplicate_entry(const struct object_id *oid,
 	struct object_entry *entry;
 
 	if (reuse_packfile_bitmap &&
-	    bitmap_walk_contains(bitmap_git, reuse_packfile_bitmap, oid))
+	    bitmap_walk_contains(bitmap_but, reuse_packfile_bitmap, oid))
 		return 1;
 
 	entry = packlist_find(&to_pack, oid);
@@ -1350,7 +1350,7 @@ static int have_duplicate_entry(const struct object_id *oid,
 }
 
 static int want_found_object(const struct object_id *oid, int exclude,
-			     struct packed_git *p)
+			     struct packed_but *p)
 {
 	if (exclude)
 		return 1;
@@ -1417,10 +1417,10 @@ static int want_found_object(const struct object_id *oid, int exclude,
 	return -1;
 }
 
-static int want_object_in_pack_one(struct packed_git *p,
+static int want_object_in_pack_one(struct packed_but *p,
 				   const struct object_id *oid,
 				   int exclude,
-				   struct packed_git **found_pack,
+				   struct packed_but **found_pack,
 				   off_t *found_offset)
 {
 	off_t offset;
@@ -1453,7 +1453,7 @@ static int want_object_in_pack_one(struct packed_git *p,
  */
 static int want_object_in_pack(const struct object_id *oid,
 			       int exclude,
-			       struct packed_git **found_pack,
+			       struct packed_but **found_pack,
 			       off_t *found_offset)
 {
 	int want;
@@ -1483,12 +1483,12 @@ static int want_object_in_pack(const struct object_id *oid,
 		}
 	}
 
-	list_for_each(pos, get_packed_git_mru(the_repository)) {
-		struct packed_git *p = list_entry(pos, struct packed_git, mru);
+	list_for_each(pos, get_packed_but_mru(the_repository)) {
+		struct packed_but *p = list_entry(pos, struct packed_but, mru);
 		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset);
 		if (!exclude && want > 0)
 			list_move(&p->mru,
-				  get_packed_git_mru(the_repository));
+				  get_packed_but_mru(the_repository));
 		if (want != -1)
 			return want;
 	}
@@ -1520,7 +1520,7 @@ static void create_object_entry(const struct object_id *oid,
 				uint32_t hash,
 				int exclude,
 				int no_try_delta,
-				struct packed_git *found_pack,
+				struct packed_but *found_pack,
 				off_t found_offset)
 {
 	struct object_entry *entry;
@@ -1547,7 +1547,7 @@ static const char no_closure_warning[] = N_(
 static int add_object_entry(const struct object_id *oid, enum object_type type,
 			    const char *name, int exclude)
 {
-	struct packed_git *found_pack = NULL;
+	struct packed_but *found_pack = NULL;
 	off_t found_offset = 0;
 
 	display_progress(progress_state, ++nr_seen);
@@ -1574,7 +1574,7 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 static int add_object_entry_from_bitmap(const struct object_id *oid,
 					enum object_type type,
 					int flags, uint32_t name_hash,
-					struct packed_git *pack, off_t offset)
+					struct packed_but *pack, off_t offset)
 {
 	display_progress(progress_state, ++nr_seen);
 
@@ -1889,7 +1889,7 @@ static int can_reuse_delta(const struct object_id *base_oid,
 	 * even if it was buried too deep in history to make it into the
 	 * packing list.
 	 */
-	if (thin && bitmap_has_oid_in_uninteresting(bitmap_git, base_oid)) {
+	if (thin && bitmap_has_oid_in_uninteresting(bitmap_but, base_oid)) {
 		if (use_delta_islands) {
 			if (!in_same_island(&delta->idx.oid, base_oid))
 				return 0;
@@ -1927,7 +1927,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 	struct object_info oi = {.typep = &type, .sizep = &canonical_size};
 
 	if (IN_PACK(entry)) {
-		struct packed_git *p = IN_PACK(entry);
+		struct packed_but *p = IN_PACK(entry);
 		struct pack_window *w_curs = NULL;
 		int have_base = 0;
 		struct object_id base_ref;
@@ -2086,8 +2086,8 @@ static int pack_offset_sort(const void *_a, const void *_b)
 {
 	const struct object_entry *a = *(struct object_entry **)_a;
 	const struct object_entry *b = *(struct object_entry **)_b;
-	const struct packed_git *a_in_pack = IN_PACK(a);
-	const struct packed_git *b_in_pack = IN_PACK(b);
+	const struct packed_but *a_in_pack = IN_PACK(a);
+	const struct packed_but *b_in_pack = IN_PACK(b);
 
 	/* avoid filesystem trashing with loose objects */
 	if (!a_in_pack && !b_in_pack)
@@ -2420,7 +2420,7 @@ static inline void oe_set_tree_depth(struct packing_data *pack,
 unsigned long oe_get_size_slow(struct packing_data *pack,
 			       const struct object_entry *e)
 {
-	struct packed_git *p;
+	struct packed_but *p;
 	struct pack_window *w_curs;
 	unsigned char *buf;
 	enum object_type type;
@@ -2988,7 +2988,7 @@ static int obj_is_packed(const struct object_id *oid)
 {
 	return packlist_find(&to_pack, oid) ||
 		(reuse_packfile_bitmap &&
-		 bitmap_walk_contains(bitmap_git, reuse_packfile_bitmap, oid));
+		 bitmap_walk_contains(bitmap_but, reuse_packfile_bitmap, oid));
 }
 
 static void add_tag_chain(const struct object_id *oid)
@@ -3105,44 +3105,44 @@ static void prepare_pack(int window, int depth)
 	free(delta_list);
 }
 
-static int git_pack_config(const char *k, const char *v, void *cb)
+static int but_pack_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "pack.window")) {
-		window = git_config_int(k, v);
+		window = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.windowmemory")) {
-		window_memory_limit = git_config_ulong(k, v);
+		window_memory_limit = but_config_ulong(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.depth")) {
-		depth = git_config_int(k, v);
+		depth = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.deltacachesize")) {
-		max_delta_cache_size = git_config_int(k, v);
+		max_delta_cache_size = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.deltacachelimit")) {
-		cache_max_small_delta_size = git_config_int(k, v);
+		cache_max_small_delta_size = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.writebitmaphashcache")) {
-		if (git_config_bool(k, v))
+		if (but_config_bool(k, v))
 			write_bitmap_options |= BITMAP_OPT_HASH_CACHE;
 		else
 			write_bitmap_options &= ~BITMAP_OPT_HASH_CACHE;
 	}
 	if (!strcmp(k, "pack.usebitmaps")) {
-		use_bitmap_index_default = git_config_bool(k, v);
+		use_bitmap_index_default = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.allowpackreuse")) {
-		allow_pack_reuse = git_config_bool(k, v);
+		allow_pack_reuse = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
-		delta_search_threads = git_config_int(k, v);
+		delta_search_threads = but_config_int(k, v);
 		if (delta_search_threads < 0)
 			die(_("invalid number of threads specified (%d)"),
 			    delta_search_threads);
@@ -3153,14 +3153,14 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 	if (!strcmp(k, "pack.indexversion")) {
-		pack_idx_opts.version = git_config_int(k, v);
+		pack_idx_opts.version = but_config_int(k, v);
 		if (pack_idx_opts.version > 2)
 			die(_("bad pack.indexversion=%"PRIu32),
 			    pack_idx_opts.version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.writereverseindex")) {
-		if (git_config_bool(k, v))
+		if (but_config_bool(k, v))
 			pack_idx_opts.flags |= WRITE_REV;
 		else
 			pack_idx_opts.flags &= ~WRITE_REV;
@@ -3189,7 +3189,7 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		ex->uri = xstrdup(pack_end + 1);
 		oidmap_put(&configured_exclusions, ex);
 	}
-	return git_default_config(k, v, cb);
+	return but_default_config(k, v, cb);
 }
 
 /* Counters for trace2 output when in --stdin-packs mode. */
@@ -3197,7 +3197,7 @@ static int stdin_packs_found_nr;
 static int stdin_packs_hints_nr;
 
 static int add_object_entry_from_pack(const struct object_id *oid,
-				      struct packed_git *p,
+				      struct packed_but *p,
 				      uint32_t pos,
 				      void *_data)
 {
@@ -3263,8 +3263,8 @@ static void show_object_pack_hint(struct object *object, const char *name,
 
 static int pack_mtime_cmp(const void *_a, const void *_b)
 {
-	struct packed_git *a = ((const struct string_list_item*)_a)->util;
-	struct packed_git *b = ((const struct string_list_item*)_b)->util;
+	struct packed_but *a = ((const struct string_list_item*)_a)->util;
+	struct packed_but *b = ((const struct string_list_item*)_b)->util;
 
 	/*
 	 * order packs by descending mtime so that objects are laid out
@@ -3285,7 +3285,7 @@ static void read_packs_list_from_stdin(void)
 	struct string_list exclude_packs = STRING_LIST_INIT_DUP;
 	struct string_list_item *item = NULL;
 
-	struct packed_git *p;
+	struct packed_but *p;
 	struct rev_info revs;
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -3343,7 +3343,7 @@ static void read_packs_list_from_stdin(void)
 	 * or all of them.
 	 */
 	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
+		struct packed_but *p = item->util;
 		if (!p)
 			die(_("could not find pack '%s'"), item->string);
 	}
@@ -3354,7 +3354,7 @@ static void read_packs_list_from_stdin(void)
 	 * discards any objects that are also found in excluded packs.
 	 */
 	for_each_string_list_item(item, &exclude_packs) {
-		struct packed_git *p = item->util;
+		struct packed_but *p = item->util;
 		if (!p)
 			die(_("could not find pack '%s'"), item->string);
 		p->pack_keep_in_core = 1;
@@ -3368,7 +3368,7 @@ static void read_packs_list_from_stdin(void)
 	QSORT(include_packs.items, include_packs.nr, pack_mtime_cmp);
 
 	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
+		struct packed_but *p = item->util;
 		if (!p)
 			die(_("could not find pack '%s'"), item->string);
 		for_each_object_in_pack(p,
@@ -3522,7 +3522,7 @@ static void show_edge(struct cummit *cummit)
 }
 
 static int add_object_in_unpacked_pack(const struct object_id *oid,
-				       struct packed_git *pack,
+				       struct packed_but *pack,
 				       uint32_t pos,
 				       void *_data)
 {
@@ -3568,8 +3568,8 @@ static void add_unreachable_loose_objects(void)
 
 static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
 {
-	static struct packed_git *last_found = (void *)1;
-	struct packed_git *p;
+	static struct packed_but *last_found = (void *)1;
+	struct packed_but *p;
 
 	p = (last_found != (void *)1) ? last_found :
 					get_all_packs(the_repository);
@@ -3614,7 +3614,7 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
 
 static void loosen_unused_packed_objects(void)
 {
-	struct packed_git *p;
+	struct packed_but *p;
 	uint32_t i;
 	uint32_t loosened_objects_nr = 0;
 	struct object_id oid;
@@ -3659,12 +3659,12 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
+	if (!(bitmap_but = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
 	if (pack_options_allow_reuse() &&
 	    !reuse_partial_packfile_from_bitmap(
-			bitmap_git,
+			bitmap_but,
 			&reuse_packfile,
 			&reuse_packfile_objects,
 			&reuse_packfile_bitmap)) {
@@ -3674,7 +3674,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 		display_progress(progress_state, nr_seen);
 	}
 
-	traverse_bitmap_cummit_list(bitmap_git, revs,
+	traverse_bitmap_cummit_list(bitmap_but, revs,
 				    &add_object_entry_from_bitmap);
 	return 0;
 }
@@ -3810,7 +3810,7 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 
 static void add_extra_kept_packs(const struct string_list *names)
 {
-	struct packed_git *p;
+	struct packed_but *p;
 
 	if (!names->nr)
 		return;
@@ -3998,16 +3998,16 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
-	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", -1);
-	if (the_repository->gitdir) {
+	sparse = but_env_bool("GIT_TEST_PACK_SPARSE", -1);
+	if (the_repository->butdir) {
 		prepare_repo_settings(the_repository);
 		if (sparse < 0)
 			sparse = the_repository->settings.pack_use_sparse;
 	}
 
 	reset_pack_idx_option(&pack_idx_opts);
-	git_config(git_pack_config, NULL);
-	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
+	but_config(but_pack_config, NULL);
+	if (but_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
 		pack_idx_opts.flags |= WRITE_REV;
 
 	progress = isatty(2);
@@ -4139,7 +4139,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	add_extra_kept_packs(&keep_pack_list);
 	if (ignore_packed_keep_on_disk) {
-		struct packed_git *p;
+		struct packed_but *p;
 		for (p = get_all_packs(the_repository); p; p = p->next)
 			if (p->pack_local && p->pack_keep)
 				break;
@@ -4152,7 +4152,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		 * want to unset "local" based on looking at packs, as
 		 * it also covers non-local objects
 		 */
-		struct packed_git *p;
+		struct packed_but *p;
 		for (p = get_all_packs(the_repository); p; p = p->next) {
 			if (!p->pack_local) {
 				have_non_local_packs = 1;

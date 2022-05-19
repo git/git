@@ -114,8 +114,8 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *				(i.e. '<argh>') in the help message.
  *				Useful for options with multiple parameters.
  *   PARSE_OPT_NOCOMPLETE: by default all visible options are completable
- *			   by git-completion.bash. This option suppresses that.
- *   PARSE_OPT_COMP_ARG: this option forces to git-completion.bash to
+ *			   by but-completion.bash. This option suppresses that.
+ *   PARSE_OPT_COMP_ARG: this option forces to but-completion.bash to
  *			 complete an option as --name= not --name even if
  *			 the option takes optional argument.
  *
@@ -346,7 +346,7 @@ int parse_opt_tracking_mode(const struct option *, const char *, int);
 #define OPT__FORCE(var, h, f) OPT_COUNTUP_F('f', "force",   (var), (h), (f))
 #define OPT__ABBREV(var)  \
 	{ OPTION_CALLBACK, 0, "abbrev", (var), N_("n"),	\
-	  N_("use <n> digits to display object names"),	\
+	  N_("use <n> dibuts to display object names"),	\
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
 #define OPT__COLOR(var, h) \
 	OPT_COLOR_FLAG(0, "color", (var), (h))

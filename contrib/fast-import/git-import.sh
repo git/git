@@ -1,23 +1,23 @@
 #!/bin/sh
 #
 # Performs an initial import of a directory. This is the equivalent
-# of doing 'git init; git add .; git cummit'. It's a lot slower,
+# of doing 'but init; but add .; but cummit'. It's a lot slower,
 # but is meant to be a simple fast-import example.
 
 if [ -z "$1" -o -z "$2" ]; then
-	echo "usage: git-import branch import-message"
+	echo "usage: but-import branch import-message"
 	exit 1
 fi
 
-USERNAME="$(git config user.name)"
-EMAIL="$(git config user.email)"
+USERNAME="$(but config user.name)"
+EMAIL="$(but config user.email)"
 
 if [ -z "$USERNAME" -o -z "$EMAIL" ]; then
 	echo "You need to set user name and email"
 	exit 1
 fi
 
-git init
+but init
 
 (
 	cat <<EOF
@@ -35,4 +35,4 @@ EOF
 		echo
 	done
 	echo
-) | git fast-import --date-format=now
+) | but fast-import --date-format=now

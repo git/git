@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 tests for excluded paths during clone and sync'
+test_description='but p4 tests for excluded paths during clone and sync'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -30,10 +30,10 @@ test_expect_success 'create exclude repo' '
 '
 
 test_expect_success 'check the repo was created correctly' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot/...@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot/...@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_path_is_file wanted/foo &&
 		test_path_is_file discard/foo &&
 		test_path_is_file discard_file &&
@@ -42,10 +42,10 @@ test_expect_success 'check the repo was created correctly' '
 '
 
 test_expect_success 'clone, excluding part of repo' '
-	test_when_finished cleanup_git &&
-	git p4 clone -//depot/discard/... --dest="$git" //depot/...@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone -//depot/discard/... --dest="$but" //depot/...@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_path_is_file wanted/foo &&
 		test_path_is_missing discard/foo &&
 		test_path_is_file discard_file &&
@@ -54,10 +54,10 @@ test_expect_success 'clone, excluding part of repo' '
 '
 
 test_expect_success 'clone, excluding single file, no trailing /' '
-	test_when_finished cleanup_git &&
-	git p4 clone -//depot/discard_file --dest="$git" //depot/...@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone -//depot/discard_file --dest="$but" //depot/...@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_path_is_file wanted/foo &&
 		test_path_is_file discard/foo &&
 		test_path_is_missing discard_file &&
@@ -66,8 +66,8 @@ test_expect_success 'clone, excluding single file, no trailing /' '
 '
 
 test_expect_success 'clone, then sync with exclude' '
-	test_when_finished cleanup_git &&
-	git p4 clone -//depot/discard/... --dest="$git" //depot/...@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone -//depot/discard/... --dest="$but" //depot/...@all &&
 	(
 		cd "$cli" &&
 		p4 edit wanted/foo discard/foo discard_file_not &&
@@ -76,8 +76,8 @@ test_expect_success 'clone, then sync with exclude' '
 		date >>discard_file_not &&
 		p4 submit -d "updating" &&
 
-		cd "$git" &&
-		git p4 sync -//depot/discard/... &&
+		cd "$but" &&
+		but p4 sync -//depot/discard/... &&
 		test_path_is_file wanted/foo &&
 		test_path_is_missing discard/foo &&
 		test_path_is_file discard_file &&
@@ -86,8 +86,8 @@ test_expect_success 'clone, then sync with exclude' '
 '
 
 test_expect_success 'clone, then sync with exclude, no trailing /' '
-	test_when_finished cleanup_git &&
-	git p4 clone -//depot/discard/... -//depot/discard_file --dest="$git" //depot/...@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone -//depot/discard/... -//depot/discard_file --dest="$but" //depot/...@all &&
 	(
 		cd "$cli" &&
 		p4 edit wanted/foo discard/foo discard_file_not &&
@@ -96,8 +96,8 @@ test_expect_success 'clone, then sync with exclude, no trailing /' '
 		date >>discard_file_not &&
 		p4 submit -d "updating" &&
 
-		cd "$git" &&
-		git p4 sync -//depot/discard/... -//depot/discard_file &&
+		cd "$but" &&
+		but p4 sync -//depot/discard/... -//depot/discard_file &&
 		test_path_is_file wanted/foo &&
 		test_path_is_missing discard/foo &&
 		test_path_is_missing discard_file &&

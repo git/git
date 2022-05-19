@@ -9,11 +9,11 @@ test_expect_success 'setup cummits' '
 '
 
 test_expect_success 'setup reflog with alternating cummits' '
-	git checkout -b topic &&
-	git reset one &&
-	git reset two &&
-	git reset one &&
-	git reset two
+	but checkout -b topic &&
+	but reset one &&
+	but reset two &&
+	but reset one &&
+	but reset two
 '
 
 test_expect_success 'reflog shows all entries' '
@@ -24,7 +24,7 @@ test_expect_success 'reflog shows all entries' '
 		topic@{3} reset: moving to one
 		topic@{4} branch: Created from HEAD
 	EOF
-	git log -g --format="%gd %gs" topic >actual &&
+	but log -g --format="%gd %gs" topic >actual &&
 	test_cmp expect actual
 '
 

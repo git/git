@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2005 Jon Seymour
 #
-test_description='Tests git rev-list --bisect functionality'
+test_description='Tests but rev-list --bisect functionality'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
@@ -16,11 +16,11 @@ test_bisection_diff()
 	_max_diff=$1
 	_bisect_option=$2
 	shift 2
-	_bisection=$(git rev-list $_bisect_option "$@")
-	_list_size=$(git rev-list "$@" | wc -l)
+	_bisection=$(but rev-list $_bisect_option "$@")
+	_list_size=$(but rev-list "$@" | wc -l)
         _head=$1
 	shift 1
-	_bisection_size=$(git rev-list $_bisection "$@" | wc -l)
+	_bisection_size=$(but rev-list $_bisection "$@" | wc -l)
 	[ -n "$_list_size" -a -n "$_bisection_size" ] ||
 	error "test_bisection_diff failed"
 
@@ -37,8 +37,8 @@ test_bisection_diff()
 }
 
 date >path0
-git update-index --add path0
-save_tag tree git write-tree
+but update-index --add path0
+save_tag tree but write-tree
 on_cummitter_date "00:00" hide_error save_tag root unique_cummit root tree
 on_cummitter_date "00:01" save_tag l0 unique_cummit l0 tree -p root
 on_cummitter_date "00:02" save_tag l1 unique_cummit l1 tree -p l0
@@ -58,7 +58,7 @@ on_cummitter_date "00:15" save_tag a4 unique_cummit a4 tree -p a3 -p b4 -p c3
 on_cummitter_date "00:16" save_tag l3 unique_cummit l3 tree -p a4
 on_cummitter_date "00:17" save_tag l4 unique_cummit l4 tree -p l3
 on_cummitter_date "00:18" save_tag l5 unique_cummit l5 tree -p l4
-git update-ref HEAD $(tag l5)
+but update-ref HEAD $(tag l5)
 
 
 #     E
@@ -163,23 +163,23 @@ test_sequence()
 # the bisection point is the head - this is the bad point.
 #
 
-test_output_expect_success "$_bisect_option l5 ^root" 'git rev-list $_bisect_option l5 ^root' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root" 'but rev-list $_bisect_option l5 ^root' <<EOF
 c3
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^root ^c3" 'git rev-list $_bisect_option l5 ^root ^c3' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root ^c3" 'but rev-list $_bisect_option l5 ^root ^c3' <<EOF
 b4
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^root ^c3 ^b4" 'git rev-list $_bisect_option l5 ^c3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root ^c3 ^b4" 'but rev-list $_bisect_option l5 ^c3 ^b4' <<EOF
 l3
 EOF
 
-test_output_expect_success "$_bisect_option l3 ^root ^c3 ^b4" 'git rev-list $_bisect_option l3 ^root ^c3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option l3 ^root ^c3 ^b4" 'but rev-list $_bisect_option l3 ^root ^c3 ^b4' <<EOF
 a4
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^b3 ^a3 ^b4 ^a4" 'git rev-list $_bisect_option l3 ^b3 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l5 ^b3 ^a3 ^b4 ^a4" 'but rev-list $_bisect_option l3 ^b3 ^a3 ^a4' <<EOF
 l3
 EOF
 
@@ -187,11 +187,11 @@ EOF
 # if l3 is bad, then l4 is bad too - so advance the bad pointer by making b4 the known bad head
 #
 
-test_output_expect_success "$_bisect_option l4 ^a2 ^a3 ^b ^a4" 'git rev-list $_bisect_option l4 ^a2 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l4 ^a2 ^a3 ^b ^a4" 'but rev-list $_bisect_option l4 ^a2 ^a3 ^a4' <<EOF
 l3
 EOF
 
-test_output_expect_success "$_bisect_option l3 ^a2 ^a3 ^b ^a4" 'git rev-list $_bisect_option l3 ^a2 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l3 ^a2 ^a3 ^b ^a4" 'but rev-list $_bisect_option l3 ^a2 ^a3 ^a4' <<EOF
 l3
 EOF
 
@@ -201,15 +201,15 @@ EOF
 # as another example, let's consider a4 to be the bad head, in which case
 #
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'but rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
 c2
 EOF
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2" 'but rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2' <<EOF
 c3
 EOF
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3" 'but rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3' <<EOF
 a4
 EOF
 
@@ -219,11 +219,11 @@ EOF
 # or consider c3 to be the bad head
 #
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'but rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
 c2
 EOF
 
-test_output_expect_success "$_bisect_option c3 ^a2 ^a3 ^b4 ^c2" 'git rev-list $_bisect_option c3 ^a2 ^a3 ^b4 ^c2' <<EOF
+test_output_expect_success "$_bisect_option c3 ^a2 ^a3 ^b4 ^c2" 'but rev-list $_bisect_option c3 ^a2 ^a3 ^b4 ^c2' <<EOF
 c3
 EOF
 
@@ -237,23 +237,23 @@ test_sequence "--bisect"
 #
 
 test_expect_success 'set up fake --bisect refs' '
-	git update-ref refs/bisect/bad c3 &&
-	good=$(git rev-parse b1) &&
-	git update-ref refs/bisect/good-$good $good &&
-	good=$(git rev-parse c1) &&
-	git update-ref refs/bisect/good-$good $good
+	but update-ref refs/bisect/bad c3 &&
+	good=$(but rev-parse b1) &&
+	but update-ref refs/bisect/good-$good $good &&
+	good=$(but rev-parse c1) &&
+	but update-ref refs/bisect/good-$good $good
 '
 
 test_expect_success 'rev-list --bisect can default to good/bad refs' '
 	# the only thing between c3 and c1 is c2
-	git rev-parse c2 >expect &&
-	git rev-list --bisect >actual &&
+	but rev-parse c2 >expect &&
+	but rev-list --bisect >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-parse --bisect can default to good/bad refs' '
-	git rev-parse c3 ^b1 ^c1 >expect &&
-	git rev-parse --bisect >actual &&
+	but rev-parse c3 ^b1 ^c1 >expect &&
+	but rev-parse --bisect >actual &&
 
 	# output order depends on the refnames, which in turn depends on
 	# the exact sha1s. We just want to make sure we have the same set
@@ -263,11 +263,11 @@ test_expect_success 'rev-parse --bisect can default to good/bad refs' '
 	test_cmp expect.sorted actual.sorted
 '
 
-test_output_expect_success '--bisect --first-parent' 'git rev-list --bisect --first-parent E ^F' <<EOF
+test_output_expect_success '--bisect --first-parent' 'but rev-list --bisect --first-parent E ^F' <<EOF
 e4
 EOF
 
-test_output_expect_success '--first-parent' 'git rev-list --first-parent E ^F' <<EOF
+test_output_expect_success '--first-parent' 'but rev-list --first-parent E ^F' <<EOF
 E
 e1
 e2
@@ -279,7 +279,7 @@ e7
 e8
 EOF
 
-test_output_expect_success '--bisect-vars --first-parent' 'git rev-list --bisect-vars --first-parent E ^F' <<EOF
+test_output_expect_success '--bisect-vars --first-parent' 'but rev-list --bisect-vars --first-parent E ^F' <<EOF
 bisect_rev='e5'
 bisect_nr=4
 bisect_good=4
@@ -290,21 +290,21 @@ EOF
 
 test_expect_success '--bisect-all --first-parent' '
 	cat >expect.unsorted <<-EOF &&
-	$(git rev-parse E) (tag: E, dist=0)
-	$(git rev-parse e1) (tag: e1, dist=1)
-	$(git rev-parse e2) (tag: e2, dist=2)
-	$(git rev-parse e3) (tag: e3, dist=3)
-	$(git rev-parse e4) (tag: e4, dist=4)
-	$(git rev-parse e5) (tag: e5, dist=4)
-	$(git rev-parse e6) (tag: e6, dist=3)
-	$(git rev-parse e7) (tag: e7, dist=2)
-	$(git rev-parse e8) (tag: e8, dist=1)
+	$(but rev-parse E) (tag: E, dist=0)
+	$(but rev-parse e1) (tag: e1, dist=1)
+	$(but rev-parse e2) (tag: e2, dist=2)
+	$(but rev-parse e3) (tag: e3, dist=3)
+	$(but rev-parse e4) (tag: e4, dist=4)
+	$(but rev-parse e5) (tag: e5, dist=4)
+	$(but rev-parse e6) (tag: e6, dist=3)
+	$(but rev-parse e7) (tag: e7, dist=2)
+	$(but rev-parse e8) (tag: e8, dist=1)
 	EOF
 
 	# expect results to be ordered by distance (descending),
 	# commit hash (ascending)
 	sort -k4,4r -k1,1 expect.unsorted >expect &&
-	git rev-list --bisect-all --first-parent E ^F >actual &&
+	but rev-list --bisect-all --first-parent E ^F >actual &&
 	test_cmp expect actual
 '
 

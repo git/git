@@ -1,11 +1,11 @@
 #!/bin/sh
 
-test_description='git svn fetch deleted tag 2'
+test_description='but svn fetch deleted tag 2'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'setup svn repo' '
 	mkdir -p import/branches &&
@@ -16,7 +16,7 @@ test_expect_success 'setup svn repo' '
 	echo "file1" >import/trunk/subdir1/file &&
 	echo "file2" >import/trunk/subdir2/file &&
 	echo "file3" >import/trunk/subdir3/file &&
-	svn_cmd import -m "import for git svn" import "$svnrepo" &&
+	svn_cmd import -m "import for but svn" import "$svnrepo" &&
 	rm -rf import &&
 
 	svn_cmd co "$svnrepo/trunk" svn_project &&
@@ -35,13 +35,13 @@ test_expect_success 'setup svn repo' '
 '
 
 test_expect_success 'fetch deleted tags from same revision with no checksum error' '
-	git svn init --stdlayout "$svnrepo" git_project &&
-	cd git_project &&
-	git svn fetch &&
+	but svn init --stdlayout "$svnrepo" but_project &&
+	cd but_project &&
+	but svn fetch &&
 
-	git diff --exit-code main:subdir3/file origin/tags/mytag:file &&
-	git diff --exit-code main:subdir2/file origin/tags/mytag^:file &&
-	git diff --exit-code main:subdir1/file origin/tags/mytag^^:file
+	but diff --exit-code main:subdir3/file origin/tags/mytag:file &&
+	but diff --exit-code main:subdir2/file origin/tags/mytag^:file &&
+	but diff --exit-code main:subdir1/file origin/tags/mytag^^:file
 '
 
 test_done

@@ -27,7 +27,7 @@ static int append_normalized_escapes(struct strbuf *buf,
 	 * be escaped.  If 'esc_ok' is not NULL, those characters will be left
 	 * escaped if found that way, but will not be unescaped otherwise (used
 	 * for delimiters).  If a %-escape sequence is encountered that is not
-	 * followed by 2 hexadecimal digits, the sequence is invalid and
+	 * followed by 2 hexadecimal dibuts, the sequence is invalid and
 	 * false (0) will be returned.  Otherwise true (1) will be returned for
 	 * success.
 	 *
@@ -277,7 +277,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 			/* Skip https :443 as it's the default */
 		} else {
 			/*
-			 * Port number must be all digits with leading 0s removed
+			 * Port number must be all dibuts with leading 0s removed
 			 * and since all the protocols we deal with have a 16-bit
 			 * port number it must also be in the range 1..65535
 			 * 0 is not allowed because that means "next available"

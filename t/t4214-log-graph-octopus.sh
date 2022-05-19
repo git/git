@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git log --graph of skewed left octopus merge.'
+test_description='but log --graph of skewed left octopus merge.'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -20,19 +20,19 @@ test_cmp_colored_graph () {
 test_expect_success 'set up merge history' '
 	test_cummit initial &&
 	for i in 1 2 3 4 ; do
-		git checkout main -b $i || return $?
+		but checkout main -b $i || return $?
 		# Make tag name different from branch name, to avoid
 		# ambiguity error when calling checkout.
 		test_cummit $i $i $i tag$i || return $?
 	done &&
-	git checkout 1 -b merge &&
+	but checkout 1 -b merge &&
 	test_merge octopus-merge 1 2 3 4 &&
 	test_cummit after-merge &&
-	git checkout 1 -b L &&
+	but checkout 1 -b L &&
 	test_cummit left &&
-	git checkout 4 -b crossover &&
+	but checkout 4 -b crossover &&
 	test_cummit after-4 &&
-	git checkout initial -b more-L &&
+	but checkout initial -b more-L &&
 	test_cummit after-initial
 '
 

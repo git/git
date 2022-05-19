@@ -149,7 +149,7 @@ Cpp11BracedListStyle: false
 
 # A list of macros that should be interpreted as foreach loops instead of as
 # function calls. Taken from:
-#   git grep -h '^#define [^[:space:]]*for_each[^[:space:]]*(' \
+#   but grep -h '^#define [^[:space:]]*for_each[^[:space:]]*(' \
 #   | sed "s,^#define \([^[:space:]]*for_each[^[:space:]]*\)(.*$,  - '\1'," \
 #   | sort | uniq
 ForEachMacros:

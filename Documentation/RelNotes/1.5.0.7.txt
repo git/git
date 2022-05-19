@@ -6,10 +6,10 @@ Fixes since v1.5.0.6
 
 * Bugfixes
 
-  - git-upload-pack failed to close unused pipe ends, resulting
+  - but-upload-pack failed to close unused pipe ends, resulting
     in many zombies to hang around.
 
-  - git-rerere was recording the contents of earlier hunks
+  - but-rerere was recording the contents of earlier hunks
     duplicated in later hunks.  This prevented resolving the same
     conflict when performing the same merge the other way around.
 

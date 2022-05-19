@@ -49,7 +49,7 @@ void init_notes_merge_options(struct repository *r,
  *    are stored in 'local_tree', and the OID or the resulting cummit
  *    (to be amended when the conflicts have been resolved) is written into
  *    'result_oid'. The unmerged entries are written into the
- *    .git/NOTES_MERGE_WORKTREE directory with conflict markers.
+ *    .but/NOTES_MERGE_WORKTREE directory with conflict markers.
  *    -1 is returned.
  *
  * Both o->local_ref and o->remote_ref must be given (non-NULL), but either ref
@@ -68,7 +68,7 @@ int notes_merge(struct notes_merge_options *o,
  * the given 'partial_cummit', the partial result cummit created by a previous
  * call to notes_merge().
  *
- * This function will add the (now resolved) notes in .git/NOTES_MERGE_WORKTREE
+ * This function will add the (now resolved) notes in .but/NOTES_MERGE_WORKTREE
  * to 'partial_tree', and create a final notes merge cummit, the OID of which
  * will be stored in 'result_oid'.
  */
@@ -80,7 +80,7 @@ int notes_merge_cummit(struct notes_merge_options *o,
 /*
  * Abort conflict resolution from an earlier notes_merge()
  *
- * Removes the notes merge worktree in .git/NOTES_MERGE_WORKTREE.
+ * Removes the notes merge worktree in .but/NOTES_MERGE_WORKTREE.
  */
 int notes_merge_abort(struct notes_merge_options *o);
 

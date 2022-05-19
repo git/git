@@ -11,7 +11,7 @@ Fixes since v2.3.6
  * The completion script (in contrib/) contaminated global namespace
    and clobbered on a shell variable $x.
 
- * The "git push --signed" protocol extension did not limit what the
+ * The "but push --signed" protocol extension did not limit what the
    "nonce" that is a server-chosen string can contain or how long it
    can be, which was unnecessarily lax.  Limit both the length and the
    alphabet to a reasonably small space that can still have enough

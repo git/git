@@ -1,14 +1,14 @@
-gitremote-helpers(7)
+butremote-helpers(7)
 ====================
 
 NAME
 ----
-gitremote-helpers - Helper programs to interact with remote repositories
+butremote-helpers - Helper programs to interact with remote repositories
 
 SYNOPSIS
 --------
 [verse]
-'git remote-<transport>' <repository> [<URL>]
+'but remote-<transport>' <repository> [<URL>]
 
 DESCRIPTION
 -----------
@@ -31,8 +31,8 @@ transport objects between the object database and the remote repository,
 and update the local object store.
 
 Git comes with a "curl" family of remote helpers, that handle various
-transport protocols, such as 'git-remote-http', 'git-remote-https',
-'git-remote-ftp' and 'git-remote-ftps'. They implement the capabilities
+transport protocols, such as 'but-remote-http', 'but-remote-https',
+'but-remote-ftp' and 'but-remote-ftps'. They implement the capabilities
 'fetch', 'option', and 'push'.
 
 INVOCATION
@@ -49,20 +49,20 @@ which directory to invoke auxiliary Git commands.
 
 When Git encounters a URL of the form '<transport>://<address>', where
 '<transport>' is a protocol that it cannot handle natively, it
-automatically invokes 'git remote-<transport>' with the full URL as
+automatically invokes 'but remote-<transport>' with the full URL as
 the second argument. If such a URL is encountered directly on the
 command line, the first argument is the same as the second, and if it
 is encountered in a configured remote, the first argument is the name
 of that remote.
 
 A URL of the form '<transport>::<address>' explicitly instructs Git to
-invoke 'git remote-<transport>' with '<address>' as the second
+invoke 'but remote-<transport>' with '<address>' as the second
 argument. If such a URL is encountered directly on the command line,
 the first argument is '<address>', and if it is encountered in a
 configured remote, the first argument is the name of that remote.
 
 Additionally, when a configured remote has `remote.<name>.vcs` set to
-'<transport>', Git explicitly invokes 'git remote-<transport>' with
+'<transport>', Git explicitly invokes 'but remote-<transport>' with
 '<name>' as the first argument. If set, the second argument is
 `remote.<name>.url`; otherwise, the second argument is omitted.
 
@@ -95,9 +95,9 @@ must provide.
 Capabilities for Pushing
 ^^^^^^^^^^^^^^^^^^^^^^^^
 'connect'::
-	Can attempt to connect to 'git receive-pack' (for pushing),
-	'git upload-pack', etc for communication using
-	git's native packfile protocol. This
+	Can attempt to connect to 'but receive-pack' (for pushing),
+	'but upload-pack', etc for communication using
+	but's native packfile protocol. This
 	requires a bidirectional, full-duplex connection.
 +
 Supported commands: 'connect'.
@@ -105,7 +105,7 @@ Supported commands: 'connect'.
 'stateless-connect'::
 	Experimental; for internal use only.
 	Can attempt to connect to a remote server for communication
-	using git's wire-protocol version 2.  See the documentation
+	using but's wire-protocol version 2.  See the documentation
 	for the stateless-connect command for more information.
 +
 Supported commands: 'stateless-connect'.
@@ -129,7 +129,7 @@ When choosing between 'push' and 'export', Git prefers 'push'.
 Other frontends may have some other order of preference.
 
 'no-private-update'::
-	When using the 'refspec' capability, git normally updates the
+	When using the 'refspec' capability, but normally updates the
 	private ref on successful push. This update is disabled when
 	the remote-helper declares the capability 'no-private-update'.
 
@@ -137,8 +137,8 @@ Other frontends may have some other order of preference.
 Capabilities for Fetching
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 'connect'::
-	Can try to connect to 'git upload-pack' (for fetching),
-	'git receive-pack', etc for communication using the
+	Can try to connect to 'but upload-pack' (for fetching),
+	'but receive-pack', etc for communication using the
 	Git's native packfile protocol. This
 	requires a bidirectional, full-duplex connection.
 +
@@ -147,7 +147,7 @@ Supported commands: 'connect'.
 'stateless-connect'::
 	Experimental; for internal use only.
 	Can attempt to connect to a remote server for communication
-	using git's wire-protocol version 2.  See the documentation
+	using but's wire-protocol version 2.  See the documentation
 	for the stateless-connect command for more information.
 +
 Supported commands: 'stateless-connect'.
@@ -226,16 +226,16 @@ the remote repository.
 'export-marks' <file>::
 	This modifies the 'export' capability, instructing Git to dump the
 	internal marks table to <file> when complete. For details,
-	read up on `--export-marks=<file>` in linkgit:git-fast-export[1].
+	read up on `--export-marks=<file>` in linkbut:but-fast-export[1].
 
 'import-marks' <file>::
 	This modifies the 'export' capability, instructing Git to load the
 	marks specified in <file> before processing any input. For details,
-	read up on `--import-marks=<file>` in linkgit:git-fast-export[1].
+	read up on `--import-marks=<file>` in linkbut:but-fast-export[1].
 
 'signed-tags'::
 	This modifies the 'export' capability, instructing Git to pass
-	`--signed-tags=verbatim` to linkgit:git-fast-export[1].  In the
+	`--signed-tags=verbatim` to linkbut:but-fast-export[1].  In the
 	absence of this capability, Git will use `--signed-tags=warn-strip`.
 
 'object-format'::
@@ -372,14 +372,14 @@ Supported if the helper has the "import" capability.
 
 'export'::
 	Instructs the remote helper that any subsequent input is
-	part of a fast-import stream (generated by 'git fast-export')
+	part of a fast-import stream (generated by 'but fast-export')
 	containing objects which should be pushed to the remote.
 +
 Especially useful for interoperability with a foreign versioning
 system.
 +
 The 'export-marks' and 'import-marks' capabilities, if specified,
-affect this command in so far as they are passed on to 'git
+affect this command in so far as they are passed on to 'but
 fast-export', which then will load/store a table of marks for
 local objects. This can be used to implement for incremental
 operations.
@@ -388,8 +388,8 @@ Supported if the helper has the "export" capability.
 
 'connect' <service>::
 	Connects to given service. Standard input and standard output
-	of helper are connected to specified service (git prefix is
-	included in service name so e.g. fetching uses 'git-upload-pack'
+	of helper are connected to specified service (but prefix is
+	included in service name so e.g. fetching uses 'but-upload-pack'
 	as service) on remote side. Valid replies to this command are
 	empty line (connection established), 'fallback' (no smart
 	transport support, fall back to dumb transports) and just
@@ -403,7 +403,7 @@ Supported if the helper has the "connect" capability.
 'stateless-connect' <service>::
 	Experimental; for internal use only.
 	Connects to the given remote service for communication using
-	git's wire-protocol version 2.  Valid replies to this command
+	but's wire-protocol version 2.  Valid replies to this command
 	are empty line (connection established), 'fallback' (no smart
 	transport support, fall back to dumb transports) and just
 	exiting with error message printed (can't connect, don't bother
@@ -512,7 +512,7 @@ set by Git if the remote helper has the 'option' capability.
 	repository is guaranteed empty).
 
 'option update-shallow' {'true'|'false'}::
-	Allow to extend .git/shallow if the new refs require it.
+	Allow to extend .but/shallow if the new refs require it.
 
 'option pushcert' {'true'|'false'}::
 	GPG sign pushes.
@@ -543,14 +543,14 @@ the remote side using that algorithm.
 
 SEE ALSO
 --------
-linkgit:git-remote[1]
+linkbut:but-remote[1]
 
-linkgit:git-remote-ext[1]
+linkbut:but-remote-ext[1]
 
-linkgit:git-remote-fd[1]
+linkbut:but-remote-fd[1]
 
-linkgit:git-fast-import[1]
+linkbut:but-fast-import[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

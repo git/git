@@ -1,5 +1,5 @@
 /*
- * git-imap-send - drops patches into an imap Drafts folder
+ * but-imap-send - drops patches into an imap Drafts folder
  *                 derived from isync/mbsync - mailbox synchronizer
  *
  * Copyright (C) 2000-2002 Michael R. Elkins <me@mutt.org>
@@ -45,7 +45,7 @@ typedef void *SSL;
 static int verbosity;
 static int use_curl = USE_CURL_DEFAULT;
 
-static const char * const imap_send_usage[] = { "git imap-send [-v] [-q] [--[no-]curl] < <mbox>", NULL };
+static const char * const imap_send_usage[] = { "but imap-send [-v] [-q] [--[no-]curl] < <mbox>", NULL };
 
 static struct option imap_send_options[] = {
 	OPT__VERBOSITY(&verbosity),
@@ -908,7 +908,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 static char *cram(const char *challenge_64, const char *user, const char *pass)
 {
 	die("If you want to use CRAM-MD5 authenticate method, "
-	    "you have to build git-imap-send with OpenSSL library.");
+	    "you have to build but-imap-send with OpenSSL library.");
 }
 
 #endif
@@ -1319,28 +1319,28 @@ static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 	return 1;
 }
 
-static int git_imap_config(const char *var, const char *val, void *cb)
+static int but_imap_config(const char *var, const char *val, void *cb)
 {
 
 	if (!strcmp("imap.sslverify", var))
-		server.ssl_verify = git_config_bool(var, val);
+		server.ssl_verify = but_config_bool(var, val);
 	else if (!strcmp("imap.preformattedhtml", var))
-		server.use_html = git_config_bool(var, val);
+		server.use_html = but_config_bool(var, val);
 	else if (!strcmp("imap.folder", var))
-		return git_config_string(&server.folder, var, val);
+		return but_config_string(&server.folder, var, val);
 	else if (!strcmp("imap.user", var))
-		return git_config_string(&server.user, var, val);
+		return but_config_string(&server.user, var, val);
 	else if (!strcmp("imap.pass", var))
-		return git_config_string(&server.pass, var, val);
+		return but_config_string(&server.pass, var, val);
 	else if (!strcmp("imap.tunnel", var))
-		return git_config_string(&server.tunnel, var, val);
+		return but_config_string(&server.tunnel, var, val);
 	else if (!strcmp("imap.authmethod", var))
-		return git_config_string(&server.auth_method, var, val);
+		return but_config_string(&server.auth_method, var, val);
 	else if (!strcmp("imap.port", var))
-		server.port = git_config_int(var, val);
+		server.port = but_config_int(var, val);
 	else if (!strcmp("imap.host", var)) {
 		if (!val) {
-			git_die_config("imap.host", "Missing value for 'imap.host'");
+			but_die_config("imap.host", "Missing value for 'imap.host'");
 		} else {
 			if (starts_with(val, "imap:"))
 				val += 5;
@@ -1353,7 +1353,7 @@ static int git_imap_config(const char *var, const char *val, void *cb)
 			server.host = xstrdup(val);
 		}
 	} else
-		return git_default_config(var, val, cb);
+		return but_default_config(var, val, cb);
 
 	return 0;
 }
@@ -1521,10 +1521,10 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
 	int total;
-	int nongit_ok;
+	int nonbut_ok;
 
-	setup_git_directory_gently(&nongit_ok);
-	git_config(git_imap_config, NULL);
+	setup_but_directory_gently(&nonbut_ok);
+	but_config(but_imap_config, NULL);
 
 	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
 

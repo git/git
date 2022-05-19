@@ -22,11 +22,11 @@ test_expect_success setup '
 	test_write_lines 1 2 3 >file0 &&
 	test_write_lines A B >dir/sub &&
 	cat file0 >file2 &&
-	git add file0 file2 dir/sub &&
-	git cummit -m Initial &&
+	but add file0 file2 dir/sub &&
+	but cummit -m Initial &&
 
-	git branch initial &&
-	git branch side &&
+	but branch initial &&
+	but branch side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:01:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
@@ -35,37 +35,37 @@ test_expect_success setup '
 	test_write_lines 4 5 6 >>file0 &&
 	test_write_lines C D >>dir/sub &&
 	rm -f file2 &&
-	git update-index --remove file0 file2 dir/sub &&
-	git cummit -m "Second${LF}${LF}This is the second cummit." &&
+	but update-index --remove file0 file2 dir/sub &&
+	but cummit -m "Second${LF}${LF}This is the second cummit." &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
 	test_write_lines A B C >file1 &&
-	git add file1 &&
+	but add file1 &&
 	test_write_lines E F >>dir/sub &&
-	git update-index dir/sub &&
-	git cummit -m Third &&
+	but update-index dir/sub &&
+	but cummit -m Third &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:03:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:03:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
-	git checkout side &&
+	but checkout side &&
 	test_write_lines A B C >>file0 &&
 	test_write_lines 1 2 >>dir/sub &&
 	cat dir/sub >file3 &&
-	git add file3 &&
-	git update-index file0 dir/sub &&
-	git cummit -m Side &&
+	but add file3 &&
+	but update-index file0 dir/sub &&
+	but cummit -m Side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:04:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
 
-	git checkout master &&
-	git pull -s ours --no-rebase . side &&
+	but checkout master &&
+	but pull -s ours --no-rebase . side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
@@ -73,50 +73,50 @@ test_expect_success setup '
 
 	test_write_lines A B C >>file0 &&
 	test_write_lines 1 2 >>dir/sub &&
-	git update-index file0 dir/sub &&
+	but update-index file0 dir/sub &&
 
 	mkdir dir3 &&
 	cp dir/sub dir3/sub &&
 	test-tool chmtime +1 dir3/sub &&
 
-	git config log.showroot false &&
-	git cummit --amend &&
+	but config log.showroot false &&
+	but cummit --amend &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
-	git checkout -b rearrange initial &&
+	but checkout -b rearrange initial &&
 	test_write_lines B A >dir/sub &&
-	git add dir/sub &&
-	git cummit -m "Rearranged lines in dir/sub" &&
-	git checkout master &&
+	but add dir/sub &&
+	but cummit -m "Rearranged lines in dir/sub" &&
+	but checkout master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
-	git checkout -b mode initial &&
-	git update-index --chmod=+x file0 &&
-	git cummit -m "update mode" &&
-	git checkout -f master &&
+	but checkout -b mode initial &&
+	but update-index --chmod=+x file0 &&
+	but cummit -m "update mode" &&
+	but checkout -f master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
 	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
-	git checkout -b note initial &&
-	git update-index --chmod=+x file2 &&
-	git cummit -m "update mode (file2)" &&
-	git notes add -m "note" &&
-	git checkout -f master &&
+	but checkout -b note initial &&
+	but update-index --chmod=+x file2 &&
+	but cummit -m "update mode (file2)" &&
+	but notes add -m "note" &&
+	but checkout -f master &&
 
 	# Same merge as master, but with parents reversed. Hide it in a
 	# pseudo-ref to avoid impacting tests with --all.
 	cummit=$(echo reverse |
-		 git cummit-tree -p master^2 -p master^1 master^{tree}) &&
-	git update-ref REVERSE $cummit &&
+		 but cummit-tree -p master^2 -p master^1 master^{tree}) &&
+	but update-ref REVERSE $cummit &&
 
-	git config diff.renames false &&
+	but config diff.renames false &&
 
-	git show-branch
+	but show-branch
 '
 
 : <<\EOF
@@ -175,7 +175,7 @@ process_diffs () {
 	' "$ZERO_OID" <"$1"
 }
 
-V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
+V=$(but version | sed -e 's/^but version //' -e 's/\./\\./g')
 while read magic cmd
 do
 	status=success
@@ -203,14 +203,14 @@ do
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_$status "but $cmd # magic is ${magic:-(not used)}" '
 		{
-			echo "$ git $cmd"
+			echo "$ but $cmd"
 			case "$magic" in
 			"")
-				GIT_PRINT_SHA1_ELLIPSIS=yes git $cmd ;;
+				GIT_PRINT_SHA1_ELLIPSIS=yes but $cmd ;;
 			noellipses)
-				git $cmd ;;
+				but $cmd ;;
 			esac |
 			sed -e "s/^\\(-*\\)$V\\(-*\\)\$/\\1g-i-t--v-e-r-s-i-o-n\2/" \
 			    -e "s/^\\(.*mixed; boundary=\"-*\\)$V\\(-*\\)\"\$/\\1g-i-t--v-e-r-s-i-o-n\2\"/"
@@ -456,77 +456,77 @@ diff-tree -R --stat --compact-summary initial mode
 EOF
 
 test_expect_success 'log -m matches pure log' '
-	git log master >result &&
+	but log master >result &&
 	process_diffs result >expected &&
-	git log -m >result &&
+	but log -m >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
-	git log -p --diff-merges=separate master >result &&
+	but log -p --diff-merges=separate master >result &&
 	process_diffs result >expected &&
-	git log -p --diff-merges=on master >result &&
+	but log -p --diff-merges=on master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'deny wrong log.diffMerges config' '
 	test_config log.diffMerges wrong-value &&
-	test_expect_code 128 git log
+	test_expect_code 128 but log
 '
 
-test_expect_success 'git config log.diffMerges first-parent' '
-	git log -p --diff-merges=first-parent master >result &&
+test_expect_success 'but config log.diffMerges first-parent' '
+	but log -p --diff-merges=first-parent master >result &&
 	process_diffs result >expected &&
 	test_config log.diffMerges first-parent &&
-	git log -p --diff-merges=on master >result &&
+	but log -p --diff-merges=on master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'git config log.diffMerges first-parent vs -m' '
-	git log -p --diff-merges=first-parent master >result &&
+test_expect_success 'but config log.diffMerges first-parent vs -m' '
+	but log -p --diff-merges=first-parent master >result &&
 	process_diffs result >expected &&
 	test_config log.diffMerges first-parent &&
-	git log -p -m master >result &&
+	but log -p -m master >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
-# -m in "git diff-index" means "match missing", that differs
-# from its meaning in "git diff". Let's check it in diff-index.
+# -m in "but diff-index" means "match missing", that differs
+# from its meaning in "but diff". Let's check it in diff-index.
 # The line in the output for removed file should disappear when
 # we provide -m in diff-index.
-test_expect_success 'git diff-index -m' '
+test_expect_success 'but diff-index -m' '
 	rm -f file1 &&
-	git diff-index HEAD >without-m &&
+	but diff-index HEAD >without-m &&
 	lines_count=$(wc -l <without-m) &&
-	git diff-index -m HEAD >with-m &&
-	git restore file1 &&
+	but diff-index -m HEAD >with-m &&
+	but restore file1 &&
 	test_line_count = $((lines_count - 1)) with-m
 '
 
 test_expect_success 'log -S requires an argument' '
-	test_must_fail git log -S
+	test_must_fail but log -S
 '
 
 test_expect_success 'diff --cached on unborn branch' '
-	echo ref: refs/heads/unborn >.git/HEAD &&
-	git diff --cached >result &&
+	echo ref: refs/heads/unborn >.but/HEAD &&
+	but diff --cached >result &&
 	process_diffs result >actual &&
 	process_diffs "$TEST_DIRECTORY/t4013/diff.diff_--cached" >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'diff --cached -- file on unborn branch' '
-	git diff --cached -- file0 >result &&
+	but diff --cached -- file0 >result &&
 	process_diffs result >actual &&
 	process_diffs "$TEST_DIRECTORY/t4013/diff.diff_--cached_--_file0" >expected &&
 	test_cmp expected actual
 '
 test_expect_success 'diff --line-prefix with spaces' '
-	git diff --line-prefix="| | | " --cached -- file0 >result &&
+	but diff --line-prefix="| | | " --cached -- file0 >result &&
 	process_diffs result >actual &&
 	process_diffs "$TEST_DIRECTORY/t4013/diff.diff_--line-prefix_--cached_--_file0" >expected &&
 	test_cmp expected actual
@@ -538,7 +538,7 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	Third
 	Second
 	EOF
-	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
+	but rev-list master | but diff-tree --stdin --format=%s -s >actual &&
 	test_cmp expect actual
 '
 
@@ -551,8 +551,8 @@ test_expect_success 'diff-tree --stdin with pathspec' '
 
 	dir/sub
 	EOF
-	git rev-list master^ |
-	git diff-tree -r --stdin --name-only --format=%s dir >actual &&
+	but rev-list master^ |
+	but diff-tree -r --stdin --name-only --format=%s dir >actual &&
 	test_cmp expect actual
 '
 
@@ -560,7 +560,7 @@ test_expect_success 'show A B ... -- <pathspec>' '
 	# side touches dir/sub, file0, and file3
 	# master^ touches dir/sub, and file1
 	# master^^ touches dir/sub, file0, and file2
-	git show --name-only --format="<%s>" side master^ master^^ -- dir >actual &&
+	but show --name-only --format="<%s>" side master^ master^^ -- dir >actual &&
 	cat >expect <<-\EOF &&
 	<Side>
 
@@ -576,16 +576,16 @@ test_expect_success 'show A B ... -- <pathspec>' '
 '
 
 test_expect_success 'diff -I<regex>: setup' '
-	git checkout master &&
+	but checkout master &&
 	test_seq 50 >file0 &&
-	git cummit -m "Set up -I<regex> test file" file0 &&
+	but cummit -m "Set up -I<regex> test file" file0 &&
 	test_seq 50 | sed -e "s/13/ten and three/" -e "/7\$/d" >file0 &&
 	echo >>file0
 '
 test_expect_success 'diff -I<regex>' '
-	git diff --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	but diff --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
 	cat >expect <<-\EOF &&
-	diff --git a/file0 b/file0
+	diff --but a/file0 b/file0
 	--- a/file0
 	+++ b/file0
 	@@ -34,7 +31,6 @@
@@ -601,7 +601,7 @@ test_expect_success 'diff -I<regex>' '
 '
 
 test_expect_success 'diff -I<regex> --stat' '
-	git diff --stat --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
+	but diff --stat --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >actual &&
 	cat >expect <<-\EOF &&
 	 file0 | 1 -
 	 1 file changed, 1 deletion(-)
@@ -610,7 +610,7 @@ test_expect_success 'diff -I<regex> --stat' '
 '
 
 test_expect_success 'diff -I<regex>: detect malformed regex' '
-	test_expect_code 129 git diff --ignore-matching-lines="^[124-9" 2>error &&
+	test_expect_code 129 but diff --ignore-matching-lines="^[124-9" 2>error &&
 	test_i18ngrep "invalid regex given to -I: " error
 '
 

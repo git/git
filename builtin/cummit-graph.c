@@ -10,10 +10,10 @@
 #include "tag.h"
 
 #define BUILTIN_CUMMIT_GRAPH_VERIFY_USAGE \
-	N_("git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]")
+	N_("but cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]")
 
 #define BUILTIN_CUMMIT_GRAPH_WRITE_USAGE \
-	N_("git cummit-graph write [--object-dir <objdir>] [--append] " \
+	N_("but cummit-graph write [--object-dir <objdir>] [--append] " \
 	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] " \
 	   "[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress] " \
 	   "<split options>")
@@ -178,13 +178,13 @@ static int write_option_max_new_filters(const struct option *opt,
 	return 0;
 }
 
-static int git_cummit_graph_write_config(const char *var, const char *value,
+static int but_cummit_graph_write_config(const char *var, const char *value,
 					 void *cb)
 {
 	if (!strcmp(var, "cummitgraph.maxnewfilters"))
-		write_opts.max_new_filters = git_config_int(var, value);
+		write_opts.max_new_filters = but_config_int(var, value);
 	/*
-	 * No need to fall-back to 'git_default_config', since this was already
+	 * No need to fall-back to 'but_default_config', since this was already
 	 * called in 'cmd_cummit_graph()'.
 	 */
 	return 0;
@@ -239,7 +239,7 @@ static int graph_write(int argc, const char **argv)
 
 	trace2_cmd_mode("write");
 
-	git_config(git_cummit_graph_write_config, &opts);
+	but_config(but_cummit_graph_write_config, &opts);
 
 	argc = parse_options(argc, argv, NULL,
 			     options,
@@ -260,7 +260,7 @@ static int graph_write(int argc, const char **argv)
 	if (!opts.enable_changed_paths)
 		flags |= CUMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
 	if (opts.enable_changed_paths == 1 ||
-	    git_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+	    but_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	odb = find_odb(the_repository, opts.obj_dir);
@@ -309,7 +309,7 @@ int cmd_cummit_graph(int argc, const char **argv, const char *prefix)
 {
 	struct option *builtin_cummit_graph_options = common_opts;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_cummit_graph_options,
 			     builtin_cummit_graph_usage,

@@ -1,4 +1,4 @@
-# git-gui spellchecking support through ispell/aspell
+# but-gui spellchecking support through ispell/aspell
 # Copyright (C) 2008 Shawn Pearce
 
 class spellcheck {

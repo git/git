@@ -1,5 +1,5 @@
 /*
- * Handle git attributes.  See gitattributes(5) for a description of
+ * Handle but attributes.  See butattributes(5) for a description of
  * the file syntax, and attr.h for a description of the API.
  *
  * One basic design decision here is that we are not going to support
@@ -15,24 +15,24 @@
 #include "quote.h"
 #include "thread-utils.h"
 
-const char git_attr__true[] = "(builtin)true";
-const char git_attr__false[] = "\0(builtin)false";
-static const char git_attr__unknown[] = "(builtin)unknown";
-#define ATTR__TRUE git_attr__true
-#define ATTR__FALSE git_attr__false
+const char but_attr__true[] = "(builtin)true";
+const char but_attr__false[] = "\0(builtin)false";
+static const char but_attr__unknown[] = "(builtin)unknown";
+#define ATTR__TRUE but_attr__true
+#define ATTR__FALSE but_attr__false
 #define ATTR__UNSET NULL
-#define ATTR__UNKNOWN git_attr__unknown
+#define ATTR__UNKNOWN but_attr__unknown
 
 #ifndef DEBUG_ATTR
 #define DEBUG_ATTR 0
 #endif
 
-struct git_attr {
+struct but_attr {
 	int attr_nr; /* unique attribute number */
 	char name[FLEX_ARRAY]; /* attribute name */
 };
 
-const char *git_attr_name(const struct git_attr *attr)
+const char *but_attr_name(const struct but_attr *attr)
 {
 	return attr->name;
 }
@@ -117,7 +117,7 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 }
 
 struct all_attrs_item {
-	const struct git_attr *attr;
+	const struct but_attr *attr;
 	const char *value;
 	/*
 	 * If 'macro' is non-NULL, indicates that 'attr' is a macro based on
@@ -147,7 +147,7 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	 * If the number of attributes in the global dictionary has increased
 	 * (or this attr_check instance doesn't have an initialized all_attrs
 	 * field), reallocate the provided attr_check instance's all_attrs
-	 * field and fill each entry with its corresponding git_attr.
+	 * field and fill each entry with its corresponding but_attr.
 	 */
 	if (size != check->all_attrs_nr) {
 		struct attr_hash_entry *e;
@@ -158,7 +158,7 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 
 		hashmap_for_each_entry(&map->map, &iter, e,
 					ent /* member name */) {
-			const struct git_attr *a = e->value;
+			const struct but_attr *a = e->value;
 			check->all_attrs[a->attr_nr].attr = a;
 		}
 	}
@@ -210,9 +210,9 @@ static void report_invalid_attr(const char *name, size_t len,
  * dictionary.  If no entry is found, create a new attribute and store it in
  * the dictionary.
  */
-static const struct git_attr *git_attr_internal(const char *name, int namelen)
+static const struct but_attr *but_attr_internal(const char *name, int namelen)
 {
-	struct git_attr *a;
+	struct but_attr *a;
 
 	if (!attr_name_valid(name, namelen))
 		return NULL;
@@ -235,14 +235,14 @@ static const struct git_attr *git_attr_internal(const char *name, int namelen)
 	return a;
 }
 
-const struct git_attr *git_attr(const char *name)
+const struct but_attr *but_attr(const char *name)
 {
-	return git_attr_internal(name, strlen(name));
+	return but_attr_internal(name, strlen(name));
 }
 
 /* What does a matched pattern decide? */
 struct attr_state {
-	const struct git_attr *attr;
+	const struct but_attr *attr;
 	const char *setto;
 };
 
@@ -254,9 +254,9 @@ struct pattern {
 };
 
 /*
- * One rule, as from a .gitattributes file.
+ * One rule, as from a .butattributes file.
  *
- * If is_macro is true, then u.attr is a pointer to the git_attr being
+ * If is_macro is true, then u.attr is a pointer to the but_attr being
  * defined.
  *
  * If is_macro is false, then u.pat is the filename pattern to which the
@@ -269,7 +269,7 @@ struct pattern {
 struct match_attr {
 	union {
 		struct pattern pat;
-		const struct git_attr *attr;
+		const struct but_attr *attr;
 	} u;
 	char is_macro;
 	unsigned num_attr;
@@ -329,7 +329,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
-		e->attr = git_attr_internal(cp, len);
+		e->attr = but_attr_internal(cp, len);
 	}
 	return ep + strspn(ep, blank);
 }
@@ -390,7 +390,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		      sizeof(struct attr_state) * num_attr +
 		      (is_macro ? 0 : namelen + 1));
 	if (is_macro) {
-		res->u.attr = git_attr_internal(name, namelen);
+		res->u.attr = but_attr_internal(name, namelen);
 	} else {
 		char *p = (char *)&(res->state[num_attr]);
 		memcpy(p, name, namelen);
@@ -400,7 +400,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 				      &res->u.pat.flags,
 				      &res->u.pat.nowildcardlen);
 		if (res->u.pat.flags & PATTERN_FLAG_NEGATIVE) {
-			warning(_("Negative patterns are ignored in git attributes\n"
+			warning(_("Negative patterns are ignored in but attributes\n"
 				  "Use '\\!' for literal leading exclamation."));
 			goto fail_return;
 		}
@@ -423,21 +423,21 @@ fail_return:
 }
 
 /*
- * Like info/exclude and .gitignore, the attribute information can
+ * Like info/exclude and .butignore, the attribute information can
  * come from many places.
  *
- * (1) .gitattributes file of the same directory;
- * (2) .gitattributes file of the parent directory if (1) does not have
- *      any match; this goes recursively upwards, just like .gitignore.
+ * (1) .butattributes file of the same directory;
+ * (2) .butattributes file of the parent directory if (1) does not have
+ *      any match; this goes recursively upwards, just like .butignore.
  * (3) $GIT_DIR/info/attributes, which overrides both of the above.
  *
  * In the same file, later entries override the earlier match, so in the
  * global list, we would have entries from info/attributes the earliest
- * (reading the file from top to bottom), .gitattributes of the root
+ * (reading the file from top to bottom), .butattributes of the root
  * directory (again, reading the file from top to bottom) down to the
  * current directory, and then scan the list backwards to find the first match.
  * This is exactly the same as what is_excluded() does in dir.c to deal with
- * .gitignore file and info/excludes file as a fallback.
+ * .butignore file and info/excludes file as a fallback.
  */
 
 struct attr_stack {
@@ -575,15 +575,15 @@ struct attr_check *attr_check_initl(const char *one, ...)
 	check->alloc = cnt;
 	CALLOC_ARRAY(check->items, cnt);
 
-	check->items[0].attr = git_attr(one);
+	check->items[0].attr = but_attr(one);
 	va_start(params, one);
 	for (cnt = 1; cnt < check->nr; cnt++) {
-		const struct git_attr *attr;
+		const struct but_attr *attr;
 		param = va_arg(params, const char *);
 		if (!param)
 			BUG("counted %d != ended at %d",
 			    check->nr, cnt);
-		attr = git_attr(param);
+		attr = but_attr(param);
 		if (!attr)
 			BUG("%s: not a valid attribute name", param);
 		check->items[cnt].attr = attr;
@@ -610,7 +610,7 @@ struct attr_check *attr_check_dup(const struct attr_check *check)
 }
 
 struct attr_check_item *attr_check_append(struct attr_check *check,
-					  const struct git_attr *attr)
+					  const struct but_attr *attr)
 {
 	struct attr_check_item *item;
 
@@ -684,15 +684,15 @@ static struct attr_stack *read_attr_from_array(const char **list)
 /*
  * Callers into the attribute system assume there is a single, system-wide
  * global state where attributes are read from and when the state is flipped by
- * calling git_attr_set_direction(), the stack frames that have been
+ * calling but_attr_set_direction(), the stack frames that have been
  * constructed need to be discarded so that subsequent calls into the
  * attribute system will lazily read from the right place.  Since changing
  * direction causes a global paradigm shift, it should not ever be called while
  * another thread could potentially be calling into the attribute system.
  */
-static enum git_attr_direction direction;
+static enum but_attr_direction direction;
 
-void git_attr_set_direction(enum git_attr_direction new_direction)
+void but_attr_set_direction(enum but_attr_direction new_direction)
 {
 	if (is_bare_repository() && new_direction != GIT_ATTR_INDEX)
 		BUG("non-INDEX attr direction in a bare repo");
@@ -745,14 +745,14 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 		return NULL;
 
 	/*
-	 * The .gitattributes file only applies to files within its
+	 * The .butattributes file only applies to files within its
 	 * parent directory. In the case of cone-mode sparse-checkout,
-	 * the .gitattributes file is sparse if and only if all paths
+	 * the .butattributes file is sparse if and only if all paths
 	 * within that directory are also sparse. Thus, don't load the
-	 * .gitattributes file since it will not matter.
+	 * .butattributes file since it will not matter.
 	 *
 	 * In the case of a sparse index, it is critical that we don't go
-	 * looking for a .gitattributes file, as doing so would cause the
+	 * looking for a .butattributes file, as doing so would cause the
 	 * index to expand.
 	 */
 	if (!path_in_cone_mode_sparse_checkout(path, istate))
@@ -793,7 +793,7 @@ static struct attr_stack *read_attr(struct index_state *istate,
 			res = read_attr_from_file(path, flags);
 			if (!res)
 				/*
-				 * There is no checked out .gitattributes file
+				 * There is no checked out .butattributes file
 				 * there, but we might have it in the index.
 				 * We allow operation in a sparsely checked out
 				 * work tree, so read from it.
@@ -812,7 +812,7 @@ static void debug_info(const char *what, struct attr_stack *elem)
 {
 	fprintf(stderr, "%s: %s\n", what, elem->origin ? elem->origin : "()");
 }
-static void debug_set(const char *what, const char *match, struct git_attr *attr, const void *v)
+static void debug_set(const char *what, const char *match, struct but_attr *attr, const void *v)
 {
 	const char *value = v;
 
@@ -834,7 +834,7 @@ static void debug_set(const char *what, const char *match, struct git_attr *attr
 #define debug_set(a,b,c,d) do { ; } while (0)
 #endif /* DEBUG_ATTR */
 
-static const char *git_etc_gitattributes(void)
+static const char *but_etc_butattributes(void)
 {
 	static const char *system_wide;
 	if (!system_wide)
@@ -842,20 +842,20 @@ static const char *git_etc_gitattributes(void)
 	return system_wide;
 }
 
-static const char *get_home_gitattributes(void)
+static const char *get_home_butattributes(void)
 {
-	if (!git_attributes_file)
-		git_attributes_file = xdg_config_home("attributes");
+	if (!but_attributes_file)
+		but_attributes_file = xdg_config_home("attributes");
 
-	return git_attributes_file;
+	return but_attributes_file;
 }
 
-static int git_attr_system(void)
+static int but_attr_system(void)
 {
-	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
+	return !but_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
 
-static GIT_PATH_FUNC(git_path_info_attributes, INFOATTRIBUTES_FILE)
+static GIT_PATH_FUNC(but_path_info_attributes, INFOATTRIBUTES_FILE)
 
 static void push_stack(struct attr_stack **attr_stack_p,
 		       struct attr_stack *elem, char *origin, size_t originlen)
@@ -883,14 +883,14 @@ static void bootstrap_attr_stack(struct index_state *istate,
 	push_stack(stack, e, NULL, 0);
 
 	/* system-wide frame */
-	if (git_attr_system()) {
-		e = read_attr_from_file(git_etc_gitattributes(), flags);
+	if (but_attr_system()) {
+		e = read_attr_from_file(but_etc_butattributes(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
 	/* home directory */
-	if (get_home_gitattributes()) {
-		e = read_attr_from_file(get_home_gitattributes(), flags);
+	if (get_home_butattributes()) {
+		e = read_attr_from_file(get_home_butattributes(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
@@ -900,7 +900,7 @@ static void bootstrap_attr_stack(struct index_state *istate,
 
 	/* info frame */
 	if (startup_info->have_repository)
-		e = read_attr_from_file(git_path_info_attributes(), flags);
+		e = read_attr_from_file(but_path_info_attributes(), flags);
 	else
 		e = NULL;
 	if (!e)
@@ -918,16 +918,16 @@ static void prepare_attr_stack(struct index_state *istate,
 	/*
 	 * At the bottom of the attribute stack is the built-in
 	 * set of attribute definitions, followed by the contents
-	 * of $(prefix)/etc/gitattributes and a file specified by
+	 * of $(prefix)/etc/butattributes and a file specified by
 	 * core.attributesfile.  Then, contents from
-	 * .gitattributes files from directories closer to the
+	 * .butattributes files from directories closer to the
 	 * root to the ones in deeper directories are pushed
 	 * to the stack.  Finally, at the very top of the stack
 	 * we always keep the contents of $GIT_DIR/info/attributes.
 	 *
 	 * When checking, we use entries from near the top of the
 	 * stack, preferring $GIT_DIR/info/attributes, then
-	 * .gitattributes in deeper directories to shallower ones,
+	 * .butattributes in deeper directories to shallower ones,
 	 * and finally use the built-in set as the default.
 	 */
 	bootstrap_attr_stack(istate, stack);
@@ -988,7 +988,7 @@ static void prepare_attr_stack(struct index_state *istate,
 
 		next = read_attr(istate, pathbuf.buf, READ_ATTR_NOFOLLOW);
 
-		/* reset the pathbuf to not include "/.gitattributes" */
+		/* reset the pathbuf to not include "/.butattributes" */
 		strbuf_setlen(&pathbuf, len);
 
 		origin = xstrdup(pathbuf.buf);
@@ -1034,7 +1034,7 @@ static int fill_one(const char *what, struct all_attrs_item *all_attrs,
 	int i;
 
 	for (i = a->num_attr - 1; rem > 0 && i >= 0; i--) {
-		const struct git_attr *attr = a->state[i].attr;
+		const struct but_attr *attr = a->state[i].attr;
 		const char **n = &(all_attrs[attr->attr_nr].value);
 		const char *v = a->state[i].setto;
 
@@ -1137,7 +1137,7 @@ static void collect_some_attrs(struct index_state *istate,
 	fill(path, pathlen, basename_offset, check->stack, check->all_attrs, rem);
 }
 
-void git_check_attr(struct index_state *istate,
+void but_check_attr(struct index_state *istate,
 		    const char *path,
 		    struct attr_check *check)
 {
@@ -1154,7 +1154,7 @@ void git_check_attr(struct index_state *istate,
 	}
 }
 
-void git_all_attrs(struct index_state *istate,
+void but_all_attrs(struct index_state *istate,
 		   const char *path, struct attr_check *check)
 {
 	int i;
@@ -1168,7 +1168,7 @@ void git_all_attrs(struct index_state *istate,
 		struct attr_check_item *item;
 		if (value == ATTR__UNSET || value == ATTR__UNKNOWN)
 			continue;
-		item = attr_check_append(check, git_attr(name));
+		item = attr_check_append(check, but_attr(name));
 		item->value = value;
 	}
 }

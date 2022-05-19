@@ -1,17 +1,17 @@
-git-show-ref(1)
+but-show-ref(1)
 ===============
 
 NAME
 ----
-git-show-ref - List references in a local repository
+but-show-ref - List references in a local repository
 
 SYNOPSIS
 --------
 [verse]
-'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
+'but show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
 	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
-'git show-ref' --exclude-existing[=<pattern>]
+'but show-ref' --exclude-existing[=<pattern>]
 
 DESCRIPTION
 -----------
@@ -28,7 +28,7 @@ refs from stdin, one ref per line, and shows those that don't exist in
 the local repository.
 
 Use of this utility is encouraged in favor of directly accessing files under
-the `.git` directory.
+the `.but` directory.
 
 OPTIONS
 -------
@@ -75,7 +75,7 @@ OPTIONS
 
 --exclude-existing[=<pattern>]::
 
-	Make 'git show-ref' act as a filter that reads refs from stdin of the
+	Make 'but show-ref' act as a filter that reads refs from stdin of the
 	form "`^(?:<anything>\s)?<refname>(?:\^{})?$`"
 	and performs the following actions on each:
 	(1) strip "{caret}{}" at the end of line if any;
@@ -99,7 +99,7 @@ OUTPUT
 The output is in the format: '<SHA-1 ID>' '<space>' '<reference name>'.
 
 -----------------------------------------------------------------------------
-$ git show-ref --head --dereference
+$ but show-ref --head --dereference
 832e76a9899f560a90ffd62ae2ce83bbeff58f54 HEAD
 832e76a9899f560a90ffd62ae2ce83bbeff58f54 refs/heads/master
 832e76a9899f560a90ffd62ae2ce83bbeff58f54 refs/heads/origin
@@ -113,7 +113,7 @@ $ git show-ref --head --dereference
 When using --hash (and not --dereference) the output format is: '<SHA-1 ID>'
 
 -----------------------------------------------------------------------------
-$ git show-ref --heads --hash
+$ but show-ref --heads --hash
 2e3ba0114a1f52b47df29743d6915d056be13278
 185008ae97960c8d551adcd9e23565194651b5d1
 03adf42c988195b50e1a1935ba5fcbc39b2b029b
@@ -128,7 +128,7 @@ else, and regardless of how deep in the reference naming hierarchy they are,
 use:
 
 -----------------------------------------------------------------------------
-	git show-ref master
+	but show-ref master
 -----------------------------------------------------------------------------
 
 This will show "refs/heads/master" but also "refs/remote/other-repo/master",
@@ -137,19 +137,19 @@ if such references exists.
 When using the `--verify` flag, the command requires an exact path:
 
 -----------------------------------------------------------------------------
-	git show-ref --verify refs/heads/master
+	but show-ref --verify refs/heads/master
 -----------------------------------------------------------------------------
 
 will only match the exact branch called "master".
 
-If nothing matches, 'git show-ref' will return an error code of 1,
+If nothing matches, 'but show-ref' will return an error code of 1,
 and in the case of verification, it will show an error message.
 
 For scripting, you can ask it to be quiet with the "--quiet" flag, which
 allows you to do things like
 
 -----------------------------------------------------------------------------
-	git show-ref --quiet --verify -- "refs/heads/$headname" ||
+	but show-ref --quiet --verify -- "refs/heads/$headname" ||
 		echo "$headname is not a valid branch"
 -----------------------------------------------------------------------------
 
@@ -165,22 +165,22 @@ To do automatic tag object dereferencing, use the "-d" or "--dereference"
 flag, so you can do
 
 -----------------------------------------------------------------------------
-	git show-ref --tags --dereference
+	but show-ref --tags --dereference
 -----------------------------------------------------------------------------
 
 to get a listing of all tags together with what they dereference.
 
 FILES
 -----
-`.git/refs/*`, `.git/packed-refs`
+`.but/refs/*`, `.but/packed-refs`
 
 SEE ALSO
 --------
-linkgit:git-for-each-ref[1],
-linkgit:git-ls-remote[1],
-linkgit:git-update-ref[1],
-linkgit:gitrepository-layout[5]
+linkbut:but-for-each-ref[1],
+linkbut:but-ls-remote[1],
+linkbut:but-update-ref[1],
+linkbut:butrepository-layout[5]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

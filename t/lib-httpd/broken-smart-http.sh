@@ -1,6 +1,6 @@
 printf "Content-Type: text/%s\n" "html"
 echo
-printf "%s\n" "001e# service=git-upload-pack"
+printf "%s\n" "001e# service=but-upload-pack"
 printf "%s"   "0000"
 printf "%s%c%s%s\n" \
 	"00a58681d9f286a48b08f37b3a095330da16689e3693 HEAD" \

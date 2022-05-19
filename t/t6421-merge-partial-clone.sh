@@ -35,8 +35,8 @@ test_setup_repo () {
 	(
 		cd server &&
 
-		git config uploadpack.allowfilter 1 &&
-		git config uploadpack.allowanysha1inwant 1 &&
+		but config uploadpack.allowfilter 1 &&
+		but config uploadpack.allowanysha1inwant 1 &&
 
 		mkdir -p general &&
 		test_seq 2 9 >general/leap1 &&
@@ -68,18 +68,18 @@ test_setup_repo () {
 		do
 			echo content $i >dir/unchanged/file_$i
 		done &&
-		git add . &&
-		git cummit -m "O" &&
+		but add . &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B-single &&
-		git branch B-dir &&
-		git branch B-many &&
+		but branch O &&
+		but branch A &&
+		but branch B-single &&
+		but branch B-dir &&
+		but branch B-many &&
 
-		git switch A &&
+		but switch A &&
 
-		git rm general/leap* &&
+		but rm general/leap* &&
 		mkdir general/ &&
 		test_seq 1 9 >general/jump1 &&
 		cp general/jump1 general/jump2 &&
@@ -94,33 +94,33 @@ test_setup_repo () {
 		echo sequence >>basename/subdir/sequence &&
 		echo values >>basename/subdir/values &&
 
-		git rm dir/subdir/tweaked/f &&
+		but rm dir/subdir/tweaked/f &&
 		echo more >>dir/subdir/e &&
 		echo more >>dir/subdir/Makefile &&
 		echo more >>dir/subdir/tweaked/Makefile &&
 		mkdir dir/subdir/newsubdir &&
 		echo rust code >dir/subdir/newsubdir/newfile.rs &&
-		git mv dir/subdir/e dir/subdir/newsubdir/ &&
-		git mv dir folder &&
-		git add . &&
-		git cummit -m "A" &&
+		but mv dir/subdir/e dir/subdir/newsubdir/ &&
+		but mv dir folder &&
+		but add . &&
+		but cummit -m "A" &&
 
-		git switch B-single &&
+		but switch B-single &&
 		echo new first line >dir/subdir/Makefile &&
 		cat general/leap1 >>dir/subdir/Makefile &&
 		echo toplevel makefile >>dir/subdir/Makefile &&
 		echo perl code >general/newfile.pl &&
-		git add . &&
-		git cummit -m "B-single" &&
+		but add . &&
+		but cummit -m "B-single" &&
 
-		git switch B-dir &&
+		but switch B-dir &&
 		echo java code >dir/subdir/newfile.java &&
 		echo scala code >dir/subdir/newfile.scala &&
 		echo groovy code >dir/subdir/newfile.groovy &&
-		git add . &&
-		git cummit -m "B-dir" &&
+		but add . &&
+		but cummit -m "B-dir" &&
 
-		git switch B-many &&
+		but switch B-many &&
 		test_seq 2 10 >general/leap1 &&
 		rm general/leap2 &&
 		cp general/leap1 general/leap2 &&
@@ -138,10 +138,10 @@ test_setup_repo () {
 		mkdir dir/subdir/newsubdir/ &&
 		echo c code >dir/subdir/newfile.c &&
 		echo python code >dir/subdir/newsubdir/newfile.py &&
-		git add . &&
-		git cummit -m "B-many" &&
+		but add . &&
+		but cummit -m "B-many" &&
 
-		git switch A
+		but switch A
 	)
 }
 
@@ -209,16 +209,16 @@ test_setup_repo () {
 #
 test_expect_merge_algorithm failure success 'Objects downloaded for single relevant rename' '
 	test_setup_repo &&
-	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-single &&
+	but clone --sparse --filter=blob:none "file://$(pwd)/server" objects-single &&
 	(
 		cd objects-single &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-before &&
 
-		git checkout -q origin/A &&
+		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" git \
+		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-single &&
 
@@ -234,7 +234,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
 		test_line_count = 2 fetches &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-after &&
 		comm -2 -3 missing-objects-before missing-objects-after >old &&
 		comm -1 -3 missing-objects-before missing-objects-after >new &&
@@ -298,16 +298,16 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 #
 test_expect_merge_algorithm failure success 'Objects downloaded when a directory rename triggered' '
 	test_setup_repo &&
-	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-dir &&
+	but clone --sparse --filter=blob:none "file://$(pwd)/server" objects-dir &&
 	(
 		cd objects-dir &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-before &&
 
-		git checkout -q origin/A &&
+		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" git \
+		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-dir &&
 
@@ -322,7 +322,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
 		test_line_count = 1 fetches &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-after &&
 		comm -2 -3 missing-objects-before missing-objects-after >old &&
 		comm -1 -3 missing-objects-before missing-objects-after >new &&
@@ -399,16 +399,16 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 #
 test_expect_merge_algorithm failure success 'Objects downloaded with lots of renames and modifications' '
 	test_setup_repo &&
-	git clone --sparse --filter=blob:none "file://$(pwd)/server" objects-many &&
+	but clone --sparse --filter=blob:none "file://$(pwd)/server" objects-many &&
 	(
 		cd objects-many &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-before &&
 
-		git checkout -q origin/A &&
+		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" git \
+		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-many &&
 
@@ -426,7 +426,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded with lots of ren
 		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
 		test_line_count = 4 fetches &&
 
-		git rev-list --objects --all --missing=print |
+		but rev-list --objects --all --missing=print |
 			grep "^?" | sort >missing-objects-after &&
 		comm -2 -3 missing-objects-before missing-objects-after >old &&
 		comm -1 -3 missing-objects-before missing-objects-after >new &&

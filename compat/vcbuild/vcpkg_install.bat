@@ -1,7 +1,7 @@
 @ECHO OFF
 REM ================================================================
 REM This script installs the "vcpkg" source package manager and uses
-REM it to build the third-party libraries that git requires when it
+REM it to build the third-party libraries that but requires when it
 REM is built using MSVC.
 REM
 REM [1] Install VCPKG.
@@ -25,7 +25,7 @@ REM     third-party libraries.
 REM     [a] Write vcpkg/VCPGK-DEFS
 REM
 REM https://blogs.msdn.microsoft.com/vcblog/2016/09/19/vcpkg-a-tool-to-acquire-and-build-c-open-source-libraries-on-windows/
-REM https://github.com/Microsoft/vcpkg
+REM https://buthub.com/Microsoft/vcpkg
 REM https://vcpkg.readthedocs.io/en/latest/
 REM ================================================================
 
@@ -37,7 +37,7 @@ REM ================================================================
 	dir vcpkg\vcpkg.exe >nul 2>nul && GOTO :install_libraries
 
 	echo Fetching vcpkg in %cwd%vcpkg
-	git.exe clone https://github.com/Microsoft/vcpkg vcpkg
+	but.exe clone https://buthub.com/Microsoft/vcpkg vcpkg
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
 
 	cd vcpkg

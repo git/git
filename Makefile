@@ -14,7 +14,7 @@ include shared.mak
 # Define SOCKLEN_T to a suitable type (such as 'size_t') if your
 # system headers do not define a socklen_t type.
 #
-# Define INLINE to a suitable substitute (such as '__inline' or '') if git
+# Define INLINE to a suitable substitute (such as '__inline' or '') if but
 # fails to compile with errors about undefined inline functions or similar.
 #
 # Define SNPRINTF_RETURNS_BOGUS if you are on a system which snprintf()
@@ -43,8 +43,8 @@ include shared.mak
 #
 # Define HAVE_ALLOCA_H if you have working alloca(3) defined in that header.
 #
-# Define NO_CURL if you do not have libcurl installed.  git-http-fetch and
-# git-http-push are not built, and you cannot use http:// and https://
+# Define NO_CURL if you do not have libcurl installed.  but-http-fetch and
+# but-http-push are not built, and you cannot use http:// and https://
 # transports (neither smart nor dumb).
 #
 # Define CURLDIR=/foo/bar if your curl header and library files are in
@@ -60,7 +60,7 @@ include shared.mak
 #
 #     CURL_LDFLAGS=-lcurl
 #
-# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# Define NO_EXPAT if you do not have expat installed.  but-http-push is
 # not built, and you cannot push using http:// and https:// transports (dumb).
 #
 # Define EXPATDIR=/foo/bar if your expat header and library files are in
@@ -129,7 +129,7 @@ include shared.mak
 #
 # Define NO_SYS_SELECT_H if you don't have sys/select.h.
 #
-# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
+# Define NO_SYMLINK_HEAD if you never want .but/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
 # Define NO_SVN_TESTS if you want to skip time-consuming SVN interoperability
@@ -163,14 +163,14 @@ include shared.mak
 # Takes priority over other *_SHA1 knobs.
 #
 # Define DC_SHA1_EXTERNAL in addition to DC_SHA1 if you want to build / link
-# git with the external SHA1 collision-detect library.
-# Without this option, i.e. the default behavior is to build git with its
+# but with the external SHA1 collision-detect library.
+# Without this option, i.e. the default behavior is to build but with its
 # own built-in code (or submodule).
 #
 # Define DC_SHA1_SUBMODULE in addition to DC_SHA1 to use the
 # sha1collisiondetection shipped as a submodule instead of the
 # non-submodule copy in sha1dc/. This is an experimental option used
-# by the git project to migrate to using sha1collisiondetection as a
+# by the but project to migrate to using sha1collisiondetection as a
 # submodule.
 #
 # Define OPENSSL_SHA1 environment variable when running make to link
@@ -218,7 +218,7 @@ include shared.mak
 # This also implies NO_POLL_H and NO_SYS_POLL_H.
 #
 # Define NEEDS_SYS_PARAM_H if you need to include sys/param.h to compile,
-# *PLEASE* REPORT to git@vger.kernel.org if your platform needs this;
+# *PLEASE* REPORT to but@vger.kernel.org if your platform needs this;
 # we want to know more about the issue.
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
@@ -270,12 +270,12 @@ include shared.mak
 # Define NO_NORETURN if using buggy versions of gcc 4.6+ and profile feedback,
 # as the compiler can crash (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49299)
 #
-# Define USE_NSEC below if you want git to care about sub-second file mtimes
+# Define USE_NSEC below if you want but to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this. On
 # Linux, kernel 2.6.11 or newer is required for reliable sub-second file times
 # on file systems with exactly 1 ns or 1 s resolution. If you intend to use Git
 # on other file systems (e.g. CEPH, CIFS, NTFS, UDF), don't enable USE_NSEC. See
-# Documentation/technical/racy-git.txt for details.
+# Documentation/technical/racy-but.txt for details.
 #
 # Define USE_ST_TIMESPEC if your "struct stat" uses "st_ctimespec" instead of
 # "st_ctim"
@@ -283,7 +283,7 @@ include shared.mak
 # Define NO_NSEC if your "struct stat" does not have "st_ctim.tv_nsec"
 # available.  This automatically turns USE_NSEC off.
 #
-# Define USE_STDEV below if you want git to care about the underlying device
+# Define USE_STDEV below if you want but to care about the underlying device
 # change being considered an inode change from the update-index perspective.
 #
 # Define NO_ST_BLOCKS_IN_STRUCT_STAT if your platform does not have st_blocks
@@ -317,7 +317,7 @@ include shared.mak
 # Define NO_TCLTK if you do not want Tcl/Tk GUI.
 #
 # The TCL_PATH variable governs the location of the Tcl interpreter
-# used to optimize git-gui for your system.  Only used if NO_TCLTK
+# used to optimize but-gui for your system.  Only used if NO_TCLTK
 # is not set.  Defaults to the bare 'tclsh'.
 #
 # The TCLTK_PATH variable governs the location of the Tcl/Tk interpreter.
@@ -350,7 +350,7 @@ include shared.mak
 # programs as a tar, where bin/ and libexec/ might be on different file systems.
 #
 # Define NO_INSTALL_HARDLINKS if you prefer to use either symbolic links or
-# copies to install built-in git commands e.g. git-cat-file.
+# copies to install built-in but commands e.g. but-cat-file.
 #
 # Define SKIP_DASHED_BUILT_INS if you do not need the dashed versions of the
 # built-ins to be linked/copied at all.
@@ -370,10 +370,10 @@ include shared.mak
 # user.
 #
 # Define JSMIN to point to JavaScript minifier that functions as
-# a filter to have gitweb.js minified.
+# a filter to have butweb.js minified.
 #
 # Define CSSMIN to point to a CSS minifier in order to generate a minified
-# version of gitweb.css
+# version of butweb.css
 #
 # Define DEFAULT_PAGER to a sensible pager command (defaults to "less") if
 # you want to use something different.  The value will be interpreted by the
@@ -395,12 +395,12 @@ include shared.mak
 #
 # Define NATIVE_CRLF if your platform uses CRLF for line endings.
 #
-# Define GIT_USER_AGENT if you want to change how git identifies itself during
-# network interactions.  The default is "git/$(GIT_VERSION)".
+# Define GIT_USER_AGENT if you want to change how but identifies itself during
+# network interactions.  The default is "but/$(GIT_VERSION)".
 #
 # Define DEFAULT_HELP_FORMAT to "man", "info" or "html"
 # (defaults to "man") if you want to have a different default when
-# "git help" is called without a parameter specifying the format.
+# "but help" is called without a parameter specifying the format.
 #
 # Define GIT_TEST_INDEX_VERSION to 2, 3 or 4 to run the test suite
 # with a different indexfile format version.  If it isn't set the index
@@ -515,13 +515,13 @@ GIT-VERSION-FILE: FORCE
 # Set our default configuration.
 #
 # Among the variables below, these:
-#   gitexecdir
+#   butexecdir
 #   template_dir
 #   sysconfdir
 # can be specified as a relative path some/where/else;
-# this is interpreted as relative to $(prefix) and "git" at
+# this is interpreted as relative to $(prefix) and "but" at
 # runtime figures out where they are based on the path to the executable.
-# Additionally, the following will be treated as relative by "git" if they
+# Additionally, the following will be treated as relative by "but" if they
 # begin with "$(prefix)/":
 #   mandir
 #   infodir
@@ -534,16 +534,16 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
-gitexecdir = libexec/git-core
-mergetoolsdir = $(gitexecdir)/mergetools
+butexecdir = libexec/but-core
+mergetoolsdir = $(butexecdir)/mergetools
 sharedir = $(prefix)/share
-gitwebdir = $(sharedir)/gitweb
+butwebdir = $(sharedir)/butweb
 perllibdir = $(sharedir)/perl5
 localedir = $(sharedir)/locale
-template_dir = share/git-core/templates
-htmldir = $(prefix)/share/doc/git-doc
-ETC_GITCONFIG = $(sysconfdir)/gitconfig
-ETC_GITATTRIBUTES = $(sysconfdir)/gitattributes
+template_dir = share/but-core/templates
+htmldir = $(prefix)/share/doc/but-doc
+ETC_GITCONFIG = $(sysconfdir)/butconfig
+ETC_GITATTRIBUTES = $(sysconfdir)/butattributes
 lib = lib
 # DESTDIR =
 pathsep = :
@@ -551,12 +551,12 @@ pathsep = :
 bindir_relative = $(patsubst $(prefix)/%,%,$(bindir))
 mandir_relative = $(patsubst $(prefix)/%,%,$(mandir))
 infodir_relative = $(patsubst $(prefix)/%,%,$(infodir))
-gitexecdir_relative = $(patsubst $(prefix)/%,%,$(gitexecdir))
+butexecdir_relative = $(patsubst $(prefix)/%,%,$(butexecdir))
 localedir_relative = $(patsubst $(prefix)/%,%,$(localedir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
 perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
-export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
+export prefix bindir sharedir sysconfdir butwebdir perllibdir localedir
 
 # Set our default programs
 CC = cc
@@ -611,31 +611,31 @@ THIRD_PARTY_SOURCES =
 # interactive shell sessions without exporting it.
 unexport CDPATH
 
-SCRIPT_SH += git-bisect.sh
-SCRIPT_SH += git-difftool--helper.sh
-SCRIPT_SH += git-filter-branch.sh
-SCRIPT_SH += git-merge-octopus.sh
-SCRIPT_SH += git-merge-one-file.sh
-SCRIPT_SH += git-merge-resolve.sh
-SCRIPT_SH += git-mergetool.sh
-SCRIPT_SH += git-quiltimport.sh
-SCRIPT_SH += git-request-pull.sh
-SCRIPT_SH += git-submodule.sh
-SCRIPT_SH += git-web--browse.sh
+SCRIPT_SH += but-bisect.sh
+SCRIPT_SH += but-difftool--helper.sh
+SCRIPT_SH += but-filter-branch.sh
+SCRIPT_SH += but-merge-octopus.sh
+SCRIPT_SH += but-merge-one-file.sh
+SCRIPT_SH += but-merge-resolve.sh
+SCRIPT_SH += but-mergetool.sh
+SCRIPT_SH += but-quiltimport.sh
+SCRIPT_SH += but-request-pull.sh
+SCRIPT_SH += but-submodule.sh
+SCRIPT_SH += but-web--browse.sh
 
-SCRIPT_LIB += git-mergetool--lib
-SCRIPT_LIB += git-sh-i18n
-SCRIPT_LIB += git-sh-setup
+SCRIPT_LIB += but-mergetool--lib
+SCRIPT_LIB += but-sh-i18n
+SCRIPT_LIB += but-sh-setup
 
-SCRIPT_PERL += git-add--interactive.perl
-SCRIPT_PERL += git-archimport.perl
-SCRIPT_PERL += git-cvsexportcummit.perl
-SCRIPT_PERL += git-cvsimport.perl
-SCRIPT_PERL += git-cvsserver.perl
-SCRIPT_PERL += git-send-email.perl
-SCRIPT_PERL += git-svn.perl
+SCRIPT_PERL += but-add--interactive.perl
+SCRIPT_PERL += but-archimport.perl
+SCRIPT_PERL += but-cvsexportcummit.perl
+SCRIPT_PERL += but-cvsimport.perl
+SCRIPT_PERL += but-cvsserver.perl
+SCRIPT_PERL += but-send-email.perl
+SCRIPT_PERL += but-svn.perl
 
-SCRIPT_PYTHON += git-p4.py
+SCRIPT_PYTHON += but-p4.py
 
 # Generated files for scripts
 SCRIPT_SH_GEN = $(patsubst %.sh,%,$(SCRIPT_SH))
@@ -652,11 +652,11 @@ build-python-script: $(SCRIPT_PYTHON_GEN)
 
 .PHONY: install-perl-script install-sh-script install-python-script
 install-sh-script: $(SCRIPT_SH_GEN)
-	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
 install-perl-script: $(SCRIPT_PERL_GEN)
-	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
 install-python-script: $(SCRIPT_PYTHON_GEN)
-	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $^ '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
 
 .PHONY: clean-perl-script clean-sh-script clean-python-script
 clean-sh-script:
@@ -669,7 +669,7 @@ clean-python-script:
 SCRIPTS = $(SCRIPT_SH_GEN) \
 	  $(SCRIPT_PERL_GEN) \
 	  $(SCRIPT_PYTHON_GEN) \
-	  git-instaweb
+	  but-instaweb
 
 ETAGS_TARGET = TAGS
 
@@ -687,7 +687,7 @@ FUZZ_PROGRAMS += $(patsubst %.o,%,$(FUZZ_OBJS))
 # Empty...
 EXTRA_PROGRAMS =
 
-# ... and all the rest that could be moved out of bindir to gitexecdir
+# ... and all the rest that could be moved out of bindir to butexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
 
 PROGRAM_OBJS += daemon.o
@@ -701,7 +701,7 @@ program-objs: $(PROGRAM_OBJS)
 # Binary suffix, set to .exe for Windows builds
 X =
 
-PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
+PROGRAMS += $(patsubst %.o,but-%$X,$(PROGRAM_OBJS))
 
 TEST_BUILTINS_OBJS += test-advise.o
 TEST_BUILTINS_OBJS += test-bitmap.o
@@ -785,33 +785,33 @@ TEST_PROGRAMS = $(patsubst %,t/helper/%$X,$(TEST_PROGRAMS_NEED_X))
 
 # List built-in command $C whose implementation cmd_$C() is not in
 # builtin/$C.o but is linked in as part of some other command.
-BUILT_INS += $(patsubst builtin/%.o,git-%$X,$(BUILTIN_OBJS))
+BUILT_INS += $(patsubst builtin/%.o,but-%$X,$(BUILTIN_OBJS))
 
-BUILT_INS += git-cherry$X
-BUILT_INS += git-cherry-pick$X
-BUILT_INS += git-format-patch$X
-BUILT_INS += git-fsck-objects$X
-BUILT_INS += git-init$X
-BUILT_INS += git-maintenance$X
-BUILT_INS += git-merge-subtree$X
-BUILT_INS += git-restore$X
-BUILT_INS += git-show$X
-BUILT_INS += git-stage$X
-BUILT_INS += git-status$X
-BUILT_INS += git-switch$X
-BUILT_INS += git-whatchanged$X
+BUILT_INS += but-cherry$X
+BUILT_INS += but-cherry-pick$X
+BUILT_INS += but-format-patch$X
+BUILT_INS += but-fsck-objects$X
+BUILT_INS += but-init$X
+BUILT_INS += but-maintenance$X
+BUILT_INS += but-merge-subtree$X
+BUILT_INS += but-restore$X
+BUILT_INS += but-show$X
+BUILT_INS += but-stage$X
+BUILT_INS += but-status$X
+BUILT_INS += but-switch$X
+BUILT_INS += but-whatchanged$X
 
-# what 'all' will build but not install in gitexecdir
-OTHER_PROGRAMS = git$X
+# what 'all' will build but not install in butexecdir
+OTHER_PROGRAMS = but$X
 
 # what test wrappers are needed and 'install' will install, in bindir
-BINDIR_PROGRAMS_NEED_X += git
-BINDIR_PROGRAMS_NEED_X += git-receive-pack
-BINDIR_PROGRAMS_NEED_X += git-shell
-BINDIR_PROGRAMS_NEED_X += git-upload-archive
-BINDIR_PROGRAMS_NEED_X += git-upload-pack
+BINDIR_PROGRAMS_NEED_X += but
+BINDIR_PROGRAMS_NEED_X += but-receive-pack
+BINDIR_PROGRAMS_NEED_X += but-shell
+BINDIR_PROGRAMS_NEED_X += but-upload-archive
+BINDIR_PROGRAMS_NEED_X += but-upload-pack
 
-BINDIR_PROGRAMS_NO_X += git-cvsserver
+BINDIR_PROGRAMS_NO_X += but-cvsserver
 
 # Set paths to tools early so that they can be used for version tests.
 ifndef SHELL_PATH
@@ -829,7 +829,7 @@ export PYTHON_PATH
 
 TEST_SHELL_PATH = $(SHELL_PATH)
 
-LIB_FILE = libgit.a
+LIB_FILE = libbut.a
 XDIFF_LIB = xdiff/lib.a
 REFTABLE_LIB = reftable/libreftable.a
 REFTABLE_TEST_LIB = reftable/libreftable_test.a
@@ -844,14 +844,14 @@ generated-hdrs: $(GENERATED_H)
 ## Exhaustive lists of our source files, either dynamically generated,
 ## or hardcoded.
 SOURCES_CMD = ( \
-	git ls-files \
+	but ls-files \
 		'*.[hcS]' \
 		'*.sh' \
 		':!*[tp][0-9][0-9][0-9][0-9]*' \
 		':!contrib' \
 		2>/dev/null || \
 	$(FIND) . \
-		\( -name .git -type d -prune \) \
+		\( -name .but -type d -prune \) \
 		-o \( -name '[tp][0-9][0-9][0-9][0-9]*' -prune \) \
 		-o \( -name contrib -type d -prune \) \
 		-o \( -name build -type d -prune \) \
@@ -1239,11 +1239,11 @@ THIRD_PARTY_SOURCES += compat/regex/%
 THIRD_PARTY_SOURCES += sha1collisiondetection/%
 THIRD_PARTY_SOURCES += sha1dc/%
 
-# xdiff and reftable libs may in turn depend on what is in libgit.a
+# xdiff and reftable libs may in turn depend on what is in libbut.a
 GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
 EXTLIBS =
 
-GIT_USER_AGENT = git/$(GIT_VERSION)
+GIT_USER_AGENT = but/$(GIT_VERSION)
 
 ifeq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/sha1.h)
 DC_SHA1_SUBMODULE = auto
@@ -1285,18 +1285,18 @@ ifdef DEVELOPER
 include config.mak.dev
 endif
 
-# what 'all' will build and 'install' will install in gitexecdir,
+# what 'all' will build and 'install' will install in butexecdir,
 # excluding programs for built-in commands
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
 ALL_COMMANDS_TO_INSTALL = $(ALL_PROGRAMS)
 ifeq (,$(SKIP_DASHED_BUILT_INS))
 ALL_COMMANDS_TO_INSTALL += $(BUILT_INS)
 else
-# git-upload-pack, git-receive-pack and git-upload-archive are special: they
+# but-upload-pack, but-receive-pack and but-upload-archive are special: they
 # are _expected_ to be present in the `bin/` directory in their dashed form.
-ALL_COMMANDS_TO_INSTALL += git-receive-pack$(X)
-ALL_COMMANDS_TO_INSTALL += git-upload-archive$(X)
-ALL_COMMANDS_TO_INSTALL += git-upload-pack$(X)
+ALL_COMMANDS_TO_INSTALL += but-receive-pack$(X)
+ALL_COMMANDS_TO_INSTALL += but-upload-archive$(X)
+ALL_COMMANDS_TO_INSTALL += but-upload-pack$(X)
 endif
 
 ALL_CFLAGS = $(DEVELOPER_CFLAGS) $(CPPFLAGS) $(CFLAGS)
@@ -1377,7 +1377,7 @@ endif
 
 ifdef SANE_TOOL_PATH
 SANE_TOOL_PATH_SQ = $(subst ','\'',$(SANE_TOOL_PATH))
-BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix "$(SANE_TOOL_PATH_SQ)"|'
+BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|but_broken_path_fix "$(SANE_TOOL_PATH_SQ)"|'
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
@@ -1452,7 +1452,7 @@ ifdef NO_CURL
 	REMOTE_CURL_PRIMARY =
 	REMOTE_CURL_ALIASES =
 	REMOTE_CURL_NAMES =
-	EXCLUDED_PROGRAMS += git-http-fetch git-http-push
+	EXCLUDED_PROGRAMS += but-http-fetch but-http-push
 else
 	ifdef CURLDIR
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
@@ -1473,8 +1473,8 @@ else
 	endif
 	BASIC_CFLAGS += $(CURL_CFLAGS)
 
-	REMOTE_CURL_PRIMARY = git-remote-http$X
-	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
+	REMOTE_CURL_PRIMARY = but-remote-http$X
+	REMOTE_CURL_ALIASES = but-remote-https$X but-remote-ftp$X but-remote-ftps$X
 	REMOTE_CURL_NAMES = $(REMOTE_CURL_PRIMARY) $(REMOTE_CURL_ALIASES)
 	PROGRAM_OBJS += http-fetch.o
 	PROGRAMS += $(REMOTE_CURL_NAMES)
@@ -1797,7 +1797,7 @@ ifdef APPLE_COMMON_CRYPTO
 else
 	DC_SHA1 := YesPlease
 	BASIC_CFLAGS += -DSHA1_DC
-	LIB_OBJS += sha1dc_git.o
+	LIB_OBJS += sha1dc_but.o
 ifdef DC_SHA1_EXTERNAL
 	ifdef DC_SHA1_SUBMODULE
 		ifneq ($(DC_SHA1_SUBMODULE),auto)
@@ -1819,7 +1819,7 @@ endif
 		-DSHA1DC_NO_STANDARD_INCLUDES \
 		-DSHA1DC_INIT_SAFE_HASH_DEFAULT=0 \
 		-DSHA1DC_CUSTOM_INCLUDE_SHA1_C="\"cache.h\"" \
-		-DSHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="\"git-compat-util.h\""
+		-DSHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="\"but-compat-util.h\""
 endif
 endif
 endif
@@ -2064,13 +2064,13 @@ infodir_relative_SQ = $(subst ','\'',$(infodir_relative))
 perllibdir_SQ = $(subst ','\'',$(perllibdir))
 localedir_SQ = $(subst ','\'',$(localedir))
 localedir_relative_SQ = $(subst ','\'',$(localedir_relative))
-gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
-gitexecdir_relative_SQ = $(subst ','\'',$(gitexecdir_relative))
+butexecdir_SQ = $(subst ','\'',$(butexecdir))
+butexecdir_relative_SQ = $(subst ','\'',$(butexecdir_relative))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 htmldir_relative_SQ = $(subst ','\'',$(htmldir_relative))
 prefix_SQ = $(subst ','\'',$(prefix))
 perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
-gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
+butwebdir_SQ = $(subst ','\'',$(butwebdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
@@ -2089,8 +2089,8 @@ PERLLIB_EXTRA_SQ = $(subst ','\'',$(PERLLIB_EXTRA))
 #   "perl/header_templates/runtime_prefix.template.pl").
 ifdef RUNTIME_PREFIX
 
-ifneq ($(filter /%,$(firstword $(gitexecdir_relative))),)
-$(error RUNTIME_PREFIX requires a relative gitexecdir, not: $(gitexecdir))
+ifneq ($(filter /%,$(firstword $(butexecdir_relative))),)
+$(error RUNTIME_PREFIX requires a relative butexecdir, not: $(butexecdir))
 endif
 
 ifneq ($(filter /%,$(firstword $(localedir_relative))),)
@@ -2172,7 +2172,7 @@ endif
 profile:: profile-clean
 	$(MAKE) PROFILE=GEN all
 	$(MAKE) PROFILE=GEN -j1 test
-	@if test -n "$$GIT_PERF_REPO" || test -d .git; then \
+	@if test -n "$$GIT_PERF_REPO" || test -d .but; then \
 		$(MAKE) PROFILE=GEN -j1 perf; \
 	else \
 		echo "Skipping profile of perf tests..."; \
@@ -2187,13 +2187,13 @@ profile-fast: profile-clean
 
 all:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
 ifneq (,$X)
-	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) git$X)), test -d '$p' -o '$p' -ef '$p$X' || $(RM) '$p';)
+	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) but$X)), test -d '$p' -o '$p' -ef '$p$X' || $(RM) '$p';)
 endif
 
 all::
 ifndef NO_TCLTK
-	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) gitexecdir='$(gitexec_instdir_SQ)' all
-	$(QUIET_SUBDIR0)gitk-git $(QUIET_SUBDIR1) all
+	$(QUIET_SUBDIR0)but-gui $(QUIET_SUBDIR1) butexecdir='$(butexec_instdir_SQ)' all
+	$(QUIET_SUBDIR0)butk-but $(QUIET_SUBDIR1) all
 endif
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) SHELL_PATH='$(SHELL_PATH_SQ)' PERL_PATH='$(PERL_PATH_SQ)'
 
@@ -2202,7 +2202,7 @@ please_set_SHELL_PATH_to_a_more_modern_shell:
 
 shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
-strip: $(PROGRAMS) git$X
+strip: $(PROGRAMS) but$X
 	$(STRIP) $(STRIP_OPTS) $^
 
 ### Target-specific flags and dependencies
@@ -2238,13 +2238,13 @@ strip: $(PROGRAMS) git$X
 #   dependencies here will not need to change if the force-build
 #   details change some day.
 
-git.sp git.s git.o: GIT-PREFIX
-git.sp git.s git.o: EXTRA_CPPFLAGS = \
+but.sp but.s but.o: GIT-PREFIX
+but.sp but.s but.o: EXTRA_CPPFLAGS = \
 	'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
 	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
 	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
 
-git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
+but$X: but.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
@@ -2269,9 +2269,9 @@ version.sp version.s version.o: EXTRA_CPPFLAGS = \
 	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)' \
 	'-DGIT_BUILT_FROM_CUMMIT="$(shell \
 		GIT_CEILING_DIRECTORIES="$(CURDIR)/.." \
-		git rev-parse -q --verify HEAD 2>/dev/null)"'
+		but rev-parse -q --verify HEAD 2>/dev/null)"'
 
-$(BUILT_INS): git$X
+$(BUILT_INS): but$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
 	ln $< $@ 2>/dev/null || \
 	ln -s $< $@ 2>/dev/null || \
@@ -2284,17 +2284,17 @@ config-list.h: Documentation/*config.txt Documentation/config/*.txt
 
 command-list.h: generate-cmdlist.sh command-list.txt
 
-command-list.h: $(wildcard Documentation/git*.txt)
+command-list.h: $(wildcard Documentation/but*.txt)
 	$(QUIET_GEN)$(SHELL_PATH) ./generate-cmdlist.sh \
 		$(patsubst %,--exclude-program %,$(EXCLUDED_PROGRAMS)) \
 		command-list.txt >$@
 
-hook-list.h: generate-hooklist.sh Documentation/githooks.txt
+hook-list.h: generate-hooklist.sh Documentation/buthooks.txt
 	$(QUIET_GEN)$(SHELL_PATH) ./generate-hooklist.sh >$@
 
 SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
 	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
-	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(PAGER_ENV):\
+	$(butwebdir_SQ):$(PERL_PATH_SQ):$(PAGER_ENV):\
 	$(perllibdir_SQ)
 GIT-SCRIPT-DEFINES: FORCE
 	@FLAGS='$(SCRIPT_DEFINES)'; \
@@ -2310,7 +2310,7 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's|@@LOCALEDIR@@|$(localedir_SQ)|g' \
     -e 's/@@USE_GETTEXT_SCHEME@@/$(USE_GETTEXT_SCHEME)/g' \
     -e $(BROKEN_PATH_FIX) \
-    -e 's|@@GITWEBDIR@@|$(gitwebdir_SQ)|g' \
+    -e 's|@@GITWEBDIR@@|$(butwebdir_SQ)|g' \
     -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
     -e 's|@@PAGER_ENV@@|$(PAGER_ENV_SQ)|g' \
     $@.sh >$@+
@@ -2325,7 +2325,7 @@ $(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	mv $@+ $@
 
-git.res: git.rc GIT-VERSION-FILE GIT-PREFIX
+but.res: but.rc GIT-VERSION-FILE GIT-PREFIX
 	$(QUIET_RC)$(RC) \
 	  $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1, 4, \
 	    $(shell echo $(GIT_VERSION) 0 0 0 0 | tr '.a-zA-Z-' ' '))) \
@@ -2360,7 +2360,7 @@ perl_localedir_SQ =
 
 endif
 
-PERL_DEFINES += $(gitexecdir) $(perllibdir) $(localedir)
+PERL_DEFINES += $(butexecdir) $(perllibdir) $(localedir)
 
 $(SCRIPT_PERL_GEN): % : %.perl GIT-PERL-DEFINES GIT-PERL-HEADER GIT-VERSION-FILE
 	$(QUIET_GEN) \
@@ -2390,7 +2390,7 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 	sed -e 's=@@PATHSEP@@=$(pathsep)=g' \
 	    -e "s=@@INSTLIBDIR@@=$$INSTLIBDIR=g" \
 	    -e 's=@@PERLLIBDIR_REL@@=$(perllibdir_relative_SQ)=g' \
-	    -e 's=@@GITEXECDIR_REL@@=$(gitexecdir_relative_SQ)=g' \
+	    -e 's=@@GITEXECDIR_REL@@=$(butexecdir_relative_SQ)=g' \
 	    -e 's=@@LOCALEDIR_REL@@=$(localedir_relative_SQ)=g' \
 	    $< >$@+ && \
 	mv $@+ $@
@@ -2399,16 +2399,16 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 perllibdir:
 	@echo '$(perllibdir_SQ)'
 
-.PHONY: gitweb
-gitweb:
-	$(QUIET_SUBDIR0)gitweb $(QUIET_SUBDIR1) all
+.PHONY: butweb
+butweb:
+	$(QUIET_SUBDIR0)butweb $(QUIET_SUBDIR1) all
 
-git-instaweb: git-instaweb.sh GIT-SCRIPT-DEFINES
+but-instaweb: but-instaweb.sh GIT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	chmod +x $@+ && \
 	mv $@+ $@
 else # NO_PERL
-$(SCRIPT_PERL_GEN) git-instaweb: % : unimplemented.sh
+$(SCRIPT_PERL_GEN) but-instaweb: % : unimplemented.sh
 	$(QUIET_GEN) \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's|@@REASON@@|NO_PERL=$(NO_PERL)|g' \
@@ -2510,9 +2510,9 @@ test-objs: $(TEST_OBJS)
 GIT_OBJS += $(LIB_OBJS)
 GIT_OBJS += $(BUILTIN_OBJS)
 GIT_OBJS += common-main.o
-GIT_OBJS += git.o
-.PHONY: git-objs
-git-objs: $(GIT_OBJS)
+GIT_OBJS += but.o
+.PHONY: but-objs
+but-objs: $(GIT_OBJS)
 
 OBJECTS += $(GIT_OBJS)
 OBJECTS += $(PROGRAM_OBJS)
@@ -2595,7 +2595,7 @@ endif
 
 exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
 exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
-	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+	'-DGIT_EXEC_PATH="$(butexecdir_SQ)"' \
 	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
 	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
@@ -2636,17 +2636,17 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
-git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
+but-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
+but-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+but-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+but-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -2707,7 +2707,7 @@ pdf:
 XGETTEXT_FLAGS = \
 	--force-po \
 	--add-comments=TRANSLATORS: \
-	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
+	--msgid-bugs-address="Git Mailing List <but@vger.kernel.org>" \
 	--from-code=UTF-8
 XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
@@ -2717,7 +2717,7 @@ XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --language=Perl \
 	--keyword=__ --keyword=N__ --keyword="__n:1,2"
 LOCALIZED_C = $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
 LOCALIZED_SH = $(SCRIPT_SH)
-LOCALIZED_SH += git-sh-setup.sh
+LOCALIZED_SH += but-sh-setup.sh
 LOCALIZED_PERL = $(SCRIPT_PERL)
 
 ifdef XGETTEXT_INCLUDE_TESTS
@@ -2734,10 +2734,10 @@ endif
 ## we replace PRItime with PRIuMAX.  We need to update this to
 ## PRIdMAX if we switch to a signed type later.
 
-po/git.pot: $(GENERATED_H) FORCE
+po/but.pot: $(GENERATED_H) FORCE
 	# All modifications will be reverted at the end, so we do not
 	# want to have any local change.
-	git diff --quiet HEAD && git diff --quiet --cached
+	but diff --quiet HEAD && but diff --quiet --cached
 
 	@for s in $(LOCALIZED_C) $(LOCALIZED_SH) $(LOCALIZED_PERL); \
 	do \
@@ -2752,23 +2752,23 @@ po/git.pot: $(GENERATED_H) FORCE
 		$(LOCALIZED_PERL)
 
 	# Reverting the munged source, leaving only the updated $@
-	git reset --hard
+	but reset --hard
 	mv $@+ $@
 
 .PHONY: pot
-pot: po/git.pot
+pot: po/but.pot
 
 ifdef NO_GETTEXT
 POFILES :=
 MOFILES :=
 else
 POFILES := $(wildcard po/*.po)
-MOFILES := $(patsubst po/%.po,po/build/locale/%/LC_MESSAGES/git.mo,$(POFILES))
+MOFILES := $(patsubst po/%.po,po/build/locale/%/LC_MESSAGES/but.mo,$(POFILES))
 
 all:: $(MOFILES)
 endif
 
-po/build/locale/%/LC_MESSAGES/git.mo: po/%.po
+po/build/locale/%/LC_MESSAGES/but.mo: po/%.po
 	$(call mkdir_p_parent_template)
 	$(QUIET_MSGFMT)$(MSGFMT) -o $@ $<
 
@@ -2816,7 +2816,7 @@ cscope.out: $(FOUND_SOURCE_FILES)
 cscope: cscope.out
 
 ### Detect prefix changes
-TRACK_PREFIX = $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ):\
+TRACK_PREFIX = $(bindir_SQ):$(butexecdir_SQ):$(template_dir_SQ):$(prefix_SQ):\
 		$(localedir_SQ)
 
 GIT-PREFIX: FORCE
@@ -2936,7 +2936,7 @@ bin-wrappers/%: wrap-for-bin.sh
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	     -e 's|@@BUILD_DIR@@|$(shell pwd)|' \
-	     -e 's|@@PROG@@|$(patsubst test-%,t/helper/test-%$(X),$(@F))$(patsubst git%,$(X),$(filter $(@F),$(BINDIR_PROGRAMS_NEED_X)))|' < $< > $@ && \
+	     -e 's|@@PROG@@|$(patsubst test-%,t/helper/test-%$(X),$(@F))$(patsubst but%,$(X),$(filter $(@F),$(BINDIR_PROGRAMS_NEED_X)))|' < $< > $@ && \
 	chmod +x $@
 
 # GNU make supports exporting all variables by "export" without parameters.
@@ -2986,7 +2986,7 @@ HCO = $(patsubst %.h,%.hco,$(CHK_HDRS))
 HCC = $(HCO:hco=hcc)
 
 %.hcc: %.h
-	@echo '#include "git-compat-util.h"' >$@
+	@echo '#include "but-compat-util.h"' >$@
 	@echo '#include "$<"' >>$@
 
 $(HCO): %.hco: %.hcc FORCE
@@ -2997,7 +2997,7 @@ hdr-check: $(HCO)
 
 .PHONY: style
 style:
-	git clang-format --style file --diff --extensions c,h
+	but clang-format --style file --diff --extensions c,h
 
 .PHONY: check
 check: $(GENERATED_H)
@@ -3045,13 +3045,13 @@ template_instdir = $(prefix)/$(template_dir)
 endif
 export template_instdir
 
-ifneq ($(filter /%,$(firstword $(gitexecdir))),)
-gitexec_instdir = $(gitexecdir)
+ifneq ($(filter /%,$(firstword $(butexecdir))),)
+butexec_instdir = $(butexecdir)
 else
-gitexec_instdir = $(prefix)/$(gitexecdir)
+butexec_instdir = $(prefix)/$(butexecdir)
 endif
-gitexec_instdir_SQ = $(subst ','\'',$(gitexec_instdir))
-export gitexec_instdir
+butexec_instdir_SQ = $(subst ','\'',$(butexec_instdir))
+export butexec_instdir
 
 ifneq ($(filter /%,$(firstword $(mergetoolsdir))),)
 mergetools_instdir = $(mergetoolsdir)
@@ -3074,20 +3074,20 @@ INSTALL_STRIP =
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) $(INSTALL_STRIP) $(PROGRAMS) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) $(SCRIPTS) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) -m 644 $(SCRIPT_LIB) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
+	$(INSTALL) $(INSTALL_STRIP) $(PROGRAMS) '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
+	$(INSTALL) $(SCRIPTS) '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
+	$(INSTALL) -m 644 $(SCRIPT_LIB) '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
 	$(INSTALL) $(INSTALL_STRIP) $(install_bindir_xprograms) '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) $(BINDIR_PROGRAMS_NO_X) '$(DESTDIR_SQ)$(bindir_SQ)'
 
 ifdef MSVC
 	# We DO NOT install the individual foo.o.pdb files because they
 	# have already been rolled up into the exe's pdb file.
-	# We DO NOT have pdb files for the builtin commands (like git-status.exe)
-	# because it is just a copy/hardlink of git.exe, rather than a unique binary.
+	# We DO NOT have pdb files for the builtin commands (like but-status.exe)
+	# because it is just a copy/hardlink of but.exe, rather than a unique binary.
 	$(INSTALL) $(patsubst %.exe,%.pdb,$(filter-out $(BUILT_INS),$(patsubst %,%$X,$(BINDIR_PROGRAMS_NEED_X)))) '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) $(patsubst %.exe,%.pdb,$(filter-out $(BUILT_INS) $(REMOTE_CURL_ALIASES),$(PROGRAMS))) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
+	$(INSTALL) $(patsubst %.exe,%.pdb,$(filter-out $(BUILT_INS) $(REMOTE_CURL_ALIASES),$(PROGRAMS))) '$(DESTDIR_SQ)$(butexec_instdir_SQ)'
 ifndef DEBUG
 	$(INSTALL) $(vcpkg_rel_bin)/*.dll '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) $(vcpkg_rel_bin)/*.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
@@ -3108,21 +3108,21 @@ ifndef NO_PERL
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perllibdir_SQ)'
 	(cd perl/build/lib && $(TAR) cf - .) | \
 	(cd '$(DESTDIR_SQ)$(perllibdir_SQ)' && umask 022 && $(TAR) xof -)
-	$(MAKE) -C gitweb install
+	$(MAKE) -C butweb install
 endif
 ifndef NO_TCLTK
-	$(MAKE) -C gitk-git install
-	$(MAKE) -C git-gui gitexecdir='$(gitexec_instdir_SQ)' install
+	$(MAKE) -C butk-but install
+	$(MAKE) -C but-gui butexecdir='$(butexec_instdir_SQ)' install
 endif
 ifneq (,$X)
-	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) git$X)), test '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p' -ef '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p$X' || $(RM) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p';)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) but$X)), test '$(DESTDIR_SQ)$(butexec_instdir_SQ)/$p' -ef '$(DESTDIR_SQ)$(butexec_instdir_SQ)/$p$X' || $(RM) '$(DESTDIR_SQ)$(butexec_instdir_SQ)/$p';)
 endif
 
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
-	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	destdir_from_execdir_SQ=$$(echo '$(gitexecdir_relative_SQ)' | sed -e 's|[^/][^/]*|..|g') && \
+	execdir=$$(cd '$(DESTDIR_SQ)$(butexec_instdir_SQ)' && pwd) && \
+	destdir_from_execdir_SQ=$$(echo '$(butexecdir_relative_SQ)' | sed -e 's|[^/][^/]*|..|g') && \
 	{ test "$$bindir/" = "$$execdir/" || \
-	  for p in git$X $(filter $(install_bindir_programs),$(ALL_PROGRAMS)); do \
+	  for p in but$X $(filter $(install_bindir_programs),$(ALL_PROGRAMS)); do \
 		$(RM) "$$execdir/$$p" && \
 		test -n "$(INSTALL_SYMLINKS)" && \
 		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/$$p" "$$execdir/$$p" || \
@@ -3134,39 +3134,39 @@ endif
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
 		test -n "$(INSTALL_SYMLINKS)" && \
-		ln -s "git$X" "$$bindir/$$p" || \
+		ln -s "but$X" "$$bindir/$$p" || \
 		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; }; \
+		  ln "$$bindir/but$X" "$$bindir/$$p" 2>/dev/null || \
+		  ln -s "but$X" "$$bindir/$$p" 2>/dev/null || \
+		  cp "$$bindir/but$X" "$$bindir/$$p" || exit; }; \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
 		if test -z "$(SKIP_DASHED_BUILT_INS)"; \
 		then \
 			test -n "$(INSTALL_SYMLINKS)" && \
-			ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/git$X" "$$execdir/$$p" || \
+			ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/but$X" "$$execdir/$$p" || \
 			{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-			  ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
-			  ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
-			  cp "$$execdir/git$X" "$$execdir/$$p" || exit; }; \
+			  ln "$$execdir/but$X" "$$execdir/$$p" 2>/dev/null || \
+			  ln -s "but$X" "$$execdir/$$p" 2>/dev/null || \
+			  cp "$$execdir/but$X" "$$execdir/$$p" || exit; }; \
 		fi \
 	done && \
 	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
 	for p in $$remote_curl_aliases; do \
 		$(RM) "$$execdir/$$p" && \
 		test -n "$(INSTALL_SYMLINKS)" && \
-		ln -s "git-remote-http$X" "$$execdir/$$p" || \
+		ln -s "but-remote-http$X" "$$execdir/$$p" || \
 		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
-		  ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		  ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		  cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; } \
+		  ln "$$execdir/but-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  ln -s "but-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$execdir/but-remote-http$X" "$$execdir/$$p" || exit; } \
 	done
 
-.PHONY: install-gitweb install-doc install-man install-man-perl install-html install-info install-pdf
+.PHONY: install-butweb install-doc install-man install-man-perl install-html install-info install-pdf
 .PHONY: quick-install-doc quick-install-man quick-install-html
-install-gitweb:
-	$(MAKE) -C gitweb install
+install-butweb:
+	$(MAKE) -C butweb install
 
 install-doc: install-man-perl
 	$(MAKE) -C Documentation install
@@ -3201,13 +3201,13 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
-GIT_TARNAME = git-$(GIT_VERSION)
+GIT_TARNAME = but-$(GIT_VERSION)
 GIT_ARCHIVE_EXTRA_FILES = \
 	--prefix=$(GIT_TARNAME)/ \
 	--add-file=configure \
 	--add-file=.dist-tmp-dir/version \
-	--prefix=$(GIT_TARNAME)/git-gui/ \
-	--add-file=.dist-tmp-dir/git-gui/version
+	--prefix=$(GIT_TARNAME)/but-gui/ \
+	--add-file=.dist-tmp-dir/but-gui/version
 ifdef DC_SHA1_SUBMODULE
 GIT_ARCHIVE_EXTRA_FILES += \
 	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
@@ -3218,12 +3218,12 @@ GIT_ARCHIVE_EXTRA_FILES += \
 	--add-file=sha1collisiondetection/lib/ubc_check.c \
 	--add-file=sha1collisiondetection/lib/ubc_check.h
 endif
-dist: git-archive$(X) configure
+dist: but-archive$(X) configure
 	@$(RM) -r .dist-tmp-dir
 	@mkdir .dist-tmp-dir
 	@echo $(GIT_VERSION) > .dist-tmp-dir/version
-	@$(MAKE) -C git-gui TARDIR=../.dist-tmp-dir/git-gui dist-version
-	./git-archive --format=tar \
+	@$(MAKE) -C but-gui TARDIR=../.dist-tmp-dir/but-gui dist-version
+	./but-archive --format=tar \
 		$(GIT_ARCHIVE_EXTRA_FILES) \
 		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
 	@$(RM) -r .dist-tmp-dir
@@ -3248,17 +3248,17 @@ artifacts-tar:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) \
 	$(TAR) czf "$(ARTIFACTS_DIRECTORY)/artifacts.tar.gz" $^ templates/blt/
 .PHONY: artifacts-tar
 
-htmldocs = git-htmldocs-$(GIT_VERSION)
-manpages = git-manpages-$(GIT_VERSION)
+htmldocs = but-htmldocs-$(GIT_VERSION)
+manpages = but-manpages-$(GIT_VERSION)
 .PHONY: dist-doc distclean
-dist-doc: git$X
+dist-doc: but$X
 	$(RM) -r .doc-tmp-dir
 	mkdir .doc-tmp-dir
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
-	./git -C .doc-tmp-dir init
-	./git -C .doc-tmp-dir add .
-	./git -C .doc-tmp-dir cummit -m htmldocs
-	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+	./but -C .doc-tmp-dir init
+	./but -C .doc-tmp-dir add .
+	./but -C .doc-tmp-dir cummit -m htmldocs
+	./but -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
 		> $(htmldocs).tar
 	gzip -n -9 -f $(htmldocs).tar
 	:
@@ -3269,10 +3269,10 @@ dist-doc: git$X
 		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
-	./git -C .doc-tmp-dir init
-	./git -C .doc-tmp-dir add .
-	./git -C .doc-tmp-dir cummit -m manpages
-	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
+	./but -C .doc-tmp-dir init
+	./but -C .doc-tmp-dir add .
+	./but -C .doc-tmp-dir cummit -m manpages
+	./but -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
 		> $(manpages).tar
 	gzip -n -9 -f $(manpages).tar
 	$(RM) -r .doc-tmp-dir
@@ -3296,7 +3296,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) *.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
-	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
+	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) but$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) $(FUZZ_PROGRAMS)
 	$(RM) $(SP_OBJ)
@@ -3310,14 +3310,14 @@ clean: profile-clean coverage-clean cocciclean
 	$(MAKE) -C Documentation/ clean
 	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
 ifndef NO_PERL
-	$(MAKE) -C gitweb clean
+	$(MAKE) -C butweb clean
 	$(RM) -r perl/build/
 endif
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 ifndef NO_TCLTK
-	$(MAKE) -C gitk-git clean
-	$(MAKE) -C git-gui clean
+	$(MAKE) -C butk-but clean
+	$(MAKE) -C but-gui clean
 endif
 	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-LDFLAGS GIT-BUILD-OPTIONS
 	$(RM) GIT-USER-AGENT GIT-PREFIX
@@ -3343,11 +3343,11 @@ endif
 ### Check documentation
 #
 ALL_COMMANDS = $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB)
-ALL_COMMANDS += git
-ALL_COMMANDS += git-citool
-ALL_COMMANDS += git-gui
-ALL_COMMANDS += gitk
-ALL_COMMANDS += gitweb
+ALL_COMMANDS += but
+ALL_COMMANDS += but-citool
+ALL_COMMANDS += but-gui
+ALL_COMMANDS += butk
+ALL_COMMANDS += butweb
 
 .PHONY: check-docs
 check-docs::
@@ -3355,18 +3355,18 @@ check-docs::
 	@(for v in $(patsubst %$X,%,$(ALL_COMMANDS)); \
 	do \
 		case "$$v" in \
-		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-subtree | \
-		git-fsck-objects | git-init-db | \
-		git-remote-* | git-stage | git-legacy-* | \
-		git-?*--?* ) continue ;; \
+		but-merge-octopus | but-merge-ours | but-merge-recursive | \
+		but-merge-resolve | but-merge-subtree | \
+		but-fsck-objects | but-init-db | \
+		but-remote-* | but-stage | but-legacy-* | \
+		but-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
 		sed -e '1,/^### command list/d' -e '/^#/d' command-list.txt | \
 		grep -q "^$$v[ 	]" || \
 		case "$$v" in \
-		git) ;; \
+		but) ;; \
 		*) echo "no link: $$v";; \
 		esac ; \
 	done; \
@@ -3388,7 +3388,7 @@ check-docs::
 		esac; \
 	done ) | sort
 
-### Make sure built-ins do not have dups and listed in git.c
+### Make sure built-ins do not have dups and listed in but.c
 #
 check-builtins::
 	./check-builtins.sh
@@ -3466,6 +3466,6 @@ FUZZ_CXXFLAGS ?= $(CFLAGS)
 
 $(FUZZ_PROGRAMS): all
 	$(QUIET_LINK)$(CXX) $(FUZZ_CXXFLAGS) $(LIB_OBJS) $(BUILTIN_OBJS) \
-		$(XDIFF_OBJS) $(EXTLIBS) git.o $@.o $(LIB_FUZZING_ENGINE) -o $@
+		$(XDIFF_OBJS) $(EXTLIBS) but.o $@.o $(LIB_FUZZING_ENGINE) -o $@
 
 fuzz-all: $(FUZZ_PROGRAMS)

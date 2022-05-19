@@ -6,11 +6,11 @@ AC_DEFUN([TYPE_SOCKLEN_T],
 [
    AC_CHECK_TYPE([socklen_t], ,[
       AC_MSG_CHECKING([for socklen_t equivalent])
-      AC_CACHE_VAL([git_cv_socklen_t_equiv],
+      AC_CACHE_VAL([but_cv_socklen_t_equiv],
       [
          # Systems have either "struct sockaddr *" or
          # "void *" as the second argument to getpeername
-         git_cv_socklen_t_equiv=
+         but_cv_socklen_t_equiv=
          for arg2 in "struct sockaddr" void; do
             for t in int size_t unsigned long "unsigned long"; do
                AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
@@ -22,18 +22,18 @@ AC_DEFUN([TYPE_SOCKLEN_T],
                   $t len;
                   getpeername(0,0,&len);
                ])],[
-                  git_cv_socklen_t_equiv="$t"
+                  but_cv_socklen_t_equiv="$t"
                   break 2
                ])
             done
          done
 
-         if test "x$git_cv_socklen_t_equiv" = x; then
+         if test "x$but_cv_socklen_t_equiv" = x; then
             AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
          fi
       ])
-      AC_MSG_RESULT($git_cv_socklen_t_equiv)
-      AC_DEFINE_UNQUOTED(socklen_t, $git_cv_socklen_t_equiv,
+      AC_MSG_RESULT($but_cv_socklen_t_equiv)
+      AC_DEFINE_UNQUOTED(socklen_t, $but_cv_socklen_t_equiv,
 			[type to use in place of socklen_t if not defined])],
       [#include <sys/types.h>
 #include <sys/socket.h>])

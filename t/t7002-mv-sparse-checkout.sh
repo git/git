@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description='git mv in sparse working trees'
+test_description='but mv in sparse working trees'
 
 . ./test-lib.sh
 
 test_expect_success 'setup' "
 	mkdir -p sub/dir sub/dir2 &&
 	touch a b c sub/d sub/dir/e sub/dir2/e &&
-	git add -A &&
-	git cummit -m files &&
+	but add -A &&
+	but cummit -m files &&
 
 	cat >sparse_error_header <<-EOF &&
 	The following paths and/or pathspecs matched paths that exist
@@ -20,33 +20,33 @@ test_expect_success 'setup' "
 	hint: If you intend to update such entries, try one of the following:
 	hint: * Use the --sparse option.
 	hint: * Disable or modify the sparsity rules.
-	hint: Disable this message with \"git config advice.updateSparsePath false\"
+	hint: Disable this message with \"but config advice.updateSparsePath false\"
 	EOF
 "
 
 test_expect_success 'mv refuses to move sparse-to-sparse' '
 	test_when_finished rm -f e &&
-	git reset --hard &&
-	git sparse-checkout set a &&
+	but reset --hard &&
+	but sparse-checkout set a &&
 	touch b &&
-	test_must_fail git mv b e 2>stderr &&
+	test_must_fail but mv b e 2>stderr &&
 	cat sparse_error_header >expect &&
 	echo b >>expect &&
 	echo e >>expect &&
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse b e 2>stderr &&
+	but mv --sparse b e 2>stderr &&
 	test_must_be_empty stderr
 '
 
 test_expect_success 'mv refuses to move sparse-to-sparse, ignores failure' '
 	test_when_finished rm -f b c e &&
-	git reset --hard &&
-	git sparse-checkout set a &&
+	but reset --hard &&
+	but sparse-checkout set a &&
 
 	# tracked-to-untracked
 	touch b &&
-	git mv -k b e 2>stderr &&
+	but mv -k b e 2>stderr &&
 	test_path_exists b &&
 	test_path_is_missing e &&
 	cat sparse_error_header >expect &&
@@ -55,15 +55,15 @@ test_expect_success 'mv refuses to move sparse-to-sparse, ignores failure' '
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
 
-	git mv --sparse b e 2>stderr &&
+	but mv --sparse b e 2>stderr &&
 	test_must_be_empty stderr &&
 	test_path_is_missing b &&
 	test_path_exists e &&
 
 	# tracked-to-tracked
-	git reset --hard &&
+	but reset --hard &&
 	touch b &&
-	git mv -k b c 2>stderr &&
+	but mv -k b c 2>stderr &&
 	test_path_exists b &&
 	test_path_is_missing c &&
 	cat sparse_error_header >expect &&
@@ -72,7 +72,7 @@ test_expect_success 'mv refuses to move sparse-to-sparse, ignores failure' '
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
 
-	git mv --sparse b c 2>stderr &&
+	but mv --sparse b c 2>stderr &&
 	test_must_be_empty stderr &&
 	test_path_is_missing b &&
 	test_path_exists c
@@ -80,33 +80,33 @@ test_expect_success 'mv refuses to move sparse-to-sparse, ignores failure' '
 
 test_expect_success 'mv refuses to move non-sparse-to-sparse' '
 	test_when_finished rm -f b c e &&
-	git reset --hard &&
-	git sparse-checkout set a &&
+	but reset --hard &&
+	but sparse-checkout set a &&
 
 	# tracked-to-untracked
-	test_must_fail git mv a e 2>stderr &&
+	test_must_fail but mv a e 2>stderr &&
 	test_path_exists a &&
 	test_path_is_missing e &&
 	cat sparse_error_header >expect &&
 	echo e >>expect &&
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse a e 2>stderr &&
+	but mv --sparse a e 2>stderr &&
 	test_must_be_empty stderr &&
 	test_path_is_missing a &&
 	test_path_exists e &&
 
 	# tracked-to-tracked
 	rm e &&
-	git reset --hard &&
-	test_must_fail git mv a c 2>stderr &&
+	but reset --hard &&
+	test_must_fail but mv a c 2>stderr &&
 	test_path_exists a &&
 	test_path_is_missing c &&
 	cat sparse_error_header >expect &&
 	echo c >>expect &&
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse a c 2>stderr &&
+	but mv --sparse a c 2>stderr &&
 	test_must_be_empty stderr &&
 	test_path_is_missing a &&
 	test_path_exists c
@@ -114,31 +114,31 @@ test_expect_success 'mv refuses to move non-sparse-to-sparse' '
 
 test_expect_success 'mv refuses to move sparse-to-non-sparse' '
 	test_when_finished rm -f b c e &&
-	git reset --hard &&
-	git sparse-checkout set a e &&
+	but reset --hard &&
+	but sparse-checkout set a e &&
 
 	# tracked-to-untracked
 	touch b &&
-	test_must_fail git mv b e 2>stderr &&
+	test_must_fail but mv b e 2>stderr &&
 	cat sparse_error_header >expect &&
 	echo b >>expect &&
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse b e 2>stderr &&
+	but mv --sparse b e 2>stderr &&
 	test_must_be_empty stderr
 '
 
 test_expect_success 'recursive mv refuses to move (possible) sparse' '
 	test_when_finished rm -rf b c e sub2 &&
-	git reset --hard &&
+	but reset --hard &&
 	# Without cone mode, "sub" and "sub2" do not match
-	git sparse-checkout set sub/dir sub2/dir &&
+	but sparse-checkout set sub/dir sub2/dir &&
 
 	# Add contained contents to ensure we avoid non-existence errors
 	mkdir sub/dir2 &&
 	touch sub/d sub/dir2/e &&
 
-	test_must_fail git mv sub sub2 2>stderr &&
+	test_must_fail but mv sub sub2 2>stderr &&
 	cat sparse_error_header >expect &&
 	cat >>expect <<-\EOF &&
 	sub/d
@@ -148,26 +148,26 @@ test_expect_success 'recursive mv refuses to move (possible) sparse' '
 	EOF
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse sub sub2 2>stderr &&
+	but mv --sparse sub sub2 2>stderr &&
 	test_must_be_empty stderr &&
-	git cummit -m "moved sub to sub2" &&
-	git rev-parse HEAD~1:sub >expect &&
-	git rev-parse HEAD:sub2 >actual &&
+	but cummit -m "moved sub to sub2" &&
+	but rev-parse HEAD~1:sub >expect &&
+	but rev-parse HEAD:sub2 >actual &&
 	test_cmp expect actual &&
-	git reset --hard HEAD~1
+	but reset --hard HEAD~1
 '
 
 test_expect_success 'recursive mv refuses to move sparse' '
-	git reset --hard &&
+	but reset --hard &&
 	# Use cone mode so "sub/" matches the sparse-checkout patterns
-	git sparse-checkout init --cone &&
-	git sparse-checkout set sub/dir sub2/dir &&
+	but sparse-checkout init --cone &&
+	but sparse-checkout set sub/dir sub2/dir &&
 
 	# Add contained contents to ensure we avoid non-existence errors
 	mkdir sub/dir2 &&
 	touch sub/dir2/e &&
 
-	test_must_fail git mv sub sub2 2>stderr &&
+	test_must_fail but mv sub sub2 2>stderr &&
 	cat sparse_error_header >expect &&
 	cat >>expect <<-\EOF &&
 	sub/dir2/e
@@ -175,33 +175,33 @@ test_expect_success 'recursive mv refuses to move sparse' '
 	EOF
 	cat sparse_hint >>expect &&
 	test_cmp expect stderr &&
-	git mv --sparse sub sub2 2>stderr &&
+	but mv --sparse sub sub2 2>stderr &&
 	test_must_be_empty stderr &&
-	git cummit -m "moved sub to sub2" &&
-	git rev-parse HEAD~1:sub >expect &&
-	git rev-parse HEAD:sub2 >actual &&
+	but cummit -m "moved sub to sub2" &&
+	but rev-parse HEAD~1:sub >expect &&
+	but rev-parse HEAD:sub2 >actual &&
 	test_cmp expect actual &&
-	git reset --hard HEAD~1
+	but reset --hard HEAD~1
 '
 
 test_expect_success 'can move files to non-sparse dir' '
-	git reset --hard &&
-	git sparse-checkout init --no-cone &&
-	git sparse-checkout set a b c w !/x y/ &&
+	but reset --hard &&
+	but sparse-checkout init --no-cone &&
+	but sparse-checkout set a b c w !/x y/ &&
 	mkdir -p w x/y &&
 
-	git mv a w/new-a 2>stderr &&
-	git mv b x/y/new-b 2>stderr &&
+	but mv a w/new-a 2>stderr &&
+	but mv b x/y/new-b 2>stderr &&
 	test_must_be_empty stderr
 '
 
 test_expect_success 'refuse to move file to non-skip-worktree sparse path' '
-	git reset --hard &&
-	git sparse-checkout init --no-cone &&
-	git sparse-checkout set a !/x y/ !x/y/z &&
+	but reset --hard &&
+	but sparse-checkout init --no-cone &&
+	but sparse-checkout set a !/x y/ !x/y/z &&
 	mkdir -p x/y/z &&
 
-	test_must_fail git mv a x/y/z/new-a 2>stderr &&
+	test_must_fail but mv a x/y/z/new-a 2>stderr &&
 	echo x/y/z/new-a | cat sparse_error_header - sparse_hint >expect &&
 	test_cmp expect stderr
 '

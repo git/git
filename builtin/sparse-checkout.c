@@ -20,7 +20,7 @@
 static const char *empty_base = "";
 
 static char const * const builtin_sparse_checkout_usage[] = {
-	N_("git sparse-checkout (init|list|set|add|reapply|disable) <options>"),
+	N_("but sparse-checkout (init|list|set|add|reapply|disable) <options>"),
 	NULL
 };
 
@@ -44,7 +44,7 @@ static void write_patterns_to_file(FILE *fp, struct pattern_list *pl)
 }
 
 static char const * const builtin_sparse_checkout_list_usage[] = {
-	"git sparse-checkout list",
+	"but sparse-checkout list",
 	NULL
 };
 
@@ -419,7 +419,7 @@ static int update_modes(int *cone_mode, int *sparse_index)
 }
 
 static char const * const builtin_sparse_checkout_init_usage[] = {
-	"git sparse-checkout init [--cone] [--[no-]sparse-index]",
+	"but sparse-checkout init [--cone] [--[no-]sparse-index]",
 	NULL
 };
 
@@ -731,12 +731,12 @@ static void sanitize_paths(int argc, const char **argv,
 		if (core_sparse_checkout_cone)
 			die(_("'%s' is not a directory; to treat it as a directory anyway, rerun with --skip-checks"), argv[i]);
 		else
-			warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the git-sparse-checkout manual)."), argv[i]);
+			warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the but-sparse-checkout manual)."), argv[i]);
 	}
 }
 
 static char const * const builtin_sparse_checkout_add_usage[] = {
-	N_("git sparse-checkout add [--skip-checks] (--stdin | <patterns>)"),
+	N_("but sparse-checkout add [--skip-checks] (--stdin | <patterns>)"),
 	NULL
 };
 
@@ -772,7 +772,7 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 }
 
 static char const * const builtin_sparse_checkout_set_usage[] = {
-	N_("git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] (--stdin | <patterns>)"),
+	N_("but sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] (--stdin | <patterns>)"),
 	NULL
 };
 
@@ -831,7 +831,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 }
 
 static char const * const builtin_sparse_checkout_reapply_usage[] = {
-	"git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]",
+	"but sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]",
 	NULL
 };
 
@@ -869,7 +869,7 @@ static int sparse_checkout_reapply(int argc, const char **argv)
 }
 
 static char const * const builtin_sparse_checkout_disable_usage[] = {
-	"git sparse-checkout disable",
+	"but sparse-checkout disable",
 	NULL
 };
 
@@ -884,7 +884,7 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	/*
 	 * We do not exit early if !core_apply_sparse_checkout; due to the
 	 * ability for users to manually muck things up between
-	 *   direct editing of .git/info/sparse-checkout
+	 *   direct editing of .but/info/sparse-checkout
 	 *   running read-tree -m u HEAD or update-index --skip-worktree
 	 *   direct toggling of config options
 	 * users might end up with an index with SKIP_WORKTREE bit set on
@@ -932,7 +932,7 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 			     builtin_sparse_checkout_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	if (argc > 0) {
 		if (!strcmp(argv[0], "list"))

@@ -39,7 +39,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	return buffer.buf;
 }
 
-char *git_prompt(const char *prompt, int flags)
+char *but_prompt(const char *prompt, int flags)
 {
 	char *r = NULL;
 
@@ -58,8 +58,8 @@ char *git_prompt(const char *prompt, int flags)
 	if (!r) {
 		const char *err;
 
-		if (git_env_bool("GIT_TERMINAL_PROMPT", 1)) {
-			r = git_terminal_prompt(prompt, flags & PROMPT_ECHO);
+		if (but_env_bool("GIT_TERMINAL_PROMPT", 1)) {
+			r = but_terminal_prompt(prompt, flags & PROMPT_ECHO);
 			err = strerror(errno);
 		} else {
 			err = "terminal prompts disabled";
@@ -72,7 +72,7 @@ char *git_prompt(const char *prompt, int flags)
 	return r;
 }
 
-int git_read_line_interactively(struct strbuf *line)
+int but_read_line_interactively(struct strbuf *line)
 {
 	int ret;
 

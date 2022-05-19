@@ -26,31 +26,31 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # output as well.
 
 test_expect_success setup '
-	git cummit --allow-empty -m A &&
+	but cummit --allow-empty -m A &&
 	echo b >b &&
-	git add b &&
-	git cummit -m B &&
-	git checkout -b br1 HEAD^ &&
+	but add b &&
+	but cummit -m B &&
+	but checkout -b br1 HEAD^ &&
 	echo c >c &&
-	git add c &&
-	git cummit -m C &&
-	git tag CUMMIT-C &&
-	git merge -m D main &&
-	git tag CUMMIT-D &&
-	git checkout main &&
-	git merge -m E CUMMIT-C &&
-	git checkout -b br2 CUMMIT-C &&
+	but add c &&
+	but cummit -m C &&
+	but tag CUMMIT-C &&
+	but merge -m D main &&
+	but tag CUMMIT-D &&
+	but checkout main &&
+	but merge -m E CUMMIT-C &&
+	but checkout -b br2 CUMMIT-C &&
 	echo f >f &&
-	git add f &&
-	git cummit -m F &&
-	git checkout br1 &&
-	git merge -m G br2 &&
-	git checkout --orphan br3 &&
-	git cummit -m H
+	but add f &&
+	but cummit -m F &&
+	but checkout br1 &&
+	but merge -m G br2 &&
+	but checkout --orphan br3 &&
+	but cummit -m H
 '
 
 test_expect_success 'diff with one merge base' '
-	git diff CUMMIT-D...br1 >tmp &&
+	but diff CUMMIT-D...br1 >tmp &&
 	tail -n 1 tmp >actual &&
 	echo +f >expect &&
 	test_cmp expect actual
@@ -61,100 +61,100 @@ test_expect_success 'diff with one merge base' '
 # It should have one of those two, which comes out
 # to seven lines.
 test_expect_success 'diff with two merge bases' '
-	git diff br1...main >tmp 2>err &&
+	but diff br1...main >tmp 2>err &&
 	test_line_count = 7 tmp &&
 	test_line_count = 1 err
 '
 
 test_expect_success 'diff with no merge bases' '
-	test_must_fail git diff br2...br3 2>err &&
+	test_must_fail but diff br2...br3 2>err &&
 	test_i18ngrep "fatal: br2...br3: no merge base" err
 '
 
 test_expect_success 'diff with too many symmetric differences' '
-	test_must_fail git diff br1...main br2...br3 2>err &&
+	test_must_fail but diff br1...main br2...br3 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with symmetric difference and extraneous arg' '
-	test_must_fail git diff main br1...main 2>err &&
+	test_must_fail but diff main br1...main 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with two ranges' '
-	test_must_fail git diff main br1..main br2..br3 2>err &&
+	test_must_fail but diff main br1..main br2..br3 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff with ranges and extra arg' '
-	test_must_fail git diff main br1..main CUMMIT-D 2>err &&
+	test_must_fail but diff main br1..main CUMMIT-D 2>err &&
 	test_i18ngrep "usage" err
 '
 
 test_expect_success 'diff --merge-base with no cummits' '
-	test_must_fail git diff --merge-base
+	test_must_fail but diff --merge-base
 '
 
 test_expect_success 'diff --merge-base with three cummits' '
-	test_must_fail git diff --merge-base br1 br2 main 2>err &&
+	test_must_fail but diff --merge-base br1 br2 main 2>err &&
 	test_i18ngrep "usage" err
 '
 
 for cmd in diff-index diff
 do
 	test_expect_success "$cmd --merge-base with one cummit" '
-		git checkout main &&
-		git $cmd CUMMIT-C >expect &&
-		git $cmd --merge-base br2 >actual &&
+		but checkout main &&
+		but $cmd CUMMIT-C >expect &&
+		but $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --merge-base with one cummit and unstaged changes" '
-		git checkout main &&
-		test_when_finished git reset --hard &&
+		but checkout main &&
+		test_when_finished but reset --hard &&
 		echo unstaged >>c &&
-		git $cmd CUMMIT-C >expect &&
-		git $cmd --merge-base br2 >actual &&
+		but $cmd CUMMIT-C >expect &&
+		but $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --merge-base with one cummit and staged and unstaged changes" '
-		git checkout main &&
-		test_when_finished git reset --hard &&
+		but checkout main &&
+		test_when_finished but reset --hard &&
 		echo staged >>c &&
-		git add c &&
+		but add c &&
 		echo unstaged >>c &&
-		git $cmd CUMMIT-C >expect &&
-		git $cmd --merge-base br2 >actual &&
+		but $cmd CUMMIT-C >expect &&
+		but $cmd --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --merge-base --cached with one cummit and staged and unstaged changes" '
-		git checkout main &&
-		test_when_finished git reset --hard &&
+		but checkout main &&
+		test_when_finished but reset --hard &&
 		echo staged >>c &&
-		git add c &&
+		but add c &&
 		echo unstaged >>c &&
-		git $cmd --cached CUMMIT-C >expect &&
-		git $cmd --cached --merge-base br2 >actual &&
+		but $cmd --cached CUMMIT-C >expect &&
+		but $cmd --cached --merge-base br2 >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --merge-base with non-cummit" '
-		git checkout main &&
-		test_must_fail git $cmd --merge-base main^{tree} 2>err &&
+		but checkout main &&
+		test_must_fail but $cmd --merge-base main^{tree} 2>err &&
 		test_i18ngrep "fatal: --merge-base only works with cummits" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and one cummit" '
-		git checkout main &&
-		test_must_fail git $cmd --merge-base br3 2>err &&
+		but checkout main &&
+		test_must_fail but $cmd --merge-base br3 2>err &&
 		test_i18ngrep "fatal: no merge base found" err
 	'
 
 	test_expect_success "$cmd --merge-base with multiple merge bases and one cummit" '
-		git checkout main &&
-		test_must_fail git $cmd --merge-base br1 2>err &&
+		but checkout main &&
+		test_must_fail but $cmd --merge-base br1 2>err &&
 		test_i18ngrep "fatal: multiple merge bases found" err
 	'
 done
@@ -162,34 +162,34 @@ done
 for cmd in diff-tree diff
 do
 	test_expect_success "$cmd --merge-base with two cummits" '
-		git $cmd CUMMIT-C main >expect &&
-		git $cmd --merge-base br2 main >actual &&
+		but $cmd CUMMIT-C main >expect &&
+		but $cmd --merge-base br2 main >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --merge-base cummit and non-cummit" '
-		test_must_fail git $cmd --merge-base br2 main^{tree} 2>err &&
+		test_must_fail but $cmd --merge-base br2 main^{tree} 2>err &&
 		test_i18ngrep "fatal: --merge-base only works with cummits" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and two cummits" '
-		test_must_fail git $cmd --merge-base br2 br3 2>err &&
+		test_must_fail but $cmd --merge-base br2 br3 2>err &&
 		test_i18ngrep "fatal: no merge base found" err
 	'
 
 	test_expect_success "$cmd --merge-base with multiple merge bases and two cummits" '
-		test_must_fail git $cmd --merge-base main br1 2>err &&
+		test_must_fail but $cmd --merge-base main br1 2>err &&
 		test_i18ngrep "fatal: multiple merge bases found" err
 	'
 done
 
 test_expect_success 'diff-tree --merge-base with one cummit' '
-	test_must_fail git diff-tree --merge-base main 2>err &&
+	test_must_fail but diff-tree --merge-base main 2>err &&
 	test_i18ngrep "fatal: --merge-base only works with two cummits" err
 '
 
 test_expect_success 'diff --merge-base with range' '
-	test_must_fail git diff --merge-base br2..br3 2>err &&
+	test_must_fail but diff --merge-base br2..br3 2>err &&
 	test_i18ngrep "fatal: --merge-base does not work with ranges" err
 '
 

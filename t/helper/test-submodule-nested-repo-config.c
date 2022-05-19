@@ -15,14 +15,14 @@ int cmd__submodule_nested_repo_config(int argc, const char **argv)
 	if (argc < 3)
 		die_usage(argv, "Wrong number of arguments.");
 
-	setup_git_directory();
+	setup_but_directory();
 
 	if (repo_submodule_init(&subrepo, the_repository, argv[1], null_oid())) {
 		die_usage(argv, "Submodule not found.");
 	}
 
 	/* Read the config of _child_ submodules. */
-	print_config_from_gitmodules(&subrepo, argv[2]);
+	print_config_from_butmodules(&subrepo, argv[2]);
 
 	submodule_free(the_repository);
 

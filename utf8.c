@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "strbuf.h"
 #include "utf8.h"
 
@@ -21,7 +21,7 @@ size_t display_mode_esc_sequence_len(const char *s)
 		return 0;
 	if (*p++ != '[')
 		return 0;
-	while (isdigit(*p) || *p == ';')
+	while (isdibut(*p) || *p == ';')
 		p++;
 	if (*p++ != 'm')
 		return 0;
@@ -81,7 +81,7 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
  * in ISO 10646.
  */
 
-static int git_wcwidth(ucs_char_t ch)
+static int but_wcwidth(ucs_char_t ch)
 {
 	/*
 	 * Sorted list of non-overlapping intervals of non-spacing characters,
@@ -198,7 +198,7 @@ int utf8_width(const char **start, size_t *remainder_p)
 	ucs_char_t ch = pick_one_utf8_char(start, remainder_p);
 	if (!*start)
 		return 0;
-	return git_wcwidth(ch);
+	return but_wcwidth(ch);
 }
 
 /*
@@ -674,7 +674,7 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
 /*
  * Pick the next char from the stream, ignoring codepoints an HFS+ would.
  * Note that this is _not_ complete by any means. It's just enough
- * to make is_hfs_dotgit() work, and should not be used otherwise.
+ * to make is_hfs_dotbut() work, and should not be used otherwise.
  */
 static ucs_char_t next_hfs_char(const char **in)
 {
@@ -683,8 +683,8 @@ static ucs_char_t next_hfs_char(const char **in)
 		/*
 		 * check for malformed utf8. Technically this
 		 * gets converted to a percent-sequence, but
-		 * returning 0 is good enough for is_hfs_dotgit
-		 * to realize it cannot be .git
+		 * returning 0 is good enough for is_hfs_dotbut
+		 * to realize it cannot be .but
 		 */
 		if (!*in)
 			return 0;
@@ -757,24 +757,24 @@ static inline int is_hfs_dot_str(const char *path, const char *needle)
 	return is_hfs_dot_generic(path, needle, strlen(needle));
 }
 
-int is_hfs_dotgit(const char *path)
+int is_hfs_dotbut(const char *path)
 {
-	return is_hfs_dot_str(path, "git");
+	return is_hfs_dot_str(path, "but");
 }
 
-int is_hfs_dotgitmodules(const char *path)
+int is_hfs_dotbutmodules(const char *path)
 {
-	return is_hfs_dot_str(path, "gitmodules");
+	return is_hfs_dot_str(path, "butmodules");
 }
 
-int is_hfs_dotgitignore(const char *path)
+int is_hfs_dotbutignore(const char *path)
 {
-	return is_hfs_dot_str(path, "gitignore");
+	return is_hfs_dot_str(path, "butignore");
 }
 
-int is_hfs_dotgitattributes(const char *path)
+int is_hfs_dotbutattributes(const char *path)
 {
-	return is_hfs_dot_str(path, "gitattributes");
+	return is_hfs_dot_str(path, "butattributes");
 }
 
 int is_hfs_dotmailmap(const char *path)

@@ -1,23 +1,23 @@
-git-cummit-tree(1)
+but-cummit-tree(1)
 ==================
 
 NAME
 ----
-git-cummit-tree - Create a new cummit object
+but-cummit-tree - Create a new cummit object
 
 
 SYNOPSIS
 --------
 [verse]
-'git cummit-tree' <tree> [(-p <parent>)...]
-'git cummit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
+'but cummit-tree' <tree> [(-p <parent>)...]
+'but cummit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
 		  [(-F <file>)...] <tree>
 
 
 DESCRIPTION
 -----------
 This is usually not what an end user wants to run directly.  See
-linkgit:git-cummit[1] instead.
+linkbut:but-cummit[1] instead.
 
 Creates a new cummit object based on the provided tree object and
 emits the new cummit object id on stdout. The log message is read
@@ -39,7 +39,7 @@ to get there.
 Normally a cummit would identify a new "HEAD" state, and while Git
 doesn't care where you save the note about that state, in practice we
 tend to just write the result to the file that is pointed at by
-`.git/HEAD`, so that we can always see what the last cummitted
+`.but/HEAD`, so that we can always see what the last cummitted
 state was.
 
 OPTIONS
@@ -77,7 +77,7 @@ A cummit encapsulates:
 - cummitter name and email and the cummit time.
 
 A cummit comment is read from stdin. If a changelog
-entry is not provided via "<" redirection, 'git cummit-tree' will just wait
+entry is not provided via "<" redirection, 'but cummit-tree' will just wait
 for one to be entered and terminated with ^D.
 
 include::date-formats.txt[]
@@ -93,9 +93,9 @@ FILES
 
 SEE ALSO
 --------
-linkgit:git-write-tree[1]
-linkgit:git-cummit[1]
+linkbut:but-write-tree[1]
+linkbut:but-cummit[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

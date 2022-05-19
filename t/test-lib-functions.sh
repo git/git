@@ -187,10 +187,10 @@ test_pause () {
 	TERM="$PAUSE_TERM" HOME="$PAUSE_HOME" "$PAUSE_SHELL" <&6 >&5 2>&7
 }
 
-# Wrap git with a debugger. Adding this to a command can make it easier
+# Wrap but with a debugger. Adding this to a command can make it easier
 # to understand what is going on in a failing test.
 #
-# Usage: debug [options] <git command>
+# Usage: debug [options] <but command>
 #   -d <debugger>
 #   --debugger=<debugger>
 #	Use <debugger> instead of GDB
@@ -201,9 +201,9 @@ test_pause () {
 #	running the test.
 #
 # Examples:
-#     debug git checkout master
-#     debug --debugger=nemiver git $ARGS
-#     debug -d "valgrind --tool=memcheck --track-origins=yes" git $ARGS
+#     debug but checkout master
+#     debug --debugger=nemiver but $ARGS
+#     debug -d "valgrind --tool=memcheck --track-origins=yes" but $ARGS
 debug () {
 	GIT_DEBUGGER=1 &&
 	DEBUG_TERM=$TERM &&
@@ -245,7 +245,7 @@ debug () {
 
 # Usage: test_cummit [options] <message> [<file> [<contents> [<tag>]]]
 #   -C <dir>:
-#	Run all git commands in directory <dir>
+#	Run all but commands in directory <dir>
 #   --notick
 #	Do not call test_tick before making a cummit
 #   --append
@@ -257,9 +257,9 @@ debug () {
 #       supports nothing but the FORMAT of printf(1), i.e. no custom
 #       ARGUMENT(s).
 #   --signoff
-#	Invoke "git cummit" with --signoff
+#	Invoke "but cummit" with --signoff
 #   --author <author>
-#	Invoke "git cummit" with --author <author>
+#	Invoke "but cummit" with --author <author>
 #   --no-tag
 #	Do not tag the resulting cummit
 #   --annotate
@@ -329,26 +329,26 @@ test_cummit () {
 	else
 		$echo "${3-$1}" >"$indir$file"
 	fi &&
-	git ${indir:+ -C "$indir"} add -- "$file" &&
+	but ${indir:+ -C "$indir"} add -- "$file" &&
 	if test -z "$notick"
 	then
 		test_tick
 	fi &&
-	git ${indir:+ -C "$indir"} cummit \
+	but ${indir:+ -C "$indir"} cummit \
 	    ${author:+ --author "$author"} \
 	    $signoff -m "$1" &&
 	case "$tag" in
 	none)
 		;;
 	light)
-		git ${indir:+ -C "$indir"} tag "${4:-$1}"
+		but ${indir:+ -C "$indir"} tag "${4:-$1}"
 		;;
 	annotate)
 		if test -z "$notick"
 		then
 			test_tick
 		fi &&
-		git ${indir:+ -C "$indir"} tag -a -m "$1" "${4:-$1}"
+		but ${indir:+ -C "$indir"} tag -a -m "$1" "${4:-$1}"
 		;;
 	esac
 }
@@ -360,8 +360,8 @@ test_merge () {
 	label="$1" &&
 	shift &&
 	test_tick &&
-	git merge -m "$label" "$@" &&
-	git tag "$label"
+	but merge -m "$label" "$@" &&
+	but tag "$label"
 }
 
 # Efficiently create <nr> cummits, each with a unique number (from 1 to <nr>
@@ -369,7 +369,7 @@ test_merge () {
 #
 # Usage: test_cummit_bulk [options] <nr>
 #   -C <dir>:
-#	Run all git commands in directory <dir>
+#	Run all but commands in directory <dir>
 #   --ref=<n>:
 #	ref on which to create cummits (default: HEAD)
 #   --start=<n>:
@@ -437,7 +437,7 @@ test_cummit_bulk () {
 	total=$1
 
 	add_from=
-	if git -C "$indir" rev-parse --quiet --verify "$ref"
+	if but -C "$indir" rev-parse --quiet --verify "$ref"
 	then
 		add_from=t
 	fi
@@ -471,7 +471,7 @@ test_cummit_bulk () {
 		total=$((total - 1))
 	done >"$tmpfile"
 
-	git -C "$indir" \
+	but -C "$indir" \
 	    -c fastimport.unpacklimit=0 \
 	    fast-import <"$tmpfile" || return 1
 
@@ -482,7 +482,7 @@ test_cummit_bulk () {
 	# tree, too.
 	if test "$ref" = "HEAD"
 	then
-		git -C "$indir" checkout -f HEAD || return 1
+		but -C "$indir" checkout -f HEAD || return 1
 	fi
 
 }
@@ -493,7 +493,7 @@ test_cummit_bulk () {
 
 test_chmod () {
 	chmod "$@" &&
-	git update-index --add "--chmod=$@"
+	but update-index --add "--chmod=$@"
 }
 
 # Get the modebits from a file or directory, ignoring the setgid bit (g+s).
@@ -515,7 +515,7 @@ test_unconfig () {
 		config_dir=$1
 		shift
 	fi
-	git ${config_dir:+-C "$config_dir"} config --unset-all "$@"
+	but ${config_dir:+-C "$config_dir"} config --unset-all "$@"
 	config_status=$?
 	case "$config_status" in
 	5) # ok, nothing to unset
@@ -525,7 +525,7 @@ test_unconfig () {
 	return $config_status
 }
 
-# Set git config, automatically unsetting it after the test is over.
+# Set but config, automatically unsetting it after the test is over.
 test_config () {
 	config_dir=
 	if test "$1" = -C
@@ -535,12 +535,12 @@ test_config () {
 		shift
 	fi
 	test_when_finished "test_unconfig ${config_dir:+-C '$config_dir'} '$1'" &&
-	git ${config_dir:+-C "$config_dir"} config "$@"
+	but ${config_dir:+-C "$config_dir"} config "$@"
 }
 
 test_config_global () {
 	test_when_finished "test_unconfig --global '$1'" &&
-	git config --global "$@"
+	but config --global "$@"
 }
 
 write_script () {
@@ -554,7 +554,7 @@ write_script () {
 # Usage: test_hook [options] <hook-name> <<-\EOF
 #
 #   -C <dir>:
-#	Run all git commands in directory <dir>
+#	Run all but commands in directory <dir>
 #   --setup
 #	Setup a hook for subsequent tests, i.e. don't remove it in a
 #	"test_when_finished"
@@ -601,8 +601,8 @@ test_hook () {
 		shift
 	done &&
 
-	git_dir=$(git -C "$indir" rev-parse --absolute-git-dir) &&
-	hook_dir="$git_dir/hooks" &&
+	but_dir=$(but -C "$indir" rev-parse --absolute-but-dir) &&
+	hook_dir="$but_dir/hooks" &&
 	hook_file="$hook_dir/$1" &&
 	if test -n "$disable$remove"
 	then
@@ -887,7 +887,7 @@ test_external_without_stderr () {
 	# The temporary file has no (and must have no) security
 	# implications.
 	tmp=${TMPDIR:-/tmp}
-	stderr="$tmp/git-external-stderr.$$.tmp"
+	stderr="$tmp/but-external-stderr.$$.tmp"
 	test_external "$@" 4> "$stderr"
 	test -f "$stderr" || error "Internal error: $stderr disappeared."
 	descr="no stderr: $1"
@@ -1044,7 +1044,7 @@ test_line_count () {
 # test_stdout_line_count checks that the output of a command has the number
 # of lines it ought to. For example:
 #
-# test_stdout_line_count = 3 git ls-files -u
+# test_stdout_line_count = 3 but ls-files -u
 # test_stdout_line_count -gt 10 ls
 test_stdout_line_count () {
 	local ops val trashdir &&
@@ -1055,7 +1055,7 @@ test_stdout_line_count () {
 	ops="$1" &&
 	val="$2" &&
 	shift 2 &&
-	if ! trashdir="$(git rev-parse --git-dir)/trash"; then
+	if ! trashdir="$(but rev-parse --but-dir)/trash"; then
 		BUG "expect to be run inside a worktree"
 	fi &&
 	mkdir -p "$trashdir" &&
@@ -1106,7 +1106,7 @@ test_must_fail_acceptable () {
 	fi
 
 	case "$1" in
-	git|__git*|test-tool|test_terminal)
+	but|__but*|test-tool|test_terminal)
 		return 0
 		;;
 	*)
@@ -1121,10 +1121,10 @@ test_must_fail_acceptable () {
 #	test_expect_success 'complain and die' '
 #           do something &&
 #           do something else &&
-#	    test_must_fail git checkout ../outerspace
+#	    test_must_fail but checkout ../outerspace
 #	'
 #
-# Writing this as "! git checkout ../outerspace" is wrong, because
+# Writing this as "! but checkout ../outerspace" is wrong, because
 # the failure could be due to a segv.  We want a controlled failure.
 #
 # Accepts the following options:
@@ -1135,7 +1135,7 @@ test_must_fail_acceptable () {
 #     Currently recognized signal names are: sigpipe, success.
 #     (Don't use 'success', use 'test_might_fail' instead.)
 #
-# Do not use this to run anything but "git" and other specific testable
+# Do not use this to run anything but "but" and other specific testable
 # commands (see test_must_fail_acceptable()).  We are not in the
 # business of vetting system supplied commands -- in other words, this
 # is wrong:
@@ -1158,7 +1158,7 @@ test_must_fail () {
 	esac
 	if ! test_must_fail_acceptable "$@"
 	then
-		echo >&7 "test_must_fail: only 'git' is allowed: $*"
+		echo >&7 "test_must_fail: only 'but' is allowed: $*"
 		return 1
 	fi
 	"$@" 2>&7
@@ -1190,11 +1190,11 @@ test_must_fail () {
 # meant to be used in contexts like:
 #
 #	test_expect_success 'some command works without configuration' '
-#		test_might_fail git config --unset all.configuration &&
+#		test_might_fail but config --unset all.configuration &&
 #		do something
 #	'
 #
-# Writing "git config --unset all.configuration || :" would be wrong,
+# Writing "but config --unset all.configuration || :" would be wrong,
 # because we want to notice if it fails due to segv.
 #
 # Accepts the same options as test_must_fail.
@@ -1207,7 +1207,7 @@ test_might_fail () {
 # given command exited with a given exit code. Meant to be used as:
 #
 #	test_expect_success 'Merge with d/f conflicts' '
-#		test_expect_code 1 git merge "merge msg" B master
+#		test_expect_code 1 but merge "merge msg" B master
 #	'
 
 test_expect_code () {
@@ -1245,7 +1245,7 @@ test_cmp () {
 # Check that the given config key has the expected value.
 #
 #    test_cmp_config [-C <dir>] <expected-value>
-#                    [<git-config-options>...] <config-key>
+#                    [<but-config-options>...] <config-key>
 #
 # for example to check that the value of core.bar is foo
 #
@@ -1261,7 +1261,7 @@ test_cmp_config () {
 	fi &&
 	printf "%s\n" "$1" >expect.config &&
 	shift &&
-	git $GD config "$@" >actual.config &&
+	but $GD config "$@" >actual.config &&
 	test_cmp expect.config actual.config
 }
 
@@ -1314,7 +1314,7 @@ test_i18ngrep () {
 # not output anything when they fail.
 verbose () {
 	"$@" && return 0
-	echo >&4 "command failed: $(git rev-parse --sq-quote "$@")"
+	echo >&4 "command failed: $(but rev-parse --sq-quote "$@")"
 	return 1
 }
 
@@ -1349,8 +1349,8 @@ test_cmp_rev () {
 		BUG "test_cmp_rev requires two revisions, but got $#"
 	else
 		local r1 r2
-		r1=$(git rev-parse --verify "$1") &&
-		r2=$(git rev-parse --verify "$2") || return 1
+		r1=$(but rev-parse --verify "$1") &&
+		r2=$(but rev-parse --verify "$2") || return 1
 
 		if ! test "$r1" "$op" "$r2"
 		then
@@ -1371,7 +1371,7 @@ test_cmp_fspath () {
 		return 0
 	fi
 
-	if test true != "$(git config --get --type=bool core.ignorecase)"
+	if test true != "$(but config --get --type=bool core.ignorecase)"
 	then
 		return 1
 	fi
@@ -1405,17 +1405,17 @@ test_seq () {
 # unconditionally at the end of the test to restore sanity:
 #
 #	test_expect_success 'test core.capslock' '
-#		git config core.capslock true &&
-#		test_when_finished "git config --unset core.capslock" &&
+#		but config core.capslock true &&
+#		test_when_finished "but config --unset core.capslock" &&
 #		hello world
 #	'
 #
 # That would be roughly equivalent to
 #
 #	test_expect_success 'test core.capslock' '
-#		git config core.capslock true &&
+#		but config core.capslock true &&
 #		hello world
-#		git config --unset core.capslock
+#		but config --unset core.capslock
 #	'
 #
 # except that the greeting and config --unset must both succeed for
@@ -1437,8 +1437,8 @@ test_when_finished () {
 # This function can be used to schedule some commands to be run
 # unconditionally at the end of the test script, e.g. to stop a daemon:
 #
-#	test_expect_success 'test git daemon' '
-#		git daemon &
+#	test_expect_success 'test but daemon' '
+#		but daemon &
 #		daemon_pid=$! &&
 #		test_atexit 'kill $daemon_pid' &&
 #		hello world
@@ -1462,28 +1462,28 @@ test_atexit () {
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_atexit_cleanup"
 }
 
-# Deprecated wrapper for "git init", use "git init" directly instead
+# Deprecated wrapper for "but init", use "but init" directly instead
 # Usage: test_create_repo <directory>
 test_create_repo () {
-	git init "$@"
+	but init "$@"
 }
 
 # This function helps on symlink challenged file systems when it is not
 # important that the file system entry is a symbolic link.
-# Use test_ln_s_add instead of "ln -s x y && git add y" to add a
+# Use test_ln_s_add instead of "ln -s x y && but add y" to add a
 # symbolic link entry y to the index.
 
 test_ln_s_add () {
 	if test_have_prereq SYMLINKS
 	then
 		ln -s "$1" "$2" &&
-		git update-index --add "$2"
+		but update-index --add "$2"
 	else
 		printf '%s' "$1" >"$2" &&
-		ln_s_obj=$(git hash-object -w "$2") &&
-		git update-index --add --cacheinfo 120000 $ln_s_obj "$2" &&
+		ln_s_obj=$(but hash-object -w "$2") &&
+		but update-index --add --cacheinfo 120000 $ln_s_obj "$2" &&
 		# pick up stat info from the file
-		git update-index "$2"
+		but update-index "$2"
 	fi
 }
 
@@ -1512,7 +1512,7 @@ test_bool_env () {
 		BUG "test_bool_env requires two parameters (variable name and default value)"
 	fi
 
-	git env--helper --type=bool --default="$2" --exit-code "$1"
+	but env--helper --type=bool --default="$2" --exit-code "$1"
 	ret=$?
 	case $ret in
 	0|1)	# unset or valid bool value
@@ -1658,8 +1658,8 @@ test_copy_bytes () {
 	' - "$1"
 }
 
-# run "$@" inside a non-git directory
-nongit () {
+# run "$@" inside a non-but directory
+nonbut () {
 	test -d non-repo ||
 	mkdir non-repo ||
 	return 1
@@ -1776,7 +1776,7 @@ test_oid () {
 }
 
 # Insert a slash into an object ID so it can be used to reference a location
-# under ".git/objects".  For example, "deadbeef..." becomes "de/adbeef..".
+# under ".but/objects".  For example, "deadbeef..." becomes "de/adbeef..".
 test_oid_to_path () {
 	local basename=${1#??}
 	echo "${1%$basename}/$basename"
@@ -1836,11 +1836,11 @@ test_path_is_hidden () {
 #
 #	test_subcommand [!] <command> <args>... < <trace>
 #
-# For example, to look for an invocation of "git upload-pack
+# For example, to look for an invocation of "but upload-pack
 # /path/to/repo"
 #
-#	GIT_TRACE2_EVENT=event.log git fetch ... &&
-#	test_subcommand git upload-pack "$PATH" <event.log
+#	GIT_TRACE2_EVENT=event.log but fetch ... &&
+#	test_subcommand but upload-pack "$PATH" <event.log
 #
 # If the first parameter passed is !, this instead checks that
 # the given command was not called.
@@ -1867,13 +1867,13 @@ test_subcommand () {
 # Check that the given command was invoked as part of the
 # trace2-format trace on stdin.
 #
-#	test_region [!] <category> <label> git <command> <args>...
+#	test_region [!] <category> <label> but <command> <args>...
 #
 # For example, to look for trace2_region_enter("index", "do_read_index", repo)
-# in an invocation of "git checkout HEAD~1", run
+# in an invocation of "but checkout HEAD~1", run
 #
 #	GIT_TRACE2_EVENT="$(pwd)/trace.txt" GIT_TRACE2_EVENT_NESTING=10 \
-#		git checkout HEAD~1 &&
+#		but checkout HEAD~1 &&
 #	test_region index do_read_index <trace.txt
 #
 # If the first parameter passed is !, this instead checks that
@@ -1936,11 +1936,11 @@ test_set_magic_mtime () {
 test_is_magic_mtime () {
 	local inc=${2:-0} &&
 	local mtime=$((1234567890 + $inc)) &&
-	echo $mtime >.git/test-mtime-expect &&
-	test-tool chmtime --get "$1" >.git/test-mtime-actual &&
-	test_cmp .git/test-mtime-expect .git/test-mtime-actual
+	echo $mtime >.but/test-mtime-expect &&
+	test-tool chmtime --get "$1" >.but/test-mtime-actual &&
+	test_cmp .but/test-mtime-expect .but/test-mtime-actual
 	local ret=$?
-	rm -f .git/test-mtime-expect
-	rm -f .git/test-mtime-actual
+	rm -f .but/test-mtime-expect
+	rm -f .but/test-mtime-actual
 	return $ret
 }

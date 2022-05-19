@@ -6,7 +6,7 @@ test_description='speed of clone --reference'
 test_perf_default_repo
 
 test_expect_success 'create shareable repository' '
-	git clone --bare . shared.git
+	but clone --bare . shared.but
 '
 
 test_expect_success 'advance base repository' '
@@ -15,13 +15,13 @@ test_expect_success 'advance base repository' '
 	# skew will cause pack-objects to traverse in a very
 	# sub-optimal order, skewing the results.
 	echo content >new-file-that-does-not-exist &&
-	git add new-file-that-does-not-exist &&
-	git cummit -m "new cummit"
+	but add new-file-that-does-not-exist &&
+	but cummit -m "new cummit"
 '
 
 test_perf 'clone --reference' '
-	rm -rf dst.git &&
-	git clone --no-local --bare --reference shared.git . dst.git
+	rm -rf dst.but &&
+	but clone --no-local --bare --reference shared.but . dst.but
 '
 
 test_done

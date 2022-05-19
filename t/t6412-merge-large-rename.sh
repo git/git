@@ -16,9 +16,9 @@ count() {
 
 test_expect_success 'setup (initial)' '
 	touch file &&
-	git add . &&
-	git cummit -m initial &&
-	git tag initial
+	but add . &&
+	but cummit -m initial &&
+	but tag initial
 '
 
 make_text() {
@@ -33,28 +33,28 @@ test_rename() {
 	test_expect_success "rename ($1, $2)" '
 	n='$1' &&
 	expect='$2' &&
-	git checkout -f main &&
-	test_might_fail git branch -D test$n &&
-	git reset --hard initial &&
+	but checkout -f main &&
+	test_might_fail but branch -D test$n &&
+	but reset --hard initial &&
 	for i in $(count $n); do
 		make_text $i initial initial >$i || return 1
 	done &&
-	git add . &&
-	git cummit -m add=$n &&
+	but add . &&
+	but cummit -m add=$n &&
 	for i in $(count $n); do
 		make_text $i changed initial >$i || return 1
 	done &&
-	git cummit -a -m change=$n &&
-	git checkout -b test$n HEAD^ &&
+	but cummit -a -m change=$n &&
+	but checkout -b test$n HEAD^ &&
 	for i in $(count $n); do
-		git rm $i &&
+		but rm $i &&
 		make_text $i initial changed >$i.moved || return 1
 	done &&
-	git add . &&
-	git cummit -m change+rename=$n &&
+	but add . &&
+	but cummit -m change+rename=$n &&
 	case "$expect" in
-		ok) git merge main ;;
-		 *) test_must_fail git merge main ;;
+		ok) but merge main ;;
+		 *) test_must_fail but merge main ;;
 	esac
 	'
 }
@@ -62,44 +62,44 @@ test_rename() {
 test_rename 5 ok
 
 test_expect_success 'set diff.renamelimit to 4' '
-	git config diff.renamelimit 4
+	but config diff.renamelimit 4
 '
 test_rename 4 ok
 test_rename 5 fail
 
 test_expect_success 'set merge.renamelimit to 5' '
-	git config merge.renamelimit 5
+	but config merge.renamelimit 5
 '
 test_rename 5 ok
 test_rename 6 fail
 
 test_expect_success 'setup large simple rename' '
-	git config --unset merge.renamelimit &&
-	git config --unset diff.renamelimit &&
+	but config --unset merge.renamelimit &&
+	but config --unset diff.renamelimit &&
 
-	git reset --hard initial &&
+	but reset --hard initial &&
 	for i in $(count 200); do
 		make_text foo bar baz >$i || return 1
 	done &&
-	git add . &&
-	git cummit -m create-files &&
+	but add . &&
+	but cummit -m create-files &&
 
-	git branch simple-change &&
-	git checkout -b simple-rename &&
+	but branch simple-change &&
+	but checkout -b simple-rename &&
 
 	mkdir builtin &&
-	git mv [0-9]* builtin/ &&
-	git cummit -m renamed &&
+	but mv [0-9]* builtin/ &&
+	but cummit -m renamed &&
 
-	git checkout simple-change &&
+	but checkout simple-change &&
 	>unrelated-change &&
-	git add unrelated-change &&
-	git cummit -m unrelated-change
+	but add unrelated-change &&
+	but cummit -m unrelated-change
 '
 
 test_expect_success 'massive simple rename does not spam added files' '
 	sane_unset GIT_MERGE_VERBOSITY &&
-	git merge --no-stat simple-rename | grep -v Removing >output &&
+	but merge --no-stat simple-rename | grep -v Removing >output &&
 	test_line_count -lt 5 output
 '
 

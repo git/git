@@ -7,7 +7,7 @@
  */
 
 /* this is only to get definitions for memcpy(), ntohl() and htonl() */
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
 #include "sha1.h"
 

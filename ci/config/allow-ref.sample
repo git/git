@@ -6,12 +6,12 @@
 # editing it, cummitting, and pushing the result to the "ci-config" branch of
 # your repository:
 #
-#   git checkout -b ci-config
+#   but checkout -b ci-config
 #   cp allow-ref.sample allow-ref
 #   $EDITOR allow-ref
-#   git add allow-ref
-#   git cummit -am "implement my ci preferences"
-#   git push
+#   but add allow-ref
+#   but cummit -am "implement my ci preferences"
+#   but push
 #
 # This script will then be run when any refs are pushed to that repository. It
 # gets the fully qualified refname as the first argument, and should exit with

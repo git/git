@@ -1,14 +1,14 @@
-gittutorial(7)
+buttutorial(7)
 ==============
 
 NAME
 ----
-gittutorial - A tutorial introduction to Git
+buttutorial - A tutorial introduction to Git
 
 SYNOPSIS
 --------
 [verse]
-git *
+but *
 
 DESCRIPTION
 -----------
@@ -21,28 +21,28 @@ for example, to test the latest version, you may prefer to start with
 the first two chapters of link:user-manual.html[The Git User's Manual].
 
 First, note that you can get documentation for a command such as
-`git log --graph` with:
+`but log --graph` with:
 
 ------------------------------------------------
-$ man git-log
+$ man but-log
 ------------------------------------------------
 
 or:
 
 ------------------------------------------------
-$ git help log
+$ but help log
 ------------------------------------------------
 
 With the latter, you can use the manual viewer of your choice; see
-linkgit:git-help[1] for more information.
+linkbut:but-help[1] for more information.
 
 It is a good idea to introduce yourself to Git with your name and
 public email address before doing any operation.  The easiest
 way to do so is:
 
 ------------------------------------------------
-$ git config --global user.name "Your Name Comes Here"
-$ git config --global user.email you@yourdomain.example.com
+$ but config --global user.name "Your Name Comes Here"
+$ but config --global user.email you@yourdomain.example.com
 ------------------------------------------------
 
 
@@ -55,31 +55,31 @@ can place it under Git revision control as follows.
 ------------------------------------------------
 $ tar xzf project.tar.gz
 $ cd project
-$ git init
+$ but init
 ------------------------------------------------
 
 Git will reply
 
 ------------------------------------------------
-Initialized empty Git repository in .git/
+Initialized empty Git repository in .but/
 ------------------------------------------------
 
 You've now initialized the working directory--you may notice a new
-directory created, named ".git".
+directory created, named ".but".
 
 Next, tell Git to take a snapshot of the contents of all files under the
-current directory (note the '.'), with 'git add':
+current directory (note the '.'), with 'but add':
 
 ------------------------------------------------
-$ git add .
+$ but add .
 ------------------------------------------------
 
 This snapshot is now stored in a temporary staging area which Git calls
 the "index".  You can permanently store the contents of the index in the
-repository with 'git cummit':
+repository with 'but cummit':
 
 ------------------------------------------------
-$ git cummit
+$ but cummit
 ------------------------------------------------
 
 This will prompt you for a cummit message.  You've now stored the first
@@ -91,26 +91,26 @@ Making changes
 Modify some files, then add their updated contents to the index:
 
 ------------------------------------------------
-$ git add file1 file2 file3
+$ but add file1 file2 file3
 ------------------------------------------------
 
 You are now ready to cummit.  You can see what is about to be cummitted
-using 'git diff' with the --cached option:
+using 'but diff' with the --cached option:
 
 ------------------------------------------------
-$ git diff --cached
+$ but diff --cached
 ------------------------------------------------
 
-(Without --cached, 'git diff' will show you any changes that
+(Without --cached, 'but diff' will show you any changes that
 you've made but not yet added to the index.)  You can also get a brief
-summary of the situation with 'git status':
+summary of the situation with 'but status':
 
 ------------------------------------------------
-$ git status
+$ but status
 On branch master
 Changes to be cummitted:
 Your branch is up to date with 'origin/master'.
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 
 	modified:   file1
 	modified:   file2
@@ -122,16 +122,16 @@ If you need to make any further adjustments, do so now, and then add any
 newly modified content to the index.  Finally, cummit your changes with:
 
 ------------------------------------------------
-$ git cummit
+$ but cummit
 ------------------------------------------------
 
 This will again prompt you for a message describing the change, and then
 record a new version of the project.
 
-Alternatively, instead of running 'git add' beforehand, you can use
+Alternatively, instead of running 'but add' beforehand, you can use
 
 ------------------------------------------------
-$ git cummit -a
+$ but cummit -a
 ------------------------------------------------
 
 which will automatically notice any modified (but not new) files, add
@@ -142,7 +142,7 @@ begin the cummit message with a single short (less than 50 character)
 line summarizing the change, followed by a blank line and then a more
 thorough description. The text up to the first blank line in a cummit
 message is treated as the cummit title, and that title is used
-throughout Git.  For example, linkgit:git-format-patch[1] turns a
+throughout Git.  For example, linkbut:but-format-patch[1] turns a
 cummit into email, and it uses the title on the Subject line and the
 rest of the cummit in the body.
 
@@ -151,7 +151,7 @@ Git tracks content not files
 
 Many revision control systems provide an `add` command that tells the
 system to start tracking changes to a new file.  Git's `add` command
-does something simpler and more powerful: 'git add' is used both for new
+does something simpler and more powerful: 'but add' is used both for new
 and newly modified files, and in both cases it takes a snapshot of the
 given files and stages that content in the index, ready for inclusion in
 the next cummit.
@@ -162,20 +162,20 @@ Viewing project history
 At any point you can view the history of your changes using
 
 ------------------------------------------------
-$ git log
+$ but log
 ------------------------------------------------
 
 If you also want to see complete diffs at each step, use
 
 ------------------------------------------------
-$ git log -p
+$ but log -p
 ------------------------------------------------
 
 Often the overview of the change is useful to get a feel of
 each step
 
 ------------------------------------------------
-$ git log --stat --summary
+$ but log --stat --summary
 ------------------------------------------------
 
 Managing branches
@@ -185,13 +185,13 @@ A single Git repository can maintain multiple branches of
 development.  To create a new branch named "experimental", use
 
 ------------------------------------------------
-$ git branch experimental
+$ but branch experimental
 ------------------------------------------------
 
 If you now run
 
 ------------------------------------------------
-$ git branch
+$ but branch
 ------------------------------------------------
 
 you'll get a list of all existing branches:
@@ -207,7 +207,7 @@ automatically.  The asterisk marks the branch you are currently on;
 type
 
 ------------------------------------------------
-$ git switch experimental
+$ but switch experimental
 ------------------------------------------------
 
 to switch to the experimental branch.  Now edit a file, cummit the
@@ -215,8 +215,8 @@ change, and switch back to the master branch:
 
 ------------------------------------------------
 (edit file)
-$ git cummit -a
-$ git switch master
+$ but cummit -a
+$ but switch master
 ------------------------------------------------
 
 Check that the change you made is no longer visible, since it was
@@ -226,34 +226,34 @@ You can make a different change on the master branch:
 
 ------------------------------------------------
 (edit file)
-$ git cummit -a
+$ but cummit -a
 ------------------------------------------------
 
 at this point the two branches have diverged, with different changes
 made in each.  To merge the changes made in experimental into master, run
 
 ------------------------------------------------
-$ git merge experimental
+$ but merge experimental
 ------------------------------------------------
 
 If the changes don't conflict, you're done.  If there are conflicts,
 markers will be left in the problematic files showing the conflict;
 
 ------------------------------------------------
-$ git diff
+$ but diff
 ------------------------------------------------
 
 will show this.  Once you've edited the files to resolve the
 conflicts,
 
 ------------------------------------------------
-$ git cummit -a
+$ but cummit -a
 ------------------------------------------------
 
 will cummit the result of the merge. Finally,
 
 ------------------------------------------------
-$ gitk
+$ butk
 ------------------------------------------------
 
 will show a nice graphical representation of the resulting history.
@@ -261,7 +261,7 @@ will show a nice graphical representation of the resulting history.
 At this point you could delete the experimental branch with
 
 ------------------------------------------------
-$ git branch -d experimental
+$ but branch -d experimental
 ------------------------------------------------
 
 This command ensures that the changes in the experimental branch are
@@ -271,7 +271,7 @@ If you develop on a branch crazy-idea, then regret it, you can always
 delete the branch with
 
 -------------------------------------
-$ git branch -D crazy-idea
+$ but branch -D crazy-idea
 -------------------------------------
 
 Branches are cheap and easy, so this is a good way to try something
@@ -287,7 +287,7 @@ same machine, wants to contribute.
 Bob begins with:
 
 ------------------------------------------------
-bob$ git clone /home/alice/project myrepo
+bob$ but clone /home/alice/project myrepo
 ------------------------------------------------
 
 This creates a new directory "myrepo" containing a clone of Alice's
@@ -298,7 +298,7 @@ Bob then makes some changes and cummits them:
 
 ------------------------------------------------
 (edit files)
-bob$ git cummit -a
+bob$ but cummit -a
 (repeat as necessary)
 ------------------------------------------------
 
@@ -307,7 +307,7 @@ at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
 alice$ cd /home/alice/project
-alice$ git pull /home/bob/myrepo master
+alice$ but pull /home/bob/myrepo master
 ------------------------------------------------
 
 This merges the changes from Bob's "master" branch into Alice's
@@ -331,8 +331,8 @@ symbol "FETCH_HEAD", in order to determine if he has anything worth
 pulling, like this:
 
 ------------------------------------------------
-alice$ git fetch /home/bob/myrepo master
-alice$ git log -p HEAD..FETCH_HEAD
+alice$ but fetch /home/bob/myrepo master
+alice$ but log -p HEAD..FETCH_HEAD
 ------------------------------------------------
 
 This operation is safe even if Alice has uncummitted local changes.
@@ -346,23 +346,23 @@ If Alice wants to visualize what Bob did since their histories forked
 she can issue the following command:
 
 ------------------------------------------------
-$ gitk HEAD..FETCH_HEAD
+$ butk HEAD..FETCH_HEAD
 ------------------------------------------------
 
-This uses the same two-dot range notation we saw earlier with 'git log'.
+This uses the same two-dot range notation we saw earlier with 'but log'.
 
 Alice may want to view what both of them did since they forked.
 She can use three-dot form instead of the two-dot form:
 
 ------------------------------------------------
-$ gitk HEAD...FETCH_HEAD
+$ butk HEAD...FETCH_HEAD
 ------------------------------------------------
 
 This means "show everything that is reachable from either one, but
 exclude anything that is reachable from both of them".
 
-Please note that these range notation can be used with both gitk
-and "git log".
+Please note that these range notation can be used with both butk
+and "but log".
 
 After inspecting what Bob did, if there is nothing urgent, Alice may
 decide to continue working without pulling from Bob.  If Bob's history
@@ -376,24 +376,24 @@ again.  By defining 'remote' repository shorthand, you can make
 it easier:
 
 ------------------------------------------------
-alice$ git remote add bob /home/bob/myrepo
+alice$ but remote add bob /home/bob/myrepo
 ------------------------------------------------
 
 With this, Alice can perform the first part of the "pull" operation
-alone using the 'git fetch' command without merging them with her own
+alone using the 'but fetch' command without merging them with her own
 branch, using:
 
 -------------------------------------
-alice$ git fetch bob
+alice$ but fetch bob
 -------------------------------------
 
 Unlike the longhand form, when Alice fetches from Bob using a
-remote repository shorthand set up with 'git remote', what was
+remote repository shorthand set up with 'but remote', what was
 fetched is stored in a remote-tracking branch, in this case
 `bob/master`.  So after this:
 
 -------------------------------------
-alice$ git log -p master..bob/master
+alice$ but log -p master..bob/master
 -------------------------------------
 
 shows a list of all the changes that Bob made since he branched from
@@ -403,23 +403,23 @@ After examining those changes, Alice
 could merge the changes into her master branch:
 
 -------------------------------------
-alice$ git merge bob/master
+alice$ but merge bob/master
 -------------------------------------
 
 This `merge` can also be done by 'pulling from her own remote-tracking
 branch', like this:
 
 -------------------------------------
-alice$ git pull . remotes/bob/master
+alice$ but pull . remotes/bob/master
 -------------------------------------
 
-Note that git pull always merges into the current branch,
+Note that but pull always merges into the current branch,
 regardless of what else is given on the command line.
 
 Later, Bob can update his repo with Alice's latest changes using
 
 -------------------------------------
-bob$ git pull
+bob$ but pull
 -------------------------------------
 
 Note that he doesn't need to give the path to Alice's repository;
@@ -428,19 +428,19 @@ repository in the repository configuration, and that location is
 used for pulls:
 
 -------------------------------------
-bob$ git config --get remote.origin.url
+bob$ but config --get remote.origin.url
 /home/alice/project
 -------------------------------------
 
-(The complete configuration created by 'git clone' is visible using
-`git config -l`, and the linkgit:git-config[1] man page
+(The complete configuration created by 'but clone' is visible using
+`but config -l`, and the linkbut:but-config[1] man page
 explains the meaning of each option.)
 
 Git also keeps a pristine copy of Alice's master branch under the
 name "origin/master":
 
 -------------------------------------
-bob$ git branch -r
+bob$ but branch -r
   origin/master
 -------------------------------------
 
@@ -448,26 +448,26 @@ If Bob later decides to work from a different host, he can still
 perform clones and pulls using the ssh protocol:
 
 -------------------------------------
-bob$ git clone alice.org:/home/alice/project myrepo
+bob$ but clone alice.org:/home/alice/project myrepo
 -------------------------------------
 
 Alternatively, Git has a native protocol, or can use http;
-see linkgit:git-pull[1] for details.
+see linkbut:but-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository
-that various users push changes to; see linkgit:git-push[1] and
-linkgit:gitcvs-migration[7].
+that various users push changes to; see linkbut:but-push[1] and
+linkbut:butcvs-migration[7].
 
 Exploring history
 -----------------
 
 Git history is represented as a series of interrelated cummits.  We
-have already seen that the 'git log' command can list those cummits.
-Note that first line of each git log entry also gives a name for the
+have already seen that the 'but log' command can list those cummits.
+Note that first line of each but log entry also gives a name for the
 cummit:
 
 -------------------------------------
-$ git log
+$ but log
 cummit c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 Author: Junio C Hamano <junkio@cox.net>
 Date:   Tue May 16 17:18:22 2006 -0700
@@ -475,134 +475,134 @@ Date:   Tue May 16 17:18:22 2006 -0700
     merge-base: Clarify the comments on post processing.
 -------------------------------------
 
-We can give this name to 'git show' to see the details about this
+We can give this name to 'but show' to see the details about this
 cummit.
 
 -------------------------------------
-$ git show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
+$ but show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 -------------------------------------
 
 But there are other ways to refer to cummits.  You can use any initial
 part of the name that is long enough to uniquely identify the cummit:
 
 -------------------------------------
-$ git show c82a22c39c	# the first few characters of the name are
+$ but show c82a22c39c	# the first few characters of the name are
 			# usually enough
-$ git show HEAD		# the tip of the current branch
-$ git show experimental	# the tip of the "experimental" branch
+$ but show HEAD		# the tip of the current branch
+$ but show experimental	# the tip of the "experimental" branch
 -------------------------------------
 
 Every cummit usually has one "parent" cummit
 which points to the previous state of the project:
 
 -------------------------------------
-$ git show HEAD^  # to see the parent of HEAD
-$ git show HEAD^^ # to see the grandparent of HEAD
-$ git show HEAD~4 # to see the great-great grandparent of HEAD
+$ but show HEAD^  # to see the parent of HEAD
+$ but show HEAD^^ # to see the grandparent of HEAD
+$ but show HEAD~4 # to see the great-great grandparent of HEAD
 -------------------------------------
 
 Note that merge cummits may have more than one parent:
 
 -------------------------------------
-$ git show HEAD^1 # show the first parent of HEAD (same as HEAD^)
-$ git show HEAD^2 # show the second parent of HEAD
+$ but show HEAD^1 # show the first parent of HEAD (same as HEAD^)
+$ but show HEAD^2 # show the second parent of HEAD
 -------------------------------------
 
 You can also give cummits names of your own; after running
 
 -------------------------------------
-$ git tag v2.5 1b2e1d63ff
+$ but tag v2.5 1b2e1d63ff
 -------------------------------------
 
 you can refer to 1b2e1d63ff by the name "v2.5".  If you intend to
 share this name with other people (for example, to identify a release
 version), you should create a "tag" object, and perhaps sign it; see
-linkgit:git-tag[1] for details.
+linkbut:but-tag[1] for details.
 
 Any Git command that needs to know a cummit can take any of these
 names.  For example:
 
 -------------------------------------
-$ git diff v2.5 HEAD	 # compare the current HEAD to v2.5
-$ git branch stable v2.5 # start a new branch named "stable" based
+$ but diff v2.5 HEAD	 # compare the current HEAD to v2.5
+$ but branch stable v2.5 # start a new branch named "stable" based
 			 # at v2.5
-$ git reset --hard HEAD^ # reset your current branch and working
+$ but reset --hard HEAD^ # reset your current branch and working
 			 # directory to its state at HEAD^
 -------------------------------------
 
 Be careful with that last command: in addition to losing any changes
 in the working directory, it will also remove all later cummits from
 this branch.  If this branch is the only branch containing those
-cummits, they will be lost.  Also, don't use 'git reset' on a
+cummits, they will be lost.  Also, don't use 'but reset' on a
 publicly-visible branch that other developers pull from, as it will
 force needless merges on other developers to clean up the history.
-If you need to undo changes that you have pushed, use 'git revert'
+If you need to undo changes that you have pushed, use 'but revert'
 instead.
 
-The 'git grep' command can search for strings in any version of your
+The 'but grep' command can search for strings in any version of your
 project, so
 
 -------------------------------------
-$ git grep "hello" v2.5
+$ but grep "hello" v2.5
 -------------------------------------
 
 searches for all occurrences of "hello" in v2.5.
 
-If you leave out the cummit name, 'git grep' will search any of the
+If you leave out the cummit name, 'but grep' will search any of the
 files it manages in your current directory.  So
 
 -------------------------------------
-$ git grep "hello"
+$ but grep "hello"
 -------------------------------------
 
 is a quick way to search just the files that are tracked by Git.
 
 Many Git commands also take sets of cummits, which can be specified
-in a number of ways.  Here are some examples with 'git log':
+in a number of ways.  Here are some examples with 'but log':
 
 -------------------------------------
-$ git log v2.5..v2.6            # cummits between v2.5 and v2.6
-$ git log v2.5..                # cummits since v2.5
-$ git log --since="2 weeks ago" # cummits from the last 2 weeks
-$ git log v2.5.. Makefile       # cummits since v2.5 which modify
+$ but log v2.5..v2.6            # cummits between v2.5 and v2.6
+$ but log v2.5..                # cummits since v2.5
+$ but log --since="2 weeks ago" # cummits from the last 2 weeks
+$ but log v2.5.. Makefile       # cummits since v2.5 which modify
 				# Makefile
 -------------------------------------
 
-You can also give 'git log' a "range" of cummits where the first is not
+You can also give 'but log' a "range" of cummits where the first is not
 necessarily an ancestor of the second; for example, if the tips of
 the branches "stable" and "master" diverged from a common
 cummit some time ago, then
 
 -------------------------------------
-$ git log stable..master
+$ but log stable..master
 -------------------------------------
 
 will list cummits made in the master branch but not in the
 stable branch, while
 
 -------------------------------------
-$ git log master..stable
+$ but log master..stable
 -------------------------------------
 
 will show the list of cummits made on the stable branch but not
 the master branch.
 
-The 'git log' command has a weakness: it must present cummits in a
+The 'but log' command has a weakness: it must present cummits in a
 list.  When the history has lines of development that diverged and
-then merged back together, the order in which 'git log' presents
+then merged back together, the order in which 'but log' presents
 those cummits is meaningless.
 
 Most projects with multiple contributors (such as the Linux kernel,
-or Git itself) have frequent merges, and 'gitk' does a better job of
+or Git itself) have frequent merges, and 'butk' does a better job of
 visualizing their history.  For example,
 
 -------------------------------------
-$ gitk --since="2 weeks ago" drivers/
+$ butk --since="2 weeks ago" drivers/
 -------------------------------------
 
 allows you to browse any cummits from the last 2 weeks of cummits
 that modified files under the "drivers" directory.  (Note: you can
-adjust gitk's fonts by holding down the control key while pressing
+adjust butk's fonts by holding down the control key while pressing
 "-" or "+".)
 
 Finally, most commands that take filenames will optionally allow you
@@ -610,13 +610,13 @@ to precede any filename by a cummit, to specify a particular version
 of the file:
 
 -------------------------------------
-$ git diff v2.5:Makefile HEAD:Makefile.in
+$ but diff v2.5:Makefile HEAD:Makefile.in
 -------------------------------------
 
-You can also use 'git show' to see any such file:
+You can also use 'but show' to see any such file:
 
 -------------------------------------
-$ git show v2.5:Makefile
+$ but show v2.5:Makefile
 -------------------------------------
 
 Next Steps
@@ -637,41 +637,41 @@ is based:
 
 Part two of this tutorial explains the object
 database, the index file, and a few other odds and ends that you'll
-need to make the most of Git. You can find it at linkgit:gittutorial-2[7].
+need to make the most of Git. You can find it at linkbut:buttutorial-2[7].
 
 If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
 
-  * linkgit:git-format-patch[1], linkgit:git-am[1]: These convert
-    series of git cummits into emailed patches, and vice versa,
+  * linkbut:but-format-patch[1], linkbut:but-am[1]: These convert
+    series of but cummits into emailed patches, and vice versa,
     useful for projects such as the Linux kernel which rely heavily
     on emailed patches.
 
-  * linkgit:git-bisect[1]: When there is a regression in your
+  * linkbut:but-bisect[1]: When there is a regression in your
     project, one way to track down the bug is by searching through
     the history to find the exact cummit that's to blame.  Git bisect
     can help you perform a binary search for that cummit.  It is
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.
 
-  * linkgit:gitworkflows[7]: Gives an overview of recommended
+  * linkbut:butworkflows[7]: Gives an overview of recommended
     workflows.
 
-  * linkgit:giteveryday[7]: Everyday Git with 20 Commands Or So.
+  * linkbut:buteveryday[7]: Everyday Git with 20 Commands Or So.
 
-  * linkgit:gitcvs-migration[7]: Git for CVS users.
+  * linkbut:butcvs-migration[7]: Git for CVS users.
 
 SEE ALSO
 --------
-linkgit:gittutorial-2[7],
-linkgit:gitcvs-migration[7],
-linkgit:gitcore-tutorial[7],
-linkgit:gitglossary[7],
-linkgit:git-help[1],
-linkgit:gitworkflows[7],
-linkgit:giteveryday[7],
+linkbut:buttutorial-2[7],
+linkbut:butcvs-migration[7],
+linkbut:butcore-tutorial[7],
+linkbut:butglossary[7],
+linkbut:but-help[1],
+linkbut:butworkflows[7],
+linkbut:buteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,29 +1,29 @@
-git-checkout(1)
+but-checkout(1)
 ===============
 
 NAME
 ----
-git-checkout - Switch branches or restore working tree files
+but-checkout - Switch branches or restore working tree files
 
 SYNOPSIS
 --------
 [verse]
-'git checkout' [-q] [-f] [-m] [<branch>]
-'git checkout' [-q] [-f] [-m] --detach [<branch>]
-'git checkout' [-q] [-f] [-m] [--detach] <cummit>
-'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
-'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
+'but checkout' [-q] [-f] [-m] [<branch>]
+'but checkout' [-q] [-f] [-m] --detach [<branch>]
+'but checkout' [-q] [-f] [-m] [--detach] <cummit>
+'but checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
+'but checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
+'but checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
+'but checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
 Updates files in the working tree to match the version in the index
-or the specified tree.  If no pathspec was given, 'git checkout' will
+or the specified tree.  If no pathspec was given, 'but checkout' will
 also update `HEAD` to set the specified branch as the current
 branch.
 
-'git checkout' [<branch>]::
+'but checkout' [<branch>]::
 	To prepare for working on `<branch>`, switch to it by updating
 	the index and the files in the working tree, and by pointing
 	`HEAD` at the branch. Local modifications to the files in the
@@ -35,7 +35,7 @@ exactly one remote (call it `<remote>`) with a matching name and
 `--no-guess` is not specified, treat as equivalent to
 +
 ------------
-$ git checkout -b <branch> --track <remote>/<branch>
+$ but checkout -b <branch> --track <remote>/<branch>
 ------------
 +
 You could omit `<branch>`, in which case the command degenerates to
@@ -43,12 +43,12 @@ You could omit `<branch>`, in which case the command degenerates to
 rather expensive side-effects to show only the tracking information,
 if exists, for the current branch.
 
-'git checkout' -b|-B <new-branch> [<start-point>]::
+'but checkout' -b|-B <new-branch> [<start-point>]::
 
 	Specifying `-b` causes a new branch to be created as if
-	linkgit:git-branch[1] were called and then checked out.  In
+	linkbut:but-branch[1] were called and then checked out.  In
 	this case you can use the `--track` or `--no-track` options,
-	which will be passed to 'git branch'.  As a convenience,
+	which will be passed to 'but branch'.  As a convenience,
 	`--track` without `-b` implies branch creation; see the
 	description of `--track` below.
 +
@@ -56,15 +56,15 @@ If `-B` is given, `<new-branch>` is created if it doesn't exist; otherwise, it
 is reset. This is the transactional equivalent of
 +
 ------------
-$ git branch -f <branch> [<start-point>]
-$ git checkout <branch>
+$ but branch -f <branch> [<start-point>]
+$ but checkout <branch>
 ------------
 +
-that is to say, the branch is not reset/created unless "git checkout" is
+that is to say, the branch is not reset/created unless "but checkout" is
 successful.
 
-'git checkout' --detach [<branch>]::
-'git checkout' [--detach] <cummit>::
+'but checkout' --detach [<branch>]::
+'but checkout' [--detach] <cummit>::
 
 	Prepare to work on top of `<cummit>`, by detaching `HEAD` at it
 	(see "DETACHED HEAD" section), and updating the index and the
@@ -74,13 +74,13 @@ successful.
 	modifications.
 +
 When the `<cummit>` argument is a branch name, the `--detach` option can
-be used to detach `HEAD` at the tip of the branch (`git checkout
+be used to detach `HEAD` at the tip of the branch (`but checkout
 <branch>` would check out that branch without detaching `HEAD`).
 +
 Omitting `<branch>` detaches `HEAD` at the tip of the current branch.
 
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...::
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]::
+'but checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...::
+'but checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]::
 
 	Overwrite the contents of the files that match the pathspec.
 	When the `<tree-ish>` (most often a cummit) is not given,
@@ -96,7 +96,7 @@ specific side of the merge can be checked out of the index by
 using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
 file can be discarded to re-create the original conflicted merge result.
 
-'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]::
+'but checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]::
 	This is similar to the previous mode, but lets you use the
 	interactive interface to show the "diff" output and choose which
 	hunks to use in the result.  See below for the description of
@@ -130,7 +130,7 @@ entries; instead, unmerged entries are ignored.
 	When checking out paths from the index, check out stage #2
 	('ours') or #3 ('theirs') for unmerged paths.
 +
-Note that during `git rebase` and `git pull --rebase`, 'ours' and
+Note that during `but rebase` and `but pull --rebase`, 'ours' and
 'theirs' may appear swapped; `--ours` gives the version from the
 branch the changes are rebased onto, while `--theirs` gives the
 version from the branch that holds your work that is being rebased.
@@ -147,18 +147,18 @@ of it").
 
 -b <new-branch>::
 	Create a new branch named `<new-branch>` and start it at
-	`<start-point>`; see linkgit:git-branch[1] for details.
+	`<start-point>`; see linkbut:but-branch[1] for details.
 
 -B <new-branch>::
 	Creates the branch `<new-branch>` and start it at `<start-point>`;
 	if it already exists, then reset it to `<start-point>`. This is
-	equivalent to running "git branch" with "-f"; see
-	linkgit:git-branch[1] for details.
+	equivalent to running "but branch" with "-f"; see
+	linkbut:but-branch[1] for details.
 
 -t::
 --track[=(direct|inherit)]::
 	When creating a new branch, set up "upstream" configuration. See
-	"--track" in linkgit:git-branch[1] for details.
+	"--track" in linkbut:but-branch[1] for details.
 +
 If no `-b` option is given, the name of the new branch will be
 derived from the remote-tracking branch, by looking at the local part of
@@ -181,7 +181,7 @@ explicitly give a name with `-b` in such a case.
 	matching name, treat as equivalent to
 +
 ------------
-$ git checkout -b <branch> --track <remote>/<branch>
+$ but checkout -b <branch> --track <remote>/<branch>
 ------------
 +
 If the branch exists in multiple remotes and one of them is named by
@@ -191,7 +191,7 @@ unique across all remotes. Set it to
 e.g. `checkout.defaultRemote=origin` to always checkout remote
 branches from there if `<branch>` is ambiguous but exists on the
 'origin' remote. See also `checkout.defaultRemote` in
-linkgit:git-config[1].
+linkbut:but-config[1].
 +
 `--guess` is the default behavior. Use `--no-guess` to disable it.
 +
@@ -199,14 +199,14 @@ The default behavior can be set via the `checkout.guess` configuration
 variable.
 
 -l::
-	Create the new branch's reflog; see linkgit:git-branch[1] for
+	Create the new branch's reflog; see linkbut:but-branch[1] for
 	details.
 
 -d::
 --detach::
 	Rather than checking out a branch to work on it, check out a
 	cummit for inspection and discardable experiments.
-	This is the default behavior of `git checkout <cummit>` when
+	This is the default behavior of `but checkout <cummit>` when
 	`<cummit>` is not a branch name.  See the "DETACHED HEAD" section
 	below for details.
 
@@ -218,9 +218,9 @@ variable.
 	cummits.
 +
 The index and the working tree are adjusted as if you had previously run
-`git checkout <start-point>`.  This allows you to start a new history
+`but checkout <start-point>`.  This allows you to start a new history
 that records a set of paths similar to `<start-point>` by easily running
-`git cummit -a` to make the root cummit.
+`but cummit -a` to make the root cummit.
 +
 This can be useful when you want to publish the tree from a cummit
 without exposing its full history. You might want to do this to publish
@@ -231,12 +231,12 @@ code.
 If you want to start a disconnected history that records a set of paths
 that is totally different from the one of `<start-point>`, then you should
 clear the index and the working tree right after creating the orphan
-branch by running `git rm -rf .` from the top level of the working tree.
+branch by running `but rm -rf .` from the top level of the working tree.
 Afterwards you will be ready to prepare your new files, repopulating the
 working tree, by copying them from elsewhere, extracting a tarball, etc.
 
 --ignore-skip-worktree-bits::
-	In sparse checkout mode, `git checkout -- <paths>` would
+	In sparse checkout mode, `but checkout -- <paths>` would
 	update only entries matched by `<paths>` and sparse patterns
 	in `$GIT_DIR/info/sparse-checkout`. This option ignores
 	the sparse patterns and adds back any files in `<paths>`.
@@ -254,7 +254,7 @@ working tree, by copying them from elsewhere, extracting a tarball, etc.
 +
 When a merge conflict happens, the index entries for conflicting
 paths are left unmerged, and you need to resolve the conflicts
-and mark the resolved paths with `git add` (or `git rm` if the merge
+and mark the resolved paths with `but add` (or `but rm` if the merge
 should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
@@ -275,15 +275,15 @@ When switching branches with `--merge`, staged changes may be lost.
 	tree.  The chosen hunks are then applied in reverse to the
 	working tree (and if a `<tree-ish>` was specified, the index).
 +
-This means that you can use `git checkout -p` to selectively discard
+This means that you can use `but checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
-section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+section of linkbut:but-add[1] to learn how to operate the `--patch` mode.
 +
 Note that this option uses the no overlay mode by default (see also
 `--overlay`), and currently doesn't support overlay mode.
 
 --ignore-other-worktrees::
-	`git checkout` refuses when the wanted ref is already checked
+	`but checkout` refuses when the wanted ref is already checked
 	out by another worktree. This option makes it check the ref
 	out anyway. In other words, the ref can be held by more than one
 	worktree.
@@ -301,12 +301,12 @@ Note that this option uses the no overlay mode by default (see also
 	local modifications in a submodule would be overwritten the checkout
 	will fail unless `-f` is used. If nothing (or `--no-recurse-submodules`)
 	is used, submodules working trees will not be updated.
-	Just like linkgit:git-submodule[1], this will detach `HEAD` of the
+	Just like linkbut:but-submodule[1], this will detach `HEAD` of the
 	submodule.
 
 --overlay::
 --no-overlay::
-	In the default overlay mode, `git checkout` never
+	In the default overlay mode, `but checkout` never
 	removes files from the index or the working tree.  When
 	specifying `--no-overlay`, files that appear in the index and
 	working tree, but not in `<tree-ish>` are removed, to make them
@@ -317,7 +317,7 @@ Note that this option uses the no overlay mode by default (see also
 	`<file>` is exactly `-` then standard input is used. Pathspec
 	elements are separated by LF or CR/LF. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
-	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	(see linkbut:but-config[1]). See also `--pathspec-file-nul` and
 	global `--literal-pathspecs`.
 
 --pathspec-file-nul::
@@ -333,7 +333,7 @@ Note that this option uses the no overlay mode by default (see also
 	any branch (see below for details).
 +
 You can use the `@{-N}` syntax to refer to the N-th last
-branch/cummit checked out using "git checkout" operation. You may
+branch/cummit checked out using "but checkout" operation. You may
 also specify `-` which is synonymous to `@{-1}`.
 +
 As a special case, you may use `A...B` as a shortcut for the
@@ -345,7 +345,7 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 <start-point>::
 	The name of a cummit at which to start the new branch; see
-	linkgit:git-branch[1] for details. Defaults to `HEAD`.
+	linkbut:but-branch[1] for details. Defaults to `HEAD`.
 +
 As a special case, you may use `"A...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
@@ -365,7 +365,7 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <pathspec>...::
 	Limits the paths affected by the operation.
 +
-For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+For more details, see the 'pathspec' entry in linkbut:butglossary[7].
 
 DETACHED HEAD
 -------------
@@ -384,13 +384,13 @@ a---b---c  branch 'master' (refers to cummit 'c')
 ------------
 
 When a cummit is created in this state, the branch is updated to refer to
-the new cummit. Specifically, 'git cummit' creates a new cummit `d`, whose
+the new cummit. Specifically, 'but cummit' creates a new cummit `d`, whose
 parent is cummit `c`, and then updates branch `master` to refer to new
 cummit `d`. `HEAD` still refers to branch `master` and so indirectly now refers
 to cummit `d`:
 
 ------------
-$ edit; git add; git cummit
+$ edit; but add; but cummit
 
                HEAD (refers to branch 'master')
                 |
@@ -407,8 +407,8 @@ referenced by a named branch. Let's look at what happens when we
 checkout cummit `b` (here we show two ways this may be done):
 
 ------------
-$ git checkout v2.0  # or
-$ git checkout master^^
+$ but checkout v2.0  # or
+$ but checkout master^^
 
    HEAD (refers to cummit 'b')
     |
@@ -425,7 +425,7 @@ It means simply that `HEAD` refers to a specific cummit, as opposed to
 referring to a named branch. Let's see what happens when we create a cummit:
 
 ------------
-$ edit; git add; git cummit
+$ edit; but add; but cummit
 
      HEAD (refers to cummit 'e')
       |
@@ -442,7 +442,7 @@ There is now a new cummit `e`, but it is referenced only by `HEAD`. We can
 of course add yet another cummit in this state:
 
 ------------
-$ edit; git add; git cummit
+$ edit; but add; but cummit
 
 	 HEAD (refers to cummit 'f')
 	  |
@@ -459,7 +459,7 @@ In fact, we can perform all the normal Git operations. But, let's look
 at what happens when we then checkout `master`:
 
 ------------
-$ git checkout master
+$ but checkout master
 
                HEAD (refers to branch 'master')
       e---f     |
@@ -477,9 +477,9 @@ before that happens. If we have not yet moved away from cummit `f`,
 any of these will create a reference to it:
 
 ------------
-$ git checkout -b foo   <1>
-$ git branch foo        <2>
-$ git tag foo           <3>
+$ but checkout -b foo   <1>
+$ but branch foo        <2>
+$ but tag foo           <3>
 ------------
 
 <1> creates a new branch `foo`, which refers to cummit `f`, and then
@@ -493,25 +493,25 @@ $ git tag foo           <3>
     leaving `HEAD` detached.
 
 If we have moved away from cummit `f`, then we must first recover its object
-name (typically by using git reflog), and then we can create a reference to
+name (typically by using but reflog), and then we can create a reference to
 it. For example, to see the last two cummits to which `HEAD` referred, we
 can use either of these commands:
 
 ------------
-$ git reflog -2 HEAD # or
-$ git log -g -2 HEAD
+$ but reflog -2 HEAD # or
+$ but log -g -2 HEAD
 ------------
 
 ARGUMENT DISAMBIGUATION
 -----------------------
 
-When there is only one argument given and it is not `--` (e.g. `git
+When there is only one argument given and it is not `--` (e.g. `but
 checkout abc`), and when the argument is both a valid `<tree-ish>`
 (e.g. a branch `abc` exists) and a valid `<pathspec>` (e.g. a file
 or a directory whose name is "abc" exists), Git would usually ask
 you to disambiguate.  Because checking out a branch is so common an
-operation, however, `git checkout abc` takes "abc" as a `<tree-ish>`
-in such a situation.  Use `git checkout -- <pathspec>` if you want
+operation, however, `but checkout abc` takes "abc" as a `<tree-ish>`
+in such a situation.  Use `but checkout -- <pathspec>` if you want
 to checkout these paths out of the index.
 
 EXAMPLES
@@ -522,10 +522,10 @@ EXAMPLES
   mistake, and gets it back from the index.
 +
 ------------
-$ git checkout master             <1>
-$ git checkout master~2 Makefile  <2>
+$ but checkout master             <1>
+$ but checkout master~2 Makefile  <2>
 $ rm -f hello.c
-$ git checkout hello.c            <3>
+$ but checkout hello.c            <3>
 ------------
 +
 <1> switch branch
@@ -536,7 +536,7 @@ If you want to check out _all_ C source files out of the index,
 you can say
 +
 ------------
-$ git checkout -- '*.c'
+$ but checkout -- '*.c'
 ------------
 +
 Note the quotes around `*.c`.  The file `hello.c` will also be
@@ -549,14 +549,14 @@ step would be confused as an instruction to switch to that branch.
 You should instead write:
 +
 ------------
-$ git checkout -- hello.c
+$ but checkout -- hello.c
 ------------
 
 . After working in the wrong branch, switching to the correct
   branch would be done using:
 +
 ------------
-$ git checkout mytopic
+$ but checkout mytopic
 ------------
 +
 However, your "wrong" branch and correct `mytopic` branch may
@@ -564,7 +564,7 @@ differ in files that you have modified locally, in which case
 the above checkout would fail like this:
 +
 ------------
-$ git checkout mytopic
+$ but checkout mytopic
 error: You have local changes to 'frotz'; not switching branches.
 ------------
 +
@@ -572,39 +572,39 @@ You can give the `-m` flag to the command, which would try a
 three-way merge:
 +
 ------------
-$ git checkout -m mytopic
+$ but checkout -m mytopic
 Auto-merging frotz
 ------------
 +
 After this three-way merge, the local modifications are _not_
-registered in your index file, so `git diff` would show you what
+registered in your index file, so `but diff` would show you what
 changes you made since the tip of the new branch.
 
 . When a merge conflict happens during switching branches with
   the `-m` option, you would see something like this:
 +
 ------------
-$ git checkout -m mytopic
+$ but checkout -m mytopic
 Auto-merging frotz
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------
 +
-At this point, `git diff` shows the changes cleanly merged as in
+At this point, `but diff` shows the changes cleanly merged as in
 the previous example, as well as the changes in the conflicted
 files.  Edit and resolve the conflict and mark it resolved with
-`git add` as usual:
+`but add` as usual:
 +
 ------------
 $ edit frotz
-$ git add frotz
+$ but add frotz
 ------------
 
 SEE ALSO
 --------
-linkgit:git-switch[1],
-linkgit:git-restore[1]
+linkbut:but-switch[1],
+linkbut:but-restore[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

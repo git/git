@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Google Inc.
 #
 
-test_description='git-pack-object with missing base
+test_description='but-pack-object with missing base
 
 '
 . ./test-lib.sh
@@ -14,13 +14,13 @@ test_expect_success \
     'setup base' \
     'test_write_lines a b c d e f g h i >text &&
      echo side >side &&
-     git update-index --add text side &&
-     A=$(echo A | git cummit-tree $(git write-tree)) &&
+     but update-index --add text side &&
+     A=$(echo A | but cummit-tree $(but write-tree)) &&
 
      echo m >>text &&
-     git update-index text &&
-     B=$(echo B | git cummit-tree $(git write-tree) -p $A) &&
-     git update-ref HEAD $B
+     but update-index text &&
+     B=$(echo B | but cummit-tree $(but write-tree) -p $A) &&
+     but update-ref HEAD $B
     '
 
 # Create repository with C whose parent is B.
@@ -31,24 +31,24 @@ test_expect_success \
 #
 test_expect_success \
     'setup patch_clone' \
-    'base_objects=$(pwd)/.git/objects &&
+    'base_objects=$(pwd)/.but/objects &&
      (mkdir patch_clone &&
       cd patch_clone &&
-      git init &&
-      echo "$base_objects" >.git/objects/info/alternates &&
+      but init &&
+      echo "$base_objects" >.but/objects/info/alternates &&
       echo q >>text &&
-      git read-tree $B &&
-      git update-index text &&
-      git update-ref HEAD $(echo C | git cummit-tree $(git write-tree) -p $B) &&
-      rm .git/objects/info/alternates &&
+      but read-tree $B &&
+      but update-index text &&
+      but update-ref HEAD $(echo C | but cummit-tree $(but write-tree) -p $B) &&
+      rm .but/objects/info/alternates &&
 
-      git --git-dir=../.git cat-file cummit $B |
-      git hash-object -t cummit -w --stdin &&
+      but --but-dir=../.but cat-file cummit $B |
+      but hash-object -t cummit -w --stdin &&
 
-      git --git-dir=../.git cat-file tree "$B^{tree}" |
-      git hash-object -t tree -w --stdin
+      but --but-dir=../.but cat-file tree "$B^{tree}" |
+      but hash-object -t tree -w --stdin
      ) &&
-     C=$(git --git-dir=patch_clone/.git rev-parse HEAD)
+     C=$(but --but-dir=patch_clone/.but rev-parse HEAD)
     '
 
 # Clone patch_clone indirectly by cloning base and fetching.
@@ -57,12 +57,12 @@ test_expect_success \
     'indirectly clone patch_clone' \
     '(mkdir user_clone &&
       cd user_clone &&
-      git init &&
-      git pull ../.git &&
-      test $(git rev-parse HEAD) = $B &&
+      but init &&
+      but pull ../.but &&
+      test $(but rev-parse HEAD) = $B &&
 
-      git pull ../patch_clone/.git &&
-      test $(git rev-parse HEAD) = $C
+      but pull ../patch_clone/.but &&
+      test $(but rev-parse HEAD) = $C
      )
     '
 
@@ -72,8 +72,8 @@ test_expect_success \
     'clone of patch_clone is incomplete' \
     '(mkdir user_direct &&
       cd user_direct &&
-      git init &&
-      test_must_fail git fetch ../patch_clone/.git
+      but init &&
+      test_must_fail but fetch ../patch_clone/.but
      )
     '
 

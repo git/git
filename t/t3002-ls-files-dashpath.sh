@@ -3,9 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git ls-files test (-- to terminate the path list).
+test_description='but ls-files test (-- to terminate the path list).
 
-This test runs git ls-files --others with the following on the
+This test runs but ls-files --others with the following on the
 filesystem.
 
     path0       - a file
@@ -23,8 +23,8 @@ test_expect_success \
 	echo frotz >./--'
 
 test_expect_success \
-    'git ls-files without path restriction.' \
-    'git ls-files --others >output &&
+    'but ls-files without path restriction.' \
+    'but ls-files --others >output &&
      test_cmp output - <<EOF
 --
 -foo
@@ -34,32 +34,32 @@ EOF
 '
 
 test_expect_success \
-    'git ls-files with path restriction.' \
-    'git ls-files --others path0 >output &&
+    'but ls-files with path restriction.' \
+    'but ls-files --others path0 >output &&
 	test_cmp output - <<EOF
 path0
 EOF
 '
 
 test_expect_success \
-    'git ls-files with path restriction with --.' \
-    'git ls-files --others -- path0 >output &&
+    'but ls-files with path restriction with --.' \
+    'but ls-files --others -- path0 >output &&
 	test_cmp output - <<EOF
 path0
 EOF
 '
 
 test_expect_success \
-    'git ls-files with path restriction with -- --.' \
-    'git ls-files --others -- -- >output &&
+    'but ls-files with path restriction with -- --.' \
+    'but ls-files --others -- -- >output &&
 	test_cmp output - <<EOF
 --
 EOF
 '
 
 test_expect_success \
-    'git ls-files with no path restriction.' \
-    'git ls-files --others -- >output &&
+    'but ls-files with no path restriction.' \
+    'but ls-files --others -- >output &&
 	test_cmp output - <<EOF
 --
 -foo

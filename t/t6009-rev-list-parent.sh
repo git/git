@@ -10,15 +10,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 check_revlist () {
 	rev_list_args="$1" &&
 	shift &&
-	git rev-parse "$@" >expect &&
-	git rev-list $rev_list_args --all >actual &&
+	but rev-parse "$@" >expect &&
+	but rev-list $rev_list_args --all >actual &&
 	test_cmp expect actual
 }
 
 test_expect_success setup '
 
 	touch file &&
-	git add file &&
+	but add file &&
 
 	test_cummit one &&
 
@@ -28,38 +28,38 @@ test_expect_success setup '
 	test_cummit three &&
 	test_cummit four &&
 
-	git log --pretty=oneline --abbrev-cummit
+	but log --pretty=oneline --abbrev-cummit
 '
 
 test_expect_success 'one is ancestor of others and should not be shown' '
 
-	git rev-list one --not four >result &&
+	but rev-list one --not four >result &&
 	test_must_be_empty result
 
 '
 
 test_expect_success 'setup roots, merges and octopuses' '
 
-	git checkout --orphan newroot &&
+	but checkout --orphan newroot &&
 	test_cummit five &&
-	git checkout -b sidebranch two &&
+	but checkout -b sidebranch two &&
 	test_cummit six &&
-	git checkout -b anotherbranch three &&
+	but checkout -b anotherbranch three &&
 	test_cummit seven &&
-	git checkout -b yetanotherbranch four &&
+	but checkout -b yetanotherbranch four &&
 	test_cummit eight &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git merge --allow-unrelated-histories -m normalmerge newroot &&
-	git tag normalmerge &&
+	but merge --allow-unrelated-histories -m normalmerge newroot &&
+	but tag normalmerge &&
 	test_tick &&
-	git merge -m tripus sidebranch anotherbranch &&
-	git tag tripus &&
-	git checkout -b tetrabranch normalmerge &&
+	but merge -m tripus sidebranch anotherbranch &&
+	but tag tripus &&
+	but checkout -b tetrabranch normalmerge &&
 	test_tick &&
-	git merge -m tetrapus sidebranch anotherbranch yetanotherbranch &&
-	git tag tetrapus &&
-	git checkout main
+	but merge -m tetrapus sidebranch anotherbranch yetanotherbranch &&
+	but tag tetrapus &&
+	but checkout main
 '
 
 test_expect_success 'rev-list roots' '
@@ -121,15 +121,15 @@ test_expect_success 'dodecapus' '
 	roots= &&
 	for i in 1 2 3 4 5 6 7 8 9 10 11
 	do
-		git checkout -b root$i five &&
+		but checkout -b root$i five &&
 		test_cummit $i &&
 		roots="$roots root$i" ||
 		return 1
 	done &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git merge -m dodecapus $roots &&
-	git tag dodecapus &&
+	but merge -m dodecapus $roots &&
+	but tag dodecapus &&
 
 	check_revlist "--min-parents=4" dodecapus tetrapus &&
 	check_revlist "--min-parents=8" dodecapus &&
@@ -145,7 +145,7 @@ test_expect_success 'ancestors with the same cummit time' '
 		test_tick=$test_tick_keep &&
 		test_cummit t$i || return 1
 	done &&
-	git rev-list t1^! --not t$i >result &&
+	but rev-list t1^! --not t$i >result &&
 	test_must_be_empty result
 '
 

@@ -1,15 +1,15 @@
-git-var(1)
+but-var(1)
 ==========
 
 NAME
 ----
-git-var - Show a Git logical variable
+but-var - Show a Git logical variable
 
 
 SYNOPSIS
 --------
 [verse]
-'git var' ( -l | <variable> )
+'but var' ( -l | <variable> )
 
 DESCRIPTION
 -----------
@@ -19,13 +19,13 @@ OPTIONS
 -------
 -l::
 	Cause the logical variables to be listed. In addition, all the
-	variables of the Git configuration file .git/config are listed
+	variables of the Git configuration file .but/config are listed
 	as well. (However, the configuration variables listing functionality
-	is deprecated in favor of `git config -l`.)
+	is deprecated in favor of `but config -l`.)
 
 EXAMPLES
 --------
-	$ git var GIT_AUTHOR_IDENT
+	$ but var GIT_AUTHOR_IDENT
 	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 
@@ -45,9 +45,9 @@ GIT_EDITOR::
     environment variable, then `core.editor` configuration, then
     `$VISUAL`, then `$EDITOR`, and then the default chosen at compile
     time, which is usually 'vi'.
-ifdef::git-default-editor[]
-    The build you are using chose '{git-default-editor}' as the default.
-endif::git-default-editor[]
+ifdef::but-default-editor[]
+    The build you are using chose '{but-default-editor}' as the default.
+endif::but-default-editor[]
 
 GIT_PAGER::
     Text viewer for use by Git commands (e.g., 'less').  The value
@@ -55,19 +55,19 @@ GIT_PAGER::
     is the `$GIT_PAGER` environment variable, then `core.pager`
     configuration, then `$PAGER`, and then the default chosen at
     compile time (usually 'less').
-ifdef::git-default-pager[]
-    The build you are using chose '{git-default-pager}' as the default.
-endif::git-default-pager[]
+ifdef::but-default-pager[]
+    The build you are using chose '{but-default-pager}' as the default.
+endif::but-default-pager[]
 
 GIT_DEFAULT_BRANCH::
     The name of the first branch created in newly initialized repositories.
 
 SEE ALSO
 --------
-linkgit:git-cummit-tree[1]
-linkgit:git-tag[1]
-linkgit:git-config[1]
+linkbut:but-cummit-tree[1]
+linkbut:but-tag[1]
+linkbut:but-config[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

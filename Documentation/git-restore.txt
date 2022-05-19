@@ -1,16 +1,16 @@
-git-restore(1)
+but-restore(1)
 ==============
 
 NAME
 ----
-git-restore - Restore working tree files
+but-restore - Restore working tree files
 
 SYNOPSIS
 --------
 [verse]
-'git restore' [<options>] [--source=<tree>] [--staged] [--worktree] [--] <pathspec>...
-'git restore' [<options>] [--source=<tree>] [--staged] [--worktree] --pathspec-from-file=<file> [--pathspec-file-nul]
-'git restore' (-p|--patch) [<options>] [--source=<tree>] [--staged] [--worktree] [--] [<pathspec>...]
+'but restore' [<options>] [--source=<tree>] [--staged] [--worktree] [--] <pathspec>...
+'but restore' [<options>] [--source=<tree>] [--staged] [--worktree] --pathspec-from-file=<file> [--pathspec-file-nul]
+'but restore' (-p|--patch) [<options>] [--source=<tree>] [--staged] [--worktree] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -25,7 +25,7 @@ The command can also be used to restore the content in the index with
 By default, if `--staged` is given, the contents are restored from `HEAD`,
 otherwise from the index. Use `--source` to restore from a different cummit.
 
-See "Reset, restore and revert" in linkgit:git[1] for the differences
+See "Reset, restore and revert" in linkbut:but[1] for the differences
 between the three commands.
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
@@ -49,7 +49,7 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 --patch::
 	Interactively select hunks in the difference between the
 	restore source and the restore location. See the ``Interactive
-	Mode'' section of linkgit:git-add[1] to learn how to operate
+	Mode'' section of linkbut:but-add[1] to learn how to operate
 	the `--patch` mode.
 +
 Note that `--patch` can accept no pathspec and will prompt to restore
@@ -79,9 +79,9 @@ all modified paths.
 	When restoring files in the working tree from the index, use
 	stage #2 ('ours') or #3 ('theirs') for unmerged paths.
 +
-Note that during `git rebase` and `git pull --rebase`, 'ours' and
+Note that during `but rebase` and `but pull --rebase`, 'ours' and
 'theirs' may appear swapped. See the explanation of the same options
-in linkgit:git-checkout[1] for details.
+in linkbut:but-checkout[1] for details.
 
 -m::
 --merge::
@@ -115,7 +115,7 @@ in linkgit:git-checkout[1] for details.
 	restored to the cummit recorded in the superproject, and any local
 	modifications overwritten. If nothing (or
 	`--no-recurse-submodules`) is used, submodules working trees will
-	not be updated. Just like linkgit:git-checkout[1], this will detach
+	not be updated. Just like linkbut:but-checkout[1], this will detach
 	`HEAD` of the submodule.
 
 --overlay::
@@ -130,7 +130,7 @@ in linkgit:git-checkout[1] for details.
 	`<file>` is exactly `-` then standard input is used. Pathspec
 	elements are separated by LF or CR/LF. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
-	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	(see linkbut:but-config[1]). See also `--pathspec-file-nul` and
 	global `--literal-pathspecs`.
 
 --pathspec-file-nul::
@@ -144,7 +144,7 @@ in linkgit:git-checkout[1] for details.
 <pathspec>...::
 	Limits the paths affected by the operation.
 +
-For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+For more details, see the 'pathspec' entry in linkbut:butglossary[7].
 
 EXAMPLES
 --------
@@ -154,10 +154,10 @@ The following sequence switches to the `master` branch, reverts the
 it back from the index.
 
 ------------
-$ git switch master
-$ git restore --source master~2 Makefile  <1>
+$ but switch master
+$ but restore --source master~2 Makefile  <1>
 $ rm -f hello.c
-$ git restore hello.c                     <2>
+$ but restore hello.c                     <2>
 ------------
 
 <1> take a file out of another cummit
@@ -167,7 +167,7 @@ If you want to restore _all_ C source files to match the version in
 the index, you can say
 
 ------------
-$ git restore '*.c'
+$ but restore '*.c'
 ------------
 
 Note the quotes around `*.c`.  The file `hello.c` will also be
@@ -178,41 +178,41 @@ working tree by the shell).
 To restore all files in the current directory
 
 ------------
-$ git restore .
+$ but restore .
 ------------
 
 or to restore all working tree files with 'top' pathspec magic (see
-linkgit:gitglossary[7])
+linkbut:butglossary[7])
 
 ------------
-$ git restore :/
+$ but restore :/
 ------------
 
 To restore a file in the index to match the version in `HEAD` (this is
-the same as using linkgit:git-reset[1])
+the same as using linkbut:but-reset[1])
 
 ------------
-$ git restore --staged hello.c
+$ but restore --staged hello.c
 ------------
 
 or you can restore both the index and the working tree (this the same
-as using linkgit:git-checkout[1])
+as using linkbut:but-checkout[1])
 
 ------------
-$ git restore --source=HEAD --staged --worktree hello.c
+$ but restore --source=HEAD --staged --worktree hello.c
 ------------
 
 or the short form which is more practical but less readable:
 
 ------------
-$ git restore -s@ -SW hello.c
+$ but restore -s@ -SW hello.c
 ------------
 
 SEE ALSO
 --------
-linkgit:git-checkout[1],
-linkgit:git-reset[1]
+linkbut:but-checkout[1],
+linkbut:but-reset[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

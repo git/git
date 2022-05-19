@@ -2,7 +2,7 @@
 
 test_description='interaction with P4 case-folding'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 if test_have_prereq CASE_INSENSITIVE_FS
 then
@@ -36,21 +36,21 @@ test_expect_success 'Check p4 is in case-folding mode' '
 
 # Check we created the repo properly
 test_expect_success 'Clone lc repo using lc name' '
-	git p4 clone //depot/lc/... &&
+	but p4 clone //depot/lc/... &&
 	test_path_is_file lc/file.txt &&
-	git p4 clone //depot/UC/... &&
+	but p4 clone //depot/UC/... &&
 	test_path_is_file UC/file.txt
 '
 
 # The clone should fail, since there is no repo called LC, but because
 # we have case-insensitive p4d enabled, it appears to go ahead and work,
-# but leaves an empty git repo in place.
+# but leaves an empty but repo in place.
 test_expect_failure 'Clone lc repo using uc name' '
-	test_must_fail git p4 clone //depot/LC/...
+	test_must_fail but p4 clone //depot/LC/...
 '
 
 test_expect_failure 'Clone UC repo with lc name' '
-	test_must_fail git p4 clone //depot/uc/...
+	test_must_fail but p4 clone //depot/uc/...
 '
 
 test_done

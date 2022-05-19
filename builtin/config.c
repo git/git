@@ -8,7 +8,7 @@
 #include "worktree.h"
 
 static const char *const builtin_config_usage[] = {
-	N_("git config [<options>]"),
+	N_("but config [<options>]"),
 	NULL
 };
 
@@ -27,7 +27,7 @@ static char term = '\n';
 
 static int use_global_config, use_system_config, use_local_config;
 static int use_worktree_config;
-static struct git_config_source given_config_source;
+static struct but_config_source given_config_source;
 static int actions, type;
 static char *default_value;
 static int end_nul;
@@ -246,37 +246,37 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 
 		if (type == TYPE_INT)
 			strbuf_addf(buf, "%"PRId64,
-				    git_config_int64(key_, value_ ? value_ : ""));
+				    but_config_int64(key_, value_ ? value_ : ""));
 		else if (type == TYPE_BOOL)
-			strbuf_addstr(buf, git_config_bool(key_, value_) ?
+			strbuf_addstr(buf, but_config_bool(key_, value_) ?
 				      "true" : "false");
 		else if (type == TYPE_BOOL_OR_INT) {
 			int is_bool, v;
-			v = git_config_bool_or_int(key_, value_, &is_bool);
+			v = but_config_bool_or_int(key_, value_, &is_bool);
 			if (is_bool)
 				strbuf_addstr(buf, v ? "true" : "false");
 			else
 				strbuf_addf(buf, "%d", v);
 		} else if (type == TYPE_BOOL_OR_STR) {
-			int v = git_parse_maybe_bool(value_);
+			int v = but_parse_maybe_bool(value_);
 			if (v < 0)
 				strbuf_addstr(buf, value_);
 			else
 				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (type == TYPE_PATH) {
 			const char *v;
-			if (git_config_pathname(&v, key_, value_) < 0)
+			if (but_config_pathname(&v, key_, value_) < 0)
 				return -1;
 			strbuf_addstr(buf, v);
 			free((char *)v);
 		} else if (type == TYPE_EXPIRY_DATE) {
 			timestamp_t t;
-			if (git_config_expiry_date(&t, key_, value_) < 0)
+			if (but_config_expiry_date(&t, key_, value_) < 0)
 				return -1;
 			strbuf_addf(buf, "%"PRItime, t);
 		} else if (type == TYPE_COLOR) {
 			char v[COLOR_MAXLEN];
-			if (git_config_color(v, key_, value_) < 0)
+			if (but_config_color(v, key_, value_) < 0)
 				return -1;
 			strbuf_addstr(buf, v);
 		} else if (value_) {
@@ -342,7 +342,7 @@ static int get_value(const char *key_, const char *regex_, unsigned flags)
 			goto free_strings;
 		}
 	} else {
-		if (git_config_parse_key(key_, &key, NULL)) {
+		if (but_config_parse_key(key_, &key, NULL)) {
 			ret = CONFIG_INVALID_KEY;
 			goto free_strings;
 		}
@@ -417,19 +417,19 @@ static char *normalize_value(const char *key, const char *value)
 		 */
 		return xstrdup(value);
 	if (type == TYPE_INT)
-		return xstrfmt("%"PRId64, git_config_int64(key, value));
+		return xstrfmt("%"PRId64, but_config_int64(key, value));
 	if (type == TYPE_BOOL)
-		return xstrdup(git_config_bool(key, value) ?  "true" : "false");
+		return xstrdup(but_config_bool(key, value) ?  "true" : "false");
 	if (type == TYPE_BOOL_OR_INT) {
 		int is_bool, v;
-		v = git_config_bool_or_int(key, value, &is_bool);
+		v = but_config_bool_or_int(key, value, &is_bool);
 		if (!is_bool)
 			return xstrfmt("%d", v);
 		else
 			return xstrdup(v ? "true" : "false");
 	}
 	if (type == TYPE_BOOL_OR_STR) {
-		int v = git_parse_maybe_bool(value);
+		int v = but_parse_maybe_bool(value);
 		if (v < 0)
 			return xstrdup(value);
 		else
@@ -437,7 +437,7 @@ static char *normalize_value(const char *key, const char *value)
 	}
 	if (type == TYPE_COLOR) {
 		char v[COLOR_MAXLEN];
-		if (git_config_color(v, key, value))
+		if (but_config_color(v, key, value))
 			die(_("cannot parse color '%s'"), value);
 
 		/*
@@ -458,7 +458,7 @@ static const char *get_color_slot;
 static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
-static int git_get_color_config(const char *var, const char *value, void *cb)
+static int but_get_color_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, get_color_slot)) {
 		if (!value)
@@ -475,7 +475,7 @@ static void get_color(const char *var, const char *def_color)
 	get_color_slot = var;
 	get_color_found = 0;
 	parsed_color[0] = '\0';
-	config_with_options(git_get_color_config, NULL,
+	config_with_options(but_get_color_config, NULL,
 			    &given_config_source, &config_options);
 
 	if (!get_color_found && def_color) {
@@ -489,15 +489,15 @@ static void get_color(const char *var, const char *def_color)
 static int get_colorbool_found;
 static int get_diff_color_found;
 static int get_color_ui_found;
-static int git_get_colorbool_config(const char *var, const char *value,
+static int but_get_colorbool_config(const char *var, const char *value,
 		void *cb)
 {
 	if (!strcmp(var, get_colorbool_slot))
-		get_colorbool_found = git_config_colorbool(var, value);
+		get_colorbool_found = but_config_colorbool(var, value);
 	else if (!strcmp(var, "diff.color"))
-		get_diff_color_found = git_config_colorbool(var, value);
+		get_diff_color_found = but_config_colorbool(var, value);
 	else if (!strcmp(var, "color.ui"))
-		get_color_ui_found = git_config_colorbool(var, value);
+		get_color_ui_found = but_config_colorbool(var, value);
 	return 0;
 }
 
@@ -507,7 +507,7 @@ static int get_colorbool(const char *var, int print)
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
-	config_with_options(git_get_colorbool_config, NULL,
+	config_with_options(but_get_colorbool_config, NULL,
 			    &given_config_source, &config_options);
 
 	if (get_colorbool_found < 0) {
@@ -533,7 +533,7 @@ static int get_colorbool(const char *var, int print)
 static void check_write(void)
 {
 	if (!given_config_source.file && !startup_info->have_repository)
-		die(_("not in a git directory"));
+		die(_("not in a but directory"));
 
 	if (given_config_source.use_stdin)
 		die(_("writing to stdin is not supported"));
@@ -636,7 +636,7 @@ static char *default_user_config(void)
 
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
-	int nongit = !startup_info->have_repository;
+	int nonbut = !startup_info->have_repository;
 	char *value;
 	int flags = 0;
 
@@ -653,13 +653,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
-	if (nongit) {
+	if (nonbut) {
 		if (use_local_config)
-			die(_("--local can only be used inside a git repository"));
+			die(_("--local can only be used inside a but repository"));
 		if (given_config_source.blob)
-			die(_("--blob can only be used inside a git repository"));
+			die(_("--blob can only be used inside a but repository"));
 		if (use_worktree_config)
-			die(_("--worktree can only be used inside a git repository"));
+			die(_("--worktree can only be used inside a but repository"));
 
 	}
 
@@ -673,10 +673,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (use_global_config) {
 		char *user_config, *xdg_config;
 
-		git_global_config(&user_config, &xdg_config);
+		but_global_config(&user_config, &xdg_config);
 		if (!user_config)
 			/*
-			 * It is unknown if HOME/.gitconfig exists, so
+			 * It is unknown if HOME/.butconfig exists, so
 			 * we do not know if we should write to XDG
 			 * location; error out even if XDG_CONFIG_HOME
 			 * is set and points at a sane location.
@@ -695,23 +695,23 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (use_system_config) {
-		given_config_source.file = git_system_config();
+		given_config_source.file = but_system_config();
 		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
 	} else if (use_local_config) {
-		given_config_source.file = git_pathdup("config");
+		given_config_source.file = but_pathdup("config");
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
 		if (repository_format_worktree_config)
-			given_config_source.file = git_pathdup("config.worktree");
+			given_config_source.file = but_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
 			      "working trees unless the config\n"
 			      "extension worktreeConfig is enabled. "
 			      "Please read \"CONFIGURATION FILE\"\n"
-			      "section in \"git help worktree\" for details"));
+			      "section in \"but help worktree\" for details"));
 		else
-			given_config_source.file = git_pathdup("config");
+			given_config_source.file = but_pathdup("config");
 		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 		free_worktrees(worktrees);
 	} else if (given_config_source.file) {
@@ -728,9 +728,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = !given_config_source.file;
 	else
 		config_options.respect_includes = respect_includes_opt;
-	if (!nongit) {
-		config_options.commondir = get_git_common_dir();
-		config_options.git_dir = get_git_dir();
+	if (!nonbut) {
+		config_options.commondir = get_but_common_dir();
+		config_options.but_dir = get_but_dir();
 	}
 
 	if (end_nul) {
@@ -779,22 +779,22 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		int allowed_usage = 0;
 
 		switch (actions) {
-		/* git config --get <name> <value-pattern> */
+		/* but config --get <name> <value-pattern> */
 		case ACTION_GET:
-		/* git config --get-all <name> <value-pattern> */
+		/* but config --get-all <name> <value-pattern> */
 		case ACTION_GET_ALL:
-		/* git config --get-regexp <name-pattern> <value-pattern> */
+		/* but config --get-regexp <name-pattern> <value-pattern> */
 		case ACTION_GET_REGEXP:
-		/* git config --unset <name> <value-pattern> */
+		/* but config --unset <name> <value-pattern> */
 		case ACTION_UNSET:
-		/* git config --unset-all <name> <value-pattern> */
+		/* but config --unset-all <name> <value-pattern> */
 		case ACTION_UNSET_ALL:
 			allowed_usage = argc > 1 && !!argv[1];
 			break;
 
-		/* git config <name> <value> <value-pattern> */
+		/* but config <name> <value> <value-pattern> */
 		case ACTION_SET_ALL:
-		/* git config --replace-all <name> <value> <value-pattern> */
+		/* but config --replace-all <name> <value> <value-pattern> */
 		case ACTION_REPLACE_ALL:
 			allowed_usage = argc > 2 && !!argv[2];
 			break;
@@ -829,16 +829,16 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		char *config_file;
 
 		check_argc(argc, 0, 0);
-		if (!given_config_source.file && nongit)
-			die(_("not in a git directory"));
+		if (!given_config_source.file && nonbut)
+			die(_("not in a but directory"));
 		if (given_config_source.use_stdin)
 			die(_("editing stdin is not supported"));
 		if (given_config_source.blob)
 			die(_("editing blobs is not supported"));
-		git_config(git_default_config, NULL);
+		but_config(but_default_config, NULL);
 		config_file = given_config_source.file ?
 				xstrdup(given_config_source.file) :
-				git_pathdup("config");
+				but_pathdup("config");
 		if (use_global_config) {
 			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
 			if (fd >= 0) {
@@ -859,7 +859,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
 		UNLEAK(value);
-		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], value);
+		ret = but_config_set_in_file_gently(given_config_source.file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -870,7 +870,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
 		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
+		return but_config_set_multivar_in_file_gently(given_config_source.file,
 							      argv[0], value, argv[2],
 							      flags);
 	}
@@ -879,7 +879,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
 		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
+		return but_config_set_multivar_in_file_gently(given_config_source.file,
 							      argv[0], value,
 							      CONFIG_REGEX_NONE,
 							      flags);
@@ -889,7 +889,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
 		UNLEAK(value);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
+		return but_config_set_multivar_in_file_gently(given_config_source.file,
 							      argv[0], value, argv[2],
 							      flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
@@ -917,17 +917,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_write();
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			return git_config_set_multivar_in_file_gently(given_config_source.file,
+			return but_config_set_multivar_in_file_gently(given_config_source.file,
 								      argv[0], NULL, argv[1],
 								      flags);
 		else
-			return git_config_set_in_file_gently(given_config_source.file,
+			return but_config_set_in_file_gently(given_config_source.file,
 							     argv[0], NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write();
 		check_argc(argc, 1, 2);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
+		return but_config_set_multivar_in_file_gently(given_config_source.file,
 							      argv[0], NULL, argv[1],
 							      flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
@@ -935,7 +935,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		int ret;
 		check_write();
 		check_argc(argc, 2, 2);
-		ret = git_config_rename_section_in_file(given_config_source.file,
+		ret = but_config_rename_section_in_file(given_config_source.file,
 							argv[0], argv[1]);
 		if (ret < 0)
 			return ret;
@@ -946,7 +946,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		int ret;
 		check_write();
 		check_argc(argc, 1, 1);
-		ret = git_config_rename_section_in_file(given_config_source.file,
+		ret = but_config_rename_section_in_file(given_config_source.file,
 							argv[0], NULL);
 		if (ret < 0)
 			return ret;
@@ -960,7 +960,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_GET_COLORBOOL) {
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			color_stdout_is_tty = git_config_bool("command line", argv[1]);
+			color_stdout_is_tty = but_config_bool("command line", argv[1]);
 		return get_colorbool(argv[0], argc == 2);
 	}
 

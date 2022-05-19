@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='test that git handles an svn repository with empty symlinks'
+test_description='test that but handles an svn repository with empty symlinks'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 test_expect_success 'load svn dumpfile' '
 	svnadmin load "$rawsvnrepo" <<EOF
 SVN-fs-dump-format-version: 2
@@ -83,20 +83,20 @@ link doink
 EOF
 '
 
-test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" x'
+test_expect_success 'clone using but svn' 'but svn clone -r1 "$svnrepo" x'
 
 test_expect_success SYMLINKS '"bar" is a symlink that points to "asdf"' '
 	test -L x/bar &&
-	(cd x && test xasdf = x"$(git cat-file blob HEAD:bar)")
+	(cd x && test xasdf = x"$(but cat-file blob HEAD:bar)")
 '
 
 test_expect_success 'get "bar" => symlink fix from svn' '
-	(cd x && git svn rebase)
+	(cd x && but svn rebase)
 '
 
 test_expect_success SYMLINKS '"bar" remains a proper symlink' '
 	test -L x/bar &&
-	(cd x && test xdoink = x"$(git cat-file blob HEAD:bar)")
+	(cd x && test xdoink = x"$(but cat-file blob HEAD:bar)")
 '
 
 test_done

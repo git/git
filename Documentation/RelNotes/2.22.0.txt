@@ -13,12 +13,12 @@ Backward compatibility note
 
 UI, Workflows & Features
 
- * "git checkout --no-overlay" can be used to trigger a new mode of
+ * "but checkout --no-overlay" can be used to trigger a new mode of
    checking out paths out of the tree-ish, that allows paths that
    match the pathspec that are in the current index and working tree
    and are not in the tree-ish.
 
- * The %(trailers) formatter in "git log --format=..."  now allows to
+ * The %(trailers) formatter in "but log --format=..."  now allows to
    optionally pick trailers selectively by keyword, show only values,
    etc.
 
@@ -27,9 +27,9 @@ UI, Workflows & Features
    cases.
 
  * Command-line completion (in contrib/) learned to tab-complete the
-   "git submodule absorbgitdirs" subcommand.
+   "but submodule absorbbutdirs" subcommand.
 
- * "git branch" learned a new subcommand "--show-current".
+ * "but branch" learned a new subcommand "--show-current".
 
  * Output from "diff --cc" did not show the original paths when the
    merge involved renames.  A new option adds the paths in the
@@ -38,12 +38,12 @@ UI, Workflows & Features
  * The command line completion (in contrib/) has been taught to
    complete more subcommand parameters.
 
- * The final report from "git bisect" used to show the suspected
+ * The final report from "but bisect" used to show the suspected
    culprit using a raw "diff-tree", with which there is no output for
    a merge cummit.  This has been updated to use a more modern and
    human readable output that still is concise enough.
 
- * "git rebase --rebase-merges" replaces its old "--preserve-merges"
+ * "but rebase --rebase-merges" replaces its old "--preserve-merges"
    option; the latter is now marked as deprecated.
 
  * Error message given while cloning with --recurse-submodules has
@@ -53,28 +53,28 @@ UI, Workflows & Features
    configuration (when available), which allows --list-cmds to honour
    a repository specific setting of completion.commands, for example.
 
- * "git mergetool" learned to offer Sublime Merge (smerge) as one of
+ * "but mergetool" learned to offer Sublime Merge (smerge) as one of
    its backends.
 
  * A new hook "post-index-change" is called when the on-disk index
    file changes, which can help e.g. a virtualized working tree
    implementation.
 
- * "git difftool" can now run outside a repository.
+ * "but difftool" can now run outside a repository.
 
- * "git checkout -m <other>" was about carrying the differences
+ * "but checkout -m <other>" was about carrying the differences
    between HEAD and the working-tree files forward while checking out
    another branch, and ignored the differences between HEAD and the
    index.  The command has been taught to abort when the index and the
    HEAD are different.
 
  * A progress indicator has been added to the "index-pack" step, which
-   often makes users wait for completion during "git clone".
+   often makes users wait for completion during "but clone".
 
- * "git submodule" learns "set-branch" subcommand that allows the
+ * "but submodule" learns "set-branch" subcommand that allows the
    submodule.*.branch settings to be modified.
 
- * "git merge-recursive" backend recently learned a new heuristics to
+ * "but merge-recursive" backend recently learned a new heuristics to
    infer file movement based on how other files in the same directory
    moved.  As this is inherently less robust heuristics than the one
    based on the content similarity of the file itself (rather than
@@ -83,11 +83,11 @@ UI, Workflows & Features
    leave the renamed paths in higher/conflicted stages in the index so
    that the user can examine and confirm the result.
 
- * "git tag" learned to give an advice suggesting it might be a
+ * "but tag" learned to give an advice suggesting it might be a
    mistake when creating an annotated or signed tag that points at
    another tag.
 
- * The "git pack-objects" command learned to report the number of
+ * The "but pack-objects" command learned to report the number of
    objects it packed via the trace2 mechanism.
 
  * The list of conflicted paths shown in the editor while concluding a
@@ -99,23 +99,23 @@ UI, Workflows & Features
  * The trace2 tracing facility learned to auto-generate a filename
    when told to log to a directory.
 
- * "git clone" learned a new --server-option option when talking over
+ * "but clone" learned a new --server-option option when talking over
    the protocol version 2.
 
  * The connectivity bitmaps are created by default in bare
    repositories now; also the pathname hash-cache is created by
    default to avoid making crappy deltas when repacking.
 
- * "git branch new A...B" and "git checkout -b new A...B" have been
+ * "but branch new A...B" and "but checkout -b new A...B" have been
    taught that in their contexts, the notation A...B means "the merge
-   base between these two cummits", just like "git checkout A...B"
+   base between these two cummits", just like "but checkout A...B"
    detaches HEAD at that cummit.
 
- * Update "git difftool" and "git mergetool" so that the combinations
+ * Update "but difftool" and "but mergetool" so that the combinations
    of {diff,merge}.{tool,guitool} configuration variables serve as
    fallback settings of each other in a sensible order.
 
- * The "--dir-diff" mode of "git difftool" is not useful in "--no-index"
+ * The "--dir-diff" mode of "but difftool" is not useful in "--no-index"
    mode; they are now explicitly marked as mutually incompatible.
 
 
@@ -131,10 +131,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * A more structured way to obtain execution trace has been added.
 
- * "git prune" has been taught to take advantage of reachability
+ * "but prune" has been taught to take advantage of reachability
    bitmap when able.
 
- * The command line parser of "git cummit-tree" has been rewritten to
+ * The command line parser of "but cummit-tree" has been rewritten to
    use the parse-options API.
 
  * Suggest GitGitGadget instead of submitGit as a way to submit
@@ -147,12 +147,12 @@ Performance, Internal Implementation, Development Support etc.
  * Dev support update to make it easier to compare two formatted
    results from our documentation.
 
- * The scripted "git rebase" implementation has been retired.
+ * The scripted "but rebase" implementation has been retired.
 
- * "git multi-pack-index verify" did not scale well with the number of
+ * "but multi-pack-index verify" did not scale well with the number of
    packfiles, which is being improved.
 
- * "git stash" has been rewritten in C.
+ * "but stash" has been rewritten in C.
 
  * The "check-docs" Makefile target to support developers has been
    updated.
@@ -163,7 +163,7 @@ Performance, Internal Implementation, Development Support etc.
    command getting non-unique when a new option that share the same
    prefix is added.
 
- * The scripted version of "git rebase -i" wrote and rewrote the todo
+ * The scripted version of "but rebase -i" wrote and rewrote the todo
    list many times during a single step of its operation, and the
    recent C-rewrite made a faithful conversion of the logic to C.  The
    implementation has been updated to carry necessary information
@@ -175,13 +175,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Conversion from unsigned char[20] to struct object_id continues.
 
- * While running "git diff" in a lazy clone, we can upfront know which
+ * While running "but diff" in a lazy clone, we can upfront know which
    missing blobs we will need, instead of waiting for the on-demand
    machinery to discover them one by one.  The code learned to aim to
    achieve better performance by batching the request for these
    promised blobs.
 
- * During an initial "git clone --depth=..." partial clone, it is
+ * During an initial "but clone --depth=..." partial clone, it is
    pointless to spend cycles for a large portion of the connectivity
    check that enumerates and skips promisor objects (which by
    definition is all objects fetched from the other side).  This has
@@ -194,7 +194,7 @@ Performance, Internal Implementation, Development Support etc.
    libjson-perl even though it did not have to, which has been
    corrected.
 
- * The internal implementation of "git rebase -i" has been updated to
+ * The internal implementation of "but rebase -i" has been updated to
    avoid forking a separate "rebase--interactive" process.
 
  * Allow DEP and ASLR for Windows build to for security hardening.
@@ -206,7 +206,7 @@ Performance, Internal Implementation, Development Support etc.
  * Optionally "make coccicheck" can feed multiple source files to
    spatch, gaining performance while spending more memory.
 
- * Attempt to use an abbreviated option in "git clone --recurs" is
+ * Attempt to use an abbreviated option in "but clone --recurs" is
    responded by a request to disambiguate between --recursive and
    --recurse-submodules, which is bad because these two are synonyms.
    The parse-options API has been extended to define such synonyms
@@ -222,14 +222,14 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.21
 -----------------
 
- * "git prune-packed" did not notice and complain against excess
+ * "but prune-packed" did not notice and complain against excess
    arguments given from the command line, which now it does.
    (merge 9b0bd87ed2 rj/prune-packed-excess-args later to maint).
 
  * Split-index fix.
    (merge 6e37c8ed3c nd/split-index-null-base-fix later to maint).
 
- * "git diff --no-index" may still want to access Git goodies like
+ * "but diff --no-index" may still want to access Git goodies like
    --ext-diff and --textconv, but so far these have been ignored,
    which has been corrected.
    (merge 287ab28bfa jk/diff-no-index-initialize later to maint).
@@ -256,7 +256,7 @@ Fixes since v2.21
    ETAGS on.
    (merge 92b88eba9f js/find-lib-h-with-ls-files-when-possible later to maint).
 
- * "git rebase" that was reimplemented in C did not set ORIG_HEAD
+ * "but rebase" that was reimplemented in C did not set ORIG_HEAD
    correctly, which has been corrected.
    (merge cbd29ead92 js/rebase-orig-head-fix later to maint).
 
@@ -267,17 +267,17 @@ Fixes since v2.21
    DEVELOPER=YesPlease; this did not work well before.
    (merge 6d5d4b4e93 ab/makefile-help-devs-more later to maint).
 
- * "git fsck --connectivity-only" omits computation necessary to sift
+ * "but fsck --connectivity-only" omits computation necessary to sift
    the objects that are not reachable from any of the refs into
    unreachable and dangling.  This is now enabled when dangling
    objects are requested (which is done by default, but can be
    overridden with the "--no-dangling" option).
    (merge 8d8c2a5aef jk/fsck-doc later to maint).
 
- * On platforms where "git fetch" is killed with SIGPIPE (e.g. OSX),
+ * On platforms where "but fetch" is killed with SIGPIPE (e.g. OSX),
    the upload-pack that runs on the other end that hangs up after
-   detecting an error could cause "git fetch" to die with a signal,
-   which led to a flaky test.  "git fetch" now ignores SIGPIPE during
+   detecting an error could cause "but fetch" to die with a signal,
+   which led to a flaky test.  "but fetch" now ignores SIGPIPE during
    the network portion of its operation (this is not a problem as we
    check the return status from our write(2)s).
    (merge 143588949c jk/no-sigpipe-during-network-transport later to maint).
@@ -292,7 +292,7 @@ Fixes since v2.21
    repository_format structure.
    (merge e8805af1c3 ma/clear-repository-format later to maint).
 
- * "git config --type=color ..." is meant to replace "git config --get-color"
+ * "but config --type=color ..." is meant to replace "but config --get-color"
    but there is a slight difference that wasn't documented, which is
    now fixed.
    (merge cd8e7593b9 jk/config-type-color-ends-with-lf later to maint).
@@ -305,16 +305,16 @@ Fixes since v2.21
    from the clean filter process.
    (merge 02156ab031 jh/resize-convert-scratch-buffer later to maint).
 
- * "git rebase" uses the refs/rewritten/ hierarchy to store its
+ * "but rebase" uses the refs/rewritten/ hierarchy to store its
    intermediate states, which inherently makes the hierarchy per
    worktree, but it didn't quite work well.
    (merge b9317d55a3 nd/rewritten-ref-is-per-worktree later to maint).
 
- * "git log -L<from>,<to>:<path>" with "-s" did not suppress the patch
+ * "but log -L<from>,<to>:<path>" with "-s" did not suppress the patch
    output as it should.  This has been corrected.
    (merge 05314efaea jk/line-log-with-patch later to maint).
 
- * "git worktree add" used to do a "find an available name with stat
+ * "but worktree add" used to do a "find an available name with stat
    and then mkdir", which is race-prone.  This has been fixed by using
    mkdir and reacting to EEXIST in a loop.
    (merge 7af01f2367 ms/worktree-add-atomic-mkdir later to maint).
@@ -334,18 +334,18 @@ Fixes since v2.21
    that they can be localized.
    (merge ed8b4132c8 js/remote-curl-i18n later to maint).
 
- * "git init" forgot to read platform-specific repository
+ * "but init" forgot to read platform-specific repository
    configuration, which made Windows port to ignore settings of
    core.hidedotfiles, for example.
 
  * A corner-case object name ambiguity while the sequencer machinery
    is working (e.g. "rebase -i -x") has been fixed.
 
- * "git format-patch" did not diagnose an error while opening the
+ * "but format-patch" did not diagnose an error while opening the
    output file for the cover-letter, which has been corrected.
    (merge 2fe95f494c jc/format-patch-error-check later to maint).
 
- * "git checkout -f <branch>" while the index has an unmerged path
+ * "but checkout -f <branch>" while the index has an unmerged path
    incorrectly left some paths in an unmerged state, which has been
    corrected.
 
@@ -361,33 +361,33 @@ Fixes since v2.21
  * A buglet in configuration parser has been fixed.
    (merge 19e7fdaa58 nd/include-if-wildmatch later to maint).
 
- * The documentation for "git read-tree --reset -u" has been updated.
+ * The documentation for "but read-tree --reset -u" has been updated.
    (merge b5a0bd694c nd/read-tree-reset-doc later to maint).
 
  * Code clean-up around a much-less-important-than-it-used-to-be
    update_server_info() function.
    (merge b3223761c8 jk/server-info-rabbit-hole later to maint).
 
- * The message given when "git cummit -a <paths>" errors out has been
+ * The message given when "but cummit -a <paths>" errors out has been
    updated.
    (merge 5a1dbd48bc nd/cummit-a-with-paths-msg-update later to maint).
 
- * "git cherry-pick --options A..B", after giving control back to the
+ * "but cherry-pick --options A..B", after giving control back to the
    user to ask help resolving a conflicted step, did not honor the
    options it originally received, which has been corrected.
 
- * Various glitches in "git gc" around reflog handling have been fixed.
+ * Various glitches in "but gc" around reflog handling have been fixed.
 
  * The code to read from cummit-graph file has been cleanup with more
    careful error checking before using data read from it.
 
- * Performance fix around "git fetch" that grabs many refs.
+ * Performance fix around "but fetch" that grabs many refs.
    (merge b764300912 jt/fetch-pack-wanted-refs-optim later to maint).
 
- * Protocol v2 support in "git fetch-pack" of shallow clones has been
+ * Protocol v2 support in "but fetch-pack" of shallow clones has been
    corrected.
 
- * Performance fix around "git blame", especially in a linear history
+ * Performance fix around "but blame", especially in a linear history
    (which is the norm we should optimize for).
    (merge f892014943 dk/blame-keep-origin-blob later to maint).
 
@@ -398,7 +398,7 @@ Fixes since v2.21
    deal better with overlong messages.
    (merge 545dc345eb sg/overlong-progress-fix later to maint).
 
- * "git blame -- path" in a non-bare repository starts blaming from
+ * "but blame -- path" in a non-bare repository starts blaming from
    the working tree, and the same command in a bare repository errors
    out because there is no working tree by definition.  The command
    has been taught to instead start blaming from the cummit at HEAD,
@@ -420,19 +420,19 @@ Fixes since v2.21
  * Test fix on APFS that is incapable of store paths in Latin-1.
    (merge 3889149619 js/iso8895-test-on-apfs later to maint).
 
- * "git submodule foreach <command> --quiet" did not pass the option
+ * "but submodule foreach <command> --quiet" did not pass the option
    down correctly, which has been corrected.
    (merge a282f5a906 nd/submodule-foreach-quiet later to maint).
 
- * "git send-email" has been taught to use quoted-printable when the
+ * "but send-email" has been taught to use quoted-printable when the
    payload contains carriage-return.  The use of the mechanism is in
    line with the design originally added the codepath that chooses QP
    when the payload has overly long lines.
    (merge 74d76a1701 bc/send-email-qp-cr later to maint).
 
  * The recently added feature to add addresses that are on
-   anything-by: trailers in 'git send-email' was found to be way too
-   eager and considered nonsense strings as if they can be legitimate
+   anything-by: trailers in 'but send-email' was found to be way too
+   eager and considered nonsense strings as if they can be lebutimate
    beginning of *-by: trailer.  This has been tightened.
 
  * Builds with gettext broke on recent macOS w/ Homebrew, which
@@ -440,7 +440,7 @@ Fixes since v2.21
    has been corrected.
    (merge 92a1377a2a js/macos-gettext-build later to maint).
 
- * Running "git add" on a repository created inside the current
+ * Running "but add" on a repository created inside the current
    repository is an explicit indication that the user wants to add it
    as a submodule, but when the HEAD of the inner repository is on an
    unborn branch, it cannot be added as a submodule.  Worse, the files
@@ -449,12 +449,12 @@ Fixes since v2.21
    being addressed.
    (merge f937bc2f86 km/empty-repo-is-still-a-repo later to maint).
 
- * "git cherry-pick" run with the "-x" or the "--signoff" option used
+ * "but cherry-pick" run with the "-x" or the "--signoff" option used
    to (and more importantly, ought to) clean up the cummit log message
    with the --cleanup=space option by default, but this has been
    broken since late 2017.  This has been fixed.
 
- * When given a tag that points at a cummit-ish, "git replace --graft"
+ * When given a tag that points at a cummit-ish, "but replace --graft"
    failed to peel the tag before writing a replace ref, which did not
    make sense because the old graft mechanism the feature wants to
    mimic only allowed to replace one cummit object with another.
@@ -470,17 +470,17 @@ Fixes since v2.21
    which has been fixed.
    (merge 22c3634c0f ss/msvc-path-utils-fix later to maint).
 
- * %(push:track) token used in the --format option to "git
+ * %(push:track) token used in the --format option to "but
    for-each-ref" and friends was not showing the right branch, which
    has been fixed.
    (merge c646d0934e dr/ref-filter-push-track-fix later to maint).
 
- * "make check-docs", "git help -a", etc. did not account for cases
+ * "make check-docs", "but help -a", etc. did not account for cases
    where a particular build may deliberately omit some subcommands,
    which has been corrected.
 
  * The logic to tell if a Git repository has a working tree protects
-   "git branch -D" from removing the branch that is currently checked
+   "but branch -D" from removing the branch that is currently checked
    out by mistake.  The implementation of this logic was broken for
    repositories with unusual name, which unfortunately is the norm for
    submodules these days.  This has been fixed.
@@ -507,10 +507,10 @@ Fixes since v2.21
    conflicts are resolved in working tree *.h files but before the
    resolved results are added to the index.  This has been corrected.
 
- * "git cherry-pick" (and "revert" that shares the same runtime engine)
+ * "but cherry-pick" (and "revert" that shares the same runtime engine)
    that deals with multiple cummits got confused when the final step
    gets stopped with a conflict and the user concluded the sequence
-   with "git cummit".  Attempt to fix it by cleaning up the state
+   with "but cummit".  Attempt to fix it by cleaning up the state
    files used by these commands in such a situation.
    (merge 4a72486de9 pw/clean-sequencer-state-upon-final-cummit later to maint).
 
@@ -526,25 +526,25 @@ Fixes since v2.21
    has been corrected.
 
  * To run tests for Git SVN, our scripts for CI used to install the
-   git-svn package (in the hope that it would bring in the right
+   but-svn package (in the hope that it would bring in the right
    dependencies).  This has been updated to install the more direct
    dependency, namely, libsvn-perl.
    (merge db864306cf sg/ci-libsvn-perl later to maint).
 
- * "git cvsexportcummit" running on msys did not expect cvsnt showed
+ * "but cvsexportcummit" running on msys did not expect cvsnt showed
    "cvs status" output with CRLF line endings.
 
  * The fsmonitor interface got out of sync after the in-core index
    file gets discarded, which has been corrected.
    (merge 398a3b0899 js/fsmonitor-refresh-after-discarding-index later to maint).
 
- * "git status" did not know that the "label" instruction in the
+ * "but status" did not know that the "label" instruction in the
    todo-list "rebase -i -r" uses should not be shown as a hex object
    name.
 
- * A prerequisite check in the test suite to see if a working jgit is
+ * A prerequisite check in the test suite to see if a working jbut is
    available was made more robust.
-   (merge abd0f28983 tz/test-lib-check-working-jgit later to maint).
+   (merge abd0f28983 tz/test-lib-check-working-jbut later to maint).
 
  * The codepath to parse :<path> that obtains the object name for an
    indexed object has been made more robust.
@@ -583,7 +583,7 @@ Fixes since v2.21
    (merge f64a21bd82 tz/doc-apostrophe-no-longer-needed later to maint).
    (merge dbe7b41019 js/t3301-unbreak-notes-test later to maint).
    (merge d8083e4180 km/t3000-retitle later to maint).
-   (merge 9e4cbccbd7 tz/git-svn-doc-markup-fix later to maint).
+   (merge 9e4cbccbd7 tz/but-svn-doc-markup-fix later to maint).
    (merge da9ca955a7 jk/ls-files-doc-markup-fix later to maint).
    (merge 6804ba3a58 cw/diff-highlight later to maint).
    (merge 1a8787144d nd/submodule-helper-incomplete-line-fix later to maint).
@@ -594,4 +594,4 @@ Fixes since v2.21
    (merge d4907720a2 cm/notes-comment-fix later to maint).
    (merge 9dde06de13 cb/http-push-null-in-message-fix later to maint).
    (merge 4c785c0edc js/rebase-config-bitfix later to maint).
-   (merge 8e9fe16c87 es/doc-gitsubmodules-markup later to maint).
+   (merge 8e9fe16c87 es/doc-butsubmodules-markup later to maint).

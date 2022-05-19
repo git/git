@@ -3,8 +3,8 @@ extensions.objectFormat::
 	`sha256`.  If not specified, `sha1` is assumed.  It is an error to specify
 	this key unless `core.repositoryFormatVersion` is 1.
 +
-Note that this setting should only be set by linkgit:git-init[1] or
-linkgit:git-clone[1].  Trying to change it after initialization will not
+Note that this setting should only be set by linkbut:but-init[1] or
+linkbut:but-clone[1].  Trying to change it after initialization will not
 work and will produce hard-to-diagnose issues.
 
 extensions.worktreeConfig::
@@ -28,11 +28,11 @@ certain values from the common config file to the main working tree's
 +
 It may also be beneficial to adjust the locations of `core.sparseCheckout`
 and `core.sparseCheckoutCone` depending on your desire for customizable
-sparse-checkout settings for each worktree. By default, the `git
+sparse-checkout settings for each worktree. By default, the `but
 sparse-checkout` builtin enables `extensions.worktreeConfig`, assigns
 these config values on a per-worktree basis, and uses the
 `$GIT_DIR/info/sparse-checkout` file to specify the sparsity for each
-worktree independently. See linkgit:git-sparse-checkout[1] for more
+worktree independently. See linkbut:but-sparse-checkout[1] for more
 details.
 +
 For historical reasons, `extensions.worktreeConfig` is respected

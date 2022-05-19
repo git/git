@@ -11,7 +11,7 @@
  * published by the Free Software Foundation.
  */
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "delta.h"
 
 /* maximum hash entry list for the same hash bucket */

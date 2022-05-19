@@ -9,8 +9,8 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
-	N_("git show-ref --exclude-existing[=<pattern>]"),
+	N_("but show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
+	N_("but show-ref --exclude-existing[=<pattern>]"),
 	NULL
 };
 
@@ -25,7 +25,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	struct object_id peeled;
 
 	if (!has_object_file(oid))
-		die("git show-ref: bad ref %s (%s)", refname,
+		die("but show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 
 	if (quiet)
@@ -170,7 +170,7 @@ static const struct option show_ref_options[] = {
 	OPT_BOOL('d', "dereference", &deref_tags,
 		    N_("dereference tags into object IDs")),
 	OPT_CALLBACK_F('s', "hash", &abbrev, N_("n"),
-		       N_("only show SHA1 hash using <n> digits"),
+		       N_("only show SHA1 hash using <n> dibuts"),
 		       PARSE_OPT_OPTARG, &hash_callback),
 	OPT__ABBREV(&abbrev),
 	OPT__QUIET(&quiet,
@@ -183,7 +183,7 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);

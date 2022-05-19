@@ -18,15 +18,15 @@ test_expect_success 'scalar shows a usage' '
 '
 
 test_expect_success 'scalar unregister' '
-	git init vanish/src &&
+	but init vanish/src &&
 	scalar register vanish/src &&
-	git config --get --global --fixed-value \
+	but config --get --global --fixed-value \
 		maintenance.repo "$(pwd)/vanish/src" &&
 	scalar list >scalar.repos &&
 	grep -F "$(pwd)/vanish/src" scalar.repos &&
-	rm -rf vanish/src/.git &&
+	rm -rf vanish/src/.but &&
 	scalar unregister vanish &&
-	test_must_fail git config --get --global --fixed-value \
+	test_must_fail but config --get --global --fixed-value \
 		maintenance.repo "$(pwd)/vanish/src" &&
 	scalar list >scalar.repos &&
 	! grep -F "$(pwd)/vanish/src" scalar.repos
@@ -36,44 +36,44 @@ test_expect_success 'set up repository to clone' '
 	test_cummit first &&
 	test_cummit second &&
 	test_cummit third &&
-	git switch -c parallel first &&
+	but switch -c parallel first &&
 	mkdir -p 1/2 &&
 	test_cummit 1/2/3 &&
-	git config uploadPack.allowFilter true &&
-	git config uploadPack.allowAnySHA1InWant true
+	but config uploadPack.allowFilter true &&
+	but config uploadPack.allowAnySHA1InWant true
 '
 
 test_expect_success 'scalar clone' '
-	second=$(git rev-parse --verify second:second.t) &&
+	second=$(but rev-parse --verify second:second.t) &&
 	scalar clone "file://$(pwd)" cloned --single-branch &&
 	(
 		cd cloned/src &&
 
-		git config --get --global --fixed-value maintenance.repo \
+		but config --get --global --fixed-value maintenance.repo \
 			"$(pwd)" &&
 
-		git for-each-ref --format="%(refname)" refs/remotes/origin/ >actual &&
+		but for-each-ref --format="%(refname)" refs/remotes/origin/ >actual &&
 		echo "refs/remotes/origin/parallel" >expect &&
 		test_cmp expect actual &&
 
 		test_path_is_missing 1/2 &&
-		test_must_fail git rev-list --missing=print $second &&
-		git rev-list $second &&
-		git cat-file blob $second >actual &&
+		test_must_fail but rev-list --missing=print $second &&
+		but rev-list $second &&
+		but cat-file blob $second >actual &&
 		echo "second" >expect &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'scalar reconfigure' '
-	git init one/src &&
+	but init one/src &&
 	scalar register one &&
-	git -C one/src config core.preloadIndex false &&
+	but -C one/src config core.preloadIndex false &&
 	scalar reconfigure one &&
-	test true = "$(git -C one/src config core.preloadIndex)" &&
-	git -C one/src config core.preloadIndex false &&
+	test true = "$(but -C one/src config core.preloadIndex)" &&
+	but -C one/src config core.preloadIndex false &&
 	scalar reconfigure -a &&
-	test true = "$(git -C one/src config core.preloadIndex)"
+	test true = "$(but -C one/src config core.preloadIndex)"
 '
 
 test_expect_success 'scalar delete without enlistment shows a usage' '
@@ -87,10 +87,10 @@ test_expect_success 'scalar delete with enlistment' '
 
 test_expect_success 'scalar supports -c/-C' '
 	test_when_finished "scalar delete sub" &&
-	git init sub &&
+	but init sub &&
 	scalar -C sub -c status.aheadBehind=bogus register &&
-	test -z "$(git -C sub config --local status.aheadBehind)" &&
-	test true = "$(git -C sub config core.preloadIndex)"
+	test -z "$(but -C sub config --local status.aheadBehind)" &&
+	test true = "$(but -C sub config core.preloadIndex)"
 '
 
 test_done

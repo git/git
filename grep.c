@@ -61,7 +61,7 @@ int grep_config(const char *var, const char *value, void *cb)
 		return -1;
 
 	if (!strcmp(var, "grep.extendedregexp")) {
-		opt->extended_regexp_option = git_config_bool(var, value);
+		opt->extended_regexp_option = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -71,21 +71,21 @@ int grep_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "grep.linenumber")) {
-		opt->linenum = git_config_bool(var, value);
+		opt->linenum = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "grep.column")) {
-		opt->columnnum = git_config_bool(var, value);
+		opt->columnnum = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "grep.fullname")) {
-		opt->relative = !git_config_bool(var, value);
+		opt->relative = !but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "color.grep"))
-		opt->color = git_config_colorbool(var, value);
+		opt->color = but_config_colorbool(var, value);
 	if (!strcmp(var, "color.grep.match")) {
 		if (grep_config("color.grep.matchcontext", value, cb) < 0)
 			return -1;
@@ -1237,7 +1237,7 @@ static void show_line(struct grep_opt *opt,
 int grep_use_locks;
 
 /*
- * This lock protects access to the gitattributes machinery, which is
+ * This lock protects access to the butattributes machinery, which is
  * not thread-safe.
  */
 pthread_mutex_t grep_attr_mutex;
@@ -1454,13 +1454,13 @@ static int fill_textconv_grep(struct repository *r,
 	 * fill_textconv is not remotely thread-safe; it modifies the global
 	 * diff tempfile structure, writes to the_repo's odb and might
 	 * internally call thread-unsafe functions such as the
-	 * prepare_packed_git() lazy-initializator. Because of the last two, we
+	 * prepare_packed_but() lazy-initializator. Because of the last two, we
 	 * must ensure mutual exclusion between this call and the object reading
 	 * API, thus we use obj_read_lock() here.
 	 *
 	 * TODO: allowing text conversion to run in parallel with object
 	 * reading operations might increase performance in the multithreaded
-	 * non-worktreee git-grep with --textconv.
+	 * non-worktreee but-grep with --textconv.
 	 */
 	obj_read_lock();
 	size = fill_textconv(r, driver, df, &buf);

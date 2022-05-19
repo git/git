@@ -4,7 +4,7 @@
 # This can be used to determine the minimum prefix length to use
 # for object names to be unique.
 
-git rev-list --objects --all | sort | perl -lne '
+but rev-list --objects --all | sort | perl -lne '
   substr($_, 40) = "";
   # uncomment next line for a distribution of bits instead of hex chars
   # $_ = unpack("B*",pack("H*",$_));

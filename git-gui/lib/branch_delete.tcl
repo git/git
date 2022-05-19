@@ -1,4 +1,4 @@
-# git-gui branch delete support
+# but-gui branch delete support
 # Copyright (C) 2007 Shawn Pearce
 
 class branch_delete {
@@ -88,10 +88,10 @@ method _delete {} {
 	foreach i [$w_heads curselection] {
 		set b [$w_heads get $i]
 		if {[catch {
-			set o [git rev-parse --verify "refs/heads/$b"]
+			set o [but rev-parse --verify "refs/heads/$b"]
 		}]} continue
 		if {$check_cmt ne {}} {
-			if {[catch {set m [git merge-base $o $check_cmt]}]} continue
+			if {[catch {set m [but merge-base $o $check_cmt]}]} continue
 			if {$o ne $m} {
 				lappend not_merged $b
 				continue
@@ -127,7 +127,7 @@ method _delete {} {
 	foreach i $to_delete {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
-		if {[catch {git branch -D $b} err]} {
+		if {[catch {but branch -D $b} err]} {
 			append failed [mc " - %s:" $b] " $err\n"
 		}
 	}

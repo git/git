@@ -7,28 +7,28 @@ Updates since v2.4
 UI, Workflows & Features
 
  * The bash completion script (in contrib/) learned a few options that
-   "git revert" takes.
+   "but revert" takes.
 
  * Whitespace breakages in deleted and context lines can also be
-   painted in the output of "git diff" and friends with the new
+   painted in the output of "but diff" and friends with the new
    --ws-error-highlight option.
 
- * List of commands shown by "git help" are grouped along the workflow
+ * List of commands shown by "but help" are grouped along the workflow
    elements to help early learners.
 
- * "git p4" now detects the filetype (e.g. binary) correctly even when
+ * "but p4" now detects the filetype (e.g. binary) correctly even when
    the files are opened exclusively.
 
- * git p4 attempts to better handle branches in Perforce.
+ * but p4 attempts to better handle branches in Perforce.
 
- * "git p4" learned "--changes-block-size <n>" to read the changes in
+ * "but p4" learned "--changes-block-size <n>" to read the changes in
    chunks from Perforce, instead of making one call to "p4 changes"
    that may trigger "too many rows scanned" error from Perforce.
 
- * More workaround for Perforce's row number limit in "git p4".
+ * More workaround for Perforce's row number limit in "but p4".
 
  * Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
-   command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
+   command and initial options (e.g. "/path/to/emacs -nw"), 'but p4'
    did not let the shell interpolate the contents of the environment
    variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
    This release makes it in line with the rest of Git, as well as with
@@ -38,11 +38,11 @@ UI, Workflows & Features
    that tracks the branch at the remote the <branch> would be pushed
    to.
 
- * "git show-branch --topics HEAD" (with no other arguments) did not
+ * "but show-branch --topics HEAD" (with no other arguments) did not
    do anything interesting.  Instead, contrast the given revision
    against all the local branches by default.
 
- * A replacement for contrib/workdir/git-new-workdir that does not
+ * A replacement for contrib/workdir/but-new-workdir that does not
    rely on symbolic links and make sharing of objects and refs safer
    by making the borrowee and borrowers aware of each other.
 
@@ -53,19 +53,19 @@ UI, Workflows & Features
    XDG configuration file locations when specified.
 
  * A heuristic we use to catch mistyped paths on the command line
-   "git <cmd> <revs> <pathspec>" is to make sure that all the non-rev
+   "but <cmd> <revs> <pathspec>" is to make sure that all the non-rev
    parameters in the later part of the command line are names of the
-   files in the working tree, but that means "git grep $str -- \*.c"
+   files in the working tree, but that means "but grep $str -- \*.c"
    must always be disambiguated with "--", because nobody sane will
    create a file whose name literally is asterisk-dot-see.  Loosen the
    heuristic to declare that with a wildcard string the user likely
    meant to give us a pathspec.
 
- * "git merge FETCH_HEAD" learned that the previous "git fetch" could
+ * "but merge FETCH_HEAD" learned that the previous "but fetch" could
    be to create an Octopus merge, i.e. recording multiple branches
    that are not marked as "not-for-merge"; this allows us to lose an
-   old style invocation "git merge <msg> HEAD $cummits..." in the
-   implementation of "git pull" script; the old style syntax can now
+   old style invocation "but merge <msg> HEAD $cummits..." in the
+   implementation of "but pull" script; the old style syntax can now
    be deprecated (but not removed yet).
 
  * Filter scripts were run with SIGPIPE disabled on the Git side,
@@ -86,10 +86,10 @@ UI, Workflows & Features
    the list of cipher suite to be used with libcURL when talking with
    https:// sites.
 
- * "git subtree" script (in contrib/) used "echo -n" to produce
+ * "but subtree" script (in contrib/) used "echo -n" to produce
    progress messages in a non-portable way.
 
- * "git subtree" script (in contrib/) does not have --squash option
+ * "but subtree" script (in contrib/) does not have --squash option
    when pushing, but the documentation and help text pretended as if
    it did.
 
@@ -99,16 +99,16 @@ UI, Workflows & Features
 
  * The index file can be taught with "update-index --untracked-cache"
    to optionally remember already seen untracked files, in order to
-   speed up "git status" in a working tree with tons of cruft.
+   speed up "but status" in a working tree with tons of cruft.
 
- * "git mergetool" learned to drive WinMerge as a backend.
+ * "but mergetool" learned to drive WinMerge as a backend.
 
- * "git upload-pack" that serves "git fetch" can be told to serve
+ * "but upload-pack" that serves "but fetch" can be told to serve
    cummits that are not at the tip of any ref, as long as they are
    reachable from a ref, with uploadpack.allowReachableSHA1InWant
    configuration variable.
 
- * "git cat-file --batch(-check)" learned the "--follow-symlinks"
+ * "but cat-file --batch(-check)" learned the "--follow-symlinks"
    option that follows an in-tree symbolic link when asked about an
    object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
    Documentation/RelNotes/2.5.0.txt.  With the new option, the command
@@ -121,10 +121,10 @@ UI, Workflows & Features
       asking for :RelNotes with this option should give
       :Documentation/RelNotes/2.5.0.txt, too
 
-    - "git cat-file --follow-symlinks blob HEAD:RelNotes"
+    - "but cat-file --follow-symlinks blob HEAD:RelNotes"
       may also be something we want to allow in the future.
 
- * "git send-email" learned the alias file format used by the sendmail
+ * "but send-email" learned the alias file format used by the sendmail
    program (in a simplified form; we obviously do not feed pipes).
 
  * Traditionally, external low-level 3-way merge drivers are expected
@@ -133,9 +133,9 @@ UI, Workflows & Features
    command line.  Additionally allow them to look at the final path
    (given by %P).
 
- * "git blame" learned blame.showEmail configuration variable.
+ * "but blame" learned blame.showEmail configuration variable.
 
- * "git apply" cannot diagnose a patch corruption when the breakage is
+ * "but apply" cannot diagnose a patch corruption when the breakage is
    to mark the length of the hunk shorter than it really is on the
    hunk header line "@@ -l,k +m,n @@"; one special case it could is
    when the hunk becomes no-op (e.g. k == n == 2 for two-line context
@@ -164,16 +164,16 @@ Performance, Internal Implementation, Development Support etc.
  * Catch a programmer mistake to feed a pointer not an array to
    ARRAY_SIZE() macro, by using a couple of GCC extensions.
 
- * Some error messages in "git config" were emitted without calling
+ * Some error messages in "but config" were emitted without calling
    the usual error() facility.
 
  * When "add--interactive" splits a hunk into two overlapping hunks
    and then let the user choose only one, it sometimes feeds an
-   incorrect patch text to "git apply".  Add tests to demonstrate
+   incorrect patch text to "but apply".  Add tests to demonstrate
    this.
 
    I have a slight suspicion that this may be
-   cf. <7vtzf77wjp.fsf@gitster.siamese.dyndns.org> coming back
+   cf. <7vtzf77wjp.fsf@butster.siamese.dyndns.org> coming back
    and biting us (I seem to have said "let's run with this and see
    what happens" back then).
 
@@ -188,7 +188,7 @@ Performance, Internal Implementation, Development Support etc.
    though the same file descriptor was in the lock struct it contains.
    Clean-up the code to lose this redundant field.
 
- * There was a dead code that used to handle "git pull --tags" and
+ * There was a dead code that used to handle "but pull --tags" and
    show special-cased error message, which was made irrelevant when
    the semantics of the option changed back in Git 1.9 days.
    (merge 19d122b pt/pull-tags-error-diag later to maint).
@@ -204,10 +204,10 @@ Performance, Internal Implementation, Development Support etc.
  * Error reporting mechanism used in "refs" API has been made more
    consistent.
 
- * "git pull" has more test coverage now.
+ * "but pull" has more test coverage now.
 
- * "git pull" has become more aware of the options meant for
-   underlying "git fetch" and then learned to use parse-options
+ * "but pull" has become more aware of the options meant for
+   underlying "but fetch" and then learned to use parse-options
    parser.
 
  * Clarify in the Makefile a guideline to decide use of USE_NSEC.
@@ -222,19 +222,19 @@ Unless otherwise noted, all the fixes since v2.4 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * Git 2.4 broke setting verbosity and progress levels on "git clone"
+ * Git 2.4 broke setting verbosity and progress levels on "but clone"
    with native transports.
    (merge 822f0c4 mh/clone-verbosity-fix later to maint).
 
- * "git add -e" did not allow the user to abort the operation by
+ * "but add -e" did not allow the user to abort the operation by
    killing the editor.
    (merge cb64800 jk/add-e-kill-editor later to maint).
 
- * Memory usage of "git index-pack" has been trimmed by tens of
+ * Memory usage of "but index-pack" has been trimmed by tens of
    per-cent.
    (merge f0e7f11 nd/slim-index-pack-memory-usage later to maint).
 
- * "git rev-list --objects $old --not --all" to see if everything that
+ * "but rev-list --objects $old --not --all" to see if everything that
    is reachable from $old is already connected to the existing refs
    was very inefficient.
    (merge b6e8a3b jk/still-interesting later to maint).
@@ -243,7 +243,7 @@ notes for details).
    take a really long object type name.
    (merge 1427a7f jc/hash-object later to maint).
 
- * "git rebase --quiet" was not quite quiet when there is nothing to
+ * "but rebase --quiet" was not quite quiet when there is nothing to
    do.
    (merge 22946a9 jk/rebase-quiet-noop later to maint).
 
@@ -255,26 +255,26 @@ notes for details).
    munge such a line.  Work it around by avoiding to use "sed".
    (merge df06201 jk/filter-branch-use-of-sed-on-incomplete-line later to maint).
 
- * "git daemon" fails to build from the source under NO_IPV6
+ * "but daemon" fails to build from the source under NO_IPV6
    configuration (regression in 2.4).
    (merge d358f77 jc/daemon-no-ipv6-for-2.4.1 later to maint).
 
- * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+ * Some time ago, "but blame" (incorrectly) lost the convert_to_but()
    call when synthesizing a fake "tip" cummit that represents the
    state in the working tree, which broke folks who record the history
    with LF line ending to make their project portable across platforms
    while terminating lines in their working tree files with CRLF for
    their platform.
-   (merge 4bf256d tb/blame-resurrect-convert-to-git later to maint).
+   (merge 4bf256d tb/blame-resurrect-convert-to-but later to maint).
 
  * We avoid setting core.worktree when the repository location is the
-   ".git" directory directly at the top level of the working tree, but
+   ".but" directory directly at the top level of the working tree, but
    the code misdetected the case in which the working tree is at the
    root level of the filesystem (which arguably is a silly thing to
    do, but still valid).
    (merge 84ccad8 jk/init-core-worktree-at-root later to maint).
 
- * "git cummit --date=now" or anything that relies on approxidate lost
+ * "but cummit --date=now" or anything that relies on approxidate lost
    the daylight-saving-time offset.
    (merge f6e6362 jc/epochtime-wo-tz later to maint).
 
@@ -283,34 +283,34 @@ notes for details).
    becoming more cautious in a naive way not to lose objects to pruning.
    (merge ee1c6c3 jk/prune-mtime later to maint).
 
- * The codepaths that read .gitignore and .gitattributes files have been
+ * The codepaths that read .butignore and .butattributes files have been
    taught that these files encoded in UTF-8 may have UTF-8 BOM marker at
    the beginning; this makes it in line with what we do for configuration
    files already.
-   (merge 27547e5 cn/bom-in-gitignore later to maint).
+   (merge 27547e5 cn/bom-in-butignore later to maint).
 
  * a few helper scripts in the test suite did not report errors
    correctly.
    (merge de248e9 ep/fix-test-lib-functions-report later to maint).
 
- * The default $HOME/.gitconfig file created upon "git config --global"
+ * The default $HOME/.butconfig file created upon "but config --global"
    that edits it had incorrectly spelled user.name and user.email
    entries in it.
    (merge 7e11052 oh/fix-config-default-user-name-section later to maint).
 
- * "git cat-file bl $blob" failed to barf even though there is no
+ * "but cat-file bl $blob" failed to barf even though there is no
    object type that is "bl".
    (merge b7994af jk/type-from-string-gently later to maint).
 
- * The usual "git diff" when seeing a file turning into a directory
+ * The usual "but diff" when seeing a file turning into a directory
    showed a patchset to remove the file and create all files in the
-   directory, but "git diff --no-index" simply refused to work.  Also,
+   directory, but "but diff --no-index" simply refused to work.  Also,
    when asked to compare a file and a directory, imitate POSIX "diff"
    and compare the file with the file with the same name in the
    directory, instead of refusing to run.
    (merge 0615173 jc/diff-no-index-d-f later to maint).
 
- * "git rebase -i" moved the "current" command from "todo" to "done" a
+ * "but rebase -i" moved the "current" command from "todo" to "done" a
    bit too prematurely, losing a step when a "pick" did not even start.
    (merge 8cbc57c ph/rebase-i-redo later to maint).
 
@@ -321,24 +321,24 @@ notes for details).
    anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
    (merge baaf233 bc/connect-plink later to maint).
 
- * We have prepended $GIT_EXEC_PATH and the path "git" is installed in
+ * We have prepended $GIT_EXEC_PATH and the path "but" is installed in
    (typically "/usr/bin") to $PATH when invoking subprograms and hooks
    for almost eternity, but the original use case the latter tried to
-   support was semi-bogus (i.e. install git to /opt/foo/git and run it
+   support was semi-bogus (i.e. install but to /opt/foo/but and run it
    without having /opt/foo on $PATH), and more importantly it has
    become less and less relevant as Git grew more mainstream (i.e. the
    users would _want_ to have it on their $PATH).  Stop prepending the
-   path in which "git" is installed to users' $PATH, as that would
+   path in which "but" is installed to users' $PATH, as that would
    interfere the command search order people depend on (e.g. they may
    not like versions of programs that are unrelated to Git in /usr/bin
    and want to override them by having different ones in /usr/local/bin
    and have the latter directory earlier in their $PATH).
-   (merge a0b4507 jk/git-no-more-argv0-path-munging later to maint).
+   (merge a0b4507 jk/but-no-more-argv0-path-munging later to maint).
 
- * core.excludesfile (defaulting to $XDG_HOME/git/ignore) is supposed
-   to be overridden by repository-specific .git/info/exclude file, but
+ * core.excludesfile (defaulting to $XDG_HOME/but/ignore) is supposed
+   to be overridden by repository-specific .but/info/exclude file, but
    the order was swapped from the beginning. This belatedly fixes it.
-   (merge 099d2d8 jc/gitignore-precedence later to maint).
+   (merge 099d2d8 jc/butignore-precedence later to maint).
 
  * There was a commented-out (instead of being marked to expect
    failure) test that documented a breakage that was fixed since the
@@ -360,7 +360,7 @@ notes for details).
    resource exhaustion.  This is for 2.4.x track.
    (merge 185ce3a mh/write-refs-sooner-2.4 later to maint).
 
- * "git bundle verify" did not diagnose extra parameters on the
+ * "but bundle verify" did not diagnose extra parameters on the
    command line.
    (merge 7886cfa ps/bundle-verify-arg later to maint).
 
@@ -381,15 +381,15 @@ notes for details).
    configuration, but it didn't.
    (merge db9bb28 pt/pull-ff-vs-merge-ff later to maint).
 
- * "git pull --log" and "git pull --no-log" worked as expected, but
-   "git pull --log=20" did not.
+ * "but pull --log" and "but pull --no-log" worked as expected, but
+   "but pull --log=20" did not.
    (merge 5061a44 pt/pull-log-n later to maint).
 
- * "git rerere forget" in a repository without rerere enabled gave a
+ * "but rerere forget" in a repository without rerere enabled gave a
    cryptic error message; it should be a silent no-op instead.
    (merge 0544574 jk/rerere-forget-check-enabled later to maint).
 
- * "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ * "but rebase -i" fired post-rewrite hook when it shouldn't (namely,
    when it was told to stop sequencing with 'exec' insn).
    (merge 141ff8f mm/rebase-i-post-rewrite-exec later to maint).
 
@@ -397,8 +397,8 @@ notes for details).
    concepts.
    (merge 92de921 mm/log-format-raw-doc later to maint).
 
- * Make "git stash something --help" error out, so that users can
-   safely say "git stash drop --help".
+ * Make "but stash something --help" error out, so that users can
+   safely say "but stash drop --help".
    (merge 5ba2831 jk/stash-options later to maint).
 
  * The clean/smudge interface did not work well when filtering an
@@ -414,11 +414,11 @@ notes for details).
    request first into core (to a reasonable limit).
    (merge 636614f jk/http-backend-deadlock later to maint).
 
- * "git clean pathspec..." tried to lstat(2) and complain even for
+ * "but clean pathspec..." tried to lstat(2) and complain even for
    paths outside the given pathspec.
    (merge 838d6a9 dt/clean-pathspec-filter-then-lstat later to maint).
 
- * Recent "git prune" traverses young unreachable objects to safekeep
+ * Recent "but prune" traverses young unreachable objects to safekeep
    old objects in the reachability chain from them, which sometimes
    caused error messages that are unnecessarily alarming.
    (merge ce4e7b2 jk/squelch-missing-link-warning-for-unreachable later to maint).
@@ -439,7 +439,7 @@ notes for details).
    is on the AC power in the sample pre-auto-gc script.
    (merge c54c7b3 pa/auto-gc-mac-osx later to maint).
 
- * "git cummit --cleanup=scissors" was not careful enough to protect
+ * "but cummit --cleanup=scissors" was not careful enough to protect
    against getting fooled by a line that looked like scissors.
    (merge fbfa097 sg/cummit-cleanup-scissors later to maint).
 
@@ -452,28 +452,28 @@ notes for details).
    failed for users with noclobber set.
    (merge 0b1f688 af/tcsh-completion-noclobber later to maint).
 
- * "git for-each-ref" reported "missing object" for 0{40} when it
+ * "but for-each-ref" reported "missing object" for 0{40} when it
    encounters a broken ref.  The lack of object whose name is 0{40} is
    not the problem; the ref being broken is.
    (merge 501cf47 mh/reporting-broken-refs-from-for-each-ref later to maint).
 
- * Various fixes around "git am" that applies a patch to a history
+ * Various fixes around "but am" that applies a patch to a history
    that is not there yet.
    (merge 6ea3b67 pt/am-abort-fix later to maint).
 
- * "git fsck" used to ignore missing or invalid objects recorded in reflog.
+ * "but fsck" used to ignore missing or invalid objects recorded in reflog.
    (merge 19bf6c9 mh/fsck-reflog-entries later to maint).
 
- * "git format-patch --ignore-if-upstream A..B" did not like to be fed
+ * "but format-patch --ignore-if-upstream A..B" did not like to be fed
    tags as boundary cummits.
    (merge 9b7a61d jc/do-not-feed-tags-to-clear-cummit-marks later to maint).
 
- * "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
+ * "but fetch --depth=<depth>" and "but clone --depth=<depth>" issued
    a shallow transfer request even to an upload-pack that does not
    support the capability.
    (merge eb86a50 me/fetch-into-shallow-safety later to maint).
 
- * "git rebase" did not exit with failure when format-patch it invoked
+ * "but rebase" did not exit with failure when format-patch it invoked
    failed for whatever reason.
    (merge 60d708b cb/rebase-am-exit-code later to maint).
 
@@ -488,7 +488,7 @@ notes for details).
  * A minor bugfix when pack bitmap is used with "rev-list --count".
    (merge c8a70d3 jk/rev-list-no-bitmap-while-pruning later to maint).
 
- * "git config" failed to update the configuration file when the
+ * "but config" failed to update the configuration file when the
    underlying filesystem is incapable of renaming a file that is still
    open.
    (merge 7a64592 kb/config-unmap-before-renaming later to maint).
@@ -496,21 +496,21 @@ notes for details).
  * Avoid possible ssize_t to int truncation.
    (merge 6c8afe4 mh/strbuf-read-file-returns-ssize-t later to maint).
 
- * When you say "!<ENTER>" while running say "git log", you'd confuse
+ * When you say "!<ENTER>" while running say "but log", you'd confuse
    yourself in the resulting shell, that may look as if you took
-   control back to the original shell you spawned "git log" from but
+   control back to the original shell you spawned "but log" from but
    that isn't what is happening.  To that new shell, we leaked
    GIT_PAGER_IN_USE environment variable that was meant as a local
    communication between the original "Git" and subprocesses that was
    spawned by it after we launched the pager, which caused many
-   "interesting" things to happen, e.g. "git diff | cat" still paints
+   "interesting" things to happen, e.g. "but diff | cat" still paints
    its output in color by default.
 
    Stop leaking that environment variable to the pager's half of the
    fork; we only need it on "Git" side when we spawn the pager.
-   (merge 124b519 jc/unexport-git-pager-in-use-in-pager later to maint).
+   (merge 124b519 jc/unexport-but-pager-in-use-in-pager later to maint).
 
- * Abandoning an already applied change in "git rebase -i" with
+ * Abandoning an already applied change in "but rebase -i" with
    "--continue" left CHERRY_PICK_HEAD and confused later steps.
    (merge 0e0aff4 js/rebase-i-clean-up-upon-continue-to-skip later to maint).
 
@@ -522,7 +522,7 @@ notes for details).
    without using configuration variables.
    (merge 5841520 et/http-proxyauth later to maint).
 
- * A fix to a minor regression to "git fsck" in v2.2 era that started
+ * A fix to a minor regression to "but fsck" in v2.2 era that started
    complaining about a body-less tag object when it lacks a separator
    empty line after its header to separate it with a non-existent body.
    (merge 84d18c0 jc/fsck-retire-require-eoh later to maint).

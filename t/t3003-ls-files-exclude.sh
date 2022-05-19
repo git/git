@@ -7,15 +7,15 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'create repo with file' '
 	echo content >file &&
-	git add file &&
-	git cummit -m file &&
+	but add file &&
+	but cummit -m file &&
 	echo modification >file
 '
 
 check_output() {
 test_expect_success "ls-files output contains file ($1)" "
 	echo '$2' >expect &&
-	git ls-files --exclude-standard --$1 >output &&
+	but ls-files --exclude-standard --$1 >output &&
 	test_cmp expect output
 "
 }
@@ -26,16 +26,16 @@ check_all_output() {
 }
 
 check_all_output
-test_expect_success 'add file to gitignore' '
-	echo file >.gitignore
+test_expect_success 'add file to butignore' '
+	echo file >.butignore
 '
 check_all_output
 
 test_expect_success 'ls-files -i -c lists only tracked-but-ignored files' '
 	echo content >other-file &&
-	git add other-file &&
+	but add other-file &&
 	echo file >expect &&
-	git ls-files -i -c --exclude-standard >output &&
+	but ls-files -i -c --exclude-standard >output &&
 	test_cmp expect output
 '
 

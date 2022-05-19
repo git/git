@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git apply should not get confused with rename/copy.
+test_description='but apply should not get confused with rename/copy.
 
 '
 
@@ -43,7 +43,7 @@ This is a simple readme file.
 EOF
 
 cat >patch <<\EOF
-diff --git a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/cris/klibc/archsetjmp.h
+diff --but a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/cris/klibc/archsetjmp.h
 similarity index 76%
 copy from klibc/arch/x86_64/include/klibc/archsetjmp.h
 copy to include/arch/cris/klibc/archsetjmp.h
@@ -84,7 +84,7 @@ copy to include/arch/cris/klibc/archsetjmp.h
 
 -#endif /* _SETJMP_H */
 +#endif /* _KLIBC_ARCHSETJMP_H */
-diff --git a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/m32r/klibc/archsetjmp.h
+diff --but a/klibc/arch/x86_64/include/klibc/archsetjmp.h b/include/arch/m32r/klibc/archsetjmp.h
 similarity index 66%
 rename from klibc/arch/x86_64/include/klibc/archsetjmp.h
 rename to include/arch/m32r/klibc/archsetjmp.h
@@ -118,7 +118,7 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 
 -#endif /* _SETJMP_H */
 +#endif /* _KLIBC_ARCHSETJMP_H */
-diff --git a/klibc/README b/klibc/README
+diff --but a/klibc/README b/klibc/README
 --- a/klibc/README
 +++ b/klibc/README
 @@ -1,1 +1,4 @@
@@ -126,7 +126,7 @@ diff --git a/klibc/README b/klibc/README
 +And we add a few
 +lines at the
 +end of it.
-diff --git a/klibc/README b/klibc/arch/README
+diff --but a/klibc/README b/klibc/arch/README
 copy from klibc/README
 copy to klibc/arch/README
 --- a/klibc/README
@@ -137,10 +137,10 @@ copy to klibc/arch/README
 +add a few lines at the end of it.
 EOF
 
-find klibc -type f -print | xargs git update-index --add --
+find klibc -type f -print | xargs but update-index --add --
 
-test_expect_success 'check rename/copy patch' 'git apply --check patch'
+test_expect_success 'check rename/copy patch' 'but apply --check patch'
 
-test_expect_success 'apply rename/copy patch' 'git apply --index patch'
+test_expect_success 'apply rename/copy patch' 'but apply --index patch'
 
 test_done

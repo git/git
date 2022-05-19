@@ -11,7 +11,7 @@ while [ $# -gt 0 ]; do
 	--)
 		break ;;
 	--help)
-		echo "usage: $0 [--config file] [--subsection subsec] [other_git_tree...] [--] [test_scripts]"
+		echo "usage: $0 [--config file] [--subsection subsec] [other_but_tree...] [--] [test_scripts]"
 		exit 0 ;;
 	--config)
 		shift
@@ -40,15 +40,15 @@ run_one_dir () {
 	done
 }
 
-unpack_git_rev () {
+unpack_but_rev () {
 	rev=$1
 	echo "=== Unpacking $rev in build/$rev ==="
 	mkdir -p build/$rev
-	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
+	(cd "$(but rev-parse --show-cdup)" && but archive --format=tar $rev) |
 	(cd build/$rev && tar x)
 }
 
-build_git_rev () {
+build_but_rev () {
 	rev=$1
 	name="$2"
 	for config in config.mak config.mak.autogen config.status
@@ -70,7 +70,7 @@ build_git_rev () {
 	) || die "failed to build revision '$mydir'"
 }
 
-set_git_test_installed () {
+set_but_test_installed () {
 	mydir=$1
 
 	mydir_abs=$(cd $mydir && pwd)
@@ -79,7 +79,7 @@ set_git_test_installed () {
 	then
 		GIT_TEST_INSTALLED=$mydir_abs_wrappers
 	else
-		# Older versions of git lacked bin-wrappers;
+		# Older versions of but lacked bin-wrappers;
 		# fallback to the files in the root.
 		GIT_TEST_INSTALLED=$mydir_abs
 	fi
@@ -105,18 +105,18 @@ run_dirs_helper () {
 	elif test -d "$mydir"
 	then
 		PERF_RESULTS_PREFIX=bindir$(cd $mydir && printf "%s" "$(pwd)" | tr -c "[a-zA-Z0-9]" "_").
-		set_git_test_installed "$mydir"
+		set_but_test_installed "$mydir"
 	else
-		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
+		rev=$(but rev-parse --verify "$mydir" 2>/dev/null) ||
 		die "'$mydir' is neither a directory nor a valid revision"
 		if [ ! -d build/$rev ]; then
-			unpack_git_rev $rev
+			unpack_but_rev $rev
 		fi
-		build_git_rev $rev "$mydir"
+		build_but_rev $rev "$mydir"
 		mydir=build/$rev
 
 		PERF_RESULTS_PREFIX=build_$rev.
-		set_git_test_installed "$mydir"
+		set_but_test_installed "$mydir"
 	fi
 	export PERF_RESULTS_PREFIX
 
@@ -133,7 +133,7 @@ run_dirs () {
 get_subsections () {
 	section="$1"
 	test -z "$GIT_PERF_CONFIG_FILE" && return
-	git config -f "$GIT_PERF_CONFIG_FILE" --name-only --get-regex "$section\..*\.[^.]+" |
+	but config -f "$GIT_PERF_CONFIG_FILE" --name-only --get-regex "$section\..*\.[^.]+" |
 	sed -e "s/$section\.\(.*\)\..*/\1/" | sort | uniq
 }
 
@@ -152,11 +152,11 @@ get_var_from_env_or_config () {
 	if test -n "$GIT_PERF_SUBSECTION"
 	then
 		var="$conf_sec.$GIT_PERF_SUBSECTION.$conf_var"
-		conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+		conf_value=$(but config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
 		eval "$env_var=\"$conf_value\"" && return
 	fi
 	var="$conf_sec.$conf_var"
-	conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+	conf_value=$(but config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
 	eval "$env_var=\"$conf_value\""
 }
 

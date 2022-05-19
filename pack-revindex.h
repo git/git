@@ -37,7 +37,7 @@
 #define GIT_TEST_WRITE_REV_INDEX "GIT_TEST_WRITE_REV_INDEX"
 #define GIT_TEST_REV_INDEX_DIE_IN_MEMORY "GIT_TEST_REV_INDEX_DIE_IN_MEMORY"
 
-struct packed_git;
+struct packed_but;
 struct multi_pack_index;
 
 /*
@@ -47,7 +47,7 @@ struct multi_pack_index;
  * If a '.rev' file is present it is mmap'd, and pointers are assigned into it
  * (instead of using the in-memory variant).
  */
-int load_pack_revindex(struct packed_git *p);
+int load_pack_revindex(struct packed_but *p);
 
 /*
  * load_midx_revindex loads the '.rev' file corresponding to the given
@@ -75,7 +75,7 @@ int close_midx_revindex(struct multi_pack_index *m);
  *
  * This function runs in time O(log N) with the number of objects in the pack.
  */
-int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos);
+int offset_to_pack_pos(struct packed_but *p, off_t ofs, uint32_t *pos);
 
 /*
  * pack_pos_to_index converts the given pack-relative position 'pos' by
@@ -86,7 +86,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos);
  *
  * This function runs in constant time.
  */
-uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos);
+uint32_t pack_pos_to_index(struct packed_but *p, uint32_t pos);
 
 /*
  * pack_pos_to_offset converts the given pack-relative position 'pos' into a
@@ -100,7 +100,7 @@ uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos);
  * indexes, but an additional step is taken to consult the corresponding .idx
  * file when using the on-disk format.
  */
-off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos);
+off_t pack_pos_to_offset(struct packed_but *p, uint32_t pos);
 
 /*
  * pack_pos_to_midx converts the object at position "pos" within the MIDX

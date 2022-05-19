@@ -9,7 +9,7 @@
  * published by the Free Software Foundation.
  */
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "delta.h"
 
 void *patch_delta(const void *src_buf, unsigned long src_size,

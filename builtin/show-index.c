@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char *const show_index_usage[] = {
-	"git show-index [--object-format=<hash-algorithm>]",
+	"but show-index [--object-format=<hash-algorithm>]",
 	NULL
 };
 

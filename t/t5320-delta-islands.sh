@@ -5,7 +5,7 @@ test_description='exercise delta islands'
 
 # returns true iff $1 is a delta based on $2
 is_delta_base () {
-	delta_base=$(echo "$1" | git cat-file --batch-check='%(deltabase)') &&
+	delta_base=$(echo "$1" | but cat-file --batch-check='%(deltabase)') &&
 	echo >&2 "$1 has base $delta_base" &&
 	test "$delta_base" = "$2"
 }
@@ -16,11 +16,11 @@ is_delta_base () {
 # blobs of different refs delta against each other.
 cummit() {
 	blob=$({ test-tool genrandom "$2" 10240 && echo "$3"; } |
-	       git hash-object -w --stdin) &&
-	tree=$(printf '100644 blob %s\tfile\n' "$blob" | git mktree) &&
-	cummit=$(echo "$2-$3" | git cummit-tree "$tree" ${4:+-p "$4"}) &&
-	git update-ref "refs/heads/$1" "$cummit" &&
-	eval "$1"'=$(git rev-parse $1:file)' &&
+	       but hash-object -w --stdin) &&
+	tree=$(printf '100644 blob %s\tfile\n' "$blob" | but mktree) &&
+	cummit=$(echo "$2-$3" | but cummit-tree "$tree" ${4:+-p "$4"}) &&
+	but update-ref "refs/heads/$1" "$cummit" &&
+	eval "$1"'=$(but rev-parse $1:file)' &&
 	eval "echo >&2 $1=\$$1"
 }
 
@@ -32,33 +32,33 @@ test_expect_success 'setup cummits' '
 # Note: This is heavily dependent on the "prefer larger objects as base"
 # heuristic.
 test_expect_success 'vanilla repack deltas one against two' '
-	git repack -adf &&
+	but repack -adf &&
 	is_delta_base $one $two
 '
 
 test_expect_success 'island repack with no island definition is vanilla' '
-	git repack -adfi &&
+	but repack -adfi &&
 	is_delta_base $one $two
 '
 
 test_expect_success 'island repack with no matches is vanilla' '
-	git -c "pack.island=refs/foo" repack -adfi &&
+	but -c "pack.island=refs/foo" repack -adfi &&
 	is_delta_base $one $two
 '
 
 test_expect_success 'separate islands disallows delta' '
-	git -c "pack.island=refs/heads/(.*)" repack -adfi &&
+	but -c "pack.island=refs/heads/(.*)" repack -adfi &&
 	! is_delta_base $one $two &&
 	! is_delta_base $two $one
 '
 
 test_expect_success 'same island allows delta' '
-	git -c "pack.island=refs/heads" repack -adfi &&
+	but -c "pack.island=refs/heads" repack -adfi &&
 	is_delta_base $one $two
 '
 
 test_expect_success 'coalesce same-named islands' '
-	git \
+	but \
 		-c "pack.island=refs/(.*)/one" \
 		-c "pack.island=refs/(.*)/two" \
 		repack -adfi &&
@@ -66,20 +66,20 @@ test_expect_success 'coalesce same-named islands' '
 '
 
 test_expect_success 'island restrictions drop reused deltas' '
-	git repack -adfi &&
+	but repack -adfi &&
 	is_delta_base $one $two &&
-	git -c "pack.island=refs/heads/(.*)" repack -adi &&
+	but -c "pack.island=refs/heads/(.*)" repack -adi &&
 	! is_delta_base $one $two &&
 	! is_delta_base $two $one
 '
 
 test_expect_success 'island regexes are left-anchored' '
-	git -c "pack.island=heads/(.*)" repack -adfi &&
+	but -c "pack.island=heads/(.*)" repack -adfi &&
 	is_delta_base $one $two
 '
 
 test_expect_success 'island regexes follow last-one-wins scheme' '
-	git \
+	but \
 		-c "pack.island=refs/heads/(.*)" \
 		-c "pack.island=refs/heads/" \
 		repack -adfi &&
@@ -97,7 +97,7 @@ test_expect_success 'setup shared history' '
 #
 # We also expect $root as a delta against $two by the "longest is base" rule.
 test_expect_success 'vanilla delta goes between branches' '
-	git repack -adf &&
+	but repack -adf &&
 	is_delta_base $one $two &&
 	is_delta_base $root $two
 '
@@ -111,7 +111,7 @@ test_expect_success 'vanilla delta goes between branches' '
 # as a possible base for $two, which it would not otherwise be (due to the size
 # sorting).
 test_expect_success 'deltas allowed against superset islands' '
-	git -c "pack.island=refs/heads/(.*)" repack -adfi &&
+	but -c "pack.island=refs/heads/(.*)" repack -adfi &&
 	is_delta_base $one $root &&
 	is_delta_base $two $root
 '
@@ -127,17 +127,17 @@ test_expect_success 'island core places core objects first' '
 	$root
 	$two
 	EOF
-	git -c "pack.island=refs/heads/(.*)" \
+	but -c "pack.island=refs/heads/(.*)" \
 	    -c "pack.islandcore=one" \
 	    repack -adfi &&
-	git verify-pack -v .git/objects/pack/*.pack |
+	but verify-pack -v .but/objects/pack/*.pack |
 	cut -d" " -f1 |
 	egrep "$root|$two" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'unmatched island core is not fatal' '
-	git -c "pack.islandcore=one" repack -adfi
+	but -c "pack.islandcore=one" repack -adfi
 '
 
 test_done

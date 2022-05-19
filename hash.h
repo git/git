@@ -1,7 +1,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "repository.h"
 
 #if defined(SHA1_PPC)
@@ -11,7 +11,7 @@
 #elif defined(SHA1_OPENSSL)
 #include <openssl/sha.h>
 #elif defined(SHA1_DC)
-#include "sha1dc_git.h"
+#include "sha1dc_but.h"
 #else /* SHA1_BLK */
 #include "block-sha1/sha1.h"
 #endif
@@ -39,10 +39,10 @@
 #define platform_SHA1_Final    	SHA1_Final
 #endif
 
-#define git_SHA_CTX		platform_SHA_CTX
-#define git_SHA1_Init		platform_SHA1_Init
-#define git_SHA1_Update		platform_SHA1_Update
-#define git_SHA1_Final		platform_SHA1_Final
+#define but_SHA_CTX		platform_SHA_CTX
+#define but_SHA1_Init		platform_SHA1_Init
+#define but_SHA1_Update		platform_SHA1_Update
+#define but_SHA1_Final		platform_SHA1_Final
 
 #ifndef platform_SHA256_CTX
 #define platform_SHA256_CTX	SHA256_CTX
@@ -51,28 +51,28 @@
 #define platform_SHA256_Final	SHA256_Final
 #endif
 
-#define git_SHA256_CTX		platform_SHA256_CTX
-#define git_SHA256_Init		platform_SHA256_Init
-#define git_SHA256_Update	platform_SHA256_Update
-#define git_SHA256_Final	platform_SHA256_Final
+#define but_SHA256_CTX		platform_SHA256_CTX
+#define but_SHA256_Init		platform_SHA256_Init
+#define but_SHA256_Update	platform_SHA256_Update
+#define but_SHA256_Final	platform_SHA256_Final
 
 #ifdef platform_SHA256_Clone
-#define git_SHA256_Clone	platform_SHA256_Clone
+#define but_SHA256_Clone	platform_SHA256_Clone
 #endif
 
 #ifdef SHA1_MAX_BLOCK_SIZE
 #include "compat/sha1-chunked.h"
-#undef git_SHA1_Update
-#define git_SHA1_Update		git_SHA1_Update_Chunked
+#undef but_SHA1_Update
+#define but_SHA1_Update		but_SHA1_Update_Chunked
 #endif
 
-static inline void git_SHA1_Clone(git_SHA_CTX *dst, const git_SHA_CTX *src)
+static inline void but_SHA1_Clone(but_SHA_CTX *dst, const but_SHA_CTX *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
 
 #ifndef SHA256_NEEDS_CLONE_HELPER
-static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *src)
+static inline void but_SHA256_Clone(but_SHA256_CTX *dst, const but_SHA256_CTX *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
@@ -82,7 +82,7 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
  * Note that these constants are suitable for indexing the hash_algos array and
  * comparing against each other, but are otherwise arbitrary, so they should not
  * be exposed to the user or serialized to disk.  To know whether a
- * git_hash_algo struct points to some usable hash function, test the format_id
+ * but_hash_algo struct points to some usable hash function, test the format_id
  * field for being non-zero.  Use the name field for user-visible situations and
  * the format_id field for fixed-length fields on disk.
  */
@@ -98,7 +98,7 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 /* "sha1", big-endian */
 #define GIT_SHA1_FORMAT_ID 0x73686131
 
-/* The length in bytes and in hex digits of an object name (SHA-1 value). */
+/* The length in bytes and in hex dibuts of an object name (SHA-1 value). */
 #define GIT_SHA1_RAWSZ 20
 #define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
 /* The block size of SHA-1. */
@@ -107,13 +107,13 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 /* "s256", big-endian */
 #define GIT_SHA256_FORMAT_ID 0x73323536
 
-/* The length in bytes and in hex digits of an object name (SHA-256 value). */
+/* The length in bytes and in hex dibuts of an object name (SHA-256 value). */
 #define GIT_SHA256_RAWSZ 32
 #define GIT_SHA256_HEXSZ (2 * GIT_SHA256_RAWSZ)
 /* The block size of SHA-256. */
 #define GIT_SHA256_BLKSZ 64
 
-/* The length in byte and in hex digits of the largest possible hash value. */
+/* The length in byte and in hex dibuts of the largest possible hash value. */
 #define GIT_MAX_RAWSZ GIT_SHA256_RAWSZ
 #define GIT_MAX_HEXSZ GIT_SHA256_HEXSZ
 /* The largest possible block size for any supported hash. */
@@ -125,19 +125,19 @@ struct object_id {
 };
 
 /* A suitably aligned type for stack allocations of hash contexts. */
-union git_hash_ctx {
-	git_SHA_CTX sha1;
-	git_SHA256_CTX sha256;
+union but_hash_ctx {
+	but_SHA_CTX sha1;
+	but_SHA256_CTX sha256;
 };
-typedef union git_hash_ctx git_hash_ctx;
+typedef union but_hash_ctx but_hash_ctx;
 
-typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
-typedef void (*git_hash_clone_fn)(git_hash_ctx *dst, const git_hash_ctx *src);
-typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
-typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
-typedef void (*git_hash_final_oid_fn)(struct object_id *oid, git_hash_ctx *ctx);
+typedef void (*but_hash_init_fn)(but_hash_ctx *ctx);
+typedef void (*but_hash_clone_fn)(but_hash_ctx *dst, const but_hash_ctx *src);
+typedef void (*but_hash_update_fn)(but_hash_ctx *ctx, const void *in, size_t len);
+typedef void (*but_hash_final_fn)(unsigned char *hash, but_hash_ctx *ctx);
+typedef void (*but_hash_final_oid_fn)(struct object_id *oid, but_hash_ctx *ctx);
 
-struct git_hash_algo {
+struct but_hash_algo {
 	/*
 	 * The name of the algorithm, as appears in the config file and in
 	 * messages.
@@ -157,19 +157,19 @@ struct git_hash_algo {
 	size_t blksz;
 
 	/* The hash initialization function. */
-	git_hash_init_fn init_fn;
+	but_hash_init_fn init_fn;
 
 	/* The hash context cloning function. */
-	git_hash_clone_fn clone_fn;
+	but_hash_clone_fn clone_fn;
 
 	/* The hash update function. */
-	git_hash_update_fn update_fn;
+	but_hash_update_fn update_fn;
 
 	/* The hash finalization function. */
-	git_hash_final_fn final_fn;
+	but_hash_final_fn final_fn;
 
 	/* The hash finalization function for object IDs. */
-	git_hash_final_oid_fn final_oid_fn;
+	but_hash_final_oid_fn final_oid_fn;
 
 	/* The OID of the empty tree. */
 	const struct object_id *empty_tree;
@@ -180,7 +180,7 @@ struct git_hash_algo {
 	/* The all-zeros OID. */
 	const struct object_id *null_oid;
 };
-extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
+extern const struct but_hash_algo hash_algos[GIT_HASH_NALGOS];
 
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
@@ -191,8 +191,8 @@ int hash_algo_by_name(const char *name);
 int hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
 int hash_algo_by_length(int len);
-/* Identical, except for a pointer to struct git_hash_algo. */
-static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
+/* Identical, except for a pointer to struct but_hash_algo. */
+static inline int hash_algo_by_ptr(const struct but_hash_algo *p)
 {
 	return p - hash_algos;
 }
@@ -201,7 +201,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 const struct object_id *null_oid(void);
 
-static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
+static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *sha2, const struct but_hash_algo *algop)
 {
 	/*
 	 * Teach the compiler that there are only two possibilities of hash size
@@ -219,7 +219,7 @@ static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 
 static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
 {
-	const struct git_hash_algo *algop;
+	const struct but_hash_algo *algop;
 	if (!oid1->algo)
 		algop = the_hash_algo;
 	else
@@ -227,7 +227,7 @@ static inline int oidcmp(const struct object_id *oid1, const struct object_id *o
 	return hashcmp_algop(oid1->hash, oid2->hash, algop);
 }
 
-static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
+static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *sha2, const struct but_hash_algo *algop)
 {
 	/*
 	 * We write this here instead of deferring to hashcmp so that the
@@ -245,7 +245,7 @@ static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
 
 static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
 {
-	const struct git_hash_algo *algop;
+	const struct but_hash_algo *algop;
 	if (!oid1->algo)
 		algop = the_hash_algo;
 	else
@@ -329,7 +329,7 @@ static inline int is_empty_tree_oid(const struct object_id *oid)
 	return oideq(oid, the_hash_algo->empty_tree);
 }
 
-static inline void oid_set_algo(struct object_id *oid, const struct git_hash_algo *algop)
+static inline void oid_set_algo(struct object_id *oid, const struct but_hash_algo *algop)
 {
 	oid->algo = hash_algo_by_ptr(algop);
 }

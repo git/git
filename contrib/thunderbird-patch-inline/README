@@ -3,7 +3,7 @@ for Mozilla Thunderbird. It will let you include patches inline in e-mails
 in an easy way.
 
 Usage:
-- Generate the patch with git format-patch.
+- Generate the patch with but format-patch.
 - Start writing a new e-mail in Thunderbird.
 - Press the external editor button (or Ctrl-E) to run appp.sh
 - Select the previously generated patch file.

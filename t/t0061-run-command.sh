@@ -104,11 +104,11 @@ test_expect_success POSIXPERM 'run_command reports EACCES' '
 test_expect_success POSIXPERM,SANITY 'unreadable directory in PATH' '
 	mkdir local-command &&
 	test_when_finished "chmod u+rwx local-command && rm -fr local-command" &&
-	git config alias.nitfol "!echo frotz" &&
+	but config alias.nitfol "!echo frotz" &&
 	chmod a-rx local-command &&
 	(
 		PATH=./local-command:$PATH &&
-		git nitfol >actual
+		but nitfol >actual
 	) &&
 	echo frotz >expect &&
 	test_cmp expect actual
@@ -207,7 +207,7 @@ test_expect_success 'GIT_TRACE with environment variables' '
 
 test_expect_success MINGW 'verify curlies are quoted properly' '
 	: force the rev-parse through the MSYS2 Bash &&
-	git -c alias.r="!git rev-parse" r -- a{b}c >actual &&
+	but -c alias.r="!but rev-parse" r -- a{b}c >actual &&
 	cat >expect <<-\EOF &&
 	--
 	a{b}c
@@ -222,16 +222,16 @@ test_expect_success MINGW 'can spawn .bat with argv[0] containing spaces' '
 	rm -f out &&
 	echo "echo %* >>out" >"$bat" &&
 
-	# Ask git to invoke .bat; clone will fail due to fake SSH helper
-	test_must_fail env GIT_SSH="$bat" git clone myhost:src ssh-clone &&
+	# Ask but to invoke .bat; clone will fail due to fake SSH helper
+	test_must_fail env GIT_SSH="$bat" but clone myhost:src ssh-clone &&
 
 	# Spawning .bat can fail if there are two quoted cmd.exe arguments.
 	# .bat itself is first (due to spaces in name), so just one more is
 	# needed to verify. GIT_SSH will invoke .bat multiple times:
 	# 1) -G myhost
-	# 2) myhost "git-upload-pack src"
+	# 2) myhost "but-upload-pack src"
 	# First invocation will always succeed. Test the second one.
-	grep "git-upload-pack" out
+	grep "but-upload-pack" out
 '
 
 test_done

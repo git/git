@@ -60,7 +60,7 @@ GetOptions(\%options,
 
 if ($options{help}) {
 	my $shortname = basename($0);
-	$shortname =~ s/git-credential-//;
+	$shortname =~ s/but-credential-//;
 
 	print <<EOHIPPUS;
 
@@ -81,7 +81,7 @@ Options:
                         used in this order.
 
   -g|--gpg <program>  : specify the program for GPG. By default, this is the
-                        value of gpg.program in the git repository or global
+                        value of gpg.program in the but repository or global
                         option or gpg.
 
   -k|--insecure       : ignore bad file ownership or permissions
@@ -92,18 +92,18 @@ Options:
 
 To enable this credential helper:
 
-  git config credential.helper '$shortname -f AUTHFILE1 -f AUTHFILE2'
+  but config credential.helper '$shortname -f AUTHFILE1 -f AUTHFILE2'
 
-(Note that Git will prepend "git-credential-" to the helper name and look for it
+(Note that Git will prepend "but-credential-" to the helper name and look for it
 in the path.)
 
 ...and if you want lots of debugging info:
 
-  git config credential.helper '$shortname -f AUTHFILE -d'
+  but config credential.helper '$shortname -f AUTHFILE -d'
 
 ...or to see the files opened and data found:
 
-  git config credential.helper '$shortname -f AUTHFILE -v'
+  but config credential.helper '$shortname -f AUTHFILE -v'
 
 Only "get" mode is supported by this credential helper.  It opens every
 <authfile> and looks for the first entry that matches the requested search
@@ -123,18 +123,18 @@ criteria:
 
 Thus, when we get this query on STDIN:
 
-host=github.com
+host=buthub.com
 protocol=https
 username=tzz
 
 this credential helper will look for the first entry in every <authfile> that
 matches
 
-machine github.com port https login tzz
+machine buthub.com port https login tzz
 
 OR
 
-machine github.com protocol https login tzz
+machine buthub.com protocol https login tzz
 
 OR... etc. acceptable tokens as listed above.  Any unknown tokens are
 simply ignored.
@@ -407,20 +407,20 @@ sub print_credential_data {
 
 	log_debug("entry has passed all the search checks");
  TOKEN:
-	foreach my $git_token (sort keys %$entry) {
-		log_debug("looking for useful token $git_token");
+	foreach my $but_token (sort keys %$entry) {
+		log_debug("looking for useful token $but_token");
 		# don't print unknown (to the credential helper protocol) tokens
-		next TOKEN unless exists $query->{$git_token};
+		next TOKEN unless exists $query->{$but_token};
 
 		# don't print things asked in the query (the entry matches them)
-		next TOKEN if defined $query->{$git_token};
+		next TOKEN if defined $query->{$but_token};
 
-		log_debug("FOUND: $git_token=$entry->{$git_token}");
-		printf "%s=%s\n", $git_token, $entry->{$git_token};
+		log_debug("FOUND: $but_token=$entry->{$but_token}");
+		printf "%s=%s\n", $but_token, $entry->{$but_token};
 	}
 }
 sub load_config {
-	# load settings from git config
+	# load settings from but config
 	my $options = shift;
 	# set from command argument, gpg.program option, or default to gpg
 	$options->{'gpg'} //= Git::config('gpg.program')

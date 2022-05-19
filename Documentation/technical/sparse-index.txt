@@ -22,7 +22,7 @@ fewer files than are populated, and we can only populate files at `HEAD`.
 
 Problems occur if there is an extreme imbalance in these dimensions. For
 example, if `HEAD` contains millions of paths but the populated set has
-only tens of thousands, then commands like `git status` and `git add` can
+only tens of thousands, then commands like `but status` and `but add` can
 be dominated by operations that require O(`HEAD`) operations instead of
 O(Populated). Primarily, the cost is in parsing and rewriting the index,
 which is filled primarily with files at `HEAD` that are marked with the
@@ -127,7 +127,7 @@ setting. This setting will be on by default and disabled one builtin at a
 time until we have sufficient confidence that all of the index operations
 are properly guarded.
 
-To complete this phase, the commands `git status` and `git add` will be
+To complete this phase, the commands `but status` and `but add` will be
 integrated with the sparse-index so that they operate with O(Populated)
 performance. They will be carefully tested for operations within and
 outside the sparse-checkout definition.
@@ -161,23 +161,23 @@ the most common builtins that use the index to operate as O(Populated).
 Here is a potential list of commands that could be valuable to integrate
 at this point:
 
-* `git cummit`
-* `git checkout`
-* `git merge`
-* `git rebase`
+* `but cummit`
+* `but checkout`
+* `but merge`
+* `but rebase`
 
-Hopefully, commands such as `git merge` and `git rebase` can benefit
+Hopefully, commands such as `but merge` and `but rebase` can benefit
 instead from merge algorithms that do not use the index as a data
 structure, such as the merge-ORT strategy. As these topics mature, we
 may enable the ORT strategy by default for repositories using the
 sparse-index feature.
 
-Along with `git status` and `git add`, these commands cover the majority
+Along with `but status` and `but add`, these commands cover the majority
 of users' interactions with the working directory. In addition, we can
 integrate with these commands:
 
-* `git grep`
-* `git rm`
+* `but grep`
+* `but rm`
 
 These have been proposed as some whose behavior could change when in a
 repo with a sparse-checkout definition. It would be good to include this
@@ -202,7 +202,7 @@ them with additional overhead when a sparse-index is present.
 
 Here are some commands that might be useful to update:
 
-* `git sparse-checkout set`
-* `git am`
-* `git clean`
-* `git stash`
+* `but sparse-checkout set`
+* `but am`
+* `but clean`
+* `but stash`

@@ -1,4 +1,4 @@
-# git-gui cummit checkout support
+# but-gui cummit checkout support
 # Copyright (C) 2007 Shawn Pearce
 
 class checkout_op {
@@ -72,7 +72,7 @@ method run {} {
 		set r_head [lindex $fetch_spec 2]
 		regsub ^refs/heads/ $r_head {} r_name
 
-		set cmd [list git fetch $remote]
+		set cmd [list but fetch $remote]
 		if {$l_trck ne {}} {
 			lappend cmd +$r_head:$l_trck
 		} else {
@@ -128,7 +128,7 @@ method _finish_fetch {ok} {
 		if {$l_trck eq {}} {
 			set l_trck FETCH_HEAD
 		}
-		if {[catch {set new_hash [git rev-parse --verify "$l_trck^0"]} err]} {
+		if {[catch {set new_hash [but rev-parse --verify "$l_trck^0"]} err]} {
 			set ok 0
 			$w_cons insert [mc "fatal: Cannot resolve %s" $l_trck]
 			$w_cons insert $err
@@ -168,7 +168,7 @@ method _update_ref {} {
 		set newbranch $ref
 	}
 
-	if {[catch {set cur [git rev-parse --verify "$ref^0"]}]} {
+	if {[catch {set cur [but rev-parse --verify "$ref^0"]}]} {
 		# Assume it does not exist, and that is what the error was.
 		#
 		if {!$create} {
@@ -187,11 +187,11 @@ method _update_ref {} {
 			set c_remote [lindex $remote_source 1]
 			set c_merge [lindex $remote_source 2]
 			if {[catch {
-					git config branch.$newbranch.remote $c_remote
-					git config branch.$newbranch.merge  $c_merge
+					but config branch.$newbranch.remote $c_remote
+					but config branch.$newbranch.merge  $c_merge
 				} err]} {
 				_error $this [strcat \
-				[mc "Failed to configure simplified git-pull for '%s'." $newbranch] \
+				[mc "Failed to configure simplified but-pull for '%s'." $newbranch] \
 				"\n\n$err"]
 			}
 		}
@@ -212,7 +212,7 @@ method _update_ref {} {
 		# No merge would be required, don't compute anything.
 		#
 	} else {
-		catch {set merge_base [git merge-base $new $cur]}
+		catch {set merge_base [but merge-base $new $cur]}
 		if {$merge_base eq $cur} {
 			# The current branch is older.
 			#
@@ -257,7 +257,7 @@ method _update_ref {} {
 		}
 
 		if {[catch {
-				git update-ref -m $reflog_msg $ref $new $cur
+				but update-ref -m $reflog_msg $ref $new $cur
 			} err]} {
 			_error $this [strcat [mc "Failed to update '%s'." $newbranch] "\n\n$err"]
 			return 0
@@ -304,7 +304,7 @@ The rescan will be automatically started now.
 		_readtree $this
 	} else {
 		ui_status [mc "Refreshing file status..."]
-		set fd [git_read update-index \
+		set fd [but_read update-index \
 			-q \
 			--unmerged \
 			--ignore-missing \
@@ -345,11 +345,11 @@ method _readtree {} {
 		[mc "Updating working directory to '%s'..." [_name $this]] \
 		[mc "files checked out"]]
 
-	set fd [git_read --stderr read-tree \
+	set fd [but_read --stderr read-tree \
 		-m \
 		-u \
 		-v \
-		--exclude-per-directory=.gitignore \
+		--exclude-per-directory=.butignore \
 		$HEAD \
 		$new_hash \
 		]
@@ -400,10 +400,10 @@ method _after_readtree {} {
 		append log " from $current_branch"
 	}
 
-	# -- Move/create HEAD as a symbolic ref.  Core git does not
+	# -- Move/create HEAD as a symbolic ref.  Core but does not
 	#    even check for failure here, it Just Works(tm).  If it
 	#    doesn't we are in some really ugly state that is difficult
-	#    to recover from within git-gui.
+	#    to recover from within but-gui.
 	#
 	set rh refs/heads/
 	set rn [string length $rh]
@@ -412,7 +412,7 @@ method _after_readtree {} {
 		if {$is_detached || $current_branch ne $new_branch} {
 			append log " to $new_branch"
 			if {[catch {
-					git symbolic-ref -m $log HEAD $new_ref
+					but symbolic-ref -m $log HEAD $new_ref
 				} err]} {
 				_fatal $this $err
 			}
@@ -439,7 +439,7 @@ method _after_readtree {} {
 	#
 	if {$update_old ne {}} {
 		if {[catch {
-				git update-ref \
+				but update-ref \
 					-m $reflog_msg \
 					$new_ref \
 					$new_hash \
@@ -457,7 +457,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 
 	# -- Run the post-checkout hook.
 	#
-	set fd_ph [githook_read post-checkout $old_hash $new_hash 1]
+	set fd_ph [buthook_read post-checkout $old_hash $new_hash 1]
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
@@ -510,12 +510,12 @@ method _update_repo_state {} {
 	delete_this
 }
 
-git-version proc _detach_HEAD {log new} {
+but-version proc _detach_HEAD {log new} {
 	>= 1.5.3 {
-		git update-ref --no-deref -m $log HEAD $new
+		but update-ref --no-deref -m $log HEAD $new
 	}
 	default {
-		set p [gitdir HEAD]
+		set p [butdir HEAD]
 		file delete $p
 		set fd [open $p w]
 		fconfigure $fd -translation lf -encoding utf-8
@@ -527,7 +527,7 @@ git-version proc _detach_HEAD {log new} {
 method _confirm_reset {cur} {
 	set reset_ok 0
 	set name [_name $this]
-	set gitk [list do_gitk [list $cur ^$new_hash]]
+	set butk [list do_butk [list $cur ^$new_hash]]
 
 	_toplevel $this {Confirm Branch Reset}
 	pack [label $w.msg1 \
@@ -566,7 +566,7 @@ method _confirm_reset {cur} {
 	frame $w.buttons
 	button $w.buttons.visualize \
 		-text [mc Visualize] \
-		-command $gitk
+		-command $butk
 	pack $w.buttons.visualize -side left
 	button $w.buttons.reset \
 		-text [mc Reset] \
@@ -582,7 +582,7 @@ method _confirm_reset {cur} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	set fd [git_read rev-list --pretty=oneline $cur ^$new_hash]
+	set fd [but_read rev-list --pretty=oneline $cur ^$new_hash]
 	while {[gets $fd line] > 0} {
 		set abbr [string range $line 0 7]
 		set subj [string range $line 41 end]
@@ -591,7 +591,7 @@ method _confirm_reset {cur} {
 	close $fd
 	$list configure -state disabled
 
-	bind $w    <Key-v> $gitk
+	bind $w    <Key-v> $butk
 	bind $w <Visibility> "
 		grab $w
 		focus $w.buttons.cancel

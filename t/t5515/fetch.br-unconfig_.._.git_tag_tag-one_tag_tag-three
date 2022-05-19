@@ -1,4 +1,4 @@
-# br-unconfig ../.git tag tag-one tag tag-three
+# br-unconfig ../.but tag tag-one tag tag-three
 8e32a6d901327a23ef831511badce7bf3bf46689		tag 'tag-one' of ../
 c61a82b60967180544e3c19f819ddbd0c9f89899		tag 'tag-three' of ../
 ecf3b3627b498bdcb735cc4343bf165f76964e9a	not-for-merge	tag 'tag-main' of ../

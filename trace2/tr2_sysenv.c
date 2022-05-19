@@ -9,7 +9,7 @@
  */
 struct tr2_sysenv_entry {
 	const char *env_var_name;
-	const char *git_config_name;
+	const char *but_config_name;
 
 	char *value;
 	unsigned int getenv_called : 1;
@@ -23,7 +23,7 @@ struct tr2_sysenv_entry {
  *
  * We do not define entries for the GIT_TRACE2_PARENT_* environment
  * variables because they are transient and used to pass information
- * from parent to child git processes, rather than settings.
+ * from parent to child but processes, rather than settings.
  */
 /* clang-format off */
 static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
@@ -65,7 +65,7 @@ static int tr2_sysenv_cb(const char *key, const char *value, void *d)
 		return 0;
 
 	for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++) {
-		if (!strcmp(key, tr2_sysenv_settings[k].git_config_name)) {
+		if (!strcmp(key, tr2_sysenv_settings[k].but_config_name)) {
 			free(tr2_sysenv_settings[k].value);
 			tr2_sysenv_settings[k].value = xstrdup(value);
 			return 0;
@@ -76,7 +76,7 @@ static int tr2_sysenv_cb(const char *key, const char *value, void *d)
 }
 
 /*
- * Load Trace2 settings from the system config (usually "/etc/gitconfig"
+ * Load Trace2 settings from the system config (usually "/etc/butconfig"
  * unless we were built with a runtime-prefix).  These are intended to
  * define the default values for Trace2 as requested by the administrator.
  *

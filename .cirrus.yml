@@ -14,9 +14,9 @@ freebsd_12_task:
   install_script:
     pkg install -y gettext gmake perl5
   create_user_script:
-    - pw useradd git
-    - chown -R git:git .
+    - pw useradd but
+    - chown -R but:but .
   build_script:
-    - su git -c gmake
+    - su but -c gmake
   test_script:
-    - su git -c 'gmake test'
+    - su but -c 'gmake test'

@@ -1,4 +1,4 @@
-# git-gui simple class/object fake-alike
+# but-gui simple class/object fake-alike
 # Copyright (C) 2007 Shawn Pearce
 
 proc class {class body} {

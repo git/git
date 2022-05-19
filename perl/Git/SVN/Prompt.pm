@@ -127,7 +127,7 @@ __END__
 
 =head1 NAME
 
-Git::SVN::Prompt - authentication callbacks for git-svn
+Git::SVN::Prompt - authentication callbacks for but-svn
 
 =head1 SYNOPSIS
 
@@ -136,36 +136,36 @@ Git::SVN::Prompt - authentication callbacks for git-svn
     use SVN::Client ();
 
     my $cached_simple = SVN::Client::get_simple_provider();
-    my $git_simple = SVN::Client::get_simple_prompt_provider(\&simple, 2);
+    my $but_simple = SVN::Client::get_simple_prompt_provider(\&simple, 2);
     my $cached_ssl = SVN::Client::get_ssl_server_trust_file_provider();
-    my $git_ssl = SVN::Client::get_ssl_server_trust_prompt_provider(
+    my $but_ssl = SVN::Client::get_ssl_server_trust_prompt_provider(
         \&ssl_server_trust);
     my $cached_cert = SVN::Client::get_ssl_client_cert_file_provider();
-    my $git_cert = SVN::Client::get_ssl_client_cert_prompt_provider(
+    my $but_cert = SVN::Client::get_ssl_client_cert_prompt_provider(
         \&ssl_client_cert, 2);
     my $cached_cert_pw = SVN::Client::get_ssl_client_cert_pw_file_provider();
-    my $git_cert_pw = SVN::Client::get_ssl_client_cert_pw_prompt_provider(
+    my $but_cert_pw = SVN::Client::get_ssl_client_cert_pw_prompt_provider(
         \&ssl_client_cert_pw, 2);
     my $cached_username = SVN::Client::get_username_provider();
-    my $git_username = SVN::Client::get_username_prompt_provider(
+    my $but_username = SVN::Client::get_username_prompt_provider(
         \&username, 2);
 
     my $ctx = new SVN::Client(
         auth => [
-            $cached_simple, $git_simple,
-            $cached_ssl, $git_ssl,
-            $cached_cert, $git_cert,
-            $cached_cert_pw, $git_cert_pw,
-            $cached_username, $git_username
+            $cached_simple, $but_simple,
+            $cached_ssl, $but_ssl,
+            $cached_cert, $but_cert,
+            $cached_cert_pw, $but_cert_pw,
+            $cached_username, $but_username
         ]);
 
 =head1 DESCRIPTION
 
-This module is an implementation detail of the "git svn" command.
-It implements git-svn's authentication policy.  Do not use it unless
-you are developing git-svn.
+This module is an implementation detail of the "but svn" command.
+It implements but-svn's authentication policy.  Do not use it unless
+you are developing but-svn.
 
-The interface will change as git-svn evolves.
+The interface will change as but-svn evolves.
 
 =head1 DEPENDENCIES
 

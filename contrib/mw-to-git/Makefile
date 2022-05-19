@@ -5,18 +5,18 @@
 # To build and test:
 #
 #   make
-#   bin-wrapper/git mw preview Some_page.mw
-#   bin-wrapper/git clone mediawiki::http://example.com/wiki/
+#   bin-wrapper/but mw preview Some_page.mw
+#   bin-wrapper/but clone mediawiki::http://example.com/wiki/
 #
 # To install, run Git's toplevel 'make install' then run:
 #
 #   make install
 
 GIT_MEDIAWIKI_PM=Git/Mediawiki.pm
-SCRIPT_PERL=git-remote-mediawiki.perl
-SCRIPT_PERL+=git-mw.perl
+SCRIPT_PERL=but-remote-mediawiki.perl
+SCRIPT_PERL+=but-mw.perl
 GIT_ROOT_DIR=../..
-HERE=contrib/mw-to-git/
+HERE=contrib/mw-to-but/
 
 INSTALL = install
 

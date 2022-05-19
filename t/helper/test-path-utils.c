@@ -181,10 +181,10 @@ static int check_dotfile(const char *x, const char **argv,
 		if (!strcmp("--not", *argv))
 			expect = !expect;
 		else if (expect != (is_hfs(*argv) || is_ntfs(*argv)))
-			res = error("'%s' is %s.git%s", *argv,
+			res = error("'%s' is %s.but%s", *argv,
 				    expect ? "not " : "", x);
 		else
-			fprintf(stderr, "ok: '%s' is %s.git%s\n",
+			fprintf(stderr, "ok: '%s' is %s.but%s\n",
 				*argv, expect ? "" : "not ", x);
 	}
 	return !!res;
@@ -334,7 +334,7 @@ int cmd__path_utils(int argc, const char **argv)
 		 * absolute POSIX paths or colon-separate lists of
 		 * absolute POSIX paths into DOS paths (e.g.,
 		 * "/foo:/foo/bar" might be converted to
-		 * "D:\Src\msysgit\foo;D:\Src\msysgit\foo\bar"),
+		 * "D:\Src\msysbut\foo;D:\Src\msysbut\foo\bar"),
 		 * whereas longest_ancestor_length() requires paths
 		 * that use forward slashes.
 		 */
@@ -353,8 +353,8 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc >= 4 && !strcmp(argv[1], "prefix_path")) {
 		const char *prefix = argv[2];
 		int prefix_len = strlen(prefix);
-		int nongit_ok;
-		setup_git_directory_gently(&nongit_ok);
+		int nonbut_ok;
+		setup_but_directory_gently(&nonbut_ok);
 		while (argc > 3) {
 			puts(prefix_path(prefix, prefix_len, argv[3]));
 			argc--;
@@ -394,20 +394,20 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 2 && !strcmp(argv[1], "dirname"))
 		return test_function(dirname_data, posix_dirname, argv[1]);
 
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotbutmodules")) {
 		return check_dotfile("modules", argv + 2,
-				     is_hfs_dotgitmodules,
-				     is_ntfs_dotgitmodules);
+				     is_hfs_dotbutmodules,
+				     is_ntfs_dotbutmodules);
 	}
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitignore")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotbutignore")) {
 		return check_dotfile("ignore", argv + 2,
-				     is_hfs_dotgitignore,
-				     is_ntfs_dotgitignore);
+				     is_hfs_dotbutignore,
+				     is_ntfs_dotbutignore);
 	}
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitattributes")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotbutattributes")) {
 		return check_dotfile("attributes", argv + 2,
-				     is_hfs_dotgitattributes,
-				     is_ntfs_dotgitattributes);
+				     is_hfs_dotbutattributes,
+				     is_ntfs_dotbutattributes);
 	}
 	if (argc > 2 && !strcmp(argv[1], "is_dotmailmap")) {
 		return check_dotfile("mailmap", argv + 2,

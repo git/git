@@ -25,33 +25,33 @@ add_file () {
 		for name
 		do
 			echo "$name" >"$name" &&
-			git add "$name" &&
+			but add "$name" &&
 			test_tick &&
-			# "git cummit -m" would break MinGW, as Windows refuse to pass
-			# $test_encoding encoded parameter to git.
+			# "but cummit -m" would break MinGW, as Windows refuse to pass
+			# $test_encoding encoded parameter to but.
 			echo "Add $name ($added $name)" | iconv -f utf-8 -t $test_encoding |
-			git -c "i18n.cummitEncoding=$test_encoding" cummit -F -
+			but -c "i18n.cummitEncoding=$test_encoding" cummit -F -
 		done >/dev/null &&
-		git rev-parse --short --verify HEAD
+		but rev-parse --short --verify HEAD
 	)
 }
 
 cummit_file () {
 	test_tick &&
-	git cummit "$@" -m "cummit $*" >/dev/null
+	but cummit "$@" -m "cummit $*" >/dev/null
 }
 
 test_expect_success 'setup - submodules' '
 	test_create_repo sm2 &&
 	add_file . foo &&
 	add_file sm2 foo1 foo2 &&
-	smhead1=$(git -C sm2 rev-parse --short --verify HEAD)
+	smhead1=$(but -C sm2 rev-parse --short --verify HEAD)
 '
 
-test_expect_success 'setup - git submodule add' '
-	git submodule add ./sm2 sm1 &&
-	cummit_file sm1 .gitmodules &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
+test_expect_success 'setup - but submodule add' '
+	but submodule add ./sm2 sm1 &&
+	cummit_file sm1 .butmodules &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 0000000...$smhead1 (new submodule)
 	EOF
@@ -60,7 +60,7 @@ test_expect_success 'setup - git submodule add' '
 
 test_expect_success 'submodule directory removed' '
 	rm -rf sm1 &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 0000000...$smhead1 (new submodule)
 	EOF
@@ -68,10 +68,10 @@ test_expect_success 'submodule directory removed' '
 '
 
 test_expect_success 'setup - submodule multiple cummits' '
-	git submodule update --checkout sm1 &&
+	but submodule update --checkout sm1 &&
 	smhead2=$(add_file sm1 foo3 foo4) &&
 	cummit_file sm1 &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $smhead1..$smhead2:
 	  > Add foo4 ($added foo4)
@@ -82,7 +82,7 @@ test_expect_success 'setup - submodule multiple cummits' '
 
 test_expect_success 'submodule removed multiple cummits' '
 	rm -rf sm1 &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $smhead1..$smhead2:
 	  > Add foo4 ($added foo4)
@@ -92,8 +92,8 @@ test_expect_success 'submodule removed multiple cummits' '
 '
 
 test_expect_success 'submodule not initialized in new clone' '
-	git clone . sm3 &&
-	git -C sm3 diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
+	but clone . sm3 &&
+	but -C sm3 diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $smhead1...$smhead2 (cummits not present)
 	EOF
@@ -101,10 +101,10 @@ test_expect_success 'submodule not initialized in new clone' '
 '
 
 test_expect_success 'setup submodule moved' '
-	git submodule update --checkout sm1 &&
-	git mv sm1 sm4 &&
+	but submodule update --checkout sm1 &&
+	but mv sm1 sm4 &&
 	cummit_file sm4 &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm4 0000000...$smhead2 (new submodule)
 	EOF
@@ -115,7 +115,7 @@ test_expect_success 'submodule moved then removed' '
 	smhead3=$(add_file sm4 foo6 foo7) &&
 	cummit_file sm4 &&
 	rm -rf sm4 &&
-	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
+	but diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm4 $smhead2..$smhead3:
 	  > Add foo7 ($added foo7)

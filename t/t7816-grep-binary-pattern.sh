@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git grep with a binary pattern files'
+test_description='but grep with a binary pattern files'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
@@ -16,24 +16,24 @@ nul_match_internal () {
 
 	if test "$matches" = 1
 	then
-		test_expect_success $prereqs "LC_ALL='$lc_all' git grep $extra_flags -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "LC_ALL='$lc_all' but grep $extra_flags -f f $flags '$pattern_human' a" "
 			printf '$pattern' | q_to_nul >f &&
-			LC_ALL='$lc_all' git grep $extra_flags -f f $flags a
+			LC_ALL='$lc_all' but grep $extra_flags -f f $flags a
 		"
 	elif test "$matches" = 0
 	then
-		test_expect_success $prereqs "LC_ALL='$lc_all' git grep $extra_flags -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "LC_ALL='$lc_all' but grep $extra_flags -f f $flags '$pattern_human' a" "
 			>stderr &&
 			printf '$pattern' | q_to_nul >f &&
-			test_must_fail env LC_ALL=\"$lc_all\" git grep $extra_flags -f f $flags a 2>stderr &&
+			test_must_fail env LC_ALL=\"$lc_all\" but grep $extra_flags -f f $flags a 2>stderr &&
 			test_i18ngrep ! 'This is only supported with -P under PCRE v2' stderr
 		"
 	elif test "$matches" = P
 	then
-		test_expect_success $prereqs "error, PCRE v2 only: LC_ALL='$lc_all' git grep -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "error, PCRE v2 only: LC_ALL='$lc_all' but grep -f f $flags '$pattern_human' a" "
 			>stderr &&
 			printf '$pattern' | q_to_nul >f &&
-			test_must_fail env LC_ALL=\"$lc_all\" git grep -f f $flags a 2>stderr &&
+			test_must_fail env LC_ALL=\"$lc_all\" but grep -f f $flags a 2>stderr &&
 			test_i18ngrep 'This is only supported with -P under PCRE v2' stderr
 		"
 	else
@@ -56,8 +56,8 @@ nul_match () {
 
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
-	git add a &&
-	git cummit -m.
+	but add a &&
+	but cummit -m.
 "
 
 # Simple fixed-string matching

@@ -13,7 +13,7 @@ int cmd__dump_split_index(int ac, const char **av)
 	struct split_index *si;
 	int i;
 
-	setup_git_directory();
+	setup_but_directory();
 
 	do_read_index(&the_index, av[1], 1);
 	printf("own %s\n", oid_to_hex(&the_index.oid));

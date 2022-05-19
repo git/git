@@ -19,7 +19,7 @@ $match_emails = 1 unless $match_names;
 my $email = {};
 my $name = {};
 
-open(my $fh, '-|', "git log --format='%at <%aE> %aN'");
+open(my $fh, '-|', "but log --format='%at <%aE> %aN'");
 while(<$fh>) {
 	my ($t, $e, $n) = /(\S+) <(\S+)> (.*)/;
 	mark($email, $e, $n, $t);

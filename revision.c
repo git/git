@@ -50,7 +50,7 @@ void show_object_with_name(FILE *out, struct object *obj, const char *name)
 	 * This "for (const char *p = ..." is made as a first step towards
 	 * making use of such declarations elsewhere in our codebase.  If
 	 * it causes compilation problems on your platform, please report
-	 * it to the Git mailing list at git@vger.kernel.org. In the meantime,
+	 * it to the Git mailing list at but@vger.kernel.org. In the meantime,
 	 * adding -std=gnu99 to CFLAGS may help if you are with older GCC.
 	 */
 	for (const char *p = name; *p && *p != '\n'; p++)
@@ -1739,8 +1739,8 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 			continue; /* current index already taken care of */
 
 		if (read_index_from(&istate,
-				    worktree_git_path(wt, "index"),
-				    get_worktree_git_dir(wt)) > 0)
+				    worktree_but_path(wt, "index"),
+				    get_worktree_but_dir(wt)) > 0)
 			do_add_index_objects_to_pending(revs, &istate, flags);
 		discard_index(&istate);
 	}
@@ -2197,8 +2197,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if ((argcount = parse_long_opt("skip", argv, &optarg))) {
 		revs->skip_count = atoi(optarg);
 		return argcount;
-	} else if ((*arg == '-') && isdigit(arg[1])) {
-		/* accept -<digit>, like traditional "head" */
+	} else if ((*arg == '-') && isdibut(arg[1])) {
+		/* accept -<dibut>, like traditional "head" */
 		if (strtol_i(arg + 1, 10, &revs->max_count) < 0 ||
 		    revs->max_count < 0)
 			die("'%s': not a non-negative integer", arg + 1);
@@ -2514,9 +2514,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->grep_filter.no_body_match = 1;
 	} else if ((argcount = parse_long_opt("encoding", argv, &optarg))) {
 		if (strcmp(optarg, "none"))
-			git_log_output_encoding = xstrdup(optarg);
+			but_log_output_encoding = xstrdup(optarg);
 		else
-			git_log_output_encoding = "";
+			but_log_output_encoding = "";
 		return argcount;
 	} else if (!strcmp(arg, "--reverse")) {
 		revs->reverse ^= 1;
@@ -2609,7 +2609,7 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	/*
 	 * NOTE!
 	 *
-	 * Commands like "git shortlog" will not accept the options below
+	 * Commands like "but shortlog" will not accept the options below
 	 * unless parse_revision_opt queues them (as opposed to erroring
 	 * out).
 	 *
@@ -3297,7 +3297,7 @@ void reset_revision_walk(void)
 }
 
 static int mark_uninteresting(const struct object_id *oid,
-			      struct packed_git *pack,
+			      struct packed_but *pack,
 			      uint32_t pos,
 			      void *cb)
 {

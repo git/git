@@ -7,24 +7,24 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 	echo Hello >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m V1 &&
+	but cummit -m V1 &&
 	echo Hello world >file &&
-	git add file &&
-	git checkout -b other
+	but add file &&
+	but checkout -b other
 '
 
 test_expect_success 'check all changes are staged' '
-	git diff --exit-code
+	but diff --exit-code
 '
 
 test_expect_success 'second cummit' '
-	git cummit -m V2
+	but cummit -m V2
 '
 
 test_expect_success 'check' '
-	git diff --cached --exit-code
+	but diff --cached --exit-code
 '
 
 test_done

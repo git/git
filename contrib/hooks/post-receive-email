@@ -5,10 +5,10 @@
 # An example hook script to mail out cummit update information.
 #
 # NOTE: This script is no longer under active development.  There
-# is another script, git-multimail, which is more capable and
+# is another script, but-multimail, which is more capable and
 # configurable and is largely backwards-compatible with this script;
 # please see "contrib/hooks/multimail/".  For instructions on how to
-# migrate from post-receive-email to git-multimail, please see
+# migrate from post-receive-email to but-multimail, please see
 # "README.migrate-from-post-receive-email" in that directory.
 #
 # This hook sends emails listing new revisions to the repository
@@ -20,10 +20,10 @@
 # will have put this somewhere standard.  You should make this script
 # executable then link to it in the repository you would like to use it in.
 # For example, on debian the hook is stored in
-# /usr/share/git-core/contrib/hooks/post-receive-email:
+# /usr/share/but-core/contrib/hooks/post-receive-email:
 #
-#  cd /path/to/your/repository.git
-#  ln -sf /usr/share/git-core/contrib/hooks/post-receive-email hooks/post-receive
+#  cd /path/to/your/repository.but
+#  ln -sf /usr/share/but-core/contrib/hooks/post-receive-email hooks/post-receive
 #
 # This hook script assumes it is enabled on the central repository of a
 # project, with all users pushing only to it and not between each other.  It
@@ -31,7 +31,7 @@
 # possible for the email to be from someone other than the person doing the
 # push.
 #
-# To help with debugging and use on pre-v1.5.1 git servers, this script will
+# To help with debugging and use on pre-v1.5.1 but servers, this script will
 # also obey the interface of hooks/update, taking its arguments on the
 # command line.  Unfortunately, hooks/update is called once for each ref.
 # To avoid firing one email per ref, this script just prints its output to
@@ -55,12 +55,12 @@
 #   if emailprefix is unset, to aid filtering
 # hooks.showrev
 #   The shell command used to format each revision in the email, with
-#   "%s" replaced with the cummit id.  Defaults to "git rev-list -1
+#   "%s" replaced with the cummit id.  Defaults to "but rev-list -1
 #   --pretty %s", displaying the cummit id, author, date and log
 #   message.  To list full patches separated by a blank line, you
-#   could set this to "git show -C %s; echo".
-#   To list a gitweb/cgit URL *and* a full patch for each change set, use this:
-#     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; git show -C \$t; echo"
+#   could set this to "but show -C %s; echo".
+#   To list a butweb/cbut URL *and* a full patch for each change set, use this:
+#     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; but show -C \$t; echo"
 #   Be careful if "..." contains things that will be expanded by shell "eval"
 #   or printf.
 # hooks.emailmaxlines
@@ -69,7 +69,7 @@
 #   Lines beyond the limit are suppressed and counted, and a final
 #   line is added indicating the number of suppressed lines.
 # hooks.diffopts
-#   Alternate options for the git diff-tree invocation that shows changes.
+#   Alternate options for the but diff-tree invocation that shows changes.
 #   Default is "--stat --summary --find-copies-harder". Add -p to those
 #   options to include a unified diff of changes in addition to the usual
 #   summary output.
@@ -90,8 +90,8 @@
 prep_for_email()
 {
 	# --- Arguments
-	oldrev=$(git rev-parse $1)
-	newrev=$(git rev-parse $2)
+	oldrev=$(but rev-parse $1)
+	newrev=$(but rev-parse $2)
 	refname="$3"
 
 	# --- Interpret
@@ -111,8 +111,8 @@ prep_for_email()
 	fi
 
 	# --- Get the revision types
-	newrev_type=$(git cat-file -t $newrev 2> /dev/null)
-	oldrev_type=$(git cat-file -t "$oldrev" 2> /dev/null)
+	newrev_type=$(but cat-file -t $newrev 2> /dev/null)
+	oldrev_type=$(but cat-file -t "$oldrev" 2> /dev/null)
 	case "$change_type" in
 	create|update)
 		rev="$newrev"
@@ -207,7 +207,7 @@ generate_email()
 	# Email parameters
 	# The email subject will contain the best description of the ref
 	# that we can build from the parameters
-	describe=$(git describe $rev 2>/dev/null)
+	describe=$(but describe $rev 2>/dev/null)
 	if [ -z "$describe" ]; then
 		describe=$rev
 	fi
@@ -250,7 +250,7 @@ generate_email_header()
 	X-Git-Newrev: $newrev
 	Auto-Submitted: auto-generated
 
-	This is an automated email from the git hooks/post-receive script. It was
+	This is an automated email from the but hooks/post-receive script. It was
 	generated because a ref change was pushed to the repository containing
 	the project "$projectdesc".
 
@@ -301,24 +301,24 @@ generate_update_branch_email()
 	# In this case we want to issue an email containing only revisions
 	# 3, 4, and N.  Given (almost) by
 	#
-	#  git rev-list N ^O --not --all
+	#  but rev-list N ^O --not --all
 	#
 	# The reason for the "almost", is that the "--not --all" will take
 	# precedence over the "N", and effectively will translate to
 	#
-	#  git rev-list N ^O ^X ^N
+	#  but rev-list N ^O ^X ^N
 	#
-	# So, we need to build up the list more carefully.  git rev-parse
-	# will generate a list of revs that may be fed into git rev-list.
+	# So, we need to build up the list more carefully.  but rev-parse
+	# will generate a list of revs that may be fed into but rev-list.
 	# We can get it to make the "--not --all" part and then filter out
 	# the "^N" with:
 	#
-	#  git rev-parse --not --all | grep -v N
+	#  but rev-parse --not --all | grep -v N
 	#
-	# Then, using the --stdin switch to git rev-list we have effectively
+	# Then, using the --stdin switch to but rev-list we have effectively
 	# manufactured
 	#
-	#  git rev-list N ^O ^X
+	#  but rev-list N ^O ^X
 	#
 	# This leaves a problem when someone else updates the repository
 	# while this script is running.  Their new value of the ref we're
@@ -327,10 +327,10 @@ generate_update_branch_email()
 	# all of our cummits.  What we really want is to exclude the current
 	# value of $refname from the --not list, rather than N itself.  So:
 	#
-	#  git rev-parse --not --all | grep -v $(git rev-parse $refname)
+	#  but rev-parse --not --all | grep -v $(but rev-parse $refname)
 	#
 	# Gets us to something pretty safe (apart from the small time
-	# between refname being read, and git rev-parse running - for that,
+	# between refname being read, and but rev-parse running - for that,
 	# I give up)
 	#
 	#
@@ -348,7 +348,7 @@ generate_update_branch_email()
 	# As above, we need to take into account the presence of X; if
 	# another branch is already in the repository and points at some of
 	# the revisions that we are about to output - we don't want them.
-	# The solution is as before: git rev-parse output filtered.
+	# The solution is as before: but rev-parse output filtered.
 	#
 	# Finally, tags: 1 --- 2 --- O --- T --- 3 --- 4 --- N
 	#
@@ -358,7 +358,7 @@ generate_update_branch_email()
 	# for a branch update.  Therefore we still want to output revisions
 	# that have been output on a tag email.
 	#
-	# Luckily, git rev-parse includes just the tool.  Instead of using
+	# Luckily, but rev-parse includes just the tool.  Instead of using
 	# "--all" we use "--branches"; this has the added benefit that
 	# "remotes/" will be ignored as well.
 
@@ -368,9 +368,9 @@ generate_update_branch_email()
 	# revisions
 	fast_forward=""
 	rev=""
-	for rev in $(git rev-list $newrev..$oldrev)
+	for rev in $(but rev-list $newrev..$oldrev)
 	do
-		revtype=$(git cat-file -t "$rev")
+		revtype=$(but cat-file -t "$rev")
 		echo "  discards  $rev ($revtype)"
 	done
 	if [ -z "$rev" ]; then
@@ -382,9 +382,9 @@ generate_update_branch_email()
 	# have already had notification emails and is present to show the
 	# full detail of the change from rolling back the old revision to
 	# the base revision and then forward to the new revision
-	for rev in $(git rev-list $oldrev..$newrev)
+	for rev in $(but rev-list $oldrev..$newrev)
 	do
-		revtype=$(git cat-file -t "$rev")
+		revtype=$(but cat-file -t "$rev")
 		echo "       via  $rev ($revtype)"
 	done
 
@@ -405,7 +405,7 @@ generate_update_branch_email()
 
 		# Find the common ancestor of the old and new revisions and
 		# compare it with newrev
-		baserev=$(git merge-base $oldrev $newrev)
+		baserev=$(but merge-base $oldrev $newrev)
 		rewind_only=""
 		if [ "$baserev" = "$newrev" ]; then
 			echo "This update discarded existing revisions and left the branch pointing at"
@@ -444,7 +444,7 @@ generate_update_branch_email()
 		echo $LOGBEGIN
 		show_new_revisions
 
-		# XXX: Need a way of detecting whether git rev-list actually
+		# XXX: Need a way of detecting whether but rev-list actually
 		# outputted anything, so that we can issue a "no new
 		# revisions added by this update" message
 
@@ -462,7 +462,7 @@ generate_update_branch_email()
 	# non-fast-forward updates.
 	echo ""
 	echo "Summary of changes:"
-	git diff-tree $diffopts $oldrev..$newrev
+	but diff-tree $diffopts $oldrev..$newrev
 }
 
 #
@@ -473,7 +473,7 @@ generate_delete_branch_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
+	but diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
@@ -506,9 +506,9 @@ generate_update_atag_email()
 #
 generate_atag_email()
 {
-	# Use git for-each-ref to pull out the individual fields from the
+	# Use but for-each-ref to pull out the individual fields from the
 	# tag
-	eval $(git for-each-ref --shell --format='
+	eval $(but for-each-ref --shell --format='
 	tagobject=%(*objectname)
 	tagtype=%(*objecttype)
 	tagger=%(taggername)
@@ -522,14 +522,14 @@ generate_atag_email()
 		# If the tagged object is a cummit, then we assume this is a
 		# release, and so we calculate which tag this tag is
 		# replacing
-		prevtag=$(git describe --abbrev=0 $newrev^ 2>/dev/null)
+		prevtag=$(but describe --abbrev=0 $newrev^ 2>/dev/null)
 
 		if [ -n "$prevtag" ]; then
 			echo "  replaces  $prevtag"
 		fi
 		;;
 	*)
-		echo "    length  $(git cat-file -s $tagobject) bytes"
+		echo "    length  $(but cat-file -s $tagobject) bytes"
 		;;
 	esac
 	echo " tagged by  $tagger"
@@ -540,7 +540,7 @@ generate_atag_email()
 
 	# Show the content of the tag message; this might contain a change
 	# log or release notes so is worth displaying.
-	git cat-file tag $newrev | sed -e '1,/^$/d'
+	but cat-file tag $newrev | sed -e '1,/^$/d'
 
 	echo ""
 	case "$tagtype" in
@@ -549,11 +549,11 @@ generate_atag_email()
 		# performed on them
 		if [ -n "$prevtag" ]; then
 			# Show changes since the previous release
-			git shortlog "$prevtag..$newrev"
+			but shortlog "$prevtag..$newrev"
 		else
 			# No previous tag, show all the changes since time
 			# began
-			git shortlog $newrev
+			but shortlog $newrev
 		fi
 		;;
 	*)
@@ -573,7 +573,7 @@ generate_delete_atag_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
+	but diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
@@ -619,14 +619,14 @@ generate_general_email()
 	echo ""
 	if [ "$newrev_type" = "cummit" ]; then
 		echo $LOGBEGIN
-		git diff-tree -s --always --encoding=UTF-8 --pretty=medium $newrev
+		but diff-tree -s --always --encoding=UTF-8 --pretty=medium $newrev
 		echo $LOGEND
 	else
 		# What can we do here?  The tag marks an object that is not
 		# a cummit, so there is no log for us to display.  It's
-		# probably not wise to output git cat-file as it could be a
+		# probably not wise to output but cat-file as it could be a
 		# binary blob.  We'll just say how big it is
-		echo "$newrev is a $newrev_type, and is $(git cat-file -s $newrev) bytes long."
+		echo "$newrev is a $newrev_type, and is $(but cat-file -s $newrev) bytes long."
 	fi
 }
 
@@ -638,7 +638,7 @@ generate_delete_general_email()
 	echo "       was  $oldrev"
 	echo ""
 	echo $LOGBEGIN
-	git diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
+	but diff-tree -s --always --encoding=UTF-8 --pretty=oneline $oldrev
 	echo $LOGEND
 }
 
@@ -667,14 +667,14 @@ show_new_revisions()
 		revspec=$oldrev..$newrev
 	fi
 
-	other_branches=$(git for-each-ref --format='%(refname)' refs/heads/ |
+	other_branches=$(but for-each-ref --format='%(refname)' refs/heads/ |
 	    grep -F -v $refname)
-	git rev-parse --not $other_branches |
+	but rev-parse --not $other_branches |
 	if [ -z "$custom_showrev" ]
 	then
-		git rev-list --pretty --stdin $revspec
+		but rev-list --pretty --stdin $revspec
 	else
-		git rev-list --stdin $revspec |
+		but rev-list --stdin $revspec |
 		while read onerev
 		do
 			eval $(printf "$custom_showrev" $onerev)
@@ -719,7 +719,7 @@ LOGEND="-----------------------------------------------------------------------"
 # --- Config
 # Set GIT_DIR either from the working directory, or from the environment
 # variable.
-GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_DIR=$(but rev-parse --but-dir 2>/dev/null)
 if [ -z "$GIT_DIR" ]; then
 	echo >&2 "fatal: post-receive: GIT_DIR not set"
 	exit 1
@@ -733,13 +733,13 @@ then
 	projectdesc="UNNAMED PROJECT"
 fi
 
-recipients=$(git config hooks.mailinglist)
-announcerecipients=$(git config hooks.announcelist)
-envelopesender=$(git config hooks.envelopesender)
-emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
-custom_showrev=$(git config hooks.showrev)
-maxlines=$(git config hooks.emailmaxlines)
-diffopts=$(git config hooks.diffopts)
+recipients=$(but config hooks.mailinglist)
+announcerecipients=$(but config hooks.announcelist)
+envelopesender=$(but config hooks.envelopesender)
+emailprefix=$(but config hooks.emailprefix || echo '[SCM] ')
+custom_showrev=$(but config hooks.showrev)
+maxlines=$(but config hooks.emailmaxlines)
+diffopts=$(but config hooks.diffopts)
 : ${diffopts:="--stat --summary --find-copies-harder"}
 
 # --- Main loop

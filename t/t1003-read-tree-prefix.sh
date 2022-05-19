@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git read-tree --prefix test.
+test_description='but read-tree --prefix test.
 '
 
 TEST_PASSES_SANITIZE_LEAK=true
@@ -11,8 +11,8 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 	echo hello >one &&
-	git update-index --add one &&
-	tree=$(git write-tree) &&
+	but update-index --add one &&
+	tree=$(but write-tree) &&
 	echo tree is $tree
 '
 
@@ -20,19 +20,19 @@ echo 'one
 two/one' >expect
 
 test_expect_success 'read-tree --prefix' '
-	git read-tree --prefix=two/ $tree &&
-	git ls-files >actual &&
+	but read-tree --prefix=two/ $tree &&
+	but ls-files >actual &&
 	cmp expect actual
 '
 
 test_expect_success 'read-tree --prefix with leading slash exits with error' '
-	git rm -rf . &&
-	test_must_fail git read-tree --prefix=/two/ $tree &&
-	git read-tree --prefix=two/ $tree &&
+	but rm -rf . &&
+	test_must_fail but read-tree --prefix=/two/ $tree &&
+	but read-tree --prefix=two/ $tree &&
 
-	git rm -rf . &&
-	test_must_fail git read-tree --prefix=/ $tree &&
-	git read-tree --prefix= $tree
+	but rm -rf . &&
+	test_must_fail but read-tree --prefix=/ $tree &&
+	but read-tree --prefix= $tree
 '
 
 test_done

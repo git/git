@@ -1,14 +1,14 @@
-git-filter-branch(1)
+but-filter-branch(1)
 ====================
 
 NAME
 ----
-git-filter-branch - Rewrite branches
+but-filter-branch - Rewrite branches
 
 SYNOPSIS
 --------
 [verse]
-'git filter-branch' [--setup <command>] [--subdirectory-filter <directory>]
+'but filter-branch' [--setup <command>] [--subdirectory-filter <directory>]
 	[--env-filter <command>] [--tree-filter <command>]
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--cummit-filter <command>]
@@ -18,13 +18,13 @@ SYNOPSIS
 
 WARNING
 -------
-'git filter-branch' has a plethora of pitfalls that can produce non-obvious
+'but filter-branch' has a plethora of pitfalls that can produce non-obvious
 manglings of the intended history rewrite (and can leave you with little
 time to investigate such problems since it has such abysmal performance).
 These safety and performance issues cannot be backward compatibly fixed and
 as such, its use is not recommended.  Please use an alternative history
-filtering tool such as https://github.com/newren/git-filter-repo/[git
-filter-repo].  If you still need to use 'git filter-branch', please
+filtering tool such as https://buthub.com/newren/but-filter-repo/[but
+filter-repo].  If you still need to use 'but filter-branch', please
 carefully read <<SAFETY>> (and <<PERFORMANCE>>) to learn about the land
 mines of filter-branch, and then vigilantly avoid as many of the hazards
 listed there as reasonably possible.
@@ -45,7 +45,7 @@ changes, which would normally have no effect.  Nevertheless, this may be
 useful in the future for compensating for some Git bugs or such,
 therefore such a usage is permitted.
 
-*NOTE*: This command honors `.git/info/grafts` file and refs in
+*NOTE*: This command honors `.but/info/grafts` file and refs in
 the `refs/replace/` namespace.
 If you have any grafts or replacement refs defined, running this command
 will make them permanent.
@@ -56,7 +56,7 @@ be able to easily push and distribute the rewritten branch on top of the
 original branch.  Please do not use this command if you do not know the
 full implications, and avoid using it anyway, if a simple single cummit
 would suffice to fix your problem.  (See the "RECOVERING FROM UPSTREAM
-REBASE" section in linkgit:git-rebase[1] for further information about
+REBASE" section in linkbut:but-rebase[1] for further information about
 rewriting published history.)
 
 Always verify that the rewritten version is correct: The original refs,
@@ -79,7 +79,7 @@ the id of the cummit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_CUMMITTER_NAME, GIT_CUMMITTER_EMAIL,
 and GIT_CUMMITTER_DATE are taken from the current cummit and exported to
 the environment, in order to affect the author and cummitter identities of
-the replacement cummit created by linkgit:git-cummit-tree[1] after the
+the replacement cummit created by linkbut:but-cummit-tree[1] after the
 filters have run.
 
 If any evaluation of <command> returns a non-zero exit status, the whole
@@ -111,28 +111,28 @@ OPTIONS
 	This filter may be used if you only need to modify the environment
 	in which the cummit will be performed.  Specifically, you might
 	want to rewrite the author/cummitter name/email/time environment
-	variables (see linkgit:git-cummit-tree[1] for details).
+	variables (see linkbut:but-cummit-tree[1] for details).
 
 --tree-filter <command>::
 	This is the filter for rewriting the tree and its contents.
 	The argument is evaluated in shell with the working
 	directory set to the root of the checked out tree.  The new tree
 	is then used as-is (new files are auto-added, disappeared files
-	are auto-removed - neither .gitignore files nor any other ignore
+	are auto-removed - neither .butignore files nor any other ignore
 	rules *HAVE ANY EFFECT*!).
 
 --index-filter <command>::
 	This is the filter for rewriting the index.  It is similar to the
 	tree filter but does not check out the tree, which makes it much
-	faster.  Frequently used with `git rm --cached
+	faster.  Frequently used with `but rm --cached
 	--ignore-unmatch ...`, see EXAMPLES below.  For hairy
-	cases, see linkgit:git-update-index[1].
+	cases, see linkbut:but-update-index[1].
 
 --parent-filter <command>::
 	This is the filter for rewriting the cummit's parent list.
 	It will receive the parent string on stdin and shall output
 	the new parent string on stdout.  The parent string is in
-	the format described in linkgit:git-cummit-tree[1]: empty for
+	the format described in linkbut:but-cummit-tree[1]: empty for
 	the initial cummit, "-p parent" for a normal cummit and
 	"-p parent1 -p parent2 -p parent3 ..." for a merge cummit.
 
@@ -145,7 +145,7 @@ OPTIONS
 --cummit-filter <command>::
 	This is the filter for performing the cummit.
 	If this filter is specified, it will be called instead of the
-	'git cummit-tree' command, with arguments of the form
+	'but cummit-tree' command, with arguments of the form
 	"<TREE_ID> [(-p <PARENT_CUMMIT_ID>)...]" and the log message on
 	stdin.  The cummit id is expected on stdout.
 +
@@ -156,10 +156,10 @@ have all of them as parents.
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_cummit "$@"'
 will leave out the current cummit (but not its changes! If you want
-that, use 'git rebase' instead).
+that, use 'but rebase' instead).
 +
-You can also use the `git_cummit_non_empty_tree "$@"` instead of
-`git cummit-tree "$@"` if you don't wish to keep cummits with a single parent
+You can also use the `but_cummit_non_empty_tree "$@"` instead of
+`but cummit-tree "$@"` if you don't wish to keep cummits with a single parent
 and that makes no change to the tree.
 
 --tag-name-filter <command>::
@@ -187,11 +187,11 @@ to other tags will be rewritten to point to the underlying cummit.
 
 --prune-empty::
 	Some filters will generate empty cummits that leave the tree untouched.
-	This option instructs git-filter-branch to remove such cummits if they
+	This option instructs but-filter-branch to remove such cummits if they
 	have exactly one or zero non-pruned parents; merge cummits will
 	therefore remain intact.  This option cannot be used together with
 	`--cummit-filter`, though the same effect can be achieved by using the
-	provided `git_cummit_non_empty_tree` function in a cummit filter.
+	provided `but_cummit_non_empty_tree` function in a cummit filter.
 
 --original <namespace>::
 	Use this option to set the namespace where the original cummits
@@ -202,12 +202,12 @@ to other tags will be rewritten to point to the underlying cummit.
 	rewriting.  When applying a tree filter, the command needs to
 	temporarily check out the tree to some directory, which may consume
 	considerable space in case of large projects.  By default it
-	does this in the `.git-rewrite/` directory but you can override
+	does this in the `.but-rewrite/` directory but you can override
 	that choice by this parameter.
 
 -f::
 --force::
-	'git filter-branch' refuses to start with an existing temporary
+	'but filter-branch' refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
 
@@ -218,17 +218,17 @@ to other tags will be rewritten to point to the underlying cummit.
 	trees. If '<branch>' does not exist it will be created.
 
 <rev-list options>...::
-	Arguments for 'git rev-list'.  All positive refs included by
+	Arguments for 'but rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
 	such as `--all`, but you must use `--` to separate them from
-	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
+	the 'but filter-branch' options. Implies <<Remap_to_ancestor>>.
 
 
 [[Remap_to_ancestor]]
 Remap to ancestor
 ~~~~~~~~~~~~~~~~~
 
-By using linkgit:git-rev-list[1] arguments, e.g., path limiters, you can limit the
+By using linkbut:but-rev-list[1] arguments, e.g., path limiters, you can limit the
 set of revisions which get rewritten. However, positive refs on the command
 line are distinguished: we don't let them be excluded by such limiters. For
 this purpose, they are instead rewritten to point at the nearest ancestor that
@@ -250,21 +250,21 @@ Suppose you want to remove a file (containing confidential information
 or copyright violation) from all cummits:
 
 -------------------------------------------------------
-git filter-branch --tree-filter 'rm filename' HEAD
+but filter-branch --tree-filter 'rm filename' HEAD
 -------------------------------------------------------
 
 However, if the file is absent from the tree of some cummit,
 a simple `rm filename` will fail for that tree and cummit.
 Thus you may instead want to use `rm -f filename` as the script.
 
-Using `--index-filter` with 'git rm' yields a significantly faster
-version.  Like with using `rm filename`, `git rm --cached filename`
+Using `--index-filter` with 'but rm' yields a significantly faster
+version.  Like with using `rm filename`, `but rm --cached filename`
 will fail if the file is absent from the tree of a cummit.  If you
 want to "completely forget" a file, it does not matter when it entered
 history, so we also add `--ignore-unmatch`:
 
 --------------------------------------------------------------------------
-git filter-branch --index-filter 'git rm --cached --ignore-unmatch filename' HEAD
+but filter-branch --index-filter 'but rm --cached --ignore-unmatch filename' HEAD
 --------------------------------------------------------------------------
 
 Now, you will get the rewritten history saved in HEAD.
@@ -273,7 +273,7 @@ To rewrite the repository to look as if `foodir/` had been its project
 root, and discard all other history:
 
 -------------------------------------------------------
-git filter-branch --subdirectory-filter foodir -- --all
+but filter-branch --subdirectory-filter foodir -- --all
 -------------------------------------------------------
 
 Thus you can, e.g., turn a library subdirectory into a repository of
@@ -285,7 +285,7 @@ history) to be the parent of the current initial cummit, in
 order to paste the other history behind the current history:
 
 -------------------------------------------------------------------
-git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' HEAD
+but filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' HEAD
 -------------------------------------------------------------------
 
 (if the parent string is empty - which happens when we are dealing with
@@ -294,26 +294,26 @@ history with a single root (that is, no merge without common ancestors
 happened).  If this is not the case, use:
 
 --------------------------------------------------------------------------
-git filter-branch --parent-filter \
+but filter-branch --parent-filter \
 	'test $GIT_CUMMIT = <cummit-id> && echo "-p <graft-id>" || cat' HEAD
 --------------------------------------------------------------------------
 
 or even simpler:
 
 -----------------------------------------------
-git replace --graft $cummit-id $graft-id
-git filter-branch $graft-id..HEAD
+but replace --graft $cummit-id $graft-id
+but filter-branch $graft-id..HEAD
 -----------------------------------------------
 
 To remove cummits authored by "Darl McBribe" from the history:
 
 ------------------------------------------------------------------------------
-git filter-branch --cummit-filter '
+but filter-branch --cummit-filter '
 	if [ "$GIT_AUTHOR_NAME" = "Darl McBribe" ];
 	then
 		skip_cummit "$@";
 	else
-		git cummit-tree "$@";
+		but cummit-tree "$@";
 	fi' HEAD
 ------------------------------------------------------------------------------
 
@@ -341,15 +341,15 @@ as their parents instead of the merge cummit.
 *NOTE* the changes introduced by the cummits, and which are not reverted
 by subsequent cummits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the cummits, you should use the
-interactive mode of 'git rebase'.
+interactive mode of 'but rebase'.
 
 You can rewrite the cummit log messages using `--msg-filter`.  For
-example, 'git svn-id' strings in a repository created by 'git svn' can
+example, 'but svn-id' strings in a repository created by 'but svn' can
 be removed this way:
 
 -------------------------------------------------------
-git filter-branch --msg-filter '
-	sed -e "/^git-svn-id:/d"
+but filter-branch --msg-filter '
+	sed -e "/^but-svn-id:/d"
 '
 -------------------------------------------------------
 
@@ -357,7 +357,7 @@ If you need to add 'Acked-by' lines to, say, the last 10 cummits (none
 of which is a merge), use this command:
 
 --------------------------------------------------------
-git filter-branch --msg-filter '
+but filter-branch --msg-filter '
 	cat &&
 	echo "Acked-by: Bugs Bunny <bunny@bugzilla.org>"
 ' HEAD~10..HEAD
@@ -369,7 +369,7 @@ identity due to a misconfigured user.email, you can make a correction,
 before publishing the project, like this:
 
 --------------------------------------------------------
-git filter-branch --env-filter '
+but filter-branch --env-filter '
 	if test "$GIT_AUTHOR_EMAIL" = "root@localhost"
 	then
 		GIT_AUTHOR_EMAIL=john@example.com
@@ -383,7 +383,7 @@ git filter-branch --env-filter '
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
-point to the top-most revision that a 'git rev-list' of this range
+point to the top-most revision that a 'but rev-list' of this range
 will print.
 
 Consider this history:
@@ -397,23 +397,23 @@ A--B-----C
 To rewrite only cummits D,E,F,G,H, but leave A, B and C alone, use:
 
 --------------------------------
-git filter-branch ... C..H
+but filter-branch ... C..H
 --------------------------------
 
 To rewrite cummits E,F,G,H, use one of these:
 
 ----------------------------------------
-git filter-branch ... C..H --not D
-git filter-branch ... D..H --not C
+but filter-branch ... C..H --not D
+but filter-branch ... D..H --not C
 ----------------------------------------
 
 To move the whole tree into a subdirectory, or remove it from there:
 
 ---------------------------------------------------------------
-git filter-branch --index-filter \
-	'git ls-files -s | sed "s-\t\"*-&newsubdir/-" |
+but filter-branch --index-filter \
+	'but ls-files -s | sed "s-\t\"*-&newsubdir/-" |
 		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
-			git update-index --index-info &&
+			but update-index --index-info &&
 	 mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' HEAD
 ---------------------------------------------------------------
 
@@ -422,7 +422,7 @@ git filter-branch --index-filter \
 CHECKLIST FOR SHRINKING A REPOSITORY
 ------------------------------------
 
-git-filter-branch can be used to get rid of a subset of files,
+but-filter-branch can be used to get rid of a subset of files,
 usually with some combination of `--index-filter` and
 `--subdirectory-filter`.  People expect the resulting repository to
 be smaller than the original, but you need a few more steps to
@@ -430,17 +430,17 @@ actually make it smaller, because Git tries hard not to lose your
 objects until you tell it to.  First make sure that:
 
 * You really removed all variants of a filename, if a blob was moved
-  over its lifetime.  `git log --name-only --follow --all -- filename`
+  over its lifetime.  `but log --name-only --follow --all -- filename`
   can help you find renames.
 
 * You really filtered all refs: use `--tag-name-filter cat -- --all`
-  when calling git-filter-branch.
+  when calling but-filter-branch.
 
 Then there are two ways to get a smaller repository.  A safer way is
 to clone, that keeps your original intact.
 
-* Clone it with `git clone file:///path/to/repo`.  The clone
-  will not have the removed objects.  See linkgit:git-clone[1].  (Note
+* Clone it with `but clone file:///path/to/repo`.  The clone
+  will not have the removed objects.  See linkbut:but-clone[1].  (Note
   that cloning with a plain path just hardlinks everything!)
 
 If you really don't want to clone it, for whatever reasons, check the
@@ -448,30 +448,30 @@ following points instead (in this order).  This is a very destructive
 approach, so *make a backup* or go back to cloning it.  You have been
 warned.
 
-* Remove the original refs backed up by git-filter-branch: say `git
-  for-each-ref --format="%(refname)" refs/original/ | xargs -n 1 git
+* Remove the original refs backed up by but-filter-branch: say `but
+  for-each-ref --format="%(refname)" refs/original/ | xargs -n 1 but
   update-ref -d`.
 
-* Expire all reflogs with `git reflog expire --expire=now --all`.
+* Expire all reflogs with `but reflog expire --expire=now --all`.
 
-* Garbage collect all unreferenced objects with `git gc --prune=now`
-  (or if your git-gc is not new enough to support arguments to
-  `--prune`, use `git repack -ad; git prune` instead).
+* Garbage collect all unreferenced objects with `but gc --prune=now`
+  (or if your but-gc is not new enough to support arguments to
+  `--prune`, use `but repack -ad; but prune` instead).
 
 [[PERFORMANCE]]
 PERFORMANCE
 -----------
 
-The performance of git-filter-branch is glacially slow; its design makes it
+The performance of but-filter-branch is glacially slow; its design makes it
 impossible for a backward-compatible implementation to ever be fast:
 
-* In editing files, git-filter-branch by design checks out each and
+* In editing files, but-filter-branch by design checks out each and
   every cummit as it existed in the original repo.  If your repo has
   `10^5` files and `10^5` cummits, but each cummit only modifies five
-  files, then git-filter-branch will make you do `10^10` modifications,
+  files, then but-filter-branch will make you do `10^10` modifications,
   despite only having (at most) `5*10^5` unique blobs.
 
-* If you try and cheat and try to make git-filter-branch only work on
+* If you try and cheat and try to make but-filter-branch only work on
   files modified in a cummit, then two things happen
 
   ** you run into problems with deletions whenever the user is simply
@@ -490,16 +490,16 @@ impossible for a backward-compatible implementation to ever be fast:
   remove some and thus can avoid checking out each file (i.e. you can
   use --index-filter), you still are passing shell snippets for your
   filters.  This means that for every cummit, you have to have a
-  prepared git repo where those filters can be run.  That's a
+  prepared but repo where those filters can be run.  That's a
   significant setup.
 
 * Further, several additional files are created or updated per cummit
-  by git-filter-branch.  Some of these are for supporting the
-  convenience functions provided by git-filter-branch (such as map()),
+  by but-filter-branch.  Some of these are for supporting the
+  convenience functions provided by but-filter-branch (such as map()),
   while others are for keeping track of internal state (but could have
-  also been accessed by user filters; one of git-filter-branch's
+  also been accessed by user filters; one of but-filter-branch's
   regression tests does so).  This essentially amounts to using the
-  filesystem as an IPC mechanism between git-filter-branch and the
+  filesystem as an IPC mechanism between but-filter-branch and the
   user-provided filters.  Disks tend to be a slow IPC mechanism, and
   writing these files also effectively represents a forced
   synchronization point between separate processes that we hit with
@@ -511,46 +511,46 @@ impossible for a backward-compatible implementation to ever be fast:
   of time between operating systems, but on any platform it is very
   slow relative to invoking a function.
 
-* git-filter-branch itself is written in shell, which is kind of slow.
+* but-filter-branch itself is written in shell, which is kind of slow.
   This is the one performance issue that could be backward-compatibly
   fixed, but compared to the above problems that are intrinsic to the
-  design of git-filter-branch, the language of the tool itself is a
+  design of but-filter-branch, the language of the tool itself is a
   relatively minor issue.
 
   ** Side note: Unfortunately, people tend to fixate on the
-     written-in-shell aspect and periodically ask if git-filter-branch
+     written-in-shell aspect and periodically ask if but-filter-branch
      could be rewritten in another language to fix the performance
      issues.  Not only does that ignore the bigger intrinsic problems
      with the design, it'd help less than you'd expect: if
-     git-filter-branch itself were not shell, then the convenience
+     but-filter-branch itself were not shell, then the convenience
      functions (map(), skip_cummit(), etc) and the `--setup` argument
      could no longer be executed once at the beginning of the program
      but would instead need to be prepended to every user filter (and
      thus re-executed with every cummit).
 
-The https://github.com/newren/git-filter-repo/[git filter-repo] tool is
-an alternative to git-filter-branch which does not suffer from these
+The https://buthub.com/newren/but-filter-repo/[but filter-repo] tool is
+an alternative to but-filter-branch which does not suffer from these
 performance problems or the safety problems (mentioned below). For those
-with existing tooling which relies upon git-filter-branch, 'git
+with existing tooling which relies upon but-filter-branch, 'but
 filter-repo' also provides
-https://github.com/newren/git-filter-repo/blob/master/contrib/filter-repo-demos/filter-lamely[filter-lamely],
-a drop-in git-filter-branch replacement (with a few caveats).  While
+https://buthub.com/newren/but-filter-repo/blob/master/contrib/filter-repo-demos/filter-lamely[filter-lamely],
+a drop-in but-filter-branch replacement (with a few caveats).  While
 filter-lamely suffers from all the same safety issues as
-git-filter-branch, it at least ameliorates the performance issues a
+but-filter-branch, it at least ameliorates the performance issues a
 little.
 
 [[SAFETY]]
 SAFETY
 ------
 
-git-filter-branch is riddled with gotchas resulting in various ways to
+but-filter-branch is riddled with gotchas resulting in various ways to
 easily corrupt repos or end up with a mess worse than what you started
 with:
 
 * Someone can have a set of "working and tested filters" which they
   document or provide to a coworker, who then runs them on a different
   OS where the same commands are not working/tested (some examples in
-  the git-filter-branch manpage are also affected by this).
+  the but-filter-branch manpage are also affected by this).
   BSD vs. GNU userland differences can really bite.  If lucky, error
   messages are spewed.  But just as likely, the commands either don't
   do the filtering requested, or silently corrupt by making some
@@ -563,7 +563,7 @@ with:
 
 * Filenames with spaces are often mishandled by shell snippets since
   they cause problems for shell pipelines.  Not everyone is familiar
-  with find -print0, xargs -0, git-ls-files -z, etc.  Even people who
+  with find -print0, xargs -0, but-ls-files -z, etc.  Even people who
   are familiar with these may assume such flags are not relevant
   because someone else renamed any such files in their repo back
   before the person doing the filtering joined the project.  And
@@ -573,7 +573,7 @@ with:
 
 * Non-ascii filenames can be silently removed despite being in a
   desired directory.  Keeping only wanted paths is often done using
-  pipelines like `git ls-files | grep -v ^WANTED_DIR/ | xargs git rm`.
+  pipelines like `but ls-files | grep -v ^WANTED_DIR/ | xargs but rm`.
   ls-files will only quote filenames if needed, so folks may not
   notice that one of the files didn't match the regex (at least not
   until it's much too late).  Yes, someone who knows about
@@ -590,7 +590,7 @@ with:
   problem.)
 
 * It's far too easy to accidentally mix up old and new history.  It's
-  still possible with any tool, but git-filter-branch almost
+  still possible with any tool, but but-filter-branch almost
   invites it.  If lucky, the only downside is users getting frustrated
   that they don't know how to shrink their repo and remove the old
   stuff.  If unlucky, they merge old and new history and end up with
@@ -612,7 +612,7 @@ with:
      need to understand that they need to rebase their changes for all
      their branches on top of new history (or delete and reclone), but
      that's only one of multiple concerns to consider.  See the
-     "DISCUSSION" section of the git filter-repo manual page for more
+     "DISCUSSION" section of the but filter-repo manual page for more
      details.
 
 * Annotated tags can be accidentally converted to lightweight tags,
@@ -620,16 +620,16 @@ with:
 
   ** Someone can do a history rewrite, realize they messed up, restore
      from the backups in refs/original/, and then redo their
-     git-filter-branch command.  (The backup in refs/original/ is not a
+     but-filter-branch command.  (The backup in refs/original/ is not a
      real backup; it dereferences tags first.)
 
-  ** Running git-filter-branch with either --tags or --all in your
+  ** Running but-filter-branch with either --tags or --all in your
      <rev-list options>.  In order to retain annotated tags as
      annotated, you must use --tag-name-filter (and must not have
      restored from refs/original/ in a previously botched rewrite).
 
 * Any cummit messages that specify an encoding will become corrupted
-  by the rewrite; git-filter-branch ignores the encoding, takes the
+  by the rewrite; but-filter-branch ignores the encoding, takes the
   original bytes, and feeds it to cummit-tree without telling it the
   proper encoding.  (This happens whether or not --msg-filter is
   used.)
@@ -665,12 +665,12 @@ with:
   update authors and cummitters, missing taggers.
 
 * If the user provides a --tag-name-filter that maps multiple tags to
-  the same name, no warning or error is provided; git-filter-branch
+  the same name, no warning or error is provided; but-filter-branch
   simply overwrites each tag in some undocumented pre-defined order
-  resulting in only one tag at the end.  (A git-filter-branch
+  resulting in only one tag at the end.  (A but-filter-branch
   regression test requires this surprising behavior.)
 
-Also, the poor performance of git-filter-branch often leads to safety
+Also, the poor performance of but-filter-branch often leads to safety
 issues:
 
 * Coming up with the correct shell snippet to do the filtering you
@@ -681,7 +681,7 @@ issues:
   circumstances (spaces in filenames, non-ascii filenames, funny
   author names or emails, invalid timezones, presence of grafts or
   replace objects, etc.), meaning they may have to wait a long time,
-  hit an error, then restart.  The performance of git-filter-branch is
+  hit an error, then restart.  The performance of but-filter-branch is
   so bad that this cycle is painful, reducing the time available to
   carefully re-check (to say nothing about what it does to the
   patience of the person doing the rewrite even if they do technically
@@ -700,4 +700,4 @@ issues:
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

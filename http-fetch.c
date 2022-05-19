@@ -6,7 +6,7 @@
 #include "strvec.h"
 #include "urlmatch.h"
 
-static const char http_fetch_usage[] = "git http-fetch "
+static const char http_fetch_usage[] = "but http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | cummit-id] url";
 
 static int fetch_using_walker(const char *raw_url, int get_verbosely,
@@ -35,7 +35,7 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
 		fprintf(stderr,
 "Some loose object were found to be corrupt, but they might be just\n"
 "a false '404 Not Found' error message sent with incorrect HTTP\n"
-"status code.  Suggest running 'git fsck'.\n");
+"status code.  Suggest running 'but fsck'.\n");
 	}
 
 	walker_free(walker);
@@ -66,7 +66,7 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 		if (results.curl_result != CURLE_OK) {
 			struct url_info url;
 			char *nurl = url_normalize(preq->url, &url);
-			if (!nurl || !git_env_bool("GIT_TRACE_REDACT", 1)) {
+			if (!nurl || !but_env_bool("GIT_TRACE_REDACT", 1)) {
 				die("unable to get pack file '%s'\n%s", preq->url,
 				    curl_errorstr);
 			} else {
@@ -97,11 +97,11 @@ int cmd_main(int argc, const char **argv)
 	int get_verbosely = 0;
 	int get_recover = 0;
 	int packfile = 0;
-	int nongit;
+	int nonbut;
 	struct object_id packfile_hash;
 	struct strvec index_pack_args = STRVEC_INIT;
 
-	setup_git_directory_gently(&nongit);
+	setup_but_directory_gently(&nonbut);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		const char *p;
@@ -134,10 +134,10 @@ int cmd_main(int argc, const char **argv)
 	if (argc != arg + 2 - (cummits_on_stdin || packfile))
 		usage(http_fetch_usage);
 
-	if (nongit)
-		die(_("not a git repository"));
+	if (nonbut)
+		die(_("not a but repository"));
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	if (packfile) {
 		if (!index_pack_args.nr)

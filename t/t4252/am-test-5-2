@@ -4,7 +4,7 @@ Subject: Six
 
 Applying this patch with --directory='frotz nitfol' should succeed
 
-diff --git i/file-5 w/file-5
+diff --but i/file-5 w/file-5
 new file mode 100644
 index 000000..1d6ed9f
 --- /dev/null

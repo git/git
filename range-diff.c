@@ -62,7 +62,7 @@ static int read_patches(const char *range, struct string_list *list,
 	strvec_push(&cp.args, range);
 	cp.out = -1;
 	cp.no_stdin = 1;
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 
 	if (start_command(&cp))
 		return error_errno(_("could not start `log`"));
@@ -113,7 +113,7 @@ static int read_patches(const char *range, struct string_list *list,
 			goto cleanup;
 		}
 
-		if (starts_with(line, "diff --git")) {
+		if (starts_with(line, "diff --but")) {
 			struct patch patch = { 0 };
 			struct strbuf root = STRBUF_INIT;
 			int linenr = 0;
@@ -126,10 +126,10 @@ static int read_patches(const char *range, struct string_list *list,
 			if (eol)
 				*eol = '\n';
 			orig_len = len;
-			len = parse_git_diff_header(&root, &linenr, 0, line,
+			len = parse_but_diff_header(&root, &linenr, 0, line,
 						    len, size, &patch);
 			if (len < 0) {
-				error(_("could not parse git header '%.*s'"),
+				error(_("could not parse but header '%.*s'"),
 				      orig_len, line);
 				FREE_AND_NULL(util);
 				string_list_clear(list, 1);
@@ -190,7 +190,7 @@ static int read_patches(const char *range, struct string_list *list,
 			 * A completely blank (not ' \n', which is context)
 			 * line is not valid in a diff.  We skip it
 			 * silently, because this neatly handles the blank
-			 * separator line between cummits in git-log
+			 * separator line between cummits in but-log
 			 * output.
 			 */
 			continue;

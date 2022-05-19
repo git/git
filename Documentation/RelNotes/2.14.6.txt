@@ -9,7 +9,7 @@ Fixes since v2.14.5
 -------------------
 
  * CVE-2019-1348:
-   The --export-marks option of git fast-import is exposed also via
+   The --export-marks option of but fast-import is exposed also via
    the in-stream command feature export-marks=... and it allows
    overwriting arbitrary paths.
 
@@ -31,7 +31,7 @@ Fixes since v2.14.5
 
  * CVE-2019-1352:
    Git was unaware of NTFS Alternate Data Streams, allowing files
-   inside the .git/ directory to be overwritten during a clone.
+   inside the .but/ directory to be overwritten during a clone.
 
  * CVE-2019-1353:
    When running Git in the Windows Subsystem for Linux (also known as

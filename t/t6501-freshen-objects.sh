@@ -19,7 +19,7 @@
 #      works-in-progress. Most workflows would mention
 #      referenced objects in the index, which prune takes
 #      into account. However, many operations don't. For
-#      example, a partial cummit with "git cummit foo"
+#      example, a partial cummit with "but cummit foo"
 #      will use a temporary index. Or they may not need
 #      an index at all (e.g., creating a new cummit
 #      to refer to an existing tree).
@@ -34,12 +34,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # the normal test_cummit, which creates extra tags.
 add () {
 	echo "$1" >"$1" &&
-	git add "$1"
+	but add "$1"
 }
 cummit () {
 	test_tick &&
 	add "$1" &&
-	git cummit -m "$1"
+	but cummit -m "$1"
 }
 
 maybe_repack () {
@@ -48,10 +48,10 @@ maybe_repack () {
 		: skip repack
 		;;
 	repack)
-		git repack -ad
+		but repack -ad
 		;;
 	bitmap)
-		git repack -adb
+		but repack -adb
 		;;
 	*)
 		echo >&2 "unknown test type in maybe_repack"
@@ -63,13 +63,13 @@ maybe_repack () {
 for title in loose repack bitmap
 do
 	test_expect_success "make repo completely empty ($title)" '
-		rm -rf .git &&
-		git init
+		rm -rf .but &&
+		but init
 	'
 
 	test_expect_success "disable reflogs ($title)" '
-		git config core.logallrefupdates false &&
-		git reflog expire --expire=all --all
+		but config core.logallrefupdates false &&
+		but reflog expire --expire=all --all
 	'
 
 	test_expect_success "setup basic history ($title)" '
@@ -77,66 +77,66 @@ do
 	'
 
 	test_expect_success "create and abandon some objects ($title)" '
-		git checkout -b experiment &&
+		but checkout -b experiment &&
 		cummit abandon &&
 		maybe_repack &&
-		git checkout main &&
-		git branch -D experiment
+		but checkout main &&
+		but branch -D experiment
 	'
 
 	test_expect_success "simulate time passing ($title)" '
-		test-tool chmtime --get -86400 $(find .git/objects -type f)
+		test-tool chmtime --get -86400 $(find .but/objects -type f)
 	'
 
 	test_expect_success "start writing new cummit with old blob ($title)" '
 		tree=$(
 			GIT_INDEX_FILE=index.tmp &&
 			export GIT_INDEX_FILE &&
-			git read-tree HEAD &&
+			but read-tree HEAD &&
 			add unrelated &&
 			add abandon &&
-			git write-tree
+			but write-tree
 		)
 	'
 
 	test_expect_success "simultaneous gc ($title)" '
-		git gc --prune=12.hours.ago
+		but gc --prune=12.hours.ago
 	'
 
 	test_expect_success "finish writing out cummit ($title)" '
-		cummit=$(echo foo | git cummit-tree -p HEAD $tree) &&
-		git update-ref HEAD $cummit
+		cummit=$(echo foo | but cummit-tree -p HEAD $tree) &&
+		but update-ref HEAD $cummit
 	'
 
 	# "abandon" blob should have been rescued by reference from new tree
 	test_expect_success "repository passes fsck ($title)" '
-		git fsck
+		but fsck
 	'
 
 	test_expect_success "abandon objects again ($title)" '
-		git reset --hard HEAD^ &&
-		test-tool chmtime --get -86400 $(find .git/objects -type f)
+		but reset --hard HEAD^ &&
+		test-tool chmtime --get -86400 $(find .but/objects -type f)
 	'
 
 	test_expect_success "start writing new cummit with same tree ($title)" '
 		tree=$(
 			GIT_INDEX_FILE=index.tmp &&
 			export GIT_INDEX_FILE &&
-			git read-tree HEAD &&
+			but read-tree HEAD &&
 			add abandon &&
 			add unrelated &&
-			git write-tree
+			but write-tree
 		)
 	'
 
 	test_expect_success "simultaneous gc ($title)" '
-		git gc --prune=12.hours.ago
+		but gc --prune=12.hours.ago
 	'
 
 	# tree should have been refreshed by write-tree
 	test_expect_success "finish writing out cummit ($title)" '
-		cummit=$(echo foo | git cummit-tree -p HEAD $tree) &&
-		git update-ref HEAD $cummit
+		cummit=$(echo foo | but cummit-tree -p HEAD $tree) &&
+		but update-ref HEAD $cummit
 	'
 done
 
@@ -149,9 +149,9 @@ test_expect_success 'do not complain about existing broken links (cummit)' '
 
 	some message
 	EOF
-	cummit=$(git hash-object -t cummit -w broken-cummit) &&
-	git gc -q 2>stderr &&
-	verbose git cat-file -e $cummit &&
+	cummit=$(but hash-object -t cummit -w broken-cummit) &&
+	but gc -q 2>stderr &&
+	verbose but cat-file -e $cummit &&
 	test_must_be_empty stderr
 '
 
@@ -159,9 +159,9 @@ test_expect_success 'do not complain about existing broken links (tree)' '
 	cat >broken-tree <<-EOF &&
 	100644 blob $(test_oid 003)	foo
 	EOF
-	tree=$(git mktree --missing <broken-tree) &&
-	git gc -q 2>stderr &&
-	git cat-file -e $tree &&
+	tree=$(but mktree --missing <broken-tree) &&
+	but gc -q 2>stderr &&
+	but cat-file -e $tree &&
 	test_must_be_empty stderr
 '
 
@@ -174,9 +174,9 @@ test_expect_success 'do not complain about existing broken links (tag)' '
 
 	this is a broken tag
 	EOF
-	tag=$(git hash-object -t tag -w broken-tag) &&
-	git gc -q 2>stderr &&
-	git cat-file -e $tag &&
+	tag=$(but hash-object -t tag -w broken-tag) &&
+	but gc -q 2>stderr &&
+	but cat-file -e $tag &&
 	test_must_be_empty stderr
 '
 

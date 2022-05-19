@@ -1,16 +1,16 @@
-git-stripspace(1)
+but-stripspace(1)
 =================
 
 NAME
 ----
-git-stripspace - Remove unnecessary whitespace
+but-stripspace - Remove unnecessary whitespace
 
 
 SYNOPSIS
 --------
 [verse]
-'git stripspace' [-s | --strip-comments]
-'git stripspace' [-c | --comment-lines]
+'but stripspace' [-s | --strip-comments]
+'but stripspace' [-c | --comment-lines]
 
 DESCRIPTION
 -----------
@@ -30,7 +30,7 @@ In the case where the input consists entirely of whitespace characters, no
 output will be produced.
 
 *NOTE*: This is intended for cleaning metadata, prefer the `--whitespace=fix`
-mode of linkgit:git-apply[1] for correcting whitespace of patches or files in
+mode of linkbut:but-apply[1] for correcting whitespace of patches or files in
 the repository.
 
 OPTIONS
@@ -64,7 +64,7 @@ Given the following noisy input with '$' indicating the end of a line:
 |  $
 ---------
 
-Use 'git stripspace' with no arguments to obtain:
+Use 'but stripspace' with no arguments to obtain:
 
 ---------
 |A brief introduction$
@@ -78,7 +78,7 @@ Use 'git stripspace' with no arguments to obtain:
 |The end.$
 ---------
 
-Use 'git stripspace --strip-comments' to obtain:
+Use 'but stripspace --strip-comments' to obtain:
 
 ---------
 |A brief introduction$
@@ -91,4 +91,4 @@ Use 'git stripspace --strip-comments' to obtain:
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

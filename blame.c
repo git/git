@@ -136,19 +136,19 @@ static void append_merge_parents(struct repository *r,
 	int merge_head;
 	struct strbuf line = STRBUF_INIT;
 
-	merge_head = open(git_path_merge_head(r), O_RDONLY);
+	merge_head = open(but_path_merge_head(r), O_RDONLY);
 	if (merge_head < 0) {
 		if (errno == ENOENT)
 			return;
 		die("cannot open '%s' for reading",
-		    git_path_merge_head(r));
+		    but_path_merge_head(r));
 	}
 
 	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
 		struct object_id oid;
 		if (get_oid_hex(line.buf, &oid))
 			die("unknown line in '%s': %s",
-			    git_path_merge_head(r), line.buf);
+			    but_path_merge_head(r), line.buf);
 		tail = append_parent(r, tail, &oid);
 	}
 	close(merge_head);
@@ -261,7 +261,7 @@ static struct cummit *fake_working_tree_cummit(struct repository *r,
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die_errno("failed to read from stdin");
 	}
-	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
+	convert_to_but(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
@@ -2285,7 +2285,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			if (!DIFF_FILE_VALID(p->one))
 				continue; /* does not exist in parent */
 			if (S_ISGITLINK(p->one->mode))
-				continue; /* ignore git links */
+				continue; /* ignore but links */
 			if (porigin && !strcmp(p->one->path, porigin->path))
 				/* find_move already dealt with this path */
 				continue;
@@ -2683,8 +2683,8 @@ static struct cummit *dwim_reverse_initial(struct rev_info *revs,
 					   const char **name_p)
 {
 	/*
-	 * DWIM "git blame --reverse ONE -- PATH" as
-	 * "git blame --reverse ONE..HEAD -- PATH" but only do so
+	 * DWIM "but blame --reverse ONE -- PATH" as
+	 * "but blame --reverse ONE..HEAD -- PATH" but only do so
 	 * when it makes sense.
 	 */
 	struct object *obj;

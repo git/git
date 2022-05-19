@@ -5,10 +5,10 @@ cummitGraph.generationVersion::
 	2.
 
 cummitGraph.maxNewFilters::
-	Specifies the default value for the `--max-new-filters` option of `git
-	cummit-graph write` (c.f., linkgit:git-cummit-graph[1]).
+	Specifies the default value for the `--max-new-filters` option of `but
+	cummit-graph write` (c.f., linkbut:but-cummit-graph[1]).
 
 cummitGraph.readChangedPaths::
-	If true, then git will use the changed-path Bloom filters in the
+	If true, then but will use the changed-path Bloom filters in the
 	cummit-graph file (if it exists, and they are present). Defaults to
-	true. See linkgit:git-cummit-graph[1] for more information.
+	true. See linkbut:but-cummit-graph[1] for more information.

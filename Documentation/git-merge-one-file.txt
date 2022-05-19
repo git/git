@@ -1,21 +1,21 @@
-git-merge-one-file(1)
+but-merge-one-file(1)
 =====================
 
 NAME
 ----
-git-merge-one-file - The standard helper program to use with git-merge-index
+but-merge-one-file - The standard helper program to use with but-merge-index
 
 
 SYNOPSIS
 --------
 [verse]
-'git merge-one-file'
+'but merge-one-file'
 
 DESCRIPTION
 -----------
-This is the standard helper program to use with 'git merge-index'
-to resolve a merge after the trivial merge done with 'git read-tree -m'.
+This is the standard helper program to use with 'but merge-index'
+to resolve a merge after the trivial merge done with 'but read-tree -m'.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

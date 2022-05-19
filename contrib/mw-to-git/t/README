@@ -3,8 +3,8 @@ Tests for Mediawiki-to-Git
 
 Introduction
 ------------
-This manual describes how to install the git-remote-mediawiki test
-environment on a machine with git installed on it.
+This manual describes how to install the but-remote-mediawiki test
+environment on a machine with but installed on it.
 
 Prerequisite
 ------------
@@ -42,7 +42,7 @@ instance on your machine. If you already have one, it is still
 strongly recommended to install one with the script provided. Here's
 how to work it:
 
-a. change directory to contrib/mw-to-git/t/
+a. change directory to contrib/mw-to-but/t/
 b. if needed, edit test.config to choose your installation parameters
 c. run `./install-wiki.sh install`
 d. check on your favourite web browser if your wiki is correctly
@@ -53,20 +53,20 @@ Remove an existing wiki
 
 Edit the file test.config to fit the wiki you want to delete, and then
 execute the command `./install-wiki.sh delete` from the
-contrib/mw-to-git/t directory.
+contrib/mw-to-but/t directory.
 
 Run the existing tests
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The provided tests are currently in the `contrib/mw-to-git/t` directory.
+The provided tests are currently in the `contrib/mw-to-but/t` directory.
 The files are all the t936[0-9]-*.sh shell scripts.
 
 a. Run all tests:
-To do so, run "make test" from the contrib/mw-to-git/ directory.
+To do so, run "make test" from the contrib/mw-to-but/ directory.
 
 b. Run a specific test:
 To run a given test <test_name>, run ./<test_name> from the
-contrib/mw-to-git/t directory.
+contrib/mw-to-but/t directory.
 
 How to create new tests
 -----------------------
@@ -74,10 +74,10 @@ How to create new tests
 Available functions
 ~~~~~~~~~~~~~~~~~~~
 
-The test environment of git-remote-mediawiki provides some functions
+The test environment of but-remote-mediawiki provides some functions
 useful to test its behaviour. for more details about the functions'
-parameters, please refer to the `test-gitmw-lib.sh` and
-`test-gitmw.pl` files.
+parameters, please refer to the `test-butmw-lib.sh` and
+`test-butmw.pl` files.
 
 ** `test_check_wiki_precond`:
 Check if the tests must be skipped or not. Please use this function
@@ -94,7 +94,7 @@ Delete a given page from the wiki.
 Create or modify a given page in the wiki. You can specify several
 parameters like a summary for the page edition, or add the page to a
 given category.
-See test-gitmw.pl for more details.
+See test-butmw.pl for more details.
 
 ** `wiki_getallpage`:
 Fetch all pages from the wiki into a given directory. The directory
@@ -102,7 +102,7 @@ is created if it does not exists.
 
 ** `test_diff_directories`:
 Compare the content of two directories. The content must be the same.
-Use this function to compare the content of a git directory and a wiki
+Use this function to compare the content of a but directory and a wiki
 one created by wiki_getallpage.
 
 ** `test_contains_N_files`:
@@ -119,6 +119,6 @@ beginning of each new test, except if the test re-uses the same wiki
 How to write a new test
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Please, follow the standards given by git. See git/t/README.
+Please, follow the standards given by but. See but/t/README.
 New file should be named as t936[0-9]-*.sh.
 Be sure to reset your wiki regularly with the function `wiki_reset`.

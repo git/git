@@ -12,11 +12,11 @@ sub report {
 
 local $/;
 while (my $slurp = <>) {
-	report($ARGV, "has no 'Part of the linkgit:git[1] suite' end blurb")
+	report($ARGV, "has no 'Part of the linkbut:but[1] suite' end blurb")
 		unless $slurp =~ m[
 		^GIT\n
 		 ---\n
-		\QPart of the linkgit:git[1] suite\E \n
+		\QPart of the linkbut:but[1] suite\E \n
 		\z
 	]mx;
 }

@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 	test_cummit a &&
 	test_cummit b &&
 	test_cummit c &&
-	git checkout b &&
+	but checkout b &&
 	test_cummit d &&
 	test_cummit e
 '
@@ -21,7 +21,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "simple rebase $*" "
 		reset_rebase &&
-		git rebase $* c e &&
+		but rebase $* c e &&
 		test_cmp_rev c HEAD~2 &&
 		test_linear_range 'd e' c..
 	"
@@ -31,13 +31,13 @@ test_run_rebase success -m
 test_run_rebase success -i
 
 test_expect_success 'setup branches and remote tracking' '
-	git tag -l >tags &&
+	but tag -l >tags &&
 	for tag in $(cat tags)
 	do
-		git branch branch-$tag $tag || return 1
+		but branch branch-$tag $tag || return 1
 	done &&
-	git remote add origin "file://$PWD" &&
-	git fetch origin
+	but remote add origin "file://$PWD" &&
+	but fetch origin
 '
 
 test_run_rebase () {
@@ -45,7 +45,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* is no-op if upstream is an ancestor" "
 		reset_rebase &&
-		git rebase $* b e &&
+		but rebase $* b e &&
 		test_cmp_rev e HEAD
 	"
 }
@@ -58,7 +58,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* -f rewrites even if upstream is an ancestor" "
 		reset_rebase &&
-		git rebase $* -f b e &&
+		but rebase $* -f b e &&
 		test_cmp_rev ! e HEAD &&
 		test_cmp_rev b HEAD~2 &&
 		test_linear_range 'd e' b..
@@ -74,7 +74,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* -f rewrites even if remote upstream is an ancestor" "
 		reset_rebase &&
-		git rebase $* -f branch-b branch-e &&
+		but rebase $* -f branch-b branch-e &&
 		test_cmp_rev ! branch-e origin/branch-e &&
 		test_cmp_rev branch-b HEAD~2 &&
 		test_linear_range 'd e' branch-b..
@@ -90,7 +90,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* fast-forwards from ancestor of upstream" "
 		reset_rebase &&
-		git rebase $* e b &&
+		but rebase $* e b &&
 		test_cmp_rev e HEAD
 	"
 }
@@ -114,13 +114,13 @@ test_run_rebase success -i
 # because applying the patch succeeds, but simply results in no
 # changes.
 test_expect_success 'setup of linear history for range selection tests' '
-	git checkout c &&
+	but checkout c &&
 	test_cummit g &&
 	revert h g &&
-	git checkout d &&
+	but checkout d &&
 	cherry_pick gp g &&
 	test_cummit i &&
-	git checkout b &&
+	but checkout b &&
 	test_cummit f
 '
 
@@ -129,7 +129,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* drops patches in upstream" "
 		reset_rebase &&
-		git rebase $* h i &&
+		but rebase $* h i &&
 		test_cmp_rev h HEAD~2 &&
 		test_linear_range 'd i' h..
 	"
@@ -143,7 +143,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* can drop last patch if in upstream" "
 		reset_rebase &&
-		git rebase $* h gp &&
+		but rebase $* h gp &&
 		test_cmp_rev h HEAD^ &&
 		test_linear_range 'd' h..
 	"
@@ -157,7 +157,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto drops patches in upstream" "
 		reset_rebase &&
-		git rebase $* --onto f h i &&
+		but rebase $* --onto f h i &&
 		test_cmp_rev f HEAD~2 &&
 		test_linear_range 'd i' f..
 	"
@@ -171,7 +171,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto does not drop patches in onto" "
 		reset_rebase &&
-		git rebase $* --onto h f i &&
+		but rebase $* --onto h f i &&
 		test_cmp_rev h HEAD~3 &&
 		test_linear_range 'd gp i' h..
 	"
@@ -186,9 +186,9 @@ test_run_rebase success -i
 #
 # ! = empty
 test_expect_success 'setup of linear history for empty cummit tests' '
-	git checkout c &&
+	but checkout c &&
 	make_empty j &&
-	git checkout d &&
+	but checkout d &&
 	make_empty k &&
 	test_cummit l
 '
@@ -198,7 +198,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* keeps begin-empty cummits" "
 		reset_rebase &&
-		git rebase $* j l &&
+		but rebase $* j l &&
 		test_cmp_rev c HEAD~4 &&
 		test_linear_range 'j d k l' c..
 	"
@@ -212,7 +212,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --no-keep-empty drops begin-empty cummits" "
 		reset_rebase &&
-		git rebase $* --no-keep-empty c l &&
+		but rebase $* --no-keep-empty c l &&
 		test_cmp_rev c HEAD~2 &&
 		test_linear_range 'd l' c..
 	"
@@ -225,7 +225,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --keep-empty keeps empty even if already in upstream" "
 		reset_rebase &&
-		git rebase $* --keep-empty j l &&
+		but rebase $* --keep-empty j l &&
 		test_cmp_rev j HEAD~3 &&
 		test_linear_range 'd k l' j..
 	"
@@ -249,10 +249,10 @@ test_run_rebase success --rebase-merges
 # because applying the patch succeeds, but simply results in no
 # changes.
 test_expect_success 'setup of linear history for test involving root' '
-	git checkout b &&
+	but checkout b &&
 	revert m b &&
-	git checkout --orphan disjoint &&
-	git rm -rf . &&
+	but checkout --orphan disjoint &&
+	but rm -rf . &&
 	test_cummit x &&
 	test_cummit y &&
 	cherry_pick bp b
@@ -263,7 +263,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto --root" "
 		reset_rebase &&
-		git rebase $* --onto c --root y &&
+		but rebase $* --onto c --root y &&
 		test_cmp_rev c HEAD~2 &&
 		test_linear_range 'x y' c..
 	"
@@ -277,7 +277,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* without --onto --root with disjoint history" "
 		reset_rebase &&
-		git rebase $* c y &&
+		but rebase $* c y &&
 		test_cmp_rev c HEAD~2 &&
 		test_linear_range 'x y' c..
 	"
@@ -291,7 +291,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto --root drops patch in onto" "
 		reset_rebase &&
-		git rebase $* --onto m --root bp &&
+		but rebase $* --onto m --root bp &&
 		test_cmp_rev m HEAD~2 &&
 		test_linear_range 'x y' m..
 	"
@@ -305,7 +305,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --onto --root with merge-base does not go to root" "
 		reset_rebase &&
-		git rebase $* --onto m --root g &&
+		but rebase $* --onto m --root g &&
 		test_cmp_rev m HEAD~2 &&
 		test_linear_range 'c g' m..
 	"
@@ -320,7 +320,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* without --onto --root with disjoint history drops patch in onto" "
 		reset_rebase &&
-		git rebase $* m bp &&
+		but rebase $* m bp &&
 		test_cmp_rev m HEAD~2 &&
 		test_linear_range 'x y' m..
 	"
@@ -334,7 +334,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* --root on linear history is a no-op" "
 		reset_rebase &&
-		git rebase $* --root c &&
+		but rebase $* --root c &&
 		test_cmp_rev c HEAD
 	"
 }
@@ -347,7 +347,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* -f --root on linear history causes re-write" "
 		reset_rebase &&
-		git rebase $* -f --root c &&
+		but rebase $* -f --root c &&
 		test_cmp_rev ! a HEAD~2 &&
 		test_linear_range 'a b c' HEAD
 	"

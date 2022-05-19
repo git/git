@@ -3,7 +3,7 @@
 # Copyright (c) 2010 Nazri Ramliy
 #
 
-test_description='Test for "git log --decorate" colors'
+test_description='Test for "but log --decorate" colors'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -11,12 +11,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	git config diff.color.cummit yellow &&
-	git config color.decorate.branch green &&
-	git config color.decorate.remoteBranch red &&
-	git config color.decorate.tag "reverse bold yellow" &&
-	git config color.decorate.stash magenta &&
-	git config color.decorate.HEAD cyan &&
+	but config diff.color.cummit yellow &&
+	but config color.decorate.branch green &&
+	but config color.decorate.remoteBranch red &&
+	but config color.decorate.tag "reverse bold yellow" &&
+	but config color.decorate.stash magenta &&
+	but config color.decorate.HEAD cyan &&
 
 	c_reset="<RESET>" &&
 
@@ -28,17 +28,17 @@ test_expect_success setup '
 	c_HEAD="<CYAN>" &&
 
 	test_cummit A &&
-	git clone . other &&
+	but clone . other &&
 	(
 		cd other &&
 		test_cummit A1
 	) &&
 
-	git remote add -f other ./other &&
+	but remote add -f other ./other &&
 	test_cummit B &&
-	git tag v1.0 &&
+	but tag v1.0 &&
 	echo >>A.t &&
-	git stash save Changes to A.t
+	but stash save Changes to A.t
 '
 
 cat >expected <<EOF
@@ -56,7 +56,7 @@ EOF
 # We want log to show all, but the second parent to refs/stash is irrelevant
 # to this test since it does not contain any decoration, hence --first-parent
 test_expect_success 'cummit Decorations Colored Correctly' '
-	git log --first-parent --abbrev=10 --all --decorate --oneline --color=always |
+	but log --first-parent --abbrev=10 --all --decorate --oneline --color=always |
 	sed "s/[0-9a-f]\{10,10\}/CUMMIT_ID/" |
 	test_decode_color >out &&
 	test_cmp expected out

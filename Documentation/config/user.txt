@@ -15,8 +15,8 @@ cummitter.email::
 	`GIT_CUMMITTER_EMAIL` and `EMAIL` environment variables.
 +
 Note that the `name` forms of these variables conventionally refer to
-some form of a personal name.  See linkgit:git-cummit[1] and the
-environment variables section of linkgit:git[1] for more information on
+some form of a personal name.  See linkbut:but-cummit[1] and the
+environment variables section of linkbut:but[1] for more information on
 these settings and the `credential.username` option if you're looking
 for authentication credentials instead.
 
@@ -31,7 +31,7 @@ user.useConfigOnly::
 	Defaults to `false`.
 
 user.signingKey::
-	If linkgit:git-tag[1] or linkgit:git-cummit[1] is not selecting the
+	If linkbut:but-tag[1] or linkbut:but-cummit[1] is not selecting the
 	key you want it to automatically when creating a signed tag or
 	cummit, you can override the default selection with this variable.
 	This option is passed unchanged to gpg's --local-user parameter,
@@ -40,7 +40,7 @@ user.signingKey::
 	your private ssh key or the public key when ssh-agent is used.
 	Alternatively it can contain a public key prefixed with `key::`
 	directly (e.g.: "key::ssh-rsa XXXXXX identifier"). The private key
-	needs to be available via ssh-agent. If not set git will call
+	needs to be available via ssh-agent. If not set but will call
 	gpg.ssh.defaultKeyCommand (e.g.: "ssh-add -L") and try to use the
 	first key available. For backward compatibility, a raw key which
 	begins with "ssh-", such as "ssh-rsa XXXXXX identifier", is treated

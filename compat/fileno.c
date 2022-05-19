@@ -1,7 +1,7 @@
 #define COMPAT_CODE_FILENO
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-int git_fileno(FILE *stream)
+int but_fileno(FILE *stream)
 {
 	return fileno(stream);
 }

@@ -1,12 +1,12 @@
-# Bulgarian translation of git-gui-glossary po-file.
+# Bulgarian translation of but-gui-glossary po-file.
 # Copyright (C) 2012, 2013, 2014 Alexander Shopov <ash@kambanaria.org>.
-# This file is distributed under the same license as the git package.
+# This file is distributed under the same license as the but package.
 # Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014.
 #
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui-glossary master\n"
+"Project-Id-Version: but-gui-glossary master\n"
 "POT-Creation-Date: 2014-01-13 21:39+0200\n"
 "PO-Revision-Date: 2014-01-13 21:39+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
@@ -50,11 +50,11 @@ msgstr "изтегляне [глагол]"
 msgid "clone [verb]"
 msgstr "клонирам [глагол]"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "подаване [съществително]"
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr "подавам [съществително]"
 
@@ -79,7 +79,7 @@ msgid "hunk"
 msgstr "парче"
 
 #. "A collection of files. The index is a stored version of your working tree."
-msgid "index (in git-gui: staging area)"
+msgid "index (in but-gui: staging area)"
 msgstr "скеле/индекс/изба"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
@@ -150,7 +150,7 @@ msgstr "етикет [съществително]"
 msgid "tag [verb]"
 msgstr "задавам етикет [глагол]"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr "следящ клон"
 
@@ -170,7 +170,7 @@ msgstr "проверявам"
 msgid "working copy, working tree"
 msgstr "работно копие/работно дърво"
 
-#. "a cummit that succeeds the current one in git's graph of cummits (not necessarily directly)"
+#. "a cummit that succeeds the current one in but's graph of cummits (not necessarily directly)"
 msgid "ancestor"
 msgstr "предшественик"
 
@@ -178,7 +178,7 @@ msgstr "предшественик"
 msgid "abort"
 msgstr "преустановявам"
 
-#. "a repository with only .git directory, without working directory"
+#. "a repository with only .but directory, without working directory"
 msgid "bare repository"
 msgstr "голо хранилище"
 
@@ -194,11 +194,11 @@ msgstr "анотирам/анотиране"
 msgid "cherry-pick"
 msgstr "отбирам"
 
-#. "a cummit that directly succeeds the current one in git's graph of cummits"
+#. "a cummit that directly succeeds the current one in but's graph of cummits"
 msgid "child"
 msgstr "дете"
 
-#. "clean the state of the git repository, often after manually stopped operation"
+#. "clean the state of the but repository, often after manually stopped operation"
 msgid "cleanup"
 msgstr "зачиствам"
 
@@ -206,7 +206,7 @@ msgstr "зачиствам"
 msgid "cummit message"
 msgstr "съобщение при подаване"
 
-#. "a cummit that precedes the current one in git's graph of cummits (not necessarily directly)"
+#. "a cummit that precedes the current one in but's graph of cummits (not necessarily directly)"
 msgid "descendant"
 msgstr "наследник"
 
@@ -230,7 +230,7 @@ msgstr "кука/автоматичен скрипт"
 msgid "initial checkout"
 msgstr "първоначално изтегляне"
 
-#. "a branch that resides in the local git repository"
+#. "a branch that resides in the local but repository"
 msgid "local branch"
 msgstr "локален клон"
 
@@ -238,15 +238,15 @@ msgstr "локален клон"
 msgid "loose object"
 msgstr "непакетиран обект"
 
-#. "a branch called by convention 'master' that exists in a newly created git repository"
+#. "a branch called by convention 'master' that exists in a newly created but repository"
 msgid "master branch"
 msgstr "основен клон"
 
-#. "a remote called by convention 'origin' that the current git repository has been cloned from"
+#. "a remote called by convention 'origin' that the current but repository has been cloned from"
 msgid "origin"
 msgstr "хранилище-източник"
 
-#. "a file containing many git objects packed together"
+#. "a file containing many but objects packed together"
 msgid "pack [noun]"
 msgstr "етикет"
 
@@ -254,7 +254,7 @@ msgstr "етикет"
 msgid "packed object"
 msgstr "пакетиран обект"
 
-#. "a cummit that directly precedes the current one in git's graph of cummits"
+#. "a cummit that directly precedes the current one in but's graph of cummits"
 msgid "parent"
 msgstr "родител"
 
@@ -270,7 +270,7 @@ msgstr "коригирам (конфликт)"
 msgid "revert changes"
 msgstr "връщане на оригинала"
 
-#. "expression that signifies a revision in git"
+#. "expression that signifies a revision in but"
 msgid "revision expression"
 msgstr "израз за версия"
 
@@ -282,6 +282,6 @@ msgstr "(добавяне) към скелето за подаване/изва�
 msgid "stash"
 msgstr "скатавам промени"
 
-#. "file whose content is tracked/not tracked by git"
+#. "file whose content is tracked/not tracked by but"
 msgid "tracked/untracked"
 msgstr "следен/неследен"

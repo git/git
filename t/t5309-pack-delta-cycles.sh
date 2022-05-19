@@ -17,9 +17,9 @@ test_expect_success 'index-pack works with a single delta (A->B)' '
 		pack_obj $B
 	} >ab.pack &&
 	pack_trailer ab.pack &&
-	git index-pack --stdin <ab.pack &&
-	git cat-file -t $A &&
-	git cat-file -t $B
+	but index-pack --stdin <ab.pack &&
+	but cat-file -t $A &&
+	but cat-file -t $B
 '
 
 test_expect_success 'index-pack works with a single delta (B->A)' '
@@ -30,9 +30,9 @@ test_expect_success 'index-pack works with a single delta (B->A)' '
 		pack_obj $B $A
 	} >ba.pack &&
 	pack_trailer ba.pack &&
-	git index-pack --stdin <ba.pack &&
-	git cat-file -t $A &&
-	git cat-file -t $B
+	but index-pack --stdin <ba.pack &&
+	but cat-file -t $A &&
+	but cat-file -t $B
 '
 
 test_expect_success 'index-pack detects missing base objects' '
@@ -42,7 +42,7 @@ test_expect_success 'index-pack detects missing base objects' '
 		pack_obj $A $B
 	} >missing.pack &&
 	pack_trailer missing.pack &&
-	test_must_fail git index-pack --fix-thin --stdin <missing.pack
+	test_must_fail but index-pack --fix-thin --stdin <missing.pack
 '
 
 test_expect_success 'index-pack detects REF_DELTA cycles' '
@@ -53,13 +53,13 @@ test_expect_success 'index-pack detects REF_DELTA cycles' '
 		pack_obj $B $A
 	} >cycle.pack &&
 	pack_trailer cycle.pack &&
-	test_must_fail git index-pack --fix-thin --stdin <cycle.pack
+	test_must_fail but index-pack --fix-thin --stdin <cycle.pack
 '
 
 test_expect_success 'failover to an object in another pack' '
 	clear_packs &&
-	git index-pack --stdin <ab.pack &&
-	test_must_fail git index-pack --stdin --fix-thin <cycle.pack
+	but index-pack --stdin <ab.pack &&
+	test_must_fail but index-pack --stdin --fix-thin <cycle.pack
 '
 
 test_expect_success 'failover to a duplicate object in the same pack' '
@@ -71,7 +71,7 @@ test_expect_success 'failover to a duplicate object in the same pack' '
 		pack_obj $A
 	} >recoverable.pack &&
 	pack_trailer recoverable.pack &&
-	test_must_fail git index-pack --fix-thin --stdin <recoverable.pack
+	test_must_fail but index-pack --fix-thin --stdin <recoverable.pack
 '
 
 test_done

@@ -1,27 +1,27 @@
-git-remote(1)
+but-remote(1)
 =============
 
 NAME
 ----
-git-remote - Manage set of tracked repositories
+but-remote - Manage set of tracked repositories
 
 
 SYNOPSIS
 --------
 [verse]
-'git remote' [-v | --verbose]
-'git remote add' [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=(fetch|push)] <name> <URL>
-'git remote rename' [--[no-]progress] <old> <new>
-'git remote remove' <name>
-'git remote set-head' <name> (-a | --auto | -d | --delete | <branch>)
-'git remote set-branches' [--add] <name> <branch>...
-'git remote get-url' [--push] [--all] <name>
-'git remote set-url' [--push] <name> <newurl> [<oldurl>]
-'git remote set-url --add' [--push] <name> <newurl>
-'git remote set-url --delete' [--push] <name> <URL>
-'git remote' [-v | --verbose] 'show' [-n] <name>...
-'git remote prune' [-n | --dry-run] <name>...
-'git remote' [-v | --verbose] 'update' [-p | --prune] [(<group> | <remote>)...]
+'but remote' [-v | --verbose]
+'but remote add' [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=(fetch|push)] <name> <URL>
+'but remote rename' [--[no-]progress] <old> <new>
+'but remote remove' <name>
+'but remote set-head' <name> (-a | --auto | -d | --delete | <branch>)
+'but remote set-branches' [--add] <name> <branch>...
+'but remote get-url' [--push] [--all] <name>
+'but remote set-url' [--push] <name> <newurl> [<oldurl>]
+'but remote set-url --add' [--push] <name> <newurl>
+'but remote set-url --delete' [--push] <name> <URL>
+'but remote' [-v | --verbose] 'show' [-n] <name>...
+'but remote prune' [-n | --dry-run] <name>...
+'but remote' [-v | --verbose] 'update' [-p | --prune] [(<group> | <remote>)...]
 
 DESCRIPTION
 -----------
@@ -47,20 +47,20 @@ subcommands are available to perform operations on the remotes.
 'add'::
 
 Add a remote named <name> for the repository at
-<URL>.  The command `git fetch <name>` can then be used to create and
+<URL>.  The command `but fetch <name>` can then be used to create and
 update remote-tracking branches <name>/<branch>.
 +
-With `-f` option, `git fetch <name>` is run immediately after
+With `-f` option, `but fetch <name>` is run immediately after
 the remote information is set up.
 +
-With `--tags` option, `git fetch <name>` imports every tag from the
+With `--tags` option, `but fetch <name>` imports every tag from the
 remote repository.
 +
-With `--no-tags` option, `git fetch <name>` does not import tags from
+With `--no-tags` option, `but fetch <name>` does not import tags from
 the remote repository.
 +
 By default, only tags on fetched branches are imported
-(see linkgit:git-fetch[1]).
+(see linkbut:but-fetch[1]).
 +
 With `-t <branch>` option, instead of the default glob
 refspec for the remote to track all branches under
@@ -77,7 +77,7 @@ be stored in the 'refs/remotes/' namespace, but rather everything in
 local repository. This option only makes sense in bare repositories,
 because a fetch would overwrite any local cummits.
 +
-When a push mirror is created with `--mirror=push`, then `git push`
+When a push mirror is created with `--mirror=push`, then `but push`
 will always behave as if `--mirror` was passed.
 
 'rename'::
@@ -109,12 +109,12 @@ With `-d` or `--delete`, the symbolic ref `refs/remotes/<name>/HEAD` is deleted.
 +
 With `-a` or `--auto`, the remote is queried to determine its `HEAD`, then the
 symbolic-ref `refs/remotes/<name>/HEAD` is set to the same branch. e.g., if the remote
-`HEAD` is pointed at `next`, `git remote set-head origin -a` will set
+`HEAD` is pointed at `next`, `but remote set-head origin -a` will set
 the symbolic-ref `refs/remotes/origin/HEAD` to `refs/remotes/origin/next`. This will
 only work if `refs/remotes/origin/next` already exists; if not it must be
 fetched first.
 +
-Use `<branch>` to set the symbolic-ref `refs/remotes/<name>/HEAD` explicitly. e.g., `git
+Use `<branch>` to set the symbolic-ref `refs/remotes/<name>/HEAD` explicitly. e.g., `but
 remote set-head origin master` will set the symbolic-ref `refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master`. This will only work if
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
@@ -127,7 +127,7 @@ This can be used to track a subset of the available remote branches
 after the initial setup for a remote.
 +
 The named branches will be interpreted as if specified with the
-`-t` option on the `git remote add` command line.
+`-t` option on the `but remote add` command line.
 +
 With `--add`, instead of replacing the list of currently tracked
 branches, adds to that list.
@@ -168,17 +168,17 @@ your publishing repository), use two separate remotes.
 Gives some information about the remote <name>.
 +
 With `-n` option, the remote heads are not queried first with
-`git ls-remote <name>`; cached information is used instead.
+`but ls-remote <name>`; cached information is used instead.
 
 'prune'::
 
 Deletes stale references associated with <name>. By default, stale
 remote-tracking branches under <name> are deleted, but depending on
 global configuration and the configuration of the remote we might even
-prune local tags that haven't been pushed there. Equivalent to `git
+prune local tags that haven't been pushed there. Equivalent to `but
 fetch --prune <name>`, except that no new references will be fetched.
 +
-See the PRUNING section of linkgit:git-fetch[1] for what it'll prune
+See the PRUNING section of linkbut:but-fetch[1] for what it'll prune
 depending on various configuration.
 +
 With `--dry-run` option, report what branches would be pruned, but do not
@@ -191,7 +191,7 @@ Fetch updates for remotes or remote groups in the repository as defined by
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter `remote.<name>.skipDefaultUpdate` set to true will
-be updated.  (See linkgit:git-config[1]).
+be updated.  (See linkbut:but-config[1]).
 +
 With `--prune` option, run pruning against all the remotes that are updated.
 
@@ -201,7 +201,7 @@ DISCUSSION
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 EXIT STATUS
 -----------
@@ -220,48 +220,48 @@ EXAMPLES
 * Add a new remote, fetch, and check out a branch from it
 +
 ------------
-$ git remote
+$ but remote
 origin
-$ git branch -r
+$ but branch -r
   origin/HEAD -> origin/master
   origin/master
-$ git remote add staging git://git.kernel.org/.../gregkh/staging.git
-$ git remote
+$ but remote add staging but://but.kernel.org/.../gregkh/staging.but
+$ but remote
 origin
 staging
-$ git fetch staging
+$ but fetch staging
 ...
-From git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging
+From but://but.kernel.org/pub/scm/linux/kernel/but/gregkh/staging
  * [new branch]      master     -> staging/master
  * [new branch]      staging-linus -> staging/staging-linus
  * [new branch]      staging-next -> staging/staging-next
-$ git branch -r
+$ but branch -r
   origin/HEAD -> origin/master
   origin/master
   staging/master
   staging/staging-linus
   staging/staging-next
-$ git switch -c staging staging/master
+$ but switch -c staging staging/master
 ...
 ------------
 
-* Imitate 'git clone' but track only selected branches
+* Imitate 'but clone' but track only selected branches
 +
 ------------
-$ mkdir project.git
-$ cd project.git
-$ git init
-$ git remote add -f -t master -m master origin git://example.com/git.git/
-$ git merge origin
+$ mkdir project.but
+$ cd project.but
+$ but init
+$ but remote add -f -t master -m master origin but://example.com/but.but/
+$ but merge origin
 ------------
 
 
 SEE ALSO
 --------
-linkgit:git-fetch[1]
-linkgit:git-branch[1]
-linkgit:git-config[1]
+linkbut:but-fetch[1]
+linkbut:but-branch[1]
+linkbut:but-config[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

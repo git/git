@@ -1,4 +1,4 @@
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 new file mode 100644
 index 0000000..992913c
 --- /dev/null
@@ -12,7 +12,7 @@ index 0000000..992913c
 +F
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 new file mode 100644
 index 0000000..10a8a9f
 --- /dev/null
@@ -27,7 +27,7 @@ index 0000000..10a8a9f
 +A
 +B
 +C
-diff --git a/file1 b/file1
+diff --but a/file1 b/file1
 new file mode 100644
 index 0000000..b1e6722
 --- /dev/null

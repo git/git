@@ -24,7 +24,7 @@ UI, Workflows & Features
  * The "--format=%(trailers)" mechanism gets enhanced to make it
    easier to design output for machine consumption.
 
- * When a user does not tell "git pull" to use rebase or merge, the
+ * When a user does not tell "but pull" to use rebase or merge, the
    command gives a loud message telling a user to choose between
    rebase or merge but creates a merge anyway, forcing users who would
    want to rebase to redo the operation.  Fix an early part of this
@@ -35,46 +35,46 @@ UI, Workflows & Features
  * The configuration variable 'core.abbrev' can be set to 'no' to
    force no abbreviation regardless of the hash algorithm.
 
- * "git rev-parse" can be explicitly told to give output as absolute
+ * "but rev-parse" can be explicitly told to give output as absolute
    or relative path with the `--path-format=(absolute|relative)` option.
 
  * Bash completion (in contrib/) update to make it easier for
-   end-users to add completion for their custom "git" subcommands.
+   end-users to add completion for their custom "but" subcommands.
 
- * "git maintenance" learned to drive scheduled maintenance on
+ * "but maintenance" learned to drive scheduled maintenance on
    platforms whose native scheduling methods are not 'cron'.
 
  * After expiring a reflog and making a single cummit, the reflog for
    the branch would record a single entry that knows both @{0} and
    @{1}, but we failed to answer "what cummit were we on?", i.e. @{1}
 
- * "git bundle" learns "--stdin" option to read its refs from the
+ * "but bundle" learns "--stdin" option to read its refs from the
    standard input.  Also, it now does not lose refs whey they point
    at the same object.
 
- * "git log" learned a new "--diff-merges=<how>" option.
+ * "but log" learned a new "--diff-merges=<how>" option.
 
- * "git ls-files" can and does show multiple entries when the index is
+ * "but ls-files" can and does show multiple entries when the index is
    unmerged, which is a source for confusion unless -s/-u option is in
    use.  A new option --deduplicate has been introduced.
 
- * `git worktree list` now annotates worktrees as prunable, shows
+ * `but worktree list` now annotates worktrees as prunable, shows
    locked and prunable attributes in --porcelain mode, and gained
    a --verbose option.
 
- * "git clone" tries to locally check out the branch pointed at by
+ * "but clone" tries to locally check out the branch pointed at by
    HEAD of the remote repository after it is done, but the protocol
    did not convey the information necessary to do so when copying an
    empty repository.  The protocol v2 learned how to do so.
 
  * There are other ways than ".." for a single token to denote a
-   "cummit range", namely "<rev>^!" and "<rev>^-<n>", but "git
+   "cummit range", namely "<rev>^!" and "<rev>^-<n>", but "but
    range-diff" did not understand them.
 
- * The "git range-diff" command learned "--(left|right)-only" option
+ * The "but range-diff" command learned "--(left|right)-only" option
    to show only one side of the compared range.
 
- * "git mergetool" feeds three versions (base, local and remote) of
+ * "but mergetool" feeds three versions (base, local and remote) of
    a conflicted path unmodified.  The command learned to optionally
    prepare these files with unconflicted parts already resolved.
 
@@ -82,7 +82,7 @@ UI, Workflows & Features
    working tree, but a stray file in a bare repository also was read
    by accident, which has been corrected.
 
- * "git maintenance" tool learned a new "pack-refs" maintenance task.
+ * "but maintenance" tool learned a new "pack-refs" maintenance task.
 
  * The error message given when a configuration variable that is
    expected to have a boolean value has been improved.
@@ -91,19 +91,19 @@ UI, Workflows & Features
    two object names (one in SHA-1, the other in SHA-256) are both
    signed.
 
- * "git rev-list" command learned "--disk-usage" option.
+ * "but rev-list" command learned "--disk-usage" option.
 
- * "git {diff,log} --{skip,rotate}-to=<path>" allows the user to
+ * "but {diff,log} --{skip,rotate}-to=<path>" allows the user to
    discard diff output for early paths or move them to the end of the
    output.
 
- * "git difftool" learned "--skip-to=<path>" option to restart an
+ * "but difftool" learned "--skip-to=<path>" option to restart an
    interrupted session from an arbitrary path.
 
- * "git grep" has been tweaked to be limited to the sparse checkout
+ * "but grep" has been tweaked to be limited to the sparse checkout
    paths.
 
- * "git rebase --[no-]fork-point" gained a configuration variable
+ * "but rebase --[no-]fork-point" gained a configuration variable
    rebase.forkPoint so that users do not have to keep specifying a
    non-default setting.
 
@@ -120,8 +120,8 @@ Performance, Internal Implementation, Development Support etc.
  * Update the Code-of-conduct to version 2.0 from the upstream (we've
    been using version 1.4).
 
- * "git mktag" validates its input using its own rules before writing
-   a tag object---it has been updated to share the logic with "git
+ * "but mktag" validates its input using its own rules before writing
+   a tag object---it has been updated to share the logic with "but
    fsck".
 
  * Two new ways to feed configuration variable-value pairs via
@@ -130,10 +130,10 @@ Performance, Internal Implementation, Development Support etc.
    to make it more robust.
 
  * Tests have been updated so that they do not to get affected by the
-   name of the default branch "git init" creates.
+   name of the default branch "but init" creates.
 
- * "git fetch" learns to treat ref updates atomically in all-or-none
-   fashion, just like "git push" does, with the new "--atomic" option.
+ * "but fetch" learns to treat ref updates atomically in all-or-none
+   fashion, just like "but push" does, with the new "--atomic" option.
 
  * The peel_ref() API has been replaced with peel_iterated_oid().
 
@@ -189,14 +189,14 @@ Performance, Internal Implementation, Development Support etc.
  * The cummit-graph learned to use corrected cummit dates instead of
    the generation number to help topological revision traversal.
 
- * Piecemeal of rewrite of "git bisect" in C continues.
+ * Piecemeal of rewrite of "but bisect" in C continues.
 
  * When a pager spawned by us exited, the trace log did not record its
    exit status correctly, which has been corrected.
 
  * Removal of GIT_TEST_GETTEXT_POISON continues.
 
- * The code to implement "git merge-base --independent" was poorly
+ * The code to implement "but merge-base --independent" was poorly
    done and was kept from the very beginning of the feature.
 
  * Preliminary changes to fsmonitor integration.
@@ -212,8 +212,8 @@ Performance, Internal Implementation, Development Support etc.
    inflated and ready to be inspected), but fundamentally cannot be
    applied fully when we receive more than one pack stream, as a tree
    object in one pack may refer to a blob object in another pack as
-   ".gitmodules", when we want to inspect blobs that are used as
-   ".gitmodules" file, for example.  Teach "index-pack" to emit
+   ".butmodules", when we want to inspect blobs that are used as
+   ".butmodules" file, for example.  Teach "index-pack" to emit
    objects that must be inspected later and check them in the calling
    "fetch-pack" process.
 
@@ -233,11 +233,11 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.30
 -----------------
 
- * Diagnose command line error of "git rebase" early.
+ * Diagnose command line error of "but rebase" early.
 
- * Clean up option descriptions in "git cmd --help".
+ * Clean up option descriptions in "but cmd --help".
 
- * "git stash" did not work well in a sparsely checked out working
+ * "but stash" did not work well in a sparsely checked out working
    tree.
 
  * Some tests expect that "ls -l" output has either '-' or 'x' for
@@ -245,49 +245,49 @@ Fixes since v2.30
    directory and make these fields 'S' or 's' instead, causing test
    failures.
 
- * "git for-each-repo --config=<var> <cmd>" should not run <cmd> for
+ * "but for-each-repo --config=<var> <cmd>" should not run <cmd> for
    any repository when the configuration variable <var> is not defined
    even once.
 
- * Fix 2.29 regression where "git mergetool --tool-help" fails to list
+ * Fix 2.29 regression where "but mergetool --tool-help" fails to list
    all the available tools.
 
  * Fix for procedure to building CI test environment for mac.
 
- * The implementation of "git branch --sort" wrt the detached HEAD
+ * The implementation of "but branch --sort" wrt the detached HEAD
    display has always been hacky, which has been cleaned up.
 
- * Newline characters in the host and path part of git:// URL are
+ * Newline characters in the host and path part of but:// URL are
    now forbidden.
 
- * "git diff" showed a submodule working tree with untracked cruft as
+ * "but diff" showed a submodule working tree with untracked cruft as
    "Submodule cummit <objectname>-dirty", but a natural expectation is
-   that the "-dirty" indicator would align with "git describe --dirty",
+   that the "-dirty" indicator would align with "but describe --dirty",
    which does not consider having untracked files in the working tree
    as source of dirtiness.  The inconsistency has been fixed.
 
  * When more than one cummit with the same patch ID appears on one
-   side, "git log --cherry-pick A...B" did not exclude them all when a
+   side, "but log --cherry-pick A...B" did not exclude them all when a
    cummit with the same patch ID appears on the other side.  Now it
    does.
 
- * Documentation for "git fsck" lost stale bits that has become
+ * Documentation for "but fsck" lost stale bits that has become
    incorrect.
 
  * Doc fix for packfile URI feature.
 
- * When "git rebase -i" processes "fixup" insn, there is no reason to
+ * When "but rebase -i" processes "fixup" insn, there is no reason to
    clean up the cummit log message, but we did the usual stripspace
    processing.  This has been corrected.
    (merge f7d42ceec5 js/rebase-i-cummit-cleanup-fix later to maint).
 
- * Fix in passing custom args from "git clone" to "upload-pack" on the
+ * Fix in passing custom args from "but clone" to "upload-pack" on the
    other side.
    (merge ad6b5fefbd jv/upload-pack-filter-spec-quotefix later to maint).
 
- * The command line completion (in contrib/) completed "git branch -d"
-   with branch names, but "git branch -D" offered tagnames in addition,
-   which has been corrected.  "git branch -M" had the same problem.
+ * The command line completion (in contrib/) completed "but branch -d"
+   with branch names, but "but branch -D" offered tagnames in addition,
+   which has been corrected.  "but branch -M" had the same problem.
    (merge 27dc071b9a jk/complete-branch-force-delete later to maint).
 
  * When commands are started from a subdirectory, they may have to
@@ -303,14 +303,14 @@ Fixes since v2.30
    system, "BUG()"s were not, which has been corrected.
    (merge 0a9dde4a04 jt/trace2-BUG later to maint).
 
- * "git grep --untracked" is meant to be "let's ALSO find in these
+ * "but grep --untracked" is meant to be "let's ALSO find in these
    files on the filesystem" when looking for matches in the working
    tree files, and does not make any sense if the primary search is
    done against the index, or the tree objects.  The "--cached" and
    "--untracked" options have been marked as mutually incompatible.
    (merge 0c5d83b248 mt/grep-cached-untracked later to maint).
 
- * Fix "git fsck --name-objects" which apparently has not been used by
+ * Fix "but fsck --name-objects" which apparently has not been used by
    anybody who is motivated enough to report breakage.
    (merge e89f89361c js/fsck-name-objects-fix later to maint).
 
@@ -318,7 +318,7 @@ Fixes since v2.30
    by forcing them to use separate output files during the test.
    (merge 822ee894f6 jx/t5411-unique-filenames later to maint).
 
- * Test to make sure "git rev-parse one-thing one-thing" gives
+ * Test to make sure "but rev-parse one-thing one-thing" gives
    the same thing twice (when one-thing is --since=X).
    (merge a5cdca4520 ew/rev-parse-since-test later to maint).
 
@@ -329,15 +329,15 @@ Fixes since v2.30
 
  * Objects that lost references can be pruned away, even when they
    have notes attached to it (and these notes will become dangling,
-   which in turn can be pruned with "git notes prune").  This has been
+   which in turn can be pruned with "but notes prune").  This has been
    clarified in the documentation.
    (merge fa9ab027ba mz/doc-notes-are-not-anchors later to maint).
 
- * The error codepath around the "--temp/--prefix" feature of "git
+ * The error codepath around the "--temp/--prefix" feature of "but
    checkout-index" has been improved.
    (merge 3f7ba60350 mt/checkout-index-corner-cases later to maint).
 
- * The "git maintenance register" command had trouble registering bare
+ * The "but maintenance register" command had trouble registering bare
    repositories, which had been corrected.
 
  * A handful of multi-word configuration variable names in
@@ -345,7 +345,7 @@ Fixes since v2.30
    to use the more canonical camelCase.
    (merge 7dd0eaa39c dl/doc-config-camelcase later to maint).
 
- * "git push $there --delete ''" should have been diagnosed as an
+ * "but push $there --delete ''" should have been diagnosed as an
    error, but instead turned into a matching push, which has been
    corrected.
    (merge 20e416409f jc/push-delete-nothing later to maint).

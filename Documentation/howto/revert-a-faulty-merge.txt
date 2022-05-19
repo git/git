@@ -1,11 +1,11 @@
 Date: Fri, 19 Dec 2008 00:45:19 -0800
-From: Linus Torvalds <torvalds@linux-foundation.org>, Junio C Hamano <gitster@pobox.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>, Junio C Hamano <butster@pobox.com>
 Subject: Re: Odd merge behaviour involving reverts
 Abstract: Sometimes a branch that was already merged to the mainline
  is later found to be faulty.  Linus and Junio give guidance on
  recovering from such a premature merge and continuing development
  after the offending branch is fixed.
-Message-ID: <7vocz8a6zk.fsf@gitster.siamese.dyndns.org>
+Message-ID: <7vocz8a6zk.fsf@butster.siamese.dyndns.org>
 References: <alpine.LFD.2.00.0812181949450.14014@localhost.localdomain>
 Content-type: text/asciidoc
 
@@ -41,7 +41,7 @@ IOW, `"diff W^..W"` is similar to `"diff -R M^..M"`.
 
 Such a "revert" of a merge can be made with:
 
-    $ git revert -m 1 M
+    $ but revert -m 1 M
 
 After the developers of the side branch fix their mistakes, the history
 may look like this:
@@ -87,7 +87,7 @@ which would make the history look like this:
 where Y is the revert of W.  Such a "revert of the revert" can be done
 with:
 
-    $ git revert W
+    $ but revert W
 
 This history would (ignoring possible conflicts between what W and W..Y
 changed) be equivalent to not having W or Y at all in the history:
@@ -236,7 +236,7 @@ But if you don't actually need to change cummit A, then you need some way to
 recreate it as a new cummit with the same changes in it.  The rebase command's
 --no-ff option provides a way to do this:
 
-    $ git rebase [-i] --no-ff P
+    $ but rebase [-i] --no-ff P
 
 The --no-ff option creates a new branch A'-B'-C' with all-new cummits (all the
 SHA IDs will be different) even if in the interactive case you only actually
@@ -252,8 +252,8 @@ to fix it up.  Let's revisit the situation discussed at the start of this howto:
 
 At this point, you can use --no-ff to recreate the topic branch:
 
-    $ git checkout E
-    $ git rebase --no-ff P
+    $ but checkout E
+    $ but rebase --no-ff P
 
 yielding
 

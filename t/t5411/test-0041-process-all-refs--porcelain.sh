@@ -1,6 +1,6 @@
 test_expect_success "config receive.procReceiveRefs = refs ($PROTOCOL/porcelain)" '
-	git -C "$upstream" config --unset-all receive.procReceiveRefs &&
-	git -C "$upstream" config --add receive.procReceiveRefs refs
+	but -C "$upstream" config --unset-all receive.procReceiveRefs &&
+	but -C "$upstream" config --add receive.procReceiveRefs refs
 '
 
 # Refs of upstream : main(A)
@@ -8,10 +8,10 @@ test_expect_success "config receive.procReceiveRefs = refs ($PROTOCOL/porcelain)
 test_expect_success "setup upstream branches ($PROTOCOL/porcelain)" '
 	(
 		cd "$upstream" &&
-		git update-ref refs/heads/main $B &&
-		git update-ref refs/heads/foo $A &&
-		git update-ref refs/heads/bar $A &&
-		git update-ref refs/heads/baz $A
+		but update-ref refs/heads/main $B &&
+		but update-ref refs/heads/foo $A &&
+		but update-ref refs/heads/bar $A &&
+		but update-ref refs/heads/baz $A
 	)
 
 '
@@ -40,9 +40,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL/porcelain)" '
 
 # Refs of upstream : main(B)             foo(A)  bar(A))  baz(A)
 # Refs of workbench: main(A)  tags/v123
-# git push -f      : main(A)             (NULL)  (B)              refs/for/main/topic(A)  refs/for/next/topic(A)
+# but push -f      : main(A)             (NULL)  (B)              refs/for/main/topic(A)  refs/for/next/topic(A)
 test_expect_success "proc-receive: process all refs ($PROTOCOL/porcelain)" '
-	git -C workbench push --porcelain -f origin \
+	but -C workbench push --porcelain -f origin \
 		HEAD:refs/heads/main \
 		:refs/heads/foo \
 		$B:refs/heads/bar \
@@ -84,7 +84,7 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL/porcelain)" '
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/pull/124/head        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  	<CUMMIT-B>:refs/heads/bar	<CUMMIT-A>..<CUMMIT-B>
 	> -	:refs/heads/foo	[deleted]
 	> +	HEAD:refs/heads/main	<CUMMIT-B>...<CUMMIT-A> (forced update)
@@ -106,7 +106,7 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL/porcelain)" '
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
 	(
 		cd "$upstream" &&
-		git update-ref -d refs/heads/bar &&
-		git update-ref -d refs/heads/baz
+		but update-ref -d refs/heads/bar &&
+		but update-ref -d refs/heads/baz
 	)
 '

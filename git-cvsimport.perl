@@ -38,7 +38,7 @@ sub usage(;$) {
 	my $msg = shift;
 	print(STDERR "Error: $msg\n") if $msg;
 	print STDERR <<END;
-usage: git cvsimport     # fetch/update GIT from CVS
+usage: but cvsimport     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
        [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L cummitlimit]
@@ -109,7 +109,7 @@ sub set_timezone {
 	tzset();
 }
 
-# convert getopts specs for use by git config
+# convert getopts specs for use by but config
 my %longmap = (
 	'A:' => 'authors-file',
 	'M:' => 'merge-regex',
@@ -125,7 +125,7 @@ sub read_repo_config {
 	foreach my $o (@opts) {
 		my $key = $o;
 		$key =~ s/://g;
-		my $arg = 'git config';
+		my $arg = 'but config';
 		$arg .= ' --bool' if ($o !~ /:$/);
 		my $ckey = $key;
 
@@ -159,7 +159,7 @@ GetOptions( map { s/:/=s/; /M/ ? "$_\@" : $_ } split( /(?!:)/, $opts ) )
 usage if $opt_h;
 
 if (@ARGV == 0) {
-		chomp(my $module = `git config --get cvsimport.module`);
+		chomp(my $module = `but config --get cvsimport.module`);
 		push(@ARGV, $module) if $? == 0;
 }
 @ARGV <= 1 or usage("You can't specify more than one CVS module");
@@ -180,8 +180,8 @@ if ($opt_d) {
 $opt_s ||= "-";
 $opt_a ||= 0;
 
-my $git_tree = $opt_C;
-$git_tree ||= ".";
+my $but_tree = $opt_C;
+$but_tree ||= ".";
 
 my $remote;
 if (defined $opt_r) {
@@ -520,7 +520,7 @@ sub file {
 	my ($self,$fn,$rev) = @_;
 	my $res;
 
-	my ($fh, $name) = tempfile('gitcvs.XXXXXX',
+	my ($fh, $name) = tempfile('butcvs.XXXXXX',
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	$self->_file($fn,$rev) and $res = $self->_line($fh);
@@ -645,7 +645,7 @@ sub is_oid {
 sub get_headref ($) {
 	my $name = shift;
 	$name =~ s/'/'\\''/g;
-	my $r = `git rev-parse --verify '$name' 2>/dev/null`;
+	my $r = `but rev-parse --verify '$name' 2>/dev/null`;
 	return undef unless $? == 0;
 	chomp $r;
 	return $r;
@@ -659,12 +659,12 @@ sub munge_user_filename {
 		$user_filename_prepend . $name;
 }
 
--d $git_tree
-	or mkdir($git_tree,0777)
-	or die "Could not create $git_tree: $!";
-if ($git_tree ne '.') {
+-d $but_tree
+	or mkdir($but_tree,0777)
+	or die "Could not create $but_tree: $!";
+if ($but_tree ne '.') {
 	$user_filename_prepend = getwd() . '/';
-	chdir($git_tree);
+	chdir($but_tree);
 }
 
 my $last_branch = "";
@@ -672,25 +672,25 @@ my $orig_branch = "";
 my %branch_date;
 my $tip_at_start = undef;
 
-my $git_dir = $ENV{"GIT_DIR"} || ".git";
-$git_dir = getwd()."/".$git_dir unless $git_dir =~ m#^/#;
-$ENV{"GIT_DIR"} = $git_dir;
-my $orig_git_index;
-$orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
+my $but_dir = $ENV{"GIT_DIR"} || ".but";
+$but_dir = getwd()."/".$but_dir unless $but_dir =~ m#^/#;
+$ENV{"GIT_DIR"} = $but_dir;
+my $orig_but_index;
+$orig_but_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
 
 my %index; # holds filenames of one index per branch
 
-unless (-d $git_dir) {
-	system(qw(git init));
-	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system(qw(git read-tree --empty));
+unless (-d $but_dir) {
+	system(qw(but init));
+	die "Cannot init the GIT db at $but_tree: $?\n" if $?;
+	system(qw(but read-tree --empty));
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;
 	$orig_branch = "";
 } else {
-	open(F, "-|", qw(git symbolic-ref HEAD)) or
-		die "Cannot run git symbolic-ref: $!\n";
+	open(F, "-|", qw(but symbolic-ref HEAD)) or
+		die "Cannot run but symbolic-ref: $!\n";
 	chomp ($last_branch = <F>);
 	$last_branch = basename($last_branch);
 	close(F);
@@ -699,12 +699,12 @@ unless (-d $git_dir) {
 		$last_branch = "master";
 	}
 	$orig_branch = $last_branch;
-	$tip_at_start = `git rev-parse --verify HEAD`;
+	$tip_at_start = `but rev-parse --verify HEAD`;
 
 	# Get the last import timestamps
 	my $fmt = '($ref, $author) = (%(refname), %(author));';
-	my @cmd = ('git', 'for-each-ref', '--perl', "--format=$fmt", $remote);
-	open(H, "-|", @cmd) or die "Cannot run git for-each-ref: $!\n";
+	my @cmd = ('but', 'for-each-ref', '--perl', "--format=$fmt", $remote);
+	open(H, "-|", @cmd) or die "Cannot run but for-each-ref: $!\n";
 	while (defined(my $entry = <H>)) {
 		my ($ref, $author);
 		eval($entry) || die "cannot eval refs list: $@";
@@ -720,20 +720,20 @@ unless (-d $git_dir) {
         }
 }
 
--d $git_dir
-	or die "Could not create git subdir ($git_dir).\n";
+-d $but_dir
+	or die "Could not create but subdir ($but_dir).\n";
 
 # now we read (and possibly save) author-info as well
--f "$git_dir/cvs-authors" and
-  read_author_info("$git_dir/cvs-authors");
+-f "$but_dir/cvs-authors" and
+  read_author_info("$but_dir/cvs-authors");
 if ($opt_A) {
 	read_author_info(munge_user_filename($opt_A));
-	write_author_info("$git_dir/cvs-authors");
+	write_author_info("$but_dir/cvs-authors");
 }
 
-# open .git/cvs-revisions, if requested
-open my $revision_map, '>>', "$git_dir/cvs-revisions"
-    or die "Can't open $git_dir/cvs-revisions for appending: $!\n"
+# open .but/cvs-revisions, if requested
+open my $revision_map, '>>', "$but_dir/cvs-revisions"
+    or die "Can't open $but_dir/cvs-revisions for appending: $!\n"
 	if defined $opt_R;
 
 
@@ -758,13 +758,13 @@ unless ($opt_P) {
 		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 		die "Could not start cvsps: $!\n";
 	}
-	($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+	($cvspsfh, $cvspsfile) = tempfile('butXXXXXX', SUFFIX => '.cvsps',
 					  DIR => File::Spec->tmpdir());
 	while (<CVSPS>) {
 	    print $cvspsfh $_;
 	}
 	close CVSPS;
-	$? == 0 or die "git cvsimport: fatal: cvsps reported error\n";
+	$? == 0 or die "but cvsimport: fatal: cvsps reported error\n";
 	close $cvspsfh;
 } else {
 	$cvspsfile = munge_user_filename($opt_P);
@@ -793,27 +793,27 @@ my $state = 0;
 sub update_index (\@\@) {
 	my $old = shift;
 	my $new = shift;
-	open(my $fh, '|-', qw(git update-index -z --index-info))
-		or die "unable to open git update-index: $!";
+	open(my $fh, '|-', qw(but update-index -z --index-info))
+		or die "unable to open but update-index: $!";
 	print $fh
 		(map { "0 0000000000000000000000000000000000000000\t$_\0" }
 			@$old),
 		(map { '100' . sprintf('%o', $_->[0]) . " $_->[1]\t$_->[2]\0" }
 			@$new)
-		or die "unable to write to git update-index: $!";
+		or die "unable to write to but update-index: $!";
 	close $fh
-		or die "unable to write to git update-index: $!";
-	$? and die "git update-index reported error: $?";
+		or die "unable to write to but update-index: $!";
+	$? and die "but update-index reported error: $?";
 }
 
 sub write_tree () {
-	open(my $fh, '-|', qw(git write-tree))
-		or die "unable to open git write-tree: $!";
+	open(my $fh, '-|', qw(but write-tree))
+		or die "unable to open but write-tree: $!";
 	chomp(my $tree = <$fh>);
 	is_oid($tree)
 		or die "Cannot get tree id ($tree): $!";
 	close($fh)
-		or die "Error running git write-tree: $?\n";
+		or die "Error running but write-tree: $?\n";
 	print "Tree ID $tree\n" if $opt_v;
 	return $tree;
 }
@@ -828,9 +828,9 @@ sub cummit {
 	if ($branch eq $opt_o && !$index{branch} &&
 		!get_headref("$remote/$branch")) {
 	    # looks like an initial cummit
-	    # use the index primed by git init
-	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
-	    $index{$branch} = "$git_dir/index";
+	    # use the index primed by but init
+	    $ENV{GIT_INDEX_FILE} = "$but_dir/index";
+	    $index{$branch} = "$but_dir/index";
 	} else {
 	    # use an index per branch to speed up
 	    # imports of projects with many branches
@@ -838,9 +838,9 @@ sub cummit {
 		$index{$branch} = tmpnam();
 		$ENV{GIT_INDEX_FILE} = $index{$branch};
 		if ($ancestor) {
-		    system("git", "read-tree", "$remote/$ancestor");
+		    system("but", "read-tree", "$remote/$ancestor");
 		} else {
-		    system("git", "read-tree", "$remote/$branch");
+		    system("but", "read-tree", "$remote/$branch");
 		}
 		die "read-tree failed: $?\n" if $?;
 	    }
@@ -879,9 +879,9 @@ sub cummit {
 	$ENV{GIT_CUMMITTER_EMAIL} = $author_email;
 	$ENV{GIT_CUMMITTER_DATE} = $cummit_date;
 	my $pid = open2(my $cummit_read, my $cummit_write,
-		'git', 'cummit-tree', $tree, @cummit_args);
+		'but', 'cummit-tree', $tree, @cummit_args);
 
-	# compatibility with git2cvs
+	# compatibility with but2cvs
 	substr($logmsg,32767) = "" if length($logmsg) > 32767;
 	$logmsg =~ s/[\s\n]+\z//;
 
@@ -892,7 +892,7 @@ sub cummit {
 	}
 
 	print($cummit_write "$logmsg\n") && close($cummit_write)
-		or die "Error writing to git cummit-tree: $!\n";
+		or die "Error writing to but cummit-tree: $!\n";
 
 	print "cummitted patch $patchset ($branch $cummit_date)\n" if $opt_v;
 	chomp(my $cid = <$cummit_read>);
@@ -901,9 +901,9 @@ sub cummit {
 	close($cummit_read);
 
 	waitpid($pid,0);
-	die "Error running git cummit-tree: $?\n" if $?;
+	die "Error running but cummit-tree: $?\n" if $?;
 
-	system('git' , 'update-ref', "$remote/$branch", $cid) == 0
+	system('but' , 'update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($revision_map) {
@@ -937,7 +937,7 @@ sub cummit {
 			return;
 		}
 
-		if (system('git' , 'tag', '-f', $xtag, $cid) != 0) {
+		if (system('but' , 'tag', '-f', $xtag, $cid) != 0) {
 			# We did our best to sanitize the tag, but still failed
 			# for whatever reason. Bail out, and give the user
 			# enough information to understand if/how we should
@@ -1050,7 +1050,7 @@ while (<CVS>) {
 				next;
 			}
 
-			system(qw(git update-ref -m cvsimport),
+			system(qw(but update-ref -m cvsimport),
 				"$remote/$branch", $id);
 			if($? != 0) {
 				print STDERR "Could not create branch $branch\n";
@@ -1085,7 +1085,7 @@ while (<CVS>) {
 			my $pid = open(my $F, '-|');
 			die $! unless defined $pid;
 			if (!$pid) {
-			    exec("git", "hash-object", "-w", $tmpname)
+			    exec("but", "hash-object", "-w", $tmpname)
 				or die "Cannot create object: $!\n";
 			}
 			my $sha = <$F>;
@@ -1111,7 +1111,7 @@ while (<CVS>) {
 		}
 		cummit();
 		if (($cummitcount & 1023) == 0) {
-			system(qw(git repack -a -d));
+			system(qw(but repack -a -d));
 		}
 		$state = 1;
 	} elsif ($state == 11 and /^-+$/) {
@@ -1131,21 +1131,21 @@ unless ($opt_P) {
 # The heuristic of repacking every 1024 cummits can leave a
 # lot of unpacked data.  If there is more than 1MB worth of
 # not-packed objects, repack once more.
-my $line = `git count-objects`;
+my $line = `but count-objects`;
 if ($line =~ /^(\d+) objects, (\d+) kilobytes$/) {
   my ($n_objects, $kb) = ($1, $2);
   1024 < $kb
-    and system(qw(git repack -a -d));
+    and system(qw(but repack -a -d));
 }
 
-foreach my $git_index (values %index) {
-    if ($git_index ne "$git_dir/index") {
-	unlink($git_index);
+foreach my $but_index (values %index) {
+    if ($but_index ne "$but_dir/index") {
+	unlink($but_index);
     }
 }
 
-if (defined $orig_git_index) {
-	$ENV{GIT_INDEX_FILE} = $orig_git_index;
+if (defined $orig_but_index) {
+	$ENV{GIT_INDEX_FILE} = $orig_but_index;
 } else {
 	delete $ENV{GIT_INDEX_FILE};
 }
@@ -1156,28 +1156,28 @@ if ($orig_branch) {
 	if ($opt_i) {
 		exit 0;
 	}
-	my $tip_at_end = `git rev-parse --verify HEAD`;
+	my $tip_at_end = `but rev-parse --verify HEAD`;
 	if ($tip_at_start ne $tip_at_end) {
 		for ($tip_at_start, $tip_at_end) { chomp; }
 		print "Fetched into the current branch.\n" if $opt_v;
-		system(qw(git read-tree -u -m),
+		system(qw(but read-tree -u -m),
 		       $tip_at_start, $tip_at_end);
 		die "Fast-forward update failed: $?\n" if $?;
 	}
 	else {
-		system(qw(git merge -m cvsimport), "$remote/$opt_o");
+		system(qw(but merge -m cvsimport), "$remote/$opt_o");
 		die "Could not merge $opt_o into the current branch.\n" if $?;
 	}
 } else {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
-	system("git", "update-ref", "refs/heads/master", "$remote/$opt_o")
+	system("but", "update-ref", "refs/heads/master", "$remote/$opt_o")
 		unless defined get_headref('refs/heads/master');
-	system("git", "symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
+	system("but", "symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
 		if ($opt_r && $opt_o ne 'HEAD');
-	system('git', 'update-ref', 'HEAD', "$orig_branch");
+	system('but', 'update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
-		system(qw(git checkout -f));
+		system(qw(but checkout -f));
 		die "checkout failed: $?\n" if $?;
 	}
 }

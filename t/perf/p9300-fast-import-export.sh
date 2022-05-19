@@ -13,11 +13,11 @@ test_perf_default_repo
 # Use --reencode to avoid the default of aborting on non-utf8 cummits,
 # which lets this test run against a wider variety of sample repos.
 test_perf 'export (no-blobs)' '
-	git fast-export --reencode=yes --no-data HEAD >export
+	but fast-export --reencode=yes --no-data HEAD >export
 '
 
 test_perf 'import (no-blobs)' '
-	git fast-import --force <export
+	but fast-import --force <export
 '
 
 test_done

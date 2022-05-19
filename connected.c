@@ -10,7 +10,7 @@
 /*
  * If we feed all the cummits we want to verify to this command
  *
- *  $ git rev-list --objects --stdin --not --all
+ *  $ but rev-list --objects --stdin --not --all
  *
  * and if it does not error out, that means everything reachable from
  * these cummits locally exists and is connected to our existing refs.
@@ -26,7 +26,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
 	const struct object_id *oid;
 	int err = 0;
-	struct packed_git *new_pack = NULL;
+	struct packed_but *new_pack = NULL;
 	struct transport *transport;
 	size_t base_len;
 
@@ -50,7 +50,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		strbuf_add(&idx_file, transport->pack_lockfiles.items[0].string,
 			   base_len);
 		strbuf_addstr(&idx_file, ".idx");
-		new_pack = add_packed_git(idx_file.buf, idx_file.len, 1);
+		new_pack = add_packed_but(idx_file.buf, idx_file.len, 1);
 		strbuf_release(&idx_file);
 	}
 
@@ -67,9 +67,9 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		 * Before checking for promisor packs, be sure we have the
 		 * latest pack-files loaded into memory.
 		 */
-		reprepare_packed_git(the_repository);
+		reprepare_packed_but(the_repository);
 		do {
-			struct packed_git *p;
+			struct packed_but *p;
 
 			for (p = get_all_packs(the_repository); p; p = p->next) {
 				if (!p->pack_promisor)
@@ -108,7 +108,7 @@ no_promisor_pack_found:
 		strvec_pushf(&rev_list.args, "--progress=%s",
 			     _("Checking connectivity"));
 
-	rev_list.git_cmd = 1;
+	rev_list.but_cmd = 1;
 	if (opt->env)
 		strvec_pushv(&rev_list.env_array, opt->env);
 	rev_list.in = -1;
@@ -119,7 +119,7 @@ no_promisor_pack_found:
 		rev_list.no_stderr = opt->quiet;
 
 	if (start_command(&rev_list))
-		return error(_("Could not run 'git rev-list'"));
+		return error(_("Could not run 'but rev-list'"));
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 

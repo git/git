@@ -6,17 +6,17 @@
 #include "xdiff-interface.h"
 
 static const char builtin_merge_recursive_usage[] =
-	"git %s <base>... -- <head> <remote> ...";
+	"but %s <base>... -- <head> <remote> ...";
 
 static char *better_branch_name(const char *branch)
 {
-	static char githead_env[8 + GIT_MAX_HEXSZ + 1];
+	static char buthead_env[8 + GIT_MAX_HEXSZ + 1];
 	char *name;
 
 	if (strlen(branch) != the_hash_algo->hexsz)
 		return xstrdup(branch);
-	xsnprintf(githead_env, sizeof(githead_env), "GITHEAD_%s", branch);
-	name = getenv(githead_env);
+	xsnprintf(buthead_env, sizeof(buthead_env), "GITHEAD_%s", branch);
+	name = getenv(buthead_env);
 	return xstrdup(name ? name : branch);
 }
 

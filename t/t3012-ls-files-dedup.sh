@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git ls-files --deduplicate test'
+test_description='but ls-files --deduplicate test'
 
 . ./test-lib.sh
 
@@ -8,43 +8,43 @@ test_expect_success 'setup' '
 	>a.txt &&
 	>b.txt &&
 	>delete.txt &&
-	git add a.txt b.txt delete.txt &&
-	git cummit -m base &&
+	but add a.txt b.txt delete.txt &&
+	but cummit -m base &&
 	echo a >a.txt &&
 	echo b >b.txt &&
 	echo delete >delete.txt &&
-	git add a.txt b.txt delete.txt &&
-	git cummit -m tip &&
-	git tag tip &&
-	git reset --hard HEAD^ &&
+	but add a.txt b.txt delete.txt &&
+	but cummit -m tip &&
+	but tag tip &&
+	but reset --hard HEAD^ &&
 	echo change >a.txt &&
-	git cummit -a -m side &&
-	git tag side
+	but cummit -a -m side &&
+	but tag side
 '
 
-test_expect_success 'git ls-files --deduplicate to show unique unmerged path' '
-	test_must_fail git merge tip &&
-	git ls-files --deduplicate >actual &&
+test_expect_success 'but ls-files --deduplicate to show unique unmerged path' '
+	test_must_fail but merge tip &&
+	but ls-files --deduplicate >actual &&
 	cat >expect <<-\EOF &&
 	a.txt
 	b.txt
 	delete.txt
 	EOF
 	test_cmp expect actual &&
-	git merge --abort
+	but merge --abort
 '
 
-test_expect_success 'git ls-files -d -m --deduplicate with different display options' '
-	git reset --hard side &&
-	test_must_fail git merge tip &&
+test_expect_success 'but ls-files -d -m --deduplicate with different display options' '
+	but reset --hard side &&
+	test_must_fail but merge tip &&
 	rm delete.txt &&
-	git ls-files -d -m --deduplicate >actual &&
+	but ls-files -d -m --deduplicate >actual &&
 	cat >expect <<-\EOF &&
 	a.txt
 	delete.txt
 	EOF
 	test_cmp expect actual &&
-	git ls-files -d -m -t --deduplicate >actual &&
+	but ls-files -d -m -t --deduplicate >actual &&
 	cat >expect <<-\EOF &&
 	C a.txt
 	C a.txt
@@ -53,14 +53,14 @@ test_expect_success 'git ls-files -d -m --deduplicate with different display opt
 	C delete.txt
 	EOF
 	test_cmp expect actual &&
-	git ls-files -d -m -c --deduplicate >actual &&
+	but ls-files -d -m -c --deduplicate >actual &&
 	cat >expect <<-\EOF &&
 	a.txt
 	b.txt
 	delete.txt
 	EOF
 	test_cmp expect actual &&
-	git merge --abort
+	but merge --abort
 '
 
 test_done

@@ -5,18 +5,18 @@ test_description='blame output in various formats on a simple case'
 
 test_expect_success 'setup' '
 	echo a >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m one &&
+	but cummit -m one &&
 	echo b >>file &&
 	echo c >>file &&
 	echo d >>file &&
 	test_tick &&
-	git cummit -a -m two &&
-	ID1=$(git rev-parse HEAD^) &&
-	shortID1="^$(git rev-parse HEAD^ |cut -c 1-17)" &&
-	ID2=$(git rev-parse HEAD) &&
-	shortID2="$(git rev-parse HEAD |cut -c 1-18)"
+	but cummit -a -m two &&
+	ID1=$(but rev-parse HEAD^) &&
+	shortID1="^$(but rev-parse HEAD^ |cut -c 1-17)" &&
+	ID2=$(but rev-parse HEAD) &&
+	shortID2="$(but rev-parse HEAD |cut -c 1-18)"
 '
 
 cat >expect <<EOF
@@ -26,7 +26,7 @@ $shortID2 (A U Thor 2005-04-07 15:14:13 -0700 3) c
 $shortID2 (A U Thor 2005-04-07 15:14:13 -0700 4) d
 EOF
 test_expect_success 'normal blame output' '
-	git blame --abbrev=17 file >actual &&
+	but blame --abbrev=17 file >actual &&
 	test_cmp expect actual
 '
 
@@ -66,7 +66,7 @@ $ID2 4 4
 	d
 EOF
 test_expect_success 'blame --porcelain output' '
-	git blame --porcelain file >actual &&
+	but blame --porcelain file >actual &&
 	test_cmp expect actual
 '
 
@@ -85,23 +85,23 @@ $cummit2
 	d
 EOF
 test_expect_success 'blame --line-porcelain output' '
-	git blame --line-porcelain file >actual &&
+	but blame --line-porcelain file >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--porcelain detects first non-blank line as subject' '
 	(
-		GIT_INDEX_FILE=.git/tmp-index &&
+		GIT_INDEX_FILE=.but/tmp-index &&
 		export GIT_INDEX_FILE &&
 		echo "This is it" >single-file &&
-		git add single-file &&
-		tree=$(git write-tree) &&
+		but add single-file &&
+		tree=$(but write-tree) &&
 		cummit=$(printf "%s\n%s\n%s\n\n\n  \noneline\n\nbody\n" \
 			"tree $tree" \
 			"author A <a@b.c> 123456789 +0000" \
 			"cummitter C <c@d.e> 123456789 +0000" |
-		git hash-object -w -t cummit --stdin) &&
-		git blame --porcelain $cummit -- single-file >output &&
+		but hash-object -w -t cummit --stdin) &&
+		but blame --porcelain $cummit -- single-file >output &&
 		grep "^summary oneline$" output
 	)
 '

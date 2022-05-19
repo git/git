@@ -7,7 +7,7 @@ PERL='@@PERL@@'
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=
 OPTIONS_SPEC="\
-git instaweb [options] (--start | --stop | --restart)
+but instaweb [options] (--start | --stop | --restart)
 --
 l,local        only bind on 127.0.0.1
 p,port=        the port to bind to
@@ -21,17 +21,17 @@ restart        restart the web server
 "
 
 SUBDIRECTORY_OK=Yes
-. git-sh-setup
+. but-sh-setup
 
-fqgitdir="$GIT_DIR"
-local="$(git config --bool --get instaweb.local)"
-httpd="$(git config --get instaweb.httpd)"
-root="$(git config --get instaweb.gitwebdir)"
-port=$(git config --get instaweb.port)
-module_path="$(git config --get instaweb.modulepath)"
+fqbutdir="$GIT_DIR"
+local="$(but config --bool --get instaweb.local)"
+httpd="$(but config --get instaweb.httpd)"
+root="$(but config --get instaweb.butwebdir)"
+port=$(but config --get instaweb.port)
+module_path="$(but config --get instaweb.modulepath)"
 action="browse"
 
-conf="$GIT_DIR/gitweb/httpd.conf"
+conf="$GIT_DIR/butweb/httpd.conf"
 
 # Defaults:
 
@@ -55,22 +55,22 @@ resolve_full_httpd () {
 		fi
 		;;
 	*plackup*)
-		# server is started by running via generated gitweb.psgi in $fqgitdir/gitweb
-		full_httpd="$fqgitdir/gitweb/gitweb.psgi"
+		# server is started by running via generated butweb.psgi in $fqbutdir/butweb
+		full_httpd="$fqbutdir/butweb/butweb.psgi"
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
 	*webrick*)
 		# server is started by running via generated webrick.rb in
-		# $fqgitdir/gitweb
-		full_httpd="$fqgitdir/gitweb/webrick.rb"
+		# $fqbutdir/butweb
+		full_httpd="$fqbutdir/butweb/webrick.rb"
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
 	*python*)
-		# server is started by running via generated gitweb.py in
-		# $fqgitdir/gitweb
-		full_httpd="$fqgitdir/gitweb/gitweb.py"
+		# server is started by running via generated butweb.py in
+		# $fqbutdir/butweb
+		full_httpd="$fqbutdir/butweb/butweb.py"
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
@@ -84,8 +84,8 @@ resolve_full_httpd () {
 		# many httpds are installed in /usr/sbin or /usr/local/sbin
 		# these days and those are not in most users $PATHs
 		# in addition, we may have generated a server script
-		# in $fqgitdir/gitweb.
-		for i in /usr/local/sbin /usr/sbin "$root" "$fqgitdir/gitweb"
+		# in $fqbutdir/butweb.
+		for i in /usr/local/sbin /usr/sbin "$root" "$fqbutdir/butweb"
 		do
 			if test -x "$i/$httpd_only"
 			then
@@ -101,19 +101,19 @@ resolve_full_httpd () {
 }
 
 start_httpd () {
-	if test -f "$fqgitdir/pid"; then
+	if test -f "$fqbutdir/pid"; then
 		say "Instance already running. Restarting..."
 		stop_httpd
 	fi
 
 	# here $httpd should have a meaningful value
 	resolve_full_httpd
-	mkdir -p "$fqgitdir/gitweb/$httpd_only"
-	conf="$fqgitdir/gitweb/$httpd_only.conf"
+	mkdir -p "$fqbutdir/butweb/$httpd_only"
+	conf="$fqbutdir/butweb/$httpd_only.conf"
 
 	# generate correct config file if it doesn't exist
 	test -f "$conf" || configure_httpd
-	test -f "$fqgitdir/gitweb/gitweb_config.perl" || gitweb_conf
+	test -f "$fqbutdir/butweb/butweb_config.perl" || butweb_conf
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
 	case "$httpd" in
@@ -128,7 +128,7 @@ start_httpd () {
 			exit 1
 		fi
 
-		cat > "$fqgitdir/pid" <<EOF
+		cat > "$fqbutdir/pid" <<EOF
 $pid
 EOF
 		;;
@@ -143,8 +143,8 @@ EOF
 }
 
 stop_httpd () {
-	test -f "$fqgitdir/pid" && kill $(cat "$fqgitdir/pid")
-	rm -f "$fqgitdir/pid"
+	test -f "$fqbutdir/pid" && kill $(cat "$fqbutdir/pid")
+	rm -f "$fqbutdir/pid"
 }
 
 httpd_is_ready () {
@@ -200,47 +200,47 @@ do
 	shift
 done
 
-mkdir -p "$GIT_DIR/gitweb/tmp"
-GIT_EXEC_PATH="$(git --exec-path)"
-GIT_DIR="$fqgitdir"
-GITWEB_CONFIG="$fqgitdir/gitweb/gitweb_config.perl"
+mkdir -p "$GIT_DIR/butweb/tmp"
+GIT_EXEC_PATH="$(but --exec-path)"
+GIT_DIR="$fqbutdir"
+GITWEB_CONFIG="$fqbutdir/butweb/butweb_config.perl"
 export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
 
 webrick_conf () {
 	# webrick seems to have no way of passing arbitrary environment
 	# variables to the underlying CGI executable, so we wrap the
-	# actual gitweb.cgi using a shell script to force it
-  wrapper="$fqgitdir/gitweb/$httpd/wrapper.sh"
+	# actual butweb.cgi using a shell script to force it
+  wrapper="$fqbutdir/butweb/$httpd/wrapper.sh"
 	cat > "$wrapper" <<EOF
 #!@SHELL_PATH@
-# we use this shell script wrapper around the real gitweb.cgi since
+# we use this shell script wrapper around the real butweb.cgi since
 # there appears to be no other way to pass arbitrary environment variables
 # into the CGI process
 GIT_EXEC_PATH=$GIT_EXEC_PATH GIT_DIR=$GIT_DIR GITWEB_CONFIG=$GITWEB_CONFIG
 export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
-exec $root/gitweb.cgi
+exec $root/butweb.cgi
 EOF
 	chmod +x "$wrapper"
 
 	# This assumes _ruby_ is in the user's $PATH. that's _one_
 	# portable way to run ruby, which could be installed anywhere, really.
-	# generate a standalone server script in $fqgitdir/gitweb.
-	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
+	# generate a standalone server script in $fqbutdir/butweb.
+	cat >"$fqbutdir/butweb/$httpd.rb" <<EOF
 #!/usr/bin/env ruby
 require 'webrick'
 require 'logger'
 options = {
   :Port => $port,
   :DocumentRoot => "$root",
-  :Logger => Logger.new('$fqgitdir/gitweb/error.log'),
+  :Logger => Logger.new('$fqbutdir/butweb/error.log'),
   :AccessLog => [
-    [ Logger.new('$fqgitdir/gitweb/access.log'),
+    [ Logger.new('$fqbutdir/butweb/access.log'),
       WEBrick::AccessLog::COMBINED_LOG_FORMAT ]
   ],
-  :DirectoryIndex => ["gitweb.cgi"],
+  :DirectoryIndex => ["butweb.cgi"],
   :CGIInterpreter => "$wrapper",
   :StartCallback => lambda do
-    File.open("$fqgitdir/pid", "w") { |f| f.puts Process.pid }
+    File.open("$fqbutdir/pid", "w") { |f| f.puts Process.pid }
   end,
   :ServerType => WEBrick::Daemon,
 }
@@ -251,7 +251,7 @@ server = WEBrick::HTTPServer.new(options)
 end
 server.start
 EOF
-	chmod +x "$fqgitdir/gitweb/$httpd.rb"
+	chmod +x "$fqbutdir/butweb/$httpd.rb"
 	# configuration is embedded in server script file, webrick.rb
 	rm -f "$conf"
 }
@@ -261,13 +261,13 @@ lighttpd_conf () {
 server.document-root = "$root"
 server.port = $port
 server.modules = ( "mod_setenv", "mod_cgi" )
-server.indexfiles = ( "gitweb.cgi" )
-server.pid-file = "$fqgitdir/pid"
-server.errorlog = "$fqgitdir/gitweb/$httpd_only/error.log"
+server.indexfiles = ( "butweb.cgi" )
+server.pid-file = "$fqbutdir/pid"
+server.errorlog = "$fqbutdir/butweb/$httpd_only/error.log"
 
 # to enable, add "mod_access", "mod_accesslog" to server.modules
 # variable above and uncomment this
-#accesslog.filename = "$fqgitdir/gitweb/$httpd_only/access.log"
+#accesslog.filename = "$fqbutdir/butweb/$httpd_only/access.log"
 
 setenv.add-environment = ( "PATH" => env.PATH, "GITWEB_CONFIG" => env.GITWEB_CONFIG )
 
@@ -346,14 +346,14 @@ apache2_conf () {
 	done
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
-	echo 'text/css css' > "$fqgitdir/mime.types"
+	echo 'text/css css' > "$fqbutdir/mime.types"
 	cat > "$conf" <<EOF
-ServerName "git-instaweb"
+ServerName "but-instaweb"
 ServerRoot "$root"
 DocumentRoot "$root"
-ErrorLog "$fqgitdir/gitweb/$httpd_only/error.log"
-CustomLog "$fqgitdir/gitweb/$httpd_only/access.log" combined
-PidFile "$fqgitdir/pid"
+ErrorLog "$fqbutdir/butweb/$httpd_only/error.log"
+CustomLog "$fqbutdir/butweb/$httpd_only/access.log" combined
+PidFile "$fqbutdir/pid"
 Listen $bind$port
 EOF
 
@@ -376,8 +376,8 @@ EOF
 		fi
 	done
 	cat >> "$conf" <<EOF
-TypesConfig "$fqgitdir/mime.types"
-DirectoryIndex gitweb.cgi
+TypesConfig "$fqbutdir/mime.types"
+DirectoryIndex butweb.cgi
 EOF
 
 	if test -f "$module_path/mod_perl.so"
@@ -388,7 +388,7 @@ LoadModule perl_module $module_path/mod_perl.so
 PerlPassEnv GIT_DIR
 PerlPassEnv GIT_EXEC_PATH
 PerlPassEnv GITWEB_CONFIG
-<Location /gitweb.cgi>
+<Location /butweb.cgi>
 	SetHandler perl-script
 	PerlResponseHandler ModPerl::Registry
 	PerlOptions +ParseHeaders
@@ -413,14 +413,14 @@ EOF
 				echo "You have no CGI support!"
 				exit 2
 			fi
-			echo "ScriptSock logs/gitweb.sock" >> "$conf"
+			echo "ScriptSock logs/butweb.sock" >> "$conf"
 		fi
 		cat >> "$conf" <<EOF
 PassEnv GIT_DIR
 PassEnv GIT_EXEC_PATH
 PassEnv GITWEB_CONFIG
 AddHandler cgi-script .cgi
-<Location /gitweb.cgi>
+<Location /butweb.cgi>
 	Options +ExecCGI
 </Location>
 EOF
@@ -436,10 +436,10 @@ mongoose_conf() {
 
 root		$root
 ports		$port
-index_files	gitweb.cgi
-#ssl_cert	$fqgitdir/gitweb/ssl_cert.pem
-error_log	$fqgitdir/gitweb/$httpd_only/error.log
-access_log	$fqgitdir/gitweb/$httpd_only/access.log
+index_files	butweb.cgi
+#ssl_cert	$fqbutdir/butweb/ssl_cert.pem
+error_log	$fqbutdir/butweb/$httpd_only/error.log
+access_log	$fqbutdir/butweb/$httpd_only/access.log
 
 #cgi setup
 cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH,GITWEB_CONFIG=$GITWEB_CONFIG
@@ -452,12 +452,12 @@ EOF
 }
 
 plackup_conf () {
-	# generate a standalone 'plackup' server script in $fqgitdir/gitweb
+	# generate a standalone 'plackup' server script in $fqbutdir/butweb
 	# with embedded configuration; it does not use "$conf" file
-	cat > "$fqgitdir/gitweb/gitweb.psgi" <<EOF
+	cat > "$fqbutdir/butweb/butweb.psgi" <<EOF
 #!$PERL
 
-# gitweb - simple web interface to track changes in git repositories
+# butweb - simple web interface to track changes in but repositories
 #          PSGI wrapper and server starter (see http://plackperl.org)
 
 use strict;
@@ -466,7 +466,7 @@ use IO::Handle;
 use Plack::MIME;
 use Plack::Builder;
 use Plack::App::WrapCGI;
-use CGI::Emulate::PSGI 0.07; # minimum version required to work with gitweb
+use CGI::Emulate::PSGI 0.07; # minimum version required to work with butweb
 
 # mimetype mapping (from lighttpd_conf)
 Plack::MIME->add_type(
@@ -528,7 +528,7 @@ my \$app = builder {
 	# to be able to override \$SIG{__WARN__} to log build time warnings
 	use CGI::Carp; # it sets \$SIG{__WARN__} itself
 
-	my \$logdir = "$fqgitdir/gitweb/$httpd_only";
+	my \$logdir = "$fqbutdir/butweb/$httpd_only";
 	open my \$access_log_fh, '>>', "\$logdir/access.log"
 		or die "Couldn't open access log '\$logdir/access.log': \$!";
 	open my \$error_log_fh,  '>>', "\$logdir/error.log"
@@ -558,7 +558,7 @@ my \$app = builder {
 			\$app->(\$env);
 		}
 	};
-	# gitweb currently doesn't work with $SIG{CHLD} set to 'IGNORE',
+	# butweb currently doesn't work with $SIG{CHLD} set to 'IGNORE',
 	# because it uses 'close $fd or die...' on piped filehandle $fh
 	# (which causes the parent process to wait for child to finish).
 	enable_if { \$SIG{'CHLD'} eq 'IGNORE' } sub {
@@ -572,11 +572,11 @@ my \$app = builder {
 	};
 	# serve static files, i.e. stylesheet, images, script
 	enable 'Static',
-		path => sub { m!\.(js|css|png)\$! && s!^/gitweb/!! },
+		path => sub { m!\.(js|css|png)\$! && s!^/butweb/!! },
 		root => "$root/",
 		encoding => 'utf-8'; # encoding for 'text/plain' files
 	# convert CGI application to PSGI app
-	Plack::App::WrapCGI->new(script => "$root/gitweb.cgi")->to_app;
+	Plack::App::WrapCGI->new(script => "$root/butweb.cgi")->to_app;
 };
 
 # make it runnable as standalone app,
@@ -594,8 +594,8 @@ if (caller) {
 __END__
 EOF
 
-	chmod a+x "$fqgitdir/gitweb/gitweb.psgi"
-	# configuration is embedded in server script file, gitweb.psgi
+	chmod a+x "$fqbutdir/butweb/butweb.psgi"
+	# configuration is embedded in server script file, butweb.psgi
 	rm -f "$conf"
 }
 
@@ -603,25 +603,25 @@ python_conf() {
 	# Python's builtin http.server and its CGI support is very limited.
 	# CGI handler is capable of running CGI script only from inside a directory.
 	# Trying to set cgi_directories=["/"] will add double slash to SCRIPT_NAME
-	# and that in turn breaks gitweb's relative link generation.
+	# and that in turn breaks butweb's relative link generation.
 
-	# create a simple web root where $fqgitdir/gitweb/$httpd_only is our root
-	mkdir -p "$fqgitdir/gitweb/$httpd_only/cgi-bin"
+	# create a simple web root where $fqbutdir/butweb/$httpd_only is our root
+	mkdir -p "$fqbutdir/butweb/$httpd_only/cgi-bin"
 	# Python http.server follows the symlinks
-	ln -sf "$root/gitweb.cgi" "$fqgitdir/gitweb/$httpd_only/cgi-bin/gitweb.cgi"
-	ln -sf "$root/static" "$fqgitdir/gitweb/$httpd_only/"
+	ln -sf "$root/butweb.cgi" "$fqbutdir/butweb/$httpd_only/cgi-bin/butweb.cgi"
+	ln -sf "$root/static" "$fqbutdir/butweb/$httpd_only/"
 
-	# generate a standalone 'python http.server' script in $fqgitdir/gitweb
+	# generate a standalone 'python http.server' script in $fqbutdir/butweb
 	# This asumes that python is in user's $PATH
 	# This script is Python 2 and 3 compatible
-	cat > "$fqgitdir/gitweb/gitweb.py" <<EOF
+	cat > "$fqbutdir/butweb/butweb.py" <<EOF
 #!/usr/bin/env python
 import os
 import sys
 
 # Open log file in line buffering mode
-accesslogfile = open("$fqgitdir/gitweb/access.log", 'a', buffering=1)
-errorlogfile = open("$fqgitdir/gitweb/error.log", 'a', buffering=1)
+accesslogfile = open("$fqbutdir/butweb/access.log", 'a', buffering=1)
+errorlogfile = open("$fqbutdir/butweb/error.log", 'a', buffering=1)
 
 # and replace our stdout and stderr with log files
 # also do a lowlevel duplicate of the logfile file descriptors so that
@@ -670,7 +670,7 @@ class GitWebRequestHandler(CGIHTTPRequestHandler):
 	def do_GET(self):
 		if self.path == "/":
 			self.send_response(303, "See Other")
-			self.send_header("Location", "/cgi-bin/gitweb.cgi")
+			self.send_header("Location", "/cgi-bin/butweb.cgi")
 			self.end_headers()
 			return
 		self.redirect_path()
@@ -680,16 +680,16 @@ class GitWebRequestHandler(CGIHTTPRequestHandler):
 		self.redirect_path()
 		CGIHTTPRequestHandler.do_POST(self)
 
-	# rewrite path of every request that is not gitweb.cgi to out of cgi-bin
+	# rewrite path of every request that is not butweb.cgi to out of cgi-bin
 	def redirect_path(self):
-		if not self.path.startswith("/cgi-bin/gitweb.cgi"):
+		if not self.path.startswith("/cgi-bin/butweb.cgi"):
 			self.path = self.path.replace("/cgi-bin/", "/")
 
-	# gitweb.cgi is the only thing that is ever going to be run here.
+	# butweb.cgi is the only thing that is ever going to be run here.
 	# Ignore everything else
 	def is_cgi(self):
 		result = False
-		if self.path.startswith('/cgi-bin/gitweb.cgi'):
+		if self.path.startswith('/cgi-bin/butweb.cgi'):
 			result = CGIHTTPRequestHandler.is_cgi(self)
 		return result
 
@@ -701,7 +701,7 @@ if "$local" == "true":
 # Set our http root directory
 # This is a work around for a missing directory argument in older Python versions
 # as this was added to SimpleHTTPRequestHandler in Python 3.7
-os.chdir("$fqgitdir/gitweb/$httpd_only/")
+os.chdir("$fqbutdir/butweb/$httpd_only/")
 
 GitWebRequestHandler.protocol_version = "HTTP/1.0"
 httpd = ServerClass((bind, $port), GitWebRequestHandler)
@@ -711,14 +711,14 @@ print("Serving HTTP on", sa[0], "port", sa[1], "...")
 httpd.serve_forever()
 EOF
 
-	chmod a+x "$fqgitdir/gitweb/gitweb.py"
+	chmod a+x "$fqbutdir/butweb/butweb.py"
 }
 
-gitweb_conf() {
-	cat > "$fqgitdir/gitweb/gitweb_config.perl" <<EOF
+butweb_conf() {
+	cat > "$fqbutdir/butweb/butweb_config.perl" <<EOF
 #!@@PERL@@
-our \$projectroot = "$(dirname "$fqgitdir")";
-our \$git_temp = "$fqgitdir/gitweb/tmp";
+our \$projectroot = "$(dirname "$fqbutdir")";
+our \$but_temp = "$fqbutdir/butweb/tmp";
 our \$projects_list = \$projectroot;
 
 \$feature{'remote_heads'}{'default'} = [1];
@@ -768,11 +768,11 @@ restart)
 	;;
 esac
 
-gitweb_conf
+butweb_conf
 
 resolve_full_httpd
-mkdir -p "$fqgitdir/gitweb/$httpd_only"
-conf="$fqgitdir/gitweb/$httpd_only.conf"
+mkdir -p "$fqbutdir/butweb/$httpd_only"
+conf="$fqbutdir/butweb/$httpd_only.conf"
 
 configure_httpd
 
@@ -780,7 +780,7 @@ start_httpd
 url=http://127.0.0.1:$port
 
 if test -n "$browser"; then
-	httpd_is_ready && git web--browse -b "$browser" $url || echo $url
+	httpd_is_ready && but web--browse -b "$browser" $url || echo $url
 else
-	httpd_is_ready && git web--browse -c "instaweb.browser" $url || echo $url
+	httpd_is_ready && but web--browse -c "instaweb.browser" $url || echo $url
 fi

@@ -4,21 +4,21 @@ Git v1.7.6.3 Release Notes
 Fixes since v1.7.6.2
 --------------------
 
- * "git -c var=value subcmd" misparsed the custom configuration when
+ * "but -c var=value subcmd" misparsed the custom configuration when
    value contained an equal sign.
 
- * "git fetch" had a major performance regression, wasting many
+ * "but fetch" had a major performance regression, wasting many
    needless cycles in a repository where there is no submodules
    present. This was especially bad, when there were many refs.
 
- * "git reflog $refname" did not default to the "show" subcommand as
+ * "but reflog $refname" did not default to the "show" subcommand as
    the documentation advertised the command to do.
 
- * "git reset" did not leave meaningful log message in the reflog.
+ * "but reset" did not leave meaningful log message in the reflog.
 
- * "git status --ignored" did not show ignored items when there is no
+ * "but status --ignored" did not show ignored items when there is no
    untracked items.
 
- * "git tag --contains $cummit" was unnecessarily inefficient.
+ * "but tag --contains $cummit" was unnecessarily inefficient.
 
 Also contains minor fixes and documentation updates.

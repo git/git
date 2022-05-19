@@ -28,7 +28,7 @@ test_expect_success 'setup' '
 	Line 15
 	EOF
 	cat >expected <<-\EOF &&
-	diff --git a/path0 b/path1
+	diff --but a/path0 b/path1
 	rename from path0
 	rename to path1
 	--- a/path0
@@ -44,7 +44,7 @@ test_expect_success 'setup' '
 	 Line 14
 	EOF
 	cat >no-rename <<-\EOF
-	diff --git a/path0 b/path0
+	diff --but a/path0 b/path0
 	deleted file mode 100644
 	index fdbec44..0000000
 	--- a/path0
@@ -65,7 +65,7 @@ test_expect_success 'setup' '
 	-Line 13
 	-Line 14
 	-Line 15
-	diff --git a/path1 b/path1
+	diff --but a/path1 b/path1
 	new file mode 100644
 	index 0000000..752c50e
 	--- /dev/null
@@ -91,21 +91,21 @@ test_expect_success 'setup' '
 
 test_expect_success \
     'update-index --add a file.' \
-    'git update-index --add path0'
+    'but update-index --add path0'
 
 test_expect_success \
     'write that tree.' \
-    'tree=$(git write-tree) && echo $tree'
+    'tree=$(but write-tree) && echo $tree'
 
 sed -e 's/line/Line/' <path0 >path1
 rm -f path0
 test_expect_success \
     'renamed and edited the file.' \
-    'git update-index --add --remove path0 path1'
+    'but update-index --add --remove path0 path1'
 
 test_expect_success \
-    'git diff-index -p -M after rename and editing.' \
-    'git diff-index -p -M $tree >current'
+    'but diff-index -p -M after rename and editing.' \
+    'but diff-index -p -M $tree >current'
 
 
 test_expect_success \
@@ -113,63 +113,63 @@ test_expect_success \
     'compare_diff_patch current expected'
 
 test_expect_success 'test diff.renames=true' '
-	git -c diff.renames=true diff --cached $tree >current &&
+	but -c diff.renames=true diff --cached $tree >current &&
 	compare_diff_patch current expected
 '
 
 test_expect_success 'test diff.renames=false' '
-	git -c diff.renames=false diff --cached $tree >current &&
+	but -c diff.renames=false diff --cached $tree >current &&
 	compare_diff_patch current no-rename
 '
 
 test_expect_success 'test diff.renames unset' '
-	git diff --cached $tree >current &&
+	but diff --cached $tree >current &&
 	compare_diff_patch current expected
 '
 
 test_expect_success 'favour same basenames over different ones' '
 	cp path1 another-path &&
-	git add another-path &&
-	git cummit -m 1 &&
-	git rm path1 &&
+	but add another-path &&
+	but cummit -m 1 &&
+	but rm path1 &&
 	mkdir subdir &&
-	git mv another-path subdir/path1 &&
-	git status >out &&
+	but mv another-path subdir/path1 &&
+	but status >out &&
 	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
 '
 
-test_expect_success 'test diff.renames=true for git status' '
-	git -c diff.renames=true status >out &&
+test_expect_success 'test diff.renames=true for but status' '
+	but -c diff.renames=true status >out &&
 	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
 '
 
-test_expect_success 'test diff.renames=false for git status' '
-	git -c diff.renames=false status >out &&
+test_expect_success 'test diff.renames=false for but status' '
+	but -c diff.renames=false status >out &&
 	test_i18ngrep ! "renamed: .*path1 -> subdir/path1" out &&
 	test_i18ngrep "new file: .*subdir/path1" out &&
 	test_i18ngrep "deleted: .*[^/]path1" out
 '
 
 test_expect_success 'favour same basenames even with minor differences' '
-	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
-	git status >out &&
+	but show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
+	but status >out &&
 	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
 '
 
 test_expect_success 'two files with same basename and same content' '
-	git reset --hard &&
+	but reset --hard &&
 	mkdir -p dir/A dir/B &&
 	cp path1 dir/A/file &&
 	cp path1 dir/B/file &&
-	git add dir &&
-	git cummit -m 2 &&
-	git mv dir other-dir &&
-	git status >out &&
+	but add dir &&
+	but cummit -m 2 &&
+	but mv dir other-dir &&
+	but status >out &&
 	test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file" out
 '
 
 test_expect_success 'setup for many rename source candidates' '
-	git reset --hard &&
+	but reset --hard &&
 	for i in 0 1 2 3 4 5 6 7 8 9;
 	do
 		for j in 0 1 2 3 4 5 6 7 8 9;
@@ -177,13 +177,13 @@ test_expect_success 'setup for many rename source candidates' '
 			echo "$i$j" >"path$i$j" || return 1
 		done
 	done &&
-	git add "path??" &&
+	but add "path??" &&
 	test_tick &&
-	git cummit -m "hundred" &&
+	but cummit -m "hundred" &&
 	(cat path1 && echo new) >new-path &&
 	echo old >>path1 &&
-	git add new-path path1 &&
-	git diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&
+	but add new-path path1 &&
+	but diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&
 	sed -e "s/^\([CM]\)[0-9]*	/\1	/" actual >actual.munged &&
 	cat >expect <<-EOF &&
 	C	path1	new-path
@@ -196,68 +196,68 @@ test_expect_success 'setup for many rename source candidates' '
 test_expect_success 'rename pretty print with nothing in common' '
 	mkdir -p a/b/ &&
 	: >a/b/c &&
-	git add a/b/c &&
-	git cummit -m "create a/b/c" &&
+	but add a/b/c &&
+	but cummit -m "create a/b/c" &&
 	mkdir -p c/b/ &&
-	git mv a/b/c c/b/a &&
-	git cummit -m "a/b/c -> c/b/a" &&
-	git diff -M --summary HEAD^ HEAD >output &&
+	but mv a/b/c c/b/a &&
+	but cummit -m "a/b/c -> c/b/a" &&
+	but diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " a/b/c => c/b/a " output &&
-	git diff -M --stat HEAD^ HEAD >output &&
+	but diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " a/b/c => c/b/a " output
 '
 
 test_expect_success 'rename pretty print with common prefix' '
 	mkdir -p c/d &&
-	git mv c/b/a c/d/e &&
-	git cummit -m "c/b/a -> c/d/e" &&
-	git diff -M --summary HEAD^ HEAD >output &&
+	but mv c/b/a c/d/e &&
+	but cummit -m "c/b/a -> c/d/e" &&
+	but diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " c/{b/a => d/e} " output &&
-	git diff -M --stat HEAD^ HEAD >output &&
+	but diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " c/{b/a => d/e} " output
 '
 
 test_expect_success 'rename pretty print with common suffix' '
 	mkdir d &&
-	git mv c/d/e d/e &&
-	git cummit -m "c/d/e -> d/e" &&
-	git diff -M --summary HEAD^ HEAD >output &&
+	but mv c/d/e d/e &&
+	but cummit -m "c/d/e -> d/e" &&
+	but diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " {c/d => d}/e " output &&
-	git diff -M --stat HEAD^ HEAD >output &&
+	but diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " {c/d => d}/e " output
 '
 
 test_expect_success 'rename pretty print with common prefix and suffix' '
 	mkdir d/f &&
-	git mv d/e d/f/e &&
-	git cummit -m "d/e -> d/f/e" &&
-	git diff -M --summary HEAD^ HEAD >output &&
+	but mv d/e d/f/e &&
+	but cummit -m "d/e -> d/f/e" &&
+	but diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " d/{ => f}/e " output &&
-	git diff -M --stat HEAD^ HEAD >output &&
+	but diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " d/{ => f}/e " output
 '
 
 test_expect_success 'rename pretty print common prefix and suffix overlap' '
 	mkdir d/f/f &&
-	git mv d/f/e d/f/f/e &&
-	git cummit -m "d/f/e d/f/f/e" &&
-	git diff -M --summary HEAD^ HEAD >output &&
+	but mv d/f/e d/f/f/e &&
+	but cummit -m "d/f/e d/f/f/e" &&
+	but diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " d/f/{ => f}/e " output &&
-	git diff -M --stat HEAD^ HEAD >output &&
+	but diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " d/f/{ => f}/e " output
 '
 
 test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
 	test_write_lines line1 line2 line3 >myfile &&
-	git add myfile &&
-	git cummit -m x &&
+	but add myfile &&
+	but cummit -m x &&
 
 	test_write_lines line1 line2 line4 >myotherfile &&
-	git rm myfile &&
-	git add myotherfile &&
-	git cummit -m x &&
+	but rm myfile &&
+	but add myotherfile &&
+	but cummit -m x &&
 
-	git diff-tree -M -l0 HEAD HEAD^ >actual &&
+	but diff-tree -M -l0 HEAD HEAD^ >actual &&
 	# Verify that a rename from myotherfile to myfile was detected
 	grep "myotherfile.*myfile" actual
 '
@@ -266,17 +266,17 @@ test_expect_success 'basename similarity vs best similarity' '
 	mkdir subdir &&
 	test_write_lines line1 line2 line3 line4 line5 \
 			 line6 line7 line8 line9 line10 >subdir/file.txt &&
-	git add subdir/file.txt &&
-	git cummit -m "base txt" &&
+	but add subdir/file.txt &&
+	but cummit -m "base txt" &&
 
-	git rm subdir/file.txt &&
+	but rm subdir/file.txt &&
 	test_write_lines line1 line2 line3 line4 line5 \
 			  line6 line7 line8 >file.txt &&
 	test_write_lines line1 line2 line3 line4 line5 \
 			  line6 line7 line8 line9 >file.md &&
-	git add file.txt file.md &&
-	git cummit -a -m "rename" &&
-	git diff-tree -r -M --name-status HEAD^ HEAD >actual &&
+	but add file.txt file.md &&
+	but cummit -a -m "rename" &&
+	but diff-tree -r -M --name-status HEAD^ HEAD >actual &&
 	# subdir/file.txt is 88% similar to file.md, 78% similar to file.txt,
 	# but since same basenames are checked first...
 	cat >expected <<-\EOF &&

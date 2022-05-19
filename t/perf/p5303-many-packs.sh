@@ -15,12 +15,12 @@ test_perf_large_repo
 # And then all of the rest of the objects can go in a single packfile that
 # represents the state before any of those pushes (actually, we'll generate
 # that first because in such a setup it would be the oldest pack, and we sort
-# the packs by reverse mtime inside git).
+# the packs by reverse mtime inside but).
 repack_into_n () {
 	rm -rf staging &&
 	mkdir staging &&
 
-	git rev-list --first-parent HEAD |
+	but rev-list --first-parent HEAD |
 	perl -e '
 		my $n = shift;
 		while (<>) {
@@ -33,12 +33,12 @@ repack_into_n () {
 	# create base packfile
 	base_pack=$(
 		head -n 1 pushes |
-		git pack-objects --delta-base-offset --revs staging/pack
+		but pack-objects --delta-base-offset --revs staging/pack
 	) &&
 	test_export base_pack &&
 
 	# create an empty packfile
-	empty_pack=$(git pack-objects staging/pack </dev/null) &&
+	empty_pack=$(but pack-objects staging/pack </dev/null) &&
 	test_export empty_pack &&
 
 	# and then incrementals between each pair of cummits
@@ -50,7 +50,7 @@ repack_into_n () {
 				echo "$rev" &&
 				echo "^$last"
 			} |
-			git pack-objects --delta-base-offset --revs \
+			but pack-objects --delta-base-offset --revs \
 				staging/pack || return 1
 		fi
 		last=$rev
@@ -63,21 +63,21 @@ repack_into_n () {
 	) >stdin.packs
 
 	# and install the whole thing
-	rm -f .git/objects/pack/* &&
-	mv staging/* .git/objects/pack/
+	rm -f .but/objects/pack/* &&
+	mv staging/* .but/objects/pack/
 }
 
 # Pretend we just have a single branch and no reflogs, and that everything is
 # in objects/pack; that makes our fake pack-building via repack_into_n()
 # much simpler.
 test_expect_success 'simplify reachability' '
-	tip=$(git rev-parse --verify HEAD) &&
-	git for-each-ref --format="option no-deref%0adelete %(refname)" |
-	git update-ref --stdin &&
-	rm -rf .git/logs &&
-	git update-ref refs/heads/master $tip &&
-	git symbolic-ref HEAD refs/heads/master &&
-	git repack -ad
+	tip=$(but rev-parse --verify HEAD) &&
+	but for-each-ref --format="option no-deref%0adelete %(refname)" |
+	but update-ref --stdin &&
+	rm -rf .but/logs &&
+	but update-ref refs/heads/master $tip &&
+	but symbolic-ref HEAD refs/heads/master &&
+	but repack -ad
 '
 
 for nr_packs in 1 50 1000
@@ -87,11 +87,11 @@ do
 	'
 
 	test_perf "rev-list ($nr_packs)" '
-		git rev-list --objects --all >/dev/null
+		but rev-list --objects --all >/dev/null
 	'
 
 	test_perf "abbrev-cummit ($nr_packs)" '
-		git rev-list --abbrev-commit HEAD >/dev/null
+		but rev-list --abbrev-commit HEAD >/dev/null
 	'
 
 	# This simulates the interesting part of the repack, which is the
@@ -99,14 +99,14 @@ do
 	# between trials.
 	test_perf "repack ($nr_packs)" '
 		GIT_TEST_FULL_IN_PACK_ARRAY=1 \
-		git pack-objects --keep-true-parents \
+		but pack-objects --keep-true-parents \
 		  --honor-pack-keep --non-empty --all \
 		  --reflog --indexed-objects --delta-base-offset \
 		  --stdout </dev/null >/dev/null
 	'
 
 	test_perf "repack with kept ($nr_packs)" '
-		git pack-objects --keep-true-parents \
+		but pack-objects --keep-true-parents \
 		  --keep-pack=pack-$empty_pack.pack \
 		  --honor-pack-keep --non-empty --all \
 		  --reflog --indexed-objects --delta-base-offset \
@@ -114,7 +114,7 @@ do
 	'
 
 	test_perf "repack with --stdin-packs ($nr_packs)" '
-		git pack-objects \
+		but pack-objects \
 		  --keep-true-parents \
 		  --stdin-packs \
 		  --non-empty \
@@ -132,13 +132,13 @@ test_expect_success 'generate lots of packs' '
 		echo "EOF" &&
 		echo "checkpoint" || return 1
 	done |
-	git -c fastimport.unpackLimit=0 fast-import
+	but -c fastimport.unpackLimit=0 fast-import
 '
 
 # The purpose of this test is to evaluate load time for a large number
 # of packs while doing as little other work as possible.
 test_perf "load 10,000 packs" '
-	git rev-parse --verify "HEAD^{cummit}"
+	but rev-parse --verify "HEAD^{cummit}"
 '
 
 test_done

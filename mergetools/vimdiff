@@ -1,8 +1,8 @@
 # This script can be run in two different contexts:
 #
-#   - From git, when the user invokes the "vimdiff" merge tool. In this context
+#   - From but, when the user invokes the "vimdiff" merge tool. In this context
 #     this script expects the following environment variables (among others) to
-#     be defined (which is something "git" takes care of):
+#     be defined (which is something "but" takes care of):
 #
 #       - $BASE
 #       - $LOCAL
@@ -349,14 +349,14 @@ gen_cmd () {
 
 	# Add an extra "-c" option to move to the first tab (notice that we
 	# can't simply append the command to the previous "-c" string as
-	# explained here: https://github.com/vim/vim/issues/9076
+	# explained here: https://buthub.com/vim/vim/issues/9076
 
 	FINAL_CMD="-c \"$CMD\" -c \"tabfirst\""
 }
 
 
 ################################################################################
-## API functions (called from "git-mergetool--lib.sh")
+## API functions (called from "but-mergetool--lib.sh")
 ################################################################################
 
 diff_cmd () {
@@ -385,7 +385,7 @@ diff_cmd_help () {
 
 
 merge_cmd () {
-	layout=$(git config mergetool.vimdiff.layout)
+	layout=$(but config mergetool.vimdiff.layout)
 
 	case "$1" in
 	*vimdiff)
@@ -481,7 +481,7 @@ merge_cmd_help () {
 		echo "where only the MERGED file is shown"
 		;;
 	*)
-		echo "with a custom layout (see \`git help mergetool\`'s \`BACKEND SPECIFIC HINTS\` section)"
+		echo "with a custom layout (see \`but help mergetool\`'s \`BACKEND SPECIFIC HINTS\` section)"
 		;;
 	esac
 

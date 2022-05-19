@@ -2,7 +2,7 @@
 
 const char help[] =
 	/* TRANSLATORS: This is a test. You don't need to translate it. */
-	N_("See 'git help COMMAND' for more information on a specific command.");
+	N_("See 'but help COMMAND' for more information on a specific command.");
 
 int main(void)
 {

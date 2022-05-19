@@ -20,7 +20,7 @@ struct pack_header {
 
 /*
  * The first four bytes of index formats later than version 1 should
- * start with this signature, as all older git binaries would find this
+ * start with this signature, as all older but binaries would find this
  * value illegal and abort reading the file.
  *
  * This is the case because the number of objects in a packfile
@@ -29,7 +29,7 @@ struct pack_header {
  * version 1 of the index file due to the offsets limited to 32 bits.
  * Clearly the signature exceeds this maximum.
  *
- * Very old git binaries will also compare the first 4 bytes to the
+ * Very old but binaries will also compare the first 4 bytes to the
  * next 4 bytes in the index and abort with a "non-monotonic index"
  * error if the second 4 byte word is smaller than the first 4
  * byte word.  This would be true in the proposed future index
@@ -82,9 +82,9 @@ struct progress;
 typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
 const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
-int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
-int verify_pack_index(struct packed_git *);
-int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
+int check_pack_crc(struct packed_but *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
+int verify_pack_index(struct packed_but *);
+int verify_pack(struct repository *, struct packed_but *, verify_fn fn, struct progress *, uint32_t);
 off_t write_pack_header(struct hashfile *f, uint32_t);
 void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
 char *index_pack_lockfile(int fd, int *is_well_formed);

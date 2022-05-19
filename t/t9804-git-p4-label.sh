@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 label tests'
+test_description='but p4 label tests'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -14,7 +14,7 @@ test_expect_success 'start p4d' '
 # are silently discarded.
 #
 test_expect_success 'basic p4 labels' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		mkdir -p main &&
@@ -50,20 +50,20 @@ test_expect_success 'basic p4 labels' '
 
 		p4 labels ... &&
 
-		git p4 clone --dest="$git" --detect-labels //depot@all &&
-		cd "$git" &&
+		but p4 clone --dest="$but" --detect-labels //depot@all &&
+		cd "$but" &&
 
-		git tag &&
-		git tag >taglist &&
+		but tag &&
+		but tag >taglist &&
 		test_line_count = 3 taglist &&
 
 		cd main &&
-		git checkout tag_tag_f1_only &&
+		but checkout tag_tag_f1_only &&
 		! test -f f2 &&
-		git checkout tag_tag_with\$_shell_char &&
+		but checkout tag_tag_with\$_shell_char &&
 		test -f f1 && test -f f2 && test -f file_with_\$metachar &&
 
-		git show tag_long_label | grep -q "A Label second line"
+		but show tag_long_label | grep -q "A Label second line"
 	)
 '
 
@@ -74,7 +74,7 @@ test_expect_success 'basic p4 labels' '
 #   cannot be imported (at least not easily).
 
 test_expect_failure 'two labels on the same changelist' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		mkdir -p main &&
@@ -89,20 +89,20 @@ test_expect_failure 'two labels on the same changelist' '
 
 		p4 labels ... &&
 
-		git p4 clone --dest="$git" --detect-labels //depot@all &&
-		cd "$git" &&
+		but p4 clone --dest="$but" --detect-labels //depot@all &&
+		cd "$but" &&
 
-		git tag | grep tag_f1 &&
-		git tag | grep -q tag_f1_1 &&
-		git tag | grep -q tag_f1_2 &&
+		but tag | grep tag_f1 &&
+		but tag | grep -q tag_f1_1 &&
+		but tag | grep -q tag_f1_2 &&
 
 		cd main &&
 
-		git checkout tag_tag_f1_1 &&
+		but checkout tag_tag_f1_1 &&
 		ls &&
 		test -f f1 &&
 
-		git checkout tag_tag_f1_2 &&
+		but checkout tag_tag_f1_2 &&
 		ls &&
 		test -f f1
 	)

@@ -1,5 +1,5 @@
 /*
- * Builtin "git log" and related commands (show, whatchanged)
+ * Builtin "but log" and related commands (show, whatchanged)
  *
  * (C) Copyright 2006 Linus Torvalds
  *		 2006 Junio Hamano
@@ -41,7 +41,7 @@
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100
 #define FORMAT_PATCH_NAME_MAX_DEFAULT 64
 
-/* Set a default date-time format for git log ("log.date" config variable) */
+/* Set a default date-time format for but log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
 
 static int default_abbrev_cummit;
@@ -57,8 +57,8 @@ static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
 static const char *fmt_pretty;
 
 static const char * const builtin_log_usage[] = {
-	N_("git log [<options>] [<revision-range>] [[--] <path>...]"),
-	N_("git show [<options>] <object>..."),
+	N_("but log [<options>] [<revision-range>] [[--] <path>...]"),
+	N_("but show [<options>] <object>..."),
 	NULL
 };
 
@@ -80,7 +80,7 @@ static int auto_decoration_style(void)
 
 static int parse_decoration_style(const char *value)
 {
-	switch (git_parse_maybe_bool(value)) {
+	switch (but_parse_maybe_bool(value)) {
 	case 1:
 		return DECORATE_SHORT_REFS;
 	case 0:
@@ -95,7 +95,7 @@ static int parse_decoration_style(const char *value)
 	else if (!strcmp(value, "auto"))
 		return auto_decoration_style();
 	/*
-	 * Please update _git_log() in git-completion.bash when you
+	 * Please update _but_log() in but-completion.bash when you
 	 * add new decoration styles.
 	 */
 	return -1;
@@ -492,28 +492,28 @@ static int cmd_log_walk(struct rev_info *rev)
 	return retval;
 }
 
-static int git_log_config(const char *var, const char *value, void *cb)
+static int but_log_config(const char *var, const char *value, void *cb)
 {
 	const char *slot_name;
 
 	if (!strcmp(var, "format.pretty"))
-		return git_config_string(&fmt_pretty, var, value);
+		return but_config_string(&fmt_pretty, var, value);
 	if (!strcmp(var, "format.subjectprefix"))
-		return git_config_string(&fmt_patch_subject_prefix, var, value);
+		return but_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "format.filenamemaxlength")) {
-		fmt_patch_name_max = git_config_int(var, value);
+		fmt_patch_name_max = but_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "format.encodeemailheaders")) {
-		default_encode_email_headers = git_config_bool(var, value);
+		default_encode_email_headers = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.abbrevcummit")) {
-		default_abbrev_cummit = git_config_bool(var, value);
+		default_abbrev_cummit = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.date"))
-		return git_config_string(&default_date_mode, var, value);
+		return but_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.decorate")) {
 		decoration_style = parse_decoration_style(value);
 		if (decoration_style < 0)
@@ -523,27 +523,27 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "log.diffmerges"))
 		return diff_merges_config(value);
 	if (!strcmp(var, "log.showroot")) {
-		default_show_root = git_config_bool(var, value);
+		default_show_root = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.follow")) {
-		default_follow = git_config_bool(var, value);
+		default_follow = but_config_bool(var, value);
 		return 0;
 	}
 	if (skip_prefix(var, "color.decorate.", &slot_name))
 		return parse_decorate_color_config(var, slot_name, value);
 	if (!strcmp(var, "log.mailmap")) {
-		use_mailmap_config = git_config_bool(var, value);
+		use_mailmap_config = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.showsignature")) {
-		default_show_signature = git_config_bool(var, value);
+		default_show_signature = but_config_bool(var, value);
 		return 0;
 	}
 
-	if (git_gpg_config(var, value, cb) < 0)
+	if (but_gpg_config(var, value, cb) < 0)
 		return -1;
-	return git_diff_ui_config(var, value, cb);
+	return but_diff_ui_config(var, value, cb);
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
@@ -552,10 +552,10 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	struct setup_revision_opt opt;
 
 	init_log_defaults();
-	git_config(git_log_config, NULL);
+	but_config(but_log_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	but_config(grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.simplify_history = 0;
@@ -604,7 +604,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	}
 
 	if (!buf)
-		die(_("git show %s: bad file"), obj_name);
+		die(_("but show %s: bad file"), obj_name);
 
 	write_or_die(1, buf, size);
 	free(obj_context.path);
@@ -667,11 +667,11 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	int i, count, ret = 0;
 
 	init_log_defaults();
-	git_config(git_log_config, NULL);
+	but_config(but_log_config, NULL);
 
 	memset(&match_all, 0, sizeof(match_all));
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	but_config(grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.always_show_header = 1;
@@ -749,7 +749,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 }
 
 /*
- * This is equivalent to "git log -g --abbrev-cummit --pretty=oneline"
+ * This is equivalent to "but log -g --abbrev-cummit --pretty=oneline"
  */
 int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
@@ -757,11 +757,11 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	struct setup_revision_opt opt;
 
 	init_log_defaults();
-	git_config(git_log_config, NULL);
+	but_config(but_log_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
-	git_config(grep_config, &rev.grep_filter);
+	but_config(grep_config, &rev.grep_filter);
 
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -793,10 +793,10 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	struct setup_revision_opt opt;
 
 	init_log_defaults();
-	git_config(git_log_config, NULL);
+	but_config(but_log_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	but_config(grep_config, &rev.grep_filter);
 
 	rev.always_show_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -869,7 +869,7 @@ static enum thread_level thread;
 static int do_signoff;
 static enum auto_base_setting auto_base;
 static char *from;
-static const char *signature = git_version_string;
+static const char *signature = but_version_string;
 static const char *signature_file;
 static enum cover_setting config_cover_letter;
 static const char *config_output_directory;
@@ -893,7 +893,7 @@ static enum cover_from_description parse_cover_from_description(const char *arg)
 		die(_("%s: invalid cover from description mode"), arg);
 }
 
-static int git_format_config(const char *var, const char *value, void *cb)
+static int but_format_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
@@ -902,7 +902,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "format.suffix"))
-		return git_config_string(&fmt_patch_suffix, var, value);
+		return but_config_string(&fmt_patch_suffix, var, value);
 	if (!strcmp(var, "format.to")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -924,7 +924,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			auto_number = 1;
 			return 0;
 		}
-		numbered = git_config_bool(var, value);
+		numbered = but_config_bool(var, value);
 		auto_number = auto_number && numbered;
 		return 0;
 	}
@@ -932,7 +932,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		if (value && *value)
 			default_attach = xstrdup(value);
 		else
-			default_attach = xstrdup(git_version_string);
+			default_attach = xstrdup(but_version_string);
 		return 0;
 	}
 	if (!strcmp(var, "format.thread")) {
@@ -944,48 +944,48 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			thread = THREAD_SHALLOW;
 			return 0;
 		}
-		thread = git_config_bool(var, value) ? THREAD_SHALLOW : THREAD_UNSET;
+		thread = but_config_bool(var, value) ? THREAD_SHALLOW : THREAD_UNSET;
 		return 0;
 	}
 	if (!strcmp(var, "format.signoff")) {
-		do_signoff = git_config_bool(var, value);
+		do_signoff = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "format.signature"))
-		return git_config_string(&signature, var, value);
+		return but_config_string(&signature, var, value);
 	if (!strcmp(var, "format.signaturefile"))
-		return git_config_pathname(&signature_file, var, value);
+		return but_config_pathname(&signature_file, var, value);
 	if (!strcmp(var, "format.coverletter")) {
 		if (value && !strcasecmp(value, "auto")) {
 			config_cover_letter = COVER_AUTO;
 			return 0;
 		}
-		config_cover_letter = git_config_bool(var, value) ? COVER_ON : COVER_OFF;
+		config_cover_letter = but_config_bool(var, value) ? COVER_ON : COVER_OFF;
 		return 0;
 	}
 	if (!strcmp(var, "format.outputdirectory"))
-		return git_config_string(&config_output_directory, var, value);
+		return but_config_string(&config_output_directory, var, value);
 	if (!strcmp(var, "format.useautobase")) {
 		if (value && !strcasecmp(value, "whenAble")) {
 			auto_base = AUTO_BASE_WHEN_ABLE;
 			return 0;
 		}
-		auto_base = git_config_bool(var, value) ? AUTO_BASE_ALWAYS : AUTO_BASE_NEVER;
+		auto_base = but_config_bool(var, value) ? AUTO_BASE_ALWAYS : AUTO_BASE_NEVER;
 		return 0;
 	}
 	if (!strcmp(var, "format.from")) {
-		int b = git_parse_maybe_bool(value);
+		int b = but_parse_maybe_bool(value);
 		free(from);
 		if (b < 0)
 			from = xstrdup(value);
 		else if (b)
-			from = xstrdup(git_cummitter_info(IDENT_NO_DATE));
+			from = xstrdup(but_cummitter_info(IDENT_NO_DATE));
 		else
 			from = NULL;
 		return 0;
 	}
 	if (!strcmp(var, "format.notes")) {
-		int b = git_parse_maybe_bool(value);
+		int b = but_parse_maybe_bool(value);
 		if (b < 0)
 			enable_ref_display_notes(&notes_opt, &show_notes, value);
 		else if (b)
@@ -999,7 +999,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_log_config(var, value, cb);
+	return but_log_config(var, value, cb);
 }
 
 static const char *output_directory = NULL;
@@ -1081,9 +1081,9 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 static void gen_message_id(struct rev_info *info, char *base)
 {
 	struct strbuf buf = STRBUF_INIT;
-	strbuf_addf(&buf, "%s.%"PRItime".git.%s", base,
+	strbuf_addf(&buf, "%s.%"PRItime".but.%s", base,
 		    (timestamp_t) time(NULL),
-		    git_cummitter_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
+		    but_cummitter_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
@@ -1219,7 +1219,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	if (!cmit_fmt_is_mail(rev->cummit_format))
 		die(_("cover letter needs email format"));
 
-	cummitter = git_cummitter_info(0);
+	cummitter = but_cummitter_info(0);
 
 	if (use_separate_file &&
 	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
@@ -1337,7 +1337,7 @@ static const char *set_outdir(const char *prefix, const char *output_directory)
 }
 
 static const char * const builtin_format_patch_usage[] = {
-	N_("git format-patch [<options>] [<since> | <revision-range>]"),
+	N_("but format-patch [<options>] [<since> | <revision-range>]"),
 	NULL
 };
 
@@ -1410,7 +1410,7 @@ static int thread_callback(const struct option *opt, const char *arg, int unset)
 	else if (!strcmp(arg, "deep"))
 		*thread = THREAD_DEEP;
 	/*
-	 * Please update _git_formatpatch() in git-completion.bash
+	 * Please update _but_formatpatch() in but-completion.bash
 	 * when you add new options.
 	 */
 	else
@@ -1426,7 +1426,7 @@ static int attach_callback(const struct option *opt, const char *arg, int unset)
 	else if (arg)
 		rev->mime_boundary = arg;
 	else
-		rev->mime_boundary = git_version_string;
+		rev->mime_boundary = but_version_string;
 	rev->no_inline = unset ? 0 : 1;
 	return 0;
 }
@@ -1439,7 +1439,7 @@ static int inline_callback(const struct option *opt, const char *arg, int unset)
 	else if (arg)
 		rev->mime_boundary = arg;
 	else
-		rev->mime_boundary = git_version_string;
+		rev->mime_boundary = but_version_string;
 	rev->no_inline = 0;
 	return 0;
 }
@@ -1485,7 +1485,7 @@ static int from_callback(const struct option *opt, const char *arg, int unset)
 	else if (arg)
 		*from = xstrdup(arg);
 	else
-		*from = xstrdup(git_cummitter_info(IDENT_NO_DATE));
+		*from = xstrdup(but_cummitter_info(IDENT_NO_DATE));
 	return 0;
 }
 
@@ -1577,7 +1577,7 @@ static struct cummit *get_base_cummit(const char *base_cummit,
 		} else {
 			if (die_on_failure)
 				die(_("failed to get upstream, if you want to record base cummit automatically,\n"
-				      "please use git branch --set-upstream-to to track a remote branch.\n"
+				      "please use but branch --set-upstream-to to track a remote branch.\n"
 				      "Or you could specify base cummit by --base=<base-cummit-id> manually"));
 			else
 				return NULL;
@@ -1883,9 +1883,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	init_log_defaults();
 	init_display_notes(&notes_opt);
-	git_config(git_format_config, NULL);
+	but_config(but_format_config, NULL);
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	but_config(grep_config, &rev.grep_filter);
 
 	rev.show_notes = show_notes;
 	memcpy(&rev.notes_opt, &notes_opt, sizeof(notes_opt));
@@ -1909,7 +1909,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
-	 * like "git format-patch -o a123 HEAD^.." may fail; a123 is
+	 * like "but format-patch -o a123 HEAD^.." may fail; a123 is
 	 * possibly a valid SHA1.
 	 */
 	argc = parse_options(argc, argv, prefix, builtin_format_patch_options,
@@ -2032,7 +2032,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (rev.diffopt.use_color != GIT_COLOR_ALWAYS)
 			rev.diffopt.use_color = GIT_COLOR_NEVER;
 		/*
-		 * We consider <outdir> as 'outside of gitdir', therefore avoid
+		 * We consider <outdir> as 'outside of butdir', therefore avoid
 		 * applying adjust_shared_perm in s-c-l-d.
 		 */
 		saved = get_shared_repository();
@@ -2056,7 +2056,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 		if (rev.max_count < 0 && !rev.show_root_diff) {
 			/*
-			 * This is traditional behaviour of "git format-patch
+			 * This is traditional behaviour of "but format-patch
 			 * origin" that prepares what the origin side still
 			 * does not have.
 			 */
@@ -2163,7 +2163,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (!signature) {
 		; /* --no-signature inhibits all signatures */
-	} else if (signature && signature != git_version_string) {
+	} else if (signature && signature != but_version_string) {
 		; /* non-default signature already set */
 	} else if (signature_file) {
 		struct strbuf buf = STRBUF_INIT;
@@ -2309,7 +2309,7 @@ static int add_pending_cummit(const char *arg, struct rev_info *revs, int flags)
 }
 
 static const char * const cherry_usage[] = {
-	N_("git cherry [-v] [<upstream> [<head> [<limit>]]]"),
+	N_("but cherry [-v] [<upstream> [<head> [<limit>]]]"),
 	NULL
 };
 

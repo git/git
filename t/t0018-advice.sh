@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'advice should be printed when config variable is unset' '
 	cat >expect <<-\EOF &&
 	hint: This is a piece of advice
-	hint: Disable this message with "git config advice.nestedTag false"
+	hint: Disable this message with "but config advice.nestedTag false"
 	EOF
 	test-tool advise "This is a piece of advice" 2>actual &&
 	test_cmp expect actual
@@ -17,7 +17,7 @@ test_expect_success 'advice should be printed when config variable is unset' '
 test_expect_success 'advice should be printed when config variable is set to true' '
 	cat >expect <<-\EOF &&
 	hint: This is a piece of advice
-	hint: Disable this message with "git config advice.nestedTag false"
+	hint: Disable this message with "but config advice.nestedTag false"
 	EOF
 	test_config advice.nestedTag true &&
 	test-tool advise "This is a piece of advice" 2>actual &&

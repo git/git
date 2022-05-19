@@ -4,10 +4,10 @@ test_description='check quarantine of objects during push'
 . ./test-lib.sh
 
 test_expect_success 'create picky dest repo' '
-	git init --bare dest.git &&
-	test_hook --setup -C dest.git pre-receive <<-\EOF
+	but init --bare dest.but &&
+	test_hook --setup -C dest.but pre-receive <<-\EOF
 	while read old new ref; do
-		test "$(git log -1 --format=%s $new)" = reject && exit 1
+		test "$(but log -1 --format=%s $new)" = reject && exit 1
 	done
 	exit 0
 	EOF
@@ -15,21 +15,21 @@ test_expect_success 'create picky dest repo' '
 
 test_expect_success 'accepted objects work' '
 	test_cummit ok &&
-	git push dest.git HEAD &&
-	cummit=$(git rev-parse HEAD) &&
-	git --git-dir=dest.git cat-file cummit $cummit
+	but push dest.but HEAD &&
+	cummit=$(but rev-parse HEAD) &&
+	but --but-dir=dest.but cat-file cummit $cummit
 '
 
 test_expect_success 'rejected objects are not installed' '
 	test_cummit reject &&
-	cummit=$(git rev-parse HEAD) &&
-	test_must_fail git push dest.git reject &&
-	test_must_fail git --git-dir=dest.git cat-file cummit $cummit
+	cummit=$(but rev-parse HEAD) &&
+	test_must_fail but push dest.but reject &&
+	test_must_fail but --but-dir=dest.but cat-file cummit $cummit
 '
 
 test_expect_success 'rejected objects are removed' '
 	echo "incoming-*" >expect &&
-	(cd dest.git/objects && echo incoming-*) >actual &&
+	(cd dest.but/objects && echo incoming-*) >actual &&
 	test_cmp expect actual
 '
 
@@ -40,8 +40,8 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	# a non-trivial file with multiple versions.
 
 	test-tool genrandom foo 4096 >file.bin &&
-	git add file.bin &&
-	git cummit -m bin &&
+	but add file.bin &&
+	but cummit -m bin &&
 
 	if test_have_prereq MINGW
 	then
@@ -49,24 +49,24 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	else
 		pathsep=":"
 	fi &&
-	git clone --bare . "xxx${pathsep}yyy.git" &&
+	but clone --bare . "xxx${pathsep}yyy.but" &&
 
 	echo change >>file.bin &&
-	git cummit -am change &&
+	but cummit -am change &&
 	# Note that we have to use the full path here, or it gets confused
 	# with the ssh host:path syntax.
-	git push "$(pwd)/xxx${pathsep}yyy.git" HEAD
+	but push "$(pwd)/xxx${pathsep}yyy.but" HEAD
 '
 
 test_expect_success 'updating a ref from quarantine is forbidden' '
-	git init --bare update.git &&
-	test_hook -C update.git pre-receive <<-\EOF &&
+	but init --bare update.but &&
+	test_hook -C update.but pre-receive <<-\EOF &&
 	read old new refname
-	git update-ref refs/heads/unrelated $new
+	but update-ref refs/heads/unrelated $new
 	exit 1
 	EOF
-	test_must_fail git push update.git HEAD &&
-	git -C update.git fsck
+	test_must_fail but push update.but HEAD &&
+	but -C update.but fsck
 '
 
 test_done

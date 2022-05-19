@@ -11,7 +11,7 @@
  * is free to insert any arbitrary byte sequence its its name. That
  * can include newlines, spaces, closing parentheses etc.
  *
- * See do_task_stat() in fs/proc/array.c in linux.git, this is in
+ * See do_task_stat() in fs/proc/array.c in linux.but, this is in
  * contrast with the escaped version of the name found in
  * /proc/%d/status.
  *
@@ -21,7 +21,7 @@
  *
  * How much N do we need? On Linux /proc/sys/kernel/pid_max is 2^15 by
  * default, but it can be raised set to values of up to 2^22. So
- * that's 7 digits for a PID. We have 2 PIDs in the first four fields
+ * that's 7 dibuts for a PID. We have 2 PIDs in the first four fields
  * we're interested in, so 2 * 7 = 14.
  *
  * We then have 3 spaces between those four values, and we'd like to

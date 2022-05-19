@@ -11,9 +11,9 @@ start_httpd
 
 cummit() {
 	echo "$1" >tracked &&
-	git add tracked &&
+	but add tracked &&
 	test_tick &&
-	git cummit -m "$1"
+	but cummit -m "$1"
 }
 
 test_expect_success 'setup shallow clone' '
@@ -25,17 +25,17 @@ test_expect_success 'setup shallow clone' '
 	cummit 5 &&
 	cummit 6 &&
 	cummit 7 &&
-	git clone --no-local --depth=5 .git shallow &&
-	git config --global transfer.fsckObjects true
+	but clone --no-local --depth=5 .but shallow &&
+	but config --global transfer.fsckObjects true
 '
 
 test_expect_success 'clone http repository' '
-	git clone --bare --no-local shallow "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git clone $HTTPD_URL/smart/repo.git clone &&
+	but clone --bare --no-local shallow "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but clone $HTTPD_URL/smart/repo.but clone &&
 	(
 	cd clone &&
-	git fsck &&
-	git log --format=%s origin/main >actual &&
+	but fsck &&
+	but log --format=%s origin/main >actual &&
 	cat <<EOF >expect &&
 7
 6
@@ -55,27 +55,27 @@ test_expect_success 'no shallow lines after receiving ACK ready' '
 		cd shallow &&
 		for i in $(test_seq 15)
 		do
-			git checkout --orphan unrelated$i &&
+			but checkout --orphan unrelated$i &&
 			test_cummit unrelated$i &&
-			git push -q "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+			but push -q "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" \
 				refs/heads/unrelated$i:refs/heads/unrelated$i &&
-			git push -q ../clone/.git \
+			but push -q ../clone/.but \
 				refs/heads/unrelated$i:refs/heads/unrelated$i ||
 			exit 1
 		done &&
-		git checkout main &&
+		but checkout main &&
 		test_cummit new &&
-		git push  "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" main
+		but push  "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" main
 	) &&
 	(
 		cd clone &&
-		git checkout --orphan newnew &&
+		but checkout --orphan newnew &&
 		test_tick=1400000000 &&
 		test_cummit new-too &&
 		# NEEDSWORK: If the overspecification of the expected result is reduced, we
 		# might be able to run this test in all protocol versions.
 		GIT_TRACE_PACKET="$TRASH_DIRECTORY/trace" GIT_TEST_PROTOCOL_VERSION=0 \
-			git fetch --depth=2 &&
+			but fetch --depth=2 &&
 		grep "fetch-pack< ACK .* ready" ../trace &&
 		! grep "fetch-pack> done" ../trace
 	)
@@ -85,20 +85,20 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
-	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-since.git" &&
-	git clone --shallow-since "300000000 +0700" $HTTPD_URL/smart/shallow-since.git ../shallow11 &&
-	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
+	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	mv .but "$HTTPD_DOCUMENT_ROOT_PATH/shallow-since.but" &&
+	but clone --shallow-since "300000000 +0700" $HTTPD_URL/smart/shallow-since.but ../shallow11 &&
+	but -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
 	test_cmp expected actual
 	)
 '
 
 test_expect_success 'fetch shallow since ...' '
-	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
-	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
+	but -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
+	but -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
@@ -113,17 +113,17 @@ test_expect_success 'shallow clone exclude tag two' '
 	test_cummit one &&
 	test_cummit two &&
 	test_cummit three &&
-	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-exclude.git" &&
-	git clone --shallow-exclude two $HTTPD_URL/smart/shallow-exclude.git ../shallow12 &&
-	git -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
+	mv .but "$HTTPD_DOCUMENT_ROOT_PATH/shallow-exclude.but" &&
+	but clone --shallow-exclude two $HTTPD_URL/smart/shallow-exclude.but ../shallow12 &&
+	but -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
 	test_cmp expected actual
 	)
 '
 
 test_expect_success 'fetch exclude tag one' '
-	git -C shallow12 fetch --shallow-exclude one origin &&
-	git -C shallow12 log --pretty=tformat:%s origin/main >actual &&
+	but -C shallow12 fetch --shallow-exclude one origin &&
+	but -C shallow12 log --pretty=tformat:%s origin/main >actual &&
 	test_write_lines three two >expected &&
 	test_cmp expected actual
 '
@@ -135,16 +135,16 @@ test_expect_success 'fetching deepen' '
 	test_cummit one &&
 	test_cummit two &&
 	test_cummit three &&
-	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" &&
-	git clone --depth 1 $HTTPD_URL/smart/shallow-deepen.git deepen &&
-	mv "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" .git &&
+	mv .but "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.but" &&
+	but clone --depth 1 $HTTPD_URL/smart/shallow-deepen.but deepen &&
+	mv "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.but" .but &&
 	test_cummit four &&
-	git -C deepen log --pretty=tformat:%s main >actual &&
+	but -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
-	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" &&
-	git -C deepen fetch --deepen=1 &&
-	git -C deepen log --pretty=tformat:%s origin/main >actual &&
+	mv .but "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.but" &&
+	but -C deepen fetch --deepen=1 &&
+	but -C deepen log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	four
 	three

@@ -176,11 +176,11 @@ var maybeQuotedRe = /^\"(.*)\"$/;
 /**#@-*/
 
 /**
- * unquote maybe C-quoted filename (as used by git, i.e. it is
+ * unquote maybe C-quoted filename (as used by but, i.e. it is
  * in double quotes '"' if there is any escape character used)
  * e.g. 'aa' -> 'aa', '"a\ta"' -> 'a	a'
  *
- * @param {String} str: git-quoted string
+ * @param {String} str: but-quoted string
  * @returns {String} Unquoted and unescaped string
  *
  * @globals escCodeRe, octEscRe, maybeQuotedRe

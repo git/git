@@ -1,4 +1,4 @@
-# git-gui branch merge support
+# but-gui branch merge support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 class merge {
@@ -77,7 +77,7 @@ method _rev {} {
 method _visualize {} {
 	set rev [_rev $this]
 	if {$rev ne {}} {
-		do_gitk [list $rev --not HEAD]
+		do_butk [list $rev --not HEAD]
 	}
 }
 
@@ -93,7 +93,7 @@ method _start {} {
 	set spec [$w_rev get_tracking_branch]
 	set cmit [$w_rev get_cummit]
 
-	set fh [open [gitdir FETCH_HEAD] w]
+	set fh [open [butdir FETCH_HEAD] w]
 	fconfigure $fh -translation lf
 	if {$spec eq {}} {
 		set remote .
@@ -112,13 +112,13 @@ method _start {} {
 	close $fh
 	set _last_merged_branch $branch
 
-	if {[git-version >= "2.5.0"]} {
-		set cmd [list git merge --strategy=recursive FETCH_HEAD]
+	if {[but-version >= "2.5.0"]} {
+		set cmd [list but merge --strategy=recursive FETCH_HEAD]
 	} else {
-		set cmd [list git]
+		set cmd [list but]
 		lappend cmd merge
 		lappend cmd --strategy=recursive
-		lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+		lappend cmd [but fmt-merge-msg <[butdir FETCH_HEAD]]
 		lappend cmd HEAD
 		lappend cmd $name
 	}
@@ -239,7 +239,7 @@ Continue with resetting the current changes?"]
 	}
 
 	if {[ask_popup $op_question] eq {yes}} {
-		set fd [git_read --stderr read-tree --reset -u -v HEAD]
+		set fd [but_read --stderr read-tree --reset -u -v HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		set status_bar_operation [$::main_status \
 			start \
@@ -266,12 +266,12 @@ proc _reset_wait {fd status_bar_operation} {
 		$ui_comm delete 0.0 end
 		$ui_comm edit modified false
 
-		catch {file delete [gitdir MERGE_HEAD]}
-		catch {file delete [gitdir rr-cache MERGE_RR]}
-		catch {file delete [gitdir MERGE_RR]}
-		catch {file delete [gitdir SQUASH_MSG]}
-		catch {file delete [gitdir MERGE_MSG]}
-		catch {file delete [gitdir GITGUI_MSG]}
+		catch {file delete [butdir MERGE_HEAD]}
+		catch {file delete [butdir rr-cache MERGE_RR]}
+		catch {file delete [butdir MERGE_RR]}
+		catch {file delete [butdir SQUASH_MSG]}
+		catch {file delete [butdir MERGE_MSG]}
+		catch {file delete [butdir GITGUI_MSG]}
 
 		if {$fail} {
 			warn_popup "[mc "Abort failed."]\n\n$err"

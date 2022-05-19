@@ -1,4 +1,4 @@
-$ git format-patch --attach --stdout --suffix=.diff initial..side
+$ but format-patch --attach --stdout --suffix=.diff initial..side
 From c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:03:00 +0000
@@ -24,7 +24,7 @@ Content-Type: text/x-patch; name="0001-Side.diff"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: attachment; filename="0001-Side.diff"
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -33,7 +33,7 @@ index 35d242b..7289e35 100644
  B
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..f4615da 100644
 --- a/file0
 +++ b/file0
@@ -44,7 +44,7 @@ index 01e79c3..f4615da 100644
 +A
 +B
 +C
-diff --git a/file3 b/file3
+diff --but a/file3 b/file3
 new file mode 100644
 index 0000000..7289e35
 --- /dev/null

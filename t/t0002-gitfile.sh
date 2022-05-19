@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='.git file
+test_description='.but file
 
-Verify that plumbing commands work when .git is a file
+Verify that plumbing commands work when .but is a file
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -16,74 +16,74 @@ objpath() {
 
 test_expect_success 'initial setup' '
 	REAL="$(pwd)/.real" &&
-	mv .git "$REAL"
+	mv .but "$REAL"
 '
 
-test_expect_success 'bad setup: invalid .git file format' '
-	echo "gitdir $REAL" >.git &&
-	test_must_fail git rev-parse 2>.err &&
-	test_i18ngrep "invalid gitfile format" .err
+test_expect_success 'bad setup: invalid .but file format' '
+	echo "butdir $REAL" >.but &&
+	test_must_fail but rev-parse 2>.err &&
+	test_i18ngrep "invalid butfile format" .err
 '
 
-test_expect_success 'bad setup: invalid .git file path' '
-	echo "gitdir: $REAL.not" >.git &&
-	test_must_fail git rev-parse 2>.err &&
-	test_i18ngrep "not a git repository" .err
+test_expect_success 'bad setup: invalid .but file path' '
+	echo "butdir: $REAL.not" >.but &&
+	test_must_fail but rev-parse 2>.err &&
+	test_i18ngrep "not a but repository" .err
 '
 
-test_expect_success 'final setup + check rev-parse --git-dir' '
-	echo "gitdir: $REAL" >.git &&
-	test "$REAL" = "$(git rev-parse --git-dir)"
+test_expect_success 'final setup + check rev-parse --but-dir' '
+	echo "butdir: $REAL" >.but &&
+	test "$REAL" = "$(but rev-parse --but-dir)"
 '
 
 test_expect_success 'check hash-object' '
 	echo "foo" >bar &&
-	SHA=$(cat bar | git hash-object -w --stdin) &&
+	SHA=$(cat bar | but hash-object -w --stdin) &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
 test_expect_success 'check cat-file' '
-	git cat-file blob $SHA >actual &&
+	but cat-file blob $SHA >actual &&
 	test_cmp bar actual
 '
 
 test_expect_success 'check update-index' '
 	test_path_is_missing "$REAL/index" &&
 	rm -f "$REAL/objects/$(objpath $SHA)" &&
-	git update-index --add bar &&
+	but update-index --add bar &&
 	test_path_is_file "$REAL/index" &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
 test_expect_success 'check write-tree' '
-	SHA=$(git write-tree) &&
+	SHA=$(but write-tree) &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
 test_expect_success 'check cummit-tree' '
-	SHA=$(echo "cummit bar" | git cummit-tree $SHA) &&
+	SHA=$(echo "cummit bar" | but cummit-tree $SHA) &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
 test_expect_success !SANITIZE_LEAK 'check rev-list' '
-	git update-ref "HEAD" "$SHA" &&
-	git rev-list HEAD >actual &&
+	but update-ref "HEAD" "$SHA" &&
+	but rev-list HEAD >actual &&
 	echo $SHA >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'setup_git_dir twice in subdir' '
-	git init sgd &&
+test_expect_success 'setup_but_dir twice in subdir' '
+	but init sgd &&
 	(
 		cd sgd &&
-		git config alias.lsfi ls-files &&
-		mv .git .realgit &&
-		echo "gitdir: .realgit" >.git &&
+		but config alias.lsfi ls-files &&
+		mv .but .realbut &&
+		echo "butdir: .realbut" >.but &&
 		mkdir subdir &&
 		cd subdir &&
 		>foo &&
-		git add foo &&
-		git lsfi >actual &&
+		but add foo &&
+		but lsfi >actual &&
 		echo foo >expected &&
 		test_cmp expected actual
 	)
@@ -95,11 +95,11 @@ test_expect_success 'enter_repo non-strict mode' '
 		cd enter_repo &&
 		test_tick &&
 		test_cummit foo &&
-		mv .git .realgit &&
-		echo "gitdir: .realgit" >.git
+		mv .but .realbut &&
+		echo "butdir: .realbut" >.but
 	) &&
-	head=$(git -C enter_repo rev-parse HEAD) &&
-	git ls-remote enter_repo >actual &&
+	head=$(but -C enter_repo rev-parse HEAD) &&
+	but ls-remote enter_repo >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
 	$head	refs/heads/main
@@ -111,10 +111,10 @@ test_expect_success 'enter_repo non-strict mode' '
 test_expect_success 'enter_repo linked checkout' '
 	(
 		cd enter_repo &&
-		git worktree add  ../foo refs/tags/foo
+		but worktree add  ../foo refs/tags/foo
 	) &&
-	head=$(git -C enter_repo rev-parse HEAD) &&
-	git ls-remote foo >actual &&
+	head=$(but -C enter_repo rev-parse HEAD) &&
+	but ls-remote foo >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
 	$head	refs/heads/main
@@ -124,8 +124,8 @@ test_expect_success 'enter_repo linked checkout' '
 '
 
 test_expect_success 'enter_repo strict mode' '
-	head=$(git -C enter_repo rev-parse HEAD) &&
-	git ls-remote --upload-pack="git upload-pack --strict" foo/.git >actual &&
+	head=$(but -C enter_repo rev-parse HEAD) &&
+	but ls-remote --upload-pack="but upload-pack --strict" foo/.but >actual &&
 	cat >expected <<-EOF &&
 	$head	HEAD
 	$head	refs/heads/main

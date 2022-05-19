@@ -11,14 +11,14 @@ Backward compatibility notes.
    this (mis)feature.  That is not scheduled to happen in the upcoming
    release (yet).
 
- * The historical argument order "git merge <msg> HEAD <cummit>..."
+ * The historical argument order "but merge <msg> HEAD <cummit>..."
    has been deprecated for quite some time, and is now removed.
 
- * The default location "~/.git-credential-cache/socket" for the
+ * The default location "~/.but-credential-cache/socket" for the
    socket used to communicate with the credential-cache daemon has
-   been moved to "~/.cache/git/credential/socket".
+   been moved to "~/.cache/but/credential/socket".
 
- * Git now avoids blindly falling back to ".git" when the setup
+ * Git now avoids blindly falling back to ".but" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
    happens to work right now may be broken by a call to die("BUG").
    We've tried hard to locate such cases and fixed them, but there
@@ -31,16 +31,16 @@ Updates since v2.12
 
 UI, Workflows & Features
 
- * "git describe" and "git name-rev" have been taught to take more
+ * "but describe" and "but name-rev" have been taught to take more
    than one refname patterns to restrict the set of refs to base their
    naming output on, and also learned to take negative patterns to
    name refs not to be used for naming via their "--exclude" option.
 
- * Deletion of a branch "foo/bar" could remove .git/refs/heads/foo
+ * Deletion of a branch "foo/bar" could remove .but/refs/heads/foo
    once there no longer is any other branch whose name begins with
    "foo/", but we didn't do so so far.  Now we do.
 
- * When "git merge" detects a path that is renamed in one history
+ * When "but merge" detects a path that is renamed in one history
    while the other history deleted (or modified) it, it now reports
    both paths to help the user understand what is going on in the two
    histories being merged.
@@ -51,7 +51,7 @@ UI, Workflows & Features
    proxy used for https://a.example.com, https://b.example.com, etc.,
    i.e. any host in the example.com domain.
 
- * "git tag" did not leave useful message when adding a new entry to
+ * "but tag" did not leave useful message when adding a new entry to
    reflog; this was left unnoticed for a long time because refs/tags/*
    doesn't keep reflog by default.
 
@@ -68,15 +68,15 @@ UI, Workflows & Features
    configuration variable, and comes with an escape hatch for users to
    deal with misdetected cases.
 
- * The "--git-path", "--git-common-dir", and "--shared-index-path"
-   options of "git rev-parse" did not produce usable output.  They are
+ * The "--but-path", "--but-common-dir", and "--shared-index-path"
+   options of "but rev-parse" did not produce usable output.  They are
    now updated to show the path to the correct file, relative to where
    the caller is.
 
- * "git diff -W" has been taught to handle the case where a new
+ * "but diff -W" has been taught to handle the case where a new
    function is added at the end of the file better.
 
- * "git update-ref -d" and other operations to delete references did
+ * "but update-ref -d" and other operations to delete references did
    not leave any entry in HEAD's reflog when the reference being
    deleted was the current branch.  This is not a problem in practice
    because you do not want to delete the branch you are currently on,
@@ -84,18 +84,18 @@ UI, Workflows & Features
    be logged in a useful way.
 
  * "Cc:" on the trailer part does not have to conform to RFC strictly,
-   unlike in the e-mail header.  "git send-email" has been updated to
+   unlike in the e-mail header.  "but send-email" has been updated to
    ignore anything after '>' when picking addresses, to allow non-address
    cruft like " # stable 4.4" after the address.
 
- * When "git submodule init" decides that the submodule in the working
+ * When "but submodule init" decides that the submodule in the working
    tree is its upstream, it now gives a warning as it is not a very
    common setup.
 
- * "git stash push" takes a pathspec so that the local changes can be
+ * "but stash push" takes a pathspec so that the local changes can be
    stashed away only partially.
 
- * Documentation for "git ls-files" did not refer to core.quotePath.
+ * Documentation for "but ls-files" did not refer to core.quotePath.
 
  * The experimental "split index" feature has gained a few
    configuration variables to make it easier to use.
@@ -107,7 +107,7 @@ UI, Workflows & Features
 
  * The pathspec mechanism learned to further limit the paths that
    match the pattern to those that have specified attributes attached
-   via the gitattributes mechanism.
+   via the butattributes mechanism.
 
  * Our source code has used the SHA1_HEADER cpp macro after "#include"
    in the C code to switch among the SHA-1 implementations. Instead,
@@ -115,14 +115,14 @@ UI, Workflows & Features
    using "#ifdef BLK_SHA1/#include "block-sha1/sha1.h"/.../#endif";
    this helps some IDE tools.
 
- * The start-up sequence of "git" needs to figure out some configured
+ * The start-up sequence of "but" needs to figure out some configured
    settings before it finds and set itself up in the location of the
    repository and was quite messy due to its "chicken-and-egg" nature.
    The code has been restructured.
 
  * The command line prompt (in contrib/) learned a new 'tag' style
    that can be specified with GIT_PS1_DESCRIBE_STYLE, to describe a
-   detached HEAD with "git describe --tags".
+   detached HEAD with "but describe --tags".
 
  * The configuration file learned a new "includeIf.<condition>.path"
    that includes the contents of the given path only when the
@@ -136,27 +136,27 @@ UI, Workflows & Features
    external remote helper interface; now the "smart HTTP" remote
    helper understands what to do with the passed information.
 
- * "git describe --dirty" dies when it cannot be determined if the
+ * "but describe --dirty" dies when it cannot be determined if the
    state in the working tree matches that of HEAD (e.g. broken
    repository or broken submodule).  The command learned a new option
-   "git describe --broken" to give "$name-broken" (where $name is the
+   "but describe --broken" to give "$name-broken" (where $name is the
    description of HEAD) in such a case.
 
- * "git checkout" is taught the "--recurse-submodules" option.
+ * "but checkout" is taught the "--recurse-submodules" option.
 
- * Recent enhancement to "git stash push" command to support pathspec
+ * Recent enhancement to "but stash push" command to support pathspec
    to allow only a subset of working tree changes to be stashed away
    was found to be too chatty and exposed the internal implementation
    detail (e.g. when it uses reset to match the index to HEAD before
    doing other things, output from reset seeped out).  These, and
    other chattyness has been fixed.
 
- * "git merge <message> HEAD <cummit>" syntax that has been deprecated
+ * "but merge <message> HEAD <cummit>" syntax that has been deprecated
    since October 2007 has been removed.
 
  * The refs completion for large number of refs has been sped up,
    partly by giving up disambiguating ambiguous refs and partly by
-   eliminating most of the shell processing between 'git for-each-ref'
+   eliminating most of the shell processing between 'but for-each-ref'
    and 'ls-remote' and Bash's completion facility.
 
  * On many keyboards, typing "@{" involves holding down SHIFT key and
@@ -165,7 +165,7 @@ UI, Workflows & Features
    we can safely accept them case insensitively without introducing
    ambiguity or confusion to solve this.
 
- * "git tag/branch/for-each-ref" family of commands long allowed to
+ * "but tag/branch/for-each-ref" family of commands long allowed to
    filter the refs by "--contains X" (show only the refs that are
    descendants of X), "--merged X" (show only the refs that are
    ancestors of X), "--no-merged X" (show only the refs that are not
@@ -173,10 +173,10 @@ UI, Workflows & Features
    only the refs that are not descendants of X) has been added to
    them.
 
- * The default behaviour of "git log" in an interactive session has
+ * The default behaviour of "but log" in an interactive session has
    been changed to enable "--decorate".
 
- * The output from "git status --short" has been extended to show
+ * The output from "but status --short" has been extended to show
    various kinds of dirtiness in submodules differently; instead of to
    "M" for modified, 'm' and '?' can be shown to signal changes only
    to the working tree of the submodule but not the cummit that is
@@ -186,16 +186,16 @@ UI, Workflows & Features
    size that can be expressed in size_t, which can be larger than
    ulong on some platforms.
 
- * "git rebase" learns "--signoff" option.
+ * "but rebase" learns "--signoff" option.
 
- * The completion script (in contrib/) learned to complete "git push
+ * The completion script (in contrib/) learned to complete "but push
    --delete b<TAB>" to complete branch name to be deleted.
 
- * "git worktree add --lock" allows to lock a worktree immediately
-   after it's created. This helps prevent a race between "git worktree
-   add; git worktree lock" and "git worktree prune".
+ * "but worktree add --lock" allows to lock a worktree immediately
+   after it's created. This helps prevent a race between "but worktree
+   add; but worktree lock" and "but worktree prune".
 
- * Completion for "git checkout <branch>" that auto-creates the branch
+ * Completion for "but checkout <branch>" that auto-creates the branch
    out of a remote tracking branch can now be disabled, as this
    completion often gets in the way when completing to checkout an
    existing local branch that happens to share the same prefix with
@@ -204,24 +204,24 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, Development Support etc.
 
- * The code to list branches in "git branch" has been consolidated
+ * The code to list branches in "but branch" has been consolidated
    with the more generic ref-filter API.
 
  * Resource usage while enumerating refs from alternate object store
    has been optimized to help receiving end of "push" that hosts a
    repository with many "forks".
 
- * The gitattributes machinery is being taught to work better in a
+ * The butattributes machinery is being taught to work better in a
    multi-threaded environment.
 
- * "git rebase -i" starts using the recently updated "sequencer" code.
+ * "but rebase -i" starts using the recently updated "sequencer" code.
 
  * Code and design clean-up for the refs API.
 
  * The preload-index code has been taught not to bother with the index
    entries that are paths that are not checked out by "sparse checkout".
 
- * Some warning() messages from "git clean" were updated to show the
+ * Some warning() messages from "but clean" were updated to show the
    errno from failed system calls.
 
  * The "parse_config_key()" API function has been cleaned up.
@@ -252,7 +252,7 @@ Performance, Internal Implementation, Development Support etc.
  * Add 32-bit Linux variant to the set of platforms to be tested with
    Travis CI.
 
- * "git branch --list" takes the "--abbrev" and "--no-abbrev" options
+ * "but branch --list" takes the "--abbrev" and "--no-abbrev" options
    to control the output of the object name in its "-v"(erbose)
    output, but a recent update started ignoring them; fix it before
    the breakage reaches to any released version.
@@ -261,7 +261,7 @@ Performance, Internal Implementation, Development Support etc.
    older one and the newer one interoperate happily has now become
    possible.
 
- * "git tag --contains" used to (ab)use the object bits to keep track
+ * "but tag --contains" used to (ab)use the object bits to keep track
    of the state of object reachability without clearing them after
    use; this has been cleaned up and made to use the newer cummit-slab
    facility.
@@ -289,7 +289,7 @@ Performance, Internal Implementation, Development Support etc.
    submodules and make it possible to later extend use of multiple
    worktrees for a project with submodules.
 
- * Some debugging output from "git describe" were marked for l10n,
+ * Some debugging output from "but describe" were marked for l10n,
    but some weren't.  Mark missing ones for l10n.
 
  * Define a new task in .travis.yml that triggers a test session on
@@ -298,7 +298,7 @@ Performance, Internal Implementation, Development Support etc.
  * Conversion from uchar[20] to struct object_id continues.
 
  * The "submodule" specific field in the ref_store structure is
-   replaced with a more generic "gitdir" that can later be used also
+   replaced with a more generic "butdir" that can later be used also
    when dealing with ref_store that represents the set of refs visible
    from the other worktrees.
 
@@ -315,16 +315,16 @@ Performance, Internal Implementation, Development Support etc.
  * The index file has a trailing SHA-1 checksum to detect file
    corruption, and historically we checked it every time the index
    file is used.  Omit the validation during normal use, and instead
-   verify only in "git fsck".
+   verify only in "but fsck".
 
- * Having a git command on the upstream side of a pipe in a test
+ * Having a but command on the upstream side of a pipe in a test
    script will hide the exit status from the command, which may cause
    us to fail to notice a breakage; rewrite tests in a script to avoid
    this issue.
 
  * Travis CI learns to run coccicheck.
 
- * "git checkout" that handles a lot of paths has been optimized by
+ * "but checkout" that handles a lot of paths has been optimized by
    reducing the number of unnecessary checks of paths in the
    has_dir_name() function.
 
@@ -343,20 +343,20 @@ Unless otherwise noted, all the fixes since v2.12 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * "git repack --depth=<n>" for a long time busted the specified depth
+ * "but repack --depth=<n>" for a long time busted the specified depth
    when reusing delta from existing packs.  This has been corrected.
 
- * The code to parse the command line "git grep <patterns>... <rev>
+ * The code to parse the command line "but grep <patterns>... <rev>
    [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
    have been fixed (e.g. we used to check "--" if it is a rev).
 
- * "git ls-remote" and "git archive --remote" are designed to work
+ * "but ls-remote" and "but archive --remote" are designed to work
    without being in a directory under Git's control.  However, recent
    updates revealed that we randomly look into a directory called
-   .git/ without actually doing necessary set-up when working in a
+   .but/ without actually doing necessary set-up when working in a
    repository.  Stop doing so.
 
- * "git show-branch" expected there were only very short branch names
+ * "but show-branch" expected there were only very short branch names
    in the repository and used a fixed-length buffer to hold them
    without checking for overflow.
 
@@ -368,7 +368,7 @@ notes for details).
    close_tempfile() now resets errno to EIO to make errno at least
    predictable.
 
- * "git remote rm X", when a branch has remote X configured as the
+ * "but remote rm X", when a branch has remote X configured as the
    value of its branch.*.remote, tried to remove branch.*.remote and
    branch.*.merge and failed if either is unset.
 
@@ -376,16 +376,16 @@ notes for details).
    automatic gc; it has been taught to run at least once a day (by
    default) by ignoring a stale "gc.log" file that is too old.
 
- * The code to parse "git -c VAR=VAL cmd" and set configuration
+ * The code to parse "but -c VAR=VAL cmd" and set configuration
    variable for the duration of cmd had two small bugs, which have
    been fixed.
 
  * user.email that consists of only cruft chars should consistently
    error out, but didn't.
 
- * "git upload-pack", which is a counter-part of "git fetch", did not
+ * "but upload-pack", which is a counter-part of "but fetch", did not
    report a request for a ref that was not advertised as invalid.
-   This is generally not a problem (because "git fetch" will stop
+   This is generally not a problem (because "but fetch" will stop
    before making such a request), but is the right thing to do.
 
  * A leak in a codepath to read from a packed object in (rare) cases
@@ -395,8 +395,8 @@ notes for details).
    redirected request, we ignored the error we got from the server,
    and ended up giving a not-so-useful error message.
 
- * The patch subcommand of "git add -i" was meant to have paths
-   selection prompt just like other subcommand, unlike "git add -p"
+ * The patch subcommand of "but add -i" was meant to have paths
+   selection prompt just like other subcommand, unlike "but add -p"
    directly jumps to hunk selection.  Recently, this was broken and
    "add -i" lost the paths selection dialog, but it now has been
    fixed.
@@ -408,31 +408,31 @@ notes for details).
  * There is no need for Python only to give a few messages to the
    standard error stream, but we somehow did.
 
- * The code to parse "git log -L..." command line was buggy when there
+ * The code to parse "but log -L..." command line was buggy when there
    are many ranges specified with -L; overrun of the allocated buffer
    has been fixed.
 
- * The command-line parsing of "git log -L" copied internal data
+ * The command-line parsing of "but log -L" copied internal data
    structures using incorrect size on ILP32 systems.
 
- * "git diff --quiet" relies on the size field in diff_filespec to be
+ * "but diff --quiet" relies on the size field in diff_filespec to be
    correctly populated, but diff_populate_filespec() helper function
    made an incorrect short-cut when asked only to populate the size
-   field for paths that need to go through convert_to_git() (e.g. CRLF
+   field for paths that need to go through convert_to_but() (e.g. CRLF
    conversion).
 
  * A few tests were run conditionally under (rare) conditions where
    they cannot be run (like running cvs tests under 'root' account).
 
- * "git branch @" created refs/heads/@ as a branch, and in general the
+ * "but branch @" created refs/heads/@ as a branch, and in general the
    code that handled @{-1} and @{upstream} was a bit too loose in
    disambiguating.
 
- * "git fetch" that requests a cummit by object name, when the other
+ * "but fetch" that requests a cummit by object name, when the other
    side does not allow such an request, failed without much
    explanation.
 
- * "git filter-branch --prune-empty" drops a single-parent cummit that
+ * "but filter-branch --prune-empty" drops a single-parent cummit that
    becomes a no-op, but did not drop a root cummit whose tree is empty.
 
  * Recent versions of Git treats http alternates (used in dumb http
@@ -440,15 +440,15 @@ notes for details).
    enable following it, due to security concerns.  But we forgot to
    give a warning when we decide not to honor the alternates.
 
- * "git push" had a handful of codepaths that could lead to a deadlock
+ * "but push" had a handful of codepaths that could lead to a deadlock
    when unexpected error happened, which has been fixed.
 
  * "Dumb http" transport used to misparse a nonsense http-alternates
    response, which has been fixed.
 
- * "git add -p <pathspec>" unnecessarily expanded the pathspec to a
-   list of individual files that matches the pathspec by running "git
-   ls-files <pathspec>", before feeding it to "git diff-index" to see
+ * "but add -p <pathspec>" unnecessarily expanded the pathspec to a
+   list of individual files that matches the pathspec by running "but
+   ls-files <pathspec>", before feeding it to "but diff-index" to see
    which paths have changes, because historically the pathspec
    language supported by "diff-index" was weaker.  These days they are
    equivalent and there is no reason to internally expand it.  This
@@ -456,10 +456,10 @@ notes for details).
    some platforms.
    (merge 7288e12cce jk/add-i-use-pathspecs later to maint).
 
- * "git status --porcelain" is supposed to give a stable output, but a
+ * "but status --porcelain" is supposed to give a stable output, but a
    few strings were left as translatable by mistake.
 
- * "git revert -m 0 $merge_cummit" complained that reverting a merge
+ * "but revert -m 0 $merge_cummit" complained that reverting a merge
    needs to say relative to which parent the reversion needs to
    happen, as if "-m 0" weren't given.  The correct diagnosis is that
    "-m 0" does not refer to the first parent ("-m 1" does).  This has
@@ -472,7 +472,7 @@ notes for details).
  * Fix for NO_PTHREADS build.
 
  * Fix for potential segv introduced in v2.11.0 and later (also
-   v2.10.2) to "git log --pickaxe-regex -S".
+   v2.10.2) to "but log --pickaxe-regex -S".
 
  * A few unterminated here documents in tests were fixed, which in
    turn revealed incorrect expectations the tests make. These tests
@@ -481,10 +481,10 @@ notes for details).
  * Fix for NO_PTHREADS option.
    (merge 2225e1ea20 bw/grep-recurse-submodules later to maint).
 
- * Git now avoids blindly falling back to ".git" when the setup
+ * Git now avoids blindly falling back to ".but" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
    happens to work right now may be broken by a call to die("BUG").
-   (merge b1ef400eec jk/no-looking-at-dotgit-outside-repo-final later to maint).
+   (merge b1ef400eec jk/no-looking-at-dotbut-outside-repo-final later to maint).
 
  * A few commands that recently learned the "--recurse-submodule"
    option misbehaved when started from a subdirectory of the
@@ -497,7 +497,7 @@ notes for details).
    aware of.  strbuf_getcwd() has been taught to cope with it better.
    (merge a54e938e5b rs/freebsd-getcwd-workaround later to maint).
 
- * A recent update to "rebase -i" stopped running hooks for the "git
+ * A recent update to "rebase -i" stopped running hooks for the "but
    cummit" command during "reword" action, which has been fixed.
 
  * Removing an entry from a notes tree and then looking another note
@@ -505,7 +505,7 @@ notes for details).
    functions did not work as expected.  No in-tree users of the API
    has such access pattern, but it still is worth fixing.
 
- * "git receive-pack" could have been forced to die by attempting
+ * "but receive-pack" could have been forced to die by attempting
    allocate an unreasonably large amount of memory with a crafted push
    certificate; this has been fixed.
    (merge f2214dede9 bc/push-cert-receive-fix later to maint).
@@ -514,7 +514,7 @@ notes for details).
    objects.
    (merge 51054177b3 jk/loose-object-info-report-error later to maint).
 
- * "git diff --submodule=diff" learned to work better in a project
+ * "but diff --submodule=diff" learned to work better in a project
    with a submodule that in turn has its own submodules.
    (merge 17b254cda6 sb/show-diff-for-submodule-in-diff-fix later to maint).
 
@@ -522,7 +522,7 @@ notes for details).
    etc. result in recomputation of perl.mak file.
    (merge c59c4939c2 ab/regen-perl-mak-with-different-perl later to maint).
 
- * "git push --recurse-submodules --push-option=<string>" learned to
+ * "but push --recurse-submodules --push-option=<string>" learned to
    propagate the push option recursively down to pushes in submodules.
 
  * If a patch e-mail had its first paragraph after an in-body header
@@ -534,9 +534,9 @@ notes for details).
  * Clean up fallouts from recent tightening of the set-up sequence,
    where Git barfs when repository information is accessed without
    first ensuring that it was started in a repository.
-   (merge bccb22cbb1 jk/no-looking-at-dotgit-outside-repo later to maint).
+   (merge bccb22cbb1 jk/no-looking-at-dotbut-outside-repo later to maint).
 
- * "git p4" used "name-rev HEAD" when it wants to learn what branch is
+ * "but p4" used "name-rev HEAD" when it wants to learn what branch is
    checked out; it should use "symbolic-ref HEAD".
    (merge eff451101d ld/p4-current-branch-fix later to maint).
 
@@ -545,13 +545,13 @@ notes for details).
    (merge ae51d91105 sr/http-proxy-configuration-fix later to maint).
 
  * $GIT_DIR may in some cases be normalized with all symlinks resolved
-   while "gitdir" path expansion in the pattern does not receive the
+   while "butdir" path expansion in the pattern does not receive the
    same treatment, leading to incorrect mismatch.  This has been fixed.
 
- * "git submodule" script does not work well with strange pathnames.
+ * "but submodule" script does not work well with strange pathnames.
    Protect it from a path with slashes in them, at least.
 
- * "git fetch-pack" was not prepared to accept ERR packet that the
+ * "but fetch-pack" was not prepared to accept ERR packet that the
    upload-pack can send with a human-readable error message.  It
    showed the packet contents with ERR prefix, so there was no data
    loss, but it was redundant to say "ERR" in an error message.
@@ -566,22 +566,22 @@ notes for details).
    using garbage past the end of the buffer.
    (merge 5781a9a270 dt/xgethostname-nul-termination later to maint).
 
- * A recent update broke "git add -p ../foo" from a subdirectory.
+ * A recent update broke "but add -p ../foo" from a subdirectory.
 
- * While handy, "git_path()" is a dangerous function to use as a
+ * While handy, "but_path()" is a dangerous function to use as a
    callsite that uses it safely one day can be broken by changes
    to other code that calls it.  Reduction of its use continues.
-   (merge 16d2676c9e jk/war-on-git-path later to maint).
+   (merge 16d2676c9e jk/war-on-but-path later to maint).
 
- * The split-index code configuration code used an unsafe git_path()
+ * The split-index code configuration code used an unsafe but_path()
    function without copying its result out.
 
  * Many stale HTTP(s) links have been updated in our documentation.
    (merge 613416f0be jk/update-links-in-docs later to maint).
 
- * "git-shell" rejects a request to serve a repository whose name
+ * "but-shell" rejects a request to serve a repository whose name
    begins with a dash, which makes it no longer possible to get it
-   confused into spawning service programs like "git-upload-pack" with
+   confused into spawning service programs like "but-upload-pack" with
    an option like "--help", which in turn would spawn an interactive
    pager, instead of working with the repository user asked to access
    (i.e. the one whose name is "--help").
@@ -609,7 +609,7 @@ notes for details).
    (merge 7ba1ceef95 xy/format-patch-base later to maint).
    (merge fa1912c89a rs/misc-cppcheck-fixes later to maint).
    (merge f17d642d3b ab/push-cas-doc-n-test later to maint).
-   (merge 61e282425a ss/gitmodules-ignore-doc later to maint).
+   (merge 61e282425a ss/butmodules-ignore-doc later to maint).
    (merge 8d3047cd5b ss/submodule-shallow-doc later to maint).
    (merge 1f9e18b772 jk/prio-queue-avoid-swap-with-self later to maint).
    (merge 627fde1025 jk/submodule-init-segv-fix later to maint).

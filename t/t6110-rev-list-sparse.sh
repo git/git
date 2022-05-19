@@ -10,14 +10,14 @@ test_expect_success setup '
 	test_cummit A &&
 	test_cummit B &&
 	test_cummit C &&
-	git checkout -b side HEAD^ &&
+	but checkout -b side HEAD^ &&
 	test_cummit D &&
 	test_cummit E &&
-	git merge main
+	but merge main
 '
 
 test_expect_success 'rev-list --first-parent --boundary' '
-	git rev-list --first-parent --boundary HEAD^..
+	but rev-list --first-parent --boundary HEAD^..
 '
 
 test_done

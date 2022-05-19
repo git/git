@@ -2,12 +2,12 @@ CONFIGURATION FILE
 ------------------
 
 The Git configuration file contains a number of variables that affect
-the Git commands' behavior. The files `.git/config` and optionally
+the Git commands' behavior. The files `.but/config` and optionally
 `config.worktree` (see the "CONFIGURATION FILE" section of
-linkgit:git-worktree[1]) in each repository are used to store the
-configuration for that repository, and `$HOME/.gitconfig` is used to
-store a per-user configuration as fallback values for the `.git/config`
-file. The file `/etc/gitconfig` can be used to store a system-wide
+linkbut:but-worktree[1]) in each repository are used to store the
+configuration for that repository, and `$HOME/.butconfig` is used to
+store a per-user configuration as fallback values for the `.but/config`
+file. The file `/etc/butconfig` can be used to store a system-wide
 default configuration.
 
 The configuration variables are used by both the Git plumbing
@@ -111,21 +111,21 @@ The condition starts with a keyword followed by a colon and some data
 whose format and meaning depends on the keyword. Supported keywords
 are:
 
-`gitdir`::
+`butdir`::
 
-	The data that follows the keyword `gitdir:` is used as a glob
-	pattern. If the location of the .git directory matches the
+	The data that follows the keyword `butdir:` is used as a glob
+	pattern. If the location of the .but directory matches the
 	pattern, the include condition is met.
 +
-The .git location may be auto-discovered, or come from `$GIT_DIR`
-environment variable. If the repository is auto discovered via a .git
-file (e.g. from submodules, or a linked worktree), the .git location
-would be the final location where the .git directory is, not where the
-.git file is.
+The .but location may be auto-discovered, or come from `$GIT_DIR`
+environment variable. If the repository is auto discovered via a .but
+file (e.g. from submodules, or a linked worktree), the .but location
+would be the final location where the .but directory is, not where the
+.but file is.
 +
 The pattern can contain standard globbing wildcards and two additional
 ones, `**/` and `/**`, that can match multiple path components. Please
-refer to linkgit:gitignore[5] for details. For convenience:
+refer to linkbut:butignore[5] for details. For convenience:
 
  * If the pattern starts with `~/`, `~` will be substituted with the
    content of the environment variable `HOME`.
@@ -141,8 +141,8 @@ refer to linkgit:gitignore[5] for details. For convenience:
    example, the pattern `foo/` becomes `foo/**`. In other words, it
    matches "foo" and everything inside, recursively.
 
-`gitdir/i`::
-	This is the same as `gitdir` except that matching is done
+`butdir/i`::
+	This is the same as `butdir` except that matching is done
 	case-insensitively (e.g. on case-insensitive file systems)
 
 `onbranch`::
@@ -186,13 +186,13 @@ As for the naming of this keyword, it is for forwards compatibiliy with
 a naming scheme that supports more variable-based include conditions,
 but currently Git only supports the exact keyword described above.
 
-A few more notes on matching via `gitdir` and `gitdir/i`:
+A few more notes on matching via `butdir` and `butdir/i`:
 
  * Symlinks in `$GIT_DIR` are not resolved before matching.
 
  * Both the symlink & realpath versions of paths will be matched
-   outside of `$GIT_DIR`. E.g. if ~/git is a symlink to
-   /mnt/storage/git, both `gitdir:~/git` and `gitdir:/mnt/storage/git`
+   outside of `$GIT_DIR`. E.g. if ~/but is a symlink to
+   /mnt/storage/but, both `butdir:~/but` and `butdir:/mnt/storage/but`
    will match.
 +
 This was not the case in the initial release of this feature in
@@ -223,30 +223,30 @@ Example
 
 # Proxy settings
 [core]
-	gitProxy="ssh" for "kernel.org"
-	gitProxy=default-proxy ; for the rest
+	butProxy="ssh" for "kernel.org"
+	butProxy=default-proxy ; for the rest
 
 [include]
 	path = /path/to/foo.inc ; include by absolute path
 	path = foo.inc ; find "foo.inc" relative to the current file
 	path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
 
-; include if $GIT_DIR is /path/to/foo/.git
-[includeIf "gitdir:/path/to/foo/.git"]
+; include if $GIT_DIR is /path/to/foo/.but
+[includeIf "butdir:/path/to/foo/.but"]
 	path = /path/to/foo.inc
 
 ; include for all repositories inside /path/to/group
-[includeIf "gitdir:/path/to/group/"]
+[includeIf "butdir:/path/to/group/"]
 	path = /path/to/foo.inc
 
 ; include for all repositories inside $HOME/to/group
-[includeIf "gitdir:~/to/group/"]
+[includeIf "butdir:~/to/group/"]
 	path = /path/to/foo.inc
 
 ; relative paths are always relative to the including
 ; file (if the condition is true); their location is not
 ; affected by the condition
-[includeIf "gitdir:/path/to/group/"]
+[includeIf "butdir:/path/to/group/"]
 	path = foo.inc
 
 ; include only if we are in a worktree where foo-branch is
@@ -260,7 +260,7 @@ Example
 [includeIf "hasconfig:remote.*.url:https://example.com/**"]
 	path = foo.inc
 [remote "origin"]
-	url = https://example.com/git
+	url = https://example.com/but
 ----
 
 Values
@@ -284,7 +284,7 @@ boolean::
 		`0` and the empty string.
 +
 When converting a value to its canonical form using the `--type=bool` type
-specifier, 'git config' will ensure that the output is "true" or
+specifier, 'but config' will ensure that the output is "true" or
 "false" (spelled in lowercase).
 
 integer::
@@ -331,7 +331,7 @@ attributes.
 An empty color string produces no color effect at all. This can be used
 to avoid coloring specific elements without disabling color entirely.
 +
-For git's pre-defined color slots, the attributes are meant to be reset
+For but's pre-defined color slots, the attributes are meant to be reset
 at the beginning of each item in the colored output. So setting
 `color.decorate.branch` to `black` will paint that branch name in a
 plain `black`, even if the previous thing on the same output line (e.g.
@@ -364,7 +364,7 @@ Note that this list is non-comprehensive and not necessarily complete.
 For command-specific variables, you will find a more detailed description
 in the appropriate manual page.
 
-Other git-related tools may and do use their own variables.  When
+Other but-related tools may and do use their own variables.  When
 inventing new variables for use in your own tool, make sure their
 names do not conflict with those that are used by Git itself and
 other popular tools, and describe them in your documentation.
@@ -425,9 +425,9 @@ include::config/fsck.txt[]
 
 include::config/gc.txt[]
 
-include::config/gitcvs.txt[]
+include::config/butcvs.txt[]
 
-include::config/gitweb.txt[]
+include::config/butweb.txt[]
 
 include::config/grep.txt[]
 

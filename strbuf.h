@@ -659,7 +659,7 @@ int launch_sequence_editor(const char *path, struct strbuf *buffer,
  * the editor and reads back in the file contents into the `buffer`.
  * Finally, it deletes the temporary file.
  *
- * If `path` is relative, it refers to a file in the `.git` directory.
+ * If `path` is relative, it refers to a file in the `.but` directory.
  */
 int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
 			      const char *const *env);

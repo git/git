@@ -25,7 +25,7 @@ struct revindex_entry {
  */
 
 /*
- * This is a least-significant-digit radix sort.
+ * This is a least-significant-dibut radix sort.
  *
  * It sorts each of the "n" items in "entries" by its offset field. The "max"
  * parameter must be at least as large as the largest offset in the array,
@@ -34,7 +34,7 @@ struct revindex_entry {
 static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 {
 	/*
-	 * We use a "digit" size of 16 bits. That keeps our memory
+	 * We use a "dibut" size of 16 bits. That keeps our memory
 	 * usage reasonable, and we can generally (for a 4G or smaller
 	 * packfile) quit after two rounds of radix-sorting.
 	 */
@@ -42,7 +42,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 #define BUCKETS (1 << DIGIT_SIZE)
 	/*
 	 * We want to know the bucket that a[i] will go into when we are using
-	 * the digit that is N bits from the (least significant) end.
+	 * the dibut that is N bits from the (least significant) end.
 	 */
 #define BUCKET_FOR(a, i, bits) (((a)[(i)].offset >> (bits)) & (BUCKETS-1))
 
@@ -63,7 +63,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	to = tmp;
 
 	/*
-	 * If (max >> bits) is zero, then we know that the radix digit we are
+	 * If (max >> bits) is zero, then we know that the radix dibut we are
 	 * on (and any higher) will be zero for all entries, and our loop will
 	 * be a no-op, as everybody lands in the same zero-th bucket.
 	 */
@@ -125,7 +125,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 /*
  * Ordered list of offsets of objects in the pack.
  */
-static void create_pack_revindex(struct packed_git *p)
+static void create_pack_revindex(struct packed_but *p)
 {
 	const unsigned num_ent = p->num_objects;
 	unsigned i;
@@ -166,9 +166,9 @@ static void create_pack_revindex(struct packed_git *p)
 	sort_revindex(p->revindex, num_ent, p->pack_size);
 }
 
-static int create_pack_revindex_in_memory(struct packed_git *p)
+static int create_pack_revindex_in_memory(struct packed_but *p)
 {
-	if (git_env_bool(GIT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
+	if (but_env_bool(GIT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
 		die("dying as requested by '%s'",
 		    GIT_TEST_REV_INDEX_DIE_IN_MEMORY);
 	if (open_pack_index(p))
@@ -177,7 +177,7 @@ static int create_pack_revindex_in_memory(struct packed_git *p)
 	return 0;
 }
 
-static char *pack_revindex_filename(struct packed_git *p)
+static char *pack_revindex_filename(struct packed_but *p)
 {
 	size_t len;
 	if (!strip_suffix(p->pack_name, ".pack", &len))
@@ -204,7 +204,7 @@ static int load_revindex_from_disk(char *revindex_name,
 	size_t revindex_size;
 	struct revindex_header *hdr;
 
-	fd = git_open(revindex_name);
+	fd = but_open(revindex_name);
 
 	if (fd < 0) {
 		ret = -1;
@@ -259,7 +259,7 @@ cleanup:
 	return ret;
 }
 
-static int load_pack_revindex_from_disk(struct packed_git *p)
+static int load_pack_revindex_from_disk(struct packed_but *p)
 {
 	char *revindex_name;
 	int ret;
@@ -282,7 +282,7 @@ cleanup:
 	return ret;
 }
 
-int load_pack_revindex(struct packed_git *p)
+int load_pack_revindex(struct packed_but *p)
 {
 	if (p->revindex || p->revindex_data)
 		return 0;
@@ -351,7 +351,7 @@ int close_midx_revindex(struct multi_pack_index *m)
 	return 0;
 }
 
-int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
+int offset_to_pack_pos(struct packed_but *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
 
@@ -378,7 +378,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 	return -1;
 }
 
-uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
+uint32_t pack_pos_to_index(struct packed_but *p, uint32_t pos)
 {
 	if (!(p->revindex || p->revindex_data))
 		BUG("pack_pos_to_index: reverse index not yet loaded");
@@ -391,7 +391,7 @@ uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
 		return get_be32(p->revindex_data + pos);
 }
 
-off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
+off_t pack_pos_to_offset(struct packed_but *p, uint32_t pos)
 {
 	if (!(p->revindex || p->revindex_data))
 		BUG("pack_pos_to_index: reverse index not yet loaded");

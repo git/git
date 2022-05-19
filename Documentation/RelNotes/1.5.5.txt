@@ -6,7 +6,7 @@ Updates since v1.5.4
 
 (subsystems)
 
- * Comes with git-gui 0.10.1
+ * Comes with but-gui 0.10.1
 
 (portability)
 
@@ -26,12 +26,12 @@ Updates since v1.5.4
  * New configuration variable "pack.packsizelimit" can be used
    in place of command line option --max-pack-size.
 
- * "git fetch" over the native git protocol used to make a
+ * "but fetch" over the native but protocol used to make a
    connection to find out the set of current remote refs and
    another to actually download the pack data.  We now use only
    one connection for these tasks.
 
- * "git cummit" does not run lstat(2) more than necessary
+ * "but cummit" does not run lstat(2) more than necessary
    anymore.
 
 (usability, bells and whistles)
@@ -50,136 +50,136 @@ Updates since v1.5.4
    require pathnames relative to the work tree or the current
    subdirectory.  They now can take absolute pathnames in such a
    case as long as the pathnames do not refer outside of the
-   work tree.  E.g. "git add $(pwd)/foo" now works.
+   work tree.  E.g. "but add $(pwd)/foo" now works.
 
  * Error messages used to be sent to stderr, only to get hidden,
    when $PAGER was in use.  They now are sent to stdout along
    with the command output to be shown in the $PAGER.
 
- * A pattern "foo/" in .gitignore file now matches a directory
+ * A pattern "foo/" in .butignore file now matches a directory
    "foo".  Pattern "foo" also matches as before.
 
  * bash completion's prompt helper function can talk about
    operation in-progress (e.g. merge, rebase, etc.).
 
  * Configuration variables "url.<usethis>.insteadof = <otherurl>" can be
-   used to tell "git-fetch" and "git-push" to use different URL than what
+   used to tell "but-fetch" and "but-push" to use different URL than what
    is given from the command line.
 
- * "git add -i" behaves better even before you make an initial cummit.
+ * "but add -i" behaves better even before you make an initial cummit.
 
- * "git am" refused to run from a subdirectory without a good reason.
+ * "but am" refused to run from a subdirectory without a good reason.
 
- * After "git apply --whitespace=fix" fixes whitespace errors in a patch,
+ * After "but apply --whitespace=fix" fixes whitespace errors in a patch,
    a line before the fix can appear as a context or preimage line in a
    later patch, causing the patch not to apply.  The command now knows to
    see through whitespace fixes done to context lines to successfully
    apply such a patch series.
 
- * "git branch" (and "git checkout -b") to branch from a local branch can
+ * "but branch" (and "but checkout -b") to branch from a local branch can
    optionally set "branch.<name>.merge" to mark the new branch to build on
    the other local branch, when "branch.autosetupmerge" is set to
    "always", or when passing the command line option "--track" (this option
    was ignored when branching from local branches).  By default, this does
    not happen when branching from a local branch.
 
- * "git checkout" to switch to a branch that has "branch.<name>.merge" set
+ * "but checkout" to switch to a branch that has "branch.<name>.merge" set
    (i.e. marked to build on another branch) reports how much the branch
    and the other branch diverged.
 
- * When "git checkout" has to update a lot of paths, it used to be silent
+ * When "but checkout" has to update a lot of paths, it used to be silent
    for 4 seconds before it showed any progress report.  It is now a bit
    more impatient and starts showing progress report early.
 
- * "git cummit" learned a new hook "prepare-cummit-msg" that can
+ * "but cummit" learned a new hook "prepare-cummit-msg" that can
    inspect what is going to be cummitted and prepare the cummit
    log message template to be edited.
 
- * "git cvsimport" can now take more than one -M options.
+ * "but cvsimport" can now take more than one -M options.
 
- * "git describe" learned to limit the tags to be used for
+ * "but describe" learned to limit the tags to be used for
    naming with --match option.
 
- * "git describe --contains" now barfs when the named cummit
+ * "but describe --contains" now barfs when the named cummit
    cannot be described.
 
- * "git describe --exact-match" describes only cummits that are tagged.
+ * "but describe --exact-match" describes only cummits that are tagged.
 
- * "git describe --long" describes a tagged cummit as $tag-0-$sha1,
+ * "but describe --long" describes a tagged cummit as $tag-0-$sha1,
    instead of just showing the exact tagname.
 
- * "git describe" warns when using a tag whose name and path contradict
+ * "but describe" warns when using a tag whose name and path contradict
    with each other.
 
- * "git diff" learned "--relative" option to limit and output paths
+ * "but diff" learned "--relative" option to limit and output paths
    relative to the current directory when working in a subdirectory.
 
- * "git diff" learned "--dirstat" option to show birds-eye-summary of
+ * "but diff" learned "--dirstat" option to show birds-eye-summary of
    changes more concisely than "--diffstat".
 
- * "git format-patch" learned --cover-letter option to generate a cover
+ * "but format-patch" learned --cover-letter option to generate a cover
    letter template.
 
- * "git gc" learned --quiet option.
+ * "but gc" learned --quiet option.
 
- * "git gc" now automatically prunes unreachable objects that are two
+ * "but gc" now automatically prunes unreachable objects that are two
    weeks old or older.
 
- * "git gc --auto" can be disabled more easily by just setting gc.auto
+ * "but gc --auto" can be disabled more easily by just setting gc.auto
    to zero.  It also tolerates more packfiles by default.
 
- * "git grep" now knows "--name-only" is a synonym for the "-l" option.
+ * "but grep" now knows "--name-only" is a synonym for the "-l" option.
 
- * "git help <alias>" now reports "'git <alias>' is alias to <what>",
-   instead of saying "No manual entry for git-<alias>".
+ * "but help <alias>" now reports "'but <alias>' is alias to <what>",
+   instead of saying "No manual entry for but-<alias>".
 
- * "git help" can use different backends to show manual pages and this can
+ * "but help" can use different backends to show manual pages and this can
    be configured using "man.viewer" configuration.
 
- * "gitk" does not restore window position from $HOME/.gitk anymore (it
+ * "butk" does not restore window position from $HOME/.butk anymore (it
    still restores the size).
 
- * "git log --grep=<what>" learned "--fixed-strings" option to look for
+ * "but log --grep=<what>" learned "--fixed-strings" option to look for
    <what> without treating it as a regular expression.
 
- * "git gui" learned an auto-spell checking.
+ * "but gui" learned an auto-spell checking.
 
- * "git push <somewhere> HEAD" and "git push <somewhere> +HEAD" works as
+ * "but push <somewhere> HEAD" and "but push <somewhere> +HEAD" works as
    expected; they push the current branch (and only the current branch).
    In addition, HEAD can be written as the value of "remote.<there>.push"
    configuration variable.
 
- * When the configuration variable "pack.threads" is set to 0, "git
+ * When the configuration variable "pack.threads" is set to 0, "but
    repack" auto detects the number of CPUs and uses that many threads.
 
- * "git send-email" learned to prompt for passwords
+ * "but send-email" learned to prompt for passwords
    interactively.
 
- * "git send-email" learned an easier way to suppress CC
+ * "but send-email" learned an easier way to suppress CC
    recipients.
 
- * "git stash" learned "pop" command, that applies the latest stash and
+ * "but stash" learned "pop" command, that applies the latest stash and
    removes it from the stash, and "drop" command to discard the named
    stash entry.
 
- * "git submodule" learned a new subcommand "summary" to show the
+ * "but submodule" learned a new subcommand "summary" to show the
    symmetric difference between the HEAD version and the work tree version
    of the submodule cummits.
 
- * Various "git cvsimport", "git cvsexportcummit", "git cvsserver",
-   "git svn" and "git p4" improvements.
+ * Various "but cvsimport", "but cvsexportcummit", "but cvsserver",
+   "but svn" and "but p4" improvements.
 
 (internal)
 
- * Duplicated code between git-help and git-instaweb that
+ * Duplicated code between but-help and but-instaweb that
    launches user's preferred browser has been refactored.
 
  * It is now easier to write test scripts that records known
    breakages.
 
- * "git checkout" is rewritten in C.
+ * "but checkout" is rewritten in C.
 
- * "git remote" is rewritten in C.
+ * "but remote" is rewritten in C.
 
  * Two conflict hunks that are separated by a very short span of common
    lines are now coalesced into one larger hunk, to make the result easier
@@ -197,11 +197,11 @@ Fixes since v1.5.4
 All of the fixes in v1.5.4 maintenance series are included in
 this release, unless otherwise noted.
 
- * "git-http-push" did not allow deletion of remote ref with the usual
+ * "but-http-push" did not allow deletion of remote ref with the usual
    "push <remote> :<branch>" syntax.
 
- * "git-rebase --abort" did not go back to the right location if
-   "git-reset" was run during the "git-rebase" session.
+ * "but-rebase --abort" did not go back to the right location if
+   "but-reset" was run during the "but-rebase" session.
 
- * "git imap-send" without setting imap.host did not error out but
+ * "but imap-send" without setting imap.host did not error out but
    segfaulted.

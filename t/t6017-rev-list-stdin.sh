@@ -18,8 +18,8 @@ check () {
 			printf "%s\n" $i
 		done >input &&
 		test_expect_success "check $cmd $*" '
-			git $cmd $(cat input) >expect &&
-			git $cmd --stdin <input >actual &&
+			but $cmd $(cat input) >expect &&
+			but $cmd --stdin <input >actual &&
 			sed -e "s/^/input /" input &&
 			sed -e "s/^/output /" expect &&
 			test_cmp expect actual
@@ -36,18 +36,18 @@ test_expect_success setup '
 			for j in $them
 			do
 				echo $i.$j >file-$j &&
-				git add file-$j || exit
+				but add file-$j || exit
 			done &&
 			test_tick &&
-			git cummit -m $i || exit
+			but cummit -m $i || exit
 		done &&
 		for i in $them
 		do
-			git checkout -b side-$i main~$i &&
+			but checkout -b side-$i main~$i &&
 			echo updated $i >file-$i &&
-			git add file-$i &&
+			but add file-$i &&
 			test_tick &&
-			git cummit -m side-$i || exit
+			but cummit -m side-$i || exit
 		done
 	)
 '
@@ -73,7 +73,7 @@ test_expect_success 'not only --stdin' '
 	--
 	file-2
 	EOF
-	git log --pretty=tformat:%s --name-only --stdin main -- file-1 \
+	but log --pretty=tformat:%s --name-only --stdin main -- file-1 \
 		<input >actual &&
 	test_cmp expect actual
 '

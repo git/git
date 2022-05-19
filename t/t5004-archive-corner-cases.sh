@@ -1,13 +1,13 @@
 #!/bin/sh
 
-test_description='test corner cases of git-archive'
+test_description='test corner cases of but-archive'
 . ./test-lib.sh
 
-# the 10knuls.tar file is used to test for an empty git generated tar
+# the 10knuls.tar file is used to test for an empty but generated tar
 # without having to invoke tar because an otherwise valid empty GNU tar
 # will be considered broken by {Open,Net}BSD tar
 test_expect_success 'create cummit with empty tree and fake empty tar' '
-	git cummit --allow-empty -m foo &&
+	but cummit --allow-empty -m foo &&
 	perl -e "print \"\\0\" x 10240" >10knuls.tar
 '
 
@@ -43,19 +43,19 @@ then
 fi
 
 test_expect_success HEADER_ONLY_TAR_OK 'tar archive of cummit with empty tree' '
-	git archive --format=tar HEAD >empty-with-pax-header.tar &&
+	but archive --format=tar HEAD >empty-with-pax-header.tar &&
 	make_dir extract &&
 	"$TAR" xf empty-with-pax-header.tar -C extract &&
 	check_dir extract
 '
 
 test_expect_success 'tar archive of empty tree is empty' '
-	git archive --format=tar HEAD: >empty.tar &&
+	but archive --format=tar HEAD: >empty.tar &&
 	test_cmp_bin 10knuls.tar empty.tar
 '
 
 test_expect_success 'tar archive of empty tree with prefix' '
-	git archive --format=tar --prefix=foo/ HEAD >prefix.tar &&
+	but archive --format=tar --prefix=foo/ HEAD >prefix.tar &&
 	make_dir extract &&
 	"$TAR" xf prefix.tar -C extract &&
 	check_dir extract foo
@@ -77,7 +77,7 @@ test_expect_success UNZIP 'zip archive of empty tree is empty' '
 		expect_code=$?
 	} &&
 
-	git archive --format=zip HEAD >empty.zip &&
+	but archive --format=zip HEAD >empty.zip &&
 	make_dir extract &&
 	(
 		cd extract &&
@@ -89,7 +89,7 @@ test_expect_success UNZIP 'zip archive of empty tree is empty' '
 test_expect_success UNZIP 'zip archive of empty tree with prefix' '
 	# We do not have to play exit-code tricks here, because our
 	# result should not be empty; it has a directory in it.
-	git archive --format=zip --prefix=foo/ HEAD >prefix.zip &&
+	but archive --format=zip --prefix=foo/ HEAD >prefix.zip &&
 	make_dir extract &&
 	(
 		cd extract &&
@@ -99,21 +99,21 @@ test_expect_success UNZIP 'zip archive of empty tree with prefix' '
 '
 
 test_expect_success 'archive complains about pathspec on empty tree' '
-	test_must_fail git archive --format=tar HEAD -- foo >/dev/null
+	test_must_fail but archive --format=tar HEAD -- foo >/dev/null
 '
 
 test_expect_success 'create a cummit with an empty subtree' '
-	empty_tree=$(git hash-object -t tree /dev/null) &&
-	root_tree=$(printf "040000 tree $empty_tree\tsub\n" | git mktree)
+	empty_tree=$(but hash-object -t tree /dev/null) &&
+	root_tree=$(printf "040000 tree $empty_tree\tsub\n" | but mktree)
 '
 
 test_expect_success 'archive empty subtree with no pathspec' '
-	git archive --format=tar $root_tree >subtree-all.tar &&
+	but archive --format=tar $root_tree >subtree-all.tar &&
 	test_cmp_bin 10knuls.tar subtree-all.tar
 '
 
 test_expect_success 'archive empty subtree by direct pathspec' '
-	git archive --format=tar $root_tree -- sub >subtree-path.tar &&
+	but archive --format=tar $root_tree -- sub >subtree-path.tar &&
 	test_cmp_bin 10knuls.tar subtree-path.tar
 '
 
@@ -134,11 +134,11 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 			: >00/$a$b || return 1
 		done
 	done &&
-	git add 00 &&
-	git cummit -m "256 files in 1 directory" &&
+	but add 00 &&
+	but cummit -m "256 files in 1 directory" &&
 
 	# duplicate it to get 65536 files in 256 directories
-	subtree=$(git write-tree --prefix=00/) &&
+	subtree=$(but write-tree --prefix=00/) &&
 	for c in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		for d in 0 1 2 3 4 5 6 7 8 9 a b c d e f
@@ -146,10 +146,10 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 			echo "040000 tree $subtree	$c$d" || return 1
 		done
 	done >tree &&
-	tree=$(git mktree <tree) &&
+	tree=$(but mktree <tree) &&
 
 	# zip them
-	git archive -o many.zip $tree &&
+	but archive -o many.zip $tree &&
 
 	# check the number of entries in the ZIP file directory
 	expr 65536 + 256 >expect &&
@@ -166,17 +166,17 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 	s=$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s &&
 
 	# create blob with a length of 65536 + 1 bytes
-	blob=$(echo $s | git hash-object -w --stdin) &&
+	blob=$(echo $s | but hash-object -w --stdin) &&
 
 	# create tree containing 65500 entries of that blob
 	for i in $(test_seq 1 65500)
 	do
 		echo "100644 blob $blob	$i" || return 1
 	done >tree &&
-	tree=$(git mktree <tree) &&
+	tree=$(but mktree <tree) &&
 
 	# zip it, creating an archive a bit bigger than 4GB
-	git archive -0 -o many-big.zip $tree &&
+	but archive -0 -o many-big.zip $tree &&
 
 	"$GIT_UNZIP" -t many-big.zip 9999 65500 &&
 	"$GIT_UNZIP" -t many-big.zip
@@ -185,20 +185,20 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	'zip archive with files bigger than 4GB' '
 	# Pack created with:
-	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
-	mkdir -p .git/objects/pack &&
+	#   dd if=/dev/zero of=file bs=1M count=4100 && but hash-object -w file
+	mkdir -p .but/objects/pack &&
 	(
-		cd .git/objects/pack &&
+		cd .but/objects/pack &&
 		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
 	) &&
 	blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
 	size=$(expr 4100 "*" 1024 "*" 1024) &&
 
 	# create a tree containing the file
-	tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
+	tree=$(echo "100644 blob $blob	big-file" | but mktree) &&
 
 	# zip it, creating an archive with a file bigger than 4GB
-	git archive -o big.zip $tree &&
+	but archive -o big.zip $tree &&
 
 	"$GIT_UNZIP" -t big.zip &&
 	"$ZIPINFO" big.zip >big.lst &&
@@ -219,9 +219,9 @@ build_tree() {
 }
 
 test_expect_success 'tar archive with long paths' '
-	blob=$(echo foo | git hash-object -w --stdin) &&
-	tree=$(build_tree $blob | git mktree) &&
-	git archive -o long_paths.tar $tree
+	blob=$(echo foo | but hash-object -w --stdin) &&
+	tree=$(build_tree $blob | but mktree) &&
+	but archive -o long_paths.tar $tree
 '
 
 test_done

@@ -8,24 +8,24 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	test_write_lines 1 2 3 4 5 6 7 8 9 >file &&
-	git add file &&
+	but add file &&
 	cp file elif &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 
 	sed -e "s/1/one/" -e "s/9/nine/" >file <elif &&
-	git cummit -a -m ours &&
+	but cummit -a -m ours &&
 
-	git checkout -b side HEAD^ &&
+	but checkout -b side HEAD^ &&
 
 	sed -e "s/9/nueve/" >file <elif &&
-	git cummit -a -m theirs &&
+	but cummit -a -m theirs &&
 
-	git checkout main^0
+	but checkout main^0
 '
 
 test_expect_success 'plain recursive - should conflict' '
-	git reset --hard main &&
-	test_must_fail git merge -s recursive side &&
+	but reset --hard main &&
+	test_must_fail but merge -s recursive side &&
 	grep nine file &&
 	grep nueve file &&
 	! grep 9 file &&
@@ -34,8 +34,8 @@ test_expect_success 'plain recursive - should conflict' '
 '
 
 test_expect_success 'recursive favouring theirs' '
-	git reset --hard main &&
-	git merge -s recursive -Xtheirs side &&
+	but reset --hard main &&
+	but merge -s recursive -Xtheirs side &&
 	! grep nine file &&
 	grep nueve file &&
 	! grep 9 file &&
@@ -44,8 +44,8 @@ test_expect_success 'recursive favouring theirs' '
 '
 
 test_expect_success 'recursive favouring ours' '
-	git reset --hard main &&
-	git merge -s recursive -X ours side &&
+	but reset --hard main &&
+	but merge -s recursive -X ours side &&
 	grep nine file &&
 	! grep nueve file &&
 	! grep 9 file &&
@@ -54,54 +54,54 @@ test_expect_success 'recursive favouring ours' '
 '
 
 test_expect_success 'binary file with -Xours/-Xtheirs' '
-	echo file binary >.gitattributes &&
+	echo file binary >.butattributes &&
 
-	git reset --hard main &&
-	git merge -s recursive -X theirs side &&
-	git diff --exit-code side HEAD -- file &&
+	but reset --hard main &&
+	but merge -s recursive -X theirs side &&
+	but diff --exit-code side HEAD -- file &&
 
-	git reset --hard main &&
-	git merge -s recursive -X ours side &&
-	git diff --exit-code main HEAD -- file
+	but reset --hard main &&
+	but merge -s recursive -X ours side &&
+	but diff --exit-code main HEAD -- file
 '
 
 test_expect_success 'pull passes -X to underlying merge' '
-	git reset --hard main && git pull --no-rebase -s recursive -Xours . side &&
-	git reset --hard main && git pull --no-rebase -s recursive -X ours . side &&
-	git reset --hard main && git pull --no-rebase -s recursive -Xtheirs . side &&
-	git reset --hard main && git pull --no-rebase -s recursive -X theirs . side &&
-	git reset --hard main && test_must_fail git pull --no-rebase -s recursive -X bork . side
+	but reset --hard main && but pull --no-rebase -s recursive -Xours . side &&
+	but reset --hard main && but pull --no-rebase -s recursive -X ours . side &&
+	but reset --hard main && but pull --no-rebase -s recursive -Xtheirs . side &&
+	but reset --hard main && but pull --no-rebase -s recursive -X theirs . side &&
+	but reset --hard main && test_must_fail but pull --no-rebase -s recursive -X bork . side
 '
 
 test_expect_success SYMLINKS 'symlink with -Xours/-Xtheirs' '
-	git reset --hard main &&
-	git checkout -b two main &&
+	but reset --hard main &&
+	but checkout -b two main &&
 	ln -s target-zero link &&
-	git add link &&
-	git cummit -m "add link pointing to zero" &&
+	but add link &&
+	but cummit -m "add link pointing to zero" &&
 
 	ln -f -s target-two link &&
-	git cummit -m "add link pointing to two" link &&
+	but cummit -m "add link pointing to two" link &&
 
-	git checkout -b one HEAD^ &&
+	but checkout -b one HEAD^ &&
 	ln -f -s target-one link &&
-	git cummit -m "add link pointing to one" link &&
+	but cummit -m "add link pointing to one" link &&
 
 	# we expect symbolic links not to resolve automatically, of course
-	git checkout one^0 &&
-	test_must_fail git merge -s recursive two &&
+	but checkout one^0 &&
+	test_must_fail but merge -s recursive two &&
 
 	# favor theirs to resolve to target-two?
-	git reset --hard &&
-	git checkout one^0 &&
-	git merge -s recursive -X theirs two &&
-	git diff --exit-code two HEAD link &&
+	but reset --hard &&
+	but checkout one^0 &&
+	but merge -s recursive -X theirs two &&
+	but diff --exit-code two HEAD link &&
 
 	# favor ours to resolve to target-one?
-	git reset --hard &&
-	git checkout one^0 &&
-	git merge -s recursive -X ours two &&
-	git diff --exit-code one HEAD link
+	but reset --hard &&
+	but checkout one^0 &&
+	but merge -s recursive -X ours two &&
+	but diff --exit-code one HEAD link
 
 '
 

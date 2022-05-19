@@ -6,15 +6,15 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 test_expect_success GETTEXT_ISO_LOCALE 'setup' '
-	printf "TILRAUN: Halló Heimur!" >file &&
-	git add file &&
+	printf "TILRAUN: Hallï¿½ Heimur!" >file &&
+	but add file &&
 	LC_ALL="$is_IS_iso_locale" &&
 	export LC_ALL
 '
 
 test_expect_success GETTEXT_ISO_LOCALE,PCRE 'grep pcre string' '
-	git grep --perl-regexp -i "TILRAUN: H.lló Heimur!" &&
-	git grep --perl-regexp -i "TILRAUN: H.LLÓ HEIMUR!"
+	but grep --perl-regexp -i "TILRAUN: H.llï¿½ Heimur!" &&
+	but grep --perl-regexp -i "TILRAUN: H.LLï¿½ HEIMUR!"
 '
 
 test_done

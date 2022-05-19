@@ -6,19 +6,19 @@ Updates since v2.18
 
 UI, Workflows & Features
 
- * "git diff" compares the index and the working tree.  For paths
+ * "but diff" compares the index and the working tree.  For paths
    added with intent-to-add bit, the command shows the full contents
    of them as added, but the paths themselves were not marked as new
    files.  They are now shown as new by default.
 
-   "git apply" learned the "--intent-to-add" option so that an
+   "but apply" learned the "--intent-to-add" option so that an
    otherwise working-tree-only application of a patch will add new
    paths to the index marked with the "intent-to-add" bit.
 
- * "git grep" learned the "--column" option that gives not just the
+ * "but grep" learned the "--column" option that gives not just the
    line number but the column number of the hit.
 
- * The "-l" option in "git branch -l" is an unfortunate short-hand for
+ * The "-l" option in "but branch -l" is an unfortunate short-hand for
    "--create-reflog", but many users, both old and new, somehow expect
    it to be something else, perhaps "--list".  This step warns when "-l"
    is used as a short-hand for "--create-reflog" and warns about the
@@ -26,35 +26,35 @@ UI, Workflows & Features
 
  * The userdiff pattern for .php has been updated.
 
- * The content-transfer-encoding of the message "git send-email" sends
+ * The content-transfer-encoding of the message "but send-email" sends
    out by default was 8bit, which can cause trouble when there is an
    overlong line to bust RFC 5322/2822 limit.  A new option 'auto' to
    automatically switch to quoted-printable when there is such a line
    in the payload has been introduced and is made the default.
 
- * "git checkout" and "git worktree add" learned to honor
+ * "but checkout" and "but worktree add" learned to honor
    checkout.defaultRemote when auto-vivifying a local branch out of a
    remote tracking branch in a repository with multiple remotes that
    have tracking branches that share the same names.
    (merge 8d7b558bae ab/checkout-default-remote later to maint).
 
- * "git grep" learned the "--only-matching" option.
+ * "but grep" learned the "--only-matching" option.
 
- * "git rebase --rebase-merges" mode now handles octopus merges as
+ * "but rebase --rebase-merges" mode now handles octopus merges as
    well.
 
  * Add a server-side knob to skip cummits in exponential/fibbonacci
    stride in an attempt to cover wider swath of history with a smaller
    number of iterations, potentially accepting a larger packfile
    transfer, instead of going back one cummit a time during common
-   ancestor discovery during the "git fetch" transaction.
+   ancestor discovery during the "but fetch" transaction.
    (merge 42cc7485a2 jt/fetch-negotiator-skipping later to maint).
 
  * A new configuration variable core.usereplacerefs has been added,
    primarily to help server installations that want to ignore the
    replace mechanism altogether.
 
- * Teach "git tag -s" etc. a few configuration variables (gpg.format
+ * Teach "but tag -s" etc. a few configuration variables (gpg.format
    that can be set to "openpgp" or "x509", and gpg.<format>.program
    that is used to specify what program to use to deal with the format)
    to allow x.509 certs with CMS via "gpgsm" to be used instead of
@@ -62,45 +62,45 @@ UI, Workflows & Features
 
  * Many more strings are prepared for l10n.
 
- * "git p4 submit" learns to ask its own pre-submit hook if it should
+ * "but p4 submit" learns to ask its own pre-submit hook if it should
    continue with submitting.
 
- * The test performed at the receiving end of "git push" to prevent
+ * The test performed at the receiving end of "but push" to prevent
    bad objects from entering repository can be customized via
    receive.fsck.* configuration variables; we now have gained a
-   counterpart to do the same on the "git fetch" side, with
+   counterpart to do the same on the "but fetch" side, with
    fetch.fsck.* configuration variables.
 
- * "git pull --rebase=interactive" learned "i" as a short-hand for
+ * "but pull --rebase=interactive" learned "i" as a short-hand for
    "interactive".
 
- * "git instaweb" has been adjusted to run better with newer Apache on
+ * "but instaweb" has been adjusted to run better with newer Apache on
    RedHat based distros.
 
- * "git range-diff" is a reimplementation of "git tbdiff" that lets us
+ * "but range-diff" is a reimplementation of "but tbdiff" that lets us
    compare individual patches in two iterations of a topic.
 
  * The sideband code learned to optionally paint selected keywords at
    the beginning of incoming lines on the receiving end.
 
- * "git branch --list" learned to take the default sort order from the
-   'branch.sort' configuration variable, just like "git tag --list"
+ * "but branch --list" learned to take the default sort order from the
+   'branch.sort' configuration variable, just like "but tag --list"
    pays attention to 'tag.sort'.
 
- * "git worktree" command learned "--quiet" option to make it less
+ * "but worktree" command learned "--quiet" option to make it less
    verbose.
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * The bulk of "git submodule foreach" has been rewritten in C.
+ * The bulk of "but submodule foreach" has been rewritten in C.
 
  * The in-core "cummit" object had an all-purpose "void *util" field,
    which was tricky to use especially in library-ish part of the
    code.  All of the existing uses of the field has been migrated to a
    more dedicated "cummit-slab" mechanism and the field is eliminated.
 
- * A less often used command "git show-index" has been modernized.
+ * A less often used command "but show-index" has been modernized.
    (merge fb3010c31f jk/show-index later to maint).
 
  * The conversion to pass "the_repository" and then "a_repository"
@@ -129,13 +129,13 @@ Performance, Internal Implementation, Development Support etc.
  * Remove unused function definitions and declarations from ewah
    bitmap subsystem.
 
- * Code preparation to make "git p4" closer to be usable with Python 3.
+ * Code preparation to make "but p4" closer to be usable with Python 3.
 
- * Tighten the API to make it harder to misuse in-tree .gitmodules
+ * Tighten the API to make it harder to misuse in-tree .butmodules
    file, even though it shares the same syntax with configuration
    files, to read random configuration items from it.
 
- * "git fast-import" has been updated to avoid attempting to create
+ * "but fast-import" has been updated to avoid attempting to create
    delta against a zero-byte-long string, which is pointless.
 
  * The codebase has been updated to compile cleanly with -pedantic
@@ -151,19 +151,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Conversion from uchar[40] to struct object_id continues.
 
- * Recent "security fix" to pay attention to contents of ".gitmodules"
-   while accepting "git push" was a bit overly strict than necessary,
+ * Recent "security fix" to pay attention to contents of ".butmodules"
+   while accepting "but push" was a bit overly strict than necessary,
    which has been adjusted.
 
- * "git fsck" learns to make sure the optional cummit-graph file is in
+ * "but fsck" learns to make sure the optional cummit-graph file is in
    a sane state.
 
- * "git diff --color-moved" feature has further been tweaked.
+ * "but diff --color-moved" feature has further been tweaked.
 
  * Code restructuring and a small fix to transport protocol v2 during
    fetching.
 
- * Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
+ * Parsing of -L[<N>][,[<M>]] parameters "but blame" and "but log"
    take has been tweaked.
 
  * lookup_cummit_reference() and friends have been updated to find
@@ -172,7 +172,7 @@ Performance, Internal Implementation, Development Support etc.
  * Various glitches in the heuristics of merge-recursive strategy have
    been documented in new tests.
 
- * "git fetch" learned a new option "--negotiation-tip" to limit the
+ * "but fetch" learned a new option "--negotiation-tip" to limit the
    set of cummits it tells the other end as "have", to reduce wasted
    bandwidth and cycles, which would be helpful when the receiving
    repository has a lot of refs that have little to do with the
@@ -253,13 +253,13 @@ Performance, Internal Implementation, Development Support etc.
  * After a partial clone, repeated fetches from promisor remote would
    have accumulated many packfiles marked with .promisor bit without
    getting them coalesced into fewer packfiles, hurting performance.
-   "git repack" now learned to repack them.
+   "but repack" now learned to repack them.
 
  * Partially revert the support for multiple hash functions to regain
    hash comparison performance; we'd think of a way to do this better
    in the next cycle.
 
- * "git help --config" (which is used in command line completion)
+ * "but help --config" (which is used in command line completion)
    missed the configuration variables not described in the main
    config.txt file but are described in another file that is included
    by it, which has been corrected.
@@ -272,12 +272,12 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.18
 -----------------
 
- * "git remote update" can take both a single remote nickname and a
+ * "but remote update" can take both a single remote nickname and a
    nickname for remote groups, and the completion script (in contrib/)
    has been taught about it.
    (merge 9cd4382ad5 ls/complete-remote-update-names later to maint).
 
- * "git fetch --shallow-since=<cutoff>" that specifies the cut-off
+ * "but fetch --shallow-since=<cutoff>" that specifies the cut-off
    point that is newer than the existing history used to end up
    grabbing the entire history.  Such a request now errors out.
    (merge e34de73c56 nd/reject-empty-shallow-request later to maint).
@@ -290,17 +290,17 @@ Fixes since v2.18
    defined even if extensions.partialclone is set.
    (merge cac1137dc4 jh/partial-clone later to maint).
 
- * "git send-pack --signed" (hence "git push --signed" over the http
+ * "but send-pack --signed" (hence "but push --signed" over the http
    transport) did not read user ident from the config mechanism to
    determine whom to sign the push certificate as, which has been
    corrected.
    (merge d067d98887 ms/send-pack-honor-config later to maint).
 
- * "git fetch-pack --all" used to unnecessarily fail upon seeing an
+ * "but fetch-pack --all" used to unnecessarily fail upon seeing an
    annotated tag that points at an object other than a cummit.
    (merge c12c9df527 jk/fetch-all-peeled-fix later to maint).
 
- * When user edits the patch in "git add -p" and the user's editor is
+ * When user edits the patch in "but add -p" and the user's editor is
    set to strip trailing whitespaces indiscriminately, an empty line
    that is unchanged in the patch would become completely empty
    (instead of a line with a sole SP on it).  The code introduced in
@@ -316,7 +316,7 @@ Fixes since v2.18
  * Bugfix for "rebase -i" corner case regression.
    (merge a9279c6785 pw/rebase-i-keep-reword-after-conflict later to maint).
 
- * Recently added "--base" option to "git format-patch" command did
+ * Recently added "--base" option to "but format-patch" command did
    not correctly generate prereq patch ids.
    (merge 15b76c1fb3 xy/format-patch-prereq-patch-id-fix later to maint).
 
@@ -324,7 +324,7 @@ Fixes since v2.18
    releases ago.
    (merge 6600054e9b dj/runtime-prefix later to maint).
 
- * "git filter-branch" when used with the "--state-branch" option
+ * "but filter-branch" when used with the "--state-branch" option
    still attempted to rewrite the cummits whose filtered result is
    known from the previous attempt (which is recorded on the state
    branch); the command has been corrected not to waste cycles doing
@@ -337,42 +337,42 @@ Fixes since v2.18
 
  * "fsck.skipList" did not prevent a blob object listed there from
    being inspected for is contents (e.g. we recently started to
-   inspect the contents of ".gitmodules" for certain malicious
+   inspect the contents of ".butmodules" for certain malicious
    patterns), which has been corrected.
    (merge fb16287719 rj/submodule-fsck-skip later to maint).
 
- * "git checkout --recurse-submodules another-branch" did not report
+ * "but checkout --recurse-submodules another-branch" did not report
    in which submodule it failed to update the working tree, which
    resulted in an unhelpful error message.
    (merge ba95d4e4bd sb/submodule-move-head-error-msg later to maint).
 
- * "git rebase" behaved slightly differently depending on which one of
+ * "but rebase" behaved slightly differently depending on which one of
    the three backends gets used; this has been documented and an
    effort to make them more uniform has begun.
    (merge b00bf1c9a8 en/rebase-consistency later to maint).
 
- * The "--ignore-case" option of "git for-each-ref" (and its friends)
+ * The "--ignore-case" option of "but for-each-ref" (and its friends)
    did not work correctly, which has been fixed.
    (merge e674eb2528 jk/for-each-ref-icase later to maint).
 
- * "git fetch" failed to correctly validate the set of objects it
+ * "but fetch" failed to correctly validate the set of objects it
    received when making a shallow history deeper, which has been
    corrected.
    (merge cf1e7c0770 jt/connectivity-check-after-unshallow later to maint).
 
- * Partial clone support of "git clone" has been updated to correctly
+ * Partial clone support of "but clone" has been updated to correctly
    validate the objects it receives from the other side.  The server
    side has been corrected to send objects that are directly
    requested, even if they may match the filtering criteria (e.g. when
    doing a "lazy blob" partial clone).
    (merge a7e67c11b8 jt/partial-clone-fsck-connectivity later to maint).
 
- * Handling of an empty range by "git cherry-pick" was inconsistent
+ * Handling of an empty range by "but cherry-pick" was inconsistent
    depending on how the range ended up to be empty, which has been
    corrected.
    (merge c5e358d073 jk/empty-pick-fix later to maint).
 
- * "git reset --merge" (hence "git merge ---abort") and "git reset --hard"
+ * "but reset --merge" (hence "but merge ---abort") and "but reset --hard"
    had trouble working correctly in a sparsely checked out working
    tree after a conflict, which has been corrected.
    (merge b33fdfc34c mk/merge-in-sparse-checkout later to maint).
@@ -380,7 +380,7 @@ Fixes since v2.18
  * Correct a broken use of "VAR=VAL shell_func" in a test.
    (merge 650161a277 jc/t3404-one-shot-export-fix later to maint).
 
- * "git rev-parse ':/substring'" did not consider the history leading
+ * "but rev-parse ':/substring'" did not consider the history leading
    only to HEAD when looking for a cummit with the given substring,
    when the HEAD is detached.  This has been fixed.
    (merge 6b3351e799 wc/find-cummit-with-pattern-on-detached-head later to maint).
@@ -391,7 +391,7 @@ Fixes since v2.18
  * core.commentchar is now honored when preparing the list of cummits
    to replay in "rebase -i".
 
- * "git pull --rebase" on a corrupt HEAD caused a segfault.  In
+ * "but pull --rebase" on a corrupt HEAD caused a segfault.  In
    general we substitute an empty tree object when running the in-core
    equivalent of the diff-index command, and the codepath has been
    corrected to do so as well to fix this issue.
@@ -405,8 +405,8 @@ Fixes since v2.18
  * Tests to cover more D/F conflict cases have been added for
    merge-recursive.
 
- * "git gc --auto" opens file descriptors for the packfiles before
-   spawning "git repack/prune", which would upset Windows that does
+ * "but gc --auto" opens file descriptors for the packfiles before
+   spawning "but repack/prune", which would upset Windows that does
    not want a process to work on a file that is open by another
    process.  The issue has been worked around.
    (merge 12e73a3ce4 kg/gc-auto-windows-workaround later to maint).
@@ -416,7 +416,7 @@ Fixes since v2.18
    which has been corrected.
    (merge 55f39cf755 en/dirty-merge-fixes later to maint).
 
- * "git rebase" started exporting GIT_DIR environment variable and
+ * "but rebase" started exporting GIT_DIR environment variable and
    exposing it to hook scripts when part of it got rewritten in C.
    Instead of matching the old scripted Porcelains' behaviour,
    compensate by also exporting GIT_WORK_TREE environment as well to
@@ -425,7 +425,7 @@ Fixes since v2.18
    already broken for them anyway.
    (merge ab5e67d751 bc/sequencer-export-work-tree-as-well later to maint).
 
- * "git send-email" when using in a batched mode that limits the
+ * "but send-email" when using in a batched mode that limits the
    number of messages sent in a single SMTP session lost the contents
    of the variable used to choose between tls/ssl, unable to send the
    second and later batches, which has been fixed.
@@ -440,12 +440,12 @@ Fixes since v2.18
    (merge e3f2f5f9cd es/diff-color-moved-fix later to maint).
 
  * The wire-protocol v2 relies on the client to send "ref prefixes" to
-   limit the bandwidth spent on the initial ref advertisement.  "git
+   limit the bandwidth spent on the initial ref advertisement.  "but
    clone" when learned to speak v2 forgot to do so, which has been
    corrected.
    (merge 402c47d939 bw/clone-ref-prefixes later to maint).
 
- * "git diff --histogram" had a bad memory usage pattern, which has
+ * "but diff --histogram" had a bad memory usage pattern, which has
    been rearranged to reduce the peak usage.
    (merge 79cb2ebb92 sb/histogram-less-memory later to maint).
 
@@ -453,13 +453,13 @@ Fixes since v2.18
    (merge 7726d360b5 jk/size-t later to maint).
 
  * The wire-protocol v2 relies on the client to send "ref prefixes" to
-   limit the bandwidth spent on the initial ref advertisement.  "git
+   limit the bandwidth spent on the initial ref advertisement.  "but
    fetch $remote branch:branch" that asks tags that point into the
    history leading to the "branch" automatically followed sent to
    narrow prefix and broke the tag following, which has been fixed.
    (merge 2b554353a5 jt/tag-following-with-proto-v2-fix later to maint).
 
- * When the sparse checkout feature is in use, "git cherry-pick" and
+ * When the sparse checkout feature is in use, "but cherry-pick" and
    other mergy operations lost the skip_worktree bit when a path that
    is excluded from checkout requires content level merge, which is
    resolved as the same as the HEAD version, without materializing the
@@ -468,16 +468,16 @@ Fixes since v2.18
    bit (and not materializing the file in the working tree).
    (merge 2b75fb601c en/merge-recursive-skip-fix later to maint).
 
- * The "author-script" file "git rebase -i" creates got broken when
+ * The "author-script" file "but rebase -i" creates got broken when
    we started to move the command away from shell script, which is
    getting fixed now.
    (merge 5522bbac20 es/rebase-i-author-script-fix later to maint).
 
- * The automatic tree-matching in "git merge -s subtree" was broken 5
+ * The automatic tree-matching in "but merge -s subtree" was broken 5
    years ago and nobody has noticed since then, which is now fixed.
    (merge 2ec4150713 jk/merge-subtree-heuristics later to maint).
 
- * "git fetch $there refs/heads/s" ought to fetch the tip of the
+ * "but fetch $there refs/heads/s" ought to fetch the tip of the
    branch 's', but when "refs/heads/refs/heads/s", i.e. a branch whose
    name is "refs/heads/s" exists at the same time, fetched that one
    instead by mistake.  This has been corrected to honor the usual
@@ -493,23 +493,23 @@ Fixes since v2.18
    server to close the input stream.  This has been fixed.
    (merge eebfe40962 mk/http-backend-content-length later to maint).
 
- * "git merge --abort" etc. did not clean things up properly when
+ * "but merge --abort" etc. did not clean things up properly when
    there were conflicted entries in the index in certain order that
    are involved in D/F conflicts.  This has been corrected.
    (merge ad3762042a en/abort-df-conflict-fixes later to maint).
 
- * "git diff --indent-heuristic" had a bad corner case performance.
+ * "but diff --indent-heuristic" had a bad corner case performance.
    (merge 301ef85401 sb/indent-heuristic-optim later to maint).
 
- * The "--exec" option to "git rebase --rebase-merges" placed the exec
+ * The "--exec" option to "but rebase --rebase-merges" placed the exec
    commands at wrong places, which has been corrected.
 
- * "git verify-tag" and "git verify-cummit" have been taught to use
+ * "but verify-tag" and "but verify-cummit" have been taught to use
    the exit status of underlying "gpg --verify" to signal bad or
    untrusted signature they found.
    (merge 4e5dc9ca17 jc/gpg-status later to maint).
 
- * "git mergetool" stopped and gave an extra prompt to continue after
+ * "but mergetool" stopped and gave an extra prompt to continue after
    the last path has been handled, which did not make much sense.
    (merge d651a54b8a ng/mergetool-lose-final-prompt later to maint).
 
@@ -520,31 +520,31 @@ Fixes since v2.18
    has been updated to improve in this area.
    (merge d641097589 js/mingw-o-append later to maint).
 
- * "git pull --rebase -v" in a repository with a submodule barfed as
+ * "but pull --rebase -v" in a repository with a submodule barfed as
    an intermediate process did not understand what "-v(erbose)" flag
    meant, which has been fixed.
    (merge e84c3cf3dc sb/pull-rebase-submodule later to maint).
 
- * Recent update to "git config" broke updating variable in a
+ * Recent update to "but config" broke updating variable in a
    subsection, which has been corrected.
    (merge bff7df7a87 sb/config-write-fix later to maint).
 
- * When "git rebase -i" is told to squash two or more cummits into
+ * When "but rebase -i" is told to squash two or more cummits into
    one, it labeled the log message for each cummit with its number.
    It correctly called the first one "1st cummit", but the next one
    was "cummit #1", which was off-by-one.  This has been corrected.
    (merge dd2e36ebac pw/rebase-i-squash-number-fix later to maint).
 
- * "git rebase -i", when a 'merge <branch>' insn in its todo list
+ * "but rebase -i", when a 'merge <branch>' insn in its todo list
    fails, segfaulted, which has been (minimally) corrected.
    (merge bc9238bb09 pw/rebase-i-merge-segv-fix later to maint).
 
- * "git cherry-pick --quit" failed to remove CHERRY_PICK_HEAD even
+ * "but cherry-pick --quit" failed to remove CHERRY_PICK_HEAD even
    though we won't be in a cherry-pick session after it returns, which
    has been corrected.
    (merge 3e7dd99208 nd/cherry-pick-quit-fix later to maint).
 
- * In a recent update in 2.18 era, "git pack-objects" started
+ * In a recent update in 2.18 era, "but pack-objects" started
    producing a larger than necessary packfiles by missing
    opportunities to use large deltas.  This has been corrected.
 
@@ -553,20 +553,20 @@ Fixes since v2.18
    which has been fixed.
    (merge 9bf5d4c4e2 nd/config-core-checkstat-doc later to maint).
 
- * Recent "git rebase -i" update started to write bogusly formatted
+ * Recent "but rebase -i" update started to write bogusly formatted
    author-script, with a matching broken reading code.  These are
    fixed.
 
  * Recent addition of "directory rename" heuristics to the
    merge-recursive backend makes the command susceptible to false
-   positives and false negatives.  In the context of "git am -3",
+   positives and false negatives.  In the context of "but am -3",
    which does not know about surrounding unmodified paths and thus
    cannot inform the merge machinery about the full trees involved,
    this risk is particularly severe.  As such, the heuristic is
-   disabled for "git am -3" to keep the machinery "more stupid but
+   disabled for "but am -3" to keep the machinery "more stupid but
    predictable".
 
- * "git merge-base" in 2.19-rc1 has performance regression when the
+ * "but merge-base" in 2.19-rc1 has performance regression when the
    (experimental) cummit-graph feature is in use, which has been
    mitigated.
 
@@ -574,7 +574,7 @@ Fixes since v2.18
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
    (merge 5b26c3c941 en/merge-recursive-cleanup later to maint).
-   (merge 0dcbc0392e bw/config-refer-to-gitsubmodules-doc later to maint).
+   (merge 0dcbc0392e bw/config-refer-to-butsubmodules-doc later to maint).
    (merge bb4d000e87 bw/protocol-v2 later to maint).
    (merge 928f0ab4ba vs/typofixes later to maint).
    (merge d7f590be84 en/rebase-i-microfixes later to maint).
@@ -590,7 +590,7 @@ Fixes since v2.18
    (merge ab29f1b329 sg/fast-import-dump-refs-on-checkpoint-fix later to maint).
    (merge 6a8ad880f0 jn/subtree-test-fixes later to maint).
    (merge ffbd51cc60 nd/pack-objects-threading-doc later to maint).
-   (merge e9dac7be60 es/mw-to-git-chain-fix later to maint).
+   (merge e9dac7be60 es/mw-to-but-chain-fix later to maint).
    (merge fe583c6c7a rs/remote-mv-leakfix later to maint).
    (merge 69885ab015 en/t3031-title-fix later to maint).
    (merge 8578037bed nd/config-blame-sort later to maint).

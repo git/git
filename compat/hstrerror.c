@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <netdb.h>
 
-const char *githstrerror(int err)
+const char *buthstrerror(int err)
 {
 	static char buffer[48];
 	switch (err)

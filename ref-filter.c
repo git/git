@@ -13,7 +13,7 @@
 #include "ref-filter.h"
 #include "revision.h"
 #include "utf8.h"
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "version.h"
 #include "trailer.h"
 #include "wt-status.h"
@@ -628,7 +628,7 @@ static struct {
 	[ATOM_ELSE] = { "else", SOURCE_NONE },
 	[ATOM_REST] = { "rest", SOURCE_NONE, FIELD_STR, rest_atom_parser },
 	/*
-	 * Please update $__git_ref_fieldlist in git-completion.bash
+	 * Please update $__but_ref_fieldlist in but-completion.bash
 	 * when you add new atoms
 	 */
 };
@@ -706,9 +706,9 @@ static int parse_ref_filter_atom(struct ref_format *format,
 	if (ARRAY_SIZE(valid_atom) <= i)
 		return strbuf_addf_ret(err, -1, _("unknown field name: %.*s"),
 				       (int)(ep-atom), atom);
-	if (valid_atom[i].source != SOURCE_NONE && !have_git_dir())
+	if (valid_atom[i].source != SOURCE_NONE && !have_but_dir())
 		return strbuf_addf_ret(err, -1,
-				       _("not a git repository, but the field '%.*s' requires access to object data"),
+				       _("not a but repository, but the field '%.*s' requires access to object data"),
 				       (int)(ep-atom), atom);
 
 	/* Add it in, including the deref prefix */

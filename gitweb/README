@@ -1,31 +1,31 @@
 GIT web Interface
 =================
 
-From the git version 1.4.0 gitweb is bundled with git.
+From the but version 1.4.0 butweb is bundled with but.
 
 
-Build time gitweb configuration
+Build time butweb configuration
 -------------------------------
-There are many configuration variables which affect building gitweb (among
-others creating gitweb.cgi out of gitweb.perl by replacing placeholders such
+There are many configuration variables which affect building butweb (among
+others creating butweb.cgi out of butweb.perl by replacing placeholders such
 as `++GIT_BINDIR++` by their build-time values).
 
-Building and installing gitweb is described in gitweb's INSTALL file
-(in 'gitweb/INSTALL').
+Building and installing butweb is described in butweb's INSTALL file
+(in 'butweb/INSTALL').
 
 
-Runtime gitweb configuration
+Runtime butweb configuration
 ----------------------------
 Gitweb obtains configuration data from the following sources in the
 following order:
 
 1. built-in values (some set during build stage),
 2. common system-wide configuration file (`GITWEB_CONFIG_COMMON`,
-   defaults to '/etc/gitweb-common.conf'),
+   defaults to '/etc/butweb-common.conf'),
 3. either per-instance configuration file (`GITWEB_CONFIG`, defaults to
-   'gitweb_config.perl' in the same directory as the installed gitweb),
+   'butweb_config.perl' in the same directory as the installed butweb),
    or if it does not exists then system-wide configuration file
-   (`GITWEB_CONFIG_SYSTEM`, defaults to '/etc/gitweb.conf').
+   (`GITWEB_CONFIG_SYSTEM`, defaults to '/etc/butweb.conf').
 
 Values obtained in later configuration files override values obtained earlier
 in above sequence.
@@ -44,21 +44,21 @@ The most notable thing that is not configurable at compile time are the
 optional features, stored in the '%features' variable.
 
 Ultimate description on how to reconfigure the default features setting
-in your `GITWEB_CONFIG` or per-project in `project.git/config` can be found
-as comments inside 'gitweb.cgi'.
+in your `GITWEB_CONFIG` or per-project in `project.but/config` can be found
+as comments inside 'butweb.cgi'.
 
-See also gitweb.conf(5) manpage.
+See also butweb.conf(5) manpage.
 
 
 Web server configuration
 ------------------------
 Gitweb can be run as CGI script, as legacy mod_perl application (using
 ModPerl::Registry), and as FastCGI script.  You can find some simple examples
-in "Example web server configuration" section in INSTALL file for gitweb (in
-gitweb/INSTALL).
+in "Example web server configuration" section in INSTALL file for butweb (in
+butweb/INSTALL).
 
 See "Webserver configuration" and "Advanced web server setup" sections in
-gitweb(1) manpage.
+butweb(1) manpage.
 
 
 AUTHORS
@@ -67,4 +67,4 @@ Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
 
 Any comment/question/concern to:
-  Git mailing list <git@vger.kernel.org>
+  Git mailing list <but@vger.kernel.org>

@@ -4,7 +4,7 @@ Git v1.8.3 Release Notes
 Backward compatibility notes (for Git 2.0)
 ------------------------------------------
 
-When "git push [$there]" does not say what to push, we have used the
+When "but push [$there]" does not say what to push, we have used the
 traditional "matching" semantics so far (all your branches were sent
 to the remote as long as there already are branches of the same name
 over there).  In Git 2.0, the default will change to the "simple"
@@ -16,23 +16,23 @@ to the "matching" semantics, you can set the variable to "matching"
 to keep the traditional behaviour.  If you want to live in the future
 early, you can set it to "simple" today without waiting for Git 2.0.
 
-When "git add -u" (and "git add -A") is run inside a subdirectory and
+When "but add -u" (and "but add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git cummit -a" and other commands.  There will be no
-mechanism to make plain "git add -u" behave like "git add -u .".
-Current users of "git add -u" (without a pathspec) should start
-training their fingers to explicitly say "git add -u ."
+with "but cummit -a" and other commands.  There will be no
+mechanism to make plain "but add -u" behave like "but add -u .".
+Current users of "but add -u" (without a pathspec) should start
+training their fingers to explicitly say "but add -u ."
 before Git 2.0 comes.  A warning is issued when these commands are
 run without a pathspec and when you have local changes outside the
 current directory, because the behaviour in Git 2.0 will be different
 from today's version in such a situation.
 
-In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
-that "git add dir/" will notice paths you removed from the directory
+In Git 2.0, "but add <path>" will behave as "but add -A <path>", so
+that "but add dir/" will notice paths you removed from the directory
 and record the removal.  Versions before Git 2.0, including this
 release, will keep ignoring removals, but the users who rely on this
-behaviour are encouraged to start using "git add --ignore-removal <path>"
+behaviour are encouraged to start using "but add --ignore-removal <path>"
 now before 2.0 is released.
 
 
@@ -51,46 +51,46 @@ Foreign interface
 
 UI, Workflows & Features
 
- * A handful of updates applied to gitk, including an addition of
+ * A handful of updates applied to butk, including an addition of
    "revert" action, showing dates in tags in a nicer way, making
    colors configurable, and support for -G'pickaxe' search.
 
  * The prompt string generator (in contrib/completion/) learned to
    show how many changes there are in total and how many have been
-   replayed during a "git rebase" session.
+   replayed during a "but rebase" session.
 
- * "git branch --vv" learned to paint the name of the branch it
+ * "but branch --vv" learned to paint the name of the branch it
    integrates with in a different color (color.branch.upstream,
    which defaults to blue).
 
- * In a sparsely populated working tree, "git checkout <pathspec>" no
+ * In a sparsely populated working tree, "but checkout <pathspec>" no
    longer unmarks paths that match the given pathspec that were
    originally ignored with "--sparse" (use --ignore-skip-worktree-bits
    option to resurrect these paths out of the index if you really want
    to).
 
- * "git log --format" specifier learned %C(auto) token that tells Git
+ * "but log --format" specifier learned %C(auto) token that tells Git
    to use color when interpolating %d (decoration), %h (short cummit
    object name), etc. for terminal output.
 
- * "git bisect" leaves the final outcome as a comment in its bisect
+ * "but bisect" leaves the final outcome as a comment in its bisect
    log file.
 
- * "git clone --reference" can now refer to a gitfile "textual symlink"
+ * "but clone --reference" can now refer to a butfile "textual symlink"
    that points at the real location of the repository.
 
- * "git count-objects" learned "--human-readable" aka "-H" option to
+ * "but count-objects" learned "--human-readable" aka "-H" option to
    show various large numbers in Ki/Mi/GiB scaled as necessary.
 
- * "git cherry-pick $blob" and "git cherry-pick $tree" are nonsense,
+ * "but cherry-pick $blob" and "but cherry-pick $tree" are nonsense,
    and a more readable error message e.g. "can't cherry-pick a tree"
    is given (we used to say "expected exactly one cummit").
 
- * The "--annotate" option to "git send-email" can be turned on (or
+ * The "--annotate" option to "but send-email" can be turned on (or
    off) by default with sendemail.annotate configuration variable (you
    can use --no-annotate from the command line to override it).
 
- * The "--cover-letter" option to "git format-patch" can be turned on
+ * The "--cover-letter" option to "but format-patch" can be turned on
    (or off) by default with format.coverLetter configuration
    variable. By setting it to 'auto', you can turn it on only for a
    series with two or more patches.
@@ -98,7 +98,7 @@ UI, Workflows & Features
  * The bash completion support (in contrib/) learned that cherry-pick
    takes a few more options than it already knew about.
 
- * "git help" learned "-g" option to show the list of guides just like
+ * "but help" learned "-g" option to show the list of guides just like
    list of commands are given with "-a".
 
  * A triangular "pull from one place, push to another place" workflow
@@ -106,14 +106,14 @@ UI, Workflows & Features
    "origin" thing) and branch.*.pushremote (overrides the
    branch.*.remote) configuration variables.
 
- * "git status" learned to report that you are in the middle of a
+ * "but status" learned to report that you are in the middle of a
    revert session, just like it does for a cherry-pick and a bisect
    session.
 
- * The handling by "git branch --set-upstream-to" against various forms
+ * The handling by "but branch --set-upstream-to" against various forms
    of erroneous inputs was suboptimal and has been improved.
 
- * When the interactive access to git-shell is not enabled, it issues
+ * When the interactive access to but-shell is not enabled, it issues
    a message meant to help the system administrator to enable it.  An
    explicit way has been added to issue custom messages to refuse an
    access over the network to help the end users who connect to the
@@ -124,42 +124,42 @@ UI, Workflows & Features
    message with the final log message contents after applymsg hook
    munges it.
 
- * "git status" suggests users to look into using --untracked=no option
+ * "but status" suggests users to look into using --untracked=no option
    when it takes too long.
 
- * "git status" shows a bit more information during a rebase/bisect
+ * "but status" shows a bit more information during a rebase/bisect
    session.
 
- * "git fetch" learned to fetch a cummit at the tip of an unadvertised
+ * "but fetch" learned to fetch a cummit at the tip of an unadvertised
    ref by specifying a raw object name from the command line when the
    server side supports this feature.
 
- * Output from "git log --graph" works better with submodule log
+ * Output from "but log --graph" works better with submodule log
    output now.
 
- * "git count-objects -v" learned to report leftover temporary
+ * "but count-objects -v" learned to report leftover temporary
    packfiles and other garbage in the object store.
 
  * A new read-only credential helper (in contrib/) to interact with
    the .netrc/.authinfo files has been added.
 
- * "git send-email" can be used with the credential helper system.
+ * "but send-email" can be used with the credential helper system.
 
  * There was no Porcelain way to say "I no longer am interested in
    this submodule", once you express your interest in a submodule with
    "submodule init".  "submodule deinit" is the way to do so.
 
- * "git pull --rebase" learned to pass "-v/-q" options to underlying
-   "git rebase".
+ * "but pull --rebase" learned to pass "-v/-q" options to underlying
+   "but rebase".
 
- * The new "--follow-tags" option tells "git push" to push relevant
+ * The new "--follow-tags" option tells "but push" to push relevant
    annotated tags when pushing branches out.
 
- * "git merge" and "git pull" can optionally be told to inspect and
+ * "but merge" and "but pull" can optionally be told to inspect and
    reject when merging a cummit that does not carry a trusted GPG
    signature.
 
- * "git mergetool" now feeds files to the "p4merge" backend in the
+ * "but mergetool" now feeds files to the "p4merge" backend in the
    order that matches the p4 convention, where "theirs" is usually
    shown on the left side, which is the opposite from what other backends
    expect.
@@ -167,10 +167,10 @@ UI, Workflows & Features
  * "show/log" now honors gpg.program configuration just like other
    parts of the code that use GnuPG.
 
- * "git log" that shows the difference between the parent and the
+ * "but log" that shows the difference between the parent and the
    child has been optimized somewhat.
 
- * "git difftool" allows the user to write into the temporary files
+ * "but difftool" allows the user to write into the temporary files
    being shown; if the user makes changes to the working tree at the
    same time, it now refrains from overwriting the copy in the working
    tree and leaves the temporary file so that changes can be merged
@@ -206,7 +206,7 @@ Performance, Internal Implementation, etc.
    and repeatedly grew and rehashed them.
 
  * The API to walk reflog entries from the latest to older, which was
-   necessary for operations such as "git checkout -", was cumbersome
+   necessary for operations such as "but checkout -", was cumbersome
    to use correctly and also inefficient.
 
  * Codepaths that inspect log-message-to-be and decide when to add a
@@ -220,11 +220,11 @@ Performance, Internal Implementation, etc.
    codepaths, and setting permission bits on directories is a codepath
    that needs to use a more correct one.
 
- * "git checkout" had repeated pathspec matches on the same paths,
-   which have been consolidated.  Also a bug in "git checkout dir/"
+ * "but checkout" had repeated pathspec matches on the same paths,
+   which have been consolidated.  Also a bug in "but checkout dir/"
    that is started from an unmerged index has been fixed.
 
- * A few bugfixes to "git rerere" working on corner case merge
+ * A few bugfixes to "but rerere" working on corner case merge
    conflicts have been applied.
 
 
@@ -238,12 +238,12 @@ Unless otherwise noted, all the fixes since v1.8.2 in the maintenance
 track are contained in this release (see release notes to them for
 details).
 
- * Recent versions of File::Temp (used by "git svn") started blowing
+ * Recent versions of File::Temp (used by "but svn") started blowing
    up when its tempfile sub is called as a class method; updated the
    callsite to call it as a plain vanilla function to fix it.
-   (merge eafc2dd hb/git-pm-tempfile later to maint).
+   (merge eafc2dd hb/but-pm-tempfile later to maint).
 
- * Various subcommands of "git remote" simply ignored extraneous
+ * Various subcommands of "but remote" simply ignored extraneous
    command line arguments instead of diagnosing them as errors.
 
  * When receive-pack detects an error in the pack header it received in
@@ -259,7 +259,7 @@ details).
    timestamp can always be found in it.
 
  * When "upload-pack" fails while generating a pack in response to
-   "git fetch" (or "git clone"), the receiving side had
+   "but fetch" (or "but clone"), the receiving side had
    a programming error that triggered the die handler
    recursively.
 
@@ -273,37 +273,37 @@ details).
    like they are when talking with smart HTTP clients.
    (merge 6130f86 jk/http-dumb-namespaces later to maint).
 
- * "git merge-tree" did not omit a merge result that is identical to
+ * "but merge-tree" did not omit a merge result that is identical to
    the "our" side in certain cases.
    (merge aacecc3 jk/merge-tree-added-identically later to maint).
 
- * Perl scripts like "git-svn" closed (instead of redirecting to /dev/null)
+ * Perl scripts like "but-svn" closed (instead of redirecting to /dev/null)
    the standard error stream, which is not a very smart thing to do.
    A later open may return file descriptor #2 for an unrelated purpose, and
    error reporting code may write into it.
 
- * "git show-branch" was not prepared to show a very long run of
+ * "but show-branch" was not prepared to show a very long run of
    ancestor operators e.g. foobar^2~2^2^2^2...^2~4 correctly.
 
- * "git diff --diff-algorithm algo" is also understood as "git diff
+ * "but diff --diff-algorithm algo" is also understood as "but diff
    --diff-algorithm=algo".
 
  * The new core.commentchar configuration was not applied in a few
    places.
 
- * "git bundle" erroneously bailed out when parsing a valid bundle
+ * "but bundle" erroneously bailed out when parsing a valid bundle
    containing a prerequisite cummit without a cummit message.
 
- * "git log -S/-G" started paying attention to textconv filter, but
+ * "but log -S/-G" started paying attention to textconv filter, but
    there was no way to disable this.  Make it honor the --no-textconv
    option.
 
- * When used with the "-d temporary-directory" option, "git filter-branch"
+ * When used with the "-d temporary-directory" option, "but filter-branch"
    failed to come back to the original working tree to perform the
    final clean-up procedure.
 
- * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
-   "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
+ * "but merge $(but rev-parse v1.8.2)" behaved quite differently from
+   "but merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
    not pay much attention to the annotated tag payload.  Make the code
    notice the type of the tag object, in addition to the dwim_ref()
    based classification the current code uses (i.e. the name appears
@@ -312,11 +312,11 @@ details).
  * Fix a 1.8.1.x regression that stopped matching "dir" (without a
    trailing slash) to a directory "dir".
 
- * "git apply --whitespace=fix" was not prepared to see a line getting
+ * "but apply --whitespace=fix" was not prepared to see a line getting
    longer after fixing whitespaces (e.g. tab-in-indent aka Python).
 
  * The prompt string generator (in contrib/completion/) did not notice
-   when we are in a middle of a "git revert" session.
+   when we are in a middle of a "but revert" session.
 
  * "submodule summary --summary-limit" option did not support the
    "--option=value" form.
@@ -336,17 +336,17 @@ details).
 
  * Recent optimizations broke shallow clones.
 
- * "git cmd -- ':(top'" was not diagnosed as an invalid syntax, and
+ * "but cmd -- ':(top'" was not diagnosed as an invalid syntax, and
    instead the parser kept reading beyond the end of the string.
 
- * "git tag -f <tag>" always said "Updated tag '<tag>'" even when
+ * "but tag -f <tag>" always said "Updated tag '<tag>'" even when
    creating a new tag (i.e. neither overwriting nor updating).
 
- * "git p4" did not behave well when the path to the root of the P4
+ * "but p4" did not behave well when the path to the root of the P4
    client was not its real path.
    (merge bbd8486 pw/p4-symlinked-root later to maint).
 
- * "git archive" reported a failure when asked to create an archive out
+ * "but archive" reported a failure when asked to create an archive out
    of an empty tree.  It is more intuitive to give an empty
    archive back in such a case.
 
@@ -357,20 +357,20 @@ details).
  * An aliased command spawned from a bare repository that does not say
    it is bare with "core.bare = yes" was treated as non-bare by mistake.
 
- * In "git reflog expire", the REACHABLE bit was not cleared from the
+ * In "but reflog expire", the REACHABLE bit was not cleared from the
    correct objects.
 
- * The logic used by "git diff -M --stat" to shorten the names of
+ * The logic used by "but diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
    common prefix and suffix between the two filenames overlapped.
 
- * The "--match=<pattern>" option of "git describe", when used with
+ * The "--match=<pattern>" option of "but describe", when used with
    "--all" to allow refs that are not annotated tags to be a
    base of description, did not restrict the output from the command
    to those refs that match the given pattern.
 
  * Clarify in the documentation "what" gets pushed to "where" when the
-   command line to "git push" does not say these explicitly.
+   command line to "but push" does not say these explicitly.
 
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
@@ -379,7 +379,7 @@ details).
 
  * The v4 index format was not documented.
 
- * The "--match=<pattern>" argument "git describe" takes uses glob
+ * The "--match=<pattern>" argument "but describe" takes uses glob
    pattern but it wasn't obvious from the documentation.
 
  * Some sources failed to compile on systems that lack NI_MAXHOST in
@@ -388,7 +388,7 @@ details).
  * Add an example use of "--env-filter" in "filter-branch"
    documentation.
 
- * "git bundle verify" did not say "records a complete history" for a
+ * "but bundle verify" did not say "records a complete history" for a
    bundle that does not have any prerequisites.
 
  * In the v1.8.0 era, we changed symbols that do not have to be global
@@ -396,23 +396,23 @@ details).
    CGit sideways, bypassing the entry points of the API the
    in-tree users use.
 
- * "git update-index -h" did not do the usual "-h(elp)" thing.
+ * "but update-index -h" did not do the usual "-h(elp)" thing.
 
- * "git index-pack" had a buffer-overflow while preparing an
+ * "but index-pack" had a buffer-overflow while preparing an
    informational message when the translated version of it was too
    long.
 
- * 'git cummit -m "$msg"' used to add an extra newline even when
+ * 'but cummit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
 
- * The SSL peer verification done by "git imap-send" did not ask for
+ * The SSL peer verification done by "but imap-send" did not ask for
    Server Name Indication (RFC 4366), failing to connect to SSL/TLS
    sites that serve multiple hostnames on a single IP.
 
  * perl/Git.pm::cat_blob slurped everything in core only to write it
    out to a file descriptor, which was not a very smart thing to do.
 
- * "git branch" did not bother to check nonsense command line
+ * "but branch" did not bother to check nonsense command line
    parameters.  It now issues errors in many cases.
 
  * Verification of signed tags was not done correctly when not in C
@@ -426,11 +426,11 @@ details).
  * When export-subst is used, "zip" output recorded an incorrect
    size of the file.
 
- * "git am $maildir/" applied messages in an unexpected order; sort
+ * "but am $maildir/" applied messages in an unexpected order; sort
    filenames read from the maildir/ in a way that is more likely to
    sort the messages in the order the writing MUA meant to, by sorting
    numeric segments in numeric order and non-numeric segments in
    alphabetical order.
 
- * "git submodule update", when recursed into sub-submodules, did not
+ * "but submodule update", when recursed into sub-submodules, did not
    accumulate the prefix paths.

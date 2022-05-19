@@ -37,7 +37,7 @@ static void setup_enlistment_directory(int argc, const char **argv,
 	int enlistment_found = 0;
 
 	if (startup_info->have_repository)
-		BUG("gitdir already set up?!?");
+		BUG("butdir already set up?!?");
 
 	if (argc > 1)
 		usage_with_options(usagestr, options);
@@ -89,10 +89,10 @@ static void setup_enlistment_directory(int argc, const char **argv,
 		die_errno(_("could not switch to '%s'"), path.buf);
 
 	strbuf_release(&path);
-	setup_git_directory();
+	setup_but_directory();
 }
 
-static int run_git(const char *arg, ...)
+static int run_but(const char *arg, ...)
 {
 	struct strvec argv = STRVEC_INIT;
 	va_list args;
@@ -172,9 +172,9 @@ static int set_recommended_config(int reconfigure)
 
 	for (i = 0; config[i].key; i++) {
 		if ((reconfigure && config[i].overwrite_on_reconfigure) ||
-		    git_config_get_string(config[i].key, &value)) {
+		    but_config_get_string(config[i].key, &value)) {
 			trace2_data_string("scalar", the_repository, config[i].key, "created");
-			if (git_config_set_gently(config[i].key,
+			if (but_config_set_gently(config[i].key,
 						  config[i].value) < 0)
 				return error(_("could not configure %s=%s"),
 					     config[i].key, config[i].value);
@@ -188,10 +188,10 @@ static int set_recommended_config(int reconfigure)
 	 * The `log.excludeDecoration` setting is special because it allows
 	 * for multiple values.
 	 */
-	if (git_config_get_string("log.excludeDecoration", &value)) {
+	if (but_config_get_string("log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (git_config_set_multivar_gently("log.excludeDecoration",
+		if (but_config_set_multivar_gently("log.excludeDecoration",
 						   "refs/prefetch/*",
 						   CONFIG_REGEX_NONE, 0))
 			return error(_("could not configure "
@@ -207,7 +207,7 @@ static int set_recommended_config(int reconfigure)
 
 static int toggle_maintenance(int enable)
 {
-	return run_git("maintenance", enable ? "start" : "unregister", NULL);
+	return run_but("maintenance", enable ? "start" : "unregister", NULL);
 }
 
 static int add_or_remove_enlistment(int add)
@@ -217,7 +217,7 @@ static int add_or_remove_enlistment(int add)
 	if (!the_repository->worktree)
 		die(_("Scalar enlistments require a worktree"));
 
-	res = run_git("config", "--global", "--get", "--fixed-value",
+	res = run_but("config", "--global", "--get", "--fixed-value",
 		      "scalar.repo", the_repository->worktree, NULL);
 
 	/*
@@ -227,7 +227,7 @@ static int add_or_remove_enlistment(int add)
 	if ((add && !res) || (!add && res))
 		return 0;
 
-	return run_git("config", "--global", add ? "--add" : "--unset",
+	return run_but("config", "--global", add ? "--add" : "--unset",
 		       add ? "--no-fixed-value" : "--fixed-value",
 		       "scalar.repo", the_repository->worktree, NULL);
 }
@@ -273,7 +273,7 @@ static int set_config(const char *fmt, ...)
 	value = strchr(buf.buf, '=');
 	if (value)
 		*(value++) = '\0';
-	res = git_config_set_gently(buf.buf, value);
+	res = but_config_set_gently(buf.buf, value);
 	strbuf_release(&buf);
 
 	return res;
@@ -284,7 +284,7 @@ static char *remote_default_branch(const char *url)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf out = STRBUF_INIT;
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	strvec_pushl(&cp.args, "ls-remote", "--symref", url, "HEAD", NULL);
 	if (!pipe_command(&cp, NULL, 0, &out, 0, NULL, 0)) {
 		const char *line = out.buf;
@@ -318,7 +318,7 @@ static char *remote_default_branch(const char *url)
 	strbuf_reset(&out);
 
 	child_process_init(&cp);
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	strvec_pushl(&cp.args, "symbolic-ref", "--short", "HEAD", NULL);
 	if (!pipe_command(&cp, NULL, 0, &out, 0, NULL, 0)) {
 		strbuf_trim(&out);
@@ -401,8 +401,8 @@ static int cmd_clone(int argc, const char **argv)
 		/* Strip trailing slashes, if any */
 		while (buf.len > 0 && is_dir_sep(buf.buf[buf.len - 1]))
 			strbuf_setlen(&buf, buf.len - 1);
-		/* Strip suffix `.git`, if any */
-		strbuf_strip_suffix(&buf, ".git");
+		/* Strip suffix `.but`, if any */
+		strbuf_strip_suffix(&buf, ".but");
 
 		enlistment = find_last_dir_sep(buf.buf);
 		if (!enlistment) {
@@ -428,7 +428,7 @@ static int cmd_clone(int argc, const char **argv)
 		free(b);
 	}
 
-	if ((res = run_git("-c", buf.buf, "init", "--", dir, NULL)))
+	if ((res = run_but("-c", buf.buf, "init", "--", dir, NULL)))
 		goto cleanup;
 
 	if (chdir(dir) < 0) {
@@ -436,7 +436,7 @@ static int cmd_clone(int argc, const char **argv)
 		goto cleanup;
 	}
 
-	setup_git_directory();
+	setup_but_directory();
 
 	/* common-main already logs `argv` */
 	trace2_def_repo(the_repository);
@@ -458,13 +458,13 @@ static int cmd_clone(int argc, const char **argv)
 	}
 
 	if (!full_clone &&
-	    (res = run_git("sparse-checkout", "init", "--cone", NULL)))
+	    (res = run_but("sparse-checkout", "init", "--cone", NULL)))
 		goto cleanup;
 
 	if (set_recommended_config(0))
 		return error(_("could not configure '%s'"), dir);
 
-	if ((res = run_git("fetch", "--quiet", "origin", NULL))) {
+	if ((res = run_but("fetch", "--quiet", "origin", NULL))) {
 		warning(_("partial clone failed; attempting full clone"));
 
 		if (set_config("remote.origin.promisor") ||
@@ -473,7 +473,7 @@ static int cmd_clone(int argc, const char **argv)
 			goto cleanup;
 		}
 
-		if ((res = run_git("fetch", "--quiet", "origin", NULL)))
+		if ((res = run_but("fetch", "--quiet", "origin", NULL)))
 			goto cleanup;
 	}
 
@@ -485,7 +485,7 @@ static int cmd_clone(int argc, const char **argv)
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "origin/%s", branch);
-	res = run_git("checkout", "-f", "-t", buf.buf, NULL);
+	res = run_but("checkout", "-f", "-t", buf.buf, NULL);
 	if (res)
 		goto cleanup;
 
@@ -503,7 +503,7 @@ static int cmd_list(int argc, const char **argv)
 	if (argc != 1)
 		die(_("`scalar list` does not take arguments"));
 
-	if (run_git("config", "--global", "--get-all", "scalar.repo", NULL) < 0)
+	if (run_but("config", "--global", "--get-all", "scalar.repo", NULL) < 0)
 		return -1;
 	return 0;
 }
@@ -551,7 +551,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
 	int i, res = 0;
 	struct repository r = { NULL };
-	struct strbuf commondir = STRBUF_INIT, gitdir = STRBUF_INIT;
+	struct strbuf commondir = STRBUF_INIT, butdir = STRBUF_INIT;
 
 	argc = parse_options(argc, argv, NULL, options,
 			     usage, 0);
@@ -566,26 +566,26 @@ static int cmd_reconfigure(int argc, const char **argv)
 		usage_msg_opt(_("--all or <enlistment>, but not both"),
 			      usage, options);
 
-	git_config(get_scalar_repos, &scalar_repos);
+	but_config(get_scalar_repos, &scalar_repos);
 
 	for (i = 0; i < scalar_repos.nr; i++) {
 		const char *dir = scalar_repos.items[i].string;
 
 		strbuf_reset(&commondir);
-		strbuf_reset(&gitdir);
+		strbuf_reset(&butdir);
 
 		if (chdir(dir) < 0) {
 			warning_errno(_("could not switch to '%s'"), dir);
 			res = -1;
-		} else if (discover_git_directory(&commondir, &gitdir) < 0) {
-			warning_errno(_("git repository gone in '%s'"), dir);
+		} else if (discover_but_directory(&commondir, &butdir) < 0) {
+			warning_errno(_("but repository gone in '%s'"), dir);
 			res = -1;
 		} else {
-			git_config_clear();
+			but_config_clear();
 
 			the_repository = &r;
 			r.commondir = commondir.buf;
-			r.gitdir = gitdir.buf;
+			r.butdir = butdir.buf;
 
 			if (set_recommended_config(1) < 0)
 				res = -1;
@@ -594,7 +594,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 	string_list_clear(&scalar_repos, 1);
 	strbuf_release(&commondir);
-	strbuf_release(&gitdir);
+	strbuf_release(&butdir);
 
 	return res;
 }
@@ -650,13 +650,13 @@ static int cmd_run(int argc, const char **argv)
 		return register_dir();
 
 	if (i > 0)
-		return run_git("maintenance", "run",
+		return run_but("maintenance", "run",
 			       "--task", tasks[i].task, NULL);
 
 	if (register_dir())
 		return -1;
 	for (i = 1; tasks[i].arg; i++)
-		if (run_git("maintenance", "run",
+		if (run_but("maintenance", "run",
 			    "--task", tasks[i].task, NULL))
 			return -1;
 	return 0;
@@ -667,12 +667,12 @@ static int remove_deleted_enlistment(struct strbuf *path)
 	int res = 0;
 	strbuf_realpath_forgiving(path, path->buf, 1);
 
-	if (run_git("config", "--global",
+	if (run_but("config", "--global",
 		    "--unset", "--fixed-value",
 		    "scalar.repo", path->buf, NULL) < 0)
 		res = -1;
 
-	if (run_git("config", "--global",
+	if (run_but("config", "--global",
 		    "--unset", "--fixed-value",
 		    "maintenance.repo", path->buf, NULL) < 0)
 		res = -1;
@@ -701,16 +701,16 @@ static int cmd_unregister(int argc, const char **argv)
 	if (argc == 1) {
 		struct strbuf src_path = STRBUF_INIT, workdir_path = STRBUF_INIT;
 
-		strbuf_addf(&src_path, "%s/src/.git", argv[0]);
-		strbuf_addf(&workdir_path, "%s/.git", argv[0]);
+		strbuf_addf(&src_path, "%s/src/.but", argv[0]);
+		strbuf_addf(&workdir_path, "%s/.but", argv[0]);
 		if (!is_directory(src_path.buf) && !is_directory(workdir_path.buf)) {
 			/* remove possible matching registrations */
 			int res = -1;
 
-			strbuf_strip_suffix(&src_path, "/.git");
+			strbuf_strip_suffix(&src_path, "/.but");
 			res = remove_deleted_enlistment(&src_path) && res;
 
-			strbuf_strip_suffix(&workdir_path, "/.git");
+			strbuf_strip_suffix(&workdir_path, "/.but");
 			res = remove_deleted_enlistment(&workdir_path) && res;
 
 			strbuf_release(&src_path);
@@ -819,7 +819,7 @@ int cmd_main(int argc, const char **argv)
 		} else if (!strcmp(argv[1], "-c")) {
 			if (argc < 3)
 				die(_("-c requires a <key>=<value> argument"));
-			git_config_push_parameter(argv[2]);
+			but_config_push_parameter(argv[2]);
 			argc -= 2;
 			argv += 2;
 		} else

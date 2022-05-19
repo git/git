@@ -147,7 +147,7 @@ IPATTERN("fortran",
 	 "[a-zA-Z][a-zA-Z0-9_]*"
 	 "|\\.([Ee][Qq]|[Nn][Ee]|[Gg][TtEe]|[Ll][TtEe]|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Aa][Nn][Dd]|[Oo][Rr]|[Nn]?[Ee][Qq][Vv]|[Nn][Oo][Tt])\\."
 	 /* numbers and format statements like 2E14.4, or ES12.6, 9X.
-	  * Don't worry about format statements without leading digits since
+	  * Don't worry about format statements without leading dibuts since
 	  * they would have been matched above as a variable anyway. */
 	 "|[-+]?[0-9.]+([AaIiDdEeFfLlTtXx][Ss]?[-+]?[0-9.]*)?(_[a-zA-Z0-9][a-zA-Z0-9_]*)?"
 	 "|//|\\*\\*|::|[/<>=]="),
@@ -340,7 +340,7 @@ static struct userdiff_driver *userdiff_find_by_namelen(const char *name, size_t
 static int parse_funcname(struct userdiff_funcname *f, const char *k,
 		const char *v, int cflags)
 {
-	if (git_config_string(&f->pattern, k, v) < 0)
+	if (but_config_string(&f->pattern, k, v) < 0)
 		return -1;
 	f->cflags = cflags;
 	return 0;
@@ -351,13 +351,13 @@ static int parse_tristate(int *b, const char *k, const char *v)
 	if (v && !strcasecmp(v, "auto"))
 		*b = -1;
 	else
-		*b = git_config_bool(k, v);
+		*b = but_config_bool(k, v);
 	return 0;
 }
 
 static int parse_bool(int *b, const char *k, const char *v)
 {
-	*b = git_config_bool(k, v);
+	*b = but_config_bool(k, v);
 	return 0;
 }
 
@@ -386,13 +386,13 @@ int userdiff_config(const char *k, const char *v)
 	if (!strcmp(type, "binary"))
 		return parse_tristate(&drv->binary, k, v);
 	if (!strcmp(type, "command"))
-		return git_config_string(&drv->external, k, v);
+		return but_config_string(&drv->external, k, v);
 	if (!strcmp(type, "textconv"))
-		return git_config_string(&drv->textconv, k, v);
+		return but_config_string(&drv->textconv, k, v);
 	if (!strcmp(type, "cachetextconv"))
 		return parse_bool(&drv->textconv_want_cache, k, v);
 	if (!strcmp(type, "wordregex"))
-		return git_config_string(&drv->word_regex, k, v);
+		return but_config_string(&drv->word_regex, k, v);
 
 	return 0;
 }
@@ -412,7 +412,7 @@ struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
 		check = attr_check_initl("diff", NULL);
 	if (!path)
 		return NULL;
-	git_check_attr(istate, path, check);
+	but_check_attr(istate, path, check);
 
 	if (ATTR_TRUE(check->items[0].value))
 		return &driver_true;

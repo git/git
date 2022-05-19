@@ -3,13 +3,13 @@
 # Copyright (c) 2012 Steven Walter
 #
 
-test_description='git svn merge detection'
-. ./lib-git-svn.sh
+test_description='but svn merge detection'
+. ./lib-but-svn.sh
 
 svn_ver="$(svn --version --quiet)"
 case $svn_ver in
 0.* | 1.[0-4].*)
-	skip_all="skipping git-svn test - SVN too old ($svn_ver)"
+	skip_all="skipping but-svn test - SVN too old ($svn_ver)"
 	test_done
 	;;
 esac
@@ -48,12 +48,12 @@ test_expect_success 'initialize source svn repo' '
 '
 
 test_expect_success 'clone svn repo' '
-	git svn init -s "$svnrepo" &&
-	git svn fetch
+	but svn init -s "$svnrepo" &&
+	but svn fetch
 '
 
-test_expect_success 'verify merge cummit' 'x=$(git rev-parse HEAD^2) &&
-	y=$(git rev-parse origin/branch2) &&
+test_expect_success 'verify merge cummit' 'x=$(but rev-parse HEAD^2) &&
+	y=$(but rev-parse origin/branch2) &&
 	test "x$x" = "x$y"
 '
 

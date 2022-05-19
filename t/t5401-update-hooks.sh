@@ -8,28 +8,28 @@ test_description='Test the update hook infrastructure.'
 
 test_expect_success setup '
 	echo This is a test. >a &&
-	git update-index --add a &&
-	tree0=$(git write-tree) &&
-	cummit0=$(echo setup | git cummit-tree $tree0) &&
+	but update-index --add a &&
+	tree0=$(but write-tree) &&
+	cummit0=$(echo setup | but cummit-tree $tree0) &&
 	echo We hope it works. >a &&
-	git update-index a &&
-	tree1=$(git write-tree) &&
-	cummit1=$(echo modify | git cummit-tree $tree1 -p $cummit0) &&
-	git update-ref refs/heads/main $cummit0 &&
-	git update-ref refs/heads/tofail $cummit1 &&
-	git clone --bare ./. victim.git &&
-	GIT_DIR=victim.git git update-ref refs/heads/tofail $cummit1 &&
-	git update-ref refs/heads/main $cummit1 &&
-	git update-ref refs/heads/tofail $cummit0 &&
+	but update-index a &&
+	tree1=$(but write-tree) &&
+	cummit1=$(echo modify | but cummit-tree $tree1 -p $cummit0) &&
+	but update-ref refs/heads/main $cummit0 &&
+	but update-ref refs/heads/tofail $cummit1 &&
+	but clone --bare ./. victim.but &&
+	GIT_DIR=victim.but but update-ref refs/heads/tofail $cummit1 &&
+	but update-ref refs/heads/main $cummit1 &&
+	but update-ref refs/heads/tofail $cummit0 &&
 
-	test_hook --setup -C victim.git pre-receive <<-\EOF &&
+	test_hook --setup -C victim.but pre-receive <<-\EOF &&
 	printf %s "$@" >>$GIT_DIR/pre-receive.args
 	cat - >$GIT_DIR/pre-receive.stdin
 	echo STDOUT pre-receive
 	echo STDERR pre-receive >&2
 	EOF
 
-	test_hook --setup -C victim.git update <<-\EOF &&
+	test_hook --setup -C victim.but update <<-\EOF &&
 	echo "$@" >>$GIT_DIR/update.args
 	read x; printf %s "$x" >$GIT_DIR/update.stdin
 	echo STDOUT update $1
@@ -37,14 +37,14 @@ test_expect_success setup '
 	test "$1" = refs/heads/main || exit
 	EOF
 
-	test_hook --setup -C victim.git post-receive <<-\EOF &&
+	test_hook --setup -C victim.but post-receive <<-\EOF &&
 	printf %s "$@" >>$GIT_DIR/post-receive.args
 	cat - >$GIT_DIR/post-receive.stdin
 	echo STDOUT post-receive
 	echo STDERR post-receive >&2
 	EOF
 
-	test_hook --setup -C victim.git post-update <<-\EOF
+	test_hook --setup -C victim.but post-update <<-\EOF
 	echo "$@" >>$GIT_DIR/post-update.args
 	read x; printf %s "$x" >$GIT_DIR/post-update.stdin
 	echo STDOUT post-update
@@ -53,56 +53,56 @@ test_expect_success setup '
 '
 
 test_expect_success push '
-	test_must_fail git send-pack --force ./victim.git \
+	test_must_fail but send-pack --force ./victim.but \
 		main tofail >send.out 2>send.err
 '
 
 test_expect_success 'updated as expected' '
-	test $(GIT_DIR=victim.git git rev-parse main) = $cummit1 &&
-	test $(GIT_DIR=victim.git git rev-parse tofail) = $cummit1
+	test $(GIT_DIR=victim.but but rev-parse main) = $cummit1 &&
+	test $(GIT_DIR=victim.but but rev-parse tofail) = $cummit1
 '
 
 test_expect_success 'hooks ran' '
-	test -f victim.git/pre-receive.args &&
-	test -f victim.git/pre-receive.stdin &&
-	test -f victim.git/update.args &&
-	test -f victim.git/update.stdin &&
-	test -f victim.git/post-receive.args &&
-	test -f victim.git/post-receive.stdin &&
-	test -f victim.git/post-update.args &&
-	test -f victim.git/post-update.stdin
+	test -f victim.but/pre-receive.args &&
+	test -f victim.but/pre-receive.stdin &&
+	test -f victim.but/update.args &&
+	test -f victim.but/update.stdin &&
+	test -f victim.but/post-receive.args &&
+	test -f victim.but/post-receive.stdin &&
+	test -f victim.but/post-update.args &&
+	test -f victim.but/post-update.stdin
 '
 
 test_expect_success 'pre-receive hook input' '
 	(echo $cummit0 $cummit1 refs/heads/main &&
 	 echo $cummit1 $cummit0 refs/heads/tofail
-	) | test_cmp - victim.git/pre-receive.stdin
+	) | test_cmp - victim.but/pre-receive.stdin
 '
 
 test_expect_success 'update hook arguments' '
 	(echo refs/heads/main $cummit0 $cummit1 &&
 	 echo refs/heads/tofail $cummit1 $cummit0
-	) | test_cmp - victim.git/update.args
+	) | test_cmp - victim.but/update.args
 '
 
 test_expect_success 'post-receive hook input' '
 	echo $cummit0 $cummit1 refs/heads/main |
-	test_cmp - victim.git/post-receive.stdin
+	test_cmp - victim.but/post-receive.stdin
 '
 
 test_expect_success 'post-update hook arguments' '
 	echo refs/heads/main |
-	test_cmp - victim.git/post-update.args
+	test_cmp - victim.but/post-update.args
 '
 
 test_expect_success 'all hook stdin is /dev/null' '
-	test_must_be_empty victim.git/update.stdin &&
-	test_must_be_empty victim.git/post-update.stdin
+	test_must_be_empty victim.but/update.stdin &&
+	test_must_be_empty victim.but/post-update.stdin
 '
 
 test_expect_success 'all *-receive hook args are empty' '
-	test_must_be_empty victim.git/pre-receive.args &&
-	test_must_be_empty victim.git/post-receive.args
+	test_must_be_empty victim.but/pre-receive.args &&
+	test_must_be_empty victim.but/post-receive.args
 '
 
 test_expect_success 'send-pack produced no output' '
@@ -128,16 +128,16 @@ test_expect_success 'send-pack stderr contains hook messages' '
 '
 
 test_expect_success 'pre-receive hook that forgets to read its input' '
-	test_hook --clobber -C victim.git pre-receive <<-\EOF &&
+	test_hook --clobber -C victim.but pre-receive <<-\EOF &&
 	exit 0
 	EOF
-	rm -f victim.git/hooks/update victim.git/hooks/post-update &&
+	rm -f victim.but/hooks/update victim.but/hooks/post-update &&
 
 	for v in $(test_seq 100 999)
 	do
-		git branch branch_$v main || return
+		but branch branch_$v main || return
 	done &&
-	git push ./victim.git "+refs/heads/*:refs/heads/*"
+	but push ./victim.but "+refs/heads/*:refs/heads/*"
 '
 
 test_done

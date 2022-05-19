@@ -9,35 +9,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 advance () {
 	echo "$1" >"$1" &&
-	git add "$1" &&
+	but add "$1" &&
 	test_tick &&
-	git cummit -m "$1"
+	but cummit -m "$1"
 }
 
 test_expect_success setup '
 	advance a &&
 	advance b &&
 	advance c &&
-	git clone . test &&
+	but clone . test &&
 	(
 		cd test &&
-		git checkout -b b1 origin &&
-		git reset --hard HEAD^ &&
+		but checkout -b b1 origin &&
+		but reset --hard HEAD^ &&
 		advance d &&
-		git checkout -b b2 origin &&
-		git reset --hard b1 &&
-		git checkout -b b3 origin &&
-		git reset --hard HEAD^ &&
-		git checkout -b b4 origin &&
+		but checkout -b b2 origin &&
+		but reset --hard b1 &&
+		but checkout -b b3 origin &&
+		but reset --hard HEAD^ &&
+		but checkout -b b4 origin &&
 		advance e &&
 		advance f &&
-		git checkout -b brokenbase origin &&
-		git checkout -b b5 --track brokenbase &&
+		but checkout -b brokenbase origin &&
+		but checkout -b b5 --track brokenbase &&
 		advance g &&
-		git branch -d brokenbase &&
-		git checkout -b b6 origin
+		but branch -d brokenbase &&
+		but checkout -b b6 origin
 	) &&
-	git checkout -b follower --track main &&
+	but checkout -b follower --track main &&
 	advance h
 '
 
@@ -54,7 +54,7 @@ EOF
 test_expect_success 'branch -v' '
 	(
 		cd test &&
-		git branch -v
+		but branch -v
 	) |
 	sed -n -e "$t6040_script" >actual &&
 	test_cmp expect actual
@@ -72,7 +72,7 @@ EOF
 test_expect_success 'branch -vv' '
 	(
 		cd test &&
-		git branch -vv
+		but branch -vv
 	) |
 	sed -n -e "$t6040_script" >actual &&
 	test_cmp expect actual
@@ -80,28 +80,28 @@ test_expect_success 'branch -vv' '
 
 test_expect_success 'checkout (diverged from upstream)' '
 	(
-		cd test && git checkout b1
+		cd test && but checkout b1
 	) >actual &&
 	test_i18ngrep "have 1 and 1 different" actual
 '
 
 test_expect_success 'checkout with local tracked branch' '
-	git checkout main &&
-	git checkout follower >actual &&
+	but checkout main &&
+	but checkout follower >actual &&
 	test_i18ngrep "is ahead of" actual
 '
 
 test_expect_success 'checkout (upstream is gone)' '
 	(
 		cd test &&
-		git checkout b5
+		but checkout b5
 	) >actual &&
 	test_i18ngrep "is based on .*, but the upstream is gone." actual
 '
 
 test_expect_success 'checkout (up-to-date with upstream)' '
 	(
-		cd test && git checkout b6
+		cd test && but checkout b6
 	) >actual &&
 	test_i18ngrep "Your branch is up to date with .origin/main" actual
 '
@@ -109,9 +109,9 @@ test_expect_success 'checkout (up-to-date with upstream)' '
 test_expect_success 'status (diverged from upstream)' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
+		but checkout b1 >/dev/null &&
 		# reports nothing to cummit
-		test_must_fail git cummit --dry-run
+		test_must_fail but cummit --dry-run
 	) >actual &&
 	test_i18ngrep "have 1 and 1 different" actual
 '
@@ -119,9 +119,9 @@ test_expect_success 'status (diverged from upstream)' '
 test_expect_success 'status (upstream is gone)' '
 	(
 		cd test &&
-		git checkout b5 >/dev/null &&
+		but checkout b5 >/dev/null &&
 		# reports nothing to cummit
-		test_must_fail git cummit --dry-run
+		test_must_fail but cummit --dry-run
 	) >actual &&
 	test_i18ngrep "is based on .*, but the upstream is gone." actual
 '
@@ -129,9 +129,9 @@ test_expect_success 'status (upstream is gone)' '
 test_expect_success 'status (up-to-date with upstream)' '
 	(
 		cd test &&
-		git checkout b6 >/dev/null &&
+		but checkout b6 >/dev/null &&
 		# reports nothing to cummit
-		test_must_fail git cummit --dry-run
+		test_must_fail but cummit --dry-run
 	) >actual &&
 	test_i18ngrep "Your branch is up to date with .origin/main" actual
 '
@@ -143,8 +143,8 @@ EOF
 test_expect_success 'status -s -b (diverged from upstream)' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git status -s -b | head -1
+		but checkout b1 >/dev/null &&
+		but status -s -b | head -1
 	) >actual &&
 	test_cmp expect actual
 '
@@ -156,8 +156,8 @@ EOF
 test_expect_success 'status -s -b --no-ahead-behind (diverged from upstream)' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git status -s -b --no-ahead-behind | head -1
+		but checkout b1 >/dev/null &&
+		but status -s -b --no-ahead-behind | head -1
 	) >actual &&
 	test_cmp expect actual
 '
@@ -169,8 +169,8 @@ EOF
 test_expect_success 'status.aheadbehind=false status -s -b (diverged from upstream)' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git -c status.aheadbehind=false status -s -b | head -1
+		but checkout b1 >/dev/null &&
+		but -c status.aheadbehind=false status -s -b | head -1
 	) >actual &&
 	test_cmp expect actual
 '
@@ -184,8 +184,8 @@ EOF
 test_expect_success 'status --long --branch' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git status --long -b | head -3
+		but checkout b1 >/dev/null &&
+		but status --long -b | head -3
 	) >actual &&
 	test_cmp expect actual
 '
@@ -193,8 +193,8 @@ test_expect_success 'status --long --branch' '
 test_expect_success 'status --long --branch' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git -c status.aheadbehind=true status --long -b | head -3
+		but checkout b1 >/dev/null &&
+		but -c status.aheadbehind=true status --long -b | head -3
 	) >actual &&
 	test_cmp expect actual
 '
@@ -207,8 +207,8 @@ EOF
 test_expect_success 'status --long --branch --no-ahead-behind' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git status --long -b --no-ahead-behind | head -2
+		but checkout b1 >/dev/null &&
+		but status --long -b --no-ahead-behind | head -2
 	) >actual &&
 	test_cmp expect actual
 '
@@ -216,8 +216,8 @@ test_expect_success 'status --long --branch --no-ahead-behind' '
 test_expect_success 'status.aheadbehind=false status --long --branch' '
 	(
 		cd test &&
-		git checkout b1 >/dev/null &&
-		git -c status.aheadbehind=false status --long -b | head -2
+		but checkout b1 >/dev/null &&
+		but -c status.aheadbehind=false status --long -b | head -2
 	) >actual &&
 	test_cmp expect actual
 '
@@ -229,8 +229,8 @@ EOF
 test_expect_success 'status -s -b (upstream is gone)' '
 	(
 		cd test &&
-		git checkout b5 >/dev/null &&
-		git status -s -b | head -1
+		but checkout b5 >/dev/null &&
+		but status -s -b | head -1
 	) >actual &&
 	test_cmp expect actual
 '
@@ -242,52 +242,52 @@ EOF
 test_expect_success 'status -s -b (up-to-date with upstream)' '
 	(
 		cd test &&
-		git checkout b6 >/dev/null &&
-		git status -s -b | head -1
+		but checkout b6 >/dev/null &&
+		but status -s -b | head -1
 	) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'fail to track lightweight tags' '
-	git checkout main &&
-	git tag light &&
-	test_must_fail git branch --track lighttrack light >actual &&
+	but checkout main &&
+	but tag light &&
+	test_must_fail but branch --track lighttrack light >actual &&
 	test_i18ngrep ! "set up to track" actual &&
-	test_must_fail git checkout lighttrack
+	test_must_fail but checkout lighttrack
 '
 
 test_expect_success 'fail to track annotated tags' '
-	git checkout main &&
-	git tag -m heavy heavy &&
-	test_must_fail git branch --track heavytrack heavy >actual &&
+	but checkout main &&
+	but tag -m heavy heavy &&
+	test_must_fail but branch --track heavytrack heavy >actual &&
 	test_i18ngrep ! "set up to track" actual &&
-	test_must_fail git checkout heavytrack
+	test_must_fail but checkout heavytrack
 '
 
 test_expect_success '--set-upstream-to does not change branch' '
-	git branch from-main main &&
-	git branch --set-upstream-to main from-main &&
-	git branch from-topic_2 main &&
-	test_must_fail git config branch.from-topic_2.merge > actual &&
-	git rev-list from-topic_2 &&
-	git update-ref refs/heads/from-topic_2 from-topic_2^ &&
-	git rev-parse from-topic_2 >expect2 &&
-	git branch --set-upstream-to main from-topic_2 &&
-	git config branch.from-main.merge > actual &&
-	git rev-parse from-topic_2 >actual2 &&
+	but branch from-main main &&
+	but branch --set-upstream-to main from-main &&
+	but branch from-topic_2 main &&
+	test_must_fail but config branch.from-topic_2.merge > actual &&
+	but rev-list from-topic_2 &&
+	but update-ref refs/heads/from-topic_2 from-topic_2^ &&
+	but rev-parse from-topic_2 >expect2 &&
+	but branch --set-upstream-to main from-topic_2 &&
+	but config branch.from-main.merge > actual &&
+	but rev-parse from-topic_2 >actual2 &&
 	grep -q "^refs/heads/main$" actual &&
 	cmp expect2 actual2
 '
 
 test_expect_success '--set-upstream-to @{-1}' '
-	git checkout follower &&
-	git checkout from-topic_2 &&
-	git config branch.from-topic_2.merge > expect2 &&
-	git branch --set-upstream-to @{-1} from-main &&
-	git config branch.from-main.merge > actual &&
-	git config branch.from-topic_2.merge > actual2 &&
-	git branch --set-upstream-to follower from-main &&
-	git config branch.from-main.merge > expect &&
+	but checkout follower &&
+	but checkout from-topic_2 &&
+	but config branch.from-topic_2.merge > expect2 &&
+	but branch --set-upstream-to @{-1} from-main &&
+	but config branch.from-main.merge > actual &&
+	but config branch.from-topic_2.merge > actual2 &&
+	but branch --set-upstream-to follower from-main &&
+	but config branch.from-main.merge > expect &&
 	test_cmp expect2 actual2 &&
 	test_cmp expect actual
 '

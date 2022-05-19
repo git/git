@@ -4,9 +4,9 @@ Git v1.7.6 Release Notes
 Updates since v1.7.5
 --------------------
 
- * Various git-svn updates.
+ * Various but-svn updates.
 
- * Updates the way content tags are handled in gitweb.  Also adds
+ * Updates the way content tags are handled in butweb.  Also adds
    a UI to choose common timezone for displaying the dates.
 
  * Similar to branch names, tagnames that begin with "-" are now
@@ -22,7 +22,7 @@ Updates since v1.7.5
    during the common ancestor negotiation exchange with the other side.
 
  * Adding a file larger than core.bigfilethreshold (defaults to 1/2 Gig)
-   using "git add" will send the contents straight to a packfile without
+   using "but add" will send the contents straight to a packfile without
    having to hold it and its compressed representation both at the same
    time in memory.
 
@@ -35,56 +35,56 @@ Updates since v1.7.5
    entire working tree. In general, ":/path/to/file" would be relative
    to the root of the working tree hierarchy.
 
-   After "git reset --hard; edit Makefile; cd t/", "git add -u" would
-   be a no-op, but "git add -u :/" would add the updated contents of
+   After "but reset --hard; edit Makefile; cd t/", "but add -u" would
+   be a no-op, but "but add -u :/" would add the updated contents of
    the Makefile at the top level. If you want to name a path in the
    current subdirectory whose unusual name begins with ":/", you can
    name it by "./:/that/path" or by "\:/that/path".
 
- * "git blame" learned "--abbrev[=<n>]" option to control the minimum
-   number of hexdigits shown for cummit object names.
+ * "but blame" learned "--abbrev[=<n>]" option to control the minimum
+   number of hexdibuts shown for cummit object names.
 
- * "git blame" learned "--line-porcelain" that is less efficient but is
+ * "but blame" learned "--line-porcelain" that is less efficient but is
    easier to parse.
 
- * Aborting "git cummit --interactive" discards updates to the index
+ * Aborting "but cummit --interactive" discards updates to the index
    made during the interactive session.
 
- * "git cummit" learned a "--patch" option to directly jump to the
+ * "but cummit" learned a "--patch" option to directly jump to the
    per-hunk selection UI of the interactive mode.
 
- * "git diff" and its family of commands learned --dirstat=0 to show
+ * "but diff" and its family of commands learned --dirstat=0 to show
    directories that contribute less than 0.1% of changes.
 
- * "git diff" and its family of commands learned --dirstat=lines mode to
+ * "but diff" and its family of commands learned --dirstat=lines mode to
    assess damage to the directory based on number of lines in the patch
    output, not based on the similarity numbers.
 
- * "git format-patch" learned "--quiet" option to suppress the output of
+ * "but format-patch" learned "--quiet" option to suppress the output of
    the names of generated files.
 
- * "git format-patch" quotes people's names when it has RFC822 special
+ * "but format-patch" quotes people's names when it has RFC822 special
    characters in it, e.g. "Junio C. Hamano" <jch@example.com>.  Earlier
    it was up to the user to do this when using its output.
 
- * "git format-patch" can take an empty --subject-prefix now.
+ * "but format-patch" can take an empty --subject-prefix now.
 
- * "git grep" learned the "-P" option to take pcre regular expressions.
+ * "but grep" learned the "-P" option to take pcre regular expressions.
 
- * "git log" and friends learned a new "--notes" option to replace the
+ * "but log" and friends learned a new "--notes" option to replace the
    "--show-notes" option.  Unlike "--show-notes", "--notes=<ref>" does
    not imply showing the default notes.
 
  * They also learned a log.abbrevcummit configuration variable to augment
    the --abbrev-cummit command line option.
 
- * "git ls-remote" learned "--exit-code" option to consider it a
+ * "but ls-remote" learned "--exit-code" option to consider it a
    different kind of error when no remote ref to be shown.
 
- * "git merge" learned "-" as a short-hand for "the previous branch", just
-   like the way "git checkout -" works.
+ * "but merge" learned "-" as a short-hand for "the previous branch", just
+   like the way "but checkout -" works.
 
- * "git merge" uses "merge.ff" configuration variable to decide to always
+ * "but merge" uses "merge.ff" configuration variable to decide to always
    create a merge cummit (i.e. --no-ff, aka merge.ff=no), refuse to create
    a merge cummit (i.e. --ff-only, aka merge.ff=only). Setting merge.ff=yes
    (or not setting it at all) restores the default behaviour of allowing
@@ -92,27 +92,27 @@ Updates since v1.7.5
 
  * p4-import (from contrib) learned a new option --preserve-user.
 
- * "git read-tree -m" learned "--dry-run" option that reports if a merge
+ * "but read-tree -m" learned "--dry-run" option that reports if a merge
    would fail without touching the index nor the working tree.
 
- * "git rebase" that does not specify on top of which branch to rebase
+ * "but rebase" that does not specify on top of which branch to rebase
    the current branch now uses @{upstream} of the current branch.
 
- * "git rebase" finished either normally or with --abort did not
+ * "but rebase" finished either normally or with --abort did not
    update the reflog for HEAD to record the event to come back to
    where it started from.
 
- * "git remote add -t only-this-branch --mirror=fetch" is now allowed. Earlier
+ * "but remote add -t only-this-branch --mirror=fetch" is now allowed. Earlier
    a fetch-mode mirror meant mirror everything, but now it only means refs are
    not renamed.
 
- * "git rev-list --count" used with "--cherry-mark" counts the cherry-picked
+ * "but rev-list --count" used with "--cherry-mark" counts the cherry-picked
    cummits separately, producing more a useful output.
 
- * "git submodule update" learned "--force" option to get rid of local
+ * "but submodule update" learned "--force" option to get rid of local
    changes in submodules and replace them with the up-to-date version.
 
- * "git status" and friends ignore .gitmodules file while the file is
+ * "but status" and friends ignore .butmodules file while the file is
    still in a conflicted state during a merge, to avoid using information
    that is not final and possibly corrupt with conflict markers.
 
@@ -126,11 +126,11 @@ Fixes since v1.7.5
 Unless otherwise noted, all the fixes in 1.7.5.X maintenance track are
 included in this release.
 
- * "git config" used to choke with an insanely long line.
+ * "but config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
- * "git diff --quiet" did not work well with --diff-filter.
+ * "but diff --quiet" did not work well with --diff-filter.
    (merge jk/diff-not-so-quick later)
 
- * "git status -z" did not default to --porcelain output format.
+ * "but status -z" did not default to --porcelain output format.
    (merge bc/maint-status-z-to-use-porcelain later)

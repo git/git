@@ -8,23 +8,23 @@ test_expect_success 'setup a commit history with trees, blobs' '
 	for x in one two three four
 	do
 		echo $x >$x &&
-		git add $x &&
-		git cummit -m "add file $x" ||
+		but add $x &&
+		but cummit -m "add file $x" ||
 		return 1
 	done &&
 	for x in four three
 	do
-		git rm $x &&
-		git cummit -m "remove $x" ||
+		but rm $x &&
+		but cummit -m "remove $x" ||
 		return 1
 	done
 '
 
 test_expect_success 'rev-list --in-cummit-order' '
-	git rev-list --in-cummit-order --objects HEAD >actual.raw &&
+	but rev-list --in-cummit-order --objects HEAD >actual.raw &&
 	cut -d" " -f1 >actual <actual.raw &&
 
-	git cat-file --batch-check="%(objectname)" >expect.raw <<-\EOF &&
+	but cat-file --batch-check="%(objectname)" >expect.raw <<-\EOF &&
 		HEAD^{cummit}
 		HEAD^{tree}
 		HEAD^{tree}:one
@@ -48,10 +48,10 @@ test_expect_success 'rev-list --in-cummit-order' '
 '
 
 test_expect_success 'rev-list lists blobs and trees after cummits' '
-	git rev-list --objects HEAD >actual.raw &&
+	but rev-list --objects HEAD >actual.raw &&
 	cut -d" " -f1 >actual <actual.raw &&
 
-	git cat-file --batch-check="%(objectname)" >expect.raw <<-\EOF &&
+	but cat-file --batch-check="%(objectname)" >expect.raw <<-\EOF &&
 		HEAD^{cummit}
 		HEAD~1^{cummit}
 		HEAD~2^{cummit}

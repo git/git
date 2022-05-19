@@ -3,7 +3,7 @@
 test_description='external credential helper tests
 
 This is a tool for authors of external helper tools to sanity-check
-their helpers. If you have written the "git-credential-foo" helper,
+their helpers. If you have written the "but-credential-foo" helper,
 you check it with:
 
   make GIT_TEST_CREDENTIAL_HELPER=foo t0303-credential-external.sh

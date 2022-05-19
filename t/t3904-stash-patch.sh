@@ -14,12 +14,12 @@ test_expect_success 'setup' '
 	echo parent > dir/foo &&
 	echo dummy > bar &&
 	echo cummitted > HEAD &&
-	git add bar dir/foo HEAD &&
-	git cummit -m initial &&
+	but add bar dir/foo HEAD &&
+	but cummit -m initial &&
 	test_tick &&
 	test_cummit second dir/foo head &&
 	echo index > dir/foo &&
-	git add dir/foo &&
+	but add dir/foo &&
 	set_and_save_state bar bar_work bar_index &&
 	save_head
 '
@@ -29,49 +29,49 @@ test_expect_success 'setup' '
 test_expect_success 'saying "n" does nothing' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state dir/foo work index &&
-	test_write_lines n n n | test_must_fail git stash save -p &&
+	test_write_lines n n n | test_must_fail but stash save -p &&
 	verify_state HEAD HEADfile_work HEADfile_index &&
 	verify_saved_state bar &&
 	verify_state dir/foo work index
 '
 
-test_expect_success 'git stash -p' '
-	test_write_lines y n y | git stash save -p &&
+test_expect_success 'but stash -p' '
+	test_write_lines y n y | but stash save -p &&
 	verify_state HEAD cummitted HEADfile_index &&
 	verify_saved_state bar &&
 	verify_state dir/foo head index &&
-	git reset --hard &&
-	git stash apply &&
+	but reset --hard &&
+	but stash apply &&
 	verify_state HEAD HEADfile_work cummitted &&
 	verify_state bar dummy dummy &&
 	verify_state dir/foo work head
 '
 
-test_expect_success 'git stash -p --no-keep-index' '
+test_expect_success 'but stash -p --no-keep-index' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state bar bar_work bar_index &&
 	set_state dir/foo work index &&
-	test_write_lines y n y | git stash save -p --no-keep-index &&
+	test_write_lines y n y | but stash save -p --no-keep-index &&
 	verify_state HEAD cummitted cummitted &&
 	verify_state bar bar_work dummy &&
 	verify_state dir/foo head head &&
-	git reset --hard &&
-	git stash apply --index &&
+	but reset --hard &&
+	but stash apply --index &&
 	verify_state HEAD HEADfile_work HEADfile_index &&
 	verify_state bar dummy bar_index &&
 	verify_state dir/foo work index
 '
 
-test_expect_success 'git stash --no-keep-index -p' '
+test_expect_success 'but stash --no-keep-index -p' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state bar bar_work bar_index &&
 	set_state dir/foo work index &&
-	test_write_lines y n y | git stash save --no-keep-index -p &&
+	test_write_lines y n y | but stash save --no-keep-index -p &&
 	verify_state HEAD cummitted cummitted &&
 	verify_state dir/foo head head &&
 	verify_state bar bar_work dummy &&
-	git reset --hard &&
-	git stash apply --index &&
+	but reset --hard &&
+	but stash apply --index &&
 	verify_state HEAD HEADfile_work HEADfile_index &&
 	verify_state bar dummy bar_index &&
 	verify_state dir/foo work index
@@ -80,7 +80,7 @@ test_expect_success 'git stash --no-keep-index -p' '
 test_expect_success 'stash -p --no-keep-index -- <pathspec> does not unstage other files' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state dir/foo work index &&
-	echo y | git stash push -p --no-keep-index -- HEAD &&
+	echo y | but stash push -p --no-keep-index -- HEAD &&
 	verify_state HEAD cummitted cummitted &&
 	verify_state dir/foo work index
 '
@@ -90,14 +90,14 @@ test_expect_success 'none of this moved HEAD' '
 '
 
 test_expect_success 'stash -p with split hunk' '
-	git reset --hard &&
+	but reset --hard &&
 	cat >test <<-\EOF &&
 	aaa
 	bbb
 	ccc
 	EOF
-	git add test &&
-	git cummit -m "initial" &&
+	but add test &&
+	but cummit -m "initial" &&
 	cat >test <<-\EOF &&
 	aaa
 	added line 1
@@ -106,7 +106,7 @@ test_expect_success 'stash -p with split hunk' '
 	ccc
 	EOF
 	printf "%s\n" s n y q |
-	git stash -p 2>error &&
+	but stash -p 2>error &&
 	test_must_be_empty error &&
 	grep "added line 1" test &&
 	! grep "added line 2" test

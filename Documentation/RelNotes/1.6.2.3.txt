@@ -11,10 +11,10 @@ Fixes since v1.6.2.2
 * A fairly large and trivial memory leak while rev-list shows list of
   reachable objects has been identified and plugged.
 
-* "git-cummit --interactive" did not abort when underlying "git-add -i"
+* "but-cummit --interactive" did not abort when underlying "but-add -i"
   signaled a failure.
 
-* git-repack (invoked from git-gc) did not work as nicely as it should in
+* but-repack (invoked from but-gc) did not work as nicely as it should in
   a repository that borrows objects from neighbours via alternates
   mechanism especially when some packs are marked with the ".keep" flag
   to prevent them from being repacked.

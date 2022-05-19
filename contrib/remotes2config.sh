@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Use this tool to rewrite your .git/remotes/ files into the config.
+# Use this tool to rewrite your .but/remotes/ files into the config.
 
-. git-sh-setup
+. but-sh-setup
 
 if [ -d "$GIT_DIR"/remotes ]; then
 	echo "Rewriting $GIT_DIR/remotes" >&2
@@ -26,8 +26,8 @@ if [ -d "$GIT_DIR"/remotes ]; then
 				mv "$GIT_DIR"/remotes "$GIT_DIR"/remotes.old
 			fi ;;
 		*)
-			echo "git config $key "$value" $regex"
-			git config $key "$value" $regex || error=1 ;;
+			echo "but config $key "$value" $regex"
+			but config $key "$value" $regex || error=1 ;;
 		esac
 	done
 fi

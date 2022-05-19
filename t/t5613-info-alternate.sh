@@ -10,41 +10,41 @@ test_expect_success 'preparing first repository' '
 	test_create_repo A && (
 		cd A &&
 		echo "Hello World" > file1 &&
-		git add file1 &&
-		git cummit -m "Initial cummit" file1 &&
-		git repack -a -d &&
-		git prune
+		but add file1 &&
+		but cummit -m "Initial cummit" file1 &&
+		but repack -a -d &&
+		but prune
 	)
 '
 
 test_expect_success 'preparing second repository' '
-	git clone -l -s A B && (
+	but clone -l -s A B && (
 		cd B &&
 		echo "foo bar" > file2 &&
-		git add file2 &&
-		git cummit -m "next cummit" file2 &&
-		git repack -a -d -l &&
-		git prune
+		but add file2 &&
+		but cummit -m "next cummit" file2 &&
+		but repack -a -d -l &&
+		but prune
 	)
 '
 
 test_expect_success 'preparing third repository' '
-	git clone -l -s B C && (
+	but clone -l -s B C && (
 		cd C &&
 		echo "Goodbye, cruel world" > file3 &&
-		git add file3 &&
-		git cummit -m "one more" file3 &&
-		git repack -a -d -l &&
-		git prune
+		but add file3 &&
+		but cummit -m "one more" file3 &&
+		but repack -a -d -l &&
+		but prune
 	)
 '
 
 test_expect_success 'count-objects shows the alternates' '
 	cat >expect <<-EOF &&
-	alternate: $(pwd)/B/.git/objects
-	alternate: $(pwd)/A/.git/objects
+	alternate: $(pwd)/B/.but/objects
+	alternate: $(pwd)/A/.but/objects
 	EOF
-	git -C C count-objects -v >actual &&
+	but -C C count-objects -v >actual &&
 	grep ^alternate: actual >actual.alternates &&
 	test_cmp expect actual.alternates
 '
@@ -65,38 +65,38 @@ test_expect_success 'count-objects shows the alternates' '
 # we do not try to checkout the result (which needs objects), either of
 # which would cause the clone to fail.
 test_expect_success 'creating too deep nesting' '
-	git clone -l -s C D &&
-	git clone -l -s D E &&
-	git clone -l -s E F &&
-	git clone -l -s F G &&
-	git clone --bare -l -s G H
+	but clone -l -s C D &&
+	but clone -l -s D E &&
+	but clone -l -s E F &&
+	but clone -l -s F G &&
+	but clone --bare -l -s G H
 '
 
 test_expect_success 'validity of seventh repository' '
-	git -C G fsck
+	but -C G fsck
 '
 
 test_expect_success 'invalidity of eighth repository' '
-	test_must_fail git -C H fsck
+	test_must_fail but -C H fsck
 '
 
 test_expect_success 'breaking of loops' '
-	echo "$(pwd)"/B/.git/objects >>A/.git/objects/info/alternates &&
-	git -C C fsck
+	echo "$(pwd)"/B/.but/objects >>A/.but/objects/info/alternates &&
+	but -C C fsck
 '
 
 test_expect_success 'that info/alternates is necessary' '
-	rm -f C/.git/objects/info/alternates &&
-	test_must_fail git -C C fsck
+	rm -f C/.but/objects/info/alternates &&
+	test_must_fail but -C C fsck
 '
 
 test_expect_success 'that relative alternate is possible for current dir' '
-	echo "../../../B/.git/objects" >C/.git/objects/info/alternates &&
-	git fsck
+	echo "../../../B/.but/objects" >C/.but/objects/info/alternates &&
+	but fsck
 '
 
 test_expect_success 'that relative alternate is recursive' '
-	git -C D fsck
+	but -C D fsck
 '
 
 # we can reach "A" from our new repo both directly, and via "C".
@@ -104,34 +104,34 @@ test_expect_success 'that relative alternate is recursive' '
 # pure-text comparison of the alternate names.
 test_expect_success 'relative duplicates are eliminated' '
 	mkdir -p deep/subdir &&
-	git init --bare deep/subdir/duplicate.git &&
-	cat >deep/subdir/duplicate.git/objects/info/alternates <<-\EOF &&
-	../../../../C/.git/objects
-	../../../../A/.git/objects
+	but init --bare deep/subdir/duplicate.but &&
+	cat >deep/subdir/duplicate.but/objects/info/alternates <<-\EOF &&
+	../../../../C/.but/objects
+	../../../../A/.but/objects
 	EOF
 	cat >expect <<-EOF &&
-	alternate: $(pwd)/C/.git/objects
-	alternate: $(pwd)/B/.git/objects
-	alternate: $(pwd)/A/.git/objects
+	alternate: $(pwd)/C/.but/objects
+	alternate: $(pwd)/B/.but/objects
+	alternate: $(pwd)/A/.but/objects
 	EOF
-	git -C deep/subdir/duplicate.git count-objects -v >actual &&
+	but -C deep/subdir/duplicate.but count-objects -v >actual &&
 	grep ^alternate: actual >actual.alternates &&
 	test_cmp expect actual.alternates
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'dup finding can be case-insensitive' '
-	git init --bare insensitive.git &&
+	but init --bare insensitive.but &&
 	# the previous entry for "A" will have used uppercase
-	cat >insensitive.git/objects/info/alternates <<-\EOF &&
-	../../C/.git/objects
-	../../a/.git/objects
+	cat >insensitive.but/objects/info/alternates <<-\EOF &&
+	../../C/.but/objects
+	../../a/.but/objects
 	EOF
 	cat >expect <<-EOF &&
-	alternate: $(pwd)/C/.git/objects
-	alternate: $(pwd)/B/.git/objects
-	alternate: $(pwd)/A/.git/objects
+	alternate: $(pwd)/C/.but/objects
+	alternate: $(pwd)/B/.but/objects
+	alternate: $(pwd)/A/.but/objects
 	EOF
-	git -C insensitive.git count-objects -v >actual &&
+	but -C insensitive.but count-objects -v >actual &&
 	grep ^alternate: actual >actual.alternates &&
 	test_cmp expect actual.alternates
 '

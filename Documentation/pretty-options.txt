@@ -12,7 +12,7 @@ See the "PRETTY FORMATS" section for some additional details for each
 format.  When '=<format>' part is omitted, it defaults to 'medium'.
 +
 Note: you can specify the default pretty format in the repository
-configuration (see linkgit:git-config[1]).
+configuration (see linkbut:but-config[1]).
 
 --abbrev-cummit::
 	Instead of showing the full 40-byte hexadecimal cummit object
@@ -58,17 +58,17 @@ By default, tabs are expanded in pretty formats that indent the log
 message by 4 spaces (i.e.  'medium', which is the default, 'full',
 and 'fuller').
 
-ifndef::git-rev-list[]
+ifndef::but-rev-list[]
 --notes[=<ref>]::
-	Show the notes (see linkgit:git-notes[1]) that annotate the
+	Show the notes (see linkbut:but-notes[1]) that annotate the
 	cummit, when showing the cummit log message.  This is the default
-	for `git log`, `git show` and `git whatchanged` commands when
+	for `but log`, `but show` and `but whatchanged` commands when
 	there is no `--pretty`, `--format`, or `--oneline` option given
 	on the command line.
 +
 By default, the notes shown are from the notes refs listed in the
 `core.notesRef` and `notes.displayRef` variables (or corresponding
-environment overrides). See linkgit:git-config[1] for more details.
+environment overrides). See linkbut:but-config[1] for more details.
 +
 With an optional '<ref>' argument, use the ref to find the notes
 to display.  The ref can specify the full refname when it begins
@@ -91,7 +91,7 @@ being displayed. Examples: "--notes=foo" will show only notes from
 --[no-]standard-notes::
 	These options are deprecated. Use the above --notes/--no-notes
 	options instead.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --show-signature::
 	Check the validity of a signed cummit object by passing the signature

@@ -16,7 +16,7 @@ R="$1"
 
 [ "$(id -u)" -eq 0 ] && die "This script should not be run as root, what if it does rm -rf /?"
 [ -n "$R" ] || die "usage: prepare-chroot.sh <root>"
-[ -x git ] || die "This script needs to be executed at git source code's top directory"
+[ -x but ] || die "This script needs to be executed at but source code's top directory"
 if [ -x /bin/busybox ]; then
 	BB=/bin/busybox
 elif [ -x /usr/bin/busybox ]; then
@@ -42,7 +42,7 @@ rsync --exclude-from t/t1509/excludes -Ha . "$R$(pwd)"
 # Fake perl to reduce dependency, t1509 does not use perl, but some
 # env might slip through, see test-lib.sh, unset.*PERL_PATH
 sed 's|^PERL_PATH=.*|PERL_PATH=/bin/true|' GIT-BUILD-OPTIONS > "$R$(pwd)/GIT-BUILD-OPTIONS"
-for cmd in git $BB;do 
+for cmd in but $BB;do
 	ldd $cmd | grep '/' | sed 's,.*\s\(/[^ ]*\).*,\1,' | while read i; do
 		mkdir -p "$R$(dirname $i)"
 		cp "$i" "$R/$i"

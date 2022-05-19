@@ -2,7 +2,7 @@
 
 test_description='Test the Git Mediawiki remote helper: queries w/ more than 500 results'
 
-. ./test-gitmw-lib.sh
+. ./test-butmw-lib.sh
 . $TEST_DIRECTORY/test-lib.sh
 
 test_check_precond
@@ -17,7 +17,7 @@ test_expect_success 'creating page w/ >500 revisions' '
 '
 
 test_expect_success 'cloning page w/ >500 revisions' '
-	git clone mediawiki::'"$WIKI_URL"' mw_dir
+	but clone mediawiki::'"$WIKI_URL"' mw_dir
 '
 
 test_done

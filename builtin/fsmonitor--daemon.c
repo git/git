@@ -10,10 +10,10 @@
 #include "pkt-line.h"
 
 static const char * const builtin_fsmonitor__daemon_usage[] = {
-	N_("git fsmonitor--daemon start [<options>]"),
-	N_("git fsmonitor--daemon run [<options>]"),
-	N_("git fsmonitor--daemon stop"),
-	N_("git fsmonitor--daemon status"),
+	N_("but fsmonitor--daemon start [<options>]"),
+	N_("but fsmonitor--daemon run [<options>]"),
+	N_("but fsmonitor--daemon stop"),
+	N_("but fsmonitor--daemon status"),
 	NULL
 };
 
@@ -33,7 +33,7 @@ static int fsmonitor__announce_startup = 0;
 static int fsmonitor_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, FSMONITOR__IPC_THREADS)) {
-		int i = git_config_int(var, value);
+		int i = but_config_int(var, value);
 		if (i < 1)
 			return error(_("value of '%s' out of range: %d"),
 				     FSMONITOR__IPC_THREADS, i);
@@ -42,7 +42,7 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, FSMONITOR__START_TIMEOUT)) {
-		int i = git_config_int(var, value);
+		int i = but_config_int(var, value);
 		if (i < 0)
 			return error(_("value of '%s' out of range: %d"),
 				     FSMONITOR__START_TIMEOUT, i);
@@ -52,7 +52,7 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, FSMONITOR__ANNOUNCE_STARTUP)) {
 		int is_bool;
-		int i = git_config_bool_or_int(var, value, &is_bool);
+		int i = but_config_bool_or_int(var, value, &is_bool);
 		if (i < 0)
 			return error(_("value of '%s' not bool or int: %d"),
 				     var, i);
@@ -60,13 +60,13 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 /*
  * Acting as a CLIENT.
  *
- * Send a "quit" command to the `git-fsmonitor--daemon` (if running)
+ * Send a "quit" command to the `but-fsmonitor--daemon` (if running)
  * and wait for it to shutdown.
  */
 static int do_as_client__send_stop(void)
@@ -362,7 +362,7 @@ static struct fsmonitor_token_data *fsmonitor_new_token_data(void)
 	token->client_ref_count = 0;
 
 	if (test_env_value < 0)
-		test_env_value = git_env_bool("GIT_TEST_FSMONITOR_TOKEN", 0);
+		test_env_value = but_env_bool("GIT_TEST_FSMONITOR_TOKEN", 0);
 
 	if (!test_env_value) {
 		struct timeval tv;
@@ -473,7 +473,7 @@ static void fsmonitor_batch__combine(struct fsmonitor_batch *batch_dest,
  * activity, we try to truncate old batches from the end of the list as
  * they become irrelevant.
  *
- * We assume that the .git/index will be updated with the most recent token
+ * We assume that the .but/index will be updated with the most recent token
  * any time the index is updated.  And future commands will only ask for
  * recent changes *since* that new token.  So as tokens advance into the
  * future, older batch items will never be requested/needed.  So we can
@@ -982,14 +982,14 @@ static int handle_client(void *data,
 enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	const char *rel)
 {
-	if (fspathncmp(rel, ".git", 4))
+	if (fspathncmp(rel, ".but", 4))
 		return IS_WORKDIR_PATH;
 	rel += 4;
 
 	if (!*rel)
 		return IS_DOT_GIT;
 	if (*rel != '/')
-		return IS_WORKDIR_PATH; /* e.g. .gitignore */
+		return IS_WORKDIR_PATH; /* e.g. .butignore */
 	rel++;
 
 	if (!fspathncmp(rel, FSMONITOR_COOKIE_PREFIX,
@@ -999,7 +999,7 @@ enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	return IS_INSIDE_DOT_GIT;
 }
 
-enum fsmonitor_path_type fsmonitor_classify_path_gitdir_relative(
+enum fsmonitor_path_type fsmonitor_classify_path_butdir_relative(
 	const char *rel)
 {
 	if (!fspathncmp(rel, FSMONITOR_COOKIE_PREFIX,
@@ -1043,19 +1043,19 @@ enum fsmonitor_path_type fsmonitor_classify_path_absolute(
 	if (t != IS_OUTSIDE_CONE)
 		return t;
 
-	if (fspathncmp(path, state->path_gitdir_watch.buf,
-		       state->path_gitdir_watch.len))
+	if (fspathncmp(path, state->path_butdir_watch.buf,
+		       state->path_butdir_watch.len))
 		return IS_OUTSIDE_CONE;
 
-	rel = path + state->path_gitdir_watch.len;
+	rel = path + state->path_butdir_watch.len;
 
 	if (!*rel)
-		return IS_GITDIR; /* it is the <gitdir> exactly */
+		return IS_GITDIR; /* it is the <butdir> exactly */
 	if (*rel != '/')
 		return IS_OUTSIDE_CONE;
 	rel++;
 
-	return fsmonitor_classify_path_gitdir_relative(rel);
+	return fsmonitor_classify_path_butdir_relative(rel);
 }
 
 /*
@@ -1145,8 +1145,8 @@ static void *fsm_listen__thread_proc(void *_state)
 	trace_printf_key(&trace_fsmonitor, "Watching: worktree '%s'",
 			 state->path_worktree_watch.buf);
 	if (state->nr_paths_watching > 1)
-		trace_printf_key(&trace_fsmonitor, "Watching: gitdir '%s'",
-				 state->path_gitdir_watch.buf);
+		trace_printf_key(&trace_fsmonitor, "Watching: butdir '%s'",
+				 state->path_butdir_watch.buf);
 
 	fsm_listen__loop(state);
 
@@ -1232,39 +1232,39 @@ static int fsmonitor_run_daemon(void)
 
 	/* Prepare to (recursively) watch the <worktree-root> directory. */
 	strbuf_init(&state.path_worktree_watch, 0);
-	strbuf_addstr(&state.path_worktree_watch, absolute_path(get_git_work_tree()));
+	strbuf_addstr(&state.path_worktree_watch, absolute_path(get_but_work_tree()));
 	state.nr_paths_watching = 1;
 
 	/*
-	 * We create and delete cookie files somewhere inside the .git
+	 * We create and delete cookie files somewhere inside the .but
 	 * directory to help us keep sync with the file system.  If
-	 * ".git" is not a directory, then <gitdir> is not inside the
+	 * ".but" is not a directory, then <butdir> is not inside the
 	 * cone of <worktree-root>, so set up a second watch to watch
-	 * the <gitdir> so that we get events for the cookie files.
+	 * the <butdir> so that we get events for the cookie files.
 	 */
-	strbuf_init(&state.path_gitdir_watch, 0);
-	strbuf_addbuf(&state.path_gitdir_watch, &state.path_worktree_watch);
-	strbuf_addstr(&state.path_gitdir_watch, "/.git");
-	if (!is_directory(state.path_gitdir_watch.buf)) {
-		strbuf_reset(&state.path_gitdir_watch);
-		strbuf_addstr(&state.path_gitdir_watch, absolute_path(get_git_dir()));
+	strbuf_init(&state.path_butdir_watch, 0);
+	strbuf_addbuf(&state.path_butdir_watch, &state.path_worktree_watch);
+	strbuf_addstr(&state.path_butdir_watch, "/.but");
+	if (!is_directory(state.path_butdir_watch.buf)) {
+		strbuf_reset(&state.path_butdir_watch);
+		strbuf_addstr(&state.path_butdir_watch, absolute_path(get_but_dir()));
 		state.nr_paths_watching = 2;
 	}
 
 	/*
 	 * We will write filesystem syncing cookie files into
-	 * <gitdir>/<fsmonitor-dir>/<cookie-dir>/<pid>-<seq>.
+	 * <butdir>/<fsmonitor-dir>/<cookie-dir>/<pid>-<seq>.
 	 *
 	 * The extra layers of subdirectories here keep us from
-	 * changing the mtime on ".git/" or ".git/foo/" when we create
+	 * changing the mtime on ".but/" or ".but/foo/" when we create
 	 * or delete cookie files.
 	 *
 	 * There have been problems with some IDEs that do a
-	 * non-recursive watch of the ".git/" directory and run a
+	 * non-recursive watch of the ".but/" directory and run a
 	 * series of commands any time something happens.
 	 *
 	 * For example, if we place our cookie files directly in
-	 * ".git/" or ".git/foo/" then a `git status` (or similar
+	 * ".but/" or ".but/foo/" then a `but status` (or similar
 	 * command) from the IDE will cause a cookie file to be
 	 * created in one of those dirs.  This causes the mtime of
 	 * those dirs to change.  This triggers the IDE's watch
@@ -1273,11 +1273,11 @@ static int fsmonitor_run_daemon(void)
 	 * idle.
 	 *
 	 * Adding the extra layers of subdirectories prevents the
-	 * mtime of ".git/" and ".git/foo" from changing when a
+	 * mtime of ".but/" and ".but/foo" from changing when a
 	 * cookie file is created.
 	 */
 	strbuf_init(&state.path_cookie_prefix, 0);
-	strbuf_addbuf(&state.path_cookie_prefix, &state.path_gitdir_watch);
+	strbuf_addbuf(&state.path_cookie_prefix, &state.path_butdir_watch);
 
 	strbuf_addch(&state.path_cookie_prefix, '/');
 	strbuf_addstr(&state.path_cookie_prefix, FSMONITOR_DIR);
@@ -1308,7 +1308,7 @@ done:
 	ipc_server_free(state.ipc_server_data);
 
 	strbuf_release(&state.path_worktree_watch);
-	strbuf_release(&state.path_gitdir_watch);
+	strbuf_release(&state.path_butdir_watch);
 	strbuf_release(&state.path_cookie_prefix);
 
 	return err;
@@ -1389,7 +1389,7 @@ static int try_to_start_background_daemon(void)
 		fflush(stderr);
 	}
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 
 	strvec_push(&cp.args, "fsmonitor--daemon");
 	strvec_push(&cp.args, "run");
@@ -1437,7 +1437,7 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(fsmonitor_config, NULL);
+	but_config(fsmonitor_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_fsmonitor__daemon_usage, 0);

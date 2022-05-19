@@ -6,20 +6,20 @@ Fixes since v1.5.2.3
 
  * Bugfixes
 
-   - "git-gui" bugfixes, including a handful fixes to run it
+   - "but-gui" bugfixes, including a handful fixes to run it
      better on Cygwin/MSYS.
 
-   - "git checkout" failed to switch back and forth between
+   - "but checkout" failed to switch back and forth between
      branches, one of which has "frotz -> xyzzy" symlink and
      file "xyzzy/filfre", while the other one has a file
      "frotz/filfre".
 
-   - "git prune" used to segfault upon seeing a cummit that is
+   - "but prune" used to segfault upon seeing a cummit that is
      referred to by a tree object (aka "subproject").
 
-   - "git diff --name-status --no-index" mishandled an added file.
+   - "but diff --name-status --no-index" mishandled an added file.
 
-   - "git apply --reverse --whitespace=warn" still complained
+   - "but apply --reverse --whitespace=warn" still complained
      about whitespaces that a forward application would have
      introduced.
 

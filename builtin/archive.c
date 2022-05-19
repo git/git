@@ -32,9 +32,9 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	_remote = remote_get(remote);
 	if (!_remote->url[0])
-		die(_("git archive: Remote with no URL"));
+		die(_("but archive: Remote with no URL"));
 	transport = transport_get(_remote, _remote->url[0]);
-	transport_connect(transport, "git-upload-archive", exec, fd);
+	transport_connect(transport, "but-upload-archive", exec, fd);
 
 	/*
 	 * Inject a fake --format field at the beginning of the
@@ -56,15 +56,15 @@ static int run_remote_archiver(int argc, const char **argv,
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
-		die(_("git archive: expected ACK/NAK, got a flush packet"));
+		die(_("but archive: expected ACK/NAK, got a flush packet"));
 	if (strcmp(reader.line, "ACK")) {
 		if (starts_with(reader.line, "NACK "))
-			die(_("git archive: NACK %s"), reader.line + 5);
-		die(_("git archive: protocol error"));
+			die(_("but archive: NACK %s"), reader.line + 5);
+		die(_("but archive: protocol error"));
 	}
 
 	if (packet_reader_read(&reader) != PACKET_READ_FLUSH)
-		die(_("git archive: expected a flush"));
+		die(_("but archive: expected a flush"));
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
 	rv = recv_sideband("archive", fd[0], 1);
@@ -80,7 +80,7 @@ static int run_remote_archiver(int argc, const char **argv,
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
-	const char *exec = "git-upload-archive";
+	const char *exec = "but-upload-archive";
 	const char *output = NULL;
 	const char *remote = NULL;
 	struct option local_opts[] = {
@@ -89,7 +89,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "remote", &remote, N_("repo"),
 			N_("retrieve the archive from remote repository <repo>")),
 		OPT_STRING(0, "exec", &exec, N_("command"),
-			N_("path to the remote git-upload-archive command")),
+			N_("path to the remote but-upload-archive command")),
 		OPT_END()
 	};
 

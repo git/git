@@ -1,20 +1,20 @@
-git-imap-send(1)
+but-imap-send(1)
 ================
 
 NAME
 ----
-git-imap-send - Send a collection of patches from stdin to an IMAP folder
+but-imap-send - Send a collection of patches from stdin to an IMAP folder
 
 
 SYNOPSIS
 --------
 [verse]
-'git imap-send' [-v] [-q] [--[no-]curl]
+'but imap-send' [-v] [-q] [--[no-]curl]
 
 
 DESCRIPTION
 -----------
-This command uploads a mailbox generated with 'git format-patch'
+This command uploads a mailbox generated with 'but format-patch'
 into an IMAP drafts folder.  This allows patches to be sent as
 other email is when using mail clients that cannot read mailbox
 files directly. The command also works with any general mailbox
@@ -23,7 +23,7 @@ that order.
 
 Typical usage is something like:
 
-git format-patch --signoff --stdout --attach origin | git imap-send
+but format-patch --signoff --stdout --attach origin | but imap-send
 
 
 OPTIONS
@@ -43,7 +43,7 @@ OPTIONS
 	option set.
 
 --no-curl::
-	Talk to the IMAP server using git's own IMAP routines instead of
+	Talk to the IMAP server using but's own IMAP routines instead of
 	using libcurl.  Ignored if Git was built with the NO_OPENSSL option
 	set.
 
@@ -116,7 +116,7 @@ folder will be localized.
 
 Once the cummits are ready to be sent, run the following command:
 
-  $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
+  $ but format-patch --cover-letter -M --stdout origin/master | but imap-send
 
 Just make sure to disable line wrapping in the email client (Gmail's web
 interface will wrap lines no matter what, so you need to use a real
@@ -137,8 +137,8 @@ users may wish to visit this web page for more information:
 
 SEE ALSO
 --------
-linkgit:git-format-patch[1], linkgit:git-send-email[1], mbox(5)
+linkbut:but-format-patch[1], linkbut:but-send-email[1], mbox(5)
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='tracking branch update checks for git push'
+test_description='tracking branch update checks for but push'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -9,56 +9,56 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'setup' '
 	echo 1 >file &&
-	git add file &&
-	git cummit -m 1 &&
-	git branch b1 &&
-	git branch b2 &&
-	git branch b3 &&
-	git clone . aa &&
-	git checkout b1 &&
+	but add file &&
+	but cummit -m 1 &&
+	but branch b1 &&
+	but branch b2 &&
+	but branch b3 &&
+	but clone . aa &&
+	but checkout b1 &&
 	echo b1 >>file &&
-	git cummit -a -m b1 &&
-	git checkout b2 &&
+	but cummit -a -m b1 &&
+	but checkout b2 &&
 	echo b2 >>file &&
-	git cummit -a -m b2
+	but cummit -a -m b2
 '
 
 test_expect_success 'prepare pushable branches' '
 	cd aa &&
-	b1=$(git rev-parse origin/b1) &&
-	b2=$(git rev-parse origin/b2) &&
-	git checkout -b b1 origin/b1 &&
+	b1=$(but rev-parse origin/b1) &&
+	b2=$(but rev-parse origin/b2) &&
+	but checkout -b b1 origin/b1 &&
 	echo aa-b1 >>file &&
-	git cummit -a -m aa-b1 &&
-	git checkout -b b2 origin/b2 &&
+	but cummit -a -m aa-b1 &&
+	but checkout -b b2 origin/b2 &&
 	echo aa-b2 >>file &&
-	git cummit -a -m aa-b2 &&
-	git checkout main &&
+	but cummit -a -m aa-b2 &&
+	but checkout main &&
 	echo aa-main >>file &&
-	git cummit -a -m aa-main
+	but cummit -a -m aa-main
 '
 
 test_expect_success 'mixed-success push returns error' '
-	test_must_fail git push origin :
+	test_must_fail but push origin :
 '
 
 test_expect_success 'check tracking branches updated correctly after push' '
-	test "$(git rev-parse origin/main)" = "$(git rev-parse main)"
+	test "$(but rev-parse origin/main)" = "$(but rev-parse main)"
 '
 
 test_expect_success 'check tracking branches not updated for failed refs' '
-	test "$(git rev-parse origin/b1)" = "$b1" &&
-	test "$(git rev-parse origin/b2)" = "$b2"
+	test "$(but rev-parse origin/b1)" = "$b1" &&
+	test "$(but rev-parse origin/b2)" = "$b2"
 '
 
 test_expect_success 'deleted branches have their tracking branches removed' '
-	git push origin :b1 &&
-	test "$(git rev-parse origin/b1)" = "origin/b1"
+	but push origin :b1 &&
+	test "$(but rev-parse origin/b1)" = "origin/b1"
 '
 
 test_expect_success 'already deleted tracking branches ignored' '
-	git branch -d -r origin/b3 &&
-	git push origin :b3 >output 2>&1 &&
+	but branch -d -r origin/b3 &&
+	but push origin :b3 >output 2>&1 &&
 	! grep "^error: " output
 '
 

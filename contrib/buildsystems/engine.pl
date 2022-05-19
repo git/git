@@ -16,10 +16,10 @@ use Text::ParseWords;
 
 my (%build_structure, %compile_options, @makedry);
 my $out_dir = getcwd();
-my $git_dir = $out_dir;
-$git_dir =~ s=\\=/=g;
-$git_dir = dirname($git_dir) while (!-e "$git_dir/git.c" && "$git_dir" ne "");
-die "Couldn't find Git repo" if ("$git_dir" eq "");
+my $but_dir = $out_dir;
+$but_dir =~ s=\\=/=g;
+$but_dir = dirname($but_dir) while (!-e "$but_dir/but.c" && "$but_dir" ne "");
+die "Couldn't find Git repo" if ("$but_dir" eq "");
 
 my @gens = Generators::available();
 my $gen = "Vcproj";
@@ -63,16 +63,16 @@ while (@ARGV) {
 }
 
 # NOT using File::Spec->rel2abs($path, $base) here, as
-# it fails badly for me in the msysgit environment
-$git_dir = File::Spec->rel2abs($git_dir);
+# it fails badly for me in the msysbut environment
+$but_dir = File::Spec->rel2abs($but_dir);
 $out_dir = File::Spec->rel2abs($out_dir);
-my $rel_dir = makeOutRel2Git($git_dir, $out_dir);
+my $rel_dir = makeOutRel2Git($but_dir, $out_dir);
 
 # Print some information so the user feels informed
 print << "EOM";
 -----
 Generator: $gen
-Git dir:   $git_dir
+Git dir:   $but_dir
 Out dir:   $out_dir
 -----
 Running GNU Make to figure out build structure...
@@ -82,7 +82,7 @@ EOM
 # Capture the make dry stderr to file for review (will be empty for a release build).
 
 my $ErrsFile = "msvc-build-makedryerrors.txt";
-@makedry = `make -C $git_dir -n MSVC=1 SKIP_VCPKG=1 V=1 2>$ErrsFile`
+@makedry = `make -C $but_dir -n MSVC=1 SKIP_VCPKG=1 V=1 2>$ErrsFile`
 if !@makedry;
 # test for an empty Errors file and remove it
 unlink $ErrsFile if -f -z $ErrsFile;
@@ -97,7 +97,7 @@ if (defined $make_out) {
 parseMakeOutput();
 
 # Finally, ask the generator to start generating..
-Generators::generate($gen, $git_dir, $out_dir, $rel_dir, %build_structure);
+Generators::generate($gen, $but_dir, $out_dir, $rel_dir, %build_structure);
 
 # main flow ends here
 # -------------------------------------------------------------------------------------------------

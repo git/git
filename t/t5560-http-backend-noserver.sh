@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git-http-backend-noserver'
+test_description='test but-http-backend-noserver'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -18,12 +18,12 @@ run_backend() {
 	echo "$2" |
 	QUERY_STRING="${1#*[?]}" \
 	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%[?]*}" \
-	git http-backend >act.out 2>act.err
+	but http-backend >act.out 2>act.err
 }
 
 GET() {
 	REQUEST_METHOD="GET" && export REQUEST_METHOD &&
-	run_backend "/repo.git/$1" &&
+	run_backend "/repo.but/$1" &&
 	sane_unset REQUEST_METHOD &&
 	if ! grep "Status" act.out >act
 	then
@@ -36,7 +36,7 @@ GET() {
 POST() {
 	REQUEST_METHOD="POST" && export REQUEST_METHOD &&
 	CONTENT_TYPE="application/x-$1-request" && export CONTENT_TYPE &&
-	run_backend "/repo.git/$1" "$2" &&
+	run_backend "/repo.but/$1" "$2" &&
 	sane_unset REQUEST_METHOD &&
 	sane_unset CONTENT_TYPE &&
 	if ! grep "Status" act.out >act
@@ -64,9 +64,9 @@ expect_aliased() {
 test_expect_success 'http-backend blocks bad PATH_INFO' '
 	config http.getanyfile true &&
 
-	expect_aliased 0 /repo.git/HEAD &&
+	expect_aliased 0 /repo.but/HEAD &&
 
-	expect_aliased 1 /repo.git/../HEAD &&
+	expect_aliased 1 /repo.but/../HEAD &&
 	expect_aliased 1 /../etc/passwd &&
 	expect_aliased 1 ../etc/passwd &&
 	expect_aliased 1 /etc//passwd &&

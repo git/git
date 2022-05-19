@@ -16,35 +16,35 @@ UI, Workflows & Features
    working tree after a (non-trivial) merge whose result matches what
    our side originally had.
 
- * "git filter-branch" learned to use a different exit code to allow
+ * "but filter-branch" learned to use a different exit code to allow
    the callers to tell the case where there was no new cummits to
    rewrite from other error cases.
 
  * When built with more recent cURL, GIT_SSL_VERSION can now specify
    "tlsv1.3" as its value.
 
- * "git gui" learned that "~/.ssh/id_ecdsa.pub" and
+ * "but gui" learned that "~/.ssh/id_ecdsa.pub" and
    "~/.ssh/id_ed25519.pub" are also possible SSH key files.
-   (merge 2e2f0288ef bb/git-gui-ssh-key-files later to maint).
+   (merge 2e2f0288ef bb/but-gui-ssh-key-files later to maint).
 
- * "git gui" performs cummit upon CTRL/CMD+ENTER but the
+ * "but gui" performs cummit upon CTRL/CMD+ENTER but the
    CTRL/CMD+KP_ENTER (i.e. enter key on the numpad) did not have the
    same key binding.  It now does.
-   (merge 28a1d94a06 bp/git-gui-bind-kp-enter later to maint).
+   (merge 28a1d94a06 bp/but-gui-bind-kp-enter later to maint).
 
- * "git gui" has been taught to work with old versions of tk (like
+ * "but gui" has been taught to work with old versions of tk (like
    8.5.7) that do not support "ttk::style theme use" as a way to query
    the current theme.
-   (merge 4891961105 cb/git-gui-ttk-style later to maint).
+   (merge 4891961105 cb/but-gui-ttk-style later to maint).
 
- * "git rebase" has learned to honor "--signoff" option when using
+ * "but rebase" has learned to honor "--signoff" option when using
    backends other than "am" (but not "--preserve-merges").
 
- * "git branch --list" during an interrupted "rebase -i" now lets
+ * "but branch --list" during an interrupted "rebase -i" now lets
    users distinguish the case where a detached HEAD is being rebased
    and a normal branch is being rebased.
 
- * "git mergetools" learned talking to guiffy.
+ * "but mergetools" learned talking to guiffy.
 
  * The scripts in contrib/emacs/ have outlived their usefulness and
    have been replaced with a stub that errors out and tells the user
@@ -54,33 +54,33 @@ UI, Workflows & Features
    contents to the specified encoding when checking out to the working
    tree (and the other way around when checking in).
 
- * The "git config" command uses separate options e.g. "--int",
+ * The "but config" command uses separate options e.g. "--int",
    "--bool", etc. to specify what type the caller wants the value to
    be interpreted as.  A new "--type=<typename>" option has been
    introduced, which would make it cleaner to define new types.
 
- * "git config --get" learned the "--default" option, to help the
+ * "but config --get" learned the "--default" option, to help the
    calling script.  Building on top of the above changes, the
-   "git config" learns "--type=color" type.  Taken together, you can
-   do things like "git config --get foo.color --default blue" and get
+   "but config" learns "--type=color" type.  Taken together, you can
+   do things like "but config --get foo.color --default blue" and get
    the ANSI color sequence for the color given to foo.color variable,
    or "blue" if the variable does not exist.
 
- * "git ls-remote" learned an option to allow sorting its output based
+ * "but ls-remote" learned an option to allow sorting its output based
    on the refnames being shown.
 
- * The command line completion (in contrib/) has been taught that "git
-   stash save" has been deprecated ("git stash push" is the preferred
+ * The command line completion (in contrib/) has been taught that "but
+   stash save" has been deprecated ("but stash push" is the preferred
    spelling in the new world) and does not offer it as a possible
-   completion candidate when "git stash push" can be.
+   completion candidate when "but stash push" can be.
 
- * "git gc --prune=nonsense" spent long time repacking and then
-   silently failed when underlying "git prune --expire=nonsense"
+ * "but gc --prune=nonsense" spent long time repacking and then
+   silently failed when underlying "but prune --expire=nonsense"
    failed to parse its command line.  This has been corrected.
 
- * Error messages from "git push" can be painted for more visibility.
+ * Error messages from "but push" can be painted for more visibility.
 
- * "git http-fetch" (deprecated) had an optional and experimental
+ * "but http-fetch" (deprecated) had an optional and experimental
    "feature" to fetch only cummits and/or trees, which nobody used.
    This has been removed.
 
@@ -89,24 +89,24 @@ UI, Workflows & Features
    code had support for it in many places, which has been cleaned up
    in order to drop support of the "grafts" mechanism.
 
- * "git worktree add" learned to check out an existing branch.
+ * "but worktree add" learned to check out an existing branch.
 
- * "git --no-pager cmd" did not have short-and-sweet single letter
+ * "but --no-pager cmd" did not have short-and-sweet single letter
    option. Now it does as "-P".
    (merge 7213c28818 js/no-pager-shorthand later to maint).
 
- * "git rebase" learned "--rebase-merges" to transplant the whole
+ * "but rebase" learned "--rebase-merges" to transplant the whole
    topology of cummit graph elsewhere.
 
- * "git status" learned to pay attention to UI related diff
+ * "but status" learned to pay attention to UI related diff
    configuration variables such as diff.renames.
 
  * The command line completion mechanism (in contrib/) learned to load
-   custom completion file for "git $command" where $command is a
-   custom "git-$command" that the end user has on the $PATH when using
+   custom completion file for "but $command" where $command is a
+   custom "but-$command" that the end user has on the $PATH when using
    newer version of bash-completion.
 
- * "git send-email" can sometimes offer confirmation dialog "Send this
+ * "but send-email" can sometimes offer confirmation dialog "Send this
    email?" with choices 'Yes', 'No', 'Quit', and 'All'.  A new action
    'Edit' has been added to this dialog's choice.
 
@@ -114,15 +114,15 @@ UI, Workflows & Features
    strategy can be told not to spend cycles trying to find renamed
    paths and merge them accordingly.
 
- * "git status" learned to honor a new status.renames configuration to
+ * "but status" learned to honor a new status.renames configuration to
    skip rename detection, which could be useful for those who want to
    do so without disabling the default rename detection done by the
-   "git diff" command.
+   "but diff" command.
 
  * Command line completion (in contrib/) learned to complete pathnames
    for various commands better.
 
- * "git blame" learns to unhighlight uninteresting metadata from the
+ * "but blame" learns to unhighlight uninteresting metadata from the
    originating cummit on lines that are the same as the previous one,
    and also paint lines in different colors depending on the age of
    the cummit.
@@ -135,7 +135,7 @@ UI, Workflows & Features
    These object names are now sorted according to their types for
    easier eyeballing.
 
- * "git fetch $there $refspec" that talks over protocol v2 can take
+ * "but fetch $there $refspec" that talks over protocol v2 can take
    advantage of server-side ref filtering; the code has been extended
    so that this mechanism triggers also when fetching with configured
    refspec.
@@ -144,13 +144,13 @@ UI, Workflows & Features
    from the other side; instead, just let cURL library to advertise
    and negotiate the best one.
 
- * "git p4" learned to "unshelve" shelved cummit from P4.
+ * "but p4" learned to "unshelve" shelved cummit from P4.
    (merge 123f631761 ld/p4-unshelve later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * A "git fetch" from a repository with insane number of refs into a
+ * A "but fetch" from a repository with insane number of refs into a
    repository that is already up-to-date still wasted too many cycles
    making many lstat(2) calls to see if these objects at the tips
    exist as loose objects locally.  These lstat(2) calls are optimized
@@ -166,13 +166,13 @@ Performance, Internal Implementation, Development Support etc.
    use, as before.
 
  * The build procedure learned to optionally use symbolic links
-   (instead of hardlinks and copies) to install "git-foo" for built-in
+   (instead of hardlinks and copies) to install "but-foo" for built-in
    commands, whose binaries are all identical.
 
  * Conversion from uchar[20] to struct object_id continues.
 
- * The way "git worktree prune" worked internally has been simplified,
-   by assuming how "git worktree move" moves an existing worktree to a
+ * The way "but worktree prune" worked internally has been simplified,
+   by assuming how "but worktree move" moves an existing worktree to a
    different place.
 
  * Code clean-up for the "repository" abstraction.
@@ -249,7 +249,7 @@ Performance, Internal Implementation, Development Support etc.
    to avoid opening and parsing the cummit object when it makes sense
    to do so.
 
- * "git gc" in a large repository takes a lot of time as it considers
+ * "but gc" in a large repository takes a lot of time as it considers
    to repack all objects into one pack by default.  The command has
    been taught to pretend as if the largest existing packfile is
    marked with ".keep" so that it is left untouched while objects in
@@ -261,11 +261,11 @@ Performance, Internal Implementation, Development Support etc.
    repository object (which in turn tells the API which object store
    the objects are to be located).
 
- * "git pack-objects" needs to allocate tons of "struct object_entry"
+ * "but pack-objects" needs to allocate tons of "struct object_entry"
    while doing its work, and shrinking its size helps the performance
    quite a bit.
 
- * The implementation of "git rebase -i --root" has been updated to use
+ * The implementation of "but rebase -i --root" has been updated to use
    the sequencer machinery more.
 
  * Developer support update, by using BUG() macro instead of die() to
@@ -309,31 +309,31 @@ Also contains various documentation updates and code clean-ups.
 Fixes since v2.17
 -----------------
 
- * "git shortlog cruft" aborted with a BUG message when run outside a
+ * "but shortlog cruft" aborted with a BUG message when run outside a
    Git repository.  The command has been taught to complain about
    extra and unwanted arguments on its command line instead in such a
    case.
    (merge 4aa0161e83 ma/shortlog-revparse later to maint).
 
- * "git stash push -u -- <pathspec>" gave an unnecessary and confusing
+ * "but stash push -u -- <pathspec>" gave an unnecessary and confusing
    error message when there was no tracked files that match the
    <pathspec>, which has been fixed.
    (merge 353278687e tg/stash-untracked-with-pathspec-fix later to maint).
 
- * "git tag --contains no-such-cummit" gave a full list of options
+ * "but tag --contains no-such-cummit" gave a full list of options
    after giving an error message.
    (merge 3bb0923f06 ps/contains-id-error-message later to maint).
 
- * "diff-highlight" filter (in contrib/) learned to understand "git log
+ * "diff-highlight" filter (in contrib/) learned to understand "but log
    --graph" output better.
    (merge 4551fbba14 jk/diff-highlight-graph-fix later to maint).
 
- * when refs that do not point at cummittish are given, "git
+ * when refs that do not point at cummittish are given, "but
    filter-branch" gave a misleading error messages.  This has been
    corrected.
    (merge f78ab355e7 yk/filter-branch-non-cummittish-refs later to maint).
 
- * "git submodule status" misbehaved on a submodule that has been
+ * "but submodule status" misbehaved on a submodule that has been
    removed from the working tree.
    (merge 74b6bda32f rs/status-with-removed-submodule later to maint).
 
@@ -342,7 +342,7 @@ Fixes since v2.17
    fixed.
    (merge a0d51e8d0e eb/cred-helper-ignore-sigpipe later to maint).
 
- * "git rebase --keep-empty" still removed an empty cummit if the
+ * "but rebase --keep-empty" still removed an empty cummit if the
    other side contained an empty cummit (due to the "does an
    equivalent patch exist already?" check), which has been corrected.
    (merge 3d946165e1 pw/rebase-keep-empty-fixes later to maint).
@@ -353,11 +353,11 @@ Fixes since v2.17
    cached paths to the new current directory.
    (merge fb9c2d2703 jk/relative-directory-fix later to maint).
 
- * "cd sub/dir && git cummit ../path" ought to record the changes to
+ * "cd sub/dir && but cummit ../path" ought to record the changes to
    the file "sub/path", but this regressed long time ago.
    (merge 86238e07ef bw/cummit-partial-from-subdirectory-fix later to maint).
 
- * Recent introduction of "--log-destination" option to "git daemon"
+ * Recent introduction of "--log-destination" option to "but daemon"
    did not work well when the daemon was run under "--inetd" mode.
    (merge e67d906d73 lw/daemon-log-destination later to maint).
 
@@ -369,22 +369,22 @@ Fixes since v2.17
    (merge d8579accfa bp/fsmonitor-bufsize-fix later to maint).
 
  * Recent simplification of build procedure forgot a bit of tweak to
-   the build procedure of contrib/mw-to-git/
+   the build procedure of contrib/mw-to-but/
    (merge d8698987f3 ab/simplify-perl-makefile later to maint).
 
- * Moving a submodule that itself has submodule in it with "git mv"
+ * Moving a submodule that itself has submodule in it with "but mv"
    forgot to make necessary adjustment to the nested sub-submodules;
    now the codepath learned to recurse into the submodules.
 
- * "git config --unset a.b", when "a.b" is the last variable in an
+ * "but config --unset a.b", when "a.b" is the last variable in an
    otherwise empty section "a", left an empty section "a" behind, and
-   worse yet, a subsequent "git config a.c value" did not reuse that
+   worse yet, a subsequent "but config a.c value" did not reuse that
    empty shell and instead created a new one.  These have been
    (partially) corrected.
    (merge c71d8bb38a js/empty-config-section-fix later to maint).
 
- * "git worktree remove" learned that "-f" is a shorthand for
-   "--force" option, just like for "git worktree add".
+ * "but worktree remove" learned that "-f" is a shorthand for
+   "--force" option, just like for "but worktree add".
    (merge d228eea514 sb/worktree-remove-opt-force later to maint).
 
  * The completion script (in contrib/) learned to clear cached list of
@@ -392,32 +392,32 @@ Fixes since v2.17
    way.
    (merge 94408dc71c sg/completion-clear-cached later to maint).
 
- * "git svn" had a minor thinko/typo which has been fixed.
-   (merge 51db271587 ab/git-svn-get-record-typofix later to maint).
+ * "but svn" had a minor thinko/typo which has been fixed.
+   (merge 51db271587 ab/but-svn-get-record-typofix later to maint).
 
  * During a "rebase -i" session, the code could give older timestamp
    to cummits created by later "pick" than an earlier "reword", which
    has been corrected.
    (merge 12f7babd6b js/ident-date-fix later to maint).
 
- * "git submodule status" did not check the symbolic revision name it
+ * "but submodule status" did not check the symbolic revision name it
    computed for the submodule HEAD is not the NULL, and threw it at
    printf routines, which has been corrected.
    (merge 0b5e2ea7cf nd/submodule-status-fix later to maint).
 
  * When fed input that already has In-Reply-To: and/or References:
-   headers and told to add the same information, "git send-email"
+   headers and told to add the same information, "but send-email"
    added these headers separately, instead of appending to an existing
    one, which is a violation of the RFC.  This has been corrected.
    (merge 256be1d3f0 sa/send-email-dedup-some-headers later to maint).
 
- * "git fast-export" had a regression in v2.15.0 era where it skipped
+ * "but fast-export" had a regression in v2.15.0 era where it skipped
    some merge cummits in certain cases, which has been corrected.
    (merge be011bbe00 ma/fast-export-skip-merge-fix later to maint).
 
  * The code did not propagate the terminal width to subprocesses via
    COLUMNS environment variable, which it now does.  This caused
-   trouble to "git column" helper subprocess when "git tag --column=row"
+   trouble to "but column" helper subprocess when "but tag --column=row"
    tried to list the existing tags on a display with non-default width.
    (merge b5d5a567fb nd/term-columns later to maint).
 
@@ -426,7 +426,7 @@ Fixes since v2.17
    better viewed as such with appropriate diff drivers.
    (merge 7818b619e2 ab/perl-python-attrs later to maint).
 
- * "git rebase -i" sometimes left intermediate "# This is a
+ * "but rebase -i" sometimes left intermediate "# This is a
    combination of N cummits" message meant for the human consumption
    inside an editor in the final result in certain corner cases, which
    has been fixed.
@@ -438,7 +438,7 @@ Fixes since v2.17
    versa) to cope with APFS as well as HFS.
    (merge 742ae10e35 tb/test-apfs-utf8-normalization later to maint).
 
- * "git format-patch --cover --attach" created a broken MIME multipart
+ * "but format-patch --cover --attach" created a broken MIME multipart
    message for the cover letter, which has been fixed by keeping the
    cover letter as plain text file.
    (merge 50cd54ef4e bc/format-patch-cover-no-attach later to maint).
@@ -468,14 +468,14 @@ Fixes since v2.17
    semi-corrupt repository.
    (merge 8702b30fd7 jk/unavailable-can-be-missing later to maint).
 
- * "git update-ref A B" is supposed to ensure that ref A does not yet
+ * "but update-ref A B" is supposed to ensure that ref A does not yet
    exist when B is a NULL OID, but this check was not done correctly
    for pseudo-refs outside refs/ hierarchy, e.g. MERGE_HEAD.
 
- * "git submodule update" and "git submodule add" supported the
+ * "but submodule update" and "but submodule add" supported the
    "--reference" option to borrow objects from a neighbouring local
-   repository like "git clone" does, but lacked the more recent
-   invention "--dissociate".  Also "git submodule add" has been taught
+   repository like "but clone" does, but lacked the more recent
+   invention "--dissociate".  Also "but submodule add" has been taught
    to take the "--progress" option.
    (merge a0ef29341a cf/submodule-progress-dissociate later to maint).
 
@@ -483,7 +483,7 @@ Fixes since v2.17
    the GPG used to decrypt the encrypted .netrc file.
    (merge 786ef50a23 lm/credential-netrc later to maint).
 
- * "git submodule update" attempts two different kinds of "git fetch"
+ * "but submodule update" attempts two different kinds of "but fetch"
    against the upstream repository to grab a cummit bound at the
    submodule's path, but it incorrectly gave up if the first kind
    (i.e. a normal fetch) failed, making the second "last resort" one
@@ -491,7 +491,7 @@ Fixes since v2.17
    This has been corrected.
    (merge e30d833671 sb/submodule-update-try-harder later to maint).
 
- * Error behaviour of "git grep" when it cannot read the index was
+ * Error behaviour of "but grep" when it cannot read the index was
    inconsistent with other commands that uses the index, which has
    been corrected to error out early.
    (merge b2aa84c789 sb/grep-die-on-unreadable-index later to maint).
@@ -504,17 +504,17 @@ Fixes since v2.17
    tarballs with overly long paths that use PAX extended headers.
    (merge 12ecea46e3 pa/import-tars-long-names later to maint).
 
- * "git rev-parse Y..." etc. misbehaved when given endpoints were
+ * "but rev-parse Y..." etc. misbehaved when given endpoints were
    not cummittishes.
    (merge 0ed556d38f en/rev-parse-invalid-range later to maint).
 
- * "git pull --recurse-submodules --rebase", when the submodule
+ * "but pull --recurse-submodules --rebase", when the submodule
    repository's history did not have anything common between ours and
    the upstream's, failed to execute.  We need to fetch from them to
    continue even in such a case.
    (merge 4d36f88be7 jt/submodule-pull-recurse-rebase later to maint).
 
- * "git remote update" can take both a single remote nickname and a
+ * "but remote update" can take both a single remote nickname and a
    nickname for remote groups, but only one of them was documented.
    (merge a97447a42a nd/remote-update-doc later to maint).
 
@@ -553,15 +553,15 @@ Fixes since v2.17
    (merge 43b44ccfe7 js/t5404-path-fix later to maint).
    (merge decf711fc1 ps/test-chmtime-get later to maint).
    (merge 22d11a6e8e es/worktree-docs later to maint).
-   (merge 92a5dbbc22 tg/use-git-contacts later to maint).
+   (merge 92a5dbbc22 tg/use-but-contacts later to maint).
    (merge adc887221f tq/t1510 later to maint).
    (merge bed21a8ad6 sg/doc-gc-quote-mismatch-fix later to maint).
-   (merge 73364e4f10 tz/doc-git-urls-reference later to maint).
+   (merge 73364e4f10 tz/doc-but-urls-reference later to maint).
    (merge cd1e606bad bc/mailmap-self later to maint).
    (merge f7997e3682 ao/config-api-doc later to maint).
    (merge ee930754d8 jk/apply-p-doc later to maint).
    (merge 011b648646 nd/pack-format-doc later to maint).
-   (merge 87a6bb701a sg/t5310-jgit-bitmap-test later to maint).
+   (merge 87a6bb701a sg/t5310-jbut-bitmap-test later to maint).
    (merge f6b82970aa sg/t5516-fixes later to maint).
    (merge 4362da078e sg/t7005-spaces-in-filenames-cleanup later to maint).
    (merge 7d0ee47c11 js/test-unset-prereq later to maint).

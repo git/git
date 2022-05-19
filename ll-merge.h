@@ -59,7 +59,7 @@ struct ll_merge_options {
 
 	/**
 	 * Resolve local conflicts automatically in favor of one side or the other
-	 * (as in 'git merge-file' `--ours`/`--theirs`/`--union`).  Can be `0`,
+	 * (as in 'but merge-file' `--ours`/`--theirs`/`--union`).  Can be `0`,
 	 * `XDL_MERGE_FAVOR_OURS`, `XDL_MERGE_FAVOR_THEIRS`,
 	 * or `XDL_MERGE_FAVOR_UNION`.
 	 */
@@ -92,7 +92,7 @@ enum ll_merge_result {
 /**
  * Perform a three-way single-file merge in core.  This is a thin wrapper
  * around `xdl_merge` that takes the path and any merge backend specified in
- * `.gitattributes` or `.git/info/attributes` into account.
+ * `.butattributes` or `.but/info/attributes` into account.
  * Returns 0 for a clean merge.
  */
 enum ll_merge_result ll_merge(mmbuffer_t *result_buf,

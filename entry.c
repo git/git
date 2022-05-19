@@ -327,7 +327,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 		}
 
 		/*
-		 * Convert from git internal format to working tree format
+		 * Convert from but internal format to working tree format
 		 */
 		if (dco && dco->state != CE_NO_DELAY) {
 			ret = async_convert_to_working_tree_ca(ca, ce->name,
@@ -529,7 +529,7 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 		 * just do the right thing)
 		 */
 		if (S_ISDIR(st.st_mode)) {
-			/* If it is a gitlink, leave it alone! */
+			/* If it is a butlink, leave it alone! */
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
 			remove_subtree(&path);

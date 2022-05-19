@@ -19,7 +19,7 @@ int cmd__serve_v2(int argc, const char **argv)
 			 N_("exit immediately after advertising capabilities")),
 		OPT_END()
 	};
-	const char *prefix = setup_git_directory();
+	const char *prefix = setup_but_directory();
 
 	/* ignore all unknown cmdline switches for now */
 	argc = parse_options(argc, argv, prefix, options, serve_usage,

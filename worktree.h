@@ -35,10 +35,10 @@ struct worktree **get_worktrees(void);
 int submodule_uses_worktrees(const char *path);
 
 /*
- * Return git dir of the worktree. Note that the path may be relative.
- * If wt is NULL, git dir of current worktree is returned.
+ * Return but dir of the worktree. Note that the path may be relative.
+ * If wt is NULL, but dir of current worktree is returned.
  */
-const char *get_worktree_git_dir(const struct worktree *wt);
+const char *get_worktree_but_dir(const struct worktree *wt);
 
 /*
  * Search for the worktree identified unambiguously by `arg` -- typically
@@ -107,7 +107,7 @@ int validate_worktree(const struct worktree *wt,
 		      unsigned flags);
 
 /*
- * Update worktrees/xxx/gitdir with the new path.
+ * Update worktrees/xxx/butdir with the new path.
  */
 void update_worktree_location(struct worktree *wt,
 			      const char *path_);
@@ -125,9 +125,9 @@ void repair_worktrees(worktree_repair_fn, void *cb_data);
 
 /*
  * Repair administrative files corresponding to the worktree at the given path.
- * The worktree's .git file pointing at the repository must be intact for the
+ * The worktree's .but file pointing at the repository must be intact for the
  * repair to succeed. Useful for re-associating an orphaned worktree with the
- * repository if the worktree has been moved manually (without using "git
+ * repository if the worktree has been moved manually (without using "but
  * worktree move"). For each repair made or error encountered while attempting
  * a repair, the callback function, if non-NULL, is called with the path of the
  * worktree and a description of the repair or error, along with the callback
@@ -159,10 +159,10 @@ int is_worktree_being_rebased(const struct worktree *wt, const char *target);
 int is_worktree_being_bisected(const struct worktree *wt, const char *target);
 
 /*
- * Similar to git_path() but can produce paths for a specified
+ * Similar to but_path() but can produce paths for a specified
  * worktree instead of current one
  */
-const char *worktree_git_path(const struct worktree *wt,
+const char *worktree_but_path(const struct worktree *wt,
 			      const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 

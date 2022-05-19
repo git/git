@@ -9,11 +9,11 @@
 #
 # License: GPL v2 or later
 
-# tests for git-remote-mediawiki
+# tests for but-remote-mediawiki
 
-test_description='Test the Git Mediawiki remote helper: git push and git pull simple test cases'
+test_description='Test the Git Mediawiki remote helper: but push and but pull simple test cases'
 
-. ./test-gitmw-lib.sh
+. ./test-butmw-lib.sh
 . ./push-pull-tests.sh
 . $TEST_DIRECTORY/test-lib.sh
 

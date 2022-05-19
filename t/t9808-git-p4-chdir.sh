@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 relative chdir'
+test_description='but p4 relative chdir'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -22,11 +22,11 @@ test_expect_success 'init depot' '
 test_expect_success 'P4CONFIG and absolute dir clone' '
 	printf "P4PORT=$P4PORT\nP4CLIENT=$P4CLIENT\n" >p4config &&
 	test_when_finished "rm p4config" &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		P4CONFIG=p4config && export P4CONFIG &&
 		sane_unset P4PORT P4CLIENT &&
-		git p4 clone --verbose --dest="$git" //depot
+		but p4 clone --verbose --dest="$but" //depot
 	)
 '
 
@@ -34,11 +34,11 @@ test_expect_success 'P4CONFIG and absolute dir clone' '
 test_expect_success 'P4CONFIG and relative dir clone' '
 	printf "P4PORT=$P4PORT\nP4CLIENT=$P4CLIENT\n" >p4config &&
 	test_when_finished "rm p4config" &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		P4CONFIG=p4config && export P4CONFIG &&
 		sane_unset P4PORT P4CLIENT &&
-		git p4 clone --verbose --dest="git" //depot
+		but p4 clone --verbose --dest="but" //depot
 	)
 '
 
@@ -46,13 +46,13 @@ test_expect_success 'P4CONFIG and relative dir clone' '
 # if clone destination is relative.  Make sure that chdir() expands
 # the relative path in --dest to absolute.
 test_expect_success 'p4 client root would be relative due to clone --dest' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		echo P4PORT=$P4PORT >git/.p4config &&
+		echo P4PORT=$P4PORT >but/.p4config &&
 		P4CONFIG=.p4config &&
 		export P4CONFIG &&
 		unset P4PORT &&
-		git p4 clone --dest="git" //depot
+		but p4 clone --dest="but" //depot
 	)
 '
 
@@ -65,7 +65,7 @@ test_expect_success SYMLINKS 'p4 client root symlink should stay symbolic' '
 	test_when_finished "rm \"$symbolic\"" &&
 	mkdir -p "$physical" &&
 	ln -s "$physical" "$symbolic" &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		P4CLIENT=client-sym &&
 		p4 client -i <<-EOF &&
@@ -75,11 +75,11 @@ test_expect_success SYMLINKS 'p4 client root symlink should stay symbolic' '
 		LineEnd: unix
 		View: //depot/... //$P4CLIENT/...
 		EOF
-		git p4 clone --dest="$git" //depot &&
-		cd "$git" &&
+		but p4 clone --dest="$but" //depot &&
+		cd "$but" &&
 		test_cummit file2 &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit
 	)
 '
 

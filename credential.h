@@ -27,8 +27,8 @@
  *
  * The Git code (typically a remote-helper) will call the C API to obtain
  * credential data like a login/password pair (credential_fill). The
- * API will itself call a remote helper (e.g. "git credential-cache" or
- * "git credential-store") that may retrieve credential data from a
+ * API will itself call a remote helper (e.g. "but credential-cache" or
+ * "but credential-store") that may retrieve credential data from a
  * store. If the credential helper cannot find the information, the C API
  * will prompt the user. Then, the caller of the API takes care of
  * contacting the server, and does the actual authentication.

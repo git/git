@@ -8,7 +8,7 @@ CVE-2019-1353, CVE-2019-1354, and CVE-2019-1387; see the release notes
 for those versions for details.
 
 The change to disallow `submodule.<name>.update=!command` entries in
-`.gitmodules` which was introduced v2.15.4 (and for which v2.17.3
+`.butmodules` which was introduced v2.15.4 (and for which v2.17.3
 added explicit fsck checks) fixes the vulnerability in v2.20.x where a
 recursive clone followed by a submodule update could execute code
 contained within the repository without the user explicitly having

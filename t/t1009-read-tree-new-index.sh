@@ -10,19 +10,19 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 	echo one >a &&
-	git add a &&
-	git cummit -m initial
+	but add a &&
+	but cummit -m initial
 '
 
 test_expect_success 'non-existent index file' '
 	rm -f new-index &&
-	GIT_INDEX_FILE=new-index git read-tree main
+	GIT_INDEX_FILE=new-index but read-tree main
 '
 
 test_expect_success 'empty index file' '
 	rm -f new-index &&
 	> new-index &&
-	GIT_INDEX_FILE=new-index git read-tree main
+	GIT_INDEX_FILE=new-index but read-tree main
 '
 
 test_done

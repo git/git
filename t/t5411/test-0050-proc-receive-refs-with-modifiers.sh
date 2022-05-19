@@ -1,10 +1,10 @@
 test_expect_success "config receive.procReceiveRefs with modifiers ($PROTOCOL)" '
 	(
 		cd "$upstream" &&
-		git config --unset-all receive.procReceiveRefs &&
-		git config --add receive.procReceiveRefs m:refs/heads/main &&
-		git config --add receive.procReceiveRefs ad:refs/heads &&
-		git config --add receive.procReceiveRefs "a!:refs/heads"
+		but config --unset-all receive.procReceiveRefs &&
+		but config --add receive.procReceiveRefs m:refs/heads/main &&
+		but config --add receive.procReceiveRefs ad:refs/heads &&
+		but config --add receive.procReceiveRefs "a!:refs/heads"
 	)
 '
 
@@ -23,9 +23,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         : main(B)  tags/v123
+# but push         : main(B)  tags/v123
 test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		$B:refs/heads/main \
 		v123 >out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -45,7 +45,7 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/pull/124/head        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> refs/pull/123/head
 	>  * [new reference]   v123 -> refs/pull/124/head
 	EOF
@@ -59,8 +59,8 @@ test_expect_success "proc-receive: update branch and new tag ($PROTOCOL)" '
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "setup upstream: create tags/v123 ($PROTOCOL)" '
-	git -C "$upstream" update-ref refs/heads/topic $A &&
-	git -C "$upstream" update-ref refs/tags/v123 $TAG &&
+	but -C "$upstream" update-ref refs/heads/topic $A &&
+	but -C "$upstream" update-ref refs/tags/v123 $TAG &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
 	<CUMMIT-A> refs/heads/main
@@ -85,9 +85,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL)" '
 
 # Refs of upstream : main(A)  topic(A)  tags/v123
 # Refs of workbench: main(A)            tags/v123
-# git push         : NULL       topic(B)  NULL       next(A)
+# but push         : NULL       topic(B)  NULL       next(A)
 test_expect_success "proc-receive: create/delete branch, and delete tag ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		:refs/heads/main \
 		$B:refs/heads/topic \
 		$A:refs/heads/next \
@@ -114,7 +114,7 @@ test_expect_success "proc-receive: create/delete branch, and delete tag ($PROTOC
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/topic        Z
 	> remote: post-receive< <TAG-v123> <ZERO-OID> refs/tags/v123        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/pull/124/head        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  - [deleted]         refs/pull/123/head
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> topic
 	>  - [deleted]         v123

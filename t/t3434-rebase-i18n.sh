@@ -21,39 +21,39 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 compare_msg () {
 	iconv -f "$2" -t "$3" "$TEST_DIRECTORY/t3434/$1" >expect &&
-	git cat-file commit HEAD >raw &&
+	but cat-file commit HEAD >raw &&
 	sed "1,/^$/d" raw >actual &&
 	test_cmp expect actual
 }
 
 test_expect_success setup '
 	test_cummit one &&
-	git branch first &&
+	but branch first &&
 	test_cummit two &&
-	git switch first &&
+	but switch first &&
 	test_cummit three &&
-	git branch second &&
+	but branch second &&
 	test_cummit four &&
-	git switch second &&
+	but switch second &&
 	test_cummit five &&
 	test_cummit six
 '
 
 test_expect_success 'rebase --rebase-merges update encoding eucJP to UTF-8' '
-	git switch -c merge-eucJP-UTF-8 first &&
-	git config i18n.cummitencoding eucJP &&
-	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
-	git config i18n.cummitencoding UTF-8 &&
-	git rebase --rebase-merges main &&
+	but switch -c merge-eucJP-UTF-8 first &&
+	but config i18n.cummitencoding eucJP &&
+	but merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
+	but config i18n.cummitencoding UTF-8 &&
+	but rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP UTF-8
 '
 
 test_expect_success 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP' '
-	git switch -c merge-eucJP-ISO-2022-JP first &&
-	git config i18n.cummitencoding eucJP &&
-	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
-	git config i18n.cummitencoding ISO-2022-JP &&
-	git rebase --rebase-merges main &&
+	but switch -c merge-eucJP-ISO-2022-JP first &&
+	but config i18n.cummitencoding eucJP &&
+	but merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
+	but config i18n.cummitencoding ISO-2022-JP &&
+	but rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP ISO-2022-JP
 '
 
@@ -62,20 +62,20 @@ test_rebase_continue_update_encode () {
 	new=$2
 	msgfile=$3
 	test_expect_success "rebase --continue update from $old to $new" '
-		(git rebase --abort || : abort current git-rebase failure) &&
-		git switch -c conflict-$old-$new one &&
+		(but rebase --abort || : abort current but-rebase failure) &&
+		but switch -c conflict-$old-$new one &&
 		echo for-conflict >two.t &&
-		git add two.t &&
-		git config i18n.cummitencoding $old &&
-		git cummit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
-		git config i18n.cummitencoding $new &&
-		test_must_fail git rebase -m main &&
-		test -f .git/rebase-merge/message &&
-		git stripspace <.git/rebase-merge/message >two.t &&
-		git add two.t &&
-		git rebase --continue &&
+		but add two.t &&
+		but config i18n.cummitencoding $old &&
+		but cummit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
+		but config i18n.cummitencoding $new &&
+		test_must_fail but rebase -m main &&
+		test -f .but/rebase-merge/message &&
+		but stripspace <.but/rebase-merge/message >two.t &&
+		but add two.t &&
+		but rebase --continue &&
 		compare_msg $msgfile $old $new &&
-		: git-cummit assume invalid utf-8 is latin1 &&
+		: but-cummit assume invalid utf-8 is latin1 &&
 		test_cmp expect two.t
 	'
 }

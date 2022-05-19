@@ -17,8 +17,8 @@ skipping more cummits at a time, reducing the number of round trips.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
-	working directory. With many files, commands such as `git status` and
-	`git checkout` may be slow and these new defaults improve performance:
+	working directory. With many files, commands such as `but status` and
+	`but checkout` may be slow and these new defaults improve performance:
 +
 * `index.version=4` enables path-prefix compression in the index.
 +

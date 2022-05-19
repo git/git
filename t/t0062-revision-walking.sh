@@ -18,11 +18,11 @@ EOF
 
 test_expect_success 'setup' '
 	echo a > a &&
-	git add a &&
-	git cummit -m "add a" &&
+	but add a &&
+	but cummit -m "add a" &&
 	echo b > b &&
-	git add b &&
-	git cummit -m "add b"
+	but add b &&
+	but cummit -m "add b"
 '
 
 test_expect_success 'revision walking can be done twice' '

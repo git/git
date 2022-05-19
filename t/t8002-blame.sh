@@ -1,12 +1,12 @@
 #!/bin/sh
 
-test_description='git blame'
+test_description='but blame'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-PROG='git blame -c'
+PROG='but blame -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 
 test_expect_success 'setup' '
@@ -15,33 +15,33 @@ test_expect_success 'setup' '
 
 test_expect_success 'blame untracked file in empty repo' '
 	>untracked &&
-	test_must_fail git blame untracked
+	test_must_fail but blame untracked
 '
 
-PROG='git blame -c -e'
+PROG='but blame -c -e'
 test_expect_success 'blame --show-email' '
 	check_count \
-		"<A@test.git>" 1 \
-		"<B@test.git>" 1 \
-		"<B1@test.git>" 1 \
-		"<B2@test.git>" 1 \
+		"<A@test.but>" 1 \
+		"<B@test.but>" 1 \
+		"<B1@test.but>" 1 \
+		"<B2@test.but>" 1 \
 		"<author@example.com>" 1 \
-		"<C@test.git>" 1 \
-		"<D@test.git>" 1 \
-		"<E at test dot git>" 1
+		"<C@test.but>" 1 \
+		"<D@test.but>" 1 \
+		"<E at test dot but>" 1
 '
 
 test_expect_success 'setup showEmail tests' '
 	echo "bin: test number 1" >one &&
-	git add one &&
+	but add one &&
 	GIT_AUTHOR_NAME=name1 \
-	GIT_AUTHOR_EMAIL=email1@test.git \
-	git cummit -m First --date="2010-01-01 01:00:00" &&
+	GIT_AUTHOR_EMAIL=email1@test.but \
+	but cummit -m First --date="2010-01-01 01:00:00" &&
 	cat >expected_n <<-\EOF &&
 	(name1 2010-01-01 01:00:00 +0000 1) bin: test number 1
 	EOF
 	cat >expected_e <<-\EOF
-	(<email1@test.git> 2010-01-01 01:00:00 +0000 1) bin: test number 1
+	(<email1@test.but> 2010-01-01 01:00:00 +0000 1) bin: test number 1
 	EOF
 '
 
@@ -50,56 +50,56 @@ find_blame () {
 }
 
 test_expect_success 'blame with no options and no config' '
-	git blame one >blame &&
+	but blame one >blame &&
 	find_blame <blame >result &&
 	test_cmp expected_n result
 '
 
 test_expect_success 'blame with showemail options' '
-	git blame --show-email one >blame1 &&
+	but blame --show-email one >blame1 &&
 	find_blame <blame1 >result &&
 	test_cmp expected_e result &&
-	git blame -e one >blame2 &&
+	but blame -e one >blame2 &&
 	find_blame <blame2 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame3 &&
+	but blame --no-show-email one >blame3 &&
 	find_blame <blame3 >result &&
 	test_cmp expected_n result
 '
 
 test_expect_success 'blame with showEmail config false' '
-	git config blame.showEmail false &&
-	git blame one >blame1 &&
+	but config blame.showEmail false &&
+	but blame one >blame1 &&
 	find_blame <blame1 >result &&
 	test_cmp expected_n result &&
-	git blame --show-email one >blame2 &&
+	but blame --show-email one >blame2 &&
 	find_blame <blame2 >result &&
 	test_cmp expected_e result &&
-	git blame -e one >blame3 &&
+	but blame -e one >blame3 &&
 	find_blame <blame3 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame4 &&
+	but blame --no-show-email one >blame4 &&
 	find_blame <blame4 >result &&
 	test_cmp expected_n result
 '
 
 test_expect_success 'blame with showEmail config true' '
-	git config blame.showEmail true &&
-	git blame one >blame1 &&
+	but config blame.showEmail true &&
+	but blame one >blame1 &&
 	find_blame <blame1 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame2 &&
+	but blame --no-show-email one >blame2 &&
 	find_blame <blame2 >result &&
 	test_cmp expected_n result
 '
 
 test_expect_success 'set up abbrev tests' '
 	test_cummit abbrev &&
-	sha1=$(git rev-parse --verify HEAD) &&
+	sha1=$(but rev-parse --verify HEAD) &&
 	check_abbrev () {
 		expect=$1 && shift &&
 		echo $sha1 | cut -c 1-$expect >expect &&
-		git blame "$@" abbrev.t >actual &&
+		but blame "$@" abbrev.t >actual &&
 		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&
 		test_cmp expect actual.sha
 	}
@@ -126,18 +126,18 @@ test_expect_success '--no-abbrev works like --abbrev with full length' '
 '
 
 test_expect_success '--exclude-promisor-objects does not BUG-crash' '
-	test_must_fail git blame --exclude-promisor-objects one
+	test_must_fail but blame --exclude-promisor-objects one
 '
 
 test_expect_success 'blame with uncummitted edits in partial clone does not crash' '
-	git init server &&
+	but init server &&
 	echo foo >server/file.txt &&
-	git -C server add file.txt &&
-	git -C server cummit -m file &&
+	but -C server add file.txt &&
+	but -C server cummit -m file &&
 
-	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	but clone --filter=blob:none "file://$(pwd)/server" client &&
 	echo bar >>client/file.txt &&
-	git -C client blame file.txt
+	but -C client blame file.txt
 '
 
 test_done

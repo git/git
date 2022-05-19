@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test git update-server-info'
+test_description='Test but update-server-info'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -8,34 +8,34 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' 'test_cummit file'
 
 test_expect_success 'create info/refs' '
-	git update-server-info &&
-	test_path_is_file .git/info/refs
+	but update-server-info &&
+	test_path_is_file .but/info/refs
 '
 
 test_expect_success 'modify and store mtime' '
-	test-tool chmtime =0 .git/info/refs &&
-	test-tool chmtime --get .git/info/refs >a
+	test-tool chmtime =0 .but/info/refs &&
+	test-tool chmtime --get .but/info/refs >a
 '
 
 test_expect_success 'info/refs is not needlessly overwritten' '
-	git update-server-info &&
-	test-tool chmtime --get .git/info/refs >b &&
+	but update-server-info &&
+	test-tool chmtime --get .but/info/refs >b &&
 	test_cmp a b
 '
 
 test_expect_success 'info/refs can be forced to update' '
-	git update-server-info -f &&
-	test-tool chmtime --get .git/info/refs >b &&
+	but update-server-info -f &&
+	test-tool chmtime --get .but/info/refs >b &&
 	! test_cmp a b
 '
 
 test_expect_success 'info/refs updates when changes are made' '
-	test-tool chmtime =0 .git/info/refs &&
-	test-tool chmtime --get .git/info/refs >b &&
+	test-tool chmtime =0 .but/info/refs &&
+	test-tool chmtime --get .but/info/refs >b &&
 	test_cmp a b &&
-	git update-ref refs/heads/foo HEAD &&
-	git update-server-info &&
-	test-tool chmtime --get .git/info/refs >b &&
+	but update-ref refs/heads/foo HEAD &&
+	but update-server-info &&
+	test-tool chmtime --get .but/info/refs >b &&
 	! test_cmp a b
 '
 

@@ -28,34 +28,34 @@ test_expect_success "setup" '
 # make sure to exercise these code paths, the output is a bit tricky
 # to verify
 test_expect_success 'basic help commands' '
-	git help >/dev/null &&
-	git help -a --no-verbose >/dev/null &&
-	git help -g >/dev/null &&
-	git help -a >/dev/null
+	but help >/dev/null &&
+	but help -a --no-verbose >/dev/null &&
+	but help -g >/dev/null &&
+	but help -a >/dev/null
 '
 
 test_expect_success 'invalid usage' '
-	test_expect_code 129 git help -a add &&
-	test_expect_code 129 git help --all add &&
+	test_expect_code 129 but help -a add &&
+	test_expect_code 129 but help --all add &&
 
-	test_expect_code 129 git help -g add &&
-	test_expect_code 129 git help -a -c &&
+	test_expect_code 129 but help -g add &&
+	test_expect_code 129 but help -a -c &&
 
-	test_expect_code 129 git help -g add &&
-	test_expect_code 129 git help -a -g &&
+	test_expect_code 129 but help -g add &&
+	test_expect_code 129 but help -a -g &&
 
-	test_expect_code 129 git help -g -c &&
-	test_expect_code 129 git help --config-for-completion add &&
-	test_expect_code 129 git help --config-sections-for-completion add
+	test_expect_code 129 but help -g -c &&
+	test_expect_code 129 but help --config-for-completion add &&
+	test_expect_code 129 but help --config-sections-for-completion add
 '
 
 for opt in '-a' '-g' '-c' '--config-for-completion' '--config-sections-for-completion'
 do
 	test_expect_success "invalid usage of '$opt' with [-i|-m|-w]" '
-		git help $opt &&
-		test_expect_code 129 git help $opt -i &&
-		test_expect_code 129 git help $opt -m &&
-		test_expect_code 129 git help $opt -w
+		but help $opt &&
+		test_expect_code 129 but help $opt -i &&
+		test_expect_code 129 but help $opt -m &&
+		test_expect_code 129 but help $opt -w
 	'
 
 	if test "$opt" = "-a"
@@ -64,74 +64,74 @@ do
 	fi
 
 	test_expect_success "invalid usage of '$opt' with --no-external-commands" '
-		test_expect_code 129 git help $opt --no-external-commands
+		test_expect_code 129 but help $opt --no-external-commands
 	'
 
 	test_expect_success "invalid usage of '$opt' with --no-aliases" '
-		test_expect_code 129 git help $opt --no-external-commands
+		test_expect_code 129 but help $opt --no-external-commands
 	'
 done
 
 test_expect_success "works for commands and guides by default" '
 	configure_help &&
-	git help status &&
-	echo "test://html/git-status.html" >expect &&
+	but help status &&
+	echo "test://html/but-status.html" >expect &&
 	test_cmp expect test-browser.log &&
-	git help revisions &&
-	echo "test://html/gitrevisions.html" >expect &&
+	but help revisions &&
+	echo "test://html/butrevisions.html" >expect &&
 	test_cmp expect test-browser.log
 '
 
 test_expect_success "--exclude-guides does not work for guides" '
 	>test-browser.log &&
-	test_must_fail git help --exclude-guides revisions &&
+	test_must_fail but help --exclude-guides revisions &&
 	test_must_be_empty test-browser.log
 '
 
 test_expect_success "--help does not work for guides" "
 	cat <<-EOF >expect &&
-		git: 'revisions' is not a git command. See 'git --help'.
+		but: 'revisions' is not a but command. See 'but --help'.
 	EOF
-	test_must_fail git revisions --help 2>actual &&
+	test_must_fail but revisions --help 2>actual &&
 	test_cmp expect actual
 "
 
-test_expect_success 'git help' '
-	git help >help.output &&
+test_expect_success 'but help' '
+	but help >help.output &&
 	test_i18ngrep "^   clone  " help.output &&
 	test_i18ngrep "^   add    " help.output &&
 	test_i18ngrep "^   log    " help.output &&
 	test_i18ngrep "^   cummit " help.output &&
 	test_i18ngrep "^   fetch  " help.output
 '
-test_expect_success 'git help -g' '
-	git help -g >help.output &&
+test_expect_success 'but help -g' '
+	but help -g >help.output &&
 	test_i18ngrep "^   attributes " help.output &&
 	test_i18ngrep "^   everyday   " help.output &&
 	test_i18ngrep "^   tutorial   " help.output
 '
 
-test_expect_success 'git help fails for non-existing html pages' '
+test_expect_success 'but help fails for non-existing html pages' '
 	configure_help &&
 	mkdir html-empty &&
-	test_must_fail git -c help.htmlpath=html-empty help status &&
+	test_must_fail but -c help.htmlpath=html-empty help status &&
 	test_must_be_empty test-browser.log
 '
 
-test_expect_success 'git help succeeds without git.html' '
+test_expect_success 'but help succeeds without but.html' '
 	configure_help &&
 	mkdir html-with-docs &&
-	touch html-with-docs/git-status.html &&
-	git -c help.htmlpath=html-with-docs help status &&
-	echo "html-with-docs/git-status.html" >expect &&
+	touch html-with-docs/but-status.html &&
+	but -c help.htmlpath=html-with-docs help status &&
+	echo "html-with-docs/but-status.html" >expect &&
 	test_cmp expect test-browser.log
 '
 
-test_expect_success 'git help -c' '
-	git help -c >help.output &&
+test_expect_success 'but help -c' '
+	but help -c >help.output &&
 	cat >expect <<-\EOF &&
 
-	'\''git help config'\'' for more information
+	'\''but help config'\'' for more information
 	EOF
 	grep -v -E \
 		-e "^[^.]+\.[^.]+$" \
@@ -140,27 +140,27 @@ test_expect_success 'git help -c' '
 	test_cmp expect actual
 '
 
-test_expect_success 'git help --config-for-completion' '
-	git help -c >human &&
+test_expect_success 'but help --config-for-completion' '
+	but help -c >human &&
 	grep -E \
 	     -e "^[^.]+\.[^.]+$" \
 	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
 	     sed -e "s/\*.*//" -e "s/<.*//" |
 	     sort -u >human.munged &&
 
-	git help --config-for-completion >vars &&
+	but help --config-for-completion >vars &&
 	test_cmp human.munged vars
 '
 
-test_expect_success 'git help --config-sections-for-completion' '
-	git help -c >human &&
+test_expect_success 'but help --config-sections-for-completion' '
+	but help -c >human &&
 	grep -E \
 	     -e "^[^.]+\.[^.]+$" \
 	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
 	     sed -e "s/\..*//" |
 	     sort -u >human.munged &&
 
-	git help --config-sections-for-completion >sections &&
+	but help --config-sections-for-completion >sections &&
 	test_cmp human.munged sections
 '
 
@@ -172,38 +172,38 @@ test_section_spacing () {
 
 test_section_spacing_trailer () {
 	test_section_spacing "$@" &&
-	test_expect_code 1 git >out &&
+	test_expect_code 1 but >out &&
 	sed -n '/list available subcommands/,$p' <out >>expect
 }
 
 
-for cmd in git "git help"
+for cmd in but "but help"
 do
 	test_expect_success "'$cmd' section spacing" '
-		test_section_spacing_trailer git help <<-\EOF &&
-		usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]
+		test_section_spacing_trailer but help <<-\EOF &&
+		usage: but [--version] [--help] [-C <path>] [-c <name>=<value>]
 
 		These are common Git commands used in various situations:
 
-		start a working area (see also: git help tutorial)
+		start a working area (see also: but help tutorial)
 
-		work on the current change (see also: git help everyday)
+		work on the current change (see also: but help everyday)
 
-		examine the history and state (see also: git help revisions)
+		examine the history and state (see also: but help revisions)
 
 		grow, mark and tweak your common history
 
-		collaborate (see also: git help workflows)
+		collaborate (see also: but help workflows)
 
 		EOF
 		test_cmp expect actual
 	'
 done
 
-test_expect_success "'git help -a' section spacing" '
+test_expect_success "'but help -a' section spacing" '
 	test_section_spacing \
-		git help -a --no-external-commands --no-aliases <<-\EOF &&
-	See '\''git help <command>'\'' to read about a specific subcommand
+		but help -a --no-external-commands --no-aliases <<-\EOF &&
+	See '\''but help <command>'\'' to read about a specific subcommand
 
 	Main Porcelain Commands
 
@@ -224,8 +224,8 @@ test_expect_success "'git help -a' section spacing" '
 	test_cmp expect actual
 '
 
-test_expect_success "'git help -g' section spacing" '
-	test_section_spacing_trailer git help -g <<-\EOF &&
+test_expect_success "'but help -g' section spacing" '
+	test_section_spacing_trailer but help -g <<-\EOF &&
 	The Git concept guides are:
 
 	EOF
@@ -234,7 +234,7 @@ test_expect_success "'git help -g' section spacing" '
 
 test_expect_success 'generate builtin list' '
 	mkdir -p sub &&
-	git --list-cmds=builtins >builtins
+	but --list-cmds=builtins >builtins
 '
 
 while read builtin
@@ -243,7 +243,7 @@ do
 		(
 			GIT_CEILING_DIRECTORIES=$(pwd) &&
 			export GIT_CEILING_DIRECTORIES &&
-			test_expect_code 129 git -C sub $builtin -h >output 2>&1
+			test_expect_code 129 but -C sub $builtin -h >output 2>&1
 		) &&
 		test_i18ngrep usage output
 	'

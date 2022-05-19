@@ -14,14 +14,14 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
 	COPYING_test_data >path0/COPYING &&
-	git update-index --add path0/COPYING &&
-	tree=$(git write-tree) &&
-	blob=$(git rev-parse :path0/COPYING)
+	but update-index --add path0/COPYING &&
+	tree=$(but write-tree) &&
+	blob=$(but rev-parse :path0/COPYING)
 '
 
 test_expect_success 'prepare work tree' '
 	cp path0/COPYING path1/COPYING &&
-	git update-index --add --remove path0/COPYING path1/COPYING
+	but update-index --add --remove path0/COPYING path1/COPYING
 '
 
 # In the tree, there is only path0/COPYING.  In the cache, path0 and
@@ -33,12 +33,12 @@ cat >expected <<EOF
 EOF
 
 test_expect_success 'copy detection' '
-	git diff-index -C --find-copies-harder $tree >current &&
+	but diff-index -C --find-copies-harder $tree >current &&
 	compare_diff_raw current expected
 '
 
 test_expect_success 'copy detection, cached' '
-	git diff-index -C --find-copies-harder --cached $tree >current &&
+	but diff-index -C --find-copies-harder --cached $tree >current &&
 	compare_diff_raw current expected
 '
 
@@ -53,13 +53,13 @@ cat >expected <<EOF
 EOF
 
 test_expect_success 'copy, limited to a subtree' '
-	git diff-index -C --find-copies-harder $tree path1 >current &&
+	but diff-index -C --find-copies-harder $tree path1 >current &&
 	compare_diff_raw current expected
 '
 
 test_expect_success 'tweak work tree' '
 	rm -f path0/COPYING &&
-	git update-index --remove path0/COPYING
+	but update-index --remove path0/COPYING
 '
 # In the tree, there is only path0/COPYING.  In the cache, path0 does
 # not have COPYING anymore and path1 has COPYING which is a copy of
@@ -71,7 +71,7 @@ cat >expected <<EOF
 EOF
 
 test_expect_success 'rename detection' '
-	git diff-index -C --find-copies-harder $tree >current &&
+	but diff-index -C --find-copies-harder $tree >current &&
 	compare_diff_raw current expected
 '
 
@@ -85,7 +85,7 @@ cat >expected <<EOF
 EOF
 
 test_expect_success 'rename, limited to a subtree' '
-	git diff-index -C --find-copies-harder $tree path1 >current &&
+	but diff-index -C --find-copies-harder $tree path1 >current &&
 	compare_diff_raw current expected
 '
 

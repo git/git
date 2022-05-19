@@ -1,36 +1,36 @@
 #!/bin/sh
 
-test_description='git for-each-repo builtin'
+test_description='but for-each-repo builtin'
 
 . ./test-lib.sh
 
 test_expect_success 'run based on configured value' '
-	git init one &&
-	git init two &&
-	git init three &&
-	git -C two cummit --allow-empty -m "DID NOT RUN" &&
-	git config run.key "$TRASH_DIRECTORY/one" &&
-	git config --add run.key "$TRASH_DIRECTORY/three" &&
-	git for-each-repo --config=run.key cummit --allow-empty -m "ran" &&
-	git -C one log -1 --pretty=format:%s >message &&
+	but init one &&
+	but init two &&
+	but init three &&
+	but -C two cummit --allow-empty -m "DID NOT RUN" &&
+	but config run.key "$TRASH_DIRECTORY/one" &&
+	but config --add run.key "$TRASH_DIRECTORY/three" &&
+	but for-each-repo --config=run.key cummit --allow-empty -m "ran" &&
+	but -C one log -1 --pretty=format:%s >message &&
 	grep ran message &&
-	git -C two log -1 --pretty=format:%s >message &&
+	but -C two log -1 --pretty=format:%s >message &&
 	! grep ran message &&
-	git -C three log -1 --pretty=format:%s >message &&
+	but -C three log -1 --pretty=format:%s >message &&
 	grep ran message &&
-	git for-each-repo --config=run.key -- cummit --allow-empty -m "ran again" &&
-	git -C one log -1 --pretty=format:%s >message &&
+	but for-each-repo --config=run.key -- cummit --allow-empty -m "ran again" &&
+	but -C one log -1 --pretty=format:%s >message &&
 	grep again message &&
-	git -C two log -1 --pretty=format:%s >message &&
+	but -C two log -1 --pretty=format:%s >message &&
 	! grep again message &&
-	git -C three log -1 --pretty=format:%s >message &&
+	but -C three log -1 --pretty=format:%s >message &&
 	grep again message
 '
 
 test_expect_success 'do nothing on empty config' '
 	# the whole thing would fail if for-each-ref iterated even
-	# once, because "git help --no-such-option" would fail
-	git for-each-repo --config=bogus.config -- help --no-such-option
+	# once, because "but help --no-such-option" would fail
+	but for-each-repo --config=bogus.config -- help --no-such-option
 '
 
 test_done

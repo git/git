@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git merge --signoff
+test_description='but merge --signoff
 
-This test runs git merge --signoff and makes sure that it works.
+This test runs but merge --signoff and makes sure that it works.
 '
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -16,7 +16,7 @@ test_setup() {
 	cat >expected-signed <<EOF &&
 Merge branch 'main' into other-branch
 
-Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(but var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 	# Expected cummit message after merge without --signoff (or with --no-signoff)
@@ -25,8 +25,8 @@ Merge branch 'main' into other-branch
 EOF
 
 	# Initial cummit and feature branch to merge main into it.
-	git cummit --allow-empty -m "Initial empty cummit" &&
-	git checkout -b other-branch &&
+	but cummit --allow-empty -m "Initial empty cummit" &&
+	but checkout -b other-branch &&
 	test_cummit other-branch file1 1
 }
 
@@ -40,32 +40,32 @@ test_expect_success 'setup' '
 '
 
 # Test with --signoff flag
-test_expect_success 'git merge --signoff adds a sign-off line' '
-	git checkout main &&
+test_expect_success 'but merge --signoff adds a sign-off line' '
+	but checkout main &&
 	test_cummit main-branch-2 file2 2 &&
-	git checkout other-branch &&
-	git merge main --signoff --no-edit &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but checkout other-branch &&
+	but merge main --signoff --no-edit &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-signed actual
 '
 
 # Test without --signoff flag
-test_expect_success 'git merge does not add a sign-off line' '
-	git checkout main &&
+test_expect_success 'but merge does not add a sign-off line' '
+	but checkout main &&
 	test_cummit main-branch-3 file3 3 &&
-	git checkout other-branch &&
-	git merge main --no-edit &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but checkout other-branch &&
+	but merge main --no-edit &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-unsigned actual
 '
 
 # Test for --no-signoff flag
-test_expect_success 'git merge --no-signoff flag cancels --signoff flag' '
-	git checkout main &&
+test_expect_success 'but merge --no-signoff flag cancels --signoff flag' '
+	but checkout main &&
 	test_cummit main-branch-4 file4 4 &&
-	git checkout other-branch &&
-	git merge main --no-edit --signoff --no-signoff &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but checkout other-branch &&
+	but merge main --no-edit --signoff --no-signoff &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-unsigned actual
 '
 

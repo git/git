@@ -23,100 +23,100 @@ test_expect_success setup '
 	done >oops &&
 
 	test_tick &&
-	git add oops &&
-	git cummit -m initial &&
-	git tag initial &&
+	but add oops &&
+	but cummit -m initial &&
+	but tag initial &&
 
 	test_tick &&
 	echo "Add extra line at the end" >>oops &&
-	git cummit -a -m added &&
-	git tag added &&
+	but cummit -a -m added &&
+	but tag added &&
 
 	test_tick &&
-	git mv oops spoo &&
-	git cummit -m rename1 &&
-	git tag rename1 &&
+	but mv oops spoo &&
+	but cummit -m rename1 &&
+	but tag rename1 &&
 
 	test_tick &&
-	git checkout -b side initial &&
-	git mv oops opos &&
-	git cummit -m rename2 &&
-	git tag rename2
+	but checkout -b side initial &&
+	but mv oops opos &&
+	but cummit -m rename2 &&
+	but tag rename2
 '
 
 test_expect_success 'cherry-pick --nonsense' '
 
-	pos=$(git rev-parse HEAD) &&
-	git diff --exit-code HEAD &&
-	test_must_fail git cherry-pick --nonsense 2>msg &&
-	git diff --exit-code HEAD "$pos" &&
+	pos=$(but rev-parse HEAD) &&
+	but diff --exit-code HEAD &&
+	test_must_fail but cherry-pick --nonsense 2>msg &&
+	but diff --exit-code HEAD "$pos" &&
 	test_i18ngrep "[Uu]sage:" msg
 '
 
 test_expect_success 'revert --nonsense' '
 
-	pos=$(git rev-parse HEAD) &&
-	git diff --exit-code HEAD &&
-	test_must_fail git revert --nonsense 2>msg &&
-	git diff --exit-code HEAD "$pos" &&
+	pos=$(but rev-parse HEAD) &&
+	but diff --exit-code HEAD &&
+	test_must_fail but revert --nonsense 2>msg &&
+	but diff --exit-code HEAD "$pos" &&
 	test_i18ngrep "[Uu]sage:" msg
 '
 
 test_expect_success 'cherry-pick after renaming branch' '
 
-	git checkout rename2 &&
-	git cherry-pick added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
+	but checkout rename2 &&
+	but cherry-pick added &&
+	test $(but rev-parse HEAD^) = $(but rev-parse rename2) &&
 	test -f opos &&
 	grep "Add extra line at the end" opos &&
-	git reflog -1 | grep cherry-pick
+	but reflog -1 | grep cherry-pick
 
 '
 
 test_expect_success 'revert after renaming branch' '
 
-	git checkout rename1 &&
-	git revert added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
+	but checkout rename1 &&
+	but revert added &&
+	test $(but rev-parse HEAD^) = $(but rev-parse rename1) &&
 	test -f spoo &&
 	! grep "Add extra line at the end" spoo &&
-	git reflog -1 | grep revert
+	but reflog -1 | grep revert
 
 '
 
 test_expect_success 'cherry-pick on stat-dirty working tree' '
-	git clone . copy &&
+	but clone . copy &&
 	(
 		cd copy &&
-		git checkout initial &&
+		but checkout initial &&
 		test-tool chmtime +40 oops &&
-		git cherry-pick added
+		but cherry-pick added
 	)
 '
 
 test_expect_success 'revert forbidden on dirty working tree' '
 
 	echo content >extra_file &&
-	git add extra_file &&
-	test_must_fail git revert HEAD 2>errors &&
+	but add extra_file &&
+	test_must_fail but revert HEAD 2>errors &&
 	test_i18ngrep "your local changes would be overwritten by " errors
 
 '
 
 test_expect_success 'cherry-pick on unborn branch' '
-	git checkout --orphan unborn &&
-	git rm --cached -r . &&
+	but checkout --orphan unborn &&
+	but rm --cached -r . &&
 	rm -rf * &&
-	git cherry-pick initial &&
-	git diff --quiet initial &&
+	but cherry-pick initial &&
+	but diff --quiet initial &&
 	test_cmp_rev ! initial HEAD
 '
 
 test_expect_success 'cherry-pick "-" to pick from previous branch' '
-	git checkout unborn &&
+	but checkout unborn &&
 	test_cummit to-pick actual content &&
-	git checkout main &&
-	git cherry-pick - &&
+	but checkout main &&
+	but cherry-pick - &&
 	echo content >expect &&
 	test_cmp expect actual
 '
@@ -128,17 +128,17 @@ test_expect_success 'cherry-pick "-" is meaningless without checkout' '
 		test_cummit one &&
 		test_cummit two &&
 		test_cummit three &&
-		test_must_fail git cherry-pick -
+		test_must_fail but cherry-pick -
 	)
 '
 
 test_expect_success 'cherry-pick "-" works with arguments' '
-	git checkout -b side-branch &&
+	but checkout -b side-branch &&
 	test_cummit change actual change &&
-	git checkout main &&
-	git cherry-pick -s - &&
+	but checkout main &&
+	but cherry-pick -s - &&
 	echo "Signed-off-by: C O Mitter <cummitter@example.com>" >expect &&
-	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
+	but cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
 	test_cmp expect signoff &&
 	echo change >expect &&
 	test_cmp expect actual
@@ -146,32 +146,32 @@ test_expect_success 'cherry-pick "-" works with arguments' '
 
 test_expect_success 'cherry-pick works with dirty renamed file' '
 	test_cummit to-rename &&
-	git checkout -b unrelated &&
+	but checkout -b unrelated &&
 	test_cummit unrelated &&
-	git checkout @{-1} &&
-	git mv to-rename.t renamed &&
+	but checkout @{-1} &&
+	but mv to-rename.t renamed &&
 	test_tick &&
-	git cummit -m renamed &&
+	but cummit -m renamed &&
 	echo modified >renamed &&
-	git cherry-pick refs/heads/unrelated &&
-	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
+	but cherry-pick refs/heads/unrelated &&
+	test $(but rev-parse :0:renamed) = $(but rev-parse HEAD~2:to-rename.t) &&
 	grep -q "^modified$" renamed
 '
 
 test_expect_success 'advice from failed revert' '
 	test_cummit --no-tag "add dream" dream dream &&
-	dream_oid=$(git rev-parse --short HEAD) &&
+	dream_oid=$(but rev-parse --short HEAD) &&
 	cat <<-EOF >expected &&
 	error: could not revert $dream_oid... add dream
 	hint: After resolving the conflicts, mark them with
-	hint: "git add/rm <pathspec>", then run
-	hint: "git revert --continue".
-	hint: You can instead skip this cummit with "git revert --skip".
-	hint: To abort and get back to the state before "git revert",
-	hint: run "git revert --abort".
+	hint: "but add/rm <pathspec>", then run
+	hint: "but revert --continue".
+	hint: You can instead skip this cummit with "but revert --skip".
+	hint: To abort and get back to the state before "but revert",
+	hint: run "but revert --abort".
 	EOF
 	test_cummit --append --no-tag "double-add dream" dream dream &&
-	test_must_fail git revert HEAD^ 2>actual &&
+	test_must_fail but revert HEAD^ 2>actual &&
 	test_cmp expected actual
 '
 test_done

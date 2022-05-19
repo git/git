@@ -8,24 +8,24 @@ oid_version sha1:1
 oid_version sha256:2
 EOF
 
-graph_git_two_modes() {
-	git -c core.cummitGraph=true $1 >output &&
-	git -c core.cummitGraph=false $1 >expect &&
+graph_but_two_modes() {
+	but -c core.cummitGraph=true $1 >output &&
+	but -c core.cummitGraph=false $1 >expect &&
 	test_cmp expect output
 }
 
-graph_git_behavior() {
+graph_but_behavior() {
 	MSG=$1
 	DIR=$2
 	BRANCH=$3
 	COMPARE=$4
-	test_expect_success "check normal git operations: $MSG" '
+	test_expect_success "check normal but operations: $MSG" '
 		cd "$TRASH_DIRECTORY/$DIR" &&
-		graph_git_two_modes "log --oneline $BRANCH" &&
-		graph_git_two_modes "log --topo-order $BRANCH" &&
-		graph_git_two_modes "log --graph $COMPARE..$BRANCH" &&
-		graph_git_two_modes "branch -vv" &&
-		graph_git_two_modes "merge-base -a $BRANCH $COMPARE"
+		graph_but_two_modes "log --oneline $BRANCH" &&
+		graph_but_two_modes "log --topo-order $BRANCH" &&
+		graph_but_two_modes "log --graph $COMPARE..$BRANCH" &&
+		graph_but_two_modes "branch -vv" &&
+		graph_but_two_modes "merge-base -a $BRANCH $COMPARE"
 	'
 }
 

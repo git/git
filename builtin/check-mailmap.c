@@ -6,7 +6,7 @@
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {
-N_("git check-mailmap [<options>] <contact>..."),
+N_("but check-mailmap [<options>] <contact>..."),
 NULL
 };
 
@@ -41,7 +41,7 @@ int cmd_check_mailmap(int argc, const char **argv, const char *prefix)
 	int i;
 	struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, check_mailmap_options,
 			     check_mailmap_usage, 0);
 	if (argc == 0 && !use_stdin)

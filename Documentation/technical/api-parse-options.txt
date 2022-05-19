@@ -203,7 +203,7 @@ There are some macros to easily define options:
 	if it was an argument to the function given by `func_ptr`.
 	The result will be put into `var`.  There can be only one such
 	option definition.  It cannot be negated and it takes no
-	arguments.  Short options that happen to be digits take
+	arguments.  Short options that happen to be dibuts take
 	precedence over it.
 
 `OPT_COLOR_FLAG(short, long, &int_var, description)`::

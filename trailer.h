@@ -52,7 +52,7 @@ struct trailer_info {
 
 /*
  * A list that represents newly-added trailers, such as those provided
- * with the --trailer command line option of git-interpret-trailers.
+ * with the --trailer command line option of but-interpret-trailers.
  */
 struct new_trailer_item {
 	struct list_head list;

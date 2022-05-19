@@ -16,27 +16,27 @@ setup_upstream_and_workbench () {
 	# Refs of upstream : main(A)
 	# Refs of workbench: main(A)  tags/v123
 	test_expect_success "setup upstream and workbench" '
-		rm -rf upstream.git &&
+		rm -rf upstream.but &&
 		rm -rf workbench &&
-		git init --bare upstream.git &&
-		git init workbench &&
+		but init --bare upstream.but &&
+		but init workbench &&
 		create_cummits_in workbench A B &&
 		(
 			cd workbench &&
 			# Try to make a stable fixed width for abbreviated cummit ID,
 			# this fixed-width oid will be replaced with "<OID>".
-			git config core.abbrev 7 &&
-			git tag -m "v123" v123 $A &&
-			git remote add origin ../upstream.git &&
-			git push origin main &&
-			git update-ref refs/heads/main $A $B &&
-			git -C ../upstream.git update-ref \
+			but config core.abbrev 7 &&
+			but tag -m "v123" v123 $A &&
+			but remote add origin ../upstream.but &&
+			but push origin main &&
+			but update-ref refs/heads/main $A $B &&
+			but -C ../upstream.but update-ref \
 				refs/heads/main $A $B
 		) &&
-		TAG=$(git -C workbench rev-parse v123) &&
+		TAG=$(but -C workbench rev-parse v123) &&
 
 		# setup pre-receive hook
-		test_hook --setup -C upstream.git pre-receive <<-\EOF &&
+		test_hook --setup -C upstream.but pre-receive <<-\EOF &&
 		exec >&2
 		echo "# pre-receive hook"
 		while read old new ref
@@ -46,7 +46,7 @@ setup_upstream_and_workbench () {
 		EOF
 
 		# setup post-receive hook
-		test_hook --setup -C upstream.git post-receive <<-\EOF &&
+		test_hook --setup -C upstream.but post-receive <<-\EOF &&
 		exec >&2
 		echo "# post-receive hook"
 		while read old new ref
@@ -55,7 +55,7 @@ setup_upstream_and_workbench () {
 		done
 		EOF
 
-		upstream=upstream.git
+		upstream=upstream.but
 	'
 }
 
@@ -105,10 +105,10 @@ setup_upstream_and_workbench
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "setup for HTTP protocol" '
-	git -C upstream.git config http.receivepack true &&
-	upstream="$HTTPD_DOCUMENT_ROOT_PATH/upstream.git" &&
-	mv upstream.git "$upstream" &&
-	git -C workbench remote set-url origin "$HTTPD_URL/auth-push/smart/upstream.git" &&
+	but -C upstream.but config http.receivepack true &&
+	upstream="$HTTPD_DOCUMENT_ROOT_PATH/upstream.but" &&
+	mv upstream.but "$upstream" &&
+	but -C workbench remote set-url origin "$HTTPD_URL/auth-push/smart/upstream.but" &&
 	set_askpass user@host pass@host
 '
 

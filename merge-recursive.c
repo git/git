@@ -1,5 +1,5 @@
 /*
- * Recursive Merge algorithm stolen from git-merge-recursive.py by
+ * Recursive Merge algorithm stolen from but-merge-recursive.py by
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
@@ -1284,7 +1284,7 @@ static int merge_submodule(struct merge_options *opt,
 		       "If this is correct simply add it to the index "
 		       "for example\n"
 		       "by using:\n\n"
-		       "  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
+		       "  but update-index --cacheinfo 160000 %s \"%s\"\n\n"
 		       "which will accept this suggestion.\n"),
 		       oid_to_hex(&merges.objects[0].item->oid), path);
 		break;
@@ -3847,21 +3847,21 @@ static void merge_recursive_config(struct merge_options *opt)
 {
 	char *value = NULL;
 	int renormalize = 0;
-	git_config_get_int("merge.verbosity", &opt->verbosity);
-	git_config_get_int("diff.renamelimit", &opt->rename_limit);
-	git_config_get_int("merge.renamelimit", &opt->rename_limit);
-	git_config_get_bool("merge.renormalize", &renormalize);
+	but_config_get_int("merge.verbosity", &opt->verbosity);
+	but_config_get_int("diff.renamelimit", &opt->rename_limit);
+	but_config_get_int("merge.renamelimit", &opt->rename_limit);
+	but_config_get_bool("merge.renormalize", &renormalize);
 	opt->renormalize = renormalize;
-	if (!git_config_get_string("diff.renames", &value)) {
-		opt->detect_renames = git_config_rename("diff.renames", value);
+	if (!but_config_get_string("diff.renames", &value)) {
+		opt->detect_renames = but_config_rename("diff.renames", value);
 		free(value);
 	}
-	if (!git_config_get_string("merge.renames", &value)) {
-		opt->detect_renames = git_config_rename("merge.renames", value);
+	if (!but_config_get_string("merge.renames", &value)) {
+		opt->detect_renames = but_config_rename("merge.renames", value);
 		free(value);
 	}
-	if (!git_config_get_string("merge.directoryrenames", &value)) {
-		int boolval = git_parse_maybe_bool(value);
+	if (!but_config_get_string("merge.directoryrenames", &value)) {
+		int boolval = but_parse_maybe_bool(value);
 		if (0 <= boolval) {
 			opt->detect_directory_renames = boolval ?
 				MERGE_DIRECTORY_RENAMES_TRUE :
@@ -3869,10 +3869,10 @@ static void merge_recursive_config(struct merge_options *opt)
 		} else if (!strcasecmp(value, "conflict")) {
 			opt->detect_directory_renames =
 				MERGE_DIRECTORY_RENAMES_CONFLICT;
-		} /* avoid erroring on values from future versions of git */
+		} /* avoid erroring on values from future versions of but */
 		free(value);
 	}
-	git_config(git_xmerge_config, NULL);
+	but_config(but_xmerge_config, NULL);
 }
 
 void init_merge_options(struct merge_options *opt,
@@ -3953,8 +3953,8 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 		opt->detect_renames = 1;
 	}
 	/*
-	 * Please update $__git_merge_strategy_options in
-	 * git-completion.bash when you add new options
+	 * Please update $__but_merge_strategy_options in
+	 * but-completion.bash when you add new options
 	 */
 	else
 		return -1;

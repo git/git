@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Examples from the git-notes man page
+test_description='Examples from the but-notes man page
 
 Make sure the manual is not full of lies.'
 
@@ -19,19 +19,19 @@ test_expect_success 'example 1: notes to add an Acked-by line' '
 	Notes:
 	    Acked-by: A C Ker <acker@example.com>
 	EOF
-	git notes add -m "Acked-by: A C Ker <acker@example.com>" B &&
-	git show -s B^{cummit} >log &&
+	but notes add -m "Acked-by: A C Ker <acker@example.com>" B &&
+	but show -s B^{cummit} >log &&
 	tail -n 4 log >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'example 2: binary notes' '
 	cp "$TEST_DIRECTORY"/test-binary-1.png . &&
-	git checkout B &&
-	blob=$(git hash-object -w test-binary-1.png) &&
-	git notes --ref=logo add -C "$blob" &&
-	git notes --ref=logo copy B C &&
-	git notes --ref=logo show C >actual &&
+	but checkout B &&
+	blob=$(but hash-object -w test-binary-1.png) &&
+	but notes --ref=logo add -C "$blob" &&
+	but notes --ref=logo copy B C &&
+	but notes --ref=logo show C >actual &&
 	test_cmp test-binary-1.png actual
 '
 

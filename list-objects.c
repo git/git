@@ -82,7 +82,7 @@ static void process_blob(struct traversal_context *ctx,
 }
 
 /*
- * Processing a gitlink entry currently does nothing, since
+ * Processing a butlink entry currently does nothing, since
  * we do not recurse into the subproject.
  *
  * We *could* eventually add a flag that actually does that,
@@ -90,20 +90,20 @@ static void process_blob(struct traversal_context *ctx,
  *  - is the subproject actually checked out?
  *  - if so, see if the subproject has already been added
  *    to the alternates list, and add it if not.
- *  - process the cummit (or tag) the gitlink points to
+ *  - process the cummit (or tag) the butlink points to
  *    recursively.
  *
  * However, it's unclear whether there is really ever any
  * reason to see superprojects and subprojects as such a
  * "unified" object pool (potentially resulting in a totally
  * humongous pack - avoiding which was the whole point of
- * having gitlinks in the first place!).
+ * having butlinks in the first place!).
  *
  * So for now, there is just a note that we *could* follow
  * the link, and how to do it. Whether it necessarily makes
  * any sense what-so-ever to ever do that is another issue.
  */
-static void process_gitlink(struct traversal_context *ctx,
+static void process_butlink(struct traversal_context *ctx,
 			    const unsigned char *sha1,
 			    struct strbuf *path,
 			    const char *name)
@@ -149,7 +149,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 			process_tree(ctx, t, base, entry.path);
 		}
 		else if (S_ISGITLINK(entry.mode))
-			process_gitlink(ctx, entry.oid.hash,
+			process_butlink(ctx, entry.oid.hash,
 					base, entry.path);
 		else {
 			struct blob *b = lookup_blob(ctx->revs->repo, &entry.oid);

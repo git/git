@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "bloom.h"
 #include "test-tool.h"
 #include "cummit.h"
@@ -37,7 +37,7 @@ static void get_bloom_filter_for_cummit(const struct object_id *cummit_oid)
 {
 	struct cummit *c;
 	struct bloom_filter *filter;
-	setup_git_directory();
+	setup_but_directory();
 	c = lookup_cummit(the_repository, cummit_oid);
 	filter = get_or_compute_bloom_filter(the_repository, c, 1,
 					     &settings,
@@ -52,7 +52,7 @@ static const char *bloom_usage = "\n"
 
 int cmd__bloom(int argc, const char **argv)
 {
-	setup_git_directory();
+	setup_but_directory();
 
 	if (argc < 2)
 		usage(bloom_usage);

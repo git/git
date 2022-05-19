@@ -1,4 +1,4 @@
-# git-gui branch (create/delete) support
+# but-gui branch (create/delete) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc _error_parent {} {

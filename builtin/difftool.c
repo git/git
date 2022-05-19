@@ -1,13 +1,13 @@
 /*
- * "git difftool" builtin command
+ * "but difftool" builtin command
  *
  * This is a wrapper around the GIT_EXTERNAL_DIFF-compatible
- * git-difftool--helper script.
+ * but-difftool--helper script.
  *
- * This script exports GIT_EXTERNAL_DIFF and GIT_PAGER for use by git.
- * The GIT_DIFF* variables are exported for use by git-difftool--helper.
+ * This script exports GIT_EXTERNAL_DIFF and GIT_PAGER for use by but.
+ * The GIT_DIFF* variables are exported for use by but-difftool--helper.
  *
- * Any arguments that are unknown to this script are forwarded to 'git diff'.
+ * Any arguments that are unknown to this script are forwarded to 'but diff'.
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
@@ -28,18 +28,18 @@
 static int trust_exit_code;
 
 static const char *const builtin_difftool_usage[] = {
-	N_("git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"),
+	N_("but difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"),
 	NULL
 };
 
 static int difftool_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "difftool.trustexitcode")) {
-		trust_exit_code = git_config_bool(var, value);
+		trust_exit_code = but_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static int print_tool_help(void)
@@ -71,7 +71,7 @@ static int parse_index_info(char *p, int *mode1, int *mode2,
 	*status = *++p;
 	if (!*status)
 		return error("missing status");
-	if (p[1] && !isdigit(p[1]))
+	if (p[1] && !isdibut(p[1]))
 		return error("unexpected trailer: '%s'", p + 1);
 	return 0;
 }
@@ -203,17 +203,17 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	struct child_process update_index = CHILD_PROCESS_INIT;
 	struct child_process diff_files = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
-	const char *git_dir = absolute_path(get_git_dir());
+	const char *but_dir = absolute_path(get_but_dir());
 	FILE *fp;
 
 	strvec_pushl(&update_index.args,
-		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "--but-dir", but_dir, "--work-tree", workdir,
 		     "update-index", "--really-refresh", "-q",
 		     "--unmerged", NULL);
 	update_index.no_stdin = 1;
 	update_index.no_stdout = 1;
 	update_index.no_stderr = 1;
-	update_index.git_cmd = 1;
+	update_index.but_cmd = 1;
 	update_index.use_shell = 0;
 	update_index.clean_on_exit = 1;
 	update_index.dir = workdir;
@@ -222,10 +222,10 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	run_command(&update_index);
 
 	strvec_pushl(&diff_files.args,
-		     "--git-dir", git_dir, "--work-tree", workdir,
+		     "--but-dir", but_dir, "--work-tree", workdir,
 		     "diff-files", "--name-only", "-z", NULL);
 	diff_files.no_stdin = 1;
-	diff_files.git_cmd = 1;
+	diff_files.but_cmd = 1;
 	diff_files.use_shell = 0;
 	diff_files.clean_on_exit = 1;
 	diff_files.out = -1;
@@ -260,7 +260,7 @@ static int ensure_leading_directories(char *path)
 
 /*
  * Unconditional writing of a plain regular file is what
- * "git difftool --dir-diff" wants to do for symlinks.  We are preparing two
+ * "but difftool --dir-diff" wants to do for symlinks.  We are preparing two
  * temporary directories to be fed to a Git-unaware tool that knows how to
  * show a diff of two directories (e.g. "diff -r A B").
  *
@@ -268,7 +268,7 @@ static int ensure_leading_directories(char *path)
  * these temporary directories, it will try to dereference and show the
  * difference of the target of the symbolic link, which is not what we want,
  * as the goal of the dir-diff mode is to produce an output that is logically
- * equivalent to what "git diff" produces.
+ * equivalent to what "but diff" produces.
  *
  * Most importantly, we want to get textual comparison of the result of the
  * readlink(2).  get_symlink() provides that---it returns the contents of
@@ -326,7 +326,7 @@ static void write_file_in_directory(struct strbuf *dir, size_t dir_len,
 /* Write the file contents for the left and right sides of the difftool
  * dir-diff representation for submodules and symlinks. Symlinks and submodules
  * are written as regular text files so that external diff tools can diff them
- * as text files, resulting in behavior that is analogous to to what "git diff"
+ * as text files, resulting in behavior that is analogous to to what "but diff"
  * displays for symlink and submodule diffs.
  */
 static void write_standin_files(struct pair_entry *entry,
@@ -365,13 +365,13 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct hashmap wt_modified, tmp_modified;
 	int indices_loaded = 0;
 
-	workdir = get_git_work_tree();
+	workdir = get_but_work_tree();
 
 	/* Setup temp directories */
 	tmp = getenv("TMPDIR");
 	strbuf_add_absolute_path(&tmpdir, tmp ? tmp : "/tmp");
 	strbuf_trim_trailing_dir_sep(&tmpdir);
-	strbuf_addstr(&tmpdir, "/git-difftool.XXXXXX");
+	strbuf_addstr(&tmpdir, "/but-difftool.XXXXXX");
 	if (!mkdtemp(tmpdir.buf)) {
 		ret = error("could not create '%s'", tmpdir.buf);
 		goto finish;
@@ -400,7 +400,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	wtdir_len = wtdir.len;
 
 	child->no_stdin = 1;
-	child->git_cmd = 1;
+	child->but_cmd = 1;
 	child->use_shell = 0;
 	child->clean_on_exit = 1;
 	child->dir = prefix;
@@ -552,7 +552,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	}
 
 	/*
-	 * Symbolic links require special treatment. The standard "git diff"
+	 * Symbolic links require special treatment. The standard "but diff"
 	 * shows only the link itself, not the contents of the link target.
 	 * This loop replicates that behavior.
 	 */
@@ -664,7 +664,7 @@ static int run_file_diff(int prompt, const char *prefix,
 			 struct child_process *child)
 {
 	const char *env[] = {
-		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
+		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=but-difftool--helper", NULL,
 		NULL
 	};
 
@@ -673,7 +673,7 @@ static int run_file_diff(int prompt, const char *prefix,
 	else if (!prompt)
 		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
 
-	child->git_cmd = 1;
+	child->but_cmd = 1;
 	child->dir = prefix;
 	strvec_pushv(&child->env_array, env);
 
@@ -703,7 +703,7 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 			 N_("print a list of diff tools that may be used with "
 			    "`--tool`")),
 		OPT_BOOL(0, "trust-exit-code", &trust_exit_code,
-			 N_("make 'git-difftool' exit when an invoked diff "
+			 N_("make 'but-difftool' exit when an invoked diff "
 			    "tool returns a non-zero exit code")),
 		OPT_STRING('x', "extcmd", &extcmd, N_("command"),
 			   N_("specify a custom command for viewing diffs")),
@@ -712,7 +712,7 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	git_config(difftool_config, NULL);
+	but_config(difftool_config, NULL);
 	symlinks = has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
@@ -727,8 +727,8 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 
 	if (!no_index){
 		setup_work_tree();
-		setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_git_dir()), 1);
-		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_git_work_tree()), 1);
+		setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_but_dir()), 1);
+		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_but_work_tree()), 1);
 	} else if (dir_diff)
 		die(_("options '%s' and '%s' cannot be used together"), "--dir-diff", "--no-index");
 
@@ -756,9 +756,9 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	       trust_exit_code ? "true" : "false", 1);
 
 	/*
-	 * In directory diff mode, 'git-difftool--helper' is called once
-	 * to compare the a / b directories. In file diff mode, 'git diff'
-	 * will invoke a separate instance of 'git-difftool--helper' for
+	 * In directory diff mode, 'but-difftool--helper' is called once
+	 * to compare the a / b directories. In file diff mode, 'but diff'
+	 * will invoke a separate instance of 'but-difftool--helper' for
 	 * each file that changed.
 	 */
 	strvec_push(&child.args, "diff");

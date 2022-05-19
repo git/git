@@ -25,7 +25,7 @@ INPUT_END
 }
 
 verify_notes () {
-	git log | grep "^    " > output &&
+	but log | grep "^    " > output &&
 	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
 		echo "    cummit #$i" &&
@@ -70,15 +70,15 @@ deleteall
 INPUT_END
 
 	) |
-	git fast-import --quiet &&
-	git config core.notesRef refs/notes/cummits
+	but fast-import --quiet &&
+	but config core.notesRef refs/notes/cummits
 '
 
 test_sha1_based () {
 	(
 		start_note_cummit &&
 		nr=$number_of_cummits &&
-		git rev-list refs/heads/main >out &&
+		but rev-list refs/heads/main >out &&
 		while read sha1; do
 			note_path=$(echo "$sha1" | sed "$1")
 			cat <<INPUT_END &&
@@ -92,7 +92,7 @@ INPUT_END
 			nr=$(($nr-1))
 		done <out
 	) >gfi &&
-	git fast-import --quiet <gfi
+	but fast-import --quiet <gfi
 }
 
 test_expect_success 'test notes in 2/38-fanout' 'test_sha1_based "s|^..|&/|"'
@@ -108,7 +108,7 @@ test_same_notes () {
 	(
 		start_note_cummit &&
 		nr=$number_of_cummits &&
-		git rev-list refs/heads/main |
+		but rev-list refs/heads/main |
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
 			second_note_path=$(echo "$sha1" | sed "$2")
@@ -128,7 +128,7 @@ INPUT_END
 			nr=$(($nr-1))
 		done
 	) |
-	git fast-import --quiet
+	but fast-import --quiet
 }
 
 test_expect_success 'test same notes in no fanout and 2/38-fanout' 'test_same_notes "s|^..|&/|" ""'
@@ -147,7 +147,7 @@ test_concatenated_notes () {
 	(
 		start_note_cummit &&
 		nr=$number_of_cummits &&
-		git rev-list refs/heads/main |
+		but rev-list refs/heads/main |
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
 			second_note_path=$(echo "$sha1" | sed "$2")
@@ -167,11 +167,11 @@ INPUT_END
 			nr=$(($nr-1))
 		done
 	) |
-	git fast-import --quiet
+	but fast-import --quiet
 }
 
 verify_concatenated_notes () {
-	git log | grep "^    " > output &&
+	but log | grep "^    " > output &&
 	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
 		echo "    cummit #$i" &&

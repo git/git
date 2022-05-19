@@ -6,29 +6,29 @@ Updates since v2.28
 
 UI, Workflows & Features
 
- * "git help log" has been enhanced by sharing more material from the
-   documentation for the underlying "git rev-list" command.
+ * "but help log" has been enhanced by sharing more material from the
+   documentation for the underlying "but rev-list" command.
 
- * "git for-each-ref --format=<>" learned %(contents:size).
+ * "but for-each-ref --format=<>" learned %(contents:size).
 
- * "git merge" learned to selectively omit " into <branch>" at the end
+ * "but merge" learned to selectively omit " into <branch>" at the end
    of the title of default merge message with merge.suppressDest
    configuration.
 
- * The component to respond to "git fetch" request is made more
+ * The component to respond to "but fetch" request is made more
    configurable to selectively allow or reject object filtering
    specification used for partial cloning.
 
  * Stop when "sendmail.*" configuration variables are defined, which
    could be a mistaken attempt to define "sendemail.*" variables.
 
- * The existing backends for "git mergetool" based on variants of vim
+ * The existing backends for "but mergetool" based on variants of vim
    have been refactored and then support for "nvim" has been added.
 
- * "git bisect" learns the "--first-parent" option to find the first
+ * "but bisect" learns the "--first-parent" option to find the first
    breakage along the first-parent chain.
 
- * "git log --first-parent -p" showed patches only for single-parent
+ * "but log --first-parent -p" showed patches only for single-parent
    cummits on the first-parent chain; the "--first-parent" option has
    been made to imply "-m".  Use "--no-diff-merges" to restore the
    previous behaviour to omit patches for merge cummits.
@@ -37,14 +37,14 @@ UI, Workflows & Features
    placed by the sequencer machinery have been made more readable by
    humans.
 
- * The "--batch-size" option of "git multi-pack-index repack" command
+ * The "--batch-size" option of "but multi-pack-index repack" command
    is now used to specify that very small packfiles are collected into
    one until the total size roughly exceeds it.
 
  * The recent addition of SHA-256 support is marked as experimental in
    the documentation.
 
- * "git fetch" learned --no-write-fetch-head option to avoid writing
+ * "but fetch" learned --no-write-fetch-head option to avoid writing
    the FETCH_HEAD file.
 
  * Command line completion (in contrib/) usually omits redundant,
@@ -55,16 +55,16 @@ UI, Workflows & Features
    object names of blobs involved in the patch, but its length was not
    affected by the --abbrev option.  Now it is.
 
- * "git worktree" gained a "repair" subcommand to help users recover
+ * "but worktree" gained a "repair" subcommand to help users recover
    after moving the worktrees or repository manually without telling
-   Git.  Also, "git init --separate-git-dir" no longer corrupts
+   Git.  Also, "but init --separate-but-dir" no longer corrupts
    administrative data related to linked worktrees.
 
  * The "--format=" option to the "for-each-ref" command and friends
    learned a few more tricks, e.g. the ":short" suffix that applies to
    "objectname" now also can be used for "parent", "tree", etc.
 
- * "git worktree add" learns that the "-d" is a synonym to "--detach"
+ * "but worktree add" learns that the "-d" is a synonym to "--detach"
    option to create a new worktree without being on a branch.
 
  * "format-patch --range-diff=<prev> <origin>..HEAD" has been taught
@@ -72,50 +72,50 @@ UI, Workflows & Features
 
  * "add -p" now allows editing paths that were only added in intent.
 
- * The 'meld' backend of the "git mergetool" learned to give the
+ * The 'meld' backend of the "but mergetool" learned to give the
    underlying 'meld' the '--auto-merge' option, which would help
    reduce the amount of text that requires manual merging.
 
- * "git for-each-ref" and friends that list refs used to allow only
+ * "but for-each-ref" and friends that list refs used to allow only
    one --merged or --no-merged to filter them; they learned to take
    combination of both kind of filtering.
 
- * "git maintenance", a "git gc"'s big brother, has been introduced to
+ * "but maintenance", a "but gc"'s big brother, has been introduced to
    take care of more repository maintenance tasks, not limited to the
    object database cleaning.
 
- * "git receive-pack" that accepts requests by "git push" learned to
+ * "but receive-pack" that accepts requests by "but push" learned to
    outsource most of the ref updates to the new "proc-receive" hook.
 
- * "git push" that wants to be atomic and wants to send push
+ * "but push" that wants to be atomic and wants to send push
    certificate learned not to prepare and sign the push certificate
    when it fails the local check (hence due to atomicity it is known
    that no certificate is needed).
 
- * "git cummit-graph write" learned to limit the number of bloom
+ * "but cummit-graph write" learned to limit the number of bloom
    filters that are computed from scratch with the --max-new-filters
    option.
 
  * The transport protocol v2 has become the default again.
 
- * The installation procedure learned to optionally omit "git-foo"
+ * The installation procedure learned to optionally omit "but-foo"
    executable files for each 'foo' built-in subcommand, which are only
    required by old timers that still rely on the age old promise that
-   prepending "git --exec-path" output to PATH early in their script
-   will keep the "git-foo" calls they wrote working.
+   prepending "but --exec-path" output to PATH early in their script
+   will keep the "but-foo" calls they wrote working.
 
- * The command line completion (in contrib/) learned that "git restore
+ * The command line completion (in contrib/) learned that "but restore
    -s <TAB>" is often followed by a refname.
 
- * "git shortlog" has been taught to group cummits by the contents of
+ * "but shortlog" has been taught to group cummits by the contents of
    the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
 
- * "git archive" learns the "--add-file" option to include untracked
+ * "but archive" learns the "--add-file" option to include untracked
    files into a snapshot from a tree-ish.
 
- * "git fetch" and "git push" support negative refspecs.
+ * "but fetch" and "but push" support negative refspecs.
 
- * "git format-patch" learns to take "whenAble" as a possible value
+ * "but format-patch" learns to take "whenAble" as a possible value
    for the format.useAutoBase configuration variable to become no-op
    when the  automatically computed base does not make sense.
 
@@ -136,7 +136,7 @@ Performance, Internal Implementation, Development Support etc.
  * Preliminary clean-up of the refs API in preparation for adding a
    new refs backend "reftable".
 
- * Dev support to limit the use of test_must_fail to only git commands.
+ * Dev support to limit the use of test_must_fail to only but commands.
 
  * While packing many objects in a repository with a promissor remote,
    lazily fetching missing objects from the promissor remote one by
@@ -168,12 +168,12 @@ Performance, Internal Implementation, Development Support etc.
  * A no-op replacement function implemented as a C preprocessor macro
    does not perform as good a job as one implemented as a "static
    inline" function in catching errors in parameters; replace the
-   former with the latter in <git-compat-util.h> header.
+   former with the latter in <but-compat-util.h> header.
 
  * Test framework update.
    (merge d572f52a64 es/test-cmp-typocatcher later to maint).
 
- * Updates to "git merge" tests, in preparation for a new merge
+ * Updates to "but merge" tests, in preparation for a new merge
    strategy backend.
 
  * midx and cummit-graph files now use the byte defined in their file
@@ -182,16 +182,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * The FETCH_HEAD is now always read from the filesystem regardless of
    the ref backend in use, as its format is much richer than the
-   normal refs, and written directly by "git fetch" as a plain file..
+   normal refs, and written directly by "but fetch" as a plain file..
 
  * An unused binary has been discarded, and a bunch of commands
    have been turned into built-in.
 
  * A handful of places in in-tree code still relied on being able to
-   execute the git subcommands, especially built-ins, in "git-foo"
+   execute the but subcommands, especially built-ins, in "but-foo"
    form, which have been corrected.
 
- * When a packfile is removed by "git repack", multi-pack-index gets
+ * When a packfile is removed by "but repack", multi-pack-index gets
    cleared; the code was taught to do so less aggressively by first
    checking if the midx actually refers to a pack that no longer
    exists.
@@ -206,7 +206,7 @@ Performance, Internal Implementation, Development Support etc.
  * Allow maintainers to tweak $(TAR) invocations done while making
    distribution tarballs.
 
- * "git index-pack" learned to resolve deltified objects with greater
+ * "but index-pack" learned to resolve deltified objects with greater
    parallelism.
 
  * "diff-highlight" (in contrib/) had a logic to flush its output upon
@@ -221,17 +221,17 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.28
 -----------------
 
- * The "mediawiki" remote backend which lives in contrib/mw-to-git/
-   and is not built with git by default, had an RCE bug allowing a
+ * The "mediawiki" remote backend which lives in contrib/mw-to-but/
+   and is not built with but by default, had an RCE bug allowing a
    malicious MediaWiki server operator to inject arbitrary commands
    for execution by a cloning client. This has been fixed.
 
    The bug was discovered and reported by Joern Schneeweisz of GitLab
-   to the git-security mailing list. Its practical impact due to the
-   obscurity of git-remote-mediawiki was deemed small enough to forgo
+   to the but-security mailing list. Its practical impact due to the
+   obscurity of but-remote-mediawiki was deemed small enough to forgo
    a dedicated security release.
 
- * "git clone --separate-git-dir=$elsewhere" used to stomp on the
+ * "but clone --separate-but-dir=$elsewhere" used to stomp on the
    contents of the existing directory $elsewhere, which has been
    taught to fail when $elsewhere is not an empty directory.
    (merge dfaa209a79 bw/fail-cloning-into-non-empty later to maint).
@@ -255,7 +255,7 @@ Fixes since v2.28
    which has been corrected.
    (merge cd85b447bf bc/push-cas-cquoted-refname later to maint).
 
- * "git mv src dst", when src is an unmerged path, errored out
+ * "but mv src dst", when src is an unmerged path, errored out
    correctly but with an incorrect error message to claim that src is
    not tracked, which has been clarified.
    (merge 9b906af657 ct/mv-unmerged-path-error later to maint).
@@ -273,7 +273,7 @@ Fixes since v2.28
  * Doc cleanup around "worktree".
    (merge dc9c144be5 es/worktree-doc-cleanups later to maint).
 
- * The "git blame --first-parent" option was not documented, but now
+ * The "but blame --first-parent" option was not documented, but now
    it is.
    (merge 11bc12ae1e rp/blame-first-parent-doc later to maint).
 
@@ -283,14 +283,14 @@ Fixes since v2.28
    buffer space.  This has been corrected.
    (merge 09b2aa30c9 ps/ref-transaction-hook later to maint).
 
- * Recent versions of "git diff-files" shows a diff between the index
+ * Recent versions of "but diff-files" shows a diff between the index
    and the working tree for "intent-to-add" paths as a "new file"
-   patch; "git apply --cached" should be able to take "git diff-files"
-   and should act as an equivalent to "git add" for the path, but the
+   patch; "but apply --cached" should be able to take "but diff-files"
+   and should act as an equivalent to "but add" for the path, but the
    command failed to do so for such a path.
    (merge 4c025c667e rp/apply-cached-with-i-t-a later to maint).
 
- * "git diff [<tree-ish>] $path" for a $path that is marked with i-t-a
+ * "but diff [<tree-ish>] $path" for a $path that is marked with i-t-a
    bit was not showing the mode bits from the working tree.
    (merge cb0dd22b82 rp/ita-diff-modefix later to maint).
 
@@ -299,7 +299,7 @@ Fixes since v2.28
    corrected.
    (merge 5da69c0dac ak/sequencer-fix-find-uniq-abbrev later to maint).
 
- * When given more than one target line ranges, "git blame -La,b
+ * When given more than one target line ranges, "but blame -La,b
    -Lc,d" was over-eager to coalesce groups of original lines and
    showed incorrect results, which has been corrected.
    (merge c2ebaa27d6 jk/blame-coalesce-fix later to maint).
@@ -315,17 +315,17 @@ Fixes since v2.28
  * "unlink" emulation on MinGW has been optimized.
    (merge 680e0b4524 jh/mingw-unlink later to maint).
 
- * The purpose of "git init --separate-git-dir" is to initialize a
+ * The purpose of "but init --separate-but-dir" is to initialize a
    new project with the repository separate from the working tree,
    or, in the case of an existing project, to move the repository
-   (the .git/ directory) out of the working tree. It does not make
-   sense to use --separate-git-dir with a bare repository for which
+   (the .but/ directory) out of the working tree. It does not make
+   sense to use --separate-but-dir with a bare repository for which
    there is no working tree, so disallow its use with bare
    repositories.
-   (merge ccf236a23a es/init-no-separate-git-dir-in-bare later to maint).
+   (merge ccf236a23a es/init-no-separate-but-dir-in-bare later to maint).
 
- * "ls-files -o" mishandled the top-level directory of another git
-   working tree that hangs in the current git working tree.
+ * "ls-files -o" mishandled the top-level directory of another but
+   working tree that hangs in the current but working tree.
    (merge ab282aa548 en/dir-nonbare-embedded later to maint).
 
  * Fix some incorrect UNLEAK() annotations.
@@ -341,7 +341,7 @@ Fixes since v2.28
  * Updates into a lazy/partial clone with a submodule did not work
    well with transfer.fsckobjects set.
 
- * The parser for "git for-each-ref --format=..." was too loose when
+ * The parser for "but for-each-ref --format=..." was too loose when
    parsing the "%(trailers...)" atom, and forgot that "trailers" and
    "trailers:<modifiers>" are the only two allowed forms, which has
    been corrected.
@@ -351,29 +351,29 @@ Fixes since v2.28
    index-pack task in parallel, which has been adjusted a bit upwards.
    (merge fbff95b67f jk/index-pack-w-more-threads later to maint).
 
- * "git restore/checkout --no-overlay" with wildcarded pathspec
+ * "but restore/checkout --no-overlay" with wildcarded pathspec
    mistakenly removed matching paths in subdirectories, which has been
    corrected.
    (merge bfda204ade rs/checkout-no-overlay-pathspec-fix later to maint).
 
- * The description of --cached/--index options in "git apply --help"
+ * The description of --cached/--index options in "but apply --help"
    has been updated.
    (merge d064702be3 rp/apply-cached-doc later to maint).
 
- * Feeding "$ZERO_OID" to "git log --ignore-missing --stdin", and
-   running "git log --ignore-missing $ZERO_OID" fell back to start
+ * Feeding "$ZERO_OID" to "but log --ignore-missing --stdin", and
+   running "but log --ignore-missing $ZERO_OID" fell back to start
    digging from HEAD; it has been corrected to become a no-op, like
-   "git log --tags=no-tag-matches-this-pattern" does.
+   "but log --tags=no-tag-matches-this-pattern" does.
    (merge 04a0e98515 jk/rev-input-given-fix later to maint).
 
  * Various callers of run_command API have been modernized.
    (merge afbdba391e jc/run-command-use-embedded-args later to maint).
 
- * List of options offered and accepted by "git add -i/-p" were
+ * List of options offered and accepted by "but add -i/-p" were
    inconsistent, which have been corrected.
    (merge ce910287e7 pw/add-p-allowed-options-fix later to maint).
 
- * "git diff --stat -w" showed 0-line changes for paths whose changes
+ * "but diff --stat -w" showed 0-line changes for paths whose changes
    were only whitespaces, which was not intuitive.  We now omit such
    paths from the stat output.
    (merge 1cf3d5db9b mr/diff-hide-stat-wo-textual-change later to maint).
@@ -382,7 +382,7 @@ Fixes since v2.28
    been freed, which has been fixed.
    (merge 6479ea4a8a jk/xrealloc-avoid-use-after-free later to maint).
 
- * "git status" has trouble showing where it came from by interpreting
+ * "but status" has trouble showing where it came from by interpreting
    reflog entries that record certain events, e.g. "checkout @{u}", and
    gives a hard/fatal error.  Even though it inherently is impossible
    to give a correct answer because the reflog entries lose some
@@ -392,39 +392,39 @@ Fixes since v2.28
    have changed), at least hide the error and allow "status" to show its
    output.
 
- * "git status --short" quoted a path with SP in it when tracked, but
+ * "but status --short" quoted a path with SP in it when tracked, but
    not those that are untracked, ignored or unmerged.  They are all
    shown quoted consistently.
 
- * "git diff/show" on a change that involves a submodule used to read
+ * "but diff/show" on a change that involves a submodule used to read
    the information on cummits in the submodule from a wrong repository
    and gave a wrong information when the cummit-graph is involved.
    (merge 85a1ec2c32 mf/submodule-summary-with-correct-repository later to maint).
 
- * Unlike "git config --local", "git config --worktree" did not fail
-   early and cleanly when started outside a git repository.
-   (merge 378fe5fc3d mt/config-fail-nongit-early later to maint).
+ * Unlike "but config --local", "but config --worktree" did not fail
+   early and cleanly when started outside a but repository.
+   (merge 378fe5fc3d mt/config-fail-nonbut-early later to maint).
 
  * There is a logic to estimate how many objects are in the
    repository, which is meant to run once per process invocation, but
    it ran every time the estimated value was requested.
    (merge 67bb65de5d jk/dont-count-existing-objects-twice later to maint).
 
- * "git remote set-head" that failed still said something that hints
+ * "but remote set-head" that failed still said something that hints
    the operation went through, which was misleading.
    (merge 5a07c6c3c2 cs/don-t-pretend-a-failed-remote-set-head-succeeded later to maint).
 
- * "git fetch --all --ipv4/--ipv6" forgot to pass the protocol options
-   to instances of the "git fetch" that talk to individual remotes,
+ * "but fetch --all --ipv4/--ipv6" forgot to pass the protocol options
+   to instances of the "but fetch" that talk to individual remotes,
    which has been corrected.
    (merge 4e735c1326 ar/fetch-ipversion-in-all later to maint).
 
- * The "unshelve" subcommand of "git p4" incorrectly used cummit^N
+ * The "unshelve" subcommand of "but p4" incorrectly used cummit^N
    where it meant to say cummit~N to name the Nth generation
    ancestor, which has been corrected.
    (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
 
- * "git clone" that clones from SHA-1 repository, while
+ * "but clone" that clones from SHA-1 repository, while
    GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
    unusable repository that half-claims to be SHA-256 repository
    with SHA-1 objects and refs.  This has been corrected.
@@ -432,10 +432,10 @@ Fixes since v2.28
  * Adjust sample hooks for hash algorithm other than SHA-1.
    (merge d8d3d632f4 dl/zero-oid-in-hooks later to maint).
 
- * "git range-diff" showed incorrect diffstat, which has been
+ * "but range-diff" showed incorrect diffstat, which has been
    corrected.
 
- * Earlier we taught "git pull" to warn when the user does not say the
+ * Earlier we taught "but pull" to warn when the user does not say the
    histories need to be merged, rebased or accepts only fast-
    forwarding, but the warning triggered for those who have set the
    pull.ff configuration variable.
@@ -444,13 +444,13 @@ Fixes since v2.28
  * Compilation fix around type punning.
    (merge 176380fd11 jk/drop-unaligned-loads later to maint).
 
- * "git blame --ignore-rev/--ignore-revs-file" failed to validate
+ * "but blame --ignore-rev/--ignore-revs-file" failed to validate
    their input are valid revision, and failed to take into account
    that the user may want to give an annotated tag instead of a
    cummit, which has been corrected.
    (merge 610e2b9240 jc/blame-ignore-fix later to maint).
 
- * "git bisect start X Y", when X and Y are not valid cummittish
+ * "but bisect start X Y", when X and Y are not valid cummittish
    object names, should take X and Y as pathspec, but didn't.
    (merge 73c6de06af cc/bisect-start-fix later to maint).
 
@@ -466,7 +466,7 @@ Fixes since v2.28
    cummit-graph feature was in use, which has been corrected.
    (merge 8791bf1841 ds/in-merge-bases-many-optim-bug later to maint).
 
- * "git submodule update --quiet" did not squelch underlying "rebase"
+ * "but submodule update --quiet" did not squelch underlying "rebase"
    and "pull" commands.
    (merge 3ad0401e9e td/submodule-update-quiet later to maint).
 
@@ -483,7 +483,7 @@ Fixes since v2.28
    (merge b17f411ab5 ar/help-guides-doc later to maint).
    (merge 98c6871fad rs/grep-simpler-parse-object-or-die-call later to maint).
    (merge 861c4ce141 en/typofixes later to maint).
-   (merge 60e47f6773 sg/ci-git-path-fix-with-pyenv later to maint).
+   (merge 60e47f6773 sg/ci-but-path-fix-with-pyenv later to maint).
    (merge e2bfa50ac3 jb/doc-packfile-name later to maint).
    (merge 918d8ff780 es/worktree-cleanup later to maint).
    (merge dc156bc31f ma/t1450-quotefix later to maint).

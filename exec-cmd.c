@@ -33,7 +33,7 @@ static const char *system_prefix(void);
 
 /**
  * Path to the current Git executable. Resolved on startup by
- * 'git_resolve_executable_dir'.
+ * 'but_resolve_executable_dir'.
  */
 static const char *executable_dirname;
 
@@ -47,7 +47,7 @@ static const char *system_prefix(void)
 	if (!prefix &&
 	    !(prefix = strip_path_suffix(executable_dirname, GIT_EXEC_PATH)) &&
 	    !(prefix = strip_path_suffix(executable_dirname, BINDIR)) &&
-	    !(prefix = strip_path_suffix(executable_dirname, "git"))) {
+	    !(prefix = strip_path_suffix(executable_dirname, "but"))) {
 		prefix = FALLBACK_RUNTIME_PREFIX;
 		trace_printf("RUNTIME_PREFIX requested, "
 				"but prefix computation failed.  "
@@ -61,7 +61,7 @@ static const char *system_prefix(void)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path_from_argv0(struct strbuf *buf, const char *argv0)
+static int but_get_exec_path_from_argv0(struct strbuf *buf, const char *argv0)
 {
 	const char *slash;
 
@@ -84,7 +84,7 @@ static int git_get_exec_path_from_argv0(struct strbuf *buf, const char *argv0)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path_procfs(struct strbuf *buf)
+static int but_get_exec_path_procfs(struct strbuf *buf)
 {
 	if (strbuf_realpath(buf, PROCFS_EXECUTABLE_PATH, 0)) {
 		trace_printf(
@@ -102,7 +102,7 @@ static int git_get_exec_path_procfs(struct strbuf *buf)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path_bsd_sysctl(struct strbuf *buf)
+static int but_get_exec_path_bsd_sysctl(struct strbuf *buf)
 {
 	int mib[4];
 	char path[MAXPATHLEN];
@@ -129,7 +129,7 @@ static int git_get_exec_path_bsd_sysctl(struct strbuf *buf)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path_darwin(struct strbuf *buf)
+static int but_get_exec_path_darwin(struct strbuf *buf)
 {
 	char path[PATH_MAX];
 	uint32_t size = sizeof(path);
@@ -150,7 +150,7 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path_wpgmptr(struct strbuf *buf)
+static int but_get_exec_path_wpgmptr(struct strbuf *buf)
 {
 	int len = wcslen(_wpgmptr) * 3 + 1;
 	strbuf_grow(buf, len);
@@ -167,7 +167,7 @@ static int git_get_exec_path_wpgmptr(struct strbuf *buf)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int git_get_exec_path(struct strbuf *buf, const char *argv0)
+static int but_get_exec_path(struct strbuf *buf, const char *argv0)
 {
 	/*
 	 * Identifying the executable path is operating system specific.
@@ -185,22 +185,22 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 	 */
 	if (
 #ifdef HAVE_BSD_KERN_PROC_SYSCTL
-		git_get_exec_path_bsd_sysctl(buf) &&
+		but_get_exec_path_bsd_sysctl(buf) &&
 #endif /* HAVE_BSD_KERN_PROC_SYSCTL */
 
 #ifdef HAVE_NS_GET_EXECUTABLE_PATH
-		git_get_exec_path_darwin(buf) &&
+		but_get_exec_path_darwin(buf) &&
 #endif /* HAVE_NS_GET_EXECUTABLE_PATH */
 
 #ifdef PROCFS_EXECUTABLE_PATH
-		git_get_exec_path_procfs(buf) &&
+		but_get_exec_path_procfs(buf) &&
 #endif /* PROCFS_EXECUTABLE_PATH */
 
 #ifdef HAVE_WPGMPTR
-		git_get_exec_path_wpgmptr(buf) &&
+		but_get_exec_path_wpgmptr(buf) &&
 #endif /* HAVE_WPGMPTR */
 
-		git_get_exec_path_from_argv0(buf, argv0)) {
+		but_get_exec_path_from_argv0(buf, argv0)) {
 		return -1;
 	}
 
@@ -214,13 +214,13 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 	return 0;
 }
 
-void git_resolve_executable_dir(const char *argv0)
+void but_resolve_executable_dir(const char *argv0)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *resolved;
 	const char *slash;
 
-	if (git_get_exec_path(&buf, argv0)) {
+	if (but_get_exec_path(&buf, argv0)) {
 		trace_printf(
 			"trace: could not determine executable path from: %s\n",
 			argv0);
@@ -252,7 +252,7 @@ static const char *system_prefix(void)
  * This is called during initialization, but No work needs to be done here when
  * runtime prefix is not being used.
  */
-void git_resolve_executable_dir(const char *argv0)
+void but_resolve_executable_dir(const char *argv0)
 {
 }
 
@@ -271,7 +271,7 @@ char *system_path(const char *path)
 
 static const char *exec_path_value;
 
-void git_set_exec_path(const char *exec_path)
+void but_set_exec_path(const char *exec_path)
 {
 	exec_path_value = exec_path;
 	/*
@@ -280,8 +280,8 @@ void git_set_exec_path(const char *exec_path)
 	setenv(EXEC_PATH_ENVIRONMENT, exec_path, 1);
 }
 
-/* Returns the highest-priority location to look for git programs. */
-const char *git_exec_path(void)
+/* Returns the highest-priority location to look for but programs. */
+const char *but_exec_path(void)
 {
 	if (!exec_path_value) {
 		const char *env = getenv(EXEC_PATH_ENVIRONMENT);
@@ -303,11 +303,11 @@ static void add_path(struct strbuf *out, const char *path)
 
 void setup_path(void)
 {
-	const char *exec_path = git_exec_path();
+	const char *exec_path = but_exec_path();
 	const char *old_path = getenv("PATH");
 	struct strbuf new_path = STRBUF_INIT;
 
-	git_set_exec_path(exec_path);
+	but_set_exec_path(exec_path);
 	add_path(&new_path, exec_path);
 
 	if (old_path)
@@ -320,22 +320,22 @@ void setup_path(void)
 	strbuf_release(&new_path);
 }
 
-const char **prepare_git_cmd(struct strvec *out, const char **argv)
+const char **prepare_but_cmd(struct strvec *out, const char **argv)
 {
-	strvec_push(out, "git");
+	strvec_push(out, "but");
 	strvec_pushv(out, argv);
 	return out->v;
 }
 
-int execv_git_cmd(const char **argv)
+int execv_but_cmd(const char **argv)
 {
 	struct strvec nargv = STRVEC_INIT;
 
-	prepare_git_cmd(&nargv, argv);
+	prepare_but_cmd(&nargv, argv);
 	trace_argv_printf(nargv.v, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	sane_execvp("git", (char **)nargv.v);
+	sane_execvp("but", (char **)nargv.v);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
@@ -343,7 +343,7 @@ int execv_git_cmd(const char **argv)
 	return -1;
 }
 
-int execl_git_cmd(const char *cmd, ...)
+int execl_but_cmd(const char *cmd, ...)
 {
 	int argc;
 	const char *argv[MAX_ARGS + 1];
@@ -363,5 +363,5 @@ int execl_git_cmd(const char *cmd, ...)
 		return error(_("too many args to run %s"), cmd);
 
 	argv[argc] = NULL;
-	return execv_git_cmd(argv);
+	return execv_but_cmd(argv);
 }

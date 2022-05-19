@@ -21,110 +21,110 @@ munge_cr () {
 
 test_expect_success setup '
 
-	git config core.autocrlf false &&
+	but config core.autocrlf false &&
 
 	test_write_lines Hello world how are you >one &&
 	mkdir dir &&
 	test_write_lines I am very very fine thank you >dir/two &&
 	test_write_lines Oh here is NULQin text here | q_to_nul >three &&
-	git add . &&
+	but add . &&
 
-	git cummit -m initial &&
+	but cummit -m initial &&
 
-	one=$(git rev-parse HEAD:one) &&
-	dir=$(git rev-parse HEAD:dir) &&
-	two=$(git rev-parse HEAD:dir/two) &&
-	three=$(git rev-parse HEAD:three) &&
+	one=$(but rev-parse HEAD:one) &&
+	dir=$(but rev-parse HEAD:dir) &&
+	two=$(but rev-parse HEAD:dir/two) &&
+	three=$(but rev-parse HEAD:three) &&
 
 	test_write_lines Some extra lines here >>one &&
-	git diff >patch.file &&
-	patched=$(git hash-object --stdin <one) &&
-	git read-tree --reset -u HEAD
+	but diff >patch.file &&
+	patched=$(but hash-object --stdin <one) &&
+	but read-tree --reset -u HEAD
 '
 
 test_expect_success 'safecrlf: autocrlf=input, all CRLF' '
 
-	git config core.autocrlf input &&
-	git config core.safecrlf true &&
+	but config core.autocrlf input &&
+	but config core.safecrlf true &&
 
 	test_write_lines I am all CRLF | append_cr >allcrlf &&
-	test_must_fail git add allcrlf
+	test_must_fail but add allcrlf
 '
 
 test_expect_success 'safecrlf: autocrlf=input, mixed LF/CRLF' '
 
-	git config core.autocrlf input &&
-	git config core.safecrlf true &&
+	but config core.autocrlf input &&
+	but config core.safecrlf true &&
 
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
-	test_must_fail git add mixed
+	test_must_fail but add mixed
 '
 
 test_expect_success 'safecrlf: autocrlf=true, all LF' '
 
-	git config core.autocrlf true &&
-	git config core.safecrlf true &&
+	but config core.autocrlf true &&
+	but config core.safecrlf true &&
 
 	test_write_lines I am all LF >alllf &&
-	test_must_fail git add alllf
+	test_must_fail but add alllf
 '
 
 test_expect_success 'safecrlf: autocrlf=true mixed LF/CRLF' '
 
-	git config core.autocrlf true &&
-	git config core.safecrlf true &&
+	but config core.autocrlf true &&
+	but config core.safecrlf true &&
 
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
-	test_must_fail git add mixed
+	test_must_fail but add mixed
 '
 
 test_expect_success 'safecrlf: print warning only once' '
 
-	git config core.autocrlf input &&
-	git config core.safecrlf warn &&
+	but config core.autocrlf input &&
+	but config core.safecrlf warn &&
 
 	test_write_lines I am all LF >doublewarn &&
-	git add doublewarn &&
-	git cummit -m "nowarn" &&
+	but add doublewarn &&
+	but cummit -m "nowarn" &&
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >doublewarn &&
-	git add doublewarn 2>err &&
+	but add doublewarn 2>err &&
 	grep "CRLF will be replaced by LF" err >err.warnings &&
 	test_line_count = 1 err.warnings
 '
 
 
-test_expect_success 'safecrlf: git diff demotes safecrlf=true to warn' '
-	git config core.autocrlf input &&
-	git config core.safecrlf true &&
-	git diff HEAD
+test_expect_success 'safecrlf: but diff demotes safecrlf=true to warn' '
+	but config core.autocrlf input &&
+	but config core.safecrlf true &&
+	but diff HEAD
 '
 
 
 test_expect_success 'safecrlf: no warning with safecrlf=false' '
-	git config core.autocrlf input &&
-	git config core.safecrlf false &&
+	but config core.autocrlf input &&
+	but config core.safecrlf false &&
 
 	test_write_lines I am all CRLF | append_cr >allcrlf &&
-	git add allcrlf 2>err &&
+	but add allcrlf 2>err &&
 	test_must_be_empty err
 '
 
 
 test_expect_success 'switch off autocrlf, safecrlf, reset HEAD' '
-	git config core.autocrlf false &&
-	git config core.safecrlf false &&
-	git reset --hard HEAD^
+	but config core.autocrlf false &&
+	but config core.safecrlf false &&
+	but reset --hard HEAD^
 '
 
 test_expect_success 'update with autocrlf=input' '
 
 	rm -f tmp one dir/two three &&
-	git read-tree --reset -u HEAD &&
-	git config core.autocrlf input &&
+	but read-tree --reset -u HEAD &&
+	but config core.autocrlf input &&
 	munge_cr append one &&
 	munge_cr append dir/two &&
-	git update-index -- one dir/two &&
-	differs=$(git diff-index --cached HEAD) &&
+	but update-index -- one dir/two &&
+	differs=$(but diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 
 '
@@ -132,12 +132,12 @@ test_expect_success 'update with autocrlf=input' '
 test_expect_success 'update with autocrlf=true' '
 
 	rm -f tmp one dir/two three &&
-	git read-tree --reset -u HEAD &&
-	git config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
+	but config core.autocrlf true &&
 	munge_cr append one &&
 	munge_cr append dir/two &&
-	git update-index -- one dir/two &&
-	differs=$(git diff-index --cached HEAD) &&
+	but update-index -- one dir/two &&
+	differs=$(but diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 
 '
@@ -145,231 +145,231 @@ test_expect_success 'update with autocrlf=true' '
 test_expect_success 'checkout with autocrlf=true' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 	munge_cr remove one &&
 	munge_cr remove dir/two &&
-	git update-index -- one dir/two &&
-	test "$one" = $(git hash-object --stdin <one) &&
-	test "$two" = $(git hash-object --stdin <dir/two) &&
-	differs=$(git diff-index --cached HEAD) &&
+	but update-index -- one dir/two &&
+	test "$one" = $(but hash-object --stdin <one) &&
+	test "$two" = $(but hash-object --stdin <dir/two) &&
+	differs=$(but diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 '
 
 test_expect_success 'checkout with autocrlf=input' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf input &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf input &&
+	but read-tree --reset -u HEAD &&
 	! has_cr one &&
 	! has_cr dir/two &&
-	git update-index -- one dir/two &&
-	test "$one" = $(git hash-object --stdin <one) &&
-	test "$two" = $(git hash-object --stdin <dir/two) &&
-	differs=$(git diff-index --cached HEAD) &&
+	but update-index -- one dir/two &&
+	test "$one" = $(but hash-object --stdin <one) &&
+	test "$two" = $(but hash-object --stdin <dir/two) &&
+	differs=$(but diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 '
 
 test_expect_success 'apply patch (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf input &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf input &&
+	but read-tree --reset -u HEAD &&
 
-	git apply patch.file &&
-	verbose test "$patched" = "$(git hash-object --stdin <one)"
+	but apply patch.file &&
+	verbose test "$patched" = "$(but hash-object --stdin <one)"
 '
 
 test_expect_success 'apply patch --cached (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf input &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf input &&
+	but read-tree --reset -u HEAD &&
 
-	git apply --cached patch.file &&
-	verbose test "$patched" = $(git rev-parse :one)
+	but apply --cached patch.file &&
+	verbose test "$patched" = $(but rev-parse :one)
 '
 
 test_expect_success 'apply patch --index (autocrlf=input)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf input &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf input &&
+	but read-tree --reset -u HEAD &&
 
-	git apply --index patch.file &&
-	verbose test "$patched" = $(git rev-parse :one) &&
-	verbose test "$patched" = $(git hash-object --stdin <one)
+	but apply --index patch.file &&
+	verbose test "$patched" = $(but rev-parse :one) &&
+	verbose test "$patched" = $(but hash-object --stdin <one)
 '
 
 test_expect_success 'apply patch (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
-	git apply patch.file &&
-	verbose test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
+	but apply patch.file &&
+	verbose test "$patched" = "$(remove_cr <one | but hash-object --stdin)"
 '
 
 test_expect_success 'apply patch --cached (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
-	git apply --cached patch.file &&
-	verbose test "$patched" = $(git rev-parse :one)
+	but apply --cached patch.file &&
+	verbose test "$patched" = $(but rev-parse :one)
 '
 
 test_expect_success 'apply patch --index (autocrlf=true)' '
 
 	rm -f tmp one dir/two three &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
-	git apply --index patch.file &&
-	verbose test "$patched" = $(git rev-parse :one) &&
-	verbose test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
+	but apply --index patch.file &&
+	verbose test "$patched" = $(but rev-parse :one) &&
+	verbose test "$patched" = "$(remove_cr <one | but hash-object --stdin)"
 '
 
-test_expect_success '.gitattributes says two is binary' '
+test_expect_success '.butattributes says two is binary' '
 
 	rm -f tmp one dir/two three &&
-	echo "two -crlf" >.gitattributes &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	echo "two -crlf" >.butattributes &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
 	! has_cr dir/two &&
 	verbose has_cr one &&
 	! has_cr three
 '
 
-test_expect_success '.gitattributes says two is input' '
+test_expect_success '.butattributes says two is input' '
 
 	rm -f tmp one dir/two three &&
-	echo "two crlf=input" >.gitattributes &&
-	git read-tree --reset -u HEAD &&
+	echo "two crlf=input" >.butattributes &&
+	but read-tree --reset -u HEAD &&
 
 	! has_cr dir/two
 '
 
-test_expect_success '.gitattributes says two and three are text' '
+test_expect_success '.butattributes says two and three are text' '
 
 	rm -f tmp one dir/two three &&
-	echo "t* crlf" >.gitattributes &&
-	git read-tree --reset -u HEAD &&
+	echo "t* crlf" >.butattributes &&
+	but read-tree --reset -u HEAD &&
 
 	verbose has_cr dir/two &&
 	verbose has_cr three
 '
 
-test_expect_success 'in-tree .gitattributes (1)' '
+test_expect_success 'in-tree .butattributes (1)' '
 
-	echo "one -crlf" >>.gitattributes &&
-	git add .gitattributes &&
-	git cummit -m "Add .gitattributes" &&
+	echo "one -crlf" >>.butattributes &&
+	but add .butattributes &&
+	but cummit -m "Add .butattributes" &&
 
-	rm -rf tmp one dir .gitattributes patch.file three &&
-	git read-tree --reset -u HEAD &&
-
-	! has_cr one &&
-	verbose has_cr three
-'
-
-test_expect_success 'in-tree .gitattributes (2)' '
-
-	rm -rf tmp one dir .gitattributes patch.file three &&
-	git read-tree --reset HEAD &&
-	git checkout-index -f -q -u -a &&
+	rm -rf tmp one dir .butattributes patch.file three &&
+	but read-tree --reset -u HEAD &&
 
 	! has_cr one &&
 	verbose has_cr three
 '
 
-test_expect_success 'in-tree .gitattributes (3)' '
+test_expect_success 'in-tree .butattributes (2)' '
 
-	rm -rf tmp one dir .gitattributes patch.file three &&
-	git read-tree --reset HEAD &&
-	git checkout-index -u .gitattributes &&
-	git checkout-index -u one dir/two three &&
-
-	! has_cr one &&
-	verbose has_cr three
-'
-
-test_expect_success 'in-tree .gitattributes (4)' '
-
-	rm -rf tmp one dir .gitattributes patch.file three &&
-	git read-tree --reset HEAD &&
-	git checkout-index -u one dir/two three &&
-	git checkout-index -u .gitattributes &&
+	rm -rf tmp one dir .butattributes patch.file three &&
+	but read-tree --reset HEAD &&
+	but checkout-index -f -q -u -a &&
 
 	! has_cr one &&
 	verbose has_cr three
 '
 
-test_expect_success 'checkout with existing .gitattributes' '
+test_expect_success 'in-tree .butattributes (3)' '
 
-	git config core.autocrlf true &&
-	git config --unset core.safecrlf &&
-	echo ".file2 -crlfQ" | q_to_cr >> .gitattributes &&
-	git add .gitattributes &&
-	git cummit -m initial &&
-	echo ".file -crlfQ" | q_to_cr >> .gitattributes &&
+	rm -rf tmp one dir .butattributes patch.file three &&
+	but read-tree --reset HEAD &&
+	but checkout-index -u .butattributes &&
+	but checkout-index -u one dir/two three &&
+
+	! has_cr one &&
+	verbose has_cr three
+'
+
+test_expect_success 'in-tree .butattributes (4)' '
+
+	rm -rf tmp one dir .butattributes patch.file three &&
+	but read-tree --reset HEAD &&
+	but checkout-index -u one dir/two three &&
+	but checkout-index -u .butattributes &&
+
+	! has_cr one &&
+	verbose has_cr three
+'
+
+test_expect_success 'checkout with existing .butattributes' '
+
+	but config core.autocrlf true &&
+	but config --unset core.safecrlf &&
+	echo ".file2 -crlfQ" | q_to_cr >> .butattributes &&
+	but add .butattributes &&
+	but cummit -m initial &&
+	echo ".file -crlfQ" | q_to_cr >> .butattributes &&
 	echo "contents" > .file &&
-	git add .gitattributes .file &&
-	git cummit -m second &&
+	but add .butattributes .file &&
+	but cummit -m second &&
 
-	git checkout main~1 &&
-	git checkout main &&
-	test "$(git diff-files --raw)" = ""
+	but checkout main~1 &&
+	but checkout main &&
+	test "$(but diff-files --raw)" = ""
 
 '
 
-test_expect_success 'checkout when deleting .gitattributes' '
+test_expect_success 'checkout when deleting .butattributes' '
 
-	git rm .gitattributes &&
+	but rm .butattributes &&
 	echo "contentsQ" | q_to_cr > .file2 &&
-	git add .file2 &&
-	git cummit -m third &&
+	but add .file2 &&
+	but cummit -m third &&
 
-	git checkout main~1 &&
-	git checkout main &&
+	but checkout main~1 &&
+	but checkout main &&
 	has_cr .file2
 
 '
 
-test_expect_success 'invalid .gitattributes (must not crash)' '
+test_expect_success 'invalid .butattributes (must not crash)' '
 
-	echo "three +crlf" >>.gitattributes &&
-	git diff
+	echo "three +crlf" >>.butattributes &&
+	but diff
 
 '
 # Some more tests here to add new autocrlf functionality.
 # We want to have a known state here, so start a bit from scratch
 
 test_expect_success 'setting up for new autocrlf tests' '
-	git config core.autocrlf false &&
-	git config core.safecrlf false &&
+	but config core.autocrlf false &&
+	but config core.safecrlf false &&
 	rm -rf .????* * &&
 	test_write_lines I am all LF >alllf &&
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_write_lines I am all CRLF | append_cr >allcrlf &&
-	git add -A . &&
-	git cummit -m "alllf, allcrlf and mixed only" &&
-	git tag -a -m "message" autocrlf-checkpoint
+	but add -A . &&
+	but cummit -m "alllf, allcrlf and mixed only" &&
+	but tag -a -m "message" autocrlf-checkpoint
 '
 
 test_expect_success 'report no change after setting autocrlf' '
-	git config core.autocrlf true &&
+	but config core.autocrlf true &&
 	touch * &&
-	git diff --exit-code
+	but diff --exit-code
 '
 
 test_expect_success 'files are clean after checkout' '
 	rm * &&
-	git checkout -f &&
-	git diff --exit-code
+	but checkout -f &&
+	but diff --exit-code
 '
 
 cr_to_Q_no_NL () {
@@ -390,11 +390,11 @@ test_expect_success 'CRLF only file has CRLF with autocrlf' '
 
 test_expect_success 'New CRLF file gets LF in repo' '
 	tr -d "\015" < alllf | append_cr > alllf2 &&
-	git add alllf2 &&
-	git cummit -m "alllf2 added" &&
-	git config core.autocrlf false &&
+	but add alllf2 &&
+	but cummit -m "alllf2 added" &&
+	but config core.autocrlf false &&
 	rm * &&
-	git checkout -f &&
+	but checkout -f &&
 	test_cmp alllf alllf2
 '
 

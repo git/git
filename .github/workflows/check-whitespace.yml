@@ -2,7 +2,7 @@ name: check-whitespace
 
 # Get the repository with all cummits to ensure that we can analyze
 # all of the cummits contributed via the Pull Request.
-# Process `git log --check` output to extract just the check errors.
+# Process `but log --check` output to extract just the check errors.
 # Exit with failure upon white-space issues.
 
 on:
@@ -17,7 +17,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: git log --check
+    - name: but log --check
       id: check_out
       run: |
         log=
@@ -42,7 +42,7 @@ jobs:
             echo "${dash} ${etc}"
             ;;
           esac
-        done <<< $(git log --check --pretty=format:"---% h% s" ${{github.event.pull_request.base.sha}}..)
+        done <<< $(but log --check --pretty=format:"---% h% s" ${{buthub.event.pull_request.base.sha}}..)
 
         if test -n "${log}"
         then

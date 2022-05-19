@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git checkout --patch'
+test_description='but checkout --patch'
 
 . ./lib-patch-mode.sh
 
@@ -8,8 +8,8 @@ test_expect_success PERL 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
 	echo dummy > bar &&
-	git add bar dir/foo &&
-	git cummit -m initial &&
+	but add bar dir/foo &&
+	but cummit -m initial &&
 	test_tick &&
 	test_cummit second dir/foo head &&
 	set_and_save_state bar bar_work bar_index &&
@@ -24,63 +24,63 @@ test_expect_success PERL 'setup' '
 # PERL.
 test_expect_success PERL 'saying "n" does nothing' '
 	set_and_save_state dir/foo work head &&
-	test_write_lines n n | git checkout -p &&
+	test_write_lines n n | but checkout -p &&
 	verify_saved_state bar &&
 	verify_saved_state dir/foo
 '
 
-test_expect_success PERL 'git checkout -p' '
-	test_write_lines n y | git checkout -p &&
+test_expect_success PERL 'but checkout -p' '
+	test_write_lines n y | but checkout -p &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
 
-test_expect_success PERL 'git checkout -p with staged changes' '
+test_expect_success PERL 'but checkout -p with staged changes' '
 	set_state dir/foo work index &&
-	test_write_lines n y | git checkout -p &&
+	test_write_lines n y | but checkout -p &&
 	verify_saved_state bar &&
 	verify_state dir/foo index index
 '
 
-test_expect_success PERL 'git checkout -p HEAD with NO staged changes: abort' '
+test_expect_success PERL 'but checkout -p HEAD with NO staged changes: abort' '
 	set_and_save_state dir/foo work head &&
-	test_write_lines n y n | git checkout -p HEAD &&
+	test_write_lines n y n | but checkout -p HEAD &&
 	verify_saved_state bar &&
 	verify_saved_state dir/foo
 '
 
-test_expect_success PERL 'git checkout -p HEAD with NO staged changes: apply' '
-	test_write_lines n y y | git checkout -p HEAD &&
+test_expect_success PERL 'but checkout -p HEAD with NO staged changes: apply' '
+	test_write_lines n y y | but checkout -p HEAD &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
 
-test_expect_success PERL 'git checkout -p HEAD with change already staged' '
+test_expect_success PERL 'but checkout -p HEAD with change already staged' '
 	set_state dir/foo index index &&
 	# the third n is to get out in case it mistakenly does not apply
-	test_write_lines n y n | git checkout -p HEAD &&
+	test_write_lines n y n | but checkout -p HEAD &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
 
-test_expect_success PERL 'git checkout -p HEAD^...' '
+test_expect_success PERL 'but checkout -p HEAD^...' '
 	# the third n is to get out in case it mistakenly does not apply
-	test_write_lines n y n | git checkout -p HEAD^... &&
+	test_write_lines n y n | but checkout -p HEAD^... &&
 	verify_saved_state bar &&
 	verify_state dir/foo parent parent
 '
 
-test_expect_success PERL 'git checkout -p HEAD^' '
+test_expect_success PERL 'but checkout -p HEAD^' '
 	# the third n is to get out in case it mistakenly does not apply
-	test_write_lines n y n | git checkout -p HEAD^ &&
+	test_write_lines n y n | but checkout -p HEAD^ &&
 	verify_saved_state bar &&
 	verify_state dir/foo parent parent
 '
 
-test_expect_success PERL 'git checkout -p handles deletion' '
+test_expect_success PERL 'but checkout -p handles deletion' '
 	set_state dir/foo work index &&
 	rm dir/foo &&
-	test_write_lines n y | git checkout -p &&
+	test_write_lines n y | but checkout -p &&
 	verify_saved_state bar &&
 	verify_state dir/foo index index
 '
@@ -92,21 +92,21 @@ test_expect_success PERL 'git checkout -p handles deletion' '
 
 test_expect_success PERL 'path limiting works: dir' '
 	set_state dir/foo work head &&
-	test_write_lines y n | git checkout -p dir &&
+	test_write_lines y n | but checkout -p dir &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
 
 test_expect_success PERL 'path limiting works: -- dir' '
 	set_state dir/foo work head &&
-	test_write_lines y n | git checkout -p -- dir &&
+	test_write_lines y n | but checkout -p -- dir &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
 
 test_expect_success PERL 'path limiting works: HEAD^ -- dir' '
 	# the third n is to get out in case it mistakenly does not apply
-	test_write_lines y n n | git checkout -p HEAD^ -- dir &&
+	test_write_lines y n n | but checkout -p HEAD^ -- dir &&
 	verify_saved_state bar &&
 	verify_state dir/foo parent parent
 '
@@ -114,7 +114,7 @@ test_expect_success PERL 'path limiting works: HEAD^ -- dir' '
 test_expect_success PERL 'path limiting works: foo inside dir' '
 	set_state dir/foo work head &&
 	# the third n is to get out in case it mistakenly does not apply
-	test_write_lines y n n | (cd dir && git checkout -p foo) &&
+	test_write_lines y n n | (cd dir && but checkout -p foo) &&
 	verify_saved_state bar &&
 	verify_state dir/foo head head
 '
@@ -124,8 +124,8 @@ test_expect_success PERL 'none of this moved HEAD' '
 '
 
 test_expect_success PERL 'empty tree can be handled' '
-	test_when_finished "git reset --hard" &&
-	git checkout -p $(test_oid empty_tree) --
+	test_when_finished "but reset --hard" &&
+	but checkout -p $(test_oid empty_tree) --
 '
 
 test_done

@@ -1,11 +1,11 @@
 # Vietnamese translation for GIT-GUI
 # Bản dịch Tiếng Việt dành cho gói Git-gui.
-# This file is distributed under the same license as the git-core package.
+# This file is distributed under the same license as the but-core package.
 # First translated by Trần Ngọc Quân <vnwildman@gmail.com>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui 0.19.0\n"
+"Project-Id-Version: but-gui 0.19.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-06-26 13:42+0700\n"
 "PO-Revision-Date: 2014-06-27 07:48+0700\n"
@@ -21,33 +21,33 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Poedit-Basepath: ../\n"
 
-#: git-gui.sh:859
+#: but-gui.sh:859
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Phông chữ không hợp lệ được đặc tả trong %s:"
 
-#: git-gui.sh:912
+#: but-gui.sh:912
 msgid "Main Font"
 msgstr "Phông chữ chính"
 
-#: git-gui.sh:913
+#: but-gui.sh:913
 msgid "Diff/Console Font"
 msgstr "Phông chữ cho Bảng điều khiển hay Diff"
 
-#: git-gui.sh:928 git-gui.sh:942 git-gui.sh:955 git-gui.sh:1045
-#: git-gui.sh:1064 git-gui.sh:3119
-msgid "git-gui: fatal error"
-msgstr "git-gui: lỗi nghiêm trọng"
+#: but-gui.sh:928 but-gui.sh:942 but-gui.sh:955 but-gui.sh:1045
+#: but-gui.sh:1064 but-gui.sh:3119
+msgid "but-gui: fatal error"
+msgstr "but-gui: lỗi nghiêm trọng"
 
-#: git-gui.sh:929
-msgid "Cannot find git in PATH."
-msgstr "Không tìm thấy git trong biến PATH."
+#: but-gui.sh:929
+msgid "Cannot find but in PATH."
+msgstr "Không tìm thấy but trong biến PATH."
 
-#: git-gui.sh:956
+#: but-gui.sh:956
 msgid "Cannot parse Git version string:"
 msgstr "Không thể phân tích chuỗi phiên bản Git:"
 
-#: git-gui.sh:981
+#: but-gui.sh:981
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -66,502 +66,502 @@ msgstr ""
 "\n"
 "Cọi '%s' có phiên bản là 1.5.0?\n"
 
-#: git-gui.sh:1278
+#: but-gui.sh:1278
 msgid "Git directory not found:"
-msgstr "Không tìm thấy thư mục git:"
+msgstr "Không tìm thấy thư mục but:"
 
-#: git-gui.sh:1312
+#: but-gui.sh:1312
 msgid "Cannot move to top of working directory:"
 msgstr "Không thể di chuyển đến đỉnh của thư mục làm việc:"
 
-#: git-gui.sh:1320
+#: but-gui.sh:1320
 msgid "Cannot use bare repository:"
 msgstr "Không thể dùng kho trần:"
 
-#: git-gui.sh:1328
+#: but-gui.sh:1328
 msgid "No working directory"
 msgstr "Không có thư mục làm việc"
 
-#: git-gui.sh:1500 lib/checkout_op.tcl:306
+#: but-gui.sh:1500 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr "Cập nhật lại trạng thái tập tin..."
 
-#: git-gui.sh:1560
+#: but-gui.sh:1560
 msgid "Scanning for modified files ..."
 msgstr "Đang quét đĩa tìm tập tin thay đổi..."
 
-#: git-gui.sh:1636
+#: but-gui.sh:1636
 msgid "Calling prepare-cummit-msg hook..."
 msgstr "Đang gọi móc prepare-cummit-msg..."
 
-#: git-gui.sh:1653
+#: but-gui.sh:1653
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr "Lần chuyển giao bị chối từ do móc prepare-cummit-msg."
 
-#: git-gui.sh:1811 lib/browser.tcl:252
+#: but-gui.sh:1811 lib/browser.tcl:252
 msgid "Ready."
 msgstr "Sẵn sàng."
 
-#: git-gui.sh:1969
+#: but-gui.sh:1969
 #, tcl-format
 msgid "Displaying only %s of %s files."
 msgstr "Chỉ hiển thị %s trong số %s tập tin."
 
-#: git-gui.sh:2095
+#: but-gui.sh:2095
 msgid "Unmodified"
 msgstr "Không thay đổi gì"
 
-#: git-gui.sh:2097
+#: but-gui.sh:2097
 msgid "Modified, not staged"
 msgstr "Đã sửa nhưng chưa đánh dấu để chuyển giao"
 
-#: git-gui.sh:2098 git-gui.sh:2110
+#: but-gui.sh:2098 but-gui.sh:2110
 msgid "Staged for cummit"
 msgstr "Đánh dấu để chuyển giao"
 
-#: git-gui.sh:2099 git-gui.sh:2111
+#: but-gui.sh:2099 but-gui.sh:2111
 msgid "Portions staged for cummit"
 msgstr "Các phần được đánh dấu là cần chuyển giao"
 
-#: git-gui.sh:2100 git-gui.sh:2112
+#: but-gui.sh:2100 but-gui.sh:2112
 msgid "Staged for cummit, missing"
 msgstr "Đã đánh dấu là cần chuyển giao, thiếu"
 
-#: git-gui.sh:2102
+#: but-gui.sh:2102
 msgid "File type changed, not staged"
 msgstr "Đã đổi kiểu tập tin nhưng chưa được đánh dấu cần chuyển giao"
 
-#: git-gui.sh:2103 git-gui.sh:2104
+#: but-gui.sh:2103 but-gui.sh:2104
 msgid "File type changed, old type staged for cummit"
 msgstr "Đã đổi kiểu tập tin, kiểu cũ đã được đánh dấu cần chuyển giao"
 
-#: git-gui.sh:2105
+#: but-gui.sh:2105
 msgid "File type changed, staged"
 msgstr "Đã đổi kiểu tập tin, đã được đánh dấu cần chuyển giao"
 
-#: git-gui.sh:2106
+#: but-gui.sh:2106
 msgid "File type change staged, modification not staged"
 msgstr ""
 "Thay đổi kiểu tập tin đã được đánh dấu cần chuyển giao, nhưng các thay đổi "
 "thì chưa"
 
-#: git-gui.sh:2107
+#: but-gui.sh:2107
 msgid "File type change staged, file missing"
 msgstr ""
 "Thay đổi kiểu tập tin đã được đánh dấu cần chuyển giao, tập tin bị thiếu"
 
-#: git-gui.sh:2109
+#: but-gui.sh:2109
 msgid "Untracked, not staged"
 msgstr "Chưa được theo dõi, chưa đánh dấu là cần chuyển giao"
 
-#: git-gui.sh:2114
+#: but-gui.sh:2114
 msgid "Missing"
 msgstr "Thiếu"
 
-#: git-gui.sh:2115
+#: but-gui.sh:2115
 msgid "Staged for removal"
 msgstr "Đã đánh dấu là cần gỡ bỏ"
 
-#: git-gui.sh:2116
+#: but-gui.sh:2116
 msgid "Staged for removal, still present"
 msgstr "Đã đánh dấu là cần gỡ bỏ, nhưng vẫn hiện diện"
 
-#: git-gui.sh:2118 git-gui.sh:2119 git-gui.sh:2120 git-gui.sh:2121
-#: git-gui.sh:2122 git-gui.sh:2123
+#: but-gui.sh:2118 but-gui.sh:2119 but-gui.sh:2120 but-gui.sh:2121
+#: but-gui.sh:2122 but-gui.sh:2123
 msgid "Requires merge resolution"
 msgstr "Các yêu cầu phân giải hòa trộn"
 
-#: git-gui.sh:2158
-msgid "Starting gitk... please wait..."
-msgstr "Đang khởi động gitk... vui lòng chờ..."
+#: but-gui.sh:2158
+msgid "Starting butk... please wait..."
+msgstr "Đang khởi động butk... vui lòng chờ..."
 
-#: git-gui.sh:2170
-msgid "Couldn't find gitk in PATH"
-msgstr "Không thể tìm thấy gitk trong PATH"
+#: but-gui.sh:2170
+msgid "Couldn't find butk in PATH"
+msgstr "Không thể tìm thấy butk trong PATH"
 
-#: git-gui.sh:2229
-msgid "Couldn't find git gui in PATH"
-msgstr "Không thể tìm thấy git gui trong PATH"
+#: but-gui.sh:2229
+msgid "Couldn't find but gui in PATH"
+msgstr "Không thể tìm thấy but gui trong PATH"
 
-#: git-gui.sh:2648 lib/choose_repository.tcl:40
+#: but-gui.sh:2648 lib/choose_repository.tcl:40
 msgid "Repository"
 msgstr "Kho"
 
-#: git-gui.sh:2649
+#: but-gui.sh:2649
 msgid "Edit"
 msgstr "Chỉnh sửa"
 
-#: git-gui.sh:2651 lib/choose_rev.tcl:567
+#: but-gui.sh:2651 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr "Nhánh"
 
-#: git-gui.sh:2654 lib/choose_rev.tcl:554
+#: but-gui.sh:2654 lib/choose_rev.tcl:554
 msgid "cummit@@noun"
 msgstr "Chuyển giao@@noun"
 
-#: git-gui.sh:2657 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
+#: but-gui.sh:2657 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
 msgid "Merge"
 msgstr "Trộn"
 
-#: git-gui.sh:2658 lib/choose_rev.tcl:563
+#: but-gui.sh:2658 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr "Máy chủ"
 
-#: git-gui.sh:2661
+#: but-gui.sh:2661
 msgid "Tools"
 msgstr "Công cụ"
 
-#: git-gui.sh:2670
+#: but-gui.sh:2670
 msgid "Explore Working Copy"
 msgstr "Quét dò thư mục làm việc"
 
-#: git-gui.sh:2676
+#: but-gui.sh:2676
 msgid "Git Bash"
 msgstr "Git Bash"
 
-#: git-gui.sh:2686
+#: but-gui.sh:2686
 msgid "Browse Current Branch's Files"
 msgstr "Duyệt các Tập tin ở nhánh hiện nay"
 
-#: git-gui.sh:2690
+#: but-gui.sh:2690
 msgid "Browse Branch Files..."
 msgstr "Duyệt các tập tin nhánh..."
 
-#: git-gui.sh:2695
+#: but-gui.sh:2695
 msgid "Visualize Current Branch's History"
 msgstr "Hiển thị trực quan lịch sử nhánh hiện nay"
 
-#: git-gui.sh:2699
+#: but-gui.sh:2699
 msgid "Visualize All Branch History"
 msgstr "Hiển thị trực quan lịch sử mọi nhánh"
 
-#: git-gui.sh:2706
+#: but-gui.sh:2706
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "Duyệt tập tin của %s..."
 
-#: git-gui.sh:2708
+#: but-gui.sh:2708
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "Duyệt lịch sử của %s trực quan"
 
-#: git-gui.sh:2713 lib/database.tcl:40 lib/database.tcl:66
+#: but-gui.sh:2713 lib/database.tcl:40 lib/database.tcl:66
 msgid "Database Statistics"
 msgstr "Thống kê cơ sở dữ liệu"
 
-#: git-gui.sh:2716 lib/database.tcl:33
+#: but-gui.sh:2716 lib/database.tcl:33
 msgid "Compress Database"
 msgstr "Nén cơ sở dữ liệu"
 
-#: git-gui.sh:2719
+#: but-gui.sh:2719
 msgid "Verify Database"
 msgstr "Thẩm tra cơ sở dữ liệu"
 
-#: git-gui.sh:2726 git-gui.sh:2730 git-gui.sh:2734 lib/shortcut.tcl:8
+#: but-gui.sh:2726 but-gui.sh:2730 but-gui.sh:2734 lib/shortcut.tcl:8
 #: lib/shortcut.tcl:40 lib/shortcut.tcl:72
 msgid "Create Desktop Icon"
 msgstr "Tạo lối tắt ở màn hình nền"
 
-#: git-gui.sh:2742 lib/choose_repository.tcl:192 lib/choose_repository.tcl:200
+#: but-gui.sh:2742 lib/choose_repository.tcl:192 lib/choose_repository.tcl:200
 msgid "Quit"
 msgstr "Thoát"
 
-#: git-gui.sh:2750
+#: but-gui.sh:2750
 msgid "Undo"
 msgstr "Hủy lệnh vừa rồi"
 
-#: git-gui.sh:2753
+#: but-gui.sh:2753
 msgid "Redo"
 msgstr "Làm lại"
 
-#: git-gui.sh:2757 git-gui.sh:3362
+#: but-gui.sh:2757 but-gui.sh:3362
 msgid "Cut"
 msgstr "Cắt"
 
-#: git-gui.sh:2760 git-gui.sh:3365 git-gui.sh:3439 git-gui.sh:3524
+#: but-gui.sh:2760 but-gui.sh:3365 but-gui.sh:3439 but-gui.sh:3524
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Chép"
 
-#: git-gui.sh:2763 git-gui.sh:3368
+#: but-gui.sh:2763 but-gui.sh:3368
 msgid "Paste"
 msgstr "Dán"
 
-#: git-gui.sh:2766 git-gui.sh:3371 lib/branch_delete.tcl:28
+#: but-gui.sh:2766 but-gui.sh:3371 lib/branch_delete.tcl:28
 #: lib/remote_branch_delete.tcl:39
 msgid "Delete"
 msgstr "Xóa bỏ"
 
-#: git-gui.sh:2770 git-gui.sh:3375 git-gui.sh:3528 lib/console.tcl:71
+#: but-gui.sh:2770 but-gui.sh:3375 but-gui.sh:3528 lib/console.tcl:71
 msgid "Select All"
 msgstr "Chọn tất cả"
 
-#: git-gui.sh:2779
+#: but-gui.sh:2779
 msgid "Create..."
 msgstr "Tạo..."
 
-#: git-gui.sh:2785
+#: but-gui.sh:2785
 msgid "Checkout..."
 msgstr "Lấy ra..."
 
-#: git-gui.sh:2791
+#: but-gui.sh:2791
 msgid "Rename..."
 msgstr "Đổi tên..."
 
-#: git-gui.sh:2796
+#: but-gui.sh:2796
 msgid "Delete..."
 msgstr "Xóa..."
 
-#: git-gui.sh:2801
+#: but-gui.sh:2801
 msgid "Reset..."
 msgstr "Đặt lại.."
 
-#: git-gui.sh:2811
+#: but-gui.sh:2811
 msgid "Done"
 msgstr "Xong"
 
-#: git-gui.sh:2813
+#: but-gui.sh:2813
 msgid "cummit@@verb"
 msgstr "Chuyển giao@@verb"
 
-#: git-gui.sh:2822 git-gui.sh:3303
+#: but-gui.sh:2822 but-gui.sh:3303
 msgid "New cummit"
 msgstr "Lần chuyển giao mới"
 
-#: git-gui.sh:2830 git-gui.sh:3310
+#: but-gui.sh:2830 but-gui.sh:3310
 msgid "Amend Last cummit"
 msgstr "Tu bổ lần chuyển giao cuối"
 
-#: git-gui.sh:2840 git-gui.sh:3264 lib/remote_branch_delete.tcl:101
+#: but-gui.sh:2840 but-gui.sh:3264 lib/remote_branch_delete.tcl:101
 msgid "Rescan"
 msgstr "Quét lại"
 
-#: git-gui.sh:2846
+#: but-gui.sh:2846
 msgid "Stage To cummit"
 msgstr "Đưa lên bệ phóng để chuyển giao"
 
-#: git-gui.sh:2852
+#: but-gui.sh:2852
 msgid "Stage Changed Files To cummit"
 msgstr "Đánh dấu các tập tin đã thay đổi cần chuyển giao"
 
-#: git-gui.sh:2858
+#: but-gui.sh:2858
 msgid "Unstage From cummit"
 msgstr "Đưa ra khỏi bệ phóng để không chuyển giao"
 
-#: git-gui.sh:2864 lib/index.tcl:442
+#: but-gui.sh:2864 lib/index.tcl:442
 msgid "Revert Changes"
 msgstr "Hoàn nguyên các thay đổi"
 
-#: git-gui.sh:2872 git-gui.sh:3575 git-gui.sh:3606
+#: but-gui.sh:2872 but-gui.sh:3575 but-gui.sh:3606
 msgid "Show Less Context"
 msgstr "Hiện ít nội dung hơn"
 
-#: git-gui.sh:2876 git-gui.sh:3579 git-gui.sh:3610
+#: but-gui.sh:2876 but-gui.sh:3579 but-gui.sh:3610
 msgid "Show More Context"
 msgstr "Hiện chi tiết hơn"
 
-#: git-gui.sh:2883 git-gui.sh:3277 git-gui.sh:3386
+#: but-gui.sh:2883 but-gui.sh:3277 but-gui.sh:3386
 msgid "Sign Off"
 msgstr "Ký tên"
 
-#: git-gui.sh:2899
+#: but-gui.sh:2899
 msgid "Local Merge..."
 msgstr "Trộn nội bộ..."
 
-#: git-gui.sh:2904
+#: but-gui.sh:2904
 msgid "Abort Merge..."
 msgstr "Hủy bỏ hòa trộn..."
 
-#: git-gui.sh:2916 git-gui.sh:2944
+#: but-gui.sh:2916 but-gui.sh:2944
 msgid "Add..."
 msgstr "Thêm..."
 
-#: git-gui.sh:2920
+#: but-gui.sh:2920
 msgid "Push..."
 msgstr "Đẩy lên..."
 
-#: git-gui.sh:2924
+#: but-gui.sh:2924
 msgid "Delete Branch..."
 msgstr "Xoá nhánh..."
 
-#: git-gui.sh:2934 git-gui.sh:3557
+#: but-gui.sh:2934 but-gui.sh:3557
 msgid "Options..."
 msgstr "Tùy chọn..."
 
-#: git-gui.sh:2945
+#: but-gui.sh:2945
 msgid "Remove..."
 msgstr "Gỡ bỏ..."
 
-#: git-gui.sh:2954 lib/choose_repository.tcl:54
+#: but-gui.sh:2954 lib/choose_repository.tcl:54
 msgid "Help"
 msgstr "Trợ giúp"
 
-#: git-gui.sh:2958 git-gui.sh:2962 lib/about.tcl:14
+#: but-gui.sh:2958 but-gui.sh:2962 lib/about.tcl:14
 #: lib/choose_repository.tcl:48 lib/choose_repository.tcl:57
 #, tcl-format
 msgid "About %s"
 msgstr "Giới thiệu về %s"
 
-#: git-gui.sh:2986
+#: but-gui.sh:2986
 msgid "Online Documentation"
 msgstr "Đọc tài liệu trực tuyến"
 
-#: git-gui.sh:2989 lib/choose_repository.tcl:51 lib/choose_repository.tcl:60
+#: but-gui.sh:2989 lib/choose_repository.tcl:51 lib/choose_repository.tcl:60
 msgid "Show SSH Key"
 msgstr "Hiện khoá SSH"
 
-#: git-gui.sh:3008 git-gui.sh:3140
+#: but-gui.sh:3008 but-gui.sh:3140
 msgid "Usage"
 msgstr "Cách dùng"
 
-#: git-gui.sh:3089 lib/blame.tcl:573
+#: but-gui.sh:3089 lib/blame.tcl:573
 msgid "Error"
 msgstr "Lỗi"
 
-#: git-gui.sh:3120
+#: but-gui.sh:3120
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "lỗi nghiêm trọng: không thể lấy thông tin về đường dẫn %s: Không có tập tin "
 "hoặc thư mục như vậy"
 
-#: git-gui.sh:3153
+#: but-gui.sh:3153
 msgid "Current Branch:"
 msgstr "Nhánh hiện hành:"
 
-#: git-gui.sh:3179
+#: but-gui.sh:3179
 msgid "Staged Changes (Will cummit)"
 msgstr "Đánh dấu các thay đổi (Sẽ chuyển giao)"
 
-#: git-gui.sh:3199
+#: but-gui.sh:3199
 msgid "Unstaged Changes"
 msgstr "Bỏ ra khỏi bệ phóng các thay đổi"
 
-#: git-gui.sh:3270
+#: but-gui.sh:3270
 msgid "Stage Changed"
 msgstr "Đặt lên bệ phóng các thay đổi"
 
-#: git-gui.sh:3289 lib/transport.tcl:137 lib/transport.tcl:229
+#: but-gui.sh:3289 lib/transport.tcl:137 lib/transport.tcl:229
 msgid "Push"
 msgstr "Đẩy lên"
 
-#: git-gui.sh:3324
+#: but-gui.sh:3324
 msgid "Initial cummit Message:"
 msgstr "Phần chú thích cho lần chuyển giao khởi tạo:"
 
-#: git-gui.sh:3325
+#: but-gui.sh:3325
 msgid "Amended cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ:"
 
-#: git-gui.sh:3326
+#: but-gui.sh:3326
 msgid "Amended Initial cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ lần khởi tạo:"
 
-#: git-gui.sh:3327
+#: but-gui.sh:3327
 msgid "Amended Merge cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ lần hòa trộn"
 
-#: git-gui.sh:3328
+#: but-gui.sh:3328
 msgid "Merge cummit Message:"
 msgstr "Ghi chú của lần chuyển giao hòa trộn:"
 
-#: git-gui.sh:3329
+#: but-gui.sh:3329
 msgid "cummit Message:"
 msgstr "Chú thích của lần chuyển giao:"
 
-#: git-gui.sh:3378 git-gui.sh:3532 lib/console.tcl:73
+#: but-gui.sh:3378 but-gui.sh:3532 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Chép tất cả"
 
-#: git-gui.sh:3402 lib/blame.tcl:105
+#: but-gui.sh:3402 lib/blame.tcl:105
 msgid "File:"
 msgstr "Tập tin:"
 
-#: git-gui.sh:3520
+#: but-gui.sh:3520
 msgid "Refresh"
 msgstr "Làm tươi lại"
 
-#: git-gui.sh:3541
+#: but-gui.sh:3541
 msgid "Decrease Font Size"
 msgstr "Giảm kích cỡ phông"
 
-#: git-gui.sh:3545
+#: but-gui.sh:3545
 msgid "Increase Font Size"
 msgstr "Tăng kích cỡ phông"
 
-#: git-gui.sh:3553 lib/blame.tcl:294
+#: but-gui.sh:3553 lib/blame.tcl:294
 msgid "Encoding"
 msgstr "Bảng mã"
 
-#: git-gui.sh:3564
+#: but-gui.sh:3564
 msgid "Apply/Reverse Hunk"
 msgstr "Áp dụng hay đảo ngược cả khối"
 
-#: git-gui.sh:3569
+#: but-gui.sh:3569
 msgid "Apply/Reverse Line"
 msgstr "Áp dụng hay đảo ngược dòng"
 
-#: git-gui.sh:3588
+#: but-gui.sh:3588
 msgid "Run Merge Tool"
 msgstr "Chạy công cụ hòa trộn"
 
-#: git-gui.sh:3593
+#: but-gui.sh:3593
 msgid "Use Remote Version"
 msgstr "Dùng phiên bản ở máy chủ"
 
-#: git-gui.sh:3597
+#: but-gui.sh:3597
 msgid "Use Local Version"
 msgstr "Dùng phiên bản ở máy nội bộ"
 
-#: git-gui.sh:3601
+#: but-gui.sh:3601
 msgid "Revert To Base"
 msgstr "Trở lại cơ bản"
 
-#: git-gui.sh:3619
+#: but-gui.sh:3619
 msgid "Visualize These Changes In The Submodule"
 msgstr "Hiển thị trực quan các thay đổi trong mô-đun con"
 
-#: git-gui.sh:3623
+#: but-gui.sh:3623
 msgid "Visualize Current Branch History In The Submodule"
 msgstr "Hiển thị trực quan lịch sử nhánh hiện tại trong mô-đun con"
 
-#: git-gui.sh:3627
+#: but-gui.sh:3627
 msgid "Visualize All Branch History In The Submodule"
 msgstr "Hiển thị trực quan lịch sử mọi nhánh trong mô-đun con"
 
-#: git-gui.sh:3632
-msgid "Start git gui In The Submodule"
-msgstr "Khởi chạy git gui trong mô-đun-con"
+#: but-gui.sh:3632
+msgid "Start but gui In The Submodule"
+msgstr "Khởi chạy but gui trong mô-đun-con"
 
-#: git-gui.sh:3667
+#: but-gui.sh:3667
 msgid "Unstage Hunk From cummit"
 msgstr "Bỏ đánh dấu đoạn cần chuyển giao"
 
-#: git-gui.sh:3669
+#: but-gui.sh:3669
 msgid "Unstage Lines From cummit"
 msgstr "Bỏ đánh dấu các dòng cần chuyển giao"
 
-#: git-gui.sh:3671
+#: but-gui.sh:3671
 msgid "Unstage Line From cummit"
 msgstr "Bỏ đánh dấu dòng cần chuyển giao"
 
-#: git-gui.sh:3674
+#: but-gui.sh:3674
 msgid "Stage Hunk For cummit"
 msgstr "Đánh dấu đoạn cần chuyển giao"
 
-#: git-gui.sh:3676
+#: but-gui.sh:3676
 msgid "Stage Lines For cummit"
 msgstr "Đánh dấu các dòng cần chuyển giao"
 
-#: git-gui.sh:3678
+#: but-gui.sh:3678
 msgid "Stage Line For cummit"
 msgstr "Đánh dấu dòng cần chuyển giao"
 
-#: git-gui.sh:3703
+#: but-gui.sh:3703
 msgid "Initializing..."
 msgstr "Đang khởi tạo..."
 
-#: git-gui.sh:3846
+#: but-gui.sh:3846
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -573,11 +573,11 @@ msgid ""
 msgstr ""
 "Gần như chắc chắn là môi trường tồn tại.\n"
 "\n"
-"Các biến môi trường sau đây có lẽ sẽ bị bỏ qua bởi các tiến trình con git\n"
+"Các biến môi trường sau đây có lẽ sẽ bị bỏ qua bởi các tiến trình con but\n"
 "chạy bởi %s:\n"
 "\n"
 
-#: git-gui.sh:3875
+#: but-gui.sh:3875
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -587,7 +587,7 @@ msgstr ""
 "Cái này có nguyên nhân bởi một lỗi phát ra từ\n"
 "Tcl phân phối bởi Cygwin."
 
-#: git-gui.sh:3880
+#: but-gui.sh:3880
 #, tcl-format
 msgid ""
 "\n"
@@ -595,18 +595,18 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 "\n"
 "\n"
 "Thay thế tốt cho %s\n"
 "là thay thế các giá trị cài đặt cho user.name và\n"
 "user.email thành tập tin cá nhân của bạn\n"
-"~/.gitconfig.\n"
+"~/.butconfig.\n"
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - công cụ đồ họa dành cho Git."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui - công cụ đồ họa dành cho Git."
 
 #: lib/blame.tcl:73
 msgid "File Viewer"
@@ -939,8 +939,8 @@ msgstr "Chưa có nhánh '%s'"
 
 #: lib/checkout_op.tcl:194
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
-msgstr "Gặp lỗi khi cấu hình git-pull đơn giản dành cho '%s'."
+msgid "Failed to configure simplified but-pull for '%s'."
+msgstr "Gặp lỗi khi cấu hình but-pull đơn giản dành cho '%s'."
 
 #: lib/checkout_op.tcl:229
 #, tcl-format
@@ -1177,7 +1177,7 @@ msgstr "Chia sẻ (Nhanh nhất, Không nên dùng, No Backup)"
 #: lib/choose_repository.tcl:1059 lib/choose_repository.tcl:1067
 #, tcl-format
 msgid "Not a Git repository: %s"
-msgstr "Không phải là kho git: %s"
+msgstr "Không phải là kho but: %s"
 
 #: lib/choose_repository.tcl:594
 msgid "Standard only available for local repository."
@@ -1761,10 +1761,10 @@ msgstr "Lỗi mục lục"
 #: lib/index.tcl:19
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "Cập nhật mục lục cho Git gặp lỗi. Việc quét lại sẽ tự động được khởi chạy để "
-"đồng hóa lại với git-gui."
+"đồng hóa lại với but-gui."
 
 #: lib/index.tcl:30
 msgid "Continue"

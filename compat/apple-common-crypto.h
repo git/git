@@ -5,8 +5,8 @@
 #include <CommonCrypto/CommonHMAC.h>
 #define EVP_md5(...) kCCHmacAlgMD5
 /* CCHmac doesn't take md_len and the return type is void */
-#define HMAC git_CC_HMAC
-static inline unsigned char *git_CC_HMAC(CCHmacAlgorithm alg,
+#define HMAC but_CC_HMAC
+static inline unsigned char *but_CC_HMAC(CCHmacAlgorithm alg,
 		const void *key, int key_len,
 		const unsigned char *data, size_t data_len,
 		unsigned char *md, unsigned int *md_len)
@@ -27,15 +27,15 @@ static inline unsigned char *git_CC_HMAC(CCHmacAlgorithm alg,
 #endif
 
 #ifdef APPLE_LION_OR_NEWER
-#define git_CC_error_check(pattern, err) \
+#define but_CC_error_check(pattern, err) \
 	do { \
 		if (err) { \
 			die(pattern, (long)CFErrorGetCode(err)); \
 		} \
 	} while(0)
 
-#define EVP_EncodeBlock git_CC_EVP_EncodeBlock
-static inline int git_CC_EVP_EncodeBlock(unsigned char *out,
+#define EVP_EncodeBlock but_CC_EVP_EncodeBlock
+static inline int but_CC_EVP_EncodeBlock(unsigned char *out,
 		const unsigned char *in, int inlen)
 {
 	CFErrorRef err;
@@ -44,15 +44,15 @@ static inline int git_CC_EVP_EncodeBlock(unsigned char *out,
 	CFIndex length;
 
 	encoder = SecEncodeTransformCreate(kSecBase64Encoding, &err);
-	git_CC_error_check("SecEncodeTransformCreate failed: %ld", err);
+	but_CC_error_check("SecEncodeTransformCreate failed: %ld", err);
 
 	input = CFDataCreate(kCFAllocatorDefault, in, inlen);
 	SecTransformSetAttribute(encoder, kSecTransformInputAttributeName,
 			input, &err);
-	git_CC_error_check("SecTransformSetAttribute failed: %ld", err);
+	but_CC_error_check("SecTransformSetAttribute failed: %ld", err);
 
 	output = SecTransformExecute(encoder, &err);
-	git_CC_error_check("SecTransformExecute failed: %ld", err);
+	but_CC_error_check("SecTransformExecute failed: %ld", err);
 
 	length = CFDataGetLength(output);
 	CFDataGetBytes(output, CFRangeMake(0, length), out);
@@ -64,8 +64,8 @@ static inline int git_CC_EVP_EncodeBlock(unsigned char *out,
 	return (int)strlen((const char *)out);
 }
 
-#define EVP_DecodeBlock git_CC_EVP_DecodeBlock
-static int inline git_CC_EVP_DecodeBlock(unsigned char *out,
+#define EVP_DecodeBlock but_CC_EVP_DecodeBlock
+static int inline but_CC_EVP_DecodeBlock(unsigned char *out,
 		const unsigned char *in, int inlen)
 {
 	CFErrorRef err;
@@ -74,15 +74,15 @@ static int inline git_CC_EVP_DecodeBlock(unsigned char *out,
 	CFIndex length;
 
 	decoder = SecDecodeTransformCreate(kSecBase64Encoding, &err);
-	git_CC_error_check("SecEncodeTransformCreate failed: %ld", err);
+	but_CC_error_check("SecEncodeTransformCreate failed: %ld", err);
 
 	input = CFDataCreate(kCFAllocatorDefault, in, inlen);
 	SecTransformSetAttribute(decoder, kSecTransformInputAttributeName,
 			input, &err);
-	git_CC_error_check("SecTransformSetAttribute failed: %ld", err);
+	but_CC_error_check("SecTransformSetAttribute failed: %ld", err);
 
 	output = SecTransformExecute(decoder, &err);
-	git_CC_error_check("SecTransformExecute failed: %ld", err);
+	but_CC_error_check("SecTransformExecute failed: %ld", err);
 
 	length = CFDataGetLength(output);
 	CFDataGetBytes(output, CFRangeMake(0, length), out);

@@ -1,9 +1,9 @@
-# git-gui object database management support
+# but-gui object database management support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc do_stats {} {
 	global use_ttk NS
-	set fd [git_read count-objects -v]
+	set fd [but_read count-objects -v]
 	while {[gets $fd line] > 0} {
 		if {[regexp {^([^:]+): (\d+)$} $line _ name value]} {
 			set stats($name) $value
@@ -12,7 +12,7 @@ proc do_stats {} {
 	close $fd
 
 	set packed_sz 0
-	foreach p [glob -directory [gitdir objects pack] \
+	foreach p [glob -directory [butdir objects pack] \
 		-type f \
 		-nocomplain -- *] {
 		incr packed_sz [file size $p]
@@ -71,17 +71,17 @@ proc do_stats {} {
 proc do_gc {} {
 	set w [console::new {gc} [mc "Compressing the object database"]]
 	console::chain $w {
-		{exec git pack-refs --prune}
-		{exec git reflog expire --all}
-		{exec git repack -a -d -l}
-		{exec git rerere gc}
+		{exec but pack-refs --prune}
+		{exec but reflog expire --all}
+		{exec but repack -a -d -l}
+		{exec but rerere gc}
 	}
 }
 
 proc do_fsck_objects {} {
 	set w [console::new {fsck-objects} \
 		[mc "Verifying the object database with fsck-objects"]]
-	set cmd [list git fsck-objects]
+	set cmd [list but fsck-objects]
 	lappend cmd --full
 	lappend cmd --cache
 	lappend cmd --strict
@@ -99,7 +99,7 @@ proc hint_gc {} {
 	set count [llength [glob \
 		-nocomplain \
 		-- \
-		[gitdir objects 4\[0-[expr {$ndirs-1}]\]/*]]]
+		[butdir objects 4\[0-[expr {$ndirs-1}]\]/*]]]
 
 	if {$count >= $limit * $ndirs} {
 		set objects_current [expr {$count * 256/$ndirs}]

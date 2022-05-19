@@ -1,48 +1,48 @@
-git-gc(1)
+but-gc(1)
 =========
 
 NAME
 ----
-git-gc - Cleanup unnecessary files and optimize the local repository
+but-gc - Cleanup unnecessary files and optimize the local repository
 
 
 SYNOPSIS
 --------
 [verse]
-'git gc' [--aggressive] [--auto] [--quiet] [--prune=<date> | --no-prune] [--force] [--keep-largest-pack]
+'but gc' [--aggressive] [--auto] [--quiet] [--prune=<date> | --no-prune] [--force] [--keep-largest-pack]
 
 DESCRIPTION
 -----------
 Runs a number of housekeeping tasks within the current repository,
 such as compressing file revisions (to reduce disk space and increase
 performance), removing unreachable objects which may have been
-created from prior invocations of 'git add', packing refs, pruning
+created from prior invocations of 'but add', packing refs, pruning
 reflog, rerere metadata or stale working trees. May also update ancillary
 indexes such as the cummit-graph.
 
 When common porcelain operations that create objects are run, they
 will check whether the repository has grown substantially since the
-last maintenance, and if so run `git gc` automatically. See `gc.auto`
+last maintenance, and if so run `but gc` automatically. See `gc.auto`
 below for how to disable this behavior.
 
-Running `git gc` manually should only be needed when adding objects to
+Running `but gc` manually should only be needed when adding objects to
 a repository without regularly running such porcelain commands, to do
 a one-off repository optimization, or e.g. to clean up a suboptimal
 mass-import. See the "PACKFILE OPTIMIZATION" section in
-linkgit:git-fast-import[1] for more details on the import case.
+linkbut:but-fast-import[1] for more details on the import case.
 
 OPTIONS
 -------
 
 --aggressive::
-	Usually 'git gc' runs very quickly while providing good disk
+	Usually 'but gc' runs very quickly while providing good disk
 	space utilization and performance.  This option will cause
-	'git gc' to more aggressively optimize the repository at the expense
+	'but gc' to more aggressively optimize the repository at the expense
 	of taking much more time.  The effects of this optimization are
 	mostly persistent. See the "AGGRESSIVE" section below for details.
 
 --auto::
-	With this option, 'git gc' checks whether any housekeeping is
+	With this option, 'but gc' checks whether any housekeeping is
 	required; if not, it exits without performing any work.
 +
 See the `gc.auto` option in the "CONFIGURATION" section below for how
@@ -69,7 +69,7 @@ be performed as well.
 	Suppress all progress reports.
 
 --force::
-	Force `git gc` to run even if there may be another `git gc`
+	Force `but gc` to run even if there may be another `but gc`
 	instance running on this repository.
 
 --keep-largest-pack::
@@ -80,9 +80,9 @@ be performed as well.
 AGGRESSIVE
 ----------
 
-When the `--aggressive` option is supplied, linkgit:git-repack[1] will
+When the `--aggressive` option is supplied, linkbut:but-repack[1] will
 be invoked with the `-f` flag, which in turn will pass
-`--no-reuse-delta` to linkgit:git-pack-objects[1]. This will throw
+`--no-reuse-delta` to linkbut:but-pack-objects[1]. This will throw
 away any existing deltas and re-compute them, at the expense of
 spending much more time on the repacking.
 
@@ -92,7 +92,7 @@ that pack might get re-used, but there are also various cases where we
 might pick a sub-optimal delta from a newer pack instead.
 
 Furthermore, supplying `--aggressive` will tweak the `--depth` and
-`--window` options passed to linkgit:git-repack[1]. See the
+`--window` options passed to linkbut:but-repack[1]. See the
 `gc.aggressiveDepth` and `gc.aggressiveWindow` settings below. By
 using a larger window size we're more likely to find more optimal
 deltas.
@@ -107,26 +107,26 @@ CONFIGURATION
 -------------
 
 The below documentation is the same as what's found in
-linkgit:git-config[1]:
+linkbut:but-config[1]:
 
 include::config/gc.txt[]
 
 NOTES
 -----
 
-'git gc' tries very hard not to delete objects that are referenced
+'but gc' tries very hard not to delete objects that are referenced
 anywhere in your repository. In particular, it will keep not only
 objects referenced by your current set of branches and tags, but also
 objects referenced by the index, remote-tracking branches, reflogs
 (which may reference cummits in branches that were later amended or
 rewound), and anything else in the refs/* namespace. Note that a note
-(of the kind created by 'git notes') attached to an object does not
+(of the kind created by 'but notes') attached to an object does not
 contribute in keeping the object alive. If you are expecting some
 objects to be deleted and they aren't, check all of those locations
 and decide whether it makes sense in your case to remove those
 references.
 
-On the other hand, when 'git gc' runs concurrently with another process,
+On the other hand, when 'but gc' runs concurrently with another process,
 there is a risk of it deleting an object that the other process is using
 but hasn't created a reference to. This may just cause the other process
 to fail or may corrupt the repository if the other process later adds a
@@ -147,17 +147,17 @@ seems to be low in practice).
 HOOKS
 -----
 
-The 'git gc --auto' command will run the 'pre-auto-gc' hook.  See
-linkgit:githooks[5] for more information.
+The 'but gc --auto' command will run the 'pre-auto-gc' hook.  See
+linkbut:buthooks[5] for more information.
 
 
 SEE ALSO
 --------
-linkgit:git-prune[1]
-linkgit:git-reflog[1]
-linkgit:git-repack[1]
-linkgit:git-rerere[1]
+linkbut:but-prune[1]
+linkbut:but-reflog[1]
+linkbut:but-repack[1]
+linkbut:but-rerere[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

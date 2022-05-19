@@ -10,10 +10,10 @@
 #include "strvec.h"
 
 static const char upload_archive_usage[] =
-	"git upload-archive <repo>";
+	"but upload-archive <repo>";
 
 static const char deadchild[] =
-"git upload-archive: archiver died with error";
+"but upload-archive: archiver died with error";
 
 #define MAX_ARGS (64)
 
@@ -26,12 +26,12 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 		usage(upload_archive_usage);
 
 	if (!enter_repo(argv[1], 0))
-		die("'%s' does not appear to be a git repository", argv[1]);
+		die("'%s' does not appear to be a but repository", argv[1]);
 
 	init_archivers();
 
 	/* put received options in sent_argv[] */
-	strvec_push(&sent_argv, "git-upload-archive");
+	strvec_push(&sent_argv, "but-upload-archive");
 	for (;;) {
 		char *buf = packet_read_line(0, NULL);
 		if (!buf)
@@ -90,7 +90,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	 * end over channel #3.
 	 */
 	writer.out = writer.err = -1;
-	writer.git_cmd = 1;
+	writer.but_cmd = 1;
 	strvec_push(&writer.args, "upload-archive--writer");
 	strvec_pushv(&writer.args, argv + 1);
 	if (start_command(&writer)) {

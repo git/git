@@ -15,7 +15,7 @@ test_expect_success 'test capability advertisement' '
 	EOF
 	cat >expect <<-EOF &&
 	version 2
-	agent=git/$(git version | cut -d" " -f3)
+	agent=but/$(but version | cut -d" " -f3)
 	ls-refs=unborn
 	fetch=shallow wait-for-done
 	server-option
@@ -54,7 +54,7 @@ test_expect_success 'request invalid capability' '
 
 test_expect_success 'request with no command' '
 	test-tool pkt-line pack >in <<-EOF &&
-	agent=git/test
+	agent=but/test
 	object-format=$(test_oid algo)
 	0000
 	EOF
@@ -66,7 +66,7 @@ test_expect_success 'request invalid command' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=foo
 	object-format=$(test_oid algo)
-	agent=git/test
+	agent=but/test
 	0000
 	EOF
 	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
@@ -107,7 +107,7 @@ test_expect_success 'requested command is command=value' '
 test_expect_success 'wrong object-format' '
 	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
-	agent=git/test
+	agent=but/test
 	object-format=$(test_oid wrong_algo)
 	0000
 	EOF
@@ -119,10 +119,10 @@ test_expect_success 'wrong object-format' '
 #
 test_expect_success 'setup some refs and tags' '
 	test_cummit one &&
-	git branch dev main &&
+	but branch dev main &&
 	test_cummit two &&
-	git symbolic-ref refs/heads/release refs/heads/main &&
-	git tag -a -m "annotated tag" annotated-tag
+	but symbolic-ref refs/heads/release refs/heads/main &&
+	but tag -a -m "annotated tag" annotated-tag
 '
 
 test_expect_success 'basics of ls-refs' '
@@ -133,13 +133,13 @@ test_expect_success 'basics of ls-refs' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse HEAD) HEAD
-	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/main) refs/heads/main
-	$(git rev-parse refs/heads/release) refs/heads/release
-	$(git rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
-	$(git rev-parse refs/tags/one) refs/tags/one
-	$(git rev-parse refs/tags/two) refs/tags/two
+	$(but rev-parse HEAD) HEAD
+	$(but rev-parse refs/heads/dev) refs/heads/dev
+	$(but rev-parse refs/heads/main) refs/heads/main
+	$(but rev-parse refs/heads/release) refs/heads/release
+	$(but rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
+	$(but rev-parse refs/tags/one) refs/tags/one
+	$(but rev-parse refs/tags/two) refs/tags/two
 	0000
 	EOF
 
@@ -172,8 +172,8 @@ test_expect_success 'basic ref-prefixes' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse refs/heads/main) refs/heads/main
-	$(git rev-parse refs/tags/one) refs/tags/one
+	$(but rev-parse refs/heads/main) refs/heads/main
+	$(but rev-parse refs/tags/one) refs/tags/one
 	0000
 	EOF
 
@@ -192,9 +192,9 @@ test_expect_success 'refs/heads prefix' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/main) refs/heads/main
-	$(git rev-parse refs/heads/release) refs/heads/release
+	$(but rev-parse refs/heads/dev) refs/heads/dev
+	$(but rev-parse refs/heads/main) refs/heads/main
+	$(but rev-parse refs/heads/release) refs/heads/release
 	0000
 	EOF
 
@@ -219,13 +219,13 @@ test_expect_success 'ignore very large set of prefixes' '
 	# and then confirm that we see unmatched prefixes anyway (i.e.,
 	# that the prefix was not applied).
 	cat >expect <<-EOF &&
-	$(git rev-parse HEAD) HEAD
-	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/main) refs/heads/main
-	$(git rev-parse refs/heads/release) refs/heads/release
-	$(git rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
-	$(git rev-parse refs/tags/one) refs/tags/one
-	$(git rev-parse refs/tags/two) refs/tags/two
+	$(but rev-parse HEAD) HEAD
+	$(but rev-parse refs/heads/dev) refs/heads/dev
+	$(but rev-parse refs/heads/main) refs/heads/main
+	$(but rev-parse refs/heads/release) refs/heads/release
+	$(but rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag
+	$(but rev-parse refs/tags/one) refs/tags/one
+	$(but rev-parse refs/tags/two) refs/tags/two
 	0000
 	EOF
 
@@ -245,9 +245,9 @@ test_expect_success 'peel parameter' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag peeled:$(git rev-parse refs/tags/annotated-tag^{})
-	$(git rev-parse refs/tags/one) refs/tags/one
-	$(git rev-parse refs/tags/two) refs/tags/two
+	$(but rev-parse refs/tags/annotated-tag) refs/tags/annotated-tag peeled:$(but rev-parse refs/tags/annotated-tag^{})
+	$(but rev-parse refs/tags/one) refs/tags/one
+	$(but rev-parse refs/tags/two) refs/tags/two
 	0000
 	EOF
 
@@ -267,9 +267,9 @@ test_expect_success 'symrefs parameter' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse refs/heads/dev) refs/heads/dev
-	$(git rev-parse refs/heads/main) refs/heads/main
-	$(git rev-parse refs/heads/release) refs/heads/release symref-target:refs/heads/main
+	$(but rev-parse refs/heads/dev) refs/heads/dev
+	$(but rev-parse refs/heads/main) refs/heads/main
+	$(but rev-parse refs/heads/release) refs/heads/release symref-target:refs/heads/main
 	0000
 	EOF
 
@@ -290,7 +290,7 @@ test_expect_success 'sending server-options' '
 	EOF
 
 	cat >expect <<-EOF &&
-	$(git rev-parse HEAD) HEAD
+	$(but rev-parse HEAD) HEAD
 	0000
 	EOF
 
@@ -300,7 +300,7 @@ test_expect_success 'sending server-options' '
 '
 
 test_expect_success 'unexpected lines are not allowed in fetch request' '
-	git init server &&
+	but init server &&
 
 	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
@@ -325,15 +325,15 @@ test_expect_success 'basics of object-info' '
 	object-format=$(test_oid algo)
 	0001
 	size
-	oid $(git rev-parse two:two.t)
-	oid $(git rev-parse two:two.t)
+	oid $(but rev-parse two:two.t)
+	oid $(but rev-parse two:two.t)
 	0000
 	EOF
 
 	cat >expect <<-EOF &&
 	size
-	$(git rev-parse two:two.t) $(wc -c <two.t | xargs)
-	$(git rev-parse two:two.t) $(wc -c <two.t | xargs)
+	$(but rev-parse two:two.t) $(wc -c <two.t | xargs)
+	$(but rev-parse two:two.t) $(wc -c <two.t | xargs)
 	0000
 	EOF
 

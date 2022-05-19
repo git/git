@@ -4,7 +4,7 @@ Date:   Thu Feb 28 10:48:43 2013 +0100
 
     change back to complete line
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
 @@ -18,5 +18,7 @@
@@ -24,7 +24,7 @@ Date:   Thu Feb 28 10:48:10 2013 +0100
 
     change to an incomplete line at end
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
 @@ -18,5 +18,5 @@
@@ -42,7 +42,7 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
 
     touch both functions
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
 @@ -17,5 +17,5 @@
@@ -59,7 +59,7 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
 
     initial
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +16,5 @@

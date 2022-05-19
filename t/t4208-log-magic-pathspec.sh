@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='magic pathspec tests using git-log'
+test_description='magic pathspec tests using but-log'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -10,134 +10,134 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	test_cummit initial &&
 	test_tick &&
-	git cummit --allow-empty -m empty &&
+	but cummit --allow-empty -m empty &&
 	mkdir sub
 '
 
-test_expect_success '"git log :/" should not be ambiguous' '
-	git log :/
+test_expect_success '"but log :/" should not be ambiguous' '
+	but log :/
 '
 
-test_expect_success '"git log :/a" should be ambiguous (applied both rev and worktree)' '
+test_expect_success '"but log :/a" should be ambiguous (applied both rev and worktree)' '
 	: >a &&
-	test_must_fail git log :/a 2>error &&
+	test_must_fail but log :/a 2>error &&
 	test_i18ngrep ambiguous error
 '
 
-test_expect_success '"git log :/a -- " should not be ambiguous' '
-	git log :/a --
+test_expect_success '"but log :/a -- " should not be ambiguous' '
+	but log :/a --
 '
 
-test_expect_success '"git log :/detached -- " should find a cummit only in HEAD' '
-	test_when_finished "git checkout main" &&
-	git checkout --detach &&
+test_expect_success '"but log :/detached -- " should find a cummit only in HEAD' '
+	test_when_finished "but checkout main" &&
+	but checkout --detach &&
 	test_cummit --no-tag detached &&
 	test_cummit --no-tag something-else &&
-	git log :/detached --
+	but log :/detached --
 '
 
-test_expect_success '"git log :/detached -- " should not find an orphaned cummit' '
-	test_must_fail git log :/detached --
+test_expect_success '"but log :/detached -- " should not find an orphaned cummit' '
+	test_must_fail but log :/detached --
 '
 
-test_expect_success '"git log :/detached -- " should find HEAD only of own worktree' '
-	git worktree add other-tree HEAD &&
-	git -C other-tree checkout --detach &&
+test_expect_success '"but log :/detached -- " should find HEAD only of own worktree' '
+	but worktree add other-tree HEAD &&
+	but -C other-tree checkout --detach &&
 	test_tick &&
-	git -C other-tree cummit --allow-empty -m other-detached &&
-	git -C other-tree log :/other-detached -- &&
-	test_must_fail git log :/other-detached --
+	but -C other-tree cummit --allow-empty -m other-detached &&
+	but -C other-tree log :/other-detached -- &&
+	test_must_fail but log :/other-detached --
 '
 
-test_expect_success '"git log -- :/a" should not be ambiguous' '
-	git log -- :/a
+test_expect_success '"but log -- :/a" should not be ambiguous' '
+	but log -- :/a
 '
 
-test_expect_success '"git log :/any/path/" should not segfault' '
-	test_must_fail git log :/any/path/
+test_expect_success '"but log :/any/path/" should not segfault' '
+	test_must_fail but log :/any/path/
 '
 
 # This differs from the ":/a" check above in that :/in looks like a pathspec,
 # but doesn't match an actual file.
-test_expect_success '"git log :/in" should not be ambiguous' '
-	git log :/in
+test_expect_success '"but log :/in" should not be ambiguous' '
+	but log :/in
 '
 
-test_expect_success '"git log :" should be ambiguous' '
-	test_must_fail git log : 2>error &&
+test_expect_success '"but log :" should be ambiguous' '
+	test_must_fail but log : 2>error &&
 	test_i18ngrep ambiguous error
 '
 
-test_expect_success 'git log -- :' '
-	git log -- :
+test_expect_success 'but log -- :' '
+	but log -- :
 '
 
-test_expect_success 'git log HEAD -- :/' '
-	initial=$(git rev-parse --short HEAD^) &&
+test_expect_success 'but log HEAD -- :/' '
+	initial=$(but rev-parse --short HEAD^) &&
 	cat >expected <<-EOF &&
 	$initial initial
 	EOF
-	(cd sub && git log --oneline HEAD -- :/ >../actual) &&
+	(cd sub && but log --oneline HEAD -- :/ >../actual) &&
 	test_cmp expected actual
 '
 
-test_expect_success '"git log :^sub" is not ambiguous' '
-	git log :^sub
+test_expect_success '"but log :^sub" is not ambiguous' '
+	but log :^sub
 '
 
-test_expect_success '"git log :^does-not-exist" does not match anything' '
-	test_must_fail git log :^does-not-exist
+test_expect_success '"but log :^does-not-exist" does not match anything' '
+	test_must_fail but log :^does-not-exist
 '
 
-test_expect_success  '"git log :!" behaves the same as :^' '
-	git log :!sub &&
-	test_must_fail git log :!does-not-exist
+test_expect_success  '"but log :!" behaves the same as :^' '
+	but log :!sub &&
+	test_must_fail but log :!does-not-exist
 '
 
-test_expect_success '"git log :(exclude)sub" is not ambiguous' '
-	git log ":(exclude)sub"
+test_expect_success '"but log :(exclude)sub" is not ambiguous' '
+	but log ":(exclude)sub"
 '
 
-test_expect_success '"git log :(exclude)sub --" must resolve as an object' '
-	test_must_fail git log ":(exclude)sub" --
+test_expect_success '"but log :(exclude)sub --" must resolve as an object' '
+	test_must_fail but log ":(exclude)sub" --
 '
 
-test_expect_success '"git log :(unknown-magic) complains of bogus magic' '
-	test_must_fail git log ":(unknown-magic)" 2>error &&
+test_expect_success '"but log :(unknown-magic) complains of bogus magic' '
+	test_must_fail but log ":(unknown-magic)" 2>error &&
 	test_i18ngrep pathspec.magic error
 '
 
-test_expect_success 'command line pathspec parsing for "git log"' '
-	git reset --hard &&
+test_expect_success 'command line pathspec parsing for "but log"' '
+	but reset --hard &&
 	>a &&
-	git add a &&
-	git cummit -m "add an empty a" --allow-empty &&
+	but add a &&
+	but cummit -m "add an empty a" --allow-empty &&
 	echo 1 >a &&
-	git cummit -a -m "update a to 1" &&
-	git checkout HEAD^ &&
+	but cummit -a -m "update a to 1" &&
+	but checkout HEAD^ &&
 	echo 2 >a &&
-	git cummit -a -m "update a to 2" &&
-	test_must_fail git merge main &&
-	git add a &&
-	git log --merge -- a
+	but cummit -a -m "update a to 2" &&
+	test_must_fail but merge main &&
+	but add a &&
+	but log --merge -- a
 '
 
 test_expect_success 'tree_entry_interesting does not match past submodule boundaries' '
 	test_when_finished "rm -rf repo submodule" &&
-	git init submodule &&
+	but init submodule &&
 	test_cummit -C submodule initial &&
-	git init repo &&
+	but init repo &&
 	>"repo/[bracket]" &&
-	git -C repo add "[bracket]" &&
+	but -C repo add "[bracket]" &&
 	test_tick &&
-	git -C repo cummit -m bracket &&
-	git -C repo rev-list HEAD -- "[bracket]" >expect &&
+	but -C repo cummit -m bracket &&
+	but -C repo rev-list HEAD -- "[bracket]" >expect &&
 
-	git -C repo submodule add ../submodule &&
+	but -C repo submodule add ../submodule &&
 	test_tick &&
-	git -C repo cummit -m submodule &&
+	but -C repo cummit -m submodule &&
 
-	git -C repo rev-list HEAD -- "[bracket]" >actual &&
+	but -C repo rev-list HEAD -- "[bracket]" >actual &&
 	test_cmp expect actual
 '
 

@@ -1,4 +1,4 @@
- Documentation/git-ls-tree.txt |   20 +-
+ Documentation/but-ls-tree.txt |   20 +-
  ls-tree.c                     |  333 +++++++++++++++++++++++------------------
  t/t3100-ls-tree-restrict.sh   |    3 
  tree.c                        |    2 

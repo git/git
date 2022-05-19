@@ -7,11 +7,11 @@
 #include "config.h"
 #include "refs.h"
 
-static const char var_usage[] = "git var (-l | <variable>)";
+static const char var_usage[] = "but var (-l | <variable>)";
 
 static const char *editor(int flag)
 {
-	const char *pgm = git_editor();
+	const char *pgm = but_editor();
 
 	if (!pgm && flag & IDENT_STRICT)
 		die("Terminal is dumb, but EDITOR unset");
@@ -21,7 +21,7 @@ static const char *editor(int flag)
 
 static const char *pager(int flag)
 {
-	const char *pgm = git_pager(1);
+	const char *pgm = but_pager(1);
 
 	if (!pgm)
 		pgm = "cat";
@@ -30,16 +30,16 @@ static const char *pager(int flag)
 
 static const char *default_branch(int flag)
 {
-	return git_default_branch_name(1);
+	return but_default_branch_name(1);
 }
 
-struct git_var {
+struct but_var {
 	const char *name;
 	const char *(*read)(int);
 };
-static struct git_var git_vars[] = {
-	{ "GIT_CUMMITTER_IDENT", git_cummitter_info },
-	{ "GIT_AUTHOR_IDENT",   git_author_info },
+static struct but_var but_vars[] = {
+	{ "GIT_CUMMITTER_IDENT", but_cummitter_info },
+	{ "GIT_AUTHOR_IDENT",   but_author_info },
 	{ "GIT_EDITOR", editor },
 	{ "GIT_PAGER", pager },
 	{ "GIT_DEFAULT_BRANCH", default_branch },
@@ -48,20 +48,20 @@ static struct git_var git_vars[] = {
 
 static void list_vars(void)
 {
-	struct git_var *ptr;
+	struct but_var *ptr;
 	const char *val;
 
-	for (ptr = git_vars; ptr->read; ptr++)
+	for (ptr = but_vars; ptr->read; ptr++)
 		if ((val = ptr->read(0)))
 			printf("%s=%s\n", ptr->name, val);
 }
 
 static const char *read_var(const char *var)
 {
-	struct git_var *ptr;
+	struct but_var *ptr;
 	const char *val;
 	val = NULL;
-	for (ptr = git_vars; ptr->read; ptr++) {
+	for (ptr = but_vars; ptr->read; ptr++) {
 		if (strcmp(var, ptr->name) == 0) {
 			val = ptr->read(IDENT_STRICT);
 			break;
@@ -76,7 +76,7 @@ static int show_config(const char *var, const char *value, void *cb)
 		printf("%s=%s\n", var, value);
 	else
 		printf("%s\n", var);
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 int cmd_var(int argc, const char **argv, const char *prefix)
@@ -86,11 +86,11 @@ int cmd_var(int argc, const char **argv, const char *prefix)
 		usage(var_usage);
 
 	if (strcmp(argv[1], "-l") == 0) {
-		git_config(show_config, NULL);
+		but_config(show_config, NULL);
 		list_vars();
 		return 0;
 	}
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	val = read_var(argv[1]);
 	if (!val)
 		usage(var_usage);

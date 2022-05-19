@@ -1,170 +1,170 @@
 #!/bin/sh
 
-test_description='git rebase of cummits that start or become empty'
+test_description='but rebase of cummits that start or become empty'
 
 . ./test-lib.sh
 
 test_expect_success 'setup test repository' '
 	test_write_lines 1 2 3 4 5 6 7 8 9 10 >numbers &&
 	test_write_lines A B C D E F G H I J >letters &&
-	git add numbers letters &&
-	git cummit -m A &&
+	but add numbers letters &&
+	but cummit -m A &&
 
-	git branch upstream &&
-	git branch localmods &&
+	but branch upstream &&
+	but branch localmods &&
 
-	git checkout upstream &&
+	but checkout upstream &&
 	test_write_lines A B C D E >letters &&
-	git add letters &&
-	git cummit -m B &&
+	but add letters &&
+	but cummit -m B &&
 
 	test_write_lines 1 2 3 4 five 6 7 8 9 ten >numbers &&
-	git add numbers &&
-	git cummit -m C &&
+	but add numbers &&
+	but cummit -m C &&
 
-	git checkout localmods &&
+	but checkout localmods &&
 	test_write_lines 1 2 3 4 five 6 7 8 9 10 >numbers &&
-	git add numbers &&
-	git cummit -m C2 &&
+	but add numbers &&
+	but cummit -m C2 &&
 
-	git cummit --allow-empty -m D &&
+	but cummit --allow-empty -m D &&
 
 	test_write_lines A B C D E >letters &&
-	git add letters &&
-	git cummit -m "Five letters ought to be enough for anybody"
+	but add letters &&
+	but cummit -m "Five letters ought to be enough for anybody"
 '
 
 test_expect_failure 'rebase (apply-backend)' '
-	test_when_finished "git rebase --abort" &&
-	git checkout -B testing localmods &&
+	test_when_finished "but rebase --abort" &&
+	but checkout -B testing localmods &&
 	# rebase (--apply) should not drop cummits that start empty
-	git rebase --apply upstream &&
+	but rebase --apply upstream &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=drop' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=drop upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=drop upstream &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge uses default of --empty=drop' '
-	git checkout -B testing localmods &&
-	git rebase --merge upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge upstream &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=keep' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=keep upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=keep upstream &&
 
 	test_write_lines D C2 C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=ask' '
-	git checkout -B testing localmods &&
-	test_must_fail git rebase --merge --empty=ask upstream &&
+	but checkout -B testing localmods &&
+	test_must_fail but rebase --merge --empty=ask upstream &&
 
-	git rebase --skip &&
+	but rebase --skip &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --interactive --empty=drop' '
-	git checkout -B testing localmods &&
-	git rebase --interactive --empty=drop upstream &&
+	but checkout -B testing localmods &&
+	but rebase --interactive --empty=drop upstream &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --interactive --empty=keep' '
-	git checkout -B testing localmods &&
-	git rebase --interactive --empty=keep upstream &&
+	but checkout -B testing localmods &&
+	but rebase --interactive --empty=keep upstream &&
 
 	test_write_lines D C2 C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --interactive --empty=ask' '
-	git checkout -B testing localmods &&
-	test_must_fail git rebase --interactive --empty=ask upstream &&
+	but checkout -B testing localmods &&
+	test_must_fail but rebase --interactive --empty=ask upstream &&
 
-	git rebase --skip &&
+	but rebase --skip &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --interactive uses default of --empty=ask' '
-	git checkout -B testing localmods &&
-	test_must_fail git rebase --interactive upstream &&
+	but checkout -B testing localmods &&
+	test_must_fail but rebase --interactive upstream &&
 
-	git rebase --skip &&
+	but rebase --skip &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=drop --keep-empty' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=drop --keep-empty upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=drop --keep-empty upstream &&
 
 	test_write_lines D C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=drop --no-keep-empty' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=drop --no-keep-empty upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=drop --no-keep-empty upstream &&
 
 	test_write_lines C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=keep --keep-empty' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=keep --keep-empty upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=keep --keep-empty upstream &&
 
 	test_write_lines D C2 C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge --empty=keep --no-keep-empty' '
-	git checkout -B testing localmods &&
-	git rebase --merge --empty=keep --no-keep-empty upstream &&
+	but checkout -B testing localmods &&
+	but rebase --merge --empty=keep --no-keep-empty upstream &&
 
 	test_write_lines C2 C B A >expect &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --merge does not leave state laying around' '
-	git checkout -B testing localmods~2 &&
-	git rebase --merge upstream &&
+	but checkout -B testing localmods~2 &&
+	but rebase --merge upstream &&
 
-	test_path_is_missing .git/CHERRY_PICK_HEAD &&
-	test_path_is_missing .git/MERGE_MSG
+	test_path_is_missing .but/CHERRY_PICK_HEAD &&
+	test_path_is_missing .but/MERGE_MSG
 '
 
 test_done

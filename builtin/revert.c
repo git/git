@@ -14,21 +14,21 @@
  *
  * Copyright (c) 2007 Johannes E. Schindelin
  *
- * Based on git-revert.sh, which is
+ * Based on but-revert.sh, which is
  *
  * Copyright (c) 2005 Linus Torvalds
  * Copyright (c) 2005 Junio C Hamano
  */
 
 static const char * const revert_usage[] = {
-	N_("git revert [<options>] <cummit-ish>..."),
-	N_("git revert <subcommand>"),
+	N_("but revert [<options>] <cummit-ish>..."),
+	N_("but revert <subcommand>"),
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
-	N_("git cherry-pick [<options>] <cummit-ish>..."),
-	N_("git cherry-pick <subcommand>"),
+	N_("but cherry-pick [<options>] <cummit-ish>..."),
+	N_("but cherry-pick <subcommand>"),
 	NULL
 };
 

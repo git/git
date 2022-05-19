@@ -7,7 +7,7 @@
 #include "config.h"
 
 static char const * const builtin_mktag_usage[] = {
-	"git mktag",
+	"but mktag",
 	NULL
 };
 static int option_strict = 1;
@@ -91,7 +91,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	fsck_set_msg_type_from_ids(&fsck_options, FSCK_MSG_EXTRA_HEADER_ENTRY,
 				   FSCK_WARN);
 	/* config might set fsck.extraHeaderEntry=* again */
-	git_config(git_fsck_config, &fsck_options);
+	but_config(but_fsck_config, &fsck_options);
 	if (fsck_tag_standalone(NULL, buf.buf, buf.len, &fsck_options,
 				&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));

@@ -257,7 +257,7 @@ struct rev_info {
 	struct grep_opt	grep_filter;
 
 	/* Display history graph */
-	struct git_graph *graph;
+	struct but_graph *graph;
 
 	/* special limits */
 	int skip_count;

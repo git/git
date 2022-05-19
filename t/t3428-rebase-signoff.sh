@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git rebase --signoff
+test_description='but rebase --signoff
 
-This test runs git rebase --signoff and make sure that it works.
+This test runs but rebase --signoff and make sure that it works.
 '
 
 . ./test-lib.sh
@@ -16,14 +16,14 @@ EOF
 cat >expected-initial-signed <<EOF
 Initial empty cummit
 
-Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(but var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 # Expected cummit message after rebase --signoff
 cat >expected-signed <<EOF
 first
 
-Signed-off-by: $(git var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(but var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 # Expected cummit message after rebase without --signoff (or with --no-signoff)
@@ -35,50 +35,50 @@ EOF
 # We configure an alias to do the rebase --signoff so that
 # on the next subtest we can show that --no-signoff overrides the alias
 test_expect_success 'rebase --signoff adds a sign-off line' '
-	git cummit --allow-empty -m "Initial empty cummit" &&
-	git add file && git cummit -m first &&
-	git config alias.rbs "rebase --signoff" &&
-	git rbs HEAD^ &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	but cummit --allow-empty -m "Initial empty cummit" &&
+	but add file && but cummit -m first &&
+	but config alias.rbs "rebase --signoff" &&
+	but rbs HEAD^ &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
 	test_cmp expected-signed actual
 '
 
 test_expect_success 'rebase --no-signoff does not add a sign-off line' '
-	git cummit --amend -m "first" &&
-	git rbs --no-signoff HEAD^ &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	but cummit --amend -m "first" &&
+	but rbs --no-signoff HEAD^ &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
 	test_cmp expected-unsigned actual
 '
 
 test_expect_success 'rebase --exec --signoff adds a sign-off line' '
 	test_when_finished "rm exec" &&
-	git cummit --amend -m "first" &&
-	git rebase --exec "touch exec" --signoff HEAD^ &&
+	but cummit --amend -m "first" &&
+	but rebase --exec "touch exec" --signoff HEAD^ &&
 	test_path_is_file exec &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-signed actual
 '
 
 test_expect_success 'rebase --root --signoff adds a sign-off line' '
-	git cummit --amend -m "first" &&
-	git rebase --root --keep-empty --signoff &&
-	git cat-file commit HEAD^ | sed -e "1,/^\$/d" >actual &&
+	but cummit --amend -m "first" &&
+	but rebase --root --keep-empty --signoff &&
+	but cat-file commit HEAD^ | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-initial-signed actual &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-signed actual
 '
 
 test_expect_success 'rebase -i --signoff fails' '
-	git cummit --amend -m "first" &&
-	git rebase -i --signoff HEAD^ &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but cummit --amend -m "first" &&
+	but rebase -i --signoff HEAD^ &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-signed actual
 '
 
 test_expect_success 'rebase -m --signoff fails' '
-	git cummit --amend -m "first" &&
-	git rebase -m --signoff HEAD^ &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but cummit --amend -m "first" &&
+	but rebase -m --signoff HEAD^ &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	test_cmp expected-signed actual
 '
 test_done

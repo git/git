@@ -11,36 +11,36 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup 1' '
 
 	echo hello >a &&
-	o0=$(git hash-object a) &&
+	o0=$(but hash-object a) &&
 	cp a b &&
 	cp a c &&
 	mkdir d &&
 	cp a d/e &&
 
 	test_tick &&
-	git add a b c d/e &&
-	git cummit -m initial &&
-	c0=$(git rev-parse --verify HEAD) &&
-	git branch side &&
-	git branch df-1 &&
-	git branch df-2 &&
-	git branch df-3 &&
-	git branch remove &&
-	git branch submod &&
-	git branch copy &&
-	git branch rename &&
-	git branch rename-ln &&
+	but add a b c d/e &&
+	but cummit -m initial &&
+	c0=$(but rev-parse --verify HEAD) &&
+	but branch side &&
+	but branch df-1 &&
+	but branch df-2 &&
+	but branch df-3 &&
+	but branch remove &&
+	but branch submod &&
+	but branch copy &&
+	but branch rename &&
+	but branch rename-ln &&
 
 	echo hello >>a &&
 	cp a d/e &&
-	o1=$(git hash-object a) &&
+	o1=$(but hash-object a) &&
 
-	git add a d/e &&
+	but add a d/e &&
 
 	test_tick &&
-	git cummit -m "main modifies a and d/e" &&
-	c1=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "main modifies a and d/e" &&
+	c1=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o1	a" &&
 		echo "100644 blob $o0	b" &&
@@ -57,8 +57,8 @@ test_expect_success 'setup 1' '
 test_expect_success 'setup 2' '
 
 	rm -rf [abcd] &&
-	git checkout side &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout side &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -72,14 +72,14 @@ test_expect_success 'setup 2' '
 	test_cmp expected actual &&
 
 	echo goodbye >>a &&
-	o2=$(git hash-object a) &&
+	o2=$(but hash-object a) &&
 
-	git add a &&
+	but add a &&
 
 	test_tick &&
-	git cummit -m "side modifies a" &&
-	c2=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "side modifies a" &&
+	c2=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o2	a" &&
 		echo "100644 blob $o0	b" &&
@@ -96,8 +96,8 @@ test_expect_success 'setup 2' '
 test_expect_success 'setup 3' '
 
 	rm -rf [abcd] &&
-	git checkout df-1 &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout df-1 &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -110,13 +110,13 @@ test_expect_success 'setup 3' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	rm -f b && mkdir b && echo df-1 >b/c && git add b/c &&
-	o3=$(git hash-object b/c) &&
+	rm -f b && mkdir b && echo df-1 >b/c && but add b/c &&
+	o3=$(but hash-object b/c) &&
 
 	test_tick &&
-	git cummit -m "df-1 makes b/c" &&
-	c3=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "df-1 makes b/c" &&
+	c3=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o3	b/c" &&
@@ -133,8 +133,8 @@ test_expect_success 'setup 3' '
 test_expect_success 'setup 4' '
 
 	rm -rf [abcd] &&
-	git checkout df-2 &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout df-2 &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -147,13 +147,13 @@ test_expect_success 'setup 4' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	rm -f a && mkdir a && echo df-2 >a/c && git add a/c &&
-	o4=$(git hash-object a/c) &&
+	rm -f a && mkdir a && echo df-2 >a/c && but add a/c &&
+	o4=$(but hash-object a/c) &&
 
 	test_tick &&
-	git cummit -m "df-2 makes a/c" &&
-	c4=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "df-2 makes a/c" &&
+	c4=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o4	a/c" &&
 		echo "100644 blob $o0	b" &&
@@ -170,8 +170,8 @@ test_expect_success 'setup 4' '
 test_expect_success 'setup 5' '
 
 	rm -rf [abcd] &&
-	git checkout remove &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout remove &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -187,14 +187,14 @@ test_expect_success 'setup 5' '
 	rm -f b &&
 	echo remove-conflict >a &&
 
-	git add a &&
-	git rm b &&
-	o5=$(git hash-object a) &&
+	but add a &&
+	but rm b &&
+	o5=$(but hash-object a) &&
 
 	test_tick &&
-	git cummit -m "remove removes b and modifies a" &&
-	c5=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "remove removes b and modifies a" &&
+	c5=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o5	a" &&
 		echo "100644 blob $o0	c" &&
@@ -210,8 +210,8 @@ test_expect_success 'setup 5' '
 test_expect_success 'setup 6' '
 
 	rm -rf [abcd] &&
-	git checkout df-3 &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout df-3 &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -224,13 +224,13 @@ test_expect_success 'setup 6' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	rm -fr d && echo df-3 >d && git add d &&
-	o6=$(git hash-object d) &&
+	rm -fr d && echo df-3 >d && but add d &&
+	o6=$(but hash-object d) &&
 
 	test_tick &&
-	git cummit -m "df-3 makes d" &&
-	c6=$(git rev-parse --verify HEAD) &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but cummit -m "df-3 makes d" &&
+	c6=$(but rev-parse --verify HEAD) &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	a" &&
 		echo "100644 blob $o0	b" &&
@@ -246,49 +246,49 @@ test_expect_success 'setup 6' '
 
 test_expect_success 'setup 7' '
 
-	git checkout submod &&
-	git rm d/e &&
+	but checkout submod &&
+	but rm d/e &&
 	test_tick &&
-	git cummit -m "remove d/e" &&
-	git update-index --add --cacheinfo 160000 $c1 d &&
+	but cummit -m "remove d/e" &&
+	but update-index --add --cacheinfo 160000 $c1 d &&
 	test_tick &&
-	git cummit -m "make d/ a submodule"
+	but cummit -m "make d/ a submodule"
 '
 
 test_expect_success 'setup 8' '
-	git checkout rename &&
-	git mv a e &&
-	git add e &&
+	but checkout rename &&
+	but mv a e &&
+	but add e &&
 	test_tick &&
-	git cummit -m "rename a->e" &&
-	c7=$(git rev-parse --verify HEAD) &&
-	git checkout rename-ln &&
-	git mv a e &&
+	but cummit -m "rename a->e" &&
+	c7=$(but rev-parse --verify HEAD) &&
+	but checkout rename-ln &&
+	but mv a e &&
 	test_ln_s_add e a &&
 	test_tick &&
-	git cummit -m "rename a->e, symlink a->e" &&
-	oln=$(printf e | git hash-object --stdin)
+	but cummit -m "rename a->e, symlink a->e" &&
+	oln=$(printf e | but hash-object --stdin)
 '
 
 test_expect_success 'setup 9' '
-	git checkout copy &&
+	but checkout copy &&
 	cp a e &&
-	git add e &&
+	but add e &&
 	test_tick &&
-	git cummit -m "copy a->e"
+	but cummit -m "copy a->e"
 '
 
 test_expect_success 'merge-recursive simple' '
 
 	rm -fr [abcd] &&
-	git checkout -f "$c2" &&
+	but checkout -f "$c2" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c2" "$c1"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c2" "$c1"
 '
 
 test_expect_success 'merge-recursive result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o0 1	a" &&
 		echo "100644 $o2 2	a" &&
@@ -304,30 +304,30 @@ test_expect_success 'merge-recursive result' '
 test_expect_success 'fail if the index has unresolved entries' '
 
 	rm -fr [abcd] &&
-	git checkout -f "$c1" &&
+	but checkout -f "$c1" &&
 
-	test_must_fail git merge "$c5" &&
-	test_must_fail git merge "$c5" 2> out &&
+	test_must_fail but merge "$c5" &&
+	test_must_fail but merge "$c5" 2> out &&
 	test_i18ngrep "not possible because you have unmerged files" out &&
-	git add -u &&
-	test_must_fail git merge "$c5" 2> out &&
+	but add -u &&
+	test_must_fail but merge "$c5" 2> out &&
 	test_i18ngrep "You have not concluded your merge" out &&
-	rm -f .git/MERGE_HEAD &&
-	test_must_fail git merge "$c5" 2> out &&
+	rm -f .but/MERGE_HEAD &&
+	test_must_fail but merge "$c5" 2> out &&
 	test_i18ngrep "Your local changes to the following files would be overwritten by merge:" out
 '
 
 test_expect_success 'merge-recursive remove conflict' '
 
 	rm -fr [abcd] &&
-	git checkout -f "$c1" &&
+	but checkout -f "$c1" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c5"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c1" "$c5"
 '
 
 test_expect_success 'merge-recursive remove conflict' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o0 1	a" &&
 		echo "100644 $o1 2	a" &&
@@ -341,15 +341,15 @@ test_expect_success 'merge-recursive remove conflict' '
 
 test_expect_success 'merge-recursive d/f simple' '
 	rm -fr [abcd] &&
-	git reset --hard &&
-	git checkout -f "$c1" &&
+	but reset --hard &&
+	but checkout -f "$c1" &&
 
-	git merge-recursive "$c0" -- "$c1" "$c3"
+	but merge-recursive "$c0" -- "$c1" "$c3"
 '
 
 test_expect_success 'merge-recursive result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	a" &&
 		echo "100644 $o3 0	b/c" &&
@@ -363,15 +363,15 @@ test_expect_success 'merge-recursive result' '
 test_expect_success 'merge-recursive d/f conflict' '
 
 	rm -fr [abcd] &&
-	git reset --hard &&
-	git checkout -f "$c1" &&
+	but reset --hard &&
+	but checkout -f "$c1" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c4"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c1" "$c4"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o0 1	a" &&
 		echo "100644 $o1 2	a" &&
@@ -387,15 +387,15 @@ test_expect_success 'merge-recursive d/f conflict result' '
 test_expect_success 'merge-recursive d/f conflict the other way' '
 
 	rm -fr [abcd] &&
-	git reset --hard &&
-	git checkout -f "$c4" &&
+	but reset --hard &&
+	but checkout -f "$c4" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c4" "$c1"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c4" "$c1"
 '
 
 test_expect_success 'merge-recursive d/f conflict result the other way' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o0 1	a" &&
 		echo "100644 $o1 3	a" &&
@@ -411,15 +411,15 @@ test_expect_success 'merge-recursive d/f conflict result the other way' '
 test_expect_success 'merge-recursive d/f conflict' '
 
 	rm -fr [abcd] &&
-	git reset --hard &&
-	git checkout -f "$c1" &&
+	but reset --hard &&
+	but checkout -f "$c1" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c6"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c1" "$c6"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	a" &&
 		echo "100644 $o0 0	b" &&
@@ -435,15 +435,15 @@ test_expect_success 'merge-recursive d/f conflict result' '
 test_expect_success 'merge-recursive d/f conflict' '
 
 	rm -fr [abcd] &&
-	git reset --hard &&
-	git checkout -f "$c6" &&
+	but reset --hard &&
+	but checkout -f "$c6" &&
 
-	test_expect_code 1 git merge-recursive "$c0" -- "$c6" "$c1"
+	test_expect_code 1 but merge-recursive "$c0" -- "$c6" "$c1"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	a" &&
 		echo "100644 $o0 0	b" &&
@@ -457,28 +457,28 @@ test_expect_success 'merge-recursive d/f conflict result' '
 '
 
 test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not produce d/f conflict' '
-	git init sym &&
+	but init sym &&
 	(
 		cd sym &&
 		ln -s . foo &&
 		mkdir bar &&
 		>bar/file &&
-		git add foo bar/file &&
-		git cummit -m "foo symlink" &&
+		but add foo bar/file &&
+		but cummit -m "foo symlink" &&
 
-		git checkout -b branch1 &&
-		git cummit --allow-empty -m "empty cummit" &&
+		but checkout -b branch1 &&
+		but cummit --allow-empty -m "empty cummit" &&
 
-		git checkout main &&
-		git rm foo &&
+		but checkout main &&
+		but rm foo &&
 		mkdir foo &&
 		>foo/bar &&
-		git add foo/bar &&
-		git cummit -m "replace foo symlink with real foo dir and foo/bar file" &&
+		but add foo/bar &&
+		but cummit -m "replace foo symlink with real foo dir and foo/bar file" &&
 
-		git checkout branch1 &&
+		but checkout branch1 &&
 
-		git cherry-pick main &&
+		but cherry-pick main &&
 		test_path_is_dir foo &&
 		test_path_is_file foo/bar
 	)
@@ -486,16 +486,16 @@ test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not
 
 test_expect_success 'reset and 3-way merge' '
 
-	git reset --hard "$c2" &&
-	git read-tree -m "$c0" "$c2" "$c1"
+	but reset --hard "$c2" &&
+	but read-tree -m "$c0" "$c2" "$c1"
 
 '
 
 test_expect_success 'reset and bind merge' '
 
-	git reset --hard main &&
-	git read-tree --prefix=M/ main &&
-	git ls-files -s >actual &&
+	but reset --hard main &&
+	but read-tree --prefix=M/ main &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
 		echo "100644 $o0 0	M/b" &&
@@ -508,8 +508,8 @@ test_expect_success 'reset and bind merge' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	git read-tree --prefix=a1/ main &&
-	git ls-files -s >actual &&
+	but read-tree --prefix=a1/ main &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
 		echo "100644 $o0 0	M/b" &&
@@ -526,8 +526,8 @@ test_expect_success 'reset and bind merge' '
 	) >expected &&
 	test_cmp expected actual &&
 
-	git read-tree --prefix=z/ main &&
-	git ls-files -s >actual &&
+	but read-tree --prefix=z/ main &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o1 0	M/a" &&
 		echo "100644 $o0 0	M/b" &&
@@ -557,13 +557,13 @@ test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 		GIT_INDEX_FILE="$PWD/ours-has-rename-index" &&
 		export GIT_INDEX_FILE &&
 		mkdir "$GIT_WORK_TREE" &&
-		git read-tree -i -m $c7 2>actual-err &&
+		but read-tree -i -m $c7 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git update-index --ignore-missing --refresh 2>actual-err &&
+		but update-index --ignore-missing --refresh 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git merge-recursive $c0 -- $c7 $c3 2>actual-err &&
+		but merge-recursive $c0 -- $c7 $c3 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git ls-files -s >actual-files 2>actual-err &&
+		but ls-files -s >actual-files 2>actual-err &&
 		test_must_be_empty actual-err
 	) &&
 	cat >expected-files <<-EOF &&
@@ -582,13 +582,13 @@ test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
 		GIT_INDEX_FILE="$PWD/theirs-has-rename-index" &&
 		export GIT_INDEX_FILE &&
 		mkdir "$GIT_WORK_TREE" &&
-		git read-tree -i -m $c3 2>actual-err &&
+		but read-tree -i -m $c3 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git update-index --ignore-missing --refresh 2>actual-err &&
+		but update-index --ignore-missing --refresh 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git merge-recursive $c0 -- $c3 $c7 2>actual-err &&
+		but merge-recursive $c0 -- $c3 $c7 2>actual-err &&
 		test_must_be_empty actual-err &&
-		git ls-files -s >actual-files 2>actual-err &&
+		but ls-files -s >actual-files 2>actual-err &&
 		test_must_be_empty actual-err
 	) &&
 	cat >expected-files <<-EOF &&
@@ -602,24 +602,24 @@ test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
 
 test_expect_success 'merge removes empty directories' '
 
-	git reset --hard main &&
-	git checkout -b rm &&
-	git rm d/e &&
-	git cummit -mremoved-d/e &&
-	git checkout main &&
-	git merge -s recursive rm &&
+	but reset --hard main &&
+	but checkout -b rm &&
+	but rm d/e &&
+	but cummit -mremoved-d/e &&
+	but checkout main &&
+	but merge -s recursive rm &&
 	test_path_is_missing d
 '
 
 test_expect_success 'merge-recursive simple w/submodule' '
 
-	git checkout submod &&
-	git merge remove
+	but checkout submod &&
+	but merge remove
 '
 
 test_expect_success 'merge-recursive simple w/submodule result' '
 
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	(
 		echo "100644 $o5 0	a" &&
 		echo "100644 $o0 0	c" &&
@@ -629,9 +629,9 @@ test_expect_success 'merge-recursive simple w/submodule result' '
 '
 
 test_expect_success 'merge-recursive copy vs. rename' '
-	git checkout -f copy &&
-	git merge rename &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout -f copy &&
+	but merge rename &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "100644 blob $o0	b" &&
 		echo "100644 blob $o0	c" &&
@@ -647,9 +647,9 @@ test_expect_success 'merge-recursive copy vs. rename' '
 
 test_expect_merge_algorithm failure success 'merge-recursive rename vs. rename/symlink' '
 
-	git checkout -f rename &&
-	git merge rename-ln &&
-	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	but checkout -f rename &&
+	but merge rename-ln &&
+	( but ls-tree -r HEAD && but ls-files -s ) >actual &&
 	(
 		echo "120000 blob $oln	a" &&
 		echo "100644 blob $o0	b" &&
@@ -666,9 +666,9 @@ test_expect_merge_algorithm failure success 'merge-recursive rename vs. rename/s
 '
 
 test_expect_success 'merging with triple rename across D/F conflict' '
-	git reset --hard HEAD &&
-	git checkout -b topic &&
-	git rm -rf . &&
+	but reset --hard HEAD &&
+	but checkout -b topic &&
+	but rm -rf . &&
 
 	echo "just a file" >sub1 &&
 	mkdir -p sub2 &&
@@ -677,40 +677,40 @@ test_expect_success 'merging with triple rename across D/F conflict' '
 	echo content3 >sub2/file3 &&
 	mkdir simple &&
 	echo base >simple/bar &&
-	git add -A &&
+	but add -A &&
 	test_tick &&
-	git cummit -m base &&
+	but cummit -m base &&
 
-	git checkout -b other &&
+	but checkout -b other &&
 	echo more >>simple/bar &&
 	test_tick &&
-	git cummit -a -m changesimplefile &&
+	but cummit -a -m changesimplefile &&
 
-	git checkout topic &&
-	git rm sub1 &&
-	git mv sub2 sub1 &&
+	but checkout topic &&
+	but rm sub1 &&
+	but mv sub2 sub1 &&
 	test_tick &&
-	git cummit -m changefiletodir &&
+	but cummit -m changefiletodir &&
 
 	test_tick &&
-	git merge other
+	but merge other
 '
 
 test_expect_success 'merge-recursive remembers the names of all base trees' '
-	git reset --hard HEAD &&
+	but reset --hard HEAD &&
 
 	# make the index match $c1 so that merge-recursive below does not
 	# fail early
-	git diff --binary HEAD $c1 -- | git apply --cached &&
+	but diff --binary HEAD $c1 -- | but apply --cached &&
 
 	# more trees than static slots used by oid_to_hex()
 	for cummit in $c0 $c2 $c4 $c5 $c6 $c7
 	do
-		git rev-parse "$cummit^{tree}" || return 1
+		but rev-parse "$cummit^{tree}" || return 1
 	done >trees &&
 
 	# ignore the return code; it only fails because the input is weird...
-	test_must_fail git -c merge.verbosity=5 merge-recursive $(cat trees) -- $c1 $c3 >out &&
+	test_must_fail but -c merge.verbosity=5 merge-recursive $(cat trees) -- $c1 $c3 >out &&
 
 	# ...but make sure it fails in the expected way
 	test_i18ngrep CONFLICT.*rename/rename out &&
@@ -720,11 +720,11 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	sed -n "s/^virtual //p" out | sort >actual &&
 	test_cmp expect actual &&
 
-	git clean -fd
+	but clean -fd
 '
 
 test_expect_success 'merge-recursive internal merge resolves to the sameness' '
-	git reset --hard HEAD &&
+	but reset --hard HEAD &&
 
 	# We are going to create a history leading to two criss-cross
 	# branches A and B.  The common ancestor at the bottom, O0,
@@ -747,30 +747,30 @@ test_expect_success 'merge-recursive internal merge resolves to the sameness' '
 	# the index dirty?" check in this case.
 
 	echo "zero" >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m "O0" &&
-	O0=$(git rev-parse HEAD) &&
+	but cummit -m "O0" &&
+	O0=$(but rev-parse HEAD) &&
 
 	test_tick &&
-	git cummit --allow-empty -m "O1" &&
-	O1=$(git rev-parse HEAD) &&
+	but cummit --allow-empty -m "O1" &&
+	O1=$(but rev-parse HEAD) &&
 
-	git reset --hard $O0 &&
+	but reset --hard $O0 &&
 	test_tick &&
-	git cummit --allow-empty -m "O2" &&
-	O2=$(git rev-parse HEAD) &&
+	but cummit --allow-empty -m "O2" &&
+	O2=$(but rev-parse HEAD) &&
 
 	test_tick &&
-	git merge -s ours $O1 &&
-	B=$(git rev-parse HEAD) &&
+	but merge -s ours $O1 &&
+	B=$(but rev-parse HEAD) &&
 
-	git reset --hard $O1 &&
+	but reset --hard $O1 &&
 	test_tick &&
-	git merge -s ours $O2 &&
-	A=$(git rev-parse HEAD) &&
+	but merge -s ours $O2 &&
+	A=$(but rev-parse HEAD) &&
 
-	git merge $B
+	but merge $B
 '
 
 test_done

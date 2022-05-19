@@ -1,5 +1,5 @@
 test_expect_success "setup receive.procReceiveRefs" '
-	git -C "$upstream" config --add receive.procReceiveRefs refs/for
+	but -C "$upstream" config --add receive.procReceiveRefs refs/for
 '
 
 test_expect_success "setup proc-receive hook" '
@@ -22,7 +22,7 @@ test_expect_success "setup proc-receive hook" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         : (B)                   refs/for/main/topic1(A)  foo(A)  refs/for/next/topic(A)  refs/for/main/topic2(A)
+# but push         : (B)                   refs/for/main/topic1(A)  foo(A)  refs/for/next/topic(A)  refs/for/main/topic2(A)
 test_expect_success "proc-receive: report status v1" '
 	{
 		if test -z "$GIT_DEFAULT_HASH" || test "$GIT_DEFAULT_HASH" = "sha1"
@@ -42,8 +42,8 @@ test_expect_success "proc-receive: report status v1" '
 		printf "%s %s refs/for/main/topic2\n" \
 			$ZERO_OID $A | packetize &&
 		printf 0000 &&
-		printf "" | git -C "$upstream" pack-objects --stdout
-	} | git receive-pack "$upstream" --stateless-rpc \
+		printf "" | but -C "$upstream" pack-objects --stdout
+	} | but receive-pack "$upstream" --stateless-rpc \
 	>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&

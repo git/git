@@ -1,13 +1,13 @@
-test_expect_success "setup git config for remote-tracking of special refs" '
+test_expect_success "setup but config for remote-tracking of special refs" '
 	(
 		cd workbench &&
-		if ! git config --get-all remote.origin.fetch | grep refs/for/
+		if ! but config --get-all remote.origin.fetch | grep refs/for/
 		then
-			git config --add remote.origin.fetch \
+			but config --add remote.origin.fetch \
 				"+refs/for/*:refs/t/for/*" &&
-			git config --add remote.origin.fetch \
+			but config --add remote.origin.fetch \
 				"+refs/pull/*:refs/t/pull/*" &&
-			git config --add remote.origin.fetch \
+			but config --add remote.origin.fetch \
 				"+refs/changes/*:refs/t/changes/*"
 		fi
 	)
@@ -33,9 +33,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no 
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrite for one ref, no refname for the 1st rewrite ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -59,7 +59,7 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/24/124/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/changes/25/125/1        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  HEAD -> refs/for/main/topic
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
 	>    <CUMMIT-A>..<CUMMIT-B>  HEAD -> refs/changes/25/125/1
@@ -72,7 +72,7 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 '
 
 test_expect_success "proc-receive: check remote-tracking #1 ($PROTOCOL)" '
-	git -C workbench show-ref |
+	but -C workbench show-ref |
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -81,9 +81,9 @@ test_expect_success "proc-receive: check remote-tracking #1 ($PROTOCOL)" '
 	<CUMMIT-B> refs/t/for/main/topic
 	EOF
 	test_cmp expect actual &&
-	git -C workbench update-ref -d refs/t/for/main/topic &&
-	git -C workbench update-ref -d refs/t/changes/24/124/1 &&
-	git -C workbench update-ref -d refs/t/changes/25/125/1
+	but -C workbench update-ref -d refs/t/for/main/topic &&
+	but -C workbench update-ref -d refs/t/changes/24/124/1 &&
+	but -C workbench update-ref -d refs/t/changes/25/125/1
 '
 
 test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no refname for the 2nd rewrite, $PROTOCOL)" '
@@ -107,9 +107,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no 
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrites for one ref, no refname for the 2nd rewrite ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -134,7 +134,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/24/124/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/changes/25/125/1        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
 	>    <CUMMIT-A>..<CUMMIT-B>  HEAD -> refs/for/main/topic
 	>  + <CUMMIT-B>...<CUMMIT-A> HEAD -> refs/changes/25/125/1 (forced update)
@@ -147,7 +147,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 '
 
 test_expect_success "proc-receive: check remote-tracking #2 ($PROTOCOL)" '
-	git -C workbench show-ref |
+	but -C workbench show-ref |
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -156,9 +156,9 @@ test_expect_success "proc-receive: check remote-tracking #2 ($PROTOCOL)" '
 	<CUMMIT-B> refs/t/for/main/topic
 	EOF
 	test_cmp expect actual &&
-	git -C workbench update-ref -d refs/t/for/main/topic &&
-	git -C workbench update-ref -d refs/t/changes/24/124/1 &&
-	git -C workbench update-ref -d refs/t/changes/25/125/1
+	but -C workbench update-ref -d refs/t/for/main/topic &&
+	but -C workbench update-ref -d refs/t/changes/24/124/1 &&
+	but -C workbench update-ref -d refs/t/changes/25/125/1
 '
 
 test_expect_success "setup proc-receive hook (multiple rewrites for one ref, $PROTOCOL)" '
@@ -176,9 +176,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, $PR
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -196,7 +196,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/23/123/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/changes/24/124/2        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  * [new reference]   HEAD -> refs/changes/23/123/1
 	>    <CUMMIT-A>..<CUMMIT-B>  HEAD -> refs/changes/24/124/2
 	EOF
@@ -208,7 +208,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
 '
 
 test_expect_success "proc-receive: check remote-tracking #3 ($PROTOCOL)" '
-	git -C workbench show-ref |
+	but -C workbench show-ref |
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
@@ -216,6 +216,6 @@ test_expect_success "proc-receive: check remote-tracking #3 ($PROTOCOL)" '
 	<CUMMIT-B> refs/t/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
-	git -C workbench update-ref -d refs/t/changes/24/124/1 &&
-	git -C workbench update-ref -d refs/t/changes/25/125/2
+	but -C workbench update-ref -d refs/t/changes/24/124/1 &&
+	but -C workbench update-ref -d refs/t/changes/25/125/2
 '

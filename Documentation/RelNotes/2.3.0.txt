@@ -26,36 +26,36 @@ UI, Workflows & Features
    to pass an extra set of arguments to the underlying ssh.  A new
    environment variable GIT_SSH_COMMAND can be used for this.
 
- * A request to store an empty note via "git notes" meant to remove
+ * A request to store an empty note via "but notes" meant to remove
    note from the object but with --allow-empty we will store a
    (surprise!)  note that is empty.
 
- * "git interpret-trailers" learned to properly handle the
+ * "but interpret-trailers" learned to properly handle the
    "Conflicts:" block at the end.
 
- * "git am" learned "--message-id" option to copy the message ID of
+ * "but am" learned "--message-id" option to copy the message ID of
    the incoming e-mail to the log message of resulting cummit.
 
- * "git clone --reference=<over there>" learned the "--dissociate"
+ * "but clone --reference=<over there>" learned the "--dissociate"
    option to go with it; it borrows objects from the reference object
    store while cloning only to reduce network traffic and then
    dissociates the resulting clone from the reference by performing
    local copies of borrowed objects.
 
- * "git send-email" learned "--transfer-encoding" option to force a
+ * "but send-email" learned "--transfer-encoding" option to force a
    non-fault Content-Transfer-Encoding header (e.g. base64).
 
- * "git send-email" normally identifies itself via X-Mailer: header in
+ * "but send-email" normally identifies itself via X-Mailer: header in
    the message it sends out.  A new command line flag --no-xmailer
    allows the user to squelch the header.
 
- * "git push" into a repository with a working tree normally refuses
+ * "but push" into a repository with a working tree normally refuses
    to modify the branch that is checked out.  The command learned to
-   optionally do an equivalent of "git reset --hard" only when there
+   optionally do an equivalent of "but reset --hard" only when there
    is no change to the working tree and the index instead, which would
    be useful to "deploy" by pushing into a repository.
 
- * "git new-workdir" (in contrib/) can be used to populate an empty
+ * "but new-workdir" (in contrib/) can be used to populate an empty
    and existing directory now.
 
  * Credential helpers are asked in turn until one of them give
@@ -65,7 +65,7 @@ UI, Workflows & Features
    Also GIT_TERMINAL_PROMPT environment can be set to false to disable
    our built-in prompt mechanism for passwords.
 
- * "git branch -d" (delete) and "git branch -m" (move) learned to
+ * "but branch -d" (delete) and "but branch -m" (move) learned to
    honor "-f" (force) flag; unlike many other subcommands, the way to
    force these have been with separate "-D/-M" options, which was
    inconsistent.
@@ -73,18 +73,18 @@ UI, Workflows & Features
  * "diff-highlight" filter (in contrib/) allows its color output to be
    customized via configuration variables.
 
- * "git imap-send" learned to take "-v" (verbose) and "-q" (quiet)
+ * "but imap-send" learned to take "-v" (verbose) and "-q" (quiet)
    command line options.
 
- * "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
+ * "but remote add $name $URL" is now allowed when "url.$URL.insteadOf"
    is already defined.
 
- * "git imap-send" now can be built to use cURL library to talk to
+ * "but imap-send" now can be built to use cURL library to talk to
    IMAP servers (if the library is recent enough, of course).
    This allows you to use authenticate method other than CRAM-MD5,
    among other things.
 
- * "git imap-send" now allows GIT_CURL_VERBOSE environment variable to
+ * "but imap-send" now allows GIT_CURL_VERBOSE environment variable to
    control the verbosity when talking via the cURL library.
 
  * The prompt script (in contrib/) learned to optionally hide prompt
@@ -113,7 +113,7 @@ Performance, Internal Implementation, Development Support etc.
    repository creation.  The initialization codepath has been hardened
    against this issue.
 
- * The codepath in "git remote update --prune" to drop many refs has
+ * The codepath in "but remote update --prune" to drop many refs has
    been optimized.
 
  * The API into get_merge_bases*() family of functions was easy to
@@ -122,13 +122,13 @@ Performance, Internal Implementation, Development Support etc.
  * Long overdue departure from the assumption that S_IFMT is shared by
    everybody made in 2005, which was necessary to port to z/OS.
 
- * "git push" and "git fetch" did not communicate an overlong refname
+ * "but push" and "but fetch" did not communicate an overlong refname
    correctly.  Now it uses 64kB sideband to accommodate longer ones.
 
  * Recent GPG changes the keyring format and drops support for RFC1991
    formatted signatures, breaking our existing tests.
 
- * "git-prompt" (in contrib/) used a variable from the global scope,
+ * "but-prompt" (in contrib/) used a variable from the global scope,
    possibly contaminating end-user's namespace.
 
 
@@ -142,31 +142,31 @@ Unless otherwise noted, all the fixes since v2.2 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * "git http-push" over WebDAV (aka dumb http-push) was broken in
+ * "but http-push" over WebDAV (aka dumb http-push) was broken in
    v2.2.2 when parsing a symbolic ref, resulting in a bogus request
    that gets rejected by recent versions of cURL library.
    (merge f6786c8 jk/http-push-symref-fix later to maint).
 
- * The logic in "git bisect bad HEAD" etc. to avoid forcing the test
+ * The logic in "but bisect bad HEAD" etc. to avoid forcing the test
    of the common ancestor of bad and good cummits was broken.
    (merge 07913d5 cc/bisect-rev-parsing later to maint).
 
- * "git checkout-index --temp=$target $path" did not work correctly
+ * "but checkout-index --temp=$target $path" did not work correctly
    for paths outside the current subdirectory in the project.
    (merge 74c4de5 es/checkout-index-temp later to maint).
 
- * The report from "git checkout" on a branch that builds on another
+ * The report from "but checkout" on a branch that builds on another
    local branch by setting its branch.*.merge to branch name (not a
    full refname) incorrectly said that the upstream is gone.
    (merge 05e7368 jc/checkout-local-track-report later to maint).
 
- * With The git-prompt support (in contrib/), using the exit status of
-   the last command in the prompt, e.g.  PS1='$(__git_ps1) $? ', did
+ * With The but-prompt support (in contrib/), using the exit status of
+   the last command in the prompt, e.g.  PS1='$(__but_ps1) $? ', did
    not work well, because the helper function stomped on the exit
    status.
    (merge 6babe76 tf/prompt-preserve-exit-status later to maint).
 
- * Recent update to "git cummit" broke amending an existing cummit
+ * Recent update to "but cummit" broke amending an existing cummit
    with bogus author/cummitter lines without a valid e-mail address.
    (merge c83a509 jk/cummit-date-approxidate later to maint).
 
@@ -193,15 +193,15 @@ notes for details).
    file.
    (merge ea41783 jk/read-packed-refs-without-path-max later to maint).
 
- * "git apply" was described in the documentation to take --ignore-date
+ * "but apply" was described in the documentation to take --ignore-date
    option, which it does not.
    (merge 0cef4e7 rw/apply-does-not-take-ignore-date later to maint).
 
- * "git add -i" did not notice when the interactive command input
+ * "but add -i" did not notice when the interactive command input
    stream went away and kept asking the same question.
    (merge a8bec7a jk/add-i-read-error later to maint).
 
- * "git send-email" did not handle RFC 2047 encoded headers quite
+ * "but send-email" did not handle RFC 2047 encoded headers quite
    right.
    (merge ab47e2a rd/send-email-2047-fix later to maint).
 
@@ -214,13 +214,13 @@ notes for details).
    read them correctly.
    (merge 69216bf jk/for-each-reflog-ent-reverse later to maint).
 
- * "git diff -B -M" after making a new copy B out of an existing file
+ * "but diff -B -M" after making a new copy B out of an existing file
    A and then editing A extensively ought to report that B was created
-   by copying A and A was modified, which is what "git diff -C"
+   by copying A and A was modified, which is what "but diff -C"
    reports, but it instead said A was renamed to B and A was edited
    heavily in place.  This was not just incoherent but also failed to
-   apply with "git apply".  The report has been corrected to match what
-   "git diff -C" produces for this case.
+   apply with "but apply".  The report has been corrected to match what
+   "but diff -C" produces for this case.
    (merge 6936b58 jc/diff-b-m later to maint).
 
  * In files we pre-populate for the user to edit with commented hints,
@@ -231,7 +231,7 @@ notes for details).
    such a case.
    (merge d55aeb7 jc/strbuf-add-lines-avoid-sp-ht-sequence later to maint).
 
- * "git ls-tree" does not support path selection based on negative
+ * "but ls-tree" does not support path selection based on negative
    pathspecs, but did not error out when negative pathspecs are given.
    (merge f1f6224 nd/ls-tree-pathspec later to maint).
 
@@ -244,16 +244,16 @@ notes for details).
    has been optimized when no abbreviation was requested.
    (merge 61e704e mh/find-uniq-abbrev later to maint).
 
- * "git add --ignore-errors ..." did not ignore an error to
+ * "but add --ignore-errors ..." did not ignore an error to
    give a file that did not exist.
    (merge 1d31e5a mg/add-ignore-errors later to maint).
 
- * "git checkout $treeish $path", when $path in the index and the
+ * "but checkout $treeish $path", when $path in the index and the
    working tree already matched what is in $treeish at the $path,
    still overwrote the $path unnecessarily.
    (merge c5326bd jk/checkout-from-tree later to maint).
 
- * "git config --get-color" did not parse its command line arguments
+ * "but config --get-color" did not parse its command line arguments
    carefully.
    (merge cb35722 jk/colors-fix later to maint).
 
@@ -266,11 +266,11 @@ notes for details).
    (merge 83915ba rs/maint-config-use-labs later to maint).
    (merge 31a8aa1 rs/receive-pack-use-labs later to maint).
 
- * "gitweb" used to depend on a behaviour recent CGI.pm deprecated.
-   (merge 13dbf46 jk/gitweb-with-newer-cgi-multi-param later to maint).
+ * "butweb" used to depend on a behaviour recent CGI.pm deprecated.
+   (merge 13dbf46 jk/butweb-with-newer-cgi-multi-param later to maint).
 
- * "git init" (hence "git clone") initialized the per-repository
-   configuration file .git/config with x-bit by mistake.
+ * "but init" (hence "but clone") initialized the per-repository
+   configuration file .but/config with x-bit by mistake.
    (merge 1f32ecf mh/config-flip-xbit-back-after-checking later to maint).
 
  * Recent update in Git 2.2 started creating objects/info/packs and
@@ -278,7 +278,7 @@ notes for details).
    (merge d91175b jk/prune-packed-server-info later to maint).
 
  * Git 2.0 was supposed to make the "simple" mode for the default of
-   "git push", but it didn't.
+   "but push", but it didn't.
    (merge 00a6fa0 jk/push-simple later to maint).
 
  * "Everyday" document had a broken link.
@@ -291,10 +291,10 @@ notes for details).
    when NO_PERL and NO_PYTHON build-time configuration changed.
    (merge ca2051d jk/rebuild-perl-scripts-with-no-perl-seting-change later to maint).
 
- * The usage string of "git log" command was marked incorrectly for
+ * The usage string of "but log" command was marked incorrectly for
    l10n.
    (merge e66dc0c km/log-usage-string-i18n later to maint).
 
- * "git for-each-ref" mishandled --format="%(upstream:track)" when a
+ * "but for-each-ref" mishandled --format="%(upstream:track)" when a
    branch is marked to have forked from a non-existing branch.
    (merge b6160d9 rc/for-each-ref-tracking later to maint).

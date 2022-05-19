@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 with server triggers'
+test_description='but p4 with server triggers'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -21,7 +21,7 @@ test_expect_success 'init depot' '
 '
 
 test_expect_success 'clone with extra info lines from verbose p4 trigger' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		p4 triggers -i <<-EOF
 		Triggers: p4triggertest-command command pre-user-change "echo verbose trigger"
@@ -30,7 +30,7 @@ test_expect_success 'clone with extra info lines from verbose p4 trigger' '
 	(
 		p4 change -o |  grep -s "verbose trigger"
 	) &&
-	git p4 clone --dest="$git" //depot/@all &&
+	but p4 clone --dest="$but" //depot/@all &&
 	(
 		p4 triggers -i <<-EOF
 		Triggers:
@@ -39,7 +39,7 @@ test_expect_success 'clone with extra info lines from verbose p4 trigger' '
 '
 
 test_expect_success 'import with extra info lines from verbose p4 trigger' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		echo file3 >file3 &&
@@ -54,10 +54,10 @@ test_expect_success 'import with extra info lines from verbose p4 trigger' '
 	(
 		p4 describe 1 |  grep -s "verbose trigger"
 	) &&
-	git p4 clone --dest="$git" //depot/@all &&
+	but p4 clone --dest="$but" //depot/@all &&
 	(
-		cd "$git" &&
-		git p4 sync
+		cd "$but" &&
+		but p4 sync
 	) &&
 	(
 		p4 triggers -i <<-EOF
@@ -67,7 +67,7 @@ test_expect_success 'import with extra info lines from verbose p4 trigger' '
 '
 
 test_expect_success 'submit description with extra info lines from verbose p4 change trigger' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		p4 triggers -i <<-EOF
 		Triggers: p4triggertest-command command pre-user-change "echo verbose trigger"
@@ -76,14 +76,14 @@ test_expect_success 'submit description with extra info lines from verbose p4 ch
 	(
 		p4 change -o |  grep -s "verbose trigger"
 	) &&
-	git p4 clone --dest="$git" //depot &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		echo file4 >file4 &&
-		git add file4 &&
-		git cummit -m file4 &&
-		git p4 submit
+		but add file4 &&
+		but cummit -m file4 &&
+		but p4 submit
 	) &&
 	(
 		p4 triggers -i <<-EOF

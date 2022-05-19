@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "hashmap.h"
 #include "strbuf.h"
 

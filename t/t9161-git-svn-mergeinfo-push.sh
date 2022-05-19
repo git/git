@@ -4,23 +4,23 @@
 # Portions copyright (c) 2011 Bryan Jacobs
 #
 
-test_description='git-svn svn mergeinfo propagation'
+test_description='but-svn svn mergeinfo propagation'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'load svn dump' "
 	svnadmin load -q '$rawsvnrepo' \
 	  < '$TEST_DIRECTORY/t9161/branches.dump' &&
-	git svn init --minimize-url -R svnmerge \
+	but svn init --minimize-url -R svnmerge \
 	  -T trunk -b branches '$svnrepo' &&
-	git svn fetch --all
+	but svn fetch --all
 	"
 
 test_expect_success 'propagate merge information' '
-	git config svn.pushmergeinfo yes &&
-	git checkout origin/svnb1 &&
-	git merge --no-ff origin/svnb2 &&
-	git svn dcummit
+	but config svn.pushmergeinfo yes &&
+	but checkout origin/svnb1 &&
+	but merge --no-ff origin/svnb2 &&
+	but svn dcummit
 	'
 
 test_expect_success 'check svn:mergeinfo' '
@@ -29,8 +29,8 @@ test_expect_success 'check svn:mergeinfo' '
 	'
 
 test_expect_success 'merge another branch' '
-	git merge --no-ff origin/svnb3 &&
-	git svn dcummit
+	but merge --no-ff origin/svnb3 &&
+	but svn dcummit
 	'
 
 test_expect_success 'check primary parent mergeinfo respected' '
@@ -40,8 +40,8 @@ test_expect_success 'check primary parent mergeinfo respected' '
 	'
 
 test_expect_success 'merge existing merge' '
-	git merge --no-ff origin/svnb4 &&
-	git svn dcummit
+	but merge --no-ff origin/svnb4 &&
+	but svn dcummit
 	'
 
 test_expect_success "check both parents' mergeinfo respected" '
@@ -53,20 +53,20 @@ test_expect_success "check both parents' mergeinfo respected" '
 	'
 
 test_expect_success 'make further cummits to branch' '
-	git checkout origin/svnb2 &&
+	but checkout origin/svnb2 &&
 	touch newb2file &&
-	git add newb2file &&
-	git cummit -m "later b2 cummit" &&
+	but add newb2file &&
+	but cummit -m "later b2 cummit" &&
 	touch newb2file-2 &&
-	git add newb2file-2 &&
-	git cummit -m "later b2 cummit 2" &&
-	git svn dcummit
+	but add newb2file-2 &&
+	but cummit -m "later b2 cummit 2" &&
+	but svn dcummit
 	'
 
 test_expect_success 'second forward merge' '
-	git checkout origin/svnb1 &&
-	git merge --no-ff origin/svnb2 &&
-	git svn dcummit
+	but checkout origin/svnb1 &&
+	but merge --no-ff origin/svnb2 &&
+	but svn dcummit
 	'
 
 test_expect_success 'check new mergeinfo added' '
@@ -78,9 +78,9 @@ test_expect_success 'check new mergeinfo added' '
 	'
 
 test_expect_success 'reintegration merge' '
-	git checkout origin/svnb4 &&
-	git merge --no-ff origin/svnb1 &&
-	git svn dcummit
+	but checkout origin/svnb4 &&
+	but merge --no-ff origin/svnb1 &&
+	but svn dcummit
 	'
 
 test_expect_success 'check reintegration mergeinfo' '
@@ -92,12 +92,12 @@ test_expect_success 'check reintegration mergeinfo' '
 	'
 
 test_expect_success 'dcummit a merge at the top of a stack' '
-	git checkout origin/svnb1 &&
+	but checkout origin/svnb1 &&
 	touch anotherfile &&
-	git add anotherfile &&
-	git cummit -m "a cummit" &&
-	git merge origin/svnb4 &&
-	git svn dcummit
+	but add anotherfile &&
+	but cummit -m "a cummit" &&
+	but merge origin/svnb4 &&
+	but svn dcummit
 	'
 
 test_done

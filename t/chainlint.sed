@@ -31,10 +31,10 @@
 # Detection of a missing &&-link in a multi-line subshell is complicated by the
 # fact that the last statement before the closing ")" must not end with "&&".
 # Since processing is line-by-line, it is not known whether a missing "&&" is
-# legitimate or not until the _next_ line is seen. To accommodate this, within
+# lebutimate or not until the _next_ line is seen. To accommodate this, within
 # multi-line subshells, each line is stored in sed's "hold" area until after
 # the next line is seen and processed. If the next line is a stand-alone ")",
-# then a missing "&&" on the previous line is legitimate; otherwise a missing
+# then a missing "&&" on the previous line is lebutimate; otherwise a missing
 # "&&" is a break in the &&-chain.
 #
 #    (
@@ -163,7 +163,7 @@ s/.*\n//
 # comment or empty line -- discard since final non-comment, non-empty line
 # before closing ")", "done", "elsif", "else", or "fi" will need to be
 # re-visited to drop "suspect" marking since final line of those constructs
-# legitimately lacks "&&", so "suspect" mark must be removed
+# lebutimately lacks "&&", so "suspect" mark must be removed
 /^[ 	]*#/bnextln
 /^[ 	]*$/bnextln
 # in-line comment -- strip it (but not "#" in a string, Bash ${#...} array
@@ -310,7 +310,7 @@ n
 bcase
 
 # found "else" or "elif" -- drop "suspect" from final line before "else" since
-# that line legitimately lacks "&&"
+# that line lebutimately lacks "&&"
 :else
 x
 s/\( ?!AMP?!\)* ?!AMP?!$//
@@ -318,7 +318,7 @@ x
 bcont
 
 # found "done" closing for-loop or while-loop, or "fi" closing if-then -- drop
-# "suspect" from final contained line since that line legitimately lacks "&&"
+# "suspect" from final contained line since that line lebutimately lacks "&&"
 :done
 x
 s/\( ?!AMP?!\)* ?!AMP?!$//
@@ -375,7 +375,7 @@ n
 bblock
 
 # found closing ")" on own line -- drop "suspect" from final line of subshell
-# since that line legitimately lacks "&&" and exit subshell loop
+# since that line lebutimately lacks "&&" and exit subshell loop
 :clssolo
 x
 s/\( ?!AMP?!\)* ?!AMP?!$//

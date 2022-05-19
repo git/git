@@ -1,15 +1,15 @@
-git-contacts(1)
+but-contacts(1)
 ===============
 
 NAME
 ----
-git-contacts - List people who might be interested in a set of changes
+but-contacts - List people who might be interested in a set of changes
 
 
 SYNOPSIS
 --------
 [verse]
-'git contacts' (<patch>|<range>|<rev>)...
+'but contacts' (<patch>|<range>|<rev>)...
 
 
 DESCRIPTION
@@ -23,20 +23,20 @@ which touched the lines of files under consideration.
 Input consists of one or more patch files or revision arguments.  A revision
 argument can be a range or a single `<rev>` which is interpreted as
 `<rev>..HEAD`, thus the same revision arguments are accepted as for
-linkgit:git-format-patch[1]. Patch files and revision arguments can be combined
+linkbut:but-format-patch[1]. Patch files and revision arguments can be combined
 in the same invocation.
 
 This command can be useful for determining the list of people with whom to
 discuss proposed changes, or for finding the list of recipients to Cc: when
-submitting a patch series via `git send-email`. For the latter case, `git
-contacts` can be used as the argument to `git send-email`'s `--cc-cmd` option.
+submitting a patch series via `but send-email`. For the latter case, `but
+contacts` can be used as the argument to `but send-email`'s `--cc-cmd` option.
 
 
 DISCUSSION
 ----------
 
-`git blame` is invoked for each hunk in a patch file or revision.  For each
-cummit mentioned by `git blame`, the cummit message is consulted for people who
+`but blame` is invoked for each hunk in a patch file or revision.  For each
+cummit mentioned by `but blame`, the cummit message is consulted for people who
 authored, reviewed, signed, acknowledged, or were Cc:'d.  Once the list of
 participants is known, each person's relevance is computed by considering how
 many cummits mentioned that person compared with the total number of cummits
@@ -58,25 +58,25 @@ EXAMPLES
 * Consult patch files:
 +
 ------------
-$ git contacts feature/*.patch
+$ but contacts feature/*.patch
 ------------
 
 * Revision range:
 +
 ------------
-$ git contacts R1..R2
+$ but contacts R1..R2
 ------------
 
 * From a single revision to `HEAD`:
 +
 ------------
-$ git contacts origin
+$ but contacts origin
 ------------
 
-* Helper for `git send-email`:
+* Helper for `but send-email`:
 +
 ------------
-$ git send-email --cc-cmd='git contacts' feature/*.patch
+$ but send-email --cc-cmd='but contacts' feature/*.patch
 ------------
 
 
@@ -91,4 +91,4 @@ the future, these conditions may become configurable.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

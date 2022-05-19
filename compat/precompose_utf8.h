@@ -10,7 +10,7 @@
 typedef struct dirent_prec_psx {
 	ino_t d_ino;            /* Posix */
 	size_t max_name_len;    /* See below */
-	unsigned char d_type;   /* available on all systems git runs on */
+	unsigned char d_type;   /* available on all systems but runs on */
 
 	/*
 	 * See http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/dirent.h.html

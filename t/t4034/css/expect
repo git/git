@@ -1,4 +1,4 @@
-<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>diff --but a/pre b/post<RESET>
 <BOLD>index b8ae0bb..fe500b7 100644<RESET>
 <BOLD>--- a/pre<RESET>
 <BOLD>+++ b/post<RESET>

@@ -32,7 +32,7 @@
 #include "shallow.h"
 
 static const char * const receive_pack_usage[] = {
-	N_("git receive-pack <git-dir>"),
+	N_("but receive-pack <but-dir>"),
 	NULL
 };
 
@@ -123,7 +123,7 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 		if (!strcasecmp(value, "updateinstead"))
 			return DENY_UPDATE_INSTEAD;
 	}
-	if (git_config_bool(var, value))
+	if (but_config_bool(var, value))
 		return DENY_REFUSE;
 	return DENY_IGNORE;
 }
@@ -135,34 +135,34 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	if (status)
 		return status;
 
-	status = git_gpg_config(var, value, NULL);
+	status = but_gpg_config(var, value, NULL);
 	if (status)
 		return status;
 
 	if (strcmp(var, "receive.denydeletes") == 0) {
-		deny_deletes = git_config_bool(var, value);
+		deny_deletes = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
-		deny_non_fast_forwards = git_config_bool(var, value);
+		deny_non_fast_forwards = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.unpacklimit") == 0) {
-		receive_unpack_limit = git_config_int(var, value);
+		receive_unpack_limit = but_config_int(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
-		transfer_unpack_limit = git_config_int(var, value);
+		transfer_unpack_limit = but_config_int(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.fsck.skiplist") == 0) {
 		const char *path;
 
-		if (git_config_pathname(&path, var, value))
+		if (but_config_pathname(&path, var, value))
 			return 1;
 		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
 			fsck_msg_types.len ? ',' : '=', path);
@@ -180,12 +180,12 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "receive.fsckobjects") == 0) {
-		receive_fsck_objects = git_config_bool(var, value);
+		receive_fsck_objects = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "transfer.fsckobjects") == 0) {
-		transfer_fsck_objects = git_config_bool(var, value);
+		transfer_fsck_objects = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -200,50 +200,50 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "repack.usedeltabaseoffset") == 0) {
-		prefer_ofs_delta = git_config_bool(var, value);
+		prefer_ofs_delta = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.updateserverinfo") == 0) {
-		auto_update_server_info = git_config_bool(var, value);
+		auto_update_server_info = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.autogc") == 0) {
-		auto_gc = git_config_bool(var, value);
+		auto_gc = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.shallowupdate") == 0) {
-		shallow_update = git_config_bool(var, value);
+		shallow_update = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.certnonceseed") == 0)
-		return git_config_string(&cert_nonce_seed, var, value);
+		return but_config_string(&cert_nonce_seed, var, value);
 
 	if (strcmp(var, "receive.certnonceslop") == 0) {
-		nonce_stamp_slop_limit = git_config_ulong(var, value);
+		nonce_stamp_slop_limit = but_config_ulong(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.advertiseatomic") == 0) {
-		advertise_atomic_push = git_config_bool(var, value);
+		advertise_atomic_push = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.advertisepushoptions") == 0) {
-		advertise_push_options = git_config_bool(var, value);
+		advertise_push_options = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.keepalive") == 0) {
-		keepalive_in_sec = git_config_int(var, value);
+		keepalive_in_sec = but_config_int(var, value);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.maxinputsize") == 0) {
-		max_input_size = git_config_int64(var, value);
+		max_input_size = but_config_int64(var, value);
 		return 0;
 	}
 
@@ -255,11 +255,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "transfer.advertisesid") == 0) {
-		advertise_sid = git_config_bool(var, value);
+		advertise_sid = but_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static void show_ref(const char *path, const struct object_id *oid)
@@ -282,7 +282,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 		if (advertise_sid)
 			strbuf_addf(&cap, " session-id=%s", trace2_session_id());
 		strbuf_addf(&cap, " object-format=%s", the_hash_algo->name);
-		strbuf_addf(&cap, " agent=%s", git_user_agent_sanitized());
+		strbuf_addf(&cap, " agent=%s", but_user_agent_sanitized());
 		packet_write_fmt(1, "%s %s%c%s\n",
 			     oid_to_hex(oid), path, 0, cap.buf);
 		strbuf_release(&cap);
@@ -536,7 +536,7 @@ static void hmac_hash(unsigned char *out,
 	unsigned char k_ipad[GIT_MAX_BLKSZ];
 	unsigned char k_opad[GIT_MAX_BLKSZ];
 	int i;
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 
 	/* RFC 2104 2. (1) */
 	memset(key, '\0', GIT_MAX_BLKSZ);
@@ -1262,7 +1262,7 @@ cleanup:
 static char *refuse_unconfigured_deny_msg =
 	N_("By default, updating the current branch in a non-bare repository\n"
 	   "is denied, because it will make the index and work tree inconsistent\n"
-	   "with what you pushed, and will require 'git reset --hard' to match\n"
+	   "with what you pushed, and will require 'but reset --hard' to match\n"
 	   "the work tree to HEAD.\n"
 	   "\n"
 	   "You can set the 'receive.denyCurrentBranch' configuration variable\n"
@@ -1281,7 +1281,7 @@ static void refuse_unconfigured_deny(void)
 
 static char *refuse_unconfigured_deny_delete_current_msg =
 	N_("By default, deleting the current branch is denied, because the next\n"
-	   "'git clone' won't result in any file checked out, causing confusion.\n"
+	   "'but clone' won't result in any file checked out, causing confusion.\n"
 	   "\n"
 	   "You can set 'receive.denyDeleteCurrent' configuration variable to\n"
 	   "'warn' or 'ignore' in the remote repository to allow deleting the\n"
@@ -1361,7 +1361,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	if (run_command(&child))
 		return "Up-to-date check failed";
 
@@ -1373,7 +1373,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child.dir = work_tree;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	if (run_command(&child))
 		return "Working directory has unstaged changes";
 
@@ -1387,7 +1387,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	if (run_command(&child))
 		return "Working directory has staged changes";
 
@@ -1399,7 +1399,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	if (run_command(&child))
 		return "Could not update working tree to new HEAD";
 
@@ -1427,7 +1427,7 @@ static const char *push_to_checkout(unsigned char *hash,
 
 static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
-	const char *retval, *git_dir;
+	const char *retval, *but_dir;
 	struct strvec env = STRVEC_INIT;
 	int invoked_hook;
 
@@ -1436,9 +1436,9 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 
 	if (worktree->is_bare)
 		return "denyCurrentBranch = updateInstead needs a worktree";
-	git_dir = get_worktree_git_dir(worktree);
+	but_dir = get_worktree_but_dir(worktree);
 
-	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
+	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(but_dir));
 
 	retval = push_to_checkout(sha1, &invoked_hook, &env, worktree->path);
 	if (!invoked_hook)
@@ -1468,7 +1468,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		goto out;
 	}
 
-	strbuf_addf(&namespaced_name_buf, "%s%s", get_git_namespace(), name);
+	strbuf_addf(&namespaced_name_buf, "%s%s", get_but_namespace(), name);
 	free(namespaced_name);
 	namespaced_name = strbuf_detach(&namespaced_name_buf, NULL);
 
@@ -1696,7 +1696,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	const char *dst_name;
 	int flag;
 
-	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
+	strbuf_addf(&buf, "%s%s", get_but_namespace(), cmd->ref_name);
 	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
 	check_aliased_update_internal(cmd, list, dst_name, flag);
 	strbuf_release(&buf);
@@ -1784,7 +1784,7 @@ static void reject_updates_to_hidden(struct command *commands)
 	size_t prefix_len;
 	struct command *cmd;
 
-	strbuf_addstr(&refname_full, get_git_namespace());
+	strbuf_addstr(&refname_full, get_but_namespace());
 	prefix_len = refname_full.len;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
@@ -2237,7 +2237,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 				     (uintmax_t)max_input_size);
 		child.no_stdout = 1;
 		child.err = err_fd;
-		child.git_cmd = 1;
+		child.but_cmd = 1;
 		status = run_command(&child);
 		if (status)
 			return "unpack-objects abnormal exit";
@@ -2268,7 +2268,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 				     (uintmax_t)max_input_size);
 		child.out = -1;
 		child.err = err_fd;
-		child.git_cmd = 1;
+		child.but_cmd = 1;
 		status = start_command(&child);
 		if (status)
 			return "index-pack fork failed";
@@ -2277,7 +2277,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		status = finish_command(&child);
 		if (status)
 			return "index-pack abnormal exit";
-		reprepare_packed_git(the_repository);
+		reprepare_packed_but(the_repository);
 	}
 	return NULL;
 }
@@ -2341,7 +2341,7 @@ static void prepare_shallow_update(struct shallow_info *si)
 	 * keep hooks happy by forcing a temporary shallow file via
 	 * env variable because we can't add --shallow-file to every
 	 * command. check_connected() will be done with
-	 * true .git/shallow though.
+	 * true .but/shallow though.
 	 */
 	setenv(GIT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
 }
@@ -2495,9 +2495,9 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	setup_path();
 
 	if (!enter_repo(service_dir, 0))
-		die("'%s' does not appear to be a git repository", service_dir);
+		die("'%s' does not appear to be a but repository", service_dir);
 
-	git_config(receive_pack_config, NULL);
+	but_config(receive_pack_config, NULL);
 	if (cert_nonce_seed)
 		push_cert_nonce = prepare_push_cert_nonce(service_dir, time(NULL));
 
@@ -2578,7 +2578,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			proc.no_stdin = 1;
 			proc.stdout_to_stderr = 1;
 			proc.err = use_sideband ? -1 : 0;
-			proc.git_cmd = proc.close_object_store = 1;
+			proc.but_cmd = proc.close_object_store = 1;
 			strvec_pushl(&proc.args, "gc", "--auto", "--quiet",
 				     NULL);
 

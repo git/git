@@ -12,33 +12,33 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #  refs/heads/main - three
 test_expect_success 'setup repo with odd suffix ref' '
 	echo content >file &&
-	git add . &&
-	git cummit -m one &&
-	git update-ref refs/for/refs/heads/main HEAD &&
+	but add . &&
+	but cummit -m one &&
+	but update-ref refs/for/refs/heads/main HEAD &&
 	echo content >>file &&
-	git cummit -a -m two &&
+	but cummit -a -m two &&
 	echo content >>file &&
-	git cummit -a -m three &&
-	git checkout HEAD^
+	but cummit -a -m three &&
+	but checkout HEAD^
 '
 
 test_expect_success 'suffix ref is ignored during fetch' '
-	git clone --bare file://"$PWD" suffix &&
+	but clone --bare file://"$PWD" suffix &&
 	echo three >expect &&
-	git --git-dir=suffix log -1 --format=%s refs/heads/main >actual &&
+	but --but-dir=suffix log -1 --format=%s refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'try to create repo with absurdly long refname' '
 	ref240=$ZERO_OID/$ZERO_OID/$ZERO_OID/$ZERO_OID/$ZERO_OID/$ZERO_OID &&
 	ref1440=$ref240/$ref240/$ref240/$ref240/$ref240/$ref240 &&
-	git init long &&
+	but init long &&
 	(
 		cd long &&
 		test_cummit long &&
 		test_cummit main
 	) &&
-	if git -C long update-ref refs/heads/$ref1440 long; then
+	if but -C long update-ref refs/heads/$ref1440 long; then
 		test_set_prereq LONG_REF
 	else
 		echo >&2 "long refs not supported"
@@ -46,18 +46,18 @@ test_expect_success 'try to create repo with absurdly long refname' '
 '
 
 test_expect_success LONG_REF 'fetch handles extremely long refname' '
-	git fetch long refs/heads/*:refs/remotes/long/* &&
+	but fetch long refs/heads/*:refs/remotes/long/* &&
 	cat >expect <<-\EOF &&
 	long
 	main
 	EOF
-	git for-each-ref --format="%(subject)" refs/remotes/long >actual &&
+	but for-each-ref --format="%(subject)" refs/remotes/long >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success LONG_REF 'push handles extremely long refname' '
-	git push long :refs/heads/$ref1440 &&
-	git -C long for-each-ref --format="%(subject)" refs/heads >actual &&
+	but push long :refs/heads/$ref1440 &&
+	but -C long for-each-ref --format="%(subject)" refs/heads >actual &&
 	echo main >expect &&
 	test_cmp expect actual
 '

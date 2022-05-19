@@ -44,7 +44,7 @@ do
 			mv "$trash_dir" failed-test-artifacts
 			continue
 			;;
-		github-actions)
+		buthub-actions)
 			mkdir -p failed-test-artifacts
 			echo "FAILED_TEST_ARTIFACTS=t/failed-test-artifacts" >>$GITHUB_ENV
 			cp "${TEST_EXIT%.exit}.out" failed-test-artifacts/

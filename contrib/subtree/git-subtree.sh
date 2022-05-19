@@ -1,37 +1,37 @@
 #!/bin/sh
 #
-# git-subtree.sh: split/join git repositories in subdirectories of this one
+# but-subtree.sh: split/join but repositories in subdirectories of this one
 #
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
 
-if test -z "$GIT_EXEC_PATH" || ! test -f "$GIT_EXEC_PATH/git-sh-setup" || {
+if test -z "$GIT_EXEC_PATH" || ! test -f "$GIT_EXEC_PATH/but-sh-setup" || {
 	test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" &&
 	test ! "$GIT_EXEC_PATH" -ef "${PATH%%:*}" 2>/dev/null
 }
 then
 	basename=${0##*[/\\]}
-	echo >&2 'It looks like either your git installation or your'
-	echo >&2 'git-subtree installation is broken.'
+	echo >&2 'It looks like either your but installation or your'
+	echo >&2 'but-subtree installation is broken.'
 	echo >&2
 	echo >&2 "Tips:"
-	echo >&2 " - If \`git --exec-path\` does not print the correct path to"
-	echo >&2 "   your git install directory, then set the GIT_EXEC_PATH"
+	echo >&2 " - If \`but --exec-path\` does not print the correct path to"
+	echo >&2 "   your but install directory, then set the GIT_EXEC_PATH"
 	echo >&2 "   environment variable to the correct directory."
 	echo >&2 " - Make sure that your \`$basename\` file is either in your"
-	echo >&2 "   PATH or in your git exec path (\`$(git --exec-path)\`)."
-	echo >&2 " - You should run git-subtree as \`git ${basename#git-}\`,"
+	echo >&2 "   PATH or in your but exec path (\`$(but --exec-path)\`)."
+	echo >&2 " - You should run but-subtree as \`but ${basename#but-}\`,"
 	echo >&2 "   not as \`$basename\`." >&2
 	exit 126
 fi
 
 OPTS_SPEC="\
-git subtree add   --prefix=<prefix> <cummit>
-git subtree add   --prefix=<prefix> <repository> <ref>
-git subtree merge --prefix=<prefix> <cummit>
-git subtree split --prefix=<prefix> [<cummit>]
-git subtree pull  --prefix=<prefix> <repository> <ref>
-git subtree push  --prefix=<prefix> <repository> <refspec>
+but subtree add   --prefix=<prefix> <cummit>
+but subtree add   --prefix=<prefix> <repository> <ref>
+but subtree merge --prefix=<prefix> <cummit>
+but subtree split --prefix=<prefix> [<cummit>]
+but subtree pull  --prefix=<prefix> <repository> <ref>
+but subtree push  --prefix=<prefix> <repository> <refspec>
 --
 h,help        show the help
 q             quiet
@@ -99,9 +99,9 @@ main () {
 	then
 		set -- -h
 	fi
-	set_args="$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	set_args="$(echo "$OPTS_SPEC" | but rev-parse --parseopt -- "$@" || echo exit $?)"
 	eval "$set_args"
-	. git-sh-setup
+	. but-sh-setup
 	require_work_tree
 
 	# First figure out the command and whether we use --rejoin, so
@@ -167,16 +167,16 @@ main () {
 			arg_debug=1
 			;;
 		--annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_annotate="$1"
 			shift
 			;;
 		--no-annotate)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_annotate=
 			;;
 		-b)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_branch="$1"
 			shift
 			;;
@@ -185,7 +185,7 @@ main () {
 			shift
 			;;
 		-m)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_addmerge_message="$1"
 			shift
 			;;
@@ -193,34 +193,34 @@ main () {
 			arg_prefix=
 			;;
 		--onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_onto="$1"
 			shift
 			;;
 		--no-onto)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_onto=
 			;;
 		--rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			;;
 		--no-rejoin)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			;;
 		--ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_ignore_joins=1
 			;;
 		--no-ignore-joins)
-			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_split" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_split_ignore_joins=
 			;;
 		--squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_addmerge_squash=1
 			;;
 		--no-squash)
-			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'git subtree $arg_command'."
+			test -n "$allow_addmerge" || die "The '$opt' flag does not make sense with 'but subtree $arg_command'."
 			arg_addmerge_squash=
 			;;
 		--)
@@ -245,7 +245,7 @@ main () {
 		;;
 	*)
 		test -e "$arg_prefix" ||
-			die "'$arg_prefix' does not exist; use 'git subtree add'"
+			die "'$arg_prefix' does not exist; use 'but subtree add'"
 		;;
 	esac
 
@@ -333,7 +333,7 @@ cache_set () {
 # Usage: rev_exists REV
 rev_exists () {
 	assert test $# = 1
-	if git rev-parse "$1" >/dev/null 2>&1
+	if but rev-parse "$1" >/dev/null 2>&1
 	then
 		return 0
 	else
@@ -364,7 +364,7 @@ find_latest_squash () {
 	sq=
 	main=
 	sub=
-	git log --grep="^git-subtree-dir: $dir/*\$" \
+	but log --grep="^but-subtree-dir: $dir/*\$" \
 		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
 	while read a b junk
 	do
@@ -374,11 +374,11 @@ find_latest_squash () {
 		START)
 			sq="$b"
 			;;
-		git-subtree-mainline:)
+		but-subtree-mainline:)
 			main="$b"
 			;;
-		git-subtree-split:)
-			sub="$(git rev-parse "$b^{cummit}")" ||
+		but-subtree-split:)
+			sub="$(but rev-parse "$b^{cummit}")" ||
 			die "could not rev-parse split hash $b from cummit $sq"
 			;;
 		END)
@@ -388,7 +388,7 @@ find_latest_squash () {
 				then
 					# a rejoin cummit?
 					# Pretend its sub was a squash.
-					sq=$(git rev-parse --verify "$sq^2") ||
+					sq=$(but rev-parse --verify "$sq^2") ||
 						die
 				fi
 				debug "Squash found: $sq $sub"
@@ -413,12 +413,12 @@ find_existing_splits () {
 	rev="$2"
 	main=
 	sub=
-	local grep_format="^git-subtree-dir: $dir/*\$"
+	local grep_format="^but-subtree-dir: $dir/*\$"
 	if test -n "$arg_split_ignore_joins"
 	then
 		grep_format="^Add '$dir/' from cummit '"
 	fi
-	git log --grep="$grep_format" \
+	but log --grep="$grep_format" \
 		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' "$rev" |
 	while read a b junk
 	do
@@ -426,11 +426,11 @@ find_existing_splits () {
 		START)
 			sq="$b"
 			;;
-		git-subtree-mainline:)
+		but-subtree-mainline:)
 			main="$b"
 			;;
-		git-subtree-split:)
-			sub="$(git rev-parse "$b^{cummit}")" ||
+		but-subtree-split:)
+			sub="$(but rev-parse "$b^{cummit}")" ||
 			die "could not rev-parse split hash $b from cummit $sq"
 			;;
 		END)
@@ -462,7 +462,7 @@ copy_cummit () {
 	# We're going to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
 	debug copy_cummit "{$1}" "{$2}" "{$3}"
-	git log -1 --no-show-signature --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
+	but log -1 --no-show-signature --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
 	(
 		read GIT_AUTHOR_NAME
 		read GIT_AUTHOR_EMAIL
@@ -480,7 +480,7 @@ copy_cummit () {
 			printf "%s" "$arg_split_annotate"
 			cat
 		) |
-		git cummit-tree "$2" $3  # reads the rest of stdin
+		but cummit-tree "$2" $3  # reads the rest of stdin
 	) || die "Can't copy cummit $1"
 }
 
@@ -499,16 +499,16 @@ add_msg () {
 	if test -n "$arg_split_rejoin"
 	then
 		# If this is from a --rejoin, then rejoin_msg has
-		# already inserted the `git-subtree-xxx:` tags
+		# already inserted the `but-subtree-xxx:` tags
 		echo "$cummit_message"
 		return
 	fi
 	cat <<-EOF
 		$cummit_message
 
-		git-subtree-dir: $dir
-		git-subtree-mainline: $latest_old
-		git-subtree-split: $latest_new
+		but-subtree-dir: $dir
+		but-subtree-mainline: $latest_old
+		but-subtree-split: $latest_new
 	EOF
 }
 
@@ -538,9 +538,9 @@ rejoin_msg () {
 	cat <<-EOF
 		$cummit_message
 
-		git-subtree-dir: $dir
-		git-subtree-mainline: $latest_old
-		git-subtree-split: $latest_new
+		but-subtree-dir: $dir
+		but-subtree-mainline: $latest_old
+		but-subtree-split: $latest_new
 	EOF
 }
 
@@ -550,29 +550,29 @@ squash_msg () {
 	dir="$1"
 	oldsub="$2"
 	newsub="$3"
-	newsub_short=$(git rev-parse --short "$newsub")
+	newsub_short=$(but rev-parse --short "$newsub")
 
 	if test -n "$oldsub"
 	then
-		oldsub_short=$(git rev-parse --short "$oldsub")
+		oldsub_short=$(but rev-parse --short "$oldsub")
 		echo "Squashed '$dir/' changes from $oldsub_short..$newsub_short"
 		echo
-		git log --no-show-signature --pretty=tformat:'%h %s' "$oldsub..$newsub"
-		git log --no-show-signature --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
+		but log --no-show-signature --pretty=tformat:'%h %s' "$oldsub..$newsub"
+		but log --no-show-signature --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
 	else
 		echo "Squashed '$dir/' content from cummit $newsub_short"
 	fi
 
 	echo
-	echo "git-subtree-dir: $dir"
-	echo "git-subtree-split: $newsub"
+	echo "but-subtree-dir: $dir"
+	echo "but-subtree-split: $newsub"
 }
 
 # Usage: toptree_for_cummit cummit
 toptree_for_cummit () {
 	assert test $# = 1
 	cummit="$1"
-	git rev-parse --verify "$cummit^{tree}" || exit $?
+	but rev-parse --verify "$cummit^{tree}" || exit $?
 }
 
 # Usage: subtree_for_cummit cummit DIR
@@ -580,7 +580,7 @@ subtree_for_cummit () {
 	assert test $# = 2
 	cummit="$1"
 	dir="$2"
-	git ls-tree "$cummit" -- "$dir" |
+	but ls-tree "$cummit" -- "$dir" |
 	while read mode type tree name
 	do
 		assert test "$name" = "$dir"
@@ -620,10 +620,10 @@ new_squash_cummit () {
 	if test -n "$old"
 	then
 		squash_msg "$dir" "$oldsub" "$newsub" |
-		git cummit-tree "$tree" -p "$old" || exit $?
+		but cummit-tree "$tree" -p "$old" || exit $?
 	else
 		squash_msg "$dir" "" "$newsub" |
-		git cummit-tree "$tree" || exit $?
+		but cummit-tree "$tree" || exit $?
 	fi
 }
 
@@ -651,7 +651,7 @@ copy_or_skip () {
 			then
 				# if a previous identical parent was found, check whether
 				# one is already an ancestor of the other
-				mergebase=$(git merge-base $identical $parent)
+				mergebase=$(but merge-base $identical $parent)
 				if test "$identical" = "$mergebase"
 				then
 					# current identical cummit is an ancestor of parent
@@ -689,7 +689,7 @@ copy_or_skip () {
 
 	if test -n "$identical" && test -n "$nonidentical"
 	then
-		extras=$(git rev-list --count $identical..$nonidentical)
+		extras=$(but rev-list --count $identical..$nonidentical)
 		if test "$extras" -ne 0
 		then
 			# we need to preserve history along the other branch
@@ -707,11 +707,11 @@ copy_or_skip () {
 # Usage: ensure_clean
 ensure_clean () {
 	assert test $# = 0
-	if ! git diff-index HEAD --exit-code --quiet 2>&1
+	if ! but diff-index HEAD --exit-code --quiet 2>&1
 	then
 		die "Working tree has modifications.  Cannot add."
 	fi
-	if ! git diff-index --cached HEAD --exit-code --quiet 2>&1
+	if ! but diff-index --cached HEAD --exit-code --quiet 2>&1
 	then
 		die "Index has modifications.  Cannot add."
 	fi
@@ -720,7 +720,7 @@ ensure_clean () {
 # Usage: ensure_valid_ref_format REF
 ensure_valid_ref_format () {
 	assert test $# = 1
-	git check-ref-format "refs/heads/$1" ||
+	but check-ref-format "refs/heads/$1" ||
 		die "'$1' does not look like a ref"
 }
 
@@ -736,7 +736,7 @@ process_split_cummit () {
 	else
 		# processing cummit without normal parent information;
 		# fetch from repo
-		parents=$(git rev-parse "$rev^@")
+		parents=$(but rev-parse "$rev^@")
 		extracount=$(($extracount + 1))
 	fi
 
@@ -786,7 +786,7 @@ cmd_add () {
 
 	if test $# -eq 1
 	then
-		git rev-parse -q --verify "$1^{cummit}" >/dev/null ||
+		but rev-parse -q --verify "$1^{cummit}" >/dev/null ||
 			die "'$1' does not refer to a cummit"
 
 		cmd_add_cummit "$@"
@@ -810,10 +810,10 @@ cmd_add () {
 # Usage: cmd_add_repository REPOSITORY REFSPEC
 cmd_add_repository () {
 	assert test $# = 2
-	echo "git fetch" "$@"
+	echo "but fetch" "$@"
 	repository=$1
 	refspec=$2
-	git fetch "$@" || exit $?
+	but fetch "$@" || exit $?
 	cmd_add_cummit FETCH_HEAD
 }
 
@@ -822,19 +822,19 @@ cmd_add_cummit () {
 	# The rev has already been validated by cmd_add(), we just
 	# need to normalize it.
 	assert test $# = 1
-	rev=$(git rev-parse --verify "$1^{cummit}") || exit $?
+	rev=$(but rev-parse --verify "$1^{cummit}") || exit $?
 
 	debug "Adding $dir as '$rev'..."
 	if test -z "$arg_split_rejoin"
 	then
 		# Only bother doing this if this is a genuine 'add',
 		# not a synthetic 'add' from '--rejoin'.
-		git read-tree --prefix="$dir" $rev || exit $?
+		but read-tree --prefix="$dir" $rev || exit $?
 	fi
-	git checkout -- "$dir" || exit $?
-	tree=$(git write-tree) || exit $?
+	but checkout -- "$dir" || exit $?
+	tree=$(but write-tree) || exit $?
 
-	headrev=$(git rev-parse HEAD) || exit $?
+	headrev=$(but rev-parse HEAD) || exit $?
 	if test -n "$headrev" && test "$headrev" != "$rev"
 	then
 		headp="-p $headrev"
@@ -846,13 +846,13 @@ cmd_add_cummit () {
 	then
 		rev=$(new_squash_cummit "" "" "$rev") || exit $?
 		cummit=$(add_squashed_msg "$rev" "$dir" |
-			git cummit-tree "$tree" $headp -p "$rev") || exit $?
+			but cummit-tree "$tree" $headp -p "$rev") || exit $?
 	else
 		revp=$(peel_cummittish "$rev") || exit $?
 		cummit=$(add_msg "$dir" $headrev "$rev" |
-			git cummit-tree "$tree" $headp -p "$revp") || exit $?
+			but cummit-tree "$tree" $headp -p "$revp") || exit $?
 	fi
-	git reset "$cummit" || exit $?
+	but reset "$cummit" || exit $?
 
 	say >&2 "Added dir '$dir'"
 }
@@ -861,10 +861,10 @@ cmd_add_cummit () {
 cmd_split () {
 	if test $# -eq 0
 	then
-		rev=$(git rev-parse HEAD)
+		rev=$(but rev-parse HEAD)
 	elif test $# -eq 1
 	then
-		rev=$(git rev-parse -q --verify "$1^{cummit}") ||
+		rev=$(but rev-parse -q --verify "$1^{cummit}") ||
 			die "'$1' does not refer to a cummit"
 	else
 		die "You must provide exactly one revision.  Got: '$*'"
@@ -881,7 +881,7 @@ cmd_split () {
 	if test -n "$arg_split_onto"
 	then
 		debug "Reading history for --onto=$arg_split_onto..."
-		git rev-list $arg_split_onto |
+		but rev-list $arg_split_onto |
 		while read rev
 		do
 			# the 'onto' history is already just the subdir, so
@@ -896,7 +896,7 @@ cmd_split () {
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
+	grl='but rev-list --topo-order --reverse --parents $rev $unrevs'
 	revmax=$(eval "$grl" | wc -l)
 	revcount=0
 	createcount=0
@@ -929,7 +929,7 @@ cmd_split () {
 	then
 		if rev_exists "refs/heads/$arg_split_branch"
 		then
-			if ! git merge-base --is-ancestor "$arg_split_branch" "$latest_new"
+			if ! but merge-base --is-ancestor "$arg_split_branch" "$latest_new"
 			then
 				die "Branch '$arg_split_branch' is not an ancestor of cummit '$latest_new'."
 			fi
@@ -937,7 +937,7 @@ cmd_split () {
 		else
 			action='Created'
 		fi
-		git update-ref -m 'subtree split' \
+		but update-ref -m 'subtree split' \
 			"refs/heads/$arg_split_branch" "$latest_new" || exit $?
 		say >&2 "$action branch '$arg_split_branch'"
 	fi
@@ -949,7 +949,7 @@ cmd_split () {
 cmd_merge () {
 	test $# -eq 1 ||
 		die "You must provide exactly one revision.  Got: '$*'"
-	rev=$(git rev-parse -q --verify "$1^{cummit}") ||
+	rev=$(but rev-parse -q --verify "$1^{cummit}") ||
 		die "'$1' does not refer to a cummit"
 	ensure_clean
 
@@ -975,10 +975,10 @@ cmd_merge () {
 
 	if test -n "$arg_addmerge_message"
 	then
-		git merge --no-ff -Xsubtree="$arg_prefix" \
+		but merge --no-ff -Xsubtree="$arg_prefix" \
 			--message="$arg_addmerge_message" "$rev"
 	else
-		git merge --no-ff -Xsubtree="$arg_prefix" $rev
+		but merge --no-ff -Xsubtree="$arg_prefix" $rev
 	fi
 }
 
@@ -990,7 +990,7 @@ cmd_pull () {
 	fi
 	ensure_clean
 	ensure_valid_ref_format "$2"
-	git fetch "$@" || exit $?
+	but fetch "$@" || exit $?
 	cmd_merge FETCH_HEAD
 }
 
@@ -1012,14 +1012,14 @@ cmd_push () {
 			localrevname_presplit=${refspec%%:*}
 		fi
 		ensure_valid_ref_format "$remoteref"
-		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{cummit}") ||
+		localrev_presplit=$(but rev-parse -q --verify "$localrevname_presplit^{cummit}") ||
 			die "'$localrevname_presplit' does not refer to a cummit"
 
-		echo "git push using: " "$repository" "$refspec"
+		echo "but push using: " "$repository" "$refspec"
 		localrev=$(cmd_split "$localrev_presplit") || die
-		git push "$repository" "$localrev":"refs/heads/$remoteref"
+		but push "$repository" "$localrev":"refs/heads/$remoteref"
 	else
-		die "'$dir' must already exist. Try 'git subtree add'."
+		die "'$dir' must already exist. Try 'but subtree add'."
 	fi
 }
 

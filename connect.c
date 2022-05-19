@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "cache.h"
 #include "config.h"
 #include "pkt-line.h"
@@ -491,7 +491,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 		packet_write_fmt(fd_out, "command=ls-refs\n");
 
 	if (server_supports_v2("agent", 0))
-		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+		packet_write_fmt(fd_out, "agent=%s", but_user_agent_sanitized());
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		int hash_algo = hash_algo_by_name(hash_name);
@@ -561,7 +561,7 @@ const char *parse_feature_value(const char *feature_list, const char *feature, i
 					*offset = found + len - feature_list;
 				return value;
 			}
-			/* feature with a value (e.g., "agent=git/1.2.3") */
+			/* feature with a value (e.g., "agent=but/1.2.3") */
 			else if (*value == '=') {
 				int end;
 
@@ -649,7 +649,7 @@ static const char *prot_name(enum protocol protocol)
 		case PROTO_SSH:
 			return "ssh";
 		case PROTO_GIT:
-			return "git";
+			return "but";
 		default:
 			return "unknown protocol";
 	}
@@ -659,11 +659,11 @@ static enum protocol get_protocol(const char *name)
 {
 	if (!strcmp(name, "ssh"))
 		return PROTO_SSH;
-	if (!strcmp(name, "git"))
+	if (!strcmp(name, "but"))
 		return PROTO_GIT;
-	if (!strcmp(name, "git+ssh")) /* deprecated - do not use */
+	if (!strcmp(name, "but+ssh")) /* deprecated - do not use */
 		return PROTO_SSH;
-	if (!strcmp(name, "ssh+git")) /* deprecated - do not use */
+	if (!strcmp(name, "ssh+but")) /* deprecated - do not use */
 		return PROTO_SSH;
 	if (!strcmp(name, "file"))
 		return PROTO_FILE;
@@ -736,7 +736,7 @@ static const char *ai_name(const struct addrinfo *ai)
 /*
  * Returns a connected socket() fd, or else die()s.
  */
-static int git_tcp_connect_sock(char *host, int flags)
+static int but_tcp_connect_sock(char *host, int flags)
 {
 	struct strbuf error_message = STRBUF_INIT;
 	int sockfd = -1;
@@ -806,7 +806,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 /*
  * Returns a connected socket() fd, or else die()s.
  */
-static int git_tcp_connect_sock(char *host, int flags)
+static int but_tcp_connect_sock(char *host, int flags)
 {
 	struct strbuf error_message = STRBUF_INIT;
 	int sockfd = -1;
@@ -880,19 +880,19 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 
 /*
- * Dummy child_process returned by git_connect() if the transport protocol
+ * Dummy child_process returned by but_connect() if the transport protocol
  * does not need fork(2).
  */
 static struct child_process no_fork = CHILD_PROCESS_INIT;
 
-int git_connection_is_socket(struct child_process *conn)
+int but_connection_is_socket(struct child_process *conn)
 {
 	return conn == &no_fork;
 }
 
-static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
+static struct child_process *but_tcp_connect(int fd[2], char *host, int flags)
 {
-	int sockfd = git_tcp_connect_sock(host, flags);
+	int sockfd = but_tcp_connect_sock(host, flags);
 
 	fd[0] = sockfd;
 	fd[1] = dup(sockfd);
@@ -901,27 +901,27 @@ static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
 }
 
 
-static char *git_proxy_command;
+static char *but_proxy_command;
 
-static int git_proxy_command_options(const char *var, const char *value,
+static int but_proxy_command_options(const char *var, const char *value,
 		void *cb)
 {
-	if (!strcmp(var, "core.gitproxy")) {
+	if (!strcmp(var, "core.butproxy")) {
 		const char *for_pos;
 		int matchlen = -1;
 		int hostlen;
 		const char *rhost_name = cb;
 		int rhost_len = strlen(rhost_name);
 
-		if (git_proxy_command)
+		if (but_proxy_command)
 			return 0;
 		if (!value)
 			return config_error_nonbool(var);
 		/* [core]
 		 * ;# matches www.kernel.org as well
-		 * gitproxy = netcatter-1 for kernel.org
-		 * gitproxy = netcatter-2 for sample.xz
-		 * gitproxy = netcatter-default
+		 * butproxy = netcatter-1 for kernel.org
+		 * butproxy = netcatter-2 for sample.xz
+		 * butproxy = netcatter-default
 		 */
 		for_pos = strstr(value, " for ");
 		if (!for_pos)
@@ -941,26 +941,26 @@ static int git_proxy_command_options(const char *var, const char *value,
 				matchlen = -1;
 		}
 		if (0 <= matchlen) {
-			/* core.gitproxy = none for kernel.org */
+			/* core.butproxy = none for kernel.org */
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmemdupz(value, matchlen);
+			but_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
-static int git_use_proxy(const char *host)
+static int but_use_proxy(const char *host)
 {
-	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, (void*)host);
-	return (git_proxy_command && *git_proxy_command);
+	but_proxy_command = getenv("GIT_PROXY_COMMAND");
+	but_config(but_proxy_command_options, (void*)host);
+	return (but_proxy_command && *but_proxy_command);
 }
 
-static struct child_process *git_proxy_connect(int fd[2], char *host)
+static struct child_process *but_proxy_connect(int fd[2], char *host)
 {
 	const char *port = STR(DEFAULT_GIT_PORT);
 	struct child_process *proxy;
@@ -974,13 +974,13 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 
 	proxy = xmalloc(sizeof(*proxy));
 	child_process_init(proxy);
-	strvec_push(&proxy->args, git_proxy_command);
+	strvec_push(&proxy->args, but_proxy_command);
 	strvec_push(&proxy->args, host);
 	strvec_push(&proxy->args, port);
 	proxy->in = -1;
 	proxy->out = -1;
 	if (start_command(proxy))
-		die(_("cannot start proxy %s"), git_proxy_command);
+		die(_("cannot start proxy %s"), but_proxy_command);
 	fd[0] = proxy->out; /* read from proxy stdout */
 	fd[1] = proxy->in;  /* write to proxy stdin */
 	return proxy;
@@ -1051,7 +1051,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		path = strchr(end, separator);
 
 	if (!path || !*path)
-		die(_("no path specified; see 'git help pull' for valid url syntax"));
+		die(_("no path specified; see 'but help pull' for valid url syntax"));
 
 	/*
 	 * null-terminate hostname and point path to ~ for URL's like this:
@@ -1082,7 +1082,7 @@ static const char *get_ssh_command(void)
 	if ((ssh = getenv("GIT_SSH_COMMAND")))
 		return ssh;
 
-	if (!git_config_get_string_tmp("core.sshcommand", &ssh))
+	if (!but_config_get_string_tmp("core.sshcommand", &ssh))
 		return ssh;
 
 	return NULL;
@@ -1101,7 +1101,7 @@ static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
-	if (!variant && git_config_get_string_tmp("ssh.variant", &variant))
+	if (!variant && but_config_get_string_tmp("ssh.variant", &variant))
 		return;
 
 	if (!strcmp(variant, "auto"))
@@ -1171,7 +1171,7 @@ static enum ssh_variant determine_ssh_variant(const char *ssh_command,
  * The caller is responsible for freeing hostandport, but this function may
  * modify it (for example, to truncate it to remove the port part).
  */
-static struct child_process *git_connect_git(int fd[2], char *hostandport,
+static struct child_process *but_connect_but(int fd[2], char *hostandport,
 					     const char *path, const char *prog,
 					     enum protocol_version version,
 					     int flags)
@@ -1189,24 +1189,24 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
 	else
 		target_host = xstrdup(hostandport);
 
-	transport_check_allowed("git");
+	transport_check_allowed("but");
 	if (strchr(target_host, '\n') || strchr(path, '\n'))
-		die(_("newline is forbidden in git:// hosts and repo paths"));
+		die(_("newline is forbidden in but:// hosts and repo paths"));
 
 	/*
 	 * These underlying connection commands die() if they
 	 * cannot connect.
 	 */
-	if (git_use_proxy(hostandport))
-		conn = git_proxy_connect(fd, hostandport);
+	if (but_use_proxy(hostandport))
+		conn = but_proxy_connect(fd, hostandport);
 	else
-		conn = git_tcp_connect(fd, hostandport, flags);
+		conn = but_tcp_connect(fd, hostandport, flags);
 	/*
 	 * Separate original protocol components prog and path
 	 * from extended host header with a NUL byte.
 	 *
 	 * Note: Do not add any other headers here!  Doing so
-	 * will cause older git-daemon servers to crash.
+	 * will cause older but-daemon servers to crash.
 	 */
 	strbuf_addf(&request,
 		    "%s %s%chost=%s%c",
@@ -1350,7 +1350,7 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
  * will hopefully be changed in a libification effort, to return NULL when
  * the connection failed).
  */
-struct child_process *git_connect(int fd[2], const char *url,
+struct child_process *but_connect(int fd[2], const char *url,
 				  const char *prog, int flags)
 {
 	char *hostandport, *path;
@@ -1363,7 +1363,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 	 * to perform a push, then fallback to v0 since the client doesn't know
 	 * how to push yet using v2.
 	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", prog))
+	if (version == protocol_v2 && !strcmp("but-receive-pack", prog))
 		version = protocol_v0;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -1379,8 +1379,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		conn = NULL;
 	} else if (protocol == PROTO_GIT) {
-		conn = git_connect_git(fd, hostandport, path, prog, version, flags);
-		conn->trace2_child_class = "transport/git";
+		conn = but_connect_but(fd, hostandport, path, prog, version, flags);
+		conn->trace2_child_class = "transport/but";
 	} else {
 		struct strbuf cmd = STRBUF_INIT;
 		const char *const *var;
@@ -1451,7 +1451,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 int finish_connect(struct child_process *conn)
 {
 	int code;
-	if (!conn || git_connection_is_socket(conn))
+	if (!conn || but_connection_is_socket(conn))
 		return 0;
 
 	code = finish_command(conn);

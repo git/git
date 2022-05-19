@@ -29,29 +29,29 @@ test_rebase_gpg_sign () {
 	conf=$1
 	shift
 	test_expect_success "rebase $* with cummit.gpgsign=$conf $will sign cummit" "
-		git reset two &&
-		git config cummit.gpgsign $conf &&
+		but reset two &&
+		but config cummit.gpgsign $conf &&
 		set_fake_editor &&
-		FAKE_LINES='r 1 p 2' git rebase --force-rebase --root $* &&
-		$must_fail git verify-commit HEAD^ &&
-		$must_fail git verify-commit HEAD
+		FAKE_LINES='r 1 p 2' but rebase --force-rebase --root $* &&
+		$must_fail but verify-commit HEAD^ &&
+		$must_fail but verify-commit HEAD
 	"
 }
 
 test_expect_success 'setup' '
 	test_cummit one &&
 	test_cummit two &&
-	test_must_fail git verify-commit HEAD &&
-	test_must_fail git verify-commit HEAD^
+	test_must_fail but verify-commit HEAD &&
+	test_must_fail but verify-commit HEAD^
 '
 
 test_expect_success 'setup: merge cummit' '
 	test_cummit fork-point &&
-	git switch -c side &&
+	but switch -c side &&
 	test_cummit three &&
-	git switch main &&
-	git merge --no-ff side &&
-	git tag merged
+	but switch main &&
+	but merge --no-ff side &&
+	but tag merged
 '
 
 test_rebase_gpg_sign ! false
@@ -65,67 +65,67 @@ test_rebase_gpg_sign ! true  -i --gpg-sign --no-gpg-sign
 test_rebase_gpg_sign   false -i --no-gpg-sign --gpg-sign
 
 test_expect_failure 'rebase -p --no-gpg-sign override cummit.gpgsign' '
-	test_when_finished "git clean -f" &&
-	git reset --hard merged &&
-	git config cummit.gpgsign true &&
-	git rebase -p --no-gpg-sign --onto=one fork-point main &&
-	test_must_fail git verify-commit HEAD
+	test_when_finished "but clean -f" &&
+	but reset --hard merged &&
+	but config cummit.gpgsign true &&
+	but rebase -p --no-gpg-sign --onto=one fork-point main &&
+	test_must_fail but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r, merge strategy, --gpg-sign will sign cummit' '
-	git reset --hard merged &&
+	but reset --hard merged &&
 	test_unconfig cummit.gpgsign &&
-	git rebase -fr --gpg-sign -s resolve --root &&
-	git verify-commit HEAD
+	but rebase -fr --gpg-sign -s resolve --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r, merge strategy, cummit.gpgsign=true will sign cummit' '
-	git reset --hard merged &&
-	git config cummit.gpgsign true &&
-	git rebase -fr -s resolve --root &&
-	git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign true &&
+	but rebase -fr -s resolve --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r, merge strategy, cummit.gpgsign=false --gpg-sign will sign cummit' '
-	git reset --hard merged &&
-	git config cummit.gpgsign false &&
-	git rebase -fr --gpg-sign -s resolve --root &&
-	git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign false &&
+	but rebase -fr --gpg-sign -s resolve --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success "rebase -r, merge strategy, cummit.gpgsign=true --no-gpg-sign won't sign cummit" '
-	git reset --hard merged &&
-	git config cummit.gpgsign true &&
-	git rebase -fr --no-gpg-sign -s resolve --root &&
-	test_must_fail git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign true &&
+	but rebase -fr --no-gpg-sign -s resolve --root &&
+	test_must_fail but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r --gpg-sign will sign cummit' '
-	git reset --hard merged &&
+	but reset --hard merged &&
 	test_unconfig cummit.gpgsign &&
-	git rebase -fr --gpg-sign --root &&
-	git verify-commit HEAD
+	but rebase -fr --gpg-sign --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r with cummit.gpgsign=true will sign cummit' '
-	git reset --hard merged &&
-	git config cummit.gpgsign true &&
-	git rebase -fr --root &&
-	git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign true &&
+	but rebase -fr --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success 'rebase -r --gpg-sign with cummit.gpgsign=false will sign cummit' '
-	git reset --hard merged &&
-	git config cummit.gpgsign false &&
-	git rebase -fr --gpg-sign --root &&
-	git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign false &&
+	but rebase -fr --gpg-sign --root &&
+	but verify-commit HEAD
 '
 
 test_expect_success "rebase -r --no-gpg-sign with cummit.gpgsign=true won't sign cummit" '
-	git reset --hard merged &&
-	git config cummit.gpgsign true &&
-	git rebase -fr --no-gpg-sign --root &&
-	test_must_fail git verify-commit HEAD
+	but reset --hard merged &&
+	but config cummit.gpgsign true &&
+	but rebase -fr --no-gpg-sign --root &&
+	test_must_fail but verify-commit HEAD
 '
 
 test_done

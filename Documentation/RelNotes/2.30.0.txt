@@ -12,44 +12,44 @@ UI, Workflows & Features
 
  * Userdiff for CSS update.
 
- * The command line completion script (in contrib/) learned that "git
-   stash show" takes the options "git diff" takes.
+ * The command line completion script (in contrib/) learned that "but
+   stash show" takes the options "but diff" takes.
 
- * "git worktree list" now shows if each worktree is locked.  This
+ * "but worktree list" now shows if each worktree is locked.  This
    possibly may open us to show other kinds of states in the future.
 
- * "git maintenance", an extended big brother of "git gc", continues
+ * "but maintenance", an extended big brother of "but gc", continues
    to evolve.
 
- * "git push --force-with-lease[=<ref>]" can easily be misused to lose
-   cummits unless the user takes good care of their own "git fetch".
+ * "but push --force-with-lease[=<ref>]" can easily be misused to lose
+   cummits unless the user takes good care of their own "but fetch".
    A new option "--force-if-includes" attempts to ensure that what is
    being force-pushed was created after examining the cummit at the
    tip of the remote ref that is about to be force-replaced.
 
- * "git clone" learned clone.defaultremotename configuration variable
+ * "but clone" learned clone.defaultremotename configuration variable
    to customize what nickname to use to call the remote the repository
    was cloned from.
 
- * "git checkout" learned to use checkout.guess configuration variable
+ * "but checkout" learned to use checkout.guess configuration variable
    and enable/disable its "--[no-]guess" option accordingly.
 
- * "git resurrect" script (in contrib/) learned that the object names
+ * "but resurrect" script (in contrib/) learned that the object names
    may be longer than 40-hex depending on the hash function in use.
 
- * "git diff A...B" learned "git diff --merge-base A B", which is a
+ * "but diff A...B" learned "but diff --merge-base A B", which is a
    longer short-hand to say the same thing.
 
  * A sample 'push-to-checkout' hook, that performs the same as
    what the built-in default action does, has been added.
 
- * "git diff" family of commands learned the "-I<regex>" option to
+ * "but diff" family of commands learned the "-I<regex>" option to
    ignore hunks whose changed lines all match the given pattern.
 
  * The userdiff pattern learned to identify the function definition in
    POSIX shells and bash.
 
- * "git checkout-index" did not consistently signal an error with its
+ * "but checkout-index" did not consistently signal an error with its
    exit status, but now it does.
 
  * A cummit and tag object may have CR at the end of each and
@@ -60,38 +60,38 @@ UI, Workflows & Features
    more lenient and accept a line with lone CR on it as a blank line,
    too.
 
- * Exit codes from "git remote add" etc. were not usable by scripted
+ * Exit codes from "but remote add" etc. were not usable by scripted
    callers, but now they are.
 
- * "git archive" now allows compression level higher than "-9"
+ * "but archive" now allows compression level higher than "-9"
    when generating tar.gz output.
 
  * Zsh autocompletion (in contrib/) update.
 
- * The maximum length of output filenames "git format-patch" creates
+ * The maximum length of output filenames "but format-patch" creates
    has become configurable (used to be capped at 64).
 
- * "git rev-parse" learned the "--end-of-options" to help scripts to
+ * "but rev-parse" learned the "--end-of-options" to help scripts to
    safely take a parameter that is supposed to be a revision, e.g.
-   "git rev-parse --verify -q --end-of-options $rev".
+   "but rev-parse --verify -q --end-of-options $rev".
 
  * The command line completion script (in contrib/) learned to expand
    commands that are alias of alias.
 
- * "git update-ref --stdin" learns to take multiple transactions in a
+ * "but update-ref --stdin" learns to take multiple transactions in a
    single session.
 
- * Various subcommands of "git config" that take value_regex
+ * Various subcommands of "but config" that take value_regex
    learned the "--literal-value" option to take the value_regex option
    as a literal string.
 
  * The transport layer was taught to optionally exchange the session
    ID assigned by the trace2 subsystem during fetch/push transactions.
 
- * "git imap-send" used to ignore configuration variables like
+ * "but imap-send" used to ignore configuration variables like
    core.askpass; this has been corrected.
 
- * "git $cmd $args", when $cmd is not a recognised subcommand, by
+ * "but $cmd $args", when $cmd is not a recognised subcommand, by
    default tries to see if $cmd is a typo of an existing subcommand
    and optionally executes the corrected command if there is only one
    possibility, depending on the setting of help.autocorrect; the
@@ -99,19 +99,19 @@ UI, Workflows & Features
    to find a likely typo, by setting the configuration variable to
    'never'.
 
- * "@" sometimes worked (e.g. "git push origin @:there") as a part of
-   a refspec element, but "git push origin @" did not work, which has
+ * "@" sometimes worked (e.g. "but push origin @:there") as a part of
+   a refspec element, but "but push origin @" did not work, which has
    been corrected.
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * Use "git archive" more to produce the release tarball.
+ * Use "but archive" more to produce the release tarball.
 
  * GitHub Actions automated test improvement to skip tests on a tree
    identical to what has already been tested.
 
- * Test-coverage for running cummit-graph task "git maintenance" has
+ * Test-coverage for running cummit-graph task "but maintenance" has
    been extended.
 
  * Our test scripts can be told to run only individual pieces while
@@ -122,27 +122,27 @@ Performance, Internal Implementation, Development Support etc.
  * Adjust tests so that they won't scream when the default initial
    branch name is different from 'master'.
 
- * Rewriting "git bisect" in C continues.
+ * Rewriting "but bisect" in C continues.
 
  * More preliminary tests have been added to document desired outcomes
    of various "directory rename" situations.
 
  * Micro clean-up of a couple of test scripts.
 
- * "git diff" and other commands that share the same machinery to
+ * "but diff" and other commands that share the same machinery to
    compare with working tree files have been taught to take advantage
    of the fsmonitor data when available.
 
  * The code to detect premature EOF in the sideband demultiplexer has
    been cleaned up.
 
- * "git fetch --depth=<n>" over the stateless RPC / smart HTTP
+ * "but fetch --depth=<n>" over the stateless RPC / smart HTTP
    transport handled EOF from the client poorly at the server end.
 
  * A specialization of hashmap that uses a string as key has been
    introduced.  Hopefully it will see wider use over time.
 
- * "git bisect start/next" in a large span of history spends a lot of
+ * "but bisect start/next" in a large span of history spends a lot of
    time trying to come up with exactly the half-way point; this can be
    optimized by stopping when we see a cummit that is close enough to
    the half-way point.
@@ -158,7 +158,7 @@ Performance, Internal Implementation, Development Support etc.
    file, causing everybody else but one to fail---reattempt locking
    with some timeout to reduce the rate of the failure.
 
- * "git-parse-remote" shell script library outlived its usefulness.
+ * "but-parse-remote" shell script library outlived its usefulness.
 
  * Like die() and error(), a call to warning() will also trigger a
    trace2 event.
@@ -177,7 +177,7 @@ Fixes since v2.29
    corrected.
    (merge 5f35edd9d7 jk/cummitter-date-is-author-date-fix later to maint).
 
- * "git checkout -p A...B [-- <path>]" did not work, even though the
+ * "but checkout -p A...B [-- <path>]" did not work, even though the
    same command without "-p" correctly used the merge-base between
    cummits A and B.
    (merge 35166b1fb5 dl/checkout-p-merge-base later to maint).
@@ -188,17 +188,17 @@ Fixes since v2.29
    been corrected.
    (merge 712b0377db js/avoid-split-sideband-message later to maint).
 
- * "git fast-import" wasted a lot of memory when many marks were in use.
+ * "but fast-import" wasted a lot of memory when many marks were in use.
    (merge 3f018ec716 jk/fast-import-marks-alloc-fix later to maint).
 
  * A test helper "test_cmp A B" was taught to diagnose missing files A
-   or B as a bug in test, but some tests legitimately wanted to notice
+   or B as a bug in test, but some tests lebutimately wanted to notice
    a failure to even create file B as an error, in addition to leaving
    the expected result in it, and were misdiagnosed as a bug.  This
    has been corrected.
    (merge 262d5ad5a5 es/test-cmp-typocatcher later to maint).
 
- * When "git cummit-graph" detects the same cummit recorded more than
+ * When "but cummit-graph" detects the same cummit recorded more than
    once while it is merging the layers, it used to die.  The code now
    ignores all but one of them and continues.
    (merge 85102ac71b ds/cummit-graph-merging-fix later to maint).
@@ -208,7 +208,7 @@ Fixes since v2.29
    clarified in the documentation.
    (merge 3abd4a67d9 bk/sob-dco later to maint).
 
- * "git credential' didn't honor the core.askPass configuration
+ * "but credential' didn't honor the core.askPass configuration
    variable (among other things), which has been corrected.
    (merge 567ad2c0f9 tk/credential-config later to maint).
 
@@ -216,69 +216,69 @@ Fixes since v2.29
    code as an error.
    (merge 5539183622 jk/no-common later to maint).
 
- * "git rebase --rebase-merges" did not correctly pass --gpg-sign
-   command line option to underlying "git merge" when replaying a merge
+ * "but rebase --rebase-merges" did not correctly pass --gpg-sign
+   command line option to underlying "but merge" when replaying a merge
    using non-default merge strategy or when replaying an octopus merge
    (because replaying a two-head merge with the default strategy was
    done in a separate codepath, the problem did not trigger for most
    users), which has been corrected.
    (merge 43ad4f2eca sc/sequencer-gpg-octopus later to maint).
 
- * "git apply -R" did not handle patches that touch the same path
+ * "but apply -R" did not handle patches that touch the same path
    twice correctly, which has been corrected.  This is most relevant
    in a patch that changes a path from a regular file to a symbolic
    link (and vice versa).
    (merge b0f266de11 jt/apply-reverse-twice later to maint).
 
- * A recent oid->hash conversion missed one spot, breaking "git svn".
+ * A recent oid->hash conversion missed one spot, breaking "but svn".
    (merge 03bb366de4 bc/svn-hash-oid-fix later to maint).
 
  * The documentation on the "--abbrev=<n>" option did not say the
-   output may be longer than "<n>" hexdigits, which has been
+   output may be longer than "<n>" hexdibuts, which has been
    clarified.
    (merge cda34e0d0c jc/abbrev-doc later to maint).
 
- * "git p4" now honors init.defaultBranch configuration.
+ * "but p4" now honors init.defaultBranch configuration.
    (merge 1b09d1917f js/p4-default-branch later to maint).
 
  * Recently the format of an internal state file "rebase -i" uses has
    been tightened up for consistency, which would hurt those who start
-   "rebase -i" with old git and then continue with new git.  Loosen
+   "rebase -i" with old but and then continue with new but.  Loosen
    the reader side a bit (which we may want to tighten again in a year
    or so).
    (merge c779386182 jc/sequencer-stopped-sha-simplify later to maint).
 
- * The code to see if "git stash drop" can safely remove refs/stash
+ * The code to see if "but stash drop" can safely remove refs/stash
    has been made more careful.
    (merge 4f44c5659b rs/empty-reflog-check-fix later to maint).
 
- * "git log -L<range>:<path>" is documented to take no pathspec, but
+ * "but log -L<range>:<path>" is documented to take no pathspec, but
    this was not enforced by the command line option parser, which has
    been corrected.
    (merge 39664cb0ac jc/line-log-takes-no-pathspec later to maint).
 
- * "git format-patch --output=there" did not work as expected and
+ * "but format-patch --output=there" did not work as expected and
    instead crashed.  The option is now supported.
    (merge dc1672dd10 jk/format-patch-output later to maint).
 
  * Define ARM64 compiled with MSVC to be little-endian.
    (merge 0c038fc65a dg/bswap-msvc later to maint).
 
- * "git rebase -i" did not store ORIG_HEAD correctly.
+ * "but rebase -i" did not store ORIG_HEAD correctly.
    (merge 8843302307 pw/rebase-i-orig-head later to maint).
 
- * "git blame -L :funcname -- path" did not work well for a path for
+ * "but blame -L :funcname -- path" did not work well for a path for
    which a userdiff driver is defined.
 
  * "make DEVELOPER=1 sparse" used to run sparse and let it emit
    warnings; now such warnings will cause an error.
    (merge 521dc56270 jc/sparse-error-for-developer-build later to maint).
 
- * "git blame --ignore-revs-file=<file>" learned to ignore a
+ * "but blame --ignore-revs-file=<file>" learned to ignore a
    non-existent object name in the input, instead of complaining.
    (merge c714d05875 jc/blame-ignore-fix later to maint).
 
- * Running "git diff" while allowing external diff in a state with
+ * Running "but diff" while allowing external diff in a state with
    unmerged paths used to segfault, which has been corrected.
    (merge d66851806f jk/diff-release-filespec-fix later to maint).
 
@@ -295,36 +295,36 @@ Fixes since v2.29
    larger than 4GB.
    (merge 81c4c5cf2e jk/4gb-idx later to maint).
 
- * Since jgit does not yet work with SHA-256 repositories, mark the
+ * Since jbut does not yet work with SHA-256 repositories, mark the
    tests that use it not to run unless we are testing with ShA-1
    repositories.
-   (merge ea699b4adc sg/t5310-jgit-wants-sha1 later to maint).
+   (merge ea699b4adc sg/t5310-jbut-wants-sha1 later to maint).
 
- * Config parser fix for "git notes".
+ * Config parser fix for "but notes".
    (merge 45fef1599a na/notes-displayref-is-not-boolean later to maint).
 
  * Move a definition of compatibility wrapper from cache.h to
-   git-compat-util.h
+   but-compat-util.h
    (merge a76b138daa hn/sleep-millisec-decl later to maint).
 
  * Error message fix.
    (merge eaf5341538 km/stash-error-message-fix later to maint).
 
- * "git pull --rebase --recurse-submodules" checked for local changes
+ * "but pull --rebase --recurse-submodules" checked for local changes
    in a wrong range and failed to run correctly when it should.
    (merge 5176f20ffe pb/pull-rebase-recurse-submodules later to maint).
 
- * "git push" that is killed may leave a pack-objects process behind,
+ * "but push" that is killed may leave a pack-objects process behind,
    still computing to find a good compression, wasting cycles.  This
    has been corrected.
    (merge 8b59935114 jk/stop-pack-objects-when-push-is-killed later to maint).
 
- * "git fetch" that is killed may leave a pack-objects process behind,
+ * "but fetch" that is killed may leave a pack-objects process behind,
    still computing to find a good compression, wasting cycles.  This
    has been corrected.
    (merge 309a4028e7 jk/stop-pack-objects-when-fetch-is-killed later to maint).
 
- * "git add -i" failed to honor custom colors configured to show
+ * "but add -i" failed to honor custom colors configured to show
    patches, which has been corrected.
    (merge 96386faa03 js/add-i-color-fix later to maint).
 
@@ -333,7 +333,7 @@ Fixes since v2.29
    could.
    (merge 506ec2fbda tb/idx-midx-race-fix later to maint).
 
- * "git apply" adjusted the permission bits of working-tree files and
+ * "but apply" adjusted the permission bits of working-tree files and
    directories according to core.sharedRepository setting by mistake and
    for a long time, which has been corrected.
    (merge eb3c027e17 mt/do-not-use-scld-in-working-tree later to maint).
@@ -343,7 +343,7 @@ Fixes since v2.29
    this impossible.
    (merge 6031af387e rs/fetch-pack-invalid-lockfile later to maint).
 
- * "git maintenance run/start/stop" needed to be run in a repository
+ * "but maintenance run/start/stop" needed to be run in a repository
    to hold the lockfile they use, but didn't make sure they are
    actually in a repository, which has been corrected.
 
@@ -357,10 +357,10 @@ Fixes since v2.29
    HTML version of the user manual reproducibly.
    (merge 3569e11d69 ae/doc-reproducible-html later to maint).
 
- * Tighten error checking in the codepath that responds to "git fetch".
+ * Tighten error checking in the codepath that responds to "but fetch".
    (merge d43a21bdbb jk/check-config-parsing-error-in-upload-pack later to maint).
 
- * "git pack-redundant" when there is only one packfile used to crash,
+ * "but pack-redundant" when there is only one packfile used to crash,
    which has been corrected.
    (merge 0696232390 jx/pack-redundant-on-single-pack later to maint).
 

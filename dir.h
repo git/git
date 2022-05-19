@@ -7,7 +7,7 @@
 
 /**
  * The directory listing API is used to enumerate paths in the work tree,
- * optionally taking `.git/info/exclude` and `.gitignore` files per directory
+ * optionally taking `.but/info/exclude` and `.butignore` files per directory
  * into account.
  */
 
@@ -15,7 +15,7 @@
  * Calling sequence
  * ----------------
  *
- * Note: The index may be checked for .gitignore files that are
+ * Note: The index may be checked for .butignore files that are
  * CE_SKIP_WORKTREE marked. If you want to exclude files, make sure you have
  * loaded the index first.
  *
@@ -24,7 +24,7 @@
  * - To add single exclude pattern, call `add_pattern_list()` and then
  *   `add_pattern()`.
  *
- * - To add patterns from a file (e.g. `.git/info/exclude`), call
+ * - To add patterns from a file (e.g. `.but/info/exclude`), call
  *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.
  *
  * - A short-hand function `setup_standard_excludes()` can be used to set
@@ -152,7 +152,7 @@ struct oid_stat {
  *   - dir_struct flags
  *   - The content of $GIT_DIR/info/exclude
  *   - The content of core.excludesfile
- *   - The content (or the lack) of .gitignore of all parent directories
+ *   - The content (or the lack) of .butignore of all parent directories
  *     from $GIT_WORK_TREE
  *   - The check_only flag in read_directory_recursive (for
  *     DIR_HIDE_EMPTY_DIRECTORIES)
@@ -179,7 +179,7 @@ struct untracked_cache_dir {
 	/* all data except 'dirs' in this struct are good */
 	unsigned int valid : 1;
 	unsigned int recurse : 1;
-	/* null object ID means this directory does not have .gitignore */
+	/* null object ID means this directory does not have .butignore */
 	struct object_id exclude_oid;
 	char name[FLEX_ARRAY];
 };
@@ -197,7 +197,7 @@ struct untracked_cache {
 	struct untracked_cache_dir *root;
 	/* Statistics */
 	int dir_created;
-	int gitignore_invalidated;
+	int butignore_invalidated;
 	int dir_invalidated;
 	int dir_opened;
 	/* fsmonitor invalidation data */
@@ -244,7 +244,7 @@ struct dir_struct {
 		DIR_NO_GITLINKS = 1<<3,
 
 		/**
-		 * Special mode for git-add. Return ignored files in `ignored[]` and
+		 * Special mode for but-add. Return ignored files in `ignored[]` and
 		 * untracked files in `entries[]`. Only returns ignored files that match
 		 * pathspec exactly (no wildcards). Does not recurse into ignored
 		 * directories.
@@ -297,7 +297,7 @@ struct dir_struct {
 
 	/**
 	 * The name of the file to be read in each directory for excluded files
-	 * (typically `.gitignore`).
+	 * (typically `.butignore`).
 	 */
 	const char *exclude_per_dir;
 
@@ -307,7 +307,7 @@ struct dir_struct {
 	 * EXC_CMDL lists patterns explicitly given on the command line.
 	 * EXC_DIRS lists patterns obtained from per-directory ignore files.
 	 * EXC_FILE lists patterns from fallback ignore files, e.g.
-	 *   - .git/info/exclude
+	 *   - .but/info/exclude
 	 *   - core.excludesfile
 	 *
 	 * Each group contains multiple exclude lists, a single list
@@ -465,11 +465,11 @@ int is_empty_dir(const char *dir);
  * Retrieve the "humanish" basename of the given Git URL.
  *
  * For example:
- * 	/path/to/repo.git => "repo"
- * 	host.xz:foo/.git => "foo"
+ * 	/path/to/repo.but => "repo"
+ * 	host.xz:foo/.but => "foo"
  * 	http://example.com/user/bar.baz => "bar.baz"
  */
-char *git_url_basename(const char *repo, int is_bundle, int is_bare);
+char *but_url_basename(const char *repo, int is_bundle, int is_bare);
 void strip_dir_trailing_slashes(char *dir);
 
 void setup_standard_excludes(struct dir_struct *dir);
@@ -523,7 +523,7 @@ unsigned int fspathhash(const char *str);
  * The prefix part of pattern must not contains wildcards.
  */
 struct pathspec_item;
-int git_fnmatch(const struct pathspec_item *item,
+int but_fnmatch(const struct pathspec_item *item,
 		const char *pattern, const char *string,
 		int prefix);
 
@@ -566,16 +566,16 @@ void add_untracked_cache(struct index_state *istate);
 void remove_untracked_cache(struct index_state *istate);
 
 /*
- * Connect a worktree to a git directory by creating (or overwriting) a
- * '.git' file containing the location of the git directory. In the git
+ * Connect a worktree to a but directory by creating (or overwriting) a
+ * '.but' file containing the location of the but directory. In the but
  * directory set the core.worktree setting to indicate where the worktree is.
  * When `recurse_into_nested` is set, recurse into any nested submodules,
  * connecting them as well.
  */
-void connect_work_tree_and_git_dir(const char *work_tree,
-				   const char *git_dir,
+void connect_work_tree_and_but_dir(const char *work_tree,
+				   const char *but_dir,
 				   int recurse_into_nested);
-void relocate_gitdir(const char *path,
-		     const char *old_git_dir,
-		     const char *new_git_dir);
+void relocate_butdir(const char *path,
+		     const char *old_but_dir,
+		     const char *new_but_dir);
 #endif

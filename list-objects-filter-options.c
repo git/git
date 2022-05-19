@@ -58,13 +58,13 @@ int gently_parse_list_objects_filter(
 		return 0;
 
 	} else if (skip_prefix(arg, "blob:limit=", &v0)) {
-		if (git_parse_ulong(v0, &filter_options->blob_limit_value)) {
+		if (but_parse_ulong(v0, &filter_options->blob_limit_value)) {
 			filter_options->choice = LOFC_BLOB_LIMIT;
 			return 0;
 		}
 
 	} else if (skip_prefix(arg, "tree:", &v0)) {
-		if (!git_parse_ulong(v0, &filter_options->tree_exclude_depth)) {
+		if (!but_parse_ulong(v0, &filter_options->tree_exclude_depth)) {
 			strbuf_addstr(errbuf, _("expected 'tree:<depth>'"));
 			return 1;
 		}
@@ -102,7 +102,7 @@ int gently_parse_list_objects_filter(
 
 	}
 	/*
-	 * Please update _git_fetch() in git-completion.bash when you
+	 * Please update _but_fetch() in but-completion.bash when you
 	 * add new filters
 	 */
 
@@ -366,7 +366,7 @@ void partial_clone_register(
 
 		/* Add promisor config for the remote */
 		cfg_name = xstrfmt("remote.%s.promisor", remote);
-		git_config_set(cfg_name, "true");
+		but_config_set(cfg_name, "true");
 		free(cfg_name);
 	}
 
@@ -376,7 +376,7 @@ void partial_clone_register(
 	 */
 	filter_name = xstrfmt("remote.%s.partialclonefilter", remote);
 	/* NEEDSWORK: 'expand' result leaking??? */
-	git_config_set(filter_name,
+	but_config_set(filter_name,
 		       expand_list_objects_filter_spec(filter_options));
 	free(filter_name);
 

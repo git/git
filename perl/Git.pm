@@ -25,10 +25,10 @@ $VERSION = '0.01';
 
   my $version = Git::command_oneline('version');
 
-  git_cmd_try { Git::command_noisy('update-server-info') }
+  but_cmd_try { Git::command_noisy('update-server-info') }
               '%s failed w/ code %d';
 
-  my $repo = Git->repository (Directory => '/srv/git/cogito.git');
+  my $repo = Git->repository (Directory => '/srv/but/cobuto.but');
 
 
   my @revs = $repo->command('rev-list', '--since=last monday', '--all');
@@ -51,13 +51,13 @@ require Exporter;
 
 @ISA = qw(Exporter);
 
-@EXPORT = qw(git_cmd_try);
+@EXPORT = qw(but_cmd_try);
 
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
-                version exec_path html_path hash_object git_cmd_try
+                version exec_path html_path hash_object but_cmd_try
                 remote_refs prompt
                 get_tz_offset get_record
                 credential credential_read credential_write
@@ -88,13 +88,13 @@ of your process.)
 
 TODO: In the future, we might also do
 
-	my $remoterepo = $repo->remote_repository (Name => 'cogito', Branch => 'master');
-	$remoterepo ||= Git->remote_repository ('http://git.or.cz/cogito.git/');
+	my $remoterepo = $repo->remote_repository (Name => 'cobuto', Branch => 'master');
+	$remoterepo ||= Git->remote_repository ('http://but.or.cz/cobuto.but/');
 	my @refs = $remoterepo->refs();
 
 Currently, the module merely wraps calls to external Git tools. In the future,
 it will provide a much faster way to interact with Git by linking directly
-to libgit. This should be completely opaque to the user, though (performance
+to libbut. This should be completely opaque to the user, though (performance
 increase notwithstanding).
 
 =cut
@@ -129,9 +129,9 @@ B<WorkingSubdir> - Subdirectory in the working copy to work inside.
 Just left undefined if you do not want to limit the scope of operations.
 
 B<Directory> - Path to the Git working directory in its usual setup.
-The C<.git> directory is searched in the directory and all the parent
+The C<.but> directory is searched in the directory and all the parent
 directories; if found, C<WorkingCopy> is set to the directory containing
-it and C<Repository> to the C<.git> directory itself. If no C<.git>
+it and C<Repository> to the C<.but> directory itself. If no C<.but>
 directory was found, the C<Directory> is assumed to be a bare repository,
 C<Repository> is set to point at it and C<WorkingCopy> is left undefined.
 If the C<$GIT_DIR> environment variable is set, things behave as expected
@@ -179,7 +179,7 @@ sub repository {
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
 		my $dir;
 		try {
-			$dir = $search->command_oneline(['rev-parse', '--git-dir'],
+			$dir = $search->command_oneline(['rev-parse', '--but-dir'],
 			                                STDERR => 0);
 		} catch Git::Error::Command with {
 			$dir = undef;
@@ -191,7 +191,7 @@ sub repository {
 			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
 			$opts{Repository} = Cwd::abs_path($dir);
 
-			# If --git-dir went ok, this shouldn't die either.
+			# If --but-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
 			$dir = Cwd::abs_path($opts{Directory}) . '/';
 			if ($prefix) {
@@ -208,15 +208,15 @@ sub repository {
 			$dir = $opts{Directory};
 
 			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
-				# Mimic git-rev-parse --git-dir error message:
-				throw Error::Simple("fatal: Not a git repository: $dir");
+				# Mimic but-rev-parse --but-dir error message:
+				throw Error::Simple("fatal: Not a but repository: $dir");
 			}
 			my $search = Git->repository(Repository => $dir);
 			try {
 				$search->command('symbolic-ref', 'HEAD');
 			} catch Git::Error::Command with {
-				# Mimic git-rev-parse --git-dir error message:
-				throw Error::Simple("fatal: Not a git repository: $dir");
+				# Mimic but-rev-parse --but-dir error message:
+				throw Error::Simple("fatal: Not a but repository: $dir");
 			}
 
 			$opts{Repository} = Cwd::abs_path($dir);
@@ -239,7 +239,7 @@ sub repository {
 
 =item command ( [ COMMAND, ARGUMENTS... ], { Opt => Val ... } )
 
-Execute the given Git C<COMMAND> (specify it without the 'git-'
+Execute the given Git C<COMMAND> (specify it without the 'but-'
 prefix), optionally with the specified extra C<ARGUMENTS>.
 
 The second more elaborate form can be used if you want to further adjust
@@ -406,10 +406,10 @@ sub command_bidi_pipe {
 		shift;
 		require Cwd;
 		$cwd_save = Cwd::getcwd();
-		_setup_git_cmd_env($self);
+		_setup_but_cmd_env($self);
 	}
 	require IPC::Open2;
-	$pid = IPC::Open2::open2($in, $out, 'git', @_);
+	$pid = IPC::Open2::open2($in, $out, 'but', @_);
 	chdir($cwd_save) if $cwd_save;
 	return ($pid, $in, $out, join(' ', @_));
 }
@@ -495,7 +495,7 @@ Return the Git version in use.
 
 sub version {
 	my $verstr = command_oneline('--version');
-	$verstr =~ s/^git version //;
+	$verstr =~ s/^but version //;
 	$verstr;
 }
 
@@ -503,7 +503,7 @@ sub version {
 =item exec_path ()
 
 Return path to the Git sub-command executables (the same as
-C<git --exec-path>). Useful mostly only internally.
+C<but --exec-path>). Useful mostly only internally.
 
 =cut
 
@@ -513,7 +513,7 @@ sub exec_path { command_oneline('--exec-path') }
 =item html_path ()
 
 Return path to the Git html documentation (the same as
-C<git --html-path>). Useful mostly only internally.
+C<but --html-path>). Useful mostly only internally.
 
 =cut
 
@@ -612,7 +612,7 @@ sub _prompt {
 
 =item repo_path ()
 
-Return path to the git repository. Must be called on a repository instance.
+Return path to the but repository. Must be called on a repository instance.
 
 =cut
 
@@ -814,12 +814,12 @@ This function returns a hashref of refs stored in a given remote repository.
 The hash is in the format C<refname =\> hash>. For tags, the C<refname> entry
 contains the tag object while a C<refname^{}> entry gives the tagged objects.
 
-C<REPOSITORY> has the same meaning as the appropriate C<git-ls-remote>
+C<REPOSITORY> has the same meaning as the appropriate C<but-ls-remote>
 argument; either a URL or a remote name (if called on a repository instance).
 C<GROUPS> is an optional arrayref that can contain 'tags' to return all the
 tags and/or 'heads' to return all the heads. C<REFGLOB> is an optional array
 of strings containing a shell-like glob to further limit the refs returned in
-the hash; the meaning is again the same as the appropriate C<git-ls-remote>
+the hash; the meaning is again the same as the appropriate C<but-ls-remote>
 argument.
 
 This function may or may not be called on a repository instance. In the former
@@ -869,7 +869,7 @@ This suite of functions retrieves and parses ident information, as stored
 in the cummit and tag objects or produced by C<var GIT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<cummitter>; case is insignificant).
 
-The C<ident> method retrieves the ident information from C<git var>
+The C<ident> method retrieves the ident information from C<but var>
 and either returns it as a scalar string or as an array with the fields parsed.
 Alternatively, it can take a prepared ident string (e.g. from the cummit
 object) and just parse it.
@@ -1006,7 +1006,7 @@ sub cat_blob {
 	}
 
 	if ($description !~ /^[0-9a-fA-F]{40}(?:[0-9a-fA-F]{24})? \S+ (\d+)$/) {
-		carp "Unexpected result returned from git cat-file";
+		carp "Unexpected result returned from but cat-file";
 		return -1;
 	}
 
@@ -1085,7 +1085,7 @@ sub credential_read {
 		if ($_ eq '') {
 			last;
 		} elsif (!/^([^=]+)=(.*)$/) {
-			throw Error::Simple("unable to parse git credential data:\n$_");
+			throw Error::Simple("unable to parse but credential data:\n$_");
 		}
 		$credential{$1} = $2;
 	}
@@ -1145,7 +1145,7 @@ sub _credential_run {
 		%$credential = credential_read $reader;
 	}
 	if (<$reader>) {
-		throw Error::Simple("unexpected output from git credential $op response:\n$_\n");
+		throw Error::Simple("unexpected output from but credential $op response:\n$_\n");
 	}
 
 	command_close_bidi_pipe($pid, $reader, undef, $ctx);
@@ -1155,15 +1155,15 @@ sub _credential_run {
 
 =item credential( CREDENTIAL_HASHREF, CODE )
 
-Executes C<git credential> for a given set of credentials and specified
+Executes C<but credential> for a given set of credentials and specified
 operation.  In both forms C<CREDENTIAL_HASHREF> needs to be a reference to
 a hash which stores credentials.  Under certain conditions the hash can
 change.
 
 In the first form, C<OPERATION> can be C<'fill'>, C<'approve'> or C<'reject'>,
-and function will execute corresponding C<git credential> sub-command.  If
+and function will execute corresponding C<but credential> sub-command.  If
 it's omitted C<'fill'> is assumed.  In case of C<'fill'> the values stored in
-C<CREDENTIAL_HASHREF> will be changed to the ones returned by the C<git
+C<CREDENTIAL_HASHREF> will be changed to the ones returned by the C<but
 credential fill> command.  The usual usage would look something like:
 
 	my %cred = (
@@ -1180,10 +1180,10 @@ credential fill> command.  The usual usage would look something like:
 	}
 
 In the second form, C<CODE> needs to be a reference to a subroutine.  The
-function will execute C<git credential fill> to fill the provided credential
+function will execute C<but credential fill> to fill the provided credential
 hash, then call C<CODE> with C<CREDENTIAL_HASHREF> as the sole argument.  If
-C<CODE>'s return value is defined, the function will execute C<git credential
-approve> (if return value yields true) or C<git credential reject> (if return
+C<CODE>'s return value is defined, the function will execute C<but credential
+approve> (if return value yields true) or C<but credential reject> (if return
 value is false).  If the return value is undef, nothing at all is executed;
 this is useful, for example, if the credential could neither be verified nor
 rejected due to an unrelated network error.  The return value is the same as
@@ -1551,7 +1551,7 @@ use C<command_close_pipe()>, which can throw the exception.
 
 =over 4
 
-=item git_cmd_try { CODE } ERRMSG
+=item but_cmd_try { CODE } ERRMSG
 
 This magical statement will automatically catch any C<Git::Error::Command>
 exceptions thrown by C<CODE> and make your program die with C<ERRMSG>
@@ -1565,7 +1565,7 @@ Note that this is the only auto-exported function.
 
 =cut
 
-sub git_cmd_try(&$) {
+sub but_cmd_try(&$) {
 	my ($code, $errmsg) = @_;
 	my @result;
 	my $err;
@@ -1662,16 +1662,16 @@ sub _command_common_pipe {
 }
 
 # When already in the subprocess, set up the appropriate state
-# for the given repository and execute the git command.
+# for the given repository and execute the but command.
 sub _cmd_exec {
 	my ($self, @args) = @_;
-	_setup_git_cmd_env($self);
-	_execv_git_cmd(@args);
+	_setup_but_cmd_env($self);
+	_execv_but_cmd(@args);
 	die qq[exec "@args" failed: $!];
 }
 
-# set up the appropriate state for git command
-sub _setup_git_cmd_env {
+# set up the appropriate state for but command
+sub _setup_but_cmd_env {
 	my $self = shift;
 	if ($self) {
 		$self->repo_path() and $ENV{'GIT_DIR'} = $self->repo_path();
@@ -1684,7 +1684,7 @@ sub _setup_git_cmd_env {
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])
 # by searching for it at proper places.
-sub _execv_git_cmd { exec('git', @_); }
+sub _execv_but_cmd { exec('but', @_); }
 
 sub _is_sig {
 	my ($v, $n) = @_;
@@ -1740,7 +1740,7 @@ sub TIEHANDLE {
 	# but I have no ActiveState clue... --pasky
 	# Let's just hope ActiveState Perl does at least the quoting
 	# correctly.
-	my @data = qx{git @params};
+	my @data = qx{but @params};
 	bless { i => 0, data => \@data }, $class;
 }
 

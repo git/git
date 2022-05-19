@@ -17,8 +17,8 @@
 #include "protocol.h"
 
 static const char * const send_pack_usage[] = {
-	N_("git send-pack [--mirror] [--dry-run] [--force]\n"
-	   "              [--receive-pack=<git-receive-pack>]\n"
+	N_("but send-pack [--mirror] [--dry-run] [--force]\n"
+	   "              [--receive-pack=<but-receive-pack>]\n"
 	   "              [--verbose] [--thin] [--atomic]\n"
 	   "              [<host>:]<directory> (--all | <ref>...)"),
 	NULL,
@@ -129,12 +129,12 @@ static void print_helper_status(struct ref *ref)
 
 static int send_pack_config(const char *k, const char *v, void *cb)
 {
-	git_gpg_config(k, v, NULL);
+	but_gpg_config(k, v, NULL);
 
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
-		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_parse_maybe_bool(value)) {
+		if (!but_config_get_value("push.gpgsign", &value)) {
+			switch (but_parse_maybe_bool(value)) {
 			case 0:
 				args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
 				break;
@@ -149,7 +149,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 			}
 		}
 	}
-	return git_default_config(k, v, cb);
+	return but_default_config(k, v, cb);
 }
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)
@@ -167,7 +167,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int helper_status = 0;
 	int send_all = 0;
 	int verbose = 0;
-	const char *receivepack = "git-receive-pack";
+	const char *receivepack = "but-receive-pack";
 	unsigned dry_run = 0;
 	unsigned send_mirror = 0;
 	unsigned force_update = 0;
@@ -213,7 +213,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(send_pack_config, NULL);
+	but_config(send_pack_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, send_pack_usage, 0);
 	if (argc > 0) {
 		dest = argv[0];
@@ -274,7 +274,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, dest, receivepack,
+		conn = but_connect(fd, dest, receivepack,
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 

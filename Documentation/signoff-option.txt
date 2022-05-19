@@ -1,6 +1,6 @@
-ifdef::git-cummit[]
+ifdef::but-cummit[]
 -s::
-endif::git-cummit[]
+endif::but-cummit[]
 --signoff::
 --no-signoff::
 	Add a `Signed-off-by` trailer by the cummitter at the end of the cummit

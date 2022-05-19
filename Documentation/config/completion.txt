@@ -1,5 +1,5 @@
 completion.commands::
-	This is only used by git-completion.bash to add or remove
+	This is only used by but-completion.bash to add or remove
 	commands from the list of completed commands. Normally only
 	porcelain commands and a few select others are completed. You
 	can add more commands, separated by space, in this

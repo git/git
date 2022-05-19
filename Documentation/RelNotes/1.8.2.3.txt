@@ -9,10 +9,10 @@ Fixes since v1.8.2.2
    huge problem but was exposed by a new change that uses these
    names in error output.
 
- * When "git difftool" drove "kdiff3", it mistakenly passed --auto
+ * When "but difftool" drove "kdiff3", it mistakenly passed --auto
    option that was meant while resolving merge conflicts.
 
- * "git remote add" command did not diagnose extra command line
+ * "but remote add" command did not diagnose extra command line
    arguments as an error and silently ignored them.
 
 Also contains a handful of trivial code clean-ups, documentation

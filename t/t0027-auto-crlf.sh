@@ -23,7 +23,7 @@ compare_ws_file () {
 	rm "$exp" "$act"
 }
 
-create_gitattributes () {
+create_butattributes () {
 	{
 		while test "$#" != 0
 		do
@@ -42,13 +42,13 @@ create_gitattributes () {
 			esac &&
 			shift
 		done
-	} >.gitattributes
+	} >.butattributes
 }
 
 # Create 2 sets of files:
 # The NNO files are "Not NOrmalized in the repo. We use CRLF_mix_LF and store
 #   it under different names for the different test cases, see ${pfx}
-#   Depending on .gitattributes they are normalized at the next cummit (or not)
+#   Depending on .butattributes they are normalized at the next cummit (or not)
 # The MIX files have different contents in the repo.
 #   Depending on its contents, the "new safer autocrlf" may kick in.
 create_NNO_MIX_files () {
@@ -95,14 +95,14 @@ cummit_check_warn () {
 	lfmixcr=$6
 	crlfnul=$7
 	pfx=crlf_${crlf}_attr_${attr}
-	create_gitattributes "$attr" &&
+	create_butattributes "$attr" &&
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul CRLF_nul
 	do
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+		but -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done &&
-	git cummit -m "core.autocrlf $crlf" &&
+	but cummit -m "core.autocrlf $crlf" &&
 	check_warning "$lfname" ${pfx}_LF.err &&
 	check_warning "$crlfname" ${pfx}_CRLF.err &&
 	check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err &&
@@ -121,13 +121,13 @@ cummit_chk_wrnNNO () {
 	crlfnul=$1 ; shift
 	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
 	#cummit files on top of existing file
-	create_gitattributes "$attr" $aeol &&
+	create_butattributes "$attr" $aeol &&
 	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 	do
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
 		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+		but -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
 	test_expect_success "cummit NNO files crlf=$crlf attr=$attr LF" '
@@ -163,13 +163,13 @@ CUMMIT_MIX_chkwrn () {
 	crlfnul=$1 ; shift
 	pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf}
 	#cummit file with CLRF_mix_LF on top of existing file
-	create_gitattributes "$attr" $aeol &&
+	create_butattributes "$attr" $aeol &&
 	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 	do
 		fname=${pfx}_$f.txt &&
 		cp CRLF_mix_LF $fname &&
 		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+		but -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
 	test_expect_success "cummit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
@@ -215,7 +215,7 @@ stats_ascii () {
 }
 
 
-# construct the attr/ returned by git ls-files --eol
+# construct the attr/ returned by but ls-files --eol
 # Take none (=empty), one or two args
 # convert.c: eol=XX overrides text=auto
 attr_ascii () {
@@ -288,16 +288,16 @@ checkout_files () {
 	lfmixcrlf=$1 ; shift
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
-	create_gitattributes "$attr" $ident $aeol &&
-	git config core.autocrlf $crlf &&
+	create_butattributes "$attr" $ident $aeol &&
+	but config core.autocrlf $crlf &&
 	pfx=eol_${ceol}_crlf_${crlf}_attr_${attr}_ &&
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul
 	do
 		rm crlf_false_attr__$f.txt &&
 		if test -z "$ceol"; then
-			git checkout -- crlf_false_attr__$f.txt
+			but checkout -- crlf_false_attr__$f.txt
 		else
-			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
+			but -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
 		fi
 	done
 
@@ -311,7 +311,7 @@ checkout_files () {
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF_nul.txt
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF_nul.txt
 		EOF
-		git ls-files --eol crlf_false_attr__* >tmp &&
+		but ls-files --eol crlf_false_attr__* >tmp &&
 		sed -e "s/	/ /g" -e "s/  */ /g" tmp |
 		sort >actual &&
 		test_cmp expect actual
@@ -359,7 +359,7 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 	i/ w/crlf TeBi_126_CL
 	i/ w/-text TeBi_126_CLC
 	EOF
-	git ls-files --eol -o >tmp &&
+	but ls-files --eol -o >tmp &&
 	sed -n -e "/TeBi_/{s!attr/[	]*!!g
 	s!	! !g
 	s!  *! !g
@@ -369,10 +369,10 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 '
 
 test_expect_success 'setup main' '
-	echo >.gitattributes &&
-	git checkout -b main &&
-	git add .gitattributes &&
-	git cummit -m "add .gitattributes" . &&
+	echo >.butattributes &&
+	but checkout -b main &&
+	but add .butattributes &&
+	but cummit -m "add .butattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONE\r\nLINETWO\r\nLINETHREE" >CRLF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\r\nLINETWO\nLINETHREE"   >CRLF_mix_LF &&
@@ -381,8 +381,8 @@ test_expect_success 'setup main' '
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONEQ\r\nLINETWO\r\nLINETHREE" | q_to_nul >CRLF_nul &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONEQ\nLINETWO\nLINETHREE" | q_to_nul >LF_nul &&
 	create_NNO_MIX_files &&
-	git -c core.autocrlf=false add NNO_*.txt MIX_*.txt &&
-	git cummit -m "mixed line endings" &&
+	but -c core.autocrlf=false add NNO_*.txt MIX_*.txt &&
+	but cummit -m "mixed line endings" &&
 	test_tick
 '
 
@@ -482,12 +482,12 @@ cummit_chk_wrnNNO "text"  ""      true    LF_CRLF   ""        LF_CRLF     LF_CRL
 cummit_chk_wrnNNO "text"  ""      input   ""        CRLF_LF   CRLF_LF     ""          CRLF_LF
 
 test_expect_success 'cummit NNO and cleanup' '
-	git cummit -m "cummit files on top of NNO" &&
+	but cummit -m "cummit files on top of NNO" &&
 	rm -f *.txt &&
-	git -c core.autocrlf=false reset --hard
+	but -c core.autocrlf=false reset --hard
 '
 
-test_expect_success 'cummit empty gitattribues' '
+test_expect_success 'cummit empty butattribues' '
 	check_files_in_repo false ""      LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul &&
 	check_files_in_repo true  ""      LF LF   LF          LF_mix_CR CRLF_nul &&
 	check_files_in_repo input ""      LF LF   LF          LF_mix_CR CRLF_nul
@@ -531,9 +531,9 @@ done
 # - checkout_files will check multiple files with a combination of settings
 #   and attributes (core.autocrlf=input is forbidden with core.eol=crlf)
 #
-# - parameter $1 	: text in .gitattributs  "" (empty) | auto | text | -text
+# - parameter $1 	: text in .butattributs  "" (empty) | auto | text | -text
 # - parameter $2 	: ident                  "" | i (i == ident)
-# - parameter $3 	: eol in .gitattributs   "" (empty) | lf | crlf
+# - parameter $3 	: eol in .butattributs   "" (empty) | lf | crlf
 # - parameter $4 	: core.autocrlf          false | true | input
 # - parameter $5 	: core.eol               "" | lf | crlf | "native"
 # - parameter $6 	: reference for a file with only LF in the repo
@@ -597,10 +597,10 @@ do
 	# auto: core.autocrlf=false and core.eol unset(or native) uses native eol
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	# core.autocrlf false, .gitattributes sets eol
+	# core.autocrlf false, .butattributes sets eol
 	checkout_files     ""    "$id" "lf"   false   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     ""    "$id" "crlf" false   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	# core.autocrlf true, .gitattributes sets eol
+	# core.autocrlf true, .butattributes sets eol
 	checkout_files     ""    "$id" "lf"   true    ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     ""    "$id" "crlf" true    ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
 done
@@ -610,14 +610,14 @@ unset GIT_TEST_CHAIN_LINT_HARDER_DEFAULT
 
 # Should be the last test case: remove some files from the worktree
 test_expect_success 'ls-files --eol -d -z' '
-	rm crlf_false_attr__CRLF.txt crlf_false_attr__CRLF_mix_LF.txt crlf_false_attr__LF.txt .gitattributes &&
+	rm crlf_false_attr__CRLF.txt crlf_false_attr__CRLF_mix_LF.txt crlf_false_attr__LF.txt .butattributes &&
 	cat >expect <<-\EOF &&
 	i/crlf w/ crlf_false_attr__CRLF.txt
-	i/lf w/ .gitattributes
+	i/lf w/ .butattributes
 	i/lf w/ crlf_false_attr__LF.txt
 	i/mixed w/ crlf_false_attr__CRLF_mix_LF.txt
 	EOF
-	git ls-files --eol -d >tmp &&
+	but ls-files --eol -d >tmp &&
 	sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" tmp |
 	sort >actual &&
 	test_cmp expect actual

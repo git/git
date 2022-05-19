@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "line-range.h"
 #include "cache.h"
 #include "tag.h"
@@ -932,7 +932,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		fill_line_ends(rev->diffopt.repo, pair->one, &p_lines, &p_ends);
 	fill_line_ends(rev->diffopt.repo, pair->two, &t_lines, &t_ends);
 
-	fprintf(opt->file, "%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
+	fprintf(opt->file, "%s%sdiff --but a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
 	fprintf(opt->file, "%s%s--- %s%s%s\n", prefix, c_meta,
 	       pair->one->oid_valid ? "a/" : "",
 	       pair->one->oid_valid ? pair->one->path : "/dev/null",

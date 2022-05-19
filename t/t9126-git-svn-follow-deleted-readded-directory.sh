@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2008 Alec Berryman
 
-test_description='git svn fetch repository with deleted and readded directory'
+test_description='but svn fetch repository with deleted and readded directory'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 # Don't run this by default; it opens up a port.
 require_svnserve
@@ -15,8 +15,8 @@ test_expect_success 'load repository' '
 
 test_expect_success 'fetch repository' '
     start_svnserve &&
-    git svn init svn://127.0.0.1:$SVNSERVE_PORT &&
-    git svn fetch
+    but svn init svn://127.0.0.1:$SVNSERVE_PORT &&
+    but svn fetch
     '
 
 test_done

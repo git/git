@@ -10,16 +10,16 @@ test_expect_success 'create cummits with glob characters' '
 	# the name "f*" in the worktree, because it is not allowed
 	# on Windows (the tests below do not depend on the presence
 	# of the file in the worktree)
-	git config core.protectNTFS false &&
-	git update-index --add --cacheinfo 100644 "$(git rev-parse HEAD:foo)" "f*" &&
+	but config core.protectNTFS false &&
+	but update-index --add --cacheinfo 100644 "$(but rev-parse HEAD:foo)" "f*" &&
 	test_tick &&
-	git cummit -m star &&
+	but cummit -m star &&
 	test_cummit bracket "f[o][o]"
 '
 
 test_expect_success 'vanilla pathspec matches literally' '
 	echo vanilla >expect &&
-	git log --format=%s -- foo >actual &&
+	but log --format=%s -- foo >actual &&
 	test_cmp expect actual
 '
 
@@ -29,7 +29,7 @@ test_expect_success 'star pathspec globs' '
 	star
 	vanilla
 	EOF
-	git log --format=%s -- "f*" >actual &&
+	but log --format=%s -- "f*" >actual &&
 	test_cmp expect actual
 '
 
@@ -39,7 +39,7 @@ test_expect_success 'star pathspec globs' '
 	star
 	vanilla
 	EOF
-	git log --format=%s -- ":(glob)f*" >actual &&
+	but log --format=%s -- ":(glob)f*" >actual &&
 	test_cmp expect actual
 '
 
@@ -48,7 +48,7 @@ test_expect_success 'bracket pathspec globs and matches literal brackets' '
 	bracket
 	vanilla
 	EOF
-	git log --format=%s -- "f[o][o]" >actual &&
+	but log --format=%s -- "f[o][o]" >actual &&
 	test_cmp expect actual
 '
 
@@ -57,62 +57,62 @@ test_expect_success 'bracket pathspec globs and matches literal brackets' '
 	bracket
 	vanilla
 	EOF
-	git log --format=%s -- ":(glob)f[o][o]" >actual &&
+	but log --format=%s -- ":(glob)f[o][o]" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (vanilla)' '
 	echo vanilla >expect &&
-	git --literal-pathspecs log --format=%s -- foo >actual &&
+	but --literal-pathspecs log --format=%s -- foo >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (vanilla)' '
 	echo vanilla >expect &&
-	git log --format=%s -- ":(literal)foo" >actual &&
+	but log --format=%s -- ":(literal)foo" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (star)' '
 	echo star >expect &&
-	git --literal-pathspecs log --format=%s -- "f*" >actual &&
+	but --literal-pathspecs log --format=%s -- "f*" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (star)' '
 	echo star >expect &&
-	git log --format=%s -- ":(literal)f*" >actual &&
+	but log --format=%s -- ":(literal)f*" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (bracket)' '
 	echo bracket >expect &&
-	git --literal-pathspecs log --format=%s -- "f[o][o]" >actual &&
+	but --literal-pathspecs log --format=%s -- "f[o][o]" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option matches literally (bracket)' '
 	echo bracket >expect &&
-	git log --format=%s -- ":(literal)f[o][o]" >actual &&
+	but log --format=%s -- ":(literal)f[o][o]" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'no-glob option disables :(literal)' '
-	git --literal-pathspecs log --format=%s -- ":(literal)foo" >actual &&
+	but --literal-pathspecs log --format=%s -- ":(literal)foo" >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'no-glob environment variable works' '
 	echo star >expect &&
-	GIT_LITERAL_PATHSPECS=1 git log --format=%s -- "f*" >actual &&
+	GIT_LITERAL_PATHSPECS=1 but log --format=%s -- "f*" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'blame takes global pathspec flags' '
-	git --literal-pathspecs blame -- foo &&
-	git --icase-pathspecs   blame -- foo &&
-	git --glob-pathspecs    blame -- foo &&
-	git --noglob-pathspecs  blame -- foo
+	but --literal-pathspecs blame -- foo &&
+	but --icase-pathspecs   blame -- foo &&
+	but --glob-pathspecs    blame -- foo &&
+	but --noglob-pathspecs  blame -- foo
 '
 
 test_expect_success 'setup xxx/bar' '
@@ -125,12 +125,12 @@ test_expect_success '**/ works with :(glob)' '
 	xxx
 	unrelated
 	EOF
-	git log --format=%s -- ":(glob)**/bar" >actual &&
+	but log --format=%s -- ":(glob)**/bar" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '**/ does not work with --noglob-pathspecs' '
-	git --noglob-pathspecs log --format=%s -- "**/bar" >actual &&
+	but --noglob-pathspecs log --format=%s -- "**/bar" >actual &&
 	test_must_be_empty actual
 '
 
@@ -139,7 +139,7 @@ test_expect_success '**/ works with :(glob) and --noglob-pathspecs' '
 	xxx
 	unrelated
 	EOF
-	git --noglob-pathspecs log --format=%s -- ":(glob)**/bar" >actual &&
+	but --noglob-pathspecs log --format=%s -- ":(glob)**/bar" >actual &&
 	test_cmp expect actual
 '
 
@@ -148,12 +148,12 @@ test_expect_success '**/ works with --glob-pathspecs' '
 	xxx
 	unrelated
 	EOF
-	git --glob-pathspecs log --format=%s -- "**/bar" >actual &&
+	but --glob-pathspecs log --format=%s -- "**/bar" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '**/ does not work with :(literal) and --glob-pathspecs' '
-	git --glob-pathspecs log --format=%s -- ":(literal)**/bar" >actual &&
+	but --glob-pathspecs log --format=%s -- ":(literal)**/bar" >actual &&
 	test_must_be_empty actual
 '
 

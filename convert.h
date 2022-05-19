@@ -96,7 +96,7 @@ const char *get_convert_attr_ascii(struct index_state *istate,
 				   const char *path);
 
 /* returns 1 if *dst was used */
-int convert_to_git(struct index_state *istate,
+int convert_to_but(struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags);
 int convert_to_working_tree_ca(const struct conv_attrs *ca,
@@ -132,17 +132,17 @@ int async_query_available_blobs(const char *cmd,
 int renormalize_buffer(struct index_state *istate,
 		       const char *path, const char *src, size_t len,
 		       struct strbuf *dst);
-static inline int would_convert_to_git(struct index_state *istate,
+static inline int would_convert_to_but(struct index_state *istate,
 				       const char *path)
 {
-	return convert_to_git(istate, path, NULL, 0, NULL, 0);
+	return convert_to_but(istate, path, NULL, 0, NULL, 0);
 }
-/* Precondition: would_convert_to_git_filter_fd(path) == true */
-void convert_to_git_filter_fd(struct index_state *istate,
+/* Precondition: would_convert_to_but_filter_fd(path) == true */
+void convert_to_but_filter_fd(struct index_state *istate,
 			      const char *path, int fd,
 			      struct strbuf *dst,
 			      int conv_flags);
-int would_convert_to_git_filter_fd(struct index_state *istate,
+int would_convert_to_but_filter_fd(struct index_state *istate,
 				   const char *path);
 
 /*
@@ -163,7 +163,7 @@ void clone_checkout_metadata(struct checkout_metadata *dst,
 			     const struct object_id *blob);
 
 /*
- * Reset the internal list of attributes used by convert_to_git and
+ * Reset the internal list of attributes used by convert_to_but and
  * convert_to_working_tree.
  */
 void reset_parsed_attributes(void);

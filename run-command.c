@@ -406,8 +406,8 @@ static int prepare_cmd(struct strvec *out, const struct child_process *cmd)
 	 */
 	strvec_push(out, SHELL_PATH);
 
-	if (cmd->git_cmd) {
-		prepare_git_cmd(out, cmd->args.v);
+	if (cmd->but_cmd) {
+		prepare_but_cmd(out, cmd->args.v);
 	} else if (cmd->use_shell) {
 		prepare_shell_cmd(out, cmd->args.v);
 	} else {
@@ -647,8 +647,8 @@ static void trace_run_command(const struct child_process *cp)
 		strbuf_addch(&buf, ';');
 	}
 	trace_add_env(&buf, cp->env_array.v);
-	if (cp->git_cmd)
-		strbuf_addstr(&buf, " git");
+	if (cp->but_cmd)
+		strbuf_addstr(&buf, " but");
 	sq_quote_argv_pretty(&buf, cp->args.v);
 
 	trace_printf("%s", buf.buf);
@@ -909,8 +909,8 @@ end_of_spawn:
 	else if (cmd->out > 1)
 		fhout = dup(cmd->out);
 
-	if (cmd->git_cmd)
-		cmd->args.v = prepare_git_cmd(&nargv, sargv);
+	if (cmd->but_cmd)
+		cmd->args.v = prepare_but_cmd(&nargv, sargv);
 	else if (cmd->use_shell)
 		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
 
@@ -1022,7 +1022,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	strvec_pushv(&cmd.args, argv);
 	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
-	cmd.git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
+	cmd.but_cmd = opt & RUN_GIT_CMD ? 1 : 0;
 	cmd.stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
 	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
@@ -1105,38 +1105,38 @@ static struct {
 	void (**handlers)(void);
 	size_t nr;
 	size_t alloc;
-} git_atexit_hdlrs;
+} but_atexit_hdlrs;
 
-static int git_atexit_installed;
+static int but_atexit_installed;
 
-static void git_atexit_dispatch(void)
+static void but_atexit_dispatch(void)
 {
 	size_t i;
 
-	for (i=git_atexit_hdlrs.nr ; i ; i--)
-		git_atexit_hdlrs.handlers[i-1]();
+	for (i=but_atexit_hdlrs.nr ; i ; i--)
+		but_atexit_hdlrs.handlers[i-1]();
 }
 
-static void git_atexit_clear(void)
+static void but_atexit_clear(void)
 {
-	free(git_atexit_hdlrs.handlers);
-	memset(&git_atexit_hdlrs, 0, sizeof(git_atexit_hdlrs));
-	git_atexit_installed = 0;
+	free(but_atexit_hdlrs.handlers);
+	memset(&but_atexit_hdlrs, 0, sizeof(but_atexit_hdlrs));
+	but_atexit_installed = 0;
 }
 
 #undef atexit
-int git_atexit(void (*handler)(void))
+int but_atexit(void (*handler)(void))
 {
-	ALLOC_GROW(git_atexit_hdlrs.handlers, git_atexit_hdlrs.nr + 1, git_atexit_hdlrs.alloc);
-	git_atexit_hdlrs.handlers[git_atexit_hdlrs.nr++] = handler;
-	if (!git_atexit_installed) {
-		if (atexit(&git_atexit_dispatch))
+	ALLOC_GROW(but_atexit_hdlrs.handlers, but_atexit_hdlrs.nr + 1, but_atexit_hdlrs.alloc);
+	but_atexit_hdlrs.handlers[but_atexit_hdlrs.nr++] = handler;
+	if (!but_atexit_installed) {
+		if (atexit(&but_atexit_dispatch))
 			return -1;
-		git_atexit_installed = 1;
+		but_atexit_installed = 1;
 	}
 	return 0;
 }
-#define atexit git_atexit
+#define atexit but_atexit
 
 static int process_is_async;
 int in_async(void)
@@ -1220,7 +1220,7 @@ int start_async(struct async *async)
 			close(fdin[1]);
 		if (need_out)
 			close(fdout[0]);
-		git_atexit_clear();
+		but_atexit_clear();
 		process_is_async = 1;
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
@@ -1803,11 +1803,11 @@ int run_auto_maintenance(int quiet)
 	int enabled;
 	struct child_process maint = CHILD_PROCESS_INIT;
 
-	if (!git_config_get_bool("maintenance.auto", &enabled) &&
+	if (!but_config_get_bool("maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
-	maint.git_cmd = 1;
+	maint.but_cmd = 1;
 	maint.close_object_store = 1;
 	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
@@ -1815,7 +1815,7 @@ int run_auto_maintenance(int quiet)
 	return run_command(&maint);
 }
 
-void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir)
+void prepare_other_repo_env(struct strvec *env_array, const char *new_but_dir)
 {
 	const char * const *var;
 
@@ -1824,7 +1824,7 @@ void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir)
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(env_array, *var);
 	}
-	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
+	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_but_dir);
 }
 
 enum start_bg_result start_bg_command(struct child_process *cmd,

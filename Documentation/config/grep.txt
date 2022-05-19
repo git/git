@@ -18,8 +18,8 @@ grep.extendedRegexp::
 
 grep.threads::
 	Number of grep worker threads to use.
-	See `grep.threads` in linkgit:git-grep[1] for more information.
+	See `grep.threads` in linkbut:but-grep[1] for more information.
 
 grep.fallbackToNoIndex::
-	If set to true, fall back to git grep --no-index if git grep
-	is executed outside of a git repository.  Defaults to false.
+	If set to true, fall back to but grep --no-index if but grep
+	is executed outside of a but repository.  Defaults to false.

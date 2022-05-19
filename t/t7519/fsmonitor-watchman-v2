@@ -5,7 +5,7 @@ use warnings;
 use IPC::Open2;
 
 # An example hook script to integrate Watchman
-# (https://facebook.github.io/watchman/) with git to speed up detecting
+# (https://facebook.buthub.io/watchman/) with but to speed up detecting
 # new and modified files.
 #
 # The hook is passed a version (currently 2) and last update token
@@ -14,7 +14,7 @@ use IPC::Open2;
 # be relative to the root of the working tree and separated by a single NUL.
 #
 # To enable this hook, rename this file to "query-watchman" and set
-# 'git config core.fsmonitor .git/hooks/query-watchman'
+# 'but config core.fsmonitor .but/hooks/query-watchman'
 #
 my ($version, $last_update_token) = @ARGV;
 
@@ -27,7 +27,7 @@ if ($version ne 2) {
 	    "Falling back to scanning...\n";
 }
 
-my $git_work_tree = get_working_dir();
+my $but_work_tree = get_working_dir();
 
 my $retry = 1;
 
@@ -54,7 +54,7 @@ sub output_result {
 	my ($clockid, @files) = @_;
 
 	# Uncomment for debugging watchman output
-	# open (my $fh, ">", ".git/watchman-output.out");
+	# open (my $fh, ">", ".but/watchman-output.out");
 	# binmode $fh, ":utf8";
 	# print $fh "$clockid\n@files\n";
 	# close $fh;
@@ -67,8 +67,8 @@ sub output_result {
 }
 
 sub watchman_clock {
-	my $response = qx/watchman clock "$git_work_tree"/;
-	die "Failed to get clock id on '$git_work_tree'.\n" .
+	my $response = qx/watchman clock "$but_work_tree"/;
+	die "Failed to get clock id on '$but_work_tree'.\n" .
 		"Falling back to scanning...\n" if $? != 0;
 
 	return $json_pkg->new->utf8->decode($response);
@@ -80,7 +80,7 @@ sub watchman_query {
 	"Falling back to scanning...\n";
 
 	# In the query expression below we're asking for names of files that
-	# changed since $last_update_token but not from the .git folder.
+	# changed since $last_update_token but not from the .but folder.
 	#
 	# To accomplish this, we're using the "since" generator to use the
 	# recency index to select candidate nodes and "fields" to limit the
@@ -90,15 +90,15 @@ sub watchman_query {
 		$last_update_token = "\"$last_update_token\"";
 	}
 	my $query = <<"	END";
-		["query", "$git_work_tree", {
+		["query", "$but_work_tree", {
 			"since": $last_update_token,
 			"fields": ["name"],
-			"expression": ["not", ["dirname", ".git"]]
+			"expression": ["not", ["dirname", ".but"]]
 		}]
 	END
 
 	# Uncomment for debugging the watchman query
-	# open (my $fh, ">", ".git/watchman-query.json");
+	# open (my $fh, ">", ".but/watchman-query.json");
 	# print $fh $query;
 	# close $fh;
 
@@ -107,7 +107,7 @@ sub watchman_query {
 	my $response = do {local $/; <CHLD_OUT>};
 
 	# Uncomment for debugging the watch response
-	# open ($fh, ">", ".git/watchman-response.json");
+	# open ($fh, ">", ".but/watchman-response.json");
 	# print $fh $response;
 	# close $fh;
 
@@ -124,8 +124,8 @@ sub is_work_tree_watched {
 	my $error = $output->{error};
 	if ($retry > 0 and $error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
 		$retry--;
-		my $response = qx/watchman watch "$git_work_tree"/;
-		die "Failed to make watchman watch '$git_work_tree'.\n" .
+		my $response = qx/watchman watch "$but_work_tree"/;
+		die "Failed to make watchman watch '$but_work_tree'.\n" .
 		    "Falling back to scanning...\n" if $? != 0;
 		$output = $json_pkg->new->utf8->decode($response);
 		$error = $output->{error};
@@ -133,13 +133,13 @@ sub is_work_tree_watched {
 		"Falling back to scanning...\n" if $error;
 
 		# Uncomment for debugging watchman output
-		# open (my $fh, ">", ".git/watchman-output.out");
+		# open (my $fh, ">", ".but/watchman-output.out");
 		# close $fh;
 
 		# Watchman will always return all files on the first query so
-		# return the fast "everything is dirty" flag to git and do the
+		# return the fast "everything is dirty" flag to but and do the
 		# Watchman query just to get it over with now so we won't pay
-		# the cost in git to look up each individual file.
+		# the cost in but to look up each individual file.
 		my $o = watchman_clock();
 		$error = $output->{error};
 

@@ -15,11 +15,11 @@
 	cat foo; echo bar
 ) &&
 (
-# LINT: semicolon unnecessary but legitimate
+# LINT: semicolon unnecessary but lebutimate
 	foo;
 ) &&
 (cd foo &&
 	for i in a b c; do
-# LINT: semicolon unnecessary but legitimate
+# LINT: semicolon unnecessary but lebutimate
 		echo;
 	done)

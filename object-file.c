@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  *
- * This handles basic git object files - packing, unpacking,
+ * This handles basic but object files - packing, unpacking,
  * creation etc.
  */
 #include "cache.h"
@@ -81,57 +81,57 @@ static const struct object_id null_oid_sha256 = {
 	.algo = GIT_HASH_SHA256,
 };
 
-static void git_hash_sha1_init(git_hash_ctx *ctx)
+static void but_hash_sha1_init(but_hash_ctx *ctx)
 {
-	git_SHA1_Init(&ctx->sha1);
+	but_SHA1_Init(&ctx->sha1);
 }
 
-static void git_hash_sha1_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+static void but_hash_sha1_clone(but_hash_ctx *dst, const but_hash_ctx *src)
 {
-	git_SHA1_Clone(&dst->sha1, &src->sha1);
+	but_SHA1_Clone(&dst->sha1, &src->sha1);
 }
 
-static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len)
+static void but_hash_sha1_update(but_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA1_Update(&ctx->sha1, data, len);
+	but_SHA1_Update(&ctx->sha1, data, len);
 }
 
-static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
+static void but_hash_sha1_final(unsigned char *hash, but_hash_ctx *ctx)
 {
-	git_SHA1_Final(hash, &ctx->sha1);
+	but_SHA1_Final(hash, &ctx->sha1);
 }
 
-static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+static void but_hash_sha1_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 {
-	git_SHA1_Final(oid->hash, &ctx->sha1);
+	but_SHA1_Final(oid->hash, &ctx->sha1);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
 }
 
 
-static void git_hash_sha256_init(git_hash_ctx *ctx)
+static void but_hash_sha256_init(but_hash_ctx *ctx)
 {
-	git_SHA256_Init(&ctx->sha256);
+	but_SHA256_Init(&ctx->sha256);
 }
 
-static void git_hash_sha256_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+static void but_hash_sha256_clone(but_hash_ctx *dst, const but_hash_ctx *src)
 {
-	git_SHA256_Clone(&dst->sha256, &src->sha256);
+	but_SHA256_Clone(&dst->sha256, &src->sha256);
 }
 
-static void git_hash_sha256_update(git_hash_ctx *ctx, const void *data, size_t len)
+static void but_hash_sha256_update(but_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA256_Update(&ctx->sha256, data, len);
+	but_SHA256_Update(&ctx->sha256, data, len);
 }
 
-static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
+static void but_hash_sha256_final(unsigned char *hash, but_hash_ctx *ctx)
 {
-	git_SHA256_Final(hash, &ctx->sha256);
+	but_SHA256_Final(hash, &ctx->sha256);
 }
 
-static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+static void but_hash_sha256_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 {
-	git_SHA256_Final(oid->hash, &ctx->sha256);
+	but_SHA256_Final(oid->hash, &ctx->sha256);
 	/*
 	 * This currently does nothing, so the compiler should optimize it out,
 	 * but keep it in case we extend the hash size again.
@@ -140,43 +140,43 @@ static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 	oid->algo = GIT_HASH_SHA256;
 }
 
-static void git_hash_unknown_init(git_hash_ctx *ctx)
+static void but_hash_unknown_init(but_hash_ctx *ctx)
 {
 	BUG("trying to init unknown hash");
 }
 
-static void git_hash_unknown_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+static void but_hash_unknown_clone(but_hash_ctx *dst, const but_hash_ctx *src)
 {
 	BUG("trying to clone unknown hash");
 }
 
-static void git_hash_unknown_update(git_hash_ctx *ctx, const void *data, size_t len)
+static void but_hash_unknown_update(but_hash_ctx *ctx, const void *data, size_t len)
 {
 	BUG("trying to update unknown hash");
 }
 
-static void git_hash_unknown_final(unsigned char *hash, git_hash_ctx *ctx)
+static void but_hash_unknown_final(unsigned char *hash, but_hash_ctx *ctx)
 {
 	BUG("trying to finalize unknown hash");
 }
 
-static void git_hash_unknown_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+static void but_hash_unknown_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 {
 	BUG("trying to finalize unknown hash");
 }
 
-const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
+const struct but_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	{
 		.name = NULL,
 		.format_id = 0x00000000,
 		.rawsz = 0,
 		.hexsz = 0,
 		.blksz = 0,
-		.init_fn = git_hash_unknown_init,
-		.clone_fn = git_hash_unknown_clone,
-		.update_fn = git_hash_unknown_update,
-		.final_fn = git_hash_unknown_final,
-		.final_oid_fn = git_hash_unknown_final_oid,
+		.init_fn = but_hash_unknown_init,
+		.clone_fn = but_hash_unknown_clone,
+		.update_fn = but_hash_unknown_update,
+		.final_fn = but_hash_unknown_final,
+		.final_oid_fn = but_hash_unknown_final_oid,
 		.empty_tree = NULL,
 		.empty_blob = NULL,
 		.null_oid = NULL,
@@ -187,11 +187,11 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		.rawsz = GIT_SHA1_RAWSZ,
 		.hexsz = GIT_SHA1_HEXSZ,
 		.blksz = GIT_SHA1_BLKSZ,
-		.init_fn = git_hash_sha1_init,
-		.clone_fn = git_hash_sha1_clone,
-		.update_fn = git_hash_sha1_update,
-		.final_fn = git_hash_sha1_final,
-		.final_oid_fn = git_hash_sha1_final_oid,
+		.init_fn = but_hash_sha1_init,
+		.clone_fn = but_hash_sha1_clone,
+		.update_fn = but_hash_sha1_update,
+		.final_fn = but_hash_sha1_final,
+		.final_oid_fn = but_hash_sha1_final_oid,
 		.empty_tree = &empty_tree_oid,
 		.empty_blob = &empty_blob_oid,
 		.null_oid = &null_oid_sha1,
@@ -202,11 +202,11 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		.rawsz = GIT_SHA256_RAWSZ,
 		.hexsz = GIT_SHA256_HEXSZ,
 		.blksz = GIT_SHA256_BLKSZ,
-		.init_fn = git_hash_sha256_init,
-		.clone_fn = git_hash_sha256_clone,
-		.update_fn = git_hash_sha256_update,
-		.final_fn = git_hash_sha256_final,
-		.final_oid_fn = git_hash_sha256_final_oid,
+		.init_fn = but_hash_sha256_init,
+		.clone_fn = but_hash_sha256_clone,
+		.update_fn = but_hash_sha256_update,
+		.final_fn = but_hash_sha256_final,
+		.final_oid_fn = but_hash_sha256_final_oid,
 		.empty_tree = &empty_tree_oid_sha256,
 		.empty_blob = &empty_blob_oid_sha256,
 		.null_oid = &null_oid_sha256,
@@ -307,7 +307,7 @@ static int get_conv_flags(unsigned flags)
 }
 
 
-int mkdir_in_gitdir(const char *path)
+int mkdir_in_butdir(const char *path)
 {
 	if (mkdir(path, 0777)) {
 		int saved_errno = errno;
@@ -319,7 +319,7 @@ int mkdir_in_gitdir(const char *path)
 		/*
 		 * Are we looking at a path in a symlinked worktree
 		 * whose original repository does not yet have it?
-		 * e.g. .git/rr-cache pointing at its original
+		 * e.g. .but/rr-cache pointing at its original
 		 * repository in which the user hasn't performed any
 		 * conflict resolution yet?
 		 */
@@ -455,7 +455,7 @@ static int alt_odb_usable(struct raw_object_store *o,
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path->buf)) {
 		error(_("object directory %s does not exist; "
-			"check .git/objects/info/alternates"),
+			"check .but/objects/info/alternates"),
 		      path->buf);
 		return 0;
 	}
@@ -489,8 +489,8 @@ static int alt_odb_usable(struct raw_object_store *o,
  * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
  * whose contents is similar to that environment variable but can be
  * LF separated.  Its base points at a statically allocated buffer that
- * contains "/the/directory/corresponding/to/.git/objects/...", while
- * its name points just after the slash at the end of ".git/objects/"
+ * contains "/the/directory/corresponding/to/.but/objects/...", while
+ * its name points just after the slash at the end of ".but/objects/"
  * in the example above, and has enough space to hold all hex characters
  * of the object ID, an extra slash for the first level indirection, and
  * the terminating NUL.
@@ -629,7 +629,7 @@ static void read_info_alternates(struct repository *r,
 void add_to_alternates_file(const char *reference)
 {
 	struct lock_file lock = LOCK_INIT;
-	char *alts = git_pathdup("objects/info/alternates");
+	char *alts = but_pathdup("objects/info/alternates");
 	FILE *in, *out;
 	int found = 0;
 
@@ -732,33 +732,33 @@ void restore_primary_odb(struct object_directory *restore_odb, const char *old_p
  */
 char *compute_alternate_path(const char *path, struct strbuf *err)
 {
-	char *ref_git = NULL;
+	char *ref_but = NULL;
 	const char *repo;
 	int seen_error = 0;
 
-	ref_git = real_pathdup(path, 0);
-	if (!ref_git) {
+	ref_but = real_pathdup(path, 0);
+	if (!ref_but) {
 		seen_error = 1;
 		strbuf_addf(err, _("path '%s' does not exist"), path);
 		goto out;
 	}
 
-	repo = read_gitfile(ref_git);
+	repo = read_butfile(ref_but);
 	if (!repo)
-		repo = read_gitfile(mkpath("%s/.git", ref_git));
+		repo = read_butfile(mkpath("%s/.but", ref_but));
 	if (repo) {
-		free(ref_git);
-		ref_git = xstrdup(repo);
+		free(ref_but);
+		ref_but = xstrdup(repo);
 	}
 
-	if (!repo && is_directory(mkpath("%s/.git/objects", ref_git))) {
-		char *ref_git_git = mkpathdup("%s/.git", ref_git);
-		free(ref_git);
-		ref_git = ref_git_git;
-	} else if (!is_directory(mkpath("%s/objects", ref_git))) {
+	if (!repo && is_directory(mkpath("%s/.but/objects", ref_but))) {
+		char *ref_but_but = mkpathdup("%s/.but", ref_but);
+		free(ref_but);
+		ref_but = ref_but_but;
+	} else if (!is_directory(mkpath("%s/objects", ref_but))) {
 		struct strbuf sb = STRBUF_INIT;
 		seen_error = 1;
-		if (get_common_dir(&sb, ref_git)) {
+		if (get_common_dir(&sb, ref_but)) {
 			strbuf_addf(err,
 				    _("reference repository '%s' as a linked "
 				      "checkout is not supported yet."),
@@ -771,14 +771,14 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 		goto out;
 	}
 
-	if (!access(mkpath("%s/shallow", ref_git), F_OK)) {
+	if (!access(mkpath("%s/shallow", ref_but), F_OK)) {
 		strbuf_addf(err, _("reference repository '%s' is shallow"),
 			    path);
 		seen_error = 1;
 		goto out;
 	}
 
-	if (!access(mkpath("%s/info/grafts", ref_git), F_OK)) {
+	if (!access(mkpath("%s/info/grafts", ref_but), F_OK)) {
 		strbuf_addf(err,
 			    _("reference repository '%s' is grafted"),
 			    path);
@@ -788,10 +788,10 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 
 out:
 	if (seen_error) {
-		FREE_AND_NULL(ref_git);
+		FREE_AND_NULL(ref_but);
 	}
 
-	return ref_git;
+	return ref_but;
 }
 
 struct object_directory *find_odb(struct repository *r, const char *obj_dir)
@@ -820,19 +820,19 @@ static void fill_alternate_refs_command(struct child_process *cmd,
 {
 	const char *value;
 
-	if (!git_config_get_value("core.alternateRefsCommand", &value)) {
+	if (!but_config_get_value("core.alternateRefsCommand", &value)) {
 		cmd->use_shell = 1;
 
 		strvec_push(&cmd->args, value);
 		strvec_push(&cmd->args, repo_path);
 	} else {
-		cmd->git_cmd = 1;
+		cmd->but_cmd = 1;
 
-		strvec_pushf(&cmd->args, "--git-dir=%s", repo_path);
+		strvec_pushf(&cmd->args, "--but-dir=%s", repo_path);
 		strvec_push(&cmd->args, "for-each-ref");
 		strvec_push(&cmd->args, "--format=%(objectname)");
 
-		if (!git_config_get_value("core.alternateRefsPrefixes", &value)) {
+		if (!but_config_get_value("core.alternateRefsPrefixes", &value)) {
 			strvec_push(&cmd->args, "--");
 			strvec_split(&cmd->args, value);
 		}
@@ -892,7 +892,7 @@ static int refs_from_alternate_cb(struct object_directory *e,
 		goto out;
 	base_len = path.len;
 
-	/* Is this a git repository with refs? */
+	/* Is this a but repository with refs? */
 	strbuf_addstr(&path, "/refs");
 	if (!is_directory(path.buf))
 		goto out;
@@ -1006,7 +1006,7 @@ static void mmap_limit_check(size_t length)
 {
 	static size_t limit = 0;
 	if (!limit) {
-		limit = git_env_ulong("GIT_MMAP_LIMIT", 0);
+		limit = but_env_ulong("GIT_MMAP_LIMIT", 0);
 		if (!limit)
 			limit = SIZE_MAX;
 	}
@@ -1083,8 +1083,8 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	struct object_id real_oid;
 	unsigned long size;
 	enum object_type obj_type;
-	struct git_istream *st;
-	git_hash_ctx c;
+	struct but_istream *st;
+	but_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
@@ -1115,7 +1115,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
 
-int git_open_cloexec(const char *name, int flags)
+int but_open_cloexec(const char *name, int flags)
 {
 	int fd;
 	static int o_cloexec = O_CLOEXEC;
@@ -1181,7 +1181,7 @@ static int open_loose_object(struct repository *r,
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
 		*path = odb_loose_path(odb, &buf, oid);
-		fd = git_open(*path);
+		fd = but_open(*path);
 		if (fd >= 0)
 			return fd;
 
@@ -1216,7 +1216,7 @@ static void *map_loose_object_1(struct repository *r, const char *path,
 	int fd;
 
 	if (path)
-		fd = git_open(path);
+		fd = but_open(path);
 	else
 		fd = open_loose_object(r, oid, &path);
 	map = NULL;
@@ -1245,7 +1245,7 @@ void *map_loose_object(struct repository *r,
 	return map_loose_object_1(r, NULL, oid, size);
 }
 
-enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
+enum unpack_loose_header_result unpack_loose_header(but_zstream *stream,
 						    unsigned char *map,
 						    unsigned long mapsize,
 						    void *buffer,
@@ -1261,9 +1261,9 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	stream->next_out = buffer;
 	stream->avail_out = bufsiz;
 
-	git_inflate_init(stream);
+	but_inflate_init(stream);
 	obj_read_unlock();
-	status = git_inflate(stream, 0);
+	status = but_inflate(stream, 0);
 	obj_read_lock();
 	if (status < Z_OK)
 		return ULHR_BAD;
@@ -1293,7 +1293,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 
 	do {
 		obj_read_unlock();
-		status = git_inflate(stream, 0);
+		status = but_inflate(stream, 0);
 		obj_read_lock();
 		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
 		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
@@ -1304,7 +1304,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	return ULHR_TOO_LONG;
 }
 
-static void *unpack_loose_rest(git_zstream *stream,
+static void *unpack_loose_rest(but_zstream *stream,
 			       void *buffer, unsigned long size,
 			       const struct object_id *oid)
 {
@@ -1336,12 +1336,12 @@ static void *unpack_loose_rest(git_zstream *stream,
 		stream->avail_out = size - bytes;
 		while (status == Z_OK) {
 			obj_read_unlock();
-			status = git_inflate(stream, Z_FINISH);
+			status = but_inflate(stream, Z_FINISH);
 			obj_read_lock();
 		}
 	}
 	if (status == Z_STREAM_END && !stream->avail_in) {
-		git_inflate_end(stream);
+		but_inflate_end(stream);
 		return buf;
 	}
 
@@ -1424,7 +1424,7 @@ static int loose_object_info(struct repository *r,
 	int status = 0;
 	unsigned long mapsize;
 	void *map;
-	git_zstream stream;
+	but_zstream stream;
 	char hdr[MAX_HEADER_LEN];
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
@@ -1492,7 +1492,7 @@ static int loose_object_info(struct repository *r,
 		break;
 	}
 
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 cleanup:
 	munmap(map, mapsize);
 	if (oi->sizep == &size_scratch)
@@ -1579,7 +1579,7 @@ static int do_oid_object_info_extended(struct repository *r,
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			reprepare_packed_git(r);
+			reprepare_packed_but(r);
 			if (find_pack_entry(r, real, &e))
 				break;
 		}
@@ -1704,7 +1704,7 @@ void *read_object_file_extended(struct repository *r,
 				int lookup_replace)
 {
 	void *data;
-	const struct packed_git *p;
+	const struct packed_but *p;
 	const char *path;
 	struct stat st;
 	const struct object_id *repl = lookup_replace ?
@@ -1784,7 +1784,7 @@ void *read_object_with_reference(struct repository *r,
 	}
 }
 
-static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
+static void hash_object_body(const struct but_hash_algo *algo, but_hash_ctx *c,
 			     const void *buf, unsigned long len,
 			     struct object_id *oid,
 			     char *hdr, int *hdrlen)
@@ -1795,12 +1795,12 @@ static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
 	algo->final_oid_fn(oid, c);
 }
 
-static void write_object_file_prepare(const struct git_hash_algo *algo,
+static void write_object_file_prepare(const struct but_hash_algo *algo,
 				      const void *buf, unsigned long len,
 				      enum object_type type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
-	git_hash_ctx c;
+	but_hash_ctx c;
 
 	/* Generate the header */
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
@@ -1809,12 +1809,12 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
-static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
+static void write_object_file_prepare_literally(const struct but_hash_algo *algo,
 				      const void *buf, unsigned long len,
 				      const char *type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
-	git_hash_ctx c;
+	but_hash_ctx c;
 
 	*hdrlen = format_object_header_literally(hdr, *hdrlen, type, len);
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
@@ -1870,7 +1870,7 @@ static int write_buffer(int fd, const void *buf, size_t len)
 	return 0;
 }
 
-static void hash_object_file_literally(const struct git_hash_algo *algo,
+static void hash_object_file_literally(const struct but_hash_algo *algo,
 				       const void *buf, unsigned long len,
 				       const char *type, struct object_id *oid)
 {
@@ -1880,7 +1880,7 @@ static void hash_object_file_literally(const struct git_hash_algo *algo,
 	write_object_file_prepare_literally(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
-void hash_object_file(const struct git_hash_algo *algo, const void *buf,
+void hash_object_file(const struct but_hash_algo *algo, const void *buf,
 		      unsigned long len, enum object_type type,
 		      struct object_id *oid)
 {
@@ -1927,7 +1927,7 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 	strbuf_reset(tmp);
 	strbuf_add(tmp, filename, dirlen);
 	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
-	fd = git_mkstemp_mode(tmp->buf, 0444);
+	fd = but_mkstemp_mode(tmp->buf, 0444);
 	if (fd < 0 && dirlen && errno == ENOENT) {
 		/*
 		 * Make sure the directory exists; note that the contents
@@ -1944,7 +1944,7 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 
 		/* Try again */
 		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
-		fd = git_mkstemp_mode(tmp->buf, 0444);
+		fd = but_mkstemp_mode(tmp->buf, 0444);
 	}
 	return fd;
 }
@@ -1955,8 +1955,8 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 {
 	int fd, ret;
 	unsigned char compressed[4096];
-	git_zstream stream;
-	git_hash_ctx c;
+	but_zstream stream;
+	but_hash_ctx c;
 	struct object_id parano_oid;
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
@@ -1974,7 +1974,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	}
 
 	/* Set it up */
-	git_deflate_init(&stream, zlib_compression_level);
+	but_deflate_init(&stream, zlib_compression_level);
 	stream.next_out = compressed;
 	stream.avail_out = sizeof(compressed);
 	the_hash_algo->init_fn(&c);
@@ -1982,7 +1982,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	/* First header.. */
 	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
-	while (git_deflate(&stream, 0) == Z_OK)
+	while (but_deflate(&stream, 0) == Z_OK)
 		; /* nothing */
 	the_hash_algo->update_fn(&c, hdr, hdrlen);
 
@@ -1991,7 +1991,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	stream.avail_in = len;
 	do {
 		unsigned char *in0 = stream.next_in;
-		ret = git_deflate(&stream, Z_FINISH);
+		ret = but_deflate(&stream, Z_FINISH);
 		the_hash_algo->update_fn(&c, in0, stream.next_in - in0);
 		if (write_buffer(fd, compressed, stream.next_out - compressed) < 0)
 			die(_("unable to write loose object file"));
@@ -2002,7 +2002,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	if (ret != Z_STREAM_END)
 		die(_("unable to deflate new object %s (%d)"), oid_to_hex(oid),
 		    ret);
-	ret = git_deflate_end_gently(&stream);
+	ret = but_deflate_end_gently(&stream);
 	if (ret != Z_OK)
 		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
 		    ret);
@@ -2051,7 +2051,7 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	int hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
-	 * it out into .git/objects/??/?{38} file.
+	 * it out into .but/objects/??/?{38} file.
 	 */
 	write_object_file_prepare(the_hash_algo, buf, len, type, oid, hdr,
 				  &hdrlen);
@@ -2172,11 +2172,11 @@ static int index_mem(struct index_state *istate,
 		type = OBJ_BLOB;
 
 	/*
-	 * Convert blobs to git internal format
+	 * Convert blobs to but internal format
 	 */
 	if ((type == OBJ_BLOB) && path) {
 		struct strbuf nbuf = STRBUF_INIT;
-		if (convert_to_git(istate, path, buf, size, &nbuf,
+		if (convert_to_but(istate, path, buf, size, &nbuf,
 				   get_conv_flags(flags))) {
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
@@ -2211,9 +2211,9 @@ static int index_stream_convert_blob(struct index_state *istate,
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
-	assert(would_convert_to_git_filter_fd(istate, path));
+	assert(would_convert_to_but_filter_fd(istate, path));
 
-	convert_to_git_filter_fd(istate, path, fd, &sbuf,
+	convert_to_but_filter_fd(istate, path, fd, &sbuf,
 				 get_conv_flags(flags));
 
 	if (write_object)
@@ -2276,12 +2276,12 @@ static int index_core(struct index_state *istate,
  * This creates one packfile per large blob unless bulk-checkin
  * machinery is "plugged".
  *
- * This also bypasses the usual "convert-to-git" dance, and that is on
+ * This also bypasses the usual "convert-to-but" dance, and that is on
  * purpose. We could write a streaming version of the converting
  * functions and insert that before feeding the data to fast-import
  * (or equivalent in-core API described above). However, that is
  * somewhat complicated, as we do not know the size of the filter
- * result, which we need to know beforehand when writing a git object.
+ * result, which we need to know beforehand when writing a but object.
  * Since the primary motivation for trying to stream from the working
  * tree file and to avoid mmaping it in core is to deal with large
  * binary blobs, they generally do not want to get any conversion, and
@@ -2304,12 +2304,12 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 	 * Call xsize_t() only when needed to avoid potentially unnecessary
 	 * die() for large files.
 	 */
-	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(istate, path))
+	if (type == OBJ_BLOB && path && would_convert_to_but_filter_fd(istate, path))
 		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(istate, oid, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
-		 (path && would_convert_to_git(istate, path)))
+		 (path && would_convert_to_but(istate, path)))
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	else
@@ -2346,7 +2346,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return resolve_gitlink_ref(path, "HEAD", oid);
+		return resolve_butlink_ref(path, "HEAD", oid);
 	default:
 		return error(_("%s: unsupported file type"), path);
 	}
@@ -2546,13 +2546,13 @@ void odb_clear_loose_cache(struct object_directory *odb)
 	       sizeof(odb->loose_objects_subdir_seen));
 }
 
-static int check_stream_oid(git_zstream *stream,
+static int check_stream_oid(but_zstream *stream,
 			    const char *hdr,
 			    unsigned long size,
 			    const char *path,
 			    const struct object_id *expected_oid)
 {
-	git_hash_ctx c;
+	but_hash_ctx c;
 	struct object_id real_oid;
 	unsigned char buf[4096];
 	unsigned long total_read;
@@ -2578,11 +2578,11 @@ static int check_stream_oid(git_zstream *stream,
 		stream->avail_out = sizeof(buf);
 		if (size - total_read < stream->avail_out)
 			stream->avail_out = size - total_read;
-		status = git_inflate(stream, Z_FINISH);
+		status = but_inflate(stream, Z_FINISH);
 		the_hash_algo->update_fn(&c, buf, stream->next_out - buf);
 		total_read += stream->next_out - buf;
 	}
-	git_inflate_end(stream);
+	but_inflate_end(stream);
 
 	if (status != Z_STREAM_END) {
 		error(_("corrupt loose object '%s'"), oid_to_hex(expected_oid));
@@ -2613,7 +2613,7 @@ int read_loose_object(const char *path,
 	int ret = -1;
 	void *map = NULL;
 	unsigned long mapsize;
-	git_zstream stream;
+	but_zstream stream;
 	char hdr[MAX_HEADER_LEN];
 	unsigned long *size = oi->sizep;
 
@@ -2631,7 +2631,7 @@ int read_loose_object(const char *path,
 
 	if (parse_loose_header(hdr, oi) < 0) {
 		error(_("unable to parse header of %s"), path);
-		git_inflate_end(&stream);
+		but_inflate_end(&stream);
 		goto out;
 	}
 
@@ -2642,7 +2642,7 @@ int read_loose_object(const char *path,
 		*contents = unpack_loose_rest(&stream, hdr, *size, expected_oid);
 		if (!*contents) {
 			error(_("unable to unpack contents of %s"), path);
-			git_inflate_end(&stream);
+			but_inflate_end(&stream);
 			goto out;
 		}
 		hash_object_file_literally(the_repository->hash_algo,

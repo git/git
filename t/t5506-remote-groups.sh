@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git remote group handling'
+test_description='but remote group handling'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -13,8 +13,8 @@ mark() {
 update_repo() {
 	(cd $1 &&
 	echo content >>file &&
-	git add file &&
-	git cummit -F ../mark)
+	but add file &&
+	but cummit -F ../mark)
 }
 
 update_repos() {
@@ -23,7 +23,7 @@ update_repos() {
 }
 
 repo_fetched() {
-	if test "$(git log -1 --pretty=format:%s $1 --)" = "$(cat mark)"; then
+	if test "$(but log -1 --pretty=format:%s $1 --)" = "$(cat mark)"; then
 		echo >&2 "repo was fetched: $1"
 		return 0
 	fi
@@ -32,16 +32,16 @@ repo_fetched() {
 }
 
 test_expect_success 'setup' '
-	mkdir one && (cd one && git init) &&
-	mkdir two && (cd two && git init) &&
-	git remote add -m main one one &&
-	git remote add -m main two two
+	mkdir one && (cd one && but init) &&
+	mkdir two && (cd two && but init) &&
+	but remote add -m main one one &&
+	but remote add -m main two two
 '
 
 test_expect_success 'no group updates all' '
 	mark update-all &&
 	update_repos &&
-	git remote update &&
+	but remote update &&
 	repo_fetched one &&
 	repo_fetched two
 '
@@ -49,7 +49,7 @@ test_expect_success 'no group updates all' '
 test_expect_success 'nonexistent group produces error' '
 	mark nonexistent &&
 	update_repos &&
-	test_must_fail git remote update nonexistent &&
+	test_must_fail but remote update nonexistent &&
 	! repo_fetched one &&
 	! repo_fetched two
 '
@@ -57,9 +57,9 @@ test_expect_success 'nonexistent group produces error' '
 test_expect_success 'updating group updates all members (remote update)' '
 	mark group-all &&
 	update_repos &&
-	git config --add remotes.all one &&
-	git config --add remotes.all two &&
-	git remote update all &&
+	but config --add remotes.all one &&
+	but config --add remotes.all two &&
+	but remote update all &&
 	repo_fetched one &&
 	repo_fetched two
 '
@@ -67,7 +67,7 @@ test_expect_success 'updating group updates all members (remote update)' '
 test_expect_success 'updating group updates all members (fetch)' '
 	mark fetch-group-all &&
 	update_repos &&
-	git fetch all &&
+	but fetch all &&
 	repo_fetched one &&
 	repo_fetched two
 '
@@ -75,8 +75,8 @@ test_expect_success 'updating group updates all members (fetch)' '
 test_expect_success 'updating group does not update non-members (remote update)' '
 	mark group-some &&
 	update_repos &&
-	git config --add remotes.some one &&
-	git remote update some &&
+	but config --add remotes.some one &&
+	but remote update some &&
 	repo_fetched one &&
 	! repo_fetched two
 '
@@ -84,8 +84,8 @@ test_expect_success 'updating group does not update non-members (remote update)'
 test_expect_success 'updating group does not update non-members (fetch)' '
 	mark fetch-group-some &&
 	update_repos &&
-	git config --add remotes.some one &&
-	git remote update some &&
+	but config --add remotes.some one &&
+	but remote update some &&
 	repo_fetched one &&
 	! repo_fetched two
 '
@@ -93,7 +93,7 @@ test_expect_success 'updating group does not update non-members (fetch)' '
 test_expect_success 'updating remote name updates that remote' '
 	mark remote-name &&
 	update_repos &&
-	git remote update one &&
+	but remote update one &&
 	repo_fetched one &&
 	! repo_fetched two
 '

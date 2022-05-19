@@ -23,7 +23,7 @@
  * Error messages expected by scripts out of plumbing commands such as
  * read-tree.  Non-scripted Porcelain is not required to use these messages
  * and in fact are encouraged to reword them to better suit their particular
- * situation better.  See how "git checkout" and "git merge" replaces
+ * situation better.  See how "but checkout" and "but merge" replaces
  * them using setup_unpack_trees_porcelain(), for example.
  */
 static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
@@ -294,7 +294,7 @@ static void display_warning_msgs(struct unpack_trees_options *o)
 		string_list_clear(rejects, 0);
 	}
 	if (warning_displayed)
-		fprintf(stderr, _("After fixing the above paths, you may want to run `git sparse-checkout reapply`.\n"));
+		fprintf(stderr, _("After fixing the above paths, you may want to run `but sparse-checkout reapply`.\n"));
 }
 static int check_submodule_move_head(const struct cache_entry *ce,
 				     const char *old_id,
@@ -316,15 +316,15 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 }
 
 /*
- * Perform the loading of the repository's gitmodules file.  This function is
- * used by 'check_update()' to perform loading of the gitmodules file in two
+ * Perform the loading of the repository's butmodules file.  This function is
+ * used by 'check_update()' to perform loading of the butmodules file in two
  * different situations:
- * (1) before removing entries from the working tree if the gitmodules file has
+ * (1) before removing entries from the working tree if the butmodules file has
  *     been marked for removal.  This situation is specified by 'state' == NULL.
- * (2) before checking out entries to the working tree if the gitmodules file
+ * (2) before checking out entries to the working tree if the butmodules file
  *     has been marked for update.  This situation is specified by 'state' != NULL.
  */
-static void load_gitmodules_file(struct index_state *index,
+static void load_butmodules_file(struct index_state *index,
 				 struct checkout *state)
 {
 	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
@@ -332,11 +332,11 @@ static void load_gitmodules_file(struct index_state *index,
 	if (pos >= 0) {
 		struct cache_entry *ce = index->cache[pos];
 		if (!state && ce->ce_flags & CE_WT_REMOVE) {
-			repo_read_gitmodules(the_repository, 0);
+			repo_read_butmodules(the_repository, 0);
 		} else if (state && (ce->ce_flags & CE_UPDATE)) {
 			submodule_free(the_repository);
 			checkout_entry(ce, state, NULL, NULL);
-			repo_read_gitmodules(the_repository, 0);
+			repo_read_butmodules(the_repository, 0);
 		}
 	}
 }
@@ -433,10 +433,10 @@ static int check_updates(struct unpack_trees_options *o,
 	/* Start with clean cache to avoid using any possibly outdated info. */
 	invalidate_lstat_cache();
 
-	git_attr_set_direction(GIT_ATTR_CHECKOUT);
+	but_attr_set_direction(GIT_ATTR_CHECKOUT);
 
 	if (should_update_submodules())
-		load_gitmodules_file(index, NULL);
+		load_butmodules_file(index, NULL);
 
 	for (i = 0; i < index->cache_nr; i++) {
 		const struct cache_entry *ce = index->cache[i];
@@ -451,7 +451,7 @@ static int check_updates(struct unpack_trees_options *o,
 	remove_scheduled_dirs();
 
 	if (should_update_submodules())
-		load_gitmodules_file(index, &state);
+		load_butmodules_file(index, &state);
 
 	if (has_promisor_remote())
 		/*
@@ -486,7 +486,7 @@ static int check_updates(struct unpack_trees_options *o,
 					      progress, &cnt);
 	stop_progress(&progress);
 	errs |= finish_delayed_checkout(&state, NULL, o->verbose_update);
-	git_attr_set_direction(GIT_ATTR_CHECKIN);
+	but_attr_set_direction(GIT_ATTR_CHECKIN);
 
 	if (o->clone)
 		report_collided_checkout(index);
@@ -1947,7 +1947,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->dst_index) {
 		move_index_extensions(&o->result, o->src_index);
 		if (!ret) {
-			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
+			if (but_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
 				cache_tree_verify(the_repository, &o->result);
 			if (!cache_tree_fully_valid(o->result.cache_tree))
 				cache_tree_update(&o->result,
@@ -2191,7 +2191,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 
 	if (S_ISGITLINK(ce->ce_mode)) {
 		struct object_id oid;
-		int sub_head = resolve_gitlink_ref(ce->name, "HEAD", &oid);
+		int sub_head = resolve_butlink_ref(ce->name, "HEAD", &oid);
 		/*
 		 * If we are not going to update the submodule, then
 		 * we don't care.
@@ -2668,7 +2668,7 @@ int threeway_merge(const struct cache_entry * const *stages,
 
 	/*
 	 * Under the "aggressive" rule, we resolve mostly trivial
-	 * cases that we historically had git-merge-one-file resolve.
+	 * cases that we historically had but-merge-one-file resolve.
 	 */
 	if (o->aggressive) {
 		int head_deleted = !head;
@@ -2763,7 +2763,7 @@ int threeway_merge(const struct cache_entry * const *stages,
  * The rule is to "carry forward" what is in the index without losing
  * information across a "fast-forward", favoring a successful merge
  * over a merge failure when it makes sense.  For details of the
- * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
+ * "carry forward" rule, please see <Documentation/but-read-tree.txt>.
  *
  */
 int twoway_merge(const struct cache_entry * const *src,
@@ -2813,7 +2813,7 @@ int twoway_merge(const struct cache_entry * const *src,
 			/*
 			 * This case is a directory/file conflict across the sparse-index
 			 * boundary. When we are changing from one path to another via
-			 * 'git checkout', then we want to replace one entry with another
+			 * 'but checkout', then we want to replace one entry with another
 			 * via merged_entry(). If there are staged changes, then we should
 			 * reject the merge instead.
 			 */

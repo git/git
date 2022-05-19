@@ -27,11 +27,11 @@ int cmd_unpack_file(int argc, const char **argv, const char *prefix)
 	struct object_id oid;
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
-		usage("git unpack-file <sha1>");
+		usage("but unpack-file <sha1>");
 	if (get_oid(argv[1], &oid))
 		die("Not a valid object name %s", argv[1]);
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	puts(create_temp_file(&oid));
 	return 0;

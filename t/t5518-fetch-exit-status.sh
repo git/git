@@ -13,27 +13,27 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 
 	>file &&
-	git add file &&
-	git cummit -m initial &&
+	but add file &&
+	but cummit -m initial &&
 
-	git checkout -b side &&
+	but checkout -b side &&
 	echo side >file &&
-	git cummit -a -m side &&
+	but cummit -a -m side &&
 
-	git checkout main &&
+	but checkout main &&
 	echo next >file &&
-	git cummit -a -m next
+	but cummit -a -m next
 '
 
 test_expect_success 'non-fast-forward fetch' '
 
-	test_must_fail git fetch . main:side
+	test_must_fail but fetch . main:side
 
 '
 
 test_expect_success 'forced update' '
 
-	git fetch . +main:side
+	but fetch . +main:side
 
 '
 

@@ -11,7 +11,7 @@ struct debug_ref_store {
 
 extern struct ref_storage_be refs_be_debug;
 
-struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_store *store)
+struct ref_store *maybe_debug_wrap_ref_store(const char *butdir, struct ref_store *store)
 {
 	struct debug_ref_store *res;
 	struct ref_storage_be *be_copy;
@@ -24,9 +24,9 @@ struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_stor
 	*be_copy = refs_be_debug;
 	/* we never deallocate backends, so safe to copy the pointer. */
 	be_copy->name = store->be->name;
-	trace_printf_key(&trace_refs, "ref_store for %s\n", gitdir);
+	trace_printf_key(&trace_refs, "ref_store for %s\n", butdir);
 	res->refs = store;
-	base_ref_store_init((struct ref_store *)res, store->repo, gitdir,
+	base_ref_store_init((struct ref_store *)res, store->repo, butdir,
 			    be_copy);
 	return (struct ref_store *)res;
 }

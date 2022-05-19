@@ -5,7 +5,7 @@
 
 test_description='merging symlinks on filesystem w/o symlink support.
 
-This tests that git merge-recursive writes merge results as plain files
+This tests that but merge-recursive writes merge results as plain files
 if core.symlinks is false.'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -14,28 +14,28 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	git config core.symlinks false &&
+	but config core.symlinks false &&
 	>file &&
-	git add file &&
-	git cummit -m initial &&
-	git branch b-symlink &&
-	git branch b-file &&
-	l=$(printf file | git hash-object -t blob -w --stdin) &&
-	echo "120000 $l	symlink" | git update-index --index-info &&
-	git cummit -m main &&
-	git checkout b-symlink &&
-	l=$(printf file-different | git hash-object -t blob -w --stdin) &&
-	echo "120000 $l	symlink" | git update-index --index-info &&
-	git cummit -m b-symlink &&
-	git checkout b-file &&
+	but add file &&
+	but cummit -m initial &&
+	but branch b-symlink &&
+	but branch b-file &&
+	l=$(printf file | but hash-object -t blob -w --stdin) &&
+	echo "120000 $l	symlink" | but update-index --index-info &&
+	but cummit -m main &&
+	but checkout b-symlink &&
+	l=$(printf file-different | but hash-object -t blob -w --stdin) &&
+	echo "120000 $l	symlink" | but update-index --index-info &&
+	but cummit -m b-symlink &&
+	but checkout b-file &&
 	echo plain-file >symlink &&
-	git add symlink &&
-	git cummit -m b-file
+	but add symlink &&
+	but cummit -m b-file
 '
 
 test_expect_success 'merge main into b-symlink, which has a different symbolic link' '
-	git checkout b-symlink &&
-	test_must_fail git merge main
+	but checkout b-symlink &&
+	test_must_fail but merge main
 '
 
 test_expect_success 'the merge result must be a file' '
@@ -43,9 +43,9 @@ test_expect_success 'the merge result must be a file' '
 '
 
 test_expect_success 'merge main into b-file, which has a file instead of a symbolic link' '
-	git reset --hard &&
-	git checkout b-file &&
-	test_must_fail git merge main
+	but reset --hard &&
+	but checkout b-file &&
+	test_must_fail but merge main
 '
 
 test_expect_success 'the merge result must be a file' '
@@ -53,9 +53,9 @@ test_expect_success 'the merge result must be a file' '
 '
 
 test_expect_success 'merge b-file, which has a file instead of a symbolic link, into main' '
-	git reset --hard &&
-	git checkout main &&
-	test_must_fail git merge b-file
+	but reset --hard &&
+	but checkout main &&
+	test_must_fail but merge b-file
 '
 
 test_expect_success 'the merge result must be a file' '

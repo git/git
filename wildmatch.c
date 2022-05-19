@@ -41,7 +41,7 @@ typedef unsigned char uchar;
 #endif
 
 #define ISPRINT(c) (ISASCII(c) && isprint(c))
-#define ISDIGIT(c) (ISASCII(c) && isdigit(c))
+#define ISDIGIT(c) (ISASCII(c) && isdibut(c))
 #define ISALNUM(c) (ISASCII(c) && isalnum(c))
 #define ISALPHA(c) (ISASCII(c) && isalpha(c))
 #define ISCNTRL(c) (ISASCII(c) && iscntrl(c))
@@ -49,7 +49,7 @@ typedef unsigned char uchar;
 #define ISPUNCT(c) (ISASCII(c) && ispunct(c))
 #define ISSPACE(c) (ISASCII(c) && isspace(c))
 #define ISUPPER(c) (ISASCII(c) && isupper(c))
-#define ISXDIGIT(c) (ISASCII(c) && isxdigit(c))
+#define ISXDIGIT(c) (ISASCII(c) && isxdibut(c))
 
 /* Match pattern "p" against "text" */
 static int dowild(const uchar *p, const uchar *text, unsigned int flags)
@@ -229,7 +229,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 					} else if (CC_EQ(s,i, "cntrl")) {
 						if (ISCNTRL(t_ch))
 							matched = 1;
-					} else if (CC_EQ(s,i, "digit")) {
+					} else if (CC_EQ(s,i, "dibut")) {
 						if (ISDIGIT(t_ch))
 							matched = 1;
 					} else if (CC_EQ(s,i, "graph")) {
@@ -252,7 +252,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 							matched = 1;
 						else if ((flags & WM_CASEFOLD) && ISLOWER(t_ch))
 							matched = 1;
-					} else if (CC_EQ(s,i, "xdigit")) {
+					} else if (CC_EQ(s,i, "xdibut")) {
 						if (ISXDIGIT(t_ch))
 							matched = 1;
 					} else /* malformed [:class:] string */

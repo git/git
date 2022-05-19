@@ -36,60 +36,60 @@ test_expect_success 'setup repo with criss-cross history' '
 	done &&
 
 	# check them in
-	git add data &&
-	git cummit -m A &&
-	git branch A &&
+	but add data &&
+	but cummit -m A &&
+	but branch A &&
 
 	# a file in one branch
-	git checkout -b B A &&
-	git rm data/9 &&
-	git add data &&
-	git cummit -m B &&
+	but checkout -b B A &&
+	but rm data/9 &&
+	but add data &&
+	but cummit -m B &&
 
 	# with a branch off of it
-	git branch D &&
+	but branch D &&
 
 	# put some cummits on D
-	git checkout D &&
+	but checkout D &&
 	echo testD > data/testD &&
-	git add data &&
-	git cummit -m D &&
+	but add data &&
+	but cummit -m D &&
 
 	# back up to the top, create another branch and cause
 	# a rename conflict with the file we deleted earlier
-	git checkout -b C A &&
-	git mv data/9 data/new-9 &&
-	git add data &&
-	git cummit -m C &&
+	but checkout -b C A &&
+	but mv data/9 data/new-9 &&
+	but add data &&
+	but cummit -m C &&
 
 	# with a branch off of it
-	git branch E &&
+	but branch E &&
 
 	# put a cummit on E
-	git checkout E &&
+	but checkout E &&
 	echo testE > data/testE &&
-	git add data &&
-	git cummit -m E &&
+	but add data &&
+	but cummit -m E &&
 
 	# now, merge E into B
-	git checkout B &&
-	test_must_fail git merge E &&
+	but checkout B &&
+	test_must_fail but merge E &&
 	# force-resolve
-	git add data &&
-	git cummit -m F &&
-	git branch F &&
+	but add data &&
+	but cummit -m F &&
+	but branch F &&
 
 	# and merge D into C
-	git checkout C &&
-	test_must_fail git merge D &&
+	but checkout C &&
+	test_must_fail but merge D &&
 	# force-resolve
-	git add data &&
-	git cummit -m G &&
-	git branch G
+	but add data &&
+	but cummit -m G &&
+	but branch G
 '
 
 test_expect_success 'recursive merge between F and G does not cause segfault' '
-	git merge F
+	but merge F
 '
 
 test_done

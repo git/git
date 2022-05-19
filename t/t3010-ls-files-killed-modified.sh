@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git ls-files -k and -m flags test.
+test_description='but ls-files -k and -m flags test.
 
 This test prepares the following in the cache:
 
@@ -28,7 +28,7 @@ and the following on the filesystem:
     submod1/	- a submodule (modified from the cache)
     submod2/	- a submodule (matches the cache)
 
-git ls-files -k should report that existing filesystem objects
+but ls-files -k should report that existing filesystem objects
 path0/*, path1/*, path2 and path3 to be killed.
 
 Also for modification test, the cache and working tree have:
@@ -43,7 +43,7 @@ modified without reporting path9 and path10.  submod1 is also modified.
 '
 . ./test-lib.sh
 
-test_expect_success 'git update-index --add to add various paths.' '
+test_expect_success 'but update-index --add to add various paths.' '
 	date >path0 &&
 	test_ln_s_add xyzzy path1 &&
 	mkdir path2 path3 pathx &&
@@ -54,20 +54,20 @@ test_expect_success 'git update-index --add to add various paths.' '
 	date >path8 &&
 	: >path9 &&
 	date >path10 &&
-	git update-index --add -- path0 path?/file? pathx/ju path7 path8 path9 path10 &&
-	git init submod1 &&
-	git -C submod1 cummit --allow-empty -m "empty 1" &&
-	git init submod2 &&
-	git -C submod2 cummit --allow-empty -m "empty 2" &&
-	git update-index --add submod[12] &&
+	but update-index --add -- path0 path?/file? pathx/ju path7 path8 path9 path10 &&
+	but init submod1 &&
+	but -C submod1 cummit --allow-empty -m "empty 1" &&
+	but init submod2 &&
+	but -C submod2 cummit --allow-empty -m "empty 2" &&
+	but update-index --add submod[12] &&
 	(
 		cd submod1 &&
-		git cummit --allow-empty -m "empty 1 (updated)"
+		but cummit --allow-empty -m "empty 1 (updated)"
 	) &&
 	rm -fr path?	# leave path10 alone
 '
 
-test_expect_success 'git ls-files -k to show killed files.' '
+test_expect_success 'but ls-files -k to show killed files.' '
 	date >path2 &&
 	if test_have_prereq SYMLINKS
 	then
@@ -95,21 +95,21 @@ test_expect_success 'git ls-files -k to show killed files.' '
 	EOF
 '
 
-test_expect_success 'git ls-files -k output (w/o icase)' '
-	git ls-files -k >.output &&
+test_expect_success 'but ls-files -k output (w/o icase)' '
+	but ls-files -k >.output &&
 	test_cmp .expected .output
 '
 
-test_expect_success 'git ls-files -k output (w/ icase)' '
-	git -c core.ignorecase=true ls-files -k >.output &&
+test_expect_success 'but ls-files -k output (w/ icase)' '
+	but -c core.ignorecase=true ls-files -k >.output &&
 	test_cmp .expected .output
 '
 
-test_expect_success 'git ls-files -m to show modified files.' '
-	git ls-files -m >.output
+test_expect_success 'but ls-files -m to show modified files.' '
+	but ls-files -m >.output
 '
 
-test_expect_success 'validate git ls-files -m output.' '
+test_expect_success 'validate but ls-files -m output.' '
 	cat >.expected <<-\EOF &&
 	path0
 	path1

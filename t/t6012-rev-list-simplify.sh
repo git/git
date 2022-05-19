@@ -8,12 +8,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 note () {
-	git tag "$1"
+	but tag "$1"
 }
 
 unnote () {
 	test_when_finished "rm -f tmp" &&
-	git name-rev --tags --annotate-stdin >tmp &&
+	but name-rev --tags --annotate-stdin >tmp &&
 	sed -e "s|$OID_REGEX (tags/\([^)]*\)) |\1 |g" <tmp
 }
 
@@ -35,69 +35,69 @@ unnote () {
 test_expect_success setup '
 	echo "Hi there" >file &&
 	echo "initial" >lost &&
-	git add file lost &&
-	test_tick && git cummit -m "Initial file and lost" &&
+	but add file lost &&
+	test_tick && but cummit -m "Initial file and lost" &&
 	note A &&
 
-	git branch other-branch &&
+	but branch other-branch &&
 
-	git symbolic-ref HEAD refs/heads/unrelated &&
-	git rm -f "*" &&
+	but symbolic-ref HEAD refs/heads/unrelated &&
+	but rm -f "*" &&
 	echo "Unrelated branch" >side &&
-	git add side &&
-	test_tick && git cummit -m "Side root" &&
+	but add side &&
+	test_tick && but cummit -m "Side root" &&
 	note J &&
-	git checkout main &&
+	but checkout main &&
 
 	echo "Hello" >file &&
 	echo "second" >lost &&
-	git add file lost &&
-	test_tick && GIT_AUTHOR_DATE=$(($test_tick + 120)) git cummit -m "Modified file and lost" &&
+	but add file lost &&
+	test_tick && GIT_AUTHOR_DATE=$(($test_tick + 120)) but cummit -m "Modified file and lost" &&
 	note B &&
 
-	git checkout other-branch &&
+	but checkout other-branch &&
 
 	echo "Hello" >file &&
 	>lost &&
-	git add file lost &&
-	test_tick && git cummit -m "Modified the file identically" &&
+	but add file lost &&
+	test_tick && but cummit -m "Modified the file identically" &&
 	note C &&
 
 	echo "This is a stupid example" >another-file &&
-	git add another-file &&
-	test_tick && git cummit -m "Add another file" &&
+	but add another-file &&
+	test_tick && but cummit -m "Add another file" &&
 	note D &&
 
 	test_tick &&
-	test_must_fail git merge -m "merge" main &&
-	>lost && git cummit -a -m "merge" &&
+	test_must_fail but merge -m "merge" main &&
+	>lost && but cummit -a -m "merge" &&
 	note E &&
 
 	echo "Yet another" >elif &&
-	git add elif &&
-	test_tick && git cummit -m "Irrelevant change" &&
+	but add elif &&
+	test_tick && but cummit -m "Irrelevant change" &&
 	note F &&
 
-	git checkout main &&
+	but checkout main &&
 	echo "Yet another" >elif &&
-	git add elif &&
-	test_tick && git cummit -m "Another irrelevant change" &&
+	but add elif &&
+	test_tick && but cummit -m "Another irrelevant change" &&
 	note G &&
 
-	test_tick && git merge -m "merge" other-branch &&
+	test_tick && but merge -m "merge" other-branch &&
 	note H &&
 
 	echo "Final change" >file &&
-	test_tick && git cummit -a -m "Final change" &&
+	test_tick && but cummit -a -m "Final change" &&
 	note I &&
 
-	git checkout main &&
-	test_tick && git merge --allow-unrelated-histories -m "Coolest" unrelated &&
+	but checkout main &&
+	test_tick && but merge --allow-unrelated-histories -m "Coolest" unrelated &&
 	note K &&
 
 	echo "Immaterial" >elif &&
-	git add elif &&
-	test_tick && git cummit -m "Last" &&
+	but add elif &&
+	test_tick && but cummit -m "Last" &&
 	note L
 '
 
@@ -113,7 +113,7 @@ check_outcome () {
 	shift &&
 	param="$*" &&
 	test_expect_$outcome "log $param" '
-		git log --pretty="$FMT" --parents $param >out &&
+		but log --pretty="$FMT" --parents $param >out &&
 		unnote >actual <out &&
 		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 		test_cmp expect check
@@ -153,15 +153,15 @@ check_result 'L K I H G B' --exclude-first-parent-only --first-parent L ^F
 check_result 'E C B A' --full-history E -- lost
 test_expect_success 'full history simplification without parent' '
 	printf "%s\n" E C B A >expect &&
-	git log --pretty="$FMT" --full-history E -- lost >out &&
+	but log --pretty="$FMT" --full-history E -- lost >out &&
 	unnote >actual <out &&
 	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 	test_cmp expect check
 '
 
 test_expect_success '--full-diff is not affected by --parents' '
-	git log -p --pretty="%H" --full-diff -- file >expected &&
-	git log -p --pretty="%H" --full-diff --parents -- file >actual &&
+	but log -p --pretty="%H" --full-diff -- file >expected &&
+	but log -p --pretty="%H" --full-diff --parents -- file >actual &&
 	test_cmp expected actual
 '
 
@@ -180,63 +180,63 @@ test_expect_success '--full-diff is not affected by --parents' '
 # This example is explained in Documentation/rev-list-options.txt
 
 test_expect_success 'setup rebuild repo' '
-	rm -rf .git * &&
-	git init &&
-	git switch -c topic &&
+	rm -rf .but * &&
+	but init &&
+	but switch -c topic &&
 
 	echo base >file &&
-	git add file &&
+	but add file &&
 	test_cummit I &&
 
 	echo A >file &&
-	git add file &&
+	but add file &&
 	test_cummit A &&
 
-	git switch -c branchB I &&
+	but switch -c branchB I &&
 	echo B >file &&
-	git add file &&
+	but add file &&
 	test_cummit B &&
 
-	git switch topic &&
-	test_must_fail git merge -m "M" B &&
+	but switch topic &&
+	test_must_fail but merge -m "M" B &&
 	echo A >file &&
 	echo B >>file &&
-	git add file &&
-	git merge --continue &&
+	but add file &&
+	but merge --continue &&
 	note M &&
 
 	echo C >other &&
-	git add other &&
+	but add other &&
 	test_cummit C &&
 
-	git switch -c branchX I &&
+	but switch -c branchX I &&
 	echo X >file &&
-	git add file &&
+	but add file &&
 	test_cummit X &&
 
-	git switch -c branchR M &&
-	git merge -m R -Xtheirs X &&
+	but switch -c branchR M &&
+	but merge -m R -Xtheirs X &&
 	note R &&
 
-	git switch topic &&
-	git merge -m N R &&
+	but switch topic &&
+	but merge -m N R &&
 	note N &&
 
-	git switch -c branchY M &&
+	but switch -c branchY M &&
 	echo Y >y &&
-	git add y &&
+	but add y &&
 	test_cummit Y &&
 
-	git switch -c branchZ C &&
+	but switch -c branchZ C &&
 	echo Z >z &&
-	git add z &&
+	but add z &&
 	test_cummit Z &&
 
-	git switch topic &&
-	git merge -m O Z &&
+	but switch topic &&
+	but merge -m O Z &&
 	note O &&
 
-	git merge -m P Y &&
+	but merge -m P Y &&
 	note P
 '
 
@@ -279,7 +279,7 @@ test_expect_success 'log --graph --simplify-merges --show-pulls' '
 	|/  
 	* I
 	EOF
-	git log --graph --pretty="%s" \
+	but log --graph --pretty="%s" \
 		--simplify-merges --show-pulls \
 		-- file >actual &&
 	test_cmp expect actual

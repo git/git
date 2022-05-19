@@ -7,28 +7,28 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 head_is_detached() {
-	git --git-dir=$1/.git rev-parse --verify HEAD &&
-	test_must_fail git --git-dir=$1/.git symbolic-ref HEAD
+	but --but-dir=$1/.but rev-parse --verify HEAD &&
+	test_must_fail but --but-dir=$1/.but symbolic-ref HEAD
 }
 
 test_expect_success 'setup' '
 	echo one >file &&
-	git add file &&
-	git cummit -m one &&
+	but add file &&
+	but cummit -m one &&
 	echo two >file &&
-	git cummit -a -m two &&
-	git tag two &&
+	but cummit -a -m two &&
+	but tag two &&
 	echo three >file &&
-	git cummit -a -m three
+	but cummit -a -m three
 '
 
 test_expect_success 'clone repo (detached HEAD points to branch)' '
-	git checkout main^0 &&
-	git clone "file://$PWD" detached-branch
+	but checkout main^0 &&
+	but clone "file://$PWD" detached-branch
 '
 test_expect_success 'cloned HEAD matches' '
 	echo three >expect &&
-	git --git-dir=detached-branch/.git log -1 --format=%s >actual &&
+	but --but-dir=detached-branch/.but log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
 test_expect_failure 'cloned HEAD is detached' '
@@ -36,12 +36,12 @@ test_expect_failure 'cloned HEAD is detached' '
 '
 
 test_expect_success 'clone repo (detached HEAD points to tag)' '
-	git checkout two^0 &&
-	git clone "file://$PWD" detached-tag
+	but checkout two^0 &&
+	but clone "file://$PWD" detached-tag
 '
 test_expect_success 'cloned HEAD matches' '
 	echo two >expect &&
-	git --git-dir=detached-tag/.git log -1 --format=%s >actual &&
+	but --but-dir=detached-tag/.but log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
 test_expect_success 'cloned HEAD is detached' '
@@ -49,12 +49,12 @@ test_expect_success 'cloned HEAD is detached' '
 '
 
 test_expect_success 'clone repo (detached HEAD points to history)' '
-	git checkout two^ &&
-	git clone "file://$PWD" detached-history
+	but checkout two^ &&
+	but clone "file://$PWD" detached-history
 '
 test_expect_success 'cloned HEAD matches' '
 	echo one >expect &&
-	git --git-dir=detached-history/.git log -1 --format=%s >actual &&
+	but --but-dir=detached-history/.but log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
 test_expect_success 'cloned HEAD is detached' '
@@ -62,14 +62,14 @@ test_expect_success 'cloned HEAD is detached' '
 '
 
 test_expect_success 'clone repo (orphan detached HEAD)' '
-	git checkout main^0 &&
+	but checkout main^0 &&
 	echo four >file &&
-	git cummit -a -m four &&
-	git clone "file://$PWD" detached-orphan
+	but cummit -a -m four &&
+	but clone "file://$PWD" detached-orphan
 '
 test_expect_success 'cloned HEAD matches' '
 	echo four >expect &&
-	git --git-dir=detached-orphan/.git log -1 --format=%s >actual &&
+	but --but-dir=detached-orphan/.but log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
 test_expect_success 'cloned HEAD is detached' '

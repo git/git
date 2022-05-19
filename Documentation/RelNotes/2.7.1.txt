@@ -14,7 +14,7 @@ Fixes since v2.7
    to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
    array.
 
- * "git send-email" was confused by escaped quotes stored in the alias
+ * "but send-email" was confused by escaped quotes stored in the alias
    files saved by "mutt", which has been corrected.
 
  * A few unportable C construct have been spotted by clang compiler
@@ -23,7 +23,7 @@ Fixes since v2.7
  * The documentation has been updated to hint the connection between
    the '--signoff' option and DCO.
 
- * "git reflog" incorrectly assumed that all objects that used to be
+ * "but reflog" incorrectly assumed that all objects that used to be
    at the tip of a ref must be cummits, which caused it to segfault.
 
  * The ignore mechanism saw a few regressions around untracked file
@@ -37,10 +37,10 @@ Fixes since v2.7
    user is tighter.  They have been made to work better by calling
    unlink(2) and retrying after fopen(3) fails with EPERM.
 
- * Asking gitweb for a nonexistent cummit left a warning in the server
+ * Asking butweb for a nonexistent cummit left a warning in the server
    log.
 
- * "git rebase", unlike all other callers of "gc --auto", did not
+ * "but rebase", unlike all other callers of "gc --auto", did not
    ignore the exit code from "gc --auto".
 
  * Many codepaths that run "gc --auto" before exiting kept packfiles
@@ -55,17 +55,17 @@ Fixes since v2.7
  * The description for SANITY prerequisite the test suite uses has
    been clarified both in the comment and in the implementation.
 
- * "git tag" started listing a tag "foo" as "tags/foo" when a branch
+ * "but tag" started listing a tag "foo" as "tags/foo" when a branch
    named "foo" exists in the same repository; remove this unnecessary
    disambiguation, which is a regression introduced in v2.7.0.
 
- * The way "git svn" uses auth parameter was broken by Subversion
+ * The way "but svn" uses auth parameter was broken by Subversion
    1.9.0 and later.
 
- * The "split" subcommand of "git subtree" (in contrib/) incorrectly
+ * The "split" subcommand of "but subtree" (in contrib/) incorrectly
    skipped merges when it shouldn't, which was corrected.
 
- * A few options of "git diff" did not work well when the command was
+ * A few options of "but diff" did not work well when the command was
    run from a subdirectory.
 
  * dirname() emulation has been added, as Msys2 lacks it.
@@ -79,7 +79,7 @@ Fixes since v2.7
    suggests is not such a good idea, and doing the change the other
    one suggested to do.
 
- * Documentation for "git fetch --depth" has been updated for clarity.
+ * Documentation for "but fetch --depth" has been updated for clarity.
 
  * The command line completion learned a handful of additional options
    and command specific syntax.

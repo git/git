@@ -1,6 +1,6 @@
-# Translation of git-gui to Greek
+# Translation of but-gui to Greek
 # Copyright (C) 2009 Jimmy Angelakos
-# This file is distributed under the same license as the git-gui package.
+# This file is distributed under the same license as the but-gui package.
 # Jimmy Angelakos <vyruss@hellug.gr>, 2009.
 msgid ""
 msgstr ""
@@ -16,33 +16,33 @@ msgstr ""
 "X-Generator: Lokalize 0.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: git-gui.sh:41 git-gui.sh:634 git-gui.sh:648 git-gui.sh:661 git-gui.sh:744
-#: git-gui.sh:763
-msgid "git-gui: fatal error"
-msgstr "git-gui: κρίσιμο σφάλμα"
+#: but-gui.sh:41 but-gui.sh:634 but-gui.sh:648 but-gui.sh:661 but-gui.sh:744
+#: but-gui.sh:763
+msgid "but-gui: fatal error"
+msgstr "but-gui: κρίσιμο σφάλμα"
 
-#: git-gui.sh:593
+#: but-gui.sh:593
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Μη έγκυρη γραμματοσειρά στο %s:"
 
-#: git-gui.sh:620
+#: but-gui.sh:620
 msgid "Main Font"
 msgstr "Κύρια Γραμματοσειρά"
 
-#: git-gui.sh:621
+#: but-gui.sh:621
 msgid "Diff/Console Font"
 msgstr "Γραμματοσειρά Διαφοράς/Κονσόλας"
 
-#: git-gui.sh:635
-msgid "Cannot find git in PATH."
-msgstr "Δε βρέθηκε το git στο PATH."
+#: but-gui.sh:635
+msgid "Cannot find but in PATH."
+msgstr "Δε βρέθηκε το but στο PATH."
 
-#: git-gui.sh:662
+#: but-gui.sh:662
 msgid "Cannot parse Git version string:"
 msgstr "Αδύνατη η ανάγνωση στοιχειοσειράς έκδοσης Git:"
 
-#: git-gui.sh:680
+#: but-gui.sh:680
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -61,379 +61,379 @@ msgstr ""
 "\n"
 "Να υποτεθεί πως το '%s' είναι η έκδοση 1.5.0;\n"
 
-#: git-gui.sh:918
+#: but-gui.sh:918
 msgid "Git directory not found:"
 msgstr "Δε βρέθηκε φάκελος Git:"
 
-#: git-gui.sh:925
+#: but-gui.sh:925
 msgid "Cannot move to top of working directory:"
 msgstr "Δεν είναι δυνατή η μετακίνηση στην κορυφή του φακέλου εργασίας:"
 
-#: git-gui.sh:932
-msgid "Cannot use funny .git directory:"
-msgstr "Δεν είναι δυνατή η χρήση περίεργου φακέλου .git:"
+#: but-gui.sh:932
+msgid "Cannot use funny .but directory:"
+msgstr "Δεν είναι δυνατή η χρήση περίεργου φακέλου .but:"
 
-#: git-gui.sh:937
+#: but-gui.sh:937
 msgid "No working directory"
 msgstr "Δεν υπάρχει φάκελος εργασίας"
 
-#: git-gui.sh:1084 lib/checkout_op.tcl:283
+#: but-gui.sh:1084 lib/checkout_op.tcl:283
 msgid "Refreshing file status..."
 msgstr "Ανανέωση κατάστασης αρχείου..."
 
-#: git-gui.sh:1149
+#: but-gui.sh:1149
 msgid "Scanning for modified files ..."
 msgstr "Ανίχνευση για τροποποιημένα αρχεία..."
 
-#: git-gui.sh:1324 lib/browser.tcl:246
+#: but-gui.sh:1324 lib/browser.tcl:246
 msgid "Ready."
 msgstr "Έτοιμο."
 
-#: git-gui.sh:1590
+#: but-gui.sh:1590
 msgid "Unmodified"
 msgstr "Μη τροποποιημένο"
 
-#: git-gui.sh:1592
+#: but-gui.sh:1592
 msgid "Modified, not staged"
 msgstr "Τροποποιημένο, μη σταδιοποιημένο"
 
-#: git-gui.sh:1593 git-gui.sh:1598
+#: but-gui.sh:1593 but-gui.sh:1598
 msgid "Staged for cummit"
 msgstr "Σταδιοποιημένο προς υποβολή"
 
-#: git-gui.sh:1594 git-gui.sh:1599
+#: but-gui.sh:1594 but-gui.sh:1599
 msgid "Portions staged for cummit"
 msgstr "Μέρη σταδιοποιημένα προς υποβολή"
 
-#: git-gui.sh:1595 git-gui.sh:1600
+#: but-gui.sh:1595 but-gui.sh:1600
 msgid "Staged for cummit, missing"
 msgstr "Σταδιοποιημένο προς υποβολή, λείπει"
 
-#: git-gui.sh:1597
+#: but-gui.sh:1597
 msgid "Untracked, not staged"
 msgstr "Μη παρακολουθούμενο, μη σταδιοποιημένο"
 
-#: git-gui.sh:1602
+#: but-gui.sh:1602
 msgid "Missing"
 msgstr "Λείπει"
 
-#: git-gui.sh:1603
+#: but-gui.sh:1603
 msgid "Staged for removal"
 msgstr "Σταδιοποιημένο προς αφαίρεση"
 
-#: git-gui.sh:1604
+#: but-gui.sh:1604
 msgid "Staged for removal, still present"
 msgstr "Σταδιοποιημένο προς αφαίρεση, ακόμα παρόν"
 
-#: git-gui.sh:1606 git-gui.sh:1607 git-gui.sh:1608 git-gui.sh:1609
+#: but-gui.sh:1606 but-gui.sh:1607 but-gui.sh:1608 but-gui.sh:1609
 msgid "Requires merge resolution"
 msgstr "Απαιτεί επίλυση συγχώνευσης"
 
-#: git-gui.sh:1644
-msgid "Starting gitk... please wait..."
-msgstr "Γίνεται εκκίνηση του gitk... παρακαλώ περιμένετε..."
+#: but-gui.sh:1644
+msgid "Starting butk... please wait..."
+msgstr "Γίνεται εκκίνηση του butk... παρακαλώ περιμένετε..."
 
-#: git-gui.sh:1653
+#: but-gui.sh:1653
 #, tcl-format
 msgid ""
-"Unable to start gitk:\n"
+"Unable to start butk:\n"
 "\n"
 "%s does not exist"
 msgstr ""
-"Αδυναμία εκκίνησης του gitk:\n"
+"Αδυναμία εκκίνησης του butk:\n"
 "\n"
 "Το %s δεν υπάρχει"
 
-#: git-gui.sh:1860 lib/choose_repository.tcl:36
+#: but-gui.sh:1860 lib/choose_repository.tcl:36
 msgid "Repository"
 msgstr "Αποθετήριο"
 
-#: git-gui.sh:1861
+#: but-gui.sh:1861
 msgid "Edit"
 msgstr "Επεξεργασία"
 
-#: git-gui.sh:1863 lib/choose_rev.tcl:561
+#: but-gui.sh:1863 lib/choose_rev.tcl:561
 msgid "Branch"
 msgstr "Κλάδος"
 
-#: git-gui.sh:1866 lib/choose_rev.tcl:548
+#: but-gui.sh:1866 lib/choose_rev.tcl:548
 msgid "cummit@@noun"
 msgstr "Υποβολή@@noun"
 
-#: git-gui.sh:1869 lib/merge.tcl:120 lib/merge.tcl:149 lib/merge.tcl:167
+#: but-gui.sh:1869 lib/merge.tcl:120 lib/merge.tcl:149 lib/merge.tcl:167
 msgid "Merge"
 msgstr "Συγχώνευση"
 
-#: git-gui.sh:1870 lib/choose_rev.tcl:557
+#: but-gui.sh:1870 lib/choose_rev.tcl:557
 msgid "Remote"
 msgstr "Απομακρυσμένο"
 
-#: git-gui.sh:1879
+#: but-gui.sh:1879
 msgid "Browse Current Branch's Files"
 msgstr "Περιήγηση Αρχείων Τρέχοντα Κλάδου"
 
-#: git-gui.sh:1883
+#: but-gui.sh:1883
 msgid "Browse Branch Files..."
 msgstr "Περιήγηση Αρχείων Κλάδου..."
 
-#: git-gui.sh:1888
+#: but-gui.sh:1888
 msgid "Visualize Current Branch's History"
 msgstr "Απεικόνιση Ιστορικού Τρέχοντα Κλάδου"
 
-#: git-gui.sh:1892
+#: but-gui.sh:1892
 msgid "Visualize All Branch History"
 msgstr "Απεικόνιση Ιστορικού Όλων των Κλάδων"
 
-#: git-gui.sh:1899
+#: but-gui.sh:1899
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "Περιήγηση Αρχείων του %s"
 
-#: git-gui.sh:1901
+#: but-gui.sh:1901
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "Απεικόνιση Ιστορικού του %s"
 
-#: git-gui.sh:1906 lib/database.tcl:27 lib/database.tcl:67
+#: but-gui.sh:1906 lib/database.tcl:27 lib/database.tcl:67
 msgid "Database Statistics"
 msgstr "Στατιστικά Βάσης Δεδομένων"
 
-#: git-gui.sh:1909 lib/database.tcl:34
+#: but-gui.sh:1909 lib/database.tcl:34
 msgid "Compress Database"
 msgstr "Συμπίεση Βάσης Δεδομένων"
 
-#: git-gui.sh:1912
+#: but-gui.sh:1912
 msgid "Verify Database"
 msgstr "Επαλήθευση Βάσης Δεδομένων"
 
-#: git-gui.sh:1919 git-gui.sh:1923 git-gui.sh:1927 lib/shortcut.tcl:7
+#: but-gui.sh:1919 but-gui.sh:1923 but-gui.sh:1927 lib/shortcut.tcl:7
 #: lib/shortcut.tcl:39 lib/shortcut.tcl:71
 msgid "Create Desktop Icon"
 msgstr "Δημιουργία Εικονιδίου Επιφάνειας Εργασίας"
 
-#: git-gui.sh:1932 lib/choose_repository.tcl:177 lib/choose_repository.tcl:185
+#: but-gui.sh:1932 lib/choose_repository.tcl:177 lib/choose_repository.tcl:185
 msgid "Quit"
 msgstr "Έξοδος"
 
-#: git-gui.sh:1939
+#: but-gui.sh:1939
 msgid "Undo"
 msgstr "Αναίρεση"
 
-#: git-gui.sh:1942
+#: but-gui.sh:1942
 msgid "Redo"
 msgstr "Ξανά"
 
-#: git-gui.sh:1946 git-gui.sh:2443
+#: but-gui.sh:1946 but-gui.sh:2443
 msgid "Cut"
 msgstr "Αποκοπή"
 
-#: git-gui.sh:1949 git-gui.sh:2446 git-gui.sh:2520 git-gui.sh:2614
+#: but-gui.sh:1949 but-gui.sh:2446 but-gui.sh:2520 but-gui.sh:2614
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Αντιγραφή"
 
-#: git-gui.sh:1952 git-gui.sh:2449
+#: but-gui.sh:1952 but-gui.sh:2449
 msgid "Paste"
 msgstr "Επικόλληση"
 
-#: git-gui.sh:1955 git-gui.sh:2452 lib/branch_delete.tcl:26
+#: but-gui.sh:1955 but-gui.sh:2452 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr "Διαγραφή"
 
-#: git-gui.sh:1959 git-gui.sh:2456 git-gui.sh:2618 lib/console.tcl:71
+#: but-gui.sh:1959 but-gui.sh:2456 but-gui.sh:2618 lib/console.tcl:71
 msgid "Select All"
 msgstr "Επιλογή Όλων"
 
-#: git-gui.sh:1968
+#: but-gui.sh:1968
 msgid "Create..."
 msgstr "Δημιουργία..."
 
-#: git-gui.sh:1974
+#: but-gui.sh:1974
 msgid "Checkout..."
 msgstr "Εξαγωγή..."
 
-#: git-gui.sh:1980
+#: but-gui.sh:1980
 msgid "Rename..."
 msgstr "Μετονομασία..."
 
-#: git-gui.sh:1985 git-gui.sh:2085
+#: but-gui.sh:1985 but-gui.sh:2085
 msgid "Delete..."
 msgstr "Διαγραφή..."
 
-#: git-gui.sh:1990
+#: but-gui.sh:1990
 msgid "Reset..."
 msgstr "Επαναφορά..."
 
-#: git-gui.sh:2002 git-gui.sh:2389
+#: but-gui.sh:2002 but-gui.sh:2389
 msgid "New cummit"
 msgstr "Νέα Υποβολή"
 
-#: git-gui.sh:2010 git-gui.sh:2396
+#: but-gui.sh:2010 but-gui.sh:2396
 msgid "Amend Last cummit"
 msgstr "Διόρθωση Τελευταίας Υποβολής"
 
-#: git-gui.sh:2019 git-gui.sh:2356 lib/remote_branch_delete.tcl:99
+#: but-gui.sh:2019 but-gui.sh:2356 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Επανανίχνευση"
 
-#: git-gui.sh:2025
+#: but-gui.sh:2025
 msgid "Stage To cummit"
 msgstr "Σταδιοποίηση Προς Υποβολή"
 
-#: git-gui.sh:2031
+#: but-gui.sh:2031
 msgid "Stage Changed Files To cummit"
 msgstr "Σταδιοποίηση Αλλαγμένων Αρχείων Προς Υποβολή"
 
-#: git-gui.sh:2037
+#: but-gui.sh:2037
 msgid "Unstage From cummit"
 msgstr "Αποσταδιοποίηση Από Υποβολή"
 
-#: git-gui.sh:2042 lib/index.tcl:395
+#: but-gui.sh:2042 lib/index.tcl:395
 msgid "Revert Changes"
 msgstr "Αναίρεση Αλλαγών"
 
-#: git-gui.sh:2049 git-gui.sh:2368 git-gui.sh:2467
+#: but-gui.sh:2049 but-gui.sh:2368 but-gui.sh:2467
 msgid "Sign Off"
 msgstr "Αποσύνδεση"
 
-#: git-gui.sh:2053 git-gui.sh:2372
+#: but-gui.sh:2053 but-gui.sh:2372
 msgid "cummit@@verb"
 msgstr "Υποβολή@@verb"
 
-#: git-gui.sh:2064
+#: but-gui.sh:2064
 msgid "Local Merge..."
 msgstr "Τοπική Συγχώνευση..."
 
-#: git-gui.sh:2069
+#: but-gui.sh:2069
 msgid "Abort Merge..."
 msgstr "Ακύρωση Συγχώνευσης..."
 
-#: git-gui.sh:2081
+#: but-gui.sh:2081
 msgid "Push..."
 msgstr "Ώθηση..."
 
-#: git-gui.sh:2092 lib/choose_repository.tcl:41
+#: but-gui.sh:2092 lib/choose_repository.tcl:41
 #, fuzzy
 msgid "Apple"
 msgstr ""
 
-#: git-gui.sh:2095 git-gui.sh:2117 lib/about.tcl:14
+#: but-gui.sh:2095 but-gui.sh:2117 lib/about.tcl:14
 #: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
 #, tcl-format
 msgid "About %s"
 msgstr "Περί %s"
 
-#: git-gui.sh:2099
+#: but-gui.sh:2099
 msgid "Preferences..."
 msgstr "Προτιμήσεις..."
 
-#: git-gui.sh:2107 git-gui.sh:2639
+#: but-gui.sh:2107 but-gui.sh:2639
 msgid "Options..."
 msgstr "Επιλογές..."
 
-#: git-gui.sh:2113 lib/choose_repository.tcl:47
+#: but-gui.sh:2113 lib/choose_repository.tcl:47
 msgid "Help"
 msgstr "Βοήθεια"
 
-#: git-gui.sh:2154
+#: but-gui.sh:2154
 msgid "Online Documentation"
 msgstr "Διαδικτυακή Τεκμηρίωση"
 
-#: git-gui.sh:2238
+#: but-gui.sh:2238
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr "κρίσιμο: δε βρέθηκε η διαδρομή: %s: Δεν υπάρχει το αρχείο ή ο φάκελος"
 
-#: git-gui.sh:2271
+#: but-gui.sh:2271
 msgid "Current Branch:"
 msgstr "Τρέχων Κλάδος:"
 
-#: git-gui.sh:2292
+#: but-gui.sh:2292
 msgid "Staged Changes (Will cummit)"
 msgstr "Σταδιοποιημένες Αλλαγές (Θα Υποβληθούν)"
 
-#: git-gui.sh:2312
+#: but-gui.sh:2312
 msgid "Unstaged Changes"
 msgstr "Μη Σταδιοποιημένες Αλλαγές"
 
-#: git-gui.sh:2362
+#: but-gui.sh:2362
 msgid "Stage Changed"
 msgstr "Σταδιοποίηση Αλλαγών"
 
-#: git-gui.sh:2378 lib/transport.tcl:93 lib/transport.tcl:182
+#: but-gui.sh:2378 lib/transport.tcl:93 lib/transport.tcl:182
 msgid "Push"
 msgstr "Ώθηση"
 
-#: git-gui.sh:2408
+#: but-gui.sh:2408
 msgid "Initial cummit Message:"
 msgstr "Αρχικό Μήνυμα Υποβολής:"
 
-#: git-gui.sh:2409
+#: but-gui.sh:2409
 msgid "Amended cummit Message:"
 msgstr "Διορθωμένο Μήνυμα Υποβολής:"
 
-#: git-gui.sh:2410
+#: but-gui.sh:2410
 msgid "Amended Initial cummit Message:"
 msgstr "Διορθωμένο Αρχικό Μήνυμα Υποβολής:"
 
-#: git-gui.sh:2411
+#: but-gui.sh:2411
 msgid "Amended Merge cummit Message:"
 msgstr "Διορθωμένο Μήνυμα Υποβολής Συγχώνευσης:"
 
-#: git-gui.sh:2412
+#: but-gui.sh:2412
 msgid "Merge cummit Message:"
 msgstr "Μήνυμα Υποβολής Συγχώνευσης:"
 
-#: git-gui.sh:2413
+#: but-gui.sh:2413
 msgid "cummit Message:"
 msgstr "Μήνυμα Υποβολής:"
 
-#: git-gui.sh:2459 git-gui.sh:2622 lib/console.tcl:73
+#: but-gui.sh:2459 but-gui.sh:2622 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Αντιγραφή Όλων"
 
-#: git-gui.sh:2483 lib/blame.tcl:107
+#: but-gui.sh:2483 lib/blame.tcl:107
 msgid "File:"
 msgstr "Αρχείο:"
 
-#: git-gui.sh:2589
+#: but-gui.sh:2589
 msgid "Apply/Reverse Hunk"
 msgstr "Εφαρμογή/Αντιστροφή Κομματιού"
 
-#: git-gui.sh:2595
+#: but-gui.sh:2595
 msgid "Show Less Context"
 msgstr "Προβολή Στενότερου Πλαισίου"
 
-#: git-gui.sh:2602
+#: but-gui.sh:2602
 msgid "Show More Context"
 msgstr "Προβολή Ευρύτερου Πλαισίου"
 
-#: git-gui.sh:2610
+#: but-gui.sh:2610
 msgid "Refresh"
 msgstr "Ανανέωση"
 
-#: git-gui.sh:2631
+#: but-gui.sh:2631
 msgid "Decrease Font Size"
 msgstr "Μείωση Μεγέθους Γραμματοσειράς"
 
-#: git-gui.sh:2635
+#: but-gui.sh:2635
 msgid "Increase Font Size"
 msgstr "Αύξηση Μεγέθους Γραμματοσειράς"
 
-#: git-gui.sh:2646
+#: but-gui.sh:2646
 msgid "Unstage Hunk From cummit"
 msgstr "Αποσταδιοποίηση Κομματιού Από Υποβολή"
 
-#: git-gui.sh:2648
+#: but-gui.sh:2648
 msgid "Stage Hunk For cummit"
 msgstr "Σταδιοποίηση Κομματιού Προς Υποβολή"
 
-#: git-gui.sh:2667
+#: but-gui.sh:2667
 msgid "Initializing..."
 msgstr "Γίνεται αρχικοποίηση..."
 
-#: git-gui.sh:2762
+#: but-gui.sh:2762
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -450,7 +450,7 @@ msgstr ""
 "από το %s:\n"
 "\n"
 
-#: git-gui.sh:2792
+#: but-gui.sh:2792
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -460,7 +460,7 @@ msgstr ""
 "Αυτό οφείλεται σε ένα γνωστό θέμα με το\n"
 "εκτελέσιμο Tcl που διανέμεται με το Cygwin."
 
-#: git-gui.sh:2797
+#: but-gui.sh:2797
 #, tcl-format
 msgid ""
 "\n"
@@ -468,18 +468,18 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 "\n"
 "\n"
 "Ένα καλό υποκατάστατο για το %s\n"
 "είναι η τοποθέτηση τιμών για τις ρυθμίσεις\n"
 "user.name και user.email στο προσωπικό σας\n"
-"αρχείο ~/.gitconfig .\n"
+"αρχείο ~/.butconfig .\n"
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - ένα γραφικό περιβάλλον για το Git."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui - ένα γραφικό περιβάλλον για το Git."
 
 #: lib/blame.tcl:77
 msgid "File Viewer"
@@ -1512,10 +1512,10 @@ msgstr "Σφάλμα Ευρετηρίου"
 #: lib/index.tcl:21
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "Η ενημέρωση του ευρετηρίου Git απέτυχε. Θα ξεκινήσει αυτόματα επανανίχνευση "
-"για επανασυγχρονισμό του git-gui."
+"για επανασυγχρονισμό του but-gui."
 
 #: lib/index.tcl:27
 msgid "Continue"

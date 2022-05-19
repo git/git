@@ -8,7 +8,7 @@ const char *find_hook(const char *name)
 	static struct strbuf path = STRBUF_INIT;
 
 	strbuf_reset(&path);
-	strbuf_git_path(&path, "hooks/%s", name);
+	strbuf_but_path(&path, "hooks/%s", name);
 	if (access(path.buf, X_OK) < 0) {
 		int err = errno;
 
@@ -28,7 +28,7 @@ const char *find_hook(const char *name)
 				advise(_("The '%s' hook was ignored because "
 					 "it's not set as executable.\n"
 					 "You can disable this warning with "
-					 "`git config advice.ignoredHook false`."),
+					 "`but config advice.ignoredHook false`."),
 				       path.buf);
 			}
 		}

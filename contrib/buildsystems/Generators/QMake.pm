@@ -13,24 +13,24 @@ BEGIN {
 }
 
 sub generate {
-    my ($git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($but_dir, $out_dir, $rel_dir, %build_structure) = @_;
 
     my @libs = @{$build_structure{"LIBS"}};
     foreach (@libs) {
-        createLibProject($_, $git_dir, $out_dir, $rel_dir, %build_structure);
+        createLibProject($_, $but_dir, $out_dir, $rel_dir, %build_structure);
     }
 
     my @apps = @{$build_structure{"APPS"}};
     foreach (@apps) {
-        createAppProject($_, $git_dir, $out_dir, $rel_dir, %build_structure);
+        createAppProject($_, $but_dir, $out_dir, $rel_dir, %build_structure);
     }
 
-    createGlueProject($git_dir, $out_dir, $rel_dir, %build_structure);
+    createGlueProject($but_dir, $out_dir, $rel_dir, %build_structure);
     return 0;
 }
 
 sub createLibProject {
-    my ($libname, $git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($libname, $but_dir, $out_dir, $rel_dir, %build_structure) = @_;
     print "Generate $libname lib project\n";
     $rel_dir = "../$rel_dir";
 
@@ -90,7 +90,7 @@ EOM
 }
 
 sub createAppProject {
-    my ($appname, $git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($appname, $but_dir, $out_dir, $rel_dir, %build_structure) = @_;
     print "Generate $appname app project\n";
     $rel_dir = "../$rel_dir";
 
@@ -161,7 +161,7 @@ EOM
 }
 
 sub createGlueProject {
-    my ($git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($but_dir, $out_dir, $rel_dir, %build_structure) = @_;
     my $libs = join(" \\ \n", map("\t$_|$_.pro", @{$build_structure{"LIBS"}}));
     my $apps = join(" \\ \n", map("\t$_|$_.pro", @{$build_structure{"APPS"}}));
     $libs =~ s/\.a//g;

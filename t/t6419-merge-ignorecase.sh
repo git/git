@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge with case-changing rename on case-insensitive file system'
+test_description='but-merge with case-changing rename on case-insensitive file system'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -14,42 +14,42 @@ then
 fi
 
 test_expect_success 'merge with case-changing rename' '
-	test $(git config core.ignorecase) = true &&
+	test $(but config core.ignorecase) = true &&
 	>TestCase &&
-	git add TestCase &&
-	git cummit -m "add TestCase" &&
-	git tag baseline &&
-	git checkout -b with-camel &&
+	but add TestCase &&
+	but cummit -m "add TestCase" &&
+	but tag baseline &&
+	but checkout -b with-camel &&
 	>foo &&
-	git add foo &&
-	git cummit -m "intervening cummit" &&
-	git checkout main &&
-	git rm TestCase &&
+	but add foo &&
+	but cummit -m "intervening cummit" &&
+	but checkout main &&
+	but rm TestCase &&
 	>testcase &&
-	git add testcase &&
-	git cummit -m "rename to testcase" &&
-	git checkout with-camel &&
-	git merge main -m "merge" &&
+	but add testcase &&
+	but cummit -m "rename to testcase" &&
+	but checkout with-camel &&
+	but merge main -m "merge" &&
 	test_path_is_file testcase
 '
 
 test_expect_success 'merge with case-changing rename on both sides' '
-	git checkout main &&
-	git reset --hard baseline &&
-	git branch -D with-camel &&
-	git checkout -b with-camel &&
-	git mv TestCase testcase &&
-	git cummit -m "recase on branch" &&
+	but checkout main &&
+	but reset --hard baseline &&
+	but branch -D with-camel &&
+	but checkout -b with-camel &&
+	but mv TestCase testcase &&
+	but cummit -m "recase on branch" &&
 	>foo &&
-	git add foo &&
-	git cummit -m "intervening cummit" &&
-	git checkout main &&
-	git rm TestCase &&
+	but add foo &&
+	but cummit -m "intervening cummit" &&
+	but checkout main &&
+	but rm TestCase &&
 	>testcase &&
-	git add testcase &&
-	git cummit -m "rename to testcase" &&
-	git checkout with-camel &&
-	git merge main -m "merge" &&
+	but add testcase &&
+	but cummit -m "rename to testcase" &&
+	but checkout with-camel &&
+	but merge main -m "merge" &&
 	test_path_is_file testcase
 '
 

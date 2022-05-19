@@ -5,8 +5,8 @@
 #     Celestin Matte <celestin.matte@ensimag.imag.fr>
 # License: GPL v2 or later
 
-# Set of tools for git repo with a mediawiki remote.
-# Documentation & bugtracker: https://github.com/Git-Mediawiki/Git-Mediawiki
+# Set of tools for but repo with a mediawiki remote.
+# Documentation & bugtracker: https://buthub.com/Git-Mediawiki/Git-Mediawiki
 
 use strict;
 use warnings;
@@ -76,7 +76,7 @@ GetOptions( %{$cmd->[1]},
 
 sub preview_help {
 	print {*STDOUT} <<'END';
-USAGE: git mw preview [--remote|-r <remote name>] [--autoload|-a]
+USAGE: but mw preview [--remote|-r <remote name>] [--autoload|-a]
                       [--output|-o <output filename>] [--verbose|-v]
                       <blob> | <filename>
 
@@ -126,7 +126,7 @@ sub preview {
 	my $file_content;
 
 	if ($file_name eq EMPTY) {
-		die "Missing file argument, see `git mw help`\n";
+		die "Missing file argument, see `but mw help`\n";
 	}
 
 	v_print("### Selecting remote\n");
@@ -169,7 +169,7 @@ MESSAGE
 
 	# Read file content
 	if (! -e $file_name) {
-		$file_content = git_cmd_try {
+		$file_content = but_cmd_try {
 			Git::command('cat-file', 'blob', $file_name); }
 			"%s failed w/ code %d";
 
@@ -211,7 +211,7 @@ MESSAGE
 	v_print("### Results\n");
 	if ($autoload) {
 		v_print("Launching browser w/ file: ${preview_file_name}");
-		system('git', 'web--browse', $preview_file_name);
+		system('but', 'web--browse', $preview_file_name);
 	} else {
 		print {*STDERR} "Preview file saved as: ${preview_file_name}\n";
 	}
@@ -242,7 +242,7 @@ sub merge_contents {
 		print {*STDERR} <<"CONFIG";
 Could not combine the new content with the template. You might want to
 configure `mediawiki.IDContent` in your config:
-	git config --add remote.${remote_name}.mwIDcontent <id>
+	but config --add remote.${remote_name}.mwIDcontent <id>
 and re-run the command afterward.
 CONFIG
 		exit 1;
@@ -270,7 +270,7 @@ sub make_links_absolute {
 
 sub is_valid_remote {
 	my $remote = shift;
-	my @remotes = git_cmd_try {
+	my @remotes = but_cmd_try {
 		Git::command('remote') }
 		"%s failed w/ code %d";
 	my $found_remote = 0;
@@ -284,7 +284,7 @@ sub is_valid_remote {
 }
 
 sub find_mediawiki_remotes {
-	my @remotes = git_cmd_try {
+	my @remotes = but_cmd_try {
 		Git::command('remote'); }
 		"%s failed w/ code %d";
 	my $remote_url;
@@ -299,7 +299,7 @@ sub find_mediawiki_remotes {
 }
 
 sub find_upstream_remote_name {
-	my $current_branch = git_cmd_try {
+	my $current_branch = but_cmd_try {
 		Git::command_oneline('symbolic-ref', '--short', 'HEAD') }
 		"%s failed w/ code %d";
 	return Git::config("branch.${current_branch}.remote");
@@ -358,10 +358,10 @@ WARNING
 
 sub help {
 	print {*STDOUT} <<'END';
-usage: git mw <command> <args>
+usage: but mw <command> <args>
 
-git mw commands are:
-    help        Display help information about git mw
+but mw commands are:
+    help        Display help information about but mw
     preview     Parse and render local file into HTML
 END
 	exit;

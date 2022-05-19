@@ -31,47 +31,47 @@ test_expect_success 'setup' '
 	for i in $(test_seq 1 10)
 	do
 		test_cummit "1-$i" &&
-		git branch -f cummit-1-$i &&
-		git tag -a -m "1-$i" tag-1-$i cummit-1-$i || return 1
+		but branch -f cummit-1-$i &&
+		but tag -a -m "1-$i" tag-1-$i cummit-1-$i || return 1
 	done &&
 	for j in $(test_seq 1 9)
 	do
-		git reset --hard cummit-$j-1 &&
+		but reset --hard cummit-$j-1 &&
 		x=$(($j + 1)) &&
 		test_cummit "$x-1" &&
-		git branch -f cummit-$x-1 &&
-		git tag -a -m "$x-1" tag-$x-1 cummit-$x-1 &&
+		but branch -f cummit-$x-1 &&
+		but tag -a -m "$x-1" tag-$x-1 cummit-$x-1 &&
 
 		for i in $(test_seq 2 10)
 		do
-			git merge cummit-$j-$i -m "$x-$i" &&
-			git branch -f cummit-$x-$i &&
-			git tag -a -m "$x-$i" tag-$x-$i cummit-$x-$i || return 1
+			but merge cummit-$j-$i -m "$x-$i" &&
+			but branch -f cummit-$x-$i &&
+			but tag -a -m "$x-$i" tag-$x-$i cummit-$x-$i || return 1
 		done
 	done &&
-	git cummit-graph write --reachable &&
-	mv .git/objects/info/cummit-graph cummit-graph-full &&
+	but cummit-graph write --reachable &&
+	mv .but/objects/info/cummit-graph cummit-graph-full &&
 	chmod u+w cummit-graph-full &&
-	git show-ref -s cummit-5-5 | git cummit-graph write --stdin-cummits &&
-	mv .git/objects/info/cummit-graph cummit-graph-half &&
+	but show-ref -s cummit-5-5 | but cummit-graph write --stdin-cummits &&
+	mv .but/objects/info/cummit-graph cummit-graph-half &&
 	chmod u+w cummit-graph-half &&
-	git -c cummitGraph.generationVersion=1 cummit-graph write --reachable &&
-	mv .git/objects/info/cummit-graph cummit-graph-no-gdat &&
+	but -c cummitGraph.generationVersion=1 cummit-graph write --reachable &&
+	mv .but/objects/info/cummit-graph cummit-graph-no-gdat &&
 	chmod u+w cummit-graph-no-gdat &&
-	git config core.cummitGraph true
+	but config core.cummitGraph true
 '
 
 run_all_modes () {
-	test_when_finished rm -rf .git/objects/info/cummit-graph &&
+	test_when_finished rm -rf .but/objects/info/cummit-graph &&
 	"$@" <input >actual &&
 	test_cmp expect actual &&
-	cp cummit-graph-full .git/objects/info/cummit-graph &&
+	cp cummit-graph-full .but/objects/info/cummit-graph &&
 	"$@" <input >actual &&
 	test_cmp expect actual &&
-	cp cummit-graph-half .git/objects/info/cummit-graph &&
+	cp cummit-graph-half .but/objects/info/cummit-graph &&
 	"$@" <input >actual &&
 	test_cmp expect actual &&
-	cp cummit-graph-no-gdat .git/objects/info/cummit-graph &&
+	cp cummit-graph-no-gdat .but/objects/info/cummit-graph &&
 	"$@" <input >actual &&
 	test_cmp expect actual
 }
@@ -177,7 +177,7 @@ test_expect_success 'get_merge_bases_many' '
 	EOF
 	{
 		echo "get_merge_bases_many(A,X):" &&
-		git rev-parse cummit-5-6 \
+		but rev-parse cummit-5-6 \
 			      cummit-4-7 | sort
 	} >expect &&
 	test_all_modes get_merge_bases_many
@@ -196,7 +196,7 @@ test_expect_success 'reduce_heads' '
 	EOF
 	{
 		echo "reduce_heads(X):" &&
-		git rev-parse cummit-5-1 \
+		but rev-parse cummit-5-1 \
 			      cummit-4-4 \
 			      cummit-3-6 \
 			      cummit-2-8 \
@@ -308,7 +308,7 @@ test_expect_success 'cummit_contains:miss' '
 '
 
 test_expect_success 'rev-list: basic topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 cummit-5-6 cummit-4-6 cummit-3-6 cummit-2-6 cummit-1-6 \
 		cummit-6-5 cummit-5-5 cummit-4-5 cummit-3-5 cummit-2-5 cummit-1-5 \
 		cummit-6-4 cummit-5-4 cummit-4-4 cummit-3-4 cummit-2-4 cummit-1-4 \
@@ -316,11 +316,11 @@ test_expect_success 'rev-list: basic topo-order' '
 		cummit-6-2 cummit-5-2 cummit-4-2 cummit-3-2 cummit-2-2 cummit-1-2 \
 		cummit-6-1 cummit-5-1 cummit-4-1 cummit-3-1 cummit-2-1 cummit-1-1 \
 	>expect &&
-	run_all_modes git rev-list --topo-order cummit-6-6
+	run_all_modes but rev-list --topo-order cummit-6-6
 '
 
 test_expect_success 'rev-list: first-parent topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 \
 		cummit-6-5 \
 		cummit-6-4 \
@@ -328,11 +328,11 @@ test_expect_success 'rev-list: first-parent topo-order' '
 		cummit-6-2 \
 		cummit-6-1 cummit-5-1 cummit-4-1 cummit-3-1 cummit-2-1 cummit-1-1 \
 	>expect &&
-	run_all_modes git rev-list --first-parent --topo-order cummit-6-6
+	run_all_modes but rev-list --first-parent --topo-order cummit-6-6
 '
 
 test_expect_success 'rev-list: range topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 cummit-5-6 cummit-4-6 cummit-3-6 cummit-2-6 cummit-1-6 \
 		cummit-6-5 cummit-5-5 cummit-4-5 cummit-3-5 cummit-2-5 cummit-1-5 \
 		cummit-6-4 cummit-5-4 cummit-4-4 cummit-3-4 cummit-2-4 cummit-1-4 \
@@ -340,11 +340,11 @@ test_expect_success 'rev-list: range topo-order' '
 		cummit-6-2 cummit-5-2 cummit-4-2 \
 		cummit-6-1 cummit-5-1 cummit-4-1 \
 	>expect &&
-	run_all_modes git rev-list --topo-order cummit-3-3..cummit-6-6
+	run_all_modes but rev-list --topo-order cummit-3-3..cummit-6-6
 '
 
 test_expect_success 'rev-list: range topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 cummit-5-6 cummit-4-6 \
 		cummit-6-5 cummit-5-5 cummit-4-5 \
 		cummit-6-4 cummit-5-4 cummit-4-4 \
@@ -352,11 +352,11 @@ test_expect_success 'rev-list: range topo-order' '
 		cummit-6-2 cummit-5-2 cummit-4-2 \
 		cummit-6-1 cummit-5-1 cummit-4-1 \
 	>expect &&
-	run_all_modes git rev-list --topo-order cummit-3-8..cummit-6-6
+	run_all_modes but rev-list --topo-order cummit-3-8..cummit-6-6
 '
 
 test_expect_success 'rev-list: first-parent range topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 \
 		cummit-6-5 \
 		cummit-6-4 \
@@ -364,21 +364,21 @@ test_expect_success 'rev-list: first-parent range topo-order' '
 		cummit-6-2 \
 		cummit-6-1 cummit-5-1 cummit-4-1 \
 	>expect &&
-	run_all_modes git rev-list --first-parent --topo-order cummit-3-8..cummit-6-6
+	run_all_modes but rev-list --first-parent --topo-order cummit-3-8..cummit-6-6
 '
 
 test_expect_success 'rev-list: ancestry-path topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 cummit-5-6 cummit-4-6 cummit-3-6 \
 		cummit-6-5 cummit-5-5 cummit-4-5 cummit-3-5 \
 		cummit-6-4 cummit-5-4 cummit-4-4 cummit-3-4 \
 		cummit-6-3 cummit-5-3 cummit-4-3 \
 	>expect &&
-	run_all_modes git rev-list --topo-order --ancestry-path cummit-3-3..cummit-6-6
+	run_all_modes but rev-list --topo-order --ancestry-path cummit-3-3..cummit-6-6
 '
 
 test_expect_success 'rev-list: symmetric difference topo-order' '
-	git rev-parse \
+	but rev-parse \
 		cummit-6-6 cummit-5-6 cummit-4-6 \
 		cummit-6-5 cummit-5-5 cummit-4-5 \
 		cummit-6-4 cummit-5-4 cummit-4-4 \
@@ -388,7 +388,7 @@ test_expect_success 'rev-list: symmetric difference topo-order' '
 		cummit-3-8 cummit-2-8 cummit-1-8 \
 		cummit-3-7 cummit-2-7 cummit-1-7 \
 	>expect &&
-	run_all_modes git rev-list --topo-order cummit-3-8...cummit-6-6
+	run_all_modes but rev-list --topo-order cummit-3-8...cummit-6-6
 '
 
 test_expect_success 'get_reachable_subset:all' '
@@ -404,7 +404,7 @@ test_expect_success 'get_reachable_subset:all' '
 	EOF
 	(
 		echo "get_reachable_subset(X,Y)" &&
-		git rev-parse cummit-3-3 \
+		but rev-parse cummit-3-3 \
 			      cummit-1-7 \
 			      cummit-5-6 | sort
 	) >expect &&
@@ -423,7 +423,7 @@ test_expect_success 'get_reachable_subset:some' '
 	EOF
 	(
 		echo "get_reachable_subset(X,Y)" &&
-		git rev-parse cummit-3-3 \
+		but rev-parse cummit-3-3 \
 			      cummit-1-7 | sort
 	) >expect &&
 	test_all_modes get_reachable_subset

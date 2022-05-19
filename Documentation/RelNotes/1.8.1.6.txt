@@ -20,20 +20,20 @@ Fixes since v1.8.1.5
  * Annotated tags outside refs/tags/ hierarchy were not advertised
    correctly to the ls-remote and fetch with recent version of Git.
 
- * The logic used by "git diff -M --stat" to shorten the names of
+ * The logic used by "but diff -M --stat" to shorten the names of
    files before and after a rename did not work correctly when the
    common prefix and suffix between the two filenames overlapped.
 
- * "git update-index -h" did not do the usual "-h(elp)" thing.
+ * "but update-index -h" did not do the usual "-h(elp)" thing.
 
  * perl/Git.pm::cat_blob slurped everything in core only to write it
    out to a file descriptor, which was not a very smart thing to do.
 
- * The SSL peer verification done by "git imap-send" did not ask for
+ * The SSL peer verification done by "but imap-send" did not ask for
    Server Name Indication (RFC 4366), failing to connect SSL/TLS
    sites that serve multiple hostnames on a single IP.
 
- * "git bundle verify" did not say "records a complete history" for a
+ * "but bundle verify" did not say "records a complete history" for a
    bundle that does not have any prerequisites.
 
 Also contains various documentation fixes.

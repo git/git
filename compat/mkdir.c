@@ -1,4 +1,4 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 #undef mkdir
 
 /* for platforms that can't deal with a trailing '/' */

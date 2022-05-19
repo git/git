@@ -1,9 +1,9 @@
 /*
- * "git annotate" builtin alias
+ * "but annotate" builtin alias
  *
  * Copyright (C) 2006 Ryan Anderson
  */
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "builtin.h"
 #include "strvec.h"
 

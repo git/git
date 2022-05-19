@@ -112,22 +112,22 @@ match_with_ls_files() {
 
 	if test "$match_expect" = 'E'
 	then
-		if test -e .git/created_test_file
+		if test -e .but/created_test_file
 		then
 			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match dies on '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
-				test_must_fail git$ls_files_args ls-files -z -- '$pattern'
+				test_must_fail but$ls_files_args ls-files -z -- '$pattern'
 			"
 		else
 			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
 		fi
 	elif test "$match_expect" = 1
 	then
-		if test -e .git/created_test_file
+		if test -e .but/created_test_file
 		then
 			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
-				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
+				but$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
@@ -135,11 +135,11 @@ match_with_ls_files() {
 		fi
 	elif test "$match_expect" = 0
 	then
-		if test -e .git/created_test_file
+		if test -e .but/created_test_file
 		then
 			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): no match '$pattern' '$text'" "
 				>expect &&
-				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
+				but$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
@@ -153,7 +153,7 @@ match_with_ls_files() {
 match() {
 	if test "$#" = 6
 	then
-		# When test-tool wildmatch and git ls-files produce the same
+		# When test-tool wildmatch and but ls-files produce the same
 		# result.
 		match_glob=$1
 		match_file_glob=$match_glob
@@ -180,17 +180,17 @@ match() {
 	fi
 
 	test_expect_success EXPENSIVE_ON_WINDOWS 'cleanup after previous file test' '
-		if test -e .git/created_test_file
+		if test -e .but/created_test_file
 		then
-			git reset &&
-			git clean -df
+			but reset &&
+			but clean -df
 		fi
 	'
 
-	printf '%s' "$text" >.git/expected_test_file
+	printf '%s' "$text" >.but/expected_test_file
 
 	test_expect_success EXPENSIVE_ON_WINDOWS "setup match file test for $text" '
-		file=$(cat .git/expected_test_file) &&
+		file=$(cat .but/expected_test_file) &&
 		if should_create_test_file "$file"
 		then
 			dirs=${file%/*} &&
@@ -201,11 +201,11 @@ match() {
 			else
 				touch -- "./$file"
 			fi &&
-			git add -A &&
-			printf "%s" "$file" >.git/created_test_file
-		elif test -e .git/created_test_file
+			but add -A &&
+			printf "%s" "$file" >.but/created_test_file
+		elif test -e .but/created_test_file
 		then
-			rm .git/created_test_file
+			rm .but/created_test_file
 		fi
 	'
 
@@ -303,7 +303,7 @@ match 1 1 1 1 '[ab]' '\[ab]'
 match 1 1 1 1 '[ab]' '[[]ab]'
 match 1 1 1 1 '[ab]' '[[:]ab]'
 match 0 0 0 0 '[ab]' '[[::]ab]'
-match 1 1 1 1 '[ab]' '[[:digit]ab]'
+match 1 1 1 1 '[ab]' '[[:dibut]ab]'
 match 1 1 1 1 '[ab]' '[\[:]ab]'
 match 1 1 1 1 '?a?b' '\??\?b'
 match 1 1 1 1 'abc' '\a\b\c'
@@ -312,23 +312,23 @@ match 0 0 0 0 \
 match 1 1 1 1 'foo/bar/baz/to' '**/t[o]'
 
 # Character class tests
-match 1 1 1 1 'a1B' '[[:alpha:]][[:digit:]][[:upper:]]'
-match 0 1 0 1 'a' '[[:digit:][:upper:][:space:]]'
-match 1 1 1 1 'A' '[[:digit:][:upper:][:space:]]'
-match 1 1 1 1 '1' '[[:digit:][:upper:][:space:]]'
-match 0 0 0 0 '1' '[[:digit:][:upper:][:spaci:]]'
-match 1 1 1 1 ' ' '[[:digit:][:upper:][:space:]]'
-match 0 0 0 0 '.' '[[:digit:][:upper:][:space:]]'
-match 1 1 1 1 '.' '[[:digit:][:punct:][:space:]]'
-match 1 1 1 1 '5' '[[:xdigit:]]'
-match 1 1 1 1 'f' '[[:xdigit:]]'
-match 1 1 1 1 'D' '[[:xdigit:]]'
-match 1 1 1 1 '_' '[[:alnum:][:alpha:][:blank:][:cntrl:][:digit:][:graph:][:lower:][:print:][:punct:][:space:][:upper:][:xdigit:]]'
-match 1 1 1 1 '.' '[^[:alnum:][:alpha:][:blank:][:cntrl:][:digit:][:lower:][:space:][:upper:][:xdigit:]]'
-match 1 1 1 1 '5' '[a-c[:digit:]x-z]'
-match 1 1 1 1 'b' '[a-c[:digit:]x-z]'
-match 1 1 1 1 'y' '[a-c[:digit:]x-z]'
-match 0 0 0 0 'q' '[a-c[:digit:]x-z]'
+match 1 1 1 1 'a1B' '[[:alpha:]][[:dibut:]][[:upper:]]'
+match 0 1 0 1 'a' '[[:dibut:][:upper:][:space:]]'
+match 1 1 1 1 'A' '[[:dibut:][:upper:][:space:]]'
+match 1 1 1 1 '1' '[[:dibut:][:upper:][:space:]]'
+match 0 0 0 0 '1' '[[:dibut:][:upper:][:spaci:]]'
+match 1 1 1 1 ' ' '[[:dibut:][:upper:][:space:]]'
+match 0 0 0 0 '.' '[[:dibut:][:upper:][:space:]]'
+match 1 1 1 1 '.' '[[:dibut:][:punct:][:space:]]'
+match 1 1 1 1 '5' '[[:xdibut:]]'
+match 1 1 1 1 'f' '[[:xdibut:]]'
+match 1 1 1 1 'D' '[[:xdibut:]]'
+match 1 1 1 1 '_' '[[:alnum:][:alpha:][:blank:][:cntrl:][:dibut:][:graph:][:lower:][:print:][:punct:][:space:][:upper:][:xdibut:]]'
+match 1 1 1 1 '.' '[^[:alnum:][:alpha:][:blank:][:cntrl:][:dibut:][:lower:][:space:][:upper:][:xdibut:]]'
+match 1 1 1 1 '5' '[a-c[:dibut:]x-z]'
+match 1 1 1 1 'b' '[a-c[:dibut:]x-z]'
+match 1 1 1 1 'y' '[a-c[:dibut:]x-z]'
+match 0 0 0 0 'q' '[a-c[:dibut:]x-z]'
 
 # Additional tests, including some malformed wildmatch patterns
 match 1 1 1 1 ']' '[\\-^]'

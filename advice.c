@@ -79,7 +79,7 @@ static struct {
 
 static const char turn_off_instructions[] =
 N_("\n"
-   "Disable this message with \"git config advice.%s false\"");
+   "Disable this message with \"but config advice.%s false\"");
 
 static void vadvise(const char *advice, int display_instructions,
 		    const char *key, va_list params)
@@ -135,13 +135,13 @@ void advise_if_enabled(enum advice_type type, const char *advice, ...)
 	va_end(params);
 }
 
-int git_default_advice_config(const char *var, const char *value)
+int but_default_advice_config(const char *var, const char *value)
 {
 	const char *k, *slot_name;
 	int i;
 
 	if (!strcmp(var, "color.advice")) {
-		advice_use_color = git_config_colorbool(var, value);
+		advice_use_color = but_config_colorbool(var, value);
 		return 0;
 	}
 
@@ -160,7 +160,7 @@ int git_default_advice_config(const char *var, const char *value)
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
 		if (strcasecmp(k, advice_setting[i].key))
 			continue;
-		advice_setting[i].enabled = git_config_bool(var, value);
+		advice_setting[i].enabled = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -193,10 +193,10 @@ int error_resolve_conflict(const char *me)
 
 	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 		/*
-		 * Message used both when 'git cummit' fails and when
+		 * Message used both when 'but cummit' fails and when
 		 * other commands doing a merge do.
 		 */
-		advise(_("Fix them up in the work tree, and then use 'git add/rm <file>'\n"
+		advise(_("Fix them up in the work tree, and then use 'but add/rm <file>'\n"
 			 "as appropriate to mark resolution and make a cummit."));
 	return -1;
 }
@@ -251,11 +251,11 @@ void detach_advice(const char *new_name)
 	"If you want to create a new branch to retain cummits you create, you may\n"
 	"do so (now or later) by using -c with the switch command. Example:\n"
 	"\n"
-	"  git switch -c <new-branch-name>\n"
+	"  but switch -c <new-branch-name>\n"
 	"\n"
 	"Or undo this operation with:\n"
 	"\n"
-	"  git switch -\n"
+	"  but switch -\n"
 	"\n"
 	"Turn off this advice by setting config variable advice.detachedHead to false\n\n");
 

@@ -11,8 +11,8 @@ fi
 
 test_expect_success 'setup' '
 
-	git config pack.compression 0 &&
-	git config pack.depth 0 &&
+	but config pack.compression 0 &&
+	but config pack.depth 0 &&
 	blobsize=$((100*1024*1024)) &&
 	blobcount=$((2*1024*1024*1024/$blobsize+1)) &&
 	i=1 &&
@@ -32,20 +32,20 @@ test_expect_success 'setup' '
 	 echo "data 5" &&
 	 echo ">2gb" &&
 	 cat cummit) |
-	git fast-import --big-file-threshold=2 &&
+	but fast-import --big-file-threshold=2 &&
 	test ! -f exit-status
 
 '
 
 test_expect_success 'clone - bare' '
 
-	git clone --bare --no-hardlinks . clone-bare
+	but clone --bare --no-hardlinks . clone-bare
 
 '
 
 test_expect_success 'clone - with worktree, file:// protocol' '
 
-	git clone "file://$(pwd)" clone-wt
+	but clone "file://$(pwd)" clone-wt
 
 '
 

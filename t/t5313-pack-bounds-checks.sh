@@ -9,7 +9,7 @@ clear_base () {
 }
 
 restore_base () {
-	cp base-backup/* .git/objects/pack/
+	cp base-backup/* .but/objects/pack/
 }
 
 do_pack () {
@@ -18,10 +18,10 @@ do_pack () {
 		for i in $pack_objects
 		do
 			echo $i
-		done | git pack-objects "$@" .git/objects/pack/pack
+		done | but pack-objects "$@" .but/objects/pack/pack
 	) &&
-	pack=.git/objects/pack/pack-$sha1.pack &&
-	idx=.git/objects/pack/pack-$sha1.idx &&
+	pack=.but/objects/pack/pack-$sha1.pack &&
+	idx=.but/objects/pack/pack-$sha1.idx &&
 	chmod +w $pack $idx &&
 	test_when_finished 'rm -f "$pack" "$idx"'
 }
@@ -58,14 +58,14 @@ test_expect_success 'set up base packfile and variables' '
 	# the hash of this content starts with ff, which
 	# makes some later computations much simpler
 	echo $(test_oid oidfff) >file &&
-	git add file &&
-	git cummit -m base &&
-	git repack -ad &&
-	base=$(echo .git/objects/pack/*) &&
+	but add file &&
+	but cummit -m base &&
+	but repack -ad &&
+	base=$(echo .but/objects/pack/*) &&
 	chmod +w $base &&
 	mkdir base-backup &&
 	cp $base base-backup/ &&
-	object=$(git rev-parse HEAD:file)
+	object=$(but rev-parse HEAD:file)
 '
 
 test_expect_success 'pack/index object count mismatch' '
@@ -77,19 +77,19 @@ test_expect_success 'pack/index object count mismatch' '
 	# .idx, but notice later that the .pack is bogus
 	# and fail to show any data.
 	echo "$object missing" >expect &&
-	git cat-file --batch-all-objects --batch-check >actual &&
+	but cat-file --batch-all-objects --batch-check >actual &&
 	test_cmp expect actual &&
 
 	# ...and here fail to load the object (without segfaulting),
 	# but fallback to a good copy if available.
-	test_must_fail git cat-file blob $object &&
+	test_must_fail but cat-file blob $object &&
 	restore_base &&
-	git cat-file blob $object >actual &&
+	but cat-file blob $object >actual &&
 	test_cmp file actual &&
 
 	# ...and make sure that index-pack --verify, which has its
 	# own reading routines, does not segfault.
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but index-pack --verify $pack
 '
 
 test_expect_success 'matched bogus object count' '
@@ -100,16 +100,16 @@ test_expect_success 'matched bogus object count' '
 
 	# Unlike above, we should notice early that the .idx is totally
 	# bogus, and not even enumerate its contents.
-	git cat-file --batch-all-objects --batch-check >actual &&
+	but cat-file --batch-all-objects --batch-check >actual &&
 	test_must_be_empty actual &&
 
 	# But as before, we can do the same object-access checks.
-	test_must_fail git cat-file blob $object &&
+	test_must_fail but cat-file blob $object &&
 	restore_base &&
-	git cat-file blob $object >actual &&
+	but cat-file blob $object >actual &&
 	test_cmp file actual &&
 
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but index-pack --verify $pack
 '
 
 # Note that we cannot check the fallback case for these
@@ -125,24 +125,24 @@ test_expect_success 'bogus object offset (v1)' '
 	do_pack $object --index-version=1 &&
 	munge $idx $((4 * 256)) "\377\0\0\0" &&
 	clear_base &&
-	test_must_fail git cat-file blob $object &&
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but cat-file blob $object &&
+	test_must_fail but index-pack --verify $pack
 '
 
 test_expect_success 'bogus object offset (v2, no msb)' '
 	do_pack $object --index-version=2 &&
 	munge $idx $(ofs_table 1) "\0\377\0\0" &&
 	clear_base &&
-	test_must_fail git cat-file blob $object &&
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but cat-file blob $object &&
+	test_must_fail but index-pack --verify $pack
 '
 
 test_expect_success 'bogus offset into v2 extended table' '
 	do_pack $object --index-version=2 &&
 	munge $idx $(ofs_table 1) "\377\0\0\0" &&
 	clear_base &&
-	test_must_fail git cat-file blob $object &&
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but cat-file blob $object &&
+	test_must_fail but index-pack --verify $pack
 '
 
 test_expect_success 'bogus offset inside v2 extended table' '
@@ -153,7 +153,7 @@ test_expect_success 'bogus offset inside v2 extended table' '
 	# the second entry in sorted-hash order. The hash of this object starts
 	# with "000", which sorts before that of $object (which starts
 	# with "fff").
-	second=$(test_oid oid000 | git hash-object -w --stdin) &&
+	second=$(test_oid oid000 | but hash-object -w --stdin) &&
 	do_pack "$object $second" --index-version=2 &&
 
 	# We have to make extra room for the table, so we cannot
@@ -166,29 +166,29 @@ test_expect_success 'bogus offset inside v2 extended table' '
 	} >tmp &&
 	mv tmp "$idx" &&
 	clear_base &&
-	test_must_fail git cat-file blob $object &&
-	test_must_fail git index-pack --verify $pack
+	test_must_fail but cat-file blob $object &&
+	test_must_fail but index-pack --verify $pack
 '
 
 test_expect_success 'bogus OFS_DELTA in packfile' '
 	# Generate a pack with a delta in it.
-	base=$(test-tool genrandom foo 3000 | git hash-object --stdin -w) &&
-	delta=$(test-tool genrandom foo 2000 | git hash-object --stdin -w) &&
+	base=$(test-tool genrandom foo 3000 | but hash-object --stdin -w) &&
+	delta=$(test-tool genrandom foo 2000 | but hash-object --stdin -w) &&
 	do_pack "$base $delta" --delta-base-offset &&
-	rm -f .git/objects/??/* &&
+	rm -f .but/objects/??/* &&
 
 	# Double check that we have the delta we expect.
 	echo $base >expect &&
-	echo $delta | git cat-file --batch-check="%(deltabase)" >actual &&
+	echo $delta | but cat-file --batch-check="%(deltabase)" >actual &&
 	test_cmp expect actual &&
 
 	# Now corrupt it. We assume the varint size for the delta is small
 	# enough to fit in the first byte (which it should be, since it
 	# is a pure deletion from the base), and that original ofs_delta
 	# takes 2 bytes (which it should, as it should be ~3000).
-	ofs=$(git show-index <$idx | grep $delta | cut -d" " -f1) &&
+	ofs=$(but show-index <$idx | grep $delta | cut -d" " -f1) &&
 	munge $pack $(($ofs + 1)) "\177\377" &&
-	test_must_fail git cat-file blob $delta >/dev/null
+	test_must_fail but cat-file blob $delta >/dev/null
 '
 
 test_done

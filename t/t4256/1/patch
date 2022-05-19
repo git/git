@@ -13,7 +13,7 @@ Content-Transfer-Encoding: 7bit
   mailinfo.c | 64 ++++++++++++++++++++++++++++++++++++++++++++++++++++--
   1 file changed, 62 insertions(+), 2 deletions(-)
 
-diff --git a/mailinfo.c b/mailinfo.c
+diff --but a/mailinfo.c b/mailinfo.c
 index 3281a37d51..b395adbdf2 100644
 --- a/mailinfo.c
 +++ b/mailinfo.c

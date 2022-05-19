@@ -18,13 +18,13 @@ perl -MJSON::PP -e 0 >/dev/null 2>&1 && test_set_prereq JSON_PP
 TTDIR="$GIT_BUILD_DIR/t/helper/" && export TTDIR
 PATH="$TTDIR:$PATH" && export PATH
 
-# Warning: use of 'test_cmp' may run test-tool.exe and/or git.exe
+# Warning: use of 'test_cmp' may run test-tool.exe and/or but.exe
 # Warning: to do the actual diff/comparison, so the HEREDOCs here
-# Warning: only cover our actual calls to test-tool and/or git.
+# Warning: only cover our actual calls to test-tool and/or but.
 # Warning: So you may see extra lines in artifact files when
 # Warning: interactively debugging.
 
-V=$(git version | sed -e 's/^git version //') && export V
+V=$(but version | sed -e 's/^but version //') && export V
 
 # There are multiple trace2 targets: normal, perf, and event.
 # Trace2 events will/can be written to each active target (subject
@@ -32,7 +32,7 @@ V=$(git version | sed -e 's/^git version //') && export V
 # Test each target independently.
 #
 # Defer setting GIT_TRACE2_PERF until the actual command we want to
-# test because hidden git and test-tool commands in the test
+# test because hidden but and test-tool commands in the test
 # harness can contaminate our output.
 
 # We don't bother repeating the 001return and 002exit tests, since they
@@ -168,8 +168,8 @@ test_expect_success JSON_PP 'event stream, return code 0' '
 
 test_expect_success JSON_PP 'event stream, list config' '
 	test_when_finished "rm trace.event actual expect" &&
-	git config --local t0212.abc 1 &&
-	git config --local t0212.def "hello world" &&
+	but config --local t0212.abc 1 &&
+	but config --local t0212.def "hello world" &&
 	GIT_TRACE2_EVENT="$(pwd)/trace.event" GIT_TRACE2_CONFIG_PARAMS="t0212.*" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
@@ -316,11 +316,11 @@ test_expect_success 'discard traces when there are too many files' '
 		cd .. &&
 		GIT_TRACE2_EVENT="$(pwd)/trace_target_dir" test-tool trace2 001return 0
 	) &&
-	echo git-trace2-discard >>expected_filenames.txt &&
+	echo but-trace2-discard >>expected_filenames.txt &&
 	ls trace_target_dir >ls_output.txt &&
 	test_cmp expected_filenames.txt ls_output.txt &&
-	head -n1 trace_target_dir/git-trace2-discard | grep \"event\":\"version\" &&
-	head -n2 trace_target_dir/git-trace2-discard | tail -n1 | grep \"event\":\"too_many_files\"
+	head -n1 trace_target_dir/but-trace2-discard | grep \"event\":\"version\" &&
+	head -n2 trace_target_dir/but-trace2-discard | tail -n1 | grep \"event\":\"too_many_files\"
 '
 
 test_done

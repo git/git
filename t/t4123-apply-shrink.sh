@@ -29,18 +29,18 @@ EOF
 
 test_expect_success setup '
 
-	git add F &&
+	but add F &&
 	mv F G &&
 	sed -e "s/1/11/" -e "s/999999/9/" -e "s/H/HH/" <G >F &&
-	git diff >patch &&
+	but diff >patch &&
 	sed -e "/^\$/d" <G >F &&
-	git add F
+	but add F
 
 '
 
 test_expect_success 'apply should fail gracefully' '
-	test_must_fail git apply --index patch &&
-	test_path_is_missing .git/index.lock
+	test_must_fail but apply --index patch &&
+	test_path_is_missing .but/index.lock
 '
 
 test_done

@@ -9,7 +9,7 @@ test_perf_default_repo
 for format in %H %h %T %t %P %p %h-%h-%h %an-%ae-%s
 do
 	test_perf "log with $format" "
-		git log --format=\"$format\" >/dev/null
+		but log --format=\"$format\" >/dev/null
 	"
 done
 

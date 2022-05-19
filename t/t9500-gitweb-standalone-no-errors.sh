@@ -3,9 +3,9 @@
 # Copyright (c) 2007 Jakub Narebski
 #
 
-test_description='gitweb as standalone script (basic tests).
+test_description='butweb as standalone script (basic tests).
 
-This test runs gitweb (git web interface) as CGI script from
+This test runs butweb (but web interface) as CGI script from
 commandline, and checks that it would not write any errors
 or warnings to log.'
 
@@ -13,42 +13,42 @@ or warnings to log.'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./lib-gitweb.sh
+. ./lib-butweb.sh
 
 # ----------------------------------------------------------------------
 # no cummits (empty, just initialized repository)
 
 test_expect_success \
 	'no cummits: projects_list (implicit)' \
-	'gitweb_run'
+	'butweb_run'
 
 test_expect_success \
 	'no cummits: projects_index' \
-	'gitweb_run "a=project_index"'
+	'butweb_run "a=project_index"'
 
 test_expect_success \
-	'no cummits: .git summary (implicit)' \
-	'gitweb_run "p=.git"'
+	'no cummits: .but summary (implicit)' \
+	'butweb_run "p=.but"'
 
 test_expect_success \
-	'no cummits: .git cummit (implicit HEAD)' \
-	'gitweb_run "p=.git;a=cummit"'
+	'no cummits: .but cummit (implicit HEAD)' \
+	'butweb_run "p=.but;a=cummit"'
 
 test_expect_success \
-	'no cummits: .git cummitdiff (implicit HEAD)' \
-	'gitweb_run "p=.git;a=cummitdiff"'
+	'no cummits: .but cummitdiff (implicit HEAD)' \
+	'butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
-	'no cummits: .git tree (implicit HEAD)' \
-	'gitweb_run "p=.git;a=tree"'
+	'no cummits: .but tree (implicit HEAD)' \
+	'butweb_run "p=.but;a=tree"'
 
 test_expect_success \
-	'no cummits: .git heads' \
-	'gitweb_run "p=.git;a=heads"'
+	'no cummits: .but heads' \
+	'butweb_run "p=.but;a=heads"'
 
 test_expect_success \
-	'no cummits: .git tags' \
-	'gitweb_run "p=.git;a=tags"'
+	'no cummits: .but tags' \
+	'butweb_run "p=.but;a=tags"'
 
 
 # ----------------------------------------------------------------------
@@ -57,80 +57,80 @@ test_expect_success \
 test_expect_success \
 	'Make initial cummit' \
 	'echo "Not an empty file." >file &&
-	 git add file &&
-	 git cummit -a -m "Initial cummit." &&
-	 git branch b'
+	 but add file &&
+	 but cummit -a -m "Initial cummit." &&
+	 but branch b'
 
 test_expect_success \
 	'projects_list (implicit)' \
-	'gitweb_run'
+	'butweb_run'
 
 test_expect_success \
 	'projects_index' \
-	'gitweb_run "a=project_index"'
+	'butweb_run "a=project_index"'
 
 test_expect_success \
-	'.git summary (implicit)' \
-	'gitweb_run "p=.git"'
+	'.but summary (implicit)' \
+	'butweb_run "p=.but"'
 
 test_expect_success \
-	'.git cummit (implicit HEAD)' \
-	'gitweb_run "p=.git;a=cummit"'
+	'.but cummit (implicit HEAD)' \
+	'butweb_run "p=.but;a=cummit"'
 
 test_expect_success \
-	'.git cummitdiff (implicit HEAD, root cummit)' \
-	'gitweb_run "p=.git;a=cummitdiff"'
+	'.but cummitdiff (implicit HEAD, root cummit)' \
+	'butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
-	'.git cummitdiff_plain (implicit HEAD, root cummit)' \
-	'gitweb_run "p=.git;a=cummitdiff_plain"'
+	'.but cummitdiff_plain (implicit HEAD, root cummit)' \
+	'butweb_run "p=.but;a=cummitdiff_plain"'
 
 test_expect_success \
-	'.git cummit (HEAD)' \
-	'gitweb_run "p=.git;a=commit;h=HEAD"'
+	'.but cummit (HEAD)' \
+	'butweb_run "p=.but;a=commit;h=HEAD"'
 
 test_expect_success \
-	'.git tree (implicit HEAD)' \
-	'gitweb_run "p=.git;a=tree"'
+	'.but tree (implicit HEAD)' \
+	'butweb_run "p=.but;a=tree"'
 
 test_expect_success \
-	'.git blob (file)' \
-	'gitweb_run "p=.git;a=blob;f=file"'
+	'.but blob (file)' \
+	'butweb_run "p=.but;a=blob;f=file"'
 
 test_expect_success \
-	'.git blob_plain (file)' \
-	'gitweb_run "p=.git;a=blob_plain;f=file"'
+	'.but blob_plain (file)' \
+	'butweb_run "p=.but;a=blob_plain;f=file"'
 
 # ----------------------------------------------------------------------
 # nonexistent objects
 
 test_expect_success \
-	'.git cummit (non-existent)' \
-	'gitweb_run "p=.git;a=commit;h=non-existent"'
+	'.but cummit (non-existent)' \
+	'butweb_run "p=.but;a=commit;h=non-existent"'
 
 test_expect_success \
-	'.git cummitdiff (non-existent)' \
-	'gitweb_run "p=.git;a=cummitdiff;h=non-existent"'
+	'.but cummitdiff (non-existent)' \
+	'butweb_run "p=.but;a=cummitdiff;h=non-existent"'
 
 test_expect_success \
-	'.git cummitdiff (non-existent vs HEAD)' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=non-existent;h=HEAD"'
+	'.but cummitdiff (non-existent vs HEAD)' \
+	'butweb_run "p=.but;a=cummitdiff;hp=non-existent;h=HEAD"'
 
 test_expect_success \
-	'.git tree (0000000000000000000000000000000000000000)' \
-	'gitweb_run "p=.git;a=tree;h=0000000000000000000000000000000000000000"'
+	'.but tree (0000000000000000000000000000000000000000)' \
+	'butweb_run "p=.but;a=tree;h=0000000000000000000000000000000000000000"'
 
 test_expect_success \
-	'.git tag (0000000000000000000000000000000000000000)' \
-	'gitweb_run "p=.git;a=tag;h=0000000000000000000000000000000000000000"'
+	'.but tag (0000000000000000000000000000000000000000)' \
+	'butweb_run "p=.but;a=tag;h=0000000000000000000000000000000000000000"'
 
 test_expect_success \
-	'.git blob (non-existent)' \
-	'gitweb_run "p=.git;a=blob;f=non-existent"'
+	'.but blob (non-existent)' \
+	'butweb_run "p=.but;a=blob;f=non-existent"'
 
 test_expect_success \
-	'.git blob_plain (non-existent)' \
-	'gitweb_run "p=.git;a=blob_plain;f=non-existent"'
+	'.but blob_plain (non-existent)' \
+	'butweb_run "p=.but;a=blob_plain;f=non-existent"'
 
 
 # ----------------------------------------------------------------------
@@ -138,59 +138,59 @@ test_expect_success \
 
 test_expect_success \
 	'cummitdiff(0): root' \
-	'gitweb_run "p=.git;a=cummitdiff"'
+	'butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): file added' \
 	'echo "New file" >new_file &&
-	 git add new_file &&
-	 git cummit -a -m "File added." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but add new_file &&
+	 but cummit -a -m "File added." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): mode change' \
 	'test_chmod +x new_file &&
-	 git cummit -a -m "Mode changed." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "Mode changed." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): file renamed' \
-	'git mv new_file renamed_file &&
-	 git cummit -a -m "File renamed." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	'but mv new_file renamed_file &&
+	 but cummit -a -m "File renamed." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): file to symlink' \
 	'rm renamed_file &&
 	 test_ln_s_add file renamed_file &&
-	 git cummit -a -m "File to symlink." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "File to symlink." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): file deleted' \
-	'git rm renamed_file &&
+	'but rm renamed_file &&
 	 rm -f renamed_file &&
-	 git cummit -a -m "File removed." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "File removed." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): file copied / new file' \
 	'cp file file2 &&
-	 git add file2 &&
-	 git cummit -a -m "File copied." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but add file2 &&
+	 but cummit -a -m "File copied." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): mode change and modified' \
 	'echo "New line" >>file2 &&
 	 test_chmod +x file2 &&
-	 git cummit -a -m "Mode change and modification." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "Mode change and modification." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): renamed and modified' \
 	'cat >file2<<EOF &&
-Dominus regit me,
+Dominus rebut me,
 et nihil mihi deerit.
 In loco pascuae ibi me collocavit,
 super aquam refectionis educavit me;
@@ -198,19 +198,19 @@ animam meam convertit,
 deduxit me super semitas jusitiae,
 propter nomen suum.
 EOF
-	 git cummit -a -m "File added." &&
-	 git mv file2 file3 &&
+	 but cummit -a -m "File added." &&
+	 but mv file2 file3 &&
 	 echo "Propter nomen suum." >>file3 &&
-	 git cummit -a -m "File rename and modification." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "File rename and modification." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'cummitdiff(0): renamed, mode change and modified' \
-	'git mv file3 file2 &&
+	'but mv file3 file2 &&
 	 echo "Propter nomen suum." >>file2 &&
 	 test_chmod +x file2 &&
-	 git cummit -a -m "File rename, mode change and modification." &&
-	 gitweb_run "p=.git;a=cummitdiff"'
+	 but cummit -a -m "File rename, mode change and modification." &&
+	 butweb_run "p=.but;a=cummitdiff"'
 
 # ----------------------------------------------------------------------
 # cummitdiff testing (taken from t4114-apply-typechange.sh)
@@ -218,69 +218,69 @@ test_expect_success \
 test_expect_success 'setup typechange cummits' '
 	echo "hello world" >foo &&
 	echo "hi planet" >bar &&
-	git update-index --add foo bar &&
-	git cummit -m initial &&
-	git branch initial &&
+	but update-index --add foo bar &&
+	but cummit -m initial &&
+	but branch initial &&
 	rm -f foo &&
 	test_ln_s_add bar foo &&
-	git cummit -m "foo symlinked to bar" &&
-	git branch foo-symlinked-to-bar &&
+	but cummit -m "foo symlinked to bar" &&
+	but branch foo-symlinked-to-bar &&
 	rm -f foo &&
 	echo "how far is the sun?" >foo &&
-	git update-index foo &&
-	git cummit -m "foo back to file" &&
-	git branch foo-back-to-file &&
+	but update-index foo &&
+	but cummit -m "foo back to file" &&
+	but branch foo-back-to-file &&
 	rm -f foo &&
-	git update-index --remove foo &&
+	but update-index --remove foo &&
 	mkdir foo &&
 	echo "if only I knew" >foo/baz &&
-	git update-index --add foo/baz &&
-	git cummit -m "foo becomes a directory" &&
-	git branch "foo-becomes-a-directory" &&
+	but update-index --add foo/baz &&
+	but cummit -m "foo becomes a directory" &&
+	but branch "foo-becomes-a-directory" &&
 	echo "hello world" >foo/baz &&
-	git update-index foo/baz &&
-	git cummit -m "foo/baz is the original foo" &&
-	git branch foo-baz-renamed-from-foo
+	but update-index foo/baz &&
+	but cummit -m "foo/baz is the original foo" &&
+	but branch foo-baz-renamed-from-foo
 	'
 
 test_expect_success \
 	'cummitdiff(2): file renamed from foo to foo/baz' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-baz-renamed-from-foo"'
+	'butweb_run "p=.but;a=cummitdiff;hp=initial;h=foo-baz-renamed-from-foo"'
 
 test_expect_success \
 	'cummitdiff(2): file renamed from foo/baz to foo' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=foo-baz-renamed-from-foo;h=initial"'
+	'butweb_run "p=.but;a=cummitdiff;hp=foo-baz-renamed-from-foo;h=initial"'
 
 test_expect_success \
 	'cummitdiff(2): directory becomes file' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=foo-becomes-a-directory;h=initial"'
+	'butweb_run "p=.but;a=cummitdiff;hp=foo-becomes-a-directory;h=initial"'
 
 test_expect_success \
 	'cummitdiff(2): file becomes directory' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-becomes-a-directory"'
+	'butweb_run "p=.but;a=cummitdiff;hp=initial;h=foo-becomes-a-directory"'
 
 test_expect_success \
 	'cummitdiff(2): file becomes symlink' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-symlinked-to-bar"'
+	'butweb_run "p=.but;a=cummitdiff;hp=initial;h=foo-symlinked-to-bar"'
 
 test_expect_success \
 	'cummitdiff(2): symlink becomes file' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-back-to-file"'
+	'butweb_run "p=.but;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-back-to-file"'
 
 test_expect_success \
 	'cummitdiff(2): symlink becomes directory' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-becomes-a-directory"'
+	'butweb_run "p=.but;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-becomes-a-directory"'
 
 test_expect_success \
 	'cummitdiff(2): directory becomes symlink' \
-	'gitweb_run "p=.git;a=cummitdiff;hp=foo-becomes-a-directory;h=foo-symlinked-to-bar"'
+	'butweb_run "p=.but;a=cummitdiff;hp=foo-becomes-a-directory;h=foo-symlinked-to-bar"'
 
 # ----------------------------------------------------------------------
 # cummitdiff testing (incomplete lines)
 
 test_expect_success 'setup incomplete lines' '
 	cat >file<<-\EOF &&
-	Dominus regit me,
+	Dominus rebut me,
 	et nihil mihi deerit.
 	In loco pascuae ibi me collocavit,
 	super aquam refectionis educavit me;
@@ -289,62 +289,62 @@ test_expect_success 'setup incomplete lines' '
 	propter nomen suum.
 	CHANGE_ME
 	EOF
-	git cummit -a -m "Preparing for incomplete lines" &&
+	but cummit -a -m "Preparing for incomplete lines" &&
 	echo "incomplete" | tr -d "\\012" >>file &&
-	git cummit -a -m "Add incomplete line" &&
-	git tag incomplete_lines_add &&
+	but cummit -a -m "Add incomplete line" &&
+	but tag incomplete_lines_add &&
 	sed -e s/CHANGE_ME/change_me/ <file >file+ &&
 	mv -f file+ file &&
-	git cummit -a -m "Incomplete context line" &&
-	git tag incomplete_lines_ctx &&
-	echo "Dominus regit me," >file &&
+	but cummit -a -m "Incomplete context line" &&
+	but tag incomplete_lines_ctx &&
+	echo "Dominus rebut me," >file &&
 	echo "incomplete line" | tr -d "\\012" >>file &&
-	git cummit -a -m "Change incomplete line" &&
-	git tag incomplete_lines_chg &&
-	echo "Dominus regit me," >file &&
-	git cummit -a -m "Remove incomplete line" &&
-	git tag incomplete_lines_rem
+	but cummit -a -m "Change incomplete line" &&
+	but tag incomplete_lines_chg &&
+	echo "Dominus rebut me," >file &&
+	but cummit -a -m "Remove incomplete line" &&
+	but tag incomplete_lines_rem
 '
 
 test_expect_success 'cummitdiff(1): addition of incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_add"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_add"
 '
 
 test_expect_success 'cummitdiff(1): incomplete line as context line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_ctx"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_ctx"
 '
 
 test_expect_success 'cummitdiff(1): change incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_chg"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_chg"
 '
 
 test_expect_success 'cummitdiff(1): removal of incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_rem"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_rem"
 '
 
 # ----------------------------------------------------------------------
 # cummit, cummitdiff: merge, large
 test_expect_success \
 	'Create a merge' \
-	'git checkout b &&
+	'but checkout b &&
 	 echo "Branch" >>b &&
-	 git add b &&
-	 git cummit -a -m "On branch" &&
-	 git checkout main &&
-	 git merge b &&
-	 git tag merge_cummit'
+	 but add b &&
+	 but cummit -a -m "On branch" &&
+	 but checkout main &&
+	 but merge b &&
+	 but tag merge_cummit'
 
 test_expect_success \
 	'cummit(0): merge cummit' \
-	'gitweb_run "p=.git;a=cummit"'
+	'butweb_run "p=.but;a=cummit"'
 
 test_expect_success \
 	'cummitdiff(0): merge cummit' \
-	'gitweb_run "p=.git;a=cummitdiff"'
+	'butweb_run "p=.but;a=cummitdiff"'
 
 test_expect_success \
 	'Prepare large cummit' \
-	'git checkout b &&
+	'but checkout b &&
 	 echo "To be changed" >01-change &&
 	 echo "To be renamed" >02-pure-rename-from &&
 	 echo "To be deleted" >03-delete &&
@@ -352,52 +352,52 @@ test_expect_success \
 	 echo "To have mode changed" >05-mode-change &&
 	 echo "File to symlink" >06-file-or-symlink &&
 	 echo "To be changed and have mode changed" >07-change-mode-change &&
-	 git add 0* &&
-	 git cummit -a -m "Prepare large cummit" &&
+	 but add 0* &&
+	 but cummit -a -m "Prepare large cummit" &&
 	 echo "Changed" >01-change &&
-	 git mv 02-pure-rename-from 02-pure-rename-to &&
-	 git rm 03-delete && rm -f 03-delete &&
+	 but mv 02-pure-rename-from 02-pure-rename-to &&
+	 but rm 03-delete && rm -f 03-delete &&
 	 echo "A new file" >03-new &&
-	 git add 03-new &&
-	 git mv 04-rename-from 04-rename-to &&
+	 but add 03-new &&
+	 but mv 04-rename-from 04-rename-to &&
 	 echo "Changed" >>04-rename-to &&
 	 test_chmod +x 05-mode-change &&
 	 rm -f 06-file-or-symlink &&
 	 test_ln_s_add 01-change 06-file-or-symlink &&
 	 echo "Changed and have mode changed" >07-change-mode-change &&
 	 test_chmod +x 07-change-mode-change &&
-	 git cummit -a -m "Large cummit" &&
-	 git checkout main'
+	 but cummit -a -m "Large cummit" &&
+	 but checkout main'
 
 test_expect_success \
 	'cummit(1): large cummit' \
-	'gitweb_run "p=.git;a=commit;h=b"'
+	'butweb_run "p=.but;a=commit;h=b"'
 
 test_expect_success \
 	'cummitdiff(1): large cummit' \
-	'gitweb_run "p=.git;a=cummitdiff;h=b"'
+	'butweb_run "p=.but;a=cummitdiff;h=b"'
 
 # ----------------------------------------------------------------------
 # side-by-side diff
 
 test_expect_success 'side-by-side: addition of incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_add;ds=sidebyside"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_add;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: incomplete line as context line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_ctx;ds=sidebyside"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_ctx;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: changed incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_chg;ds=sidebyside"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_chg;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: removal of incomplete line' '
-	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_rem;ds=sidebyside"
+	butweb_run "p=.but;a=cummitdiff;h=incomplete_lines_rem;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: merge cummit' '
-	gitweb_run "p=.git;a=cummitdiff;h=merge_cummit;ds=sidebyside"
+	butweb_run "p=.but;a=cummitdiff;h=merge_cummit;ds=sidebyside"
 '
 
 # ----------------------------------------------------------------------
@@ -405,101 +405,101 @@ test_expect_success 'side-by-side: merge cummit' '
 
 test_expect_success \
 	'tags: list of different types of tags' \
-	'git checkout main &&
-	 git tag -a -m "Tag cummit object" tag-commit HEAD &&
-	 git tag -a -m "" tag-cummit-nomessage HEAD &&
-	 git tag -a -m "Tag tag object" tag-tag tag-cummit &&
-	 git tag -a -m "Tag tree object" tag-tree HEAD^{tree} &&
-	 git tag -a -m "Tag blob object" tag-blob HEAD:file &&
-	 git tag lightweight/tag-commit HEAD &&
-	 git tag lightweight/tag-tag tag-cummit &&
-	 git tag lightweight/tag-tree HEAD^{tree} &&
-	 git tag lightweight/tag-blob HEAD:file &&
-	 gitweb_run "p=.git;a=tags"'
+	'but checkout main &&
+	 but tag -a -m "Tag cummit object" tag-commit HEAD &&
+	 but tag -a -m "" tag-cummit-nomessage HEAD &&
+	 but tag -a -m "Tag tag object" tag-tag tag-cummit &&
+	 but tag -a -m "Tag tree object" tag-tree HEAD^{tree} &&
+	 but tag -a -m "Tag blob object" tag-blob HEAD:file &&
+	 but tag lightweight/tag-commit HEAD &&
+	 but tag lightweight/tag-tag tag-cummit &&
+	 but tag lightweight/tag-tree HEAD^{tree} &&
+	 but tag lightweight/tag-blob HEAD:file &&
+	 butweb_run "p=.but;a=tags"'
 
 test_expect_success \
 	'tag: Tag to cummit object' \
-	'gitweb_run "p=.git;a=tag;h=tag-cummit"'
+	'butweb_run "p=.but;a=tag;h=tag-cummit"'
 
 test_expect_success \
 	'tag: on lightweight tag (invalid)' \
-	'gitweb_run "p=.git;a=tag;h=lightweight/tag-cummit"'
+	'butweb_run "p=.but;a=tag;h=lightweight/tag-cummit"'
 
 # ----------------------------------------------------------------------
 # logs
 
 test_expect_success \
 	'logs: log (implicit HEAD)' \
-	'gitweb_run "p=.git;a=log"'
+	'butweb_run "p=.but;a=log"'
 
 test_expect_success \
 	'logs: shortlog (implicit HEAD)' \
-	'gitweb_run "p=.git;a=shortlog"'
+	'butweb_run "p=.but;a=shortlog"'
 
 test_expect_success \
 	'logs: history (implicit HEAD, file)' \
-	'gitweb_run "p=.git;a=history;f=file"'
+	'butweb_run "p=.but;a=history;f=file"'
 
 test_expect_success \
 	'logs: history (implicit HEAD, non-existent file)' \
-	'gitweb_run "p=.git;a=history;f=non-existent"'
+	'butweb_run "p=.but;a=history;f=non-existent"'
 
 test_expect_success \
 	'logs: history (implicit HEAD, deleted file)' \
-	'git checkout main &&
+	'but checkout main &&
 	 echo "to be deleted" >deleted_file &&
-	 git add deleted_file &&
-	 git cummit -m "Add file to be deleted" &&
-	 git rm deleted_file &&
-	 git cummit -m "Delete file" &&
-	 gitweb_run "p=.git;a=history;f=deleted_file"'
+	 but add deleted_file &&
+	 but cummit -m "Add file to be deleted" &&
+	 but rm deleted_file &&
+	 but cummit -m "Delete file" &&
+	 butweb_run "p=.but;a=history;f=deleted_file"'
 
 # ----------------------------------------------------------------------
 # path_info links
 test_expect_success \
 	'path_info: project' \
-	'gitweb_run "" "/.git"'
+	'butweb_run "" "/.but"'
 
 test_expect_success \
 	'path_info: project/branch' \
-	'gitweb_run "" "/.git/b"'
+	'butweb_run "" "/.but/b"'
 
 test_expect_success \
 	'path_info: project/branch:file' \
-	'gitweb_run "" "/.git/main:file"'
+	'butweb_run "" "/.but/main:file"'
 
 test_expect_success \
 	'path_info: project/branch:dir/' \
-	'gitweb_run "" "/.git/main:foo/"'
+	'butweb_run "" "/.but/main:foo/"'
 
 test_expect_success \
 	'path_info: project/branch (non-existent)' \
-	'gitweb_run "" "/.git/non-existent"'
+	'butweb_run "" "/.but/non-existent"'
 
 test_expect_success \
 	'path_info: project/branch:filename (non-existent branch)' \
-	'gitweb_run "" "/.git/non-existent:non-existent"'
+	'butweb_run "" "/.but/non-existent:non-existent"'
 
 test_expect_success \
 	'path_info: project/branch:file (non-existent)' \
-	'gitweb_run "" "/.git/main:non-existent"'
+	'butweb_run "" "/.but/main:non-existent"'
 
 test_expect_success \
 	'path_info: project/branch:dir/ (non-existent)' \
-	'gitweb_run "" "/.git/main:non-existent/"'
+	'butweb_run "" "/.but/main:non-existent/"'
 
 
 test_expect_success \
 	'path_info: project/branch:/file' \
-	'gitweb_run "" "/.git/main:/file"'
+	'butweb_run "" "/.but/main:/file"'
 
 test_expect_success \
 	'path_info: project/:/file (implicit HEAD)' \
-	'gitweb_run "" "/.git/:/file"'
+	'butweb_run "" "/.but/:/file"'
 
 test_expect_success \
 	'path_info: project/:/ (implicit HEAD, top tree)' \
-	'gitweb_run "" "/.git/:/"'
+	'butweb_run "" "/.but/:/"'
 
 
 # ----------------------------------------------------------------------
@@ -507,15 +507,15 @@ test_expect_success \
 
 test_expect_success \
 	'feeds: OPML' \
-	'gitweb_run "a=opml"'
+	'butweb_run "a=opml"'
 
 test_expect_success \
 	'feed: RSS' \
-	'gitweb_run "p=.git;a=rss"'
+	'butweb_run "p=.but;a=rss"'
 
 test_expect_success \
 	'feed: Atom' \
-	'gitweb_run "p=.git;a=atom"'
+	'butweb_run "p=.but;a=atom"'
 
 # ----------------------------------------------------------------------
 # encoding/decoding
@@ -526,9 +526,9 @@ test_expect_success \
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
 	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >>file &&
-	 git add file &&
-	 git cummit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
-	 gitweb_run "p=.git;a=cummit"'
+	 but add file &&
+	 but cummit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
+	 butweb_run "p=.but;a=cummit"'
 
 test_expect_success \
 	'encode(cummit): iso-8859-1' \
@@ -536,64 +536,64 @@ test_expect_success \
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
 	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >>file &&
-	 git add file &&
+	 but add file &&
 	 test_config i18n.cummitencoding ISO-8859-1 &&
-	 git cummit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
-	 gitweb_run "p=.git;a=cummit"'
+	 but cummit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
+	 butweb_run "p=.but;a=cummit"'
 
 test_expect_success \
 	'encode(log): utf-8 and iso-8859-1' \
-	'gitweb_run "p=.git;a=log"'
+	'butweb_run "p=.but;a=log"'
 
 # ----------------------------------------------------------------------
 # extra options
 
 test_expect_success \
 	'opt: log --no-merges' \
-	'gitweb_run "p=.git;a=log;opt=--no-merges"'
+	'butweb_run "p=.but;a=log;opt=--no-merges"'
 
 test_expect_success \
 	'opt: atom --no-merges' \
-	'gitweb_run "p=.git;a=log;opt=--no-merges"'
+	'butweb_run "p=.but;a=log;opt=--no-merges"'
 
 test_expect_success \
 	'opt: "file" history --no-merges' \
-	'gitweb_run "p=.git;a=history;f=file;opt=--no-merges"'
+	'butweb_run "p=.but;a=history;f=file;opt=--no-merges"'
 
 test_expect_success \
 	'opt: log --no-such-option (invalid option)' \
-	'gitweb_run "p=.git;a=log;opt=--no-such-option"'
+	'butweb_run "p=.but;a=log;opt=--no-such-option"'
 
 test_expect_success \
 	'opt: tree --no-merges (invalid option for action)' \
-	'gitweb_run "p=.git;a=tree;opt=--no-merges"'
+	'butweb_run "p=.but;a=tree;opt=--no-merges"'
 
 # ----------------------------------------------------------------------
 # testing config_to_multi / cloneurl
 
 test_expect_success \
        'URL: no project URLs, no base URL' \
-       'gitweb_run "p=.git;a=summary"'
+       'butweb_run "p=.but;a=summary"'
 
 test_expect_success \
-       'URL: project URLs via gitweb.url' \
-       'git config --add gitweb.url git://example.com/git/trash.git &&
-        git config --add gitweb.url http://example.com/git/trash.git &&
-        gitweb_run "p=.git;a=summary"'
+       'URL: project URLs via butweb.url' \
+       'but config --add butweb.url but://example.com/but/trash.but &&
+        but config --add butweb.url http://example.com/but/trash.but &&
+        butweb_run "p=.but;a=summary"'
 
-cat >.git/cloneurl <<\EOF
-git://example.com/git/trash.git
-http://example.com/git/trash.git
+cat >.but/cloneurl <<\EOF
+but://example.com/but/trash.but
+http://example.com/but/trash.but
 EOF
 
 test_expect_success \
        'URL: project URLs via cloneurl file' \
-       'gitweb_run "p=.git;a=summary"'
+       'butweb_run "p=.but;a=summary"'
 
 # ----------------------------------------------------------------------
-# gitweb config and repo config
+# butweb config and repo config
 
-cat >>gitweb_config.perl <<\EOF
+cat >>butweb_config.perl <<\EOF
 
 # turn on override for each overridable feature
 foreach my $key (keys %feature) {
@@ -605,49 +605,49 @@ EOF
 
 test_expect_success \
 	'config override: projects list (implicit)' \
-	'gitweb_run'
+	'butweb_run'
 
 test_expect_success \
 	'config override: tree view, features not overridden in repo config' \
-	'gitweb_run "p=.git;a=tree"'
+	'butweb_run "p=.but;a=tree"'
 
 test_expect_success \
 	'config override: tree view, features disabled in repo config' \
-	'git config gitweb.blame no &&
-	 git config gitweb.snapshot none &&
-	 git config gitweb.avatar gravatar &&
-	 gitweb_run "p=.git;a=tree"'
+	'but config butweb.blame no &&
+	 but config butweb.snapshot none &&
+	 but config butweb.avatar gravatar &&
+	 butweb_run "p=.but;a=tree"'
 
 test_expect_success \
 	'config override: tree view, features enabled in repo config (1)' \
-	'git config gitweb.blame yes &&
-	 git config gitweb.snapshot "zip,tgz, tbz2" &&
-	 gitweb_run "p=.git;a=tree"'
+	'but config butweb.blame yes &&
+	 but config butweb.snapshot "zip,tgz, tbz2" &&
+	 butweb_run "p=.but;a=tree"'
 
 test_expect_success 'setup' '
-	version=$(git config core.repositoryformatversion) &&
-	algo=$(test_might_fail git config extensions.objectformat) &&
-	cat >.git/config <<-\EOF &&
+	version=$(but config core.repositoryformatversion) &&
+	algo=$(test_might_fail but config extensions.objectformat) &&
+	cat >.but/config <<-\EOF &&
 	# testing noval and alternate separator
-	[gitweb]
+	[butweb]
 		blame
 		snapshot = zip tgz
 	EOF
-	git config core.repositoryformatversion "$version" &&
+	but config core.repositoryformatversion "$version" &&
 	if test -n "$algo"
 	then
-		git config extensions.objectformat "$algo"
+		but config extensions.objectformat "$algo"
 	fi
 '
 
 test_expect_success \
 	'config override: tree view, features enabled in repo config (2)' \
-	'gitweb_run "p=.git;a=tree"'
+	'butweb_run "p=.but;a=tree"'
 
 # ----------------------------------------------------------------------
 # searching
 
-cat >>gitweb_config.perl <<\EOF
+cat >>butweb_config.perl <<\EOF
 
 # enable search
 $feature{'search'}{'default'} = [1];
@@ -660,37 +660,37 @@ test_expect_success \
 	'echo "1st MATCH" >>file &&
 	 echo "2nd MATCH" >>file &&
 	 echo "MATCH" >>bar &&
-	 git add file bar &&
-	 git cummit -m "Added MATCH word"'
+	 but add file bar &&
+	 but cummit -m "Added MATCH word"'
 
 test_expect_success \
 	'search: cummit author' \
-	'gitweb_run "p=.git;a=search;h=HEAD;st=author;s=A+U+Thor"'
+	'butweb_run "p=.but;a=search;h=HEAD;st=author;s=A+U+Thor"'
 
 test_expect_success \
 	'search: cummit message' \
-	'gitweb_run "p=.git;a=search;h=HEAD;st=cummitr;s=MATCH"'
+	'butweb_run "p=.but;a=search;h=HEAD;st=cummitr;s=MATCH"'
 
 test_expect_success \
 	'search: grep' \
-	'gitweb_run "p=.git;a=search;h=HEAD;st=grep;s=MATCH"'
+	'butweb_run "p=.but;a=search;h=HEAD;st=grep;s=MATCH"'
 
 test_expect_success \
 	'search: pickaxe' \
-	'gitweb_run "p=.git;a=search;h=HEAD;st=pickaxe;s=MATCH"'
+	'butweb_run "p=.but;a=search;h=HEAD;st=pickaxe;s=MATCH"'
 
 test_expect_success \
 	'search: projects' \
-	'gitweb_run "a=project_list;s=.git"'
+	'butweb_run "a=project_list;s=.but"'
 
 # ----------------------------------------------------------------------
 # non-ASCII in README.html
 
 test_expect_success \
 	'README.html with non-ASCII characters (utf-8)' \
-	'echo "<b>UTF-8 example:</b><br />" >.git/README.html &&
-	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >>.git/README.html &&
-	 gitweb_run "p=.git;a=summary"'
+	'echo "<b>UTF-8 example:</b><br />" >.but/README.html &&
+	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >>.but/README.html &&
+	 butweb_run "p=.but;a=summary"'
 
 # ----------------------------------------------------------------------
 # syntax highlighting
@@ -703,7 +703,7 @@ elif test -z "$highlight_version"; then
 	say "Skipping syntax highlighting tests: incorrect 'highlight' found"
 else
 	test_set_prereq HIGHLIGHT
-	cat >>gitweb_config.perl <<-\EOF
+	cat >>butweb_config.perl <<-\EOF
 	our $highlight_bin = "highlight";
 	$feature{'highlight'}{'override'} = 1;
 	EOF
@@ -711,89 +711,89 @@ fi
 
 test_expect_success HIGHLIGHT \
 	'syntax highlighting (no highlight, unknown syntax)' \
-	'git config gitweb.highlight yes &&
-	 gitweb_run "p=.git;a=blob;f=file"'
+	'but config butweb.highlight yes &&
+	 butweb_run "p=.but;a=blob;f=file"'
 
 test_expect_success HIGHLIGHT \
 	'syntax highlighting (highlighted, shell script)' \
-	'git config gitweb.highlight yes &&
+	'but config butweb.highlight yes &&
 	 echo "#!/usr/bin/sh" >test.sh &&
-	 git add test.sh &&
-	 git cummit -m "Add test.sh" &&
-	 gitweb_run "p=.git;a=blob;f=test.sh"'
+	 but add test.sh &&
+	 but cummit -m "Add test.sh" &&
+	 butweb_run "p=.but;a=blob;f=test.sh"'
 
 test_expect_success HIGHLIGHT \
 	'syntax highlighting (highlighter language autodetection)' \
-	'git config gitweb.highlight yes &&
+	'but config butweb.highlight yes &&
 	 echo "#!/usr/bin/perl" >test &&
-	 git add test &&
-	 git cummit -m "Add test" &&
-	 gitweb_run "p=.git;a=blob;f=test"'
+	 but add test &&
+	 but cummit -m "Add test" &&
+	 butweb_run "p=.but;a=blob;f=test"'
 
 # ----------------------------------------------------------------------
 # forks of projects
 
-cat >>gitweb_config.perl <<\EOF &&
+cat >>butweb_config.perl <<\EOF &&
 $feature{'forks'}{'default'} = [1];
 EOF
 
 test_expect_success \
 	'forks: prepare' \
-	'git init --bare foo.git &&
-	 git --git-dir=foo.git --work-tree=. add file &&
-	 git --git-dir=foo.git --work-tree=. cummit -m "Initial cummit" &&
-	 echo "foo" >foo.git/description &&
+	'but init --bare foo.but &&
+	 but --but-dir=foo.but --work-tree=. add file &&
+	 but --but-dir=foo.but --work-tree=. cummit -m "Initial cummit" &&
+	 echo "foo" >foo.but/description &&
 	 mkdir -p foo &&
 	 (cd foo &&
-	  git clone --shared --bare ../foo.git foo-forked.git &&
-	  echo "fork of foo" >foo-forked.git/description)'
+	  but clone --shared --bare ../foo.but foo-forked.but &&
+	  echo "fork of foo" >foo-forked.but/description)'
 
 test_expect_success \
 	'forks: projects list' \
-	'gitweb_run'
+	'butweb_run'
 
 test_expect_success \
 	'forks: forks action' \
-	'gitweb_run "p=foo.git;a=forks"'
+	'butweb_run "p=foo.but;a=forks"'
 
 # ----------------------------------------------------------------------
 # content tags (tag cloud)
 
-cat >>gitweb_config.perl <<-\EOF &&
+cat >>butweb_config.perl <<-\EOF &&
 # we don't test _setting_ content tags, so any true value is good
 $feature{'ctags'}{'default'} = ['ctags_script.cgi'];
 EOF
 
 test_expect_success \
 	'ctags: tag cloud in projects list' \
-	'mkdir .git/ctags &&
-	 echo "2" >.git/ctags/foo &&
-	 echo "1" >.git/ctags/bar &&
-	gitweb_run'
+	'mkdir .but/ctags &&
+	 echo "2" >.but/ctags/foo &&
+	 echo "1" >.but/ctags/bar &&
+	butweb_run'
 
 test_expect_success \
 	'ctags: search projects by existing tag' \
-	'gitweb_run "by_tag=foo"'
+	'butweb_run "by_tag=foo"'
 
 test_expect_success \
 	'ctags: search projects by non existent tag' \
-	'gitweb_run "by_tag=non-existent"'
+	'butweb_run "by_tag=non-existent"'
 
 test_expect_success \
 	'ctags: malformed tag weights' \
-	'mkdir -p .git/ctags &&
-	 echo "not-a-number" >.git/ctags/nan &&
-	 echo "not-a-number-2" >.git/ctags/nan2 &&
-	 echo "0.1" >.git/ctags/floating-point &&
-	 gitweb_run'
+	'mkdir -p .but/ctags &&
+	 echo "not-a-number" >.but/ctags/nan &&
+	 echo "not-a-number-2" >.but/ctags/nan2 &&
+	 echo "0.1" >.but/ctags/floating-point &&
+	 butweb_run'
 
 # ----------------------------------------------------------------------
 # categories
 
 test_expect_success \
 	'categories: projects list, only default category' \
-	'echo "\$projects_list_group_categories = 1;" >>gitweb_config.perl &&
-	 gitweb_run'
+	'echo "\$projects_list_group_categories = 1;" >>butweb_config.perl &&
+	 butweb_run'
 
 # ----------------------------------------------------------------------
 # unborn branches
@@ -801,10 +801,10 @@ test_expect_success \
 test_expect_success \
 	'unborn HEAD: "summary" page (with "heads" subview)' \
 	'{
-		git checkout orphan_branch ||
-		git checkout --orphan orphan_branch
+		but checkout orphan_branch ||
+		but checkout --orphan orphan_branch
 	 } &&
-	 test_when_finished "git checkout main" &&
-	 gitweb_run "p=.git;a=summary"'
+	 test_when_finished "but checkout main" &&
+	 butweb_run "p=.but;a=summary"'
 
 test_done

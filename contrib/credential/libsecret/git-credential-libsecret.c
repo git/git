@@ -30,7 +30,7 @@
 #include <libsecret/secret.h>
 
 /*
- * This credential struct and API is simplified from git's credential.{h,c}
+ * This credential struct and API is simplified from but's credential.{h,c}
  */
 struct credential {
 	char *protocol;
@@ -293,7 +293,7 @@ static int credential_read(struct credential *c)
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
-		 * this future-proofs us when later versions of git do
+		 * this future-proofs us when later versions of but do
 		 * learn new lines, and the helpers are updated to match.
 		 */
 	}

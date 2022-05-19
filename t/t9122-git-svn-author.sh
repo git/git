@@ -1,7 +1,7 @@
 #!/bin/sh
 
-test_description='git svn authorship'
-. ./lib-git-svn.sh
+test_description='but svn authorship'
+. ./lib-but-svn.sh
 
 test_expect_success 'setup svn repository' '
 	svn_cmd checkout "$svnrepo" work.svn &&
@@ -13,39 +13,39 @@ test_expect_success 'setup svn repository' '
 	)
 '
 
-test_expect_success 'interact with it via git svn' '
-	mkdir work.git &&
+test_expect_success 'interact with it via but svn' '
+	mkdir work.but &&
 	(
-		cd work.git &&
-		git svn init "$svnrepo" &&
-		git svn fetch &&
+		cd work.but &&
+		but svn init "$svnrepo" &&
+		but svn fetch &&
 
 		echo modification >file &&
 		test_tick &&
-		git cummit -a -m second &&
+		but cummit -a -m second &&
 
 		test_tick &&
-		git svn dcummit &&
+		but svn dcummit &&
 
 		echo "further modification" >file &&
 		test_tick &&
-		git cummit -a -m third &&
+		but cummit -a -m third &&
 
 		test_tick &&
-		git svn --add-author-from dcummit &&
+		but svn --add-author-from dcummit &&
 
 		echo "yet further modification" >file &&
 		test_tick &&
-		git cummit -a -m fourth &&
+		but cummit -a -m fourth &&
 
 		test_tick &&
-		git svn --add-author-from --use-log-author dcummit &&
+		but svn --add-author-from --use-log-author dcummit &&
 
-		git log &&
+		but log &&
 
-		git show -s HEAD^^ >../actual.2 &&
-		git show -s HEAD^  >../actual.3 &&
-		git show -s HEAD   >../actual.4
+		but show -s HEAD^^ >../actual.2 &&
+		but show -s HEAD^  >../actual.3 &&
+		but show -s HEAD   >../actual.4
 
 	) &&
 

@@ -466,20 +466,20 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
-static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
-static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
-static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
-static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
-static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
-static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
-static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
-static GIT_PATH_FUNC(git_path_head_name, "head-name")
+static GIT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
+static GIT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static GIT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static GIT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
+static GIT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
+static GIT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
+static GIT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
+static GIT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
+static GIT_PATH_FUNC(but_path_head_name, "head-name")
 
 static void read_bisect_paths(struct strvec *array)
 {
 	struct strbuf str = STRBUF_INIT;
-	const char *filename = git_path_bisect_names();
+	const char *filename = but_path_bisect_names();
 	FILE *fp = xfopen(filename, "r");
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
@@ -702,7 +702,7 @@ static enum bisect_error error_if_skipped_cummits(struct cummit_list *tried,
 
 static int is_expected_rev(const struct object_id *oid)
 {
-	const char *filename = git_path_bisect_expected_rev();
+	const char *filename = but_path_bisect_expected_rev();
 	struct stat st;
 	struct strbuf str = STRBUF_INIT;
 	FILE *fp;
@@ -806,7 +806,7 @@ static enum bisect_error handle_bad_merge_base(void)
 	}
 
 	fprintf(stderr, _("Some %s revs are not ancestors of the %s rev.\n"
-		"git bisect cannot work properly in this case.\n"
+		"but bisect cannot work properly in this case.\n"
 		"Maybe you mistook %s and %s revs?\n"),
 		term_good, term_bad, term_good, term_bad);
 	return BISECT_FAILED;
@@ -909,7 +909,7 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 	if (!current_bad_oid)
 		return error(_("a %s revision is needed"), term_bad);
 
-	filename = git_pathdup("BISECT_ANCESTORS_OK");
+	filename = but_pathdup("BISECT_ANCESTORS_OK");
 
 	/* Check if file BISECT_ANCESTORS_OK exists. */
 	if (!stat(filename, &st) && S_ISREG(st.st_mode))
@@ -948,7 +948,7 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 }
 
 /*
- * This does "git diff-tree --pretty cummit" without one fork+exec.
+ * This does "but diff-tree --pretty cummit" without one fork+exec.
  */
 static void show_diff_tree(struct repository *r,
 			   const char *prefix,
@@ -959,7 +959,7 @@ static void show_diff_tree(struct repository *r,
 	};
 	struct rev_info opt;
 
-	git_config(git_diff_ui_config, NULL);
+	but_config(but_diff_ui_config, NULL);
 	repo_init_revisions(r, &opt, prefix);
 
 	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
@@ -974,7 +974,7 @@ static void show_diff_tree(struct repository *r,
 void read_bisect_terms(const char **read_bad, const char **read_good)
 {
 	struct strbuf str = STRBUF_INIT;
-	const char *filename = git_path_bisect_terms();
+	const char *filename = but_path_bisect_terms();
 	FILE *fp = fopen(filename, "r");
 
 	if (!fp) {
@@ -1025,7 +1025,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 	if (read_bisect_refs())
 		die(_("reading bisect refs failed"));
 
-	if (file_exists(git_path_bisect_first_parent()))
+	if (file_exists(but_path_bisect_first_parent()))
 		bisect_flags |= FIND_BISECTION_FIRST_PARENT_ONLY;
 
 	if (skipped_revs.nr)
@@ -1166,20 +1166,20 @@ int bisect_clean_state(void)
 	result = delete_refs("bisect: remove", &refs_for_removal, REF_NO_DEREF);
 	refs_for_removal.strdup_strings = 1;
 	string_list_clear(&refs_for_removal, 0);
-	unlink_or_warn(git_path_bisect_expected_rev());
-	unlink_or_warn(git_path_bisect_ancestors_ok());
-	unlink_or_warn(git_path_bisect_log());
-	unlink_or_warn(git_path_bisect_names());
-	unlink_or_warn(git_path_bisect_run());
-	unlink_or_warn(git_path_bisect_terms());
-	unlink_or_warn(git_path_bisect_first_parent());
-	/* Cleanup head-name if it got left by an old version of git-bisect */
-	unlink_or_warn(git_path_head_name());
+	unlink_or_warn(but_path_bisect_expected_rev());
+	unlink_or_warn(but_path_bisect_ancestors_ok());
+	unlink_or_warn(but_path_bisect_log());
+	unlink_or_warn(but_path_bisect_names());
+	unlink_or_warn(but_path_bisect_run());
+	unlink_or_warn(but_path_bisect_terms());
+	unlink_or_warn(but_path_bisect_first_parent());
+	/* Cleanup head-name if it got left by an old version of but-bisect */
+	unlink_or_warn(but_path_head_name());
 	/*
 	 * Cleanup BISECT_START last to support the --no-checkout option
 	 * introduced in the cummit 4796e823a.
 	 */
-	unlink_or_warn(git_path_bisect_start());
+	unlink_or_warn(but_path_bisect_start());
 
 	return result;
 }

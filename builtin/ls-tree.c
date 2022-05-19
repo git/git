@@ -33,7 +33,7 @@ struct show_tree_data {
 };
 
 static const  char * const ls_tree_usage[] = {
-	N_("git ls-tree [<options>] <tree-ish> [<path>...]"),
+	N_("but ls-tree [<options>] <tree-ish> [<path>...]"),
 	NULL
 };
 
@@ -362,7 +362,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	};
 	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	ls_tree_prefix = prefix;
 	if (prefix)
 		chomp_prefix = strlen(prefix);

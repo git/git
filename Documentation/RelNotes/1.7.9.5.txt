@@ -4,19 +4,19 @@ Git v1.7.9.5 Release Notes
 Fixes since v1.7.9.4
 --------------------
 
- * When "git config" diagnoses an error in a configuration file and
+ * When "but config" diagnoses an error in a configuration file and
    shows the line number for the offending line, it miscounted if the
    error was at the end of line.
 
- * "git fast-import" accepted "ls" command with an empty path by
+ * "but fast-import" accepted "ls" command with an empty path by
    mistake.
 
- * Various new-ish output decoration modes of "git grep" were not
+ * Various new-ish output decoration modes of "but grep" were not
    documented in the manual's synopsis section.
 
- * The "remaining" subcommand to "git rerere" was not documented.
+ * The "remaining" subcommand to "but rerere" was not documented.
 
- * "gitweb" used to drop warnings in the log file when "heads" view is
+ * "butweb" used to drop warnings in the log file when "heads" view is
    accessed in a repository whose HEAD does not point at a valid
    branch.
 

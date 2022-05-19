@@ -9,7 +9,7 @@ module Git
       named :chrome
 
       def process(parent, target, attrs)
-        prefix = parent.document.attr('git-relative-html-prefix')
+        prefix = parent.document.attr('but-relative-html-prefix')
         if parent.document.doctype == 'book'
           "<ulink url=\"#{prefix}#{target}.html\">" \
           "#{target}(#{attrs[1]})</ulink>"
@@ -43,6 +43,6 @@ module Git
 end
 
 Asciidoctor::Extensions.register do
-  inline_macro Git::Documentation::LinkGitProcessor, :linkgit
+  inline_macro Git::Documentation::LinkGitProcessor, :linkbut
   postprocessor Git::Documentation::DocumentPostProcessor
 end

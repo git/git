@@ -1,18 +1,18 @@
-git-p4(1)
+but-p4(1)
 =========
 
 NAME
 ----
-git-p4 - Import from and submit to Perforce repositories
+but-p4 - Import from and submit to Perforce repositories
 
 
 SYNOPSIS
 --------
 [verse]
-'git p4 clone' [<sync-options>] [<clone-options>] <p4-depot-path>...
-'git p4 sync' [<sync-options>] [<p4-depot-path>...]
-'git p4 rebase'
-'git p4 submit' [<submit-options>] [<master-branch-name>]
+'but p4 clone' [<sync-options>] [<clone-options>] <p4-depot-path>...
+'but p4 sync' [<sync-options>] [<p4-depot-path>...]
+'but p4 rebase'
+'but p4 submit' [<submit-options>] [<master-branch-name>]
 
 
 DESCRIPTION
@@ -21,11 +21,11 @@ This command provides a way to interact with p4 repositories
 using Git.
 
 Create a new Git repository from an existing p4 repository using
-'git p4 clone', giving it one or more p4 depot paths.  Incorporate
-new cummits from p4 changes with 'git p4 sync'.  The 'sync' command
+'but p4 clone', giving it one or more p4 depot paths.  Incorporate
+new cummits from p4 changes with 'but p4 sync'.  The 'sync' command
 is also used to include new branches from other p4 depot paths.
-Submit Git changes back to p4 using 'git p4 submit'.  The command
-'git p4 rebase' does a sync plus rebases the current branch onto
+Submit Git changes back to p4 using 'but p4 submit'.  The command
+'but p4 rebase' does a sync plus rebases the current branch onto
 the updated p4 remote branch.
 
 
@@ -34,7 +34,7 @@ EXAMPLES
 * Clone a repository:
 +
 ------------
-$ git p4 clone //depot/path/project
+$ but p4 clone //depot/path/project
 ------------
 
 * Do some work in the newly created Git repository:
@@ -42,20 +42,20 @@ $ git p4 clone //depot/path/project
 ------------
 $ cd project
 $ vi foo.h
-$ git cummit -a -m "edited foo.h"
+$ but cummit -a -m "edited foo.h"
 ------------
 
 * Update the Git repository with recent changes from p4, rebasing your
   work on top:
 +
 ------------
-$ git p4 rebase
+$ but p4 rebase
 ------------
 
 * Submit your cummits back to p4:
 +
 ------------
-$ git p4 submit
+$ but p4 submit
 ------------
 
 
@@ -64,10 +64,10 @@ COMMANDS
 
 Clone
 ~~~~~
-Generally, 'git p4 clone' is used to create a new Git directory
+Generally, 'but p4 clone' is used to create a new Git directory
 from an existing p4 repository:
 ------------
-$ git p4 clone //depot/path/project
+$ but p4 clone //depot/path/project
 ------------
 This:
 
@@ -81,7 +81,7 @@ This:
 To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:
 ------------
-$ git p4 clone //depot/path/project@all
+$ but p4 clone //depot/path/project@all
 ------------
 
 
@@ -90,17 +90,17 @@ Sync
 As development continues in the p4 repository, those changes can
 be included in the Git repository using:
 ------------
-$ git p4 sync
+$ but p4 sync
 ------------
 This command finds new changes in p4 and imports them as Git cummits.
 
 P4 repositories can be added to an existing Git repository using
-'git p4 sync' too:
+'but p4 sync' too:
 ------------
-$ mkdir repo-git
-$ cd repo-git
-$ git init
-$ git p4 sync //path/in/your/perforce/depot
+$ mkdir repo-but
+$ cd repo-but
+$ but init
+$ but p4 sync //path/in/your/perforce/depot
 ------------
 This imports the specified depot into
 'refs/remotes/p4/master' in an existing Git repository.  The
@@ -108,11 +108,11 @@ This imports the specified depot into
 be used for the p4 content.
 
 If a Git repository includes branches 'refs/remotes/origin/p4', these
-will be fetched and consulted first during a 'git p4 sync'.  Since
+will be fetched and consulted first during a 'but p4 sync'.  Since
 importing directly from p4 is considerably slower than pulling changes
 from a Git remote, this can be useful in a multi-developer environment.
 
-If there are multiple branches, doing 'git p4 sync' will automatically
+If there are multiple branches, doing 'but p4 sync' will automatically
 use the "BRANCH DETECTION" algorithm to try to partition new changes
 into the right branch.  This can be overridden with the `--branch`
 option to specify just a single branch to update.
@@ -123,10 +123,10 @@ Rebase
 A common working pattern is to fetch the latest changes from the p4 depot
 and merge them with local uncummitted changes.  Often, the p4 repository
 is the ultimate location for all code, thus a rebase workflow makes
-sense.  This command does 'git p4 sync' followed by 'git rebase' to move
+sense.  This command does 'but p4 sync' followed by 'but rebase' to move
 local cummits on top of updated p4 changes.
 ------------
-$ git p4 rebase
+$ but p4 rebase
 ------------
 
 
@@ -135,30 +135,30 @@ Submit
 Submitting changes from a Git repository back to the p4 repository
 requires a separate p4 client workspace.  This should be specified
 using the `P4CLIENT` environment variable or the Git configuration
-variable 'git-p4.client'.  The p4 client must exist, but the client root
+variable 'but-p4.client'.  The p4 client must exist, but the client root
 will be created and populated if it does not already exist.
 
 To submit all changes that are in the current Git branch but not in
 the 'p4/master' branch, use:
 ------------
-$ git p4 submit
+$ but p4 submit
 ------------
 
 To specify a branch other than the current one, use:
 ------------
-$ git p4 submit topicbranch
+$ but p4 submit topicbranch
 ------------
 
 To specify a single cummit or a range of cummits, use:
 ------------
-$ git p4 submit --cummit <sha1>
-$ git p4 submit --cummit <sha1..sha1>
+$ but p4 submit --cummit <sha1>
+$ but p4 submit --cummit <sha1..sha1>
 ------------
 
 The upstream reference is generally 'refs/remotes/p4/master', but can
 be overridden using the `--origin=` command-line option.
 
-The p4 changes will be created as the user invoking 'git p4 submit'. The
+The p4 changes will be created as the user invoking 'but p4 submit'. The
 `--preserve-user` option will cause ownership to be modified
 according to the author of the Git cummit.  This option requires admin
 privileges in p4, which can be granted using 'p4 protect'.
@@ -166,17 +166,17 @@ privileges in p4, which can be granted using 'p4 protect'.
 To shelve changes instead of submitting, use `--shelve` and `--update-shelve`:
 
 ----
-$ git p4 submit --shelve
-$ git p4 submit --update-shelve 1234 --update-shelve 2345
+$ but p4 submit --shelve
+$ but p4 submit --update-shelve 1234 --update-shelve 2345
 ----
 
 
 Unshelve
 ~~~~~~~~
-Unshelving will take a shelved P4 changelist, and produce the equivalent git cummit
+Unshelving will take a shelved P4 changelist, and produce the equivalent but cummit
 in the branch refs/remotes/p4-unshelved/<changelist>.
 
-The git cummit is created relative to the current origin revision (HEAD by default).
+The but cummit is created relative to the current origin revision (HEAD by default).
 A parent cummit is created based on the origin, and then the unshelve cummit is
 created based on that.
 
@@ -186,12 +186,12 @@ If the target branch in refs/remotes/p4-unshelved already exists, the old one wi
 be renamed.
 
 ----
-$ git p4 sync
-$ git p4 unshelve 12345
-$ git show p4-unshelved/12345
+$ but p4 sync
+$ but p4 unshelve 12345
+$ but show p4-unshelved/12345
 <submit more changes via p4 to the same files>
-$ git p4 unshelve 12345
-<refuses to unshelve until git is in sync with p4 again>
+$ but p4 unshelve 12345
+<refuses to unshelve until but is in sync with p4 again>
 
 ----
 
@@ -202,8 +202,8 @@ General options
 ~~~~~~~~~~~~~~~
 All commands except clone accept these options.
 
---git-dir <dir>::
-	Set the `GIT_DIR` environment variable.  See linkgit:git[1].
+--but-dir <dir>::
+	Set the `GIT_DIR` environment variable.  See linkbut:but[1].
 
 -v::
 --verbose::
@@ -229,8 +229,8 @@ This example imports a new remote "p4/proj2" into an existing
 Git repository:
 +
 ----
-    $ git init
-    $ git p4 sync --branch=refs/remotes/p4/proj2 //depot/proj2
+    $ but init
+    $ but p4 sync --branch=refs/remotes/p4/proj2 //depot/proj2
 ----
 
 --detect-branches::
@@ -239,7 +239,7 @@ Git repository:
 
 --changesfile <file>::
 	Import exactly the p4 change numbers listed in 'file', one per
-	line.  Normally, 'git p4' inspects the current p4 repository
+	line.  Normally, 'but p4' inspects the current p4 repository
 	state and detects the changes it should import.
 
 --silent::
@@ -256,7 +256,7 @@ Git repository:
 --import-local::
 	By default, p4 branches are stored in 'refs/remotes/p4/',
 	where they will be treated as remote-tracking branches by
-	linkgit:git-branch[1] and other commands.  This option instead
+	linkbut:but-branch[1] and other commands.  This option instead
 	puts p4 branches in 'refs/heads/p4/'.  Note that future
 	sync operations must specify `--import-local` as well so that
 	they can find the p4 branches in refs/heads.
@@ -303,11 +303,11 @@ options described above.
 	directory.
 
 --bare::
-	Perform a bare clone.  See linkgit:git-clone[1].
+	Perform a bare clone.  See linkbut:but-clone[1].
 
 Submit options
 ~~~~~~~~~~~~~~
-These options can be used to modify 'git p4 submit' behavior.
+These options can be used to modify 'but p4 submit' behavior.
 
 --origin <cummit>::
 	Upstream location from which cummits are identified to submit to
@@ -315,7 +315,7 @@ These options can be used to modify 'git p4 submit' behavior.
 	from `HEAD`.
 
 -M::
-	Detect renames.  See linkgit:git-diff[1].  Renames will be
+	Detect renames.  See linkbut:but-diff[1].  Renames will be
 	represented in p4 using explicit 'move' operations.  There
 	is no corresponding option to detect copies, but there are
 	variables for both moves and copies.
@@ -367,12 +367,12 @@ These options can be used to modify 'git p4 submit' behavior.
 
 --disable-rebase::
     Disable the automatic rebase after all cummits have been successfully
-    submitted. Can also be set with git-p4.disableRebase.
+    submitted. Can also be set with but-p4.disableRebase.
 
 --disable-p4sync::
     Disable the automatic sync of p4/master from Perforce after cummits have
     been submitted. Implies --disable-rebase. Can also be set with
-    git-p4.disableP4Sync. Sync with origin/master still goes ahead if possible.
+    but-p4.disableP4Sync. Sync with origin/master still goes ahead if possible.
 
 Hooks for submit
 ----------------
@@ -382,7 +382,7 @@ p4-pre-submit
 
 The `p4-pre-submit` hook is executed if it exists and is executable.
 The hook takes no parameters and nothing from standard input. Exiting with
-non-zero status from this script prevents `git-p4 submit` from launching.
+non-zero status from this script prevents `but-p4 submit` from launching.
 It can be bypassed with the `--no-verify` command line option.
 
 One usage scenario is to run unit tests in the hook.
@@ -419,13 +419,13 @@ p4-post-changelist
 The `p4-post-changelist` hook is invoked after the submit has
 successfully occurred in P4. It takes no parameters and is meant
 primarily for notification and cannot affect the outcome of the
-git p4 submit action.
+but p4 submit action.
 
 
 
 Rebase options
 ~~~~~~~~~~~~~~
-These options can be used to modify 'git p4 rebase' behavior.
+These options can be used to modify 'but p4 rebase' behavior.
 
 --import-labels::
 	Import p4 labels.
@@ -434,12 +434,12 @@ Unshelve options
 ~~~~~~~~~~~~~~~~
 
 --origin::
-    Sets the git refspec against which the shelved P4 changelist is compared.
+    Sets the but refspec against which the shelved P4 changelist is compared.
     Defaults to p4/master.
 
 DEPOT PATH SYNTAX
 -----------------
-The p4 depot path argument to 'git p4 sync' and 'git p4 clone' can
+The p4 depot path argument to 'but p4 sync' and 'but p4 clone' can
 be one or more space-separated p4 depot paths, with an optional
 p4 revision specifier on the end:
 
@@ -471,26 +471,26 @@ The p4 client specification is maintained with the 'p4 client' command
 and contains among other fields, a View that specifies how the depot
 is mapped into the client repository.  The 'clone' and 'sync' commands
 can consult the client spec when given the `--use-client-spec` option or
-when the useClientSpec variable is true.  After 'git p4 clone', the
+when the useClientSpec variable is true.  After 'but p4 clone', the
 useClientSpec variable is automatically set in the repository
-configuration file.  This allows future 'git p4 submit' commands to
+configuration file.  This allows future 'but p4 submit' commands to
 work properly; the submit command looks only at the variable and does
 not have a command-line option.
 
-The full syntax for a p4 view is documented in 'p4 help views'.  'git p4'
+The full syntax for a p4 view is documented in 'p4 help views'.  'but p4'
 knows only a subset of the view syntax.  It understands multi-line
 mappings, overlays with '+', exclusions with '-' and double-quotes
-around whitespace.  Of the possible wildcards, 'git p4' only handles
-'...', and only when it is at the end of the path.  'git p4' will complain
+around whitespace.  Of the possible wildcards, 'but p4' only handles
+'...', and only when it is at the end of the path.  'but p4' will complain
 if it encounters an unhandled wildcard.
 
 Bugs in the implementation of overlap mappings exist.  If multiple depot
 paths map through overlays to the same location in the repository,
-'git p4' can choose the wrong one.  This is hard to solve without
-dedicating a client spec just for 'git p4'.
+'but p4' can choose the wrong one.  This is hard to solve without
+dedicating a client spec just for 'but p4'.
 
-The name of the client can be given to 'git p4' in multiple ways.  The
-variable 'git-p4.client' takes precedence if it exists.  Otherwise,
+The name of the client can be given to 'but p4' in multiple ways.  The
+variable 'but-p4.client' takes precedence if it exists.  Otherwise,
 normal p4 mechanisms of determining the client are used:  environment
 variable `P4CLIENT`, a file referenced by `P4CONFIG`, or the local host name.
 
@@ -501,12 +501,12 @@ P4 does not have the same concept of a branch as Git.  Instead,
 p4 organizes its content as a directory tree, where by convention
 different logical branches are in different locations in the tree.
 The 'p4 branch' command is used to maintain mappings between
-different areas in the tree, and indicate related content.  'git p4'
+different areas in the tree, and indicate related content.  'but p4'
 can use these mappings to determine branch relationships.
 
 If you have a repository where all the branches of interest exist as
 subdirectories of a single depot path, you can use `--detect-branches`
-when cloning or syncing to have 'git p4' automatically find
+when cloning or syncing to have 'but p4' automatically find
 subdirectories in p4, and to generate these as branches in Git.
 
 For example, if the P4 repository structure is:
@@ -520,9 +520,9 @@ And "p4 branch -o branch1" shows a View line that looks like:
 //depot/main/... //depot/branch1/...
 ----
 
-Then this 'git p4 clone' command:
+Then this 'but p4 clone' command:
 ----
-git p4 clone --detect-branches //depot@all
+but p4 clone --detect-branches //depot@all
 ----
 produces a separate branch in 'refs/remotes/p4/' for //depot/main,
 called 'master', and one for //depot/branch1 called 'depot/branch1'.
@@ -530,59 +530,59 @@ called 'master', and one for //depot/branch1 called 'depot/branch1'.
 However, it is not necessary to create branches in p4 to be able to use
 them like branches.  Because it is difficult to infer branch
 relationships automatically, a Git configuration setting
-'git-p4.branchList' can be used to explicitly identify branch
+'but-p4.branchList' can be used to explicitly identify branch
 relationships.  It is a list of "source:destination" pairs, like a
 simple p4 branch specification, where the "source" and "destination" are
 the path elements in the p4 repository.  The example above relied on the
 presence of the p4 branch.  Without p4 branches, the same result will
 occur with:
 ----
-git init depot
+but init depot
 cd depot
-git config git-p4.branchList main:branch1
-git p4 clone --detect-branches //depot@all .
+but config but-p4.branchList main:branch1
+but p4 clone --detect-branches //depot@all .
 ----
 
 
 PERFORMANCE
 -----------
-The fast-import mechanism used by 'git p4' creates one pack file for
-each invocation of 'git p4 sync'.  Normally, Git garbage compression
-(linkgit:git-gc[1]) automatically compresses these to fewer pack files,
-but explicit invocation of 'git repack -adf' may improve performance.
+The fast-import mechanism used by 'but p4' creates one pack file for
+each invocation of 'but p4 sync'.  Normally, Git garbage compression
+(linkbut:but-gc[1]) automatically compresses these to fewer pack files,
+but explicit invocation of 'but repack -adf' may improve performance.
 
 
 CONFIGURATION VARIABLES
 -----------------------
-The following config settings can be used to modify 'git p4' behavior.
-They all are in the 'git-p4' section.
+The following config settings can be used to modify 'but p4' behavior.
+They all are in the 'but-p4' section.
 
 General variables
 ~~~~~~~~~~~~~~~~~
-git-p4.user::
+but-p4.user::
 	User specified as an option to all p4 commands, with '-u <user>'.
 	The environment variable `P4USER` can be used instead.
 
-git-p4.password::
+but-p4.password::
 	Password specified as an option to all p4 commands, with
 	'-P <password>'.
 	The environment variable `P4PASS` can be used instead.
 
-git-p4.port::
+but-p4.port::
 	Port specified as an option to all p4 commands, with
 	'-p <port>'.
 	The environment variable `P4PORT` can be used instead.
 
-git-p4.host::
+but-p4.host::
 	Host specified as an option to all p4 commands, with
 	'-h <host>'.
 	The environment variable `P4HOST` can be used instead.
 
-git-p4.client::
+but-p4.client::
 	Client specified as an option to all p4 commands, with
 	'-c <client>', including the client spec.
 
-git-p4.retries::
+but-p4.retries::
 	Specifies the number of times to retry a p4 command (notably,
 	'p4 sync') if the network times out. The default value is 3.
 	Set the value to 0 to disable retries or if your p4 version
@@ -590,94 +590,94 @@ git-p4.retries::
 
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
-git-p4.syncFromOrigin::
+but-p4.syncFromOrigin::
 	Because importing cummits from other Git repositories is much faster
 	than importing them from p4, a mechanism exists to find p4 changes
 	first in Git remotes.  If branches exist under 'refs/remote/origin/p4',
 	those will be fetched and used when syncing from p4.  This
 	variable can be set to 'false' to disable this behavior.
 
-git-p4.branchUser::
+but-p4.branchUser::
 	One phase in branch detection involves looking at p4 branches
 	to find new ones to import.  By default, all branches are
 	inspected.  This option limits the search to just those owned
 	by the single user named in the variable.
 
-git-p4.branchList::
+but-p4.branchList::
 	List of branches to be imported when branch detection is
 	enabled.  Each entry should be a pair of branch names separated
 	by a colon (:).  This example declares that both branchA and
 	branchB were created from main:
 +
 -------------
-git config       git-p4.branchList main:branchA
-git config --add git-p4.branchList main:branchB
+but config       but-p4.branchList main:branchA
+but config --add but-p4.branchList main:branchB
 -------------
 
-git-p4.ignoredP4Labels::
+but-p4.ignoredP4Labels::
 	List of p4 labels to ignore. This is built automatically as
 	unimportable labels are discovered.
 
-git-p4.importLabels::
-	Import p4 labels into git, as per --import-labels.
+but-p4.importLabels::
+	Import p4 labels into but, as per --import-labels.
 
-git-p4.labelImportRegexp::
+but-p4.labelImportRegexp::
 	Only p4 labels matching this regular expression will be imported. The
 	default value is '[a-zA-Z0-9_\-.]+$'.
 
-git-p4.useClientSpec::
+but-p4.useClientSpec::
 	Specify that the p4 client spec should be used to identify p4
 	depot paths of interest.  This is equivalent to specifying the
 	option `--use-client-spec`.  See the "CLIENT SPEC" section above.
 	This variable is a boolean, not the name of a p4 client.
 
-git-p4.pathEncoding::
+but-p4.pathEncoding::
 	Perforce keeps the encoding of a path as given by the originating OS.
-	Git expects paths encoded as UTF-8. Use this config to tell git-p4
+	Git expects paths encoded as UTF-8. Use this config to tell but-p4
 	what encoding Perforce had used for the paths. This encoding is used
 	to transcode the paths to UTF-8. As an example, Perforce on Windows
 	often uses "cp1252" to encode path names.
 
-git-p4.largeFileSystem::
+but-p4.largeFileSystem::
 	Specify the system that is used for large (binary) files. Please note
-	that large file systems do not support the 'git p4 submit' command.
-	Only Git LFS is implemented right now (see https://git-lfs.github.com/
+	that large file systems do not support the 'but p4 submit' command.
+	Only Git LFS is implemented right now (see https://but-lfs.buthub.com/
 	for more information). Download and install the Git LFS command line
 	extension to use this option and configure it like this:
 +
 -------------
-git config       git-p4.largeFileSystem GitLFS
+but config       but-p4.largeFileSystem GitLFS
 -------------
 
-git-p4.largeFileExtensions::
+but-p4.largeFileExtensions::
 	All files matching a file extension in the list will be processed
 	by the large file system. Do not prefix the extensions with '.'.
 
-git-p4.largeFileThreshold::
+but-p4.largeFileThreshold::
 	All files with an uncompressed size exceeding the threshold will be
 	processed by the large file system. By default the threshold is
 	defined in bytes. Add the suffix k, m, or g to change the unit.
 
-git-p4.largeFileCompressedThreshold::
+but-p4.largeFileCompressedThreshold::
 	All files with a compressed size exceeding the threshold will be
 	processed by the large file system. This option might slow down
 	your clone/sync process. By default the threshold is defined in
 	bytes. Add the suffix k, m, or g to change the unit.
 
-git-p4.largeFilePush::
+but-p4.largeFilePush::
 	Boolean variable which defines if large files are automatically
 	pushed to a server.
 
-git-p4.keepEmptycummits::
+but-p4.keepEmptycummits::
 	A changelist that contains only excluded files will be imported
 	as an empty cummit if this boolean option is set to true.
 
-git-p4.mapUser::
+but-p4.mapUser::
 	Map a P4 user to a name and email address in Git. Use a string
 	with the following format to create a mapping:
 +
 -------------
-git config --add git-p4.mapUser "p4user = First Last <mail@address.com>"
+but config --add but-p4.mapUser "p4user = First Last <mail@address.com>"
 -------------
 +
 A mapping will override any user information from P4. Mappings for
@@ -685,70 +685,70 @@ multiple P4 user can be defined.
 
 Submit variables
 ~~~~~~~~~~~~~~~~
-git-p4.detectRenames::
-	Detect renames.  See linkgit:git-diff[1].  This can be true,
-	false, or a score as expected by 'git diff -M'.
+but-p4.detectRenames::
+	Detect renames.  See linkbut:but-diff[1].  This can be true,
+	false, or a score as expected by 'but diff -M'.
 
-git-p4.detectCopies::
-	Detect copies.  See linkgit:git-diff[1].  This can be true,
-	false, or a score as expected by 'git diff -C'.
+but-p4.detectCopies::
+	Detect copies.  See linkbut:but-diff[1].  This can be true,
+	false, or a score as expected by 'but diff -C'.
 
-git-p4.detectCopiesHarder::
-	Detect copies harder.  See linkgit:git-diff[1].  A boolean.
+but-p4.detectCopiesHarder::
+	Detect copies harder.  See linkbut:but-diff[1].  A boolean.
 
-git-p4.preserveUser::
+but-p4.preserveUser::
 	On submit, re-author changes to reflect the Git author,
-	regardless of who invokes 'git p4 submit'.
+	regardless of who invokes 'but p4 submit'.
 
-git-p4.allowMissingP4Users::
-	When 'preserveUser' is true, 'git p4' normally dies if it
+but-p4.allowMissingP4Users::
+	When 'preserveUser' is true, 'but p4' normally dies if it
 	cannot find an author in the p4 user map.  This setting
 	submits the change regardless.
 
-git-p4.skipSubmitEdit::
+but-p4.skipSubmitEdit::
 	The submit process invokes the editor before each p4 change
 	is submitted.  If this setting is true, though, the editing
 	step is skipped.
 
-git-p4.skipSubmitEditCheck::
-	After editing the p4 change message, 'git p4' makes sure that
+but-p4.skipSubmitEditCheck::
+	After editing the p4 change message, 'but p4' makes sure that
 	the description really was changed by looking at the file
 	modification time.  This option disables that test.
 
-git-p4.allowSubmit::
-	By default, any branch can be used as the source for a 'git p4
+but-p4.allowSubmit::
+	By default, any branch can be used as the source for a 'but p4
 	submit' operation.  This configuration variable, if set, permits only
 	the named branches to be used as submit sources.  Branch names
 	must be the short names (no "refs/heads/"), and should be
 	separated by commas (","), with no spaces.
 
-git-p4.skipUserNameCheck::
-	If the user running 'git p4 submit' does not exist in the p4
-	user map, 'git p4' exits.  This option can be used to force
+but-p4.skipUserNameCheck::
+	If the user running 'but p4 submit' does not exist in the p4
+	user map, 'but p4' exits.  This option can be used to force
 	submission regardless.
 
-git-p4.attemptRCSCleanup::
-	If enabled, 'git p4 submit' will attempt to cleanup RCS keywords
+but-p4.attemptRCSCleanup::
+	If enabled, 'but p4 submit' will attempt to cleanup RCS keywords
 	($Header$, etc). These would otherwise cause merge conflicts and prevent
 	the submit going ahead. This option should be considered experimental at
 	present.
 
-git-p4.exportLabels::
+but-p4.exportLabels::
 	Export Git tags to p4 labels, as per --export-labels.
 
-git-p4.labelExportRegexp::
+but-p4.labelExportRegexp::
 	Only p4 labels matching this regular expression will be exported. The
 	default value is '[a-zA-Z0-9_\-.]+$'.
 
-git-p4.conflict::
+but-p4.conflict::
 	Specify submit behavior when a conflict with p4 is found, as per
 	--conflict.  The default behavior is 'ask'.
 
-git-p4.disableRebase::
+but-p4.disableRebase::
     Do not rebase the tree against p4/master following a submit.
 
-git-p4.disableP4Sync::
-    Do not sync p4/master with Perforce following a submit. Implies git-p4.disableRebase.
+but-p4.disableP4Sync::
+    Do not sync p4/master with Perforce following a submit. Implies but-p4.disableRebase.
 
 IMPLEMENTATION DETAILS
 ----------------------
@@ -758,11 +758,11 @@ IMPLEMENTATION DETAILS
 * Submitting requires a p4 client, which is not in the same location
   as the Git repository.  Patches are applied, one at a time, to
   this p4 client and submitted from there.
-* Each cummit imported by 'git p4' has a line at the end of the log
+* Each cummit imported by 'but p4' has a line at the end of the log
   message indicating the p4 depot location and change number.  This
-  line is used by later 'git p4 sync' operations to know which p4
+  line is used by later 'but p4 sync' operations to know which p4
   changes are new.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

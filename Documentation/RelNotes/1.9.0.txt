@@ -4,7 +4,7 @@ Git v1.9.0 Release Notes
 Backward compatibility notes
 ----------------------------
 
-"git submodule foreach $cmd $args" used to treat "$cmd $args" the same
+"but submodule foreach $cmd $args" used to treat "$cmd $args" the same
 way "ssh" did, concatenating them into a single string and letting the
 shell unquote. Careless users who forget to sufficiently quote $args
 get their argument split at $IFS whitespaces by the shell, and got
@@ -15,11 +15,11 @@ Read-only support for experimental loose-object format, in which users
 could optionally choose to write their loose objects for a short
 while between v1.4.3 and v1.5.3 era, has been dropped.
 
-The meanings of the "--tags" option to "git fetch" has changed; the
+The meanings of the "--tags" option to "but fetch" has changed; the
 command fetches tags _in addition to_ what is fetched by the same
 command line without the option.
 
-The way "git push $there $what" interprets the $what part given on the
+The way "but push $there $what" interprets the $what part given on the
 command line, when it does not have a colon that explicitly tells us
 what ref at the $there repository is to be updated, has been enhanced.
 
@@ -30,7 +30,7 @@ finally gone (repo-config, tar-tree, lost-found, and peek-remote).
 Backward compatibility notes (for Git 2.0.0)
 --------------------------------------------
 
-When "git push [$there]" does not say what to push, we have used the
+When "but push [$there]" does not say what to push, we have used the
 traditional "matching" semantics so far (all your branches were sent
 to the remote as long as there already are branches of the same name
 over there).  In Git 2.0, the default will change to the "simple"
@@ -49,27 +49,27 @@ semantics, you can set the variable to "matching" to keep the
 traditional behaviour.  If you want to live in the future early, you
 can set it to "simple" today without waiting for Git 2.0.
 
-When "git add -u" (and "git add -A") is run inside a subdirectory and
+When "but add -u" (and "but add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git cummit -a" and other commands.  There will be no
-mechanism to make plain "git add -u" behave like "git add -u .".
-Current users of "git add -u" (without a pathspec) should start
-training their fingers to explicitly say "git add -u ."
+with "but cummit -a" and other commands.  There will be no
+mechanism to make plain "but add -u" behave like "but add -u .".
+Current users of "but add -u" (without a pathspec) should start
+training their fingers to explicitly say "but add -u ."
 before Git 2.0 comes.  A warning is issued when these commands are
 run without a pathspec and when you have local changes outside the
 current directory, because the behaviour in Git 2.0 will be different
 from today's version in such a situation.
 
-In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
-that "git add dir/" will notice paths you removed from the directory
+In Git 2.0, "but add <path>" will behave as "but add -A <path>", so
+that "but add dir/" will notice paths you removed from the directory
 and record the removal.  Versions before Git 2.0, including this
 release, will keep ignoring removals, but the users who rely on this
-behaviour are encouraged to start using "git add --ignore-removal <path>"
+behaviour are encouraged to start using "but add --ignore-removal <path>"
 now before 2.0 is released.
 
-The default prefix for "git svn" will change in Git 2.0.  For a long
-time, "git svn" created its remote-tracking branches directly under
+The default prefix for "but svn" will change in Git 2.0.  For a long
+time, "but svn" created its remote-tracking branches directly under
 refs/remotes, but it will place them under refs/remotes/origin/ unless
 it is told otherwise with its --prefix option.
 
@@ -87,7 +87,7 @@ Foreign interfaces, subsystems and ports.
 
  * The build procedure is aware of MirBSD now.
 
- * Various "git p4", "git svn" and "gitk" updates.
+ * Various "but p4", "but svn" and "butk" updates.
 
 
 UI, Workflows & Features
@@ -107,60 +107,60 @@ UI, Workflows & Features
    hierarchies, whose variables are predominantly three-level, were
    not completed by hitting a <TAB> in bash and zsh completions.
 
- * Fetching a 'frotz' branch with "git fetch", while a 'frotz/nitfol'
+ * Fetching a 'frotz' branch with "but fetch", while a 'frotz/nitfol'
    remote-tracking branch from an earlier fetch was still there, would
    error out, primarily because the command was not told that it is
-   allowed to lose any information on our side.  "git fetch --prune"
+   allowed to lose any information on our side.  "but fetch --prune"
    now can be used to remove 'frotz/nitfol' to make room for fetching and
    storing the 'frotz' remote-tracking branch.
 
  * "diff.orderfile=<file>" configuration variable can be used to
    pretend as if the "-O<file>" option were given from the command
-   line of "git diff", etc.
+   line of "but diff", etc.
 
- * The negative pathspec syntax allows "git log -- . ':!dir'" to tell
+ * The negative pathspec syntax allows "but log -- . ':!dir'" to tell
    us "I am interested in everything but 'dir' directory".
 
- * "git difftool" shows how many different paths there are in total,
+ * "but difftool" shows how many different paths there are in total,
    and how many of them have been shown so far, to indicate progress.
 
- * "git push origin master" used to push our 'master' branch to update
+ * "but push origin master" used to push our 'master' branch to update
    the 'master' branch at the 'origin' repository.  This has been
-   enhanced to use the same ref mapping "git push origin" would use to
+   enhanced to use the same ref mapping "but push origin" would use to
    determine what ref at the 'origin' to be updated with our 'master'.
    For example, with this configuration
 
    [remote "origin"]
       push = refs/heads/*:refs/review/*
 
-   that would cause "git push origin" to push out our local branches
+   that would cause "but push origin" to push out our local branches
    to corresponding refs under refs/review/ hierarchy at 'origin',
-   "git push origin master" would update 'refs/review/master' over
+   "but push origin master" would update 'refs/review/master' over
    there.  Alternatively, if push.default is set to 'upstream' and our
    'master' is set to integrate with 'topic' from the 'origin' branch,
-   running "git push origin" while on our 'master' would update their
-   'topic' branch, and running "git push origin master" while on any
+   running "but push origin" while on our 'master' would update their
+   'topic' branch, and running "but push origin master" while on any
    of our branches does the same.
 
- * "gitweb" learned to treat ref hierarchies other than refs/heads as
+ * "butweb" learned to treat ref hierarchies other than refs/heads as
    if they are additional branch namespaces (e.g. refs/changes/ in
    Gerrit).
 
- * "git for-each-ref --format=..." learned a few formatting directives;
+ * "but for-each-ref --format=..." learned a few formatting directives;
    e.g. "%(color:red)%(HEAD)%(color:reset) %(refname:short) %(subject)".
 
- * The command string given to "git submodule foreach" is passed
+ * The command string given to "but submodule foreach" is passed
    directly to the shell, without being eval'ed.  This is a backward
    incompatible change that may break existing users.
 
- * "git log" and friends learned the "--exclude=<glob>" option, to
+ * "but log" and friends learned the "--exclude=<glob>" option, to
    allow people to say "list history of all branches except those that
-   match this pattern" with "git log --exclude='*/*' --branches".
+   match this pattern" with "but log --exclude='*/*' --branches".
 
- * "git rev-parse --parseopt" learned a new "--stuck-long" option to
+ * "but rev-parse --parseopt" learned a new "--stuck-long" option to
    help scripts parse options with an optional parameter.
 
- * The "--tags" option to "git fetch" no longer tells the command to
+ * The "--tags" option to "but fetch" no longer tells the command to
    fetch _only_ the tags. It instead fetches tags _in addition to_
    what are fetched by the same command line without the option.
 
@@ -181,7 +181,7 @@ Performance, Internal Implementation, etc.
    different settings (or delta order) would produce a pack with
    different name.
 
- * "git diff --no-index" mode used to unnecessarily attempt to read
+ * "but diff --no-index" mode used to unnecessarily attempt to read
    the index when there is one.
 
  * The deprecated parse-options macro OPT_BOOLEAN has been removed;
@@ -192,19 +192,19 @@ Performance, Internal Implementation, etc.
 
  * The new PERLLIB_EXTRA makefile variable can be used to specify
    additional directories Perl modules (e.g. the ones necessary to run
-   git-svn) are installed on the platform when building.
+   but-svn) are installed on the platform when building.
 
- * "git merge-base" learned the "--fork-point" mode, that implements
-   the same logic used in "git pull --rebase" to find a suitable fork
+ * "but merge-base" learned the "--fork-point" mode, that implements
+   the same logic used in "but pull --rebase" to find a suitable fork
    point out of the reflog entries for the remote-tracking branch the
-   work has been based on.  "git rebase" has the same logic that can be
+   work has been based on.  "but rebase" has the same logic that can be
    triggered with the "--fork-point" option.
 
- * A third-party "receive-pack" (the responder to "git push") can
-   advertise the "no-thin" capability to tell "git push" not to use
+ * A third-party "receive-pack" (the responder to "but push") can
+   advertise the "no-thin" capability to tell "but push" not to use
    the thin-pack optimization. Our receive-pack has always been
    capable of accepting and fattening a thin-pack, and will continue
-   not to ask "git push" to use a non-thin pack.
+   not to ask "but push" to use a non-thin pack.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -217,18 +217,18 @@ Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
 track are contained in this release (see the maintenance releases' notes
 for details).
 
- * The pathspec matching code, while comparing two trees (e.g. "git
+ * The pathspec matching code, while comparing two trees (e.g. "but
    diff A B -- path1 path2") was too aggressive and failed to match
    some paths when multiple pathspecs were involved.
 
- * "git repack --max-pack-size=8g" stopped being parsed correctly when
+ * "but repack --max-pack-size=8g" stopped being parsed correctly when
    the command was reimplemented in C.
 
- * An earlier update in v1.8.4.x to "git rev-list --objects" with
+ * An earlier update in v1.8.4.x to "but rev-list --objects" with
    negative ref had a performance regression.
    (merge 200abe7 jk/mark-edges-uninteresting later to maint).
 
- * A recent update to "git send-email" broke platforms where
+ * A recent update to "but send-email" broke platforms where
    /etc/ssl/certs/ directory exists but cannot be used as SSL_ca_path
    (e.g. Fedora rawhide).
 
@@ -236,33 +236,33 @@ for details).
    and its lookalike, when $branch part has interesting characters,
    e.g. "@", and ":", have been fixed.
 
- * "git clone" would fail to clone from a repository that has a ref
+ * "but clone" would fail to clone from a repository that has a ref
    directly under "refs/", e.g. "refs/stash", because different
    validation paths do different things on such a refname.  Loosen the
    client side's validation to allow such a ref.
 
- * "git log --left-right A...B" lost the "leftness" of cummits
+ * "but log --left-right A...B" lost the "leftness" of cummits
    reachable from A when A is a tag as a side effect of a recent
    bugfix.  This is a regression in 1.8.4.x series.
 
- * documentations to "git pull" hinted there is an "-m" option because
-   it incorrectly shared the documentation with "git merge".
+ * documentations to "but pull" hinted there is an "-m" option because
+   it incorrectly shared the documentation with "but merge".
 
- * "git diff A B submod" and "git diff A B submod/" ought to have done
+ * "but diff A B submod" and "but diff A B submod/" ought to have done
    the same for a submodule "submod", but didn't.
 
- * "git clone $origin foo\bar\baz" on Windows failed to create the
+ * "but clone $origin foo\bar\baz" on Windows failed to create the
    leading directories (i.e. a moral-equivalent of "mkdir -p").
 
- * "submodule.*.update=checkout", when propagated from .gitmodules to
-   .git/config, turned into a "submodule.*.update=none", which did not
+ * "submodule.*.update=checkout", when propagated from .butmodules to
+   .but/config, turned into a "submodule.*.update=none", which did not
    make much sense.
    (merge efa8fd7 fp/submodule-checkout-mode later to maint).
 
- * The implementation of 'git stash $cmd "stash@{...}"' did not quote
+ * The implementation of 'but stash $cmd "stash@{...}"' did not quote
    the stash argument properly and left it split at IFS whitespace.
 
- * The "--[no-]informative-errors" options to "git daemon" were parsed
+ * The "--[no-]informative-errors" options to "but daemon" were parsed
    a bit too loosely, allowing any other string after these option
    names.
 
@@ -274,7 +274,7 @@ for details).
    t/ directory.
    (merge 738a8be jk/test-framework-updates later to maint).
 
- * "git merge-base --octopus" used to leave cleaning up suboptimal
+ * "but merge-base --octopus" used to leave cleaning up suboptimal
    result to the caller, but now it does the clean-up itself.
 
  * A "gc" process running as a different user should be able to stop a
@@ -282,10 +282,10 @@ for details).
 
  * An earlier "clean-up" introduced an unnecessary memory leak.
 
- * "git add -A" (no other arguments) in a totally empty working tree
+ * "but add -A" (no other arguments) in a totally empty working tree
    used to emit an error.
 
- * "git log --decorate" did not handle a tag pointed by another tag
+ * "but log --decorate" did not handle a tag pointed by another tag
    nicely.
 
  * When we figure out how many file descriptors to allocate for
@@ -302,14 +302,14 @@ for details).
    callers to weird inconsistencies.
    (merge 663a856 cc/replace-object-info later to maint).
 
- * "git cat-file --batch=", an admittedly useless command, did not
+ * "but cat-file --batch=", an admittedly useless command, did not
    behave very well.
 
- * "git rev-parse <revs> -- <paths>" did not implement the usual
-   disambiguation rules the commands in the "git log" family used in
+ * "but rev-parse <revs> -- <paths>" did not implement the usual
+   disambiguation rules the commands in the "but log" family used in
    the same way.
 
- * "git mv A B/", when B does not exist as a directory, should error
+ * "but mv A B/", when B does not exist as a directory, should error
    out, but it didn't.
 
  * A workaround to an old bug in glibc prior to glibc 2.17 has been
@@ -317,27 +317,27 @@ for details).
    corrupts system error messages in non-C locales.
 
  * SSL-related options were not passed correctly to underlying socket
-   layer in "git send-email".
+   layer in "but send-email".
 
- * "git cummit -v" appends the patch to the log message before
+ * "but cummit -v" appends the patch to the log message before
    editing, and then removes the patch when the editor returned
    control. However, the patch was not stripped correctly when the
    first modified path was a submodule.
 
- * "git fetch --depth=0" was a no-op, and was silently ignored.
+ * "but fetch --depth=0" was a no-op, and was silently ignored.
    Diagnose it as an error.
 
  * Remote repository URLs expressed in scp-style host:path notation are
    parsed more carefully (e.g. "foo/bar:baz" is local, "[::1]:/~user" asks
    to connect to user's home directory on host at address ::1.
 
- * "git diff -- ':(icase)makefile'" was unnecessarily rejected at the
+ * "but diff -- ':(icase)makefile'" was unnecessarily rejected at the
    command line parser.
 
- * "git cat-file --batch-check=ok" did not check the existence of
+ * "but cat-file --batch-check=ok" did not check the existence of
    the named object.
 
- * "git am --abort" sometimes complained about not being able to write
+ * "but am --abort" sometimes complained about not being able to write
    a tree with an 0{40} object in it.
 
  * Two processes creating loose objects at the same time could have

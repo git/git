@@ -66,7 +66,7 @@ void http_init(struct remote *remote, const char *url,
 void http_cleanup(void);
 struct curl_slist *http_copy_default_headers(void);
 
-extern long int git_curl_ipresolve;
+extern long int but_curl_ipresolve;
 extern int active_requests;
 extern int http_is_verbose;
 extern ssize_t http_post_buffer;
@@ -106,9 +106,9 @@ void normalize_curl_result(CURLcode *result, long http_code, char *errorstr,
 /* Helpers for modifying and creating URLs */
 void append_remote_object_url(struct strbuf *buf, const char *url,
 			      const char *hex,
-			      int only_two_digit_prefix);
+			      int only_two_dibut_prefix);
 char *get_remote_object_url(const char *url, const char *hex,
-			    int only_two_digit_prefix);
+			    int only_two_dibut_prefix);
 
 /* Options for http_get_*() */
 struct http_get_options {
@@ -167,7 +167,7 @@ int http_fetch_ref(const char *base, struct ref *ref);
 
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
-			struct packed_git **packs_head);
+			struct packed_but **packs_head);
 
 struct http_pack_request {
 	char *url;
@@ -186,20 +186,20 @@ struct http_pack_request {
 };
 
 struct http_pack_request *new_http_pack_request(
-	const unsigned char *packed_git_hash, const char *base_url);
+	const unsigned char *packed_but_hash, const char *base_url);
 struct http_pack_request *new_direct_http_pack_request(
-	const unsigned char *packed_git_hash, char *url);
+	const unsigned char *packed_but_hash, char *url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
 
 /*
- * Remove p from the given list, and invoke install_packed_git() on it.
+ * Remove p from the given list, and invoke install_packed_but() on it.
  *
  * This is a convenience function for users that have obtained a list of packs
  * from http_get_info_packs() and have chosen a specific pack to fetch.
  */
-void http_install_packfile(struct packed_git *p,
-			   struct packed_git **list_to_remove_from);
+void http_install_packfile(struct packed_but *p,
+			   struct packed_but **list_to_remove_from);
 
 /* Helpers for fetching object */
 struct http_object_request {
@@ -211,8 +211,8 @@ struct http_object_request {
 	long http_code;
 	struct object_id oid;
 	struct object_id real_oid;
-	git_hash_ctx c;
-	git_zstream stream;
+	but_hash_ctx c;
+	but_zstream stream;
 	int zret;
 	int rename;
 	struct active_request_slot *slot;

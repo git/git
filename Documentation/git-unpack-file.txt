@@ -1,16 +1,16 @@
-git-unpack-file(1)
+but-unpack-file(1)
 ==================
 
 NAME
 ----
-git-unpack-file - Creates a temporary file with a blob's contents
+but-unpack-file - Creates a temporary file with a blob's contents
 
 
 
 SYNOPSIS
 --------
 [verse]
-'git unpack-file' <blob>
+'but unpack-file' <blob>
 
 DESCRIPTION
 -----------
@@ -25,4 +25,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

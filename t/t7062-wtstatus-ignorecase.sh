@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-status with core.ignorecase=true'
+test_description='but-status with core.ignorecase=true'
 
 . ./test-lib.sh
 
@@ -11,10 +11,10 @@ test_expect_success 'status with hash collisions' '
 	mkdir V/XQANY &&
 	mkdir WURZAUP &&
 	touch V/XQANY/test &&
-	git config core.ignorecase true &&
-	git add . &&
-	# test is successful if git status completes (no endless loop)
-	git status
+	but config core.ignorecase true &&
+	but add . &&
+	# test is successful if but status completes (no endless loop)
+	but status
 '
 
 test_done

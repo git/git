@@ -15,34 +15,34 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 pristine_detach () {
-	git checkout -f "$1^0" &&
-	git read-tree -u --reset HEAD &&
-	git clean -d -f -f -q -x
+	but checkout -f "$1^0" &&
+	but read-tree -u --reset HEAD &&
+	but clean -d -f -f -q -x
 }
 
 test_expect_success setup '
 
 	echo unrelated >unrelated &&
-	git add unrelated &&
+	but add unrelated &&
 	test_cummit initial foo a &&
 	test_cummit base foo b &&
 	test_cummit picked foo c &&
 	test_cummit --signoff picked-signed foo d &&
-	git checkout -b topic initial &&
+	but checkout -b topic initial &&
 	test_cummit redundant-pick foo c redundant &&
-	git cummit --allow-empty --allow-empty-message &&
-	git tag empty &&
-	git checkout main &&
-	git config advice.detachedhead false
+	but cummit --allow-empty --allow-empty-message &&
+	but tag empty &&
+	but checkout main &&
+	but config advice.detachedhead false
 
 '
 
 test_expect_success 'failed cherry-pick does not advance HEAD' '
 	pristine_detach initial &&
 
-	head=$(git rev-parse HEAD) &&
-	test_must_fail git cherry-pick picked &&
-	newhead=$(git rev-parse HEAD) &&
+	head=$(but rev-parse HEAD) &&
+	test_must_fail but cherry-pick picked &&
+	newhead=$(but rev-parse HEAD) &&
 
 	test "$head" = "$newhead"
 '
@@ -50,17 +50,17 @@ test_expect_success 'failed cherry-pick does not advance HEAD' '
 test_expect_success 'advice from failed cherry-pick' '
 	pristine_detach initial &&
 
-	picked=$(git rev-parse --short picked) &&
+	picked=$(but rev-parse --short picked) &&
 	cat <<-EOF >expected &&
 	error: could not apply $picked... picked
 	hint: After resolving the conflicts, mark them with
-	hint: "git add/rm <pathspec>", then run
-	hint: "git cherry-pick --continue".
-	hint: You can instead skip this cummit with "git cherry-pick --skip".
-	hint: To abort and get back to the state before "git cherry-pick",
-	hint: run "git cherry-pick --abort".
+	hint: "but add/rm <pathspec>", then run
+	hint: "but cherry-pick --continue".
+	hint: You can instead skip this cummit with "but cherry-pick --skip".
+	hint: To abort and get back to the state before "but cherry-pick",
+	hint: run "but cherry-pick --abort".
 	EOF
-	test_must_fail git cherry-pick picked 2>actual &&
+	test_must_fail but cherry-pick picked 2>actual &&
 
 	test_cmp expected actual
 '
@@ -68,48 +68,48 @@ test_expect_success 'advice from failed cherry-pick' '
 test_expect_success 'advice from failed cherry-pick --no-cummit' "
 	pristine_detach initial &&
 
-	picked=\$(git rev-parse --short picked) &&
+	picked=\$(but rev-parse --short picked) &&
 	cat <<-EOF >expected &&
 	error: could not apply \$picked... picked
 	hint: after resolving the conflicts, mark the corrected paths
-	hint: with 'git add <paths>' or 'git rm <paths>'
+	hint: with 'but add <paths>' or 'but rm <paths>'
 	EOF
-	test_must_fail git cherry-pick --no-cummit picked 2>actual &&
+	test_must_fail but cherry-pick --no-cummit picked 2>actual &&
 
 	test_cmp expected actual
 "
 
 test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 	test_cmp_rev picked CHERRY_PICK_HEAD
 '
 
 test_expect_success 'successful cherry-pick does not set CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
-	git cherry-pick base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	but cherry-pick base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success 'cherry-pick --no-cummit does not set CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
-	git cherry-pick --no-cummit base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	but cherry-pick --no-cummit base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success 'cherry-pick w/dirty tree does not set CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 	echo foo >foo &&
-	test_must_fail git cherry-pick base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	test_must_fail but cherry-pick base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success \
 	'cherry-pick --strategy=resolve w/dirty tree does not set CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 	echo foo >foo &&
-	test_must_fail git cherry-pick --strategy=resolve base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	test_must_fail but cherry-pick --strategy=resolve base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success 'GIT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
@@ -117,25 +117,25 @@ test_expect_success 'GIT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
 	(
 		GIT_CHERRY_PICK_HELP="and then do something else" &&
 		export GIT_CHERRY_PICK_HELP &&
-		test_must_fail git cherry-pick picked
+		test_must_fail but cherry-pick picked
 	) &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
-test_expect_success 'git reset clears CHERRY_PICK_HEAD' '
+test_expect_success 'but reset clears CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
-	git reset &&
+	test_must_fail but cherry-pick picked &&
+	but reset &&
 
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success 'failed cummit does not clear CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
-	test_must_fail git cummit &&
+	test_must_fail but cherry-pick picked &&
+	test_must_fail but cummit &&
 
 	test_cmp_rev picked CHERRY_PICK_HEAD
 '
@@ -143,15 +143,15 @@ test_expect_success 'failed cummit does not clear CHERRY_PICK_HEAD' '
 test_expect_success 'cancelled cummit does not clear CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 	echo resolved >foo &&
-	git add foo &&
-	git update-index --refresh -q &&
-	test_must_fail git diff-index --exit-code HEAD &&
+	but add foo &&
+	but update-index --refresh -q &&
+	test_must_fail but diff-index --exit-code HEAD &&
 	(
 		GIT_EDITOR=false &&
 		export GIT_EDITOR &&
-		test_must_fail git cummit
+		test_must_fail but cummit
 	) &&
 
 	test_cmp_rev picked CHERRY_PICK_HEAD
@@ -160,21 +160,21 @@ test_expect_success 'cancelled cummit does not clear CHERRY_PICK_HEAD' '
 test_expect_success 'successful cummit clears CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 	echo resolved >foo &&
-	git add foo &&
-	git cummit &&
+	but add foo &&
+	but cummit &&
 
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
 test_expect_success 'partial cummit of cherry-pick fails' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 	echo resolved >foo &&
-	git add foo &&
-	test_must_fail git cummit foo 2>err &&
+	but add foo &&
+	test_must_fail but cummit foo 2>err &&
 
 	test_i18ngrep "cannot do a partial cummit during a cherry-pick." err
 '
@@ -182,10 +182,10 @@ test_expect_success 'partial cummit of cherry-pick fails' '
 test_expect_success 'cummit --amend of cherry-pick fails' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 	echo resolved >foo &&
-	git add foo &&
-	test_must_fail git cummit --amend 2>err &&
+	but add foo &&
+	test_must_fail but cummit --amend 2>err &&
 
 	test_i18ngrep "in the middle of a cherry-pick -- cannot amend." err
 '
@@ -193,51 +193,51 @@ test_expect_success 'cummit --amend of cherry-pick fails' '
 test_expect_success 'successful final cummit clears cherry-pick state' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick base picked-signed &&
+	test_must_fail but cherry-pick base picked-signed &&
 	echo resolved >foo &&
-	test_path_is_file .git/sequencer/todo &&
-	git cummit -a &&
-	test_path_is_missing .git/sequencer
+	test_path_is_file .but/sequencer/todo &&
+	but cummit -a &&
+	test_path_is_missing .but/sequencer
 '
 
 test_expect_success 'reset after final pick clears cherry-pick state' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick base picked-signed &&
+	test_must_fail but cherry-pick base picked-signed &&
 	echo resolved >foo &&
-	test_path_is_file .git/sequencer/todo &&
-	git reset &&
-	test_path_is_missing .git/sequencer
+	test_path_is_file .but/sequencer/todo &&
+	but reset &&
+	test_path_is_missing .but/sequencer
 '
 
 test_expect_success 'failed cherry-pick produces dirty index' '
 	pristine_detach initial &&
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
-	test_must_fail git update-index --refresh -q &&
-	test_must_fail git diff-index --exit-code HEAD
+	test_must_fail but update-index --refresh -q &&
+	test_must_fail but diff-index --exit-code HEAD
 '
 
 test_expect_success 'failed cherry-pick registers participants in index' '
 	pristine_detach initial &&
 	{
-		git checkout base -- foo &&
-		git ls-files --stage foo &&
-		git checkout initial -- foo &&
-		git ls-files --stage foo &&
-		git checkout picked -- foo &&
-		git ls-files --stage foo
+		but checkout base -- foo &&
+		but ls-files --stage foo &&
+		but checkout initial -- foo &&
+		but ls-files --stage foo &&
+		but checkout picked -- foo &&
+		but ls-files --stage foo
 	} >stages &&
 	sed "
 		1 s/ 0	/ 1	/
 		2 s/ 0	/ 2	/
 		3 s/ 0	/ 3	/
 	" stages >expected &&
-	git read-tree -u --reset HEAD &&
+	but read-tree -u --reset HEAD &&
 
-	test_must_fail git cherry-pick picked &&
-	git ls-files --stage --unmerged >actual &&
+	test_must_fail but cherry-pick picked &&
+	but ls-files --stage --unmerged >actual &&
 
 	test_cmp expected actual
 '
@@ -245,7 +245,7 @@ test_expect_success 'failed cherry-pick registers participants in index' '
 test_expect_success \
 	'cherry-pick conflict, ensure cummit.cleanup = scissors places scissors line properly' '
 	pristine_detach initial &&
-	git config cummit.cleanup scissors &&
+	but config cummit.cleanup scissors &&
 	cat <<-EOF >expected &&
 		picked
 
@@ -257,15 +257,15 @@ test_expect_success \
 		#	foo
 		EOF
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
-	test_cmp expected .git/MERGE_MSG
+	test_cmp expected .but/MERGE_MSG
 '
 
 test_expect_success \
 	'cherry-pick conflict, ensure cleanup=scissors places scissors line properly' '
 	pristine_detach initial &&
-	git config --unset cummit.cleanup &&
+	but config --unset cummit.cleanup &&
 	cat <<-EOF >expected &&
 		picked
 
@@ -277,9 +277,9 @@ test_expect_success \
 		#	foo
 		EOF
 
-	test_must_fail git cherry-pick --cleanup=scissors picked &&
+	test_must_fail but cherry-pick --cleanup=scissors picked &&
 
-	test_cmp expected .git/MERGE_MSG
+	test_cmp expected .but/MERGE_MSG
 '
 
 test_expect_success 'failed cherry-pick describes conflict in work tree' '
@@ -292,7 +292,7 @@ test_expect_success 'failed cherry-pick describes conflict in work tree' '
 	>>>>>>> objid (picked)
 	EOF
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
 	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
@@ -300,7 +300,7 @@ test_expect_success 'failed cherry-pick describes conflict in work tree' '
 
 test_expect_success 'diff3 -m style' '
 	pristine_detach initial &&
-	git config merge.conflictstyle diff3 &&
+	but config merge.conflictstyle diff3 &&
 	cat <<-EOF >expected &&
 	<<<<<<< HEAD
 	a
@@ -311,14 +311,14 @@ test_expect_success 'diff3 -m style' '
 	>>>>>>> objid (picked)
 	EOF
 
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
 	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'revert also handles conflicts sanely' '
-	git config --unset merge.conflictstyle &&
+	but config --unset merge.conflictstyle &&
 	pristine_detach initial &&
 	cat <<-EOF >expected &&
 	<<<<<<< HEAD
@@ -328,28 +328,28 @@ test_expect_success 'revert also handles conflicts sanely' '
 	>>>>>>> parent of objid (picked)
 	EOF
 	{
-		git checkout picked -- foo &&
-		git ls-files --stage foo &&
-		git checkout initial -- foo &&
-		git ls-files --stage foo &&
-		git checkout base -- foo &&
-		git ls-files --stage foo
+		but checkout picked -- foo &&
+		but ls-files --stage foo &&
+		but checkout initial -- foo &&
+		but ls-files --stage foo &&
+		but checkout base -- foo &&
+		but ls-files --stage foo
 	} >stages &&
 	sed "
 		1 s/ 0	/ 1	/
 		2 s/ 0	/ 2	/
 		3 s/ 0	/ 3	/
 	" stages >expected-stages &&
-	git read-tree -u --reset HEAD &&
+	but read-tree -u --reset HEAD &&
 
-	head=$(git rev-parse HEAD) &&
-	test_must_fail git revert picked &&
-	newhead=$(git rev-parse HEAD) &&
-	git ls-files --stage --unmerged >actual-stages &&
+	head=$(but rev-parse HEAD) &&
+	test_must_fail but revert picked &&
+	newhead=$(but rev-parse HEAD) &&
+	but ls-files --stage --unmerged >actual-stages &&
 
 	test "$head" = "$newhead" &&
-	test_must_fail git update-index --refresh -q &&
-	test_must_fail git diff-index --exit-code HEAD &&
+	test_must_fail but update-index --refresh -q &&
+	test_must_fail but diff-index --exit-code HEAD &&
 	test_cmp expected-stages actual-stages &&
 	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
@@ -357,30 +357,30 @@ test_expect_success 'revert also handles conflicts sanely' '
 
 test_expect_success 'failed revert sets REVERT_HEAD' '
 	pristine_detach initial &&
-	test_must_fail git revert picked &&
+	test_must_fail but revert picked &&
 	test_cmp_rev picked REVERT_HEAD
 '
 
 test_expect_success 'successful revert does not set REVERT_HEAD' '
 	pristine_detach base &&
-	git revert base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD &&
-	test_must_fail git rev-parse --verify REVERT_HEAD
+	but revert base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD &&
+	test_must_fail but rev-parse --verify REVERT_HEAD
 '
 
 test_expect_success 'revert --no-cummit sets REVERT_HEAD' '
 	pristine_detach base &&
-	git revert --no-cummit base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD &&
+	but revert --no-cummit base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD &&
 	test_cmp_rev base REVERT_HEAD
 '
 
 test_expect_success 'revert w/dirty tree does not set REVERT_HEAD' '
 	pristine_detach base &&
 	echo foo >foo &&
-	test_must_fail git revert base &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD &&
-	test_must_fail git rev-parse --verify REVERT_HEAD
+	test_must_fail but revert base &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD &&
+	test_must_fail but rev-parse --verify REVERT_HEAD
 '
 
 test_expect_success 'GIT_CHERRY_PICK_HELP does not suppress REVERT_HEAD' '
@@ -389,49 +389,49 @@ test_expect_success 'GIT_CHERRY_PICK_HELP does not suppress REVERT_HEAD' '
 		GIT_CHERRY_PICK_HELP="and then do something else" &&
 		GIT_REVERT_HELP="and then do something else, again" &&
 		export GIT_CHERRY_PICK_HELP GIT_REVERT_HELP &&
-		test_must_fail git revert picked
+		test_must_fail but revert picked
 	) &&
-	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD &&
+	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD &&
 	test_cmp_rev picked REVERT_HEAD
 '
 
-test_expect_success 'git reset clears REVERT_HEAD' '
+test_expect_success 'but reset clears REVERT_HEAD' '
 	pristine_detach initial &&
-	test_must_fail git revert picked &&
-	git reset &&
-	test_must_fail git rev-parse --verify REVERT_HEAD
+	test_must_fail but revert picked &&
+	but reset &&
+	test_must_fail but rev-parse --verify REVERT_HEAD
 '
 
 test_expect_success 'failed cummit does not clear REVERT_HEAD' '
 	pristine_detach initial &&
-	test_must_fail git revert picked &&
-	test_must_fail git cummit &&
+	test_must_fail but revert picked &&
+	test_must_fail but cummit &&
 	test_cmp_rev picked REVERT_HEAD
 '
 
 test_expect_success 'successful final cummit clears revert state' '
 	pristine_detach picked-signed &&
 
-	test_must_fail git revert picked-signed base &&
+	test_must_fail but revert picked-signed base &&
 	echo resolved >foo &&
-	test_path_is_file .git/sequencer/todo &&
-	git cummit -a &&
-	test_path_is_missing .git/sequencer
+	test_path_is_file .but/sequencer/todo &&
+	but cummit -a &&
+	test_path_is_missing .but/sequencer
 '
 
 test_expect_success 'reset after final pick clears revert state' '
 	pristine_detach picked-signed &&
 
-	test_must_fail git revert picked-signed base &&
+	test_must_fail but revert picked-signed base &&
 	echo resolved >foo &&
-	test_path_is_file .git/sequencer/todo &&
-	git reset &&
-	test_path_is_missing .git/sequencer
+	test_path_is_file .but/sequencer/todo &&
+	but reset &&
+	test_path_is_missing .but/sequencer
 '
 
 test_expect_success 'revert conflict, diff3 -m style' '
 	pristine_detach initial &&
-	git config merge.conflictstyle diff3 &&
+	but config merge.conflictstyle diff3 &&
 	cat <<-EOF >expected &&
 	<<<<<<< HEAD
 	a
@@ -442,7 +442,7 @@ test_expect_success 'revert conflict, diff3 -m style' '
 	>>>>>>> parent of objid (picked)
 	EOF
 
-	test_must_fail git revert picked &&
+	test_must_fail but revert picked &&
 
 	sed "s/[a-f0-9]* (/objid (/" foo >actual &&
 	test_cmp expected actual
@@ -451,7 +451,7 @@ test_expect_success 'revert conflict, diff3 -m style' '
 test_expect_success \
 	'revert conflict, ensure cummit.cleanup = scissors places scissors line properly' '
 	pristine_detach initial &&
-	git config cummit.cleanup scissors &&
+	but config cummit.cleanup scissors &&
 	cat >expected <<-EOF &&
 		Revert "picked"
 
@@ -465,16 +465,16 @@ test_expect_success \
 		#	foo
 		EOF
 
-	test_must_fail git revert picked &&
+	test_must_fail but revert picked &&
 
-	sed "s/$OID_REGEX/OBJID/" .git/MERGE_MSG >actual &&
+	sed "s/$OID_REGEX/OBJID/" .but/MERGE_MSG >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success \
 	'revert conflict, ensure cleanup=scissors places scissors line properly' '
 	pristine_detach initial &&
-	git config --unset cummit.cleanup &&
+	but config --unset cummit.cleanup &&
 	cat >expected <<-EOF &&
 		Revert "picked"
 
@@ -488,37 +488,37 @@ test_expect_success \
 		#	foo
 		EOF
 
-	test_must_fail git revert --cleanup=scissors picked &&
+	test_must_fail but revert --cleanup=scissors picked &&
 
-	sed "s/$OID_REGEX/OBJID/" .git/MERGE_MSG >actual &&
+	sed "s/$OID_REGEX/OBJID/" .but/MERGE_MSG >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'failed cherry-pick does not forget -s' '
 	pristine_detach initial &&
-	test_must_fail git cherry-pick -s picked &&
-	test_i18ngrep -e "Signed-off-by" .git/MERGE_MSG
+	test_must_fail but cherry-pick -s picked &&
+	test_i18ngrep -e "Signed-off-by" .but/MERGE_MSG
 '
 
 test_expect_success 'cummit after failed cherry-pick does not add duplicated -s' '
 	pristine_detach initial &&
-	test_must_fail git cherry-pick -s picked-signed &&
-	git cummit -a -s &&
-	test $(git show -s >tmp && grep -c "Signed-off-by" tmp && rm tmp) = 1
+	test_must_fail but cherry-pick -s picked-signed &&
+	but cummit -a -s &&
+	test $(but show -s >tmp && grep -c "Signed-off-by" tmp && rm tmp) = 1
 '
 
 test_expect_success 'cummit after failed cherry-pick adds -s at the right place' '
 	pristine_detach initial &&
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
-	git cummit -a -s &&
+	but cummit -a -s &&
 
 	# Do S-o-b and Conflicts appear in the right order?
 	cat <<-\EOF >expect &&
 	Signed-off-by: C O Mitter <cummitter@example.com>
 	# Conflicts:
 	EOF
-	grep -e "^# Conflicts:" -e "^Signed-off-by" .git/CUMMIT_EDITMSG >actual &&
+	grep -e "^# Conflicts:" -e "^Signed-off-by" .but/CUMMIT_EDITMSG >actual &&
 	test_cmp expect actual &&
 
 	cat <<-\EOF >expected &&
@@ -527,27 +527,27 @@ test_expect_success 'cummit after failed cherry-pick adds -s at the right place'
 	Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 
-	git show -s --pretty=format:%B >actual &&
+	but show -s --pretty=format:%B >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'cummit --amend -s places the sign-off at the right place' '
 	pristine_detach initial &&
-	test_must_fail git cherry-pick picked &&
+	test_must_fail but cherry-pick picked &&
 
 	# emulate old-style conflicts block
-	mv .git/MERGE_MSG .git/MERGE_MSG+ &&
-	sed -e "/^# Conflicts:/,\$s/^# *//" .git/MERGE_MSG+ >.git/MERGE_MSG &&
+	mv .but/MERGE_MSG .but/MERGE_MSG+ &&
+	sed -e "/^# Conflicts:/,\$s/^# *//" .but/MERGE_MSG+ >.but/MERGE_MSG &&
 
-	git cummit -a &&
-	git cummit --amend -s &&
+	but cummit -a &&
+	but cummit --amend -s &&
 
 	# Do S-o-b and Conflicts appear in the right order?
 	cat <<-\EOF >expect &&
 	Signed-off-by: C O Mitter <cummitter@example.com>
 	Conflicts:
 	EOF
-	grep -e "^Conflicts:" -e "^Signed-off-by" .git/CUMMIT_EDITMSG >actual &&
+	grep -e "^Conflicts:" -e "^Signed-off-by" .but/CUMMIT_EDITMSG >actual &&
 	test_cmp expect actual
 '
 
@@ -555,32 +555,32 @@ test_expect_success 'cherry-pick preserves sparse-checkout' '
 	pristine_detach initial &&
 	test_config core.sparseCheckout true &&
 	test_when_finished "
-		echo \"/*\" >.git/info/sparse-checkout
-		git read-tree --reset -u HEAD
-		rm .git/info/sparse-checkout" &&
-	echo /unrelated >.git/info/sparse-checkout &&
-	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick -Xours picked>actual &&
+		echo \"/*\" >.but/info/sparse-checkout
+		but read-tree --reset -u HEAD
+		rm .but/info/sparse-checkout" &&
+	echo /unrelated >.but/info/sparse-checkout &&
+	but read-tree --reset -u HEAD &&
+	test_must_fail but cherry-pick -Xours picked>actual &&
 	test_i18ngrep ! "Changes not staged for cummit:" actual
 '
 
 test_expect_success 'cherry-pick --continue remembers --keep-redundant-cummits' '
-	test_when_finished "git cherry-pick --abort || :" &&
+	test_when_finished "but cherry-pick --abort || :" &&
 	pristine_detach initial &&
-	test_must_fail git cherry-pick --keep-redundant-cummits picked redundant &&
+	test_must_fail but cherry-pick --keep-redundant-cummits picked redundant &&
 	echo c >foo &&
-	git add foo &&
-	git cherry-pick --continue
+	but add foo &&
+	but cherry-pick --continue
 '
 
 test_expect_success 'cherry-pick --continue remembers --allow-empty and --allow-empty-message' '
-	test_when_finished "git cherry-pick --abort || :" &&
+	test_when_finished "but cherry-pick --abort || :" &&
 	pristine_detach initial &&
-	test_must_fail git cherry-pick --allow-empty --allow-empty-message \
+	test_must_fail but cherry-pick --allow-empty --allow-empty-message \
 				       picked empty &&
 	echo c >foo &&
-	git add foo &&
-	git cherry-pick --continue
+	but add foo &&
+	but cherry-pick --continue
 '
 
 test_done

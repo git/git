@@ -304,27 +304,27 @@ int xdiff_compare_lines(const char *l1, long s1,
 	return xdl_recmatch(l1, s1, l2, s2, flags);
 }
 
-int git_xmerge_style = -1;
+int but_xmerge_style = -1;
 
-int git_xmerge_config(const char *var, const char *value, void *cb)
+int but_xmerge_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
 			die("'%s' is not a boolean", var);
 		if (!strcmp(value, "diff3"))
-			git_xmerge_style = XDL_MERGE_DIFF3;
+			but_xmerge_style = XDL_MERGE_DIFF3;
 		else if (!strcmp(value, "zdiff3"))
-			git_xmerge_style = XDL_MERGE_ZEALOUS_DIFF3;
+			but_xmerge_style = XDL_MERGE_ZEALOUS_DIFF3;
 		else if (!strcmp(value, "merge"))
-			git_xmerge_style = 0;
+			but_xmerge_style = 0;
 		/*
-		 * Please update _git_checkout() in
-		 * git-completion.bash when you add new merge config
+		 * Please update _but_checkout() in
+		 * but-completion.bash when you add new merge config
 		 */
 		else
 			die("unknown style '%s' given for '%s'",
 			    value, var);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }

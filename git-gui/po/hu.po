@@ -1,11 +1,11 @@
-# Hungarian translations for git-gui-i package.
-# Copyright (C) 2007 THE git-gui-i'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the git-gui-i package.
+# Hungarian translations for but-gui-i package.
+# Copyright (C) 2007 THE but-gui-i'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the but-gui-i package.
 # Miklos Vajna <vmiklos@frugalware.org>, 2007.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui-i 18n\n"
+"Project-Id-Version: but-gui-i 18n\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-08 08:31-0800\n"
 "PO-Revision-Date: 2008-12-10 15:00+0100\n"
@@ -16,33 +16,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: git-gui.sh:41 git-gui.sh:737 git-gui.sh:751 git-gui.sh:764 git-gui.sh:847
-#: git-gui.sh:866
-msgid "git-gui: fatal error"
-msgstr "git-gui: végzetes hiba"
+#: but-gui.sh:41 but-gui.sh:737 but-gui.sh:751 but-gui.sh:764 but-gui.sh:847
+#: but-gui.sh:866
+msgid "but-gui: fatal error"
+msgstr "but-gui: végzetes hiba"
 
-#: git-gui.sh:689
+#: but-gui.sh:689
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Érvénytelen font lett megadva itt: %s:"
 
-#: git-gui.sh:723
+#: but-gui.sh:723
 msgid "Main Font"
 msgstr "Fő betűtípus"
 
-#: git-gui.sh:724
+#: but-gui.sh:724
 msgid "Diff/Console Font"
 msgstr "Diff/konzol betűtípus"
 
-#: git-gui.sh:738
-msgid "Cannot find git in PATH."
-msgstr "A git nem található a PATH-ban."
+#: but-gui.sh:738
+msgid "Cannot find but in PATH."
+msgstr "A but nem található a PATH-ban."
 
-#: git-gui.sh:765
+#: but-gui.sh:765
 msgid "Cannot parse Git version string:"
 msgstr "Nem értelmezhető a Git verzió sztring:"
 
-#: git-gui.sh:783
+#: but-gui.sh:783
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -61,445 +61,445 @@ msgstr ""
 "\n"
 "Feltételezhetjük, hogy a(z) '%s' verziója legalább 1.5.0?\n"
 
-#: git-gui.sh:1062
+#: but-gui.sh:1062
 msgid "Git directory not found:"
 msgstr "A Git könyvtár nem található:"
 
-#: git-gui.sh:1069
+#: but-gui.sh:1069
 msgid "Cannot move to top of working directory:"
 msgstr "Nem lehet a munkakönyvtár tetejére lépni:"
 
-#: git-gui.sh:1076
-msgid "Cannot use funny .git directory:"
-msgstr "Nem használható vicces .git könyvtár:"
+#: but-gui.sh:1076
+msgid "Cannot use funny .but directory:"
+msgstr "Nem használható vicces .but könyvtár:"
 
-#: git-gui.sh:1081
+#: but-gui.sh:1081
 msgid "No working directory"
 msgstr "Nincs munkakönyvtár"
 
-#: git-gui.sh:1247 lib/checkout_op.tcl:305
+#: but-gui.sh:1247 lib/checkout_op.tcl:305
 msgid "Refreshing file status..."
 msgstr "A fájlok státuszának frissítése..."
 
-#: git-gui.sh:1303
+#: but-gui.sh:1303
 msgid "Scanning for modified files ..."
 msgstr "Módosított fájlok keresése ..."
 
-#: git-gui.sh:1367
+#: but-gui.sh:1367
 msgid "Calling prepare-cummit-msg hook..."
 msgstr "A prepare-cummit-msg hurok meghívása..."
 
-#: git-gui.sh:1384
+#: but-gui.sh:1384
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr "A cummitot megakadályozta a prepare-cummit-msg hurok."
 
-#: git-gui.sh:1542 lib/browser.tcl:246
+#: but-gui.sh:1542 lib/browser.tcl:246
 msgid "Ready."
 msgstr "Kész."
 
-#: git-gui.sh:1819
+#: but-gui.sh:1819
 msgid "Unmodified"
 msgstr "Nem módosított"
 
-#: git-gui.sh:1821
+#: but-gui.sh:1821
 msgid "Modified, not staged"
 msgstr "Módosított, de nem kiválasztott"
 
-#: git-gui.sh:1822 git-gui.sh:1830
+#: but-gui.sh:1822 but-gui.sh:1830
 msgid "Staged for cummit"
 msgstr "Kiválasztva cummitolásra"
 
-#: git-gui.sh:1823 git-gui.sh:1831
+#: but-gui.sh:1823 but-gui.sh:1831
 msgid "Portions staged for cummit"
 msgstr "Részek kiválasztva cummitolásra"
 
-#: git-gui.sh:1824 git-gui.sh:1832
+#: but-gui.sh:1824 but-gui.sh:1832
 msgid "Staged for cummit, missing"
 msgstr "Kiválasztva cummitolásra, hiányzó"
 
-#: git-gui.sh:1826
+#: but-gui.sh:1826
 msgid "File type changed, not staged"
 msgstr "Fájl típus megváltozott, nem kiválasztott"
 
-#: git-gui.sh:1827
+#: but-gui.sh:1827
 msgid "File type changed, staged"
 msgstr "A fájltípus megváltozott, kiválasztott"
 
-#: git-gui.sh:1829
+#: but-gui.sh:1829
 msgid "Untracked, not staged"
 msgstr "Nem követett, nem kiválasztott"
 
-#: git-gui.sh:1834
+#: but-gui.sh:1834
 msgid "Missing"
 msgstr "Hiányzó"
 
-#: git-gui.sh:1835
+#: but-gui.sh:1835
 msgid "Staged for removal"
 msgstr "Kiválasztva eltávolításra"
 
-#: git-gui.sh:1836
+#: but-gui.sh:1836
 msgid "Staged for removal, still present"
 msgstr "Kiválasztva eltávolításra, jelenleg is elérhető"
 
-#: git-gui.sh:1838 git-gui.sh:1839 git-gui.sh:1840 git-gui.sh:1841
-#: git-gui.sh:1842 git-gui.sh:1843
+#: but-gui.sh:1838 but-gui.sh:1839 but-gui.sh:1840 but-gui.sh:1841
+#: but-gui.sh:1842 but-gui.sh:1843
 msgid "Requires merge resolution"
 msgstr "Merge feloldás szükséges"
 
-#: git-gui.sh:1878
-msgid "Starting gitk... please wait..."
-msgstr "A gitk indítása... várjunk..."
+#: but-gui.sh:1878
+msgid "Starting butk... please wait..."
+msgstr "A butk indítása... várjunk..."
 
-#: git-gui.sh:1887
-msgid "Couldn't find gitk in PATH"
-msgstr "A gitk nem található a PATH-ban."
+#: but-gui.sh:1887
+msgid "Couldn't find butk in PATH"
+msgstr "A butk nem található a PATH-ban."
 
-#: git-gui.sh:2280 lib/choose_repository.tcl:36
+#: but-gui.sh:2280 lib/choose_repository.tcl:36
 msgid "Repository"
 msgstr "Repó"
 
-#: git-gui.sh:2281
+#: but-gui.sh:2281
 msgid "Edit"
 msgstr "Szerkesztés"
 
-#: git-gui.sh:2283 lib/choose_rev.tcl:561
+#: but-gui.sh:2283 lib/choose_rev.tcl:561
 msgid "Branch"
 msgstr "Branch"
 
-#: git-gui.sh:2286 lib/choose_rev.tcl:548
+#: but-gui.sh:2286 lib/choose_rev.tcl:548
 msgid "cummit@@noun"
 msgstr "cummit@@főnév"
 
-#: git-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+#: but-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
 msgstr "Merge"
 
-#: git-gui.sh:2290 lib/choose_rev.tcl:557
+#: but-gui.sh:2290 lib/choose_rev.tcl:557
 msgid "Remote"
 msgstr "Távoli"
 
-#: git-gui.sh:2293
+#: but-gui.sh:2293
 msgid "Tools"
 msgstr "Eszközök"
 
-#: git-gui.sh:2302
+#: but-gui.sh:2302
 msgid "Explore Working Copy"
 msgstr "Munkamásolat felfedezése"
 
-#: git-gui.sh:2307
+#: but-gui.sh:2307
 msgid "Browse Current Branch's Files"
 msgstr "A jelenlegi branch fájljainak böngészése"
 
-#: git-gui.sh:2311
+#: but-gui.sh:2311
 msgid "Browse Branch Files..."
 msgstr "A branch fájljainak böngészése..."
 
-#: git-gui.sh:2316
+#: but-gui.sh:2316
 msgid "Visualize Current Branch's History"
 msgstr "A jelenlegi branch történetének vizualizálása"
 
-#: git-gui.sh:2320
+#: but-gui.sh:2320
 msgid "Visualize All Branch History"
 msgstr "Az összes branch történetének vizualizálása"
 
-#: git-gui.sh:2327
+#: but-gui.sh:2327
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "A(z) %s branch fájljainak böngészése"
 
-#: git-gui.sh:2329
+#: but-gui.sh:2329
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "A(z) %s branch történetének vizualizálása"
 
-#: git-gui.sh:2334 lib/database.tcl:27 lib/database.tcl:67
+#: but-gui.sh:2334 lib/database.tcl:27 lib/database.tcl:67
 msgid "Database Statistics"
 msgstr "Adatbázis statisztikák"
 
-#: git-gui.sh:2337 lib/database.tcl:34
+#: but-gui.sh:2337 lib/database.tcl:34
 msgid "Compress Database"
 msgstr "Adatbázis tömörítése"
 
-#: git-gui.sh:2340
+#: but-gui.sh:2340
 msgid "Verify Database"
 msgstr "Adatbázis ellenőrzése"
 
-#: git-gui.sh:2347 git-gui.sh:2351 git-gui.sh:2355 lib/shortcut.tcl:7
+#: but-gui.sh:2347 but-gui.sh:2351 but-gui.sh:2355 lib/shortcut.tcl:7
 #: lib/shortcut.tcl:39 lib/shortcut.tcl:71
 msgid "Create Desktop Icon"
 msgstr "Asztal ikon létrehozása"
 
-#: git-gui.sh:2363 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
+#: but-gui.sh:2363 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
 msgid "Quit"
 msgstr "Kilépés"
 
-#: git-gui.sh:2371
+#: but-gui.sh:2371
 msgid "Undo"
 msgstr "Visszavonás"
 
-#: git-gui.sh:2374
+#: but-gui.sh:2374
 msgid "Redo"
 msgstr "Mégis"
 
-#: git-gui.sh:2378 git-gui.sh:2937
+#: but-gui.sh:2378 but-gui.sh:2937
 msgid "Cut"
 msgstr "Kivágás"
 
-#: git-gui.sh:2381 git-gui.sh:2940 git-gui.sh:3014 git-gui.sh:3096
+#: but-gui.sh:2381 but-gui.sh:2940 but-gui.sh:3014 but-gui.sh:3096
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Másolás"
 
-#: git-gui.sh:2384 git-gui.sh:2943
+#: but-gui.sh:2384 but-gui.sh:2943
 msgid "Paste"
 msgstr "Beillesztés"
 
-#: git-gui.sh:2387 git-gui.sh:2946 lib/branch_delete.tcl:26
+#: but-gui.sh:2387 but-gui.sh:2946 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr "Törlés"
 
-#: git-gui.sh:2391 git-gui.sh:2950 git-gui.sh:3100 lib/console.tcl:71
+#: but-gui.sh:2391 but-gui.sh:2950 but-gui.sh:3100 lib/console.tcl:71
 msgid "Select All"
 msgstr "Mindent kiválaszt"
 
-#: git-gui.sh:2400
+#: but-gui.sh:2400
 msgid "Create..."
 msgstr "Létrehozás..."
 
-#: git-gui.sh:2406
+#: but-gui.sh:2406
 msgid "Checkout..."
 msgstr "Checkout..."
 
-#: git-gui.sh:2412
+#: but-gui.sh:2412
 msgid "Rename..."
 msgstr "Átnevezés..."
 
-#: git-gui.sh:2417
+#: but-gui.sh:2417
 msgid "Delete..."
 msgstr "Törlés..."
 
-#: git-gui.sh:2422
+#: but-gui.sh:2422
 msgid "Reset..."
 msgstr "Visszaállítás..."
 
-#: git-gui.sh:2432
+#: but-gui.sh:2432
 msgid "Done"
 msgstr "Kész"
 
-#: git-gui.sh:2434
+#: but-gui.sh:2434
 msgid "cummit@@verb"
 msgstr "cummit@@ige"
 
-#: git-gui.sh:2443 git-gui.sh:2878
+#: but-gui.sh:2443 but-gui.sh:2878
 msgid "New cummit"
 msgstr "Új cummit"
 
-#: git-gui.sh:2451 git-gui.sh:2885
+#: but-gui.sh:2451 but-gui.sh:2885
 msgid "Amend Last cummit"
 msgstr "Utolsó cummit javítása"
 
-#: git-gui.sh:2461 git-gui.sh:2839 lib/remote_branch_delete.tcl:99
+#: but-gui.sh:2461 but-gui.sh:2839 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Keresés újra"
 
-#: git-gui.sh:2467
+#: but-gui.sh:2467
 msgid "Stage To cummit"
 msgstr "Kiválasztás cummitolásra"
 
-#: git-gui.sh:2473
+#: but-gui.sh:2473
 msgid "Stage Changed Files To cummit"
 msgstr "Módosított fájlok kiválasztása cummitolásra"
 
-#: git-gui.sh:2479
+#: but-gui.sh:2479
 msgid "Unstage From cummit"
 msgstr "cummitba való kiválasztás visszavonása"
 
-#: git-gui.sh:2484 lib/index.tcl:410
+#: but-gui.sh:2484 lib/index.tcl:410
 msgid "Revert Changes"
 msgstr "Változtatások visszaállítása"
 
-#: git-gui.sh:2491 git-gui.sh:3083
+#: but-gui.sh:2491 but-gui.sh:3083
 msgid "Show Less Context"
 msgstr "Kevesebb környezet mutatása"
 
-#: git-gui.sh:2495 git-gui.sh:3087
+#: but-gui.sh:2495 but-gui.sh:3087
 msgid "Show More Context"
 msgstr "Több környezet mutatása"
 
-#: git-gui.sh:2502 git-gui.sh:2852 git-gui.sh:2961
+#: but-gui.sh:2502 but-gui.sh:2852 but-gui.sh:2961
 msgid "Sign Off"
 msgstr "Aláír"
 
-#: git-gui.sh:2518
+#: but-gui.sh:2518
 msgid "Local Merge..."
 msgstr "Helyi merge..."
 
-#: git-gui.sh:2523
+#: but-gui.sh:2523
 msgid "Abort Merge..."
 msgstr "Merge megszakítása..."
 
-#: git-gui.sh:2535 git-gui.sh:2575
+#: but-gui.sh:2535 but-gui.sh:2575
 msgid "Add..."
 msgstr "Hozzáadás..."
 
-#: git-gui.sh:2539
+#: but-gui.sh:2539
 msgid "Push..."
 msgstr "Push..."
 
-#: git-gui.sh:2543
+#: but-gui.sh:2543
 msgid "Delete Branch..."
 msgstr "Branch törlése..."
 
-#: git-gui.sh:2553 git-gui.sh:2589 lib/about.tcl:14
+#: but-gui.sh:2553 but-gui.sh:2589 lib/about.tcl:14
 #: lib/choose_repository.tcl:44 lib/choose_repository.tcl:53
 #, tcl-format
 msgid "About %s"
 msgstr "Névjegy: %s"
 
-#: git-gui.sh:2557
+#: but-gui.sh:2557
 msgid "Preferences..."
 msgstr "Beállítások..."
 
-#: git-gui.sh:2565 git-gui.sh:3129
+#: but-gui.sh:2565 but-gui.sh:3129
 msgid "Options..."
 msgstr "Opciók..."
 
-#: git-gui.sh:2576
+#: but-gui.sh:2576
 msgid "Remove..."
 msgstr "Eltávolítás..."
 
-#: git-gui.sh:2585 lib/choose_repository.tcl:50
+#: but-gui.sh:2585 lib/choose_repository.tcl:50
 msgid "Help"
 msgstr "Segítség"
 
-#: git-gui.sh:2611
+#: but-gui.sh:2611
 msgid "Online Documentation"
 msgstr "Online dokumentáció"
 
-#: git-gui.sh:2614 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
+#: but-gui.sh:2614 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
 msgid "Show SSH Key"
 msgstr "SSH kulcs mutatása"
 
-#: git-gui.sh:2721
+#: but-gui.sh:2721
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "végzetes hiba: nem érhető el a(z) %s útvonal: Nincs ilyen fájl vagy könyvtár"
 
-#: git-gui.sh:2754
+#: but-gui.sh:2754
 msgid "Current Branch:"
 msgstr "Jelenlegi branch:"
 
-#: git-gui.sh:2775
+#: but-gui.sh:2775
 msgid "Staged Changes (Will cummit)"
 msgstr "Kiválasztott változtatások (cummitolva lesz)"
 
-#: git-gui.sh:2795
+#: but-gui.sh:2795
 msgid "Unstaged Changes"
 msgstr "Kiválasztatlan változtatások"
 
-#: git-gui.sh:2845
+#: but-gui.sh:2845
 msgid "Stage Changed"
 msgstr "Változtatások kiválasztása"
 
-#: git-gui.sh:2864 lib/transport.tcl:104 lib/transport.tcl:193
+#: but-gui.sh:2864 lib/transport.tcl:104 lib/transport.tcl:193
 msgid "Push"
 msgstr "Push"
 
-#: git-gui.sh:2899
+#: but-gui.sh:2899
 msgid "Initial cummit Message:"
 msgstr "Kezdeti cummit üzenet:"
 
-#: git-gui.sh:2900
+#: but-gui.sh:2900
 msgid "Amended cummit Message:"
 msgstr "Javító cummit üzenet:"
 
-#: git-gui.sh:2901
+#: but-gui.sh:2901
 msgid "Amended Initial cummit Message:"
 msgstr "Kezdeti javító cummit üzenet:"
 
-#: git-gui.sh:2902
+#: but-gui.sh:2902
 msgid "Amended Merge cummit Message:"
 msgstr "Javító merge cummit üzenet:"
 
-#: git-gui.sh:2903
+#: but-gui.sh:2903
 msgid "Merge cummit Message:"
 msgstr "Merge cummit üzenet:"
 
-#: git-gui.sh:2904
+#: but-gui.sh:2904
 msgid "cummit Message:"
 msgstr "cummit üzenet:"
 
-#: git-gui.sh:2953 git-gui.sh:3104 lib/console.tcl:73
+#: but-gui.sh:2953 but-gui.sh:3104 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Összes másolása"
 
-#: git-gui.sh:2977 lib/blame.tcl:104
+#: but-gui.sh:2977 lib/blame.tcl:104
 msgid "File:"
 msgstr "Fájl:"
 
-#: git-gui.sh:3092
+#: but-gui.sh:3092
 msgid "Refresh"
 msgstr "Frissítés"
 
-#: git-gui.sh:3113
+#: but-gui.sh:3113
 msgid "Decrease Font Size"
 msgstr "Font méret csökkentése"
 
-#: git-gui.sh:3117
+#: but-gui.sh:3117
 msgid "Increase Font Size"
 msgstr "Fönt méret növelése"
 
-#: git-gui.sh:3125 lib/blame.tcl:281
+#: but-gui.sh:3125 lib/blame.tcl:281
 msgid "Encoding"
 msgstr "Kódolás"
 
-#: git-gui.sh:3136
+#: but-gui.sh:3136
 msgid "Apply/Reverse Hunk"
 msgstr "Hunk alkalmazása/visszaállítása"
 
-#: git-gui.sh:3141
+#: but-gui.sh:3141
 msgid "Apply/Reverse Line"
 msgstr "Sor alkalmazása/visszaállítása"
 
-#: git-gui.sh:3151
+#: but-gui.sh:3151
 msgid "Run Merge Tool"
 msgstr "Merge eszköz futtatása"
 
-#: git-gui.sh:3156
+#: but-gui.sh:3156
 msgid "Use Remote Version"
 msgstr "Távoli verzió használata"
 
-#: git-gui.sh:3160
+#: but-gui.sh:3160
 msgid "Use Local Version"
 msgstr "Helyi verzió használata"
 
-#: git-gui.sh:3164
+#: but-gui.sh:3164
 msgid "Revert To Base"
 msgstr "Visszaállítás az alaphoz"
 
-#: git-gui.sh:3183
+#: but-gui.sh:3183
 msgid "Unstage Hunk From cummit"
 msgstr "Hunk törlése cummitból"
 
-#: git-gui.sh:3184
+#: but-gui.sh:3184
 msgid "Unstage Line From cummit"
 msgstr "A sor kiválasztásának törlése"
 
-#: git-gui.sh:3186
+#: but-gui.sh:3186
 msgid "Stage Hunk For cummit"
 msgstr "Hunk kiválasztása cummitba"
 
-#: git-gui.sh:3187
+#: but-gui.sh:3187
 msgid "Stage Line For cummit"
 msgstr "Sor kiválasztása cummitba"
 
-#: git-gui.sh:3210
+#: but-gui.sh:3210
 msgid "Initializing..."
 msgstr "Inicializálás..."
 
-#: git-gui.sh:3315
+#: but-gui.sh:3315
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -516,7 +516,7 @@ msgstr ""
 "indított folyamatok által:\n"
 "\n"
 
-#: git-gui.sh:3345
+#: but-gui.sh:3345
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -526,7 +526,7 @@ msgstr ""
 "Ez a Cygwin által terjesztett Tcl binárisban\n"
 "lévő ismert hiba miatt van."
 
-#: git-gui.sh:3350
+#: but-gui.sh:3350
 #, tcl-format
 msgid ""
 "\n"
@@ -534,18 +534,18 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 "\n"
 "\n"
 "Egy jó helyettesítés a(z) %s számára\n"
 "a user.name és user.email beállítások\n"
 "elhelyezése a személyes\n"
-"~/.gitconfig fájlba.\n"
+"~/.butconfig fájlba.\n"
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - egy grafikus felület a Githez."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui - egy grafikus felület a Githez."
 
 #: lib/blame.tcl:72
 msgid "File Viewer"
@@ -864,9 +864,9 @@ msgstr "A(z) '%s' branch nem létezik."
 
 #: lib/checkout_op.tcl:193
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
+msgid "Failed to configure simplified but-pull for '%s'."
 msgstr ""
-"Nem sikerült beállítani az egyszerűsített git-pull-t a(z) '%s' számára."
+"Nem sikerült beállítani az egyszerűsített but-pull-t a(z) '%s' számára."
 
 #: lib/checkout_op.tcl:228
 #, tcl-format
@@ -1667,10 +1667,10 @@ msgstr "Index hiba"
 #: lib/index.tcl:21
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "A Git index frissítése sikertelen volt.  Egy újraolvasás automatikusan "
-"elindult, hogy a git-gui újra szinkonban legyen."
+"elindult, hogy a but-gui újra szinkonban legyen."
 
 #: lib/index.tcl:27
 msgid "Continue"
@@ -2551,11 +2551,11 @@ msgid "Include tags"
 msgstr "Tageket is"
 
 #~ msgid ""
-#~ "Unable to start gitk:\n"
+#~ "Unable to start butk:\n"
 #~ "\n"
 #~ "%s does not exist"
 #~ msgstr ""
-#~ "A gitk indítása sikertelen:\n"
+#~ "A butk indítása sikertelen:\n"
 #~ "\n"
 #~ "A(z) %s nem létezik"
 

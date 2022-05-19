@@ -22,28 +22,28 @@ test_perf_default_repo
 # branch to be the ballast.
 
 test_expect_success "setup repo" '
-	if git rev-parse --verify refs/heads/p0006-ballast^{cummit}
+	if but rev-parse --verify refs/heads/p0006-ballast^{cummit}
 	then
 		echo Assuming synthetic repo from many-files.sh &&
-		git branch br_base            master &&
-		git branch br_ballast         p0006-ballast &&
-		git config --local core.sparsecheckout 1 &&
-		cat >.git/info/sparse-checkout <<-EOF
+		but branch br_base            master &&
+		but branch br_ballast         p0006-ballast &&
+		but config --local core.sparsecheckout 1 &&
+		cat >.but/info/sparse-checkout <<-EOF
 		/*
 		!ballast/*
 		EOF
 	else
 		echo Assuming non-synthetic repo... &&
-		git branch br_base            $(git rev-list HEAD | tail -n 1) &&
-		git branch br_ballast         HEAD
+		but branch br_base            $(but rev-list HEAD | tail -n 1) &&
+		but branch br_ballast         HEAD
 	fi &&
-	git checkout -q br_ballast &&
-	nr_files=$(git ls-files | wc -l)
+	but checkout -q br_ballast &&
+	nr_files=$(but ls-files | wc -l)
 '
 
 test_perf "read-tree status br_ballast ($nr_files)" '
-	git read-tree HEAD &&
-	git status
+	but read-tree HEAD &&
+	but status
 '
 
 test_done

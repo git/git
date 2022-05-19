@@ -4,56 +4,56 @@ GIT v1.6.1.1 Release Notes
 Fixes since v1.6.1
 ------------------
 
-* "git add frotz/nitfol" when "frotz" is a submodule should have errored
+* "but add frotz/nitfol" when "frotz" is a submodule should have errored
   out, but it didn't.
 
-* "git apply" took file modes from the patch text and updated the mode
+* "but apply" took file modes from the patch text and updated the mode
   bits of the target tree even when the patch was not about mode changes.
 
-* "git bisect view" on Cygwin did not launch gitk
+* "but bisect view" on Cygwin did not launch butk
 
-* "git checkout $tree" did not trigger an error.
+* "but checkout $tree" did not trigger an error.
 
-* "git cummit" tried to remove CUMMIT_EDITMSG from the work tree by mistake.
+* "but cummit" tried to remove CUMMIT_EDITMSG from the work tree by mistake.
 
-* "git describe --all" complained when a cummit is described with a tag,
+* "but describe --all" complained when a cummit is described with a tag,
   which was nonsense.
 
-* "git diff --no-index --" did not trigger no-index (aka "use git-diff as
+* "but diff --no-index --" did not trigger no-index (aka "use but-diff as
   a replacement of diff on untracked files") behaviour.
 
-* "git format-patch -1 HEAD" on a root cummit failed to produce patch
+* "but format-patch -1 HEAD" on a root cummit failed to produce patch
   text.
 
-* "git fsck branch" did not work as advertised; instead it behaved the same
-  way as "git fsck".
+* "but fsck branch" did not work as advertised; instead it behaved the same
+  way as "but fsck".
 
-* "git log --pretty=format:%s" did not handle a multi-line subject the
+* "but log --pretty=format:%s" did not handle a multi-line subject the
   same way as built-in log listers (i.e. shortlog, --pretty=oneline, etc.)
 
-* "git daemon", and "git merge-file" are more careful when freopen fails
+* "but daemon", and "but merge-file" are more careful when freopen fails
   and barf, instead of going on and writing to unopened filehandle.
 
-* "git http-push" did not like some RFC 4918 compliant DAV server
+* "but http-push" did not like some RFC 4918 compliant DAV server
   responses.
 
-* "git merge -s recursive" mistakenly overwritten an untracked file in the
+* "but merge -s recursive" mistakenly overwritten an untracked file in the
   work tree upon delete/modify conflict.
 
-* "git merge -s recursive" didn't leave the index unmerged for entries with
+* "but merge -s recursive" didn't leave the index unmerged for entries with
   rename/delete conflicts.
 
-* "git merge -s recursive" clobbered untracked files in the work tree.
+* "but merge -s recursive" clobbered untracked files in the work tree.
 
-* "git mv -k" with more than one erroneous paths misbehaved.
+* "but mv -k" with more than one erroneous paths misbehaved.
 
-* "git read-tree -m -u" hence branch switching incorrectly lost a
+* "but read-tree -m -u" hence branch switching incorrectly lost a
   subdirectory in rare cases.
 
-* "git rebase -i" issued an unnecessary error message upon a user error of
+* "but rebase -i" issued an unnecessary error message upon a user error of
   marking the first cummit to be "squash"ed.
 
-* "git shortlog" did not format a cummit message with multi-line
+* "but shortlog" did not format a cummit message with multi-line
   subject correctly.
 
 Many documentation updates.

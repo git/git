@@ -20,7 +20,7 @@ Fixes since v2.12.2
  * Teach the "debug" helper used in the test framework that allows a
    command to run under "gdb" to make the session interactive.
 
- * "git repack --depth=<n>" for a long time busted the specified depth
+ * "but repack --depth=<n>" for a long time busted the specified depth
    when reusing delta from existing packs.  This has been corrected.
 
  * user.email that consists of only cruft chars should consistently
@@ -29,15 +29,15 @@ Fixes since v2.12.2
  * A few tests were run conditionally under (rare) conditions where
    they cannot be run (like running cvs tests under 'root' account).
 
- * "git branch @" created refs/heads/@ as a branch, and in general the
+ * "but branch @" created refs/heads/@ as a branch, and in general the
    code that handled @{-1} and @{upstream} was a bit too loose in
    disambiguating.
 
- * "git fetch" that requests a cummit by object name, when the other
+ * "but fetch" that requests a cummit by object name, when the other
    side does not allow such an request, failed without much
    explanation.
 
- * "git filter-branch --prune-empty" drops a single-parent cummit that
+ * "but filter-branch --prune-empty" drops a single-parent cummit that
    becomes a no-op, but did not drop a root cummit whose tree is empty.
 
  * Recent versions of Git treats http alternates (used in dumb http
@@ -54,9 +54,9 @@ Fixes since v2.12.2
    turn revealed incorrect expectations the tests make. These tests
    have been updated.
 
- * "git-shell" rejects a request to serve a repository whose name
+ * "but-shell" rejects a request to serve a repository whose name
    begins with a dash, which makes it no longer possible to get it
-   confused into spawning service programs like "git-upload-pack" with
+   confused into spawning service programs like "but-upload-pack" with
    an option like "--help", which in turn would spawn an interactive
    pager, instead of working with the repository user asked to access
    (i.e. the one whose name is "--help").

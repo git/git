@@ -9,7 +9,7 @@
  * Calling sequence
  * ----------------
  *
- * - Create a `struct git_graph` by calling `graph_init()`.  When using the
+ * - Create a `struct but_graph` by calling `graph_init()`.  When using the
  *   revision walking API, this is done automatically by `setup_revisions()` if
  *   the '--graph' option is supplied.
  *
@@ -39,7 +39,7 @@
  *
  * ------------
  * struct cummit *cummit;
- * struct git_graph *graph = graph_init(opts);
+ * struct but_graph *graph = graph_init(opts);
  *
  * while ((cummit = get_revision(opts)) != NULL) {
  * 	while (!graph_is_cummit_finished(graph))
@@ -100,7 +100,7 @@
  */
 
 /* A graph is a pointer to this opaque structure */
-struct git_graph;
+struct but_graph;
 
 /*
  * Called to setup global display of line_prefix diff option.
@@ -130,22 +130,22 @@ void graph_setup_line_prefix(struct diff_options *diffopt);
  * This functions must be called BEFORE graph_init() is called.
  *
  * NOTE: This function isn't used in Git outside graph.c but it is used
- * by CGit (http://git.zx2c4.com/cgit/) to use HTML for colors.
+ * by CGit (http://but.zx2c4.com/cbut/) to use HTML for colors.
  */
 void graph_set_column_colors(const char **colors, unsigned short colors_max);
 
 /*
- * Create a new struct git_graph.
+ * Create a new struct but_graph.
  */
-struct git_graph *graph_init(struct rev_info *opt);
+struct but_graph *graph_init(struct rev_info *opt);
 
 /*
- * Free a struct git_graph.
+ * Free a struct but_graph.
  */
-void graph_clear(struct git_graph *graph);
+void graph_clear(struct but_graph *graph);
 
 /*
- * Update a git_graph with a new cummit.
+ * Update a but_graph with a new cummit.
  * This will cause the graph to begin outputting lines for the new cummit
  * the next time graph_next_line() is called.
  *
@@ -168,7 +168,7 @@ void graph_clear(struct git_graph *graph);
  * - `graph_update()` may be used on a pruned set of cummits only if the parent list
  *   has been rewritten so as to include only ancestors from the pruned set.
  */
-void graph_update(struct git_graph *graph, struct cummit *cummit);
+void graph_update(struct but_graph *graph, struct cummit *cummit);
 
 /*
  * Determine if a graph has finished outputting lines for the current
@@ -184,7 +184,7 @@ void graph_update(struct git_graph *graph, struct cummit *cummit);
  * been printed, the next call to `graph_next_line()` will output an ellipsis,
  * to indicate that a portion of the graph was omitted.
  */
-int graph_is_cummit_finished(struct git_graph const *graph);
+int graph_is_cummit_finished(struct but_graph const *graph);
 
 /*
  * Output the next line for a graph.
@@ -196,15 +196,15 @@ int graph_is_cummit_finished(struct git_graph const *graph);
  * graph_update() is called.
  *
  * NOTE: This function isn't used in Git outside graph.c but it is used
- * by CGit (http://git.zx2c4.com/cgit/) to wrap HTML around graph lines.
+ * by CGit (http://but.zx2c4.com/cbut/) to wrap HTML around graph lines.
  */
-int graph_next_line(struct git_graph *graph, struct strbuf *sb);
+int graph_next_line(struct but_graph *graph, struct strbuf *sb);
 
 
 /*
  * Return current width of the graph in on-screen characters.
  */
-int graph_width(struct git_graph *graph);
+int graph_width(struct but_graph *graph);
 
 /*
  * graph_show_*: helper functions for printing to stdout
@@ -216,26 +216,26 @@ int graph_width(struct git_graph *graph);
  * up to and including the line containing this cummit.
  * Does not print a terminating newline on the last line.
  */
-void graph_show_cummit(struct git_graph *graph);
+void graph_show_cummit(struct but_graph *graph);
 
 /*
  * If the graph is non-NULL, print one line of the history graph to stdout.
  * Does not print a terminating newline on the last line.
  */
-void graph_show_oneline(struct git_graph *graph);
+void graph_show_oneline(struct but_graph *graph);
 
 /*
  * If the graph is non-NULL, print one line of vertical graph padding to
  * stdout.  Does not print a terminating newline on the last line.
  */
-void graph_show_padding(struct git_graph *graph);
+void graph_show_padding(struct but_graph *graph);
 
 /*
  * If the graph is non-NULL, print the rest of the history graph for this
  * cummit to stdout.  Does not print a terminating newline on the last line.
  * Returns 1 if output was printed, and 0 if no output was necessary.
  */
-int graph_show_remainder(struct git_graph *graph);
+int graph_show_remainder(struct but_graph *graph);
 
 /*
  * Print a cummit message strbuf and the remainder of the graph to stdout.
@@ -258,7 +258,7 @@ int graph_show_remainder(struct git_graph *graph);
  * file specified by the graph diff options. This is necessary so that
  * graph_show_cummit_msg can be called even with a NULL graph.
  */
-void graph_show_cummit_msg(struct git_graph *graph,
+void graph_show_cummit_msg(struct but_graph *graph,
 			   FILE *file,
 			   struct strbuf const *sb);
 

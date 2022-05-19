@@ -1,4 +1,4 @@
-$ git show --first-parent master
+$ but show --first-parent master
 cummit 59d314ad6f356dd08601a4cd5e530381da3e3c64
 Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
@@ -6,7 +6,7 @@ Date:   Mon Jun 26 00:04:00 2006 +0000
 
     Merge branch 'side'
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index cead32e..992913c 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -16,7 +16,7 @@ index cead32e..992913c 100644
  F
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index b414108..10a8a9f 100644
 --- a/file0
 +++ b/file0

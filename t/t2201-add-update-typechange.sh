@@ -1,13 +1,13 @@
 #!/bin/sh
 
-test_description='more git add -u'
+test_description='more but add -u'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
 	>xyzzy &&
-	_empty=$(git hash-object --stdin <xyzzy) &&
+	_empty=$(but hash-object --stdin <xyzzy) &&
 	>yomin &&
 	>caskly &&
 	if test_have_prereq SYMLINKS; then
@@ -19,10 +19,10 @@ test_expect_success setup '
 	fi &&
 	mkdir rezrov &&
 	>rezrov/bozbar &&
-	git add caskly xyzzy yomin nitfol rezrov/bozbar &&
+	but add caskly xyzzy yomin nitfol rezrov/bozbar &&
 
 	test_tick &&
-	git cummit -m initial
+	but cummit -m initial
 
 '
 
@@ -47,33 +47,33 @@ test_expect_success modify '
 	>yomin/yomin &&
 	(
 		cd yomin &&
-		git init &&
-		git add yomin &&
-		git cummit -m "sub initial"
+		but init &&
+		but add yomin &&
+		but cummit -m "sub initial"
 	) &&
-	yomin=$(GIT_DIR=yomin/.git git rev-parse HEAD) &&
+	yomin=$(GIT_DIR=yomin/.but but rev-parse HEAD) &&
 	# yonk is added and then turned into a submodule
 	# this should appear as T in diff-files and as A in diff-index
 	>yonk &&
-	git add yonk &&
+	but add yonk &&
 	rm -f yonk &&
 	mkdir yonk &&
 	>yonk/yonk &&
 	(
 		cd yonk &&
-		git init &&
-		git add yonk &&
-		git cummit -m "sub initial"
+		but init &&
+		but add yonk &&
+		but cummit -m "sub initial"
 	) &&
-	yonk=$(GIT_DIR=yonk/.git git rev-parse HEAD) &&
+	yonk=$(GIT_DIR=yonk/.but but rev-parse HEAD) &&
 	# zifmia is added and then removed
 	# this should appear in diff-files but not in diff-index.
 	>zifmia &&
-	git add zifmia &&
+	but add zifmia &&
 	rm -f zifmia &&
 	mkdir zifmia &&
 	{
-		git ls-tree -r HEAD |
+		but ls-tree -r HEAD |
 		sed -e "s/^/:/" -e "
 			/	caskly/{
 				s/	caskly/ $ZERO_OID D&/
@@ -114,35 +114,35 @@ test_expect_success modify '
 '
 
 test_expect_success diff-files '
-	git diff-files --raw >actual &&
+	but diff-files --raw >actual &&
 	test_cmp expect-files actual
 '
 
 test_expect_success diff-index '
-	git diff-index --raw HEAD -- >actual &&
+	but diff-index --raw HEAD -- >actual &&
 	test_cmp expect-index actual
 '
 
 test_expect_success 'add -u' '
-	rm -f ".git/saved-index" &&
-	cp -p ".git/index" ".git/saved-index" &&
-	git add -u &&
-	git ls-files -s >actual &&
+	rm -f ".but/saved-index" &&
+	cp -p ".but/index" ".but/saved-index" &&
+	but add -u &&
+	but ls-files -s >actual &&
 	test_cmp expect-final actual
 '
 
 test_expect_success 'cummit -a' '
-	if test -f ".git/saved-index"
+	if test -f ".but/saved-index"
 	then
-		rm -f ".git/index" &&
-		mv ".git/saved-index" ".git/index"
+		rm -f ".but/index" &&
+		mv ".but/saved-index" ".but/index"
 	fi &&
-	git cummit -m "second" -a &&
-	git ls-files -s >actual &&
+	but cummit -m "second" -a &&
+	but ls-files -s >actual &&
 	test_cmp expect-final actual &&
-	rm -f .git/index &&
-	git read-tree HEAD &&
-	git ls-files -s >actual &&
+	rm -f .but/index &&
+	but read-tree HEAD &&
+	but ls-files -s >actual &&
 	test_cmp expect-final actual
 '
 

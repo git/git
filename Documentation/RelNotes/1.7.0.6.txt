@@ -4,10 +4,10 @@ Git v1.7.0.6 Release Notes
 Fixes since v1.7.0.5
 --------------------
 
- * "git diff --stat" used "int" to count the size of differences,
+ * "but diff --stat" used "int" to count the size of differences,
    which could result in overflowing.
 
- * "git rev-list --abbrev-cummit" defaulted to 40-byte abbreviations, unlike
-   newer tools in the git toolset.
+ * "but rev-list --abbrev-cummit" defaulted to 40-byte abbreviations, unlike
+   newer tools in the but toolset.
 
 And other minor fixes and documentation updates.

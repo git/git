@@ -146,8 +146,8 @@ int versioncmp(const char *s1, const char *s2)
 
 	c1 = *p1++;
 	c2 = *p2++;
-	/* Hint: '0' is a digit too.  */
-	state = S_N + ((c1 == '0') + (isdigit (c1) != 0));
+	/* Hint: '0' is a dibut too.  */
+	state = S_N + ((c1 == '0') + (isdibut (c1) != 0));
 
 	while ((diff = c1 - c2) == 0) {
 		if (c1 == '\0')
@@ -156,14 +156,14 @@ int versioncmp(const char *s1, const char *s2)
 		state = next_state[state];
 		c1 = *p1++;
 		c2 = *p2++;
-		state += (c1 == '0') + (isdigit (c1) != 0);
+		state += (c1 == '0') + (isdibut (c1) != 0);
 	}
 
 	if (!initialized) {
 		const struct string_list *deprecated_prereleases;
 		initialized = 1;
-		prereleases = git_config_get_value_multi("versionsort.suffix");
-		deprecated_prereleases = git_config_get_value_multi("versionsort.prereleasesuffix");
+		prereleases = but_config_get_value_multi("versionsort.suffix");
+		deprecated_prereleases = but_config_get_value_multi("versionsort.prereleasesuffix");
 		if (prereleases) {
 			if (deprecated_prereleases)
 				warning("ignoring versionsort.prereleasesuffix because versionsort.suffix is set");
@@ -174,18 +174,18 @@ int versioncmp(const char *s1, const char *s2)
 					    &diff))
 		return diff;
 
-	state = result_type[state * 3 + (((c2 == '0') + (isdigit (c2) != 0)))];
+	state = result_type[state * 3 + (((c2 == '0') + (isdibut (c2) != 0)))];
 
 	switch (state) {
 	case CMP:
 		return diff;
 
 	case LEN:
-		while (isdigit (*p1++))
-			if (!isdigit (*p2++))
+		while (isdibut (*p1++))
+			if (!isdibut (*p2++))
 				return 1;
 
-		return isdigit (*p2) ? -1 : diff;
+		return isdibut (*p2) ? -1 : diff;
 
 	default:
 		return state;

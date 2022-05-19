@@ -50,17 +50,17 @@ static inline char *reencode_string(const char *in,
 int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
 
 /*
- * Returns true if the path would match ".git" after HFS case-folding.
- * The path should be NUL-terminated, but we will match variants of both ".git\0"
- * and ".git/..." (but _not_ ".../.git"). This makes it suitable for both fsck
+ * Returns true if the path would match ".but" after HFS case-folding.
+ * The path should be NUL-terminated, but we will match variants of both ".but\0"
+ * and ".but/..." (but _not_ ".../.but"). This makes it suitable for both fsck
  * and verify_path().
  *
- * Likewise, the is_hfs_dotgitfoo() variants look for ".gitfoo".
+ * Likewise, the is_hfs_dotbutfoo() variants look for ".butfoo".
  */
-int is_hfs_dotgit(const char *path);
-int is_hfs_dotgitmodules(const char *path);
-int is_hfs_dotgitignore(const char *path);
-int is_hfs_dotgitattributes(const char *path);
+int is_hfs_dotbut(const char *path);
+int is_hfs_dotbutmodules(const char *path);
+int is_hfs_dotbutignore(const char *path);
+int is_hfs_dotbutattributes(const char *path);
 int is_hfs_dotmailmap(const char *path);
 
 typedef enum {

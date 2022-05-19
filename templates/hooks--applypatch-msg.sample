@@ -9,7 +9,7 @@
 #
 # To enable this hook, rename this file to "applypatch-msg".
 
-. git-sh-setup
-cummitmsg="$(git rev-parse --git-path hooks/cummit-msg)"
+. but-sh-setup
+cummitmsg="$(but rev-parse --but-path hooks/cummit-msg)"
 test -x "$cummitmsg" && exec "$cummitmsg" ${1+"$@"}
 :

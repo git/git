@@ -184,23 +184,23 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))
 			status_printf_ln(s, c,
-					 _("  (use \"git restore --staged <file>...\" to unstage)"));
+					 _("  (use \"but restore --staged <file>...\" to unstage)"));
 		else
 			status_printf_ln(s, c,
-					 _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
+					 _("  (use \"but restore --source=%s --staged <file>...\" to unstage)"),
 					 s->reference);
 	} else
-		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+		status_printf_ln(s, c, _("  (use \"but rm --cached <file>...\" to unstage)"));
 
 	if (!both_deleted) {
 		if (!del_mod_conflict)
-			status_printf_ln(s, c, _("  (use \"git add <file>...\" to mark resolution)"));
+			status_printf_ln(s, c, _("  (use \"but add <file>...\" to mark resolution)"));
 		else
-			status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
+			status_printf_ln(s, c, _("  (use \"but add/rm <file>...\" as appropriate to mark resolution)"));
 	} else if (!del_mod_conflict && !not_deleted) {
-		status_printf_ln(s, c, _("  (use \"git rm <file>...\" to mark resolution)"));
+		status_printf_ln(s, c, _("  (use \"but rm <file>...\" to mark resolution)"));
 	} else {
-		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
+		status_printf_ln(s, c, _("  (use \"but add/rm <file>...\" as appropriate to mark resolution)"));
 	}
 }
 
@@ -212,17 +212,17 @@ static void wt_longstatus_print_cached_header(struct wt_status *s)
 	if (!s->hints)
 		return;
 	if (s->whence != FROM_CUMMIT)
-		; /* NEEDSWORK: use "git reset --unresolve"??? */
+		; /* NEEDSWORK: use "but reset --unresolve"??? */
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))
 			status_printf_ln(s, c
-					 , _("  (use \"git restore --staged <file>...\" to unstage)"));
+					 , _("  (use \"but restore --staged <file>...\" to unstage)"));
 		else
 			status_printf_ln(s, c,
-					 _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
+					 _("  (use \"but restore --source=%s --staged <file>...\" to unstage)"),
 					 s->reference);
 	} else
-		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+		status_printf_ln(s, c, _("  (use \"but rm --cached <file>...\" to unstage)"));
 }
 
 static void wt_longstatus_print_dirty_header(struct wt_status *s,
@@ -235,10 +235,10 @@ static void wt_longstatus_print_dirty_header(struct wt_status *s,
 	if (!s->hints)
 		return;
 	if (!has_deleted)
-		status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be cummitted)"));
+		status_printf_ln(s, c, _("  (use \"but add <file>...\" to update what will be cummitted)"));
 	else
-		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" to update what will be cummitted)"));
-	status_printf_ln(s, c, _("  (use \"git restore <file>...\" to discard changes in working directory)"));
+		status_printf_ln(s, c, _("  (use \"but add/rm <file>...\" to update what will be cummitted)"));
+	status_printf_ln(s, c, _("  (use \"but restore <file>...\" to discard changes in working directory)"));
 	if (has_dirty_submodules)
 		status_printf_ln(s, c, _("  (cummit or discard the untracked or modified content in submodules)"));
 }
@@ -251,7 +251,7 @@ static void wt_longstatus_print_other_header(struct wt_status *s,
 	status_printf_ln(s, c, "%s:", what);
 	if (!s->hints)
 		return;
-	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be cummitted)"), how);
+	status_printf_ln(s, c, _("  (use \"but %s <file>...\" to include in what will be cummitted)"), how);
 }
 
 static void wt_longstatus_print_trailer(struct wt_status *s)
@@ -993,7 +993,7 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncum
 	if (!uncummitted)
 		strvec_push(&sm_summary.args, s->amend ? "HEAD^" : "HEAD");
 
-	sm_summary.git_cmd = 1;
+	sm_summary.but_cmd = 1;
 	sm_summary.no_stdin = 1;
 
 	capture_command(&sm_summary, &cmd_stdout, 1024);
@@ -1210,16 +1210,16 @@ static void show_merge_in_progress(struct wt_status *s,
 		status_printf_ln(s, color, _("You have unmerged paths."));
 		if (s->hints) {
 			status_printf_ln(s, color,
-					 _("  (fix conflicts and run \"git cummit\")"));
+					 _("  (fix conflicts and run \"but cummit\")"));
 			status_printf_ln(s, color,
-					 _("  (use \"git merge --abort\" to abort the merge)"));
+					 _("  (use \"but merge --abort\" to abort the merge)"));
 		}
 	} else {
 		status_printf_ln(s, color,
 			_("All conflicts fixed but you are still merging."));
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (use \"git cummit\" to conclude merge)"));
+				_("  (use \"but cummit\" to conclude merge)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
@@ -1238,22 +1238,22 @@ static void show_am_in_progress(struct wt_status *s,
 		am_empty_patch = s->state.am_empty_patch;
 		if (!am_empty_patch)
 			status_printf_ln(s, color,
-				_("  (fix conflicts and then run \"git am --continue\")"));
+				_("  (fix conflicts and then run \"but am --continue\")"));
 		status_printf_ln(s, color,
-			_("  (use \"git am --skip\" to skip this patch)"));
+			_("  (use \"but am --skip\" to skip this patch)"));
 		if (am_empty_patch)
 			status_printf_ln(s, color,
-				_("  (use \"git am --allow-empty\" to record this patch as an empty cummit)"));
+				_("  (use \"but am --allow-empty\" to record this patch as an empty cummit)"));
 		status_printf_ln(s, color,
-			_("  (use \"git am --abort\" to restore the original branch)"));
+			_("  (use \"but am --abort\" to restore the original branch)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
 
-static char *read_line_from_git_path(const char *filename)
+static char *read_line_from_but_path(const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *fp = fopen_or_warn(git_path("%s", filename), "r");
+	FILE *fp = fopen_or_warn(but_path("%s", filename), "r");
 
 	if (!fp) {
 		strbuf_release(&buf);
@@ -1277,10 +1277,10 @@ static int split_cummit_in_progress(struct wt_status *s)
 	    !s->branch || strcmp(s->branch, "HEAD"))
 		return 0;
 
-	head = read_line_from_git_path("HEAD");
-	orig_head = read_line_from_git_path("ORIG_HEAD");
-	rebase_amend = read_line_from_git_path("rebase-merge/amend");
-	rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+	head = read_line_from_but_path("HEAD");
+	orig_head = read_line_from_but_path("ORIG_HEAD");
+	rebase_amend = read_line_from_but_path("rebase-merge/amend");
+	rebase_orig_head = read_line_from_but_path("rebase-merge/orig-head");
 
 	if (!head || !orig_head || !rebase_amend || !rebase_orig_head)
 		; /* fall through, no split in progress */
@@ -1342,13 +1342,13 @@ static void abbrev_oid_in_line(struct strbuf *line)
 static int read_rebase_todolist(const char *fname, struct string_list *lines)
 {
 	struct strbuf line = STRBUF_INIT;
-	FILE *f = fopen(git_path("%s", fname), "r");
+	FILE *f = fopen(but_path("%s", fname), "r");
 
 	if (!f) {
 		if (errno == ENOENT)
 			return -1;
 		die_errno("Could not open file %s for reading",
-			  git_path("%s", fname));
+			  but_path("%s", fname));
 	}
 	while (!strbuf_getline_lf(&line, f)) {
 		if (line.len && line.buf[0] == comment_line_char)
@@ -1375,10 +1375,10 @@ static void show_rebase_information(struct wt_status *s,
 		struct string_list yet_to_do = STRING_LIST_INIT_DUP;
 
 		read_rebase_todolist("rebase-merge/done", &have_done);
-		if (read_rebase_todolist("rebase-merge/git-rebase-todo",
+		if (read_rebase_todolist("rebase-merge/but-rebase-todo",
 					 &yet_to_do))
 			status_printf_ln(s, color,
-				_("git-rebase-todo is missing."));
+				_("but-rebase-todo is missing."));
 		if (have_done.nr == 0)
 			status_printf_ln(s, color, _("No commands done."));
 		else {
@@ -1394,7 +1394,7 @@ static void show_rebase_information(struct wt_status *s,
 				status_printf_ln(s, color, "   %s", have_done.items[i].string);
 			if (have_done.nr > nr_lines_to_show && s->hints)
 				status_printf_ln(s, color,
-					_("  (see more in file %s)"), git_path("rebase-merge/done"));
+					_("  (see more in file %s)"), but_path("rebase-merge/done"));
 		}
 
 		if (yet_to_do.nr == 0)
@@ -1410,7 +1410,7 @@ static void show_rebase_information(struct wt_status *s,
 				status_printf_ln(s, color, "   %s", yet_to_do.items[i].string);
 			if (s->hints)
 				status_printf_ln(s, color,
-					_("  (use \"git rebase --edit-todo\" to view and edit)"));
+					_("  (use \"but rebase --edit-todo\" to view and edit)"));
 		}
 		string_list_clear(&yet_to_do, 0);
 		string_list_clear(&have_done, 0);
@@ -1440,18 +1440,18 @@ static void show_rebase_in_progress(struct wt_status *s,
 		print_rebase_state(s, color);
 		if (s->hints) {
 			status_printf_ln(s, color,
-				_("  (fix conflicts and then run \"git rebase --continue\")"));
+				_("  (fix conflicts and then run \"but rebase --continue\")"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --skip\" to skip this patch)"));
+				_("  (use \"but rebase --skip\" to skip this patch)"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --abort\" to check out the original branch)"));
+				_("  (use \"but rebase --abort\" to check out the original branch)"));
 		}
 	} else if (s->state.rebase_in_progress ||
-		   !stat(git_path_merge_msg(s->repo), &st)) {
+		   !stat(but_path_merge_msg(s->repo), &st)) {
 		print_rebase_state(s, color);
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (all conflicts fixed: run \"git rebase --continue\")"));
+				_("  (all conflicts fixed: run \"but rebase --continue\")"));
 	} else if (split_cummit_in_progress(s)) {
 		if (s->state.branch)
 			status_printf_ln(s, color,
@@ -1463,7 +1463,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 					 _("You are currently splitting a cummit during a rebase."));
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
+				_("  (Once your working directory is clean, run \"but rebase --continue\")"));
 	} else {
 		if (s->state.branch)
 			status_printf_ln(s, color,
@@ -1475,9 +1475,9 @@ static void show_rebase_in_progress(struct wt_status *s,
 					 _("You are currently editing a cummit during a rebase."));
 		if (s->hints && !s->amend) {
 			status_printf_ln(s, color,
-				_("  (use \"git cummit --amend\" to amend the current cummit)"));
+				_("  (use \"but cummit --amend\" to amend the current cummit)"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --continue\" once you are satisfied with your changes)"));
+				_("  (use \"but rebase --continue\" once you are satisfied with your changes)"));
 		}
 	}
 	wt_longstatus_print_trailer(s);
@@ -1498,17 +1498,17 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
-				_("  (fix conflicts and run \"git cherry-pick --continue\")"));
+				_("  (fix conflicts and run \"but cherry-pick --continue\")"));
 		else if (is_null_oid(&s->state.cherry_pick_head_oid))
 			status_printf_ln(s, color,
-				_("  (run \"git cherry-pick --continue\" to continue)"));
+				_("  (run \"but cherry-pick --continue\" to continue)"));
 		else
 			status_printf_ln(s, color,
-				_("  (all conflicts fixed: run \"git cherry-pick --continue\")"));
+				_("  (all conflicts fixed: run \"but cherry-pick --continue\")"));
 		status_printf_ln(s, color,
-			_("  (use \"git cherry-pick --skip\" to skip this patch)"));
+			_("  (use \"but cherry-pick --skip\" to skip this patch)"));
 		status_printf_ln(s, color,
-			_("  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"));
+			_("  (use \"but cherry-pick --abort\" to cancel the cherry-pick operation)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
@@ -1527,17 +1527,17 @@ static void show_revert_in_progress(struct wt_status *s,
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
-				_("  (fix conflicts and run \"git revert --continue\")"));
+				_("  (fix conflicts and run \"but revert --continue\")"));
 		else if (is_null_oid(&s->state.revert_head_oid))
 			status_printf_ln(s, color,
-				_("  (run \"git revert --continue\" to continue)"));
+				_("  (run \"but revert --continue\" to continue)"));
 		else
 			status_printf_ln(s, color,
-				_("  (all conflicts fixed: run \"git revert --continue\")"));
+				_("  (all conflicts fixed: run \"but revert --continue\")"));
 		status_printf_ln(s, color,
-			_("  (use \"git revert --skip\" to skip this patch)"));
+			_("  (use \"but revert --skip\" to skip this patch)"));
 		status_printf_ln(s, color,
-			_("  (use \"git revert --abort\" to cancel the revert operation)"));
+			_("  (use \"but revert --abort\" to cancel the revert operation)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
@@ -1554,7 +1554,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 				 _("You are currently bisecting."));
 	if (s->hints)
 		status_printf_ln(s, color,
-			_("  (use \"git bisect reset\" to get back to the original branch)"));
+			_("  (use \"but bisect reset\" to get back to the original branch)"));
 	wt_longstatus_print_trailer(s);
 }
 
@@ -1582,7 +1582,7 @@ static char *get_branch(const struct worktree *wt, const char *path)
 	struct object_id oid;
 	const char *branch_name;
 
-	if (strbuf_read_file(&sb, worktree_git_path(wt, "%s", path), 0) <= 0)
+	if (strbuf_read_file(&sb, worktree_but_path(wt, "%s", path), 0) <= 0)
 		goto got_nothing;
 
 	while (sb.len && sb.buf[sb.len - 1] == '\n')
@@ -1677,18 +1677,18 @@ int wt_status_check_rebase(const struct worktree *wt,
 {
 	struct stat st;
 
-	if (!stat(worktree_git_path(wt, "rebase-apply"), &st)) {
-		if (!stat(worktree_git_path(wt, "rebase-apply/applying"), &st)) {
+	if (!stat(worktree_but_path(wt, "rebase-apply"), &st)) {
+		if (!stat(worktree_but_path(wt, "rebase-apply/applying"), &st)) {
 			state->am_in_progress = 1;
-			if (!stat(worktree_git_path(wt, "rebase-apply/patch"), &st) && !st.st_size)
+			if (!stat(worktree_but_path(wt, "rebase-apply/patch"), &st) && !st.st_size)
 				state->am_empty_patch = 1;
 		} else {
 			state->rebase_in_progress = 1;
 			state->branch = get_branch(wt, "rebase-apply/head-name");
 			state->onto = get_branch(wt, "rebase-apply/onto");
 		}
-	} else if (!stat(worktree_git_path(wt, "rebase-merge"), &st)) {
-		if (!stat(worktree_git_path(wt, "rebase-merge/interactive"), &st))
+	} else if (!stat(worktree_but_path(wt, "rebase-merge"), &st)) {
+		if (!stat(worktree_but_path(wt, "rebase-merge/interactive"), &st))
 			state->rebase_interactive_in_progress = 1;
 		else
 			state->rebase_in_progress = 1;
@@ -1704,7 +1704,7 @@ int wt_status_check_bisect(const struct worktree *wt,
 {
 	struct stat st;
 
-	if (!stat(worktree_git_path(wt, "BISECT_LOG"), &st)) {
+	if (!stat(worktree_but_path(wt, "BISECT_LOG"), &st)) {
 		state->bisect_in_progress = 1;
 		state->branch = get_branch(wt, "BISECT_START");
 		return 1;
@@ -1750,7 +1750,7 @@ void wt_status_get_state(struct repository *r,
 	struct object_id oid;
 	enum replay_action action;
 
-	if (!stat(git_path_merge_head(r), &st)) {
+	if (!stat(but_path_merge_head(r), &st)) {
 		wt_status_check_rebase(NULL, state);
 		state->merge_in_progress = 1;
 	} else if (wt_status_check_rebase(NULL, state)) {
@@ -1871,7 +1871,7 @@ static void wt_longstatus_print(struct wt_status *s)
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 					 _("It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
 					   "may speed it up, but you have to be careful not to forget to add\n"
-					   "new files yourself (see 'git help status')."),
+					   "new files yourself (see 'but help status')."),
 					 s->untracked_in_ms / 1000.0);
 		}
 	} else if (s->cummittable)
@@ -1889,8 +1889,8 @@ static void wt_longstatus_print(struct wt_status *s)
 		else if (s->workdir_dirty) {
 			if (s->hints)
 				fprintf(s->fp, _("no changes added to cummit "
-						 "(use \"git add\" and/or "
-						 "\"git cummit -a\")\n"));
+						 "(use \"but add\" and/or "
+						 "\"but cummit -a\")\n"));
 			else
 				fprintf(s->fp, _("no changes added to "
 						 "cummit\n"));
@@ -1898,14 +1898,14 @@ static void wt_longstatus_print(struct wt_status *s)
 			if (s->hints)
 				fprintf(s->fp, _("nothing added to cummit but "
 						 "untracked files present (use "
-						 "\"git add\" to track)\n"));
+						 "\"but add\" to track)\n"));
 			else
 				fprintf(s->fp, _("nothing added to cummit but "
 						 "untracked files present\n"));
 		} else if (s->is_initial) {
 			if (s->hints)
 				fprintf(s->fp, _("nothing to cummit (create/"
-						 "copy files and use \"git "
+						 "copy files and use \"but "
 						 "add\" to track)\n"));
 			else
 				fprintf(s->fp, _("nothing to cummit\n"));

@@ -1,2 +1,2 @@
-$ git diff --no-index dir dir3
+$ but diff --no-index dir dir3
 $

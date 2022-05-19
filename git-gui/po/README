@@ -1,38 +1,38 @@
-Localizing git-gui for your language
+Localizing but-gui for your language
 ====================================
 
 This short note is to help you, who reads and writes English and your
-own language, help us getting git-gui localized for more languages.  It
+own language, help us getting but-gui localized for more languages.  It
 does not try to be a comprehensive manual of GNU gettext, which is the
 i18n framework we use, but tries to help you get started by covering the
 basics and how it is used in this project.
 
 1. Getting started.
 
-You would first need to have a working "git".  Your distribution may
-have it as "git-core" package (do not get "GNU Interactive Tools" --
-that is a different "git").  You would also need GNU gettext toolchain
+You would first need to have a working "but".  Your distribution may
+have it as "but-core" package (do not get "GNU Interactive Tools" --
+that is a different "but").  You would also need GNU gettext toolchain
 to test the resulting translation out.  Although you can work on message
 translation files with a regular text editor, it is a good idea to have
 specialized so-called "po file editors" (e.g. emacs po-mode, KBabel,
 poedit, GTranslator --- any of them would work well).  Please install
 them.
 
-You would then need to clone the git-gui project repository and create
+You would then need to clone the but-gui project repository and create
 a feature branch to begin working:
 
-	$ git clone git://repo.or.cz/git-gui.git
-	$ cd git-gui.git
-	$ git checkout -b my-translation
+	$ but clone but://repo.or.cz/but-gui.but
+	$ cd but-gui.but
+	$ but checkout -b my-translation
 
-The "git checkout" command creates a new branch to keep your work
+The "but checkout" command creates a new branch to keep your work
 isolated and to make it simple to post your patch series when
 completed.  You will be working on this branch.
 
 
 2. Starting a new language.
 
-In the git-gui directory is a po/ subdirectory.  It has a handful of
+In the but-gui directory is a po/ subdirectory.  It has a handful of
 files whose names end with ".po".  Is there a file that has messages
 in your language?
 
@@ -47,21 +47,21 @@ language, you do not have to perform any step in this section, but keep
 reading, because we are covering the basics.
 
 If you did not find your language, you would need to start one yourself.
-Copy po/git-gui.pot file to po/af.po (replace "af" with the code for
+Copy po/but-gui.pot file to po/af.po (replace "af" with the code for
 your language).  Edit the first several lines to match existing *.po
-files to make it clear this is a translation table for git-gui project,
+files to make it clear this is a translation table for but-gui project,
 and you are the primary translator.  The result of your editing would
 look something like this:
 
-    # Translation of git-gui to Afrikaans
+    # Translation of but-gui to Afrikaans
     # Copyright (C) 2007 Shawn Pearce
-    # This file is distributed under the same license as the git-gui package.
+    # This file is distributed under the same license as the but-gui package.
     # YOUR NAME <YOUR@E-MAIL.ADDRESS>, 2007.
     #
     #, fuzzy
     msgid ""
     msgstr ""
-    "Project-Id-Version: git-gui\n"
+    "Project-Id-Version: but-gui\n"
     "Report-Msgid-Bugs-To: \n"
     "POT-Creation-Date: 2007-07-24 22:19+0300\n"
     "PO-Revision-Date: 2007-07-25 18:00+0900\n"
@@ -72,7 +72,7 @@ look something like this:
     "Content-Transfer-Encoding: 8bit\n"
 
 You will find many pairs of a "msgid" line followed by a "msgstr" line.
-These pairs define how messages in git-gui application are translated to
+These pairs define how messages in but-gui application are translated to
 your language.  Your primarily job is to fill in the empty double quote
 pairs on msgstr lines with the translation of the strings on their
 matching msgid lines.  A few tips:
@@ -134,15 +134,15 @@ matching msgid lines.  A few tips:
 
 You can test your translation by running "make install", which would
 create po/af.msg file and installs the result, and then running the
-resulting git-gui under your locale:
+resulting but-gui under your locale:
 
 	$ make install
-	$ LANG=af git-gui
+	$ LANG=af but-gui
 
 There is a trick to test your translation without first installing:
 
 	$ make
-	$ LANG=af ./git-gui.sh
+	$ LANG=af ./but-gui.sh
 
 When you are satisfied with your translation, cummit your changes then submit
 your patch series to the maintainer and the Git mailing list:
@@ -150,11 +150,11 @@ your patch series to the maintainer and the Git mailing list:
 	$ edit po/af.po
 	... be sure to update Last-Translator: and
 	... PO-Revision-Date: lines.
-	$ git add po/af.po
-	$ git cummit -s -m 'git-gui: added Afrikaans translation.'
-	$ git send-email --to 'git@vger.kernel.org' \
+	$ but add po/af.po
+	$ but cummit -s -m 'but-gui: added Afrikaans translation.'
+	$ but send-email --to 'but@vger.kernel.org' \
 	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
-	   --subject 'git-gui: Afrikaans translation' \
+	   --subject 'but-gui: Afrikaans translation' \
 	   master..
 
 
@@ -162,25 +162,25 @@ your patch series to the maintainer and the Git mailing list:
 
 There may already be a translation for your language, and you may want
 to contribute an update.  This may be because you would want to improve
-the translation of existing messages, or because the git-gui software
+the translation of existing messages, or because the but-gui software
 itself was updated and there are new messages that need translation.
 
 In any case, make sure you are up to date before starting your work:
 
-	$ git checkout master
-	$ git pull
+	$ but checkout master
+	$ but pull
 
 In the former case, you will edit po/af.po (again, replace "af" with
 your language code), and after testing and updating the Last-Translator:
 and PO-Revision-Date: lines, "add/cummit/push" as in the previous
 section.
 
-By comparing "POT-Creation-Date:" line in po/git-gui.pot file and
+By comparing "POT-Creation-Date:" line in po/but-gui.pot file and
 po/af.po file, you can tell if there are new messages that need to be
 translated.  You would need the GNU gettext package to perform this
 step.
 
-	$ msgmerge -U po/af.po po/git-gui.pot
+	$ msgmerge -U po/af.po po/but-gui.pot
 
 This updates po/af.po (again, replace "af" with your language
 code) so that it contains msgid lines (i.e. the original) that
@@ -200,21 +200,21 @@ watch out for:
  - New messages added to the software will have msgstr lines with empty
    strings.  You would need to translate them.
 
-The po/git-gui.pot file is updated by the internationalization
+The po/but-gui.pot file is updated by the internationalization
 coordinator from time to time.  You _could_ update it yourself, but
 translators are discouraged from doing so because we would want all
-language teams to be working off of the same version of git-gui.pot.
+language teams to be working off of the same version of but-gui.pot.
 
 ****************************************************************
 
 This section is a note to the internationalization coordinator, and
 translators do not have to worry about it too much.
 
-The message template file po/git-gui.pot needs to be kept up to date
+The message template file po/but-gui.pot needs to be kept up to date
 relative to the software the translations apply to, and it is the
 responsibility of the internationalization coordinator.
 
-When updating po/git-gui.pot file, however, _never_ run "msgmerge -U
+When updating po/but-gui.pot file, however, _never_ run "msgmerge -U
 po/xx.po" for individual language translations, unless you are absolutely
 sure that there is no outstanding work on translation for language xx.
 Doing so will create unnecessary merge conflicts and force needless
@@ -236,12 +236,12 @@ patch to X, replace the translated file in Z, and then running msgmerge
 again based on the updated POT file and cummit the result.  The sequence
 would look like this:
 
-    $ git checkout X
-    $ git am -s xx.patch
-    $ git checkout master
-    $ git checkout HEAD@{1} po/xx.po
-    $ msgmerge -U po/xx.po po/git-gui.pot
-    $ git cummit -c HEAD@{1} po/xx.po
+    $ but checkout X
+    $ but am -s xx.patch
+    $ but checkout master
+    $ but checkout HEAD@{1} po/xx.po
+    $ msgmerge -U po/xx.po po/but-gui.pot
+    $ but cummit -c HEAD@{1} po/xx.po
 
 State in the message that the translated messages are based on a slightly
 older version, and msgmerge was run to incorporate changes to message

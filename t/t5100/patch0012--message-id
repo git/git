@@ -2,7 +2,7 @@
  howto/build_navy.txt |    6 +++---
  1 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/howto/build_navy.txt b/howto/build_navy.txt
+diff --but a/howto/build_navy.txt b/howto/build_navy.txt
 index 3fd3afb..0ee807e 100644
 --- a/howto/build_navy.txt
 +++ b/howto/build_navy.txt

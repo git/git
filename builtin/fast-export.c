@@ -1,5 +1,5 @@
 /*
- * "git fast-export" builtin command
+ * "but fast-export" builtin command
  *
  * Copyright (C) 2007 Johannes E. Schindelin
  */
@@ -26,7 +26,7 @@
 #include "cummit-slab.h"
 
 static const char *fast_export_usage[] = {
-	N_("git fast-export [<rev-list-opts>]"),
+	N_("but fast-export [<rev-list-opts>]"),
 	NULL
 };
 
@@ -88,7 +88,7 @@ static int parse_opt_reencode_mode(const struct option *opt,
 		return 0;
 	}
 
-	switch (git_parse_maybe_bool(arg)) {
+	switch (but_parse_maybe_bool(arg)) {
 	case 0:
 		reencode_mode = REENCODE_NO;
 		break;
@@ -1213,7 +1213,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		usage_with_options (fast_export_usage, options);
 
 	/* we handle encodings */
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	repo_init_revisions(the_repository, &revs, prefix);
 	init_revision_sources(&revision_sources);

@@ -3,14 +3,14 @@
 # Copyright (c) 2012 SZEDER Gábor
 #
 
-test_description='test git-specific bash prompt functions'
+test_description='test but-specific bash prompt functions'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-bash.sh
 
-. "$GIT_BUILD_DIR/contrib/completion/git-prompt.sh"
+. "$GIT_BUILD_DIR/contrib/completion/but-prompt.sh"
 
 actual="$TRASH_DIRECTORY/actual"
 c_red='\\[\\e[31m\\]'
@@ -19,50 +19,50 @@ c_lblue='\\[\\e[1;34m\\]'
 c_clear='\\[\\e[0m\\]'
 
 test_expect_success 'setup for prompt tests' '
-	git init otherrepo &&
+	but init otherrepo &&
 	echo 1 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m initial &&
-	git tag -a -m msg1 t1 &&
-	git checkout -b b1 &&
+	but cummit -m initial &&
+	but tag -a -m msg1 t1 &&
+	but checkout -b b1 &&
 	echo 2 >file &&
-	git cummit -m "second b1" file &&
+	but cummit -m "second b1" file &&
 	echo 3 >file &&
-	git cummit -m "third b1" file &&
-	git tag -a -m msg2 t2 &&
-	git checkout -b b2 main &&
+	but cummit -m "third b1" file &&
+	but tag -a -m msg2 t2 &&
+	but checkout -b b2 main &&
 	echo 0 >file &&
-	git cummit -m "second b2" file &&
+	but cummit -m "second b2" file &&
 	echo 00 >file &&
-	git cummit -m "another b2" file &&
+	but cummit -m "another b2" file &&
 	echo 000 >file &&
-	git cummit -m "yet another b2" file &&
+	but cummit -m "yet another b2" file &&
 	mkdir ignored_dir &&
-	echo "ignored_dir/" >>.gitignore &&
-	git checkout main
+	echo "ignored_dir/" >>.butignore &&
+	but checkout main
 '
 
 test_expect_success 'prompt - branch name' '
 	printf " (main)" >expected &&
-	__git_ps1 >"$actual" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success SYMLINKS 'prompt - branch name - symlink symref' '
 	printf " (main)" >expected &&
-	test_when_finished "git checkout main" &&
+	test_when_finished "but checkout main" &&
 	test_config core.preferSymlinkRefs true &&
-	git checkout main &&
-	__git_ps1 >"$actual" &&
+	but checkout main &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - unborn branch' '
 	printf " (unborn)" >expected &&
-	git checkout --orphan unborn &&
-	test_when_finished "git checkout main" &&
-	__git_ps1 >"$actual" &&
+	but checkout --orphan unborn &&
+	test_when_finished "but checkout main" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
@@ -76,91 +76,91 @@ with
 newline" &&
 	mkdir "$repo_with_newline" &&
 	printf " (main)" >expected &&
-	git init "$repo_with_newline" &&
+	but init "$repo_with_newline" &&
 	test_when_finished "rm -rf \"$repo_with_newline\"" &&
 	mkdir "$repo_with_newline"/subdir &&
 	(
 		cd "$repo_with_newline/subdir" &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - detached head' '
-	printf " ((%s...))" $(git log -1 --format="%h" --abbrev=13 b1^) >expected &&
+	printf " ((%s...))" $(but log -1 --format="%h" --abbrev=13 b1^) >expected &&
 	test_config core.abbrev 13 &&
-	git checkout b1^ &&
-	test_when_finished "git checkout main" &&
-	__git_ps1 >"$actual" &&
+	but checkout b1^ &&
+	test_when_finished "but checkout main" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - describe detached head - contains' '
 	printf " ((t2~1))" >expected &&
-	git checkout b1^ &&
-	test_when_finished "git checkout main" &&
+	but checkout b1^ &&
+	test_when_finished "but checkout main" &&
 	(
 		GIT_PS1_DESCRIBE_STYLE=contains &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - describe detached head - branch' '
 	printf " ((tags/t2~1))" >expected &&
-	git checkout b1^ &&
-	test_when_finished "git checkout main" &&
+	but checkout b1^ &&
+	test_when_finished "but checkout main" &&
 	(
 		GIT_PS1_DESCRIBE_STYLE=branch &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - describe detached head - describe' '
-	printf " ((t1-1-g%s))" $(git log -1 --format="%h" b1^) >expected &&
-	git checkout b1^ &&
-	test_when_finished "git checkout main" &&
+	printf " ((t1-1-g%s))" $(but log -1 --format="%h" b1^) >expected &&
+	but checkout b1^ &&
+	test_when_finished "but checkout main" &&
 	(
 		GIT_PS1_DESCRIBE_STYLE=describe &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - describe detached head - default' '
 	printf " ((t2))" >expected &&
-	git checkout --detach b1 &&
-	test_when_finished "git checkout main" &&
-	__git_ps1 >"$actual" &&
+	but checkout --detach b1 &&
+	test_when_finished "but checkout main" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - inside .git directory' '
+test_expect_success 'prompt - inside .but directory' '
 	printf " (GIT_DIR!)" >expected &&
 	(
-		cd .git &&
-		__git_ps1 >"$actual"
+		cd .but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - deep inside .git directory' '
+test_expect_success 'prompt - deep inside .but directory' '
 	printf " (GIT_DIR!)" >expected &&
 	(
-		cd .git/objects &&
-		__git_ps1 >"$actual"
+		cd .but/objects &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - inside bare repository' '
 	printf " (BARE:main)" >expected &&
-	git init --bare bare.git &&
-	test_when_finished "rm -rf bare.git" &&
+	but init --bare bare.but &&
+	test_when_finished "rm -rf bare.but" &&
 	(
-		cd bare.git &&
-		__git_ps1 >"$actual"
+		cd bare.but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -169,78 +169,78 @@ test_expect_success 'prompt - interactive rebase' '
 	printf " (b1|REBASE 2/3)" >expected &&
 	write_script fake_editor.sh <<-\EOF &&
 		echo "exec echo" >"$1"
-		echo "edit $(git log -1 --format="%h")" >>"$1"
+		echo "edit $(but log -1 --format="%h")" >>"$1"
 		echo "exec echo" >>"$1"
 	EOF
 	test_when_finished "rm -f fake_editor.sh" &&
 	test_set_editor "$TRASH_DIRECTORY/fake_editor.sh" &&
-	git checkout b1 &&
-	test_when_finished "git checkout main" &&
-	git rebase -i HEAD^ &&
-	test_when_finished "git rebase --abort" &&
-	__git_ps1 >"$actual" &&
+	but checkout b1 &&
+	test_when_finished "but checkout main" &&
+	but rebase -i HEAD^ &&
+	test_when_finished "but rebase --abort" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - rebase merge' '
 	printf " (b2|REBASE 1/3)" >expected &&
-	git checkout b2 &&
-	test_when_finished "git checkout main" &&
-	test_must_fail git rebase --merge b1 b2 &&
-	test_when_finished "git rebase --abort" &&
-	__git_ps1 >"$actual" &&
+	but checkout b2 &&
+	test_when_finished "but checkout main" &&
+	test_must_fail but rebase --merge b1 b2 &&
+	test_when_finished "but rebase --abort" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - rebase am' '
 	printf " (b2|REBASE 1/3)" >expected &&
-	git checkout b2 &&
-	test_when_finished "git checkout main" &&
-	test_must_fail git rebase --apply b1 b2 &&
-	test_when_finished "git rebase --abort" &&
-	__git_ps1 >"$actual" &&
+	but checkout b2 &&
+	test_when_finished "but checkout main" &&
+	test_must_fail but rebase --apply b1 b2 &&
+	test_when_finished "but rebase --abort" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - merge' '
 	printf " (b1|MERGING)" >expected &&
-	git checkout b1 &&
-	test_when_finished "git checkout main" &&
-	test_must_fail git merge b2 &&
-	test_when_finished "git reset --hard" &&
-	__git_ps1 >"$actual" &&
+	but checkout b1 &&
+	test_when_finished "but checkout main" &&
+	test_must_fail but merge b2 &&
+	test_when_finished "but reset --hard" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - cherry-pick' '
 	printf " (main|CHERRY-PICKING)" >expected &&
-	test_must_fail git cherry-pick b1 b1^ &&
-	test_when_finished "git cherry-pick --abort" &&
-	__git_ps1 >"$actual" &&
+	test_must_fail but cherry-pick b1 b1^ &&
+	test_when_finished "but cherry-pick --abort" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual" &&
-	git reset --merge &&
-	test_must_fail git rev-parse CHERRY_PICK_HEAD &&
-	__git_ps1 >"$actual" &&
+	but reset --merge &&
+	test_must_fail but rev-parse CHERRY_PICK_HEAD &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - revert' '
 	printf " (main|REVERTING)" >expected &&
-	test_must_fail git revert b1^ b1 &&
-	test_when_finished "git revert --abort" &&
-	__git_ps1 >"$actual" &&
+	test_must_fail but revert b1^ b1 &&
+	test_when_finished "but revert --abort" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual" &&
-	git reset --merge &&
-	test_must_fail git rev-parse REVERT_HEAD &&
-	__git_ps1 >"$actual" &&
+	but reset --merge &&
+	test_must_fail but rev-parse REVERT_HEAD &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bisect' '
 	printf " (main|BISECTING)" >expected &&
-	git bisect start &&
-	test_when_finished "git bisect reset" &&
-	__git_ps1 >"$actual" &&
+	but bisect start &&
+	test_when_finished "but bisect reset" &&
+	__but_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
@@ -248,7 +248,7 @@ test_expect_success 'prompt - dirty status indicator - clean' '
 	printf " (main)" >expected &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -256,10 +256,10 @@ test_expect_success 'prompt - dirty status indicator - clean' '
 test_expect_success 'prompt - dirty status indicator - dirty worktree' '
 	printf " (main *)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -267,11 +267,11 @@ test_expect_success 'prompt - dirty status indicator - dirty worktree' '
 test_expect_success 'prompt - dirty status indicator - dirty index' '
 	printf " (main +)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
+	test_when_finished "but reset --hard" &&
+	but add -u &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -279,47 +279,47 @@ test_expect_success 'prompt - dirty status indicator - dirty index' '
 test_expect_success 'prompt - dirty status indicator - dirty index and worktree' '
 	printf " (main *+)" >expected &&
 	echo "dirty index" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
+	test_when_finished "but reset --hard" &&
+	but add -u &&
 	echo "dirty worktree" >file &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - dirty status indicator - orphan branch - clean' '
 	printf " (orphan #)" >expected &&
-	test_when_finished "git checkout main" &&
-	git checkout --orphan orphan &&
-	git reset --hard &&
+	test_when_finished "but checkout main" &&
+	but checkout --orphan orphan &&
+	but reset --hard &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index' '
 	printf " (orphan +)" >expected &&
-	test_when_finished "git checkout main" &&
-	git checkout --orphan orphan &&
+	test_when_finished "but checkout main" &&
+	but checkout --orphan orphan &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index and worktree' '
 	printf " (orphan *+)" >expected &&
-	test_when_finished "git checkout main" &&
-	git checkout --orphan orphan &&
+	test_when_finished "but checkout main" &&
+	but checkout --orphan orphan &&
 	>file &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -327,11 +327,11 @@ test_expect_success 'prompt - dirty status indicator - orphan branch - dirty ind
 test_expect_success 'prompt - dirty status indicator - shell variable unset with config disabled' '
 	printf " (main)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	test_config bash.showDirtyState false &&
 	(
 		sane_unset GIT_PS1_SHOWDIRTYSTATE &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -339,11 +339,11 @@ test_expect_success 'prompt - dirty status indicator - shell variable unset with
 test_expect_success 'prompt - dirty status indicator - shell variable unset with config enabled' '
 	printf " (main)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	test_config bash.showDirtyState true &&
 	(
 		sane_unset GIT_PS1_SHOWDIRTYSTATE &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -351,11 +351,11 @@ test_expect_success 'prompt - dirty status indicator - shell variable unset with
 test_expect_success 'prompt - dirty status indicator - shell variable set with config disabled' '
 	printf " (main)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	test_config bash.showDirtyState false &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -363,23 +363,23 @@ test_expect_success 'prompt - dirty status indicator - shell variable set with c
 test_expect_success 'prompt - dirty status indicator - shell variable set with config enabled' '
 	printf " (main *)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	test_config bash.showDirtyState true &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - dirty status indicator - not shown inside .git directory' '
+test_expect_success 'prompt - dirty status indicator - not shown inside .but directory' '
 	printf " (GIT_DIR!)" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		cd .git &&
-		__git_ps1 >"$actual"
+		cd .but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -388,7 +388,7 @@ test_expect_success 'prompt - stash status indicator - no stash' '
 	printf " (main)" >expected &&
 	(
 		GIT_PS1_SHOWSTASHSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -396,25 +396,25 @@ test_expect_success 'prompt - stash status indicator - no stash' '
 test_expect_success 'prompt - stash status indicator - stash' '
 	printf " (main $)" >expected &&
 	echo 2 >file &&
-	git stash &&
-	test_when_finished "git stash drop" &&
-	git pack-refs --all &&
+	but stash &&
+	test_when_finished "but stash drop" &&
+	but pack-refs --all &&
 	(
 		GIT_PS1_SHOWSTASHSTATE=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - stash status indicator - not shown inside .git directory' '
+test_expect_success 'prompt - stash status indicator - not shown inside .but directory' '
 	printf " (GIT_DIR!)" >expected &&
 	echo 2 >file &&
-	git stash &&
-	test_when_finished "git stash drop" &&
+	but stash &&
+	test_when_finished "but stash drop" &&
 	(
 		GIT_PS1_SHOWSTASHSTATE=y &&
-		cd .git &&
-		__git_ps1 >"$actual"
+		cd .but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -424,7 +424,7 @@ test_expect_success 'prompt - untracked files status indicator - no untracked fi
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
 		cd otherrepo &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -433,7 +433,7 @@ test_expect_success 'prompt - untracked files status indicator - untracked files
 	printf " (main %%)" >expected &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -445,7 +445,7 @@ test_expect_success 'prompt - untracked files status indicator - empty untracked
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
 		cd otherrepo &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -458,7 +458,7 @@ test_expect_success 'prompt - untracked files status indicator - non-empty untra
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
 		cd otherrepo &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -469,7 +469,7 @@ test_expect_success 'prompt - untracked files status indicator - untracked files
 		mkdir -p ignored_dir &&
 		cd ignored_dir &&
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -479,7 +479,7 @@ test_expect_success 'prompt - untracked files status indicator - shell variable 
 	test_config bash.showUntrackedFiles false &&
 	(
 		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -489,7 +489,7 @@ test_expect_success 'prompt - untracked files status indicator - shell variable 
 	test_config bash.showUntrackedFiles true &&
 	(
 		sane_unset GIT_PS1_SHOWUNTRACKEDFILES &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -499,7 +499,7 @@ test_expect_success 'prompt - untracked files status indicator - shell variable 
 	test_config bash.showUntrackedFiles false &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -509,148 +509,148 @@ test_expect_success 'prompt - untracked files status indicator - shell variable 
 	test_config bash.showUntrackedFiles true &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - untracked files status indicator - not shown inside .git directory' '
+test_expect_success 'prompt - untracked files status indicator - not shown inside .but directory' '
 	printf " (GIT_DIR!)" >expected &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
-		cd .git &&
-		__git_ps1 >"$actual"
+		cd .but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - format string starting with dash' '
 	printf -- "-main" >expected &&
-	__git_ps1 "-%s" >"$actual" &&
+	__but_ps1 "-%s" >"$actual" &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - pc mode' '
-	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (\${__but_ps1_branch_name}):AFTER\\nmain" >expected &&
 	(
-		__git_ps1 "BEFORE:" ":AFTER" >"$actual" &&
+		__but_ps1 "BEFORE:" ":AFTER" >"$actual" &&
 		test_must_be_empty "$actual" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - branch name' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear}):AFTER\\nmain" >expected &&
 	(
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" >"$actual" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" >"$actual" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - detached head' '
-	printf "BEFORE: (${c_red}\${__git_ps1_branch_name}${c_clear}):AFTER\\n(%s...)" $(git log -1 --format="%h" b1^) >expected &&
-	git checkout b1^ &&
-	test_when_finished "git checkout main" &&
+	printf "BEFORE: (${c_red}\${__but_ps1_branch_name}${c_clear}):AFTER\\n(%s...)" $(but log -1 --format="%h" b1^) >expected &&
+	but checkout b1^ &&
+	test_when_finished "but checkout main" &&
 	(
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirty worktree' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_red}*${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_red}*${c_clear}):AFTER\\nmain" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirty index' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_green}+${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_green}+${c_clear}):AFTER\\nmain" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
+	test_when_finished "but reset --hard" &&
+	but add -u &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirty index and worktree' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_red}*${c_green}+${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_red}*${c_green}+${c_clear}):AFTER\\nmain" >expected &&
 	echo "dirty index" >file &&
-	test_when_finished "git reset --hard" &&
-	git add -u &&
+	test_when_finished "but reset --hard" &&
+	but add -u &&
 	echo "dirty worktree" >file &&
 	(
 		GIT_PS1_SHOWCOLORHINTS=y &&
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - dirty status indicator - before root cummit' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_green}#${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_green}#${c_clear}):AFTER\\nmain" >expected &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
 		cd otherrepo &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - bash color pc mode - inside .git directory' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear}):AFTER\\nGIT_DIR!" >expected &&
+test_expect_success 'prompt - bash color pc mode - inside .but directory' '
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear}):AFTER\\nGIT_DIR!" >expected &&
 	echo "dirty" >file &&
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		cd .git &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		cd .but &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - stash status indicator' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_lblue}\$${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_lblue}\$${c_clear}):AFTER\\nmain" >expected &&
 	echo 2 >file &&
-	git stash &&
-	test_when_finished "git stash drop" &&
+	but stash &&
+	test_when_finished "but stash drop" &&
 	(
 		GIT_PS1_SHOWSTASHSTATE=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - bash color pc mode - untracked files status indicator' '
-	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_red}%%${c_clear}):AFTER\\nmain" >expected &&
+	printf "BEFORE: (${c_green}\${__but_ps1_branch_name}${c_clear} ${c_red}%%${c_clear}):AFTER\\nmain" >expected &&
 	(
 		GIT_PS1_SHOWUNTRACKEDFILES=y &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
-		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
+		__but_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s\\n%s" "$PS1" "${__but_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -660,7 +660,7 @@ test_expect_success 'prompt - zsh color pc mode' '
 	(
 		ZSH_VERSION=5.0.0 &&
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -671,17 +671,17 @@ test_expect_success 'prompt - hide if pwd ignored - env var unset, config disabl
 	test_config bash.hideIfPwdIgnored false &&
 	(
 		cd ignored_dir &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - hide if pwd ignored - env var unset, config disabled, pc mode' '
-	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	printf "BEFORE: (\${__but_ps1_branch_name}):AFTER" >expected &&
 	test_config bash.hideIfPwdIgnored false &&
 	(
 		cd ignored_dir &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -691,16 +691,16 @@ test_expect_success 'prompt - hide if pwd ignored - env var unset, config unset'
 	printf " (main)" >expected &&
 	(
 		cd ignored_dir &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - hide if pwd ignored - env var unset, config unset, pc mode' '
-	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	printf "BEFORE: (\${__but_ps1_branch_name}):AFTER" >expected &&
 	(
 		cd ignored_dir &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -712,18 +712,18 @@ test_expect_success 'prompt - hide if pwd ignored - env var set, config disabled
 	(
 		cd ignored_dir &&
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success 'prompt - hide if pwd ignored - env var set, config disabled, pc mode' '
-	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	printf "BEFORE: (\${__but_ps1_branch_name}):AFTER" >expected &&
 	test_config bash.hideIfPwdIgnored false &&
 	(
 		cd ignored_dir &&
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -733,7 +733,7 @@ test_expect_success 'prompt - hide if pwd ignored - env var set, config unset' '
 	(
 		cd ignored_dir &&
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		__git_ps1 >"$actual"
+		__but_ps1 >"$actual"
 	) &&
 	test_must_be_empty "$actual"
 '
@@ -743,18 +743,18 @@ test_expect_success 'prompt - hide if pwd ignored - env var set, config unset, p
 	(
 		cd ignored_dir &&
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		__git_ps1 "BEFORE:" ":AFTER" &&
+		__but_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - hide if pwd ignored - inside gitdir' '
+test_expect_success 'prompt - hide if pwd ignored - inside butdir' '
 	printf " (GIT_DIR!)" >expected &&
 	(
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		cd .git &&
-		__git_ps1 >"$actual"
+		cd .but &&
+		__but_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '

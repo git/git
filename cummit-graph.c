@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "config.h"
 #include "lockfile.h"
 #include "pack.h"
@@ -21,13 +21,13 @@
 #include "trace2.h"
 #include "chunk-format.h"
 
-void git_test_write_cummit_graph_or_die(void)
+void but_test_write_cummit_graph_or_die(void)
 {
 	int flags = 0;
-	if (!git_env_bool(GIT_TEST_CUMMIT_GRAPH, 0))
+	if (!but_env_bool(GIT_TEST_CUMMIT_GRAPH, 0))
 		return;
 
-	if (git_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+	if (but_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags = CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	if (write_cummit_graph_reachable(the_repository->objects->odb,
@@ -216,7 +216,7 @@ extern int read_replace_refs;
 
 static int cummit_graph_compatible(struct repository *r)
 {
-	if (!r->gitdir)
+	if (!r->butdir)
 		return 0;
 
 	if (read_replace_refs) {
@@ -237,7 +237,7 @@ static int cummit_graph_compatible(struct repository *r)
 
 int open_cummit_graph(const char *graph_file, int *fd, struct stat *st)
 {
-	*fd = git_open(graph_file);
+	*fd = but_open(graph_file);
 	if (*fd < 0)
 		return 0;
 	if (fstat(*fd, st)) {
@@ -638,13 +638,13 @@ static int prepare_cummit_graph(struct repository *r)
 	struct object_directory *odb;
 
 	/*
-	 * Early return if there is no git dir or if the cummit graph is
+	 * Early return if there is no but dir or if the cummit graph is
 	 * disabled.
 	 *
 	 * This must come before the "already attempted?" check below, because
 	 * we want to disable even an already-loaded graph file.
 	 */
-	if (!r->gitdir || r->cummit_graph_disabled)
+	if (!r->butdir || r->cummit_graph_disabled)
 		return 0;
 
 	if (r->objects->cummit_graph_attempted)
@@ -653,7 +653,7 @@ static int prepare_cummit_graph(struct repository *r)
 
 	prepare_repo_settings(r);
 
-	if (!git_env_bool(GIT_TEST_CUMMIT_GRAPH, 0) &&
+	if (!but_env_bool(GIT_TEST_CUMMIT_GRAPH, 0) &&
 	    r->settings.core_cummit_graph != 1)
 		/*
 		 * This repository is not configured to use cummit graphs, so
@@ -945,7 +945,7 @@ int parse_cummit_in_graph(struct repository *r, struct cummit *item)
 	static int checked_env = 0;
 
 	if (!checked_env &&
-	    git_env_bool(GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE, 0))
+	    but_env_bool(GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE, 0))
 		die("dying as requested by the '%s' variable on cummit-graph parse!",
 		    GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE);
 	checked_env = 1;
@@ -1359,7 +1359,7 @@ static int write_graph_chunk_bloom_data(struct hashfile *f,
 }
 
 static int add_packed_cummits(const struct object_id *oid,
-			      struct packed_git *pack,
+			      struct packed_but *pack,
 			      uint32_t pos,
 			      void *data)
 {
@@ -1709,10 +1709,10 @@ static int fill_oids_from_packs(struct write_cummit_graph_context *ctx,
 		ctx->progress_done = 0;
 	}
 	for (i = 0; i < pack_indexes->nr; i++) {
-		struct packed_git *p;
+		struct packed_but *p;
 		strbuf_setlen(&packname, dirlen);
 		strbuf_addstr(&packname, pack_indexes->items[i].string);
-		p = add_packed_git(packname.buf, packname.len, 1);
+		p = add_packed_but(packname.buf, packname.len, 1);
 		if (!p) {
 			ret = error(_("error adding pack %s"), packname.buf);
 			goto cleanup;
@@ -1866,7 +1866,7 @@ static int write_cummit_graph_file(struct write_cummit_graph_context *ctx)
 					       LOCK_DIE_ON_ERROR, 0444);
 		free(lock_name);
 
-		fd = git_mkstemp_mode(ctx->graph_name, 0444);
+		fd = but_mkstemp_mode(ctx->graph_name, 0444);
 		if (fd < 0) {
 			error(_("unable to create temporary graph layer"));
 			return -1;
@@ -2306,11 +2306,11 @@ int write_cummit_graph(struct object_directory *odb,
 	ctx->write_generation_data = (get_configured_generation_version(r) == 2);
 	ctx->num_generation_data_overflows = 0;
 
-	bloom_settings.bits_per_entry = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
+	bloom_settings.bits_per_entry = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
 						      bloom_settings.bits_per_entry);
-	bloom_settings.num_hashes = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_NUM_HASHES",
+	bloom_settings.num_hashes = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_NUM_HASHES",
 						  bloom_settings.num_hashes);
-	bloom_settings.max_changed_paths = git_env_ulong("GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS",
+	bloom_settings.max_changed_paths = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS",
 							 bloom_settings.max_changed_paths);
 	ctx->bloom_settings = &bloom_settings;
 

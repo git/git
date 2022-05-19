@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description='git reset --patch'
+test_description='but reset --patch'
 . ./lib-patch-mode.sh
 
 test_expect_success PERL 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
 	echo dummy > bar &&
-	git add dir &&
-	git cummit -m initial &&
+	but add dir &&
+	but cummit -m initial &&
 	test_tick &&
 	test_cummit second dir/foo head &&
 	set_and_save_state bar bar_work bar_index &&
@@ -19,42 +19,42 @@ test_expect_success PERL 'setup' '
 
 test_expect_success PERL 'saying "n" does nothing' '
 	set_and_save_state dir/foo work work &&
-	test_write_lines n n | git reset -p &&
+	test_write_lines n n | but reset -p &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p' '
-	test_write_lines n y | git reset -p >output &&
+test_expect_success PERL 'but reset -p' '
+	test_write_lines n y | but reset -p >output &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar &&
 	test_i18ngrep "Unstage" output
 '
 
-test_expect_success PERL 'git reset -p HEAD^' '
-	test_write_lines n y | git reset -p HEAD^ >output &&
+test_expect_success PERL 'but reset -p HEAD^' '
+	test_write_lines n y | but reset -p HEAD^ >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
 	test_i18ngrep "Apply" output
 '
 
-test_expect_success PERL 'git reset -p HEAD^^{tree}' '
-	test_write_lines n y | git reset -p HEAD^^{tree} >output &&
+test_expect_success PERL 'but reset -p HEAD^^{tree}' '
+	test_write_lines n y | but reset -p HEAD^^{tree} >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
 	test_i18ngrep "Apply" output
 '
 
-test_expect_success PERL 'git reset -p HEAD^:dir/foo (blob fails)' '
+test_expect_success PERL 'but reset -p HEAD^:dir/foo (blob fails)' '
 	set_and_save_state dir/foo work work &&
-	test_must_fail git reset -p HEAD^:dir/foo &&
+	test_must_fail but reset -p HEAD^:dir/foo &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p aaaaaaaa (unknown fails)' '
+test_expect_success PERL 'but reset -p aaaaaaaa (unknown fails)' '
 	set_and_save_state dir/foo work work &&
-	test_must_fail git reset -p aaaaaaaa &&
+	test_must_fail but reset -p aaaaaaaa &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
@@ -64,22 +64,22 @@ test_expect_success PERL 'git reset -p aaaaaaaa (unknown fails)' '
 # dir/foo.  There's always an extra 'n' to reject edits to dir/foo in
 # the failure case (and thus get out of the loop).
 
-test_expect_success PERL 'git reset -p dir' '
+test_expect_success PERL 'but reset -p dir' '
 	set_state dir/foo work work &&
-	test_write_lines y n | git reset -p dir &&
+	test_write_lines y n | but reset -p dir &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p -- foo (inside dir)' '
+test_expect_success PERL 'but reset -p -- foo (inside dir)' '
 	set_state dir/foo work work &&
-	test_write_lines y n | (cd dir && git reset -p -- foo) &&
+	test_write_lines y n | (cd dir && but reset -p -- foo) &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p HEAD^ -- dir' '
-	test_write_lines y n | git reset -p HEAD^ -- dir &&
+test_expect_success PERL 'but reset -p HEAD^ -- dir' '
+	test_write_lines y n | but reset -p HEAD^ -- dir &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar
 '

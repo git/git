@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 support for file type change'
+test_description='but p4 support for file type change'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -24,36 +24,36 @@ test_expect_success 'create files' '
 '
 
 test_expect_success SYMLINKS 'change file to symbolic link' '
-	git p4 clone --dest="$git" //depot@all &&
-	test_when_finished cleanup_git &&
+	but p4 clone --dest="$but" //depot@all &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 
 		rm file2 &&
 		ln -s file1 file2 &&
-		git add file2 &&
-		git cummit -m "symlink file1 to file2" &&
-		git p4 submit &&
+		but add file2 &&
+		but cummit -m "symlink file1 to file2" &&
+		but p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
 		grep "(symlink)" filelog
 	)
 '
 
 test_expect_success SYMLINKS 'change symbolic link to file' '
-	git p4 clone --dest="$git" //depot@all &&
-	test_when_finished cleanup_git &&
+	but p4 clone --dest="$but" //depot@all &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 
 		rm file2 &&
 		cat >file2 <<-EOF &&
 		This is another content for the second file.
 		EOF
-		git add file2 &&
-		git cummit -m "re-write file2" &&
-		git p4 submit &&
+		but add file2 &&
+		but cummit -m "re-write file2" &&
+		but p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
 		grep "(text)" filelog
 	)

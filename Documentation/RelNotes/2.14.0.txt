@@ -11,7 +11,7 @@ Backward compatibility notes and other notable changes.
    this (mis)feature.  That is not scheduled to happen in the upcoming
    release (yet).
 
- * Git now avoids blindly falling back to ".git" when the setup
+ * Git now avoids blindly falling back to ".but" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
    happens to work right now may be broken by a call to die("BUG").
    We've tried hard to locate such cases and fixed them, but there
@@ -34,34 +34,34 @@ Updates since v2.13
 
 UI, Workflows & Features
 
- * The colors in which "git status --short --branch" showed the names
+ * The colors in which "but status --short --branch" showed the names
    of the current branch and its remote-tracking branch are now
    configurable.
 
- * "git clone" learned the "--no-tags" option not to fetch all tags
+ * "but clone" learned the "--no-tags" option not to fetch all tags
    initially, and also set up the tagopt not to follow any tags in
    subsequent fetches.
 
- * "git archive --format=zip" learned to use zip64 extension when
+ * "but archive --format=zip" learned to use zip64 extension when
    necessary to go beyond the 4GB limit.
 
- * "git reset" learned "--recurse-submodules" option.
+ * "but reset" learned "--recurse-submodules" option.
 
- * "git diff --submodule=diff" now recurses into nested submodules.
+ * "but diff --submodule=diff" now recurses into nested submodules.
 
- * "git repack" learned to accept the --threads=<n> option and pass it
+ * "but repack" learned to accept the --threads=<n> option and pass it
    to pack-objects.
 
- * "git send-email" learned to run sendemail-validate hook to inspect
+ * "but send-email" learned to run sendemail-validate hook to inspect
    and reject a message before sending it out.
 
- * There is no good reason why "git fetch $there $sha1" should fail
+ * There is no good reason why "but fetch $there $sha1" should fail
    when the $sha1 names an object at the tip of an advertised ref,
    even when the other side hasn't enabled allowTipSHA1InWant.
 
- * The "[includeIf "gitdir:$dir"] path=..." mechanism introduced in
-   2.13.0 would canonicalize the path of the gitdir being matched,
-   and did not match e.g. "gitdir:~/work/*" against a repo in
+ * The "[includeIf "butdir:$dir"] path=..." mechanism introduced in
+   2.13.0 would canonicalize the path of the butdir being matched,
+   and did not match e.g. "butdir:~/work/*" against a repo in
    "~/work/main" if "~/work" was a symlink to "/mnt/storage/work".
    Now we match both the resolved canonical path and what "pwd" would
    show. The include will happen if either one matches.
@@ -73,7 +73,7 @@ UI, Workflows & Features
  * Many commands learned to pay attention to submodule.recurse
    configuration.
 
- * The convention for a command line is to follow "git cmdname
+ * The convention for a command line is to follow "but cmdname
    --options" with revisions followed by an optional "--"
    disambiguator and then finally pathspecs.  When "--" is not there,
    we make sure early ones are all interpretable as revs (and do not
@@ -92,41 +92,41 @@ UI, Workflows & Features
    to define common functions/variables that can be used by other
    filters.
 
- * Using "git add d/i/r" when d/i/r is the top of the working tree of
-   a separate repository would create a gitlink in the index, which
+ * Using "but add d/i/r" when d/i/r is the top of the working tree of
+   a separate repository would create a butlink in the index, which
    would appear as a not-quite-initialized submodule to others.  We
    learned to give warnings when this happens.
 
- * "git status" learned to optionally give how many stash entries there
+ * "but status" learned to optionally give how many stash entries there
    are in its output.
 
- * "git status" has long shown essentially the same message as "git
+ * "but status" has long shown essentially the same message as "but
    cummit"; the message it gives while preparing for the root cummit,
    i.e. "Initial cummit", was hard to understand for some new users.
    Now it says "No cummits yet" to stress more on the current status
    (rather than the cummit the user is preparing for, which is more in
-   line with the focus of "git cummit").
+   line with the focus of "but cummit").
 
- * "git send-email" now has --batch-size and --relogin-delay options
+ * "but send-email" now has --batch-size and --relogin-delay options
     which can be used to overcome limitations on SMTP servers that
     restrict on how many of e-mails can be sent in a single session.
 
  * An old message shown in the cummit log template was removed, as it
    has outlived its usefulness.
 
- * "git pull --rebase --recurse-submodules" learns to rebase the
+ * "but pull --rebase --recurse-submodules" learns to rebase the
    branch in the submodules to an updated base.
 
- * "git log" learned -P as a synonym for --perl-regexp, "git grep"
+ * "but log" learned -P as a synonym for --perl-regexp, "but grep"
    already had such a synonym.
 
- * "git log" didn't understand --regexp-ignore-case when combined with
+ * "but log" didn't understand --regexp-ignore-case when combined with
    --perl-regexp. This has been fixed.
 
 Performance, Internal Implementation, Development Support etc.
 
- * The default packed-git limit value has been raised on larger
-   platforms to save "git fetch" from a (recoverable) failure while
+ * The default packed-but limit value has been raised on larger
+   platforms to save "but fetch" from a (recoverable) failure while
    "gc" is running in parallel.
 
  * Code to update the cache-tree has been tightened so that we won't
@@ -159,15 +159,15 @@ Performance, Internal Implementation, Development Support etc.
  * Code from "conversion using external process" codepath has been
    extracted to a separate sub-process.[ch] module.
 
- * When "git checkout", "git merge", etc. manipulates the in-core
+ * When "but checkout", "but merge", etc. manipulates the in-core
    index, various pieces of information in the index extensions are
    discarded from the original state, as it is usually not the case
    that they are kept up-to-date and in-sync with the operation on the
    main index.  The untracked cache extension is copied across these
-   operations now, which would speed up "git status" (as long as the
+   operations now, which would speed up "but status" (as long as the
    cache is properly invalidated).
 
- * The internal implementation of "git grep" has seen some clean-up.
+ * The internal implementation of "but grep" has seen some clean-up.
 
  * Update the C style recommendation for notes for translators, as
    recent versions of gettext tools can work with our style of
@@ -176,8 +176,8 @@ Performance, Internal Implementation, Development Support etc.
  * The implementation of "ref" API around the "packed refs" have been
    cleaned up, in preparation for further changes.
 
- * The internal logic used in "git blame" has been libified to make it
-   easier to use by cgit.
+ * The internal logic used in "but blame" has been libified to make it
+   easier to use by cbut.
 
  * Our code often opens a path to an optional file, to work on its
    contents when we can successfully open it.  We can ignore a failure
@@ -236,8 +236,8 @@ Performance, Internal Implementation, Development Support etc.
    hashmap is initialized.
 
  * The "collision detecting" SHA-1 implementation shipped with 2.13 is
-   now integrated into git.git as a submodule (the first submodule to
-   ship with git.git). Clone git.git with --recurse-submodules to get
+   now integrated into but.but as a submodule (the first submodule to
+   ship with but.but). Clone but.but with --recurse-submodules to get
    it. For now a non-submodule copy of the same code is also shipped
    as part of the tree.
 
@@ -251,7 +251,7 @@ Performance, Internal Implementation, Development Support etc.
  * We started using "%" PRItime, imitating "%" PRIuMAX and friends, as
    a way to format the internal timestamp value, but this does not
    play well with gettext(1) i18n framework, and causes "make pot"
-   that is run by the l10n coordinator to create a broken po/git.pot
+   that is run by the l10n coordinator to create a broken po/but.pot
    file.  This is a possible workaround for that problem.
 
  * It turns out that Cygwin also needs the fopen() wrapper that
@@ -267,18 +267,18 @@ Unless otherwise noted, all the fixes since v2.13 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * "git gc" did not interact well with "git worktree"-managed
+ * "but gc" did not interact well with "but worktree"-managed
    per-worktree refs.
 
- * "git cherry-pick" and other uses of the sequencer machinery
+ * "but cherry-pick" and other uses of the sequencer machinery
    mishandled a trailer block whose last line is an incomplete line.
    This has been fixed so that an additional sign-off etc. are added
    after completing the existing incomplete line.
 
- * The codepath in "git am" that is used when running "git rebase"
+ * The codepath in "but am" that is used when running "but rebase"
    leaked memory held for the log message of the cummits being rebased.
 
- * "git clone --config var=val" is a way to populate the
+ * "but clone --config var=val" is a way to populate the
    per-repository configuration file of the new repository, but it did
    not work well when val is an empty string.  This has been fixed.
 
@@ -301,7 +301,7 @@ notes for details).
    to ensure that output strings that should not be translated are
    not translated by mistake), and TravisCI is told to run them.
 
- * "git checkout --recurse-submodules" did not quite work with a
+ * "but checkout --recurse-submodules" did not quite work with a
    submodule that itself has submodules.
 
  * "pack-objects" can stream a slice of an existing packfile out when
@@ -312,7 +312,7 @@ notes for details).
 
  * Fix memory leaks pointed out by Coverity (and people).
 
- * "git read-tree -m" (no tree-ish) gave a nonsense suggestion "use
+ * "but read-tree -m" (no tree-ish) gave a nonsense suggestion "use
    --empty if you want to clear the index".  With "-m", such a request
    will still fail anyway, as you'd need to name at least one tree-ish
    to be merged.
@@ -335,22 +335,22 @@ notes for details).
  * A few http:// links that are redirected to https:// in the
    documentation have been updated to https:// links.
 
- * "git for-each-ref --format=..." with %(HEAD) in the format used to
+ * "but for-each-ref --format=..." with %(HEAD) in the format used to
    resolve the HEAD symref as many times as it had processed refs,
-   which was wasteful, and "git branch" shared the same problem.
+   which was wasteful, and "but branch" shared the same problem.
 
  * Regression fix to topic recently merged to 'master'.
 
- * The shell completion script (in contrib/) learned "git stash" has
+ * The shell completion script (in contrib/) learned "but stash" has
    a new "push" subcommand.
 
- * "git interpret-trailers", when used as GIT_EDITOR for "git cummit
+ * "but interpret-trailers", when used as GIT_EDITOR for "but cummit
    -v", looked for and appended to a trailer block at the very end,
    i.e. at the end of the "diff" output.  The command has been
    corrected to pay attention to the cut-mark line "cummit -v" adds to
    the buffer---the real trailer block should appear just before it.
 
- * A test allowed both "git push" and "git receive-pack" on the other
+ * A test allowed both "but push" and "but receive-pack" on the other
    end write their traces into the same file.  This is OK on platforms
    that allows atomically appending to a file opened with O_APPEND,
    but on other platforms led to a mangled output, causing
@@ -358,10 +358,10 @@ notes for details).
    traces from "receive-pack" in the test.
 
  * Tag objects, which are not reachable from any ref, that point at
-   missing objects were mishandled by "git gc" and friends (they
+   missing objects were mishandled by "but gc" and friends (they
    should silently be ignored instead)
 
- * "git describe --contains" penalized light-weight tags so much that
+ * "but describe --contains" penalized light-weight tags so much that
    they were almost never considered.  Instead, give them about the
    same chance to be considered as an annotated tag that is the same
    age as the underlying cummit would.
@@ -374,29 +374,29 @@ notes for details).
    unavailable, not just the ones that require a web server.  Non HTTP
    tests have been salvaged to always run in this script.
 
- * "git send-email" now uses Net::SMTP::SSL, which is obsolete, only
+ * "but send-email" now uses Net::SMTP::SSL, which is obsolete, only
    when needed.  Recent versions of Net::SMTP can do TLS natively.
 
- * "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
+ * "foo\bar\baz" in "but fetch foo\bar\baz", even though there is no
    slashes in it, cannot be a nickname for a remote on Windows, as
    that is likely to be a pathname on a local filesystem.
 
- * "git clean -d" used to clean directories that has ignored files,
+ * "but clean -d" used to clean directories that has ignored files,
    even though the command should not lose ignored ones without "-x".
-   "git status --ignored"  did not list ignored and untracked files
+   "but status --ignored"  did not list ignored and untracked files
    without "-uall".  These have been corrected.
 
- * The result from "git diff" that compares two blobs, e.g. "git diff
+ * The result from "but diff" that compares two blobs, e.g. "but diff
    $cummit1:$path $cummit2:$path", used to be shown with the full
    object name as given on the command line, but it is more natural to
-   use the $path in the output and use it to look up .gitattributes.
+   use the $path in the output and use it to look up .butattributes.
 
  * The "collision detecting" SHA-1 implementation shipped with 2.13
    was quite broken on some big-endian platforms and/or platforms that
    do not like unaligned fetches.  Update to the upstream code which
    has already fixed these issues.
 
- * "git am -h" triggered a BUG().
+ * "but am -h" triggered a BUG().
 
  * The interaction of "url.*.insteadOf" and custom URL scheme's
    whitelisting is now documented better.
@@ -406,12 +406,12 @@ notes for details).
    fstat() on a file that is opened for writing and data was written
    but not yet closed.
 
- * "git pull --rebase --autostash" didn't auto-stash when the local history
+ * "but pull --rebase --autostash" didn't auto-stash when the local history
    fast-forwards to the upstream.
 
  * A flaky test has been corrected.
 
- * "git $cmd -h" for builtin commands calls the implementation of the
+ * "but $cmd -h" for builtin commands calls the implementation of the
    command (i.e. cmd_$cmd() function) without doing any repository
    set-up, and the commands that expect RUN_SETUP is done by the Git
    potty needs to be prepared to show the help text without barfing.
@@ -419,16 +419,16 @@ notes for details).
 
  * Help contributors that visit us at GitHub.
 
- * "git stash push <pathspec>" did not work from a subdirectory at all.
+ * "but stash push <pathspec>" did not work from a subdirectory at all.
    Bugfix for a topic in v2.13
 
  * As there is no portable way to pass timezone information to
-   strftime, some output format from "git log" and friends are
+   strftime, some output format from "but log" and friends are
    impossible to produce.  Teach our own strbuf_addftime to replace %z
    and %Z with caller-supplied values to help working around this.
    (merge 6eced3ec5e rs/strbuf-addftime-zZ later to maint).
 
- * "git mergetool" learned to work around a wrapper MacOS X adds
+ * "but mergetool" learned to work around a wrapper MacOS X adds
    around underlying meld.
 
  * An example in documentation that does not work in multi worktree
@@ -450,16 +450,16 @@ notes for details).
    into its own header file.
    (merge dc8441fdb4 bw/config-h later to maint).
 
- * "git add -p" were updated in 2.12 timeframe to cope with custom
+ * "but add -p" were updated in 2.12 timeframe to cope with custom
    core.commentchar but the implementation was buggy and a
    metacharacter like $ and * did not work.
 
- * A recent regression in "git rebase -i" has been fixed and tests
+ * A recent regression in "but rebase -i" has been fixed and tests
    that would have caught it and others have been added.
 
  * An unaligned 32-bit access in pack-bitmap code has been corrected.
 
- * Tighten error checks for invalid "git apply" input.
+ * Tighten error checks for invalid "but apply" input.
 
  * The split index code did not honor core.sharedRepository setting
    correctly.
@@ -471,17 +471,17 @@ notes for details).
  * Code clean-up to fix possible buffer over-reading.
 
  * A few tests that tried to verify the contents of push certificates
-   did not use 'git rev-parse' to formulate the line to look for in
+   did not use 'but rev-parse' to formulate the line to look for in
    the certificate correctly.
 
  * Update the character width tables.
 
- * After "git branch --move" of the currently checked out branch, the
+ * After "but branch --move" of the currently checked out branch, the
    code to walk the reflog of HEAD via "log -g" and friends
    incorrectly stopped at the reflog entry that records the renaming
    of the branch.
 
- * The rewrite of "git branch --list" using for-each-ref's internals
+ * The rewrite of "but branch --list" using for-each-ref's internals
    that happened in v2.13 regressed its handling of color.branch.local;
    this has been fixed.
 
@@ -489,7 +489,7 @@ notes for details).
    Git with address sanitizer more easily.
    (merge 425ca6710b jk/build-with-asan later to maint).
 
- * On Cygwin, similar to Windows, "git push //server/share/repository"
+ * On Cygwin, similar to Windows, "but push //server/share/repository"
    ought to mean a repository on a network share that can be accessed
    locally, but this did not work correctly due to stripping the double
    slashes at the beginning.
@@ -501,7 +501,7 @@ notes for details).
 
  * Code clean-up, that makes us in sync with Debian by one patch.
 
- * We run an early part of "git gc" that deals with refs before
+ * We run an early part of "but gc" that deals with refs before
    daemonising (and not under lock) even when running a background
    auto-gc, which caused multiple gc processes attempting to run the
    early part at the same time.  This is now prevented by running the

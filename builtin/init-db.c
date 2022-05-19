@@ -12,7 +12,7 @@
 #include "worktree.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
-#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
+#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/but-core/templates"
 #endif
 
 #ifdef NO_TRUSTABLE_FILEMODE
@@ -33,16 +33,16 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 	size_t template_baselen = template_path->len;
 	struct dirent *de;
 
-	/* Note: if ".git/hooks" file exists in the repository being
-	 * re-initialized, /etc/core-git/templates/hooks/update would
-	 * cause "git init" to fail here.  I think this is sane but
+	/* Note: if ".but/hooks" file exists in the repository being
+	 * re-initialized, /etc/core-but/templates/hooks/update would
+	 * cause "but init" to fail here.  I think this is sane but
 	 * it means that the set of templates we ship by default, along
-	 * with the way the namespace under .git/ is organized, should
+	 * with the way the namespace under .but/ is organized, should
 	 * be really carefully chosen.
 	 */
 	safe_create_dir(path->buf, 1);
 	while ((de = readdir(dir)) != NULL) {
-		struct stat st_git, st_template;
+		struct stat st_but, st_template;
 		int exists = 0;
 
 		strbuf_setlen(path, path_baselen);
@@ -52,7 +52,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			continue;
 		strbuf_addstr(path, de->d_name);
 		strbuf_addstr(template_path, de->d_name);
-		if (lstat(path->buf, &st_git)) {
+		if (lstat(path->buf, &st_but)) {
 			if (errno != ENOENT)
 				die_errno(_("cannot stat '%s'"), path->buf);
 		}
@@ -141,7 +141,7 @@ static void copy_templates(const char *template_dir, const char *init_template_d
 		goto close_free_return;
 	}
 
-	strbuf_addstr(&path, get_git_common_dir());
+	strbuf_addstr(&path, get_but_common_dir());
 	strbuf_complete(&path, '/');
 	copy_templates_1(&path, &template_path, dir);
 close_free_return:
@@ -154,15 +154,15 @@ free_return:
 }
 
 /*
- * If the git_dir is not directly inside the working tree, then git will not
+ * If the but_dir is not directly inside the working tree, then but will not
  * find it by default, and we need to set the worktree explicitly.
  */
-static int needs_work_tree_config(const char *git_dir, const char *work_tree)
+static int needs_work_tree_config(const char *but_dir, const char *work_tree)
 {
-	if (!strcmp(work_tree, "/") && !strcmp(git_dir, "/.git"))
+	if (!strcmp(work_tree, "/") && !strcmp(but_dir, "/.but"))
 		return 0;
-	if (skip_prefix(git_dir, work_tree, &git_dir) &&
-	    !strcmp(git_dir, "/.git"))
+	if (skip_prefix(but_dir, work_tree, &but_dir) &&
+	    !strcmp(but_dir, "/.but"))
 		return 0;
 	return 1;
 }
@@ -178,17 +178,17 @@ void initialize_repository_version(int hash_algo, int reinit)
 	/* This forces creation of new config file */
 	xsnprintf(repo_version_string, sizeof(repo_version_string),
 		  "%d", repo_version);
-	git_config_set("core.repositoryformatversion", repo_version_string);
+	but_config_set("core.repositoryformatversion", repo_version_string);
 
 	if (hash_algo != GIT_HASH_SHA1)
-		git_config_set("extensions.objectformat",
+		but_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
 	else if (reinit)
-		git_config_set_gently("extensions.objectformat", NULL);
+		but_config_set_gently("extensions.objectformat", NULL);
 }
 
 static int create_default_files(const char *template_path,
-				const char *original_git_dir,
+				const char *original_but_dir,
 				const char *initial_branch,
 				const struct repository_format *fmt,
 				int quiet)
@@ -201,7 +201,7 @@ static int create_default_files(const char *template_path,
 	int filemode;
 	struct strbuf err = STRBUF_INIT;
 	const char *init_template_dir = NULL;
-	const char *work_tree = get_git_work_tree();
+	const char *work_tree = get_but_work_tree();
 
 	/*
 	 * First copy the templates -- we might have the default
@@ -212,12 +212,12 @@ static int create_default_files(const char *template_path,
 	 * values (since we've just potentially changed what's available on
 	 * disk).
 	 */
-	git_config_get_pathname("init.templatedir", &init_template_dir);
+	but_config_get_pathname("init.templatedir", &init_template_dir);
 	copy_templates(template_path, init_template_dir);
 	free((char *)init_template_dir);
-	git_config_clear();
+	but_config_clear();
 	reset_shared_repository();
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	/*
 	 * We must make sure command-line options continue to override any
@@ -232,15 +232,15 @@ static int create_default_files(const char *template_path,
 	 * shared-repository settings, we would need to fix them up.
 	 */
 	if (get_shared_repository()) {
-		adjust_shared_perm(get_git_dir());
+		adjust_shared_perm(get_but_dir());
 	}
 
 	/*
 	 * We need to create a "refs" dir in any case so that older
-	 * versions of git can tell that this is a repository.
+	 * versions of but can tell that this is a repository.
 	 */
-	safe_create_dir(git_path("refs"), 1);
-	adjust_shared_perm(git_path("refs"));
+	safe_create_dir(but_path("refs"), 1);
+	adjust_shared_perm(but_path("refs"));
 
 	if (refs_init_db(&err))
 		die("failed to set up refs db: %s", err.buf);
@@ -249,14 +249,14 @@ static int create_default_files(const char *template_path,
 	 * Point the HEAD symref to the initial branch with if HEAD does
 	 * not yet exist.
 	 */
-	path = git_path_buf(&buf, "HEAD");
+	path = but_path_buf(&buf, "HEAD");
 	reinit = (!access(path, R_OK)
 		  || readlink(path, junk, sizeof(junk)-1) != -1);
 	if (!reinit) {
 		char *ref;
 
 		if (!initial_branch)
-			initial_branch = git_default_branch_name(quiet);
+			initial_branch = but_default_branch_name(quiet);
 
 		ref = xstrfmt("refs/heads/%s", initial_branch);
 		if (check_refname_format(ref, 0) < 0)
@@ -271,7 +271,7 @@ static int create_default_files(const char *template_path,
 	initialize_repository_version(fmt->hash_algo, 0);
 
 	/* Check filemode trustability */
-	path = git_path_buf(&buf, "config");
+	path = but_path_buf(&buf, "config");
 	filemode = TEST_FILEMODE;
 	if (TEST_FILEMODE && !lstat(path, &st1)) {
 		struct stat st2;
@@ -282,22 +282,22 @@ static int create_default_files(const char *template_path,
 		if (filemode && !reinit && (st1.st_mode & S_IXUSR))
 			filemode = 0;
 	}
-	git_config_set("core.filemode", filemode ? "true" : "false");
+	but_config_set("core.filemode", filemode ? "true" : "false");
 
 	if (is_bare_repository())
-		git_config_set("core.bare", "true");
+		but_config_set("core.bare", "true");
 	else {
-		git_config_set("core.bare", "false");
+		but_config_set("core.bare", "false");
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == LOG_REFS_UNSET)
-			git_config_set("core.logallrefupdates", "true");
-		if (needs_work_tree_config(original_git_dir, work_tree))
-			git_config_set("core.worktree", work_tree);
+			but_config_set("core.logallrefupdates", "true");
+		if (needs_work_tree_config(original_but_dir, work_tree))
+			but_config_set("core.worktree", work_tree);
 	}
 
 	if (!reinit) {
 		/* Check if symlink is supported in the work tree */
-		path = git_path_buf(&buf, "tXXXXXX");
+		path = but_path_buf(&buf, "tXXXXXX");
 		if (!close(xmkstemp(path)) &&
 		    !unlink(path) &&
 		    !symlink("testing", path) &&
@@ -305,12 +305,12 @@ static int create_default_files(const char *template_path,
 		    S_ISLNK(st1.st_mode))
 			unlink(path); /* good */
 		else
-			git_config_set("core.symlinks", "false");
+			but_config_set("core.symlinks", "false");
 
 		/* Check if the filesystem is case-insensitive */
-		path = git_path_buf(&buf, "CoNfIg");
+		path = but_path_buf(&buf, "CoNfIg");
 		if (!access(path, F_OK))
-			git_config_set("core.ignorecase", "true");
+			but_config_set("core.ignorecase", "true");
 		probe_utf8_pathname_composition();
 	}
 
@@ -339,26 +339,26 @@ static void create_object_directory(void)
 	strbuf_release(&path);
 }
 
-static void separate_git_dir(const char *git_dir, const char *git_link)
+static void separate_but_dir(const char *but_dir, const char *but_link)
 {
 	struct stat st;
 
-	if (!stat(git_link, &st)) {
+	if (!stat(but_link, &st)) {
 		const char *src;
 
 		if (S_ISREG(st.st_mode))
-			src = read_gitfile(git_link);
+			src = read_butfile(but_link);
 		else if (S_ISDIR(st.st_mode))
-			src = git_link;
+			src = but_link;
 		else
 			die(_("unable to handle file type %d"), (int)st.st_mode);
 
-		if (rename(src, git_dir))
-			die_errno(_("unable to move %s to %s"), src, git_dir);
+		if (rename(src, but_dir))
+			die_errno(_("unable to move %s to %s"), src, but_dir);
 		repair_worktrees(NULL, NULL);
 	}
 
-	write_file(git_link, "gitdir: %s", git_dir);
+	write_file(but_link, "butdir: %s", but_dir);
 }
 
 static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash)
@@ -381,38 +381,38 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 	}
 }
 
-int init_db(const char *git_dir, const char *real_git_dir,
+int init_db(const char *but_dir, const char *real_but_dir,
 	    const char *template_dir, int hash, const char *initial_branch,
 	    unsigned int flags)
 {
 	int reinit;
 	int exist_ok = flags & INIT_DB_EXIST_OK;
-	char *original_git_dir = real_pathdup(git_dir, 1);
+	char *original_but_dir = real_pathdup(but_dir, 1);
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 
-	if (real_git_dir) {
+	if (real_but_dir) {
 		struct stat st;
 
-		if (!exist_ok && !stat(git_dir, &st))
-			die(_("%s already exists"), git_dir);
+		if (!exist_ok && !stat(but_dir, &st))
+			die(_("%s already exists"), but_dir);
 
-		if (!exist_ok && !stat(real_git_dir, &st))
-			die(_("%s already exists"), real_git_dir);
+		if (!exist_ok && !stat(real_but_dir, &st))
+			die(_("%s already exists"), real_but_dir);
 
-		set_git_dir(real_git_dir, 1);
-		git_dir = get_git_dir();
-		separate_git_dir(git_dir, original_git_dir);
+		set_but_dir(real_but_dir, 1);
+		but_dir = get_but_dir();
+		separate_but_dir(but_dir, original_but_dir);
 	}
 	else {
-		set_git_dir(git_dir, 1);
-		git_dir = get_git_dir();
+		set_but_dir(but_dir, 1);
+		but_dir = get_but_dir();
 	}
 	startup_info->have_repository = 1;
 
 	/* Ensure `core.hidedotfiles` is processed */
-	git_config(platform_core_config, NULL);
+	but_config(platform_core_config, NULL);
 
-	safe_create_dir(git_dir, 0);
+	safe_create_dir(but_dir, 0);
 
 	init_is_bare_repository = is_bare_repository();
 
@@ -425,7 +425,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 
 	validate_hash_algorithm(&repo_fmt, hash);
 
-	reinit = create_default_files(template_dir, original_git_dir,
+	reinit = create_default_files(template_dir, original_but_dir,
 				      initial_branch, &repo_fmt,
 				      flags & INIT_DB_QUIET);
 	if (reinit && initial_branch)
@@ -438,7 +438,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		char buf[10];
 		/* We do not spell "group" and such, so that
 		 * the configuration can be read by older version
-		 * of git. Note, we use octal numbers for new share modes,
+		 * of but. Note, we use octal numbers for new share modes,
 		 * and compatibility values for PERM_GROUP and
 		 * PERM_EVERYBODY.
 		 */
@@ -451,53 +451,53 @@ int init_db(const char *git_dir, const char *real_git_dir,
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
 			BUG("invalid value for shared_repository");
-		git_config_set("core.sharedrepository", buf);
-		git_config_set("receive.denyNonFastforwards", "true");
+		but_config_set("core.sharedrepository", buf);
+		but_config_set("receive.denyNonFastforwards", "true");
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {
-		int len = strlen(git_dir);
+		int len = strlen(but_dir);
 
 		if (reinit)
 			printf(get_shared_repository()
 			       ? _("Reinitialized existing shared Git repository in %s%s\n")
 			       : _("Reinitialized existing Git repository in %s%s\n"),
-			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
+			       but_dir, len && but_dir[len-1] != '/' ? "/" : "");
 		else
 			printf(get_shared_repository()
 			       ? _("Initialized empty shared Git repository in %s%s\n")
 			       : _("Initialized empty Git repository in %s%s\n"),
-			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
+			       but_dir, len && but_dir[len-1] != '/' ? "/" : "");
 	}
 
-	free(original_git_dir);
+	free(original_but_dir);
 	return 0;
 }
 
-static int guess_repository_type(const char *git_dir)
+static int guess_repository_type(const char *but_dir)
 {
 	const char *slash;
 	char *cwd;
-	int cwd_is_git_dir;
+	int cwd_is_but_dir;
 
 	/*
-	 * "GIT_DIR=. git init" is always bare.
-	 * "GIT_DIR=`pwd` git init" too.
+	 * "GIT_DIR=. but init" is always bare.
+	 * "GIT_DIR=`pwd` but init" too.
 	 */
-	if (!strcmp(".", git_dir))
+	if (!strcmp(".", but_dir))
 		return 1;
 	cwd = xgetcwd();
-	cwd_is_git_dir = !strcmp(git_dir, cwd);
+	cwd_is_but_dir = !strcmp(but_dir, cwd);
 	free(cwd);
-	if (cwd_is_git_dir)
+	if (cwd_is_but_dir)
 		return 1;
 	/*
-	 * "GIT_DIR=.git or GIT_DIR=something/.git is usually not.
+	 * "GIT_DIR=.but or GIT_DIR=something/.but is usually not.
 	 */
-	if (!strcmp(git_dir, ".git"))
+	if (!strcmp(but_dir, ".but"))
 		return 0;
-	slash = strrchr(git_dir, '/');
-	if (slash && !strcmp(slash, "/.git"))
+	slash = strrchr(but_dir, '/');
+	if (slash && !strcmp(slash, "/.but"))
 		return 0;
 
 	/*
@@ -510,12 +510,12 @@ static int guess_repository_type(const char *git_dir)
 static int shared_callback(const struct option *opt, const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
-	*((int *) opt->value) = (arg) ? git_config_perm("arg", arg) : PERM_GROUP;
+	*((int *) opt->value) = (arg) ? but_config_perm("arg", arg) : PERM_GROUP;
 	return 0;
 }
 
 static const char *const init_db_usage[] = {
-	N_("git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]] [<directory>]"),
+	N_("but init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]] [<directory>]"),
 	NULL
 };
 
@@ -527,8 +527,8 @@ static const char *const init_db_usage[] = {
  */
 int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
-	const char *git_dir;
-	const char *real_git_dir = NULL;
+	const char *but_dir;
+	const char *real_but_dir = NULL;
 	const char *work_tree;
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
@@ -542,11 +542,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				N_("create a bare repository"), 1),
 		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
 			N_("permissions"),
-			N_("specify that the git repository is to be shared amongst several users"),
+			N_("specify that the but repository is to be shared amongst several users"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0},
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
-		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
-			   N_("separate git dir from working tree")),
+		OPT_STRING(0, "separate-but-dir", &real_but_dir, N_("butdir"),
+			   N_("separate but dir from working tree")),
 		OPT_STRING('b', "initial-branch", &initial_branch, N_("name"),
 			   N_("override the name of the initial branch")),
 		OPT_STRING(0, "object-format", &object_format, N_("hash"),
@@ -556,11 +556,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
-	if (real_git_dir && is_bare_repository_cfg == 1)
-		die(_("options '%s' and '%s' cannot be used together"), "--separate-git-dir", "--bare");
+	if (real_but_dir && is_bare_repository_cfg == 1)
+		die(_("options '%s' and '%s' cannot be used together"), "--separate-but-dir", "--bare");
 
-	if (real_git_dir && !is_absolute_path(real_git_dir))
-		real_git_dir = real_pathdup(real_git_dir, 1);
+	if (real_but_dir && !is_absolute_path(real_but_dir))
+		real_but_dir = real_pathdup(real_but_dir, 1);
 
 	if (template_dir && *template_dir && !is_absolute_path(template_dir)) {
 		template_dir = absolute_pathdup(template_dir);
@@ -621,76 +621,76 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
 	 * without --bare.  Catch the error early.
 	 */
-	git_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
+	but_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
 	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
-	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
+	if ((!but_dir || is_bare_repository_cfg == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
-			  "specifying %s (or --git-dir=<directory>)"),
+			  "specifying %s (or --but-dir=<directory>)"),
 		    GIT_WORK_TREE_ENVIRONMENT,
 		    GIT_DIR_ENVIRONMENT);
 
 	/*
-	 * Set up the default .git directory contents
+	 * Set up the default .but directory contents
 	 */
-	if (!git_dir)
-		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+	if (!but_dir)
+		but_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 
 	/*
-	 * When --separate-git-dir is used inside a linked worktree, take
-	 * care to ensure that the common .git/ directory is relocated, not
-	 * the worktree-specific .git/worktrees/<id>/ directory.
+	 * When --separate-but-dir is used inside a linked worktree, take
+	 * care to ensure that the common .but/ directory is relocated, not
+	 * the worktree-specific .but/worktrees/<id>/ directory.
 	 */
-	if (real_git_dir) {
+	if (real_but_dir) {
 		int err;
 		const char *p;
 		struct strbuf sb = STRBUF_INIT;
 
-		p = read_gitfile_gently(git_dir, &err);
+		p = read_butfile_gently(but_dir, &err);
 		if (p && get_common_dir(&sb, p)) {
 			struct strbuf mainwt = STRBUF_INIT;
 
 			strbuf_addbuf(&mainwt, &sb);
-			strbuf_strip_suffix(&mainwt, "/.git");
+			strbuf_strip_suffix(&mainwt, "/.but");
 			if (chdir(mainwt.buf) < 0)
 				die_errno(_("cannot chdir to %s"), mainwt.buf);
 			strbuf_release(&mainwt);
-			git_dir = strbuf_detach(&sb, NULL);
+			but_dir = strbuf_detach(&sb, NULL);
 		}
 		strbuf_release(&sb);
 	}
 
 	if (is_bare_repository_cfg < 0)
-		is_bare_repository_cfg = guess_repository_type(git_dir);
+		is_bare_repository_cfg = guess_repository_type(but_dir);
 
 	if (!is_bare_repository_cfg) {
-		const char *git_dir_parent = strrchr(git_dir, '/');
-		if (git_dir_parent) {
-			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-			git_work_tree_cfg = real_pathdup(rel, 1);
+		const char *but_dir_parent = strrchr(but_dir, '/');
+		if (but_dir_parent) {
+			char *rel = xstrndup(but_dir, but_dir_parent - but_dir);
+			but_work_tree_cfg = real_pathdup(rel, 1);
 			free(rel);
 		}
-		if (!git_work_tree_cfg)
-			git_work_tree_cfg = xgetcwd();
+		if (!but_work_tree_cfg)
+			but_work_tree_cfg = xgetcwd();
 		if (work_tree)
-			set_git_work_tree(work_tree);
+			set_but_work_tree(work_tree);
 		else
-			set_git_work_tree(git_work_tree_cfg);
-		if (access(get_git_work_tree(), X_OK))
+			set_but_work_tree(but_work_tree_cfg);
+		if (access(get_but_work_tree(), X_OK))
 			die_errno (_("Cannot access work tree '%s'"),
-				   get_git_work_tree());
+				   get_but_work_tree());
 	}
 	else {
-		if (real_git_dir)
-			die(_("--separate-git-dir incompatible with bare repository"));
+		if (real_but_dir)
+			die(_("--separate-but-dir incompatible with bare repository"));
 		if (work_tree)
-			set_git_work_tree(work_tree);
+			set_but_work_tree(work_tree);
 	}
 
-	UNLEAK(real_git_dir);
-	UNLEAK(git_dir);
+	UNLEAK(real_but_dir);
+	UNLEAK(but_dir);
 	UNLEAK(work_tree);
 
 	flags |= INIT_DB_EXIST_OK;
-	return init_db(git_dir, real_git_dir, template_dir, hash_algo,
+	return init_db(but_dir, real_but_dir, template_dir, hash_algo,
 		       initial_branch, flags);
 }

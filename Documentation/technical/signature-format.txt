@@ -34,7 +34,7 @@ on the type of the object resp. transaction.
 
 == Tag signatures
 
-- created by: `git tag -s`
+- created by: `but tag -s`
 - payload: annotated tag object
 - embedding: append the signature to the unsigned tag object
 - example: tag `signedtag` with subject `signed tag`
@@ -61,7 +61,7 @@ lZyI6HWixKJkWw8lE9aAOD9TmTW9sFJwcVAzmAuFX2kUreDUKMZduGcoRYGpD7E=
 -----END PGP SIGNATURE-----
 ----
 
-- verify with: `git verify-tag [-v]` or `git tag -v`
+- verify with: `but verify-tag [-v]` or `but tag -v`
 
 ----
 gpg: Signature made Wed Jun 15 10:56:46 2016 CEST using RSA key ID B7227189
@@ -81,7 +81,7 @@ signed tag message body
 
 == cummit signatures
 
-- created by: `git cummit -S`
+- created by: `but cummit -S`
 - payload: cummit object
 - embedding: header entry `gpgsig`
   (content is preceded by a space)
@@ -109,7 +109,7 @@ signed cummit
 signed cummit message body
 ----
 
-- verify with: `git verify-cummit [-v]` (or `git show --show-signature`)
+- verify with: `but verify-cummit [-v]` (or `but show --show-signature`)
 
 ----
 gpg: Signature made Wed Jun 15 10:58:57 2016 CEST using RSA key ID B7227189
@@ -129,7 +129,7 @@ signed cummit message body
 
 == Mergetag signatures
 
-- created by: `git merge` on signed tag
+- created by: `but merge` on signed tag
 - payload/embedding: the whole signed tag object is embedded into
   the (merge) cummit object as header entry `mergetag`
 - example: merge of the signed tag `signedtag` as above
@@ -174,7 +174,7 @@ signed tag message body
 ----
 
 - verify with: verification is embedded in merge cummit message by default,
-  alternatively with `git show --show-signature`:
+  alternatively with `but show --show-signature`:
 
 ----
 cummit 9863f0c76ff78712b6800e199a46aa56afbcbd49

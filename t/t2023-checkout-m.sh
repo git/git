@@ -12,16 +12,16 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 	test_tick &&
 	test_cummit both.txt both.txt initial &&
-	git branch topic &&
+	but branch topic &&
 	test_cummit modified_in_main both.txt in_main &&
 	test_cummit added_in_main each.txt in_main &&
-	git checkout topic &&
+	but checkout topic &&
 	test_cummit modified_in_topic both.txt in_topic &&
 	test_cummit added_in_topic each.txt in_topic
 '
 
-test_expect_success 'git merge main' '
-    test_must_fail git merge main
+test_expect_success 'but merge main' '
+    test_must_fail but merge main
 '
 
 clean_branchnames () {
@@ -32,8 +32,8 @@ clean_branchnames () {
 test_expect_success '-m restores 2-way conflicted+resolved file' '
 	cp each.txt each.txt.conflicted &&
 	echo resolved >each.txt &&
-	git add each.txt &&
-	git checkout -m -- each.txt &&
+	but add each.txt &&
+	but checkout -m -- each.txt &&
 	clean_branchnames <each.txt >each.txt.cleaned &&
 	clean_branchnames <each.txt.conflicted >each.txt.conflicted.cleaned &&
 	test_cmp each.txt.conflicted.cleaned each.txt.cleaned
@@ -42,33 +42,33 @@ test_expect_success '-m restores 2-way conflicted+resolved file' '
 test_expect_success '-m restores 3-way conflicted+resolved file' '
 	cp both.txt both.txt.conflicted &&
 	echo resolved >both.txt &&
-	git add both.txt &&
-	git checkout -m -- both.txt &&
+	but add both.txt &&
+	but checkout -m -- both.txt &&
 	clean_branchnames <both.txt >both.txt.cleaned &&
 	clean_branchnames <both.txt.conflicted >both.txt.conflicted.cleaned &&
 	test_cmp both.txt.conflicted.cleaned both.txt.cleaned
 '
 
 test_expect_success 'force checkout a conflict file creates stage zero entry' '
-	git init co-force &&
+	but init co-force &&
 	(
 		cd co-force &&
 		echo a >a &&
-		git add a &&
-		git cummit -ama &&
-		A_OBJ=$(git rev-parse :a) &&
-		git branch topic &&
+		but add a &&
+		but cummit -ama &&
+		A_OBJ=$(but rev-parse :a) &&
+		but branch topic &&
 		echo b >a &&
-		git cummit -amb &&
-		B_OBJ=$(git rev-parse :a) &&
-		git checkout topic &&
+		but cummit -amb &&
+		B_OBJ=$(but rev-parse :a) &&
+		but checkout topic &&
 		echo c >a &&
-		C_OBJ=$(git hash-object a) &&
-		git checkout -m main &&
+		C_OBJ=$(but hash-object a) &&
+		but checkout -m main &&
 		test_cmp_rev :1:a $A_OBJ &&
 		test_cmp_rev :2:a $B_OBJ &&
 		test_cmp_rev :3:a $C_OBJ &&
-		git checkout -f topic &&
+		but checkout -f topic &&
 		test_cmp_rev :0:a $A_OBJ
 	)
 '

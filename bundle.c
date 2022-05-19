@@ -13,8 +13,8 @@
 #include "strvec.h"
 #include "list-objects-filter-options.h"
 
-static const char v2_bundle_signature[] = "# v2 git bundle\n";
-static const char v3_bundle_signature[] = "# v3 git bundle\n";
+static const char v2_bundle_signature[] = "# v2 but bundle\n";
+static const char v3_bundle_signature[] = "# v3 but bundle\n";
 static struct {
 	int version;
 	const char *signature;
@@ -338,7 +338,7 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
 			     list_objects_filter_spec(&revs->filter));
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
-	pack_objects.git_cmd = 1;
+	pack_objects.but_cmd = 1;
 
 	/*
 	 * start_command() will close our descriptor if it's >1. Duplicate it
@@ -419,7 +419,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			goto skip_write_ref;
 		}
 		/*
-		 * If you run "git bundle create bndl v1.0..v2.0", the
+		 * If you run "but bundle create bndl v1.0..v2.0", the
 		 * name of the positive ref is "v2.0" but that is the
 		 * cummit that is referenced by the tag, and not the tag
 		 * itself.
@@ -634,7 +634,7 @@ int unbundle(struct repository *r, struct bundle_header *header,
 		return -1;
 	ip.in = bundle_fd;
 	ip.no_stdout = 1;
-	ip.git_cmd = 1;
+	ip.but_cmd = 1;
 	if (run_command(&ip))
 		return error(_("index-pack died"));
 	return 0;

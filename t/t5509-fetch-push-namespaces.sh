@@ -7,48 +7,48 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	git config --global protocol.ext.allow user &&
+	but config --global protocol.ext.allow user &&
 	test_tick &&
-	git init original &&
+	but init original &&
 	(
 		cd original &&
 		echo 0 >count &&
-		git add count &&
+		but add count &&
 		test_cummit 0 &&
 		echo 1 >count &&
-		git add count &&
+		but add count &&
 		test_cummit 1 &&
-		git remote add pushee-namespaced "ext::git --namespace=namespace %s ../pushee" &&
-		git remote add pushee-unnamespaced ../pushee
+		but remote add pushee-namespaced "ext::but --namespace=namespace %s ../pushee" &&
+		but remote add pushee-unnamespaced ../pushee
 	) &&
-	cummit0=$(cd original && git rev-parse HEAD^) &&
-	cummit1=$(cd original && git rev-parse HEAD) &&
-	git init --bare pushee &&
-	git init puller
+	cummit0=$(cd original && but rev-parse HEAD^) &&
+	cummit1=$(cd original && but rev-parse HEAD) &&
+	but init --bare pushee &&
+	but init puller
 '
 
 test_expect_success 'pushing into a repository using a ref namespace' '
 	(
 		cd original &&
-		git push pushee-namespaced main &&
-		git ls-remote pushee-namespaced >actual &&
+		but push pushee-namespaced main &&
+		but ls-remote pushee-namespaced >actual &&
 		printf "$cummit1\trefs/heads/main\n" >expected &&
 		test_cmp expected actual &&
-		git push pushee-namespaced --tags &&
-		git ls-remote pushee-namespaced >actual &&
+		but push pushee-namespaced --tags &&
+		but ls-remote pushee-namespaced >actual &&
 		printf "$cummit0\trefs/tags/0\n" >>expected &&
 		printf "$cummit1\trefs/tags/1\n" >>expected &&
 		test_cmp expected actual &&
 		# Verify that the GIT_NAMESPACE environment variable works as well
-		GIT_NAMESPACE=namespace git ls-remote "ext::git %s ../pushee" >actual &&
+		GIT_NAMESPACE=namespace but ls-remote "ext::but %s ../pushee" >actual &&
 		test_cmp expected actual &&
 		# Verify that --namespace overrides GIT_NAMESPACE
-		GIT_NAMESPACE=garbage git ls-remote pushee-namespaced >actual &&
+		GIT_NAMESPACE=garbage but ls-remote pushee-namespaced >actual &&
 		test_cmp expected actual &&
 		# Try a namespace with no content
-		git ls-remote "ext::git --namespace=garbage %s ../pushee" >actual &&
+		but ls-remote "ext::but --namespace=garbage %s ../pushee" >actual &&
 		test_must_be_empty actual &&
-		git ls-remote pushee-unnamespaced >actual &&
+		but ls-remote pushee-unnamespaced >actual &&
 		sed -e "s|refs/|refs/namespaces/namespace/refs/|" expected >expected.unnamespaced &&
 		test_cmp expected.unnamespaced actual
 	)
@@ -57,8 +57,8 @@ test_expect_success 'pushing into a repository using a ref namespace' '
 test_expect_success 'pulling from a repository using a ref namespace' '
 	(
 		cd puller &&
-		git remote add -f pushee-namespaced "ext::git --namespace=namespace %s ../pushee" &&
-		git for-each-ref refs/ >actual &&
+		but remote add -f pushee-namespaced "ext::but --namespace=namespace %s ../pushee" &&
+		but for-each-ref refs/ >actual &&
 		printf "$cummit1 cummit\trefs/remotes/pushee-namespaced/main\n" >expected &&
 		printf "$cummit0 cummit\trefs/tags/0\n" >>expected &&
 		printf "$cummit1 cummit\trefs/tags/1\n" >>expected &&
@@ -75,10 +75,10 @@ test_expect_success 'pulling from a repository using a ref namespace' '
 # functionality of using clone --mirror to back up a set of repos hosted
 # in the namespaces of a single repo.
 test_expect_success 'mirroring a repository using a ref namespace' '
-	git clone --mirror pushee mirror &&
+	but clone --mirror pushee mirror &&
 	(
 		cd mirror &&
-		git for-each-ref refs/ >actual &&
+		but for-each-ref refs/ >actual &&
 		printf "$cummit1 cummit\trefs/namespaces/namespace/refs/heads/main\n" >expected &&
 		printf "$cummit0 cummit\trefs/namespaces/namespace/refs/tags/0\n" >>expected &&
 		printf "$cummit1 cummit\trefs/namespaces/namespace/refs/tags/1\n" >>expected &&
@@ -88,16 +88,16 @@ test_expect_success 'mirroring a repository using a ref namespace' '
 
 test_expect_success 'hide namespaced refs with transfer.hideRefs' '
 	GIT_NAMESPACE=namespace \
-		git -C pushee -c transfer.hideRefs=refs/tags \
-		ls-remote "ext::git %s ." >actual &&
+		but -C pushee -c transfer.hideRefs=refs/tags \
+		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
 	GIT_NAMESPACE=namespace \
-		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
-		ls-remote "ext::git %s ." >actual &&
+		but -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
+		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
 	printf "$cummit0\trefs/tags/0\n" >>expected &&
 	printf "$cummit1\trefs/tags/1\n" >>expected &&
@@ -106,63 +106,63 @@ test_expect_success 'check that transfer.hideRefs does not match unstripped refs
 
 test_expect_success 'hide full refs with transfer.hideRefs' '
 	GIT_NAMESPACE=namespace \
-		git -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
-		ls-remote "ext::git %s ." >actual &&
+		but -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
+		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'try to update a hidden ref' '
 	test_config -C pushee transfer.hideRefs refs/heads/main &&
-	test_must_fail git -C original push pushee-namespaced main
+	test_must_fail but -C original push pushee-namespaced main
 '
 
 test_expect_success 'try to update a ref that is not hidden' '
 	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/main &&
-	git -C original push pushee-namespaced main
+	but -C original push pushee-namespaced main
 '
 
 test_expect_success 'try to update a hidden full ref' '
 	test_config -C pushee transfer.hideRefs "^refs/namespaces/namespace/refs/heads/main" &&
-	test_must_fail git -C original push pushee-namespaced main
+	test_must_fail but -C original push pushee-namespaced main
 '
 
 test_expect_success 'set up ambiguous HEAD' '
-	git init ambiguous &&
+	but init ambiguous &&
 	(
 		cd ambiguous &&
-		git cummit --allow-empty -m foo &&
-		git update-ref refs/namespaces/ns/refs/heads/one HEAD &&
-		git update-ref refs/namespaces/ns/refs/heads/two HEAD &&
-		git symbolic-ref refs/namespaces/ns/HEAD \
+		but cummit --allow-empty -m foo &&
+		but update-ref refs/namespaces/ns/refs/heads/one HEAD &&
+		but update-ref refs/namespaces/ns/refs/heads/two HEAD &&
+		but symbolic-ref refs/namespaces/ns/HEAD \
 			refs/namespaces/ns/refs/heads/two
 	)
 '
 
 test_expect_success 'clone chooses correct HEAD (v0)' '
-	GIT_NAMESPACE=ns git -c protocol.version=0 \
+	GIT_NAMESPACE=ns but -c protocol.version=0 \
 		clone ambiguous ambiguous-v0 &&
 	echo refs/heads/two >expect &&
-	git -C ambiguous-v0 symbolic-ref HEAD >actual &&
+	but -C ambiguous-v0 symbolic-ref HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'clone chooses correct HEAD (v2)' '
-	GIT_NAMESPACE=ns git -c protocol.version=2 \
+	GIT_NAMESPACE=ns but -c protocol.version=2 \
 		clone ambiguous ambiguous-v2 &&
 	echo refs/heads/two >expect &&
-	git -C ambiguous-v2 symbolic-ref HEAD >actual &&
+	but -C ambiguous-v2 symbolic-ref HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'denyCurrentBranch and unborn branch with ref namespace' '
 	(
 		cd original &&
-		git init unborn &&
-		git remote add unborn-namespaced "ext::git --namespace=namespace %s unborn" &&
-		test_must_fail git push unborn-namespaced HEAD:main &&
-		git -C unborn config receive.denyCurrentBranch updateInstead &&
-		git push unborn-namespaced HEAD:main
+		but init unborn &&
+		but remote add unborn-namespaced "ext::but --namespace=namespace %s unborn" &&
+		test_must_fail but push unborn-namespaced HEAD:main &&
+		but -C unborn config receive.denyCurrentBranch updateInstead &&
+		but push unborn-namespaced HEAD:main
 	)
 '
 

@@ -10,42 +10,42 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 cummit () {
 	test_tick &&
 	echo $1 > foo &&
-	git add foo &&
-	git cummit -m "$1"
+	but add foo &&
+	but cummit -m "$1"
 }
 
 compare () {
 	# Split arguments on whitespace.
-	git $1 $2 >expected &&
-	git $1 $3 >actual &&
+	but $1 $2 >expected &&
+	but $1 $3 >actual &&
 	test_cmp expected actual
 }
 
 test_expect_success 'setup' '
 
 	cummit main &&
-	git checkout -b subspace/one main &&
+	but checkout -b subspace/one main &&
 	cummit one &&
-	git checkout -b subspace/two main &&
+	but checkout -b subspace/two main &&
 	cummit two &&
-	git checkout -b subspace-x main &&
+	but checkout -b subspace-x main &&
 	cummit subspace-x &&
-	git checkout -b other/three main &&
+	but checkout -b other/three main &&
 	cummit three &&
-	git checkout -b someref main &&
+	but checkout -b someref main &&
 	cummit some &&
-	git checkout main &&
+	but checkout main &&
 	cummit topic_2 &&
-	git tag foo/bar main &&
+	but tag foo/bar main &&
 	cummit topic_3 &&
-	git update-ref refs/remotes/foo/baz main &&
+	but update-ref refs/remotes/foo/baz main &&
 	cummit topic_4 &&
-	git update-ref refs/remotes/upstream/one subspace/one &&
-	git update-ref refs/remotes/upstream/two subspace/two &&
-	git update-ref refs/remotes/upstream/x subspace-x &&
-	git tag qux/one subspace/one &&
-	git tag qux/two subspace/two &&
-	git tag qux/x subspace-x
+	but update-ref refs/remotes/upstream/one subspace/one &&
+	but update-ref refs/remotes/upstream/two subspace/two &&
+	but update-ref refs/remotes/upstream/x subspace-x &&
+	but tag qux/one subspace/one &&
+	but tag qux/two subspace/two &&
+	but tag qux/x subspace-x
 '
 
 test_expect_success 'rev-parse --glob=refs/heads/subspace/*' '
@@ -325,12 +325,12 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 '
 
 test_expect_success 'rev-list should succeed with empty output on empty stdin' '
-	git rev-list --stdin </dev/null >actual &&
+	but rev-list --stdin </dev/null >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list should succeed with empty output with all refs excluded' '
-	git rev-list --exclude=* --all >actual &&
+	but rev-list --exclude=* --all >actual &&
 	test_must_be_empty actual
 '
 
@@ -338,18 +338,18 @@ test_expect_success 'rev-list should succeed with empty output with empty --all'
 	(
 		test_create_repo empty &&
 		cd empty &&
-		git rev-list --all >actual &&
+		but rev-list --all >actual &&
 		test_must_be_empty actual
 	)
 '
 
 test_expect_success 'rev-list should succeed with empty output with empty glob' '
-	git rev-list --glob=does-not-match-anything >actual &&
+	but rev-list --glob=does-not-match-anything >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list should succeed with empty output when ignoring missing' '
-	git rev-list --ignore-missing $ZERO_OID >actual &&
+	but rev-list --ignore-missing $ZERO_OID >actual &&
 	test_must_be_empty actual
 '
 

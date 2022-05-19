@@ -6,7 +6,7 @@
 #include "parse-options.h"
 
 static const char *const merge_file_usage[] = {
-	N_("git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>"),
+	N_("but merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>"),
 	NULL
 };
 
@@ -56,9 +56,9 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	if (startup_info->have_repository) {
 		/* Read the configuration file */
-		git_config(git_xmerge_config, NULL);
-		if (0 <= git_xmerge_style)
-			xmp.style = git_xmerge_style;
+		but_config(but_xmerge_config, NULL);
+		if (0 <= but_xmerge_style)
+			xmp.style = but_xmerge_style;
 	}
 
 	argc = parse_options(argc, argv, prefix, options, merge_file_usage, 0);

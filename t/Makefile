@@ -98,7 +98,7 @@ test-lint-shell-syntax:
 test-lint-filenames:
 	@# We do *not* pass a glob to ls-files but use grep instead, to catch
 	@# non-ASCII characters (which are quoted within double-quotes)
-	@bad="$$(git -c core.quotepath=true ls-files 2>/dev/null | \
+	@bad="$$(but -c core.quotepath=true ls-files 2>/dev/null | \
 			grep '["*:<>?\\|]')"; \
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
@@ -112,7 +112,7 @@ aggregate-results:
 		echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
-gitweb-test:
+butweb-test:
 	$(MAKE) $(TGITWEB)
 
 valgrind:

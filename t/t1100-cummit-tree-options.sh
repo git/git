@@ -3,9 +3,9 @@
 # Copyright (C) 2005 Rene Scharfe
 #
 
-test_description='git cummit-tree options test
+test_description='but cummit-tree options test
 
-This test checks that git cummit-tree can create a specific cummit
+This test checks that but cummit-tree can create a specific cummit
 object by defining all environment variables that it understands.
 
 Also make sure that command line parser understands the normal
@@ -25,7 +25,7 @@ EOF
 
 test_expect_success \
     'test preparation: write empty tree' \
-    'git write-tree >treeid'
+    'but write-tree >treeid'
 
 test_expect_success \
     'construct cummit' \
@@ -36,11 +36,11 @@ test_expect_success \
      GIT_CUMMITTER_NAME="cummitter Name" \
      GIT_CUMMITTER_EMAIL="cummitter@email" \
      GIT_CUMMITTER_DATE="2005-05-26 23:30" \
-     TZ=GMT git cummit-tree $(cat treeid) >cummitid 2>/dev/null'
+     TZ=GMT but cummit-tree $(cat treeid) >cummitid 2>/dev/null'
 
 test_expect_success \
     'read cummit' \
-    'git cat-file cummit $(cat cummitid) >cummit'
+    'but cat-file cummit $(cat cummitid) >cummit'
 
 test_expect_success \
     'compare cummit' \
@@ -50,14 +50,14 @@ test_expect_success \
 test_expect_success 'flags and then non flags' '
 	test_tick &&
 	echo comment text |
-	git cummit-tree $(cat treeid) >cummitid &&
+	but cummit-tree $(cat treeid) >cummitid &&
 	echo comment text |
-	git cummit-tree $(cat treeid) -p $(cat cummitid) >childid-1 &&
+	but cummit-tree $(cat treeid) -p $(cat cummitid) >childid-1 &&
 	echo comment text |
-	git cummit-tree -p $(cat cummitid) $(cat treeid) >childid-2 &&
+	but cummit-tree -p $(cat cummitid) $(cat treeid) >childid-2 &&
 	test_cmp childid-1 childid-2 &&
-	git cummit-tree $(cat treeid) -m foo >childid-3 &&
-	git cummit-tree -m foo $(cat treeid) >childid-4 &&
+	but cummit-tree $(cat treeid) -m foo >childid-3 &&
+	but cummit-tree -m foo $(cat treeid) >childid-4 &&
 	test_cmp childid-3 childid-4
 '
 

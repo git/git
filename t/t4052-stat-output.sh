@@ -16,17 +16,17 @@ name=aaaaaaaaaa
 name=$name$name$name$name$name$name$name$name$name$name$name$name
 test_expect_success 'preparation' '
 	>"$name" &&
-	git add "$name" &&
-	git cummit -m message &&
+	but add "$name" &&
+	but cummit -m message &&
 	echo a >"$name" &&
-	git cummit -m message "$name"
+	but cummit -m message "$name"
 '
 
 cat >expect72 <<-'EOF'
  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 EOF
 test_expect_success "format-patch: small change with long name gives more space to the name" '
-	git format-patch -1 --stdout >output &&
+	but format-patch -1 --stdout >output &&
 	grep " | " output >actual &&
 	test_cmp expect72 actual
 '
@@ -37,7 +37,7 @@ do
 	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
 	test_expect_success "$cmd: small change with long name gives more space to the name" '
-		git $cmd $args >output &&
+		but $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp expect80 actual
 	'
@@ -64,25 +64,25 @@ EOF
 while read expect cmd args
 do
 	test_expect_success "$cmd --stat=width: a long name is given more room when the bar is short" '
-		git $cmd $args --stat=40 >output &&
+		but $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
 		test_cmp $expect.60 actual
 	'
 
 	test_expect_success "$cmd --stat-width=width with long name" '
-		git $cmd $args --stat-width=40 >output &&
+		but $cmd $args --stat-width=40 >output &&
 		grep " | " output >actual &&
 		test_cmp $expect.60 actual
 	'
 
 	test_expect_success "$cmd --stat=...,name-width with long name" '
-		git $cmd $args --stat=60,30 >output &&
+		but $cmd $args --stat=60,30 >output &&
 		grep " | " output >actual &&
 		test_cmp $expect.6030 actual
 	'
 
 	test_expect_success "$cmd --stat-name-width with long name" '
-		git $cmd $args --stat-name-width=30 >output &&
+		but $cmd $args --stat-name-width=30 >output &&
 		grep " | " output >actual &&
 		test_cmp $expect.6030 actual
 	'
@@ -96,14 +96,14 @@ EOF
 
 test_expect_success 'preparation for big change tests' '
 	>abcd &&
-	git add abcd &&
-	git cummit -m message &&
+	but add abcd &&
+	but cummit -m message &&
 	i=0 &&
 	while test $i -lt 1000
 	do
 		echo $i && i=$(($i + 1)) || return 1
 	done >abcd &&
-	git cummit -m message abcd
+	but cummit -m message abcd
 '
 
 cat >expect72 <<'EOF'
@@ -111,7 +111,7 @@ cat >expect72 <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 test_expect_success "format-patch --cover-letter ignores COLUMNS (big change)" '
-	COLUMNS=200 git format-patch -1 --stdout --cover-letter >output &&
+	COLUMNS=200 but format-patch -1 --stdout --cover-letter >output &&
 	grep " | " output >actual &&
 	test_cmp expect72 actual
 '
@@ -131,7 +131,7 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (big change)" '
-		COLUMNS=200 git $cmd $args >output &&
+		COLUMNS=200 but $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
@@ -139,7 +139,7 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (big change)" '
-		COLUMNS=200 git $cmd $args --graph >output &&
+		COLUMNS=200 but $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -159,7 +159,7 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb not enough COLUMNS (big change)" '
-		COLUMNS=40 git $cmd $args >output &&
+		COLUMNS=40 but $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
@@ -167,7 +167,7 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb not enough COLUMNS (big change)" '
-		COLUMNS=40 git $cmd $args --graph >output &&
+		COLUMNS=40 but $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -187,7 +187,7 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb statGraphWidth config" '
-		git -c diff.statGraphWidth=26 $cmd $args >output &&
+		but -c diff.statGraphWidth=26 $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
@@ -195,7 +195,7 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb statGraphWidth config" '
-		git -c diff.statGraphWidth=26 $cmd $args --graph >output &&
+		but -c diff.statGraphWidth=26 $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -216,19 +216,19 @@ EOF
 while read cmd args
 do
 	test_expect_success "$cmd --stat=width with big change" '
-		git $cmd $args --stat=40 >output &&
+		but $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --stat-width=width with big change" '
-		git $cmd $args --stat-width=40 >output &&
+		but $cmd $args --stat-width=40 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --stat-graph-width with big change" '
-		git $cmd $args --stat-graph-width=26 >output &&
+		but $cmd $args --stat-graph-width=26 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
@@ -236,13 +236,13 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat-width=width --graph with big change" '
-		git $cmd $args --stat-width=40 --graph >output &&
+		but $cmd $args --stat-width=40 --graph >output &&
 		grep " | " output >actual &&
 		test_cmp expect-graph actual
 	'
 
 	test_expect_success "$cmd --stat-graph-width --graph with big change" '
-		git $cmd $args --stat-graph-width=26 --graph >output &&
+		but $cmd $args --stat-graph-width=26 --graph >output &&
 		grep " | " output >actual &&
 		test_cmp expect-graph actual
 	'
@@ -255,8 +255,8 @@ EOF
 
 test_expect_success 'preparation for long filename tests' '
 	cp abcd aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
-	git add aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
-	git cummit -m message
+	but add aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
+	but cummit -m message
 '
 
 cat >expect <<'EOF'
@@ -268,7 +268,7 @@ EOF
 while read cmd args
 do
 	test_expect_success "$cmd --stat=width with big change is more balanced" '
-		git $cmd $args --stat-width=60 >output &&
+		but $cmd $args --stat-width=60 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
@@ -276,7 +276,7 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat=width --graph with big change is balanced" '
-		git $cmd $args --stat-width=60 --graph >output &&
+		but $cmd $args --stat-width=60 --graph >output &&
 		grep " | " output >actual &&
 		test_cmp expect-graph actual
 	'
@@ -302,7 +302,7 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (long filename)" '
-		COLUMNS=200 git $cmd $args >output &&
+		COLUMNS=200 but $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
@@ -310,7 +310,7 @@ do
 	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (long filename)" '
-		COLUMNS=200 git $cmd $args --graph >output &&
+		COLUMNS=200 but $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -331,7 +331,7 @@ while read verb expect cmd args
 do
 	test_expect_success COLUMNS_CAN_BE_1 \
 		"$cmd $verb prefix greater than COLUMNS (big change)" '
-		COLUMNS=1 git $cmd $args >output &&
+		COLUMNS=1 but $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
@@ -340,7 +340,7 @@ do
 
 	test_expect_success COLUMNS_CAN_BE_1 \
 		"$cmd --graph $verb prefix greater than COLUMNS (big change)" '
-		COLUMNS=1 git $cmd $args --graph >output &&
+		COLUMNS=1 but $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -355,8 +355,8 @@ cat >expect <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 test_expect_success 'merge --stat respects COLUMNS (big change)' '
-	git checkout -b branch HEAD^^ &&
-	COLUMNS=100 git merge --stat --no-ff main^ >output &&
+	but checkout -b branch HEAD^^ &&
+	COLUMNS=100 but merge --stat --no-ff main^ >output &&
 	grep " | " output >actual &&
 	test_cmp expect actual
 '
@@ -365,7 +365,7 @@ cat >expect <<'EOF'
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++++++++++++++++++++++++
 EOF
 test_expect_success 'merge --stat respects COLUMNS (long filename)' '
-	COLUMNS=100 git merge --stat --no-ff main >output &&
+	COLUMNS=100 but merge --stat --no-ff main >output &&
 	grep " | " output >actual &&
 	test_cmp expect actual
 '

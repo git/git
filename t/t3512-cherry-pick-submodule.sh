@@ -19,35 +19,35 @@ test_expect_success 'unrelated submodule/file conflict is ignored' '
 	test_create_repo sub &&
 
 	touch sub/file &&
-	git -C sub add file &&
-	git -C sub cummit -m "add a file in a submodule" &&
+	but -C sub add file &&
+	but -C sub cummit -m "add a file in a submodule" &&
 
 	test_create_repo a_repo &&
 	(
 		cd a_repo &&
 		>a_file &&
-		git add a_file &&
-		git cummit -m "add a file" &&
+		but add a_file &&
+		but cummit -m "add a file" &&
 
-		git branch test &&
-		git checkout test &&
+		but branch test &&
+		but checkout test &&
 
 		mkdir sub &&
 		>sub/content &&
-		git add sub/content &&
-		git cummit -m "add a regular folder with name sub" &&
+		but add sub/content &&
+		but cummit -m "add a regular folder with name sub" &&
 
 		echo "123" >a_file &&
-		git add a_file &&
-		git cummit -m "modify a file" &&
+		but add a_file &&
+		but cummit -m "modify a file" &&
 
-		git checkout main &&
+		but checkout main &&
 
-		git submodule add ../sub sub &&
-		git submodule update sub &&
-		git cummit -m "add a submodule info folder with name sub" &&
+		but submodule add ../sub sub &&
+		but submodule update sub &&
+		but cummit -m "add a submodule info folder with name sub" &&
 
-		git cherry-pick test
+		but cherry-pick test
 	)
 '
 

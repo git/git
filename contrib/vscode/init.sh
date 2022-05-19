@@ -17,7 +17,7 @@ cat >.vscode/settings.json.new <<\EOF ||
 {
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
-    "[git-cummit]": {
+    "[but-cummit]": {
         "editor.wordWrap": "wordWrapColumn",
         "editor.wordWrapColumn": 72
     },
@@ -217,7 +217,7 @@ case "$(uname -s)" in
 MINGW*)
 	GCCPATH="$(cygpath -am "$GCCPATH")"
 	GDBPATH="$(cygpath -am "$GDBPATH")"
-	MAKE_BASH="$(cygpath -am /git-cmd.exe) --command=usr\\\\bin\\\\bash.exe"
+	MAKE_BASH="$(cygpath -am /but-cmd.exe) --command=usr\\\\bin\\\\bash.exe"
 	MAKECOMMAND="$MAKE_BASH -lc \\\"$MAKECOMMAND\\\""
 	OSNAME=Win32
 	X=.exe
@@ -266,7 +266,7 @@ cat >.vscode/launch.json.new <<EOF ||
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "\${workspaceFolder}/git$X",
+            "program": "\${workspaceFolder}/but$X",
             "args": [],
             "stopAtEntry": false,
             "cwd": "\${workspaceFolder}",
@@ -297,7 +297,7 @@ vscode-init:
 	@mkdir -p .vscode && \
 	incs= && defs= && \
 	for e in $(ALL_CFLAGS) \
-			'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+			'-DGIT_EXEC_PATH="$(butexecdir_SQ)"' \
 			'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 			'-DBINDIR="$(bindir_relative_SQ)"' \
 			'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"' \
@@ -361,12 +361,12 @@ for file in .vscode/settings.json .vscode/tasks.json .vscode/launch.json
 do
 	if test -f $file
 	then
-		if git diff --no-index --quiet --exit-code $file $file.new
+		if but diff --no-index --quiet --exit-code $file $file.new
 		then
 			rm $file.new
 		else
 			printf "The file $file.new has these changes:\n\n"
-			git --no-pager diff --no-index $file $file.new
+			but --no-pager diff --no-index $file $file.new
 			printf "\n\nMaybe \`mv $file.new $file\`?\n\n"
 		fi
 	else

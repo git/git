@@ -3,12 +3,12 @@
 
 int cmd_hash_impl(int ac, const char **av, int algo)
 {
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 	unsigned char hash[GIT_MAX_HEXSZ];
 	unsigned bufsz = 8192;
 	int binary = 0;
 	char *buffer;
-	const struct git_hash_algo *algop = &hash_algos[algo];
+	const struct but_hash_algo *algop = &hash_algos[algo];
 
 	if (ac == 2) {
 		if (!strcmp(av[1], "-b"))

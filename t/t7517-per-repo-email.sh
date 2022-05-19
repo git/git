@@ -18,61 +18,61 @@ test_expect_success 'setup a likely user.useConfigOnly use case' '
 
 	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
 	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
-	git config user.name "test" &&
-	git config --global user.useConfigOnly true
+	but config user.name "test" &&
+	but config --global user.useConfigOnly true
 '
 
 test_expect_success 'fails cummitting if clone email is not set' '
-	test_must_fail git cummit --allow-empty -m msg
+	test_must_fail but cummit --allow-empty -m msg
 '
 
 test_expect_success 'fails cummitting if clone email is not set, but EMAIL set' '
-	test_must_fail env EMAIL=test@fail.com git cummit --allow-empty -m msg
+	test_must_fail env EMAIL=test@fail.com but cummit --allow-empty -m msg
 '
 
 test_expect_success 'succeeds cummitting if clone email is set' '
 	test_config user.email "test@ok.com" &&
-	git cummit --allow-empty -m msg
+	but cummit --allow-empty -m msg
 '
 
 test_expect_success 'succeeds cloning if global email is not set' '
-	git clone . clone
+	but clone . clone
 '
 
 test_expect_success 'set up rebase scenarios' '
 	# temporarily enable an actual ident for this setup
 	test_config user.email foo@example.com &&
 	test_cummit new &&
-	git branch side-without-commit HEAD^ &&
-	git checkout -b side-with-commit HEAD^ &&
+	but branch side-without-commit HEAD^ &&
+	but checkout -b side-with-commit HEAD^ &&
 	test_cummit side
 '
 
 test_expect_success 'fast-forward rebase does not care about ident' '
-	git checkout -B tmp side-without-cummit &&
-	git rebase main
+	but checkout -B tmp side-without-cummit &&
+	but rebase main
 '
 
 test_expect_success 'non-fast-forward rebase refuses to write cummits' '
-	test_when_finished "git rebase --abort || true" &&
-	git checkout -B tmp side-with-cummit &&
-	test_must_fail git rebase main
+	test_when_finished "but rebase --abort || true" &&
+	but checkout -B tmp side-with-cummit &&
+	test_must_fail but rebase main
 '
 
 test_expect_success 'fast-forward rebase does not care about ident (interactive)' '
-	git checkout -B tmp side-without-cummit &&
-	git rebase -i main
+	but checkout -B tmp side-without-cummit &&
+	but rebase -i main
 '
 
 test_expect_success 'non-fast-forward rebase refuses to write cummits (interactive)' '
-	test_when_finished "git rebase --abort || true" &&
-	git checkout -B tmp side-with-cummit &&
-	test_must_fail git rebase -i main
+	test_when_finished "but rebase --abort || true" &&
+	but checkout -B tmp side-with-cummit &&
+	test_must_fail but rebase -i main
 '
 
 test_expect_success 'noop interactive rebase does not care about ident' '
-	git checkout -B tmp side-with-cummit &&
-	git rebase -i HEAD^
+	but checkout -B tmp side-with-cummit &&
+	but rebase -i HEAD^
 '
 
 test_expect_success 'author.name overrides user.name' '
@@ -82,8 +82,8 @@ test_expect_success 'author.name overrides user.name' '
 	test_cummit author-name-override-user &&
 	echo author user@example.com > expected-author &&
 	echo user user@example.com > expected-cummitter &&
-	git log --format="%an %ae" -1 > actual-author &&
-	git log --format="%cn %ce" -1 > actual-cummitter &&
+	but log --format="%an %ae" -1 > actual-author &&
+	but log --format="%cn %ce" -1 > actual-cummitter &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '
@@ -95,8 +95,8 @@ test_expect_success 'author.email overrides user.email' '
 	test_cummit author-email-override-user &&
 	echo user author@example.com > expected-author &&
 	echo user user@example.com > expected-cummitter &&
-	git log --format="%an %ae" -1 > actual-author &&
-	git log --format="%cn %ce" -1 > actual-cummitter &&
+	but log --format="%an %ae" -1 > actual-author &&
+	but log --format="%cn %ce" -1 > actual-cummitter &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '
@@ -108,8 +108,8 @@ test_expect_success 'cummitter.name overrides user.name' '
 	test_cummit cummitter-name-override-user &&
 	echo user user@example.com > expected-author &&
 	echo cummitter user@example.com > expected-cummitter &&
-	git log --format="%an %ae" -1 > actual-author &&
-	git log --format="%cn %ce" -1 > actual-cummitter &&
+	but log --format="%an %ae" -1 > actual-author &&
+	but log --format="%cn %ce" -1 > actual-cummitter &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '
@@ -121,8 +121,8 @@ test_expect_success 'cummitter.email overrides user.email' '
 	test_cummit cummitter-email-override-user &&
 	echo user user@example.com > expected-author &&
 	echo user cummitter@example.com > expected-cummitter &&
-	git log --format="%an %ae" -1 > actual-author &&
-	git log --format="%cn %ce" -1 > actual-cummitter &&
+	but log --format="%an %ae" -1 > actual-author &&
+	but log --format="%cn %ce" -1 > actual-cummitter &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '
@@ -141,8 +141,8 @@ test_expect_success 'author and cummitter environment variables override config 
 	test_cummit env-override-conf &&
 	echo env_author env_author@example.com > expected-author &&
 	echo env_cummit env_cummit@example.com > expected-cummitter &&
-	git log --format="%an %ae" -1 > actual-author &&
-	git log --format="%cn %ce" -1 > actual-cummitter &&
+	but log --format="%an %ae" -1 > actual-author &&
+	but log --format="%cn %ce" -1 > actual-cummitter &&
 	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
 	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
 	test_cmp expected-author actual-author &&

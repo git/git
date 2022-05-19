@@ -1,4 +1,4 @@
-$ git whatchanged --root -c --patch-with-stat --summary master
+$ but whatchanged --root -c --patch-with-stat --summary master
 cummit 59d314ad6f356dd08601a4cd5e530381da3e3c64
 Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
@@ -50,7 +50,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
  3 files changed, 9 insertions(+)
  create mode 100644 file3
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -59,7 +59,7 @@ index 35d242b..7289e35 100644
  B
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..f4615da 100644
 --- a/file0
 +++ b/file0
@@ -70,7 +70,7 @@ index 01e79c3..f4615da 100644
 +A
 +B
 +C
-diff --git a/file3 b/file3
+diff --but a/file3 b/file3
 new file mode 100644
 index 0000000..7289e35
 --- /dev/null
@@ -92,7 +92,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
  2 files changed, 5 insertions(+)
  create mode 100644 file1
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -102,7 +102,7 @@ index 8422d40..cead32e 100644
  D
 +E
 +F
-diff --git a/file1 b/file1
+diff --but a/file1 b/file1
 new file mode 100644
 index 0000000..b1e6722
 --- /dev/null
@@ -126,7 +126,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
  3 files changed, 5 insertions(+), 3 deletions(-)
  delete mode 100644 file2
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -135,7 +135,7 @@ index 35d242b..8422d40 100644
  B
 +C
 +D
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..b414108 100644
 --- a/file0
 +++ b/file0
@@ -146,7 +146,7 @@ index 01e79c3..b414108 100644
 +4
 +5
 +6
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 deleted file mode 100644
 index 01e79c3..0000000
 --- a/file2
@@ -170,7 +170,7 @@ Date:   Mon Jun 26 00:00:00 2006 +0000
  create mode 100644 file0
  create mode 100644 file2
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 new file mode 100644
 index 0000000..35d242b
 --- /dev/null
@@ -178,7 +178,7 @@ index 0000000..35d242b
 @@ -0,0 +1,2 @@
 +A
 +B
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 new file mode 100644
 index 0000000..01e79c3
 --- /dev/null
@@ -187,7 +187,7 @@ index 0000000..01e79c3
 +1
 +2
 +3
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 new file mode 100644
 index 0000000..01e79c3
 --- /dev/null

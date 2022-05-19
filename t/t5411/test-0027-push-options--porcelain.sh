@@ -1,5 +1,5 @@
 test_expect_success "setup proc-receive hook and disable push-options ($PROTOCOL/porcelain)" '
-	git -C "$upstream" config receive.advertisePushOptions false &&
+	but -C "$upstream" config receive.advertisePushOptions false &&
 	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
@@ -9,9 +9,9 @@ test_expect_success "setup proc-receive hook and disable push-options ($PROTOCOL
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push -o ...  :                       refs/for/main/topic
+# but push -o ...  :                       refs/for/main/topic
 test_expect_success "proc-receive: not support push options ($PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push \
+	test_must_fail but -C workbench push \
 		--porcelain \
 		-o issue=123 \
 		-o reviewer=user1 \
@@ -28,7 +28,7 @@ test_expect_success "proc-receive: not support push options ($PROTOCOL/porcelain
 '
 
 test_expect_success "enable push options ($PROTOCOL/porcelain)" '
-	git -C "$upstream" config receive.advertisePushOptions true
+	but -C "$upstream" config receive.advertisePushOptions true
 '
 
 test_expect_success "setup version=0 for proc-receive hook ($PROTOCOL/porcelain)" '
@@ -42,9 +42,9 @@ test_expect_success "setup version=0 for proc-receive hook ($PROTOCOL/porcelain)
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push -o ...  :                       next(A)  refs/for/main/topic
+# but push -o ...  :                       next(A)  refs/for/main/topic
 test_expect_success "proc-receive: ignore push-options for version 0 ($PROTOCOL/porcelain)" '
-	git -C workbench push \
+	but -C workbench push \
 		--porcelain \
 		--atomic \
 		-o issue=123 \
@@ -64,7 +64,7 @@ test_expect_success "proc-receive: ignore push-options for version 0 ($PROTOCOL/
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> *	HEAD:refs/heads/next	[new branch]
 	> *	HEAD:refs/for/main/topic	[new reference]
 	> Done
@@ -88,14 +88,14 @@ test_expect_success "restore proc-receive hook ($PROTOCOL/porcelain)" '
 # Refs of upstream : main(A)             next(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
-	git -C "$upstream" update-ref -d refs/heads/next
+	but -C "$upstream" update-ref -d refs/heads/next
 '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push -o ...  :                       next(A)  refs/for/main/topic
+# but push -o ...  :                       next(A)  refs/for/main/topic
 test_expect_success "proc-receive: push with options ($PROTOCOL/porcelain)" '
-	git -C workbench push \
+	but -C workbench push \
 		--porcelain \
 		--atomic \
 		-o issue=123 \
@@ -118,7 +118,7 @@ test_expect_success "proc-receive: push with options ($PROTOCOL/porcelain)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> *	HEAD:refs/heads/next	[new branch]
 	> *	HEAD:refs/for/main/topic	[new reference]
 	> Done
@@ -134,5 +134,5 @@ test_expect_success "proc-receive: push with options ($PROTOCOL/porcelain)" '
 # Refs of upstream : main(A)             next(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
-	git -C "$upstream" update-ref -d refs/heads/next
+	but -C "$upstream" update-ref -d refs/heads/next
 '

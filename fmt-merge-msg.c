@@ -21,13 +21,13 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 
 	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
 		int is_bool;
-		merge_log_config = git_config_bool_or_int(key, value, &is_bool);
+		merge_log_config = but_config_bool_or_int(key, value, &is_bool);
 		if (!is_bool && merge_log_config < 0)
 			return error("%s: negative length %s", key, value);
 		if (is_bool && merge_log_config)
 			merge_log_config = DEFAULT_MERGE_LOG_LEN;
 	} else if (!strcmp(key, "merge.branchdesc")) {
-		use_branch_desc = git_config_bool(key, value);
+		use_branch_desc = but_config_bool(key, value);
 	} else if (!strcmp(key, "merge.suppressdest")) {
 		if (!value)
 			return config_error_nonbool(key);
@@ -37,10 +37,10 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 			string_list_append(&suppress_dest_patterns, value);
 		suppress_dest_pattern_seen = 1;
 	} else {
-		status = git_gpg_config(key, value, NULL);
+		status = but_gpg_config(key, value, NULL);
 		if (status)
 			return status;
-		return git_default_config(key, value, cb);
+		return but_default_config(key, value, cb);
 	}
 	return 0;
 }
@@ -146,7 +146,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 
 	/*
 	 * At this point, line points at the beginning of comment e.g.
-	 * "branch 'frotz' of git://that/repository.git".
+	 * "branch 'frotz' of but://that/repository.but".
 	 * Find the repository name and point it with src.
 	 */
 	src = strstr(line, " of ");
@@ -307,10 +307,10 @@ static void credit_people(struct strbuf *out,
 
 	if (kind == 'a') {
 		label = "By";
-		me = git_author_info(IDENT_NO_DATE);
+		me = but_author_info(IDENT_NO_DATE);
 	} else {
 		label = "Via";
-		me = git_cummitter_info(IDENT_NO_DATE);
+		me = but_cummitter_info(IDENT_NO_DATE);
 	}
 
 	if (!them->nr ||

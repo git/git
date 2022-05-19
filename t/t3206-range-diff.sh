@@ -11,7 +11,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # harm than good.  We need some real history.
 
 test_expect_success 'setup' '
-	git fast-import <"$TEST_DIRECTORY"/t3206/history.export &&
+	but fast-import <"$TEST_DIRECTORY"/t3206/history.export &&
 	test_oid_cache <<-\EOF
 	# topic
 	t1 sha1:4de457d
@@ -130,7 +130,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'simple A..B A..C (unmodified)' '
-	git range-diff --no-color main..topic main..unmodified \
+	but range-diff --no-color main..topic main..unmodified \
 		>actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
@@ -142,19 +142,19 @@ test_expect_success 'simple A..B A..C (unmodified)' '
 '
 
 test_expect_success 'simple B...C (unmodified)' '
-	git range-diff --no-color topic...unmodified >actual &&
+	but range-diff --no-color topic...unmodified >actual &&
 	# same "expect" as above
 	test_cmp expect actual
 '
 
 test_expect_success 'simple A B C (unmodified)' '
-	git range-diff --no-color main topic unmodified >actual &&
+	but range-diff --no-color main topic unmodified >actual &&
 	# same "expect" as above
 	test_cmp expect actual
 '
 
 test_expect_success 'A^! and A^-<n> (unmodified)' '
-	git range-diff --no-color topic^! unmodified^-1 >actual &&
+	but range-diff --no-color topic^! unmodified^-1 >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t4) = 1:  $(test_oid u4) s/12/B/
 	EOF
@@ -162,12 +162,12 @@ test_expect_success 'A^! and A^-<n> (unmodified)' '
 '
 
 test_expect_success 'A^{/..} is not mistaken for a range' '
-	test_must_fail git range-diff topic^.. topic^{/..} 2>error &&
+	test_must_fail but range-diff topic^.. topic^{/..} 2>error &&
 	test_i18ngrep "not a cummit range" error
 '
 
 test_expect_success 'trivial reordering' '
-	git range-diff --no-color main topic reordered >actual &&
+	but range-diff --no-color main topic reordered >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid r1) s/5/A/
 	3:  $(test_oid t3) = 2:  $(test_oid r2) s/11/B/
@@ -178,7 +178,7 @@ test_expect_success 'trivial reordering' '
 '
 
 test_expect_success 'removed a cummit' '
-	git range-diff --no-color main topic removed >actual &&
+	but range-diff --no-color main topic removed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid d1) s/5/A/
 	2:  $(test_oid t2) < -:  $(test_oid __) s/4/A/
@@ -189,7 +189,7 @@ test_expect_success 'removed a cummit' '
 '
 
 test_expect_success 'added a cummit' '
-	git range-diff --no-color main topic added >actual &&
+	but range-diff --no-color main topic added >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid a1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid a2) s/4/A/
@@ -201,7 +201,7 @@ test_expect_success 'added a cummit' '
 '
 
 test_expect_success 'new base, A B C' '
-	git range-diff --no-color main topic rebased >actual &&
+	but range-diff --no-color main topic rebased >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid b1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid b2) s/4/A/
@@ -213,7 +213,7 @@ test_expect_success 'new base, A B C' '
 
 test_expect_success 'new base, B...C' '
 	# this syntax includes the cummits from main!
-	git range-diff --no-color topic...rebased >actual &&
+	but range-diff --no-color topic...rebased >actual &&
 	cat >expect <<-EOF &&
 	-:  $(test_oid __) > 1:  $(test_oid b5) unrelated
 	1:  $(test_oid t1) = 2:  $(test_oid b1) s/5/A/
@@ -225,7 +225,7 @@ test_expect_success 'new base, B...C' '
 '
 
 test_expect_success 'changed cummit' '
-	git range-diff --no-color topic...changed >actual &&
+	but range-diff --no-color topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
@@ -254,7 +254,7 @@ test_expect_success 'changed cummit' '
 '
 
 test_expect_success 'changed cummit with --no-patch diff option' '
-	git range-diff --no-color --no-patch topic...changed >actual &&
+	but range-diff --no-color --no-patch topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
@@ -265,7 +265,7 @@ test_expect_success 'changed cummit with --no-patch diff option' '
 '
 
 test_expect_success 'changed cummit with --stat diff option' '
-	git range-diff --no-color --stat topic...changed >actual &&
+	but range-diff --no-color --stat topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
@@ -280,7 +280,7 @@ test_expect_success 'changed cummit with --stat diff option' '
 '
 
 test_expect_success 'changed cummit with sm config' '
-	git range-diff --no-color --submodule=log topic...changed >actual &&
+	but range-diff --no-color --submodule=log topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
@@ -309,7 +309,7 @@ test_expect_success 'changed cummit with sm config' '
 '
 
 test_expect_success 'renamed file' '
-	git range-diff --no-color --submodule=log topic...renamed-file >actual &&
+	but range-diff --no-color --submodule=log topic...renamed-file >actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid n1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid n2) s/4/A/
@@ -354,7 +354,7 @@ test_expect_success 'renamed file' '
 '
 
 test_expect_success 'file with mode only change' '
-	git range-diff --no-color --submodule=log topic...mode-only-change >actual &&
+	but range-diff --no-color --submodule=log topic...mode-only-change >actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t2) ! 1:  $(test_oid o1) s/4/A/
 	    @@ Metadata
@@ -394,7 +394,7 @@ test_expect_success 'file with mode only change' '
 '
 
 test_expect_success 'file added and later removed' '
-	git range-diff --no-color --submodule=log topic...added-removed >actual &&
+	but range-diff --no-color --submodule=log topic...added-removed >actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid s1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid s2) s/4/A/
@@ -435,12 +435,12 @@ test_expect_success 'file added and later removed' '
 '
 
 test_expect_success 'no cummits on one side' '
-	git cummit --amend -m "new message" &&
-	git range-diff main HEAD@{1} HEAD
+	but cummit --amend -m "new message" &&
+	but range-diff main HEAD@{1} HEAD
 '
 
 test_expect_success 'changed message' '
-	git range-diff --no-color topic...changed-message >actual &&
+	but range-diff --no-color topic...changed-message >actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid m1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid m2) s/4/A/
@@ -493,7 +493,7 @@ test_expect_success 'dual-coloring' '
 	:    <GREEN> +B<RESET>
 	:      13<RESET>
 	EOF
-	git range-diff changed...changed-message --color --dual-color >actual.raw &&
+	but range-diff changed...changed-message --color --dual-color >actual.raw &&
 	test_decode_color >actual <actual.raw &&
 	test_cmp expect actual
 '
@@ -501,7 +501,7 @@ test_expect_success 'dual-coloring' '
 for prev in topic main..topic
 do
 	test_expect_success "format-patch --range-diff=$prev" '
-		git format-patch --cover-letter --range-diff=$prev \
+		but format-patch --cover-letter --range-diff=$prev \
 			main..unmodified >actual &&
 		test_when_finished "rm 000?-*" &&
 		test_line_count = 5 actual &&
@@ -514,7 +514,7 @@ do
 done
 
 test_expect_success 'format-patch --range-diff as commentary' '
-	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
+	but format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
 	test_when_finished "rm 0001-*" &&
 	test_line_count = 1 actual &&
 	test_i18ngrep "^Range-diff:$" 0001-* &&
@@ -522,7 +522,7 @@ test_expect_success 'format-patch --range-diff as commentary' '
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a non-integer' '
-	git format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
+	but format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
 	test_when_finished "rm v2.9-0001-*" &&
 	test_line_count = 1 actual &&
 	test_i18ngrep "^Range-diff:$" v2.9-0001-* &&
@@ -530,7 +530,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a non-integer' 
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a integer' '
-	git format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
+	but format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
 	test_when_finished "rm v2-0001-*" &&
 	test_line_count = 1 actual &&
 	test_i18ngrep "^Range-diff ..* v1:$" v2-0001-* &&
@@ -538,7 +538,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a integer' '
 '
 
 test_expect_success 'format-patch --range-diff with v0' '
-	git format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
+	but format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
 	test_when_finished "rm v0-0001-*" &&
 	test_line_count = 1 actual &&
 	test_i18ngrep "^Range-diff:$" v0-0001-* &&
@@ -546,24 +546,24 @@ test_expect_success 'format-patch --range-diff with v0' '
 '
 
 test_expect_success 'range-diff overrides diff.noprefix internally' '
-	git -c diff.noprefix=true range-diff HEAD^...
+	but -c diff.noprefix=true range-diff HEAD^...
 '
 
 test_expect_success 'basic with modified format.pretty with suffix' '
-	git -c format.pretty="format:cummit %H%d%n" range-diff \
+	but -c format.pretty="format:cummit %H%d%n" range-diff \
 		main..topic main..unmodified
 '
 
 test_expect_success 'basic with modified format.pretty without "cummit "' '
-	git -c format.pretty="format:%H%n" range-diff \
+	but -c format.pretty="format:%H%n" range-diff \
 		main..topic main..unmodified
 '
 
 test_expect_success 'range-diff compares notes by default' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	git range-diff --no-color main..topic main..unmodified \
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
+	but range-diff --no-color main..topic main..unmodified \
 		>actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
@@ -584,10 +584,10 @@ test_expect_success 'range-diff compares notes by default' '
 '
 
 test_expect_success 'range-diff with --no-notes' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	git range-diff --no-color --no-notes main..topic main..unmodified \
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
+	but range-diff --no-color --no-notes main..topic main..unmodified \
 		>actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
@@ -599,13 +599,13 @@ test_expect_success 'range-diff with --no-notes' '
 '
 
 test_expect_success 'range-diff with multiple --notes' '
-	git notes --ref=note1 add -m "topic note1" topic &&
-	git notes --ref=note1 add -m "unmodified note1" unmodified &&
-	test_when_finished git notes --ref=note1 remove topic unmodified &&
-	git notes --ref=note2 add -m "topic note2" topic &&
-	git notes --ref=note2 add -m "unmodified note2" unmodified &&
-	test_when_finished git notes --ref=note2 remove topic unmodified &&
-	git range-diff --no-color --notes=note1 --notes=note2 main..topic main..unmodified \
+	but notes --ref=note1 add -m "topic note1" topic &&
+	but notes --ref=note1 add -m "unmodified note1" unmodified &&
+	test_when_finished but notes --ref=note1 remove topic unmodified &&
+	but notes --ref=note2 add -m "topic note2" topic &&
+	but notes --ref=note2 add -m "unmodified note2" unmodified &&
+	test_when_finished but notes --ref=note2 remove topic unmodified &&
+	but range-diff --no-color --notes=note1 --notes=note2 main..topic main..unmodified \
 		>actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
@@ -631,10 +631,10 @@ test_expect_success 'range-diff with multiple --notes' '
 '
 
 test_expect_success 'format-patch --range-diff does not compare notes by default' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	git format-patch --cover-letter --range-diff=$prev \
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
+	but format-patch --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
@@ -648,10 +648,10 @@ test_expect_success 'format-patch --range-diff does not compare notes by default
 '
 
 test_expect_success 'format-patch --range-diff with --no-notes' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	git format-patch --no-notes --cover-letter --range-diff=$prev \
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
+	but format-patch --no-notes --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
@@ -665,10 +665,10 @@ test_expect_success 'format-patch --range-diff with --no-notes' '
 '
 
 test_expect_success 'format-patch --range-diff with --notes' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	git format-patch --notes --cover-letter --range-diff=$prev \
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
+	but format-patch --notes --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
@@ -693,11 +693,11 @@ test_expect_success 'format-patch --range-diff with --notes' '
 '
 
 test_expect_success 'format-patch --range-diff with format.notes config' '
-	git notes add -m "topic note" topic &&
-	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
+	but notes add -m "topic note" topic &&
+	but notes add -m "unmodified note" unmodified &&
+	test_when_finished but notes remove topic unmodified &&
 	test_config format.notes true &&
-	git format-patch --cover-letter --range-diff=$prev \
+	but format-patch --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
@@ -722,13 +722,13 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 '
 
 test_expect_success 'format-patch --range-diff with multiple notes' '
-	git notes --ref=note1 add -m "topic note1" topic &&
-	git notes --ref=note1 add -m "unmodified note1" unmodified &&
-	test_when_finished git notes --ref=note1 remove topic unmodified &&
-	git notes --ref=note2 add -m "topic note2" topic &&
-	git notes --ref=note2 add -m "unmodified note2" unmodified &&
-	test_when_finished git notes --ref=note2 remove topic unmodified &&
-	git format-patch --notes=note1 --notes=note2 --cover-letter --range-diff=$prev \
+	but notes --ref=note1 add -m "topic note1" topic &&
+	but notes --ref=note1 add -m "unmodified note1" unmodified &&
+	test_when_finished but notes --ref=note1 remove topic unmodified &&
+	but notes --ref=note2 add -m "topic note2" topic &&
+	but notes --ref=note2 add -m "unmodified note2" unmodified &&
+	test_when_finished but notes --ref=note2 remove topic unmodified &&
+	but format-patch --notes=note1 --notes=note2 --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
@@ -758,16 +758,16 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 '
 
 test_expect_success '--left-only/--right-only' '
-	git switch --orphan left-right &&
+	but switch --orphan left-right &&
 	test_cummit first &&
 	test_cummit unmatched &&
 	test_cummit common &&
-	git switch -C left-right first &&
-	git cherry-pick common &&
+	but switch -C left-right first &&
+	but cherry-pick common &&
 
-	git range-diff -s --left-only ...common >actual &&
-	head_oid=$(git rev-parse --short HEAD) &&
-	common_oid=$(git rev-parse --short common) &&
+	but range-diff -s --left-only ...common >actual &&
+	head_oid=$(but rev-parse --short HEAD) &&
+	common_oid=$(but rev-parse --short common) &&
 	echo "1:  $head_oid = 2:  $common_oid common" >expect &&
 	test_cmp expect actual
 '

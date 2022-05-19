@@ -1,4 +1,4 @@
-From: Junio C Hamano <gitster@pobox.com>
+From: Junio C Hamano <butster@pobox.com>
 Subject: Separating topic branches
 Abstract: In this article, JC describes how to separate topic branches.
 Content-type: text/asciidoc
@@ -7,7 +7,7 @@ How to separate topic branches
 ==============================
 
 This text was originally a footnote to a discussion about the
-behaviour of the git diff commands.
+behaviour of the but diff commands.
 
 Often I find myself doing that [running diff against something other
 than HEAD] while rewriting messy development history.  For example, I
@@ -29,8 +29,8 @@ In order to rewrite this mess to be more manageable, I would first do
 picking pieces from it to get logically self-contained units, and
 start building on top of "master":
 
-        $ git diff master..topic >P.diff
-        $ git checkout -b topicA master
+        $ but diff master..topic >P.diff
+        $ but checkout -b topicA master
         ... pick and apply pieces from P.diff to build
         ... cummits on topicA branch.
 
@@ -52,8 +52,8 @@ comparing "master" and "topic" I used initially.  Still on
 "topicA", I extract "diff topic", and use it to rebuild the
 other topic:
 
-        $ git diff -R topic >P.diff ;# --cached also would work fine
-        $ git checkout -b topicB master
+        $ but diff -R topic >P.diff ;# --cached also would work fine
+        $ but checkout -b topicB master
         ... pick and apply pieces from P.diff to build
         ... cummits on topicB branch.
 
@@ -69,8 +69,8 @@ other topic:
 After I am done, I'd try a pretend-merge between "topicA" and
 "topicB" in order to make sure I have not missed anything:
 
-        $ git pull . topicA ;# merge it into current "topicB"
-        $ git diff topic
+        $ but pull . topicA ;# merge it into current "topicB"
+        $ but diff topic
                                 "topicB"
                o---o---o---o---o---* (pretend merge)
               /                   /
@@ -83,8 +83,8 @@ After I am done, I'd try a pretend-merge between "topicA" and
 The last diff better not to show anything other than cleanups
 for cruft.  Then I can finally clean things up:
 
-        $ git branch -D topic
-        $ git reset --hard HEAD^ ;# nuke pretend merge
+        $ but branch -D topic
+        $ but reset --hard HEAD^ ;# nuke pretend merge
 
                                 "topicB"
                o---o---o---o---o

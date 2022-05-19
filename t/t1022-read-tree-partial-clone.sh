@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git read-tree in partial clones'
+test_description='but read-tree in partial clones'
 
 TEST_NO_CREATE_REPO=1
 
@@ -9,17 +9,17 @@ TEST_NO_CREATE_REPO=1
 test_expect_success 'read-tree in partial clone prefetches in one batch' '
 	test_when_finished "rm -rf server client trace" &&
 
-	git init server &&
+	but init server &&
 	echo foo >server/one &&
 	echo bar >server/two &&
-	git -C server add one two &&
-	git -C server cummit -m "initial cummit" &&
-	TREE=$(git -C server rev-parse HEAD^{tree}) &&
+	but -C server add one two &&
+	but -C server cummit -m "initial cummit" &&
+	TREE=$(but -C server rev-parse HEAD^{tree}) &&
 
-	git -C server config uploadpack.allowfilter 1 &&
-	git -C server config uploadpack.allowanysha1inwant 1 &&
-	git clone --bare --filter=blob:none "file://$(pwd)/server" client &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client read-tree $TREE &&
+	but -C server config uploadpack.allowfilter 1 &&
+	but -C server config uploadpack.allowanysha1inwant 1 &&
+	but clone --bare --filter=blob:none "file://$(pwd)/server" client &&
+	GIT_TRACE_PACKET="$(pwd)/trace" but -C client read-tree $TREE &&
 
 	# "done" marks the end of negotiation (once per fetch). Expect that
 	# only one fetch occurs.

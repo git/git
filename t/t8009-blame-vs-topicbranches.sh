@@ -15,21 +15,21 @@ test_description='blaming trough history with topic branches'
 test_expect_success setup '
 	test_cummit A0 file.t line0 &&
 	test_cummit A1 &&
-	git reset --hard A0 &&
+	but reset --hard A0 &&
 	test_cummit B1 &&
 	test_cummit B2 file.t line0changed &&
-	git reset --hard A1 &&
+	but reset --hard A1 &&
 	test_merge A2 B2 &&
-	git reset --hard A1 &&
+	but reset --hard A1 &&
 	test_cummit C1 &&
-	git reset --hard A2 &&
+	but reset --hard A2 &&
 	test_merge A3 C1
 	'
 
 test_expect_success 'blame --reverse --first-parent finds A1' '
-	git blame --porcelain --reverse --first-parent A0..A3 -- file.t >actual_full &&
+	but blame --porcelain --reverse --first-parent A0..A3 -- file.t >actual_full &&
 	head -n 1 <actual_full | sed -e "s/ .*//" >actual &&
-	git rev-parse A1 >expect &&
+	but rev-parse A1 >expect &&
 	test_cmp expect actual
 	'
 

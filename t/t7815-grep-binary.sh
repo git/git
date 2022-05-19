@@ -1,116 +1,116 @@
 #!/bin/sh
 
-test_description='git grep in binary files'
+test_description='but grep in binary files'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
-	git add a &&
-	git cummit -m.
+	but add a &&
+	but cummit -m.
 "
 
-test_expect_success 'git grep ina a' '
+test_expect_success 'but grep ina a' '
 	echo Binary file a matches >expect &&
-	git grep ina a >actual &&
+	but grep ina a >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git grep -ah ina a' '
-	git grep -ah ina a >actual &&
+test_expect_success 'but grep -ah ina a' '
+	but grep -ah ina a >actual &&
 	test_cmp a actual
 '
 
-test_expect_success 'git grep -I ina a' '
-	test_must_fail git grep -I ina a >actual &&
+test_expect_success 'but grep -I ina a' '
+	test_must_fail but grep -I ina a >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'git grep -c ina a' '
+test_expect_success 'but grep -c ina a' '
 	echo a:1 >expect &&
-	git grep -c ina a >actual &&
+	but grep -c ina a >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git grep -l ina a' '
+test_expect_success 'but grep -l ina a' '
 	echo a >expect &&
-	git grep -l ina a >actual &&
+	but grep -l ina a >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git grep -L bar a' '
+test_expect_success 'but grep -L bar a' '
 	echo a >expect &&
-	git grep -L bar a >actual &&
+	but grep -L bar a >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git grep -q ina a' '
-	git grep -q ina a >actual &&
+test_expect_success 'but grep -q ina a' '
+	but grep -q ina a >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'git grep -F ile a' '
-	git grep -F ile a
+test_expect_success 'but grep -F ile a' '
+	but grep -F ile a
 '
 
-test_expect_success 'git grep -Fi iLE a' '
-	git grep -Fi iLE a
+test_expect_success 'but grep -Fi iLE a' '
+	but grep -Fi iLE a
 '
 
 # This test actually passes on platforms where regexec() supports the
 # flag REG_STARTEND.
-test_expect_success 'git grep ile a' '
-	git grep ile a
+test_expect_success 'but grep ile a' '
+	but grep ile a
 '
 
-test_expect_failure 'git grep .fi a' '
-	git grep .fi a
+test_expect_failure 'but grep .fi a' '
+	but grep .fi a
 '
 
 test_expect_success 'grep respects binary diff attribute' '
 	echo text >t &&
-	git add t &&
+	but add t &&
 	echo t:text >expect &&
-	git grep text t >actual &&
+	but grep text t >actual &&
 	test_cmp expect actual &&
-	echo "t -diff" >.gitattributes &&
+	echo "t -diff" >.butattributes &&
 	echo "Binary file t matches" >expect &&
-	git grep text t >actual &&
+	but grep text t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep --cached respects binary diff attribute' '
-	git grep --cached text t >actual &&
+	but grep --cached text t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep --cached respects binary diff attribute (2)' '
-	git add .gitattributes &&
-	rm .gitattributes &&
-	git grep --cached text t >actual &&
-	test_when_finished "git rm --cached .gitattributes" &&
-	test_when_finished "git checkout .gitattributes" &&
+	but add .butattributes &&
+	rm .butattributes &&
+	but grep --cached text t >actual &&
+	test_when_finished "but rm --cached .butattributes" &&
+	test_when_finished "but checkout .butattributes" &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep revision respects binary diff attribute' '
-	git cummit -m new &&
+	but cummit -m new &&
 	echo "Binary file HEAD:t matches" >expect &&
-	git grep text HEAD -- t >actual &&
-	test_when_finished "git reset HEAD^" &&
+	but grep text HEAD -- t >actual &&
+	test_when_finished "but reset HEAD^" &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep respects not-binary diff attribute' '
 	echo binQary | q_to_nul >b &&
-	git add b &&
+	but add b &&
 	echo "Binary file b matches" >expect &&
-	git grep bin b >actual &&
+	but grep bin b >actual &&
 	test_cmp expect actual &&
-	echo "b diff" >.gitattributes &&
+	echo "b diff" >.butattributes &&
 	echo "b:binQary" >expect &&
-	git grep bin b >actual.raw &&
+	but grep bin b >actual.raw &&
 	nul_to_q <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -122,27 +122,27 @@ EOF
 chmod +x nul_to_q_textconv
 
 test_expect_success 'setup textconv filters' '
-	echo a diff=foo >.gitattributes &&
-	git config diff.foo.textconv "\"$(pwd)\""/nul_to_q_textconv
+	echo a diff=foo >.butattributes &&
+	but config diff.foo.textconv "\"$(pwd)\""/nul_to_q_textconv
 '
 
 test_expect_success 'grep does not honor textconv' '
-	test_must_fail git grep Qfile
+	test_must_fail but grep Qfile
 '
 
 test_expect_success 'grep --textconv honors textconv' '
 	echo "a:binaryQfileQm[*]cQ*æQð" >expect &&
-	git grep --textconv Qfile >actual &&
+	but grep --textconv Qfile >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep --no-textconv does not honor textconv' '
-	test_must_fail git grep --no-textconv Qfile
+	test_must_fail but grep --no-textconv Qfile
 '
 
 test_expect_success 'grep --textconv blob honors textconv' '
 	echo "HEAD:a:binaryQfileQm[*]cQ*æQð" >expect &&
-	git grep --textconv Qfile HEAD:a >actual &&
+	but grep --textconv Qfile HEAD:a >actual &&
 	test_cmp expect actual
 '
 

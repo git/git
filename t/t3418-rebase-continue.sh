@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase --continue tests'
+test_description='but rebase --continue tests'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -15,85 +15,85 @@ test_expect_success 'setup' '
 	test_cummit "cummit-new-file-F1" F1 1 &&
 	test_cummit "cummit-new-file-F2" F2 2 &&
 
-	git checkout -b topic HEAD^ &&
+	but checkout -b topic HEAD^ &&
 	test_cummit "cummit-new-file-F2-on-topic-branch" F2 22 &&
 
-	git checkout main
+	but checkout main
 '
 
 test_expect_success 'merge based rebase --continue with works with touched file' '
-	rm -fr .git/rebase-* &&
-	git reset --hard &&
-	git checkout main &&
+	rm -fr .but/rebase-* &&
+	but reset --hard &&
+	but checkout main &&
 
-	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	FAKE_LINES="edit 1" but rebase -i HEAD^ &&
 	test-tool chmtime =-60 F1 &&
-	git rebase --continue
+	but rebase --continue
 '
 
-test_expect_success 'merge based rebase --continue removes .git/MERGE_MSG' '
-	git checkout -f --detach topic &&
+test_expect_success 'merge based rebase --continue removes .but/MERGE_MSG' '
+	but checkout -f --detach topic &&
 
-	test_must_fail git rebase --onto main HEAD^ &&
-	git read-tree --reset -u HEAD &&
-	test_path_is_file .git/MERGE_MSG &&
-	git rebase --continue &&
-	test_path_is_missing .git/MERGE_MSG
+	test_must_fail but rebase --onto main HEAD^ &&
+	but read-tree --reset -u HEAD &&
+	test_path_is_file .but/MERGE_MSG &&
+	but rebase --continue &&
+	test_path_is_missing .but/MERGE_MSG
 '
 
 test_expect_success 'apply based rebase --continue works with touched file' '
-	rm -fr .git/rebase-* &&
-	git reset --hard &&
-	git checkout main &&
+	rm -fr .but/rebase-* &&
+	but reset --hard &&
+	but checkout main &&
 
-	test_must_fail git rebase --apply --onto main main topic &&
+	test_must_fail but rebase --apply --onto main main topic &&
 	echo "Resolved" >F2 &&
-	git add F2 &&
+	but add F2 &&
 	test-tool chmtime =-60 F1 &&
-	git rebase --continue
+	but rebase --continue
 '
 
 test_expect_success 'rebase --continue can not be used with other options' '
-	test_must_fail git rebase -v --continue &&
-	test_must_fail git rebase --continue -v
+	test_must_fail but rebase -v --continue &&
+	test_must_fail but rebase --continue -v
 '
 
 test_expect_success 'rebase --continue remembers merge strategy and options' '
-	rm -fr .git/rebase-* &&
-	git reset --hard cummit-new-file-F2-on-topic-branch &&
+	rm -fr .but/rebase-* &&
+	but reset --hard cummit-new-file-F2-on-topic-branch &&
 	test_cummit "cummit-new-file-F3-on-topic-branch" F3 32 &&
 	test_when_finished "rm -fr test-bin funny.was.run" &&
 	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF &&
+	cat >test-bin/but-merge-funny <<-EOF &&
 	#!$SHELL_PATH
 	case "\$1" in --opt) ;; *) exit 2 ;; esac
 	shift &&
 	>funny.was.run &&
-	exec git merge-recursive "\$@"
+	exec but merge-recursive "\$@"
 	EOF
-	chmod +x test-bin/git-merge-funny &&
+	chmod +x test-bin/but-merge-funny &&
 	(
 		PATH=./test-bin:$PATH &&
-		test_must_fail git rebase -s funny -Xopt main topic
+		test_must_fail but rebase -s funny -Xopt main topic
 	) &&
 	test -f funny.was.run &&
 	rm funny.was.run &&
 	echo "Resolved" >F2 &&
-	git add F2 &&
+	but add F2 &&
 	(
 		PATH=./test-bin:$PATH &&
-		git rebase --continue
+		but rebase --continue
 	) &&
 	test -f funny.was.run
 '
 
 test_expect_success 'rebase -i --continue handles merge strategy and options' '
-	rm -fr .git/rebase-* &&
-	git reset --hard cummit-new-file-F2-on-topic-branch &&
+	rm -fr .but/rebase-* &&
+	but reset --hard cummit-new-file-F2-on-topic-branch &&
 	test_cummit "cummit-new-file-F3-on-topic-branch-for-dash-i" F3 32 &&
 	test_when_finished "rm -fr test-bin funny.was.run funny.args" &&
 	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF &&
+	cat >test-bin/but-merge-funny <<-EOF &&
 	#!$SHELL_PATH
 	echo "\$@" >>funny.args
 	case "\$1" in --opt) ;; *) exit 2 ;; esac
@@ -101,112 +101,112 @@ test_expect_success 'rebase -i --continue handles merge strategy and options' '
 	case "\$4" in --) ;; *) exit 2 ;; esac
 	shift 2 &&
 	>funny.was.run &&
-	exec git merge-recursive "\$@"
+	exec but merge-recursive "\$@"
 	EOF
-	chmod +x test-bin/git-merge-funny &&
+	chmod +x test-bin/but-merge-funny &&
 	(
 		PATH=./test-bin:$PATH &&
-		test_must_fail git rebase -i -s funny -Xopt -Xfoo main topic
+		test_must_fail but rebase -i -s funny -Xopt -Xfoo main topic
 	) &&
 	test -f funny.was.run &&
 	rm funny.was.run &&
 	echo "Resolved" >F2 &&
-	git add F2 &&
+	but add F2 &&
 	(
 		PATH=./test-bin:$PATH &&
-		git rebase --continue
+		but rebase --continue
 	) &&
 	test -f funny.was.run
 '
 
 test_expect_success 'rebase -r passes merge strategy options correctly' '
-	rm -fr .git/rebase-* &&
-	git reset --hard cummit-new-file-F3-on-topic-branch &&
+	rm -fr .but/rebase-* &&
+	but reset --hard cummit-new-file-F3-on-topic-branch &&
 	test_cummit merge-theirs &&
-	git reset --hard HEAD^ &&
+	but reset --hard HEAD^ &&
 	test_cummit some-other-cummit &&
 	test_tick &&
-	git merge --no-ff merge-theirs &&
-	FAKE_LINES="1 3 edit 4 5 7 8 9" git rebase -i -f -r -m \
+	but merge --no-ff merge-theirs &&
+	FAKE_LINES="1 3 edit 4 5 7 8 9" but rebase -i -f -r -m \
 		-s recursive --strategy-option=theirs HEAD~2 &&
 	test_cummit force-change-ours &&
-	git rebase --continue
+	but rebase --continue
 '
 
 test_expect_success '--skip after failed fixup cleans cummit message' '
-	test_when_finished "test_might_fail git rebase --abort" &&
-	git checkout -b with-conflicting-fixup &&
+	test_when_finished "test_might_fail but rebase --abort" &&
+	but checkout -b with-conflicting-fixup &&
 	test_cummit wants-fixup &&
 	test_cummit "fixup! wants-fixup" wants-fixup.t 1 wants-fixup-1 &&
 	test_cummit "fixup! wants-fixup" wants-fixup.t 2 wants-fixup-2 &&
 	test_cummit "fixup! wants-fixup" wants-fixup.t 3 wants-fixup-3 &&
 	test_must_fail env FAKE_LINES="1 fixup 2 squash 4" \
-		git rebase -i HEAD~4 &&
+		but rebase -i HEAD~4 &&
 
 	: now there is a conflict, and comments in the cummit message &&
-	git show HEAD >out &&
+	but show HEAD >out &&
 	grep "fixup! wants-fixup" out &&
 
 	: skip and continue &&
-	echo "cp \"\$1\" .git/copy.txt" | write_script copy-editor.sh &&
-	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
+	echo "cp \"\$1\" .but/copy.txt" | write_script copy-editor.sh &&
+	(test_set_editor "$PWD/copy-editor.sh" && but rebase --skip) &&
 
 	: the user should not have had to edit the cummit message &&
-	test_path_is_missing .git/copy.txt &&
+	test_path_is_missing .but/copy.txt &&
 
 	: now the comments in the cummit message should have been cleaned up &&
-	git show HEAD >out &&
+	but show HEAD >out &&
 	! grep "fixup! wants-fixup" out &&
 
 	: now, let us ensure that "squash" is handled correctly &&
-	git reset --hard wants-fixup-3 &&
+	but reset --hard wants-fixup-3 &&
 	test_must_fail env FAKE_LINES="1 squash 4 squash 2 squash 4" \
-		git rebase -i HEAD~4 &&
+		but rebase -i HEAD~4 &&
 
 	: the first squash failed, but there are two more in the chain &&
 	(test_set_editor "$PWD/copy-editor.sh" &&
-	 test_must_fail git rebase --skip) &&
+	 test_must_fail but rebase --skip) &&
 
 	: not the final squash, no need to edit the cummit message &&
-	test_path_is_missing .git/copy.txt &&
+	test_path_is_missing .but/copy.txt &&
 
 	: The first squash was skipped, therefore: &&
-	git show HEAD >out &&
+	but show HEAD >out &&
 	test_i18ngrep "# This is a combination of 2 cummits" out &&
 	test_i18ngrep "# This is the cummit message #2:" out &&
 
-	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
-	git show HEAD >out &&
+	(test_set_editor "$PWD/copy-editor.sh" && but rebase --skip) &&
+	but show HEAD >out &&
 	test_i18ngrep ! "# This is a combination" out &&
 
 	: Final squash failed, but there was still a squash &&
-	test_i18ngrep "# This is a combination of 2 cummits" .git/copy.txt &&
-	test_i18ngrep "# This is the cummit message #2:" .git/copy.txt
+	test_i18ngrep "# This is a combination of 2 cummits" .but/copy.txt &&
+	test_i18ngrep "# This is the cummit message #2:" .but/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
-	rm -fr .git/rebase-* &&
-	git reset --hard cummit-new-file-F3-on-topic-branch &&
-	git checkout main &&
+	rm -fr .but/rebase-* &&
+	but reset --hard cummit-new-file-F3-on-topic-branch &&
+	but checkout main &&
 	test_cummit "cummit-new-file-F3" F3 3 &&
 	test_config rerere.enabled true &&
-	git update-ref refs/heads/topic cummit-new-file-F3-on-topic-branch &&
-	test_must_fail git rebase -m main topic &&
+	but update-ref refs/heads/topic cummit-new-file-F3-on-topic-branch &&
+	test_must_fail but rebase -m main topic &&
 	echo "Resolved" >F2 &&
 	cp F2 expected-F2 &&
-	git add F2 &&
-	test_must_fail git rebase --continue &&
+	but add F2 &&
+	test_must_fail but rebase --continue &&
 	echo "Resolved" >F3 &&
 	cp F3 expected-F3 &&
-	git add F3 &&
-	git rebase --continue &&
-	git reset --hard topic@{1}
+	but add F3 &&
+	but rebase --continue &&
+	but reset --hard topic@{1}
 '
 
 prepare () {
-	rm -fr .git/rebase-* &&
-	git reset --hard cummit-new-file-F3-on-topic-branch &&
-	git checkout main &&
+	rm -fr .but/rebase-* &&
+	but reset --hard cummit-new-file-F3-on-topic-branch &&
+	but checkout main &&
 	test_config rerere.enabled true
 }
 
@@ -214,39 +214,39 @@ test_rerere_autoupdate () {
 	action=$1 &&
 	test_expect_success "rebase $action --continue remembers --rerere-autoupdate" '
 		prepare &&
-		test_must_fail git rebase $action --rerere-autoupdate main topic &&
+		test_must_fail but rebase $action --rerere-autoupdate main topic &&
 		test_cmp expected-F2 F2 &&
-		git diff-files --quiet &&
-		test_must_fail git rebase --continue &&
+		but diff-files --quiet &&
+		test_must_fail but rebase --continue &&
 		test_cmp expected-F3 F3 &&
-		git diff-files --quiet &&
-		git rebase --continue
+		but diff-files --quiet &&
+		but rebase --continue
 	'
 
 	test_expect_success "rebase $action --continue honors rerere.autoUpdate" '
 		prepare &&
 		test_config rerere.autoupdate true &&
-		test_must_fail git rebase $action main topic &&
+		test_must_fail but rebase $action main topic &&
 		test_cmp expected-F2 F2 &&
-		git diff-files --quiet &&
-		test_must_fail git rebase --continue &&
+		but diff-files --quiet &&
+		test_must_fail but rebase --continue &&
 		test_cmp expected-F3 F3 &&
-		git diff-files --quiet &&
-		git rebase --continue
+		but diff-files --quiet &&
+		but rebase --continue
 	'
 
 	test_expect_success "rebase $action --continue remembers --no-rerere-autoupdate" '
 		prepare &&
 		test_config rerere.autoupdate true &&
-		test_must_fail git rebase $action --no-rerere-autoupdate main topic &&
+		test_must_fail but rebase $action --no-rerere-autoupdate main topic &&
 		test_cmp expected-F2 F2 &&
-		test_must_fail git diff-files --quiet &&
-		git add F2 &&
-		test_must_fail git rebase --continue &&
+		test_must_fail but diff-files --quiet &&
+		but add F2 &&
+		test_must_fail but rebase --continue &&
 		test_cmp expected-F3 F3 &&
-		test_must_fail git diff-files --quiet &&
-		git add F3 &&
-		git rebase --continue
+		test_must_fail but diff-files --quiet &&
+		but add F3 &&
+		but rebase --continue
 	'
 }
 
@@ -258,75 +258,75 @@ unset GIT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '
 	rm -f execed &&
-	FAKE_LINES="break b exec_>execed" git rebase -i HEAD &&
+	FAKE_LINES="break b exec_>execed" but rebase -i HEAD &&
 	test_path_is_missing execed &&
-	git rebase --continue &&
+	but rebase --continue &&
 	test_path_is_missing execed &&
-	git rebase --continue &&
+	but rebase --continue &&
 	test_path_is_file execed
 '
 
 test_expect_success '--reschedule-failed-exec' '
-	test_when_finished "git rebase --abort" &&
-	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
-	git rebase --abort &&
-	test_must_fail git -c rebase.rescheduleFailedExec=true \
+	test_when_finished "but rebase --abort" &&
+	test_must_fail but rebase -x false --reschedule-failed-exec HEAD^ &&
+	grep "^exec false" .but/rebase-merge/but-rebase-todo &&
+	but rebase --abort &&
+	test_must_fail but -c rebase.rescheduleFailedExec=true \
 		rebase -x false HEAD^ 2>err &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	grep "^exec false" .but/rebase-merge/but-rebase-todo &&
 	test_i18ngrep "has been rescheduled" err
 '
 
 test_expect_success 'rebase.rescheduleFailedExec only affects `rebase -i`' '
 	test_config rebase.rescheduleFailedExec true &&
-	test_must_fail git rebase -x false HEAD^ &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
-	git rebase --abort &&
-	git rebase HEAD^
+	test_must_fail but rebase -x false HEAD^ &&
+	grep "^exec false" .but/rebase-merge/but-rebase-todo &&
+	but rebase --abort &&
+	but rebase HEAD^
 '
 
 test_expect_success 'rebase.rescheduleFailedExec=true & --no-reschedule-failed-exec' '
-	test_when_finished "git rebase --abort" &&
+	test_when_finished "but rebase --abort" &&
 	test_config rebase.rescheduleFailedExec true &&
-	test_must_fail git rebase -x false --no-reschedule-failed-exec HEAD~2 &&
-	test_must_fail git rebase --continue 2>err &&
+	test_must_fail but rebase -x false --no-reschedule-failed-exec HEAD~2 &&
+	test_must_fail but rebase --continue 2>err &&
 	! grep "has been rescheduled" err
 '
 
 test_expect_success 'new rebase.rescheduleFailedExec=true setting in an ongoing rebase is ignored' '
-	test_when_finished "git rebase --abort" &&
-	test_must_fail git rebase -x false HEAD~2 &&
+	test_when_finished "but rebase --abort" &&
+	test_must_fail but rebase -x false HEAD~2 &&
 	test_config rebase.rescheduleFailedExec true &&
-	test_must_fail git rebase --continue 2>err &&
+	test_must_fail but rebase --continue 2>err &&
 	! grep "has been rescheduled" err
 '
 
 test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebase' '
-	test_when_finished "git rebase --abort" &&
-	test_must_fail git rebase -x false HEAD~2 &&
-	test_expect_code 129 git rebase --continue --no-reschedule-failed-exec &&
-	test_expect_code 129 git rebase --edit-todo --no-reschedule-failed-exec
+	test_when_finished "but rebase --abort" &&
+	test_must_fail but rebase -x false HEAD~2 &&
+	test_expect_code 129 but rebase --continue --no-reschedule-failed-exec &&
+	test_expect_code 129 but rebase --edit-todo --no-reschedule-failed-exec
 '
 
 test_orig_head_helper () {
-	test_when_finished 'git rebase --abort &&
-		git checkout topic &&
-		git reset --hard cummit-new-file-F2-on-topic-branch' &&
-	git update-ref -d ORIG_HEAD &&
-	test_must_fail git rebase "$@" &&
+	test_when_finished 'but rebase --abort &&
+		but checkout topic &&
+		but reset --hard cummit-new-file-F2-on-topic-branch' &&
+	but update-ref -d ORIG_HEAD &&
+	test_must_fail but rebase "$@" &&
 	test_cmp_rev ORIG_HEAD cummit-new-file-F2-on-topic-branch
 }
 
 test_orig_head () {
 	type=$1
 	test_expect_success "rebase $type sets ORIG_HEAD correctly" '
-		git checkout topic &&
-		git reset --hard cummit-new-file-F2-on-topic-branch &&
+		but checkout topic &&
+		but reset --hard cummit-new-file-F2-on-topic-branch &&
 		test_orig_head_helper $type main
 	'
 
 	test_expect_success "rebase $type <upstream> <branch> sets ORIG_HEAD correctly" '
-		git checkout main &&
+		but checkout main &&
 		test_orig_head_helper $type main topic
 	'
 }

@@ -3,7 +3,7 @@
 # Copyright (c) 2009 Jens Lehmann
 # Copyright (c) 2011 Alexey Shumkin (+ non-UTF-8 cummit encoding tests)
 
-test_description='git rev-list --pretty=format test'
+test_description='but rev-list --pretty=format test'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -36,22 +36,22 @@ truncate_count=20
 
 test_expect_success 'setup' '
 	: >foo &&
-	git add foo &&
-	git config i18n.cummitEncoding $test_encoding &&
-	echo "$added_iso88591" | git cummit -F - &&
-	head1=$(git rev-parse --verify HEAD) &&
-	head1_short=$(git rev-parse --verify --short $head1) &&
-	head1_short4=$(git rev-parse --verify --short=4 $head1) &&
-	tree1=$(git rev-parse --verify HEAD:) &&
-	tree1_short=$(git rev-parse --verify --short $tree1) &&
+	but add foo &&
+	but config i18n.cummitEncoding $test_encoding &&
+	echo "$added_iso88591" | but cummit -F - &&
+	head1=$(but rev-parse --verify HEAD) &&
+	head1_short=$(but rev-parse --verify --short $head1) &&
+	head1_short4=$(but rev-parse --verify --short=4 $head1) &&
+	tree1=$(but rev-parse --verify HEAD:) &&
+	tree1_short=$(but rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
-	echo "$changed_iso88591" | git cummit -a -F - &&
-	head2=$(git rev-parse --verify HEAD) &&
-	head2_short=$(git rev-parse --verify --short $head2) &&
-	head2_short4=$(git rev-parse --verify --short=4 $head2) &&
-	tree2=$(git rev-parse --verify HEAD:) &&
-	tree2_short=$(git rev-parse --verify --short $tree2) &&
-	git config --unset i18n.cummitEncoding
+	echo "$changed_iso88591" | but cummit -a -F - &&
+	head2=$(but rev-parse --verify HEAD) &&
+	head2_short=$(but rev-parse --verify --short $head2) &&
+	head2_short4=$(but rev-parse --verify --short=4 $head2) &&
+	tree2=$(but rev-parse --verify HEAD:) &&
+	tree2_short=$(but rev-parse --verify --short $tree2) &&
+	but config --unset i18n.cummitEncoding
 '
 
 # usage: test_format [argument...] name format_string [failure] <expected_output
@@ -69,7 +69,7 @@ test_format () {
 	done
 	cat >expect.$1
 	test_expect_${3:-success} "format $1" "
-		git rev-list $args --pretty=format:'$2' main >output.$1 &&
+		but rev-list $args --pretty=format:'$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
 }
@@ -89,11 +89,11 @@ test_pretty () {
 	done
 	cat >expect.$1
 	test_expect_${3:-success} "pretty $1 (without --no-commit-header)" "
-		git rev-list $args --pretty='$2' main >output.$1 &&
+		but rev-list $args --pretty='$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
 	test_expect_${3:-success} "pretty $1 (with --no-commit-header)" "
-		git rev-list $args --no-commit-header --pretty='$2' main >output.$1 &&
+		but rev-list $args --no-commit-header --pretty='$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
 }
@@ -263,13 +263,13 @@ test_expect_success 'basic colors' '
 	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
 	EOF
 	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
-	git rev-list --color --format="$format" -1 main >actual.raw &&
+	but rev-list --color --format="$format" -1 main >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%S is not a placeholder for rev-list yet' '
-	git rev-list --format="%S" -1 main | grep "%S"
+	but rev-list --format="%S" -1 main | grep "%S"
 '
 
 test_expect_success 'advanced colors' '
@@ -278,7 +278,7 @@ test_expect_success 'advanced colors' '
 	<BOLD;RED;BYELLOW>foo<RESET>
 	EOF
 	format="%C(red yellow bold)foo%C(reset)" &&
-	git rev-list --color --format="$format" -1 main >actual.raw &&
+	but rev-list --color --format="$format" -1 main >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -291,68 +291,68 @@ do
 	desc=${spec%%:*}
 	color=${spec#*:}
 	test_expect_success "$desc does not enable color by default" '
-		git log --format=$color -1 >actual &&
+		but log --format=$color -1 >actual &&
 		has_no_color actual
 	'
 
 	test_expect_success "$desc enables colors for color.diff" '
-		git -c color.diff=always log --format=$color -1 >actual &&
+		but -c color.diff=always log --format=$color -1 >actual &&
 		has_color actual
 	'
 
 	test_expect_success "$desc enables colors for color.ui" '
-		git -c color.ui=always log --format=$color -1 >actual &&
+		but -c color.ui=always log --format=$color -1 >actual &&
 		has_color actual
 	'
 
 	test_expect_success "$desc respects --color" '
-		git log --format=$color -1 --color >actual &&
+		but log --format=$color -1 --color >actual &&
 		has_color actual
 	'
 
 	test_expect_success "$desc respects --no-color" '
-		git -c color.ui=always log --format=$color -1 --no-color >actual &&
+		but -c color.ui=always log --format=$color -1 --no-color >actual &&
 		has_no_color actual
 	'
 
 	test_expect_success TTY "$desc respects --color=auto (stdout is tty)" '
-		test_terminal git log --format=$color -1 --color=auto >actual &&
+		test_terminal but log --format=$color -1 --color=auto >actual &&
 		has_color actual
 	'
 
 	test_expect_success "$desc respects --color=auto (stdout not tty)" '
 		(
 			TERM=vt100 && export TERM &&
-			git log --format=$color -1 --color=auto >actual &&
+			but log --format=$color -1 --color=auto >actual &&
 			has_no_color actual
 		)
 	'
 done
 
 test_expect_success '%C(always,...) enables color even without tty' '
-	git log --format=$ALWAYS_COLOR -1 >actual &&
+	but log --format=$ALWAYS_COLOR -1 >actual &&
 	has_color actual
 '
 
 test_expect_success '%C(auto) respects --color' '
-	git log --color --format="%C(auto)%H" -1 >actual.raw &&
+	but log --color --format="%C(auto)%H" -1 >actual.raw &&
 	test_decode_color <actual.raw >actual &&
-	echo "<YELLOW>$(git rev-parse HEAD)<RESET>" >expect &&
+	echo "<YELLOW>$(but rev-parse HEAD)<RESET>" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success '%C(auto) respects --no-color' '
-	git log --no-color --format="%C(auto)%H" -1 >actual &&
-	git rev-parse HEAD >expect &&
+	but log --no-color --format="%C(auto)%H" -1 >actual &&
+	but rev-parse HEAD >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-list %C(auto,...) respects --color' '
-	git rev-list --color --format="%C(auto,green)foo%C(auto,reset)" \
+	but rev-list --color --format="%C(auto,green)foo%C(auto,reset)" \
 		-1 HEAD >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	cat >expect <<-EOF &&
-	cummit $(git rev-parse HEAD)
+	cummit $(but rev-parse HEAD)
 	<GREEN>foo<RESET>
 	EOF
 	test_cmp expect actual
@@ -367,10 +367,10 @@ include an ISO8859 character: ¡bueno!
 EOF
 
 test_expect_success 'setup complex body' '
-	git config i18n.cummitencoding $test_encoding &&
-	echo change2 >foo && git cummit -a -F cummit-msg &&
-	head3=$(git rev-parse --verify HEAD) &&
-	head3_short=$(git rev-parse --short $head3)
+	but config i18n.cummitencoding $test_encoding &&
+	echo change2 >foo && but cummit -a -F cummit-msg &&
+	head3=$(but rev-parse --verify HEAD) &&
+	head3_short=$(but rev-parse --short $head3)
 '
 
 test_format complex-encoding %e <<EOF
@@ -435,7 +435,7 @@ test_format complex-body %b <expected.ISO8859-1
 
 # Git uses i18n.cummitEncoding if no i18n.logOutputEncoding set
 # so unset i18n.cummitEncoding to test encoding conversion
-git config --unset i18n.cummitEncoding
+but config --unset i18n.cummitEncoding
 
 test_format complex-subject-cummitencoding-unset %s <<EOF
 cummit $head3
@@ -478,62 +478,62 @@ test_format complex-body-cummitencoding-unset %b <expected.utf-8
 test_expect_success '%x00 shows NUL' '
 	echo  >expect cummit $head3 &&
 	echo >>expect fooQbar &&
-	git rev-list -1 --format=foo%x00bar HEAD >actual.nul &&
+	but rev-list -1 --format=foo%x00bar HEAD >actual.nul &&
 	nul_to_q <actual.nul >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%ad respects --date=' '
 	echo 2005-04-07 >expect.ad-short &&
-	git log -1 --date=short --pretty=tformat:%ad >output.ad-short main &&
+	but log -1 --date=short --pretty=tformat:%ad >output.ad-short main &&
 	test_cmp expect.ad-short output.ad-short
 '
 
 test_expect_success 'empty email' '
 	test_tick &&
-	C=$(GIT_AUTHOR_EMAIL= git cummit-tree HEAD^{tree} </dev/null) &&
-	A=$(git show --pretty=format:%an,%ae,%ad%n -s $C) &&
+	C=$(GIT_AUTHOR_EMAIL= but cummit-tree HEAD^{tree} </dev/null) &&
+	A=$(but show --pretty=format:%an,%ae,%ad%n -s $C) &&
 	verbose test "$A" = "$GIT_AUTHOR_NAME,,Thu Apr 7 15:14:13 2005 -0700"
 '
 
 test_expect_success 'del LF before empty (1)' '
-	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD^^ >actual &&
+	but show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD^^ >actual &&
 	test_line_count = 2 actual
 '
 
 test_expect_success 'del LF before empty (2)' '
-	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD >actual &&
+	but show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD >actual &&
 	test_line_count = 6 actual &&
 	grep "^$" actual
 '
 
 test_expect_success 'add LF before non-empty (1)' '
-	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD^^ >actual &&
+	but show -s --pretty=format:"%s%+b%nThanks%n" HEAD^^ >actual &&
 	test_line_count = 2 actual
 '
 
 test_expect_success 'add LF before non-empty (2)' '
-	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD >actual &&
+	but show -s --pretty=format:"%s%+b%nThanks%n" HEAD >actual &&
 	test_line_count = 6 actual &&
 	grep "^$" actual
 '
 
 test_expect_success 'add SP before non-empty (1)' '
-	git show -s --pretty=format:"%s% bThanks" HEAD^^ >actual &&
+	but show -s --pretty=format:"%s% bThanks" HEAD^^ >actual &&
 	test $(wc -w <actual) = 3
 '
 
 test_expect_success 'add SP before non-empty (2)' '
-	git show -s --pretty=format:"%s% sThanks" HEAD^^ >actual &&
+	but show -s --pretty=format:"%s% sThanks" HEAD^^ >actual &&
 	test $(wc -w <actual) = 6
 '
 
 test_expect_success '--abbrev' '
 	echo SHORT SHORT SHORT >expect2 &&
 	echo LONG LONG LONG >expect3 &&
-	git log -1 --format="%h %h %h" HEAD >actual1 &&
-	git log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
-	git log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
+	but log -1 --format="%h %h %h" HEAD >actual1 &&
+	but log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
+	but log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
 	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
 	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
 	test_cmp expect2 fuzzy2 &&
@@ -543,66 +543,66 @@ test_expect_success '--abbrev' '
 
 test_expect_success '%H is not affected by --abbrev-cummit' '
 	expected=$(($(test_oid hexsz) + 1)) &&
-	git log -1 --format=%H --abbrev-cummit --abbrev=20 HEAD >actual &&
+	but log -1 --format=%H --abbrev-cummit --abbrev=20 HEAD >actual &&
 	len=$(wc -c <actual) &&
 	test $len = $expected
 '
 
 test_expect_success '%h is not affected by --abbrev-cummit' '
-	git log -1 --format=%h --abbrev-cummit --abbrev=20 HEAD >actual &&
+	but log -1 --format=%h --abbrev-cummit --abbrev=20 HEAD >actual &&
 	len=$(wc -c <actual) &&
 	test $len = 21
 '
 
-test_expect_success '"%h %gD: %gs" is same as git-reflog' '
-	git reflog >expect &&
-	git log -g --format="%h %gD: %gs" >actual &&
+test_expect_success '"%h %gD: %gs" is same as but-reflog' '
+	but reflog >expect &&
+	but log -g --format="%h %gD: %gs" >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success '"%h %gD: %gs" is same as git-reflog (with date)' '
-	git reflog --date=raw >expect &&
-	git log -g --format="%h %gD: %gs" --date=raw >actual &&
+test_expect_success '"%h %gD: %gs" is same as but-reflog (with date)' '
+	but reflog --date=raw >expect &&
+	but log -g --format="%h %gD: %gs" --date=raw >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success '"%h %gD: %gs" is same as git-reflog (with --abbrev)' '
-	git reflog --abbrev=13 --date=raw >expect &&
-	git log -g --abbrev=13 --format="%h %gD: %gs" --date=raw >actual &&
+test_expect_success '"%h %gD: %gs" is same as but-reflog (with --abbrev)' '
+	but reflog --abbrev=13 --date=raw >expect &&
+	but log -g --abbrev=13 --format="%h %gD: %gs" --date=raw >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%gd shortens ref name' '
 	echo "main@{0}" >expect.gd-short &&
-	git log -g -1 --format=%gd refs/heads/main >actual.gd-short &&
+	but log -g -1 --format=%gd refs/heads/main >actual.gd-short &&
 	test_cmp expect.gd-short actual.gd-short
 '
 
 test_expect_success 'reflog identity' '
 	echo "$GIT_CUMMITTER_NAME:$GIT_CUMMITTER_EMAIL" >expect &&
-	git log -g -1 --format="%gn:%ge" >actual &&
+	but log -g -1 --format="%gn:%ge" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'oneline with empty message' '
-	git cummit --allow-empty --cleanup=verbatim -m "$LF" &&
-	git cummit --allow-empty --allow-empty-message &&
-	git rev-list --oneline HEAD >test.txt &&
+	but cummit --allow-empty --cleanup=verbatim -m "$LF" &&
+	but cummit --allow-empty --allow-empty-message &&
+	but rev-list --oneline HEAD >test.txt &&
 	test_line_count = 5 test.txt &&
-	git rev-list --oneline --graph HEAD >testg.txt &&
+	but rev-list --oneline --graph HEAD >testg.txt &&
 	test_line_count = 5 testg.txt
 '
 
 test_expect_success 'single-character name is parsed correctly' '
-	git cummit --author="a <a@example.com>" --allow-empty -m foo &&
+	but cummit --author="a <a@example.com>" --allow-empty -m foo &&
 	echo "a <a@example.com>" >expect &&
-	git log -1 --format="%an <%ae>" >actual &&
+	but log -1 --format="%an <%ae>" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'unused %G placeholders are passed through' '
 	echo "%GX %G" >expect &&
-	git log -1 --format="%GX %G" >actual &&
+	but log -1 --format="%GX %G" >actual &&
 	test_cmp expect actual
 '
 

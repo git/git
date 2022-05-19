@@ -190,8 +190,8 @@ static struct atom_str **atom_table;
 static struct pack_idx_option pack_idx_opts;
 static unsigned int pack_id;
 static struct hashfile *pack_file;
-static struct packed_git *pack_data;
-static struct packed_git **all_packs;
+static struct packed_but *pack_data;
+static struct packed_but **all_packs;
 static off_t pack_size;
 
 /* Table of objects we've written. */
@@ -317,7 +317,7 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 
 static void write_crash_report(const char *err)
 {
-	char *loc = git_pathdup("fast_import_crash_%"PRIuMAX, (uintmax_t) getpid());
+	char *loc = but_pathdup("fast_import_crash_%"PRIuMAX, (uintmax_t) getpid());
 	FILE *rpt = fopen(loc, "w");
 	struct branch *b;
 	unsigned long lu;
@@ -749,7 +749,7 @@ static struct tree_content *dup_tree_content(struct tree_content *s)
 static void start_packfile(void)
 {
 	struct strbuf tmp_file = STRBUF_INIT;
-	struct packed_git *p;
+	struct packed_but *p;
 	int pack_fd;
 
 	pack_fd = odb_mkstemp(&tmp_file, "pack/tmp_pack_XXXXXX");
@@ -823,14 +823,14 @@ static void unkeep_all_packs(void)
 	int k;
 
 	for (k = 0; k < pack_id; k++) {
-		struct packed_git *p = all_packs[k];
+		struct packed_but *p = all_packs[k];
 		odb_pack_name(&name, p->hash, "keep");
 		unlink_or_warn(name.buf);
 	}
 	strbuf_release(&name);
 }
 
-static int loosen_small_pack(const struct packed_git *p)
+static int loosen_small_pack(const struct packed_but *p)
 {
 	struct child_process unpack = CHILD_PROCESS_INIT;
 
@@ -838,7 +838,7 @@ static int loosen_small_pack(const struct packed_git *p)
 		die_errno("Failed seeking to start of '%s'", p->pack_name);
 
 	unpack.in = p->pack_fd;
-	unpack.git_cmd = 1;
+	unpack.but_cmd = 1;
 	unpack.stdout_to_stderr = 1;
 	strvec_push(&unpack.args, "unpack-objects");
 	if (!show_stats)
@@ -857,7 +857,7 @@ static void end_packfile(void)
 	running = 1;
 	clear_delta_base_cache();
 	if (object_count) {
-		struct packed_git *new_p;
+		struct packed_but *new_p;
 		struct object_id cur_pack_oid;
 		char *idx_name;
 		int i;
@@ -880,12 +880,12 @@ static void end_packfile(void)
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
-		/* Register the packfile with core git's machinery. */
-		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
+		/* Register the packfile with core but's machinery. */
+		new_p = add_packed_but(idx_name, strlen(idx_name), 1);
 		if (!new_p)
-			die("core git rejected index %s", idx_name);
+			die("core but rejected index %s", idx_name);
 		all_packs[pack_id] = new_p;
-		install_packed_git(the_repository, new_p);
+		install_packed_but(the_repository, new_p);
 		free(idx_name);
 
 		/* Print the boundary */
@@ -941,8 +941,8 @@ static int store_object(
 	unsigned char hdr[96];
 	struct object_id oid;
 	unsigned long hdrlen, deltalen;
-	git_hash_ctx c;
-	git_zstream s;
+	but_hash_ctx c;
+	but_zstream s;
 
 	hdrlen = format_object_header((char *)hdr, sizeof(hdr), type,
 				      dat->len);
@@ -978,7 +978,7 @@ static int store_object(
 	} else
 		delta = NULL;
 
-	git_deflate_init(&s, pack_compression_level);
+	but_deflate_init(&s, pack_compression_level);
 	if (delta) {
 		s.next_in = delta;
 		s.avail_in = deltalen;
@@ -986,11 +986,11 @@ static int store_object(
 		s.next_in = (void *)dat->buf;
 		s.avail_in = dat->len;
 	}
-	s.avail_out = git_deflate_bound(&s, s.avail_in);
+	s.avail_out = but_deflate_bound(&s, s.avail_in);
 	s.next_out = out = xmalloc(s.avail_out);
-	while (git_deflate(&s, Z_FINISH) == Z_OK)
+	while (but_deflate(&s, Z_FINISH) == Z_OK)
 		; /* nothing */
-	git_deflate_end(&s);
+	but_deflate_end(&s);
 
 	/* Determine if we should auto-checkpoint. */
 	if ((max_packsize
@@ -1005,14 +1005,14 @@ static int store_object(
 		if (delta) {
 			FREE_AND_NULL(delta);
 
-			git_deflate_init(&s, pack_compression_level);
+			but_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
-			s.avail_out = git_deflate_bound(&s, s.avail_in);
+			s.avail_out = but_deflate_bound(&s, s.avail_in);
 			s.next_out = out = xrealloc(out, s.avail_out);
-			while (git_deflate(&s, Z_FINISH) == Z_OK)
+			while (but_deflate(&s, Z_FINISH) == Z_OK)
 				; /* nothing */
-			git_deflate_end(&s);
+			but_deflate_end(&s);
 		}
 	}
 
@@ -1084,8 +1084,8 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	struct object_id oid;
 	unsigned long hdrlen;
 	off_t offset;
-	git_hash_ctx c;
-	git_zstream s;
+	but_hash_ctx c;
+	but_zstream s;
 	struct hashfile_checkpoint checkpoint;
 	int status = Z_OK;
 
@@ -1105,7 +1105,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 
 	crc32_begin(pack_file);
 
-	git_deflate_init(&s, pack_compression_level);
+	but_deflate_init(&s, pack_compression_level);
 
 	hdrlen = encode_in_pack_object_header(out_buf, out_sz, OBJ_BLOB, len);
 
@@ -1125,7 +1125,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 			len -= n;
 		}
 
-		status = git_deflate(&s, len ? 0 : Z_FINISH);
+		status = but_deflate(&s, len ? 0 : Z_FINISH);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t n = s.next_out - out_buf;
@@ -1144,7 +1144,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 			die("unexpected deflate failure: %d", status);
 		}
 	}
-	git_deflate_end(&s);
+	but_deflate_end(&s);
 	the_hash_algo->final_oid_fn(&oid, &c);
 
 	if (oidout)
@@ -1204,7 +1204,7 @@ static void *gfi_unpack_entry(
 	unsigned long *sizep)
 {
 	enum object_type type;
-	struct packed_git *p = all_packs[oe->pack_id];
+	struct packed_but *p = all_packs[oe->pack_id];
 	if (p == pack_data && p->pack_size < (pack_size + the_hash_algo->rawsz)) {
 		/* The object is stored in the packfile we are writing to
 		 * and we have modified it since the last time we scanned
@@ -2100,7 +2100,7 @@ static uintmax_t do_change_note_fanout(
 	unsigned int i, tmp_hex_oid_len, tmp_fullpath_len;
 	uintmax_t num_notes = 0;
 	struct object_id oid;
-	/* hex oid + '/' between each pair of hex digits + NUL */
+	/* hex oid + '/' between each pair of hex dibuts + NUL */
 	char realpath[GIT_MAX_HEXSZ + ((GIT_MAX_HEXSZ / 2) - 1) + 1];
 	const unsigned hexsz = the_hash_algo->hexsz;
 
@@ -2174,7 +2174,7 @@ static uintmax_t change_note_fanout(struct tree_entry *root,
 		unsigned char fanout)
 {
 	/*
-	 * The size of path is due to one slash between every two hex digits,
+	 * The size of path is due to one slash between every two hex dibuts,
 	 * plus the terminating NUL.  Note that there is no slash at the end, so
 	 * the number of slashes is one less than half the number of hex
 	 * characters.
@@ -3246,7 +3246,7 @@ static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
 		return xstrdup(path);
-	return git_pathdup("info/fast-import/%s", path);
+	return but_pathdup("info/fast-import/%s", path);
 }
 
 static void option_import_marks(const char *marks,
@@ -3346,7 +3346,7 @@ static int parse_one_option(const char *option)
 {
 	if (skip_prefix(option, "max-pack-size=", &option)) {
 		unsigned long v;
-		if (!git_parse_ulong(option, &v))
+		if (!but_parse_ulong(option, &v))
 			return 0;
 		if (v < 8192) {
 			warning("max-pack-size is now in bytes, assuming --max-pack-size=%lum", v);
@@ -3358,7 +3358,7 @@ static int parse_one_option(const char *option)
 		max_packsize = v;
 	} else if (skip_prefix(option, "big-file-threshold=", &option)) {
 		unsigned long v;
-		if (!git_parse_ulong(option, &v))
+		if (!but_parse_ulong(option, &v))
 			return 0;
 		big_file_threshold = v;
 	} else if (skip_prefix(option, "depth=", &option)) {
@@ -3451,35 +3451,35 @@ static void parse_option(const char *option)
 	die("This version of fast-import does not support option: %s", option);
 }
 
-static void git_pack_config(void)
+static void but_pack_config(void)
 {
 	int indexversion_value;
 	int limit;
 	unsigned long packsizelimit_value;
 
-	if (!git_config_get_ulong("pack.depth", &max_depth)) {
+	if (!but_config_get_ulong("pack.depth", &max_depth)) {
 		if (max_depth > MAX_DEPTH)
 			max_depth = MAX_DEPTH;
 	}
-	if (!git_config_get_int("pack.indexversion", &indexversion_value)) {
+	if (!but_config_get_int("pack.indexversion", &indexversion_value)) {
 		pack_idx_opts.version = indexversion_value;
 		if (pack_idx_opts.version > 2)
-			git_die_config("pack.indexversion",
+			but_die_config("pack.indexversion",
 					"bad pack.indexversion=%"PRIu32, pack_idx_opts.version);
 	}
-	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
+	if (!but_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
 		max_packsize = packsizelimit_value;
 
-	if (!git_config_get_int("fastimport.unpacklimit", &limit))
+	if (!but_config_get_int("fastimport.unpacklimit", &limit))
 		unpack_limit = limit;
-	else if (!git_config_get_int("transfer.unpacklimit", &limit))
+	else if (!but_config_get_int("transfer.unpacklimit", &limit))
 		unpack_limit = limit;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 }
 
 static const char fast_import_usage[] =
-"git fast-import [--date-format=<f>] [--max-pack-size=<n>] [--big-file-threshold=<n>] [--depth=<n>] [--active-branches=<n>] [--export-marks=<marks.file>]";
+"but fast-import [--date-format=<f>] [--max-pack-size=<n>] [--big-file-threshold=<n>] [--depth=<n>] [--active-branches=<n>] [--export-marks=<marks.file>]";
 
 static void parse_argv(void)
 {
@@ -3524,7 +3524,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 		usage(fast_import_usage);
 
 	reset_pack_idx_option(&pack_idx_opts);
-	git_pack_config();
+	but_pack_config();
 
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
@@ -3586,10 +3586,10 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 			parse_progress();
 		else if (skip_prefix(command_buf.buf, "feature ", &v))
 			parse_feature(v);
-		else if (skip_prefix(command_buf.buf, "option git ", &v))
+		else if (skip_prefix(command_buf.buf, "option but ", &v))
 			parse_option(v);
 		else if (starts_with(command_buf.buf, "option "))
-			/* ignore non-git options*/;
+			/* ignore non-but options*/;
 		else
 			die("Unsupported command: %s", command_buf.buf);
 

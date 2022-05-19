@@ -59,15 +59,15 @@ echo "$newtime" >"$tmpdir/newtime" || die "Failed to write to '$tmpdir/newtime'"
 
 # Bisecting must be performed from the top level directory (even with --no-checkout)
 (
-	toplevel_dir=$(git rev-parse --show-toplevel) || die "Failed to find top level directory"
+	toplevel_dir=$(but rev-parse --show-toplevel) || die "Failed to find top level directory"
 	cd "$toplevel_dir" || die "Failed to cd into top level directory '$toplevel_dir'"
 
-	git bisect start --no-checkout "$newrev" "$oldrev" || die "Failed to start bisecting"
+	but bisect start --no-checkout "$newrev" "$oldrev" || die "Failed to start bisecting"
 
-	git bisect run t/perf/bisect_run_script "$test_script" "$test_number" "$tmpdir"
+	but bisect run t/perf/bisect_run_script "$test_script" "$test_number" "$tmpdir"
 	res="$?"
 
-	git bisect reset
+	but bisect reset
 
 	exit "$res"
 )

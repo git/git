@@ -10,19 +10,19 @@ Fixes since v1.5.6
   programs but keeping it relative to the current directory internally
   gives 1-3 per-cent performance boost.
 
-* bash completion knows the new --graph option to git-log family.
+* bash completion knows the new --graph option to but-log family.
 
 
-* git-diff -c/--cc showed unnecessary "deletion" lines at the context
+* but-diff -c/--cc showed unnecessary "deletion" lines at the context
   boundary.
 
-* git-for-each-ref ignored %(object) and %(type) requests for tag
+* but-for-each-ref ignored %(object) and %(type) requests for tag
   objects.
 
-* git-merge usage had a typo.
+* but-merge usage had a typo.
 
-* Rebuilding of git-svn metainfo database did not take rewriteRoot
+* Rebuilding of but-svn metainfo database did not take rewriteRoot
   option into account.
 
-* Running "git-rebase --continue/--skip/--abort" before starting a
+* Running "but-rebase --continue/--skip/--abort" before starting a
   rebase gave nonsense error messages.

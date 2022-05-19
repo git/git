@@ -15,14 +15,14 @@
 #include "fsck.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
-static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]";
+static const char unpack_usage[] = "but unpack-objects [-n] [-q] [-r] [--strict]";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
-static git_hash_ctx ctx;
+static but_hash_ctx ctx;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 static struct progress *progress;
 
@@ -98,7 +98,7 @@ static void use(int bytes)
 
 static void *get_data(unsigned long size)
 {
-	git_zstream stream;
+	but_zstream stream;
 	void *buf = xmallocz(size);
 
 	memset(&stream, 0, sizeof(stream));
@@ -107,10 +107,10 @@ static void *get_data(unsigned long size)
 	stream.avail_out = size;
 	stream.next_in = fill(1);
 	stream.avail_in = len;
-	git_inflate_init(&stream);
+	but_inflate_init(&stream);
 
 	for (;;) {
-		int ret = git_inflate(&stream, 0);
+		int ret = but_inflate(&stream, 0);
 		use(len - stream.avail_in);
 		if (stream.total_out == size && ret == Z_STREAM_END)
 			break;
@@ -125,7 +125,7 @@ static void *get_data(unsigned long size)
 		stream.next_in = fill(1);
 		stream.avail_in = len;
 	}
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 	return buf;
 }
 
@@ -520,7 +520,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	quiet = !isatty(2);
 

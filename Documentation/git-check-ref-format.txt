@@ -1,17 +1,17 @@
-git-check-ref-format(1)
+but-check-ref-format(1)
 =======================
 
 NAME
 ----
-git-check-ref-format - Ensures that a reference name is well formed
+but-check-ref-format - Ensures that a reference name is well formed
 
 SYNOPSIS
 --------
 [verse]
-'git check-ref-format' [--normalize]
+'but check-ref-format' [--normalize]
        [--[no-]allow-onelevel] [--refspec-pattern]
        <refname>
-'git check-ref-format' --branch <branchname-shorthand>
+'but check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ branch head is stored in the `refs/heads` hierarchy, while
 a tag is stored in the `refs/tags` hierarchy of the ref namespace
 (typically in `$GIT_DIR/refs/heads` and `$GIT_DIR/refs/tags`
 directories or, as entries in file `$GIT_DIR/packed-refs`
-if refs are packed by `git gc`).
+if refs are packed by `but gc`).
 
 Git imposes the following rules on how references are named:
 
@@ -61,7 +61,7 @@ Git imposes the following rules on how references are named:
 These rules make it easy for shell script based tools to parse
 reference names, pathname expansion by the shell when a reference name is used
 unquoted (by mistake), and also avoid ambiguities in certain
-reference name expressions (see linkgit:gitrevisions[7]):
+reference name expressions (see linkbut:butrevisions[7]):
 
 . A double-dot `..` is often used as in `ref1..ref2`, and in some
   contexts this notation means `^ref1 ref2` (i.e. not in
@@ -73,7 +73,7 @@ reference name expressions (see linkgit:gitrevisions[7]):
 . A colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  'git cat-file': "git cat-file blob v1.3.3:refs.c".
+  'but cat-file': "but cat-file blob v1.3.3:refs.c".
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 
@@ -81,14 +81,14 @@ With the `--branch` option, the command takes a name and checks if
 it can be used as a valid branch name (e.g. when creating a new
 branch). But be cautious when using the
 previous checkout syntax that may refer to a detached HEAD state.
-The rule `git check-ref-format --branch $name` implements
-may be stricter than what `git check-ref-format refs/heads/$name`
+The rule `but check-ref-format --branch $name` implements
+may be stricter than what `but check-ref-format refs/heads/$name`
 says (e.g. a dash may appear at the beginning of a ref component,
 but it is explicitly forbidden at the beginning of a branch name).
 When run with `--branch` option in a repository, the input is first
 expanded for the ``previous checkout syntax''
 `@{-n}`.  For example, `@{-1}` is a way to refer the last thing that
-was checked out using "git switch" or "git checkout" operation.
+was checked out using "but switch" or "but checkout" operation.
 This option should be
 used by porcelains to accept this syntax anywhere a branch name is
 expected, so they can act as if you typed the branch name. As an
@@ -125,16 +125,16 @@ EXAMPLES
 * Print the name of the previous thing checked out:
 +
 ------------
-$ git check-ref-format --branch @{-1}
+$ but check-ref-format --branch @{-1}
 ------------
 
 * Determine the reference name to use for a new branch:
 +
 ------------
-$ ref=$(git check-ref-format --normalize "refs/heads/$newbranch")||
+$ ref=$(but check-ref-format --normalize "refs/heads/$newbranch")||
 { echo "we do not like '$newbranch' as a branch name." >&2 ; exit 1 ; }
 ------------
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

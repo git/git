@@ -15,7 +15,7 @@ if test_have_prereq EXPENSIVE
 then
 	max_count=10000
 fi
-from_rev=" $(git rev-list HEAD | head -n $max_count | tail -n 1).."
+from_rev=" $(but rev-list HEAD | head -n $max_count | tail -n 1).."
 from_rev_desc=" <limit-rev>.."
 
 for icase in \
@@ -30,8 +30,8 @@ do
 		for opts in \
 			'-S'
 		do
-			test_perf "git log $icase$opts'$pattern'$from_rev_desc" "
-				git log --pretty=format:%H $icase$opts'$pattern'$from_rev
+			test_perf "but log $icase$opts'$pattern'$from_rev_desc" "
+				but log --pretty=format:%H $icase$opts'$pattern'$from_rev
 			"
 		done
 	done
@@ -45,8 +45,8 @@ do
 		for opts in \
 			'--pickaxe-regex -S'
 		do
-			test_perf "git log $icase$opts'$pattern'$from_rev_desc" "
-				git log --pretty=format:%H $icase$opts'$pattern'$from_rev
+			test_perf "but log $icase$opts'$pattern'$from_rev_desc" "
+				but log --pretty=format:%H $icase$opts'$pattern'$from_rev
 			"
 		done
 	done
@@ -60,8 +60,8 @@ do
 		for opts in \
 			'-G'
 		do
-			test_perf "git log $icase$opts'$pattern'$from_rev_desc" "
-				git log --pretty=format:%H $icase$opts'$pattern'$from_rev
+			test_perf "but log $icase$opts'$pattern'$from_rev_desc" "
+				but log --pretty=format:%H $icase$opts'$pattern'$from_rev
 			"
 		done
 	done

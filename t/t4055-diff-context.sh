@@ -26,18 +26,18 @@ test_expect_success 'setup' '
 	n
 	EOF
 	sed "/TARGET/d" >x <template &&
-	git update-index --add x &&
-	git cummit -m initial &&
+	but update-index --add x &&
+	but cummit -m initial &&
 
 	sed "s/TARGET/ADDED/" >x <template &&
-	git update-index --add x &&
-	git cummit -m next &&
+	but update-index --add x &&
+	but cummit -m next &&
 
 	sed "s/TARGET/MODIFIED/" >x <template
 '
 
 test_expect_success 'the default number of context lines is 3' '
-	git diff >output &&
+	but diff >output &&
 	! grep "^ d" output &&
 	grep "^ e" output &&
 	grep "^ j" output &&
@@ -45,46 +45,46 @@ test_expect_success 'the default number of context lines is 3' '
 '
 
 test_expect_success 'diff.context honored by "log"' '
-	git log -1 -p >output &&
+	but log -1 -p >output &&
 	! grep firstline output &&
-	git config diff.context 8 &&
-	git log -1 -p >output &&
+	but config diff.context 8 &&
+	but log -1 -p >output &&
 	grep "^ firstline" output
 '
 
 test_expect_success 'The -U option overrides diff.context' '
-	git config diff.context 8 &&
-	git log -U4 -1 >output &&
+	but config diff.context 8 &&
+	but log -U4 -1 >output &&
 	! grep "^ firstline" output
 '
 
 test_expect_success 'diff.context honored by "diff"' '
-	git config diff.context 8 &&
-	git diff >output &&
+	but config diff.context 8 &&
+	but diff >output &&
 	grep "^ firstline" output
 '
 
 test_expect_success 'plumbing not affected' '
-	git config diff.context 8 &&
-	git diff-files -p >output &&
+	but config diff.context 8 &&
+	but diff-files -p >output &&
 	! grep "^ firstline" output
 '
 
 test_expect_success 'non-integer config parsing' '
-	git config diff.context no &&
-	test_must_fail git diff 2>output &&
+	but config diff.context no &&
+	test_must_fail but diff 2>output &&
 	test_i18ngrep "bad numeric config value" output
 '
 
 test_expect_success 'negative integer config parsing' '
-	git config diff.context -1 &&
-	test_must_fail git diff 2>output &&
+	but config diff.context -1 &&
+	test_must_fail but diff 2>output &&
 	test_i18ngrep "bad config variable" output
 '
 
 test_expect_success '-U0 is valid, so is diff.context=0' '
-	git config diff.context 0 &&
-	git diff >output &&
+	but config diff.context 0 &&
+	but diff >output &&
 	grep "^-ADDED" output &&
 	grep "^+MODIFIED" output
 '

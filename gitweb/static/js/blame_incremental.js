@@ -3,7 +3,7 @@
 //          2008-2011, Jakub Narebski <jnareb@gmail.com>
 
 /**
- * @fileOverview JavaScript side of Ajax-y 'blame_incremental' view in gitweb
+ * @fileOverview JavaScript side of Ajax-y 'blame_incremental' view in butweb
  * @license GPLv2 or later
  */
 
@@ -147,7 +147,7 @@ function errorInfo(str) {
 }
 
 /* ............................................................ */
-/* coloring rows during blame_data (git blame --incremental) run */
+/* coloring rows during blame_data (but blame --incremental) run */
 
 /**
  * used to extract N from 'colorN', where N is a number,
@@ -431,7 +431,7 @@ var curcummit = new cummit();
 var curGroup  = {};
 
 /**
- * Parse output from 'git blame --incremental [...]', received via
+ * Parse output from 'but blame --incremental [...]', received via
  * XMLHttpRequest from server (blamedataUrl), and call handleLine
  * (which updates page) as soon as blame entry is completed.
  *
@@ -643,7 +643,7 @@ function handleResponse(xhr, fromTimer) {
 // ------------------------------------------------------------
 
 /**
- * Incrementally update line data in blame_incremental view in gitweb.
+ * Incrementally update line data in blame_incremental view in butweb.
  *
  * @param {String} blamedataUrl: URL to server script generating blame data.
  * @param {String} bUrl: partial URL to project, used to generate links.

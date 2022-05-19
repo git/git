@@ -2,7 +2,7 @@
 #define TEST_TOOL_H
 
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 int cmd__advise_if_enabled(int argc, const char **argv);
 int cmd__bitmap(int argc, const char **argv);

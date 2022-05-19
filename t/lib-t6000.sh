@@ -5,7 +5,7 @@
 # Answer the sha1 has associated with the tag. The tag must exist under refs/tags
 tag () {
 	_tag=$1
-	git rev-parse --verify "refs/tags/$_tag" ||
+	but rev-parse --verify "refs/tags/$_tag" ||
 	error "tag: \"$_tag\" does not exist"
 }
 
@@ -15,7 +15,7 @@ unique_cummit () {
 	_text=$1
 	_tree=$2
 	shift 2
-	echo "$_text" | git cummit-tree $(tag "$_tree") "$@"
+	echo "$_text" | but cummit-tree $(tag "$_tree") "$@"
 }
 
 # Save the output of a command into the tag specified. Prepend
@@ -25,7 +25,7 @@ save_tag () {
 	test -n "$_tag" || error "usage: save_tag tag cummit-args ..."
 	shift 1
 
-	git update-ref "refs/tags/$_tag" $("$@")
+	but update-ref "refs/tags/$_tag" $("$@")
 
 	echo "s/$(tag $_tag)/$_tag/g" >sed.script.tmp
 	cat sed.script >>sed.script.tmp
@@ -59,7 +59,7 @@ as_author () {
 
 cummit_date () {
 	_cummit=$1
-	git cat-file cummit $_cummit |
+	but cat-file cummit $_cummit |
 	sed -n "s/^cummitter .*> \([0-9]*\) .*/\1/p"
 }
 

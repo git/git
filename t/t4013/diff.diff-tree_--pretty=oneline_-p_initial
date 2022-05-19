@@ -1,2 +1,2 @@
-$ git diff-tree --pretty=oneline -p initial
+$ but diff-tree --pretty=oneline -p initial
 $

@@ -1,6 +1,6 @@
 #include "cache.h"
 
-int git_SHA1_Update_Chunked(platform_SHA_CTX *c, const void *data, size_t len)
+int but_SHA1_Update_Chunked(platform_SHA_CTX *c, const void *data, size_t len)
 {
 	size_t nr;
 	size_t total = 0;

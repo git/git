@@ -14,28 +14,28 @@ test_expect_success setup '
 
 	for f in text binary union
 	do
-		echo Initial >$f && git add $f || return 1
+		echo Initial >$f && but add $f || return 1
 	done &&
 	test_tick &&
-	git cummit -m Initial &&
+	but cummit -m Initial &&
 
-	git branch side &&
+	but branch side &&
 	for f in text binary union
 	do
-		echo Main >>$f && git add $f || return 1
+		echo Main >>$f && but add $f || return 1
 	done &&
 	test_tick &&
-	git cummit -m Main &&
+	but cummit -m Main &&
 
-	git checkout side &&
+	but checkout side &&
 	for f in text binary union
 	do
-		echo Side >>$f && git add $f || return 1
+		echo Side >>$f && but add $f || return 1
 	done &&
 	test_tick &&
-	git cummit -m Side &&
+	but cummit -m Side &&
 
-	git tag anchor &&
+	but tag anchor &&
 
 	cat >./custom-merge <<-\EOF &&
 	#!/bin/sh
@@ -62,12 +62,12 @@ test_expect_success setup '
 
 test_expect_success merge '
 
-	cat >.gitattributes <<-\EOF &&
+	cat >.butattributes <<-\EOF &&
 	binary -merge
 	union merge=union
 	EOF
 
-	if git merge main
+	if but merge main
 	then
 		echo Gaah, should have conflicted
 		false
@@ -78,15 +78,15 @@ test_expect_success merge '
 
 test_expect_success 'check merge result in index' '
 
-	git ls-files -u | grep binary &&
-	git ls-files -u | grep text &&
-	! (git ls-files -u | grep union)
+	but ls-files -u | grep binary &&
+	but ls-files -u | grep text &&
+	! (but ls-files -u | grep union)
 
 '
 
 test_expect_success 'check merge result in working tree' '
 
-	git cat-file -p HEAD:binary >binary-orig &&
+	but cat-file -p HEAD:binary >binary-orig &&
 	grep "<<<<<<<" text &&
 	cmp binary-orig binary &&
 	! grep "<<<<<<<" union &&
@@ -96,8 +96,8 @@ test_expect_success 'check merge result in working tree' '
 '
 
 test_expect_success 'retry the merge with longer context' '
-	echo text conflict-marker-size=32 >>.gitattributes &&
-	git checkout -m text &&
+	echo text conflict-marker-size=32 >>.butattributes &&
+	but checkout -m text &&
 	sed -ne "/^\([<=>]\)\1\1\1*/{
 		s/ .*$//
 		p
@@ -109,22 +109,22 @@ test_expect_success 'retry the merge with longer context' '
 
 test_expect_success 'custom merge backend' '
 
-	echo "* merge=union" >.gitattributes &&
-	echo "text merge=custom" >>.gitattributes &&
+	echo "* merge=union" >.butattributes &&
+	echo "text merge=custom" >>.butattributes &&
 
-	git reset --hard anchor &&
-	git config --replace-all \
+	but reset --hard anchor &&
+	but config --replace-all \
 	merge.custom.driver "./custom-merge %O %A %B 0 %P" &&
-	git config --replace-all \
+	but config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
-	git merge main &&
+	but merge main &&
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git unpack-file main^:text) &&
-	a=$(git unpack-file side^:text) &&
-	b=$(git unpack-file main:text) &&
+	o=$(but unpack-file main^:text) &&
+	a=$(but unpack-file side^:text) &&
+	b=$(but unpack-file main:text) &&
 	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
@@ -133,13 +133,13 @@ test_expect_success 'custom merge backend' '
 
 test_expect_success 'custom merge backend' '
 
-	git reset --hard anchor &&
-	git config --replace-all \
+	but reset --hard anchor &&
+	but config --replace-all \
 	merge.custom.driver "./custom-merge %O %A %B 1 %P" &&
-	git config --replace-all \
+	but config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
-	if git merge main
+	if but merge main
 	then
 		echo "Eh? should have conflicted"
 		false
@@ -149,9 +149,9 @@ test_expect_success 'custom merge backend' '
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git unpack-file main^:text) &&
-	a=$(git unpack-file anchor:text) &&
-	b=$(git unpack-file main:text) &&
+	o=$(but unpack-file main^:text) &&
+	a=$(but unpack-file anchor:text) &&
+	b=$(but unpack-file main:text) &&
 	sh -c "./custom-merge $o $a $b 0 text" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
@@ -168,30 +168,30 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	(
 		cd repo1 &&
 		>a &&
-		git add a &&
-		git cummit -m initial
+		but add a &&
+		but cummit -m initial
 	) &&
 	test_tick &&
 	(
 		cd repo2 &&
-		git cummit --allow-empty -m initial
+		but cummit --allow-empty -m initial
 	) &&
 	test_tick &&
 	(
 		cd repo1 &&
-		git fetch ../repo2 main &&
-		git merge --allow-unrelated-histories FETCH_HEAD
+		but fetch ../repo2 main &&
+		but merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
 test_expect_success 'custom merge does not lock index' '
-	git reset --hard anchor &&
+	but reset --hard anchor &&
 	write_script sleep-an-hour.sh <<-\EOF &&
 		sleep 3600 &
 		echo $! >sleep.pid
 	EOF
 
-	test_write_lines >.gitattributes \
+	test_write_lines >.butattributes \
 		"* merge=ours" "text merge=sleep-an-hour" &&
 	test_config merge.ours.driver true &&
 	test_config merge.sleep-an-hour.driver ./sleep-an-hour.sh &&
@@ -204,28 +204,28 @@ test_expect_success 'custom merge does not lock index' '
 	# By packaging the command in test_when_finished, we get both
 	# the correctness check and the clean-up.
 	test_when_finished "kill \$(cat sleep.pid)" &&
-	git merge main
+	but merge main
 '
 
 test_expect_success 'binary files with union attribute' '
-	git checkout -b bin-main &&
+	but checkout -b bin-main &&
 	printf "base\0" >bin.txt &&
-	echo "bin.txt merge=union" >.gitattributes &&
-	git add bin.txt .gitattributes &&
-	git cummit -m base &&
+	echo "bin.txt merge=union" >.butattributes &&
+	but add bin.txt .butattributes &&
+	but cummit -m base &&
 
 	printf "one\0" >bin.txt &&
-	git cummit -am one &&
+	but cummit -am one &&
 
-	git checkout -b bin-side HEAD^ &&
+	but checkout -b bin-side HEAD^ &&
 	printf "two\0" >bin.txt &&
-	git cummit -am two &&
+	but cummit -am two &&
 
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test_must_fail git merge bin-main >output
+		test_must_fail but merge bin-main >output
 	else
-		test_must_fail git merge bin-main 2>output
+		test_must_fail but merge bin-main 2>output
 	fi &&
 	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
 '

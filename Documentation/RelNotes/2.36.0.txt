@@ -6,10 +6,10 @@ Updates since Git 2.35
 
 Backward compatibility warts
 
- * "git name-rev --stdin" has been deprecated and issues a warning
-   when used; use "git name-rev --annotate-stdin" instead.
+ * "but name-rev --stdin" has been deprecated and issues a warning
+   when used; use "but name-rev --annotate-stdin" instead.
 
- * "git clone --filter=... --recurse-submodules" only makes the
+ * "but clone --filter=... --recurse-submodules" only makes the
    top-level a partial clone, while submodules are fully cloned.  This
    behaviour is changed to pass the same filter down to the submodules.
 
@@ -36,15 +36,15 @@ Note to those who build from the source
 
 UI, Workflows & Features
 
- * Assorted updates to "git cat-file", especially "-h".
+ * Assorted updates to "but cat-file", especially "-h".
 
  * The command line completion (in contrib/) learns to complete
-   arguments to give to "git sparse-checkout" command.
+   arguments to give to "but sparse-checkout" command.
 
- * "git log --remerge-diff" shows the difference from mechanical merge
+ * "but log --remerge-diff" shows the difference from mechanical merge
    result and the result that is actually recorded in a merge cummit.
 
- * "git log" and friends learned an option --exclude-first-parent-only
+ * "but log" and friends learned an option --exclude-first-parent-only
    to propagate UNINTERESTING bit down only along the first-parent
    chain, just like --first-parent option shows cummits that lack the
    UNINTERESTING bit only along the first-parent chain.
@@ -53,10 +53,10 @@ UI, Workflows & Features
    complete all Git subcommands, including the ones that are normally
    hidden, when GIT_COMPLETION_SHOW_ALL_COMMANDS is used.
 
- * "git branch" learned the "--recurse-submodules" option.
+ * "but branch" learned the "--recurse-submodules" option.
 
  * A user can forget to make a script file executable before giving
-   it to "git bisect run".  In such a case, all tests will exit with
+   it to "but bisect run".  In such a case, all tests will exit with
    126 or 127 error codes, even on revisions that are marked as good.
    Try to recognize this situation and stop iteration early.
 
@@ -64,7 +64,7 @@ UI, Workflows & Features
    allowed input size, include the value of the limit in the error
    message.
 
- * The error message given by "git switch HEAD~4" has been clarified
+ * The error message given by "but switch HEAD~4" has been clarified
    to suggest the "--detach" option that is required.
 
  * In sparse-checkouts, files mis-marked as missing from the working tree
@@ -72,14 +72,14 @@ UI, Workflows & Features
    harder to correct.  Automatically detecting and correcting the marking
    of such files has been added to avoid these problems.
 
- * "git cat-file" learns "--batch-command" mode, which is a more
+ * "but cat-file" learns "--batch-command" mode, which is a more
    flexible interface than the existing "--batch" or "--batch-check"
    modes, to allow different kinds of inquiries made.
 
  * The level of verbose output from the ort backend during inner merge
    has been aligned to that of the recursive backend.
 
- * "git remote rename A B", depending on the number of remote-tracking
+ * "but remote rename A B", depending on the number of remote-tracking
    refs involved, takes long time renaming them.  The command has been
    taught to show progress bar while making the user wait.
 
@@ -89,32 +89,32 @@ UI, Workflows & Features
 
  * A new built-in userdiff driver for kotlin has been added.
 
- * "git repack" learned a new configuration to disable triggering of
+ * "but repack" learned a new configuration to disable triggering of
    age-old "update-server-info" command, which is rarely useful these
    days.
 
- * "git stash" does not allow subcommands it internally runs as its
-   implementation detail, except for "git reset", to emit messages;
-   now "git reset" part has also been squelched.
+ * "but stash" does not allow subcommands it internally runs as its
+   implementation detail, except for "but reset", to emit messages;
+   now "but reset" part has also been squelched.
 
- * "git ls-tree" learns "--oid-only" option, similar to "--name-only",
+ * "but ls-tree" learns "--oid-only" option, similar to "--name-only",
    and more generalized "--format" option.
 
- * "git fetch --refetch" learned to fetch everything without telling
+ * "but fetch --refetch" learned to fetch everything without telling
    the other side what we already have, which is useful when you
    cannot trust what you have in the local object store.
 
- * "git branch" gives hint when branch tracking cannot be established
+ * "but branch" gives hint when branch tracking cannot be established
    because fetch refspecs from multiple remote repositories overlap.
 
- * "git worktree list --porcelain" did not c-quote pathnames and lock
+ * "but worktree list --porcelain" did not c-quote pathnames and lock
    reasons with unsafe bytes correctly, which is worked around by
    introducing NUL terminated output format with "-z".
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * "git apply" (ab)used the util pointer of the string-list to keep
+ * "but apply" (ab)used the util pointer of the string-list to keep
    track of how each symbolic link needs to be handled, which has been
    simplified by using strset.
 
@@ -122,22 +122,22 @@ Performance, Internal Implementation, Development Support etc.
    alignment requirement of data being sorted in compatibility
    implementation of qsort_s() and stable qsort().
 
- * Use the parse-options API in "git reflog" command.
+ * Use the parse-options API in "but reflog" command.
 
  * The conditional inclusion mechanism of configuration files using
    "[includeIf <condition>]" learns to base its decision on the
    URL of the remote repository the repository interacts with.
    (merge 399b198489 jt/conditional-config-on-remote-url later to maint).
 
- * "git name-rev --stdin" does not behave like usual "--stdin" at
+ * "but name-rev --stdin" does not behave like usual "--stdin" at
    all.  Start the process of renaming it to "--annotate-stdin".
    (merge a2585719b3 jc/name-rev-stdin later to maint).
 
- * "git update-index", "git checkout-index", and "git clean" are
+ * "but update-index", "but checkout-index", and "but clean" are
    taught to work better with the sparse checkout feature.
 
  * Use an internal call to reset_head() helper function instead of
-   spawning "git checkout" in "rebase", and update code paths that are
+   spawning "but checkout" in "rebase", and update code paths that are
    involved in the change.
 
  * Messages "ort" merge backend prepares while dealing with conflicted
@@ -163,19 +163,19 @@ Performance, Internal Implementation, Development Support etc.
  * Makefile refactoring with a bit of suffixes rule stripping to
    optimize the runtime overhead.
 
- * "git stash drop" is reimplemented as an internal call to
-   reflog_delete() function, instead of invoking "git reflog delete"
+ * "but stash drop" is reimplemented as an internal call to
+   reflog_delete() function, instead of invoking "but reflog delete"
    via run_command() API.
 
  * Count string_list items in size_t, not "unsigned int".
 
- * The single-key interactive operation used by "git add -p" has been
+ * The single-key interactive operation used by "but add -p" has been
    made more robust.
 
- * Remove unneeded <meta http-equiv=content-type...> from gitweb
+ * Remove unneeded <meta http-equiv=content-type...> from butweb
    output.
 
- * "git name-rev" learned to use the generation numbers when setting
+ * "but name-rev" learned to use the generation numbers when setting
    the lower bound of searching cummits used to explain the revision,
    when available, instead of cummitter time.
 
@@ -185,7 +185,7 @@ Performance, Internal Implementation, Development Support etc.
  * Updates to refs traditionally weren't fsync'ed, but we can
    configure using core.fsync variable to do so.
 
- * "git reflog" command now uses parse-options API to parse its
+ * "but reflog" command now uses parse-options API to parse its
    command line options.
 
 
@@ -195,13 +195,13 @@ Fixes since v2.35
  * "rebase" and "stash" in secondary worktrees are broken in
    Git 2.35.0, which has been corrected.
 
- * "git pull --rebase" ignored the rebase.autostash configuration
+ * "but pull --rebase" ignored the rebase.autostash configuration
    variable when the remote history is a descendant of our history,
    which has been corrected.
    (merge 3013d98d7a pb/pull-rebase-autostash-fix later to maint).
 
- * "git update-index --refresh" has been taught to deal better with
-   racy timestamps (just like "git status" already does).
+ * "but update-index --refresh" has been taught to deal better with
+   racy timestamps (just like "but status" already does).
    (merge 2ede073fd2 ms/update-index-racy later to maint).
 
  * Avoid tests that are run under GIT_TRACE2 set from failing
@@ -217,11 +217,11 @@ Fixes since v2.35
    before other args, which has been corrected.
    (merge c11f95010c tl/doc-cli-options-first later to maint).
 
- * "git add -p" rewritten in C regressed hunk splitting in some cases,
+ * "but add -p" rewritten in C regressed hunk splitting in some cases,
    which has been corrected.
    (merge 7008ddc645 pw/add-p-hunk-split-fix later to maint).
 
- * "git fetch --negotiate-only" is an internal command used by "git
+ * "but fetch --negotiate-only" is an internal command used by "but
    push" to figure out which part of our history is missing from the
    other side.  It should never recurse into submodules even when
    fetch.recursesubmodules configuration variable is set, nor it
@@ -233,7 +233,7 @@ Fixes since v2.35
    work better on a system with CRLF line endings.
    (merge caeef01ea7 fs/ssh-signing-crlf later to maint).
 
- * "git sparse-checkout init" failed to write into $GIT_DIR/info
+ * "but sparse-checkout init" failed to write into $GIT_DIR/info
    directory when the repository was created without one, which has
    been corrected to auto-create it.
    (merge 7f44842ac1 jt/sparse-checkout-leading-dir-fix later to maint).
@@ -257,7 +257,7 @@ Fixes since v2.35
  * Update the contributor-facing documents on proposed log messages.
    (merge cdba0295b0 jc/doc-log-messages later to maint).
 
- * When "git fetch --prune" failed to prune the refs it wanted to
+ * When "but fetch --prune" failed to prune the refs it wanted to
    prune, the command issued error messages but exited with exit
    status 0, which has been corrected.
    (merge c9e04d905e tg/fetch-prune-exit-code-fix later to maint).
@@ -278,15 +278,15 @@ Fixes since v2.35
    feature.experimental configuration variables has been corrected.
    (merge 714edc620c en/fetch-negotiation-default-fix later to maint).
 
- * "git diff --diff-filter=aR" is now parsed correctly.
+ * "but diff --diff-filter=aR" is now parsed correctly.
    (merge 75408ca949 js/diff-filter-negation-fix later to maint).
 
- * When "git subtree" wants to create a merge, it used "git merge" and
+ * When "but subtree" wants to create a merge, it used "but merge" and
    let it be affected by end-user's "merge.ff" configuration, which
    has been corrected.
    (merge 9158a3564a tk/subtree-merge-not-ff-only later to maint).
 
- * Unlike "git apply", "git patch-id" did not handle patches with
+ * Unlike "but apply", "but patch-id" did not handle patches with
    hunks that has only 1 line in either preimage or postimage, which
    has been corrected.
    (merge 757e75c81e jz/patch-id-hunk-header-parsing-fix later to maint).
@@ -298,12 +298,12 @@ Fixes since v2.35
    future "gc" needs to clean up.
    (merge 5407764069 cb/clear-quarantine-early-on-all-ref-update-errors later to maint).
 
- * When there is no object to write .bitmap file for, "git
+ * When there is no object to write .bitmap file for, "but
    multi-pack-index" triggered an error, instead of just skipping,
    which has been corrected.
    (merge eb57277ba3 tb/midx-no-bitmap-for-no-objects later to maint).
 
- * "git cmd -h" outside a repository should error out cleanly for many
+ * "but cmd -h" outside a repository should error out cleanly for many
    commands, but instead it hit a BUG(), which has been corrected.
    (merge 87ad07d735 js/short-help-outside-repo-fix later to maint).
 
@@ -317,7 +317,7 @@ Fixes since v2.35
  * Test modernization.
    (merge d4fe066e4b sy/t0001-use-path-is-helper later to maint).
 
- * "git log --graph --graph" used to leak a graph structure, and there
+ * "but log --graph --graph" used to leak a graph structure, and there
    was no way to countermand "--graph" that appear earlier on the
    command line.  A "--no-graph" option has been added and resource
    leakage has been plugged.
@@ -326,7 +326,7 @@ Fixes since v2.35
    improved.
    (merge 3a73c1dfaf ab/ambiguous-object-name later to maint).
 
- * "git sparse-checkout" wants to work with per-worktree configuration,
+ * "but sparse-checkout" wants to work with per-worktree configuration,
    but did not work well in a worktree attached to a bare repository.
    (merge 3ce1138272 ds/sparse-checkout-requires-per-worktree-config later to maint).
 
@@ -341,7 +341,7 @@ Fixes since v2.35
  * Document Taylor as a new member of Git PLC at SFC.  Welcome.
    (merge e8d56ca863 tb/coc-plc-update later to maint).
 
- * "git checkout -b branch/with/multi/level/name && git stash" only
+ * "but checkout -b branch/with/multi/level/name && but stash" only
    recorded the last level component of the branch name, which has
    been corrected.
 
@@ -359,7 +359,7 @@ Fixes since v2.35
    on-disk index file when there is no other change to the index,
    which has been corrected.
 
- * "git config -h" did not describe the "--type" option correctly.
+ * "but config -h" did not describe the "--type" option correctly.
    (merge 5445124fad mf/fix-type-in-config-h later to maint).
 
  * The way generation number v2 in the cummit-graph files are
@@ -370,13 +370,13 @@ Fixes since v2.35
    with newer versions of glibc.
    (merge baedc59543 ep/test-malloc-check-with-glibc-2.34 later to maint).
 
- * When "git fetch --recurse-submodules" grabbed submodule cummits
+ * When "but fetch --recurse-submodules" grabbed submodule cummits
    that would be needed to recursively check out newly fetched cummits
    in the superproject, it only paid attention to submodules that are
    in the current checkout of the superproject.  We now do so for all
-   submodules that have been run "git submodule init" on.
+   submodules that have been run "but submodule init" on.
 
- * "git rebase $base $non_branch_cummit", when $base is an ancestor or
+ * "but rebase $base $non_branch_cummit", when $base is an ancestor or
    the $non_branch_cummit, modified the current branch, which has been
    corrected.
 
@@ -387,12 +387,12 @@ Fixes since v2.35
    filename of the file we failed to fsync, even though the
    information was readily available, which has been corrected.
 
- * "git am" can read from the standard input when no mailbox is given
+ * "but am" can read from the standard input when no mailbox is given
    on the command line, but the end-user gets no indication when it
    happens, making Git appear stuck.
    (merge 7b20af6a06 jc/mailsplit-warn-on-tty later to maint).
 
- * "git mv" failed to refresh the cached stat information for the
+ * "but mv" failed to refresh the cached stat information for the
    entry it moved.
    (merge b7f9130a06 vd/mv-refresh-stat later to maint).
 
@@ -412,7 +412,7 @@ Fixes since v2.35
    (merge 74f3390dde sy/diff-usage-typofix later to maint).
    (merge 45d0212a71 ll/doc-mktree-typofix later to maint).
    (merge e9b272e4c1 js/no-more-legacy-stash later to maint).
-   (merge 6798b08e84 ab/do-not-hide-failures-in-git-dot-pm later to maint).
+   (merge 6798b08e84 ab/do-not-hide-failures-in-but-dot-pm later to maint).
    (merge 9325285df4 po/doc-check-ignore-markup-fix later to maint).
    (merge cd26cd6c7c sy/modernize-t-lib-read-tree-m-3way later to maint).
    (merge d17294a05e ab/hash-object-leakfix later to maint).
@@ -421,7 +421,7 @@ Fixes since v2.35
    (merge 04bf052eef ab/grep-patterntype later to maint).
    (merge 6ee36364eb ab/diff-free-more later to maint).
    (merge 63a36017fe nj/read-tree-doc-reffix later to maint).
-   (merge eed36fce38 sm/no-git-in-upstream-of-pipe-in-tests later to maint).
+   (merge eed36fce38 sm/no-but-in-upstream-of-pipe-in-tests later to maint).
    (merge c614beb933 ep/t6423-modernize later to maint).
    (merge 57be9c6dee ab/reflog-prep-fix later to maint).
    (merge 5327d8982a js/in-place-reverse-in-sequencer later to maint).

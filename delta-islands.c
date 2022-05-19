@@ -339,7 +339,7 @@ static int island_config_callback(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "pack.islandcore"))
-		return git_config_string(&core_island_name, k, v);
+		return but_config_string(&core_island_name, k, v);
 
 	return 0;
 }
@@ -459,7 +459,7 @@ void load_delta_islands(struct repository *r, int progress)
 	island_marks = kh_init_oid_map();
 	remote_islands = kh_init_str();
 
-	git_config(island_config_callback, NULL);
+	but_config(island_config_callback, NULL);
 	for_each_ref(find_island_for_ref, NULL);
 	deduplicate_islands(r);
 

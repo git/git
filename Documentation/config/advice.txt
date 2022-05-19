@@ -9,7 +9,7 @@ advice.*::
 		the same remote-tracking branch namespace and causes branch
 		tracking set-up to fail.
 	fetchShowForcedUpdates::
-		Advice shown when linkgit:git-fetch[1] takes a long time
+		Advice shown when linkbut:but-fetch[1] takes a long time
 		to calculate forced updates after ref updates, or to warn
 		that the check is disabled.
 	pushUpdateRejected::
@@ -18,62 +18,62 @@ advice.*::
 		'pushFetchFirst', 'pushNeedsForce', and 'pushRefNeedsUpdate'
 		simultaneously.
 	pushNonFFCurrent::
-		Advice shown when linkgit:git-push[1] fails due to a
+		Advice shown when linkbut:but-push[1] fails due to a
 		non-fast-forward update to the current branch.
 	pushNonFFMatching::
-		Advice shown when you ran linkgit:git-push[1] and pushed
+		Advice shown when you ran linkbut:but-push[1] and pushed
 		'matching refs' explicitly (i.e. you used ':', or
 		specified a refspec that isn't your current branch) and
 		it resulted in a non-fast-forward error.
 	pushAlreadyExists::
-		Shown when linkgit:git-push[1] rejects an update that
+		Shown when linkbut:but-push[1] rejects an update that
 		does not qualify for fast-forwarding (e.g., a tag.)
 	pushFetchFirst::
-		Shown when linkgit:git-push[1] rejects an update that
+		Shown when linkbut:but-push[1] rejects an update that
 		tries to overwrite a remote ref that points at an
 		object we do not have.
 	pushNeedsForce::
-		Shown when linkgit:git-push[1] rejects an update that
+		Shown when linkbut:but-push[1] rejects an update that
 		tries to overwrite a remote ref that points at an
 		object that is not a cummit-ish, or make the remote
 		ref point at an object that is not a cummit-ish.
 	pushUnqualifiedRefname::
-		Shown when linkgit:git-push[1] gives up trying to
+		Shown when linkbut:but-push[1] gives up trying to
 		guess based on the source and destination refs what
 		remote ref namespace the source belongs in, but where
 		we can still suggest that the user push to either
 		refs/heads/* or refs/tags/* based on the type of the
 		source object.
 	pushRefNeedsUpdate::
-		Shown when linkgit:git-push[1] rejects a forced update of
+		Shown when linkbut:but-push[1] rejects a forced update of
 		a branch when its remote-tracking ref has updates that we
 		do not have locally.
 	skippedCherryPicks::
-		Shown when linkgit:git-rebase[1] skips a cummit that has already
+		Shown when linkbut:but-rebase[1] skips a cummit that has already
 		been cherry-picked onto the upstream branch.
 	statusAheadBehind::
-		Shown when linkgit:git-status[1] computes the ahead/behind
+		Shown when linkbut:but-status[1] computes the ahead/behind
 		counts for a local ref compared to its remote tracking ref,
 		and that calculation takes longer than expected. Will not
 		appear if `status.aheadBehind` is false or the option
 		`--no-ahead-behind` is given.
 	statusHints::
 		Show directions on how to proceed from the current
-		state in the output of linkgit:git-status[1], in
+		state in the output of linkbut:but-status[1], in
 		the template shown when writing cummit messages in
-		linkgit:git-cummit[1], and in the help message shown
-		by linkgit:git-switch[1] or
-		linkgit:git-checkout[1] when switching branch.
+		linkbut:but-cummit[1], and in the help message shown
+		by linkbut:but-switch[1] or
+		linkbut:but-checkout[1] when switching branch.
 	statusUoption::
-		Advise to consider using the `-u` option to linkgit:git-status[1]
+		Advise to consider using the `-u` option to linkbut:but-status[1]
 		when the command takes more than 2 seconds to enumerate untracked
 		files.
 	cummitBeforeMerge::
-		Advice shown when linkgit:git-merge[1] refuses to
+		Advice shown when linkbut:but-merge[1] refuses to
 		merge to avoid overwriting local changes.
 	resetNoRefresh::
 		Advice to consider using the `--no-refresh` option to
-		linkgit:git-reset[1] when the command takes more than 2 seconds
+		linkbut:but-reset[1] when the command takes more than 2 seconds
 		to refresh the index after reset.
 	resolveConflict::
 		Advice shown by various commands when conflicts
@@ -86,15 +86,15 @@ advice.*::
 		domain name.
 	detachedHead::
 		Advice shown when you used
-		linkgit:git-switch[1] or linkgit:git-checkout[1]
+		linkbut:but-switch[1] or linkbut:but-checkout[1]
 		to move to the detach HEAD state, to instruct how to
 		create a local branch after the fact.
 	suggestDetachingHead::
-		Advice shown when linkgit:git-switch[1] refuses to detach HEAD
+		Advice shown when linkbut:but-switch[1] refuses to detach HEAD
 		without the explicit `--detach` option.
 	checkoutAmbiguousRemoteBranchName::
 		Advice shown when the argument to
-		linkgit:git-checkout[1] and linkgit:git-switch[1]
+		linkbut:but-checkout[1] and linkbut:but-switch[1]
 		ambiguously resolves to a
 		remote tracking branch on more than one remote in
 		situations where an unambiguous argument would have
@@ -105,13 +105,13 @@ advice.*::
 		advice would be printed.
 	amWorkDir::
 		Advice that shows the location of the patch file when
-		linkgit:git-am[1] fails to apply it.
+		linkbut:but-am[1] fails to apply it.
 	rmHints::
-		In case of failure in the output of linkgit:git-rm[1],
+		In case of failure in the output of linkbut:but-rm[1],
 		show directions on how to proceed from the current state.
 	addEmbeddedRepo::
 		Advice on what to do when you've accidentally added one
-		git repo inside of another.
+		but repo inside of another.
 	ignoredHook::
 		Advice shown if a hook is ignored because the hook is not
 		set as executable.
@@ -125,7 +125,7 @@ advice.*::
 		configured to "die" causes a fatal error.
 	submodulesNotUpdated::
 		Advice shown when a user runs a submodule command that fails
-		because `git submodule update --init` was not run.
+		because `but submodule update --init` was not run.
 	addIgnoredFile::
 		Advice shown if a user attempts to add an ignored file to
 		the index.
@@ -133,7 +133,7 @@ advice.*::
 		Advice shown if a user runs the add command without providing
 		the pathspec parameter.
 	updateSparsePath::
-		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
+		Advice shown when either linkbut:but-add[1] or linkbut:but-rm[1]
 		is asked to update index entries outside the current sparse
 		checkout.
 --

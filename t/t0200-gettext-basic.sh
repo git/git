@@ -12,8 +12,8 @@ test_expect_success "sanity: \$GIT_INTERNAL_GETTEXT_SH_SCHEME is set (to $GIT_IN
     test -n "$GIT_INTERNAL_GETTEXT_SH_SCHEME"
 '
 
-test_expect_success 'sanity: $TEXTDOMAIN is git' '
-    test $TEXTDOMAIN = "git"
+test_expect_success 'sanity: $TEXTDOMAIN is but' '
+    test $TEXTDOMAIN = "but"
 '
 
 test_expect_success 'xgettext sanity: Perl _() strings are not extracted' '
@@ -37,7 +37,7 @@ test_expect_success GETTEXT 'sanity: $TEXTDOMAINDIR exists without NO_GETTEXT=Ye
 '
 
 test_expect_success GETTEXT 'sanity: Icelandic locale was compiled' '
-    test -f "$TEXTDOMAINDIR/is/LC_MESSAGES/git.mo"
+    test -f "$TEXTDOMAINDIR/is/LC_MESSAGES/but.mo"
 '
 
 # TODO: When we have more locales, generalize this to test them
@@ -46,7 +46,7 @@ test_expect_success GETTEXT_LOCALE 'sanity: gettext("") metadata is OK' '
     # Return value may be non-zero
     LANGUAGE=is LC_ALL="$is_IS_locale" gettext "" >zero-expect &&
     grep "Project-Id-Version: Git" zero-expect &&
-    grep "Git Mailing List <git@vger.kernel.org>" zero-expect &&
+    grep "Git Mailing List <but@vger.kernel.org>" zero-expect &&
     grep "Content-Type: text/plain; charset=UTF-8" zero-expect &&
     grep "Content-Transfer-Encoding: 8bit" zero-expect
 '
@@ -62,10 +62,10 @@ test_expect_success GETTEXT_LOCALE 'sanity: gettext(unknown) is passed through' 
 test_expect_success GETTEXT_LOCALE 'xgettext: C extraction of _() and N_() strings' '
     printf "TILRAUN: C tilraunastrengur" >expect &&
     printf "\n" >>expect &&
-    printf "Sjá '\''git help SKIPUN'\'' til að sjá hjálp fyrir tiltekna skipun." >>expect &&
+    printf "Sjá '\''but help SKIPUN'\'' til að sjá hjálp fyrir tiltekna skipun." >>expect &&
     LANGUAGE=is LC_ALL="$is_IS_locale" gettext "TEST: A C test string" >actual &&
     printf "\n" >>actual &&
-    LANGUAGE=is LC_ALL="$is_IS_locale" gettext "See '\''git help COMMAND'\'' for more information on a specific command." >>actual &&
+    LANGUAGE=is LC_ALL="$is_IS_locale" gettext "See '\''but help COMMAND'\'' for more information on a specific command." >>actual &&
     test_cmp expect actual
 '
 

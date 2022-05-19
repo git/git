@@ -1,13 +1,13 @@
 
 	delete tempdir
 
-	'git subtree rejoin' option to do the same as --rejoin, eg. after a
+	'but subtree rejoin' option to do the same as --rejoin, eg. after a
 	  rebase
 
 	--prefix doesn't force the subtree correctly in merge/pull:
 	"-s subtree" should be given an explicit subtree option?
 		There doesn't seem to be a way to do this.  We'd have to
-		patch git-merge-subtree.  Ugh.
+		patch but-merge-subtree.  Ugh.
 		(but we could avoid this problem by generating squashes with
 		exactly the right subtree structure, rather than using
 		subtree merge...)
@@ -31,7 +31,7 @@
 
 	if you try to add (or maybe merge?) with an invalid cummitid, you
 		get a misleading "prefix must end with /" message from
-		one of the other git tools that git-subtree calls.  Should
+		one of the other but tools that but-subtree calls.  Should
 		detect this situation and print the *real* problem.
 
 	"pull --squash" should do fetch-synthesize-merge, but instead just
@@ -44,5 +44,5 @@
 
 	guess --prefix automatically if possible based on pwd
 
-	make a 'git subtree grafts' that automatically expands --squash'd
+	make a 'but subtree grafts' that automatically expands --squash'd
 		cummits so you can see the full history if you want it.

@@ -20,59 +20,59 @@ compare_refs() {
 		fail='!' &&
 		shift
 	fi &&
-	git --git-dir="$1/.git" rev-parse --verify $2 >expect &&
-	git --git-dir="$3/.git" rev-parse --verify $4 >actual &&
+	but --but-dir="$1/.but" rev-parse --verify $2 >expect &&
+	but --but-dir="$3/.but" rev-parse --verify $4 >actual &&
 	eval $fail test_cmp expect actual
 }
 
 test_expect_success 'setup repository' '
-	git init server &&
+	but init server &&
 	(cd server &&
 	 echo content >file &&
-	 git add file &&
-	 git cummit -m one)
+	 but add file &&
+	 but cummit -m one)
 '
 
 test_expect_success 'cloning from local repo' '
-	git clone "testgit::${PWD}/server" local &&
+	but clone "testbut::${PWD}/server" local &&
 	test_cmp server/file local/file
 '
 
 test_expect_success 'create new cummit on remote' '
 	(cd server &&
 	 echo content >>file &&
-	 git cummit -a -m two)
+	 but cummit -a -m two)
 '
 
 test_expect_success 'pulling from local repo' '
-	(cd local && git pull) &&
+	(cd local && but pull) &&
 	test_cmp server/file local/file
 '
 
 test_expect_success 'pushing to local repo' '
 	(cd local &&
 	echo content >>file &&
-	git cummit -a -m three &&
-	git push) &&
+	but cummit -a -m three &&
+	but push) &&
 	compare_refs local HEAD server HEAD
 '
 
 test_expect_success 'fetch new branch' '
 	(cd server &&
-	 git reset --hard &&
-	 git checkout -b new &&
+	 but reset --hard &&
+	 but checkout -b new &&
 	 echo content >>file &&
-	 git cummit -a -m five
+	 but cummit -a -m five
 	) &&
 	(cd local &&
-	 git fetch origin new
+	 but fetch origin new
 	) &&
 	compare_refs server HEAD local FETCH_HEAD
 '
 
 test_expect_success 'fetch multiple branches' '
 	(cd local &&
-	 git fetch
+	 but fetch
 	) &&
 	compare_refs server main local refs/remotes/origin/main &&
 	compare_refs server new local refs/remotes/origin/new
@@ -80,122 +80,122 @@ test_expect_success 'fetch multiple branches' '
 
 test_expect_success 'push when remote has extra refs' '
 	(cd local &&
-	 git reset --hard origin/main &&
+	 but reset --hard origin/main &&
 	 echo content >>file &&
-	 git cummit -a -m six &&
-	 git push
+	 but cummit -a -m six &&
+	 but push
 	) &&
 	compare_refs local main server main
 '
 
 test_expect_success 'push new branch by name' '
 	(cd local &&
-	 git checkout -b new-name  &&
+	 but checkout -b new-name  &&
 	 echo content >>file &&
-	 git cummit -a -m seven &&
-	 git push origin new-name
+	 but cummit -a -m seven &&
+	 but push origin new-name
 	) &&
 	compare_refs local HEAD server refs/heads/new-name
 '
 
 test_expect_success 'push new branch with old:new refspec' '
 	(cd local &&
-	 git push origin new-name:new-refspec
+	 but push origin new-name:new-refspec
 	) &&
 	compare_refs local HEAD server refs/heads/new-refspec
 '
 
 test_expect_success 'push new branch with HEAD:new refspec' '
 	(cd local &&
-	 git checkout new-name &&
-	 git push origin HEAD:new-refspec-2
+	 but checkout new-name &&
+	 but push origin HEAD:new-refspec-2
 	) &&
 	compare_refs local HEAD server refs/heads/new-refspec-2
 '
 
 test_expect_success 'push delete branch' '
 	(cd local &&
-	 git push origin :new-name
+	 but push origin :new-name
 	) &&
-	test_must_fail git --git-dir="server/.git" \
+	test_must_fail but --but-dir="server/.but" \
 	 rev-parse --verify refs/heads/new-name
 '
 
 test_expect_success 'forced push' '
 	(cd local &&
-	git checkout -b force-test &&
+	but checkout -b force-test &&
 	echo content >> file &&
-	git cummit -a -m eight &&
-	git push origin force-test &&
+	but cummit -a -m eight &&
+	but push origin force-test &&
 	echo content >> file &&
-	git cummit -a --amend -m eight-modified &&
-	git push --force origin force-test
+	but cummit -a --amend -m eight-modified &&
+	but push --force origin force-test
 	) &&
 	compare_refs local refs/heads/force-test server refs/heads/force-test
 '
 
 test_expect_success 'cloning without refspec' '
 	GIT_REMOTE_TESTGIT_NOREFSPEC=1 \
-	git clone "testgit::${PWD}/server" local2 2>error &&
+	but clone "testbut::${PWD}/server" local2 2>error &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
-	git reset --hard &&
-	GIT_REMOTE_TESTGIT_NOREFSPEC=1 git pull 2>../error) &&
+	but reset --hard &&
+	GIT_REMOTE_TESTGIT_NOREFSPEC=1 but pull 2>../error) &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_success 'pushing without refspecs' '
-	test_when_finished "(cd local2 && git reset --hard origin)" &&
+	test_when_finished "(cd local2 && but reset --hard origin)" &&
 	(cd local2 &&
 	echo content >>file &&
-	git cummit -a -m ten &&
+	but cummit -a -m ten &&
 	GIT_REMOTE_TESTGIT_NOREFSPEC=1 &&
 	export GIT_REMOTE_TESTGIT_NOREFSPEC &&
-	test_must_fail git push 2>../error) &&
+	test_must_fail but push 2>../error) &&
 	test_i18ngrep "remote-helper doesn.t support push; refspec needed" error
 '
 
 test_expect_success 'pulling without marks' '
 	(cd local2 &&
-	GIT_REMOTE_TESTGIT_NO_MARKS=1 git pull) &&
+	GIT_REMOTE_TESTGIT_NO_MARKS=1 but pull) &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_failure 'pushing without marks' '
-	test_when_finished "(cd local2 && git reset --hard origin)" &&
+	test_when_finished "(cd local2 && but reset --hard origin)" &&
 	(cd local2 &&
 	echo content >>file &&
-	git cummit -a -m twelve &&
-	GIT_REMOTE_TESTGIT_NO_MARKS=1 git push) &&
+	but cummit -a -m twelve &&
+	GIT_REMOTE_TESTGIT_NO_MARKS=1 but push) &&
 	compare_refs local2 HEAD server HEAD
 '
 
 test_expect_success 'push all with existing object' '
 	(cd local &&
-	git branch dup2 main &&
-	git push origin --all
+	but branch dup2 main &&
+	but push origin --all
 	) &&
 	compare_refs local dup2 server dup2
 '
 
 test_expect_success 'push ref with existing object' '
 	(cd local &&
-	git branch dup main &&
-	git push origin dup
+	but branch dup main &&
+	but push origin dup
 	) &&
 	compare_refs local dup server dup
 '
 
 test_expect_success GPG 'push signed tag' '
 	(cd local &&
-	git checkout main &&
-	git tag -s -m signed-tag signed-tag &&
-	git push origin signed-tag
+	but checkout main &&
+	but tag -s -m signed-tag signed-tag &&
+	but push origin signed-tag
 	) &&
 	compare_refs local signed-tag^{} server signed-tag^{} &&
 	compare_refs ! local signed-tag server signed-tag
@@ -203,21 +203,21 @@ test_expect_success GPG 'push signed tag' '
 
 test_expect_success GPG 'push signed tag with signed-tags capability' '
 	(cd local &&
-	git checkout main &&
-	git tag -s -m signed-tag signed-tag-2 &&
-	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 git push origin signed-tag-2
+	but checkout main &&
+	but tag -s -m signed-tag signed-tag-2 &&
+	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 but push origin signed-tag-2
 	) &&
 	compare_refs local signed-tag-2 server signed-tag-2
 '
 
 test_expect_success 'push update refs' '
 	(cd local &&
-	git checkout -b update main &&
+	but checkout -b update main &&
 	echo update >>file &&
-	git cummit -a -m update &&
-	git push origin update &&
-	git rev-parse --verify remotes/origin/update >expect &&
-	git rev-parse --verify testgit/origin/heads/update >actual &&
+	but cummit -a -m update &&
+	but push origin update &&
+	but rev-parse --verify remotes/origin/update >expect &&
+	but rev-parse --verify testbut/origin/heads/update >actual &&
 	test_cmp expect actual
 	)
 '
@@ -225,98 +225,98 @@ test_expect_success 'push update refs' '
 test_expect_success 'push update refs disabled by no-private-update' '
 	(cd local &&
 	echo more-update >>file &&
-	git cummit -a -m more-update &&
-	git rev-parse --verify testgit/origin/heads/update >expect &&
-	GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE=t git push origin update &&
-	git rev-parse --verify testgit/origin/heads/update >actual &&
+	but cummit -a -m more-update &&
+	but rev-parse --verify testbut/origin/heads/update >expect &&
+	GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE=t but push origin update &&
+	but rev-parse --verify testbut/origin/heads/update >actual &&
 	test_cmp expect actual
 	)
 '
 
 test_expect_success 'push update refs failure' '
 	(cd local &&
-	git checkout update &&
+	but checkout update &&
 	echo "update fail" >>file &&
-	git cummit -a -m "update fail" &&
-	git rev-parse --verify testgit/origin/heads/update >expect &&
+	but cummit -a -m "update fail" &&
+	but rev-parse --verify testbut/origin/heads/update >expect &&
 	test_expect_code 1 env GIT_REMOTE_TESTGIT_FAILURE="non-fast forward" \
-		git push origin update &&
-	git rev-parse --verify testgit/origin/heads/update >actual &&
+		but push origin update &&
+	but rev-parse --verify testbut/origin/heads/update >actual &&
 	test_cmp expect actual
 	)
 '
 
 clean_mark () {
 	cut -f 2 -d ' ' "$1" |
-	git cat-file --batch-check |
+	but cat-file --batch-check |
 	grep cummit |
 	sort >$(basename "$1")
 }
 
 test_expect_success 'proper failure checks for fetching' '
 	(cd local &&
-	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git fetch 2>error &&
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 but fetch 2>error &&
 	test_i18ngrep -q "error while running fast-import" error
 	)
 '
 
 test_expect_success 'proper failure checks for pushing' '
-	test_when_finished "rm -rf local/git.marks local/testgit.marks" &&
+	test_when_finished "rm -rf local/but.marks local/testbut.marks" &&
 	(cd local &&
-	git checkout -b crash main &&
+	but checkout -b crash main &&
 	echo crash >>file &&
-	git cummit -a -m crash &&
-	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all &&
-	clean_mark ".git/testgit/origin/git.marks" &&
-	clean_mark ".git/testgit/origin/testgit.marks" &&
-	test_cmp git.marks testgit.marks
+	but cummit -a -m crash &&
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 but push --all &&
+	clean_mark ".but/testbut/origin/but.marks" &&
+	clean_mark ".but/testbut/origin/testbut.marks" &&
+	test_cmp but.marks testbut.marks
 	)
 '
 
 test_expect_success 'push messages' '
 	(cd local &&
-	git checkout -b new_branch main &&
+	but checkout -b new_branch main &&
 	echo new >>file &&
-	git cummit -a -m new &&
-	git push origin new_branch &&
-	git fetch origin &&
+	but cummit -a -m new &&
+	but push origin new_branch &&
+	but fetch origin &&
 	echo new >>file &&
-	git cummit -a -m new &&
-	git push origin new_branch 2> msg &&
+	but cummit -a -m new &&
+	but push origin new_branch 2> msg &&
 	! grep "\[new branch\]" msg
 	)
 '
 
 test_expect_success 'fetch HEAD' '
 	(cd server &&
-	git checkout main &&
+	but checkout main &&
 	echo more >>file &&
-	git cummit -a -m more
+	but cummit -a -m more
 	) &&
 	(cd local &&
-	git fetch origin HEAD
+	but fetch origin HEAD
 	) &&
 	compare_refs server HEAD local FETCH_HEAD
 '
 
 test_expect_success 'fetch url' '
 	(cd server &&
-	git checkout main &&
+	but checkout main &&
 	echo more >>file &&
-	git cummit -a -m more
+	but cummit -a -m more
 	) &&
 	(cd local &&
-	git fetch "testgit::${PWD}/../server"
+	but fetch "testbut::${PWD}/../server"
 	) &&
 	compare_refs server HEAD local FETCH_HEAD
 '
 
 test_expect_success 'fetch tag' '
 	(cd server &&
-	 git tag v1.0
+	 but tag v1.0
 	) &&
 	(cd local &&
-	 git fetch
+	 but fetch
 	) &&
 	compare_refs local v1.0 server v1.0
 '

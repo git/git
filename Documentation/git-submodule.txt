@@ -1,33 +1,33 @@
-git-submodule(1)
+but-submodule(1)
 ================
 
 NAME
 ----
-git-submodule - Initialize, update or inspect submodules
+but-submodule - Initialize, update or inspect submodules
 
 
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] [--cached]
-'git submodule' [--quiet] add [<options>] [--] <repository> [<path>]
-'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
-'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] deinit [-f|--force] (--all|[--] <path>...)
-'git submodule' [--quiet] update [<options>] [--] [<path>...]
-'git submodule' [--quiet] set-branch [<options>] [--] <path>
-'git submodule' [--quiet] set-url [--] <path> <newurl>
-'git submodule' [--quiet] summary [<options>] [--] [<path>...]
-'git submodule' [--quiet] foreach [--recursive] <command>
-'git submodule' [--quiet] sync [--recursive] [--] [<path>...]
-'git submodule' [--quiet] absorbgitdirs [--] [<path>...]
+'but submodule' [--quiet] [--cached]
+'but submodule' [--quiet] add [<options>] [--] <repository> [<path>]
+'but submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
+'but submodule' [--quiet] init [--] [<path>...]
+'but submodule' [--quiet] deinit [-f|--force] (--all|[--] <path>...)
+'but submodule' [--quiet] update [<options>] [--] [<path>...]
+'but submodule' [--quiet] set-branch [<options>] [--] <path>
+'but submodule' [--quiet] set-url [--] <path> <newurl>
+'but submodule' [--quiet] summary [<options>] [--] [<path>...]
+'but submodule' [--quiet] foreach [--recursive] <command>
+'but submodule' [--quiet] sync [--recursive] [--] [<path>...]
+'but submodule' [--quiet] absorbbutdirs [--] [<path>...]
 
 
 DESCRIPTION
 -----------
 Inspects, updates and manages submodules.
 
-For more information about submodules, see linkgit:gitsubmodules[7].
+For more information about submodules, see linkbut:butsubmodules[7].
 
 COMMANDS
 --------
@@ -42,9 +42,9 @@ add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--dep
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
 or ../), the location relative to the superproject's default remote
-repository (Please note that to specify a repository 'foo.git'
-which is located right next to a superproject 'bar.git', you'll
-have to use `../foo.git` instead of `./foo.git` - as one might expect
+repository (Please note that to specify a repository 'foo.but'
+which is located right next to a superproject 'bar.but', you'll
+have to use `../foo.but` instead of `./foo.but` - as one might expect
 when following the rules for relative URLs - because the evaluation
 of relative URLs in Git is identical to that of relative directories).
 +
@@ -58,24 +58,24 @@ working directory is used instead.
 The optional argument <path> is the relative location for the cloned
 submodule to exist in the superproject. If <path> is not given, the
 canonical part of the source repository is used ("repo" for
-"/path/to/repo.git" and "foo" for "host.xz:foo/.git"). If <path>
+"/path/to/repo.but" and "foo" for "host.xz:foo/.but"). If <path>
 exists and is already a valid Git repository, then it is staged
 for cummit without cloning. The <path> is also used as the submodule's
 logical name in its configuration entries unless `--name` is used
 to specify a logical name.
 +
-The given URL is recorded into `.gitmodules` for use by subsequent users
+The given URL is recorded into `.butmodules` for use by subsequent users
 cloning the superproject. If the URL is given relative to the
 superproject's repository, the presumption is the superproject and
 submodule repositories will be kept together in the same relative
 location, and only the superproject's URL needs to be provided.
-git-submodule will correctly locate the submodule using the relative
-URL in `.gitmodules`.
+but-submodule will correctly locate the submodule using the relative
+URL in `.butmodules`.
 
 status [--cached] [--recursive] [--] [<path>...]::
 	Show the status of the submodules. This will print the SHA-1 of the
 	currently checked out cummit for each submodule, along with the
-	submodule path and the output of 'git describe' for the
+	submodule path and the output of 'but describe' for the
 	SHA-1. Each SHA-1 will possibly be prefixed with `-` if the submodule is
 	not initialized, `+` if the currently checked out submodule cummit
 	does not match the SHA-1 found in the index of the containing
@@ -89,13 +89,13 @@ submodules, and show their status as well.
 +
 If you are only interested in changes of the currently initialized
 submodules with respect to the cummit recorded in the index or the HEAD,
-linkgit:git-status[1] and linkgit:git-diff[1] will provide that information
+linkbut:but-status[1] and linkbut:but-diff[1] will provide that information
 too (and can also report changes to a submodule's work tree).
 
 init [--] [<path>...]::
 	Initialize the submodules recorded in the index (which were
 	added and cummitted elsewhere) by setting `submodule.$name.url`
-	in .git/config. It uses the same setting from `.gitmodules` as
+	in .but/config. It uses the same setting from `.butmodules` as
 	a template. If the URL is relative, it will be resolved using
 	the default remote. If there is no default remote, the current
 	repository will be assumed to be upstream.
@@ -106,10 +106,10 @@ configured to be active will be initialized, otherwise all submodules are
 initialized.
 +
 When present, it will also copy the value of `submodule.$name.update`.
-This command does not alter existing information in .git/config.
-You can then customize the submodule clone URLs in .git/config
-for your local setup and proceed to `git submodule update`;
-you can also just use `git submodule update --init` without
+This command does not alter existing information in .but/config.
+You can then customize the submodule clone URLs in .but/config
+for your local setup and proceed to `but submodule update`;
+you can also just use `but submodule update --init` without
 the explicit 'init' step if you do not intend to customize
 any submodule locations.
 +
@@ -117,9 +117,9 @@ See the add subcommand for the definition of default remote.
 
 deinit [-f|--force] (--all|[--] <path>...)::
 	Unregister the given submodules, i.e. remove the whole
-	`submodule.$name` section from .git/config together with their work
-	tree. Further calls to `git submodule update`, `git submodule foreach`
-	and `git submodule sync` will skip any unregistered submodules until
+	`submodule.$name` section from .but/config together with their work
+	tree. Further calls to `but submodule update`, `but submodule foreach`
+	and `but submodule sync` will skip any unregistered submodules until
 	they are initialized again, so use this command if you don't want to
 	have a local checkout of the submodule in your working tree anymore.
 +
@@ -130,7 +130,7 @@ If `--force` is specified, the submodule's working tree will
 be removed even if it contains local modifications.
 +
 If you really want to remove a submodule from the repository and cummit
-that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
+that use linkbut:but-rm[1] instead. See linkbut:butsubmodules[7] for removal
 options.
 
 update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--filter <filter spec>] [--] [<path>...]::
@@ -150,7 +150,7 @@ through the `submodule.<name>.update` configuration are:
 	    checked out in the submodule on a detached HEAD.
 +
 If `--force` is specified, the submodule will be checked out (using
-`git checkout --force`), even if the cummit specified
+`but checkout --force`), even if the cummit specified
 in the index of the containing repository already matches the cummit
 checked out in the submodule.
 
@@ -172,14 +172,14 @@ The following 'update' procedures are only available via the
 	none;; the submodule is not updated.
 
 If the submodule is not yet initialized, and you just want to use the
-setting as stored in `.gitmodules`, you can automatically initialize the
+setting as stored in `.butmodules`, you can automatically initialize the
 submodule with the `--init` option.
 
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
 
 If `--filter <filter spec>` is specified, the given partial clone filter will be
-applied to the submodule. See linkgit:git-rev-list[1] for details on filter
+applied to the submodule. See linkbut:but-rev-list[1] for details on filter
 specifications.
 --
 set-branch (-b|--branch) <branch> [--] <path>::
@@ -204,14 +204,14 @@ summary [--cached|--files] [(-n|--summary-limit) <n>] [cummit] [--] [<path>...]:
 	(this option doesn't allow to use the `--cached` option or to provide an
 	explicit cummit).
 +
-Using the `--submodule=log` option with linkgit:git-diff[1] will provide that
+Using the `--submodule=log` option with linkbut:but-diff[1] will provide that
 information too.
 
 foreach [--recursive] <command>::
 	Evaluates an arbitrary shell command in each checked out submodule.
 	The command has access to the variables $name, $sm_path, $displaypath,
 	$sha1 and $toplevel:
-	$name is the name of the relevant submodule section in `.gitmodules`,
+	$name is the name of the relevant submodule section in `.butmodules`,
 	$sm_path is the path of the submodule as recorded in the immediate
 	superproject, $displaypath contains the relative path from the
 	current working directory to the submodules root directory,
@@ -233,34 +233,34 @@ As an example, the command below will show the path and currently
 checked out cummit for each submodule:
 +
 --------------
-git submodule foreach 'echo $sm_path `git rev-parse HEAD`'
+but submodule foreach 'echo $sm_path `but rev-parse HEAD`'
 --------------
 
 sync [--recursive] [--] [<path>...]::
 	Synchronizes submodules' remote URL configuration setting
-	to the value specified in `.gitmodules`. It will only affect those
-	submodules which already have a URL entry in .git/config (that is the
+	to the value specified in `.butmodules`. It will only affect those
+	submodules which already have a URL entry in .but/config (that is the
 	case when they are initialized or freshly added). This is useful when
 	submodule URLs change upstream and you need to update your local
 	repositories accordingly.
 +
-`git submodule sync` synchronizes all submodules while
-`git submodule sync -- A` synchronizes submodule "A" only.
+`but submodule sync` synchronizes all submodules while
+`but submodule sync -- A` synchronizes submodule "A" only.
 +
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and sync any nested submodules within.
 
-absorbgitdirs::
-	If a git directory of a submodule is inside the submodule,
-	move the git directory of the submodule into its superproject's
-	`$GIT_DIR/modules` path and then connect the git directory and
+absorbbutdirs::
+	If a but directory of a submodule is inside the submodule,
+	move the but directory of the submodule into its superproject's
+	`$GIT_DIR/modules` path and then connect the but directory and
 	its working directory by setting the `core.worktree` and adding
-	a .git file pointing to the git directory embedded in the
-	superprojects git directory.
+	a .but file pointing to the but directory embedded in the
+	superprojects but directory.
 +
 A repository that was cloned independently and later added as a submodule or
-old setups have the submodules git directory inside the submodule instead of
-embedded into the superprojects git directory.
+old setups have the submodules but directory inside the submodule instead of
+embedded into the superprojects but directory.
 +
 This command is recursive by default.
 
@@ -285,7 +285,7 @@ OPTIONS
 --branch <branch>::
 	Branch of repository to add as submodule.
 	The name of the branch is recorded as `submodule.<name>.branch` in
-	`.gitmodules` for `update --remote`.  A special value of `.` is used to
+	`.butmodules` for `update --remote`.  A special value of `.` is used to
 	indicate that the name of the branch in the submodule should be the
 	same name as the current branch in the current repository.  If the
 	option is not specified, it defaults to the remote 'HEAD'.
@@ -328,14 +328,14 @@ OPTIONS
 	is branch's remote (`branch.<name>.remote`), defaulting to `origin`.
 	The remote branch used defaults to the remote `HEAD`, but the branch
 	name may be overridden by setting the `submodule.<name>.branch`
-	option in either `.gitmodules` or `.git/config` (with `.git/config`
+	option in either `.butmodules` or `.but/config` (with `.but/config`
 	taking precedence).
 +
 This works for any of the supported update procedures (`--checkout`,
 `--rebase`, etc.).  The only change is the source of the target SHA-1.
 For example, `submodule update --remote --merge` will merge upstream
 submodule changes into the submodules, while `submodule update
---merge` will merge superproject gitlink changes into the submodules.
+--merge` will merge superproject butlink changes into the submodules.
 +
 In order to ensure a current tracking branch state, `update --remote`
 fetches the submodule's remote repository before calculating the
@@ -343,10 +343,10 @@ SHA-1.  If you don't want to fetch, you should use `submodule update
 --remote --no-fetch`.
 +
 Use this option to integrate changes from the upstream subproject with
-your submodule's current HEAD.  Alternatively, you can run `git pull`
+your submodule's current HEAD.  Alternatively, you can run `but pull`
 from the submodule, which is equivalent except for the remote branch
 name: `update --remote` uses the default upstream repository and
-`submodule.<name>.branch`, while `git pull` uses the submodule's
+`submodule.<name>.branch`, while `but pull` uses the submodule's
 `branch.<name>.merge`.  Prefer `submodule.<name>.branch` if you want
 to distribute the default upstream branch with the superproject and
 `branch.<name>.merge` if you want a more native feel while working in
@@ -381,13 +381,13 @@ the submodule itself.
 	Rebase the current branch onto the cummit recorded in the
 	superproject. If this option is given, the submodule's HEAD will not
 	be detached. If a merge failure prevents this process, you will have
-	to resolve these failures with linkgit:git-rebase[1].
+	to resolve these failures with linkbut:but-rebase[1].
 	If the key `submodule.$name.update` is set to `rebase`, this option is
 	implicit.
 
 --init::
 	This option is only valid for the update command.
-	Initialize all submodules for which "git submodule init" has not been
+	Initialize all submodules for which "but submodule init" has not been
 	called so far before updating.
 
 --name::
@@ -398,16 +398,16 @@ the submodule itself.
 --reference <repository>::
 	This option is only valid for add and update commands.  These
 	commands sometimes need to clone a remote repository. In this case,
-	this option will be passed to the linkgit:git-clone[1] command.
+	this option will be passed to the linkbut:but-clone[1] command.
 +
 *NOTE*: Do *not* use this option unless you have read the note
-for linkgit:git-clone[1]'s `--reference`, `--shared`, and `--dissociate`
+for linkbut:but-clone[1]'s `--reference`, `--shared`, and `--dissociate`
 options carefully.
 
 --dissociate::
 	This option is only valid for add and update commands.  These
 	commands sometimes need to clone a remote repository. In this case,
-	this option will be passed to the linkgit:git-clone[1] command.
+	this option will be passed to the linkbut:but-clone[1] command.
 +
 *NOTE*: see the NOTE for the `--reference` option.
 
@@ -420,12 +420,12 @@ options carefully.
 --depth::
 	This option is valid for add and update commands. Create a 'shallow'
 	clone with a history truncated to the specified number of revisions.
-	See linkgit:git-clone[1]
+	See linkbut:but-clone[1]
 
 --[no-]recommend-shallow::
 	This option is only valid for the update command.
 	The initial clone of a submodule will use the recommended
-	`submodule.<name>.shallow` as provided by the `.gitmodules` file
+	`submodule.<name>.shallow` as provided by the `.butmodules` file
 	by default. To ignore the suggestions use `--no-recommend-shallow`.
 
 -j <n>::
@@ -445,16 +445,16 @@ options carefully.
 
 FILES
 -----
-When initializing submodules, a `.gitmodules` file in the top-level directory
+When initializing submodules, a `.butmodules` file in the top-level directory
 of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as `$GIT_DIR/config`. The key
-to each submodule url is "submodule.$name.url".  See linkgit:gitmodules[5]
+to each submodule url is "submodule.$name.url".  See linkbut:butmodules[5]
 for details.
 
 SEE ALSO
 --------
-linkgit:gitsubmodules[7], linkgit:gitmodules[5].
+linkbut:butsubmodules[7], linkbut:butmodules[5].
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

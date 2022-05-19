@@ -19,54 +19,54 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 note () {
-	git tag "$1"
+	but tag "$1"
 }
 
 unnote () {
-	git name-rev --tags --annotate-stdin | \
+	but name-rev --tags --annotate-stdin | \
 	sed -e "s|$OID_REGEX (tags/\([^)]*\))\([ 	]\)|\1\2|g"
 }
 
 test_expect_success setup '
 	test_cummit "Initial file" file "Hi there" A &&
-	git branch other-branch &&
+	but branch other-branch &&
 
 	test_cummit "file=Hello" file "Hello" B &&
-	git branch third-branch &&
+	but branch third-branch &&
 
-	git checkout other-branch &&
+	but checkout other-branch &&
 	test_cummit "Added other" other "Hello" C &&
 
-	git checkout main &&
+	but checkout main &&
 	test_merge D other-branch &&
 
-	git checkout third-branch &&
+	but checkout third-branch &&
 	test_cummit "Third file" third "Nothing" E &&
 
-	git checkout main &&
+	but checkout main &&
 	test_cummit "file=Blah" file "Blah" F &&
 
-	test_tick && git merge --no-cummit third-branch &&
-	git checkout third-branch file &&
-	git cummit &&
+	test_tick && but merge --no-cummit third-branch &&
+	but checkout third-branch file &&
+	but cummit &&
 	note G &&
-	git branch fiddler-branch &&
+	but branch fiddler-branch &&
 
-	git checkout -b part2-branch &&
+	but checkout -b part2-branch &&
 	test_cummit "file=Part 2" file "Part 2" H &&
 
-	git checkout fiddler-branch &&
+	but checkout fiddler-branch &&
 	test_cummit "Bad cummit" file "Silly" I &&
 
-	test_tick && git revert I && note J &&
+	test_tick && but revert I && note J &&
 
-	git checkout main &&
-	test_tick && git merge --no-ff fiddler-branch &&
+	but checkout main &&
+	test_tick && but merge --no-ff fiddler-branch &&
 	note K &&
 
 	test_cummit "file=Part 1" file "Part 1" L &&
 
-	test_tick && test_must_fail git merge part2-branch &&
+	test_tick && test_must_fail but merge part2-branch &&
 	test_cummit M file "Parts 1+2"
 '
 
@@ -93,7 +93,7 @@ check_outcome () {
 
 	param="$*" &&
 	test_expect_$outcome "log $param" '
-		git log --format="$FMT" $param |
+		but log --format="$FMT" $param |
 		unnote >actual &&
 		sed -e "$munge_actual" <actual >check &&
 		test_cmp expect check

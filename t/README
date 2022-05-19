@@ -18,8 +18,8 @@ The easiest way to run tests is to say "make".  This runs all
 the tests.
 
     *** t0000-basic.sh ***
-    ok 1 - .git/objects should be empty after git init in an empty repo.
-    ok 2 - .git/objects should have 3 subdirectories.
+    ok 1 - .but/objects should be empty after but init in an empty repo.
+    ok 2 - .but/objects should have 3 subdirectories.
     ok 3 - success is reported like this
     ...
     ok 43 - very long name in the index handled sanely
@@ -41,7 +41,7 @@ powered by a recent version of prove(1):
     [19:17:33] ./t0022-crlf-rename.sh ............................... ok       69 ms
     [19:17:33] ./t0024-crlf-archive.sh .............................. ok      154 ms
     [19:17:33] ./t0004-unwritable.sh ................................ ok      289 ms
-    [19:17:33] ./t0002-gitfile.sh ................................... ok      480 ms
+    [19:17:33] ./t0002-butfile.sh ................................... ok      480 ms
     ===(     102;0  25/?  6/?  5/?  16/?  1/?  4/?  2/?  1/?  3/?  1... )===
 
 prove and other harnesses come with a lot of useful options. The
@@ -59,11 +59,11 @@ GIT_PROVE_OPTS can be used to pass additional options, e.g.
 You can also run each test individually from command line, like this:
 
     $ sh ./t3010-ls-files-killed-modified.sh
-    ok 1 - git update-index --add to add various paths.
-    ok 2 - git ls-files -k to show killed files.
-    ok 3 - validate git ls-files -k output.
-    ok 4 - git ls-files -m to show modified files.
-    ok 5 - validate git ls-files -m output.
+    ok 1 - but update-index --add to add various paths.
+    ok 2 - but ls-files -k to show killed files.
+    ok 3 - validate but ls-files -k output.
+    ok 4 - but ls-files -m to show modified files.
+    ok 5 - validate but ls-files -m output.
     # passed all 5 test(s)
     1..5
 
@@ -138,7 +138,7 @@ appropriately before running "make". Short options can be bundled, i.e.
 	issues.
 
 	Note that memcheck is run with the option --leak-check=no,
-	as the git process is short-lived and some errors are not
+	as the but process is short-lived and some errors are not
 	interesting. In order to run a single command under the same
 	conditions manually, you should set GIT_VALGRIND to point to
 	the 't/valgrind/' directory and use the commands under
@@ -164,7 +164,7 @@ appropriately before running "make". Short options can be bundled, i.e.
 
 --with-dashes::
 	By default tests are run without dashed forms of
-	commands (like git-cummit) in the PATH (it only uses
+	commands (like but-cummit) in the PATH (it only uses
 	wrappers from ../bin-wrappers).  Use this option to include
 	the build directory (..) in the PATH, which contains all
 	the dashed forms of commands.  This option is currently
@@ -173,8 +173,8 @@ appropriately before running "make". Short options can be bundled, i.e.
 
 --no-bin-wrappers::
 	By default, the test suite uses the wrappers in
-	`../bin-wrappers/` to execute `git` and friends. With this option,
-	`../git` and friends are run directly. This is not recommended
+	`../bin-wrappers/` to execute `but` and friends. With this option,
+	`../but` and friends are run directly. This is not recommended
 	in general, as the wrappers contain safeguards to ensure that no
 	files from an installed Git are used, but can speed up test runs
 	especially on platforms where running shell scripts is expensive
@@ -225,16 +225,16 @@ appropriately before running "make". Short options can be bundled, i.e.
 	them fails, whichever comes first. Implies `--stress`.
 
 You can also set the GIT_TEST_INSTALLED environment variable to
-the bindir of an existing git installation to test that installation.
-You still need to have built this git sandbox, from which various
+the bindir of an existing but installation to test that installation.
+You still need to have built this but sandbox, from which various
 test-* support programs, templates, and perl libraries are used.
-If your installed git is incomplete, it will silently test parts of
+If your installed but is incomplete, it will silently test parts of
 your built version instead.
 
 When using GIT_TEST_INSTALLED, you can also set GIT_TEST_EXEC_PATH to
 override the location of the dashed-form subcommands (what
 GIT_EXEC_PATH would be used for during normal operation).
-GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/git --exec-path`.
+GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/but --exec-path`.
 
 
 Skipping Tests
@@ -247,7 +247,7 @@ as pathnames.
 
 You should be able to say something like
 
-    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-cummit.sh
+    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-but-cvsexport-cummit.sh
 
 and even:
 
@@ -288,41 +288,41 @@ the set one by one, from left to right.
 For example, to run only tests up to a specific test (21), one
 could do this:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='1-21'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='1-21'
 
 or this:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='-21'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='-21'
 
 Common case is to run several setup tests (1, 2, 3) and then a
 specific test (21) that relies on that setup:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='1,2,3,21'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='1,2,3,21'
 
 or:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run=1,2,3,21
+    $ sh ./t9200-but-cvsexport-cummit.sh --run=1,2,3,21
 
 or:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='-3,21'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='-3,21'
 
 As noted above, the test set is built by going through the items
 from left to right, so this:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='1-4,!3'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='1-4,!3'
 
 will run tests 1, 2, and 4.  Items that come later have higher
 precedence.  It means that this:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='!3,1-4'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='!3,1-4'
 
 would just run tests from 1 to 4, including 3.
 
 You may use negation with ranges.  The following will run all
 test in the test suite except from 7 up to 11:
 
-    $ sh ./t9200-git-cvsexport-cummit.sh --run='!7-11'
+    $ sh ./t9200-but-cvsexport-cummit.sh --run='!7-11'
 
 Sometimes there may be multiple tests with e.g. "setup" in their name
 that are needed and rather than figuring out the number for all of them
@@ -364,7 +364,7 @@ refactor to deal with it. The "SYMLINKS" prerequisite is currently
 excluded as so much relies on it, but this might change in the future.
 
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
-test suite. Accept any boolean values that are accepted by git-config.
+test suite. Accept any boolean values that are accepted by but-config.
 
 GIT_TEST_PASSING_SANITIZE_LEAK=<boolean> when compiled with
 SANITIZE=leak will run only those tests that have whitelisted
@@ -379,7 +379,7 @@ default to n.
 GIT_TEST_FULL_IN_PACK_ARRAY=<boolean> exercises the uncommon
 pack-objects code path where there are more than 1024 packs even if
 the actual number of packs in repository is below this limit. Accept
-any boolean values that are accepted by git-config.
+any boolean values that are accepted by but-config.
 
 GIT_TEST_OE_SIZE=<n> exercises the uncommon pack-objects code path
 where we do not cache object size in memory and read it from existing
@@ -396,12 +396,12 @@ records are valid when the index is written out or after a merge. This
 is mostly to catch missing invalidation. Default is true.
 
 GIT_TEST_CUMMIT_GRAPH=<boolean>, when true, forces the cummit-graph to
-be written after every 'git cummit' command, and overrides the
+be written after every 'but cummit' command, and overrides the
 'core.cummitGraph' setting to true.
 
 GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=<boolean>, when true, forces
 cummit-graph write to compute and write changed path Bloom filters for
-every 'git cummit-graph write', as if the `--changed-paths` option was
+every 'but cummit-graph write', as if the `--changed-paths` option was
 passed in.
 
 GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
@@ -420,8 +420,8 @@ GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
 by overriding the minimum number of cache entries required per thread.
 
 GIT_TEST_ADD_I_USE_BUILTIN=<boolean>, when true, enables the
-built-in version of git add -i. See 'add.interactive.useBuiltin' in
-git-config(1).
+built-in version of but add -i. See 'add.interactive.useBuiltin' in
+but-config(1).
 
 GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
 of the index for the whole test suite by bypassing the default number of
@@ -429,11 +429,11 @@ cache entries and thread minimums. Setting this to 1 will make the
 index loading single threaded.
 
 GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
-index to be written after every 'git repack' command, and overrides the
+index to be written after every 'but repack' command, and overrides the
 'core.multiPackIndex' setting to true.
 
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=<boolean>, when true, sets the
-'--bitmap' option on all invocations of 'git multi-pack-index write',
+'--bitmap' option on all invocations of 'but multi-pack-index write',
 and ignores pack-objects' '--write-bitmap-index'.
 
 GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
@@ -479,9 +479,9 @@ The test files are named as:
 
 	tNNNN-commandname-details.sh
 
-where N is a decimal digit.
+where N is a decimal dibut.
 
-First digit tells the family:
+First dibut tells the family:
 
 	0 - the absolute basics and global stuff
 	1 - the basic commands concerning database
@@ -492,11 +492,11 @@ First digit tells the family:
 	6 - the revision tree commands (even e.g. merge-base)
 	7 - the porcelainish commands concerning the working tree
 	8 - the porcelainish commands concerning forensics
-	9 - the git tools
+	9 - the but tools
 
-Second digit tells the particular command we are testing.
+Second dibut tells the particular command we are testing.
 
-Third digit (optionally) tells the particular switch or group of switches
+Third dibut (optionally) tells the particular switch or group of switches
 we are testing.
 
 If you create files under t/ directory (i.e. here) that is not
@@ -520,7 +520,7 @@ assignment to variable 'test_description', like this:
 	test_description='xxx test (option --frotz)
 
 	This test registers the following structure in the cache
-	and tries to run git-ls-files with option --frotz.'
+	and tries to run but-ls-files with option --frotz.'
 
 
 Source 'test-lib.sh'
@@ -536,7 +536,7 @@ This test harness library does the following things:
  - If the script is invoked with command line argument --help
    (or -h), it shows the test_description and exits.
 
- - Creates an empty test directory with an empty .git/objects database
+ - Creates an empty test directory with an empty .but/objects database
    and chdir(2) into it.  This directory is 't/trash
    directory.$test_name_without_dotsh', with t/ subject to change by
    the --root option documented above, and a '.stress-<N>' suffix
@@ -564,14 +564,14 @@ Here are the "do's:"
 
    Write test code like this:
 
-	git merge foo &&
-	git push bar &&
+	but merge foo &&
+	but push bar &&
 	test ...
 
    Instead of:
 
-	git merge hla
-	git push gh
+	but merge hla
+	but push gh
 	test ...
 
    That way all of the commands in your tests will succeed or fail. If
@@ -592,7 +592,7 @@ Here are the "do's:"
    Tests that are likely to smoke out future regressions are better
    than tests that just inflate the coverage metrics.
 
- - When a test checks for an absolute path that a git command generated,
+ - When a test checks for an absolute path that a but command generated,
    construct the expected value using $(pwd) rather than $PWD,
    $TEST_DIRECTORY, or $TRASH_DIRECTORY. It makes a difference on
    Windows, where the shell (MSYS bash) mangles absolute path names.
@@ -646,41 +646,41 @@ And here are the "don'ts:"
    Use test_done instead if you need to stop the tests early (see
    "Skipping tests" below).
 
- - Don't use '! git cmd' when you want to make sure the git command
+ - Don't use '! but cmd' when you want to make sure the but command
    exits with failure in a controlled way by calling "die()".  Instead,
-   use 'test_must_fail git cmd'.  This will signal a failure if git
+   use 'test_must_fail but cmd'.  This will signal a failure if but
    dies in an unexpected way (e.g. segfault).
 
    On the other hand, don't use test_must_fail for running regular
    platform commands; just use '! cmd'.  We are not in the business
    of verifying that the world given to us sanely works.
 
- - Don't feed the output of a git command to a pipe, as in:
+ - Don't feed the output of a but command to a pipe, as in:
 
-     git -C repo ls-files |
+     but -C repo ls-files |
      xargs -n 1 basename |
      grep foo
 
-   which will discard git's exit code and may mask a crash. In the
+   which will discard but's exit code and may mask a crash. In the
    above example, all exit codes are ignored except grep's.
 
    Instead, write the output of that command to a temporary
-   file with ">" or assign it to a variable with "x=$(git ...)" rather
+   file with ">" or assign it to a variable with "x=$(but ...)" rather
    than pipe it.
 
- - Don't use command substitution in a way that discards git's exit
+ - Don't use command substitution in a way that discards but's exit
    code. When assigning to a variable, the exit code is not discarded,
    e.g.:
 
-     x=$(git cat-file -p $sha) &&
+     x=$(but cat-file -p $sha) &&
      ...
 
-   is OK because a crash in "git cat-file" will cause the "&&" chain
+   is OK because a crash in "but cat-file" will cause the "&&" chain
    to fail, but:
 
-     test "refs/heads/foo" = "$(git symbolic-ref HEAD)"
+     test "refs/heads/foo" = "$(but symbolic-ref HEAD)"
 
-   is not OK and a crash in git could go undetected.
+   is not OK and a crash in but could go undetected.
 
  - Don't use perl without spelling it as "$PERL_PATH". This is to help
    our friends on Windows where the platform Perl often adds CR before
@@ -704,16 +704,16 @@ And here are the "don'ts:"
    group commands, subshells, and shell functions (except test helper
    functions like 'test_must_fail') like this:
 
-     ( cd dir && git cmd ) 2>error &&
+     ( cd dir && but cmd ) 2>error &&
      test_cmp expect error
 
    When running the test with '-x' tracing, then the trace of commands
    executed in the compound command will be included in standard error
    as well, quite possibly throwing off the subsequent checks examining
-   the output.  Instead, save only the relevant git command's standard
+   the output.  Instead, save only the relevant but command's standard
    error:
 
-     ( cd dir && git cmd 2>../error ) &&
+     ( cd dir && but cmd 2>../error ) &&
      test_cmp expect error
 
  - Don't break the TAP output
@@ -789,14 +789,14 @@ see test-lib-functions.sh for the full list and their options.
    Example:
 
 	test_expect_success \
-	    'git-write-tree should be able to write an empty tree.' \
-	    'tree=$(git-write-tree)'
+	    'but-write-tree should be able to write an empty tree.' \
+	    'tree=$(but-write-tree)'
 
    If you supply three parameters the first will be taken to be a
    prerequisite; see the test_set_prereq and test_have_prereq
    documentation below:
 
-	test_expect_success TTY 'git --paginate rev-list uses a pager' \
+	test_expect_success TTY 'but --paginate rev-list uses a pager' \
 	    ' ... '
 
    You can also supply a comma-separated list of prerequisites, in the
@@ -824,9 +824,9 @@ see test-lib-functions.sh for the full list and their options.
    argument.  This is primarily meant for use during the
    development of a new test script.
 
- - debug [options] <git-command>
+ - debug [options] <but-command>
 
-   Run a git command inside a debugger. This is primarily meant for
+   Run a but command inside a debugger. This is primarily meant for
    use when debugging a failing test script. With '-t', use your
    original TERM instead of test-lib.sh's "dumb", so that your
    debugger interface has colors.
@@ -883,7 +883,7 @@ see test-lib-functions.sh for the full list and their options.
  - test_external [<prereq>] <message> <external> <script>
 
    Execute a <script> with an <external> interpreter (like perl). This
-   was added for tests like t9700-perl-git.sh which do most of their
+   was added for tests like t9700-perl-but.sh which do most of their
    work in an external test script.
 
 	test_external \
@@ -892,7 +892,7 @@ see test-lib-functions.sh for the full list and their options.
 
    If the test is outputting its own TAP you should set the
    test_external_has_tap variable somewhere before calling the first
-   test_external* function. See t9700-perl-git.sh for an example.
+   test_external* function. See t9700-perl-but.sh for an example.
 
 	# The external test will outputs its own plan
 	test_external_has_tap=1
@@ -912,14 +912,14 @@ see test-lib-functions.sh for the full list and their options.
    For example:
 
 	test_expect_success 'Merge with d/f conflicts' '
-		test_expect_code 1 git merge "merge msg" B master
+		test_expect_code 1 but merge "merge msg" B master
 	'
 
- - test_must_fail [<options>] <git-command>
+ - test_must_fail [<options>] <but-command>
 
-   Run a git command and ensure it fails in a controlled way.  Use
-   this instead of "! <git-command>".  When git-command dies due to a
-   segfault, test_must_fail diagnoses it as an error; "! <git-command>"
+   Run a but command and ensure it fails in a controlled way.  Use
+   this instead of "! <but-command>".  When but-command dies due to a
+   segfault, test_must_fail diagnoses it as an error; "! <but-command>"
    treats it as just another expected failure, which would let such a
    bug go unnoticed.
 
@@ -931,10 +931,10 @@ see test-lib-functions.sh for the full list and their options.
        Currently recognized signal names are: sigpipe, success.
        (Don't use 'success', use 'test_might_fail' instead.)
 
- - test_might_fail [<options>] <git-command>
+ - test_might_fail [<options>] <but-command>
 
    Similar to test_must_fail, but tolerate success, too.  Use this
-   instead of "<git-command> || :" to catch failures due to segv.
+   instead of "<but-command> || :" to catch failures due to segv.
 
    Accepts the same options as test_must_fail.
 
@@ -970,8 +970,8 @@ see test-lib-functions.sh for the full list and their options.
    Example:
 
 	test_expect_success 'branch pointing to non-cummit' '
-		git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
-		test_when_finished "git update-ref -d refs/heads/invalid" &&
+		but rev-parse HEAD^{tree} >.but/refs/heads/invalid &&
+		test_when_finished "but update-ref -d refs/heads/invalid" &&
 		...
 	'
 
@@ -980,8 +980,8 @@ see test-lib-functions.sh for the full list and their options.
    Prepend <script> to a list of commands to run unconditionally to
    clean up before the test script exits, e.g. to stop a daemon:
 
-	test_expect_success 'test git daemon' '
-		git daemon &
+	test_expect_success 'test but daemon' '
+		but daemon &
 		daemon_pid=$! &&
 		test_atexit 'kill $daemon_pid' &&
 		hello world
@@ -1024,7 +1024,7 @@ see test-lib-functions.sh for the full list and their options.
 	the test. Example:
 
 	test_expect_success 'test' '
-		git do-something >actual &&
+		but do-something >actual &&
 		test_pause &&
 		test_cmp expected actual
 	'
@@ -1037,7 +1037,7 @@ see test-lib-functions.sh for the full list and their options.
    of the sequence
 
 	ln -s foo bar &&
-	git add bar
+	but add bar
 
    Sometimes it is possible to split a test in a part that does not need
    the symbolic link in the file system and a part that does; then only
@@ -1138,7 +1138,7 @@ use these, and "test_set_prereq" for how to define your own.
  - PCRE
 
    Git was compiled with support for PCRE. Wrap any tests
-   that use git-grep --perl-regexp or git-grep -P in these.
+   that use but-grep --perl-regexp or but-grep -P in these.
 
  - CASE_INSENSITIVE_FS
 
@@ -1166,7 +1166,7 @@ As with any programming projects, existing programs are the best
 source of the information.  However, do _not_ emulate
 t0000-basic.sh when writing your tests.  The test is special in
 that it tries to validate the very core of Git.  For example, it
-knows that there will be 256 subdirectories under .git/objects/,
+knows that there will be 256 subdirectories under .but/objects/,
 and it knows that the object ID of an empty tree is a certain
 40-byte string.  This is deliberately done so in t0000-basic.sh
 because the things the very basic core test tries to achieve is

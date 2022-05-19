@@ -4,18 +4,18 @@ GIT v1.6.3.3 Release Notes
 Fixes since v1.6.3.2
 --------------------
 
- * "git archive" running on Cygwin can get stuck in an infinite loop.
+ * "but archive" running on Cygwin can get stuck in an infinite loop.
 
- * "git daemon" did not correctly parse the initial line that carries
+ * "but daemon" did not correctly parse the initial line that carries
    virtual host request information.
 
- * "git diff --textconv" leaked memory badly when the textconv filter
+ * "but diff --textconv" leaked memory badly when the textconv filter
    errored out.
 
  * The built-in regular expressions to pick function names to put on
    hunk header lines for java and objc were very inefficiently written.
 
- * in certain error situations git-fetch (and git-clone) on Windows didn't
+ * in certain error situations but-fetch (and but-clone) on Windows didn't
    detect connection abort and ended up waiting indefinitely.
 
  * import-tars script (in contrib) did not import symbolic links correctly.
@@ -26,13 +26,13 @@ Fixes since v1.6.3.2
  * low-level filelevel merge driver used return value from strdup()
    without checking if we ran out of memory.
 
- * "git rebase -i" left stray closing parenthesis in its reflog message.
+ * "but rebase -i" left stray closing parenthesis in its reflog message.
 
- * "git remote show" did not show all the URLs associated with the named
-   remote, even though "git remote -v" did.  Made them consistent by
+ * "but remote show" did not show all the URLs associated with the named
+   remote, even though "but remote -v" did.  Made them consistent by
    making the former show all URLs.
 
  * "whitespace" attribute that is set was meant to detect all errors known
-   to git, but it told git to ignore trailing carriage-returns.
+   to but, but it told but to ignore trailing carriage-returns.
 
 Includes other documentation fixes.

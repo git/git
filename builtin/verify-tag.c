@@ -1,9 +1,9 @@
 /*
- * Builtin "git verify-tag"
+ * Builtin "but verify-tag"
  *
  * Copyright (c) 2007 Carlos Rica <jasampler@gmail.com>
  *
- * Based on git-verify-tag.sh
+ * Based on but-verify-tag.sh
  */
 #include "cache.h"
 #include "config.h"
@@ -15,16 +15,16 @@
 #include "ref-filter.h"
 
 static const char * const verify_tag_usage[] = {
-		N_("git verify-tag [-v | --verbose] [--format=<format>] <tag>..."),
+		N_("but verify-tag [-v | --verbose] [--format=<format>] <tag>..."),
 		NULL
 };
 
-static int git_verify_tag_config(const char *var, const char *value, void *cb)
+static int but_verify_tag_config(const char *var, const char *value, void *cb)
 {
-	int status = git_gpg_config(var, value, cb);
+	int status = but_gpg_config(var, value, cb);
 	if (status)
 		return status;
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 int cmd_verify_tag(int argc, const char **argv, const char *prefix)
@@ -39,7 +39,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_verify_tag_config, NULL);
+	but_config(but_verify_tag_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, verify_tag_options,
 			     verify_tag_usage, PARSE_OPT_KEEP_ARGV0);

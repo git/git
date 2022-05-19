@@ -69,7 +69,7 @@ proc finish {} {
 		}
 	}
 
-	# On Windows, force the encoding to UTF-8: it is what `git.exe` expects
+	# On Windows, force the encoding to UTF-8: it is what `but.exe` expects
 	if {$::tcl_platform(platform) eq {windows}} {
 		set ::answer [encoding convertto utf-8 $::answer]
 	}

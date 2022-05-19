@@ -1,22 +1,22 @@
-git-svn(1)
+but-svn(1)
 ==========
 
 NAME
 ----
-git-svn - Bidirectional operation between a Subversion repository and Git
+but-svn - Bidirectional operation between a Subversion repository and Git
 
 SYNOPSIS
 --------
 [verse]
-'git svn' <command> [<options>] [<arguments>]
+'but svn' <command> [<options>] [<arguments>]
 
 DESCRIPTION
 -----------
-'git svn' is a simple conduit for changesets between Subversion and Git.
+'but svn' is a simple conduit for changesets between Subversion and Git.
 It provides a bidirectional flow of changes between a Subversion and a Git
 repository.
 
-'git svn' can track a standard Subversion repository,
+'but svn' can track a standard Subversion repository,
 following the common "trunk/branches/tags" layout, with the --stdlayout option.
 It can also follow branches and tags in any layout with the -T/-t/-b options
 (see options to 'init' below, and also the 'clone' command).
@@ -30,7 +30,7 @@ COMMANDS
 
 'init'::
 	Initializes an empty Git repository with additional
-	metadata directories for 'git svn'.  The Subversion URL
+	metadata directories for 'but svn'.  The Subversion URL
 	may be specified as a command-line argument, or as full
 	URL arguments to -T/-t/-b.  Optionally, the target
 	directory to operate on can be specified as a second
@@ -109,12 +109,12 @@ your Perl's Getopt::Long is < v2.37).
 	of `--include-paths`.
 --no-minimize-url;;
 	When tracking multiple directories (using --stdlayout,
-	--branches, or --tags options), git svn will attempt to connect
+	--branches, or --tags options), but svn will attempt to connect
 	to the root (or highest allowed level) of the Subversion
 	repository.  This default allows better tracking of history if
 	entire projects are moved within a repository, but may cause
 	issues on repositories where read access restrictions are in
-	place.  Passing `--no-minimize-url` will allow git svn to
+	place.  Passing `--no-minimize-url` will allow but svn to
 	accept URLs as-is without attempting to connect to a higher
 	level directory.  This option is off by default when only
 	one URL/branch is tracked (it would do little good).
@@ -130,7 +130,7 @@ This automatically updates the rev_map if needed (see
 
 --localtime;;
 	Store Git cummit times in the local time zone instead of UTC.  This
-	makes 'git log' (even without --date=local) show the same times
+	makes 'but log' (even without --date=local) show the same times
 	that `svn log` would in the local time zone.
 +
 This doesn't interfere with interoperating with the Subversion
@@ -221,21 +221,21 @@ config key: svn-remote.<name>.include-paths
 
 --placeholder-filename=<filename>;;
 	Set the name of placeholder files created by --preserve-empty-dirs.
-	Default: ".gitignore"
+	Default: ".butignore"
 
 'rebase'::
 	This fetches revisions from the SVN parent of the current HEAD
 	and rebases the current (uncummitted to SVN) work against it.
 +
-This works similarly to `svn update` or 'git pull' except that
-it preserves linear history with 'git rebase' instead of
-'git merge' for ease of dcummitting with 'git svn'.
+This works similarly to `svn update` or 'but pull' except that
+it preserves linear history with 'but rebase' instead of
+'but merge' for ease of dcummitting with 'but svn'.
 +
-This accepts all options that 'git svn fetch' and 'git rebase'
+This accepts all options that 'but svn fetch' and 'but rebase'
 accept.  However, `--fetch-all` only fetches from the current
 [svn-remote], and not all [svn-remote] definitions.
 +
-Like 'git rebase'; this requires that the working tree be clean
+Like 'but rebase'; this requires that the working tree be clean
 and have no uncummitted changes.
 +
 This automatically updates the rev_map if needed (see
@@ -243,7 +243,7 @@ This automatically updates the rev_map if needed (see
 
 -l;;
 --local;;
-	Do not fetch remotely; only run 'git rebase' against the
+	Do not fetch remotely; only run 'but rebase' against the
 	last fetched cummit from the upstream SVN.
 
 'dcummit'::
@@ -262,7 +262,7 @@ Use of 'dcummit' is preferred to 'set-tree' (below).
 	After cummitting, do not rebase or reset.
 --cummit-url <URL>;;
 	cummit to this SVN URL (the full path).  This is intended to
-	allow existing 'git svn' repositories created with one transport
+	allow existing 'but svn' repositories created with one transport
 	method (e.g. `svn://` or `http://` for anonymous read) to be
 	reused if a user is later given access to an alternate transport
 	method (e.g. `svn+ssh://` or `https://`) for cummit.
@@ -289,7 +289,7 @@ discouraged.
 [verse]
 config key: svn.pushmergeinfo
 +
-This option will cause git-svn to attempt to automatically populate the
+This option will cause but-svn to attempt to automatically populate the
 svn:mergeinfo property in the SVN repository when possible. Currently, this can
 only be done when dcummitting non-fast-forward merges where all parents but the
 first have already been pushed into SVN.
@@ -299,7 +299,7 @@ first have already been pushed into SVN.
 	For each patch, one may answer "yes" (accept this patch), "no" (discard this
 	patch), "all" (accept all patches), or "quit".
 +
-'git svn dcummit' returns immediately if answer is "no" or "quit", without
+'but svn dcummit' returns immediately if answer is "no" or "quit", without
 cummitting anything to SVN.
 
 'branch'::
@@ -312,7 +312,7 @@ cummitting anything to SVN.
 -t;;
 --tag;;
 	Create a tag by using the tags_subdir instead of the branches_subdir
-	specified during git svn init.
+	specified during but svn init.
 
 -d<path>;;
 --destination=<path>;;
@@ -324,8 +324,8 @@ cummitting anything to SVN.
 	on the left-hand side of one of the configured branches or tags
 	refspecs.  You can see these refspecs with the commands
 +
-	git config --get-all svn-remote.<name>.branches
-	git config --get-all svn-remote.<name>.tags
+	but config --get-all svn-remote.<name>.branches
+	but config --get-all svn-remote.<name>.tags
 +
 where <name> is the name of the SVN repository as specified by the -R option to
 'init' (or "svn" by default).
@@ -340,7 +340,7 @@ where <name> is the name of the SVN repository as specified by the -R option to
 	repository is read-only.  This option overrides configuration
 	property 'cummiturl'.
 +
-	git config --get-all svn-remote.<name>.cummiturl
+	but config --get-all svn-remote.<name>.cummiturl
 +
 
 --parents;;
@@ -387,7 +387,7 @@ NOTE: SVN itself only stores times in UTC and nothing else. The regular svn
 client converts the UTC time to the local time (or based on the TZ=
 environment). This command has the same behaviour.
 +
-Any other arguments are passed directly to 'git log'
+Any other arguments are passed directly to 'but log'
 
 'blame'::
 	Show what revision and author last modified each line of a file. The
@@ -395,10 +395,10 @@ Any other arguments are passed directly to 'git log'
 	`svn blame' by default. Like the SVN blame command,
 	local uncummitted changes in the working tree are ignored;
 	the version of the file in the HEAD revision is annotated. Unknown
-	arguments are passed directly to 'git blame'.
+	arguments are passed directly to 'but blame'.
 +
---git-format;;
-	Produce output in the same format as 'git blame', but with
+--but-format;;
+	Produce output in the same format as 'but blame', but with
 	SVN revision numbers instead of Git commit hashes. In this mode,
 	changes that haven't been cummitted to SVN (including local
 	working-copy edits) are shown as revision 0.
@@ -428,11 +428,11 @@ Any other arguments are passed directly to 'git log'
 	absolutely no attempts to do patching when cummitting to SVN, it
 	simply overwrites files with those specified in the tree or
 	cummit.  All merging is assumed to have taken place
-	independently of 'git svn' functions.
+	independently of 'but svn' functions.
 
 'create-ignore'::
 	Recursively finds the svn:ignore property on directories and
-	creates matching .gitignore files. The resulting files are staged to
+	creates matching .butignore files. The resulting files are staged to
 	be cummitted, but are not cummitted. Use -r/--revision to refer to a
 	specific revision.
 
@@ -445,19 +445,19 @@ Any other arguments are passed directly to 'git log'
 	Attempts to recreate empty directories that core Git cannot track
 	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
 	Empty directories are automatically recreated when using
-	"git svn clone" and "git svn rebase", so "mkdirs" is intended
-	for use after commands like "git checkout" or "git reset".
+	"but svn clone" and "but svn rebase", so "mkdirs" is intended
+	for use after commands like "but checkout" or "but reset".
 	(See the svn-remote.<name>.automkdirs config file option for
 	more information.)
 
 'cummit-diff'::
 	cummits the diff of two tree-ish arguments from the
-	command-line.  This command does not rely on being inside a `git svn
+	command-line.  This command does not rely on being inside a `but svn
 	init`-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the
 	URL of the target Subversion repository.  The final argument
-	(URL) may be omitted if you are working from a 'git svn'-aware
-	repository (that has been `init`-ed with 'git svn').
+	(URL) may be omitted if you are working from a 'but svn'-aware
+	repository (that has been `init`-ed with 'but svn').
 	The -r<revision> option is required for this.
 +
 The cummit message is supplied either directly with the `-m` or `-F`
@@ -498,7 +498,7 @@ denotes such an object, or it is requested by invoking an editor (see
 Example:
 +
 ------------------------------------------------------------------------
-git svn propset svn:keywords "FreeBSD=%H" devel/py-tipper/Makefile
+but svn propset svn:keywords "FreeBSD=%H" devel/py-tipper/Makefile
 ------------------------------------------------------------------------
 +
 This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
@@ -523,9 +523,9 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 	file cannot be ignored forever (with --ignore-paths) the only
 	way to repair the repo is to use 'reset'.
 +
-Only the rev_map and refs/remotes/git-svn are changed (see
+Only the rev_map and refs/remotes/but-svn are changed (see
 '$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
-Follow 'reset' with a 'fetch' and then 'git reset' or 'git rebase' to
+Follow 'reset' with a 'fetch' and then 'but reset' or 'but rebase' to
 move local branches onto the new tree.
 
 -r <n>;;
@@ -540,7 +540,7 @@ Example:;;
 Assume you have local changes in "master", but you need to refetch "r2".
 +
 ------------
-    r1---r2---r3 remotes/git-svn
+    r1---r2---r3 remotes/but-svn
                 \
                  A---B master
 ------------
@@ -549,24 +549,24 @@ Fix the ignore-paths or SVN permissions problem that caused "r2" to
 be incomplete in the first place.  Then:
 +
 [verse]
-git svn reset -r2 -p
-git svn fetch
+but svn reset -r2 -p
+but svn fetch
 +
 ------------
-    r1---r2'--r3' remotes/git-svn
+    r1---r2'--r3' remotes/but-svn
       \
        r2---r3---A---B master
 ------------
 +
-Then fixup "master" with 'git rebase'.
-Do NOT use 'git merge' or your history will not be compatible with a
+Then fixup "master" with 'but rebase'.
+Do NOT use 'but merge' or your history will not be compatible with a
 future 'dcummit'!
 +
 [verse]
-git rebase --onto remotes/git-svn A^ master
+but rebase --onto remotes/but-svn A^ master
 +
 ------------
-    r1---r2'--r3' remotes/git-svn
+    r1---r2'--r3' remotes/but-svn
                 \
                  A'--B' master
 ------------
@@ -577,7 +577,7 @@ OPTIONS
 --shared[=(false|true|umask|group|all|world|everybody)]::
 --template=<template-directory>::
 	Only used with the 'init' command.
-	These are passed directly to 'git init'.
+	These are passed directly to 'but init'.
 
 -r <arg>::
 --revision <arg>::
@@ -597,7 +597,7 @@ and lost.
 +
 Read a list of cummits from stdin and cummit them in reverse
 order.  Only the leading sha1 is read from each line, so
-'git rev-list --pretty=oneline' output can be used.
+'but rev-list --pretty=oneline' output can be used.
 
 --rmdir::
 	Only used with the 'dcummit', 'set-tree' and 'cummit-diff' commands.
@@ -626,8 +626,8 @@ config key: svn.edit
 --find-copies-harder::
 	Only used with the 'dcummit', 'set-tree' and 'cummit-diff' commands.
 +
-They are both passed directly to 'git diff-tree'; see
-linkgit:git-diff-tree[1] for more information.
+They are both passed directly to 'but diff-tree'; see
+linkbut:but-diff-tree[1] for more information.
 +
 [verse]
 config key: svn.l
@@ -635,17 +635,17 @@ config key: svn.findcopiesharder
 
 -A<filename>::
 --authors-file=<filename>::
-	Syntax is compatible with the file used by 'git cvsimport' but
+	Syntax is compatible with the file used by 'but cvsimport' but
 	an empty email address can be supplied with '<>':
 +
 ------------------------------------------------------------------------
 	loginname = Joe User <user@example.com>
 ------------------------------------------------------------------------
 +
-If this option is specified and 'git svn' encounters an SVN
-cummitter name that does not exist in the authors-file, 'git svn'
+If this option is specified and 'but svn' encounters an SVN
+cummitter name that does not exist in the authors-file, 'but svn'
 will abort operation. The user will then have to add the
-appropriate entry.  Re-running the previous 'git svn' command
+appropriate entry.  Re-running the previous 'but svn' command
 after the authors-file is modified should continue operation.
 +
 [verse]
@@ -669,7 +669,7 @@ config key: svn.authorsProg
 
 -q::
 --quiet::
-	Make 'git svn' less verbose. Specify a second time to make it
+	Make 'but svn' less verbose. Specify a second time to make it
 	even less verbose.
 
 -m::
@@ -680,8 +680,8 @@ config key: svn.authorsProg
 --rebase-merges::
 	These are only used with the 'dcummit' and 'rebase' commands.
 +
-Passed directly to 'git rebase' when using 'dcummit' if a
-'git reset' cannot be used (see 'dcummit').
+Passed directly to 'but rebase' when using 'dcummit' if a
+'but reset' cannot be used (see 'dcummit').
 
 -n::
 --dry-run::
@@ -740,7 +740,7 @@ ADVANCED OPTIONS
 	a suitable parent in the first Git cummit for the branch.
 	This is especially helpful when we're tracking a directory
 	that has been moved around within the repository.  If this
-	feature is disabled, the branches created by 'git svn' will all
+	feature is disabled, the branches created by 'but svn' will all
 	be linear and not share any history, meaning that there will be
 	no information on where branches were branched off or merged.
 	However, following long/convoluted histories can take a long
@@ -756,14 +756,14 @@ CONFIG FILE-ONLY OPTIONS
 
 svn.noMetadata::
 svn-remote.<name>.noMetadata::
-	This gets rid of the 'git-svn-id:' lines at the end of every cummit.
+	This gets rid of the 'but-svn-id:' lines at the end of every cummit.
 +
-This option can only be used for one-shot imports as 'git svn'
+This option can only be used for one-shot imports as 'but svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your '$GIT_DIR/svn/\**/.rev_map.*' files, 'git svn' will not
+if you lose your '$GIT_DIR/svn/\**/.rev_map.*' files, 'but svn' will not
 be able to rebuild them.
 +
-The 'git svn log' command will not work on repositories using
+The 'but svn log' command will not work on repositories using
 this, either.  Using this conflicts with the 'useSvmProps'
 option for (hopefully) obvious reasons.
 +
@@ -771,13 +771,13 @@ This option is NOT recommended as it makes it difficult to track down
 old references to SVN revision numbers in existing documentation, bug
 reports, and archives.  If you plan to eventually migrate from SVN to
 Git and are certain about dropping SVN history, consider
-https://github.com/newren/git-filter-repo[git-filter-repo] instead.
+https://buthub.com/newren/but-filter-repo[but-filter-repo] instead.
 filter-repo also allows reformatting of metadata for ease-of-reading
 and rewriting authorship info for non-"svn.authorsFile" users.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
-	This allows 'git svn' to re-map repository URLs and UUIDs from
+	This allows 'but svn' to re-map repository URLs and UUIDs from
 	mirrors created using SVN::Mirror (or svk) for metadata.
 +
 If an SVN revision has a property, "svm:headrev", it is likely
@@ -796,7 +796,7 @@ svn-remote.<name>.useSvnsyncprops::
 
 svn-remote.<name>.rewriteRoot::
 	This allows users to create repositories from alternate
-	URLs.  For example, an administrator could run 'git svn' on the
+	URLs.  For example, an administrator could run 'but svn' on the
 	server locally (accessing via file://) but wish to distribute
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
@@ -822,31 +822,31 @@ svn.brokenSymlinkWorkaround::
 	broken symlinks checked into SVN by broken clients.  Set this
 	option to "false" if you track a SVN repository with many
 	empty blobs that are not symlinks.  This option may be changed
-	while 'git svn' is running and take effect on the next
-	revision fetched.  If unset, 'git svn' assumes this option to
+	while 'but svn' is running and take effect on the next
+	revision fetched.  If unset, 'but svn' assumes this option to
 	be "true".
 
 svn.pathnameencoding::
-	This instructs git svn to recode pathnames to a given encoding.
+	This instructs but svn to recode pathnames to a given encoding.
 	It can be used by windows users and by those who work in non-utf8
 	locales to avoid corrupted file names with non-ASCII characters.
 	Valid encodings are the ones supported by Perl's Encode module.
 
 svn-remote.<name>.automkdirs::
-	Normally, the "git svn clone" and "git svn rebase" commands
+	Normally, the "but svn clone" and "but svn rebase" commands
 	attempt to recreate empty directories that are in the
 	Subversion repository.  If this option is set to "false", then
-	empty directories will only be created if the "git svn mkdirs"
-	command is run explicitly.  If unset, 'git svn' assumes this
+	empty directories will only be created if the "but svn mkdirs"
+	command is run explicitly.  If unset, 'but svn' assumes this
 	option to be "true".
 
 Since the noMetadata, rewriteRoot, rewriteUUID, useSvnsyncProps and useSvmProps
-options all affect the metadata generated and used by 'git svn'; they
+options all affect the metadata generated and used by 'but svn'; they
 *must* be set in the configuration file before any history is imported
 and these settings should never be changed once they are set.
 
 Additionally, only one of these options can be used per svn-remote
-section because they affect the 'git-svn-id:' metadata line, except
+section because they affect the 'but-svn-id:' metadata line, except
 for rewriteRoot and rewriteUUID which can be used together.
 
 
@@ -857,118 +857,118 @@ Tracking and contributing to the trunk of a Subversion-managed project
 (ignoring tags and branches):
 
 ------------------------------------------------------------------------
-# Clone a repo (like git clone):
-	git svn clone http://svn.example.com/project/trunk
+# Clone a repo (like but clone):
+	but svn clone http://svn.example.com/project/trunk
 # Enter the newly cloned directory:
 	cd trunk
-# You should be on master branch, double-check with 'git branch'
-	git branch
+# You should be on master branch, double-check with 'but branch'
+	but branch
 # Do some work and cummit locally to Git:
-	git cummit ...
+	but cummit ...
 # Something is cummitted to SVN, rebase your local changes against the
 # latest changes in SVN:
-	git svn rebase
+	but svn rebase
 # Now cummit your changes (that were cummitted previously using Git) to SVN,
 # as well as automatically updating your working HEAD:
-	git svn dcummit
+	but svn dcummit
 # Append svn:ignore settings to the default Git exclude file:
-	git svn show-ignore >> .git/info/exclude
+	but svn show-ignore >> .but/info/exclude
 ------------------------------------------------------------------------
 
 Tracking and contributing to an entire Subversion-managed project
 (complete with a trunk, tags and branches):
 
 ------------------------------------------------------------------------
-# Clone a repo with standard SVN directory layout (like git clone):
-	git svn clone http://svn.example.com/project --stdlayout --prefix svn/
+# Clone a repo with standard SVN directory layout (like but clone):
+	but svn clone http://svn.example.com/project --stdlayout --prefix svn/
 # Or, if the repo uses a non-standard directory layout:
-	git svn clone http://svn.example.com/project -T tr -b branch -t tag --prefix svn/
+	but svn clone http://svn.example.com/project -T tr -b branch -t tag --prefix svn/
 # View all branches and tags you have cloned:
-	git branch -r
+	but branch -r
 # Create a new branch in SVN
-	git svn branch waldo
+	but svn branch waldo
 # Reset your master to trunk (or any other branch, replacing 'trunk'
 # with the appropriate name):
-	git reset --hard svn/trunk
+	but reset --hard svn/trunk
 # You may only dcummit to one branch/tag/trunk at a time.  The usage
 # of dcummit/rebase/show-ignore should be the same as above.
 ------------------------------------------------------------------------
 
-The initial 'git svn clone' can be quite time-consuming
+The initial 'but svn clone' can be quite time-consuming
 (especially for large Subversion repositories). If multiple
 people (or one person with multiple machines) want to use
-'git svn' to interact with the same Subversion repository, you can
-do the initial 'git svn clone' to a repository on a server and
-have each person clone that repository with 'git clone':
+'but svn' to interact with the same Subversion repository, you can
+do the initial 'but svn clone' to a repository on a server and
+have each person clone that repository with 'but clone':
 
 ------------------------------------------------------------------------
 # Do the initial import on a server
-	ssh server "cd /pub && git svn clone http://svn.example.com/project [options...]"
+	ssh server "cd /pub && but svn clone http://svn.example.com/project [options...]"
 # Clone locally - make sure the refs/remotes/ space matches the server
 	mkdir project
 	cd project
-	git init
-	git remote add origin server:/pub/project
-	git config --replace-all remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
-	git fetch
+	but init
+	but remote add origin server:/pub/project
+	but config --replace-all remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
+	but fetch
 # Prevent fetch/pull from remote Git server in the future,
-# we only want to use git svn for future updates
-	git config --remove-section remote.origin
+# we only want to use but svn for future updates
+	but config --remove-section remote.origin
 # Create a local branch from one of the branches just fetched
-	git checkout -b master FETCH_HEAD
-# Initialize 'git svn' locally (be sure to use the same URL and
+	but checkout -b master FETCH_HEAD
+# Initialize 'but svn' locally (be sure to use the same URL and
 # --stdlayout/-T/-b/-t/--prefix options as were used on server)
-	git svn init http://svn.example.com/project [options...]
+	but svn init http://svn.example.com/project [options...]
 # Pull the latest changes from Subversion
-	git svn rebase
+	but svn rebase
 ------------------------------------------------------------------------
 
 REBASE VS. PULL/MERGE
 ---------------------
-Prefer to use 'git svn rebase' or 'git rebase', rather than
-'git pull' or 'git merge' to synchronize unintegrated cummits with a 'git svn'
+Prefer to use 'but svn rebase' or 'but rebase', rather than
+'but pull' or 'but merge' to synchronize unintegrated cummits with a 'but svn'
 branch. Doing so will keep the history of unintegrated cummits linear with
 respect to the upstream SVN repository and allow the use of the preferred
-'git svn dcummit' subcommand to push unintegrated cummits back into SVN.
+'but svn dcummit' subcommand to push unintegrated cummits back into SVN.
 
-Originally, 'git svn' recommended that developers pulled or merged from
-the 'git svn' branch.  This was because the author favored
-`git svn set-tree B` to cummit a single head rather than the
-`git svn set-tree A..B` notation to cummit multiple cummits. Use of
-'git pull' or 'git merge' with `git svn set-tree A..B` will cause non-linear
+Originally, 'but svn' recommended that developers pulled or merged from
+the 'but svn' branch.  This was because the author favored
+`but svn set-tree B` to cummit a single head rather than the
+`but svn set-tree A..B` notation to cummit multiple cummits. Use of
+'but pull' or 'but merge' with `but svn set-tree A..B` will cause non-linear
 history to be flattened when cummitting into SVN and this can lead to merge
 cummits unexpectedly reversing previous cummits in SVN.
 
 MERGE TRACKING
 --------------
-While 'git svn' can track
+While 'but svn' can track
 copy history (including branches and tags) for repositories adopting a
 standard layout, it cannot yet represent merge history that happened
-inside git back upstream to SVN users.  Therefore it is advised that
+inside but back upstream to SVN users.  Therefore it is advised that
 users keep history as linear as possible inside Git to ease
 compatibility with SVN (see the CAVEATS section below).
 
 HANDLING OF SVN BRANCHES
 ------------------------
-If 'git svn' is configured to fetch branches (and --follow-branches
+If 'but svn' is configured to fetch branches (and --follow-branches
 is in effect), it sometimes creates multiple Git branches for one
 SVN branch, where the additional branches have names of the form
 'branchname@nnn' (with nnn an SVN revision number).  These additional
-branches are created if 'git svn' cannot find a parent cummit for the
+branches are created if 'but svn' cannot find a parent cummit for the
 first cummit in an SVN branch, to connect the branch to the history of
 the other branches.
 
 Normally, the first cummit in an SVN branch consists
-of a copy operation. 'git svn' will read this cummit to get the SVN
+of a copy operation. 'but svn' will read this cummit to get the SVN
 revision the branch was created from. It will then try to find the
 Git cummit that corresponds to this SVN revision, and use that as the
 parent of the branch. However, it is possible that there is no suitable
 Git cummit to serve as parent.  This will happen, among other reasons,
-if the SVN branch is a copy of a revision that was not fetched by 'git
+if the SVN branch is a copy of a revision that was not fetched by 'but
 svn' (e.g. because it is an old revision that was skipped with
 `--revision`), or if in SVN a directory was copied that is not tracked
-by 'git svn' (such as a branch that is not tracked at all, or a
-subdirectory of a tracked branch). In these cases, 'git svn' will still
+by 'but svn' (such as a branch that is not tracked at all, or a
+subdirectory of a tracked branch). In these cases, 'but svn' will still
 create a Git branch, but instead of using an existing Git cummit as the
 parent of the branch, it will read the SVN history of the directory the
 branch was copied from and create appropriate Git cummits.  This is
@@ -986,7 +986,7 @@ single SVN revision.
 
 An example: in an SVN repository with a standard
 trunk/tags/branches layout, a directory trunk/sub is created in r.100.
-In r.200, trunk/sub is branched by copying it to branches/. 'git svn
+In r.200, trunk/sub is branched by copying it to branches/. 'but svn
 clone -s' will then create a branch 'sub'. It will also create new Git
 cummits for r.100 through r.199 and use these as the history of branch
 'sub'. Thus there will be two Git cummits for each revision from r.100
@@ -998,46 +998,46 @@ CAVEATS
 -------
 
 For the sake of simplicity and interoperating with Subversion,
-it is recommended that all 'git svn' users clone, fetch and dcummit
-directly from the SVN server, and avoid all 'git clone'/'pull'/'merge'/'push'
+it is recommended that all 'but svn' users clone, fetch and dcummit
+directly from the SVN server, and avoid all 'but clone'/'pull'/'merge'/'push'
 operations between Git repositories and branches.  The recommended
 method of exchanging code between Git branches and users is
-'git format-patch' and 'git am', or just 'dcummit'ing to the SVN repository.
+'but format-patch' and 'but am', or just 'dcummit'ing to the SVN repository.
 
-Running 'git merge' or 'git pull' is NOT recommended on a branch you
+Running 'but merge' or 'but pull' is NOT recommended on a branch you
 plan to 'dcummit' from because Subversion users cannot see any
 merges you've made.  Furthermore, if you merge or pull from a Git branch
 that is a mirror of an SVN branch, 'dcummit' may cummit to the wrong
 branch.
 
-If you do merge, note the following rule: 'git svn dcummit' will
+If you do merge, note the following rule: 'but svn dcummit' will
 attempt to cummit on top of the SVN cummit named in
 ------------------------------------------------------------------------
-git log --grep=^git-svn-id: --first-parent -1
+but log --grep=^but-svn-id: --first-parent -1
 ------------------------------------------------------------------------
 You 'must' therefore ensure that the most recent cummit of the branch
 you want to dcummit to is the 'first' parent of the merge.  Chaos will
 ensue otherwise, especially if the first parent is an older cummit on
 the same SVN branch.
 
-'git clone' does not clone branches under the refs/remotes/ hierarchy or
-any 'git svn' metadata, or config.  So repositories created and managed with
-using 'git svn' should use 'rsync' for cloning, if cloning is to be done
+'but clone' does not clone branches under the refs/remotes/ hierarchy or
+any 'but svn' metadata, or config.  So repositories created and managed with
+using 'but svn' should use 'rsync' for cloning, if cloning is to be done
 at all.
 
-Since 'dcummit' uses rebase internally, any Git branches you 'git push' to
+Since 'dcummit' uses rebase internally, any Git branches you 'but push' to
 before 'dcummit' on will require forcing an overwrite of the existing ref
 on the remote repository.  This is generally considered bad practice,
-see the linkgit:git-push[1] documentation for details.
+see the linkbut:but-push[1] documentation for details.
 
-Do not use the --amend option of linkgit:git-cummit[1] on a change you've
+Do not use the --amend option of linkbut:but-cummit[1] on a change you've
 already dcummitted.  It is considered bad practice to --amend cummits
 you've already pushed to a remote repository for other users, and
 dcummit with SVN is analogous to that.
 
 When cloning an SVN repository, if none of the options for describing
 the repository layout is used (--trunk, --tags, --branches,
---stdlayout), 'git svn clone' will create a Git repository with
+--stdlayout), 'but svn clone' will create a Git repository with
 completely linear history, where branches and tags appear as separate
 directories in the working copy.  While this is the easiest way to get a
 copy of a complete repository, for projects with many branches it will
@@ -1050,7 +1050,7 @@ without giving any repository layout options.  If the full history with
 branches and tags is required, the options `--trunk` / `--branches` /
 `--tags` must be used.
 
-When using multiple --branches or --tags, 'git svn' does not automatically
+When using multiple --branches or --tags, 'but svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
 the same name, or if a branch and a tag have the same name).  In these cases,
 use 'init' to set up your Git repository then, before your first 'fetch', edit
@@ -1063,7 +1063,7 @@ with different name spaces.  For example:
 CONFIGURATION
 -------------
 
-'git svn' stores [svn-remote] configuration information in the
+'but svn' stores [svn-remote] configuration information in the
 repository $GIT_DIR/config file.  It is similar the core Git
 [remote] sections except 'fetch' keys do not accept glob
 arguments; but they are instead handled by the 'branches'
@@ -1086,7 +1086,7 @@ Keep in mind that the `*` (asterisk) wildcard of the local ref
 however the remote wildcard may be anywhere as long as it's an
 independent path component (surrounded by `/` or EOL).   This
 type of configuration is not automatically created by 'init' and
-should be manually entered with a text-editor or using 'git config'.
+should be manually entered with a text-editor or using 'but config'.
 
 Also note that only one asterisk is allowed per word. For example:
 
@@ -1125,10 +1125,10 @@ Creating a branch in such a configuration requires disambiguating which
 location to use using the -d or --destination flag:
 
 ------------------------------------------------------------------------
-$ git svn branch -d branches/server release-2-3-0
+$ but svn branch -d branches/server release-2-3-0
 ------------------------------------------------------------------------
 
-Note that git-svn keeps track of the highest revision in which a branch
+Note that but-svn keeps track of the highest revision in which a branch
 or tag has appeared. If the subset of branches or tags is changed after
 fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
 (or reset) branches-maxRev and/or tags-maxRev as appropriate.
@@ -1138,12 +1138,12 @@ FILES
 $GIT_DIR/svn/\**/.rev_map.*::
 	Mapping between Subversion revision numbers and Git cummit
 	names.  In a repository where the noMetadata option is not set,
-	this can be rebuilt from the git-svn-id: lines that are at the
+	this can be rebuilt from the but-svn-id: lines that are at the
 	end of every cummit (see the 'svn.noMetadata' section above for
 	details).
 +
-'git svn fetch' and 'git svn rebase' automatically update the rev_map
-if it is missing or not up to date.  'git svn reset' automatically
+'but svn fetch' and 'but svn rebase' automatically update the rev_map
+if it is missing or not up to date.  'but svn reset' automatically
 rewinds it.
 
 BUGS
@@ -1161,14 +1161,14 @@ for Git to detect them.
 
 In SVN, it is possible (though discouraged) to cummit changes to a tag
 (because a tag is just a directory copy, thus technically the same as a
-branch). When cloning an SVN repository, 'git svn' cannot know if such a
+branch). When cloning an SVN repository, 'but svn' cannot know if such a
 cummit to a tag will happen in the future. Thus it acts conservatively
 and imports all SVN tags as branches, prefixing the tag name with 'tags/'.
 
 SEE ALSO
 --------
-linkgit:git-rebase[1]
+linkbut:but-rebase[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

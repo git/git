@@ -15,72 +15,72 @@
 #include "progress.h"
 
 static const char * const builtin_remote_usage[] = {
-	"git remote [-v | --verbose]",
-	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <name> <url>"),
-	N_("git remote rename [--[no-]progress] <old> <new>"),
-	N_("git remote remove <name>"),
-	N_("git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
-	N_("git remote [-v | --verbose] show [-n] <name>"),
-	N_("git remote prune [-n | --dry-run] <name>"),
-	N_("git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"),
-	N_("git remote set-branches [--add] <name> <branch>..."),
-	N_("git remote get-url [--push] [--all] <name>"),
-	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	"but remote [-v | --verbose]",
+	N_("but remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <name> <url>"),
+	N_("but remote rename [--[no-]progress] <old> <new>"),
+	N_("but remote remove <name>"),
+	N_("but remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
+	N_("but remote [-v | --verbose] show [-n] <name>"),
+	N_("but remote prune [-n | --dry-run] <name>"),
+	N_("but remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"),
+	N_("but remote set-branches [--add] <name> <branch>..."),
+	N_("but remote get-url [--push] [--all] <name>"),
+	N_("but remote set-url [--push] <name> <newurl> [<oldurl>]"),
+	N_("but remote set-url --add <name> <newurl>"),
+	N_("but remote set-url --delete <name> <url>"),
 	NULL
 };
 
 static const char * const builtin_remote_add_usage[] = {
-	N_("git remote add [<options>] <name> <url>"),
+	N_("but remote add [<options>] <name> <url>"),
 	NULL
 };
 
 static const char * const builtin_remote_rename_usage[] = {
-	N_("git remote rename [--[no-]progress] <old> <new>"),
+	N_("but remote rename [--[no-]progress] <old> <new>"),
 	NULL
 };
 
 static const char * const builtin_remote_rm_usage[] = {
-	N_("git remote remove <name>"),
+	N_("but remote remove <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_sethead_usage[] = {
-	N_("git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
+	N_("but remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
 	NULL
 };
 
 static const char * const builtin_remote_setbranches_usage[] = {
-	N_("git remote set-branches <name> <branch>..."),
-	N_("git remote set-branches --add <name> <branch>..."),
+	N_("but remote set-branches <name> <branch>..."),
+	N_("but remote set-branches --add <name> <branch>..."),
 	NULL
 };
 
 static const char * const builtin_remote_show_usage[] = {
-	N_("git remote show [<options>] <name>"),
+	N_("but remote show [<options>] <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_prune_usage[] = {
-	N_("git remote prune [<options>] <name>"),
+	N_("but remote prune [<options>] <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_update_usage[] = {
-	N_("git remote update [<options>] [<group> | <remote>]..."),
+	N_("but remote update [<options>] [<group> | <remote>]..."),
 	NULL
 };
 
 static const char * const builtin_remote_geturl_usage[] = {
-	N_("git remote get-url [--push] [--all] <name>"),
+	N_("but remote get-url [--push] [--all] <name>"),
 	NULL
 };
 
 static const char * const builtin_remote_seturl_usage[] = {
-	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	N_("but remote set-url [--push] <name> <newurl> [<oldurl>]"),
+	N_("but remote set-url --add <name> <newurl>"),
+	N_("but remote set-url --delete <name> <url>"),
 	NULL
 };
 
@@ -125,7 +125,7 @@ static void add_branch(const char *key, const char *branchname,
 	else
 		strbuf_addf(tmp, "refs/heads/%s:refs/remotes/%s/%s",
 				branchname, remotename, branchname);
-	git_config_set_multivar(key, tmp->buf, "^$", 0);
+	but_config_set_multivar(key, tmp->buf, "^$", 0);
 }
 
 static const char mirror_advice[] =
@@ -201,7 +201,7 @@ static int add(int argc, const char **argv)
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
-	git_config_set(buf.buf, url);
+	but_config_set(buf.buf, url);
 
 	if (!mirror || mirror & MIRROR_FETCH) {
 		strbuf_reset(&buf);
@@ -217,13 +217,13 @@ static int add(int argc, const char **argv)
 	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		git_config_set(buf.buf, "true");
+		but_config_set(buf.buf, "true");
 	}
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.tagOpt", name);
-		git_config_set(buf.buf,
+		but_config_set(buf.buf,
 			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
@@ -339,7 +339,7 @@ static void read_branches(void)
 {
 	if (branch_list.nr)
 		return;
-	git_config(config_read_branches, NULL);
+	but_config(config_read_branches, NULL);
 }
 
 struct ref_states {
@@ -608,19 +608,19 @@ static int migrate_file(struct remote *remote)
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
 	for (i = 0; i < remote->url_nr; i++)
-		git_config_set_multivar(buf.buf, remote->url[i], "^$", 0);
+		but_config_set_multivar(buf.buf, remote->url[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push.raw_nr; i++)
-		git_config_set_multivar(buf.buf, remote->push.raw[i], "^$", 0);
+		but_config_set_multivar(buf.buf, remote->push.raw[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch.raw_nr; i++)
-		git_config_set_multivar(buf.buf, remote->fetch.raw[i], "^$", 0);
+		but_config_set_multivar(buf.buf, remote->fetch.raw[i], "^$", 0);
 	if (remote->origin == REMOTE_REMOTES)
-		unlink_or_warn(git_path("remotes/%s", remote->name));
+		unlink_or_warn(but_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
-		unlink_or_warn(git_path("branches/%s", remote->name));
+		unlink_or_warn(but_path("branches/%s", remote->name));
 	strbuf_release(&buf);
 
 	return 0;
@@ -654,11 +654,11 @@ static void handle_push_default(const char* old_name, const char* new_name)
 {
 	struct push_default_info push_default = {
 		old_name, CONFIG_SCOPE_UNKNOWN, STRBUF_INIT, -1 };
-	git_config(config_read_push_default, &push_default);
+	but_config(config_read_push_default, &push_default);
 	if (push_default.scope >= CONFIG_SCOPE_COMMAND)
 		; /* pass */
 	else if (push_default.scope >= CONFIG_SCOPE_LOCAL) {
-		int result = git_config_set_gently("remote.pushDefault",
+		int result = but_config_set_gently("remote.pushDefault",
 						   new_name);
 		if (new_name && result && result != CONFIG_NOTHING_SET)
 			die(_("could not set '%s'"), "remote.pushDefault");
@@ -722,13 +722,13 @@ static int mv(int argc, const char **argv)
 
 	strbuf_addf(&buf, "remote.%s", rename.old_name);
 	strbuf_addf(&buf2, "remote.%s", rename.new_name);
-	if (git_config_rename_section(buf.buf, buf2.buf) < 1)
+	if (but_config_rename_section(buf.buf, buf2.buf) < 1)
 		return error(_("Could not rename config section '%s' to '%s'"),
 				buf.buf, buf2.buf);
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
-	git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
+	but_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
 	for (i = 0; i < oldremote->fetch.raw_nr; i++) {
 		char *ptr;
@@ -748,7 +748,7 @@ static int mv(int argc, const char **argv)
 				  "\tPlease update the configuration manually if necessary."),
 				buf2.buf);
 
-		git_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
+		but_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
 	}
 
 	read_branches();
@@ -758,12 +758,12 @@ static int mv(int argc, const char **argv)
 		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			but_config_set(buf.buf, rename.new_name);
 		}
 		if (info->push_remote_name && !strcmp(info->push_remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushRemote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			but_config_set(buf.buf, rename.new_name);
 		}
 	}
 
@@ -880,7 +880,7 @@ static int rm(int argc, const char **argv)
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "branch.%s.%s",
 						item->string, *k);
-				result = git_config_set_gently(buf.buf, NULL);
+				result = but_config_set_gently(buf.buf, NULL);
 				if (result && result != CONFIG_NOTHING_SET)
 					die(_("could not unset '%s'"), buf.buf);
 			}
@@ -888,7 +888,7 @@ static int rm(int argc, const char **argv)
 		if (info->push_remote_name && !strcmp(info->push_remote_name, remote->name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushremote", item->string);
-			result = git_config_set_gently(buf.buf, NULL);
+			result = but_config_set_gently(buf.buf, NULL);
 			if (result && result != CONFIG_NOTHING_SET)
 				die(_("could not unset '%s'"), buf.buf);
 		}
@@ -915,14 +915,14 @@ static int rm(int argc, const char **argv)
 			      "to delete them, use:",
 			      skipped.nr));
 		for (i = 0; i < skipped.nr; i++)
-			fprintf(stderr, "  git branch -d %s\n",
+			fprintf(stderr, "  but branch -d %s\n",
 				skipped.items[i].string);
 	}
 	string_list_clear(&skipped, 0);
 
 	if (!result) {
 		strbuf_addf(&buf, "remote.%s", remote->name);
-		if (git_config_rename_section(buf.buf, NULL) < 1)
+		if (but_config_rename_section(buf.buf, NULL) < 1)
 			return error(_("Could not remove config section '%s'"), buf.buf);
 
 		handle_push_default(remote->name, NULL);
@@ -1036,7 +1036,7 @@ static int show_remote_info_item(struct string_list_item *item, void *cb_data)
 		} else if (string_list_has_string(&states->tracked, name))
 			arg = _(" tracked");
 		else if (string_list_has_string(&states->stale, name))
-			arg = _(" stale (use 'git remote prune' to remove)");
+			arg = _(" stale (use 'but remote prune' to remove)");
 		else
 			arg = _(" ???");
 		printf("    %-*s", info->width, name);
@@ -1310,27 +1310,27 @@ static int show(int argc, const char **argv)
 		for_each_string_list(&info.list, show_remote_info_item, &info);
 		string_list_clear(&info.list, 0);
 
-		/* git pull info */
+		/* but pull info */
 		info.width = 0;
 		info.any_rebase = 0;
 		for_each_string_list(&branch_list, add_local_to_show_info, &info);
 		if (info.list.nr)
-			printf_ln(Q_("  Local branch configured for 'git pull':",
-				     "  Local branches configured for 'git pull':",
+			printf_ln(Q_("  Local branch configured for 'but pull':",
+				     "  Local branches configured for 'but pull':",
 				     info.list.nr));
 		for_each_string_list(&info.list, show_local_info_item, &info);
 		string_list_clear(&info.list, 0);
 
-		/* git push info */
+		/* but push info */
 		if (info.states.remote->mirror)
-			printf_ln(_("  Local refs will be mirrored by 'git push'"));
+			printf_ln(_("  Local refs will be mirrored by 'but push'"));
 
 		info.width = info.width2 = 0;
 		for_each_string_list(&info.states.push, add_push_to_show_info, &info);
 		QSORT(info.list.items, info.list.nr, cmp_string_with_push);
 		if (info.list.nr)
-			printf_ln(Q_("  Local ref configured for 'git push'%s:",
-				     "  Local refs configured for 'git push'%s:",
+			printf_ln(Q_("  Local ref configured for 'but push'%s:",
+				     "  Local refs configured for 'but push'%s:",
 				     info.list.nr),
 				  no_query ? _(" (status not queried)") : "");
 		for_each_string_list(&info.list, show_push_info_item, &info);
@@ -1371,7 +1371,7 @@ static int set_head(int argc, const char **argv)
 			result |= error(_("Multiple remote HEAD branches. "
 					  "Please choose one explicitly with:"));
 			for (i = 0; i < states.heads.nr; i++)
-				fprintf(stderr, "  git remote set-head %s %s\n",
+				fprintf(stderr, "  but remote set-head %s %s\n",
 					argv[0], states.heads.items[i].string);
 		} else
 			head_name = xstrdup(states.heads.items[0].string);
@@ -1504,7 +1504,7 @@ static int update(int argc, const char **argv)
 		strvec_push(&fetch_argv, argv[i]);
 
 	if (strcmp(fetch_argv.v[fetch_argv.nr-1], "default") == 0) {
-		git_config(get_remote_default, &default_defined);
+		but_config(get_remote_default, &default_defined);
 		if (!default_defined) {
 			strvec_pop(&fetch_argv);
 			strvec_push(&fetch_argv, "--all");
@@ -1518,7 +1518,7 @@ static int update(int argc, const char **argv)
 
 static int remove_all_fetch_refspecs(const char *key)
 {
-	return git_config_set_multivar_gently(key, NULL, NULL,
+	return but_config_set_multivar_gently(key, NULL, NULL,
 					      CONFIG_FLAGS_MULTI_REPLACE);
 }
 
@@ -1688,10 +1688,10 @@ static int set_url(int argc, const char **argv)
 	/* Special cases that add new entry. */
 	if ((!oldurl && !delete_mode) || add_mode) {
 		if (add_mode)
-			git_config_set_multivar(name_buf.buf, newurl,
+			but_config_set_multivar(name_buf.buf, newurl,
 						       "^$", 0);
 		else
-			git_config_set(name_buf.buf, newurl);
+			but_config_set(name_buf.buf, newurl);
 		goto out;
 	}
 
@@ -1712,9 +1712,9 @@ static int set_url(int argc, const char **argv)
 	regfree(&old_regex);
 
 	if (!delete_mode)
-		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
+		but_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
 	else
-		git_config_set_multivar(name_buf.buf, NULL, oldurl,
+		but_config_set_multivar(name_buf.buf, NULL, oldurl,
 					CONFIG_FLAGS_MULTI_REPLACE);
 out:
 	strbuf_release(&name_buf);

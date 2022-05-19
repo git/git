@@ -7,45 +7,45 @@ test_expect_success 'set up patches to apply' '
 	test_cummit unrelated &&
 	test_cummit no-conflict &&
 	test_cummit conflict-patch file patch &&
-	git format-patch --stdout -2 >mbox &&
+	but format-patch --stdout -2 >mbox &&
 
-	git reset --hard unrelated &&
+	but reset --hard unrelated &&
 	test_cummit conflict-main file main base
 '
 
 # Sanity check our setup.
 test_expect_success 'applying all patches generates conflict' '
-	test_must_fail git am mbox &&
+	test_must_fail but am mbox &&
 	echo resolved >file &&
-	git add -u &&
-	git am --resolved
+	but add -u &&
+	but am --resolved
 '
 
 test_expect_success 'interactive am can apply a single patch' '
-	git reset --hard base &&
+	but reset --hard base &&
 	# apply the first, but not the second
-	test_write_lines y n | git am -i mbox &&
+	test_write_lines y n | but am -i mbox &&
 
 	echo no-conflict >expect &&
-	git log -1 --format=%s >actual &&
+	but log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'interactive am can resolve conflict' '
-	git reset --hard base &&
+	but reset --hard base &&
 	# apply both; the second one will conflict
-	test_write_lines y y | test_must_fail git am -i mbox &&
+	test_write_lines y y | test_must_fail but am -i mbox &&
 	echo resolved >file &&
-	git add -u &&
+	but add -u &&
 	# interactive "--resolved" will ask us if we want to apply the result
-	echo y | git am -i --resolved &&
+	echo y | but am -i --resolved &&
 
 	echo conflict-patch >expect &&
-	git log -1 --format=%s >actual &&
+	but log -1 --format=%s >actual &&
 	test_cmp expect actual &&
 
 	echo resolved >expect &&
-	git cat-file blob HEAD:file >actual &&
+	but cat-file blob HEAD:file >actual &&
 	test_cmp expect actual
 '
 

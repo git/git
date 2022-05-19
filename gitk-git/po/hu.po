@@ -1,12 +1,12 @@
-# Translation of gitk to Hungarian.
+# Translation of butk to Hungarian.
 # Copyright (C) 2007 Paul Mackerras.
-# This file is distributed under the same license as the gitk package.
+# This file is distributed under the same license as the butk package.
 #
 # Laszlo Papp <laszlo.papp@arhungary.hu>, 2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui\n"
+"Project-Id-Version: but-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
 "PO-Revision-Date: 2009-12-14 14:04+0100\n"
@@ -17,32 +17,32 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: gitk:140
+#: butk:140
 msgid "Couldn't get list of unmerged files:"
 msgstr "Nem sikerült letölteni az unmerged fájl listát:"
 
-#: gitk:212 gitk:2381
+#: butk:212 butk:2381
 msgid "Color words"
 msgstr ""
 
-#: gitk:217 gitk:2381 gitk:8220 gitk:8253
+#: butk:217 butk:2381 butk:8220 butk:8253
 msgid "Markup words"
 msgstr ""
 
-#: gitk:324
+#: butk:324
 msgid "Error parsing revisions:"
 msgstr "Hiba történt értelmezés közben:"
 
-#: gitk:380
+#: butk:380
 msgid "Error executing --argscmd command:"
 msgstr "Hiba történt a végrehajtáskor --argscmd parancs:"
 
-#: gitk:393
+#: butk:393
 msgid "No files selected: --merge specified but no files are unmerged."
 msgstr ""
 "Nincsen fájl kiválasztva: --merge megadve, de egyetlen fájl sem unmerged."
 
-#: gitk:396
+#: butk:396
 msgid ""
 "No files selected: --merge specified but no unmerged files are within file "
 "limit."
@@ -50,648 +50,648 @@ msgstr ""
 "Nincsen fájl kiválasztva: --merge megadva, de nincsenek unmerged fájlok a "
 "fájlon belül limit."
 
-#: gitk:418 gitk:566
-msgid "Error executing git log:"
-msgstr "Hiba történt a git log végrehajtása közben:"
+#: butk:418 butk:566
+msgid "Error executing but log:"
+msgstr "Hiba történt a but log végrehajtása közben:"
 
-#: gitk:436 gitk:582
+#: butk:436 butk:582
 msgid "Reading"
 msgstr "Olvasás"
 
-#: gitk:496 gitk:4525
+#: butk:496 butk:4525
 msgid "Reading cummits..."
 msgstr "cummitok olvasása ..."
 
-#: gitk:499 gitk:1637 gitk:4528
+#: butk:499 butk:1637 butk:4528
 msgid "No cummits selected"
 msgstr "Nincsen cummit kiválasztva"
 
-#: gitk:1445 gitk:4045 gitk:12432
+#: butk:1445 butk:4045 butk:12432
 msgid "Command line"
 msgstr "Parancs sor"
 
-#: gitk:1511
-msgid "Can't parse git log output:"
-msgstr "Nem lehet értelmezni a git log kimenetét:"
+#: butk:1511
+msgid "Can't parse but log output:"
+msgstr "Nem lehet értelmezni a but log kimenetét:"
 
-#: gitk:1740
+#: butk:1740
 msgid "No cummit information available"
 msgstr "Nincsen elérhető cummit információ"
 
-#: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
+#: butk:1903 butk:1932 butk:4315 butk:9669 butk:11241 butk:11521
 msgid "OK"
 msgstr "OK"
 
-#: gitk:1934 gitk:4317 gitk:9196 gitk:9275 gitk:9391 gitk:9440 gitk:9671
-#: gitk:11242 gitk:11522
+#: butk:1934 butk:4317 butk:9196 butk:9275 butk:9391 butk:9440 butk:9671
+#: butk:11242 butk:11522
 msgid "Cancel"
 msgstr "Visszavonás"
 
-#: gitk:2069
+#: butk:2069
 msgid "&Update"
 msgstr "Frissités"
 
-#: gitk:2070
+#: butk:2070
 msgid "&Reload"
 msgstr "Újratöltés"
 
-#: gitk:2071
+#: butk:2071
 msgid "Reread re&ferences"
 msgstr "Referenciák újraolvasása"
 
-#: gitk:2072
+#: butk:2072
 msgid "&List references"
 msgstr "Referenciák listázása"
 
-#: gitk:2074
-msgid "Start git &gui"
+#: butk:2074
+msgid "Start but &gui"
 msgstr "Git gui indítása"
 
-#: gitk:2076
+#: butk:2076
 msgid "&Quit"
 msgstr "Kilépés"
 
-#: gitk:2068
+#: butk:2068
 msgid "&File"
 msgstr "Fájl"
 
-#: gitk:2080
+#: butk:2080
 msgid "&Preferences"
 msgstr "Beállítások"
 
-#: gitk:2079
+#: butk:2079
 msgid "&Edit"
 msgstr "Szerkesztés"
 
-#: gitk:2084
+#: butk:2084
 msgid "&New view..."
 msgstr "Új nézet ..."
 
-#: gitk:2085
+#: butk:2085
 msgid "&Edit view..."
 msgstr "Nézet szerkesztése ..."
 
-#: gitk:2086
+#: butk:2086
 msgid "&Delete view"
 msgstr "Nézet törlése"
 
-#: gitk:2088 gitk:4043
+#: butk:2088 butk:4043
 msgid "&All files"
 msgstr "Minden fájl"
 
-#: gitk:2083 gitk:4067
+#: butk:2083 butk:4067
 msgid "&View"
 msgstr "Nézet"
 
-#: gitk:2093 gitk:2103 gitk:3012
-msgid "&About gitk"
+#: butk:2093 butk:2103 butk:3012
+msgid "&About butk"
 msgstr "Gitk névjegy"
 
-#: gitk:2094 gitk:2108
+#: butk:2094 butk:2108
 msgid "&Key bindings"
 msgstr "Billentyűkombináció"
 
-#: gitk:2092 gitk:2107
+#: butk:2092 butk:2107
 msgid "&Help"
 msgstr "Segítség"
 
-#: gitk:2185 gitk:8652
+#: butk:2185 butk:8652
 msgid "SHA1 ID:"
 msgstr "SHA1 ID:"
 
-#: gitk:2229
+#: butk:2229
 msgid "Row"
 msgstr "Sor"
 
-#: gitk:2267
+#: butk:2267
 msgid "Find"
 msgstr "Keresés"
 
-#: gitk:2295
+#: butk:2295
 msgid "cummit"
 msgstr "cummit"
 
-#: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
-#: gitk:6912
+#: butk:2299 butk:2301 butk:4687 butk:4710 butk:4734 butk:6755 butk:6827
+#: butk:6912
 msgid "containing:"
 msgstr "tartalmazás:"
 
-#: gitk:2302 gitk:3526 gitk:3531 gitk:4763
+#: butk:2302 butk:3526 butk:3531 butk:4763
 msgid "touching paths:"
 msgstr "érintendő útvonalak:"
 
-#: gitk:2303 gitk:4777
+#: butk:2303 butk:4777
 msgid "adding/removing string:"
 msgstr "string hozzáadása/törlése:"
 
-#: gitk:2304 gitk:4779
+#: butk:2304 butk:4779
 msgid "changing lines matching:"
 msgstr ""
 
-#: gitk:2313 gitk:2315 gitk:4766
+#: butk:2313 butk:2315 butk:4766
 msgid "Exact"
 msgstr "Pontos"
 
-#: gitk:2315 gitk:4854 gitk:6723
+#: butk:2315 butk:4854 butk:6723
 msgid "IgnCase"
 msgstr "Kis/nagy betű nem számít"
 
-#: gitk:2315 gitk:4736 gitk:4852 gitk:6719
+#: butk:2315 butk:4736 butk:4852 butk:6719
 msgid "Regexp"
 msgstr "Regexp"
 
-#: gitk:2317 gitk:2318 gitk:4874 gitk:4904 gitk:4911 gitk:6848 gitk:6916
+#: butk:2317 butk:2318 butk:4874 butk:4904 butk:4911 butk:6848 butk:6916
 msgid "All fields"
 msgstr "Minden mező"
 
-#: gitk:2318 gitk:4871 gitk:4904 gitk:6786
+#: butk:2318 butk:4871 butk:4904 butk:6786
 msgid "Headline"
 msgstr "Főcím"
 
-#: gitk:2319 gitk:4871 gitk:6786 gitk:6916 gitk:7389
+#: butk:2319 butk:4871 butk:6786 butk:6916 butk:7389
 msgid "Comments"
 msgstr "Megjegyzések"
 
-#: gitk:2319 gitk:4871 gitk:4876 gitk:4911 gitk:6786 gitk:7324 gitk:8830
-#: gitk:8845
+#: butk:2319 butk:4871 butk:4876 butk:4911 butk:6786 butk:7324 butk:8830
+#: butk:8845
 msgid "Author"
 msgstr "Szerző"
 
-#: gitk:2319 gitk:4871 gitk:6786 gitk:7326
+#: butk:2319 butk:4871 butk:6786 butk:7326
 msgid "cummitter"
 msgstr "cummitoló"
 
-#: gitk:2350
+#: butk:2350
 msgid "Search"
 msgstr "Keresés"
 
-#: gitk:2358
+#: butk:2358
 msgid "Diff"
 msgstr "Diff"
 
-#: gitk:2360
+#: butk:2360
 msgid "Old version"
 msgstr "Régi verzió"
 
-#: gitk:2362
+#: butk:2362
 msgid "New version"
 msgstr "Új verzió"
 
-#: gitk:2364
+#: butk:2364
 msgid "Lines of context"
 msgstr "Tartalmi sorok"
 
-#: gitk:2374
+#: butk:2374
 msgid "Ignore space change"
 msgstr "Space váltás mellőzése"
 
-#: gitk:2378 gitk:2380 gitk:7959 gitk:8206
+#: butk:2378 butk:2380 butk:7959 butk:8206
 msgid "Line diff"
 msgstr ""
 
-#: gitk:2445
+#: butk:2445
 msgid "Patch"
 msgstr "Patch"
 
-#: gitk:2447
+#: butk:2447
 msgid "Tree"
 msgstr "Tree"
 
-#: gitk:2617 gitk:2637
+#: butk:2617 butk:2637
 msgid "Diff this -> selected"
 msgstr "Diff ezeket -> kiválasztott"
 
-#: gitk:2618 gitk:2638
+#: butk:2618 butk:2638
 msgid "Diff selected -> this"
 msgstr "Diff kiválasztottakat -> ezt"
 
-#: gitk:2619 gitk:2639
+#: butk:2619 butk:2639
 msgid "Make patch"
 msgstr "Patch készítése"
 
-#: gitk:2620 gitk:9254
+#: butk:2620 butk:9254
 msgid "Create tag"
 msgstr "Tag készítése"
 
-#: gitk:2621 gitk:9371
+#: butk:2621 butk:9371
 msgid "Write cummit to file"
 msgstr "cummit fáljba írása"
 
-#: gitk:2622 gitk:9428
+#: butk:2622 butk:9428
 msgid "Create new branch"
 msgstr "Új branch készítése"
 
-#: gitk:2623
+#: butk:2623
 msgid "Cherry-pick this cummit"
 msgstr "Cherry-pick erre a cummitra"
 
-#: gitk:2624
+#: butk:2624
 msgid "Reset HEAD branch to here"
 msgstr "HEAD branch újraindítása ide"
 
-#: gitk:2625
+#: butk:2625
 msgid "Mark this cummit"
 msgstr "Ezen cummit megjelölése"
 
-#: gitk:2626
+#: butk:2626
 msgid "Return to mark"
 msgstr "Visszatérés a megjelöléshez"
 
-#: gitk:2627
+#: butk:2627
 msgid "Find descendant of this and mark"
 msgstr "Találd meg ezen utódokat és jelöld meg"
 
-#: gitk:2628
+#: butk:2628
 msgid "Compare with marked cummit"
 msgstr "Összehasonlítás a megjelölt cummit-tal"
 
-#: gitk:2629 gitk:2640
+#: butk:2629 butk:2640
 #, fuzzy
 msgid "Diff this -> marked cummit"
 msgstr "Diff ezeket -> kiválasztott"
 
-#: gitk:2630 gitk:2641
+#: butk:2630 butk:2641
 #, fuzzy
 msgid "Diff marked cummit -> this"
 msgstr "Diff kiválasztottakat -> ezt"
 
-#: gitk:2631
+#: butk:2631
 #, fuzzy
 msgid "Revert this cummit"
 msgstr "Ezen cummit megjelölése"
 
-#: gitk:2647
+#: butk:2647
 msgid "Check out this branch"
 msgstr "Check out ezt a branchot"
 
-#: gitk:2648
+#: butk:2648
 msgid "Remove this branch"
 msgstr "Töröld ezt a branch-ot"
 
-#: gitk:2649
+#: butk:2649
 msgid "Copy branch name"
 msgstr ""
 
-#: gitk:2656
+#: butk:2656
 msgid "Highlight this too"
 msgstr "Emeld ki ezt is"
 
-#: gitk:2657
+#: butk:2657
 msgid "Highlight this only"
 msgstr "Csak ezt emeld ki"
 
-#: gitk:2658
+#: butk:2658
 msgid "External diff"
 msgstr "Külső diff"
 
-#: gitk:2659
+#: butk:2659
 msgid "Blame parent cummit"
 msgstr "Blame szülő kommitra"
 
-#: gitk:2660
+#: butk:2660
 msgid "Copy path"
 msgstr ""
 
-#: gitk:2667
+#: butk:2667
 msgid "Show origin of this line"
 msgstr "Mutasd meg ennek a sornak az eredetét"
 
-#: gitk:2668
-msgid "Run git gui blame on this line"
-msgstr "Futtasd a git gui blame-t ezen a soron"
+#: butk:2668
+msgid "Run but gui blame on this line"
+msgstr "Futtasd a but gui blame-t ezen a soron"
 
-#: gitk:3014
+#: butk:3014
 #, fuzzy
 msgid ""
 "\n"
-"Gitk - a cummit viewer for git\n"
+"Gitk - a cummit viewer for but\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - cummit nézegető a githez\n"
+"Gitk - cummit nézegető a buthez\n"
 "\n"
 "Szerzői jog \\u00a9 2005-2016 Paul Mackerras\n"
 "\n"
 "Használd és terjeszd a GNU General Public License feltételei mellett"
 
-#: gitk:3022 gitk:3089 gitk:9857
+#: butk:3022 butk:3089 butk:9857
 msgid "Close"
 msgstr "Bezárás"
 
-#: gitk:3043
+#: butk:3043
 msgid "Gitk key bindings"
 msgstr "Gitk-billentyű hozzárendelés"
 
-#: gitk:3046
+#: butk:3046
 msgid "Gitk key bindings:"
 msgstr "Gitk-billentyű hozzaárendelés:"
 
-#: gitk:3048
+#: butk:3048
 #, tcl-format
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tKilépés"
 
-#: gitk:3049
+#: butk:3049
 #, fuzzy, tcl-format
 msgid "<%s-W>\t\tClose window"
 msgstr "<%s-F>\t\tKeresés"
 
-#: gitk:3050
+#: butk:3050
 msgid "<Home>\t\tMove to first cummit"
 msgstr "<Pos1>\t\tElső cummithoz"
 
-#: gitk:3051
+#: butk:3051
 msgid "<End>\t\tMove to last cummit"
 msgstr "<Ende>\t\tUtolsó cummithoz"
 
-#: gitk:3052
+#: butk:3052
 #, fuzzy
 msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Hoch>, p, i\tEgy cummittal feljebb"
 
-#: gitk:3053
+#: butk:3053
 #, fuzzy
 msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Runter>, n, k\tEgy cummittal lejjebb"
 
-#: gitk:3054
+#: butk:3054
 #, fuzzy
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Links>, z, j\tVissza a history listába"
 
-#: gitk:3055
+#: butk:3055
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Rechts>, x, l\tElőre a history listába"
 
-#: gitk:3056
+#: butk:3056
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr ""
 
-#: gitk:3057
+#: butk:3057
 msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<BildHoch>\tEgy lappal feljebb a cummit listába"
 
-#: gitk:3058
+#: butk:3058
 msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<BildRunter>\tEgy lappal lejjebb a cummit listába"
 
-#: gitk:3059
+#: butk:3059
 #, tcl-format
 msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Pos1>\tGörgetés a cummit lista tetejéhez"
 
-#: gitk:3060
+#: butk:3060
 #, tcl-format
 msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-Ende>\tGörgetés a cummit lista aljához"
 
-#: gitk:3061
+#: butk:3061
 #, tcl-format
 msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Hoch>\tEgy sorral feljebb görgetés a cummit listában"
 
-#: gitk:3062
+#: butk:3062
 #, tcl-format
 msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Runter>\tEgy sorral lejjebb görgetés a cummit listában"
 
-#: gitk:3063
+#: butk:3063
 #, tcl-format
 msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-BildHoch>\tEgy lappal feljebb görgetés a cummit listában"
 
-#: gitk:3064
+#: butk:3064
 #, tcl-format
 msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-BildRunter>\tEgy sorral lejjebb görgetés a cummit listában"
 
-#: gitk:3065
+#: butk:3065
 msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Umschalt-Hoch>\tKeresés visszafele (felfele, utolsó cummitok)"
 
-#: gitk:3066
+#: butk:3066
 msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Umschalt-Runter>\tKeresés előre (lefelé; korábbi cummitok)"
 
-#: gitk:3067
+#: butk:3067
 msgid "<Delete>, b\tScroll diff view up one page"
 msgstr "<Entf>, b\t\tEgy lappal feljebb görgetés a diff nézetben"
 
-#: gitk:3068
+#: butk:3068
 msgid "<Backspace>\tScroll diff view up one page"
 msgstr "<Löschtaste>\tEgy lappal feljebb görgetés a diff nézetben"
 
-#: gitk:3069
+#: butk:3069
 msgid "<Space>\t\tScroll diff view down one page"
 msgstr "<Leertaste>\tEgy lappal lejjebb görgetés a diff nézetben"
 
-#: gitk:3070
+#: butk:3070
 msgid "u\t\tScroll diff view up 18 lines"
 msgstr "u\t\t18 sorral felfelé görgetés diff nézetben"
 
-#: gitk:3071
+#: butk:3071
 msgid "d\t\tScroll diff view down 18 lines"
 msgstr "d\t\t18 sorral lejjebb görgetés a diff nézetben"
 
-#: gitk:3072
+#: butk:3072
 #, tcl-format
 msgid "<%s-F>\t\tFind"
 msgstr "<%s-F>\t\tKeresés"
 
-#: gitk:3073
+#: butk:3073
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
 msgstr "<%s-G>\t\tKövetkező találathoz"
 
-#: gitk:3074
+#: butk:3074
 msgid "<Return>\tMove to next find hit"
 msgstr "<Eingabetaste>\tKövetkező találathoz"
 
-#: gitk:3075
+#: butk:3075
 #, fuzzy
 msgid "g\t\tGo to cummit"
 msgstr "<Ende>\t\tUtolsó cummithoz"
 
-#: gitk:3076
+#: butk:3076
 msgid "/\t\tFocus the search box"
 msgstr "/\t\tLépj a keresési mezőre"
 
-#: gitk:3077
+#: butk:3077
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\tElőző találathoz"
 
-#: gitk:3078
+#: butk:3078
 msgid "f\t\tScroll diff view to next file"
 msgstr "f\t\tKövetkező fájlra görgetés diff nézetben"
 
-#: gitk:3079
+#: butk:3079
 #, tcl-format
 msgid "<%s-S>\t\tSearch for next hit in diff view"
 msgstr "<%s-S>\t\tKövetkező találatra keresés diff nézetben"
 
-#: gitk:3080
+#: butk:3080
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
 msgstr "<%s-R>\t\tElőző találatra keresés diff nézetben"
 
-#: gitk:3081
+#: butk:3081
 #, tcl-format
 msgid "<%s-KP+>\tIncrease font size"
 msgstr "<%s-Nummerblock-Plus>\tBetűméret növelése"
 
-#: gitk:3082
+#: butk:3082
 #, tcl-format
 msgid "<%s-plus>\tIncrease font size"
 msgstr "<%s-Plus>\tBetűméret növelése"
 
-#: gitk:3083
+#: butk:3083
 #, tcl-format
 msgid "<%s-KP->\tDecrease font size"
 msgstr "<%s-Nummernblock-Minus> Betűméret csökkentése"
 
-#: gitk:3084
+#: butk:3084
 #, tcl-format
 msgid "<%s-minus>\tDecrease font size"
 msgstr "<%s-Minus>\tBetűméret csökkentése"
 
-#: gitk:3085
+#: butk:3085
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tFrissítés"
 
-#: gitk:3550 gitk:3559
+#: butk:3550 butk:3559
 #, tcl-format
 msgid "Error creating temporary directory %s:"
 msgstr "Hiba történt az ideiglenes könyvtár létrehozása közben %s:"
 
-#: gitk:3572
+#: butk:3572
 #, tcl-format
 msgid "Error getting \"%s\" from %s:"
 msgstr "Hiba történt \"%s\" letöltése közben %s-ről:"
 
-#: gitk:3635
+#: butk:3635
 msgid "command failed:"
 msgstr "parancs hiba:"
 
-#: gitk:3784
+#: butk:3784
 msgid "No such cummit"
 msgstr "Nincs ilyen cummit"
 
-#: gitk:3798
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: parancs hiba:"
+#: butk:3798
+msgid "but gui blame: command failed:"
+msgstr "but gui blame: parancs hiba:"
 
-#: gitk:3829
+#: butk:3829
 #, tcl-format
 msgid "Couldn't read merge head: %s"
 msgstr "Nem sikerült a Merge head olvasása: %s"
 
-#: gitk:3837
+#: butk:3837
 #, tcl-format
 msgid "Error reading index: %s"
 msgstr "Hiba történt az index olvasása közben: %s"
 
-#: gitk:3862
+#: butk:3862
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "Nem sikerült a git blame indítása: %s"
+msgid "Couldn't start but blame: %s"
+msgstr "Nem sikerült a but blame indítása: %s"
 
-#: gitk:3865 gitk:6754
+#: butk:3865 butk:6754
 msgid "Searching"
 msgstr "Keresés"
 
-#: gitk:3897
+#: butk:3897
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Hiba történt a git blame futtatása közben: %s"
+msgid "Error running but blame: %s"
+msgstr "Hiba történt a but blame futtatása közben: %s"
 
-#: gitk:3925
+#: butk:3925
 #, tcl-format
 msgid "That line comes from cummit %s,  which is not in this view"
 msgstr ""
 "A %s cummitból származik az a sor, amelyik nem található ebben a nézetben"
 
-#: gitk:3939
+#: butk:3939
 msgid "External diff viewer failed:"
 msgstr "Külső diff nézegető hiba:"
 
-#: gitk:4070
+#: butk:4070
 msgid "Gitk view definition"
 msgstr "Gitk nézet meghatározása"
 
-#: gitk:4074
+#: butk:4074
 msgid "Remember this view"
 msgstr "Maradj ennél a nézetnél"
 
-#: gitk:4075
+#: butk:4075
 msgid "References (space separated list):"
 msgstr "Referenciák (szóközzel tagolt lista"
 
-#: gitk:4076
+#: butk:4076
 msgid "Branches & tags:"
 msgstr "Branch-ek & tagek:"
 
-#: gitk:4077
+#: butk:4077
 msgid "All refs"
 msgstr "Minden ref"
 
-#: gitk:4078
+#: butk:4078
 msgid "All (local) branches"
 msgstr "Minden (helyi) branch"
 
-#: gitk:4079
+#: butk:4079
 msgid "All tags"
 msgstr "Minden tag"
 
-#: gitk:4080
+#: butk:4080
 msgid "All remote-tracking branches"
 msgstr "Minden távoli követő branch"
 
-#: gitk:4081
+#: butk:4081
 msgid "cummit Info (regular expressions):"
 msgstr "cummit Infó (reguláris kifejezés):"
 
-#: gitk:4082
+#: butk:4082
 msgid "Author:"
 msgstr "Szerző:"
 
-#: gitk:4083
+#: butk:4083
 msgid "cummitter:"
 msgstr "cummitoló:"
 
-#: gitk:4084
+#: butk:4084
 msgid "cummit Message:"
 msgstr "cummit üzenet:"
 
-#: gitk:4085
+#: butk:4085
 msgid "Matches all cummit Info criteria"
 msgstr "Egyezik minen cummit Infó feltétellel"
 
-#: gitk:4086
+#: butk:4086
 #, fuzzy
 msgid "Matches no cummit Info criteria"
 msgstr "Egyezik minen cummit Infó feltétellel"
 
-#: gitk:4087
+#: butk:4087
 msgid "Changes to Files:"
 msgstr "Fájl változások:"
 
-#: gitk:4088
+#: butk:4088
 msgid "Fixed String"
 msgstr "Fix String"
 
-#: gitk:4089
+#: butk:4089
 msgid "Regular Expression"
 msgstr "Reguláris kifejezés"
 
-#: gitk:4090
+#: butk:4090
 msgid "Search string:"
 msgstr "Keresés szöveg:"
 
-#: gitk:4091
+#: butk:4091
 msgid ""
 "cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
@@ -699,203 +699,203 @@ msgstr ""
 "cummit Dátumok (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 
-#: gitk:4092
+#: butk:4092
 msgid "Since:"
 msgstr "Ettől:"
 
-#: gitk:4093
+#: butk:4093
 msgid "Until:"
 msgstr "Eddig:"
 
-#: gitk:4094
+#: butk:4094
 msgid "Limit and/or skip a number of revisions (positive integer):"
 msgstr "Limitálva és/vagy kihagyva egy adott számú revíziót (pozitív egész):"
 
-#: gitk:4095
+#: butk:4095
 msgid "Number to show:"
 msgstr "Mutatandó szám:"
 
-#: gitk:4096
+#: butk:4096
 msgid "Number to skip:"
 msgstr "Kihagyandó szám:"
 
-#: gitk:4097
+#: butk:4097
 msgid "Miscellaneous options:"
 msgstr "Különféle opciók:"
 
-#: gitk:4098
+#: butk:4098
 msgid "Strictly sort by date"
 msgstr "Szigorú rendezás dátum alapján"
 
-#: gitk:4099
+#: butk:4099
 msgid "Mark branch sides"
 msgstr "Jelölje meg az ágakat"
 
-#: gitk:4100
+#: butk:4100
 msgid "Limit to first parent"
 msgstr "Korlátozás az első szülőre"
 
-#: gitk:4101
+#: butk:4101
 msgid "Simple history"
 msgstr "Egyszerű history"
 
-#: gitk:4102
-msgid "Additional arguments to git log:"
-msgstr "További argumentok a git log-hoz:"
+#: butk:4102
+msgid "Additional arguments to but log:"
+msgstr "További argumentok a but log-hoz:"
 
-#: gitk:4103
+#: butk:4103
 msgid "Enter files and directories to include, one per line:"
 msgstr "Fájlok és könyvtárak bejegyzése amiket tartalmaz, soronként:"
 
-#: gitk:4104
+#: butk:4104
 msgid "Command to generate more cummits to include:"
 msgstr "Parancs több tartalmazó cummit generálására:"
 
-#: gitk:4228
+#: butk:4228
 msgid "Gitk: edit view"
 msgstr "Gitk: szerkesztés nézet"
 
-#: gitk:4236
+#: butk:4236
 msgid "-- criteria for selecting revisions"
 msgstr "-- kritériumok a revíziók kiválasztásához"
 
-#: gitk:4241
+#: butk:4241
 msgid "View Name"
 msgstr "Nézet neve"
 
-#: gitk:4316
+#: butk:4316
 msgid "Apply (F5)"
 msgstr "Alkalmaz (F5)"
 
-#: gitk:4354
+#: butk:4354
 msgid "Error in cummit selection arguments:"
 msgstr "Hiba történt a cummit argumentumok kiválasztása közben:"
 
-#: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
+#: butk:4409 butk:4462 butk:4924 butk:4938 butk:6208 butk:12373 butk:12374
 msgid "None"
 msgstr "Keine"
 
-#: gitk:5021 gitk:5026
+#: butk:5021 butk:5026
 msgid "Descendant"
 msgstr "Leszármazott"
 
-#: gitk:5022
+#: butk:5022
 msgid "Not descendant"
 msgstr "Nem leszármazott"
 
-#: gitk:5029 gitk:5034
+#: butk:5029 butk:5034
 msgid "Ancestor"
 msgstr "Előd"
 
-#: gitk:5030
+#: butk:5030
 msgid "Not ancestor"
 msgstr "Nem előd"
 
-#: gitk:5324
+#: butk:5324
 msgid "Local changes checked in to index but not cummitted"
 msgstr ""
 "Lokális változtatások, melyek be vannak téve az indexbe, de még nincsenek "
 "cummitolva"
 
-#: gitk:5360
+#: butk:5360
 msgid "Local uncummitted changes, not checked in to index"
 msgstr "Lokális nem cummitolt változások, nincsenek betéve az indexbe"
 
-#: gitk:7134
+#: butk:7134
 msgid "and many more"
 msgstr ""
 
-#: gitk:7137
+#: butk:7137
 msgid "many"
 msgstr "sok"
 
-#: gitk:7328
+#: butk:7328
 msgid "Tags:"
 msgstr "Tagek:"
 
-#: gitk:7345 gitk:7351 gitk:8825
+#: butk:7345 butk:7351 butk:8825
 msgid "Parent"
 msgstr "Eltern"
 
-#: gitk:7356
+#: butk:7356
 msgid "Child"
 msgstr "Gyerek"
 
-#: gitk:7365
+#: butk:7365
 msgid "Branch"
 msgstr "Ág"
 
-#: gitk:7368
+#: butk:7368
 msgid "Follows"
 msgstr "Következők"
 
-#: gitk:7371
+#: butk:7371
 msgid "Precedes"
 msgstr "Megelőzők"
 
-#: gitk:7966
+#: butk:7966
 #, tcl-format
 msgid "Error getting diffs: %s"
 msgstr "Hiba történt a diff-ek letöltése közben: %s"
 
-#: gitk:8650
+#: butk:8650
 msgid "Goto:"
 msgstr "Menj:"
 
-#: gitk:8671
+#: butk:8671
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
 msgstr "Rövid SHA1 id %s félreérthető"
 
-#: gitk:8678
+#: butk:8678
 #, tcl-format
 msgid "Revision %s is not known"
 msgstr "A(z) %s revízió nem ismert"
 
-#: gitk:8688
+#: butk:8688
 #, tcl-format
 msgid "SHA1 id %s is not known"
 msgstr "SHA1 id %s nem ismert"
 
-#: gitk:8690
+#: butk:8690
 #, tcl-format
 msgid "Revision %s is not in the current view"
 msgstr "A(z) %s revízió nincs a jelenlegi nézetben"
 
-#: gitk:8832 gitk:8847
+#: butk:8832 butk:8847
 msgid "Date"
 msgstr "Dátum"
 
-#: gitk:8835
+#: butk:8835
 msgid "Children"
 msgstr "Gyerekek"
 
-#: gitk:8898
+#: butk:8898
 #, tcl-format
 msgid "Reset %s branch to here"
 msgstr "Állítsd vissza a %s branch-ot ide"
 
-#: gitk:8900
+#: butk:8900
 msgid "Detached head: can't reset"
 msgstr "Elkülönített head: nem lehet visszaállítani"
 
-#: gitk:9005 gitk:9011
+#: butk:9005 butk:9011
 msgid "Skipping merge cummit "
 msgstr "Merge cummit kihagyása "
 
-#: gitk:9020 gitk:9025
+#: butk:9020 butk:9025
 msgid "Error getting patch ID for "
 msgstr "Hiba történt a patch ID megszerzése közben a következőnél "
 
-#: gitk:9021 gitk:9026
+#: butk:9021 butk:9026
 msgid " - stopping\n"
 msgstr " - abbahagyás\n"
 
-#: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
+#: butk:9031 butk:9034 butk:9042 butk:9056 butk:9065
 msgid "cummit "
 msgstr "cummit "
 
-#: gitk:9035
+#: butk:9035
 msgid ""
 " is the same patch as\n"
 "       "
@@ -903,7 +903,7 @@ msgstr ""
 " Ugyanaz a patch mint\n"
 "       "
 
-#: gitk:9043
+#: butk:9043
 msgid ""
 " differs from\n"
 "       "
@@ -911,7 +911,7 @@ msgstr ""
 " különbözik innentől\n"
 "       "
 
-#: gitk:9045
+#: butk:9045
 msgid ""
 "Diff of cummits:\n"
 "\n"
@@ -919,132 +919,132 @@ msgstr ""
 "A cummitok diffje:\n"
 "\n"
 
-#: gitk:9057 gitk:9066
+#: butk:9057 butk:9066
 #, tcl-format
 msgid " has %s children - stopping\n"
 msgstr " %s gyereke van. abbahagyás\n"
 
-#: gitk:9085
+#: butk:9085
 #, tcl-format
 msgid "Error writing cummit to file: %s"
 msgstr "Hiba történt a cummit fájlba írása közben: %s"
 
-#: gitk:9091
+#: butk:9091
 #, tcl-format
 msgid "Error diffing cummits: %s"
 msgstr "Hiba történt a cummitok diffelése közben: %s"
 
-#: gitk:9137
+#: butk:9137
 msgid "Top"
 msgstr "Teteje"
 
-#: gitk:9138
+#: butk:9138
 msgid "From"
 msgstr "Innen"
 
-#: gitk:9143
+#: butk:9143
 msgid "To"
 msgstr "Ide"
 
-#: gitk:9167
+#: butk:9167
 msgid "Generate patch"
 msgstr "Patch generálása"
 
-#: gitk:9169
+#: butk:9169
 msgid "From:"
 msgstr "Innen:"
 
-#: gitk:9178
+#: butk:9178
 msgid "To:"
 msgstr "Ide:"
 
-#: gitk:9187
+#: butk:9187
 msgid "Reverse"
 msgstr "Visszafele"
 
-#: gitk:9189 gitk:9385
+#: butk:9189 butk:9385
 msgid "Output file:"
 msgstr "Kimeneti fájl:"
 
-#: gitk:9195
+#: butk:9195
 msgid "Generate"
 msgstr "Generálás"
 
-#: gitk:9233
+#: butk:9233
 msgid "Error creating patch:"
 msgstr "Hiba törtét a patch készítése közben:"
 
-#: gitk:9256 gitk:9373 gitk:9430
+#: butk:9256 butk:9373 butk:9430
 msgid "ID:"
 msgstr "ID:"
 
-#: gitk:9265
+#: butk:9265
 msgid "Tag name:"
 msgstr "Tag név:"
 
-#: gitk:9268
+#: butk:9268
 msgid "Tag message is optional"
 msgstr ""
 
-#: gitk:9270
+#: butk:9270
 #, fuzzy
 msgid "Tag message:"
 msgstr "Tag név:"
 
-#: gitk:9274 gitk:9439
+#: butk:9274 butk:9439
 msgid "Create"
 msgstr "Létrehozás"
 
-#: gitk:9292
+#: butk:9292
 msgid "No tag name specified"
 msgstr "A tag neve nincsen megadva"
 
-#: gitk:9296
+#: butk:9296
 #, tcl-format
 msgid "Tag \"%s\" already exists"
 msgstr "%s Tag már létezik"
 
-#: gitk:9306
+#: butk:9306
 msgid "Error creating tag:"
 msgstr "Hiba történt a tag létrehozása közben:"
 
-#: gitk:9382
+#: butk:9382
 msgid "Command:"
 msgstr "Parancs:"
 
-#: gitk:9390
+#: butk:9390
 msgid "Write"
 msgstr "Írás"
 
-#: gitk:9408
+#: butk:9408
 msgid "Error writing cummit:"
 msgstr "Hiba történt a cummit írása közben:"
 
-#: gitk:9435
+#: butk:9435
 msgid "Name:"
 msgstr "Név:"
 
-#: gitk:9458
+#: butk:9458
 msgid "Please specify a name for the new branch"
 msgstr "Kérem adja meg a nevét az új branchhoz"
 
-#: gitk:9463
+#: butk:9463
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
 msgstr "%s branch már létezik. Felülírja?"
 
-#: gitk:9530
+#: butk:9530
 #, tcl-format
 msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "%s cummit már benne van a %s branchban -- biztos hogy újra csinálja ?"
 "eintragen?"
 
-#: gitk:9535
+#: butk:9535
 msgid "Cherry-picking"
 msgstr "Cherry-picking"
 
-#: gitk:9544
+#: butk:9544
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
@@ -1054,31 +1054,31 @@ msgstr ""
 "Kérem cummitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
 "újra."
 
-#: gitk:9550
+#: butk:9550
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
-"Do you wish to run git citool to resolve it?"
+"Do you wish to run but citool to resolve it?"
 msgstr ""
 "Cherry-pick hiba történt merge konfliktus miatt.\n"
-"Kívánja futtatni a git citool-t a probléma megoldásához?"
+"Kívánja futtatni a but citool-t a probléma megoldásához?"
 
-#: gitk:9566 gitk:9624
+#: butk:9566 butk:9624
 msgid "No changes cummitted"
 msgstr "Nincsen változás cummitolva"
 
-#: gitk:9593
+#: butk:9593
 #, fuzzy, tcl-format
 msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr ""
 "%s cummit már benne van a %s branchban -- biztos hogy újra csinálja ?"
 "eintragen?"
 
-#: gitk:9598
+#: butk:9598
 #, fuzzy
 msgid "Reverting"
 msgstr "Újraindítás"
 
-#: gitk:9606
+#: butk:9606
 #, fuzzy, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
@@ -1088,37 +1088,37 @@ msgstr ""
 "Kérem cummitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
 "újra."
 
-#: gitk:9610
+#: butk:9610
 #, fuzzy
 msgid ""
 "Revert failed because of merge conflict.\n"
-" Do you wish to run git citool to resolve it?"
+" Do you wish to run but citool to resolve it?"
 msgstr ""
 "Cherry-pick hiba történt merge konfliktus miatt.\n"
-"Kívánja futtatni a git citool-t a probléma megoldásához?"
+"Kívánja futtatni a but citool-t a probléma megoldásához?"
 
-#: gitk:9653
+#: butk:9653
 msgid "Confirm reset"
 msgstr "Újraindítás megerősítése"
 
-#: gitk:9655
+#: butk:9655
 #, tcl-format
 msgid "Reset branch %s to %s?"
 msgstr "Újraindítja a %s branchot %s-ig?"
 
-#: gitk:9657
+#: butk:9657
 msgid "Reset type:"
 msgstr "Újraindítás típusa:"
 
-#: gitk:9660
+#: butk:9660
 msgid "Soft: Leave working tree and index untouched"
 msgstr "Soft: Hagyd a working tree-t és az indexet érintetlenül"
 
-#: gitk:9663
+#: butk:9663
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr "Kevert: Hagyd a working tree-t érintetlenül, töröld az indexet"
 
-#: gitk:9666
+#: butk:9666
 msgid ""
 "Hard: Reset working tree and index\n"
 "(discard ALL local changes)"
@@ -1126,19 +1126,19 @@ msgstr ""
 "Hard: Indítsd újra a working tree-t és az indexet\n"
 "(MINDEN lokális változás eldobása)"
 
-#: gitk:9683
+#: butk:9683
 msgid "Resetting"
 msgstr "Újraindítás"
 
-#: gitk:9743
+#: butk:9743
 msgid "Checking out"
 msgstr "Kivesz"
 
-#: gitk:9796
+#: butk:9796
 msgid "Cannot delete the currently checked-out branch"
 msgstr "Nem lehet a jelenleg kivett branch-ot törölni"
 
-#: gitk:9802
+#: butk:9802
 #, tcl-format
 msgid ""
 "The cummits on branch %s aren't on any other branch.\n"
@@ -1147,16 +1147,16 @@ msgstr ""
 "A %s branchon található cummit nem található meg semelyik másik branchon.\n"
 "Tényleg törli a %s branchot?"
 
-#: gitk:9833
+#: butk:9833
 #, tcl-format
 msgid "Tags and heads: %s"
 msgstr "Tagek és headek: %s"
 
-#: gitk:9850
+#: butk:9850
 msgid "Filter"
 msgstr "Szűrő"
 
-#: gitk:10146
+#: butk:10146
 msgid ""
 "Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -1164,223 +1164,223 @@ msgstr ""
 "Hiba történt a cummit topológiai információ olvasása közben; branch ésa "
 "megelőző/következő információ nem lesz teljes."
 
-#: gitk:11123
+#: butk:11123
 msgid "Tag"
 msgstr "Tag"
 
-#: gitk:11127
+#: butk:11127
 msgid "Id"
 msgstr "Id"
 
-#: gitk:11210
+#: butk:11210
 msgid "Gitk font chooser"
 msgstr "Gitk-betű kiválasztó"
 
-#: gitk:11227
+#: butk:11227
 msgid "B"
 msgstr "F"
 
-#: gitk:11230
+#: butk:11230
 msgid "I"
 msgstr "K"
 
-#: gitk:11348
+#: butk:11348
 msgid "cummit list display options"
 msgstr "cummit lista kijelzési opciók"
 
-#: gitk:11351
+#: butk:11351
 msgid "Maximum graph width (lines)"
 msgstr "Maximális grafikon szélesség (sorok)"
 
-#: gitk:11355
+#: butk:11355
 #, no-tcl-format
 msgid "Maximum graph width (% of pane)"
 msgstr "Maximális grafikon szélesség (táble %-je)"
 
-#: gitk:11358
+#: butk:11358
 msgid "Show local changes"
 msgstr "Mutasd a lokális változtatásokat"
 
-#: gitk:11361
+#: butk:11361
 #, fuzzy
 msgid "Auto-select SHA1 (length)"
 msgstr "SHA1 Automatikus kiválasztása"
 
-#: gitk:11365
+#: butk:11365
 msgid "Hide remote refs"
 msgstr "A távoli refek elrejtése"
 
-#: gitk:11369
+#: butk:11369
 msgid "Diff display options"
 msgstr "Diff kijelző opciók"
 
-#: gitk:11371
+#: butk:11371
 msgid "Tab spacing"
 msgstr "Tab sorköz"
 
-#: gitk:11374
+#: butk:11374
 #, fuzzy
 msgid "Display nearby tags/heads"
 msgstr "Szomszédos tagek kijelzése"
 
-#: gitk:11377
+#: butk:11377
 msgid "Maximum # tags/heads to show"
 msgstr ""
 
-#: gitk:11380
+#: butk:11380
 msgid "Limit diffs to listed paths"
 msgstr "Korlátozott diffek a kilistázott útvonalakhoz"
 
-#: gitk:11383
+#: butk:11383
 msgid "Support per-file encodings"
 msgstr "Fájlonkénti kódolás támgatása"
 
-#: gitk:11389 gitk:11536
+#: butk:11389 butk:11536
 msgid "External diff tool"
 msgstr "Külső diff alkalmazás"
 
-#: gitk:11390
+#: butk:11390
 msgid "Choose..."
 msgstr "Válaszd ..."
 
-#: gitk:11395
+#: butk:11395
 msgid "General options"
 msgstr "Általános opciók"
 
-#: gitk:11398
+#: butk:11398
 msgid "Use themed widgets"
 msgstr "Témázott vezérlők használata"
 
-#: gitk:11400
+#: butk:11400
 msgid "(change requires restart)"
 msgstr "(a változás újraindítást igényel)"
 
-#: gitk:11402
+#: butk:11402
 msgid "(currently unavailable)"
 msgstr "(jelenleg nem elérhető)"
 
-#: gitk:11413
+#: butk:11413
 msgid "Colors: press to choose"
 msgstr "Színek: nyomja meg a kiválasztáshoz"
 
-#: gitk:11416
+#: butk:11416
 msgid "Interface"
 msgstr "Interfész"
 
-#: gitk:11417
+#: butk:11417
 msgid "interface"
 msgstr "interfész"
 
-#: gitk:11420
+#: butk:11420
 msgid "Background"
 msgstr "Háttér"
 
-#: gitk:11421 gitk:11451
+#: butk:11421 butk:11451
 msgid "background"
 msgstr "háttér"
 
-#: gitk:11424
+#: butk:11424
 msgid "Foreground"
 msgstr "Előtér"
 
-#: gitk:11425
+#: butk:11425
 msgid "foreground"
 msgstr "előtér"
 
-#: gitk:11428
+#: butk:11428
 msgid "Diff: old lines"
 msgstr "Diff: régi sorok"
 
-#: gitk:11429
+#: butk:11429
 msgid "diff old lines"
 msgstr "diff régi sorok"
 
-#: gitk:11433
+#: butk:11433
 msgid "Diff: new lines"
 msgstr "Diff: új sorok"
 
-#: gitk:11434
+#: butk:11434
 msgid "diff new lines"
 msgstr "diff - új sorok"
 
-#: gitk:11438
+#: butk:11438
 msgid "Diff: hunk header"
 msgstr "Diff: nagy headerök"
 
-#: gitk:11440
+#: butk:11440
 msgid "diff hunk header"
 msgstr "diff - nagy headerök"
 
-#: gitk:11444
+#: butk:11444
 msgid "Marked line bg"
 msgstr "Megjelölt sor háttér"
 
-#: gitk:11446
+#: butk:11446
 msgid "marked line background"
 msgstr "megjelölt sor háttér"
 
-#: gitk:11450
+#: butk:11450
 msgid "Select bg"
 msgstr "Válasszon hátteret"
 
-#: gitk:11459
+#: butk:11459
 msgid "Fonts: press to choose"
 msgstr "Betű: nyomja meg a kiválasztáshoz"
 
-#: gitk:11461
+#: butk:11461
 msgid "Main font"
 msgstr "Fő betű"
 
-#: gitk:11462
+#: butk:11462
 msgid "Diff display font"
 msgstr "Diff kijelző betű"
 
-#: gitk:11463
+#: butk:11463
 msgid "User interface font"
 msgstr "Felhasználói interfész betű"
 
-#: gitk:11485
+#: butk:11485
 msgid "Gitk preferences"
 msgstr "Gitk beállítások"
 
-#: gitk:11494
+#: butk:11494
 #, fuzzy
 msgid "General"
 msgstr "Generálás"
 
-#: gitk:11495
+#: butk:11495
 msgid "Colors"
 msgstr ""
 
-#: gitk:11496
+#: butk:11496
 msgid "Fonts"
 msgstr ""
 
-#: gitk:11546
+#: butk:11546
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: válasszon színt a %s-ra"
 
-#: gitk:12059
+#: butk:12059
 msgid ""
-"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+"Sorry, butk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
-"Sajnáljuk, de a gitk nem futtatható ezzel a Tcl/Tk verzióval.\n"
+"Sajnáljuk, de a butk nem futtatható ezzel a Tcl/Tk verzióval.\n"
 "Gitk futtatásához legalább Tcl/Tk 8.4 szükséges."
 
-#: gitk:12269
-msgid "Cannot find a git repository here."
-msgstr "Nem találhatü git repository itt."
+#: butk:12269
+msgid "Cannot find a but repository here."
+msgstr "Nem találhatü but repository itt."
 
-#: gitk:12316
+#: butk:12316
 #, tcl-format
 msgid "Ambiguous argument '%s': both revision and filename"
 msgstr "Félreérthető argumentum '%s': revízió és fájlnév is"
 
-#: gitk:12328
-msgid "Bad arguments to gitk:"
-msgstr "Rossz gitk argumentumok:"
+#: butk:12328
+msgid "Bad arguments to butk:"
+msgstr "Rossz butk argumentumok:"
 
 #~ msgid "mc"
 #~ msgstr "mc"
@@ -1397,7 +1397,7 @@ msgstr "Rossz gitk argumentumok:"
 #~ msgid "CDate"
 #~ msgstr "Dátum"
 
-#~ msgid "Cannot find the git directory \"%s\"."
+#~ msgid "Cannot find the but directory \"%s\"."
 #~ msgstr "Nem található a \"%s\" könyvtár."
 
 #~ msgid "Use all refs"

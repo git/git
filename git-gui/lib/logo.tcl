@@ -1,10 +1,10 @@
-# git-gui Git Gui logo
+# but-gui Git Gui logo
 # Copyright (C) 2007 Shawn Pearce
 
 # Henrik Nyh's alternative Git logo, from his blog post
-# http://henrik.nyh.se/2007/06/alternative-git-logo-and-favicon
+# http://henrik.nyh.se/2007/06/alternative-but-logo-and-favicon
 #
-image create photo ::git_logo_data -data {
+image create photo ::but_logo_data -data {
 R0lGODdhYQC8AIQbAGZmZtg4LW9vb3l5eYKCgoyMjEC/TOJpYZWVlZ+fn2/PeKmpqbKysry8vMXF
 xZ/fpc/Pz7fnvPXNytnZ2eLi4s/v0vja1+zs7Of36fX19f3z8v///////////////////ywAAAAA
 YQC8AAAF/uAmjmRpnmiqrmzrvq4hz3RtGw+s7zx5/7dcb0hUAY8zYXHJRCKVzGjPeYRKry8q0Irt
@@ -33,11 +33,11 @@ JBEQELChmgbAACJioj4JOCKCCLCABZ6EAg1IHwDlyLYAB1gRJhSYgHUQAD9WnQ9+CWBAA+wknTpC
 JwQAOw==
 }
 
-proc git_logo {w} {
+proc but_logo {w} {
 	label $w \
 		-borderwidth 1 \
 		-relief sunken \
 		-background white \
-		-image ::git_logo_data
+		-image ::but_logo_data
 	return $w
 }

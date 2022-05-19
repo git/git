@@ -194,17 +194,17 @@ static int release_snapshot(struct snapshot *snapshot)
 }
 
 struct ref_store *packed_ref_store_create(struct repository *repo,
-					  const char *gitdir,
+					  const char *butdir,
 					  unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_store_init(ref_store, repo, gitdir, &refs_be_packed);
+	base_ref_store_init(ref_store, repo, butdir, &refs_be_packed);
 	refs->store_flags = store_flags;
 
-	strbuf_addf(&sb, "%s/packed-refs", gitdir);
+	strbuf_addf(&sb, "%s/packed-refs", butdir);
 	refs->path = strbuf_detach(&sb, NULL);
 	chdir_notify_reparent("packed-refs", &refs->path);
 	return ref_store;
@@ -995,7 +995,7 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	static int timeout_value = 1000;
 
 	if (!timeout_configured) {
-		git_config_get_int("core.packedrefstimeout", &timeout_value);
+		but_config_get_int("core.packedrefstimeout", &timeout_value);
 		timeout_configured = 1;
 	}
 

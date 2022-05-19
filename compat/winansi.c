@@ -1,10 +1,10 @@
 /*
- * Copyright 2008 Peter Harris <git@peter.is-a-geek.org>
+ * Copyright 2008 Peter Harris <but@peter.is-a-geek.org>
  */
 
 #undef NOGDI
 
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 #include <wingdi.h>
 #include <winreg.h>
 #include "win32.h"
@@ -16,10 +16,10 @@ static int fd_is_interactive[3] = { 0, 0, 0 };
 #define FD_MSYS    0x4
 
 /*
- ANSI codes used by git: m, K
+ ANSI codes used by but: m, K
 
- This file is git-specific. Therefore, this file does not attempt
- to implement any codes that are not used by git.
+ This file is but-specific. Therefore, this file does not attempt
+ to implement any codes that are not used by but.
 */
 
 static HANDLE console;
@@ -592,7 +592,7 @@ static void detect_msys_tty(int fd)
 #endif
 
 /*
- * Wrapper for isatty().  Most calls in the main git code
+ * Wrapper for isatty().  Most calls in the main but code
  * call isatty(1 or 2) to see if the instance is interactive
  * and should: be colored, show progress, paginate output.
  * We lie and give results for what the descriptor WAS at

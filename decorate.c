@@ -1,5 +1,5 @@
 /*
- * decorate.c - decorate a git object with some arbitrary
+ * decorate.c - decorate a but object with some arbitrary
  * data.
  */
 #include "cache.h"

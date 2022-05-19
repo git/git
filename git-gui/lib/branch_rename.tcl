@@ -1,4 +1,4 @@
-# git-gui branch rename support
+# but-gui branch rename support
 # Copyright (C) 2007 Shawn Pearce
 
 class branch_rename {
@@ -93,7 +93,7 @@ method _rename {} {
 		focus $w.rename.newname_t
 		return
 	}
-	if {![catch {git show-ref --verify -- "refs/heads/$newname"}]} {
+	if {![catch {but show-ref --verify -- "refs/heads/$newname"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -103,7 +103,7 @@ method _rename {} {
 		focus $w.rename.newname_t
 		return
 	}
-	if {[catch {git check-ref-format "heads/$newname"}]} {
+	if {[catch {but check-ref-format "heads/$newname"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -114,7 +114,7 @@ method _rename {} {
 		return
 	}
 
-	if {[catch {git branch -m $oldname $newname} err]} {
+	if {[catch {but branch -m $oldname $newname} err]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \

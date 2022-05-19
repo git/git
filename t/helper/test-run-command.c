@@ -9,7 +9,7 @@
  */
 
 #include "test-tool.h"
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "cache.h"
 #include "run-command.h"
 #include "strvec.h"
@@ -155,8 +155,8 @@ static int testsuite(int argc, const char **argv)
 	while ((d = readdir(dir))) {
 		const char *p = d->d_name;
 
-		if (*p != 't' || !isdigit(p[1]) || !isdigit(p[2]) ||
-		    !isdigit(p[3]) || !isdigit(p[4]) || p[5] != '-' ||
+		if (*p != 't' || !isdibut(p[1]) || !isdibut(p[2]) ||
+		    !isdibut(p[3]) || !isdibut(p[4]) || p[5] != '-' ||
 		    !ends_with(p, ".sh"))
 			continue;
 

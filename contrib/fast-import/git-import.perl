@@ -1,23 +1,23 @@
 #!/usr/bin/perl
 #
 # Performs an initial import of a directory. This is the equivalent
-# of doing 'git init; git add .; git cummit'. It's a little slower,
+# of doing 'but init; but add .; but cummit'. It's a little slower,
 # but is meant to be a simple fast-import example.
 
 use strict;
 use File::Find;
 
-my $USAGE = 'usage: git-import branch import-message';
+my $USAGE = 'usage: but-import branch import-message';
 my $branch = shift or die "$USAGE\n";
 my $message = shift or die "$USAGE\n";
 
-chomp(my $username = `git config user.name`);
-chomp(my $email = `git config user.email`);
+chomp(my $username = `but config user.name`);
+chomp(my $email = `but config user.email`);
 die 'You need to set user name and email'
   unless $username && $email;
 
-system('git init');
-open(my $fi, '|-', qw(git fast-import --date-format=now))
+system('but init');
+open(my $fi, '|-', qw(but fast-import --date-format=now))
   or die "unable to spawn fast-import: $!";
 
 print $fi <<EOF;
@@ -31,7 +31,7 @@ EOF
 
 find(
   sub {
-    if($File::Find::name eq './.git') {
+    if($File::Find::name eq './.but') {
       $File::Find::prune = 1;
       return;
     }

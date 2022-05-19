@@ -6,7 +6,7 @@ Updates since Git 2.32
 
 UI, Workflows & Features
 
- * "git send-email" learned the "--sendmail-cmd" command line option
+ * "but send-email" learned the "--sendmail-cmd" command line option
    and the "sendemail.sendmailCmd" configuration variable, which is a
    more sensible approach than the current way of repurposing the
    "smtp-server" that is meant to name the server to instead name the
@@ -14,10 +14,10 @@ UI, Workflows & Features
 
  * The userdiff pattern for C# learned the token "record".
 
- * "git rev-list" learns to omit the "cummit <object-name>" header
+ * "but rev-list" learns to omit the "cummit <object-name>" header
    lines from the output with the `--no-commit-header` option.
 
- * "git worktree add --lock" learned to record why the worktree is
+ * "but worktree add --lock" learned to record why the worktree is
    locked with a custom message.
 
 
@@ -44,7 +44,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Code cleanup around struct_type_init() functions.
 
- * "git send-email" optimization.
+ * "but send-email" optimization.
 
  * GitHub Actions / CI update.
    (merge 0dc787a9f2 js/ci-windows-update later to maint).
@@ -52,7 +52,7 @@ Performance, Internal Implementation, Development Support etc.
  * Object accesses in repositories with many alternate object store
    have been optimized.
 
- * "git log" has been optimized not to waste cycles to load ref
+ * "but log" has been optimized not to waste cycles to load ref
    decoration data that may not be needed.
 
  * Many "printf"-like helper functions we have have been annotated
@@ -63,12 +63,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The CI gained a new job to run "make sparse" check.
 
- * "git status" codepath learned to work with sparsely populated index
+ * "but status" codepath learned to work with sparsely populated index
    without hydrating it fully.
 
  * A guideline for gender neutral documentation has been added.
 
- * Documentation on "git diff -l<n>" and diff.renameLimit have been
+ * Documentation on "but diff -l<n>" and diff.renameLimit have been
    updated, and the defaults for these limits have been raised.
 
  * The completion support used to offer alternate spelling of options
@@ -77,14 +77,14 @@ Performance, Internal Implementation, Development Support etc.
  * "TEST_OUTPUT_DIRECTORY=there make test" failed to work, which has
    been corrected.
 
- * "git bundle" gained more test coverage.
+ * "but bundle" gained more test coverage.
 
- * "git read-tree" had a codepath where blobs are fetched one-by-one
+ * "but read-tree" had a codepath where blobs are fetched one-by-one
    from the promisor remote, which has been corrected to fetch in bulk.
 
- * Rewrite of "git submodule" in C continues.
+ * Rewrite of "but submodule" in C continues.
 
- * "git checkout" and "git cummit" learn to work without unnecessarily
+ * "but checkout" and "but cummit" learn to work without unnecessarily
    expanding sparse indexes.
 
 
@@ -104,25 +104,25 @@ Fixes since v2.32
  * The description of "fast-forward" in the glossary has been updated.
    (merge e22f2daed0 ry/clarify-fast-forward-in-glossary later to maint).
 
- * Recent "git clone" left a temporary directory behind when the
+ * Recent "but clone" left a temporary directory behind when the
    transport layer returned an failure.
    (merge 6aacb7d861 jk/clone-clean-upon-transport-error later to maint).
 
- * "git fetch" over protocol v2 left its side of the socket open after
+ * "but fetch" over protocol v2 left its side of the socket open after
    it finished speaking, which unnecessarily wasted the resource on
    the other side.
    (merge ae1a7eefff jk/fetch-pack-v2-half-close-early later to maint).
 
- * The command line completion (in contrib/) learned that "git diff"
+ * The command line completion (in contrib/) learned that "but diff"
    takes the "--anchored" option.
    (merge d1e7c2cac9 tb/complete-diff-anchored later to maint).
 
- * "git-svn" tests assumed that "locale -a", which is used to pick an
+ * "but-svn" tests assumed that "locale -a", which is used to pick an
    available UTF-8 locale, is available everywhere.  A knob has been
    introduced to allow testers to specify a suitable locale to use.
    (merge 482c962de4 dd/svn-test-wo-locale-a later to maint).
 
- * Update "git subtree" to work better on Windows.
+ * Update "but subtree" to work better on Windows.
    (merge 77f37de39f js/subtree-on-windows-fix later to maint).
 
  * Remove multimail from contrib/
@@ -150,7 +150,7 @@ Fixes since v2.32
    (merge 7c0afdf23c jk/test-without-readlink-1 later to maint).
 
  * Recent update to completion script (in contrib/) broke those who
-   use the __git_complete helper to define completion to their custom
+   use the __but_complete helper to define completion to their custom
    command.
    (merge cea232194d fw/complete-cmd-idx-fix later to maint).
 
@@ -171,20 +171,20 @@ Fixes since v2.32
    fall back on the hardcoded default value for our own use.
    (merge 9b6e2c8b98 js/stop-exporting-bogus-columns later to maint).
 
- * "git cat-file --batch-all-objects"" misbehaved when "--batch" is in
+ * "but cat-file --batch-all-objects"" misbehaved when "--batch" is in
    use and did not ask for certain object traits.
    (merge ee02ac6164 zh/cat-file-batch-fix later to maint).
 
- * Some code and doc clarification around "git push".
+ * Some code and doc clarification around "but push".
 
  * The "union" conflict resultion variant misbehaved when used with
    binary merge driver.
    (merge 382b601acd jk/union-merge-binary later to maint).
 
- * Prevent "git p4" from failing to submit changes to binary file.
+ * Prevent "but p4" from failing to submit changes to binary file.
    (merge 54662d5958 dc/p4-binary-submit-fix later to maint).
 
- * "git grep --and -e foo" ought to have been diagnosed as an error
+ * "but grep --and -e foo" ought to have been diagnosed as an error
    but instead segfaulted, which has been corrected.
    (merge fe7fe62d8d rs/grep-parser-fix later to maint).
 
@@ -201,18 +201,18 @@ Fixes since v2.32
    (merge e355307692 js/gfw-system-config-loc-fix later to maint).
 
  * Code recently added to support common ancestry negotiation during
-   "git push" did not sanity check its arguments carefully enough.
+   "but push" did not sanity check its arguments carefully enough.
    (merge eff40457a4 ab/fetch-negotiate-segv-fix later to maint).
 
  * Update the documentation not to assume users are of certain gender
    and adds to guidelines to do so.
    (merge 46a237f42f ds/gender-neutral-doc later to maint).
 
- * "git cummit --allow-empty-message" won't abort the operation upon
+ * "but cummit --allow-empty-message" won't abort the operation upon
    an empty message, but the hint shown in the editor said otherwise.
    (merge 6f70f00b4f hj/cummit-allow-empty-message later to maint).
 
- * The code that gives an error message in "git multi-pack-index" when
+ * The code that gives an error message in "but multi-pack-index" when
    no subcommand is given tried to print a NULL pointer as a strong,
    which has been corrected.
    (merge 88617d11f9 tb/reverse-midx later to maint).
@@ -220,13 +220,13 @@ Fixes since v2.32
  * CI update.
    (merge a066a90db6 js/ci-check-whitespace-updates later to maint).
 
- * Documentation fix for "git pull --rebase=no".
+ * Documentation fix for "but pull --rebase=no".
    (merge d3236becec fc/pull-no-rebase-merges-theirs-into-ours later to maint).
 
  * A race between repacking and using pack bitmaps has been corrected.
    (merge dc1daacdcc jk/check-pack-valid-before-opening-bitmap later to maint).
 
- * The local changes stashed by "git merge --autostash" were lost when
+ * The local changes stashed by "but merge --autostash" were lost when
    the merge failed in certain ways, which has been corrected.
 
  * Windows rmdir() equivalent behaves differently from POSIX ones in
@@ -268,7 +268,7 @@ Fixes since v2.32
    (merge 6a24cc71ed ar/submodule-helper-include-cleanup later to maint).
    (merge 5632e838f8 rs/khash-alloc-cleanup later to maint).
    (merge b1d87fbaf1 jk/typofix later to maint).
-   (merge e04170697a ab/gitignore-discovery-doc later to maint).
+   (merge e04170697a ab/butignore-discovery-doc later to maint).
    (merge 8232a0ff48 dl/packet-read-response-end-fix later to maint).
    (merge eb448631fb dl/diff-merge-base later to maint).
    (merge c510928a25 hn/refs-debug-empty-prefix later to maint).

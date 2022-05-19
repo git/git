@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git patch-id'
+test_description='but patch-id'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -11,38 +11,38 @@ test_expect_success 'setup' '
 	as="a a a a a a a a" && # eight a
 	test_write_lines $as >foo &&
 	test_write_lines $as >bar &&
-	git add foo bar &&
-	git cummit -a -m initial &&
+	but add foo bar &&
+	but cummit -a -m initial &&
 	test_write_lines $as b >foo &&
 	test_write_lines $as b >bar &&
-	git cummit -a -m first &&
-	git checkout -b same main &&
-	git cummit --amend -m same-msg &&
-	git checkout -b notsame main &&
+	but cummit -a -m first &&
+	but checkout -b same main &&
+	but cummit --amend -m same-msg &&
+	but checkout -b notsame main &&
 	echo c >foo &&
 	echo c >bar &&
-	git cummit --amend -a -m notsame-msg &&
+	but cummit --amend -a -m notsame-msg &&
 	test_write_lines bar foo >bar-then-foo &&
 	test_write_lines foo bar >foo-then-bar
 '
 
 test_expect_success 'patch-id output is well-formed' '
-	git log -p -1 >log.output &&
-	git patch-id <log.output >output &&
-	grep "^$OID_REGEX $(git rev-parse HEAD)$" output
+	but log -p -1 >log.output &&
+	but patch-id <log.output >output &&
+	grep "^$OID_REGEX $(but rev-parse HEAD)$" output
 '
 
 #calculate patch id. Make sure output is not empty.
 calc_patch_id () {
 	patch_name="$1"
 	shift
-	git patch-id "$@" >patch-id.output &&
+	but patch-id "$@" >patch-id.output &&
 	sed "s/ .*//" patch-id.output >patch-id_"$patch_name" &&
 	test_line_count -eq 1 patch-id_"$patch_name"
 }
 
 get_top_diff () {
-	git log -p -1 "$@" -O bar-then-foo --
+	but log -p -1 "$@" -O bar-then-foo --
 }
 
 get_patch_id () {
@@ -62,20 +62,20 @@ test_expect_success 'patch-id detects inequality' '
 	! test_cmp patch-id_main patch-id_notsame
 '
 
-test_expect_success 'patch-id supports git-format-patch output' '
+test_expect_success 'patch-id supports but-format-patch output' '
 	get_patch_id main &&
-	git checkout same &&
-	git format-patch -1 --stdout >format-patch.output &&
+	but checkout same &&
+	but format-patch -1 --stdout >format-patch.output &&
 	calc_patch_id same <format-patch.output &&
 	test_cmp patch-id_main patch-id_same &&
-	set $(git patch-id <format-patch.output) &&
-	test "$2" = $(git rev-parse HEAD)
+	set $(but patch-id <format-patch.output) &&
+	test "$2" = $(but rev-parse HEAD)
 '
 
 test_expect_success 'whitespace is irrelevant in footer' '
 	get_patch_id main &&
-	git checkout same &&
-	git format-patch -1 --stdout >format-patch.output &&
+	but checkout same &&
+	but format-patch -1 --stdout >format-patch.output &&
 	sed "s/ \$//" format-patch.output | calc_patch_id same &&
 	test_cmp patch-id_main patch-id_same
 '
@@ -97,8 +97,8 @@ test_patch_id_file_order () {
 	shift
 	get_top_diff "main" >top-diff.output &&
 	calc_patch_id <top-diff.output "$name" "$@" &&
-	git checkout same &&
-	git format-patch -1 --stdout -O foo-then-bar >format-patch.output &&
+	but checkout same &&
+	but format-patch -1 --stdout -O foo-then-bar >format-patch.output &&
 	calc_patch_id <format-patch.output "ordered-$name" "$@" &&
 	cmp_patch_id $relevant "$name" "ordered-$name"
 
@@ -144,10 +144,10 @@ test_expect_success '--stable overrides patchid.stable = false' '
 	test_patch_id irrelevant patchid.stable=false--stable --stable
 '
 
-test_expect_success 'patch-id supports git-format-patch MIME output' '
+test_expect_success 'patch-id supports but-format-patch MIME output' '
 	get_patch_id main &&
-	git checkout same &&
-	git format-patch -1 --attach --stdout >format-patch.output &&
+	but checkout same &&
+	but format-patch -1 --attach --stdout >format-patch.output &&
 	calc_patch_id <format-patch.output same &&
 	test_cmp patch-id_main patch-id_same
 '
@@ -168,14 +168,14 @@ test_expect_success 'patch-id respects config from subdir' '
 
 test_expect_success 'patch-id handles no-nl-at-eof markers' '
 	cat >nonl <<-\EOF &&
-	diff --git i/a w/a
+	diff --but i/a w/a
 	index e69de29..2e65efe 100644
 	--- i/a
 	+++ w/a
 	@@ -0,0 +1 @@
 	+a
 	\ No newline at end of file
-	diff --git i/b w/b
+	diff --but i/b w/b
 	index e69de29..6178079 100644
 	--- i/b
 	+++ w/b
@@ -183,13 +183,13 @@ test_expect_success 'patch-id handles no-nl-at-eof markers' '
 	+b
 	EOF
 	cat >withnl <<-\EOF &&
-	diff --git i/a w/a
+	diff --but i/a w/a
 	index e69de29..7898192 100644
 	--- i/a
 	+++ w/a
 	@@ -0,0 +1 @@
 	+a
-	diff --git i/b w/b
+	diff --but i/b w/b
 	index e69de29..6178079 100644
 	--- i/b
 	+++ w/b
@@ -203,21 +203,21 @@ test_expect_success 'patch-id handles no-nl-at-eof markers' '
 
 test_expect_success 'patch-id handles diffs with one line of before/after' '
 	cat >diffu1 <<-\EOF &&
-	diff --git a/bar b/bar
+	diff --but a/bar b/bar
 	index bdaf90f..31051f6 100644
 	--- a/bar
 	+++ b/bar
 	@@ -2 +2,2 @@
 	 b
 	+c
-	diff --git a/car b/car
+	diff --but a/car b/car
 	index 00750ed..2ae5e34 100644
 	--- a/car
 	+++ b/car
 	@@ -1 +1,2 @@
 	 3
 	+d
-	diff --git a/foo b/foo
+	diff --but a/foo b/foo
 	index e439850..7146eb8 100644
 	--- a/foo
 	+++ b/foo

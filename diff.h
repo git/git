@@ -32,7 +32,7 @@
  *
  * - Fill in the options structure to specify desired output format, rename
  * detection, etc.  `diff_opt_parse()` can be used to parse options given
- * from the command line in a way consistent with existing git-diff family
+ * from the command line in a way consistent with existing but-diff family
  * of programs.
  *
  * - Call `diff_setup_done()`; this inspects the options set up so far for
@@ -249,9 +249,9 @@ struct diff_options {
 	 * <file> in the diff.  Otherwise, the output starts at the
 	 * path that is the same as, or first path that sorts after,
 	 * <file>.  Because it is unreasonable to require the exact
-	 * match for "git log -p --rotate-to=<file>" (i.e. not all
-	 * cummit would touch that single <file>), "git log" sets it
-	 * to false.  "git diff" sets it to true to detect an error
+	 * match for "but log -p --rotate-to=<file>" (i.e. not all
+	 * cummit would touch that single <file>), "but log" sets it
+	 * to false.  "but diff" sets it to true to detect an error
 	 * in the command line option.
 	 */
 	const char *rotate_to;
@@ -317,7 +317,7 @@ struct diff_options {
 	int dirstat_permille;
 	int setup;
 
-	/* Number of hexdigits to abbreviate raw format output to. */
+	/* Number of hexdibuts to abbreviate raw format output to. */
 	int abbrev;
 
 	/* If non-zero, then stop computing after this many changes. */
@@ -531,17 +531,17 @@ void free_diffstat_info(struct diffstat_t *diffstat);
 int parse_long_opt(const char *opt, const char **argv,
 		   const char **optarg);
 
-int git_diff_basic_config(const char *var, const char *value, void *cb);
-int git_diff_heuristic_config(const char *var, const char *value, void *cb);
+int but_diff_basic_config(const char *var, const char *value, void *cb);
+int but_diff_heuristic_config(const char *var, const char *value, void *cb);
 void init_diff_ui_defaults(void);
-int git_diff_ui_config(const char *var, const char *value, void *cb);
+int but_diff_ui_config(const char *var, const char *value, void *cb);
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define diff_setup(diffopts) repo_diff_setup(the_repository, diffopts)
 #endif
 void repo_diff_setup(struct repository *, struct diff_options *);
 int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 void diff_setup_done(struct diff_options *);
-int git_config_rename(const char *var, const char *value);
+int but_config_rename(const char *var, const char *value);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2
@@ -635,7 +635,7 @@ int run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int, int);
-void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx);
+void flush_one_hunk(struct object_id *result, but_hash_ctx *ctx);
 
 int diff_result_code(struct diff_options *, int);
 

@@ -7,14 +7,14 @@
 #include "column.h"
 
 static const char * const builtin_column_usage[] = {
-	N_("git column [<options>]"),
+	N_("but column [<options>]"),
 	NULL
 };
 static unsigned int colopts;
 
 static int column_config(const char *var, const char *value, void *cb)
 {
-	return git_column_config(var, value, cb, &colopts);
+	return but_column_config(var, value, cb, &colopts);
 }
 
 int cmd_column(int argc, const char **argv, const char *prefix)
@@ -37,9 +37,9 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 	/* This one is special and must be the first one */
 	if (argc > 1 && starts_with(argv[1], "--command=")) {
 		command = argv[1] + 10;
-		git_config(column_config, (void *)command);
+		but_config(column_config, (void *)command);
 	} else
-		git_config(column_config, NULL);
+		but_config(column_config, NULL);
 
 	memset(&copts, 0, sizeof(copts));
 	copts.padding = 1;

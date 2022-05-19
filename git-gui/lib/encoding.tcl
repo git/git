@@ -1,6 +1,6 @@
-# git-gui encoding support
+# but-gui encoding support
 # Copyright (C) 2005 Paul Mackerras <paulus@samba.org>
-# (Copied from gitk, cummit fd8ccbec4f0161)
+# (Copied from butk, cummit fd8ccbec4f0161)
 
 # This list of encoding names and aliases is distilled from
 # http://www.iana.org/assignments/character-sets.
@@ -290,7 +290,7 @@ proc build_encoding_table {} {
 	global encoding_aliases encoding_lookup_table
 
 	# Prepare the lookup list; cannot use lsort -nocase because
-	# of compatibility issues with older Tcl (e.g. in msysgit)
+	# of compatibility issues with older Tcl (e.g. in msysbut)
 	set names [list]
 	foreach item [encoding names] {
 		lappend names [list [string tolower $item] $item]
@@ -375,7 +375,7 @@ proc get_path_encoding {path} {
 		if {[info exists path_encoding_overrides($path)]} {
 			set enc2 $path_encoding_overrides($path)
 		} else {
-			set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+			set enc2 [tcl_encoding [butattr $path encoding $tcl_enc]]
 		}
 		if {$enc2 ne {}} {
 			set tcl_enc $enc2

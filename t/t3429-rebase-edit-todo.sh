@@ -12,55 +12,55 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'rebase exec modifies rebase-todo' '
-	todo=.git/rebase-merge/git-rebase-todo &&
-	git rebase HEAD~1 -x "echo exec touch F >>$todo" &&
+	todo=.but/rebase-merge/but-rebase-todo &&
+	but rebase HEAD~1 -x "echo exec touch F >>$todo" &&
 	test -e F
 '
 
 test_expect_success 'rebase exec with an empty list does not exec anything' '
-	git rebase HEAD -x "true" 2>output &&
+	but rebase HEAD -x "true" 2>output &&
 	! grep "Executing: true" output
 '
 
 test_expect_success 'loose object cache vs re-reading todo list' '
-	GIT_REBASE_TODO=.git/rebase-merge/git-rebase-todo &&
+	GIT_REBASE_TODO=.but/rebase-merge/but-rebase-todo &&
 	export GIT_REBASE_TODO &&
 	write_script append-todo.sh <<-\EOS &&
-	# For values 5 and 6, this yields SHA-1s with the same first two digits
-	echo "pick $(git rev-parse --short \
+	# For values 5 and 6, this yields SHA-1s with the same first two dibuts
+	echo "pick $(but rev-parse --short \
 		$(printf "%s\\n" \
 			"tree $EMPTY_TREE" \
 			"author A U Thor <author@example.org> $1 +0000" \
 			"cummitter A U Thor <author@example.org> $1 +0000" \
 			"" \
 			"$1" |
-		  git hash-object -t cummit -w --stdin))" >>$GIT_REBASE_TODO
+		  but hash-object -t cummit -w --stdin))" >>$GIT_REBASE_TODO
 
 	shift
 	test -z "$*" ||
 	echo "exec $0 $*" >>$GIT_REBASE_TODO
 	EOS
 
-	git rebase HEAD -x "./append-todo.sh 5 6"
+	but rebase HEAD -x "./append-todo.sh 5 6"
 '
 
 test_expect_success 'todo is re-read after reword and squash' '
 	write_script reword-editor.sh <<-\EOS &&
 	GIT_SEQUENCE_EDITOR="echo \"exec echo $(cat file) >>actual\" >>" \
-		git rebase --edit-todo
+		but rebase --edit-todo
 	EOS
 
 	test_write_lines first third >expected &&
 	set_fake_editor &&
 	GIT_SEQUENCE_EDITOR="$EDITOR" FAKE_LINES="reword 1 squash 2 fixup 3" \
-		GIT_EDITOR=./reword-editor.sh git rebase -i --root third &&
+		GIT_EDITOR=./reword-editor.sh but rebase -i --root third &&
 	test_cmp expected actual
 '
 
 test_expect_success 're-reading todo doesnt interfere with revert --edit' '
-	git reset --hard third &&
+	but reset --hard third &&
 
-	git revert --edit third second &&
+	but revert --edit third second &&
 
 	cat >expect <<-\EOF &&
 	Revert "second"
@@ -69,21 +69,21 @@ test_expect_success 're-reading todo doesnt interfere with revert --edit' '
 	second
 	first
 	EOF
-	git log --format="%s" >actual &&
+	but log --format="%s" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 're-reading todo doesnt interfere with cherry-pick --edit' '
-	git reset --hard first &&
+	but reset --hard first &&
 
-	git cherry-pick --edit second third &&
+	but cherry-pick --edit second third &&
 
 	cat >expect <<-\EOF &&
 	third
 	second
 	first
 	EOF
-	git log --format="%s" >actual &&
+	but log --format="%s" >actual &&
 	test_cmp expect actual
 '
 

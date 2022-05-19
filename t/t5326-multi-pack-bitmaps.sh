@@ -23,19 +23,19 @@ bitmap_reuse_tests() {
 
 	test_expect_success "setup pack reuse tests ($from -> $to)" '
 		rm -fr repo &&
-		git init repo &&
+		but init repo &&
 		(
 			cd repo &&
 			test_cummit_bulk 16 &&
-			git tag old-tip &&
+			but tag old-tip &&
 
-			git config core.multiPackIndex true &&
+			but config core.multiPackIndex true &&
 			if test "MIDX" = "$from"
 			then
-				git repack -Ad &&
-				git multi-pack-index write --bitmap
+				but repack -Ad &&
+				but multi-pack-index write --bitmap
 			else
-				git repack -Adb
+				but repack -Adb
 			fi
 		)
 	'
@@ -44,14 +44,14 @@ bitmap_reuse_tests() {
 		(
 			cd repo &&
 			test_cummit_bulk --id=further 16 &&
-			git tag new-tip &&
+			but tag new-tip &&
 
 			if test "MIDX" = "$to"
 			then
-				git repack -d &&
-				git multi-pack-index write --bitmap
+				but repack -d &&
+				but multi-pack-index write --bitmap
 			else
-				git repack -Adb
+				but repack -Adb
 			fi
 		)
 	'
@@ -59,9 +59,9 @@ bitmap_reuse_tests() {
 	test_expect_success "verify resulting bitmaps ($from -> $to)" '
 		(
 			cd repo &&
-			git for-each-ref &&
-			git rev-list --test-bitmap refs/tags/old-tip &&
-			git rev-list --test-bitmap refs/tags/new-tip
+			but for-each-ref &&
+			but rev-list --test-bitmap refs/tags/old-tip &&
+			but rev-list --test-bitmap refs/tags/new-tip
 		)
 	'
 }
@@ -72,7 +72,7 @@ bitmap_reuse_tests 'MIDX' 'MIDX'
 
 test_expect_success 'missing object closure fails gracefully' '
 	rm -fr repo &&
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
@@ -82,11 +82,11 @@ test_expect_success 'missing object closure fails gracefully' '
 
 		# Do not pass "--revs"; we want a pack without the "loose"
 		# cummit.
-		git pack-objects $objdir/pack/pack <<-EOF &&
-		$(git rev-parse packed)
+		but pack-objects $objdir/pack/pack <<-EOF &&
+		$(but rev-parse packed)
 		EOF
 
-		test_must_fail git multi-pack-index write --bitmap 2>err &&
+		test_must_fail but multi-pack-index write --bitmap 2>err &&
 		grep "doesn.t have full closure" err &&
 		test_path_is_missing $midx
 	)
@@ -96,13 +96,13 @@ midx_bitmap_partial_tests
 
 test_expect_success 'removing a MIDX clears stale bitmaps' '
 	rm -fr repo &&
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
 		test_cummit base &&
-		git repack &&
-		git multi-pack-index write --bitmap &&
+		but repack &&
+		but multi-pack-index write --bitmap &&
 
 		# Write a MIDX and bitmap; remove the MIDX but leave the bitmap.
 		stale_bitmap=$midx-$(midx_checksum $objdir).bitmap &&
@@ -110,8 +110,8 @@ test_expect_success 'removing a MIDX clears stale bitmaps' '
 
 		# Then write a new MIDX.
 		test_cummit new &&
-		git repack &&
-		git multi-pack-index write --bitmap &&
+		but repack &&
+		but multi-pack-index write --bitmap &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
@@ -120,20 +120,20 @@ test_expect_success 'removing a MIDX clears stale bitmaps' '
 '
 
 test_expect_success 'pack.preferBitmapTips' '
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
 
 		test_cummit_bulk --message="%s" 103 &&
 
-		git log --format="%H" >cummits.raw &&
+		but log --format="%H" >cummits.raw &&
 		sort <cummits.raw >cummits &&
 
-		git log --format="create refs/tags/%s %H" HEAD >refs &&
-		git update-ref --stdin <refs &&
+		but log --format="create refs/tags/%s %H" HEAD >refs &&
+		but update-ref --stdin <refs &&
 
-		git multi-pack-index write --bitmap &&
+		but multi-pack-index write --bitmap &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
@@ -142,12 +142,12 @@ test_expect_success 'pack.preferBitmapTips' '
 		test_line_count = 1 before &&
 
 		perl -ne "printf(\"create refs/tags/include/%d \", $.); print" \
-			<before | git update-ref --stdin &&
+			<before | but update-ref --stdin &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
 		rm -fr $midx &&
 
-		git -c pack.preferBitmapTips=refs/tags/include \
+		but -c pack.preferBitmapTips=refs/tags/include \
 			multi-pack-index write --bitmap &&
 		test-tool bitmap list-cummits | sort >bitmaps &&
 		comm -13 bitmaps cummits >after &&
@@ -157,7 +157,7 @@ test_expect_success 'pack.preferBitmapTips' '
 '
 
 test_expect_success 'writing a bitmap with --refs-snapshot' '
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
@@ -165,53 +165,53 @@ test_expect_success 'writing a bitmap with --refs-snapshot' '
 		test_cummit one &&
 		test_cummit two &&
 
-		git rev-parse one >snapshot &&
+		but rev-parse one >snapshot &&
 
-		git repack -ad &&
+		but repack -ad &&
 
 		# First, write a MIDX which see both refs/tags/one and
 		# refs/tags/two (causing both of those cummits to receive
 		# bitmaps).
-		git multi-pack-index write --bitmap &&
+		but multi-pack-index write --bitmap &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
 		test-tool bitmap list-cummits | sort >bitmaps &&
-		grep "$(git rev-parse one)" bitmaps &&
-		grep "$(git rev-parse two)" bitmaps &&
+		grep "$(but rev-parse one)" bitmaps &&
+		grep "$(but rev-parse two)" bitmaps &&
 
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
 		rm -fr $midx &&
 
 		# Then again, but with a refs snapshot which only sees
 		# refs/tags/one.
-		git multi-pack-index write --bitmap --refs-snapshot=snapshot &&
+		but multi-pack-index write --bitmap --refs-snapshot=snapshot &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
 		test-tool bitmap list-cummits | sort >bitmaps &&
-		grep "$(git rev-parse one)" bitmaps &&
-		! grep "$(git rev-parse two)" bitmaps
+		grep "$(but rev-parse one)" bitmaps &&
+		! grep "$(but rev-parse two)" bitmaps
 	)
 '
 
 test_expect_success 'write a bitmap with --refs-snapshot (preferred tips)' '
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
 
 		test_cummit_bulk --message="%s" 103 &&
 
-		git log --format="%H" >cummits.raw &&
+		but log --format="%H" >cummits.raw &&
 		sort <cummits.raw >cummits &&
 
-		git log --format="create refs/tags/%s %H" HEAD >refs &&
-		git update-ref --stdin <refs &&
+		but log --format="create refs/tags/%s %H" HEAD >refs &&
+		but update-ref --stdin <refs &&
 
-		git multi-pack-index write --bitmap &&
+		but multi-pack-index write --bitmap &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
@@ -228,7 +228,7 @@ test_expect_success 'write a bitmap with --refs-snapshot (preferred tips)' '
 		rm -fr $midx-$(midx_checksum $objdir).bitmap &&
 		rm -fr $midx &&
 
-		git multi-pack-index write --bitmap --refs-snapshot=snapshot &&
+		but multi-pack-index write --bitmap --refs-snapshot=snapshot &&
 		test-tool bitmap list-cummits | sort >bitmaps &&
 		comm -13 bitmaps cummits >after &&
 
@@ -238,22 +238,22 @@ test_expect_success 'write a bitmap with --refs-snapshot (preferred tips)' '
 
 test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 	rm -fr repo &&
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
 
 		test_cummit base &&
 		test_cummit base2 &&
-		git repack -adb &&
+		but repack -adb &&
 
 		test-tool bitmap dump-hashes >pack.raw &&
 		test_file_not_empty pack.raw &&
 		sort pack.raw >pack.hashes &&
 
 		test_cummit new &&
-		git repack &&
-		git multi-pack-index write --bitmap &&
+		but repack &&
+		but multi-pack-index write --bitmap &&
 
 		test-tool bitmap dump-hashes >midx.raw &&
 		sort midx.raw >midx.hashes &&
@@ -268,17 +268,17 @@ test_expect_success 'hash-cache values are propagated from pack bitmaps' '
 
 test_expect_success 'no .bitmap is written without any objects' '
 	rm -fr repo &&
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
 
-		empty="$(git pack-objects $objdir/pack/pack </dev/null)" &&
+		empty="$(but pack-objects $objdir/pack/pack </dev/null)" &&
 		cat >packs <<-EOF &&
 		pack-$empty.idx
 		EOF
 
-		git multi-pack-index write --bitmap --stdin-packs \
+		but multi-pack-index write --bitmap --stdin-packs \
 			<packs 2>err &&
 
 		grep "bitmap without any objects" err &&
@@ -290,7 +290,7 @@ test_expect_success 'no .bitmap is written without any objects' '
 
 test_expect_success 'graceful fallback when missing reverse index' '
 	rm -fr repo &&
-	git init repo &&
+	but init repo &&
 	test_when_finished "rm -fr repo" &&
 	(
 		cd repo &&
@@ -298,11 +298,11 @@ test_expect_success 'graceful fallback when missing reverse index' '
 		test_cummit base &&
 
 		# write a pack and MIDX bitmap containing base
-		git repack -adb &&
-		git multi-pack-index write --bitmap &&
+		but repack -adb &&
+		but multi-pack-index write --bitmap &&
 
 		GIT_TEST_MIDX_READ_RIDX=0 \
-			git rev-list --use-bitmap-index HEAD 2>err &&
+			but rev-list --use-bitmap-index HEAD 2>err &&
 		! grep "ignoring extra bitmap file" err
 	)
 '

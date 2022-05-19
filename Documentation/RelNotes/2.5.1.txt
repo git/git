@@ -4,8 +4,8 @@ Git v2.5.1 Release Notes
 Fixes since v2.5
 ----------------
 
- * Running an aliased command from a subdirectory when the .git thing
-   in the working tree is a gitfile pointing elsewhere did not work.
+ * Running an aliased command from a subdirectory when the .but thing
+   in the working tree is a butfile pointing elsewhere did not work.
 
  * Often a fast-import stream builds a new cummit on top of the
    previous cummit it built, and it often unconditionally emits a
@@ -33,7 +33,7 @@ Fixes since v2.5
  * "sparse checkout" misbehaved for a path that is excluded from the
    checkout when switching between branches that differ at the path.
 
- * The low-level "git send-pack" did not honor 'user.signingkey'
+ * The low-level "but send-pack" did not honor 'user.signingkey'
    configuration variable when sending a signed-push.
 
  * An attempt to delete a ref by pushing into a repository whose HEAD
@@ -41,11 +41,11 @@ Fixes since v2.5
    created due to ref D/F conflict (e.g. refs/heads/a/b exists, HEAD
    points at refs/heads/a) failed.
 
- * "git subtree" (in contrib/) depended on "git log" output to be
+ * "but subtree" (in contrib/) depended on "but log" output to be
    stable, which was a no-no.  Apply a workaround to force a
    particular date format.
 
- * "git clone $URL" in recent releases of Git contains a regression in
+ * "but clone $URL" in recent releases of Git contains a regression in
    the code that invents a new repository name incorrectly based on
    the $URL.  This has been corrected.
    (merge db2e220 jk/guess-repo-name-regression-fix later to maint).
@@ -54,7 +54,7 @@ Fixes since v2.5
    unpleasant interactions with other features of the test suite.
    (merge 9b5fe78 jk/test-with-x later to maint).
 
- * "git pull" in recent releases of Git has a regression in the code
+ * "but pull" in recent releases of Git has a regression in the code
    that allows custom path to the --upload-pack=<program>.  This has
    been corrected.
 

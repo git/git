@@ -1,17 +1,17 @@
-git-switch(1)
+but-switch(1)
 =============
 
 NAME
 ----
-git-switch - Switch branches
+but-switch - Switch branches
 
 SYNOPSIS
 --------
 [verse]
-'git switch' [<options>] [--no-guess] <branch>
-'git switch' [<options>] --detach [<start-point>]
-'git switch' [<options>] (-c|-C) <new-branch> [<start-point>]
-'git switch' [<options>] --orphan <new-branch>
+'but switch' [<options>] [--no-guess] <branch>
+'but switch' [<options>] --detach [<start-point>]
+'but switch' [<options>] (-c|-C) <new-branch> [<start-point>]
+'but switch' [<options>] --orphan <new-branch>
 
 DESCRIPTION
 -----------
@@ -47,7 +47,7 @@ OPTIONS
 	from some other point.)
 +
 You can use the `@{-N}` syntax to refer to the N-th last
-branch/cummit switched to using "git switch" or "git checkout"
+branch/cummit switched to using "but switch" or "but checkout"
 operation. You may also specify `-` which is synonymous to `@{-1}`.
 This is often used to switch quickly between two branches, or to undo
 a branch switch by mistake.
@@ -63,8 +63,8 @@ out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 	convenient shortcut for:
 +
 ------------
-$ git branch <new-branch>
-$ git switch <new-branch>
+$ but branch <new-branch>
+$ but switch <new-branch>
 ------------
 
 -C <new-branch>::
@@ -74,15 +74,15 @@ $ git switch <new-branch>
 	convenient shortcut for:
 +
 ------------
-$ git branch -f <new-branch>
-$ git switch <new-branch>
+$ but branch -f <new-branch>
+$ but switch <new-branch>
 ------------
 
 -d::
 --detach::
 	Switch to a cummit for inspection and discardable
 	experiments. See the "DETACHED HEAD" section in
-	linkgit:git-checkout[1] for details.
+	linkbut:but-checkout[1] for details.
 
 --guess::
 --no-guess::
@@ -91,7 +91,7 @@ $ git switch <new-branch>
 	matching name, treat as equivalent to
 +
 ------------
-$ git switch -c <branch> --track <remote>/<branch>
+$ but switch -c <branch> --track <remote>/<branch>
 ------------
 +
 If the branch exists in multiple remotes and one of them is named by
@@ -100,7 +100,7 @@ one for the purposes of disambiguation, even if the `<branch>` isn't
 unique across all remotes. Set it to e.g. `checkout.defaultRemote=origin`
 to always checkout remote branches from there if `<branch>` is
 ambiguous but exists on the 'origin' remote. See also
-`checkout.defaultRemote` in linkgit:git-config[1].
+`checkout.defaultRemote` in linkbut:but-config[1].
 +
 `--guess` is the default behavior. Use `--no-guess` to disable it.
 +
@@ -130,7 +130,7 @@ variable.
 +
 When a merge conflict happens, the index entries for conflicting
 paths are left unmerged, and you need to resolve the conflicts
-and mark the resolved paths with `git add` (or `git rm` if the merge
+and mark the resolved paths with `but add` (or `but rm` if the merge
 should result in deletion of the path).
 
 --conflict=<style>::
@@ -153,7 +153,7 @@ should result in deletion of the path).
 -t::
 --track [direct|inherit]::
 	When creating a new branch, set up "upstream" configuration.
-	`-c` is implied. See `--track` in linkgit:git-branch[1] for
+	`-c` is implied. See `--track` in linkbut:but-branch[1] for
 	details.
 +
 If no `-c` option is given, the name of the new branch will be derived
@@ -175,7 +175,7 @@ name, the guessing is aborted.  You can explicitly give a name with
 	tracked files are removed.
 
 --ignore-other-worktrees::
-	`git switch` refuses when the wanted ref is already
+	`but switch` refuses when the wanted ref is already
 	checked out by another worktree. This option makes it check
 	the ref out anyway. In other words, the ref can be held by
 	more than one worktree.
@@ -186,7 +186,7 @@ name, the guessing is aborted.  You can explicitly give a name with
 	active submodules according to the cummit recorded in the
 	superproject. If nothing (or `--no-recurse-submodules`) is
 	used, submodules working trees will not be updated. Just
-	like linkgit:git-submodule[1], this will detach `HEAD` of the
+	like linkbut:but-submodule[1], this will detach `HEAD` of the
 	submodules.
 
 EXAMPLES
@@ -195,14 +195,14 @@ EXAMPLES
 The following command switches to the "master" branch:
 
 ------------
-$ git switch master
+$ but switch master
 ------------
 
 After working in the wrong branch, switching to the correct branch
 would be done using:
 
 ------------
-$ git switch mytopic
+$ but switch mytopic
 ------------
 
 However, your "wrong" branch and correct "mytopic" branch may differ
@@ -210,7 +210,7 @@ in files that you have modified locally, in which case the above
 switch would fail like this:
 
 ------------
-$ git switch mytopic
+$ but switch mytopic
 error: You have local changes to 'frotz'; not switching branches.
 ------------
 
@@ -218,26 +218,26 @@ You can give the `-m` flag to the command, which would try a three-way
 merge:
 
 ------------
-$ git switch -m mytopic
+$ but switch -m mytopic
 Auto-merging frotz
 ------------
 
 After this three-way merge, the local modifications are _not_
-registered in your index file, so `git diff` would show you what
+registered in your index file, so `but diff` would show you what
 changes you made since the tip of the new branch.
 
 To switch back to the previous branch before we switched to mytopic
 (i.e. "master" branch):
 
 ------------
-$ git switch -
+$ but switch -
 ------------
 
 You can grow a new branch from any cummit. For example, switch to
 "HEAD~3" and create branch "fixup":
 
 ------------
-$ git switch -c fixup HEAD~3
+$ but switch -c fixup HEAD~3
 Switched to a new branch 'fixup'
 ------------
 
@@ -245,7 +245,7 @@ If you want to start a new branch from a remote branch of the same
 name:
 
 ------------
-$ git switch new-topic
+$ but switch new-topic
 Branch 'new-topic' set up to track remote branch 'new-topic' from 'origin'
 Switched to a new branch 'new-topic'
 ------------
@@ -254,7 +254,7 @@ To check out cummit `HEAD~3` for temporary inspection or experiment
 without creating a new branch:
 
 ------------
-$ git switch --detach HEAD~3
+$ but switch --detach HEAD~3
 HEAD is now at 9fc9555312 Merge branch 'cc/shared-index-permbits'
 ------------
 
@@ -262,14 +262,14 @@ If it turns out whatever you have done is worth keeping, you can
 always create a new name for it (without switching away):
 
 ------------
-$ git switch -c good-surprises
+$ but switch -c good-surprises
 ------------
 
 SEE ALSO
 --------
-linkgit:git-checkout[1],
-linkgit:git-branch[1]
+linkbut:but-checkout[1],
+linkbut:but-branch[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

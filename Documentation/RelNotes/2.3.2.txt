@@ -7,17 +7,17 @@ Fixes since v2.3.1
  * "update-index --refresh" used to leak when an entry cannot be
    refreshed for whatever reason.
 
- * "git fast-import" used to crash when it could not close and
+ * "but fast-import" used to crash when it could not close and
    conclude the resulting packfile cleanly.
 
- * "git blame" died, trying to free an uninitialized piece of memory.
+ * "but blame" died, trying to free an uninitialized piece of memory.
 
- * "git merge-file" did not work correctly in a subdirectory.
+ * "but merge-file" did not work correctly in a subdirectory.
 
- * "git submodule add" failed to squash "path/to/././submodule" to
+ * "but submodule add" failed to squash "path/to/././submodule" to
    "path/to/submodule".
 
- * In v2.2.0, we broke "git prune" that runs in a repository that
+ * In v2.2.0, we broke "but prune" that runs in a repository that
    borrows from an alternate object store.
 
  * Certain older vintages of cURL give irregular output from
@@ -49,13 +49,13 @@ Fixes since v2.3.1
  * We didn't format an integer that wouldn't fit in "int" but in
    "uintmax_t" correctly.
 
- * "git push --signed" gave an incorrectly worded error message when
+ * "but push --signed" gave an incorrectly worded error message when
    the other side did not support the capability.
 
- * "git fetch" over a remote-helper that cannot respond to "list"
+ * "but fetch" over a remote-helper that cannot respond to "list"
    command could not fetch from a symbolic reference e.g. HEAD.
 
- * The insn sheet "git rebase -i" creates did not fully honor
+ * The insn sheet "but rebase -i" creates did not fully honor
    core.abbrev settings.
 
  * The tests that wanted to see that file becomes unreadable after
@@ -68,7 +68,7 @@ Fixes since v2.3.1
  * The configuration variable 'mailinfo.scissors' was hard to
    discover in the documentation.
 
- * Correct a breakage to git-svn around v2.2 era that triggers
+ * Correct a breakage to but-svn around v2.2 era that triggers
    premature closing of FileHandle.
 
  * Even though we officially haven't dropped Perl 5.8 support, the

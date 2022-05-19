@@ -137,8 +137,8 @@ move rearranged line #7
 move rearranged line #8
 move rearranged line #9
 EOF
-	git add . &&
-	git cummit -m "initial" &&
+	but add . &&
+	but cummit -m "initial" &&
 	mkdir dst &&
 	mkdir dst/copy &&
 	mkdir dst/copy/unchanged &&
@@ -244,12 +244,12 @@ move rearranged line #7
 move rearranged line #8
 move rearranged line #9
 EOF
-	git add . &&
-	git rm -r src/move/unchanged &&
-	git rm -r src/move/changed &&
-	git rm -r src/move/rearranged &&
-	git cummit -m "changes" &&
-	git config diff.renames false
+	but add . &&
+	but rm -r src/move/unchanged &&
+	but rm -r src/move/changed &&
+	but rm -r src/move/rearranged &&
+	but cummit -m "changes" &&
+	but config diff.renames false
 '
 
 cat <<EOF >expect_diff_stat
@@ -289,11 +289,11 @@ cat <<EOF >expect_diff_stat_CC
 EOF
 
 test_expect_success 'sanity check setup (--numstat)' '
-	git diff --numstat HEAD^..HEAD >actual_diff_stat &&
+	but diff --numstat HEAD^..HEAD >actual_diff_stat &&
 	test_cmp expect_diff_stat actual_diff_stat &&
-	git diff --numstat -M HEAD^..HEAD >actual_diff_stat_M &&
+	but diff --numstat -M HEAD^..HEAD >actual_diff_stat_M &&
 	test_cmp expect_diff_stat_M actual_diff_stat_M &&
-	git diff --numstat -C -C HEAD^..HEAD >actual_diff_stat_CC &&
+	but diff --numstat -C -C HEAD^..HEAD >actual_diff_stat_CC &&
 	test_cmp expect_diff_stat_CC actual_diff_stat_CC
 '
 
@@ -327,69 +327,69 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success 'various ways to misspell --dirstat' '
-	test_must_fail git show --dirstat10 &&
-	test_must_fail git show --dirstat10,files &&
-	test_must_fail git show -X=20 &&
-	test_must_fail git show -X=20,cumulative
+	test_must_fail but show --dirstat10 &&
+	test_must_fail but show --dirstat10,files &&
+	test_must_fail but show -X=20 &&
+	test_must_fail but show -X=20,cumulative
 '
 
 test_expect_success 'vanilla --dirstat' '
-	git diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'vanilla -X' '
-	git diff -X HEAD^..HEAD >actual_diff_dirstat &&
+	but diff -X HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff -X -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff -X -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff -X -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff -X -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'explicit defaults: --dirstat=changes,noncumulative,3' '
-	git diff --dirstat=changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'explicit defaults: -Xchanges,noncumulative,3' '
-	git diff -Xchanges,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff -Xchanges,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff -Xchanges,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff -Xchanges,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff -Xchanges,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff -Xchanges,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'later options override earlier options:' '
-	git diff --dirstat=files,10,cumulative,changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,10,cumulative,changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,10,cumulative,changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,10,cumulative,changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,10,cumulative,changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,10,cumulative,changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC &&
-	git diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files --dirstat=10 --dirstat=cumulative --dirstat=changes --dirstat=noncumulative -X3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'non-defaults in config overridden by explicit defaults on command line' '
-	git -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=files,cumulative,50 diff --dirstat=changes,noncumulative,3 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -427,29 +427,29 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=0' '
-	git diff --dirstat=0 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=0 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '-X0' '
-	git diff -X0 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff -X0 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff -X0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff -X0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff -X0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff -X0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=0' '
-	git -c diff.dirstat=0 diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=0 diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=0 diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=0 diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=0 diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=0 diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -497,47 +497,47 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=0 --cumulative' '
-	git diff --dirstat=0 --cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=0 --cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=0 --cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=0 --cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=0 --cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=0 --cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=0,cumulative' '
-	git diff --dirstat=0,cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=0,cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=0,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=0,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=0,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=0,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '-X0,cumulative' '
-	git diff -X0,cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but diff -X0,cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff -X0,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff -X0,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff -X0,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff -X0,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=0,cumulative' '
-	git -c diff.dirstat=0,cumulative diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=0,cumulative diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=0,cumulative diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=0,cumulative diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=0,cumulative diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=0,cumulative diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=0 & --dirstat=cumulative' '
-	git -c diff.dirstat=0 diff --dirstat=cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=0 diff --dirstat=cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=0 diff --dirstat=cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=0 diff --dirstat=cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=0 diff --dirstat=cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=0 diff --dirstat=cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -575,29 +575,29 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat-by-file' '
-	git diff --dirstat-by-file HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat-by-file HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat-by-file -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat-by-file -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat-by-file -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat-by-file -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=files' '
-	git diff --dirstat=files HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=files' '
-	git -c diff.dirstat=files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -627,29 +627,29 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat-by-file=10' '
-	git diff --dirstat-by-file=10 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat-by-file=10 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat-by-file=10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat-by-file=10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat-by-file=10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat-by-file=10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=files,10' '
-	git diff --dirstat=files,10 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,10 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=10,files' '
-	git -c diff.dirstat=10,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=10,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=10,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=10,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=10,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=10,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -697,29 +697,29 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat-by-file --cumulative' '
-	git diff --dirstat-by-file --cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat-by-file --cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat-by-file --cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat-by-file --cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat-by-file --cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat-by-file --cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=files,cumulative' '
-	git diff --dirstat=files,cumulative HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,cumulative HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,cumulative -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,cumulative -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=cumulative,files' '
-	git -c diff.dirstat=cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -756,20 +756,20 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=files,cumulative,10' '
-	git diff --dirstat=files,cumulative,10 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,cumulative,10 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,cumulative,10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,cumulative,10 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,cumulative,10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,cumulative,10 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=10,cumulative,files' '
-	git -c diff.dirstat=10,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=10,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=10,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=10,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=10,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=10,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -793,47 +793,47 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=files,cumulative,16.7' '
-	git diff --dirstat=files,cumulative,16.7 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,cumulative,16.7 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,cumulative,16.7 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,cumulative,16.7 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,cumulative,16.7 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,cumulative,16.7 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=16.7,cumulative,files' '
-	git -c diff.dirstat=16.7,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=16.7,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=16.7,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=16.7,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=16.7,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=16.7,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=16.70,cumulative,files' '
-	git -c diff.dirstat=16.70,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=16.70,cumulative,files diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=16.70,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=16.70,cumulative,files diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=16.70,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=16.70,cumulative,files diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=files,cumulative,27.2' '
-	git diff --dirstat=files,cumulative,27.2 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,cumulative,27.2 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,cumulative,27.2 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,cumulative,27.2 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,cumulative,27.2 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,cumulative,27.2 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=files,cumulative,27.09' '
-	git diff --dirstat=files,cumulative,27.09 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=files,cumulative,27.09 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=files,cumulative,27.09 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=files,cumulative,27.09 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=files,cumulative,27.09 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=files,cumulative,27.09 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -869,20 +869,20 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=lines' '
-	git diff --dirstat=lines HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=lines HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=lines -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=lines -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=lines -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=lines -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=lines' '
-	git -c diff.dirstat=lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
@@ -920,25 +920,25 @@ cat <<EOF >expect_diff_dirstat_CC
 EOF
 
 test_expect_success '--dirstat=lines,0' '
-	git diff --dirstat=lines,0 HEAD^..HEAD >actual_diff_dirstat &&
+	but diff --dirstat=lines,0 HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git diff --dirstat=lines,0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but diff --dirstat=lines,0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git diff --dirstat=lines,0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but diff --dirstat=lines,0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success 'diff.dirstat=0,lines' '
-	git -c diff.dirstat=0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	but -c diff.dirstat=0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	git -c diff.dirstat=0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	but -c diff.dirstat=0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	git -c diff.dirstat=0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	but -c diff.dirstat=0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
 test_expect_success '--dirstat=future_param,lines,0 should fail loudly' '
-	test_must_fail git diff --dirstat=future_param,lines,0 HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
+	test_must_fail but diff --dirstat=future_param,lines,0 HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_must_be_empty actual_diff_dirstat &&
 	test_i18ngrep -q "future_param" actual_error &&
@@ -946,7 +946,7 @@ test_expect_success '--dirstat=future_param,lines,0 should fail loudly' '
 '
 
 test_expect_success '--dirstat=dummy1,cumulative,2dummy should report both unrecognized parameters' '
-	test_must_fail git diff --dirstat=dummy1,cumulative,2dummy HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
+	test_must_fail but diff --dirstat=dummy1,cumulative,2dummy HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_must_be_empty actual_diff_dirstat &&
 	test_i18ngrep -q "dummy1" actual_error &&
@@ -955,19 +955,19 @@ test_expect_success '--dirstat=dummy1,cumulative,2dummy should report both unrec
 '
 
 test_expect_success 'diff.dirstat=future_param,0,lines should warn, but still work' '
-	git -c diff.dirstat=future_param,0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
+	but -c diff.dirstat=future_param,0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
 	test_i18ngrep -q "future_param" actual_error &&
 	test_i18ngrep -q "diff\\.dirstat" actual_error &&
 
-	git -c diff.dirstat=future_param,0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M 2>actual_error &&
+	but -c diff.dirstat=future_param,0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
 	test_i18ngrep -q "future_param" actual_error &&
 	test_i18ngrep -q "diff\\.dirstat" actual_error &&
 
-	git -c diff.dirstat=future_param,0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC 2>actual_error &&
+	but -c diff.dirstat=future_param,0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC &&
 	test_i18ngrep -q "future_param" actual_error &&
@@ -975,15 +975,15 @@ test_expect_success 'diff.dirstat=future_param,0,lines should warn, but still wo
 '
 
 test_expect_success '--shortstat --dirstat should output only one dirstat' '
-	git diff --shortstat --dirstat=changes HEAD^..HEAD >out &&
+	but diff --shortstat --dirstat=changes HEAD^..HEAD >out &&
 	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_changes &&
 	test_line_count = 1 actual_diff_shortstat_dirstat_changes &&
 
-	git diff --shortstat --dirstat=lines HEAD^..HEAD >out &&
+	but diff --shortstat --dirstat=lines HEAD^..HEAD >out &&
 	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_lines &&
 	test_line_count = 1 actual_diff_shortstat_dirstat_lines &&
 
-	git diff --shortstat --dirstat=files HEAD^..HEAD >out &&
+	but diff --shortstat --dirstat=files HEAD^..HEAD >out &&
 	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_files &&
 	test_line_count = 1 actual_diff_shortstat_dirstat_files
 '

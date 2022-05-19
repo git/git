@@ -1,6 +1,6 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-char *gitstrcasestr(const char *haystack, const char *needle)
+char *butstrcasestr(const char *haystack, const char *needle)
 {
 	int nlen = strlen(needle);
 	int hlen = strlen(haystack) - nlen + 1;

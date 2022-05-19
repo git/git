@@ -1,11 +1,11 @@
-# Translation of git-gui glossary to Italian
+# Translation of but-gui glossary to Italian
 # Copyright (C) 2007 Shawn Pearce, et al.
-# This file is distributed under the same license as the git package.
+# This file is distributed under the same license as the but package.
 # Christian Stimming <stimming@tuhh.de>, 2007
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui glossary\n"
+"Project-Id-Version: but-gui glossary\n"
 "POT-Creation-Date: 2007-10-19 21:43+0200\n"
 "PO-Revision-Date: 2007-10-10 15:24+0200\n"
 "Last-Translator: Michele Ballabio <barra_cuda@katamail.com>\n"
@@ -57,11 +57,11 @@ msgstr ""
 msgid "clone [verb]"
 msgstr "clonare"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "revisione, cummit, deposito (TortoiseCVS), invio (TSVN)?"
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr ""
 "creare una nuova revisione, archiviare, effettuare un cummit, depositare "
@@ -84,7 +84,7 @@ msgid "fetch"
 msgstr "recuperare, prelevare, prendere da, recuperare (TSVN)"
 
 #. "A collection of files. The index is a stored version of your working tree."
-msgid "index (in git-gui: staging area)"
+msgid "index (in but-gui: staging area)"
 msgstr "indice"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
@@ -161,7 +161,7 @@ msgstr "etichetta, etichettatura (TortoiseCVS)"
 msgid "tag [verb]"
 msgstr "etichettare"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr ""
 "duplicato locale di ramo remoto, ramo in 'tracking', ramo inseguitore? ramo "

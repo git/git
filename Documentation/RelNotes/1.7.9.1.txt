@@ -13,38 +13,38 @@ Fixes since v1.7.9
 
  * rpmbuild noticed an unpackaged but installed *.mo file and failed.
 
- * Subprocesses spawned from various git programs were often left running
+ * Subprocesses spawned from various but programs were often left running
    to completion even when the top-level process was killed.
 
- * "git add -e" learned not to show a diff for an otherwise unmodified
+ * "but add -e" learned not to show a diff for an otherwise unmodified
    submodule that only has uncummitted local changes in the patch
    prepared by for the user to edit.
 
- * Typo in "git branch --edit-description my-tpoic" was not diagnosed.
+ * Typo in "but branch --edit-description my-tpoic" was not diagnosed.
 
- * Using "git grep -l/-L" together with options -W or --break may not
+ * Using "but grep -l/-L" together with options -W or --break may not
    make much sense as the output is to only count the number of hits
    and there is no place for file breaks, but the latter options made
    "-l/-L" to miscount the hits.
 
- * "git log --first-parent $pathspec" did not stay on the first parent
+ * "but log --first-parent $pathspec" did not stay on the first parent
    chain and veered into side branch from which the whole change to the
    specified paths came.
 
- * "git merge --no-edit $tag" failed to honor the --no-edit option.
+ * "but merge --no-edit $tag" failed to honor the --no-edit option.
 
- * "git merge --ff-only $tag" failed because it cannot record the
+ * "but merge --ff-only $tag" failed because it cannot record the
    required mergetag without creating a merge, but this is so common
    operation for branch that is used _only_ to follow the upstream, so
    it was changed to allow fast-forwarding without recording the mergetag.
 
- * "git mergetool" now gives an empty file as the common base version
+ * "but mergetool" now gives an empty file as the common base version
    to the backend when dealing with the "both sides added, differently"
    case.
 
- * "git push -q" was not sufficiently quiet.
+ * "but push -q" was not sufficiently quiet.
 
- * When "git push" fails to update any refs, the client side did not
+ * When "but push" fails to update any refs, the client side did not
    report an error correctly to the end user.
 
  * "rebase" and "cummit --amend" failed to work on cummits with ancient
@@ -54,10 +54,10 @@ Fixes since v1.7.9
    name of the tag prefixed with "tags/", which would have helped older
    clients.
 
- * "git submodule add $path" forgot to recompute the name to be stored
-   in .gitmodules when the submodule at $path was once added to the
+ * "but submodule add $path" forgot to recompute the name to be stored
+   in .butmodules when the submodule at $path was once added to the
    superproject and already initialized.
 
- * Many small corner case bugs on "git tag -n" was corrected.
+ * Many small corner case bugs on "but tag -n" was corrected.
 
 Also contains minor fixes and documentation updates.

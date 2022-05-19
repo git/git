@@ -2,7 +2,7 @@
 #include "transport.h"
 
 static const char usage_msg[] =
-	"git remote-fd <remote> <url>";
+	"but remote-fd <remote> <url>";
 
 /*
  * URL syntax:
@@ -13,8 +13,8 @@ static const char usage_msg[] =
  *	[foo] indicates 'foo' is optional. <anything> is any string.
  *
  * The data output to <outfd>/<inoutfd> should be passed unmolested to
- * git-receive-pack/git-upload-pack/git-upload-archive and output of
- * git-receive-pack/git-upload-pack/git-upload-archive should be passed
+ * but-receive-pack/but-upload-pack/but-upload-archive and output of
+ * but-receive-pack/but-upload-pack/but-upload-archive should be passed
  * unmolested to <infd>/<inoutfd>.
  *
  */

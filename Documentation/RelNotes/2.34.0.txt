@@ -6,7 +6,7 @@ Updates since Git 2.33
 
 Backward compatibility notes
 
- * The "--preserve-merges" option of "git rebase" has been removed.
+ * The "--preserve-merges" option of "but rebase" has been removed.
 
 
 UI, Workflows & Features
@@ -20,17 +20,17 @@ UI, Workflows & Features
 
  * The userdiff pattern for "java" language has been updated.
 
- * "git rebase" by default skips changes that are equivalent to
+ * "but rebase" by default skips changes that are equivalent to
    cummits that are already in the history the branch is rebased onto;
    give messages when this happens to let the users be aware of
    skipped cummits, and also teach them how to tell "rebase" to keep
    duplicated changes.
 
- * The advice message that "git cherry-pick" gives when it asks
+ * The advice message that "but cherry-pick" gives when it asks
    conflicted replay of a cummit to be resolved by the end user has
    been updated.
 
- * After "git clone --recurse-submodules", all submodules are cloned
+ * After "but clone --recurse-submodules", all submodules are cloned
    but they are not by default recursed into by other commands.  With
    submodule.stickyRecursiveClone configuration set, submodule.recurse
    configuration is set to true in a repository created by "clone"
@@ -40,14 +40,14 @@ UI, Workflows & Features
    interactive when the help.autocorrect configuration variable is set
    to 'prompt'.
 
- * "git maintenance" scheduler learned to use systemd timers as a
+ * "but maintenance" scheduler learned to use systemd timers as a
    possible backend.
 
- * "git diff --submodule=diff" showed failure from run_command() when
+ * "but diff --submodule=diff" showed failure from run_command() when
    trying to run diff inside a submodule, when the user manually
    removes the submodule directory.
 
- * "git bundle unbundle" learned to show progress display.
+ * "but bundle unbundle" learned to show progress display.
 
  * In cone mode, the sparse-index code path learned to remove ignored
    files (like build artifacts) outside the sparse cone, allowing the
@@ -60,7 +60,7 @@ UI, Workflows & Features
 
  * The credential-cache helper has been adjusted to Windows.
 
- * The error in "git help no-such-git-command" is handled better.
+ * The error in "but help no-such-but-command" is handled better.
 
  * The unicode character width table (used for output alignment) has
    been updated.
@@ -68,14 +68,14 @@ UI, Workflows & Features
  * The ref iteration code used to optionally allow dangling refs to be
    shown, which has been tightened up.
 
- * "git add", "git mv", and "git rm" have been adjusted to avoid
+ * "but add", "but mv", and "but rm" have been adjusted to avoid
    updating paths outside of the sparse-checkout definition unless
    the user specifies a "--sparse" option.
 
- * "git repack" has been taught to generate multi-pack reachability
+ * "but repack" has been taught to generate multi-pack reachability
    bitmaps.
 
- * "git fsck" has been taught to report mismatch between expected and
+ * "but fsck" has been taught to report mismatch between expected and
    actual types of an object better.
 
  * In addition to GnuPG, ssh public crypto can be used for object and
@@ -83,18 +83,18 @@ UI, Workflows & Features
    ssh-keygen from OpenSSH 8.7, whose support for it is broken.  Avoid
    using it unless you update to OpenSSH 8.8.
 
- * "git log --grep=string --author=name" learns to highlight hits just
-   like "git grep string" does.
+ * "but log --grep=string --author=name" learns to highlight hits just
+   like "but grep string" does.
 
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * "git bisect" spawned "git show-branch" only to pretty-print the
+ * "but bisect" spawned "but show-branch" only to pretty-print the
    title of the cummit after checking out the next version to be
    tested; this has been rewritten in C.
 
- * "git add" can work better with the sparse index.
+ * "but add" can work better with the sparse index.
 
  * Support for ancient versions of cURL library (pre 7.19.4) has been
    dropped.
@@ -106,7 +106,7 @@ Performance, Internal Implementation, Development Support etc.
    context Git was invoked.
 
  * Loading of ref tips to prepare for common ancestry negotiation in
-   "git fetch-pack" has been optimized by taking advantage of the
+   "but fetch-pack" has been optimized by taking advantage of the
    cummit graph when available.
 
  * Remind developers that the userdiff patterns should be kept simple
@@ -121,7 +121,7 @@ Performance, Internal Implementation, Development Support etc.
    of the cummit-graph, when available, to determine if a cummit is
    reachable from any of the existing refs.
 
- * "git fetch --quiet" optimization to avoid useless computation of
+ * "but fetch --quiet" optimization to avoid useless computation of
    info that will never be displayed.
 
  * Callers from older advice_config[] based API has been updated to
@@ -133,14 +133,14 @@ Performance, Internal Implementation, Development Support etc.
  * "make INSTALL_STRIP=-s install" allows the installation step to use
    "install -s" to strip the binaries as they get installed.
 
- * Code that handles large number of refs in the "git fetch" code
+ * Code that handles large number of refs in the "but fetch" code
    path has been optimized.
 
  * The reachability bitmap file used to be generated only for a single
    pack, but now we've learned to generate bitmaps for history that
    span across multiple packfiles.
 
- * The code to make "git grep" recurse into submodules has been
+ * The code to make "but grep" recurse into submodules has been
    updated to migrate away from the "add submodule's object store as
    an alternate object store" mechanism (which is suboptimal).
 
@@ -152,7 +152,7 @@ Performance, Internal Implementation, Development Support etc.
  * Update the build procedure to use the "-pedantic" build when
    DEVELOPER makefile macro is in effect.
 
- * Large part of "git submodule add" gets rewritten in C.
+ * Large part of "but submodule add" gets rewritten in C.
 
  * The run-command API has been updated so that the callers can easily
    ask the file descriptors open for packfiles to be closed immediately
@@ -166,20 +166,20 @@ Performance, Internal Implementation, Development Support etc.
 
  * Remove external declaration of functions that no longer exist.
 
- * "git multi-pack-index write --bitmap" learns to propagate the
+ * "but multi-pack-index write --bitmap" learns to propagate the
    hashcache from original bitmap to resulting bitmap.
 
  * CI learns to run the leak sanitizer builds.
 
- * "git grep --recurse-submodules" takes trees and blobs from the
+ * "but grep --recurse-submodules" takes trees and blobs from the
    submodule repository, but the textconv settings when processing a
    blob from the submodule is not taken from the submodule repository.
    A test is added to demonstrate the issue, without fixing it.
 
- * Teach "git help -c" into helping the command line completion of
+ * Teach "but help -c" into helping the command line completion of
    configuration variables.
 
- * When "git cmd -h" shows more than one line of usage text (e.g.
+ * When "but cmd -h" shows more than one line of usage text (e.g.
    the cmd subcommand may take sub-sub-command), parse-options API
    learned to align these lines, even across i18n/l10n.
 
@@ -197,55 +197,55 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.33
 -----------------
 
- * Input validation of "git pack-objects --stdin-packs" has been
+ * Input validation of "but pack-objects --stdin-packs" has been
    corrected.
 
- * Bugfix for common ancestor negotiation recently introduced in "git
+ * Bugfix for common ancestor negotiation recently introduced in "but
    push" code path.
 
- * "git pull" had various corner cases that were not well thought out
-   around its --rebase backend, e.g. "git pull --ff-only" did not stop
+ * "but pull" had various corner cases that were not well thought out
+   around its --rebase backend, e.g. "but pull --ff-only" did not stop
    but went ahead and rebased when the history on other side is not a
    descendant of our history.  The series tries to fix them up.
 
- * "git apply" miscounted the bytes and failed to read to the end of
+ * "but apply" miscounted the bytes and failed to read to the end of
    binary hunks.
 
- * "git range-diff" code clean-up.
+ * "but range-diff" code clean-up.
 
- * "git cummit --fixup" now works with "--edit" again, after it was
+ * "but cummit --fixup" now works with "--edit" again, after it was
    broken in v2.32.
 
  * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
    new version has a blocker bug for that architecture.
 
  * Checking out all the paths from HEAD during the last conflicted
-   step in "git rebase" and continuing would cause the step to be
+   step in "but rebase" and continuing would cause the step to be
    skipped (which is expected), but leaves MERGE_MSG file behind in
-   $GIT_DIR and confuses the next "git cummit", which has been
+   $GIT_DIR and confuses the next "but cummit", which has been
    corrected.
 
- * Various bugs in "git rebase -r" have been fixed.
+ * Various bugs in "but rebase -r" have been fixed.
 
  * mmap() imitation used to call xmalloc() that dies upon malloc()
    failure, which has been corrected to just return an error to the
    caller to be handled.
 
- * "git diff --relative" segfaulted and/or produced incorrect result
+ * "but diff --relative" segfaulted and/or produced incorrect result
    when there are unmerged paths.
 
- * The delayed checkout code path in "git checkout" etc. were chatty
+ * The delayed checkout code path in "but checkout" etc. were chatty
    even when --quiet and/or --no-progress options were given.
 
- * "git branch -D <branch>" used to refuse to remove a broken branch
+ * "but branch -D <branch>" used to refuse to remove a broken branch
    ref that points at a missing cummit, which has been corrected.
 
  * Build update for Apple clang.
 
- * The parser for the "--nl" option of "git column" has been
+ * The parser for the "--nl" option of "but column" has been
    corrected.
 
- * "git upload-pack" which runs on the other side of "git fetch"
+ * "but upload-pack" which runs on the other side of "but fetch"
    forgot to take the ref namespaces into account when handling
    want-ref requests.
 
@@ -256,17 +256,17 @@ Fixes since v2.33
    area we created.  We now by default export GIT_CEILING_DIRECTORIES
    to limit the damage from such a stray test.
 
- * Even when running "git send-email" without its own threaded
+ * Even when running "but send-email" without its own threaded
    discussion support, a threading related header in one message is
    carried over to the subsequent message to result in an unwanted
    threading, which has been corrected.
 
- * The output from "git fast-export", when its anonymization feature
+ * The output from "but fast-export", when its anonymization feature
    is in use, showed an annotated tag incorrectly.
 
- * Recent "diff -m" changes broke "gitk", which has been corrected.
+ * Recent "diff -m" changes broke "butk", which has been corrected.
 
- * The "git apply -3" code path learned not to bother the lower level
+ * The "but apply -3" code path learned not to bother the lower level
    merge machinery when the three-way merge can be trivially resolved
    without the content level merge.  This fixes a regression caused by
    recent "-3way first and fall back to direct application" change.
@@ -275,7 +275,7 @@ Fixes since v2.33
    been optimized to avoid needless computation when it is not writing
    the file out.
 
- * "git range-diff -I... <range> <range>" segfaulted, which has been
+ * "but range-diff -I... <range> <range>" segfaulted, which has been
    corrected.
 
  * The order in which various files that make up a single (conceptual)
@@ -287,27 +287,27 @@ Fixes since v2.33
    create a new file.  Such a call in the files backend of the ref
    subsystem has been cleaned up.
 
- * "git update-ref --stdin" failed to flush its output as needed,
+ * "but update-ref --stdin" failed to flush its output as needed,
    which potentially led the conversation to a deadlock.
 
- * When "git am --abort" fails to abort correctly, it still exited
+ * When "but am --abort" fails to abort correctly, it still exited
    with exit status of 0, which has been corrected.
 
  * Correct nr and alloc members of strvec struct to be of type size_t.
 
- * "git stash", where the tentative change involves changing a
+ * "but stash", where the tentative change involves changing a
    directory to a file (or vice versa), was confused, which has been
    corrected.
 
- * "git clone" from a repository whose HEAD is unborn into a bare
+ * "but clone" from a repository whose HEAD is unborn into a bare
    repository didn't follow the branch name the other side used, which
    is corrected.
 
- * "git cvsserver" had a long-standing bug in its authentication code,
+ * "but cvsserver" had a long-standing bug in its authentication code,
    which has finally been corrected (it is unclear and is a separate
    question if anybody is seriously using it, though).
 
- * "git difftool --dir-diff" mishandled symbolic links.
+ * "but difftool --dir-diff" mishandled symbolic links.
 
  * Sensitive data in the HTTP trace were supposed to be redacted, but
    we failed to do so in HTTP/2 requests.
@@ -318,20 +318,20 @@ Fixes since v2.33
 
  * Protocol v0 clients can get stuck parsing a malformed feature line.
 
- * A few kinds of changes "git status" can show were not documented.
+ * A few kinds of changes "but status" can show were not documented.
    (merge d2a534c515 ja/doc-status-types-and-copies later to maint).
 
  * The mergesort implementation used to sort linked list has been
    optimized.
    (merge c90cfc225b rs/mergesort later to maint).
 
- * An editor session launched during a Git operation (e.g. during 'git
+ * An editor session launched during a Git operation (e.g. during 'but
    cummit') can leave the terminal in a funny state.  The code path
    has updated to save the terminal state before, and restore it
    after, it spawns an editor.
    (merge 3d411afabc cm/save-restore-terminal later to maint).
 
- * "git cat-file --batch" with the "--batch-all-objects" option is
+ * "but cat-file --batch" with the "--batch-all-objects" option is
    supposed to iterate over all the objects found in a repository, but
    it used to translate these object names using the replace mechanism,
    which defeats the point of enumerating all objects in the repository.
@@ -342,7 +342,7 @@ Fixes since v2.33
    with trailing slashes to the index, which has been corrected.
    (merge c8ad9d04c6 rs/make-verify-path-really-verify-again later to maint).
 
- * The "--color-lines" and "--color-by-age" options of "git blame"
+ * The "--color-lines" and "--color-by-age" options of "but blame"
    have been missing, which are now documented.
    (merge 8c32856133 bs/doc-blame-color-lines later to maint).
 
@@ -354,10 +354,10 @@ Fixes since v2.33
    housekeeping pauses interfering in the middle.
    (merge be79131a53 rs/disable-gc-during-perf-tests later to maint).
 
- * Stop "git add --dry-run" from creating new blob and tree objects.
+ * Stop "but add --dry-run" from creating new blob and tree objects.
    (merge e578d0311d rs/add-dry-run-without-objects later to maint).
 
- * "git cummit" gave duplicated error message when the object store
+ * "but cummit" gave duplicated error message when the object store
    was unwritable, which has been corrected.
    (merge 4ef91a2d79 ab/fix-cummit-error-message-upon-unwritable-object-store later to maint).
 
@@ -374,19 +374,19 @@ Fixes since v2.33
  * Improve test framework around unwritable directories.
    (merge 5d22e18965 ab/test-cleanly-recreate-trash-directory later to maint).
 
- * "git push" client talking to an HTTP server did not diagnose the
+ * "but push" client talking to an HTTP server did not diagnose the
    lack of the final status report from the other side correctly,
    which has been corrected.
    (merge c5c3486f38 jk/http-push-status-fix later to maint).
 
- * Update "git archive" documentation and give explicit mention on the
+ * Update "but archive" documentation and give explicit mention on the
    compression level for both zip and tar.gz format.
    (merge c4b208c309 bs/archive-doc-compression-level later to maint).
 
- * Drop "git sparse-checkout" from the list of common commands.
+ * Drop "but sparse-checkout" from the list of common commands.
    (merge 6a9a50a8af sg/sparse-index-not-that-common-a-command later to maint).
 
- * "git branch -c/-m new old" was not described to copy config, which
+ * "but branch -c/-m new old" was not described to copy config, which
    has been corrected.
    (merge 8252ec300e jc/branch-copy-doc later to maint).
 
@@ -395,18 +395,18 @@ Fixes since v2.33
  * Fix long-standing shell syntax error in the completion script.
    (merge 46b0585286 re/completion-fix-test-equality later to maint).
 
- * Teach "git cummit-graph" command not to allow using replace objects
+ * Teach "but cummit-graph" command not to allow using replace objects
    at all, as we do not use the cummit-graph at runtime when we see
    object replacement.
    (merge 095d112f8c ab/ignore-replace-while-working-on-cummit-graph later to maint).
 
- * "git pull --no-verify" did not affect the underlying "git merge".
-   (merge 47bfdfb3fd ar/fix-git-pull-no-verify later to maint).
+ * "but pull --no-verify" did not affect the underlying "but merge".
+   (merge 47bfdfb3fd ar/fix-but-pull-no-verify later to maint).
 
  * One CI task based on Fedora image noticed a not-quite-kosher
    construct recently, which has been corrected.
 
- * "git pull --ff-only" and "git pull --rebase --ff-only" should make
+ * "but pull --ff-only" and "but pull --rebase --ff-only" should make
    it a no-op to attempt pulling from a remote that is behind us, but
    instead the command errored out by saying it was impossible to
    fast-forward, which may technically be true, but not a useful thing

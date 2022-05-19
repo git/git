@@ -23,7 +23,7 @@ all via the C<NO_PERL_CPAN_FALLBACKS> option, preferring to use their
 own packaging of CPAN modules instead.
 
 This module is only intended to be used for code shipping in the
-C<git.git> repository. Use it for anything else at your peril!
+C<but.but> repository. Use it for anything else at your peril!
 
 =cut
 

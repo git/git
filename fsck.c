@@ -376,7 +376,7 @@ static int fsck_walk_cummit(struct cummit *cummit, void *data, struct fsck_optio
 		}
 		else { /* parse ~<generation> suffix */
 			for (generation = 0, power = 1;
-			     len && isdigit(name[len - 1]);
+			     len && isdibut(name[len - 1]);
 			     power *= 10)
 				generation += power * (name[--len] - '0');
 			if (power > 1 && len && name[len - 1] == '~')
@@ -511,7 +511,7 @@ static int verify_ordered(unsigned mode1, const char *name1,
 	c2 = name2[len];
 	if (!c1 && !c2)
 		/*
-		 * git-write-tree used to write out a nonsense tree that has
+		 * but-write-tree used to write out a nonsense tree that has
 		 * entries with the same name, one blob and one tree.  Make
 		 * sure we do not have duplicate entries.
 		 */
@@ -568,7 +568,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 	int has_empty_name = 0;
 	int has_dot = 0;
 	int has_dotdot = 0;
-	int has_dotgit = 0;
+	int has_dotbut = 0;
 	int has_zero_pad = 0;
 	int has_bad_modes = 0;
 	int has_dup_entries = 0;
@@ -600,31 +600,31 @@ static int fsck_tree(const struct object_id *tree_oid,
 		has_empty_name |= !*name;
 		has_dot |= !strcmp(name, ".");
 		has_dotdot |= !strcmp(name, "..");
-		has_dotgit |= is_hfs_dotgit(name) || is_ntfs_dotgit(name);
+		has_dotbut |= is_hfs_dotbut(name) || is_ntfs_dotbut(name);
 		has_zero_pad |= *(char *)desc.buffer == '0';
 
-		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name)) {
+		if (is_hfs_dotbutmodules(name) || is_ntfs_dotbutmodules(name)) {
 			if (!S_ISLNK(mode))
-				oidset_insert(&options->gitmodules_found,
+				oidset_insert(&options->butmodules_found,
 					      entry_oid);
 			else
 				retval += report(options,
 						 tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITMODULES_SYMLINK,
-						 ".gitmodules is a symbolic link");
+						 ".butmodules is a symbolic link");
 		}
 
 		if (S_ISLNK(mode)) {
-			if (is_hfs_dotgitignore(name) ||
-			    is_ntfs_dotgitignore(name))
+			if (is_hfs_dotbutignore(name) ||
+			    is_ntfs_dotbutignore(name))
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITIGNORE_SYMLINK,
-						 ".gitignore is a symlink");
-			if (is_hfs_dotgitattributes(name) ||
-			    is_ntfs_dotgitattributes(name))
+						 ".butignore is a symlink");
+			if (is_hfs_dotbutattributes(name) ||
+			    is_ntfs_dotbutattributes(name))
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
-						 ".gitattributes is a symlink");
+						 ".butattributes is a symlink");
 			if (is_hfs_dotmailmap(name) ||
 			    is_ntfs_dotmailmap(name))
 				retval += report(options, tree_oid, OBJ_TREE,
@@ -635,15 +635,15 @@ static int fsck_tree(const struct object_id *tree_oid,
 		if ((backslash = strchr(name, '\\'))) {
 			while (backslash) {
 				backslash++;
-				has_dotgit |= is_ntfs_dotgit(backslash);
-				if (is_ntfs_dotgitmodules(backslash)) {
+				has_dotbut |= is_ntfs_dotbut(backslash);
+				if (is_ntfs_dotbutmodules(backslash)) {
 					if (!S_ISLNK(mode))
-						oidset_insert(&options->gitmodules_found,
+						oidset_insert(&options->butmodules_found,
 							      entry_oid);
 					else
 						retval += report(options, tree_oid, OBJ_TREE,
 								 FSCK_MSG_GITMODULES_SYMLINK,
-								 ".gitmodules is a symbolic link");
+								 ".butmodules is a symbolic link");
 				}
 				backslash = strchr(backslash, '\\');
 			}
@@ -719,10 +719,10 @@ static int fsck_tree(const struct object_id *tree_oid,
 		retval += report(options, tree_oid, OBJ_TREE,
 				 FSCK_MSG_HAS_DOTDOT,
 				 "contains '..'");
-	if (has_dotgit)
+	if (has_dotbut)
 		retval += report(options, tree_oid, OBJ_TREE,
 				 FSCK_MSG_HAS_DOTGIT,
-				 "contains '.git'");
+				 "contains '.but'");
 	if (has_zero_pad)
 		retval += report(options, tree_oid, OBJ_TREE,
 				 FSCK_MSG_ZERO_PADDED_FILEMODE,
@@ -810,10 +810,10 @@ static int fsck_ident(const char **ident,
 		return report(options, oid, type, FSCK_MSG_BAD_DATE, "invalid author/cummitter line - bad date");
 	p = end + 1;
 	if ((*p != '+' && *p != '-') ||
-	    !isdigit(p[1]) ||
-	    !isdigit(p[2]) ||
-	    !isdigit(p[3]) ||
-	    !isdigit(p[4]) ||
+	    !isdibut(p[1]) ||
+	    !isdibut(p[2]) ||
+	    !isdibut(p[3]) ||
+	    !isdibut(p[4]) ||
 	    (p[5] != '\n'))
 		return report(options, oid, type, FSCK_MSG_BAD_TIMEZONE, "invalid author/cummitter line - bad time zone");
 	p += 6;
@@ -1032,20 +1032,20 @@ static int count_leading_dotdots(const char *url, const char **out)
 	}
 }
 /*
- * Check whether a transport is implemented by git-remote-curl.
+ * Check whether a transport is implemented by but-remote-curl.
  *
  * If it is, returns 1 and writes the URL that would be passed to
- * git-remote-curl to the "out" parameter.
+ * but-remote-curl to the "out" parameter.
  *
  * Otherwise, returns 0 and leaves "out" untouched.
  *
  * Examples:
- *   http::https://example.com/repo.git -> 1, https://example.com/repo.git
- *   https://example.com/repo.git -> 1, https://example.com/repo.git
- *   git://example.com/repo.git -> 0
+ *   http::https://example.com/repo.but -> 1, https://example.com/repo.but
+ *   https://example.com/repo.but -> 1, https://example.com/repo.but
+ *   but://example.com/repo.but -> 0
  *
  * This is for use in checking for previously exploitable bugs that
- * required a submodule URL to be passed to git-remote-curl.
+ * required a submodule URL to be passed to but-remote-curl.
  */
 static int url_to_curl_url(const char *url, const char **out)
 {
@@ -1077,7 +1077,7 @@ static int check_submodule_url(const char *url)
 	if (looks_like_command_line_option(url))
 		return -1;
 
-	if (submodule_url_is_relative(url) || starts_with(url, "git://")) {
+	if (submodule_url_is_relative(url) || starts_with(url, "but://")) {
 		char *decoded;
 		const char *next;
 		int has_nl;
@@ -1096,8 +1096,8 @@ static int check_submodule_url(const char *url)
 		/*
 		 * URLs which escape their root via "../" can overwrite
 		 * the host field and previous components, resolving to
-		 * URLs like https::example.com/submodule.git and
-		 * https:///example.com/submodule.git that were
+		 * URLs like https::example.com/submodule.but and
+		 * https:///example.com/submodule.but that were
 		 * susceptible to CVE-2020-11008.
 		 */
 		if (count_leading_dotdots(url, &next) > 0 &&
@@ -1118,15 +1118,15 @@ static int check_submodule_url(const char *url)
 	return 0;
 }
 
-struct fsck_gitmodules_data {
+struct fsck_butmodules_data {
 	const struct object_id *oid;
 	struct fsck_options *options;
 	int ret;
 };
 
-static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
+static int fsck_butmodules_fn(const char *var, const char *value, void *vdata)
 {
-	struct fsck_gitmodules_data *data = vdata;
+	struct fsck_butmodules_data *data = vdata;
 	const char *subsection, *key;
 	size_t subsection_len;
 	char *name;
@@ -1170,12 +1170,12 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 static int fsck_blob(const struct object_id *oid, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
-	struct fsck_gitmodules_data data;
+	struct fsck_butmodules_data data;
 	struct config_options config_opts = { 0 };
 
-	if (!oidset_contains(&options->gitmodules_found, oid))
+	if (!oidset_contains(&options->butmodules_found, oid))
 		return 0;
-	oidset_insert(&options->gitmodules_done, oid);
+	oidset_insert(&options->butmodules_done, oid);
 
 	if (object_on_skiplist(options, oid))
 		return 0;
@@ -1188,18 +1188,18 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		 */
 		return report(options, oid, OBJ_BLOB,
 			      FSCK_MSG_GITMODULES_LARGE,
-			      ".gitmodules too large to parse");
+			      ".butmodules too large to parse");
 	}
 
 	data.oid = oid;
 	data.options = options;
 	data.ret = 0;
 	config_opts.error_action = CONFIG_ERROR_SILENT;
-	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-				".gitmodules", buf, size, &data, &config_opts))
+	if (but_config_from_mem(fsck_butmodules_fn, CONFIG_ORIGIN_BLOB,
+				".butmodules", buf, size, &data, &config_opts))
 		data.ret |= report(options, oid, OBJ_BLOB,
 				   FSCK_MSG_GITMODULES_PARSE,
-				   "could not parse gitmodules blob");
+				   "could not parse butmodules blob");
 
 	return data.ret;
 }
@@ -1246,13 +1246,13 @@ int fsck_finish(struct fsck_options *options)
 	struct oidset_iter iter;
 	const struct object_id *oid;
 
-	oidset_iter_init(&options->gitmodules_found, &iter);
+	oidset_iter_init(&options->butmodules_found, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
 		enum object_type type;
 		unsigned long size;
 		char *buf;
 
-		if (oidset_contains(&options->gitmodules_done, oid))
+		if (oidset_contains(&options->butmodules_done, oid))
 			continue;
 
 		buf = read_object_file(oid, &type, &size);
@@ -1262,7 +1262,7 @@ int fsck_finish(struct fsck_options *options)
 			ret |= report(options,
 				      oid, OBJ_BLOB,
 				      FSCK_MSG_GITMODULES_MISSING,
-				      "unable to read .gitmodules blob");
+				      "unable to read .butmodules blob");
 			continue;
 		}
 
@@ -1272,24 +1272,24 @@ int fsck_finish(struct fsck_options *options)
 			ret |= report(options,
 				      oid, type,
 				      FSCK_MSG_GITMODULES_BLOB,
-				      "non-blob found at .gitmodules");
+				      "non-blob found at .butmodules");
 		free(buf);
 	}
 
 
-	oidset_clear(&options->gitmodules_found);
-	oidset_clear(&options->gitmodules_done);
+	oidset_clear(&options->butmodules_found);
+	oidset_clear(&options->butmodules_done);
 	return ret;
 }
 
-int git_fsck_config(const char *var, const char *value, void *cb)
+int but_fsck_config(const char *var, const char *value, void *cb)
 {
 	struct fsck_options *options = cb;
 	if (strcmp(var, "fsck.skiplist") == 0) {
 		const char *path;
 		struct strbuf sb = STRBUF_INIT;
 
-		if (git_config_pathname(&path, var, value))
+		if (but_config_pathname(&path, var, value))
 			return 1;
 		strbuf_addf(&sb, "skiplist=%s", path);
 		free((char *)path);
@@ -1303,14 +1303,14 @@ int git_fsck_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 /*
  * Custom error callbacks that are used in more than one place.
  */
 
-int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
+int fsck_error_cb_print_missing_butmodules(struct fsck_options *o,
 					   const struct object_id *oid,
 					   enum object_type object_type,
 					   enum fsck_msg_type msg_type,

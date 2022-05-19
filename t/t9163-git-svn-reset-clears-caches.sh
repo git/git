@@ -3,16 +3,16 @@
 # Copyright (c) 2012 Peter Baumann
 #
 
-test_description='git svn reset clears memoized caches'
+test_description='but svn reset clears memoized caches'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 svn_ver="$(svn --version --quiet)"
 case $svn_ver in
 0.* | 1.[0-4].*)
-	skip_all="skipping git-svn test - SVN too old ($svn_ver)"
+	skip_all="skipping but-svn test - SVN too old ($svn_ver)"
 	test_done
 	;;
 esac
@@ -49,33 +49,33 @@ test_expect_success 'initialize source svn repo' '
 '
 
 test_expect_success 'fetch to merge-base (a)' '
-	git svn init -s "$svnrepo" &&
-	git svn fetch --revision BASE:3
+	but svn init -s "$svnrepo" &&
+	but svn fetch --revision BASE:3
 '
 
-# git svn rebase looses the merge cummit
+# but svn rebase looses the merge cummit
 #
 # ... a  -  b - m  <- trunk
 #      \
 #       ... c
 #
 test_expect_success 'rebase looses SVN merge (m)' '
-	git svn rebase &&
-	git svn fetch &&
-	test 1 = $(git cat-file -p main|grep parent|wc -l)
+	but svn rebase &&
+	but svn fetch &&
+	test 1 = $(but cat-file -p main|grep parent|wc -l)
 '
 
-# git svn fetch creates correct history with merge cummit
+# but svn fetch creates correct history with merge cummit
 #
 # ... a  -  b - m  <- trunk
 #      \       /
 #       ... c      <- branch1
 #
 test_expect_success 'reset and fetch gets the SVN merge (m) correctly' '
-	git svn reset -r 3 &&
-	git reset --hard origin/trunk &&
-	git svn fetch &&
-	test 2 = $(git cat-file -p origin/trunk|grep parent|wc -l)
+	but svn reset -r 3 &&
+	but reset --hard origin/trunk &&
+	but svn fetch &&
+	test 2 = $(but cat-file -p origin/trunk|grep parent|wc -l)
 '
 
 test_done

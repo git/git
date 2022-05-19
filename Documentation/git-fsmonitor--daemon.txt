@@ -1,17 +1,17 @@
-git-fsmonitor{litdd}daemon(1)
+but-fsmonitor{litdd}daemon(1)
 =============================
 
 NAME
 ----
-git-fsmonitor--daemon - A Built-in File System Monitor
+but-fsmonitor--daemon - A Built-in File System Monitor
 
 SYNOPSIS
 --------
 [verse]
-'git fsmonitor{litdd}daemon' start
-'git fsmonitor{litdd}daemon' run
-'git fsmonitor{litdd}daemon' stop
-'git fsmonitor{litdd}daemon' status
+'but fsmonitor{litdd}daemon' start
+'but fsmonitor{litdd}daemon' run
+'but fsmonitor{litdd}daemon' stop
+'but fsmonitor{litdd}daemon' status
 
 DESCRIPTION
 -----------
@@ -19,9 +19,9 @@ DESCRIPTION
 A daemon to watch the working directory for file and directory
 changes using platform-specific file system notification facilities.
 
-This daemon communicates directly with commands like `git status`
+This daemon communicates directly with commands like `but status`
 using the link:technical/api-simple-ipc.html[simple IPC] interface
-instead of the slower linkgit:githooks[5] interface.
+instead of the slower linkbut:buthooks[5] interface.
 
 This daemon is built into Git so that no third-party tools are
 required.
@@ -48,16 +48,16 @@ REMARKS
 
 This daemon is a long running process used to watch a single working
 directory and maintain a list of the recently changed files and
-directories.  Performance of commands such as `git status` can be
+directories.  Performance of commands such as `but status` can be
 increased if they just ask for a summary of changes to the working
 directory and can avoid scanning the disk.
 
-When `core.fsmonitor` is set to `true` (see linkgit:git-config[1])
-commands, such as `git status`, will ask the daemon for changes and
+When `core.fsmonitor` is set to `true` (see linkbut:but-config[1])
+commands, such as `but status`, will ask the daemon for changes and
 automatically start it (if necessary).
 
 For more information see the "File System Monitor" section in
-linkgit:git-update-index[1].
+linkbut:but-update-index[1].
 
 CAVEATS
 -------
@@ -72,4 +72,4 @@ but it will not cause an incorrect result.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

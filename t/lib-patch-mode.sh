@@ -7,7 +7,7 @@
 # Prepare the content for path in worktree and the index as specified.
 set_state () {
 	echo "$3" > "$1" &&
-	git add "$1" &&
+	but add "$1" &&
 	echo "$2" > "$1"
 }
 
@@ -18,7 +18,7 @@ set_state () {
 save_state () {
 	noslash="$(echo "$1" | tr / _)" &&
 	cat "$1" > _worktree_"$noslash" &&
-	git show :"$1" > _index_"$noslash"
+	but show :"$1" > _index_"$noslash"
 }
 
 # set_and_save_state <path> <worktree-content> <index-content>
@@ -30,7 +30,7 @@ set_and_save_state () {
 # verify_state <path> <expected-worktree-content> <expected-index-content>
 verify_state () {
 	test "$(cat "$1")" = "$2" &&
-	test "$(git show :"$1")" = "$3"
+	test "$(but show :"$1")" = "$3"
 }
 
 # verify_saved_state <path>
@@ -42,9 +42,9 @@ verify_saved_state () {
 }
 
 save_head () {
-	git rev-parse HEAD > _head
+	but rev-parse HEAD > _head
 }
 
 verify_saved_head () {
-	test "$(cat _head)" = "$(git rev-parse HEAD)"
+	test "$(cat _head)" = "$(but rev-parse HEAD)"
 }

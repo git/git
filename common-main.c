@@ -38,9 +38,9 @@ int main(int argc, const char **argv)
 	sanitize_stdfds();
 	restore_sigpipe_to_default();
 
-	git_resolve_executable_dir(argv[0]);
+	but_resolve_executable_dir(argv[0]);
 
-	git_setup_gettext();
+	but_setup_gettext();
 
 	initialize_the_repository();
 
@@ -57,7 +57,7 @@ int main(int argc, const char **argv)
 
 	/*
 	 * We define exit() to call trace2_cmd_exit_fl() in
-	 * git-compat-util.h. Whether we reach this or exit()
+	 * but-compat-util.h. Whether we reach this or exit()
 	 * elsewhere we'll always run our trace2 exit handler.
 	 */
 	exit(result);

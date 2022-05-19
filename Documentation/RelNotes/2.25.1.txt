@@ -4,7 +4,7 @@ Git 2.25.1 Release Notes
 Fixes since v2.25
 -----------------
 
- * "git cummit" gives output similar to "git status" when there is
+ * "but cummit" gives output similar to "but status" when there is
    nothing to cummit, but without honoring the advise.statusHints
    configuration variable, which has been corrected.
 
@@ -17,13 +17,13 @@ Fixes since v2.25
    single directory using the cache-tree was not careful enough
    against corrupt index file.
 
- * Complete an update to tutorial that encourages "git switch" over
-   "git checkout" that was done only half-way.
+ * Complete an update to tutorial that encourages "but switch" over
+   "but checkout" that was done only half-way.
 
  * Reduce unnecessary round-trip when running "ls-remote" over the
    stateless RPC mechanism.
 
- * "git restore --staged" did not correctly update the cache-tree
+ * "but restore --staged" did not correctly update the cache-tree
    structure, resulting in bogus trees to be written afterwards, which
    has been corrected.
 
@@ -36,14 +36,14 @@ Fixes since v2.25
    libasan, when address sanitizer is used with more recent versions
    of gcc and clang.
 
- * "git fetch --refmap=" option has got a better documentation.
+ * "but fetch --refmap=" option has got a better documentation.
 
- * Corner case bugs in "git clean" that stems from a (necessarily for
+ * Corner case bugs in "but clean" that stems from a (necessarily for
    performance reasons) awkward calling convention in the directory
    enumeration API has been corrected.
 
- * "git grep --no-index" should not get affected by the contents of
-   the .gitmodules file but when "--recurse-submodules" is given or
+ * "but grep --no-index" should not get affected by the contents of
+   the .butmodules file but when "--recurse-submodules" is given or
    the "submodule.recurse" variable is set, it did.  Now these
    settings are ignored in the "--no-index" mode.
 

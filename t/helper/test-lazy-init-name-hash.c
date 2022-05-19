@@ -204,7 +204,7 @@ int cmd__lazy_init_name_hash(int argc, const char **argv)
 	const char *prefix;
 	uint64_t avg_single, avg_multi;
 
-	prefix = setup_git_directory();
+	prefix = setup_but_directory();
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 

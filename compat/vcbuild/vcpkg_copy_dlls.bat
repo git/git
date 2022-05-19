@@ -2,7 +2,7 @@
 REM ================================================================
 REM This script is an optional step. It copies the *.dll and *.pdb
 REM files (created by vcpkg_install.bat) into the top-level directory
-REM of the repo so that you can type "./git.exe" and find them without
+REM of the repo so that you can type "./but.exe" and find them without
 REM having to fixup your PATH.
 REM
 REM NOTE: Because the names of some DLL files change between DEBUG and

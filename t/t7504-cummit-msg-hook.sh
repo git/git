@@ -10,8 +10,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'with no hook' '
 
 	echo "foo" > file &&
-	git add file &&
-	git cummit -m "first"
+	but add file &&
+	but cummit -m "first"
 
 '
 
@@ -31,26 +31,26 @@ export FAKE_EDITOR
 test_expect_success 'with no hook (editor)' '
 
 	echo "more foo" >> file &&
-	git add file &&
+	but add file &&
 	echo "more foo" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
 
 '
 
 test_expect_success '--no-verify with no hook' '
 
 	echo "bar" > file &&
-	git add file &&
-	git cummit --no-verify -m "bar"
+	but add file &&
+	but cummit --no-verify -m "bar"
 
 '
 
 test_expect_success '--no-verify with no hook (editor)' '
 
 	echo "more bar" > file &&
-	git add file &&
+	but add file &&
 	echo "more bar" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -63,34 +63,34 @@ test_expect_success 'setup: cummit-msg hook that always succeeds' '
 test_expect_success 'with succeeding hook' '
 
 	echo "more" >> file &&
-	git add file &&
-	git cummit -m "more"
+	but add file &&
+	but cummit -m "more"
 
 '
 
 test_expect_success 'with succeeding hook (editor)' '
 
 	echo "more more" >> file &&
-	git add file &&
+	but add file &&
 	echo "more more" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
 
 '
 
 test_expect_success '--no-verify with succeeding hook' '
 
 	echo "even more" >> file &&
-	git add file &&
-	git cummit --no-verify -m "even more"
+	but add file &&
+	but cummit --no-verify -m "even more"
 
 '
 
 test_expect_success '--no-verify with succeeding hook (editor)' '
 
 	echo "even more more" >> file &&
-	git add file &&
+	but add file &&
 	echo "even more more" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -101,114 +101,114 @@ test_expect_success 'setup: cummit-msg hook that always fails' '
 '
 
 cummit_msg_is () {
-	test "$(git log --pretty=format:%s%b -1)" = "$1"
+	test "$(but log --pretty=format:%s%b -1)" = "$1"
 }
 
 test_expect_success 'with failing hook' '
 
 	echo "another" >> file &&
-	git add file &&
-	test_must_fail git cummit -m "another"
+	but add file &&
+	test_must_fail but cummit -m "another"
 
 '
 
 test_expect_success 'with failing hook (editor)' '
 
 	echo "more another" >> file &&
-	git add file &&
+	but add file &&
 	echo "more another" > FAKE_MSG &&
-	! (GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit)
+	! (GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit)
 
 '
 
 test_expect_success '--no-verify with failing hook' '
 
 	echo "stuff" >> file &&
-	git add file &&
-	git cummit --no-verify -m "stuff"
+	but add file &&
+	but cummit --no-verify -m "stuff"
 
 '
 
 test_expect_success '-n followed by --verify with failing hook' '
 
 	echo "even more" >> file &&
-	git add file &&
-	test_must_fail git cummit -n --verify -m "even more"
+	but add file &&
+	test_must_fail but cummit -n --verify -m "even more"
 
 '
 
 test_expect_success '--no-verify with failing hook (editor)' '
 
 	echo "more stuff" >> file &&
-	git add file &&
+	but add file &&
 	echo "more stuff" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
 test_expect_success 'merge fails with failing hook' '
 
-	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f main" &&
-	git checkout --orphan newbranch &&
+	test_when_finished "but branch -D newbranch" &&
+	test_when_finished "but checkout -f main" &&
+	but checkout --orphan newbranch &&
 	: >file2 &&
-	git add file2 &&
-	git cummit --no-verify file2 -m in-side-branch &&
-	test_must_fail git merge --allow-unrelated-histories main &&
+	but add file2 &&
+	but cummit --no-verify file2 -m in-side-branch &&
+	test_must_fail but merge --allow-unrelated-histories main &&
 	cummit_msg_is "in-side-branch" # HEAD before merge
 
 '
 
 test_expect_success 'merge bypasses failing hook with --no-verify' '
 
-	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f main" &&
-	git checkout --orphan newbranch &&
-	git rm -f file &&
+	test_when_finished "but branch -D newbranch" &&
+	test_when_finished "but checkout -f main" &&
+	but checkout --orphan newbranch &&
+	but rm -f file &&
 	: >file2 &&
-	git add file2 &&
-	git cummit --no-verify file2 -m in-side-branch &&
-	git merge --no-verify --allow-unrelated-histories main &&
+	but add file2 &&
+	but cummit --no-verify file2 -m in-side-branch &&
+	but merge --no-verify --allow-unrelated-histories main &&
 	cummit_msg_is "Merge branch '\''main'\'' into newbranch"
 '
 
 test_expect_success 'setup: cummit-msg hook made non-executable' '
-	git_dir="$(git rev-parse --git-dir)" &&
-	chmod -x "$git_dir/hooks/cummit-msg"
+	but_dir="$(but rev-parse --but-dir)" &&
+	chmod -x "$but_dir/hooks/cummit-msg"
 '
 
 
 test_expect_success POSIXPERM 'with non-executable hook' '
 
 	echo "content" >file &&
-	git add file &&
-	git cummit -m "content"
+	but add file &&
+	but cummit -m "content"
 
 '
 
 test_expect_success POSIXPERM 'with non-executable hook (editor)' '
 
 	echo "content again" >> file &&
-	git add file &&
+	but add file &&
 	echo "content again" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit -m "content again"
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -m "content again"
 
 '
 
 test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 
 	echo "more content" >> file &&
-	git add file &&
-	git cummit --no-verify -m "more content"
+	but add file &&
+	but cummit --no-verify -m "more content"
 
 '
 
 test_expect_success POSIXPERM '--no-verify with non-executable hook (editor)' '
 
 	echo "even more content" >> file &&
-	git add file &&
+	but add file &&
 	echo "even more content" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -222,8 +222,8 @@ test_expect_success 'setup: cummit-msg hook that edits the cummit message' '
 test_expect_success 'hook edits cummit message' '
 
 	echo "additional" >> file &&
-	git add file &&
-	git cummit -m "additional" &&
+	but add file &&
+	but cummit -m "additional" &&
 	cummit_msg_is "new message"
 
 '
@@ -231,9 +231,9 @@ test_expect_success 'hook edits cummit message' '
 test_expect_success 'hook edits cummit message (editor)' '
 
 	echo "additional content" >> file &&
-	git add file &&
+	but add file &&
 	echo "additional content" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
 	cummit_msg_is "new message"
 
 '
@@ -241,8 +241,8 @@ test_expect_success 'hook edits cummit message (editor)' '
 test_expect_success "hook doesn't edit cummit message" '
 
 	echo "plus" >> file &&
-	git add file &&
-	git cummit --no-verify -m "plus" &&
+	but add file &&
+	but cummit --no-verify -m "plus" &&
 	cummit_msg_is "plus"
 
 '
@@ -250,40 +250,40 @@ test_expect_success "hook doesn't edit cummit message" '
 test_expect_success "hook doesn't edit cummit message (editor)" '
 
 	echo "more plus" >> file &&
-	git add file &&
+	but add file &&
 	echo "more plus" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify &&
 	cummit_msg_is "more plus"
 '
 
-test_expect_success 'hook called in git-merge picks up cummit message' '
-	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f main" &&
-	git checkout --orphan newbranch &&
-	git rm -f file &&
+test_expect_success 'hook called in but-merge picks up cummit message' '
+	test_when_finished "but branch -D newbranch" &&
+	test_when_finished "but checkout -f main" &&
+	but checkout --orphan newbranch &&
+	but rm -f file &&
 	: >file2 &&
-	git add file2 &&
-	git cummit --no-verify file2 -m in-side-branch &&
-	git merge --allow-unrelated-histories main &&
+	but add file2 &&
+	but cummit --no-verify file2 -m in-side-branch &&
+	but merge --allow-unrelated-histories main &&
 	cummit_msg_is "new message"
 '
 
 test_expect_failure 'merge --continue remembers --no-verify' '
-	test_when_finished "git branch -D newbranch" &&
-	test_when_finished "git checkout -f main" &&
-	git checkout main &&
+	test_when_finished "but branch -D newbranch" &&
+	test_when_finished "but checkout -f main" &&
+	but checkout main &&
 	echo a >file2 &&
-	git add file2 &&
-	git cummit --no-verify -m "add file2 to main" &&
-	git checkout -b newbranch main^ &&
+	but add file2 &&
+	but cummit --no-verify -m "add file2 to main" &&
+	but checkout -b newbranch main^ &&
 	echo b >file2 &&
-	git add file2 &&
-	git cummit --no-verify file2 -m in-side-branch &&
-	git merge --no-verify -m not-rewritten-by-hook main &&
+	but add file2 &&
+	but cummit --no-verify file2 -m in-side-branch &&
+	but merge --no-verify -m not-rewritten-by-hook main &&
 	# resolve conflict:
 	echo c >file2 &&
-	git add file2 &&
-	git merge --continue &&
+	but add file2 &&
+	but merge --continue &&
 	cummit_msg_is not-rewritten-by-hook
 '
 
@@ -299,7 +299,7 @@ export REWORD_EDITOR
 
 test_expect_success 'hook is called for reword during `rebase -i`' '
 
-	GIT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" git rebase -i HEAD^ &&
+	GIT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" but rebase -i HEAD^ &&
 	cummit_msg_is "new message"
 
 '

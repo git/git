@@ -43,25 +43,25 @@ test_setup_1a () {
 		cd 1a_$1 &&
 
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -70,11 +70,11 @@ test_expect_success '1a-L: Modify(A)/Modify(B), change on B subset of A' '
 	(
 		cd 1a_L &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test-tool chmtime --get -3600 b >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -82,15 +82,15 @@ test_expect_success '1a-L: Modify(A)/Modify(B), change on B subset of A' '
 		test-tool chmtime --get b >new-mtime &&
 		test_cmp old-mtime new-mtime &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:b &&
-		git rev-parse >expect A:b &&
+		but rev-parse >actual HEAD:b &&
+		but rev-parse >expect A:b &&
 		test_cmp expect actual &&
 
-		git hash-object b   >actual &&
-		git rev-parse   A:b >expect &&
+		but hash-object b   >actual &&
+		but rev-parse   A:b >expect &&
 		test_cmp expect actual
 	)
 '
@@ -100,10 +100,10 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 	(
 		cd 1a_R &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
 		test-tool chmtime --get -3600 b >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure b WAS updated
 		test-tool chmtime --get b >new-mtime &&
@@ -111,15 +111,15 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 
 		test_must_be_empty err &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:b &&
-		git rev-parse >expect A:b &&
+		but rev-parse >actual HEAD:b &&
+		but rev-parse >expect A:b &&
 		test_cmp expect actual &&
 
-		git hash-object b   >actual &&
-		git rev-parse   A:b >expect &&
+		but hash-object b   >actual &&
+		but rev-parse   A:b >expect &&
 		test_cmp expect actual
 	)
 '
@@ -141,24 +141,24 @@ test_setup_2a () {
 		cd 2a_$1 &&
 
 		test_seq 1 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_seq 1 11 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv b c &&
+		but checkout B &&
+		but mv b c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -167,25 +167,25 @@ test_expect_success '2a-L: Modify/rename, merge into modify side' '
 	(
 		cd 2a_L &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test_path_is_missing c &&
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_path_is_file c &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:c &&
-		git rev-parse >expect A:b &&
+		but rev-parse >actual HEAD:c &&
+		but rev-parse >expect A:b &&
 		test_cmp expect actual &&
 
-		git hash-object c   >actual &&
-		git rev-parse   A:b >expect &&
+		but hash-object c   >actual &&
+		but rev-parse   A:b >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:b &&
+		test_must_fail but rev-parse HEAD:b &&
 		test_path_is_missing b
 	)
 '
@@ -195,10 +195,10 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 	(
 		cd 2a_R &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure c WAS updated
 		test-tool chmtime --get c >new-mtime &&
@@ -206,18 +206,18 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 
 		test_must_be_empty err &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:c &&
-		git rev-parse >expect A:b &&
+		but rev-parse >actual HEAD:c &&
+		but rev-parse >expect A:b &&
 		test_cmp expect actual &&
 
-		git hash-object c   >actual &&
-		git rev-parse   A:b >expect &&
+		but hash-object c   >actual &&
+		but rev-parse   A:b >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:b &&
+		test_must_fail but rev-parse HEAD:b &&
 		test_path_is_missing b
 	)
 '
@@ -234,26 +234,26 @@ test_setup_2b () {
 		cd 2b_$1 &&
 
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
-		git add b &&
-		git mv b c &&
+		but add b &&
+		but mv b c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -262,10 +262,10 @@ test_expect_success '2b-L: Rename+Mod(A)/Mod(B), B mods subset of A' '
 	(
 		cd 2b_L &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -273,18 +273,18 @@ test_expect_success '2b-L: Rename+Mod(A)/Mod(B), B mods subset of A' '
 		test-tool chmtime --get c >new-mtime &&
 		test_cmp old-mtime new-mtime &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:c &&
-		git rev-parse >expect A:c &&
+		but rev-parse >actual HEAD:c &&
+		but rev-parse >expect A:c &&
 		test_cmp expect actual &&
 
-		git hash-object c   >actual &&
-		git rev-parse   A:c >expect &&
+		but hash-object c   >actual &&
+		but rev-parse   A:c >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:b &&
+		test_must_fail but rev-parse HEAD:b &&
 		test_path_is_missing b
 	)
 '
@@ -294,28 +294,28 @@ test_expect_success '2b-R: Rename+Mod(A)/Mod(B), B mods subset of A' '
 	(
 		cd 2b_R &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
 		test_path_is_missing c &&
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure c now present (and thus was updated)
 		test_path_is_file c &&
 
 		test_must_be_empty err &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual HEAD:c &&
-		git rev-parse >expect A:c &&
+		but rev-parse >actual HEAD:c &&
+		but rev-parse >expect A:c &&
 		test_cmp expect actual &&
 
-		git hash-object c   >actual &&
-		git rev-parse   A:c >expect &&
+		but hash-object c   >actual &&
+		but rev-parse   A:c >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:b &&
+		test_must_fail but rev-parse HEAD:b &&
 		test_path_is_missing b
 	)
 '
@@ -341,25 +341,25 @@ test_setup_2c () {
 		cd 2c &&
 
 		test_seq 1 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_seq 1 11 >b &&
 		echo whatever >c &&
-		git add b c &&
+		but add b c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv b c &&
+		but checkout B &&
+		but mv b c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -368,12 +368,12 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 	(
 		cd 2c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
 		GIT_MERGE_VERBOSITY=3 &&
 		export GIT_MERGE_VERBOSITY &&
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep "CONFLICT (.*/add):" out &&
 		test_must_be_empty err &&
@@ -392,25 +392,25 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 		# enforce broken behavior.  So for now, the main test is the
 		# one above that err is an empty file.
 
-		#git ls-files -s >index_files &&
+		#but ls-files -s >index_files &&
 		#test_line_count = 2 index_files &&
 
-		#git rev-parse >actual :2:c :3:c &&
-		#git rev-parse >expect A:b  A:c  &&
+		#but rev-parse >actual :2:c :3:c &&
+		#but rev-parse >expect A:b  A:c  &&
 		#test_cmp expect actual &&
 
-		#git cat-file -p A:b >>merged &&
-		#git cat-file -p A:c >>merge-me &&
+		#but cat-file -p A:b >>merged &&
+		#but cat-file -p A:c >>merge-me &&
 		#>empty &&
-		#test_must_fail git merge-file \
+		#test_must_fail but merge-file \
 		#	-L "Temporary merge branch 1" \
 		#	-L "" \
 		#	-L "Temporary merge branch 2" \
 		#	merged empty merge-me &&
 		#sed -e "s/^\([<=>]\)/\1\1\1/" merged >merged-internal &&
 
-		#git hash-object c               >actual &&
-		#git hash-object merged-internal >expect &&
+		#but hash-object c               >actual &&
+		#but hash-object merged-internal >expect &&
 		#test_cmp expect actual &&
 
 		#test_path_is_missing b
@@ -444,25 +444,25 @@ test_setup_3a () {
 		mkdir foo &&
 		test_seq 1 10 >bq &&
 		test_write_lines a b c d e f g h i j k >foo/whatever &&
-		git add bq foo/whatever &&
+		but add bq foo/whatever &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_seq 1 11 >bq &&
-		git add bq &&
-		git mv bq foo/ &&
+		but add bq &&
+		but mv bq foo/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv foo/ bar/ &&
+		but checkout B &&
+		but mv foo/ bar/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -471,27 +471,27 @@ test_expect_success '3a-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	(
 		cd 3a_L &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
 		test_path_is_file bar/bq &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 2 index_files &&
 
-		git rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
-		git rev-parse >expect A:foo/bq    A:foo/whatever &&
+		but rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
+		but rev-parse >expect A:foo/bq    A:foo/whatever &&
 		test_cmp expect actual &&
 
-		git hash-object bar/bq   bar/whatever   >actual &&
-		git rev-parse   A:foo/bq A:foo/whatever >expect &&
+		but hash-object bar/bq   bar/whatever   >actual &&
+		but rev-parse   A:foo/bq A:foo/whatever >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
+		test_must_fail but rev-parse HEAD:bq HEAD:foo/bq &&
 		test_path_is_missing bq &&
 		test_path_is_missing foo/bq &&
 		test_path_is_missing foo/whatever
@@ -503,27 +503,27 @@ test_expect_success '3a-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	(
 		cd 3a_R &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
 		test_path_is_file bar/bq &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 2 index_files &&
 
-		git rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
-		git rev-parse >expect A:foo/bq    A:foo/whatever &&
+		but rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
+		but rev-parse >expect A:foo/bq    A:foo/whatever &&
 		test_cmp expect actual &&
 
-		git hash-object bar/bq   bar/whatever   >actual &&
-		git rev-parse   A:foo/bq A:foo/whatever >expect &&
+		but hash-object bar/bq   bar/whatever   >actual &&
+		but rev-parse   A:foo/bq A:foo/whatever >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
+		test_must_fail but rev-parse HEAD:bq HEAD:foo/bq &&
 		test_path_is_missing bq &&
 		test_path_is_missing foo/bq &&
 		test_path_is_missing foo/whatever
@@ -544,25 +544,25 @@ test_setup_3b () {
 		mkdir foo &&
 		test_seq 1 10 >bq &&
 		test_write_lines a b c d e f g h i j k >foo/whatever &&
-		git add bq foo/whatever &&
+		but add bq foo/whatever &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv bq foo/ &&
+		but checkout A &&
+		but mv bq foo/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_seq 1 11 >bq &&
-		git add bq &&
-		git mv foo/ bar/ &&
+		but add bq &&
+		but mv foo/ bar/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -571,27 +571,27 @@ test_expect_success '3b-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	(
 		cd 3b_L &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
 		test_path_is_file bar/bq &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 2 index_files &&
 
-		git rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
-		git rev-parse >expect B:bq        A:foo/whatever &&
+		but rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
+		but rev-parse >expect B:bq        A:foo/whatever &&
 		test_cmp expect actual &&
 
-		git hash-object bar/bq bar/whatever   >actual &&
-		git rev-parse   B:bq   A:foo/whatever >expect &&
+		but hash-object bar/bq bar/whatever   >actual &&
+		but rev-parse   B:bq   A:foo/whatever >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
+		test_must_fail but rev-parse HEAD:bq HEAD:foo/bq &&
 		test_path_is_missing bq &&
 		test_path_is_missing foo/bq &&
 		test_path_is_missing foo/whatever
@@ -603,27 +603,27 @@ test_expect_success '3b-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	(
 		cd 3b_R &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
 		test_path_is_file bar/bq &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 2 index_files &&
 
-		git rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
-		git rev-parse >expect B:bq        A:foo/whatever &&
+		but rev-parse >actual HEAD:bar/bq HEAD:bar/whatever &&
+		but rev-parse >expect B:bq        A:foo/whatever &&
 		test_cmp expect actual &&
 
-		git hash-object bar/bq bar/whatever   >actual &&
-		git rev-parse   B:bq   A:foo/whatever >expect &&
+		but hash-object bar/bq bar/whatever   >actual &&
+		but rev-parse   B:bq   A:foo/whatever >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:bq HEAD:foo/bq &&
+		test_must_fail but rev-parse HEAD:bq HEAD:foo/bq &&
 		test_path_is_missing bq &&
 		test_path_is_missing foo/bq &&
 		test_path_is_missing foo/whatever
@@ -647,25 +647,25 @@ test_setup_4a () {
 		cd 4a &&
 
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -680,12 +680,12 @@ test_expect_merge_algorithm failure success '4a: Change on A, change on B subset
 	(
 		cd 4a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo "File rewritten" >b &&
 
 		test-tool chmtime --get -3600 b >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -693,15 +693,15 @@ test_expect_merge_algorithm failure success '4a: Change on A, change on B subset
 		test-tool chmtime --get b >new-mtime &&
 		test_cmp old-mtime new-mtime &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual :0:b &&
-		git rev-parse >expect A:b &&
+		but rev-parse >actual :0:b &&
+		but rev-parse >expect A:b &&
 		test_cmp expect actual &&
 
-		git hash-object b >actual &&
-		echo "File rewritten" | git hash-object --stdin >expect &&
+		but hash-object b >actual &&
+		echo "File rewritten" | but hash-object --stdin >expect &&
 		test_cmp expect actual
 	)
 '
@@ -719,26 +719,26 @@ test_setup_4b () {
 		cd 4b &&
 
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
-		git add b &&
-		git mv b c &&
+		but add b &&
+		but mv b c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -747,12 +747,12 @@ test_expect_success '4b: Rename+Mod(A)/Mod(B), change on B subset of A, dirty mo
 	(
 		cd 4b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo "File rewritten" >c &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -760,18 +760,18 @@ test_expect_success '4b: Rename+Mod(A)/Mod(B), change on B subset of A, dirty mo
 		test-tool chmtime --get c >new-mtime &&
 		test_cmp old-mtime new-mtime &&
 
-		git ls-files -s >index_files &&
+		but ls-files -s >index_files &&
 		test_line_count = 1 index_files &&
 
-		git rev-parse >actual :0:c &&
-		git rev-parse >expect A:c &&
+		but rev-parse >actual :0:c &&
+		but rev-parse >expect A:c &&
 		test_cmp expect actual &&
 
-		git hash-object c >actual &&
-		echo "File rewritten" | git hash-object --stdin >expect &&
+		but hash-object c >actual &&
+		echo "File rewritten" | but hash-object --stdin >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:b &&
+		test_must_fail but rev-parse HEAD:b &&
 		test_path_is_missing b
 	)
 '

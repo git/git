@@ -1,4 +1,4 @@
-$ git diff-tree -c --stat --summary master
+$ but diff-tree -c --stat --summary master
 59d314ad6f356dd08601a4cd5e530381da3e3c64
  dir/sub | 2 ++
  file0   | 3 +++

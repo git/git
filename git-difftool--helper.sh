@@ -1,18 +1,18 @@
 #!/bin/sh
-# git-difftool--helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
-# This script is typically launched by using the 'git difftool'
+# but-difftool--helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
+# This script is typically launched by using the 'but difftool'
 # convenience command.
 #
 # Copyright (c) 2009, 2010 David Aguilar
 
 TOOL_MODE=diff
-. git-mergetool--lib
+. but-mergetool--lib
 
 # difftool.prompt controls the default prompt/no-prompt behavior
 # and is overridden with $GIT_DIFFTOOL*_PROMPT.
 should_prompt () {
-	prompt_merge=$(git config --bool mergetool.prompt || echo true)
-	prompt=$(git config --bool difftool.prompt || echo $prompt_merge)
+	prompt_merge=$(but config --bool mergetool.prompt || echo true)
+	prompt=$(but config --bool difftool.prompt || echo $prompt_merge)
 	if test "$prompt" = true
 	then
 		test -z "$GIT_DIFFTOOL_NO_PROMPT"
@@ -87,7 +87,7 @@ then
 	# will diagnose unusable tool by itself
 	run_merge_tool "$merge_tool" false
 else
-	# Launch the merge tool on each path provided by 'git diff'
+	# Launch the merge tool on each path provided by 'but diff'
 	while test $# -gt 6
 	do
 		launch_merge_tool "$1" "$2" "$5"

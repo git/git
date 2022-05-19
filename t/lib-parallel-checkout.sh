@@ -27,7 +27,7 @@ test_checkout_workers () {
 	rm -f "$trace_file" &&
 	GIT_TRACE2="$(pwd)/$trace_file" "$@" 2>&8 &&
 
-	local workers="$(grep "child_start\[..*\] git checkout--worker" "$trace_file" | wc -l)" &&
+	local workers="$(grep "child_start\[..*\] but checkout--worker" "$trace_file" | wc -l)" &&
 	test $workers -eq $expected_workers &&
 	rm "$trace_file"
 } 8>&2 2>&4
@@ -39,7 +39,7 @@ verify_checkout () {
 		BUG "usage: verify_checkout <repository path>"
 	fi &&
 
-	git -C "$1" diff-index --ignore-submodules=none --exit-code HEAD -- &&
-	git -C "$1" status --porcelain >"$1".status &&
+	but -C "$1" diff-index --ignore-submodules=none --exit-code HEAD -- &&
+	but -C "$1" status --porcelain >"$1".status &&
 	test_must_be_empty "$1".status
 }

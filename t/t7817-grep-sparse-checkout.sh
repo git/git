@@ -41,36 +41,36 @@ test_expect_success 'setup' '
 	mkdir dir &&
 	echo "text" >dir/c &&
 
-	git init sub &&
+	but init sub &&
 	(
 		cd sub &&
 		mkdir A B &&
 		echo "text" >A/a &&
 		echo "text" >B/b &&
-		git add A B &&
-		git cummit -m sub &&
-		git sparse-checkout init --cone &&
-		git sparse-checkout set B
+		but add A B &&
+		but cummit -m sub &&
+		but sparse-checkout init --cone &&
+		but sparse-checkout set B
 	) &&
 
-	git init sub2 &&
+	but init sub2 &&
 	(
 		cd sub2 &&
 		echo "text" >a &&
-		git add a &&
-		git cummit -m sub2
+		but add a &&
+		but cummit -m sub2
 	) &&
 
-	git submodule add ./sub &&
-	git submodule add ./sub2 &&
-	git add a b dir &&
-	git cummit -m super &&
-	git sparse-checkout init --no-cone &&
-	git sparse-checkout set "/*" "!b" "!/*/" "sub" &&
+	but submodule add ./sub &&
+	but submodule add ./sub2 &&
+	but add a b dir &&
+	but cummit -m super &&
+	but sparse-checkout init --no-cone &&
+	but sparse-checkout set "/*" "!b" "!/*/" "sub" &&
 
-	git tag -am tag-to-cummit tag-to-commit HEAD &&
-	tree=$(git rev-parse HEAD^{tree}) &&
-	git tag -am tag-to-tree tag-to-tree $tree &&
+	but tag -am tag-to-cummit tag-to-commit HEAD &&
+	tree=$(but rev-parse HEAD^{tree}) &&
+	but tag -am tag-to-tree tag-to-tree $tree &&
 
 	test_path_is_missing b &&
 	test_path_is_missing dir &&
@@ -78,13 +78,13 @@ test_expect_success 'setup' '
 	test_path_is_file a &&
 	test_path_is_file sub/B/b &&
 	test_path_is_file sub2/a &&
-	git branch -m main
+	but branch -m main
 '
 
 # The test below covers a special case: the sparsity patterns exclude '/b' and
 # sparse checkout is enabled, but the path exists in the working tree (e.g.
-# manually created after `git sparse-checkout init`).  Although b is marked
-# as SKIP_WORKTREE, git grep should notice it IS present in the worktree and
+# manually created after `but sparse-checkout init`).  Although b is marked
+# as SKIP_WORKTREE, but grep should notice it IS present in the worktree and
 # report it.
 test_expect_success 'working tree grep honors sparse checkout' '
 	cat >expect <<-EOF &&
@@ -93,7 +93,7 @@ test_expect_success 'working tree grep honors sparse checkout' '
 	EOF
 	test_when_finished "rm -f b" &&
 	echo "new-text" >b &&
-	git grep "text" >actual &&
+	but grep "text" >actual &&
 	test_cmp expect actual
 '
 
@@ -102,19 +102,19 @@ test_expect_success 'grep searches unmerged file despite not matching sparsity p
 	b:modified-b-in-branchX
 	b:modified-b-in-branchY
 	EOF
-	test_when_finished "test_might_fail git merge --abort && \
-			    git checkout main && git sparse-checkout init" &&
+	test_when_finished "test_might_fail but merge --abort && \
+			    but checkout main && but sparse-checkout init" &&
 
-	git sparse-checkout disable &&
-	git checkout -b branchY main &&
+	but sparse-checkout disable &&
+	but checkout -b branchY main &&
 	test_cummit modified-b-in-branchY b &&
-	git checkout -b branchX main &&
+	but checkout -b branchX main &&
 	test_cummit modified-b-in-branchX b &&
 
-	git sparse-checkout init &&
+	but sparse-checkout init &&
 	test_path_is_missing b &&
-	test_must_fail git merge branchY &&
-	git grep "modified-b" >actual &&
+	test_must_fail but merge branchY &&
+	but grep "modified-b" >actual &&
 	test_cmp expect actual
 '
 
@@ -124,13 +124,13 @@ test_expect_success 'grep --cached searches entries with the SKIP_WORKTREE bit' 
 	b:text
 	dir/c:text
 	EOF
-	git grep --cached "text" >actual &&
+	but grep --cached "text" >actual &&
 	test_cmp expect actual
 '
 
 # Note that sub2/ is present in the worktree but it is excluded by the sparsity
 # patterns.  We also explicitly mark it as SKIP_WORKTREE in case it got cleared
-# by previous git commands.  Thus sub2 starts as SKIP_WORKTREE but since it is
+# by previous but commands.  Thus sub2 starts as SKIP_WORKTREE but since it is
 # present in the working tree, grep should recurse into it.
 test_expect_success 'grep --recurse-submodules honors sparse checkout in submodule' '
 	cat >expect <<-EOF &&
@@ -138,8 +138,8 @@ test_expect_success 'grep --recurse-submodules honors sparse checkout in submodu
 	sub/B/b:text
 	sub2/a:text
 	EOF
-	git update-index --skip-worktree sub2 &&
-	git grep --recurse-submodules "text" >actual &&
+	but update-index --skip-worktree sub2 &&
+	but grep --recurse-submodules "text" >actual &&
 	test_cmp expect actual
 '
 
@@ -152,7 +152,7 @@ test_expect_success 'grep --recurse-submodules --cached searches entries with th
 	sub/B/b:text
 	sub2/a:text
 	EOF
-	git grep --recurse-submodules --cached "text" >actual &&
+	but grep --recurse-submodules --cached "text" >actual &&
 	test_cmp expect actual
 '
 
@@ -160,9 +160,9 @@ test_expect_success 'working tree grep does not search the index with CE_VALID a
 	cat >expect <<-EOF &&
 	a:text
 	EOF
-	test_when_finished "git update-index --no-assume-unchanged b" &&
-	git update-index --assume-unchanged b &&
-	git grep text >actual &&
+	test_when_finished "but update-index --no-assume-unchanged b" &&
+	but update-index --assume-unchanged b &&
+	but grep text >actual &&
 	test_cmp expect actual
 '
 
@@ -172,9 +172,9 @@ test_expect_success 'grep --cached searches index entries with both CE_VALID and
 	b:text
 	dir/c:text
 	EOF
-	test_when_finished "git update-index --no-assume-unchanged b" &&
-	git update-index --assume-unchanged b &&
-	git grep --cached text >actual &&
+	test_when_finished "but update-index --no-assume-unchanged b" &&
+	but update-index --assume-unchanged b &&
+	but grep --cached text >actual &&
 	test_cmp expect actual
 '
 

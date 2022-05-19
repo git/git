@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 #
-# An test hook script to integrate with git to test fsmonitor.
+# An test hook script to integrate with but to test fsmonitor.
 #
 # The hook is passed a version (currently 2) and since token
 # formatted as a string and outputs to stdout all files that have been

@@ -3,9 +3,9 @@
 # Copyright (c) 2010 Steven Walter
 #
 
-test_description='git svn mergeinfo propagation'
+test_description='but svn mergeinfo propagation'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'initialize source svn repo' '
 	svn_cmd mkdir -m x "$svnrepo"/trunk &&
@@ -20,15 +20,15 @@ test_expect_success 'initialize source svn repo' '
 '
 
 test_expect_success 'clone svn repo' '
-	git svn init "$svnrepo"/trunk &&
-	git svn fetch
+	but svn init "$svnrepo"/trunk &&
+	but svn fetch
 '
 
 test_expect_success 'change svn:mergeinfo' '
 	touch bar &&
-	git add bar &&
-	git cummit -m "bar" &&
-	git svn dcummit --mergeinfo="/branches/foo:1-10"
+	but add bar &&
+	but cummit -m "bar" &&
+	but svn dcummit --mergeinfo="/branches/foo:1-10"
 '
 
 test_expect_success 'verify svn:mergeinfo' '
@@ -38,9 +38,9 @@ test_expect_success 'verify svn:mergeinfo' '
 
 test_expect_success 'change svn:mergeinfo multiline' '
 	touch baz &&
-	git add baz &&
-	git cummit -m "baz" &&
-	git svn dcummit --mergeinfo="/branches/bar:1-10 /branches/other:3-5,8,10-11"
+	but add baz &&
+	but cummit -m "baz" &&
+	but svn dcummit --mergeinfo="/branches/bar:1-10 /branches/other:3-5,8,10-11"
 '
 
 test_expect_success 'verify svn:mergeinfo multiline' '

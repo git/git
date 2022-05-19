@@ -3,12 +3,12 @@
 *.bak
 *.c
 *.h
-.git
+.but
 contrib
 Documentation
-git-gui
-gitk-git
-gitweb
+but-gui
+butk-but
+butweb
 t/t4013
 t/t5100
 t/t5515

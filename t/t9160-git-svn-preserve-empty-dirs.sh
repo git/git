@@ -3,15 +3,15 @@
 # Copyright (c) 2011 Ray Chen
 #
 
-test_description='git svn test (option --preserve-empty-dirs)
+test_description='but svn test (option --preserve-empty-dirs)
 
-This test uses git to clone a Subversion repository that contains empty
+This test uses but to clone a Subversion repository that contains empty
 directories, and checks that corresponding directories are created in the
 local Git repository with placeholder files.'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
-GIT_REPO=git-svn-repo
+GIT_REPO=but-svn-repo
 
 test_expect_success 'initialize source svn repo containing empty dirs' '
 	svn_cmd mkdir -m x "$svnrepo"/trunk &&
@@ -56,20 +56,20 @@ test_expect_success 'initialize source svn repo containing empty dirs' '
 '
 
 test_expect_success 'clone svn repo with --preserve-empty-dirs' '
-	git svn clone "$svnrepo"/trunk --preserve-empty-dirs "$GIT_REPO"
+	but svn clone "$svnrepo"/trunk --preserve-empty-dirs "$GIT_REPO"
 '
 
 # "$GIT_REPO"/1 should only contain the placeholder file.
 test_expect_success 'directory empty from inception' '
-	test -f "$GIT_REPO"/1/.gitignore &&
+	test -f "$GIT_REPO"/1/.butignore &&
 	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1"
 '
 
 # "$GIT_REPO"/2 and "$GIT_REPO"/3 should only contain the placeholder file.
 test_expect_success 'directory empty from subsequent svn cummit' '
-	test -f "$GIT_REPO"/2/.gitignore &&
+	test -f "$GIT_REPO"/2/.butignore &&
 	test $(find "$GIT_REPO"/2 -type f | wc -l) = "1" &&
-	test -f "$GIT_REPO"/3/.gitignore &&
+	test -f "$GIT_REPO"/3/.butignore &&
 	test $(find "$GIT_REPO"/3 -type f | wc -l) = "1"
 '
 
@@ -80,21 +80,21 @@ test_expect_success 'add entry to previously empty directory' '
 	test -f "$GIT_REPO"/4/a/b/c/foo
 '
 
-# The HEAD~2 cummit should not have introduced .gitignore placeholder files.
+# The HEAD~2 cummit should not have introduced .butignore placeholder files.
 test_expect_success 'remove non-last entry from directory' '
 	(
 		cd "$GIT_REPO" &&
-		git checkout HEAD~2
+		but checkout HEAD~2
 	) &&
-	test_path_is_missing "$GIT_REPO"/2/.gitignore &&
-	test_path_is_missing "$GIT_REPO"/3/.gitignore
+	test_path_is_missing "$GIT_REPO"/2/.butignore &&
+	test_path_is_missing "$GIT_REPO"/3/.butignore
 '
 
 # After re-cloning the repository with --placeholder-file specified, there
 # should be 5 files named ".placeholder" in the local Git repo.
 test_expect_success 'clone svn repo with --placeholder-file specified' '
 	rm -rf "$GIT_REPO" &&
-	git svn clone "$svnrepo"/trunk --preserve-empty-dirs \
+	but svn clone "$svnrepo"/trunk --preserve-empty-dirs \
 		--placeholder-file=.placeholder "$GIT_REPO" &&
 	find "$GIT_REPO" -type f -name ".placeholder" &&
 	test $(find "$GIT_REPO" -type f -name ".placeholder" | wc -l) = "5"
@@ -127,7 +127,7 @@ test_expect_success 'second set of svn cummits and rebase' '
 	rm -rf "$SVN_TREE" &&
 	(
 		cd "$GIT_REPO" &&
-		git svn rebase
+		but svn rebase
 	)
 '
 

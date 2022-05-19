@@ -12,8 +12,8 @@ use constant cummit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_cummit $incremental/;
 
-# Option set in git-svn
-our $_git_format;
+# Option set in but-svn
+our $_but_format;
 
 sub cmt_showable {
 	my ($c) = @_;
@@ -30,10 +30,10 @@ sub cmt_showable {
 		shift @log;
 
 		# TODO: make $c->{l} not have a trailing newline in the future
-		@{$c->{l}} = map { "$_\n" } grep !/^git-svn-id: /, @log;
+		@{$c->{l}} = map { "$_\n" } grep !/^but-svn-id: /, @log;
 
 		(undef, $c->{r}, undef) = ::extract_metadata(
-				(grep(/^git-svn-id: /, @log))[-1]);
+				(grep(/^but-svn-id: /, @log))[-1]);
 	}
 	return defined $c->{r};
 }
@@ -42,7 +42,7 @@ sub log_use_color {
 	return $color || Git->repository->get_colorbool('color.diff');
 }
 
-sub git_svn_log_cmd {
+sub but_svn_log_cmd {
 	my ($r_min, $r_max, @args) = @_;
 	my $head = 'HEAD';
 	my (@files, @log_opts);
@@ -128,7 +128,7 @@ sub format_svn_date {
 	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 
-sub parse_git_date {
+sub parse_but_date {
 	my ($t, $tz) = @_;
 	# Date::Parse isn't in the standard Perl distro :(
 	if ($tz =~ s/^\+//) {
@@ -167,7 +167,7 @@ sub get_author_info {
 	$dest->{t} = $t;
 	$dest->{tz} = $tz;
 	$dest->{a} = $au;
-	$dest->{t_utc} = parse_git_date($t, $tz);
+	$dest->{t_utc} = parse_but_date($t, $tz);
 }
 
 sub process_cummit {
@@ -270,12 +270,12 @@ sub cmd_show_log {
 			$r_min = $r_max = $::_revision;
 		} else {
 			fatal "-r$::_revision is not supported, use ",
-				"standard 'git log' arguments instead";
+				"standard 'but log' arguments instead";
 		}
 	}
 
 	config_pager();
-	@args = git_svn_log_cmd($r_min, $r_max, @args);
+	@args = but_svn_log_cmd($r_min, $r_max, @args);
 	if (!@args) {
 		print cummit_log_separator unless $incremental || $oneline;
 		return;
@@ -317,7 +317,7 @@ sub cmd_show_log {
 		} elsif ($stat && /^ \d+ files changed, \d+ insertions/) {
 			push @{$c->{stat}}, $_;
 			$stat = undef;
-		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
+		} elsif (/^${esc_color}    (but-svn-id:.+)$/o) {
 			($c->{url}, $c->{r}, undef) = ::extract_metadata($1);
 		} elsif (s/^${esc_color}    //o) {
 			push @{$c->{l}}, $_;
@@ -344,10 +344,10 @@ sub cmd_blame {
 
 	my ($fh, $ctx, $rev);
 
-	if ($_git_format) {
+	if ($_but_format) {
 		($fh, $ctx) = command_output_pipe('blame', @_, $path);
 		while (my $line = <$fh>) {
-			if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
+			if ($line =~ /^\^?([[:xdibut:]]+)\s/) {
 				# Uncummitted edits show up as a rev ID of
 				# all zeros, which we can't look up with
 				# cmt_metadata
@@ -359,7 +359,7 @@ sub cmd_blame {
 					$rev = '0';
 				}
 				$rev = sprintf('%-10s', $rev);
-				$line =~ s/^\^?[[:xdigit:]]+(\s)/$rev$1/;
+				$line =~ s/^\^?[[:xdibut:]]+(\s)/$rev$1/;
 			}
 			print $line;
 		}
@@ -373,7 +373,7 @@ sub cmd_blame {
 
 		while (my $line = <$fh>) {
 			push @buffer, $line;
-			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
+			if ($line =~ /^([[:xdibut:]]{40})\s\d+\s\d+/) {
 				$dsha{$1} = 1;
 			}
 		}
@@ -381,7 +381,7 @@ sub cmd_blame {
 		my $s2r = ::cmt_sha2rev_batch([keys %dsha]);
 
 		foreach my $line (@buffer) {
-			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
+			if ($line =~ /^([[:xdibut:]]{40})\s\d+\s\d+/) {
 				$rev = $s2r->{$1};
 				$rev = '0' if (!$rev)
 			}

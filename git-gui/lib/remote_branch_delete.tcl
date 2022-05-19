@@ -1,4 +1,4 @@
-# git-gui remote branch deleting support
+# but-gui remote branch deleting support
 # Copyright (C) 2007 Shawn Pearce
 
 class remote_branch_delete {
@@ -159,7 +159,7 @@ method _delete {} {
 	set not_merged [list]
 	set need_fetch 0
 	set have_selection 0
-	set push_cmd [list git push]
+	set push_cmd [list but push]
 	lappend push_cmd -v
 	lappend push_cmd $uri
 
@@ -167,7 +167,7 @@ method _delete {} {
 		set ref [lindex $full_list $i]
 		if {$crev ne {}} {
 			set obj $full_cache("$cache\n$ref")
-			if {[catch {set m [git merge-base $obj $crev]}]} {
+			if {[catch {set m [but merge-base $obj $crev]}]} {
 				set need_fetch 1
 				set m {}
 			}
@@ -308,7 +308,7 @@ method _load {cache uri} {
 		set full_list [list]
 		set head_cache($cache) [list]
 		set full_cache($cache) [list]
-		set active_ls [git_read ls-remote $uri]
+		set active_ls [but_read ls-remote $uri]
 		fconfigure $active_ls \
 			-blocking 0 \
 			-translation lf \

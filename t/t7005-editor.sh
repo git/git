@@ -8,7 +8,7 @@ unset EDITOR VISUAL GIT_EDITOR
 
 test_expect_success 'determine default editor' '
 
-	vi=$(TERM=vt100 git var GIT_EDITOR) &&
+	vi=$(TERM=vt100 but var GIT_EDITOR) &&
 	test -n "$vi"
 
 '
@@ -37,7 +37,7 @@ test_expect_success setup '
 	msg="Hand-edited" &&
 	test_cummit "$msg" &&
 	echo "$msg" >expect &&
-	git show -s --format=%s > actual &&
+	but show -s --format=%s > actual &&
 	test_cmp expect actual
 
 '
@@ -46,7 +46,7 @@ TERM=dumb
 export TERM
 test_expect_success 'dumb should error out when falling back on vi' '
 
-	if git cummit --amend
+	if but cummit --amend
 	then
 		echo "Oops?"
 		false
@@ -60,8 +60,8 @@ test_expect_success 'dumb should prefer EDITOR to VISUAL' '
 	EDITOR=./e-EDITOR.sh &&
 	VISUAL=./e-VISUAL.sh &&
 	export EDITOR VISUAL &&
-	git cummit --amend &&
-	test "$(git show -s --format=%s)" = "Edited by EDITOR"
+	but cummit --amend &&
+	test "$(but show -s --format=%s)" = "Edited by EDITOR"
 
 '
 
@@ -71,10 +71,10 @@ for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
 do
 	echo "Edited by $i" >expect
 	unset EDITOR VISUAL GIT_EDITOR
-	git config --unset-all core.editor
+	but config --unset-all core.editor
 	case "$i" in
 	core_editor)
-		git config core.editor ./e-core_editor.sh
+		but config core.editor ./e-core_editor.sh
 		;;
 	[A-Z]*)
 		eval "$i=./e-$i.sh"
@@ -82,21 +82,21 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git --exec-path=. cummit --amend &&
-		git show -s --pretty=oneline |
+		but --exec-path=. cummit --amend &&
+		but show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		test_cmp expect actual
 	'
 done
 
 unset EDITOR VISUAL GIT_EDITOR
-git config --unset-all core.editor
+but config --unset-all core.editor
 for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
 do
 	echo "Edited by $i" >expect
 	case "$i" in
 	core_editor)
-		git config core.editor ./e-core_editor.sh
+		but config core.editor ./e-core_editor.sh
 		;;
 	[A-Z]*)
 		eval "$i=./e-$i.sh"
@@ -104,8 +104,8 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git --exec-path=. cummit --amend &&
-		git show -s --pretty=oneline |
+		but --exec-path=. cummit --amend &&
+		but show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		test_cmp expect actual
 	'
@@ -114,17 +114,17 @@ done
 test_expect_success 'editor with a space' '
 	echo "echo space >\"\$1\"" >"e space.sh" &&
 	chmod a+x "e space.sh" &&
-	GIT_EDITOR="./e\ space.sh" git cummit --amend &&
-	test space = "$(git show -s --pretty=format:%s)"
+	GIT_EDITOR="./e\ space.sh" but cummit --amend &&
+	test space = "$(but show -s --pretty=format:%s)"
 
 '
 
 unset GIT_EDITOR
 test_expect_success 'core.editor with a space' '
 
-	git config core.editor \"./e\ space.sh\" &&
-	git cummit --amend &&
-	test space = "$(git show -s --pretty=format:%s)"
+	but config core.editor \"./e\ space.sh\" &&
+	but cummit --amend &&
+	test space = "$(but show -s --pretty=format:%s)"
 
 '
 

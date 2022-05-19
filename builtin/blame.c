@@ -29,20 +29,20 @@
 #include "refs.h"
 #include "tag.h"
 
-static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
+static char blame_usage[] = N_("but blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
 static const char *blame_opt_usage[] = {
 	blame_usage,
 	"",
-	N_("<rev-opts> are documented in git-rev-list(1)"),
+	N_("<rev-opts> are documented in but-rev-list(1)"),
 	NULL
 };
 
 static int longest_file;
 static int longest_author;
-static int max_orig_digits;
-static int max_digits;
-static int max_score_digits;
+static int max_orig_dibuts;
+static int max_dibuts;
+static int max_score_dibuts;
 static int show_root;
 static int reverse;
 static int blank_boundary;
@@ -499,13 +499,13 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 		} else {
 			if (opt & OUTPUT_SHOW_SCORE)
 				printf(" %*d %02d",
-				       max_score_digits, ent->score,
+				       max_score_dibuts, ent->score,
 				       ent->suspect->refcnt);
 			if (opt & OUTPUT_SHOW_NAME)
 				printf(" %-*.*s", longest_file, longest_file,
 				       suspect->path);
 			if (opt & OUTPUT_SHOW_NUMBER)
-				printf(" %*d", max_orig_digits,
+				printf(" %*d", max_orig_dibuts,
 				       ent->s_lno + 1 + cnt);
 
 			if (!(opt & OUTPUT_NO_AUTHOR)) {
@@ -523,7 +523,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 						   show_raw_time));
 			}
 			printf(" %*d) ",
-			       max_digits, ent->lno + 1 + cnt);
+			       max_dibuts, ent->lno + 1 + cnt);
 		}
 		if (reset)
 			fputs(reset, stdout);
@@ -571,7 +571,7 @@ static void output(struct blame_scoreboard *sb, int option)
 
 /*
  * Add phony grafts for use with -S; this is primarily to
- * support git's cvsserver that wants to give a linear history
+ * support but's cvsserver that wants to give a linear history
  * to its clients.
  */
 static int read_ancestry(const char *graft_file)
@@ -646,9 +646,9 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		if (largest_score < blame_entry_score(sb, e))
 			largest_score = blame_entry_score(sb, e);
 	}
-	max_orig_digits = decimal_width(longest_src_lines);
-	max_digits = decimal_width(longest_dst_lines);
-	max_score_digits = decimal_width(largest_score);
+	max_orig_dibuts = decimal_width(longest_src_lines);
+	max_dibuts = decimal_width(longest_dst_lines);
+	max_score_dibuts = decimal_width(largest_score);
 
 	if (compute_auto_abbrev)
 		/* one more abbrev length is needed for the boundary cummit */
@@ -677,19 +677,19 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
-static int git_blame_config(const char *var, const char *value, void *cb)
+static int but_blame_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "blame.showroot")) {
-		show_root = git_config_bool(var, value);
+		show_root = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "blame.blankboundary")) {
-		blank_boundary = git_config_bool(var, value);
+		blank_boundary = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "blame.showemail")) {
 		int *output_option = cb;
-		if (git_config_bool(var, value))
+		if (but_config_bool(var, value))
 			*output_option |= OUTPUT_SHOW_EMAIL;
 		else
 			*output_option &= ~OUTPUT_SHOW_EMAIL;
@@ -705,18 +705,18 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		const char *str;
 		int ret;
 
-		ret = git_config_pathname(&str, var, value);
+		ret = but_config_pathname(&str, var, value);
 		if (ret)
 			return ret;
 		string_list_insert(&ignore_revs_file_list, str);
 		return 0;
 	}
 	if (!strcmp(var, "blame.markunblamablelines")) {
-		mark_unblamable_lines = git_config_bool(var, value);
+		mark_unblamable_lines = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "blame.markignoredlines")) {
-		mark_ignored_lines = git_config_bool(var, value);
+		mark_ignored_lines = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "color.blame.repeatedlines")) {
@@ -745,12 +745,12 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		}
 	}
 
-	if (git_diff_heuristic_config(var, value, cb) < 0)
+	if (but_diff_heuristic_config(var, value, cb) < 0)
 		return -1;
 	if (userdiff_config(var, value) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static int blame_copy_callback(const struct option *option, const char *arg, int unset)
@@ -871,7 +871,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
 		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line cummit information"), OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
-		OPT_BIT('c', NULL, &output_option, N_("use the same output mode as git-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
+		OPT_BIT('c', NULL, &output_option, N_("use the same output mode as but-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
 		OPT_BIT('t', NULL, &output_option, N_("show raw timestamp (Default: off)"), OUTPUT_RAW_TIMESTAMP),
 		OPT_BIT('l', NULL, &output_option, N_("show long cummit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
 		OPT_BIT('s', NULL, &output_option, N_("suppress author name and timestamp (Default: off)"), OUTPUT_NO_AUTHOR),
@@ -882,7 +882,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "color-lines", &output_option, N_("color redundant metadata from previous line differently"), OUTPUT_COLOR_LINE),
 		OPT_BIT(0, "color-by-age", &output_option, N_("color lines by age"), OUTPUT_SHOW_AGE_WITH_COLOR),
 		OPT_BIT(0, "minimal", &xdl_opts, N_("spend extra cycles to find better match"), XDF_NEED_MINIMAL),
-		OPT_STRING('S', NULL, &revs_file, N_("file"), N_("use revisions from <file> instead of calling git-rev-list")),
+		OPT_STRING('S', NULL, &revs_file, N_("file"), N_("use revisions from <file> instead of calling but-rev-list")),
 		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("use <file>'s contents as the final image")),
 		OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback),
 		OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback),
@@ -901,7 +901,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	long num_lines = 0;
 
 	setup_default_color_by_age();
-	git_config(git_blame_config, &output_option);
+	but_config(but_blame_config, &output_option);
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.date_mode = blame_date_mode;
 	revs.diffopt.flags.allow_textconv = 1;
@@ -992,7 +992,7 @@ parse_done:
 		/*
 		 * TRANSLATORS: This string is used to tell us the
 		 * maximum display width for a relative timestamp in
-		 * "git blame" output.  For C locale, "4 years, 11
+		 * "but blame" output.  For C locale, "4 years, 11
 		 * months ago", which takes 22 places, is the longest
 		 * among various forms of relative timestamps, but
 		 * your language may need more or fewer display
@@ -1059,7 +1059,7 @@ parse_done:
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		} else {	/* (2a) */
-			if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
+			if (argc == 2 && is_a_rev(argv[1]) && !get_but_work_tree())
 				die("missing <path> to blame");
 			path = add_prefix(prefix, argv[argc - 1]);
 		}

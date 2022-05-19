@@ -12,16 +12,16 @@ test_have_prereq !MINGW || X=.exe
 
 test_expect_success setup '
 
-	rm -fr .git &&
+	rm -fr .but &&
 	test_create_repo src &&
 	(
 		cd src &&
 		>file &&
-		git add file &&
-		git cummit -m initial &&
+		but add file &&
+		but cummit -m initial &&
 		echo 1 >file &&
-		git add file &&
-		git cummit -m updated
+		but add file &&
+		but cummit -m updated
 	)
 
 '
@@ -29,43 +29,43 @@ test_expect_success setup '
 test_expect_success 'clone with excess parameters (1)' '
 
 	rm -fr dst &&
-	test_must_fail git clone -n src dst junk
+	test_must_fail but clone -n src dst junk
 
 '
 
 test_expect_success 'clone with excess parameters (2)' '
 
 	rm -fr dst &&
-	test_must_fail git clone -n "file://$(pwd)/src" dst junk
+	test_must_fail but clone -n "file://$(pwd)/src" dst junk
 
 '
 
 test_expect_success 'output from clone' '
 	rm -fr dst &&
-	git clone -n "file://$(pwd)/src" dst >output 2>&1 &&
+	but clone -n "file://$(pwd)/src" dst >output 2>&1 &&
 	test $(grep Clon output | wc -l) = 1
 '
 
 test_expect_success 'clone does not keep pack' '
 
 	rm -fr dst &&
-	git clone -n "file://$(pwd)/src" dst &&
+	but clone -n "file://$(pwd)/src" dst &&
 	! test -f dst/file &&
-	! (echo dst/.git/objects/pack/pack-* | grep "\.keep")
+	! (echo dst/.but/objects/pack/pack-* | grep "\.keep")
 
 '
 
 test_expect_success 'clone checks out files' '
 
 	rm -fr dst &&
-	git clone src dst &&
+	but clone src dst &&
 	test -f dst/file
 
 '
 
 test_expect_success 'clone respects GIT_WORK_TREE' '
 
-	GIT_WORK_TREE=worktree git clone src bare &&
+	GIT_WORK_TREE=worktree but clone src bare &&
 	test -f bare/config &&
 	test -f worktree/file
 
@@ -77,81 +77,81 @@ test_expect_success 'clone from hooks' '
 	cd r0 &&
 	test_cummit initial &&
 	cd .. &&
-	git init r1 &&
+	but init r1 &&
 	cd r1 &&
 	test_hook pre-cummit <<-\EOF &&
-	git clone ../r0 ../r2
+	but clone ../r0 ../r2
 	exit 1
 	EOF
 	: >file &&
-	git add file &&
-	test_must_fail git cummit -m invoke-hook &&
+	but add file &&
+	test_must_fail but cummit -m invoke-hook &&
 	cd .. &&
-	test_cmp r0/.git/HEAD r2/.git/HEAD &&
+	test_cmp r0/.but/HEAD r2/.but/HEAD &&
 	test_cmp r0/initial.t r2/initial.t
 
 '
 
 test_expect_success 'clone creates intermediate directories' '
 
-	git clone src long/path/to/dst &&
+	but clone src long/path/to/dst &&
 	test -f long/path/to/dst/file
 
 '
 
 test_expect_success 'clone creates intermediate directories for bare repo' '
 
-	git clone --bare src long/path/to/bare/dst &&
+	but clone --bare src long/path/to/bare/dst &&
 	test -f long/path/to/bare/dst/config
 
 '
 
 test_expect_success 'clone --mirror' '
 
-	git clone --mirror src mirror &&
+	but clone --mirror src mirror &&
 	test -f mirror/HEAD &&
 	test ! -f mirror/file &&
-	FETCH="$(cd mirror && git config remote.origin.fetch)" &&
+	FETCH="$(cd mirror && but config remote.origin.fetch)" &&
 	test "+refs/*:refs/*" = "$FETCH" &&
-	MIRROR="$(cd mirror && git config --bool remote.origin.mirror)" &&
+	MIRROR="$(cd mirror && but config --bool remote.origin.mirror)" &&
 	test "$MIRROR" = true
 
 '
 
 test_expect_success 'clone --mirror with detached HEAD' '
 
-	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
-	git clone --mirror src mirror.detached &&
-	( cd src && git checkout - ) &&
-	GIT_DIR=mirror.detached git rev-parse HEAD >actual &&
+	( cd src && but checkout HEAD^ && but rev-parse HEAD >../expected ) &&
+	but clone --mirror src mirror.detached &&
+	( cd src && but checkout - ) &&
+	GIT_DIR=mirror.detached but rev-parse HEAD >actual &&
 	test_cmp expected actual
 
 '
 
 test_expect_success 'clone --bare with detached HEAD' '
 
-	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
-	git clone --bare src bare.detached &&
-	( cd src && git checkout - ) &&
-	GIT_DIR=bare.detached git rev-parse HEAD >actual &&
+	( cd src && but checkout HEAD^ && but rev-parse HEAD >../expected ) &&
+	but clone --bare src bare.detached &&
+	( cd src && but checkout - ) &&
+	GIT_DIR=bare.detached but rev-parse HEAD >actual &&
 	test_cmp expected actual
 
 '
 
-test_expect_success 'clone --bare names the local repository <name>.git' '
+test_expect_success 'clone --bare names the local repository <name>.but' '
 
-	git clone --bare src &&
-	test -d src.git
+	but clone --bare src &&
+	test -d src.but
 
 '
 
 test_expect_success 'clone --mirror does not repeat tags' '
 
 	(cd src &&
-	 git tag some-tag HEAD) &&
-	git clone --mirror src mirror2 &&
+	 but tag some-tag HEAD) &&
+	but clone --mirror src mirror2 &&
 	(cd mirror2 &&
-	 git show-ref 2> clone.err > clone.out) &&
+	 but show-ref 2> clone.err > clone.out) &&
 	! grep Duplicate mirror2/clone.err &&
 	grep some-tag mirror2/clone.out
 
@@ -159,153 +159,153 @@ test_expect_success 'clone --mirror does not repeat tags' '
 
 test_expect_success 'clone to destination with trailing /' '
 
-	git clone src target-1/ &&
-	T=$( cd target-1 && git rev-parse HEAD ) &&
-	S=$( cd src && git rev-parse HEAD ) &&
+	but clone src target-1/ &&
+	T=$( cd target-1 && but rev-parse HEAD ) &&
+	S=$( cd src && but rev-parse HEAD ) &&
 	test "$T" = "$S"
 
 '
 
 test_expect_success 'clone to destination with extra trailing /' '
 
-	git clone src target-2/// &&
-	T=$( cd target-2 && git rev-parse HEAD ) &&
-	S=$( cd src && git rev-parse HEAD ) &&
+	but clone src target-2/// &&
+	T=$( cd target-2 && but rev-parse HEAD ) &&
+	S=$( cd src && but rev-parse HEAD ) &&
 	test "$T" = "$S"
 
 '
 
 test_expect_success 'clone to an existing empty directory' '
 	mkdir target-3 &&
-	git clone src target-3 &&
-	T=$( cd target-3 && git rev-parse HEAD ) &&
-	S=$( cd src && git rev-parse HEAD ) &&
+	but clone src target-3 &&
+	T=$( cd target-3 && but rev-parse HEAD ) &&
+	S=$( cd src && but rev-parse HEAD ) &&
 	test "$T" = "$S"
 '
 
 test_expect_success 'clone to an existing non-empty directory' '
 	mkdir target-4 &&
 	>target-4/Fakefile &&
-	test_must_fail git clone src target-4
+	test_must_fail but clone src target-4
 '
 
 test_expect_success 'clone to an existing path' '
 	>target-5 &&
-	test_must_fail git clone src target-5
+	test_must_fail but clone src target-5
 '
 
 test_expect_success 'clone a void' '
 	mkdir src-0 &&
 	(
-		cd src-0 && git init
+		cd src-0 && but init
 	) &&
-	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
+	but clone "file://$(pwd)/src-0" target-6 2>err-6 &&
 	! grep "fatal:" err-6 &&
 	(
 		cd src-0 && test_cummit A
 	) &&
-	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
+	but clone "file://$(pwd)/src-0" target-7 2>err-7 &&
 	! grep "fatal:" err-7 &&
 	# There is no reason to insist they are bit-for-bit
 	# identical, but this test should suffice for now.
-	test_cmp target-6/.git/config target-7/.git/config
+	test_cmp target-6/.but/config target-7/.but/config
 '
 
 test_expect_success 'clone respects global branch.autosetuprebase' '
 	(
-		test_config="$HOME/.gitconfig" &&
-		git config -f "$test_config" branch.autosetuprebase remote &&
+		test_config="$HOME/.butconfig" &&
+		but config -f "$test_config" branch.autosetuprebase remote &&
 		rm -fr dst &&
-		git clone src dst &&
+		but clone src dst &&
 		cd dst &&
-		actual="z$(git config branch.main.rebase)" &&
+		actual="z$(but config branch.main.rebase)" &&
 		test ztrue = $actual
 	)
 '
 
 test_expect_success 'respect url-encoding of file://' '
-	git init x+y &&
-	git clone "file://$PWD/x+y" xy-url-1 &&
-	git clone "file://$PWD/x%2By" xy-url-2
+	but init x+y &&
+	but clone "file://$PWD/x+y" xy-url-1 &&
+	but clone "file://$PWD/x%2By" xy-url-2
 '
 
 test_expect_success 'do not query-string-decode + in URLs' '
 	rm -rf x+y &&
-	git init "x y" &&
-	test_must_fail git clone "file://$PWD/x+y" xy-no-plus
+	but init "x y" &&
+	test_must_fail but clone "file://$PWD/x+y" xy-no-plus
 '
 
 test_expect_success 'do not respect url-encoding of non-url path' '
-	git init x+y &&
-	test_must_fail git clone x%2By xy-regular &&
-	git clone x+y xy-regular
+	but init x+y &&
+	test_must_fail but clone x%2By xy-regular &&
+	but clone x+y xy-regular
 '
 
-test_expect_success 'clone separate gitdir' '
+test_expect_success 'clone separate butdir' '
 	rm -rf dst &&
-	git clone --separate-git-dir realgitdir src dst &&
-	test -d realgitdir/refs
+	but clone --separate-but-dir realbutdir src dst &&
+	test -d realbutdir/refs
 '
 
-test_expect_success 'clone separate gitdir: output' '
-	echo "gitdir: $(pwd)/realgitdir" >expected &&
-	test_cmp expected dst/.git
+test_expect_success 'clone separate butdir: output' '
+	echo "butdir: $(pwd)/realbutdir" >expected &&
+	test_cmp expected dst/.but
 '
 
-test_expect_success 'clone from .git file' '
-	git clone dst/.git dst2
+test_expect_success 'clone from .but file' '
+	but clone dst/.but dst2
 '
 
-test_expect_success 'fetch from .git gitfile' '
+test_expect_success 'fetch from .but butfile' '
 	(
 		cd dst2 &&
-		git fetch ../dst/.git
+		but fetch ../dst/.but
 	)
 '
 
-test_expect_success 'fetch from gitfile parent' '
+test_expect_success 'fetch from butfile parent' '
 	(
 		cd dst2 &&
-		git fetch ../dst
+		but fetch ../dst
 	)
 '
 
-test_expect_success 'clone separate gitdir where target already exists' '
+test_expect_success 'clone separate butdir where target already exists' '
 	rm -rf dst &&
-	echo foo=bar >>realgitdir/config &&
-	test_must_fail git clone --separate-git-dir realgitdir src dst &&
-	grep foo=bar realgitdir/config
+	echo foo=bar >>realbutdir/config &&
+	test_must_fail but clone --separate-but-dir realbutdir src dst &&
+	grep foo=bar realbutdir/config
 '
 
 test_expect_success 'clone --reference from original' '
-	git clone --shared --bare src src-1 &&
-	git clone --bare src src-2 &&
-	git clone --reference=src-2 --bare src-1 target-8 &&
+	but clone --shared --bare src src-1 &&
+	but clone --bare src src-2 &&
+	but clone --reference=src-2 --bare src-1 target-8 &&
 	grep /src-2/ target-8/objects/info/alternates
 '
 
 test_expect_success 'clone with more than one --reference' '
-	git clone --bare src src-3 &&
-	git clone --bare src src-4 &&
-	git clone --reference=src-3 --reference=src-4 src target-9 &&
-	grep /src-3/ target-9/.git/objects/info/alternates &&
-	grep /src-4/ target-9/.git/objects/info/alternates
+	but clone --bare src src-3 &&
+	but clone --bare src src-4 &&
+	but clone --reference=src-3 --reference=src-4 src target-9 &&
+	grep /src-3/ target-9/.but/objects/info/alternates &&
+	grep /src-4/ target-9/.but/objects/info/alternates
 '
 
 test_expect_success 'clone from original with relative alternate' '
 	mkdir nest &&
-	git clone --bare src nest/src-5 &&
-	echo ../../../src/.git/objects >nest/src-5/objects/info/alternates &&
-	git clone --bare nest/src-5 target-10 &&
-	grep /src/\\.git/objects target-10/objects/info/alternates
+	but clone --bare src nest/src-5 &&
+	echo ../../../src/.but/objects >nest/src-5/objects/info/alternates &&
+	but clone --bare nest/src-5 target-10 &&
+	grep /src/\\.but/objects target-10/objects/info/alternates
 '
 
 test_expect_success 'clone checking out a tag' '
-	git clone --branch=some-tag src dst.tag &&
-	GIT_DIR=src/.git git rev-parse some-tag >expected &&
-	GIT_DIR=dst.tag/.git git rev-parse HEAD >actual &&
+	but clone --branch=some-tag src dst.tag &&
+	GIT_DIR=src/.but but rev-parse some-tag >expected &&
+	GIT_DIR=dst.tag/.but but rev-parse HEAD >actual &&
 	test_cmp expected actual &&
-	GIT_DIR=dst.tag/.git git config remote.origin.fetch >fetch.actual &&
+	GIT_DIR=dst.tag/.but but config remote.origin.fetch >fetch.actual &&
 	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
 	test_cmp fetch.expected fetch.actual
 '
@@ -322,7 +322,7 @@ test_expect_success 'set up ssh wrapper' '
 copy_ssh_wrapper_as () {
 	rm -f "${1%$X}$X" &&
 	cp "$TRASH_DIRECTORY/ssh$X" "${1%$X}$X" &&
-	test_when_finished "rm $(git rev-parse --sq-quote "${1%$X}$X")" &&
+	test_when_finished "rm $(but rev-parse --sq-quote "${1%$X}$X")" &&
 	GIT_SSH="${1%$X}$X" &&
 	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\""
 }
@@ -336,65 +336,65 @@ expect_ssh () {
 		1)
 			;;
 		2)
-			echo "ssh: $1 git-upload-pack '$2'"
+			echo "ssh: $1 but-upload-pack '$2'"
 			;;
 		3)
-			echo "ssh: $1 $2 git-upload-pack '$3'"
+			echo "ssh: $1 $2 but-upload-pack '$3'"
 			;;
 		*)
-			echo "ssh: $1 $2 git-upload-pack '$3' $4"
+			echo "ssh: $1 $2 but-upload-pack '$3' $4"
 		esac
 	} >"$TRASH_DIRECTORY/ssh-expect" &&
 	(cd "$TRASH_DIRECTORY" && test_cmp ssh-expect ssh-output)
 }
 
 test_expect_success 'clone myhost:src uses ssh' '
-	GIT_TEST_PROTOCOL_VERSION=0 git clone myhost:src ssh-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 but clone myhost:src ssh-clone &&
 	expect_ssh myhost src
 '
 
 test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 	cp -R src "foo:bar" &&
-	git clone "foo:bar" foobar &&
+	but clone "foo:bar" foobar &&
 	expect_ssh none
 '
 
 test_expect_success 'bracketed hostnames are still ssh' '
-	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'OpenSSH variant passes -4' '
-	GIT_TEST_PROTOCOL_VERSION=0 git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 but clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
 	expect_ssh "-4 -p 123" myhost src
 '
 
 test_expect_success 'variant can be overridden' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/putty" &&
-	git -c ssh.variant=putty clone -4 "[myhost:123]:src" ssh-putty-clone &&
+	but -c ssh.variant=putty clone -4 "[myhost:123]:src" ssh-putty-clone &&
 	expect_ssh "-4 -P 123" myhost src
 '
 
 test_expect_success 'variant=auto picks based on basename' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	git -c ssh.variant=auto clone -4 "[myhost:123]:src" ssh-auto-clone &&
+	but -c ssh.variant=auto clone -4 "[myhost:123]:src" ssh-auto-clone &&
 	expect_ssh "-4 -P 123" myhost src
 '
 
 test_expect_success 'simple does not support -4/-6' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
-	test_must_fail git clone -4 "myhost:src" ssh-4-clone-simple
+	test_must_fail but clone -4 "myhost:src" ssh-4-clone-simple
 '
 
 test_expect_success 'simple does not support port' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
-	test_must_fail git clone "[myhost:123]:src" ssh-bracket-clone-simple
+	test_must_fail but clone "[myhost:123]:src" ssh-bracket-clone-simple
 '
 
 test_expect_success 'uplink is treated as simple' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/uplink" &&
-	test_must_fail git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
-	git clone "myhost:src" ssh-clone-uplink &&
+	test_must_fail but clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
+	but clone "myhost:src" ssh-clone-uplink &&
 	expect_ssh myhost src
 '
 
@@ -409,52 +409,52 @@ test_expect_success 'OpenSSH-like uplink is treated as ssh' '
 	test_when_finished "rm -f \"\$TRASH_DIRECTORY/uplink\"" &&
 	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
 	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
-	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
+	GIT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'plink is treated specially (as putty)' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-plink-0 &&
+	but clone "[myhost:123]:src" ssh-bracket-clone-plink-0 &&
 	expect_ssh "-P 123" myhost src
 '
 
 test_expect_success 'plink.exe is treated specially (as putty)' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-plink-1 &&
+	but clone "[myhost:123]:src" ssh-bracket-clone-plink-1 &&
 	expect_ssh "-P 123" myhost src
 '
 
 test_expect_success 'tortoiseplink is like putty, with extra arguments' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/tortoiseplink" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-plink-2 &&
+	but clone "[myhost:123]:src" ssh-bracket-clone-plink-2 &&
 	expect_ssh "-batch -P 123" myhost src
 '
 
 test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
 	GIT_SSH_COMMAND="\"$TRASH_DIRECTORY/plink.exe\" -v" \
-		git clone "[myhost:123]:src" ssh-bracket-clone-plink-3 &&
+		but clone "[myhost:123]:src" ssh-bracket-clone-plink-3 &&
 	expect_ssh "-v -P 123" myhost src
 '
 
 test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
 	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
-		git clone "[myhost:123]:src" ssh-bracket-clone-plink-4 &&
+		but clone "[myhost:123]:src" ssh-bracket-clone-plink-4 &&
 	expect_ssh "-v -P 123" myhost src
 '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_TEST_PROTOCOL_VERSION=0 GIT_SSH_VARIANT=ssh \
-		git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+		but clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'ssh.variant overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_TEST_PROTOCOL_VERSION=0 git -c ssh.variant=ssh \
+	GIT_TEST_PROTOCOL_VERSION=0 but -c ssh.variant=ssh \
 		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
 	expect_ssh "-p 123" myhost src
 '
@@ -462,21 +462,21 @@ test_expect_success 'ssh.variant overrides plink detection' '
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_SSH_VARIANT=plink \
-	git clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
+	but clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
 	expect_ssh "-P 123" myhost src
 '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_SSH_VARIANT=tortoiseplink \
-	git clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
+	but clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
 	expect_ssh "-batch -P 123" myhost src
 '
 
 test_expect_success 'clean failure on broken quoting' '
 	test_must_fail \
 		env GIT_SSH_COMMAND="${SQ}plink.exe -v" \
-		git clone "[myhost:123]:src" sq-failure
+		but clone "[myhost:123]:src" sq-failure
 '
 
 counter=0
@@ -485,7 +485,7 @@ counter=0
 # $3 path
 test_clone_url () {
 	counter=$(($counter + 1))
-	test_might_fail env GIT_TEST_PROTOCOL_VERSION=0 git clone "$1" tmp$counter &&
+	test_might_fail env GIT_TEST_PROTOCOL_VERSION=0 but clone "$1" tmp$counter &&
 	shift &&
 	expect_ssh "$@"
 }
@@ -593,37 +593,37 @@ test_expect_success 'clone from a repository with two identical branches' '
 
 	(
 		cd src &&
-		git checkout -b another main
+		but checkout -b another main
 	) &&
-	git clone src target-11 &&
-	test "z$( cd target-11 && git symbolic-ref HEAD )" = zrefs/heads/another
+	but clone src target-11 &&
+	test "z$( cd target-11 && but symbolic-ref HEAD )" = zrefs/heads/another
 
 '
 
 test_expect_success 'shallow clone locally' '
-	git clone --depth=1 --no-local src ssrrcc &&
-	git clone ssrrcc ddsstt &&
-	test_cmp ssrrcc/.git/shallow ddsstt/.git/shallow &&
-	( cd ddsstt && git fsck )
+	but clone --depth=1 --no-local src ssrrcc &&
+	but clone ssrrcc ddsstt &&
+	test_cmp ssrrcc/.but/shallow ddsstt/.but/shallow &&
+	( cd ddsstt && but fsck )
 '
 
 test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
-	rm -rf dst.git &&
-	GIT_TRACE_PACKFILE=$PWD/tmp.pack git clone --no-local --bare src dst.git &&
-	git init --bare replay.git &&
-	git -C replay.git index-pack -v --stdin <tmp.pack
+	rm -rf dst.but &&
+	GIT_TRACE_PACKFILE=$PWD/tmp.pack but clone --no-local --bare src dst.but &&
+	but init --bare replay.but &&
+	but -C replay.but index-pack -v --stdin <tmp.pack
 '
 
 test_expect_success 'clone on case-insensitive fs' '
-	git init icasefs &&
+	but init icasefs &&
 	(
 		cd icasefs &&
-		o=$(git hash-object -w --stdin </dev/null | hex2oct) &&
+		o=$(but hash-object -w --stdin </dev/null | hex2oct) &&
 		t=$(printf "100644 X\0${o}100644 x\0${o}" |
-			git hash-object -w -t tree --stdin) &&
-		c=$(git cummit-tree -m bogus $t) &&
-		git update-ref refs/heads/bogus $c &&
-		git clone -b bogus . bogus 2>warning
+			but hash-object -w -t tree --stdin) &&
+		c=$(but cummit-tree -m bogus $t) &&
+		but update-ref refs/heads/bogus $c &&
+		but clone -b bogus . bogus 2>warning
 	)
 '
 
@@ -636,15 +636,15 @@ test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 test_expect_success 'clone with GIT_DEFAULT_HASH' '
 	(
 		sane_unset GIT_DEFAULT_HASH &&
-		git init --object-format=sha1 test-sha1 &&
-		git init --object-format=sha256 test-sha256
+		but init --object-format=sha1 test-sha1 &&
+		but init --object-format=sha256 test-sha256
 	) &&
 	test_cummit -C test-sha1 foo &&
 	test_cummit -C test-sha256 foo &&
-	GIT_DEFAULT_HASH=sha1 git clone test-sha256 test-clone-sha256 &&
-	GIT_DEFAULT_HASH=sha256 git clone test-sha1 test-clone-sha1 &&
-	git -C test-clone-sha1 status &&
-	git -C test-clone-sha256 status
+	GIT_DEFAULT_HASH=sha1 but clone test-sha256 test-clone-sha256 &&
+	GIT_DEFAULT_HASH=sha256 but clone test-sha1 test-clone-sha1 &&
+	but -C test-clone-sha1 status &&
+	but -C test-clone-sha256 status
 '
 
 partial_clone_server () {
@@ -653,10 +653,10 @@ partial_clone_server () {
 	rm -rf "$SERVER" client &&
 	test_create_repo "$SERVER" &&
 	test_cummit -C "$SERVER" one &&
-	HASH1=$(git -C "$SERVER" hash-object one.t) &&
-	git -C "$SERVER" revert HEAD &&
+	HASH1=$(but -C "$SERVER" hash-object one.t) &&
+	but -C "$SERVER" revert HEAD &&
 	test_cummit -C "$SERVER" two &&
-	HASH2=$(git -C "$SERVER" hash-object two.t) &&
+	HASH2=$(but -C "$SERVER" hash-object two.t) &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1
 }
@@ -666,17 +666,17 @@ partial_clone () {
 	       URL="$2" &&
 
 	partial_clone_server "${SERVER}" &&
-	git clone --filter=blob:limit=0 "$URL" client &&
+	but clone --filter=blob:limit=0 "$URL" client &&
 
-	git -C client fsck &&
+	but -C client fsck &&
 
 	# Ensure that unneeded blobs are not inadvertently fetched.
 	test_config -C client remote.origin.promisor "false" &&
-	git -C client config --unset remote.origin.partialclonefilter &&
-	test_must_fail git -C client cat-file -e "$HASH1" &&
+	but -C client config --unset remote.origin.partialclonefilter &&
+	test_must_fail but -C client cat-file -e "$HASH1" &&
 
 	# But this blob was fetched, because clone performs an initial checkout
-	git -C client cat-file -e "$HASH2"
+	but -C client cat-file -e "$HASH2"
 }
 
 test_expect_success 'partial clone' '
@@ -685,7 +685,7 @@ test_expect_success 'partial clone' '
 
 test_expect_success 'partial clone with -o' '
 	partial_clone_server server &&
-	git clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client &&
+	but clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client &&
 	test_cmp_config -C client "blob:limit=0" --get-all remote.blah.partialclonefilter
 '
 
@@ -694,7 +694,7 @@ test_expect_success 'partial clone: warn if server does not support object filte
 	test_create_repo server &&
 	test_cummit -C server one &&
 
-	git clone --filter=blob:limit=0 "file://$(pwd)/server" client 2> err &&
+	but clone --filter=blob:limit=0 "file://$(pwd)/server" client 2> err &&
 
 	test_i18ngrep "filtering not recognized by server" err
 '
@@ -705,27 +705,27 @@ test_expect_success 'batch missing blob request during checkout' '
 	test_create_repo server &&
 	echo a >server/a &&
 	echo b >server/b &&
-	git -C server add a b &&
+	but -C server add a b &&
 
-	git -C server cummit -m x &&
+	but -C server cummit -m x &&
 	echo aa >server/a &&
 	echo bb >server/b &&
-	git -C server add a b &&
-	git -C server cummit -m x &&
+	but -C server add a b &&
+	but -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
 
-	git clone --filter=blob:limit=0 "file://$(pwd)/server" client &&
+	but clone --filter=blob:limit=0 "file://$(pwd)/server" client &&
 
 	# Ensure that there is only one negotiation by checking that there is
 	# only "done" line sent. ("done" marks the end of negotiation.)
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client checkout HEAD^ &&
+	GIT_TRACE_PACKET="$(pwd)/trace" but -C client checkout HEAD^ &&
 	grep "fetch> done" trace >done_lines &&
 	test_line_count = 1 done_lines
 '
 
-test_expect_success 'batch missing blob request does not inadvertently try to fetch gitlinks' '
+test_expect_success 'batch missing blob request does not inadvertently try to fetch butlinks' '
 	rm -rf server client &&
 
 	test_create_repo repo_for_submodule &&
@@ -734,21 +734,21 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 	test_create_repo server &&
 	echo a >server/a &&
 	echo b >server/b &&
-	git -C server add a b &&
-	git -C server cummit -m x &&
+	but -C server add a b &&
+	but -C server cummit -m x &&
 
 	echo aa >server/a &&
 	echo bb >server/b &&
-	# Also add a gitlink pointing to an arbitrary repository
-	git -C server submodule add "$(pwd)/repo_for_submodule" c &&
-	git -C server add a b c &&
-	git -C server cummit -m x &&
+	# Also add a butlink pointing to an arbitrary repository
+	but -C server submodule add "$(pwd)/repo_for_submodule" c &&
+	but -C server add a b c &&
+	but -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
 
 	# Make sure that it succeeds
-	git clone --filter=blob:limit=0 "file://$(pwd)/server" client
+	but clone --filter=blob:limit=0 "file://$(pwd)/server" client
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -760,11 +760,11 @@ test_expect_success 'partial clone using HTTP' '
 
 test_expect_success 'reject cloning shallow repository using HTTP' '
 	test_when_finished "rm -rf repo" &&
-	git clone --bare --no-local --depth=1 src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	test_must_fail git -c protocol.version=2 clone --reject-shallow $HTTPD_URL/smart/repo.git repo 2>err &&
+	but clone --bare --no-local --depth=1 src "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	test_must_fail but -c protocol.version=2 clone --reject-shallow $HTTPD_URL/smart/repo.but repo 2>err &&
 	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
 
-	git clone --no-reject-shallow $HTTPD_URL/smart/repo.git repo
+	but clone --no-reject-shallow $HTTPD_URL/smart/repo.but repo
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

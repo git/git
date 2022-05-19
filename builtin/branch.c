@@ -1,8 +1,8 @@
 /*
- * Builtin "git branch"
+ * Builtin "but branch"
  *
  * Copyright (c) 2006 Kristian Høgsberg <krh@redhat.com>
- * Based on git-branch.sh by Junio C Hamano.
+ * Based on but-branch.sh by Junio C Hamano.
  */
 
 #include "cache.h"
@@ -26,14 +26,14 @@
 #include "cummit-reach.h"
 
 static const char * const builtin_branch_usage[] = {
-	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),
-	N_("git branch [<options>] [-f] [--recurse-submodules] <branch-name> [<start-point>]"),
-	N_("git branch [<options>] [-l] [<pattern>...]"),
-	N_("git branch [<options>] [-r] (-d | -D) <branch-name>..."),
-	N_("git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"),
-	N_("git branch [<options>] (-c | -C) [<old-branch>] <new-branch>"),
-	N_("git branch [<options>] [-r | -a] [--points-at]"),
-	N_("git branch [<options>] [-r | -a] [--format]"),
+	N_("but branch [<options>] [-r | -a] [--merged] [--no-merged]"),
+	N_("but branch [<options>] [-f] [--recurse-submodules] <branch-name> [<start-point>]"),
+	N_("but branch [<options>] [-l] [<pattern>...]"),
+	N_("but branch [<options>] [-r] (-d | -D) <branch-name>..."),
+	N_("but branch [<options>] (-m | -M) [<old-branch>] <new-branch>"),
+	N_("but branch [<options>] (-c | -C) [<old-branch>] <new-branch>"),
+	N_("but branch [<options>] [-r | -a] [--points-at]"),
+	N_("but branch [<options>] [-r | -a] [--format]"),
 	NULL
 };
 
@@ -77,7 +77,7 @@ static unsigned int colopts;
 
 define_list_config_array(color_branch_slots);
 
-static int git_branch_config(const char *var, const char *value, void *cb)
+static int but_branch_config(const char *var, const char *value, void *cb)
 {
 	const char *slot_name;
 
@@ -89,9 +89,9 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 	}
 
 	if (starts_with(var, "column."))
-		return git_column_config(var, value, "branch", &colopts);
+		return but_column_config(var, value, "branch", &colopts);
 	if (!strcmp(var, "color.branch")) {
-		branch_use_color = git_config_colorbool(var, value);
+		branch_use_color = but_config_colorbool(var, value);
 		return 0;
 	}
 	if (skip_prefix(var, "color.branch.", &slot_name)) {
@@ -103,15 +103,15 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		return color_parse(value, branch_colors[slot]);
 	}
 	if (!strcmp(var, "submodule.recurse")) {
-		recurse_submodules = git_config_bool(var, value);
+		recurse_submodules = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcasecmp(var, "submodule.propagateBranches")) {
-		submodule_propagate_branches = git_config_bool(var, value);
+		submodule_propagate_branches = but_config_bool(var, value);
 		return 0;
 	}
 
-	return git_color_default_config(var, value, cb);
+	return but_color_default_config(var, value, cb);
 }
 
 static const char *branch_get_color(enum color_branch ix)
@@ -186,7 +186,7 @@ static int check_branch_cummit(const char *branchname, const char *refname,
 	if (!force && !branch_merged(kinds, branchname, rev, head_rev)) {
 		error(_("The branch '%s' is not fully merged.\n"
 		      "If you are sure you want to delete it, "
-		      "run 'git branch -D %s'."), branchname, branchname);
+		      "run 'but branch -D %s'."), branchname, branchname);
 		return -1;
 	}
 	return 0;
@@ -196,7 +196,7 @@ static void delete_branch_config(const char *branchname)
 {
 	struct strbuf buf = STRBUF_INIT;
 	strbuf_addf(&buf, "branch.%s", branchname);
-	if (git_config_rename_section(buf.buf, NULL) < 0)
+	if (but_config_rename_section(buf.buf, NULL) < 0)
 		warning(_("Update of config-file failed"));
 	strbuf_release(&buf);
 }
@@ -544,7 +544,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	}
 
 	/*
-	 * A command like "git branch -M currentbranch currentbranch" cannot
+	 * A command like "but branch -M currentbranch currentbranch" cannot
 	 * cause the worktree to become inconsistent with HEAD, so allow it.
 	 */
 	if (!strcmp(oldname, newname))
@@ -592,9 +592,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&oldref);
 	strbuf_addf(&newsection, "branch.%s", interpreted_newname);
 	strbuf_release(&newref);
-	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
+	if (!copy && but_config_rename_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is renamed, but update of config-file failed"));
-	if (copy && strcmp(oldname, newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
+	if (copy && strcmp(oldname, newname) && but_config_copy_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is copied, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
@@ -624,7 +624,7 @@ static int edit_branch_description(const char *branch_name)
 	strbuf_stripspace(&buf, 1);
 
 	strbuf_addf(&name, "branch.%s.description", branch_name);
-	git_config_set(name.buf, buf.len ? buf.buf : NULL);
+	but_config_set(name.buf, buf.len ? buf.buf : NULL);
 	strbuf_release(&name);
 	strbuf_release(&buf);
 
@@ -669,7 +669,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_WITHOUT(&filter.no_cummit, N_("print only branches that don't contain the cummit")),
 		OPT__ABBREV(&filter.abbrev),
 
-		OPT_GROUP(N_("Specific git-branch actions:")),
+		OPT_GROUP(N_("Specific but-branch actions:")),
 		OPT_SET_INT('a', "all", &filter.kind, N_("list both remote-tracking and local branches"),
 			FILTER_REFS_REMOTES | FILTER_REFS_BRANCHES),
 		OPT_BIT('d', "delete", &delete, N_("delete fully merged branch"), 1),
@@ -705,9 +705,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_branch_usage, options);
 
-	git_config(git_branch_config, &sorting_options);
+	but_config(but_branch_config, &sorting_options);
 
-	track = git_branch_track;
+	track = but_branch_track;
 
 	head = resolve_refdup("HEAD", 0, &head_oid, NULL);
 	if (!head)
@@ -773,7 +773,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		print_current_branch_name();
 		return 0;
 	} else if (list) {
-		/*  git branch --list also shows HEAD when it is detached */
+		/*  but branch --list also shows HEAD when it is detached */
 		if ((filter.kind & FILTER_REFS_BRANCHES) && filter.detached)
 			filter.kind |= FILTER_REFS_DETACHED_HEAD;
 		filter.name_patterns = argv;
@@ -877,17 +877,17 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die(_("Branch '%s' has no upstream information"), branch->name);
 
 		strbuf_addf(&buf, "branch.%s.remote", branch->name);
-		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
+		but_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "branch.%s.merge", branch->name);
-		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
+		but_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_release(&buf);
 	} else if (!noncreate_actions && argc > 0 && argc <= 2) {
 		const char *branch_name = argv[0];
 		const char *start_name = argc == 2 ? argv[1] : head;
 
 		if (filter.kind != FILTER_REFS_BRANCHES)
-			die(_("The -a, and -r, options to 'git branch' do not take a branch name.\n"
+			die(_("The -a, and -r, options to 'but branch' do not take a branch name.\n"
 				  "Did you mean to use: -a|-r --list <pattern>?"));
 
 		if (track == BRANCH_TRACK_OVERRIDE)

@@ -11,44 +11,44 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 
 	echo hello >world &&
-	git update-index --add world &&
-	git cummit -m initial &&
-	git branch side &&
+	but update-index --add world &&
+	but cummit -m initial &&
+	but branch side &&
 	echo goodbye >world &&
-	git update-index --add world &&
-	git cummit -m second
+	but update-index --add world &&
+	but cummit -m second
 
 '
 
 test_expect_success 'branch switching' '
 
-	git reset --hard &&
-	test "$(git diff-files --raw)" = "" &&
+	but reset --hard &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout main &&
-	test "$(git diff-files --raw)" = "" &&
+	but checkout main &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout side &&
-	test "$(git diff-files --raw)" = "" &&
+	but checkout side &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout main &&
-	test "$(git diff-files --raw)" = ""
+	but checkout main &&
+	test "$(but diff-files --raw)" = ""
 
 '
 
 test_expect_success 'path checkout' '
 
-	git reset --hard &&
-	test "$(git diff-files --raw)" = "" &&
+	but reset --hard &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout main world &&
-	test "$(git diff-files --raw)" = "" &&
+	but checkout main world &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout side world &&
-	test "$(git diff-files --raw)" = "" &&
+	but checkout side world &&
+	test "$(but diff-files --raw)" = "" &&
 
-	git checkout main world &&
-	test "$(git diff-files --raw)" = ""
+	but checkout main world &&
+	test "$(but diff-files --raw)" = ""
 
 '
 

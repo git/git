@@ -1,15 +1,15 @@
-git-mktree(1)
+but-mktree(1)
 =============
 
 NAME
 ----
-git-mktree - Build a tree-object from ls-tree formatted text
+but-mktree - Build a tree-object from ls-tree formatted text
 
 
 SYNOPSIS
 --------
 [verse]
-'git mktree' [-z] [--missing] [--batch]
+'but mktree' [-z] [--missing] [--batch]
 
 DESCRIPTION
 -----------
@@ -26,7 +26,7 @@ OPTIONS
 --missing::
 	Allow missing objects.  The default behaviour (without this option)
 	is to verify that each tree entry's sha1 identifies an existing
-	object.  This option has no effect on the treatment of gitlink entries
+	object.  This option has no effect on the treatment of butlink entries
 	(aka "submodules") which are always allowed to be missing.
 
 --batch::
@@ -37,4 +37,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

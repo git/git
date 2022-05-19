@@ -32,13 +32,13 @@ test_have_prereq SYMLINKS ||
 if test_have_prereq CASE_INSENSITIVE_FS
 then
 test_expect_success "detection of case insensitive filesystem during repo init" '
-	test $(git config --bool core.ignorecase) = true
+	test $(but config --bool core.ignorecase) = true
 '
 else
 test_expect_success "detection of case insensitive filesystem during repo init" '
 	{
-		test_must_fail git config --bool core.ignorecase >/dev/null ||
-			test $(git config --bool core.ignorecase) = false
+		test_must_fail but config --bool core.ignorecase >/dev/null ||
+			test $(but config --bool core.ignorecase) = false
 	}
 '
 fi
@@ -47,50 +47,50 @@ if test_have_prereq SYMLINKS
 then
 test_expect_success "detection of filesystem w/o symlink support during repo init" '
 	{
-		test_must_fail git config --bool core.symlinks ||
-		test "$(git config --bool core.symlinks)" = true
+		test_must_fail but config --bool core.symlinks ||
+		test "$(but config --bool core.symlinks)" = true
 	}
 '
 else
 test_expect_success "detection of filesystem w/o symlink support during repo init" '
-	v=$(git config --bool core.symlinks) &&
+	v=$(but config --bool core.symlinks) &&
 	test "$v" = false
 '
 fi
 
 test_expect_success "setup case tests" '
-	git config core.ignorecase true &&
+	but config core.ignorecase true &&
 	touch camelcase &&
-	git add camelcase &&
-	git cummit -m "initial" &&
-	git tag initial &&
-	git checkout -b topic &&
-	git mv camelcase tmp &&
-	git mv tmp CamelCase &&
-	git cummit -m "rename" &&
-	git checkout -f main
+	but add camelcase &&
+	but cummit -m "initial" &&
+	but tag initial &&
+	but checkout -b topic &&
+	but mv camelcase tmp &&
+	but mv tmp CamelCase &&
+	but cummit -m "rename" &&
+	but checkout -f main
 '
 
 test_expect_success 'rename (case change)' '
-	git mv camelcase CamelCase &&
-	git cummit -m "rename"
+	but mv camelcase CamelCase &&
+	but cummit -m "rename"
 '
 
 test_expect_success 'merge (case change)' '
 	rm -f CamelCase &&
 	rm -f camelcase &&
-	git reset --hard initial &&
-	git merge topic
+	but reset --hard initial &&
+	but merge topic
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'add directory (with different case)' '
-	git reset --hard initial &&
+	but reset --hard initial &&
 	mkdir -p dir1/dir2 &&
 	echo >dir1/dir2/a &&
 	echo >dir1/dir2/b &&
-	git add dir1/dir2/a &&
-	git add dir1/DIR2/b &&
-	git ls-files >actual &&
+	but add dir1/dir2/a &&
+	but add dir1/DIR2/b &&
+	but ls-files >actual &&
 	cat >expected <<-\EOF &&
 		camelcase
 		dir1/dir2/a
@@ -100,58 +100,58 @@ test_expect_success CASE_INSENSITIVE_FS 'add directory (with different case)' '
 '
 
 test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
-	git reset --hard initial &&
+	but reset --hard initial &&
 	rm camelcase &&
 	echo 1 >CamelCase &&
-	git add CamelCase &&
-	git ls-files >tmp &&
+	but add CamelCase &&
+	but ls-files >tmp &&
 	camel=$(grep -i camelcase tmp) &&
 	test $(echo "$camel" | wc -l) = 1 &&
-	test "z$(git cat-file blob :$camel)" = z1
+	test "z$(but cat-file blob :$camel)" = z1
 '
 
 test_expect_success "setup unicode normalization tests" '
 	test_create_repo unicode &&
 	cd unicode &&
-	git config core.precomposeunicode false &&
+	but config core.precomposeunicode false &&
 	touch "$aumlcdiar" &&
-	git add "$aumlcdiar" &&
-	git cummit -m initial &&
-	git tag initial &&
-	git checkout -b topic &&
-	git mv $aumlcdiar tmp &&
-	git mv tmp "$auml" &&
-	git cummit -m rename &&
-	git checkout -f main
+	but add "$aumlcdiar" &&
+	but cummit -m initial &&
+	but tag initial &&
+	but checkout -b topic &&
+	but mv $aumlcdiar tmp &&
+	but mv tmp "$auml" &&
+	but cummit -m rename &&
+	but checkout -f main
 '
 
 $test_unicode 'rename (silent unicode normalization)' '
-	git mv "$aumlcdiar" "$auml" &&
-	git cummit -m rename
+	but mv "$aumlcdiar" "$auml" &&
+	but cummit -m rename
 '
 
 $test_unicode 'merge (silent unicode normalization)' '
-	git reset --hard initial &&
-	git merge topic
+	but reset --hard initial &&
+	but merge topic
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'checkout with no pathspec and a case insensitive fs' '
-	git init repo &&
+	but init repo &&
 	(
 		cd repo &&
 
 		>Gitweb &&
-		git add Gitweb &&
-		git cummit -m "add Gitweb" &&
+		but add Gitweb &&
+		but cummit -m "add Gitweb" &&
 
-		git checkout --orphan todo &&
-		git reset --hard &&
-		mkdir -p gitweb/subdir &&
-		>gitweb/subdir/file &&
-		git add gitweb &&
-		git cummit -m "add gitweb/subdir/file" &&
+		but checkout --orphan todo &&
+		but reset --hard &&
+		mkdir -p butweb/subdir &&
+		>butweb/subdir/file &&
+		but add butweb &&
+		but cummit -m "add butweb/subdir/file" &&
 
-		git checkout main
+		but checkout main
 	)
 '
 

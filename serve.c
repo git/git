@@ -22,7 +22,7 @@ static int agent_advertise(struct repository *r,
 			   struct strbuf *value)
 {
 	if (value)
-		strbuf_addstr(value, git_user_agent_sanitized());
+		strbuf_addstr(value, but_user_agent_sanitized());
 	return 1;
 }
 
@@ -48,7 +48,7 @@ static void object_format_receive(struct repository *r,
 static int session_id_advertise(struct repository *r, struct strbuf *value)
 {
 	if (advertise_sid == -1 &&
-	    git_config_get_bool("transfer.advertisesid", &advertise_sid))
+	    but_config_get_bool("transfer.advertisesid", &advertise_sid))
 		advertise_sid = 0;
 	if (!advertise_sid)
 		return 0;

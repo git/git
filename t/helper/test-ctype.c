@@ -31,7 +31,7 @@ static int is_in(const char *s, int ch)
 
 int cmd__ctype(int argc, const char **argv)
 {
-	TEST_CLASS(isdigit, DIGIT);
+	TEST_CLASS(isdibut, DIGIT);
 	TEST_CLASS(isspace, " \n\r\t");
 	TEST_CLASS(isalpha, LOWER UPPER);
 	TEST_CLASS(isalnum, LOWER UPPER DIGIT);

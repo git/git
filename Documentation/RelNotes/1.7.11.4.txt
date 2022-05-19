@@ -10,22 +10,22 @@ Fixes since v1.7.11.3
  * The advise() function did not use varargs correctly to format
    its message.
 
- * When "git am" failed, old timers knew to check .git/rebase-apply/patch
+ * When "but am" failed, old timers knew to check .but/rebase-apply/patch
    to see what went wrong, but we never told the users about it.
 
- * "git cummit-tree" learned a more natural "-p <parent> <tree>" order
+ * "but cummit-tree" learned a more natural "-p <parent> <tree>" order
    of arguments long time ago, but recently forgot it by mistake.
 
- * "git diff --no-ext-diff" did not output anything for a typechange
+ * "but diff --no-ext-diff" did not output anything for a typechange
    filepair when GIT_EXTERNAL_DIFF is in effect.
 
- * In 1.7.9 era, we taught "git rebase" about the raw timestamp format
+ * In 1.7.9 era, we taught "but rebase" about the raw timestamp format
    but we did not teach the same trick to "filter-branch", which rolled
    a similar logic on its own.
 
- * When "git submodule add" clones a submodule repository, it can get
+ * When "but submodule add" clones a submodule repository, it can get
    confused where to store the resulting submodule repository in the
-   superproject's .git/ directory when there is a symbolic link in the
+   superproject's .but/ directory when there is a symbolic link in the
    path to the current directory.
 
 Also contains minor typofixes and documentation updates.

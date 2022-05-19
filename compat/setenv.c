@@ -1,6 +1,6 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-int gitsetenv(const char *name, const char *value, int replace)
+int butsetenv(const char *name, const char *value, int replace)
 {
 	int out;
 	size_t namelen, valuelen;

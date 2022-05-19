@@ -47,7 +47,7 @@ struct options {
 		atomic : 1,
 		object_format : 1,
 		force_if_includes : 1;
-	const struct git_hash_algo *hash_algo;
+	const struct but_hash_algo *hash_algo;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -188,11 +188,11 @@ static int set_option(const char *name, const char *value)
 		return 0;
 	} else if (!strcmp(name, "family")) {
 		if (!strcmp(value, "ipv4"))
-			git_curl_ipresolve = CURL_IPRESOLVE_V4;
+			but_curl_ipresolve = CURL_IPRESOLVE_V4;
 		else if (!strcmp(value, "ipv6"))
-			git_curl_ipresolve = CURL_IPRESOLVE_V6;
+			but_curl_ipresolve = CURL_IPRESOLVE_V6;
 		else if (!strcmp(value, "all"))
-			git_curl_ipresolve = CURL_IPRESOLVE_WHATEVER;
+			but_curl_ipresolve = CURL_IPRESOLVE_WHATEVER;
 		else
 			return -1;
 		return 0;
@@ -228,11 +228,11 @@ struct discovery {
 	struct ref *refs;
 	struct oid_array shallow;
 	enum protocol_version version;
-	unsigned proto_git : 1;
+	unsigned proto_but : 1;
 };
 static struct discovery *last_discovery;
 
-static struct ref *parse_git_refs(struct discovery *heads, int for_push)
+static struct ref *parse_but_refs(struct discovery *heads, int for_push)
 {
 	struct ref *list = NULL;
 	struct packet_reader reader;
@@ -265,7 +265,7 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 	return list;
 }
 
-static const struct git_hash_algo *detect_hash_algo(struct discovery *heads)
+static const struct but_hash_algo *detect_hash_algo(struct discovery *heads)
 {
 	const char *p = memchr(heads->buf, '\t', heads->len);
 	int algo;
@@ -291,7 +291,7 @@ static struct ref *parse_info_refs(struct discovery *heads)
 	options.hash_algo = detect_hash_algo(heads);
 	if (!options.hash_algo)
 		die("%sinfo/refs not valid: could not determine hash algorithm; "
-		    "is this a git repository?",
+		    "is this a but repository?",
 		    transport_anonymize_url(url.buf));
 
 	data = heads->buf;
@@ -305,7 +305,7 @@ static struct ref *parse_info_refs(struct discovery *heads)
 			mid = &data[i];
 		if (data[i] == '\n') {
 			if (mid - start != options.hash_algo->hexsz)
-				die(_("%sinfo/refs not valid: is this a git repository?"),
+				die(_("%sinfo/refs not valid: is this a but repository?"),
 				    transport_anonymize_url(url.buf));
 			data[i] = 0;
 			ref_name = mid + 1;
@@ -427,14 +427,14 @@ static void check_smart_http(struct discovery *d, const char *service,
 		 */
 		d->buf = reader.src_buffer;
 		d->len = reader.src_len;
-		d->proto_git = 1;
+		d->proto_but = 1;
 
 	} else if (!strcmp(reader.line, "version 2")) {
 		/*
 		 * v2 smart http; do not consume version packet, which will
 		 * be handled elsewhere.
 		 */
-		d->proto_git = 1;
+		d->proto_but = 1;
 
 	} else {
 		die(_("invalid server response; got '%s'"), reader.line);
@@ -461,7 +461,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 
 	strbuf_addf(&refs_url, "%sinfo/refs", url.buf);
 	if ((starts_with(url.buf, "http://") || starts_with(url.buf, "https://")) &&
-	     git_env_bool("GIT_SMART_HTTP", 1)) {
+	     but_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url.buf, '?'))
 			strbuf_addch(&refs_url, '?');
@@ -475,7 +475,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	 * to perform a push, then fallback to v0 since the client doesn't know
 	 * how to push yet using v2.
 	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", service))
+	if (version == protocol_v2 && !strcmp("but-receive-pack", service))
 		version = protocol_v0;
 
 	/* Add the extra Git-Protocol header */
@@ -527,8 +527,8 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	if (maybe_smart)
 		check_smart_http(last, service, &type);
 
-	if (last->proto_git)
-		last->refs = parse_git_refs(last, for_push);
+	if (last->proto_but)
+		last->refs = parse_but_refs(last, for_push);
 	else
 		last->refs = parse_info_refs(last);
 
@@ -548,9 +548,9 @@ static struct ref *get_refs(int for_push)
 	struct discovery *heads;
 
 	if (for_push)
-		heads = discover_refs("git-receive-pack", for_push);
+		heads = discover_refs("but-receive-pack", for_push);
 	else
-		heads = discover_refs("git-upload-pack", for_push);
+		heads = discover_refs("but-upload-pack", for_push);
 
 	return heads->refs;
 }
@@ -745,13 +745,13 @@ static void check_pktline(struct check_pktline_state *state, const char *ptr, si
 {
 	while (size) {
 		if (!state->remaining) {
-			int digits_remaining = 4 - state->len_filled;
-			if (digits_remaining > size)
-				digits_remaining = size;
-			memcpy(&state->len_buf[state->len_filled], ptr, digits_remaining);
-			state->len_filled += digits_remaining;
-			ptr += digits_remaining;
-			size -= digits_remaining;
+			int dibuts_remaining = 4 - state->len_filled;
+			if (dibuts_remaining > size)
+				dibuts_remaining = size;
+			memcpy(&state->len_buf[state->len_filled], ptr, dibuts_remaining);
+			state->len_filled += dibuts_remaining;
+			ptr += dibuts_remaining;
+			size -= dibuts_remaining;
 
 			if (state->len_filled == 4) {
 				state->remaining = packet_length(state->len_buf);
@@ -973,11 +973,11 @@ retry:
 		 * we can try to deflate it ourselves, this may save on
 		 * the transfer time.
 		 */
-		git_zstream stream;
+		but_zstream stream;
 		int ret;
 
-		git_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
-		gzip_size = git_deflate_bound(&stream, rpc->len);
+		but_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
+		gzip_size = but_deflate_bound(&stream, rpc->len);
 		gzip_body = xmalloc(gzip_size);
 
 		stream.next_in = (unsigned char *)rpc->buf;
@@ -985,11 +985,11 @@ retry:
 		stream.next_out = (unsigned char *)gzip_body;
 		stream.avail_out = gzip_size;
 
-		ret = git_deflate(&stream, Z_FINISH);
+		ret = but_deflate(&stream, Z_FINISH);
 		if (ret != Z_STREAM_END)
 			die(_("cannot deflate request; zlib deflate error %d"), ret);
 
-		ret = git_deflate_end_gently(&stream);
+		ret = but_deflate_end_gently(&stream);
 		if (ret != Z_OK)
 			die(_("cannot deflate request; zlib end error %d"), ret);
 
@@ -1064,7 +1064,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 
 	client.in = -1;
 	client.out = -1;
-	client.git_cmd = 1;
+	client.but_cmd = 1;
 	strvec_pushv(&client.args, client_argv);
 	if (start_command(&client))
 		exit(1);
@@ -1150,7 +1150,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	return ret ? error(_("fetch failed.")) : 0;
 }
 
-static int fetch_git(struct discovery *heads,
+static int fetch_but(struct discovery *heads,
 	int nr_heads, struct ref **to_fetch)
 {
 	struct rpc_state rpc;
@@ -1202,7 +1202,7 @@ static int fetch_git(struct discovery *heads,
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
-	rpc.service_name = "git-upload-pack",
+	rpc.service_name = "but-upload-pack",
 	rpc.gzip_request = 1;
 
 	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
@@ -1216,9 +1216,9 @@ static int fetch_git(struct discovery *heads,
 
 static int fetch(int nr_heads, struct ref **to_fetch)
 {
-	struct discovery *d = discover_refs("git-upload-pack", 0);
-	if (d->proto_git)
-		return fetch_git(d, nr_heads, to_fetch);
+	struct discovery *d = discover_refs("but-upload-pack", 0);
+	if (d->proto_but)
+		return fetch_but(d, nr_heads, to_fetch);
 	else
 		return fetch_dumb(nr_heads, to_fetch);
 }
@@ -1281,7 +1281,7 @@ static int push_dav(int nr_spec, const char **specs)
 	struct child_process child = CHILD_PROCESS_INIT;
 	size_t i;
 
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	strvec_push(&child.args, "http-push");
 	strvec_push(&child.args, "--helper-status");
 	if (options.dry_run)
@@ -1293,11 +1293,11 @@ static int push_dav(int nr_spec, const char **specs)
 		strvec_push(&child.args, specs[i]);
 
 	if (run_command(&child))
-		die(_("git-http-push failed"));
+		die(_("but-http-push failed"));
 	return 0;
 }
 
-static int push_git(struct discovery *heads, int nr_spec, const char **specs)
+static int push_but(struct discovery *heads, int nr_spec, const char **specs)
 {
 	struct rpc_state rpc;
 	int i, err;
@@ -1341,7 +1341,7 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
-	rpc.service_name = "git-receive-pack",
+	rpc.service_name = "but-receive-pack",
 
 	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
 	if (rpc_result.len)
@@ -1354,11 +1354,11 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 
 static int push(int nr_spec, const char **specs)
 {
-	struct discovery *heads = discover_refs("git-receive-pack", 1);
+	struct discovery *heads = discover_refs("but-receive-pack", 1);
 	int ret;
 
-	if (heads->proto_git)
-		ret = push_git(heads, nr_spec, specs);
+	if (heads->proto_but)
+		ret = push_but(heads, nr_spec, specs);
 	else
 		ret = push_dav(nr_spec, specs);
 	free_discovery(heads);
@@ -1477,12 +1477,12 @@ static int stateless_connect(const char *service_name)
 int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int nongit;
+	int nonbut;
 	int ret = 1;
 
-	setup_git_directory_gently(&nongit);
+	setup_but_directory_gently(&nonbut);
 	if (argc < 2) {
-		error(_("remote-curl: usage: git remote-curl <remote> [<url>]"));
+		error(_("remote-curl: usage: but remote-curl <remote> [<url>]"));
 		goto cleanup;
 	}
 
@@ -1494,7 +1494,7 @@ int cmd_main(int argc, const char **argv)
 
 	/*
 	 * Just report "remote-curl" here (folding all the various aliases
-	 * ("git-remote-http", "git-remote-https", and etc.) here since they
+	 * ("but-remote-http", "but-remote-https", and etc.) here since they
 	 * are all just copies of the same actual executable.
 	 */
 	trace2_cmd_name("remote-curl");
@@ -1514,13 +1514,13 @@ int cmd_main(int argc, const char **argv)
 
 		if (strbuf_getline_lf(&buf, stdin) == EOF) {
 			if (ferror(stdin))
-				error(_("remote-curl: error reading command stream from git"));
+				error(_("remote-curl: error reading command stream from but"));
 			goto cleanup;
 		}
 		if (buf.len == 0)
 			break;
 		if (starts_with(buf.buf, "fetch ")) {
-			if (nongit)
+			if (nonbut)
 				die(_("remote-curl: fetch attempted without a local repo"));
 			parse_fetch(&buf);
 
@@ -1562,7 +1562,7 @@ int cmd_main(int argc, const char **argv)
 			if (!stateless_connect(arg))
 				break;
 		} else {
-			error(_("remote-curl: unknown command '%s' from git"), buf.buf);
+			error(_("remote-curl: unknown command '%s' from but"), buf.buf);
 			goto cleanup;
 		}
 		strbuf_reset(&buf);

@@ -1,9 +1,9 @@
 /*
- * "git reset" builtin command
+ * "but reset" builtin command
  *
  * Copyright (c) 2007 Carlos Rica
  *
- * Based on git-reset.sh, which is
+ * Based on but-reset.sh, which is
  *
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
@@ -29,11 +29,11 @@
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
-static const char * const git_reset_usage[] = {
-	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"),
-	N_("git reset [-q] [<tree-ish>] [--] <pathspec>..."),
-	N_("git reset [-q] [--pathspec-from-file [--pathspec-file-nul]] [<tree-ish>]"),
-	N_("git reset --patch [<tree-ish>] [--] [<pathspec>...]"),
+static const char * const but_reset_usage[] = {
+	N_("but reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"),
+	N_("but reset [-q] [<tree-ish>] [--] <pathspec>..."),
+	N_("but reset [-q] [--pathspec-from-file [--pathspec-file-nul]] [<tree-ish>]"),
+	N_("but reset --patch [<tree-ish>] [--] [<pathspec>...]"),
 	NULL
 };
 
@@ -44,7 +44,7 @@ static const char *reset_type_names[] = {
 
 static inline int is_merge(void)
 {
-	return !access(git_path_merge_head(the_repository), F_OK);
+	return !access(but_path_merge_head(the_repository), F_OK);
 }
 
 static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet)
@@ -316,11 +316,11 @@ static void parse_args(struct pathspec *pathspec,
 	/*
 	 * Possible arguments are:
 	 *
-	 * git reset [-opts] [<rev>]
-	 * git reset [-opts] <tree> [<paths>...]
-	 * git reset [-opts] <tree> -- [<paths>...]
-	 * git reset [-opts] -- [<paths>...]
-	 * git reset [-opts] <paths>...
+	 * but reset [-opts] [<rev>]
+	 * but reset [-opts] <tree> [<paths>...]
+	 * but reset [-opts] <tree> -- [<paths>...]
+	 * but reset [-opts] -- [<paths>...]
+	 * but reset [-opts] <paths>...
 	 *
 	 * At this point, argv points immediately after [-opts].
 	 */
@@ -381,12 +381,12 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 	return update_ref_status;
 }
 
-static int git_reset_config(const char *var, const char *value, void *cb)
+static int but_reset_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "submodule.recurse"))
-		return git_default_submodule_config(var, value, cb);
+		return but_default_submodule_config(var, value, cb);
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
@@ -422,9 +422,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_reset_config, NULL);
+	but_config(but_reset_config, NULL);
 
-	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
+	argc = parse_options(argc, argv, prefix, options, but_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
@@ -471,12 +471,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		return run_add_interactive(rev, "--patch=reset", &pathspec);
 	}
 
-	/* git reset tree [--] paths... can be used to
+	/* but reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
 	 * affecting the working tree nor HEAD. */
 	if (pathspec.nr) {
 		if (reset_type == MIXED)
-			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
+			warning(_("--mixed with paths is deprecated; use 'but reset -- <paths>' instead."));
 		else if (reset_type != NONE)
 			die(_("Cannot do %s reset with paths."),
 					_(reset_type_names[reset_type]));
@@ -489,7 +489,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	else
 		trace2_cmd_mode(reset_type_names[reset_type]);
 
-	if (reset_type != SOFT && (reset_type != MIXED || get_git_work_tree()))
+	if (reset_type != SOFT && (reset_type != MIXED || get_but_work_tree()))
 		setup_work_tree();
 
 	if (reset_type == MIXED && is_bare_repository())
@@ -519,7 +519,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			if (read_from_tree(&pathspec, &oid, intent_to_add))
 				return 1;
 			the_index.updated_skipworktree = 1;
-			if (!no_refresh && get_git_work_tree()) {
+			if (!no_refresh && get_but_work_tree()) {
 				uint64_t t_begin, t_delta_in_ms;
 
 				t_begin = getnanotime();

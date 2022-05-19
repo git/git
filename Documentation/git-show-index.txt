@@ -1,21 +1,21 @@
-git-show-index(1)
+but-show-index(1)
 =================
 
 NAME
 ----
-git-show-index - Show packed archive index
+but-show-index - Show packed archive index
 
 
 SYNOPSIS
 --------
 [verse]
-'git show-index' [--object-format=<hash-algorithm>]
+'but show-index' [--object-format=<hash-algorithm>]
 
 
 DESCRIPTION
 -----------
 Read the `.idx` file for a Git packfile (created with
-linkgit:git-pack-objects[1] or linkgit:git-index-pack[1]) from the
+linkbut:but-pack-objects[1] or linkbut:but-index-pack[1]) from the
 standard input, and dump its contents. The output consists of one object
 per line, with each line containing two or three space-separated
 columns:
@@ -33,7 +33,7 @@ file, which should be (in a correctly constructed file) sorted by object
 id.
 
 Note that you can get more information on a packfile by calling
-linkgit:git-verify-pack[1]. However, as this command considers only the
+linkbut:but-verify-pack[1]. However, as this command considers only the
 index file itself, it's both faster and more flexible.
 
 OPTIONS
@@ -49,4 +49,4 @@ include::object-format-disclaimer.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

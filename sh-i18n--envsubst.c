@@ -4,16 +4,16 @@
  * Copyright (C) 2010 Ævar Arnfjörð Bjarmason
  *
  * This is a modified version of
- * 67d0871a8c:gettext-runtime/src/envsubst.c from the gettext.git
+ * 67d0871a8c:gettext-runtime/src/envsubst.c from the gettext.but
  * repository. It has been stripped down to only implement the
- * envsubst(1) features that we need in the git-sh-i18n fallbacks.
+ * envsubst(1) features that we need in the but-sh-i18n fallbacks.
  *
  * The "Close standard error" part in main() is from
  * 8dac033df0:gnulib-local/lib/closeout.c. The copyright notices for
  * both files are reproduced immediately below.
  */
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "trace2.h"
 
 /* Substitution of environment variables in shell format strings.
@@ -80,13 +80,13 @@ cmd_main (int argc, const char *argv[])
       subst_from_stdin ();
 	  */
 	case 2:
-	  /* echo '$foo and $bar' | git sh-i18n--envsubst --variables '$foo and $bar' */
+	  /* echo '$foo and $bar' | but sh-i18n--envsubst --variables '$foo and $bar' */
 	  all_variables = 0;
 	  note_variables (argv[1]);
       subst_from_stdin ();
 	  break;
 	case 3:
-	  /* git sh-i18n--envsubst --variables '$foo and $bar' */
+	  /* but sh-i18n--envsubst --variables '$foo and $bar' */
 	  if (strcmp(argv[1], "--variables"))
 		error ("first argument must be --variables when two are given");
 	  /* show_variables = 1; */

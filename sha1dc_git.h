@@ -9,15 +9,15 @@
 #endif
 
 #ifdef DC_SHA1_EXTERNAL
-void git_SHA1DCInit(SHA1_CTX *);
+void but_SHA1DCInit(SHA1_CTX *);
 #else
-#define git_SHA1DCInit	SHA1DCInit
+#define but_SHA1DCInit	SHA1DCInit
 #endif
 
-void git_SHA1DCFinal(unsigned char [20], SHA1_CTX *);
-void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *data, unsigned long len);
+void but_SHA1DCFinal(unsigned char [20], SHA1_CTX *);
+void but_SHA1DCUpdate(SHA1_CTX *ctx, const void *data, unsigned long len);
 
 #define platform_SHA_CTX SHA1_CTX
-#define platform_SHA1_Init git_SHA1DCInit
-#define platform_SHA1_Update git_SHA1DCUpdate
-#define platform_SHA1_Final git_SHA1DCFinal
+#define platform_SHA1_Init but_SHA1DCInit
+#define platform_SHA1_Update but_SHA1DCUpdate
+#define platform_SHA1_Final but_SHA1DCFinal

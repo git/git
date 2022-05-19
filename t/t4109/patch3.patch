@@ -1,5 +1,5 @@
 cat > patch3.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 --- a/main.c
 +++ b/main.c
 @@ -1,9 +1,7 @@

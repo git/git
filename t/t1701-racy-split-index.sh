@@ -10,11 +10,11 @@ test_description='racy split index'
 test_expect_success 'setup' '
 	# Only split the index when the test explicitly says so.
 	sane_unset GIT_TEST_SPLIT_INDEX &&
-	git config splitIndex.maxPercentChange 100 &&
+	but config splitIndex.maxPercentChange 100 &&
 
 	echo "cached content" >racy-file &&
-	git add racy-file &&
-	git cummit -m initial &&
+	but add racy-file &&
+	but cummit -m initial &&
 
 	echo something >other-file &&
 	# No raciness with this file.
@@ -24,7 +24,7 @@ test_expect_success 'setup' '
 '
 
 check_cached_diff () {
-	git diff-index --patch --cached $EMPTY_TREE racy-file >diff &&
+	but diff-index --patch --cached $EMPTY_TREE racy-file >diff &&
 	tail -1 diff >actual &&
 	test_cmp expect actual
 }
@@ -33,7 +33,7 @@ trials="0 1 2 3 4"
 for trial in $trials
 do
 	test_expect_success "split the index while adding a racily clean file #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
 		# The next three commands must be run within the same
 		# second (so both writes to racy-file result in the same
@@ -42,12 +42,12 @@ do
 
 		# Update and split the index.  The cache entry of
 		# racy-file will be stored only in the shared index.
-		git update-index --split-index --add racy-file &&
+		but update-index --split-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
 
-		# Subsequent git commands should notice that racy-file
+		# Subsequent but commands should notice that racy-file
 		# and the split index have the same mtime, and check
 		# the content of the file to see if it is actually
 		# clean.
@@ -58,9 +58,9 @@ done
 for trial in $trials
 do
 	test_expect_success "add a racily clean file to an already split index #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
-		git update-index --split-index &&
+		but update-index --split-index &&
 
 		# The next three commands must be run within the same
 		# second.
@@ -68,12 +68,12 @@ do
 
 		# Update the split index.  The cache entry of racy-file
 		# will be stored only in the split index.
-		git update-index --add racy-file &&
+		but update-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
 
-		# Subsequent git commands should notice that racy-file
+		# Subsequent but commands should notice that racy-file
 		# and the split index have the same mtime, and check
 		# the content of the file to see if it is actually
 		# clean.
@@ -84,13 +84,13 @@ done
 for trial in $trials
 do
 	test_expect_success "split the index when the index contains a racily clean cache entry #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
 		# The next three commands must be run within the same
 		# second.
 		echo "cached content" >racy-file &&
 
-		git update-index --add racy-file &&
+		but update-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
@@ -103,9 +103,9 @@ do
 		# the racily clean cache entry of racy-file.
 		# A corresponding replacement cache entry with smudged
 		# stat data should be added to the new split index.
-		git update-index --split-index --add other-file &&
+		but update-index --split-index --add other-file &&
 
-		# Subsequent git commands should notice the smudged
+		# Subsequent but commands should notice the smudged
 		# stat data in the replacement cache entry and that it
 		# doesnt match with the file the worktree.
 		check_cached_diff
@@ -115,9 +115,9 @@ done
 for trial in $trials
 do
 	test_expect_success "update the split index when it contains a new racily clean cache entry #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
-		git update-index --split-index &&
+		but update-index --split-index &&
 
 		# The next three commands must be run within the same
 		# second.
@@ -125,7 +125,7 @@ do
 
 		# Update the split index.  The cache entry of racy-file
 		# will be stored only in the split index.
-		git update-index --add racy-file &&
+		but update-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
@@ -138,9 +138,9 @@ do
 		# entry of racy-file is only stored in the split index.
 		# An updated cache entry with smudged stat data should
 		# be added to the new split index.
-		git update-index --add other-file &&
+		but update-index --add other-file &&
 
-		# Subsequent git commands should notice the smudged
+		# Subsequent but commands should notice the smudged
 		# stat data.
 		check_cached_diff
 	'
@@ -149,7 +149,7 @@ done
 for trial in $trials
 do
 	test_expect_success "update the split index when a racily clean cache entry is stored only in the shared index #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
 		# The next three commands must be run within the same
 		# second.
@@ -157,7 +157,7 @@ do
 
 		# Update and split the index.  The cache entry of
 		# racy-file will be stored only in the shared index.
-		git update-index --split-index --add racy-file &&
+		but update-index --split-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
@@ -170,9 +170,9 @@ do
 		# entry of racy-file is only stored in the shared index.
 		# A corresponding replacement cache entry with smudged
 		# stat data should be added to the new split index.
-		git update-index --add other-file &&
+		but update-index --add other-file &&
 
-		# Subsequent git commands should notice the smudged
+		# Subsequent but commands should notice the smudged
 		# stat data.
 		check_cached_diff
 	'
@@ -181,7 +181,7 @@ done
 for trial in $trials
 do
 	test_expect_success "update the split index after unpack trees() copied a racily clean cache entry from the shared index #$trial" '
-		rm -f .git/index .git/sharedindex.* &&
+		rm -f .but/index .but/sharedindex.* &&
 
 		# The next three commands must be run within the same
 		# second.
@@ -189,7 +189,7 @@ do
 
 		# Update and split the index.  The cache entry of
 		# racy-file will be stored only in the shared index.
-		git update-index --split-index --add racy-file &&
+		but update-index --split-index --add racy-file &&
 
 		# File size must stay the same.
 		echo "dirty worktree" >racy-file &&
@@ -203,9 +203,9 @@ do
 		# index.  A corresponding replacement cache entry
 		# with smudged stat data should be added to the new
 		# split index.
-		git read-tree -m HEAD &&
+		but read-tree -m HEAD &&
 
-		# Subsequent git commands should notice the smudged
+		# Subsequent but commands should notice the smudged
 		# stat data.
 		check_cached_diff
 	'

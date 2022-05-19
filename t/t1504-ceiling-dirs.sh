@@ -7,12 +7,12 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_prefix() {
 	test_expect_success "$1" \
-	"test '$2' = \"\$(git rev-parse --show-prefix)\""
+	"test '$2' = \"\$(but rev-parse --show-prefix)\""
 }
 
 test_fail() {
 	test_expect_success "$1: prefix" '
-		test_expect_code 128 git rev-parse --show-prefix
+		test_expect_code 128 but rev-parse --show-prefix
 	'
 }
 
@@ -124,9 +124,9 @@ test_fail second_of_three
 
 
 GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub"
-GIT_DIR=../../.git
+GIT_DIR=../../.but
 export GIT_DIR
-test_prefix git_dir_specified ""
+test_prefix but_dir_specified ""
 unset GIT_DIR
 
 

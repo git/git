@@ -5,12 +5,12 @@
 
 /*
  * Prints the size of the object corresponding to the given hash in a specific
- * gitdir. This is similar to "git -C gitdir cat-file -s", except that this
+ * butdir. This is similar to "but -C butdir cat-file -s", except that this
  * exercises the code that accesses the object of an arbitrary repository that
- * is not the_repository. ("git -C gitdir" makes it so that the_repository is
- * the one in gitdir.)
+ * is not the_repository. ("but -C butdir" makes it so that the_repository is
+ * the one in butdir.)
  */
-static void object_info(const char *gitdir, const char *oid_hex)
+static void object_info(const char *butdir, const char *oid_hex)
 {
 	struct repository r;
 	struct object_id oid;
@@ -18,7 +18,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 	struct object_info oi = {.sizep = &size};
 	const char *p;
 
-	if (repo_init(&r, gitdir, NULL))
+	if (repo_init(&r, butdir, NULL))
 		die("could not init repo");
 	if (parse_oid_hex(oid_hex, &oid, &p))
 		die("could not parse oid");
@@ -29,7 +29,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 
 int cmd__partial_clone(int argc, const char **argv)
 {
-	setup_git_directory();
+	setup_but_directory();
 
 	if (argc < 4)
 		die("too few arguments");

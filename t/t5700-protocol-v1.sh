@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git wire-protocol transition'
+test_description='test but wire-protocol transition'
 
 TEST_NO_CREATE_REPO=1
 
@@ -13,23 +13,23 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-# Test protocol v1 with 'git://' transport
+# Test protocol v1 with 'but://' transport
 #
-. "$TEST_DIRECTORY"/lib-git-daemon.sh
-start_git_daemon --export-all --enable=receive-pack
+. "$TEST_DIRECTORY"/lib-but-daemon.sh
+start_but_daemon --export-all --enable=receive-pack
 daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
 
-test_expect_success 'create repo to be served by git-daemon' '
-	git init "$daemon_parent" &&
+test_expect_success 'create repo to be served by but-daemon' '
+	but init "$daemon_parent" &&
 	test_cummit -C "$daemon_parent" one
 '
 
-test_expect_success 'clone with git:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -c protocol.version=1 \
+test_expect_success 'clone with but:// using protocol v1' '
+	GIT_TRACE_PACKET=1 but -c protocol.version=1 \
 		clone "$GIT_DAEMON_URL/parent" daemon_child 2>log &&
 
-	git -C daemon_child log -1 --format=%s >actual &&
-	git -C "$daemon_parent" log -1 --format=%s >expect &&
+	but -C daemon_child log -1 --format=%s >actual &&
+	but -C "$daemon_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
@@ -38,14 +38,14 @@ test_expect_success 'clone with git:// using protocol v1' '
 	grep "clone< version 1" log
 '
 
-test_expect_success 'fetch with git:// using protocol v1' '
+test_expect_success 'fetch with but:// using protocol v1' '
 	test_cummit -C "$daemon_parent" two &&
 
-	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C daemon_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C daemon_child log -1 --format=%s origin/main >actual &&
-	git -C "$daemon_parent" log -1 --format=%s >expect &&
+	but -C daemon_child log -1 --format=%s origin/main >actual &&
+	but -C "$daemon_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
@@ -54,12 +54,12 @@ test_expect_success 'fetch with git:// using protocol v1' '
 	grep "fetch< version 1" log
 '
 
-test_expect_success 'pull with git:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
+test_expect_success 'pull with but:// using protocol v1' '
+	GIT_TRACE_PACKET=1 but -C daemon_child -c protocol.version=1 \
 		pull 2>log &&
 
-	git -C daemon_child log -1 --format=%s >actual &&
-	git -C "$daemon_parent" log -1 --format=%s >expect &&
+	but -C daemon_child log -1 --format=%s >actual &&
+	but -C "$daemon_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
@@ -68,16 +68,16 @@ test_expect_success 'pull with git:// using protocol v1' '
 	grep "fetch< version 1" log
 '
 
-test_expect_success 'push with git:// using protocol v1' '
+test_expect_success 'push with but:// using protocol v1' '
 	test_cummit -C daemon_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
-	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C daemon_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
 
-	git -C daemon_child log -1 --format=%s >actual &&
-	git -C "$daemon_parent" log -1 --format=%s client_branch >expect &&
+	but -C daemon_child log -1 --format=%s >actual &&
+	but -C "$daemon_parent" log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
@@ -86,21 +86,21 @@ test_expect_success 'push with git:// using protocol v1' '
 	grep "push< version 1" log
 '
 
-stop_git_daemon
+stop_but_daemon
 
 # Test protocol v1 with 'file://' transport
 #
 test_expect_success 'create repo to be served by file:// transport' '
-	git init file_parent &&
+	but init file_parent &&
 	test_cummit -C file_parent one
 '
 
 test_expect_success 'clone with file:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -c protocol.version=1 \
 		clone "file://$(pwd)/file_parent" file_child 2>log &&
 
-	git -C file_child log -1 --format=%s >actual &&
-	git -C file_parent log -1 --format=%s >expect &&
+	but -C file_child log -1 --format=%s >actual &&
+	but -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -110,11 +110,11 @@ test_expect_success 'clone with file:// using protocol v1' '
 test_expect_success 'fetch with file:// using protocol v1' '
 	test_cummit -C file_parent two &&
 
-	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C file_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C file_child log -1 --format=%s origin/main >actual &&
-	git -C file_parent log -1 --format=%s >expect &&
+	but -C file_child log -1 --format=%s origin/main >actual &&
+	but -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -122,11 +122,11 @@ test_expect_success 'fetch with file:// using protocol v1' '
 '
 
 test_expect_success 'pull with file:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C file_child -c protocol.version=1 \
 		pull 2>log &&
 
-	git -C file_child log -1 --format=%s >actual &&
-	git -C file_parent log -1 --format=%s >expect &&
+	but -C file_child log -1 --format=%s >actual &&
+	but -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -138,11 +138,11 @@ test_expect_success 'push with file:// using protocol v1' '
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
-	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C file_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
 
-	git -C file_child log -1 --format=%s >actual &&
-	git -C file_parent log -1 --format=%s client_branch >expect &&
+	but -C file_child log -1 --format=%s >actual &&
+	but -C file_parent log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -152,16 +152,16 @@ test_expect_success 'push with file:// using protocol v1' '
 test_expect_success 'cloning branchless tagless but not refless remote' '
 	rm -rf server client &&
 
-	git -c init.defaultbranch=main init server &&
+	but -c init.defaultbranch=main init server &&
 	echo foo >server/foo.txt &&
-	git -C server add foo.txt &&
-	git -C server cummit -m "message" &&
-	git -C server update-ref refs/notbranch/alsonottag HEAD &&
-	git -C server checkout --detach &&
-	git -C server branch -D main &&
-	git -C server symbolic-ref HEAD refs/heads/nonexistentbranch &&
+	but -C server add foo.txt &&
+	but -C server cummit -m "message" &&
+	but -C server update-ref refs/notbranch/alsonottag HEAD &&
+	but -C server checkout --detach &&
+	but -C server branch -D main &&
+	but -C server symbolic-ref HEAD refs/heads/nonexistentbranch &&
 
-	git -c protocol.version=1 clone "file://$(pwd)/server" client
+	but -c protocol.version=1 clone "file://$(pwd)/server" client
 '
 
 # Test protocol v1 with 'ssh://' transport
@@ -182,17 +182,17 @@ expect_ssh () {
 }
 
 test_expect_success 'create repo to be served by ssh:// transport' '
-	git init ssh_parent &&
+	but init ssh_parent &&
 	test_cummit -C ssh_parent one
 '
 
 test_expect_success 'clone with ssh:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -c protocol.version=1 \
 		clone "ssh://myhost:$(pwd)/ssh_parent" ssh_child 2>log &&
-	expect_ssh git-upload-pack &&
+	expect_ssh but-upload-pack &&
 
-	git -C ssh_child log -1 --format=%s >actual &&
-	git -C ssh_parent log -1 --format=%s >expect &&
+	but -C ssh_child log -1 --format=%s >actual &&
+	but -C ssh_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -202,12 +202,12 @@ test_expect_success 'clone with ssh:// using protocol v1' '
 test_expect_success 'fetch with ssh:// using protocol v1' '
 	test_cummit -C ssh_parent two &&
 
-	GIT_TRACE_PACKET=1 git -C ssh_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C ssh_child -c protocol.version=1 \
 		fetch 2>log &&
-	expect_ssh git-upload-pack &&
+	expect_ssh but-upload-pack &&
 
-	git -C ssh_child log -1 --format=%s origin/main >actual &&
-	git -C ssh_parent log -1 --format=%s >expect &&
+	but -C ssh_child log -1 --format=%s origin/main >actual &&
+	but -C ssh_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -215,12 +215,12 @@ test_expect_success 'fetch with ssh:// using protocol v1' '
 '
 
 test_expect_success 'pull with ssh:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -C ssh_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C ssh_child -c protocol.version=1 \
 		pull 2>log &&
-	expect_ssh git-upload-pack &&
+	expect_ssh but-upload-pack &&
 
-	git -C ssh_child log -1 --format=%s >actual &&
-	git -C ssh_parent log -1 --format=%s >expect &&
+	but -C ssh_child log -1 --format=%s >actual &&
+	but -C ssh_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -232,12 +232,12 @@ test_expect_success 'push with ssh:// using protocol v1' '
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
-	GIT_TRACE_PACKET=1 git -C ssh_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C ssh_child -c protocol.version=1 \
 		push origin HEAD:client_branch 2>log &&
-	expect_ssh git-receive-pack &&
+	expect_ssh but-receive-pack &&
 
-	git -C ssh_child log -1 --format=%s >actual &&
-	git -C ssh_parent log -1 --format=%s client_branch >expect &&
+	but -C ssh_child log -1 --format=%s >actual &&
+	but -C ssh_parent log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
@@ -250,49 +250,49 @@ test_expect_success 'push with ssh:// using protocol v1' '
 start_httpd
 
 test_expect_success 'create repo to be served by http:// transport' '
-	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
+	but init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
 	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
 '
 
 test_expect_success 'clone with http:// using protocol v1' '
-	GIT_TRACE_PACKET=1 GIT_TRACE_CURL=1 git -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 GIT_TRACE_CURL=1 but -c protocol.version=1 \
 		clone "$HTTPD_URL/smart/http_parent" http_child 2>log &&
 
-	git -C http_child log -1 --format=%s >actual &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
+	but -C http_child log -1 --format=%s >actual &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
 	grep "Git-Protocol: version=1" log &&
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	grep "but< version 1" log
 '
 
 test_expect_success 'fetch with http:// using protocol v1' '
 	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
-	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C http_child -c protocol.version=1 \
 		fetch 2>log &&
 
-	git -C http_child log -1 --format=%s origin/main >actual &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
+	but -C http_child log -1 --format=%s origin/main >actual &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	grep "but< version 1" log
 '
 
 test_expect_success 'pull with http:// using protocol v1' '
-	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C http_child -c protocol.version=1 \
 		pull 2>log &&
 
-	git -C http_child log -1 --format=%s >actual &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
+	but -C http_child log -1 --format=%s >actual &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	grep "but< version 1" log
 '
 
 test_expect_success 'push with http:// using protocol v1' '
@@ -300,15 +300,15 @@ test_expect_success 'push with http:// using protocol v1' '
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
-	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
+	GIT_TRACE_PACKET=1 but -C http_child -c protocol.version=1 \
 		push origin HEAD:client_branch && #2>log &&
 
-	git -C http_child log -1 --format=%s >actual &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
+	but -C http_child log -1 --format=%s >actual &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	grep "but< version 1" log
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

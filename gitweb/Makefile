@@ -4,36 +4,36 @@ all::
 # Define V=1 to have a more verbose compile.
 #
 # Define JSMIN to point to JavaScript minifier that functions as
-# a filter to have static/gitweb.js minified.
+# a filter to have static/butweb.js minified.
 #
 # Define CSSMIN to point to a CSS minifier in order to generate a minified
-# version of static/gitweb.css
+# version of static/butweb.css
 #
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
-gitwebdir ?= /var/www/cgi-bin
+butwebdir ?= /var/www/cgi-bin
 
 RM ?= rm -f
 INSTALL ?= install
 
-# default configuration for gitweb
-GITWEB_CONFIG = gitweb_config.perl
-GITWEB_CONFIG_SYSTEM = /etc/gitweb.conf
-GITWEB_CONFIG_COMMON = /etc/gitweb-common.conf
+# default configuration for butweb
+GITWEB_CONFIG = butweb_config.perl
+GITWEB_CONFIG_SYSTEM = /etc/butweb.conf
+GITWEB_CONFIG_COMMON = /etc/butweb-common.conf
 GITWEB_HOME_LINK_STR = projects
 GITWEB_SITENAME =
-GITWEB_PROJECTROOT = /pub/git
+GITWEB_PROJECTROOT = /pub/but
 GITWEB_PROJECT_MAXDEPTH = 2007
 GITWEB_EXPORT_OK =
 GITWEB_STRICT_EXPORT =
 GITWEB_BASE_URL =
 GITWEB_LIST =
 GITWEB_HOMETEXT = indextext.html
-GITWEB_CSS = static/gitweb.css
-GITWEB_LOGO = static/git-logo.png
-GITWEB_FAVICON = static/git-favicon.png
-GITWEB_JS = static/gitweb.js
+GITWEB_CSS = static/butweb.css
+GITWEB_LOGO = static/but-logo.png
+GITWEB_FAVICON = static/but-favicon.png
+GITWEB_JS = static/butweb.js
 GITWEB_SITE_HTML_HEAD_STRING =
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
@@ -59,8 +59,8 @@ PERL_PATH  ?= /usr/bin/perl
 
 # Shell quote;
 bindir_SQ = $(subst ','\'',$(bindir))#'
-gitwebdir_SQ = $(subst ','\'',$(gitwebdir))#'
-gitwebstaticdir_SQ = $(subst ','\'',$(gitwebdir)/static)#'
+butwebdir_SQ = $(subst ','\'',$(butwebdir))#'
+butwebstaticdir_SQ = $(subst ','\'',$(butwebdir)/static)#'
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))#'
 PERL_PATH_SQ  = $(subst ','\'',$(PERL_PATH))#'
 DESTDIR_SQ    = $(subst ','\'',$(DESTDIR))#'
@@ -90,36 +90,36 @@ ifndef V
 endif
 endif
 
-all:: gitweb.cgi static/gitweb.js
+all:: butweb.cgi static/butweb.js
 
-GITWEB_PROGRAMS = gitweb.cgi
+GITWEB_PROGRAMS = butweb.cgi
 
 ifdef JSMIN
-GITWEB_FILES += static/gitweb.min.js
-GITWEB_JS = static/gitweb.min.js
-all:: static/gitweb.min.js
-static/gitweb.min.js: static/gitweb.js GITWEB-BUILD-OPTIONS
+GITWEB_FILES += static/butweb.min.js
+GITWEB_JS = static/butweb.min.js
+all:: static/butweb.min.js
+static/butweb.min.js: static/butweb.js GITWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(JSMIN) <$< >$@
 else
-GITWEB_FILES += static/gitweb.js
+GITWEB_FILES += static/butweb.js
 endif
 
 ifdef CSSMIN
-GITWEB_FILES += static/gitweb.min.css
-GITWEB_CSS = static/gitweb.min.css
-all:: static/gitweb.min.css
-static/gitweb.min.css: static/gitweb.css GITWEB-BUILD-OPTIONS
+GITWEB_FILES += static/butweb.min.css
+GITWEB_CSS = static/butweb.min.css
+all:: static/butweb.min.css
+static/butweb.min.css: static/butweb.css GITWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(CSSMIN) <$< >$@
 else
-GITWEB_FILES += static/gitweb.css
+GITWEB_FILES += static/butweb.css
 endif
 
-GITWEB_FILES += static/git-logo.png static/git-favicon.png
+GITWEB_FILES += static/but-logo.png static/but-favicon.png
 
-# JavaScript files that are composed (concatenated) to form gitweb.js
+# JavaScript files that are composed (concatenated) to form butweb.js
 #
 # js/lib/common-lib.js should be always first, then js/lib/*.js,
-# then the rest of files; js/gitweb.js should be last (if it exists)
+# then the rest of files; js/butweb.js should be last (if it exists)
 GITWEB_JSLIB_FILES += static/js/lib/common-lib.js
 GITWEB_JSLIB_FILES += static/js/lib/datetime.js
 GITWEB_JSLIB_FILES += static/js/lib/cookies.js
@@ -157,14 +157,14 @@ GITWEB-BUILD-OPTIONS: FORCE
 	@echo "x" '$(PERL_PATH_SQ)' $(GITWEB_REPLACE) "$(JSMIN)|$(CSSMIN)" >$@+
 	@cmp -s $@+ $@ && rm -f $@+ || mv -f $@+ $@
 
-gitweb.cgi: gitweb.perl GITWEB-BUILD-OPTIONS
+butweb.cgi: butweb.perl GITWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 		$(GITWEB_REPLACE) $< >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-static/gitweb.js: $(GITWEB_JSLIB_FILES)
+static/butweb.js: $(GITWEB_JSLIB_FILES)
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	cat $^ >$@+ && \
 	mv $@+ $@
@@ -172,25 +172,25 @@ static/gitweb.js: $(GITWEB_JSLIB_FILES)
 ### Testing rules
 
 test:
-	$(MAKE) -C ../t gitweb-test
+	$(MAKE) -C ../t butweb-test
 
 test-installed:
-	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(gitwebdir_SQ)' \
-		$(MAKE) -C ../t gitweb-test
+	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(butwebdir_SQ)' \
+		$(MAKE) -C ../t butweb-test
 
 ### Installation rules
 
 install: all
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebdir_SQ)'
-	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(gitwebdir_SQ)'
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
-	$(INSTALL) -m 644 $(GITWEB_FILES) '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(butwebdir_SQ)'
+	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(butwebdir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(butwebstaticdir_SQ)'
+	$(INSTALL) -m 644 $(GITWEB_FILES) '$(DESTDIR_SQ)$(butwebstaticdir_SQ)'
 
 ### Cleaning rules
 
 clean:
-	$(RM) gitweb.cgi static/gitweb.js \
-		static/gitweb.min.js static/gitweb.min.css \
+	$(RM) butweb.cgi static/butweb.js \
+		static/butweb.min.js static/butweb.min.css \
 		GITWEB-BUILD-OPTIONS
 
 .PHONY: all clean install test test-installed .FORCE-GIT-VERSION-FILE FORCE

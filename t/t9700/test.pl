@@ -8,7 +8,7 @@ use strict;
 use Test::More qw(no_plan);
 
 BEGIN {
-	# t9700-perl-git.sh kicks off our testing, so we have to go from
+	# t9700-perl-but.sh kicks off our testing, so we have to go from
 	# there.
 	Test::More->builder->current_test(1);
 	Test::More->builder->no_ending(1);
@@ -105,7 +105,7 @@ close TEMPFILE;
 unlink $tmpfile;
 
 # paths
-is($r->repo_path, $abs_repo_dir . "/.git", "repo_path");
+is($r->repo_path, $abs_repo_dir . "/.but", "repo_path");
 is($r->wc_path, $abs_repo_dir . "/", "wc_path");
 is($r->wc_subdir, "", "wc_subdir initial");
 $r->wc_chdir("directory1");
@@ -115,7 +115,7 @@ is($r->config("test.string"), "value", "config after wc_chdir");
 # Object generation in sub directory
 chdir("directory2");
 my $r2 = Git->repository();
-is($r2->repo_path, $abs_repo_dir . "/.git", "repo_path (2)");
+is($r2->repo_path, $abs_repo_dir . "/.but", "repo_path (2)");
 is($r2->wc_path, $abs_repo_dir . "/", "wc_path (2)");
 is($r2->wc_subdir, "directory2/", "wc_subdir initial (2)");
 

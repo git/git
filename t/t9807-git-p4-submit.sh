@@ -1,11 +1,11 @@
 #!/bin/sh
 
-test_description='git p4 submit'
+test_description='but p4 submit'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -31,16 +31,16 @@ test_expect_success 'is_cli_file_writeable function' '
 '
 
 test_expect_success 'submit with no client dir' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo file2 >file2 &&
-		git add file2 &&
-		git cummit -m "git cummit 2" &&
+		but add file2 &&
+		but cummit -m "but cummit 2" &&
 		rm -rf "$cli" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -51,14 +51,14 @@ test_expect_success 'submit with no client dir' '
 
 # make two cummits, but tell it to apply only from HEAD^
 test_expect_success 'submit --origin' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file3" &&
 		test_cummit "file4" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit --origin=HEAD^
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit --origin=HEAD^
 	) &&
 	(
 		cd "$cli" &&
@@ -68,13 +68,13 @@ test_expect_success 'submit --origin' '
 '
 
 test_expect_success 'submit --dry-run' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "dry-run1" &&
 		test_cummit "dry-run2" &&
-		git p4 submit --dry-run >out &&
+		but p4 submit --dry-run >out &&
 		test_i18ngrep "Would apply" out
 	) &&
 	(
@@ -85,20 +85,20 @@ test_expect_success 'submit --dry-run' '
 '
 
 test_expect_success 'submit --dry-run --export-labels' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo dry-run1 >dry-run1 &&
-		git add dry-run1 &&
-		git cummit -m "dry-run1" dry-run1 &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit &&
+		but add dry-run1 &&
+		but cummit -m "dry-run1" dry-run1 &&
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit &&
 		echo dry-run2 >dry-run2 &&
-		git add dry-run2 &&
-		git cummit -m "dry-run2" dry-run2 &&
-		git tag -m "dry-run-tag1" dry-run-tag1 HEAD^ &&
-		git p4 submit --dry-run --export-labels >out &&
+		but add dry-run2 &&
+		but cummit -m "dry-run2" dry-run2 &&
+		but tag -m "dry-run-tag1" dry-run-tag1 HEAD^ &&
+		but p4 submit --dry-run --export-labels >out &&
 		test_i18ngrep "Would create p4 label" out
 	) &&
 	(
@@ -109,31 +109,31 @@ test_expect_success 'submit --dry-run --export-labels' '
 '
 
 test_expect_success 'submit with allowSubmit' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file5" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.allowSubmit "nobranch" &&
-		test_must_fail git p4 submit &&
-		git config git-p4.allowSubmit "nobranch,main" &&
-		git p4 submit
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.allowSubmit "nobranch" &&
+		test_must_fail but p4 submit &&
+		but config but-p4.allowSubmit "nobranch,main" &&
+		but p4 submit
 	)
 '
 
 test_expect_success 'submit with master branch name from argv' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file6" &&
-		git config git-p4.skipSubmitEdit true &&
-		test_must_fail git p4 submit nobranch &&
-		git branch otherbranch &&
-		git reset --hard HEAD^ &&
+		but config but-p4.skipSubmitEdit true &&
+		test_must_fail but p4 submit nobranch &&
+		but branch otherbranch &&
+		but reset --hard HEAD^ &&
 		test_cummit "file7" &&
-		git p4 submit otherbranch
+		but p4 submit otherbranch
 	) &&
 	(
 		cd "$cli" &&
@@ -143,32 +143,32 @@ test_expect_success 'submit with master branch name from argv' '
 '
 
 test_expect_success 'allow submit from branch with same revision but different name' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file8" &&
-		git checkout -b branch1 &&
-		git checkout -b branch2 &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.allowSubmit "branch1" &&
-		test_must_fail git p4 submit &&
-		git checkout branch1 &&
-		git p4 submit
+		but checkout -b branch1 &&
+		but checkout -b branch2 &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.allowSubmit "branch1" &&
+		test_must_fail but p4 submit &&
+		but checkout branch1 &&
+		but p4 submit
 	)
 '
 
 # make two cummits, but tell it to apply only one
 
 test_expect_success 'submit --cummit one' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file9" &&
 		test_cummit "file10" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit --commit HEAD
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit --commit HEAD
 	) &&
 	(
 		cd "$cli" &&
@@ -180,15 +180,15 @@ test_expect_success 'submit --cummit one' '
 # make three cummits, but tell it to apply only range
 
 test_expect_success 'submit --cummit range' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cummit "file11" &&
 		test_cummit "file12" &&
 		test_cummit "file13" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit --commit HEAD~2..HEAD
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit --commit HEAD~2..HEAD
 	) &&
 	(
 		cd "$cli" &&
@@ -203,15 +203,15 @@ test_expect_success 'submit --cummit range' '
 #
 
 test_expect_success 'submit modify' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		echo line >>file1 &&
-		git add file1 &&
-		git cummit -m file1 &&
-		git p4 submit
+		but add file1 &&
+		but cummit -m file1 &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -221,15 +221,15 @@ test_expect_success 'submit modify' '
 '
 
 test_expect_success 'submit add' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		echo file13 >file13 &&
-		git add file13 &&
-		git cummit -m file13 &&
-		git p4 submit
+		but add file13 &&
+		but cummit -m file13 &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -238,14 +238,14 @@ test_expect_success 'submit add' '
 '
 
 test_expect_success 'submit delete' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git rm file4.t &&
-		git cummit -m "delete file4.t" &&
-		git p4 submit
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but rm file4.t &&
+		but cummit -m "delete file4.t" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -254,17 +254,17 @@ test_expect_success 'submit delete' '
 '
 
 test_expect_success 'submit copy' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.detectCopies true &&
-		git config git-p4.detectCopiesHarder true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.detectCopies true &&
+		but config but-p4.detectCopiesHarder true &&
 		cp file5.t file5.ta &&
-		git add file5.ta &&
-		git cummit -m "copy to file5.ta" &&
-		git p4 submit
+		but add file5.ta &&
+		but cummit -m "copy to file5.ta" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -274,15 +274,15 @@ test_expect_success 'submit copy' '
 '
 
 test_expect_success 'submit rename' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.detectRenames true &&
-		git mv file6.t file6.ta &&
-		git cummit -m "rename file6.t to file6.ta" &&
-		git p4 submit
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.detectRenames true &&
+		but mv file6.t file6.ta &&
+		but cummit -m "rename file6.t to file6.ta" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -293,22 +293,22 @@ test_expect_success 'submit rename' '
 '
 
 #
-# Converting git cummit message to p4 change description, including
+# Converting but cummit message to p4 change description, including
 # parsing out the optional Jobs: line.
 #
 test_expect_success 'simple one-line description' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo desc2 >desc2 &&
-		git add desc2 &&
+		but add desc2 &&
 		cat >msg <<-EOF &&
 		One-line description line for desc2.
 		EOF
-		git cummit -F - <msg &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit &&
+		but cummit -F - <msg &&
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
 			 marshal_dump change) &&
 		# marshal_dump always adds a newline
@@ -318,21 +318,21 @@ test_expect_success 'simple one-line description' '
 '
 
 test_expect_success 'description with odd formatting' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo desc3 >desc3 &&
-		git add desc3 &&
+		but add desc3 &&
 		(
 			printf "subject line\n\n\tExtra tab\nline.\n\n" &&
 			printf "Description:\n\tBogus description marker\n\n" &&
-			# git cummit eats trailing newlines; only use one
+			# but cummit eats trailing newlines; only use one
 			printf "Files:\n\tBogus descs marker\n"
 		) >msg &&
-		git cummit -F - <msg &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit &&
+		but cummit -F - <msg &&
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
 			 marshal_dump change) &&
 		# marshal_dump always adds a newline
@@ -351,12 +351,12 @@ make_job() {
 }
 
 test_expect_success 'description with Jobs section at end' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo desc4 >desc4 &&
-		git add desc4 &&
+		but add desc4 &&
 		echo 6060842 >jobname &&
 		(
 			printf "subject line\n\n\tExtra tab\nline.\n\n" &&
@@ -364,11 +364,11 @@ test_expect_success 'description with Jobs section at end' '
 			printf "Junk: 3164175\n" &&
 			printf "Jobs: $(cat jobname)\n"
 		) >msg &&
-		git cummit -F - <msg &&
-		git config git-p4.skipSubmitEdit true &&
+		but cummit -F - <msg &&
+		but config but-p4.skipSubmitEdit true &&
 		# build a job
 		make_job $(cat jobname) &&
-		git p4 submit &&
+		but p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
 			 marshal_dump change) &&
 		# marshal_dump always adds a newline
@@ -383,12 +383,12 @@ test_expect_success 'description with Jobs section at end' '
 '
 
 test_expect_success 'description with Jobs and values on separate lines' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo desc5 >desc5 &&
-		git add desc5 &&
+		but add desc5 &&
 		echo PROJ-6060842 >jobname1 &&
 		echo PROJ-6060847 >jobname2 &&
 		(
@@ -399,12 +399,12 @@ test_expect_success 'description with Jobs and values on separate lines' '
 			printf "\t$(cat jobname1)\n" &&
 			printf "\t$(cat jobname2)\n"
 		) >msg &&
-		git cummit -F - <msg &&
-		git config git-p4.skipSubmitEdit true &&
+		but cummit -F - <msg &&
+		but config but-p4.skipSubmitEdit true &&
 		# build two jobs
 		make_job $(cat jobname1) &&
 		make_job $(cat jobname2) &&
-		git p4 submit &&
+		but p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
 			 marshal_dump change) &&
 		# marshal_dump always adds a newline
@@ -424,12 +424,12 @@ test_expect_success 'description with Jobs and values on separate lines' '
 '
 
 test_expect_success 'description with Jobs section and bogus following text' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo desc6 >desc6 &&
-		git add desc6 &&
+		but add desc6 &&
 		echo 6060843 >jobname &&
 		(
 			printf "subject line\n\n\tExtra tab\nline.\n\n" &&
@@ -438,11 +438,11 @@ test_expect_success 'description with Jobs section and bogus following text' '
 			printf "Jobs: $(cat jobname)\n" &&
 			printf "MoreJunk: 3711\n"
 		) >msg &&
-		git cummit -F - <msg &&
-		git config git-p4.skipSubmitEdit true &&
+		but cummit -F - <msg &&
+		but config but-p4.skipSubmitEdit true &&
 		# build a job
 		make_job $(cat jobname) &&
-		test_must_fail git p4 submit 2>err &&
+		test_must_fail but p4 submit 2>err &&
 		test_i18ngrep "Unknown field name" err
 	) &&
 	(
@@ -453,14 +453,14 @@ test_expect_success 'description with Jobs section and bogus following text' '
 '
 
 test_expect_success 'submit --prepare-p4-only' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo prep-only-add >prep-only-add &&
-		git add prep-only-add &&
-		git cummit -m "prep only add" &&
-		git p4 submit --prepare-p4-only >out &&
+		but add prep-only-add &&
+		but cummit -m "prep only add" &&
+		but p4 submit --prepare-p4-only >out &&
 		test_i18ngrep "prepared for submission" out &&
 		test_i18ngrep "must be deleted" out &&
 		test_i18ngrep ! "everything below this line is just the diff" out
@@ -473,21 +473,21 @@ test_expect_success 'submit --prepare-p4-only' '
 '
 
 test_expect_success 'submit --shelve' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
 		cd "$cli" &&
 		p4 revert ... &&
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		test_cummit "shelveme1" &&
-		git p4 submit --origin=HEAD^ &&
+		but p4 submit --origin=HEAD^ &&
 
 		echo 654321 >shelveme2.t &&
 		echo 123456 >>shelveme1.t &&
-		git add shelveme* &&
-		git cummit -m"shelvetest" &&
-		git p4 submit --shelve --origin=HEAD^ &&
+		but add shelveme* &&
+		but cummit -m"shelvetest" &&
+		but p4 submit --shelve --origin=HEAD^ &&
 
 		test_path_is_file shelveme1.t &&
 		test_path_is_file shelveme2.t
@@ -509,20 +509,20 @@ last_shelve () {
 
 make_shelved_cl() {
 	test_cummit "$1" >/dev/null &&
-	git p4 submit --origin HEAD^ --shelve >/dev/null &&
+	but p4 submit --origin HEAD^ --shelve >/dev/null &&
 	p4 -G changes -s shelved -m 1 | marshal_dump change
 }
 
 # Update existing shelved changelists
 
 test_expect_success 'submit --update-shelve' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
 		cd "$cli" &&
 		p4 revert ... &&
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		shelved_cl0=$(make_shelved_cl "shelved-change-0") &&
 		echo shelved_cl0=$shelved_cl0 &&
 		shelved_cl1=$(make_shelved_cl "shelved-change-1") &&
@@ -531,12 +531,12 @@ test_expect_success 'submit --update-shelve' '
 
 		echo "updated-line" >>shelf.t &&
 		echo added-file.t >added-file.t &&
-		git add shelf.t added-file.t &&
-		git rm -f shelved-change-1.t &&
-		git cummit --amend -C HEAD &&
-		git show --stat HEAD &&
-		git p4 submit -v --origin HEAD~2 --update-shelve $shelved_cl0 --update-shelve $shelved_cl1 &&
-		echo "done git p4 submit"
+		but add shelf.t added-file.t &&
+		but rm -f shelved-change-1.t &&
+		but cummit --amend -C HEAD &&
+		but show --stat HEAD &&
+		but p4 submit -v --origin HEAD~2 --update-shelve $shelved_cl0 --update-shelve $shelved_cl1 &&
+		echo "done but p4 submit"
 	) &&
 	(
 		cd "$cli" &&
@@ -550,7 +550,7 @@ test_expect_success 'submit --update-shelve' '
 '
 
 test_expect_success 'update a shelve involving moved and copied files' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		: >file_to_move &&
@@ -561,24 +561,24 @@ test_expect_success 'update a shelve involving moved and copied files' '
 		p4 submit -d "change2" &&
 		p4 opened
 	) &&
-	git p4 clone --dest="$git" //depot &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.detectCopies true &&
-		git config git-p4.detectRenames true &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.detectCopies true &&
+		but config but-p4.detectRenames true &&
+		but config but-p4.skipSubmitEdit true &&
 		mkdir moved &&
 		cp file_to_move copy_of_file &&
-		git add copy_of_file &&
-		git mv file_to_move moved/ &&
-		git cummit -m "rename a file" &&
-		git p4 submit -M --shelve --origin HEAD^ &&
+		but add copy_of_file &&
+		but mv file_to_move moved/ &&
+		but cummit -m "rename a file" &&
+		but p4 submit -M --shelve --origin HEAD^ &&
 		: >new_file &&
-		git add new_file &&
-		git cummit --amend &&
-		git show --stat HEAD &&
+		but add new_file &&
+		but cummit --amend &&
+		but show --stat HEAD &&
 		change=$(last_shelve) &&
-		git p4 submit -M --update-shelve $change --commit HEAD
+		but p4 submit -M --update-shelve $change --commit HEAD
 	) &&
 	(
 		cd "$cli" &&

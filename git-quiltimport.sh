@@ -2,16 +2,16 @@
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=
 OPTIONS_SPEC="\
-git quiltimport [options]
+but quiltimport [options]
 --
 n,dry-run     dry run
 author=       author name and email address for patches without any
 patches=      path to the quilt patches
 series=       path to the quilt series file
-keep-non-patch Pass -b to git mailinfo
+keep-non-patch Pass -b to but mailinfo
 "
 SUBDIRECTORY_ON=Yes
-. git-sh-setup
+. but-sh-setup
 
 dry_run=""
 quilt_author=""
@@ -77,7 +77,7 @@ tmp_info="$tmp_dir/info"
 
 
 # Find the initial cummit
-cummit=$(git rev-parse HEAD)
+cummit=$(but rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
 while read patch_name level garbage <&3
@@ -102,7 +102,7 @@ do
 		continue
 	fi
 	echo $patch_name
-	git mailinfo $MAILINFO_OPT "$tmp_msg" "$tmp_patch" \
+	but mailinfo $MAILINFO_OPT "$tmp_msg" "$tmp_patch" \
 		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3
 	test -s "$tmp_patch" || {
 		echo "Patch is empty.  Was it split wrong?"
@@ -146,10 +146,10 @@ do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
-		tree=$(git write-tree) &&
-		cummit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git cummit-tree $tree -p $cummit) &&
-		git update-ref -m "quiltimport: $patch_name" HEAD $cummit || exit 4
+		but apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
+		tree=$(but write-tree) &&
+		cummit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | but cummit-tree $tree -p $cummit) &&
+		but update-ref -m "quiltimport: $patch_name" HEAD $cummit || exit 4
 	fi
 done 3<"$QUILT_SERIES"
 rm -rf $tmp_dir || exit 5

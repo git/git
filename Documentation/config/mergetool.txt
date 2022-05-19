@@ -40,7 +40,7 @@ mergetool.meld.useAutoMerge::
 	parts automatically, highlight the conflicting parts and wait for
 	user decision.  Setting `mergetool.meld.useAutoMerge` to `true` tells
 	Git to unconditionally use the `--auto-merge` option with `meld`.
-	Setting this value to `auto` makes git detect whether `--auto-merge`
+	Setting this value to `auto` makes but detect whether `--auto-merge`
 	is supported and will only use `--auto-merge` when available.  A
 	value of `false` avoids using `--auto-merge` altogether, and is the
 	default value.
@@ -49,8 +49,8 @@ mergetool.vimdiff.layout::
 	The vimdiff backend uses this variable to control how its split
 	windows look like. Applies even if you are using Neovim (`nvim`) or
 	gVim (`gvim`) as the merge tool. See BACKEND SPECIFIC HINTS section
-ifndef::git-mergetool[]
-	in linkgit:git-mergetool[1].
+ifndef::but-mergetool[]
+	in linkbut:but-mergetool[1].
 endif::[]
 	for details.
 

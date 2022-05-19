@@ -9,15 +9,15 @@ Backward compatibility notes
    of wrapping).  Existing users who prefer not to see line-wrapped
    output may want to set
 
-     $ git config core.pager "less -S"
+     $ but config core.pager "less -S"
 
    to restore the traditional behaviour.  It is expected that people
    find output from most subcommands easier to read with the new
    default, except for "blame" which tends to produce really long
-   lines.  To override the new default only for "git blame", you can
+   lines.  To override the new default only for "but blame", you can
    do this:
 
-     $ git config pager.blame "less -S"
+     $ but config pager.blame "less -S"
 
  * A few disused directories in contrib/ have been retired.
 
@@ -49,13 +49,13 @@ UI, Workflows & Features
    allowing modern platforms to take advantage of their
    multiple cores.
 
- * "git clone" applies the "if cloning from a local disk, physically
+ * "but clone" applies the "if cloning from a local disk, physically
    copy the repository using hardlinks, unless otherwise told not to with
    --no-local" optimization when the url.*.insteadOf mechanism rewrites a
-   remote-repository "git clone $URL" into a
+   remote-repository "but clone $URL" into a
    clone from a local disk.
 
- * "git cummit --date=<date>" option learned more
+ * "but cummit --date=<date>" option learned more
    timestamp formats, including "--date=now".
 
  * The `core.commentChar` configuration variable is used to specify a
@@ -63,28 +63,28 @@ UI, Workflows & Features
    the cummit message editor.  This can be set to `auto` to attempt to
    choose a different character that does not conflict with any that
    already starts a line in the message being edited, for cases like
-   "git cummit --amend".
+   "but cummit --amend".
 
- * "git format-patch" learned --signature-file=<file> to add the contents
+ * "but format-patch" learned --signature-file=<file> to add the contents
    of a file as a signature to the mail message it produces.
 
- * "git grep" learned the grep.fullname configuration variable to force
+ * "but grep" learned the grep.fullname configuration variable to force
    "--full-name" to be the default.  This may cause regressions for
    scripted users who do not expect this new behaviour.
 
- * "git imap-send" learned to ask the credential helper for auth
+ * "but imap-send" learned to ask the credential helper for auth
    material.
 
- * "git log" and friends now understand the value "auto" for the
+ * "but log" and friends now understand the value "auto" for the
    "log.decorate" configuration variable to enable the "--decorate"
    option automatically when the output is sent to tty.
 
- * "git merge" without an argument, even when there is an upstream
+ * "but merge" without an argument, even when there is an upstream
    defined for the current branch, refused to run until
    merge.defaultToUpstream is set to true.  Flip the default of that
    configuration variable to true.
 
- * "git mergetool" learned to drive the vimdiff3 backend.
+ * "but mergetool" learned to drive the vimdiff3 backend.
 
  * mergetool.prompt used to default to 'true', always asking "do you
    really want to run the tool on this path?".  The default has been
@@ -97,29 +97,29 @@ UI, Workflows & Features
    users need to explicitly set the variable to 'true' if they want
    to be prompted to confirm running the tool on each path.
 
- * "git replace" learned the "--edit" subcommand to create a
+ * "but replace" learned the "--edit" subcommand to create a
    replacement by editing an existing object.
 
- * "git replace" learned a "--graft" option to rewrite the parents of a
+ * "but replace" learned a "--graft" option to rewrite the parents of a
    cummit.
 
- * "git send-email" learned "--to-cover" and "--cc-cover" options, to
+ * "but send-email" learned "--to-cover" and "--cc-cover" options, to
    tell it to copy To: and Cc: headers found in the first input file
    when emitting later input files.
 
- * "git svn" learned to cope with malformed timestamps with only one
-   digit in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
+ * "but svn" learned to cope with malformed timestamps with only one
+   dibut in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
    by some broken subversion server implementations.
 
- * "git tag" when editing the tag message shows the name of the tag
+ * "but tag" when editing the tag message shows the name of the tag
    being edited as a comment in the editor.
 
- * "git tag" learned to pay attention to "tag.sort" configuration, to
+ * "but tag" learned to pay attention to "tag.sort" configuration, to
    be used as the default sort order when no --sort=<value> option
    is given.
 
- * A new "git verify-cummit" command, to check GPG signatures in signed
-   cummits, in a way similar to "git verify-tag" is used to check
+ * A new "but verify-cummit" command, to check GPG signatures in signed
+   cummits, in a way similar to "but verify-tag" is used to check
    signed tags, was added.
 
 
@@ -146,10 +146,10 @@ Performance, Internal Implementation, etc.
  * The `core.deltabasecachelimit` used to default to 16 MiB , but this
    proved to be too small, and has been bumped to 96 MiB.
 
- * "git blame" has been optimized greatly by reorganising the data
+ * "but blame" has been optimized greatly by reorganising the data
    structure that is used to keep track of the work to be done.
 
- * "git diff" that compares 3-or-more trees (e.g. parents and the
+ * "but diff" that compares 3-or-more trees (e.g. parents and the
    result of a merge) has been optimized.
 
  * The API to update/delete references are being converted to handle
@@ -186,7 +186,7 @@ notes for details).
    to a tty.
    (merge 38de156 mn/sideband-no-ansi later to maint).
 
- * Mishandling of patterns in .gitignore that have trailing SPs quoted
+ * Mishandling of patterns in .butignore that have trailing SPs quoted
    with backslashes (e.g. ones that end with "\ ") has been
    corrected.
    (merge 97c1364be6b pb/trim-trailing-spaces later to maint).
@@ -196,7 +196,7 @@ notes for details).
    the object being corrupt, but that is not quite true.
    (merge d6c8a05 jk/report-fail-to-read-objects-better later to maint).
 
- * "git log -2master" is a common typo that shows two cummits starting
+ * "but log -2master" is a common typo that shows two cummits starting
    from whichever random branch that is not 'master' that happens to
    be checked out currently.
    (merge e3fa568 jc/revision-dash-count-parsing later to maint).
@@ -229,8 +229,8 @@ notes for details).
    (merge 9352fd5 ow/config-mailmap-pathname later to maint).
 
  * The completion scripts (in contrib/) did not know about quite a few
-   options that are common between "git merge" and "git pull", and a
-   couple of options unique to "git merge".
+   options that are common between "but merge" and "but pull", and a
+   couple of options unique to "but merge".
    (merge 8fee872 jk/complete-merge-pull later to maint).
 
  * The unix-domain socket used by the sample credential cache daemon
@@ -243,31 +243,31 @@ notes for details).
    function in a rarely used code path.
    (merge 479eaa8 ah/fix-http-push later to maint).
 
- * "--ignore-space-change" option of "git apply" ignored the spaces
+ * "--ignore-space-change" option of "but apply" ignored the spaces
    at the beginning of lines too aggressively, which is inconsistent
-   with the option of the same name that "diff" and "git diff" have.
+   with the option of the same name that "diff" and "but diff" have.
    (merge 14d3bb4 jc/apply-ignore-whitespace later to maint).
 
- * "git blame" miscounted the number of columns needed to show localized
+ * "but blame" miscounted the number of columns needed to show localized
    timestamps, resulting in a jaggy left-side-edge for the source code
    lines in its output.
    (merge dd75553 jx/blame-align-relative-time later to maint).
 
- * "git blame" assigned the blame to the copy in the working-tree if
+ * "but blame" assigned the blame to the copy in the working-tree if
    the repository is set to core.autocrlf=input and the file used CRLF
    line endings.
    (merge 4d4813a bc/blame-crlf-test later to maint).
 
- * "git clone -b brefs/tags/bar" would have mistakenly thought we were
+ * "but clone -b brefs/tags/bar" would have mistakenly thought we were
    following a single tag, even though it was a name of the branch,
    because it incorrectly used strstr().
    (merge 60a5f5f jc/fix-clone-single-starting-at-a-tag later to maint).
 
- * "git cummit --allow-empty-message -C $cummit" did not work when the
+ * "but cummit --allow-empty-message -C $cummit" did not work when the
    cummit did not have any log message.
    (merge 076cbd6 jk/CUMMIT-C-pick-empty later to maint).
 
- * "git diff --find-copies-harder" sometimes pretended as if the mode
+ * "but diff --find-copies-harder" sometimes pretended as if the mode
    bits have changed for paths that are marked with the assume-unchanged
    bit.
    (merge 5304810 jk/diff-files-assume-unchanged later to maint).
@@ -277,28 +277,28 @@ notes for details).
    under "--prune-empty".
    (merge 79bc4ef cb/filter-branch-prune-empty-degenerate-merges later to maint).
 
- * "git format-patch" did not enforce the rule that the "--follow"
+ * "but format-patch" did not enforce the rule that the "--follow"
    option from the log/diff family of commands must be used with
    exactly one pathspec.
    (merge dd63f16 jk/diff-follow-must-take-one-pathspec later to maint).
 
- * "git gc --auto" was recently changed to run in the background to
+ * "but gc --auto" was recently changed to run in the background to
    give control back early to the end-user sitting in front of the
    terminal, but it forgot that housekeeping involving reflogs should
    be done without other processes competing for accesses to the refs.
    (merge 62aad18 nd/daemonize-gc later to maint).
 
- * "git grep -O" to show the lines that hit in the pager did not work
+ * "but grep -O" to show the lines that hit in the pager did not work
    well with case insensitive search.  We now spawn "less" with its
    "-I" option when it is used as the pager (which is the default).
    (merge f7febbe sk/spawn-less-case-insensitively-from-grep-O-i later to maint).
 
- * We used to disable threaded "git index-pack" on platforms without
+ * We used to disable threaded "but index-pack" on platforms without
    thread-safe pread(); use a different workaround for such
-   platforms to allow threaded "git index-pack".
+   platforms to allow threaded "but index-pack".
    (merge 3953949 nd/index-pack-one-fd-per-thread later to maint).
 
- * The error reporting from "git index-pack" has been improved to
+ * The error reporting from "but index-pack" has been improved to
    distinguish missing objects from type errors.
    (merge 77583e7 jk/index-pack-report-missing later to maint).
 
@@ -309,7 +309,7 @@ notes for details).
  * "log --show-signature" did not pay attention to the "--graph" option.
    (merge cf3983d zk/log-graph-showsig later to maint).
 
- * "git mailinfo" used to read beyond the ends of header strings while
+ * "but mailinfo" used to read beyond the ends of header strings while
    parsing an incoming e-mail message to extract the patch.
    (merge b1a013d rs/mailinfo-header-cmp later to maint).
 
@@ -323,55 +323,55 @@ notes for details).
    change anything around the end of file.
    (merge ba31180 mk/merge-incomplete-files later to maint).
 
- * "git pack-objects" unnecessarily copied the previous contents when
+ * "but pack-objects" unnecessarily copied the previous contents when
    extending the hashtable, even though it will populate the table
    from scratch anyway.
    (merge fb79947 rs/pack-objects-no-unnecessary-realloc later to maint).
 
- * Recent updates to "git repack" started to duplicate objects that
+ * Recent updates to "but repack" started to duplicate objects that
    are in packfiles marked with the .keep flag into the new packfile by
    mistake.
    (merge d078d85 jk/repack-pack-keep-objects later to maint).
 
- * "git rerere forget" did not work well when merge.conflictstyle
+ * "but rerere forget" did not work well when merge.conflictstyle
    was set to a non-default value.
    (merge de3d8bb fc/rerere-conflict-style later to maint).
 
- * "git remote rm" and "git remote prune" can involve removing many
+ * "but remote rm" and "but remote prune" can involve removing many
    refs at once, which is not a very efficient thing to do when very
    many refs exist in the packed-refs file.
    (merge e6bea66 jl/remote-rm-prune later to maint).
 
- * "git log --exclude=<glob> --all | git shortlog" worked as expected,
-   but "git shortlog --exclude=<glob> --all", which is supposed to be
+ * "but log --exclude=<glob> --all | but shortlog" worked as expected,
+   but "but shortlog --exclude=<glob> --all", which is supposed to be
    identical to the above pipeline, was not accepted at the command
    line argument parser level.
    (merge eb07774 jc/shortlog-ref-exclude later to maint).
 
- * The autostash mode of "git rebase -i" did not restore the dirty
+ * The autostash mode of "but rebase -i" did not restore the dirty
    working tree state if the user aborted the interactive rebase by
    emptying the insn sheet.
    (merge ddb5432 rr/rebase-autostash-fix later to maint).
 
- * "git rebase --fork-point" did not filter out patch-identical
+ * "but rebase --fork-point" did not filter out patch-identical
    cummits correctly.
 
- * During "git rebase --merge", a conflicted patch could not be
+ * During "but rebase --merge", a conflicted patch could not be
    skipped with "--skip" if the next one also conflicted.
    (merge 95104c7 bc/fix-rebase-merge-skip later to maint).
 
- * "git show -s" (i.e. show log message only) used to incorrectly emit
+ * "but show -s" (i.e. show log message only) used to incorrectly emit
    an extra blank line after a merge cummit.
    (merge ad2f725 mk/show-s-no-extra-blank-line-for-merges later to maint).
 
- * "git status", even though it is a read-only operation, tries to
+ * "but status", even though it is a read-only operation, tries to
    update the index with refreshed lstat(2) info to optimize future
    accesses to the working tree opportunistically, but this could
    race with a "read-write" operation that modifies the index while it
    is running.  Detect such a race and avoid overwriting the index.
    (merge 426ddee ym/fix-opportunistic-index-update-race later to maint).
 
- * "git status" (and "git cummit") behaved as if changes in a modified
+ * "but status" (and "but cummit") behaved as if changes in a modified
    submodule are not there if submodule.*.ignore configuration is set,
    which was misleading.  The configuration is only to unclutter diff
    output during the course of development, and not to hide
@@ -379,11 +379,11 @@ notes for details).
    them.
    (merge c215d3d jl/status-added-submodule-is-never-ignored later to maint).
 
- * Documentation for "git submodule sync" forgot to say that the subcommand
+ * Documentation for "but submodule sync" forgot to say that the subcommand
    can take the "--recursive" option.
    (merge 9393ae7 mc/doc-submodule-sync-recurse later to maint).
 
- * "git update-index --cacheinfo" in 2.0 release crashed on a
+ * "but update-index --cacheinfo" in 2.0 release crashed on a
    malformed command line.
    (merge c8e1ee4 jc/rev-parse-argh-dashed-multi-words later to maint).
 

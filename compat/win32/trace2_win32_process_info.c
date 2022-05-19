@@ -6,7 +6,7 @@
 
 /*
  * An arbitrarily chosen value to limit the size of the ancestor
- * array built in git_processes().
+ * array built in but_processes().
  */
 #define NR_PIDS_LIMIT 10
 
@@ -129,7 +129,7 @@ static void get_ancestry(void)
  * This will catch debug runs (where the debugger started the process).
  * This is the normal case.  Since this code is called during our startup,
  * it will not report instances where a debugger is attached dynamically
- * to a running git process, but that is relatively rare.
+ * to a running but process, but that is relatively rare.
  */
 static void get_is_being_debugged(void)
 {

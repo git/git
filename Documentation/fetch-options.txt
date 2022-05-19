@@ -4,8 +4,8 @@
 -a::
 --append::
 	Append ref names and object names of fetched refs to the
-	existing contents of `.git/FETCH_HEAD`.  Without this
-	option old data in `.git/FETCH_HEAD` will be overwritten.
+	existing contents of `.but/FETCH_HEAD`.  Without this
+	option old data in `.but/FETCH_HEAD` will be overwritten.
 
 --atomic::
 	Use an atomic transaction to update local refs. Either all refs are
@@ -14,8 +14,8 @@
 --depth=<depth>::
 	Limit fetching to the specified number of cummits from the tip of
 	each remote branch history. If fetching to a 'shallow' repository
-	created by `git clone` with `--depth=<depth>` option (see
-	linkgit:git-clone[1]), deepen or shorten the history to the specified
+	created by `but clone` with `--depth=<depth>` option (see
+	linkbut:but-clone[1]), deepen or shorten the history to the specified
 	number of cummits. Tags for the deepened cummits are not fetched.
 
 --deepen=<depth>::
@@ -42,8 +42,8 @@ the current repository has the same history as the source repository.
 
 --update-shallow::
 	By default when fetching from a shallow repository,
-	`git fetch` refuses refs that require updating
-	.git/shallow. This option updates .git/shallow and accept such
+	`but fetch` refuses refs that require updating
+	.but/shallow. This option updates .but/shallow and accept such
 	refs.
 
 --negotiation-tip=<cummit|glob>::
@@ -63,7 +63,7 @@ abbreviated) SHA-1 of a cummit. Specifying a glob is equivalent to specifying
 this option multiple times, one for each matching ref name.
 +
 See also the `fetch.negotiationAlgorithm` and `push.negotiate`
-configuration variables documented in linkgit:git-config[1], and the
+configuration variables documented in linkbut:but-config[1], and the
 `--negotiate-only` option below.
 
 --negotiate-only::
@@ -73,57 +73,57 @@ configuration variables documented in linkgit:git-config[1], and the
 +
 This is incompatible with `--recurse-submodules=[yes|on-demand]`.
 Internally this is used to implement the `push.negotiate` option, see
-linkgit:git-config[1].
+linkbut:but-config[1].
 
 --dry-run::
 	Show what would be done, without making any changes.
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --[no-]write-fetch-head::
 	Write the list of remote refs fetched in the `FETCH_HEAD`
 	file directly under `$GIT_DIR`.  This is the default.
 	Passing `--no-write-fetch-head` from the command line tells
 	Git not to write the file.  Under `--dry-run` option, the
 	file is never written.
-endif::git-pull[]
+endif::but-pull[]
 
 -f::
 --force::
-	When 'git fetch' is used with `<src>:<dst>` refspec it may
+	When 'but fetch' is used with `<src>:<dst>` refspec it may
 	refuse to update the local branch as discussed
-ifdef::git-pull[]
-	in the `<refspec>` part of the linkgit:git-fetch[1]
+ifdef::but-pull[]
+	in the `<refspec>` part of the linkbut:but-fetch[1]
 	documentation.
-endif::git-pull[]
-ifndef::git-pull[]
+endif::but-pull[]
+ifndef::but-pull[]
 	in the `<refspec>` part below.
-endif::git-pull[]
+endif::but-pull[]
 	This option overrides that check.
 
 -k::
 --keep::
 	Keep downloaded pack.
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --multiple::
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
 --[no-]auto-maintenance::
 --[no-]auto-gc::
-	Run `git maintenance run --auto` at the end to perform automatic
+	Run `but maintenance run --auto` at the end to perform automatic
 	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
 	This is enabled by default.
 
 --[no-]write-cummit-graph::
 	Write a cummit-graph after fetching. This overrides the config
 	setting `fetch.writecummitGraph`.
-endif::git-pull[]
+endif::but-pull[]
 
 --prefetch::
 	Modify the configured refspec to place all refs into the
 	`refs/prefetch/` namespace. See the `prefetch` task in
-	linkgit:git-maintenance[1].
+	linkbut:but-maintenance[1].
 
 -p::
 --prune::
@@ -136,7 +136,7 @@ endif::git-pull[]
 	was cloned with the --mirror option), then they are also
 	subject to pruning. Supplying `--prune-tags` is a shorthand for
 	providing the tag refspec.
-ifndef::git-pull[]
+ifndef::but-pull[]
 +
 See the PRUNING section below for more details.
 
@@ -151,19 +151,19 @@ See the PRUNING section below for more details.
 +
 See the PRUNING section below for more details.
 
-endif::git-pull[]
+endif::but-pull[]
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 -n::
-endif::git-pull[]
+endif::but-pull[]
 --no-tags::
 	By default, tags that point at objects that are downloaded
 	from the remote repository are fetched and stored locally.
 	This option disables this automatic tag following. The default
 	behavior for a remote may be specified with the remote.<name>.tagOpt
-	setting. See linkgit:git-config[1].
+	setting. See linkbut:but-config[1].
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --refetch::
 	Instead of negotiating with the server to avoid transferring cummits and
 	associated objects that are already present locally, this option fetches
@@ -171,7 +171,7 @@ ifndef::git-pull[]
 	filter from configuration or using `--filter=` when the filter
 	definition has changed. Automatic post-fetch maintenance will perform
 	object database pack consolidation to remove any duplicate objects.
-endif::git-pull[]
+endif::but-pull[]
 
 --refmap=<refspec>::
 	When fetching refs listed on the command line, use the
@@ -193,17 +193,17 @@ endif::git-pull[]
 	is used (though tags may be pruned anyway if they are also the
 	destination of an explicit refspec; see `--prune`).
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new cummits of
 	submodules should be fetched too. When recursing through submodules,
-	`git fetch` always attempts to fetch "changed" submodules, that is, a
+	`but fetch` always attempts to fetch "changed" submodules, that is, a
 	submodule that has cummits that are referenced by a newly fetched
 	superproject cummit but are missing in the local submodule clone. A
 	changed submodule can be fetched as long as it is present locally e.g.
-	in `$GIT_DIR/modules/` (see linkgit:gitsubmodules[7]); if the upstream
+	in `$GIT_DIR/modules/` (see linkbut:butsubmodules[7]); if the upstream
 	adds a new submodule, that submodule cannot be fetched until it is
-	cloned e.g. by `git submodule update`.
+	cloned e.g. by `but submodule update`.
 +
 When set to 'on-demand', only changed submodules are fetched. When set
 to 'yes', all populated submodules are fetched and submodules that are
@@ -211,9 +211,9 @@ both unpopulated and changed are fetched. When set to 'no', submodules
 are never fetched.
 +
 When unspecified, this uses the value of `fetch.recurseSubmodules` if it
-is set (see linkgit:git-config[1]), defaulting to 'on-demand' if unset.
+is set (see linkbut:but-config[1]), defaulting to 'on-demand' if unset.
 When this option is used without any value, it defaults to 'yes'.
-endif::git-pull[]
+endif::but-pull[]
 
 -j::
 --jobs=<n>::
@@ -222,25 +222,25 @@ endif::git-pull[]
 If the `--multiple` option was specified, the different remotes will be fetched
 in parallel. If multiple submodules are fetched, they will be fetched in
 parallel. To control them independently, use the config settings
-`fetch.parallel` and `submodule.fetchJobs` (see linkgit:git-config[1]).
+`fetch.parallel` and `submodule.fetchJobs` (see linkbut:but-config[1]).
 +
 Typically, parallel recursive and multi-remote fetches will be faster. By
 default fetches are performed sequentially, not in parallel.
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
 	using the `--recurse-submodules=no` option).
-endif::git-pull[]
+endif::but-pull[]
 
 --set-upstream::
 	If the remote is fetched successfully, add upstream
 	(tracking) reference, used by argument-less
-	linkgit:git-pull[1] and other commands. For more information,
+	linkbut:but-pull[1] and other commands. For more information,
 	see `branch.<name>.merge` and `branch.<name>.remote` in
-	linkgit:git-config[1].
+	linkbut:but-config[1].
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
 	such as "Fetching submodule foo".  This option is used
@@ -250,37 +250,37 @@ ifndef::git-pull[]
 	This option is used internally to temporarily provide a
 	non-negative default value for the --recurse-submodules
 	option.  All other methods of configuring fetch's submodule
-	recursion (such as settings in linkgit:gitmodules[5] and
-	linkgit:git-config[1]) override this option, as does
+	recursion (such as settings in linkbut:butmodules[5] and
+	linkbut:but-config[1]) override this option, as does
 	specifying --[no-]recurse-submodules directly.
 
 -u::
 --update-head-ok::
-	By default 'git fetch' refuses to update the head which
+	By default 'but fetch' refuses to update the head which
 	corresponds to the current branch.  This flag disables the
-	check.  This is purely for the internal use for 'git pull'
-	to communicate with 'git fetch', and unless you are
+	check.  This is purely for the internal use for 'but pull'
+	to communicate with 'but fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
-endif::git-pull[]
+endif::but-pull[]
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
-	by 'git fetch-pack', `--exec=<upload-pack>` is passed to
+	by 'but fetch-pack', `--exec=<upload-pack>` is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 -q::
 --quiet::
-	Pass --quiet to git-fetch-pack and silence any other internally
-	used git commands. Progress is not reported to the standard error
+	Pass --quiet to but-fetch-pack and silence any other internally
+	used but commands. Progress is not reported to the standard error
 	stream.
 
 -v::
 --verbose::
 	Be verbose.
-endif::git-pull[]
+endif::but-pull[]
 
 --progress::
 	Progress status is reported on the standard error stream
@@ -298,17 +298,17 @@ endif::git-pull[]
 	sent to the other side in the order listed on the command line.
 
 --show-forced-updates::
-	By default, git checks if a branch is force-updated during
+	By default, but checks if a branch is force-updated during
 	fetch. This can be disabled through fetch.showForcedUpdates, but
 	the --show-forced-updates option guarantees this check occurs.
-	See linkgit:git-config[1].
+	See linkbut:but-config[1].
 
 --no-show-forced-updates::
-	By default, git checks if a branch is force-updated during
+	By default, but checks if a branch is force-updated during
 	fetch. Pass --no-show-forced-updates or set fetch.showForcedUpdates
 	to false to skip this check for performance reasons. If used during
-	'git-pull' the --ff-only option will still check for forced updates
-	before attempting a fast-forward update. See linkgit:git-config[1].
+	'but-pull' the --ff-only option will still check for forced updates
+	before attempting a fast-forward update. See linkbut:but-config[1].
 
 -4::
 --ipv4::

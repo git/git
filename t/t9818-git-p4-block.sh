@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 fetching changes in multiple blocks'
+test_description='but p4 fetching changes in multiple blocks'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -50,35 +50,35 @@ test_expect_success 'Default user cannot fetch changes' '
 '
 
 test_expect_success 'Clone the repo' '
-	git p4 clone --dest="$git" --changes-block-size=7 --verbose //depot/included@all
+	but p4 clone --dest="$but" --changes-block-size=7 --verbose //depot/included@all
 '
 
 test_expect_success 'All files are present' '
 	echo file.txt >expected &&
 	test_write_lines outer0.txt outer1.txt outer2.txt outer3.txt outer4.txt >>expected &&
 	test_write_lines outer5.txt >>expected &&
-	ls "$git" >current &&
+	ls "$but" >current &&
 	test_cmp expected current
 '
 
 test_expect_success 'file.txt is correct' '
 	echo 55 >expected &&
-	test_cmp expected "$git/file.txt"
+	test_cmp expected "$but/file.txt"
 '
 
 test_expect_success 'Correct number of cummits' '
-	(cd "$git" && git log --oneline) >log &&
+	(cd "$but" && but log --oneline) >log &&
 	wc -l log &&
 	test_line_count = 43 log
 '
 
 test_expect_success 'Previous version of file.txt is correct' '
-	(cd "$git" && git checkout HEAD^^) &&
+	(cd "$but" && but checkout HEAD^^) &&
 	echo 53 >expected &&
-	test_cmp expected "$git/file.txt"
+	test_cmp expected "$but/file.txt"
 '
 
-# Test git-p4 sync, with some files outside the client specification.
+# Test but-p4 sync, with some files outside the client specification.
 
 p4_add_file() {
 	(cd "$cli" &&
@@ -104,16 +104,16 @@ test_expect_success 'Add some more files' '
 # by the additional files in "excluded"
 test_expect_success 'Syncing files' '
 	(
-		cd "$git" &&
-		git p4 sync --changes-block-size=7 &&
-		git checkout p4/master &&
+		cd "$but" &&
+		but p4 sync --changes-block-size=7 &&
+		but checkout p4/master &&
 		ls -l x* > log &&
 		test_line_count = 11 log
 	)
 '
 
 # Handling of multiple depot paths:
-#    git p4 clone //depot/pathA //depot/pathB
+#    but p4 clone //depot/pathA //depot/pathB
 #
 test_expect_success 'Create a repo with multiple depot paths' '
 	client_view "//depot/pathA/... //client/pathA/..." \
@@ -129,10 +129,10 @@ test_expect_success 'Create a repo with multiple depot paths' '
 '
 
 test_expect_success 'Clone repo with multiple depot paths' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
+		cd "$but" &&
+		but p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
 			--destination=dest &&
 		ls -1 dest >log &&
 		test_line_count = 20 log
@@ -140,9 +140,9 @@ test_expect_success 'Clone repo with multiple depot paths' '
 '
 
 test_expect_success 'Clone repo with self-sizing block size' '
-	test_when_finished cleanup_git &&
-	git p4 clone --changes-block-size=1000000 //depot@all --destination="$git" &&
-	git -C "$git" log --oneline >log &&
+	test_when_finished cleanup_but &&
+	but p4 clone --changes-block-size=1000000 //depot@all --destination="$but" &&
+	but -C "$but" log --oneline >log &&
 	test_line_count \> 10 log
 '
 

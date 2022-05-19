@@ -1,4 +1,4 @@
-$ git diff --raw --abbrev=4 initial
+$ but diff --raw --abbrev=4 initial
 :100644 100644 35d2... 9929... M	dir/sub
 :100644 100644 01e7... 10a8... M	file0
 :000000 100644 0000... b1e6... A	file1

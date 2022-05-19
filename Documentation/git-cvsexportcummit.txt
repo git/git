@@ -1,15 +1,15 @@
-git-cvsexportcummit(1)
+but-cvsexportcummit(1)
 ======================
 
 NAME
 ----
-git-cvsexportcummit - Export a single cummit to a CVS checkout
+but-cvsexportcummit - Export a single cummit to a CVS checkout
 
 
 SYNOPSIS
 --------
 [verse]
-'git cvsexportcummit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d <cvsroot>]
+'but cvsexportcummit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d <cvsroot>]
 	[-w <cvs-workdir>] [-W] [-f] [-m <msgprefix>] [<parent-cummit>] <cummit-id>
 
 
@@ -28,7 +28,7 @@ by default.
 
 Supports file additions, removals, and cummits that affect binary files.
 
-If the cummit is a merge cummit, you must tell 'git cvsexportcummit' what
+If the cummit is a merge cummit, you must tell 'but cvsexportcummit' what
 parent the changeset should be done against.
 
 OPTIONS
@@ -93,26 +93,26 @@ EXAMPLES
 Merge one patch into CVS::
 +
 ------------
-$ export GIT_DIR=~/project/.git
+$ export GIT_DIR=~/project/.but
 $ cd ~/project_cvs_checkout
-$ git cvsexportcummit -v <cummit-sha1>
+$ but cvsexportcummit -v <cummit-sha1>
 $ cvs cummit -F .msg <files>
 ------------
 
 Merge one patch into CVS (-c and -w options). The working directory is within the Git Repo::
 +
 ------------
-	$ git cvsexportcummit -v -c -w ~/project_cvs_checkout <cummit-sha1>
+	$ but cvsexportcummit -v -c -w ~/project_cvs_checkout <cummit-sha1>
 ------------
 
 Merge pending patches into CVS automatically -- only if you really know what you are doing::
 +
 ------------
-$ export GIT_DIR=~/project/.git
+$ export GIT_DIR=~/project/.but
 $ cd ~/project_cvs_checkout
-$ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcummit -c -p -v
+$ but cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 but cvsexportcummit -c -p -v
 ------------
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

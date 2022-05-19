@@ -1,15 +1,15 @@
-git-grep(1)
+but-grep(1)
 ===========
 
 NAME
 ----
-git-grep - Print lines matching a pattern
+but-grep - Print lines matching a pattern
 
 
 SYNOPSIS
 --------
 [verse]
-'git grep' [-a | --text] [-I] [--textconv] [-i | --ignore-case] [-w | --word-regexp]
+'but grep' [-a | --text] [-I] [--textconv] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-P | --perl-regexp]
@@ -52,11 +52,11 @@ OPTIONS
 	tree, search also in untracked files.
 
 --no-exclude-standard::
-	Also search in ignored files by not honoring the `.gitignore`
+	Also search in ignored files by not honoring the `.butignore`
 	mechanism. Only useful with `--untracked`.
 
 --exclude-standard::
-	Do not pay attention to ignored files specified via the `.gitignore`
+	Do not pay attention to ignored files specified via the `.butignore`
 	mechanism.  Only useful when searching files in the current directory
 	with `--no-index`.
 
@@ -159,7 +159,7 @@ providing this option will cause it to die.
 --files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
-	For better compatibility with 'git diff', `--name-only` is a
+	For better compatibility with 'but diff', `--name-only` is a
 	synonym for `--files-with-matches`.
 
 -O[<pager>]::
@@ -170,14 +170,14 @@ providing this option will cause it to die.
 	the first match automatically. The `pager` argument is
 	optional; if specified, it must be stuck to the option
 	without a space. If `pager` is unspecified, the default pager
-	will be used (see `core.pager` in linkgit:git-config[1]).
+	will be used (see `core.pager` in linkbut:but-config[1]).
 
 -z::
 --null::
 	Use \0 as the delimiter for pathnames in the output, and print
 	them verbatim. Without this option, pathnames with "unusual"
 	characters are quoted as explained for the configuration
-	variable core.quotePath (see linkgit:git-config[1]).
+	variable core.quotePath (see linkbut:but-config[1]).
 
 -o::
 --only-matching::
@@ -209,9 +209,9 @@ providing this option will cause it to die.
 --show-function::
 	Show the preceding line that contains the function name of
 	the match, unless the matching line is a function name itself.
-	The name is determined in the same way as `git diff` works out
+	The name is determined in the same way as `but diff` works out
 	patch hunk headers (see 'Defining a custom hunk-header' in
-	linkgit:gitattributes[5]).
+	linkbut:butattributes[5]).
 
 -<num>::
 -C <num>::
@@ -235,8 +235,8 @@ providing this option will cause it to die.
 	function name up to the one before the next function name,
 	effectively showing the whole function in which the match was
 	found. The function names are determined in the same way as
-	`git diff` works out patch hunk headers (see 'Defining a
-	custom hunk-header' in linkgit:gitattributes[5]).
+	`but diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkbut:butattributes[5]).
 
 --threads <num>::
 	Number of grep worker threads to use.
@@ -300,24 +300,24 @@ question doesn't support them.
 	Both leading paths match and glob(7) patterns are supported.
 +
 For more details about the <pathspec> syntax, see the 'pathspec' entry
-in linkgit:gitglossary[7].
+in linkbut:butglossary[7].
 
 EXAMPLES
 --------
 
-`git grep 'time_t' -- '*.[ch]'`::
+`but grep 'time_t' -- '*.[ch]'`::
 	Looks for `time_t` in all tracked .c and .h files in the working
 	directory and its subdirectories.
 
-`git grep -e '#define' --and \( -e MAX_PATH -e PATH_MAX \)`::
+`but grep -e '#define' --and \( -e MAX_PATH -e PATH_MAX \)`::
 	Looks for a line that has `#define` and either `MAX_PATH` or
 	`PATH_MAX`.
 
-`git grep --all-match -e NODE -e Unexpected`::
+`but grep --all-match -e NODE -e Unexpected`::
 	Looks for a line that has `NODE` or `Unexpected` in
 	files that have lines that match both.
 
-`git grep solution -- :^Documentation`::
+`but grep solution -- :^Documentation`::
 	Looks for `solution`, excluding files in `Documentation`.
 
 NOTES ON THREADS
@@ -359,10 +359,10 @@ grep.fullName::
 	If set to true, enable `--full-name` option by default.
 
 grep.fallbackToNoIndex::
-	If set to true, fall back to git grep --no-index if git grep
-	is executed outside of a git repository.  Defaults to false.
+	If set to true, fall back to but grep --no-index if but grep
+	is executed outside of a but repository.  Defaults to false.
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

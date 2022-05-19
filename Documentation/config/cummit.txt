@@ -1,9 +1,9 @@
 cummit.cleanup::
 	This setting overrides the default of the `--cleanup` option in
-	`git cummit`. See linkgit:git-cummit[1] for details. Changing the
+	`but cummit`. See linkbut:but-cummit[1] for details. Changing the
 	default can be useful when you always want to keep lines that begin
 	with comment character `#` in your log message, in which case you
-	would do `git config cummit.cleanup whitespace` (note that you will
+	would do `but config cummit.cleanup whitespace` (note that you will
 	have to remove the help lines that begin with `#` in the cummit log
 	template yourself, if you do this).
 
@@ -25,5 +25,5 @@ cummit.template::
 	new cummit messages.
 
 cummit.verbose::
-	A boolean or int to specify the level of verbose with `git cummit`.
-	See linkgit:git-cummit[1].
+	A boolean or int to specify the level of verbose with `but cummit`.
+	See linkbut:but-cummit[1].

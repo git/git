@@ -16,13 +16,13 @@ sane_unset GIT_TRACE2_CONFIG_PARAMS
 TTDIR="$GIT_BUILD_DIR/t/helper/" && export TTDIR
 PATH="$TTDIR:$PATH" && export PATH
 
-# Warning: use of 'test_cmp' may run test-tool.exe and/or git.exe
+# Warning: use of 'test_cmp' may run test-tool.exe and/or but.exe
 # Warning: to do the actual diff/comparison, so the HEREDOCs here
-# Warning: only cover our actual calls to test-tool and/or git.
+# Warning: only cover our actual calls to test-tool and/or but.
 # Warning: So you may see extra lines in artifact files when
 # Warning: interactively debugging.
 
-V=$(git version | sed -e 's/^git version //') && export V
+V=$(but version | sed -e 's/^but version //') && export V
 
 # There are multiple trace2 targets: normal, perf, and event.
 # Trace2 events will/can be written to each active target (subject
@@ -30,7 +30,7 @@ V=$(git version | sed -e 's/^git version //') && export V
 # Test each target independently.
 #
 # Defer setting GIT_TRACE2_PERF until the actual command we want to
-# test because hidden git and test-tool commands in the test
+# test because hidden but and test-tool commands in the test
 # harness can contaminate our output.
 
 # Enable "brief" feature which turns off the prefix:

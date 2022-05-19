@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "protocol-caps.h"
 #include "gettext.h"
 #include "pkt-line.h"

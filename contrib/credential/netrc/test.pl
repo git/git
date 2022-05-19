@@ -8,7 +8,7 @@ use File::Spec::Functions qw(:DEFAULT rel2abs);
 use IPC::Open2;
 
 BEGIN {
-	# t-git-credential-netrc.sh kicks off our testing, so we have to go
+	# t-but-credential-netrc.sh kicks off our testing, so we have to go
 	# from there.
 	Test::More->builder->current_test(1);
 }
@@ -18,7 +18,7 @@ my $scriptDir = dirname rel2abs $0;
 my ($netrc, $netrcGpg, $gcNetrc) = map { catfile $scriptDir, $_; }
                                        qw(test.netrc
                                           test.netrc.gpg
-                                          git-credential-netrc);
+                                          but-credential-netrc);
 local $ENV{PATH} = join ':'
                       , $scriptDir
                       , $ENV{PATH}
@@ -28,14 +28,14 @@ local $ENV{PATH} = join ':'
 diag "Testing insecure file, nothing should be found\n";
 chmod 0644, $netrc;
 my $cred = run_credential(['-f', $netrc, 'get'],
-			  { host => 'github.com' });
+			  { host => 'buthub.com' });
 
 ok(scalar keys %$cred == 0, "Got 0 keys from insecure file");
 
 diag "Testing missing file, nothing should be found\n";
 chmod 0644, $netrc;
 $cred = run_credential(['-f', '///nosuchfile///', 'get'],
-		       { host => 'github.com' });
+		       { host => 'buthub.com' });
 
 ok(scalar keys %$cred == 0, "Got 0 keys from missing file");
 
@@ -52,9 +52,9 @@ $cred = run_credential(['-f', $netrc, 'get'],
 
 ok(scalar keys %$cred == 0, "Got no corovamilkbar keys");
 
-diag "Testing netrc file for a github.com entry\n";
+diag "Testing netrc file for a buthub.com entry\n";
 $cred = run_credential(['-f', $netrc, 'get'],
-		       { host => 'github.com' });
+		       { host => 'buthub.com' });
 
 ok(scalar keys %$cred == 2, "Got 2 Github keys");
 
@@ -88,12 +88,12 @@ ok(scalar keys %$cred == 2, "Got 2 'host:port kills host' keys");
 is($cred->{password}, 'bobwillknow', "Got correct 'host:port kills host' password");
 is($cred->{username}, 'bob', "Got correct 'host:port kills host' username");
 
-diag 'Testing netrc file decryption by git config gpg.program setting\n';
+diag 'Testing netrc file decryption by but config gpg.program setting\n';
 $cred = run_credential( ['-f', $netrcGpg, 'get']
-                      , { host => 'git-config-gpg' }
+                      , { host => 'but-config-gpg' }
                       );
 
-ok(scalar keys %$cred == 2, 'Got keys decrypted by git config option');
+ok(scalar keys %$cred == 2, 'Got keys decrypted by but config option');
 
 diag 'Testing netrc file decryption by gpg option\n';
 $cred = run_credential( ['-f', $netrcGpg, '-g', 'test.command-option-gpg', 'get']

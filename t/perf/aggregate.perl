@@ -109,7 +109,7 @@ while (scalar @ARGV) {
 	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
-		my $rev = sane_backticks(qw(git rev-parse --verify), $arg);
+		my $rev = sane_backticks(qw(but rev-parse --verify), $arg);
 		chomp $rev;
 		$dir = "build/".$rev;
 	} elsif ($arg eq '.') {

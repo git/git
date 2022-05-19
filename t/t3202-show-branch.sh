@@ -11,10 +11,10 @@ test_expect_success 'setup' '
 	test_cummit initial &&
 	for i in $(test_seq 1 10)
 	do
-		git checkout -b branch$i initial &&
+		but checkout -b branch$i initial &&
 		test_cummit --no-tag branch$i || return 1
 	done &&
-	git for-each-ref \
+	but for-each-ref \
 		--sort=version:refname \
 		--format="%(refname:strip=2)" \
 		"refs/heads/branch*" >branches.sorted &&
@@ -45,7 +45,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'show-branch with more than 8 branches' '
-	git show-branch $(cat branches.sorted) >actual &&
+	but show-branch $(cat branches.sorted) >actual &&
 	test_cmp expect actual
 '
 
@@ -54,7 +54,7 @@ test_expect_success 'show-branch with showbranch.default' '
 	do
 		test_config showbranch.default $branch --add || return 1
 	done &&
-	git show-branch >actual &&
+	but show-branch >actual &&
 	test_cmp expect actual
 '
 
@@ -83,7 +83,7 @@ test_expect_success 'show-branch --color output' '
 	> <RED>+<RESET>          [branch1] branch1
 	> <RED>+<RESET><GREEN>+<RESET><YELLOW>+<RESET><BLUE>+<RESET><MAGENTA>+<RESET><CYAN>+<RESET><BOLD;RED>+<RESET><BOLD;GREEN>+<RESET><BOLD;YELLOW>+<RESET><BOLD;BLUE>*<RESET> [branch10^] initial
 	EOF
-	git show-branch --color=always $(cat branches.sorted) >actual.raw &&
+	but show-branch --color=always $(cat branches.sorted) >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -92,7 +92,7 @@ test_expect_success 'show branch --remotes' '
 	cat >expect.err <<-\EOF &&
 	No revs to be shown.
 	EOF
-	git show-branch -r 2>actual.err >actual.out &&
+	but show-branch -r 2>actual.err >actual.out &&
 	test_cmp expect.err actual.err &&
 	test_must_be_empty actual.out
 '
@@ -113,20 +113,20 @@ test_expect_success 'setup show branch --list' '
 '
 
 test_expect_success 'show branch --list' '
-	git show-branch --list $(cat branches.sorted) >actual &&
+	but show-branch --list $(cat branches.sorted) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show branch --list has no --color output' '
-	git show-branch --color=always --list $(cat branches.sorted) >actual &&
+	but show-branch --color=always --list $(cat branches.sorted) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show branch --merge-base with one argument' '
 	for branch in $(cat branches.sorted)
 	do
-		git rev-parse $branch >expect &&
-		git show-branch --merge-base $branch >actual &&
+		but rev-parse $branch >expect &&
+		but show-branch --merge-base $branch >actual &&
 		test_cmp expect actual || return 1
 	done
 '
@@ -134,18 +134,18 @@ test_expect_success 'show branch --merge-base with one argument' '
 test_expect_success 'show branch --merge-base with two arguments' '
 	for branch in $(cat branches.sorted)
 	do
-		git rev-parse initial >expect &&
-		git show-branch --merge-base initial $branch >actual &&
+		but rev-parse initial >expect &&
+		but show-branch --merge-base initial $branch >actual &&
 		test_cmp expect actual || return 1
 	done
 '
 
 test_expect_success 'show branch --merge-base with N arguments' '
-	git rev-parse initial >expect &&
-	git show-branch --merge-base $(cat branches.sorted) >actual &&
+	but rev-parse initial >expect &&
+	but show-branch --merge-base $(cat branches.sorted) >actual &&
 	test_cmp expect actual &&
 
-	git merge-base $(cat branches.sorted) >actual &&
+	but merge-base $(cat branches.sorted) >actual &&
 	test_cmp expect actual
 '
 
@@ -157,7 +157,7 @@ test_expect_success 'show branch --reflog=2' '
 	>	+  [refs/heads/branch10@{0}] branch10
 	>	++ [refs/heads/branch10@{1}] initial
 	EOF
-	git show-branch --reflog=2 >actual &&
+	but show-branch --reflog=2 >actual &&
 	test_cmp actual expect
 '
 

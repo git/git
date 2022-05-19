@@ -1,25 +1,25 @@
-git-status(1)
+but-status(1)
 =============
 
 NAME
 ----
-git-status - Show the working tree status
+but-status - Show the working tree status
 
 
 SYNOPSIS
 --------
 [verse]
-'git status' [<options>...] [--] [<pathspec>...]
+'but status' [<options>...] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
 Displays paths that have differences between the index file and the
 current HEAD cummit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
-tracked by Git (and are not ignored by linkgit:gitignore[5]). The first
-are what you _would_ cummit by running `git cummit`; the second and
-third are what you _could_ cummit by running 'git add' before running
-`git cummit`.
+tracked by Git (and are not ignored by linkbut:butignore[5]). The first
+are what you _would_ cummit by running `but cummit`; the second and
+third are what you _could_ cummit by running 'but add' before running
+`but cummit`.
 
 OPTIONS
 -------
@@ -51,9 +51,9 @@ This is optional and defaults to the original version 'v1' format.
 --verbose::
 	In addition to the names of files that have been changed, also
 	show the textual changes that are staged to be cummitted
-	(i.e., like the output of `git diff --cached`). If `-v` is specified
+	(i.e., like the output of `but diff --cached`). If `-v` is specified
 	twice, then also show the changes in the working tree that
-	have not yet been staged (i.e., like the output of `git diff`).
+	have not yet been staged (i.e., like the output of `but diff`).
 
 -u[<mode>]::
 --untracked-files[=<mode>]::
@@ -76,12 +76,12 @@ forgetting to add newly created files.  Because it takes extra work
 to find untracked files in the filesystem, this mode may take some
 time in a large working tree.
 Consider enabling untracked cache and split index if supported (see
-`git update-index --untracked-cache` and `git update-index
---split-index`), Otherwise you can use `no` to have `git status`
+`but update-index --untracked-cache` and `but update-index
+--split-index`), Otherwise you can use `no` to have `but status`
 return more quickly without showing untracked files.
 
 The default can be changed using the status.showUntrackedFiles
-configuration variable documented in linkgit:git-config[1].
+configuration variable documented in linkbut:but-config[1].
 --
 
 --ignore-submodules[=<when>]::
@@ -90,7 +90,7 @@ configuration variable documented in linkgit:git-config[1].
 	Using "none" will consider the submodule modified when it either contains
 	untracked or modified files or its HEAD differs from the cummit recorded
 	in the superproject and can be used to override any settings of the
-	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
+	'ignore' option in linkbut:but-config[1] or linkbut:butmodules[5]. When
 	"untracked" is used submodules are not considered dirty when they only
 	contain untracked content (but they are still scanned for modified
 	content). Using "dirty" ignores all changes to the work tree of submodules,
@@ -142,15 +142,15 @@ ignored, then the directory is not shown, but all contents are shown.
 --renames::
 --no-renames::
 	Turn on/off rename detection regardless of user configuration.
-	See also linkgit:git-diff[1] `--no-renames`.
+	See also linkbut:but-diff[1] `--no-renames`.
 
 --find-renames[=<n>]::
 	Turn on rename detection, optionally setting the similarity
 	threshold.
-	See also linkgit:git-diff[1] `--find-renames`.
+	See also linkbut:but-diff[1] `--find-renames`.
 
 <pathspec>...::
-	See the 'pathspec' entry in linkgit:gitglossary[7].
+	See the 'pathspec' entry in linkbut:butglossary[7].
 
 OUTPUT
 ------
@@ -250,7 +250,7 @@ Submodules have more state and instead report
 		m    the submodule has modified content
 		?    the submodule has untracked files
 since modified content or untracked files in a submodule cannot be added
-via `git add` in the superproject to prepare a cummit.
+via `but add` in the superproject to prepare a cummit.
 
 'm' and '?' are applied recursively. For example if a nested submodule
 in a submodule contains an untracked file, this is reported as '?' as well.
@@ -418,7 +418,7 @@ byte.
 
 Without the `-z` option, pathnames with "unusual" characters are
 quoted as explained for the configuration variable `core.quotePath`
-(see linkgit:git-config[1]).
+(see linkbut:but-config[1]).
 
 
 CONFIGURATION
@@ -436,18 +436,18 @@ directory.
 If `status.submoduleSummary` is set to a non zero number or true (identical
 to -1 or an unlimited number), the submodule summary will be enabled for
 the long format and a summary of cummits for modified submodules will be
-shown (see --summary-limit option of linkgit:git-submodule[1]). Please note
+shown (see --summary-limit option of linkbut:but-submodule[1]). Please note
 that the summary output from the status command will be suppressed for all
 submodules when `diff.ignoreSubmodules` is set to 'all' or only for those
 submodules where `submodule.<name>.ignore=all`. To also view the summary for
 ignored submodules you can either use the --ignore-submodules=dirty command
-line option or the 'git submodule summary' command, which shows a similar
+line option or the 'but submodule summary' command, which shows a similar
 output but does not honor these settings.
 
 BACKGROUND REFRESH
 ------------------
 
-By default, `git status` will automatically refresh the index, updating
+By default, `but status` will automatically refresh the index, updating
 the cached stat information from the working tree and writing out the
 result. Writing out the updated index is an optimization that isn't
 strictly necessary (`status` computes the values for itself, but writing
@@ -455,12 +455,12 @@ them out is just to save subsequent programs from repeating our
 computation). When `status` is run in the background, the lock held
 during the write may conflict with other simultaneous processes, causing
 them to fail. Scripts running `status` in the background should consider
-using `git --no-optional-locks status` (see linkgit:git[1] for details).
+using `but --no-optional-locks status` (see linkbut:but[1] for details).
 
 SEE ALSO
 --------
-linkgit:gitignore[5]
+linkbut:butignore[5]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

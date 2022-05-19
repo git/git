@@ -6,14 +6,14 @@ test_description='checkout'
 
 # Arguments: [!] <branch> <oid> [<checkout options>]
 #
-# Runs "git checkout" to switch to <branch>, testing that
+# Runs "but checkout" to switch to <branch>, testing that
 #
 #   1) we are on the specified branch, <branch>;
 #   2) HEAD is <oid>; if <oid> is not specified, the old HEAD is used.
 #
-# If <checkout options> is not specified, "git checkout" is run with -b.
+# If <checkout options> is not specified, "but checkout" is run with -b.
 #
-# If the first argument is `!`, "git checkout" is expected to fail when
+# If the first argument is `!`, "but checkout" is expected to fail when
 # it is run.
 do_checkout () {
 	should_fail= &&
@@ -26,9 +26,9 @@ do_checkout () {
 	exp_ref="refs/heads/$exp_branch" &&
 
 	# if <oid> is not specified, use HEAD.
-	exp_oid=${2:-$(git rev-parse --verify HEAD)} &&
+	exp_oid=${2:-$(but rev-parse --verify HEAD)} &&
 
-	# default options for git checkout: -b
+	# default options for but checkout: -b
 	if test -z "$3"
 	then
 		opts="-b"
@@ -38,24 +38,24 @@ do_checkout () {
 
 	if test -n "$should_fail"
 	then
-		test_must_fail git checkout $opts $exp_branch $exp_oid
+		test_must_fail but checkout $opts $exp_branch $exp_oid
 	else
-		git checkout $opts $exp_branch $exp_oid &&
+		but checkout $opts $exp_branch $exp_oid &&
 		echo "$exp_ref" >ref.expect &&
-		git rev-parse --symbolic-full-name HEAD >ref.actual &&
+		but rev-parse --symbolic-full-name HEAD >ref.actual &&
 		test_cmp ref.expect ref.actual &&
 		echo "$exp_oid" >oid.expect &&
-		git rev-parse --verify HEAD >oid.actual &&
+		but rev-parse --verify HEAD >oid.actual &&
 		test_cmp oid.expect oid.actual
 	fi
 }
 
 test_dirty_unmergeable () {
-	test_expect_code 1 git diff --exit-code
+	test_expect_code 1 but diff --exit-code
 }
 
 test_dirty_unmergeable_discards_changes () {
-	git diff --exit-code
+	but diff --exit-code
 }
 
 setup_dirty_unmergeable () {
@@ -63,59 +63,59 @@ setup_dirty_unmergeable () {
 }
 
 test_dirty_mergeable () {
-	test_expect_code 1 git diff --cached --exit-code
+	test_expect_code 1 but diff --cached --exit-code
 }
 
 test_dirty_mergeable_discards_changes () {
-	git diff --cached --exit-code
+	but diff --cached --exit-code
 }
 
 setup_dirty_mergeable () {
 	echo >file2 file2 &&
-	git add file2
+	but add file2
 }
 
 test_expect_success 'setup' '
 	test_cummit initial file1 &&
-	HEAD1=$(git rev-parse --verify HEAD) &&
+	HEAD1=$(but rev-parse --verify HEAD) &&
 
 	test_cummit change1 file1 &&
-	HEAD2=$(git rev-parse --verify HEAD) &&
+	HEAD2=$(but rev-parse --verify HEAD) &&
 
-	git branch -m branch1
+	but branch -m branch1
 '
 
 test_expect_success 'checkout a branch without refs/heads/* prefix' '
-	git clone --no-tags . repo-odd-prefix &&
+	but clone --no-tags . repo-odd-prefix &&
 	(
 		cd repo-odd-prefix &&
 
-		origin=$(git symbolic-ref refs/remotes/origin/HEAD) &&
-		git symbolic-ref refs/heads/a-branch "$origin" &&
+		origin=$(but symbolic-ref refs/remotes/origin/HEAD) &&
+		but symbolic-ref refs/heads/a-branch "$origin" &&
 
-		git checkout -f a-branch &&
-		git checkout -f a-branch
+		but checkout -f a-branch &&
+		but checkout -f a-branch
 	)
 '
 
 test_expect_success 'checkout -b to a new branch, set to HEAD' '
 	test_when_finished "
-		git checkout branch1 &&
-		test_might_fail git branch -D branch2" &&
+		but checkout branch1 &&
+		test_might_fail but branch -D branch2" &&
 	do_checkout branch2
 '
 
 test_expect_success 'checkout -b to a merge base' '
 	test_when_finished "
-		git checkout branch1 &&
-		test_might_fail git branch -D branch2" &&
-	git checkout -b branch2 branch1...
+		but checkout branch1 &&
+		test_might_fail but branch -D branch2" &&
+	but checkout -b branch2 branch1...
 '
 
 test_expect_success 'checkout -b to a new branch, set to an explicit ref' '
 	test_when_finished "
-		git checkout branch1 &&
-		test_might_fail git branch -D branch2" &&
+		but checkout branch1 &&
+		test_might_fail but branch -D branch2" &&
 	do_checkout branch2 $HEAD1
 '
 
@@ -127,8 +127,8 @@ test_expect_success 'checkout -b to a new branch with unmergeable changes fails'
 
 test_expect_success 'checkout -f -b to a new branch with unmergeable changes discards changes' '
 	test_when_finished "
-		git checkout branch1 &&
-		test_might_fail git branch -D branch2" &&
+		but checkout branch1 &&
+		test_might_fail but branch -D branch2" &&
 
 	# still dirty and on branch1
 	do_checkout branch2 $HEAD1 "-f -b" &&
@@ -137,9 +137,9 @@ test_expect_success 'checkout -f -b to a new branch with unmergeable changes dis
 
 test_expect_success 'checkout -b to a new branch preserves mergeable changes' '
 	test_when_finished "
-		git reset --hard &&
-		git checkout branch1 &&
-		test_might_fail git branch -D branch2" &&
+		but reset --hard &&
+		but checkout branch1 &&
+		test_might_fail but branch -D branch2" &&
 
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 &&
@@ -147,52 +147,52 @@ test_expect_success 'checkout -b to a new branch preserves mergeable changes' '
 '
 
 test_expect_success 'checkout -f -b to a new branch with mergeable changes discards changes' '
-	test_when_finished git reset --hard HEAD &&
+	test_when_finished but reset --hard HEAD &&
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 "-f -b" &&
 	test_dirty_mergeable_discards_changes
 '
 
 test_expect_success 'checkout -b to an existing branch fails' '
-	test_when_finished git reset --hard HEAD &&
+	test_when_finished but reset --hard HEAD &&
 	do_checkout ! branch2 $HEAD2
 '
 
 test_expect_success 'checkout -b to @{-1} fails with the right branch name' '
-	git checkout branch1 &&
-	git checkout branch2 &&
+	but checkout branch1 &&
+	but checkout branch2 &&
 	echo  >expect "fatal: a branch named '\''branch1'\'' already exists" &&
-	test_must_fail git checkout -b @{-1} 2>actual &&
+	test_must_fail but checkout -b @{-1} 2>actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'checkout -B to an existing branch resets branch to HEAD' '
-	git checkout branch1 &&
+	but checkout branch1 &&
 
 	do_checkout branch2 "" -B
 '
 
 test_expect_success 'checkout -B to a merge base' '
-	git checkout branch1 &&
+	but checkout branch1 &&
 
-	git checkout -B branch2 branch1...
+	but checkout -B branch2 branch1...
 '
 
 test_expect_success 'checkout -B to an existing branch from detached HEAD resets branch to HEAD' '
-	head=$(git rev-parse --verify HEAD) &&
-	git checkout "$head" &&
+	head=$(but rev-parse --verify HEAD) &&
+	but checkout "$head" &&
 
 	do_checkout branch2 "" -B
 '
 
 test_expect_success 'checkout -B to an existing branch with an explicit ref resets branch to that ref' '
-	git checkout branch1 &&
+	but checkout branch1 &&
 
 	do_checkout branch2 $HEAD1 -B
 '
 
 test_expect_success 'checkout -B to an existing branch with unmergeable changes fails' '
-	git checkout branch1 &&
+	but checkout branch1 &&
 
 	setup_dirty_unmergeable &&
 	do_checkout ! branch2 $HEAD1 -B &&
@@ -206,8 +206,8 @@ test_expect_success 'checkout -f -B to an existing branch with unmergeable chang
 '
 
 test_expect_success 'checkout -B to an existing branch preserves mergeable changes' '
-	test_when_finished git reset --hard &&
-	git checkout branch1 &&
+	test_when_finished but reset --hard &&
+	but checkout branch1 &&
 
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 -B &&
@@ -215,7 +215,7 @@ test_expect_success 'checkout -B to an existing branch preserves mergeable chang
 '
 
 test_expect_success 'checkout -f -B to an existing branch with mergeable changes discards changes' '
-	git checkout branch1 &&
+	but checkout branch1 &&
 
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 "-f -B" &&
@@ -223,63 +223,63 @@ test_expect_success 'checkout -f -B to an existing branch with mergeable changes
 '
 
 test_expect_success 'checkout -b <describe>' '
-	git tag -f -m "First cummit" initial initial &&
-	git checkout -f change1 &&
-	name=$(git describe) &&
-	git checkout -b $name &&
-	git diff --exit-code change1 &&
+	but tag -f -m "First cummit" initial initial &&
+	but checkout -f change1 &&
+	name=$(but describe) &&
+	but checkout -b $name &&
+	but diff --exit-code change1 &&
 	echo "refs/heads/$name" >expect &&
-	git symbolic-ref HEAD >actual &&
+	but symbolic-ref HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'checkout -B to the current branch works' '
-	git checkout branch1 &&
-	git checkout -B branch1-scratch &&
+	but checkout branch1 &&
+	but checkout -B branch1-scratch &&
 
 	setup_dirty_mergeable &&
-	git checkout -B branch1-scratch initial &&
+	but checkout -B branch1-scratch initial &&
 	test_dirty_mergeable
 '
 
 test_expect_success 'checkout -b after clone --no-checkout does a checkout of HEAD' '
-	git init src &&
+	but init src &&
 	test_cummit -C src a &&
-	rev="$(git -C src rev-parse HEAD)" &&
-	git clone --no-checkout src dest &&
-	git -C dest checkout "$rev" -b branch &&
+	rev="$(but -C src rev-parse HEAD)" &&
+	but clone --no-checkout src dest &&
+	but -C dest checkout "$rev" -b branch &&
 	test_path_is_file dest/a.t
 '
 
 test_expect_success 'checkout -b to a new branch preserves mergeable changes despite sparse-checkout' '
 	test_when_finished "
-		git reset --hard &&
-		git checkout branch1-scratch &&
-		test_might_fail git branch -D branch3 &&
-		git config core.sparseCheckout false &&
-		rm .git/info/sparse-checkout" &&
+		but reset --hard &&
+		but checkout branch1-scratch &&
+		test_might_fail but branch -D branch3 &&
+		but config core.sparseCheckout false &&
+		rm .but/info/sparse-checkout" &&
 
 	test_cummit file2 &&
 
 	echo stuff >>file1 &&
-	echo file2 >.git/info/sparse-checkout &&
-	git config core.sparseCheckout true &&
+	echo file2 >.but/info/sparse-checkout &&
+	but config core.sparseCheckout true &&
 
-	CURHEAD=$(git rev-parse HEAD) &&
+	CURHEAD=$(but rev-parse HEAD) &&
 	do_checkout branch3 $CURHEAD &&
 
 	echo file1 >expect &&
-	git diff --name-only >actual &&
+	but diff --name-only >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'checkout -b rejects an invalid start point' '
-	test_must_fail git checkout -b branch4 file1 2>err &&
+	test_must_fail but checkout -b branch4 file1 2>err &&
 	test_i18ngrep "is not a cummit" err
 '
 
 test_expect_success 'checkout -b rejects an extra path argument' '
-	test_must_fail git checkout -b branch5 branch1 file1 2>err &&
+	test_must_fail but checkout -b branch5 branch1 file1 2>err &&
 	test_i18ngrep "Cannot update paths and switch to branch" err
 '
 

@@ -7,8 +7,8 @@ Fixes since v2.5.2
  * The experimental untracked-cache feature were buggy when paths with
    a few levels of subdirectories are involved.
 
- * Recent versions of scripted "git am" has a performance regression
-   in "git am --skip" codepath, which no longer exists in the
+ * Recent versions of scripted "but am" has a performance regression
+   in "but am --skip" codepath, which no longer exists in the
    built-in version on the 'master' front.  Fix the regression in
    the last scripted version that appear in 2.5.x maintenance track
    and older.

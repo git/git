@@ -5,7 +5,7 @@
 
 struct config_set;
 struct fsmonitor_settings;
-struct git_hash_algo;
+struct but_hash_algo;
 struct index_state;
 struct lock_file;
 struct pathspec;
@@ -62,13 +62,13 @@ struct repo_path_cache {
 struct repository {
 	/* Environment */
 	/*
-	 * Path to the git directory.
+	 * Path to the but directory.
 	 * Cannot be NULL after initialization.
 	 */
-	char *gitdir;
+	char *butdir;
 
 	/*
-	 * Path to the common git directory.
+	 * Path to the common but directory.
 	 * Cannot be NULL after initialization.
 	 */
 	char *commondir;
@@ -129,12 +129,12 @@ struct repository {
 	/* Subsystems */
 	/*
 	 * Repository's config which contains key-value pairs from the usual
-	 * set of config files (i.e. repo specific .git/config, user wide
-	 * ~/.gitconfig, XDG config file and the global /etc/gitconfig)
+	 * set of config files (i.e. repo specific .but/config, user wide
+	 * ~/.butconfig, XDG config file and the global /etc/butconfig)
 	 */
 	struct config_set *config;
 
-	/* Repository's submodule config as defined by '.gitmodules' */
+	/* Repository's submodule config as defined by '.butmodules' */
 	struct submodule_cache *submodule_cache;
 
 	/*
@@ -147,7 +147,7 @@ struct repository {
 	struct remote_state *remote_state;
 
 	/* Repository's current hash algorithm, as serialized on disk. */
-	const struct git_hash_algo *hash_algo;
+	const struct but_hash_algo *hash_algo;
 
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
@@ -161,7 +161,7 @@ struct repository {
 
 	/* Configurations */
 
-	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
+	/* Indicate if a repository has a different 'commondir' from 'butdir' */
 	unsigned different_commondir:1;
 };
 
@@ -171,7 +171,7 @@ extern struct repository *the_repository;
  * Define a custom repository layout. Any field can be NULL, which
  * will default back to the path according to the default layout.
  */
-struct set_gitdir_args {
+struct set_butdir_args {
 	const char *commondir;
 	const char *object_dir;
 	const char *graft_file;
@@ -180,16 +180,16 @@ struct set_gitdir_args {
 	int disable_ref_updates;
 };
 
-void repo_set_gitdir(struct repository *repo, const char *root,
-		     const struct set_gitdir_args *extra_args);
+void repo_set_butdir(struct repository *repo, const char *root,
+		     const struct set_butdir_args *extra_args);
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void initialize_the_repository(void);
-int repo_init(struct repository *r, const char *gitdir, const char *worktree);
+int repo_init(struct repository *r, const char *butdir, const char *worktree);
 
 /*
  * Initialize the repository 'subrepo' as the submodule at the given path. If
- * the submodule's gitdir cannot be found at <path>/.git, this function calls
+ * the submodule's butdir cannot be found at <path>/.but, this function calls
  * submodule_from_path() to try to find it. treeish_name is only used if
  * submodule_from_path() needs to be called; see its documentation for more
  * information.

@@ -11,19 +11,19 @@ Fixes since v1.8.0
    "echo" to interpret "\a" as if it were a C-string asking for a
    BEL output.
 
- * "git mergetool" feeds /dev/null as a common ancestor when dealing
+ * "but mergetool" feeds /dev/null as a common ancestor when dealing
    with an add/add conflict, but p4merge backend cannot handle
    it. Work it around by passing a temporary empty file.
 
- * "git log -F -E --grep='<ere>'" failed to use the given <ere>
+ * "but log -F -E --grep='<ere>'" failed to use the given <ere>
    pattern as extended regular expression, and instead looked for the
    string literally.
 
- * "git grep -e pattern <tree>" asked the attribute system to read
-   "<tree>:.gitattributes" file in the working tree, which was
+ * "but grep -e pattern <tree>" asked the attribute system to read
+   "<tree>:.butattributes" file in the working tree, which was
    nonsense.
 
- * A symbolic ref refs/heads/SYM was not correctly removed with "git
+ * A symbolic ref refs/heads/SYM was not correctly removed with "but
    branch -d SYM"; the command removed the ref pointed by SYM
    instead.
 
@@ -31,7 +31,7 @@ Fixes since v1.8.0
    to clarify that these are not a remote entity, but unhyphenated
    spelling snuck in to a few places since then.
 
- * "git pull --rebase" run while the HEAD is detached tried to find
+ * "but pull --rebase" run while the HEAD is detached tried to find
    the upstream branch of the detached HEAD (which by definition
    does not exist) and emitted unnecessary error messages.
 
@@ -46,19 +46,19 @@ Fixes since v1.8.0
  * Various rfc2047 quoting issues around a non-ASCII name on the
    From: line in the output from format-patch have been corrected.
 
- * "git diff -G<pattern>" did not honor textconv filter when looking
+ * "but diff -G<pattern>" did not honor textconv filter when looking
    for changes.
 
  * Bash completion script (in contrib/) did not correctly complete a
-   lazy "git checkout $name_of_remote_tracking_branch_that_is_unique"
+   lazy "but checkout $name_of_remote_tracking_branch_that_is_unique"
    command line.
 
- * RSS feed from "gitweb" had a xss hole in its title output.
+ * RSS feed from "butweb" had a xss hole in its title output.
 
- * "git config --path $key" segfaulted on "[section] key" (a boolean
+ * "but config --path $key" segfaulted on "[section] key" (a boolean
    "true" spelled without "=", not "[section] key = true").
 
- * "git checkout -b foo" while on an unborn branch did not say
+ * "but checkout -b foo" while on an unborn branch did not say
    "Switched to a new branch 'foo'" like other cases.
 
 Also contains other minor fixes and documentation updates.

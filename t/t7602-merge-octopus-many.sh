@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git merge
+test_description='but merge
 
 Testing octopus merge with more than 25 refs.'
 
@@ -8,23 +8,23 @@ Testing octopus merge with more than 25 refs.'
 
 test_expect_success 'setup' '
 	echo c0 > c0.c &&
-	git add c0.c &&
-	git cummit -m c0 &&
-	git tag c0 &&
+	but add c0.c &&
+	but cummit -m c0 &&
+	but tag c0 &&
 	i=1 &&
 	while test $i -le 30
 	do
-		git reset --hard c0 &&
+		but reset --hard c0 &&
 		echo c$i > c$i.c &&
-		git add c$i.c &&
-		git cummit -m c$i &&
-		git tag c$i &&
+		but add c$i.c &&
+		but cummit -m c$i &&
+		but tag c$i &&
 		i=$(expr $i + 1) || return 1
 	done
 '
 
 test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	i=2 &&
 	refs="" &&
 	while test $i -le 30
@@ -32,15 +32,15 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 		refs="$refs c$i" &&
 		i=$(expr $i + 1) || return 1
 	done &&
-	git merge $refs &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
+	but merge $refs &&
+	test "$(but rev-parse c1)" != "$(but rev-parse HEAD)" &&
 	i=1 &&
 	while test $i -le 30
 	do
-		test "$(git rev-parse c$i)" = "$(git rev-parse HEAD^$i)" &&
+		test "$(but rev-parse c$i)" = "$(but rev-parse HEAD^$i)" &&
 		i=$(expr $i + 1) || return 1
 	done &&
-	git diff --exit-code &&
+	but diff --exit-code &&
 	i=1 &&
 	while test $i -le 30
 	do
@@ -64,8 +64,8 @@ Merge made by the 'octopus' strategy.
 EOF
 
 test_expect_success 'merge output uses pretty names' '
-	git reset --hard c1 &&
-	git merge c2 c3 c4 >actual &&
+	but reset --hard c1 &&
+	but merge c2 c3 c4 >actual &&
 	test_cmp expected actual
 '
 
@@ -83,7 +83,7 @@ test_expect_success 'merge reduces irrelevant remote heads' '
 		sed s/recursive/ort/ expected.tmp >expected &&
 		rm expected.tmp
 	fi &&
-	GIT_MERGE_VERBOSITY=0 git merge c4 c5 >actual &&
+	GIT_MERGE_VERBOSITY=0 but merge c4 c5 >actual &&
 	test_cmp expected actual
 '
 
@@ -99,8 +99,8 @@ Merge made by the 'octopus' strategy.
 EOF
 
 test_expect_success 'merge fast-forward output uses pretty names' '
-	git reset --hard c0 &&
-	git merge c1 c2 >actual &&
+	but reset --hard c0 &&
+	but merge c1 c2 >actual &&
 	test_cmp expected actual
 '
 

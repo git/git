@@ -6,13 +6,13 @@ Fixes since v2.9.3
 
  * There are certain house-keeping tasks that need to be performed at
    the very beginning of any Git program, and programs that are not
-   built-in commands had to do them exactly the same way as "git"
+   built-in commands had to do them exactly the same way as "but"
    potty does.  It was easy to make mistakes in one-off standalone
    programs (like test helpers).  A common "main()" function that
    calls cmd_main() of individual program has been introduced to
    make it harder to make mistakes.
 
- * "git merge" with renormalization did not work well with
+ * "but merge" with renormalization did not work well with
    merge-recursive, due to "safer crlf" conversion kicking in when it
    shouldn't.
 
@@ -20,7 +20,7 @@ Fixes since v2.9.3
    --date=unix to report the seconds-since-epoch (without timezone)
    has been added.
 
- * "git push --force-with-lease" already had enough logic to allow
+ * "but push --force-with-lease" already had enough logic to allow
    ensuring that such a push results in creation of a ref (i.e. the
    receiving end did not have another push from sideways that would be
    discarded by our force-pushing), but didn't expose this possibility
@@ -31,7 +31,7 @@ Fixes since v2.9.3
    corrected to record the same blob as the other file the hardlink is
    shared with.
 
- * "git mv dir non-existing-dir/" did not work in some environments
+ * "but mv dir non-existing-dir/" did not work in some environments
    the same way as existing mainstream platforms.  The code now moves
    "dir" to "non-existing-dir", without relying on rename("A", "B/")
    that strips the trailing slash of '/'.
@@ -42,31 +42,31 @@ Fixes since v2.9.3
    catch pathnames that are not portable to other platforms as need
    arises).
 
- * When "git merge-recursive" works on history with many criss-cross
+ * When "but merge-recursive" works on history with many criss-cross
    merges in "verbose" mode, the names the command assigns to the
    virtual merge bases could have overwritten each other by unintended
    reuse of the same piece of memory.
 
- * "git checkout --detach <branch>" used to give the same advice
-   message as that is issued when "git checkout <tag>" (or anything
+ * "but checkout --detach <branch>" used to give the same advice
+   message as that is issued when "but checkout <tag>" (or anything
    that is not a branch name) is given, but asking with "--detach" is
    an explicit enough sign that the user knows what is going on.  The
    advice message has been squelched in this case.
 
- * "git difftool" by default ignores the error exit from the backend
+ * "but difftool" by default ignores the error exit from the backend
    commands it spawns, because often they signal that they found
    differences by exiting with a non-zero status code just like "diff"
    does; the exit status codes 126 and above however are special in
    that they are used to signal that the command is not executable,
-   does not exist, or killed by a signal.  "git difftool" has been
+   does not exist, or killed by a signal.  "but difftool" has been
    taught to notice these exit status codes.
 
  * On Windows, help.browser configuration variable used to be ignored,
    which has been corrected.
 
- * The "git -c var[=val] cmd" facility to append a configuration
+ * The "but -c var[=val] cmd" facility to append a configuration
    variable definition at the end of the search order was described in
-   git(1) manual page, but not in git-config(1), which was more likely
+   but(1) manual page, but not in but-config(1), which was more likely
    place for people to look for when they ask "can I make a one-shot
    override, and if so how?"
 
@@ -80,9 +80,9 @@ Fixes since v2.9.3
    the file descriptor still open.  Open tempfile with O_CLOEXEC flag
    to avoid this (on Windows, this is mapped to O_NOINHERIT).
 
- * "git-shell" rejects a request to serve a repository whose name
+ * "but-shell" rejects a request to serve a repository whose name
    begins with a dash, which makes it no longer possible to get it
-   confused into spawning service programs like "git-upload-pack" with
+   confused into spawning service programs like "but-upload-pack" with
    an option like "--help", which in turn would spawn an interactive
    pager, instead of working with the repository user asked to access
    (i.e. the one whose name is "--help").

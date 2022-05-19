@@ -11,11 +11,11 @@
 #include "date.h"
 
 static const char* show_branch_usage[] = {
-    N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
+    N_("but show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
        "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
        "                [--more=<n> | --list | --independent | --merge-base]\n"
        "                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"),
-    N_("git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"),
+    N_("but show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"),
     NULL
 };
 
@@ -321,7 +321,7 @@ static void show_one_cummit(struct cummit *cummit, int no_name)
 static char *ref_name[MAX_REVS + 1];
 static int ref_name_cnt;
 
-static const char *find_digit_prefix(const char *s, int *v)
+static const char *find_dibut_prefix(const char *s, int *v)
 {
 	const char *p;
 	int ver;
@@ -341,8 +341,8 @@ static int version_cmp(const char *a, const char *b)
 	while (1) {
 		int va, vb;
 
-		a = find_digit_prefix(a, &va);
-		b = find_digit_prefix(b, &vb);
+		a = find_dibut_prefix(a, &va);
+		b = find_dibut_prefix(b, &vb);
 		if (va != vb)
 			return va - vb;
 
@@ -552,7 +552,7 @@ static void append_one_rev(const char *av)
 	die("bad sha1 reference %s", av);
 }
 
-static int git_show_branch_config(const char *var, const char *value, void *cb)
+static int but_show_branch_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "showbranch.default")) {
 		if (!value)
@@ -568,11 +568,11 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "color.showbranch")) {
-		showbranch_use_color = git_config_colorbool(var, value);
+		showbranch_use_color = but_config_colorbool(var, value);
 		return 0;
 	}
 
-	return git_color_default_config(var, value, cb);
+	return but_color_default_config(var, value, cb);
 }
 
 static int omit_in_dense(struct cummit *cummit, struct cummit **rev, int n)
@@ -681,7 +681,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	init_cummit_name_slab(&name_slab);
 
-	git_config(git_show_branch_config, NULL);
+	but_config(but_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_args.nr) {

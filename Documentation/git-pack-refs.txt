@@ -1,14 +1,14 @@
-git-pack-refs(1)
+but-pack-refs(1)
 ================
 
 NAME
 ----
-git-pack-refs - Pack heads and tags for efficient repository access
+but-pack-refs - Pack heads and tags for efficient repository access
 
 SYNOPSIS
 --------
 [verse]
-'git pack-refs' [--all] [--no-prune]
+'but pack-refs' [--all] [--no-prune]
 
 DESCRIPTION
 -----------
@@ -34,7 +34,7 @@ Subsequent updates to branches always create new files under
 
 A recommended practice to deal with a repository with too many
 refs is to pack its refs with `--all` once, and
-occasionally run `git pack-refs`.  Tags are by
+occasionally run `but pack-refs`.  Tags are by
 definition stationary and are not expected to change.  Branch
 heads will be packed with the initial `pack-refs --all`, but
 only the currently active branch heads will become unpacked,
@@ -64,10 +64,10 @@ BUGS
 ----
 
 Older documentation written before the packed-refs mechanism was
-introduced may still say things like ".git/refs/heads/<branch> file
+introduced may still say things like ".but/refs/heads/<branch> file
 exists" when it means "branch <branch> exists".
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

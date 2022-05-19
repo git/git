@@ -8,7 +8,7 @@
 #include "quote.h"
 
 static const char builtin_get_tar_cummit_id_usage[] =
-"git get-tar-cummit-id";
+"but get-tar-cummit-id";
 
 /* ustar header + extended global header content */
 #define RECORDSIZE	(512)
@@ -29,9 +29,9 @@ int cmd_get_tar_cummit_id(int argc, const char **argv, const char *prefix)
 
 	n = read_in_full(0, buffer, HEADERSIZE);
 	if (n < 0)
-		die_errno("git get-tar-cummit-id: read error");
+		die_errno("but get-tar-cummit-id: read error");
 	if (n != HEADERSIZE)
-		die_errno("git get-tar-cummit-id: EOF before reading tar header");
+		die_errno("but get-tar-cummit-id: EOF before reading tar header");
 	if (header->typeflag[0] != 'g')
 		return 1;
 
@@ -46,7 +46,7 @@ int cmd_get_tar_cummit_id(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	if (write_in_full(1, comment, len) < 0)
-		die_errno("git get-tar-cummit-id: write error");
+		die_errno("but get-tar-cummit-id: write error");
 
 	return 0;
 }

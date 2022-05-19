@@ -1,4 +1,4 @@
-# git-gui console support
+# but-gui console support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 class console {
@@ -91,8 +91,8 @@ method _init {} {
 }
 
 method exec {cmd {after {}}} {
-	if {[lindex $cmd 0] eq {git}} {
-		set fd_f [eval git_read --stderr [lrange $cmd 1 end]]
+	if {[lindex $cmd 0] eq {but}} {
+		set fd_f [eval but_read --stderr [lrange $cmd 1 end]]
 	} else {
 		lappend cmd 2>@1
 		set fd_f [_open_stdout_stderr $cmd]

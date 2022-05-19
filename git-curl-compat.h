@@ -12,9 +12,9 @@
  * document.
  *
  * The source of truth for what versions have which symbols is
- * https://github.com/curl/curl/blob/master/docs/libcurl/symbols-in-versions;
- * the release dates are taken from curl.git (at
- * https://github.com/curl/curl/).
+ * https://buthub.com/curl/curl/blob/master/docs/libcurl/symbols-in-versions;
+ * the release dates are taken from curl.but (at
+ * https://buthub.com/curl/curl/).
  *
  * For each X symbol we need from curl we define our own
  * GIT_CURL_HAVE_X. If multiple similar symbols with the same prefix
@@ -49,7 +49,7 @@
  *
  * If we start requiring 7.34.0 we might also be able to remove the
  * code conditional on USE_CURL_FOR_IMAP_SEND in imap-send.c, see
- * 1e16b255b95 (git-imap-send: use libcurl for implementation,
+ * 1e16b255b95 (but-imap-send: use libcurl for implementation,
  * 2014-11-09) and the check it added for "072200" in the Makefile.
 
  */

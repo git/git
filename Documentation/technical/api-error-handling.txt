@@ -1,11 +1,11 @@
-Error reporting in git
+Error reporting in but
 ======================
 
 `BUG`, `die`, `usage`, `error`, and `warning` report errors of
 various kinds.
 
 - `BUG` is for failed internal assertions that should never happen,
-  i.e. a bug in git itself.
+  i.e. a bug in but itself.
 
 - `die` is for fatal application errors.  It prints a message to
   the user and exits with status 128.
@@ -32,7 +32,7 @@ Customizable error handlers
 The default behavior of `die` and `error` is to write a message to
 stderr and then exit or return as appropriate.  This behavior can be
 overridden using `set_die_routine` and `set_error_routine`.  For
-example, "git daemon" uses set_die_routine to write the reason `die`
+example, "but daemon" uses set_die_routine to write the reason `die`
 was called to syslog before exiting.
 
 Library errors

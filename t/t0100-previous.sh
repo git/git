@@ -9,61 +9,61 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'branch -d @{-1}' '
 	test_cummit A &&
-	git checkout -b junk &&
-	git checkout - &&
-	test "$(git symbolic-ref HEAD)" = refs/heads/main &&
-	git branch -d @{-1} &&
-	test_must_fail git rev-parse --verify refs/heads/junk
+	but checkout -b junk &&
+	but checkout - &&
+	test "$(but symbolic-ref HEAD)" = refs/heads/main &&
+	but branch -d @{-1} &&
+	test_must_fail but rev-parse --verify refs/heads/junk
 '
 
 test_expect_success 'branch -d @{-12} when there is not enough switches yet' '
-	git reflog expire --expire=now &&
-	git checkout -b junk2 &&
-	git checkout - &&
-	test "$(git symbolic-ref HEAD)" = refs/heads/main &&
-	test_must_fail git branch -d @{-12} &&
-	git rev-parse --verify refs/heads/main
+	but reflog expire --expire=now &&
+	but checkout -b junk2 &&
+	but checkout - &&
+	test "$(but symbolic-ref HEAD)" = refs/heads/main &&
+	test_must_fail but branch -d @{-12} &&
+	but rev-parse --verify refs/heads/main
 '
 
 test_expect_success 'merge @{-1}' '
-	git checkout A &&
+	but checkout A &&
 	test_cummit B &&
-	git checkout A &&
+	but checkout A &&
 	test_cummit C &&
 	test_cummit D &&
-	git branch -f main B &&
-	git branch -f other &&
-	git checkout other &&
-	git checkout main &&
-	git merge @{-1} &&
-	git cat-file commit HEAD | grep "Merge branch '\''other'\''"
+	but branch -f main B &&
+	but branch -f other &&
+	but checkout other &&
+	but checkout main &&
+	but merge @{-1} &&
+	but cat-file commit HEAD | grep "Merge branch '\''other'\''"
 '
 
 test_expect_success 'merge @{-1}~1' '
-	git checkout main &&
-	git reset --hard B &&
-	git checkout other &&
-	git checkout main &&
-	git merge @{-1}~1 &&
-	git cat-file commit HEAD >actual &&
+	but checkout main &&
+	but reset --hard B &&
+	but checkout other &&
+	but checkout main &&
+	but merge @{-1}~1 &&
+	but cat-file commit HEAD >actual &&
 	grep "Merge branch '\''other'\''" actual
 '
 
 test_expect_success 'merge @{-100} before checking out that many branches yet' '
-	git reflog expire --expire=now &&
-	git checkout -f main &&
-	git reset --hard B &&
-	git branch -f other C &&
-	git checkout other &&
-	git checkout main &&
-	test_must_fail git merge @{-100}
+	but reflog expire --expire=now &&
+	but checkout -f main &&
+	but reset --hard B &&
+	but branch -f other C &&
+	but checkout other &&
+	but checkout main &&
+	test_must_fail but merge @{-100}
 '
 
 test_expect_success 'log -g @{-1}' '
-	git checkout -b last_branch &&
-	git checkout -b new_branch &&
+	but checkout -b last_branch &&
+	but checkout -b new_branch &&
 	echo "last_branch@{0}" >expect &&
-	git log -g --format=%gd @{-1} >actual &&
+	but log -g --format=%gd @{-1} >actual &&
 	test_cmp expect actual
 '
 

@@ -59,7 +59,7 @@ However, the assumption does hold in all cases because it reflects the way
 that both rebase and cherry-pick were implemented; and the implementation
 of cherry-pick and rebase are not readily changeable for backwards
 compatibility reasons (see for example the discussion of the --ours and
---theirs flag in the documentation of `git checkout`, particularly the
+--theirs flag in the documentation of `but checkout`, particularly the
 comments about how they behave with rebase).  The optimization avoids
 checking first-parent-ness, though.  It checks the conditions that make the
 optimization valid instead, so it would still continue working if someone
@@ -93,7 +93,7 @@ this discussion is deferred until section 8.
 
 === 1. How rebasing and cherry-picking work ===
 
-Consider the following setup (from the git-rebase manpage):
+Consider the following setup (from the but-rebase manpage):
 
 		     A---B---C topic
 		    /

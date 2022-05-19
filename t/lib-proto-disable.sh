@@ -7,66 +7,66 @@ test_whitelist () {
 	url=$3
 
 	test_expect_success "clone $desc (enabled)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		(
 			GIT_ALLOW_PROTOCOL=$proto &&
 			export GIT_ALLOW_PROTOCOL &&
-			git clone --bare "$url" tmp.git
+			but clone --bare "$url" tmp.but
 		)
 	'
 
 	test_expect_success "fetch $desc (enabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_ALLOW_PROTOCOL=$proto &&
 			export GIT_ALLOW_PROTOCOL &&
-			git fetch
+			but fetch
 		)
 	'
 
 	test_expect_success "push $desc (enabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_ALLOW_PROTOCOL=$proto &&
 			export GIT_ALLOW_PROTOCOL &&
-			git push origin HEAD:pushed
+			but push origin HEAD:pushed
 		)
 	'
 
 	test_expect_success "push $desc (disabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_ALLOW_PROTOCOL=none &&
 			export GIT_ALLOW_PROTOCOL &&
-			test_must_fail git push origin HEAD:pushed
+			test_must_fail but push origin HEAD:pushed
 		)
 	'
 
 	test_expect_success "fetch $desc (disabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_ALLOW_PROTOCOL=none &&
 			export GIT_ALLOW_PROTOCOL &&
-			test_must_fail git fetch
+			test_must_fail but fetch
 		)
 	'
 
 	test_expect_success "clone $desc (disabled)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		(
 			GIT_ALLOW_PROTOCOL=none &&
 			export GIT_ALLOW_PROTOCOL &&
-			test_must_fail git clone --bare "$url" tmp.git
+			test_must_fail but clone --bare "$url" tmp.but
 		)
 	'
 
 	test_expect_success "clone $desc (env var has precedence)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		(
 			GIT_ALLOW_PROTOCOL=none &&
 			export GIT_ALLOW_PROTOCOL &&
-			test_must_fail git -c protocol.allow=always clone --bare "$url" tmp.git &&
-			test_must_fail git -c protocol.$proto.allow=always clone --bare "$url" tmp.git
+			test_must_fail but -c protocol.allow=always clone --bare "$url" tmp.but &&
+			test_must_fail but -c protocol.$proto.allow=always clone --bare "$url" tmp.but
 		)
 	'
 }
@@ -78,103 +78,103 @@ test_config () {
 
 	# Test clone/fetch/push with protocol.<type>.allow config
 	test_expect_success "clone $desc (enabled with config)" '
-		rm -rf tmp.git &&
-		git -c protocol.$proto.allow=always clone --bare "$url" tmp.git
+		rm -rf tmp.but &&
+		but -c protocol.$proto.allow=always clone --bare "$url" tmp.but
 	'
 
 	test_expect_success "fetch $desc (enabled)" '
-		git -C tmp.git -c protocol.$proto.allow=always fetch
+		but -C tmp.but -c protocol.$proto.allow=always fetch
 	'
 
 	test_expect_success "push $desc (enabled)" '
-		git -C tmp.git -c protocol.$proto.allow=always  push origin HEAD:pushed
+		but -C tmp.but -c protocol.$proto.allow=always  push origin HEAD:pushed
 	'
 
 	test_expect_success "push $desc (disabled)" '
-		test_must_fail git -C tmp.git -c protocol.$proto.allow=never push origin HEAD:pushed
+		test_must_fail but -C tmp.but -c protocol.$proto.allow=never push origin HEAD:pushed
 	'
 
 	test_expect_success "fetch $desc (disabled)" '
-		test_must_fail git -C tmp.git -c protocol.$proto.allow=never fetch
+		test_must_fail but -C tmp.but -c protocol.$proto.allow=never fetch
 	'
 
 	test_expect_success "clone $desc (disabled)" '
-		rm -rf tmp.git &&
-		test_must_fail git -c protocol.$proto.allow=never clone --bare "$url" tmp.git
+		rm -rf tmp.but &&
+		test_must_fail but -c protocol.$proto.allow=never clone --bare "$url" tmp.but
 	'
 
 	# Test clone/fetch/push with protocol.user.allow and its env var
 	test_expect_success "clone $desc (enabled)" '
-		rm -rf tmp.git &&
-		git -c protocol.$proto.allow=user clone --bare "$url" tmp.git
+		rm -rf tmp.but &&
+		but -c protocol.$proto.allow=user clone --bare "$url" tmp.but
 	'
 
 	test_expect_success "fetch $desc (enabled)" '
-		git -C tmp.git -c protocol.$proto.allow=user fetch
+		but -C tmp.but -c protocol.$proto.allow=user fetch
 	'
 
 	test_expect_success "push $desc (enabled)" '
-		git -C tmp.git -c protocol.$proto.allow=user push origin HEAD:pushed
+		but -C tmp.but -c protocol.$proto.allow=user push origin HEAD:pushed
 	'
 
 	test_expect_success "push $desc (disabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_PROTOCOL_FROM_USER=0 &&
 			export GIT_PROTOCOL_FROM_USER &&
-			test_must_fail git -c protocol.$proto.allow=user push origin HEAD:pushed
+			test_must_fail but -c protocol.$proto.allow=user push origin HEAD:pushed
 		)
 	'
 
 	test_expect_success "fetch $desc (disabled)" '
 		(
-			cd tmp.git &&
+			cd tmp.but &&
 			GIT_PROTOCOL_FROM_USER=0 &&
 			export GIT_PROTOCOL_FROM_USER &&
-			test_must_fail git -c protocol.$proto.allow=user fetch
+			test_must_fail but -c protocol.$proto.allow=user fetch
 		)
 	'
 
 	test_expect_success "clone $desc (disabled)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		(
 			GIT_PROTOCOL_FROM_USER=0 &&
 			export GIT_PROTOCOL_FROM_USER &&
-			test_must_fail git -c protocol.$proto.allow=user clone --bare "$url" tmp.git
+			test_must_fail but -c protocol.$proto.allow=user clone --bare "$url" tmp.but
 		)
 	'
 
 	# Test clone/fetch/push with protocol.allow user defined default
 	test_expect_success "clone $desc (enabled)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		test_config_global protocol.allow always &&
-		git clone --bare "$url" tmp.git
+		but clone --bare "$url" tmp.but
 	'
 
 	test_expect_success "fetch $desc (enabled)" '
 		test_config_global protocol.allow always &&
-		git -C tmp.git fetch
+		but -C tmp.but fetch
 	'
 
 	test_expect_success "push $desc (enabled)" '
 		test_config_global protocol.allow always &&
-		git -C tmp.git push origin HEAD:pushed
+		but -C tmp.but push origin HEAD:pushed
 	'
 
 	test_expect_success "push $desc (disabled)" '
 		test_config_global protocol.allow never &&
-		test_must_fail git -C tmp.git push origin HEAD:pushed
+		test_must_fail but -C tmp.but push origin HEAD:pushed
 	'
 
 	test_expect_success "fetch $desc (disabled)" '
 		test_config_global protocol.allow never &&
-		test_must_fail git -C tmp.git fetch
+		test_must_fail but -C tmp.but fetch
 	'
 
 	test_expect_success "clone $desc (disabled)" '
-		rm -rf tmp.git &&
+		rm -rf tmp.but &&
 		test_config_global protocol.allow never &&
-		test_must_fail git clone --bare "$url" tmp.git
+		test_must_fail but clone --bare "$url" tmp.but
 	'
 }
 
@@ -206,7 +206,7 @@ setup_ssh_wrapper () {
 
 # set up a wrapper that can be used with remote-ext to
 # access repositories in the "remote" directory of trash-dir,
-# like "ext::fake-remote %S repo.git"
+# like "ext::fake-remote %S repo.but"
 setup_ext_wrapper () {
 	test_expect_success 'setup ext wrapper' '
 		write_script fake-remote <<-\EOF &&

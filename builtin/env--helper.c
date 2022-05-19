@@ -3,7 +3,7 @@
 #include "parse-options.h"
 
 static char const * const env__helper_usage[] = {
-	N_("git env--helper --type=[bool|ulong] <options> <env-var>"),
+	N_("but env--helper --type=[bool|ulong] <options> <env-var>"),
 	NULL
 };
 
@@ -43,9 +43,9 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 			       N_("value is given this type"), PARSE_OPT_NONEG,
 			       option_parse_type),
 		OPT_STRING(0, "default", &env_default, N_("value"),
-			   N_("default for git_env_*(...) to fall back on")),
+			   N_("default for but_env_*(...) to fall back on")),
 		OPT_BOOL(0, "exit-code", &exit_code,
-			 N_("be quiet only use git_env_*() value as exit code")),
+			 N_("be quiet only use but_env_*() value as exit code")),
 		OPT_END(),
 	};
 
@@ -62,7 +62,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 	switch (cmdmode) {
 	case ENV_HELPER_TYPE_BOOL:
 		if (env_default) {
-			default_int = git_parse_maybe_bool(env_default);
+			default_int = but_parse_maybe_bool(env_default);
 			if (default_int == -1) {
 				error(_("option `--default' expects a boolean value with `--type=bool`, not `%s`"),
 				      env_default);
@@ -71,14 +71,14 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 		} else {
 			default_int = 0;
 		}
-		ret_int = git_env_bool(env_variable, default_int);
+		ret_int = but_env_bool(env_variable, default_int);
 		if (!exit_code)
 			puts(ret_int ? "true" : "false");
 		ret = ret_int;
 		break;
 	case ENV_HELPER_TYPE_ULONG:
 		if (env_default) {
-			if (!git_parse_ulong(env_default, &default_ulong)) {
+			if (!but_parse_ulong(env_default, &default_ulong)) {
 				error(_("option `--default' expects an unsigned long value with `--type=ulong`, not `%s`"),
 				      env_default);
 				usage_with_options(env__helper_usage, opts);
@@ -86,7 +86,7 @@ int cmd_env__helper(int argc, const char **argv, const char *prefix)
 		} else {
 			default_ulong = 0;
 		}
-		ret_ulong = git_env_ulong(env_variable, default_ulong);
+		ret_ulong = but_env_ulong(env_variable, default_ulong);
 		if (!exit_code)
 			printf("%lu\n", ret_ulong);
 		ret = ret_ulong;

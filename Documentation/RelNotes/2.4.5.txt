@@ -7,7 +7,7 @@ Fixes since v2.4.4
  * The setup code used to die when core.bare and core.worktree are set
    inconsistently, even for commands that do not need working tree.
 
- * There was a dead code that used to handle "git pull --tags" and
+ * There was a dead code that used to handle "but pull --tags" and
    show special-cased error message, which was made irrelevant when
    the semantics of the option changed back in Git 1.9 days.
 
@@ -17,11 +17,11 @@ Fixes since v2.4.4
  * The configuration reader/writer uses mmap(2) interface to access
    the files; when we find a directory, it barfed with "Out of memory?".
 
- * Recent "git prune" traverses young unreachable objects to safekeep
+ * Recent "but prune" traverses young unreachable objects to safekeep
    old objects in the reachability chain from them, which sometimes
    showed unnecessary error messages that are alarming.
 
- * "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ * "but rebase -i" fired post-rewrite hook when it shouldn't (namely,
    when it was told to stop sequencing with 'exec' insn).
 
 Also contains typofixes, documentation updates and trivial code

@@ -10,7 +10,7 @@ merge_cmd () {
 	if $base_present
 	then
 		basename="$(basename "$merge_tool_path" .exe)"
-		if test "$basename" = "tortoisegitmerge"
+		if test "$basename" = "tortoisebutmerge"
 		then
 			"$merge_tool_path" \
 				-base "$BASE" -mine "$LOCAL" \
@@ -27,9 +27,9 @@ merge_cmd () {
 }
 
 translate_merge_tool_path() {
-	if type tortoisegitmerge >/dev/null 2>/dev/null
+	if type tortoisebutmerge >/dev/null 2>/dev/null
 	then
-		echo tortoisegitmerge
+		echo tortoisebutmerge
 	else
 		echo tortoisemerge
 	fi

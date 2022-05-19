@@ -2,15 +2,15 @@
 #
 # Copyright (c) 2009 Robert Allan Zeh
 
-test_description='git svn gc basic tests'
+test_description='but svn gc basic tests'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'setup directories and test repo' '
 	mkdir import &&
 	mkdir tmp &&
 	echo "Sample text for Subversion repository." > import/test.txt &&
-	svn_cmd import -m "import for git svn" import "$svnrepo" > /dev/null
+	svn_cmd import -m "import for but svn" import "$svnrepo" > /dev/null
 	'
 
 test_expect_success 'checkout working copy from svn' \
@@ -23,29 +23,29 @@ test_expect_success 'set some properties to create an unhandled.log file' '
 		svn_cmd cummit -m "property set"
 	)'
 
-test_expect_success 'Setup repo' 'git svn init "$svnrepo"'
+test_expect_success 'Setup repo' 'but svn init "$svnrepo"'
 
-test_expect_success 'Fetch repo' 'git svn fetch'
+test_expect_success 'Fetch repo' 'but svn fetch'
 
 test_expect_success 'make backup copy of unhandled.log' '
-	 cp .git/svn/refs/remotes/git-svn/unhandled.log tmp
+	 cp .but/svn/refs/remotes/but-svn/unhandled.log tmp
 	'
 
-test_expect_success 'create leftover index' '> .git/svn/refs/remotes/git-svn/index'
+test_expect_success 'create leftover index' '> .but/svn/refs/remotes/but-svn/index'
 
-test_expect_success 'git svn gc runs' 'git svn gc'
+test_expect_success 'but svn gc runs' 'but svn gc'
 
-test_expect_success 'git svn index removed' '! test -f .git/svn/refs/remotes/git-svn/index'
+test_expect_success 'but svn index removed' '! test -f .but/svn/refs/remotes/but-svn/index'
 
-if test -r .git/svn/refs/remotes/git-svn/unhandled.log.gz
+if test -r .but/svn/refs/remotes/but-svn/unhandled.log.gz
 then
-	test_expect_success 'git svn gc produces a valid gzip file' '
-		 gunzip .git/svn/refs/remotes/git-svn/unhandled.log.gz
+	test_expect_success 'but svn gc produces a valid gzip file' '
+		 gunzip .but/svn/refs/remotes/but-svn/unhandled.log.gz
 		'
 fi
 
-test_expect_success 'git svn gc does not change unhandled.log files' '
-	 test_cmp .git/svn/refs/remotes/git-svn/unhandled.log tmp/unhandled.log
+test_expect_success 'but svn gc does not change unhandled.log files' '
+	 test_cmp .but/svn/refs/remotes/but-svn/unhandled.log tmp/unhandled.log
 	'
 
 test_done

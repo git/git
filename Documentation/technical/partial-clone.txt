@@ -100,7 +100,7 @@ or cummits that reference missing trees.
   and treated differently by various commands.
 
 - On the client a repository extension is added to the local config to
-  prevent older versions of git from failing mid-operation because of
+  prevent older versions of but from failing mid-operation because of
   missing objects that they cannot handle.
   See "extensions.partialClone" in Documentation/technical/repository-version.txt"
 
@@ -150,8 +150,8 @@ a time.
 - `rev-list` has been taught to print missing objects.
 +
 This can be used by other commands to bulk prefetch objects.
-For example, a "git log -p A..B" may internally want to first do
-something like "git rev-list --objects --quiet --missing=print A..B"
+For example, a "but log -p A..B" may internally want to first do
+something like "but rev-list --objects --quiet --missing=print A..B"
 and prefetch those objects in bulk.
 
 - `fsck` has been updated to be fully aware of promisor objects.
@@ -171,7 +171,7 @@ additional flag.
 Fetching Missing Objects
 ------------------------
 
-- Fetching of objects is done by invoking a "git fetch" subprocess.
+- Fetching of objects is done by invoking a "but fetch" subprocess.
 
 - The local repository sends a request with the hashes of all requested
   objects, and does not perform any packfile negotiation.
@@ -192,7 +192,7 @@ Many promisor remotes can be configured and used.
 
 This allows for example a user to have multiple geographically-close
 cache servers for fetching missing blobs while continuing to do
-filtered `git-fetch` commands from the central server.
+filtered `but-fetch` commands from the central server.
 
 When fetching objects, promisor remotes are tried one after the other
 until all the objects have been fetched.
@@ -326,8 +326,8 @@ Footnotes
     omitted by the server during a clone or subsequent fetches.
 
 This file would need to be loaded into memory on every object lookup.
-It would need to be read, updated, and re-written (like the .git/index)
-on every explicit "git fetch" command *and* on any dynamic object fetch.
+It would need to be read, updated, and re-written (like the .but/index)
+on every explicit "but fetch" command *and* on any dynamic object fetch.
 
 The cost to read, update, and write this file could add significant
 overhead to every command if there are many missing objects.  For example,
@@ -339,29 +339,29 @@ type of packfile that references it.
 
 Related Links
 -------------
-[0] https://crbug.com/git/2
+[0] https://crbug.com/but/2
     Bug#2: Partial Clone
 
-[1] https://lore.kernel.org/git/20170113155253.1644-1-benpeart@microsoft.com/ +
+[1] https://lore.kernel.org/but/20170113155253.1644-1-benpeart@microsoft.com/ +
     Subject: [RFC] Add support for downloading blobs on demand +
     Date: Fri, 13 Jan 2017 10:52:53 -0500
 
-[2] https://lore.kernel.org/git/cover.1506714999.git.jonathantanmy@google.com/ +
+[2] https://lore.kernel.org/but/cover.1506714999.but.jonathantanmy@google.com/ +
     Subject: [PATCH 00/18] Partial clone (from clone to lazy fetch in 18 patches) +
     Date: Fri, 29 Sep 2017 13:11:36 -0700
 
-[3] https://lore.kernel.org/git/20170426221346.25337-1-jonathantanmy@google.com/ +
+[3] https://lore.kernel.org/but/20170426221346.25337-1-jonathantanmy@google.com/ +
     Subject: Proposal for missing blob support in Git repos +
     Date: Wed, 26 Apr 2017 15:13:46 -0700
 
-[4] https://lore.kernel.org/git/1488999039-37631-1-git-send-email-git@jeffhostetler.com/ +
+[4] https://lore.kernel.org/but/1488999039-37631-1-but-send-email-but@jeffhostetler.com/ +
     Subject: [PATCH 00/10] RFC Partial Clone and Fetch +
     Date: Wed,  8 Mar 2017 18:50:29 +0000
 
-[5] https://lore.kernel.org/git/20170505152802.6724-1-benpeart@microsoft.com/ +
+[5] https://lore.kernel.org/but/20170505152802.6724-1-benpeart@microsoft.com/ +
     Subject: [PATCH v7 00/10] refactor the filter process code into a reusable module +
     Date: Fri,  5 May 2017 11:27:52 -0400
 
-[6] https://lore.kernel.org/git/20170714132651.170708-1-benpeart@microsoft.com/ +
+[6] https://lore.kernel.org/but/20170714132651.170708-1-benpeart@microsoft.com/ +
     Subject: [RFC/PATCH v2 0/1] Add support for downloading blobs on demand +
     Date: Fri, 14 Jul 2017 09:26:50 -0400

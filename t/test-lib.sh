@@ -1,4 +1,4 @@
-# Test framework for git.  See t/README for usage.
+# Test framework for but.  See t/README for usage.
 #
 # Copyright (c) 2005 Junio C Hamano
 #
@@ -24,7 +24,7 @@ then
 	TEST_DIRECTORY=$(pwd)
 else
 	# The TEST_DIRECTORY will always be the path to the "t"
-	# directory in the git.git checkout. This is overridden by
+	# directory in the but.but checkout. This is overridden by
 	# e.g. t/lib-subtest.sh, but only because its $(pwd) is
 	# different. Those tests still set "$TEST_DIRECTORY" to the
 	# same path.
@@ -69,7 +69,7 @@ prepend_var GIT_SAN_OPTIONS : strip_path_prefix=\"$GIT_BUILD_DIR/\"
 # If we were built with ASAN, it may complain about leaks
 # of program-lifetime variables. Disable it by default to lower
 # the noise level. This needs to happen at the start of the script,
-# before we even do our "did we build git yet" check (since we don't
+# before we even do our "did we build but yet" check (since we don't
 # want that one to complain to stderr).
 prepend_var ASAN_OPTIONS : $GIT_SAN_OPTIONS
 prepend_var ASAN_OPTIONS : detect_leaks=0
@@ -104,20 +104,20 @@ then
 fi
 
 # Explicitly set the default branch name for testing, to avoid the
-# transitory "git init" warning under --verbose.
+# transitory "but init" warning under --verbose.
 : ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 ################################################################
 # It appears that people try to run tests without building...
-"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git$X" >/dev/null
+"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/but$X" >/dev/null
 if test $? != 1
 then
 	if test -n "$GIT_TEST_INSTALLED"
 	then
 		echo >&2 "error: there is no working Git at '$GIT_TEST_INSTALLED'"
 	else
-		echo >&2 'error: you do not seem to have built git yet.'
+		echo >&2 'error: you do not seem to have built but yet.'
 	fi
 	exit 1
 fi
@@ -1385,10 +1385,10 @@ then
 		make_symlink "$symlink_target" "$GIT_VALGRIND/bin/$base" || exit
 	}
 
-	# override all git executables in TEST_DIRECTORY/..
+	# override all but executables in TEST_DIRECTORY/..
 	GIT_VALGRIND=$TEST_DIRECTORY/valgrind
 	mkdir -p "$GIT_VALGRIND"/bin
-	for file in $GIT_BUILD_DIR/git* $GIT_BUILD_DIR/t/helper/test-*
+	for file in $GIT_BUILD_DIR/but* $GIT_BUILD_DIR/t/helper/test-*
 	do
 		make_valgrind_symlink $file
 	done
@@ -1398,7 +1398,7 @@ then
 	IFS=:
 	for path in $PATH
 	do
-		ls "$path"/git-* 2> /dev/null |
+		ls "$path"/but-* 2> /dev/null |
 		while read file
 		do
 			make_valgrind_symlink "$file"
@@ -1415,8 +1415,8 @@ then
 	export GIT_VALGRIND_ENABLED
 elif test -n "$GIT_TEST_INSTALLED"
 then
-	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
-	error "Cannot run git from $GIT_TEST_INSTALLED."
+	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/but --exec-path)  ||
+	error "Cannot run but from $GIT_TEST_INSTALLED."
 	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR/t/helper:$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
@@ -1424,16 +1424,16 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 	then
 		with_dashes=t
 	else
-		git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
-		if ! test -x "$git_bin_dir/git"
+		but_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
+		if ! test -x "$but_bin_dir/but"
 		then
 			if test -z "$with_dashes"
 			then
-				say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+				say "$but_bin_dir/but is not executable; using GIT_EXEC_PATH"
 			fi
 			with_dashes=t
 		fi
-		PATH="$git_bin_dir:$PATH"
+		PATH="$but_bin_dir:$PATH"
 	fi
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
@@ -1486,7 +1486,7 @@ if test -n "$SANITIZE_LEAK"
 then
 	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
 	then
-		# We need to see it in "git env--helper" (via
+		# We need to see it in "but env--helper" (via
 		# test_bool_env)
 		export TEST_PASSES_SANITIZE_LEAK
 
@@ -1529,14 +1529,14 @@ remove_trash_directory "$TRASH_DIRECTORY" || {
 remove_trash=t
 if test -z "$TEST_NO_CREATE_REPO"
 then
-	git init "$TRASH_DIRECTORY" >&3 2>&4 ||
-	error "cannot run git init"
+	but init "$TRASH_DIRECTORY" >&3 2>&4 ||
+	error "cannot run but init"
 else
 	mkdir -p "$TRASH_DIRECTORY"
 fi
 
 # Use -P to resolve symlinks in our working directory so that the cwd
-# in subprocesses like git equals our $PWD (for pathname comparisons).
+# in subprocesses like but equals our $PWD (for pathname comparisons).
 cd -P "$TRASH_DIRECTORY" || exit 1
 
 if test -n "$write_junit_xml"
@@ -1557,7 +1557,7 @@ then
 fi
 
 # Convenience
-# A regexp to match 5 and 35 hexdigits
+# A regexp to match 5 and 35 hexdibuts
 _x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x35="$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 
@@ -1593,7 +1593,7 @@ yes () {
 # The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
 # thus needs to be set up really early, and set an internal variable
 # for convenience so the hot test_set_prereq() codepath doesn't need
-# to call "git env--helper" (via test_bool_env). Only do that work
+# to call "but env--helper" (via test_bool_env). Only do that work
 # if needed by seeing if GIT_TEST_FAIL_PREREQS is set at all.
 GIT_TEST_FAIL_PREREQS_INTERNAL=
 if test -n "$GIT_TEST_FAIL_PREREQS"
@@ -1620,7 +1620,7 @@ case $uname_s in
 	find () {
 		/usr/bin/find "$@"
 	}
-	# git sees Windows-style pwd
+	# but sees Windows-style pwd
 	pwd () {
 		builtin pwd -W
 	}
@@ -1692,7 +1692,7 @@ test_lazy_prereq SYMLINKS_WINDOWS '
 '
 
 test_lazy_prereq FILEMODE '
-	test "$(git config --bool core.filemode)" = true
+	test "$(but config --bool core.filemode)" = true
 '
 
 test_lazy_prereq CASE_INSENSITIVE_FS '
@@ -1726,7 +1726,7 @@ test_lazy_prereq UTF8_NFD_TO_NFC '
 test_lazy_prereq AUTOIDENT '
 	sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
-	git var GIT_AUTHOR_IDENT
+	but var GIT_AUTHOR_IDENT
 '
 
 test_lazy_prereq EXPENSIVE '
@@ -1747,7 +1747,7 @@ test_lazy_prereq NOT_ROOT '
 '
 
 test_lazy_prereq JGIT '
-	jgit --version
+	jbut --version
 '
 
 # SANITY is about "can you correctly predict what the filesystem would
@@ -1816,7 +1816,7 @@ test_lazy_prereq ULIMIT_FILE_DESCRIPTORS '
 '
 
 build_option () {
-	git version --build-options |
+	but version --build-options |
 	sed -ne "s/^$1: //p"
 }
 
@@ -1841,7 +1841,7 @@ test_lazy_prereq CURL '
 test_lazy_prereq SHA1 '
 	case "$GIT_DEFAULT_HASH" in
 	sha1) true ;;
-	"") test $(git hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 ;;
+	"") test $(but hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 ;;
 	*) false ;;
 	esac
 '
@@ -1853,9 +1853,9 @@ test_lazy_prereq SHA1 '
 # to avoid errors.
 GIT_TEST_MAINT_SCHEDULER="none:exit 1"
 
-# Does this platform support `git fsmonitor--daemon`
+# Does this platform support `but fsmonitor--daemon`
 #
 test_lazy_prereq FSMONITOR_DAEMON '
-	git version --build-options >output &&
+	but version --build-options >output &&
 	grep "feature: fsmonitor--daemon" output
 '

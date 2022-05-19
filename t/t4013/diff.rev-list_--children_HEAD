@@ -1,4 +1,4 @@
-$ git rev-list --children HEAD
+$ but rev-list --children HEAD
 59d314ad6f356dd08601a4cd5e530381da3e3c64
 c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a 59d314ad6f356dd08601a4cd5e530381da3e3c64
 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0 59d314ad6f356dd08601a4cd5e530381da3e3c64

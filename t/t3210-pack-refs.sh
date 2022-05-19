@@ -4,9 +4,9 @@
 # Copyright (c) 2006 Christian Couder
 #
 
-test_description='git pack-refs should not change the branch semantic
+test_description='but pack-refs should not change the branch semantic
 
-This test runs git pack-refs and git show-ref and checks that the branch
+This test runs but pack-refs and but show-ref and checks that the branch
 semantic is still the same.
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -15,245 +15,245 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'enable reflogs' '
-	git config core.logallrefupdates true
+	but config core.logallrefupdates true
 '
 
 test_expect_success \
     'prepare a trivial repository' \
     'echo Hello > A &&
-     git update-index --add A &&
-     git cummit -m "Initial cummit." &&
-     HEAD=$(git rev-parse --verify HEAD)'
+     but update-index --add A &&
+     but cummit -m "Initial cummit." &&
+     HEAD=$(but rev-parse --verify HEAD)'
 
 SHA1=
 
 test_expect_success \
-    'see if git show-ref works as expected' \
-    'git branch a &&
-     SHA1=$(cat .git/refs/heads/a) &&
+    'see if but show-ref works as expected' \
+    'but branch a &&
+     SHA1=$(cat .but/refs/heads/a) &&
      echo "$SHA1 refs/heads/a" >expect &&
-     git show-ref a >result &&
+     but show-ref a >result &&
      test_cmp expect result'
 
 test_expect_success \
     'see if a branch still exists when packed' \
-    'git branch b &&
-     git pack-refs --all &&
-     rm -f .git/refs/heads/b &&
+    'but branch b &&
+     but pack-refs --all &&
+     rm -f .but/refs/heads/b &&
      echo "$SHA1 refs/heads/b" >expect &&
-     git show-ref b >result &&
+     but show-ref b >result &&
      test_cmp expect result'
 
-test_expect_success 'git branch c/d should barf if branch c exists' '
-     git branch c &&
-     git pack-refs --all &&
-     rm -f .git/refs/heads/c &&
-     test_must_fail git branch c/d
+test_expect_success 'but branch c/d should barf if branch c exists' '
+     but branch c &&
+     but pack-refs --all &&
+     rm -f .but/refs/heads/c &&
+     test_must_fail but branch c/d
 '
 
 test_expect_success \
-    'see if a branch still exists after git pack-refs --prune' \
-    'git branch e &&
-     git pack-refs --all --prune &&
+    'see if a branch still exists after but pack-refs --prune' \
+    'but branch e &&
+     but pack-refs --all --prune &&
      echo "$SHA1 refs/heads/e" >expect &&
-     git show-ref e >result &&
+     but show-ref e >result &&
      test_cmp expect result'
 
-test_expect_success 'see if git pack-refs --prune remove ref files' '
-     git branch f &&
-     git pack-refs --all --prune &&
-     ! test -f .git/refs/heads/f
+test_expect_success 'see if but pack-refs --prune remove ref files' '
+     but branch f &&
+     but pack-refs --all --prune &&
+     ! test -f .but/refs/heads/f
 '
 
-test_expect_success 'see if git pack-refs --prune removes empty dirs' '
-     git branch r/s/t &&
-     git pack-refs --all --prune &&
-     ! test -e .git/refs/heads/r
-'
-
-test_expect_success \
-    'git branch g should work when git branch g/h has been deleted' \
-    'git branch g/h &&
-     git pack-refs --all --prune &&
-     git branch -d g/h &&
-     git branch g &&
-     git pack-refs --all &&
-     git branch -d g'
-
-test_expect_success 'git branch i/j/k should barf if branch i exists' '
-     git branch i &&
-     git pack-refs --all --prune &&
-     test_must_fail git branch i/j/k
+test_expect_success 'see if but pack-refs --prune removes empty dirs' '
+     but branch r/s/t &&
+     but pack-refs --all --prune &&
+     ! test -e .but/refs/heads/r
 '
 
 test_expect_success \
-    'test git branch k after branch k/l/m and k/lm have been deleted' \
-    'git branch k/l &&
-     git branch k/lm &&
-     git branch -d k/l &&
-     git branch k/l/m &&
-     git branch -d k/l/m &&
-     git branch -d k/lm &&
-     git branch k'
+    'but branch g should work when but branch g/h has been deleted' \
+    'but branch g/h &&
+     but pack-refs --all --prune &&
+     but branch -d g/h &&
+     but branch g &&
+     but pack-refs --all &&
+     but branch -d g'
+
+test_expect_success 'but branch i/j/k should barf if branch i exists' '
+     but branch i &&
+     but pack-refs --all --prune &&
+     test_must_fail but branch i/j/k
+'
 
 test_expect_success \
-    'test git branch n after some branch deletion and pruning' \
-    'git branch n/o &&
-     git branch n/op &&
-     git branch -d n/o &&
-     git branch n/o/p &&
-     git branch -d n/op &&
-     git pack-refs --all --prune &&
-     git branch -d n/o/p &&
-     git branch n'
+    'test but branch k after branch k/l/m and k/lm have been deleted' \
+    'but branch k/l &&
+     but branch k/lm &&
+     but branch -d k/l &&
+     but branch k/l/m &&
+     but branch -d k/l/m &&
+     but branch -d k/lm &&
+     but branch k'
+
+test_expect_success \
+    'test but branch n after some branch deletion and pruning' \
+    'but branch n/o &&
+     but branch n/op &&
+     but branch -d n/o &&
+     but branch n/o/p &&
+     but branch -d n/op &&
+     but pack-refs --all --prune &&
+     but branch -d n/o/p &&
+     but branch n'
 
 test_expect_success \
 	'see if up-to-date packed refs are preserved' \
-	'git branch q &&
-	 git pack-refs --all --prune &&
-	 git update-ref refs/heads/q refs/heads/q &&
-	 ! test -f .git/refs/heads/q'
+	'but branch q &&
+	 but pack-refs --all --prune &&
+	 but update-ref refs/heads/q refs/heads/q &&
+	 ! test -f .but/refs/heads/q'
 
 test_expect_success 'pack, prune and repack' '
-	git tag foo &&
-	git pack-refs --all --prune &&
-	git show-ref >all-of-them &&
-	git pack-refs &&
-	git show-ref >again &&
+	but tag foo &&
+	but pack-refs --all --prune &&
+	but show-ref >all-of-them &&
+	but pack-refs &&
+	but show-ref >again &&
 	test_cmp all-of-them again
 '
 
 test_expect_success 'explicit pack-refs with dangling packed reference' '
-	git cummit --allow-empty -m "soon to be garbage-collected" &&
-	git pack-refs --all &&
-	git reset --hard HEAD^ &&
-	git reflog expire --expire=all --all &&
-	git prune --expire=all &&
-	git pack-refs --all 2>result &&
+	but cummit --allow-empty -m "soon to be garbage-collected" &&
+	but pack-refs --all &&
+	but reset --hard HEAD^ &&
+	but reflog expire --expire=all --all &&
+	but prune --expire=all &&
+	but pack-refs --all 2>result &&
 	test_must_be_empty result
 '
 
 test_expect_success 'delete ref with dangling packed version' '
-	git checkout -b lamb &&
-	git cummit --allow-empty -m "future garbage" &&
-	git pack-refs --all &&
-	git reset --hard HEAD^ &&
-	git checkout main &&
-	git reflog expire --expire=all --all &&
-	git prune --expire=all &&
-	git branch -d lamb 2>result &&
+	but checkout -b lamb &&
+	but cummit --allow-empty -m "future garbage" &&
+	but pack-refs --all &&
+	but reset --hard HEAD^ &&
+	but checkout main &&
+	but reflog expire --expire=all --all &&
+	but prune --expire=all &&
+	but branch -d lamb 2>result &&
 	test_must_be_empty result
 '
 
 test_expect_success 'delete ref while another dangling packed ref' '
-	git branch lamb &&
-	git cummit --allow-empty -m "future garbage" &&
-	git pack-refs --all &&
-	git reset --hard HEAD^ &&
-	git reflog expire --expire=all --all &&
-	git prune --expire=all &&
-	git branch -d lamb 2>result &&
+	but branch lamb &&
+	but cummit --allow-empty -m "future garbage" &&
+	but pack-refs --all &&
+	but reset --hard HEAD^ &&
+	but reflog expire --expire=all --all &&
+	but prune --expire=all &&
+	but branch -d lamb 2>result &&
 	test_must_be_empty result
 '
 
 test_expect_success 'pack ref directly below refs/' '
-	git update-ref refs/top HEAD &&
-	git pack-refs --all --prune &&
-	grep refs/top .git/packed-refs &&
-	test_path_is_missing .git/refs/top
+	but update-ref refs/top HEAD &&
+	but pack-refs --all --prune &&
+	grep refs/top .but/packed-refs &&
+	test_path_is_missing .but/refs/top
 '
 
 test_expect_success 'do not pack ref in refs/bisect' '
-	git update-ref refs/bisect/local HEAD &&
-	git pack-refs --all --prune &&
-	! grep refs/bisect/local .git/packed-refs >/dev/null &&
-	test_path_is_file .git/refs/bisect/local
+	but update-ref refs/bisect/local HEAD &&
+	but pack-refs --all --prune &&
+	! grep refs/bisect/local .but/packed-refs >/dev/null &&
+	test_path_is_file .but/refs/bisect/local
 '
 
 test_expect_success 'disable reflogs' '
-	git config core.logallrefupdates false &&
-	rm -rf .git/logs
+	but config core.logallrefupdates false &&
+	rm -rf .but/logs
 '
 
 test_expect_success 'create packed foo/bar/baz branch' '
-	git branch foo/bar/baz &&
-	git pack-refs --all --prune &&
-	test_path_is_missing .git/refs/heads/foo/bar/baz &&
-	test_must_fail git reflog exists refs/heads/foo/bar/baz
+	but branch foo/bar/baz &&
+	but pack-refs --all --prune &&
+	test_path_is_missing .but/refs/heads/foo/bar/baz &&
+	test_must_fail but reflog exists refs/heads/foo/bar/baz
 '
 
 test_expect_success 'notice d/f conflict with existing directory' '
-	test_must_fail git branch foo &&
-	test_must_fail git branch foo/bar
+	test_must_fail but branch foo &&
+	test_must_fail but branch foo/bar
 '
 
 test_expect_success 'existing directory reports concrete ref' '
-	test_must_fail git branch foo 2>stderr &&
+	test_must_fail but branch foo 2>stderr &&
 	test_i18ngrep refs/heads/foo/bar/baz stderr
 '
 
 test_expect_success 'notice d/f conflict with existing ref' '
-	test_must_fail git branch foo/bar/baz/extra &&
-	test_must_fail git branch foo/bar/baz/lots/of/extra/components
+	test_must_fail but branch foo/bar/baz/extra &&
+	test_must_fail but branch foo/bar/baz/lots/of/extra/components
 '
 
 test_expect_success 'reject packed-refs with unterminated line' '
-	cp .git/packed-refs .git/packed-refs.bak &&
-	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
-	printf "%s" "$HEAD refs/zzzzz" >>.git/packed-refs &&
-	echo "fatal: unterminated line in .git/packed-refs: $HEAD refs/zzzzz" >expected_err &&
-	test_must_fail git for-each-ref >out 2>err &&
+	cp .but/packed-refs .but/packed-refs.bak &&
+	test_when_finished "mv .but/packed-refs.bak .but/packed-refs" &&
+	printf "%s" "$HEAD refs/zzzzz" >>.but/packed-refs &&
+	echo "fatal: unterminated line in .but/packed-refs: $HEAD refs/zzzzz" >expected_err &&
+	test_must_fail but for-each-ref >out 2>err &&
 	test_cmp expected_err err
 '
 
 test_expect_success 'reject packed-refs containing junk' '
-	cp .git/packed-refs .git/packed-refs.bak &&
-	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
-	printf "%s\n" "bogus content" >>.git/packed-refs &&
-	echo "fatal: unexpected line in .git/packed-refs: bogus content" >expected_err &&
-	test_must_fail git for-each-ref >out 2>err &&
+	cp .but/packed-refs .but/packed-refs.bak &&
+	test_when_finished "mv .but/packed-refs.bak .but/packed-refs" &&
+	printf "%s\n" "bogus content" >>.but/packed-refs &&
+	echo "fatal: unexpected line in .but/packed-refs: bogus content" >expected_err &&
+	test_must_fail but for-each-ref >out 2>err &&
 	test_cmp expected_err err
 '
 
 test_expect_success 'reject packed-refs with a short SHA-1' '
-	cp .git/packed-refs .git/packed-refs.bak &&
-	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
-	printf "%.7s %s\n" $HEAD refs/zzzzz >>.git/packed-refs &&
-	printf "fatal: unexpected line in .git/packed-refs: %.7s %s\n" $HEAD refs/zzzzz >expected_err &&
-	test_must_fail git for-each-ref >out 2>err &&
+	cp .but/packed-refs .but/packed-refs.bak &&
+	test_when_finished "mv .but/packed-refs.bak .but/packed-refs" &&
+	printf "%.7s %s\n" $HEAD refs/zzzzz >>.but/packed-refs &&
+	printf "fatal: unexpected line in .but/packed-refs: %.7s %s\n" $HEAD refs/zzzzz >expected_err &&
+	test_must_fail but for-each-ref >out 2>err &&
 	test_cmp expected_err err
 '
 
 test_expect_success 'timeout if packed-refs.lock exists' '
-	LOCK=.git/packed-refs.lock &&
+	LOCK=.but/packed-refs.lock &&
 	>"$LOCK" &&
 	test_when_finished "rm -f $LOCK" &&
-	test_must_fail git pack-refs --all --prune
+	test_must_fail but pack-refs --all --prune
 '
 
 test_expect_success 'retry acquiring packed-refs.lock' '
-	LOCK=.git/packed-refs.lock &&
+	LOCK=.but/packed-refs.lock &&
 	>"$LOCK" &&
 	test_when_finished "wait && rm -f $LOCK" &&
 	{
 		( sleep 1 && rm -f $LOCK ) &
 	} &&
-	git -c core.packedrefstimeout=3000 pack-refs --all --prune
+	but -c core.packedrefstimeout=3000 pack-refs --all --prune
 '
 
 test_expect_success SYMLINKS 'pack symlinked packed-refs' '
 	# First make sure that symlinking works when reading:
-	git update-ref refs/heads/lossy refs/heads/main &&
-	git for-each-ref >all-refs-before &&
-	mv .git/packed-refs .git/my-deviant-packed-refs &&
-	ln -s my-deviant-packed-refs .git/packed-refs &&
-	git for-each-ref >all-refs-linked &&
+	but update-ref refs/heads/lossy refs/heads/main &&
+	but for-each-ref >all-refs-before &&
+	mv .but/packed-refs .but/my-deviant-packed-refs &&
+	ln -s my-deviant-packed-refs .but/packed-refs &&
+	but for-each-ref >all-refs-linked &&
 	test_cmp all-refs-before all-refs-linked &&
-	git pack-refs --all --prune &&
-	git for-each-ref >all-refs-packed &&
+	but pack-refs --all --prune &&
+	but for-each-ref >all-refs-packed &&
 	test_cmp all-refs-before all-refs-packed &&
-	test -h .git/packed-refs &&
-	test "$(test_readlink .git/packed-refs)" = "my-deviant-packed-refs"
+	test -h .but/packed-refs &&
+	test "$(test_readlink .but/packed-refs)" = "my-deviant-packed-refs"
 '
 
 test_done

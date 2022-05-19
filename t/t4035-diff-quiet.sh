@@ -7,20 +7,20 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'setup' '
 	echo 1 >a &&
-	git add . &&
-	git cummit -m first &&
+	but add . &&
+	but cummit -m first &&
 	echo 2 >b &&
-	git add . &&
-	git cummit -a -m second &&
+	but add . &&
+	but cummit -a -m second &&
 	mkdir -p test-outside/repo && (
 		cd test-outside/repo &&
-		git init &&
+		but init &&
 		echo "1 1" >a &&
-		git add . &&
-		git cummit -m 1
+		but add . &&
+		but cummit -m 1
 	) &&
-	mkdir -p test-outside/non/git && (
-		cd test-outside/non/git &&
+	mkdir -p test-outside/non/but && (
+		cd test-outside/non/but &&
 		echo "1 1" >a &&
 		echo "1 1" >matching-file &&
 		echo "1 1 " >trailing-space &&
@@ -29,137 +29,137 @@ test_expect_success 'setup' '
 	)
 '
 
-test_expect_success 'git diff-tree HEAD^ HEAD' '
-	test_expect_code 1 git diff-tree --quiet HEAD^ HEAD >cnt &&
+test_expect_success 'but diff-tree HEAD^ HEAD' '
+	test_expect_code 1 but diff-tree --quiet HEAD^ HEAD >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-tree HEAD^ HEAD -- a' '
-	test_expect_code 0 git diff-tree --quiet HEAD^ HEAD -- a >cnt &&
+test_expect_success 'but diff-tree HEAD^ HEAD -- a' '
+	test_expect_code 0 but diff-tree --quiet HEAD^ HEAD -- a >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-tree HEAD^ HEAD -- b' '
-	test_expect_code 1 git diff-tree --quiet HEAD^ HEAD -- b >cnt &&
+test_expect_success 'but diff-tree HEAD^ HEAD -- b' '
+	test_expect_code 1 but diff-tree --quiet HEAD^ HEAD -- b >cnt &&
 	test_line_count = 0 cnt
 '
 # this diff outputs one line: sha1 of the given head
-test_expect_success 'echo HEAD | git diff-tree --stdin' '
-	echo $(git rev-parse HEAD) |
-	test_expect_code 1 git diff-tree --quiet --stdin >cnt &&
+test_expect_success 'echo HEAD | but diff-tree --stdin' '
+	echo $(but rev-parse HEAD) |
+	test_expect_code 1 but diff-tree --quiet --stdin >cnt &&
 	test_line_count = 1 cnt
 '
-test_expect_success 'git diff-tree HEAD HEAD' '
-	test_expect_code 0 git diff-tree --quiet HEAD HEAD >cnt &&
+test_expect_success 'but diff-tree HEAD HEAD' '
+	test_expect_code 0 but diff-tree --quiet HEAD HEAD >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-files' '
-	test_expect_code 0 git diff-files --quiet >cnt &&
+test_expect_success 'but diff-files' '
+	test_expect_code 0 but diff-files --quiet >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-index --cached HEAD' '
-	test_expect_code 0 git diff-index --quiet --cached HEAD >cnt &&
+test_expect_success 'but diff-index --cached HEAD' '
+	test_expect_code 0 but diff-index --quiet --cached HEAD >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-index --cached HEAD^' '
-	test_expect_code 1 git diff-index --quiet --cached HEAD^ >cnt &&
+test_expect_success 'but diff-index --cached HEAD^' '
+	test_expect_code 1 but diff-index --quiet --cached HEAD^ >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-index --cached HEAD^' '
+test_expect_success 'but diff-index --cached HEAD^' '
 	echo text >>b &&
 	echo 3 >c &&
-	git add . &&
-	test_expect_code 1 git diff-index --quiet --cached HEAD^ >cnt &&
+	but add . &&
+	test_expect_code 1 but diff-index --quiet --cached HEAD^ >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-tree -Stext HEAD^ HEAD -- b' '
-	git cummit -m "text in b" &&
-	test_expect_code 1 git diff-tree --quiet -Stext HEAD^ HEAD -- b >cnt &&
+test_expect_success 'but diff-tree -Stext HEAD^ HEAD -- b' '
+	but cummit -m "text in b" &&
+	test_expect_code 1 but diff-tree --quiet -Stext HEAD^ HEAD -- b >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-tree -Snot-found HEAD^ HEAD -- b' '
-	test_expect_code 0 git diff-tree --quiet -Snot-found HEAD^ HEAD -- b >cnt &&
+test_expect_success 'but diff-tree -Snot-found HEAD^ HEAD -- b' '
+	test_expect_code 0 but diff-tree --quiet -Snot-found HEAD^ HEAD -- b >cnt &&
 	test_line_count = 0 cnt
 '
-test_expect_success 'git diff-files' '
+test_expect_success 'but diff-files' '
 	echo 3 >>c &&
-	test_expect_code 1 git diff-files --quiet >cnt &&
+	test_expect_code 1 but diff-files --quiet >cnt &&
 	test_line_count = 0 cnt
 '
 
-test_expect_success 'git diff-index --cached HEAD' '
-	git update-index c &&
-	test_expect_code 1 git diff-index --quiet --cached HEAD >cnt &&
+test_expect_success 'but diff-index --cached HEAD' '
+	but update-index c &&
+	test_expect_code 1 but diff-index --quiet --cached HEAD >cnt &&
 	test_line_count = 0 cnt
 '
 
-test_expect_success 'git diff, one file outside repo' '
+test_expect_success 'but diff, one file outside repo' '
 	(
 		cd test-outside/repo &&
-		test_expect_code 0 git diff --quiet a ../non/git/matching-file &&
-		test_expect_code 1 git diff --quiet a ../non/git/extra-space
+		test_expect_code 0 but diff --quiet a ../non/but/matching-file &&
+		test_expect_code 1 but diff --quiet a ../non/but/extra-space
 	)
 '
 
-test_expect_success 'git diff, both files outside repo' '
+test_expect_success 'but diff, both files outside repo' '
 	(
 		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
 		export GIT_CEILING_DIRECTORIES &&
-		cd test-outside/non/git &&
-		test_expect_code 0 git diff --quiet a matching-file &&
-		test_expect_code 1 git diff --quiet a extra-space
+		cd test-outside/non/but &&
+		test_expect_code 0 but diff --quiet a matching-file &&
+		test_expect_code 1 but diff --quiet a extra-space
 	)
 '
 
-test_expect_success 'git diff --ignore-space-at-eol, one file outside repo' '
+test_expect_success 'but diff --ignore-space-at-eol, one file outside repo' '
 	(
 		cd test-outside/repo &&
-		test_expect_code 0 git diff --quiet --ignore-space-at-eol a ../non/git/trailing-space &&
-		test_expect_code 1 git diff --quiet --ignore-space-at-eol a ../non/git/extra-space
+		test_expect_code 0 but diff --quiet --ignore-space-at-eol a ../non/but/trailing-space &&
+		test_expect_code 1 but diff --quiet --ignore-space-at-eol a ../non/but/extra-space
 	)
 '
 
-test_expect_success 'git diff --ignore-space-at-eol, both files outside repo' '
+test_expect_success 'but diff --ignore-space-at-eol, both files outside repo' '
 	(
 		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
 		export GIT_CEILING_DIRECTORIES &&
-		cd test-outside/non/git &&
-		test_expect_code 0 git diff --quiet --ignore-space-at-eol a trailing-space &&
-		test_expect_code 1 git diff --quiet --ignore-space-at-eol a extra-space
+		cd test-outside/non/but &&
+		test_expect_code 0 but diff --quiet --ignore-space-at-eol a trailing-space &&
+		test_expect_code 1 but diff --quiet --ignore-space-at-eol a extra-space
 	)
 '
 
-test_expect_success 'git diff --ignore-all-space, one file outside repo' '
+test_expect_success 'but diff --ignore-all-space, one file outside repo' '
 	(
 		cd test-outside/repo &&
-		test_expect_code 0 git diff --quiet --ignore-all-space a ../non/git/trailing-space &&
-		test_expect_code 0 git diff --quiet --ignore-all-space a ../non/git/extra-space &&
-		test_expect_code 1 git diff --quiet --ignore-all-space a ../non/git/never-match
+		test_expect_code 0 but diff --quiet --ignore-all-space a ../non/but/trailing-space &&
+		test_expect_code 0 but diff --quiet --ignore-all-space a ../non/but/extra-space &&
+		test_expect_code 1 but diff --quiet --ignore-all-space a ../non/but/never-match
 	)
 '
 
-test_expect_success 'git diff --ignore-all-space, both files outside repo' '
+test_expect_success 'but diff --ignore-all-space, both files outside repo' '
 	(
 		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
 		export GIT_CEILING_DIRECTORIES &&
-		cd test-outside/non/git &&
-		test_expect_code 0 git diff --quiet --ignore-all-space a trailing-space &&
-		test_expect_code 0 git diff --quiet --ignore-all-space a extra-space &&
-		test_expect_code 1 git diff --quiet --ignore-all-space a never-match
+		cd test-outside/non/but &&
+		test_expect_code 0 but diff --quiet --ignore-all-space a trailing-space &&
+		test_expect_code 0 but diff --quiet --ignore-all-space a extra-space &&
+		test_expect_code 1 but diff --quiet --ignore-all-space a never-match
 	)
 '
 
-test_expect_success 'git diff --quiet ignores stat-change only entries' '
+test_expect_success 'but diff --quiet ignores stat-change only entries' '
 	test-tool chmtime +10 a &&
 	echo modified >>b &&
-	test_expect_code 1 git diff --quiet
+	test_expect_code 1 but diff --quiet
 '
 
-test_expect_success 'git diff --quiet on a path that need conversion' '
-	echo "crlf.txt text=auto" >.gitattributes &&
+test_expect_success 'but diff --quiet on a path that need conversion' '
+	echo "crlf.txt text=auto" >.butattributes &&
 	printf "Hello\r\nWorld\r\n" >crlf.txt &&
-	git add .gitattributes crlf.txt &&
+	but add .butattributes crlf.txt &&
 
 	printf "Hello\r\nWorld\n" >crlf.txt &&
-	git diff --quiet crlf.txt
+	but diff --quiet crlf.txt
 '
 
 test_done

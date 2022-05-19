@@ -197,7 +197,7 @@ fields on the index. This could cause performance penalties for
 subsequent commands that need to refresh the index, as they would have
 to go to the file system to see if the entry is dirty. Thus, if we have
 N entries in a colliding group and we decide to write and `lstat()` only
-one of them, every subsequent `git-status` will have to read, convert,
+one of them, every subsequent `but-status` will have to read, convert,
 and hash the written file N - 1 times. By checking out all colliding
 entries (like the sequential code does), we only pay the overhead once,
 during checkout.

@@ -32,10 +32,10 @@ do
     esac
 done
 
-git ls-tree -r HEAD >GEN_src_list
+but ls-tree -r HEAD >GEN_src_list
 nr_src_files=$(cat GEN_src_list | wc -l)
 
-src_branch=$(git symbolic-ref --short HEAD)
+src_branch=$(but symbolic-ref --short HEAD)
 
 echo "Branch $src_branch initially has $nr_src_files files."
 
@@ -48,10 +48,10 @@ fi
 
 # Create well-known branch and add 1 file change to start
 # if off before the ballast.
-git checkout -b $branch_name HEAD
+but checkout -b $branch_name HEAD
 echo "$target_size" > inflate-repo.params
-git add inflate-repo.params
-git cummit -q -m params
+but add inflate-repo.params
+but cummit -q -m params
 
 # Create ballast for in our branch.
 copy=1
@@ -59,26 +59,26 @@ nr_files=$nr_src_files
 while test $nr_files -lt $target_size
 do
     sed -e "s|	|	$ballast/$copy/|" <GEN_src_list |
-	git update-index --index-info
+	but update-index --index-info
 
     nr_files=$(expr $nr_files + $nr_src_files)
     copy=$(expr $copy + 1)
 done
 rm GEN_src_list
-git cummit -q -m "ballast"
+but cummit -q -m "ballast"
 
 # Modify 1 file and cummit.
 echo "$target_size" >> inflate-repo.params
-git add inflate-repo.params
-git cummit -q -m "ballast plus 1"
+but add inflate-repo.params
+but cummit -q -m "ballast plus 1"
 
-nr_files=$(git ls-files | wc -l)
+nr_files=$(but ls-files | wc -l)
 
 # Checkout master to put repo in canonical state (because
 # the perf test may need to clone and enable sparse-checkout
 # before attempting to checkout a cummit with the ballast
 # (because it may contain 100K directories and 1M files)).
-git checkout $src_branch
+but checkout $src_branch
 
 echo "Repository inflated. Branch $branch_name has $nr_files files."
 

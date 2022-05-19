@@ -1,10 +1,10 @@
-# Portuguese translations for git-gui glossary.
+# Portuguese translations for but-gui glossary.
 # Copyright (C) 2016 Shawn Pearce, et al.
-# This file is distributed under the same license as the git package.
+# This file is distributed under the same license as the but package.
 # Vasco Almeida <vascomalmeida@sapo.pt>, 2016.
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui glossary\n"
+"Project-Id-Version: but-gui glossary\n"
 "POT-Creation-Date: 2016-05-06 10:22+0000\n"
 "PO-Revision-Date: 2016-05-06 12:32+0000\n"
 "Last-Translator: Vasco Almeida <vascomalmeida@sapo.pt>\n"
@@ -56,11 +56,11 @@ msgstr "extrair"
 msgid "clone [verb]"
 msgstr "clonar"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "cummit"
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr "submeter"
 
@@ -85,7 +85,7 @@ msgid "hunk"
 msgstr "excerto"
 
 #. "A collection of files. The index is a stored version of your working tree."
-msgid "index (in git-gui: staging area)"
+msgid "index (in but-gui: staging area)"
 msgstr "índice"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
@@ -156,7 +156,7 @@ msgstr "tag"
 msgid "tag [verb]"
 msgstr "criar tag"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr "ramo de monitorização"
 
@@ -176,7 +176,7 @@ msgstr "verificar"
 msgid "working copy, working tree"
 msgstr "cópia de trabalho, árvore de trabalho"
 
-#. "a cummit that succeeds the current one in git's graph of cummits (not necessarily directly)"
+#. "a cummit that succeeds the current one in but's graph of cummits (not necessarily directly)"
 msgid "ancestor"
 msgstr "antecessor"
 
@@ -184,7 +184,7 @@ msgstr "antecessor"
 msgid "abort"
 msgstr "abortar"
 
-#. "a repository with only .git directory, without working directory"
+#. "a repository with only .but directory, without working directory"
 msgid "bare repository"
 msgstr "repositório nu"
 
@@ -200,11 +200,11 @@ msgstr "culpar"
 msgid "cherry-pick"
 msgstr "efetuar cherry-pick (escolher-a-dedo?, selecionar?)"
 
-#. "a cummit that directly succeeds the current one in git's graph of cummits"
+#. "a cummit that directly succeeds the current one in but's graph of cummits"
 msgid "child"
 msgstr "filho"
 
-#. "clean the state of the git repository, often after manually stopped operation"
+#. "clean the state of the but repository, often after manually stopped operation"
 msgid "cleanup"
 msgstr "limpar"
 
@@ -212,7 +212,7 @@ msgstr "limpar"
 msgid "cummit message"
 msgstr "mensagem de cummit"
 
-#. "a cummit that precedes the current one in git's graph of cummits (not necessarily directly)"
+#. "a cummit that precedes the current one in but's graph of cummits (not necessarily directly)"
 msgid "descendant"
 msgstr "descendente"
 
@@ -236,7 +236,7 @@ msgstr "gancho"
 msgid "initial checkout"
 msgstr "extração inicial"
 
-#. "a branch that resides in the local git repository"
+#. "a branch that resides in the local but repository"
 msgid "local branch"
 msgstr "ramo local"
 
@@ -244,15 +244,15 @@ msgstr "ramo local"
 msgid "loose object"
 msgstr "objeto solto"
 
-#. "a branch called by convention 'master' that exists in a newly created git repository"
+#. "a branch called by convention 'master' that exists in a newly created but repository"
 msgid "master branch"
 msgstr "ramo mestre"
 
-#. "a remote called by convention 'origin' that the current git repository has been cloned from"
+#. "a remote called by convention 'origin' that the current but repository has been cloned from"
 msgid "origin"
 msgstr "origem"
 
-#. "a file containing many git objects packed together"
+#. "a file containing many but objects packed together"
 msgid "pack [noun]"
 msgstr "pacote"
 
@@ -260,7 +260,7 @@ msgstr "pacote"
 msgid "packed object"
 msgstr "objeto compactado"
 
-#. "a cummit that directly precedes the current one in git's graph of cummits"
+#. "a cummit that directly precedes the current one in but's graph of cummits"
 msgid "parent"
 msgstr "pai"
 
@@ -276,7 +276,7 @@ msgstr "resolver (um conflito)"
 msgid "revert changes"
 msgstr "reverter alterações"
 
-#. "expression that signifies a revision in git"
+#. "expression that signifies a revision in but"
 msgid "revision expression"
 msgstr "expressão de revisão"
 
@@ -288,6 +288,6 @@ msgstr "preparar/retirar"
 msgid "stash"
 msgstr "empilhar"
 
-#. "file whose content is tracked/not tracked by git"
+#. "file whose content is tracked/not tracked by but"
 msgid "tracked/untracked"
 msgstr "controlado/não controlado"

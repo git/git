@@ -1,8 +1,8 @@
-# git-gui desktop icon creators
+# but-gui desktop icon creators
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc do_windows_shortcut {} {
-	global _gitworktree
+	global _butworktree
 	set fn [tk_getSaveFile \
 		-parent . \
 		-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
@@ -11,15 +11,15 @@ proc do_windows_shortcut {} {
 		if {[file extension $fn] ne {.lnk}} {
 			set fn ${fn}.lnk
 		}
-		# Use git-gui.exe if available (ie: git-for-windows)
-		set cmdLine [auto_execok git-gui.exe]
+		# Use but-gui.exe if available (ie: but-for-windows)
+		set cmdLine [auto_execok but-gui.exe]
 		if {$cmdLine eq {}} {
 			set cmdLine [list [info nameofexecutable] \
 							 [file normalize $::argv0]]
 		}
 		if {[catch {
 				win32_create_lnk $fn $cmdLine \
-					[file normalize $_gitworktree]
+					[file normalize $_butworktree]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
@@ -27,7 +27,7 @@ proc do_windows_shortcut {} {
 }
 
 proc do_cygwin_shortcut {} {
-	global argv0 _gitworktree
+	global argv0 _butworktree
 
 	if {[catch {
 		set desktop [exec cygpath \
@@ -60,7 +60,7 @@ proc do_cygwin_shortcut {} {
 					$sh -c \
 					"CHERE_INVOKING=1 source /etc/profile;[sq $me] &" \
 					] \
-					[file normalize $_gitworktree]
+					[file normalize $_butworktree]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
@@ -82,7 +82,7 @@ proc do_macosx_app {} {
 		if {[catch {
 				set Contents [file join $fn Contents]
 				set MacOS [file join $Contents MacOS]
-				set exe [file join $MacOS git-gui]
+				set exe [file join $MacOS but-gui]
 
 				file mkdir $MacOS
 
@@ -94,9 +94,9 @@ proc do_macosx_app {} {
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>git-gui</string>
+	<string>but-gui</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.spearce.git-gui</string>
+	<string>org.spearce.but-gui</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -116,7 +116,7 @@ proc do_macosx_app {} {
 				foreach name [lsort [array names env]] {
 					set value $env($name)
 					switch -- $name {
-					GIT_DIR { set value [file normalize [gitdir]] }
+					GIT_DIR { set value [file normalize [butdir]] }
 					}
 
 					switch -glob -- $name {
@@ -128,7 +128,7 @@ proc do_macosx_app {} {
 					}
 					}
 				}
-				puts $fd "export PATH=[sq [file dirname $::_git]]:\$PATH &&"
+				puts $fd "export PATH=[sq [file dirname $::_but]]:\$PATH &&"
 				puts $fd "cd [sq [file normalize [pwd]]] &&"
 				puts $fd "exec \\"
 				puts $fd " [sq [info nameofexecutable]] \\"

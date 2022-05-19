@@ -1,2 +1,2 @@
-$ git diff-tree -p initial
+$ but diff-tree -p initial
 $

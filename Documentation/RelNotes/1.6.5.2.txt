@@ -7,13 +7,13 @@ Fixes since v1.6.5.1
  * Installation of templates triggered a bug in busybox when using tar
    implementation from it.
 
- * "git add -i" incorrectly ignored paths that are already in the index
-   if they matched .gitignore patterns.
+ * "but add -i" incorrectly ignored paths that are already in the index
+   if they matched .butignore patterns.
 
- * "git describe --always" should have produced some output even there
+ * "but describe --always" should have produced some output even there
    were no tags in the repository, but it didn't.
 
- * "git ls-files" when showing tracked files incorrectly paid attention
+ * "but ls-files" when showing tracked files incorrectly paid attention
    to the exclude patterns.
 
 Other minor documentation updates are included.

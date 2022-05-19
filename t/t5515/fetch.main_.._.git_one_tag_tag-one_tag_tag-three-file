@@ -1,4 +1,4 @@
-# main ../.git one tag tag-one tag tag-three-file
+# main ../.but one tag tag-one tag tag-three-file
 8e32a6d901327a23ef831511badce7bf3bf46689		branch 'one' of ../
 8e32a6d901327a23ef831511badce7bf3bf46689		tag 'tag-one' of ../
 0e3b14047d3ee365f4f2a1b673db059c3972589c	not-for-merge	tag 'tag-three-file' of ../

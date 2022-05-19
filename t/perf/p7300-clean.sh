@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description="Test git-clean performance"
+test_description="Test but-clean performance"
 
 . ./perf-lib.sh
 
@@ -20,16 +20,16 @@ test_expect_success 'setup untracked directory with many sub dirs' '
 	done
 '
 
-test_perf 'clean many untracked sub dirs, check for nested git' '
-	git clean -n -q -f -d 100000_sub_dirs/
+test_perf 'clean many untracked sub dirs, check for nested but' '
+	but clean -n -q -f -d 100000_sub_dirs/
 '
 
-test_perf 'clean many untracked sub dirs, ignore nested git' '
-	git clean -n -q -f -f -d 100000_sub_dirs/
+test_perf 'clean many untracked sub dirs, ignore nested but' '
+	but clean -n -q -f -f -d 100000_sub_dirs/
 '
 
 test_perf 'ls-files -o' '
-	git ls-files -o
+	but ls-files -o
 '
 
 test_done

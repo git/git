@@ -3,7 +3,7 @@
  if test "z$*" = zversion \
  || test "z$*" = z--version; \
  then \
-	echo 'git-gui version @@GITGUI_VERSION@@'; \
+	echo 'but-gui version @@GITGUI_VERSION@@'; \
 	exit; \
  fi; \
  argv0=$0; \
@@ -37,7 +37,7 @@ if {[catch {package require Tcl 8.5} err]
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title "git-gui: fatal error" \
+		-title "but-gui: fatal error" \
 		-message $err
 	exit 1
 }
@@ -56,11 +56,11 @@ if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
 	set oguilib [file dirname [file normalize $argv0]]
-	if {[file tail $oguilib] eq {git-core}} {
+	if {[file tail $oguilib] eq {but-core}} {
 		set oguilib [file dirname $oguilib]
 	}
 	set oguilib [file dirname $oguilib]
-	set oguilib [file join $oguilib share git-gui lib]
+	set oguilib [file join $oguilib share but-gui lib]
 	set oguimsg [file join $oguilib msgs]
 } elseif {[string match @@* $oguirel]} {
 	set oguilib [file join [file dirname [file normalize $argv0]] lib]
@@ -157,11 +157,11 @@ if {[tk windowingsystem] eq "aqua"} {
 ## read only globals
 
 set _appname {Git Gui}
-set _gitdir {}
-set _gitworktree {}
+set _butdir {}
+set _butworktree {}
 set _isbare {}
-set _gitexec {}
-set _githtmldir {}
+set _butexec {}
+set _buthtmldir {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
@@ -197,55 +197,55 @@ proc appname {} {
 	return $_appname
 }
 
-proc gitdir {args} {
-	global _gitdir
+proc butdir {args} {
+	global _butdir
 	if {$args eq {}} {
-		return $_gitdir
+		return $_butdir
 	}
-	return [eval [list file join $_gitdir] $args]
+	return [eval [list file join $_butdir] $args]
 }
 
-proc gitexec {args} {
-	global _gitexec
-	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [git --exec-path]} err]} {
+proc butexec {args} {
+	global _butexec
+	if {$_butexec eq {}} {
+		if {[catch {set _butexec [but --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
 		if {[is_Cygwin]} {
-			set _gitexec [exec cygpath \
+			set _butexec [exec cygpath \
 				--windows \
 				--absolute \
-				$_gitexec]
+				$_butexec]
 		} else {
-			set _gitexec [file normalize $_gitexec]
+			set _butexec [file normalize $_butexec]
 		}
 	}
 	if {$args eq {}} {
-		return $_gitexec
+		return $_butexec
 	}
-	return [eval [list file join $_gitexec] $args]
+	return [eval [list file join $_butexec] $args]
 }
 
-proc githtmldir {args} {
-	global _githtmldir
-	if {$_githtmldir eq {}} {
-		if {[catch {set _githtmldir [git --html-path]}]} {
+proc buthtmldir {args} {
+	global _buthtmldir
+	if {$_buthtmldir eq {}} {
+		if {[catch {set _buthtmldir [but --html-path]}]} {
 			# Git not installed or option not yet supported
 			return {}
 		}
 		if {[is_Cygwin]} {
-			set _githtmldir [exec cygpath \
+			set _buthtmldir [exec cygpath \
 				--windows \
 				--absolute \
-				$_githtmldir]
+				$_buthtmldir]
 		} else {
-			set _githtmldir [file normalize $_githtmldir]
+			set _buthtmldir [file normalize $_buthtmldir]
 		}
 	}
 	if {$args eq {}} {
-		return $_githtmldir
+		return $_buthtmldir
 	}
-	return [eval [list file join $_githtmldir] $args]
+	return [eval [list file join $_buthtmldir] $args]
 }
 
 proc reponame {} {
@@ -354,12 +354,12 @@ proc get_config {name} {
 
 proc is_bare {} {
 	global _isbare
-	global _gitdir
-	global _gitworktree
+	global _butdir
+	global _butworktree
 
 	if {$_isbare eq {}} {
 		if {[catch {
-			set _bare [git rev-parse --is-bare-repository]
+			set _bare [but rev-parse --is-bare-repository]
 			switch  -- $_bare {
 			true { set _isbare 1 }
 			false { set _isbare 0}
@@ -367,8 +367,8 @@ proc is_bare {} {
 			}
 		}]} {
 			if {[is_config_true core.bare]
-				|| ($_gitworktree eq {}
-					&& [lindex [file split $_gitdir] end] ne {.git})} {
+				|| ($_butworktree eq {}
+					&& [lindex [file split $_butdir] end] ne {.but})} {
 				set _isbare 1
 			} else {
 				set _isbare 0
@@ -399,25 +399,25 @@ proc _trace_exec {cmd} {
 
 #'"  fix poor old emacs font-lock mode
 
-proc _git_cmd {name} {
-	global _git_cmd_path
+proc _but_cmd {name} {
+	global _but_cmd_path
 
-	if {[catch {set v $_git_cmd_path($name)}]} {
+	if {[catch {set v $_but_cmd_path($name)}]} {
 		switch -- $name {
 		  version   -
 		--version   -
-		--exec-path { return [list $::_git $name] }
+		--exec-path { return [list $::_but $name] }
 		}
 
-		set p [gitexec git-$name$::_search_exe]
+		set p [butexec but-$name$::_search_exe]
 		if {[file exists $p]} {
 			set v [list $p]
-		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
+		} elseif {[is_Windows] && [file exists [butexec but-$name]]} {
 			# Try to determine what sort of magic will make
-			# git-$name go and do its thing, because native
+			# but-$name go and do its thing, because native
 			# Tcl on Windows doesn't know it.
 			#
-			set p [gitexec git-$name]
+			set p [butexec but-$name]
 			set f [open $p r]
 			set s [gets $f]
 			close $f
@@ -426,7 +426,7 @@ proc _git_cmd {name} {
 			#!*sh     { set i sh     }
 			#!*perl   { set i perl   }
 			#!*python { set i python }
-			default   { error "git-$name is not supported: $s" }
+			default   { error "but-$name is not supported: $s" }
 			}
 
 			upvar #0 _$i interp
@@ -434,16 +434,16 @@ proc _git_cmd {name} {
 				set interp [_which $i]
 			}
 			if {$interp eq {}} {
-				error "git-$name requires $i (not in PATH)"
+				error "but-$name requires $i (not in PATH)"
 			}
 			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
 		} else {
-			# Assume it is builtin to git somehow and we
+			# Assume it is builtin to but somehow and we
 			# aren't actually able to see a file for it.
 			#
-			set v [list $::_git $name]
+			set v [list $::_but $name]
 		}
-		set _git_cmd_path($name) $v
+		set _but_cmd_path($name) $v
 	}
 	return $v
 }
@@ -460,9 +460,9 @@ proc _which {what args} {
 				$env(PATH)] {;}]
 			set _search_exe .exe
 		} elseif {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
+			set butguidir [file dirname [info script]]
+			regsub -all ";" $butguidir "\\;" butguidir
+			set env(PATH) "$butguidir;$env(PATH)"
 			set _search_path [split $env(PATH) {;}]
 			set _search_exe .exe
 		} else {
@@ -521,9 +521,9 @@ proc _lappend_nice {cmd_var} {
 
 	if {![info exists _nice]} {
 		set _nice [_which nice]
-		if {[catch {exec $_nice git version}]} {
+		if {[catch {exec $_nice but version}]} {
 			set _nice {}
-		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_git]} {
+		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_but]} {
 			set _nice {}
 		}
 	}
@@ -532,8 +532,8 @@ proc _lappend_nice {cmd_var} {
 	}
 }
 
-proc git {args} {
-	set fd [eval [list git_read] $args]
+proc but {args} {
+	set fd [eval [list but_read] $args]
 	fconfigure $fd -translation binary -encoding utf-8
 	set result [string trimright [read $fd] "\n"]
 	close $fd
@@ -569,7 +569,7 @@ proc _open_stdout_stderr {cmd} {
 	return $fd
 }
 
-proc git_read {args} {
+proc but_read {args} {
 	set opt [list]
 
 	while {1} {
@@ -591,13 +591,13 @@ proc git_read {args} {
 		set args [lrange $args 1 end]
 	}
 
-	set cmdp [_git_cmd [lindex $args 0]]
+	set cmdp [_but_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
 	return [_open_stdout_stderr [concat $opt $cmdp $args]]
 }
 
-proc git_write {args} {
+proc but_write {args} {
 	set opt [list]
 
 	while {1} {
@@ -615,15 +615,15 @@ proc git_write {args} {
 		set args [lrange $args 1 end]
 	}
 
-	set cmdp [_git_cmd [lindex $args 0]]
+	set cmdp [_but_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
 	_trace_exec [concat $opt $cmdp $args]
 	return [open [concat [list | ] $opt $cmdp $args] w]
 }
 
-proc githook_read {hook_name args} {
-	set pchook [gitdir hooks $hook_name]
+proc buthook_read {hook_name args} {
+	set pchook [butdir hooks $hook_name]
 	lappend args 2>@1
 
 	# On Windows [file executable] might lie so we need to ask
@@ -662,8 +662,8 @@ proc kill_file_process {fd} {
 	}
 }
 
-proc gitattr {path attr default} {
-	if {[catch {set r [git check-attr $attr -- $path]}]} {
+proc butattr {path attr default} {
+	if {[catch {set r [but check-attr $attr -- $path]}]} {
 		set r unspecified
 	} else {
 		set r [join [lrange [split $r :] 2 end] :]
@@ -683,7 +683,7 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [open [gitdir HEAD] r]
+	set fd [open [butdir HEAD] r]
 	fconfigure $fd -translation binary -encoding utf-8
 	if {[gets $fd ref] < 1} {
 		set ref {}
@@ -732,7 +732,7 @@ bind . <Visibility> {
 }
 
 if {[is_Windows]} {
-	wm iconbitmap . -default $oguilib/git-gui.ico
+	wm iconbitmap . -default $oguilib/but-gui.ico
 	set ::tk::AlwaysShowSelection 1
 	bind . <Control-F2> {console show}
 
@@ -742,28 +742,28 @@ if {[is_Windows]} {
 	}
 } else {
 	catch {
-		image create photo gitlogo -width 16 -height 16
+		image create photo butlogo -width 16 -height 16
 
-		gitlogo put #33CC33 -to  7  0  9  2
-		gitlogo put #33CC33 -to  4  2 12  4
-		gitlogo put #33CC33 -to  7  4  9  6
-		gitlogo put #CC3333 -to  4  6 12  8
-		gitlogo put gray26  -to  4  9  6 10
-		gitlogo put gray26  -to  3 10  6 12
-		gitlogo put gray26  -to  8  9 13 11
-		gitlogo put gray26  -to  8 11 10 12
-		gitlogo put gray26  -to 11 11 13 14
-		gitlogo put gray26  -to  3 12  5 14
-		gitlogo put gray26  -to  5 13
-		gitlogo put gray26  -to 10 13
-		gitlogo put gray26  -to  4 14 12 15
-		gitlogo put gray26  -to  5 15 11 16
-		gitlogo redither
+		butlogo put #33CC33 -to  7  0  9  2
+		butlogo put #33CC33 -to  4  2 12  4
+		butlogo put #33CC33 -to  7  4  9  6
+		butlogo put #CC3333 -to  4  6 12  8
+		butlogo put gray26  -to  4  9  6 10
+		butlogo put gray26  -to  3 10  6 12
+		butlogo put gray26  -to  8  9 13 11
+		butlogo put gray26  -to  8 11 10 12
+		butlogo put gray26  -to 11 11 13 14
+		butlogo put gray26  -to  3 12  5 14
+		butlogo put gray26  -to  5 13
+		butlogo put gray26  -to 10 13
+		butlogo put gray26  -to  4 14 12 15
+		butlogo put gray26  -to  5 15 11 16
+		butlogo redither
 
-		image create photo gitlogo32 -width 32 -height 32
-		gitlogo32 copy gitlogo -zoom 2 2
+		image create photo butlogo32 -width 32 -height 32
+		butlogo32 copy butlogo -zoom 2 2
 
-		wm iconphoto . -default gitlogo gitlogo32
+		wm iconphoto . -default butlogo butlogo32
 	}
 }
 
@@ -892,7 +892,7 @@ set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
-# TODO: this option should be added to the git-config documentation
+# TODO: this option should be added to the but-config documentation
 set default_config(gui.maxfilesdisplayed) 5000
 set default_config(gui.usettk) 1
 set default_config(gui.warndetachedcummit) 1
@@ -906,16 +906,16 @@ set default_config(gui.displayuntracked) true
 
 ######################################################################
 ##
-## find git
+## find but
 
-set _git  [_which git]
-if {$_git eq {}} {
+set _but  [_which but]
+if {$_but eq {}} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
-		-message [mc "Cannot find git in PATH."]
+		-title [mc "but-gui: fatal error"] \
+		-message [mc "Cannot find but in PATH."]
 	exit 1
 }
 
@@ -923,12 +923,12 @@ if {$_git eq {}} {
 ##
 ## version check
 
-if {[catch {set _git_version [git --version]} err]} {
+if {[catch {set _but_version [but --version]} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
+		-title [mc "but-gui: fatal error"] \
 		-message "Cannot determine Git version:
 
 $err
@@ -936,13 +936,13 @@ $err
 [appname] requires Git 1.5.0 or later."
 	exit 1
 }
-if {![regsub {^git version } $_git_version {} _git_version]} {
+if {![regsub {^but version } $_but_version {} _but_version]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
-		-message [strcat [mc "Cannot parse Git version string:"] "\n\n$_git_version"]
+		-title [mc "but-gui: fatal error"] \
+		-message [strcat [mc "Cannot parse Git version string:"] "\n\n$_but_version"]
 	exit 1
 }
 
@@ -957,10 +957,10 @@ proc get_trimmed_version {s} {
 	}
 	return [join $r .]
 }
-set _real_git_version $_git_version
-set _git_version [get_trimmed_version $_git_version]
+set _real_but_version $_but_version
+set _but_version [get_trimmed_version $_but_version]
 
-if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
+if {![regexp {^[1-9]+(\.[0-9]+)+$} $_but_version]} {
 	catch {wm withdraw .}
 	if {[tk_messageBox \
 		-icon warning \
@@ -974,26 +974,26 @@ if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 %s requires at least Git 1.5.0 or later.
 
 Assume '%s' is version 1.5.0?
-" $_git $_real_git_version [appname] $_real_git_version]] eq {yes}} {
-		set _git_version 1.5.0
+" $_but $_real_but_version [appname] $_real_but_version]] eq {yes}} {
+		set _but_version 1.5.0
 	} else {
 		exit 1
 	}
 }
-unset _real_git_version
+unset _real_but_version
 
-proc git-version {args} {
-	global _git_version
+proc but-version {args} {
+	global _but_version
 
 	switch [llength $args] {
 	0 {
-		return $_git_version
+		return $_but_version
 	}
 
 	2 {
 		set op [lindex $args 0]
 		set vr [lindex $args 1]
-		set cm [package vcompare $_git_version $vr]
+		set cm [package vcompare $_but_version $vr]
 		return [expr $cm $op 0]
 	}
 
@@ -1004,14 +1004,14 @@ proc git-version {args} {
 		set body [lindex $args 3]
 
 		if {($type ne {proc} && $type ne {method})} {
-			error "Invalid arguments to git-version"
+			error "Invalid arguments to but-version"
 		}
 		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
 			error "Last arm of $type $name must be default"
 		}
 
 		foreach {op vr cb} [lrange $body 0 end-2] {
-			if {[git-version $op $vr]} {
+			if {[but-version $op $vr]} {
 				return [uplevel [list $type $name $parm $cb]]
 			}
 		}
@@ -1020,23 +1020,23 @@ proc git-version {args} {
 	}
 
 	default {
-		error "git-version >= x"
+		error "but-version >= x"
 	}
 
 	}
 }
 
-if {[git-version < 1.5]} {
+if {[but-version < 1.5]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
+		-title [mc "but-gui: fatal error"] \
 		-message "[appname] requires Git 1.5.0 or later.
 
-You are using [git-version]:
+You are using [but-version]:
 
-[git --version]"
+[but --version]"
 	exit 1
 }
 
@@ -1050,11 +1050,11 @@ if {[catch {set fd [open $idx r]} err]} {
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
+		-title [mc "but-gui: fatal error"] \
 		-message $err
 	exit 1
 }
-if {[gets $fd] eq {# Autogenerated by git-gui Makefile}} {
+if {[gets $fd] eq {# Autogenerated by but-gui Makefile}} {
 	set idx [list]
 	while {[gets $fd n] >= 0} {
 		if {$n ne {} && ![string match #* $n]} {
@@ -1083,14 +1083,14 @@ unset -nocomplain idx fd
 ##
 ## config file parsing
 
-git-version proc _parse_config {arr_name args} {
+but-version proc _parse_config {arr_name args} {
 	>= 1.5.3 {
 		upvar $arr_name arr
 		array unset arr
 		set buf {}
 		catch {
 			set fd_rc [eval \
-				[list git_read config] \
+				[list but_read config] \
 				$args \
 				[list --null --list]]
 			fconfigure $fd_rc -translation binary -encoding utf-8
@@ -1115,7 +1115,7 @@ git-version proc _parse_config {arr_name args} {
 		upvar $arr_name arr
 		array unset arr
 		catch {
-			set fd_rc [eval [list git_read config --list] $args]
+			set fd_rc [eval [list but_read config --list] $args]
 			while {[gets $fd_rc line] >= 0} {
 				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 					if {[is_many_config $name]} {
@@ -1162,7 +1162,7 @@ proc load_config {include_global} {
 ##
 ## feature option selection
 
-if {[regexp {^git-(.+)$} [file tail $argv0] _junk subcommand]} {
+if {[regexp {^but-(.+)$} [file tail $argv0] _junk subcommand]} {
 	unset _junk
 } else {
 	set subcommand gui
@@ -1228,7 +1228,7 @@ set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
-	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
+	set env(SSH_ASKPASS) [butexec but-gui--askpass]
 }
 
 ######################################################################
@@ -1237,14 +1237,14 @@ if {![info exists env(SSH_ASKPASS)]} {
 
 set picked 0
 if {[catch {
-		set _gitdir $env(GIT_DIR)
+		set _butdir $env(GIT_DIR)
 		set _prefix {}
 		}]
 	&& [catch {
-		# beware that from the .git dir this sets _gitdir to .
+		# beware that from the .but dir this sets _butdir to .
 		# and _prefix to the empty string
-		set _gitdir [git rev-parse --git-dir]
-		set _prefix [git rev-parse --show-prefix]
+		set _butdir [but rev-parse --but-dir]
+		set _prefix [but rev-parse --show-prefix]
 	} err]} {
 	load_config 1
 	apply_config
@@ -1252,82 +1252,82 @@ if {[catch {
 	set picked 1
 }
 
-# we expand the _gitdir when it's just a single dot (i.e. when we're being
-# run from the .git dir itself) lest the routines to find the worktree
+# we expand the _butdir when it's just a single dot (i.e. when we're being
+# run from the .but dir itself) lest the routines to find the worktree
 # get confused
-if {$_gitdir eq "."} {
-	set _gitdir [pwd]
+if {$_butdir eq "."} {
+	set _butdir [pwd]
 }
 
-if {![file isdirectory $_gitdir] && [is_Cygwin]} {
-	catch {set _gitdir [exec cygpath --windows $_gitdir]}
+if {![file isdirectory $_butdir] && [is_Cygwin]} {
+	catch {set _butdir [exec cygpath --windows $_butdir]}
 }
-if {![file isdirectory $_gitdir]} {
+if {![file isdirectory $_butdir]} {
 	catch {wm withdraw .}
-	error_popup [strcat [mc "Git directory not found:"] "\n\n$_gitdir"]
+	error_popup [strcat [mc "Git directory not found:"] "\n\n$_butdir"]
 	exit 1
 }
-# _gitdir exists, so try loading the config
+# _butdir exists, so try loading the config
 load_config 0
 apply_config
 
 # v1.7.0 introduced --show-toplevel to return the canonical work-tree
-if {[package vcompare $_git_version 1.7.0] >= 0} {
+if {[package vcompare $_but_version 1.7.0] >= 0} {
 	if { [is_Cygwin] } {
-		catch {set _gitworktree [exec cygpath --windows [git rev-parse --show-toplevel]]}
+		catch {set _butworktree [exec cygpath --windows [but rev-parse --show-toplevel]]}
 	} else {
-		set _gitworktree [git rev-parse --show-toplevel]
+		set _butworktree [but rev-parse --show-toplevel]
 	}
 } else {
 	# try to set work tree from environment, core.worktree or use
 	# cdup to obtain a relative path to the top of the worktree. If
 	# run from the top, the ./ prefix ensures normalize expands pwd.
-	if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-		set _gitworktree [get_config core.worktree]
-		if {$_gitworktree eq ""} {
-			set _gitworktree [file normalize ./[git rev-parse --show-cdup]]
+	if {[catch { set _butworktree $env(GIT_WORK_TREE) }]} {
+		set _butworktree [get_config core.worktree]
+		if {$_butworktree eq ""} {
+			set _butworktree [file normalize ./[but rev-parse --show-cdup]]
 		}
 	}
 }
 
 if {$_prefix ne {}} {
-	if {$_gitworktree eq {}} {
+	if {$_butworktree eq {}} {
 		regsub -all {[^/]+/} $_prefix ../ cdup
 	} else {
-		set cdup $_gitworktree
+		set cdup $_butworktree
 	}
 	if {[catch {cd $cdup} err]} {
 		catch {wm withdraw .}
 		error_popup [strcat [mc "Cannot move to top of working directory:"] "\n\n$err"]
 		exit 1
 	}
-	set _gitworktree [pwd]
+	set _butworktree [pwd]
 	unset cdup
 } elseif {![is_enabled bare]} {
 	if {[is_bare]} {
 		catch {wm withdraw .}
-		error_popup [strcat [mc "Cannot use bare repository:"] "\n\n$_gitdir"]
+		error_popup [strcat [mc "Cannot use bare repository:"] "\n\n$_butdir"]
 		exit 1
 	}
-	if {$_gitworktree eq {}} {
-		set _gitworktree [file dirname $_gitdir]
+	if {$_butworktree eq {}} {
+		set _butworktree [file dirname $_butdir]
 	}
-	if {[catch {cd $_gitworktree} err]} {
+	if {[catch {cd $_butworktree} err]} {
 		catch {wm withdraw .}
-		error_popup [strcat [mc "No working directory"] " $_gitworktree:\n\n$err"]
+		error_popup [strcat [mc "No working directory"] " $_butworktree:\n\n$err"]
 		exit 1
 	}
-	set _gitworktree [pwd]
+	set _butworktree [pwd]
 }
-set _reponame [file split [file normalize $_gitdir]]
-if {[lindex $_reponame end] eq {.git}} {
+set _reponame [file split [file normalize $_butdir]]
+if {[lindex $_reponame end] eq {.but}} {
 	set _reponame [lindex $_reponame end-1]
 } else {
 	set _reponame [lindex $_reponame end]
 }
 
-set env(GIT_DIR) $_gitdir
-set env(GIT_WORK_TREE) $_gitworktree
+set env(GIT_DIR) $_butdir
+set env(GIT_WORK_TREE) $_butworktree
 
 ######################################################################
 ##
@@ -1403,13 +1403,13 @@ proc repository_state {ctvar hdvar mhvar} {
 	set mh [list]
 
 	load_current_branch
-	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
+	if {[catch {set hd [but rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
 		return
 	}
 
-	set merge_head [gitdir MERGE_HEAD]
+	set merge_head [butdir MERGE_HEAD]
 	if {[file exists $merge_head]} {
 		set ct merge
 		set fd_mh [open $merge_head r]
@@ -1431,7 +1431,7 @@ proc PARENT {} {
 		return $p
 	}
 	if {$empty_tree eq {}} {
-		set empty_tree [git mktree << {}]
+		set empty_tree [but mktree << {}]
 	}
 	return $empty_tree
 }
@@ -1490,7 +1490,7 @@ proc rescan {after {honor_trustmtime 1}} {
 	} else {
 		set rescan_active 1
 		ui_status [mc "Refreshing file status..."]
-		set fd_rf [git_read update-index \
+		set fd_rf [but_read update-index \
 			-q \
 			--unmerged \
 			--ignore-missing \
@@ -1503,22 +1503,22 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 if {[is_Cygwin]} {
-	set is_git_info_exclude {}
+	set is_but_info_exclude {}
 	proc have_info_exclude {} {
-		global is_git_info_exclude
+		global is_but_info_exclude
 
-		if {$is_git_info_exclude eq {}} {
-			if {[catch {exec test -f [gitdir info exclude]}]} {
-				set is_git_info_exclude 0
+		if {$is_but_info_exclude eq {}} {
+			if {[catch {exec test -f [butdir info exclude]}]} {
+				set is_but_info_exclude 0
 			} else {
-				set is_git_info_exclude 1
+				set is_but_info_exclude 1
 			}
 		}
-		return $is_git_info_exclude
+		return $is_but_info_exclude
 	}
 } else {
 	proc have_info_exclude {} {
-		return [file readable [gitdir info exclude]]
+		return [file readable [butdir info exclude]]
 	}
 }
 
@@ -1531,12 +1531,12 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	if {[package vcompare $::_git_version 1.6.3] >= 0} {
+	if {[package vcompare $::_but_version 1.6.3] >= 0} {
 		set ls_others [list --exclude-standard]
 	} else {
-		set ls_others [list --exclude-per-directory=.gitignore]
+		set ls_others [list --exclude-per-directory=.butignore]
 		if {[have_info_exclude]} {
-			lappend ls_others "--exclude-from=[gitdir info exclude]"
+			lappend ls_others "--exclude-from=[butdir info exclude]"
 		}
 		set user_exclude [get_config core.excludesfile]
 		if {$user_exclude ne {} && [file readable $user_exclude]} {
@@ -1550,12 +1550,12 @@ proc rescan_stage2 {fd after} {
 
 	set rescan_active 2
 	ui_status [mc "Scanning for modified files ..."]
-	if {[git-version >= "1.7.2"]} {
-		set fd_di [git_read diff-index --cached --ignore-submodules=dirty -z [PARENT]]
+	if {[but-version >= "1.7.2"]} {
+		set fd_di [but_read diff-index --cached --ignore-submodules=dirty -z [PARENT]]
 	} else {
-		set fd_di [git_read diff-index --cached -z [PARENT]]
+		set fd_di [but_read diff-index --cached -z [PARENT]]
 	}
-	set fd_df [git_read diff-files -z]
+	set fd_df [but_read diff-files -z]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
 	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
@@ -1564,7 +1564,7 @@ proc rescan_stage2 {fd after} {
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
 
 	if {[is_config_true gui.displayuntracked]} {
-		set fd_lo [eval git_read ls-files --others -z $ls_others]
+		set fd_lo [eval but_read ls-files --others -z $ls_others]
 		fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
 		fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
 		incr rescan_active
@@ -1574,7 +1574,7 @@ proc rescan_stage2 {fd after} {
 proc load_message {file {encoding {}}} {
 	global ui_comm
 
-	set f [gitdir $file]
+	set f [butdir $file]
 	if {[file isfile $f]} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
@@ -1596,21 +1596,21 @@ proc load_message {file {encoding {}}} {
 proc run_prepare_cummit_msg_hook {} {
 	global pch_error
 
-	# prepare-cummit-msg requires PREPARE_CUMMIT_MSG exist.  From git-gui
-	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
+	# prepare-cummit-msg requires PREPARE_CUMMIT_MSG exist.  From but-gui
+	# it will be .but/MERGE_MSG (merge), .but/SQUASH_MSG (squash), or an
 	# empty file but existent file.
 
-	set fd_pcm [open [gitdir PREPARE_CUMMIT_MSG] a]
+	set fd_pcm [open [butdir PREPARE_CUMMIT_MSG] a]
 
-	if {[file isfile [gitdir MERGE_MSG]]} {
+	if {[file isfile [butdir MERGE_MSG]]} {
 		set pcm_source "merge"
-		set fd_mm [open [gitdir MERGE_MSG] r]
+		set fd_mm [open [butdir MERGE_MSG] r]
 		fconfigure $fd_mm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_mm]
 		close $fd_mm
-	} elseif {[file isfile [gitdir SQUASH_MSG]]} {
+	} elseif {[file isfile [butdir SQUASH_MSG]]} {
 		set pcm_source "squash"
-		set fd_sm [open [gitdir SQUASH_MSG] r]
+		set fd_sm [open [butdir SQUASH_MSG] r]
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
@@ -1626,10 +1626,10 @@ proc run_prepare_cummit_msg_hook {} {
 
 	close $fd_pcm
 
-	set fd_ph [githook_read prepare-cummit-msg \
-			[gitdir PREPARE_CUMMIT_MSG] $pcm_source]
+	set fd_ph [buthook_read prepare-cummit-msg \
+			[butdir PREPARE_CUMMIT_MSG] $pcm_source]
 	if {$fd_ph eq {}} {
-		catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
+		catch {file delete [butdir PREPARE_CUMMIT_MSG]}
 		return 0;
 	}
 
@@ -1652,17 +1652,17 @@ proc prepare_cummit_msg_hook_wait {fd_ph} {
 		if {[catch {close $fd_ph}]} {
 			ui_status [mc "cummit declined by prepare-cummit-msg hook."]
 			hook_failed_popup prepare-cummit-msg $pch_error
-			catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
+			catch {file delete [butdir PREPARE_CUMMIT_MSG]}
 			exit 1
 		} else {
 			load_message PREPARE_CUMMIT_MSG
 		}
 		set pch_error {}
-		catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
+		catch {file delete [butdir PREPARE_CUMMIT_MSG]}
 		return
 	}
 	fconfigure $fd_ph -blocking 0
-	catch {file delete [gitdir PREPARE_CUMMIT_MSG]}
+	catch {file delete [butdir PREPARE_CUMMIT_MSG]}
 }
 
 proc read_diff_index {fd after} {
@@ -2158,17 +2158,17 @@ proc incr_font_size {font {amt 1}} {
 ##
 ## ui commands
 
-proc do_gitk {revs {is_submodule false}} {
+proc do_butk {revs {is_submodule false}} {
 	global current_diff_path file_states current_diff_side ui_index
-	global _gitdir _gitworktree
+	global _butdir _butworktree
 
-	# -- Always start gitk through whatever we were loaded with.  This
+	# -- Always start butk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [_which gitk -script]
+	set exe [_which butk -script]
 	set cmd [list [info nameofexecutable] $exe]
 	if {$exe eq {}} {
-		error_popup [mc "Couldn't find gitk in PATH"]
+		error_popup [mc "Couldn't find butk in PATH"]
 	} else {
 		global env
 
@@ -2176,7 +2176,7 @@ proc do_gitk {revs {is_submodule false}} {
 
 		if {!$is_submodule} {
 			if {![is_bare]} {
-				cd $_gitworktree
+				cd $_butworktree
 			}
 		} else {
 			cd $current_diff_path
@@ -2200,42 +2200,42 @@ proc do_gitk {revs {is_submodule false}} {
 			}
 			# GIT_DIR and GIT_WORK_TREE for the submodule are not the ones
 			# we've been using for the main repository, so unset them.
-			# TODO we could make life easier (start up faster?) for gitk
-			# by setting these to the appropriate values to allow gitk
+			# TODO we could make life easier (start up faster?) for butk
+			# by setting these to the appropriate values to allow butk
 			# to skip the heuristics to find their proper value
 			unset env(GIT_DIR)
 			unset env(GIT_WORK_TREE)
 		}
 		eval exec $cmd $revs "--" "--" &
 
-		set env(GIT_DIR) $_gitdir
-		set env(GIT_WORK_TREE) $_gitworktree
+		set env(GIT_DIR) $_butdir
+		set env(GIT_WORK_TREE) $_butworktree
 		cd $pwd
 
 		if {[info exists main_status]} {
 			set status_operation [$::main_status \
 				start \
-				[mc "Starting %s... please wait..." "gitk"]]
+				[mc "Starting %s... please wait..." "butk"]]
 
 			after 3500 [list $status_operation stop]
 		}
 	}
 }
 
-proc do_git_gui {} {
+proc do_but_gui {} {
 	global current_diff_path
 
-	# -- Always start git gui through whatever we were loaded with.  This
+	# -- Always start but gui through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [list [_which git]]
+	set exe [list [_which but]]
 	if {$exe eq {}} {
-		error_popup [mc "Couldn't find git gui in PATH"]
+		error_popup [mc "Couldn't find but gui in PATH"]
 	} else {
 		global env
-		global _gitdir _gitworktree
+		global _butdir _butworktree
 
-		# see note in do_gitk about unsetting these vars when
+		# see note in do_butk about unsetting these vars when
 		# running tools in a submodule
 		unset env(GIT_DIR)
 		unset env(GIT_WORK_TREE)
@@ -2245,13 +2245,13 @@ proc do_git_gui {} {
 
 		eval exec $exe gui &
 
-		set env(GIT_DIR) $_gitdir
-		set env(GIT_WORK_TREE) $_gitworktree
+		set env(GIT_DIR) $_butdir
+		set env(GIT_WORK_TREE) $_butworktree
 		cd $pwd
 
 		set status_operation [$::main_status \
 			start \
-			[mc "Starting %s... please wait..." "git-gui"]]
+			[mc "Starting %s... please wait..." "but-gui"]]
 
 		after 3500 [list $status_operation stop]
 	}
@@ -2271,16 +2271,16 @@ proc get_explorer {} {
 }
 
 proc do_explore {} {
-	global _gitworktree
+	global _butworktree
 	set explorer [get_explorer]
-	eval exec $explorer [list [file nativename $_gitworktree]] &
+	eval exec $explorer [list [file nativename $_butworktree]] &
 }
 
 # Open file relative to the working tree by the default associated app.
 proc do_file_open {file} {
-	global _gitworktree
+	global _butworktree
 	set explorer [get_explorer]
-	set full_file_path [file join $_gitworktree $file]
+	set full_file_path [file join $_butworktree $file]
 	exec $explorer [file nativename $full_file_path] &
 }
 
@@ -2305,9 +2305,9 @@ proc do_quit {{rc {1}}} {
 	if {[winfo exists $ui_comm]} {
 		# -- Stash our current cummit buffer.
 		#
-		set save [gitdir GITGUI_MSG]
+		set save [butdir GITGUI_MSG]
 		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
-			file rename -force [gitdir GITGUI_BCK] $save
+			file rename -force [butdir GITGUI_BCK] $save
 			set GITGUI_BCK_exists 0
 		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]
@@ -2335,7 +2335,7 @@ proc do_quit {{rc {1}}} {
 		#
 		after cancel $GITGUI_BCK_i
 		if {$GITGUI_BCK_exists} {
-			catch {file delete [gitdir GITGUI_BCK]}
+			catch {file delete [butdir GITGUI_BCK]}
 		}
 
 		# -- Stash our current window geometry into this repository.
@@ -2345,7 +2345,7 @@ proc do_quit {{rc {1}}} {
 			set rc_wmstate {}
 		}
 		if {$cfg_wmstate ne $rc_wmstate} {
-			catch {git config gui.wmstate $cfg_wmstate}
+			catch {but config gui.wmstate $cfg_wmstate}
 		}
 		if {$cfg_wmstate eq {zoomed}} {
 			# on Windows wm geometry will lie about window
@@ -2366,7 +2366,7 @@ proc do_quit {{rc {1}}} {
 			set rc_geometry {}
 		}
 		if {$cfg_geometry ne $rc_geometry} {
-			catch {git config gui.geometry $cfg_geometry}
+			catch {but config gui.geometry $cfg_geometry}
 		}
 	}
 
@@ -2758,10 +2758,10 @@ if {![is_bare]} {
 }
 
 if {[is_Windows]} {
-	# Use /git-bash.exe if available
+	# Use /but-bash.exe if available
 	set normalized [file normalize $::argv0]
-	regsub "/mingw../libexec/git-core/git-gui$" \
-		$normalized "/git-bash.exe" cmdLine
+	regsub "/mingw../libexec/but-core/but-gui$" \
+		$normalized "/but-bash.exe" cmdLine
 	if {$cmdLine != $normalized && [file exists $cmdLine]} {
 		set cmdLine [list "Git Bash" $cmdLine &]
 	} else {
@@ -2787,11 +2787,11 @@ set ui_browse_current [.mbar.repository index last]
 
 .mbar.repository add command \
 	-label [mc "Visualize Current Branch's History"] \
-	-command {do_gitk $current_branch}
+	-command {do_butk $current_branch}
 set ui_visualize_current [.mbar.repository index last]
 .mbar.repository add command \
 	-label [mc "Visualize All Branch History"] \
-	-command {do_gitk --all}
+	-command {do_butk --all}
 .mbar.repository add separator
 
 proc current_branch_write {args} {
@@ -3050,7 +3050,7 @@ if {[is_MacOSX]} {
 }
 . configure -menu .mbar
 
-set doc_path [githtmldir]
+set doc_path [buthtmldir]
 if {$doc_path ne {}} {
 	set doc_path [file join $doc_path index.html]
 
@@ -3062,11 +3062,11 @@ if {$doc_path ne {}} {
 if {[file isfile $doc_path]} {
 	set doc_url "file:$doc_path"
 } else {
-	set doc_url {http://www.kernel.org/pub/software/scm/git/docs/}
+	set doc_url {http://www.kernel.org/pub/software/scm/but/docs/}
 }
 
 proc start_browser {url} {
-	git "web--browse" $url
+	but "web--browse" $url
 }
 
 .mbar.help add command -label [mc "Online Documentation"] \
@@ -3184,7 +3184,7 @@ blame {
 	} else {
 		if {[regexp {^[0-9a-f]{1,39}$} $head]} {
 			if {[catch {
-					set head [git rev-parse --verify $head]
+					set head [but rev-parse --verify $head]
 				} err]} {
 				if {[tk windowingsystem] eq "win32"} {
 					tk_messageBox -icon error -title [mc Error] -message $err
@@ -3217,7 +3217,7 @@ blame {
 			tk_messageBox \
 				-icon error \
 				-type ok \
-				-title [mc "git-gui: fatal error"] \
+				-title [mc "but-gui: fatal error"] \
 				-message [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
@@ -3761,20 +3761,20 @@ set ctxmsm .vpane.lower.diff.body.ctxmsm
 menu $ctxmsm -tearoff 0
 $ctxmsm add command \
 	-label [mc "Visualize These Changes In The Submodule"] \
-	-command {do_gitk -- true}
+	-command {do_butk -- true}
 lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
 $ctxmsm add command \
 	-label [mc "Visualize Current Branch History In The Submodule"] \
-	-command {do_gitk {} true}
+	-command {do_butk {} true}
 lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
 $ctxmsm add command \
 	-label [mc "Visualize All Branch History In The Submodule"] \
-	-command {do_gitk --all true}
+	-command {do_butk --all true}
 lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
 $ctxmsm add separator
 $ctxmsm add command \
-	-label [mc "Start git gui In The Submodule"] \
-	-command {do_git_gui}
+	-label [mc "Start but gui In The Submodule"] \
+	-command {do_but_gui}
 lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
 $ctxmsm add separator
 create_common_diff_popup $ctxmsm
@@ -3783,7 +3783,7 @@ proc has_textconv {path} {
 	if {[is_config_false gui.textconv]} {
 		return 0
 	}
-	set filter [gitattr $path diff set]
+	set filter [butattr $path diff set]
 	set textconv [get_config [join [list diff $filter textconv] .]]
 	if {$filter ne {set} && $textconv ne {}} {
 		return 1
@@ -4025,12 +4025,12 @@ set file_lists_last_clicked($ui_workdir) {}
 set file_lists($ui_index) [list]
 set file_lists($ui_workdir) [list]
 
-wm title . "[appname] ([reponame]) [file normalize $_gitworktree]"
+wm title . "[appname] ([reponame]) [file normalize $_butworktree]"
 focus -force $ui_comm
 
 # -- Warn the user about environmental problems.  Cygwin's Tcl
 #    does *not* pass its env array onto any processes it spawns.
-#    This means that git processes get none of our environment.
+#    This means that but processes get none of our environment.
 #
 if {[is_Cygwin]} {
 	set ignored_env 0
@@ -4074,7 +4074,7 @@ Tcl binary distributed by Cygwin."]
 A good replacement for %s
 is placing values for the user.name and
 user.email settings into your personal
-~/.gitconfig file.
+~/.butconfig file.
 " $suggest_user]
 		}
 		warn_popup $msg
@@ -4104,15 +4104,15 @@ if {[winfo exists $ui_comm]} {
 	#    newer of the two files to initialize the buffer.
 	#
 	if {$GITGUI_BCK_exists} {
-		set m [gitdir GITGUI_MSG]
+		set m [butdir GITGUI_MSG]
 		if {[file isfile $m]} {
-			if {[file mtime [gitdir GITGUI_BCK]] > [file mtime $m]} {
-				catch {file delete [gitdir GITGUI_MSG]}
+			if {[file mtime [butdir GITGUI_BCK]] > [file mtime $m]} {
+				catch {file delete [butdir GITGUI_MSG]}
 			} else {
 				$ui_comm delete 0.0 end
 				$ui_comm edit reset
 				$ui_comm edit modified false
-				catch {file delete [gitdir GITGUI_BCK]}
+				catch {file delete [butdir GITGUI_BCK]}
 				set GITGUI_BCK_exists 0
 			}
 		}
@@ -4129,12 +4129,12 @@ if {[winfo exists $ui_comm]} {
 
 			if {$msg eq {}} {
 				if {$GITGUI_BCK_exists} {
-					catch {file delete [gitdir GITGUI_BCK]}
+					catch {file delete [butdir GITGUI_BCK]}
 					set GITGUI_BCK_exists 0
 				}
 			} elseif {$m} {
 				catch {
-					set fd [open [gitdir GITGUI_BCK] w]
+					set fd [open [butdir GITGUI_BCK] w]
 					fconfigure $fd -encoding utf-8
 					puts -nonewline $fd $msg
 					close $fd

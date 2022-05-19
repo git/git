@@ -1,9 +1,9 @@
 /*
- * "git clean" builtin command
+ * "but clean" builtin command
  *
  * Copyright (C) 2007 Shawn Bohrer
  *
- * Based on git-clean.sh by Pavel Roskin
+ * Based on but-clean.sh by Pavel Roskin
  */
 
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
@@ -26,14 +26,14 @@ static struct string_list del_list = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
 
 static const char *const builtin_clean_usage[] = {
-	N_("git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."),
+	N_("but clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."),
 	NULL
 };
 
 static const char *msg_remove = N_("Removing %s\n");
 static const char *msg_would_remove = N_("Would remove %s\n");
-static const char *msg_skip_git_dir = N_("Skipping repository %s\n");
-static const char *msg_would_skip_git_dir = N_("Would skip repository %s\n");
+static const char *msg_skip_but_dir = N_("Skipping repository %s\n");
+static const char *msg_would_skip_but_dir = N_("Would skip repository %s\n");
 static const char *msg_warn_remove_failed = N_("failed to remove %s");
 static const char *msg_warn_lstat_failed = N_("could not lstat %s\n");
 static const char *msg_skip_cwd = N_("Refusing to remove current working directory\n");
@@ -99,17 +99,17 @@ struct menu_stuff {
 
 define_list_config_array(color_interactive_slots);
 
-static int git_clean_config(const char *var, const char *value, void *cb)
+static int but_clean_config(const char *var, const char *value, void *cb)
 {
 	const char *slot_name;
 
 	if (starts_with(var, "column."))
-		return git_column_config(var, value, "clean", &colopts);
+		return but_column_config(var, value, "clean", &colopts);
 
 	/* honors the color.interactive* config variables which also
-	   applied in git-add--interactive and git-stash */
+	   applied in but-add--interactive and but-stash */
 	if (!strcmp(var, "color.interactive")) {
-		clean_use_color = git_config_colorbool(var, value);
+		clean_use_color = but_config_colorbool(var, value);
 		return 0;
 	}
 	if (skip_prefix(var, "color.interactive.", &slot_name)) {
@@ -122,12 +122,12 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "clean.requireforce")) {
-		force = !git_config_bool(var, value);
+		force = !but_config_bool(var, value);
 		return 0;
 	}
 
 	/* inspect the color.ui config variable and others */
-	return git_color_default_config(var, value, cb);
+	return but_color_default_config(var, value, cb);
 }
 
 static const char *clean_get_color(enum color_clean ix)
@@ -167,7 +167,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	    is_nonbare_repository_dir(path)) {
 		if (!quiet) {
 			quote_path(path->buf, prefix, &quoted, 0);
-			printf(dry_run ?  _(msg_would_skip_git_dir) : _(msg_skip_git_dir),
+			printf(dry_run ?  _(msg_would_skip_but_dir) : _(msg_skip_but_dir),
 					quoted.buf);
 		}
 
@@ -514,7 +514,7 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 					is_range = 0;
 					break;
 				}
-			} else if (!isdigit(*p)) {
+			} else if (!isdibut(*p)) {
 				is_number = 0;
 				is_range = 0;
 				break;
@@ -559,8 +559,8 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 }
 
 /*
- * Implement a git-add-interactive compatible UI, which is borrowed
- * from git-add--interactive.perl.
+ * Implement a but-add-interactive compatible UI, which is borrowed
+ * from but-add--interactive.perl.
  *
  * Return value:
  *
@@ -604,7 +604,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 			       clean_get_color(CLEAN_COLOR_RESET));
 		}
 
-		if (git_read_line_interactively(&choice) == EOF) {
+		if (but_read_line_interactively(&choice) == EOF) {
 			eof = 1;
 			break;
 		}
@@ -684,7 +684,7 @@ static int filter_by_patterns_cmd(void)
 		clean_print_color(CLEAN_COLOR_PROMPT);
 		printf(_("Input ignore patterns>> "));
 		clean_print_color(CLEAN_COLOR_RESET);
-		if (git_read_line_interactively(&confirm) == EOF)
+		if (but_read_line_interactively(&confirm) == EOF)
 			putchar('\n');
 
 		/* quit filter_by_pattern mode if press ENTER or Ctrl-D */
@@ -779,7 +779,7 @@ static int ask_each_cmd(void)
 			qname = quote_path(item->string, NULL, &buf, 0);
 			/* TRANSLATORS: Make sure to keep [y/N] as is */
 			printf(_("Remove %s [y/N]? "), qname);
-			if (git_read_line_interactively(&confirm) == EOF) {
+			if (but_read_line_interactively(&confirm) == EOF) {
 				putchar('\n');
 				eof = 1;
 			}
@@ -937,7 +937,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_clean_config, NULL);
+	but_config(but_clean_config, NULL);
 	if (force < 0)
 		force = 0;
 	else

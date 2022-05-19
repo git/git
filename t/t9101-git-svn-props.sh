@@ -3,8 +3,8 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-test_description='git svn property tests'
-. ./lib-git-svn.sh
+test_description='but svn property tests'
+. ./lib-but-svn.sh
 
 mkdir import
 
@@ -26,29 +26,29 @@ cd import
 EOF
 
 	printf "Hello\r\nWorld\r\n" > crlf
-	a_crlf=$(git hash-object -w crlf)
+	a_crlf=$(but hash-object -w crlf)
 	printf "Hello\rWorld\r" > cr
-	a_cr=$(git hash-object -w cr)
+	a_cr=$(but hash-object -w cr)
 	printf "Hello\nWorld\n" > lf
-	a_lf=$(git hash-object -w lf)
+	a_lf=$(but hash-object -w lf)
 
 	printf "Hello\r\nWorld" > ne_crlf
-	a_ne_crlf=$(git hash-object -w ne_crlf)
+	a_ne_crlf=$(but hash-object -w ne_crlf)
 	printf "Hello\nWorld" > ne_lf
-	a_ne_lf=$(git hash-object -w ne_lf)
+	a_ne_lf=$(but hash-object -w ne_lf)
 	printf "Hello\rWorld" > ne_cr
-	a_ne_cr=$(git hash-object -w ne_cr)
+	a_ne_cr=$(but hash-object -w ne_cr)
 
 	touch empty
-	a_empty=$(git hash-object -w empty)
+	a_empty=$(but hash-object -w empty)
 	printf "\n" > empty_lf
-	a_empty_lf=$(git hash-object -w empty_lf)
+	a_empty_lf=$(but hash-object -w empty_lf)
 	printf "\r" > empty_cr
-	a_empty_cr=$(git hash-object -w empty_cr)
+	a_empty_cr=$(but hash-object -w empty_cr)
 	printf "\r\n" > empty_crlf
-	a_empty_crlf=$(git hash-object -w empty_crlf)
+	a_empty_crlf=$(but hash-object -w empty_crlf)
 
-	svn_cmd import --no-auto-props -m 'import for git svn' . "$svnrepo" >/dev/null
+	svn_cmd import --no-auto-props -m 'import for but svn' . "$svnrepo" >/dev/null
 cd ..
 
 rm -rf import
@@ -68,16 +68,16 @@ test_expect_success 'setup some cummits to svn' '
 	)
 '
 
-test_expect_success 'initialize git svn' 'git svn init "$svnrepo"'
-test_expect_success 'fetch revisions from svn' 'git svn fetch'
+test_expect_success 'initialize but svn' 'but svn init "$svnrepo"'
+test_expect_success 'fetch revisions from svn' 'but svn fetch'
 
 name='test svn:keywords ignoring'
 test_expect_success "$name" \
-	'git checkout -b mybranch remotes/git-svn &&
+	'but checkout -b mybranch remotes/but-svn &&
 	echo Hi again >> kw.c &&
-	git cummit -a -m "test keywords ignoring" &&
-	git svn set-tree remotes/git-svn..mybranch &&
-	git pull . remotes/git-svn'
+	but cummit -a -m "test keywords ignoring" &&
+	but svn set-tree remotes/but-svn..mybranch &&
+	but pull . remotes/but-svn'
 
 expect='/* $Id$ */'
 got="$(sed -ne 2p kw.c)"
@@ -94,8 +94,8 @@ test_expect_success "propset CR on crlf files" '
 '
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
-	'git svn fetch &&
-	 git pull . remotes/git-svn &&
+	'but svn fetch &&
+	 but pull . remotes/but-svn &&
 	 svn_cmd co "$svnrepo" new_wc'
 
 for i in crlf ne_crlf lf ne_lf cr ne_cr empty_cr empty_lf empty empty_crlf
@@ -107,8 +107,8 @@ done
 cd test_wc
 	printf '$Id$\rHello\rWorld\r' > cr
 	printf '$Id$\rHello\rWorld' > ne_cr
-	a_cr=$(printf '$Id$\r\nHello\r\nWorld\r\n' | git hash-object --stdin)
-	a_ne_cr=$(printf '$Id$\r\nHello\r\nWorld' | git hash-object --stdin)
+	a_cr=$(printf '$Id$\r\nHello\r\nWorld\r\n' | but hash-object --stdin)
+	a_ne_cr=$(printf '$Id$\r\nHello\r\nWorld' | but hash-object --stdin)
 	test_expect_success 'Set CRLF on cr files' \
 	'svn_cmd propset svn:eol-style CRLF cr &&
 	 svn_cmd propset svn:eol-style CRLF ne_cr &&
@@ -117,10 +117,10 @@ cd test_wc
 	 svn_cmd cummit -m "propset CRLF on cr files"'
 cd ..
 test_expect_success 'fetch and pull latest from svn' \
-	'git svn fetch && git pull . remotes/git-svn'
+	'but svn fetch && but pull . remotes/but-svn'
 
-b_cr="$(git hash-object cr)"
-b_ne_cr="$(git hash-object ne_cr)"
+b_cr="$(but hash-object cr)"
+b_ne_cr="$(but hash-object ne_cr)"
 
 test_expect_success 'CRLF + $Id$' "test '$a_cr' = '$b_cr'"
 test_expect_success 'CRLF + $Id$ (no newline)' "test '$a_ne_cr' = '$b_ne_cr'"
@@ -152,7 +152,7 @@ no-such-file*
 ' . &&
 		svn_cmd cummit -m 'propset svn:ignore'
 	) &&
-	git svn show-ignore > show-ignore.got &&
+	but svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
 "
 
@@ -160,24 +160,24 @@ cat >create-ignore.expect <<\EOF
 /no-such-file*
 EOF
 
-expectoid=$(git hash-object create-ignore.expect)
+expectoid=$(but hash-object create-ignore.expect)
 
 cat >create-ignore-index.expect <<EOF
-100644 $expectoid 0	.gitignore
-100644 $expectoid 0	deeply/.gitignore
-100644 $expectoid 0	deeply/nested/.gitignore
-100644 $expectoid 0	deeply/nested/directory/.gitignore
+100644 $expectoid 0	.butignore
+100644 $expectoid 0	deeply/.butignore
+100644 $expectoid 0	deeply/nested/.butignore
+100644 $expectoid 0	deeply/nested/directory/.butignore
 EOF
 
 test_expect_success 'test create-ignore' "
-	git svn fetch && git pull . remotes/git-svn &&
-	git svn create-ignore &&
-	cmp ./.gitignore create-ignore.expect &&
-	cmp ./deeply/.gitignore create-ignore.expect &&
-	cmp ./deeply/nested/.gitignore create-ignore.expect &&
-	cmp ./deeply/nested/directory/.gitignore create-ignore.expect &&
-	git ls-files -s >ls_files_result &&
-	grep gitignore ls_files_result | cmp - create-ignore-index.expect
+	but svn fetch && but pull . remotes/but-svn &&
+	but svn create-ignore &&
+	cmp ./.butignore create-ignore.expect &&
+	cmp ./deeply/.butignore create-ignore.expect &&
+	cmp ./deeply/nested/.butignore create-ignore.expect &&
+	cmp ./deeply/nested/directory/.butignore create-ignore.expect &&
+	but ls-files -s >ls_files_result &&
+	grep butignore ls_files_result | cmp - create-ignore-index.expect
 	"
 
 cat >prop.expect <<\EOF
@@ -194,7 +194,7 @@ EOF
 # right directory.
 test_expect_success 'test propget' '
 	test_propget () {
-		git svn propget $1 $2 >actual &&
+		but svn propget $1 $2 >actual &&
 		cmp $3 actual
 	} &&
 	test_propget svn:ignore . prop.expect &&
@@ -225,10 +225,10 @@ Properties on 'nested/directory/.keep':
 EOF
 
 test_expect_success 'test proplist' "
-	git svn proplist . >actual &&
+	but svn proplist . >actual &&
 	cmp prop.expect actual &&
 
-	git svn proplist nested/directory/.keep >actual &&
+	but svn proplist nested/directory/.keep >actual &&
 	cmp prop2.expect actual
 	"
 

@@ -18,8 +18,8 @@ test_expect_success SYMLINKS \
     'prepare reference tree' \
     'echo xyzzy | tr -d '\\\\'012 >yomin &&
      ln -s xyzzy frotz &&
-    git update-index --add frotz yomin &&
-    tree=$(git write-tree) &&
+    but update-index --add frotz yomin &&
+    tree=$(but write-tree) &&
     echo $tree'
 
 test_expect_success SYMLINKS \
@@ -28,7 +28,7 @@ test_expect_success SYMLINKS \
      rm -f yomin &&
      ln -s xyzzy nitfol &&
      ln -s xzzzy bozbar &&
-    git update-index --add --remove frotz rezrov nitfol bozbar yomin'
+    but update-index --add --remove frotz rezrov nitfol bozbar yomin'
 
 # tree has frotz pointing at xyzzy, and yomin that contains xyzzy to
 # confuse things.  work tree has rezrov (xyzzy) nitfol (xyzzy) and
@@ -37,24 +37,24 @@ test_expect_success SYMLINKS \
 # a new creation.
 
 test_expect_success SYMLINKS 'setup diff output' "
-    GIT_DIFF_OPTS=--unified=0 git diff-index -C -p $tree >current &&
+    GIT_DIFF_OPTS=--unified=0 but diff-index -C -p $tree >current &&
     cat >expected <<\EOF
-diff --git a/bozbar b/bozbar
+diff --but a/bozbar b/bozbar
 new file mode 120000
 --- /dev/null
 +++ b/bozbar
 @@ -0,0 +1 @@
 +xzzzy
 \ No newline at end of file
-diff --git a/frotz b/nitfol
+diff --but a/frotz b/nitfol
 similarity index 100%
 copy from frotz
 copy to nitfol
-diff --git a/frotz b/rezrov
+diff --but a/frotz b/rezrov
 similarity index 100%
 rename from frotz
 rename to rezrov
-diff --git a/yomin b/yomin
+diff --but a/yomin b/yomin
 deleted file mode 100644
 --- a/yomin
 +++ /dev/null

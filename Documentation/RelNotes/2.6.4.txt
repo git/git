@@ -13,7 +13,7 @@ Fixes since v2.6.3
    non-POSIX paths.
 
  * We now consistently allow all hooks to ignore their standard input,
-   rather than having git complain of SIGPIPE.
+   rather than having but complain of SIGPIPE.
 
  * Fix shell quoting in contrib script.
 
@@ -26,7 +26,7 @@ Fixes since v2.6.3
 
  * Fix for a corner case in filter-branch.
 
- * Make git-p4 work on a detached head.
+ * Make but-p4 work on a detached head.
 
  * Documentation clarification for "check-ignore" without "--verbose".
 
@@ -35,7 +35,7 @@ Fixes since v2.6.3
    submit" fails.
 
  * Having a leftover .idx file without corresponding .pack file in
-   the repository hurts performance; "git gc" learned to prune them.
+   the repository hurts performance; "but gc" learned to prune them.
 
  * The code to prepare the working tree side of temporary directory
    for the "dir-diff" feature forgot that symbolic links need not be
@@ -45,14 +45,14 @@ Fixes since v2.6.3
    not even exist or may be a directory.
 
  * There was no way to defeat a configured rebase.autostash variable
-   from the command line, as "git rebase --no-autostash" was missing.
+   from the command line, as "but rebase --no-autostash" was missing.
 
- * Allow "git interpret-trailers" to run outside of a Git repository.
+ * Allow "but interpret-trailers" to run outside of a Git repository.
 
  * Produce correct "dirty" marker for shell prompts, even when we
    are on an orphan or an unborn branch.
 
- * Some corner cases have been fixed in string-matching done in "git
+ * Some corner cases have been fixed in string-matching done in "but
    status".
 
  * Apple's common crypto implementation of SHA1_Update() does not take

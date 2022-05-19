@@ -11,34 +11,34 @@ Fixes since v1.7.7.1
    broken in the middle of a transfer, showed a useless message on
    a corrupt packet.
 
- * "git fetch --prune" was unsafe when used with refspecs from the
+ * "but fetch --prune" was unsafe when used with refspecs from the
    command line.
 
  * The attribute mechanism did not use case insensitive match when
    core.ignorecase was set.
 
- * "git bisect" did not notice when it failed to update the working tree
+ * "but bisect" did not notice when it failed to update the working tree
    to the next cummit to be tested.
 
- * "git config --bool --get-regexp" failed to separate the variable name
+ * "but config --bool --get-regexp" failed to separate the variable name
    and its value "true" when the variable is defined without "= true".
 
- * "git remote rename $a $b" were not careful to match the remote name
+ * "but remote rename $a $b" were not careful to match the remote name
    against $a (i.e. source side of the remote nickname).
 
- * "git mergetool" did not use its arguments as pathspec, but as a path to
+ * "but mergetool" did not use its arguments as pathspec, but as a path to
    the file that may not even have any conflict.
 
- * "git diff --[num]stat" used to use the number of lines of context
+ * "but diff --[num]stat" used to use the number of lines of context
    different from the default, potentially giving different results from
-   "git diff | diffstat" and confusing the users.
+   "but diff | diffstat" and confusing the users.
 
- * "git pull" and "git rebase" did not work well even when GIT_WORK_TREE is
+ * "but pull" and "but rebase" did not work well even when GIT_WORK_TREE is
    set correctly with GIT_DIR if the current directory is outside the working
    tree.
 
- * "git send-email" did not honor the configured hostname when restarting
+ * "but send-email" did not honor the configured hostname when restarting
    the HELO/EHLO exchange after switching TLS on.
 
- * "gitweb" used to produce a non-working link while showing the contents
+ * "butweb" used to produce a non-working link while showing the contents
    of a blob, when JavaScript actions are enabled.

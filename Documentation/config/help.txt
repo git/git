@@ -1,15 +1,15 @@
 help.browser::
 	Specify the browser that will be used to display help in the
-	'web' format. See linkgit:git-help[1].
+	'web' format. See linkbut:but-help[1].
 
 help.format::
-	Override the default help format used by linkgit:git-help[1].
+	Override the default help format used by linkbut:but-help[1].
 	Values 'man', 'info', 'web' and 'html' are supported. 'man' is
 	the default. 'web' and 'html' are the same.
 
 help.autoCorrect::
-	If git detects typos and can identify exactly one valid command similar
-	to the error, git will try to suggest the correct command or even
+	If but detects typos and can identify exactly one valid command similar
+	to the error, but will try to suggest the correct command or even
 	run the suggestion automatically. Possible config values are:
 	 - 0 (default): show the suggested command.
 	 - positive number: run the suggested command after specified

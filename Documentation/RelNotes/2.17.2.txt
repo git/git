@@ -7,6 +7,6 @@ version for details.
 
 In addition, this release also teaches "fsck" and the server side
 logic to reject pushes to repositories that attempt to create such a
-problematic ".gitmodules" file as tracked contents, to help hosting
+problematic ".butmodules" file as tracked contents, to help hosting
 sites protect their customers by preventing malicious contents from
 spreading.

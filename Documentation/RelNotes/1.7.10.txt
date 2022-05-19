@@ -4,12 +4,12 @@ Git v1.7.10 Release Notes
 Compatibility Notes
 -------------------
 
- * From this release on, the "git merge" command in an interactive
+ * From this release on, the "but merge" command in an interactive
    session will start an editor when it automatically resolves the
    merge for the user to explain the resulting cummit, just like the
-   "git cummit" command does when it wasn't given a cummit message.
+   "but cummit" command does when it wasn't given a cummit message.
 
-   If you have a script that runs "git merge" and keeps its standard
+   If you have a script that runs "but merge" and keeps its standard
    input and output attached to the user's terminal, and if you do not
    want the user to explain the resulting merge cummits, you can
    export GIT_MERGE_AUTOEDIT environment variable set to "no", like
@@ -22,14 +22,14 @@ Compatibility Notes
    to disable this behavior (if you want your users to explain their
    merge cummits, you do not have to do anything).  Alternatively, you
    can give the "--no-edit" option to individual invocations of the
-   "git merge" command if you know everybody who uses your script has
+   "but merge" command if you know everybody who uses your script has
    Git v1.7.8 or newer.
 
- * The "--binary/-b" options to "git am" have been a no-op for quite a
+ * The "--binary/-b" options to "but am" have been a no-op for quite a
    while and were deprecated in mid 2008 (v1.6.0).  When you give these
-   options to "git am", it will now warn and ask you not to use them.
+   options to "but am", it will now warn and ask you not to use them.
 
- * When you do not tell which branches and tags to push to the "git
+ * When you do not tell which branches and tags to push to the "but
    push" command in any way, the command used "matching refs" rule to
    update remote branches and tags with branches and tags with the
    same name you locally have.  In future versions of Git, this will
@@ -46,15 +46,15 @@ Updates since v1.7.9
 
 UI, Workflows & Features
 
- * various "gitk" updates.
+ * various "butk" updates.
    - show the path to the top level directory in the window title
    - update preference edit dialog
    - display file list correctly when directories are given on command line
-   - make "git-describe" output in the log message into a clickable link
+   - make "but-describe" output in the log message into a clickable link
    - avoid matching the UNIX timestamp part when searching all fields
    - give preference to symbolic font names like sans & monospace
    - allow comparing two cummits using a mark
-   - "gitk" honors log.showroot configuration.
+   - "butk" honors log.showroot configuration.
 
  * Teams for localizing the messages from the Porcelain layer of
    commands are starting to form, thanks to Jiang Xin who volunteered
@@ -71,26 +71,26 @@ UI, Workflows & Features
    now optionally be marked as "required".
 
  * Options whose names begin with "--no-" (e.g. the "--no-verify"
-   option of the "git cummit" command) can be negated by omitting
-   "no-" from its name, e.g. "git cummit --verify".
+   option of the "but cummit" command) can be negated by omitting
+   "no-" from its name, e.g. "but cummit --verify".
 
- * "git am" learned to pass "-b" option to underlying "git mailinfo", so
+ * "but am" learned to pass "-b" option to underlying "but mailinfo", so
    that a bracketed string other than "PATCH" at the beginning can be kept.
 
- * "git clone" learned "--single-branch" option to limit cloning to a
+ * "but clone" learned "--single-branch" option to limit cloning to a
    single branch (surprise!); tags that do not point into the history
    of the branch are not fetched.
 
- * "git clone" learned to detach the HEAD in the resulting repository
+ * "but clone" learned to detach the HEAD in the resulting repository
    when the user specifies a tag with "--branch" (e.g., "--branch=v1.0").
    Clone also learned to print the usual "detached HEAD" advice in such
-   a case, similar to "git checkout v1.0".
+   a case, similar to "but checkout v1.0".
 
  * When showing a patch while ignoring whitespace changes, the context
    lines are taken from the postimage, in order to make it easier to
    view the output.
 
- * "git diff --stat" learned to adjust the width of the output on
+ * "but diff --stat" learned to adjust the width of the output on
    wider terminals, and give more columns to pathnames as needed.
 
  * "diff-highlight" filter (in contrib/) was updated to produce more
@@ -99,45 +99,45 @@ UI, Workflows & Features
  * "fsck" learned "--no-dangling" option to omit dangling object
    information.
 
- * "git log -G" and "git log -S" learned to pay attention to the "-i"
+ * "but log -G" and "but log -S" learned to pay attention to the "-i"
    option.  With "-i", "log -G" ignores the case when finding patch
    hunks that introduce or remove a string that matches the given
    pattern.  Similarly with "-i", "log -S" ignores the case when
    finding the cummit the given block of text appears or disappears
    from the file.
 
- * "git merge" in an interactive session learned to spawn the editor
+ * "but merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
    to encourage people to explain their merges better. Legacy scripts
    can export GIT_MERGE_AUTOEDIT=no to retain the historical behavior.
-   Both "git merge" and "git pull" can be given --no-edit from the
+   Both "but merge" and "but pull" can be given --no-edit from the
    command line to accept the auto-generated merge message.
 
  * The advice message given when the user didn't give enough clue on
-   what to merge to "git pull" and "git merge" has been updated to
+   what to merge to "but pull" and "but merge" has been updated to
    be more concise and easier to understand.
 
- * "git push" learned the "--prune" option, similar to "git fetch".
+ * "but push" learned the "--prune" option, similar to "but fetch".
 
  * The whole directory that houses a top-level superproject managed by
-   "git submodule" can be moved to another place.
+   "but submodule" can be moved to another place.
 
- * "git symbolic-ref" learned the "--short" option to abbreviate the
+ * "but symbolic-ref" learned the "--short" option to abbreviate the
    refname it shows unambiguously.
 
- * "git tag --list" can be given "--points-at <object>" to limit its
+ * "but tag --list" can be given "--points-at <object>" to limit its
    output to those that point at the given object.
 
- * "gitweb" allows intermediate entries in the directory hierarchy
+ * "butweb" allows intermediate entries in the directory hierarchy
    that leads to a project to be clicked, which in turn shows the
    list of projects inside that directory.
 
- * "gitweb" learned to read various pieces of information for the
+ * "butweb" learned to read various pieces of information for the
    repositories lazily, instead of reading everything that could be
    needed (including the ones that are not necessary for a specific
    task).
 
- * Project search in "gitweb" shows the substring that matched in the
+ * Project search in "butweb" shows the substring that matched in the
    project name and description highlighted.
 
  * HTTP transport learned to authenticate with a proxy if needed.
@@ -148,34 +148,34 @@ UI, Workflows & Features
 
 Foreign Interface
 
- * Improved handling of views, labels and branches in "git-p4" (in contrib).
+ * Improved handling of views, labels and branches in "but-p4" (in contrib).
 
- * "git-p4" (in contrib) suffered from unnecessary merge conflicts when
+ * "but-p4" (in contrib) suffered from unnecessary merge conflicts when
    p4 expanded the embedded $RCS$-like keywords; it can be now told to
    unexpand them.
 
- * Some "git-svn" updates.
+ * Some "but-svn" updates.
 
  * "vcs-svn"/"svn-fe" learned to read dumps with svn-deltas and
    support incremental imports.
 
- * "git difftool/mergetool" learned to drive DeltaWalker.
+ * "but difftool/mergetool" learned to drive DeltaWalker.
 
 Performance
 
- * Unnecessary calls to parse_object() "git upload-pack" makes in
-   response to "git fetch", have been eliminated, to help performance
+ * Unnecessary calls to parse_object() "but upload-pack" makes in
+   response to "but fetch", have been eliminated, to help performance
    in repositories with excessive number of refs.
 
 Internal Implementation (please report possible regressions)
 
- * Recursive call chains in "git index-pack" to deal with long delta
+ * Recursive call chains in "but index-pack" to deal with long delta
    chains have been flattened, to reduce the stack footprint.
 
  * Use of add_extra_ref() API is now gone, to make it possible to
    cleanly restructure the overall refs API.
 
- * The command line parser of "git pack-objects" now uses parse-options
+ * The command line parser of "but pack-objects" now uses parse-options
    API.
 
  * The test suite supports the new "test_pause" helper function.
@@ -189,8 +189,8 @@ Internal Implementation (please report possible regressions)
  * The code to check if a path points at a file beyond a symbolic link
    has been restructured to be thread-safe.
 
- * When pruning directories that has become empty during "git prune"
-   and "git prune-packed", call closedir() that iterates over a
+ * When pruning directories that has become empty during "but prune"
+   and "but prune-packed", call closedir() that iterates over a
    directory before rmdir() it.
 
 Also contains minor documentation updates and code clean-ups.
@@ -207,8 +207,8 @@ details).
    with versions of Perl older than 5.8.3.
    (merge 5eb660e ab/perl-i18n later to maint).
 
- * "git tag -s" honored "gpg.program" configuration variable since
-   1.7.9, but "git tag -v" and "git verify-tag" didn't.
+ * "but tag -s" honored "gpg.program" configuration variable since
+   1.7.9, but "but tag -v" and "but verify-tag" didn't.
    (merge a2c2506 az/verify-tag-use-gpg-config later to maint).
 
  * "configure" script learned to take "--with-sane-tool-path" from the

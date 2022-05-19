@@ -6,7 +6,7 @@
 #include "alias.h"
 #include "prompt.h"
 
-#define COMMAND_DIR "git-shell-commands"
+#define COMMAND_DIR "but-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"
 #define NOLOGIN_COMMAND COMMAND_DIR "/no-interactive-login"
 
@@ -17,14 +17,14 @@ static int do_generic_cmd(const char *me, char *arg)
 	setup_path();
 	if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
 		die("bad argument");
-	if (!skip_prefix(me, "git-", &me))
+	if (!skip_prefix(me, "but-", &me))
 		die("bad command");
 
 	my_argv[0] = me;
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
-	return execv_git_cmd(my_argv);
+	return execv_but_cmd(my_argv);
 }
 
 static int is_valid_cmd_name(const char *cmd)
@@ -76,8 +76,8 @@ static void run_shell(void)
 		int code;
 		int count;
 
-		fprintf(stderr, "git> ");
-		if (git_read_line_interactively(&line) == EOF) {
+		fprintf(stderr, "but> ");
+		if (but_read_line_interactively(&line) == EOF) {
 			fprintf(stderr, "\n");
 			strbuf_release(&line);
 			break;
@@ -119,9 +119,9 @@ static struct commands {
 	const char *name;
 	int (*exec)(const char *me, char *arg);
 } cmd_list[] = {
-	{ "git-receive-pack", do_generic_cmd },
-	{ "git-upload-pack", do_generic_cmd },
-	{ "git-upload-archive", do_generic_cmd },
+	{ "but-receive-pack", do_generic_cmd },
+	{ "but-upload-pack", do_generic_cmd },
+	{ "but-upload-archive", do_generic_cmd },
 	{ NULL },
 };
 
@@ -141,7 +141,7 @@ int cmd_main(int argc, const char **argv)
 		/* Allow the user to run an interactive shell */
 		cd_to_homedir();
 		if (access(COMMAND_DIR, R_OK | X_OK) == -1) {
-			die("Interactive git shell is not enabled.\n"
+			die("Interactive but shell is not enabled.\n"
 			    "hint: ~/" COMMAND_DIR " should exist "
 			    "and have read and execute access.");
 		}
@@ -150,15 +150,15 @@ int cmd_main(int argc, const char **argv)
 	} else if (argc != 3 || strcmp(argv[1], "-c")) {
 		/*
 		 * We do not accept any other modes except "-c" followed by
-		 * "cmd arg", where "cmd" is a very limited subset of git
+		 * "cmd arg", where "cmd" is a very limited subset of but
 		 * commands or a command in the COMMAND_DIR
 		 */
 		die("Run with no arguments or with -c cmd");
 	}
 
 	prog = xstrdup(argv[2]);
-	if (!strncmp(prog, "git", 3) && isspace(prog[3]))
-		/* Accept "git foo" as if the caller said "git-foo". */
+	if (!strncmp(prog, "but", 3) && isspace(prog[3]))
+		/* Accept "but foo" as if the caller said "but-foo". */
 		prog[3] = '-';
 
 	for (cmd = cmd_list ; cmd->name ; cmd++) {

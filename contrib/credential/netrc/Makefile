@@ -1,7 +1,7 @@
 # The default target of this Makefile is...
 all::
 
-SCRIPT_PERL = git-credential-netrc.perl
+SCRIPT_PERL = but-credential-netrc.perl
 GIT_ROOT_DIR = ../../..
 HERE = contrib/credential/netrc
 
@@ -22,9 +22,9 @@ clean:
                 clean-perl-script
 
 test: build
-	./t-git-credential-netrc.sh
+	./t-but-credential-netrc.sh
 
 testverbose: build
-	./t-git-credential-netrc.sh -d -v
+	./t-but-credential-netrc.sh -d -v
 
 .PHONY: all build install clean test testverbose

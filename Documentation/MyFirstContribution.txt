@@ -28,18 +28,18 @@ useful additional context:
 
 If you get stuck, you can seek help in the following places.
 
-==== git@vger.kernel.org
+==== but@vger.kernel.org
 
 This is the main Git project mailing list where code reviews, version
 announcements, design discussions, and more take place. Those interested in
 contributing are welcome to post questions here. The Git list requires
 plain-text-only emails and prefers inline and bottom-posting when replying to
 mail; you will be CC'd in all replies to you. Optionally, you can subscribe to
-the list by sending an email to majordomo@vger.kernel.org with "subscribe git"
-in the body. The https://lore.kernel.org/git[archive] of this mailing list is
+the list by sending an email to majordomo@vger.kernel.org with "subscribe but"
+in the body. The https://lore.kernel.org/but[archive] of this mailing list is
 available to view in a browser.
 
-==== https://groups.google.com/forum/#!forum/git-mentoring[git-mentoring@googlegroups.com]
+==== https://groups.google.com/forum/#!forum/but-mentoring[but-mentoring@googlegroups.com]
 
 This mailing list is targeted to new contributors and was created as a place to
 post questions and receive answers outside of the public eye of the main list.
@@ -47,12 +47,12 @@ Veteran contributors who are especially interested in helping mentor newcomers
 are present on the list. In order to avoid search indexers, group membership is
 required to view messages; anyone can join and no approval is required.
 
-==== https://web.libera.chat/#git-devel[#git-devel] on Libera Chat
+==== https://web.libera.chat/#but-devel[#but-devel] on Libera Chat
 
 This IRC channel is for conversations between Git contributors. If someone is
 currently online and knows the answer to your question, you can receive help
 in real time. Otherwise, you can read the
-https://colabti.org/irclogger/irclogger_logs/git-devel[scrollback] to see
+https://colabti.org/irclogger/irclogger_logs/but-devel[scrollback] to see
 whether someone answered you. IRC does not allow offline private messaging, so
 if you try to private message someone and then log out of IRC, they cannot
 respond to you. It's better to ask your questions in the channel so that you
@@ -66,12 +66,12 @@ conversation.
 === Clone the Git Repository
 
 Git is mirrored in a number of locations. Clone the repository from one of them;
-https://git-scm.com/downloads suggests one of the best places to clone from is
+https://but-scm.com/downloads suggests one of the best places to clone from is
 the mirror on GitHub.
 
 ----
-$ git clone https://github.com/git/git git
-$ cd git
+$ but clone https://buthub.com/but/but but
+$ cd but
 ----
 
 [[dependencies]]
@@ -101,7 +101,7 @@ use it as you prefer, here and elsewhere.
 Use + to indicate fixed-width here; couldn't get ` to work nicely with the
 quotes around "Pony Saying 'Um, Hello'".
 ////
-In this tutorial, we will add a new command, +git psuh+, short for ``Pony Saying
+In this tutorial, we will add a new command, +but psuh+, short for ``Pony Saying
 `Um, Hello''' - a feature which has gone unimplemented despite a high frequency
 of invocation during users' typical daily workflow.
 
@@ -121,7 +121,7 @@ branch of the upstream project. Create the `psuh` branch you will use for
 development like so:
 
 ----
-$ git checkout -b psuh origin/master
+$ but checkout -b psuh origin/master
 ----
 
 We'll make a number of cummits here in order to demonstrate how to send a topic
@@ -131,13 +131,13 @@ with multiple patches up for review simultaneously.
 == Code It Up!
 
 NOTE: A reference implementation can be found at
-https://github.com/nasamuffin/git/tree/psuh.
+https://buthub.com/nasamuffin/but/tree/psuh.
 
 [[add-new-command]]
 === Adding a New Command
 
 Lots of the subcommands are written as builtins, which means they are
-implemented in C and compiled into the main `git` executable. Implementing the
+implemented in C and compiled into the main `but` executable. Implementing the
 very simple `psuh` command as a built-in will demonstrate the structure of the
 codebase, the internal API, and the process of working together as a contributor
 with the reviewers and maintainer to integrate this change into the system.
@@ -197,7 +197,7 @@ it off, but it's a good idea to mention the problem to the mailing list.
 Great, now your new command builds happily on its own. But nobody invokes it.
 Let's change that.
 
-The list of commands lives in `git.c`. We can register a new command by adding
+The list of commands lives in `but.c`. We can register a new command by adding
 a `cmd_struct` to the `commands[]` array. `struct cmd_struct` takes a string
 with the command name, a function pointer to the command implementation, and a
 setup option flag. For now, let's keep mimicking `push`. Find the line where
@@ -213,34 +213,34 @@ and see if it works. There's a binary you can use to test with in the
 `bin-wrappers` directory.
 
 ----
-$ ./bin-wrappers/git psuh
+$ ./bin-wrappers/but psuh
 ----
 
 Check it out! You've got a command! Nice work! Let's cummit this.
 
-`git status` reveals modified `Makefile`, `builtin.h`, and `git.c` as well as
-untracked `builtin/psuh.c` and `git-psuh`. First, let's take care of the binary,
-which should be ignored. Open `.gitignore` in your editor, find `/git-pull`, and
+`but status` reveals modified `Makefile`, `builtin.h`, and `but.c` as well as
+untracked `builtin/psuh.c` and `but-psuh`. First, let's take care of the binary,
+which should be ignored. Open `.butignore` in your editor, find `/but-pull`, and
 add an entry for your new command in alphabetical order:
 
 ----
 ...
-/git-prune-packed
-/git-psuh
-/git-pull
-/git-push
-/git-quiltimport
-/git-range-diff
+/but-prune-packed
+/but-psuh
+/but-pull
+/but-push
+/but-quiltimport
+/but-range-diff
 ...
 ----
 
-Checking `git status` again should show that `git-psuh` has been removed from
-the untracked list and `.gitignore` has been added to the modified list. Now we
+Checking `but status` again should show that `but-psuh` has been removed from
+the untracked list and `.butignore` has been added to the modified list. Now we
 can stage and cummit:
 
 ----
-$ git add Makefile builtin.h builtin/psuh.c git.c .gitignore
-$ git cummit -s
+$ but add Makefile builtin.h builtin/psuh.c but.c .butignore
+$ but cummit -s
 ----
 
 You will be presented with your editor in order to write a cummit message. Start
@@ -269,7 +269,7 @@ such as answering the question "why?".
 Signed-off-by: A U Thor <author@example.com>
 ----
 
-Go ahead and inspect your new cummit with `git show`. "psuh:" indicates you
+Go ahead and inspect your new cummit with `but show`. "psuh:" indicates you
 have modified mainly the `psuh` command. The subject line gives readers an idea
 of what you've changed. The sign-off line (`-s`) indicates that you agree to
 the Developer's Certificate of Origin 1.1 (see the
@@ -307,7 +307,7 @@ existing `printf()` calls in place:
 
 Build and try it. As you may expect, there's pretty much just whatever we give
 on the command line, including the name of our command. (If `prefix` is empty
-for you, try `cd Documentation/ && ../bin-wrappers/git psuh`). That's not so
+for you, try `cd Documentation/ && ../bin-wrappers/but psuh`). That's not so
 helpful. So what other context can we get?
 
 Add a line to `#include "config.h"`. Then, add the following bits to the
@@ -318,31 +318,31 @@ function body:
 
 ...
 
-	git_config(git_default_config, NULL);
-	if (git_config_get_string_tmp("user.name", &cfg_name) > 0)
+	but_config(but_default_config, NULL);
+	if (but_config_get_string_tmp("user.name", &cfg_name) > 0)
 		printf(_("No name is found in config\n"));
 	else
 		printf(_("Your name: %s\n"), cfg_name);
 ----
 
-`git_config()` will grab the configuration from config files known to Git and
-apply standard precedence rules. `git_config_get_string_tmp()` will look up
+`but_config()` will grab the configuration from config files known to Git and
+apply standard precedence rules. `but_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
-about how to use `git_config()`) in `Documentation/technical/api-config.txt`.
+about how to use `but_config()`) in `Documentation/technical/api-config.txt`.
 
 You should see that the name printed matches the one you see when you run:
 
 ----
-$ git config --get user.name
+$ but config --get user.name
 ----
 
 Great! Now we know how to check for values in the Git config. Let's cummit this
 too, so we don't lose our progress.
 
 ----
-$ git add builtin/psuh.c
-$ git cummit -sm "psuh: show parameters & config opts"
+$ but add builtin/psuh.c
+$ but cummit -sm "psuh: show parameters & config opts"
 ----
 
 NOTE: Again, the above is for sake of brevity in this tutorial. In a real change
@@ -351,18 +351,18 @@ message.
 
 Still, it'd be nice to know what the user's working context is like. Let's see
 if we can print the name of the user's current branch. We can mimic the
-`git status` implementation; the printer is located in `wt-status.c` and we can
+`but status` implementation; the printer is located in `wt-status.c` and we can
 see that the branch is held in a `struct wt_status`.
 
 `wt_status_print()` gets invoked by `cmd_status()` in `builtin/cummit.c`.
 Looking at that implementation we see the status config being populated like so:
 
 ----
-status_init_config(&s, git_status_config);
+status_init_config(&s, but_status_config);
 ----
 
 But as we drill down, we can find that `status_init_config()` wraps a call
-to `git_config()`. Let's modify the code we wrote in the previous cummit.
+to `but_config()`. Let's modify the code we wrote in the previous cummit.
 
 Be sure to include the header to allow you to use `struct wt_status`:
 ----
@@ -378,7 +378,7 @@ prepare it, and print its contents:
 ...
 
 	wt_status_prepare(the_repository, &status);
-	git_config(git_default_config, &status);
+	but_config(but_default_config, &status);
 
 ...
 
@@ -390,8 +390,8 @@ Run it again. Check it out - here's the (verbose) name of your current branch!
 Let's cummit this as well.
 
 ----
-$ git add builtin/psuh.c
-$ git cummit -sm "psuh: print the current branch"
+$ but add builtin/psuh.c
+$ but cummit -sm "psuh: print the current branch"
 ----
 
 Now let's see if we can get some info about a specific cummit.
@@ -442,8 +442,8 @@ see the subject line of the most recent cummit in `origin/master` that you know
 about. Neat! Let's cummit that as well.
 
 ----
-$ git add builtin/psuh.c
-$ git cummit -sm "psuh: display the top of origin/master"
+$ but add builtin/psuh.c
+$ but cummit -sm "psuh: display the top of origin/master"
 ----
 
 [[add-documentation]]
@@ -454,15 +454,15 @@ community. But hang on just a minute - this isn't very user-friendly. Run the
 following:
 
 ----
-$ ./bin-wrappers/git help psuh
+$ ./bin-wrappers/but help psuh
 ----
 
 Your new command is undocumented! Let's fix that.
 
-Take a look at `Documentation/git-*.txt`. These are the manpages for the
+Take a look at `Documentation/but-*.txt`. These are the manpages for the
 subcommands that Git knows about. You can open these up and take a look to get
 acquainted with the format, but then go ahead and make a new file
-`Documentation/git-psuh.txt`. Like with most of the documentation in the Git
+`Documentation/but-psuh.txt`. Like with most of the documentation in the Git
 project, help pages are written with AsciiDoc (see CodingGuidelines, "Writing
 Documentation" section). Use the following template to fill out your own
 manpage:
@@ -470,18 +470,18 @@ manpage:
 // Surprisingly difficult to embed AsciiDoc source within AsciiDoc.
 [listing]
 ....
-git-psuh(1)
+but-psuh(1)
 ===========
 
 NAME
 ----
-git-psuh - Delight users' typo with a shy horse
+but-psuh - Delight users' typo with a shy horse
 
 
 SYNOPSIS
 --------
 [verse]
-'git-psuh [<arg>...]'
+'but-psuh [<arg>...]'
 
 DESCRIPTION
 -----------
@@ -497,7 +497,7 @@ OUTPUT
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite
 ....
 
 The most important pieces of this to note are the file header, underlined by =,
@@ -515,17 +515,17 @@ convert your AsciiDoc to troff which is man-readable like so:
 
 ----
 $ make all doc
-$ man Documentation/git-psuh.1
+$ man Documentation/but-psuh.1
 ----
 
 or
 
 ----
-$ make -C Documentation/ git-psuh.1
-$ man Documentation/git-psuh.1
+$ make -C Documentation/ but-psuh.1
+$ man Documentation/but-psuh.1
 ----
 
-While this isn't as satisfying as running through `git help`, you can at least
+While this isn't as satisfying as running through `but help`, you can at least
 check that your help page looks right.
 
 You can also check that the documentation coverage is good (that is, the project
@@ -537,7 +537,7 @@ Go ahead and cummit your new documentation change.
 [[add-usage]]
 === Adding Usage Text
 
-Try and run `./bin-wrappers/git psuh -h`. Your command should crash at the end.
+Try and run `./bin-wrappers/but psuh -h`. Your command should crash at the end.
 That's because `-h` is a special case which your command should handle by
 printing usage.
 
@@ -554,7 +554,7 @@ At global scope, add your array of usage strings:
 
 ----
 static const char * const psuh_usage[] = {
-	N_("git psuh [<arg>...]"),
+	N_("but psuh [<arg>...]"),
 	NULL,
 };
 ----
@@ -589,25 +589,25 @@ a flag.) `parse_options()` will terminate parsing when it reaches `--` and give
 you the rest of the options afterwards, untouched.
 
 Now that you have a usage hint, you can teach Git how to show it in the general
-command list shown by `git help git` or `git help -a`, which is generated from
-`command-list.txt`. Find the line for 'git-pull' so you can add your 'git-psuh'
+command list shown by `but help but` or `but help -a`, which is generated from
+`command-list.txt`. Find the line for 'but-pull' so you can add your 'but-psuh'
 line above it in alphabetical order. Now, we can add some attributes about the
 command which impacts where it shows up in the aforementioned help commands. The
 top of `command-list.txt` shares some information about what each attribute
 means; in those help pages, the commands are sorted according to these
-attributes. `git psuh` is user-facing, or porcelain - so we will mark it as
+attributes. `but psuh` is user-facing, or porcelain - so we will mark it as
 "mainporcelain". For "mainporcelain" commands, the comments at the top of
 `command-list.txt` indicate we can also optionally add an attribute from another
-list; since `git psuh` shows some information about the user's workspace but
+list; since `but psuh` shows some information about the user's workspace but
 doesn't modify anything, let's mark it as "info". Make sure to keep your
 attributes in the same style as the rest of `command-list.txt` using spaces to
 align and delineate them:
 
 ----
-git-prune-packed                        plumbingmanipulators
-git-psuh                                mainporcelain		info
-git-pull                                mainporcelain           remote
-git-push                                mainporcelain           remote
+but-prune-packed                        plumbingmanipulators
+but-psuh                                mainporcelain		info
+but-pull                                mainporcelain           remote
+but-push                                mainporcelain           remote
 ----
 
 Build again. Now, when you run with `-h`, you should see your usage printed and
@@ -633,7 +633,7 @@ Related reading: `t/README`
 [[overview-test-structure]]
 === Overview of Testing Structure
 
-The tests in Git live in `t/` and are named with a 4-digit decimal number using
+The tests in Git live in `t/` and are named with a 4-dibut decimal number using
 the schema shown in the Naming Tests section of `t/README`.
 
 [[write-new-test]]
@@ -650,20 +650,20 @@ Create a new file `t/t9999-psuh-tutorial.sh`. Begin with the header as so (see
 ----
 #!/bin/sh
 
-test_description='git-psuh test
+test_description='but-psuh test
 
-This test runs git-psuh and makes sure it does not crash.'
+This test runs but-psuh and makes sure it does not crash.'
 
 . ./test-lib.sh
 ----
 
 Tests are framed inside of a `test_expect_success` in order to output TAP
-formatted results. Let's make sure that `git psuh` doesn't exit poorly and does
+formatted results. Let's make sure that `but psuh` doesn't exit poorly and does
 mention the right animal somewhere:
 
 ----
 test_expect_success 'runs correctly with no args and good output' '
-	git psuh >actual &&
+	but psuh >actual &&
 	grep Pony actual
 '
 ----
@@ -695,7 +695,7 @@ $ make
 $ cd t/ && prove t9999-psuh-tutorial.sh
 ----
 
-You can run the full test suite and ensure `git-psuh` didn't break anything:
+You can run the full test suite and ensure `but-psuh` didn't break anything:
 
 ----
 $ cd t/
@@ -723,14 +723,14 @@ The first method to be covered is GitGitGadget, which is useful for those
 already familiar with GitHub's common pull request workflow. This method
 requires a GitHub account.
 
-The second method to be covered is `git send-email`, which can give slightly
+The second method to be covered is `but send-email`, which can give slightly
 more fine-grained control over the emails to be sent. This method requires some
 setup which can change depending on your system and will not be covered in this
 tutorial.
 
 Regardless of which method you choose, your engagement with reviewers will be
 the same; the review process will be covered after the sections on GitGitGadget
-and `git send-email`.
+and `but send-email`.
 
 [[howto-ggg]]
 == Sending Patches via GitGitGadget
@@ -741,43 +741,43 @@ Johannes Schindelin to make life as a Git contributor easier for those used to
 the GitHub PR workflow. It allows contributors to open pull requests against its
 mirror of the Git project, and does some magic to turn the PR into a set of
 emails and send them out for you. It also runs the Git continuous integration
-suite for you. It's documented at http://gitgitgadget.github.io.
+suite for you. It's documented at http://butbutgadget.buthub.io.
 
 [[create-fork]]
-=== Forking `git/git` on GitHub
+=== Forking `but/but` on GitHub
 
 Before you can send your patch off to be reviewed using GitGitGadget, you will
 need to fork the Git project and upload your changes. First thing - make sure
 you have a GitHub account.
 
-Head to the https://github.com/git/git[GitHub mirror] and look for the Fork
+Head to the https://buthub.com/but/but[GitHub mirror] and look for the Fork
 button. Place your fork wherever you deem appropriate and create it.
 
 [[upload-to-fork]]
 === Uploading to Your Own Fork
 
 To upload your branch to your own fork, you'll need to add the new fork as a
-remote. You can use `git remote -v` to show the remotes you have added already.
+remote. You can use `but remote -v` to show the remotes you have added already.
 From your new fork's page on GitHub, you can press "Clone or download" to get
 the URL; then you need to run the following to add, replacing your own URL and
 remote name for the examples provided:
 
 ----
-$ git remote add remotename git@github.com:remotename/git.git
+$ but remote add remotename but@buthub.com:remotename/but.but
 ----
 
 or to use the HTTPS URL:
 
 ----
-$ git remote add remotename https://github.com/remotename/git/.git
+$ but remote add remotename https://buthub.com/remotename/but/.but
 ----
 
-Run `git remote -v` again and you should see the new remote showing up.
-`git fetch remotename` (with the real name of your remote replaced) in order to
+Run `but remote -v` again and you should see the new remote showing up.
+`but fetch remotename` (with the real name of your remote replaced) in order to
 get ready to push.
 
 Next, double-check that you've been doing all your development in a new branch
-by running `git branch`. If you didn't, now is a good time to move your new
+by running `but branch`. If you didn't, now is a good time to move your new
 cummits to their own branch.
 
 As mentioned briefly at the beginning of this document, we are basing our work
@@ -785,16 +785,16 @@ on `master`, so go ahead and update as shown below, or using your preferred
 workflow.
 
 ----
-$ git checkout master
-$ git pull -r
-$ git rebase master psuh
+$ but checkout master
+$ but pull -r
+$ but rebase master psuh
 ----
 
 Finally, you're ready to push your new topic branch! (Due to our branch and
 command name choices, be careful when you type the command below.)
 
 ----
-$ git push remotename psuh
+$ but push remotename psuh
 ----
 
 Now you should be able to go and check out your newly created branch on GitHub.
@@ -803,8 +803,8 @@ Now you should be able to go and check out your newly created branch on GitHub.
 === Sending a PR to GitGitGadget
 
 In order to have your code tested and formatted for review, you need to start by
-opening a Pull Request against `gitgitgadget/git`. Head to
-https://github.com/gitgitgadget/git and open a PR either with the "New pull
+opening a Pull Request against `butbutgadget/but`. Head to
+https://buthub.com/butbutgadget/but and open a PR either with the "New pull
 request" button or the convenient "Compare & pull request" button that may
 appear with the name of your newly pushed branch.
 
@@ -824,24 +824,24 @@ use the tool.
 
 NOTE: You can typically find someone who can `/allow` you on GitGitGadget by
 either examining recent pull requests where someone has been granted `/allow`
-(https://github.com/gitgitgadget/git/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+%22%2Fallow%22[Search:
+(https://buthub.com/butbutgadget/but/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+%22%2Fallow%22[Search:
 is:pr is:open "/allow"]), in which case both the author and the person who
 granted the `/allow` can now `/allow` you, or by inquiring on the
-https://web.libera.chat/#git-devel[#git-devel] IRC channel on Libera Chat
+https://web.libera.chat/#but-devel[#but-devel] IRC channel on Libera Chat
 linking your pull request and asking for someone to `/allow` you.
 
-If the CI fails, you can update your changes with `git rebase -i` and push your
+If the CI fails, you can update your changes with `but rebase -i` and push your
 branch again:
 
 ----
-$ git push -f remotename psuh
+$ but push -f remotename psuh
 ----
 
 In fact, you should continue to make changes this way up until the point when
 your patch is accepted into `next`.
 
 ////
-TODO https://github.com/gitgitgadget/gitgitgadget/issues/83
+TODO https://buthub.com/butbutgadget/butbutgadget/issues/83
 It'd be nice to be able to verify that the patch looks good before sending it
 to everyone on Git mailing list.
 [[check-work-ggg]]
@@ -865,7 +865,7 @@ Once you have your branch again in the shape you want following all review
 comments, you can submit again:
 
 ----
-$ git push -f remotename psuh
+$ but push -f remotename psuh
 ----
 
 Next, go look at your pull request against GitGitGadget; you should see the CI
@@ -877,8 +877,8 @@ of what they're looking at. When the CI is done running, you can comment once
 more with `/submit` - GitGitGadget will automatically add a v2 mark to your
 changes.
 
-[[howto-git-send-email]]
-== Sending Patches with `git send-email`
+[[howto-but-send-email]]
+== Sending Patches with `but send-email`
 
 If you don't want to use GitGitGadget, you can also use Git itself to mail your
 patches. Some benefits of using Git this way include finer grained control of
@@ -886,13 +886,13 @@ subject line (for example, being able to use the tag [RFC PATCH] in the subject)
 and being able to send a ``dry run'' mail to yourself to ensure it all looks
 good before going out to the list.
 
-[[setup-git-send-email]]
-=== Prerequisite: Setting Up `git send-email`
+[[setup-but-send-email]]
+=== Prerequisite: Setting Up `but send-email`
 
 Configuration for `send-email` can vary based on your operating system and email
 provider, and so will not be covered in this tutorial, beyond stating that in
-many distributions of Linux, `git-send-email` is not packaged alongside the
-typical `git` install. You may need to install this additional package; there
+many distributions of Linux, `but-send-email` is not packaged alongside the
+typical `but` install. You may need to install this additional package; there
 are a number of resources online to help you do so. You will also need to
 determine the right way to configure it to use your SMTP server; again, as this
 configuration can change significantly based on your system and email setup, it
@@ -905,7 +905,7 @@ Sending emails with Git is a two-part process; before you can prepare the emails
 themselves, you'll need to prepare the patches. Luckily, this is pretty simple:
 
 ----
-$ git format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
+$ but format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
 ----
 
  . The `--cover-letter` option tells `format-patch` to create a
@@ -914,7 +914,7 @@ $ git format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
    will be next to your other patches.
 
  . The `-o psuh/` option tells `format-patch` to place the patch
-   files into a directory. This is useful because `git send-email`
+   files into a directory. This is useful because `but send-email`
    can take a directory and send out all the patches from there.
 
  . The `--base=auto` option tells the command to record the "base
@@ -936,7 +936,7 @@ The command will make one patch file per cummit. After you
 run, you can go have a look at each of the patches with your favorite text
 editor and make sure everything looks alright; however, it's not recommended to
 make code fixups via the patch file. It's a better idea to make the change the
-normal way using `git rebase -i` or by adding a new cummit than by modifying a
+normal way using `but rebase -i` or by adding a new cummit than by modifying a
 patch.
 
 NOTE: Optionally, you can also use the `--rfc` flag to prefix your patch subject
@@ -973,7 +973,7 @@ Make sure you retain the ``[PATCH 0/X]'' part; that's what indicates to the Git
 community that this email is the beginning of a review, and many reviewers
 filter their email for this type of flag.
 
-You'll need to add some extra parameters when you invoke `git send-email` to add
+You'll need to add some extra parameters when you invoke `but send-email` to add
 the cover letter.
 
 Next you'll have to fill out the body of your cover letter. This is an important
@@ -986,7 +986,7 @@ Here's an example body for `psuh`:
 
 ----
 Our internal metrics indicate widespread interest in the command
-git-psuh - that is, many users are trying to use it, but finding it is
+but-psuh - that is, many users are trying to use it, but finding it is
 unavailable, using some unknown workaround instead.
 
 The following handful of patches add the psuh command and implement some
@@ -996,19 +996,19 @@ This patchset is part of the MyFirstContribution tutorial and should not
 be merged.
 ----
 
-The template created by `git format-patch --cover-letter` includes a diffstat.
+The template created by `but format-patch --cover-letter` includes a diffstat.
 This gives reviewers a summary of what they're in for when reviewing your topic.
 The one generated for `psuh` from the sample implementation looks like this:
 
 ----
- Documentation/git-psuh.txt | 40 +++++++++++++++++++++
+ Documentation/but-psuh.txt | 40 +++++++++++++++++++++
  Makefile                   |  1 +
  builtin.h                  |  1 +
  builtin/psuh.c             | 73 ++++++++++++++++++++++++++++++++++++++
- git.c                      |  1 +
+ but.c                      |  1 +
  t/t9999-psuh-tutorial.sh   | 12 +++++++
  6 files changed, 128 insertions(+)
- create mode 100644 Documentation/git-psuh.txt
+ create mode 100644 Documentation/but-psuh.txt
  create mode 100644 builtin/psuh.c
  create mode 100755 t/t9999-psuh-tutorial.sh
 ----
@@ -1016,20 +1016,20 @@ The one generated for `psuh` from the sample implementation looks like this:
 Finally, the letter will include the version of Git used to generate the
 patches. You can leave that string alone.
 
-[[sending-git-send-email]]
+[[sending-but-send-email]]
 === Sending Email
 
 At this point you should have a directory `psuh/` which is filled with your
 patches and a cover letter. Time to mail it out! You can send it like this:
 
 ----
-$ git send-email --to=target@example.com psuh/*.patch
+$ but send-email --to=target@example.com psuh/*.patch
 ----
 
-NOTE: Check `git help send-email` for some other options which you may find
+NOTE: Check `but help send-email` for some other options which you may find
 valuable, such as changing the Reply-to address or adding more CC and BCC lines.
 
-NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
+NOTE: When you are sending a real patch, it will go to but@vger.kernel.org - but
 please don't send your patchset from the tutorial to the real mailing list! For
 now, you can send it to yourself, to make sure you understand how it will look.
 
@@ -1041,7 +1041,7 @@ press `y` or `a` at these prompts your emails will be sent! Congratulations!
 Awesome, now the community will drop everything and review your changes. (Just
 kidding - be patient!)
 
-[[v2-git-send-email]]
+[[v2-but-send-email]]
 === Sending v2
 
 This section will focus on how to send a v2 of your patchset. To learn what
@@ -1052,21 +1052,21 @@ We'll reuse our `psuh` topic branch for v2. Before we make any changes, we'll
 mark the tip of our v1 branch for easy reference:
 
 ----
-$ git checkout psuh
-$ git branch psuh-v1
+$ but checkout psuh
+$ but branch psuh-v1
 ----
 
-Refine your patch series by using `git rebase -i` to adjust cummits based upon
+Refine your patch series by using `but rebase -i` to adjust cummits based upon
 reviewer comments. Once the patch series is ready for submission, generate your
 patches again, but with some new flags:
 
 ----
-$ git format-patch -v2 --cover-letter -o psuh/ --range-diff master..psuh-v1 master..
+$ but format-patch -v2 --cover-letter -o psuh/ --range-diff master..psuh-v1 master..
 ----
 
 The `--range-diff master..psuh-v1` parameter tells `format-patch` to include a
 range-diff between `psuh-v1` and `psuh` in the cover letter (see
-linkgit:git-range-diff[1]). This helps tell reviewers about the differences
+linkbut:but-range-diff[1]). This helps tell reviewers about the differences
 between your v1 and v2 patches.
 
 The `-v2` parameter tells `format-patch` to output your patches
@@ -1087,9 +1087,9 @@ need the exact same body in your second cover letter; focus on explaining to
 reviewers the changes you've made that may not be as visible.
 
 You will also need to go and find the Message-Id of your previous cover letter.
-You can either note it when you send the first series, from the output of `git
+You can either note it when you send the first series, from the output of `but
 send-email`, or you can look it up on the
-https://lore.kernel.org/git[mailing list]. Find your cover letter in the
+https://lore.kernel.org/but[mailing list]. Find your cover letter in the
 archives, click on it, then click "permalink" or "raw" to reveal the Message-Id
 header. It should match:
 
@@ -1115,7 +1115,7 @@ Now send the emails again, paying close attention to which messages you pass in
 to the command:
 
 ----
-$ git send-email --to=target@example.com
+$ but send-email --to=target@example.com
 		 --in-reply-to="<foo.12345.author@example.com>"
 		 psuh/v2-*.patch
 ----
@@ -1127,7 +1127,7 @@ In some cases, your very small change may consist of only one patch. When that
 happens, you only need to send one email. Your cummit message should already be
 meaningful and explain at a high level the purpose (what is happening and why)
 of your patch, but if you need to supply even more context, you can do so below
-the `---` in your patch. Take the example below, which was generated with `git
+the `---` in your patch. Take the example below, which was generated with `but
 format-patch` on a single cummit, and then edited to add the content between
 the `---` and the diffstat.
 
@@ -1145,13 +1145,13 @@ Signed-off-by: A U Thor <author@example.com>
 Let's have a wild discussion about grammar on the mailing list. This
 part of my email will never end up in the cummit log. Here is where I
 can add additional context to the mailing list about my intent, outside
-of the context of the cummit log. This section was added after `git
+of the context of the cummit log. This section was added after `but
 format-patch` was run, by editing the patch file in a text editor.
 
  README.md | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/README.md b/README.md
+diff --but a/README.md b/README.md
 index 88f126184c..38da593a60 100644
 --- a/README.md
 +++ b/README.md
@@ -1210,14 +1210,14 @@ you to do.
 Make sure your email client has a plaintext email mode and it is turned on; the
 Git list rejects HTML email. Please also follow the mailing list etiquette
 outlined in the
-https://kernel.googlesource.com/pub/scm/git/git/+/todo/MaintNotes[Maintainer's
+https://kernel.googlesource.com/pub/scm/but/but/+/todo/MaintNotes[Maintainer's
 Note], which are similar to etiquette rules in most open source communities
 surrounding bottom-posting and inline replies.
 
 When you're making changes to your code, it is cleanest - that is, the resulting
-cummits are easiest to look at - if you use `git rebase -i` (interactive
+cummits are easiest to look at - if you use `but rebase -i` (interactive
 rebase). Take a look at this
-https://www.oreilly.com/library/view/git-pocket-guide/9781449327507/ch10.html[overview]
+https://www.oreilly.com/library/view/but-pocket-guide/9781449327507/ch10.html[overview]
 from O'Reilly. The general idea is to modify each cummit which requires changes;
 this way, instead of having a patch A with a mistake, a patch B which was fine
 and required no upstream reviews in v1, and a patch C which fixes patch A for
@@ -1246,22 +1246,22 @@ will merge your topic branch to `next` and life is good.
 However, if you discover it isn't so perfect after this point, you may need to
 take some special steps depending on where you are in the process.
 
-If the maintainer has announced in the "What's cooking in git.git" email that
+If the maintainer has announced in the "What's cooking in but.but" email that
 your topic is marked for `next` - that is, that they plan to merge it to `next`
 but have not yet done so - you should send an email asking the maintainer to
 wait a little longer: "I've sent v4 of my series and you marked it for `next`,
 but I need to change this and that - please wait for v5 before you merge it."
 
 If the topic has already been merged to `next`, rather than modifying your
-patches with `git rebase -i`, you should make further changes incrementally -
+patches with `but rebase -i`, you should make further changes incrementally -
 that is, with another cummit, based on top of the maintainer's topic branch as
-detailed in https://github.com/gitster/git. Your work is still in the same topic
+detailed in https://buthub.com/butster/but. Your work is still in the same topic
 but is now incremental, rather than a wholesale rewrite of the topic branch.
 
 The topic branches in the maintainer's GitHub are mirrored in GitGitGadget, so
 if you're sending your reviews out that way, you should be sure to open your PR
 against the appropriate GitGitGadget/Git branch.
 
-If you're using `git send-email`, you can use it the same way as before, but you
+If you're using `but send-email`, you can use it the same way as before, but you
 should generate your diffs from `<topic>..<mybranch>` and base your work on
 `<topic>` instead of `master`.

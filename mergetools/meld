@@ -25,14 +25,14 @@ merge_cmd () {
 }
 
 merge_cmd_help () {
-	echo "Use Meld (requires a graphical session) with optional \`auto merge\` (see \`git help mergetool\`'s \`CONFIGURATION\` section)"
+	echo "Use Meld (requires a graphical session) with optional \`auto merge\` (see \`but help mergetool\`'s \`CONFIGURATION\` section)"
 }
 
 # Get meld help message
 init_meld_help_msg () {
 	if test -z "$meld_help_msg"
 	then
-		meld_path="$(git config mergetool.meld.path || echo meld)"
+		meld_path="$(but config mergetool.meld.path || echo meld)"
 		meld_help_msg=$("$meld_path" --help 2>&1)
 	fi
 }
@@ -42,7 +42,7 @@ check_meld_for_features () {
 	# Check whether we should use 'meld --output <file>'
 	if test -z "$meld_has_output_option"
 	then
-		meld_has_output_option=$(git config --bool mergetool.meld.hasOutput)
+		meld_has_output_option=$(but config --bool mergetool.meld.hasOutput)
 		case "$meld_has_output_option" in
 		true | false)
 			: use configured value
@@ -67,7 +67,7 @@ check_meld_for_features () {
 	if test -z "$meld_use_auto_merge_option"
 	then
 		meld_use_auto_merge_option=$(
-			git config --bool-or-str mergetool.meld.useAutoMerge
+			but config --bool-or-str mergetool.meld.useAutoMerge
 		)
 		case "$meld_use_auto_merge_option" in
 		true | false)

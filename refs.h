@@ -49,7 +49,7 @@ struct worktree;
  * give up and return NULL.
  *
  * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
- * name is invalid according to git-check-ref-format(1).  If the name
+ * name is invalid according to but-check-ref-format(1).  If the name
  * is bad then the value stored in oid will be null_oid and the two
  * flags REF_ISBROKEN and REF_BAD_NAME will be set.
  *
@@ -132,12 +132,12 @@ int refs_init_db(struct strbuf *err);
 int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
 
 /**
- * Resolve refname in the nested "gitlink" repository in the specified
+ * Resolve refname in the nested "butlink" repository in the specified
  * submodule (which must be non-NULL). If the resolution is
  * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
  */
-int resolve_gitlink_ref(const char *submodule, const char *refname,
+int resolve_butlink_ref(const char *submodule, const char *refname,
 			struct object_id *oid);
 
 /*
@@ -170,9 +170,9 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
  * Retrieves the default branch name for newly-initialized repositories.
  *
  * The return value of `repo_default_branch_name()` is an allocated string. The
- * return value of `git_default_branch_name()` is a singleton.
+ * return value of `but_default_branch_name()` is a singleton.
  */
-const char *git_default_branch_name(int quiet);
+const char *but_default_branch_name(int quiet);
 char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
@@ -286,7 +286,7 @@ struct ref_transaction;
 /*
  * Reference name is not well formed.
  *
- * See git-check-ref-format(1) for the definition of well formed ref names.
+ * See but-check-ref-format(1) for the definition of well formed ref names.
  */
 #define REF_BAD_NAME 0x08
 
@@ -524,7 +524,7 @@ int for_each_reflog(each_ref_fn fn, void *cb_data);
 
 /*
  * Return 0 iff refname has the correct format for a refname according
- * to the rules described in Documentation/git-check-ref-format.txt.
+ * to the rules described in Documentation/but-check-ref-format.txt.
  * If REFNAME_ALLOW_ONELEVEL is set in flags, then accept one-level
  * reference names.  If REFNAME_REFSPEC_PATTERN is set in flags, then
  * allow a single "*" wildcard character in the refspec. No leading or
@@ -761,7 +761,7 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 
 /*
  * Like ref_transaction_cummit(), but optimized for creating
- * references when originally initializing a repository (e.g., by "git
+ * references when originally initializing a repository (e.g., by "but
  * clone"). It writes the new references directly to packed-refs
  * without locking the individual references.
  *

@@ -10,10 +10,10 @@ test_expect_success 'setup' '
 			mkdir -p $(dirname $p)
 		fi &&
 		: >$p &&
-		git add $p &&
-		git cummit -m $p || return 1
+		but add $p &&
+		but cummit -m $p || return 1
 	done &&
-	git log --oneline --format=%s >actual &&
+	but log --oneline --format=%s >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/sub/sub/file
@@ -26,13 +26,13 @@ EOF
 '
 
 test_expect_success 'exclude only pathspec uses default implicit pathspec' '
-	git log --oneline --format=%s -- . ":(exclude)sub" >expect &&
-	git log --oneline --format=%s -- ":(exclude)sub" >actual &&
+	but log --oneline --format=%s -- . ":(exclude)sub" >expect &&
+	but log --oneline --format=%s -- ":(exclude)sub" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 't_e_i() exclude sub' '
-	git log --oneline --format=%s -- . ":(exclude)sub" >actual &&
+	but log --oneline --format=%s -- . ":(exclude)sub" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -41,7 +41,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub/sub/file' '
-	git log --oneline --format=%s -- . ":(exclude)sub/sub/file" >actual &&
+	but log --oneline --format=%s -- . ":(exclude)sub/sub/file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/sub/sub/file
@@ -53,7 +53,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub using mnemonic' '
-	git log --oneline --format=%s -- . ":!sub" >actual &&
+	but log --oneline --format=%s -- . ":!sub" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -62,7 +62,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude :(icase)SUB' '
-	git log --oneline --format=%s -- . ":(exclude,icase)SUB" >actual &&
+	but log --oneline --format=%s -- . ":(exclude,icase)SUB" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -73,7 +73,7 @@ EOF
 test_expect_success 't_e_i() exclude sub2 from sub' '
 	(
 	cd sub &&
-	git log --oneline --format=%s -- :/ ":/!sub2" >actual &&
+	but log --oneline --format=%s -- :/ ":/!sub2" >actual &&
 	cat <<EOF >expect &&
 sub/sub/sub/file
 sub/file2
@@ -86,7 +86,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub/*file' '
-	git log --oneline --format=%s -- . ":(exclude)sub/*file" >actual &&
+	but log --oneline --format=%s -- . ":(exclude)sub/*file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/file2
@@ -96,7 +96,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude :(glob)sub/*/file' '
-	git log --oneline --format=%s -- . ":(exclude,glob)sub/*/file" >actual &&
+	but log --oneline --format=%s -- . ":(exclude,glob)sub/*/file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/sub/sub/file
@@ -108,7 +108,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub' '
-	git ls-files -- . ":(exclude)sub" >actual &&
+	but ls-files -- . ":(exclude)sub" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -117,7 +117,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub/sub/file' '
-	git ls-files -- . ":(exclude)sub/sub/file" >actual &&
+	but ls-files -- . ":(exclude)sub/sub/file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file
@@ -129,7 +129,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub using mnemonic' '
-	git ls-files -- . ":!sub" >actual &&
+	but ls-files -- . ":!sub" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -138,7 +138,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude :(icase)SUB' '
-	git ls-files -- . ":(exclude,icase)SUB" >actual &&
+	but ls-files -- . ":(exclude,icase)SUB" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -149,7 +149,7 @@ EOF
 test_expect_success 'm_p_d() exclude sub2 from sub' '
 	(
 	cd sub &&
-	git ls-files -- :/ ":/!sub2" >actual &&
+	but ls-files -- :/ ":/!sub2" >actual &&
 	cat <<EOF >expect &&
 ../file
 file
@@ -162,7 +162,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub/*file' '
-	git ls-files -- . ":(exclude)sub/*file" >actual &&
+	but ls-files -- . ":(exclude)sub/*file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file2
@@ -172,7 +172,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude :(glob)sub/*/file' '
-	git ls-files -- . ":(exclude,glob)sub/*/file" >actual &&
+	but ls-files -- . ":(exclude,glob)sub/*/file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file
@@ -184,7 +184,7 @@ EOF
 '
 
 test_expect_success 'multiple exclusions' '
-	git ls-files -- ":^*/file2" ":^sub2" >actual &&
+	but ls-files -- ":^*/file2" ":^sub2" >actual &&
 	cat <<-\EOF >expect &&
 	file
 	sub/file
@@ -195,17 +195,17 @@ test_expect_success 'multiple exclusions' '
 '
 
 test_expect_success 't_e_i() exclude case #8' '
-	git init case8 &&
+	but init case8 &&
 	(
 		cd case8 &&
 		echo file >file1 &&
 		echo file >file2 &&
-		git add file1 file2 &&
-		git cummit -m twofiles &&
-		git grep -l file HEAD :^file2 >actual &&
+		but add file1 file2 &&
+		but cummit -m twofiles &&
+		but grep -l file HEAD :^file2 >actual &&
 		echo HEAD:file1 >expected &&
 		test_cmp expected actual &&
-		git grep -l file HEAD :^file1 >actual &&
+		but grep -l file HEAD :^file1 >actual &&
 		echo HEAD:file2 >expected &&
 		test_cmp expected actual
 	)
@@ -222,7 +222,7 @@ test_expect_success 'grep --untracked PATTERN' '
 	sub/actual
 	sub/expect
 	EOF
-	git grep -l --untracked file -- >actual-grep &&
+	but grep -l --untracked file -- >actual-grep &&
 	test_cmp expect-grep actual-grep
 '
 
@@ -231,7 +231,7 @@ test_expect_success 'grep --untracked PATTERN :(exclude)DIR' '
 	actual
 	expect
 	EOF
-	git grep -l --untracked file -- ":(exclude)sub" >actual-grep &&
+	but grep -l --untracked file -- ":(exclude)sub" >actual-grep &&
 	test_cmp expect-grep actual-grep
 '
 
@@ -240,7 +240,7 @@ test_expect_success 'grep --untracked PATTERN :(exclude)*FILE' '
 	actual
 	sub/actual
 	EOF
-	git grep -l --untracked file -- ":(exclude)*expect" >actual-grep &&
+	but grep -l --untracked file -- ":(exclude)*expect" >actual-grep &&
 	test_cmp expect-grep actual-grep
 '
 

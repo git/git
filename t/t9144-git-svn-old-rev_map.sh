@@ -2,30 +2,30 @@
 #
 # Copyright (c) 2009 Eric Wong
 
-test_description='git svn old rev_map preservd'
-. ./lib-git-svn.sh
+test_description='but svn old rev_map preservd'
+. ./lib-but-svn.sh
 
 test_expect_success 'setup test repository with old layout' '
 	mkdir i &&
 	(cd i && > a) &&
 	svn_cmd import -m- i "$svnrepo" &&
-	git svn init "$svnrepo" &&
-	git svn fetch &&
-	test -d .git/svn/refs/remotes/git-svn/ &&
-	! test -e .git/svn/git-svn/ &&
-	mv .git/svn/refs/remotes/git-svn .git/svn/ &&
-	rm -r .git/svn/refs
+	but svn init "$svnrepo" &&
+	but svn fetch &&
+	test -d .but/svn/refs/remotes/but-svn/ &&
+	! test -e .but/svn/but-svn/ &&
+	mv .but/svn/refs/remotes/but-svn .but/svn/ &&
+	rm -r .but/svn/refs
 '
 
 test_expect_success 'old layout continues to work' '
 	svn_cmd import -m- i "$svnrepo/b" &&
-	git svn rebase &&
+	but svn rebase &&
 	echo a >> b/a &&
-	git add b/a &&
-	git cummit -m- -a &&
-	git svn dcummit &&
-	! test -d .git/svn/refs/ &&
-	test -e .git/svn/git-svn/
+	but add b/a &&
+	but cummit -m- -a &&
+	but svn dcummit &&
+	! test -d .but/svn/refs/ &&
+	test -e .but/svn/but-svn/
 '
 
 test_done

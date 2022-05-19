@@ -1,4 +1,4 @@
-# git-gui Git repository chooser
+# but-gui Git repository chooser
 # Copyright (C) 2007 Shawn Pearce
 
 class choose_repository {
@@ -84,7 +84,7 @@ constructor pick {} {
 		set m_repo {}
 	}
 
-	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
+	pack [but_logo $w.but_logo] -side left -fill y -padx 10 -pady 10
 
 	set w_body $w.body
 	set opts $w_body.options
@@ -252,7 +252,7 @@ method _invoke_next {} {
 proc _get_recentrepos {} {
 	set recent [list]
 	foreach p [lsort -unique [get_config gui.recentrepo]] {
-		if {[_is_git [file join $p .git]]} {
+		if {[_is_but [file join $p .but]]} {
 			lappend recent $p
 		} else {
 			_unset_recentrepo $p
@@ -263,7 +263,7 @@ proc _get_recentrepos {} {
 
 proc _unset_recentrepo {p} {
 	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
-	catch {git config --global --unset-all gui.recentrepo "^$p\$"}
+	catch {but config --global --unset-all gui.recentrepo "^$p\$"}
 	load_config 1
 }
 
@@ -280,7 +280,7 @@ proc _append_recentrepos {path} {
 		_unset_recentrepo $path
 	}
 
-	git config --global --add gui.recentrepo $path
+	but config --global --add gui.recentrepo $path
 	load_config 1
 	set recent [get_config gui.recentrepo]
 
@@ -325,7 +325,7 @@ method _write_local_path {args} {
 	}
 }
 
-method _git_init {} {
+method _but_init {} {
 	if {[catch {file mkdir $local_path} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
@@ -340,7 +340,7 @@ method _git_init {} {
 		return 0
 	}
 
-	if {[catch {git init} err]} {
+	if {[catch {but init} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
 			"\n\n$err"]
@@ -348,23 +348,23 @@ method _git_init {} {
 	}
 
 	_append_recentrepos [pwd]
-	set ::_gitdir .git
+	set ::_butdir .but
 	set ::_prefix {}
 	return 1
 }
 
-proc _is_git {path {outdir_var ""}} {
+proc _is_but {path {outdir_var ""}} {
 	if {$outdir_var ne ""} {
 		upvar 1 $outdir_var outdir
 	}
-	if {[catch {set outdir [git rev-parse --resolve-git-dir $path]}]} {
+	if {[catch {set outdir [but rev-parse --resolve-but-dir $path]}]} {
 		return 0
 	}
 	return 1
 }
 
 proc _objdir {path} {
-	set objdir [file join $path .git objects]
+	set objdir [file join $path .but objects]
 	if {[file isdirectory $objdir]} {
 		return $objdir
 	}
@@ -375,7 +375,7 @@ proc _objdir {path} {
 	}
 
 	if {[is_Cygwin]} {
-		set objdir [file join $path .git objects.lnk]
+		set objdir [file join $path .but objects.lnk]
 		if {[file isfile $objdir]} {
 			return [win32_read_lnk $objdir]
 		}
@@ -454,7 +454,7 @@ method _do_new2 {} {
 	if {![_new_ok $local_path]} {
 		return
 	}
-	if {![_git_init $this]} {
+	if {![_but_init $this]} {
 		return
 	}
 	set done 1
@@ -462,7 +462,7 @@ method _do_new2 {} {
 
 proc _new_ok {p} {
 	if {[file isdirectory $p]} {
-		if {[_is_git [file join $p .git]]} {
+		if {[_is_but [file join $p .but]]} {
 			error_popup [mc "Directory %s already exists." $p]
 			return 0
 		}
@@ -569,7 +569,7 @@ method _open_origin {} {
 	if {$p eq {}} return
 
 	set p [file normalize $p]
-	if {![_is_git [file join $p .git]] && ![_is_git $p]} {
+	if {![_is_but [file join $p .but]] && ![_is_but $p]} {
 		error_popup [mc "Not a Git repository: %s" [file tail $p]]
 		return
 	}
@@ -584,8 +584,8 @@ method _update_clone {args} {
 	}
 
 	if {$origin_url ne {} &&
-		(  [_is_git [file join $origin_url .git]]
-		|| [_is_git $origin_url])} {
+		(  [_is_but [file join $origin_url .but]]
+		|| [_is_but $origin_url])} {
 		set e normal
 		if {[[lindex $w_types 0] cget -state] eq {disabled}} {
 			set clone_type hardlink
@@ -622,9 +622,9 @@ method _do_clone2 {} {
 		}
 	}
 
-	set giturl $origin_url
-	if {[is_Cygwin] && [file isdirectory $giturl]} {
-		set giturl [exec cygpath --unix --absolute $giturl]
+	set buturl $origin_url
+	if {[is_Cygwin] && [file isdirectory $buturl]} {
+		set buturl [exec cygpath --unix --absolute $buturl]
 		if {$clone_type eq {shared}} {
 			set objdir [exec cygpath --unix --absolute $objdir]
 		}
@@ -635,12 +635,12 @@ method _do_clone2 {} {
 		return
 	}
 
-	if {![_git_init $this]} return
+	if {![_but_init $this]} return
 	set local_path [pwd]
 
 	if {[catch {
-			git config remote.$origin_name.url $giturl
-			git config remote.$origin_name.fetch +refs/heads/*:refs/remotes/$origin_name/*
+			but config remote.$origin_name.url $buturl
+			but config remote.$origin_name.fetch +refs/heads/*:refs/remotes/$origin_name/*
 		} err]} {
 		error_popup [strcat [mc "Failed to configure origin"] "\n\n$err"]
 		return
@@ -661,9 +661,9 @@ method _do_clone2 {} {
 		if {[file exists [file join $objdir info alternates]]} {
 			set pwd [pwd]
 			if {[catch {
-				file mkdir [gitdir objects info]
+				file mkdir [butdir objects info]
 				set f_in [open [file join $objdir info alternates] r]
-				set f_cp [open [gitdir objects info alternates] w]
+				set f_cp [open [butdir objects info alternates] w]
 				fconfigure $f_in -translation binary -encoding binary
 				fconfigure $f_cp -translation binary -encoding binary
 				cd $objdir
@@ -695,7 +695,7 @@ method _do_clone2 {} {
 		$status_op update $bcur $bcnt
 		update
 
-		file mkdir [file join .git objects pack]
+		file mkdir [file join .but objects pack]
 		foreach i [glob -tails -nocomplain \
 			-directory [file join $objdir pack] *] {
 			lappend tolink [file join pack $i]
@@ -704,7 +704,7 @@ method _do_clone2 {} {
 		update
 
 		foreach i $buckets {
-			file mkdir [file join .git objects $i]
+			file mkdir [file join .but objects $i]
 			foreach j [glob -tails -nocomplain \
 				-directory [file join $objdir $i] *] {
 				lappend tolink [file join $i $j]
@@ -728,7 +728,7 @@ method _do_clone2 {} {
 		set i [lindex $tolink 0]
 		if {[catch {
 				file link -hard \
-					[file join .git objects $i] \
+					[file join .but objects $i] \
 					[file join $objdir $i]
 			} err]} {
 			info_popup [mc "Hardlinks are unavailable.  Falling back to copying."]
@@ -748,11 +748,11 @@ method _do_clone2 {} {
 			[mc "Cloning from %s" $origin_url]]
 		pack $w_body -fill both -expand 1 -padx 10
 		$o_cons exec \
-			[list git fetch --no-tags -k $origin_name] \
+			[list but fetch --no-tags -k $origin_name] \
 			[cb _do_clone_tags]
 	}
 	shared {
-		set fd [open [gitdir objects info alternates] w]
+		set fd [open [butdir objects info alternates] w]
 		fconfigure $fd -translation binary
 		puts $fd $objdir
 		close $fd
@@ -764,7 +764,7 @@ method _do_clone2 {} {
 		set pwd [pwd]
 		if {[catch {
 				cd $origin_url
-				set HEAD [git rev-parse --verify HEAD^0]
+				set HEAD [but rev-parse --verify HEAD^0]
 			} err]} {
 			_clone_failed $this [mc "Not a Git repository: %s" [file tail $origin_url]]
 			return 0
@@ -786,7 +786,7 @@ method _copy_files {objdir tocopy} {
 	foreach p $tocopy {
 		if {[catch {
 				set f_in [open [file join $objdir $p] r]
-				set f_cp [open [file join .git objects $p] w]
+				set f_cp [open [file join .but objects $p] w]
 				fconfigure $f_in -translation binary -encoding binary
 				fconfigure $f_cp -translation binary -encoding binary
 
@@ -819,7 +819,7 @@ method _link_files {objdir tolink} {
 		set p [lindex $tolink $i]
 		if {[catch {
 				file link -hard \
-					[file join .git objects $p] \
+					[file join .but objects $p] \
 					[file join $objdir $p]
 			} err]} {
 			_clone_failed $this [mc "Unable to hardlink object: %s" $err]
@@ -843,12 +843,12 @@ method _clone_refs {} {
 		error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
 		return 0
 	}
-	set fd_in [git_read for-each-ref \
+	set fd_in [but_read for-each-ref \
 		--tcl \
 		{--format=list %(refname) %(objectname) %(*objectname)}]
 	cd $pwd
 
-	set fd [open [gitdir packed-refs] w]
+	set fd [open [butdir packed-refs] w]
 	fconfigure $fd -translation binary
 	puts $fd "# pack-refs with: peeled"
 	while {[gets $fd_in line] >= 0} {
@@ -875,7 +875,7 @@ method _clone_refs {} {
 method _do_clone_tags {ok} {
 	if {$ok} {
 		$o_cons exec \
-			[list git fetch --tags -k $origin_name] \
+			[list but fetch --tags -k $origin_name] \
 			[cb _do_clone_HEAD]
 	} else {
 		$o_cons done $ok
@@ -886,7 +886,7 @@ method _do_clone_tags {ok} {
 method _do_clone_HEAD {ok} {
 	if {$ok} {
 		$o_cons exec \
-			[list git fetch $origin_name HEAD] \
+			[list but fetch $origin_name HEAD] \
 			[cb _do_clone_full_end]
 	} else {
 		$o_cons done $ok
@@ -901,8 +901,8 @@ method _do_clone_full_end {ok} {
 		destroy $w_body
 
 		set HEAD {}
-		if {[file exists [gitdir FETCH_HEAD]]} {
-			set fd [open [gitdir FETCH_HEAD] r]
+		if {[file exists [butdir FETCH_HEAD]]} {
+			set fd [open [butdir FETCH_HEAD] r]
 			while {[gets $fd line] >= 0} {
 				if {[regexp "^(.{40})\t\t" $line line HEAD]} {
 					break
@@ -911,7 +911,7 @@ method _do_clone_full_end {ok} {
 			close $fd
 		}
 
-		catch {git pack-refs}
+		catch {but pack-refs}
 		_do_clone_checkout $this $HEAD
 	} else {
 		_clone_failed $this [mc "Cannot determine HEAD.  See console output for details."]
@@ -944,7 +944,7 @@ method _do_clone_checkout {HEAD} {
 		return
 	}
 	if {[catch {
-			git update-ref HEAD $HEAD^0
+			but update-ref HEAD $HEAD^0
 		} err]} {
 		info_popup [strcat \
 			[mc "Cannot resolve %s as a cummit." $HEAD^0] \
@@ -978,7 +978,7 @@ method _do_clone_checkout {HEAD} {
 		[mc "files"]]
 
 	set readtree_err {}
-	set fd [git_read --stderr read-tree \
+	set fd [but_read --stderr read-tree \
 		-m \
 		-u \
 		-v \
@@ -1011,8 +1011,8 @@ method _readtree_wait {fd} {
 
 	# -- Run the post-checkout hook.
 	#
-	set fd_ph [githook_read post-checkout [string repeat 0 40] \
-		[git rev-parse HEAD] 1]
+	set fd_ph [buthook_read post-checkout [string repeat 0 40] \
+		[but rev-parse HEAD] 1]
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
@@ -1051,7 +1051,7 @@ method _do_clone_submodules {} {
 			[mc "Cloning submodules"]]
 		pack $w_body -fill both -expand 1 -padx 10
 		$o_cons exec \
-			[list git submodule update --init --recursive] \
+			[list but submodule update --init --recursive] \
 			[cb _do_validate_submodule_cloning]
 	} else {
 		set done 1
@@ -1120,7 +1120,7 @@ method _open_local_path {} {
 	if {$p eq {}} return
 
 	set p [file normalize $p]
-	if {![_is_git [file join $p .git]]} {
+	if {![_is_but [file join $p .but]]} {
 		error_popup [mc "Not a Git repository: %s" [file tail $p]]
 		return
 	}
@@ -1128,7 +1128,7 @@ method _open_local_path {} {
 }
 
 method _do_open2 {} {
-	if {![_is_git [file join $local_path .git] actualgit]} {
+	if {![_is_but [file join $local_path .but] actualbut]} {
 		error_popup [mc "Not a Git repository: %s" [file tail $local_path]]
 		return
 	}
@@ -1141,7 +1141,7 @@ method _do_open2 {} {
 	}
 
 	_append_recentrepos [pwd]
-	set ::_gitdir $actualgit
+	set ::_butdir $actualbut
 	set ::_prefix {}
 	set done 1
 }

@@ -12,16 +12,16 @@ result.
 
 Thus, the following command:
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 -----------------------------------------------------------------------
-$ git rev-list foo bar ^baz
+$ but rev-list foo bar ^baz
 -----------------------------------------------------------------------
-endif::git-rev-list[]
-ifdef::git-log[]
+endif::but-rev-list[]
+ifdef::but-log[]
 -----------------------------------------------------------------------
-$ git log foo bar ^baz
+$ but log foo bar ^baz
 -----------------------------------------------------------------------
-endif::git-log[]
+endif::but-log[]
 
 means "list all the cummits which are reachable from 'foo' or 'bar', but
 not from 'baz'".
@@ -30,32 +30,32 @@ A special notation "'<cummit1>'..'<cummit2>'" can be used as a
 short-hand for "^'<cummit1>' '<cummit2>'". For example, either of
 the following may be used interchangeably:
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 -----------------------------------------------------------------------
-$ git rev-list origin..HEAD
-$ git rev-list HEAD ^origin
+$ but rev-list origin..HEAD
+$ but rev-list HEAD ^origin
 -----------------------------------------------------------------------
-endif::git-rev-list[]
-ifdef::git-log[]
+endif::but-rev-list[]
+ifdef::but-log[]
 -----------------------------------------------------------------------
-$ git log origin..HEAD
-$ git log HEAD ^origin
+$ but log origin..HEAD
+$ but log HEAD ^origin
 -----------------------------------------------------------------------
-endif::git-log[]
+endif::but-log[]
 
 Another special notation is "'<cummit1>'...'<cummit2>'" which is useful
 for merges.  The resulting set of cummits is the symmetric difference
 between the two operands.  The following two commands are equivalent:
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 -----------------------------------------------------------------------
-$ git rev-list A B --not $(git merge-base --all A B)
-$ git rev-list A...B
+$ but rev-list A B --not $(but merge-base --all A B)
+$ but rev-list A...B
 -----------------------------------------------------------------------
-endif::git-rev-list[]
-ifdef::git-log[]
+endif::but-rev-list[]
+ifdef::but-log[]
 -----------------------------------------------------------------------
-$ git log A B --not $(git merge-base --all A B)
-$ git log A...B
+$ but log A B --not $(but merge-base --all A B)
+$ but log A...B
 -----------------------------------------------------------------------
-endif::git-log[]
+endif::but-log[]

@@ -1,5 +1,5 @@
  Makefile         |    2 +-
- git-fetch-script |   41 +++++++++++++++++++++++++++++++++++++++++
- git-pull-script  |   34 +---------------------------------
+ but-fetch-script |   41 +++++++++++++++++++++++++++++++++++++++++
+ but-pull-script  |   34 +---------------------------------
  3 files changed, 43 insertions(+), 34 deletions(-)
- create git-fetch-script
+ create but-fetch-script

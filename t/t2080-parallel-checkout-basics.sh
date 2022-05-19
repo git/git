@@ -41,66 +41,66 @@ TEST_NO_CREATE_REPO=1
 #  -                  m/m (file)
 #
 test_expect_success 'setup repo for checkout with various types of changes' '
-	git init sub &&
+	but init sub &&
 	(
 		cd sub &&
-		git checkout -b B2 &&
+		but checkout -b B2 &&
 		echo B2 >file &&
-		git add file &&
-		git cummit -m file &&
+		but add file &&
+		but cummit -m file &&
 
-		git checkout -b B1 &&
+		but checkout -b B1 &&
 		echo B1 >file &&
-		git add file &&
-		git cummit -m file
+		but add file &&
+		but cummit -m file
 	) &&
 
-	git init various &&
+	but init various &&
 	(
 		cd various &&
 
-		git checkout -b B1 &&
+		but checkout -b B1 &&
 		mkdir a c e &&
 		echo a/a >a/a &&
 		echo b >b &&
 		echo c/c >c/c &&
 		test_ln_s_add c d &&
 		echo e/e >e/e &&
-		git submodule add ../sub f &&
-		git submodule add ../sub g &&
+		but submodule add ../sub f &&
+		but submodule add ../sub g &&
 		test_ln_s_add c h &&
 
 		echo "B1 i" >i &&
 		test_ln_s_add c j &&
-		git submodule add -b B1 ../sub k &&
+		but submodule add -b B1 ../sub k &&
 		mkdir l &&
 		echo l/l >l/l &&
 
-		git add . &&
-		git cummit -m B1 &&
+		but add . &&
+		but cummit -m B1 &&
 
-		git checkout -b B2 &&
-		git rm -rf :^.gitmodules :^k &&
+		but checkout -b B2 &&
+		but rm -rf :^.butmodules :^k &&
 		mkdir b d f &&
 		echo a >a &&
 		echo b/b >b/b &&
 		test_ln_s_add b c &&
 		echo d/d >d/d &&
-		git submodule add ../sub e &&
+		but submodule add ../sub e &&
 		echo f/f >f/f &&
 		test_ln_s_add b g &&
-		git submodule add ../sub h &&
+		but submodule add ../sub h &&
 
 		echo "B2 i" >i &&
 		test_ln_s_add b j &&
-		git -C k checkout B2 &&
+		but -C k checkout B2 &&
 		mkdir m &&
 		echo m/m >m/m &&
 
-		git add . &&
-		git cummit -m B2 &&
+		but add . &&
+		but cummit -m B2 &&
 
-		git checkout --recurse-submodules B1
+		but checkout --recurse-submodules B1
 	)
 '
 
@@ -118,16 +118,16 @@ do
 
 		# The just copied files have more recent timestamps than their
 		# associated index entries. So refresh the cached timestamps
-		# to avoid an "entry not up-to-date" error from `git checkout`.
-		# We only have to do this for the submodules as `git checkout`
+		# to avoid an "entry not up-to-date" error from `but checkout`.
+		# We only have to do this for the submodules as `but checkout`
 		# will already refresh the superproject index before performing
 		# the up-to-date check.
 		#
-		git -C $repo submodule foreach "git update-index --refresh" &&
+		but -C $repo submodule foreach "but update-index --refresh" &&
 
 		set_checkout_config $workers $threshold &&
 		test_checkout_workers $expected_workers \
-			git -C $repo checkout --recurse-submodules B2 &&
+			but -C $repo checkout --recurse-submodules B2 &&
 		verify_checkout $repo
 	'
 done
@@ -143,24 +143,24 @@ do
 		repo=various_${mode}_clone &&
 		set_checkout_config $workers $threshold &&
 		test_checkout_workers $expected_workers \
-			git clone --recurse-submodules --branch B2 various $repo &&
+			but clone --recurse-submodules --branch B2 various $repo &&
 		verify_checkout $repo
 	'
 done
 
 # Just to be paranoid, actually compare the working trees' contents directly.
 test_expect_success 'compare the working trees' '
-	rm -rf various_*/.git &&
-	rm -rf various_*/*/.git &&
+	rm -rf various_*/.but &&
+	rm -rf various_*/*/.but &&
 
-	# We use `git diff` instead of `diff -r` because the latter would
+	# We use `but diff` instead of `diff -r` because the latter would
 	# follow symlinks, and not all `diff` implementations support the
 	# `--no-dereference` option.
 	#
-	git diff --no-index various_sequential various_parallel &&
-	git diff --no-index various_sequential various_parallel_clone &&
-	git diff --no-index various_sequential various_sequential-fallback &&
-	git diff --no-index various_sequential various_sequential-fallback_clone
+	but diff --no-index various_sequential various_parallel &&
+	but diff --no-index various_sequential various_parallel_clone &&
+	but diff --no-index various_sequential various_sequential-fallback &&
+	but diff --no-index various_sequential various_sequential-fallback_clone
 '
 
 # Currently, each submodule is checked out in a separated child process, but
@@ -168,22 +168,22 @@ test_expect_success 'compare the working trees' '
 # write the submodules' entries.
 test_expect_success 'submodules can use parallel checkout' '
 	set_checkout_config 2 0 &&
-	git init super &&
+	but init super &&
 	(
 		cd super &&
-		git init sub &&
+		but init sub &&
 		test_cummit -C sub A &&
 		test_cummit -C sub B &&
-		git submodule add ./sub &&
-		git cummit -m sub &&
+		but submodule add ./sub &&
+		but cummit -m sub &&
 		rm sub/* &&
-		test_checkout_workers 2 git checkout --recurse-submodules .
+		test_checkout_workers 2 but checkout --recurse-submodules .
 	)
 '
 
 test_expect_success 'parallel checkout respects --[no]-force' '
 	set_checkout_config 2 0 &&
-	git init dirty &&
+	but init dirty &&
 	(
 		cd dirty &&
 		mkdir D &&
@@ -195,12 +195,12 @@ test_expect_success 'parallel checkout respects --[no]-force' '
 		echo changed >F.t &&
 
 		# We expect 0 workers because there is nothing to be done
-		test_checkout_workers 0 git checkout HEAD &&
+		test_checkout_workers 0 but checkout HEAD &&
 		test_path_is_file D &&
 		grep changed D &&
 		grep changed F.t &&
 
-		test_checkout_workers 2 git checkout --force HEAD &&
+		test_checkout_workers 2 but checkout --force HEAD &&
 		test_path_is_dir D &&
 		grep D/F D/F.t &&
 		grep F F.t
@@ -209,7 +209,7 @@ test_expect_success 'parallel checkout respects --[no]-force' '
 
 test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading dirs' '
 	set_checkout_config 2 0 &&
-	git init symlinks &&
+	but init symlinks &&
 	(
 		cd symlinks &&
 		mkdir D untracked &&
@@ -219,7 +219,7 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 		rm -rf D &&
 		ln -s untracked D &&
 
-		test_checkout_workers 2 git checkout --force HEAD &&
+		test_checkout_workers 2 but checkout --force HEAD &&
 		! test -h D &&
 		grep D/A D/A.t &&
 		grep D/B D/B.t

@@ -1,4 +1,4 @@
-// git-gui Windows shortcut support
+// but-gui Windows shortcut support
 // Copyright (C) 2007 Shawn Pearce
 
 var WshShell = WScript.CreateObject("WScript.Shell");

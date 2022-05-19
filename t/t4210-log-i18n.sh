@@ -24,15 +24,15 @@ test_expect_success 'create cummits in different encodings' '
 
 	t${utf8_e}st
 	EOF
-	git add msg &&
-	git -c i18n.cummitencoding=utf8 cummit -F msg &&
+	but add msg &&
+	but -c i18n.cummitencoding=utf8 cummit -F msg &&
 	cat >msg <<-EOF &&
 	latin1
 
 	t${latin1_e}st
 	EOF
-	git add msg &&
-	git -c i18n.cummitencoding=ISO-8859-1 cummit -F msg
+	but add msg &&
+	but -c i18n.cummitencoding=ISO-8859-1 cummit -F msg
 '
 
 test_expect_success 'log --grep searches in log output encoding (utf8)' '
@@ -40,7 +40,7 @@ test_expect_success 'log --grep searches in log output encoding (utf8)' '
 	latin1
 	utf8
 	EOF
-	git log --encoding=utf8 --format=%s --grep=$utf8_e >actual &&
+	but log --encoding=utf8 --format=%s --grep=$utf8_e >actual &&
 	test_cmp expect actual
 '
 
@@ -49,17 +49,17 @@ test_expect_success !MINGW 'log --grep searches in log output encoding (latin1)'
 	latin1
 	utf8
 	EOF
-	git log --encoding=ISO-8859-1 --format=%s --grep=$latin1_e >actual &&
+	but log --encoding=ISO-8859-1 --format=%s --grep=$latin1_e >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success !MINGW 'log --grep does not find non-reencoded values (utf8)' '
-	git log --encoding=utf8 --format=%s --grep=$latin1_e >actual &&
+	but log --encoding=utf8 --format=%s --grep=$latin1_e >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'log --grep does not find non-reencoded values (latin1)' '
-	git log --encoding=ISO-8859-1 --format=%s --grep=$utf8_e >actual &&
+	but log --encoding=ISO-8859-1 --format=%s --grep=$utf8_e >actual &&
 	test_must_be_empty actual
 '
 
@@ -84,10 +84,10 @@ triggers_undefined_behaviour () {
 	return 1
 }
 
-mismatched_git_log () {
+mismatched_but_log () {
 	local pattern=$1
 
-	LC_ALL=$is_IS_locale git log --encoding=ISO-8859-1 --format=%s \
+	LC_ALL=$is_IS_locale but log --encoding=ISO-8859-1 --format=%s \
 		--grep=$pattern
 }
 
@@ -105,11 +105,11 @@ do
 	fi
 
 	test_expect_success $prereq "config grep.patternType=$engine" "
-		git config grep.patternType $engine
+		but config grep.patternType $engine
 	"
 
 	test_expect_success GETTEXT_LOCALE,$prereq "log --grep does not find non-reencoded values (latin1 + locale)" "
-		mismatched_git_log '$force_regex$utf8_e' >actual &&
+		mismatched_but_log '$force_regex$utf8_e' >actual &&
 		test_must_be_empty actual
 	"
 
@@ -120,12 +120,12 @@ do
 			latin1
 			utf8
 			EOF
-			mismatched_git_log '$force_regex$latin1_e' >actual &&
+			mismatched_but_log '$force_regex$latin1_e' >actual &&
 			test_cmp expect actual
 		"
 
 		test_expect_success GETTEXT_LOCALE,$prereq "log --grep does not die on invalid UTF-8 value (latin1 + locale + invalid needle)" "
-			mismatched_git_log '$force_regex$invalid_e' >actual &&
+			mismatched_but_log '$force_regex$invalid_e' >actual &&
 			test_must_be_empty actual
 		"
 	fi

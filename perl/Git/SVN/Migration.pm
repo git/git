@@ -1,34 +1,34 @@
 package Git::SVN::Migration;
 # these version numbers do NOT correspond to actual version numbers
-# of git or git-svn.  They are just relative.
+# of but or but-svn.  They are just relative.
 #
-# v0 layout: .git/$id/info/url, refs/heads/$id-HEAD
+# v0 layout: .but/$id/info/url, refs/heads/$id-HEAD
 #
-# v1 layout: .git/$id/info/url, refs/remotes/$id
+# v1 layout: .but/$id/info/url, refs/remotes/$id
 #
-# v2 layout: .git/svn/$id/info/url, refs/remotes/$id
+# v2 layout: .but/svn/$id/info/url, refs/remotes/$id
 #
-# v3 layout: .git/svn/$id, refs/remotes/$id
+# v3 layout: .but/svn/$id, refs/remotes/$id
 #            - info/url may remain for backwards compatibility
 #            - this is what we migrate up to this layout automatically,
-#            - this will be used by git svn init on single branches
+#            - this will be used by but svn init on single branches
 # v3.1 layout (auto migrated):
 #            - .rev_db => .rev_db.$UUID, .rev_db will remain as a symlink
 #              for backwards compatibility
 #
-# v4 layout: .git/svn/$repo_id/$id, refs/remotes/$repo_id/$id
+# v4 layout: .but/svn/$repo_id/$id, refs/remotes/$repo_id/$id
 #            - this is only created for newly multi-init-ed
 #              repositories.  Similar in spirit to the
-#              --use-separate-remotes option in git-clone (now default)
+#              --use-separate-remotes option in but-clone (now default)
 #            - we do not automatically migrate to this (following
-#              the example set by core git)
+#              the example set by core but)
 #
 # v5 layout: .rev_db.$UUID => .rev_map.$UUID
 #            - newer, more-efficient format that uses 24-bytes per record
 #              with no filler space.
 #            - use xxd -c24 < .rev_map.$UUID to view and debug
 #            - This is a one-way migration, repositories updated to the
-#              new format will not be able to use old git-svn without
+#              new format will not be able to use old but-svn without
 #              rebuilding the .rev_db.  Rebuilding the rev_db is not
 #              possible if noMetadata or useSvmProps are set; but should
 #              be no problem for users that use the (sensible) defaults.
@@ -49,22 +49,22 @@ use Git qw(
 use Git::SVN;
 
 sub migrate_from_v0 {
-	my $git_dir = $ENV{GIT_DIR};
-	return undef unless -d $git_dir;
+	my $but_dir = $ENV{GIT_DIR};
+	return undef unless -d $but_dir;
 	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
 	my $migrated = 0;
 	while (<$fh>) {
 		chomp;
 		my ($id, $orig_ref) = ($_, $_);
 		next unless $id =~ s#^refs/heads/(.+)-HEAD$#$1#;
-		my $info_url = command_oneline(qw(rev-parse --git-path),
+		my $info_url = command_oneline(qw(rev-parse --but-path),
 						"$id/info/url");
 		next unless -f $info_url;
 		my $new_ref = "refs/remotes/$id";
 		if (::verify_ref("$new_ref^0")) {
 			print STDERR "W: $orig_ref is probably an old ",
 			             "branch used by an ancient version of ",
-				     "git-svn.\n",
+				     "but-svn.\n",
 				     "However, $new_ref also exists.\n",
 				     "We will not be able ",
 				     "to use this branch until this ",
@@ -83,25 +83,25 @@ sub migrate_from_v0 {
 }
 
 sub migrate_from_v1 {
-	my $git_dir = $ENV{GIT_DIR};
+	my $but_dir = $ENV{GIT_DIR};
 	my $migrated = 0;
-	return $migrated unless -d $git_dir;
+	return $migrated unless -d $but_dir;
 	my $svn_dir = Git::SVN::svn_dir();
 
 	# just in case somebody used 'svn' as their $id at some point...
 	return $migrated if -d $svn_dir && ! -f "$svn_dir/info/url";
 
-	print STDERR "Migrating from a git-svn v1 layout...\n";
+	print STDERR "Migrating from a but-svn v1 layout...\n";
 	mkpath([$svn_dir]);
-	print STDERR "Data from a previous version of git-svn exists, but\n\t",
+	print STDERR "Data from a previous version of but-svn exists, but\n\t",
 	             "$svn_dir\n\t(required for this version ",
-	             "($::VERSION) of git-svn) does not exist.\n";
+	             "($::VERSION) of but-svn) does not exist.\n";
 	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
 	while (<$fh>) {
 		my $x = $_;
 		next unless $x =~ s#^refs/remotes/##;
 		chomp $x;
-		my $info_url = command_oneline(qw(rev-parse --git-path),
+		my $info_url = command_oneline(qw(rev-parse --but-path),
 						"$x/info/url");
 		next unless -f $info_url;
 		my $u = eval { ::file_to_s($info_url) };
@@ -110,24 +110,24 @@ sub migrate_from_v1 {
 		mkpath([$dn]) unless -d $dn;
 		if ($x eq 'svn') { # they used 'svn' as GIT_SVN_ID:
 			mkpath(["$svn_dir/svn"]);
-			print STDERR " - $git_dir/$x/info => ",
+			print STDERR " - $but_dir/$x/info => ",
 			                "$svn_dir/$x/info\n";
-			rename "$git_dir/$x/info", "$svn_dir/$x/info" or
+			rename "$but_dir/$x/info", "$svn_dir/$x/info" or
 			       croak "$!: $x";
 			# don't worry too much about these, they probably
 			# don't exist with repos this old (save for index,
 			# and we can easily regenerate that)
 			foreach my $f (qw/unhandled.log index .rev_db/) {
-				rename "$git_dir/$x/$f", "$svn_dir/$x/$f";
+				rename "$but_dir/$x/$f", "$svn_dir/$x/$f";
 			}
 		} else {
-			print STDERR " - $git_dir/$x => $svn_dir/$x\n";
-			rename "$git_dir/$x", "$svn_dir/$x" or croak "$!: $x";
+			print STDERR " - $but_dir/$x => $svn_dir/$x\n";
+			rename "$but_dir/$x", "$svn_dir/$x" or croak "$!: $x";
 		}
 		$migrated++;
 	}
 	command_close_pipe($fh, $ctx);
-	print STDERR "Done migrating from a git-svn v1 layout\n";
+	print STDERR "Done migrating from a but-svn v1 layout\n";
 	$migrated;
 }
 
@@ -246,7 +246,7 @@ sub minimize_connections {
 	}
 	if (@emptied) {
 		my $file = $ENV{GIT_CONFIG} ||
-			command_oneline(qw(rev-parse --git-path config));
+			command_oneline(qw(rev-parse --but-path config));
 		print STDERR <<EOF;
 The following [svn-remote] sections in your config file ($file) are empty
 and can be safely removed:

@@ -1,7 +1,7 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
 #include "list.h"
@@ -18,7 +18,7 @@
 #include "repository.h"
 #include "mem-pool.h"
 
-typedef struct git_zstream {
+typedef struct but_zstream {
 	z_stream z;
 	unsigned long avail_in;
 	unsigned long avail_out;
@@ -26,21 +26,21 @@ typedef struct git_zstream {
 	unsigned long total_out;
 	unsigned char *next_in;
 	unsigned char *next_out;
-} git_zstream;
+} but_zstream;
 
-void git_inflate_init(git_zstream *);
-void git_inflate_init_gzip_only(git_zstream *);
-void git_inflate_end(git_zstream *);
-int git_inflate(git_zstream *, int flush);
+void but_inflate_init(but_zstream *);
+void but_inflate_init_gzip_only(but_zstream *);
+void but_inflate_end(but_zstream *);
+int but_inflate(but_zstream *, int flush);
 
-void git_deflate_init(git_zstream *, int level);
-void git_deflate_init_gzip(git_zstream *, int level);
-void git_deflate_init_raw(git_zstream *, int level);
-void git_deflate_end(git_zstream *);
-int git_deflate_abort(git_zstream *);
-int git_deflate_end_gently(git_zstream *);
-int git_deflate(git_zstream *, int flush);
-unsigned long git_deflate_bound(git_zstream *, unsigned long);
+void but_deflate_init(but_zstream *, int level);
+void but_deflate_init_gzip(but_zstream *, int level);
+void but_deflate_init_raw(but_zstream *, int level);
+void but_deflate_end(but_zstream *);
+int but_deflate_abort(but_zstream *);
+int but_deflate_end_gently(but_zstream *);
+int but_deflate(but_zstream *, int flush);
+unsigned long but_deflate_bound(but_zstream *, unsigned long);
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
@@ -60,7 +60,7 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
 #define S_IFINVALID     0030000
 
 /*
- * A "directory link" is a link to another git directory.
+ * A "directory link" is a link to another but directory.
  *
  * The value 0160000 is not normally a valid mode, and
  * also just happens to be S_IFDIR + S_IFLNK
@@ -91,11 +91,11 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
  *
  * as www.google.com puts it.
  *
- * This port has been properly assigned for git use by IANA:
- * git (Assigned-9418) [I06-050728-0001].
+ * This port has been properly assigned for but use by IANA:
+ * but (Assigned-9418) [I06-050728-0001].
  *
- *	git  9418/tcp   git pack transfer service
- *	git  9418/udp   git pack transfer service
+ *	but  9418/tcp   but pack transfer service
+ *	but  9418/udp   but pack transfer service
  *
  * with Linus Torvalds <torvalds@osdl.org> as the point of
  * contact. September 2005.
@@ -426,7 +426,7 @@ extern struct index_state the_index;
 #define active_cache_tree (the_index.cache_tree)
 
 #define read_cache() repo_read_index(the_repository)
-#define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))
+#define read_cache_from(path) read_index_from(&the_index, (path), (get_but_dir()))
 #define read_cache_preload(pathspec) repo_read_index_preload(the_repository, (pathspec), 0)
 #define is_cache_unborn() is_index_unborn(&the_index)
 #define read_cache_unmerged() repo_read_index_unmerged(the_repository)
@@ -489,7 +489,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
 #define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
 #define GIT_SUPER_PREFIX_ENVIRONMENT "GIT_INTERNAL_SUPER_PREFIX"
-#define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
+#define DEFAULT_GIT_DIR_ENVIRONMENT ".but"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
@@ -502,12 +502,12 @@ static inline enum object_type object_type(unsigned int mode)
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
 #define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
-#define GITATTRIBUTES_FILE ".gitattributes"
+#define GITATTRIBUTES_FILE ".butattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"
-#define GITMODULES_FILE ".gitmodules"
-#define GITMODULES_INDEX ":.gitmodules"
-#define GITMODULES_HEAD "HEAD:.gitmodules"
+#define GITMODULES_FILE ".butmodules"
+#define GITMODULES_INDEX ":.butmodules"
+#define GITMODULES_HEAD "HEAD:.butmodules"
 #define GIT_NOTES_REF_ENVIRONMENT "GIT_NOTES_REF"
 #define GIT_NOTES_DEFAULT_REF "refs/notes/cummits"
 #define GIT_NOTES_DISPLAY_REF_ENVIRONMENT "GIT_NOTES_DISPLAY_REF"
@@ -535,7 +535,7 @@ static inline enum object_type object_type(unsigned int mode)
  * This environment variable is expected to contain a boolean indicating
  * whether we should or should not treat:
  *
- *   GIT_DIR=foo.git git ...
+ *   GIT_DIR=foo.but but ...
  *
  * as if GIT_WORK_TREE=. was given. It's not expected that users will make use
  * of this, but we use it internally to communicate to sub-processes that we
@@ -545,50 +545,50 @@ static inline enum object_type object_type(unsigned int mode)
 
 /*
  * Repository-local GIT_* environment variables; these will be cleared
- * when git spawns a sub-process that runs inside another repository.
+ * when but spawns a sub-process that runs inside another repository.
  * The array is NULL-terminated, which makes it easy to pass in the "env"
  * parameter of a run-command invocation, or to do a simple walk.
  */
 extern const char * const local_repo_env[];
 
-void setup_git_env(const char *git_dir);
+void setup_but_env(const char *but_dir);
 
 /*
- * Returns true iff we have a configured git repository (either via
- * setup_git_directory, or in the environment via $GIT_DIR).
+ * Returns true iff we have a configured but repository (either via
+ * setup_but_directory, or in the environment via $GIT_DIR).
  */
-int have_git_dir(void);
+int have_but_dir(void);
 
 extern int is_bare_repository_cfg;
 int is_bare_repository(void);
-int is_inside_git_dir(void);
-extern char *git_work_tree_cfg;
+int is_inside_but_dir(void);
+extern char *but_work_tree_cfg;
 int is_inside_work_tree(void);
-const char *get_git_dir(void);
-const char *get_git_common_dir(void);
+const char *get_but_dir(void);
+const char *get_but_common_dir(void);
 const char *get_object_directory(void);
 char *get_index_file(void);
 char *get_graft_file(struct repository *r);
-void set_git_dir(const char *path, int make_realpath);
-int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
-int get_common_dir(struct strbuf *sb, const char *gitdir);
-const char *get_git_namespace(void);
+void set_but_dir(const char *path, int make_realpath);
+int get_common_dir_noenv(struct strbuf *sb, const char *butdir);
+int get_common_dir(struct strbuf *sb, const char *butdir);
+const char *get_but_namespace(void);
 const char *strip_namespace(const char *namespaced_ref);
 const char *get_super_prefix(void);
-const char *get_git_work_tree(void);
+const char *get_but_work_tree(void);
 
 /*
- * Return true if the given path is a git directory; note that this _just_
- * looks at the directory itself. If you want to know whether "foo/.git"
+ * Return true if the given path is a but directory; note that this _just_
+ * looks at the directory itself. If you want to know whether "foo/.but"
  * is a repository, you must feed that path, not just "foo".
  */
-int is_git_directory(const char *path);
+int is_but_directory(const char *path);
 
 /*
- * Return 1 if the given path is the root of a git repository or
+ * Return 1 if the given path is the root of a but repository or
  * submodule, else 0. Will not return 1 for bare repositories with the
- * exception of creating a bare repository in "foo/.git" and calling
- * is_git_repository("foo").
+ * exception of creating a bare repository in "foo/.but" and calling
+ * is_but_repository("foo").
  *
  * If we run into read errors, we err on the side of saying "yes, it is",
  * as we usually consider sub-repos precious, and would prefer to err on the
@@ -604,29 +604,29 @@ int is_nonbare_repository_dir(struct strbuf *path);
 #define READ_GITFILE_ERR_NO_PATH 6
 #define READ_GITFILE_ERR_NOT_A_REPO 7
 #define READ_GITFILE_ERR_TOO_LARGE 8
-void read_gitfile_error_die(int error_code, const char *path, const char *dir);
-const char *read_gitfile_gently(const char *path, int *return_error_code);
-#define read_gitfile(path) read_gitfile_gently((path), NULL)
-const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
-#define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
+void read_butfile_error_die(int error_code, const char *path, const char *dir);
+const char *read_butfile_gently(const char *path, int *return_error_code);
+#define read_butfile(path) read_butfile_gently((path), NULL)
+const char *resolve_butdir_gently(const char *suspect, int *return_error_code);
+#define resolve_butdir(path) resolve_butdir_gently((path), NULL)
 
-void set_git_work_tree(const char *tree);
+void set_but_work_tree(const char *tree);
 
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
 void setup_work_tree(void);
 /*
- * Find the commondir and gitdir of the repository that contains the current
+ * Find the commondir and butdir of the repository that contains the current
  * working directory, without changing the working directory or other global
- * state. The result is appended to commondir and gitdir.  If the discovered
- * gitdir does not correspond to a worktree, then 'commondir' and 'gitdir' will
+ * state. The result is appended to commondir and butdir.  If the discovered
+ * butdir does not correspond to a worktree, then 'commondir' and 'butdir' will
  * both have the same result appended to the buffer.  The return value is
  * either 0 upon success and non-zero if no repository was found.
  */
-int discover_git_directory(struct strbuf *commondir,
-			   struct strbuf *gitdir);
-const char *setup_git_directory_gently(int *);
-const char *setup_git_directory(void);
+int discover_but_directory(struct strbuf *commondir,
+			   struct strbuf *butdir);
+const char *setup_but_directory_gently(int *);
+const char *setup_but_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
 char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
 
@@ -652,7 +652,7 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
 
-int init_db(const char *git_dir, const char *real_git_dir,
+int init_db(const char *but_dir, const char *real_but_dir,
 	    const char *template_dir, int hash_algo,
 	    const char *initial_branch, unsigned int flags);
 void initialize_repository_version(int hash_algo, int reinit);
@@ -743,7 +743,7 @@ void preload_index(struct index_state *index,
 int do_read_index(struct index_state *istate, const char *path,
 		  int must_exist); /* for testting only! */
 int read_index_from(struct index_state *, const char *path,
-		    const char *gitdir);
+		    const char *butdir);
 int is_index_unborn(struct index_state *);
 
 void ensure_full_index(struct index_state *istate);
@@ -964,12 +964,12 @@ extern int warn_ambiguous_refs;
 extern int warn_on_object_refname_ambiguity;
 extern char *apply_default_whitespace;
 extern char *apply_default_ignorewhitespace;
-extern const char *git_attributes_file;
-extern const char *git_hooks_path;
+extern const char *but_attributes_file;
+extern const char *but_hooks_path;
 extern int zlib_compression_level;
 extern int pack_compression_level;
-extern size_t packed_git_window_size;
-extern size_t packed_git_limit;
+extern size_t packed_but_window_size;
+extern size_t packed_but_limit;
 extern size_t delta_base_cache_limit;
 extern unsigned long big_file_threshold;
 extern unsigned long pack_size_limit_cfg;
@@ -991,7 +991,7 @@ void reset_shared_repository(void);
  * commands that do not want replace references to be active.
  */
 extern int read_replace_refs;
-extern char *git_replace_ref_base;
+extern char *but_replace_ref_base;
 
 /*
  * These values are used to help identify parts of a repository to fsync.
@@ -1169,9 +1169,9 @@ int verify_repository_format(const struct repository_format *format,
 			     struct strbuf *err);
 
 /*
- * Check the repository format version in the path found in get_git_dir(),
+ * Check the repository format version in the path found in get_but_dir(),
  * and die if it is a version we don't understand. Generally one would
- * set_git_dir() before calling this, and use it only for "are we in a valid
+ * set_but_dir() before calling this, and use it only for "are we in a valid
  * repo?".
  *
  * If successful and fmt is not NULL, fill fmt with data.
@@ -1199,7 +1199,7 @@ void check_repository_format(struct repository_format *fmt);
  * written (excluding the NUL terminator).
  *
  * Note that while this version avoids the static buffer, it is not fully
- * reentrant, as it calls into other non-reentrant git code.
+ * reentrant, as it calls into other non-reentrant but code.
  */
 const char *repo_find_unique_abbrev(struct repository *r, const struct object_id *oid, int len);
 #define find_unique_abbrev(oid, len) repo_find_unique_abbrev(the_repository, oid, len)
@@ -1207,8 +1207,8 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct obje
 #define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
 /* set default permissions by passing mode arguments to open(2) */
-int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
-int git_mkstemp_mode(char *pattern, int mode);
+int but_mkstemps_mode(char *pattern, int suffix_len, int mode);
+int but_mkstemp_mode(char *pattern, int mode);
 
 /*
  * NOTE NOTE NOTE!!
@@ -1225,7 +1225,7 @@ enum sharedrepo {
 	PERM_GROUP          = 0660,
 	PERM_EVERYBODY      = 0664
 };
-int git_config_perm(const char *var, const char *value);
+int but_config_perm(const char *var, const char *value);
 int adjust_shared_perm(const char *path);
 
 /*
@@ -1246,7 +1246,7 @@ int adjust_shared_perm(const char *path);
  * safe_create_leading_directories_const() doesn't modify path, even
  * temporarily. Both these variants adjust the permissions of the
  * created directories to honor core.sharedRepository, so they are best
- * suited for files inside the git dir. For working tree files, use
+ * suited for files inside the but dir. For working tree files, use
  * safe_create_leading_directories_no_share() instead, as it ignores
  * the core.sharedRepository setting.
  */
@@ -1261,7 +1261,7 @@ enum scld_error safe_create_leading_directories(char *path);
 enum scld_error safe_create_leading_directories_const(const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
-int mkdir_in_gitdir(const char *path);
+int mkdir_in_butdir(const char *path);
 char *interpolate_path(const char *path, int real_home);
 /* NEEDSWORK: remove this synonym once in-flight topics have migrated */
 #define expand_user_path interpolate_path
@@ -1287,13 +1287,13 @@ char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
 
 /*
- * These functions match their is_hfs_dotgit() counterparts; see utf8.h for
+ * These functions match their is_hfs_dotbut() counterparts; see utf8.h for
  * details.
  */
-int is_ntfs_dotgit(const char *name);
-int is_ntfs_dotgitmodules(const char *name);
-int is_ntfs_dotgitignore(const char *name);
-int is_ntfs_dotgitattributes(const char *name);
+int is_ntfs_dotbut(const char *name);
+int is_ntfs_dotbutmodules(const char *name);
+int is_ntfs_dotbutignore(const char *name);
+int is_ntfs_dotbutattributes(const char *name);
 int is_ntfs_dotmailmap(const char *name);
 
 /*
@@ -1313,20 +1313,20 @@ char *xdg_config_home_for(const char *subdir, const char *filename);
 
 /**
  * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/git/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
- * "$HOME/.config/git/$filename". Return NULL upon error.
+ * "$XDG_CONFIG_HOME/but/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
+ * "$HOME/.config/but/$filename". Return NULL upon error.
  */
 char *xdg_config_home(const char *filename);
 
 /**
  * Return a newly allocated string with the evaluation of
- * "$XDG_CACHE_HOME/git/$filename" if $XDG_CACHE_HOME is non-empty, otherwise
- * "$HOME/.cache/git/$filename". Return NULL upon error.
+ * "$XDG_CACHE_HOME/but/$filename" if $XDG_CACHE_HOME is non-empty, otherwise
+ * "$HOME/.cache/but/$filename". Return NULL upon error.
  */
 char *xdg_cache_home(const char *filename);
 
-int git_open_cloexec(const char *name, int flags);
-#define git_open(name) git_open_cloexec(name, O_RDONLY)
+int but_open_cloexec(const char *name, int flags);
+#define but_open(name) but_open_cloexec(name, O_RDONLY)
 
 /**
  * unpack_loose_header() initializes the data stream needed to unpack
@@ -1350,7 +1350,7 @@ enum unpack_loose_header_result {
 	ULHR_BAD,
 	ULHR_TOO_LONG,
 };
-enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
+enum unpack_loose_header_result unpack_loose_header(but_zstream *stream,
 						    unsigned char *map,
 						    unsigned long mapsize,
 						    void *buffer,
@@ -1398,7 +1398,7 @@ static inline unsigned int hexval(unsigned char c)
 }
 
 /*
- * Convert two consecutive hexadecimal digits into a char.  Return a
+ * Convert two consecutive hexadecimal dibuts into a char.  Return a
  * negative value on error.  Don't run over the end of short strings.
  */
 static inline int hex2chr(const char *s)
@@ -1504,12 +1504,12 @@ int get_sha1_hex(const char *hex, unsigned char *sha1);
 int get_oid_hex(const char *hex, struct object_id *sha1);
 
 /* Like get_oid_hex, but for an arbitrary hash algorithm. */
-int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
+int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct but_hash_algo *algop);
 
 /*
- * Read `len` pairs of hexadecimal digits from `hex` and write the
+ * Read `len` pairs of hexadecimal dibuts from `hex` and write the
  * values to `binary` as `len` bytes. Return 0 on success, or -1 if
- * the input does not consist of hex digits).
+ * the input does not consist of hex dibuts).
  */
 int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
 
@@ -1526,9 +1526,9 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
  *   printf("%s -> %s", hash_to_hex(one), hash_to_hex(two));
  *   printf("%s -> %s", oid_to_hex(one), oid_to_hex(two));
  */
-char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
+char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct but_hash_algo *);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
-char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
+char *hash_to_hex_algop(const unsigned char *hash, const struct but_hash_algo *);	/* static buffer result! */
 char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 
@@ -1543,7 +1543,7 @@ int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
 
 /* Like parse_oid_hex, but for an arbitrary hash algorithm. */
 int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
+			const struct but_hash_algo *algo);
 
 
 /*
@@ -1631,19 +1631,19 @@ enum want_ident {
 	WANT_CUMMITTER_IDENT
 };
 
-const char *git_author_info(int);
-const char *git_cummitter_info(int);
+const char *but_author_info(int);
+const char *but_cummitter_info(int);
 const char *fmt_ident(const char *name, const char *email,
 		      enum want_ident whose_ident,
 		      const char *date_str, int);
 const char *fmt_name(enum want_ident);
 const char *ident_default_name(void);
 const char *ident_default_email(void);
-const char *git_editor(void);
-const char *git_sequence_editor(void);
-const char *git_pager(int stdout_is_tty);
+const char *but_editor(void);
+const char *but_sequence_editor(void);
+const char *but_pager(int stdout_is_tty);
 int is_terminal_dumb(void);
-int git_ident_config(const char *, const char *, void *);
+int but_ident_config(const char *, const char *, void *);
 /*
  * Prepare an ident to fall back on if the user didn't configure it.
  */
@@ -1708,7 +1708,7 @@ struct pack_window {
 
 struct pack_entry {
 	off_t offset;
-	struct packed_git *p;
+	struct packed_but *p;
 };
 
 /*
@@ -1743,10 +1743,10 @@ const char *get_cummit_output_encoding(void);
 int cummitter_ident_sufficiently_given(void);
 int author_ident_sufficiently_given(void);
 
-extern const char *git_cummit_encoding;
-extern const char *git_log_output_encoding;
-extern const char *git_mailmap_file;
-extern const char *git_mailmap_blob;
+extern const char *but_cummit_encoding;
+extern const char *but_log_output_encoding;
+extern const char *but_mailmap_file;
+extern const char *but_mailmap_blob;
 
 /* IO helper functions */
 void maybe_flush_or_die(FILE *, const char *);
@@ -1829,7 +1829,7 @@ void shift_tree_by(struct repository *, const struct object_id *, const struct o
 /*
  * whitespace rules.
  * used by both diff and apply
- * last two digits are tab width
+ * last two dibuts are tab width
  */
 #define WS_BLANK_AT_EOL         0100
 #define WS_SPACE_BEFORE_TAB     0200

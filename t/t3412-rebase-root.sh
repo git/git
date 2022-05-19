@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git rebase --root
+test_description='but rebase --root
 
-Tests if git rebase --root --onto <newparent> can rebase the root cummit.
+Tests if but rebase --root --onto <newparent> can rebase the root cummit.
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -10,29 +10,29 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 log_with_names () {
-	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
-	git name-rev --annotate-stdin --name-only --refs=refs/heads/$1
+	but rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
+	but name-rev --annotate-stdin --name-only --refs=refs/heads/$1
 }
 
 
 test_expect_success 'prepare repository' '
 	test_cummit 1 A &&
 	test_cummit 2 A &&
-	git symbolic-ref HEAD refs/heads/other &&
-	rm .git/index &&
+	but symbolic-ref HEAD refs/heads/other &&
+	rm .but/index &&
 	test_cummit 3 B &&
 	test_cummit 1b A 1 &&
 	test_cummit 4 B
 '
 
 test_expect_success 'rebase --root fails with too many args' '
-	git checkout -B fail other &&
-	test_must_fail git rebase --onto main --root fail fail
+	but checkout -B fail other &&
+	test_must_fail but rebase --onto main --root fail fail
 '
 
 test_expect_success 'setup pre-rebase hook' '
 	test_hook --setup pre-rebase <<-\EOF
-	echo "$1,$2" >.git/PRE-REBASE-INPUT
+	echo "$1,$2" >.but/PRE-REBASE-INPUT
 	EOF
 '
 cat > expect <<EOF
@@ -43,55 +43,55 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'rebase --root --onto <newbase>' '
-	git checkout -b work other &&
-	git rebase --root --onto main &&
-	git log --pretty=tformat:"%s" > rebased &&
+	but checkout -b work other &&
+	but rebase --root --onto main &&
+	but log --pretty=tformat:"%s" > rebased &&
 	test_cmp expect rebased
 '
 
 test_expect_success 'pre-rebase got correct input (1)' '
-	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,
+	test "z$(cat .but/PRE-REBASE-INPUT)" = z--root,
 '
 
 test_expect_success 'rebase --root --onto <newbase> <branch>' '
-	git branch work2 other &&
-	git rebase --root --onto main work2 &&
-	git log --pretty=tformat:"%s" > rebased2 &&
+	but branch work2 other &&
+	but rebase --root --onto main work2 &&
+	but log --pretty=tformat:"%s" > rebased2 &&
 	test_cmp expect rebased2
 '
 
 test_expect_success 'pre-rebase got correct input (2)' '
-	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,work2
+	test "z$(cat .but/PRE-REBASE-INPUT)" = z--root,work2
 '
 
 test_expect_success 'rebase -i --root --onto <newbase>' '
-	git checkout -b work3 other &&
-	git rebase -i --root --onto main &&
-	git log --pretty=tformat:"%s" > rebased3 &&
+	but checkout -b work3 other &&
+	but rebase -i --root --onto main &&
+	but log --pretty=tformat:"%s" > rebased3 &&
 	test_cmp expect rebased3
 '
 
 test_expect_success 'pre-rebase got correct input (3)' '
-	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,
+	test "z$(cat .but/PRE-REBASE-INPUT)" = z--root,
 '
 
 test_expect_success 'rebase -i --root --onto <newbase> <branch>' '
-	git branch work4 other &&
-	git rebase -i --root --onto main work4 &&
-	git log --pretty=tformat:"%s" > rebased4 &&
+	but branch work4 other &&
+	but rebase -i --root --onto main work4 &&
+	but log --pretty=tformat:"%s" > rebased4 &&
 	test_cmp expect rebased4
 '
 
 test_expect_success 'pre-rebase got correct input (4)' '
-	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,work4
+	test "z$(cat .but/PRE-REBASE-INPUT)" = z--root,work4
 '
 
 test_expect_success 'set up merge history' '
-	git checkout other^ &&
-	git checkout -b side &&
+	but checkout other^ &&
+	but checkout -b side &&
 	test_cummit 5 C &&
-	git checkout other &&
-	git merge side
+	but checkout other &&
+	but merge side
 '
 
 cat > expect-side <<'EOF'
@@ -110,12 +110,12 @@ cummit work6~4
 EOF
 
 test_expect_success 'set up second root and merge' '
-	git symbolic-ref HEAD refs/heads/third &&
-	rm .git/index &&
+	but symbolic-ref HEAD refs/heads/third &&
+	rm .but/index &&
 	rm A B C &&
 	test_cummit 6 D &&
-	git checkout other &&
-	git merge --allow-unrelated-histories third
+	but checkout other &&
+	but merge --allow-unrelated-histories third
 '
 
 cat > expect-third <<'EOF'
@@ -144,39 +144,39 @@ test_expect_success 'setup pre-rebase hook that fails' '
 '
 
 test_expect_success 'pre-rebase hook stops rebase' '
-	git checkout -b stops1 other &&
-	test_must_fail git rebase --root --onto main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1 &&
-	test 0 = $(git rev-list other...stops1 | wc -l)
+	but checkout -b stops1 other &&
+	test_must_fail but rebase --root --onto main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/stops1 &&
+	test 0 = $(but rev-list other...stops1 | wc -l)
 '
 
 test_expect_success 'pre-rebase hook stops rebase -i' '
-	git checkout -b stops2 other &&
-	test_must_fail git rebase --root --onto main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2 &&
-	test 0 = $(git rev-list other...stops2 | wc -l)
+	but checkout -b stops2 other &&
+	test_must_fail but rebase --root --onto main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/stops2 &&
+	test 0 = $(but rev-list other...stops2 | wc -l)
 '
 
 test_expect_success 'remove pre-rebase hook' '
-	rm -f .git/hooks/pre-rebase
+	rm -f .but/hooks/pre-rebase
 '
 
 test_expect_success 'set up a conflict' '
-	git checkout main &&
+	but checkout main &&
 	echo conflict > B &&
-	git add B &&
-	git cummit -m conflict
+	but add B &&
+	but cummit -m conflict
 '
 
 test_expect_success 'rebase --root with conflict (first part)' '
-	git checkout -b conflict1 other &&
-	test_must_fail git rebase --root --onto main &&
-	git ls-files -u | grep "B$"
+	but checkout -b conflict1 other &&
+	test_must_fail but rebase --root --onto main &&
+	but ls-files -u | grep "B$"
 '
 
 test_expect_success 'fix the conflict' '
 	echo 3 > B &&
-	git add B
+	but add B
 '
 
 cat > expect-conflict <<EOF
@@ -190,25 +190,25 @@ conflict
 EOF
 
 test_expect_success 'rebase --root with conflict (second part)' '
-	git rebase --continue &&
-	git log --pretty=tformat:"%s" > conflict1 &&
+	but rebase --continue &&
+	but log --pretty=tformat:"%s" > conflict1 &&
 	test_cmp expect-conflict conflict1
 '
 
 test_expect_success 'rebase -i --root with conflict (first part)' '
-	git checkout -b conflict2 other &&
-	test_must_fail git rebase -i --root --onto main &&
-	git ls-files -u | grep "B$"
+	but checkout -b conflict2 other &&
+	test_must_fail but rebase -i --root --onto main &&
+	but ls-files -u | grep "B$"
 '
 
 test_expect_success 'fix the conflict' '
 	echo 3 > B &&
-	git add B
+	but add B
 '
 
 test_expect_success 'rebase -i --root with conflict (second part)' '
-	git rebase --continue &&
-	git log --pretty=tformat:"%s" > conflict2 &&
+	but rebase --continue &&
+	but log --pretty=tformat:"%s" > conflict2 &&
 	test_cmp expect-conflict conflict2
 '
 
@@ -235,7 +235,7 @@ EOF
 
 test_expect_success 'fix the conflict' '
 	echo 3 > B &&
-	git add B
+	but add B
 '
 
 test_done

@@ -13,8 +13,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 create_repo () {
 	number_of_cummits=$1
 	nr=0
-	test -d .git || {
-	git init &&
+	test -d .but || {
+	but init &&
 	(
 		while test $nr -lt $number_of_cummits
 		do
@@ -56,15 +56,15 @@ create_repo () {
 
 		cat note_cummit
 	) |
-	git fast-import --quiet &&
-	git config core.notesRef refs/notes/cummits
+	but fast-import --quiet &&
+	but config core.notesRef refs/notes/cummits
 	}
 }
 
 test_notes () {
 	count=$1 &&
-	git config core.notesRef refs/notes/cummits &&
-	git log >tmp &&
+	but config core.notesRef refs/notes/cummits &&
+	but log >tmp &&
 	grep "^    " tmp >output &&
 	i=$count &&
 	while test $i -gt 0
@@ -90,7 +90,7 @@ write_script time_notes <<\EOF
 			unset GIT_NOTES_REF
 			;;
 		esac
-		git log || exit $?
+		but log || exit $?
 		i=$(($i+1))
 	done >/dev/null
 EOF

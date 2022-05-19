@@ -1,15 +1,15 @@
-git-http-fetch(1)
+but-http-fetch(1)
 =================
 
 NAME
 ----
-git-http-fetch - Download from a remote Git repository via HTTP
+but-http-fetch - Download from a remote Git repository via HTTP
 
 
 SYNOPSIS
 --------
 [verse]
-'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w <filename>] [--recover] [--stdin | --packfile=<hash> | <cummit>] <URL>
+'but http-fetch' [-c] [-t] [-a] [-d] [-v] [-w <filename>] [--recover] [--stdin | --packfile=<hash> | <cummit>] <URL>
 
 DESCRIPTION
 -----------
@@ -36,14 +36,14 @@ cummit-id::
 
 --stdin::
 	Instead of a cummit id on the command line (which is not expected in this
-	case), 'git http-fetch' expects lines on stdin in the format
+	case), 'but http-fetch' expects lines on stdin in the format
 
 		<cummit-id>['\t'<filename-as-in--w>]
 
 --packfile=<hash>::
 	For internal use only. Instead of a cummit id on the command
 	line (which is not expected in
-	this case), 'git http-fetch' fetches the packfile directly at the given
+	this case), 'but http-fetch' fetches the packfile directly at the given
 	URL and uses index-pack to generate corresponding .idx and .keep files.
 	The hash is used to determine the name of the temporary file and is
 	arbitrary. The output of index-pack is printed to stdout. Requires
@@ -59,4 +59,4 @@ cummit-id::
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

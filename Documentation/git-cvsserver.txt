@@ -1,9 +1,9 @@
-git-cvsserver(1)
+but-cvsserver(1)
 ================
 
 NAME
 ----
-git-cvsserver - A CVS server emulator for Git
+but-cvsserver - A CVS server emulator for Git
 
 SYNOPSIS
 --------
@@ -11,18 +11,18 @@ SYNOPSIS
 SSH:
 
 [verse]
-export CVS_SERVER="git cvsserver"
-'cvs' -d :ext:user@server/path/repo.git co <HEAD_name>
+export CVS_SERVER="but cvsserver"
+'cvs' -d :ext:user@server/path/repo.but co <HEAD_name>
 
 pserver (/etc/inetd.conf):
 
 [verse]
-cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
+cvspserver stream tcp nowait nobody /usr/bin/but-cvsserver but-cvsserver pserver
 
 Usage:
 
 [verse]
-'git-cvsserver' [<options>] [pserver|server] [<directory> ...]
+'but-cvsserver' [<options>] [pserver|server] [<directory> ...]
 
 DESCRIPTION
 -----------
@@ -40,7 +40,7 @@ OPTIONS
 -------
 
 All these options obviously only make sense if enforced by the server side.
-They have been implemented to resemble the linkgit:git-daemon[1] options as
+They have been implemented to resemble the linkbut:but-daemon[1] options as
 closely as possible.
 
 --base-path <path>::
@@ -50,7 +50,7 @@ Prepend 'path' to requested CVSROOT
 Don't allow recursing into subdirectories
 
 --export-all::
-Don't check for `gitcvs.enabled` in config. You also have to specify a list
+Don't check for `butcvs.enabled` in config. You also have to specify a list
 of allowed directories (see below) if you want to use this option.
 
 -V::
@@ -64,8 +64,8 @@ Print usage information and exit
 
 <directory>::
 You can specify a list of allowed directories. If no directories
-are given, all are allowed. This is an additional restriction, gitcvs
-access still needs to be enabled by the `gitcvs.enabled` config option
+are given, all are allowed. This is an additional restriction, butcvs
+access still needs to be enabled by the `butcvs.enabled` config option
 unless `--export-all` was given, too.
 
 
@@ -74,7 +74,7 @@ LIMITATIONS
 
 CVS clients cannot tag, branch or perform Git merges.
 
-'git-cvsserver' maps Git branches to CVS modules. This is very different
+'but-cvsserver' maps Git branches to CVS modules. This is very different
 from what most CVS users would expect since in CVS modules usually represent
 one or more directories.
 
@@ -86,7 +86,7 @@ INSTALLATION
 +
 --
 ------
-   cvspserver stream tcp nowait nobody git-cvsserver pserver
+   cvspserver stream tcp nowait nobody but-cvsserver pserver
 
 ------
 Note: Some inetd servers let you specify the name of the executable
@@ -95,18 +95,18 @@ it was executed with). In this case the correct line in /etc/inetd.conf
 looks like
 
 ------
-   cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
+   cvspserver stream tcp nowait nobody /usr/bin/but-cvsserver but-cvsserver pserver
 
 ------
 
 Only anonymous access is provided by pserver by default. To cummit you
-will have to create pserver accounts, simply add a gitcvs.authdb
+will have to create pserver accounts, simply add a butcvs.authdb
 setting in the config file of the repositories you want the cvsserver
 to allow writes to, for example:
 
 ------
 
-   [gitcvs]
+   [butcvs]
 	authdb = /etc/cvsserver/passwd
 
 ------
@@ -127,42 +127,42 @@ pwhash in NetBSD) and paste it in the right location.
 
 Then provide your password via the pserver method, for example:
 ------
-   cvs -d:pserver:someuser:somepassword@server:/path/repo.git co <HEAD_name>
+   cvs -d:pserver:someuser:somepassword@server:/path/repo.but co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having Git tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
-environment variable, you can rename 'git-cvsserver' to `cvs`.
+environment variable, you can rename 'but-cvsserver' to `cvs`.
 
 Note: Newer CVS versions (>= 1.12.11) also support specifying
 CVS_SERVER directly in CVSROOT like
 
 ------
-   cvs -d ":ext;CVS_SERVER=git cvsserver:user@server/path/repo.git" co <HEAD_name>
+   cvs -d ":ext;CVS_SERVER=but cvsserver:user@server/path/repo.but" co <HEAD_name>
 ------
 This has the advantage that it will be saved in your 'CVS/Root' files and
 you don't need to worry about always setting the correct environment
-variable.  SSH users restricted to 'git-shell' don't need to override the default
-with CVS_SERVER (and shouldn't) as 'git-shell' understands `cvs` to mean
-'git-cvsserver' and pretends that the other end runs the real 'cvs' better.
+variable.  SSH users restricted to 'but-shell' don't need to override the default
+with CVS_SERVER (and shouldn't) as 'but-shell' understands `cvs` to mean
+'but-cvsserver' and pretends that the other end runs the real 'cvs' better.
 --
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
 +
 --
 ------
-   [gitcvs]
+   [butcvs]
         enabled=1
         # optional for debugging
 	logFile=/path/to/logfile
 
 ------
-Note: you need to ensure each user that is going to invoke 'git-cvsserver' has
+Note: you need to ensure each user that is going to invoke 'but-cvsserver' has
 write access to the log file and to the database (see
 <<dbbackend,Database Backend>>. If you want to offer write access over
 SSH, the users of course also need write access to the Git repository itself.
 
 You also need to ensure that each repository is "bare" (without a Git index
-file) for `cvs cummit` to work. See linkgit:gitcvs-migration[7].
+file) for `cvs cummit` to work. See linkbut:butcvs-migration[7].
 
 [[configaccessmethod]]
 All configuration variables can also be overridden for a specific method of
@@ -170,10 +170,10 @@ access. Valid method names are "ext" (for SSH access) and "pserver". The
 following example configuration would disable pserver access while still
 allowing access over SSH.
 ------
-   [gitcvs]
+   [butcvs]
         enabled=0
 
-   [gitcvs "ext"]
+   [butcvs "ext"]
         enabled=1
 ------
 --
@@ -181,12 +181,12 @@ allowing access over SSH.
    automatically saving it in your 'CVS/Root' files, then you need to set them
    explicitly in your environment.  CVSROOT should be set as per normal, but the
    directory should point at the appropriate Git repo.  As above, for SSH clients
-   _not_ restricted to 'git-shell', CVS_SERVER should be set to 'git-cvsserver'.
+   _not_ restricted to 'but-shell', CVS_SERVER should be set to 'but-cvsserver'.
 +
 --
 ------
-   export CVSROOT=:ext:user@server:/var/git/project.git
-   export CVS_SERVER="git cvsserver"
+   export CVSROOT=:ext:user@server:/var/but/project.but
+   export CVS_SERVER="but cvsserver"
 ------
 --
 4. For SSH clients that will make cummits, make sure their server-side
@@ -209,35 +209,35 @@ allowing access over SSH.
 DATABASE BACKEND
 ----------------
 
-'git-cvsserver' uses one database per Git head (i.e. CVS module) to
+'but-cvsserver' uses one database per Git head (i.e. CVS module) to
 store information about the repository to maintain consistent
 CVS revision numbers. The database needs to be
 updated (i.e. written to) after every cummit.
 
-If the cummit is done directly by using `git` (as opposed to
-using 'git-cvsserver') the update will need to happen on the
-next repository access by 'git-cvsserver', independent of
+If the cummit is done directly by using `but` (as opposed to
+using 'but-cvsserver') the update will need to happen on the
+next repository access by 'but-cvsserver', independent of
 access method and requested operation.
 
 That means that even if you offer only read access (e.g. by using
-the pserver method), 'git-cvsserver' should have write access to
+the pserver method), 'but-cvsserver' should have write access to
 the database to work reliably (otherwise you need to make sure
-that the database is up to date any time 'git-cvsserver' is executed).
+that the database is up to date any time 'but-cvsserver' is executed).
 
 By default it uses SQLite databases in the Git directory, named
-`gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
+`butcvs.<module_name>.sqlite`. Note that the SQLite backend creates
 temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
-'git-cvsserver' write access to the database file without granting
+'but-cvsserver' write access to the database file without granting
 them write access to the directory, too.
 
 The database cannot be reliably regenerated in a
 consistent form after the branch it is tracking has changed.
-Example: For merged branches, 'git-cvsserver' only tracks
-one branch of development, and after a 'git merge' an
+Example: For merged branches, 'but-cvsserver' only tracks
+one branch of development, and after a 'but merge' an
 incrementally updated database may track a different branch
 than a database regenerated from scratch, causing inconsistent
-CVS revision numbers. `git-cvsserver` has no way of knowing which
+CVS revision numbers. `but-cvsserver` has no way of knowing which
 branch it would have picked if it had been run incrementally
 pre-merge. So if you have to fully or partially (from old
 backup) regenerate the database, you should be suspicious
@@ -249,18 +249,18 @@ configuration variables:
 Configuring database backend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-'git-cvsserver' uses the Perl DBI module. Please also read
+'but-cvsserver' uses the Perl DBI module. Please also read
 its documentation if changing these variables, especially
 about `DBI->connect()`.
 
-gitcvs.dbName::
+butcvs.dbName::
 	Database name. The exact meaning depends on the
 	selected database driver, for SQLite this is a filename.
 	Supports variable substitution (see below). May
 	not contain semicolons (`;`).
-	Default: '%Ggitcvs.%m.sqlite'
+	Default: '%Gbutcvs.%m.sqlite'
 
-gitcvs.dbDriver::
+butcvs.dbDriver::
 	Used DBI driver. You can specify any available driver
 	for this here, but it might not work. cvsserver is tested
 	with 'DBD::SQLite', reported to work with
@@ -269,16 +269,16 @@ gitcvs.dbDriver::
 	contain colons (`:`).
 	Default: 'SQLite'
 
-gitcvs.dbuser::
+butcvs.dbuser::
 	Database user. Only useful if setting `dbDriver`, since
 	SQLite has no concept of database users. Supports variable
 	substitution (see below).
 
-gitcvs.dbPass::
+butcvs.dbPass::
 	Database password.  Only useful if setting `dbDriver`, since
 	SQLite has no concept of database passwords.
 
-gitcvs.dbTableNamePrefix::
+butcvs.dbTableNamePrefix::
 	Database table name prefix.  Supports variable substitution
 	(see below).  Any non-alphabetic characters will be replaced
 	with underscores.
@@ -301,7 +301,7 @@ In `dbDriver` and `dbUser` you can use the following variables:
 %a::
 	access method (one of "ext" or "pserver")
 %u::
-	Name of the user running 'git-cvsserver'.
+	Name of the user running 'but-cvsserver'.
 	If no name can be determined, the
 	numeric uid is used.
 
@@ -309,13 +309,13 @@ ENVIRONMENT
 -----------
 
 These variables obviate the need for command-line options in some
-circumstances, allowing easier restricted usage through git-shell.
+circumstances, allowing easier restricted usage through but-shell.
 
 GIT_CVSSERVER_BASE_PATH takes the place of the argument to --base-path.
 
 GIT_CVSSERVER_ROOT specifies a single-directory whitelist. The
 repository must still be configured to allow access through
-git-cvsserver, as described above.
+but-cvsserver, as described above.
 
 When these environment variables are set, the corresponding
 command-line arguments may not be used.
@@ -337,13 +337,13 @@ To get a checkout with the Eclipse CVS client:
 Protocol notes: If you are using anonymous access via pserver, just select that.
 Those using SSH access should choose the 'ext' protocol, and configure 'ext'
 access on the Preferences->Team->CVS->ExtConnection pane. Set CVS_SERVER to
-"`git cvsserver`". Note that password support is not good when using 'ext',
+"`but cvsserver`". Note that password support is not good when using 'ext',
 you will definitely want to have SSH keys setup.
 
 Alternatively, you can just use the non-standard extssh protocol that Eclipse
 offer. In that case CVS_SERVER is ignored, and you will have to replace
-the cvs utility on the server with 'git-cvsserver' or manipulate your `.bashrc`
-so that calling 'cvs' effectively calls 'git-cvsserver'.
+the cvs utility on the server with 'but-cvsserver' or manipulate your `.bashrc`
+so that calling 'cvs' effectively calls 'but-cvsserver'.
 
 CLIENTS KNOWN TO WORK
 ---------------------
@@ -360,12 +360,12 @@ All the operations required for normal use are supported, including
 checkout, diff, status, update, log, add, remove, cummit.
 
 Most CVS command arguments that read CVS tags or revision numbers
-(typically -r) work, and also support any git refspec
+(typically -r) work, and also support any but refspec
 (tag, branch, cummit ID, etc).
 However, CVS revision numbers for non-default branches are not well
 emulated, and cvs log does not show tags or branches at
 all.  (Non-main-branch CVS revision numbers superficially resemble CVS
-revision numbers, but they actually encode a git cummit ID directly,
+revision numbers, but they actually encode a but cummit ID directly,
 rather than represent the number of revisions since the branch point.)
 
 Note that there are two ways to checkout a particular branch.
@@ -382,16 +382,16 @@ operations against that main branch are fast.  Or alternatively,
 -r doesn't take any extra disk space, but may be significantly slower for
 many operations, like cvs update.
 
-If you want to refer to a git refspec that has characters that are
+If you want to refer to a but refspec that has characters that are
 not allowed by CVS, you have two options.  First, it may just work
-to supply the git refspec directly to the appropriate CVS -r argument;
+to supply the but refspec directly to the appropriate CVS -r argument;
 some CVS clients don't seem to do much sanity checking of the argument.
 Second, if that fails, you can use a special character escape mechanism
 that only uses characters that are valid in CVS tags.  A sequence
 of 4 or 5 characters of the form (underscore (`"_"`), dash (`"-"`),
 one or two characters, and dash (`"-"`)) can encode various characters based
 on the one or two letters: `"s"` for slash (`"/"`), `"p"` for
-period (`"."`), `"u"` for underscore (`"_"`), or two hexadecimal digits
+period (`"."`), `"u"` for underscore (`"_"`), or two hexadecimal dibuts
 for any byte value at all (typically an ASCII number, or perhaps a part
 of a UTF-8 encoded character).
 
@@ -406,27 +406,27 @@ which causes the CVS client to treat them as a text files, subject
 to end-of-line conversion on some platforms.
 
 You can make the server use the end-of-line conversion attributes to
-set the `-k` modes for files by setting the `gitcvs.usecrlfattr`
-config variable.  See linkgit:gitattributes[5] for more information
+set the `-k` modes for files by setting the `butcvs.usecrlfattr`
+config variable.  See linkbut:butattributes[5] for more information
 about end-of-line conversion.
 
-Alternatively, if `gitcvs.usecrlfattr` config is not enabled
+Alternatively, if `butcvs.usecrlfattr` config is not enabled
 or the attributes do not allow automatic detection for a filename, then
-the server uses the `gitcvs.allBinary` config for the default setting.
-If `gitcvs.allBinary` is set, then file not otherwise
+the server uses the `butcvs.allBinary` config for the default setting.
+If `butcvs.allBinary` is set, then file not otherwise
 specified will default to '-kb' mode. Otherwise the `-k` mode
-is left blank. But if `gitcvs.allBinary` is set to "guess", then
+is left blank. But if `butcvs.allBinary` is set to "guess", then
 the correct `-k` mode will be guessed based on the contents of
 the file.
 
 For best consistency with 'cvs', it is probably best to override the
-defaults by setting `gitcvs.usecrlfattr` to true,
-and `gitcvs.allBinary` to "guess".
+defaults by setting `butcvs.usecrlfattr` to true,
+and `butcvs.allBinary` to "guess".
 
 DEPENDENCIES
 ------------
-'git-cvsserver' depends on DBD::SQLite.
+'but-cvsserver' depends on DBD::SQLite.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

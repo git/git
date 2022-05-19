@@ -60,7 +60,7 @@ static unsigned char refname_disposition[256] = {
  * Try to read one refname component from the front of refname.
  * Return the length of the component found, or -1 if the component is
  * not legal.  It is legal if it is something reasonable to have under
- * ".git/refs/"; We do not like it if:
+ * ".but/refs/"; We do not like it if:
  *
  * - it begins with ".", or
  * - it has double dots "..", or
@@ -439,7 +439,7 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 	struct object_id oid;
 	int flag;
 
-	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
+	strbuf_addf(&buf, "%sHEAD", get_but_namespace());
 	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, &oid, &flag))
 		ret = fn(buf.buf, &oid, flag, cb_data);
 	strbuf_release(&buf);
@@ -562,12 +562,12 @@ static const char default_branch_name_advice[] = N_(
 "is subject to change. To configure the initial branch name to use in all\n"
 "of your new repositories, which will suppress this warning, call:\n"
 "\n"
-"\tgit config --global init.defaultBranch <name>\n"
+"\tbut config --global init.defaultBranch <name>\n"
 "\n"
 "Names commonly chosen instead of 'master' are 'main', 'trunk' and\n"
 "'development'. The just-created branch can be renamed via this command:\n"
 "\n"
-"\tgit branch -m <name>\n"
+"\tbut branch -m <name>\n"
 );
 
 char *repo_default_branch_name(struct repository *r, int quiet)
@@ -596,7 +596,7 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 	return ret;
 }
 
-const char *git_default_branch_name(int quiet)
+const char *but_default_branch_name(int quiet)
 {
 	static char *ret;
 
@@ -779,7 +779,7 @@ long get_files_ref_lock_timeout_ms(void)
 	static int timeout_ms = 100;
 
 	if (!configured) {
-		git_config_get_int("core.filesreflocktimeout", &timeout_ms);
+		but_config_get_int("core.filesreflocktimeout", &timeout_ms);
 		configured = 1;
 	}
 
@@ -1408,7 +1408,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 		static int ref_paranoia = -1;
 
 		if (ref_paranoia < 0)
-			ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 1);
+			ref_paranoia = but_env_bool("GIT_REF_PARANOIA", 1);
 		if (ref_paranoia) {
 			flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 			flags |= DO_FOR_EACH_OMIT_DANGLING_SYMREFS;
@@ -1522,8 +1522,8 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
 {
-	return do_for_each_repo_ref(r, git_replace_ref_base, fn,
-				    strlen(git_replace_ref_base),
+	return do_for_each_repo_ref(r, but_replace_ref_base, fn,
+				    strlen(but_replace_ref_base),
 				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
@@ -1531,7 +1531,7 @@ int for_each_namespaced_ref(each_ref_fn fn, void *cb_data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
-	strbuf_addf(&buf, "%srefs/", get_git_namespace());
+	strbuf_addf(&buf, "%srefs/", get_but_namespace());
 	ret = do_for_each_ref(get_main_ref_store(the_repository),
 			      buf.buf, fn, 0, 0, cb_data);
 	strbuf_release(&buf);
@@ -1643,7 +1643,7 @@ static int refs_read_special_head(struct ref_store *ref_store,
 	struct strbuf full_path = STRBUF_INIT;
 	struct strbuf content = STRBUF_INIT;
 	int result = -1;
-	strbuf_addf(&full_path, "%s/%s", ref_store->gitdir, refname);
+	strbuf_addf(&full_path, "%s/%s", ref_store->butdir, refname);
 
 	if (strbuf_read_file(&content, full_path.buf, 0) < 0)
 		goto done;
@@ -1781,7 +1781,7 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 				       resolve_flags, oid, flags);
 }
 
-int resolve_gitlink_ref(const char *submodule, const char *refname,
+int resolve_butlink_ref(const char *submodule, const char *refname,
 			struct object_id *oid)
 {
 	struct ref_store *refs;
@@ -1862,10 +1862,10 @@ static struct ref_store *lookup_ref_store_map(struct hashmap *map,
 
 /*
  * Create, record, and return a ref_store instance for the specified
- * gitdir.
+ * butdir.
  */
 static struct ref_store *ref_store_init(struct repository *repo,
-					const char *gitdir,
+					const char *butdir,
 					unsigned int flags)
 {
 	const char *be_name = "files";
@@ -1875,7 +1875,7 @@ static struct ref_store *ref_store_init(struct repository *repo,
 	if (!be)
 		BUG("reference backend %s is unknown", be_name);
 
-	refs = be->init(repo, gitdir, flags);
+	refs = be->init(repo, butdir, flags);
 	return refs;
 }
 
@@ -1884,11 +1884,11 @@ struct ref_store *get_main_ref_store(struct repository *r)
 	if (r->refs_private)
 		return r->refs_private;
 
-	if (!r->gitdir)
+	if (!r->butdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
-	r->refs_private = ref_store_init(r, r->gitdir, REF_STORE_ALL_CAPS);
-	r->refs_private = maybe_debug_wrap_ref_store(r->gitdir, r->refs_private);
+	r->refs_private = ref_store_init(r, r->butdir, REF_STORE_ALL_CAPS);
+	r->refs_private = maybe_debug_wrap_ref_store(r->butdir, r->refs_private);
 	return r->refs_private;
 }
 
@@ -1940,7 +1940,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	if (!is_nonbare_repository_dir(&submodule_sb))
 		goto done;
 
-	if (submodule_to_gitdir(&submodule_sb, submodule))
+	if (submodule_to_butdir(&submodule_sb, submodule))
 		goto done;
 
 	subrepo = xmalloc(sizeof(*subrepo));
@@ -1982,11 +1982,11 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 
 	if (wt->id)
 		refs = ref_store_init(the_repository,
-				      git_common_path("worktrees/%s", wt->id),
+				      but_common_path("worktrees/%s", wt->id),
 				      REF_STORE_ALL_CAPS);
 	else
 		refs = ref_store_init(the_repository,
-				      get_git_common_dir(),
+				      get_but_common_dir(),
 				      REF_STORE_ALL_CAPS);
 
 	if (refs)
@@ -2000,7 +2000,7 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
 {
 	refs->be = be;
 	refs->repo = repo;
-	refs->gitdir = xstrdup(path);
+	refs->butdir = xstrdup(path);
 }
 
 /* backend functions */

@@ -7,7 +7,7 @@ Updates since v1.7.10
 UI, Workflows & Features
 
  * A new mode for push, "simple", which is a cross between "current"
-   and "upstream", has been introduced. "git push" without any refspec
+   and "upstream", has been introduced. "but push" without any refspec
    will push the current branch out to the same name at the remote
    repository only when it is set to track the branch with the same
    name over there.  The plan is to make this mode the new default
@@ -16,7 +16,7 @@ UI, Workflows & Features
  * A couple of commands learned the "--column" option to produce
    columnar output.
 
- * A third-party tool "git subtree" is distributed in contrib/
+ * A third-party tool "but subtree" is distributed in contrib/
 
  * A remote helper that acts as a proxy and caches ssl session for the
    https:// transport is added to the contrib/ area.
@@ -37,10 +37,10 @@ UI, Workflows & Features
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
 
- * "git am" learned the "--include" option, which is an opposite of
+ * "but am" learned the "--include" option, which is an opposite of
    existing the "--exclude" option.
 
- * When "git am -3" needs to fall back to an application of the patch
+ * When "but am -3" needs to fall back to an application of the patch
    to a synthesized preimage followed by a 3-way merge, the paths that
    needed such treatment are now reported to the end user, so that the
    result in them can be eyeballed with extra care.
@@ -48,7 +48,7 @@ UI, Workflows & Features
  * The output from "diff/log --stat" used to always allocate 4 columns
    to show the number of modified lines, but not anymore.
 
- * "git difftool" learned the "--dir-diff" option to spawn external
+ * "but difftool" learned the "--dir-diff" option to spawn external
    diff tools that can compare two directory hierarchies at a time
    after populating two temporary directories, instead of running an
    instance of the external tool once per a file pair.
@@ -57,27 +57,27 @@ UI, Workflows & Features
    involved in the side topic you are merging in a comment in the merge
    cummit template.
 
- * "git rebase" learned to optionally keep cummits that do not
+ * "but rebase" learned to optionally keep cummits that do not
    introduce any change in the original history.
 
- * "git push --recurse-submodules" learned to optionally look into the
+ * "but push --recurse-submodules" learned to optionally look into the
    histories of submodules bound to the superproject and push them
    out.
 
- * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
+ * A 'snapshot' request to "butweb" honors If-Modified-Since: header,
    based on the cummit date.
 
- * "gitweb" learned to highlight the patch it outputs even more.
+ * "butweb" learned to highlight the patch it outputs even more.
 
 Foreign Interface
 
- * "git svn" used to die with unwanted SIGPIPE when talking with an HTTP
+ * "but svn" used to die with unwanted SIGPIPE when talking with an HTTP
    server that uses keep-alive.
 
- * "git svn" learned to use platform specific authentication
+ * "but svn" learned to use platform specific authentication
    providers, e.g. gnome-keyring, kwallet, etc.
 
- * "git p4" has been moved out of the contrib/ area and has seen more
+ * "but p4" has been moved out of the contrib/ area and has seen more
    work on importing labels as tags from (and exporting tags as labels
    to) p4.
 
@@ -89,10 +89,10 @@ Performance and Internal Implementation (please report possible regressions)
  * An experimental "version 4" format of the index file has been
    introduced to reduce on-disk footprint and I/O overhead.
 
- * "git archive" learned to produce its output without reading the
+ * "but archive" learned to produce its output without reading the
    blob object it writes out in memory in its entirety.
 
- * "git index-pack" that runs when fetching or pushing objects to
+ * "but index-pack" that runs when fetching or pushing objects to
    complete the packfile on the receiving end learned to use multiple
    threads to do its job when available.
 
@@ -100,7 +100,7 @@ Performance and Internal Implementation (please report possible regressions)
    engine was optimized on little-endian machines, using the same
    trick the kernel folks came up with.
 
- * "git apply" had some memory leaks plugged.
+ * "but apply" had some memory leaks plugged.
 
  * Setting up a revision traversal with many starting points was
    inefficient as these were placed in a date-order priority queue
@@ -111,7 +111,7 @@ Performance and Internal Implementation (please report possible regressions)
    from the object store without keeping everything in core.
 
  * The weighting parameters to suggestion command name typo have been
-   tweaked, so that "git tags" will suggest "tag?" and not "stage?".
+   tweaked, so that "but tags" will suggest "tag?" and not "stage?".
 
  * Because "sh" on the user's PATH may be utterly broken on some
    systems, run-command API now uses SHELL_PATH, not /bin/sh, when
@@ -130,10 +130,10 @@ Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * "git submodule init" used to report "registered for path ..."
+ * "but submodule init" used to report "registered for path ..."
    even for submodules that were registered earlier.
    (cherry-pick c1c259e jl/submodule-report-new-path-once later to maint).
 
- * "git diff --stat" used to fully count a binary file with modified
+ * "but diff --stat" used to fully count a binary file with modified
    execution bits whose contents is unmodified, which was not quite
    right.

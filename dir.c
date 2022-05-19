@@ -93,7 +93,7 @@ unsigned int fspathhash(const char *str)
 	return ignore_case ? strihash(str) : strhash(str);
 }
 
-int git_fnmatch(const struct pathspec_item *item,
+int but_fnmatch(const struct pathspec_item *item,
 		const char *pattern, const char *string,
 		int prefix)
 {
@@ -383,7 +383,7 @@ static int match_pathspec_item(struct index_state *istate,
 		return MATCHED_EXACTLY;
 
 	if (item->nowildcard_len < item->len &&
-	    !git_fnmatch(item, match, name,
+	    !but_fnmatch(item, match, name,
 			 item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
@@ -590,7 +590,7 @@ int report_path_error(const char *ps_matched,
 		if (found_dup)
 			continue;
 
-		error(_("pathspec '%s' did not match any file(s) known to git"),
+		error(_("pathspec '%s' did not match any file(s) known to but"),
 		      pathspec->items[num].original);
 		errors++;
 	}
@@ -1001,20 +1001,20 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	return d;
 }
 
-static void do_invalidate_gitignore(struct untracked_cache_dir *dir)
+static void do_invalidate_butignore(struct untracked_cache_dir *dir)
 {
 	int i;
 	dir->valid = 0;
 	dir->untracked_nr = 0;
 	for (i = 0; i < dir->dirs_nr; i++)
-		do_invalidate_gitignore(dir->dirs[i]);
+		do_invalidate_butignore(dir->dirs[i]);
 }
 
-static void invalidate_gitignore(struct untracked_cache *uc,
+static void invalidate_butignore(struct untracked_cache *uc,
 				 struct untracked_cache_dir *dir)
 {
-	uc->gitignore_invalidated++;
-	do_invalidate_gitignore(dir);
+	uc->butignore_invalidated++;
+	do_invalidate_butignore(dir);
 }
 
 static void invalidate_directory(struct untracked_cache *uc,
@@ -1108,7 +1108,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 				 (pos = index_name_pos(istate, fname, strlen(fname))) >= 0 &&
 				 !ce_stage(istate->cache[pos]) &&
 				 ce_uptodate(istate->cache[pos]) &&
-				 !would_convert_to_git(istate, fname))
+				 !would_convert_to_but(istate, fname))
 				oidcpy(&oid_stat->oid,
 				       &istate->cache[pos]->oid);
 			else
@@ -1194,7 +1194,7 @@ struct pattern_list *add_pattern_list(struct dir_struct *dir,
 }
 
 /*
- * Used to set up core.excludesfile and .git/info/exclude lists.
+ * Used to set up core.excludesfile and .but/info/exclude lists.
  */
 static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 				     struct oid_stat *oid_stat)
@@ -1637,9 +1637,9 @@ static void prep_exclude(struct dir_struct *dir,
 		     */
 		    (!untracked || !untracked->valid ||
 		     /*
-		      * .. and .gitignore does not exist before
+		      * .. and .butignore does not exist before
 		      * (i.e. null exclude_oid). Then we can skip
-		      * loading .gitignore, which would result in
+		      * loading .butignore, which would result in
 		      * ENOENT anyway.
 		      */
 		     !is_null_oid(&untracked->exclude_oid))) {
@@ -1664,18 +1664,18 @@ static void prep_exclude(struct dir_struct *dir,
 		 * will first be called in valid_cached_dir() then maybe many
 		 * times more in last_matching_pattern(). When the cache is
 		 * used, last_matching_pattern() will not be called and
-		 * reading .gitignore content will be a waste.
+		 * reading .butignore content will be a waste.
 		 *
 		 * So when it's called by valid_cached_dir() and we can get
-		 * .gitignore SHA-1 from the index (i.e. .gitignore is not
+		 * .butignore SHA-1 from the index (i.e. .butignore is not
 		 * modified on work tree), we could delay reading the
-		 * .gitignore content until we absolutely need it in
+		 * .butignore content until we absolutely need it in
 		 * last_matching_pattern(). Be careful about ignore rule
 		 * order, though, if you do that.
 		 */
 		if (untracked &&
 		    !oideq(&oid_stat.oid, &untracked->exclude_oid)) {
-			invalidate_gitignore(dir->untracked, untracked);
+			invalidate_butignore(dir->untracked, untracked);
 			oidcpy(&untracked->exclude_oid, &oid_stat.oid);
 		}
 		dir->exclude_stack = stk;
@@ -1757,7 +1757,7 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 enum exist_status {
 	index_nonexistent = 0,
 	index_directory,
-	index_gitdir
+	index_butdir
 };
 
 /*
@@ -1775,14 +1775,14 @@ static enum exist_status directory_exists_in_index_icase(struct index_state *ist
 
 	ce = index_file_exists(istate, dirname, len, ignore_case);
 	if (ce && S_ISGITLINK(ce->ce_mode))
-		return index_gitdir;
+		return index_butdir;
 
 	return index_nonexistent;
 }
 
 /*
  * The index sorts alphabetically by entry name, which
- * means that a gitlink sorts as '\0' at the end, while
+ * means that a butlink sorts as '\0' at the end, while
  * a directory (which is defined not as an entry, but as
  * the files it contains) will sort with the '/' at the
  * end.
@@ -1810,7 +1810,7 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
 		if (endchar == '/')
 			return index_directory;
 		if (!endchar && S_ISGITLINK(ce->ce_mode))
-			return index_gitdir;
+			return index_butdir;
 	}
 	return index_nonexistent;
 }
@@ -1824,16 +1824,16 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
  *  - recurse into it
  *
  * and which one we choose depends on a combination of existing
- * git index contents and the flags passed into the directory
+ * but index contents and the flags passed into the directory
  * traversal routine.
  *
  * Case 1: If we *already* have entries in the index under that
  * directory name, we always recurse into the directory to see
  * all the files.
  *
- * Case 2: If we *already* have that directory name as a gitlink,
- * we always continue to see it as a gitlink, regardless of whether
- * there is an actual git directory there or not (it might not
+ * Case 2: If we *already* have that directory name as a butlink,
+ * we always continue to see it as a butlink, regardless of whether
+ * there is an actual but directory there or not (it might not
  * be checked out as a subproject!)
  *
  * Case 3: if we didn't have it in the index previously, we
@@ -1843,8 +1843,8 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
  *      just a directory, unless DIR_HIDE_EMPTY_DIRECTORIES is
  *      also true, in which case we need to check if it contains any
  *      untracked and / or ignored files.
- *  (b) if it looks like a git directory and we don't have the
- *      DIR_NO_GITLINKS flag, then we treat it as a gitlink, and
+ *  (b) if it looks like a but directory and we don't have the
+ *      DIR_NO_GITLINKS flag, then we treat it as a butlink, and
  *      show it as a directory.
  *  (c) otherwise, we recurse into it.
  */
@@ -1868,7 +1868,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 
 	if (status == index_directory)
 		return path_recurse;
-	if (status == index_gitdir)
+	if (status == index_butdir)
 		return path_none;
 	if (status != index_nonexistent)
 		BUG("Unhandled value for directory_exists_in_index: %d\n", status);
@@ -2033,10 +2033,10 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		/* state == path_excluded implies all paths under
 		 * dirname were ignored...
 		 *
-		 * if running e.g. `git status --porcelain --ignored=matching`,
+		 * if running e.g. `but status --porcelain --ignored=matching`,
 		 * then we want to see the subpaths that are ignored.
 		 *
-		 * if running e.g. just `git status --porcelain`, then
+		 * if running e.g. just `but status --porcelain`, then
 		 * we just want the directory itself to be listed as ignored
 		 * and not the individual paths underneath.
 		 */
@@ -2268,7 +2268,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	if (!cdir->d_name)
 		return treat_path_fast(dir, cdir, istate, path,
 				       baselen, pathspec);
-	if (is_dot_or_dotdot(cdir->d_name) || !fspathcmp(cdir->d_name, ".git"))
+	if (is_dot_or_dotdot(cdir->d_name) || !fspathcmp(cdir->d_name, ".but"))
 		return path_none;
 	strbuf_setlen(path, baselen);
 	strbuf_addstr(path, cdir->d_name);
@@ -2510,11 +2510,11 @@ static void add_path_to_appropriate_result_list(struct dir_struct *dir,
 
 /*
  * Read a directory tree. We currently ignore anything but
- * directories, regular files and symlinks. That's because git
+ * directories, regular files and symlinks. That's because but
  * doesn't handle them at all yet. Maybe that will change some
  * day.
  *
- * Also, we ignore the name ".git" (even if it is not a directory).
+ * Also, we ignore the name ".but" (even if it is not a directory).
  * That likely will not change.
  *
  * If 'stop_at_first_file' is specified, 'path_excluded' is returned
@@ -2658,8 +2658,8 @@ static int treat_leading_path(struct dir_struct *dir,
 	 * then we will ask treat_path() whether we should go into foo, then
 	 * whether we should go into bar, then whether baz is relevant.
 	 * Checking each is important because e.g. if path is
-	 *    .git/info/
-	 * then we need to check .git to know we shouldn't traverse it.
+	 *    .but/info/
+	 * then we need to check .but to know we shouldn't traverse it.
 	 * If the return from treat_path() is:
 	 *    * path_none, for any path, we return false.
 	 *    * path_recurse, for all path components, we return true
@@ -2719,7 +2719,7 @@ static const char *get_ident_string(void)
 		return sb.buf;
 	if (uname(&uts) < 0)
 		die_errno(_("failed to get kernel name and information"));
-	strbuf_addf(&sb, "Location %s, system %s", get_git_work_tree(),
+	strbuf_addf(&sb, "Location %s, system %s", get_but_work_tree(),
 		    uts.sysname);
 	return sb.buf;
 }
@@ -2727,7 +2727,7 @@ static const char *get_ident_string(void)
 static int ident_in_untracked(const struct untracked_cache *uc)
 {
 	/*
-	 * Previous git versions may have saved many NUL separated
+	 * Previous but versions may have saved many NUL separated
 	 * strings in the "ident" field, but it is insane to manage
 	 * many locations, so just take care of the first one.
 	 */
@@ -2755,7 +2755,7 @@ static unsigned new_untracked_cache_flags(struct index_state *istate)
 	/*
 	 * This logic is coordinated with the setting of these flags in
 	 * wt-status.c#wt_status_collect_untracked(), and the evaluation
-	 * of the config setting in cummit.c#git_status_config()
+	 * of the config setting in cummit.c#but_status_config()
 	 */
 	if (!repo_config_get_string(repo, "status.showuntrackedfiles", &val) &&
 	    !strcmp(val, "all"))
@@ -2772,7 +2772,7 @@ static void new_untracked_cache(struct index_state *istate, int flags)
 {
 	struct untracked_cache *uc = xcalloc(1, sizeof(*uc));
 	strbuf_init(&uc->ident, 100);
-	uc->exclude_per_dir = ".gitignore";
+	uc->exclude_per_dir = ".butignore";
 	uc->dir_flags = flags >= 0 ? flags : new_untracked_cache_flags(istate);
 	set_untracked_ident(uc);
 	istate->untracked = uc;
@@ -2811,7 +2811,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	if (!dir->untracked)
 		return NULL;
 	if (untracked_cache_disabled < 0)
-		untracked_cache_disabled = git_env_bool("GIT_DISABLE_UNTRACKED_CACHE", 0);
+		untracked_cache_disabled = but_env_bool("GIT_DISABLE_UNTRACKED_CACHE", 0);
 	if (untracked_cache_disabled)
 		return NULL;
 
@@ -2826,7 +2826,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 
 	/*
-	 * Optimize for the main use case only: whole-tree git
+	 * Optimize for the main use case only: whole-tree but
 	 * status. More work involved in treat_leading_path() if we
 	 * use cache on just a subset of the worktree. pathspec
 	 * support could make the matter even worse.
@@ -2840,8 +2840,8 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 
 	/*
-	 * If we use .gitignore in the cache and now you change it to
-	 * .gitexclude, everything will go wrong.
+	 * If we use .butignore in the cache and now you change it to
+	 * .butexclude, everything will go wrong.
 	 */
 	if (dir->exclude_per_dir != dir->untracked->exclude_per_dir &&
 	    strcmp(dir->exclude_per_dir, dir->untracked->exclude_per_dir))
@@ -2873,7 +2873,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		 *
 		 * Keeping the saved and used untracked cache consistent with the
 		 * configuration provides an opportunity for frequent users of
-		 * "git status -uall" to leverage the untracked cache by aligning their
+		 * "but status -uall" to leverage the untracked cache by aligning their
 		 * configuration - setting "status.showuntrackedfiles" to "all" or
 		 * "normal" as appropriate.
 		 *
@@ -2913,12 +2913,12 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	root = dir->untracked->root;
 	if (!oideq(&dir->ss_info_exclude.oid,
 		   &dir->untracked->ss_info_exclude.oid)) {
-		invalidate_gitignore(dir->untracked, root);
+		invalidate_butignore(dir->untracked, root);
 		dir->untracked->ss_info_exclude = dir->ss_info_exclude;
 	}
 	if (!oideq(&dir->ss_excludes_file.oid,
 		   &dir->untracked->ss_excludes_file.oid)) {
-		invalidate_gitignore(dir->untracked, root);
+		invalidate_butignore(dir->untracked, root);
 		dir->untracked->ss_excludes_file = dir->ss_excludes_file;
 	}
 
@@ -2954,8 +2954,8 @@ static void emit_traversal_statistics(struct dir_struct *dir,
 	trace2_data_intmax("read_directory", repo,
 			   "node-creation", dir->untracked->dir_created);
 	trace2_data_intmax("read_directory", repo,
-			   "gitignore-invalidation",
-			   dir->untracked->gitignore_invalidated);
+			   "butignore-invalidation",
+			   dir->untracked->butignore_invalidated);
 	trace2_data_intmax("read_directory", repo,
 			   "directory-invalidation",
 			   dir->untracked->dir_invalidated);
@@ -2997,13 +2997,13 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 
 		if (force_untracked_cache < 0)
 			force_untracked_cache =
-				git_env_bool("GIT_FORCE_UNTRACKED_CACHE", -1);
+				but_env_bool("GIT_FORCE_UNTRACKED_CACHE", -1);
 		if (force_untracked_cache < 0)
 			force_untracked_cache = (istate->repo->settings.core_untracked_cache == UNTRACKED_CACHE_WRITE);
 		if (force_untracked_cache &&
 			dir->untracked == istate->untracked &&
 		    (dir->untracked->dir_opened ||
-		     dir->untracked->gitignore_invalidated ||
+		     dir->untracked->butignore_invalidated ||
 		     dir->untracked->dir_invalidated))
 			istate->cache_changed |= UNTRACKED_CHANGED;
 		if (dir->untracked != istate->untracked) {
@@ -3100,7 +3100,7 @@ int is_empty_dir(const char *path)
 	return ret;
 }
 
-char *git_url_basename(const char *repo, int is_bundle, int is_bare)
+char *but_url_basename(const char *repo, int is_bundle, int is_bare)
 {
 	const char *end = repo + strlen(repo), *start, *ptr;
 	size_t len;
@@ -3126,12 +3126,12 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	}
 
 	/*
-	 * Strip trailing spaces, slashes and /.git
+	 * Strip trailing spaces, slashes and /.but
 	 */
 	while (start < end && (is_dir_sep(end[-1]) || isspace(end[-1])))
 		end--;
 	if (end - start > 5 && is_dir_sep(end[-5]) &&
-	    !strncmp(end - 4, ".git", 4)) {
+	    !strncmp(end - 4, ".but", 4)) {
 		end -= 5;
 		while (start < end && is_dir_sep(end[-1]))
 			end--;
@@ -3141,14 +3141,14 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	 * Strip trailing port number if we've got only a
 	 * hostname (that is, there is no dir separator but a
 	 * colon). This check is required such that we do not
-	 * strip URI's like '/foo/bar:2222.git', which should
+	 * strip URI's like '/foo/bar:2222.but', which should
 	 * result in a dir '2222' being guessed due to backwards
 	 * compatibility.
 	 */
 	if (memchr(start, '/', end - start) == NULL
 	    && memchr(start, ':', end - start) != NULL) {
 		ptr = end;
-		while (start < ptr && isdigit(ptr[-1]) && ptr[-1] != ':')
+		while (start < ptr && isdibut(ptr[-1]) && ptr[-1] != ':')
 			ptr--;
 		if (start < ptr && ptr[-1] == ':')
 			end = ptr - 1;
@@ -3157,7 +3157,7 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	/*
 	 * Find last component. To remain backwards compatible we
 	 * also regard colons as path separators, such that
-	 * cloning a repository 'foo:bar.git' would result in a
+	 * cloning a repository 'foo:bar.but' would result in a
 	 * directory 'bar' being guessed.
 	 */
 	ptr = end;
@@ -3166,17 +3166,17 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	start = ptr;
 
 	/*
-	 * Strip .{bundle,git}.
+	 * Strip .{bundle,but}.
 	 */
 	len = end - start;
-	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
+	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".but");
 
 	if (!len || (len == 1 && *start == '/'))
 		die(_("No directory name could be guessed.\n"
 		      "Please specify a directory on the command line"));
 
 	if (is_bare)
-		dir = xstrfmt("%.*s.git", (int)len, start);
+		dir = xstrfmt("%.*s.but", (int)len, start);
 	else
 		dir = xstrndup(start, len);
 	/*
@@ -3225,8 +3225,8 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	struct object_id submodule_head;
 
 	if ((flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
-	    !resolve_gitlink_ref(path->buf, "HEAD", &submodule_head)) {
-		/* Do not descend and nuke a nested git work tree. */
+	    !resolve_butlink_ref(path->buf, "HEAD", &submodule_head)) {
+		/* Do not descend and nuke a nested but work tree. */
 		if (kept_up)
 			*kept_up = 1;
 		return 0;
@@ -3298,13 +3298,13 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 	return remove_dir_recurse(path, flag, NULL);
 }
 
-static GIT_PATH_FUNC(git_path_info_exclude, "info/exclude")
+static GIT_PATH_FUNC(but_path_info_exclude, "info/exclude")
 
 void setup_standard_excludes(struct dir_struct *dir)
 {
-	dir->exclude_per_dir = ".gitignore";
+	dir->exclude_per_dir = ".butignore";
 
-	/* core.excludesfile defaulting to $XDG_CONFIG_HOME/git/ignore */
+	/* core.excludesfile defaulting to $XDG_CONFIG_HOME/but/ignore */
 	if (!excludes_file)
 		excludes_file = xdg_config_home("ignore");
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
@@ -3313,7 +3313,7 @@ void setup_standard_excludes(struct dir_struct *dir)
 
 	/* per repository user preference */
 	if (startup_info->have_repository) {
-		const char *path = git_path_info_exclude();
+		const char *path = but_path_info_exclude();
 		if (!access_or_warn(path, R_OK, 0))
 			add_patterns_from_file_1(dir, path,
 						 dir->untracked ? &dir->ss_info_exclude : NULL);
@@ -3322,7 +3322,7 @@ void setup_standard_excludes(struct dir_struct *dir)
 
 char *get_sparse_checkout_filename(void)
 {
-	return git_pathdup("info/sparse-checkout");
+	return but_pathdup("info/sparse-checkout");
 }
 
 int get_sparse_checkout_patterns(struct pattern_list *pl)
@@ -3779,7 +3779,7 @@ static void invalidate_one_directory(struct untracked_cache *uc,
 /*
  * Normally when an entry is added or removed from a directory,
  * invalidating that directory is enough. No need to touch its
- * ancestors. When a directory is shown as "foo/bar/" in git-status
+ * ancestors. When a directory is shown as "foo/bar/" in but-status
  * however, deleting or adding an entry may have cascading effect.
  *
  * Say the "foo/bar/file" has become untracked, we need to tell the
@@ -3845,8 +3845,8 @@ void untracked_cache_add_to_index(struct index_state *istate,
 	untracked_cache_invalidate_path(istate, path, 1);
 }
 
-static void connect_wt_gitdir_in_nested(const char *sub_worktree,
-					const char *sub_gitdir)
+static void connect_wt_butdir_in_nested(const char *sub_worktree,
+					const char *sub_butdir)
 {
 	int i;
 	struct repository subrepo;
@@ -3856,11 +3856,11 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 	const struct submodule *sub;
 
 	/* If the submodule has no working tree, we can ignore it. */
-	if (repo_init(&subrepo, sub_gitdir, sub_worktree))
+	if (repo_init(&subrepo, sub_butdir, sub_worktree))
 		return;
 
 	if (repo_read_index(&subrepo) < 0)
-		die(_("index file corrupt in repo %s"), subrepo.gitdir);
+		die(_("index file corrupt in repo %s"), subrepo.butdir);
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(subrepo.index);
@@ -3880,69 +3880,69 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 
 		sub = submodule_from_path(&subrepo, null_oid(), ce->name);
 		if (!sub || !is_submodule_active(&subrepo, ce->name))
-			/* .gitmodules broken or inactive sub */
+			/* .butmodules broken or inactive sub */
 			continue;
 
 		strbuf_reset(&sub_wt);
 		strbuf_reset(&sub_gd);
 		strbuf_addf(&sub_wt, "%s/%s", sub_worktree, sub->path);
-		submodule_name_to_gitdir(&sub_gd, &subrepo, sub->name);
+		submodule_name_to_butdir(&sub_gd, &subrepo, sub->name);
 
-		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1);
+		connect_work_tree_and_but_dir(sub_wt.buf, sub_gd.buf, 1);
 	}
 	strbuf_release(&sub_wt);
 	strbuf_release(&sub_gd);
 	repo_clear(&subrepo);
 }
 
-void connect_work_tree_and_git_dir(const char *work_tree_,
-				   const char *git_dir_,
+void connect_work_tree_and_but_dir(const char *work_tree_,
+				   const char *but_dir_,
 				   int recurse_into_nested)
 {
-	struct strbuf gitfile_sb = STRBUF_INIT;
+	struct strbuf butfile_sb = STRBUF_INIT;
 	struct strbuf cfg_sb = STRBUF_INIT;
 	struct strbuf rel_path = STRBUF_INIT;
-	char *git_dir, *work_tree;
+	char *but_dir, *work_tree;
 
-	/* Prepare .git file */
-	strbuf_addf(&gitfile_sb, "%s/.git", work_tree_);
-	if (safe_create_leading_directories_const(gitfile_sb.buf))
-		die(_("could not create directories for %s"), gitfile_sb.buf);
+	/* Prepare .but file */
+	strbuf_addf(&butfile_sb, "%s/.but", work_tree_);
+	if (safe_create_leading_directories_const(butfile_sb.buf))
+		die(_("could not create directories for %s"), butfile_sb.buf);
 
 	/* Prepare config file */
-	strbuf_addf(&cfg_sb, "%s/config", git_dir_);
+	strbuf_addf(&cfg_sb, "%s/config", but_dir_);
 	if (safe_create_leading_directories_const(cfg_sb.buf))
 		die(_("could not create directories for %s"), cfg_sb.buf);
 
-	git_dir = real_pathdup(git_dir_, 1);
+	but_dir = real_pathdup(but_dir_, 1);
 	work_tree = real_pathdup(work_tree_, 1);
 
-	/* Write .git file */
-	write_file(gitfile_sb.buf, "gitdir: %s",
-		   relative_path(git_dir, work_tree, &rel_path));
+	/* Write .but file */
+	write_file(butfile_sb.buf, "butdir: %s",
+		   relative_path(but_dir, work_tree, &rel_path));
 	/* Update core.worktree setting */
-	git_config_set_in_file(cfg_sb.buf, "core.worktree",
-			       relative_path(work_tree, git_dir, &rel_path));
+	but_config_set_in_file(cfg_sb.buf, "core.worktree",
+			       relative_path(work_tree, but_dir, &rel_path));
 
-	strbuf_release(&gitfile_sb);
+	strbuf_release(&butfile_sb);
 	strbuf_release(&cfg_sb);
 	strbuf_release(&rel_path);
 
 	if (recurse_into_nested)
-		connect_wt_gitdir_in_nested(work_tree, git_dir);
+		connect_wt_butdir_in_nested(work_tree, but_dir);
 
 	free(work_tree);
-	free(git_dir);
+	free(but_dir);
 }
 
 /*
- * Migrate the git directory of the given path from old_git_dir to new_git_dir.
+ * Migrate the but directory of the given path from old_but_dir to new_but_dir.
  */
-void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_git_dir)
+void relocate_butdir(const char *path, const char *old_but_dir, const char *new_but_dir)
 {
-	if (rename(old_git_dir, new_git_dir) < 0)
-		die_errno(_("could not migrate git directory from '%s' to '%s'"),
-			old_git_dir, new_git_dir);
+	if (rename(old_but_dir, new_but_dir) < 0)
+		die_errno(_("could not migrate but directory from '%s' to '%s'"),
+			old_but_dir, new_but_dir);
 
-	connect_work_tree_and_git_dir(path, new_git_dir, 0);
+	connect_work_tree_and_but_dir(path, new_but_dir, 0);
 }

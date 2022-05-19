@@ -170,7 +170,7 @@ struct tempfile *mks_tempfile_sm(const char *filename_template, int suffixlen, i
 	struct tempfile *tempfile = new_tempfile();
 
 	strbuf_add_absolute_path(&tempfile->filename, filename_template);
-	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
+	tempfile->fd = but_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
 		return NULL;
@@ -189,7 +189,7 @@ struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, 
 		tmpdir = "/tmp";
 
 	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, filename_template);
-	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
+	tempfile->fd = but_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
 		return NULL;

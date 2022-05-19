@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# An test hook script to integrate with git to test fsmonitor.
+# An test hook script to integrate with but to test fsmonitor.
 #
 # The hook is passed a version (currently 1) and a time in nanoseconds
 # formatted as a string and outputs to stdout all files that have been

@@ -2,7 +2,7 @@
  * crit-bit tree implementation, does no allocations internally
  * For more information on crit-bit trees: https://cr.yp.to/critbit.html
  * Based on Adam Langley's adaptation of Dan Bernstein's public domain code
- * git clone https://github.com/agl/critbit.git
+ * but clone https://buthub.com/agl/critbit.but
  */
 #include "cbtree.h"
 

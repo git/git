@@ -2,9 +2,9 @@ http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy',
 	'https_proxy', and 'all_proxy' environment variables (see `curl(1)`). In
 	addition to the syntax understood by curl, it is possible to specify a
-	proxy string with a user name but no password, in which case git will
+	proxy string with a user name but no password, in which case but will
 	attempt to acquire one in the same way it does for other credentials. See
-	linkgit:gitcredentials[7] for more information. The syntax thus is
+	linkbut:butcredentials[7] for more information. The syntax thus is
 	'[protocol://][user[:password]@]proxyhost[:port]'. This can be overridden
 	on a per-remote basis; see remote.<name>.proxy
 
@@ -118,7 +118,7 @@ http.sslVersion::
 
 +
 Can be overridden by the `GIT_SSL_VERSION` environment variable.
-To force git to use libcurl's default ssl version and ignore any
+To force but to use libcurl's default ssl version and ignore any
 explicit http.sslversion option, set `GIT_SSL_VERSION` to the
 empty string.
 
@@ -131,7 +131,7 @@ http.sslCipherList::
   of this list.
 +
 Can be overridden by the `GIT_SSL_CIPHER_LIST` environment variable.
-To force git to use libcurl's default cipher list and ignore any
+To force but to use libcurl's default cipher list and ignore any
 explicit http.sslCipherList option, set `GIT_SSL_CIPHER_LIST` to the
 empty string.
 
@@ -191,7 +191,7 @@ http.pinnedpubkey::
 	Public key of the https service. It may either be the filename of
 	a PEM or DER encoded public key file or a string starting with
 	'sha256//' followed by the base64 encoded sha256 hash of the
-	public key. See also libcurl 'CURLOPT_PINNEDPUBLICKEY'. git will
+	public key. See also libcurl 'CURLOPT_PINNEDPUBLICKEY'. but will
 	exit with an error if this option is set but not supported by
 	cURL.
 
@@ -243,20 +243,20 @@ http.noEPSV::
 
 http.userAgent::
 	The HTTP USER_AGENT string presented to an HTTP server.  The default
-	value represents the version of the client Git such as git/1.7.1.
+	value represents the version of the client Git such as but/1.7.1.
 	This option allows you to override this value to a more common value
 	such as Mozilla/4.0.  This may be necessary, for instance, if
 	connecting through a firewall that restricts HTTP connections to a set
-	of common USER_AGENT strings (but not including those like git/1.7.1).
+	of common USER_AGENT strings (but not including those like but/1.7.1).
 	Can be overridden by the `GIT_HTTP_USER_AGENT` environment variable.
 
 http.followRedirects::
-	Whether git should follow HTTP redirects. If set to `true`, git
+	Whether but should follow HTTP redirects. If set to `true`, but
 	will transparently follow any redirect issued by a server it
-	encounters. If set to `false`, git will treat all redirects as
-	errors. If set to `initial`, git will follow redirects only for
+	encounters. If set to `false`, but will treat all redirects as
+	errors. If set to `initial`, but will follow redirects only for
 	the initial request to a remote, but not for subsequent
-	follow-up HTTP requests. Since git uses the redirected URL as
+	follow-up HTTP requests. Since but uses the redirected URL as
 	the base for the follow-up requests, this is generally
 	sufficient. The default is `initial`.
 
@@ -280,7 +280,7 @@ http.<url>.*::
   Omitted port numbers are automatically converted to the correct
   default for the scheme before matching.
 
-. Path (e.g., `repo.git` in `https://example.com/repo.git`). The
+. Path (e.g., `repo.but` in `https://example.com/repo.but`). The
   path field of the config key must match the path field of the URL
   either exactly or as a prefix of slash-delimited path elements.  This means
   a config key with path `foo/` matches URL path `foo/bar`.  A prefix can only
@@ -288,7 +288,7 @@ http.<url>.*::
   key with path `foo/bar` is a better match to URL path `foo/bar` than a config
   key with just path `foo/`).
 
-. User name (e.g., `user` in `https://user@example.com/repo.git`). If
+. User name (e.g., `user` in `https://user@example.com/repo.but`). If
   the config key has a user name it must match the user name in the
   URL exactly. If the config key does not have a user name, that
   config key will match a URL with any user name (including none),

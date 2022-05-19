@@ -1,15 +1,15 @@
-git-am(1)
+but-am(1)
 =========
 
 NAME
 ----
-git-am - Apply a series of patches from a mailbox
+but-am - Apply a series of patches from a mailbox
 
 
 SYNOPSIS
 --------
 [verse]
-'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
+'but am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
 	 [--[no-]3way] [--interactive] [--cummitter-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
@@ -18,7 +18,7 @@ SYNOPSIS
 	 [--quoted-cr=<action>]
 	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
+'but am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
@@ -37,17 +37,17 @@ OPTIONS
 --signoff::
 	Add a `Signed-off-by` trailer to the cummit message, using
 	the cummitter identity of yourself.
-	See the signoff option in linkgit:git-cummit[1] for more information.
+	See the signoff option in linkbut:but-cummit[1] for more information.
 
 -k::
 --keep::
-	Pass `-k` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-k` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 
 --keep-non-patch::
-	Pass `-b` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-b` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 
 --[no-]keep-cr::
-	With `--keep-cr`, call 'git mailsplit' (see linkgit:git-mailsplit[1])
+	With `--keep-cr`, call 'but mailsplit' (see linkbut:but-mailsplit[1])
 	with the same option, to prevent it from stripping CR at the end of
 	lines. `am.keepcr` configuration variable can be used to specify the
 	default behaviour.  `--no-keep-cr` is useful to override `am.keepcr`.
@@ -55,14 +55,14 @@ OPTIONS
 -c::
 --scissors::
 	Remove everything in body before a scissors line (see
-	linkgit:git-mailinfo[1]). Can be activated by default using
+	linkbut:but-mailinfo[1]). Can be activated by default using
 	the `mailinfo.scissors` configuration variable.
 
 --no-scissors::
-	Ignore scissors lines (see linkgit:git-mailinfo[1]).
+	Ignore scissors lines (see linkbut:but-mailinfo[1]).
 
 --quoted-cr=<action>::
-	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	This flag will be passed down to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 
 --empty=(stop|drop|keep)::
 	By default, or when the option is set to 'stop', the command
@@ -74,7 +74,7 @@ OPTIONS
 
 -m::
 --message-id::
-	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
+	Pass the `-m` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]),
 	so that the Message-ID header is added to the cummit message.
 	The `am.messageid` configuration variable can be used to specify
 	the default behaviour.
@@ -89,18 +89,18 @@ OPTIONS
 
 -u::
 --utf8::
-	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-u` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 	The proposed cummit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
 	`i18n.cummitEncoding` can be used to specify project's
 	preferred encoding if it is not UTF-8).
 +
-This was optional in prior versions of git, but now it is the
+This was optional in prior versions of but, but now it is the
 default.   You can use `--no-utf8` to override this.
 
 --no-utf8::
-	Pass `-n` flag to 'git mailinfo' (see
-	linkgit:git-mailinfo[1]).
+	Pass `-n` flag to 'but mailinfo' (see
+	linkbut:but-mailinfo[1]).
 
 -3::
 --3way::
@@ -110,7 +110,7 @@ default.   You can use `--no-utf8` to override this.
 	it is supposed to apply to and we have those blobs
 	available locally. `--no-3way` can be used to override
 	am.threeWay configuration variable. For more information,
-	see am.threeWay in linkgit:git-config[1].
+	see am.threeWay in linkbut:but-config[1].
 
 --rerere-autoupdate::
 --no-rerere-autoupdate::
@@ -126,7 +126,7 @@ default.   You can use `--no-utf8` to override this.
 --exclude=<path>::
 --include=<path>::
 --reject::
-	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
+	These flags are passed to the 'but apply' (see linkbut:but-apply[1])
 	program that applies
 	the patch.
 
@@ -135,7 +135,7 @@ default.   You can use `--no-utf8` to override this.
 	automatically. This option allows the user to bypass the automatic
 	detection and specify the patch format that the patch(es) should be
 	interpreted as. Valid formats are mbox, mboxrd,
-	stgit, stgit-series and hg.
+	stbut, stbut-series and hg.
 
 -i::
 --interactive::
@@ -183,7 +183,7 @@ default.   You can use `--no-utf8` to override this.
 	to the screen before exiting.  This overrides the
 	standard message informing you to use `--continue`
 	or `--skip` to handle the failure.  This is solely
-	for internal use between 'git rebase' and 'git am'.
+	for internal use between 'but rebase' and 'but am'.
 
 --abort::
 	Restore the original branch and abort the patching operation.
@@ -195,7 +195,7 @@ default.   You can use `--no-utf8` to override this.
 	untouched.
 
 --show-current-patch[=(diff|raw)]::
-	Show the message at which `git am` has stopped due to
+	Show the message at which `but am` has stopped due to
 	conflicts.  If `raw` is specified, show the raw contents of
 	the e-mail message; if `diff`, show the diff portion only.
 	Defaults to `raw`.
@@ -233,7 +233,7 @@ message.  Any line that is of the form:
 is taken as the beginning of a patch, and the cummit log message
 is terminated before the first occurrence of such a line.
 
-When initially invoking `git am`, you give it the names of the mailboxes
+When initially invoking `but am`, you give it the names of the mailboxes
 to process.  Upon seeing the first patch that does not apply, it
 aborts in the middle.  You can recover from this in one of two ways:
 
@@ -246,25 +246,25 @@ aborts in the middle.  You can recover from this in one of two ways:
 
 The command refuses to process new mailboxes until the current
 operation is finished, so if you decide to start over from scratch,
-run `git am --abort` before running the command with mailbox
+run `but am --abort` before running the command with mailbox
 names.
 
 Before any patches are applied, ORIG_HEAD is set to the tip of the
 current branch.  This is useful if you have problems with multiple
-cummits, like running 'git am' on the wrong branch or an error in the
+cummits, like running 'but am' on the wrong branch or an error in the
 cummits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
 
 HOOKS
 -----
 This command can run `applypatch-msg`, `pre-applypatch`,
-and `post-applypatch` hooks.  See linkgit:githooks[5] for more
+and `post-applypatch` hooks.  See linkbut:buthooks[5] for more
 information.
 
 SEE ALSO
 --------
-linkgit:git-apply[1].
+linkbut:but-apply[1].
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

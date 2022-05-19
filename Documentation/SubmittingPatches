@@ -22,7 +22,7 @@ change is relevant to.
   feature depends on other topics that are in `next`, but not in
   `master`, fork a branch from the tip of `master`, merge these topics
   to the branch, and work on that branch.  You can remind yourself of
-  how you prepared the base with `git log --first-parent master..`.
+  how you prepared the base with `but log --first-parent master..`.
 
 * Corrections and enhancements to a topic not yet in `master` should
   be based on the tip of that topic. If the topic has not been merged
@@ -39,7 +39,7 @@ change is relevant to.
   repositories (see the section "Subsystems" below).  Changes to
   these parts should be based on their trees.
 
-To find the tip of a topic branch, run `git log --first-parent
+To find the tip of a topic branch, run `but log --first-parent
 master..seen` and look for the merge cummit. The second parent of this
 cummit is the tip of the topic branch.
 
@@ -81,7 +81,7 @@ fixed by accident to avoid regression.  Also, try merging your work to
 that are still in flight may have unexpected interactions with what
 you are trying to do in your topic.
 
-Pushing to a fork of https://github.com/git/git will use their CI
+Pushing to a fork of https://buthub.com/but/but will use their CI
 integration to test your changes on Linux, Mac and Windows. See the
 <<GHCI,GitHub CI>> section for details.
 
@@ -105,7 +105,7 @@ patches separate from other documentation changes.
 Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
 in `templates/hooks--pre-cummit`.  To help ensure this does not happen,
-run `git diff --check` on your changes before you cummit.
+run `but diff --check` on your changes before you cummit.
 
 [[describe-changes]]
 === Describe your changes well.
@@ -140,23 +140,23 @@ The goal of your log message is to convey the _why_ behind your
 change to help future developers.
 
 The first line of the cummit message should be a short description (50
-characters is the soft limit, see DISCUSSION in linkgit:git-cummit[1]),
+characters is the soft limit, see DISCUSSION in linkbut:but-cummit[1]),
 and should skip the full stop.  It is also conventional in most cases to
 prefix the first line with "area: " where the area is a filename or
 identifier for the general area of the code being modified, e.g.
 
 * doc: clarify distinction between sign-off and pgp-signing
-* githooks.txt: improve the intro section
+* buthooks.txt: improve the intro section
 
-If in doubt which identifier to use, run `git log --no-merges` on the
+If in doubt which identifier to use, run `but log --no-merges` on the
 files you are modifying to see the current conventions.
 
 [[summary-section]]
 The title sentence after the "area:" prefix omits the full stop at the
 end, and its first word is not capitalized unless there is a reason to
 capitalize it other than because it is the first word in the sentence.
-E.g. "doc: clarify...", not "doc: Clarify...", or "githooks.txt:
-improve...", not "githooks.txt: Improve...".  But "refs: HEAD is also
+E.g. "doc: clarify...", not "doc: Clarify...", or "buthooks.txt:
+improve...", not "buthooks.txt: Improve...".  But "refs: HEAD is also
 treated as a ref" is correct, as we spell `HEAD` in all caps even when
 it appears in the middle of a sentence.
 
@@ -208,18 +208,18 @@ date)", like this:
 	noticed that ...
 ....
 
-The "Copy cummit summary" command of gitk can be used to obtain this
+The "Copy cummit summary" command of butk can be used to obtain this
 format (with the subject enclosed in a pair of double-quotes), or this
-invocation of `git show`:
+invocation of `but show`:
 
 ....
-	git show -s --pretty=reference <cummit>
+	but show -s --pretty=reference <cummit>
 ....
 
 or, on an older version of Git without support for --pretty=reference:
 
 ....
-	git show -s --date=short --pretty='format:%h (%s, %ad)' <cummit>
+	but show -s --date=short --pretty='format:%h (%s, %ad)' <cummit>
 ....
 
 [[sign-off]]
@@ -267,7 +267,7 @@ this:
 	Signed-off-by: Random J Developer <random@developer.example.org>
 ....
 
-This line can be added by Git if you run the git-cummit command with
+This line can be added by Git if you run the but-cummit command with
 the -s option.
 
 Notice that you can place your own `Signed-off-by` trailer when
@@ -301,13 +301,13 @@ If you like, you can put extra tags at the end:
 You can also create your own tag or use one that's in common usage
 such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 
-[[git-tools]]
+[[but-tools]]
 === Generate your patch using Git tools out of your cummits.
 
 Git based diff tools generate unidiff which is the preferred format.
 
-You do not have to be afraid to use `-M` option to `git diff` or
-`git format-patch`, if your patch involves file renames.  The
+You do not have to be afraid to use `-M` option to `but diff` or
+`but format-patch`, if your patch involves file renames.  The
 receiving end can handle them just fine.
 
 [[review-patch]]
@@ -324,7 +324,7 @@ mark your patches as such.
 [[send-patches]]
 === Sending your patches.
 
-:security-ml: footnoteref:[security-ml,The Git Security mailing list: git-security@googlegroups.com]
+:security-ml: footnoteref:[security-ml,The Git Security mailing list: but-security@googlegroups.com]
 
 Before sending any patches, please note that patches that may be
 security relevant should be submitted privately to the Git Security
@@ -365,7 +365,7 @@ discussion before being accepted, [PATCH v2], [PATCH v3] etc.
 are often seen when you are sending an update to what you have
 previously sent.
 
-The `git format-patch` command follows the best current practice to
+The `but format-patch` command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
 patch should come your cummit message, ending with the
 `Signed-off-by` trailers, and a line that consists of three dashes,
@@ -374,7 +374,7 @@ you are forwarding a patch from somebody else, optionally, at
 the beginning of the e-mail message just before the cummit
 message starts, you can put a "From: " line to name that person.
 To change the default "[PATCH]" in the subject to "[<text>]", use
-`git format-patch --subject-prefix=<text>`.  As a shortcut, you
+`but format-patch --subject-prefix=<text>`.  As a shortcut, you
 can use `--rfc` instead of `--subject-prefix="RFC PATCH"`, or
 `-v <n>` instead of `--subject-prefix="PATCH v<n>"`.
 
@@ -384,7 +384,7 @@ material between the three-dash line and the diffstat.  For
 patches requiring multiple iterations of review and discussion,
 an explanation of changes between each iteration can be kept in
 Git-notes and inserted automatically following the three-dash
-line via `git format-patch --notes`.
+line via `but format-patch --notes`.
 
 [[attachment]]
 Do not attach the patch as a MIME attachment, compressed or not.
@@ -421,19 +421,19 @@ mentioned below, but should instead be sent privately to the Git
 Security mailing list{security-ml-ref}.
 
 Send your patch with "To:" set to the mailing list, with "cc:" listing
-people who are involved in the area you are touching (the `git
+people who are involved in the area you are touching (the `but
 contacts` command in `contrib/contacts/` can help to
 identify them), to solicit comments and reviews.  Also, when you made
 trial merges of your topic to `next` and `seen`, you may have noticed
 work by others conflicting with your changes.  There is a good possibility
 that these people may know the area you are touching well.
 
-:current-maintainer: footnote:[The current maintainer: gitster@pobox.com]
-:git-ml: footnote:[The mailing list: git@vger.kernel.org]
+:current-maintainer: footnote:[The current maintainer: butster@pobox.com]
+:but-ml: footnote:[The mailing list: but@vger.kernel.org]
 
 After the list reached a consensus that it is a good idea to apply the
 patch, re-send it with "To:" set to the maintainer{current-maintainer}
-and "cc:" the list{git-ml} for inclusion.  This is especially relevant
+and "cc:" the list{but-ml} for inclusion.  This is especially relevant
 when the maintainer did not heavily participate in the discussion and
 instead left the review to trusted others.
 
@@ -446,17 +446,17 @@ patch, and "cc:" them when sending such a final version for inclusion.
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- `git-gui/` comes from git-gui project, maintained by Pratyush Yadav:
+- `but-gui/` comes from but-gui project, maintained by Pratyush Yadav:
 
-	https://github.com/prati0100/git-gui.git
+	https://buthub.com/prati0100/but-gui.but
 
-- `gitk-git/` comes from Paul Mackerras's gitk project:
+- `butk-but/` comes from Paul Mackerras's butk project:
 
-	git://ozlabs.org/~paulus/gitk
+	but://ozlabs.org/~paulus/butk
 
 - `po/` comes from the localization coordinator, Jiang Xin:
 
-	https://github.com/git-l10n/git-po/
+	https://buthub.com/but-l10n/but-po/
 
 Patches to these parts should be based on their trees.
 
@@ -475,7 +475,7 @@ The people who may need to know are the ones whose code you
 are butchering.  These people happen to be the ones who are
 most likely to be knowledgeable enough to help you, but
 they have no obligation to help you (i.e. you ask for help,
-don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
+don't demand).  +but log -p {litdd} _$area_you_are_modifying_+ would
 help you find out who they are.
 
 . You get comments and suggestions for improvements.  You may
@@ -499,32 +499,32 @@ their trees themselves.
 == Know the status of your patch after submission
 
 * You can use Git itself to find out when your patch is merged in
-  master. `git pull --rebase` will automatically skip already-applied
+  master. `but pull --rebase` will automatically skip already-applied
   patches, and will let you know. This works only if you rebase on top
   of the branch in which your patch has been merged (i.e. it will not
   tell you if your patch is merged in `seen` if you rebase on top of
   master).
 
 * Read the Git mailing list, the maintainer regularly posts messages
-  entitled "What's cooking in git.git" and "What's in git.git" giving
+  entitled "What's cooking in but.but" and "What's in but.but" giving
   the status of various proposed changes.
 
 == GitHub CI[[GHCI]]
 
 With an account at GitHub, you can use GitHub CI to test your changes
 on Linux, Mac and Windows. See
-https://github.com/git/git/actions/workflows/main.yml for examples of
+https://buthub.com/but/but/actions/workflows/main.yml for examples of
 recent CI runs.
 
 Follow these steps for the initial setup:
 
-. Fork https://github.com/git/git to your GitHub account.
+. Fork https://buthub.com/but/but to your GitHub account.
   You can find detailed instructions how to fork here:
-  https://help.github.com/articles/fork-a-repo/
+  https://help.buthub.com/articles/fork-a-repo/
 
 After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
-branches here: `https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml`
+branches here: `https://buthub.com/<Your GitHub handle>/but/actions/workflows/main.yml`
 
 If a branch did not pass all test cases then it is marked with a red
 cross. In that case you can click on the failing job and navigate to
@@ -542,9 +542,9 @@ Some of patches I receive or pick up from the list share common
 patterns of breakage.  Please make sure your MUA is set up
 properly not to corrupt whitespaces.
 
-See the DISCUSSION section of linkgit:git-format-patch[1] for hints on
+See the DISCUSSION section of linkbut:but-format-patch[1] for hints on
 checking your patch by mailing it to yourself and applying with
-linkgit:git-am[1].
+linkbut:but-am[1].
 
 While you are at it, check the resulting cummit log message from
 a trial run of applying the patch.  If what is in the resulting
@@ -583,7 +583,7 @@ Date:   Mon Aug 15 17:23:51 2005 -0700
     There's no excuse for unconditionally removing whitespace from
     the pico buffers on close.
 
-diff --git a/pico/pico.c b/pico/pico.c
+diff --but a/pico/pico.c b/pico/pico.c
 --- a/pico/pico.c
 +++ b/pico/pico.c
 @@ -219,7 +219,9 @@ PICO *pm;
@@ -613,13 +613,13 @@ it.
 
 === Thunderbird, KMail, GMail
 
-See the MUA-SPECIFIC HINTS section of linkgit:git-format-patch[1].
+See the MUA-SPECIFIC HINTS section of linkbut:but-format-patch[1].
 
 === Gnus
 
 "|" in the `*Summary*` buffer can be used to pipe the current
 message to an external program, and this is a handy way to drive
-`git am`.  However, if the message is MIME encoded, what is
+`but am`.  However, if the message is MIME encoded, what is
 piped into the program is the representation you see in your
 `*Article*` buffer after unwrapping MIME.  This is often not what
 you would want for two reasons.  It tends to screw up non ASCII

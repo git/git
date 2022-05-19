@@ -304,7 +304,7 @@ static void setup_child_process(struct add_p_state *s,
 		strvec_push(&cp->args, arg);
 	va_end(ap);
 
-	cp->git_cmd = 1;
+	cp->but_cmd = 1;
 	strvec_pushf(&cp->env_array,
 		     INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
 }
@@ -454,7 +454,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 			setup_child_process(s, &filter_cp,
 					    diff_filter, NULL);
-			filter_cp.git_cmd = 0;
+			filter_cp.but_cmd = 0;
 			filter_cp.use_shell = 1;
 			strbuf_reset(&s->buf);
 			if (pipe_command(&filter_cp,
@@ -1181,7 +1181,7 @@ static int run_apply_check(struct add_p_state *s,
 			    "apply", "--check", NULL);
 	strvec_pushv(&cp.args, s->mode->apply_check_args);
 	if (pipe_command(&cp, s->buf.buf, s->buf.len, NULL, 0, NULL, 0))
-		return error(_("'git apply --cached' failed"));
+		return error(_("'but apply --cached' failed"));
 
 	return 0;
 }
@@ -1194,7 +1194,7 @@ static int read_single_character(struct add_p_state *s)
 		return res;
 	}
 
-	if (git_read_line_interactively(&s->answer) == EOF)
+	if (but_read_line_interactively(&s->answer) == EOF)
 		return EOF;
 	return 0;
 }
@@ -1683,7 +1683,7 @@ soft_increment:
 			strvec_pushv(&cp.args, s->mode->apply_args);
 			if (pipe_command(&cp, s->buf.buf, s->buf.len,
 					 NULL, 0, NULL, 0))
-				error(_("'git apply' failed"));
+				error(_("'but apply' failed"));
 		}
 		if (repo_read_index(s->s.r) >= 0)
 			repo_refresh_and_write_index(s->s.r, REFRESH_QUIET, 0,

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge
+test_description='but-merge
 
 Do not overwrite changes.'
 
@@ -13,116 +13,116 @@ test_expect_success 'setup' '
 	test_cummit c0 c0.c &&
 	test_cummit c1 c1.c &&
 	test_cummit c1a c1.c "c1 a" &&
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_cummit c2 c2.c &&
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	mkdir sub &&
 	echo "sub/f" > sub/f &&
 	mkdir sub2 &&
 	echo "sub2/f" > sub2/f &&
-	git add sub/f sub2/f &&
-	git cummit -m sub &&
-	git tag sub &&
+	but add sub/f sub2/f &&
+	but cummit -m sub &&
+	but tag sub &&
 	echo "VERY IMPORTANT CHANGES" > important
 '
 
 test_expect_success 'will not overwrite untracked file' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	cp important c2.c &&
-	test_must_fail git merge c2 &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	test_must_fail but merge c2 &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important c2.c
 '
 
 test_expect_success 'will overwrite tracked file' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	cp important c2.c &&
-	git add c2.c &&
-	git cummit -m important &&
-	git checkout c2
+	but add c2.c &&
+	but cummit -m important &&
+	but checkout c2
 '
 
 test_expect_success 'will not overwrite new file' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	cp important c2.c &&
-	git add c2.c &&
-	test_must_fail git merge c2 &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	but add c2.c &&
+	test_must_fail but merge c2 &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important c2.c
 '
 
 test_expect_success 'will not overwrite staged changes' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	cp important c2.c &&
-	git add c2.c &&
+	but add c2.c &&
 	rm c2.c &&
-	test_must_fail git merge c2 &&
-	test_path_is_missing .git/MERGE_HEAD &&
-	git checkout c2.c &&
+	test_must_fail but merge c2 &&
+	test_path_is_missing .but/MERGE_HEAD &&
+	but checkout c2.c &&
 	test_cmp important c2.c
 '
 
 test_expect_success 'will not overwrite removed file' '
-	git reset --hard c1 &&
-	git rm c1.c &&
-	git cummit -m "rm c1.c" &&
+	but reset --hard c1 &&
+	but rm c1.c &&
+	but cummit -m "rm c1.c" &&
 	cp important c1.c &&
-	test_must_fail git merge c1a &&
+	test_must_fail but merge c1a &&
 	test_cmp important c1.c &&
 	rm c1.c  # Do not leave untracked file in way of future tests
 '
 
 test_expect_success 'will not overwrite re-added file' '
-	git reset --hard c1 &&
-	git rm c1.c &&
-	git cummit -m "rm c1.c" &&
+	but reset --hard c1 &&
+	but rm c1.c &&
+	but cummit -m "rm c1.c" &&
 	cp important c1.c &&
-	git add c1.c &&
-	test_must_fail git merge c1a &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	but add c1.c &&
+	test_must_fail but merge c1a &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important c1.c
 '
 
 test_expect_success 'will not overwrite removed file with staged changes' '
-	git reset --hard c1 &&
-	git rm c1.c &&
-	git cummit -m "rm c1.c" &&
+	but reset --hard c1 &&
+	but rm c1.c &&
+	but cummit -m "rm c1.c" &&
 	cp important c1.c &&
-	git add c1.c &&
+	but add c1.c &&
 	rm c1.c &&
-	test_must_fail git merge c1a &&
-	test_path_is_missing .git/MERGE_HEAD &&
-	git checkout c1.c &&
+	test_must_fail but merge c1a &&
+	test_path_is_missing .but/MERGE_HEAD &&
+	but checkout c1.c &&
 	test_cmp important c1.c
 '
 
 test_expect_success 'will not overwrite unstaged changes in renamed file' '
-	git reset --hard c1 &&
-	git mv c1.c other.c &&
-	git cummit -m rename &&
+	but reset --hard c1 &&
+	but mv c1.c other.c &&
+	but cummit -m rename &&
 	cp important other.c &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test_must_fail git merge c1a >out 2>err &&
+		test_must_fail but merge c1a >out 2>err &&
 		test_i18ngrep "would be overwritten by merge" err &&
 		test_cmp important other.c &&
-		test_path_is_missing .git/MERGE_HEAD
+		test_path_is_missing .but/MERGE_HEAD
 	else
-		test_must_fail git merge c1a >out &&
+		test_must_fail but merge c1a >out &&
 		test_i18ngrep "Refusing to lose dirty file at other.c" out &&
 		test_path_is_file other.c~HEAD &&
-		test $(git hash-object other.c~HEAD) = $(git rev-parse c1a:c1.c) &&
+		test $(but hash-object other.c~HEAD) = $(but rev-parse c1a:c1.c) &&
 		test_cmp important other.c
 	fi
 '
 
 test_expect_success 'will not overwrite untracked subtree' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	rm -rf sub &&
 	mkdir -p sub/f &&
 	cp important sub/f/important &&
-	test_must_fail git merge sub &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	test_must_fail but merge sub &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important sub/f/important
 '
 
@@ -135,33 +135,33 @@ Aborting
 EOF
 
 test_expect_success 'will not overwrite untracked file in leading path' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	rm -rf sub &&
 	cp important sub &&
 	cp important sub2 &&
-	test_must_fail git merge sub 2>out &&
+	test_must_fail but merge sub 2>out &&
 	test_cmp out expect &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important sub &&
 	test_cmp important sub2 &&
 	rm -f sub sub2
 '
 
 test_expect_success SYMLINKS 'will not overwrite untracked symlink in leading path' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	rm -rf sub &&
 	mkdir sub2 &&
 	ln -s sub2 sub &&
-	test_must_fail git merge sub &&
-	test_path_is_missing .git/MERGE_HEAD
+	test_must_fail but merge sub &&
+	test_path_is_missing .but/MERGE_HEAD
 '
 
 test_expect_success 'will not be confused by symlink in leading path' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	rm -rf sub &&
 	test_ln_s_add sub2 sub &&
-	git cummit -m ln &&
-	git checkout sub
+	but cummit -m ln &&
+	but checkout sub
 '
 
 cat >expect <<\EOF
@@ -170,36 +170,36 @@ fatal: read-tree failed
 EOF
 
 test_expect_success 'will not overwrite untracked file on unborn branch' '
-	git reset --hard c0 &&
-	git rm -fr . &&
-	git checkout --orphan new &&
+	but reset --hard c0 &&
+	but rm -fr . &&
+	but checkout --orphan new &&
 	cp important c0.c &&
-	test_must_fail git merge c0 2>out &&
+	test_must_fail but merge c0 2>out &&
 	test_cmp out expect
 '
 
-test_expect_success 'will not overwrite untracked file on unborn branch .git/MERGE_HEAD sanity etc.' '
+test_expect_success 'will not overwrite untracked file on unborn branch .but/MERGE_HEAD sanity etc.' '
 	test_when_finished "rm c0.c" &&
-	test_path_is_missing .git/MERGE_HEAD &&
+	test_path_is_missing .but/MERGE_HEAD &&
 	test_cmp important c0.c
 '
 
 test_expect_success 'failed merge leaves unborn branch in the womb' '
-	test_must_fail git rev-parse --verify HEAD
+	test_must_fail but rev-parse --verify HEAD
 '
 
 test_expect_success 'set up unborn branch and content' '
-	git symbolic-ref HEAD refs/heads/unborn &&
-	rm -f .git/index &&
+	but symbolic-ref HEAD refs/heads/unborn &&
+	rm -f .but/index &&
 	echo foo > tracked-file &&
-	git add tracked-file &&
+	but add tracked-file &&
 	echo bar > untracked-file
 '
 
 test_expect_success 'will not clobber WT/index when merging into unborn' '
-	git merge main &&
+	but merge main &&
 	grep foo tracked-file &&
-	git show :tracked-file >expect &&
+	but show :tracked-file >expect &&
 	grep foo expect &&
 	grep bar untracked-file
 '

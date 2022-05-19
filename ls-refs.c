@@ -126,7 +126,7 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 	int flag;
 	int oid_is_null;
 
-	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
+	strbuf_addf(&namespaced, "%sHEAD", get_but_namespace());
 	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flag))
 		return; /* bad ref */
 	oid_is_null = is_null_oid(&oid);
@@ -155,7 +155,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 	strbuf_init(&data.buf, 0);
 
 	ensure_config_read();
-	git_config(ls_refs_config, NULL);
+	but_config(ls_refs_config, NULL);
 
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
@@ -189,7 +189,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 	send_possibly_unborn_head(&data);
 	if (!data.prefixes.nr)
 		strvec_push(&data.prefixes, "");
-	for_each_fullref_in_prefixes(get_git_namespace(), data.prefixes.v,
+	for_each_fullref_in_prefixes(get_but_namespace(), data.prefixes.v,
 				     send_ref, &data);
 	packet_fflush(stdout);
 	strvec_clear(&data.prefixes);

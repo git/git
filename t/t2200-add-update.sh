@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git add -u
+test_description='but add -u
 
 This test creates a working tree state with three files:
 
@@ -8,10 +8,10 @@ This test creates a working tree state with three files:
   dir/sub (previously cummitted, modified)
   dir/other (untracked)
 
-and issues a git add -u with path limiting on "dir" to add
+and issues a but add -u with path limiting on "dir" to add
 only the updates to dir/sub.
 
-Also tested are "git add -u" without limiting, and "git add -u"
+Also tested are "but add -u" without limiting, and "but add -u"
 without contents changes, and other conditions'
 
 . ./test-lib.sh
@@ -24,9 +24,9 @@ test_expect_success setup '
 	echo initial >dir1/sub1 &&
 	echo initial >dir1/sub2 &&
 	echo initial >dir2/sub3 &&
-	git add check dir1 dir2 top foo &&
+	but add check dir1 dir2 top foo &&
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 
 	echo changed >check &&
 	echo changed >top &&
@@ -36,39 +36,39 @@ test_expect_success setup '
 '
 
 test_expect_success update '
-	git add -u dir1 dir2
+	but add -u dir1 dir2
 '
 
 test_expect_success 'update noticed a removal' '
-	git ls-files dir1/sub1 >out &&
+	but ls-files dir1/sub1 >out &&
 	test_must_be_empty out
 '
 
 test_expect_success 'update touched correct path' '
-	git diff-files --name-status dir2/sub3 >out &&
+	but diff-files --name-status dir2/sub3 >out &&
 	test_must_be_empty out
 '
 
 test_expect_success 'update did not touch other tracked files' '
 	echo "M	check" >expect &&
-	git diff-files --name-status check >actual &&
+	but diff-files --name-status check >actual &&
 	test_cmp expect actual &&
 
 	echo "M	top" >expect &&
-	git diff-files --name-status top >actual &&
+	but diff-files --name-status top >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'update did not touch untracked files' '
-	git ls-files dir2/other >out &&
+	but ls-files dir2/other >out &&
 	test_must_be_empty out
 '
 
 test_expect_success 'cache tree has not been corrupted' '
 
-	git ls-files -s |
+	but ls-files -s |
 	sed -e "s/ 0	/	/" >expect &&
-	git ls-tree -r $(git write-tree) |
+	but ls-tree -r $(but write-tree) |
 	sed -e "s/ blob / /" >current &&
 	test_cmp expect current
 
@@ -78,12 +78,12 @@ test_expect_success 'update from a subdirectory' '
 	(
 		cd dir1 &&
 		echo more >sub2 &&
-		git add -u sub2
+		but add -u sub2
 	)
 '
 
 test_expect_success 'change gets noticed' '
-	git diff-files --name-status dir1 >out &&
+	but diff-files --name-status dir1 >out &&
 	test_must_be_empty out
 '
 
@@ -91,11 +91,11 @@ test_expect_success 'non-qualified update in subdir updates from the root' '
 	(
 		cd dir1 &&
 		echo even more >>sub2 &&
-		git --literal-pathspecs add -u &&
+		but --literal-pathspecs add -u &&
 		echo even more >>sub2 &&
-		git add -u
+		but add -u
 	) &&
-	git diff-files --name-only >actual &&
+	but diff-files --name-only >actual &&
 	test_must_be_empty actual
 '
 
@@ -108,8 +108,8 @@ test_expect_success 'replace a file with a symlink' '
 
 test_expect_success 'add everything changed' '
 
-	git add -u &&
-	git diff-files >out &&
+	but add -u &&
+	but diff-files >out &&
 	test_must_be_empty out
 
 '
@@ -117,8 +117,8 @@ test_expect_success 'add everything changed' '
 test_expect_success 'touch and then add -u' '
 
 	touch check &&
-	git add -u &&
-	git diff-files >out &&
+	but add -u &&
+	but diff-files >out &&
 	test_must_be_empty out
 
 '
@@ -126,8 +126,8 @@ test_expect_success 'touch and then add -u' '
 test_expect_success 'touch and then add explicitly' '
 
 	touch check &&
-	git add check &&
-	git diff-files >out &&
+	but add check &&
+	but diff-files >out &&
 	test_must_be_empty out
 
 '
@@ -138,13 +138,13 @@ test_expect_success 'add -n -u should not add but just report' '
 		echo "add '\''check'\''" &&
 		echo "remove '\''top'\''"
 	) >expect &&
-	before=$(git ls-files -s check top) &&
-	git count-objects -v >objects_before &&
+	before=$(but ls-files -s check top) &&
+	but count-objects -v >objects_before &&
 	echo changed >>check &&
 	rm -f top &&
-	git add -n -u >actual &&
-	after=$(git ls-files -s check top) &&
-	git count-objects -v >objects_after &&
+	but add -n -u >actual &&
+	after=$(but ls-files -s check top) &&
+	but count-objects -v >objects_after &&
 
 	test "$before" = "$after" &&
 	test_cmp objects_before objects_after &&
@@ -153,10 +153,10 @@ test_expect_success 'add -n -u should not add but just report' '
 '
 
 test_expect_success 'add -u resolves unmerged paths' '
-	git reset --hard &&
-	one=$(echo 1 | git hash-object -w --stdin) &&
-	two=$(echo 2 | git hash-object -w --stdin) &&
-	three=$(echo 3 | git hash-object -w --stdin) &&
+	but reset --hard &&
+	one=$(echo 1 | but hash-object -w --stdin) &&
+	two=$(echo 2 | but hash-object -w --stdin) &&
+	three=$(echo 3 | but hash-object -w --stdin) &&
 	{
 		for path in path1 path2
 		do
@@ -169,19 +169,19 @@ test_expect_success 'add -u resolves unmerged paths' '
 		echo "100644 $one 3	path5" &&
 		echo "100644 $one 3	path6"
 	} |
-	git update-index --index-info &&
+	but update-index --index-info &&
 	echo 3 >path1 &&
 	echo 2 >path3 &&
 	echo 2 >path5 &&
 
-	# Fail to explicitly resolve removed paths with "git add"
-	test_must_fail git add --no-all path4 &&
-	test_must_fail git add --no-all path6 &&
+	# Fail to explicitly resolve removed paths with "but add"
+	test_must_fail but add --no-all path4 &&
+	test_must_fail but add --no-all path6 &&
 
 	# "add -u" should notice removals no matter what stages
 	# the index entries are in.
-	git add -u &&
-	git ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
+	but add -u &&
+	but ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
 	{
 		echo "100644 $three 0	path1" &&
 		echo "100644 $two 0	path3" &&
@@ -191,8 +191,8 @@ test_expect_success 'add -u resolves unmerged paths' '
 '
 
 test_expect_success '"add -u non-existent" should fail' '
-	test_must_fail git add -u non-existent &&
-	git ls-files >actual &&
+	test_must_fail but add -u non-existent &&
+	but ls-files >actual &&
 	! grep "non-existent" actual
 '
 

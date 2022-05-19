@@ -9,8 +9,8 @@
 #include "string-list.h"
 #include "strbuf.h"
 
-static const char git_mailsplit_usage[] =
-"git mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [(<mbox>|<Maildir>)...]";
+static const char but_mailsplit_usage[] =
+"but mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [(<mbox>|<Maildir>)...]";
 
 static int is_from_line(const char *line, int len)
 {
@@ -28,11 +28,11 @@ static int is_from_line(const char *line, int len)
 			break;
 	}
 
-	if (!isdigit(colon[-4]) ||
-	    !isdigit(colon[-2]) ||
-	    !isdigit(colon[-1]) ||
-	    !isdigit(colon[ 1]) ||
-	    !isdigit(colon[ 2]))
+	if (!isdibut(colon[-4]) ||
+	    !isdibut(colon[-2]) ||
+	    !isdibut(colon[-1]) ||
+	    !isdibut(colon[ 1]) ||
+	    !isdibut(colon[ 2]))
 		return 0;
 
 	/* year */
@@ -148,7 +148,7 @@ out:
 static int maildir_filename_cmp(const char *a, const char *b)
 {
 	while (*a && *b) {
-		if (isdigit(*a) && isdigit(*b)) {
+		if (isdibut(*a) && isdibut(*b)) {
 			long int na, nb;
 			na = strtol(a, (char **)&a, 10);
 			nb = strtol(b, (char **)&b, 10);
@@ -286,12 +286,12 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 		if ( arg[1] == 'd' ) {
 			nr_prec = strtol(arg+2, NULL, 10);
 			if (nr_prec < 3 || 10 <= nr_prec)
-				usage(git_mailsplit_usage);
+				usage(but_mailsplit_usage);
 			continue;
 		} else if ( arg[1] == 'f' ) {
 			nr = strtol(arg+2, NULL, 10);
 		} else if ( arg[1] == 'h' ) {
-			usage(git_mailsplit_usage);
+			usage(but_mailsplit_usage);
 		} else if ( arg[1] == 'b' && !arg[2] ) {
 			allow_bare = 1;
 		} else if (!strcmp(arg, "--keep-cr")) {
@@ -322,7 +322,7 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			argp = stdin_only;
 			break;
 		default:
-			usage(git_mailsplit_usage);
+			usage(but_mailsplit_usage);
 		}
 	} else {
 		/* New usage: if no more argument, parse stdin */

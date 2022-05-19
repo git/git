@@ -1,7 +1,7 @@
 # Helpers for scripts testing bitmap functionality; see t5310 for
 # example usage.
 
-objdir=.git/objects
+objdir=.but/objects
 midx=$objdir/pack/multi-pack-index
 
 # Compare a file containing rev-list bitmap traversal output to its non-bitmap
@@ -75,102 +75,102 @@ test_bitmap_traversal () {
 setup_bitmap_history() {
 	test_expect_success 'setup repo with moderate-sized history' '
 		test_cummit_bulk --id=file 10 &&
-		git branch -M second &&
-		git checkout -b other HEAD~5 &&
+		but branch -M second &&
+		but checkout -b other HEAD~5 &&
 		test_cummit_bulk --id=side 10 &&
 
 		# add complicated history setup, including merges and
 		# ambiguous merge-bases
 
-		git checkout -b merge-left other~2 &&
-		git merge second~2 -m "merge-left" &&
+		but checkout -b merge-left other~2 &&
+		but merge second~2 -m "merge-left" &&
 
-		git checkout -b merge-right second~1 &&
-		git merge other~1 -m "merge-right" &&
+		but checkout -b merge-right second~1 &&
+		but merge other~1 -m "merge-right" &&
 
-		git checkout -b octo-second second &&
-		git merge merge-left merge-right -m "octopus-second" &&
+		but checkout -b octo-second second &&
+		but merge merge-left merge-right -m "octopus-second" &&
 
-		git checkout -b octo-other other &&
-		git merge merge-left merge-right -m "octopus-other" &&
+		but checkout -b octo-other other &&
+		but merge merge-left merge-right -m "octopus-other" &&
 
-		git checkout other &&
-		git merge octo-other -m "pull octopus" &&
+		but checkout other &&
+		but merge octo-other -m "pull octopus" &&
 
-		git checkout second &&
-		git merge octo-second -m "pull octopus" &&
+		but checkout second &&
+		but merge octo-second -m "pull octopus" &&
 
 		# Remove these branches so they are not selected
 		# as bitmap tips
-		git branch -D merge-left &&
-		git branch -D merge-right &&
-		git branch -D octo-other &&
-		git branch -D octo-second &&
+		but branch -D merge-left &&
+		but branch -D merge-right &&
+		but branch -D octo-other &&
+		but branch -D octo-second &&
 
 		# add padding to make these merges less interesting
 		# and avoid having them selected for bitmaps
 		test_cummit_bulk --id=file 100 &&
-		git checkout other &&
+		but checkout other &&
 		test_cummit_bulk --id=side 100 &&
-		git checkout second &&
+		but checkout second &&
 
-		bitmaptip=$(git rev-parse second) &&
-		blob=$(echo tagged-blob | git hash-object -w --stdin) &&
-		git tag tagged-blob $blob
+		bitmaptip=$(but rev-parse second) &&
+		blob=$(echo tagged-blob | but hash-object -w --stdin) &&
+		but tag tagged-blob $blob
 	'
 }
 
 rev_list_tests_head () {
 	test_expect_success "counting cummits via bitmap ($state, $branch)" '
-		git rev-list --count $branch >expect &&
-		git rev-list --use-bitmap-index --count $branch >actual &&
+		but rev-list --count $branch >expect &&
+		but rev-list --use-bitmap-index --count $branch >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "counting partial cummits via bitmap ($state, $branch)" '
-		git rev-list --count $branch~5..$branch >expect &&
-		git rev-list --use-bitmap-index --count $branch~5..$branch >actual &&
+		but rev-list --count $branch~5..$branch >expect &&
+		but rev-list --use-bitmap-index --count $branch~5..$branch >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "counting cummits with limit ($state, $branch)" '
-		git rev-list --count -n 1 $branch >expect &&
-		git rev-list --use-bitmap-index --count -n 1 $branch >actual &&
+		but rev-list --count -n 1 $branch >expect &&
+		but rev-list --use-bitmap-index --count -n 1 $branch >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "counting non-linear history ($state, $branch)" '
-		git rev-list --count other...second >expect &&
-		git rev-list --use-bitmap-index --count other...second >actual &&
+		but rev-list --count other...second >expect &&
+		but rev-list --use-bitmap-index --count other...second >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "counting cummits with limiting ($state, $branch)" '
-		git rev-list --count $branch -- 1.t >expect &&
-		git rev-list --use-bitmap-index --count $branch -- 1.t >actual &&
+		but rev-list --count $branch -- 1.t >expect &&
+		but rev-list --use-bitmap-index --count $branch -- 1.t >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "counting objects via bitmap ($state, $branch)" '
-		git rev-list --count --objects $branch >expect &&
-		git rev-list --use-bitmap-index --count --objects $branch >actual &&
+		but rev-list --count --objects $branch >expect &&
+		but rev-list --use-bitmap-index --count --objects $branch >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "enumerate cummits ($state, $branch)" '
-		git rev-list --use-bitmap-index $branch >actual &&
-		git rev-list $branch >expect &&
+		but rev-list --use-bitmap-index $branch >actual &&
+		but rev-list $branch >expect &&
 		test_bitmap_traversal --no-confirm-bitmaps expect actual
 	'
 
 	test_expect_success "enumerate --objects ($state, $branch)" '
-		git rev-list --objects --use-bitmap-index $branch >actual &&
-		git rev-list --objects $branch >expect &&
+		but rev-list --objects --use-bitmap-index $branch >actual &&
+		but rev-list --objects $branch >expect &&
 		test_bitmap_traversal expect actual
 	'
 
 	test_expect_success "bitmap --objects handles non-cummit objects ($state, $branch)" '
-		git rev-list --objects --use-bitmap-index $branch tagged-blob >actual &&
+		but rev-list --objects --use-bitmap-index $branch tagged-blob >actual &&
 		grep $blob actual
 	'
 }
@@ -187,30 +187,30 @@ rev_list_tests () {
 basic_bitmap_tests () {
 	tip="$1"
 	test_expect_success 'rev-list --test-bitmap verifies bitmaps' "
-		git rev-list --test-bitmap "${tip:-HEAD}"
+		but rev-list --test-bitmap "${tip:-HEAD}"
 	"
 
 	rev_list_tests 'full bitmap'
 
 	test_expect_success 'clone from bitmapped repository' '
-		rm -fr clone.git &&
-		git clone --no-local --bare . clone.git &&
-		git rev-parse HEAD >expect &&
-		git --git-dir=clone.git rev-parse HEAD >actual &&
+		rm -fr clone.but &&
+		but clone --no-local --bare . clone.but &&
+		but rev-parse HEAD >expect &&
+		but --but-dir=clone.but rev-parse HEAD >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success 'partial clone from bitmapped repository' '
 		test_config uploadpack.allowfilter true &&
-		rm -fr partial-clone.git &&
-		git clone --no-local --bare --filter=blob:none . partial-clone.git &&
+		rm -fr partial-clone.but &&
+		but clone --no-local --bare --filter=blob:none . partial-clone.but &&
 		(
-			cd partial-clone.git &&
+			cd partial-clone.but &&
 			pack=$(echo objects/pack/*.pack) &&
-			git verify-pack -v "$pack" >have &&
+			but verify-pack -v "$pack" >have &&
 			awk "/blob/ { print \$1 }" <have >blobs &&
 			# we expect this single blob because of the direct ref
-			git rev-parse refs/tags/tagged-blob >expect &&
+			but rev-parse refs/tags/tagged-blob >expect &&
 			test_cmp expect blobs
 		)
 	'
@@ -222,15 +222,15 @@ basic_bitmap_tests () {
 	rev_list_tests 'partial bitmap'
 
 	test_expect_success 'fetch (partial bitmap)' '
-		git --git-dir=clone.git fetch origin second:second &&
-		git rev-parse HEAD >expect &&
-		git --git-dir=clone.git rev-parse HEAD >actual &&
+		but --but-dir=clone.but fetch origin second:second &&
+		but rev-parse HEAD >expect &&
+		but --but-dir=clone.but rev-parse HEAD >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success 'enumerating progress counts pack-reused objects' '
-		count=$(git rev-list --objects --all --count) &&
-		git repack -adb &&
+		count=$(but rev-list --objects --all --count) &&
+		but repack -adb &&
 
 		# check first with only reused objects; confirm that our
 		# progress showed the right number, and also that we did
@@ -238,15 +238,15 @@ basic_bitmap_tests () {
 		# line of the meter (there may be an arbitrary number of
 		# intermediate lines ending with CR).
 		GIT_PROGRESS_DELAY=0 \
-			git pack-objects --all --stdout --progress \
+			but pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
 		grep "Enumerating objects: $count, done" stderr &&
 		grep "pack-reused $count" stderr &&
 
 		# now the same but with one non-reused object
-		git cummit --allow-empty -m "an extra cummit object" &&
+		but cummit --allow-empty -m "an extra cummit object" &&
 		GIT_PROGRESS_DELAY=0 \
-			git pack-objects --all --stdout --progress \
+			but pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
 		grep "Enumerating objects: $((count+1)), done" stderr &&
 		grep "pack-reused $count" stderr
@@ -260,7 +260,7 @@ basic_bitmap_tests () {
 # there's only one (e.g., via "repack -ad", or having just fetched a copy).
 have_delta () {
 	echo $2 >expect &&
-	echo $1 | git cat-file --batch-check="%(deltabase)" >actual &&
+	echo $1 | but cat-file --batch-check="%(deltabase)" >actual &&
 	test_cmp expect actual
 }
 
@@ -270,7 +270,7 @@ midx_checksum () {
 
 # midx_pack_source <obj>
 midx_pack_source () {
-	test-tool read-midx --show-objects .git/objects | grep "^$1 " | cut -f2
+	test-tool read-midx --show-objects .but/objects | grep "^$1 " | cut -f2
 }
 
 test_rev_exists () {
@@ -279,7 +279,7 @@ test_rev_exists () {
 
 	test_expect_success "reverse index exists ($kind)" '
 		GIT_TRACE2_EVENT=$(pwd)/event.trace \
-			git rev-list --test-bitmap "$cummit" &&
+			but rev-list --test-bitmap "$cummit" &&
 
 		if test "rev" = "$kind"
 		then
@@ -295,8 +295,8 @@ midx_bitmap_core () {
 	setup_bitmap_history
 
 	test_expect_success 'create single-pack midx with bitmaps' '
-		git repack -ad &&
-		git multi-pack-index write --bitmap &&
+		but repack -ad &&
+		but multi-pack-index write --bitmap &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'
@@ -309,20 +309,20 @@ midx_bitmap_core () {
 		for i in $(test_seq 1 16)
 		do
 			test_cummit "$i" &&
-			git repack -d || return 1
+			but repack -d || return 1
 		done &&
 
-		git checkout -b other2 HEAD~8 &&
+		but checkout -b other2 HEAD~8 &&
 		for i in $(test_seq 1 8)
 		do
 			test_cummit "side-$i" &&
-			git repack -d || return 1
+			but repack -d || return 1
 		done &&
-		git checkout second
+		but checkout second
 	'
 
 	test_expect_success 'create multi-pack midx with bitmaps' '
-		git multi-pack-index write --bitmap &&
+		but multi-pack-index write --bitmap &&
 
 		ls $objdir/pack/pack-*.pack >packs &&
 		test_line_count = 25 packs &&
@@ -336,15 +336,15 @@ midx_bitmap_core () {
 	basic_bitmap_tests
 
 	test_expect_success '--no-bitmap is respected when bitmaps exist' '
-		git multi-pack-index write --bitmap &&
+		but multi-pack-index write --bitmap &&
 
 		test_cummit respect--no-bitmap &&
-		git repack -d &&
+		but repack -d &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
-		git multi-pack-index write --no-bitmap &&
+		but multi-pack-index write --no-bitmap &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-$(midx_checksum $objdir).bitmap &&
@@ -358,14 +358,14 @@ midx_bitmap_core () {
 		test_seq 1 128 >a &&
 		test_seq 1 130 >b &&
 
-		git add a b &&
-		git cummit -m "initial cummit" &&
+		but add a b &&
+		but cummit -m "initial cummit" &&
 
-		a=$(git rev-parse HEAD:a) &&
-		b=$(git rev-parse HEAD:b) &&
+		a=$(but rev-parse HEAD:a) &&
+		b=$(but rev-parse HEAD:b) &&
 
 		# In the first pack, "a" is stored as a delta to "b".
-		p1=$(git pack-objects .git/objects/pack/pack <<-EOF
+		p1=$(but pack-objects .but/objects/pack/pack <<-EOF
 		$a
 		$b
 		EOF
@@ -373,18 +373,18 @@ midx_bitmap_core () {
 
 		# In the second pack, "a" is missing, and "b" is not a delta nor base to
 		# any other object.
-		p2=$(git pack-objects .git/objects/pack/pack <<-EOF
+		p2=$(but pack-objects .but/objects/pack/pack <<-EOF
 		$b
-		$(git rev-parse HEAD)
-		$(git rev-parse HEAD^{tree})
+		$(but rev-parse HEAD)
+		$(but rev-parse HEAD^{tree})
 		EOF
 		) &&
 
-		git prune-packed &&
+		but prune-packed &&
 		# Use the second pack as the preferred source, so that "b" occurs
 		# earlier in the MIDX object order, rendering "a" unusable for pack
 		# reuse.
-		git multi-pack-index write --bitmap --preferred-pack=pack-$p2.idx &&
+		but multi-pack-index write --bitmap --preferred-pack=pack-$p2.idx &&
 
 		have_delta $a $b &&
 		test $(midx_pack_source $a) != $(midx_pack_source $b)
@@ -393,17 +393,17 @@ midx_bitmap_core () {
 	rev_list_tests 'full bitmap with backwards delta'
 
 	test_expect_success 'clone with bitmaps enabled' '
-		git clone --no-local --bare . clone-reverse-delta.git &&
-		test_when_finished "rm -fr clone-reverse-delta.git" &&
+		but clone --no-local --bare . clone-reverse-delta.but &&
+		test_when_finished "rm -fr clone-reverse-delta.but" &&
 
-		git rev-parse HEAD >expect &&
-		git --git-dir=clone-reverse-delta.git rev-parse HEAD >actual &&
+		but rev-parse HEAD >expect &&
+		but --but-dir=clone-reverse-delta.but rev-parse HEAD >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success 'changing the preferred pack does not corrupt bitmaps' '
 		rm -fr repo &&
-		git init repo &&
+		but init repo &&
 		test_when_finished "rm -fr repo" &&
 		(
 			cd repo &&
@@ -411,24 +411,24 @@ midx_bitmap_core () {
 			test_cummit A &&
 			test_cummit B &&
 
-			git rev-list --objects --no-object-names HEAD^ >A.objects &&
-			git rev-list --objects --no-object-names HEAD^.. >B.objects &&
+			but rev-list --objects --no-object-names HEAD^ >A.objects &&
+			but rev-list --objects --no-object-names HEAD^.. >B.objects &&
 
-			A=$(git pack-objects $objdir/pack/pack <A.objects) &&
-			B=$(git pack-objects $objdir/pack/pack <B.objects) &&
+			A=$(but pack-objects $objdir/pack/pack <A.objects) &&
+			B=$(but pack-objects $objdir/pack/pack <B.objects) &&
 
 			cat >indexes <<-EOF &&
 			pack-$A.idx
 			pack-$B.idx
 			EOF
 
-			git multi-pack-index write --bitmap --stdin-packs \
+			but multi-pack-index write --bitmap --stdin-packs \
 				--preferred-pack=pack-$A.pack <indexes &&
-			git rev-list --test-bitmap A &&
+			but rev-list --test-bitmap A &&
 
-			git multi-pack-index write --bitmap --stdin-packs \
+			but multi-pack-index write --bitmap --stdin-packs \
 				--preferred-pack=pack-$B.pack <indexes &&
-			git rev-list --test-bitmap A
+			but rev-list --test-bitmap A
 		)
 	'
 }
@@ -438,9 +438,9 @@ midx_bitmap_partial_tests () {
 
 	test_expect_success 'setup partial bitmaps' '
 		test_cummit packed &&
-		git repack &&
+		but repack &&
 		test_cummit loose &&
-		git multi-pack-index write --bitmap 2>err &&
+		but multi-pack-index write --bitmap 2>err &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap
 	'

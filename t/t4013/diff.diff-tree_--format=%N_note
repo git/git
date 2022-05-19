@@ -1,4 +1,4 @@
-$ git diff-tree --format=%N note
+$ but diff-tree --format=%N note
 note
 
 

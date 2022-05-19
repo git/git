@@ -324,7 +324,7 @@ static int verify_gpg_signed_buffer(struct signature_check *sigc,
 	struct strbuf gpg_stdout = STRBUF_INIT;
 	struct strbuf gpg_stderr = STRBUF_INIT;
 
-	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
+	temp = mks_tempfile_t(".but_vtag_tmpXXXXXX");
 	if (!temp)
 		return error_errno(_("could not create temporary file"));
 	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
@@ -369,10 +369,10 @@ static void parse_ssh_output(struct signature_check *sigc)
 
 	/*
 	 * ssh-keygen output should be:
-	 * Good "git" signature for PRINCIPAL with RSA key SHA256:FINGERPRINT
+	 * Good "but" signature for PRINCIPAL with RSA key SHA256:FINGERPRINT
 	 *
 	 * or for valid but unknown keys:
-	 * Good "git" signature with RSA key SHA256:FINGERPRINT
+	 * Good "but" signature with RSA key SHA256:FINGERPRINT
 	 *
 	 * Note that "PRINCIPAL" can contain whitespace, "RSA" and
 	 * "SHA256" part could be a different token that names of
@@ -385,7 +385,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 
 	line = to_free = xmemdupz(sigc->output, strcspn(sigc->output, "\n"));
 
-	if (skip_prefix(line, "Good \"git\" signature for ", &line)) {
+	if (skip_prefix(line, "Good \"but\" signature for ", &line)) {
 		/* Search for the last "with" to get the full principal */
 		principal = line;
 		do {
@@ -400,7 +400,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 		sigc->result = 'G';
 		sigc->trust_level = TRUST_FULLY;
 		sigc->signer = xmemdupz(principal, line - principal - 1);
-	} else if (skip_prefix(line, "Good \"git\" signature with ", &line)) {
+	} else if (skip_prefix(line, "Good \"but\" signature with ", &line)) {
 		/* Valid signature, but key unknown */
 		sigc->result = 'G';
 		sigc->trust_level = TRUST_UNDEFINED;
@@ -451,7 +451,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		return -1;
 	}
 
-	buffer_file = mks_tempfile_t(".git_vtag_tmpXXXXXX");
+	buffer_file = mks_tempfile_t(".but_vtag_tmpXXXXXX");
 	if (!buffer_file)
 		return error_errno(_("could not create temporary file"));
 	if (write_in_full(buffer_file->fd, signature, signature_size) < 0 ||
@@ -487,7 +487,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		child_process_init(&ssh_keygen);
 		strvec_pushl(&ssh_keygen.args, fmt->program,
 			     "-Y", "check-novalidate",
-			     "-n", "git",
+			     "-n", "but",
 			     "-s", buffer_file->filename.buf,
 			     verify_time.buf,
 			     NULL);
@@ -535,7 +535,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 			 * Try with each until we find a match
 			 */
 			strvec_pushl(&ssh_keygen.args, "-Y", "verify",
-				     "-n", "git",
+				     "-n", "but",
 				     "-f", ssh_allowed_signers,
 				     "-I", principal,
 				     "-s", buffer_file->filename.buf,
@@ -697,7 +697,7 @@ void set_signing_key(const char *key)
 	configured_signing_key = xstrdup(key);
 }
 
-int git_gpg_config(const char *var, const char *value, void *cb)
+int but_gpg_config(const char *var, const char *value, void *cb)
 {
 	struct gpg_format *fmt = NULL;
 	char *fmtname = NULL;
@@ -739,19 +739,19 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "gpg.ssh.defaultkeycommand")) {
 		if (!value)
 			return config_error_nonbool(var);
-		return git_config_string(&ssh_default_key_command, var, value);
+		return but_config_string(&ssh_default_key_command, var, value);
 	}
 
 	if (!strcmp(var, "gpg.ssh.allowedsignersfile")) {
 		if (!value)
 			return config_error_nonbool(var);
-		return git_config_pathname(&ssh_allowed_signers, var, value);
+		return but_config_pathname(&ssh_allowed_signers, var, value);
 	}
 
 	if (!strcmp(var, "gpg.ssh.revocationfile")) {
 		if (!value)
 			return config_error_nonbool(var);
-		return git_config_pathname(&ssh_revocation_file, var, value);
+		return but_config_pathname(&ssh_revocation_file, var, value);
 	}
 
 	if (!strcmp(var, "gpg.program") || !strcmp(var, "gpg.openpgp.program"))
@@ -765,7 +765,7 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 
 	if (fmtname) {
 		fmt = get_format_by_name(fmtname);
-		return git_config_string(&fmt->program, var, value);
+		return but_config_string(&fmt->program, var, value);
 	}
 
 	return 0;
@@ -902,7 +902,7 @@ const char *get_signing_key(void)
 		return use_format->get_default_key();
 	}
 
-	return git_cummitter_info(IDENT_STRICT | IDENT_NO_DATE);
+	return but_cummitter_info(IDENT_STRICT | IDENT_NO_DATE);
 }
 
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
@@ -989,7 +989,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 
 	if (is_literal_ssh_key(signing_key, &literal_key)) {
 		/* A literal ssh key */
-		key_file = mks_tempfile_t(".git_signing_key_tmpXXXXXX");
+		key_file = mks_tempfile_t(".but_signing_key_tmpXXXXXX");
 		if (!key_file)
 			return error_errno(
 				_("could not create temporary file"));
@@ -1006,7 +1006,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 		ssh_signing_key_file = expand_user_path(signing_key, 1);
 	}
 
-	buffer_file = mks_tempfile_t(".git_signing_buffer_tmpXXXXXX");
+	buffer_file = mks_tempfile_t(".but_signing_buffer_tmpXXXXXX");
 	if (!buffer_file) {
 		error_errno(_("could not create temporary file"));
 		goto out;
@@ -1021,7 +1021,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 
 	strvec_pushl(&signer.args, use_format->program,
 		     "-Y", "sign",
-		     "-n", "git",
+		     "-n", "but",
 		     "-f", ssh_signing_key_file,
 		     buffer_file->filename.buf,
 		     NULL);

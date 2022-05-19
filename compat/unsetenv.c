@@ -1,6 +1,6 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-int gitunsetenv(const char *name)
+int butunsetenv(const char *name)
 {
 #if !defined(__MINGW32__)
      extern char **environ;

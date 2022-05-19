@@ -10,8 +10,8 @@ test_expect_success 'set up non-repo directory' '
 	export GIT_CEILING_DIRECTORIES &&
 	mkdir non-repo &&
 	cd non-repo &&
-	# confirm that git does not find a repo
-	test_must_fail git rev-parse --git-dir
+	# confirm that but does not find a repo
+	test_must_fail but rev-parse --but-dir
 '
 
 # Rather than directly test the output of sq-quote directly,
@@ -25,22 +25,22 @@ dump_args () {
 }
 test_expect_success 'rev-parse --sq-quote' '
 	dump_args "$tricky" easy >expect &&
-	eval "dump_args $(git rev-parse --sq-quote "$tricky" easy)" >actual &&
+	eval "dump_args $(but rev-parse --sq-quote "$tricky" easy)" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-parse --local-env-vars' '
-	git rev-parse --local-env-vars >actual &&
+	but rev-parse --local-env-vars >actual &&
 	# we do not want to depend on the complete list here,
 	# so just look for something plausible
 	grep ^GIT_DIR actual
 '
 
-test_expect_success 'rev-parse --resolve-git-dir' '
-	git init --separate-git-dir repo dir &&
-	test_must_fail git rev-parse --resolve-git-dir . &&
+test_expect_success 'rev-parse --resolve-but-dir' '
+	but init --separate-but-dir repo dir &&
+	test_must_fail but rev-parse --resolve-but-dir . &&
 	echo "$(pwd)/repo" >expect &&
-	git rev-parse --resolve-git-dir dir/.git >actual &&
+	but rev-parse --resolve-but-dir dir/.but >actual &&
 	test_cmp expect actual
 '
 

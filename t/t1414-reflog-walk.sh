@@ -9,16 +9,16 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'set up some reflog entries' '
 	test_cummit one &&
 	test_cummit two &&
-	git checkout -b side HEAD^ &&
+	but checkout -b side HEAD^ &&
 	test_cummit three &&
-	git merge --no-cummit main &&
+	but merge --no-cummit main &&
 	echo evil-merge-content >>one.t &&
 	test_tick &&
-	git cummit --no-edit -a
+	but cummit --no-edit -a
 '
 
 do_walk () {
-	git log -g --format="%gd %gs" "$@"
+	but log -g --format="%gd %gs" "$@"
 }
 
 test_expect_success 'set up expected reflog' '
@@ -60,8 +60,8 @@ test_expect_success 'pathspec limiting handles merges' '
 
 test_expect_success '--parents shows true parents' '
 	# convert newlines to spaces
-	echo $(git rev-parse HEAD HEAD^1 HEAD^2) >expect &&
-	git rev-list -g --parents -1 HEAD >actual &&
+	echo $(but rev-parse HEAD HEAD^1 HEAD^2) >expect &&
+	but rev-list -g --parents -1 HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -98,42 +98,42 @@ test_expect_success 'min/max age uses entry date to limit' '
 	# does something (and does not get optimized out). We know
 	# that the timestamps of those cummits will be before our "min".
 
-	git update-ref -m before refs/heads/minmax one &&
+	but update-ref -m before refs/heads/minmax one &&
 
 	test_tick &&
 	min=$test_tick &&
-	git update-ref -m min refs/heads/minmax two &&
+	but update-ref -m min refs/heads/minmax two &&
 
 	test_tick &&
 	max=$test_tick &&
-	git update-ref -m max refs/heads/minmax one &&
+	but update-ref -m max refs/heads/minmax one &&
 
 	test_tick &&
-	git update-ref -m after refs/heads/minmax two &&
+	but update-ref -m after refs/heads/minmax two &&
 
 	cat >expect <<-\EOF &&
 	max
 	min
 	EOF
-	git log -g --since=$min --until=$max --format=%gs minmax >actual &&
+	but log -g --since=$min --until=$max --format=%gs minmax >actual &&
 	test_cmp expect actual
 '
 
 # Create a situation where the reflog and ref database disagree about the latest
 # state of HEAD.
 test_expect_success REFFILES 'walk prefers reflog to ref tip' '
-	head=$(git rev-parse HEAD) &&
-	one=$(git rev-parse one) &&
+	head=$(but rev-parse HEAD) &&
+	one=$(but rev-parse one) &&
 	ident="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" &&
-	echo "$head $one $ident	broken reflog entry" >>.git/logs/HEAD &&
+	echo "$head $one $ident	broken reflog entry" >>.but/logs/HEAD &&
 
 	echo $one >expect &&
-	git log -g --format=%H -1 >actual &&
+	but log -g --format=%H -1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-list -g complains when there are no reflogs' '
-	test_must_fail git rev-list -g
+	test_must_fail but rev-list -g
 '
 
 test_done

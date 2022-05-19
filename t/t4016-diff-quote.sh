@@ -28,15 +28,15 @@ test_expect_success setup '
 	echo P1.0 >"$P1.0" &&
 	echo P1.2 >"$P1.2" &&
 	echo P1.3 >"$P1.3" &&
-	git add . &&
-	git cummit -m initial &&
-	git mv "$P0.0" "R$P0.0" &&
-	git mv "$P0.1" "R$P1.0" &&
-	git mv "$P0.2" "R$P2.0" &&
-	git mv "$P0.3" "R$P3.0" &&
-	git mv "$P1.0" "R$P0.1" &&
-	git mv "$P1.2" "R$P2.1" &&
-	git mv "$P1.3" "R$P3.1" &&
+	but add . &&
+	but cummit -m initial &&
+	but mv "$P0.0" "R$P0.0" &&
+	but mv "$P0.1" "R$P1.0" &&
+	but mv "$P0.2" "R$P2.0" &&
+	but mv "$P0.3" "R$P3.0" &&
+	but mv "$P1.0" "R$P0.1" &&
+	but mv "$P1.2" "R$P2.1" &&
+	but mv "$P1.3" "R$P3.1" &&
 	:
 '
 
@@ -52,12 +52,12 @@ cat >expect <<\EOF
 EOF
 '
 
-test_expect_success 'git diff --summary -M HEAD' '
-	git diff --summary -M HEAD >actual &&
+test_expect_success 'but diff --summary -M HEAD' '
+	but diff --summary -M HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git diff --numstat -M HEAD' '
+test_expect_success 'but diff --numstat -M HEAD' '
 	cat >expect <<-\EOF &&
 	0	0	pathname.1 => "Rpathname\twith HT.0"
 	0	0	pathname.3 => "Rpathname\nwith LF.0"
@@ -67,11 +67,11 @@ test_expect_success 'git diff --numstat -M HEAD' '
 	0	0	pathname.0 => Rpathname.0
 	0	0	"pathname\twith HT.0" => Rpathname.1
 	EOF
-	git diff --numstat -M HEAD >actual &&
+	but diff --numstat -M HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git diff --stat -M HEAD' '
+test_expect_success 'but diff --stat -M HEAD' '
 	cat >expect <<-\EOF &&
 	 pathname.1 => "Rpathname\twith HT.0"            | 0
 	 pathname.3 => "Rpathname\nwith LF.0"            | 0
@@ -82,7 +82,7 @@ test_expect_success 'git diff --stat -M HEAD' '
 	 "pathname\twith HT.0" => Rpathname.1            | 0
 	 7 files changed, 0 insertions(+), 0 deletions(-)
 	EOF
-	git diff --stat -M HEAD >actual &&
+	but diff --stat -M HEAD >actual &&
 	test_cmp expect actual
 '
 

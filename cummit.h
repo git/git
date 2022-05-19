@@ -23,7 +23,7 @@ struct cummit_list {
 
 /*
  * The size of this struct matters in full repo walk operations like
- * 'git clone' or 'git gc'. Consider using cummit-slab to attach data
+ * 'but clone' or 'but gc'. Consider using cummit-slab to attach data
  * to a cummit instead of adding new fields here.
  */
 struct cummit {
@@ -330,7 +330,7 @@ struct cummit *get_merge_parent(const char *name);
 
 int parse_signed_cummit(const struct cummit *cummit,
 			struct strbuf *message, struct strbuf *signature,
-			const struct git_hash_algo *algop);
+			const struct but_hash_algo *algop);
 int remove_signature(struct strbuf *buf);
 
 /*
@@ -380,6 +380,6 @@ int parse_buffer_signed_by_header(const char *buffer,
 				  unsigned long size,
 				  struct strbuf *payload,
 				  struct strbuf *signature,
-				  const struct git_hash_algo *algop);
+				  const struct but_hash_algo *algop);
 
 #endif /* COMMIT_H */

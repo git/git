@@ -1,27 +1,27 @@
 #!/bin/sh
 
-test_description='git branch display tests'
+test_description='but branch display tests'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'make cummits' '
 	echo content >file &&
-	git add file &&
-	git cummit -m one &&
-	git branch -M main &&
+	but add file &&
+	but cummit -m one &&
+	but branch -M main &&
 	echo content >>file &&
-	git cummit -a -m two
+	but cummit -a -m two
 '
 
 test_expect_success 'make branches' '
-	git branch branch-one &&
-	git branch branch-two HEAD^
+	but branch branch-one &&
+	but branch branch-two HEAD^
 '
 
 test_expect_success 'make remote branches' '
-	git update-ref refs/remotes/origin/branch-one branch-one &&
-	git update-ref refs/remotes/origin/branch-two branch-two &&
-	git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/branch-one
+	but update-ref refs/remotes/origin/branch-one branch-one &&
+	but update-ref refs/remotes/origin/branch-two branch-two &&
+	but symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/branch-one
 '
 
 cat >expect <<'EOF'
@@ -29,13 +29,13 @@ cat >expect <<'EOF'
   branch-two
 * main
 EOF
-test_expect_success 'git branch shows local branches' '
-	git branch >actual &&
+test_expect_success 'but branch shows local branches' '
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch --list shows local branches' '
-	git branch --list >actual &&
+test_expect_success 'but branch --list shows local branches' '
+	but branch --list >actual &&
 	test_cmp expect actual
 '
 
@@ -43,8 +43,8 @@ cat >expect <<'EOF'
   branch-one
   branch-two
 EOF
-test_expect_success 'git branch --list pattern shows matching local branches' '
-	git branch --list branch* >actual &&
+test_expect_success 'but branch --list pattern shows matching local branches' '
+	but branch --list branch* >actual &&
 	test_cmp expect actual
 '
 
@@ -53,8 +53,8 @@ cat >expect <<'EOF'
   origin/branch-one
   origin/branch-two
 EOF
-test_expect_success 'git branch -r shows remote branches' '
-	git branch -r >actual &&
+test_expect_success 'but branch -r shows remote branches' '
+	but branch -r >actual &&
 	test_cmp expect actual
 '
 
@@ -66,8 +66,8 @@ cat >expect <<'EOF'
   remotes/origin/branch-one
   remotes/origin/branch-two
 EOF
-test_expect_success 'git branch -a shows local and remote branches' '
-	git branch -a >actual &&
+test_expect_success 'but branch -a shows local and remote branches' '
+	but branch -a >actual &&
 	test_cmp expect actual
 '
 
@@ -76,8 +76,8 @@ two
 one
 two
 EOF
-test_expect_success 'git branch -v shows branch summaries' '
-	git branch -v >tmp &&
+test_expect_success 'but branch -v shows branch summaries' '
+	but branch -v >tmp &&
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
 '
@@ -86,138 +86,138 @@ cat >expect <<'EOF'
 two
 one
 EOF
-test_expect_success 'git branch --list -v pattern shows branch summaries' '
-	git branch --list -v branch* >tmp &&
+test_expect_success 'but branch --list -v pattern shows branch summaries' '
+	but branch --list -v branch* >tmp &&
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
 '
-test_expect_success 'git branch --ignore-case --list -v pattern shows branch summaries' '
-	git branch --list --ignore-case -v BRANCH* >tmp &&
+test_expect_success 'but branch --ignore-case --list -v pattern shows branch summaries' '
+	but branch --list --ignore-case -v BRANCH* >tmp &&
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch -v pattern does not show branch summaries' '
-	test_must_fail git branch -v branch*
+test_expect_success 'but branch -v pattern does not show branch summaries' '
+	test_must_fail but branch -v branch*
 '
 
-test_expect_success 'git branch `--show-current` shows current branch' '
+test_expect_success 'but branch `--show-current` shows current branch' '
 	cat >expect <<-\EOF &&
 	branch-two
 	EOF
-	git checkout branch-two &&
-	git branch --show-current >actual &&
+	but checkout branch-two &&
+	but branch --show-current >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch `--show-current` is silent when detached HEAD' '
-	git checkout HEAD^0 &&
-	git branch --show-current >actual &&
+test_expect_success 'but branch `--show-current` is silent when detached HEAD' '
+	but checkout HEAD^0 &&
+	but branch --show-current >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'git branch `--show-current` works properly when tag exists' '
+test_expect_success 'but branch `--show-current` works properly when tag exists' '
 	cat >expect <<-\EOF &&
 	branch-and-tag-name
 	EOF
 	test_when_finished "
-		git checkout branch-one
-		git branch -D branch-and-tag-name
+		but checkout branch-one
+		but branch -D branch-and-tag-name
 	" &&
-	git checkout -b branch-and-tag-name &&
-	test_when_finished "git tag -d branch-and-tag-name" &&
-	git tag branch-and-tag-name &&
-	git branch --show-current >actual &&
+	but checkout -b branch-and-tag-name &&
+	test_when_finished "but tag -d branch-and-tag-name" &&
+	but tag branch-and-tag-name &&
+	but branch --show-current >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch `--show-current` works properly with worktrees' '
+test_expect_success 'but branch `--show-current` works properly with worktrees' '
 	cat >expect <<-\EOF &&
 	branch-one
 	branch-two
 	EOF
-	git checkout branch-one &&
+	but checkout branch-one &&
 	test_when_finished "
-		git worktree remove worktree_dir
+		but worktree remove worktree_dir
 	" &&
-	git worktree add worktree_dir branch-two &&
+	but worktree add worktree_dir branch-two &&
 	{
-		git branch --show-current &&
-		git -C worktree_dir branch --show-current
+		but branch --show-current &&
+		but -C worktree_dir branch --show-current
 	} >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch shows detached HEAD properly' '
+test_expect_success 'but branch shows detached HEAD properly' '
 	cat >expect <<EOF &&
-* (HEAD detached at $(git rev-parse --short HEAD^0))
+* (HEAD detached at $(but rev-parse --short HEAD^0))
   branch-one
   branch-two
   main
 EOF
-	git checkout HEAD^0 &&
-	git branch >actual &&
+	but checkout HEAD^0 &&
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch shows detached HEAD properly after checkout --detach' '
-	git checkout main &&
+test_expect_success 'but branch shows detached HEAD properly after checkout --detach' '
+	but checkout main &&
 	cat >expect <<EOF &&
-* (HEAD detached at $(git rev-parse --short HEAD^0))
+* (HEAD detached at $(but rev-parse --short HEAD^0))
   branch-one
   branch-two
   main
 EOF
-	git checkout --detach &&
-	git branch >actual &&
+	but checkout --detach &&
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch shows detached HEAD properly after moving' '
+test_expect_success 'but branch shows detached HEAD properly after moving' '
 	cat >expect <<EOF &&
-* (HEAD detached from $(git rev-parse --short HEAD))
+* (HEAD detached from $(but rev-parse --short HEAD))
   branch-one
   branch-two
   main
 EOF
-	git reset --hard HEAD^1 &&
-	git branch >actual &&
+	but reset --hard HEAD^1 &&
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch shows detached HEAD properly from tag' '
+test_expect_success 'but branch shows detached HEAD properly from tag' '
 	cat >expect <<EOF &&
 * (HEAD detached at fromtag)
   branch-one
   branch-two
   main
 EOF
-	git tag fromtag main &&
-	git checkout fromtag &&
-	git branch >actual &&
+	but tag fromtag main &&
+	but checkout fromtag &&
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch shows detached HEAD properly after moving from tag' '
+test_expect_success 'but branch shows detached HEAD properly after moving from tag' '
 	cat >expect <<EOF &&
 * (HEAD detached from fromtag)
   branch-one
   branch-two
   main
 EOF
-	git reset --hard HEAD^1 &&
-	git branch >actual &&
+	but reset --hard HEAD^1 &&
+	but branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch `--sort=[-]objectsize` option' '
+test_expect_success 'but branch `--sort=[-]objectsize` option' '
 	cat >expect <<-\EOF &&
 	* (HEAD detached from fromtag)
 	  branch-two
 	  branch-one
 	  main
 	EOF
-	git branch --sort=objectsize >actual &&
+	but branch --sort=objectsize >actual &&
 	test_cmp expect actual &&
 
 	cat >expect <<-\EOF &&
@@ -226,18 +226,18 @@ test_expect_success 'git branch `--sort=[-]objectsize` option' '
 	  main
 	  branch-two
 	EOF
-	git branch --sort=-objectsize >actual &&
+	but branch --sort=-objectsize >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch `--sort=[-]type` option' '
+test_expect_success 'but branch `--sort=[-]type` option' '
 	cat >expect <<-\EOF &&
 	* (HEAD detached from fromtag)
 	  branch-one
 	  branch-two
 	  main
 	EOF
-	git branch --sort=type >actual &&
+	but branch --sort=type >actual &&
 	test_cmp expect actual &&
 
 	cat >expect <<-\EOF &&
@@ -246,18 +246,18 @@ test_expect_success 'git branch `--sort=[-]type` option' '
 	  branch-two
 	  main
 	EOF
-	git branch --sort=-type >actual &&
+	but branch --sort=-type >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch `--sort=[-]version:refname` option' '
+test_expect_success 'but branch `--sort=[-]version:refname` option' '
 	cat >expect <<-\EOF &&
 	* (HEAD detached from fromtag)
 	  branch-one
 	  branch-two
 	  main
 	EOF
-	git branch --sort=version:refname >actual &&
+	but branch --sort=version:refname >actual &&
 	test_cmp expect actual &&
 
 	cat >expect <<-\EOF &&
@@ -266,54 +266,54 @@ test_expect_success 'git branch `--sort=[-]version:refname` option' '
 	  branch-two
 	  branch-one
 	EOF
-	git branch --sort=-version:refname >actual &&
+	but branch --sort=-version:refname >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch --points-at option' '
+test_expect_success 'but branch --points-at option' '
 	cat >expect <<-\EOF &&
 	  branch-one
 	  main
 	EOF
-	git branch --points-at=branch-one >actual &&
+	but branch --points-at=branch-one >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ambiguous branch/tag not marked' '
-	git tag ambiguous &&
-	git branch ambiguous &&
+	but tag ambiguous &&
+	but branch ambiguous &&
 	echo "  ambiguous" >expect &&
-	git branch --list ambiguous >actual &&
+	but branch --list ambiguous >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'local-branch symrefs shortened properly' '
-	git symbolic-ref refs/heads/ref-to-branch refs/heads/branch-one &&
-	git symbolic-ref refs/heads/ref-to-remote refs/remotes/origin/branch-one &&
+	but symbolic-ref refs/heads/ref-to-branch refs/heads/branch-one &&
+	but symbolic-ref refs/heads/ref-to-remote refs/remotes/origin/branch-one &&
 	cat >expect <<-\EOF &&
 	  ref-to-branch -> branch-one
 	  ref-to-remote -> origin/branch-one
 	EOF
-	git branch >actual.raw &&
+	but branch >actual.raw &&
 	grep ref-to <actual.raw >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'sort branches, ignore case' '
 	(
-		git init -b main sort-icase &&
+		but init -b main sort-icase &&
 		cd sort-icase &&
 		test_cummit initial &&
-		git branch branch-one &&
-		git branch BRANCH-two &&
-		git branch --list | awk "{print \$NF}" >actual &&
+		but branch branch-one &&
+		but branch BRANCH-two &&
+		but branch --list | awk "{print \$NF}" >actual &&
 		cat >expected <<-\EOF &&
 		BRANCH-two
 		branch-one
 		main
 		EOF
 		test_cmp expected actual &&
-		git branch --list -i | awk "{print \$NF}" >actual &&
+		but branch --list -i | awk "{print \$NF}" >actual &&
 		cat >expected <<-\EOF &&
 		branch-one
 		BRANCH-two
@@ -323,7 +323,7 @@ test_expect_success 'sort branches, ignore case' '
 	)
 '
 
-test_expect_success 'git branch --format option' '
+test_expect_success 'but branch --format option' '
 	cat >expect <<-\EOF &&
 	Refname is (HEAD detached from fromtag)
 	Refname is refs/heads/ambiguous
@@ -333,12 +333,12 @@ test_expect_success 'git branch --format option' '
 	Refname is refs/heads/ref-to-branch
 	Refname is refs/heads/ref-to-remote
 	EOF
-	git branch --format="Refname is %(refname)" >actual &&
+	but branch --format="Refname is %(refname)" >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch with --format=%(rest) must fail' '
-	test_must_fail git branch --format="%(rest)" >actual
+test_expect_success 'but branch with --format=%(rest) must fail' '
+	test_must_fail but branch --format="%(rest)" >actual
 '
 
 test_expect_success 'worktree colors correct' '
@@ -351,10 +351,10 @@ test_expect_success 'worktree colors correct' '
 	  ref-to-branch<RESET> -> branch-one
 	  ref-to-remote<RESET> -> origin/branch-one
 	EOF
-	git worktree add worktree_dir branch-two &&
-	git branch --color >actual.raw &&
+	but worktree add worktree_dir branch-two &&
+	but branch --color >actual.raw &&
 	rm -r worktree_dir &&
-	git worktree prune &&
+	but worktree prune &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -366,26 +366,26 @@ test_expect_success "set up color tests" '
 '
 
 test_expect_success '%(color) omitted without tty' '
-	TERM=vt100 git branch $color_args >actual.raw &&
+	TERM=vt100 but branch $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.bare actual
 '
 
 test_expect_success TTY '%(color) present with tty' '
-	test_terminal git branch $color_args >actual.raw &&
+	test_terminal but branch $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.color actual
 '
 
 test_expect_success '--color overrides auto-color' '
-	git branch --color $color_args >actual.raw &&
+	but branch --color $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.color actual
 '
 
 test_expect_success 'verbose output lists worktree path' '
-	one=$(git rev-parse --short HEAD) &&
-	two=$(git rev-parse --short main) &&
+	one=$(but rev-parse --short HEAD) &&
+	two=$(but rev-parse --short main) &&
 	cat >expect <<-EOF &&
 	* (HEAD detached from fromtag) $one one
 	  ambiguous                    $one one
@@ -395,10 +395,10 @@ test_expect_success 'verbose output lists worktree path' '
 	  ref-to-branch                $two two
 	  ref-to-remote                $two two
 	EOF
-	git worktree add worktree_dir branch-two &&
-	git branch -vv >actual &&
+	but worktree add worktree_dir branch-two &&
+	but branch -vv >actual &&
 	rm -r worktree_dir &&
-	git worktree prune &&
+	but worktree prune &&
 	test_cmp expect actual
 '
 

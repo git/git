@@ -19,7 +19,7 @@ int save_term(enum save_term_flags flags);
 /* Restore the terminal attributes that were saved with save_term() */
 void restore_term(void);
 
-char *git_terminal_prompt(const char *prompt, int echo);
+char *but_terminal_prompt(const char *prompt, int echo);
 
 /* Read a single keystroke, without echoing it to the terminal */
 int read_key_without_echo(struct strbuf *buf);

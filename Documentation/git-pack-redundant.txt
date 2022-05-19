@@ -1,15 +1,15 @@
-git-pack-redundant(1)
+but-pack-redundant(1)
 =====================
 
 NAME
 ----
-git-pack-redundant - Find redundant pack files
+but-pack-redundant - Find redundant pack files
 
 
 SYNOPSIS
 --------
 [verse]
-'git pack-redundant' [ --verbose ] [ --alt-odb ] ( --all | <pack-filename>... )
+'but pack-redundant' [ --verbose ] [ --alt-odb ] ( --all | <pack-filename>... )
 
 DESCRIPTION
 -----------
@@ -17,13 +17,13 @@ This program computes which packs in your repository
 are redundant. The output is suitable for piping to
 `xargs rm` if you are in the root of the repository.
 
-'git pack-redundant' accepts a list of objects on standard input. Any objects
+'but pack-redundant' accepts a list of objects on standard input. Any objects
 given will be ignored when checking which packs are required. This makes the
 following command useful when wanting to remove packs which contain unreachable
 objects.
 
-git fsck --full --unreachable | cut -d ' ' -f3 | \
-git pack-redundant --all | xargs rm
+but fsck --full --unreachable | cut -d ' ' -f3 | \
+but pack-redundant --all | xargs rm
 
 OPTIONS
 -------
@@ -41,10 +41,10 @@ OPTIONS
 
 SEE ALSO
 --------
-linkgit:git-pack-objects[1]
-linkgit:git-repack[1]
-linkgit:git-prune-packed[1]
+linkbut:but-pack-objects[1]
+linkbut:but-repack[1]
+linkbut:but-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

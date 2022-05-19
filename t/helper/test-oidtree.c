@@ -12,11 +12,11 @@ int cmd__oidtree(int argc, const char **argv)
 {
 	struct oidtree ot;
 	struct strbuf line = STRBUF_INIT;
-	int nongit_ok;
+	int nonbut_ok;
 	int algo = GIT_HASH_UNKNOWN;
 
 	oidtree_init(&ot);
-	setup_git_directory_gently(&nongit_ok);
+	setup_but_directory_gently(&nonbut_ok);
 
 	while (strbuf_getline(&line, stdin) != EOF) {
 		const char *arg;

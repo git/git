@@ -7,9 +7,9 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 
-	git config diff.color.whitespace "blue reverse" &&
+	but config diff.color.whitespace "blue reverse" &&
 	>F &&
-	git add F &&
+	but add F &&
 	echo "         Eight SP indent" >>F &&
 	echo " 	HT and SP indent" >>F &&
 	echo "With trailing SP " >>F &&
@@ -34,7 +34,7 @@ fi
 rm -f check-grep
 
 prepare_output () {
-	git diff --color >output
+	but diff --color >output
 	$grep_a "$blue_grep" output >error
 	$grep_a -v "$blue_grep" output >normal
 	return 0
@@ -54,8 +54,8 @@ test_expect_success default '
 
 test_expect_success 'default (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace" >.butattributes &&
 	prepare_output &&
 
 	grep Eight error >/dev/null &&
@@ -68,8 +68,8 @@ test_expect_success 'default (attribute)' '
 
 test_expect_success 'default, tabwidth=10 (attribute)' '
 
-	git config core.whitespace "tabwidth=10" &&
-	echo "F whitespace" >.gitattributes &&
+	but config core.whitespace "tabwidth=10" &&
+	echo "F whitespace" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -82,8 +82,8 @@ test_expect_success 'default, tabwidth=10 (attribute)' '
 
 test_expect_success 'no check (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F -whitespace" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F -whitespace" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -96,8 +96,8 @@ test_expect_success 'no check (attribute)' '
 
 test_expect_success 'no check, tabwidth=10 (attribute), must be irrelevant' '
 
-	git config core.whitespace "tabwidth=10" &&
-	echo "F -whitespace" >.gitattributes &&
+	but config core.whitespace "tabwidth=10" &&
+	echo "F -whitespace" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -110,8 +110,8 @@ test_expect_success 'no check, tabwidth=10 (attribute), must be irrelevant' '
 
 test_expect_success 'without -trail' '
 
-	rm -f .gitattributes &&
-	git config core.whitespace -trail &&
+	rm -f .butattributes &&
+	but config core.whitespace -trail &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -124,8 +124,8 @@ test_expect_success 'without -trail' '
 
 test_expect_success 'without -trail (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace=-trail" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace=-trail" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -138,8 +138,8 @@ test_expect_success 'without -trail (attribute)' '
 
 test_expect_success 'without -space' '
 
-	rm -f .gitattributes &&
-	git config core.whitespace -space &&
+	rm -f .butattributes &&
+	but config core.whitespace -space &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -152,8 +152,8 @@ test_expect_success 'without -space' '
 
 test_expect_success 'without -space (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace=-space" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace=-space" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -166,8 +166,8 @@ test_expect_success 'without -space (attribute)' '
 
 test_expect_success 'with indent-non-tab only' '
 
-	rm -f .gitattributes &&
-	git config core.whitespace indent,-trailing,-space &&
+	rm -f .butattributes &&
+	but config core.whitespace indent,-trailing,-space &&
 	prepare_output &&
 
 	grep Eight error >/dev/null &&
@@ -180,8 +180,8 @@ test_expect_success 'with indent-non-tab only' '
 
 test_expect_success 'with indent-non-tab only (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace=indent,-trailing,-space" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace=indent,-trailing,-space" >.butattributes &&
 	prepare_output &&
 
 	grep Eight error >/dev/null &&
@@ -194,8 +194,8 @@ test_expect_success 'with indent-non-tab only (attribute)' '
 
 test_expect_success 'with indent-non-tab only, tabwidth=10' '
 
-	rm -f .gitattributes &&
-	git config core.whitespace indent,tabwidth=10,-trailing,-space &&
+	rm -f .butattributes &&
+	but config core.whitespace indent,tabwidth=10,-trailing,-space &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -208,8 +208,8 @@ test_expect_success 'with indent-non-tab only, tabwidth=10' '
 
 test_expect_success 'with indent-non-tab only, tabwidth=10 (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace=indent,-trailing,-space,tabwidth=10" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace=indent,-trailing,-space,tabwidth=10" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -222,8 +222,8 @@ test_expect_success 'with indent-non-tab only, tabwidth=10 (attribute)' '
 
 test_expect_success 'with cr-at-eol' '
 
-	rm -f .gitattributes &&
-	git config core.whitespace cr-at-eol &&
+	rm -f .butattributes &&
+	but config core.whitespace cr-at-eol &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -236,8 +236,8 @@ test_expect_success 'with cr-at-eol' '
 
 test_expect_success 'with cr-at-eol (attribute)' '
 
-	test_might_fail git config --unset core.whitespace &&
-	echo "F whitespace=trailing,cr-at-eol" >.gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	echo "F whitespace=trailing,cr-at-eol" >.butattributes &&
 	prepare_output &&
 
 	grep Eight normal >/dev/null &&
@@ -250,8 +250,8 @@ test_expect_success 'with cr-at-eol (attribute)' '
 
 test_expect_success 'trailing empty lines (1)' '
 
-	rm -f .gitattributes &&
-	test_must_fail git diff --check >output &&
+	rm -f .butattributes &&
+	test_must_fail but diff --check >output &&
 	grep "new blank line at" output &&
 	grep "trailing whitespace" output
 
@@ -259,8 +259,8 @@ test_expect_success 'trailing empty lines (1)' '
 
 test_expect_success 'trailing empty lines (2)' '
 
-	echo "F -whitespace" >.gitattributes &&
-	git diff --check >output &&
+	echo "F -whitespace" >.butattributes &&
+	but diff --check >output &&
 	test_must_be_empty output
 
 '
@@ -268,19 +268,19 @@ test_expect_success 'trailing empty lines (2)' '
 test_expect_success 'checkdiff shows correct line number for trailing blank lines' '
 
 	printf "a\nb\n" > G &&
-	git add G &&
+	but add G &&
 	printf "x\nx\nx\na\nb\nc\n\n" > G &&
-	[ "$(git diff --check -- G)" = "G:7: new blank line at EOF." ]
+	[ "$(but diff --check -- G)" = "G:7: new blank line at EOF." ]
 
 '
 
 test_expect_success 'do not color trailing cr in context' '
-	test_might_fail git config --unset core.whitespace &&
-	rm -f .gitattributes &&
+	test_might_fail but config --unset core.whitespace &&
+	rm -f .butattributes &&
 	echo AAAQ | tr Q "\015" >G &&
-	git add G &&
+	but add G &&
 	echo BBBQ | tr Q "\015" >>G &&
-	git diff --color G | tr "\015" Q >output &&
+	but diff --color G | tr "\015" Q >output &&
 	grep "BBB.*${blue_grep}Q" output &&
 	grep "AAA.*\[mQ" output
 
@@ -288,9 +288,9 @@ test_expect_success 'do not color trailing cr in context' '
 
 test_expect_success 'color new trailing blank lines' '
 	test_write_lines a b "" "" >x &&
-	git add x &&
+	but add x &&
 	test_write_lines a "" "" "" c "" "" "" "" >x &&
-	git diff --color x >output &&
+	but diff --color x >output &&
 	cnt=$($grep_a "${blue_grep}" output | wc -l) &&
 	test $cnt = 2
 '

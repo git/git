@@ -1,21 +1,21 @@
-git-verify-pack(1)
+but-verify-pack(1)
 ==================
 
 NAME
 ----
-git-verify-pack - Validate packed Git archive files
+but-verify-pack - Validate packed Git archive files
 
 
 SYNOPSIS
 --------
 [verse]
-'git verify-pack' [-v|--verbose] [-s|--stat-only] [--] <pack>.idx ...
+'but verify-pack' [-v|--verbose] [-s|--stat-only] [--] <pack>.idx ...
 
 
 DESCRIPTION
 -----------
 Reads given idx file for packed Git archive created with the
-'git pack-objects' command and verifies idx file and the
+'but pack-objects' command and verifies idx file and the
 corresponding pack file.
 
 OPTIONS
@@ -50,4 +50,4 @@ for objects that are deltified.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

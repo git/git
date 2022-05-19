@@ -1,15 +1,15 @@
-git-update-index(1)
+but-update-index(1)
 ===================
 
 NAME
 ----
-git-update-index - Register file contents in the working tree to the index
+but-update-index - Register file contents in the working tree to the index
 
 
 SYNOPSIS
 --------
 [verse]
-'git update-index'
+'but update-index'
 	     [--add] [--remove | --force-remove] [--replace]
 	     [--refresh] [-q] [--unmerged] [--ignore-missing]
 	     [(--cacheinfo <mode>,<object>,<file>)...]
@@ -33,10 +33,10 @@ DESCRIPTION
 Modifies the index. Each file mentioned is updated into the index and
 any 'unmerged' or 'needs updating' state is cleared.
 
-See also linkgit:git-add[1] for a more user-friendly way to do some of
+See also linkbut:but-add[1] for a more user-friendly way to do some of
 the most common operations on the index.
 
-The way 'git update-index' handles files it is told about can be modified
+The way 'but update-index' handles files it is told about can be modified
 using the various options:
 
 OPTIONS
@@ -58,7 +58,7 @@ OPTIONS
 -q::
         Quiet.  If --refresh finds that the index needs an update, the
         default behavior is to error out.  This option makes
-	'git update-index' continue anyway.
+	'but update-index' continue anyway.
 
 --ignore-submodules::
 	Do not try to update submodules.  This option is only respected
@@ -66,7 +66,7 @@ OPTIONS
 
 --unmerged::
         If --refresh finds unmerged changes in the index, the default
-	behavior is to error out.  This option makes 'git update-index'
+	behavior is to error out.  This option makes 'but update-index'
         continue anyway.
 
 --ignore-missing::
@@ -126,7 +126,7 @@ you will need to handle the situation manually.
 
 -g::
 --again::
-	Runs 'git update-index' itself on the paths whose index
+	Runs 'but update-index' itself on the paths whose index
 	entries are different from those from the `HEAD` cummit.
 
 --unresolve::
@@ -144,7 +144,7 @@ you will need to handle the situation manually.
 
 --replace::
 	By default, when a file `path` exists in the index,
-	'git update-index' refuses an attempt to add `path/file`.
+	'but update-index' refuses an attempt to add `path/file`.
 	Similarly if a file `path/file` exists, a file `path`
 	cannot be added.  With --replace flag, existing entries
 	that conflict with the entry being added are
@@ -162,12 +162,12 @@ you will need to handle the situation manually.
 	Write the resulting index out in the named on-disk format version.
 	Supported versions are 2, 3 and 4. The current default version is 2
 	or 3, depending on whether extra features are used, such as
-	`git add -N`.
+	`but add -N`.
 +
 Version 4 performs a simple pathname compression that reduces index
 size by 30%-50% on large repositories, which results in faster load
 time. Version 4 is relatively young (first released in 1.8.0 in
-October 2012). Other Git implementations such as JGit and libgit2
+October 2012). Other Git implementations such as JGit and libbut2
 may not support it yet.
 
 -z::
@@ -182,7 +182,7 @@ may not support it yet.
 	file.
 +
 These options take effect whatever the value of the `core.splitIndex`
-configuration variable (see linkgit:git-config[1]). But a warning is
+configuration variable (see linkbut:but-config[1]). But a warning is
 emitted when the change goes against the configured value, as the
 configured value will take effect next time the index is read and this
 will remove the intended effect of the option.
@@ -193,7 +193,7 @@ will remove the intended effect of the option.
 	`--test-untracked-cache` before enabling it.
 +
 These options take effect whatever the value of the `core.untrackedCache`
-configuration variable (see linkgit:git-config[1]). But a warning is
+configuration variable (see linkbut:but-config[1]). But a warning is
 emitted when the change goes against the configured value, as the
 configured value will take effect next time the index is read and this
 will remove the intended effect of the option.
@@ -218,7 +218,7 @@ will remove the intended effect of the option.
 --no-fsmonitor::
 	Enable or disable files system monitor feature. These options
 	take effect whatever the value of the `core.fsmonitor`
-	configuration variable (see linkgit:git-config[1]). But a warning
+	configuration variable (see linkbut:but-config[1]). But a warning
 	is emitted when the change goes against the configured value, as
 	the configured value will take effect next time the index is
 	read and this will remove the intended effect of the option.
@@ -241,7 +241,7 @@ up to date for mode/content changes. But what it *does* do is to
 can refresh the index for a file that hasn't been changed but where
 the stat entry is out of date.
 
-For example, you'd want to do this after doing a 'git read-tree', to link
+For example, you'd want to do this after doing a 'but read-tree', to link
 up the stat index details with the proper files.
 
 USING --CACHEINFO OR --INFO-ONLY
@@ -253,7 +253,7 @@ merging.
 To pretend you have a file at path with mode and sha1, say:
 
 ----------------
-$ git update-index --add --cacheinfo <mode>,<sha1>,<path>
+$ but update-index --add --cacheinfo <mode>,<sha1>,<path>
 ----------------
 
 `--info-only` is used to register files without placing them in the object
@@ -275,12 +275,12 @@ specifically for scripts.  It can take inputs of three formats:
 
     . mode SP type SP sha1          TAB path
 +
-This format is to stuff `git ls-tree` output into the index.
+This format is to stuff `but ls-tree` output into the index.
 
     . mode         SP sha1 SP stage TAB path
 +
 This format is to put higher order stages into the
-index file and matches 'git ls-files --stage' output.
+index file and matches 'but ls-files --stage' output.
 
     . mode         SP sha1          TAB path
 +
@@ -294,14 +294,14 @@ then feeding necessary input lines in the third format.
 For example, starting with this index:
 
 ------------
-$ git ls-files -s
+$ but ls-files -s
 100644 8a1218a1024a212bb3db30becd860315f9f3ac52 0       frotz
 ------------
 
 you can feed the following input to `--index-info`:
 
 ------------
-$ git update-index --index-info
+$ but update-index --index-info
 0 0000000000000000000000000000000000000000	frotz
 100644 8a1218a1024a212bb3db30becd860315f9f3ac52 1	frotz
 100755 8a1218a1024a212bb3db30becd860315f9f3ac52 2	frotz
@@ -313,7 +313,7 @@ Then the second and third line feeds stage 1 and stage 2 entries
 for that path.  After the above, we would end up with this:
 
 ------------
-$ git ls-files -s
+$ but ls-files -s
 100644 8a1218a1024a212bb3db30becd860315f9f3ac52 1	frotz
 100755 8a1218a1024a212bb3db30becd860315f9f3ac52 2	frotz
 ------------
@@ -338,17 +338,17 @@ tree files, you have to explicitly tell Git about it by dropping
 
 In order to set "assume unchanged" bit, use `--assume-unchanged`
 option.  To unset, use `--no-assume-unchanged`. To see which files
-have the "assume unchanged" bit set, use `git ls-files -v`
-(see linkgit:git-ls-files[1]).
+have the "assume unchanged" bit set, use `but ls-files -v`
+(see linkbut:but-ls-files[1]).
 
 The command looks at `core.ignorestat` configuration variable.  When
-this is true, paths updated with `git update-index paths...` and
+this is true, paths updated with `but update-index paths...` and
 paths updated with other Git commands that update both index and
-working tree (e.g. 'git apply --index', 'git checkout-index -u',
-and 'git read-tree -u') are automatically marked as "assume
+working tree (e.g. 'but apply --index', 'but checkout-index -u',
+and 'but read-tree -u') are automatically marked as "assume
 unchanged".  Note that "assume unchanged" bit is *not* set if
-`git update-index --refresh` finds the working tree file matches
-the index (use `git update-index --really-refresh` if you want
+`but update-index --refresh` finds the working tree file matches
+the index (use `but update-index --really-refresh` if you want
 to mark them as "assume unchanged").
 
 Sometimes users confuse the assume-unchanged bit with the
@@ -361,24 +361,24 @@ EXAMPLES
 To update and refresh only the files already checked out:
 
 ----------------
-$ git checkout-index -n -f -a && git update-index --ignore-missing --refresh
+$ but checkout-index -n -f -a && but update-index --ignore-missing --refresh
 ----------------
 
 On an inefficient filesystem with `core.ignorestat` set::
 +
 ------------
-$ git update-index --really-refresh              <1>
-$ git update-index --no-assume-unchanged foo.c   <2>
-$ git diff --name-only                           <3>
+$ but update-index --really-refresh              <1>
+$ but update-index --no-assume-unchanged foo.c   <2>
+$ but diff --name-only                           <3>
 $ edit foo.c
-$ git diff --name-only                           <4>
+$ but diff --name-only                           <4>
 M foo.c
-$ git update-index foo.c                         <5>
-$ git diff --name-only                           <6>
+$ but update-index foo.c                         <5>
+$ but diff --name-only                           <6>
 $ edit foo.c
-$ git diff --name-only                           <7>
-$ git update-index --no-assume-unchanged foo.c   <8>
-$ git diff --name-only                           <9>
+$ but diff --name-only                           <7>
+$ but update-index --no-assume-unchanged foo.c   <8>
+$ but diff --name-only                           <9>
 M foo.c
 ------------
 +
@@ -396,21 +396,21 @@ M foo.c
 SKIP-WORKTREE BIT
 -----------------
 
-Skip-worktree bit can be defined in one (long) sentence: Tell git to
+Skip-worktree bit can be defined in one (long) sentence: Tell but to
 avoid writing the file to the working directory when reasonably
 possible, and treat the file as unchanged when it is not
 present in the working directory.
 
-Note that not all git commands will pay attention to this bit, and
+Note that not all but commands will pay attention to this bit, and
 some only partially support it.
 
 The update-index flags and the read-tree capabilities relating to the
 skip-worktree bit predated the introduction of the
-linkgit:git-sparse-checkout[1] command, which provides a much easier
+linkbut:but-sparse-checkout[1] command, which provides a much easier
 way to configure and handle the skip-worktree bits.  If you want to
 reduce your working tree to only deal with a subset of the files in
 the repository, we strongly encourage the use of
-linkgit:git-sparse-checkout[1] in preference to the low-level
+linkbut:but-sparse-checkout[1] in preference to the low-level
 update-index and read-tree primitives.
 
 The primary purpose of the skip-worktree bit is to enable sparse
@@ -420,8 +420,8 @@ as `switch`, `pull`, `merge`) will avoid writing these files.
 However, these commands will sometimes write these files anyway in
 important cases such as conflicts during a merge or rebase.  Git
 commands will also avoid treating the lack of such files as an
-intentional deletion; for example `git add -u` will not not stage a
-deletion for these files and `git cummit -a` will not make a cummit
+intentional deletion; for example `but add -u` will not not stage a
+deletion for these files and `but cummit -a` will not make a cummit
 deleting them either.
 
 Although this bit looks similar to assume-unchanged bit, its goal is
@@ -433,7 +433,7 @@ changes).  skip-worktree tells Git to ignore the absence of the file,
 avoid updating it when possible with commands that normally update
 much of the working directory (e.g. `checkout`, `switch`, `pull`,
 etc.), and not have its absence be recorded in cummits.  Note that in
-sparse checkouts (setup by `git sparse-checkout` or by configuring
+sparse checkouts (setup by `but sparse-checkout` or by configuring
 core.sparseCheckout to true), if a file is marked as skip-worktree in
 the index but is found in the working tree, Git will clear the
 skip-worktree bit for that file.
@@ -452,12 +452,12 @@ all index entries and stays unchanged.
 All changes in the split index are pushed back to the shared index
 file when the number of entries in the split index reaches a level
 specified by the splitIndex.maxPercentChange config variable (see
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 Each time a new shared index file is created, the old shared index
 files are deleted if their modification time is older than what is
 specified by the splitIndex.sharedIndexExpire config variable (see
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 To avoid deleting a shared index file that is still used, its
 modification time is updated to the current time every time a new split
@@ -467,7 +467,7 @@ UNTRACKED CACHE
 ---------------
 
 This cache is meant to speed up commands that involve determining
-untracked files such as `git status`.
+untracked files such as `but status`.
 
 This feature works by recording the mtime of the working tree
 directories and then omitting reading directories and stat calls
@@ -483,10 +483,10 @@ no longer the case.
 
 If you want to enable (or disable) this feature, it is easier to use
 the `core.untrackedCache` configuration variable (see
-linkgit:git-config[1]) than using the `--untracked-cache` option to
-`git update-index` in each repository, especially if you want to do so
+linkbut:but-config[1]) than using the `--untracked-cache` option to
+`but update-index` in each repository, especially if you want to do so
 across all repositories you use, because you can set the configuration
-variable to `true` (or `false`) in your `$HOME/.gitconfig` just once
+variable to `true` (or `false`) in your `$HOME/.butconfig` just once
 and have it affect all repositories you touch.
 
 When the `core.untrackedCache` configuration variable is changed, the
@@ -497,41 +497,41 @@ the index.
 
 Before 2.17, the untracked cache had a bug where replacing a directory
 with a symlink to another directory could cause it to incorrectly show
-files tracked by git as untracked. See the "status: add a failing test
-showing a core.untrackedCache bug" cummit to git.git. A workaround for
+files tracked by but as untracked. See the "status: add a failing test
+showing a core.untrackedCache bug" cummit to but.but. A workaround for
 that is (and this might work for other undiscovered bugs in the
 future):
 
 ----------------
-$ git -c core.untrackedCache=false status
+$ but -c core.untrackedCache=false status
 ----------------
 
 This bug has also been shown to affect non-symlink cases of replacing
 a directory with a file when it comes to the internal structures of
 the untracked cache, but no case has been reported where this resulted in
-wrong "git status" output.
+wrong "but status" output.
 
-There are also cases where existing indexes written by git versions
+There are also cases where existing indexes written by but versions
 before 2.17 will reference directories that don't exist anymore,
 potentially causing many "could not open directory" warnings to be
-printed on "git status". These are new warnings for existing issues
+printed on "but status". These are new warnings for existing issues
 that were previously silently discarded.
 
-As with the bug described above the solution is to one-off do a "git
+As with the bug described above the solution is to one-off do a "but
 status" run with `core.untrackedCache=false` to flush out the leftover
 bad data.
 
 FILE SYSTEM MONITOR
 -------------------
 
-This feature is intended to speed up git operations for repos that have
+This feature is intended to speed up but operations for repos that have
 large working directories.
 
-It enables git to work together with a file system monitor (see
-linkgit:git-fsmonitor{litdd}daemon[1]
+It enables but to work together with a file system monitor (see
+linkbut:but-fsmonitor{litdd}daemon[1]
 and the
-"fsmonitor-watchman" section of linkgit:githooks[5]) that can
-inform it as to what files have been modified. This enables git to avoid
+"fsmonitor-watchman" section of linkbut:buthooks[5]) that can
+inform it as to what files have been modified. This enables but to avoid
 having to lstat() every file to find modified files.
 
 When used in conjunction with the untracked cache, it can further improve
@@ -540,10 +540,10 @@ looking for new files.
 
 If you want to enable (or disable) this feature, it is easier to use
 the `core.fsmonitor` configuration variable (see
-linkgit:git-config[1]) than using the `--fsmonitor` option to `git
+linkbut:but-config[1]) than using the `--fsmonitor` option to `but
 update-index` in each repository, especially if you want to do so
 across all repositories you use, because you can set the configuration
-variable in your `$HOME/.gitconfig` just once and have it affect all
+variable in your `$HOME/.butconfig` just once and have it affect all
 repositories you touch.
 
 When the `core.fsmonitor` configuration variable is changed, the
@@ -556,14 +556,14 @@ CONFIGURATION
 
 The command honors `core.filemode` configuration variable.  If
 your repository is on a filesystem whose executable bits are
-unreliable, this should be set to 'false' (see linkgit:git-config[1]).
+unreliable, this should be set to 'false' (see linkbut:but-config[1]).
 This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
-need to use 'git update-index --chmod='.
+need to use 'but update-index --chmod='.
 
 Quite similarly, if `core.symlinks` configuration variable is set
-to 'false' (see linkgit:git-config[1]), symbolic links are checked out
+to 'false' (see linkbut:but-config[1]), symbolic links are checked out
 as plain files, and this command does not modify a recorded file mode
 from symbolic link to regular file.
 
@@ -573,11 +573,11 @@ The command looks at `core.ignorestat` configuration variable.  See
 The command also looks at `core.trustctime` configuration variable.
 It can be useful when the inode change time is regularly modified by
 something outside Git (file system crawlers and backup systems use
-ctime for marking files processed) (see linkgit:git-config[1]).
+ctime for marking files processed) (see linkbut:but-config[1]).
 
 The untracked cache extension can be enabled by the
 `core.untrackedCache` configuration variable (see
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 NOTES
 -----
@@ -597,10 +597,10 @@ automatically.
 
 SEE ALSO
 --------
-linkgit:git-config[1],
-linkgit:git-add[1],
-linkgit:git-ls-files[1]
+linkbut:but-config[1],
+linkbut:but-add[1],
+linkbut:but-ls-files[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

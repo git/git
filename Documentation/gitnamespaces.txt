@@ -1,15 +1,15 @@
-gitnamespaces(7)
+butnamespaces(7)
 ================
 
 NAME
 ----
-gitnamespaces - Git namespaces
+butnamespaces - Git namespaces
 
 SYNOPSIS
 --------
 [verse]
-GIT_NAMESPACE=<namespace> 'git upload-pack'
-GIT_NAMESPACE=<namespace> 'git receive-pack'
+GIT_NAMESPACE=<namespace> 'but upload-pack'
+GIT_NAMESPACE=<namespace> 'but receive-pack'
 
 
 DESCRIPTION
@@ -19,7 +19,7 @@ Git supports dividing the refs of a single repository into multiple
 namespaces, each of which has its own branches, tags, and HEAD.  Git can
 expose each namespace as an independent repository to pull from and push
 to, while sharing the object store, and exposing all the refs to
-operations such as linkgit:git-gc[1].
+operations such as linkbut:but-gc[1].
 
 Storing multiple repositories as namespaces of a single repository
 avoids storing duplicate copies of the same objects, such as when
@@ -33,7 +33,7 @@ the namespace.  For each ref namespace, Git stores the corresponding
 refs in a directory under `refs/namespaces/`.  For example,
 `GIT_NAMESPACE=foo` will store refs under `refs/namespaces/foo/`.  You
 can also specify namespaces via the `--namespace` option to
-linkgit:git[1].
+linkbut:but[1].
 
 Note that namespaces which include a `/` will expand to a hierarchy of
 namespaces; for example, `GIT_NAMESPACE=foo/bar` will store refs under
@@ -45,24 +45,24 @@ also avoids ambiguity with strange namespace paths such as `foo/refs/heads/`,
 which could otherwise generate directory/file conflicts within the `refs`
 directory.
 
-linkgit:git-upload-pack[1] and linkgit:git-receive-pack[1] rewrite the
-names of refs as specified by `GIT_NAMESPACE`.  git-upload-pack and
-git-receive-pack will ignore all references outside the specified
+linkbut:but-upload-pack[1] and linkbut:but-receive-pack[1] rewrite the
+names of refs as specified by `GIT_NAMESPACE`.  but-upload-pack and
+but-receive-pack will ignore all references outside the specified
 namespace.
 
-The smart HTTP server, linkgit:git-http-backend[1], will pass
+The smart HTTP server, linkbut:but-http-backend[1], will pass
 GIT_NAMESPACE through to the backend programs; see
-linkgit:git-http-backend[1] for sample configuration to expose
+linkbut:but-http-backend[1] for sample configuration to expose
 repository namespaces as repositories.
 
-For a simple local test, you can use linkgit:git-remote-ext[1]:
+For a simple local test, you can use linkbut:but-remote-ext[1]:
 
 ----------
-git clone ext::'git --namespace=foo %s /tmp/prefixed.git'
+but clone ext::'but --namespace=foo %s /tmp/prefixed.but'
 ----------
 
 include::transfer-data-leaks.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

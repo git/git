@@ -18,14 +18,14 @@ rebase.autoStash::
 	However, use with care: the final stash application after a
 	successful rebase might result in non-trivial conflicts.
 	This option can be overridden by the `--no-autostash` and
-	`--autostash` options of linkgit:git-rebase[1].
+	`--autostash` options of linkbut:but-rebase[1].
 	Defaults to false.
 
 rebase.missingcummitsCheck::
-	If set to "warn", git rebase -i will print a warning if some
+	If set to "warn", but rebase -i will print a warning if some
 	cummits are removed (e.g. a line was deleted), however the
 	rebase will still proceed. If set to "error", it will print
-	the previous warning and stop the rebase, 'git rebase
+	the previous warning and stop the rebase, 'but rebase
 	--edit-todo' can then be used to correct the error. If set to
 	"ignore", no checking is done.
 	To drop a cummit without warning or error, use the `drop`
@@ -33,12 +33,12 @@ rebase.missingcummitsCheck::
 	Defaults to "ignore".
 
 rebase.instructionFormat::
-	A format string, as specified in linkgit:git-log[1], to be used for the
+	A format string, as specified in linkbut:but-log[1], to be used for the
 	todo list during an interactive rebase.  The format will
 	automatically have the long commit hash prepended to the format.
 
 rebase.abbreviateCommands::
-	If set to true, `git rebase` will use abbreviated command names in the
+	If set to true, `but rebase` will use abbreviated command names in the
 	todo list resulting in something like this:
 +
 -------------------------------------------

@@ -19,23 +19,23 @@ grep_wrote () {
 }
 
 setup_client_and_server () {
-	git init client &&
+	but init client &&
 	test_when_finished 'rm -rf client' &&
 	test_cummit -C client first_cummit &&
 	test_cummit -C client second_cummit &&
 
-	git init "$SERVER" &&
+	but init "$SERVER" &&
 	test_when_finished 'rm -rf "$SERVER"' &&
 	test_config -C "$SERVER" http.receivepack true &&
 	test_cummit -C "$SERVER" unrelated_cummit &&
-	git -C client push "$URI" first_cummit:refs/remotes/origin/first_cummit &&
-	git -C "$SERVER" config receive.hideRefs refs/remotes/origin/first_cummit
+	but -C client push "$URI" first_cummit:refs/remotes/origin/first_cummit &&
+	but -C "$SERVER" config receive.hideRefs refs/remotes/origin/first_cummit
 }
 
 test_expect_success 'push without negotiation (for comparing object counts with the next test)' '
 	setup_client_and_server &&
 
-	GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c protocol.version=2 \
+	GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 6 event # 2 cummits, 2 trees, 2 blobs
@@ -44,7 +44,7 @@ test_expect_success 'push without negotiation (for comparing object counts with 
 test_expect_success 'push with negotiation' '
 	setup_client_and_server &&
 
-	GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c protocol.version=2 -c push.negotiate=1 \
+	GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 3 event # 1 cummit, 1 tree, 1 blob
@@ -56,7 +56,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	# Use protocol v0 to make negotiation fail (because protocol v0 does
 	# not support the "wait-for-done" capability, which is required for
 	# push negotiation)
-	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c push.negotiate=1 \
+	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main 2>err &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 6 event && # 2 cummits, 2 trees, 2 blobs

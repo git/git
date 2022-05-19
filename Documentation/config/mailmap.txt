@@ -4,7 +4,7 @@ mailmap.file::
 	first, then the mailmap file pointed to by this variable.
 	The location of the mailmap file may be in a repository
 	subdirectory, or somewhere outside of the repository itself.
-	See linkgit:git-shortlog[1] and linkgit:git-blame[1].
+	See linkbut:but-shortlog[1] and linkbut:but-blame[1].
 
 mailmap.blob::
 	Like `mailmap.file`, but consider the value as a reference to a

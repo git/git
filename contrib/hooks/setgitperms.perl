@@ -3,20 +3,20 @@
 # Copyright (c) 2006 Josh England
 #
 # This script can be used to save/restore full permissions and ownership data
-# within a git working tree.
+# within a but working tree.
 #
-# To save permissions/ownership data, place this script in your .git/hooks
+# To save permissions/ownership data, place this script in your .but/hooks
 # directory and enable a `pre-cummit` hook with the following lines:
 #      #!/bin/sh
-#     SUBDIRECTORY_OK=1 . git-sh-setup
-#     $GIT_DIR/hooks/setgitperms.perl -r
+#     SUBDIRECTORY_OK=1 . but-sh-setup
+#     $GIT_DIR/hooks/setbutperms.perl -r
 #
-# To restore permissions/ownership data, place this script in your .git/hooks
+# To restore permissions/ownership data, place this script in your .but/hooks
 # directory and enable a `post-merge` and `post-checkout` hook with the
 # following lines:
 #      #!/bin/sh
-#     SUBDIRECTORY_OK=1 . git-sh-setup
-#     $GIT_DIR/hooks/setgitperms.perl -w
+#     SUBDIRECTORY_OK=1 . but-sh-setup
+#     $GIT_DIR/hooks/setbutperms.perl -w
 #
 use strict;
 use Getopt::Long;
@@ -24,17 +24,17 @@ use File::Find;
 use File::Basename;
 
 my $usage =
-"usage: setgitperms.perl [OPTION]... <--read|--write>
-This program uses a file `.gitmeta` to store/restore permissions and uid/gid
-info for all files/dirs tracked by git in the repository.
+"usage: setbutperms.perl [OPTION]... <--read|--write>
+This program uses a file `.butmeta` to store/restore permissions and uid/gid
+info for all files/dirs tracked by but in the repository.
 
 ---------------------------------Read Mode-------------------------------------
--r,  --read         Reads perms/etc from working dir into a .gitmeta file
--s,  --stdout       Output to stdout instead of .gitmeta
+-r,  --read         Reads perms/etc from working dir into a .butmeta file
+-s,  --stdout       Output to stdout instead of .butmeta
 -d,  --diff         Show unified diff of perms file (XOR with --stdout)
 
 ---------------------------------Write Mode------------------------------------
--w,  --write        Modify perms/etc in working dir to match the .gitmeta file
+-w,  --write        Modify perms/etc in working dir to match the .butmeta file
 -v,  --verbose      Be verbose
 
 \n";
@@ -50,13 +50,13 @@ if ((@ARGV < 0) || !GetOptions(
 			      )) { die $usage; }
 die $usage unless ($read_mode xor $write_mode);
 
-my $topdir = `git rev-parse --show-cdup` or die "\n"; chomp $topdir;
-my $gitdir = $topdir . '.git';
-my $gitmeta = $topdir . '.gitmeta';
+my $topdir = `but rev-parse --show-cdup` or die "\n"; chomp $topdir;
+my $butdir = $topdir . '.but';
+my $butmeta = $topdir . '.butmeta';
 
 if ($write_mode) {
-    # Update the working dir permissions/ownership based on data from .gitmeta
-    open (IN, "<$gitmeta") or die "Could not open $gitmeta for reading: $!\n";
+    # Update the working dir permissions/ownership based on data from .butmeta
+    open (IN, "<$butmeta") or die "Could not open $butmeta for reading: $!\n";
     while (defined ($_ = <IN>)) {
 	chomp;
 	if (/^(.*)  mode=(\S+)\s+uid=(\d+)\s+gid=(\d+)/) {
@@ -87,38 +87,38 @@ if ($write_mode) {
 	    }
 	}
 	else {
-	    warn "Invalid input format in $gitmeta:\n\t$_\n";
+	    warn "Invalid input format in $butmeta:\n\t$_\n";
 	}
     }
     close IN;
 }
 elsif ($read_mode) {
-    # Handle merge conflicts in the .gitperms file
-    if (-e "$gitdir/MERGE_MSG") {
-	if (`grep ====== $gitmeta`) {
+    # Handle merge conflicts in the .butperms file
+    if (-e "$butdir/MERGE_MSG") {
+	if (`grep ====== $butmeta`) {
 	    # Conflict not resolved -- abort the cummit
 	    print "PERMISSIONS/OWNERSHIP CONFLICT\n";
-	    print "    Resolve the conflict in the $gitmeta file and then run\n";
-	    print "    `.git/hooks/setgitperms.perl --write` to reconcile.\n";
+	    print "    Resolve the conflict in the $butmeta file and then run\n";
+	    print "    `.but/hooks/setbutperms.perl --write` to reconcile.\n";
 	    exit 1;
 	}
-	elsif (`grep $gitmeta $gitdir/MERGE_MSG`) {
-	    # A conflict in .gitmeta has been manually resolved. Verify that
-	    # the working dir perms matches the current .gitmeta perms for
+	elsif (`grep $butmeta $butdir/MERGE_MSG`) {
+	    # A conflict in .butmeta has been manually resolved. Verify that
+	    # the working dir perms matches the current .butmeta perms for
 	    # each file/dir that conflicted.
-	    # This is here because a `setgitperms.perl --write` was not
+	    # This is here because a `setbutperms.perl --write` was not
 	    # performed due to a merge conflict, so permissions/ownership
-	    # may not be consistent with the manually merged .gitmeta file.
-	    my @conflict_diff = `git show \$(cat $gitdir/MERGE_HEAD)`;
+	    # may not be consistent with the manually merged .butmeta file.
+	    my @conflict_diff = `but show \$(cat $butdir/MERGE_HEAD)`;
 	    my @conflict_files;
 	    my $metadiff = 0;
 
-	    # Build a list of files that conflicted from the .gitmeta diff
+	    # Build a list of files that conflicted from the .butmeta diff
 	    foreach my $line (@conflict_diff) {
-		if ($line =~ m|^diff --git a/$gitmeta b/$gitmeta|) {
+		if ($line =~ m|^diff --but a/$butmeta b/$butmeta|) {
 		    $metadiff = 1;
 		}
-		elsif ($line =~ /^diff --git/) {
+		elsif ($line =~ /^diff --but/) {
 		    $metadiff = 0;
 		}
 		elsif ($metadiff && $line =~ /^\+(.*)  mode=/) {
@@ -127,10 +127,10 @@ elsif ($read_mode) {
 	    }
 
 	    # Verify that each conflict file now has permissions consistent
-	    # with the .gitmeta file
+	    # with the .butmeta file
 	    foreach my $file (@conflict_files) {
 		my $absfile = $topdir . $file;
-		my $gm_entry = `grep "^$file  mode=" $gitmeta`;
+		my $gm_entry = `grep "^$file  mode=" $butmeta`;
 		if ($gm_entry =~ /mode=(\d+)  uid=(\d+)  gid=(\d+)/) {
 		    my ($gm_mode, $gm_uid, $gm_gid) = ($1, $2, $3);
 		    my (undef,undef,$mode,undef,$uid,$gid) = lstat("$absfile");
@@ -139,7 +139,7 @@ elsif ($read_mode) {
 			|| ($gm_gid != $gid)) {
 			print "PERMISSIONS/OWNERSHIP CONFLICT\n";
 			print "    Mismatch found for file: $file\n";
-			print "    Run `.git/hooks/setgitperms.perl --write` to reconcile.\n";
+			print "    Run `.but/hooks/setbutperms.perl --write` to reconcile.\n";
 			exit 1;
 		    }
 		}
@@ -150,12 +150,12 @@ elsif ($read_mode) {
 	}
     }
 
-    # No merge conflicts -- write out perms/ownership data to .gitmeta file
+    # No merge conflicts -- write out perms/ownership data to .butmeta file
     unless ($stdout) {
-	open (OUT, ">$gitmeta.tmp") or die "Could not open $gitmeta.tmp for writing: $!\n";
+	open (OUT, ">$butmeta.tmp") or die "Could not open $butmeta.tmp for writing: $!\n";
     }
 
-    my @files = `git ls-files`;
+    my @files = `but ls-files`;
     my %dirs;
 
     foreach my $path (@files) {
@@ -168,24 +168,24 @@ elsif ($read_mode) {
 	    printstats($parent);
 	    $parent = dirname($parent);
 	}
-	# Now the git-tracked file
+	# Now the but-tracked file
 	printstats($path);
     }
 
     # diff the temporary metadata file to see if anything has changed
     # If no metadata has changed, don't overwrite the real file
-    # This is just so `git cummit -a` doesn't try to cummit a bogus update
+    # This is just so `but cummit -a` doesn't try to cummit a bogus update
     unless ($stdout) {
-	if (! -e $gitmeta) {
-	    rename "$gitmeta.tmp", $gitmeta;
+	if (! -e $butmeta) {
+	    rename "$butmeta.tmp", $butmeta;
 	}
 	else {
-	    my $diff = `diff -U 0 $gitmeta $gitmeta.tmp`;
+	    my $diff = `diff -U 0 $butmeta $butmeta.tmp`;
 	    if ($diff ne '') {
-		rename "$gitmeta.tmp", $gitmeta;
+		rename "$butmeta.tmp", $butmeta;
 	    }
 	    else {
-		unlink "$gitmeta.tmp";
+		unlink "$butmeta.tmp";
 	    }
 	    if ($showdiff) {
 		print $diff;
@@ -193,8 +193,8 @@ elsif ($read_mode) {
 	}
 	close OUT;
     }
-    # Make sure the .gitmeta file is tracked
-    system("git add $gitmeta");
+    # Make sure the .butmeta file is tracked
+    system("but add $butmeta");
 }
 
 

@@ -11,6 +11,6 @@ Fixes since v2.17
 
  * In addition to the above fixes, this release has support on the
    server side to reject pushes to repositories that attempt to create
-   such problematic .gitmodules file etc. as tracked contents, to help
+   such problematic .butmodules file etc. as tracked contents, to help
    hosting sites protect their customers by preventing malicious
    contents from spreading.

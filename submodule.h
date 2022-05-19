@@ -41,15 +41,15 @@ struct submodule_update_strategy {
 	.type = SM_UPDATE_UNSPECIFIED, \
 }
 
-int is_gitmodules_unmerged(struct index_state *istate);
-int is_writing_gitmodules_ok(void);
-int is_staging_gitmodules_ok(struct index_state *istate);
-int update_path_in_gitmodules(const char *oldpath, const char *newpath);
-int remove_path_from_gitmodules(const char *path);
-void stage_updated_gitmodules(struct index_state *istate);
+int is_butmodules_unmerged(struct index_state *istate);
+int is_writing_butmodules_ok(void);
+int is_staging_butmodules_ok(struct index_state *istate);
+int update_path_in_butmodules(const char *oldpath, const char *newpath);
+int remove_path_from_butmodules(const char *path);
+void stage_updated_butmodules(struct index_state *istate);
 void set_diffopt_flags_from_submodule_config(struct diff_options *,
 					     const char *path);
-int git_default_submodule_config(const char *var, const char *value, void *cb);
+int but_default_submodule_config(const char *var, const char *value, void *cb);
 
 struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
@@ -60,9 +60,9 @@ int is_tree_submodule_active(struct repository *repo,
 int is_submodule_active(struct repository *repo, const char *path);
 /*
  * Determine if a submodule has been populated at a given 'path' by checking if
- * the <path>/.git resolves to a valid git repository.
+ * the <path>/.but resolves to a valid but repository.
  * If return_error_code is NULL, die on error.
- * Otherwise the return error code is the same as of resolve_gitdir_gently.
+ * Otherwise the return error code is the same as of resolve_butdir_gently.
  */
 int is_submodule_populated_gently(const char *path, int *return_error_code);
 void die_in_unpopulated_submodule(struct index_state *istate,
@@ -95,7 +95,7 @@ int fetch_submodules(struct repository *r,
 		     int default_option,
 		     int quiet, int max_parallel_jobs);
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
-int submodule_uses_gitfile(const char *path);
+int submodule_uses_butfile(const char *path);
 
 #define SUBMODULE_REMOVAL_DIE_ON_ERROR (1<<0)
 #define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1<<1)
@@ -134,19 +134,19 @@ int push_unpushed_submodules(struct repository *r,
  * path of that submodule in 'buf'. Return -1 on error or when the
  * submodule is not initialized.
  */
-int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
+int submodule_to_butdir(struct strbuf *buf, const char *submodule);
 
 /*
- * Given a submodule name, create a path to where the submodule's gitdir lives
+ * Given a submodule name, create a path to where the submodule's butdir lives
  * inside of the provided repository's 'modules' directory.
  */
-void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
+void submodule_name_to_butdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name);
 
 /*
- * Make sure that no submodule's git dir is nested in a sibling submodule's.
+ * Make sure that no submodule's but dir is nested in a sibling submodule's.
  */
-int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
+int validate_submodule_but_dir(char *but_dir, const char *submodule_name);
 
 #define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
@@ -165,7 +165,7 @@ void submodule_unset_core_worktree(const struct submodule *sub);
 void prepare_submodule_repo_env(struct strvec *out);
 
 #define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
-void absorb_git_dir_into_superproject(const char *path,
+void absorb_but_dir_into_superproject(const char *path,
 				      unsigned flags);
 
 /*

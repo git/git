@@ -1,14 +1,14 @@
-git-daemon(1)
+but-daemon(1)
 =============
 
 NAME
 ----
-git-daemon - A really simple server for Git repositories
+but-daemon - A really simple server for Git repositories
 
 SYNOPSIS
 --------
 [verse]
-'git daemon' [--verbose] [--syslog] [--export-all]
+'but daemon' [--verbose] [--syslog] [--export-all]
 	     [--timeout=<n>] [--init-timeout=<n>] [--max-connections=<n>]
 	     [--strict-paths] [--base-path=<path>] [--base-path-relaxed]
 	     [--user-path | --user-path=<path>]
@@ -29,39 +29,39 @@ A really simple TCP Git daemon that normally listens on port "DEFAULT_GIT_PORT"
 aka 9418.  It waits for a connection asking for a service, and will serve
 that service if it is enabled.
 
-It verifies that the directory has the magic file "git-daemon-export-ok", and
+It verifies that the directory has the magic file "but-daemon-export-ok", and
 it will refuse to export any Git directory that hasn't explicitly been marked
 for export this way (unless the `--export-all` parameter is specified). If you
-pass some directory paths as 'git daemon' arguments, you can further restrict
+pass some directory paths as 'but daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
 By default, only `upload-pack` service is enabled, which serves
-'git fetch-pack' and 'git ls-remote' clients, which are invoked
-from 'git fetch', 'git pull', and 'git clone'.
+'but fetch-pack' and 'but ls-remote' clients, which are invoked
+from 'but fetch', 'but pull', and 'but clone'.
 
 This is ideally suited for read-only updates, i.e., pulling from
 Git repositories.
 
-An `upload-archive` also exists to serve 'git archive'.
+An `upload-archive` also exists to serve 'but archive'.
 
 OPTIONS
 -------
 --strict-paths::
 	Match paths exactly (i.e. don't allow "/foo/repo" when the real path is
-	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
-	'git daemon' will refuse to start when this option is enabled and no
+	"/foo/repo.but" or "/foo/repo/.but") and don't do user-relative paths.
+	'but daemon' will refuse to start when this option is enabled and no
 	whitelist is specified.
 
 --base-path=<path>::
 	Remap all the path requests as relative to the given path.
-	This is sort of "Git root" - if you run 'git daemon' with
-	'--base-path=/srv/git' on example.com, then if you later try to pull
-	'git://example.com/hello.git', 'git daemon' will interpret the path
-	as `/srv/git/hello.git`.
+	This is sort of "Git root" - if you run 'but daemon' with
+	'--base-path=/srv/but' on example.com, then if you later try to pull
+	'but://example.com/hello.but', 'but daemon' will interpret the path
+	as `/srv/but/hello.but`.
 
 --base-path-relaxed::
 	If --base-path is enabled and repo lookup fails, with this option
-	'git daemon' will attempt to lookup without prefixing the base path.
+	'but daemon' will attempt to lookup without prefixing the base path.
 	This is useful for switching to --base-path usage, while still
 	allowing the old paths.
 
@@ -78,7 +78,7 @@ OPTIONS
 --export-all::
 	Allow pulling from all directories that look like Git repositories
 	(have the 'objects' and 'refs' subdirectories), even if they
-	do not have the 'git-daemon-export-ok' file.
+	do not have the 'but-daemon-export-ok' file.
 
 --inetd::
 	Have the server run as an inetd service. Implies --syslog (may be
@@ -127,7 +127,7 @@ stderr::
 	the process disconnects from the real standard error,
 	making this destination effectively equivalent to `none`.
 syslog::
-	Write to syslog, using the `git-daemon` identifier.
+	Write to syslog, using the `but-daemon` identifier.
 none::
 	Disable all logging.
 --
@@ -139,7 +139,7 @@ otherwise `stderr`.
 --user-path=<path>::
 	Allow {tilde}user notation to be used in requests.  When
 	specified with no parameter, requests to
-	git://host/{tilde}alice/foo is taken as a request to access
+	but://host/{tilde}alice/foo is taken as a request to access
 	'foo' repository in the home directory of user `alice`.
 	If `--user-path=path` is specified, the same request is
 	taken as a request to access `path/foo` repository in
@@ -170,10 +170,10 @@ otherwise `stderr`.
 +
 Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
-'git daemon' if needed.
+'but daemon' if needed.
 +
 Like many programs that switch user id, the daemon does not reset
-environment variables such as `$HOME` when it runs git programs,
+environment variables such as `$HOME` when it runs but programs,
 e.g. `upload-pack` and `receive-pack`. When using this option, you
 may also want to set and export `HOME` to point at the home
 directory of `<user>` before starting the daemon, and make sure any
@@ -194,7 +194,7 @@ Git configuration files in that directory are readable by `<user>`.
 	may be overridden.
 
 --[no-]informative-errors::
-	When informative errors are turned on, git-daemon will report
+	When informative errors are turned on, but-daemon will report
 	more verbose errors to the client, differentiating conditions
 	like "no such repository" from "repository not exported". This
 	is more convenient for clients, but may leak information about
@@ -227,24 +227,24 @@ SERVICES
 
 These services can be globally enabled/disabled using the
 command-line options of this command.  If finer-grained
-control is desired (e.g. to allow 'git archive' to be run
+control is desired (e.g. to allow 'but archive' to be run
 against only in a few selected repositories the daemon serves),
 the per-repository configuration file can be used to enable or
 disable them.
 
 upload-pack::
-	This serves 'git fetch-pack' and 'git ls-remote'
+	This serves 'but fetch-pack' and 'but ls-remote'
 	clients.  It is enabled by default, but a repository can
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
 
 upload-archive::
-	This serves 'git archive --remote'.  It is disabled by
+	This serves 'but archive --remote'.  It is disabled by
 	default, but a repository can enable it by setting
 	`daemon.uploadarch` configuration item to `true`.
 
 receive-pack::
-	This serves 'git send-pack' clients, allowing anonymous
+	This serves 'but send-pack' clients, allowing anonymous
 	push.  It is disabled by default, as there is _no_
 	authentication in the protocol (in other words, anybody
 	can push anything into the repository, including removal
@@ -259,31 +259,31 @@ We assume the following in /etc/services::
 +
 ------------
 $ grep 9418 /etc/services
-git		9418/tcp		# Git Version Control System
+but		9418/tcp		# Git Version Control System
 ------------
 
-'git daemon' as inetd server::
-	To set up 'git daemon' as an inetd service that handles any
+'but daemon' as inetd server::
+	To set up 'but daemon' as an inetd service that handles any
 	repository under the whitelisted set of directories, /pub/foo
 	and /pub/bar, place an entry like the following into
 	/etc/inetd all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody  /usr/bin/git
-		git daemon --inetd --verbose --export-all
+	but stream tcp nowait nobody  /usr/bin/but
+		but daemon --inetd --verbose --export-all
 		/pub/foo /pub/bar
 ------------------------------------------------
 
 
-'git daemon' as inetd server for virtual hosts::
-	To set up 'git daemon' as an inetd service that handles
+'but daemon' as inetd server for virtual hosts::
+	To set up 'but daemon' as an inetd service that handles
 	repositories for different virtual hosts, `www.example.com`
 	and `www.example.org`, place an entry like the following into
 	`/etc/inetd` all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody /usr/bin/git
-		git daemon --inetd --verbose --export-all
+	but stream tcp nowait nobody /usr/bin/but
+		but daemon --inetd --verbose --export-all
 		--interpolated-path=/pub/%H%D
 		/pub/www.example.org/software
 		/pub/www.example.com/software
@@ -293,18 +293,18 @@ git		9418/tcp		# Git Version Control System
 In this example, the root-level directory `/pub` will contain
 a subdirectory for each virtual host name supported.
 Further, both hosts advertise repositories simply as
-`git://www.example.com/software/repo.git`.  For pre-1.4.0
+`but://www.example.com/software/repo.but`.  For pre-1.4.0
 clients, a symlink from `/software` into the appropriate
 default repository could be made as well.
 
 
-'git daemon' as regular daemon for virtual hosts::
-	To set up 'git daemon' as a regular, non-inetd service that
+'but daemon' as regular daemon for virtual hosts::
+	To set up 'but daemon' as a regular, non-inetd service that
 	handles repositories for multiple virtual hosts based on
 	their IP addresses, start the daemon like this:
 +
 ------------------------------------------------
-	git daemon --verbose --export-all
+	but daemon --verbose --export-all
 		--interpolated-path=/pub/%IP/%D
 		/pub/192.168.1.200/software
 		/pub/10.10.220.23/software
@@ -316,7 +316,7 @@ Repositories can still be accessed by hostname though, assuming
 they correspond to these IP addresses.
 
 selectively enable/disable services per repository::
-	To enable 'git archive --remote' and disable 'git fetch' against
+	To enable 'but archive --remote' and disable 'but fetch' against
 	a repository, have the following in the configuration file in the
 	repository (that is the file 'config' next to `HEAD`, 'refs' and
 	'objects').
@@ -330,11 +330,11 @@ selectively enable/disable services per repository::
 
 ENVIRONMENT
 -----------
-'git daemon' will set REMOTE_ADDR to the IP address of the client
+'but daemon' will set REMOTE_ADDR to the IP address of the client
 that connected to it, if the IP address is available. REMOTE_ADDR will
 be available in the environment of hooks called when
 services are performed.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

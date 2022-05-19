@@ -129,7 +129,7 @@ static void show_dir_entry(struct index_state *istate,
 	int len = max_prefix_len;
 
 	if (len > ent->len)
-		die("git ls-files: internal error - directory entry not superset of prefix");
+		die("but ls-files: internal error - directory entry not superset of prefix");
 
 	/* If ps_matches is non-NULL, figure out which pathspec(s) match. */
 	if (ps_matched)
@@ -227,7 +227,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 		    const char *tag)
 {
 	if (max_prefix_len > strlen(fullname))
-		die("git ls-files: internal error - cache entry not superset of prefix");
+		die("but ls-files: internal error - cache entry not superset of prefix");
 
 	if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
 	    is_submodule_active(repo, ce->name)) {
@@ -561,7 +561,7 @@ void overlay_tree_on_index(struct index_state *istate,
 }
 
 static const char * const ls_files_usage[] = {
-	N_("git ls-files [<options>] [<file>...]"),
+	N_("but ls-files [<options>] [<file>...]"),
 	NULL
 };
 
@@ -657,7 +657,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_STRING(0, "exclude-per-directory", &dir.exclude_per_dir, N_("file"),
 			N_("read additional per-directory exclude patterns in <file>")),
 		OPT_CALLBACK_F(0, "exclude-standard", &dir, NULL,
-			N_("add the standard git exclusions"),
+			N_("add the standard but exclusions"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			option_parse_exclude_standard),
 		OPT_SET_INT_F(0, "full-name", &prefix_len,
@@ -688,7 +688,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	prefix = cmd_prefix;
 	if (prefix)
 		prefix_len = strlen(prefix);
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	if (repo_read_index(the_repository) < 0)
 		die("index file corrupt");
@@ -785,7 +785,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		show_ru_info(the_repository->index);
 
 	if (ps_matched && report_path_error(ps_matched, &pathspec)) {
-		fprintf(stderr, "Did you forget to 'git add'?\n");
+		fprintf(stderr, "Did you forget to 'but add'?\n");
 		ret = 1;
 	}
 

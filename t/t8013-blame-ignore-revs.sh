@@ -11,38 +11,38 @@ test_expect_success setup '
 	test_cummit A file line1 &&
 
 	echo line2 >>file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m B &&
-	git tag B &&
+	but cummit -m B &&
+	but tag B &&
 
 	test_write_lines line-one line-two >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m X &&
-	git tag X &&
-	git tag -a -m "X (annotated)" XT &&
+	but cummit -m X &&
+	but tag X &&
+	but tag -a -m "X (annotated)" XT &&
 
-	git blame --line-porcelain file >blame_raw &&
+	but blame --line-porcelain file >blame_raw &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse X >expect &&
+	but rev-parse X >expect &&
 	test_cmp expect actual &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse X >expect &&
+	but rev-parse X >expect &&
 	test_cmp expect actual
 '
 
 # Ensure bogus --ignore-rev requests are caught
 test_expect_success 'validate --ignore-rev' '
-	test_must_fail git blame --ignore-rev X^{tree} file
+	test_must_fail but blame --ignore-rev X^{tree} file
 '
 
 # Ensure bogus --ignore-revs-file requests are silently accepted
 test_expect_success 'validate --ignore-revs-file' '
-	git rev-parse X^{tree} >ignore_x &&
-	git blame --ignore-revs-file ignore_x file
+	but rev-parse X^{tree} >ignore_x &&
+	but blame --ignore-revs-file ignore_x file
 '
 
 for I in X XT
@@ -51,14 +51,14 @@ do
 	# Giving X (i.e. cummit) and XT (i.e. annotated tag to cummit) should
 	# produce the same result.
 	test_expect_success "ignore_rev_changing_lines ($I)" '
-		git blame --line-porcelain --ignore-rev $I file >blame_raw &&
+		but blame --line-porcelain --ignore-rev $I file >blame_raw &&
 
 		grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-		git rev-parse A >expect &&
+		but rev-parse A >expect &&
 		test_cmp expect actual &&
 
 		grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
-		git rev-parse B >expect &&
+		but rev-parse B >expect &&
 		test_cmp expect actual
 	'
 done
@@ -71,13 +71,13 @@ done
 # heuristics from matching them with any lines in the parent.
 test_expect_success ignore_rev_adding_unblamable_lines '
 	test_write_lines line-one-change line-two-changed y3 y4 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m Y &&
-	git tag Y &&
+	but cummit -m Y &&
+	but tag Y &&
 
-	git rev-parse Y >expect &&
-	git blame --line-porcelain file --ignore-rev Y >blame_raw &&
+	but rev-parse Y >expect &&
+	but blame --line-porcelain file --ignore-rev Y >blame_raw &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 3" blame_raw | sed -e "s/ .*//" >actual &&
 	test_cmp expect actual &&
@@ -88,38 +88,38 @@ test_expect_success ignore_rev_adding_unblamable_lines '
 
 # Ignore X and Y, both in separate files.  Lines 1 == A, 2 == B.
 test_expect_success ignore_revs_from_files '
-	git rev-parse X >ignore_x &&
-	git rev-parse Y >ignore_y &&
-	git blame --line-porcelain file --ignore-revs-file ignore_x --ignore-revs-file ignore_y >blame_raw &&
+	but rev-parse X >ignore_x &&
+	but rev-parse Y >ignore_y &&
+	but blame --line-porcelain file --ignore-revs-file ignore_x --ignore-revs-file ignore_y >blame_raw &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse A >expect &&
+	but rev-parse A >expect &&
 	test_cmp expect actual &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse B >expect &&
+	but rev-parse B >expect &&
 	test_cmp expect actual
 '
 
 # Ignore X from the config option, Y from a file.
 test_expect_success ignore_revs_from_configs_and_files '
-	git config --add blame.ignoreRevsFile ignore_x &&
-	git blame --line-porcelain file --ignore-revs-file ignore_y >blame_raw &&
+	but config --add blame.ignoreRevsFile ignore_x &&
+	but blame --line-porcelain file --ignore-revs-file ignore_y >blame_raw &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse A >expect &&
+	but rev-parse A >expect &&
 	test_cmp expect actual &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 2" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse B >expect &&
+	but rev-parse B >expect &&
 	test_cmp expect actual
 '
 
 # Override blame.ignoreRevsFile (ignore_x) with an empty string.  X should be
 # blamed now for lines 1 and 2, since we are no longer ignoring X.
 test_expect_success override_ignore_revs_file '
-	git blame --line-porcelain file --ignore-revs-file "" --ignore-revs-file ignore_y >blame_raw &&
-	git rev-parse X >expect &&
+	but blame --line-porcelain file --ignore-revs-file "" --ignore-revs-file ignore_y >blame_raw &&
+	but rev-parse X >expect &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
 	test_cmp expect actual &&
@@ -128,14 +128,14 @@ test_expect_success override_ignore_revs_file '
 	test_cmp expect actual
 	'
 test_expect_success bad_files_and_revs '
-	test_must_fail git blame file --ignore-rev NOREV 2>err &&
+	test_must_fail but blame file --ignore-rev NOREV 2>err &&
 	test_i18ngrep "cannot find revision NOREV to ignore" err &&
 
-	test_must_fail git blame file --ignore-revs-file NOFILE 2>err &&
+	test_must_fail but blame file --ignore-revs-file NOFILE 2>err &&
 	test_i18ngrep "could not open.*: NOFILE" err &&
 
 	echo NOREV >ignore_norev &&
-	test_must_fail git blame file --ignore-revs-file ignore_norev 2>err &&
+	test_must_fail but blame file --ignore-revs-file ignore_norev 2>err &&
 	test_i18ngrep "invalid object name: NOREV" err
 '
 
@@ -145,9 +145,9 @@ test_expect_success bad_files_and_revs '
 # Lines 3 and 4 are from Y and unblamable.  This was set up in
 # ignore_rev_adding_unblamable_lines.
 test_expect_success mark_unblamable_lines '
-	git config --add blame.markUnblamableLines true &&
+	but config --add blame.markUnblamableLines true &&
 
-	git blame --ignore-rev Y file >blame_raw &&
+	but blame --ignore-rev Y file >blame_raw &&
 	echo "*" >expect &&
 
 	sed -n "3p" blame_raw | cut -c1 >actual &&
@@ -166,15 +166,15 @@ test_expect_success mark_unblamable_lines '
 # Y  ... 4)
 # We're checking only the first character
 test_expect_success mark_ignored_lines '
-	git config --add blame.markIgnoredLines true &&
+	but config --add blame.markIgnoredLines true &&
 
 	test_write_lines line-one-Z line-two-Z y3 y4 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m Z &&
-	git tag Z &&
+	but cummit -m Z &&
+	but tag Z &&
 
-	git blame --ignore-rev Z file >blame_raw &&
+	but blame --ignore-rev Z file >blame_raw &&
 	echo "?" >expect &&
 
 	sed -n "1p" blame_raw | cut -c1 >actual &&
@@ -197,9 +197,9 @@ test_expect_success mark_ignored_lines '
 # Lines 3 and 4 are from Y and unblamable, as set up in
 # ignore_rev_adding_unblamable_lines.  Z changed lines 1 and 2.
 test_expect_success mark_unblamable_lines_intermediate '
-	git config --add blame.markUnblamableLines true &&
+	but config --add blame.markUnblamableLines true &&
 
-	git blame --ignore-rev Y file >blame_raw 2>stderr &&
+	but blame --ignore-rev Y file >blame_raw 2>stderr &&
 	echo "*" >expect &&
 
 	sed -n "3p" blame_raw | cut -c1 >actual &&
@@ -222,28 +222,28 @@ test_expect_success mark_unblamable_lines_intermediate '
 #
 # A--B--C, ignore B to test the ignore heuristic's boundary checks.
 test_expect_success ignored_chunk_negative_parent_size '
-	rm -rf .git/ &&
-	git init &&
+	rm -rf .but/ &&
+	but init &&
 
 	test_write_lines L1 L2 L7 L8 L9 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m A &&
-	git tag A &&
+	but cummit -m A &&
+	but tag A &&
 
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 L9 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m B &&
-	git tag B &&
+	but cummit -m B &&
+	but tag B &&
 
 	test_write_lines L1 L2 L3 L4 xxx L6 L7 L8 L9 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m C &&
-	git tag C &&
+	but cummit -m C &&
+	but tag C &&
 
-	git blame file --ignore-rev B >blame_raw
+	but blame file --ignore-rev B >blame_raw
 '
 
 # Resetting the repo and creating:
@@ -254,37 +254,37 @@ test_expect_success ignored_chunk_negative_parent_size '
 #
 # 'A' creates a file.  B changes line 1, and C changes line 9.  M merges.
 test_expect_success ignore_merge '
-	rm -rf .git/ &&
-	git init &&
+	rm -rf .but/ &&
+	but init &&
 
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 L9 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m A &&
-	git tag A &&
+	but cummit -m A &&
+	but tag A &&
 
 	test_write_lines BB L2 L3 L4 L5 L6 L7 L8 L9 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m B &&
-	git tag B &&
+	but cummit -m B &&
+	but tag B &&
 
-	git reset --hard A &&
+	but reset --hard A &&
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 CC >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m C &&
-	git tag C &&
+	but cummit -m C &&
+	but tag C &&
 
 	test_merge M B &&
-	git blame --line-porcelain file --ignore-rev M >blame_raw &&
+	but blame --line-porcelain file --ignore-rev M >blame_raw &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 1" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse B >expect &&
+	but rev-parse B >expect &&
 	test_cmp expect actual &&
 
 	grep -E "^[0-9a-f]+ [0-9]+ 9" blame_raw | sed -e "s/ .*//" >actual &&
-	git rev-parse C >expect &&
+	but rev-parse C >expect &&
 	test_cmp expect actual
 '
 

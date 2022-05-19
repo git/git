@@ -22,7 +22,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 
 /*
  * This is the max value that a ustar size header can specify, as it is fixed
- * at 11 octal digits. POSIX specifies that we switch to extended headers at
+ * at 11 octal dibuts. POSIX specifies that we switch to extended headers at
  * this size.
  *
  * Likewise for the mtime (which happens to use a buffer of the same size).
@@ -114,7 +114,7 @@ static void write_trailer(void)
  */
 static int stream_blocked(struct repository *r, const struct object_id *oid)
 {
-	struct git_istream *st;
+	struct but_istream *st;
 	enum object_type type;
 	unsigned long sz;
 	char buf[BLOCKSIZE];
@@ -388,7 +388,7 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 	if (!strcmp(type, "remote")) {
-		if (git_config_bool(var, value))
+		if (but_config_bool(var, value))
 			ar->flags |= ARCHIVER_REMOTE;
 		else
 			ar->flags &= ~ARCHIVER_REMOTE;
@@ -398,14 +398,14 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 	return 0;
 }
 
-static int git_tar_config(const char *var, const char *value, void *cb)
+static int but_tar_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (value && !strcmp(value, "user")) {
 			tar_umask = umask(0);
 			umask(tar_umask);
 		} else {
-			tar_umask = git_config_int(var, value);
+			tar_umask = but_config_int(var, value);
 		}
 		return 0;
 	}
@@ -475,7 +475,7 @@ void init_tar_archiver(void)
 	tar_filter_config("tar.tgz.remote", "true", NULL);
 	tar_filter_config("tar.tar.gz.command", "gzip -cn", NULL);
 	tar_filter_config("tar.tar.gz.remote", "true", NULL);
-	git_config(git_tar_config, NULL);
+	but_config(but_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
 		if (tar_filters[i]->data)

@@ -2,11 +2,11 @@
 
 test_description='CRLF merge conflict across text=auto change
 
-* [main] remove .gitattributes
+* [main] remove .butattributes
  ! [side] add line from b
 --
  + [side] add line from b
-*  [main] remove .gitattributes
+*  [main] remove .butattributes
 *  [main^] add line from a
 *  [main~2] normalize file
 *+ [side^] Initial
@@ -27,47 +27,47 @@ compare_files () {
 }
 
 test_expect_success setup '
-	git config core.autocrlf false &&
+	but config core.autocrlf false &&
 
 	echo first line | append_cr >file &&
 	echo first line >control_file &&
 	echo only line >inert_file &&
 
-	git add file control_file inert_file &&
+	but add file control_file inert_file &&
 	test_tick &&
-	git cummit -m "Initial" &&
-	git tag initial &&
-	git branch side &&
+	but cummit -m "Initial" &&
+	but tag initial &&
+	but branch side &&
 
-	echo "* text=auto" >.gitattributes &&
+	echo "* text=auto" >.butattributes &&
 	echo first line >file &&
-	git add .gitattributes file &&
+	but add .butattributes file &&
 	test_tick &&
-	git cummit -m "normalize file" &&
+	but cummit -m "normalize file" &&
 
 	echo same line | append_cr >>file &&
 	echo same line >>control_file &&
-	git add file control_file &&
+	but add file control_file &&
 	test_tick &&
-	git cummit -m "add line from a" &&
-	git tag a &&
+	but cummit -m "add line from a" &&
+	but tag a &&
 
-	git rm .gitattributes &&
+	but rm .butattributes &&
 	rm file &&
-	git checkout file &&
+	but checkout file &&
 	test_tick &&
-	git cummit -m "remove .gitattributes" &&
-	git tag c &&
+	but cummit -m "remove .butattributes" &&
+	but tag c &&
 
-	git checkout side &&
+	but checkout side &&
 	echo same line | append_cr >>file &&
 	echo same line >>control_file &&
-	git add file control_file &&
+	but add file control_file &&
 	test_tick &&
-	git cummit -m "add line from b" &&
-	git tag b &&
+	but cummit -m "add line from b" &&
+	but tag b &&
 
-	git checkout main
+	but checkout main
 '
 
 test_expect_success 'set up fuzz_conflict() helper' '
@@ -86,31 +86,31 @@ test_expect_success 'Merge after setting text=auto' '
 		append_cr <expected >expected.temp &&
 		mv expected.temp expected
 	fi &&
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	rm -f .gitattributes &&
-	git reset --hard a &&
-	git merge b &&
+	but config merge.renormalize true &&
+	but rm -fr . &&
+	rm -f .butattributes &&
+	but reset --hard a &&
+	but merge b &&
 	compare_files expected file
 '
 
 test_expect_success 'Merge addition of text=auto eol=LF' '
-	git config core.eol lf &&
+	but config core.eol lf &&
 	cat <<-\EOF >expected &&
 	first line
 	same line
 	EOF
 
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	rm -f .gitattributes &&
-	git reset --hard b &&
-	git merge a &&
+	but config merge.renormalize true &&
+	but rm -fr . &&
+	rm -f .butattributes &&
+	but reset --hard b &&
+	but merge a &&
 	compare_files  expected file
 '
 
 test_expect_success 'Merge addition of text=auto eol=CRLF' '
-	git config core.eol crlf &&
+	but config core.eol crlf &&
 	cat <<-\EOF >expected &&
 	first line
 	same line
@@ -118,18 +118,18 @@ test_expect_success 'Merge addition of text=auto eol=CRLF' '
 
 	append_cr <expected >expected.temp &&
 	mv expected.temp expected &&
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	rm -f .gitattributes &&
-	git reset --hard b &&
-	echo >&2 "After git reset --hard b" &&
-	git ls-files -s --eol >&2 &&
-	git merge a &&
+	but config merge.renormalize true &&
+	but rm -fr . &&
+	rm -f .butattributes &&
+	but reset --hard b &&
+	echo >&2 "After but reset --hard b" &&
+	but ls-files -s --eol >&2 &&
+	but merge a &&
 	compare_files  expected file
 '
 
 test_expect_success 'Detect CRLF/LF conflict after setting text=auto' '
-	git config core.eol native &&
+	but config core.eol native &&
 	echo "<<<<<<<" >expected &&
 	echo first line >>expected &&
 	echo same line >>expected &&
@@ -137,10 +137,10 @@ test_expect_success 'Detect CRLF/LF conflict after setting text=auto' '
 	echo first line | append_cr >>expected &&
 	echo same line | append_cr >>expected &&
 	echo ">>>>>>>" >>expected &&
-	git config merge.renormalize false &&
-	rm -f .gitattributes &&
-	git reset --hard a &&
-	test_must_fail git merge b &&
+	but config merge.renormalize false &&
+	rm -f .butattributes &&
+	but reset --hard a &&
+	test_must_fail but merge b &&
 	fuzz_conflict file >file.fuzzy &&
 	compare_files expected file.fuzzy
 '
@@ -153,10 +153,10 @@ test_expect_success 'Detect LF/CRLF conflict from addition of text=auto' '
 	echo first line >>expected &&
 	echo same line >>expected &&
 	echo ">>>>>>>" >>expected &&
-	git config merge.renormalize false &&
-	rm -f .gitattributes &&
-	git reset --hard b &&
-	test_must_fail git merge a &&
+	but config merge.renormalize false &&
+	rm -f .butattributes &&
+	but reset --hard b &&
+	test_must_fail but merge a &&
 	fuzz_conflict file >file.fuzzy &&
 	compare_files expected file.fuzzy
 '
@@ -167,13 +167,13 @@ test_expect_success 'checkout -m after setting text=auto' '
 	same line
 	EOF
 
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	rm -f .gitattributes &&
-	git reset --hard initial &&
-	git restore --source=a -- . &&
-	git checkout -m b &&
-	git diff --no-index --ignore-cr-at-eol expected file
+	but config merge.renormalize true &&
+	but rm -fr . &&
+	rm -f .butattributes &&
+	but reset --hard initial &&
+	but restore --source=a -- . &&
+	but checkout -m b &&
+	but diff --no-index --ignore-cr-at-eol expected file
 '
 
 test_expect_success 'checkout -m addition of text=auto' '
@@ -182,49 +182,49 @@ test_expect_success 'checkout -m addition of text=auto' '
 	same line
 	EOF
 
-	git config merge.renormalize true &&
-	git rm -fr . &&
-	rm -f .gitattributes file &&
-	git reset --hard initial &&
-	git restore --source=b -- . &&
-	git checkout -m a &&
-	git diff --no-index --ignore-cr-at-eol expected file
+	but config merge.renormalize true &&
+	but rm -fr . &&
+	rm -f .butattributes file &&
+	but reset --hard initial &&
+	but restore --source=b -- . &&
+	but checkout -m a &&
+	but diff --no-index --ignore-cr-at-eol expected file
 '
 
 test_expect_success 'Test delete/normalize conflict' '
-	git checkout -f side &&
-	git rm -fr . &&
-	rm -f .gitattributes &&
-	git reset --hard initial &&
-	git rm file &&
-	git cummit -m "remove file" &&
-	git checkout main &&
-	git reset --hard a^ &&
-	git merge side &&
+	but checkout -f side &&
+	but rm -fr . &&
+	rm -f .butattributes &&
+	but reset --hard initial &&
+	but rm file &&
+	but cummit -m "remove file" &&
+	but checkout main &&
+	but reset --hard a^ &&
+	but merge side &&
 	test_path_is_missing file
 '
 
 test_expect_success 'rename/delete vs. renormalization' '
-	git init subrepo &&
+	but init subrepo &&
 	(
 		cd subrepo &&
 		echo foo >oldfile &&
-		git add oldfile &&
-		git cummit -m original &&
+		but add oldfile &&
+		but cummit -m original &&
 
-		git branch rename &&
-		git branch nuke &&
+		but branch rename &&
+		but branch nuke &&
 
-		git checkout rename &&
-		git mv oldfile newfile &&
-		git cummit -m renamed &&
+		but checkout rename &&
+		but mv oldfile newfile &&
+		but cummit -m renamed &&
 
-		git checkout nuke &&
-		git rm oldfile &&
-		git cummit -m deleted &&
+		but checkout nuke &&
+		but rm oldfile &&
+		but cummit -m deleted &&
 
-		git checkout rename^0 &&
-		test_must_fail git -c merge.renormalize=true merge nuke >out &&
+		but checkout rename^0 &&
+		test_must_fail but -c merge.renormalize=true merge nuke >out &&
 
 		grep "rename/delete" out
 	)

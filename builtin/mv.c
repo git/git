@@ -1,5 +1,5 @@
 /*
- * "git mv" builtin command
+ * "but mv" builtin command
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
@@ -15,7 +15,7 @@
 #include "submodule.h"
 
 static const char * const builtin_mv_usage[] = {
-	N_("git mv [<options>] <source>... <destination>"),
+	N_("but mv [<options>] <source>... <destination>"),
 	NULL
 };
 
@@ -76,20 +76,20 @@ static const char *add_slash(const char *path)
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
 
 static void prepare_move_submodule(const char *src, int first,
-				   const char **submodule_gitfile)
+				   const char **submodule_butfile)
 {
-	struct strbuf submodule_dotgit = STRBUF_INIT;
+	struct strbuf submodule_dotbut = STRBUF_INIT;
 	if (!S_ISGITLINK(active_cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
-	if (!is_staging_gitmodules_ok(&the_index))
-		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
-	strbuf_addf(&submodule_dotgit, "%s/.git", src);
-	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
-	if (*submodule_gitfile)
-		*submodule_gitfile = xstrdup(*submodule_gitfile);
+	if (!is_staging_butmodules_ok(&the_index))
+		die(_("Please stage your changes to .butmodules or stash them to proceed"));
+	strbuf_addf(&submodule_dotbut, "%s/.but", src);
+	*submodule_butfile = read_butfile(submodule_dotbut.buf);
+	if (*submodule_butfile)
+		*submodule_butfile = xstrdup(*submodule_butfile);
 	else
-		*submodule_gitfile = SUBMODULE_WITH_GITDIR;
-	strbuf_release(&submodule_dotgit);
+		*submodule_butfile = SUBMODULE_WITH_GITDIR;
+	strbuf_release(&submodule_dotbut);
 }
 
 static int index_range_of_same_dir(const char *src, int length,
@@ -117,7 +117,7 @@ static int index_range_of_same_dir(const char *src, int length,
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-	int i, flags, gitmodules_modified = 0;
+	int i, flags, butmodules_modified = 0;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0, ignore_sparse = 0;
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -128,7 +128,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "sparse", &ignore_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
 		OPT_END(),
 	};
-	const char **source, **destination, **dest_path, **submodule_gitfile;
+	const char **source, **destination, **dest_path, **submodule_butfile;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX, SPARSE } *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
@@ -136,7 +136,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct cache_entry *ce;
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_mv_options,
 			     builtin_mv_usage, 0);
@@ -151,14 +151,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	modes = xcalloc(argc, sizeof(enum update_mode));
 	/*
 	 * Keep trailing slash, needed to let
-	 * "git mv file no-such-dir/" error out, except in the case
-	 * "git mv directory no-such-dir/".
+	 * "but mv file no-such-dir/" error out, except in the case
+	 * "but mv directory no-such-dir/".
 	 */
 	flags = KEEP_TRAILING_SLASH;
 	if (argc == 1 && is_directory(argv[0]) && !is_directory(argv[1]))
 		flags = 0;
 	dest_path = internal_prefix_pathspec(prefix, argv + argc, 1, flags);
-	submodule_gitfile = xcalloc(argc, sizeof(char *));
+	submodule_butfile = xcalloc(argc, sizeof(char *));
 
 	if (dest_path[0][0] == '\0')
 		/* special case: "." was normalized to "" */
@@ -199,7 +199,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 			if (first >= 0)
 				prepare_move_submodule(src, first,
-						       submodule_gitfile + i);
+						       submodule_butfile + i);
 			else if (index_range_of_same_dir(src, length,
 							 &first, &last) < 1)
 				bad = _("source directory is empty");
@@ -211,7 +211,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				REALLOC_ARRAY(source, n);
 				REALLOC_ARRAY(destination, n);
 				REALLOC_ARRAY(modes, n);
-				REALLOC_ARRAY(submodule_gitfile, n);
+				REALLOC_ARRAY(submodule_butfile, n);
 
 				dst = add_slash(dst);
 				dst_len = strlen(dst);
@@ -223,7 +223,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					destination[argc + j] =
 						prefix_path(dst, dst_len, path + length + 1);
 					modes[argc + j] = ce_skip_worktree(ce) ? SPARSE : INDEX;
-					submodule_gitfile[argc + j] = NULL;
+					submodule_butfile[argc + j] = NULL;
 				}
 				argc += last - first;
 			}
@@ -288,7 +288,7 @@ remove_entry:
 				n * sizeof(char *));
 			memmove(modes + i, modes + i + 1,
 				n * sizeof(enum update_mode));
-			memmove(submodule_gitfile + i, submodule_gitfile + i + 1,
+			memmove(submodule_butfile + i, submodule_butfile + i + 1,
 				n * sizeof(char *));
 			i--;
 		}
@@ -313,12 +313,12 @@ remove_entry:
 				continue;
 			die_errno(_("renaming '%s' failed"), src);
 		}
-		if (submodule_gitfile[i]) {
-			if (!update_path_in_gitmodules(src, dst))
-				gitmodules_modified = 1;
-			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
-				connect_work_tree_and_git_dir(dst,
-							      submodule_gitfile[i],
+		if (submodule_butfile[i]) {
+			if (!update_path_in_butmodules(src, dst))
+				butmodules_modified = 1;
+			if (submodule_butfile[i] != SUBMODULE_WITH_GITDIR)
+				connect_work_tree_and_but_dir(dst,
+							      submodule_butfile[i],
 							      1);
 		}
 
@@ -330,8 +330,8 @@ remove_entry:
 		rename_cache_entry_at(pos, dst);
 	}
 
-	if (gitmodules_modified)
-		stage_updated_gitmodules(&the_index);
+	if (butmodules_modified)
+		stage_updated_butmodules(&the_index);
 
 	if (write_locked_index(&the_index, &lock_file,
 			       CUMMIT_LOCK | SKIP_IF_UNCHANGED))
@@ -340,7 +340,7 @@ remove_entry:
 	string_list_clear(&src_for_dst, 0);
 	UNLEAK(source);
 	UNLEAK(dest_path);
-	free(submodule_gitfile);
+	free(submodule_butfile);
 	free(modes);
 	return 0;
 }

@@ -25,18 +25,18 @@ case $uname_s in
 esac
 
 # don't leave a stale daemon running
-test_atexit 'git credential-cache exit'
+test_atexit 'but credential-cache exit'
 
 # test that the daemon works with no special setup
 helper_test cache
 
-test_expect_success 'socket defaults to ~/.cache/git/credential/socket' '
+test_expect_success 'socket defaults to ~/.cache/but/credential/socket' '
 	test_when_finished "
-		git credential-cache exit &&
-		rmdir -p .cache/git/credential/
+		but credential-cache exit &&
+		rmdir -p .cache/but/credential/
 	" &&
-	test_path_is_missing "$HOME/.git-credential-cache" &&
-	test_path_is_socket "$HOME/.cache/git/credential/socket"
+	test_path_is_missing "$HOME/.but-credential-cache" &&
+	test_path_is_socket "$HOME/.cache/but/credential/socket"
 '
 
 XDG_CACHE_HOME="$HOME/xdg"
@@ -45,16 +45,16 @@ export XDG_CACHE_HOME
 helper_test cache
 
 test_expect_success "use custom XDG_CACHE_HOME if set and default sockets are not created" '
-	test_when_finished "git credential-cache exit" &&
-	test_path_is_socket "$XDG_CACHE_HOME/git/credential/socket" &&
-	test_path_is_missing "$HOME/.git-credential-cache/socket" &&
-	test_path_is_missing "$HOME/.cache/git/credential/socket"
+	test_when_finished "but credential-cache exit" &&
+	test_path_is_socket "$XDG_CACHE_HOME/but/credential/socket" &&
+	test_path_is_missing "$HOME/.but-credential-cache/socket" &&
+	test_path_is_missing "$HOME/.cache/but/credential/socket"
 '
 unset XDG_CACHE_HOME
 
 test_expect_success 'credential-cache --socket option overrides default location' '
 	test_when_finished "
-		git credential-cache exit --socket \"\$HOME/dir/socket\" &&
+		but credential-cache exit --socket \"\$HOME/dir/socket\" &&
 		rmdir \"\$HOME/dir\"
 	" &&
 	check approve "cache --socket \"\$HOME/dir/socket\"" <<-\EOF &&
@@ -68,7 +68,7 @@ test_expect_success 'credential-cache --socket option overrides default location
 
 test_expect_success "use custom XDG_CACHE_HOME even if xdg socket exists" '
 	test_when_finished "
-		git credential-cache exit &&
+		but credential-cache exit &&
 		sane_unset XDG_CACHE_HOME
 	" &&
 	check approve cache <<-\EOF &&
@@ -77,7 +77,7 @@ test_expect_success "use custom XDG_CACHE_HOME even if xdg socket exists" '
 	username=store-user
 	password=store-pass
 	EOF
-	test_path_is_socket "$HOME/.cache/git/credential/socket" &&
+	test_path_is_socket "$HOME/.cache/but/credential/socket" &&
 	XDG_CACHE_HOME="$HOME/xdg" &&
 	export XDG_CACHE_HOME &&
 	check approve cache <<-\EOF &&
@@ -86,40 +86,40 @@ test_expect_success "use custom XDG_CACHE_HOME even if xdg socket exists" '
 	username=store-user
 	password=store-pass
 	EOF
-	test_path_is_socket "$XDG_CACHE_HOME/git/credential/socket"
+	test_path_is_socket "$XDG_CACHE_HOME/but/credential/socket"
 '
 
 test_expect_success 'use user socket if user directory exists' '
 	test_when_finished "
-		git credential-cache exit &&
-		rmdir \"\$HOME/.git-credential-cache/\"
+		but credential-cache exit &&
+		rmdir \"\$HOME/.but-credential-cache/\"
 	" &&
-	mkdir -p "$HOME/.git-credential-cache/" &&
-	chmod 700 "$HOME/.git-credential-cache/" &&
+	mkdir -p "$HOME/.but-credential-cache/" &&
+	chmod 700 "$HOME/.but-credential-cache/" &&
 	check approve cache <<-\EOF &&
 	protocol=https
 	host=example.com
 	username=store-user
 	password=store-pass
 	EOF
-	test_path_is_socket "$HOME/.git-credential-cache/socket"
+	test_path_is_socket "$HOME/.but-credential-cache/socket"
 '
 
 test_expect_success SYMLINKS 'use user socket if user directory is a symlink to a directory' '
 	test_when_finished "
-		git credential-cache exit &&
+		but credential-cache exit &&
 		rmdir \"\$HOME/dir/\" &&
-		rm \"\$HOME/.git-credential-cache\"
+		rm \"\$HOME/.but-credential-cache\"
 	" &&
 	mkdir -p -m 700 "$HOME/dir/" &&
-	ln -s "$HOME/dir" "$HOME/.git-credential-cache" &&
+	ln -s "$HOME/dir" "$HOME/.but-credential-cache" &&
 	check approve cache <<-\EOF &&
 	protocol=https
 	host=example.com
 	username=store-user
 	password=store-pass
 	EOF
-	test_path_is_socket "$HOME/.git-credential-cache/socket"
+	test_path_is_socket "$HOME/.but-credential-cache/socket"
 '
 
 helper_test_timeout cache --timeout=1

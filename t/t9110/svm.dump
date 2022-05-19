@@ -82,7 +82,7 @@ Content-length: 182
 K 7
 svn:log
 V 18
-import for git-svn
+import for but-svn
 K 10
 svn:author
 V 7
@@ -379,7 +379,7 @@ Content-length: 182
 K 7
 svn:log
 V 18
-import for git-svn
+import for but-svn
 K 10
 svn:author
 V 7

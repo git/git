@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The git-remote-persistent-https binary speeds up SSL operations by running
+// The but-remote-persistent-https binary speeds up SSL operations by running
 // a daemon job that keeps a connection open to a Git server. This ensures the
-// git-remote-persistent-https--proxy is running and delegating execution
-// to the git-remote-http binary with the http_proxy set to the daemon job.
+// but-remote-persistent-https--proxy is running and delegating execution
+// to the but-remote-http binary with the http_proxy set to the daemon job.
 // A unix socket is used to authenticate the proxy and discover the
 // HTTP address. Note, both the client and proxy are included in the same
 // binary.
@@ -32,7 +32,7 @@ import (
 
 var (
 	forceProxy = flag.Bool("proxy", false, "Whether to start the binary in proxy mode")
-	proxyBin   = flag.String("proxy_bin", "git-remote-persistent-https--proxy", "Path to the proxy binary")
+	proxyBin   = flag.String("proxy_bin", "but-remote-persistent-https--proxy", "Path to the proxy binary")
 	printLabel = flag.Bool("print_label", false, "Prints the build label for the binary")
 
 	// Variable that should be defined through the -X linker flag.
@@ -54,7 +54,7 @@ func main() {
 
 	var err error
 	if *forceProxy || strings.HasSuffix(os.Args[0], "--proxy") {
-		log.SetPrefix("git-remote-persistent-https--proxy: ")
+		log.SetPrefix("but-remote-persistent-https--proxy: ")
 		proxy := &Proxy{
 			BuildLabel:         buildLabel(),
 			MaxIdleDuration:    defaultMaxIdleDuration,
@@ -62,7 +62,7 @@ func main() {
 		}
 		err = proxy.Run()
 	} else {
-		log.SetPrefix("git-remote-persistent-https: ")
+		log.SetPrefix("but-remote-persistent-https: ")
 		client := &Client{
 			ProxyBin: *proxyBin,
 			Args:     flag.Args(),

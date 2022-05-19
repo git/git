@@ -13,8 +13,8 @@
 #include "strmap.h"
 
 static char const * const shortlog_usage[] = {
-	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
-	N_("git log --pretty=short | git shortlog [<options>]"),
+	N_("but shortlog [<options>] [<revision-range>] [[--] <path>...]"),
+	N_("but log --pretty=short | but shortlog [<options>]"),
 	NULL
 };
 
@@ -344,7 +344,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
 	struct shortlog log = { STRING_LIST_INIT_NODUP };
 	struct rev_info rev;
-	int nongit = !startup_info->have_repository;
+	int nonbut = !startup_info->have_repository;
 
 	const struct option options[] = {
 		OPT_BIT('c', "cummitter", &log.groups,
@@ -366,7 +366,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	struct parse_opt_ctx_t ctx;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	shortlog_init(&log);
 	repo_init_revisions(the_repository, &rev, prefix);
 	parse_options_start(&ctx, argc, argv, prefix, options,
@@ -391,7 +391,7 @@ parse_done:
 	revision_opts_finish(&rev);
 	argc = parse_options_end(&ctx);
 
-	if (nongit && argc > 1) {
+	if (nonbut && argc > 1) {
 		error(_("too many arguments given outside repository"));
 		usage_with_options(shortlog_usage, options);
 	}
@@ -410,7 +410,7 @@ parse_done:
 	string_list_sort(&log.trailers);
 
 	/* assume HEAD if from a tty */
-	if (!nongit && !rev.pending.nr && isatty(0))
+	if (!nonbut && !rev.pending.nr && isatty(0))
 		add_head_to_pending(&rev);
 	if (rev.pending.nr == 0) {
 		if (isatty(0))

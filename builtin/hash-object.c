@@ -80,8 +80,8 @@ static void hash_stdin_paths(const char *type, int no_filters, unsigned flags,
 int cmd_hash_object(int argc, const char **argv, const char *prefix)
 {
 	static const char * const hash_object_usage[] = {
-		N_("git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] [--] <file>..."),
-		"git hash-object  --stdin-paths",
+		N_("but hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] [--] <file>..."),
+		"but hash-object  --stdin-paths",
 		NULL
 	};
 	const char *type = blob_type;
@@ -89,7 +89,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int stdin_paths = 0;
 	int no_filters = 0;
 	int literally = 0;
-	int nongit = 0;
+	int nonbut = 0;
 	unsigned flags = HASH_FORMAT_CHECK;
 	const char *vpath = NULL;
 	char *vpath_free = NULL;
@@ -111,16 +111,16 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 			     hash_object_usage, 0);
 
 	if (flags & HASH_WRITE_OBJECT)
-		prefix = setup_git_directory();
+		prefix = setup_but_directory();
 	else
-		prefix = setup_git_directory_gently(&nongit);
+		prefix = setup_but_directory_gently(&nonbut);
 
 	if (vpath && prefix) {
 		vpath_free = prefix_filename(prefix, vpath);
 		vpath = vpath_free;
 	}
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	if (stdin_paths) {
 		if (hashstdin)

@@ -9,9 +9,9 @@
  * support with your compiler (such as with "-std=gnu99") and don't have access
  * to one with this support, such as GCC or Clang, you can remove this #if
  * directive, but please report the details of your system to
- * git@vger.kernel.org.
+ * but@vger.kernel.org.
  */
-#error "Required C99 support is in a test phase.  Please see git-compat-util.h for more details."
+#error "Required C99 support is in a test phase.  Please see but-compat-util.h for more details."
 #endif
 
 #ifdef USE_MSVC_CRTDBG
@@ -326,10 +326,10 @@ static inline int setitimer(int which, const struct itimerval *value, struct iti
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
 #else
-#define basename gitbasename
-char *gitbasename(char *);
-#define dirname gitdirname
-char *gitdirname(char *);
+#define basename butbasename
+char *butbasename(char *);
+#define dirname butdirname
+char *butdirname(char *);
 #endif
 
 #ifndef NO_ICONV
@@ -401,35 +401,35 @@ int lstat_cache_aware_rmdir(const char *path);
 #endif
 
 #ifndef has_dos_drive_prefix
-static inline int git_has_dos_drive_prefix(const char *path)
+static inline int but_has_dos_drive_prefix(const char *path)
 {
 	return 0;
 }
-#define has_dos_drive_prefix git_has_dos_drive_prefix
+#define has_dos_drive_prefix but_has_dos_drive_prefix
 #endif
 
 #ifndef skip_dos_drive_prefix
-static inline int git_skip_dos_drive_prefix(char **path)
+static inline int but_skip_dos_drive_prefix(char **path)
 {
 	return 0;
 }
-#define skip_dos_drive_prefix git_skip_dos_drive_prefix
+#define skip_dos_drive_prefix but_skip_dos_drive_prefix
 #endif
 
 #ifndef is_dir_sep
-static inline int git_is_dir_sep(int c)
+static inline int but_is_dir_sep(int c)
 {
 	return c == '/';
 }
-#define is_dir_sep git_is_dir_sep
+#define is_dir_sep but_is_dir_sep
 #endif
 
 #ifndef offset_1st_component
-static inline int git_offset_1st_component(const char *path)
+static inline int but_offset_1st_component(const char *path)
 {
 	return is_dir_sep(path[0]);
 }
-#define offset_1st_component git_offset_1st_component
+#define offset_1st_component but_offset_1st_component
 #endif
 
 #ifndef is_valid_path
@@ -449,19 +449,19 @@ static inline int is_path_owned_by_current_uid(const char *path)
 #endif
 
 #ifndef find_last_dir_sep
-static inline char *git_find_last_dir_sep(const char *path)
+static inline char *but_find_last_dir_sep(const char *path)
 {
 	return strrchr(path, '/');
 }
-#define find_last_dir_sep git_find_last_dir_sep
+#define find_last_dir_sep but_find_last_dir_sep
 #endif
 
 #ifndef has_dir_sep
-static inline int git_has_dir_sep(const char *path)
+static inline int but_has_dir_sep(const char *path)
 {
 	return !!strchr(path, '/');
 }
-#define has_dir_sep(path) git_has_dir_sep(path)
+#define has_dir_sep(path) but_has_dir_sep(path)
 #endif
 
 #ifndef query_user_email
@@ -687,10 +687,10 @@ static inline int ends_with(const char *str, const char *suffix)
 #define MAP_PRIVATE 1
 #endif
 
-#define mmap git_mmap
-#define munmap git_munmap
-void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-int git_munmap(void *start, size_t length);
+#define mmap but_mmap
+#define munmap but_munmap
+void *but_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+int but_munmap(void *start, size_t length);
 
 #else /* NO_MMAP || USE_WIN32_MMAP */
 
@@ -743,26 +743,26 @@ int git_munmap(void *start, size_t length);
 #ifdef stat
 #undef stat
 #endif
-#define stat(path, buf) git_stat(path, buf)
-int git_stat(const char *, struct stat *);
+#define stat(path, buf) but_stat(path, buf)
+int but_stat(const char *, struct stat *);
 #ifdef fstat
 #undef fstat
 #endif
-#define fstat(fd, buf) git_fstat(fd, buf)
-int git_fstat(int, struct stat *);
+#define fstat(fd, buf) but_fstat(fd, buf)
+int but_fstat(int, struct stat *);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat(path, buf) git_lstat(path, buf)
-int git_lstat(const char *, struct stat *);
+#define lstat(path, buf) but_lstat(path, buf)
+int but_lstat(const char *, struct stat *);
 #endif
 
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (size_t)(sizeof(void*) >= 8 ? (32 * 1024L * 1024L) : 256))
 
 #ifdef NO_PREAD
-#define pread git_pread
-ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
+#define pread but_pread
+ssize_t but_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
 /*
  * Forward decl that will remind us if its twin in cache.h changes.
@@ -772,45 +772,45 @@ ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
-#define setenv gitsetenv
-int gitsetenv(const char *, const char *, int);
+#define setenv butsetenv
+int butsetenv(const char *, const char *, int);
 #endif
 
 #ifdef NO_MKDTEMP
-#define mkdtemp gitmkdtemp
-char *gitmkdtemp(char *);
+#define mkdtemp butmkdtemp
+char *butmkdtemp(char *);
 #endif
 
 #ifdef NO_UNSETENV
-#define unsetenv gitunsetenv
-int gitunsetenv(const char *);
+#define unsetenv butunsetenv
+int butunsetenv(const char *);
 #endif
 
 #ifdef NO_STRCASESTR
-#define strcasestr gitstrcasestr
-char *gitstrcasestr(const char *haystack, const char *needle);
+#define strcasestr butstrcasestr
+char *butstrcasestr(const char *haystack, const char *needle);
 #endif
 
 #ifdef NO_STRLCPY
-#define strlcpy gitstrlcpy
-size_t gitstrlcpy(char *, const char *, size_t);
+#define strlcpy butstrlcpy
+size_t butstrlcpy(char *, const char *, size_t);
 #endif
 
 #ifdef NO_STRTOUMAX
-#define strtoumax gitstrtoumax
-uintmax_t gitstrtoumax(const char *, char **, int);
-#define strtoimax gitstrtoimax
-intmax_t gitstrtoimax(const char *, char **, int);
+#define strtoumax butstrtoumax
+uintmax_t butstrtoumax(const char *, char **, int);
+#define strtoimax butstrtoimax
+intmax_t butstrtoimax(const char *, char **, int);
 #endif
 
 #ifdef NO_HSTRERROR
-#define hstrerror githstrerror
-const char *githstrerror(int herror);
+#define hstrerror buthstrerror
+const char *buthstrerror(int herror);
 #endif
 
 #ifdef NO_MEMMEM
-#define memmem gitmemmem
-void *gitmemmem(const void *haystack, size_t haystacklen,
+#define memmem butmemmem
+void *butmemmem(const void *haystack, size_t haystacklen,
 		const void *needle, size_t needlelen);
 #endif
 
@@ -818,8 +818,8 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
 #ifdef strdup
 #undef strdup
 #endif
-#define strdup gitstrdup
-char *gitstrdup(const char *s);
+#define strdup butstrdup
+char *butstrdup(const char *s);
 #endif
 
 #ifdef NO_GETPAGESIZE
@@ -835,30 +835,30 @@ char *gitstrdup(const char *s);
 #  ifdef fopen
 #   undef fopen
 #  endif
-#  define fopen(a,b) git_fopen(a,b)
+#  define fopen(a,b) but_fopen(a,b)
 # endif
-FILE *git_fopen(const char*, const char*);
+FILE *but_fopen(const char*, const char*);
 #endif
 
 #ifdef SNPRINTF_RETURNS_BOGUS
 #ifdef snprintf
 #undef snprintf
 #endif
-#define snprintf git_snprintf
-int git_snprintf(char *str, size_t maxsize,
+#define snprintf but_snprintf
+int but_snprintf(char *str, size_t maxsize,
 		 const char *format, ...);
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
-#define vsnprintf git_vsnprintf
-int git_vsnprintf(char *str, size_t maxsize,
+#define vsnprintf but_vsnprintf
+int but_vsnprintf(char *str, size_t maxsize,
 		  const char *format, va_list ap);
 #endif
 
 #ifdef OPEN_RETURNS_EINTR
 #undef open
-#define open git_open_with_retry
-int git_open_with_retry(const char *path, int flag, ...);
+#define open but_open_with_retry
+int but_open_with_retry(const char *path, int flag, ...);
 #endif
 
 #ifdef __GLIBC_PREREQ
@@ -868,8 +868,8 @@ int git_open_with_retry(const char *path, int flag, ...);
 #endif
 
 #ifndef HAVE_STRCHRNUL
-#define strchrnul gitstrchrnul
-static inline char *gitstrchrnul(const char *s, int c)
+#define strchrnul butstrchrnul
+static inline char *butstrchrnul(const char *s, int c)
 {
 	while (*s && *s != c)
 		s++;
@@ -886,8 +886,8 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 #endif
 
 #ifdef NO_PTHREADS
-#define atexit git_atexit
-int git_atexit(void (*handler)(void));
+#define atexit but_atexit
+int but_atexit(void (*handler)(void));
 #endif
 
 static inline size_t st_add(size_t a, size_t b)
@@ -1082,7 +1082,7 @@ extern const unsigned char tolower_trans_tbl[256];
 /* Sane ctype - no locale, and works with signed chars */
 #undef isascii
 #undef isspace
-#undef isdigit
+#undef isdibut
 #undef isalpha
 #undef isalnum
 #undef isprint
@@ -1092,7 +1092,7 @@ extern const unsigned char tolower_trans_tbl[256];
 #undef toupper
 #undef iscntrl
 #undef ispunct
-#undef isxdigit
+#undef isxdibut
 
 extern const unsigned char sane_ctype[256];
 #define GIT_SPACE 0x01
@@ -1106,7 +1106,7 @@ extern const unsigned char sane_ctype[256];
 #define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
 #define isascii(x) (((x) & ~0x7f) == 0)
 #define isspace(x) sane_istest(x,GIT_SPACE)
-#define isdigit(x) sane_istest(x,GIT_DIGIT)
+#define isdibut(x) sane_istest(x,GIT_DIGIT)
 #define isalpha(x) sane_istest(x,GIT_ALPHA)
 #define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
 #define isprint(x) ((x) >= 0x20 && (x) <= 0x7e)
@@ -1117,7 +1117,7 @@ extern const unsigned char sane_ctype[256];
 #define iscntrl(x) (sane_istest(x,GIT_CNTRL))
 #define ispunct(x) sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | \
 		GIT_GLOB_SPECIAL | GIT_PATHSPEC_MAGIC)
-#define isxdigit(x) (hexval_table[(unsigned char)(x)] != -1)
+#define isxdibut(x) (hexval_table[(unsigned char)(x)] != -1)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
 #define is_pathspec_magic(x) sane_istest(x,GIT_PATHSPEC_MAGIC)
@@ -1186,10 +1186,10 @@ static inline int strtol_i(char const *s, int base, int *result)
 	return 0;
 }
 
-void git_stable_qsort(void *base, size_t nmemb, size_t size,
+void but_stable_qsort(void *base, size_t nmemb, size_t size,
 		      int(*compar)(const void *, const void *));
 #ifdef INTERNAL_QSORT
-#define qsort git_stable_qsort
+#define qsort but_stable_qsort
 #endif
 
 #define QSORT(base, n, compar) sane_qsort((base), (n), sizeof(*(base)), compar)
@@ -1201,12 +1201,12 @@ static inline void sane_qsort(void *base, size_t nmemb, size_t size,
 }
 
 #define STABLE_QSORT(base, n, compar) \
-	git_stable_qsort((base), (n), sizeof(*(base)), compar)
+	but_stable_qsort((base), (n), sizeof(*(base)), compar)
 
 #ifndef HAVE_ISO_QSORT_S
-int git_qsort_s(void *base, size_t nmemb, size_t size,
+int but_qsort_s(void *base, size_t nmemb, size_t size,
 		int (*compar)(const void *, const void *, void *), void *ctx);
-#define qsort_s git_qsort_s
+#define qsort_s but_qsort_s
 #endif
 
 #define QSORT_S(base, n, compar, ctx) do {			\
@@ -1295,12 +1295,12 @@ enum fsync_action {
  * FSYNC_HARDWARE_FLUSH does an OS writeout and hardware flush to ensure that
  * changes are durable. It is not expected to fail.
  */
-int git_fsync(int fd, enum fsync_action action);
+int but_fsync(int fd, enum fsync_action action);
 
 /*
  * Writes out trace statistics for fsync using the trace2 API.
  */
-void trace_git_fsync_stats(void);
+void trace_but_fsync_stats(void);
 
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
@@ -1362,20 +1362,20 @@ static inline void funlockfile(FILE *fh)
 #endif
 
 #ifdef FILENO_IS_A_MACRO
-int git_fileno(FILE *stream);
+int but_fileno(FILE *stream);
 # ifndef COMPAT_CODE_FILENO
 #  undef fileno
-#  define fileno(p) git_fileno(p)
+#  define fileno(p) but_fileno(p)
 # endif
 #endif
 
 #ifdef NEED_ACCESS_ROOT_HANDLER
-int git_access(const char *path, int mode);
+int but_access(const char *path, int mode);
 # ifndef COMPAT_CODE_ACCESS
 #  ifdef access
 #  undef access
 #  endif
-#  define access(path, mode) git_access(path, mode)
+#  define access(path, mode) but_access(path, mode)
 # endif
 #endif
 

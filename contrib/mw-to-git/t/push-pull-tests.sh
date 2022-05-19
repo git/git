@@ -3,12 +3,12 @@ test_push_pull () {
 	test_expect_success 'Git pull works after adding a new wiki page' '
 		wiki_reset &&
 
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_1 &&
-		wiki_editpage Foo "page created after the git clone" false &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_1 &&
+		wiki_editpage Foo "page created after the but clone" false &&
 
 		(
 			cd mw_dir_1 &&
-			git pull
+			but pull
 		) &&
 
 		wiki_getallpage ref_page_1 &&
@@ -18,27 +18,27 @@ test_push_pull () {
 	test_expect_success 'Git pull works after editing a wiki page' '
 		wiki_reset &&
 
-		wiki_editpage Foo "page created before the git clone" false &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_2 &&
+		wiki_editpage Foo "page created before the but clone" false &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_2 &&
 		wiki_editpage Foo "new line added on the wiki" true &&
 
 		(
 			cd mw_dir_2 &&
-			git pull
+			but pull
 		) &&
 
 		wiki_getallpage ref_page_2 &&
 		test_diff_directories mw_dir_2 ref_page_2
 	'
 
-	test_expect_success 'git pull works on conflict handled by auto-merge' '
+	test_expect_success 'but pull works on conflict handled by auto-merge' '
 		wiki_reset &&
 
 		wiki_editpage Foo "1 init
 3
 5
 	" false &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_3 &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_3 &&
 
 		wiki_editpage Foo "1 init
 2 content added on wiki after clone
@@ -50,27 +50,27 @@ test_push_pull () {
 			cd mw_dir_3 &&
 		echo "1 init
 3
-4 content added on git after clone
+4 content added on but after clone
 5
 " >Foo.mw &&
-			git cummit -am "conflicting change on foo" &&
-			git pull &&
-			git push
+			but cummit -am "conflicting change on foo" &&
+			but pull &&
+			but push
 		)
 	'
 
 	test_expect_success 'Git push works after adding a file .mw' '
 		wiki_reset &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_4 &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_4 &&
 		wiki_getallpage ref_page_4 &&
 		(
 			cd mw_dir_4 &&
 			test_path_is_missing Foo.mw &&
 			touch Foo.mw &&
 			echo "hello world" >>Foo.mw &&
-			git add Foo.mw &&
-			git cummit -m "Foo" &&
-			git push
+			but add Foo.mw &&
+			but cummit -m "Foo" &&
+			but push
 		) &&
 		wiki_getallpage ref_page_4 &&
 		test_diff_directories mw_dir_4 ref_page_4
@@ -78,14 +78,14 @@ test_push_pull () {
 
 	test_expect_success 'Git push works after editing a file .mw' '
 		wiki_reset &&
-		wiki_editpage "Foo" "page created before the git clone" false &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_5 &&
+		wiki_editpage "Foo" "page created before the but clone" false &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_5 &&
 
 		(
 			cd mw_dir_5 &&
 			echo "new line added in the file Foo.mw" >>Foo.mw &&
-			git cummit -am "edit file Foo.mw" &&
-			git push
+			but cummit -am "edit file Foo.mw" &&
+			but push
 		) &&
 
 		wiki_getallpage ref_page_5 &&
@@ -94,14 +94,14 @@ test_push_pull () {
 
 	test_expect_failure 'Git push works after deleting a file' '
 		wiki_reset &&
-		wiki_editpage Foo "wiki page added before git clone" false &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_6 &&
+		wiki_editpage Foo "wiki page added before but clone" false &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_6 &&
 
 		(
 			cd mw_dir_6 &&
-			git rm Foo.mw &&
-			git cummit -am "page Foo.mw deleted" &&
-			git push
+			but rm Foo.mw &&
+			but cummit -am "page Foo.mw deleted" &&
+			but push
 		) &&
 
 		test_must_fail wiki_page_exist Foo
@@ -110,7 +110,7 @@ test_push_pull () {
 	test_expect_success 'Merge conflict expected and solving it' '
 		wiki_reset &&
 
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_7 &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_7 &&
 		wiki_editpage Foo "1 conflict
 3 wiki
 4" false &&
@@ -118,26 +118,26 @@ test_push_pull () {
 		(
 			cd mw_dir_7 &&
 		echo "1 conflict
-2 git
+2 but
 4" >Foo.mw &&
-			git add Foo.mw &&
-			git cummit -m "conflict created" &&
-			test_must_fail git pull &&
+			but add Foo.mw &&
+			but cummit -m "conflict created" &&
+			test_must_fail but pull &&
 			"$PERL_PATH" -pi -e "s/[<=>].*//g" Foo.mw &&
-			git cummit -am "merge conflict solved" &&
-			git push
+			but cummit -am "merge conflict solved" &&
+			but push
 		)
 	'
 
-	test_expect_failure 'git pull works after deleting a wiki page' '
+	test_expect_failure 'but pull works after deleting a wiki page' '
 		wiki_reset &&
-		wiki_editpage Foo "wiki page added before the git clone" false &&
-		git clone mediawiki::'"$WIKI_URL"' mw_dir_8 &&
+		wiki_editpage Foo "wiki page added before the but clone" false &&
+		but clone mediawiki::'"$WIKI_URL"' mw_dir_8 &&
 
 		wiki_delete_page Foo &&
 		(
 			cd mw_dir_8 &&
-			git pull &&
+			but pull &&
 			test_path_is_missing Foo.mw
 		)
 	'

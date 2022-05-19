@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description="Comparison of git-log's --grep regex engines with -F
+test_description="Comparison of but-log's --grep regex engines with -F
 
 Set GIT_PERF_4221_LOG_OPTS in the environment to pass options to
-git-grep. Make sure to include a leading space,
+but-grep. Make sure to include a leading space,
 e.g. GIT_PERF_4221_LOG_OPTS=' -i'. Some options to try:
 
 	-i
@@ -27,7 +27,7 @@ do
 			prereq=""
 		fi
 		test_perf $prereq "$engine log$GIT_PERF_4221_LOG_OPTS --grep='$pattern'" "
-			git -c grep.patternType=$engine log --pretty=format:%h$GIT_PERF_4221_LOG_OPTS --grep='$pattern' >'out.$engine' || :
+			but -c grep.patternType=$engine log --pretty=format:%h$GIT_PERF_4221_LOG_OPTS --grep='$pattern' >'out.$engine' || :
 		"
 	done
 

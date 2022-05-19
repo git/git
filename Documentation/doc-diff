@@ -24,7 +24,7 @@ asciidoctor		use asciidoctor with both cummits
 cut-footer		cut away footer
 "
 SUBDIRECTORY_OK=1
-. "$(git --exec-path)/git-sh-setup"
+. "$(but --exec-path)/but-sh-setup"
 
 parallel=
 force=
@@ -65,12 +65,12 @@ do
 	shift
 done
 
-tmp="$(git rev-parse --show-toplevel)/Documentation/tmp-doc-diff" || exit 1
+tmp="$(but rev-parse --show-toplevel)/Documentation/tmp-doc-diff" || exit 1
 
 if test -n "$clean"
 then
 	test $# -eq 0 || usage
-	git worktree remove --force "$tmp/worktree" 2>/dev/null
+	but worktree remove --force "$tmp/worktree" 2>/dev/null
 	rm -rf "$tmp"
 	exit 0
 fi
@@ -88,8 +88,8 @@ test $# -gt 1 || usage
 from=$1; shift
 to=$1; shift
 
-from_oid=$(git rev-parse --verify "$from") || exit 1
-to_oid=$(git rev-parse --verify "$to") || exit 1
+from_oid=$(but rev-parse --verify "$from") || exit 1
+to_oid=$(but rev-parse --verify "$to") || exit 1
 
 if test -n "$force"
 then
@@ -100,7 +100,7 @@ fi
 # results that don't differ between the two trees.
 if ! test -d "$tmp/worktree"
 then
-	git worktree add -f --detach "$tmp/worktree" "$from" &&
+	but worktree add -f --detach "$tmp/worktree" "$from" &&
 	dots=$(echo "$tmp/worktree" | sed 's#[^/]*#..#g') &&
 	ln -s "$dots/config.mak" "$tmp/worktree/config.mak"
 fi
@@ -149,7 +149,7 @@ render_tree () {
 	makemanflags=$3 &&
 	if ! test -d "$tmp/installed/$dname"
 	then
-		git -C "$tmp/worktree" checkout --detach "$oid" &&
+		but -C "$tmp/worktree" checkout --detach "$oid" &&
 		make -j$parallel -C "$tmp/worktree" \
 			$makemanflags \
 			GIT_VERSION=omitted \
@@ -183,4 +183,4 @@ render_tree () {
 
 render_tree $from_oid $from_dir $from_makemanflags &&
 render_tree $to_oid $to_dir $to_makemanflags &&
-git -C $tmp/rendered diff --no-index "$@" $from_dir $to_dir
+but -C $tmp/rendered diff --no-index "$@" $from_dir $to_dir

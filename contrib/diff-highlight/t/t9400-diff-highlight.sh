@@ -30,13 +30,13 @@ dh_test () {
 
 	{
 		cat "$a" >file &&
-		git add file &&
-		git cummit -m "Add a file" &&
+		but add file &&
+		but cummit -m "Add a file" &&
 
 		cat "$b" >file &&
-		git diff file >diff.raw &&
-		git cummit -a -m "Update a file" &&
-		git show >cummit.raw
+		but diff file >diff.raw &&
+		but cummit -a -m "Update a file" &&
+		but show >cummit.raw
 	} >/dev/null &&
 
 	"$DIFF_HIGHLIGHT" <diff.raw | test_strip_patch_header >diff.act &&
@@ -56,7 +56,7 @@ test_strip_patch_header () {
 #	 /
 #	D---E---F branch
 #
-#	git log --all --graph
+#	but log --all --graph
 #	* cummit
 #	|    B
 #	| * cummit
@@ -71,29 +71,29 @@ test_strip_patch_header () {
 #
 dh_test_setup_history () {
 	echo file1 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m "D" &&
+	but cummit -m "D" &&
 
-	git checkout -b branch &&
+	but checkout -b branch &&
 	echo file2 >file &&
 	test_tick &&
-	git cummit -a -m "E" &&
+	but cummit -a -m "E" &&
 
-	git checkout master &&
+	but checkout master &&
 	echo file2 >file &&
 	test_tick &&
-	git cummit -a -m "A" &&
+	but cummit -a -m "A" &&
 
-	git checkout branch &&
+	but checkout branch &&
 	echo file3 >file &&
 	test_tick &&
-	git cummit -a -m "F" &&
+	but cummit -a -m "F" &&
 
-	git checkout master &&
+	but checkout master &&
 	echo file3 >file &&
 	test_tick &&
-	git cummit -a -m "B"
+	but cummit -a -m "B"
 }
 
 left_trim () {
@@ -257,9 +257,9 @@ test_expect_success 'diff-highlight works with the --graph option' '
 	# date-order so that the cummits are interleaved for both
 	# trim graph elements so we can do a diff
 	# trim leading space because our trim_graph is not perfect
-	git log --branches -p --date-order |
+	but log --branches -p --date-order |
 		"$DIFF_HIGHLIGHT" | left_trim >graph.exp &&
-	git log --branches -p --date-order --graph |
+	but log --branches -p --date-order --graph |
 		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph.act &&
 	test_cmp graph.exp graph.act
 '
@@ -268,7 +268,7 @@ test_expect_success 'diff-highlight works with the --graph option' '
 # doesn't know about color, so just sanity check that something got
 # highlighted.
 test_expect_success 'diff-highlight works with color graph' '
-	git log --branches -p --date-order --graph --color |
+	but log --branches -p --date-order --graph --color |
 		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph &&
 	grep "\[7m" graph
 '
@@ -283,19 +283,19 @@ test_expect_success 'diff-highlight works with color graph' '
 # which naively looks like one side added "+resolved".
 test_expect_success 'diff-highlight ignores combined diffs' '
 	echo "content" >file &&
-	git add file &&
-	git cummit -m base &&
+	but add file &&
+	but cummit -m base &&
 
 	>file &&
-	git cummit -am master &&
+	but cummit -am master &&
 
-	git checkout -b other HEAD^ &&
+	but checkout -b other HEAD^ &&
 	echo "modified content" >file &&
-	git cummit -am other &&
+	but cummit -am other &&
 
-	test_must_fail git merge master &&
+	test_must_fail but merge master &&
 	echo "resolved content" >file &&
-	git cummit -am resolved &&
+	but cummit -am resolved &&
 
 	cat >expect <<-\EOF &&
 	--- a/file
@@ -305,7 +305,7 @@ test_expect_success 'diff-highlight ignores combined diffs' '
 	++resolved content
 	EOF
 
-	git show -c | "$DIFF_HIGHLIGHT" >actual.raw &&
+	but show -c | "$DIFF_HIGHLIGHT" >actual.raw &&
 	sed -n "/^---/,\$p" <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -316,13 +316,13 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	the old line
 	-leading dash
 	EOF
-	git add file &&
-	git cummit -m before &&
+	but add file &&
+	but cummit -m before &&
 
 	sed s/old/new/ <file >file.tmp &&
 	mv file.tmp file &&
-	git add file &&
-	git cummit -m after &&
+	but add file &&
+	but cummit -m after &&
 
 	cat >expect <<-EOF &&
 	--- a/file
@@ -333,7 +333,7 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	+the ${CW}new${CR} line
 	 -leading dash
 	EOF
-	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
+	but log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
 	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
 	test_cmp expect actual
 '

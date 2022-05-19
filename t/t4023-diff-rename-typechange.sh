@@ -10,50 +10,50 @@ test_expect_success setup '
 	rm -f foo bar &&
 	COPYING_test_data >foo &&
 	test_ln_s_add linklink bar &&
-	git add foo &&
-	git cummit -a -m Initial &&
-	git tag one &&
+	but add foo &&
+	but cummit -a -m Initial &&
+	but tag one &&
 
-	git rm -f foo bar &&
+	but rm -f foo bar &&
 	COPYING_test_data >bar &&
 	test_ln_s_add linklink foo &&
-	git add bar &&
-	git cummit -a -m Second &&
-	git tag two &&
+	but add bar &&
+	but cummit -a -m Second &&
+	but tag two &&
 
-	git rm -f foo bar &&
+	but rm -f foo bar &&
 	COPYING_test_data >foo &&
-	git add foo &&
-	git cummit -a -m Third &&
-	git tag three &&
+	but add foo &&
+	but cummit -a -m Third &&
+	but tag three &&
 
 	mv foo bar &&
 	test_ln_s_add linklink foo &&
-	git add bar &&
-	git cummit -a -m Fourth &&
-	git tag four &&
+	but add bar &&
+	but cummit -a -m Fourth &&
+	but tag four &&
 
 	# This is purely for sanity check
 
-	git rm -f foo bar &&
+	but rm -f foo bar &&
 	COPYING_test_data >foo &&
 	cat "$TEST_DIRECTORY"/../Makefile >bar &&
-	git add foo bar &&
-	git cummit -a -m Fifth &&
-	git tag five &&
+	but add foo bar &&
+	but cummit -a -m Fifth &&
+	but tag five &&
 
-	git rm -f foo bar &&
+	but rm -f foo bar &&
 	cat "$TEST_DIRECTORY"/../Makefile >foo &&
 	COPYING_test_data >bar &&
-	git add foo bar &&
-	git cummit -a -m Sixth &&
-	git tag six
+	but add foo bar &&
+	but cummit -a -m Sixth &&
+	but tag six
 
 '
 
 test_expect_success 'cross renames to be detected for regular files' '
 
-	git diff-tree five six -r --name-status -B -M | sort >actual &&
+	but diff-tree five six -r --name-status -B -M | sort >actual &&
 	{
 		echo "R100	foo	bar" &&
 		echo "R100	bar	foo"
@@ -64,7 +64,7 @@ test_expect_success 'cross renames to be detected for regular files' '
 
 test_expect_success 'cross renames to be detected for typechange' '
 
-	git diff-tree one two -r --name-status -B -M | sort >actual &&
+	but diff-tree one two -r --name-status -B -M | sort >actual &&
 	{
 		echo "R100	foo	bar" &&
 		echo "R100	bar	foo"
@@ -75,7 +75,7 @@ test_expect_success 'cross renames to be detected for typechange' '
 
 test_expect_success 'moves and renames' '
 
-	git diff-tree three four -r --name-status -B -M | sort >actual &&
+	but diff-tree three four -r --name-status -B -M | sort >actual &&
 	{
 		# see -B -M (#6) in t4008
 		echo "C100	foo	bar" &&

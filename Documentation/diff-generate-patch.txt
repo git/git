@@ -2,23 +2,23 @@ Generating patch text with -p
 -----------------------------
 
 Running
-linkgit:git-diff[1],
-linkgit:git-log[1],
-linkgit:git-show[1],
-linkgit:git-diff-index[1],
-linkgit:git-diff-tree[1], or
-linkgit:git-diff-files[1]
+linkbut:but-diff[1],
+linkbut:but-log[1],
+linkbut:but-show[1],
+linkbut:but-diff-index[1],
+linkbut:but-diff-tree[1], or
+linkbut:but-diff-files[1]
 with the `-p` option produces patch text.
 You can customize the creation of patch text via the
 `GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables
-(see linkgit:git[1]), and the `diff` attribute (see linkgit:gitattributes[5]).
+(see linkbut:but[1]), and the `diff` attribute (see linkbut:butattributes[5]).
 
 What the -p option produces is slightly different from the traditional
 diff format:
 
-1.   It is preceded with a "git diff" header that looks like this:
+1.   It is preceded with a "but diff" header that looks like this:
 
-       diff --git a/file1 b/file2
+       diff --but a/file1 b/file2
 +
 The `a/` and `b/` filenames are the same unless rename/copy is
 involved.  Especially, even for a creation or a deletion,
@@ -42,7 +42,7 @@ the file that rename/copy produces, respectively.
        dissimilarity index <number>
        index <hash>..<hash> <mode>
 +
-File modes are printed as 6-digit octal numbers including the file type
+File modes are printed as 6-dibut octal numbers including the file type
 and file permission bits.
 +
 Path names in extended headers do not include the `a/` and `b/` prefixes.
@@ -60,23 +60,23 @@ separate lines indicate the old and the new mode.
 
 3.  Pathnames with "unusual" characters are quoted as explained for
     the configuration variable `core.quotePath` (see
-    linkgit:git-config[1]).
+    linkbut:but-config[1]).
 
 4.  All the `file1` files in the output refer to files before the
     cummit, and all the `file2` files refer to files after the cummit.
     It is incorrect to apply each change to each file sequentially.  For
     example, this patch will swap a and b:
 
-      diff --git a/a b/b
+      diff --but a/a b/b
       rename from a
       rename to b
-      diff --git a/b b/a
+      diff --but a/b b/a
       rename from b
       rename to a
 
 5.  Hunk headers mention the name of the function to which the hunk
     applies.  See "Defining a custom hunk-header" in
-    linkgit:gitattributes[5] for details of how to tailor to this to
+    linkbut:butattributes[5] for details of how to tailor to this to
     specific languages.
 
 
@@ -85,8 +85,8 @@ Combined diff format
 
 Any diff-generating command can take the `-c` or `--cc` option to
 produce a 'combined diff' when showing a merge. This is the default
-format when showing merges with linkgit:git-diff[1] or
-linkgit:git-show[1]. Note also that you can give suitable
+format when showing merges with linkbut:but-diff[1] or
+linkbut:but-show[1]. Note also that you can give suitable
 `--diff-merges` option to any of these commands to force generation of
 diffs in specific format.
 
@@ -122,7 +122,7 @@ index fabadb8,cc95eb0..4866510
 		for_each_ref(get_name);
 ------------
 
-1.   It is preceded with a "git diff" header, that looks like
+1.   It is preceded with a "but diff" header, that looks like
      this (when the `-c` option is used):
 
        diff --combined file
@@ -199,9 +199,9 @@ file2, plus `++` to mean one line that was added does not appear
 in either file1 or file2).  Also eight other lines are the same
 from file1 but do not appear in file2 (hence prefixed with `+`).
 
-When shown by `git diff-tree -c`, it compares the parents of a
+When shown by `but diff-tree -c`, it compares the parents of a
 merge cummit with the merge result (i.e. file1..fileN are the
-parents).  When shown by `git diff-files -c`, it compares the
+parents).  When shown by `but diff-files -c`, it compares the
 two unresolved merge parents with the working tree file
 (i.e. file1 is stage 2 aka "our version", file2 is stage 3 aka
 "their version").

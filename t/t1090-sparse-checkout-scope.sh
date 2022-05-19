@@ -11,31 +11,31 @@ test_expect_success 'setup' '
 	echo "initial" >a &&
 	echo "initial" >b &&
 	echo "initial" >c &&
-	git add a b c &&
-	git cummit -m "initial cummit"
+	but add a b c &&
+	but cummit -m "initial cummit"
 '
 
 test_expect_success 'create feature branch' '
-	git checkout -b feature &&
+	but checkout -b feature &&
 	echo "modified" >b &&
 	echo "modified" >c &&
-	git add b c &&
-	git cummit -m "modification"
+	but add b c &&
+	but cummit -m "modification"
 '
 
 test_expect_success 'perform sparse checkout of main' '
-	git config --local --bool core.sparsecheckout true &&
-	echo "!/*" >.git/info/sparse-checkout &&
-	echo "/a" >>.git/info/sparse-checkout &&
-	echo "/c" >>.git/info/sparse-checkout &&
-	git checkout main &&
+	but config --local --bool core.sparsecheckout true &&
+	echo "!/*" >.but/info/sparse-checkout &&
+	echo "/a" >>.but/info/sparse-checkout &&
+	echo "/c" >>.but/info/sparse-checkout &&
+	but checkout main &&
 	test_path_is_file a &&
 	test_path_is_missing b &&
 	test_path_is_file c
 '
 
 test_expect_success 'merge feature branch into sparse checkout of main' '
-	git merge feature &&
+	but merge feature &&
 	test_path_is_file a &&
 	test_path_is_missing b &&
 	test_path_is_file c &&
@@ -43,9 +43,9 @@ test_expect_success 'merge feature branch into sparse checkout of main' '
 '
 
 test_expect_success 'return to full checkout of main' '
-	git checkout feature &&
-	echo "/*" >.git/info/sparse-checkout &&
-	git checkout main &&
+	but checkout feature &&
+	echo "/*" >.but/info/sparse-checkout &&
+	but checkout main &&
 	test_path_is_file a &&
 	test_path_is_file b &&
 	test_path_is_file c &&
@@ -53,11 +53,11 @@ test_expect_success 'return to full checkout of main' '
 '
 
 test_expect_success 'skip-worktree on files outside sparse patterns' '
-	git sparse-checkout disable &&
-	git sparse-checkout set --no-cone "a*" &&
-	git checkout-index --all --ignore-skip-worktree-bits &&
+	but sparse-checkout disable &&
+	but sparse-checkout set --no-cone "a*" &&
+	but checkout-index --all --ignore-skip-worktree-bits &&
 
-	git ls-files -t >output &&
+	but ls-files -t >output &&
 	! grep ^S output >actual &&
 	test_must_be_empty actual &&
 
@@ -66,14 +66,14 @@ test_expect_success 'skip-worktree on files outside sparse patterns' '
 	S b
 	S c
 	EOF
-	git ls-files -t >output &&
+	but ls-files -t >output &&
 	grep ^S output >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'in partial clone, sparse checkout only fetches needed blobs' '
 	test_create_repo server &&
-	git clone "file://$(pwd)/server" client &&
+	but clone "file://$(pwd)/server" client &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -81,22 +81,22 @@ test_expect_success 'in partial clone, sparse checkout only fetches needed blobs
 	echo bb >server/b &&
 	mkdir server/c &&
 	echo ccc >server/c/c &&
-	git -C server add a b c/c &&
-	git -C server cummit -m message &&
+	but -C server add a b c/c &&
+	but -C server cummit -m message &&
 
 	test_config -C client core.sparsecheckout 1 &&
-	echo "!/*" >client/.git/info/sparse-checkout &&
-	echo "/a" >>client/.git/info/sparse-checkout &&
-	git -C client fetch --filter=blob:none origin &&
-	git -C client checkout FETCH_HEAD &&
+	echo "!/*" >client/.but/info/sparse-checkout &&
+	echo "/a" >>client/.but/info/sparse-checkout &&
+	but -C client fetch --filter=blob:none origin &&
+	but -C client checkout FETCH_HEAD &&
 
-	git -C client rev-list HEAD \
+	but -C client rev-list HEAD \
 		--quiet --objects --missing=print >unsorted_actual &&
 	(
 		printf "?" &&
-		git hash-object server/b &&
+		but hash-object server/b &&
 		printf "?" &&
-		git hash-object server/c/c
+		but hash-object server/c/c
 	) >unsorted_expect &&
 	sort unsorted_actual >actual &&
 	sort unsorted_expect >expect &&

@@ -12,7 +12,7 @@ Updates since v2.7
 
 UI, Workflows & Features
 
- * It turns out "git clone" over rsync transport has been broken when
+ * It turns out "but clone" over rsync transport has been broken when
    the source repository has packed references for a long time, and
    nobody noticed nor complained about it.
 
@@ -20,32 +20,32 @@ UI, Workflows & Features
    "-d", just like "branch --delete" and "branch -d" are the same
    thing.
 
- * "git blame" learned to produce the progress eye-candy when it takes
+ * "but blame" learned to produce the progress eye-candy when it takes
    too much time before emitting the first line of the result.
 
- * "git grep" can now be configured (or told from the command line)
+ * "but grep" can now be configured (or told from the command line)
    how many threads to use when searching in the working tree files.
 
- * Some "git notes" operations, e.g. "git log --notes=<note>", should
+ * Some "but notes" operations, e.g. "but log --notes=<note>", should
    be able to read notes from any tree-ish that is shaped like a notes
    tree, but the notes infrastructure required that the argument must
    be a ref under refs/notes/.  Loosen it to require a valid ref only
    when the operation would update the notes (in which case we must
    have a place to store the updated notes tree, iow, a ref).
 
- * "git grep" by default does not fall back to its "--no-index"
+ * "but grep" by default does not fall back to its "--no-index"
    behavior outside a directory under Git's control (otherwise the
    user may by mistake end up running a huge recursive search); with a
-   new configuration (set in $HOME/.gitconfig--by definition this
+   new configuration (set in $HOME/.butconfig--by definition this
    cannot be set in the config file per project), this safety can be
    disabled.
 
- * "git pull --rebase" has been extended to allow invoking
+ * "but pull --rebase" has been extended to allow invoking
    "rebase -i".
 
- * "git p4" learned to cope with the type of a file getting changed.
+ * "but p4" learned to cope with the type of a file getting changed.
 
- * "git format-patch" learned to notice format.outputDirectory
+ * "but format-patch" learned to notice format.outputDirectory
    configuration variable.  This allows "-o <dir>" option to be
    omitted on the command line if you always use the same directory in
    your workflow.
@@ -55,18 +55,18 @@ UI, Workflows & Features
 
  * Many commands that read files that are expected to contain text
    that is generated (or can be edited) by the end user to control
-   their behavior (e.g. "git grep -f <filename>") have been updated
+   their behavior (e.g. "but grep -f <filename>") have been updated
    to be more tolerant to lines that are terminated with CRLF (they
    used to treat such a line to contain payload that ends with CR,
    which is usually not what the users expect).
 
- * "git notes merge" used to limit the source of the merged notes tree
+ * "but notes merge" used to limit the source of the merged notes tree
    to somewhere under refs/notes/ hierarchy, which was too limiting
    when inventing a workflow to exchange notes with remote
    repositories using remote-tracking notes trees (located in e.g.
    refs/remote-notes/ or somesuch).
 
- * "git ls-files" learned a new "--eol" option to help diagnose
+ * "but ls-files" learned a new "--eol" option to help diagnose
    end-of-line problems.
 
  * "ls-remote" learned an option to show which branch the remote
@@ -80,11 +80,11 @@ UI, Workflows & Features
    material in user's keyrings.
 
  * Update the untracked cache subsystem and change its primary UI from
-   "git update-index" to "git config".
+   "but update-index" to "but config".
 
  * There were a few "now I am doing this thing" progress messages in
    the TCP connection code that can be triggered by setting a verbose
-   option internally in the code, but "git fetch -v" and friends never
+   option internally in the code, but "but fetch -v" and friends never
    passed the verbose option down to that codepath.
 
  * Clean/smudge filters defined in a configuration file of lower
@@ -98,9 +98,9 @@ UI, Workflows & Features
  * The "user.useConfigOnly" configuration variable can be used to
    force the user to always set user.email & user.name configuration
    variables, serving as a reminder for those who work on multiple
-   projects and do not want to put these in their $HOME/.gitconfig.
+   projects and do not want to put these in their $HOME/.butconfig.
 
- * "git fetch" and friends that make network connections can now be
+ * "but fetch" and friends that make network connections can now be
    told to only use ipv4 (or ipv6).
 
  * Some authentication methods do not need username or password, but
@@ -114,7 +114,7 @@ UI, Workflows & Features
 
  * The configuration system has been taught to phrase where it found a
    bad configuration variable in a better way in its error messages.
-   "git config" learnt a new "--show-origin" option to indicate where
+   "but config" learnt a new "--show-origin" option to indicate where
    the values come from.
 
  * The "credential-cache" daemon process used to run in whatever
@@ -122,17 +122,17 @@ UI, Workflows & Features
    filesystem that houses the repository harder; now the process
    chdir()s to the directory that house its own socket on startup.
 
- * When "git submodule update" did not result in fetching the cummit
+ * When "but submodule update" did not result in fetching the cummit
    object in the submodule that is referenced by the superproject, the
    command learned to retry another fetch, specifically asking for
    that cummit that may not be connected to the refs it usually
    fetches.
 
- * "git merge-recursive" learned "--no-renames" option to disable its
+ * "but merge-recursive" learned "--no-renames" option to disable its
    rename detection logic.
 
  * Across the transition at around Git version 2.0, the user used to
-   get a pretty loud warning when running "git push" without setting
+   get a pretty loud warning when running "but push" without setting
    push.default configuration variable.  We no longer warn because the
    transition was completed a long time ago.
 
@@ -143,7 +143,7 @@ UI, Workflows & Features
 Performance, Internal Implementation, Development Support etc.
 
  * Add a framework to spawn a group of processes in parallel, and use
-   it to run "git fetch --recurse-submodules" in parallel.
+   it to run "but fetch --recurse-submodules" in parallel.
 
  * A slight update to the Makefile to mark ".PHONY" targets as such
    correctly.
@@ -154,7 +154,7 @@ Performance, Internal Implementation, Development Support etc.
  * d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
    $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
    handling by overwriting GIT_WORK_TREE environment variable to
-   affect subprocesses when set_git_work_tree() gets called, which
+   affect subprocesses when set_but_work_tree() gets called, which
    resulted in a rather unpleasant regression to "clone" and "init".
    Try to address the same issue by always restoring the environment
    and respawning the real underlying command when handling alias.
@@ -168,13 +168,13 @@ Performance, Internal Implementation, Development Support etc.
    allow and silently ignore carriage-return at the end of the line to
    help users on DOSsy systems.
 
- * "git shortlog" used to accumulate various pieces of information
+ * "but shortlog" used to accumulate various pieces of information
    regardless of what was asked to be shown in the final output.  It
    has been optimized by noticing what need not to be collected
    (e.g. there is no need to collect the log messages when showing
    only the number of changes).
 
- * "git checkout $branch" (and other operations that share the same
+ * "but checkout $branch" (and other operations that share the same
    underlying machinery) has been optimized.
 
  * Automated tests in Travis CI environment has been optimized by
@@ -210,13 +210,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Traditionally, the tests that try commands that work on the
    contents in the working tree were named with "worktree" in their
-   filenames, but with the recent addition of "git worktree"
+   filenames, but with the recent addition of "but worktree"
    subcommand, whose tests are also named similarly, it has become
    harder to tell them apart.  The traditional tests have been renamed
    to use "work-tree" instead in an attempt to differentiate them.
    (merge 5549029 mg/work-tree-tests later to maint).
 
- * Many codepaths forget to check return value from git_config_set();
+ * Many codepaths forget to check return value from but_config_set();
    the function is made to die() to make sure we do not proceed when
    setting a configuration variable failed.
    (merge 3d18064 ps/config-error later to maint).
@@ -278,7 +278,7 @@ notes for details).
    quite yet in the index, but a few commands behaved as if they
    already are in a harmful way.
 
- * "git send-email" was confused by escaped quotes stored in the alias
+ * "but send-email" was confused by escaped quotes stored in the alias
    files saved by "mutt", which has been corrected.
 
  * A few non-portable C construct have been spotted by clang compiler
@@ -287,7 +287,7 @@ notes for details).
  * The documentation has been updated to hint the connection between
    the '--signoff' option and DCO.
 
- * "git reflog" incorrectly assumed that all objects that used to be
+ * "but reflog" incorrectly assumed that all objects that used to be
    at the tip of a ref must be cummits, which caused it to segfault.
 
  * The ignore mechanism saw a few regressions around untracked file
@@ -301,14 +301,14 @@ notes for details).
    user is tighter.  They have been made to work better by calling
    unlink(2) and retrying after fopen(3) fails with EPERM.
 
- * Asking gitweb for a nonexistent cummit left a warning in the server
+ * Asking butweb for a nonexistent cummit left a warning in the server
    log.
 
    Somebody may want to follow this up with an additional test, perhaps?
    IIRC, we do test that no Perl warnings are given to the server log,
    so this should have been caught if our test coverage were good.
 
- * "git rebase", unlike all other callers of "gc --auto", did not
+ * "but rebase", unlike all other callers of "gc --auto", did not
    ignore the exit code from "gc --auto".
 
  * Many codepaths that run "gc --auto" before exiting kept packfiles
@@ -323,17 +323,17 @@ notes for details).
  * The description for SANITY prerequisite the test suite uses has
    been clarified both in the comment and in the implementation.
 
- * "git tag" started listing a tag "foo" as "tags/foo" when a branch
+ * "but tag" started listing a tag "foo" as "tags/foo" when a branch
    named "foo" exists in the same repository; remove this unnecessary
    disambiguation, which is a regression introduced in v2.7.0.
 
- * The way "git svn" uses auth parameter was broken by Subversion
+ * The way "but svn" uses auth parameter was broken by Subversion
    1.9.0 and later.
 
- * The "split" subcommand of "git subtree" (in contrib/) incorrectly
+ * The "split" subcommand of "but subtree" (in contrib/) incorrectly
    skipped merges when it shouldn't, which was corrected.
 
- * A few options of "git diff" did not work well when the command was
+ * A few options of "but diff" did not work well when the command was
    run from a subdirectory.
 
  * The command line completion learned a handful of additional options
@@ -346,7 +346,7 @@ notes for details).
    directory that is not a submodule.  This removes a ton of wasted
    CPU cycles.
 
- * "git worktree" had a broken code that attempted to auto-fix
+ * "but worktree" had a broken code that attempted to auto-fix
    possible inconsistency that results from end-users moving a
    worktree to different places without telling Git (the original
    repository needs to maintain back-pointers to its worktrees,
@@ -358,7 +358,7 @@ notes for details).
    termination when inserting conflict markers to merged contents that
    are themselves CRLF line-terminated.
 
- * "git push --force-with-lease" has been taught to report if the push
+ * "but push --force-with-lease" has been taught to report if the push
    needed to force (or fast-forwarded).
 
  * The emulated "yes" command used in our test scripts has been
@@ -366,32 +366,32 @@ notes for details).
    that is not used, to help those who test on Windows where it would
    not stop until it fills the pipe buffer due to lack of SIGPIPE.
 
- * The documentation for "git clean" has been corrected; it mentioned
-   that .git/modules/* are removed by giving two "-f", which has never
+ * The documentation for "but clean" has been corrected; it mentioned
+   that .but/modules/* are removed by giving two "-f", which has never
    been the case.
 
- * The vimdiff backend for "git mergetool" has been tweaked to arrange
+ * The vimdiff backend for "but mergetool" has been tweaked to arrange
    and number buffers in the order that would match the expectation of
    majority of people who read left to right, then top down and assign
    buffers 1 2 3 4 "mentally" to local base remote merge windows based
    on that order.
 
- * "git show 'HEAD:Foo[BAR]Baz'" did not interpret the argument as a
+ * "but show 'HEAD:Foo[BAR]Baz'" did not interpret the argument as a
    rev, i.e. the object named by the pathname with wildcard
    characters in a tree object.
    (merge aac4fac nd/dwim-wildcards-as-pathspecs later to maint).
 
- * "git rev-parse --git-common-dir" used in the worktree feature
+ * "but rev-parse --but-common-dir" used in the worktree feature
    misbehaved when run from a subdirectory.
-   (merge 17f1365 nd/git-common-dir-fix later to maint).
+   (merge 17f1365 nd/but-common-dir-fix later to maint).
 
- * "git worktree add -B <branchname>" did not work.
+ * "but worktree add -B <branchname>" did not work.
 
- * The "v(iew)" subcommand of the interactive "git am -i" command was
+ * The "v(iew)" subcommand of the interactive "but am -i" command was
    broken in 2.6.0 timeframe when the command was rewritten in C.
    (merge 708b8cc jc/am-i-v-fix later to maint).
 
- * "git merge-tree" used to mishandle "both sides added" conflict with
+ * "but merge-tree" used to mishandle "both sides added" conflict with
    its own "create a fake ancestor file that has the common parts of
    what both sides have added and do a 3-way merge" logic; this has
    been updated to use the usual "3-way merge with an empty blob as
@@ -407,7 +407,7 @@ notes for details).
    (merge 08c95df jk/tighten-alloc later to maint).
 
  * The documentation did not clearly state that the 'simple' mode is
-   now the default for "git push" when push.default configuration is
+   now the default for "but push" when push.default configuration is
    not set.
    (merge f6b1fb3 mm/push-simple-doc later to maint).
 
@@ -416,12 +416,12 @@ notes for details).
    tests to sidestep the problem.
    (merge 3b1442d jk/grep-binary-workaround-in-test later to maint).
 
- * A helper function "git submodule" uses since v2.7.0 to list the
+ * A helper function "but submodule" uses since v2.7.0 to list the
    modules that match the pathspec argument given to its subcommands
    (e.g. "submodule add <repo> <path>") has been fixed.
    (merge 2b56bb7 sb/submodule-module-list-fix later to maint).
 
- * "git config section.var value" to set a value in per-repository
+ * "but config section.var value" to set a value in per-repository
    configuration file failed when it was run outside any repository,
    but didn't say the reason correctly.
    (merge 638fa62 js/config-set-in-non-repository later to maint).
@@ -433,7 +433,7 @@ notes for details).
 
  * Other minor clean-ups and documentation updates
    (merge f459823 ak/extract-argv0-last-dir-sep later to maint).
-   (merge 63ca1c0 ak/git-strip-extension-from-dashed-command later to maint).
+   (merge 63ca1c0 ak/but-strip-extension-from-dashed-command later to maint).
    (merge 4867f11 ps/plug-xdl-merge-leak later to maint).
    (merge 4938686 dt/initial-ref-xn-cummit-doc later to maint).
    (merge 9537f21 ma/update-hooks-sample-typofix later to maint).

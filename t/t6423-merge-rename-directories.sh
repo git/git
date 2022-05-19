@@ -47,26 +47,26 @@ test_setup_1a () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo d >z/d &&
 		mkdir z/e &&
 		echo f >z/e/f &&
-		git add z/d z/e/f &&
+		but add z/d z/e/f &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -75,25 +75,25 @@ test_expect_success '1a: Simple directory rename detection' '
 	(
 		cd 1a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:y/e/f &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:z/d    B:z/e/f &&
 		test_cmp expect actual &&
 
-		git hash-object y/d >actual &&
-		git rev-parse B:z/d >expect &&
+		but hash-object y/d >actual &&
+		but rev-parse B:z/d >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:z/d &&
-		test_must_fail git rev-parse HEAD:z/e/f &&
+		test_must_fail but rev-parse HEAD:z/d &&
+		test_must_fail but rev-parse HEAD:z/e/f &&
 		test_path_is_missing z/d &&
 		test_path_is_missing z/e/f
 	)
@@ -115,26 +115,26 @@ test_setup_1b () {
 		echo c >z/c &&
 		mkdir y &&
 		echo d >y/d &&
-		git add z y &&
+		but add z y &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo e >z/e &&
-		git add z/e &&
+		but add z/e &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z/b y &&
-		git mv z/c y &&
+		but checkout B &&
+		but mv z/b y &&
+		but mv z/c y &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -143,19 +143,19 @@ test_expect_success '1b: Merge a directory with another' '
 	(
 		cd 1b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:y/e &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:y/d    A:z/e &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:z/e
+		test_must_fail but rev-parse HEAD:z/e
 	)
 '
 
@@ -178,23 +178,23 @@ test_setup_1c () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/d &&
+		but checkout B &&
+		but mv x/d z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -203,20 +203,20 @@ test_expect_success '1c: Transitive renaming' '
 	(
 		cd 1c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:x/d &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:x/d &&
-		test_must_fail git rev-parse HEAD:z/d &&
+		test_must_fail but rev-parse HEAD:x/d &&
+		test_must_fail but rev-parse HEAD:z/d &&
 		test_path_is_missing z/d
 	)
 '
@@ -242,29 +242,29 @@ test_setup_1d () {
 		mkdir y &&
 		echo d >y/d &&
 		echo e >y/e &&
-		git add z y &&
+		but add z y &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z x &&
+		but checkout A &&
+		but mv z x &&
 		echo m >y/m &&
 		echo wham1 >y/wham &&
-		git add y &&
+		but add y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv y x &&
+		but checkout B &&
+		but mv y x &&
 		echo n >z/n &&
 		echo wham2 >z/wham &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -273,44 +273,44 @@ test_expect_success '1d: Directory renames cause a rename/rename(2to1) conflict'
 	(
 		cd 1d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 8 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:x/b :0:x/c :0:x/d :0:x/e :0:x/m :0:x/n &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  O:y/d  O:y/e  A:y/m  B:z/n &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse :0:x/wham &&
-		git rev-parse >actual \
+		test_must_fail but rev-parse :0:x/wham &&
+		but rev-parse >actual \
 			:2:x/wham :3:x/wham &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 A:y/wham  B:z/wham &&
 		test_cmp expect actual &&
 
 		# Test that the two-way merge in x/wham is as expected
-		git cat-file -p :2:x/wham >expect &&
-		git cat-file -p :3:x/wham >other &&
+		but cat-file -p :2:x/wham >expect &&
+		but cat-file -p :3:x/wham >other &&
 		>empty &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD:y/wham" \
 				-L "" \
 				-L "B^0:z/wham" \
 				expect empty other
 		else
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD" \
 				-L "" \
 				-L "B^0" \
@@ -335,26 +335,26 @@ test_setup_1e () {
 		mkdir z &&
 		echo b >z/oldb &&
 		echo c >z/oldc &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir y &&
-		git mv z/oldb y/newb &&
-		git mv z/oldc y/newc &&
+		but mv z/oldb y/newb &&
+		but mv z/oldc y/newc &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo d >z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -363,19 +363,19 @@ test_expect_success '1e: Renamed directory, with all files being renamed too' '
 	(
 		cd 1e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/newb HEAD:y/newc HEAD:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/oldb    O:z/oldc    B:z/d &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:z/d
+		test_must_fail but rev-parse HEAD:z/d
 	)
 '
 
@@ -397,31 +397,31 @@ test_setup_1f () {
 		echo d >z/d &&
 		echo e >z/e &&
 		echo f >z/f &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo g >z/g &&
-		git add z/g &&
+		but add z/g &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y &&
 		mkdir x &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
-		git mv z/d x/ &&
-		git mv z/e x/ &&
-		git mv z/f x/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
+		but mv z/d x/ &&
+		but mv z/e x/ &&
+		but mv z/f x/ &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -430,20 +430,20 @@ test_expect_success '1f: Split a directory into two other directories' '
 	(
 		cd 1f &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:x/d HEAD:x/e HEAD:x/f HEAD:x/g &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:z/d    O:z/e    O:z/f    A:z/g &&
 		test_cmp expect actual &&
 		test_path_is_missing z/g &&
-		test_must_fail git rev-parse HEAD:z/g
+		test_must_fail but rev-parse HEAD:z/g
 	)
 '
 
@@ -483,27 +483,27 @@ test_setup_2a () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir y &&
 		mkdir w &&
-		git mv z/b y/ &&
-		git mv z/c w/ &&
+		but mv z/b y/ &&
+		but mv z/c w/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo d >z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -512,21 +512,21 @@ test_expect_success '2a: Directory split into two on one side, with equal number
 	(
 		cd 2a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT.*directory rename split" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:w/c :0:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:z/d &&
 		test_cmp expect actual
 	)
@@ -545,28 +545,28 @@ test_setup_2b () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir y &&
 		mkdir w &&
-		git mv z/b y/ &&
-		git mv z/c w/ &&
+		but mv z/b y/ &&
+		but mv z/c w/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir x &&
 		echo d >x/d &&
-		git add x/d &&
+		but add x/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -575,20 +575,20 @@ test_expect_success '2b: Directory split into two on one side, with equal number
 	(
 		cd 2b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:w/c :0:x/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:x/d &&
 		test_cmp expect actual &&
 		test_i18ngrep ! "CONFLICT.*directory rename split" out
@@ -628,27 +628,27 @@ test_setup_3a () {
 		echo b >z/b &&
 		echo c >z/c &&
 		echo d >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_tick &&
-		git cummit --allow-empty -m "A" &&
+		but cummit --allow-empty -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y &&
 		mkdir x &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
-		git mv z/d x/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
+		but mv z/d x/ &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -657,16 +657,16 @@ test_expect_success '3a: Avoid implicit rename if involved as source on other si
 	(
 		cd 3a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:x/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:z/d &&
 		test_cmp expect actual
 	)
@@ -692,29 +692,29 @@ test_setup_3b () {
 		echo b >z/b &&
 		echo c >z/c &&
 		echo d >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir y &&
 		mkdir x &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
-		git mv z/d x/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
+		but mv z/d x/ &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir w &&
-		git mv z/d w/ &&
+		but mv z/d w/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -723,29 +723,29 @@ test_expect_success '3b: Avoid implicit rename if involved as source on current 
 	(
 		cd 3b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep CONFLICT.*rename/rename.*z/d.*x/d.*w/d out &&
 		test_i18ngrep ! CONFLICT.*rename/rename.*y/d out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 3 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :1:z/d :2:x/d :3:w/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  O:z/d  O:z/d  O:z/d &&
 		test_cmp expect actual &&
 
 		test_path_is_missing z/d &&
-		git hash-object >actual \
+		but hash-object >actual \
 			x/d   w/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/d O:z/d &&
 		test_cmp expect actual
 	)
@@ -816,27 +816,27 @@ test_setup_4a () {
 		echo c >z/c &&
 		echo d >z/d &&
 		echo e >z/e &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir y &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
-		git mv z/d y/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
+		but mv z/d y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo f >z/f &&
-		git add z/f &&
+		but add z/f &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -845,20 +845,20 @@ test_expect_success '4a: Directory split, with original directory still present'
 	(
 		cd 4a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:z/e HEAD:z/f &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:z/d    O:z/e    B:z/f &&
 		test_cmp expect actual
 	)
@@ -905,28 +905,28 @@ test_setup_5a () {
 		echo c >z/c &&
 		mkdir y &&
 		echo d >y/d &&
-		git add z y &&
+		but add z y &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo e1 >z/e &&
 		echo f >z/f &&
 		echo e2 >y/e &&
-		git add z/e z/f y/e &&
+		but add z/e z/f y/e &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
+		but checkout B &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -935,21 +935,21 @@ test_expect_success '5a: Merge directories, other side adds files to original an
 	(
 		cd 5a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT.*implicit dir rename" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :0:y/d :0:y/e :0:z/e :0:y/f &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  O:y/d  A:y/e  A:z/e  A:z/f &&
 		test_cmp expect actual
 	)
@@ -968,7 +968,7 @@ test_expect_success '5a: Merge directories, other side adds files to original an
 #         conflict of y/d_1 vs. y/d_2 vs. y/d_3.  Add/add/add is not
 #         representable in the index, so the existence of y/d_3 needs to
 #         cause us to bail on directory rename detection for that path, falling
-#         back to git behavior without the directory rename detection.
+#         back to but behavior without the directory rename detection.
 
 test_setup_5b () {
 	test_create_repo 5b &&
@@ -979,29 +979,29 @@ test_setup_5b () {
 		echo b >z/b &&
 		echo c >z/c &&
 		echo d1 >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/d &&
-		git mv z y &&
+		but checkout A &&
+		but rm z/d &&
+		but mv z y &&
 		echo d2 >y/d &&
-		git add y/d &&
+		but add y/d &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y &&
 		echo d3 >y/d &&
 		echo e >z/e &&
-		git add y/d z/e &&
+		but add y/d z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1010,25 +1010,25 @@ test_expect_success '5b: Rename/delete in order to get add/add/add conflict' '
 	(
 		cd 5b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (add/add).* y/d" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :0:y/e :2:y/d :3:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:z/e  A:y/d  B:y/d &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse :1:y/d &&
+		test_must_fail but rev-parse :1:y/d &&
 		test_path_is_file y/d
 	)
 '
@@ -1057,32 +1057,32 @@ test_setup_5c () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d1 >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		echo d2 >y/d &&
-		git add y/d &&
-		git mv x w &&
+		but add y/d &&
+		but mv x w &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/ &&
+		but checkout B &&
+		but mv x/d z/ &&
 		mkdir w &&
 		mkdir y &&
 		echo d3 >w/d &&
 		echo d4 >y/d &&
 		echo e >z/e &&
-		git add w/ y/ z/e &&
+		but add w/ y/ z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1091,35 +1091,35 @@ test_expect_success '5c: Transitive rename would cause rename/rename/rename/add/
 	(
 		cd 5c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/rename).*x/d.*w/d.*z/d" out &&
 		test_i18ngrep "CONFLICT (add/add).* y/d" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 9 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 6 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :0:y/e &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:z/e &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse :1:y/d &&
-		git rev-parse >actual \
+		test_must_fail but rev-parse :1:y/d &&
+		but rev-parse >actual \
 			:2:w/d :3:w/d :1:x/d :2:y/d :3:y/d :3:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:x/d  B:w/d  O:x/d  A:y/d  B:y/d  O:x/d &&
 		test_cmp expect actual &&
 
-		git hash-object >actual \
+		but hash-object >actual \
 			z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:x/d &&
 		test_cmp expect actual &&
 		test_path_is_missing x/d &&
@@ -1145,29 +1145,29 @@ test_setup_5d () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		echo d1 >y/d &&
-		git add y/d &&
+		but add y/d &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir -p y/d &&
 		echo e >y/d/e &&
 		echo d2 >z/d &&
 		echo f >z/f &&
-		git add y/d/e z/d z/f &&
+		but add y/d/e z/d z/f &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1176,34 +1176,34 @@ test_expect_success '5d: Directory/file/file conflict due to directory rename' '
 	(
 		cd 5d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (file/directory).*y/d" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 1 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 			    :0:y/b :0:y/c :0:z/d :0:y/f :2:y/d~HEAD :0:y/d/e
 		else
 			test_line_count = 2 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 			    :0:y/b :0:y/c :0:z/d :0:y/f :2:y/d      :0:y/d/e
 		fi &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:z/d  B:z/f  A:y/d  B:y/d/e &&
 		test_cmp expect actual &&
 
-		git hash-object y/d~HEAD >actual &&
-		git rev-parse A:y/d >expect &&
+		but hash-object y/d~HEAD >actual &&
+		but rev-parse A:y/d >expect &&
 		test_cmp expect actual
 	)
 '
@@ -1247,26 +1247,26 @@ test_setup_6a () {
 		echo b >z/b &&
 		echo c >z/c &&
 		echo d >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/c &&
-		git rm z/d &&
+		but checkout A &&
+		but rm z/c &&
+		but rm z/d &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1275,35 +1275,35 @@ test_expect_success '6a: Tricky rename/delete' '
 	(
 		cd 6a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*z/c.*y/c" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 3 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/b :1:y/c :3:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/b  O:z/c  O:z/c
 		else
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 2 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 1 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/b :3:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/b  O:z/c
 		fi &&
 		test_cmp expect actual
@@ -1328,8 +1328,8 @@ test_expect_success '6a: Tricky rename/delete' '
 #
 #         A note about z/ -> x/, since it may not be clear how that could come
 #         about: If we were to ignore files renamed by both sides
-#         (i.e. z/{b,c,d}), as directory rename detection did in git-2.18 thru
-#         at least git-2.28, then we would note there are no renames from z/ to
+#         (i.e. z/{b,c,d}), as directory rename detection did in but-2.18 thru
+#         at least but-2.28, then we would note there are no renames from z/ to
 #         y/ and one rename from z/ to x/ and thus come to the conclusion that
 #         A renamed z/ -> x/.  This seems more confusing for end users than a
 #         rename of z/ to y/, it makes directory rename detection behavior
@@ -1346,29 +1346,29 @@ test_setup_6b1 () {
 		echo c >z/c &&
 		echo d >z/d &&
 		echo e >z/e &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		mkdir x &&
-		git mv y/e x/e &&
+		but mv y/e x/e &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		mkdir z &&
-		git mv y/e z/e &&
+		but mv y/e z/e &&
 		echo f >z/f &&
-		git add z/f &&
+		but add z/f &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1377,20 +1377,20 @@ test_expect_merge_algorithm failure success '6b1: Same renames done on both side
 	(
 		cd 6b1 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:x/e HEAD:y/f &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:z/d    O:z/e    B:z/f &&
 		test_cmp expect actual
 	)
@@ -1422,26 +1422,26 @@ test_setup_6b2 () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		mkdir z &&
 		echo d >z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1450,20 +1450,20 @@ test_expect_merge_algorithm failure success '6b2: Same rename done on both sides
 	(
 		cd 6b2 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:z/d &&
 		test_cmp expect actual
 	)
@@ -1486,25 +1486,25 @@ test_setup_6c () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_tick &&
-		git cummit --allow-empty -m "A" &&
+		but cummit --allow-empty -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		mkdir z &&
 		echo d >z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1513,20 +1513,20 @@ test_expect_success '6c: Rename only done on same side' '
 	(
 		cd 6c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:z/d &&
 		test_cmp expect actual
 	)
@@ -1551,23 +1551,23 @@ test_setup_6d () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_tick &&
-		git cummit --allow-empty -m "A" &&
+		but cummit --allow-empty -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
-		git mv x z &&
+		but checkout B &&
+		but mv z y &&
+		but mv x z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1576,20 +1576,20 @@ test_expect_success '6d: We do not always want transitive renaming' '
 	(
 		cd 6d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:x/d &&
 		test_cmp expect actual
 	)
@@ -1612,26 +1612,26 @@ test_setup_6e () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_tick &&
-		git cummit --allow-empty -m "A" &&
+		but cummit --allow-empty -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		echo d1 > y/d &&
 		mkdir z &&
 		echo d2 > z/d &&
-		git add y/d z/d &&
+		but add y/d z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1640,20 +1640,20 @@ test_expect_success '6e: Add/add from one side' '
 	(
 		cd 6e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:y/d    B:z/d &&
 		test_cmp expect actual
 	)
@@ -1707,28 +1707,28 @@ test_setup_7a () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir w &&
 		mkdir x &&
-		git mv z/b w/ &&
-		git mv z/c x/ &&
+		but mv z/b w/ &&
+		but mv z/c x/ &&
 		echo d > z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1737,28 +1737,28 @@ test_expect_success '7a: rename-dir vs. rename-dir (NOT split evenly) PLUS add-o
 	(
 		cd 7a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/rename).*z/b.*y/b.*w/b" out &&
 		test_i18ngrep "CONFLICT (rename/rename).*z/c.*y/c.*x/c" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 7 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 6 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:1:z/b :2:y/b :3:w/b :1:z/c :2:y/c :3:x/c :0:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/b  O:z/b  O:z/c  O:z/c  O:z/c  B:z/d &&
 		test_cmp expect actual &&
 
-		git hash-object >actual \
+		but hash-object >actual \
 			y/b   w/b   y/c   x/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b O:z/b O:z/c O:z/c &&
 		test_cmp expect actual
 	)
@@ -1783,25 +1783,25 @@ test_setup_7b () {
 		echo c >z/c &&
 		echo d1 > x/d &&
 		echo d2 > w/d &&
-		git add z x w &&
+		but add z x w &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git mv w/d y/ &&
+		but checkout A &&
+		but mv z y &&
+		but mv w/d y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/ &&
+		but checkout B &&
+		but mv x/d z/ &&
 		rmdir x &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1810,37 +1810,37 @@ test_expect_success '7b: rename/rename(2to1), but only due to transitive rename'
 	(
 		cd 7b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :2:y/d :3:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  O:w/d  O:x/d &&
 		test_cmp expect actual &&
 
 		# Test that the two-way merge in y/d is as expected
-		git cat-file -p :2:y/d >expect &&
-		git cat-file -p :3:y/d >other &&
+		but cat-file -p :2:y/d >expect &&
+		but cat-file -p :3:y/d >other &&
 		>empty &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD:y/d" \
 				-L "" \
 				-L "B^0:z/d" \
 				expect empty other
 		else
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD" \
 				-L "" \
 				-L "B^0" \
@@ -1870,25 +1870,25 @@ test_setup_7c () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git mv x w &&
+		but checkout A &&
+		but mv z y &&
+		but mv x w &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/ &&
+		but checkout B &&
+		but mv x/d z/ &&
 		rmdir x &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1897,21 +1897,21 @@ test_expect_success '7c: rename/rename(1to...2or3); transitive rename may add co
 	(
 		cd 7c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/rename).*x/d.*w/d.*y/d" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 3 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :1:x/d :2:w/d :3:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  O:x/d  O:x/d  O:x/d &&
 		test_cmp expect actual
 	)
@@ -1935,25 +1935,25 @@ test_setup_7d () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git rm -rf x &&
+		but checkout A &&
+		but mv z y &&
+		but rm -rf x &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/ &&
+		but checkout B &&
+		but mv x/d z/ &&
 		rmdir x &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1962,35 +1962,35 @@ test_expect_success '7d: transitive rename involved in rename/delete; how is it 
 	(
 		cd 7d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 4 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/b :0:y/c :1:y/d :3:y/d &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/b  O:z/c  O:x/d  O:x/d
 		else
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 3 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 1 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/b :0:y/c :3:y/d &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/b  O:z/c  O:x/d
 		fi &&
 		test_cmp expect actual
@@ -2036,30 +2036,30 @@ test_setup_7e () {
 		echo c >z/c &&
 		mkdir x &&
 		echo d1 >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git rm x/d &&
+		but checkout A &&
+		but mv z y &&
+		but rm x/d &&
 		mkdir -p x/d &&
 		mkdir -p y/d &&
 		echo f >x/d/f &&
 		echo g >y/d/g &&
-		git add x/d/f y/d/g &&
+		but add x/d/f y/d/g &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/ &&
+		but checkout B &&
+		but mv x/d z/ &&
 		rmdir x &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2068,41 +2068,41 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 	(
 		cd 7e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 6 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:x/d/f :0:y/d/g :0:y/b :0:y/c :1:y/d~B^0 :3:y/d~B^0 &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 A:x/d/f  A:y/d/g  O:z/b  O:z/c  O:x/d      O:x/d
 		else
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 5 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 1 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 2 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:x/d/f :0:y/d/g :0:y/b :0:y/c :3:y/d &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 A:x/d/f  A:y/d/g  O:z/b  O:z/c  O:x/d
 		fi &&
 		test_cmp expect actual &&
 
-		git hash-object y/d~B^0 >actual &&
-		git rev-parse O:x/d >expect &&
+		but hash-object y/d~B^0 >actual &&
+		but rev-parse O:x/d >expect &&
 		test_cmp expect actual
 	)
 '
@@ -2116,7 +2116,7 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 # explores these cases.
 #
 # To be fair, we already had non-intuitive or suboptimal behavior for most
-# of these cases in git before introducing implicit directory rename
+# of these cases in but before introducing implicit directory rename
 # detection, but it'd be nice if there was a modified ruleset out there
 # that handled these cases a bit better.
 ###########################################################################
@@ -2132,7 +2132,7 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 #   Optimal:                  y/{a,b,e},   z/{c,d,f}
 #
 # Note: Both x and y got renamed and it'd be nice to detect both, and we do
-# better with directory rename detection than git did without, but the
+# better with directory rename detection than but did without, but the
 # simple rule from section 5 prevents me from handling this as optimally as
 # we potentially could.
 
@@ -2147,26 +2147,26 @@ test_setup_8a () {
 		echo b >x/b &&
 		echo c >y/c &&
 		echo d >y/d &&
-		git add x y &&
+		but add x y &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo e >x/e &&
 		echo f >y/f &&
-		git add x/e y/f &&
+		but add x/e y/f &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv y z &&
-		git mv x y &&
+		but checkout B &&
+		but mv y z &&
+		but mv x y &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2175,20 +2175,20 @@ test_expect_success '8a: Dual-directory rename, one into the others way' '
 	(
 		cd 8a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/a HEAD:y/b HEAD:y/e HEAD:y/f HEAD:z/c HEAD:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:x/a    O:x/b    A:x/e    A:y/f    O:y/c    O:y/d &&
 		test_cmp expect actual
 	)
@@ -2226,26 +2226,26 @@ test_setup_8b () {
 		echo b1 >x/b &&
 		echo a2 >y/a &&
 		echo b2 >y/b &&
-		git add x y &&
+		but add x y &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo e1 >x/e &&
 		echo e2 >y/e &&
-		git add x/e y/e &&
+		but add x/e y/e &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv y z &&
-		git mv x y &&
+		but checkout B &&
+		but mv y z &&
+		but mv x y &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2254,20 +2254,20 @@ test_expect_success '8b: Dual-directory rename, one into the others way, with co
 	(
 		cd 8b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/a HEAD:y/b HEAD:z/a HEAD:z/b HEAD:x/e HEAD:y/e &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:x/a    O:x/b    O:y/a    O:y/b    A:x/e    A:y/e &&
 		test_cmp expect actual
 	)
@@ -2298,27 +2298,27 @@ test_setup_8c () {
 		echo b >z/b &&
 		echo c >z/c &&
 		test_seq 1 10 >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/d &&
-		git mv z y &&
+		but checkout A &&
+		but rm z/d &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo 11 >z/d &&
 		test_chmod +x z/d &&
 		echo e >z/e &&
-		git add z/d z/e &&
+		but add z/d z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2327,26 +2327,26 @@ test_expect_success '8c: modify/delete or rename+modify/delete' '
 	(
 		cd 8c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (modify/delete).* z/d" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/b :0:y/c :0:y/e :1:z/d :3:z/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/c  B:z/e  O:z/d  B:z/d &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse :2:z/d &&
-		git ls-files -s z/d | grep ^100755 &&
+		test_must_fail but rev-parse :2:z/d &&
+		but ls-files -s z/d | grep ^100755 &&
 		test_path_is_file z/d &&
 		test_path_is_missing y/d
 	)
@@ -2378,25 +2378,25 @@ test_setup_8d () {
 		echo b >z/b &&
 		echo c >z/c &&
 		test_seq 1 10 >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/d &&
-		git mv z y &&
+		but checkout A &&
+		but rm z/d &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo e >z/e &&
-		git add z/e &&
+		but add z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2405,16 +2405,16 @@ test_expect_success '8d: rename/delete...or not?' '
 	(
 		cd 8d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/e &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:z/e &&
 		test_cmp expect actual
 	)
@@ -2460,26 +2460,26 @@ test_setup_8e () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z w &&
+		but checkout B &&
+		but mv z w &&
 		mkdir z &&
 		echo d >z/d &&
-		git add z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2488,28 +2488,28 @@ test_expect_success '8e: Both sides rename, one side adds to original directory'
 	(
 		cd 8e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		test_i18ngrep CONFLICT.*rename/rename.*z/c.*y/c.*w/c out &&
 		test_i18ngrep CONFLICT.*rename/rename.*z/b.*y/b.*w/b out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 7 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 6 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 2 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:1:z/b :2:y/b :3:w/b :1:z/c :2:y/c :3:w/c :0:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/b  O:z/b  O:z/b  O:z/c  O:z/c  O:z/c  B:z/d &&
 		test_cmp expect actual &&
 
-		git hash-object >actual \
+		but hash-object >actual \
 			y/b   w/b   y/c   w/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b O:z/b O:z/c O:z/c &&
 		test_cmp expect actual &&
 
@@ -2547,27 +2547,27 @@ test_setup_9a () {
 		echo e >z/d/e &&
 		echo f >z/d/f &&
 		echo g >z/d/g &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir x &&
-		git mv z/d x/w &&
-		git mv z y &&
+		but mv z/d x/w &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo h >z/d/h &&
 		echo i >z/i &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2576,26 +2576,26 @@ test_expect_success '9a: Inner renamed directory within outer renamed directory'
 	(
 		cd 9a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 7 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/i &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    B:z/i &&
 		test_cmp expect actual &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:x/w/e HEAD:x/w/f HEAD:x/w/g HEAD:x/w/h &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/d/e    O:z/d/f    O:z/d/g    B:z/d/h &&
 		test_cmp expect actual
 	)
@@ -2618,27 +2618,27 @@ test_setup_9b () {
 		echo c >z/c &&
 		mkdir x &&
 		test_seq 1 10 >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_seq 1 11 >x/d &&
-		git add x/d &&
+		but add x/d &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_seq 0 10 >x/d &&
-		git mv x/d z/d &&
-		git add z/d &&
+		but mv x/d z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2647,28 +2647,28 @@ test_expect_success '9b: Transitive rename with content merge' '
 	(
 		cd 9b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
 		test_seq 0 11 >expected &&
 		test_cmp expected y/d &&
-		git add expected &&
-		git rev-parse >actual \
+		but add expected &&
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    :0:expected &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:x/d &&
-		test_must_fail git rev-parse HEAD:z/d &&
+		test_must_fail but rev-parse HEAD:x/d &&
+		test_must_fail but rev-parse HEAD:z/d &&
 		test_path_is_missing z/d &&
 
-		test $(git rev-parse HEAD:y/d) != $(git rev-parse O:x/d) &&
-		test $(git rev-parse HEAD:y/d) != $(git rev-parse A:x/d) &&
-		test $(git rev-parse HEAD:y/d) != $(git rev-parse B:z/d)
+		test $(but rev-parse HEAD:y/d) != $(but rev-parse O:x/d) &&
+		test $(but rev-parse HEAD:y/d) != $(but rev-parse A:x/d) &&
+		test $(but rev-parse HEAD:y/d) != $(but rev-parse B:z/d)
 	)
 '
 
@@ -2709,27 +2709,27 @@ test_setup_9c () {
 		echo e >x/e &&
 		mkdir w &&
 		echo f >w/f &&
-		git add z x w &&
+		but add z x w &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git mv w/f x/ &&
+		but checkout A &&
+		but mv z y &&
+		but mv w/f x/ &&
 		echo g >x/g &&
-		git add x/g &&
+		but add x/g &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/d &&
-		git mv x/e z/e &&
+		but checkout B &&
+		but mv x/d z/d &&
+		but mv x/e z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2738,19 +2738,19 @@ test_expect_success '9c: Doubly transitive rename?' '
 	(
 		cd 9c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "WARNING: Avoiding applying x -> z rename to x/f" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:y/d HEAD:y/e HEAD:x/f HEAD:x/g &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    O:x/d    O:x/e    O:w/f    A:x/g &&
 		test_cmp expect actual
 	)
@@ -2797,28 +2797,28 @@ test_setup_9d () {
 		echo d >w/d &&
 		echo e >v/e &&
 		echo f >u/f &&
-		git add z y x w v u &&
+		but add z y x w v u &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/a y/ &&
-		git mv x/c w/ &&
-		git mv v/e u/ &&
+		but checkout A &&
+		but mv z/a y/ &&
+		but mv x/c w/ &&
+		but mv v/e u/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo t >z/t &&
-		git mv y/b x/ &&
-		git mv w/d v/ &&
-		git add z/t &&
+		but mv y/b x/ &&
+		but mv w/d v/ &&
+		but add z/t &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2827,24 +2827,24 @@ test_expect_success '9d: N-way transitive rename?' '
 	(
 		cd 9d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "WARNING: Avoiding applying z -> y rename to z/t" out &&
 		test_i18ngrep "WARNING: Avoiding applying y -> x rename to y/a" out &&
 		test_i18ngrep "WARNING: Avoiding applying x -> w rename to x/b" out &&
 		test_i18ngrep "WARNING: Avoiding applying w -> v rename to w/c" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 7 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:z/t \
 			HEAD:y/a HEAD:x/b HEAD:w/c \
 			HEAD:u/d HEAD:u/e HEAD:u/f &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			B:z/t    \
 			O:z/a    O:y/b    O:x/c    \
 			O:w/d    O:v/e    A:u/f &&
@@ -2874,15 +2874,15 @@ test_setup_9e () {
 		echo h >dir3/h &&
 		echo j >dirN/j &&
 		echo k >dirN/k &&
-		git add dir* &&
+		but add dir* &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		echo c  >dir1/c &&
 		echo yo >dir1/yo &&
 		echo f  >dir2/f &&
@@ -2891,17 +2891,17 @@ test_setup_9e () {
 		echo yo >dir3/yo &&
 		echo l  >dirN/l &&
 		echo yo >dirN/yo &&
-		git add dir* &&
+		but add dir* &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv dir1 combined &&
-		git mv dir2/* combined/ &&
-		git mv dir3/* combined/ &&
-		git mv dirN/* combined/ &&
+		but checkout B &&
+		but mv dir1 combined &&
+		but mv dir2/* combined/ &&
+		but mv dir3/* combined/ &&
+		but mv dirN/* combined/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2910,37 +2910,37 @@ test_expect_success '9e: N-to-1 whammo' '
 	(
 		cd 9e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		grep "CONFLICT (implicit dir rename): Cannot map more than one path to combined/yo" out >error_line &&
 		grep -q dir1/yo error_line &&
 		grep -q dir2/yo error_line &&
 		grep -q dir3/yo error_line &&
 		grep -q dirN/yo error_line &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 16 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 2 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:combined/a :0:combined/b :0:combined/c \
 			:0:combined/d :0:combined/e :0:combined/f \
 			:0:combined/g :0:combined/h :0:combined/i \
 			:0:combined/j :0:combined/k :0:combined/l &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:dir1/a      O:dir1/b      A:dir1/c \
 			 O:dir2/d      O:dir2/e      A:dir2/f \
 			 O:dir3/g      O:dir3/h      A:dir3/i \
 			 O:dirN/j      O:dirN/k      A:dirN/l &&
 		test_cmp expect actual &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:dir1/yo :0:dir2/yo :0:dir3/yo :0:dirN/yo &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 A:dir1/yo  A:dir2/yo  A:dir3/yo  A:dirN/yo &&
 		test_cmp expect actual
 	)
@@ -2963,24 +2963,24 @@ test_setup_9f () {
 		echo foo >goal/a/foo &&
 		echo bar >goal/b/bar &&
 		echo baz >goal/b/baz &&
-		git add goal &&
+		but add goal &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv goal/ priority &&
+		but checkout A &&
+		but mv goal/ priority &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo c >goal/c &&
-		git add goal/c &&
+		but add goal/c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -2989,25 +2989,25 @@ test_expect_success '9f: Renamed directory that only contained immediate subdirs
 	(
 		cd 9f &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:priority/a/foo \
 			HEAD:priority/b/bar \
 			HEAD:priority/b/baz \
 			HEAD:priority/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:goal/a/foo \
 			O:goal/b/bar \
 			O:goal/b/baz \
 			B:goal/c &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:goal/c
+		test_must_fail but rev-parse HEAD:goal/c
 	)
 '
 
@@ -3036,27 +3036,27 @@ test_setup_9g () {
 		echo foo >goal/a/foo &&
 		echo bar >goal/b/bar &&
 		echo baz >goal/b/baz &&
-		git add goal &&
+		but add goal &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir priority &&
-		git mv goal/a/ priority/alpha &&
-		git mv goal/b/ priority/beta &&
+		but mv goal/a/ priority/alpha &&
+		but mv goal/b/ priority/beta &&
 		rmdir goal/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo c >goal/c &&
-		git add goal/c &&
+		but add goal/c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3065,25 +3065,25 @@ test_expect_failure '9g: Renamed directory that only contained immediate subdirs
 	(
 		cd 9g &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:priority/alpha/foo \
 			HEAD:priority/beta/bar  \
 			HEAD:priority/beta/baz  \
 			HEAD:priority/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:goal/a/foo \
 			O:goal/b/bar \
 			O:goal/b/baz \
 			B:goal/c &&
 		test_cmp expect actual &&
-		test_must_fail git rev-parse HEAD:goal/c
+		test_must_fail but rev-parse HEAD:goal/c
 	)
 '
 
@@ -3104,29 +3104,29 @@ test_setup_9h () {
 		echo b >z/b &&
 		echo c >z/c &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nd\n" >z/d &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_tick &&
 		echo more >>z/d &&
-		git add z/d &&
-		git cummit -m "A" &&
+		but add z/d &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y &&
 		mkdir x &&
-		git mv z/b y/ &&
-		git mv z/c y/ &&
-		git mv z/d x/ &&
+		but mv z/b y/ &&
+		but mv z/c y/ &&
+		but mv z/d x/ &&
 		rmdir z &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3135,16 +3135,16 @@ test_expect_success '9h: Avoid dir rename on merely modified path' '
 	(
 		cd 9h &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:y/b HEAD:y/c HEAD:x/d &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:z/b    O:z/c    A:z/d &&
 		test_cmp expect actual
 	)
@@ -3184,23 +3184,23 @@ test_setup_10a () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/c &&
+		but checkout A &&
+		but rm z/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z/c z/d &&
+		but checkout B &&
+		but mv z/c z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3209,17 +3209,17 @@ test_expect_success '10a: Overwrite untracked with normal rename/delete' '
 	(
 		cd 10a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo very >z/c &&
 		echo important >z/d &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		test_path_is_missing .git/MERGE_HEAD &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_path_is_missing .but/MERGE_HEAD &&
 		test_i18ngrep "The following untracked working tree files would be overwritten by merge" err &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 1 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 4 out &&
 
 		echo very >expect &&
@@ -3228,8 +3228,8 @@ test_expect_success '10a: Overwrite untracked with normal rename/delete' '
 		echo important >expect &&
 		test_cmp expect z/d &&
 
-		git rev-parse HEAD:z/b >actual &&
-		git rev-parse O:z/b >expect &&
+		but rev-parse HEAD:z/b >actual &&
+		but rev-parse O:z/b >expect &&
 		test_cmp expect actual
 	)
 '
@@ -3250,26 +3250,26 @@ test_setup_10b () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm z/c &&
-		git mv z/ y/ &&
+		but checkout A &&
+		but rm z/c &&
+		but mv z/ y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z/c z/d &&
+		but checkout B &&
+		but mv z/c z/d &&
 		echo e >z/e &&
-		git add z/e &&
+		but add z/e &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3278,37 +3278,37 @@ test_expect_success '10b: Overwrite untracked with dir rename + delete' '
 	(
 		cd 10b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo very >y/c &&
 		echo important >y/d &&
 		echo contents >y/e &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 1 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 0 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 5 out
 		else
 			test_i18ngrep "CONFLICT (rename/delete).*Version B\^0 of y/d left in tree at y/d~B\^0" out &&
 			test_i18ngrep "Error: Refusing to lose untracked file at y/e; writing to y/e~B\^0 instead" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 3 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 5 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/b :3:y/d :3:y/e &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				O:z/b  O:z/c  B:z/e &&
 			test_cmp expect actual
 		fi &&
@@ -3343,25 +3343,25 @@ test_setup_10c () {
 		echo b >z/b &&
 		echo c >x/c &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir w &&
-		git mv x/c w/c &&
-		git mv z/ y/ &&
+		but mv x/c w/c &&
+		but mv z/ y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/c z/ &&
+		but checkout B &&
+		but mv x/c z/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3370,40 +3370,40 @@ test_expect_success '10c1: Overwrite untracked with dir rename/rename(1to2)' '
 	(
 		cd 10c_1 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo important >y/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 4 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 0 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out
 		else
 			test_i18ngrep "CONFLICT (rename/rename)" out &&
 			test_i18ngrep "Refusing to lose untracked file at y/c; adding as y/c~B\^0 instead" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 6 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 3 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/a :0:y/b :0:x/d :1:x/c :2:w/c :3:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  O:z/b  O:x/d  O:x/c  O:x/c  O:x/c &&
 			test_cmp expect actual &&
 
-			git hash-object y/c~B^0 >actual &&
-			git rev-parse O:x/c >expect &&
+			but hash-object y/c~B^0 >actual &&
+			but rev-parse O:x/c >expect &&
 			test_cmp expect actual
 		fi &&
 
@@ -3417,44 +3417,44 @@ test_expect_success '10c2: Overwrite untracked with dir rename/rename(1to2), oth
 	(
 		cd 10c_2 &&
 
-		git reset --hard &&
-		git clean -fdqx &&
+		but reset --hard &&
+		but clean -fdqx &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 		mkdir y &&
 		echo important >y/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 4 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 0 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out
 		else
 			test_i18ngrep "CONFLICT (rename/rename)" out &&
 			test_i18ngrep "Refusing to lose untracked file at y/c; adding as y/c~HEAD instead" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 6 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 3 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/a :0:y/b :0:x/d :1:x/c :3:w/c :2:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  O:z/b  O:x/d  O:x/c  O:x/c  O:x/c &&
 			test_cmp expect actual &&
 
-			git hash-object y/c~HEAD >actual &&
-			git rev-parse O:x/c >expect &&
+			but hash-object y/c~HEAD >actual &&
+			but rev-parse O:x/c >expect &&
 			test_cmp expect actual
 		fi &&
 
@@ -3483,25 +3483,25 @@ test_setup_10d () {
 		echo d >x/d &&
 		echo e >x/e &&
 		echo f >x/f &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/c x/wham &&
-		git mv z/ y/ &&
+		but checkout A &&
+		but mv z/c x/wham &&
+		but mv z/ y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/f z/wham &&
-		git mv x/ y/ &&
+		but checkout B &&
+		but mv x/f z/wham &&
+		but mv x/ y/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3510,45 +3510,45 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 	(
 		cd 10d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo important >y/wham &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 6 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 0 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out
 		else
 			test_i18ngrep "CONFLICT (rename/rename)" out &&
 			test_i18ngrep "Refusing to lose untracked file at y/wham" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 6 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/a :0:y/b :0:y/d :0:y/e :2:y/wham :3:y/wham &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  O:z/b  O:x/d  O:x/e  O:z/c     O:x/f &&
 			test_cmp expect actual &&
 
-			test_must_fail git rev-parse :1:y/wham &&
+			test_must_fail but rev-parse :1:y/wham &&
 
 			# Test that two-way merge in y/wham~merged is as expected
-			git cat-file -p :2:y/wham >expect &&
-			git cat-file -p :3:y/wham >other &&
+			but cat-file -p :2:y/wham >expect &&
+			but cat-file -p :3:y/wham >other &&
 			>empty &&
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD" \
 				-L "" \
 				-L "B^0" \
@@ -3561,7 +3561,7 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 	)
 '
 
-# Testcase 10e, Does git complain about untracked file that's not in the way?
+# Testcase 10e, Does but complain about untracked file that's not in the way?
 #   cummit O: z/{a,b}
 #   cummit A: y/{a,b} + untracked z/c
 #   cummit B: z/{a,b,c}
@@ -3575,49 +3575,49 @@ test_setup_10e () {
 		mkdir z &&
 		echo a >z/a &&
 		echo b >z/b &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/ y/ &&
+		but checkout A &&
+		but mv z/ y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo c >z/c &&
-		git add z/c &&
+		but add z/c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
-test_expect_merge_algorithm failure success '10e: Does git complain about untracked file that is not really in the way?' '
+test_expect_merge_algorithm failure success '10e: Does but complain about untracked file that is not really in the way?' '
 	test_setup_10e &&
 	(
 		cd 10e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		mkdir z &&
 		echo random >z/c &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		test_i18ngrep ! "following untracked working tree files would be overwritten by merge" err &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 3 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:y/a :0:y/b :0:y/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			 O:z/a  O:z/b  B:z/c &&
 		test_cmp expect actual &&
 
@@ -3657,24 +3657,24 @@ test_setup_11a () {
 		mkdir z &&
 		echo a >z/a &&
 		test_seq 1 10 >z/b &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/b z/c &&
+		but checkout A &&
+		but mv z/b z/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo 11 >>z/b &&
-		git add z/b &&
+		but add z/b &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3683,32 +3683,32 @@ test_expect_success '11a: Avoid losing dirty contents with simple rename' '
 	(
 		cd 11a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo stuff >>z/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 2 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 1 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:z/a :2:z/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  B:z/b &&
 			test_cmp expect actual &&
 
-			git hash-object z/c~HEAD >actual &&
-			git rev-parse B:z/b >expect &&
+			but hash-object z/c~HEAD >actual &&
+			but rev-parse B:z/b >expect &&
 			test_cmp expect actual
 		fi &&
 
@@ -3736,25 +3736,25 @@ test_setup_11b () {
 		echo a >z/a &&
 		echo b >x/b &&
 		test_seq 1 10 >x/c &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv x/c z/c &&
+		but checkout A &&
+		but mv x/c z/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		echo 11 >>x/c &&
-		git add x/c &&
+		but add x/c &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3763,35 +3763,35 @@ test_expect_success '11b: Avoid losing dirty file involved in directory rename' 
 	(
 		cd 11b &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo stuff >>z/c &&
 
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
-			git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+			but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 3 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 0 out &&
-			git ls-files -m >out &&
+			but ls-files -m >out &&
 			test_line_count = 0 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:x/b :0:y/a :0:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:x/b  O:z/a  B:x/c &&
 			test_cmp expect actual &&
 
-			git hash-object y/c >actual &&
-			git rev-parse B:x/c >expect &&
+			but hash-object y/c >actual &&
+			but rev-parse B:x/c >expect &&
 			test_cmp expect actual
 		fi &&
 
@@ -3818,26 +3818,26 @@ test_setup_11c () {
 		echo a >y/a &&
 		echo b >x/b &&
 		test_seq 1 10 >x/c &&
-		git add y x &&
+		but add y x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv x/c y/c &&
+		but checkout A &&
+		but mv x/c y/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		mkdir y/c &&
 		echo d >y/c/d &&
 		echo 11 >>x/c &&
-		git add x/c y/c/d &&
+		but add x/c y/c/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3846,13 +3846,13 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 	(
 		cd 11c &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo stuff >>y/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			test_i18ngrep "following files would be overwritten by merge" err
@@ -3863,13 +3863,13 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 		echo stuff >>expected &&
 		test_cmp expected y/c &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -m >out &&
+		but ls-files -m >out &&
 		test_line_count = 1 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 3 out
 	)
 '
@@ -3891,27 +3891,27 @@ test_setup_11d () {
 		echo a >z/a &&
 		echo b >x/b &&
 		test_seq 1 10 >x/c &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv x/c z/c &&
+		but checkout A &&
+		but mv x/c z/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv z y &&
+		but checkout B &&
+		but mv z y &&
 		mkdir y/c &&
 		echo d >y/c/d &&
 		echo 11 >>x/c &&
-		git add x/c y/c/d &&
+		but add x/c y/c/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -3920,32 +3920,32 @@ test_expect_success '11d: Avoid losing not-uptodate with rename + D/F conflict' 
 	(
 		cd 11d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo stuff >>z/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			test_i18ngrep "Refusing to lose dirty file at z/c" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 4 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 1 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 4 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:x/b :0:y/a :0:y/c/d :3:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:x/b  O:z/a  B:y/c/d  B:x/c &&
 			test_cmp expect actual &&
 
-			git hash-object y/c~HEAD >actual &&
-			git rev-parse B:x/c >expect &&
+			but hash-object y/c~HEAD >actual &&
+			but rev-parse B:x/c >expect &&
 			test_cmp expect actual
 		fi &&
 
@@ -3977,27 +3977,27 @@ test_setup_11e () {
 		echo b >z/b &&
 		echo c >x/c &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/ y/ &&
+		but checkout A &&
+		but mv z/ y/ &&
 		echo different >y/c &&
 		mkdir w &&
-		git mv x/c w/ &&
-		git add y/c &&
+		but mv x/c w/ &&
+		but add y/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/c z/ &&
+		but checkout B &&
+		but mv x/c z/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4006,37 +4006,37 @@ test_expect_success '11e: Avoid deleting not-uptodate with dir rename/rename(1to
 	(
 		cd 11e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo mods >>y/c &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			test_i18ngrep "CONFLICT (rename/rename)" out &&
 			test_i18ngrep "Refusing to lose dirty file at y/c" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 7 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 4 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/a :0:y/b :0:x/d :1:x/c :2:w/c :2:y/c :3:y/c &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  O:z/b  O:x/d  O:x/c  O:x/c  A:y/c  O:x/c &&
 			test_cmp expect actual &&
 
 			# See if y/c~merged has expected contents; requires manually
 			# doing the expected file merge
-			git cat-file -p A:y/c >c1 &&
-			git cat-file -p B:z/c >c2 &&
+			but cat-file -p A:y/c >c1 &&
+			but cat-file -p B:z/c >c2 &&
 			>empty &&
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD" \
 				-L "" \
 				-L "B^0" \
@@ -4069,24 +4069,24 @@ test_setup_11f () {
 		echo b >z/b &&
 		test_seq 1 10 >x/c &&
 		echo d >x/d &&
-		git add z x &&
+		but add z x &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z/ y/ &&
-		git mv x/c y/wham &&
+		but checkout A &&
+		but mv z/ y/ &&
+		but mv x/c y/wham &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/wham &&
+		but checkout B &&
+		but mv x/d z/wham &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4095,38 +4095,38 @@ test_expect_success '11f: Avoid deleting not-uptodate with dir rename/rename(2to
 	(
 		cd 11f &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 		echo important >>y/wham &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			test_path_is_missing .git/MERGE_HEAD &&
+			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
 		else
 			test_i18ngrep "CONFLICT (rename/rename)" out &&
 			test_i18ngrep "Refusing to lose dirty file at y/wham" out &&
 
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 4 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 3 out &&
 
-			test_must_fail git rev-parse :1:y/wham &&
+			test_must_fail but rev-parse :1:y/wham &&
 
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:0:y/a :0:y/b :2:y/wham :3:y/wham &&
-			git rev-parse >expect \
+			but rev-parse >expect \
 				 O:z/a  O:z/b  O:x/c     O:x/d &&
 			test_cmp expect actual &&
 
 			# Test that two-way merge in y/wham~merged is as expected
-			git cat-file -p :2:y/wham >expect &&
-			git cat-file -p :3:y/wham >other &&
+			but cat-file -p :2:y/wham >expect &&
+			but cat-file -p :3:y/wham >other &&
 			>empty &&
-			test_must_fail git merge-file \
+			test_must_fail but merge-file \
 				-L "HEAD" \
 				-L "" \
 				-L "B^0" \
@@ -4164,25 +4164,25 @@ test_setup_12a () {
 		echo leaf2 >node1/leaf2 &&
 		echo leaf3 >node2/leaf3 &&
 		echo leaf4 >node2/leaf4 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv node2/ node1/ &&
+		but checkout A &&
+		but mv node2/ node1/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo leaf5 >node1/leaf5 &&
 		echo leaf6 >node2/leaf6 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4191,19 +4191,19 @@ test_expect_success '12a: Moving one directory hierarchy into another' '
 	(
 		cd 12a &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:node1/leaf1 HEAD:node1/leaf2 HEAD:node1/leaf5 \
 			HEAD:node1/node2/leaf3 \
 			HEAD:node1/node2/leaf4 \
 			HEAD:node1/node2/leaf6 &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:node1/leaf1    O:node1/leaf2    B:node1/leaf5 \
 			O:node2/leaf3 \
 			O:node2/leaf4 \
@@ -4247,23 +4247,23 @@ test_setup_12b1 () {
 		echo leaf2 >node1/leaf2 &&
 		echo leaf3 >node2/leaf3 &&
 		echo leaf4 >node2/leaf4 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv node2/ node1/ &&
+		but checkout A &&
+		but mv node2/ node1/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv node1/ node2/ &&
+		but checkout B &&
+		but mv node1/ node2/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4272,19 +4272,19 @@ test_expect_merge_algorithm failure success '12b1: Moving two directory hierarch
 	(
 		cd 12b1 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:node2/node1/leaf1 \
 			HEAD:node2/node1/leaf2 \
 			HEAD:node1/node2/leaf3 \
 			HEAD:node1/node2/leaf4 &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
 			O:node2/leaf3 \
@@ -4336,27 +4336,27 @@ test_setup_12b2 () {
 		echo leaf2 >node1/leaf2 &&
 		echo leaf3 >node2/leaf3 &&
 		echo leaf4 >node2/leaf4 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv node2/ node1/ &&
+		but checkout A &&
+		but mv node2/ node1/ &&
 		echo leaf5 >node1/leaf5 &&
-		git add node1/leaf5 &&
+		but add node1/leaf5 &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv node1/ node2/ &&
+		but checkout B &&
+		but mv node1/ node2/ &&
 		echo leaf6 >node2/leaf6 &&
-		git add node2/leaf6 &&
+		but add node2/leaf6 &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4365,21 +4365,21 @@ test_expect_success '12b2: Moving two directory hierarchies into each other' '
 	(
 		cd 12b2 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 6 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:node1/node2/node1/leaf1 \
 			HEAD:node1/node2/node1/leaf2 \
 			HEAD:node2/node1/node2/leaf3 \
 			HEAD:node2/node1/node2/leaf4 \
 			HEAD:node2/node1/leaf5       \
 			HEAD:node1/node2/leaf6       &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
 			O:node2/leaf3 \
@@ -4411,27 +4411,27 @@ test_setup_12c1 () {
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf2\n" >node1/leaf2 &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf3\n" >node2/leaf3 &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf4\n" >node2/leaf4 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv node2/ node1/ &&
-		for i in $(git ls-files); do echo side A >>$i; done &&
-		git add -u &&
+		but checkout A &&
+		but mv node2/ node1/ &&
+		for i in $(but ls-files); do echo side A >>$i; done &&
+		but add -u &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv node1/ node2/ &&
-		for i in $(git ls-files); do echo side B >>$i; done &&
-		git add -u &&
+		but checkout B &&
+		but mv node1/ node2/ &&
+		for i in $(but ls-files); do echo side B >>$i; done &&
+		but add -u &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4440,14 +4440,14 @@ test_expect_merge_algorithm failure success '12c1: Moving one directory hierarch
 	(
 		cd 12c1 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 12 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:1:node2/node1/leaf1 \
 			:1:node2/node1/leaf2 \
 			:1:node1/node2/leaf3 \
@@ -4460,7 +4460,7 @@ test_expect_merge_algorithm failure success '12c1: Moving one directory hierarch
 			:3:node2/node1/leaf2 \
 			:3:node1/node2/leaf3 \
 			:3:node1/node2/leaf4 &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
 			O:node2/leaf3 \
@@ -4501,31 +4501,31 @@ test_setup_12c2 () {
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf2\n" >node1/leaf2 &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf3\n" >node2/leaf3 &&
 		printf "1\n2\n3\n4\n5\n6\n7\n8\nleaf4\n" >node2/leaf4 &&
-		git add node1 node2 &&
+		but add node1 node2 &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv node2/ node1/ &&
-		for i in $(git ls-files); do echo side A >>$i; done &&
-		git add -u &&
+		but checkout A &&
+		but mv node2/ node1/ &&
+		for i in $(but ls-files); do echo side A >>$i; done &&
+		but add -u &&
 		echo leaf5 >node1/leaf5 &&
-		git add node1/leaf5 &&
+		but add node1/leaf5 &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv node1/ node2/ &&
-		for i in $(git ls-files); do echo side B >>$i; done &&
-		git add -u &&
+		but checkout B &&
+		but mv node1/ node2/ &&
+		for i in $(but ls-files); do echo side B >>$i; done &&
+		but add -u &&
 		echo leaf6 >node2/leaf6 &&
-		git add node2/leaf6 &&
+		but add node2/leaf6 &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4534,16 +4534,16 @@ test_expect_success '12c2: Moving one directory hierarchy into another w/ conten
 	(
 		cd 12c2 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 14 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 12 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:1:node1/node2/node1/leaf1 \
 			:1:node1/node2/node1/leaf2 \
 			:1:node2/node1/node2/leaf3 \
@@ -4558,7 +4558,7 @@ test_expect_success '12c2: Moving one directory hierarchy into another w/ conten
 			:3:node2/node1/node2/leaf4 \
 			:0:node2/node1/leaf5       \
 			:0:node1/node2/leaf6       &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:node1/leaf1 \
 			O:node1/leaf2 \
 			O:node2/leaf3 \
@@ -4591,17 +4591,17 @@ test_setup_12d () {
 		mkdir -p a/b/subdir &&
 		test_cummit a/b/subdir/foo &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir subdir &&
-		git mv a/b/subdir/foo.t subdir/foo.t &&
+		but mv a/b/subdir/foo.t subdir/foo.t &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_cummit a/b/bar
 	)
 }
@@ -4611,25 +4611,25 @@ test_expect_success '12d: Rename/merge subdir into the root, variant 1' '
 	(
 		cd 12d &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:subdir/foo.t   HEAD:bar.t &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:a/b/subdir/foo.t  B:a/b/bar.t &&
 		test_cmp expect actual &&
 
-		git hash-object bar.t >actual &&
-		git rev-parse B:a/b/bar.t >expect &&
+		but hash-object bar.t >actual &&
+		but rev-parse B:a/b/bar.t >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:a/b/subdir/foo.t &&
-		test_must_fail git rev-parse HEAD:a/b/bar.t &&
+		test_must_fail but rev-parse HEAD:a/b/subdir/foo.t &&
+		test_must_fail but rev-parse HEAD:a/b/bar.t &&
 		test_path_is_missing a/ &&
 		test_path_is_file bar.t
 	)
@@ -4649,17 +4649,17 @@ test_setup_12e () {
 		mkdir -p a/b &&
 		test_cummit a/b/foo &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		mkdir subdir &&
-		git mv a/b/foo.t foo.t &&
+		but mv a/b/foo.t foo.t &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_cummit a/b/bar
 	)
 }
@@ -4669,25 +4669,25 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 	(
 		cd 12e &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:foo.t   HEAD:bar.t &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:a/b/foo.t  B:a/b/bar.t &&
 		test_cmp expect actual &&
 
-		git hash-object bar.t >actual &&
-		git rev-parse B:a/b/bar.t >expect &&
+		but hash-object bar.t >actual &&
+		but rev-parse B:a/b/bar.t >expect &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:a/b/foo.t &&
-		test_must_fail git rev-parse HEAD:a/b/bar.t &&
+		test_must_fail but rev-parse HEAD:a/b/foo.t &&
+		test_must_fail but rev-parse HEAD:a/b/bar.t &&
 		test_path_is_missing a/ &&
 		test_path_is_file bar.t
 	)
@@ -4732,7 +4732,7 @@ test_expect_success '12e: Rename/merge subdir into the root, variant 2' '
 #      whereas dir/subdir/e -> folder/subdir/newsubdir/e looks like
 #          dir/subdir/ -> folder/subdir/newsubdir/
 #      and if we note that newfile.c is found in dir/subdir/, we might overlook
-#      the dir/ -> folder/ rule that has more weight.  Older git versions did
+#      the dir/ -> folder/ rule that has more weight.  Older but versions did
 #      this.
 #   2. The code to do trivial directory resolves.  Note that
 #      dir/subdir/unchanged/ is unchanged and can be deleted, and files in the
@@ -4762,38 +4762,38 @@ test_setup_12f () {
 		for i in $(test_seq 1 88); do
 			echo content $i >dir/unchanged/file_$i
 		done &&
-		git add . &&
-		git cummit -m "O" &&
+		but add . &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
-		git rm dir/subdir/tweaked/f dir/subdir/tweaked/g &&
+		but switch A &&
+		but rm dir/subdir/tweaked/f dir/subdir/tweaked/g &&
 		test_seq 2 10 >dir/subdir/e &&
 		test_seq 11 20 >dir/subdir/Makefile &&
 		test_seq 21 30 >dir/subdir/tweaked/Makefile &&
 		mkdir dir/subdir/newsubdir &&
-		git mv dir/subdir/e dir/subdir/newsubdir/ &&
-		git mv dir folder &&
-		git add . &&
-		git cummit -m "A" &&
+		but mv dir/subdir/e dir/subdir/newsubdir/ &&
+		but mv dir folder &&
+		but add . &&
+		but cummit -m "A" &&
 
-		git switch B &&
+		but switch B &&
 		mkdir dir/subdir/newsubdir/ &&
 		echo c code >dir/subdir/newfile.c &&
 		echo python code >dir/subdir/newsubdir/newfile.py &&
 		test_seq 1 11 >dir/subdir/e &&
 		test_seq 10 21 >dir/subdir/Makefile &&
 		test_seq 20 31 >dir/subdir/tweaked/Makefile &&
-		git add . &&
-		git cummit -m "B1" &&
+		but add . &&
+		but cummit -m "B1" &&
 
 		echo rust code >dir/subdir/newfile.rs &&
 		test_seq 1 12 >dir/subdir/e &&
-		git add . &&
-		git cummit -m "B2"
+		but add . &&
+		but cummit -m "B2"
 	)
 }
 
@@ -4802,19 +4802,19 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 	(
 		cd 12f &&
 
-		git checkout A^0 &&
-		git branch Bmod B &&
+		but checkout A^0 &&
+		but branch Bmod B &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" git -c merge.directoryRenames=true rebase A Bmod &&
+		GIT_TRACE2_PERF="$(pwd)/trace.output" but -c merge.directoryRenames=true rebase A Bmod &&
 
 		echo Checking the pick of B1... &&
 
-		test_must_fail git rev-parse Bmod~1:dir &&
+		test_must_fail but rev-parse Bmod~1:dir &&
 
-		git ls-tree -r Bmod~1 >out &&
+		but ls-tree -r Bmod~1 >out &&
 		test_line_count = 98 out &&
 
-		git diff --name-status A Bmod~1 >actual &&
+		but diff --name-status A Bmod~1 >actual &&
 		q_to_tab >expect <<-\EOF &&
 		MQfolder/subdir/Makefile
 		AQfolder/subdir/newfile.c
@@ -4828,21 +4828,21 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 		test_seq  2 11 >e_Merge1 &&
 		test_seq 11 21 >Makefile_TOP &&
 		test_seq 21 31 >Makefile_SUB &&
-		git hash-object >expect      \
+		but hash-object >expect      \
 			e_Merge1             \
 			Makefile_TOP         \
 			Makefile_SUB         &&
-		git rev-parse >actual              \
+		but rev-parse >actual              \
 			Bmod~1:folder/subdir/newsubdir/e     \
 			Bmod~1:folder/subdir/Makefile        \
 			Bmod~1:folder/subdir/tweaked/Makefile &&
 		test_cmp expect actual &&
 
 		# New files showed up at the right location with right contents
-		git rev-parse >expect                \
+		but rev-parse >expect                \
 			B~1:dir/subdir/newfile.c            \
 			B~1:dir/subdir/newsubdir/newfile.py &&
-		git rev-parse >actual                      \
+		but rev-parse >actual                      \
 			Bmod~1:folder/subdir/newfile.c            \
 			Bmod~1:folder/subdir/newsubdir/newfile.py &&
 		test_cmp expect actual &&
@@ -4852,14 +4852,14 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 		test_path_is_missing folder/subdir/tweaked/g &&
 
 		# Unchanged files or directories
-		git rev-parse >actual        \
+		but rev-parse >actual        \
 			Bmod~1:folder/subdir/a          \
 			Bmod~1:folder/subdir/b          \
 			Bmod~1:folder/subdir/c          \
 			Bmod~1:folder/subdir/d          \
 			Bmod~1:folder/unchanged         \
 			Bmod~1:folder/subdir/tweaked/h &&
-		git rev-parse >expect          \
+		but rev-parse >expect          \
 			O:dir/subdir/a         \
 			O:dir/subdir/b         \
 			O:dir/subdir/c         \
@@ -4870,12 +4870,12 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 
 		echo Checking the pick of B2... &&
 
-		test_must_fail git rev-parse Bmod:dir &&
+		test_must_fail but rev-parse Bmod:dir &&
 
-		git ls-tree -r Bmod >out &&
+		but ls-tree -r Bmod >out &&
 		test_line_count = 99 out &&
 
-		git diff --name-status Bmod~1 Bmod >actual &&
+		but diff --name-status Bmod~1 Bmod >actual &&
 		q_to_tab >expect <<-\EOF &&
 		AQfolder/subdir/newfile.rs
 		MQfolder/subdir/newsubdir/e
@@ -4884,8 +4884,8 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 
 		# Three-way merged file
 		test_seq  2 12 >e_Merge2 &&
-		git hash-object e_Merge2 >expect &&
-		git rev-parse Bmod:folder/subdir/newsubdir/e >actual &&
+		but hash-object e_Merge2 >expect &&
+		but rev-parse Bmod:folder/subdir/newsubdir/e >actual &&
 		test_cmp expect actual &&
 
 		grep region_enter.*collect_merge_info trace.output >collect &&
@@ -4910,30 +4910,30 @@ test_setup_12g () {
 		test_write_lines upon a time there was a >somefile &&
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >subdir/a &&
 		test_write_lines one two three four five six >subdir/b &&
-		git add . &&
+		but add . &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
+		but switch A &&
 		test_write_lines once upon a time there was a >somefile &&
 		> subdir/c &&
-		git add somefile subdir/c &&
+		but add somefile subdir/c &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv somefile newfile &&
-		git mv subdir newdir &&
+		but checkout B &&
+		but mv somefile newfile &&
+		but mv subdir newdir &&
 		echo repo >>newfile &&
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 11 >newdir/a &&
 		test_write_lines one two three four five six seven >newdir/b &&
-		git add newfile newdir &&
+		but add newfile newdir &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -4942,25 +4942,25 @@ test_expect_success '12g: Testcase with two kinds of "relevant" renames' '
 	(
 		cd 12g &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
 		test_write_lines once upon a time there was a repo >expect &&
 		test_cmp expect newfile &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:newdir/a  HEAD:newdir/b   HEAD:newdir/c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			B:newdir/a     B:newdir/b      A:subdir/c &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse HEAD:subdir/a &&
-		test_must_fail git rev-parse HEAD:subdir/b &&
-		test_must_fail git rev-parse HEAD:subdir/c &&
+		test_must_fail but rev-parse HEAD:subdir/a &&
+		test_must_fail but rev-parse HEAD:subdir/b &&
+		test_must_fail but rev-parse HEAD:subdir/c &&
 		test_path_is_missing subdir/ &&
 		test_path_is_file newdir/c
 	)
@@ -4980,23 +4980,23 @@ test_setup_12h () {
 		mkdir olddir &&
 		test_seq 3 8 >olddir/a &&
 		>olddir/b &&
-		git add olddir &&
-		git cummit -m orig &&
+		but add olddir &&
+		but cummit -m orig &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
+		but switch A &&
 		test_seq 3 10 >olddir/a &&
-		git add olddir/a &&
-		git mv olddir newdir &&
-		git cummit -m A &&
+		but add olddir/a &&
+		but mv olddir newdir &&
+		but cummit -m A &&
 
-		git switch B &&
+		but switch B &&
 
-		git mv olddir/a olddir/alpha &&
-		git cummit -m B
+		but mv olddir/a olddir/alpha &&
+		but cummit -m B
 	)
 }
 
@@ -5005,20 +5005,20 @@ test_expect_failure '12h: renaming a file within a renamed directory' '
 	(
 		cd 12h &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_might_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+		test_might_fail but -c merge.directoryRenames=true merge -s recursive B^0 &&
 
-		git ls-files >tracked &&
+		but ls-files >tracked &&
 		test_line_count = 2 tracked &&
 
 		test_path_is_missing olddir/a &&
 		test_path_is_file newdir/alpha &&
 		test_path_is_file newdir/b &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			HEAD:newdir/alpha  HEAD:newdir/b &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			A:newdir/a         O:oldir/b &&
 		test_cmp expect actual
 	)
@@ -5040,21 +5040,21 @@ test_setup_12i () {
 		echo foo >source/subdir/foo &&
 		echo bar >source/bar &&
 		echo baz >source/baz &&
-		git add source &&
-		git cummit -m orig &&
+		but add source &&
+		but cummit -m orig &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
-		git mv source/subdir/foo source/foo &&
-		git cummit -m A &&
+		but switch A &&
+		but mv source/subdir/foo source/foo &&
+		but cummit -m A &&
 
-		git switch B &&
-		git mv source/bar source/subdir/bar &&
+		but switch B &&
+		but mv source/bar source/subdir/bar &&
 		echo more baz >>source/baz &&
-		git cummit -m B
+		but cummit -m B
 	)
 }
 
@@ -5063,18 +5063,18 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 	(
 		cd 12i &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		test_must_fail but -c merge.directoryRenames=conflict merge -s recursive B^0 &&
 
 		test_path_is_missing source/subdir &&
 		test_path_is_file source/bar &&
 		test_path_is_file source/baz &&
 
-		git ls-files | uniq >tracked &&
+		but ls-files | uniq >tracked &&
 		test_line_count = 3 tracked &&
 
-		git status --porcelain -uno >actual &&
+		but status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU source/bar
 		 M source/baz
@@ -5098,21 +5098,21 @@ test_setup_12j () {
 		echo foo >subdir/foo &&
 		echo bar >bar &&
 		echo baz >baz &&
-		git add . &&
-		git cummit -m orig &&
+		but add . &&
+		but cummit -m orig &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
-		git mv subdir/foo foo &&
-		git cummit -m A &&
+		but switch A &&
+		but mv subdir/foo foo &&
+		but cummit -m A &&
 
-		git switch B &&
-		git mv bar subdir/bar &&
+		but switch B &&
+		but mv bar subdir/bar &&
 		echo more baz >>baz &&
-		git cummit -m B
+		but cummit -m B
 	)
 }
 
@@ -5121,18 +5121,18 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 	(
 		cd 12j &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		test_must_fail but -c merge.directoryRenames=conflict merge -s recursive B^0 &&
 
 		test_path_is_missing subdir &&
 		test_path_is_file bar &&
 		test_path_is_file baz &&
 
-		git ls-files | uniq >tracked &&
+		but ls-files | uniq >tracked &&
 		test_line_count = 3 tracked &&
 
-		git status --porcelain -uno >actual &&
+		but status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU bar
 		 M baz
@@ -5156,21 +5156,21 @@ test_setup_12k () {
 		echo foo >dirB/foo &&
 		echo bar >dirA/bar &&
 		echo baz >dirA/baz &&
-		git add . &&
-		git cummit -m orig &&
+		but add . &&
+		but cummit -m orig &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git switch A &&
-		git mv dirB/* dirA/ &&
-		git cummit -m A &&
+		but switch A &&
+		but mv dirB/* dirA/ &&
+		but cummit -m A &&
 
-		git switch B &&
-		git mv dirA/bar dirB/bar &&
+		but switch B &&
+		but mv dirA/bar dirB/bar &&
 		echo more baz >>dirA/baz &&
-		git cummit -m B
+		but cummit -m B
 	)
 }
 
@@ -5179,18 +5179,18 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 	(
 		cd 12k &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		test_must_fail but -c merge.directoryRenames=conflict merge -s recursive B^0 &&
 
 		test_path_is_missing dirB &&
 		test_path_is_file dirA/bar &&
 		test_path_is_file dirA/baz &&
 
-		git ls-files | uniq >tracked &&
+		but ls-files | uniq >tracked &&
 		test_line_count = 3 tracked &&
 
-		git status --porcelain -uno >actual &&
+		but status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU dirA/bar
 		 M dirA/baz
@@ -5224,26 +5224,26 @@ test_setup_13a () {
 		mkdir z &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add z &&
+		but add z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo d >z/d &&
 		mkdir z/e &&
 		echo f >z/e/f &&
-		git add z/d z/e/f &&
+		but add z/d z/e/f &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -5252,14 +5252,14 @@ test_expect_success '13a(conflict): messages for newly added files' '
 	(
 		cd 13a_conflict &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep CONFLICT..file.location.*z/e/f.added.in.B^0.*y/e/f out &&
 		test_i18ngrep CONFLICT..file.location.*z/d.added.in.B^0.*y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/[de]" paths &&
 
@@ -5275,15 +5275,15 @@ test_expect_success '13a(info): messages for newly added files' '
 	(
 		cd 13a_info &&
 
-		git reset --hard &&
-		git checkout A^0 &&
+		but reset --hard &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep Path.updated:.*z/e/f.added.in.B^0.*y/e/f out &&
 		test_i18ngrep Path.updated:.*z/d.added.in.B^0.*y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/[de]" paths &&
 
@@ -5313,27 +5313,27 @@ test_setup_13b () {
 		test_seq 1 10 >x/d &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add x z &&
+		but add x z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
+		but checkout A &&
+		but mv z y &&
 		echo 11 >>x/d &&
-		git add x/d &&
+		but add x/d &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo eleven >>x/d &&
-		git mv x/d z/d &&
-		git add z/d &&
+		but mv x/d z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -5342,14 +5342,14 @@ test_expect_success '13b(conflict): messages for transitive rename with conflict
 	(
 		cd 13b_conflict &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep CONFLICT.*content.*Merge.conflict.in.y/d out &&
 		test_i18ngrep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/d" paths &&
 
@@ -5363,15 +5363,15 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 	(
 		cd 13b_info &&
 
-		git reset --hard &&
-		git checkout A^0 &&
+		but reset --hard &&
+		but checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep CONFLICT.*content.*Merge.conflict.in.y/d out &&
 		test_i18ngrep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/d" paths &&
 
@@ -5401,25 +5401,25 @@ test_setup_13c () {
 		echo e >x/e &&
 		echo b >z/b &&
 		echo c >z/c &&
-		git add x z &&
+		but add x z &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv z y &&
-		git mv x/d y/ &&
+		but checkout A &&
+		but mv z y &&
+		but mv x/d y/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv x/d z/d &&
-		git add z/d &&
+		but checkout B &&
+		but mv x/d z/d &&
+		but add z/d &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -5428,13 +5428,13 @@ test_expect_success '13c(conflict): messages for rename/rename(1to1) via transit
 	(
 		cd 13c_conflict &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/d" paths &&
 
@@ -5448,14 +5448,14 @@ test_expect_success '13c(info): messages for rename/rename(1to1) via transitive 
 	(
 		cd 13c_info &&
 
-		git reset --hard &&
-		git checkout A^0 &&
+		but reset --hard &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep z/ paths &&
 		grep "y/d" paths &&
 
@@ -5490,25 +5490,25 @@ test_setup_13d () {
 		echo y >a/y &&
 		echo x >b/x &&
 		echo w >c/w &&
-		git add a b c &&
+		but add a b c &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv a/y b/ &&
-		git mv c/ d/ &&
+		but checkout A &&
+		but mv a/y b/ &&
+		but mv c/ d/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
-		git mv a/y c/ &&
-		git mv b/ d/ &&
+		but checkout B &&
+		but mv a/y c/ &&
+		but mv b/ d/ &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -5517,14 +5517,14 @@ test_expect_success '13d(conflict): messages for rename/rename(1to1) via dual tr
 	(
 		cd 13d_conflict &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep CONFLICT..file.location.*a/y.renamed.to.b/y.*moved.to.d/y out &&
 		test_i18ngrep CONFLICT..file.location.*a/y.renamed.to.c/y.*moved.to.d/y out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep b/ paths &&
 		! grep c/ paths &&
 		grep "d/y" paths &&
@@ -5540,15 +5540,15 @@ test_expect_success '13d(info): messages for rename/rename(1to1) via dual transi
 	(
 		cd 13d_info &&
 
-		git reset --hard &&
-		git checkout A^0 &&
+		but reset --hard &&
+		but checkout A^0 &&
 
-		git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep Path.updated.*a/y.renamed.to.b/y.*moving.it.to.d/y out &&
 		test_i18ngrep Path.updated.*a/y.renamed.to.c/y.*moving.it.to.d/y out &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep b/ paths &&
 		! grep c/ paths &&
 		grep "d/y" paths &&
@@ -5590,7 +5590,7 @@ test_expect_success '13d(info): messages for rename/rename(1to1) via dual transi
 #          In choosing the right resolution, it's worth noting here that
 #          cummits C & D are merges of A & B that choose different
 #          locations for 'x' (i.e. they resolve the conflict differently),
-#          and so it would be nice when merging C & D if git could detect
+#          and so it would be nice when merging C & D if but could detect
 #          this difference of opinion and report a conflict.  But the only
 #          way to do so that I can think of would be to have the virtual
 #          merge base place 'x' in some directory other than either 'a/' or
@@ -5612,42 +5612,42 @@ test_setup_13e () {
 		mkdir a &&
 		echo z >a/z &&
 		echo y >a/y &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv a/ b/ &&
+		but checkout A &&
+		but mv a/ b/ &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo x >a/x &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m "B" &&
+		but cummit -m "B" &&
 
-		git branch C A &&
-		git branch D B &&
+		but branch C A &&
+		but branch D B &&
 
-		git checkout C &&
-		test_must_fail git -c merge.directoryRenames=conflict merge B &&
-		git add b/x &&
+		but checkout C &&
+		test_must_fail but -c merge.directoryRenames=conflict merge B &&
+		but add b/x &&
 		test_tick &&
-		git cummit -m "C" &&
+		but cummit -m "C" &&
 
 
-		git checkout D &&
-		test_must_fail git -c merge.directoryRenames=conflict merge A &&
-		git add b/x &&
+		but checkout D &&
+		test_must_fail but -c merge.directoryRenames=conflict merge A &&
+		but add b/x &&
 		mkdir a &&
-		git mv b/x a/x &&
+		but mv b/x a/x &&
 		test_tick &&
-		git cummit -m "D"
+		but cummit -m "D"
 	)
 }
 
@@ -5656,16 +5656,16 @@ test_expect_success '13e: directory rename detection in recursive case' '
 	(
 		cd 13e &&
 
-		git checkout --quiet D^0 &&
+		but checkout --quiet D^0 &&
 
-		git -c merge.directoryRenames=conflict merge -s recursive C^0 >out 2>err &&
+		but -c merge.directoryRenames=conflict merge -s recursive C^0 >out 2>err &&
 
 		test_i18ngrep ! CONFLICT out &&
 		test_i18ngrep ! BUG: err &&
 		test_i18ngrep ! core.dumped err &&
 		test_must_be_empty err &&
 
-		git ls-files >paths &&
+		but ls-files >paths &&
 		! grep a/x paths &&
 		grep b/x paths
 	)

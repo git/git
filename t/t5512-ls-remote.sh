@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git ls-remote'
+test_description='but ls-remote'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -10,46 +10,46 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 generate_references () {
 	for ref
 	do
-		oid=$(git rev-parse "$ref") &&
+		oid=$(but rev-parse "$ref") &&
 		printf '%s\t%s\n' "$oid" "$ref" || return 1
 	done
 }
 
 test_expect_success setup '
 	>file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m initial &&
-	git tag mark &&
-	git tag mark1.1 &&
-	git tag mark1.2 &&
-	git tag mark1.10 &&
-	git show-ref --tags -d >expected.tag.raw &&
+	but cummit -m initial &&
+	but tag mark &&
+	but tag mark1.1 &&
+	but tag mark1.2 &&
+	but tag mark1.10 &&
+	but show-ref --tags -d >expected.tag.raw &&
 	sed -e "s/ /	/" expected.tag.raw >expected.tag &&
 	generate_references HEAD >expected.all &&
-	git show-ref -d	>refs &&
+	but show-ref -d	>refs &&
 	sed -e "s/ /	/" refs >>expected.all &&
 
-	git remote add self "$(pwd)/.git"
+	but remote add self "$(pwd)/.but"
 '
 
-test_expect_success 'ls-remote --tags .git' '
-	git ls-remote --tags .git >actual &&
+test_expect_success 'ls-remote --tags .but' '
+	but ls-remote --tags .but >actual &&
 	test_cmp expected.tag actual
 '
 
-test_expect_success 'ls-remote .git' '
-	git ls-remote .git >actual &&
+test_expect_success 'ls-remote .but' '
+	but ls-remote .but >actual &&
 	test_cmp expected.all actual
 '
 
 test_expect_success 'ls-remote --tags self' '
-	git ls-remote --tags self >actual &&
+	but ls-remote --tags self >actual &&
 	test_cmp expected.tag actual
 '
 
 test_expect_success 'ls-remote self' '
-	git ls-remote self >actual &&
+	but ls-remote self >actual &&
 	test_cmp expected.all actual
 '
 
@@ -59,7 +59,7 @@ test_expect_success 'ls-remote --sort="version:refname" --tags self' '
 		refs/tags/mark1.1 \
 		refs/tags/mark1.2 \
 		refs/tags/mark1.10 >expect &&
-	git ls-remote --sort="version:refname" --tags self >actual &&
+	but ls-remote --sort="version:refname" --tags self >actual &&
 	test_cmp expect actual
 '
 
@@ -69,7 +69,7 @@ test_expect_success 'ls-remote --sort="-version:refname" --tags self' '
 		refs/tags/mark1.2 \
 		refs/tags/mark1.1 \
 		refs/tags/mark >expect &&
-	git ls-remote --sort="-version:refname" --tags self >actual &&
+	but ls-remote --sort="-version:refname" --tags self >actual &&
 	test_cmp expect actual
 '
 
@@ -79,27 +79,27 @@ test_expect_success 'ls-remote --sort="-refname" --tags self' '
 		refs/tags/mark1.10 \
 		refs/tags/mark1.1 \
 		refs/tags/mark >expect &&
-	git ls-remote --sort="-refname" --tags self >actual &&
+	but ls-remote --sort="-refname" --tags self >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'dies when no remote specified and no default remotes found' '
-	test_must_fail git ls-remote
+	test_must_fail but ls-remote
 '
 
 test_expect_success 'use "origin" when no remote specified' '
-	URL="$(pwd)/.git" &&
+	URL="$(pwd)/.but" &&
 	echo "From $URL" >exp_err &&
 
-	git remote add origin "$URL" &&
-	git ls-remote 2>actual_err >actual &&
+	but remote add origin "$URL" &&
+	but ls-remote 2>actual_err >actual &&
 
 	test_cmp exp_err actual_err &&
 	test_cmp expected.all actual
 '
 
 test_expect_success 'suppress "From <url>" with -q' '
-	git ls-remote -q 2>actual_err &&
+	but ls-remote -q 2>actual_err &&
 	! test_cmp exp_err actual_err
 '
 
@@ -110,20 +110,20 @@ test_expect_success 'use branch.<name>.remote if possible' '
 	#
 
 	# setup a new remote to differentiate from "origin"
-	git clone . other.git &&
+	but clone . other.but &&
 	(
-		cd other.git &&
-		echo "$(git rev-parse HEAD)	HEAD" &&
-		git show-ref	| sed -e "s/ /	/"
+		cd other.but &&
+		echo "$(but rev-parse HEAD)	HEAD" &&
+		but show-ref	| sed -e "s/ /	/"
 	) >exp &&
 
-	URL="other.git" &&
+	URL="other.but" &&
 	echo "From $URL" >exp_err &&
 
-	git remote add other $URL &&
-	git config branch.main.remote other &&
+	but remote add other $URL &&
+	but config branch.main.remote other &&
 
-	git ls-remote 2>actual_err >actual &&
+	but ls-remote 2>actual_err >actual &&
 	test_cmp exp_err actual_err &&
 	test_cmp exp actual
 '
@@ -137,68 +137,68 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 		does_not_exist="refs*main"
 	fi &&
 	cat >exp <<-EOF &&
-	fatal: '\''$does_not_exist'\'' does not appear to be a git repository
+	fatal: '\''$does_not_exist'\'' does not appear to be a but repository
 	fatal: Could not read from remote repository.
 
 	Please make sure you have the correct access rights
 	and the repository exists.
 	EOF
 	#
-	# Do not expect "git ls-remote <pattern>" to work; ls-remote needs
+	# Do not expect "but ls-remote <pattern>" to work; ls-remote needs
 	# <remote> if you want to feed <pattern>, just like you cannot say
 	# fetch <branch>.
 	# We could just as easily have used "main"; the "*" emphasizes its
 	# role as a pattern.
-	test_must_fail git ls-remote "$does_not_exist" >actual 2>&1 &&
+	test_must_fail but ls-remote "$does_not_exist" >actual 2>&1 &&
 	test_cmp exp actual
 '
 
 test_expect_success 'die with non-2 for wrong repository even with --exit-code' '
 	{
-		git ls-remote --exit-code ./no-such-repository
+		but ls-remote --exit-code ./no-such-repository
 		status=$?
 	} &&
 	test $status != 2 && test $status != 0
 '
 
 test_expect_success 'Report success even when nothing matches' '
-	git ls-remote other.git "refs/nsn/*" >actual &&
+	but ls-remote other.but "refs/nsn/*" >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'Report no-match with --exit-code' '
-	test_expect_code 2 git ls-remote --exit-code other.git "refs/nsn/*" >actual &&
+	test_expect_code 2 but ls-remote --exit-code other.but "refs/nsn/*" >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'Report match with --exit-code' '
-	git ls-remote --exit-code other.git "refs/tags/*" >actual &&
-	git ls-remote . tags/mark* >expect &&
+	but ls-remote --exit-code other.but "refs/tags/*" >actual &&
+	but ls-remote . tags/mark* >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'set up some extra tags for ref hiding' '
-	git tag magic/one &&
-	git tag magic/two
+	but tag magic/one &&
+	but tag magic/two
 '
 
 for configsection in transfer uploadpack
 do
 	test_expect_success "Hide some refs with $configsection.hiderefs" '
 		test_config $configsection.hiderefs refs/tags &&
-		git ls-remote . >actual &&
+		but ls-remote . >actual &&
 		test_unconfig $configsection.hiderefs &&
-		git ls-remote . >expect.raw &&
+		but ls-remote . >expect.raw &&
 		sed -e "/	refs\/tags\//d" expect.raw >expect &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "Override hiding of $configsection.hiderefs" '
 		test_when_finished "test_unconfig $configsection.hiderefs" &&
-		git config --add $configsection.hiderefs refs/tags &&
-		git config --add $configsection.hiderefs "!refs/tags/magic" &&
-		git config --add $configsection.hiderefs refs/tags/magic/one &&
-		git ls-remote . >actual &&
+		but config --add $configsection.hiderefs refs/tags &&
+		but config --add $configsection.hiderefs "!refs/tags/magic" &&
+		but config --add $configsection.hiderefs refs/tags/magic/one &&
+		but ls-remote . >actual &&
 		grep refs/tags/magic/two actual &&
 		! grep refs/tags/magic/one actual
 	'
@@ -208,23 +208,23 @@ done
 test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs' '
 	test_config uploadpack.hiderefs refs/tags &&
 	test_config transfer.hiderefs "!refs/tags/magic" &&
-	git ls-remote . >actual &&
+	but ls-remote . >actual &&
 	grep refs/tags/magic actual
 '
 
 test_expect_success 'protocol v2 supports hiderefs' '
 	test_config uploadpack.hiderefs refs/tags &&
-	git -c protocol.version=2 ls-remote . >actual &&
+	but -c protocol.version=2 ls-remote . >actual &&
 	! grep refs/tags actual
 '
 
 test_expect_success 'ls-remote --symref' '
-	git fetch origin &&
+	but fetch origin &&
 	echo "ref: refs/heads/main	HEAD" >expect &&
 	generate_references \
 		HEAD \
 		refs/heads/main >>expect &&
-	oid=$(git rev-parse HEAD) &&
+	oid=$(but rev-parse HEAD) &&
 	echo "$oid	refs/remotes/origin/HEAD" >>expect &&
 	generate_references \
 		refs/remotes/origin/main \
@@ -234,24 +234,24 @@ test_expect_success 'ls-remote --symref' '
 		refs/tags/mark1.2 >>expect &&
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ls-remote with filtered symref (refname)' '
-	rev=$(git rev-parse HEAD) &&
+	rev=$(but rev-parse HEAD) &&
 	cat >expect <<-EOF &&
 	ref: refs/heads/main	HEAD
 	$rev	HEAD
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . HEAD >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_failure 'ls-remote with filtered symref (--heads)' '
-	git symbolic-ref refs/heads/foo refs/tags/mark &&
+	but symbolic-ref refs/heads/foo refs/tags/mark &&
 	cat >expect <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
 	$rev	refs/heads/foo
@@ -259,7 +259,7 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
 	test_cmp expect actual
 '
 
@@ -270,9 +270,9 @@ test_expect_success 'ls-remote --symref omits filtered-out matches' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
 	test_cmp expect actual &&
-	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . "refs/heads/*" >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . "refs/heads/*" >actual &&
 	test_cmp expect actual
 '
 
@@ -281,15 +281,15 @@ test_lazy_prereq GIT_DAEMON '
 '
 
 # This test spawns a daemon, so run it only if the user would be OK with
-# testing with git-daemon.
+# testing with but-daemon.
 test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-compliant empty remote' '
 	test_set_port JGIT_DAEMON_PORT &&
 	JGIT_DAEMON_PID= &&
-	git init --bare empty.git &&
-	>empty.git/git-daemon-export-ok &&
-	mkfifo jgit_daemon_output &&
+	but init --bare empty.but &&
+	>empty.but/but-daemon-export-ok &&
+	mkfifo jbut_daemon_output &&
 	{
-		jgit daemon --port="$JGIT_DAEMON_PORT" . >jgit_daemon_output &
+		jbut daemon --port="$JGIT_DAEMON_PORT" . >jbut_daemon_output &
 		JGIT_DAEMON_PID=$!
 	} &&
 	test_when_finished kill "$JGIT_DAEMON_PID" &&
@@ -310,42 +310,42 @@ test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-complian
 			echo "Expected: Listening on" &&
 			false;;
 		esac
-	} <jgit_daemon_output &&
+	} <jbut_daemon_output &&
 	# --exit-code asks the command to exit with 2 when no
 	# matching refs are found.
-	test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git
+	test_expect_code 2 but ls-remote --exit-code but://localhost:$JGIT_DAEMON_PORT/empty.but
 '
 
 test_expect_success 'ls-remote works outside repository' '
-	# It is important for this repo to be inside the nongit
+	# It is important for this repo to be inside the nonbut
 	# area, as we want a repo name that does not include
 	# slashes (because those inhibit some of our configuration
 	# lookups).
-	nongit git init --bare dst.git &&
-	nongit git ls-remote dst.git
+	nonbut but init --bare dst.but &&
+	nonbut but ls-remote dst.but
 '
 
 test_expect_success 'ls-remote --sort fails gracefully outside repository' '
 	# Use a sort key that requires access to the referenced objects.
-	nongit test_must_fail git ls-remote --sort=authordate "$TRASH_DIRECTORY" 2>err &&
-	test_i18ngrep "^fatal: not a git repository, but the field '\''authordate'\'' requires access to object data" err
+	nonbut test_must_fail but ls-remote --sort=authordate "$TRASH_DIRECTORY" 2>err &&
+	test_i18ngrep "^fatal: not a but repository, but the field '\''authordate'\'' requires access to object data" err
 '
 
 test_expect_success 'ls-remote patterns work with all protocol versions' '
-	git for-each-ref --format="%(objectname)	%(refname)" \
+	but for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/main refs/remotes/origin/main >expect &&
-	git -c protocol.version=1 ls-remote . main >actual.v1 &&
+	but -c protocol.version=1 ls-remote . main >actual.v1 &&
 	test_cmp expect actual.v1 &&
-	git -c protocol.version=2 ls-remote . main >actual.v2 &&
+	but -c protocol.version=2 ls-remote . main >actual.v2 &&
 	test_cmp expect actual.v2
 '
 
 test_expect_success 'ls-remote prefixes work with all protocol versions' '
-	git for-each-ref --format="%(objectname)	%(refname)" \
+	but for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/ refs/tags/ >expect &&
-	git -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
+	but -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
 	test_cmp expect actual.v1 &&
-	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
+	but -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
 	test_cmp expect actual.v2
 '
 

@@ -27,20 +27,20 @@ test_gpg_sign () {
 	cmit=$3
 	shift 3
 	test_expect_success "$cmd $* $cmit with cummit.gpgsign=$conf $will sign cummit" "
-		git reset --hard tip &&
-		git config cummit.gpgsign $conf &&
-		git $cmd $* $cmit &&
-		git rev-list tip.. >rev-list &&
-		$must_fail git verify-cummit \$(cat rev-list)
+		but reset --hard tip &&
+		but config cummit.gpgsign $conf &&
+		but $cmd $* $cmit &&
+		but rev-list tip.. >rev-list &&
+		$must_fail but verify-cummit \$(cat rev-list)
 	"
 }
 
 test_expect_success 'setup' '
 	test_cummit one &&
-	git switch -c side &&
+	but switch -c side &&
 	test_cummit side1 &&
 	test_cummit side2 &&
-	git switch - &&
+	but switch - &&
 	test_cummit two &&
 	test_cummit three &&
 	test_cummit tip

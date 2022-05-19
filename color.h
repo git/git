@@ -70,7 +70,7 @@ struct strbuf;
 
 /*
  * The first three are chosen to match common usage in the code, and what is
- * returned from git_config_colorbool. The "auto" value can be returned from
+ * returned from but_config_colorbool. The "auto" value can be returned from
  * config_colorbool, and will be converted by want_color() into either 0 or 1.
  */
 #define GIT_COLOR_UNKNOWN -1
@@ -90,10 +90,10 @@ extern int color_stdout_is_tty;
 
 /*
  * Use the first one if you need only color config; the second is a convenience
- * if you are just going to change to git_default_config, too.
+ * if you are just going to change to but_default_config, too.
  */
-int git_color_config(const char *var, const char *value, void *cb);
-int git_color_default_config(const char *var, const char *value, void *cb);
+int but_color_config(const char *var, const char *value, void *cb);
+int but_color_default_config(const char *var, const char *value, void *cb);
 
 /*
  * Parse a config option, which can be a boolean or one of
@@ -102,7 +102,7 @@ int git_color_default_config(const char *var, const char *value, void *cb);
  * GIT_COLOR_ALWAYS for "always" or a positive boolean,
  * and GIT_COLOR_AUTO for "auto".
  */
-int git_config_colorbool(const char *var, const char *value);
+int but_config_colorbool(const char *var, const char *value);
 
 /*
  * Return a boolean whether to use color, where the argument 'var' is

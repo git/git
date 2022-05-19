@@ -13,118 +13,118 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	echo one >one &&
-	git add one &&
+	but add one &&
 	test_tick &&
-	git cummit -m "Initial" &&
+	but cummit -m "Initial" &&
 
-	git clone . remote &&
+	but clone . remote &&
 
 	echo uno >one &&
 	echo dos >two &&
-	git add two &&
+	but add two &&
 	test_tick &&
-	git cummit -a -m "Second" &&
+	but cummit -a -m "Second" &&
 
-	git checkout -b left &&
+	but checkout -b left &&
 
 	echo "c1" >one &&
 	test_tick &&
-	git cummit -a -m "Common #1" &&
+	but cummit -a -m "Common #1" &&
 
 	echo "c2" >one &&
 	test_tick &&
-	git cummit -a -m "Common #2" &&
+	but cummit -a -m "Common #2" &&
 
-	git branch right &&
+	but branch right &&
 
 	echo "l3" >two &&
 	test_tick &&
 	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #3" &&
+	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #3" &&
 
 	echo "l4" >two &&
 	test_tick &&
 	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #4" &&
+	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #4" &&
 
 	echo "l5" >two &&
 	test_tick &&
 	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" git cummit -a -m "Left #5" &&
-	git tag tag-l5 &&
+	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #5" &&
+	but tag tag-l5 &&
 
-	git checkout right &&
+	but checkout right &&
 
 	echo "r3" >three &&
-	git add three &&
+	but add three &&
 	test_tick &&
-	git cummit -a -m "Right #3" &&
-	git tag tag-r3 &&
+	but cummit -a -m "Right #3" &&
+	but tag tag-r3 &&
 
 	echo "r4" >three &&
 	test_tick &&
-	git cummit -a -m "Right #4" &&
+	but cummit -a -m "Right #4" &&
 
 	echo "r5" >three &&
 	test_tick &&
-	git cummit -a -m "Right #5" &&
+	but cummit -a -m "Right #5" &&
 
-	git checkout -b long &&
+	but checkout -b long &&
 	test_cummit_bulk --start=0 --message=%s --filename=one 30 &&
 
-	git show-branch &&
+	but show-branch &&
 
 	apos="'\''"
 '
 
 test_expect_success GPG 'set up a signed tag' '
-	git tag -s -m signed-tag-msg signed-good-tag left
+	but tag -s -m signed-tag-msg signed-good-tag left
 '
 
 test_expect_success GPGSSH 'created ssh signed cummit and tag' '
 	test_config gpg.format ssh &&
-	git checkout -b signed-ssh &&
+	but checkout -b signed-ssh &&
 	touch file &&
-	git add file &&
-	git cummit -m "ssh signed" -S"${GPGSSH_KEY_PRIMARY}" &&
-	git tag -s -u"${GPGSSH_KEY_PRIMARY}" -m signed-ssh-tag-msg signed-good-ssh-tag left &&
-	git tag -s -u"${GPGSSH_KEY_UNTRUSTED}" -m signed-ssh-tag-msg-untrusted signed-untrusted-ssh-tag left
+	but add file &&
+	but cummit -m "ssh signed" -S"${GPGSSH_KEY_PRIMARY}" &&
+	but tag -s -u"${GPGSSH_KEY_PRIMARY}" -m signed-ssh-tag-msg signed-good-ssh-tag left &&
+	but tag -s -u"${GPGSSH_KEY_UNTRUSTED}" -m signed-ssh-tag-msg-untrusted signed-untrusted-ssh-tag left
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed tags with keys having defined lifetimes' '
 	test_when_finished "test_unconfig cummit.gpgsign" &&
 	test_config gpg.format ssh &&
-	git checkout -b signed-expiry-ssh &&
+	but checkout -b signed-expiry-ssh &&
 	touch file &&
-	git add file &&
+	but add file &&
 
-	echo expired >file && test_tick && git cummit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
-	git tag -s -u "${GPGSSH_KEY_EXPIRED}" -m expired-signed expired-signed &&
+	echo expired >file && test_tick && but cummit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
+	but tag -s -u "${GPGSSH_KEY_EXPIRED}" -m expired-signed expired-signed &&
 
-	echo notyetvalid >file && test_tick && git cummit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
-	git tag -s -u "${GPGSSH_KEY_NOTYETVALID}" -m notyetvalid-signed notyetvalid-signed &&
+	echo notyetvalid >file && test_tick && but cummit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
+	but tag -s -u "${GPGSSH_KEY_NOTYETVALID}" -m notyetvalid-signed notyetvalid-signed &&
 
-	echo timeboxedvalid >file && test_tick && git cummit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
-	git tag -s -u "${GPGSSH_KEY_TIMEBOXEDVALID}" -m timeboxedvalid-signed timeboxedvalid-signed &&
+	echo timeboxedvalid >file && test_tick && but cummit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
+	but tag -s -u "${GPGSSH_KEY_TIMEBOXEDVALID}" -m timeboxedvalid-signed timeboxedvalid-signed &&
 
-	echo timeboxedinvalid >file && test_tick && git cummit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
-	git tag -s -u "${GPGSSH_KEY_TIMEBOXEDINVALID}" -m timeboxedinvalid-signed timeboxedinvalid-signed
+	echo timeboxedinvalid >file && test_tick && but cummit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
+	but tag -s -u "${GPGSSH_KEY_TIMEBOXEDINVALID}" -m timeboxedinvalid-signed timeboxedinvalid-signed
 '
 
 test_expect_success 'message for merging local branch' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
 
-	git checkout main &&
-	git fetch . left &&
+	but checkout main &&
+	but fetch . left &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success GPG 'message for merging local tag signed by good key' '
-	git checkout main &&
-	git fetch . signed-good-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . signed-good-tag &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
 	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
@@ -132,9 +132,9 @@ test_expect_success GPG 'message for merging local tag signed by good key' '
 '
 
 test_expect_success GPG 'message for merging local tag signed by unknown key' '
-	git checkout main &&
-	git fetch . signed-good-tag &&
-	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . signed-good-tag &&
+	GNUPGHOME=. but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
 	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
@@ -143,9 +143,9 @@ test_expect_success GPG 'message for merging local tag signed by unknown key' '
 
 test_expect_success GPGSSH 'message for merging local tag signed by good ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . signed-good-ssh-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . signed-good-ssh-tag &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-ssh-tag${apos}" actual &&
 	grep "^signed-ssh-tag-msg" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
@@ -154,9 +154,9 @@ test_expect_success GPGSSH 'message for merging local tag signed by good ssh key
 
 test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . signed-untrusted-ssh-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . signed-untrusted-ssh-tag &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-untrusted-ssh-tag${apos}" actual &&
 	grep "^signed-ssh-tag-msg-untrusted" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
@@ -166,9 +166,9 @@ test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh 
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by expired ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . expired-signed &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . expired-signed &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}expired-signed${apos}" actual &&
 	grep "^expired-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
@@ -176,9 +176,9 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by not yet valid ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . notyetvalid-signed &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . notyetvalid-signed &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}notyetvalid-signed${apos}" actual &&
 	grep "^notyetvalid-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
@@ -186,9 +186,9 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by valid timeboxed ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . timeboxedvalid-signed &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . timeboxedvalid-signed &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}timeboxedvalid-signed${apos}" actual &&
 	grep "^timeboxedvalid-signed" actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
@@ -197,9 +197,9 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by invalid timeboxed ssh key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
-	git checkout main &&
-	git fetch . timeboxedinvalid-signed &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but checkout main &&
+	but fetch . timeboxedinvalid-signed &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}timeboxedinvalid-signed${apos}" actual &&
 	grep "^timeboxedinvalid-signed" actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
@@ -208,10 +208,10 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag sign
 test_expect_success 'message for merging external branch' '
 	echo "Merge branch ${apos}left${apos} of $(pwd)" >expected &&
 
-	git checkout main &&
-	git fetch "$(pwd)" left &&
+	but checkout main &&
+	but fetch "$(pwd)" left &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -232,29 +232,29 @@ test_expect_success '[merge] summary/log configuration' '
 	test_config merge.log true &&
 	test_unconfig merge.summary &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left &&
+	but fetch . left &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual1 &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual1 &&
 
 	test_unconfig merge.log &&
 	test_config merge.summary true &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left &&
+	but fetch . left &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual2 &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual2 &&
 
 	test_cmp expected actual1 &&
 	test_cmp expected actual2
 '
 
 test_expect_success 'setup FETCH_HEAD' '
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left
+	but fetch . left
 '
 
 test_expect_success 'merge.log=3 limits shortlog length' '
@@ -270,7 +270,7 @@ test_expect_success 'merge.log=3 limits shortlog length' '
 	  ...
 	EOF
 
-	git -c merge.log=3 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but -c merge.log=3 fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -288,7 +288,7 @@ test_expect_success 'merge.log=5 shows all 5 cummits' '
 	  Common #1
 	EOF
 
-	git -c merge.log=5 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but -c merge.log=5 fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -306,13 +306,13 @@ test_expect_success '--log=5 with custom comment character' '
 	  Common #1
 	EOF
 
-	git -c core.commentchar="x" fmt-merge-msg --log=5 <.git/FETCH_HEAD >actual &&
+	but -c core.commentchar="x" fmt-merge-msg --log=5 <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge.log=0 disables shortlog' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
-	git -c merge.log=0 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but -c merge.log=0 fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -329,7 +329,7 @@ test_expect_success '--log=3 limits shortlog length' '
 	  ...
 	EOF
 
-	git fmt-merge-msg --log=3 <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg --log=3 <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -347,19 +347,19 @@ test_expect_success '--log=5 shows all 5 cummits' '
 	  Common #1
 	EOF
 
-	git fmt-merge-msg --log=5 <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg --log=5 <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success '--no-log disables shortlog' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
-	git fmt-merge-msg --no-log <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg --no-log <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success '--log=0 disables shortlog' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
-	git fmt-merge-msg --no-log <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg --no-log <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -380,16 +380,16 @@ test_expect_success 'fmt-merge-msg -m' '
 
 	test_unconfig merge.log &&
 	test_unconfig merge.summary &&
-	git checkout main &&
-	git fetch "$(pwd)" left &&
-	git fmt-merge-msg -m "Sync with left" <.git/FETCH_HEAD >actual &&
-	git fmt-merge-msg --log -m "Sync with left" \
-					<.git/FETCH_HEAD >actual.log &&
+	but checkout main &&
+	but fetch "$(pwd)" left &&
+	but fmt-merge-msg -m "Sync with left" <.but/FETCH_HEAD >actual &&
+	but fmt-merge-msg --log -m "Sync with left" \
+					<.but/FETCH_HEAD >actual.log &&
 	test_config merge.log true &&
-	git fmt-merge-msg -m "Sync with left" \
-					<.git/FETCH_HEAD >actual.log-config &&
-	git fmt-merge-msg --no-log -m "Sync with left" \
-					<.git/FETCH_HEAD >actual.nolog &&
+	but fmt-merge-msg -m "Sync with left" \
+					<.but/FETCH_HEAD >actual.log-config &&
+	but fmt-merge-msg --no-log -m "Sync with left" \
+					<.but/FETCH_HEAD >actual.nolog &&
 
 	test_cmp expected actual &&
 	test_cmp expected.log actual.log &&
@@ -422,31 +422,31 @@ test_expect_success 'setup: expected shortlog for two branches' '
 test_expect_success 'shortlog for two branches' '
 	test_config merge.log true &&
 	test_unconfig merge.summary &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual1 &&
+	but fetch . left right &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual1 &&
 
 	test_unconfig merge.log &&
 	test_config merge.summary true &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual2 &&
+	but fetch . left right &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual2 &&
 
 	test_config merge.log yes &&
 	test_unconfig merge.summary &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual3 &&
+	but fetch . left right &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual3 &&
 
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual4 &&
+	but fetch . left right &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual4 &&
 
 	test_cmp expected actual1 &&
 	test_cmp expected actual2 &&
@@ -457,24 +457,24 @@ test_expect_success 'shortlog for two branches' '
 test_expect_success 'merge-msg -F' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
-	git fmt-merge-msg -F .git/FETCH_HEAD >actual &&
+	but fetch . left right &&
+	but fmt-merge-msg -F .but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge-msg -F in subdirectory' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . left right &&
+	but fetch . left right &&
 	mkdir sub &&
-	cp .git/FETCH_HEAD sub/FETCH_HEAD &&
+	cp .but/FETCH_HEAD sub/FETCH_HEAD &&
 	(
 		cd sub &&
-		git fmt-merge-msg -F FETCH_HEAD >../actual
+		but fmt-merge-msg -F FETCH_HEAD >../actual
 	) &&
 	test_cmp expected actual
 '
@@ -485,10 +485,10 @@ test_expect_success 'merge-msg with nothing to merge' '
 
 	(
 		cd remote &&
-		git checkout -b unrelated &&
+		but checkout -b unrelated &&
 		test_tick &&
-		git fetch origin &&
-		git fmt-merge-msg <.git/FETCH_HEAD >../actual
+		but fetch origin &&
+		but fmt-merge-msg <.but/FETCH_HEAD >../actual
 	) &&
 
 	test_must_be_empty actual
@@ -507,11 +507,11 @@ test_expect_success 'merge-msg tag' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . tag tag-r3 &&
+	but fetch . tag tag-r3 &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -537,11 +537,11 @@ test_expect_success 'merge-msg two tags' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . tag tag-r3 tag tag-l5 &&
+	but fetch . tag tag-r3 tag tag-l5 &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -567,11 +567,11 @@ test_expect_success 'merge-msg tag and branch' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . tag tag-r3 left &&
+	but fetch . tag tag-r3 left &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -594,25 +594,25 @@ test_expect_success 'merge-msg lots of cummits' '
 
 	test_config merge.summary yes &&
 
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git fetch . long &&
+	but fetch . long &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge-msg with "merging" an annotated tag' '
 	test_config merge.log true &&
 
-	git checkout main^0 &&
-	git cummit --allow-empty -m "One step ahead" &&
-	git tag -a -m "An annotated one" annote HEAD &&
+	but checkout main^0 &&
+	but cummit --allow-empty -m "One step ahead" &&
+	but tag -a -m "An annotated one" annote HEAD &&
 
-	git checkout main &&
-	git fetch . annote &&
+	but checkout main &&
+	but fetch . annote &&
 
-	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	but fmt-merge-msg <.but/FETCH_HEAD >actual &&
 	{
 		cat <<-\EOF
 		Merge tag '\''annote'\''
@@ -625,9 +625,9 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 	} >expected &&
 	test_cmp expected actual &&
 
-	test_when_finished "git reset --hard" &&
-	annote=$(git rev-parse annote) &&
-	git merge --no-cummit --no-ff $annote &&
+	test_when_finished "but reset --hard" &&
+	annote=$(but rev-parse annote) &&
+	but merge --no-cummit --no-ff $annote &&
 	{
 		cat <<-EOF
 		Merge tag '\''$annote'\''
@@ -638,63 +638,63 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 		  One step ahead
 		EOF
 	} >expected &&
-	test_cmp expected .git/MERGE_MSG
+	test_cmp expected .but/MERGE_MSG
 '
 
 test_expect_success 'merge --into-name=<name>' '
-	test_when_finished "git checkout main" &&
-	git checkout -B side main &&
-	git cummit --allow-empty -m "One step ahead" &&
+	test_when_finished "but checkout main" &&
+	but checkout -B side main &&
+	but cummit --allow-empty -m "One step ahead" &&
 
-	git checkout --detach main &&
-	git merge --no-ff side &&
-	git show -s --format="%s" >full.0 &&
+	but checkout --detach main &&
+	but merge --no-ff side &&
+	but show -s --format="%s" >full.0 &&
 	head -n1 full.0 >actual &&
 	# expect that HEAD is shown as-is
 	grep -e "Merge branch .side. into HEAD$" actual &&
 
-	git reset --hard main &&
-	git merge --no-ff --into-name=main side &&
-	git show -s --format="%s" >full.1 &&
+	but reset --hard main &&
+	but merge --no-ff --into-name=main side &&
+	but show -s --format="%s" >full.1 &&
 	head -n1 full.1 >actual &&
 	# expect that we pretend to be merging to main, that is suppressed
 	grep -e "Merge branch .side.$" actual &&
 
-	git checkout -b throwaway main &&
-	git merge --no-ff --into-name=main side &&
-	git show -s --format="%s" >full.2 &&
+	but checkout -b throwaway main &&
+	but merge --no-ff --into-name=main side &&
+	but show -s --format="%s" >full.2 &&
 	head -n1 full.2 >actual &&
 	# expect that we pretend to be merging to main, that is suppressed
 	grep -e "Merge branch .side.$" actual
 '
 
 test_expect_success 'merge.suppressDest configuration' '
-	test_when_finished "git checkout main" &&
-	git checkout -B side main &&
-	git cummit --allow-empty -m "One step ahead" &&
-	git checkout main &&
-	git fetch . side &&
+	test_when_finished "but checkout main" &&
+	but checkout -B side main &&
+	but cummit --allow-empty -m "One step ahead" &&
+	but checkout main &&
+	but fetch . side &&
 
-	git -c merge.suppressDest="" fmt-merge-msg <.git/FETCH_HEAD >full.1 &&
+	but -c merge.suppressDest="" fmt-merge-msg <.but/FETCH_HEAD >full.1 &&
 	head -n1 full.1 >actual &&
 	grep -e "Merge branch .side. into main" actual &&
 
-	git -c merge.suppressDest="mast" fmt-merge-msg <.git/FETCH_HEAD >full.2 &&
+	but -c merge.suppressDest="mast" fmt-merge-msg <.but/FETCH_HEAD >full.2 &&
 	head -n1 full.2 >actual &&
 	grep -e "Merge branch .side. into main$" actual &&
 
-	git -c merge.suppressDest="ma?*[rn]" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
+	but -c merge.suppressDest="ma?*[rn]" fmt-merge-msg <.but/FETCH_HEAD >full.3 &&
 	head -n1 full.3 >actual &&
 	grep -e "Merge branch .side." actual &&
 	! grep -e " into main$" actual &&
 
-	git checkout --detach HEAD &&
-	git -c merge.suppressDest="main" fmt-merge-msg <.git/FETCH_HEAD >full.4 &&
+	but checkout --detach HEAD &&
+	but -c merge.suppressDest="main" fmt-merge-msg <.but/FETCH_HEAD >full.4 &&
 	head -n1 full.4 >actual &&
 	grep -e "Merge branch .side. into HEAD$" actual &&
 
-	git -c merge.suppressDest="main" fmt-merge-msg \
-		--into-name=main <.git/FETCH_HEAD >full.5 &&
+	but -c merge.suppressDest="main" fmt-merge-msg \
+		--into-name=main <.but/FETCH_HEAD >full.5 &&
 	head -n1 full.5 >actual &&
 	grep -e "Merge branch .side." actual &&
 	! grep -e " into main$" actual &&

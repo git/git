@@ -4,10 +4,10 @@
 # Parts adapted from other tests.
 #
 
-test_description='git-cvsserver -kb modes
+test_description='but-cvsserver -kb modes
 
-tests -kb mode for binary files when accessing a git
-repository using cvs CLI client via git-cvsserver server'
+tests -kb mode for binary files when accessing a but
+repository using cvs CLI client via but-cvsserver server'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -43,7 +43,7 @@ not_present() {
 
 check_status_options() {
     (cd "$1" &&
-    GIT_CONFIG="$git_config" cvs -Q status "$2" > "${WORKDIR}/status.out" 2>&1
+    GIT_CONFIG="$but_config" cvs -Q status "$2" > "${WORKDIR}/status.out" 2>&1
     )
     if [ x"$?" != x"0" ] ; then
 	echo "Error from cvs status: $1 $2" >> "${WORKDIR}/marked.log"
@@ -63,31 +63,31 @@ check_status_options() {
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    skip_all='skipping git-cvsserver tests, cvs not found'
+    skip_all='skipping but-cvsserver tests, cvs not found'
     test_done
 fi
 if ! test_have_prereq PERL
 then
-    skip_all='skipping git-cvsserver tests, perl not available'
+    skip_all='skipping but-cvsserver tests, perl not available'
     test_done
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-    skip_all='skipping git-cvsserver tests, Perl SQLite interface unavailable'
+    skip_all='skipping but-cvsserver tests, Perl SQLite interface unavailable'
     test_done
 }
 
 unset GIT_DIR GIT_CONFIG
 WORKDIR=$PWD
-SERVERDIR=$PWD/gitcvs.git
-git_config="$SERVERDIR/config"
+SERVERDIR=$PWD/butcvs.but
+but_config="$SERVERDIR/config"
 CVSROOT=":fork:$SERVERDIR"
 CVSWORK="$PWD/cvswork"
-CVS_SERVER=git-cvsserver
+CVS_SERVER=but-cvsserver
 export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
 test_expect_success 'setup' '
-    git config push.default matching &&
+    but config push.default matching &&
     echo "Simple text file" >textfile.c &&
     echo "File with embedded NUL: Q <- there" | q_to_nul > binfile.bin &&
     mkdir subdir &&
@@ -95,30 +95,30 @@ test_expect_success 'setup' '
     echo "Another binary: Q (this time CR)" | q_to_cr > subdir/withCr.bin &&
     echo "Mixed up NUL, but marked text: Q <- there" | q_to_nul > mixedUp.c &&
     echo "Unspecified" > subdir/unspecified.other &&
-    echo "/*.bin -crlf" > .gitattributes &&
-    echo "/*.c crlf" >> .gitattributes &&
-    echo "subdir/*.bin -crlf" >> .gitattributes &&
-    echo "subdir/*.c crlf" >> .gitattributes &&
-    echo "subdir/file.h crlf" >> .gitattributes &&
-    git add .gitattributes textfile.c binfile.bin mixedUp.c subdir/* &&
-    git cummit -q -m "First cummit" &&
-    git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
-    GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
-    GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
+    echo "/*.bin -crlf" > .butattributes &&
+    echo "/*.c crlf" >> .butattributes &&
+    echo "subdir/*.bin -crlf" >> .butattributes &&
+    echo "subdir/*.c crlf" >> .butattributes &&
+    echo "subdir/file.h crlf" >> .butattributes &&
+    but add .butattributes textfile.c binfile.bin mixedUp.c subdir/* &&
+    but cummit -q -m "First cummit" &&
+    but clone -q --bare "$WORKDIR/.but" "$SERVERDIR" >/dev/null 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+    GIT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log"
 '
 
 test_expect_success 'cvs co (default crlf)' '
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     test x"$(grep '/-k' cvswork/CVS/Entries cvswork/subdir/CVS/Entries)" = x""
 '
 
 rm -rf cvswork
 test_expect_success 'cvs co (allbinary)' '
-    GIT_DIR="$SERVERDIR" git config --bool gitcvs.allbinary true &&
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config --bool butcvs.allbinary true &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     marked_as cvswork textfile.c -kb &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes -kb &&
+    marked_as cvswork .butattributes -kb &&
     marked_as cvswork mixedUp.c -kb &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h -kb &&
@@ -127,11 +127,11 @@ test_expect_success 'cvs co (allbinary)' '
 
 rm -rf cvswork cvs.log
 test_expect_success 'cvs co (use attributes/allbinary)' '
-    GIT_DIR="$SERVERDIR" git config --bool gitcvs.usecrlfattr true &&
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config --bool butcvs.usecrlfattr true &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes -kb &&
+    marked_as cvswork .butattributes -kb &&
     marked_as cvswork mixedUp.c "" &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h "" &&
@@ -140,11 +140,11 @@ test_expect_success 'cvs co (use attributes/allbinary)' '
 
 rm -rf cvswork
 test_expect_success 'cvs co (use attributes)' '
-    GIT_DIR="$SERVERDIR" git config --bool gitcvs.allbinary false &&
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config --bool butcvs.allbinary false &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes "" &&
+    marked_as cvswork .butattributes "" &&
     marked_as cvswork mixedUp.c "" &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h "" &&
@@ -155,34 +155,34 @@ test_expect_success 'adding files' '
     (cd cvswork &&
     (cd subdir &&
     echo "more text" > src.c &&
-    GIT_CONFIG="$git_config" cvs -Q add src.c >cvs.log 2>&1 &&
+    GIT_CONFIG="$but_config" cvs -Q add src.c >cvs.log 2>&1 &&
     marked_as . src.c "" &&
     echo "pseudo-binary" > temp.bin
     ) &&
-    GIT_CONFIG="$git_config" cvs -Q add subdir/temp.bin >cvs.log 2>&1 &&
+    GIT_CONFIG="$but_config" cvs -Q add subdir/temp.bin >cvs.log 2>&1 &&
     marked_as subdir temp.bin "-kb" &&
     cd subdir &&
-    GIT_CONFIG="$git_config" cvs -Q ci -m "adding files" >cvs.log 2>&1 &&
+    GIT_CONFIG="$but_config" cvs -Q ci -m "adding files" >cvs.log 2>&1 &&
     marked_as . temp.bin "-kb" &&
     marked_as . src.c ""
     )
 '
 
 test_expect_success 'updating' '
-    git pull gitcvs.git &&
+    but pull butcvs.but &&
     echo "hi" >subdir/newfile.bin &&
     echo "junk" >subdir/file.h &&
     echo "hi" >subdir/newfile.c &&
     echo "hello" >>binfile.bin &&
-    git add subdir/newfile.bin subdir/file.h subdir/newfile.c binfile.bin &&
-    git cummit -q -m "Add and change some files" &&
-    git push gitcvs.git >/dev/null &&
+    but add subdir/newfile.bin subdir/file.h subdir/newfile.c binfile.bin &&
+    but cummit -q -m "Add and change some files" &&
+    but push butcvs.but >/dev/null &&
     (cd cvswork &&
-    GIT_CONFIG="$git_config" cvs -Q update
+    GIT_CONFIG="$but_config" cvs -Q update
     ) &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes "" &&
+    marked_as cvswork .butattributes "" &&
     marked_as cvswork mixedUp.c "" &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h "" &&
@@ -196,11 +196,11 @@ test_expect_success 'updating' '
 
 rm -rf cvswork
 test_expect_success 'cvs co (use attributes/guess)' '
-    GIT_DIR="$SERVERDIR" git config gitcvs.allbinary guess &&
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config butcvs.allbinary guess &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes "" &&
+    marked_as cvswork .butattributes "" &&
     marked_as cvswork mixedUp.c "" &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h "" &&
@@ -214,23 +214,23 @@ test_expect_success 'setup multi-line files' '
       echo "line 2" &&
       echo "line 3" &&
       echo "line 4 with NUL: Q <-" ) | q_to_nul > multiline.c &&
-    git add multiline.c &&
+    but add multiline.c &&
     ( echo "line 1" &&
       echo "line 2" &&
       echo "line 3" &&
       echo "line 4" ) | q_to_nul > multilineTxt.c &&
-    git add multilineTxt.c &&
-    git cummit -q -m "multiline files" &&
-    git push gitcvs.git >/dev/null
+    but add multilineTxt.c &&
+    but cummit -q -m "multiline files" &&
+    but push butcvs.but >/dev/null
 '
 
 rm -rf cvswork
 test_expect_success 'cvs co (guess)' '
-    GIT_DIR="$SERVERDIR" git config --bool gitcvs.usecrlfattr false &&
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
+    GIT_DIR="$SERVERDIR" but config --bool butcvs.usecrlfattr false &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork main >cvs.log 2>&1 &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes "" &&
+    marked_as cvswork .butattributes "" &&
     marked_as cvswork mixedUp.c -kb &&
     marked_as cvswork multiline.c -kb &&
     marked_as cvswork multilineTxt.c "" &&
@@ -242,10 +242,10 @@ test_expect_success 'cvs co (guess)' '
 '
 
 test_expect_success 'cvs co another copy (guess)' '
-    GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
+    GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
     marked_as cvswork2 textfile.c "" &&
     marked_as cvswork2 binfile.bin -kb &&
-    marked_as cvswork2 .gitattributes "" &&
+    marked_as cvswork2 .butattributes "" &&
     marked_as cvswork2 mixedUp.c -kb &&
     marked_as cvswork2 multiline.c -kb &&
     marked_as cvswork2 multilineTxt.c "" &&
@@ -259,7 +259,7 @@ test_expect_success 'cvs co another copy (guess)' '
 test_expect_success 'cvs status - sticky options' '
     check_status_options cvswork2 textfile.c "" &&
     check_status_options cvswork2 binfile.bin -kb &&
-    check_status_options cvswork2 .gitattributes "" &&
+    check_status_options cvswork2 .butattributes "" &&
     check_status_options cvswork2 mixedUp.c -kb &&
     check_status_options cvswork2 multiline.c -kb &&
     check_status_options cvswork2 multilineTxt.c "" &&
@@ -275,7 +275,7 @@ test_expect_success 'cvs status - sticky options' '
 test_expect_success 'add text (guess)' '
     (cd cvswork &&
     echo "simpleText" > simpleText.c &&
-    GIT_CONFIG="$git_config" cvs -Q add simpleText.c
+    GIT_CONFIG="$but_config" cvs -Q add simpleText.c
     ) &&
     marked_as cvswork simpleText.c ""
 '
@@ -283,16 +283,16 @@ test_expect_success 'add text (guess)' '
 test_expect_success 'add bin (guess)' '
     (cd cvswork &&
     echo "simpleBin: NUL: Q <- there" | q_to_nul > simpleBin.bin &&
-    GIT_CONFIG="$git_config" cvs -Q add simpleBin.bin
+    GIT_CONFIG="$but_config" cvs -Q add simpleBin.bin
     ) &&
     marked_as cvswork simpleBin.bin -kb
 '
 
 test_expect_success 'remove files (guess)' '
     (cd cvswork &&
-    GIT_CONFIG="$git_config" cvs -Q rm -f subdir/file.h &&
+    GIT_CONFIG="$but_config" cvs -Q rm -f subdir/file.h &&
     (cd subdir &&
-    GIT_CONFIG="$git_config" cvs -Q rm -f withCr.bin
+    GIT_CONFIG="$but_config" cvs -Q rm -f withCr.bin
     )) &&
     marked_as cvswork/subdir withCr.bin -kb &&
     marked_as cvswork/subdir file.h ""
@@ -300,11 +300,11 @@ test_expect_success 'remove files (guess)' '
 
 test_expect_success 'cvs ci (guess)' '
     (cd cvswork &&
-    GIT_CONFIG="$git_config" cvs -Q ci -m "add/rm files" >cvs.log 2>&1
+    GIT_CONFIG="$but_config" cvs -Q ci -m "add/rm files" >cvs.log 2>&1
     ) &&
     marked_as cvswork textfile.c "" &&
     marked_as cvswork binfile.bin -kb &&
-    marked_as cvswork .gitattributes "" &&
+    marked_as cvswork .butattributes "" &&
     marked_as cvswork mixedUp.c -kb &&
     marked_as cvswork multiline.c -kb &&
     marked_as cvswork multilineTxt.c "" &&
@@ -319,11 +319,11 @@ test_expect_success 'cvs ci (guess)' '
 
 test_expect_success 'update subdir of other copy (guess)' '
     (cd cvswork2/subdir &&
-    GIT_CONFIG="$git_config" cvs -Q update
+    GIT_CONFIG="$but_config" cvs -Q update
     ) &&
     marked_as cvswork2 textfile.c "" &&
     marked_as cvswork2 binfile.bin -kb &&
-    marked_as cvswork2 .gitattributes "" &&
+    marked_as cvswork2 .butattributes "" &&
     marked_as cvswork2 mixedUp.c -kb &&
     marked_as cvswork2 multiline.c -kb &&
     marked_as cvswork2 multilineTxt.c "" &&
@@ -338,20 +338,20 @@ test_expect_success 'update subdir of other copy (guess)' '
 
 echo "starting update/merge" >> "${WORKDIR}/marked.log"
 test_expect_success 'update/merge full other copy (guess)' '
-    git pull gitcvs.git main &&
+    but pull butcvs.but main &&
     sed "s/3/replaced_3/" < multilineTxt.c > ml.temp &&
     mv ml.temp multilineTxt.c &&
-    git add multilineTxt.c &&
-    git cummit -q -m "modify multiline file" >> "${WORKDIR}/marked.log" &&
-    git push gitcvs.git >/dev/null &&
+    but add multilineTxt.c &&
+    but cummit -q -m "modify multiline file" >> "${WORKDIR}/marked.log" &&
+    but push butcvs.but >/dev/null &&
     (cd cvswork2 &&
     sed "s/1/replaced_1/" < multilineTxt.c > ml.temp &&
     mv ml.temp multilineTxt.c &&
-    GIT_CONFIG="$git_config" cvs update > cvs.log 2>&1
+    GIT_CONFIG="$but_config" cvs update > cvs.log 2>&1
     ) &&
     marked_as cvswork2 textfile.c "" &&
     marked_as cvswork2 binfile.bin -kb &&
-    marked_as cvswork2 .gitattributes "" &&
+    marked_as cvswork2 .butattributes "" &&
     marked_as cvswork2 mixedUp.c -kb &&
     marked_as cvswork2 multiline.c -kb &&
     marked_as cvswork2 multilineTxt.c "" &&

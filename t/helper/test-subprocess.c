@@ -5,16 +5,16 @@
 int cmd__subprocess(int argc, const char **argv)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	int nogit = 0;
+	int nobut = 0;
 
-	setup_git_directory_gently(&nogit);
-	if (nogit)
-		die("No git repo found");
+	setup_but_directory_gently(&nobut);
+	if (nobut)
+		die("No but repo found");
 	if (argc > 1 && !strcmp(argv[1], "--setup-work-tree")) {
 		setup_work_tree();
 		argv++;
 	}
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	strvec_pushv(&cp.args, (const char **)argv + 1);
 	return run_command(&cp);
 }

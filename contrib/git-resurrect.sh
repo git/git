@@ -1,7 +1,7 @@
 #!/bin/sh
 
 USAGE="[-a] [-r] [-m] [-t] [-n] [-b <newname>] <name>"
-LONG_USAGE="git-resurrect attempts to find traces of a branch tip
+LONG_USAGE="but-resurrect attempts to find traces of a branch tip
 called <name>, and tries to resurrect it.  Currently, the reflog is
 searched for checkout messages, and with -r also merge messages.  With
 -m and -t, the history of all refs is scanned for Merge <name> into
@@ -12,7 +12,7 @@ branches."
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=
 OPTIONS_SPEC="\
-git resurrect $USAGE
+but resurrect $USAGE
 --
 b,branch=            save branch as <newname> instead of <name>
 a,all                same as -l -r -m -t
@@ -23,7 +23,7 @@ m,merges             scan for merges into other branches (slow)
 t,merge-targets      scan for merges of other branches into <name>
 n,dry-run            don't recreate the branch"
 
-. git-sh-setup
+. but-sh-setup
 
 search_reflog () {
 	sed -ne 's~^\([^ ]*\) .*	checkout: moving from '"$1"' .*~\1~p' \
@@ -31,22 +31,22 @@ search_reflog () {
 }
 
 search_reflog_merges () {
-	git rev-parse $(
+	but rev-parse $(
 		sed -ne 's~^[^ ]* \([^ ]*\) .*	merge '"$1"':.*~\1^2~p' \
 			< "$GIT_DIR"/logs/HEAD
 	)
 }
 
-oid_pattern=$(git hash-object --stdin </dev/null | sed -e 's/./[0-9a-f]/g')
+oid_pattern=$(but hash-object --stdin </dev/null | sed -e 's/./[0-9a-f]/g')
 
 search_merges () {
-	git rev-list --all --grep="Merge branch '$1'" \
+	but rev-list --all --grep="Merge branch '$1'" \
 		--pretty=tformat:"%P %s" |
 	sed -ne "/^$oid_pattern \($oid_pattern\) Merge .*/ {s//\1/p;$early_exit}"
 }
 
 search_merge_targets () {
-	git rev-list --all --grep="Merge branch '[^']*' into $branch\$" \
+	but rev-list --all --grep="Merge branch '[^']*' into $branch\$" \
 		--pretty=tformat:"%H %s" --all |
 	sed -ne "/^\($oid_pattern\) Merge .*/ {s//\1/p;$early_exit} "
 }
@@ -151,7 +151,7 @@ if test ! -z "$scan_merge_targets"; then
 	candidates="$candidates $(search_merge_targets $branch)"
 fi
 
-candidates="$(git rev-parse $candidates | sort -u)"
+candidates="$(but rev-parse $candidates | sort -u)"
 
 if test -z "$candidates"; then
 	hint=
@@ -162,20 +162,20 @@ fi
 
 echo "** Candidates for $branch **"
 for cmt in $candidates; do
-	git --no-pager log --pretty=tformat:"%ct:%h [%cr] %s" --abbrev-cummit -1 $cmt
+	but --no-pager log --pretty=tformat:"%ct:%h [%cr] %s" --abbrev-cummit -1 $cmt
 done \
 | sort -n | cut -d: -f2-
 
-newest="$(git rev-list -1 $candidates)"
+newest="$(but rev-list -1 $candidates)"
 if test ! -z "$dry_run"; then
 	printf "** Most recent: "
-	git --no-pager log -1 --pretty=tformat:"%h %s" $newest
-elif ! git rev-parse --verify --quiet $new_name >/dev/null; then
+	but --no-pager log -1 --pretty=tformat:"%h %s" $newest
+elif ! but rev-parse --verify --quiet $new_name >/dev/null; then
 	printf "** Restoring $new_name to "
-	git --no-pager log -1 --pretty=tformat:"%h %s" $newest
-	git branch $new_name $newest
+	but --no-pager log -1 --pretty=tformat:"%h %s" $newest
+	but branch $new_name $newest
 else
 	printf "Most recent: "
-	git --no-pager log -1 --pretty=tformat:"%h %s" $newest
+	but --no-pager log -1 --pretty=tformat:"%h %s" $newest
 	echo "** $new_name already exists, doing nothing"
 fi

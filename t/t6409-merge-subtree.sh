@@ -11,143 +11,143 @@ test_expect_success setup '
 
 	s="1 2 3 4 5 6 7 8" &&
 	test_write_lines $s >hello &&
-	git add hello &&
-	git cummit -m initial &&
-	git checkout -b side &&
+	but add hello &&
+	but cummit -m initial &&
+	but checkout -b side &&
 	echo >>hello world &&
-	git add hello &&
-	git cummit -m second &&
-	git checkout main &&
+	but add hello &&
+	but cummit -m second &&
+	but checkout main &&
 	test_write_lines mundo $s >hello &&
-	git add hello &&
-	git cummit -m main
+	but add hello &&
+	but cummit -m main
 
 '
 
 test_expect_success 'subtree available and works like recursive' '
 
-	git merge -s subtree side &&
+	but merge -s subtree side &&
 	test_write_lines mundo $s world >expect &&
 	test_cmp expect hello
 
 '
 
 test_expect_success 'setup branch sub' '
-	git checkout --orphan sub &&
-	git rm -rf . &&
+	but checkout --orphan sub &&
+	but rm -rf . &&
 	test_cummit foo
 '
 
 test_expect_success 'setup topic branch' '
-	git checkout -b topic main &&
-	git merge -s ours --no-cummit --allow-unrelated-histories sub &&
-	git read-tree --prefix=dir/ -u sub &&
-	git cummit -m "initial merge of sub into topic" &&
+	but checkout -b topic main &&
+	but merge -s ours --no-cummit --allow-unrelated-histories sub &&
+	but read-tree --prefix=dir/ -u sub &&
+	but cummit -m "initial merge of sub into topic" &&
 	test_path_is_file dir/foo.t &&
 	test_path_is_file hello
 '
 
 test_expect_success 'update branch sub' '
-	git checkout sub &&
+	but checkout sub &&
 	test_cummit bar
 '
 
 test_expect_success 'update topic branch' '
-	git checkout topic &&
-	git merge -s subtree sub -m "second merge of sub into topic" &&
+	but checkout topic &&
+	but merge -s subtree sub -m "second merge of sub into topic" &&
 	test_path_is_file dir/bar.t &&
 	test_path_is_file dir/foo.t &&
 	test_path_is_file hello
 '
 
 test_expect_success 'setup' '
-	mkdir git-gui &&
-	cd git-gui &&
-	git init &&
-	echo git-gui > git-gui.sh &&
-	o1=$(git hash-object git-gui.sh) &&
-	git add git-gui.sh &&
-	git cummit -m "initial git-gui" &&
+	mkdir but-gui &&
+	cd but-gui &&
+	but init &&
+	echo but-gui > but-gui.sh &&
+	o1=$(but hash-object but-gui.sh) &&
+	but add but-gui.sh &&
+	but cummit -m "initial but-gui" &&
 	cd .. &&
-	mkdir git &&
-	cd git &&
-	git init &&
-	echo git >git.c &&
-	o2=$(git hash-object git.c) &&
-	git add git.c &&
-	git cummit -m "initial git"
+	mkdir but &&
+	cd but &&
+	but init &&
+	echo but >but.c &&
+	o2=$(but hash-object but.c) &&
+	but add but.c &&
+	but cummit -m "initial but"
 '
 
 test_expect_success 'initial merge' '
-	git remote add -f gui ../git-gui &&
-	git merge -s ours --no-cummit --allow-unrelated-histories gui/main &&
-	git read-tree --prefix=git-gui/ -u gui/main &&
-	git cummit -m "Merge git-gui as our subdirectory" &&
-	git checkout -b work &&
-	git ls-files -s >actual &&
+	but remote add -f gui ../but-gui &&
+	but merge -s ours --no-cummit --allow-unrelated-histories gui/main &&
+	but read-tree --prefix=but-gui/ -u gui/main &&
+	but cummit -m "Merge but-gui as our subdirectory" &&
+	but checkout -b work &&
+	but ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh" &&
-		echo "100644 $o2 0	git.c"
+		echo "100644 $o1 0	but-gui/but-gui.sh" &&
+		echo "100644 $o2 0	but.c"
 	) >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge update' '
-	cd ../git-gui &&
-	echo git-gui2 > git-gui.sh &&
-	o3=$(git hash-object git-gui.sh) &&
-	git add git-gui.sh &&
-	git checkout -b topic_2 &&
-	git cummit -m "update git-gui" &&
-	cd ../git &&
-	git pull --no-rebase -s subtree gui topic_2 &&
-	git ls-files -s >actual &&
+	cd ../but-gui &&
+	echo but-gui2 > but-gui.sh &&
+	o3=$(but hash-object but-gui.sh) &&
+	but add but-gui.sh &&
+	but checkout -b topic_2 &&
+	but cummit -m "update but-gui" &&
+	cd ../but &&
+	but pull --no-rebase -s subtree gui topic_2 &&
+	but ls-files -s >actual &&
 	(
-		echo "100644 $o3 0	git-gui/git-gui.sh" &&
-		echo "100644 $o2 0	git.c"
+		echo "100644 $o3 0	but-gui/but-gui.sh" &&
+		echo "100644 $o2 0	but.c"
 	) >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'initial ambiguous subtree' '
-	cd ../git &&
-	git reset --hard main &&
-	git checkout -b topic_2 &&
-	git merge -s ours --no-cummit gui/main &&
-	git read-tree --prefix=git-gui2/ -u gui/main &&
-	git cummit -m "Merge git-gui2 as our subdirectory" &&
-	git checkout -b work2 &&
-	git ls-files -s >actual &&
+	cd ../but &&
+	but reset --hard main &&
+	but checkout -b topic_2 &&
+	but merge -s ours --no-cummit gui/main &&
+	but read-tree --prefix=but-gui2/ -u gui/main &&
+	but cummit -m "Merge but-gui2 as our subdirectory" &&
+	but checkout -b work2 &&
+	but ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh" &&
-		echo "100644 $o1 0	git-gui2/git-gui.sh" &&
-		echo "100644 $o2 0	git.c"
+		echo "100644 $o1 0	but-gui/but-gui.sh" &&
+		echo "100644 $o1 0	but-gui2/but-gui.sh" &&
+		echo "100644 $o2 0	but.c"
 	) >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge using explicit' '
-	cd ../git &&
-	git reset --hard topic_2 &&
-	git pull --no-rebase -Xsubtree=git-gui gui topic_2 &&
-	git ls-files -s >actual &&
+	cd ../but &&
+	but reset --hard topic_2 &&
+	but pull --no-rebase -Xsubtree=but-gui gui topic_2 &&
+	but ls-files -s >actual &&
 	(
-		echo "100644 $o3 0	git-gui/git-gui.sh" &&
-		echo "100644 $o1 0	git-gui2/git-gui.sh" &&
-		echo "100644 $o2 0	git.c"
+		echo "100644 $o3 0	but-gui/but-gui.sh" &&
+		echo "100644 $o1 0	but-gui2/but-gui.sh" &&
+		echo "100644 $o2 0	but.c"
 	) >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'merge2 using explicit' '
-	cd ../git &&
-	git reset --hard topic_2 &&
-	git pull --no-rebase -Xsubtree=git-gui2 gui topic_2 &&
-	git ls-files -s >actual &&
+	cd ../but &&
+	but reset --hard topic_2 &&
+	but pull --no-rebase -Xsubtree=but-gui2 gui topic_2 &&
+	but ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh" &&
-		echo "100644 $o3 0	git-gui2/git-gui.sh" &&
-		echo "100644 $o2 0	git.c"
+		echo "100644 $o1 0	but-gui/but-gui.sh" &&
+		echo "100644 $o3 0	but-gui2/but-gui.sh" &&
+		echo "100644 $o2 0	but.c"
 	) >expected &&
 	test_cmp expected actual
 '

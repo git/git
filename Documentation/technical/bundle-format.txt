@@ -11,7 +11,7 @@ A v2 bundle looks like this:
 
 ----
 bundle    = signature *prerequisite *reference LF pack
-signature = "# v2 git bundle" LF
+signature = "# v2 but bundle" LF
 
 prerequisite = "-" obj-id SP comment LF
 comment      = *CHAR
@@ -24,7 +24,7 @@ A v3 bundle looks like this:
 
 ----
 bundle    = signature *capability *prerequisite *reference LF pack
-signature = "# v3 git bundle" LF
+signature = "# v3 but bundle" LF
 
 capability   = "@" key ["=" value] LF
 prerequisite = "-" obj-id SP comment LF
@@ -51,9 +51,9 @@ A Git bundle consists of several parts.
   against prerequisite objects.
 
 * "References" record the tips of the history graph, iow, what the reader of the
-  bundle CAN "git fetch" from it.
+  bundle CAN "but fetch" from it.
 
-* "Pack" is the pack data stream "git fetch" would send, if you fetch from a
+* "Pack" is the pack data stream "but fetch" would send, if you fetch from a
   repository that has the references recorded in the "References" above into a
   repository that has references pointing at the objects listed in
   "Prerequisites" above.
@@ -70,12 +70,12 @@ and the Git bundle v2 format cannot represent a shallow clone repository.
 
 == Capabilities
 
-Because there is no opportunity for negotiation, unknown capabilities cause 'git
+Because there is no opportunity for negotiation, unknown capabilities cause 'but
 bundle' to abort.
 
 * `object-format` specifies the hash algorithm in use, and can take the same
   values as the `extensions.objectFormat` configuration value.
 
 * `filter` specifies an object filter as in the `--filter` option in
-  linkgit:git-rev-list[1]. The resulting pack-file must be marked as a
+  linkbut:but-rev-list[1]. The resulting pack-file must be marked as a
   `.promisor` pack-file after it is unbundled.

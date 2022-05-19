@@ -37,7 +37,7 @@ use Git::SVN::Utils qw(
 );
 
 use Git qw(
-	git_cmd_try
+	but_cmd_try
 	command
 	command_oneline
 	command_noisy
@@ -116,10 +116,10 @@ my ($_stdin, $_help, $_edit,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_cummit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
 
-# This is a refactoring artifact so Git::SVN can get at this git-svn switch.
+# This is a refactoring artifact so Git::SVN can get at this but-svn switch.
 sub opt_prefix { return $_prefix || '' }
 
-$Git::SVN::Fetcher::_placeholder_filename = ".gitignore";
+$Git::SVN::Fetcher::_placeholder_filename = ".butignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -216,10 +216,10 @@ my %cmd = (
 	           'username=s' => \$Git::SVN::Prompt::_username,
 	           'cummit-url=s' => \$_cummit_url } ],
 	'set-tree' => [ \&cmd_set_tree,
-	                "Set an SVN repository to a git tree-ish",
+	                "Set an SVN repository to a but tree-ish",
 			{ 'stdin' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'create-ignore' => [ \&cmd_create_ignore,
-			     'Create a .gitignore per svn:ignore',
+			     'Create a .butignore per svn:ignore',
 			     { 'revision|r=i' => \$_revision
 			     } ],
 	'mkdirs' => [ \&cmd_mkdirs ,
@@ -246,7 +246,7 @@ my %cmd = (
 	'migrate' => [ sub { },
 	               # no-op, we automatically run this anyways,
 	               'Migrate configuration/metadata/layout from
-		        previous versions of git-svn',
+		        previous versions of but-svn',
                        { 'minimize' => \$Git::SVN::Migration::_minimize,
 			 %remote_opts } ],
 	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show cummit logs',
@@ -286,14 +286,14 @@ my %cmd = (
 		    { 'url' => \$_url, } ],
 	'blame' => [ \&Git::SVN::Log::cmd_blame,
 	            "Show what revision and author last modified each line of a file",
-		    { 'git-format' => \$Git::SVN::Log::_git_format } ],
+		    { 'but-format' => \$Git::SVN::Log::_but_format } ],
 	'reset' => [ \&cmd_reset,
 		     "Undo fetches back to the specified SVN revision",
 		     { 'revision|r=s' => \$_revision,
 		       'parent|p' => \$_fetch_parent } ],
 	'gc' => [ \&cmd_gc,
-		  "Compress unhandled.log files in .git/svn and remove " .
-		  "index files in .git/svn",
+		  "Compress unhandled.log files in .but/svn and remove " .
+		  "index files in .but/svn",
 		{} ],
 );
 
@@ -313,8 +313,8 @@ sub term_init {
 	$term = eval {
 		require Term::ReadLine;
 		$ENV{"GIT_SVN_NOTTY"}
-			? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
-			: new Term::ReadLine 'git-svn';
+			? new Term::ReadLine 'but-svn', \*STDIN, \*STDOUT
+			: new Term::ReadLine 'but-svn';
 	};
 	if ($@) {
 		$term = new FakeTerm "$@: going non-interactive";
@@ -335,31 +335,31 @@ for (my $i = 0; $i < @ARGV; $i++) {
 
 # make sure we're always running at the top-level working directory
 if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
-	$ENV{GIT_DIR} ||= ".git";
+	$ENV{GIT_DIR} ||= ".but";
 	# catch the submodule case
 	if (-f $ENV{GIT_DIR}) {
 		open(my $fh, '<', $ENV{GIT_DIR}) or
 			die "failed to open $ENV{GIT_DIR}: $!\n";
-		$ENV{GIT_DIR} = $1 if <$fh> =~ /^gitdir: (.+)$/;
+		$ENV{GIT_DIR} = $1 if <$fh> =~ /^butdir: (.+)$/;
 	}
 } elsif ($cmd) {
-	my ($git_dir, $cdup);
-	git_cmd_try {
-		$git_dir = command_oneline([qw/rev-parse --git-dir/]);
-	} "Unable to find .git directory\n";
-	git_cmd_try {
+	my ($but_dir, $cdup);
+	but_cmd_try {
+		$but_dir = command_oneline([qw/rev-parse --but-dir/]);
+	} "Unable to find .but directory\n";
+	but_cmd_try {
 		$cdup = command_oneline(qw/rev-parse --show-cdup/);
 		chomp $cdup if ($cdup);
 		$cdup = "." unless ($cdup && length $cdup);
-	} "Already at toplevel, but $git_dir not found\n";
-	$ENV{GIT_DIR} = $git_dir;
+	} "Already at toplevel, but $but_dir not found\n";
+	$ENV{GIT_DIR} = $but_dir;
 	chdir $cdup or die "Unable to chdir up to '$cdup'\n";
 	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
 }
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-read_git_config(\%opts) if $ENV{GIT_DIR};
+read_but_config(\%opts) if $ENV{GIT_DIR};
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
@@ -397,8 +397,8 @@ sub usage {
 	my $exit = shift || 0;
 	my $fd = $exit ? \*STDERR : \*STDOUT;
 	print $fd <<"";
-git-svn - bidirectional operations between a single Subversion tree and git
-usage: git svn <command> [options] [arguments]\n
+but-svn - bidirectional operations between a single Subversion tree and but
+usage: but svn <command> [options] [arguments]\n
 
 	print $fd "Available commands:\n" unless $cmd;
 
@@ -407,7 +407,7 @@ usage: git svn <command> [options] [arguments]\n
 		next if /^multi-/; # don't show deprecated commands
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (sort keys %{$cmd{$_}->[2]}) {
-			# mixed-case options are for .git/config only
+			# mixed-case options are for .but/config only
 			next if /[A-Z]/ && /^[a-z]+$/i;
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
@@ -419,7 +419,7 @@ usage: git svn <command> [options] [arguments]\n
 	print $fd <<"";
 \nGIT_SVN_ID may be set in the environment or via the --id/-i switch to an
 arbitrary identifier if you're tracking multiple SVN branches/repositories in
-one git repository and want to keep them separate.  See git-svn(1) for more
+one but repository and want to keep them separate.  See but-svn(1) for more
 information.
 
 	exit $exit;
@@ -427,7 +427,7 @@ information.
 
 sub version {
 	::_req_svn();
-	print "git-svn version $VERSION (svn $SVN::Core::VERSION)\n";
+	print "but-svn version $VERSION (svn $SVN::Core::VERSION)\n";
 	exit 0;
 }
 
@@ -462,7 +462,7 @@ sub ask {
 	return undef;
 }
 
-sub do_git_init_db {
+sub do_but_init_db {
 	unless (-d $ENV{GIT_DIR}) {
 		my @init_db = ('init');
 		push @init_db, "--template=$_template" if defined $_template;
@@ -474,7 +474,7 @@ sub do_git_init_db {
 			}
 		}
 		command_noisy(@init_db);
-		$_repository = Git->repository(Repository => ".git");
+		$_repository = Git->repository(Repository => ".but");
 	}
 	my $set;
 	my $pfx = "svn-remote.$Git::SVN::default_repo_id";
@@ -506,7 +506,7 @@ sub init_subdir {
 	my $repo_path = shift or return;
 	mkpath([$repo_path]) unless -d $repo_path;
 	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
-	$ENV{GIT_DIR} = '.git';
+	$ENV{GIT_DIR} = '.but';
 	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
 }
 
@@ -542,7 +542,7 @@ sub cmd_init {
 	                       "as a command-line argument\n";
 	$url = canonicalize_url($url);
 	init_subdir(@_);
-	do_git_init_db();
+	do_but_init_db();
 
 	if ($Git::SVN::_minimize_url eq 'unset') {
 		$Git::SVN::_minimize_url = 0;
@@ -736,10 +736,10 @@ sub populate_merge_info {
 			unless (defined($svnrev)) {
 				# Should have been caught be preflight check
 				fatal "merge cummit $d has ancestor $parent, but that change "
-                     ."does not have git-svn metadata!";
+                     ."does not have but-svn metadata!";
 			}
 			unless ($branchurl =~ /^\Q$rooturl\E(.*)/) {
-				fatal "cummit $parent git-svn metadata changed mid-run!";
+				fatal "cummit $parent but-svn metadata changed mid-run!";
 			}
 			my $branchpath = $1;
 
@@ -776,8 +776,8 @@ sub populate_merge_info {
 					# A child is missing SVN annotations...
 					# this might be OK, or might not be.
 					warn "W:child $irev is merged into revision "
-						 ."$d but does not have git-svn metadata. "
-						 ."This means git-svn cannot determine the "
+						 ."$d but does not have but-svn metadata. "
+						 ."This means but-svn cannot determine the "
 						 ."svn revision numbers to place into the "
 						 ."svn:mergeinfo property. You must ensure "
 						 ."a branch is entirely cummitted to "
@@ -849,9 +849,9 @@ sub dcummit_rebase {
 sub cmd_dcummit {
 	my $head = shift;
 	command_noisy(qw/update-index --refresh/);
-	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD --/) }
+	but_cmd_try { command_oneline(qw/diff-index --quiet HEAD --/) }
 		'Cannot dcummit with a dirty index.  cummit your changes first, '
-		. "or stash them with `git stash'.\n";
+		. "or stash them with `but stash'.\n";
 	$head ||= 'HEAD';
 
 	my $old_head;
@@ -949,7 +949,7 @@ sub cmd_dcummit {
 						# A parent is missing SVN annotations...
 						# abort the whole operation.
 						fatal "$parent is merged into revision $d, "
-							 ."but does not have git-svn metadata. "
+							 ."but does not have but-svn metadata. "
 							 ."Either dcummit the branch or use a "
 							 ."local cherry-pick, FF merge, or rebase "
 							 ."instead of an explicit merge cummit.";
@@ -958,7 +958,7 @@ sub cmd_dcummit {
 					unless ($paruuid eq $uuid) {
 						# Parent has SVN metadata from different repository
 						fatal "merge parent $parent for change $d has "
-							 ."git-svn uuid $paruuid, while current change "
+							 ."but-svn uuid $paruuid, while current change "
 							 ."has uuid $uuid!";
 					}
 
@@ -966,7 +966,7 @@ sub cmd_dcummit {
 						# This branch is very strange indeed.
 						fatal "merge parent $parent for $d is on branch "
 							 ."$branchurl, which is not under the "
-							 ."git-svn root $rooturl!";
+							 ."but-svn root $rooturl!";
 					}
 				}
 			}
@@ -1056,7 +1056,7 @@ sub cmd_dcummit {
 					  join("\n", @$linear_refs_), "\n",
 					  'If you are attempting to cummit ',
 					  "merges, try running:\n\t",
-					  'git rebase --interactive',
+					  'but rebase --interactive',
 					  '--rebase-merges ',
 					  $gs->refname,
 					  "\nBefore dcummitting";
@@ -1224,7 +1224,7 @@ sub mk_parent_dirs {
 }
 
 sub cmd_find_rev {
-	my $revision_or_hash = shift or die "SVN or git revision required ",
+	my $revision_or_hash = shift or die "SVN or but revision required ",
 	                                    "as a command-line argument\n";
 	my $result;
 	if ($revision_or_hash =~ /^r\d+$/) {
@@ -1328,9 +1328,9 @@ sub cmd_create_ignore {
 		# $path is of the form /path/to/dir/
 		$path = '.' . $path;
 		# SVN can have attributes on empty directories,
-		# which git won't track
+		# which but won't track
 		mkpath([$path]) unless -d $path;
-		my $ignore = $path . '.gitignore';
+		my $ignore = $path . '.butignore';
 		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
@@ -1431,7 +1431,7 @@ sub cmd_propset {
 			push @new_props, "$propname=$propval";
 		}
 	}
-	my $attrfile = "$dn/.gitattributes";
+	my $attrfile = "$dn/.butattributes";
 	open my $attrfh, '>>', $attrfile or die "Can't open $attrfile: $!\n";
 	# TODO: don't simply append here if $file already has svn-properties
 	my $new_props = join(';', @new_props);
@@ -1464,7 +1464,7 @@ sub cmd_multi_init {
 		$url = canonicalize_url($url);
 		init_subdir(@_);
 	}
-	do_git_init_db();
+	do_but_init_db();
 	if (defined $_trunk) {
 		$_trunk =~ s#^/+##;
 		my $trunk_ref = 'refs/remotes/' . $_prefix . 'trunk';
@@ -1507,7 +1507,7 @@ sub cmd_cummit_diff {
 	if (!defined $url) {
 		my $gs = eval { Git::SVN->new };
 		if (!$gs) {
-			fatal("Needed URL or usable git-svn --id in ",
+			fatal("Needed URL or usable but-svn --id in ",
 			      "the command-line\n", $usage);
 		}
 		$url = $gs->url;
@@ -1531,7 +1531,7 @@ sub cmd_cummit_diff {
 	if ($r eq 'HEAD') {
 		$r = $ra->get_latest_revnum;
 	} elsif ($r !~ /^\d+$/) {
-		die "revision argument: $r not understood by git-svn\n";
+		die "revision argument: $r not understood by but-svn\n";
 	}
 	my %ed_opts = ( r => $r,
 	                log => $_message,
@@ -1634,14 +1634,14 @@ sub cmd_info {
 	}
 
 	my ($lc_author, $lc_rev, $lc_date_utc);
-	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my @args = Git::SVN::Log::but_svn_log_cmd($rev, $rev, "--", $path);
 	my $log = command_output_pipe(@args);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
 		if (/^${esc_color}author (.+) <[^>]+> (\d+) ([\-\+]?\d+)$/o) {
 			$lc_author = $1;
-			$lc_date_utc = Git::SVN::Log::parse_git_date($2, $3);
-		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
+			$lc_date_utc = Git::SVN::Log::parse_but_date($2, $3);
+		} elsif (/^${esc_color}    (but-svn-id:.+)$/o) {
 			(undef, $lc_rev, undef) = ::extract_metadata($1);
 		}
 	}
@@ -1743,12 +1743,12 @@ sub post_fetch_checkout {
 	command_noisy(qw(update-ref HEAD), $gs->refname);
 	return unless verify_ref('HEAD^0');
 
-	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.git$#;
-	my $index = command_oneline(qw(rev-parse --git-path index));
+	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.but$#;
+	my $index = command_oneline(qw(rev-parse --but-path index));
 	return if -f $index;
 
 	return if command_oneline(qw/rev-parse --is-inside-work-tree/) eq 'false';
-	return if command_oneline(qw/rev-parse --is-inside-git-dir/) eq 'true';
+	return if command_oneline(qw/rev-parse --is-inside-but-dir/) eq 'true';
 	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
 	print STDERR "Checked out HEAD:\n  ",
 	             $gs->full_url, " r", $gs->last_rev, "\n";
@@ -1846,9 +1846,9 @@ sub get_tree_from_treeish {
 sub get_cummit_entry {
 	my ($treeish) = shift;
 	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
-	my @git_path = qw(rev-parse --git-path);
-	my $cummit_editmsg = command_oneline(@git_path, 'CUMMIT_EDITMSG');
-	my $cummit_msg = command_oneline(@git_path, 'CUMMIT_MSG');
+	my @but_path = qw(rev-parse --but-path);
+	my $cummit_editmsg = command_oneline(@but_path, 'CUMMIT_EDITMSG');
+	my $cummit_msg = command_oneline(@but_path, 'CUMMIT_MSG');
 	open my $log_fh, '>', $cummit_editmsg or croak $!;
 
 	my $type = command_oneline(qw/cat-file -t/, $treeish);
@@ -1863,7 +1863,7 @@ sub get_cummit_entry {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^$/);
 				$author = $1 if (/^author (.*>)/);
-			} elsif (/^git-svn-id: /) {
+			} elsif (/^but-svn-id: /) {
 				# skip this for now, we regenerate the
 				# correct one on re-fetch anyways
 				# TODO: set *:merge properties or like...
@@ -1935,7 +1935,7 @@ sub file_to_s {
 	return $ret;
 }
 
-# '<svn username> = real-name <email address>' mapping based on git-svnimport:
+# '<svn username> = real-name <email address>' mapping based on but-svnimport:
 sub load_authors {
 	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
 	my $log = $cmd eq 'log';
@@ -1952,8 +1952,8 @@ sub load_authors {
 	close $authors or croak $!;
 }
 
-# convert GetOpt::Long specs for use by git-config
-sub read_git_config {
+# convert GetOpt::Long specs for use by but-config
+sub read_but_config {
 	my $opts = shift;
 	my @config_only;
 	foreach my $o (keys %$opts) {
@@ -1964,7 +1964,7 @@ sub read_git_config {
 		my $v = $opts->{$o};
 		my ($key) = ($o =~ /^([a-zA-Z\-]+)/);
 		$key =~ s/-//g;
-		my $arg = 'git config';
+		my $arg = 'but config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
 		$arg .= ' --bool' if ($o !~ /[:=][sfi]$/);
 		if (ref $v eq 'ARRAY') {
@@ -1982,24 +1982,24 @@ sub read_git_config {
 }
 
 sub load_object_format {
-	chomp(my $hash = `git config --get extensions.objectformat`);
+	chomp(my $hash = `but config --get extensions.objectformat`);
 	$::oid_length = 64 if $hash eq 'sha256';
 }
 
 sub extract_metadata {
 	my $id = shift or return (undef, undef, undef);
-	my ($url, $rev, $uuid) = ($id =~ /^\s*git-svn-id:\s+(.*)\@(\d+)
+	my ($url, $rev, $uuid) = ($id =~ /^\s*but-svn-id:\s+(.*)\@(\d+)
 							\s([a-f\d\-]+)$/ix);
 	if (!defined $rev || !$uuid || !$url) {
 		# some of the original repositories I made had
 		# identifiers like this:
-		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/i);
+		($rev, $uuid) = ($id =~/^\s*but-svn-id:\s(\d+)\@([a-f\d\-]+)/i);
 	}
 	return ($url, $rev, $uuid);
 }
 
 sub cmt_metadata {
-	return extract_metadata((grep(/^git-svn-id: /,
+	return extract_metadata((grep(/^but-svn-id: /,
 		command(qw/cat-file cummit/, shift)))[-1]);
 }
 
@@ -2021,7 +2021,7 @@ sub cmt_sha2rev_batch {
 				$first = 0;
 				$size = $1;
 				next;
-			} elsif ($line =~ /^(git-svn-id: )/) {
+			} elsif ($line =~ /^(but-svn-id: )/) {
 				my (undef, $rev, undef) =
 				                      extract_metadata($line);
 				$s2r{$sha} = $rev;
@@ -2049,7 +2049,7 @@ sub working_head_info {
 			$hash = $1;
 			next;
 		}
-		next unless s{^\s*(git-svn-id:)}{$1};
+		next unless s{^\s*(but-svn-id:)}{$1};
 		my ($url, $rev, $uuid) = extract_metadata($_);
 		if (defined $url && defined $rev) {
 			next if $max{$url} and $max{$url} < $rev;
@@ -2102,7 +2102,7 @@ sub linearize_history {
 			    "has no parent cummit, and therefore ",
 			    "nothing to diff against.\n",
 			    "You should be working from a repository ",
-			    "originally created by git-svn\n";
+			    "originally created by but-svn\n";
 		}
 		if ($fp_a ne $fp_b) {
 			die "$c~1 = $fp_a, however parsing cummit $c ",

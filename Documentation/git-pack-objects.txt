@@ -1,15 +1,15 @@
-git-pack-objects(1)
+but-pack-objects(1)
 ===================
 
 NAME
 ----
-git-pack-objects - Create a packed archive of objects
+but-pack-objects - Create a packed archive of objects
 
 
 SYNOPSIS
 --------
 [verse]
-'git pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
+'but pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
@@ -39,7 +39,7 @@ archive (.pack) in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
 enables Git to read from the pack archive.
 
-The 'git unpack-objects' command can read the packed archive and
+The 'but unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
 one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
@@ -63,7 +63,7 @@ base-name::
 --revs::
 	Read the revision arguments from the standard input, instead of
 	individual object names.  The revision arguments are processed
-	the same way as 'git rev-list' with the `--objects` flag
+	the same way as 'but rev-list' with the `--objects` flag
 	uses its `cummit` arguments to build the list of objects it
 	outputs.  The objects on the resulting list are packed.
 	Besides revisions, `--not` or `--shallow <SHA-1>` lines are
@@ -224,8 +224,8 @@ depth is 4095.
 +
 Note: A thin pack violates the packed archive format by omitting
 required objects and is thus unusable by Git without making it
-self-contained. Use `git index-pack --fix-thin`
-(see linkgit:git-index-pack[1]) to restore the self-contained property.
+self-contained. Use `but index-pack --fix-thin`
+(see linkbut:but-index-pack[1]) to restore the self-contained property.
 
 --shallow::
 	Optimize a pack that will be provided to a client with a shallow
@@ -236,17 +236,17 @@ self-contained. Use `git index-pack --fix-thin`
 	A packed archive can express the base object of a delta as
 	either a 20-byte object name or as an offset in the
 	stream, but ancient versions of Git don't understand the
-	latter.  By default, 'git pack-objects' only uses the
+	latter.  By default, 'but pack-objects' only uses the
 	former format for better compatibility.  This option
 	allows the command to use the latter format for
 	compactness.  Depending on the average delta chain
 	length, this option typically shrinks the resulting
 	packfile by 3-5 per-cent.
 +
-Note: Porcelain commands such as `git gc` (see linkgit:git-gc[1]),
-`git repack` (see linkgit:git-repack[1]) pass this option by default
+Note: Porcelain commands such as `but gc` (see linkbut:but-gc[1]),
+`but repack` (see linkbut:but-repack[1]) pass this option by default
 in modern Git when they put objects in your repository into pack files.
-So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
+So does `but bundle` (see linkbut:but-bundle[1]) when it creates a bundle.
 
 --threads=<n>::
 	Specifies the number of threads to spawn when searching for best
@@ -269,7 +269,7 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 
 --filter=<filter-spec>::
 	Requires `--stdout`.  Omits certain objects (usually blobs) from
-	the resulting packfile.  See linkgit:git-rev-list[1] for valid
+	the resulting packfile.  See linkbut:but-rev-list[1] for valid
 	`<filter-spec>` forms.
 
 --no-filter::
@@ -415,7 +415,7 @@ CONFIGURATION
 -------------
 
 Various configuration variables affect packing, see
-linkgit:git-config[1] (search for "pack" and "delta").
+linkbut:but-config[1] (search for "pack" and "delta").
 
 Notably, delta compression is not used on objects larger than the
 `core.bigFileThreshold` configuration variable and on files with the
@@ -423,10 +423,10 @@ attribute `delta` set to false.
 
 SEE ALSO
 --------
-linkgit:git-rev-list[1]
-linkgit:git-repack[1]
-linkgit:git-prune-packed[1]
+linkbut:but-rev-list[1]
+linkbut:but-repack[1]
+linkbut:but-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

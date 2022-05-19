@@ -11,7 +11,7 @@ int fsmonitor_ipc__is_supported(void);
 
 /*
  * Returns the pathname to the IPC named pipe or Unix domain socket
- * where a `git-fsmonitor--daemon` process will listen.  This is a
+ * where a `but-fsmonitor--daemon` process will listen.  This is a
  * per-worktree value.
  *
  * Returns NULL if the daemon is not supported on this platform.
@@ -19,13 +19,13 @@ int fsmonitor_ipc__is_supported(void);
 const char *fsmonitor_ipc__get_path(void);
 
 /*
- * Try to determine whether there is a `git-fsmonitor--daemon` process
+ * Try to determine whether there is a `but-fsmonitor--daemon` process
  * listening on the IPC pipe/socket.
  */
 enum ipc_active_state fsmonitor_ipc__get_state(void);
 
 /*
- * Connect to a `git-fsmonitor--daemon` process via simple-ipc
+ * Connect to a `but-fsmonitor--daemon` process via simple-ipc
  * and ask for the set of changed files since the given token.
  *
  * Spawn a daemon process in the background if necessary.
@@ -36,7 +36,7 @@ int fsmonitor_ipc__send_query(const char *since_token,
 			      struct strbuf *answer);
 
 /*
- * Connect to a `git-fsmonitor--daemon` process via simple-ipc and
+ * Connect to a `but-fsmonitor--daemon` process via simple-ipc and
  * send a command verb.  If no daemon is available, we DO NOT try to
  * start one.
  *

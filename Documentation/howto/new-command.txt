@@ -13,11 +13,11 @@ Runtime environment
 -------------------
 
 Git subcommands are standalone executables that live in the Git exec
-path, normally /usr/lib/git-core.  The git executable itself is a
+path, normally /usr/lib/but-core.  The but executable itself is a
 thin wrapper that knows where the subcommands live, and runs them by
 passing command-line arguments to them.
 
-(If "git foo" is not found in the Git exec path, the wrapper
+(If "but foo" is not found in the Git exec path, the wrapper
 will look in the rest of your $PATH for it.  Thus, it's possible
 to write local Git extensions that don't live in system space.)
 
@@ -41,9 +41,9 @@ installer before we can be confident people in that environment
 won't experience an unacceptably large loss of capability.
 
 C commands are normally written as single modules, named after the
-command, that link a collection of functions called libgit.  Thus,
-your command 'git-foo' would normally be implemented as a single
-"git-foo.c" (or "builtin/foo.c" if it is to be linked to the main
+command, that link a collection of functions called libbut.  Thus,
+your command 'but-foo' would normally be implemented as a single
+"but-foo.c" (or "builtin/foo.c" if it is to be linked to the main
 binary); this organization makes it easy for people reading the code
 to find things.
 
@@ -84,7 +84,7 @@ EXTRA_PROGRAMS, SCRIPT_SH, SCRIPT_PERL or SCRIPT_PYTHON.
 3. Drop its test in the t directory.
 
 4. If your command is implemented in an interpreted language with a
-p-code intermediate form, make sure .gitignore in the main directory
+p-code intermediate form, make sure .butignore in the main directory
 includes a pattern entry that ignores such files.  Python .pyc and
 .pyo files will already be covered.
 
@@ -96,7 +96,7 @@ that categorizes commands by type, so they can be listed in appropriate
 subsections in the documentation's summary command list.  Add an entry
 for yours.  To understand the categories, look at command-list.txt
 in the main directory.  If the new command is part of the typical Git
-workflow and you believe it common enough to be mentioned in 'git help',
+workflow and you believe it common enough to be mentioned in 'but help',
 map this command to a common group in the column [common].
 
 7. Give the maintainer one paragraph to include in the RelNotes file

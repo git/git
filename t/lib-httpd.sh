@@ -31,13 +31,13 @@
 
 if test -n "$NO_CURL"
 then
-	skip_all='skipping test, git built without http support'
+	skip_all='skipping test, but built without http support'
 	test_done
 fi
 
 if test -n "$NO_EXPAT" && test -n "$LIB_HTTPD_DAV"
 then
-	skip_all='skipping test, git built without expat support'
+	skip_all='skipping test, but built without expat support'
 	test_done
 fi
 
@@ -203,16 +203,16 @@ test_http_push_nonff () {
 
 	test_expect_success 'non-fast-forward push fails' '
 		cd "$REMOTE_REPO" &&
-		HEAD=$(git rev-parse --verify HEAD) &&
+		HEAD=$(but rev-parse --verify HEAD) &&
 
 		cd "$LOCAL_REPO" &&
-		git checkout $BRANCH &&
+		but checkout $BRANCH &&
 		echo "changed" > path2 &&
-		git cummit -a -m path2 --amend &&
+		but cummit -a -m path2 --amend &&
 
-		test_must_fail git push -v origin >output 2>&1 &&
+		test_must_fail but push -v origin >output 2>&1 &&
 		(cd "$REMOTE_REPO" &&
-		 test $HEAD = $(git rev-parse --verify HEAD))
+		 test $HEAD = $(but rev-parse --verify HEAD))
 	'
 
 	test_expect_success 'non-fast-forward push show ref status' '
@@ -224,17 +224,17 @@ test_http_push_nonff () {
 	'
 
 	test_expect_${EXPECT_CAS_RESULT} 'force with lease aka cas' '
-		HEAD=$(	cd "$REMOTE_REPO" && git rev-parse --verify HEAD ) &&
+		HEAD=$(	cd "$REMOTE_REPO" && but rev-parse --verify HEAD ) &&
 		test_when_finished '\''
-			(cd "$REMOTE_REPO" && git update-ref HEAD "$HEAD")
+			(cd "$REMOTE_REPO" && but update-ref HEAD "$HEAD")
 		'\'' &&
 		(
 			cd "$LOCAL_REPO" &&
-			git push -v --force-with-lease=$BRANCH:$HEAD origin
+			but push -v --force-with-lease=$BRANCH:$HEAD origin
 		) &&
-		git rev-parse --verify "$BRANCH" >expect &&
+		but rev-parse --verify "$BRANCH" >expect &&
 		(
-			cd "$REMOTE_REPO" && git rev-parse --verify HEAD
+			cd "$REMOTE_REPO" && but rev-parse --verify HEAD
 		) >actual &&
 		test_cmp expect actual
 	'

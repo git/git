@@ -12,8 +12,8 @@ test_expect_success 'setup' '
 	mkdir -p dir1 &&
 	touch dir1/file1.txt &&
 	echo testing >dir1/file2.txt &&
-	git add . &&
-	git cummit -m "initial"
+	but add . &&
+	but cummit -m "initial"
 '
 
 test_expect_success 'test status, add, cummit, others trigger hook without flags set' '
@@ -26,12 +26,12 @@ test_expect_success 'test status, add, cummit, others trigger hook without flags
 			echo "Invalid combination of flags passed to hook; updated_skipworktree is set." >testfailure
 			exit 1
 		fi
-		if test -f ".git/index.lock"; then
-			echo ".git/index.lock exists" >testfailure
+		if test -f ".but/index.lock"; then
+			echo ".but/index.lock exists" >testfailure
 			exit 3
 		fi
-		if ! test -f ".git/index"; then
-			echo ".git/index does not exist" >testfailure
+		if ! test -f ".but/index"; then
+			echo ".but/index does not exist" >testfailure
 			exit 3
 		fi
 		echo "success" >testsuccess
@@ -41,22 +41,22 @@ test_expect_success 'test status, add, cummit, others trigger hook without flags
 	touch dir2/file2.txt &&
 	: force index to be dirty &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git status &&
+	but status &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git add . &&
+	but add . &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git cummit -m "second" &&
+	but cummit -m "second" &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git checkout -- dir1/file1.txt &&
+	but checkout -- dir1/file1.txt &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git update-index &&
+	but update-index &&
 	test_path_is_missing testsuccess &&
 	test_path_is_missing testfailure &&
-	git reset --soft &&
+	but reset --soft &&
 	test_path_is_missing testsuccess &&
 	test_path_is_missing testfailure
 '
@@ -72,12 +72,12 @@ test_expect_success 'test checkout and reset trigger the hook' '
 			exit 2
 		fi
 		if test "$1" -eq 1; then
-			if test -f ".git/index.lock"; then
-				echo "updated_workdir set but .git/index.lock exists" >testfailure
+			if test -f ".but/index.lock"; then
+				echo "updated_workdir set but .but/index.lock exists" >testfailure
 				exit 3
 			fi
-			if ! test -f ".git/index"; then
-				echo "updated_workdir set but .git/index does not exist" >testfailure
+			if ! test -f ".but/index"; then
+				echo "updated_workdir set but .but/index does not exist" >testfailure
 				exit 3
 			fi
 		else
@@ -88,18 +88,18 @@ test_expect_success 'test checkout and reset trigger the hook' '
 	EOF
 	: force index to be dirty &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git checkout main &&
+	but checkout main &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git checkout HEAD &&
+	but checkout HEAD &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git reset --hard &&
+	but reset --hard &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git checkout -B test &&
+	but checkout -B test &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure
 '
@@ -115,12 +115,12 @@ test_expect_success 'test reset --mixed and update-index triggers the hook' '
 			exit 2
 		fi
 		if test "$2" -eq 1; then
-			if test -f ".git/index.lock"; then
-				echo "updated_skipworktree set but .git/index.lock exists" >testfailure
+			if test -f ".but/index.lock"; then
+				echo "updated_skipworktree set but .but/index.lock exists" >testfailure
 				exit 3
 			fi
-			if ! test -f ".git/index"; then
-				echo "updated_skipworktree set but .git/index does not exist" >testfailure
+			if ! test -f ".but/index"; then
+				echo "updated_skipworktree set but .but/index does not exist" >testfailure
 				exit 3
 			fi
 		else
@@ -131,15 +131,15 @@ test_expect_success 'test reset --mixed and update-index triggers the hook' '
 	EOF
 	: force index to be dirty &&
 	test-tool chmtime +60 dir1/file1.txt &&
-	git reset --mixed --quiet HEAD~1 &&
+	but reset --mixed --quiet HEAD~1 &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git hash-object -w --stdin <dir1/file2.txt >expect &&
-	git update-index --cacheinfo 100644 "$(cat expect)" dir1/file1.txt &&
+	but hash-object -w --stdin <dir1/file2.txt >expect &&
+	but update-index --cacheinfo 100644 "$(cat expect)" dir1/file1.txt &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git update-index --skip-worktree dir1/file2.txt &&
-	git update-index --remove dir1/file2.txt &&
+	but update-index --skip-worktree dir1/file2.txt &&
+	but update-index --remove dir1/file2.txt &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure
 '

@@ -81,7 +81,7 @@ static int update_info_file(char *path,
 	};
 
 	safe_create_leading_directories(path);
-	fd = git_mkstemp_mode(tmp, 0666);
+	fd = but_mkstemp_mode(tmp, 0666);
 	if (fd < 0)
 		goto out;
 	to_close = uic.cur_fp = fdopen(fd, "w");
@@ -174,7 +174,7 @@ static int generate_info_refs(struct update_info_ctx *uic)
 
 static int update_info_refs(int force)
 {
-	char *path = git_pathdup("info/refs");
+	char *path = but_pathdup("info/refs");
 	int ret = update_info_file(path, generate_info_refs, force);
 	free(path);
 	return ret;
@@ -182,7 +182,7 @@ static int update_info_refs(int force)
 
 /* packs */
 static struct pack_info {
-	struct packed_git *p;
+	struct packed_but *p;
 	int old_num;
 	int new_num;
 } **info;
@@ -192,7 +192,7 @@ static struct pack_info *find_pack_by_name(const char *name)
 {
 	int i;
 	for (i = 0; i < num_pack; i++) {
-		struct packed_git *p = info[i]->p;
+		struct packed_but *p = info[i]->p;
 		if (!strcmp(pack_basename(p), name))
 			return info[i];
 	}
@@ -283,7 +283,7 @@ static int compare_info(const void *a_, const void *b_)
 
 static void init_pack_info(const char *infofile, int force)
 {
-	struct packed_git *p;
+	struct packed_but *p;
 	int stale;
 	int i;
 	size_t alloc = 0;
@@ -362,7 +362,7 @@ int update_server_info(int force)
 	errs = errs | update_info_packs(force);
 
 	/* remove leftover rev-cache file if there is any */
-	unlink_or_warn(git_path("info/rev-cache"));
+	unlink_or_warn(but_path("info/rev-cache"));
 
 	return errs;
 }

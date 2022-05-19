@@ -100,9 +100,9 @@ test_expect_success 'iterate' '
 	NULL
 	NULL
 	NULL
-	$(git rev-parse one) 1
-	$(git rev-parse two) 2
-	$(git rev-parse three) 3
+	$(but rev-parse one) 1
+	$(but rev-parse two) 2
+	$(but rev-parse three) 3
 	EOF
 
 	sort <actual.raw >actual &&

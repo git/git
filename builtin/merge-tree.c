@@ -8,7 +8,7 @@
 #include "exec-cmd.h"
 #include "merge-blobs.h"
 
-static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
+static const char merge_tree_usage[] = "but merge-tree <base-tree> <branch1> <branch2>";
 
 struct merge_list {
 	struct merge_list *next;
@@ -308,7 +308,7 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
  *    where not all of the 1/2/3 lines may exist, of course.
  *
  * The successful merge rules are the same as for the three-way merge
- * in git-read-tree.
+ * in but-read-tree.
  */
 static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *info)
 {

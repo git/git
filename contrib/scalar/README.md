@@ -18,7 +18,7 @@ core Git.
 ## Roadmap
 
 The idea is to populate this directory via incremental patch series and
-eventually move to a top-level directory next to `gitk-git/` and to `git-gui/`. The
+eventually move to a top-level directory next to `butk-but/` and to `but-gui/`. The
 current plan involves the following patch series:
 
 - `scalar-the-beginning`: The initial patch series which sets up
@@ -49,7 +49,7 @@ current plan involves the following patch series:
   complete and is verified in CI builds, let's offer to install it.
 
 - `move-scalar-to-toplevel`: Now that Scalar is complete, let's move it next to
-  `gitk-git/` and to `git-gui/`, making it a top-level command.
+  `butk-but/` and to `but-gui/`, making it a top-level command.
 
 The following two patch series exist in Microsoft's fork of Git and are
 publicly available. There is no current plan to upstream them, not because I

@@ -276,7 +276,7 @@ static void read_remotes_file(struct remote_state *remote_state,
 			      struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(git_path("remotes/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(but_path("remotes/%s", remote->name), "r");
 
 	if (!f)
 		return;
@@ -304,7 +304,7 @@ static void read_branches_file(struct remote_state *remote_state,
 {
 	char *frag;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(git_path("branches/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(but_path("branches/%s", remote->name), "r");
 
 	if (!f)
 		return;
@@ -330,14 +330,14 @@ static void read_branches_file(struct remote_state *remote_state,
 	if (frag)
 		*(frag++) = '\0';
 	else
-		frag = (char *)git_default_branch_name(0);
+		frag = (char *)but_default_branch_name(0);
 
 	add_url_alias(remote_state, remote, strbuf_detach(&buf, NULL));
 	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
 			frag, remote->name);
 
 	/*
-	 * Cogito compatible push: push current HEAD to remote #branch
+	 * Cobuto compatible push: push current HEAD to remote #branch
 	 * (master if missing)
 	 */
 	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
@@ -358,9 +358,9 @@ static int handle_config(const char *key, const char *value, void *cb)
 			return 0;
 		branch = make_branch(remote_state, name, namelen);
 		if (!strcmp(subkey, "remote")) {
-			return git_config_string(&branch->remote_name, key, value);
+			return but_config_string(&branch->remote_name, key, value);
 		} else if (!strcmp(subkey, "pushremote")) {
-			return git_config_string(&branch->pushremote_name, key, value);
+			return but_config_string(&branch->pushremote_name, key, value);
 		} else if (!strcmp(subkey, "merge")) {
 			if (!value)
 				return config_error_nonbool(key);
@@ -392,7 +392,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 
 	/* Handle remote.* variables */
 	if (!name && !strcmp(subkey, "pushdefault"))
-		return git_config_string(&remote_state->pushremote_name, key,
+		return but_config_string(&remote_state->pushremote_name, key,
 					 value);
 
 	if (!name)
@@ -409,40 +409,40 @@ static int handle_config(const char *key, const char *value, void *cb)
 	    current_config_scope() == CONFIG_SCOPE_WORKTREE)
 		remote->configured_in_repo = 1;
 	if (!strcmp(subkey, "mirror"))
-		remote->mirror = git_config_bool(key, value);
+		remote->mirror = but_config_bool(key, value);
 	else if (!strcmp(subkey, "skipdefaultupdate"))
-		remote->skip_default_update = git_config_bool(key, value);
+		remote->skip_default_update = but_config_bool(key, value);
 	else if (!strcmp(subkey, "skipfetchall"))
-		remote->skip_default_update = git_config_bool(key, value);
+		remote->skip_default_update = but_config_bool(key, value);
 	else if (!strcmp(subkey, "prune"))
-		remote->prune = git_config_bool(key, value);
+		remote->prune = but_config_bool(key, value);
 	else if (!strcmp(subkey, "prunetags"))
-		remote->prune_tags = git_config_bool(key, value);
+		remote->prune_tags = but_config_bool(key, value);
 	else if (!strcmp(subkey, "url")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		add_url(remote, v);
 	} else if (!strcmp(subkey, "pushurl")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		add_pushurl(remote, v);
 	} else if (!strcmp(subkey, "push")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		refspec_append(&remote->push, v);
 		free((char *)v);
 	} else if (!strcmp(subkey, "fetch")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		refspec_append(&remote->fetch, v);
 		free((char *)v);
 	} else if (!strcmp(subkey, "receivepack")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		if (!remote->receivepack)
 			remote->receivepack = v;
@@ -450,7 +450,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 			error(_("more than one receivepack given, using the first"));
 	} else if (!strcmp(subkey, "uploadpack")) {
 		const char *v;
-		if (git_config_string(&v, key, value))
+		if (but_config_string(&v, key, value))
 			return -1;
 		if (!remote->uploadpack)
 			remote->uploadpack = v;
@@ -462,13 +462,13 @@ static int handle_config(const char *key, const char *value, void *cb)
 		else if (!strcmp(value, "--tags"))
 			remote->fetch_tags = 2;
 	} else if (!strcmp(subkey, "proxy")) {
-		return git_config_string((const char **)&remote->http_proxy,
+		return but_config_string((const char **)&remote->http_proxy,
 					 key, value);
 	} else if (!strcmp(subkey, "proxyauthmethod")) {
-		return git_config_string((const char **)&remote->http_proxy_authmethod,
+		return but_config_string((const char **)&remote->http_proxy_authmethod,
 					 key, value);
 	} else if (!strcmp(subkey, "vcs")) {
-		return git_config_string(&remote->foreign_vcs, key, value);
+		return but_config_string(&remote->foreign_vcs, key, value);
 	}
 	return 0;
 }
@@ -627,7 +627,7 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 				   &name_given);
 
 	ret = make_remote(remote_state, name, 0);
-	if (valid_remote_nick(name) && have_git_dir()) {
+	if (valid_remote_nick(name) && have_but_dir()) {
 		if (!valid_remote(ret))
 			read_remotes_file(remote_state, ret);
 		if (!valid_remote(ret))
@@ -1073,7 +1073,7 @@ int count_refspec_match(const char *pattern,
 		 * heads or tags, and did not specify the pattern
 		 * in full (e.g. "refs/remotes/origin/master") or at
 		 * least from the toplevel (e.g. "remotes/origin/master");
-		 * otherwise "git push $URL master" would result in
+		 * otherwise "but push $URL master" would result in
 		 * ambiguity between remotes/origin/master and heads/master
 		 * at the remote site.
 		 */
@@ -1204,7 +1204,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 	enum object_type type;
 
 	/*
-	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
+	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "but push
 	 * <remote> <src>:<dst>" push, and "being pushed ('%s')" is
 	 * the <src>.
 	 */
@@ -2236,7 +2236,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			base);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+				_("  (use \"but branch --unset-upstream\" to fixup)\n"));
 	} else if (!sti) {
 		strbuf_addf(sb,
 			_("Your branch is up to date with '%s'.\n"),
@@ -2247,7 +2247,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			    base);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
-				    "git status --ahead-behind");
+				    "but status --ahead-behind");
 	} else if (!theirs) {
 		strbuf_addf(sb,
 			Q_("Your branch is ahead of '%s' by %d cummit.\n",
@@ -2256,7 +2256,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			base, ours);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git push\" to publish your local cummits)\n"));
+				_("  (use \"but push\" to publish your local cummits)\n"));
 	} else if (!ours) {
 		strbuf_addf(sb,
 			Q_("Your branch is behind '%s' by %d cummit, "
@@ -2267,7 +2267,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			base, theirs);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git pull\" to update your local branch)\n"));
+				_("  (use \"but pull\" to update your local branch)\n"));
 	} else {
 		strbuf_addf(sb,
 			Q_("Your branch and '%s' have diverged,\n"
@@ -2280,7 +2280,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			base, ours, theirs);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
+				_("  (use \"but pull\" to merge the remote branch into yours)\n"));
 	}
 	free(base);
 	return 1;
@@ -2333,7 +2333,7 @@ struct ref *guess_remote_head(const struct ref *head,
 	/* If a remote branch exists with the default branch name, let's use it. */
 	if (!all) {
 		char *ref = xstrfmt("refs/heads/%s",
-				    git_default_branch_name(0));
+				    but_default_branch_name(0));
 
 		r = find_ref_by_name(refs, ref);
 		free(ref);

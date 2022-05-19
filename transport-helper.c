@@ -51,7 +51,7 @@ struct helper_data {
 	/* Transport options for fetch-pack/send-pack (should one of
 	 * those be invoked).
 	 */
-	struct git_transport_options transport_options;
+	struct but_transport_options transport_options;
 };
 
 static void sendline(struct helper_data *helper, struct strbuf *buffer)
@@ -131,12 +131,12 @@ static struct child_process *get_helper(struct transport *transport)
 	strvec_pushf(&helper->args, "remote-%s", data->name);
 	strvec_push(&helper->args, transport->remote->name);
 	strvec_push(&helper->args, remove_ext_force(transport->url));
-	helper->git_cmd = 1;
+	helper->but_cmd = 1;
 	helper->silent_exec_failure = 1;
 
-	if (have_git_dir())
+	if (have_but_dir())
 		strvec_pushf(&helper->env_array, "%s=%s",
-			     GIT_DIR_ENVIRONMENT, get_git_dir());
+			     GIT_DIR_ENVIRONMENT, get_but_dir());
 
 	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
@@ -447,7 +447,7 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 		cat_blob_fd = xdup(helper->in);
 		strvec_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
 	}
-	fastimport->git_cmd = 1;
+	fastimport->but_cmd = 1;
 
 	code = start_command(fastimport);
 	return code;
@@ -478,7 +478,7 @@ static int get_exporter(struct transport *transport,
 	for (i = 0; i < revlist_args->nr; i++)
 		strvec_push(&fastexport->args, revlist_args->items[i].string);
 
-	fastexport->git_cmd = 1;
+	fastexport->but_cmd = 1;
 	return start_command(fastexport);
 }
 
@@ -529,7 +529,7 @@ static int fetch_with_import(struct transport *transport,
 	 * reasons we default to the equivalent of *:*.)
 	 *
 	 * Store the result in to_fetch[i].old_sha1.  Callers such
-	 * as "git fetch" can use the value to write feedback to the
+	 * as "but fetch" can use the value to write feedback to the
 	 * terminal, populate FETCH_HEAD, and determine what new value
 	 * should be written to peer_ref if the update is a
 	 * fast-forward or this is a forced update.
@@ -623,7 +623,7 @@ static int process_connect_service(struct transport *transport,
 		ret = run_connect(transport, &cmdbuf);
 	} else if (data->stateless_connect &&
 		   (get_protocol_version_config() == protocol_v2) &&
-		   !strcmp("git-upload-pack", name)) {
+		   !strcmp("but-upload-pack", name)) {
 		strbuf_addf(&cmdbuf, "stateless-connect %s\n", name);
 		ret = run_connect(transport, &cmdbuf);
 		if (ret)
@@ -641,7 +641,7 @@ static int process_connect(struct transport *transport,
 	const char *name;
 	const char *exec;
 
-	name = for_push ? "git-receive-pack" : "git-upload-pack";
+	name = for_push ? "but-receive-pack" : "but-upload-pack";
 	if (for_push)
 		exec = data->transport_options.receivepack;
 	else
@@ -1431,9 +1431,9 @@ static int udt_do_write(struct unidirectional_transfer *t)
 
 /* State of bidirectional transfer loop. */
 struct bidirectional_transfer_state {
-	/* Direction from program to git. */
+	/* Direction from program to but. */
 	struct unidirectional_transfer ptg;
-	/* Direction from git to program. */
+	/* Direction from but to program. */
 	struct unidirectional_transfer gtp;
 };
 
@@ -1495,7 +1495,7 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 		die(_("can't start thread for copying data: %s"), strerror(err));
 
 	ret |= tloop_join(gtp_thread, "Git to program copy");
-	ret |= tloop_join(ptg_thread, "Program to git copy");
+	ret |= tloop_join(ptg_thread, "Program to but copy");
 	return ret;
 }
 #else
@@ -1548,7 +1548,7 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 	pid_t pid1, pid2;
 	int ret = 0;
 
-	/* Fork thread #1: git to program. */
+	/* Fork thread #1: but to program. */
 	pid1 = fork();
 	if (pid1 < 0)
 		die_errno(_("can't start thread for copying data"));
@@ -1557,7 +1557,7 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 		exit(udt_copy_task_routine(&s->gtp) ? 0 : 1);
 	}
 
-	/* Fork thread #2: program to git. */
+	/* Fork thread #2: program to but. */
 	pid2 = fork();
 	if (pid2 < 0)
 		die_errno(_("can't start thread for copying data"));
@@ -1573,7 +1573,7 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 	udt_kill_transfer(&s->gtp);
 	udt_kill_transfer(&s->ptg);
 	ret |= tloop_join(pid1, "Git to program copy");
-	ret |= tloop_join(pid2, "Program to git copy");
+	ret |= tloop_join(pid2, "Program to but copy");
 	return ret;
 }
 #endif

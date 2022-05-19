@@ -11,12 +11,12 @@ TEST_PASSES_SANITIZE_LEAK=true
 RUN="test-tool ref-store submodule:sub"
 
 test_expect_success 'setup' '
-	git init sub &&
+	but init sub &&
 	(
 		cd sub &&
 		test_cummit first &&
-		git checkout -b new-main &&
-		git tag -a -m new-tag new-tag HEAD
+		but checkout -b new-main &&
+		but tag -a -m new-tag new-tag HEAD
 	)
 '
 
@@ -52,7 +52,7 @@ test_expect_success 'for_each_ref() is sorted' '
 '
 
 test_expect_success 'resolve_ref(main)' '
-	SHA1=`git -C sub rev-parse main` &&
+	SHA1=`but -C sub rev-parse main` &&
 	echo "$SHA1 refs/heads/main 0x0" >expected &&
 	$RUN resolve-ref refs/heads/main 0 >actual &&
 	test_cmp expected actual

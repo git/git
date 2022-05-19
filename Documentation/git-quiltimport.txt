@@ -1,15 +1,15 @@
-git-quiltimport(1)
+but-quiltimport(1)
 ==================
 
 NAME
 ----
-git-quiltimport - Applies a quilt patchset onto the current branch
+but-quiltimport - Applies a quilt patchset onto the current branch
 
 
 SYNOPSIS
 --------
 [verse]
-'git quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
+'but quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
 		[--series <file>] [--keep-non-patch]
 
 
@@ -57,8 +57,8 @@ or the value of the `$QUILT_SERIES` environment
 variable.
 
 --keep-non-patch::
-	Pass `-b` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-b` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,20 +1,20 @@
-gitfaq(7)
+butfaq(7)
 =========
 
 NAME
 ----
-gitfaq - Frequently asked questions about using Git
+butfaq - Frequently asked questions about using Git
 
 SYNOPSIS
 --------
-gitfaq
+butfaq
 
 DESCRIPTION
 -----------
 
 The examples in this FAQ assume a standard POSIX shell, like `bash` or `dash`,
 and a user, A U Thor, who has the account `author` on the hosting provider
-`git.example.org`.
+`but.example.org`.
 
 Configuration
 -------------
@@ -27,7 +27,7 @@ What should I put in `user.name`?::
 	you make.
 +
 This configuration doesn't have any effect on authenticating to remote services;
-for that, see `credential.username` in linkgit:git-config[1].
+for that, see `credential.username` in linkbut:but-config[1].
 
 [[http-postbuffer]]
 What does `http.postBuffer` really do?::
@@ -71,7 +71,7 @@ export VISUAL=nano
 +
 If you want to configure an editor specifically for Git, you can either set the
 `core.editor` configuration value or the `GIT_EDITOR` environment variable.  You
-can see linkgit:git-var[1] for details on the order in which these options are
+can see linkbut:but-var[1] for details on the order in which these options are
 consulted.
 +
 Note that in all cases, the editor value will be passed to the shell, so any
@@ -118,7 +118,7 @@ exclamation point.  If your password or token were stored in the `GIT_TOKEN`,
 you could run the following command to set your credential helper:
 +
 ----
-$ git config credential.helper \
+$ but config credential.helper \
 	'!f() { echo username=author; echo "password=$GIT_TOKEN"; };f'
 ----
 
@@ -132,21 +132,21 @@ How do I change the password or token I've saved in my credential manager?::
 	and the hostname):
 +
 ----
-$ echo url=https://author@git.example.org | git credential reject
+$ echo url=https://author@but.example.org | but credential reject
 ----
 
 [[multiple-accounts-http]]
 How do I use multiple accounts with the same hosting provider using HTTP?::
 	Usually the easiest way to distinguish between these accounts is to use
 	the username in the URL.  For example, if you have the accounts `author`
-	and `cummitter` on `git.example.org`, you can use the URLs
-	https://author@git.example.org/org1/project1.git and
-	https://cummitter@git.example.org/org2/project2.git.  This way, when you
+	and `cummitter` on `but.example.org`, you can use the URLs
+	https://author@but.example.org/org1/project1.but and
+	https://cummitter@but.example.org/org2/project2.but.  This way, when you
 	use a credential helper, it will automatically try to look up the
 	correct credentials for your account.  If you already have a remote set
-	up, you can change the URL with something like `git remote set-url
-	origin https://author@git.example.org/org1/project1.git` (see
-	linkgit:git-remote[1] for details).
+	up, you can change the URL with something like `but remote set-url
+	origin https://author@but.example.org/org1/project1.but` (see
+	linkbut:but-remote[1] for details).
 
 [[multiple-accounts-ssh]]
 How do I use multiple accounts with the same hosting provider using SSH?::
@@ -159,47 +159,47 @@ How do I use multiple accounts with the same hosting provider using SSH?::
 	the `.pub`) with the hosting provider.
 +
 Most hosting providers use a single SSH account for pushing; that is, all users
-push to the `git` account (e.g., `git@git.example.org`).  If that's the case for
+push to the `but` account (e.g., `but@but.example.org`).  If that's the case for
 your provider, you can set up multiple aliases in SSH to make it clear which key
 pair to use.  For example, you could write something like the following in
 `~/.ssh/config`, substituting the proper private key file:
 +
 ----
-# This is the account for author on git.example.org.
+# This is the account for author on but.example.org.
 Host example_author
-	HostName git.example.org
-	User git
-	# This is the key pair registered for author with git.example.org.
+	HostName but.example.org
+	User but
+	# This is the key pair registered for author with but.example.org.
 	IdentityFile ~/.ssh/id_author
 	IdentitiesOnly yes
-# This is the account for cummitter on git.example.org.
+# This is the account for cummitter on but.example.org.
 Host example_cummitter
-	HostName git.example.org
-	User git
-	# This is the key pair registered for cummitter with git.example.org.
+	HostName but.example.org
+	User but
+	# This is the key pair registered for cummitter with but.example.org.
 	IdentityFile ~/.ssh/id_cummitter
 	IdentitiesOnly yes
 ----
 +
-Then, you can adjust your push URL to use `git@example_author` or
-`git@example_cummitter` instead of `git@example.org` (e.g., `git remote set-url
-git@example_author:org1/project1.git`).
+Then, you can adjust your push URL to use `but@example_author` or
+`but@example_cummitter` instead of `but@example.org` (e.g., `but remote set-url
+but@example_author:org1/project1.but`).
 
 Common Issues
 -------------
 
 [[last-cummit-amend]]
 I've made a mistake in the last cummit.  How do I change it?::
-	You can make the appropriate change to your working tree, run `git add
-	<file>` or `git rm <file>`, as appropriate, to stage it, and then `git
+	You can make the appropriate change to your working tree, run `but add
+	<file>` or `but rm <file>`, as appropriate, to stage it, and then `but
 	cummit --amend`.  Your change will be included in the cummit, and you'll
 	be prompted to edit the cummit message again; if you wish to use the
-	original message verbatim, you can use the `--no-edit` option to `git
+	original message verbatim, you can use the `--no-edit` option to `but
 	cummit` in addition, or just save and quit when your editor opens.
 
 [[undo-previous-change]]
 I've made a change with a bug and it's been included in the main branch.  How should I undo it?::
-	The usual way to deal with this is to use `git revert`.  This preserves
+	The usual way to deal with this is to use `but revert`.  This preserves
 	the history that the original change was made and was a valuable
 	contribution, but also introduces a new cummit that undoes those changes
 	because the original had a problem.  The cummit message of the revert
@@ -214,7 +214,7 @@ How do I ignore changes to a tracked file?::
 	whether they are irrelevant and can safely be destroyed.  Therefore, it
 	has to take the safe route and always preserve them.
 +
-It's tempting to try to use certain features of `git update-index`, namely the
+It's tempting to try to use certain features of `but update-index`, namely the
 assume-unchanged and skip-worktree bits, but these don't work properly for this
 purpose and shouldn't be used this way.
 +
@@ -223,15 +223,15 @@ a file checked into the repository which is a template or set of defaults which
 can then be copied alongside and modified as appropriate.  This second, modified
 file is usually ignored to prevent accidentally cummitting it.
 
-[[files-in-gitignore-are-tracked]]
+[[files-in-butignore-are-tracked]]
 I asked Git to ignore various files, yet they are still tracked::
-	A `gitignore` file ensures that certain file(s) which are not
+	A `butignore` file ensures that certain file(s) which are not
 	tracked by Git remain untracked.  However, sometimes particular
 	file(s) may have been tracked before adding them into the
-	`.gitignore`, hence they still remain tracked.  To untrack and
-	ignore files/patterns, use `git rm --cached <file/pattern>`
-	and add a pattern to `.gitignore` that matches the <file>.
-	See linkgit:gitignore[5] for details.
+	`.butignore`, hence they still remain tracked.  To untrack and
+	ignore files/patterns, use `but rm --cached <file/pattern>`
+	and add a pattern to `.butignore` that matches the <file>.
+	See linkbut:butignore[5] for details.
 
 [[fetching-and-pulling]]
 How do I know if I want to do a fetch or a pull?::
@@ -239,7 +239,7 @@ How do I know if I want to do a fetch or a pull?::
 	repository, without modifying the working tree or current branch.
 	You can then at your leisure inspect, merge, rebase on top of, or
 	ignore the upstream changes.  A pull consists of a fetch followed
-	immediately by either a merge or rebase.  See linkgit:git-pull[1].
+	immediately by either a merge or rebase.  See linkbut:but-pull[1].
 
 Merging and Rebasing
 --------------------
@@ -248,7 +248,7 @@ Merging and Rebasing
 What kinds of problems can occur when merging long-lived branches with squash merges?::
 	In general, there are a variety of problems that can occur when using squash
 	merges to merge two branches multiple times.  These can include seeing extra
-	cummits in `git log` output, with a GUI, or when using the `...` notation to
+	cummits in `but log` output, with a GUI, or when using the `...` notation to
 	express a range, as well as the possibility of needing to re-resolve conflicts
 	again and again.
 +
@@ -266,8 +266,8 @@ changes from one side are applied as a regular cummit to the other side.  This
 means that the merge base for these branches won't have changed, and so when Git
 goes to perform its next merge, it considers all of the changes that it
 considered the last time plus the new changes.  That means any conflicts may
-need to be re-resolved.  Similarly, anything using the `...` notation in `git
-diff`, `git log`, or a GUI will result in showing all of the changes since the
+need to be re-resolved.  Similarly, anything using the `...` notation in `but
+diff`, `but log`, or a GUI will result in showing all of the changes since the
 original merge base.
 +
 As a consequence, if you want to merge two long-lived branches repeatedly, it's
@@ -292,7 +292,7 @@ with the revert onto the other branch.  A rebase in this scenario will revert
 the change, because a rebase applies each individual cummit, including the
 revert.  Note that rebases rewrite history, so you should avoid rebasing
 published branches unless you're sure you're comfortable with that.  See the
-NOTES section in linkgit:git-rebase[1] for more details.
+NOTES section in linkbut:but-rebase[1] for more details.
 
 Hooks
 -----
@@ -328,10 +328,10 @@ I'm on Windows and my text files are detected as binary.::
 	your programs, you can specify a working tree encoding that indicates
 	which encoding your files should be checked out with, while still
 	storing these files as UTF-8 in the repository.  This allows tools like
-	linkgit:git-diff[1] to work as expected, while still allowing your tools
+	linkbut:but-diff[1] to work as expected, while still allowing your tools
 	to work.
 +
-To do so, you can specify a linkgit:gitattributes[5] pattern with the
+To do so, you can specify a linkbut:butattributes[5] pattern with the
 `working-tree-encoding` attribute.  For example, the following pattern sets all
 C files to use UTF-16LE-BOM, which is a common encoding on Windows:
 +
@@ -339,17 +339,17 @@ C files to use UTF-16LE-BOM, which is a common encoding on Windows:
 *.c	working-tree-encoding=UTF-16LE-BOM
 ----
 +
-You will need to run `git add --renormalize` to have this take effect.  Note
+You will need to run `but add --renormalize` to have this take effect.  Note
 that if you are making these changes on a project that is used across platforms,
 you'll probably want to make it in a per-user configuration file or in the one
-in `$GIT_DIR/info/attributes`, since making it in a `.gitattributes` file in the
+in `$GIT_DIR/info/attributes`, since making it in a `.butattributes` file in the
 repository will apply to all users of the repository.
 +
 See the following entry for information about normalizing line endings as well,
-and see linkgit:gitattributes[5] for more information about attribute files.
+and see linkbut:butattributes[5] for more information about attribute files.
 
 [[windows-diff-control-m]]
-I'm on Windows and git diff shows my files as having a `^M` at the end.::
+I'm on Windows and but diff shows my files as having a `^M` at the end.::
 	By default, Git expects files to be stored with Unix line endings.  As such,
 	the carriage return (`^M`) that is part of a Windows line ending is shown
 	because it is considered to be trailing whitespace.  Git defaults to showing
@@ -377,9 +377,9 @@ do this with commands like the following (assuming two files `AFile.txt` and
 `afile.txt`) on an otherwise clean working tree:
 +
 ----
-$ git rm --cached AFile.txt
-$ git cummit -m 'Remove files conflicting in case'
-$ git checkout .
+$ but rm --cached AFile.txt
+$ but cummit -m 'Remove files conflicting in case'
+$ but checkout .
 ----
 +
 This avoids touching the disk, but removes the additional file.  Your project
@@ -393,7 +393,7 @@ cummitted without running the smudge or clean filter.  To fix this, run the
 following on an otherwise clean working tree:
 +
 ----
-$ git add --renormalize .
+$ but add --renormalize .
 ----
 
 [[recommended-storage-settings]]
@@ -403,7 +403,7 @@ What's the recommended way to store files in Git?::
 	text files be stored in UTF-8 without a byte-order mark (BOM) with LF
 	(Unix-style) endings.  We also recommend the use of UTF-8 (again,
 	without BOM) in cummit messages.  These are the settings that work best
-	across platforms and with tools such as `git diff` and `git merge`.
+	across platforms and with tools such as `but diff` and `but merge`.
 +
 Additionally, if you have a choice between storage formats that are text based
 or non-text based, we recommend storing files in the text format and, if
@@ -418,7 +418,7 @@ build products in the repository is generally not recommended.  Dependencies and
 build products are best stored on an artifact or package server with only
 references, URLs, and hashes stored in the repository.
 +
-We also recommend setting a linkgit:gitattributes[5] file to explicitly mark
+We also recommend setting a linkbut:butattributes[5] file to explicitly mark
 which files are text and which are binary.  If you want Git to guess, you can
 set the attribute `text=auto`.  For example, the following might be appropriate
 in some projects:
@@ -438,4 +438,4 @@ platform.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

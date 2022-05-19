@@ -11,7 +11,7 @@
 if [ $# -eq 0 ]
 then
 	cat <<!
-Usage: $(basename $0) git-gui-glossary.txt > git-gui-glossary.pot
+Usage: $(basename $0) but-gui-glossary.txt > but-gui-glossary.pot
 !
 	exit 1;
 fi

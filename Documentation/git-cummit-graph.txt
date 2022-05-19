@@ -1,16 +1,16 @@
-git-cummit-graph(1)
+but-cummit-graph(1)
 ===================
 
 NAME
 ----
-git-cummit-graph - Write and verify Git cummit-graph files
+but-cummit-graph - Write and verify Git cummit-graph files
 
 
 SYNOPSIS
 --------
 [verse]
-'git cummit-graph verify' [--object-dir <dir>] [--shallow] [--[no-]progress]
-'git cummit-graph write' <options> [--object-dir <dir>] [--[no-]progress]
+'but cummit-graph verify' [--object-dir <dir>] [--shallow] [--[no-]progress]
+'but cummit-graph write' <options> [--object-dir <dir>] [--[no-]progress]
 
 
 DESCRIPTION
@@ -24,11 +24,11 @@ OPTIONS
 --object-dir::
 	Use given directory for the location of packfiles and cummit-graph
 	file. This parameter exists to specify the location of an alternate
-	that only has the objects directory, not a full `.git` directory. The
+	that only has the objects directory, not a full `.but` directory. The
 	cummit-graph file is expected to be in the `<dir>/info` directory and
 	the packfiles are expected to be in `<dir>/pack`. If the directory
 	could not be made into an absolute path, or does not match any known
-	object directory, `git cummit-graph ...` will exit with non-zero
+	object directory, `but cummit-graph ...` will exit with non-zero
 	status.
 
 --[no-]progress::
@@ -64,7 +64,7 @@ existing cummit-graph file.
 With the `--changed-paths` option, compute and write information about the
 paths changed between a cummit and its first parent. This operation can
 take a while on large repositories. It provides significant performance gains
-for getting history of a directory or a file with `git log -- <path>`. If
+for getting history of a directory or a file with `but log -- <path>`. If
 this option is given, future cummit-graph writes will automatically assume
 that this option was intended. Use `--no-changed-paths` to stop storing this
 data.
@@ -115,34 +115,34 @@ a chain of split cummit-graphs.
 EXAMPLES
 --------
 
-* Write a cummit-graph file for the packed cummits in your local `.git`
+* Write a cummit-graph file for the packed cummits in your local `.but`
   directory.
 +
 ------------------------------------------------
-$ git cummit-graph write
+$ but cummit-graph write
 ------------------------------------------------
 
 * Write a cummit-graph file, extending the current cummit-graph file
   using cummits in `<pack-index>`.
 +
 ------------------------------------------------
-$ echo <pack-index> | git cummit-graph write --stdin-packs
+$ echo <pack-index> | but cummit-graph write --stdin-packs
 ------------------------------------------------
 
 * Write a cummit-graph file containing all reachable cummits.
 +
 ------------------------------------------------
-$ git show-ref -s | git cummit-graph write --stdin-cummits
+$ but show-ref -s | but cummit-graph write --stdin-cummits
 ------------------------------------------------
 
 * Write a cummit-graph file containing all cummits in the current
   cummit-graph file along with those reachable from `HEAD`.
 +
 ------------------------------------------------
-$ git rev-parse HEAD | git cummit-graph write --stdin-cummits --append
+$ but rev-parse HEAD | but cummit-graph write --stdin-cummits --append
 ------------------------------------------------
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -6,24 +6,24 @@ test_description='fetch follows remote-tracking branches correctly'
 
 test_expect_success setup '
 	>file &&
-	git add . &&
+	but add . &&
 	test_tick &&
-	git cummit -m Initial &&
-	git branch b-0 &&
-	git branch b1 &&
-	git branch b/one &&
+	but cummit -m Initial &&
+	but branch b-0 &&
+	but branch b1 &&
+	but branch b/one &&
 	test_create_repo other &&
 	(
 		cd other &&
-		git config remote.origin.url .. &&
-		git config remote.origin.fetch "+refs/heads/b/*:refs/remotes/b/*"
+		but config remote.origin.url .. &&
+		but config remote.origin.fetch "+refs/heads/b/*:refs/remotes/b/*"
 	)
 '
 
 test_expect_success fetch '
 	(
-		cd other && git fetch origin &&
-		test "$(git for-each-ref --format="%(refname)")" = refs/remotes/b/one
+		cd other && but fetch origin &&
+		test "$(but for-each-ref --format="%(refname)")" = refs/remotes/b/one
 	)
 '
 

@@ -49,12 +49,12 @@ void get_parallel_checkout_configs(int *num_workers, int *threshold)
 		return;
 	}
 
-	if (git_config_get_int("checkout.workers", num_workers))
+	if (but_config_get_int("checkout.workers", num_workers))
 		*num_workers = DEFAULT_NUM_WORKERS;
 	else if (*num_workers < 1)
 		*num_workers = online_cpus();
 
-	if (git_config_get_int("checkout.thresholdForParallelism", threshold))
+	if (but_config_get_int("checkout.thresholdForParallelism", threshold))
 		*threshold = DEFAULT_THRESHOLD_FOR_PARALLELISM;
 }
 
@@ -211,7 +211,7 @@ static int handle_results(struct checkout *state)
 			 * However, this would leave the unwritten entries with
 			 * null stat() fields on the index, which could
 			 * potentially slow down subsequent operations that
-			 * require refreshing it: git would not be able to
+			 * require refreshing it: but would not be able to
 			 * trust st_size and would have to go to the filesystem
 			 * to see if the contents match (see ie_modified()).
 			 *
@@ -462,7 +462,7 @@ static struct pc_worker *setup_workers(struct checkout *state, int num_workers)
 		struct child_process *cp = &workers[i].cp;
 
 		child_process_init(cp);
-		cp->git_cmd = 1;
+		cp->but_cmd = 1;
 		cp->in = -1;
 		cp->out = -1;
 		cp->clean_on_exit = 1;

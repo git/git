@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git pull message generation'
+test_description='but pull message generation'
 
 . ./test-lib.sh
 
@@ -8,29 +8,29 @@ dollar='$Dollar'
 
 test_expect_success setup '
 	test_cummit initial afile original &&
-	git clone . cloned &&
+	but clone . cloned &&
 	(
 		cd cloned &&
 		echo added >bfile &&
-		git add bfile &&
+		but add bfile &&
 		test_tick &&
-		git cummit -m "add bfile"
+		but cummit -m "add bfile"
 	) &&
 	test_tick && test_tick &&
 	echo "second" >afile &&
-	git add afile &&
-	git cummit -m "second cummit" &&
+	but add afile &&
+	but cummit -m "second cummit" &&
 	echo "original $dollar" >afile &&
-	git add afile &&
-	git cummit -m "do not clobber $dollar signs"
+	but add afile &&
+	but cummit -m "do not clobber $dollar signs"
 '
 
 test_expect_success pull '
 (
 	cd cloned &&
-	git pull --no-rebase --log &&
-	git log -2 &&
-	git cat-file commit HEAD >result &&
+	but pull --no-rebase --log &&
+	but log -2 &&
+	but cat-file commit HEAD >result &&
 	grep Dollar result
 )
 '
@@ -38,12 +38,12 @@ test_expect_success pull '
 test_expect_success '--log=1 limits shortlog length' '
 (
 	cd cloned &&
-	git reset --hard HEAD^ &&
+	but reset --hard HEAD^ &&
 	test "$(cat afile)" = original &&
 	test "$(cat bfile)" = added &&
-	git pull --no-rebase --log=1 &&
-	git log -3 &&
-	git cat-file commit HEAD >result &&
+	but pull --no-rebase --log=1 &&
+	but log -3 &&
+	but cat-file commit HEAD >result &&
 	grep Dollar result &&
 	! grep "second cummit" result
 )

@@ -15,7 +15,7 @@ int is_terminal_dumb(void)
 	return !terminal || !strcmp(terminal, "dumb");
 }
 
-const char *git_editor(void)
+const char *but_editor(void)
 {
 	const char *editor = getenv("GIT_EDITOR");
 	int terminal_is_dumb = is_terminal_dumb();
@@ -36,14 +36,14 @@ const char *git_editor(void)
 	return editor;
 }
 
-const char *git_sequence_editor(void)
+const char *but_sequence_editor(void)
 {
 	const char *editor = getenv("GIT_SEQUENCE_EDITOR");
 
 	if (!editor)
-		git_config_get_string_tmp("sequence.editor", &editor);
+		but_config_get_string_tmp("sequence.editor", &editor);
 	if (!editor)
-		editor = git_editor();
+		editor = but_editor();
 
 	return editor;
 }
@@ -118,11 +118,11 @@ static int launch_specified_editor(const char *editor, const char *path,
 
 int launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
 {
-	return launch_specified_editor(git_editor(), path, buffer, env);
+	return launch_specified_editor(but_editor(), path, buffer, env);
 }
 
 int launch_sequence_editor(const char *path, struct strbuf *buffer,
 			   const char *const *env)
 {
-	return launch_specified_editor(git_sequence_editor(), path, buffer, env);
+	return launch_specified_editor(but_sequence_editor(), path, buffer, env);
 }

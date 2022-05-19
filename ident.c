@@ -1,7 +1,7 @@
 /*
  * ident.c
  *
- * create git identifier lines of the form "name <email> date"
+ * create but identifier lines of the form "name <email> date"
  *
  * Copyright (C) 2005 Linus Torvalds
  */
@@ -9,13 +9,13 @@
 #include "config.h"
 #include "date.h"
 
-static struct strbuf git_default_name = STRBUF_INIT;
-static struct strbuf git_default_email = STRBUF_INIT;
-static struct strbuf git_default_date = STRBUF_INIT;
-static struct strbuf git_author_name = STRBUF_INIT;
-static struct strbuf git_author_email = STRBUF_INIT;
-static struct strbuf git_cummitter_name = STRBUF_INIT;
-static struct strbuf git_cummitter_email = STRBUF_INIT;
+static struct strbuf but_default_name = STRBUF_INIT;
+static struct strbuf but_default_email = STRBUF_INIT;
+static struct strbuf but_default_date = STRBUF_INIT;
+static struct strbuf but_author_name = STRBUF_INIT;
+static struct strbuf but_author_email = STRBUF_INIT;
+static struct strbuf but_cummitter_name = STRBUF_INIT;
+static struct strbuf but_cummitter_email = STRBUF_INIT;
 static int default_email_is_bogus;
 static int default_name_is_bogus;
 
@@ -157,43 +157,43 @@ static void copy_email(const struct passwd *pw, struct strbuf *email,
 
 const char *ident_default_name(void)
 {
-	if (!(ident_config_given & IDENT_NAME_GIVEN) && !git_default_name.len) {
-		copy_gecos(xgetpwuid_self(&default_name_is_bogus), &git_default_name);
-		strbuf_trim(&git_default_name);
+	if (!(ident_config_given & IDENT_NAME_GIVEN) && !but_default_name.len) {
+		copy_gecos(xgetpwuid_self(&default_name_is_bogus), &but_default_name);
+		strbuf_trim(&but_default_name);
 	}
-	return git_default_name.buf;
+	return but_default_name.buf;
 }
 
 const char *ident_default_email(void)
 {
-	if (!(ident_config_given & IDENT_MAIL_GIVEN) && !git_default_email.len) {
+	if (!(ident_config_given & IDENT_MAIL_GIVEN) && !but_default_email.len) {
 		const char *email = getenv("EMAIL");
 
 		if (email && email[0]) {
-			strbuf_addstr(&git_default_email, email);
+			strbuf_addstr(&but_default_email, email);
 			cummitter_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 			author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else if ((email = query_user_email()) && email[0]) {
-			strbuf_addstr(&git_default_email, email);
+			strbuf_addstr(&but_default_email, email);
 			free((char *)email);
 		} else
 			copy_email(xgetpwuid_self(&default_email_is_bogus),
-				   &git_default_email, &default_email_is_bogus);
-		strbuf_trim(&git_default_email);
+				   &but_default_email, &default_email_is_bogus);
+		strbuf_trim(&but_default_email);
 	}
-	return git_default_email.buf;
+	return but_default_email.buf;
 }
 
 static const char *ident_default_date(void)
 {
-	if (!git_default_date.len)
-		datestamp(&git_default_date);
-	return git_default_date.buf;
+	if (!but_default_date.len)
+		datestamp(&but_default_date);
+	return but_default_date.buf;
 }
 
 void reset_ident_date(void)
 {
-	strbuf_reset(&git_default_date);
+	strbuf_reset(&but_default_date);
 }
 
 static int crud(unsigned char c)
@@ -365,8 +365,8 @@ static void ident_env_hint(enum want_ident whose_ident)
 		"\n"
 		"Run\n"
 		"\n"
-		"  git config --global user.email \"you@example.com\"\n"
-		"  git config --global user.name \"Your Name\"\n"
+		"  but config --global user.email \"you@example.com\"\n"
+		"  but config --global user.name \"Your Name\"\n"
 		"\n"
 		"to set your account\'s default identity.\n"
 		"Omit --global to set the identity only in this repository.\n"
@@ -386,10 +386,10 @@ const char *fmt_ident(const char *name, const char *email,
 	index = (index + 1) % ARRAY_SIZE(ident_pool);
 
 	if (!email) {
-		if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)
-			email = git_author_email.buf;
-		else if (whose_ident == WANT_CUMMITTER_IDENT && git_cummitter_email.len)
-			email = git_cummitter_email.buf;
+		if (whose_ident == WANT_AUTHOR_IDENT && but_author_email.len)
+			email = but_author_email.buf;
+		else if (whose_ident == WANT_CUMMITTER_IDENT && but_cummitter_email.len)
+			email = but_cummitter_email.buf;
 	}
 	if (!email) {
 		if (strict && ident_use_config_only
@@ -407,11 +407,11 @@ const char *fmt_ident(const char *name, const char *email,
 	if (want_name) {
 		int using_default = 0;
 		if (!name) {
-			if (whose_ident == WANT_AUTHOR_IDENT && git_author_name.len)
-				name = git_author_name.buf;
+			if (whose_ident == WANT_AUTHOR_IDENT && but_author_name.len)
+				name = but_author_name.buf;
 			else if (whose_ident == WANT_CUMMITTER_IDENT &&
-					git_cummitter_name.len)
-				name = git_cummitter_name.buf;
+					but_cummitter_name.len)
+				name = but_cummitter_name.buf;
 		}
 		if (!name) {
 			if (strict && ident_use_config_only
@@ -482,7 +482,7 @@ const char *fmt_name(enum want_ident whose_ident)
 			IDENT_STRICT | IDENT_NO_DATE);
 }
 
-const char *git_author_info(int flag)
+const char *but_author_info(int flag)
 {
 	if (getenv("GIT_AUTHOR_NAME"))
 		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
@@ -495,7 +495,7 @@ const char *git_author_info(int flag)
 			 flag);
 }
 
-const char *git_cummitter_info(int flag)
+const char *but_cummitter_info(int flag)
 {
 	if (getenv("GIT_CUMMITTER_NAME"))
 		cummitter_ident_explicitly_given |= IDENT_NAME_GIVEN;
@@ -532,8 +532,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "author.name")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_author_name);
-		strbuf_addstr(&git_author_name, value);
+		strbuf_reset(&but_author_name);
+		strbuf_addstr(&but_author_name, value);
 		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		ident_config_given |= IDENT_NAME_GIVEN;
 		return 0;
@@ -542,8 +542,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "author.email")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_author_email);
-		strbuf_addstr(&git_author_email, value);
+		strbuf_reset(&but_author_email);
+		strbuf_addstr(&but_author_email, value);
 		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		ident_config_given |= IDENT_MAIL_GIVEN;
 		return 0;
@@ -552,8 +552,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "cummitter.name")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_cummitter_name);
-		strbuf_addstr(&git_cummitter_name, value);
+		strbuf_reset(&but_cummitter_name);
+		strbuf_addstr(&but_cummitter_name, value);
 		cummitter_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		ident_config_given |= IDENT_NAME_GIVEN;
 		return 0;
@@ -562,8 +562,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "cummitter.email")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_cummitter_email);
-		strbuf_addstr(&git_cummitter_email, value);
+		strbuf_reset(&but_cummitter_email);
+		strbuf_addstr(&but_cummitter_email, value);
 		cummitter_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		ident_config_given |= IDENT_MAIL_GIVEN;
 		return 0;
@@ -572,8 +572,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "user.name")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_default_name);
-		strbuf_addstr(&git_default_name, value);
+		strbuf_reset(&but_default_name);
+		strbuf_addstr(&but_default_name, value);
 		cummitter_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		ident_config_given |= IDENT_NAME_GIVEN;
@@ -583,8 +583,8 @@ static int set_ident(const char *var, const char *value)
 	if (!strcmp(var, "user.email")) {
 		if (!value)
 			return config_error_nonbool(var);
-		strbuf_reset(&git_default_email);
-		strbuf_addstr(&git_default_email, value);
+		strbuf_reset(&but_default_email);
+		strbuf_addstr(&but_default_email, value);
 		cummitter_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		ident_config_given |= IDENT_MAIL_GIVEN;
@@ -594,10 +594,10 @@ static int set_ident(const char *var, const char *value)
 	return 0;
 }
 
-int git_ident_config(const char *var, const char *value, void *data)
+int but_ident_config(const char *var, const char *value, void *data)
 {
 	if (!strcmp(var, "user.useconfigonly")) {
-		ident_use_config_only = git_config_bool(var, value);
+		ident_use_config_only = but_config_bool(var, value);
 		return 0;
 	}
 

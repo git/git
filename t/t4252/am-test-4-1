@@ -5,7 +5,7 @@ Subject: Three
 Application of this should be rejected even with -C1 -p2 because
 the preimage line in the context does not match.
 
-diff --git i/junk/file-1 w/junk/file-1
+diff --but i/junk/file-1 w/junk/file-1
 index 06e567b..10f8342 100644
 --- i/junk/file-1
 +++ w/junk/file-1

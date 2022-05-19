@@ -2,7 +2,7 @@
 #
 # Copyright (c) Linus Torvalds, 2005
 #
-# This is the git per-file merge script, called with
+# This is the but per-file merge script, called with
 #
 #   $1 - original file SHA1 (or empty)
 #   $2 - file in branch1 SHA1 (or empty)
@@ -13,17 +13,17 @@
 #   $7 - file in branch2 mode (or empty)
 #
 # Handle some trivial cases.. The _really_ trivial cases have
-# been handled already by git read-tree, but that one doesn't
+# been handled already by but read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
 USAGE='<orig blob> <our blob> <their blob> <path>'
 USAGE="$USAGE <orig mode> <our mode> <their mode>"
-LONG_USAGE="usage: git merge-one-file $USAGE
+LONG_USAGE="usage: but merge-one-file $USAGE
 
 Blob ids and modes should be empty for missing files."
 
 SUBDIRECTORY_OK=Yes
-. git-sh-setup
+. but-sh-setup
 cd_to_toplevel
 require_work_tree
 
@@ -55,14 +55,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# there may be an unrelated working tree file here,
 		# which we should just leave unmolested.  Make sure
 		# we do not have it in the index, though.
-		exec git update-index --remove -- "$4"
+		exec but update-index --remove -- "$4"
 	fi
 	if test -f "$4"
 	then
 		rm -f -- "$4" &&
 		rmdir -p "$(expr "z$4" : 'z\(.*\)/')" 2>/dev/null || :
 	fi &&
-		exec git update-index --remove -- "$4"
+		exec but update-index --remove -- "$4"
 	;;
 
 #
@@ -71,7 +71,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 ".$2.")
 	# the other side did not add and we added so there is nothing
 	# to be done, except making the path merged.
-	exec git update-index --add --cacheinfo "$6" "$2" "$4"
+	exec but update-index --add --cacheinfo "$6" "$2" "$4"
 	;;
 "..$3")
 	echo "Adding $4"
@@ -80,8 +80,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: untracked $4 is overwritten by the merge." >&2
 		exit 1
 	fi
-	git update-index --add --cacheinfo "$7" "$3" "$4" &&
-		exec git checkout-index -u -f -- "$4"
+	but update-index --add --cacheinfo "$7" "$3" "$4" &&
+		exec but checkout-index -u -f -- "$4"
 	;;
 
 #
@@ -95,8 +95,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		exit 1
 	fi
 	echo "Adding $4"
-	git update-index --add --cacheinfo "$6" "$2" "$4" &&
-		exec git checkout-index -u -f -- "$4"
+	but update-index --add --cacheinfo "$6" "$2" "$4" &&
+		exec but checkout-index -u -f -- "$4"
 	;;
 
 #
@@ -115,20 +115,20 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	src1=$(git unpack-file $2)
-	src2=$(git unpack-file $3)
+	src1=$(but unpack-file $2)
+	src2=$(but unpack-file $3)
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		orig=$(git unpack-file $(git hash-object /dev/null))
+		orig=$(but unpack-file $(but hash-object /dev/null))
 		;;
 	*)
 		echo "Auto-merging $4"
-		orig=$(git unpack-file $1)
+		orig=$(but unpack-file $1)
 		;;
 	esac
 
-	git merge-file "$src1" "$orig" "$src2"
+	but merge-file "$src1" "$orig" "$src2"
 	ret=$?
 	msg=
 	if test $ret != 0 || test -z "$1"
@@ -139,7 +139,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	# Create the working tree file, using "our tree" version from the
 	# index, and then store the result of the merge.
-	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4" || exit 1
+	but checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4" || exit 1
 	rm -f -- "$orig" "$src1" "$src2"
 
 	if test "$6" != "$7"
@@ -157,7 +157,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: $msg in $4" >&2
 		exit 1
 	fi
-	exec git update-index -- "$4"
+	exec but update-index -- "$4"
 	;;
 
 *)

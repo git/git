@@ -4,7 +4,7 @@ Git-send-pack internals
 Overall operation
 -----------------
 
-. Connects to the remote side and invokes git-receive-pack.
+. Connects to the remote side and invokes but-receive-pack.
 
 . Learns what refs the remote has and what cummit they point at.
   Matches them to the refspecs we are pushing.
@@ -29,7 +29,7 @@ Pack_objects pipeline
 
 This function gets one file descriptor (`fd`) which is either a
 socket (over the network) or a pipe (local).  What's written to
-this fd goes to git-receive-pack to be unpacked.
+this fd goes to but-receive-pack to be unpacked.
 
     send-pack ---> fd ---> receive-pack
 

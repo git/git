@@ -14,7 +14,7 @@ create_cummits_in () {
 		name=$1 &&
 		shift &&
 		test_cummit -C "$repo" --no-tag "$name" &&
-		eval $name=$(git -C "$repo" rev-parse HEAD)
+		eval $name=$(but -C "$repo" rev-parse HEAD)
 	done
 }
 
@@ -30,7 +30,7 @@ get_abbrev_oid () {
 	fi
 }
 
-# Format the output of git-push, git-show-ref and other commands to make a
+# Format the output of but-push, but-show-ref and other commands to make a
 # user-friendly and stable text.  We can easily prepare the expect text
 # without having to worry about changes of the cummit ID (full or abbrev.)
 # of the output.  Single quotes are replaced with double quotes, because
@@ -44,7 +44,7 @@ make_user_friendly_and_stable_output () {
 		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<CUMMIT-B>/g" \
 		-e "s/$(get_abbrev_oid $TAG)[0-9a-f]*/<TAG-v123>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
-		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#" \
+		-e "s#To $URL_PREFIX/upstream.but#To <URL/of/upstream.but>#" \
 		-e "/^error: / d"
 }
 
@@ -67,7 +67,7 @@ test_cmp_refs () {
 	fi
 	indir=${indir:+"$indir"/}
 	cat >show-ref.expect &&
-	git ${indir:+ -C "$indir"} show-ref >show-ref.pristine &&
+	but ${indir:+ -C "$indir"} show-ref >show-ref.pristine &&
 	make_user_friendly_and_stable_output <show-ref.pristine >show-ref.filtered &&
 	test_cmp show-ref.expect show-ref.filtered
 }

@@ -8,7 +8,7 @@
 #include "serve.h"
 
 static const char * const upload_pack_usage[] = {
-	N_("git upload-pack [<options>] <dir>"),
+	N_("but upload-pack [<options>] <dir>"),
 	NULL
 };
 
@@ -23,10 +23,10 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stateless-rpc", &stateless_rpc,
 			 N_("quit after a single request/response exchange")),
 		OPT_HIDDEN_BOOL(0, "http-backend-info-refs", &advertise_refs,
-				N_("serve up the info/refs for git-http-backend")),
+				N_("serve up the info/refs for but-http-backend")),
 		OPT_ALIAS(0, "advertise-refs", "http-backend-info-refs"),
 		OPT_BOOL(0, "strict", &strict,
-			 N_("do not try <directory>/.git/ if <directory> is no Git directory")),
+			 N_("do not try <directory>/.but/ if <directory> is no Git directory")),
 		OPT_INTEGER(0, "timeout", &timeout,
 			    N_("interrupt transfer after <n> seconds of inactivity")),
 		OPT_END()
@@ -45,7 +45,7 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	dir = argv[0];
 
 	if (!enter_repo(dir, strict))
-		die("'%s' does not appear to be a git repository", dir);
+		die("'%s' does not appear to be a but repository", dir);
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:

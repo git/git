@@ -378,7 +378,7 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 			continue;
 
 		/*
-		 * This probably does not work outside git, since
+		 * This probably does not work outside but, since
 		 * we have a very simple mmfile structure.
 		 */
 		t1.ptr = (char *)xe1->xdf2.recs[m->i1]->ptr;

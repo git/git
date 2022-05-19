@@ -74,7 +74,7 @@ static void spawn_daemon(const char *socket)
 	strvec_pushl(&daemon.args,
 		     "credential-cache--daemon", socket,
 		     NULL);
-	daemon.git_cmd = 1;
+	daemon.but_cmd = 1;
 	daemon.no_stdin = 1;
 	daemon.out = -1;
 
@@ -116,7 +116,7 @@ static char *get_socket_path(void)
 {
 	struct stat sb;
 	char *old_dir, *socket;
-	old_dir = interpolate_path("~/.git-credential-cache", 0);
+	old_dir = interpolate_path("~/.but-credential-cache", 0);
 	if (old_dir && !stat(old_dir, &sb) && S_ISDIR(sb.st_mode))
 		socket = xstrfmt("%s/socket", old_dir);
 	else
@@ -131,7 +131,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 	int timeout = 900;
 	const char *op;
 	const char * const usage[] = {
-		"git credential-cache [<options>] <action>",
+		"but credential-cache [<options>] <action>",
 		NULL
 	};
 	struct option options[] = {
@@ -169,7 +169,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 {
 	const char * const usage[] = {
-		"git credential-cache [options] <action>",
+		"but credential-cache [options] <action>",
 		"",
 		"credential-cache is disabled in this build of Git",
 		NULL

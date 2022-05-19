@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# gitweb - simple web interface to track changes in git repositories
+# butweb - simple web interface to track changes in but repositories
 #
 # (C) 2005-2006, Kay Sievers <kay.sievers@vrfy.org>
 # (C) 2005, Christian Gierke
@@ -29,7 +29,7 @@ if (!defined($CGI::VERSION) || $CGI::VERSION < 4.08) {
 }
 
 our $t0 = [ gettimeofday() ];
-our $number_of_git_cmds = 0;
+our $number_of_but_cmds = 0;
 
 BEGIN {
 	CGI->compile() if $ENV{'MOD_PERL'};
@@ -44,7 +44,7 @@ sub evaluate_uri {
 	our $my_url = $cgi->url();
 	our $my_uri = $cgi->url(-absolute => 1);
 
-	# Base URL for relative URLs in gitweb ($logo, $favicon, ...),
+	# Base URL for relative URLs in butweb ($logo, $favicon, ...),
 	# needed and used only for URLs with nonempty PATH_INFO
 	our $base_url = $my_url;
 
@@ -78,9 +78,9 @@ sub evaluate_uri {
 	our $home_link = $my_uri || "/";
 }
 
-# core git executable to use
-# this can just be "git" if your webserver has a sensible PATH
-our $GIT = "++GIT_BINDIR++/git";
+# core but executable to use
+# this can just be "but" if your webserver has a sensible PATH
+our $GIT = "++GIT_BINDIR++/but";
 
 # absolute fs-path which will be prepended to the project path
 #our $projectroot = "/pub/scm";
@@ -118,14 +118,14 @@ our $stylesheet = undef;
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
 our $favicon = "++GITWEB_FAVICON++";
-# URI of gitweb.js (JavaScript code for gitweb)
+# URI of butweb.js (JavaScript code for butweb)
 our $javascript = "++GITWEB_JS++";
 
 # URI and label (title) of GIT logo link
-#our $logo_url = "http://www.kernel.org/pub/software/scm/git/docs/";
-#our $logo_label = "git documentation";
-our $logo_url = "http://git-scm.com/";
-our $logo_label = "git homepage";
+#our $logo_url = "http://www.kernel.org/pub/software/scm/but/docs/";
+#our $logo_label = "but documentation";
+our $logo_url = "http://but-scm.com/";
+our $logo_label = "but homepage";
 
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
@@ -157,22 +157,22 @@ our $omit_owner=0;
 
 # show repository only if this subroutine returns true
 # when given the path to the project, for example:
-#    sub { return -e "$_[0]/git-daemon-export-ok"; }
+#    sub { return -e "$_[0]/but-daemon-export-ok"; }
 our $export_auth_hook = undef;
 
 # only allow viewing of repositories also shown on the overview page
 our $strict_export = "++GITWEB_STRICT_EXPORT++";
 
-# list of git base URLs used for URL to where fetch project from,
-# i.e. full URL is "$git_base_url/$project"
-our @git_base_url_list = grep { $_ ne '' } ("++GITWEB_BASE_URL++");
+# list of but base URLs used for URL to where fetch project from,
+# i.e. full URL is "$but_base_url/$project"
+our @but_base_url_list = grep { $_ ne '' } ("++GITWEB_BASE_URL++");
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
 our $default_text_plain_charset  = undef;
 
 # file to use for guessing MIME types before trying /etc/mime.types
-# (relative to the current git repository)
+# (relative to the current but repository)
 our $mimetypes_file = undef;
 
 # assume this charset if line contains non-UTF-8 characters;
@@ -182,7 +182,7 @@ our $mimetypes_file = undef;
 # could be even 'utf-8' for the old behavior)
 our $fallback_encoding = 'latin1';
 
-# rename detection options for git-diff and git-diff-tree
+# rename detection options for but-diff and but-diff-tree
 # - default is '-M', with the cost proportional to
 #   (number of removed files) * (number of new files).
 # - more costly is '-C' (which implies '-M'), with the cost proportional to
@@ -190,10 +190,10 @@ our $fallback_encoding = 'latin1';
 # - even more costly is '-C', '--find-copies-harder' with cost
 #   (number of files in the original tree) * (number of new files)
 # - one might want to include '-B' option, e.g. '-B', '-M'
-our @diff_opts = ('-M'); # taken from git_cummit
+our @diff_opts = ('-M'); # taken from but_cummit
 
 # Disables features that would allow repository owners to inject script into
-# the gitweb domain.
+# the butweb domain.
 our $prevent_xss = 0;
 
 # Path to the highlight executable to use (must be the one from
@@ -202,13 +202,13 @@ our $prevent_xss = 0;
 # [Default: highlight]
 our $highlight_bin = "++HIGHLIGHT_BIN++";
 
-# information about snapshot formats that gitweb is capable of serving
+# information about snapshot formats that butweb is capable of serving
 our %known_snapshot_formats = (
 	# name => {
 	# 	'display' => display name,
 	# 	'type' => mime type,
 	# 	'suffix' => filename suffix,
-	# 	'format' => --format for git-archive,
+	# 	'format' => --format for but-archive,
 	# 	'compressor' => [compressor command and arguments]
 	# 	                (array reference, optional)
 	# 	'disabled' => boolean (optional)}
@@ -242,14 +242,14 @@ our %known_snapshot_formats = (
 		'format' => 'zip'},
 );
 
-# Aliases so we understand old gitweb.snapshot values in repository
+# Aliases so we understand old butweb.snapshot values in repository
 # configuration.
 our %known_snapshot_format_aliases = (
 	'gzip'  => 'tgz',
 	'bzip2' => 'tbz2',
 	'xz'    => 'txz',
 
-	# backward compatibility: legacy gitweb config support
+	# backward compatibility: legacy butweb config support
 	'x-gzip' => undef, 'gz' => undef,
 	'x-bzip2' => undef, 'bz2' => undef,
 	'x-zip' => undef, '' => undef,
@@ -263,9 +263,9 @@ our %avatar_size = (
 	'double'  => 32
 );
 
-# Used to set the maximum load that we will still respond to gitweb queries.
+# Used to set the maximum load that we will still respond to butweb queries.
 # If server load exceed this value then return "503 server busy" error.
-# If gitweb cannot determined server load, it is taken to be 0.
+# If butweb cannot determined server load, it is taken to be 0.
 # Leave it undefined (or set to 'undef') to turn off load checking.
 our $maxload = 300;
 
@@ -307,8 +307,8 @@ our %feature = (
 	# if there is no 'sub' key (no feature-sub), then feature cannot be
 	# overridden
 	#
-	# use gitweb_get_feature(<feature>) to retrieve the <feature> value
-	# (an array) or gitweb_check_feature(<feature>) to check if <feature>
+	# use butweb_get_feature(<feature>) to retrieve the <feature> value
+	# (an array) or butweb_check_feature(<feature>) to check if <feature>
 	# is enabled
 
 	# Enable the 'blame' blob view, showing the last cummit that modified
@@ -318,7 +318,7 @@ our %feature = (
 	# $feature{'blame'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'blame'}{'override'} = 1;
-	# and in project config gitweb.blame = 0|1;
+	# and in project config butweb.blame = 0|1;
 	'blame' => {
 		'sub' => sub { feature_bool('blame', @_) },
 		'override' => 0,
@@ -335,7 +335,7 @@ our %feature = (
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'snapshot'}{'override'} = 1;
 	# and in project config, a comma-separated list of formats or "none"
-	# to disable.  Example: gitweb.snapshot = tbz2,zip;
+	# to disable.  Example: butweb.snapshot = tbz2,zip;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
 		'override' => 0,
@@ -361,7 +361,7 @@ our %feature = (
 	# $feature{'grep'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'grep'}{'override'} = 1;
-	# and in project config gitweb.grep = 0|1;
+	# and in project config butweb.grep = 0|1;
 	'grep' => {
 		'sub' => sub { feature_bool('grep', @_) },
 		'override' => 0,
@@ -376,7 +376,7 @@ our %feature = (
 	# $feature{'pickaxe'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'pickaxe'}{'override'} = 1;
-	# and in project config gitweb.pickaxe = 0|1;
+	# and in project config butweb.pickaxe = 0|1;
 	'pickaxe' => {
 		'sub' => sub { feature_bool('pickaxe', @_) },
 		'override' => 0,
@@ -389,17 +389,17 @@ our %feature = (
 	# $feature{'show-sizes'}{'default'} = [0];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'show-sizes'}{'override'} = 1;
-	# and in project config gitweb.showsizes = 0|1;
+	# and in project config butweb.showsizes = 0|1;
 	'show-sizes' => {
 		'sub' => sub { feature_bool('showsizes', @_) },
 		'override' => 0,
 		'default' => [1]},
 
-	# Make gitweb use an alternative format of the URLs which can be
+	# Make butweb use an alternative format of the URLs which can be
 	# more readable and natural-looking: project name is embedded
 	# directly in the path and the query string contains other
-	# auxiliary information. All gitweb installations recognize
-	# URL in either format; this configures in which formats gitweb
+	# auxiliary information. All butweb installations recognize
+	# URL in either format; this configures in which formats butweb
 	# generates links.
 
 	# To enable system wide have in $GITWEB_CONFIG
@@ -408,15 +408,15 @@ our %feature = (
 
 	# Note that you will need to change the default location of CSS,
 	# favicon, logo and possibly other files to an absolute URL. Also,
-	# if gitweb.cgi serves as your indexfile, you will need to force
+	# if butweb.cgi serves as your indexfile, you will need to force
 	# $my_uri to contain the script name in your $GITWEB_CONFIG.
 	'pathinfo' => {
 		'override' => 0,
 		'default' => [0]},
 
-	# Make gitweb consider projects in project root subdirectories
-	# to be forks of existing projects. Given project $projname.git,
-	# projects matching $projname/*.git will not be shown in the main
+	# Make butweb consider projects in project root subdirectories
+	# to be forks of existing projects. Given project $projname.but,
+	# projects matching $projname/*.but will not be shown in the main
 	# projects list, instead a '+' mark will be added to $projname
 	# there and a 'forks' view will be enabled for the project, listing
 	# all the forks. If project list is taken from a file, forks have
@@ -431,32 +431,32 @@ our %feature = (
 
 	# Insert custom links to the action bar of all project pages.
 	# This enables you mainly to link to third-party scripts integrating
-	# into gitweb; e.g. git-browser for graphical history representation
+	# into butweb; e.g. but-browser for graphical history representation
 	# or custom web-based repository administration interface.
 
 	# The 'default' value consists of a list of triplets in the form
 	# (label, link, position) where position is the label after which
 	# to insert the link and link is a format string where %n expands
 	# to the project name, %f to the project path within the filesystem,
-	# %h to the current hash (h gitweb parameter) and %b to the current
-	# hash base (hb gitweb parameter); %% expands to %.
+	# %h to the current hash (h butweb parameter) and %b to the current
+	# hash base (hb butweb parameter); %% expands to %.
 
 	# To enable system wide have in $GITWEB_CONFIG e.g.
 	# $feature{'actions'}{'default'} = [('graphiclog',
-	# 	'/git-browser/by-cummit.html?r=%n', 'summary')];
+	# 	'/but-browser/by-cummit.html?r=%n', 'summary')];
 	# Project specific override is not supported.
 	'actions' => {
 		'override' => 0,
 		'default' => []},
 
-	# Allow gitweb scan project content tags of project repository,
+	# Allow butweb scan project content tags of project repository,
 	# and display the popular Web 2.0-ish "tag cloud" near the projects
 	# list.  Note that this is something COMPLETELY different from the
 	# normal Git tags.
 
-	# gitweb by itself can show existing tags, but it does not handle
-	# tagging itself; you need to do it externally, outside gitweb.
-	# The format is described in git_get_project_ctags() subroutine.
+	# butweb by itself can show existing tags, but it does not handle
+	# tagging itself; you need to do it externally, outside butweb.
+	# The format is described in but_get_project_ctags() subroutine.
 	# You may want to install the HTML::TagCloud Perl module to get
 	# a pretty tag cloud instead of just a list of tags.
 
@@ -478,7 +478,7 @@ our %feature = (
 	# $feature{'patches'}{'default'} = [0];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'patches'}{'override'} = 1;
-	# and in project config gitweb.patches = 0|n;
+	# and in project config butweb.patches = 0|n;
 	# where n is the maximum number of patches allowed in a patchset.
 	'patches' => {
 		'sub' => \&feature_patches,
@@ -499,13 +499,13 @@ our %feature = (
 	# where <provider> is either gravatar or picon.
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'avatar'}{'override'} = 1;
-	# and in project config gitweb.avatar = <provider>;
+	# and in project config butweb.avatar = <provider>;
 	'avatar' => {
 		'sub' => \&feature_avatar,
 		'override' => 0,
 		'default' => ['']},
 
-	# Enable displaying how much time and how many git commands
+	# Enable displaying how much time and how many but commands
 	# it took to generate and display page.  Disabled by default.
 	# Project specific override is not supported.
 	'timed' => {
@@ -520,19 +520,19 @@ our %feature = (
 		'default' => [0]},
 
 	# Enable and configure ability to change common timezone for dates
-	# in gitweb output via JavaScript.  Enabled by default.
+	# in butweb output via JavaScript.  Enabled by default.
 	# Project specific override is not supported.
 	'javascript-timezone' => {
 		'override' => 0,
 		'default' => [
 			'local',     # default timezone: 'utc', 'local', or '(-|+)HHMM' format,
 			             # or undef to turn off this feature
-			'gitweb_tz', # name of cookie where to store selected timezone
+			'butweb_tz', # name of cookie where to store selected timezone
 			'datetime',  # CSS class used to mark up dates for manipulation
 		]},
 
 	# Syntax highlighting support. This is based on Daniel Svensson's
-	# and Sham Chukoury's work in gitweb-xmms2.git.
+	# and Sham Chukoury's work in butweb-xmms2.but.
 	# It requires the 'highlight' program present in $PATH,
 	# and therefore is disabled by default.
 
@@ -550,7 +550,7 @@ our %feature = (
 	# $feature{'remote_heads'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'remote_heads'}{'override'} = 1;
-	# and in project config gitweb.remoteheads = 0|1;
+	# and in project config butweb.remoteheads = 0|1;
 	'remote_heads' => {
 		'sub' => sub { feature_bool('remote_heads', @_) },
 		'override' => 0,
@@ -562,7 +562,7 @@ our %feature = (
 	# $feature{'extra-branch-refs'}{'default'} = ['dirs', 'of', 'choice'];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'extra-branch-refs'}{'override'} = 1;
-	# and in project config gitweb.extrabranchrefs = dirs of choice
+	# and in project config butweb.extrabranchrefs = dirs of choice
 	# Every directory is separated with whitespace.
 
 	'extra-branch-refs' => {
@@ -580,7 +580,7 @@ our %feature = (
 		'default' => [0]},
 );
 
-sub gitweb_get_feature {
+sub butweb_get_feature {
 	my ($name) = @_;
 	return unless exists $feature{$name};
 	my ($sub, $override, @defaults) = (
@@ -588,8 +588,8 @@ sub gitweb_get_feature {
 		$feature{$name}{'override'},
 		@{$feature{$name}{'default'}});
 	# project specific override is possible only if we have project
-	our $git_dir; # global variable, declared later
-	if (!$override || !defined $git_dir) {
+	our $but_dir; # global variable, declared later
+	if (!$override || !defined $but_dir) {
 		return @defaults;
 	}
 	if (!defined $sub) {
@@ -602,22 +602,22 @@ sub gitweb_get_feature {
 # A wrapper to check if a given feature is enabled.
 # With this, you can say
 #
-#   my $bool_feat = gitweb_check_feature('bool_feat');
-#   gitweb_check_feature('bool_feat') or somecode;
+#   my $bool_feat = butweb_check_feature('bool_feat');
+#   butweb_check_feature('bool_feat') or somecode;
 #
 # instead of
 #
-#   my ($bool_feat) = gitweb_get_feature('bool_feat');
-#   (gitweb_get_feature('bool_feat'))[0] or somecode;
+#   my ($bool_feat) = butweb_get_feature('bool_feat');
+#   (butweb_get_feature('bool_feat'))[0] or somecode;
 #
-sub gitweb_check_feature {
-	return (gitweb_get_feature(@_))[0];
+sub butweb_check_feature {
+	return (butweb_get_feature(@_))[0];
 }
 
 
 sub feature_bool {
 	my $key = shift;
-	my ($val) = git_get_project_config($key, '--bool');
+	my ($val) = but_get_project_config($key, '--bool');
 
 	if (!defined $val) {
 		return ($_[0]);
@@ -631,7 +631,7 @@ sub feature_bool {
 sub feature_snapshot {
 	my (@fmts) = @_;
 
-	my ($val) = git_get_project_config('snapshot');
+	my ($val) = but_get_project_config('snapshot');
 
 	if ($val) {
 		@fmts = ($val eq 'none' ? () : split /\s*[,\s]\s*/, $val);
@@ -641,7 +641,7 @@ sub feature_snapshot {
 }
 
 sub feature_patches {
-	my @val = (git_get_project_config('patches', '--int'));
+	my @val = (but_get_project_config('patches', '--int'));
 
 	if (@val) {
 		return @val;
@@ -651,14 +651,14 @@ sub feature_patches {
 }
 
 sub feature_avatar {
-	my @val = (git_get_project_config('avatar'));
+	my @val = (but_get_project_config('avatar'));
 
 	return @val ? @val : @_;
 }
 
 sub feature_extra_branch_refs {
 	my (@branch_refs) = @_;
-	my $values = git_get_project_config('extrabranchrefs');
+	my $values = but_get_project_config('extrabranchrefs');
 
 	if ($values) {
 		$values = config_to_multi ($values);
@@ -717,11 +717,11 @@ sub filter_and_validate_refs {
 # request, allowing updating configurations that change with each request,
 # while running other code in config file only once.
 #
-# Otherwise, if it is false then gitweb would process config file only once;
-# if it is true then gitweb config would be run for each request.
+# Otherwise, if it is false then butweb would process config file only once;
+# if it is true then butweb config would be run for each request.
 our $per_request_config = 1;
 
-# read and parse gitweb config file given by its parameter.
+# read and parse butweb config file given by its parameter.
 # returns true on success, false on recoverable error, allowing
 # to chain this subroutine, using first file that exists.
 # dies on errors during parsing config file, as it is unrecoverable.
@@ -738,7 +738,7 @@ sub read_config_file {
 }
 
 our ($GITWEB_CONFIG, $GITWEB_CONFIG_SYSTEM, $GITWEB_CONFIG_COMMON);
-sub evaluate_gitweb_config {
+sub evaluate_butweb_config {
 	our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 	our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
 	our $GITWEB_CONFIG_COMMON = $ENV{'GITWEB_CONFIG_COMMON'} || "++GITWEB_CONFIG_COMMON++";
@@ -781,11 +781,11 @@ sub get_loadavg {
 	return 0;
 }
 
-# version of the core git binary
-our $git_version;
-sub evaluate_git_version {
-	our $git_version = qx("$GIT" --version) =~ m/git version (.*)$/ ? $1 : "unknown";
-	$number_of_git_cmds++;
+# version of the core but binary
+our $but_version;
+sub evaluate_but_version {
+	our $but_version = qx("$GIT" --version) =~ m/but version (.*)$/ ? $1 : "unknown";
+	$number_of_but_cmds++;
 }
 
 sub check_loadavg {
@@ -870,38 +870,38 @@ our %cgi_param_mapping = @cgi_param_mapping;
 
 # we will also need to know the possible actions, for validation
 our %actions = (
-	"blame" => \&git_blame,
-	"blame_incremental" => \&git_blame_incremental,
-	"blame_data" => \&git_blame_data,
-	"blobdiff" => \&git_blobdiff,
-	"blobdiff_plain" => \&git_blobdiff_plain,
-	"blob" => \&git_blob,
-	"blob_plain" => \&git_blob_plain,
-	"cummitdiff" => \&git_cummitdiff,
-	"cummitdiff_plain" => \&git_cummitdiff_plain,
-	"cummit" => \&git_cummit,
-	"forks" => \&git_forks,
-	"heads" => \&git_heads,
-	"history" => \&git_history,
-	"log" => \&git_log,
-	"patch" => \&git_patch,
-	"patches" => \&git_patches,
-	"remotes" => \&git_remotes,
-	"rss" => \&git_rss,
-	"atom" => \&git_atom,
-	"search" => \&git_search,
-	"search_help" => \&git_search_help,
-	"shortlog" => \&git_shortlog,
-	"summary" => \&git_summary,
-	"tag" => \&git_tag,
-	"tags" => \&git_tags,
-	"tree" => \&git_tree,
-	"snapshot" => \&git_snapshot,
-	"object" => \&git_object,
+	"blame" => \&but_blame,
+	"blame_incremental" => \&but_blame_incremental,
+	"blame_data" => \&but_blame_data,
+	"blobdiff" => \&but_blobdiff,
+	"blobdiff_plain" => \&but_blobdiff_plain,
+	"blob" => \&but_blob,
+	"blob_plain" => \&but_blob_plain,
+	"cummitdiff" => \&but_cummitdiff,
+	"cummitdiff_plain" => \&but_cummitdiff_plain,
+	"cummit" => \&but_cummit,
+	"forks" => \&but_forks,
+	"heads" => \&but_heads,
+	"history" => \&but_history,
+	"log" => \&but_log,
+	"patch" => \&but_patch,
+	"patches" => \&but_patches,
+	"remotes" => \&but_remotes,
+	"rss" => \&but_rss,
+	"atom" => \&but_atom,
+	"search" => \&but_search,
+	"search_help" => \&but_search_help,
+	"shortlog" => \&but_shortlog,
+	"summary" => \&but_summary,
+	"tag" => \&but_tag,
+	"tags" => \&but_tags,
+	"tree" => \&but_tree,
+	"snapshot" => \&but_snapshot,
+	"object" => \&but_object,
 	# those below don't need $project
-	"opml" => \&git_opml,
-	"project_list" => \&git_project_list,
-	"project_index" => \&git_project_index,
+	"opml" => \&but_opml,
+	"project_list" => \&but_project_list,
+	"project_index" => \&but_project_index,
 );
 
 # finally, we have the hash of allowed extra_options for the commands that
@@ -969,9 +969,9 @@ sub evaluate_path_info {
 	# first, analyze the 'current' part
 	if (defined $pathname) {
 		# we got "branch:filename" or "branch:dir/"
-		# we could use git_get_type(branch:pathname), but:
-		# - it needs $git_dir
-		# - it does a git() call
+		# we could use but_get_type(branch:pathname), but:
+		# - it needs $but_dir
+		# - it does a but() call
 		# - the convention of terminating directories with a slash
 		#   makes it superfluous
 		# - embedding the action in the PATH_INFO would make it even
@@ -1002,7 +1002,7 @@ sub evaluate_path_info {
 		# set will fail, but that happens regardless of PATH_INFO.
 		if (defined $parentrefname) {
 			# if there is parent let the default be 'shortlog' action
-			# (for http://git.example.com/repo.git/A..B links); if there
+			# (for http://but.example.com/repo.but/A..B links); if there
 			# is no parent, dispatch will detect type of object and set
 			# action appropriately if required (if action is not set)
 			$input_params{'action'} ||= "shortlog";
@@ -1196,22 +1196,22 @@ sub evaluate_and_validate_params {
 	}
 }
 
-# path to the current git repository
-our $git_dir;
-sub evaluate_git_dir {
-	our $git_dir = "$projectroot/$project" if $project;
+# path to the current but repository
+our $but_dir;
+sub evaluate_but_dir {
+	our $but_dir = "$projectroot/$project" if $project;
 }
 
-our (@snapshot_fmts, $git_avatar, @extra_branch_refs);
-sub configure_gitweb_features {
+our (@snapshot_fmts, $but_avatar, @extra_branch_refs);
+sub configure_butweb_features {
 	# list of supported snapshot formats
-	our @snapshot_fmts = gitweb_get_feature('snapshot');
+	our @snapshot_fmts = butweb_get_feature('snapshot');
 	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
 
-	our ($git_avatar) = gitweb_get_feature('avatar');
-	$git_avatar = '' unless $git_avatar =~ /^(?:gravatar|picon)$/s;
+	our ($but_avatar) = butweb_get_feature('avatar');
+	$but_avatar = '' unless $but_avatar =~ /^(?:gravatar|picon)$/s;
 
-	our @extra_branch_refs = gitweb_get_feature('extra-branch-refs');
+	our @extra_branch_refs = butweb_get_feature('extra-branch-refs');
 	@extra_branch_refs = filter_and_validate_refs (@extra_branch_refs);
 }
 
@@ -1238,10 +1238,10 @@ set_message(\&handle_errors_html);
 sub dispatch {
 	if (!defined $action) {
 		if (defined $hash) {
-			$action = git_get_type($hash);
+			$action = but_get_type($hash);
 			$action or die_error(404, "Object does not exist");
 		} elsif (defined $hash_base && defined $file_name) {
-			$action = git_get_type("$hash_base:$file_name");
+			$action = but_get_type("$hash_base:$file_name");
 			$action or die_error(404, "File or directory does not exist");
 		} elsif (defined $project) {
 			$action = 'summary';
@@ -1262,7 +1262,7 @@ sub dispatch {
 sub reset_timer {
 	our $t0 = [ gettimeofday() ]
 		if defined $t0;
-	our $number_of_git_cmds = 0;
+	our $number_of_but_cmds = 0;
 }
 
 our $first_request = 1;
@@ -1271,27 +1271,27 @@ sub run_request {
 
 	evaluate_uri();
 	if ($first_request) {
-		evaluate_gitweb_config();
-		evaluate_git_version();
+		evaluate_butweb_config();
+		evaluate_but_version();
 	}
 	if ($per_request_config) {
 		if (ref($per_request_config) eq 'CODE') {
 			$per_request_config->();
 		} elsif (!$first_request) {
-			evaluate_gitweb_config();
+			evaluate_butweb_config();
 		}
 	}
 	check_loadavg();
 
-	# $projectroot and $projects_list might be set in gitweb config file
+	# $projectroot and $projects_list might be set in butweb config file
 	$projects_list ||= $projectroot;
 
 	evaluate_query_params();
 	evaluate_path_info();
 	evaluate_and_validate_params();
-	evaluate_git_dir();
+	evaluate_but_dir();
 
-	configure_gitweb_features();
+	configure_butweb_features();
 
 	dispatch();
 }
@@ -1305,7 +1305,7 @@ sub configure_as_fcgi {
 	require CGI::Fast;
 	our $CGI = 'CGI::Fast';
 	# FCGI is not Unicode aware hence the UTF-8 encoding must be done manually.
-	# However no encoding must be done within git_blob_plain() and git_snapshot()
+	# However no encoding must be done within but_blob_plain() and but_snapshot()
 	# which must still output in raw binary mode.
 	no warnings 'redefine';
 	my $enc = Encode::find_encoding('UTF-8');
@@ -1407,7 +1407,7 @@ sub href {
 		}
 	}
 
-	my $use_pathinfo = gitweb_check_feature('pathinfo');
+	my $use_pathinfo = butweb_check_feature('pathinfo');
 	if (defined $params{'project'} &&
 	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
 		# try to put as many parameters as possible in PATH_INFO:
@@ -1418,7 +1418,7 @@ sub href {
 		#   - the snapshot_format as an appropriate suffix
 
 		# When the script is the root DirectoryIndex for the domain,
-		# $href here would be something like http://gitweb.example.com/
+		# $href here would be something like http://butweb.example.com/
 		# Thus, we strip any trailing / from $href, to spare us double
 		# slashes in the final URL
 		$href =~ s,/$,,;
@@ -1559,7 +1559,7 @@ sub is_valid_ref_format {
 	my $input = shift;
 
 	return undef unless defined $input;
-	# restrictions on ref name according to git-check-ref-format
+	# restrictions on ref name according to but-check-ref-format
 	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
 		return undef;
 	}
@@ -1576,13 +1576,13 @@ sub is_valid_refname {
 	}
 	# it must be correct pathname
 	is_valid_pathname($input) or return undef;
-	# check git-check-ref-format restrictions
+	# check but-check-ref-format restrictions
 	is_valid_ref_format($input) or return undef;
 	return 1;
 }
 
 # decode sequences of octets in utf8 into Perl's internal form,
-# which is utf-8 with utf8 flag set if needed.  gitweb writes out
+# which is utf-8 with utf8 flag set if needed.  butweb writes out
 # in utf-8 thanks to "binmode STDOUT, ':utf8'" at beginning
 sub to_utf8 {
 	my $str = shift;
@@ -1714,7 +1714,7 @@ sub quot_upr {
 	}
 }
 
-# git may return quoted and escaped filenames
+# but may return quoted and escaped filenames
 sub unquote {
 	my $str = shift;
 
@@ -1766,7 +1766,7 @@ sub untabify {
 
 sub project_in_list {
 	my $project = shift;
-	my @list = git_get_projects_list();
+	my @list = but_get_projects_list();
 	return @list && scalar(grep { $_->{'path'} eq $project } @list);
 }
 
@@ -2013,7 +2013,7 @@ sub mode_str {
 	} elsif (S_ISLNK($mode)) {
 		return 'lrwxrwxrwx';
 	} elsif (S_ISREG($mode)) {
-		# git cares only about the executable bit
+		# but cares only about the executable bit
 		if ($mode & S_IXUSR) {
 			return '-rwxr-xr-x';
 		} else {
@@ -2090,7 +2090,7 @@ sub format_log_line_html {
 	$line =~ s{
         \b
         (
-            # The output of "git describe", e.g. v2.10.0-297-gf6727b0
+            # The output of "but describe", e.g. v2.10.0-297-gf6727b0
             # or hadoop-20160921-113441-20-g094fb7d
             (?<!-) # see strbuf_check_tag_ref(). Tags can't start with -
             [A-Za-z0-9.-]+
@@ -2222,16 +2222,16 @@ sub gravatar_url {
 
 # Insert an avatar for the given $email at the given $size if the feature
 # is enabled.
-sub git_get_avatar {
+sub but_get_avatar {
 	my ($email, %opts) = @_;
 	my $pre_white  = ($opts{-pad_before} ? "&nbsp;" : "");
 	my $post_white = ($opts{-pad_after}  ? "&nbsp;" : "");
 	$opts{-size} ||= 'default';
 	my $size = $avatar_size{$opts{-size}} || $avatar_size{'default'};
 	my $url = "";
-	if ($git_avatar eq 'gravatar') {
+	if ($but_avatar eq 'gravatar') {
 		$url = gravatar_url($email, $size);
-	} elsif ($git_avatar eq 'picon') {
+	} elsif ($but_avatar eq 'picon') {
 		$url = picon_url($email);
 	}
 	# Other providers can be added by extending the if chain, defining $url
@@ -2251,7 +2251,7 @@ sub git_get_avatar {
 
 sub format_search_author {
 	my ($author, $searchtype, $displaytext) = @_;
-	my $have_search = gitweb_check_feature('search');
+	my $have_search = butweb_check_feature('search');
 
 	if ($have_search) {
 		my $performed = "";
@@ -2281,13 +2281,13 @@ sub format_author_html {
 	my $author = chop_and_escape_str($co->{'author_name'}, @_);
 	return "<$tag class=\"author\">" .
 	       format_search_author($co->{'author_name'}, "author",
-		       git_get_avatar($co->{'author_email'}, -pad_after => 1) .
+		       but_get_avatar($co->{'author_email'}, -pad_after => 1) .
 		       $author) .
 	       "</$tag>";
 }
 
-# format git diff header line, i.e. "diff --(git|combined|cc) ..."
-sub format_git_diff_header_line {
+# format but diff header line, i.e. "diff --(but|combined|cc) ..."
+sub format_but_diff_header_line {
 	my $line = shift;
 	my $diffinfo = shift;
 	my ($from, $to) = @_;
@@ -2641,7 +2641,7 @@ sub format_snapshot_links {
 ## functions returning values to be passed, perhaps after some
 ## transformation, to other functions; e.g. returning arguments to href()
 
-# returns hash to be passed to href to generate gitweb URL
+# returns hash to be passed to href to generate butweb URL
 # in -title key it returns description of link
 sub get_feed_info {
 	my $format = shift || 'Atom';
@@ -2684,12 +2684,12 @@ sub get_feed_info {
 }
 
 ## ----------------------------------------------------------------------
-## git utility subroutines, invoking git commands
+## but utility subroutines, invoking but commands
 
-# returns path to the core git executable and the --git-dir parameter as list
-sub git_cmd {
-	$number_of_git_cmds++;
-	return $GIT, '--git-dir='.$git_dir;
+# returns path to the core but executable and the --but-dir parameter as list
+sub but_cmd {
+	$number_of_but_cmds++;
+	return $GIT, '--but-dir='.$but_dir;
 }
 
 # quote the given arguments for passing them to the shell
@@ -2702,40 +2702,40 @@ sub quote_command {
 }
 
 # get HEAD ref of given project as hash
-sub git_get_head_hash {
-	return git_get_full_hash(shift, 'HEAD');
+sub but_get_head_hash {
+	return but_get_full_hash(shift, 'HEAD');
 }
 
-sub git_get_full_hash {
-	return git_get_hash(@_);
+sub but_get_full_hash {
+	return but_get_hash(@_);
 }
 
-sub git_get_short_hash {
-	return git_get_hash(@_, '--short=7');
+sub but_get_short_hash {
+	return but_get_hash(@_, '--short=7');
 }
 
-sub git_get_hash {
+sub but_get_hash {
 	my ($project, $hash, @options) = @_;
-	my $o_git_dir = $git_dir;
+	my $o_but_dir = $but_dir;
 	my $retval = undef;
-	$git_dir = "$projectroot/$project";
-	if (open my $fd, '-|', git_cmd(), 'rev-parse',
+	$but_dir = "$projectroot/$project";
+	if (open my $fd, '-|', but_cmd(), 'rev-parse',
 	    '--verify', '-q', @options, $hash) {
 		$retval = <$fd>;
 		chomp $retval if defined $retval;
 		close $fd;
 	}
-	if (defined $o_git_dir) {
-		$git_dir = $o_git_dir;
+	if (defined $o_but_dir) {
+		$but_dir = $o_but_dir;
 	}
 	return $retval;
 }
 
 # get type of given object
-sub git_get_type {
+sub but_get_type {
 	my $hash = shift;
 
-	open my $fd, "-|", git_cmd(), "cat-file", '-t', $hash or return;
+	open my $fd, "-|", but_cmd(), "cat-file", '-t', $hash or return;
 	my $type = <$fd>;
 	close $fd or return;
 	chomp $type;
@@ -2760,15 +2760,15 @@ sub hash_set_multi {
 	}
 }
 
-# return hash of git project configuration
-# optionally limited to some section, e.g. 'gitweb'
-sub git_parse_project_config {
+# return hash of but project configuration
+# optionally limited to some section, e.g. 'butweb'
+sub but_parse_project_config {
 	my $section_regexp = shift;
 	my %config;
 
 	local $/ = "\0";
 
-	open my $fh, "-|", git_cmd(), "config", '-z', '-l',
+	open my $fh, "-|", but_cmd(), "config", '-z', '-l',
 		or return;
 
 	while (my $keyval = <$fh>) {
@@ -2826,15 +2826,15 @@ sub config_to_multi {
 	return ref($val) ? $val : (defined($val) ? [ $val ] : []);
 }
 
-sub git_get_project_config {
+sub but_get_project_config {
 	my ($key, $type) = @_;
 
-	return unless defined $git_dir;
+	return unless defined $but_dir;
 
 	# key sanity check
 	return unless ($key);
 	# only subsection, if exists, is case sensitive,
-	# and not lowercased by 'git config -z -l'
+	# and not lowercased by 'but config -z -l'
 	if (my ($hi, $mi, $lo) = ($key =~ /^([^.]*)\.(.*)\.([^.]*)$/)) {
 		$lo =~ s/_//g;
 		$key = join(".", lc($hi), $mi, lc($lo));
@@ -2844,7 +2844,7 @@ sub git_get_project_config {
 		$key =~ s/_//g;
 		return if ($key =~ /\W/);
 	}
-	$key =~ s/^gitweb\.//;
+	$key =~ s/^butweb\.//;
 
 	# type sanity check
 	if (defined $type) {
@@ -2855,36 +2855,36 @@ sub git_get_project_config {
 
 	# get config
 	if (!defined $config_file ||
-	    $config_file ne "$git_dir/config") {
-		%config = git_parse_project_config('gitweb');
-		$config_file = "$git_dir/config";
+	    $config_file ne "$but_dir/config") {
+		%config = but_parse_project_config('butweb');
+		$config_file = "$but_dir/config";
 	}
 
 	# check if config variable (key) exists
-	return unless exists $config{"gitweb.$key"};
+	return unless exists $config{"butweb.$key"};
 
 	# ensure given type
 	if (!defined $type) {
-		return $config{"gitweb.$key"};
+		return $config{"butweb.$key"};
 	} elsif ($type eq 'bool') {
-		# backward compatibility: 'git config --bool' returns true/false
-		return config_to_bool($config{"gitweb.$key"}) ? 'true' : 'false';
+		# backward compatibility: 'but config --bool' returns true/false
+		return config_to_bool($config{"butweb.$key"}) ? 'true' : 'false';
 	} elsif ($type eq 'int') {
-		return config_to_int($config{"gitweb.$key"});
+		return config_to_int($config{"butweb.$key"});
 	}
-	return $config{"gitweb.$key"};
+	return $config{"butweb.$key"};
 }
 
 # get hash of given path at given ref
-sub git_get_hash_by_path {
+sub but_get_hash_by_path {
 	my $base = shift;
 	my $path = shift || return undef;
 	my $type = shift;
 
 	$path =~ s,/+$,,;
 
-	open my $fd, "-|", git_cmd(), "ls-tree", $base, "--", $path
-		or die_error(500, "Open git-ls-tree failed");
+	open my $fd, "-|", but_cmd(), "ls-tree", $base, "--", $path
+		or die_error(500, "Open but-ls-tree failed");
 	my $line = <$fd>;
 	close $fd or return undef;
 
@@ -2904,19 +2904,19 @@ sub git_get_hash_by_path {
 
 # get path of entry with given hash at given tree-ish (ref)
 # used to get 'from' filename for combined diff (merge cummit) for renames
-sub git_get_path_by_hash {
+sub but_get_path_by_hash {
 	my $base = shift || return;
 	my $hash = shift || return;
 
 	local $/ = "\0";
 
-	open my $fd, "-|", git_cmd(), "ls-tree", '-r', '-t', '-z', $base
+	open my $fd, "-|", but_cmd(), "ls-tree", '-r', '-t', '-z', $base
 		or return undef;
 	while (my $line = <$fd>) {
 		chomp $line;
 
-		#'040000 tree 595596a6a9117ddba9fe379b6b012b558bac8423	gitweb'
-		#'100644 blob e02e90f0429be0d2a69b76571101f20b8f75530f	gitweb/README'
+		#'040000 tree 595596a6a9117ddba9fe379b6b012b558bac8423	butweb'
+		#'100644 blob e02e90f0429be0d2a69b76571101f20b8f75530f	butweb/README'
 		if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
 			close $fd;
 			return $1;
@@ -2927,17 +2927,17 @@ sub git_get_path_by_hash {
 }
 
 ## ......................................................................
-## git utility functions, directly accessing git repository
+## but utility functions, directly accessing but repository
 
 # get the value of config variable either from file named as the variable
-# itself in the repository ($GIT_DIR/$name file), or from gitweb.$name
+# itself in the repository ($GIT_DIR/$name file), or from butweb.$name
 # configuration variable in the repository config file.
-sub git_get_file_or_project_config {
+sub but_get_file_or_project_config {
 	my ($path, $name) = @_;
 
-	$git_dir = "$projectroot/$path";
-	open my $fd, '<', "$git_dir/$name"
-		or return git_get_project_config($name);
+	$but_dir = "$projectroot/$path";
+	open my $fd, '<', "$but_dir/$name"
+		or return but_get_project_config($name);
 	my $conf = <$fd>;
 	close $fd;
 	if (defined $conf) {
@@ -2946,14 +2946,14 @@ sub git_get_file_or_project_config {
 	return $conf;
 }
 
-sub git_get_project_description {
+sub but_get_project_description {
 	my $path = shift;
-	return git_get_file_or_project_config($path, 'description');
+	return but_get_file_or_project_config($path, 'description');
 }
 
-sub git_get_project_category {
+sub but_get_project_category {
 	my $path = shift;
-	return git_get_file_or_project_config($path, 'category');
+	return but_get_file_or_project_config($path, 'category');
 }
 
 
@@ -2963,14 +2963,14 @@ sub git_get_project_category {
 #   - otherwise add a tag with weight 1
 # * $GIT_DIR/ctags file, each line is a tag (with weight 1)
 #   the same value multiple times increases tag weight
-# * `gitweb.ctag' multi-valued repo config variable
-sub git_get_project_ctags {
+# * `butweb.ctag' multi-valued repo config variable
+sub but_get_project_ctags {
 	my $project = shift;
 	my $ctags = {};
 
-	$git_dir = "$projectroot/$project";
-	if (opendir my $dh, "$git_dir/ctags") {
-		my @files = grep { -f $_ } map { "$git_dir/ctags/$_" } readdir($dh);
+	$but_dir = "$projectroot/$project";
+	if (opendir my $dh, "$but_dir/ctags") {
+		my @files = grep { -f $_ } map { "$but_dir/ctags/$_" } readdir($dh);
 		foreach my $tagfile (@files) {
 			open my $ct, '<', $tagfile
 				or next;
@@ -2987,7 +2987,7 @@ sub git_get_project_ctags {
 		}
 		closedir $dh;
 
-	} elsif (open my $fh, '<', "$git_dir/ctags") {
+	} elsif (open my $fh, '<', "$but_dir/ctags") {
 		while (my $line = <$fh>) {
 			chomp $line;
 			$ctags->{$line}++ if $line;
@@ -2995,7 +2995,7 @@ sub git_get_project_ctags {
 		close $fh;
 
 	} else {
-		my $taglist = config_to_multi(git_get_project_config('ctag'));
+		my $taglist = config_to_multi(but_get_project_config('ctag'));
 		foreach my $tag (@$taglist) {
 			$ctags->{$tag}++;
 		}
@@ -3006,7 +3006,7 @@ sub git_get_project_ctags {
 
 # return hash, where keys are content tags ('ctags'),
 # and values are sum of weights of given tag in every project
-sub git_gather_all_ctags {
+sub but_gather_all_ctags {
 	my $projects = shift;
 	my $ctags = {};
 
@@ -3019,7 +3019,7 @@ sub git_gather_all_ctags {
 	return $ctags;
 }
 
-sub git_populate_project_tagcloud {
+sub but_populate_project_tagcloud {
 	my $ctags = shift;
 
 	# First, merge different-cased tags; tags vote on casing
@@ -3065,7 +3065,7 @@ sub git_populate_project_tagcloud {
 	return $cloud;
 }
 
-sub git_show_project_tagcloud {
+sub but_show_project_tagcloud {
 	my ($cloud, $count) = @_;
 	if (ref $cloud eq 'HTML::TagCloud') {
 		return $cloud->html_and_css($count);
@@ -3080,21 +3080,21 @@ sub git_show_project_tagcloud {
 	}
 }
 
-sub git_get_project_url_list {
+sub but_get_project_url_list {
 	my $path = shift;
 
-	$git_dir = "$projectroot/$path";
-	open my $fd, '<', "$git_dir/cloneurl"
+	$but_dir = "$projectroot/$path";
+	open my $fd, '<', "$but_dir/cloneurl"
 		or return wantarray ?
-		@{ config_to_multi(git_get_project_config('url')) } :
-		   config_to_multi(git_get_project_config('url'));
-	my @git_project_url_list = map { chomp; $_ } <$fd>;
+		@{ config_to_multi(but_get_project_config('url')) } :
+		   config_to_multi(but_get_project_config('url'));
+	my @but_project_url_list = map { chomp; $_ } <$fd>;
 	close $fd;
 
-	return wantarray ? @git_project_url_list : \@git_project_url_list;
+	return wantarray ? @but_project_url_list : \@but_project_url_list;
 }
 
-sub git_get_projects_list {
+sub but_get_projects_list {
 	my $filter = shift || '';
 	my $paranoid = shift;
 	my @list;
@@ -3122,7 +3122,7 @@ sub git_get_projects_list {
 				our $projectroot;
 				# skip project-list toplevel, if we get it.
 				return if (m!^[/.]$!);
-				# only directories can be git repositories
+				# only directories can be but repositories
 				return unless (-d $_);
 				# need search permission
 				return unless (-x $_);
@@ -3148,9 +3148,9 @@ sub git_get_projects_list {
 
 	} elsif (-f $projects_list) {
 		# read from file(url-encoded):
-		# 'git%2Fgit.git Linus+Torvalds'
-		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
-		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
+		# 'but%2Fbut.but Linus+Torvalds'
+		# 'libs%2Fklibc%2Fklibc.but H.+Peter+Anvin'
+		# 'linux%2Fhotplug%2Fudev.but Greg+Kroah-Hartman'
 		open my $fd, '<', $projects_list or return;
 	PROJECT:
 		while (my $line = <$fd>) {
@@ -3189,9 +3189,9 @@ sub filter_forks_from_projects_list {
 	# generate trie out of those directories that might contain forks
 	foreach my $pr (@$projects) {
 		my $path = $pr->{'path'};
-		$path =~ s/\.git$//;      # forks of 'repo.git' are in 'repo/' directory
-		next if ($path =~ m!/$!); # skip non-bare repositories, e.g. 'repo/.git'
-		next unless ($path);      # skip '.git' repository: tests, git-instaweb
+		$path =~ s/\.but$//;      # forks of 'repo.but' are in 'repo/' directory
+		next if ($path =~ m!/$!); # skip non-bare repositories, e.g. 'repo/.but'
+		next unless ($path);      # skip '.but' repository: tests, but-instaweb
 		next unless (-d "$projectroot/$path"); # containing directory exists
 		$pr->{'forks'} = [];      # there can be 0 or more forks of project
 
@@ -3276,16 +3276,16 @@ sub search_projects_list {
 	return @projects;
 }
 
-our $gitweb_project_owner = undef;
-sub git_get_project_list_from_file {
+our $butweb_project_owner = undef;
+sub but_get_project_list_from_file {
 
-	return if (defined $gitweb_project_owner);
+	return if (defined $butweb_project_owner);
 
-	$gitweb_project_owner = {};
+	$butweb_project_owner = {};
 	# read from file (url-encoded):
-	# 'git%2Fgit.git Linus+Torvalds'
-	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
-	# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
+	# 'but%2Fbut.but Linus+Torvalds'
+	# 'libs%2Fklibc%2Fklibc.but H.+Peter+Anvin'
+	# 'linux%2Fhotplug%2Fudev.but Greg+Kroah-Hartman'
 	if (-f $projects_list) {
 		open(my $fd, '<', $projects_list);
 		while (my $line = <$fd>) {
@@ -3293,42 +3293,42 @@ sub git_get_project_list_from_file {
 			my ($pr, $ow) = split ' ', $line;
 			$pr = unescape($pr);
 			$ow = unescape($ow);
-			$gitweb_project_owner->{$pr} = to_utf8($ow);
+			$butweb_project_owner->{$pr} = to_utf8($ow);
 		}
 		close $fd;
 	}
 }
 
-sub git_get_project_owner {
+sub but_get_project_owner {
 	my $project = shift;
 	my $owner;
 
 	return undef unless $project;
-	$git_dir = "$projectroot/$project";
+	$but_dir = "$projectroot/$project";
 
-	if (!defined $gitweb_project_owner) {
-		git_get_project_list_from_file();
+	if (!defined $butweb_project_owner) {
+		but_get_project_list_from_file();
 	}
 
-	if (exists $gitweb_project_owner->{$project}) {
-		$owner = $gitweb_project_owner->{$project};
+	if (exists $butweb_project_owner->{$project}) {
+		$owner = $butweb_project_owner->{$project};
 	}
 	if (!defined $owner){
-		$owner = git_get_project_config('owner');
+		$owner = but_get_project_config('owner');
 	}
 	if (!defined $owner) {
-		$owner = get_file_owner("$git_dir");
+		$owner = get_file_owner("$but_dir");
 	}
 
 	return $owner;
 }
 
-sub git_get_last_activity {
+sub but_get_last_activity {
 	my ($path) = @_;
 	my $fd;
 
-	$git_dir = "$projectroot/$path";
-	open($fd, "-|", git_cmd(), 'for-each-ref',
+	$but_dir = "$projectroot/$path";
+	open($fd, "-|", but_cmd(), 'for-each-ref',
 	     '--format=%(cummitter)',
 	     '--sort=-cummitterdate',
 	     '--count=1',
@@ -3344,17 +3344,17 @@ sub git_get_last_activity {
 	return (undef, undef);
 }
 
-# Implementation note: when a single remote is wanted, we cannot use 'git
+# Implementation note: when a single remote is wanted, we cannot use 'but
 # remote show -n' because that command always work (assuming it's a remote URL
-# if it's not defined), and we cannot use 'git remote show' because that would
+# if it's not defined), and we cannot use 'but remote show' because that would
 # try to make a network roundtrip. So the only way to find if that particular
-# remote is defined is to walk the list provided by 'git remote -v' and stop if
+# remote is defined is to walk the list provided by 'but remote -v' and stop if
 # and when we find what we want.
-sub git_get_remotes_list {
+sub but_get_remotes_list {
 	my $wanted = shift;
 	my %remotes = ();
 
-	open my $fd, '-|' , git_cmd(), 'remote', '-v';
+	open my $fd, '-|' , but_cmd(), 'remote', '-v';
 	return unless $fd;
 	while (my $remote = <$fd>) {
 		chomp $remote;
@@ -3374,7 +3374,7 @@ sub git_get_remotes_list {
 sub fill_remote_heads {
 	my $remotes = shift;
 	my @heads = map { "remotes/$_" } keys %$remotes;
-	my @remoteheads = git_get_heads_list(undef, @heads);
+	my @remoteheads = but_get_heads_list(undef, @heads);
 	foreach my $remote (keys %$remotes) {
 		$remotes->{$remote}{'heads'} = [ grep {
 			$_->{'name'} =~ s!^$remote/!!
@@ -3382,12 +3382,12 @@ sub fill_remote_heads {
 	}
 }
 
-sub git_get_references {
+sub but_get_references {
 	my $type = shift || "";
 	my %refs;
 	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c refs/tags/v2.6.11
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a refs/tags/v2.6.11^{}
-	open my $fd, "-|", git_cmd(), "show-ref", "--dereference",
+	open my $fd, "-|", but_cmd(), "show-ref", "--dereference",
 		($type ? ("--", "refs/$type") : ()) # use -- <pattern> if $type
 		or return;
 
@@ -3405,10 +3405,10 @@ sub git_get_references {
 	return \%refs;
 }
 
-sub git_get_rev_name_tags {
+sub but_get_rev_name_tags {
 	my $hash = shift || return undef;
 
-	open my $fd, "-|", git_cmd(), "name-rev", "--tags", $hash
+	open my $fd, "-|", but_cmd(), "name-rev", "--tags", $hash
 		or return;
 	my $name_rev = <$fd>;
 	close $fd;
@@ -3460,7 +3460,7 @@ sub parse_date {
 
 sub hide_mailaddrs_if_private {
 	my $line = shift;
-	return $line unless gitweb_check_feature('email-privacy');
+	return $line unless butweb_check_feature('email-privacy');
 	$line =~ s/<[^@>]+@[^>]+>/<redacted>/g;
 	return $line;
 }
@@ -3470,7 +3470,7 @@ sub parse_tag {
 	my %tag;
 	my @comment;
 
-	open my $fd, "-|", git_cmd(), "cat-file", "tag", $tag_id or return;
+	open my $fd, "-|", but_cmd(), "cat-file", "tag", $tag_id or return;
 	$tag{'id'} = $tag_id;
 	while (my $line = <$fd>) {
 		chomp $line;
@@ -3611,13 +3611,13 @@ sub parse_cummit {
 
 	local $/ = "\0";
 
-	open my $fd, "-|", git_cmd(), "rev-list",
+	open my $fd, "-|", but_cmd(), "rev-list",
 		"--parents",
 		"--header",
 		"--max-count=1",
 		$cummit_id,
 		"--",
-		or die_error(500, "Open git-rev-list failed");
+		or die_error(500, "Open but-rev-list failed");
 	%co = parse_cummit_text(<$fd>, 1);
 	close $fd;
 
@@ -3633,7 +3633,7 @@ sub parse_cummits {
 
 	local $/ = "\0";
 
-	open my $fd, "-|", git_cmd(), "rev-list",
+	open my $fd, "-|", but_cmd(), "rev-list",
 		"--header",
 		@args,
 		("--max-count=" . $maxcount),
@@ -3642,7 +3642,7 @@ sub parse_cummits {
 		$cummit_id,
 		"--",
 		($filename ? ($filename) : ())
-		or die_error(500, "Open git-rev-list failed");
+		or die_error(500, "Open but-rev-list failed");
 	while (my $line = <$fd>) {
 		my %co = parse_cummit_text($line);
 		push @cos, \%co;
@@ -3652,7 +3652,7 @@ sub parse_cummits {
 	return wantarray ? @cos : \@cos;
 }
 
-# parse line of git-diff-tree "raw" output
+# parse line of but-diff-tree "raw" output
 sub parse_difftree_raw_line {
 	my $line = shift;
 	my %res;
@@ -3672,7 +3672,7 @@ sub parse_difftree_raw_line {
 			$res{'from_file'} = $res{'to_file'} = $res{'file'} = unquote($7);
 		}
 	}
-	# '::100755 100755 100755 60e79ca1b01bc8b057abe17ddab484699a7f5fdb 94067cc5f73388f33722d52ae02f44692bc07490 94067cc5f73388f33722d52ae02f44692bc07490 MR	git-gui/git-gui.sh'
+	# '::100755 100755 100755 60e79ca1b01bc8b057abe17ddab484699a7f5fdb 94067cc5f73388f33722d52ae02f44692bc07490 94067cc5f73388f33722d52ae02f44692bc07490 MR	but-gui/but-gui.sh'
 	# combined diff (for merge cummit)
 	elsif ($line =~ s/^(::+)((?:[0-7]{6} )+)((?:$oid_regex )+)([a-zA-Z]+)\t(.*)$//) {
 		$res{'nparents'}  = length($1);
@@ -3691,7 +3691,7 @@ sub parse_difftree_raw_line {
 	return wantarray ? %res : \%res;
 }
 
-# wrapper: return parsed line of git-diff-tree "raw" output
+# wrapper: return parsed line of but-diff-tree "raw" output
 # (the argument might be raw line, or parsed info)
 sub parsed_difftree_line {
 	my $line_or_ref = shift;
@@ -3704,7 +3704,7 @@ sub parsed_difftree_line {
 	}
 }
 
-# parse line of git-ls-tree output
+# parse line of but-ls-tree output
 sub parse_ls_tree_line {
 	my $line = shift;
 	my %opts = @_;
@@ -3789,13 +3789,13 @@ sub parse_from_to_diffinfo {
 ## ......................................................................
 ## parse to array of hashes functions
 
-sub git_get_heads_list {
+sub but_get_heads_list {
 	my ($limit, @classes) = @_;
 	@classes = get_branch_refs() unless @classes;
 	my @patterns = map { "refs/$_" } @classes;
 	my @headslist;
 
-	open my $fd, '-|', git_cmd(), 'for-each-ref',
+	open my $fd, '-|', but_cmd(), 'for-each-ref',
 		($limit ? '--count='.($limit+1) : ()),
 		'--sort=-HEAD', '--sort=-cummitterdate',
 		'--format=%(objectname) %(refname) %(subject)%00%(cummitter)',
@@ -3836,11 +3836,11 @@ sub git_get_heads_list {
 	return wantarray ? @headslist : \@headslist;
 }
 
-sub git_get_tags_list {
+sub but_get_tags_list {
 	my $limit = shift;
 	my @tagslist;
 
-	open my $fd, '-|', git_cmd(), 'for-each-ref',
+	open my $fd, '-|', but_cmd(), 'for-each-ref',
 		($limit ? '--count='.($limit+1) : ()), '--sort=-creatordate',
 		'--format=%(objectname) %(objecttype) %(refname) '.
 		'%(*objectname) %(*objecttype) %(subject)%00%(creator)',
@@ -4013,7 +4013,7 @@ sub run_highlighter {
 
 	close $fd;
 	my $syntax_arg = (defined $syntax) ? "--syntax $syntax" : "--force";
-	open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+	open $fd, quote_command(but_cmd(), "cat-file", "blob", $hash)." | ".
 	          quote_command($^X, '-CO', '-MEncode=decode,FB_DEFAULT', '-pse',
 	            '$_ = decode($fe, $_, FB_DEFAULT) if !utf8::decode($_);',
 	            '--', "-fe=$fallback_encoding")." | ".
@@ -4184,7 +4184,7 @@ sub print_search_form {
 		$search_hash = "HEAD";
 	}
 	my $action = $my_uri;
-	my $use_pathinfo = gitweb_check_feature('pathinfo');
+	my $use_pathinfo = butweb_check_feature('pathinfo');
 	if ($use_pathinfo) {
 		$action .= "/".esc_url($project);
 	}
@@ -4207,7 +4207,7 @@ sub print_search_form {
 	      $cgi->end_form() . "\n";
 }
 
-sub git_header_html {
+sub but_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 	my %opts = @_;
@@ -4221,10 +4221,10 @@ sub git_header_html {
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
-<!-- git web interface version $version, (C) 2005-2006, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke -->
-<!-- git core binaries version $git_version -->
+<!-- but web interface version $version, (C) 2005-2006, Kay Sievers <kay.sievers\@vrfy.org>, Christian Gierke -->
+<!-- but core binaries version $but_version -->
 <head>
-<meta name="generator" content="gitweb/$version git/$git_version$mod_perl_version"/>
+<meta name="generator" content="butweb/$version but/$but_version$mod_perl_version"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 EOF
@@ -4252,24 +4252,24 @@ EOF
 		               -title => $logo_label},
 		              $cgi->img({-src => esc_url($logo),
 		                         -width => 72, -height => 27,
-		                         -alt => "git",
+		                         -alt => "but",
 		                         -class => "logo"}));
 	}
 	print_nav_breadcrumbs(%opts);
 	print "</div>\n";
 
-	my $have_search = gitweb_check_feature('search');
+	my $have_search = butweb_check_feature('search');
 	if (defined $project && $have_search) {
 		print_search_form();
 	}
 }
 
-sub git_footer_html {
+sub but_footer_html {
 	my $feed_class = 'rss_logo';
 
 	print "<div class=\"page_footer\">\n";
 	if (defined $project) {
-		my $descr = git_get_project_description($project);
+		my $descr = but_get_project_description($project);
 		if (defined $descr) {
 			print "<div class=\"page_footer_text\">" . esc_html($descr) . "</div>\n";
 		}
@@ -4297,7 +4297,7 @@ sub git_footer_html {
 	}
 	print "</div>\n"; # class="page_footer"
 
-	if (defined $t0 && gitweb_check_feature('timed')) {
+	if (defined $t0 && butweb_check_feature('timed')) {
 		print "<div id=\"generating_info\">\n";
 		print 'This page took '.
 		      '<span id="generating_time" class="time_span">'.
@@ -4305,8 +4305,8 @@ sub git_footer_html {
 		      ' seconds </span>'.
 		      ' and '.
 		      '<span id="generating_cmd">'.
-		      $number_of_git_cmds.
-		      '</span> git commands '.
+		      $number_of_but_cmds.
+		      '</span> but commands '.
 		      " to generate.\n";
 		print "</div>\n"; # class="page_footer"
 	}
@@ -4324,11 +4324,11 @@ sub git_footer_html {
 		      qq!</script>\n!;
 	} else {
 		my ($jstimezone, $tz_cookie, $datetime_class) =
-			gitweb_get_feature('javascript-timezone');
+			butweb_get_feature('javascript-timezone');
 
 		print qq!<script type="text/javascript">\n!.
 		      qq!window.onload = function () {\n!;
-		if (gitweb_check_feature('javascript-actions')) {
+		if (butweb_check_feature('javascript-actions')) {
 			print qq!	fixLinks();\n!;
 		}
 		if ($jstimezone && $tz_cookie && $datetime_class) {
@@ -4353,7 +4353,7 @@ sub git_footer_html {
 # 404: Requested object/revision/project doesn't exist.
 # 500: The server isn't configured properly, or
 #      an internal error occurred (e.g. failed assertions caused by bugs), or
-#      an unknown error occurred (e.g. the git binary died unexpectedly).
+#      an unknown error occurred (e.g. the but binary died unexpectedly).
 # 503: The server is currently unavailable (because it is overloaded,
 #      or down for maintenance).  Generally, this is a temporary state.
 sub die_error {
@@ -4369,7 +4369,7 @@ sub die_error {
 		500 => '500 Internal Server Error',
 		503 => '503 Service Unavailable',
 	);
-	git_header_html($http_responses{$status}, undef, %opts);
+	but_header_html($http_responses{$status}, undef, %opts);
 	print <<EOF;
 <div class="page_body">
 <br /><br />
@@ -4382,7 +4382,7 @@ EOF
 	}
 	print "</div>\n";
 
-	git_footer_html();
+	but_footer_html();
 	goto DONE_GITWEB
 		unless ($opts{'-error_handler'});
 }
@@ -4390,7 +4390,7 @@ EOF
 ## ----------------------------------------------------------------------
 ## functions printing or outputting HTML: navigation
 
-sub git_print_page_nav {
+sub but_print_page_nav {
 	my ($current, $suppress, $head, $treehead, $treebase, $extra) = @_;
 	$extra = '' if !defined $extra; # pager or formats
 
@@ -4414,11 +4414,11 @@ sub git_print_page_nav {
 	$arg{'tree'}{'hash'} = $treehead if defined $treehead;
 	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
 
-	my @actions = gitweb_get_feature('actions');
+	my @actions = butweb_get_feature('actions');
 	my %repl = (
 		'%' => '%',
 		'n' => $project,         # project name
-		'f' => $git_dir,         # project path within filesystem
+		'f' => $but_dir,         # project path within filesystem
 		'h' => $treehead || '',  # current hash ('h' parameter)
 		'b' => $treebase || '',  # hash base ('hb' parameter)
 	);
@@ -4446,7 +4446,7 @@ sub git_print_page_nav {
 sub format_ref_views {
 	my ($current) = @_;
 	my @ref_views = qw{tags heads};
-	push @ref_views, 'remotes' if gitweb_check_feature('remote_heads');
+	push @ref_views, 'remotes' if butweb_check_feature('remote_heads');
 	return join " | ", map {
 		$_ eq $current ? $_ :
 		$cgi->a({-href => href(action=>$_)}, $_)
@@ -4482,7 +4482,7 @@ sub format_paging_nav {
 ## ......................................................................
 ## functions printing or outputting HTML: div
 
-sub git_print_header_div {
+sub but_print_header_div {
 	my ($action, $title, $hash, $hash_base) = @_;
 	my %args = ();
 
@@ -4504,13 +4504,13 @@ sub format_repo_url {
 # Group output by placing it in a DIV element and adding a header.
 # Options for start_div() can be provided by passing a hash reference as the
 # first parameter to the function.
-# Options to git_print_header_div() can be provided by passing an array
+# Options to but_print_header_div() can be provided by passing an array
 # reference. This must follow the options to start_div if they are present.
 # The content can be a scalar, which is output as-is, a scalar reference, which
 # is output after html escaping, an IO handle passed either as *handle or
 # *handle{IO}, or a function reference. In the latter case all following
 # parameters will be taken as argument to the content function call.
-sub git_print_section {
+sub but_print_section {
 	my ($div_args, $header_args, $content);
 	my $arg = shift;
 	if (ref($arg) eq 'HASH') {
@@ -4524,7 +4524,7 @@ sub git_print_section {
 	$content = $arg;
 
 	print $cgi->start_div($div_args);
-	git_print_header_div(@$header_args);
+	but_print_header_div(@$header_args);
 
 	if (ref($content) eq 'CODE') {
 		$content->(@_);
@@ -4544,7 +4544,7 @@ sub format_timestamp_html {
 	my $strtime = $date->{'rfc2822'};
 
 	my (undef, undef, $datetime_class) =
-		gitweb_get_feature('javascript-timezone');
+		butweb_get_feature('javascript-timezone');
 	if ($datetime_class) {
 		$strtime = qq!<span class="$datetime_class">$strtime</span>!;
 	}
@@ -4561,7 +4561,7 @@ sub format_timestamp_html {
 }
 
 # Outputs the author name and date in long form
-sub git_print_authorship {
+sub but_print_authorship {
 	my $co = shift;
 	my %opts = @_;
 	my $tag = $opts{-tag} || 'div';
@@ -4571,7 +4571,7 @@ sub git_print_authorship {
 	print "<$tag class=\"author_date\">" .
 	      format_search_author($author, "author", esc_html($author)) .
 	      " [".format_timestamp_html(\%ad)."]".
-	      git_get_avatar($co->{'author_email'}, -pad_before => 1) .
+	      but_get_avatar($co->{'author_email'}, -pad_before => 1) .
 	      "</$tag>\n";
 }
 
@@ -4580,7 +4580,7 @@ sub git_print_authorship {
 # Parameters are a commit hash reference, followed by the list of people
 # to output information for. If the list is empty it defaults to both
 # author and cummitter.
-sub git_print_authorship_rows {
+sub but_print_authorship_rows {
 	my $co = shift;
 	# too bad we can't use @people = @_ || ('author', 'cummitter')
 	my @people = @_;
@@ -4593,7 +4593,7 @@ sub git_print_authorship_rows {
 		      format_search_author($co->{"${who}_email"}, $who,
 		                           esc_html("<" . $co->{"${who}_email"} . ">")) .
 		      "</td><td rowspan=\"2\">" .
-		      git_get_avatar($co->{"${who}_email"}, -size => 'double') .
+		      but_get_avatar($co->{"${who}_email"}, -size => 'double') .
 		      "</td></tr>\n" .
 		      "<tr>" .
 		      "<td></td><td>" .
@@ -4603,7 +4603,7 @@ sub git_print_authorship_rows {
 	}
 }
 
-sub git_print_page_path {
+sub but_print_page_path {
 	my $name = shift;
 	my $type = shift;
 	my $hb = shift;
@@ -4641,7 +4641,7 @@ sub git_print_page_path {
 	print "<br/></div>\n";
 }
 
-sub git_print_log {
+sub but_print_log {
 	my $log = shift;
 	my %opts = @_;
 
@@ -4694,12 +4694,12 @@ sub git_print_log {
 }
 
 # return link target (what link points to)
-sub git_get_link_target {
+sub but_get_link_target {
 	my $hash = shift;
 	my $link_target;
 
 	# read link
-	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
+	open my $fd, "-|", but_cmd(), "cat-file", "blob", $hash
 		or return;
 	{
 		local $/ = undef;
@@ -4751,8 +4751,8 @@ sub normalize_link_target {
 	return $path;
 }
 
-# print tree entry (row of git_tree), but without encompassing <tr> element
-sub git_print_tree_entry {
+# print tree entry (row of but_tree), but without encompassing <tr> element
+sub but_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
 
 	my %base_key = ();
@@ -4772,7 +4772,7 @@ sub git_print_tree_entry {
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
 			        -class => "list"}, esc_path($t->{'name'}));
 		if (S_ISLNK(oct $t->{'mode'})) {
-			my $link_target = git_get_link_target($t->{'hash'});
+			my $link_target = but_get_link_target($t->{'hash'});
 			if ($link_target) {
 				my $norm_target = normalize_link_target($link_target, $basedir);
 				if (defined $norm_target) {
@@ -4857,7 +4857,7 @@ sub fill_from_file_info {
 		if ($diff->{'status'}[$i] eq 'R' ||
 		    $diff->{'status'}[$i] eq 'C') {
 			$diff->{'from_file'}[$i] =
-				git_get_path_by_hash($parents[$i], $diff->{'from_id'}[$i]);
+				but_get_path_by_hash($parents[$i], $diff->{'from_id'}[$i]);
 		}
 	}
 
@@ -4883,10 +4883,10 @@ sub is_patch_split {
 }
 
 
-sub git_difftree_body {
+sub but_difftree_body {
 	my ($difftree, $hash, @parents) = @_;
 	my ($parent) = $parents[0];
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_blame = butweb_check_feature('blame');
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
 		print(($#{$difftree} + 1) . " files changed:\n");
@@ -5422,7 +5422,7 @@ sub print_diff_chunk {
 	}
 }
 
-sub git_patchset_body {
+sub but_patchset_body {
 	my ($fd, $diff_style, $difftree, $hash, @hash_parents) = @_;
 	my ($hash_parent) = $hash_parents[0];
 
@@ -5447,8 +5447,8 @@ sub git_patchset_body {
  PATCH:
 	while ($patch_line) {
 
-		# parse "git diff" header line
-		if ($patch_line =~ m/^diff --git (\"(?:[^\\\"]*(?:\\.[^\\\"]*)*)\"|[^ "]*) (.*)$/) {
+		# parse "but diff" header line
+		if ($patch_line =~ m/^diff --but (\"(?:[^\\\"]*(?:\\.[^\\\"]*)*)\"|[^ "]*) (.*)$/) {
 			# $1 is from_name, which we do not use
 			$to_name = unquote($2);
 			$to_name =~ s!^b/!!;
@@ -5460,12 +5460,12 @@ sub git_patchset_body {
 		}
 
 		# check if current patch belong to current raw line
-		# and parse raw git-diff line if needed
+		# and parse raw but-diff line if needed
 		if (is_patch_split($diffinfo, { 'to_file' => $to_name })) {
 			# this is continuation of a split patch
 			print "<div class=\"patch cont\">\n";
 		} else {
-			# advance raw git-diff output if needed
+			# advance raw but-diff output if needed
 			$patch_idx++ if defined $diffinfo;
 
 			# read and prepare patch information
@@ -5495,12 +5495,12 @@ sub git_patchset_body {
 			print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n";
 		}
 
-		# git diff header
+		# but diff header
 		#assert($patch_line =~ m/^diff /) if DEBUG;
 		#assert($patch_line !~ m!$/$!) if DEBUG; # is chomp-ed
 		$patch_number++;
-		# print "git diff" header
-		print format_git_diff_header_line($patch_line, $diffinfo,
+		# print "but diff" header
+		print format_but_diff_header_line($patch_line, $diffinfo,
 		                                  \%from, \%to);
 
 		# print extended diff header
@@ -5587,7 +5587,7 @@ sub git_patchset_body {
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-sub git_project_search_form {
+sub but_project_search_form {
 	my ($searchtext, $search_use_regexp) = @_;
 
 	my $limit = '';
@@ -5635,7 +5635,7 @@ sub project_info_needs_filling {
 #
 # Invalid projects are removed from the returned list if and only if you
 # ask 'age' or 'age_string' to be filled, because they are the only fields
-# that run unconditionally git command that requires repository, and
+# that run unconditionally but command that requires repository, and
 # therefore do always check if project repository is invalid.
 #
 # USAGE:
@@ -5654,32 +5654,32 @@ sub fill_project_list_info {
 		$filter_set = sub { return grep { $wanted_keys{$_} } @_; };
 	}
 
-	my $show_ctags = gitweb_check_feature('ctags');
+	my $show_ctags = butweb_check_feature('ctags');
  PROJECT:
 	foreach my $pr (@$projlist) {
 		if (project_info_needs_filling($pr, $filter_set->('age', 'age_string'))) {
-			my (@activity) = git_get_last_activity($pr->{'path'});
+			my (@activity) = but_get_last_activity($pr->{'path'});
 			unless (@activity) {
 				next PROJECT;
 			}
 			($pr->{'age'}, $pr->{'age_string'}) = @activity;
 		}
 		if (project_info_needs_filling($pr, $filter_set->('descr', 'descr_long'))) {
-			my $descr = git_get_project_description($pr->{'path'}) || "";
+			my $descr = but_get_project_description($pr->{'path'}) || "";
 			$descr = to_utf8($descr);
 			$pr->{'descr_long'} = $descr;
 			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
 		if (project_info_needs_filling($pr, $filter_set->('owner'))) {
-			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
+			$pr->{'owner'} = but_get_project_owner("$pr->{'path'}") || "";
 		}
 		if ($show_ctags &&
 		    project_info_needs_filling($pr, $filter_set->('ctags'))) {
-			$pr->{'ctags'} = git_get_project_ctags($pr->{'path'});
+			$pr->{'ctags'} = but_get_project_ctags($pr->{'path'});
 		}
 		if ($projects_list_group_categories &&
 		    project_info_needs_filling($pr, $filter_set->('category'))) {
-			my $cat = git_get_project_category($pr->{'path'}) ||
+			my $cat = but_get_project_category($pr->{'path'}) ||
 			                                   $project_list_default_category;
 			$pr->{'category'} = to_utf8($cat);
 		}
@@ -5758,7 +5758,7 @@ sub format_sort_th {
 	return $sort_th;
 }
 
-sub git_project_list_rows {
+sub but_project_list_rows {
 	my ($projlist, $from, $to, $check_forks) = @_;
 
 	$from = 0 unless defined $from;
@@ -5818,13 +5818,13 @@ sub git_project_list_rows {
 	}
 }
 
-sub git_project_list_body {
+sub but_project_list_body {
 	# actually uses global variable $project
 	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
 	my @projects = @$projlist;
 
-	my $check_forks = gitweb_check_feature('forks');
-	my $show_ctags  = gitweb_check_feature('ctags');
+	my $check_forks = butweb_check_feature('forks');
+	my $show_ctags  = butweb_check_feature('ctags');
 	my $tagfilter = $show_ctags ? $input_params{'ctag'} : undef;
 	$check_forks = undef
 		if ($tagfilter || $search_regexp);
@@ -5859,9 +5859,9 @@ sub git_project_list_body {
 	@projects = sort_projects_list(\@projects, $order);
 
 	if ($show_ctags) {
-		my $ctags = git_gather_all_ctags(\@projects);
-		my $cloud = git_populate_project_tagcloud($ctags);
-		print git_show_project_tagcloud($cloud, 64);
+		my $ctags = but_gather_all_ctags(\@projects);
+		my $cloud = but_populate_project_tagcloud($ctags);
+		print but_show_project_tagcloud($cloud, 64);
 	}
 
 	print "<table class=\"project_list\">\n";
@@ -5892,10 +5892,10 @@ sub git_project_list_body {
 				print "</tr>\n";
 			}
 
-			git_project_list_rows($categories{$cat}, undef, undef, $check_forks);
+			but_project_list_rows($categories{$cat}, undef, undef, $check_forks);
 		}
 	} else {
-		git_project_list_rows(\@projects, $from, $to, $check_forks);
+		but_project_list_rows(\@projects, $from, $to, $check_forks);
 	}
 
 	if (defined $extra) {
@@ -5909,7 +5909,7 @@ sub git_project_list_body {
 	print "</table>\n";
 }
 
-sub git_log_body {
+sub but_log_body {
 	# uses global variable $project
 	my ($cummitlist, $from, $to, $refs, $extra) = @_;
 
@@ -5921,7 +5921,7 @@ sub git_log_body {
 		next if !%co;
 		my $cummit = $co{'id'};
 		my $ref = format_ref_marker($refs, $cummit);
-		git_print_header_div('cummit',
+		but_print_header_div('cummit',
 		               "<span class=\"age\">$co{'age_string'}</span>" .
 		               esc_html($co{'title'}) . $ref,
 		               $cummit);
@@ -5934,11 +5934,11 @@ sub git_log_body {
 		      $cgi->a({-href => href(action=>"tree", hash=>$cummit, hash_base=>$cummit)}, "tree") .
 		      "<br/>\n" .
 		      "</div>\n";
-		      git_print_authorship(\%co, -tag => 'span');
+		      but_print_authorship(\%co, -tag => 'span');
 		      print "<br/>\n</div>\n";
 
 		print "<div class=\"log_body\">\n";
-		git_print_log($co{'comment'}, -final_empty_line=> 1);
+		but_print_log($co{'comment'}, -final_empty_line=> 1);
 		print "</div>\n";
 	}
 	if ($extra) {
@@ -5948,7 +5948,7 @@ sub git_log_body {
 	}
 }
 
-sub git_shortlog_body {
+sub but_shortlog_body {
 	# uses global variable $project
 	my ($cummitlist, $from, $to, $refs, $extra) = @_;
 
@@ -5967,7 +5967,7 @@ sub git_shortlog_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		# git_summary() used print "<td><i>$co{'age_string'}</i></td>\n" .
+		# but_summary() used print "<td><i>$co{'age_string'}</i></td>\n" .
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      format_author_html('td', \%co, 10) . "<td>";
 		print format_subject_html($co{'title'}, $co{'title_short'},
@@ -5992,7 +5992,7 @@ sub git_shortlog_body {
 	print "</table>\n";
 }
 
-sub git_history_body {
+sub but_history_body {
 	# Warning: assumes constant type (blob or tree) during history
 	my ($cummitlist, $from, $to, $refs, $extra,
 	    $file_name, $file_hash, $ftype) = @_;
@@ -6020,7 +6020,7 @@ sub git_history_body {
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 	# shortlog:   format_author_html('td', \%co, 10)
 		      format_author_html('td', \%co, 15, 3) . "<td>";
-		# originally git_history used chop_str($co{'title'}, 50)
+		# originally but_history used chop_str($co{'title'}, 50)
 		print format_subject_html($co{'title'}, $co{'title_short'},
 		                          href(action=>"cummit", hash=>$cummit), $ref);
 		print "</td>\n" .
@@ -6033,7 +6033,7 @@ sub git_history_body {
 			      $cgi->a({-href => href(action=>"blob_plain", hash_base=>$cummit, file_name=>$file_name)}, "raw");
 
 			my $blob_current = $file_hash;
-			my $blob_parent  = git_get_hash_by_path($cummit, $file_name);
+			my $blob_parent  = but_get_hash_by_path($cummit, $file_name);
 			if (defined $blob_current && defined $blob_parent &&
 					$blob_current ne $blob_parent) {
 				print " | " .
@@ -6055,7 +6055,7 @@ sub git_history_body {
 	print "</table>\n";
 }
 
-sub git_tags_body {
+sub but_tags_body {
 	# uses global variable $project
 	my ($taglist, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
@@ -6118,7 +6118,7 @@ sub git_tags_body {
 	print "</table>\n";
 }
 
-sub git_heads_body {
+sub but_heads_body {
 	# uses global variable $project
 	my ($headlist, $head_at, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
@@ -6157,7 +6157,7 @@ sub git_heads_body {
 }
 
 # Display a single remote block
-sub git_remote_block {
+sub but_remote_block {
 	my ($remote, $rdata, $limit, $head) = @_;
 
 	my $heads = $rdata->{'heads'};
@@ -6187,11 +6187,11 @@ sub git_remote_block {
 	}
 
 	print $urls_table;
-	git_heads_body($heads, $head, 0, $limit, $dots);
+	but_heads_body($heads, $head, 0, $limit, $dots);
 }
 
 # Display a list of remote names with the respective fetch and push URLs
-sub git_remotes_list {
+sub but_remotes_list {
 	my ($remotedata, $limit) = @_;
 	print "<table class=\"heads\">\n";
 	my $alternate = 1;
@@ -6236,22 +6236,22 @@ sub git_remotes_list {
 
 # Display remote heads grouped by remote, unless there are too many
 # remotes, in which case we only display the remote names
-sub git_remotes_body {
+sub but_remotes_body {
 	my ($remotedata, $limit, $head) = @_;
 	if ($limit and $limit < keys %$remotedata) {
-		git_remotes_list($remotedata, $limit);
+		but_remotes_list($remotedata, $limit);
 	} else {
 		fill_remote_heads($remotedata);
 		while (my ($remote, $rdata) = each %$remotedata) {
-			git_print_section({-class=>"remote", -id=>$remote},
+			but_print_section({-class=>"remote", -id=>$remote},
 				["remotes", $remote, $remote], sub {
-					git_remote_block($remote, $rdata, $limit, $head);
+					but_remote_block($remote, $rdata, $limit, $head);
 				});
 		}
 	}
 }
 
-sub git_search_message {
+sub but_search_message {
 	my %co = @_;
 
 	my $greptype;
@@ -6288,32 +6288,32 @@ sub git_search_message {
 		$paging_nav .= " &sdot; next";
 	}
 
-	git_header_html();
+	but_header_html();
 
-	git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
-	git_print_header_div('cummit', esc_html($co{'title'}), $hash);
+	but_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
+	but_print_header_div('cummit', esc_html($co{'title'}), $hash);
 	if ($page == 0 && !@cummitlist) {
 		print "<p>No match.</p>\n";
 	} else {
-		git_search_grep_body(\@cummitlist, 0, 99, $next_link);
+		but_search_grep_body(\@cummitlist, 0, 99, $next_link);
 	}
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_search_changes {
+sub but_search_changes {
 	my %co = @_;
 
 	local $/ = "\n";
-	open my $fd, '-|', git_cmd(), '--no-pager', 'log', @diff_opts,
+	open my $fd, '-|', but_cmd(), '--no-pager', 'log', @diff_opts,
 		'--pretty=format:%H', '--no-abbrev', '--raw', "-S$searchtext",
 		($search_use_regexp ? '--pickaxe-regex' : ())
-			or die_error(500, "Open git-log failed");
+			or die_error(500, "Open but-log failed");
 
-	git_header_html();
+	but_header_html();
 
-	git_print_page_nav('','', $hash,$co{'tree'},$hash);
-	git_print_header_div('cummit', esc_html($co{'title'}), $hash);
+	but_print_page_nav('','', $hash,$co{'tree'},$hash);
+	but_print_header_div('cummit', esc_html($co{'title'}), $hash);
 
 	print "<table class=\"pickaxe search\">\n";
 	my $alternate = 1;
@@ -6381,22 +6381,22 @@ sub git_search_changes {
 
 	print "</table>\n";
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_search_files {
+sub but_search_files {
 	my %co = @_;
 
 	local $/ = "\n";
-	open my $fd, "-|", git_cmd(), 'grep', '-n', '-z',
+	open my $fd, "-|", but_cmd(), 'grep', '-n', '-z',
 		$search_use_regexp ? ('-E', '-i') : '-F',
 		$searchtext, $co{'tree'}
-			or die_error(500, "Open git-grep failed");
+			or die_error(500, "Open but-grep failed");
 
-	git_header_html();
+	but_header_html();
 
-	git_print_page_nav('','', $hash,$co{'tree'},$hash);
-	git_print_header_div('cummit', esc_html($co{'title'}), $hash);
+	but_print_page_nav('','', $hash,$co{'tree'},$hash);
+	but_print_header_div('cummit', esc_html($co{'title'}), $hash);
 
 	print "<table class=\"grep_search\">\n";
 	my $alternate = 1;
@@ -6459,10 +6459,10 @@ sub git_search_files {
 
 	print "</table>\n";
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_search_grep_body {
+sub but_search_grep_body {
 	my ($cummitlist, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
 	$to = $#{$cummitlist} if (!defined $to || $#{$cummitlist} < $to);
@@ -6526,51 +6526,51 @@ sub git_search_grep_body {
 ## ======================================================================
 ## actions
 
-sub git_project_list {
+sub but_project_list {
 	my $order = $input_params{'order'};
 	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(400, "Unknown order parameter");
 	}
 
-	my @list = git_get_projects_list($project_filter, $strict_export);
+	my @list = but_get_projects_list($project_filter, $strict_export);
 	if (!@list) {
 		die_error(404, "No projects found");
 	}
 
-	git_header_html();
+	but_header_html();
 	if (defined $home_text && -f $home_text) {
 		print "<div class=\"index_include\">\n";
 		insert_file($home_text);
 		print "</div>\n";
 	}
 
-	git_project_search_form($searchtext, $search_use_regexp);
-	git_project_list_body(\@list, $order);
-	git_footer_html();
+	but_project_search_form($searchtext, $search_use_regexp);
+	but_project_list_body(\@list, $order);
+	but_footer_html();
 }
 
-sub git_forks {
+sub but_forks {
 	my $order = $input_params{'order'};
 	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(400, "Unknown order parameter");
 	}
 
 	my $filter = $project;
-	$filter =~ s/\.git$//;
-	my @list = git_get_projects_list($filter);
+	$filter =~ s/\.but$//;
+	my @list = but_get_projects_list($filter);
 	if (!@list) {
 		die_error(404, "No forks found");
 	}
 
-	git_header_html();
-	git_print_page_nav('','');
-	git_print_header_div('summary', "$project forks");
-	git_project_list_body(\@list, $order);
-	git_footer_html();
+	but_header_html();
+	but_print_page_nav('','');
+	but_print_header_div('summary', "$project forks");
+	but_project_list_body(\@list, $order);
+	but_footer_html();
 }
 
-sub git_project_index {
-	my @projects = git_get_projects_list($project_filter, $strict_export);
+sub but_project_index {
+	my @projects = but_get_projects_list($project_filter, $strict_export);
 	if (!@projects) {
 		die_error(404, "No projects found");
 	}
@@ -6582,7 +6582,7 @@ sub git_project_index {
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
-			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}");
+			$pr->{'owner'} = but_get_project_owner("$pr->{'path'}");
 		}
 
 		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});
@@ -6596,36 +6596,36 @@ sub git_project_index {
 	}
 }
 
-sub git_summary {
-	my $descr = git_get_project_description($project) || "none";
+sub but_summary {
+	my $descr = but_get_project_description($project) || "none";
 	my %co = parse_cummit("HEAD");
 	my %cd = %co ? parse_date($co{'cummitter_epoch'}, $co{'cummitter_tz'}) : ();
 	my $head = $co{'id'};
-	my $remote_heads = gitweb_check_feature('remote_heads');
+	my $remote_heads = butweb_check_feature('remote_heads');
 
-	my $owner = git_get_project_owner($project);
+	my $owner = but_get_project_owner($project);
 
-	my $refs = git_get_references();
+	my $refs = but_get_references();
 	# These get_*_list functions return one more to allow us to see if
 	# there are more ...
-	my @taglist  = git_get_tags_list(16);
-	my @headlist = git_get_heads_list(16);
-	my %remotedata = $remote_heads ? git_get_remotes_list() : ();
+	my @taglist  = but_get_tags_list(16);
+	my @headlist = but_get_heads_list(16);
+	my %remotedata = $remote_heads ? but_get_remotes_list() : ();
 	my @forklist;
-	my $check_forks = gitweb_check_feature('forks');
+	my $check_forks = butweb_check_feature('forks');
 
 	if ($check_forks) {
 		# find forks of a project
 		my $filter = $project;
-		$filter =~ s/\.git$//;
-		@forklist = git_get_projects_list($filter);
+		$filter =~ s/\.but$//;
+		@forklist = but_get_projects_list($filter);
 		# filter out forks of forks
 		@forklist = filter_forks_from_projects_list(\@forklist)
 			if (@forklist);
 	}
 
-	git_header_html();
-	git_print_page_nav('summary','', $head);
+	but_header_html();
+	but_print_page_nav('summary','', $head);
 
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table class=\"projects_list\">\n" .
@@ -6638,27 +6638,27 @@ sub git_summary {
 		      "<td>".format_timestamp_html(\%cd)."</td></tr>\n";
 	}
 
-	# use per project git URL list in $projectroot/$project/cloneurl
-	# or make project git URL from git base URL and project name
+	# use per project but URL list in $projectroot/$project/cloneurl
+	# or make project but URL from but base URL and project name
 	my $url_tag = "URL";
-	my @url_list = git_get_project_url_list($project);
-	@url_list = map { "$_/$project" } @git_base_url_list unless @url_list;
-	foreach my $git_url (@url_list) {
-		next unless $git_url;
-		print format_repo_url($url_tag, $git_url);
+	my @url_list = but_get_project_url_list($project);
+	@url_list = map { "$_/$project" } @but_base_url_list unless @url_list;
+	foreach my $but_url (@url_list) {
+		next unless $but_url;
+		print format_repo_url($url_tag, $but_url);
 		$url_tag = "";
 	}
 
 	# Tag cloud
-	my $show_ctags = gitweb_check_feature('ctags');
+	my $show_ctags = butweb_check_feature('ctags');
 	if ($show_ctags) {
-		my $ctags = git_get_project_ctags($project);
+		my $ctags = but_get_project_ctags($project);
 		if (%$ctags) {
 			# without ability to add tags, don't show if there are none
-			my $cloud = git_populate_project_tagcloud($ctags);
+			my $cloud = but_populate_project_tagcloud($ctags);
 			print "<tr id=\"metadata_ctags\">" .
 			      "<td>content tags</td>" .
-			      "<td>".git_show_project_tagcloud($cloud, 48)."</td>" .
+			      "<td>".but_show_project_tagcloud($cloud, 48)."</td>" .
 			      "</tr>\n";
 		}
 	}
@@ -6678,53 +6678,53 @@ sub git_summary {
 	# those 16 are all
 	my @cummitlist = $head ? parse_cummits($head, 17) : ();
 	if (@cummitlist) {
-		git_print_header_div('shortlog');
-		git_shortlog_body(\@cummitlist, 0, 15, $refs,
+		but_print_header_div('shortlog');
+		but_shortlog_body(\@cummitlist, 0, 15, $refs,
 		                  $#cummitlist <=  15 ? undef :
 		                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 	}
 
 	if (@taglist) {
-		git_print_header_div('tags');
-		git_tags_body(\@taglist, 0, 15,
+		but_print_header_div('tags');
+		but_tags_body(\@taglist, 0, 15,
 		              $#taglist <=  15 ? undef :
 		              $cgi->a({-href => href(action=>"tags")}, "..."));
 	}
 
 	if (@headlist) {
-		git_print_header_div('heads');
-		git_heads_body(\@headlist, $head, 0, 15,
+		but_print_header_div('heads');
+		but_heads_body(\@headlist, $head, 0, 15,
 		               $#headlist <= 15 ? undef :
 		               $cgi->a({-href => href(action=>"heads")}, "..."));
 	}
 
 	if (%remotedata) {
-		git_print_header_div('remotes');
-		git_remotes_body(\%remotedata, 15, $head);
+		but_print_header_div('remotes');
+		but_remotes_body(\%remotedata, 15, $head);
 	}
 
 	if (@forklist) {
-		git_print_header_div('forks');
-		git_project_list_body(\@forklist, 'age', 0, 15,
+		but_print_header_div('forks');
+		but_project_list_body(\@forklist, 'age', 0, 15,
 		                      $#forklist <= 15 ? undef :
 		                      $cgi->a({-href => href(action=>"forks")}, "..."),
 		                      'no_header');
 	}
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_tag {
+sub but_tag {
 	my %tag = parse_tag($hash);
 
 	if (! %tag) {
 		die_error(404, "Unknown tag object");
 	}
 
-	my $head = git_get_head_hash($project);
-	git_header_html();
-	git_print_page_nav('','', $head,undef,$head);
-	git_print_header_div('cummit', esc_html($tag{'name'}), $hash);
+	my $head = but_get_head_hash($project);
+	but_header_html();
+	but_print_page_nav('','', $head,undef,$head);
+	but_print_header_div('cummit', esc_html($tag{'name'}), $hash);
 	print "<div class=\"title_text\">\n" .
 	      "<table class=\"object_header\">\n" .
 	      "<tr>\n" .
@@ -6735,7 +6735,7 @@ sub git_tag {
 	                                      $tag{'type'}) . "</td>\n" .
 	      "</tr>\n";
 	if (defined($tag{'author'})) {
-		git_print_authorship_rows(\%tag, 'author');
+		but_print_authorship_rows(\%tag, 'author');
 	}
 	print "</table>\n\n" .
 	      "</div>\n";
@@ -6746,10 +6746,10 @@ sub git_tag {
 		print esc_html($line, -nbsp=>1) . "<br/>\n";
 	}
 	print "</div>\n";
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_blame_common {
+sub but_blame_common {
 	my $format = shift || 'porcelain';
 	if ($format eq 'porcelain' && $input_params{'javascript'}) {
 		$format = 'incremental';
@@ -6757,21 +6757,21 @@ sub git_blame_common {
 	}
 
 	# permissions
-	gitweb_check_feature('blame')
+	butweb_check_feature('blame')
 		or die_error(403, "Blame view not allowed");
 
 	# error checking
 	die_error(400, "No file name given") unless $file_name;
-	$hash_base ||= git_get_head_hash($project);
+	$hash_base ||= but_get_head_hash($project);
 	die_error(404, "Couldn't find base cummit") unless $hash_base;
 	my %co = parse_cummit($hash_base)
 		or die_error(404, "cummit not found");
 	my $ftype = "blob";
 	if (!defined $hash) {
-		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
+		$hash = but_get_hash_by_path($hash_base, $file_name, "blob")
 			or die_error(404, "Error looking up file");
 	} else {
-		$ftype = git_get_type($hash);
+		$ftype = but_get_type($hash);
 		if ($ftype !~ "blob") {
 			die_error(400, "Object is not a blob");
 		}
@@ -6780,18 +6780,18 @@ sub git_blame_common {
 	my $fd;
 	if ($format eq 'incremental') {
 		# get file contents (as base)
-		open $fd, "-|", git_cmd(), 'cat-file', 'blob', $hash
-			or die_error(500, "Open git-cat-file failed");
+		open $fd, "-|", but_cmd(), 'cat-file', 'blob', $hash
+			or die_error(500, "Open but-cat-file failed");
 	} elsif ($format eq 'data') {
-		# run git-blame --incremental
-		open $fd, "-|", git_cmd(), "blame", "--incremental",
+		# run but-blame --incremental
+		open $fd, "-|", but_cmd(), "blame", "--incremental",
 			$hash_base, "--", $file_name
-			or die_error(500, "Open git-blame --incremental failed");
+			or die_error(500, "Open but-blame --incremental failed");
 	} else {
-		# run git-blame --porcelain
-		open $fd, "-|", git_cmd(), "blame", '-p',
+		# run but-blame --porcelain
+		open $fd, "-|", but_cmd(), "blame", '-p',
 			$hash_base, '--', $file_name
-			or die_error(500, "Open git-blame --porcelain failed");
+			or die_error(500, "Open but-blame --porcelain failed");
 	}
 	binmode $fd, ':utf8';
 
@@ -6808,10 +6808,10 @@ sub git_blame_common {
 			or print "ERROR $!\n";
 
 		print 'END';
-		if (defined $t0 && gitweb_check_feature('timed')) {
+		if (defined $t0 && butweb_check_feature('timed')) {
 			print ' '.
 			      tv_interval($t0, [ gettimeofday() ]).
-			      ' '.$number_of_git_cmds;
+			      ' '.$number_of_but_cmds;
 		}
 		print "\n";
 
@@ -6819,7 +6819,7 @@ sub git_blame_common {
 	}
 
 	# page header
-	git_header_html();
+	but_header_html();
 	my $formats_nav =
 		$cgi->a({-href => href(action=>"blob", -replay=>1)},
 		        "blob") .
@@ -6840,9 +6840,9 @@ sub git_blame_common {
 		" | " .
 		$cgi->a({-href => href(action=>$action, file_name=>$file_name)},
 		        "HEAD");
-	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-	git_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, $ftype, $hash_base);
+	but_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
+	but_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
+	but_print_page_path($file_name, $ftype, $hash_base);
 
 	# page body
 	if ($format eq 'incremental') {
@@ -6979,56 +6979,56 @@ sub git_blame_common {
 	close $fd
 		or print "Reading blob failed\n";
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_blame {
-	git_blame_common();
+sub but_blame {
+	but_blame_common();
 }
 
-sub git_blame_incremental {
-	git_blame_common('incremental');
+sub but_blame_incremental {
+	but_blame_common('incremental');
 }
 
-sub git_blame_data {
-	git_blame_common('data');
+sub but_blame_data {
+	but_blame_common('data');
 }
 
-sub git_tags {
-	my $head = git_get_head_hash($project);
-	git_header_html();
-	git_print_page_nav('','', $head,undef,$head,format_ref_views('tags'));
-	git_print_header_div('summary', $project);
+sub but_tags {
+	my $head = but_get_head_hash($project);
+	but_header_html();
+	but_print_page_nav('','', $head,undef,$head,format_ref_views('tags'));
+	but_print_header_div('summary', $project);
 
-	my @tagslist = git_get_tags_list();
+	my @tagslist = but_get_tags_list();
 	if (@tagslist) {
-		git_tags_body(\@tagslist);
+		but_tags_body(\@tagslist);
 	}
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_heads {
-	my $head = git_get_head_hash($project);
-	git_header_html();
-	git_print_page_nav('','', $head,undef,$head,format_ref_views('heads'));
-	git_print_header_div('summary', $project);
+sub but_heads {
+	my $head = but_get_head_hash($project);
+	but_header_html();
+	but_print_page_nav('','', $head,undef,$head,format_ref_views('heads'));
+	but_print_header_div('summary', $project);
 
-	my @headslist = git_get_heads_list();
+	my @headslist = but_get_heads_list();
 	if (@headslist) {
-		git_heads_body(\@headslist, $head);
+		but_heads_body(\@headslist, $head);
 	}
-	git_footer_html();
+	but_footer_html();
 }
 
 # used both for single remote view and for list of all the remotes
-sub git_remotes {
-	gitweb_check_feature('remote_heads')
+sub but_remotes {
+	butweb_check_feature('remote_heads')
 		or die_error(403, "Remote heads view is disabled");
 
-	my $head = git_get_head_hash($project);
+	my $head = but_get_head_hash($project);
 	my $remote = $input_params{'hash'};
 
-	my $remotedata = git_get_remotes_list($remote);
+	my $remotedata = but_get_remotes_list($remote);
 	die_error(500, "Unable to get remote information") unless defined $remotedata;
 
 	unless (%$remotedata) {
@@ -7037,30 +7037,30 @@ sub git_remotes {
 			"No remotes found");
 	}
 
-	git_header_html(undef, undef, -action_extra => $remote);
-	git_print_page_nav('', '',  $head, undef, $head,
+	but_header_html(undef, undef, -action_extra => $remote);
+	but_print_page_nav('', '',  $head, undef, $head,
 		format_ref_views($remote ? '' : 'remotes'));
 
 	fill_remote_heads($remotedata);
 	if (defined $remote) {
-		git_print_header_div('remotes', "$remote remote for $project");
-		git_remote_block($remote, $remotedata->{$remote}, undef, $head);
+		but_print_header_div('remotes', "$remote remote for $project");
+		but_remote_block($remote, $remotedata->{$remote}, undef, $head);
 	} else {
-		git_print_header_div('summary', "$project remotes");
-		git_remotes_body($remotedata, undef, $head);
+		but_print_header_div('summary', "$project remotes");
+		but_remotes_body($remotedata, undef, $head);
 	}
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_blob_plain {
+sub but_blob_plain {
 	my $type = shift;
 	my $expires;
 
 	if (!defined $hash) {
 		if (defined $file_name) {
-			my $base = $hash_base || git_get_head_hash($project);
-			$hash = git_get_hash_by_path($base, $file_name, "blob")
+			my $base = $hash_base || but_get_head_hash($project);
+			$hash = but_get_hash_by_path($base, $file_name, "blob")
 				or die_error(404, "Cannot find file");
 		} else {
 			die_error(400, "No file name defined");
@@ -7070,8 +7070,8 @@ sub git_blob_plain {
 		$expires = "+1d";
 	}
 
-	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
-		or die_error(500, "Open git-cat-file blob '$hash' failed");
+	open my $fd, "-|", but_cmd(), "cat-file", "blob", $hash
+		or die_error(500, "Open but-cat-file blob '$hash' failed");
 
 	# content-type (can include charset)
 	$type = blob_contenttype($fd, $file_name, $type);
@@ -7112,17 +7112,17 @@ sub git_blob_plain {
 	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
 	binmode STDOUT, ':raw';
 	print <$fd>;
-	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	binmode STDOUT, ':utf8'; # as set at the beginning of butweb.cgi
 	close $fd;
 }
 
-sub git_blob {
+sub but_blob {
 	my $expires;
 
 	if (!defined $hash) {
 		if (defined $file_name) {
-			my $base = $hash_base || git_get_head_hash($project);
-			$hash = git_get_hash_by_path($base, $file_name, "blob")
+			my $base = $hash_base || but_get_head_hash($project);
+			$hash = but_get_hash_by_path($base, $file_name, "blob")
 				or die_error(404, "Cannot find file");
 		} else {
 			die_error(400, "No file name defined");
@@ -7132,23 +7132,23 @@ sub git_blob {
 		$expires = "+1d";
 	}
 
-	my $have_blame = gitweb_check_feature('blame');
-	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
+	my $have_blame = butweb_check_feature('blame');
+	open my $fd, "-|", but_cmd(), "cat-file", "blob", $hash
 		or die_error(500, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
 	# use 'blob_plain' (aka 'raw') view for files that cannot be displayed
 	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)! && -B $fd) {
 		close $fd;
-		return git_blob_plain($mimetype);
+		return but_blob_plain($mimetype);
 	}
 	# we can have blame only for text/* mimetype
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
-	my $highlight = gitweb_check_feature('highlight');
+	my $highlight = butweb_check_feature('highlight');
 	my $syntax = guess_file_syntax($highlight, $file_name);
 	$fd = run_highlighter($fd, $highlight, $syntax);
 
-	git_header_html(undef, $expires);
+	but_header_html(undef, $expires);
 	my $formats_nav = '';
 	if (defined $hash_base && (my %co = parse_cummit($hash_base))) {
 		if (defined $file_name) {
@@ -7173,14 +7173,14 @@ sub git_blob {
 				$cgi->a({-href => href(action=>"blob_plain", -replay=>1)},
 				        "raw");
 		}
-		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-		git_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
+		but_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
+		but_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
 	} else {
 		print "<div class=\"page_nav\">\n" .
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">".esc_html($hash)."</div>\n";
 	}
-	git_print_page_path($file_name, "blob", $hash_base);
+	but_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n";
 	if ($mimetype =~ m!^image/!) {
 		print qq!<img class="blob" type="!.esc_attr($mimetype).qq!"!;
@@ -7205,39 +7205,39 @@ sub git_blob {
 	close $fd
 		or print "Reading blob failed.\n";
 	print "</div>";
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_tree {
+sub but_tree {
 	if (!defined $hash_base) {
 		$hash_base = "HEAD";
 	}
 	if (!defined $hash) {
 		if (defined $file_name) {
-			$hash = git_get_hash_by_path($hash_base, $file_name, "tree");
+			$hash = but_get_hash_by_path($hash_base, $file_name, "tree");
 		} else {
 			$hash = $hash_base;
 		}
 	}
 	die_error(404, "No such tree") unless defined($hash);
 
-	my $show_sizes = gitweb_check_feature('show-sizes');
-	my $have_blame = gitweb_check_feature('blame');
+	my $show_sizes = butweb_check_feature('show-sizes');
+	my $have_blame = butweb_check_feature('blame');
 
 	my @entries = ();
 	{
 		local $/ = "\0";
-		open my $fd, "-|", git_cmd(), "ls-tree", '-z',
+		open my $fd, "-|", but_cmd(), "ls-tree", '-z',
 			($show_sizes ? '-l' : ()), @extra_options, $hash
-			or die_error(500, "Open git-ls-tree failed");
+			or die_error(500, "Open but-ls-tree failed");
 		@entries = map { chomp; $_ } <$fd>;
 		close $fd
 			or die_error(404, "Reading tree failed");
 	}
 
-	my $refs = git_get_references();
+	my $refs = but_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
-	git_header_html();
+	but_header_html();
 	my $basedir = '';
 	if (defined $hash_base && (my %co = parse_cummit($hash_base))) {
 		my @views_nav = ();
@@ -7254,9 +7254,9 @@ sub git_tree {
 			# FIXME: Should be available when we have no hash base as well.
 			push @views_nav, $snapshot_links;
 		}
-		git_print_page_nav('tree','', $hash_base, undef, undef,
+		but_print_page_nav('tree','', $hash_base, undef, undef,
 		                   join(' | ', @views_nav));
-		git_print_header_div('cummit', esc_html($co{'title'}) . $ref, $hash_base);
+		but_print_header_div('cummit', esc_html($co{'title'}) . $ref, $hash_base);
 	} else {
 		undef $hash_base;
 		print "<div class=\"page_nav\">\n";
@@ -7268,7 +7268,7 @@ sub git_tree {
 		if ($basedir ne '' && substr($basedir, -1) ne '/') {
 			$basedir .= '/';
 		}
-		git_print_page_path($file_name, 'tree', $hash_base);
+		but_print_page_path($file_name, 'tree', $hash_base);
 	}
 	print "<div class=\"page_body\">\n";
 	print "<table class=\"tree\">\n";
@@ -7286,7 +7286,7 @@ sub git_tree {
 		my $up = $file_name;
 		$up =~ s!/?[^/]+$!!;
 		undef $up unless $up;
-		# based on git_print_tree_entry
+		# based on but_print_tree_entry
 		print '<td class="mode">' . mode_str('040000') . "</td>\n";
 		print '<td class="size">&nbsp;</td>'."\n" if $show_sizes;
 		print '<td class="list">';
@@ -7309,13 +7309,13 @@ sub git_tree {
 		}
 		$alternate ^= 1;
 
-		git_print_tree_entry(\%t, $basedir, $hash_base, $have_blame);
+		but_print_tree_entry(\%t, $basedir, $hash_base, $have_blame);
 
 		print "</tr>\n";
 	}
 	print "</table>\n" .
 	      "</div>";
-	git_footer_html();
+	but_footer_html();
 }
 
 sub sanitize_for_filename {
@@ -7330,18 +7330,18 @@ sub sanitize_for_filename {
 sub snapshot_name {
 	my ($project, $hash) = @_;
 
-	# path/to/project.git  -> project
-	# path/to/project/.git -> project
+	# path/to/project.but  -> project
+	# path/to/project/.but -> project
 	my $name = to_utf8($project);
-	$name =~ s,([^/])/*\.git$,$1,;
+	$name =~ s,([^/])/*\.but$,$1,;
 	$name = sanitize_for_filename(basename($name));
 
 	my $ver = $hash;
 	if ($hash =~ /^[0-9a-fA-F]+$/) {
 		# shorten SHA-1 hash
-		my $full_hash = git_get_full_hash($project, $hash);
+		my $full_hash = but_get_full_hash($project, $hash);
 		if ($full_hash =~ /^$hash/ && length($hash) > 7) {
-			$ver = git_get_short_hash($project, $hash);
+			$ver = but_get_short_hash($project, $hash);
 		}
 	} elsif ($hash =~ m!^refs/tags/(.*)$!) {
 		# tags don't need shortened SHA-1 hash
@@ -7360,7 +7360,7 @@ sub snapshot_name {
 				$ver = $ref_dir . '-' . $ver;
 			}
 		}
-		$ver .= '-' . git_get_short_hash($project, $hash);
+		$ver .= '-' . but_get_short_hash($project, $hash);
 	}
 	# special case of sanitization for filename - we change
 	# slashes to dots instead of dashes
@@ -7396,7 +7396,7 @@ sub exit_if_unmodified_since {
 	}
 }
 
-sub git_snapshot {
+sub but_snapshot {
 	my $format = $input_params{'snapshot_format'};
 	if (!@snapshot_fmts) {
 		die_error(403, "Snapshots not allowed");
@@ -7413,7 +7413,7 @@ sub git_snapshot {
 		die_error(403, "Unsupported snapshot format");
 	}
 
-	my $type = git_get_type("$hash^{}");
+	my $type = but_get_type("$hash^{}");
 	if (!$type) {
 		die_error(404, 'Object does not exist');
 	}  elsif ($type eq 'blob') {
@@ -7427,7 +7427,7 @@ sub git_snapshot {
 	exit_if_unmodified_since($co{'cummitter_epoch'}) if %co;
 
 	my $cmd = quote_command(
-		git_cmd(), 'archive',
+		but_cmd(), 'archive',
 		"--format=$known_snapshot_formats{$format}{'format'}",
 		"--prefix=$prefix/", $hash);
 	if (exists $known_snapshot_formats{$format}{'compressor'}) {
@@ -7447,25 +7447,25 @@ sub git_snapshot {
 		-status => '200 OK');
 
 	open my $fd, "-|", $cmd
-		or die_error(500, "Execute git-archive failed");
+		or die_error(500, "Execute but-archive failed");
 	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
 	binmode STDOUT, ':raw';
 	print <$fd>;
-	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	binmode STDOUT, ':utf8'; # as set at the beginning of butweb.cgi
 	close $fd;
 }
 
-sub git_log_generic {
+sub but_log_generic {
 	my ($fmt_name, $body_subr, $base, $parent, $file_name, $file_hash) = @_;
 
-	my $head = git_get_head_hash($project);
+	my $head = but_get_head_hash($project);
 	if (!defined $base) {
 		$base = $head;
 	}
 	if (!defined $page) {
 		$page = 0;
 	}
-	my $refs = git_get_references();
+	my $refs = but_get_references();
 
 	my $commit_hash = $base;
 	if (defined $parent) {
@@ -7480,12 +7480,12 @@ sub git_log_generic {
 		# some cummits could have deleted file in question,
 		# and not have it in tree, but one of them has to have it
 		for (my $i = 0; $i < @cummitlist; $i++) {
-			$file_hash = git_get_hash_by_path($cummitlist[$i]{'id'}, $file_name);
+			$file_hash = but_get_hash_by_path($cummitlist[$i]{'id'}, $file_name);
 			last if defined $file_hash;
 		}
 	}
 	if (defined $file_hash) {
-		$ftype = git_get_type($file_hash);
+		$ftype = but_get_type($file_hash);
 	}
 	if (defined $file_name && !defined $ftype) {
 		die_error(500, "Unknown type of object");
@@ -7504,9 +7504,9 @@ sub git_log_generic {
 			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
-	my $patch_max = gitweb_get_feature('patches');
+	my $patch_max = butweb_get_feature('patches');
 	if ($patch_max && !defined $file_name &&
-		!gitweb_check_feature('email-privacy')) {
+		!butweb_check_feature('email-privacy')) {
 		if ($patch_max < 0 || @cummitlist <= $patch_max) {
 			$paging_nav .= " &sdot; " .
 				$cgi->a({-href => href(action=>"patches", -replay=>1)},
@@ -7514,28 +7514,28 @@ sub git_log_generic {
 		}
 	}
 
-	git_header_html();
-	git_print_page_nav($fmt_name,'', $hash,$hash,$hash, $paging_nav);
+	but_header_html();
+	but_print_page_nav($fmt_name,'', $hash,$hash,$hash, $paging_nav);
 	if (defined $file_name) {
-		git_print_header_div('cummit', esc_html($co{'title'}), $base);
+		but_print_header_div('cummit', esc_html($co{'title'}), $base);
 	} else {
-		git_print_header_div('summary', $project)
+		but_print_header_div('summary', $project)
 	}
-	git_print_page_path($file_name, $ftype, $hash_base)
+	but_print_page_path($file_name, $ftype, $hash_base)
 		if (defined $file_name);
 
 	$body_subr->(\@cummitlist, 0, 99, $refs, $next_link,
 	             $file_name, $file_hash, $ftype);
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_log {
-	git_log_generic('log', \&git_log_body,
+sub but_log {
+	but_log_generic('log', \&but_log_body,
 	                $hash, $hash_parent);
 }
 
-sub git_cummit {
+sub but_cummit {
 	$hash ||= $hash_base || "HEAD";
 	my %co = parse_cummit($hash)
 	    or die_error(404, "Unknown cummit object");
@@ -7567,8 +7567,8 @@ sub git_cummit {
 			} @$parents ) .
 			')';
 	}
-	if (gitweb_check_feature('patches') && @$parents <= 1 &&
-		!gitweb_check_feature('email-privacy')) {
+	if (butweb_check_feature('patches') && @$parents <= 1 &&
+		!butweb_check_feature('email-privacy')) {
 		$formats_nav .= " | " .
 			$cgi->a({-href => href(action=>"patch", -replay=>1)},
 				"patch");
@@ -7578,35 +7578,35 @@ sub git_cummit {
 		$parent = "--root";
 	}
 	my @difftree;
-	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-cummit-id",
+	open my $fd, "-|", but_cmd(), "diff-tree", '-r', "--no-cummit-id",
 		@diff_opts,
 		(@$parents <= 1 ? $parent : '-c'),
 		$hash, "--"
-		or die_error(500, "Open git-diff-tree failed");
+		or die_error(500, "Open but-diff-tree failed");
 	@difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(404, "Reading git-diff-tree failed");
+	close $fd or die_error(404, "Reading but-diff-tree failed");
 
 	# non-textual hash id's can be cached
 	my $expires;
 	if ($hash =~ m/^$oid_regex$/) {
 		$expires = "+1d";
 	}
-	my $refs = git_get_references();
+	my $refs = but_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
 
-	git_header_html(undef, $expires);
-	git_print_page_nav('cummit', '',
+	but_header_html(undef, $expires);
+	but_print_page_nav('cummit', '',
 	                   $hash, $co{'tree'}, $hash,
 	                   $formats_nav);
 
 	if (defined $co{'parent'}) {
-		git_print_header_div('cummitdiff', esc_html($co{'title'}) . $ref, $hash);
+		but_print_header_div('cummitdiff', esc_html($co{'title'}) . $ref, $hash);
 	} else {
-		git_print_header_div('tree', esc_html($co{'title'}) . $ref, $co{'tree'}, $hash);
+		but_print_header_div('tree', esc_html($co{'title'}) . $ref, $co{'tree'}, $hash);
 	}
 	print "<div class=\"title_text\">\n" .
 	      "<table class=\"object_header\">\n";
-	git_print_authorship_rows(\%co);
+	but_print_authorship_rows(\%co);
 	print "<tr><td>cummit</td><td class=\"sha1\">$co{'id'}</td></tr>\n";
 	print "<tr>" .
 	      "<td>tree</td>" .
@@ -7642,15 +7642,15 @@ sub git_cummit {
 	      "</div>\n";
 
 	print "<div class=\"page_body\">\n";
-	git_print_log($co{'comment'});
+	but_print_log($co{'comment'});
 	print "</div>\n";
 
-	git_difftree_body(\@difftree, $hash, @$parents);
+	but_difftree_body(\@difftree, $hash, @$parents);
 
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_object {
+sub but_object {
 	# object is defined by:
 	# - hash or hash_base alone
 	# - hash_base and file_name
@@ -7661,7 +7661,7 @@ sub git_object {
 		my $object_id = $hash || $hash_base;
 
 		open my $fd, "-|", quote_command(
-			git_cmd(), 'cat-file', '-t', $object_id) . ' 2> /dev/null'
+			but_cmd(), 'cat-file', '-t', $object_id) . ' 2> /dev/null'
 			or die_error(404, "Object does not exist");
 		$type = <$fd>;
 		defined $type && chomp $type;
@@ -7672,12 +7672,12 @@ sub git_object {
 	} elsif ($hash_base && defined $file_name) {
 		$file_name =~ s,/+$,,;
 
-		system(git_cmd(), "cat-file", '-e', $hash_base) == 0
+		system(but_cmd(), "cat-file", '-e', $hash_base) == 0
 			or die_error(404, "Base object does not exist");
 
 		# here errors should not happen
-		open my $fd, "-|", git_cmd(), "ls-tree", $hash_base, "--", $file_name
-			or die_error(500, "Open git-ls-tree failed");
+		open my $fd, "-|", but_cmd(), "ls-tree", $hash_base, "--", $file_name
+			or die_error(500, "Open but-ls-tree failed");
 		my $line = <$fd>;
 		close $fd;
 
@@ -7697,7 +7697,7 @@ sub git_object {
 	                     -status => '302 Found');
 }
 
-sub git_blobdiff {
+sub but_blobdiff {
 	my $format = shift || 'html';
 	my $diff_style = $input_params{'diff_style'} || 'inline';
 
@@ -7706,18 +7706,18 @@ sub git_blobdiff {
 	my %diffinfo;
 	my $expires;
 
-	# preparing $fd and %diffinfo for git_patchset_body
+	# preparing $fd and %diffinfo for but_patchset_body
 	# new style URI
 	if (defined $hash_base && defined $hash_parent_base) {
 		if (defined $file_name) {
 			# read raw output
-			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+			open $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 				$hash_parent_base, $hash_base,
 				"--", (defined $file_parent ? $file_parent : ()), $file_name
-				or die_error(500, "Open git-diff-tree failed");
+				or die_error(500, "Open but-diff-tree failed");
 			@difftree = map { chomp; $_ } <$fd>;
 			close $fd
-				or die_error(404, "Reading git-diff-tree failed");
+				or die_error(404, "Reading but-diff-tree failed");
 			@difftree
 				or die_error(404, "Blob diff not found");
 
@@ -7726,16 +7726,16 @@ sub git_blobdiff {
 			# try to find filename from $hash
 
 			# read filtered raw output
-			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+			open $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 				$hash_parent_base, $hash_base, "--"
-				or die_error(500, "Open git-diff-tree failed");
+				or die_error(500, "Open but-diff-tree failed");
 			@difftree =
 				# ':100644 100644 03b21826... 3b93d5e7... M	ls-files.c'
 				# $hash == to_id
 				grep { /^:[0-7]{6} [0-7]{6} $oid_regex $hash/ }
 				map { chomp; $_ } <$fd>;
 			close $fd
-				or die_error(404, "Reading git-diff-tree failed");
+				or die_error(404, "Reading but-diff-tree failed");
 			@difftree
 				or die_error(404, "Blob diff not found");
 
@@ -7761,11 +7761,11 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 			'-p', ($format eq 'html' ? "--full-index" : ()),
 			$hash_parent_base, $hash_base,
 			"--", (defined $file_parent ? $file_parent : ()), $file_name
-			or die_error(500, "Open git-diff-tree failed");
+			or die_error(500, "Open but-diff-tree failed");
 	}
 
 	# old/legacy style URI -- not generated anymore since 1.4.3.
@@ -7779,16 +7779,16 @@ sub git_blobdiff {
 			$cgi->a({-href => href(action=>"blobdiff_plain", -replay=>1)},
 			        "raw");
 		$formats_nav .= diff_style_nav($diff_style);
-		git_header_html(undef, $expires);
+		but_header_html(undef, $expires);
 		if (defined $hash_base && (my %co = parse_cummit($hash_base))) {
-			git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-			git_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
+			but_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
+			but_print_header_div('cummit', esc_html($co{'title'}), $hash_base);
 		} else {
 			print "<div class=\"page_nav\"><br/>$formats_nav<br/></div>\n";
 			print "<div class=\"title\">".esc_html("$hash vs $hash_parent")."</div>\n";
 		}
 		if (defined $file_name) {
-			git_print_page_path($file_name, "blob", $hash_base);
+			but_print_page_path($file_name, "blob", $hash_base);
 		} else {
 			print "<div class=\"page_path\"></div>\n";
 		}
@@ -7810,12 +7810,12 @@ sub git_blobdiff {
 	if ($format eq 'html') {
 		print "<div class=\"page_body\">\n";
 
-		git_patchset_body($fd, $diff_style,
+		but_patchset_body($fd, $diff_style,
 		                  [ \%diffinfo ], $hash_base, $hash_parent_base);
 		close $fd;
 
 		print "</div>\n"; # class="page_body"
-		git_footer_html();
+		but_footer_html();
 
 	} else {
 		while (my $line = <$fd>) {
@@ -7832,8 +7832,8 @@ sub git_blobdiff {
 	}
 }
 
-sub git_blobdiff_plain {
-	git_blobdiff('plain');
+sub but_blobdiff_plain {
+	but_blobdiff('plain');
 }
 
 # assumes that it is added as later part of already existing navigation,
@@ -7857,12 +7857,12 @@ sub diff_style_nav {
 		} @styles;
 }
 
-sub git_cummitdiff {
+sub but_cummitdiff {
 	my %params = @_;
 	my $format = $params{-format} || 'html';
 	my $diff_style = $input_params{'diff_style'} || 'inline';
 
-	my ($patch_max) = gitweb_get_feature('patches');
+	my ($patch_max) = butweb_get_feature('patches');
 	if ($format eq 'patch') {
 		die_error(403, "Patch view not allowed") unless $patch_max;
 	}
@@ -7882,7 +7882,7 @@ sub git_cummitdiff {
 			$cgi->a({-href => href(action=>"cummitdiff_plain", -replay=>1)},
 			        "raw");
 		if ($patch_max && @{$co{'parents'}} <= 1 &&
-			!gitweb_check_feature('email-privacy')) {
+			!butweb_check_feature('email-privacy')) {
 			$formats_nav .= " | " .
 				$cgi->a({-href => href(action=>"patch", -replay=>1)},
 					"patch");
@@ -7955,10 +7955,10 @@ sub git_cummitdiff {
 	my $fd;
 	my @difftree;
 	if ($format eq 'html') {
-		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 			"--no-cummit-id", "--patch-with-raw", "--full-index",
 			$hash_parent_param, $hash, "--"
-			or die_error(500, "Open git-diff-tree failed");
+			or die_error(500, "Open but-diff-tree failed");
 
 		while (my $line = <$fd>) {
 			chomp $line;
@@ -7968,14 +7968,14 @@ sub git_cummitdiff {
 		}
 
 	} elsif ($format eq 'plain') {
-		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 			'-p', $hash_parent_param, $hash, "--"
-			or die_error(500, "Open git-diff-tree failed");
+			or die_error(500, "Open but-diff-tree failed");
 	} elsif ($format eq 'patch') {
 		# For cummit ranges, we limit the output to the number of
 		# patches specified in the 'patches' feature.
 		# For single cummits, we limit the output to a single patch,
-		# diverging from the git-format-patch default.
+		# diverging from the but-format-patch default.
 		my @cummit_spec = ();
 		if ($hash_parent) {
 			if ($patch_max > 0) {
@@ -7993,9 +7993,9 @@ sub git_cummitdiff {
 			}
 			push @cummit_spec, '--root', $hash;
 		}
-		open $fd, "-|", git_cmd(), "format-patch", @diff_opts,
+		open $fd, "-|", but_cmd(), "format-patch", @diff_opts,
 			'--encoding=utf8', '--stdout', @cummit_spec
-			or die_error(500, "Open git-format-patch failed");
+			or die_error(500, "Open but-format-patch failed");
 	} else {
 		die_error(400, "Unknown cummitdiff format");
 	}
@@ -8008,27 +8008,27 @@ sub git_cummitdiff {
 
 	# write cummit message
 	if ($format eq 'html') {
-		my $refs = git_get_references();
+		my $refs = but_get_references();
 		my $ref = format_ref_marker($refs, $co{'id'});
 
-		git_header_html(undef, $expires);
-		git_print_page_nav('cummitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
-		git_print_header_div('cummit', esc_html($co{'title'}) . $ref, $hash);
+		but_header_html(undef, $expires);
+		but_print_page_nav('cummitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
+		but_print_header_div('cummit', esc_html($co{'title'}) . $ref, $hash);
 		print "<div class=\"title_text\">\n" .
 		      "<table class=\"object_header\">\n";
-		git_print_authorship_rows(\%co);
+		but_print_authorship_rows(\%co);
 		print "</table>".
 		      "</div>\n";
 		print "<div class=\"page_body\">\n";
 		if (@{$co{'comment'}} > 1) {
 			print "<div class=\"log\">\n";
-			git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
+			but_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
 			print "</div>\n"; # class="log"
 		}
 
 	} elsif ($format eq 'plain') {
-		my $refs = git_get_references("tags");
-		my $tagname = git_get_rev_name_tags($hash);
+		my $refs = but_get_references("tags");
+		my $tagname = but_get_rev_name_tags($hash);
 		my $filename = basename($project) . "-$hash.patch";
 
 		print $cgi->header(
@@ -8062,64 +8062,64 @@ sub git_cummitdiff {
 	if ($format eq 'html') {
 		my $use_parents = !defined $hash_parent ||
 			$hash_parent eq '-c' || $hash_parent eq '--cc';
-		git_difftree_body(\@difftree, $hash,
+		but_difftree_body(\@difftree, $hash,
 		                  $use_parents ? @{$co{'parents'}} : $hash_parent);
 		print "<br/>\n";
 
-		git_patchset_body($fd, $diff_style,
+		but_patchset_body($fd, $diff_style,
 		                  \@difftree, $hash,
 		                  $use_parents ? @{$co{'parents'}} : $hash_parent);
 		close $fd;
 		print "</div>\n"; # class="page_body"
-		git_footer_html();
+		but_footer_html();
 
 	} elsif ($format eq 'plain') {
 		local $/ = undef;
 		print <$fd>;
 		close $fd
-			or print "Reading git-diff-tree failed\n";
+			or print "Reading but-diff-tree failed\n";
 	} elsif ($format eq 'patch') {
 		local $/ = undef;
 		print <$fd>;
 		close $fd
-			or print "Reading git-format-patch failed\n";
+			or print "Reading but-format-patch failed\n";
 	}
 }
 
-sub git_cummitdiff_plain {
-	git_cummitdiff(-format => 'plain');
+sub but_cummitdiff_plain {
+	but_cummitdiff(-format => 'plain');
 }
 
 # format-patch-style patches
-sub git_patch {
-	git_cummitdiff(-format => 'patch', -single => 1);
+sub but_patch {
+	but_cummitdiff(-format => 'patch', -single => 1);
 }
 
-sub git_patches {
-	git_cummitdiff(-format => 'patch');
+sub but_patches {
+	but_cummitdiff(-format => 'patch');
 }
 
-sub git_history {
-	git_log_generic('history', \&git_history_body,
+sub but_history {
+	but_log_generic('history', \&but_history_body,
 	                $hash_base, $hash_parent_base,
 	                $file_name, $hash);
 }
 
-sub git_search {
+sub but_search {
 	$searchtype ||= 'cummit';
 
 	# check if appropriate features are enabled
-	gitweb_check_feature('search')
+	butweb_check_feature('search')
 		or die_error(403, "Search is disabled");
 	if ($searchtype eq 'pickaxe') {
 		# pickaxe may take all resources of your box and run for several minutes
 		# with every query - so decide by yourself how public you make this feature
-		gitweb_check_feature('pickaxe')
+		butweb_check_feature('pickaxe')
 			or die_error(403, "Pickaxe search is disabled");
 	}
 	if ($searchtype eq 'grep') {
 		# grep search might be potentially CPU-intensive, too
-		gitweb_check_feature('grep')
+		butweb_check_feature('grep')
 			or die_error(403, "Grep search is disabled");
 	}
 
@@ -8127,7 +8127,7 @@ sub git_search {
 		die_error(400, "Text field is empty");
 	}
 	if (!defined $hash) {
-		$hash = git_get_head_hash($project);
+		$hash = but_get_head_hash($project);
 	}
 	my %co = parse_cummit($hash);
 	if (!%co) {
@@ -8140,19 +8140,19 @@ sub git_search {
 	if ($searchtype eq 'cummit' ||
 	    $searchtype eq 'author' ||
 	    $searchtype eq 'cummitter') {
-		git_search_message(%co);
+		but_search_message(%co);
 	} elsif ($searchtype eq 'pickaxe') {
-		git_search_changes(%co);
+		but_search_changes(%co);
 	} elsif ($searchtype eq 'grep') {
-		git_search_files(%co);
+		but_search_files(%co);
 	} else {
 		die_error(400, "Unknown search type");
 	}
 }
 
-sub git_search_help {
-	git_header_html();
-	git_print_page_nav('','', $hash,$hash,$hash);
+sub but_search_help {
+	but_header_html();
+	but_print_page_nav('','', $hash,$hash,$hash);
 	print <<EOT;
 <p><strong>Pattern</strong> is by default a normal string that is matched precisely (but without
 regard to case, except in the case of pickaxe). However, when you check the <em>re</em> checkbox,
@@ -8163,14 +8163,14 @@ insensitive).</p>
 <dt><b>cummit</b></dt>
 <dd>The cummit messages and authorship information will be scanned for the given pattern.</dd>
 EOT
-	my $have_grep = gitweb_check_feature('grep');
+	my $have_grep = butweb_check_feature('grep');
 	if ($have_grep) {
 		print <<EOT;
 <dt><b>grep</b></dt>
 <dd>All files in the currently selected tree (HEAD unless you are explicitly browsing
     a different one) are searched for the given pattern. On large trees, this search can take
 a while and put some strain on the server, so please use it with some consideration. Note that
-due to git-grep peculiarity, currently if regexp mode is turned off, the matches are
+due to but-grep peculiarity, currently if regexp mode is turned off, the matches are
 case-sensitive.</dd>
 EOT
 	}
@@ -8180,7 +8180,7 @@ EOT
 <dt><b>cummitter</b></dt>
 <dd>Name and e-mail of the cummitter and date of cummit will be scanned for the given pattern.</dd>
 EOT
-	my $have_pickaxe = gitweb_check_feature('pickaxe');
+	my $have_pickaxe = butweb_check_feature('pickaxe');
 	if ($have_pickaxe) {
 		print <<EOT;
 <dt><b>pickaxe</b></dt>
@@ -8191,20 +8191,20 @@ interested even in changes just changing the case as well, this search is case s
 EOT
 	}
 	print "</dl>\n";
-	git_footer_html();
+	but_footer_html();
 }
 
-sub git_shortlog {
-	git_log_generic('shortlog', \&git_shortlog_body,
+sub but_shortlog {
+	but_log_generic('shortlog', \&but_shortlog_body,
 	                $hash, $hash_parent);
 }
 
 ## ......................................................................
 ## feeds (RSS, Atom; OPML)
 
-sub git_feed {
+sub but_feed {
 	my $format = shift || 'atom';
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_blame = butweb_check_feature('blame');
 
 	# Atom: http://www.atomenabled.org/developers/syndication/
 	# RSS:  http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
@@ -8256,7 +8256,7 @@ sub git_feed {
 	}
 	$title .= " $feed_type";
 	$title = esc_html($title);
-	my $descr = git_get_project_description($project);
+	my $descr = but_get_project_description($project);
 	if (defined $descr) {
 		$descr = esc_html($descr);
 	} else {
@@ -8264,7 +8264,7 @@ sub git_feed {
 		         ($format eq 'rss' ? 'RSS' : 'Atom') .
 		         " feed";
 	}
-	my $owner = git_get_project_owner($project);
+	my $owner = but_get_project_owner($project);
 	$owner = esc_html($owner);
 
 	#header
@@ -8303,7 +8303,7 @@ XML
 			print "<pubDate>$latest_date{'rfc2822'}</pubDate>\n";
 			print "<lastBuildDate>$latest_date{'rfc2822'}</lastBuildDate>\n";
 		}
-		print "<generator>gitweb v.$version/$git_version</generator>\n";
+		print "<generator>butweb v.$version/$but_version</generator>\n";
 	} elsif ($format eq 'atom') {
 		print <<XML;
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -8330,7 +8330,7 @@ XML
 		} else {
 			print "<updated>$latest_date{'iso-8601'}</updated>\n";
 		}
-		print "<generator version='$version/$git_version'>gitweb</generator>\n";
+		print "<generator version='$version/$but_version'>butweb</generator>\n";
 	}
 
 	# contents
@@ -8344,7 +8344,7 @@ XML
 		my %cd = parse_date($co{'author_epoch'}, $co{'author_tz'});
 
 		# get list of changed files
-		open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open my $fd, "-|", but_cmd(), "diff-tree", '-r', @diff_opts,
 			$co{'parent'} || "--root",
 			$co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
@@ -8441,16 +8441,16 @@ XML
 	}
 }
 
-sub git_rss {
-	git_feed('rss');
+sub but_rss {
+	but_feed('rss');
 }
 
-sub git_atom {
-	git_feed('atom');
+sub but_atom {
+	but_feed('atom');
 }
 
-sub git_opml {
-	my @list = git_get_projects_list($project_filter, $strict_export);
+sub but_opml {
+	my @list = but_get_projects_list($project_filter, $strict_export);
 	if (!@list) {
 		die_error(404, "No projects found");
 	}
@@ -8474,16 +8474,16 @@ sub git_opml {
   <title>$title OPML Export$filter</title>
 </head>
 <body>
-<outline text="git RSS feeds">
+<outline text="but RSS feeds">
 XML
 
 	foreach my $pr (@list) {
 		my %proj = %$pr;
-		my $head = git_get_head_hash($proj{'path'});
+		my $head = but_get_head_hash($proj{'path'});
 		if (!defined $head) {
 			next;
 		}
-		$git_dir = "$projectroot/$proj{'path'}";
+		$but_dir = "$projectroot/$proj{'path'}";
 		my %co = parse_cummit($head);
 		if (!%co) {
 			next;

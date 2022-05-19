@@ -48,25 +48,25 @@ test_expect_success 'setup cummits' '
 	EOF
 '
 
-cummit_sha1=$(git rev-parse 1st^{cummit})
-cummit_sha2=$(git rev-parse 2nd^{cummit})
-cummit_sha3=$(git rev-parse 3rd^{cummit})
-cummit_sha4=$(git rev-parse 4th^{cummit})
-cummit_sha5=$(git rev-parse 5th^{cummit})
+cummit_sha1=$(but rev-parse 1st^{cummit})
+cummit_sha2=$(but rev-parse 2nd^{cummit})
+cummit_sha3=$(but rev-parse 3rd^{cummit})
+cummit_sha4=$(but rev-parse 4th^{cummit})
+cummit_sha5=$(but rev-parse 5th^{cummit})
 
 verify_notes () {
 	notes_ref="$1"
-	git -c core.notesRef="refs/notes/$notes_ref" notes |
+	but -c core.notesRef="refs/notes/$notes_ref" notes |
 		sort >"output_notes_$notes_ref" &&
 	test_cmp "expect_notes_$notes_ref" "output_notes_$notes_ref" &&
-	git -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
+	but -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
 		>"output_log_$notes_ref" &&
 	test_cmp "expect_log_$notes_ref" "output_log_$notes_ref"
 }
 
 notes_merge_files_gone () {
-	# No .git/NOTES_MERGE_* files left
-	{ ls .git/NOTES_MERGE_* >output || :; } &&
+	# No .but/NOTES_MERGE_* files left
+	{ ls .but/NOTES_MERGE_* >output || :; } &&
 	test_must_be_empty output
 }
 
@@ -93,10 +93,10 @@ $cummit_sha1 1st
 EOF
 
 test_expect_success 'setup merge base (x)' '
-	git config core.notesRef refs/notes/x &&
-	git notes add -m "x notes on 2nd cummit" 2nd &&
-	git notes add -m "x notes on 3rd cummit" 3rd &&
-	git notes add -m "x notes on 4th cummit" 4th &&
+	but config core.notesRef refs/notes/x &&
+	but notes add -m "x notes on 2nd cummit" 2nd &&
+	but notes add -m "x notes on 3rd cummit" 3rd &&
+	but notes add -m "x notes on 4th cummit" 4th &&
 	verify_notes x
 '
 
@@ -123,12 +123,12 @@ y notes on 1st cummit
 EOF
 
 test_expect_success 'setup local branch (y)' '
-	git update-ref refs/notes/y refs/notes/x &&
-	git config core.notesRef refs/notes/y &&
-	git notes add -f -m "y notes on 1st cummit" 1st &&
-	git notes remove 2nd &&
-	git notes add -f -m "y notes on 3rd cummit" 3rd &&
-	git notes add -f -m "y notes on 4th cummit" 4th &&
+	but update-ref refs/notes/y refs/notes/x &&
+	but config core.notesRef refs/notes/y &&
+	but notes add -f -m "y notes on 1st cummit" 1st &&
+	but notes remove 2nd &&
+	but notes add -f -m "y notes on 3rd cummit" 3rd &&
+	but notes add -f -m "y notes on 4th cummit" 4th &&
 	verify_notes y
 '
 
@@ -155,12 +155,12 @@ z notes on 1st cummit
 EOF
 
 test_expect_success 'setup remote branch (z)' '
-	git update-ref refs/notes/z refs/notes/x &&
-	git config core.notesRef refs/notes/z &&
-	git notes add -f -m "z notes on 1st cummit" 1st &&
-	git notes add -f -m "z notes on 2nd cummit" 2nd &&
-	git notes remove 3rd &&
-	git notes add -f -m "z notes on 4th cummit" 4th &&
+	but update-ref refs/notes/z refs/notes/x &&
+	but config core.notesRef refs/notes/z &&
+	but notes add -f -m "z notes on 1st cummit" 1st &&
+	but notes add -f -m "z notes on 2nd cummit" 2nd &&
+	but notes remove 3rd &&
+	but notes add -f -m "z notes on 4th cummit" 4th &&
 	verify_notes z
 '
 
@@ -208,26 +208,26 @@ EOF
 cp expect_notes_y expect_notes_m
 cp expect_log_y expect_log_m
 
-git rev-parse refs/notes/y > pre_merge_y
-git rev-parse refs/notes/z > pre_merge_z
+but rev-parse refs/notes/y > pre_merge_y
+but rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'merge z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	git update-ref refs/notes/m refs/notes/y &&
-	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output 2>&1 &&
+	but update-ref refs/notes/m refs/notes/y &&
+	but config core.notesRef refs/notes/m &&
+	test_must_fail but notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.but/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
-	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	ls .but/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
 	( for f in $(cat expect_conflicts); do
-		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		test_cmp "expect_conflict_$f" ".but/NOTES_MERGE_WORKTREE/$f" ||
 		exit 1
 	done ) &&
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	test "$(but rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
 '
 
 cat <<EOF | sort >expect_notes_z
@@ -255,15 +255,15 @@ z notes on 1st cummit
 EOF
 
 test_expect_success 'change notes in z' '
-	git notes --ref z append -m "More z notes on 4th cummit" 4th &&
+	but notes --ref z append -m "More z notes on 4th cummit" 4th &&
 	verify_notes z
 '
 
 test_expect_success 'cannot do merge w/conflicts when previous merge is unfinished' '
-	test -d .git/NOTES_MERGE_WORKTREE &&
-	test_must_fail git notes merge z >output 2>&1 &&
+	test -d .but/NOTES_MERGE_WORKTREE &&
+	test_must_fail but notes merge z >output 2>&1 &&
 	# Output should indicate what is wrong
-	test_i18ngrep -q "\\.git/NOTES_MERGE_\\* exists" output
+	test_i18ngrep -q "\\.but/NOTES_MERGE_\\* exists" output
 '
 
 # Setup non-conflicting merge between x and new notes ref w
@@ -289,9 +289,9 @@ w notes on 1st cummit
 EOF
 
 test_expect_success 'setup unrelated notes ref (w)' '
-	git config core.notesRef refs/notes/w &&
-	git notes add -m "w notes on 1st cummit" 1st &&
-	git notes add -m "x notes on 2nd cummit" 2nd &&
+	but config core.notesRef refs/notes/w &&
+	but notes add -m "w notes on 1st cummit" 1st &&
+	but notes add -m "x notes on 2nd cummit" 2nd &&
 	verify_notes w
 '
 
@@ -320,8 +320,8 @@ w notes on 1st cummit
 EOF
 
 test_expect_success 'can do merge without conflicts even if previous merge is unfinished (x => w)' '
-	test -d .git/NOTES_MERGE_WORKTREE &&
-	git notes merge x &&
+	test -d .but/NOTES_MERGE_WORKTREE &&
+	but notes merge x &&
 	verify_notes w &&
 	# Verify that other notes refs has not changed (x and y)
 	verify_notes x &&
@@ -353,32 +353,32 @@ y and z notes on 1st cummit
 EOF
 
 test_expect_success 'do not allow mixing --cummit and --abort' '
-	test_must_fail git notes merge --cummit --abort
+	test_must_fail but notes merge --cummit --abort
 '
 
 test_expect_success 'do not allow mixing --cummit and --strategy' '
-	test_must_fail git notes merge --cummit --strategy theirs
+	test_must_fail but notes merge --cummit --strategy theirs
 '
 
 test_expect_success 'do not allow mixing --abort and --strategy' '
-	test_must_fail git notes merge --abort --strategy theirs
+	test_must_fail but notes merge --abort --strategy theirs
 '
 
 test_expect_success 'finalize conflicting merge (z => m)' '
 	# Resolve conflicts and finalize merge
-	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+	cat >.but/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
 y and z notes on 1st cummit
 EOF
-	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
+	cat >.but/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
 y and z notes on 4th cummit
 EOF
-	git notes merge --cummit &&
+	but notes merge --cummit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
-	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
-	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	test "$(but rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
+	test "$(but rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
 	# Merge cummit mentions the notes refs merged
-	git log -1 --format=%B refs/notes/m > merge_cummit_msg &&
+	but log -1 --format=%B refs/notes/m > merge_cummit_msg &&
 	grep -q refs/notes/m merge_cummit_msg &&
 	grep -q refs/notes/z merge_cummit_msg &&
 	# Merge cummit mentions conflicting notes
@@ -409,33 +409,33 @@ EOF
 cp expect_notes_y expect_notes_m
 cp expect_log_y expect_log_m
 
-git rev-parse refs/notes/y > pre_merge_y
-git rev-parse refs/notes/z > pre_merge_z
+but rev-parse refs/notes/y > pre_merge_y
+but rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	git update-ref refs/notes/m refs/notes/y &&
-	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output 2>&1 &&
+	but update-ref refs/notes/m refs/notes/y &&
+	but config core.notesRef refs/notes/m &&
+	test_must_fail but notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.but/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
-	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	ls .but/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
 	( for f in $(cat expect_conflicts); do
-		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		test_cmp "expect_conflict_$f" ".but/NOTES_MERGE_WORKTREE/$f" ||
 		exit 1
 	done ) &&
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	test "$(but rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
 '
 
 test_expect_success 'abort notes merge' '
-	git notes merge --abort &&
+	but notes merge --abort &&
 	notes_merge_files_gone &&
 	# m has not moved (still == y)
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
+	test "$(but rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -443,24 +443,24 @@ test_expect_success 'abort notes merge' '
 	verify_notes z
 '
 
-git rev-parse refs/notes/y > pre_merge_y
-git rev-parse refs/notes/z > pre_merge_z
+but rev-parse refs/notes/y > pre_merge_y
+but rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	test_must_fail git notes merge z >output 2>&1 &&
+	test_must_fail but notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.but/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
-	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	ls .but/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
 	( for f in $(cat expect_conflicts); do
-		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		test_cmp "expect_conflict_$f" ".but/NOTES_MERGE_WORKTREE/$f" ||
 		exit 1
 	done ) &&
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	test "$(but rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
 '
 
 cat <<EOF | sort >expect_notes_m
@@ -487,23 +487,23 @@ EOF
 
 test_expect_success 'add + remove notes in finalized merge (z => m)' '
 	# Resolve one conflict
-	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+	cat >.but/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
 y and z notes on 1st cummit
 EOF
 	# Remove another conflict
-	rm .git/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
+	rm .but/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
 	# Remove a D/F conflict
-	rm .git/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
+	rm .but/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
 	# Add a new note
-	echo "new note on 5th cummit" > .git/NOTES_MERGE_WORKTREE/$cummit_sha5 &&
+	echo "new note on 5th cummit" > .but/NOTES_MERGE_WORKTREE/$cummit_sha5 &&
 	# Finalize merge
-	git notes merge --cummit &&
+	but notes merge --cummit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
-	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
-	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	test "$(but rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
+	test "$(but rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
 	# Merge cummit mentions the notes refs merged
-	git log -1 --format=%B refs/notes/m > merge_cummit_msg &&
+	but log -1 --format=%B refs/notes/m > merge_cummit_msg &&
 	grep -q refs/notes/m merge_cummit_msg &&
 	grep -q refs/notes/z merge_cummit_msg &&
 	# Merge cummit mentions conflicting notes
@@ -525,57 +525,57 @@ cp expect_notes_y expect_notes_m
 cp expect_log_y expect_log_m
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	git update-ref refs/notes/m refs/notes/y &&
-	test_must_fail git notes merge z >output 2>&1 &&
+	but update-ref refs/notes/m refs/notes/y &&
+	test_must_fail but notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.but/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
-	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	ls .but/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
 	( for f in $(cat expect_conflicts); do
-		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		test_cmp "expect_conflict_$f" ".but/NOTES_MERGE_WORKTREE/$f" ||
 		exit 1
 	done ) &&
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	test "$(but rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
 '
 
 cp expect_notes_w expect_notes_m
 cp expect_log_w expect_log_m
 
 test_expect_success 'reset notes ref m to somewhere else (w)' '
-	git update-ref refs/notes/m refs/notes/w &&
+	but update-ref refs/notes/m refs/notes/w &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)"
+	test "$(but rev-parse refs/notes/m)" = "$(but rev-parse refs/notes/w)"
 '
 
 test_expect_success 'fail to finalize conflicting merge if underlying ref has moved in the meantime (m != NOTES_MERGE_PARTIAL^1)' '
 	# Resolve conflicts
-	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+	cat >.but/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
 y and z notes on 1st cummit
 EOF
-	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
+	cat >.but/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
 y and z notes on 4th cummit
 EOF
 	# Fail to finalize merge
-	test_must_fail git notes merge --cummit >output 2>&1 &&
-	# .git/NOTES_MERGE_* must remain
-	test -f .git/NOTES_MERGE_PARTIAL &&
-	test -f .git/NOTES_MERGE_REF &&
-	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha1 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha2 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
+	test_must_fail but notes merge --cummit >output 2>&1 &&
+	# .but/NOTES_MERGE_* must remain
+	test -f .but/NOTES_MERGE_PARTIAL &&
+	test -f .but/NOTES_MERGE_REF &&
+	test -f .but/NOTES_MERGE_WORKTREE/$cummit_sha1 &&
+	test -f .but/NOTES_MERGE_WORKTREE/$cummit_sha2 &&
+	test -f .but/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
+	test -f .but/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
 	# Refs are unchanged
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
-	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
-	test "$(git rev-parse refs/notes/m)" != "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
+	test "$(but rev-parse refs/notes/m)" = "$(but rev-parse refs/notes/w)" &&
+	test "$(but rev-parse refs/notes/y)" = "$(but rev-parse NOTES_MERGE_PARTIAL^1)" &&
+	test "$(but rev-parse refs/notes/m)" != "$(but rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	# Mention refs/notes/m, and its current and expected value in output
 	test_i18ngrep -q "refs/notes/m" output &&
-	test_i18ngrep -q "$(git rev-parse refs/notes/m)" output &&
-	test_i18ngrep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
+	test_i18ngrep -q "$(but rev-parse refs/notes/m)" output &&
+	test_i18ngrep -q "$(but rev-parse NOTES_MERGE_PARTIAL^1)" output &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -584,10 +584,10 @@ EOF
 '
 
 test_expect_success 'resolve situation by aborting the notes merge' '
-	git notes merge --abort &&
+	but notes merge --abort &&
 	notes_merge_files_gone &&
 	# m has not moved (still == w)
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
+	test "$(but rev-parse refs/notes/m)" = "$(but rev-parse refs/notes/w)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -601,16 +601,16 @@ bar
 EOF
 
 test_expect_success 'switch cwd before cummitting notes merge' '
-	git notes add -m foo HEAD &&
-	git notes --ref=other add -m bar HEAD &&
-	test_must_fail git notes merge refs/notes/other &&
+	but notes add -m foo HEAD &&
+	but notes --ref=other add -m bar HEAD &&
+	test_must_fail but notes merge refs/notes/other &&
 	(
-		cd .git/NOTES_MERGE_WORKTREE &&
-		echo "foo" > $(git rev-parse HEAD) &&
-		echo "bar" >> $(git rev-parse HEAD) &&
-		git notes merge --cummit
+		cd .but/NOTES_MERGE_WORKTREE &&
+		echo "foo" > $(but rev-parse HEAD) &&
+		echo "bar" >> $(but rev-parse HEAD) &&
+		but notes merge --cummit
 	) &&
-	git notes show HEAD > actual_notes &&
+	but notes show HEAD > actual_notes &&
 	test_cmp expect_notes actual_notes
 '
 

@@ -11,33 +11,33 @@ start_httpd
 
 cummit() {
 	echo "$1" >tracked &&
-	git add tracked &&
-	git cummit -m "$1"
+	but add tracked &&
+	but cummit -m "$1"
 }
 
 test_expect_success 'setup' '
-	git config --global transfer.fsckObjects true &&
+	but config --global transfer.fsckObjects true &&
 	cummit 1 &&
 	cummit 2 &&
 	cummit 3 &&
 	cummit 4 &&
-	git clone . full &&
+	but clone . full &&
 	(
-	git init full-abc &&
+	but init full-abc &&
 	cd full-abc &&
 	cummit a &&
 	cummit b &&
 	cummit c
 	) &&
-	git clone --no-local --depth=2 .git shallow &&
-	git --git-dir=shallow/.git log --format=%s >actual &&
+	but clone --no-local --depth=2 .but shallow &&
+	but --but-dir=shallow/.but log --format=%s >actual &&
 	cat <<EOF >expect &&
 4
 3
 EOF
 	test_cmp expect actual &&
-	git clone --no-local --depth=2 full-abc/.git shallow2 &&
-	git --git-dir=shallow2/.git log --format=%s >actual &&
+	but clone --no-local --depth=2 full-abc/.but shallow2 &&
+	but --but-dir=shallow2/.but log --format=%s >actual &&
 	cat <<EOF >expect &&
 c
 b
@@ -46,20 +46,20 @@ EOF
 '
 
 test_expect_success 'push to shallow repo via http' '
-	git clone --bare --no-local shallow "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	but clone --bare --no-local shallow "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
 	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git config http.receivepack true
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but config http.receivepack true
 	) &&
 	(
 	cd full &&
 	cummit 9 &&
-	git push $HTTPD_URL/smart/repo.git +main:refs/remotes/top/main
+	but push $HTTPD_URL/smart/repo.but +main:refs/remotes/top/main
 	) &&
 	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git fsck &&
-	git log --format=%s top/main >actual &&
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but fsck &&
+	but log --format=%s top/main >actual &&
 	cat <<EOF >expect &&
 9
 4
@@ -70,18 +70,18 @@ EOF
 '
 
 test_expect_success 'push from shallow repo via http' '
-	mv "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" shallow-upstream.git &&
-	git clone --bare --no-local full "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	mv "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" shallow-upstream.but &&
+	but clone --bare --no-local full "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
 	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git config http.receivepack true
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but config http.receivepack true
 	) &&
 	cummit 10 &&
-	git push $HTTPD_URL/smart/repo.git +main:refs/remotes/top/main &&
+	but push $HTTPD_URL/smart/repo.but +main:refs/remotes/top/main &&
 	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git fsck &&
-	git log --format=%s top/main >actual &&
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but fsck &&
+	but log --format=%s top/main >actual &&
 	cat <<EOF >expect &&
 10
 4

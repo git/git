@@ -74,11 +74,11 @@ test_expect_success 'setup' '
 	I fear, said Cephalus, that I must go now, for I have to look after the
 	sacrifices, and I hand over the argument to Polemarchus and the company.
 	EOF
-	git add text.txt &&
+	but add text.txt &&
 	test_tick &&
-	git cummit -m "Initial revision" &&
+	but cummit -m "Initial revision" &&
 
-	git checkout -b remote &&
+	but checkout -b remote &&
 	sed -e "
 			s/\.  /\. /g
 			s/[?]  /? /g
@@ -88,9 +88,9 @@ test_expect_success 'setup' '
 			/CEPHALUS - SOCRATES - POLEMARCHUS/ d
 		" text.txt >text.txt+ &&
 	mv text.txt+ text.txt &&
-	git cummit -a -m "Remove cruft" &&
+	but cummit -a -m "Remove cruft" &&
 
-	git checkout main &&
+	but checkout main &&
 	sed -e "
 			s/\(not in his right mind\),\(.*\)/\1;\2Q/
 			s/Quite correct\(.*\)/It is too correct\1Q/
@@ -101,34 +101,34 @@ test_expect_success 'setup' '
 			/pay your debts/ s/$/Q/
 		" text.txt | q_to_cr >text.txt+ &&
 	mv text.txt+ text.txt &&
-	git cummit -a -m "Clarify" &&
-	git show-branch --all
+	but cummit -a -m "Clarify" &&
+	but show-branch --all
 '
 
 test_expect_success 'naive merge fails' '
-	git read-tree --reset -u HEAD &&
-	test_must_fail git merge-recursive HEAD^ -- HEAD remote &&
-	test_must_fail git update-index --refresh &&
+	but read-tree --reset -u HEAD &&
+	test_must_fail but merge-recursive HEAD^ -- HEAD remote &&
+	test_must_fail but update-index --refresh &&
 	grep "<<<<<<" text.txt
 '
 
 test_expect_success '--ignore-space-change makes merge succeed' '
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-space-change HEAD^ -- HEAD remote
 '
 
 test_expect_success 'naive cherry-pick fails' '
-	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick --no-cummit remote &&
-	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick remote &&
-	test_must_fail git update-index --refresh &&
+	but read-tree --reset -u HEAD &&
+	test_must_fail but cherry-pick --no-cummit remote &&
+	but read-tree --reset -u HEAD &&
+	test_must_fail but cherry-pick remote &&
+	test_must_fail but update-index --refresh &&
 	grep "<<<<<<" text.txt
 '
 
 test_expect_success '-Xignore-space-change makes cherry-pick succeed' '
-	git read-tree --reset -u HEAD &&
-	git cherry-pick --no-cummit -Xignore-space-change remote
+	but read-tree --reset -u HEAD &&
+	but cherry-pick --no-cummit -Xignore-space-change remote
 '
 
 test_expect_success '--ignore-space-change: our w/s-only change wins' '
@@ -136,8 +136,8 @@ test_expect_success '--ignore-space-change: our w/s-only change wins' '
 	    justice and holiness and is the nurse of his age and theQ
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
 	grep "justice and holiness" text.txt >actual &&
 	test_cmp expected actual
 '
@@ -147,8 +147,8 @@ test_expect_success '--ignore-space-change: their real change wins over w/s' '
 	it?---to speak the truth and to pay your debts---no more than this? And
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
 	grep "pay your debts" text.txt >actual &&
 	test_cmp expected actual
 '
@@ -161,8 +161,8 @@ test_expect_success '--ignore-space-change: does not ignore new spaces' '
 	un intentionally; and when he departs to the world below he is not inQ
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-space-change HEAD^ -- HEAD remote &&
 	grep "Well said" text.txt >actual1 &&
 	grep "when he departs" text.txt >actual2 &&
 	test_cmp expected1 actual1 &&
@@ -174,8 +174,8 @@ test_expect_success '--ignore-all-space drops their new spaces' '
 	Well said, Cephalus, I replied; but as concerning justice, what is
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-all-space HEAD^ -- HEAD remote &&
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-all-space HEAD^ -- HEAD remote &&
 	grep "Well said" text.txt >actual &&
 	test_cmp expected actual
 '
@@ -185,8 +185,8 @@ test_expect_success '--ignore-all-space keeps our new spaces' '
 	un intentionally; and when he departs to the world below he is not inQ
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	git merge-recursive --ignore-all-space HEAD^ -- HEAD remote &&
+	but read-tree --reset -u HEAD &&
+	but merge-recursive --ignore-all-space HEAD^ -- HEAD remote &&
 	grep "when he departs" text.txt >actual &&
 	test_cmp expected actual
 '
@@ -200,8 +200,8 @@ test_expect_success '--ignore-space-at-eol' '
 	>>>>>>> remote
 	EOF
 
-	git read-tree --reset -u HEAD &&
-	test_must_fail git merge-recursive --ignore-space-at-eol \
+	but read-tree --reset -u HEAD &&
+	test_must_fail but merge-recursive --ignore-space-at-eol \
 						 HEAD^ -- HEAD remote &&
 	conflict_hunks text.txt >actual &&
 	test_cmp expected actual

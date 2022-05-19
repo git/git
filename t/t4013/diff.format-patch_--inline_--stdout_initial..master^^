@@ -1,4 +1,4 @@
-$ git format-patch --inline --stdout initial..master^^
+$ but format-patch --inline --stdout initial..master^^
 From 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
@@ -26,7 +26,7 @@ Content-Type: text/x-patch; name="0001-Second.patch"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline; filename="0001-Second.patch"
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -35,7 +35,7 @@ index 35d242b..8422d40 100644
  B
 +C
 +D
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..b414108 100644
 --- a/file0
 +++ b/file0
@@ -46,7 +46,7 @@ index 01e79c3..b414108 100644
 +4
 +5
 +6
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 deleted file mode 100644
 index 01e79c3..0000000
 --- a/file2

@@ -8,7 +8,7 @@
 struct cummit;
 struct repository;
 
-const char *git_path_cummit_editmsg(void);
+const char *but_path_cummit_editmsg(void);
 const char *rebase_path_todo(void);
 const char *rebase_path_todo_backup(void);
 const char *rebase_path_dropped(void);

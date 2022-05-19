@@ -126,8 +126,8 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 	xmp.level = XDL_MERGE_ZEALOUS;
 	xmp.favor = opts->variant;
 	xmp.xpp.flags = opts->xdl_opts;
-	if (git_xmerge_style >= 0)
-		xmp.style = git_xmerge_style;
+	if (but_xmerge_style >= 0)
+		xmp.style = but_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
 	xmp.ancestor = orig_name;
@@ -256,7 +256,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	size_t namelen;
 
 	if (!strcmp(var, "merge.default"))
-		return git_config_string(&default_ll_merge, var, value);
+		return but_config_string(&default_ll_merge, var, value);
 
 	/*
 	 * We are not interested in anything but "merge.<name>.variable";
@@ -282,7 +282,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("name", key))
-		return git_config_string(&fn->description, var, value);
+		return but_config_string(&fn->description, var, value);
 
 	if (!strcmp("driver", key)) {
 		if (!value)
@@ -310,7 +310,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("recursive", key))
-		return git_config_string(&fn->recursive, var, value);
+		return but_config_string(&fn->recursive, var, value);
 
 	return 0;
 }
@@ -320,7 +320,7 @@ static void initialize_ll_merge(void)
 	if (ll_user_merge_tail)
 		return;
 	ll_user_merge_tail = &ll_user_merge;
-	git_config(read_merge_config, NULL);
+	but_config(read_merge_config, NULL);
 }
 
 static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr)
@@ -389,7 +389,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 		normalize_file(theirs, path, istate);
 	}
 
-	git_check_attr(istate, path, check);
+	but_check_attr(istate, path, check);
 	ll_driver_name = check->items[0].value;
 	if (check->items[1].value) {
 		marker_size = atoi(check->items[1].value);
@@ -417,7 +417,7 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 
 	if (!check)
 		check = attr_check_initl("conflict-marker-size", NULL);
-	git_check_attr(istate, path, check);
+	but_check_attr(istate, path, check);
 	if (check->items[0].value) {
 		marker_size = atoi(check->items[0].value);
 		if (marker_size <= 0)

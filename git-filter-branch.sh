@@ -2,7 +2,7 @@
 #
 # Rewrite revision history
 # Copyright (c) Petr Baudis, 2006
-# Minimal changes to "port" it to core-git (c) Johannes Schindelin, 2007
+# Minimal changes to "port" it to core-but (c) Johannes Schindelin, 2007
 #
 # Lets you rewrite the revision history of the current branch, creating
 # a new branch. You can specify a number of filters to modify the cummits,
@@ -11,7 +11,7 @@
 # The following functions will also be available in the cummit filter:
 
 functions=$(cat << \EOF
-EMPTY_TREE=$(git hash-object -t tree /dev/null)
+EMPTY_TREE=$(but hash-object -t tree /dev/null)
 
 warn () {
 	echo "$*" >&2
@@ -42,16 +42,16 @@ skip_cummit()
 	done;
 }
 
-# if you run 'git_cummit_non_empty_tree "$@"' in a cummit filter,
+# if you run 'but_cummit_non_empty_tree "$@"' in a cummit filter,
 # it will skip cummits that leave the tree untouched, cummit the other.
-git_cummit_non_empty_tree()
+but_cummit_non_empty_tree()
 {
-	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
+	if test $# = 3 && test "$1" = $(but rev-parse "$3^{tree}"); then
 		map "$3"
 	elif test $# = 1 && test "$1" = $EMPTY_TREE; then
 		:
 	else
-		git cummit-tree "$@"
+		but cummit-tree "$@"
 	fi
 }
 # override die(): this version puts in an extra line break, so that
@@ -86,10 +86,10 @@ set_ident () {
 if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
 then
 	cat <<EOF
-WARNING: git-filter-branch has a glut of gotchas generating mangled history
+WARNING: but-filter-branch has a glut of gotchas generating mangled history
 	 rewrites.  Hit Ctrl-C before proceeding to abort, then use an
-	 alternative filtering tool such as 'git filter-repo'
-	 (https://github.com/newren/git-filter-repo/) instead.  See the
+	 alternative filtering tool such as 'but filter-repo'
+	 (https://buthub.com/newren/but-filter-repo/) instead.  See the
 	 filter-branch manual page for more details; to squelch this warning,
 	 set FILTER_BRANCH_SQUELCH_WARNING=1.
 EOF
@@ -106,13 +106,13 @@ USAGE="[--setup <command>] [--subdirectory-filter <directory>] [--env-filter <co
 	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
-. git-sh-setup
+. but-sh-setup
 
 if [ "$(is_bare_repository)" = false ]; then
 	require_clean_work_tree 'rewrite branches'
 fi
 
-tempdir=.git-rewrite
+tempdir=.but-rewrite
 filter_setup=
 filter_env=
 filter_tree=
@@ -209,9 +209,9 @@ done
 
 case "$prune_empty,$filter_cummit" in
 ,)
-	filter_cummit='git cummit-tree "$@"';;
+	filter_cummit='but cummit-tree "$@"';;
 t,)
-	filter_cummit="$functions;"' git_cummit_non_empty_tree "$@"';;
+	filter_cummit="$functions;"' but_cummit_non_empty_tree "$@"';;
 ,*)
 	;;
 *)
@@ -250,7 +250,7 @@ GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
 # Make sure refs/original is empty
-git for-each-ref > "$tempdir"/backup-refs || exit
+but for-each-ref > "$tempdir"/backup-refs || exit
 while read sha1 type name
 do
 	case "$force,$name" in
@@ -260,19 +260,19 @@ A previous backup already exists in $orig_namespace
 Force overwriting the backup with -f"
 	;;
 	t,$orig_namespace*)
-		git update-ref -d "$name" $sha1
+		but update-ref -d "$name" $sha1
 	;;
 	esac
 done < "$tempdir"/backup-refs
 
 # The refs should be updated if their heads were rewritten
-git rev-parse --no-flags --revs-only --symbolic-full-name \
+but rev-parse --no-flags --revs-only --symbolic-full-name \
 	--default HEAD "$@" > "$tempdir"/raw-refs || exit
 while read ref
 do
 	case "$ref" in ^?*) continue ;; esac
 
-	if git rev-parse --verify "$ref"^0 >/dev/null 2>&1
+	if but rev-parse --verify "$ref"^0 >/dev/null 2>&1
 	then
 		echo "$ref"
 	else
@@ -291,11 +291,11 @@ mkdir ../map || die "Could not create map/ directory"
 
 if test -n "$state_branch"
 then
-	state_cummit=$(git rev-parse --no-flags --revs-only "$state_branch")
+	state_cummit=$(but rev-parse --no-flags --revs-only "$state_branch")
 	if test -n "$state_cummit"
 	then
 		echo "Populating map from $state_branch ($state_cummit)" 1>&2
-		perl -e'open(MAP, "-|", "git show $ARGV[0]:filter.map") or die;
+		perl -e'open(MAP, "-|", "but show $ARGV[0]:filter.map") or die;
 			while (<MAP>) {
 				m/(.*):(.*)/ or die;
 				open F, ">../map/$1" or die;
@@ -310,7 +310,7 @@ then
 fi
 
 # we need "--" only if there are no path arguments in $@
-nonrevs=$(git rev-parse --no-revs "$@") || exit
+nonrevs=$(but rev-parse --no-revs "$@") || exit
 if test -z "$nonrevs"
 then
 	dashdash=--
@@ -319,19 +319,19 @@ else
 	remap_to_ancestor=t
 fi
 
-git rev-parse --revs-only "$@" >../parse
+but rev-parse --revs-only "$@" >../parse
 
 case "$filter_subdir" in
 "")
-	eval set -- "$(git rev-parse --sq --no-revs "$@")"
+	eval set -- "$(but rev-parse --sq --no-revs "$@")"
 	;;
 *)
-	eval set -- "$(git rev-parse --sq --no-revs "$@" $dashdash \
+	eval set -- "$(but rev-parse --sq --no-revs "$@" $dashdash \
 		"$filter_subdir")"
 	;;
 esac
 
-git rev-list --reverse --topo-order --default HEAD \
+but rev-list --reverse --topo-order --default HEAD \
 	--parents --simplify-merges --stdin "$@" <../parse >../revs ||
 	die "Could not get the cummits"
 cummits=$(wc -l <../revs | tr -d " ")
@@ -342,9 +342,9 @@ test $cummits -eq 0 && die_with_status 2 "Found nothing to rewrite"
 report_progress ()
 {
 	if test -n "$progress" &&
-		test $git_filter_branch__cummit_count -gt $next_sample_at
+		test $but_filter_branch__cummit_count -gt $next_sample_at
 	then
-		count=$git_filter_branch__cummit_count
+		count=$but_filter_branch__cummit_count
 
 		now=$(date +%s)
 		elapsed=$(($now - $start_timestamp))
@@ -360,7 +360,7 @@ report_progress ()
 	printf "\rRewrite $cummit ($count/$cummits)$progress    "
 }
 
-git_filter_branch__cummit_count=0
+but_filter_branch__cummit_count=0
 
 progress= start_timestamp=
 if date '+%s' 2>/dev/null | grep -q '^[0-9][0-9]*$'
@@ -383,7 +383,7 @@ eval "$filter_setup" < /dev/null ||
 	die "filter setup failed: $filter_setup"
 
 while read cummit parents; do
-	git_filter_branch__cummit_count=$(($git_filter_branch__cummit_count+1))
+	but_filter_branch__cummit_count=$(($but_filter_branch__cummit_count+1))
 
 	report_progress
 	test -f "$workdir"/../map/$cummit && continue
@@ -392,14 +392,14 @@ while read cummit parents; do
 	"")
 		if test -n "$need_index"
 		then
-			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $cummit
+			GIT_ALLOW_NULL_SHA1=1 but read-tree -i -m $cummit
 		fi
 		;;
 	*)
 		# The cummit may not have the subdirectory at all
 		err=$(GIT_ALLOW_NULL_SHA1=1 \
-		      git read-tree -i -m $cummit:"$filter_subdir" 2>&1) || {
-			if ! git rev-parse -q --verify $cummit:"$filter_subdir"
+		      but read-tree -i -m $cummit:"$filter_subdir" 2>&1) || {
+			if ! but rev-parse -q --verify $cummit:"$filter_subdir"
 			then
 				rm -f "$GIT_INDEX_FILE"
 			else
@@ -411,7 +411,7 @@ while read cummit parents; do
 
 	GIT_CUMMIT=$cummit
 	export GIT_CUMMIT
-	git cat-file cummit "$cummit" >../cummit ||
+	but cat-file cummit "$cummit" >../cummit ||
 		die "Cannot read cummit $cummit"
 
 	eval "$(set_ident <../cummit)" ||
@@ -420,19 +420,19 @@ while read cummit parents; do
 		die "env filter failed: $filter_env"
 
 	if [ "$filter_tree" ]; then
-		git checkout-index -f -u -a ||
+		but checkout-index -f -u -a ||
 			die "Could not checkout the index"
 		# files that $cummit removed are now still in the working tree;
 		# remove them, else they would be added again
-		git clean -d -q -f -x
+		but clean -d -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only --ignore-submodules $cummit -- &&
-			git ls-files --others
+			but diff-index -r --name-only --ignore-submodules $cummit -- &&
+			but ls-files --others
 		) > "$tempdir"/tree-state || exit
-		git update-index --add --replace --remove --stdin \
+		but update-index --add --replace --remove --stdin \
 			< "$tempdir"/tree-state || exit
 	fi
 
@@ -470,11 +470,11 @@ while read cummit parents; do
 
 	if test -n "$need_index"
 	then
-		tree=$(git write-tree)
+		tree=$(but write-tree)
 	else
-		tree=$(git rev-parse "$cummit^{tree}")
+		tree=$(but rev-parse "$cummit^{tree}")
 	fi
-	workdir=$workdir @SHELL_PATH@ -c "$filter_cummit" "git cummit-tree" \
+	workdir=$workdir @SHELL_PATH@ -c "$filter_cummit" "but cummit-tree" \
 		"$tree" $parentstr < ../message > ../map/$cummit ||
 			die "could not write rewritten cummit"
 done <../revs
@@ -489,9 +489,9 @@ if test "$remap_to_ancestor" = t
 then
 	while read ref
 	do
-		sha1=$(git rev-parse "$ref"^0)
+		sha1=$(but rev-parse "$ref"^0)
 		test -f "$workdir"/../map/$sha1 && continue
-		ancestor=$(git rev-list --simplify-merges -1 "$ref" "$@")
+		ancestor=$(but rev-list --simplify-merges -1 "$ref" "$@")
 		test "$ancestor" && echo $(map $ancestor) >"$workdir"/../map/$sha1
 	done < "$tempdir"/heads
 fi
@@ -504,7 +504,7 @@ do
 	# avoid rewriting a ref twice
 	test -f "$orig_namespace$ref" && continue
 
-	sha1=$(git rev-parse "$ref"^0)
+	sha1=$(but rev-parse "$ref"^0)
 	rewritten=$(map $sha1)
 
 	test $sha1 = "$rewritten" &&
@@ -514,14 +514,14 @@ do
 	case "$rewritten" in
 	'')
 		echo "Ref '$ref' was deleted"
-		git update-ref -m "filter-branch: delete" -d "$ref" $sha1 ||
+		but update-ref -m "filter-branch: delete" -d "$ref" $sha1 ||
 			die "Could not delete $ref"
 	;;
 	*)
 		echo "Ref '$ref' was rewritten"
-		if ! git update-ref -m "filter-branch: rewrite" \
+		if ! but update-ref -m "filter-branch: rewrite" \
 					"$ref" $rewritten $sha1 2>/dev/null; then
-			if test $(git cat-file -t "$ref") = tag; then
+			if test $(but cat-file -t "$ref") = tag; then
 				if test -z "$filter_tag_name"; then
 					warn "WARNING: You said to rewrite tagged cummits, but not the corresponding tag."
 					warn "WARNING: Perhaps use '--tag-name-filter cat' to rewrite the tag."
@@ -532,7 +532,7 @@ do
 		fi
 	;;
 	esac
-	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
+	but update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
 		 exit
 done < "$tempdir"/heads
 
@@ -541,7 +541,7 @@ done < "$tempdir"/heads
 # Filter tags
 
 if [ "$filter_tag_name" ]; then
-	git for-each-ref --format='%(objectname) %(objecttype) %(refname)' refs/tags |
+	but for-each-ref --format='%(objectname) %(objecttype) %(refname)' refs/tags |
 	while read sha1 type ref; do
 		ref="${ref#refs/tags/}"
 		# XXX: Rewrite tagged trees as well?
@@ -552,7 +552,7 @@ if [ "$filter_tag_name" ]; then
 		if [ "$type" = "tag" ]; then
 			# Dereference to a cummit
 			sha1t="$sha1"
-			sha1="$(git rev-parse -q "$sha1"^{cummit})" || continue
+			sha1="$(but rev-parse -q "$sha1"^{cummit})" || continue
 		fi
 
 		[ -f "../map/$sha1" ] || continue
@@ -567,7 +567,7 @@ if [ "$filter_tag_name" ]; then
 		if [ "$type" = "tag" ]; then
 			new_sha1=$( ( printf 'object %s\ntype cummit\ntag %s\n' \
 						"$new_sha1" "$new_ref"
-				git cat-file tag "$ref" |
+				but cat-file tag "$ref" |
 				sed -n \
 				    -e '1,/^$/{
 					  /^object /d
@@ -576,16 +576,16 @@ if [ "$filter_tag_name" ]; then
 					}' \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
 				    -e 'p' ) |
-				git hash-object -t tag -w --stdin) ||
+				but hash-object -t tag -w --stdin) ||
 				die "Could not create new tag object for $ref"
-			if git cat-file tag "$ref" | \
+			if but cat-file tag "$ref" | \
 			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
 			then
 				warn "gpg signature stripped from tag object $sha1t"
 			fi
 		fi
 
-		git update-ref "refs/tags/$new_ref" "$new_sha1" ||
+		but update-ref "refs/tags/$new_ref" "$new_sha1" ||
 			die "Could not write tag $new_ref"
 	done
 fi
@@ -634,7 +634,7 @@ then
 	echo "Saving rewrite state to $state_branch" 1>&2
 	state_blob=$(
 		perl -e'opendir D, "../map" or die;
-			open H, "|-", "git hash-object -w --stdin" or die;
+			open H, "|-", "but hash-object -w --stdin" or die;
 			foreach (sort readdir(D)) {
 				next if m/^\.\.?$/;
 				open F, "<../map/$_" or die;
@@ -642,14 +642,14 @@ then
 				print H "$_:$f\n" or die;
 			}
 			close(H) or die;' || die "Unable to save state")
-	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | git mktree)
+	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | but mktree)
 	if test -n "$state_cummit"
 	then
-		state_cummit=$(echo "Sync" | git cummit-tree "$state_tree" -p "$state_cummit")
+		state_cummit=$(echo "Sync" | but cummit-tree "$state_tree" -p "$state_cummit")
 	else
-		state_cummit=$(echo "Sync" | git cummit-tree "$state_tree" )
+		state_cummit=$(echo "Sync" | but cummit-tree "$state_tree" )
 	fi
-	git update-ref "$state_branch" "$state_cummit"
+	but update-ref "$state_branch" "$state_cummit"
 fi
 
 cd "$orig_dir"
@@ -658,7 +658,7 @@ rm -rf "$tempdir"
 trap - 0
 
 if [ "$(is_bare_repository)" = false ]; then
-	git read-tree -u -m HEAD || exit
+	but read-tree -u -m HEAD || exit
 fi
 
 exit 0

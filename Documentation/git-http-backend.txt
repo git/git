@@ -1,14 +1,14 @@
-git-http-backend(1)
+but-http-backend(1)
 ===================
 
 NAME
 ----
-git-http-backend - Server side implementation of Git over HTTP
+but-http-backend - Server side implementation of Git over HTTP
 
 SYNOPSIS
 --------
 [verse]
-'git http-backend'
+'but http-backend'
 
 DESCRIPTION
 -----------
@@ -21,15 +21,15 @@ more-efficient "v2" protocol if properly configured; see the
 discussion of `GIT_PROTOCOL` in the ENVIRONMENT section below.
 
 It verifies that the directory has the magic file
-"git-daemon-export-ok", and it will refuse to export any Git directory
+"but-daemon-export-ok", and it will refuse to export any Git directory
 that hasn't explicitly been marked for export this way (unless the
 `GIT_HTTP_EXPORT_ALL` environmental variable is set).
 
 By default, only the `upload-pack` service is enabled, which serves
-'git fetch-pack' and 'git ls-remote' clients, which are invoked from
-'git fetch', 'git pull', and 'git clone'.  If the client is authenticated,
-the `receive-pack` service is enabled, which serves 'git send-pack'
-clients, which is invoked from 'git push'.
+'but fetch-pack' and 'but ls-remote' clients, which are invoked from
+'but fetch', 'but pull', and 'but clone'.  If the client is authenticated,
+the `receive-pack` service is enabled, which serves 'but send-pack'
+clients, which is invoked from 'but push'.
 
 SERVICES
 --------
@@ -45,12 +45,12 @@ http.getanyfile::
 	by setting this configuration item to `false`.
 
 http.uploadpack::
-	This serves 'git fetch-pack' and 'git ls-remote' clients.
+	This serves 'but fetch-pack' and 'but ls-remote' clients.
 	It is enabled by default, but a repository can disable it
 	by setting this configuration item to `false`.
 
 http.receivepack::
-	This serves 'git send-pack' clients, allowing push.  It is
+	This serves 'but send-pack' clients, allowing push.  It is
 	disabled by default for anonymous users, and enabled by
 	default for users authenticated by the web server.  It can be
 	disabled by setting this item to `false`, or enabled for all
@@ -58,17 +58,17 @@ http.receivepack::
 
 URL TRANSLATION
 ---------------
-To determine the location of the repository on disk, 'git http-backend'
+To determine the location of the repository on disk, 'but http-backend'
 concatenates the environment variables PATH_INFO, which is set
 automatically by the web server, and GIT_PROJECT_ROOT, which must be set
 manually in the web server configuration.  If GIT_PROJECT_ROOT is not
-set, 'git http-backend' reads PATH_TRANSLATED, which is also set
+set, 'but http-backend' reads PATH_TRANSLATED, which is also set
 automatically by the web server.
 
 EXAMPLES
 --------
-All of the following examples map `http://$hostname/git/foo/bar.git`
-to `/var/www/git/foo/bar.git`.
+All of the following examples map `http://$hostname/but/foo/bar.but`
+to `/var/www/but/foo/bar.but`.
 
 Apache 2.x::
 	Ensure mod_cgi, mod_alias, and mod_env are enabled, set
@@ -76,12 +76,12 @@ Apache 2.x::
 	create a ScriptAlias to the CGI:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/git
+SetEnv GIT_PROJECT_ROOT /var/www/but
 SetEnv GIT_HTTP_EXPORT_ALL
-ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/
+ScriptAlias /but/ /usr/libexec/but-core/but-http-backend/
 
 # This is not strictly necessary using Apache and a modern version of
-# git-http-backend, as the webserver will pass along the header in the
+# but-http-backend, as the webserver will pass along the header in the
 # environment as HTTP_GIT_PROTOCOL, and http-backend will copy that into
 # GIT_PROTOCOL. But you may need this line (or something similar if you
 # are using a different webserver), or if you want to support older Git
@@ -99,11 +99,11 @@ detect as a push via the service parameter in the query string), and the
 receive-pack invocation itself:
 +
 ----------------------------------------------------------------
-RewriteCond %{QUERY_STRING} service=git-receive-pack [OR]
-RewriteCond %{REQUEST_URI} /git-receive-pack$
-RewriteRule ^/git/ - [E=AUTHREQUIRED:yes]
+RewriteCond %{QUERY_STRING} service=but-receive-pack [OR]
+RewriteCond %{REQUEST_URI} /but-receive-pack$
+RewriteRule ^/but/ - [E=AUTHREQUIRED:yes]
 
-<LocationMatch "^/git/">
+<LocationMatch "^/but/">
 	Order Deny,Allow
 	Deny from env=AUTHREQUIRED
 
@@ -116,11 +116,11 @@ RewriteRule ^/git/ - [E=AUTHREQUIRED:yes]
 ----------------------------------------------------------------
 +
 If you do not have `mod_rewrite` available to match against the query
-string, it is sufficient to just protect `git-receive-pack` itself,
+string, it is sufficient to just protect `but-receive-pack` itself,
 like:
 +
 ----------------------------------------------------------------
-<LocationMatch "^/git/.*/git-receive-pack$">
+<LocationMatch "^/but/.*/but-receive-pack$">
 	AuthType Basic
 	AuthName "Git Access"
 	Require group cummitters
@@ -141,7 +141,7 @@ To require authentication for both reads and writes, use a Location
 directive around the repository, or one of its parent directories:
 +
 ----------------------------------------------------------------
-<Location /git/private>
+<Location /but/private>
 	AuthType Basic
 	AuthName "Private Git Access"
 	Require group cummitters
@@ -149,29 +149,29 @@ directive around the repository, or one of its parent directories:
 </Location>
 ----------------------------------------------------------------
 +
-To serve gitweb at the same url, use a ScriptAliasMatch to only
-those URLs that 'git http-backend' can handle, and forward the
-rest to gitweb:
+To serve butweb at the same url, use a ScriptAliasMatch to only
+those URLs that 'but http-backend' can handle, and forward the
+rest to butweb:
 +
 ----------------------------------------------------------------
 ScriptAliasMatch \
-	"(?x)^/git/(.*/(HEAD | \
+	"(?x)^/but/(.*/(HEAD | \
 			info/refs | \
 			objects/(info/[^/]+ | \
 				 [0-9a-f]{2}/[0-9a-f]{38} | \
 				 pack/pack-[0-9a-f]{40}\.(pack|idx)) | \
-			git-(upload|receive)-pack))$" \
-	/usr/libexec/git-core/git-http-backend/$1
+			but-(upload|receive)-pack))$" \
+	/usr/libexec/but-core/but-http-backend/$1
 
-ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
+ScriptAlias /but/ /var/www/cgi-bin/butweb.cgi/
 ----------------------------------------------------------------
 +
-To serve multiple repositories from different linkgit:gitnamespaces[7] in a
+To serve multiple repositories from different linkbut:butnamespaces[7] in a
 single repository:
 +
 ----------------------------------------------------------------
-SetEnvIf Request_URI "^/git/([^/]*)" GIT_NAMESPACE=$1
-ScriptAliasMatch ^/git/[^/]*(.*) /usr/libexec/git-core/git-http-backend/storage.git$1
+SetEnvIf Request_URI "^/but/([^/]*)" GIT_NAMESPACE=$1
+ScriptAliasMatch ^/but/[^/]*(.*) /usr/libexec/but-core/but-http-backend/storage.but$1
 ----------------------------------------------------------------
 
 Accelerated static Apache 2.x::
@@ -181,27 +181,27 @@ Accelerated static Apache 2.x::
 	file contents from the file system directly to the network:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/git
+SetEnv GIT_PROJECT_ROOT /var/www/but
 
-AliasMatch ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/git/$1
-AliasMatch ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/git/$1
-ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/
+AliasMatch ^/but/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/but/$1
+AliasMatch ^/but/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/but/$1
+ScriptAlias /but/ /usr/libexec/but-core/but-http-backend/
 ----------------------------------------------------------------
 +
-This can be combined with the gitweb configuration:
+This can be combined with the butweb configuration:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/git
+SetEnv GIT_PROJECT_ROOT /var/www/but
 
-AliasMatch ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/git/$1
-AliasMatch ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/git/$1
+AliasMatch ^/but/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/but/$1
+AliasMatch ^/but/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/but/$1
 ScriptAliasMatch \
-	"(?x)^/git/(.*/(HEAD | \
+	"(?x)^/but/(.*/(HEAD | \
 			info/refs | \
 			objects/info/[^/]+ | \
-			git-(upload|receive)-pack))$" \
-	/usr/libexec/git-core/git-http-backend/$1
-ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
+			but-(upload|receive)-pack))$" \
+	/usr/libexec/but-core/but-http-backend/$1
+ScriptAlias /but/ /var/www/cgi-bin/butweb.cgi/
 ----------------------------------------------------------------
 
 Lighttpd::
@@ -210,11 +210,11 @@ Lighttpd::
 	all requests to the CGI:
 +
 ----------------------------------------------------------------
-alias.url += ( "/git" => "/usr/lib/git-core/git-http-backend" )
-$HTTP["url"] =~ "^/git" {
+alias.url += ( "/but" => "/usr/lib/but-core/but-http-backend" )
+$HTTP["url"] =~ "^/but" {
 	cgi.assign = ("" => "")
 	setenv.add-environment = (
-		"GIT_PROJECT_ROOT" => "/var/www/git",
+		"GIT_PROJECT_ROOT" => "/var/www/but",
 		"GIT_HTTP_EXPORT_ALL" => ""
 	)
 }
@@ -223,15 +223,15 @@ $HTTP["url"] =~ "^/git" {
 To enable anonymous read access but authenticated write access:
 +
 ----------------------------------------------------------------
-$HTTP["querystring"] =~ "service=git-receive-pack" {
-	include "git-auth.conf"
+$HTTP["querystring"] =~ "service=but-receive-pack" {
+	include "but-auth.conf"
 }
-$HTTP["url"] =~ "^/git/.*/git-receive-pack$" {
-	include "git-auth.conf"
+$HTTP["url"] =~ "^/but/.*/but-receive-pack$" {
+	include "but-auth.conf"
 }
 ----------------------------------------------------------------
 +
-where `git-auth.conf` looks something like:
+where `but-auth.conf` looks something like:
 +
 ----------------------------------------------------------------
 auth.require = (
@@ -247,15 +247,15 @@ auth.require = (
 To require authentication for both reads and writes:
 +
 ----------------------------------------------------------------
-$HTTP["url"] =~ "^/git/private" {
-	include "git-auth.conf"
+$HTTP["url"] =~ "^/but/private" {
+	include "but-auth.conf"
 }
 ----------------------------------------------------------------
 
 
 ENVIRONMENT
 -----------
-'git http-backend' relies upon the `CGI` environment variables set
+'but http-backend' relies upon the `CGI` environment variables set
 by the invoking web server, including:
 
 * PATH_INFO (if GIT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)
@@ -266,12 +266,12 @@ by the invoking web server, including:
 * REQUEST_METHOD
 
 The `GIT_HTTP_EXPORT_ALL` environmental variable may be passed to
-'git-http-backend' to bypass the check for the "git-daemon-export-ok"
+'but-http-backend' to bypass the check for the "but-daemon-export-ok"
 file in each repository before allowing export of that repository.
 
 The `GIT_HTTP_MAX_REQUEST_BUFFER` environment variable (or the
 `http.maxRequestBuffer` config variable) may be set to change the
-largest ref negotiation request that git will handle during a fetch; any
+largest ref negotiation request that but will handle during a fetch; any
 fetch requiring a larger buffer will not succeed.  This value should not
 normally need to be changed, but may be helpful if you are fetching from
 a repository with an extremely large number of refs.  The value can be
@@ -282,7 +282,7 @@ Clients may probe for optional protocol capabilities (like the v2
 protocol) using the `Git-Protocol` HTTP header. In order to support
 these, the contents of that header must appear in the `GIT_PROTOCOL`
 environment variable. Most webservers will pass this header to the CGI
-via the `HTTP_GIT_PROTOCOL` variable, and `git-http-backend` will
+via the `HTTP_GIT_PROTOCOL` variable, and `but-http-backend` will
 automatically copy that to `GIT_PROTOCOL`. However, some webservers may
 be more selective about which headers they'll pass, in which case they
 need to be configured explicitly (see the mention of `Git-Protocol` in
@@ -290,12 +290,12 @@ the Apache config from the earlier EXAMPLES section).
 
 The backend process sets GIT_CUMMITTER_NAME to '$REMOTE_USER' and
 GIT_CUMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
-ensuring that any reflogs created by 'git-receive-pack' contain some
+ensuring that any reflogs created by 'but-receive-pack' contain some
 identifying information of the remote user who performed the push.
 
 All `CGI` environment variables are available to each of the hooks
-invoked by the 'git-receive-pack'.
+invoked by the 'but-receive-pack'.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

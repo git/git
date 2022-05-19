@@ -34,7 +34,7 @@ Script to import arbitrary projects version controlled by the "copy the
 source directory to a new location and edit it there"-version controlled
 projects into version control. Handles projects with arbitrary branching
 and version trees, taking a file describing the inputs and generating a
-file compatible with the L<git-fast-import(1)> format.
+file compatible with the L<but-fast-import(1)> format.
 
 =head1 CONFIGURATION FILE
 
@@ -275,7 +275,7 @@ LINE: while (my $line = <CFG>)
 }
 close CFG;
 
-# Start spewing out data for git-fast-import
+# Start spewing out data for but-fast-import
 foreach my $cummit (@revs)
 {
 	# Progress

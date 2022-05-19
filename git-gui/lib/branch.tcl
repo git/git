@@ -1,4 +1,4 @@
-# git-gui branch (create/delete) support
+# but-gui branch (create/delete) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc load_all_heads {} {
@@ -7,7 +7,7 @@ proc load_all_heads {} {
 	set rh refs/heads
 	set rh_len [expr {[string length $rh] + 1}]
 	set all_heads [list]
-	set fd [git_read for-each-ref --format=%(refname) $rh]
+	set fd [but_read for-each-ref --format=%(refname) $rh]
 	fconfigure $fd -translation binary -encoding utf-8
 	while {[gets $fd line] > 0} {
 		if {!$some_heads_tracking || ![is_tracking_branch $line]} {
@@ -21,7 +21,7 @@ proc load_all_heads {} {
 
 proc load_all_tags {} {
 	set all_tags [list]
-	set fd [git_read for-each-ref \
+	set fd [but_read for-each-ref \
 		--sort=-taggerdate \
 		--format=%(refname) \
 		refs/tags]

@@ -1,4 +1,4 @@
-# Initialization and Icelandic locale for basic git i18n tests,
+# Initialization and Icelandic locale for basic but i18n tests,
 # which source this scriptlet instead of ./test-lib.sh.
 #
 # Copyright (c) 2010 Ævar Arnfjörð Bjarmason
@@ -12,9 +12,9 @@ export GIT_TEXTDOMAINDIR GIT_PO_PATH
 
 if test -n "$GIT_TEST_INSTALLED"
 then
-	. "$(git --exec-path)"/git-sh-i18n
+	. "$(but --exec-path)"/but-sh-i18n
 else
-	. "$GIT_BUILD_DIR"/git-sh-i18n
+	. "$GIT_BUILD_DIR"/but-sh-i18n
 fi
 
 if test_have_prereq GETTEXT

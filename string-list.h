@@ -13,8 +13,8 @@
  *
  * . Initializes the members. You might want to set the flag `strdup_strings`
  *   if the strings should be strdup()ed. For example, this is necessary
- *   when you add something like git_path("..."), since that function returns
- *   a static buffer that will change with the next call to git_path().
+ *   when you add something like but_path("..."), since that function returns
+ *   a static buffer that will change with the next call to but_path().
  *
  * If you need something advanced, you can manually malloc() the `items`
  * member (you need this if you add things later) and you should set the

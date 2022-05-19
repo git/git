@@ -1,14 +1,14 @@
-git-patch-id(1)
+but-patch-id(1)
 ===============
 
 NAME
 ----
-git-patch-id - Compute unique ID for a patch
+but-patch-id - Compute unique ID for a patch
 
 SYNOPSIS
 --------
 [verse]
-'git patch-id' [--stable | --unstable]
+'but patch-id' [--stable | --unstable]
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ have the same "patch ID" are almost guaranteed to be the same thing.
 
 IOW, you can use this thing to look for likely duplicate cummits.
 
-When dealing with 'git diff-tree' output, it takes advantage of
+When dealing with 'but diff-tree' output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
 cummit, and outputs two 40-byte hexadecimal strings.  The first
 string is the patch ID, and the second string is the cummit ID.
@@ -39,7 +39,7 @@ OPTIONS
 	   as a key to index some meta-information about the change between
 	   the two trees;
 
-	 - Result is different from the value produced by git 1.9 and older
+	 - Result is different from the value produced by but 1.9 and older
 	   or produced when an "unstable" hash (see --unstable below) is
 	   configured - even when used on a diff output taken without any use
 	   of "-O<orderfile>", thereby making existing databases storing such
@@ -50,12 +50,12 @@ OPTIONS
 --unstable::
 	Use an "unstable" hash as the patch ID. With this option,
 	the result produced is compatible with the patch-id value produced
-	by git 1.9 and older.  Users with pre-existing databases storing
-	patch-ids produced by git 1.9 and older (who do not deal with reordered
+	by but 1.9 and older.  Users with pre-existing databases storing
+	patch-ids produced by but 1.9 and older (who do not deal with reordered
 	patches) may want to use this option.
 
 	This is the default.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

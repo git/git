@@ -235,7 +235,7 @@ static void reftable_ref_record_copy_from(void *rec, const void *src_rec,
 	}
 }
 
-static char hexdigit(int c)
+static char hexdibut(int c)
 {
 	if (c <= 9)
 		return '0' + c;
@@ -248,8 +248,8 @@ static void hex_format(char *dest, uint8_t *src, int hash_size)
 	if (src) {
 		int i = 0;
 		for (i = 0; i < hash_size; i++) {
-			dest[2 * i] = hexdigit(src[i] >> 4);
-			dest[2 * i + 1] = hexdigit(src[i] & 0xf);
+			dest[2 * i] = hexdibut(src[i] >> 4);
+			dest[2 * i + 1] = hexdibut(src[i] & 0xf);
 		}
 		dest[2 * hash_size] = 0;
 	}

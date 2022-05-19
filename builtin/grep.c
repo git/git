@@ -1,5 +1,5 @@
 /*
- * Builtin "git grep"
+ * Builtin "but grep"
  *
  * Copyright (c) 2006 Junio C Hamano
  */
@@ -29,7 +29,7 @@
 static const char *grep_prefix;
 
 static char const * const grep_usage[] = {
-	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
+	N_("but grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
 	NULL
 };
 
@@ -286,11 +286,11 @@ static int wait_all(void)
 static int grep_cmd_config(const char *var, const char *value, void *cb)
 {
 	int st = grep_config(var, value, cb);
-	if (git_color_default_config(var, value, NULL) < 0)
+	if (but_color_default_config(var, value, NULL) < 0)
 		st = -1;
 
 	if (!strcmp(var, "grep.threads")) {
-		num_threads = git_config_int(var, value);
+		num_threads = but_config_int(var, value);
 		if (num_threads < 0)
 			die(_("invalid number of threads specified (%d) for %s"),
 			    num_threads, var);
@@ -306,7 +306,7 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "submodule.recurse"))
-		recurse_submodules = git_config_bool(var, value);
+		recurse_submodules = but_config_bool(var, value);
 
 	return st;
 }
@@ -450,15 +450,15 @@ static int grep_submodule(struct grep_opt *opt,
 	repos_to_free[repos_to_free_nr++] = subrepo;
 
 	/*
-	 * NEEDSWORK: repo_read_gitmodules() might call
-	 * add_to_alternates_memory() via config_from_gitmodules(). This
+	 * NEEDSWORK: repo_read_butmodules() might call
+	 * add_to_alternates_memory() via config_from_butmodules(). This
 	 * operation causes a race condition with concurrent object readings
 	 * performed by the worker threads. That's why we need obj_read_lock()
 	 * here. It should be removed once it's no longer necessary to add the
 	 * subrepo's odbs to the in-memory alternates list.
 	 */
 	obj_read_lock();
-	repo_read_gitmodules(subrepo, 0);
+	repo_read_butmodules(subrepo, 0);
 
 	/*
 	 * All code paths tested by test code no longer need submodule ODBs to
@@ -700,11 +700,11 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 			die(_("invalid object '%s' given."), name);
 		}
 
-		/* load the gitmodules file for this rev */
+		/* load the butmodules file for this rev */
 		if (recurse_submodules) {
 			submodule_free(opt->repo);
 			obj_read_lock();
-			gitmodules_config_oid(&real_obj->oid);
+			butmodules_config_oid(&real_obj->oid);
 			obj_read_unlock();
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,
@@ -851,11 +851,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "cached", &cached,
 			N_("search in index instead of in the work tree")),
 		OPT_NEGBIT(0, "no-index", &use_index,
-			 N_("find in contents not managed by git"), 1),
+			 N_("find in contents not managed by but"), 1),
 		OPT_BOOL(0, "untracked", &untracked,
 			N_("search in both tracked and untracked files")),
 		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
-			    N_("ignore files specified via '.gitignore'"), 1),
+			    N_("ignore files specified via '.butignore'"), 1),
 		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
 			 N_("recursively search in each submodule")),
 		OPT_GROUP(""),
@@ -966,7 +966,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	grep_prefix = prefix;
 
 	grep_init(&opt, the_repository);
-	git_config(grep_cmd_config, &opt);
+	but_config(grep_cmd_config, &opt);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
@@ -984,12 +984,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (use_index && !startup_info->have_repository) {
 		int fallback = 0;
-		git_config_get_bool("grep.fallbacktonoindex", &fallback);
+		but_config_get_bool("grep.fallbacktonoindex", &fallback);
 		if (fallback)
 			use_index = 0;
 		else
 			/* die the same way as if we did it at the beginning */
-			setup_git_directory();
+			setup_but_directory();
 	}
 	/* Ignore --recurse-submodules if --no-index is given or implied */
 	if (!use_index)
@@ -1014,7 +1014,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (show_in_pager == default_pager)
-		show_in_pager = git_pager(1);
+		show_in_pager = but_pager(1);
 	if (show_in_pager) {
 		opt.color = 0;
 		opt.name_only = 1;
@@ -1122,14 +1122,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			skip_first_line = 1;
 
 		/*
-		 * Pre-read gitmodules (if not read already) and force eager
-		 * initialization of packed_git to prevent racy lazy
+		 * Pre-read butmodules (if not read already) and force eager
+		 * initialization of packed_but to prevent racy lazy
 		 * reading/initialization once worker threads are started.
 		 */
 		if (recurse_submodules)
-			repo_read_gitmodules(the_repository, 1);
+			repo_read_butmodules(the_repository, 1);
 		if (startup_info->have_repository)
-			(void)get_packed_git(the_repository);
+			(void)get_packed_but(the_repository);
 
 		start_threads(&opt);
 	} else {

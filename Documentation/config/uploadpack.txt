@@ -1,7 +1,7 @@
 uploadpack.hideRefs::
 	This variable is the same as `transfer.hideRefs`, but applies
 	only to `upload-pack` (and so affects only fetches, not pushes).
-	An attempt to fetch a hidden ref by `git fetch` will fail.  See
+	An attempt to fetch a hidden ref by `but fetch` will fail.  See
 	also `uploadpack.allowTipSHA1InWant`.
 
 uploadpack.allowTipSHA1InWant::
@@ -10,7 +10,7 @@ uploadpack.allowTipSHA1InWant::
 	of a hidden ref (by default, such a request is rejected).
 	See also `uploadpack.hideRefs`.  Even if this is false, a client
 	may be able to steal objects via the techniques described in the
-	"SECURITY" section of the linkgit:gitnamespaces[7] man page; it's
+	"SECURITY" section of the linkbut:butnamespaces[7] man page; it's
 	best to keep private data in a separate repository.
 
 uploadpack.allowReachableSHA1InWant::
@@ -19,7 +19,7 @@ uploadpack.allowReachableSHA1InWant::
 	calculating object reachability is computationally expensive.
 	Defaults to `false`.  Even if this is false, a client may be able
 	to steal objects via the techniques described in the "SECURITY"
-	section of the linkgit:gitnamespaces[7] man page; it's best to
+	section of the linkbut:butnamespaces[7] man page; it's best to
 	keep private data in a separate repository.
 
 uploadpack.allowAnySHA1InWant::
@@ -40,9 +40,9 @@ uploadpack.keepAlive::
 
 uploadpack.packObjectsHook::
 	If this option is set, when `upload-pack` would run
-	`git pack-objects` to create a packfile for a client, it will
+	`but pack-objects` to create a packfile for a client, it will
 	run this shell command instead.  The `pack-objects` command and
-	arguments it _would_ have run (including the `git pack-objects`
+	arguments it _would_ have run (including the `but pack-objects`
 	at the beginning) are appended to the shell command. The stdin
 	and stdout of the hook are treated as if `pack-objects` itself
 	was run. I.e., `upload-pack` will feed input intended for

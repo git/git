@@ -1,4 +1,4 @@
-# git-gui about git-gui dialog
+# but-gui about but-gui dialog
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc do_about {} {
@@ -10,7 +10,7 @@ proc do_about {} {
 	Dialog $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
+	pack [but_logo $w.but_logo] -side left -fill y -padx 10 -pady 10
 	${NS}::label $w.header -text [mc "About %s" [appname]] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
@@ -23,12 +23,12 @@ proc do_about {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	paddedlabel $w.desc \
-		-text "[mc "git-gui - a graphical user interface for Git."]\n$copyright"
+		-text "[mc "but-gui - a graphical user interface for Git."]\n$copyright"
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
-	append v "git-gui version $appvers\n"
-	append v "[git version]\n"
+	append v "but-gui version $appvers\n"
+	append v "[but version]\n"
 	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
 		append v "Tcl/Tk version $tcl_patchLevel"
@@ -43,9 +43,9 @@ proc do_about {} {
 	}
 
 	set d {}
-	append d "git wrapper: $::_git\n"
-	append d "git exec dir: [gitexec]\n"
-	append d "git-gui lib: $oguilib"
+	append d "but wrapper: $::_but\n"
+	append d "but exec dir: [butexec]\n"
+	append d "but-gui lib: $oguilib"
 
 	paddedlabel $w.vers -text $v
 	pack $w.vers -side top -fill x -padx 5 -pady 5

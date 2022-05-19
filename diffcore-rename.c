@@ -736,10 +736,10 @@ static void cleanup_dir_rename_info(struct dir_rename_info *info,
 static const char *get_basename(const char *filename)
 {
 	/*
-	 * gitbasename() has to worry about special drives, multiple
+	 * butbasename() has to worry about special drives, multiple
 	 * directory separator characters, trailing slashes, NULL or
 	 * empty strings, etc.  We only work on filenames as stored in
-	 * git, and thus get to ignore all those complications.
+	 * but, and thus get to ignore all those complications.
 	 */
 	const char *base = strrchr(filename, '/');
 	return base ? base + 1 : filename;
@@ -756,7 +756,7 @@ static int idx_possible_rename(char *filename, struct dir_rename_info *info)
 	 * multiple files with the same basename in either set, we do not
 	 * know which to compare against.  However, there are some
 	 * filenames that occur in large numbers (particularly
-	 * build-related filenames such as 'Makefile', '.gitignore', or
+	 * build-related filenames such as 'Makefile', '.butignore', or
 	 * 'build.gradle' that potentially exist within every single
 	 * subdirectory), and for performance we want to be able to quickly
 	 * find renames for these files too.

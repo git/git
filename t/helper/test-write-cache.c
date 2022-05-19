@@ -8,7 +8,7 @@ int cmd__write_cache(int argc, const char **argv)
 	int i, cnt = 1;
 	if (argc == 2)
 		cnt = strtol(argv[1], NULL, 0);
-	setup_git_directory();
+	setup_but_directory();
 	read_cache();
 	for (i = 0; i < cnt; i++) {
 		hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);

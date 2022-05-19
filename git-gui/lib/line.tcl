@@ -1,5 +1,5 @@
 # goto line number
-# based on code from gitk, Copyright (C) Paul Mackerras
+# based on code from butk, Copyright (C) Paul Mackerras
 
 class linebar {
 

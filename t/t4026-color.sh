@@ -11,13 +11,13 @@ TEST_PASSES_SANITIZE_LEAK=true
 ESC=$(printf '\033')
 color()
 {
-	actual=$(git config --get-color no.such.slot "$1") &&
+	actual=$(but config --get-color no.such.slot "$1") &&
 	test "$actual" = "${2:+$ESC}$2"
 }
 
 invalid_color()
 {
-	test_must_fail git config --get-color no.such.slot "$1"
+	test_must_fail but config --get-color no.such.slot "$1"
 }
 
 test_expect_success 'reset' '
@@ -141,18 +141,18 @@ test_expect_success 'extra character after attribute' '
 '
 
 test_expect_success 'unknown color slots are ignored (diff)' '
-	git config color.diff.nosuchslotwilleverbedefined white &&
-	git diff --color
+	but config color.diff.nosuchslotwilleverbedefined white &&
+	but diff --color
 '
 
 test_expect_success 'unknown color slots are ignored (branch)' '
-	git config color.branch.nosuchslotwilleverbedefined white &&
-	git branch -a
+	but config color.branch.nosuchslotwilleverbedefined white &&
+	but branch -a
 '
 
 test_expect_success 'unknown color slots are ignored (status)' '
-	git config color.status.nosuchslotwilleverbedefined white &&
-	{ git status; ret=$?; } &&
+	but config color.status.nosuchslotwilleverbedefined white &&
+	{ but status; ret=$?; } &&
 	case $ret in 0|1) : ok ;; *) false ;; esac
 '
 

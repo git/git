@@ -1,4 +1,4 @@
-# git-gui options editor
+# but-gui options editor
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc config_check_encodings {} {
@@ -50,14 +50,14 @@ proc save_config {} {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
 			if {$value eq $system_config($name)} {
-				catch {git config --global --unset $name}
+				catch {but config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				git config --global $name $value
+				but config --global $name $value
 			}
 			set global_config($name) $value
 			if {$value eq $repo_config($name)} {
-				catch {git config --unset $name}
+				catch {but config --unset $name}
 				set repo_config($name) $value
 			}
 		}
@@ -67,10 +67,10 @@ proc save_config {} {
 		set value $repo_config_new($name)
 		if {$value ne $repo_config($name)} {
 			if {$value eq $global_config($name)} {
-				catch {git config --unset $name}
+				catch {but config --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				git config $name $value
+				but config $name $value
 			}
 			set repo_config($name) $value
 		}

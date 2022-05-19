@@ -2,23 +2,23 @@
 
 if test -n "$NO_SVN_TESTS"
 then
-	skip_all='skipping git svn tests, NO_SVN_TESTS defined'
+	skip_all='skipping but svn tests, NO_SVN_TESTS defined'
 	test_done
 fi
 if ! test_have_prereq PERL; then
-	skip_all='skipping git svn tests, perl not available'
+	skip_all='skipping but svn tests, perl not available'
 	test_done
 fi
 
-GIT_DIR=$PWD/.git
-GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
+GIT_DIR=$PWD/.but
+GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/but-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
 test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-	skip_all='skipping git svn tests, svn not found'
+	skip_all='skipping but svn tests, svn not found'
 	test_done
 fi
 

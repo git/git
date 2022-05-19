@@ -74,7 +74,7 @@ void trace2_initialize_clock(void);
  * Initialize TRACE2 tracing facility if any of the builtin TRACE2
  * targets are enabled in the system config or the environment.
  * This includes setting up the Trace2 thread local storage (TLS).
- * Emits a 'version' message containing the version of git
+ * Emits a 'version' message containing the version of but
  * and the Trace2 protocol.
  *
  * This function should be called from `main()` as early as possible in
@@ -106,7 +106,7 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv);
  * from main().
  *
  * Use this prior to actually calling exit().
- * See "#define exit()" in git-compat-util.h
+ * See "#define exit()" in but-compat-util.h
  */
 int trace2_cmd_exit_fl(const char *file, int line, int code);
 
@@ -178,14 +178,14 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
  *
  * Use the TR2_SYSENV_CFG_PARAM setting to register a comma-separated
  * list of patterns configured important.  For example:
- *     git config --system trace2.configParams 'core.*,remote.*.url'
+ *     but config --system trace2.configParams 'core.*,remote.*.url'
  * or:
  *     GIT_TRACE2_CONFIG_PARAMS=core.*,remote.*.url"
  *
  * Note: this routine does a read-only iteration on the config data
  * (using read_early_config()), so it must not be called until enough
  * of the process environment has been established.  This includes the
- * location of the git and worktree directories, expansion of any "-c"
+ * location of the but and worktree directories, expansion of any "-c"
  * and "-C" command line options, and etc.
  */
 void trace2_cmd_list_config_fl(const char *file, int line);
@@ -197,7 +197,7 @@ void trace2_cmd_list_config_fl(const char *file, int line);
  *
  * Use the TR2_SYSENV_ENV_VARS setting to register a comma-separated list of
  * environment variables considered important.  For example:
- *     git config --system trace2.envVars 'GIT_HTTP_USER_AGENT,GIT_CONFIG'
+ *     but config --system trace2.envVars 'GIT_HTTP_USER_AGENT,GIT_CONFIG'
  * or:
  *     GIT_TRACE2_ENV_VARS="GIT_HTTP_USER_AGENT,GIT_CONFIG"
  */
@@ -493,7 +493,7 @@ void trace2_printf_fl(const char *file, int line, const char *fmt, ...);
 /*
  * Optional platform-specific code to dump information about the
  * current and any parent process(es).  This is intended to allow
- * post-processors to know who spawned this git instance and anything
+ * post-processors to know who spawned this but instance and anything
  * else that the platform may be able to tell us about the current process.
  */
 

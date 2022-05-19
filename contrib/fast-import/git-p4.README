@@ -1,12 +1,12 @@
-The git-p4 script moved to the top-level of the git source directory.
+The but-p4 script moved to the top-level of the but source directory.
 
-Invoke it as any other git command, like "git p4 clone", for instance.
+Invoke it as any other but command, like "but p4 clone", for instance.
 
-Note that the top-level git-p4.py script is now the source.  It is
-built using make to git-p4, which will be installed.
+Note that the top-level but-p4.py script is now the source.  It is
+built using make to but-p4, which will be installed.
 
-Windows users can copy the git-p4.py source script directly, possibly
-invoking it through a batch file called "git-p4.bat" in the same folder.
+Windows users can copy the but-p4.py source script directly, possibly
+invoking it through a batch file called "but-p4.bat" in the same folder.
 It should contain just one line:
 
-    @python "%~d0%~p0git-p4.py" %*
+    @python "%~d0%~p0but-p4.py" %*

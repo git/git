@@ -1180,7 +1180,7 @@ int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
 	int fd, res = 0;
 
 	if (!is_absolute_path(path))
-		path = path2 = xstrdup(git_path("%s", path));
+		path = path2 = xstrdup(but_path("%s", path));
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)

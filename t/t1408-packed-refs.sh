@@ -9,35 +9,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	test_tick &&
-	git cummit --allow-empty -m one &&
-	one=$(git rev-parse HEAD) &&
-	git for-each-ref >actual &&
+	but cummit --allow-empty -m one &&
+	one=$(but rev-parse HEAD) &&
+	but for-each-ref >actual &&
 	echo "$one cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
-	git pack-refs --all &&
-	git for-each-ref >actual &&
+	but pack-refs --all &&
+	but for-each-ref >actual &&
 	echo "$one cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
-	git checkout --orphan another &&
+	but checkout --orphan another &&
 	test_tick &&
-	git cummit --allow-empty -m two &&
-	two=$(git rev-parse HEAD) &&
-	git checkout -B main &&
-	git branch -D another &&
+	but cummit --allow-empty -m two &&
+	two=$(but rev-parse HEAD) &&
+	but checkout -B main &&
+	but branch -D another &&
 
-	git for-each-ref >actual &&
+	but for-each-ref >actual &&
 	echo "$two cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
-	git reflog expire --expire=now --all &&
-	git prune &&
-	git tag -m v1.0 v1.0 main
+	but reflog expire --expire=now --all &&
+	but prune &&
+	but tag -m v1.0 v1.0 main
 '
 
 test_expect_success 'no error from stale entry in packed-refs' '
-	git describe main >actual 2>&1 &&
+	but describe main >actual 2>&1 &&
 	echo "v1.0" >expect &&
 	test_cmp expect actual
 '

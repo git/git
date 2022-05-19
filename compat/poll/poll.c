@@ -19,7 +19,7 @@
    with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* To bump the minimum Windows version to Windows Vista */
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 /* Tell gcc not to warn about the (nfd < 0) tests, below.  */
 #if (__GNUC__ == 4 && 3 <= __GNUC_MINOR__) || 4 < __GNUC__

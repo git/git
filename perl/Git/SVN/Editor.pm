@@ -304,7 +304,7 @@ sub apply_manualprops {
 	# - this fails for add so currently not done
 	# my $existing_props = ::get_svnprops($file);
 	my $existing_props = {};
-	# TODO: caching svn properties or storing them in .gitattributes
+	# TODO: caching svn properties or storing them in .butattributes
 	# would make that faster
 	foreach my $prop (@props) {
 		# Parse 'name=value' syntax and set the property.
@@ -426,7 +426,7 @@ sub change_dir_prop {
 
 sub _chg_file_get_blob ($$$$) {
 	my ($self, $fbat, $m, $which) = @_;
-	my $fh = $::_repository->temp_acquire("git_blob_$which");
+	my $fh = $::_repository->temp_acquire("but_blob_$which");
 	if ($m->{"mode_$which"} =~ /^120/) {
 		print $fh 'link ' or croak $!;
 		$self->change_file_prop($fbat,'svn:special','*');
@@ -544,7 +544,7 @@ __END__
 
 =head1 NAME
 
-Git::SVN::Editor - cummit driver for "git svn set-tree" and dcummit
+Git::SVN::Editor - cummit driver for "but svn set-tree" and dcummit
 
 =head1 SYNOPSIS
 
@@ -572,24 +572,24 @@ Git::SVN::Editor - cummit driver for "git svn set-tree" and dcummit
 
 =head1 DESCRIPTION
 
-This module is an implementation detail of the "git svn" command.
-Do not use it unless you are developing git-svn.
+This module is an implementation detail of the "but svn" command.
+Do not use it unless you are developing but-svn.
 
 This module adapts the C<SVN::Delta::Editor> object returned by
 C<SVN::Delta::get_cummit_editor> and drives it to convey the
-difference between two git tree objects to a remote Subversion
+difference between two but tree objects to a remote Subversion
 repository.
 
-The interface will change as git-svn evolves.
+The interface will change as but-svn evolves.
 
 =head1 DEPENDENCIES
 
 Subversion perl bindings,
 the core L<Carp> module,
-and git's L<Git> helper module.
+and but's L<Git> helper module.
 
 C<Git::SVN::Editor> has not been tested using callers other than
-B<git-svn> itself.
+B<but-svn> itself.
 
 =head1 SEE ALSO
 

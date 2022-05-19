@@ -1,4 +1,4 @@
-# git-gui Tools menu implementation
+# but-gui Tools menu implementation
 
 proc tools_list {} {
 	global repo_config

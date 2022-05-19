@@ -10,7 +10,7 @@ static int read_midx_file(const char *object_dir, int show_objects)
 	uint32_t i;
 	struct multi_pack_index *m;
 
-	setup_git_directory();
+	setup_but_directory();
 	m = load_multi_pack_index(object_dir, 1);
 
 	if (!m)
@@ -66,7 +66,7 @@ static int read_midx_checksum(const char *object_dir)
 {
 	struct multi_pack_index *m;
 
-	setup_git_directory();
+	setup_but_directory();
 	m = load_multi_pack_index(object_dir, 1);
 	if (!m)
 		return 1;
@@ -79,13 +79,13 @@ static int read_midx_preferred_pack(const char *object_dir)
 	struct multi_pack_index *midx = NULL;
 	struct bitmap_index *bitmap = NULL;
 
-	setup_git_directory();
+	setup_but_directory();
 
 	midx = load_multi_pack_index(object_dir, 1);
 	if (!midx)
 		return 1;
 
-	bitmap = prepare_bitmap_git(the_repository);
+	bitmap = prepare_bitmap_but(the_repository);
 	if (!bitmap)
 		return 1;
 	if (!bitmap_is_midx(bitmap)) {

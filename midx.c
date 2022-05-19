@@ -97,7 +97,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	get_midx_filename(&midx_name, object_dir);
 
-	fd = git_open(midx_name.buf);
+	fd = but_open(midx_name.buf);
 
 	if (fd < 0)
 		goto cleanup_fail;
@@ -162,7 +162,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
 
-	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
+	if (but_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
 
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
@@ -222,7 +222,7 @@ void close_midx(struct multi_pack_index *m)
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id)
 {
 	struct strbuf pack_name = STRBUF_INIT;
-	struct packed_git *p;
+	struct packed_but *p;
 
 	if (pack_int_id >= m->num_packs)
 		die(_("bad pack-int-id: %u (%u total packs)"),
@@ -234,7 +234,7 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t
 	strbuf_addf(&pack_name, "%s/pack/%s", m->object_dir,
 		    m->pack_names[pack_int_id]);
 
-	p = add_packed_git(pack_name.buf, pack_name.len, m->local);
+	p = add_packed_but(pack_name.buf, pack_name.len, m->local);
 	strbuf_release(&pack_name);
 
 	if (!p)
@@ -242,8 +242,8 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t
 
 	p->multi_pack_index = 1;
 	m->packs[pack_int_id] = p;
-	install_packed_git(r, p);
-	list_add_tail(&p->mru, &r->objects->packed_git_mru);
+	install_packed_but(r, p);
+	list_add_tail(&p->mru, &r->objects->packed_but_mru);
 
 	return 0;
 }
@@ -297,7 +297,7 @@ int fill_midx_entry(struct repository * r,
 {
 	uint32_t pos;
 	uint32_t pack_int_id;
-	struct packed_git *p;
+	struct packed_but *p;
 
 	if (!bsearch_midx(oid, m, &pos))
 		return 0;
@@ -431,7 +431,7 @@ static size_t write_midx_header(struct hashfile *f,
 struct pack_info {
 	uint32_t orig_pack_int_id;
 	char *pack_name;
-	struct packed_git *p;
+	struct packed_but *p;
 	unsigned expired : 1;
 };
 
@@ -501,7 +501,7 @@ static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
 
-		ctx->info[ctx->nr].p = add_packed_git(full_path,
+		ctx->info[ctx->nr].p = add_packed_but(full_path,
 						      full_path_len,
 						      0);
 
@@ -574,7 +574,7 @@ static int nth_midxed_pack_midx_entry(struct multi_pack_index *m,
 }
 
 static void fill_pack_entry(uint32_t pack_int_id,
-			    struct packed_git *p,
+			    struct packed_but *p,
 			    uint32_t cur_object,
 			    struct pack_midx_entry *entry,
 			    int preferred)
@@ -1208,7 +1208,7 @@ static int write_midx_internal(const char *object_dir,
 			if (flags & MIDX_WRITE_REV_INDEX) {
 				/*
 				 * If generating a reverse index, need to have
-				 * packed_git's loaded to compare their
+				 * packed_but's loaded to compare their
 				 * mtimes and object count.
 				 */
 				if (prepare_midx_pack(the_repository, ctx.m, i)) {
@@ -1240,13 +1240,13 @@ static int write_midx_internal(const char *object_dir,
 
 	if ((ctx.m && ctx.nr == ctx.m->num_packs) &&
 	    !(packs_to_include || packs_to_drop)) {
-		struct bitmap_index *bitmap_git;
+		struct bitmap_index *bitmap_but;
 		int bitmap_exists;
 		int want_bitmap = flags & MIDX_WRITE_BITMAP;
 
-		bitmap_git = prepare_midx_bitmap_git(ctx.m);
-		bitmap_exists = bitmap_git && bitmap_is_midx(bitmap_git);
-		free_bitmap_index(bitmap_git);
+		bitmap_but = prepare_midx_bitmap_but(ctx.m);
+		bitmap_exists = bitmap_but && bitmap_is_midx(bitmap_but);
+		free_bitmap_index(bitmap_but);
 
 		if (bitmap_exists || !want_bitmap) {
 			/*
@@ -1276,7 +1276,7 @@ static int write_midx_internal(const char *object_dir,
 				preferred_pack_name);
 	} else if (ctx.nr &&
 		   (flags & (MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP))) {
-		struct packed_git *oldest = ctx.info[ctx.preferred_pack_idx].p;
+		struct packed_but *oldest = ctx.info[ctx.preferred_pack_idx].p;
 		ctx.preferred_pack_idx = 0;
 
 		if (packs_to_drop && packs_to_drop->nr)
@@ -1289,7 +1289,7 @@ static int write_midx_internal(const char *object_dir,
 		 * (and not another pack containing a duplicate)
 		 */
 		for (i = 1; i < ctx.nr; i++) {
-			struct packed_git *p = ctx.info[i].p;
+			struct packed_but *p = ctx.info[i].p;
 
 			if (!oldest->num_objects || p->mtime < oldest->mtime) {
 				oldest = p;
@@ -1315,7 +1315,7 @@ static int write_midx_internal(const char *object_dir,
 	}
 
 	if (ctx.preferred_pack_idx > -1) {
-		struct packed_git *preferred = ctx.info[ctx.preferred_pack_idx].p;
+		struct packed_but *preferred = ctx.info[ctx.preferred_pack_idx].p;
 		if (!preferred->num_objects) {
 			error(_("cannot select preferred pack %s with no objects"),
 			      preferred->pack_name);
@@ -1452,7 +1452,7 @@ static int write_midx_internal(const char *object_dir,
 	free_chunkfile(cf);
 
 	if (flags & MIDX_WRITE_REV_INDEX &&
-	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
+	    but_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
 	if (flags & MIDX_WRITE_BITMAP) {
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,
@@ -1874,7 +1874,7 @@ static int fill_included_packs_batch(struct repository *r,
 	packs_to_repack = 0;
 	for (i = 0; total_size < batch_size && i < m->num_packs; i++) {
 		int pack_int_id = pack_info[i].pack_int_id;
-		struct packed_git *p = m->packs[pack_int_id];
+		struct packed_but *p = m->packs[pack_int_id];
 		size_t expected_size;
 
 		if (!p)
@@ -1954,7 +1954,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 
 	strbuf_release(&base_name);
 
-	cmd.git_cmd = 1;
+	cmd.but_cmd = 1;
 	cmd.in = cmd.out = -1;
 
 	if (start_command(&cmd)) {

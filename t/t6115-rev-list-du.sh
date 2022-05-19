@@ -8,19 +8,19 @@ test_description='basic tests of rev-list --disk-usage'
 test_expect_success 'set up repository' '
 	test_cummit --no-tag one &&
 	test_cummit --no-tag two &&
-	git repack -adb &&
-	git reset --hard HEAD^ &&
+	but repack -adb &&
+	but reset --hard HEAD^ &&
 	test_cummit --no-tag three &&
 	test_cummit --no-tag four &&
-	git reset --hard HEAD^
+	but reset --hard HEAD^
 '
 
 # We don't want to hardcode sizes, because they depend on the exact details of
 # packing, zlib, etc. We'll assume that the regular rev-list and cat-file
 # machinery works and compare the --disk-usage output to that.
 disk_usage_slow () {
-	git rev-list --no-object-names "$@" |
-	git cat-file --batch-check="%(objectsize:disk)" |
+	but rev-list --no-object-names "$@" |
+	but cat-file --batch-check="%(objectsize:disk)" |
 	perl -lne '$total += $_; END { print $total}'
 }
 
@@ -34,12 +34,12 @@ check_du () {
 	"
 
 	test_expect_success "rev-list --disk-usage without bitmaps ($args)" "
-		git rev-list --disk-usage $args >actual &&
+		but rev-list --disk-usage $args >actual &&
 		test_cmp expect actual
 	"
 
 	test_expect_success "rev-list --disk-usage with bitmaps ($args)" "
-		git rev-list --disk-usage --use-bitmap-index $args >actual &&
+		but rev-list --disk-usage --use-bitmap-index $args >actual &&
 		test_cmp expect actual
 	"
 }

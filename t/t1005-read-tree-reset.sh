@@ -9,98 +9,98 @@ TEST_PASSES_SANITIZE_LEAK=true
 # two-tree test
 
 test_expect_success 'setup' '
-	git init &&
+	but init &&
 	mkdir df &&
 	echo content >df/file &&
-	git add df/file &&
-	git cummit -m one &&
-	git ls-files >expect &&
+	but add df/file &&
+	but cummit -m one &&
+	but ls-files >expect &&
 	rm -rf df &&
 	echo content >df &&
-	git add df &&
+	but add df &&
 	echo content >new &&
-	git add new &&
-	git cummit -m two
+	but add new &&
+	but cummit -m two
 '
 
 test_expect_success 'reset should work' '
 	read_tree_u_must_succeed -u --reset HEAD^ &&
-	git ls-files >actual &&
+	but ls-files >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'reset should remove remnants from a failed merge' '
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >expect &&
-	sha1=$(git rev-parse :new) &&
+	but ls-files -s >expect &&
+	sha1=$(but rev-parse :new) &&
 	(
 		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	>old &&
-	git ls-files -s &&
+	but ls-files -s &&
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	! test -f old
 '
 
 test_expect_success 'two-way reset should remove remnants too' '
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >expect &&
-	sha1=$(git rev-parse :new) &&
+	but ls-files -s >expect &&
+	sha1=$(but rev-parse :new) &&
 	(
 		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	>old &&
-	git ls-files -s &&
+	but ls-files -s &&
 	read_tree_u_must_succeed --reset -u HEAD HEAD &&
-	git ls-files -s >actual &&
+	but ls-files -s >actual &&
 	! test -f old
 '
 
 test_expect_success 'Porcelain reset should remove remnants too' '
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >expect &&
-	sha1=$(git rev-parse :new) &&
+	but ls-files -s >expect &&
+	sha1=$(but rev-parse :new) &&
 	(
 		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	>old &&
-	git ls-files -s &&
-	git reset --hard &&
-	git ls-files -s >actual &&
+	but ls-files -s &&
+	but reset --hard &&
+	but ls-files -s >actual &&
 	! test -f old
 '
 
 test_expect_success 'Porcelain checkout -f should remove remnants too' '
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >expect &&
-	sha1=$(git rev-parse :new) &&
+	but ls-files -s >expect &&
+	sha1=$(but rev-parse :new) &&
 	(
 		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	>old &&
-	git ls-files -s &&
-	git checkout -f &&
-	git ls-files -s >actual &&
+	but ls-files -s &&
+	but checkout -f &&
+	but ls-files -s >actual &&
 	! test -f old
 '
 
 test_expect_success 'Porcelain checkout -f HEAD should remove remnants too' '
 	read_tree_u_must_succeed --reset -u HEAD &&
-	git ls-files -s >expect &&
-	sha1=$(git rev-parse :new) &&
+	but ls-files -s >expect &&
+	sha1=$(but rev-parse :new) &&
 	(
 		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	>old &&
-	git ls-files -s &&
-	git checkout -f HEAD &&
-	git ls-files -s >actual &&
+	but ls-files -s &&
+	but checkout -f HEAD &&
+	but ls-files -s >actual &&
 	! test -f old
 '
 

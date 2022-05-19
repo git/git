@@ -1,14 +1,14 @@
-git-web{litdd}browse(1)
+but-web{litdd}browse(1)
 =======================
 
 NAME
 ----
-git-web--browse - Git helper script to launch a web browser
+but-web--browse - Git helper script to launch a web browser
 
 SYNOPSIS
 --------
 [verse]
-'git web{litdd}browse' [<options>] (<URL>|<file>)...
+'but web{litdd}browse' [<options>] (<URL>|<file>)...
 
 DESCRIPTION
 -----------
@@ -71,7 +71,7 @@ browser.<tool>.path
 You can explicitly provide a full path to your preferred browser by
 setting the configuration variable `browser.<tool>.path`. For example,
 you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git web{litdd}browse' assumes the tool
+'browser.firefox.path'. Otherwise, 'but web{litdd}browse' assumes the tool
 is available in PATH.
 
 browser.<tool>.cmd
@@ -80,7 +80,7 @@ browser.<tool>.cmd
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
 `browser.<tool>.cmd` configuration variable will be looked up. If this
-variable exists then 'git web{litdd}browse' will treat the specified tool
+variable exists then 'but web{litdd}browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
@@ -106,19 +106,19 @@ the following:
 		cmd = A_PATH_TO/konqueror
 ------------------------------------------------
 
-Note about git-config --global
+Note about but-config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that these configuration variables should probably be set using
 the `--global` flag, for example like this:
 
 ------------------------------------------------
-$ git config --global web.browser firefox
+$ but config --global web.browser firefox
 ------------------------------------------------
 
 as they are probably more user specific than repository specific.
-See linkgit:git-config[1] for more information about this.
+See linkbut:but-config[1] for more information about this.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

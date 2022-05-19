@@ -2258,7 +2258,7 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     `foot:' |             Size of chunk, in bytes                           |
 	    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-  Larger chunks are kept in a form of bitwise digital trees (aka
+  Larger chunks are kept in a form of bitwise dibutal trees (aka
   tries) keyed on chunksizes.  Because malloc_tree_chunks are only for
   free chunks greater than 256 bytes, their size doesn't impose any
   constraints on user chunk sizes.  Each node looks like:

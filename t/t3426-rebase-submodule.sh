@@ -6,57 +6,57 @@ test_description='rebase can handle submodules'
 . "$TEST_DIRECTORY"/lib-submodule-update.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
-git_rebase () {
-	git status -su >expect &&
+but_rebase () {
+	but status -su >expect &&
 	ls -1pR * >>expect &&
-	git checkout -b ours HEAD &&
+	but checkout -b ours HEAD &&
 	echo x >>file1 &&
-	git add file1 &&
-	git cummit -m add_x &&
-	git revert HEAD &&
-	git status -su >actual &&
+	but add file1 &&
+	but cummit -m add_x &&
+	but revert HEAD &&
+	but status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
 	may_only_be_test_must_fail "$2" &&
-	$2 git rebase "$1"
+	$2 but rebase "$1"
 }
 
-test_submodule_switch_func "git_rebase"
+test_submodule_switch_func "but_rebase"
 
-git_rebase_interactive () {
-	git status -su >expect &&
+but_rebase_interactive () {
+	but status -su >expect &&
 	ls -1pR * >>expect &&
-	git checkout -b ours HEAD &&
+	but checkout -b ours HEAD &&
 	echo x >>file1 &&
-	git add file1 &&
-	git cummit -m add_x &&
-	git revert HEAD &&
-	git status -su >actual &&
+	but add file1 &&
+	but cummit -m add_x &&
+	but revert HEAD &&
+	but status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
 	set_fake_editor &&
-	echo "fake-editor.sh" >.git/info/exclude &&
+	echo "fake-editor.sh" >.but/info/exclude &&
 	may_only_be_test_must_fail "$2" &&
-	$2 git rebase -i "$1"
+	$2 but rebase -i "$1"
 }
 
-test_submodule_switch_func "git_rebase_interactive"
+test_submodule_switch_func "but_rebase_interactive"
 
 test_expect_success 'rebase interactive ignores modified submodules' '
 	test_when_finished "rm -rf super sub" &&
-	git init sub &&
-	git -C sub cummit --allow-empty -m "Initial cummit" &&
-	git init super &&
-	git -C super submodule add ../sub &&
-	git -C super config submodule.sub.ignore dirty &&
+	but init sub &&
+	but -C sub cummit --allow-empty -m "Initial cummit" &&
+	but init super &&
+	but -C super submodule add ../sub &&
+	but -C super config submodule.sub.ignore dirty &&
 	>super/foo &&
-	git -C super add foo &&
-	git -C super cummit -m "Initial cummit" &&
+	but -C super add foo &&
+	but -C super cummit -m "Initial cummit" &&
 	test_cummit -C super a &&
 	test_cummit -C super b &&
 	test_cummit -C super/sub c &&
 	set_fake_editor &&
-	git -C super rebase -i HEAD^^
+	but -C super rebase -i HEAD^^
 '
 
 test_done

@@ -2,7 +2,7 @@
 
 test_description='Clone repositories with path case variations'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d with case folding enabled' '
 	start_p4d -C1
@@ -41,12 +41,12 @@ test_expect_success 'Create a repo with path case variations' '
 
 test_expect_success 'Clone root' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase false &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase false &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		# This method is used instead of "test -f" to ensure the case is
 		# checked even if the test is executed on case-insensitive file systems.
 		# All files are there as expected although the path cases look random.
@@ -56,19 +56,19 @@ test_expect_success 'Clone root' '
 		path/to/file3.txt
 		x-outside-spec/file4.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'Clone root (ignorecase)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase true &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase true &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		# This method is used instead of "test -f" to ensure the case is
 		# checked even if the test is executed on case-insensitive file systems.
 		# All files are there as expected although the path cases look random.
@@ -78,7 +78,7 @@ test_expect_success 'Clone root (ignorecase)' '
 		path/TO/file3.txt
 		x-outside-spec/file4.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
@@ -87,12 +87,12 @@ test_expect_success 'Clone root and ignore one file' '
 	client_view \
 		"//depot/... //client/..." \
 		"-//depot/path/TO/file1.txt //client/path/TO/file1.txt" &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase false &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase false &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		# We ignore one file in the client spec and all path cases change from
 		# "TO" to "to"!
 		cat >expect <<-\EOF &&
@@ -100,7 +100,7 @@ test_expect_success 'Clone root and ignore one file' '
 		path/to/file3.txt
 		x-outside-spec/file4.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
@@ -109,12 +109,12 @@ test_expect_success 'Clone root and ignore one file (ignorecase)' '
 	client_view \
 		"//depot/... //client/..." \
 		"-//depot/path/TO/file1.txt //client/path/TO/file1.txt" &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase true &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase true &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		# We ignore one file in the client spec and all path cases change from
 		# "TO" to "to"!
 		cat >expect <<-\EOF &&
@@ -122,41 +122,41 @@ test_expect_success 'Clone root and ignore one file (ignorecase)' '
 		Path/to/file3.txt
 		x-outside-spec/file4.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'Clone path' '
 	client_view "//depot/Path/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase false &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase false &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		cat >expect <<-\EOF &&
 		to/File2.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'Clone path (ignorecase)' '
 	client_view "//depot/Path/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase true &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase true &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		cat >expect <<-\EOF &&
 		TO/File2.txt
 		TO/file1.txt
 		TO/file3.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '
@@ -176,19 +176,19 @@ test_expect_success 'Add a new file and clone path with new file (ignorecase)' '
 	) &&
 
 	client_view "//depot/Path/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config core.ignorecase true &&
-		git p4 clone --use-client-spec --destination="$git" //depot &&
+		cd "$but" &&
+		but init . &&
+		but config core.ignorecase true &&
+		but p4 clone --use-client-spec --destination="$but" //depot &&
 		cat >expect <<-\EOF &&
 		to/File0.txt
 		to/File2.txt
 		to/file1.txt
 		to/file3.txt
 		EOF
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual
 	)
 '

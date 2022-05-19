@@ -80,12 +80,12 @@ Limitations -- support in different commands
 --------------------------------------------
 
 Directory rename detection is supported by 'merge' and 'cherry-pick'.
-Other git commands which users might be surprised to see limited or no
+Other but commands which users might be surprised to see limited or no
 directory rename detection support in:
 
   * diff
 
-    Folks have requested in the past that `git diff` detect directory
+    Folks have requested in the past that `but diff` detect directory
     renames and somehow simplify its output.  It is not clear whether this
     would be desirable or how the output should be simplified, so this was
     simply not implemented.  Also, while diffcore-rename has most of the
@@ -96,11 +96,11 @@ directory rename detection support in:
 
   * am
 
-    git-am tries to avoid a full three way merge, instead calling
-    git-apply.  That prevents us from detecting renames at all, which may
+    but-am tries to avoid a full three way merge, instead calling
+    but-apply.  That prevents us from detecting renames at all, which may
     defeat the directory rename detection.  There is a fallback, though; if
-    the initial git-apply fails and the user has specified the -3 option,
-    git-am will fall back to a three way merge.  However, git-am lacks the
+    the initial but-apply fails and the user has specified the -3 option,
+    but-am will fall back to a three way merge.  However, but-am lacks the
     necessary information to do a "real" three way merge.  Instead, it has
     to use build_fake_ancestor() to get a merge base that is missing files
     whose rename may have been important to detect for directory rename
@@ -111,7 +111,7 @@ directory rename detection support in:
     Since am-based rebases work by first generating a bunch of patches
     (which no longer record what the original cummits were and thus don't
     have the necessary info from which we can find a real merge-base), and
-    then calling git-am, this implies that am-based rebases will not always
+    then calling but-am, this implies that am-based rebases will not always
     successfully detect directory renames either (see the 'am' section
     above).  merged-based rebases (rebase -m) and cherry-pick-based rebases
     (rebase -i) are not affected by this shortcoming, and fully support

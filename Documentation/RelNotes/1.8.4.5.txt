@@ -8,6 +8,6 @@ Fixes since v1.8.4.4
    with non ASCII pathnames fed Unicode strings to the underlying Hg
    API, which was wrong.
 
- * "git submodule init" copied "submodule.$name.update" settings from
-   .gitmodules to .git/config without making sure if the suggested
+ * "but submodule init" copied "submodule.$name.update" settings from
+   .butmodules to .but/config without making sure if the suggested
    value was sensible.

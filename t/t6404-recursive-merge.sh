@@ -21,48 +21,48 @@ test_expect_success 'setup tests' '
 	GIT_TEST_CUMMIT_GRAPH=0 &&
 	export GIT_TEST_CUMMIT_GRAPH &&
 	echo 1 >a1 &&
-	git add a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:00" git cummit -m 1 a1 &&
+	but add a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:00" but cummit -m 1 a1 &&
 
-	git checkout -b A main &&
+	but checkout -b A main &&
 	echo A >a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:01" git cummit -m A a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:01" but cummit -m A a1 &&
 
-	git checkout -b B main &&
+	but checkout -b B main &&
 	echo B >a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:02" git cummit -m B a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:02" but cummit -m B a1 &&
 
-	git checkout -b D A &&
-	git rev-parse B >.git/MERGE_HEAD &&
+	but checkout -b D A &&
+	but rev-parse B >.but/MERGE_HEAD &&
 	echo D >a1 &&
-	git update-index a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:03" git cummit -m D &&
+	but update-index a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:03" but cummit -m D &&
 
-	git symbolic-ref HEAD refs/heads/other &&
+	but symbolic-ref HEAD refs/heads/other &&
 	echo 2 >a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:04" git cummit -m 2 a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:04" but cummit -m 2 a1 &&
 
-	git checkout -b C &&
+	but checkout -b C &&
 	echo C >a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:05" git cummit -m C a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:05" but cummit -m C a1 &&
 
-	git checkout -b E C &&
-	git rev-parse B >.git/MERGE_HEAD &&
+	but checkout -b E C &&
+	but rev-parse B >.but/MERGE_HEAD &&
 	echo E >a1 &&
-	git update-index a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:06" git cummit -m E &&
+	but update-index a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:06" but cummit -m E &&
 
-	git checkout -b G E &&
-	git rev-parse A >.git/MERGE_HEAD &&
+	but checkout -b G E &&
+	but rev-parse A >.but/MERGE_HEAD &&
 	echo G >a1 &&
-	git update-index a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:07" git cummit -m G &&
+	but update-index a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:07" but cummit -m G &&
 
-	git checkout -b F D &&
-	git rev-parse C >.git/MERGE_HEAD &&
+	but checkout -b F D &&
+	but rev-parse C >.but/MERGE_HEAD &&
 	echo F >a1 &&
-	git update-index a1 &&
-	GIT_AUTHOR_DATE="2006-12-12 23:00:08" git cummit -m F &&
+	but update-index a1 &&
+	GIT_AUTHOR_DATE="2006-12-12 23:00:08" but cummit -m F &&
 
 	test_oid_cache <<-EOF
 	idxstage1 sha1:ec3fe2a791706733f2d8fa7ad45d9a9672031f5e
@@ -71,7 +71,7 @@ test_expect_success 'setup tests' '
 '
 
 test_expect_success 'combined merge conflicts' '
-	test_must_fail git merge -m final G
+	test_must_fail but merge -m final G
 '
 
 test_expect_success 'result contains a conflict' '
@@ -88,65 +88,65 @@ test_expect_success 'result contains a conflict' '
 
 test_expect_success 'virtual trees were processed' '
 	# TODO: fragile test, relies on ambigious merge-base resolution
-	git ls-files --stage >out &&
+	but ls-files --stage >out &&
 
 	cat >expect <<-EOF &&
 	100644 $(test_oid idxstage1) 1	a1
-	100644 $(git rev-parse F:a1) 2	a1
-	100644 $(git rev-parse G:a1) 3	a1
+	100644 $(but rev-parse F:a1) 2	a1
+	100644 $(but rev-parse G:a1) 3	a1
 	EOF
 
 	test_cmp expect out
 '
 
 test_expect_success 'refuse to merge binary files' '
-	git reset --hard &&
+	but reset --hard &&
 	printf "\0" >binary-file &&
-	git add binary-file &&
-	git cummit -m binary &&
-	git checkout G &&
+	but add binary-file &&
+	but cummit -m binary &&
+	but checkout G &&
 	printf "\0\0" >binary-file &&
-	git add binary-file &&
-	git cummit -m binary2 &&
+	but add binary-file &&
+	but cummit -m binary2 &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test_must_fail git merge F >merge_output
+		test_must_fail but merge F >merge_output
 	else
-		test_must_fail git merge F 2>merge_output
+		test_must_fail but merge F 2>merge_output
 	fi &&
 	grep "Cannot merge binary files: binary-file (HEAD vs. F)" merge_output
 '
 
 test_expect_success 'mark rename/delete as unmerged' '
 
-	git reset --hard &&
-	git checkout -b delete &&
-	git rm a1 &&
+	but reset --hard &&
+	but checkout -b delete &&
+	but rm a1 &&
 	test_tick &&
-	git cummit -m delete &&
-	git checkout -b rename HEAD^ &&
-	git mv a1 a2 &&
+	but cummit -m delete &&
+	but checkout -b rename HEAD^ &&
+	but mv a1 a2 &&
 	test_tick &&
-	git cummit -m rename &&
-	test_must_fail git merge delete &&
+	but cummit -m rename &&
+	test_must_fail but merge delete &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test 2 = $(git ls-files --unmerged | wc -l)
+		test 2 = $(but ls-files --unmerged | wc -l)
 	else
-		test 1 = $(git ls-files --unmerged | wc -l)
+		test 1 = $(but ls-files --unmerged | wc -l)
 	fi &&
-	git rev-parse --verify :2:a2 &&
-	test_must_fail git rev-parse --verify :3:a2 &&
-	git checkout -f delete &&
-	test_must_fail git merge rename &&
+	but rev-parse --verify :2:a2 &&
+	test_must_fail but rev-parse --verify :3:a2 &&
+	but checkout -f delete &&
+	test_must_fail but merge rename &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
-		test 2 = $(git ls-files --unmerged | wc -l)
+		test 2 = $(but ls-files --unmerged | wc -l)
 	else
-		test 1 = $(git ls-files --unmerged | wc -l)
+		test 1 = $(but ls-files --unmerged | wc -l)
 	fi &&
-	test_must_fail git rev-parse --verify :2:a2 &&
-	git rev-parse --verify :3:a2
+	test_must_fail but rev-parse --verify :2:a2 &&
+	but rev-parse --verify :3:a2
 '
 
 test_done

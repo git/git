@@ -1,7 +1,7 @@
 #ifndef SUBPROCESS_H
 #define SUBPROCESS_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "hashmap.h"
 #include "run-command.h"
 
@@ -15,7 +15,7 @@
  * The sub-processes are kept in a hashmap by command name and looked up
  * via the subprocess_find_entry function.  If an existing instance can not
  * be found then a new process should be created and started.  When the
- * parent git command terminates, all sub-processes are also terminated.
+ * parent but command terminates, all sub-processes are also terminated.
  *
  * This API is based on the run-command API.
  */

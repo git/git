@@ -8,18 +8,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'rename/delete' '
 	echo foo >A &&
-	git add A &&
-	git cummit -m "initial" &&
+	but add A &&
+	but cummit -m "initial" &&
 
-	git checkout -b rename &&
-	git mv A B &&
-	git cummit -m "rename" &&
+	but checkout -b rename &&
+	but mv A B &&
+	but cummit -m "rename" &&
 
-	git checkout main &&
-	git rm A &&
-	git cummit -m "delete" &&
+	but checkout main &&
+	but rm A &&
+	but cummit -m "delete" &&
 
-	test_must_fail git merge --strategy=recursive rename >output &&
+	test_must_fail but merge --strategy=recursive rename >output &&
 	test_i18ngrep "CONFLICT (rename/delete): A.* renamed .*to B.* in rename" output &&
 	test_i18ngrep "CONFLICT (rename/delete): A.*deleted in HEAD." output
 '

@@ -432,7 +432,7 @@ int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 		case '\\': case '"':
 			break; /* verbatim */
 
-		/* octal values with first digit over 4 overflow */
+		/* octal values with first dibut over 4 overflow */
 		case '0': case '1': case '2': case '3':
 					ac = ((ch - '0') << 6);
 			if ((ch = *quoted++) < '0' || '7' < ch)

@@ -1,41 +1,41 @@
-git-rebase(1)
+but-rebase(1)
 =============
 
 NAME
 ----
-git-rebase - Reapply cummits on top of another base tip
+but-rebase - Reapply cummits on top of another base tip
 
 SYNOPSIS
 --------
 [verse]
-'git rebase' [-i | --interactive] [<options>] [--exec <cmd>]
+'but rebase' [-i | --interactive] [<options>] [--exec <cmd>]
 	[--onto <newbase> | --keep-base] [<upstream> [<branch>]]
-'git rebase' [-i | --interactive] [<options>] [--exec <cmd>] [--onto <newbase>]
+'but rebase' [-i | --interactive] [<options>] [--exec <cmd>] [--onto <newbase>]
 	--root [<branch>]
-'git rebase' (--continue | --skip | --abort | --quit | --edit-todo | --show-current-patch)
+'but rebase' (--continue | --skip | --abort | --quit | --edit-todo | --show-current-patch)
 
 DESCRIPTION
 -----------
-If <branch> is specified, 'git rebase' will perform an automatic
-`git switch <branch>` before doing anything else.  Otherwise
+If <branch> is specified, 'but rebase' will perform an automatic
+`but switch <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
 
 If <upstream> is not specified, the upstream configured in
 branch.<name>.remote and branch.<name>.merge options will be used (see
-linkgit:git-config[1] for details) and the `--fork-point` option is
+linkbut:but-config[1] for details) and the `--fork-point` option is
 assumed.  If you are currently not on any branch or if the current
 branch does not have a configured upstream, the rebase will abort.
 
 All changes made by cummits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
-of cummits that would be shown by `git log <upstream>..HEAD`; or by
-`git log 'fork_point'..HEAD`, if `--fork-point` is active (see the
-description on `--fork-point` below); or by `git log HEAD`, if the
+of cummits that would be shown by `but log <upstream>..HEAD`; or by
+`but log 'fork_point'..HEAD`, if `--fork-point` is active (see the
+description on `--fork-point` below); or by `but log HEAD`, if the
 `--root` option is specified.
 
 The current branch is reset to <upstream>, or <newbase> if the
 --onto option was supplied.  This has the exact same effect as
-`git reset --hard <upstream>` (or <newbase>).  ORIG_HEAD is set
+`but reset --hard <upstream>` (or <newbase>).  ORIG_HEAD is set
 to point at the tip of the branch before the reset.
 
 The cummits that were previously saved into the temporary area are
@@ -46,10 +46,10 @@ with a different cummit message or timestamp will be skipped).
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
-and run `git rebase --continue`.  Another option is to bypass the cummit
-that caused the merge failure with `git rebase --skip`.  To check out the
-original <branch> and remove the .git/rebase-apply working files, use the
-command `git rebase --abort` instead.
+and run `but rebase --continue`.  Another option is to bypass the cummit
+that caused the merge failure with `but rebase --skip`.  To check out the
+original <branch> and remove the .but/rebase-apply working files, use the
+command `but rebase --abort` instead.
 
 Assume the following history exists and the current branch is "topic":
 
@@ -62,8 +62,8 @@ Assume the following history exists and the current branch is "topic":
 From this point, the result of either of the following commands:
 
 
-    git rebase master
-    git rebase master topic
+    but rebase master
+    but rebase master topic
 
 would be:
 
@@ -73,14 +73,14 @@ would be:
     D---E---F---G master
 ------------
 
-*NOTE:* The latter form is just a short-hand of `git checkout topic`
-followed by `git rebase master`. When rebase exits `topic` will
+*NOTE:* The latter form is just a short-hand of `but checkout topic`
+followed by `but rebase master`. When rebase exits `topic` will
 remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that cummit
 will be skipped and warnings will be issued (if the `merge` backend is
-used).  For example, running `git rebase master` on the following
+used).  For example, running `but rebase master` on the following
 history (in which `A'` and `A` introduce the same set of changes, but
 have different cummitter information):
 
@@ -128,7 +128,7 @@ more stable 'master' branch. We want our tree to look like this:
 
 We can get this using the following command:
 
-    git rebase --onto master next topic
+    but rebase --onto master next topic
 
 
 Another example of --onto option is to rebase part of a
@@ -144,7 +144,7 @@ branch.  If we have the following situation:
 
 then the command
 
-    git rebase --onto master topicA topicB
+    but rebase --onto master topicA topicB
 
 would result in:
 
@@ -167,7 +167,7 @@ the following situation:
 
 then the command
 
-    git rebase --onto topicA~5 topicA~3 topicA
+    but rebase --onto topicA~5 topicA~3 topicA
 
 would result in the removal of cummits F and G:
 
@@ -179,27 +179,27 @@ This is useful if F and G were flawed in some way, or should not be
 part of topicA.  Note that the argument to --onto and the <upstream>
 parameter can be any valid cummit-ish.
 
-In case of conflict, 'git rebase' will stop at the first problematic cummit
-and leave conflict markers in the tree.  You can use 'git diff' to locate
+In case of conflict, 'but rebase' will stop at the first problematic cummit
+and leave conflict markers in the tree.  You can use 'but diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell Git that the conflict has been resolved,
 typically this would be done with
 
 
-    git add <filename>
+    but add <filename>
 
 
 After resolving the conflict manually and updating the index with the
 desired resolution, you can continue the rebasing process with
 
 
-    git rebase --continue
+    but rebase --continue
 
 
-Alternatively, you can undo the 'git rebase' with
+Alternatively, you can undo the 'but rebase' with
 
 
-    git rebase --abort
+    but rebase --abort
 
 OPTIONS
 -------
@@ -216,9 +216,9 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 --keep-base::
 	Set the starting point at which to create the new cummits to the
 	merge base of <upstream> and <branch>. Running
-	'git rebase --keep-base <upstream> <branch>' is equivalent to
+	'but rebase --keep-base <upstream> <branch>' is equivalent to
 	running
-	'git rebase --onto <upstream>...<branch> <upstream> <branch>'.
+	'but rebase --onto <upstream>...<branch> <upstream> <branch>'.
 +
 This option is useful in the case where one is developing a feature on
 top of an upstream branch. While the feature is being worked on, the
@@ -257,7 +257,7 @@ See also INCOMPATIBLE OPTIONS below.
 	using --autostash, it will be saved to the stash list.
 
 --apply::
-	Use applying strategies to rebase (calling `git-am`
+	Use applying strategies to rebase (calling `but-am`
 	internally).  This option may become a no-op in the future
 	once the merge backend handles everything the apply one does.
 +
@@ -277,7 +277,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 Note that cummits which start empty are kept (unless --no-keep-empty
 is specified), and cummits which are clean cherry-picks (as determined
-by `git log --cherry-mark ...`) are detected and dropped as a
+by `but log --cherry-mark ...`) are detected and dropped as a
 preliminary step (unless --reapply-cherry-picks is passed).
 +
 See also INCOMPATIBLE OPTIONS below.
@@ -288,7 +288,7 @@ See also INCOMPATIBLE OPTIONS below.
 	(i.e. that do not change anything from its parent) in the
 	result.  The default is to keep cummits which start empty,
 	since creating such cummits requires passing the --allow-empty
-	override flag to `git cummit`, signifying that a user is very
+	override flag to `but cummit`, signifying that a user is very
 	intentionally creating such a cummit and thus wants to keep
 	it.
 +
@@ -317,7 +317,7 @@ upstream cummits, this can be expensive in repos with a large number
 of upstream cummits that need to be read.  When using the `merge`
 backend, warnings will be issued for each dropped cummit (unless
 `--quiet` is given). Advice will also be issued unless
-`advice.skippedCherryPicks` is set to false (see linkgit:git-config[1]).
+`advice.skippedCherryPicks` is set to false (see linkbut:but-config[1]).
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
 cummits, potentially improving performance.
@@ -341,7 +341,7 @@ See also INCOMPATIBLE OPTIONS below.
 --show-current-patch::
 	Show the current patch in an interactive rebase or when rebase
 	is stopped because of conflicts. This is the equivalent of
-	`git show REBASE_HEAD`.
+	`but show REBASE_HEAD`.
 
 -m::
 --merge::
@@ -360,7 +360,7 @@ See also INCOMPATIBLE OPTIONS below.
 	Use the given merge strategy, instead of the default `ort`.
 	This implies `--merge`.
 +
-Because 'git rebase' replays each cummit from the working branch
+Because 'but rebase' replays each cummit from the working branch
 on top of the <upstream> branch using the given strategy, using
 the 'ours' strategy simply empties all patches from the <branch>,
 which makes little sense.
@@ -407,11 +407,11 @@ See also INCOMPATIBLE OPTIONS below.
 	Do not show a diffstat as part of the rebase process.
 
 --no-verify::
-	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
+	This option bypasses the pre-rebase hook.  See also linkbut:buthooks[5].
 
 --verify::
 	Allows the pre-rebase hook to run, which is the default.  This option can
-	be used to override --no-verify.  See also linkgit:githooks[5].
+	be used to override --no-verify.  See also linkbut:buthooks[5].
 
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
@@ -442,13 +442,13 @@ details).
 +
 When --fork-point is active, 'fork_point' will be used instead of
 <upstream> to calculate the set of cummits to rebase, where
-'fork_point' is the result of `git merge-base --fork-point <upstream>
-<branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
+'fork_point' is the result of `but merge-base --fork-point <upstream>
+<branch>` command (see linkbut:but-merge-base[1]).  If 'fork_point'
 ends up being empty, the <upstream> will be used as a fallback.
 +
 If <upstream> is given on the command line, then the default is
 `--no-fork-point`, otherwise the default is `--fork-point`. See also
-`rebase.forkpoint` in linkgit:git-config[1].
+`rebase.forkpoint` in linkbut:but-config[1].
 +
 If your branch was based on <upstream> but <upstream> was rewound and
 your branch contains cummits which were dropped, this option can be used
@@ -473,8 +473,8 @@ intended to modify whitespace and nothing else will be dropped, even
 if the other side had no changes that conflicted.
 
 --whitespace=<option>::
-	This flag is passed to the 'git apply' program
-	(see linkgit:git-apply[1]) that applies the patch.
+	This flag is passed to the 'but apply' program
+	(see linkbut:but-apply[1]) that applies the patch.
 	Implies --apply.
 +
 See also INCOMPATIBLE OPTIONS below.
@@ -523,14 +523,14 @@ See also INCOMPATIBLE OPTIONS below.
 +
 By default, or when `no-rebase-cousins` was specified, cummits which do not
 have `<upstream>` as direct ancestor will keep their original branch point,
-i.e. cummits that would be excluded by linkgit:git-log[1]'s
+i.e. cummits that would be excluded by linkbut:but-log[1]'s
 `--ancestry-path` option will keep their original ancestry by default. If
 the `rebase-cousins` mode is turned on, such cummits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
 It is currently only possible to recreate the merge cummits using the
 `ort` merge strategy; different merge strategies can be used only via
-explicit `exec git merge -s <strategy> [...]` commands.
+explicit `exec but merge -s <strategy> [...]` commands.
 +
 See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 
@@ -544,11 +544,11 @@ See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 You may execute several commands by either using one instance of `--exec`
 with several commands:
 +
-	git rebase -i --exec "cmd1 && cmd2 && ..."
+	but rebase -i --exec "cmd1 && cmd2 && ..."
 +
 or by giving more than one `--exec`:
 +
-	git rebase -i --exec "cmd1" --exec "cmd2" --exec ...
+	but rebase -i --exec "cmd1" --exec "cmd2" --exec ...
 +
 If `--autosquash` is used, "exec" lines will not be appended for
 the intermediate cummits, and will only appear at the end of each
@@ -580,7 +580,7 @@ See also INCOMPATIBLE OPTIONS below.
 	to the cummit's hash. As a fall-back, partial matches of the cummit
 	subject work, too. The recommended way to create fixup/amend/squash
 	cummits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
-	and `--squash` options respectively of linkgit:git-cummit[1].
+	and `--squash` options respectively of linkbut:but-cummit[1].
 +
 If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
@@ -603,7 +603,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 Even though this option applies once a rebase is started, it's set for
 the whole rebase at the start based on either the
-`rebase.rescheduleFailedExec` configuration (see linkgit:git-config[1]
+`rebase.rescheduleFailedExec` configuration (see linkbut:but-config[1]
 or "CONFIGURATION" below) or whether this option is
 provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
 start would be overridden by the presence of
@@ -643,7 +643,7 @@ In addition, the following pairs of options are incompatible:
 BEHAVIORAL DIFFERENCES
 -----------------------
 
-git rebase has two primary backends: apply and merge.  (The apply
+but rebase has two primary backends: apply and merge.  (The apply
 backend used to be known as the 'am' backend, but the name led to
 confusion as it looks like a verb instead of a noun.  Also, the merge
 backend used to be known as the interactive backend, but it is now
@@ -733,7 +733,7 @@ cummit of the rebase, not the intermediate cummits nor the final
 cummit.  In each case, the calling of these hooks was by accident of
 implementation rather than by design (both backends were originally
 implemented as shell scripts and happened to invoke other commands
-like 'git checkout' or 'git cummit' that would call the hooks).  Both
+like 'but checkout' or 'but cummit' that would call the hooks).  Both
 backends should have the same behavior, though it is not entirely
 clear which, if any, is correct.  We will likely make rebase stop
 calling either of these hooks in the future.
@@ -744,9 +744,9 @@ Interruptability
 The apply backend has safety problems with an ill-timed interrupt; if
 the user presses Ctrl-C at the wrong time to try to abort the rebase,
 the rebase can enter a state where it cannot be aborted with a
-subsequent `git rebase --abort`.  The merge backend does not appear to
+subsequent `but rebase --abort`.  The merge backend does not appear to
 suffer from the same shortcoming.  (See
-https://lore.kernel.org/git/20200207132152.GC2868@szeder.dev/ for
+https://lore.kernel.org/but/20200207132152.GC2868@szeder.dev/ for
 details.)
 
 cummit Rewording
@@ -755,7 +755,7 @@ cummit Rewording
 When a conflict occurs while rebasing, rebase stops and asks the user
 to resolve.  Since the user may need to make notable changes while
 resolving conflicts, after conflicts are resolved and the user has run
-`git rebase --continue`, the rebase should open an editor and ask the
+`but rebase --continue`, the rebase should open an editor and ask the
 user to update the cummit message.  The merge backend does this, while
 the apply backend blindly applies the original cummit message.
 
@@ -777,18 +777,18 @@ completeness:
   them to stderr.
 
 * State directories: The two backends keep their state in different
-  directories under .git/
+  directories under .but/
 
 include::merge-strategies.txt[]
 
 NOTES
 -----
 
-You should understand the implications of using 'git rebase' on a
+You should understand the implications of using 'but rebase' on a
 repository that you share.  See also RECOVERING FROM UPSTREAM REBASE
 below.
 
-When the git-rebase command is run, it will first execute a "pre-rebase"
+When the but-rebase command is run, it will first execute a "pre-rebase"
 hook if one exists.  You can use this hook to do sanity checks and
 reject the rebase if it isn't appropriate.  Please see the template
 pre-rebase hook script for an example.
@@ -830,7 +830,7 @@ cummits, and squashing multiple cummits into one.
 
 Start it with the last cummit you want to retain as-is:
 
-	git rebase -i <after-this-cummit>
+	but rebase -i <after-this-cummit>
 
 An editor will be fired up with all the cummits in your current branch
 (ignoring merge cummits), which come after the given cummit.  You can
@@ -843,12 +843,12 @@ pick fa1afe1 The oneline of the next cummit
 ...
 -------------------------------------------
 
-The oneline descriptions are purely for your pleasure; 'git rebase' will
+The oneline descriptions are purely for your pleasure; 'but rebase' will
 not look at them but at the cummit names ("deadbee" and "fa1afe1" in this
 example), so do not delete or edit the names.
 
 By replacing the command "pick" with the command "edit", you can tell
-'git rebase' to stop after applying that cummit, so that you can edit
+'but rebase' to stop after applying that cummit, so that you can edit
 the files and/or the cummit message, amend the cummit, and continue
 rebasing.
 
@@ -877,16 +877,16 @@ cummit, the message from the final one is used.  You can also use
 an editor.
 
 
-'git rebase' will stop when "pick" has been replaced with "edit" or
+'but rebase' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
-and/or resolving conflicts you can continue with `git rebase --continue`.
+and/or resolving conflicts you can continue with `but rebase --continue`.
 
 For example, if you want to reorder the last 5 cummits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
-'git rebase' like this:
+'but rebase' like this:
 
 ----------------------
-$ git rebase -i HEAD~5
+$ but rebase -i HEAD~5
 ----------------------
 
 And move the first patch to the end of the list.
@@ -906,7 +906,7 @@ Suppose you want to rebase the side branch starting at "A" to "Q". Make
 sure that the current HEAD is "B", and call
 
 -----------------------------
-$ git rebase -i -r --onto Q O
+$ but rebase -i -r --onto Q O
 -----------------------------
 
 Reordering and editing cummits usually creates untested intermediate
@@ -927,7 +927,7 @@ exec cd subdir; make test
 
 The interactive rebase will stop when a command fails (i.e. exits with
 non-0 status) to give you an opportunity to fix the problem. You can
-continue with `git rebase --continue`.
+continue with `but rebase --continue`.
 
 The "exec" command launches the command in a shell (the one specified
 in `$SHELL`, or the default shell if `$SHELL` is not set), so you can
@@ -935,7 +935,7 @@ use shell features (like "cd", ">", ";" ...). The command is run from
 the root of the working tree.
 
 ----------------------------------
-$ git rebase -i --exec "make test"
+$ but rebase -i --exec "make test"
 ----------------------------------
 
 This command lets you check that intermediate cummits are compilable.
@@ -956,34 +956,34 @@ SPLITTING cummitS
 -----------------
 
 In interactive mode, you can mark cummits with the action "edit".  However,
-this does not necessarily mean that 'git rebase' expects the result of this
+this does not necessarily mean that 'but rebase' expects the result of this
 edit to be exactly one cummit.  Indeed, you can undo the cummit, or you can
 add other cummits.  This can be used to split a cummit into two:
 
-- Start an interactive rebase with `git rebase -i <cummit>^`, where
+- Start an interactive rebase with `but rebase -i <cummit>^`, where
   <cummit> is the cummit you want to split.  In fact, any cummit range
   will do, as long as it contains that cummit.
 
 - Mark the cummit you want to split with the action "edit".
 
-- When it comes to editing that cummit, execute `git reset HEAD^`.  The
+- When it comes to editing that cummit, execute `but reset HEAD^`.  The
   effect is that the HEAD is rewound by one, and the index follows suit.
   However, the working tree stays the same.
 
 - Now add the changes to the index that you want to have in the first
-  cummit.  You can use `git add` (possibly interactively) or
-  'git gui' (or both) to do that.
+  cummit.  You can use `but add` (possibly interactively) or
+  'but gui' (or both) to do that.
 
 - cummit the now-current index with whatever cummit message is appropriate
   now.
 
 - Repeat the last two steps until your working tree is clean.
 
-- Continue the rebase with `git rebase --continue`.
+- Continue the rebase with `but rebase --continue`.
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
-'git stash' to stash away the not-yet-cummitted changes
+'but stash' to stash away the not-yet-cummitted changes
 after each cummit, test, and amend the cummit if fixes are necessary.
 
 
@@ -1049,7 +1049,7 @@ Hard case: The changes are not the same.::
 	`--interactive` to omit, edit, squash, or fixup cummits; or
 	if the upstream used one of `cummit --amend`, `reset`, or
 	a full history rewriting command like
-	https://github.com/newren/git-filter-repo[`filter-repo`].
+	https://buthub.com/newren/but-filter-repo[`filter-repo`].
 
 
 The easy case
@@ -1059,12 +1059,12 @@ Only works if the changes (patch IDs based on the diff contents) on
 'subsystem' are literally the same before and after the rebase
 'subsystem' did.
 
-In that case, the fix is easy because 'git rebase' knows to skip
+In that case, the fix is easy because 'but rebase' knows to skip
 changes that are already present in the new upstream (unless
 `--reapply-cherry-picks` is given). So if you say
 (assuming you're on 'topic')
 ------------
-    $ git rebase subsystem
+    $ but rebase subsystem
 ------------
 you will end up with the fixed history
 ------------
@@ -1084,17 +1084,17 @@ correspond to the ones before the rebase.
 
 NOTE: While an "easy case recovery" sometimes appears to be successful
       even in the hard case, it may have unintended consequences.  For
-      example, a cummit that was removed via `git rebase
+      example, a cummit that was removed via `but rebase
       --interactive` will be **resurrected**!
 
-The idea is to manually tell 'git rebase' "where the old 'subsystem'
+The idea is to manually tell 'but rebase' "where the old 'subsystem'
 ended and your 'topic' began", that is, what the old merge base
 between them was.  You will have to find a way to name the last cummit
 of the old 'subsystem', for example:
 
-* With the 'subsystem' reflog: after 'git fetch', the old tip of
+* With the 'subsystem' reflog: after 'but fetch', the old tip of
   'subsystem' is at `subsystem@{1}`.  Subsequent fetches will
-  increase the number.  (See linkgit:git-reflog[1].)
+  increase the number.  (See linkbut:but-reflog[1].)
 
 * Relative to the tip of 'topic': knowing that your 'topic' has three
   cummits, the old tip of 'subsystem' must be `topic~3`.
@@ -1102,7 +1102,7 @@ of the old 'subsystem', for example:
 You can then transplant the old `subsystem..topic` to the new tip by
 saying (for the reflog case, and assuming you are on 'topic' already):
 ------------
-    $ git rebase --onto subsystem subsystem@{1}
+    $ but rebase --onto subsystem subsystem@{1}
 ------------
 
 The ripple effect of a "hard case" recovery is especially bad:
@@ -1119,14 +1119,14 @@ then-current `master` while working on the branch, only to rebase
 all the cummits onto `master` eventually (skipping the merge
 cummits).
 
-However, there are legitimate reasons why a developer may want to
+However, there are lebutimate reasons why a developer may want to
 recreate merge cummits: to keep the branch structure (or "cummit
 topology") when working on multiple, inter-related branches.
 
 In the following example, the developer works on a topic branch that
 refactors the way buttons are defined, and on another topic branch
 that uses that refactoring to implement a "Report a bug" button. The
-output of `git log --graph --format=%s -5` may look like this:
+output of `but log --graph --format=%s -5` may look like this:
 
 ------------
 *   Merge branch 'report-a-bug'
@@ -1179,7 +1179,7 @@ command fails, it is rescheduled immediately, with a helpful message how
 to proceed.
 
 The `reset` command resets the HEAD, index and worktree to the specified
-revision. It is similar to an `exec git reset --hard <label>`, but
+revision. It is similar to an `exec but reset --hard <label>`, but
 refuses to overwrite untracked files. If the `reset` command fails, it is
 rescheduled immediately, with a helpful message how to edit the todo list
 (this typically happens when a `reset` command was inserted into the todo
@@ -1198,8 +1198,8 @@ By default, the `merge` command will use the `ort` merge strategy for
 regular merges, and `octopus` for octopus merges.  One can specify a
 default strategy for all merges using the `--strategy` argument when
 invoking rebase, or can override specific merges in the interactive
-list of commands by using an `exec` command to call `git merge`
-explicitly with a `--strategy` argument.  Note that when calling `git
+list of commands by using an `exec` command to call `but merge`
+explicitly with a `--strategy` argument.  Note that when calling `but
 merge` explicitly like this, you can make use of the fact that the
 labels are worktree-local refs (the ref `refs/rewritten/onto` would
 correspond to the label `onto`, for example) in order to refer to the
@@ -1255,4 +1255,4 @@ include::config/sequencer.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

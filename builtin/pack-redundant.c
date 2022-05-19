@@ -14,7 +14,7 @@
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
+"but pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
 
 static int load_all_packs, verbose, alt_odb;
 
@@ -30,7 +30,7 @@ static struct llist {
 
 static struct pack_list {
 	struct pack_list *next;
-	struct packed_git *pack;
+	struct packed_but *pack;
 	struct llist *unique_objects;
 	struct llist *remaining_objects;
 	size_t all_objects_size;
@@ -277,7 +277,7 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	}
 }
 
-static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
+static size_t sizeof_union(struct packed_but *p1, struct packed_but *p2)
 {
 	size_t ret = 0;
 	size_t p1_off = 0, p2_off = 0, p1_step, p2_step;
@@ -502,7 +502,7 @@ static void scan_alt_odb_packs(void)
 	}
 }
 
-static struct pack_list * add_pack(struct packed_git *p)
+static struct pack_list * add_pack(struct packed_but *p)
 {
 	struct pack_list l;
 	size_t off = 0, step;
@@ -534,7 +534,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 
 static struct pack_list * add_pack_file(const char *filename)
 {
-	struct packed_git *p = get_all_packs(the_repository);
+	struct packed_but *p = get_all_packs(the_repository);
 
 	if (strlen(filename) < 40)
 		die("Bad pack filename: %s", filename);
@@ -544,12 +544,12 @@ static struct pack_list * add_pack_file(const char *filename)
 			return add_pack(p);
 		p = p->next;
 	}
-	die("Filename %s not found in packed_git", filename);
+	die("Filename %s not found in packed_but", filename);
 }
 
 static void load_all(void)
 {
-	struct packed_git *p = get_all_packs(the_repository);
+	struct packed_but *p = get_all_packs(the_repository);
 
 	while (p) {
 		add_pack(p);
@@ -598,11 +598,11 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!i_still_use_this) {
-		fputs(_("'git pack-redundant' is nominated for removal.\n"
+		fputs(_("'but pack-redundant' is nominated for removal.\n"
 			"If you still use this command, please add an extra\n"
 			"option, '--i-still-use-this', on the command line\n"
 			"and let us know you still use it by sending an e-mail\n"
-			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
+			"to <but@vger.kernel.org>.  Thanks.\n"), stderr);
 	}
 
 	if (load_all_packs)

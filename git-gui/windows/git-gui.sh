@@ -5,8 +5,8 @@ exec wish "$0" -- "$@"
 if { $argc >=2 && [lindex $argv 0] == "--working-dir" } {
 	set workdir [lindex $argv 1]
 	cd $workdir
-	if {[lindex [file split $workdir] end] eq {.git}} {
-		# Workaround for Explorer right click "Git GUI Here" on .git/
+	if {[lindex [file split $workdir] end] eq {.but}} {
+		# Workaround for Explorer right click "Git GUI Here" on .but/
 		cd ..
 	}
 	set argv [lrange $argv 2 end]
@@ -22,4 +22,4 @@ regsub -all ";" $bindir "\\;" bindir
 set env(PATH) "$bindir;$env(PATH)"
 unset bindir
 
-source [file join [file dirname [info script]] git-gui.tcl]
+source [file join [file dirname [info script]] but-gui.tcl]

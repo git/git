@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git rev-parse'
+test_description='test but rev-parse'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -12,15 +12,15 @@ test_one () {
 	shift &&
 	shift &&
 	echo "$expect" >expect &&
-	git -C "$dir" rev-parse "$@" >actual &&
+	but -C "$dir" rev-parse "$@" >actual &&
 	test_cmp expect actual
 }
 
-# usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir absolute-git-dir
+# usage: [options] label is-bare is-inside-but is-inside-work prefix but-dir absolute-but-dir
 test_rev_parse () {
 	d=
 	bare=
-	gitdir=
+	butdir=
 	while :
 	do
 		case "$1" in
@@ -29,7 +29,7 @@ test_rev_parse () {
 		    [tfu]*) bare="$2"; shift; shift ;;
 		    *) error "test_rev_parse: bogus core.bare value '$2'" ;;
 		    esac ;;
-		-g) gitdir="$2"; shift; shift ;;
+		-g) butdir="$2"; shift; shift ;;
 		-*) error "test_rev_parse: unrecognized option '$1'" ;;
 		*) break ;;
 		esac
@@ -39,19 +39,19 @@ test_rev_parse () {
 	shift
 
 	for o in --is-bare-repository \
-		 --is-inside-git-dir \
+		 --is-inside-but-dir \
 		 --is-inside-work-tree \
 		 --show-prefix \
-		 --git-dir \
-		 --absolute-git-dir
+		 --but-dir \
+		 --absolute-but-dir
 	do
 		test $# -eq 0 && break
 		expect="$1"
 		test_expect_success "$name: $o" '
-			if test -n "$gitdir"
+			if test -n "$butdir"
 			then
 				test_when_finished "unset GIT_DIR" &&
-				GIT_DIR="$gitdir" &&
+				GIT_DIR="$butdir" &&
 				export GIT_DIR
 			fi &&
 
@@ -62,7 +62,7 @@ test_rev_parse () {
 			esac &&
 
 			echo "$expect" >expect &&
-			git ${d:+-C} ${d:+"$d"} rev-parse $o >actual &&
+			but ${d:+-C} ${d:+"$d"} rev-parse $o >actual &&
 			test_cmp expect actual
 		'
 		shift
@@ -73,177 +73,177 @@ ROOT=$(pwd)
 
 test_expect_success 'setup' '
 	mkdir -p sub/dir work &&
-	cp -R .git repo.git &&
-	git checkout -B main &&
+	cp -R .but repo.but &&
+	but checkout -B main &&
 	test_cummit abc &&
-	git checkout -b side &&
+	but checkout -b side &&
 	test_cummit def &&
-	git checkout main &&
-	git worktree add worktree side
+	but checkout main &&
+	but worktree add worktree side
 '
 
-test_rev_parse toplevel false false true '' .git "$ROOT/.git"
+test_rev_parse toplevel false false true '' .but "$ROOT/.but"
 
-test_rev_parse -C .git .git/ false true false '' . "$ROOT/.git"
-test_rev_parse -C .git/objects .git/objects/ false true false '' "$ROOT/.git" "$ROOT/.git"
+test_rev_parse -C .but .but/ false true false '' . "$ROOT/.but"
+test_rev_parse -C .but/objects .but/objects/ false true false '' "$ROOT/.but" "$ROOT/.but"
 
-test_rev_parse -C sub/dir subdirectory false false true sub/dir/ "$ROOT/.git" "$ROOT/.git"
+test_rev_parse -C sub/dir subdirectory false false true sub/dir/ "$ROOT/.but" "$ROOT/.but"
 
 test_rev_parse -b t 'core.bare = true' true false false
 
 test_rev_parse -b u 'core.bare undefined' false false true
 
 
-test_rev_parse -C work -g ../.git -b f 'GIT_DIR=../.git, core.bare = false' false false true '' "../.git" "$ROOT/.git"
+test_rev_parse -C work -g ../.but -b f 'GIT_DIR=../.but, core.bare = false' false false true '' "../.but" "$ROOT/.but"
 
-test_rev_parse -C work -g ../.git -b t 'GIT_DIR=../.git, core.bare = true' true false false ''
+test_rev_parse -C work -g ../.but -b t 'GIT_DIR=../.but, core.bare = true' true false false ''
 
-test_rev_parse -C work -g ../.git -b u 'GIT_DIR=../.git, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../.but -b u 'GIT_DIR=../.but, core.bare undefined' false false true ''
 
 
-test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = false' false false true '' "../repo.git" "$ROOT/repo.git"
+test_rev_parse -C work -g ../repo.but -b f 'GIT_DIR=../repo.but, core.bare = false' false false true '' "../repo.but" "$ROOT/repo.but"
 
-test_rev_parse -C work -g ../repo.git -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
+test_rev_parse -C work -g ../repo.but -b t 'GIT_DIR=../repo.but, core.bare = true' true false false ''
 
-test_rev_parse -C work -g ../repo.git -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../repo.but -b u 'GIT_DIR=../repo.but, core.bare undefined' false false true ''
 
 test_expect_success 'rev-parse --path-format=absolute' '
-	test_one "." "$ROOT/.git" --path-format=absolute --git-dir &&
-	test_one "." "$ROOT/.git" --path-format=absolute --git-common-dir &&
-	test_one "sub/dir" "$ROOT/.git" --path-format=absolute --git-dir &&
-	test_one "sub/dir" "$ROOT/.git" --path-format=absolute --git-common-dir &&
-	test_one "worktree" "$ROOT/.git/worktrees/worktree" --path-format=absolute --git-dir &&
-	test_one "worktree" "$ROOT/.git" --path-format=absolute --git-common-dir &&
+	test_one "." "$ROOT/.but" --path-format=absolute --but-dir &&
+	test_one "." "$ROOT/.but" --path-format=absolute --but-common-dir &&
+	test_one "sub/dir" "$ROOT/.but" --path-format=absolute --but-dir &&
+	test_one "sub/dir" "$ROOT/.but" --path-format=absolute --but-common-dir &&
+	test_one "worktree" "$ROOT/.but/worktrees/worktree" --path-format=absolute --but-dir &&
+	test_one "worktree" "$ROOT/.but" --path-format=absolute --but-common-dir &&
 	test_one "." "$ROOT" --path-format=absolute --show-toplevel &&
-	test_one "." "$ROOT/.git/objects" --path-format=absolute --git-path objects &&
-	test_one "." "$ROOT/.git/objects/foo/bar/baz" --path-format=absolute --git-path objects/foo/bar/baz
+	test_one "." "$ROOT/.but/objects" --path-format=absolute --but-path objects &&
+	test_one "." "$ROOT/.but/objects/foo/bar/baz" --path-format=absolute --but-path objects/foo/bar/baz
 '
 
 test_expect_success 'rev-parse --path-format=relative' '
-	test_one "." ".git" --path-format=relative --git-dir &&
-	test_one "." ".git" --path-format=relative --git-common-dir &&
-	test_one "sub/dir" "../../.git" --path-format=relative --git-dir &&
-	test_one "sub/dir" "../../.git" --path-format=relative --git-common-dir &&
-	test_one "worktree" "../.git/worktrees/worktree" --path-format=relative --git-dir &&
-	test_one "worktree" "../.git" --path-format=relative --git-common-dir &&
+	test_one "." ".but" --path-format=relative --but-dir &&
+	test_one "." ".but" --path-format=relative --but-common-dir &&
+	test_one "sub/dir" "../../.but" --path-format=relative --but-dir &&
+	test_one "sub/dir" "../../.but" --path-format=relative --but-common-dir &&
+	test_one "worktree" "../.but/worktrees/worktree" --path-format=relative --but-dir &&
+	test_one "worktree" "../.but" --path-format=relative --but-common-dir &&
 	test_one "." "./" --path-format=relative --show-toplevel &&
-	test_one "." ".git/objects" --path-format=relative --git-path objects &&
-	test_one "." ".git/objects/foo/bar/baz" --path-format=relative --git-path objects/foo/bar/baz
+	test_one "." ".but/objects" --path-format=relative --but-path objects &&
+	test_one "." ".but/objects/foo/bar/baz" --path-format=relative --but-path objects/foo/bar/baz
 '
 
-test_expect_success '--path-format=relative does not affect --absolute-git-dir' '
-	git rev-parse --path-format=relative --absolute-git-dir >actual &&
-	echo "$ROOT/.git" >expect &&
+test_expect_success '--path-format=relative does not affect --absolute-but-dir' '
+	but rev-parse --path-format=relative --absolute-but-dir >actual &&
+	echo "$ROOT/.but" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success '--path-format can change in the middle of the command line' '
-	git rev-parse --path-format=absolute --git-dir --path-format=relative --git-path objects/foo/bar >actual &&
+	but rev-parse --path-format=absolute --but-dir --path-format=relative --but-path objects/foo/bar >actual &&
 	cat >expect <<-EOF &&
-	$ROOT/.git
-	.git/objects/foo/bar
+	$ROOT/.but
+	.but/objects/foo/bar
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success '--path-format does not segfault without an argument' '
-	test_must_fail git rev-parse --path-format
+	test_must_fail but rev-parse --path-format
 '
 
-test_expect_success 'git-common-dir from worktree root' '
-	echo .git >expect &&
-	git rev-parse --git-common-dir >actual &&
+test_expect_success 'but-common-dir from worktree root' '
+	echo .but >expect &&
+	but rev-parse --but-common-dir >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git-common-dir inside sub-dir' '
+test_expect_success 'but-common-dir inside sub-dir' '
 	mkdir -p path/to/child &&
 	test_when_finished "rm -rf path" &&
-	echo "$(git -C path/to/child rev-parse --show-cdup).git" >expect &&
-	git -C path/to/child rev-parse --git-common-dir >actual &&
+	echo "$(but -C path/to/child rev-parse --show-cdup).but" >expect &&
+	but -C path/to/child rev-parse --but-common-dir >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git-path from worktree root' '
-	echo .git/objects >expect &&
-	git rev-parse --git-path objects >actual &&
+test_expect_success 'but-path from worktree root' '
+	echo .but/objects >expect &&
+	but rev-parse --but-path objects >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git-path inside sub-dir' '
+test_expect_success 'but-path inside sub-dir' '
 	mkdir -p path/to/child &&
 	test_when_finished "rm -rf path" &&
-	echo "$(git -C path/to/child rev-parse --show-cdup).git/objects" >expect &&
-	git -C path/to/child rev-parse --git-path objects >actual &&
+	echo "$(but -C path/to/child rev-parse --show-cdup).but/objects" >expect &&
+	but -C path/to/child rev-parse --but-path objects >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-parse --is-shallow-repository in shallow repo' '
 	test_cummit test_cummit &&
 	echo true >expect &&
-	git clone --depth 1 --no-local . shallow &&
+	but clone --depth 1 --no-local . shallow &&
 	test_when_finished "rm -rf shallow" &&
-	git -C shallow rev-parse --is-shallow-repository >actual &&
+	but -C shallow rev-parse --is-shallow-repository >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 	echo false >expect &&
-	git rev-parse --is-shallow-repository >actual &&
+	but rev-parse --is-shallow-repository >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-parse --show-object-format in repo' '
 	echo "$(test_oid algo)" >expect &&
-	git rev-parse --show-object-format >actual &&
+	but rev-parse --show-object-format >actual &&
 	test_cmp expect actual &&
-	git rev-parse --show-object-format=storage >actual &&
+	but rev-parse --show-object-format=storage >actual &&
 	test_cmp expect actual &&
-	git rev-parse --show-object-format=input >actual &&
+	but rev-parse --show-object-format=input >actual &&
 	test_cmp expect actual &&
-	git rev-parse --show-object-format=output >actual &&
+	but rev-parse --show-object-format=output >actual &&
 	test_cmp expect actual &&
-	test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
+	test_must_fail but rev-parse --show-object-format=squeamish-ossifrage 2>err &&
 	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
 test_expect_success '--show-toplevel from subdir of working tree' '
 	pwd >expect &&
-	git -C sub/dir rev-parse --show-toplevel >actual &&
+	but -C sub/dir rev-parse --show-toplevel >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success '--show-toplevel from inside .git' '
-	test_must_fail git -C .git rev-parse --show-toplevel
+test_expect_success '--show-toplevel from inside .but' '
+	test_must_fail but -C .but rev-parse --show-toplevel
 '
 
 test_expect_success 'showing the superproject correctly' '
-	git rev-parse --show-superproject-working-tree >out &&
+	but rev-parse --show-superproject-working-tree >out &&
 	test_must_be_empty out &&
 
 	test_create_repo super &&
 	test_cummit -C super test_cummit &&
 	test_create_repo sub &&
 	test_cummit -C sub test_cummit &&
-	git -C super submodule add ../sub dir/sub &&
+	but -C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
-	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	but -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out &&
 
 	test_cummit -C super submodule_add &&
-	git -C super checkout -b branch1 &&
-	git -C super/dir/sub checkout -b branch1 &&
+	but -C super checkout -b branch1 &&
+	but -C super/dir/sub checkout -b branch1 &&
 	test_cummit -C super/dir/sub branch1_cummit &&
-	git -C super add dir/sub &&
+	but -C super add dir/sub &&
 	test_cummit -C super branch1_cummit &&
-	git -C super checkout -b branch2 main &&
-	git -C super/dir/sub checkout -b branch2 main &&
+	but -C super checkout -b branch2 main &&
+	but -C super/dir/sub checkout -b branch2 main &&
 	test_cummit -C super/dir/sub branch2_cummit &&
-	git -C super add dir/sub &&
+	but -C super add dir/sub &&
 	test_cummit -C super branch2_cummit &&
-	test_must_fail git -C super merge branch1 &&
+	test_must_fail but -C super merge branch1 &&
 
-	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	but -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out
 '
 
@@ -252,7 +252,7 @@ test_expect_success 'rev-parse --since= unsqueezed ordering' '
 	x1=--since=1970-01-01T00:00:01Z &&
 	x2=--since=1970-01-01T00:00:02Z &&
 	x3=--since=1970-01-01T00:00:03Z &&
-	git rev-parse $x1 $x1 $x3 $x2 >actual &&
+	but rev-parse $x1 $x1 $x3 $x2 >actual &&
 	cat >expect <<-EOF &&
 	--max-age=1
 	--max-age=1

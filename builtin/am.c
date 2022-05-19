@@ -1,7 +1,7 @@
 /*
- * Builtin "git am"
+ * Builtin "but am"
  *
- * Based on git-am.sh by Junio C Hamano.
+ * Based on but-am.sh by Junio C Hamano.
  */
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
@@ -67,14 +67,14 @@ enum patch_format {
 
 enum keep_type {
 	KEEP_FALSE = 0,
-	KEEP_TRUE,      /* pass -k flag to git-mailinfo */
-	KEEP_NON_PATCH  /* pass -b flag to git-mailinfo */
+	KEEP_TRUE,      /* pass -k flag to but-mailinfo */
+	KEEP_NON_PATCH  /* pass -b flag to but-mailinfo */
 };
 
 enum scissors_type {
 	SCISSORS_UNSET = -1,
-	SCISSORS_FALSE = 0,  /* pass --no-scissors to git-mailinfo */
-	SCISSORS_TRUE        /* pass --scissors to git-mailinfo */
+	SCISSORS_FALSE = 0,  /* pass --no-scissors to but-mailinfo */
+	SCISSORS_TRUE        /* pass --scissors to but-mailinfo */
 };
 
 enum signoff_type {
@@ -112,7 +112,7 @@ struct am_state {
 	/* when --rebasing, records the original cummit the patch came from */
 	struct object_id orig_cummit;
 
-	/* number of digits in patch filename */
+	/* number of dibuts in patch filename */
 	int prec;
 
 	/* various operating modes and command line options */
@@ -126,7 +126,7 @@ struct am_state {
 	int scissors; /* enum scissors_type */
 	int quoted_cr; /* enum quoted_cr_action */
 	int empty_type; /* enum empty_action */
-	struct strvec git_apply_opts;
+	struct strvec but_apply_opts;
 	const char *resolvemsg;
 	int cummitter_date_is_author_date;
 	int ignore_date;
@@ -144,22 +144,22 @@ static void am_state_init(struct am_state *state)
 
 	memset(state, 0, sizeof(*state));
 
-	state->dir = git_pathdup("rebase-apply");
+	state->dir = but_pathdup("rebase-apply");
 
 	state->prec = 4;
 
-	git_config_get_bool("am.threeway", &state->threeway);
+	but_config_get_bool("am.threeway", &state->threeway);
 
 	state->utf8 = 1;
 
-	git_config_get_bool("am.messageid", &state->message_id);
+	but_config_get_bool("am.messageid", &state->message_id);
 
 	state->scissors = SCISSORS_UNSET;
 	state->quoted_cr = quoted_cr_unset;
 
-	strvec_init(&state->git_apply_opts);
+	strvec_init(&state->but_apply_opts);
 
-	if (!git_config_get_bool("cummit.gpgsign", &gpgsign))
+	if (!but_config_get_bool("cummit.gpgsign", &gpgsign))
 		state->sign_cummit = gpgsign ? "" : NULL;
 }
 
@@ -173,7 +173,7 @@ static void am_state_release(struct am_state *state)
 	free(state->author_email);
 	free(state->author_date);
 	free(state->msg);
-	strvec_clear(&state->git_apply_opts);
+	strvec_clear(&state->but_apply_opts);
 }
 
 static int am_option_parse_quoted_cr(const struct option *opt,
@@ -302,7 +302,7 @@ static int read_state_file(struct strbuf *sb, const struct am_state *state,
  *	GIT_AUTHOR_DATE='$author_date'
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
- * with our parsing, as the file was meant to be eval'd in the old git-am.sh
+ * with our parsing, as the file was meant to be eval'd in the old but-am.sh
  * script, and thus if the file differs from what this function expects, it is
  * better to bail out than to do something that the user does not expect.
  */
@@ -445,8 +445,8 @@ static void am_load(struct am_state *state)
 		die(_("could not parse %s"), am_path(state, "quoted-cr"));
 
 	read_state_file(&sb, state, "apply-opt", 1);
-	strvec_clear(&state->git_apply_opts);
-	if (sq_dequote_to_strvec(sb.buf, &state->git_apply_opts) < 0)
+	strvec_clear(&state->but_apply_opts);
+	if (sq_dequote_to_strvec(sb.buf, &state->but_apply_opts) < 0)
 		die(_("could not parse %s"), am_path(state, "apply-opt"));
 
 	state->rebasing = !!file_exists(am_path(state, "rebasing"));
@@ -523,7 +523,7 @@ static int copy_notes_for_rebase(const struct am_state *state)
 	struct notes_rewrite_cfg *c;
 	struct strbuf sb = STRBUF_INIT;
 	const char *invalid_line = _("Malformed input line: '%s'.");
-	const char *msg = "Notes added by 'git rebase'";
+	const char *msg = "Notes added by 'but rebase'";
 	FILE *fp;
 	int ret = 0;
 
@@ -697,7 +697,7 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 	struct strbuf last = STRBUF_INIT;
 	int ret;
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	strvec_push(&cp.args, "mailsplit");
 	strvec_pushf(&cp.args, "-d%d", state->prec);
 	strvec_pushf(&cp.args, "-o%s", state->dir);
@@ -730,7 +730,7 @@ typedef int (*mail_conv_fn)(FILE *out, FILE *in, int keep_cr);
 
 /**
  * Calls `fn` for each file in `paths` to convert the foreign patch to the
- * RFC2822 mail format suitable for parsing with git-mailinfo.
+ * RFC2822 mail format suitable for parsing with but-mailinfo.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -784,9 +784,9 @@ static int split_mail_conv(mail_conv_fn fn, struct am_state *state,
 
 /**
  * A split_mail_conv() callback that converts an StGit patch to an RFC2822
- * message suitable for parsing with git-mailinfo.
+ * message suitable for parsing with but-mailinfo.
  */
-static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr)
+static int stbut_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int subject_printed = 0;
@@ -823,12 +823,12 @@ static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr)
  * This function only supports a single StGit series file in `paths`.
  *
  * Given an StGit series file, converts the StGit patches in the series into
- * RFC2822 messages suitable for parsing with git-mailinfo, and queues them in
+ * RFC2822 messages suitable for parsing with but-mailinfo, and queues them in
  * the state directory.
  *
  * Returns 0 on success, -1 on failure.
  */
-static int split_mail_stgit_series(struct am_state *state, const char **paths,
+static int split_mail_stbut_series(struct am_state *state, const char **paths,
 					int keep_cr)
 {
 	const char *series_dir;
@@ -859,7 +859,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 	strbuf_release(&sb);
 	free(series_dir_buf);
 
-	ret = split_mail_conv(stgit_patch_to_mail, state, patches.v, keep_cr);
+	ret = split_mail_conv(stbut_patch_to_mail, state, patches.v, keep_cr);
 
 	strvec_clear(&patches);
 	return ret;
@@ -867,7 +867,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 
 /**
  * A split_patches_conv() callback that converts a mercurial patch to a RFC2822
- * message suitable for parsing with git-mailinfo.
+ * message suitable for parsing with but-mailinfo.
  */
 static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 {
@@ -910,7 +910,7 @@ static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 
 			/*
 			 * mercurial's timezone is in seconds west of UTC,
-			 * however git's timezone is in hours + minutes east of
+			 * however but's timezone is in hours + minutes east of
 			 * UTC. Convert it.
 			 */
 			tz2 = labs(tz) / 3600 * 100 + labs(tz) % 3600 / 60;
@@ -943,7 +943,7 @@ exit:
  *
  * Once split out, the individual email patches will be stored in the state
  * directory, with each patch's filename being its index, padded to state->prec
- * digits.
+ * dibuts.
  *
  * state->cur will be set to the index of the first mail, and state->last will
  * be set to the index of the last mail.
@@ -958,16 +958,16 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 {
 	if (keep_cr < 0) {
 		keep_cr = 0;
-		git_config_get_bool("am.keepcr", &keep_cr);
+		but_config_get_bool("am.keepcr", &keep_cr);
 	}
 
 	switch (patch_format) {
 	case PATCH_FORMAT_MBOX:
 		return split_mail_mbox(state, paths, keep_cr, 0);
 	case PATCH_FORMAT_STGIT:
-		return split_mail_conv(stgit_patch_to_mail, state, paths, keep_cr);
+		return split_mail_conv(stbut_patch_to_mail, state, paths, keep_cr);
 	case PATCH_FORMAT_STGIT_SERIES:
-		return split_mail_stgit_series(state, paths, keep_cr);
+		return split_mail_stbut_series(state, paths, keep_cr);
 	case PATCH_FORMAT_HG:
 		return split_mail_conv(hg_patch_to_mail, state, paths, keep_cr);
 	case PATCH_FORMAT_MBOXRD:
@@ -1067,7 +1067,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	}
 	write_state_text(state, "quoted-cr", str);
 
-	sq_quote_argv(&sb, state->git_apply_opts.v);
+	sq_quote_argv(&sb, state->but_apply_opts.v);
 	write_state_text(state, "apply-opt", sb.buf);
 
 	if (state->rebasing)
@@ -1149,7 +1149,7 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 	if (state->resolvemsg) {
 		printf_ln("%s", state->resolvemsg);
 	} else {
-		const char *cmdline = state->interactive ? "git am -i" : "git am";
+		const char *cmdline = state->interactive ? "but am -i" : "but am";
 
 		printf_ln(_("When you have resolved this problem, run \"%s --continue\"."), cmdline);
 		printf_ln(_("If you prefer to skip this patch, run \"%s --skip\" instead."), cmdline);
@@ -1178,7 +1178,7 @@ static void am_append_signoff(struct am_state *state)
 }
 
 /**
- * Parses `mail` using git-mailinfo, extracting its patch and authorship info.
+ * Parses `mail` using but-mailinfo, extracting its patch and authorship info.
  * state->msg will be set to the patch message. state->author_name,
  * state->author_email and state->author_date will be set to the patch author's
  * name, email and date respectively. The patch body will be written to the
@@ -1433,7 +1433,7 @@ static void write_index_patch(const struct am_state *state)
 
 /**
  * Like parse_mail(), but parses the mail by looking up its cummit ID
- * directly. This is used in --rebasing mode to bypass git-mailinfo's munging
+ * directly. This is used in --rebasing mode to bypass but-mailinfo's munging
  * of patches.
  *
  * state->orig_cummit will be set to the original cummit ID.
@@ -1463,7 +1463,7 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 }
 
 /**
- * Applies current patch with git-apply. Returns 0 on success, -1 otherwise. If
+ * Applies current patch with but-apply. Returns 0 on success, -1 otherwise. If
  * `index_file` is not NULL, the patch will be applied to that index.
  */
 static int run_apply(const struct am_state *state, const char *index_file)
@@ -1479,14 +1479,14 @@ static int run_apply(const struct am_state *state, const char *index_file)
 		BUG("init_apply_state() failed");
 
 	strvec_push(&apply_opts, "apply");
-	strvec_pushv(&apply_opts, state->git_apply_opts.v);
+	strvec_pushv(&apply_opts, state->but_apply_opts.v);
 
 	opts_left = apply_parse_options(apply_opts.nr, apply_opts.v,
 					&apply_state, &force_apply, &options,
 					NULL);
 
 	if (opts_left != 0)
-		die("unknown option passed through to git apply");
+		die("unknown option passed through to but apply");
 
 	if (index_file) {
 		apply_state.index_file = index_file;
@@ -1531,9 +1531,9 @@ static int build_fake_ancestor(const struct am_state *state, const char *index_f
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	strvec_push(&cp.args, "apply");
-	strvec_pushv(&cp.args, state->git_apply_opts.v);
+	strvec_pushv(&cp.args, state->but_apply_opts.v);
 	strvec_pushf(&cp.args, "--build-fake-ancestor=%s", index_file);
 	strvec_push(&cp.args, am_path(state, "patch"));
 
@@ -1641,7 +1641,7 @@ static void do_cummit(const struct am_state *state)
 		exit(1);
 
 	if (write_cache_as_tree(&tree, 0, NULL))
-		die(_("git write-tree failed to write a tree"));
+		die(_("but write-tree failed to write a tree"));
 
 	if (!get_oid_cummit("HEAD", &parent)) {
 		old_oid = &parent;
@@ -1753,7 +1753,7 @@ static int do_interactive(struct am_state *state)
 			}
 			strbuf_release(&msg);
 		} else if (*reply == 'v' || *reply == 'V') {
-			const char *pager = git_pager(1);
+			const char *pager = but_pager(1);
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			if (!pager)
@@ -1872,7 +1872,7 @@ static void am_run(struct am_state *state, int resume)
 				linelen(state->msg), state->msg);
 
 			if (advice_enabled(ADVICE_AM_WORK_DIR))
-				advise(_("Use 'git am --show-current-patch=diff' to see the failed patch"));
+				advise(_("Use 'but am --show-current-patch=diff' to see the failed patch"));
 
 			die_user_resolve(state);
 		}
@@ -1920,7 +1920,7 @@ static void am_resolve(struct am_state *state, int allow_empty)
 		if (allow_empty && is_empty_or_missing_file(am_path(state, "patch"))) {
 			printf_ln(_("No changes - recorded it as an empty cummit."));
 		} else {
-			printf_ln(_("No changes - did you forget to use 'git add'?\n"
+			printf_ln(_("No changes - did you forget to use 'but add'?\n"
 				    "If there is nothing left to stage, chances are that something else\n"
 				    "already introduced the same changes; you might want to skip this patch."));
 			die_user_resolve(state);
@@ -1929,8 +1929,8 @@ static void am_resolve(struct am_state *state, int allow_empty)
 
 	if (unmerged_cache()) {
 		printf_ln(_("You still have unmerged paths in your index.\n"
-			"You should 'git add' each file with resolved conflicts to mark them as such.\n"
-			"You might run `git rm` on a file to accept \"deleted by them\" for it."));
+			"You should 'but add' each file with resolved conflicts to mark them as such.\n"
+			"You might run `but rm` on a file to accept \"deleted by them\" for it."));
 		die_user_resolve(state);
 	}
 
@@ -2108,8 +2108,8 @@ static void am_skip(struct am_state *state)
  * Returns true if it is safe to reset HEAD to the ORIG_HEAD, false otherwise.
  *
  * It is not safe to reset HEAD when:
- * 1. git-am previously failed because the index was dirty.
- * 2. HEAD has moved since git-am previously failed.
+ * 1. but-am previously failed because the index was dirty.
+ * 2. HEAD has moved since but-am previously failed.
  */
 static int safe_to_abort(const struct am_state *state)
 {
@@ -2227,16 +2227,16 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 		*opt_value = PATCH_FORMAT_UNKNOWN;
 	else if (!strcmp(arg, "mbox"))
 		*opt_value = PATCH_FORMAT_MBOX;
-	else if (!strcmp(arg, "stgit"))
+	else if (!strcmp(arg, "stbut"))
 		*opt_value = PATCH_FORMAT_STGIT;
-	else if (!strcmp(arg, "stgit-series"))
+	else if (!strcmp(arg, "stbut-series"))
 		*opt_value = PATCH_FORMAT_STGIT_SERIES;
 	else if (!strcmp(arg, "hg"))
 		*opt_value = PATCH_FORMAT_HG;
 	else if (!strcmp(arg, "mboxrd"))
 		*opt_value = PATCH_FORMAT_MBOXRD;
 	/*
-	 * Please update $__git_patchformat in git-completion.bash
+	 * Please update $__but_patchformat in but-completion.bash
 	 * when you add new options
 	 */
 	else
@@ -2267,7 +2267,7 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	struct resume_mode *resume = container_of(opt_value, struct resume_mode, mode);
 
 	/*
-	 * Please update $__git_showcurrentpatch in git-completion.bash
+	 * Please update $__but_showcurrentpatch in but-completion.bash
 	 * when you add new options
 	 */
 	const char *valid_modes[] = {
@@ -2298,15 +2298,15 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	return 0;
 }
 
-static int git_am_config(const char *k, const char *v, void *cb)
+static int but_am_config(const char *k, const char *v, void *cb)
 {
 	int status;
 
-	status = git_gpg_config(k, v, NULL);
+	status = but_gpg_config(k, v, NULL);
 	if (status)
 		return status;
 
-	return git_default_config(k, v, NULL);
+	return but_default_config(k, v, NULL);
 }
 
 int cmd_am(int argc, const char **argv, const char *prefix)
@@ -2320,8 +2320,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int ret = 0;
 
 	const char * const usage[] = {
-		N_("git am [<options>] [(<mbox> | <Maildir>)...]"),
-		N_("git am [<options>] (--continue | --skip | --abort)"),
+		N_("but am [<options>] [(<mbox> | <Maildir>)...]"),
+		N_("but am [<options>] (--continue | --skip | --abort)"),
 		NULL
 	};
 
@@ -2339,51 +2339,51 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),
 		OPT_SET_INT('k', "keep", &state.keep,
-			N_("pass -k flag to git-mailinfo"), KEEP_TRUE),
+			N_("pass -k flag to but-mailinfo"), KEEP_TRUE),
 		OPT_SET_INT(0, "keep-non-patch", &state.keep,
-			N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
+			N_("pass -b flag to but-mailinfo"), KEEP_NON_PATCH),
 		OPT_BOOL('m', "message-id", &state.message_id,
-			N_("pass -m flag to git-mailinfo")),
+			N_("pass -m flag to but-mailinfo")),
 		OPT_SET_INT_F(0, "keep-cr", &keep_cr,
-			N_("pass --keep-cr flag to git-mailsplit for mbox format"),
+			N_("pass --keep-cr flag to but-mailsplit for mbox format"),
 			1, PARSE_OPT_NONEG),
 		OPT_SET_INT_F(0, "no-keep-cr", &keep_cr,
-			N_("do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"),
+			N_("do not pass --keep-cr flag to but-mailsplit independent of am.keepcr"),
 			0, PARSE_OPT_NONEG),
 		OPT_BOOL('c', "scissors", &state.scissors,
 			N_("strip everything before a scissors line")),
 		OPT_CALLBACK_F(0, "quoted-cr", &state.quoted_cr, N_("action"),
-			       N_("pass it through git-mailinfo"),
+			       N_("pass it through but-mailinfo"),
 			       PARSE_OPT_NONEG, am_option_parse_quoted_cr),
-		OPT_PASSTHRU_ARGV(0, "whitespace", &state.git_apply_opts, N_("action"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "whitespace", &state.but_apply_opts, N_("action"),
+			N_("pass it through but-apply"),
 			0),
-		OPT_PASSTHRU_ARGV(0, "ignore-space-change", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "ignore-space-change", &state.but_apply_opts, NULL,
+			N_("pass it through but-apply"),
 			PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &state.but_apply_opts, NULL,
+			N_("pass it through but-apply"),
 			PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "directory", &state.git_apply_opts, N_("root"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "directory", &state.but_apply_opts, N_("root"),
+			N_("pass it through but-apply"),
 			0),
-		OPT_PASSTHRU_ARGV(0, "exclude", &state.git_apply_opts, N_("path"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "exclude", &state.but_apply_opts, N_("path"),
+			N_("pass it through but-apply"),
 			0),
-		OPT_PASSTHRU_ARGV(0, "include", &state.git_apply_opts, N_("path"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "include", &state.but_apply_opts, N_("path"),
+			N_("pass it through but-apply"),
 			0),
-		OPT_PASSTHRU_ARGV('C', NULL, &state.git_apply_opts, N_("n"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV('C', NULL, &state.but_apply_opts, N_("n"),
+			N_("pass it through but-apply"),
 			0),
-		OPT_PASSTHRU_ARGV('p', NULL, &state.git_apply_opts, N_("num"),
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV('p', NULL, &state.but_apply_opts, N_("num"),
+			N_("pass it through but-apply"),
 			0),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
-		OPT_PASSTHRU_ARGV(0, "reject", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
+		OPT_PASSTHRU_ARGV(0, "reject", &state.but_apply_opts, NULL,
+			N_("pass it through but-apply"),
 			PARSE_OPT_NOARG),
 		OPT_STRING(0, "resolvemsg", &state.resolvemsg, NULL,
 			N_("override error message when patch failure occurs")),
@@ -2423,14 +2423,14 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		  N_("how to handle empty patches"),
 		  PARSE_OPT_NONEG, am_option_parse_empty),
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
-			N_("(internal use for git-rebase)")),
+			N_("(internal use for but-rebase)")),
 		OPT_END()
 	};
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(usage, options);
 
-	git_config(git_am_config, NULL);
+	but_config(but_am_config, NULL);
 
 	am_state_init(&state);
 
@@ -2445,7 +2445,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				"it will be removed. Please do not use it anymore."));
 
 	/* Ensure a valid cummitter ident can be constructed */
-	git_cummitter_info(IDENT_STRICT);
+	but_cummitter_info(IDENT_STRICT);
 
 	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		die(_("failed to read the index"));
@@ -2488,7 +2488,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			}
 
 			die(_("Stray %s directory found.\n"
-				"Use \"git am --abort\" to remove it."),
+				"Use \"but am --abort\" to remove it."),
 				state.dir);
 		}
 

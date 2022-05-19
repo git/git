@@ -18,7 +18,7 @@
 #define THREE_STAGED 2
 void *RERERE_RESOLVED = &RERERE_RESOLVED;
 
-/* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
+/* if rerere_enabled == -1, fall back to detection of .but/rr-cache */
 static int rerere_enabled = -1;
 
 /* automatically update cleanly resolved paths to the index */
@@ -86,12 +86,12 @@ static void assign_variant(struct rerere_id *id)
 const char *rerere_path(const struct rerere_id *id, const char *file)
 {
 	if (!file)
-		return git_path("rr-cache/%s", rerere_id_hex(id));
+		return but_path("rr-cache/%s", rerere_id_hex(id));
 
 	if (id->variant <= 0)
-		return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
+		return but_path("rr-cache/%s/%s", rerere_id_hex(id), file);
 
-	return git_path("rr-cache/%s/%s.%d",
+	return but_path("rr-cache/%s/%s.%d",
 			rerere_id_hex(id), file, id->variant);
 }
 
@@ -117,7 +117,7 @@ static int is_rr_file(const char *name, const char *filename, int *variant)
 static void scan_rerere_dir(struct rerere_dir *rr_dir)
 {
 	struct dirent *de;
-	DIR *dir = opendir(git_path("rr-cache/%s", rr_dir->name));
+	DIR *dir = opendir(but_path("rr-cache/%s", rr_dir->name));
 
 	if (!dir)
 		return;
@@ -179,13 +179,13 @@ static struct rerere_id *new_rerere_id(unsigned char *hash)
  * $GIT_DIR/MERGE_RR file is a collection of records, each of which is
  * "conflict ID", a HT and pathname, terminated with a NUL, and is
  * used to keep track of the set of paths that "rerere" may need to
- * work on (i.e. what is left by the previous invocation of "git
+ * work on (i.e. what is left by the previous invocation of "but
  * rerere" during the current conflict resolution session).
  */
 static void read_rr(struct repository *r, struct string_list *rr)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *in = fopen_or_warn(git_path_merge_rr(r), "r");
+	FILE *in = fopen_or_warn(but_path_merge_rr(r), "r");
 
 	if (!in)
 		return;
@@ -345,7 +345,7 @@ static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
 }
 
 static int handle_conflict(struct strbuf *out, struct rerere_io *io,
-			   int marker_size, git_hash_ctx *ctx)
+			   int marker_size, but_hash_ctx *ctx)
 {
 	enum {
 		RR_SIDE_1 = 0, RR_SIDE_2, RR_ORIGINAL
@@ -419,7 +419,7 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
  */
 static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_size)
 {
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 	struct strbuf buf = STRBUF_INIT, out = STRBUF_INIT;
 	int has_conflicts = 0;
 	if (hash)
@@ -830,7 +830,7 @@ static int do_plain_rerere(struct repository *r,
 		string_list_insert(rr, path)->util = id;
 
 		/* Ensure that the directory exists. */
-		mkdir_in_gitdir(rerere_path(id, NULL));
+		mkdir_in_butdir(rerere_path(id, NULL));
 	}
 
 	for (i = 0; i < rr->nr; i++)
@@ -842,14 +842,14 @@ static int do_plain_rerere(struct repository *r,
 	return write_rr(rr, fd);
 }
 
-static void git_rerere_config(void)
+static void but_rerere_config(void)
 {
-	git_config_get_bool("rerere.enabled", &rerere_enabled);
-	git_config_get_bool("rerere.autoupdate", &rerere_autoupdate);
-	git_config(git_default_config, NULL);
+	but_config_get_bool("rerere.enabled", &rerere_enabled);
+	but_config_get_bool("rerere.autoupdate", &rerere_autoupdate);
+	but_config(but_default_config, NULL);
 }
 
-static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
+static GIT_PATH_FUNC(but_path_rr_cache, "rr-cache")
 
 static int is_rerere_enabled(void)
 {
@@ -858,12 +858,12 @@ static int is_rerere_enabled(void)
 	if (!rerere_enabled)
 		return 0;
 
-	rr_cache_exists = is_directory(git_path_rr_cache());
+	rr_cache_exists = is_directory(but_path_rr_cache());
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
-	if (!rr_cache_exists && mkdir_in_gitdir(git_path_rr_cache()))
-		die(_("could not create directory '%s'"), git_path_rr_cache());
+	if (!rr_cache_exists && mkdir_in_butdir(but_path_rr_cache()))
+		die(_("could not create directory '%s'"), but_path_rr_cache());
 	return 1;
 }
 
@@ -871,7 +871,7 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 {
 	int fd;
 
-	git_rerere_config();
+	but_rerere_config();
 	if (!is_rerere_enabled())
 		return -1;
 
@@ -881,7 +881,7 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 		fd = 0;
 	else
 		fd = hold_lock_file_for_update(&write_lock,
-					       git_path_merge_rr(r),
+					       but_path_merge_rr(r),
 					       LOCK_DIE_ON_ERROR);
 	read_rr(r, merge_rr);
 	return fd;
@@ -1184,10 +1184,10 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
-	git_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
-	git_config_get_expiry_in_days("gc.rerereunresolved", &cutoff_noresolve, now);
-	git_config(git_default_config, NULL);
-	dir = opendir(git_path("rr-cache"));
+	but_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
+	but_config_get_expiry_in_days("gc.rerereunresolved", &cutoff_noresolve, now);
+	but_config(but_default_config, NULL);
+	dir = opendir(but_path("rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));
 	/* Collect stale conflict IDs ... */
@@ -1216,7 +1216,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 
 	/* ... and then remove the empty directories */
 	for (i = 0; i < to_remove.nr; i++)
-		rmdir(git_path("rr-cache/%s", to_remove.items[i].string));
+		rmdir(but_path("rr-cache/%s", to_remove.items[i].string));
 	string_list_clear(&to_remove, 0);
 	rollback_lock_file(&write_lock);
 }
@@ -1242,6 +1242,6 @@ void rerere_clear(struct repository *r, struct string_list *merge_rr)
 			rmdir(rerere_path(id, NULL));
 		}
 	}
-	unlink_or_warn(git_path_merge_rr(r));
+	unlink_or_warn(but_path_merge_rr(r));
 	rollback_lock_file(&write_lock);
 }

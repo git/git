@@ -35,30 +35,30 @@ create_history () {
 			print "M 100644 $blob $_";
 		}
 	' "$@" |
-	git fast-import --date-format=now
+	but fast-import --date-format=now
 }
 
 # make a series of tags, one per cummit in the revision range given by $@
 create_tags () {
-	git rev-list "$@" |
+	but rev-list "$@" |
 	perl -lne 'print "create refs/tags/$. $_"' |
-	git update-ref --stdin
+	but update-ref --stdin
 }
 
 test_expect_success 'create parent and child' '
-	git init parent &&
-	git -C parent cummit --allow-empty -m base &&
-	git clone parent child &&
-	git -C parent cummit --allow-empty -m trigger-fetch
+	but init parent &&
+	but -C parent cummit --allow-empty -m base &&
+	but clone parent child &&
+	but -C parent cummit --allow-empty -m trigger-fetch
 '
 
 test_expect_success 'populate parent tags' '
 	(
 		cd parent &&
-		blob=$(echo content | git hash-object -w --stdin) &&
+		blob=$(echo content | but hash-object -w --stdin) &&
 		create_history cruft 3000 $blob &&
 		create_tags cruft &&
-		git branch -D cruft
+		but branch -D cruft
 	)
 '
 
@@ -71,8 +71,8 @@ test_expect_success 'create child packs' '
 
 test_perf 'fetch' '
 	# make sure there is something to fetch on each iteration
-	git -C child update-ref -d refs/remotes/origin/master &&
-	git -C child fetch
+	but -C child update-ref -d refs/remotes/origin/master &&
+	but -C child fetch
 '
 
 test_done

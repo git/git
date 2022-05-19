@@ -16,9 +16,9 @@ mk_repo_pair () {
 	test_create_repo workbench &&
 	(
 		cd upstream &&
-		git config receive.denyCurrentBranch warn &&
-		mkdir -p .git/hooks &&
-		cat >.git/hooks/pre-receive <<-'EOF' &&
+		but config receive.denyCurrentBranch warn &&
+		mkdir -p .but/hooks &&
+		cat >.but/hooks/pre-receive <<-'EOF' &&
 		#!/bin/sh
 		if test -n "$GIT_PUSH_OPTION_COUNT"; then
 			i=0
@@ -30,9 +30,9 @@ mk_repo_pair () {
 			done
 		fi
 		EOF
-		chmod u+x .git/hooks/pre-receive
+		chmod u+x .but/hooks/pre-receive
 
-		cat >.git/hooks/post-receive <<-'EOF' &&
+		cat >.but/hooks/post-receive <<-'EOF' &&
 		#!/bin/sh
 		if test -n "$GIT_PUSH_OPTION_COUNT"; then
 			i=0
@@ -44,11 +44,11 @@ mk_repo_pair () {
 			done
 		fi
 		EOF
-		chmod u+x .git/hooks/post-receive
+		chmod u+x .but/hooks/post-receive
 	) &&
 	(
 		cd workbench &&
-		git remote add up ../upstream
+		but remote add up ../upstream
 	)
 }
 
@@ -56,180 +56,180 @@ mk_repo_pair () {
 # i.e. test_refs second HEAD@{2}
 test_refs () {
 	test $# = 2 &&
-	git -C upstream rev-parse --verify "$1" >expect &&
-	git -C workbench rev-parse --verify "$2" >actual &&
+	but -C upstream rev-parse --verify "$1" >expect &&
+	but -C workbench rev-parse --verify "$2" >actual &&
 	test_cmp expect actual
 }
 
 test_expect_success 'one push option works for a single branch' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git push --push-option=asdf up main
+		but push --push-option=asdf up main
 	) &&
 	test_refs main main &&
 	echo "asdf" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'push option denied by remote' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions false &&
+	but -C upstream config receive.advertisePushOptions false &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		test_must_fail git push --push-option=asdf up main
+		test_must_fail but push --push-option=asdf up main
 	) &&
 	test_refs main HEAD@{1}
 '
 
 test_expect_success 'two push options work' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git push --push-option=asdf --push-option="more structured text" up main
+		but push --push-option=asdf --push-option="more structured text" up main
 	) &&
 	test_refs main main &&
 	printf "asdf\nmore structured text\n" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'push options and submodules' '
 	test_when_finished "rm -rf parent" &&
 	test_when_finished "rm -rf parent_upstream" &&
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	cp -r upstream parent_upstream &&
 	test_cummit -C upstream one &&
 
 	test_create_repo parent &&
-	git -C parent remote add up ../parent_upstream &&
+	but -C parent remote add up ../parent_upstream &&
 	test_cummit -C parent one &&
-	git -C parent push --mirror up &&
+	but -C parent push --mirror up &&
 
-	git -C parent submodule add ../upstream workbench &&
-	git -C parent/workbench remote add up ../../upstream &&
-	git -C parent cummit -m "add submodule" &&
+	but -C parent submodule add ../upstream workbench &&
+	but -C parent/workbench remote add up ../../upstream &&
+	but -C parent cummit -m "add submodule" &&
 
 	test_cummit -C parent/workbench two &&
-	git -C parent add workbench &&
-	git -C parent cummit -m "update workbench" &&
+	but -C parent add workbench &&
+	but -C parent cummit -m "update workbench" &&
 
-	git -C parent push \
+	but -C parent push \
 		--push-option=asdf --push-option="more structured text" \
 		--recurse-submodules=on-demand up main &&
 
-	git -C upstream rev-parse --verify main >expect &&
-	git -C parent/workbench rev-parse --verify main >actual &&
+	but -C upstream rev-parse --verify main >expect &&
+	but -C parent/workbench rev-parse --verify main >actual &&
 	test_cmp expect actual &&
 
-	git -C parent_upstream rev-parse --verify main >expect &&
-	git -C parent rev-parse --verify main >actual &&
+	but -C parent_upstream rev-parse --verify main >expect &&
+	but -C parent rev-parse --verify main >actual &&
 	test_cmp expect actual &&
 
 	printf "asdf\nmore structured text\n" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options &&
-	test_cmp expect parent_upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect parent_upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options &&
+	test_cmp expect parent_upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect parent_upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'default push option' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git -c push.pushOption=default push up main
+		but -c push.pushOption=default push up main
 	) &&
 	test_refs main main &&
 	echo "default" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'two default push options' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git -c push.pushOption=default1 -c push.pushOption=default2 push up main
+		but -c push.pushOption=default1 -c push.pushOption=default2 push up main
 	) &&
 	test_refs main main &&
 	printf "default1\ndefault2\n" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'push option from command line overrides from-config push option' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git -c push.pushOption=default push --push-option=manual up main
+		but -c push.pushOption=default push --push-option=manual up main
 	) &&
 	test_refs main main &&
 	echo "manual" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'empty value of push.pushOption in config clears the list' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		git -c push.pushOption=default1 -c push.pushOption= -c push.pushOption=default2 push up main
+		but -c push.pushOption=default1 -c push.pushOption= -c push.pushOption=default2 push up main
 	) &&
 	test_refs main main &&
 	echo "default2" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
-	test_cmp expect upstream/.git/hooks/post-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.but/hooks/post-receive.push_options
 '
 
 test_expect_success 'invalid push option in config' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
 		test_cummit one &&
-		git push --mirror up &&
+		but push --mirror up &&
 		test_cummit two &&
-		test_must_fail git -c push.pushOption push up main
+		test_must_fail but -c push.pushOption push up main
 	) &&
 	test_refs main HEAD@{1}
 '
 
 test_expect_success 'push options keep quoted characters intact (direct)' '
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
+	but -C upstream config receive.advertisePushOptions true &&
 	test_cummit -C workbench one &&
-	git -C workbench push --push-option="\"embedded quotes\"" up main &&
+	but -C workbench push --push-option="\"embedded quotes\"" up main &&
 	echo "\"embedded quotes\"" >expect &&
-	test_cmp expect upstream/.git/hooks/pre-receive.push_options
+	test_cmp expect upstream/.but/hooks/pre-receive.push_options
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -239,39 +239,39 @@ start_httpd
 # bool set to $1
 mk_http_pair () {
 	test_when_finished "rm -rf test_http_clone" &&
-	test_when_finished 'rm -rf "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git' &&
+	test_when_finished 'rm -rf "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but' &&
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions "$1" &&
-	git -C upstream config http.receivepack true &&
-	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
-	git clone "$HTTPD_URL"/smart/upstream test_http_clone
+	but -C upstream config receive.advertisePushOptions "$1" &&
+	but -C upstream config http.receivepack true &&
+	cp -R upstream/.but "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but &&
+	but clone "$HTTPD_URL"/smart/upstream test_http_clone
 }
 
 test_expect_success 'push option denied properly by http server' '
 	mk_http_pair false &&
 	test_cummit -C test_http_clone one &&
-	test_must_fail git -C test_http_clone push --push-option=asdf origin main 2>actual &&
+	test_must_fail but -C test_http_clone push --push-option=asdf origin main 2>actual &&
 	test_i18ngrep "the receiving end does not support push options" actual &&
-	git -C test_http_clone push origin main
+	but -C test_http_clone push origin main
 '
 
 test_expect_success 'push options work properly across http' '
 	mk_http_pair true &&
 
 	test_cummit -C test_http_clone one &&
-	git -C test_http_clone push origin main &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify main >expect &&
-	git -C test_http_clone rev-parse --verify main >actual &&
+	but -C test_http_clone push origin main &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but rev-parse --verify main >expect &&
+	but -C test_http_clone rev-parse --verify main >actual &&
 	test_cmp expect actual &&
 
 	test_cummit -C test_http_clone two &&
-	git -C test_http_clone push --push-option=asdf --push-option="more structured text" origin main &&
+	but -C test_http_clone push --push-option=asdf --push-option="more structured text" origin main &&
 	printf "asdf\nmore structured text\n" >expect &&
-	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options &&
-	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/post-receive.push_options &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but/hooks/pre-receive.push_options &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but/hooks/post-receive.push_options &&
 
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify main >expect &&
-	git -C test_http_clone rev-parse --verify main >actual &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but rev-parse --verify main >expect &&
+	but -C test_http_clone rev-parse --verify main >actual &&
 	test_cmp expect actual
 '
 
@@ -279,9 +279,9 @@ test_expect_success 'push options keep quoted characters intact (http)' '
 	mk_http_pair true &&
 
 	test_cummit -C test_http_clone one &&
-	git -C test_http_clone push --push-option="\"embedded quotes\"" origin main &&
+	but -C test_http_clone push --push-option="\"embedded quotes\"" origin main &&
 	echo "\"embedded quotes\"" >expect &&
-	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.but/hooks/pre-receive.push_options
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

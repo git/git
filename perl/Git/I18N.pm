@@ -26,7 +26,7 @@ use constant NO_GETTEXT => (
 );
 
 sub __bootstrap_locale_messages {
-	our $TEXTDOMAIN = 'git';
+	our $TEXTDOMAIN = 'but';
 	our $TEXTDOMAINDIR ||= $ENV{GIT_TEXTDOMAINDIR} || '@@LOCALEDIR@@';
 	die "NO_GETTEXT=" . NO_GETTEXT_STR if NO_GETTEXT;
 

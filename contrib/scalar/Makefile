@@ -9,7 +9,7 @@ include ../../config.mak.uname
 -include ../../config.mak
 
 TARGETS = scalar$(X) scalar.o
-GITLIBS = ../../common-main.o ../../libgit.a ../../xdiff/lib.a
+GITLIBS = ../../common-main.o ../../libbut.a ../../xdiff/lib.a
 
 all:: scalar$(X) ../../bin-wrappers/scalar
 

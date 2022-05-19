@@ -127,9 +127,9 @@ struct grep_opt {
 	 * field should probably start using "repo" in "struct grep_source"
 	 * instead.
 	 *
-	 * This is potentially the cause of at least one bug - "git grep"
+	 * This is potentially the cause of at least one bug - "but grep"
 	 * using the textconv attributes from the superproject on the
-	 * submodules. See the failing "git grep --textconv" tests in
+	 * submodules. See the failing "but grep --textconv" tests in
 	 * t7814-grep-recurse-submodules.sh for more information.
 	 */
 	struct repository *repo;

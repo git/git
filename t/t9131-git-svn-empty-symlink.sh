@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='test that git handles an svn repository with empty symlinks'
+test_description='test that but handles an svn repository with empty symlinks'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 test_expect_success 'load svn dumpfile' '
 	svnadmin load "$rawsvnrepo" <<EOF
 SVN-fs-dump-format-version: 2
@@ -82,28 +82,28 @@ link doink
 EOF
 '
 
-test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" x'
+test_expect_success 'clone using but svn' 'but svn clone -r1 "$svnrepo" x'
 test_expect_success 'enable broken symlink workaround' \
-  '(cd x && git config svn.brokenSymlinkWorkaround true)'
+  '(cd x && but config svn.brokenSymlinkWorkaround true)'
 test_expect_success '"bar" is an empty file' 'test_must_be_empty x/bar'
 test_expect_success 'get "bar" => symlink fix from svn' \
-		'(cd x && git svn rebase)'
+		'(cd x && but svn rebase)'
 test_expect_success SYMLINKS '"bar" becomes a symlink' 'test -h x/bar'
 
 
-test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" y'
+test_expect_success 'clone using but svn' 'but svn clone -r1 "$svnrepo" y'
 test_expect_success 'disable broken symlink workaround' \
-  '(cd y && git config svn.brokenSymlinkWorkaround false)'
+  '(cd y && but config svn.brokenSymlinkWorkaround false)'
 test_expect_success '"bar" is an empty file' 'test_must_be_empty y/bar'
 test_expect_success 'get "bar" => symlink fix from svn' \
-		'(cd y && git svn rebase)'
+		'(cd y && but svn rebase)'
 test_expect_success '"bar" does not become a symlink' '! test -L y/bar'
 
 # svn.brokenSymlinkWorkaround is unset
-test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" z'
+test_expect_success 'clone using but svn' 'but svn clone -r1 "$svnrepo" z'
 test_expect_success '"bar" is an empty file' 'test_must_be_empty z/bar'
 test_expect_success 'get "bar" => symlink fix from svn' \
-		'(cd z && git svn rebase)'
+		'(cd z && but svn rebase)'
 test_expect_success '"bar" does not become a symlink' '! test -L z/bar'
 
 

@@ -9,50 +9,50 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 setup_srcdst_basic () {
 	rm -fr src dst &&
-	git clone --no-local . src &&
-	git clone --no-local src dst &&
+	but clone --no-local . src &&
+	but clone --no-local src dst &&
 	(
-		cd src && git checkout HEAD^0
+		cd src && but checkout HEAD^0
 	)
 }
 
 # For tests with "--force-if-includes".
 setup_src_dup_dst () {
 	rm -fr src dup dst &&
-	git init --bare dst &&
-	git clone --no-local dst src &&
-	git clone --no-local dst dup
+	but init --bare dst &&
+	but clone --no-local dst src &&
+	but clone --no-local dst dup
 	(
 		cd src &&
 		test_cummit A &&
 		test_cummit B &&
 		test_cummit C &&
-		git push origin
+		but push origin
 	) &&
 	(
 		cd dup &&
-		git fetch &&
-		git merge origin/main &&
-		git switch -c branch main~2 &&
+		but fetch &&
+		but merge origin/main &&
+		but switch -c branch main~2 &&
 		test_cummit D &&
 		test_cummit E &&
-		git push origin --all
+		but push origin --all
 	) &&
 	(
 		cd src &&
-		git switch main &&
-		git fetch --all &&
-		git branch branch --track origin/branch &&
-		git rebase origin/main
+		but switch main &&
+		but fetch --all &&
+		but branch branch --track origin/branch &&
+		but rebase origin/main
 	) &&
 	(
 		cd dup &&
-		git switch main &&
+		but switch main &&
 		test_cummit F &&
 		test_cummit G &&
-		git switch branch &&
+		but switch branch &&
 		test_commit H &&
-		git push origin --all
+		but push origin --all
 	)
 }
 
@@ -68,11 +68,11 @@ test_expect_success 'push to update (protected)' '
 	(
 		cd dst &&
 		test_cummit D &&
-		test_must_fail git push --force-with-lease=main:main origin main 2>err &&
+		test_must_fail but push --force-with-lease=main:main origin main 2>err &&
 		grep "stale info" err
 	) &&
-	git ls-remote . refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote . refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -81,11 +81,11 @@ test_expect_success 'push to update (protected, forced)' '
 	(
 		cd dst &&
 		test_cummit D &&
-		git push --force --force-with-lease=main:main origin main 2>err &&
+		but push --force --force-with-lease=main:main origin main 2>err &&
 		grep "forced update" err
 	) &&
-	git ls-remote dst refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote dst refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -93,20 +93,20 @@ test_expect_success 'push to update (protected, tracking)' '
 	setup_srcdst_basic &&
 	(
 		cd src &&
-		git checkout main &&
+		but checkout main &&
 		test_cummit D &&
-		git checkout HEAD^0
+		but checkout HEAD^0
 	) &&
-	git ls-remote src refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >expect &&
 	(
 		cd dst &&
 		test_cummit E &&
-		git ls-remote . refs/remotes/origin/main >expect &&
-		test_must_fail git push --force-with-lease=main origin main &&
-		git ls-remote . refs/remotes/origin/main >actual &&
+		but ls-remote . refs/remotes/origin/main >expect &&
+		test_must_fail but push --force-with-lease=main origin main &&
+		but ls-remote . refs/remotes/origin/main >actual &&
 		test_cmp expect actual
 	) &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -114,18 +114,18 @@ test_expect_success 'push to update (protected, tracking, forced)' '
 	setup_srcdst_basic &&
 	(
 		cd src &&
-		git checkout main &&
+		but checkout main &&
 		test_cummit D &&
-		git checkout HEAD^0
+		but checkout HEAD^0
 	) &&
 	(
 		cd dst &&
 		test_cummit E &&
-		git ls-remote . refs/remotes/origin/main >expect &&
-		git push --force --force-with-lease=main origin main
+		but ls-remote . refs/remotes/origin/main >expect &&
+		but push --force --force-with-lease=main origin main
 	) &&
-	git ls-remote dst refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote dst refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -134,10 +134,10 @@ test_expect_success 'push to update (allowed)' '
 	(
 		cd dst &&
 		test_cummit D &&
-		git push --force-with-lease=main:main^ origin main
+		but push --force-with-lease=main:main^ origin main
 	) &&
-	git ls-remote dst refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote dst refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -146,11 +146,11 @@ test_expect_success 'push to update (allowed, tracking)' '
 	(
 		cd dst &&
 		test_cummit D &&
-		git push --force-with-lease=main origin main 2>err &&
+		but push --force-with-lease=main origin main 2>err &&
 		! grep "forced update" err
 	) &&
-	git ls-remote dst refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote dst refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -158,24 +158,24 @@ test_expect_success 'push to update (allowed even though no-ff)' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git reset --hard HEAD^ &&
+		but reset --hard HEAD^ &&
 		test_cummit D &&
-		git push --force-with-lease=main origin main 2>err &&
+		but push --force-with-lease=main origin main 2>err &&
 		grep "forced update" err
 	) &&
-	git ls-remote dst refs/heads/main >expect &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote dst refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'push to delete (protected)' '
 	setup_srcdst_basic &&
-	git ls-remote src refs/heads/main >expect &&
+	but ls-remote src refs/heads/main >expect &&
 	(
 		cd dst &&
-		test_must_fail git push --force-with-lease=main:main^ origin :main
+		test_must_fail but push --force-with-lease=main:main^ origin :main
 	) &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote src refs/heads/main >actual &&
 	test_cmp expect actual
 '
 
@@ -183,9 +183,9 @@ test_expect_success 'push to delete (protected, forced)' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git push --force --force-with-lease=main:main^ origin :main
+		but push --force --force-with-lease=main:main^ origin :main
 	) &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote src refs/heads/main >actual &&
 	test_must_be_empty actual
 '
 
@@ -193,10 +193,10 @@ test_expect_success 'push to delete (allowed)' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git push --force-with-lease=main origin :main 2>err &&
+		but push --force-with-lease=main origin :main 2>err &&
 		grep deleted err
 	) &&
-	git ls-remote src refs/heads/main >actual &&
+	but ls-remote src refs/heads/main >actual &&
 	test_must_be_empty actual
 '
 
@@ -204,14 +204,14 @@ test_expect_success 'cover everything with default force-with-lease (protected)'
 	setup_srcdst_basic &&
 	(
 		cd src &&
-		git branch nain main^
+		but branch nain main^
 	) &&
-	git ls-remote src refs/heads/\* >expect &&
+	but ls-remote src refs/heads/\* >expect &&
 	(
 		cd dst &&
-		test_must_fail git push --force-with-lease origin main main:nain
+		test_must_fail but push --force-with-lease origin main main:nain
 	) &&
-	git ls-remote src refs/heads/\* >actual &&
+	but ls-remote src refs/heads/\* >actual &&
 	test_cmp expect actual
 '
 
@@ -219,16 +219,16 @@ test_expect_success 'cover everything with default force-with-lease (allowed)' '
 	setup_srcdst_basic &&
 	(
 		cd src &&
-		git branch nain main^
+		but branch nain main^
 	) &&
 	(
 		cd dst &&
-		git fetch &&
-		git push --force-with-lease origin main main:nain
+		but fetch &&
+		but push --force-with-lease origin main main:nain
 	) &&
-	git ls-remote dst refs/heads/main |
+	but ls-remote dst refs/heads/main |
 	sed -e "s/main/nain/" >expect &&
-	git ls-remote src refs/heads/nain >actual &&
+	but ls-remote src refs/heads/nain >actual &&
 	test_cmp expect actual
 '
 
@@ -236,11 +236,11 @@ test_expect_success 'new branch covered by force-with-lease' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git branch branch main &&
-		git push --force-with-lease=branch origin branch
+		but branch branch main &&
+		but push --force-with-lease=branch origin branch
 	) &&
-	git ls-remote dst refs/heads/branch >expect &&
-	git ls-remote src refs/heads/branch >actual &&
+	but ls-remote dst refs/heads/branch >expect &&
+	but ls-remote src refs/heads/branch >actual &&
 	test_cmp expect actual
 '
 
@@ -248,11 +248,11 @@ test_expect_success 'new branch covered by force-with-lease (explicit)' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git branch branch main &&
-		git push --force-with-lease=branch: origin branch
+		but branch branch main &&
+		but push --force-with-lease=branch: origin branch
 	) &&
-	git ls-remote dst refs/heads/branch >expect &&
-	git ls-remote src refs/heads/branch >actual &&
+	but ls-remote dst refs/heads/branch >expect &&
+	but ls-remote src refs/heads/branch >actual &&
 	test_cmp expect actual
 '
 
@@ -260,61 +260,61 @@ test_expect_success 'new branch already exists' '
 	setup_srcdst_basic &&
 	(
 		cd src &&
-		git checkout -b branch main &&
+		but checkout -b branch main &&
 		test_cummit F
 	) &&
 	(
 		cd dst &&
-		git branch branch main &&
-		test_must_fail git push --force-with-lease=branch: origin branch
+		but branch branch main &&
+		test_must_fail but push --force-with-lease=branch: origin branch
 	)
 '
 
 test_expect_success 'background updates of REMOTE can be mitigated with a non-updated REMOTE-push' '
 	rm -rf src dst &&
-	git init --bare src.bare &&
+	but init --bare src.bare &&
 	test_when_finished "rm -rf src.bare" &&
-	git clone --no-local src.bare dst &&
+	but clone --no-local src.bare dst &&
 	test_when_finished "rm -rf dst" &&
 	(
 		cd dst &&
 		test_cummit G &&
-		git remote add origin-push ../src.bare &&
-		git push origin-push main:main
+		but remote add origin-push ../src.bare &&
+		but push origin-push main:main
 	) &&
-	git clone --no-local src.bare dst2 &&
+	but clone --no-local src.bare dst2 &&
 	test_when_finished "rm -rf dst2" &&
 	(
 		cd dst2 &&
 		test_commit H &&
-		git push
+		but push
 	) &&
 	(
 		cd dst &&
 		test_cummit I &&
-		git fetch origin &&
-		test_must_fail git push --force-with-lease origin-push &&
-		git fetch origin-push &&
-		git push --force-with-lease origin-push
+		but fetch origin &&
+		test_must_fail but push --force-with-lease origin-push &&
+		but fetch origin-push &&
+		but push --force-with-lease origin-push
 	)
 '
 
 test_expect_success 'background updates to remote can be mitigated with "--force-if-includes"' '
 	setup_src_dup_dst &&
 	test_when_finished "rm -fr dst src dup" &&
-	git ls-remote dst refs/heads/main >expect.main &&
-	git ls-remote dst refs/heads/branch >expect.branch &&
+	but ls-remote dst refs/heads/main >expect.main &&
+	but ls-remote dst refs/heads/branch >expect.branch &&
 	(
 		cd src &&
-		git switch branch &&
+		but switch branch &&
 		test_cummit I &&
-		git switch main &&
+		but switch main &&
 		test_cummit J &&
-		git fetch --all &&
-		test_must_fail git push --force-with-lease --force-if-includes --all
+		but fetch --all &&
+		test_must_fail but push --force-with-lease --force-if-includes --all
 	) &&
-	git ls-remote dst refs/heads/main >actual.main &&
-	git ls-remote dst refs/heads/branch >actual.branch &&
+	but ls-remote dst refs/heads/main >actual.main &&
+	but ls-remote dst refs/heads/branch >actual.branch &&
 	test_cmp expect.main actual.main &&
 	test_cmp expect.branch actual.branch
 '
@@ -322,37 +322,37 @@ test_expect_success 'background updates to remote can be mitigated with "--force
 test_expect_success 'background updates to remote can be mitigated with "push.useForceIfIncludes"' '
 	setup_src_dup_dst &&
 	test_when_finished "rm -fr dst src dup" &&
-	git ls-remote dst refs/heads/main >expect.main &&
+	but ls-remote dst refs/heads/main >expect.main &&
 	(
 		cd src &&
-		git switch branch &&
+		but switch branch &&
 		test_cummit I &&
-		git switch main &&
+		but switch main &&
 		test_cummit J &&
-		git fetch --all &&
-		git config --local push.useForceIfIncludes true &&
-		test_must_fail git push --force-with-lease=main origin main
+		but fetch --all &&
+		but config --local push.useForceIfIncludes true &&
+		test_must_fail but push --force-with-lease=main origin main
 	) &&
-	git ls-remote dst refs/heads/main >actual.main &&
+	but ls-remote dst refs/heads/main >actual.main &&
 	test_cmp expect.main actual.main
 '
 
 test_expect_success '"--force-if-includes" should be disabled for --force-with-lease="<refname>:<expect>"' '
 	setup_src_dup_dst &&
 	test_when_finished "rm -fr dst src dup" &&
-	git ls-remote dst refs/heads/main >expect.main &&
+	but ls-remote dst refs/heads/main >expect.main &&
 	(
 		cd src &&
-		git switch branch &&
+		but switch branch &&
 		test_cummit I &&
-		git switch main &&
+		but switch main &&
 		test_cummit J &&
-		remote_head="$(git rev-parse refs/remotes/origin/main)" &&
-		git fetch --all &&
-		test_must_fail git push --force-if-includes --force-with-lease="main:$remote_head" 2>err &&
+		remote_head="$(but rev-parse refs/remotes/origin/main)" &&
+		but fetch --all &&
+		test_must_fail but push --force-if-includes --force-with-lease="main:$remote_head" 2>err &&
 		grep "stale info" err
 	) &&
-	git ls-remote dst refs/heads/main >actual.main &&
+	but ls-remote dst refs/heads/main >actual.main &&
 	test_cmp expect.main actual.main
 '
 
@@ -361,12 +361,12 @@ test_expect_success '"--force-if-includes" should allow forced update after a re
 	test_when_finished "rm -fr dst src dup" &&
 	(
 		cd src &&
-		git switch branch &&
+		but switch branch &&
 		test_cummit I &&
-		git switch main &&
+		but switch main &&
 		test_cummit J &&
-		git pull --rebase origin main &&
-		git push --force-if-includes --force-with-lease="main"
+		but pull --rebase origin main &&
+		but push --force-if-includes --force-with-lease="main"
 	)
 '
 
@@ -375,13 +375,13 @@ test_expect_success '"--force-if-includes" should allow forced update after a re
 	test_when_finished "rm -fr dst src dup" &&
 	(
 		cd src &&
-		git switch branch &&
+		but switch branch &&
 		test_cummit I &&
-		git switch main &&
+		but switch main &&
 		test_cummit J &&
-		git pull --rebase origin main &&
-		git rebase --onto HEAD~4 HEAD~1 &&
-		git push --force-if-includes --force-with-lease="main"
+		but pull --rebase origin main &&
+		but rebase --onto HEAD~4 HEAD~1 &&
+		but push --force-if-includes --force-with-lease="main"
 	)
 '
 
@@ -390,9 +390,9 @@ test_expect_success '"--force-if-includes" should allow deletes' '
 	test_when_finished "rm -fr dst src dup" &&
 	(
 		cd src &&
-		git switch branch &&
-		git pull --rebase origin branch &&
-		git push --force-if-includes --force-with-lease="branch" origin :branch
+		but switch branch &&
+		but pull --rebase origin branch &&
+		but push --force-if-includes --force-with-lease="branch" origin :branch
 	)
 '
 

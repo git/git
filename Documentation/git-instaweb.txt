@@ -1,20 +1,20 @@
-git-instaweb(1)
+but-instaweb(1)
 ===============
 
 NAME
 ----
-git-instaweb - Instantly browse your working repository in gitweb
+but-instaweb - Instantly browse your working repository in butweb
 
 SYNOPSIS
 --------
 [verse]
-'git instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
+'but instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
                [--browser=<browser>]
-'git instaweb' [--start] [--stop] [--restart]
+'but instaweb' [--start] [--stop] [--restart]
 
 DESCRIPTION
 -----------
-A simple script to set up `gitweb` and a web server for browsing the local
+A simple script to set up `butweb` and a web server for browsing the local
 repository.
 
 OPTIONS
@@ -44,10 +44,10 @@ OPTIONS
 
 -b::
 --browser::
-	The web browser that should be used to view the gitweb
-	page. This will be passed to the 'git web{litdd}browse' helper
-	script along with the URL of the gitweb instance. See
-	linkgit:git-web{litdd}browse[1] for more information about this. If
+	The web browser that should be used to view the butweb
+	page. This will be passed to the 'but web{litdd}browse' helper
+	script along with the URL of the butweb instance. See
+	linkbut:but-web{litdd}browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.
 
 start::
@@ -69,7 +69,7 @@ restart::
 CONFIGURATION
 -------------
 
-You may specify configuration in your .git/config
+You may specify configuration in your .but/config
 
 -----------------------------------------------------------------------
 [instaweb]
@@ -83,12 +83,12 @@ You may specify configuration in your .git/config
 
 If the configuration variable `instaweb.browser` is not set,
 `web.browser` will be used instead if it is defined. See
-linkgit:git-web{litdd}browse[1] for more information about this.
+linkbut:but-web{litdd}browse[1] for more information about this.
 
 SEE ALSO
 --------
-linkgit:gitweb[1]
+linkbut:butweb[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -1,6 +1,6 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-uintmax_t gitstrtoumax (const char *nptr, char **endptr, int base)
+uintmax_t butstrtoumax (const char *nptr, char **endptr, int base)
 {
 #if defined(NO_STRTOULL)
 	return strtoul(nptr, endptr, base);

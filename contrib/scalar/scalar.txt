@@ -40,11 +40,11 @@ The following options can be specified _before_ the subcommand:
 
 -C <directory>::
 	Before running the subcommand, change the working directory. This
-	option imitates the same option of linkgit:git[1].
+	option imitates the same option of linkbut:but[1].
 
 -c <key>=<value>::
 	For the duration of running the specified subcommand, configure this
-	setting. This option imitates the same option of linkgit:git[1].
+	setting. This option imitates the same option of linkbut:but[1].
 
 COMMANDS
 --------
@@ -53,16 +53,16 @@ Clone
 ~~~~~
 
 clone [<options>] <url> [<enlistment>]::
-	Clones the specified repository, similar to linkgit:git-clone[1]. By
+	Clones the specified repository, similar to linkbut:but-clone[1]. By
 	default, only cummit and tree objects are cloned. Once finished, the
 	worktree is located at `<enlistment>/src`.
 +
 The sparse-checkout feature is enabled (except when run with `--full-clone`)
 and the only files present are those in the top-level directory. Use
-`git sparse-checkout set` to expand the set of directories you want to see,
-or `git sparse-checkout disable` to expand to all files (see
-linkgit:git-sparse-checkout[1] for more details). You can explore the
-subdirectories outside your sparse-checkout by using `git ls-tree
+`but sparse-checkout set` to expand the set of directories you want to see,
+or `but sparse-checkout disable` to expand to all files (see
+linkbut:but-sparse-checkout[1] for more details). You can explore the
+subdirectories outside your sparse-checkout by using `but ls-tree
 HEAD[:<directory>]`.
 
 -b <name>::
@@ -117,7 +117,7 @@ Run
 scalar run ( all | config | cummit-graph | fetch | loose-objects | pack-files ) [<enlistment>]::
 	Run the given maintenance task (or all tasks, if `all` was specified).
 	Except for `all` and `config`, this subcommand simply hands off to
-	linkgit:git-maintenance[1] (mapping `fetch` to `prefetch` and
+	linkbut:but-maintenance[1] (mapping `fetch` to `prefetch` and
 	`pack-files` to `incremental-repack`).
 +
 These tasks are run automatically as part of the scheduled maintenance,
@@ -148,8 +148,8 @@ delete <enlistment>::
 
 SEE ALSO
 --------
-linkgit:git-clone[1], linkgit:git-maintenance[1].
+linkbut:but-clone[1], linkbut:but-maintenance[1].
 
 Scalar
 ---
-Associated with the linkgit:git[1] suite
+Associated with the linkbut:but[1] suite

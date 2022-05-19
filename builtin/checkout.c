@@ -31,18 +31,18 @@
 #include "parallel-checkout.h"
 
 static const char * const checkout_usage[] = {
-	N_("git checkout [<options>] <branch>"),
-	N_("git checkout [<options>] [<branch>] -- <file>..."),
+	N_("but checkout [<options>] <branch>"),
+	N_("but checkout [<options>] [<branch>] -- <file>..."),
 	NULL,
 };
 
 static const char * const switch_branch_usage[] = {
-	N_("git switch [<options>] [<branch>]"),
+	N_("but switch [<options>] [<branch>]"),
 	NULL,
 };
 
 static const char * const restore_usage[] = {
-	N_("git restore [<options>] [--source=<branch>] <file>..."),
+	N_("but restore [<options>] [--source=<branch>] <file>..."),
 	NULL,
 };
 
@@ -275,7 +275,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 	read_mmblob(&theirs, &threeway[2]);
 
 	memset(&ll_opts, 0, sizeof(ll_opts));
-	git_config_get_bool("merge.renormalize", &renormalize);
+	but_config_get_bool("merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;
 	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
 				&ours, "ours", &theirs, "theirs",
@@ -322,7 +322,7 @@ static void mark_ce_for_checkout_overlay(struct cache_entry *ce,
 		return;
 	if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
 		/*
-		 * "git checkout tree-ish -- path", but this entry
+		 * "but checkout tree-ish -- path", but this entry
 		 * is in the original index but is not in tree-ish
 		 * or does not match the pathspec; it will not be
 		 * checked out to the working tree.  We will not do
@@ -1041,11 +1041,11 @@ static void suggest_reattach(struct cummit *cummit, struct rev_info *revs)
 			/* The singular version */
 			"If you want to keep it by creating a new branch, "
 			"this may be a good time\nto do so with:\n\n"
-			" git branch <new-branch-name> %s\n\n",
+			" but branch <new-branch-name> %s\n\n",
 			/* The plural version */
 			"If you want to keep them by creating a new branch, "
 			"this may be a good time\nto do so with:\n\n"
-			" git branch <new-branch-name> %s\n\n",
+			" but branch <new-branch-name> %s\n\n",
 			/* Give ngettext() the count */
 			lost),
 			find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV));
@@ -1147,7 +1147,7 @@ static int switch_branches(const struct checkout_opts *opts,
 	return ret || writeout_error;
 }
 
-static int git_checkout_config(const char *var, const char *value, void *cb)
+static int but_checkout_config(const char *var, const char *value, void *cb)
 {
 	struct checkout_opts *opts = cb;
 
@@ -1156,14 +1156,14 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "checkout.guess")) {
-		opts->dwim_new_local_branch = git_config_bool(var, value);
+		opts->dwim_new_local_branch = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (starts_with(var, "submodule."))
-		return git_default_submodule_config(var, value, NULL);
+		return but_default_submodule_config(var, value, NULL);
 
-	return git_xmerge_config(var, value, NULL);
+	return but_xmerge_config(var, value, NULL);
 }
 
 static void setup_new_branch_info_and_source_tree(
@@ -1213,7 +1213,7 @@ static const char *parse_remote_branch(const char *arg,
 		    advise(_("If you meant to check out a remote tracking branch on, e.g. 'origin',\n"
 			     "you can do so by fully qualifying the name with the --track option:\n"
 			     "\n"
-			     "    git checkout --track origin/<name>\n"
+			     "    but checkout --track origin/<name>\n"
 			     "\n"
 			     "If you'd like to always have checkouts of an ambiguous <name> prefer\n"
 			     "one remote, e.g. the 'origin' remote, consider setting\n"
@@ -1241,16 +1241,16 @@ static int parse_branchname_arg(int argc, const char **argv,
 	int i;
 
 	/*
-	 * case 1: git checkout <ref> -- [<paths>]
+	 * case 1: but checkout <ref> -- [<paths>]
 	 *
 	 *   <ref> must be a valid tree, everything after the '--' must be
 	 *   a path.
 	 *
-	 * case 2: git checkout -- [<paths>]
+	 * case 2: but checkout -- [<paths>]
 	 *
 	 *   everything after the '--' must be paths.
 	 *
-	 * case 3: git checkout <something> [--]
+	 * case 3: but checkout <something> [--]
 	 *
 	 *   (a) If <something> is a cummit, that is to
 	 *       switch to the branch or detach HEAD at it.  As a special case,
@@ -1273,7 +1273,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 *       - else if it's a path, treat it like case (2)
 	 *       - else: fail.
 	 *
-	 * case 4: git checkout <something> <paths>
+	 * case 4: but checkout <something> <paths>
 	 *
 	 *   The first argument must not be ambiguous.
 	 *   - If it's *only* a reference, treat it like case (1).
@@ -1327,8 +1327,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 			recover_with_dwim = 0;
 
 		/*
-		 * Accept "git checkout foo", "git checkout foo --"
-		 * and "git switch foo" as candidates for dwim.
+		 * Accept "but checkout foo", "but checkout foo --"
+		 * and "but switch foo" as candidates for dwim.
 		 */
 		if (!(argc == 1 && !has_dash_dash) &&
 		    !(argc == 2 && has_dash_dash) &&
@@ -1367,7 +1367,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	if (!has_dash_dash) {	/* case (3).(d) -> (1) */
 		/*
 		 * Do not complain the most common case
-		 *	git checkout branch
+		 *	but checkout branch
 		 * even if there happen to be a file called 'branch';
 		 * it would be extremely annoying.
 		 */
@@ -1440,24 +1440,24 @@ static void die_if_some_operation_in_progress(void)
 
 	if (state.merge_in_progress)
 		die(_("cannot switch branch while merging\n"
-		      "Consider \"git merge --quit\" "
-		      "or \"git worktree add\"."));
+		      "Consider \"but merge --quit\" "
+		      "or \"but worktree add\"."));
 	if (state.am_in_progress)
 		die(_("cannot switch branch in the middle of an am session\n"
-		      "Consider \"git am --quit\" "
-		      "or \"git worktree add\"."));
+		      "Consider \"but am --quit\" "
+		      "or \"but worktree add\"."));
 	if (state.rebase_interactive_in_progress || state.rebase_in_progress)
 		die(_("cannot switch branch while rebasing\n"
-		      "Consider \"git rebase --quit\" "
-		      "or \"git worktree add\"."));
+		      "Consider \"but rebase --quit\" "
+		      "or \"but worktree add\"."));
 	if (state.cherry_pick_in_progress)
 		die(_("cannot switch branch while cherry-picking\n"
-		      "Consider \"git cherry-pick --quit\" "
-		      "or \"git worktree add\"."));
+		      "Consider \"but cherry-pick --quit\" "
+		      "or \"but worktree add\"."));
 	if (state.revert_in_progress)
 		die(_("cannot switch branch while reverting\n"
-		      "Consider \"git revert --quit\" "
-		      "or \"git worktree add\"."));
+		      "Consider \"but revert --quit\" "
+		      "or \"but worktree add\"."));
 	if (state.bisect_in_progress)
 		warning(_("you are switching branch while bisecting"));
 }
@@ -1499,7 +1499,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 			die(_("'%s' cannot be used with '%s'"), "--detach", "-t");
 	} else if (opts->track == BRANCH_TRACK_UNSPECIFIED)
-		opts->track = git_branch_track;
+		opts->track = but_branch_track;
 
 	if (new_branch_info->name && !new_branch_info->cummit)
 		die(_("Cannot switch branch to a non-cummit '%s'"),
@@ -1622,8 +1622,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	opts->prefix = prefix;
 	opts->show_progress = -1;
 
-	git_config(git_checkout_config, opts);
-	if (the_repository->gitdir) {
+	but_config(but_checkout_config, opts);
+	if (the_repository->butdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
 	}
@@ -1647,7 +1647,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	if (opts->conflict_style) {
 		opts->merge = 1; /* implied */
-		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
+		but_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
 	}
 	if (opts->force) {
 		opts->discard_changes = 1;
@@ -1676,8 +1676,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	if (opts->checkout_index < 0 || opts->checkout_worktree < 0)
 		BUG("these flags should be non-negative by now");
 	/*
-	 * convenient shortcut: "git restore --staged [--worktree]" equals
-	 * "git restore --staged [--worktree] --source HEAD"
+	 * convenient shortcut: "but restore --staged [--worktree]" equals
+	 * "but restore --staged [--worktree] --source HEAD"
 	 */
 	if (!opts->from_treeish && opts->checkout_index)
 		opts->from_treeish = "HEAD";
@@ -1712,9 +1712,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	 *
 	 * Handle
 	 *
-	 *  1) git checkout <tree> -- [<paths>]
-	 *  2) git checkout -- [<paths>]
-	 *  3) git checkout <something> [<paths>]
+	 *  1) but checkout <tree> -- [<paths>]
+	 *  2) but checkout -- [<paths>]
+	 *  3) but checkout <something> [<paths>]
 	 *
 	 * including "last branch" syntax and DWIM-ery for names of
 	 * remote branches, erroring out for invalid or ambiguous cases.
@@ -1761,7 +1761,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 				argv[0], opts->new_branch);
 
 		if (opts->force_detach)
-			die(_("git checkout: --detach does not take a path argument '%s'"),
+			die(_("but checkout: --detach does not take a path argument '%s'"),
 			    argv[0]);
 	}
 
@@ -1786,7 +1786,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)
-			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
+			die(_("but checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 			      "checking out of the index."));
 	} else {
 		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
@@ -1822,7 +1822,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			   N_("create/reset and checkout a branch")),
 		OPT_BOOL('l', NULL, &opts.new_branch_log, N_("create reflog for new branch")),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
-			 N_("second guess 'git checkout <no-such-branch>' (default)")),
+			 N_("second guess 'but checkout <no-such-branch>' (default)")),
 		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode (default)")),
 		OPT_END()
 	};
@@ -1845,8 +1845,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if (argc == 3 && !strcmp(argv[1], "-b")) {
 		/*
-		 * User ran 'git checkout -b <branch>' and expects
-		 * the same behavior as 'git switch -c <branch>'.
+		 * User ran 'but checkout -b <branch>' and expects
+		 * the same behavior as 'but switch -c <branch>'.
 		 */
 		opts.switch_branch_doing_nothing_is_ok = 0;
 		opts.only_merge_on_switching_branches = 1;
@@ -1875,7 +1875,7 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 		OPT_STRING('C', "force-create", &opts.new_branch_force, N_("branch"),
 			   N_("create/reset and switch to a branch")),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
-			 N_("second guess 'git switch <no-such-branch>'")),
+			 N_("second guess 'but switch <no-such-branch>'")),
 		OPT_BOOL(0, "discard-changes", &opts.discard_changes,
 			 N_("throw away local modifications")),
 		OPT_END()

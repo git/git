@@ -3,7 +3,7 @@
 #include "run-command.h"
 
 char packet_buffer[LARGE_PACKET_MAX];
-static const char *packet_trace_prefix = "git";
+static const char *packet_trace_prefix = "but";
 static struct trace_key trace_packet = TRACE_KEY_INIT(PACKET);
 static struct trace_key trace_pack = TRACE_KEY_INIT(PACKFILE);
 
@@ -578,7 +578,7 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->buffer = packet_buffer;
 	reader->buffer_size = sizeof(packet_buffer);
 	reader->options = options;
-	reader->me = "git";
+	reader->me = "but";
 	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
 }
 

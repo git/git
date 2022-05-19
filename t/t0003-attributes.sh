@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description=gitattributes
+test_description=butattributes
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 attr_check_basic () {
-	path="$1" expect="$2" git_opts="$3" &&
+	path="$1" expect="$2" but_opts="$3" &&
 
-	git $git_opts check-attr test -- "$path" >actual 2>err &&
+	but $but_opts check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $expect" >expect &&
 	test_cmp expect actual
 }
@@ -21,14 +21,14 @@ attr_check () {
 attr_check_quote () {
 	path="$1" quoted_path="$2" expect="$3" &&
 
-	git check-attr test -- "$path" >actual &&
+	but check-attr test -- "$path" >actual &&
 	echo "\"$quoted_path\": test: $expect" >expect &&
 	test_cmp expect actual
 
 }
 
 test_expect_success 'open-quoted pathname' '
-	echo "\"a test=a" >.gitattributes &&
+	echo "\"a test=a" >.butattributes &&
 	attr_check a unspecified
 '
 
@@ -46,19 +46,19 @@ test_expect_success 'setup' '
 		echo "offon -test test" &&
 		echo "no notest" &&
 		echo "A/e/F test=A/e/F"
-	) >.gitattributes &&
+	) >.butattributes &&
 	(
 		echo "g test=a/g" &&
 		echo "b/g test=a/b/g"
-	) >a/.gitattributes &&
+	) >a/.butattributes &&
 	(
 		echo "h test=a/b/h" &&
 		echo "d/* test=a/b/d/*" &&
 		echo "d/yes notest"
-	) >a/b/.gitattributes &&
+	) >a/b/.butattributes &&
 	(
 		echo "global test=global"
-	) >"$HOME"/global-gitattributes &&
+	) >"$HOME"/global-butattributes &&
 	cat <<-EOF >expect-all
 	f: test: f
 	a/f: test: f
@@ -80,15 +80,15 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'command line checks' '
-	test_must_fail git check-attr &&
-	test_must_fail git check-attr -- &&
-	test_must_fail git check-attr test &&
-	test_must_fail git check-attr test -- &&
-	test_must_fail git check-attr -- f &&
-	echo "f" | test_must_fail git check-attr --stdin &&
-	echo "f" | test_must_fail git check-attr --stdin -- f &&
-	echo "f" | test_must_fail git check-attr --stdin test -- f &&
-	test_must_fail git check-attr "" -- f
+	test_must_fail but check-attr &&
+	test_must_fail but check-attr -- &&
+	test_must_fail but check-attr test &&
+	test_must_fail but check-attr test -- &&
+	test_must_fail but check-attr -- f &&
+	echo "f" | test_must_fail but check-attr --stdin &&
+	echo "f" | test_must_fail but check-attr --stdin -- f &&
+	echo "f" | test_must_fail but check-attr --stdin test -- f &&
+	test_must_fail but check-attr "" -- f
 '
 
 test_expect_success 'attribute test' '
@@ -182,40 +182,40 @@ test_expect_success 'prefixes are not confused with leading directories' '
 	a/g: test: a/g
 	a_plus/g: test: unspecified
 	EOF
-	git check-attr test a/g a_plus/g >actual &&
+	but check-attr test a/g a_plus/g >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'core.attributesfile' '
 	attr_check global unspecified &&
-	git config core.attributesfile "$HOME/global-gitattributes" &&
+	but config core.attributesfile "$HOME/global-butattributes" &&
 	attr_check global global &&
-	git config core.attributesfile "~/global-gitattributes" &&
+	but config core.attributesfile "~/global-butattributes" &&
 	attr_check global global &&
-	echo "global test=precedence" >>.gitattributes &&
+	echo "global test=precedence" >>.butattributes &&
 	attr_check global precedence
 '
 
 test_expect_success 'attribute test: read paths from stdin' '
 	grep -v notest <expect-all >expect &&
-	sed -e "s/:.*//" <expect | git check-attr --stdin test >actual &&
+	sed -e "s/:.*//" <expect | but check-attr --stdin test >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'attribute test: --all option' '
 	grep -v unspecified <expect-all | sort >specified-all &&
 	sed -e "s/:.*//" <expect-all | uniq >stdin-all &&
-	git check-attr --stdin --all <stdin-all >tmp &&
+	but check-attr --stdin --all <stdin-all >tmp &&
 	sort tmp >actual &&
 	test_cmp specified-all actual
 '
 
 test_expect_success 'attribute test: --cached option' '
-	git check-attr --cached --stdin --all <stdin-all >tmp &&
+	but check-attr --cached --stdin --all <stdin-all >tmp &&
 	sort tmp >actual &&
 	test_must_be_empty actual &&
-	git add .gitattributes a/.gitattributes a/b/.gitattributes &&
-	git check-attr --cached --stdin --all <stdin-all >tmp &&
+	but add .butattributes a/.butattributes a/b/.butattributes &&
+	but check-attr --cached --stdin --all <stdin-all >tmp &&
 	sort tmp >actual &&
 	test_cmp specified-all actual
 '
@@ -226,35 +226,35 @@ test_expect_success 'root subdir attribute test' '
 '
 
 test_expect_success 'negative patterns' '
-	echo "!f test=bar" >.gitattributes &&
-	git check-attr test -- '"'"'!f'"'"' 2>errors &&
+	echo "!f test=bar" >.butattributes &&
+	but check-attr test -- '"'"'!f'"'"' 2>errors &&
 	test_i18ngrep "Negative patterns are ignored" errors
 '
 
 test_expect_success 'patterns starting with exclamation' '
-	echo "\!f test=foo" >.gitattributes &&
+	echo "\!f test=foo" >.butattributes &&
 	attr_check "!f" foo
 '
 
 test_expect_success '"**" test' '
-	echo "**/f foo=bar" >.gitattributes &&
+	echo "**/f foo=bar" >.butattributes &&
 	cat <<\EOF >expect &&
 f: foo: bar
 a/f: foo: bar
 a/b/f: foo: bar
 a/b/c/f: foo: bar
 EOF
-	git check-attr foo -- "f" >actual 2>err &&
-	git check-attr foo -- "a/f" >>actual 2>>err &&
-	git check-attr foo -- "a/b/f" >>actual 2>>err &&
-	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
+	but check-attr foo -- "f" >actual 2>err &&
+	but check-attr foo -- "a/f" >>actual 2>>err &&
+	but check-attr foo -- "a/b/f" >>actual 2>>err &&
+	but check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
 	test_must_be_empty err
 '
 
 test_expect_success '"**" with no slashes test' '
-	echo "a**f foo=bar" >.gitattributes &&
-	git check-attr foo -- "f" >actual &&
+	echo "a**f foo=bar" >.butattributes &&
+	but check-attr foo -- "f" >actual &&
 	cat <<\EOF >expect &&
 f: foo: unspecified
 af: foo: bar
@@ -263,37 +263,37 @@ a/f: foo: unspecified
 a/b/f: foo: unspecified
 a/b/c/f: foo: unspecified
 EOF
-	git check-attr foo -- "f" >actual 2>err &&
-	git check-attr foo -- "af" >>actual 2>err &&
-	git check-attr foo -- "axf" >>actual 2>err &&
-	git check-attr foo -- "a/f" >>actual 2>>err &&
-	git check-attr foo -- "a/b/f" >>actual 2>>err &&
-	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
+	but check-attr foo -- "f" >actual 2>err &&
+	but check-attr foo -- "af" >>actual 2>err &&
+	but check-attr foo -- "axf" >>actual 2>err &&
+	but check-attr foo -- "a/f" >>actual 2>>err &&
+	but check-attr foo -- "a/b/f" >>actual 2>>err &&
+	but check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
 	test_must_be_empty err
 '
 
-test_expect_success 'using --git-dir and --work-tree' '
+test_expect_success 'using --but-dir and --work-tree' '
 	mkdir unreal real &&
-	git init real &&
-	echo "file test=in-real" >real/.gitattributes &&
+	but init real &&
+	echo "file test=in-real" >real/.butattributes &&
 	(
 		cd unreal &&
-		attr_check file in-real "--git-dir ../real/.git --work-tree ../real"
+		attr_check file in-real "--but-dir ../real/.but --work-tree ../real"
 	)
 '
 
 test_expect_success 'setup bare' '
-	git clone --bare . bare.git
+	but clone --bare . bare.but
 '
 
-test_expect_success 'bare repository: check that .gitattribute is ignored' '
+test_expect_success 'bare repository: check that .butattribute is ignored' '
 	(
-		cd bare.git &&
+		cd bare.but &&
 		(
 			echo "f	test=f" &&
 			echo "a/i test=a/i"
-		) >.gitattributes &&
+		) >.butattributes &&
 		attr_check f unspecified &&
 		attr_check a/f unspecified &&
 		attr_check a/c/f unspecified &&
@@ -304,9 +304,9 @@ test_expect_success 'bare repository: check that .gitattribute is ignored' '
 
 test_expect_success 'bare repository: check that --cached honors index' '
 	(
-		cd bare.git &&
-		GIT_INDEX_FILE=../.git/index \
-		git check-attr --cached --stdin --all <../stdin-all |
+		cd bare.but &&
+		GIT_INDEX_FILE=../.but/index \
+		but check-attr --cached --stdin --all <../stdin-all |
 		sort >actual &&
 		test_cmp ../specified-all actual
 	)
@@ -314,7 +314,7 @@ test_expect_success 'bare repository: check that --cached honors index' '
 
 test_expect_success 'bare repository: test info/attributes' '
 	(
-		cd bare.git &&
+		cd bare.but &&
 		(
 			echo "f	test=f" &&
 			echo "a/i test=a/i"
@@ -328,27 +328,27 @@ test_expect_success 'bare repository: test info/attributes' '
 '
 
 test_expect_success 'binary macro expanded by -a' '
-	echo "file binary" >.gitattributes &&
+	echo "file binary" >.butattributes &&
 	cat >expect <<-\EOF &&
 	file: binary: set
 	file: diff: unset
 	file: merge: unset
 	file: text: unset
 	EOF
-	git check-attr -a file >actual &&
+	but check-attr -a file >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'query binary macro directly' '
-	echo "file binary" >.gitattributes &&
+	echo "file binary" >.butattributes &&
 	echo file: binary: set >expect &&
-	git check-attr binary file >actual &&
+	but check-attr binary file >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success SYMLINKS 'set up symlink tests' '
 	echo "* test" >attr &&
-	rm -f .gitattributes
+	rm -f .butattributes
 '
 
 test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
@@ -359,18 +359,18 @@ test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
 '
 
 test_expect_success SYMLINKS 'symlinks respected in info/attributes' '
-	test_when_finished "rm .git/info/attributes" &&
-	ln -s ../../attr .git/info/attributes &&
+	test_when_finished "rm .but/info/attributes" &&
+	ln -s ../../attr .but/info/attributes &&
 	attr_check file set
 '
 
 test_expect_success SYMLINKS 'symlinks not respected in-tree' '
-	test_when_finished "rm -rf .gitattributes subdir" &&
-	ln -s attr .gitattributes &&
+	test_when_finished "rm -rf .butattributes subdir" &&
+	ln -s attr .butattributes &&
 	mkdir subdir &&
-	ln -s ../attr subdir/.gitattributes &&
+	ln -s ../attr subdir/.butattributes &&
 	attr_check_basic subdir/file unspecified &&
-	test_i18ngrep "unable to access.*gitattributes" err
+	test_i18ngrep "unable to access.*butattributes" err
 '
 
 test_done

@@ -183,16 +183,16 @@ sub run_cmd_pipe {
 	}
 }
 
-my ($GIT_DIR) = run_cmd_pipe(qw(git rev-parse --git-dir));
+my ($GIT_DIR) = run_cmd_pipe(qw(but rev-parse --but-dir));
 
 if (!defined $GIT_DIR) {
-	exit(1); # rev-parse would have already said "not a git repo"
+	exit(1); # rev-parse would have already said "not a but repo"
 }
 chomp($GIT_DIR);
 
 sub refresh {
 	my $fh;
-	open $fh, 'git update-index --refresh |'
+	open $fh, 'but update-index --refresh |'
 	    or die;
 	while (<$fh>) {
 		;# ignore 'needs update'
@@ -205,17 +205,17 @@ sub list_untracked {
 		chomp $_;
 		unquote_path($_);
 	}
-	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @ARGV);
+	run_cmd_pipe(qw(but ls-files --others --exclude-standard --), @ARGV);
 }
 
-# TRANSLATORS: you can adjust this to align "git add -i" status menu
+# TRANSLATORS: you can adjust this to align "but add -i" status menu
 my $status_fmt = __('%12s %12s %s');
 my $status_head = sprintf($status_fmt, __('staged'), __('unstaged'), __('path'));
 
 {
 	my $initial;
 	sub is_initial_cummit {
-		$initial = system('git rev-parse HEAD -- >/dev/null 2>&1') != 0
+		$initial = system('but rev-parse HEAD -- >/dev/null 2>&1') != 0
 			unless defined $initial;
 		return $initial;
 	}
@@ -226,7 +226,7 @@ my $status_head = sprintf($status_fmt, __('staged'), __('unstaged'), __('path'))
 	sub get_empty_tree {
 		return $empty_tree if defined $empty_tree;
 
-		($empty_tree) = run_cmd_pipe(qw(git hash-object -t tree /dev/null));
+		($empty_tree) = run_cmd_pipe(qw(but hash-object -t tree /dev/null));
 		chomp $empty_tree;
 		return $empty_tree;
 	}
@@ -258,7 +258,7 @@ sub list_modified {
 	my ($add, $del, $adddel, $file);
 
 	my $reference = get_diff_reference($patch_mode_revision);
-	for (run_cmd_pipe(qw(git diff-index --cached
+	for (run_cmd_pipe(qw(but diff-index --cached
 			     --numstat --summary), $reference,
 			     '--', @ARGV)) {
 		if (($add, $del, $file) =
@@ -285,7 +285,7 @@ sub list_modified {
 		}
 	}
 
-	for (run_cmd_pipe(qw(git diff-files --ignore-submodules=dirty --numstat --summary --raw --), @ARGV)) {
+	for (run_cmd_pipe(qw(but diff-files --ignore-submodules=dirty --numstat --summary --raw --), @ARGV)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			$file = unquote_path($file);
@@ -642,7 +642,7 @@ sub update_cmd {
 				       HEADER => $status_head, },
 				     @mods);
 	if (@update) {
-		system(qw(git update-index --add --remove --),
+		system(qw(but update-index --add --remove --),
 		       map { $_->{VALUE} } @update);
 		say_n_paths('updated', @update);
 	}
@@ -655,14 +655,14 @@ sub revert_cmd {
 				     list_modified());
 	if (@update) {
 		if (is_initial_cummit()) {
-			system(qw(git rm --cached),
+			system(qw(but rm --cached),
 				map { $_->{VALUE} } @update);
 		}
 		else {
-			my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
+			my @lines = run_cmd_pipe(qw(but ls-tree HEAD --),
 						 map { $_->{VALUE} } @update);
 			my $fh;
-			open $fh, '| git update-index --index-info'
+			open $fh, '| but update-index --index-info'
 			    or die;
 			for (@lines) {
 				print $fh $_;
@@ -671,7 +671,7 @@ sub revert_cmd {
 			for (@update) {
 				if ($_->{INDEX_ADDDEL} &&
 				    $_->{INDEX_ADDDEL} eq 'create') {
-					system(qw(git update-index --force-remove --),
+					system(qw(but update-index --force-remove --),
 					       $_->{VALUE});
 					printf(__("note: %s is untracked now.\n"), $_->{VALUE});
 				}
@@ -687,7 +687,7 @@ sub add_untracked_cmd {
 	my @add = list_and_choose({ PROMPT => __('Add untracked') },
 				  list_untracked());
 	if (@add) {
-		system(qw(git update-index --add --), @add);
+		system(qw(but update-index --add --), @add);
 		say_n_paths('added', @add);
 	} else {
 		print __("No untracked files.\n");
@@ -695,10 +695,10 @@ sub add_untracked_cmd {
 	print "\n";
 }
 
-sub run_git_apply {
+sub run_but_apply {
 	my $cmd = shift;
 	my $fh;
-	open $fh, '| git ' . $cmd . " --allow-overlap";
+	open $fh, '| but ' . $cmd . " --allow-overlap";
 	print $fh @_;
 	return close $fh;
 }
@@ -712,10 +712,10 @@ sub parse_diff {
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
-	my @diff = run_cmd_pipe("git", @diff_cmd, qw(--no-color --), $path);
+	my @diff = run_cmd_pipe("but", @diff_cmd, qw(--no-color --), $path);
 	my @colored = ();
 	if ($diff_use_color) {
-		my @display_cmd = ("git", @diff_cmd, qw(--color --), $path);
+		my @display_cmd = ("but", @diff_cmd, qw(--color --), $path);
 		if (defined $diff_filter) {
 			# quotemeta is overkill, but sufficient for shell-quoting
 			my $diff = join(' ', map { quotemeta } @display_cmd);
@@ -1132,7 +1132,7 @@ aborted and the hunk is left unchanged.
 EOF2
 	close $fh;
 
-	chomp(my ($editor) = run_cmd_pipe(qw(git var GIT_EDITOR)));
+	chomp(my ($editor) = run_cmd_pipe(qw(but var GIT_EDITOR)));
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
 	if ($? != 0) {
@@ -1158,7 +1158,7 @@ EOF2
 }
 
 sub diff_applies {
-	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
+	return run_but_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
 			     map { @{$_->{TEXT}} } @_);
 }
 
@@ -1327,7 +1327,7 @@ EOF
 
 sub apply_patch {
 	my $cmd = shift;
-	my $ret = run_git_apply $cmd, @_;
+	my $ret = run_but_apply $cmd, @_;
 	if (!$ret) {
 		print STDERR @_;
 	}
@@ -1336,17 +1336,17 @@ sub apply_patch {
 
 sub apply_patch_for_checkout_cummit {
 	my $reverse = shift;
-	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --check', @_;
-	my $applies_worktree = run_git_apply 'apply '.$reverse.' --check', @_;
+	my $applies_index = run_but_apply 'apply '.$reverse.' --cached --check', @_;
+	my $applies_worktree = run_but_apply 'apply '.$reverse.' --check', @_;
 
 	if ($applies_worktree && $applies_index) {
-		run_git_apply 'apply '.$reverse.' --cached', @_;
-		run_git_apply 'apply '.$reverse, @_;
+		run_but_apply 'apply '.$reverse.' --cached', @_;
+		run_but_apply 'apply '.$reverse, @_;
 		return 1;
 	} elsif (!$applies_index) {
 		print colored $error_color, __("The selected hunks do not apply to the index!\n");
 		if (prompt_yesno __("Apply them to the worktree anyway? ")) {
-			return run_git_apply 'apply '.$reverse, @_;
+			return run_but_apply 'apply '.$reverse, @_;
 		} else {
 			print colored $error_color, __("Nothing was applied.\n");
 			return 0;
@@ -1672,7 +1672,7 @@ sub patch_update_file {
 				};
 				if ($@) {
 					my ($err,$exp) = ($@, $1);
-					$err =~ s/ at .*git-add--interactive line \d+, <STDIN> line \d+.*$//;
+					$err =~ s/ at .*but-add--interactive line \d+, <STDIN> line \d+.*$//;
 					error_msg sprintf(__("Malformed search regexp %s: %s\n"), $exp, $err);
 					next;
 				}
@@ -1797,7 +1797,7 @@ sub diff_cmd {
 				   @mods);
 	return if (!@them);
 	my $reference = (is_initial_cummit()) ? get_empty_tree() : 'HEAD';
-	system(qw(git diff -p --cached), $reference, '--',
+	system(qw(but diff -p --cached), $reference, '--',
 		map { $_->{VALUE} } @them);
 }
 

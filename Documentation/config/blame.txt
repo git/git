@@ -1,6 +1,6 @@
 blame.blankBoundary::
 	Show blank cummit object name for boundary cummits in
-	linkgit:git-blame[1]. This option defaults to false.
+	linkbut:but-blame[1]. This option defaults to false.
 
 blame.coloring::
 	This determines the coloring scheme to be applied to blame
@@ -8,21 +8,21 @@ blame.coloring::
 	or 'none' which is the default.
 
 blame.date::
-	Specifies the format used to output dates in linkgit:git-blame[1].
+	Specifies the format used to output dates in linkbut:but-blame[1].
 	If unset the iso format is used. For supported values,
-	see the discussion of the `--date` option at linkgit:git-log[1].
+	see the discussion of the `--date` option at linkbut:but-log[1].
 
 blame.showEmail::
-	Show the author email instead of author name in linkgit:git-blame[1].
+	Show the author email instead of author name in linkbut:but-blame[1].
 	This option defaults to false.
 
 blame.showRoot::
-	Do not treat root cummits as boundaries in linkgit:git-blame[1].
+	Do not treat root cummits as boundaries in linkbut:but-blame[1].
 	This option defaults to false.
 
 blame.ignoreRevsFile::
 	Ignore revisions listed in the file, one unabbreviated object name per
-	line, in linkgit:git-blame[1].  Whitespace and comments beginning with
+	line, in linkbut:but-blame[1].  Whitespace and comments beginning with
 	`#` are ignored.  This option may be repeated multiple times.  Empty
 	file names will reset the list of ignored revisions.  This option will
 	be handled before the command line option `--ignore-revs-file`.
@@ -30,8 +30,8 @@ blame.ignoreRevsFile::
 blame.markUnblamableLines::
 	Mark lines that were changed by an ignored revision that we could not
 	attribute to another cummit with a '*' in the output of
-	linkgit:git-blame[1].
+	linkbut:but-blame[1].
 
 blame.markIgnoredLines::
 	Mark lines that were changed by an ignored revision that we attributed to
-	another cummit with a '?' in the output of linkgit:git-blame[1].
+	another cummit with a '?' in the output of linkbut:but-blame[1].

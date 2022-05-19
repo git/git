@@ -3,10 +3,10 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git checkout-index -u test.
+test_description='but checkout-index -u test.
 
-With -u flag, git checkout-index internally runs the equivalent of
-git update-index --refresh on the checked out entry.'
+With -u flag, but checkout-index internally runs the equivalent of
+but update-index --refresh on the checked out entry.'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -14,21 +14,21 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success \
 'preparation' '
 echo frotz >path0 &&
-git update-index --add path0 &&
-t=$(git write-tree)'
+but update-index --add path0 &&
+t=$(but write-tree)'
 
 test_expect_success \
-'without -u, git checkout-index smudges stat information.' '
+'without -u, but checkout-index smudges stat information.' '
 rm -f path0 &&
-git read-tree $t &&
-git checkout-index -f -a &&
-test_must_fail git diff-files --exit-code'
+but read-tree $t &&
+but checkout-index -f -a &&
+test_must_fail but diff-files --exit-code'
 
 test_expect_success \
-'with -u, git checkout-index picks up stat information from new files.' '
+'with -u, but checkout-index picks up stat information from new files.' '
 rm -f path0 &&
-git read-tree $t &&
-git checkout-index -u -f -a &&
-git diff-files --exit-code'
+but read-tree $t &&
+but checkout-index -u -f -a &&
+but diff-files --exit-code'
 
 test_done

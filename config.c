@@ -74,7 +74,7 @@ static struct key_value_info *current_config_kvi;
  * current value (repo, global, etc). For cached values, it can be found via
  * the current_config_kvi as above. During parsing, the current value can be
  * found in this variable. It's not part of "cf" because it transcends a single
- * file (i.e., a file included from .git/config is still in "repo" scope).
+ * file (i.e., a file included from .but/config is still in "repo" scope).
  */
 static enum config_scope current_parsing_scope;
 
@@ -127,7 +127,7 @@ struct config_include_data {
 	config_fn_t fn;
 	void *data;
 	const struct config_options *opts;
-	struct git_config_source *config_source;
+	struct but_config_source *config_source;
 
 	/*
 	 * All remote URLs discovered when reading all config files.
@@ -136,7 +136,7 @@ struct config_include_data {
 };
 #define CONFIG_INCLUDE_INIT { 0 }
 
-static int git_config_include(const char *var, const char *value, void *data);
+static int but_config_include(const char *var, const char *value, void *data);
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] = N_(
@@ -184,7 +184,7 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 			    !cf ? "<unknown>" :
 			    cf->name ? cf->name :
 			    "the command line");
-		ret = git_config_from_file(git_config_include, path, inc);
+		ret = but_config_from_file(but_config_include, path, inc);
 		inc->depth--;
 	}
 cleanup:
@@ -234,21 +234,21 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 	return prefix;
 }
 
-static int include_by_gitdir(const struct config_options *opts,
+static int include_by_butdir(const struct config_options *opts,
 			     const char *cond, size_t cond_len, int icase)
 {
 	struct strbuf text = STRBUF_INIT;
 	struct strbuf pattern = STRBUF_INIT;
 	int ret = 0, prefix;
-	const char *git_dir;
+	const char *but_dir;
 	int already_tried_absolute = 0;
 
-	if (opts->git_dir)
-		git_dir = opts->git_dir;
+	if (opts->but_dir)
+		but_dir = opts->but_dir;
 	else
 		goto done;
 
-	strbuf_realpath(&text, git_dir, 1);
+	strbuf_realpath(&text, but_dir, 1);
 	strbuf_add(&pattern, cond, cond_len);
 	prefix = prepare_include_condition_pattern(&pattern);
 
@@ -274,7 +274,7 @@ again:
 
 	if (!ret && !already_tried_absolute) {
 		/*
-		 * We've tried e.g. matching gitdir:~/work, but if
+		 * We've tried e.g. matching butdir:~/work, but if
 		 * ~/work is a symlink to /mnt/storage/work
 		 * strbuf_realpath() will expand it, so the rule won't
 		 * match. Let's match against a
@@ -282,7 +282,7 @@ again:
 		 * which'll do the right thing
 		 */
 		strbuf_reset(&text);
-		strbuf_add_absolute_path(&text, git_dir);
+		strbuf_add_absolute_path(&text, but_dir);
 		already_tried_absolute = 1;
 		goto again;
 	}
@@ -297,7 +297,7 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	int flags;
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
-	const char *refname = !the_repository->gitdir ?
+	const char *refname = !the_repository->butdir ?
 		NULL : resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	const char *shortname;
 
@@ -399,10 +399,10 @@ static int include_condition_is_true(struct config_include_data *inc,
 {
 	const struct config_options *opts = inc->opts;
 
-	if (skip_prefix_mem(cond, cond_len, "gitdir:", &cond, &cond_len))
-		return include_by_gitdir(opts, cond, cond_len, 0);
-	else if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
-		return include_by_gitdir(opts, cond, cond_len, 1);
+	if (skip_prefix_mem(cond, cond_len, "butdir:", &cond, &cond_len))
+		return include_by_butdir(opts, cond, cond_len, 0);
+	else if (skip_prefix_mem(cond, cond_len, "butdir/i:", &cond, &cond_len))
+		return include_by_butdir(opts, cond, cond_len, 1);
 	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
 		return include_by_branch(cond, cond_len);
 	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
@@ -413,7 +413,7 @@ static int include_condition_is_true(struct config_include_data *inc,
 	return 0;
 }
 
-static int git_config_include(const char *var, const char *value, void *data)
+static int but_config_include(const char *var, const char *value, void *data)
 {
 	struct config_include_data *inc = data;
 	const char *cond, *key;
@@ -445,7 +445,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	return ret;
 }
 
-static void git_config_push_split_parameter(const char *key, const char *value)
+static void but_config_push_split_parameter(const char *key, const char *value)
 {
 	struct strbuf env = STRBUF_INIT;
 	const char *old = getenv(CONFIG_DATA_ENVIRONMENT);
@@ -461,7 +461,7 @@ static void git_config_push_split_parameter(const char *key, const char *value)
 	strbuf_release(&env);
 }
 
-void git_config_push_parameter(const char *text)
+void but_config_push_parameter(const char *text)
 {
 	const char *value;
 
@@ -490,14 +490,14 @@ void git_config_push_parameter(const char *text)
 	value = strchr(text, '=');
 	if (value) {
 		char *key = xmemdupz(text, value - text);
-		git_config_push_split_parameter(key, value + 1);
+		but_config_push_split_parameter(key, value + 1);
 		free(key);
 	} else {
-		git_config_push_split_parameter(text, NULL);
+		but_config_push_split_parameter(text, NULL);
 	}
 }
 
-void git_config_push_env(const char *spec)
+void but_config_push_env(const char *spec)
 {
 	char *key;
 	const char *env_name;
@@ -517,7 +517,7 @@ void git_config_push_env(const char *spec)
 		die(_("missing environment variable '%s' for configuration '%.*s'"),
 		    env_name, (int)(env_name - spec - 1), spec);
 
-	git_config_push_split_parameter(key, env_value);
+	but_config_push_split_parameter(key, env_value);
 	free(key);
 }
 
@@ -538,7 +538,7 @@ static inline int iskeychar(int c)
  * baselen - pointer to size_t which will hold the length of the
  *           section + subsection part, can be NULL
  */
-int git_config_parse_key(const char *key, char **store_key, size_t *baselen_)
+int but_config_parse_key(const char *key, char **store_key, size_t *baselen_)
 {
 	size_t i, baselen;
 	int dot;
@@ -603,7 +603,7 @@ static int config_parse_pair(const char *key, const char *value,
 
 	if (!strlen(key))
 		return error(_("empty config key"));
-	if (git_config_parse_key(key, &canonical_name, NULL))
+	if (but_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
 	ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
@@ -611,7 +611,7 @@ static int config_parse_pair(const char *key, const char *value,
 	return ret;
 }
 
-int git_config_parse_parameter(const char *text,
+int but_config_parse_parameter(const char *text,
 			       config_fn_t fn, void *data)
 {
 	const char *value;
@@ -651,7 +651,7 @@ static int parse_config_env_list(char *env, config_fn_t fn, void *data)
 
 		if (!cur || isspace(*cur)) {
 			/* old-style 'key=value' */
-			if (git_config_parse_parameter(key, fn, data) < 0)
+			if (but_config_parse_parameter(key, fn, data) < 0)
 				return -1;
 		}
 		else if (*cur == '=') {
@@ -691,7 +691,7 @@ static int parse_config_env_list(char *env, config_fn_t fn, void *data)
 	return 0;
 }
 
-int git_config_from_parameters(config_fn_t fn, void *data)
+int but_config_from_parameters(config_fn_t fn, void *data)
 {
 	const char *env;
 	struct strbuf envvar = STRBUF_INIT;
@@ -992,7 +992,7 @@ static int do_event(enum config_event_t type, struct parse_event_data *data)
 	return 0;
 }
 
-static int git_parse_source(config_fn_t fn, void *data,
+static int but_parse_source(config_fn_t fn, void *data,
 			    const struct config_options *opts)
 {
 	int comment = 0;
@@ -1143,7 +1143,7 @@ static uintmax_t get_unit_factor(const char *end)
 	return 0;
 }
 
-static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
+static int but_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 {
 	if (value && *value) {
 		char *end;
@@ -1174,7 +1174,7 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	return 0;
 }
 
-static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
+static int but_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 {
 	if (value && *value) {
 		char *end;
@@ -1203,37 +1203,37 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 	return 0;
 }
 
-static int git_parse_int(const char *value, int *ret)
+static int but_parse_int(const char *value, int *ret)
 {
 	intmax_t tmp;
-	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(int)))
+	if (!but_parse_signed(value, &tmp, maximum_signed_value_of_type(int)))
 		return 0;
 	*ret = tmp;
 	return 1;
 }
 
-static int git_parse_int64(const char *value, int64_t *ret)
+static int but_parse_int64(const char *value, int64_t *ret)
 {
 	intmax_t tmp;
-	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(int64_t)))
+	if (!but_parse_signed(value, &tmp, maximum_signed_value_of_type(int64_t)))
 		return 0;
 	*ret = tmp;
 	return 1;
 }
 
-int git_parse_ulong(const char *value, unsigned long *ret)
+int but_parse_ulong(const char *value, unsigned long *ret)
 {
 	uintmax_t tmp;
-	if (!git_parse_unsigned(value, &tmp, maximum_unsigned_value_of_type(long)))
+	if (!but_parse_unsigned(value, &tmp, maximum_unsigned_value_of_type(long)))
 		return 0;
 	*ret = tmp;
 	return 1;
 }
 
-int git_parse_ssize_t(const char *value, ssize_t *ret)
+int but_parse_ssize_t(const char *value, ssize_t *ret)
 {
 	intmax_t tmp;
-	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(ssize_t)))
+	if (!but_parse_signed(value, &tmp, maximum_signed_value_of_type(ssize_t)))
 		return 0;
 	*ret = tmp;
 	return 1;
@@ -1274,39 +1274,39 @@ static void die_bad_number(const char *name, const char *value)
 	}
 }
 
-int git_config_int(const char *name, const char *value)
+int but_config_int(const char *name, const char *value)
 {
 	int ret;
-	if (!git_parse_int(value, &ret))
+	if (!but_parse_int(value, &ret))
 		die_bad_number(name, value);
 	return ret;
 }
 
-int64_t git_config_int64(const char *name, const char *value)
+int64_t but_config_int64(const char *name, const char *value)
 {
 	int64_t ret;
-	if (!git_parse_int64(value, &ret))
+	if (!but_parse_int64(value, &ret))
 		die_bad_number(name, value);
 	return ret;
 }
 
-unsigned long git_config_ulong(const char *name, const char *value)
+unsigned long but_config_ulong(const char *name, const char *value)
 {
 	unsigned long ret;
-	if (!git_parse_ulong(value, &ret))
+	if (!but_parse_ulong(value, &ret))
 		die_bad_number(name, value);
 	return ret;
 }
 
-ssize_t git_config_ssize_t(const char *name, const char *value)
+ssize_t but_config_ssize_t(const char *name, const char *value)
 {
 	ssize_t ret;
-	if (!git_parse_ssize_t(value, &ret))
+	if (!but_parse_ssize_t(value, &ret))
 		die_bad_number(name, value);
 	return ret;
 }
 
-static int git_parse_maybe_bool_text(const char *value)
+static int but_parse_maybe_bool_text(const char *value)
 {
 	if (!value)
 		return 1;
@@ -1397,36 +1397,36 @@ next_name:
 	return (current & ~negative) | positive;
 }
 
-int git_parse_maybe_bool(const char *value)
+int but_parse_maybe_bool(const char *value)
 {
-	int v = git_parse_maybe_bool_text(value);
+	int v = but_parse_maybe_bool_text(value);
 	if (0 <= v)
 		return v;
-	if (git_parse_int(value, &v))
+	if (but_parse_int(value, &v))
 		return !!v;
 	return -1;
 }
 
-int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
+int but_config_bool_or_int(const char *name, const char *value, int *is_bool)
 {
-	int v = git_parse_maybe_bool_text(value);
+	int v = but_parse_maybe_bool_text(value);
 	if (0 <= v) {
 		*is_bool = 1;
 		return v;
 	}
 	*is_bool = 0;
-	return git_config_int(name, value);
+	return but_config_int(name, value);
 }
 
-int git_config_bool(const char *name, const char *value)
+int but_config_bool(const char *name, const char *value)
 {
-	int v = git_parse_maybe_bool(value);
+	int v = but_parse_maybe_bool(value);
 	if (v < 0)
 		die(_("bad boolean config value '%s' for '%s'"), value, name);
 	return v;
 }
 
-int git_config_string(const char **dest, const char *var, const char *value)
+int but_config_string(const char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1434,7 +1434,7 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_config_pathname(const char **dest, const char *var, const char *value)
+int but_config_pathname(const char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1444,7 +1444,7 @@ int git_config_pathname(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_config_expiry_date(timestamp_t *timestamp, const char *var, const char *value)
+int but_config_expiry_date(timestamp_t *timestamp, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1454,7 +1454,7 @@ int git_config_expiry_date(timestamp_t *timestamp, const char *var, const char *
 	return 0;
 }
 
-int git_config_color(char *dest, const char *var, const char *value)
+int but_config_color(char *dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1463,15 +1463,15 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value, void *cb)
+static int but_default_core_config(const char *var, const char *value, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
-		trust_executable_bit = git_config_bool(var, value);
+		trust_executable_bit = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "core.trustctime")) {
-		trust_ctime = git_config_bool(var, value);
+		trust_ctime = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "core.checkstat")) {
@@ -1482,45 +1482,45 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.quotepath")) {
-		quote_path_fully = git_config_bool(var, value);
+		quote_path_fully = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.symlinks")) {
-		has_symlinks = git_config_bool(var, value);
+		has_symlinks = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.ignorecase")) {
-		ignore_case = git_config_bool(var, value);
+		ignore_case = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.attributesfile"))
-		return git_config_pathname(&git_attributes_file, var, value);
+		return but_config_pathname(&but_attributes_file, var, value);
 
 	if (!strcmp(var, "core.hookspath"))
-		return git_config_pathname(&git_hooks_path, var, value);
+		return but_config_pathname(&but_hooks_path, var, value);
 
 	if (!strcmp(var, "core.bare")) {
-		is_bare_repository_cfg = git_config_bool(var, value);
+		is_bare_repository_cfg = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.ignorestat")) {
-		assume_unchanged = git_config_bool(var, value);
+		assume_unchanged = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.prefersymlinkrefs")) {
-		prefer_symlink_refs = git_config_bool(var, value);
+		prefer_symlink_refs = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.logallrefupdates")) {
 		if (value && !strcasecmp(value, "always"))
 			log_all_ref_updates = LOG_REFS_ALWAYS;
-		else if (git_config_bool(var, value))
+		else if (but_config_bool(var, value))
 			log_all_ref_updates = LOG_REFS_NORMAL;
 		else
 			log_all_ref_updates = LOG_REFS_NONE;
@@ -1528,7 +1528,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.warnambiguousrefs")) {
-		warn_ambiguous_refs = git_config_bool(var, value);
+		warn_ambiguous_refs = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1537,10 +1537,10 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			return config_error_nonbool(var);
 		if (!strcasecmp(value, "auto"))
 			default_abbrev = -1;
-		else if (!git_parse_maybe_bool_text(value))
+		else if (!but_parse_maybe_bool_text(value))
 			default_abbrev = the_hash_algo->hexsz;
 		else {
-			int abbrev = git_config_int(var, value);
+			int abbrev = but_config_int(var, value);
 			if (abbrev < minimum_abbrev || abbrev > the_hash_algo->hexsz)
 				return error(_("abbrev length out of range: %d"), abbrev);
 			default_abbrev = abbrev;
@@ -1552,7 +1552,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 		return set_disambiguate_hint_config(var, value);
 
 	if (!strcmp(var, "core.loosecompression")) {
-		int level = git_config_int(var, value);
+		int level = but_config_int(var, value);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -1563,7 +1563,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.compression")) {
-		int level = git_config_int(var, value);
+		int level = but_config_int(var, value);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -1575,30 +1575,30 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.packedgitwindowsize")) {
+	if (!strcmp(var, "core.packedbutwindowsize")) {
 		int pgsz_x2 = getpagesize() * 2;
-		packed_git_window_size = git_config_ulong(var, value);
+		packed_but_window_size = but_config_ulong(var, value);
 
 		/* This value must be multiple of (pagesize * 2) */
-		packed_git_window_size /= pgsz_x2;
-		if (packed_git_window_size < 1)
-			packed_git_window_size = 1;
-		packed_git_window_size *= pgsz_x2;
+		packed_but_window_size /= pgsz_x2;
+		if (packed_but_window_size < 1)
+			packed_but_window_size = 1;
+		packed_but_window_size *= pgsz_x2;
 		return 0;
 	}
 
 	if (!strcmp(var, "core.bigfilethreshold")) {
-		big_file_threshold = git_config_ulong(var, value);
+		big_file_threshold = but_config_ulong(var, value);
 		return 0;
 	}
 
-	if (!strcmp(var, "core.packedgitlimit")) {
-		packed_git_limit = git_config_ulong(var, value);
+	if (!strcmp(var, "core.packedbutlimit")) {
+		packed_but_limit = but_config_ulong(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.deltabasecachelimit")) {
-		delta_base_cache_limit = git_config_ulong(var, value);
+		delta_base_cache_limit = but_config_ulong(var, value);
 		return 0;
 	}
 
@@ -1607,7 +1607,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			auto_crlf = AUTO_CRLF_INPUT;
 			return 0;
 		}
-		auto_crlf = git_config_bool(var, value);
+		auto_crlf = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1617,7 +1617,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 			global_conv_flags_eol = CONV_EOL_RNDTRP_WARN;
 			return 0;
 		}
-		eol_rndtrp_die = git_config_bool(var, value);
+		eol_rndtrp_die = but_config_bool(var, value);
 		global_conv_flags_eol = eol_rndtrp_die ?
 			CONV_EOL_RNDTRP_DIE : 0;
 		return 0;
@@ -1646,7 +1646,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.editor"))
-		return git_config_string(&editor_program, var, value);
+		return but_config_string(&editor_program, var, value);
 
 	if (!strcmp(var, "core.commentchar")) {
 		if (!value)
@@ -1662,10 +1662,10 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.askpass"))
-		return git_config_string(&askpass_program, var, value);
+		return but_config_string(&askpass_program, var, value);
 
 	if (!strcmp(var, "core.excludesfile"))
-		return git_config_pathname(&excludes_file, var, value);
+		return but_config_pathname(&excludes_file, var, value);
 
 	if (!strcmp(var, "core.whitespace")) {
 		if (!value)
@@ -1696,12 +1696,12 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "core.fsyncobjectfiles")) {
 		if (fsync_object_files < 0)
 			warning(_("core.fsyncObjectFiles is deprecated; use core.fsync instead"));
-		fsync_object_files = git_config_bool(var, value);
+		fsync_object_files = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.preloadindex")) {
-		core_preload_index = git_config_bool(var, value);
+		core_preload_index = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1716,32 +1716,32 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.sparsecheckout")) {
-		core_apply_sparse_checkout = git_config_bool(var, value);
+		core_apply_sparse_checkout = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.sparsecheckoutcone")) {
-		core_sparse_checkout_cone = git_config_bool(var, value);
+		core_sparse_checkout_cone = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.precomposeunicode")) {
-		precomposed_unicode = git_config_bool(var, value);
+		precomposed_unicode = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.protecthfs")) {
-		protect_hfs = git_config_bool(var, value);
+		protect_hfs = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.protectntfs")) {
-		protect_ntfs = git_config_bool(var, value);
+		protect_ntfs = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.usereplacerefs")) {
-		read_replace_refs = git_config_bool(var, value);
+		read_replace_refs = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1749,10 +1749,10 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	return platform_core_config(var, value, cb);
 }
 
-static int git_default_sparse_config(const char *var, const char *value)
+static int but_default_sparse_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "sparse.expectfilesoutsideofpatterns")) {
-		sparse_expect_files_outside_of_patterns = git_config_bool(var, value);
+		sparse_expect_files_outside_of_patterns = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1760,29 +1760,29 @@ static int git_default_sparse_config(const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_i18n_config(const char *var, const char *value)
+static int but_default_i18n_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "i18n.cummitencoding"))
-		return git_config_string(&git_cummit_encoding, var, value);
+		return but_config_string(&but_cummit_encoding, var, value);
 
 	if (!strcmp(var, "i18n.logoutputencoding"))
-		return git_config_string(&git_log_output_encoding, var, value);
+		return but_config_string(&but_log_output_encoding, var, value);
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
 
-static int git_default_branch_config(const char *var, const char *value)
+static int but_default_branch_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "branch.autosetupmerge")) {
 		if (value && !strcmp(value, "always")) {
-			git_branch_track = BRANCH_TRACK_ALWAYS;
+			but_branch_track = BRANCH_TRACK_ALWAYS;
 			return 0;
 		} else if (value && !strcmp(value, "inherit")) {
-			git_branch_track = BRANCH_TRACK_INHERIT;
+			but_branch_track = BRANCH_TRACK_INHERIT;
 			return 0;
 		}
-		git_branch_track = git_config_bool(var, value);
+		but_branch_track = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "branch.autosetuprebase")) {
@@ -1805,7 +1805,7 @@ static int git_default_branch_config(const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_push_config(const char *var, const char *value)
+static int but_default_push_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "push.default")) {
 		if (!value)
@@ -1834,54 +1834,54 @@ static int git_default_push_config(const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_mailmap_config(const char *var, const char *value)
+static int but_default_mailmap_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "mailmap.file"))
-		return git_config_pathname(&git_mailmap_file, var, value);
+		return but_config_pathname(&but_mailmap_file, var, value);
 	if (!strcmp(var, "mailmap.blob"))
-		return git_config_string(&git_mailmap_blob, var, value);
+		return but_config_string(&but_mailmap_blob, var, value);
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *cb)
+int but_default_config(const char *var, const char *value, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value, cb);
+		return but_default_core_config(var, value, cb);
 
 	if (starts_with(var, "user.") ||
 	    starts_with(var, "author.") ||
 	    starts_with(var, "cummitter."))
-		return git_ident_config(var, value, cb);
+		return but_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
-		return git_default_i18n_config(var, value);
+		return but_default_i18n_config(var, value);
 
 	if (starts_with(var, "branch."))
-		return git_default_branch_config(var, value);
+		return but_default_branch_config(var, value);
 
 	if (starts_with(var, "push."))
-		return git_default_push_config(var, value);
+		return but_default_push_config(var, value);
 
 	if (starts_with(var, "mailmap."))
-		return git_default_mailmap_config(var, value);
+		return but_default_mailmap_config(var, value);
 
 	if (starts_with(var, "advice.") || starts_with(var, "color.advice"))
-		return git_default_advice_config(var, value);
+		return but_default_advice_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
-		pager_use_color = git_config_bool(var,value);
+		pager_use_color = but_config_bool(var,value);
 		return 0;
 	}
 
 	if (!strcmp(var, "pack.packsizelimit")) {
-		pack_size_limit_cfg = git_config_ulong(var, value);
+		pack_size_limit_cfg = but_config_ulong(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "pack.compression")) {
-		int level = git_config_int(var, value);
+		int level = but_config_int(var, value);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
@@ -1892,7 +1892,7 @@ int git_default_config(const char *var, const char *value, void *cb)
 	}
 
 	if (starts_with(var, "sparse."))
-		return git_default_sparse_config(var, value);
+		return but_default_sparse_config(var, value);
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
@@ -1917,7 +1917,7 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	strbuf_init(&top->var, 1024);
 	cf = top;
 
-	ret = git_parse_source(fn, data, opts);
+	ret = but_parse_source(fn, data, opts);
 
 	/* pop config-file parsing state stack */
 	strbuf_release(&top->value);
@@ -1950,13 +1950,13 @@ static int do_config_from_file(config_fn_t fn,
 	return ret;
 }
 
-static int git_config_from_stdin(config_fn_t fn, void *data)
+static int but_config_from_stdin(config_fn_t fn, void *data)
 {
 	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
 				   data, NULL);
 }
 
-int git_config_from_file_with_options(config_fn_t fn, const char *filename,
+int but_config_from_file_with_options(config_fn_t fn, const char *filename,
 				      void *data,
 				      const struct config_options *opts)
 {
@@ -1972,12 +1972,12 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 	return ret;
 }
 
-int git_config_from_file(config_fn_t fn, const char *filename, void *data)
+int but_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
-	return git_config_from_file_with_options(fn, filename, data, NULL);
+	return but_config_from_file_with_options(fn, filename, data, NULL);
 }
 
-int git_config_from_mem(config_fn_t fn,
+int but_config_from_mem(config_fn_t fn,
 			const enum config_origin_type origin_type,
 			const char *name, const char *buf, size_t len,
 			void *data, const struct config_options *opts)
@@ -1998,7 +1998,7 @@ int git_config_from_mem(config_fn_t fn,
 	return do_config_from(&top, fn, data, opts);
 }
 
-int git_config_from_blob_oid(config_fn_t fn,
+int but_config_from_blob_oid(config_fn_t fn,
 			      const char *name,
 			      struct repository *repo,
 			      const struct object_id *oid,
@@ -2017,14 +2017,14 @@ int git_config_from_blob_oid(config_fn_t fn,
 		return error(_("reference '%s' does not point to a blob"), name);
 	}
 
-	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
+	ret = but_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
 				  data, NULL);
 	free(buf);
 
 	return ret;
 }
 
-static int git_config_from_blob_ref(config_fn_t fn,
+static int but_config_from_blob_ref(config_fn_t fn,
 				    struct repository *repo,
 				    const char *name,
 				    void *data)
@@ -2033,10 +2033,10 @@ static int git_config_from_blob_ref(config_fn_t fn,
 
 	if (repo_get_oid(repo, name, &oid) < 0)
 		return error(_("unable to resolve config blob '%s'"), name);
-	return git_config_from_blob_oid(fn, name, repo, &oid, data);
+	return but_config_from_blob_oid(fn, name, repo, &oid, data);
 }
 
-char *git_system_config(void)
+char *but_system_config(void)
 {
 	char *system_config = xstrdup_or_null(getenv("GIT_CONFIG_SYSTEM"));
 	if (!system_config)
@@ -2045,13 +2045,13 @@ char *git_system_config(void)
 	return system_config;
 }
 
-void git_global_config(char **user_out, char **xdg_out)
+void but_global_config(char **user_out, char **xdg_out)
 {
 	char *user_config = xstrdup_or_null(getenv("GIT_CONFIG_GLOBAL"));
 	char *xdg_config = NULL;
 
 	if (!user_config) {
-		user_config = interpolate_path("~/.gitconfig", 0);
+		user_config = interpolate_path("~/.butconfig", 0);
 		xdg_config = xdg_config_home("config");
 	}
 
@@ -2063,34 +2063,34 @@ void git_global_config(char **user_out, char **xdg_out)
  * Parse environment variable 'k' as a boolean (in various
  * possible spellings); if missing, use the default value 'def'.
  */
-int git_env_bool(const char *k, int def)
+int but_env_bool(const char *k, int def)
 {
 	const char *v = getenv(k);
-	return v ? git_config_bool(k, v) : def;
+	return v ? but_config_bool(k, v) : def;
 }
 
 /*
  * Parse environment variable 'k' as ulong with possibly a unit
  * suffix; if missing, use the default value 'val'.
  */
-unsigned long git_env_ulong(const char *k, unsigned long val)
+unsigned long but_env_ulong(const char *k, unsigned long val)
 {
 	const char *v = getenv(k);
-	if (v && !git_parse_ulong(v, &val))
+	if (v && !but_parse_ulong(v, &val))
 		die(_("failed to parse %s"), k);
 	return val;
 }
 
-int git_config_system(void)
+int but_config_system(void)
 {
-	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+	return !but_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
-static int do_git_config_sequence(const struct config_options *opts,
+static int do_but_config_sequence(const struct config_options *opts,
 				  config_fn_t fn, void *data)
 {
 	int ret = 0;
-	char *system_config = git_system_config();
+	char *system_config = but_system_config();
 	char *xdg_config = NULL;
 	char *user_config = NULL;
 	char *repo_config;
@@ -2098,41 +2098,41 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
-	else if (opts->git_dir)
-		BUG("git_dir without commondir");
+	else if (opts->but_dir)
+		BUG("but_dir without commondir");
 	else
 		repo_config = NULL;
 
 	current_parsing_scope = CONFIG_SCOPE_SYSTEM;
-	if (git_config_system() && system_config &&
+	if (but_config_system() && system_config &&
 	    !access_or_die(system_config, R_OK,
 			   opts->system_gently ? ACCESS_EACCES_OK : 0))
-		ret += git_config_from_file(fn, system_config, data);
+		ret += but_config_from_file(fn, system_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_GLOBAL;
-	git_global_config(&user_config, &xdg_config);
+	but_global_config(&user_config, &xdg_config);
 
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file(fn, xdg_config, data);
+		ret += but_config_from_file(fn, xdg_config, data);
 
 	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file(fn, user_config, data);
+		ret += but_config_from_file(fn, user_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_LOCAL;
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
-		ret += git_config_from_file(fn, repo_config, data);
+		ret += but_config_from_file(fn, repo_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_WORKTREE;
 	if (!opts->ignore_worktree && repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
+		char *path = but_pathdup("config.worktree");
 		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
+			ret += but_config_from_file(fn, path, data);
 		free(path);
 	}
 
 	current_parsing_scope = CONFIG_SCOPE_COMMAND;
-	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
+	if (!opts->ignore_cmdline && but_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
 
 	current_parsing_scope = prev_parsing_scope;
@@ -2144,7 +2144,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 }
 
 int config_with_options(config_fn_t fn, void *data,
-			struct git_config_source *config_source,
+			struct but_config_source *config_source,
 			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
@@ -2155,7 +2155,7 @@ int config_with_options(config_fn_t fn, void *data,
 		inc.data = data;
 		inc.opts = opts;
 		inc.config_source = config_source;
-		fn = git_config_include;
+		fn = but_config_include;
 		data = &inc;
 	}
 
@@ -2167,16 +2167,16 @@ int config_with_options(config_fn_t fn, void *data,
 	 * regular lookup sequence.
 	 */
 	if (config_source && config_source->use_stdin) {
-		ret = git_config_from_stdin(fn, data);
+		ret = but_config_from_stdin(fn, data);
 	} else if (config_source && config_source->file) {
-		ret = git_config_from_file(fn, config_source->file, data);
+		ret = but_config_from_file(fn, config_source->file, data);
 	} else if (config_source && config_source->blob) {
 		struct repository *repo = config_source->repo ?
 			config_source->repo : the_repository;
-		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
+		ret = but_config_from_blob_ref(fn, repo, config_source->blob,
 						data);
 	} else {
-		ret = do_git_config_sequence(opts, fn, data);
+		ret = do_but_config_sequence(opts, fn, data);
 	}
 
 	if (inc.remote_urls) {
@@ -2201,7 +2201,7 @@ static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 		current_config_kvi = values->items[value_index].util;
 
 		if (fn(entry->key, values->items[value_index].string, data) < 0)
-			git_die_config_linenr(entry->key,
+			but_die_config_linenr(entry->key,
 					      current_config_kvi->filename,
 					      current_config_kvi->linenr);
 
@@ -2213,30 +2213,30 @@ void read_early_config(config_fn_t cb, void *data)
 {
 	struct config_options opts = {0};
 	struct strbuf commondir = STRBUF_INIT;
-	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf butdir = STRBUF_INIT;
 
 	opts.respect_includes = 1;
 
-	if (have_git_dir()) {
-		opts.commondir = get_git_common_dir();
-		opts.git_dir = get_git_dir();
+	if (have_but_dir()) {
+		opts.commondir = get_but_common_dir();
+		opts.but_dir = get_but_dir();
 	/*
-	 * When setup_git_directory() was not yet asked to discover the
-	 * GIT_DIR, we ask discover_git_directory() to figure out whether there
+	 * When setup_but_directory() was not yet asked to discover the
+	 * GIT_DIR, we ask discover_but_directory() to figure out whether there
 	 * is any repository config we should use (but unlike
-	 * setup_git_directory_gently(), no global state is changed, most
+	 * setup_but_directory_gently(), no global state is changed, most
 	 * notably, the current working directory is still the same after the
 	 * call).
 	 */
-	} else if (!discover_git_directory(&commondir, &gitdir)) {
+	} else if (!discover_but_directory(&commondir, &butdir)) {
 		opts.commondir = commondir.buf;
-		opts.git_dir = gitdir.buf;
+		opts.but_dir = butdir.buf;
 	}
 
 	config_with_options(cb, data, NULL, &opts);
 
 	strbuf_release(&commondir);
-	strbuf_release(&gitdir);
+	strbuf_release(&butdir);
 }
 
 /*
@@ -2265,7 +2265,7 @@ static struct config_set_element *configset_find_element(struct config_set *cs, 
 	 * `key` may come from the user, so normalize it before using it
 	 * for querying entries from the hashmap.
 	 */
-	if (git_config_parse_key(key, &normalized_key, NULL))
+	if (but_config_parse_key(key, &normalized_key, NULL))
 		return NULL;
 
 	hashmap_entry_init(&k.ent, strhash(normalized_key));
@@ -2284,7 +2284,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 
 	e = configset_find_element(cs, key);
 	/*
-	 * Since the keys are being fed by git_config*() callback mechanism, they
+	 * Since the keys are being fed by but_config*() callback mechanism, they
 	 * are already normalized. So simply add them without any further munging.
 	 */
 	if (!e) {
@@ -2308,7 +2308,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 		kv_info->linenr = cf->linenr;
 		kv_info->origin_type = cf->origin_type;
 	} else {
-		/* for values read from `git_config_from_parameters()` */
+		/* for values read from `but_config_from_parameters()` */
 		kv_info->filename = NULL;
 		kv_info->linenr = -1;
 		kv_info->origin_type = CONFIG_ORIGIN_CMDLINE;
@@ -2332,7 +2332,7 @@ static int config_set_element_cmp(const void *unused_cmp_data,
 	return strcmp(e1->key, e2->key);
 }
 
-void git_configset_init(struct config_set *cs)
+void but_configset_init(struct config_set *cs)
 {
 	hashmap_init(&cs->config_hash, config_set_element_cmp, NULL, 0);
 	cs->hash_initialized = 1;
@@ -2341,7 +2341,7 @@ void git_configset_init(struct config_set *cs)
 	cs->list.items = NULL;
 }
 
-void git_configset_clear(struct config_set *cs)
+void but_configset_clear(struct config_set *cs)
 {
 	struct config_set_element *entry;
 	struct hashmap_iter iter;
@@ -2368,12 +2368,12 @@ static int config_set_callback(const char *key, const char *value, void *cb)
 	return 0;
 }
 
-int git_configset_add_file(struct config_set *cs, const char *filename)
+int but_configset_add_file(struct config_set *cs, const char *filename)
 {
-	return git_config_from_file(config_set_callback, filename, cs);
+	return but_config_from_file(config_set_callback, filename, cs);
 }
 
-int git_configset_get_value(struct config_set *cs, const char *key, const char **value)
+int but_configset_get_value(struct config_set *cs, const char *key, const char **value)
 {
 	const struct string_list *values = NULL;
 	/*
@@ -2381,7 +2381,7 @@ int git_configset_get_value(struct config_set *cs, const char *key, const char *
 	 * queried key in the files of the configset, the value returned will be the last
 	 * value in the value list for that key.
 	 */
-	values = git_configset_get_value_multi(cs, key);
+	values = but_configset_get_value_multi(cs, key);
 
 	if (!values)
 		return 1;
@@ -2390,26 +2390,26 @@ int git_configset_get_value(struct config_set *cs, const char *key, const char *
 	return 0;
 }
 
-const struct string_list *git_configset_get_value_multi(struct config_set *cs, const char *key)
+const struct string_list *but_configset_get_value_multi(struct config_set *cs, const char *key)
 {
 	struct config_set_element *e = configset_find_element(cs, key);
 	return e ? &e->value_list : NULL;
 }
 
-int git_configset_get_string(struct config_set *cs, const char *key, char **dest)
+int but_configset_get_string(struct config_set *cs, const char *key, char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value))
-		return git_config_string((const char **)dest, key, value);
+	if (!but_configset_get_value(cs, key, &value))
+		return but_config_string((const char **)dest, key, value);
 	else
 		return 1;
 }
 
-static int git_configset_get_string_tmp(struct config_set *cs, const char *key,
+static int but_configset_get_string_tmp(struct config_set *cs, const char *key,
 					const char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
+	if (!but_configset_get_value(cs, key, &value)) {
 		if (!value)
 			return config_error_nonbool(key);
 		*dest = value;
@@ -2419,52 +2419,52 @@ static int git_configset_get_string_tmp(struct config_set *cs, const char *key,
 	}
 }
 
-int git_configset_get_int(struct config_set *cs, const char *key, int *dest)
+int but_configset_get_int(struct config_set *cs, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_config_int(key, value);
+	if (!but_configset_get_value(cs, key, &value)) {
+		*dest = but_config_int(key, value);
 		return 0;
 	} else
 		return 1;
 }
 
-int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest)
+int but_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_config_ulong(key, value);
+	if (!but_configset_get_value(cs, key, &value)) {
+		*dest = but_config_ulong(key, value);
 		return 0;
 	} else
 		return 1;
 }
 
-int git_configset_get_bool(struct config_set *cs, const char *key, int *dest)
+int but_configset_get_bool(struct config_set *cs, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_config_bool(key, value);
+	if (!but_configset_get_value(cs, key, &value)) {
+		*dest = but_config_bool(key, value);
 		return 0;
 	} else
 		return 1;
 }
 
-int git_configset_get_bool_or_int(struct config_set *cs, const char *key,
+int but_configset_get_bool_or_int(struct config_set *cs, const char *key,
 				int *is_bool, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_config_bool_or_int(key, value, is_bool);
+	if (!but_configset_get_value(cs, key, &value)) {
+		*dest = but_config_bool_or_int(key, value, is_bool);
 		return 0;
 	} else
 		return 1;
 }
 
-int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *dest)
+int but_configset_get_maybe_bool(struct config_set *cs, const char *key, int *dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_parse_maybe_bool(value);
+	if (!but_configset_get_value(cs, key, &value)) {
+		*dest = but_parse_maybe_bool(value);
 		if (*dest == -1)
 			return -1;
 		return 0;
@@ -2472,11 +2472,11 @@ int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *de
 		return 1;
 }
 
-int git_configset_get_pathname(struct config_set *cs, const char *key, const char **dest)
+int but_configset_get_pathname(struct config_set *cs, const char *key, const char **dest)
 {
 	const char *value;
-	if (!git_configset_get_value(cs, key, &value))
-		return git_config_pathname(dest, key, value);
+	if (!but_configset_get_value(cs, key, &value))
+		return but_config_pathname(dest, key, value);
 	else
 		return 1;
 }
@@ -2488,14 +2488,14 @@ static void repo_read_config(struct repository *repo)
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
-	opts.git_dir = repo->gitdir;
+	opts.but_dir = repo->butdir;
 
 	if (!repo->config)
 		CALLOC_ARRAY(repo->config, 1);
 	else
-		git_configset_clear(repo->config);
+		but_configset_clear(repo->config);
 
-	git_configset_init(repo->config);
+	but_configset_init(repo->config);
 
 	if (config_with_options(config_set_callback, repo->config, NULL, &opts) < 0)
 		/*
@@ -2512,7 +2512,7 @@ static void repo_read_config(struct repository *repo)
 		die(_("unknown error occurred while reading the configuration files"));
 }
 
-static void git_config_check_init(struct repository *repo)
+static void but_config_check_init(struct repository *repo)
 {
 	if (repo->config && repo->config->hash_initialized)
 		return;
@@ -2523,37 +2523,37 @@ static void repo_config_clear(struct repository *repo)
 {
 	if (!repo->config || !repo->config->hash_initialized)
 		return;
-	git_configset_clear(repo->config);
+	but_configset_clear(repo->config);
 }
 
 void repo_config(struct repository *repo, config_fn_t fn, void *data)
 {
-	git_config_check_init(repo);
+	but_config_check_init(repo);
 	configset_iter(repo->config, fn, data);
 }
 
 int repo_config_get_value(struct repository *repo,
 			  const char *key, const char **value)
 {
-	git_config_check_init(repo);
-	return git_configset_get_value(repo->config, key, value);
+	but_config_check_init(repo);
+	return but_configset_get_value(repo->config, key, value);
 }
 
 const struct string_list *repo_config_get_value_multi(struct repository *repo,
 						      const char *key)
 {
-	git_config_check_init(repo);
-	return git_configset_get_value_multi(repo->config, key);
+	but_config_check_init(repo);
+	return but_configset_get_value_multi(repo->config, key);
 }
 
 int repo_config_get_string(struct repository *repo,
 			   const char *key, char **dest)
 {
 	int ret;
-	git_config_check_init(repo);
-	ret = git_configset_get_string(repo->config, key, dest);
+	but_config_check_init(repo);
+	ret = but_configset_get_string(repo->config, key, dest);
 	if (ret < 0)
-		git_die_config(key, NULL);
+		but_die_config(key, NULL);
 	return ret;
 }
 
@@ -2561,143 +2561,143 @@ int repo_config_get_string_tmp(struct repository *repo,
 			       const char *key, const char **dest)
 {
 	int ret;
-	git_config_check_init(repo);
-	ret = git_configset_get_string_tmp(repo->config, key, dest);
+	but_config_check_init(repo);
+	ret = but_configset_get_string_tmp(repo->config, key, dest);
 	if (ret < 0)
-		git_die_config(key, NULL);
+		but_die_config(key, NULL);
 	return ret;
 }
 
 int repo_config_get_int(struct repository *repo,
 			const char *key, int *dest)
 {
-	git_config_check_init(repo);
-	return git_configset_get_int(repo->config, key, dest);
+	but_config_check_init(repo);
+	return but_configset_get_int(repo->config, key, dest);
 }
 
 int repo_config_get_ulong(struct repository *repo,
 			  const char *key, unsigned long *dest)
 {
-	git_config_check_init(repo);
-	return git_configset_get_ulong(repo->config, key, dest);
+	but_config_check_init(repo);
+	return but_configset_get_ulong(repo->config, key, dest);
 }
 
 int repo_config_get_bool(struct repository *repo,
 			 const char *key, int *dest)
 {
-	git_config_check_init(repo);
-	return git_configset_get_bool(repo->config, key, dest);
+	but_config_check_init(repo);
+	return but_configset_get_bool(repo->config, key, dest);
 }
 
 int repo_config_get_bool_or_int(struct repository *repo,
 				const char *key, int *is_bool, int *dest)
 {
-	git_config_check_init(repo);
-	return git_configset_get_bool_or_int(repo->config, key, is_bool, dest);
+	but_config_check_init(repo);
+	return but_configset_get_bool_or_int(repo->config, key, is_bool, dest);
 }
 
 int repo_config_get_maybe_bool(struct repository *repo,
 			       const char *key, int *dest)
 {
-	git_config_check_init(repo);
-	return git_configset_get_maybe_bool(repo->config, key, dest);
+	but_config_check_init(repo);
+	return but_configset_get_maybe_bool(repo->config, key, dest);
 }
 
 int repo_config_get_pathname(struct repository *repo,
 			     const char *key, const char **dest)
 {
 	int ret;
-	git_config_check_init(repo);
-	ret = git_configset_get_pathname(repo->config, key, dest);
+	but_config_check_init(repo);
+	ret = but_configset_get_pathname(repo->config, key, dest);
 	if (ret < 0)
-		git_die_config(key, NULL);
+		but_die_config(key, NULL);
 	return ret;
 }
 
 /* Functions used historically to read configuration from 'the_repository' */
-void git_config(config_fn_t fn, void *data)
+void but_config(config_fn_t fn, void *data)
 {
 	repo_config(the_repository, fn, data);
 }
 
-void git_config_clear(void)
+void but_config_clear(void)
 {
 	repo_config_clear(the_repository);
 }
 
-int git_config_get_value(const char *key, const char **value)
+int but_config_get_value(const char *key, const char **value)
 {
 	return repo_config_get_value(the_repository, key, value);
 }
 
-const struct string_list *git_config_get_value_multi(const char *key)
+const struct string_list *but_config_get_value_multi(const char *key)
 {
 	return repo_config_get_value_multi(the_repository, key);
 }
 
-int git_config_get_string(const char *key, char **dest)
+int but_config_get_string(const char *key, char **dest)
 {
 	return repo_config_get_string(the_repository, key, dest);
 }
 
-int git_config_get_string_tmp(const char *key, const char **dest)
+int but_config_get_string_tmp(const char *key, const char **dest)
 {
 	return repo_config_get_string_tmp(the_repository, key, dest);
 }
 
-int git_config_get_int(const char *key, int *dest)
+int but_config_get_int(const char *key, int *dest)
 {
 	return repo_config_get_int(the_repository, key, dest);
 }
 
-int git_config_get_ulong(const char *key, unsigned long *dest)
+int but_config_get_ulong(const char *key, unsigned long *dest)
 {
 	return repo_config_get_ulong(the_repository, key, dest);
 }
 
-int git_config_get_bool(const char *key, int *dest)
+int but_config_get_bool(const char *key, int *dest)
 {
 	return repo_config_get_bool(the_repository, key, dest);
 }
 
-int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest)
+int but_config_get_bool_or_int(const char *key, int *is_bool, int *dest)
 {
 	return repo_config_get_bool_or_int(the_repository, key, is_bool, dest);
 }
 
-int git_config_get_maybe_bool(const char *key, int *dest)
+int but_config_get_maybe_bool(const char *key, int *dest)
 {
 	return repo_config_get_maybe_bool(the_repository, key, dest);
 }
 
-int git_config_get_pathname(const char *key, const char **dest)
+int but_config_get_pathname(const char *key, const char **dest)
 {
 	return repo_config_get_pathname(the_repository, key, dest);
 }
 
-int git_config_get_expiry(const char *key, const char **output)
+int but_config_get_expiry(const char *key, const char **output)
 {
-	int ret = git_config_get_string(key, (char **)output);
+	int ret = but_config_get_string(key, (char **)output);
 	if (ret)
 		return ret;
 	if (strcmp(*output, "now")) {
 		timestamp_t now = approxidate("now");
 		if (approxidate(*output) >= now)
-			git_die_config(key, _("Invalid %s: '%s'"), key, *output);
+			but_die_config(key, _("Invalid %s: '%s'"), key, *output);
 	}
 	return ret;
 }
 
-int git_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestamp_t now)
+int but_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestamp_t now)
 {
 	const char *expiry_string;
 	intmax_t days;
 	timestamp_t when;
 
-	if (git_config_get_string_tmp(key, &expiry_string))
+	if (but_config_get_string_tmp(key, &expiry_string))
 		return 1; /* no such thing */
 
-	if (git_parse_signed(expiry_string, &days, maximum_signed_value_of_type(int))) {
+	if (but_parse_signed(expiry_string, &days, maximum_signed_value_of_type(int))) {
 		const int scale = 86400;
 		*expiry = now - days * scale;
 		return 0;
@@ -2710,21 +2710,21 @@ int git_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestam
 	return -1; /* thing exists but cannot be parsed */
 }
 
-int git_config_get_split_index(void)
+int but_config_get_split_index(void)
 {
 	int val;
 
-	if (!git_config_get_maybe_bool("core.splitindex", &val))
+	if (!but_config_get_maybe_bool("core.splitindex", &val))
 		return val;
 
 	return -1; /* default value */
 }
 
-int git_config_get_max_percent_split_change(void)
+int but_config_get_max_percent_split_change(void)
 {
 	int val = -1;
 
-	if (!git_config_get_int("splitindex.maxpercentchange", &val)) {
+	if (!but_config_get_int("splitindex.maxpercentchange", &val)) {
 		if (0 <= val && val <= 100)
 			return val;
 
@@ -2735,17 +2735,17 @@ int git_config_get_max_percent_split_change(void)
 	return -1; /* default value */
 }
 
-int git_config_get_index_threads(int *dest)
+int but_config_get_index_threads(int *dest)
 {
 	int is_bool, val;
 
-	val = git_env_ulong("GIT_TEST_INDEX_THREADS", 0);
+	val = but_env_ulong("GIT_TEST_INDEX_THREADS", 0);
 	if (val) {
 		*dest = val;
 		return 0;
 	}
 
-	if (!git_config_get_bool_or_int("index.threads", &is_bool, &val)) {
+	if (!but_config_get_bool_or_int("index.threads", &is_bool, &val)) {
 		if (is_bool)
 			*dest = val ? 0 : 1;
 		else
@@ -2757,7 +2757,7 @@ int git_config_get_index_threads(int *dest)
 }
 
 NORETURN
-void git_die_config_linenr(const char *key, const char *filename, int linenr)
+void but_die_config_linenr(const char *key, const char *filename, int linenr)
 {
 	if (!filename)
 		die(_("unable to parse '%s' from command-line config"), key);
@@ -2767,7 +2767,7 @@ void git_die_config_linenr(const char *key, const char *filename, int linenr)
 }
 
 NORETURN __attribute__((format(printf, 2, 3)))
-void git_die_config(const char *key, const char *err, ...)
+void but_die_config(const char *key, const char *err, ...)
 {
 	const struct string_list *values;
 	struct key_value_info *kv_info;
@@ -2779,13 +2779,13 @@ void git_die_config(const char *key, const char *err, ...)
 		error_fn(err, params);
 		va_end(params);
 	}
-	values = git_config_get_value_multi(key);
+	values = but_config_get_value_multi(key);
 	kv_info = values->items[values->nr - 1].util;
-	git_die_config_linenr(key, kv_info->filename, kv_info->linenr);
+	but_die_config_linenr(key, kv_info->filename, kv_info->linenr);
 }
 
 /*
- * Find all the stuff for git_config_set() below.
+ * Find all the stuff for but_config_set() below.
  */
 
 struct config_store_data {
@@ -3080,21 +3080,21 @@ static void maybe_remove_section(struct config_store_data *store,
 		*end_offset = store->parsed[store->parsed_nr - 1].end;
 }
 
-int git_config_set_in_file_gently(const char *config_filename,
+int but_config_set_in_file_gently(const char *config_filename,
 				  const char *key, const char *value)
 {
-	return git_config_set_multivar_in_file_gently(config_filename, key, value, NULL, 0);
+	return but_config_set_multivar_in_file_gently(config_filename, key, value, NULL, 0);
 }
 
-void git_config_set_in_file(const char *config_filename,
+void but_config_set_in_file(const char *config_filename,
 			    const char *key, const char *value)
 {
-	git_config_set_multivar_in_file(config_filename, key, value, NULL, 0);
+	but_config_set_multivar_in_file(config_filename, key, value, NULL, 0);
 }
 
-int git_config_set_gently(const char *key, const char *value)
+int but_config_set_gently(const char *key, const char *value)
 {
-	return git_config_set_multivar_gently(key, value, NULL, 0);
+	return but_config_set_multivar_gently(key, value, NULL, 0);
 }
 
 int repo_config_set_worktree_gently(struct repository *r,
@@ -3102,8 +3102,8 @@ int repo_config_set_worktree_gently(struct repository *r,
 {
 	/* Only use worktree-specific config if it is is already enabled. */
 	if (repository_format_worktree_config) {
-		char *file = repo_git_path(r, "config.worktree");
-		int ret = git_config_set_multivar_in_file_gently(
+		char *file = repo_but_path(r, "config.worktree");
+		int ret = but_config_set_multivar_in_file_gently(
 					file, key, value, NULL, 0);
 		free(file);
 		return ret;
@@ -3111,9 +3111,9 @@ int repo_config_set_worktree_gently(struct repository *r,
 	return repo_config_set_multivar_gently(r, key, value, NULL, 0);
 }
 
-void git_config_set(const char *key, const char *value)
+void but_config_set(const char *key, const char *value)
 {
-	git_config_set_multivar(key, value, NULL, 0);
+	but_config_set_multivar(key, value, NULL, 0);
 
 	trace2_cmd_set_config(key, value);
 }
@@ -3131,7 +3131,7 @@ void git_config_set(const char *key, const char *value)
  *
  * This function does this:
  *
- * - it locks the config file by creating ".git/config.lock"
+ * - it locks the config file by creating ".but/config.lock"
  *
  * - it then parses the config using store_aux() as validator to find
  *   the position on the key/value pair to replace. If it is to be unset,
@@ -3143,7 +3143,7 @@ void git_config_set(const char *key, const char *value)
  * - the config file is removed and the lock file rename()d to it.
  *
  */
-int git_config_set_multivar_in_file_gently(const char *config_filename,
+int but_config_set_multivar_in_file_gently(const char *config_filename,
 					   const char *key, const char *value,
 					   const char *value_pattern,
 					   unsigned flags)
@@ -3159,18 +3159,18 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	memset(&store, 0, sizeof(store));
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
-	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
+	ret = 0 - but_config_parse_key(key, &store.key, &store.baselen);
 	if (ret)
 		goto out_free;
 
 	store.multi_replace = (flags & CONFIG_FLAGS_MULTI_REPLACE) != 0;
 
 	if (!config_filename)
-		config_filename = filename_buf = git_pathdup("config");
+		config_filename = filename_buf = but_pathdup("config");
 
 	/*
 	 * The lock serves a purpose in addition to locking: the new
-	 * contents of .git/config will be written into it.
+	 * contents of .but/config will be written into it.
 	 */
 	fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (fd < 0) {
@@ -3180,7 +3180,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	}
 
 	/*
-	 * If .git/config does not exist yet, write a minimal version.
+	 * If .but/config does not exist yet, write a minimal version.
 	 */
 	in_fd = open(config_filename, O_RDONLY);
 	if ( in_fd < 0 ) {
@@ -3244,7 +3244,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config_from_file_with_options(store_aux,
+		if (but_config_from_file_with_options(store_aux,
 						      config_filename,
 						      &store, &opts)) {
 			error(_("invalid config file %s"), config_filename);
@@ -3374,7 +3374,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	ret = 0;
 
 	/* Invalidate the config cache */
-	git_config_clear();
+	but_config_clear();
 
 out_free:
 	rollback_lock_file(&lock);
@@ -3392,11 +3392,11 @@ write_err_out:
 
 }
 
-void git_config_set_multivar_in_file(const char *config_filename,
+void but_config_set_multivar_in_file(const char *config_filename,
 				     const char *key, const char *value,
 				     const char *value_pattern, unsigned flags)
 {
-	if (!git_config_set_multivar_in_file_gently(config_filename, key, value,
+	if (!but_config_set_multivar_in_file_gently(config_filename, key, value,
 						    value_pattern, flags))
 		return;
 	if (value)
@@ -3405,7 +3405,7 @@ void git_config_set_multivar_in_file(const char *config_filename,
 		die(_("could not unset '%s'"), key);
 }
 
-int git_config_set_multivar_gently(const char *key, const char *value,
+int but_config_set_multivar_gently(const char *key, const char *value,
 				   const char *value_pattern, unsigned flags)
 {
 	return repo_config_set_multivar_gently(the_repository, key, value,
@@ -3416,8 +3416,8 @@ int repo_config_set_multivar_gently(struct repository *r, const char *key,
 				    const char *value,
 				    const char *value_pattern, unsigned flags)
 {
-	char *file = repo_git_path(r, "config");
-	int res = git_config_set_multivar_in_file_gently(file,
+	char *file = repo_but_path(r, "config");
+	int res = but_config_set_multivar_in_file_gently(file,
 							 key, value,
 							 value_pattern,
 							 flags);
@@ -3425,10 +3425,10 @@ int repo_config_set_multivar_gently(struct repository *r, const char *key,
 	return res;
 }
 
-void git_config_set_multivar(const char *key, const char *value,
+void but_config_set_multivar(const char *key, const char *value,
 			     const char *value_pattern, unsigned flags)
 {
-	git_config_set_multivar_in_file(git_path("config"),
+	but_config_set_multivar_in_file(but_path("config"),
 					key, value, value_pattern,
 					flags);
 }
@@ -3489,7 +3489,7 @@ static int section_name_is_ok(const char *name)
 }
 
 /* if new_name == NULL, the section is removed instead */
-static int git_config_copy_or_rename_section_in_file(const char *config_filename,
+static int but_config_copy_or_rename_section_in_file(const char *config_filename,
 				      const char *old_name,
 				      const char *new_name, int copy)
 {
@@ -3511,7 +3511,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	}
 
 	if (!config_filename)
-		config_filename = filename_buf = git_pathdup("config");
+		config_filename = filename_buf = but_pathdup("config");
 
 	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (out_fd < 0) {
@@ -3642,28 +3642,28 @@ out_no_rollback:
 	return ret;
 }
 
-int git_config_rename_section_in_file(const char *config_filename,
+int but_config_rename_section_in_file(const char *config_filename,
 				      const char *old_name, const char *new_name)
 {
-	return git_config_copy_or_rename_section_in_file(config_filename,
+	return but_config_copy_or_rename_section_in_file(config_filename,
 					 old_name, new_name, 0);
 }
 
-int git_config_rename_section(const char *old_name, const char *new_name)
+int but_config_rename_section(const char *old_name, const char *new_name)
 {
-	return git_config_rename_section_in_file(NULL, old_name, new_name);
+	return but_config_rename_section_in_file(NULL, old_name, new_name);
 }
 
-int git_config_copy_section_in_file(const char *config_filename,
+int but_config_copy_section_in_file(const char *config_filename,
 				      const char *old_name, const char *new_name)
 {
-	return git_config_copy_or_rename_section_in_file(config_filename,
+	return but_config_copy_or_rename_section_in_file(config_filename,
 					 old_name, new_name, 1);
 }
 
-int git_config_copy_section(const char *old_name, const char *new_name)
+int but_config_copy_section(const char *old_name, const char *new_name)
 {
-	return git_config_copy_section_in_file(NULL, old_name, new_name);
+	return but_config_copy_section_in_file(NULL, old_name, new_name);
 }
 
 /*

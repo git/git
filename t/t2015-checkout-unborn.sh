@@ -9,42 +9,42 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	mkdir parent &&
 	(cd parent &&
-	 git init &&
+	 but init &&
 	 echo content >file &&
-	 git add file &&
-	 git cummit -m base
+	 but add file &&
+	 but cummit -m base
 	) &&
-	git fetch parent main:origin
+	but fetch parent main:origin
 '
 
 test_expect_success 'checkout from unborn preserves untracked files' '
 	echo precious >expect &&
 	echo precious >file &&
-	test_must_fail git checkout -b new origin &&
+	test_must_fail but checkout -b new origin &&
 	test_cmp expect file
 '
 
 test_expect_success 'checkout from unborn preserves index contents' '
 	echo precious >expect &&
 	echo precious >file &&
-	git add file &&
-	test_must_fail git checkout -b new origin &&
+	but add file &&
+	test_must_fail but checkout -b new origin &&
 	test_cmp expect file &&
-	git show :file >file &&
+	but show :file >file &&
 	test_cmp expect file
 '
 
 test_expect_success 'checkout from unborn merges identical index contents' '
 	echo content >file &&
-	git add file &&
-	git checkout -b new origin
+	but add file &&
+	but checkout -b new origin
 '
 
 test_expect_success 'checking out another branch from unborn state' '
-	git checkout --orphan newroot &&
-	git checkout -b anothername &&
-	test_must_fail git show-ref --verify refs/heads/newroot &&
-	git symbolic-ref HEAD >actual &&
+	but checkout --orphan newroot &&
+	but checkout -b anothername &&
+	test_must_fail but show-ref --verify refs/heads/newroot &&
+	but symbolic-ref HEAD >actual &&
 	echo refs/heads/anothername >expect &&
 	test_cmp expect actual
 '
@@ -53,9 +53,9 @@ test_expect_success 'checking out in a newly created repo' '
 	test_create_repo empty &&
 	(
 		cd empty &&
-		git symbolic-ref HEAD >expect &&
-		test_must_fail git checkout &&
-		git symbolic-ref HEAD >actual &&
+		but symbolic-ref HEAD >expect &&
+		test_must_fail but checkout &&
+		but symbolic-ref HEAD >actual &&
 		test_cmp expect actual
 	)
 '

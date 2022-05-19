@@ -8,9 +8,9 @@ test_expect_success "setup proc-receive hook (ok, $PROTOCOL)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic
+# but push         :                       refs/for/main/topic
 test_expect_success "proc-receive: ok ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -22,7 +22,7 @@ test_expect_success "proc-receive: ok ($PROTOCOL)" '
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  * [new reference]   HEAD -> refs/for/main/topic
 	EOF
 	test_cmp expect actual &&

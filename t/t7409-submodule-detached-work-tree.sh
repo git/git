@@ -5,7 +5,7 @@
 
 test_description='Test submodules on detached working tree
 
-This test verifies that "git submodule" initialization, update and addition works
+This test verifies that "but submodule" initialization, update and addition works
 on detached working trees
 '
 
@@ -16,12 +16,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'submodule on detached working tree' '
-	git init --bare remote &&
+	but init --bare remote &&
 	test_create_repo bundle1 &&
 	(
 		cd bundle1 &&
 		test_cummit "shoot" &&
-		git rev-parse --verify HEAD >../expect
+		but rev-parse --verify HEAD >../expect
 	) &&
 	mkdir home &&
 	(
@@ -29,30 +29,30 @@ test_expect_success 'submodule on detached working tree' '
 		GIT_WORK_TREE="$(pwd)" &&
 		GIT_DIR="$(pwd)/.dotfiles" &&
 		export GIT_WORK_TREE GIT_DIR &&
-		git clone --bare ../remote .dotfiles &&
-		git submodule add ../bundle1 .vim/bundle/sogood &&
+		but clone --bare ../remote .dotfiles &&
+		but submodule add ../bundle1 .vim/bundle/sogood &&
 		test_cummit "sogood" &&
 		(
 			unset GIT_WORK_TREE GIT_DIR &&
 			cd .vim/bundle/sogood &&
-			git rev-parse --verify HEAD >actual &&
+			but rev-parse --verify HEAD >actual &&
 			test_cmp ../../../../expect actual
 		) &&
-		git push origin main
+		but push origin main
 	) &&
 	mkdir home2 &&
 	(
 		cd home2 &&
-		git clone --bare ../remote .dotfiles &&
+		but clone --bare ../remote .dotfiles &&
 		GIT_WORK_TREE="$(pwd)" &&
 		GIT_DIR="$(pwd)/.dotfiles" &&
 		export GIT_WORK_TREE GIT_DIR &&
-		git checkout main &&
-		git submodule update --init &&
+		but checkout main &&
+		but submodule update --init &&
 		(
 			unset GIT_WORK_TREE GIT_DIR &&
 			cd .vim/bundle/sogood &&
-			git rev-parse --verify HEAD >actual &&
+			but rev-parse --verify HEAD >actual &&
 			test_cmp ../../../../expect actual
 		)
 	)
@@ -64,22 +64,22 @@ test_expect_success 'submodule on detached working pointed by core.worktree' '
 		cd home3 &&
 		GIT_DIR="$(pwd)/.dotfiles" &&
 		export GIT_DIR &&
-		git clone --bare ../remote "$GIT_DIR" &&
-		git config core.bare false &&
-		git config core.worktree .. &&
-		git checkout main &&
-		git submodule add ../bundle1 .vim/bundle/dupe &&
+		but clone --bare ../remote "$GIT_DIR" &&
+		but config core.bare false &&
+		but config core.worktree .. &&
+		but checkout main &&
+		but submodule add ../bundle1 .vim/bundle/dupe &&
 		test_cummit "dupe" &&
-		git push origin main
+		but push origin main
 	) &&
 	(
 		cd home &&
 		GIT_DIR="$(pwd)/.dotfiles" &&
 		export GIT_DIR &&
-		git config core.bare false &&
-		git config core.worktree .. &&
-		git pull &&
-		git submodule update --init &&
+		but config core.bare false &&
+		but config core.worktree .. &&
+		but pull &&
+		but submodule update --init &&
 		test -f .vim/bundle/dupe/shoot.t
 	)
 '

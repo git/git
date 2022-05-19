@@ -20,24 +20,24 @@ test_expect_success 'setup' '
 	echo 3 >other &&
 
 	test_tick &&
-	git cummit --allow-empty -m basis
+	but cummit --allow-empty -m basis
 '
 
 test_expect_success 'setup: subdir' '
 	reset_subdir() {
-		git reset &&
+		but reset &&
 		mkdir -p sub/dir/b &&
 		mkdir -p objects &&
 		cp "$1" file &&
 		cp "$1" objects/file &&
 		cp "$1" sub/dir/file &&
 		cp "$1" sub/dir/b/file &&
-		git add file sub/dir/file sub/dir/b/file objects/file &&
+		but add file sub/dir/file sub/dir/b/file objects/file &&
 		cp "$2" file &&
 		cp "$2" sub/dir/file &&
 		cp "$2" sub/dir/b/file &&
 		cp "$2" objects/file &&
-		test_might_fail git update-index --refresh -q
+		test_might_fail but update-index --refresh -q
 	}
 '
 
@@ -46,7 +46,7 @@ test_expect_success 'apply from subdir of toplevel' '
 	reset_subdir other preimage &&
 	(
 		cd sub/dir &&
-		git apply "$patch"
+		but apply "$patch"
 	) &&
 	test_cmp expected sub/dir/file
 '
@@ -57,9 +57,9 @@ test_expect_success 'apply --cached from subdir of toplevel' '
 	reset_subdir preimage other &&
 	(
 		cd sub/dir &&
-		git apply --cached "$patch"
+		but apply --cached "$patch"
 	) &&
-	git show :sub/dir/file >actual &&
+	but show :sub/dir/file >actual &&
 	test_cmp expected actual &&
 	test_cmp expected.working sub/dir/file
 '
@@ -69,19 +69,19 @@ test_expect_success 'apply --index from subdir of toplevel' '
 	reset_subdir preimage other &&
 	(
 		cd sub/dir &&
-		test_must_fail git apply --index "$patch"
+		test_must_fail but apply --index "$patch"
 	) &&
 	reset_subdir other preimage &&
 	(
 		cd sub/dir &&
-		test_must_fail git apply --index "$patch"
+		test_must_fail but apply --index "$patch"
 	) &&
 	reset_subdir preimage preimage &&
 	(
 		cd sub/dir &&
-		git apply --index "$patch"
+		but apply --index "$patch"
 	) &&
-	git show :sub/dir/file >actual &&
+	but show :sub/dir/file >actual &&
 	test_cmp expected actual &&
 	test_cmp expected sub/dir/file
 '
@@ -89,7 +89,7 @@ test_expect_success 'apply --index from subdir of toplevel' '
 test_expect_success 'apply half-broken patch from subdir of toplevel' '
 	(
 		cd sub/dir &&
-		test_must_fail git apply <<-EOF
+		test_must_fail but apply <<-EOF
 		--- sub/dir/file
 		+++ sub/dir/file
 		@@ -1,0 +1,0 @@
@@ -100,55 +100,55 @@ test_expect_success 'apply half-broken patch from subdir of toplevel' '
 	)
 '
 
-test_expect_success 'apply from .git dir' '
+test_expect_success 'apply from .but dir' '
 	cp postimage expected &&
-	cp preimage .git/file &&
-	cp preimage .git/objects/file &&
+	cp preimage .but/file &&
+	cp preimage .but/objects/file &&
 	(
-		cd .git &&
-		git apply "$patch"
+		cd .but &&
+		but apply "$patch"
 	) &&
-	test_cmp expected .git/file
+	test_cmp expected .but/file
 '
 
-test_expect_success 'apply from subdir of .git dir' '
+test_expect_success 'apply from subdir of .but dir' '
 	cp postimage expected &&
-	cp preimage .git/file &&
-	cp preimage .git/objects/file &&
+	cp preimage .but/file &&
+	cp preimage .but/objects/file &&
 	(
-		cd .git/objects &&
-		git apply "$patch"
+		cd .but/objects &&
+		but apply "$patch"
 	) &&
-	test_cmp expected .git/objects/file
+	test_cmp expected .but/objects/file
 '
 
-test_expect_success 'apply --cached from .git dir' '
+test_expect_success 'apply --cached from .but dir' '
 	cp postimage expected &&
 	cp other expected.working &&
-	cp other .git/file &&
+	cp other .but/file &&
 	reset_subdir preimage other &&
 	(
-		cd .git &&
-		git apply --cached "$patch"
+		cd .but &&
+		but apply --cached "$patch"
 	) &&
-	git show :file >actual &&
+	but show :file >actual &&
 	test_cmp expected actual &&
 	test_cmp expected.working file &&
-	test_cmp expected.working .git/file
+	test_cmp expected.working .but/file
 '
 
-test_expect_success 'apply --cached from subdir of .git dir' '
+test_expect_success 'apply --cached from subdir of .but dir' '
 	cp postimage expected &&
 	cp preimage expected.subdir &&
-	cp other .git/file &&
-	cp other .git/objects/file &&
+	cp other .but/file &&
+	cp other .but/objects/file &&
 	reset_subdir preimage other &&
 	(
-		cd .git/objects &&
-		git apply --cached "$patch"
+		cd .but/objects &&
+		but apply --cached "$patch"
 	) &&
-	git show :file >actual &&
-	git show :objects/file >actual.subdir &&
+	but show :file >actual &&
+	but show :objects/file >actual.subdir &&
 	test_cmp expected actual &&
 	test_cmp expected.subdir actual.subdir
 '

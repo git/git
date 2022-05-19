@@ -1,15 +1,15 @@
-git-multi-pack-index(1)
+but-multi-pack-index(1)
 =======================
 
 NAME
 ----
-git-multi-pack-index - Write and verify multi-pack-indexes
+but-multi-pack-index - Write and verify multi-pack-indexes
 
 
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] [--[no-]bitmap] <sub-command>
+'but multi-pack-index' [--object-dir=<dir>] [--[no-]bitmap] <sub-command>
 
 DESCRIPTION
 -----------
@@ -55,10 +55,10 @@ write::
 		contains a "refs snapshot" taken prior to repacking.
 +
 A reference snapshot is composed of line-delimited OIDs corresponding to
-the reference tips, usually taken by `git repack` prior to generating a
+the reference tips, usually taken by `but repack` prior to generating a
 new pack. A line may optionally start with a `+` character to indicate
 that the reference which corresponds to that OID is "preferred" (see
-linkgit:git-config[1]'s `pack.preferBitmapTips`.)
+linkbut:but-config[1]'s `pack.preferBitmapTips`.)
 +
 The file given at `<path>` is expected to be readable, and can contain
 duplicates. (If a given OID is given more than once, it is marked as
@@ -89,7 +89,7 @@ repack::
 	are considered. If only one pack-file is selected, then do
 	nothing. If a new pack-file is created, rewrite the
 	multi-pack-index to reference the new pack-file. A later run of
-	'git multi-pack-index expire' will delete the pack-files that
+	'but multi-pack-index expire' will delete the pack-files that
 	were part of this batch.
 +
 If `repack.packKeptObjects` is `false`, then any pack-files with an
@@ -99,29 +99,29 @@ associated `.keep` file will not be selected for the batch to repack.
 EXAMPLES
 --------
 
-* Write a MIDX file for the packfiles in the current `.git` directory.
+* Write a MIDX file for the packfiles in the current `.but` directory.
 +
 -----------------------------------------------
-$ git multi-pack-index write
+$ but multi-pack-index write
 -----------------------------------------------
 
-* Write a MIDX file for the packfiles in the current `.git` directory with a
+* Write a MIDX file for the packfiles in the current `.but` directory with a
 corresponding bitmap.
 +
 -------------------------------------------------------------
-$ git multi-pack-index write --preferred-pack=<pack> --bitmap
+$ but multi-pack-index write --preferred-pack=<pack> --bitmap
 -------------------------------------------------------------
 
 * Write a MIDX file for the packfiles in an alternate object store.
 +
 -----------------------------------------------
-$ git multi-pack-index --object-dir <alt> write
+$ but multi-pack-index --object-dir <alt> write
 -----------------------------------------------
 
-* Verify the MIDX file for the packfiles in the current `.git` directory.
+* Verify the MIDX file for the packfiles in the current `.but` directory.
 +
 -----------------------------------------------
-$ git multi-pack-index verify
+$ but multi-pack-index verify
 -----------------------------------------------
 
 
@@ -134,4 +134,4 @@ Format] for more information on the multi-pack-index feature.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

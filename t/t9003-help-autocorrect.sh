@@ -5,58 +5,58 @@ test_description='help.autocorrect finding a match'
 
 test_expect_success 'setup' '
 	# An alias
-	git config alias.lgf "log --format=%s --first-parent" &&
+	but config alias.lgf "log --format=%s --first-parent" &&
 
 	# A random user-defined command
-	write_script git-distimdistim <<-EOF &&
+	write_script but-distimdistim <<-EOF &&
 		echo distimdistim was called
 	EOF
 
 	PATH="$PATH:." &&
 	export PATH &&
 
-	git cummit --allow-empty -m "a single log entry" &&
+	but cummit --allow-empty -m "a single log entry" &&
 
 	# Sanity check
-	git lgf >actual &&
+	but lgf >actual &&
 	echo "a single log entry" >expect &&
 	test_cmp expect actual &&
 
-	git distimdistim >actual &&
+	but distimdistim >actual &&
 	echo "distimdistim was called" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'autocorrect showing candidates' '
-	git config help.autocorrect 0 &&
+	but config help.autocorrect 0 &&
 
-	test_must_fail git lfg 2>actual &&
+	test_must_fail but lfg 2>actual &&
 	grep "^	lgf" actual &&
 
-	test_must_fail git distimdist 2>actual &&
+	test_must_fail but distimdist 2>actual &&
 	grep "^	distimdistim" actual
 '
 
 for immediate in -1 immediate
 do
 	test_expect_success 'autocorrect running commands' '
-		git config help.autocorrect $immediate &&
+		but config help.autocorrect $immediate &&
 
-		git lfg >actual &&
+		but lfg >actual &&
 		echo "a single log entry" >expect &&
 		test_cmp expect actual &&
 
-		git distimdist >actual &&
+		but distimdist >actual &&
 		echo "distimdistim was called" >expect &&
 		test_cmp expect actual
 	'
 done
 
 test_expect_success 'autocorrect can be declined altogether' '
-	git config help.autocorrect never &&
+	but config help.autocorrect never &&
 
-	test_must_fail git lfg 2>actual &&
-	grep "is not a git command" actual &&
+	test_must_fail but lfg 2>actual &&
+	grep "is not a but command" actual &&
 	test_line_count = 1 actual
 '
 

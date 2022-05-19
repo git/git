@@ -12,7 +12,7 @@ RMAIN="test-tool ref-store worktree:main"
 
 test_expect_success 'setup' '
 	test_cummit first &&
-	git worktree add -b wt-main wt &&
+	but worktree add -b wt-main wt &&
 	(
 		cd wt &&
 		test_cummit second
@@ -20,7 +20,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'resolve_ref(<shared-ref>)' '
-	SHA1=`git rev-parse main` &&
+	SHA1=`but rev-parse main` &&
 	echo "$SHA1 refs/heads/main 0x0" >expected &&
 	$RWT resolve-ref refs/heads/main 0 >actual &&
 	test_cmp expected actual &&
@@ -29,12 +29,12 @@ test_expect_success 'resolve_ref(<shared-ref>)' '
 '
 
 test_expect_success 'resolve_ref(<per-worktree-ref>)' '
-	SHA1=`git -C wt rev-parse HEAD` &&
+	SHA1=`but -C wt rev-parse HEAD` &&
 	echo "$SHA1 refs/heads/wt-main 0x1" >expected &&
 	$RWT resolve-ref HEAD 0 >actual &&
 	test_cmp expected actual &&
 
-	SHA1=`git rev-parse HEAD` &&
+	SHA1=`but rev-parse HEAD` &&
 	echo "$SHA1 refs/heads/main 0x1" >expected &&
 	$RMAIN resolve-ref HEAD 0 >actual &&
 	test_cmp expected actual
@@ -43,12 +43,12 @@ test_expect_success 'resolve_ref(<per-worktree-ref>)' '
 test_expect_success 'create_symref(FOO, refs/heads/main)' '
 	$RWT create-symref FOO refs/heads/main nothing &&
 	echo refs/heads/main >expected &&
-	git -C wt symbolic-ref FOO >actual &&
+	but -C wt symbolic-ref FOO >actual &&
 	test_cmp expected actual &&
 
 	$RMAIN create-symref FOO refs/heads/wt-main nothing &&
 	echo refs/heads/wt-main >expected &&
-	git symbolic-ref FOO >actual &&
+	but symbolic-ref FOO >actual &&
 	test_cmp expected actual
 '
 
@@ -60,13 +60,13 @@ test_expect_success 'create_symref(FOO, refs/heads/main)' '
 # PSEUDO-WT and refs/bisect/random do not create reflogs by default, so it is
 # not testing a realistic scenario.
 test_expect_success REFFILES 'for_each_reflog()' '
-	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
-	mkdir -p     .git/logs/refs/bisect &&
-	echo $ZERO_OID > .git/logs/refs/bisect/random &&
+	echo $ZERO_OID > .but/logs/PSEUDO-MAIN &&
+	mkdir -p     .but/logs/refs/bisect &&
+	echo $ZERO_OID > .but/logs/refs/bisect/random &&
 
-	echo $ZERO_OID > .git/worktrees/wt/logs/PSEUDO-WT &&
-	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
-	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+	echo $ZERO_OID > .but/worktrees/wt/logs/PSEUDO-WT &&
+	mkdir -p     .but/worktrees/wt/logs/refs/bisect &&
+	echo $ZERO_OID > .but/worktrees/wt/logs/refs/bisect/wt-random &&
 
 	$RWT for-each-reflog | cut -d" " -f 2- | sort >actual &&
 	cat >expected <<-\EOF &&

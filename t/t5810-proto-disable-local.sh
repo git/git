@@ -12,9 +12,9 @@ test_proto "file://" file "file://$PWD"
 test_proto "path" file .
 
 test_expect_success 'setup repo with dash' '
-	git init --bare repo.git &&
-	git push repo.git HEAD &&
-	mv repo.git "$PWD/-repo.git"
+	but init --bare repo.but &&
+	but push repo.but HEAD &&
+	mv repo.but "$PWD/-repo.but"
 '
 
 # This will fail even without our rejection because upload-pack will
@@ -26,12 +26,12 @@ test_expect_success 'setup repo with dash' '
 # to allow).
 test_expect_success 'repo names starting with dash are rejected' '
 	rm -f trace.out &&
-	test_must_fail env GIT_TRACE="$PWD/trace.out" git fetch -- -repo.git &&
+	test_must_fail env GIT_TRACE="$PWD/trace.out" but fetch -- -repo.but &&
 	! grep upload-pack trace.out
 '
 
 test_expect_success 'full paths still work' '
-	git fetch "$PWD/-repo.git"
+	but fetch "$PWD/-repo.but"
 '
 
 test_done

@@ -1,6 +1,6 @@
 checkout.defaultRemote::
-	When you run `git checkout <something>`
-	or `git switch <something>` and only have one
+	When you run `but checkout <something>`
+	or `but switch <something>` and only have one
 	remote, it may implicitly fall back on checking out and
 	tracking e.g. `origin/<something>`. This stops working as soon
 	as you have more than one remote with a `<something>`
@@ -9,18 +9,18 @@ checkout.defaultRemote::
 	disambiguation. The typical use-case is to set this to
 	`origin`.
 +
-Currently this is used by linkgit:git-switch[1] and
-linkgit:git-checkout[1] when `git checkout <something>`
-or `git switch <something>`
+Currently this is used by linkbut:but-switch[1] and
+linkbut:but-checkout[1] when `but checkout <something>`
+or `but switch <something>`
 will checkout the `<something>` branch on another remote,
-and by linkgit:git-worktree[1] when `git worktree add` refers to a
+and by linkbut:but-worktree[1] when `but worktree add` refers to a
 remote branch. This setting might be used for other checkout-like
 commands or functionality in the future.
 
 checkout.guess::
 	Provides the default value for the `--guess` or `--no-guess`
-	option in `git checkout` and `git switch`. See
-	linkgit:git-switch[1] and linkgit:git-checkout[1].
+	option in `but checkout` and `but switch`. See
+	linkbut:but-switch[1] and linkbut:but-checkout[1].
 
 checkout.workers::
 	The number of parallel workers to use when updating the working tree.

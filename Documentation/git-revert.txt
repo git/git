@@ -1,15 +1,15 @@
-git-revert(1)
+but-revert(1)
 =============
 
 NAME
 ----
-git-revert - Revert some existing cummits
+but-revert - Revert some existing cummits
 
 SYNOPSIS
 --------
 [verse]
-'git revert' [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <cummit>...
-'git revert' (--continue | --skip | --abort | --quit)
+'but revert' [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <cummit>...
+'but revert' (--continue | --skip | --abort | --quit)
 
 DESCRIPTION
 -----------
@@ -19,16 +19,16 @@ related patches introduce, and record some new cummits that record
 them.  This requires your working tree to be clean (no modifications
 from the HEAD cummit).
 
-Note: 'git revert' is used to record some new cummits to reverse the
+Note: 'but revert' is used to record some new cummits to reverse the
 effect of some earlier cummits (often only a faulty one).  If you want to
 throw away all uncummitted changes in your working directory, you
-should see linkgit:git-reset[1], particularly the `--hard` option.  If
+should see linkbut:but-reset[1], particularly the `--hard` option.  If
 you want to extract specific files as they were in another cummit, you
-should see linkgit:git-restore[1], specifically the `--source`
+should see linkbut:but-restore[1], specifically the `--source`
 option. Take care with these alternatives as
 both will discard uncummitted changes in your working directory.
 
-See "Reset, restore and revert" in linkgit:git[1] for the differences
+See "Reset, restore and revert" in linkbut:but[1] for the differences
 between the three commands.
 
 OPTIONS
@@ -36,14 +36,14 @@ OPTIONS
 <cummit>...::
 	cummits to revert.
 	For a more complete list of ways to spell cummit names, see
-	linkgit:gitrevisions[7].
+	linkbut:butrevisions[7].
 	Sets of cummits can also be given but no traversal is done by
-	default, see linkgit:git-rev-list[1] and its `--no-walk`
+	default, see linkbut:but-rev-list[1] and its `--no-walk`
 	option.
 
 -e::
 --edit::
-	With this option, 'git revert' will let you edit the cummit
+	With this option, 'but revert' will let you edit the cummit
 	message prior to cummitting the revert. This is the default if
 	you run the command from a terminal.
 
@@ -64,12 +64,12 @@ See the link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for
 more details.
 
 --no-edit::
-	With this option, 'git revert' will not start the cummit
+	With this option, 'but revert' will not start the cummit
 	message editor.
 
 --cleanup=<mode>::
 	This option determines how the cummit message will be cleaned up before
-	being passed on to the cummit machinery. See linkgit:git-cummit[1] for more
+	being passed on to the cummit machinery. See linkbut:but-cummit[1] for more
 	details. In particular, if the '<mode>' is given a value of `scissors`,
 	scissors will be appended to `MERGE_MSG` before being passed on in the case
 	of a conflict.
@@ -100,17 +100,17 @@ effect to your index in a row.
 -s::
 --signoff::
 	Add a `Signed-off-by` trailer at the end of the cummit message.
-	See the signoff option in linkgit:git-cummit[1] for more information.
+	See the signoff option in linkbut:but-cummit[1] for more information.
 
 --strategy=<strategy>::
 	Use the given merge strategy.  Should only be used once.
-	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	See the MERGE STRATEGIES section in linkbut:but-merge[1]
 	for details.
 
 -X<option>::
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
-	merge strategy.  See linkgit:git-merge[1] for details.
+	merge strategy.  See linkbut:but-merge[1] for details.
 
 --rerere-autoupdate::
 --no-rerere-autoupdate::
@@ -123,12 +123,12 @@ include::sequencer.txt[]
 
 EXAMPLES
 --------
-`git revert HEAD~3`::
+`but revert HEAD~3`::
 
 	Revert the changes specified by the fourth last cummit in HEAD
 	and create a new cummit with the reverted changes.
 
-`git revert -n master~5..master~2`::
+`but revert -n master~5..master~2`::
 
 	Revert the changes done by cummits from the fifth last cummit
 	in master (included) to the third last cummit in master
@@ -138,8 +138,8 @@ EXAMPLES
 
 SEE ALSO
 --------
-linkgit:git-cherry-pick[1]
+linkbut:but-cherry-pick[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

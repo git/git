@@ -1,4 +1,4 @@
-$ git diff --line-prefix=abc master master^ side
+$ but diff --line-prefix=abc master master^ side
 abcdiff --cc dir/sub
 abcindex cead32e,7289e35..992913c
 abc--- a/dir/sub

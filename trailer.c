@@ -47,7 +47,7 @@ static int configured;
 
 #define TRAILER_ARG_STRING "$ARG"
 
-static const char *git_generated_prefixes[] = {
+static const char *but_generated_prefixes[] = {
 	"Signed-off-by: ",
 	"(cherry picked from cummit ",
 	NULL
@@ -478,7 +478,7 @@ static struct {
 	{ "ifmissing", TRAILER_IF_MISSING }
 };
 
-static int git_trailer_default_config(const char *conf_key, const char *value, void *cb)
+static int but_trailer_default_config(const char *conf_key, const char *value, void *cb)
 {
 	const char *trailer_item, *variable_name;
 
@@ -509,7 +509,7 @@ static int git_trailer_default_config(const char *conf_key, const char *value, v
 	return 0;
 }
 
-static int git_trailer_config(const char *conf_key, const char *value, void *cb)
+static int but_trailer_config(const char *conf_key, const char *value, void *cb)
 {
 	const char *trailer_item, *variable_name;
 	struct arg_item *item;
@@ -584,8 +584,8 @@ static void ensure_configured(void)
 	default_conf_info.where = WHERE_END;
 	default_conf_info.if_exists = EXISTS_ADD_IF_DIFFERENT_NEIGHBOR;
 	default_conf_info.if_missing = MISSING_ADD;
-	git_config(git_trailer_default_config, NULL);
-	git_config(git_trailer_config, NULL);
+	but_config(but_trailer_default_config, NULL);
+	but_config(but_trailer_config, NULL);
 	configured = 1;
 }
 
@@ -874,7 +874,7 @@ static size_t find_trailer_start(const char *buf, size_t len)
 		}
 		only_spaces = 0;
 
-		for (p = git_generated_prefixes; *p; p++) {
+		for (p = but_generated_prefixes; *p; p++) {
 			if (starts_with(bol, *p)) {
 				trailer_lines++;
 				possible_continuation_lines = 0;
@@ -1031,7 +1031,7 @@ static FILE *create_in_place_tempfile(const char *file)
 	tail = strrchr(file, '/');
 	if (tail != NULL)
 		strbuf_add(&filename_template, file, tail - file + 1);
-	strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
+	strbuf_addstr(&filename_template, "but-interpret-trailers-XXXXXX");
 
 	trailers_tempfile = xmks_tempfile_m(filename_template.buf, st.st_mode);
 	strbuf_release(&filename_template);

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" hg-to-git.py - A Mercurial to GIT converter
+""" hg-to-but.py - A Mercurial to GIT converter
 
     Copyright (C)2007 Stelian Pop <stelian@popies.net>
 
@@ -24,10 +24,10 @@ import re
 
 if sys.hexversion < 0x02030000:
    # The behavior of the pickle module changed significantly in 2.3
-   sys.stderr.write("hg-to-git.py: requires Python 2.3 or later.\n")
+   sys.stderr.write("hg-to-but.py: requires Python 2.3 or later.\n")
    sys.exit(1)
 
-# Maps hg version -> git version
+# Maps hg version -> but version
 hgvers = {}
 # List of children for each hg revision
 hgchildren = {}
@@ -46,7 +46,7 @@ def usage():
 %s: [OPTIONS] <hgprj>
 
 options:
-    -s, --gitstate=FILE: name of the state to be saved/read
+    -s, --butstate=FILE: name of the state to be saved/read
                          for incrementals
     -n, --nrepack=INT:   number of changesets that will trigger
                          a repack (default=0, -1 to deactivate)
@@ -58,7 +58,7 @@ required:
 
 #------------------------------------------------------------------------------
 
-def getgitenv(user, date):
+def getbutenv(user, date):
     env = ''
     elems = re.compile('(.*?)\s+<(.*)>').match(user)
     if elems:
@@ -83,9 +83,9 @@ opt_nrepack = 0
 verbose = False
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 's:t:n:v', ['gitstate=', 'tempdir=', 'nrepack=', 'verbose'])
+    opts, args = getopt.getopt(sys.argv[1:], 's:t:n:v', ['butstate=', 'tempdir=', 'nrepack=', 'verbose'])
     for o, a in opts:
-        if o in ('-s', '--gitstate'):
+        if o in ('-s', '--butstate'):
             state = a
             state = os.path.abspath(state)
         if o in ('-n', '--nrepack'):
@@ -156,7 +156,7 @@ for cset in range(1, int(tip) + 1):
 
 if "0" not in hgvers:
     print('creating repository')
-    os.system('git init')
+    os.system('but init')
 
 # loop through every hg changeset
 for cset in range(int(tip) + 1):
@@ -198,10 +198,10 @@ for cset in range(int(tip) + 1):
     if cset != 0:
         if hgbranch[str(cset)] == "branch-" + str(cset):
             print('creating new branch', hgbranch[str(cset)])
-            os.system('git checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
+            os.system('but checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
         else:
             print('checking out branch', hgbranch[str(cset)])
-            os.system('git checkout %s' % hgbranch[str(cset)])
+            os.system('but checkout %s' % hgbranch[str(cset)])
 
     # merge
     if mparent:
@@ -210,39 +210,39 @@ for cset in range(int(tip) + 1):
         else:
             otherbranch = hgbranch[parent]
         print('merging', otherbranch, 'into', hgbranch[str(cset)])
-        os.system(getgitenv(user, date) + 'git merge --no-cummit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
+        os.system(getbutenv(user, date) + 'but merge --no-cummit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
-    # remove everything except .git and .hg directories
-    os.system('find . \( -path "./.hg" -o -path "./.git" \) -prune -o ! -name "." -print | xargs rm -rf')
+    # remove everything except .but and .hg directories
+    os.system('find . \( -path "./.hg" -o -path "./.but" \) -prune -o ! -name "." -print | xargs rm -rf')
 
     # repopulate with checkouted files
     os.system('hg update -C %d' % cset)
 
     # add new files
-    os.system('git ls-files -x .hg --others | git update-index --add --stdin')
+    os.system('but ls-files -x .hg --others | but update-index --add --stdin')
     # delete removed files
-    os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
+    os.system('but ls-files -x .hg --deleted | but update-index --remove --stdin')
 
     # cummit
-    os.system(getgitenv(user, date) + 'git cummit --allow-empty --allow-empty-message -a -F %s' % filecomment)
+    os.system(getbutenv(user, date) + 'but cummit --allow-empty --allow-empty-message -a -F %s' % filecomment)
     os.unlink(filecomment)
 
     # tag
     if tag and tag != 'tip':
-        os.system(getgitenv(user, date) + 'git tag %s' % tag)
+        os.system(getbutenv(user, date) + 'but tag %s' % tag)
 
     # delete branch if not used anymore...
     if mparent and len(hgchildren[str(cset)]):
         print("Deleting unused branch:", otherbranch)
-        os.system('git branch -d %s' % otherbranch)
+        os.system('but branch -d %s' % otherbranch)
 
     # retrieve and record the version
-    vvv = os.popen('git show --quiet --pretty=format:%H').read()
+    vvv = os.popen('but show --quiet --pretty=format:%H').read()
     print('record', cset, '->', vvv)
     hgvers[str(cset)] = vvv
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
-    os.system('git repack -a -d')
+    os.system('but repack -a -d')
 
 # write the state for incrementals
 if state:

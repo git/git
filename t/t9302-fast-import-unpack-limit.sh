@@ -1,5 +1,5 @@
 #!/bin/sh
-test_description='test git fast-import unpack limit'
+test_description='test but fast-import unpack limit'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -16,10 +16,10 @@ test_expect_success 'create loose objects on import' '
 	done
 	INPUT_END
 
-	git -c fastimport.unpackLimit=2 fast-import --done <input &&
-	git fsck --no-progress &&
-	test $(find .git/objects/?? -type f | wc -l) -eq 2 &&
-	test $(find .git/objects/pack -type f | wc -l) -eq 0
+	but -c fastimport.unpackLimit=2 fast-import --done <input &&
+	but fsck --no-progress &&
+	test $(find .but/objects/?? -type f | wc -l) -eq 2 &&
+	test $(find .but/objects/pack -type f | wc -l) -eq 0
 '
 
 test_expect_success 'bigger packs are preserved' '
@@ -41,16 +41,16 @@ test_expect_success 'bigger packs are preserved' '
 	done
 	INPUT_END
 
-	git -c fastimport.unpackLimit=2 fast-import --done <input &&
-	git fsck --no-progress &&
-	test $(find .git/objects/?? -type f | wc -l) -eq 2 &&
-	test $(find .git/objects/pack -type f | wc -l) -eq 2
+	but -c fastimport.unpackLimit=2 fast-import --done <input &&
+	but fsck --no-progress &&
+	test $(find .but/objects/?? -type f | wc -l) -eq 2 &&
+	test $(find .but/objects/pack -type f | wc -l) -eq 2
 '
 
 test_expect_success 'lookups after checkpoint works' '
-	hello_id=$(echo hello | git hash-object --stdin -t blob) &&
+	hello_id=$(echo hello | but hash-object --stdin -t blob) &&
 	id="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" &&
-	before=$(git rev-parse refs/heads/main^0) &&
+	before=$(but rev-parse refs/heads/main^0) &&
 	(
 		cat <<-INPUT_END &&
 		blob
@@ -88,7 +88,7 @@ test_expect_success 'lookups after checkpoint works' '
 				n=$(($n + 1))
 			fi &&
 			sleep 1 &&
-			from=$(git rev-parse refs/heads/main^0)
+			from=$(but rev-parse refs/heads/main^0)
 		done &&
 		cat <<-INPUT_END &&
 		cummit refs/heads/main
@@ -99,9 +99,9 @@ test_expect_success 'lookups after checkpoint works' '
 		from $from
 		INPUT_END
 		echo done
-	) | git -c fastimport.unpackLimit=100 fast-import --done &&
-	test $(find .git/objects/?? -type f | wc -l) -eq 6 &&
-	test $(find .git/objects/pack -type f | wc -l) -eq 2
+	) | but -c fastimport.unpackLimit=100 fast-import --done &&
+	test $(find .but/objects/?? -type f | wc -l) -eq 6 &&
+	test $(find .but/objects/pack -type f | wc -l) -eq 2
 '
 
 test_done

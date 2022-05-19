@@ -8,9 +8,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 # verify that diffc.expect matches output of
-# $(git diff -c --name-only HEAD HEAD^ HEAD^2)
+# $(but diff -c --name-only HEAD HEAD^ HEAD^2)
 diffc_verify () {
-	git diff -c --name-only HEAD HEAD^ HEAD^2 >diffc.actual &&
+	but diff -c --name-only HEAD HEAD^ HEAD^2 >diffc.actual &&
 	test_cmp diffc.expect diffc.actual
 }
 
@@ -18,40 +18,40 @@ test_expect_success 'trivial merge - combine-diff empty' '
 	for i in $(test_seq 1 9)
 	do
 		echo $i >$i.txt &&
-		git add $i.txt || return 1
+		but add $i.txt || return 1
 	done &&
-	git cummit -m "init" &&
-	git checkout -b side &&
+	but cummit -m "init" &&
+	but checkout -b side &&
 	for i in $(test_seq 2 9)
 	do
 		echo $i/2 >>$i.txt || return 1
 	done &&
-	git cummit -a -m "side 2-9" &&
-	git checkout main &&
+	but cummit -a -m "side 2-9" &&
+	but checkout main &&
 	echo 1/2 >1.txt &&
-	git cummit -a -m "main 1" &&
-	git merge side &&
+	but cummit -a -m "main 1" &&
+	but merge side &&
 	>diffc.expect &&
 	diffc_verify
 '
 
 
 test_expect_success 'only one truly conflicting path' '
-	git checkout side &&
+	but checkout side &&
 	for i in $(test_seq 2 9)
 	do
 		echo $i/3 >>$i.txt || return 1
 	done &&
 	echo "4side" >>4.txt &&
-	git cummit -a -m "side 2-9 +4" &&
-	git checkout main &&
+	but cummit -a -m "side 2-9 +4" &&
+	but checkout main &&
 	for i in $(test_seq 1 9)
 	do
 		echo $i/3 >>$i.txt || return 1
 	done &&
 	echo "4main" >>4.txt &&
-	git cummit -a -m "main 1-9 +4" &&
-	test_must_fail git merge side &&
+	but cummit -a -m "main 1-9 +4" &&
+	test_must_fail but merge side &&
 	cat <<-\EOF >4.txt &&
 	4
 	4/2
@@ -59,49 +59,49 @@ test_expect_success 'only one truly conflicting path' '
 	4main
 	4side
 	EOF
-	git add 4.txt &&
-	git cummit -m "merge side (2)" &&
+	but add 4.txt &&
+	but cummit -m "merge side (2)" &&
 	echo 4.txt >diffc.expect &&
 	diffc_verify
 '
 
 test_expect_success 'merge introduces new file' '
-	git checkout side &&
+	but checkout side &&
 	for i in $(test_seq 5 9)
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git cummit -a -m "side 5-9" &&
-	git checkout main &&
+	but cummit -a -m "side 5-9" &&
+	but checkout main &&
 	for i in $(test_seq 1 3)
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git cummit -a -m "main 1-3 +4hello" &&
-	git merge side &&
+	but cummit -a -m "main 1-3 +4hello" &&
+	but merge side &&
 	echo "Hello World" >4hello.txt &&
-	git add 4hello.txt &&
-	git cummit --amend &&
+	but add 4hello.txt &&
+	but cummit --amend &&
 	echo 4hello.txt >diffc.expect &&
 	diffc_verify
 '
 
 test_expect_success 'merge removed a file' '
-	git checkout side &&
+	but checkout side &&
 	for i in $(test_seq 5 9)
 	do
 		echo $i/5 >>$i.txt || return 1
 	done &&
-	git cummit -a -m "side 5-9" &&
-	git checkout main &&
+	but cummit -a -m "side 5-9" &&
+	but checkout main &&
 	for i in $(test_seq 1 3)
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git cummit -a -m "main 1-3" &&
-	git merge side &&
-	git rm 4.txt &&
-	git cummit --amend &&
+	but cummit -a -m "main 1-3" &&
+	but merge side &&
+	but rm 4.txt &&
+	but cummit --amend &&
 	echo 4.txt >diffc.expect &&
 	diffc_verify
 '

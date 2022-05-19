@@ -4,10 +4,10 @@ Git v2.6.3 Release Notes
 Fixes since v2.6.2
 ------------------
 
- * The error message from "git blame --contents --reverse" incorrectly
+ * The error message from "but blame --contents --reverse" incorrectly
    talked about "--contents --children".
 
- * "git merge-file" tried to signal how many conflicts it found, which
+ * "but merge-file" tried to signal how many conflicts it found, which
    obviously would not work well when there are too many of them.
 
  * The name-hash subsystem that is used to cope with case insensitive
@@ -19,7 +19,7 @@ Fixes since v2.6.2
    This was fixed by recording the path for each directory instead of
    borrowing cache entries and restructuring the API somewhat.
 
- * When the "git am" command was reimplemented in C, "git am -3" had a
+ * When the "but am" command was reimplemented in C, "but am -3" had a
    small regression where it is aborted in its error handling codepath
    when underlying merge-recursive failed in some ways.
 
@@ -32,13 +32,13 @@ Fixes since v2.6.2
    spell that "[<options>]" in most places these days.
 
  * The submodule code has been taught to work better with separate
-   work trees created via "git worktree add".
+   work trees created via "but worktree add".
 
- * When "git gc --auto" is backgrounded, its diagnosis message is
+ * When "but gc --auto" is backgrounded, its diagnosis message is
    lost.  It now is saved to a file in $GIT_DIR and is shown next time
    the "gc --auto" is run.
 
- * Work around "git p4" failing when the P4 depot records the contents
+ * Work around "but p4" failing when the P4 depot records the contents
    in UTF-16 without UTF-16 BOM.
 
  * Recent update to "rebase -i" that tries to sanity check the edited
@@ -46,23 +46,23 @@ Fixes since v2.6.2
    CRLF left by the editor is turned into a trailing CR on the line
    read via the "read" built-in command.
 
- * "git clone --dissociate" runs a big "git repack" process at the
+ * "but clone --dissociate" runs a big "but repack" process at the
    end, and it helps to close file descriptors that are open on the
    packs and their idx files before doing so on filesystems that
    cannot remove a file that is still open.
 
- * Correct "git p4 --detect-labels" so that it does not fail to create
+ * Correct "but p4 --detect-labels" so that it does not fail to create
    a tag that points at a cummit that is also being imported.
 
  * The internal stripspace() function has been moved to where it
    logically belongs to, i.e. strbuf API, and the command line parser
-   of "git stripspace" has been updated to use the parse_options API.
+   of "but stripspace" has been updated to use the parse_options API.
 
  * Prepare for Git on-disk repository representation to undergo
    backward incompatible changes by introducing a new repository
    format version "1", with an extension mechanism.
 
- * "git gc" used to barf when a symbolic ref has gone dangling
+ * "but gc" used to barf when a symbolic ref has gone dangling
    (e.g. the branch that used to be your upstream's default when you
    cloned from it is now gone, and you did "fetch --prune").
 
@@ -70,7 +70,7 @@ Fixes since v2.6.2
    of the path it accepts, and the real world callers do rely on that,
    but a test insisted that the function drops a trailing slash.
 
- * "git gc" is safe to run anytime only because it has the built-in
+ * "but gc" is safe to run anytime only because it has the built-in
    grace period to protect young objects.  In order to run with no
    grace period, the user must make sure that the repository is
    quiescent.
@@ -78,21 +78,21 @@ Fixes since v2.6.2
  * A recent "filter-branch --msg-filter" broke skipping of the cummit
    object header, which is fixed.
 
- * "git --literal-pathspecs add -u/-A" without any command line
+ * "but --literal-pathspecs add -u/-A" without any command line
    argument misbehaved ever since Git 2.0.
 
  * Merging a branch that removes a path and another that changes the
    mode bits on the same path should have conflicted at the path, but
    it didn't and silently favoured the removal.
 
- * "git imap-send" did not compile well with older version of cURL library.
+ * "but imap-send" did not compile well with older version of cURL library.
 
  * The linkage order of libraries was wrong in places around libcurl.
 
- * It was not possible to use a repository-lookalike created by "git
-   worktree add" as a local source of "git clone".
+ * It was not possible to use a repository-lookalike created by "but
+   worktree add" as a local source of "but clone".
 
- * When "git send-email" wanted to talk over Net::SMTP::SSL,
+ * When "but send-email" wanted to talk over Net::SMTP::SSL,
    Net::Cmd::datasend() did not like to be fed too many bytes at the
    same time and failed to send messages.  Send the payload one line
    at a time to work around the problem.
@@ -101,10 +101,10 @@ Fixes since v2.6.2
    list of alternate object databases, but the code to do so forgot to
    correctly initialize the list.
 
- * "git status --branch --short" accessed beyond the constant string
+ * "but status --branch --short" accessed beyond the constant string
    "HEAD", which has been corrected.
 
- * "git daemon" uses "run_command()" without "finish_command()", so it
+ * "but daemon" uses "run_command()" without "finish_command()", so it
    needs to release resources itself, which it forgot to do.
 
 Also contains typofixes, documentation updates and trivial code

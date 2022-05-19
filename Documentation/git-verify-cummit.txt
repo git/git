@@ -1,18 +1,18 @@
-git-verify-cummit(1)
+but-verify-cummit(1)
 ====================
 
 NAME
 ----
-git-verify-cummit - Check the GPG signature of cummits
+but-verify-cummit - Check the GPG signature of cummits
 
 SYNOPSIS
 --------
 [verse]
-'git verify-cummit' <cummit>...
+'but verify-cummit' <cummit>...
 
 DESCRIPTION
 -----------
-Validates the GPG signature created by 'git cummit -S'.
+Validates the GPG signature created by 'but cummit -S'.
 
 OPTIONS
 -------
@@ -29,4 +29,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

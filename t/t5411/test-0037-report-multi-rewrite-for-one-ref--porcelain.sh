@@ -18,9 +18,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no 
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrite for one ref, no refname for the 1st rewrite ($PROTOCOL/porcelain)" '
-	git -C workbench push --porcelain origin \
+	but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -44,7 +44,7 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/24/124/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/changes/25/125/1        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  	HEAD:refs/for/main/topic	<CUMMIT-A>..<CUMMIT-B>
 	> *	HEAD:refs/changes/24/124/1	[new reference]
 	>  	HEAD:refs/changes/25/125/1	<CUMMIT-A>..<CUMMIT-B>
@@ -78,9 +78,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, no 
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrites for one ref, no refname for the 2nd rewrite ($PROTOCOL/porcelain)" '
-	git -C workbench push --porcelain origin \
+	but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -105,7 +105,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/24/124/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/changes/25/125/1        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> *	HEAD:refs/changes/24/124/1	[new reference]
 	>  	HEAD:refs/for/main/topic	<CUMMIT-A>..<CUMMIT-B>
 	> +	HEAD:refs/changes/25/125/1	<CUMMIT-B>...<CUMMIT-A> (forced update)
@@ -133,9 +133,9 @@ test_expect_success "setup proc-receive hook (multiple rewrites for one ref, $PR
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL/porcelain)" '
-	git -C workbench push --porcelain origin \
+	but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -153,7 +153,7 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL/porc
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/changes/23/123/1        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/changes/24/124/2        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> *	HEAD:refs/changes/23/123/1	[new reference]
 	>  	HEAD:refs/changes/24/124/2	<CUMMIT-A>..<CUMMIT-B>
 	> Done

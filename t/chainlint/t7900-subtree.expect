@@ -5,6 +5,6 @@
 	chkms="main-sub1main-sub2main-sub3main-sub4" &&
 	chkms_sub=$(cat <<TXT | sed "s,^,sub dir/,"
 ) &&
-	subfiles=$(git ls-files) &&
+	subfiles=$(but ls-files) &&
 	check_equal "$subfiles" "$chkms$chks"
 )

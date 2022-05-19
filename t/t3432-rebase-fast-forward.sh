@@ -15,7 +15,7 @@ test_expect_success setup '
 	test_cummit B &&
 	test_cummit C &&
 	test_cummit D &&
-	git checkout -t -b side
+	but checkout -t -b side
 '
 
 test_rebase_same_head () {
@@ -52,20 +52,20 @@ test_rebase_same_head_ () {
 	shift &&
 	if test $abbreviate -eq 1
 	then
-		msg="git rebase$flag $* (rebase.abbreviateCommands = true) with $changes is $what with $cmp HEAD"
+		msg="but rebase$flag $* (rebase.abbreviateCommands = true) with $changes is $what with $cmp HEAD"
 	else
-		msg="git rebase$flag $* with $changes is $what with $cmp HEAD"
+		msg="but rebase$flag $* with $changes is $what with $cmp HEAD"
 	fi &&
 	test_expect_$status "$msg" "
 		if test $abbreviate -eq 1
 		then
 			test_config rebase.abbreviateCommands true
 		fi &&
-		oldhead=\$(git rev-parse HEAD) &&
-		test_when_finished 'git reset --hard \$oldhead' &&
-		git reflog HEAD >expect &&
-		git rebase$flag $* >stdout &&
-		git reflog HEAD >actual &&
+		oldhead=\$(but rev-parse HEAD) &&
+		test_when_finished 'but reset --hard \$oldhead' &&
+		but reflog HEAD >expect &&
+		but rebase$flag $* >stdout &&
+		but reflog HEAD >actual &&
 		if test $what = work
 		then
 			old=\$(wc -l <expect) &&
@@ -74,7 +74,7 @@ test_rebase_same_head_ () {
 		then
 			test_cmp expect actual
 		fi &&
-		newhead=\$(git rev-parse HEAD) &&
+		newhead=\$(but rev-parse HEAD) &&
 		if test $cmp = same
 		then
 			test_cmp_rev \$oldhead \$newhead
@@ -122,9 +122,9 @@ test_rebase_same_head success noop same success work same --fork-point --onto ma
 test_rebase_same_head success noop same success work same --fork-point --keep-base main
 
 test_expect_success 'add work same to upstream' '
-	git checkout main &&
+	but checkout main &&
 	test_cummit F &&
-	git checkout side
+	but checkout side
 '
 
 changes='our and their changes'

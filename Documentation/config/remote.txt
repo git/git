@@ -4,11 +4,11 @@ remote.pushDefault::
 	`branch.<name>.pushRemote` for specific branches.
 
 remote.<name>.url::
-	The URL of a remote repository.  See linkgit:git-fetch[1] or
-	linkgit:git-push[1].
+	The URL of a remote repository.  See linkbut:but-fetch[1] or
+	linkbut:but-push[1].
 
 remote.<name>.pushurl::
-	The push URL of a remote repository.  See linkgit:git-push[1].
+	The push URL of a remote repository.  See linkbut:but-push[1].
 
 remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to
@@ -21,12 +21,12 @@ remote.<name>.proxyAuthMethod::
 	`remote.<name>.proxy`). See `http.proxyAuthMethod`.
 
 remote.<name>.fetch::
-	The default set of "refspec" for linkgit:git-fetch[1]. See
-	linkgit:git-fetch[1].
+	The default set of "refspec" for linkbut:but-fetch[1]. See
+	linkbut:but-fetch[1].
 
 remote.<name>.push::
-	The default set of "refspec" for linkgit:git-push[1]. See
-	linkgit:git-push[1].
+	The default set of "refspec" for linkbut:but-push[1]. See
+	linkbut:but-push[1].
 
 remote.<name>.mirror::
 	If true, pushing to this remote will automatically behave
@@ -34,33 +34,33 @@ remote.<name>.mirror::
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	using linkbut:but-fetch[1] or the `update` subcommand of
+	linkbut:but-remote[1].
 
 remote.<name>.skipFetchAll::
 	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	using linkbut:but-fetch[1] or the `update` subcommand of
+	linkbut:but-remote[1].
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
-	option --receive-pack of linkgit:git-push[1].
+	option --receive-pack of linkbut:but-push[1].
 
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
-	option --upload-pack of linkgit:git-fetch-pack[1].
+	option --upload-pack of linkbut:but-fetch-pack[1].
 
 remote.<name>.tagOpt::
 	Setting this value to --no-tags disables automatic tag following when
 	fetching from remote <name>. Setting it to --tags will fetch every
 	tag from remote <name>, even if they are not reachable from remote
-	branch heads. Passing these flags directly to linkgit:git-fetch[1] can
+	branch heads. Passing these flags directly to linkbut:but-fetch[1] can
 	override this setting. See options --tags and --no-tags of
-	linkgit:git-fetch[1].
+	linkbut:but-fetch[1].
 
 remote.<name>.vcs::
 	Setting this to a value <vcs> will cause Git to interact with
-	the remote with the git-remote-<vcs> helper.
+	the remote with the but-remote-<vcs> helper.
 
 remote.<name>.prune::
 	When set to true, fetching from this remote by default will also
@@ -75,7 +75,7 @@ remote.<name>.pruneTags::
 	`--prune`. Overrides `fetch.pruneTags` settings, if any.
 +
 See also `remote.<name>.prune` and the PRUNING section of
-linkgit:git-fetch[1].
+linkbut:but-fetch[1].
 
 remote.<name>.promisor::
 	When set to true, this remote will be used to fetch promisor
@@ -85,4 +85,4 @@ remote.<name>.partialclonefilter::
 	The filter that will be applied when fetching from this	promisor remote.
 	Changing or clearing this value will only affect fetches for new cummits.
 	To fetch associated objects for cummits already present in the local object
-	database, use the `--refetch` option of linkgit:git-fetch[1].
+	database, use the `--refetch` option of linkbut:but-fetch[1].

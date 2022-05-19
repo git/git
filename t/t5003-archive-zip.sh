@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git archive --format=zip test'
+test_description='but archive --format=zip test'
 
 . ./test-lib.sh
 
@@ -121,29 +121,29 @@ test_expect_success 'prepare file list' '
 test_expect_success \
     'add ignored file' \
     'echo ignore me >a/ignored &&
-     echo ignored export-ignore >.git/info/attributes'
+     echo ignored export-ignore >.but/info/attributes'
 
 test_expect_success 'add files to repository' '
-	git add a &&
-	GIT_CUMMITTER_DATE="2005-05-27 22:00" git cummit -m initial
+	but add a &&
+	GIT_CUMMITTER_DATE="2005-05-27 22:00" but cummit -m initial
 '
 
 test_expect_success 'setup export-subst and diff attributes' '
-	echo "a/nodiff.* -diff" >>.git/info/attributes &&
-	echo "a/diff.* diff" >>.git/info/attributes &&
-	echo "a/custom.* diff=custom" >>.git/info/attributes &&
-	git config diff.custom.binary true &&
-	echo "substfile?" export-subst >>.git/info/attributes &&
-	git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+	echo "a/nodiff.* -diff" >>.but/info/attributes &&
+	echo "a/diff.* diff" >>.but/info/attributes &&
+	echo "a/custom.* diff=custom" >>.but/info/attributes &&
+	but config diff.custom.binary true &&
+	echo "substfile?" export-subst >>.but/info/attributes &&
+	but log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
 		>a/substfile1
 '
 
 test_expect_success 'create bare clone' '
-	git clone --bare . bare.git &&
-	cp .git/info/attributes bare.git/info/attributes &&
-	# Recreate our changes to .git/config rather than just copying it, as
+	but clone --bare . bare.but &&
+	cp .but/info/attributes bare.but/info/attributes &&
+	# Recreate our changes to .but/config rather than just copying it, as
 	# we do not want to clobber core.bare or other settings.
-	git -C bare.git config diff.custom.binary true
+	but -C bare.but config diff.custom.binary true
 '
 
 test_expect_success \
@@ -151,64 +151,64 @@ test_expect_success \
     'rm a/ignored'
 
 test_expect_success \
-    'git archive --format=zip' \
-    'git archive --format=zip HEAD >d.zip'
+    'but archive --format=zip' \
+    'but archive --format=zip HEAD >d.zip'
 
 check_zip d
 
 test_expect_success \
-    'git archive --format=zip in a bare repo' \
-    '(cd bare.git && git archive --format=zip HEAD) >d1.zip'
+    'but archive --format=zip in a bare repo' \
+    '(cd bare.but && but archive --format=zip HEAD) >d1.zip'
 
 test_expect_success \
-    'git archive --format=zip vs. the same in a bare repo' \
+    'but archive --format=zip vs. the same in a bare repo' \
     'test_cmp_bin d.zip d1.zip'
 
-test_expect_success 'git archive --format=zip with --output' \
-    'git archive --format=zip --output=d2.zip HEAD &&
+test_expect_success 'but archive --format=zip with --output' \
+    'but archive --format=zip --output=d2.zip HEAD &&
     test_cmp_bin d.zip d2.zip'
 
-test_expect_success 'git archive with --output, inferring format (local)' '
-	git archive --output=d3.zip HEAD &&
+test_expect_success 'but archive with --output, inferring format (local)' '
+	but archive --output=d3.zip HEAD &&
 	test_cmp_bin d.zip d3.zip
 '
 
-test_expect_success 'git archive with --output, inferring format (remote)' '
-	git archive --remote=. --output=d4.zip HEAD &&
+test_expect_success 'but archive with --output, inferring format (remote)' '
+	but archive --remote=. --output=d4.zip HEAD &&
 	test_cmp_bin d.zip d4.zip
 '
 
 test_expect_success \
-    'git archive --format=zip with prefix' \
-    'git archive --format=zip --prefix=prefix/ HEAD >e.zip'
+    'but archive --format=zip with prefix' \
+    'but archive --format=zip --prefix=prefix/ HEAD >e.zip'
 
 check_zip e prefix/
 
-test_expect_success 'git archive -0 --format=zip on large files' '
+test_expect_success 'but archive -0 --format=zip on large files' '
 	test_config core.bigfilethreshold 1 &&
-	git archive -0 --format=zip HEAD >large.zip
+	but archive -0 --format=zip HEAD >large.zip
 '
 
 check_zip large
 
-test_expect_success 'git archive --format=zip on large files' '
+test_expect_success 'but archive --format=zip on large files' '
 	test_config core.bigfilethreshold 1 &&
-	git archive --format=zip HEAD >large-compressed.zip
+	but archive --format=zip HEAD >large-compressed.zip
 '
 
 check_zip large-compressed
 
-test_expect_success 'git archive --format=zip --add-file' '
+test_expect_success 'but archive --format=zip --add-file' '
 	echo untracked >untracked &&
-	git archive --format=zip --add-file=untracked HEAD >with_untracked.zip
+	but archive --format=zip --add-file=untracked HEAD >with_untracked.zip
 '
 
 check_zip with_untracked
 check_added with_untracked untracked untracked
 
-test_expect_success 'git archive --format=zip --add-file twice' '
+test_expect_success 'but archive --format=zip --add-file twice' '
 	echo untracked >untracked &&
-	git archive --format=zip --prefix=one/ --add-file=untracked \
+	but archive --format=zip --prefix=one/ --add-file=untracked \
 		--prefix=two/ --add-file=untracked \
 		--prefix= HEAD >with_untracked2.zip
 '

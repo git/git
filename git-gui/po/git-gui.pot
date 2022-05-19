@@ -17,33 +17,33 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: git-gui.sh:847
+#: but-gui.sh:847
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr ""
 
-#: git-gui.sh:901
+#: but-gui.sh:901
 msgid "Main Font"
 msgstr ""
 
-#: git-gui.sh:902
+#: but-gui.sh:902
 msgid "Diff/Console Font"
 msgstr ""
 
-#: git-gui.sh:917 git-gui.sh:931 git-gui.sh:944 git-gui.sh:1034 git-gui.sh:1053
-#: git-gui.sh:3212
-msgid "git-gui: fatal error"
+#: but-gui.sh:917 but-gui.sh:931 but-gui.sh:944 but-gui.sh:1034 but-gui.sh:1053
+#: but-gui.sh:3212
+msgid "but-gui: fatal error"
 msgstr ""
 
-#: git-gui.sh:918
-msgid "Cannot find git in PATH."
+#: but-gui.sh:918
+msgid "Cannot find but in PATH."
 msgstr ""
 
-#: git-gui.sh:945
+#: but-gui.sh:945
 msgid "Cannot parse Git version string:"
 msgstr ""
 
-#: git-gui.sh:970
+#: but-gui.sh:970
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -55,518 +55,518 @@ msgid ""
 "Assume '%s' is version 1.5.0?\n"
 msgstr ""
 
-#: git-gui.sh:1267
+#: but-gui.sh:1267
 msgid "Git directory not found:"
 msgstr ""
 
-#: git-gui.sh:1301
+#: but-gui.sh:1301
 msgid "Cannot move to top of working directory:"
 msgstr ""
 
-#: git-gui.sh:1309
+#: but-gui.sh:1309
 msgid "Cannot use bare repository:"
 msgstr ""
 
-#: git-gui.sh:1317
+#: but-gui.sh:1317
 msgid "No working directory"
 msgstr ""
 
-#: git-gui.sh:1491 lib/checkout_op.tcl:306
+#: but-gui.sh:1491 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr ""
 
-#: git-gui.sh:1551
+#: but-gui.sh:1551
 msgid "Scanning for modified files ..."
 msgstr ""
 
-#: git-gui.sh:1629
+#: but-gui.sh:1629
 msgid "Calling prepare-cummit-msg hook..."
 msgstr ""
 
-#: git-gui.sh:1646
+#: but-gui.sh:1646
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr ""
 
-#: git-gui.sh:1804 lib/browser.tcl:252
+#: but-gui.sh:1804 lib/browser.tcl:252
 msgid "Ready."
 msgstr ""
 
-#: git-gui.sh:1968
+#: but-gui.sh:1968
 #, tcl-format
 msgid ""
 "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
 msgstr ""
 
-#: git-gui.sh:2091
+#: but-gui.sh:2091
 msgid "Unmodified"
 msgstr ""
 
-#: git-gui.sh:2093
+#: but-gui.sh:2093
 msgid "Modified, not staged"
 msgstr ""
 
-#: git-gui.sh:2094 git-gui.sh:2106
+#: but-gui.sh:2094 but-gui.sh:2106
 msgid "Staged for cummit"
 msgstr ""
 
-#: git-gui.sh:2095 git-gui.sh:2107
+#: but-gui.sh:2095 but-gui.sh:2107
 msgid "Portions staged for cummit"
 msgstr ""
 
-#: git-gui.sh:2096 git-gui.sh:2108
+#: but-gui.sh:2096 but-gui.sh:2108
 msgid "Staged for cummit, missing"
 msgstr ""
 
-#: git-gui.sh:2098
+#: but-gui.sh:2098
 msgid "File type changed, not staged"
 msgstr ""
 
-#: git-gui.sh:2099 git-gui.sh:2100
+#: but-gui.sh:2099 but-gui.sh:2100
 msgid "File type changed, old type staged for cummit"
 msgstr ""
 
-#: git-gui.sh:2101
+#: but-gui.sh:2101
 msgid "File type changed, staged"
 msgstr ""
 
-#: git-gui.sh:2102
+#: but-gui.sh:2102
 msgid "File type change staged, modification not staged"
 msgstr ""
 
-#: git-gui.sh:2103
+#: but-gui.sh:2103
 msgid "File type change staged, file missing"
 msgstr ""
 
-#: git-gui.sh:2105
+#: but-gui.sh:2105
 msgid "Untracked, not staged"
 msgstr ""
 
-#: git-gui.sh:2110
+#: but-gui.sh:2110
 msgid "Missing"
 msgstr ""
 
-#: git-gui.sh:2111
+#: but-gui.sh:2111
 msgid "Staged for removal"
 msgstr ""
 
-#: git-gui.sh:2112
+#: but-gui.sh:2112
 msgid "Staged for removal, still present"
 msgstr ""
 
-#: git-gui.sh:2114 git-gui.sh:2115 git-gui.sh:2116 git-gui.sh:2117
-#: git-gui.sh:2118 git-gui.sh:2119
+#: but-gui.sh:2114 but-gui.sh:2115 but-gui.sh:2116 but-gui.sh:2117
+#: but-gui.sh:2118 but-gui.sh:2119
 msgid "Requires merge resolution"
 msgstr ""
 
-#: git-gui.sh:2164
-msgid "Couldn't find gitk in PATH"
+#: but-gui.sh:2164
+msgid "Couldn't find butk in PATH"
 msgstr ""
 
-#: git-gui.sh:2210 git-gui.sh:2245
+#: but-gui.sh:2210 but-gui.sh:2245
 #, tcl-format
 msgid "Starting %s... please wait..."
 msgstr ""
 
-#: git-gui.sh:2224
-msgid "Couldn't find git gui in PATH"
+#: but-gui.sh:2224
+msgid "Couldn't find but gui in PATH"
 msgstr ""
 
-#: git-gui.sh:2726 lib/choose_repository.tcl:53
+#: but-gui.sh:2726 lib/choose_repository.tcl:53
 msgid "Repository"
 msgstr ""
 
-#: git-gui.sh:2727
+#: but-gui.sh:2727
 msgid "Edit"
 msgstr ""
 
-#: git-gui.sh:2729 lib/choose_rev.tcl:567
+#: but-gui.sh:2729 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr ""
 
-#: git-gui.sh:2732 lib/choose_rev.tcl:554
+#: but-gui.sh:2732 lib/choose_rev.tcl:554
 msgid "cummit@@noun"
 msgstr ""
 
-#: git-gui.sh:2735 lib/merge.tcl:127 lib/merge.tcl:174
+#: but-gui.sh:2735 lib/merge.tcl:127 lib/merge.tcl:174
 msgid "Merge"
 msgstr ""
 
-#: git-gui.sh:2736 lib/choose_rev.tcl:563
+#: but-gui.sh:2736 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr ""
 
-#: git-gui.sh:2739
+#: but-gui.sh:2739
 msgid "Tools"
 msgstr ""
 
-#: git-gui.sh:2748
+#: but-gui.sh:2748
 msgid "Explore Working Copy"
 msgstr ""
 
-#: git-gui.sh:2763
+#: but-gui.sh:2763
 msgid "Git Bash"
 msgstr ""
 
-#: git-gui.sh:2772
+#: but-gui.sh:2772
 msgid "Browse Current Branch's Files"
 msgstr ""
 
-#: git-gui.sh:2776
+#: but-gui.sh:2776
 msgid "Browse Branch Files..."
 msgstr ""
 
-#: git-gui.sh:2781
+#: but-gui.sh:2781
 msgid "Visualize Current Branch's History"
 msgstr ""
 
-#: git-gui.sh:2785
+#: but-gui.sh:2785
 msgid "Visualize All Branch History"
 msgstr ""
 
-#: git-gui.sh:2792
+#: but-gui.sh:2792
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr ""
 
-#: git-gui.sh:2794
+#: but-gui.sh:2794
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr ""
 
-#: git-gui.sh:2799 lib/database.tcl:40
+#: but-gui.sh:2799 lib/database.tcl:40
 msgid "Database Statistics"
 msgstr ""
 
-#: git-gui.sh:2802 lib/database.tcl:33
+#: but-gui.sh:2802 lib/database.tcl:33
 msgid "Compress Database"
 msgstr ""
 
-#: git-gui.sh:2805
+#: but-gui.sh:2805
 msgid "Verify Database"
 msgstr ""
 
-#: git-gui.sh:2812 git-gui.sh:2816 git-gui.sh:2820
+#: but-gui.sh:2812 but-gui.sh:2816 but-gui.sh:2820
 msgid "Create Desktop Icon"
 msgstr ""
 
-#: git-gui.sh:2828 lib/choose_repository.tcl:209 lib/choose_repository.tcl:217
+#: but-gui.sh:2828 lib/choose_repository.tcl:209 lib/choose_repository.tcl:217
 msgid "Quit"
 msgstr ""
 
-#: git-gui.sh:2836
+#: but-gui.sh:2836
 msgid "Undo"
 msgstr ""
 
-#: git-gui.sh:2839
+#: but-gui.sh:2839
 msgid "Redo"
 msgstr ""
 
-#: git-gui.sh:2843 git-gui.sh:3461
+#: but-gui.sh:2843 but-gui.sh:3461
 msgid "Cut"
 msgstr ""
 
-#: git-gui.sh:2846 git-gui.sh:3464 git-gui.sh:3540 git-gui.sh:3633
+#: but-gui.sh:2846 but-gui.sh:3464 but-gui.sh:3540 but-gui.sh:3633
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr ""
 
-#: git-gui.sh:2849 git-gui.sh:3467
+#: but-gui.sh:2849 but-gui.sh:3467
 msgid "Paste"
 msgstr ""
 
-#: git-gui.sh:2852 git-gui.sh:3470 lib/remote_branch_delete.tcl:39
+#: but-gui.sh:2852 but-gui.sh:3470 lib/remote_branch_delete.tcl:39
 #: lib/branch_delete.tcl:28
 msgid "Delete"
 msgstr ""
 
-#: git-gui.sh:2856 git-gui.sh:3474 git-gui.sh:3637 lib/console.tcl:71
+#: but-gui.sh:2856 but-gui.sh:3474 but-gui.sh:3637 lib/console.tcl:71
 msgid "Select All"
 msgstr ""
 
-#: git-gui.sh:2865
+#: but-gui.sh:2865
 msgid "Create..."
 msgstr ""
 
-#: git-gui.sh:2871
+#: but-gui.sh:2871
 msgid "Checkout..."
 msgstr ""
 
-#: git-gui.sh:2877
+#: but-gui.sh:2877
 msgid "Rename..."
 msgstr ""
 
-#: git-gui.sh:2882
+#: but-gui.sh:2882
 msgid "Delete..."
 msgstr ""
 
-#: git-gui.sh:2887
+#: but-gui.sh:2887
 msgid "Reset..."
 msgstr ""
 
-#: git-gui.sh:2897
+#: but-gui.sh:2897
 msgid "Done"
 msgstr ""
 
-#: git-gui.sh:2899
+#: but-gui.sh:2899
 msgid "cummit@@verb"
 msgstr ""
 
-#: git-gui.sh:2908 git-gui.sh:3400
+#: but-gui.sh:2908 but-gui.sh:3400
 msgid "Amend Last cummit"
 msgstr ""
 
-#: git-gui.sh:2918 git-gui.sh:3361 lib/remote_branch_delete.tcl:101
+#: but-gui.sh:2918 but-gui.sh:3361 lib/remote_branch_delete.tcl:101
 msgid "Rescan"
 msgstr ""
 
-#: git-gui.sh:2924
+#: but-gui.sh:2924
 msgid "Stage To cummit"
 msgstr ""
 
-#: git-gui.sh:2930
+#: but-gui.sh:2930
 msgid "Stage Changed Files To cummit"
 msgstr ""
 
-#: git-gui.sh:2936
+#: but-gui.sh:2936
 msgid "Unstage From cummit"
 msgstr ""
 
-#: git-gui.sh:2942 lib/index.tcl:521
+#: but-gui.sh:2942 lib/index.tcl:521
 msgid "Revert Changes"
 msgstr ""
 
-#: git-gui.sh:2950 git-gui.sh:3700 git-gui.sh:3731
+#: but-gui.sh:2950 but-gui.sh:3700 but-gui.sh:3731
 msgid "Show Less Context"
 msgstr ""
 
-#: git-gui.sh:2954 git-gui.sh:3704 git-gui.sh:3735
+#: but-gui.sh:2954 but-gui.sh:3704 but-gui.sh:3735
 msgid "Show More Context"
 msgstr ""
 
-#: git-gui.sh:2961 git-gui.sh:3374 git-gui.sh:3485
+#: but-gui.sh:2961 but-gui.sh:3374 but-gui.sh:3485
 msgid "Sign Off"
 msgstr ""
 
-#: git-gui.sh:2977
+#: but-gui.sh:2977
 msgid "Local Merge..."
 msgstr ""
 
-#: git-gui.sh:2982
+#: but-gui.sh:2982
 msgid "Abort Merge..."
 msgstr ""
 
-#: git-gui.sh:2994 git-gui.sh:3022
+#: but-gui.sh:2994 but-gui.sh:3022
 msgid "Add..."
 msgstr ""
 
-#: git-gui.sh:2998
+#: but-gui.sh:2998
 msgid "Push..."
 msgstr ""
 
-#: git-gui.sh:3002
+#: but-gui.sh:3002
 msgid "Delete Branch..."
 msgstr ""
 
-#: git-gui.sh:3012 git-gui.sh:3666
+#: but-gui.sh:3012 but-gui.sh:3666
 msgid "Options..."
 msgstr ""
 
-#: git-gui.sh:3023
+#: but-gui.sh:3023
 msgid "Remove..."
 msgstr ""
 
-#: git-gui.sh:3032 lib/choose_repository.tcl:67
+#: but-gui.sh:3032 lib/choose_repository.tcl:67
 msgid "Help"
 msgstr ""
 
-#: git-gui.sh:3036 git-gui.sh:3040 lib/choose_repository.tcl:61
+#: but-gui.sh:3036 but-gui.sh:3040 lib/choose_repository.tcl:61
 #: lib/choose_repository.tcl:70 lib/about.tcl:14
 #, tcl-format
 msgid "About %s"
 msgstr ""
 
-#: git-gui.sh:3064
+#: but-gui.sh:3064
 msgid "Online Documentation"
 msgstr ""
 
-#: git-gui.sh:3067 lib/choose_repository.tcl:64 lib/choose_repository.tcl:73
+#: but-gui.sh:3067 lib/choose_repository.tcl:64 lib/choose_repository.tcl:73
 msgid "Show SSH Key"
 msgstr ""
 
-#: git-gui.sh:3097 git-gui.sh:3229
+#: but-gui.sh:3097 but-gui.sh:3229
 msgid "usage:"
 msgstr ""
 
-#: git-gui.sh:3101 git-gui.sh:3233
+#: but-gui.sh:3101 but-gui.sh:3233
 msgid "Usage"
 msgstr ""
 
-#: git-gui.sh:3182 lib/blame.tcl:575
+#: but-gui.sh:3182 lib/blame.tcl:575
 msgid "Error"
 msgstr ""
 
-#: git-gui.sh:3213
+#: but-gui.sh:3213
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 
-#: git-gui.sh:3246
+#: but-gui.sh:3246
 msgid "Current Branch:"
 msgstr ""
 
-#: git-gui.sh:3271
+#: but-gui.sh:3271
 msgid "Unstaged Changes"
 msgstr ""
 
-#: git-gui.sh:3293
+#: but-gui.sh:3293
 msgid "Staged Changes (Will cummit)"
 msgstr ""
 
-#: git-gui.sh:3367
+#: but-gui.sh:3367
 msgid "Stage Changed"
 msgstr ""
 
-#: git-gui.sh:3386 lib/transport.tcl:137
+#: but-gui.sh:3386 lib/transport.tcl:137
 msgid "Push"
 msgstr ""
 
-#: git-gui.sh:3413
+#: but-gui.sh:3413
 msgid "Initial cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3414
+#: but-gui.sh:3414
 msgid "Amended cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3415
+#: but-gui.sh:3415
 msgid "Amended Initial cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3416
+#: but-gui.sh:3416
 msgid "Amended Merge cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3417
+#: but-gui.sh:3417
 msgid "Merge cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3418
+#: but-gui.sh:3418
 msgid "cummit Message:"
 msgstr ""
 
-#: git-gui.sh:3477 git-gui.sh:3641 lib/console.tcl:73
+#: but-gui.sh:3477 but-gui.sh:3641 lib/console.tcl:73
 msgid "Copy All"
 msgstr ""
 
-#: git-gui.sh:3501 lib/blame.tcl:106
+#: but-gui.sh:3501 lib/blame.tcl:106
 msgid "File:"
 msgstr ""
 
-#: git-gui.sh:3549 lib/choose_repository.tcl:1100
+#: but-gui.sh:3549 lib/choose_repository.tcl:1100
 msgid "Open"
 msgstr ""
 
-#: git-gui.sh:3629
+#: but-gui.sh:3629
 msgid "Refresh"
 msgstr ""
 
-#: git-gui.sh:3650
+#: but-gui.sh:3650
 msgid "Decrease Font Size"
 msgstr ""
 
-#: git-gui.sh:3654
+#: but-gui.sh:3654
 msgid "Increase Font Size"
 msgstr ""
 
-#: git-gui.sh:3662 lib/blame.tcl:296
+#: but-gui.sh:3662 lib/blame.tcl:296
 msgid "Encoding"
 msgstr ""
 
-#: git-gui.sh:3673
+#: but-gui.sh:3673
 msgid "Apply/Reverse Hunk"
 msgstr ""
 
-#: git-gui.sh:3678
+#: but-gui.sh:3678
 msgid "Apply/Reverse Line"
 msgstr ""
 
-#: git-gui.sh:3684 git-gui.sh:3794 git-gui.sh:3805
+#: but-gui.sh:3684 but-gui.sh:3794 but-gui.sh:3805
 msgid "Revert Hunk"
 msgstr ""
 
-#: git-gui.sh:3689 git-gui.sh:3801 git-gui.sh:3812
+#: but-gui.sh:3689 but-gui.sh:3801 but-gui.sh:3812
 msgid "Revert Line"
 msgstr ""
 
-#: git-gui.sh:3694 git-gui.sh:3791
+#: but-gui.sh:3694 but-gui.sh:3791
 msgid "Undo Last Revert"
 msgstr ""
 
-#: git-gui.sh:3713
+#: but-gui.sh:3713
 msgid "Run Merge Tool"
 msgstr ""
 
-#: git-gui.sh:3718
+#: but-gui.sh:3718
 msgid "Use Remote Version"
 msgstr ""
 
-#: git-gui.sh:3722
+#: but-gui.sh:3722
 msgid "Use Local Version"
 msgstr ""
 
-#: git-gui.sh:3726
+#: but-gui.sh:3726
 msgid "Revert To Base"
 msgstr ""
 
-#: git-gui.sh:3744
+#: but-gui.sh:3744
 msgid "Visualize These Changes In The Submodule"
 msgstr ""
 
-#: git-gui.sh:3748
+#: but-gui.sh:3748
 msgid "Visualize Current Branch History In The Submodule"
 msgstr ""
 
-#: git-gui.sh:3752
+#: but-gui.sh:3752
 msgid "Visualize All Branch History In The Submodule"
 msgstr ""
 
-#: git-gui.sh:3757
-msgid "Start git gui In The Submodule"
+#: but-gui.sh:3757
+msgid "Start but gui In The Submodule"
 msgstr ""
 
-#: git-gui.sh:3793
+#: but-gui.sh:3793
 msgid "Unstage Hunk From cummit"
 msgstr ""
 
-#: git-gui.sh:3797
+#: but-gui.sh:3797
 msgid "Unstage Lines From cummit"
 msgstr ""
 
-#: git-gui.sh:3798 git-gui.sh:3809
+#: but-gui.sh:3798 but-gui.sh:3809
 msgid "Revert Lines"
 msgstr ""
 
-#: git-gui.sh:3800
+#: but-gui.sh:3800
 msgid "Unstage Line From cummit"
 msgstr ""
 
-#: git-gui.sh:3804
+#: but-gui.sh:3804
 msgid "Stage Hunk For cummit"
 msgstr ""
 
-#: git-gui.sh:3808
+#: but-gui.sh:3808
 msgid "Stage Lines For cummit"
 msgstr ""
 
-#: git-gui.sh:3811
+#: but-gui.sh:3811
 msgid "Stage Line For cummit"
 msgstr ""
 
-#: git-gui.sh:3861
+#: but-gui.sh:3861
 msgid "Initializing..."
 msgstr ""
 
-#: git-gui.sh:4017
+#: but-gui.sh:4017
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -577,14 +577,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-gui.sh:4046
+#: but-gui.sh:4046
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
 "Tcl binary distributed by Cygwin."
 msgstr ""
 
-#: git-gui.sh:4051
+#: but-gui.sh:4051
 #, tcl-format
 msgid ""
 "\n"
@@ -592,7 +592,7 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 
 #: lib/spellcheck.tcl:57
@@ -760,7 +760,7 @@ msgstr ""
 
 #: lib/checkout_op.tcl:194
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
+msgid "Failed to configure simplified but-pull for '%s'."
 msgstr ""
 
 #: lib/checkout_op.tcl:202 lib/branch_rename.tcl:102
@@ -988,7 +988,7 @@ msgstr ""
 #: lib/index.tcl:32
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 
 #: lib/index.tcl:43
@@ -1925,7 +1925,7 @@ msgid "Failed to open repository %s:"
 msgstr ""
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
+msgid "but-gui - a graphical user interface for Git."
 msgstr ""
 
 #: lib/blame.tcl:74

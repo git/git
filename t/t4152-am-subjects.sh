@@ -7,18 +7,18 @@ make_patches() {
 	type=$1
 	subject=$2
 	test_expect_success "create patches with $type subject" '
-		git reset --hard baseline &&
+		but reset --hard baseline &&
 		echo $type >file &&
-		git cummit -a -m "$subject" &&
-		git format-patch -1 --stdout >$type.patch &&
-		git format-patch -1 --stdout -k >$type-k.patch
+		but cummit -a -m "$subject" &&
+		but format-patch -1 --stdout >$type.patch &&
+		but format-patch -1 --stdout -k >$type-k.patch
 	'
 }
 
 check_subject() {
-	git reset --hard baseline &&
-	git am $2 $1.patch &&
-	git log -1 --pretty=format:%B >actual &&
+	but reset --hard baseline &&
+	but am $2 $1.patch &&
+	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
 }
 

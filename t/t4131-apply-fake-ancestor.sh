@@ -3,7 +3,7 @@
 # Copyright (c) 2009 Stephen Boyd
 #
 
-test_description='git apply --build-fake-ancestor handling.'
+test_description='but apply --build-fake-ancestor handling.'
 
 . ./test-lib.sh
 
@@ -16,26 +16,26 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'apply --build-fake-ancestor' '
-	git checkout 2 &&
+	but checkout 2 &&
 	echo "A" > 1.t &&
-	git diff > 1.patch &&
-	git reset --hard &&
-	git checkout 1 &&
-	git apply --build-fake-ancestor 1.ancestor 1.patch
+	but diff > 1.patch &&
+	but reset --hard &&
+	but checkout 1 &&
+	but apply --build-fake-ancestor 1.ancestor 1.patch
 '
 
 test_expect_success 'apply --build-fake-ancestor in a subdirectory' '
-	git checkout 3 &&
+	but checkout 3 &&
 	echo "C" > sub/3.t &&
-	git diff > 3.patch &&
-	git reset --hard &&
-	git checkout 4 &&
+	but diff > 3.patch &&
+	but reset --hard &&
+	but checkout 4 &&
 	(
 		cd sub &&
-		git apply --build-fake-ancestor 3.ancestor ../3.patch &&
+		but apply --build-fake-ancestor 3.ancestor ../3.patch &&
 		test -f 3.ancestor
 	) &&
-	git apply --build-fake-ancestor 3.ancestor 3.patch &&
+	but apply --build-fake-ancestor 3.ancestor 3.patch &&
 	test_cmp sub/3.ancestor 3.ancestor
 '
 

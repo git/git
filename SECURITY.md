@@ -2,12 +2,12 @@
 
 ## Reporting a vulnerability
 
-Please send a detailed mail to git-security@googlegroups.com to
+Please send a detailed mail to but-security@googlegroups.com to
 report vulnerabilities in Git.
 
 Even when unsure whether the bug in question is an exploitable
 vulnerability, it is recommended to send the report to
-git-security@googlegroups.com (and obviously not to discuss the
+but-security@googlegroups.com (and obviously not to discuss the
 issue anywhere else).
 
 Vulnerabilities are expected to be discussed _only_ on that

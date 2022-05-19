@@ -35,25 +35,25 @@ test_setup_numerals () {
 
 		>README &&
 		test_write_lines I II III >numerals &&
-		git add README numerals &&
+		but add README numerals &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_write_lines I II III IIII >numerals &&
-		git add numerals &&
+		but add numerals &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		test_write_lines I II III IV >numerals &&
-		git add numerals &&
+		but add numerals &&
 		test_tick &&
-		git cummit -m "B" &&
+		but cummit -m "B" &&
 
 		cat <<-EOF >expected-index &&
 		H README
@@ -81,20 +81,20 @@ test_expect_success 'conflicting entries written to worktree even if sparse' '
 	(
 		cd numerals_plain &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test_path_is_file README &&
 		test_path_is_file numerals &&
 
-		git sparse-checkout init &&
-		git sparse-checkout set README &&
+		but sparse-checkout init &&
+		but sparse-checkout set README &&
 
 		test_path_is_file README &&
 		test_path_is_missing numerals &&
 
-		test_must_fail git merge -s recursive B^0 &&
+		test_must_fail but merge -s recursive B^0 &&
 
-		git ls-files -t >index_files &&
+		but ls-files -t >index_files &&
 		test_cmp expected-index index_files &&
 
 		test_path_is_file README &&
@@ -107,7 +107,7 @@ test_expect_success 'conflicting entries written to worktree even if sparse' '
 		#   * expected-index
 		#   * index_files
 		#   * others
-		git ls-files -o >others &&
+		but ls-files -o >others &&
 		test_line_count = 4 others
 	)
 '
@@ -117,22 +117,22 @@ test_expect_success 'present-despite-SKIP_WORKTREE handled reasonably' '
 	(
 		cd numerals_in_the_way &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
 		test_path_is_file README &&
 		test_path_is_file numerals &&
 
-		git sparse-checkout init &&
-		git sparse-checkout set README &&
+		but sparse-checkout init &&
+		but sparse-checkout set README &&
 
 		test_path_is_file README &&
 		test_path_is_missing numerals &&
 
 		echo foobar >numerals &&
 
-		test_must_fail git merge -s recursive B^0 &&
+		test_must_fail but merge -s recursive B^0 &&
 
-		test_path_is_missing .git/MERGE_HEAD &&
+		test_path_is_missing .but/MERGE_HEAD &&
 
 		test_path_is_file numerals &&
 

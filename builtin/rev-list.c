@@ -20,7 +20,7 @@
 #include "packfile.h"
 
 static const char rev_list_usage[] =
-"git rev-list [<options>] <cummit-id>... [-- <path>...]\n"
+"but rev-list [<options>] <cummit-id>... [-- <path>...]\n"
 "  limiting output:\n"
 "    --max-count=<n>\n"
 "    --max-age=<epoch>\n"
@@ -363,7 +363,7 @@ static int show_object_fast(
 	enum object_type type,
 	int exclude,
 	uint32_t name_hash,
-	struct packed_git *found_pack,
+	struct packed_but *found_pack,
 	off_t found_offset)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
@@ -406,7 +406,7 @@ static int try_bitmap_count(struct rev_info *revs,
 		 tree_count = 0,
 		 blob_count = 0;
 	int max_count;
-	struct bitmap_index *bitmap_git;
+	struct bitmap_index *bitmap_but;
 
 	/* This function only handles counting, not general traversal. */
 	if (!revs->count)
@@ -434,11 +434,11 @@ static int try_bitmap_count(struct rev_info *revs,
 	 */
 	max_count = revs->max_count;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
-	if (!bitmap_git)
+	bitmap_but = prepare_bitmap_walk(revs, filter_provided_objects);
+	if (!bitmap_but)
 		return -1;
 
-	count_bitmap_cummit_list(bitmap_git, &cummit_count,
+	count_bitmap_cummit_list(bitmap_but, &cummit_count,
 				 revs->tree_objects ? &tree_count : NULL,
 				 revs->blob_objects ? &blob_count : NULL,
 				 revs->tag_objects ? &tag_count : NULL);
@@ -446,14 +446,14 @@ static int try_bitmap_count(struct rev_info *revs,
 		cummit_count = max_count;
 
 	printf("%d\n", cummit_count + tree_count + blob_count + tag_count);
-	free_bitmap_index(bitmap_git);
+	free_bitmap_index(bitmap_but);
 	return 0;
 }
 
 static int try_bitmap_traversal(struct rev_info *revs,
 				int filter_provided_objects)
 {
-	struct bitmap_index *bitmap_git;
+	struct bitmap_index *bitmap_but;
 
 	/*
 	 * We can't use a bitmap result with a traversal limit, since the set
@@ -462,29 +462,29 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (revs->max_count >= 0)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
-	if (!bitmap_git)
+	bitmap_but = prepare_bitmap_walk(revs, filter_provided_objects);
+	if (!bitmap_but)
 		return -1;
 
-	traverse_bitmap_cummit_list(bitmap_git, revs, &show_object_fast);
-	free_bitmap_index(bitmap_git);
+	traverse_bitmap_cummit_list(bitmap_but, revs, &show_object_fast);
+	free_bitmap_index(bitmap_but);
 	return 0;
 }
 
 static int try_bitmap_disk_usage(struct rev_info *revs,
 				 int filter_provided_objects)
 {
-	struct bitmap_index *bitmap_git;
+	struct bitmap_index *bitmap_but;
 
 	if (!show_disk_usage)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
-	if (!bitmap_git)
+	bitmap_but = prepare_bitmap_walk(revs, filter_provided_objects);
+	if (!bitmap_but)
 		return -1;
 
 	printf("%"PRIuMAX"\n",
-	       (uintmax_t)get_disk_usage_from_bitmap(bitmap_git, revs));
+	       (uintmax_t)get_disk_usage_from_bitmap(bitmap_but, revs));
 	return 0;
 }
 
@@ -506,7 +506,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(rev_list_usage);
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.cummit_format = CMIT_FMT_UNSPECIFIED;

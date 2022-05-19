@@ -1,4 +1,4 @@
-# git-gui branch create support
+# but-gui branch create support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 class branch_create {
@@ -156,7 +156,7 @@ method _create {} {
 		return
 	}
 
-	if {[catch {git check-ref-format "heads/$newbranch"}]} {
+	if {[catch {but check-ref-format "heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \

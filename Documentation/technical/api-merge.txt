@@ -14,7 +14,7 @@ responsible for a few things.
    and rename/rename conflicts to the user;
 
  * performing a three-way merge of corresponding files, taking
-   path-specific merge drivers (specified in `.gitattributes`)
+   path-specific merge drivers (specified in `.butattributes`)
    into account.
 
 Data structures

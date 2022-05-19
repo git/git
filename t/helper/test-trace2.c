@@ -75,7 +75,7 @@ static int ut_002exit(int argc, const char **argv)
 }
 
 /*
- * Send an "error" event with each value in argv.  Normally, git only issues
+ * Send an "error" event with each value in argv.  Normally, but only issues
  * a single "error" event immediately before issuing an "exit" event (such
  * as in die() or BUG()), but multiple "error" events are allowed.
  *
@@ -102,10 +102,10 @@ static int ut_003error(int argc, const char **argv)
  * test-tool trace2 004child [<child-command-line>]
  *
  * For example:
- * test-tool trace2 004child git version
+ * test-tool trace2 004child but version
  * test-tool trace2 004child test-tool trace2 001return 0
  * test-tool trace2 004child test-tool trace2 004child test-tool trace2 004child
- * test-tool trace2 004child git -c alias.xyz=version xyz
+ * test-tool trace2 004child but -c alias.xyz=version xyz
  *
  * Test harness can confirm:
  * [] the "name" field in the "cmd_name" trace2 event.
@@ -123,10 +123,10 @@ static int ut_003error(int argc, const char **argv)
  *    is less than the "t_rel" field in the "child_exit" event of the parent
  *    process.
  * [] if the child process is like the alias example above,
- *    [] (optional) the child process attempts to run "git-xyx" as a dashed
+ *    [] (optional) the child process attempts to run "but-xyx" as a dashed
  *       command.
  *    [] the child process emits an "alias" event with "xyz" => "version"
- *    [] the child process runs "git version" as a child process.
+ *    [] the child process runs "but version" as a child process.
  *    [] the child process has a 3 component SID (or depth "d2" in the PERF
  *       stream).
  */
@@ -146,9 +146,9 @@ static int ut_004child(int argc, const char **argv)
 }
 
 /*
- * Exec a git command.  This may either create a child process (Windows)
+ * Exec a but command.  This may either create a child process (Windows)
  * or replace the existing process.
- * test-tool trace2 005exec <git_command_args>
+ * test-tool trace2 005exec <but_command_args>
  *
  * For example:
  * test-tool trace2 005exec version
@@ -173,7 +173,7 @@ static int ut_005exec(int argc, const char **argv)
 	if (!argc)
 		return 0;
 
-	result = execv_git_cmd(argv);
+	result = execv_but_cmd(argv);
 	return result;
 }
 
@@ -220,7 +220,7 @@ static struct unit_test ut_table[] = {
 	{ ut_002exit,     "002exit",   "<exit_code>" },
 	{ ut_003error,    "003error",  "<error_message>+" },
 	{ ut_004child,    "004child",  "[<child_command_line>]" },
-	{ ut_005exec,     "005exec",   "<git_command_args>" },
+	{ ut_005exec,     "005exec",   "<but_command_args>" },
 	{ ut_006data,     "006data",   "[<category> <key> <value>]+" },
 	{ ut_007bug,      "007bug",    "" },
 };

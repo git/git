@@ -1,7 +1,7 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 #undef open
-int git_open_with_retry(const char *path, int flags, ...)
+int but_open_with_retry(const char *path, int flags, ...)
 {
 	mode_t mode = 0;
 	int ret;

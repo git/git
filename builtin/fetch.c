@@ -1,5 +1,5 @@
 /*
- * "git fetch"
+ * "but fetch"
  */
 #include "cache.h"
 #include "config.h"
@@ -33,10 +33,10 @@
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
 static const char * const builtin_fetch_usage[] = {
-	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
-	N_("git fetch [<options>] <group>"),
-	N_("git fetch --multiple [<options>] [(<repository> | <group>)...]"),
-	N_("git fetch --all [<options>]"),
+	N_("but fetch [<options>] [<repository> [<refspec>...]]"),
+	N_("but fetch [<options>] <group>"),
+	N_("but fetch --multiple [<options>] [(<repository> | <group>)...]"),
+	N_("but fetch --all [<options>]"),
 	NULL
 };
 
@@ -87,25 +87,25 @@ static int fetch_write_cummit_graph = -1;
 static int stdin_refspecs = 0;
 static int negotiate_only;
 
-static int git_fetch_config(const char *k, const char *v, void *cb)
+static int but_fetch_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "fetch.prune")) {
-		fetch_prune_config = git_config_bool(k, v);
+		fetch_prune_config = but_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "fetch.prunetags")) {
-		fetch_prune_tags_config = git_config_bool(k, v);
+		fetch_prune_tags_config = but_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "fetch.showforcedupdates")) {
-		fetch_show_forced_updates = git_config_bool(k, v);
+		fetch_show_forced_updates = but_config_bool(k, v);
 		return 0;
 	}
 
 	if (!strcmp(k, "submodule.recurse")) {
-		int r = git_config_bool(k, v) ?
+		int r = but_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
 		recurse_submodules = r;
 	}
@@ -119,13 +119,13 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "fetch.parallel")) {
-		fetch_parallel_config = git_config_int(k, v);
+		fetch_parallel_config = but_config_int(k, v);
 		if (fetch_parallel_config < 0)
 			die(_("fetch.parallel cannot be negative"));
 		return 0;
 	}
 
-	return git_default_config(k, v, cb);
+	return but_default_config(k, v, cb);
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
@@ -133,7 +133,7 @@ static int parse_refmap_arg(const struct option *opt, const char *arg, int unset
 	BUG_ON_OPT_NEG(unset);
 
 	/*
-	 * "git fetch --refmap='' origin foo"
+	 * "but fetch --refmap='' origin foo"
 	 * can be used to tell the command not to store anywhere
 	 */
 	refspec_append(&refmap, arg);
@@ -146,9 +146,9 @@ static struct option builtin_fetch_options[] = {
 	OPT_BOOL(0, "all", &all,
 		 N_("fetch from all remotes")),
 	OPT_BOOL(0, "set-upstream", &set_upstream,
-		 N_("set upstream for git pull/fetch")),
+		 N_("set upstream for but pull/fetch")),
 	OPT_BOOL('a', "append", &append,
-		 N_("append to .git/FETCH_HEAD instead of overwriting")),
+		 N_("append to .but/FETCH_HEAD instead of overwriting")),
 	OPT_BOOL(0, "atomic", &atomic_fetch,
 		 N_("use atomic transaction to update references")),
 	OPT_STRING(0, "upload-pack", &upload_pack, N_("path"),
@@ -201,7 +201,7 @@ static struct option builtin_fetch_options[] = {
 		      "(lower priority than config files)"),
 		   PARSE_OPT_HIDDEN, option_fetch_parse_recurse_submodules),
 	OPT_BOOL(0, "update-shallow", &update_shallow,
-		 N_("accept refs that update .git/shallow")),
+		 N_("accept refs that update .but/shallow")),
 	OPT_CALLBACK_F(0, "refmap", NULL, N_("refmap"),
 		       N_("specify fetch refmap"), PARSE_OPT_NONEG, parse_refmap_arg),
 	OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
@@ -270,10 +270,10 @@ static void add_merge_config(struct ref **head,
 		/*
 		 * Not fetched to a remote-tracking branch?  We need to fetch
 		 * it anyway to allow this branch's "branch.$name.merge"
-		 * to be honored by 'git pull', but we do not have to
+		 * to be honored by 'but pull', but we do not have to
 		 * fail if branch.$name.merge is misconfigured to point
 		 * at a nonexisting branch.  If we were indeed called by
-		 * 'git pull', it will notice the misconfiguration because
+		 * 'but pull', it will notice the misconfiguration because
 		 * there is no entry in the resulting FETCH_HEAD marked
 		 * for merging.
 		 */
@@ -783,7 +783,7 @@ static void prepare_format_display(struct ref *ref_map)
 	if (verbosity < 0)
 		return;
 
-	git_config_get_string_tmp("fetch.output", &format);
+	but_config_get_string_tmp("fetch.output", &format);
 	if (!strcasecmp(format, "full"))
 		compact_format = 0;
 	else if (!strcasecmp(format, "compact"))
@@ -1022,7 +1022,7 @@ struct fetch_head {
 
 static int open_fetch_head(struct fetch_head *fetch_head)
 {
-	const char *filename = git_path_fetch_head(the_repository);
+	const char *filename = but_path_fetch_head(the_repository);
 
 	if (write_fetch_head) {
 		fetch_head->fp = fopen(filename, "a");
@@ -1101,10 +1101,10 @@ static void close_fetch_head(struct fetch_head *fetch_head)
 static const char warn_show_forced_updates[] =
 N_("fetch normally indicates which branches had a forced update,\n"
    "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
-   "flag or run 'git config fetch.showForcedUpdates true'");
+   "flag or run 'but config fetch.showForcedUpdates true'");
 static const char warn_time_show_forced_updates[] =
 N_("it took %.2f seconds to check forced updates; you can use\n"
-   "'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates false'\n"
+   "'--no-show-forced-updates' or run 'but config fetch.showForcedUpdates false'\n"
    "to avoid this check\n");
 
 static int store_updated_refs(const char *raw_url, const char *remote_name,
@@ -1223,7 +1223,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 			for (i = url_len - 1; url[i] == '/' && 0 <= i; i--)
 				;
 			url_len = i + 1;
-			if (4 < i && !strncmp(".git", url + i - 3, 4))
+			if (4 < i && !strncmp(".but", url + i - 3, 4))
 				url_len = i - 3;
 
 			strbuf_reset(&note);
@@ -1267,7 +1267,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
-		      " 'git remote prune %s' to remove any old, conflicting "
+		      " 'but remote prune %s' to remove any old, conflicting "
 		      "branches"), remote_name);
 
 	if (advice_enabled(ADVICE_FETCH_SHOW_FORCED_UPDATES)) {
@@ -1387,7 +1387,7 @@ static int prune_refs(struct refspec *rs,
 		;
 
 	url_len = i + 1;
-	if (4 < i && !strncmp(".git", url + i - 3, 4))
+	if (4 < i && !strncmp(".but", url + i - 3, 4))
 		url_len = i - 3;
 
 	if (!dry_run) {
@@ -1450,7 +1450,7 @@ static void check_not_current_branch(struct ref *ref_map,
 
 static int truncate_fetch_head(void)
 {
-	const char *filename = git_path_fetch_head(the_repository);
+	const char *filename = but_path_fetch_head(the_repository);
 	FILE *fp = fopen_for_writing(filename);
 
 	if (!fp)
@@ -1480,7 +1480,7 @@ static int add_oid(const char *refname, const struct object_id *oid, int flags,
 	return 0;
 }
 
-static void add_negotiation_tips(struct git_transport_options *smart_options)
+static void add_negotiation_tips(struct but_transport_options *smart_options)
 {
 	struct oid_array *oids = xcalloc(1, sizeof(*oids));
 	int i;
@@ -1832,7 +1832,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	struct remote_group_data g;
 	g.name = name; g.list = list;
 
-	git_config(get_remote_group, &g);
+	but_config(get_remote_group, &g);
 	if (list->nr == prev_nr) {
 		struct remote *remote = remote_get(name);
 		if (!remote_is_configured(remote, 0))
@@ -1898,7 +1898,7 @@ static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
 
 	strvec_pushv(&cp->args, state->argv);
 	strvec_push(&cp->args, remote);
-	cp->git_cmd = 1;
+	cp->but_cmd = 1;
 
 	if (verbosity >= 0)
 		printf(_("Fetching %s\n"), remote);
@@ -2113,8 +2113,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		free(anon);
 	}
 
-	git_config(git_fetch_config, NULL);
-	if (the_repository->gitdir) {
+	but_config(but_fetch_config, NULL);
+	if (the_repository->butdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
 	}
@@ -2149,7 +2149,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		int *rs = recurse_submodules == RECURSE_SUBMODULES_DEFAULT
 			  ? &recurse_submodules : NULL;
 
-		fetch_config_from_gitmodules(sfjc, rs);
+		fetch_config_from_butmodules(sfjc, rs);
 	}
 
 	if (negotiate_only && !negotiation_tip.nr)
@@ -2313,15 +2313,15 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			 * but respect config settings disabling it.
 			 */
 			int opt_val;
-			if (git_config_get_int("gc.autopacklimit", &opt_val))
+			if (but_config_get_int("gc.autopacklimit", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
-				git_config_push_parameter("gc.autoPackLimit=1");
+				but_config_push_parameter("gc.autoPackLimit=1");
 
-			if (git_config_get_int("maintenance.incremental-repack.auto", &opt_val))
+			if (but_config_get_int("maintenance.incremental-repack.auto", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
-				git_config_push_parameter("maintenance.incremental-repack.auto=-1");
+				but_config_push_parameter("maintenance.incremental-repack.auto=-1");
 		}
 		run_auto_maintenance(verbosity < 0);
 	}

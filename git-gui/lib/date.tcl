@@ -1,20 +1,20 @@
-# git-gui date processing support
+# but-gui date processing support
 # Copyright (C) 2007 Shawn Pearce
 
-set git_month(Jan)  1
-set git_month(Feb)  2
-set git_month(Mar)  3
-set git_month(Apr)  4
-set git_month(May)  5
-set git_month(Jun)  6
-set git_month(Jul)  7
-set git_month(Aug)  8
-set git_month(Sep)  9
-set git_month(Oct) 10
-set git_month(Nov) 11
-set git_month(Dec) 12
+set but_month(Jan)  1
+set but_month(Feb)  2
+set but_month(Mar)  3
+set but_month(Apr)  4
+set but_month(May)  5
+set but_month(Jun)  6
+set but_month(Jul)  7
+set but_month(Aug)  8
+set but_month(Sep)  9
+set but_month(Oct) 10
+set but_month(Nov) 11
+set but_month(Dec) 12
 
-proc parse_git_date {s} {
+proc parse_but_date {s} {
 	if {$s eq {}} {
 		return {}
 	}
@@ -26,7 +26,7 @@ proc parse_git_date {s} {
 	}
 
 	set s [clock scan [format {%4.4i%2.2i%2.2iT%2s%2s%2s} \
-			$yr $::git_month($month) $day \
+			$yr $::but_month($month) $day \
 			$hr $mm $ss] \
 			-gmt 1]
 
@@ -49,5 +49,5 @@ proc format_date {s} {
 }
 
 proc reformat_date {s} {
-	return [format_date [parse_git_date $s]]
+	return [format_date [parse_but_date $s]]
 }

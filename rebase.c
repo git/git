@@ -15,7 +15,7 @@
  */
 enum rebase_type rebase_parse_value(const char *value)
 {
-	int v = git_parse_maybe_bool(value);
+	int v = but_parse_maybe_bool(value);
 
 	if (!v)
 		return REBASE_FALSE;
@@ -28,7 +28,7 @@ enum rebase_type rebase_parse_value(const char *value)
 	else if (!strcmp(value, "preserve") || !strcmp(value, "p"))
 		error(_("%s: 'preserve' superseded by 'merges'"), value);
 	/*
-	 * Please update _git_config() in git-completion.bash when you
+	 * Please update _but_config() in but-completion.bash when you
 	 * add new rebase modes.
 	 */
 

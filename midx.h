@@ -39,7 +39,7 @@ struct multi_pack_index {
 	const unsigned char *chunk_revindex;
 
 	const char **pack_names;
-	struct packed_git **packs;
+	struct packed_but **packs;
 	char object_dir[FLEX_ARRAY];
 };
 

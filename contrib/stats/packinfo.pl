@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
 # This tool will print vaguely pretty information about a pack.  It
-# expects the output of "git verify-pack -v" as input on stdin.
+# expects the output of "but verify-pack -v" as input on stdin.
 #
-# $ git verify-pack -v | packinfo.pl
+# $ but verify-pack -v | packinfo.pl
 #
 # This prints some full-pack statistics; currently "all sizes", "all
 # path sizes", "tree sizes", "tree path sizes", and "depths".
@@ -20,7 +20,7 @@
 #
 # When run as:
 #
-# $ git verify-pack -v | packinfo.pl -tree
+# $ but verify-pack -v | packinfo.pl -tree
 #
 # the trees of objects are output along with the stats.  This looks
 # like:
@@ -43,22 +43,22 @@
 #
 # When run as:
 #
-# $ git verify-pack -v | packinfo.pl -tree -filenames
+# $ but verify-pack -v | packinfo.pl -tree -filenames
 #
 # it adds filenames to the tree.  Getting this information is slow:
 #
-#   0   blob 03156f21...     1767     1767 Documentation/git-lost-found.txt @ tags/v1.2.0~142
-#   1    blob f52a9d7f...       10     1777 Documentation/git-lost-found.txt @ tags/v1.5.0-rc1~74
-#   2     blob a8cc5739...       51     1828 Documentation/git-lost+found.txt @ tags/v0.99.9h^0
-#   3      blob 660e90b1...       15     1843 Documentation/git-lost+found.txt @ master~3222^2~2
-#   4       blob 0cb8e3bb...       33     1876 Documentation/git-lost+found.txt @ master~3222^2~3
-#   2     blob e48607f0...      311     2088 Documentation/git-lost-found.txt @ tags/v1.5.2-rc3~4
+#   0   blob 03156f21...     1767     1767 Documentation/but-lost-found.txt @ tags/v1.2.0~142
+#   1    blob f52a9d7f...       10     1777 Documentation/but-lost-found.txt @ tags/v1.5.0-rc1~74
+#   2     blob a8cc5739...       51     1828 Documentation/but-lost+found.txt @ tags/v0.99.9h^0
+#   3      blob 660e90b1...       15     1843 Documentation/but-lost+found.txt @ master~3222^2~2
+#   4       blob 0cb8e3bb...       33     1876 Documentation/but-lost+found.txt @ master~3222^2~3
+#   2     blob e48607f0...      311     2088 Documentation/but-lost-found.txt @ tags/v1.5.2-rc3~4
 #      size: count 6 total 2187 min 10 max 1767 mean 364.50 median 51 std_dev 635.85
 # path size: count 6 total 11179 min 1767 max 2088 mean 1863.17 median 1843 std_dev 107.26
 #
 # When run as:
 #
-# $ git verify-pack -v | packinfo.pl -dump
+# $ but verify-pack -v | packinfo.pl -dump
 #
 # it prints out "sha1 size pathsize depth" for each sha1 in lexical
 # order.
@@ -106,7 +106,7 @@ while (<STDIN>) {
 }
 
 if ($filenames && ($tree || $dump)) {
-    open(NAMES, "git name-rev --all|");
+    open(NAMES, "but name-rev --all|");
     while (<NAMES>) {
         if (/^(\S+)\s+(.*)$/) {
             my ($sha1, $name) = ($1, $2);
@@ -117,7 +117,7 @@ if ($filenames && ($tree || $dump)) {
 
     for my $cummit (@cummits) {
         my $name = $names{$cummit};
-        open(TREE, "git ls-tree -t -r $cummit|");
+        open(TREE, "but ls-tree -t -r $cummit|");
         print STDERR "Plumbing tree $name\n";
         while (<TREE>) {
             if (/^(\S+)\s+(\S+)\s+(\S+)\s+(.*)$/) {

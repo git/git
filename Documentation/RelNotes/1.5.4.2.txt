@@ -8,33 +8,33 @@ Fixes since v1.5.4
    valued variables misspelled as boolean and segfaulted.
 
  * Temporary files left behind due to interrupted object
-   transfers were not cleaned up with "git prune".
+   transfers were not cleaned up with "but prune".
 
- * "git config --unset" was confused when the unset variables
+ * "but config --unset" was confused when the unset variables
    were spelled with continuation lines in the config file.
 
- * The merge message detection in "git cvsimport" did not catch
+ * The merge message detection in "but cvsimport" did not catch
    a message that began with "Merge...".
 
- * "git status" suggests "git rm --cached" for unstaging the
-   earlier "git add" before the initial cummit.
+ * "but status" suggests "but rm --cached" for unstaging the
+   earlier "but add" before the initial cummit.
 
- * "git status" output was incorrect during a partial cummit.
+ * "but status" output was incorrect during a partial cummit.
 
- * "git bisect" refused to start when the HEAD was detached.
+ * "but bisect" refused to start when the HEAD was detached.
 
- * "git bisect" allowed a wildcard character in the cummit
+ * "but bisect" allowed a wildcard character in the cummit
    message expanded while writing its log file.
 
  * Manual pages were not formatted correctly with docbook xsl
    1.72; added a workaround.
 
- * "git-cummit -C $tag" used to work but rewrite in C done in
+ * "but-cummit -C $tag" used to work but rewrite in C done in
    1.5.4 broke it.  This was fixed in 1.5.4.1.
 
- * An entry in the .gitattributes file that names a pattern in a
+ * An entry in the .butattributes file that names a pattern in a
    subdirectory of the directory it is in did not match
-   correctly (e.g. pattern "b/*.c" in "a/.gitattributes" should
+   correctly (e.g. pattern "b/*.c" in "a/.butattributes" should
    match "a/b/foo.c" but it didn't).  This was fixed in 1.5.4.1.
 
  * Customized color specification was parsed incorrectly when

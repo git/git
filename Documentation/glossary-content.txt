@@ -5,12 +5,12 @@
 
 [[def_bare_repository]]bare repository::
 	A bare repository is normally an appropriately
-	named <<def_directory,directory>> with a `.git` suffix that does not
+	named <<def_directory,directory>> with a `.but` suffix that does not
 	have a locally checked-out copy of any of the files under
 	revision control. That is, all of the Git
 	administrative and control files that would normally be present in the
-	hidden `.git` sub-directory are directly present in the
-	`repository.git` directory instead,
+	hidden `.but` sub-directory are directly present in the
+	`repository.but` directory instead,
 	and no other files are present and checked out. Usually publishers of
 	public repositories make bare repositories available.
 
@@ -53,7 +53,7 @@
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of
 	changes out of a series of changes (typically cummits) and record them
 	as a new series of changes on top of a different codebase. In Git, this is
-	performed by the "git cherry-pick" command to extract the change introduced
+	performed by the "but cherry-pick" command to extract the change introduced
 	by an existing <<def_cummit,cummit>> and to record it based on the tip
 	of the current <<def_branch,branch>> as a new cummit.
 
@@ -94,7 +94,7 @@ to point at the new cummit.
 	cummit object,
 	etc.
 
-[[def_core_git]]core Git::
+[[def_core_but]]core Git::
 	Fundamental data structures and utilities of Git. Exposes only limited
 	source code management tools.
 
@@ -121,10 +121,10 @@ to point at the new cummit.
 	"detached".
 +
 Note that commands that operate on the history of the current branch
-(e.g. `git cummit` to build a new history on top of it) still work
+(e.g. `but cummit` to build a new history on top of it) still work
 while the HEAD is detached. They update the HEAD to point at the tip
 of the updated history without affecting any branch.  Commands that
-update or inquire information _about_ the current branch (e.g. `git
+update or inquire information _about_ the current branch (e.g. `but
 branch --set-upstream-to` that sets what remote-tracking branch the
 current branch integrates with) obviously do not work, as there is no
 (real) current branch to ask about in this state.
@@ -156,18 +156,18 @@ current branch integrates with) obviously do not work, as there is no
 	branch's <<def_head_ref,head ref>> from a remote
 	<<def_repository,repository>>, to find out which objects are
 	missing from the local <<def_object_database,object database>>,
-	and to get them, too.  See also linkgit:git-fetch[1].
+	and to get them, too.  See also linkbut:but-fetch[1].
 
 [[def_file_system]]file system::
 	Linus Torvalds originally designed Git to be a user space file system,
 	i.e. the infrastructure to hold files and directories. That ensured the
 	efficiency and speed of Git.
 
-[[def_git_archive]]Git archive::
+[[def_but_archive]]Git archive::
 	Synonym for <<def_repository,repository>> (for arch people).
 
-[[def_gitfile]]gitfile::
-	A plain file `.git` at the root of a working tree that
+[[def_butfile]]butfile::
+	A plain file `.but` at the root of a working tree that
 	points at the directory that is the real repository.
 
 [[def_grafts]]grafts::
@@ -175,10 +175,10 @@ current branch integrates with) obviously do not work, as there is no
 	together by recording fake ancestry information for cummits. This way
 	you can make Git pretend the set of <<def_parent,parents>> a <<def_cummit,cummit>> has
 	is different from what was recorded when the cummit was
-	created. Configured via the `.git/info/grafts` file.
+	created. Configured via the `.but/info/grafts` file.
 +
 Note that the grafts mechanism is outdated and can lead to problems
-transferring objects between repositories; see linkgit:git-replace[1]
+transferring objects between repositories; see linkbut:but-replace[1]
 for a more flexible and robust system to do the same thing.
 
 [[def_hash]]hash::
@@ -188,7 +188,7 @@ for a more flexible and robust system to do the same thing.
 	A <<def_ref,named reference>> to the <<def_cummit,cummit>> at the tip of a
 	<<def_branch,branch>>.  Heads are stored in a file in
 	`$GIT_DIR/refs/heads/` directory, except when using packed refs. (See
-	linkgit:git-pack-refs[1].)
+	linkbut:but-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
 	The current <<def_branch,branch>>.  In more detail: Your <<def_working_tree,
@@ -285,7 +285,7 @@ This cummit is referred to as a "merge cummit", or sometimes just a
 	'origin' is used for that purpose. New upstream updates
 	will be fetched into <<def_remote_tracking_branch,remote-tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
-	`git branch -r`.
+	`but branch -r`.
 
 [[def_overlay]]overlay::
 	Only update and add files to the working directory, but don't
@@ -308,8 +308,8 @@ This cummit is referred to as a "merge cummit", or sometimes just a
 [[def_pathspec]]pathspec::
 	Pattern used to limit paths in Git commands.
 +
-Pathspecs are used on the command line of "git ls-files", "git
-ls-tree", "git add", "git grep", "git diff", "git checkout",
+Pathspecs are used on the command line of "but ls-files", "but
+ls-tree", "but add", "but grep", "but diff", "but checkout",
 and many other commands to
 limit the scope of operations to some subset of the tree or
 working tree.  See the documentation of each command for whether
@@ -369,7 +369,7 @@ glob;;
 	consumption by fnmatch(3) with the FNM_PATHNAME flag:
 	wildcards in the pattern will not match a / in the pathname.
 	For example, "Documentation/{asterisk}.html" matches
-	"Documentation/git.html" but not "Documentation/ppc/ppc.html"
+	"Documentation/but.html" but not "Documentation/ppc/ppc.html"
 	or "tools/perf/Documentation/perf.html".
 +
 Two consecutive asterisks ("`**`") in patterns matched against
@@ -383,7 +383,7 @@ full pathname may have special meaning:
 
  - A trailing "`/**`" matches everything inside. For example,
    "`abc/**`" matches all files inside directory "abc", relative
-   to the location of the `.gitignore` file, with infinite depth.
+   to the location of the `.butignore` file, with infinite depth.
 
  - A slash followed by two consecutive asterisks then a slash
    matches zero or more directories. For example, "`a/**/b`"
@@ -398,7 +398,7 @@ After `attr:` comes a space separated list of "attribute
 requirements", all of which must be met in order for the
 path to be considered a match; this is in addition to the
 usual non-magic pathspec pattern matching.
-See linkgit:gitattributes[5].
+See linkbut:butattributes[5].
 +
 Each of the attribute requirements for the path takes one of
 these forms:
@@ -434,14 +434,14 @@ exclude;;
 	routines that help select changes that add or delete a given text
 	string. With the `--pickaxe-all` option, it can be used to view the full
 	<<def_changeset,changeset>> that introduced or removed, say, a
-	particular line of text. See linkgit:git-diff[1].
+	particular line of text. See linkbut:but-diff[1].
 
 [[def_plumbing]]plumbing::
-	Cute name for <<def_core_git,core Git>>.
+	Cute name for <<def_core_but,core Git>>.
 
 [[def_porcelain]]porcelain::
 	Cute name for programs and program suites depending on
-	<<def_core_git,core Git>>, presenting a high level access to
+	<<def_core_but,core Git>>, presenting a high level access to
 	core Git. Porcelains expose more of a <<def_SCM,SCM>>
 	interface than the <<def_plumbing,plumbing>>.
 
@@ -454,7 +454,7 @@ exclude;;
 [[def_pseudoref]]pseudoref::
 	Pseudorefs are a class of files under `$GIT_DIR` which behave
 	like refs for the purposes of rev-parse, but which are treated
-	specially by git.  Pseudorefs both have names that are all-caps,
+	specially by but.  Pseudorefs both have names that are all-caps,
 	and always start with a line consisting of a
 	<<def_SHA1,SHA-1>> followed by whitespace.  So, HEAD is not a
 	pseudoref, because it is sometimes a symbolic ref.  They might
@@ -464,12 +464,12 @@ exclude;;
 	be symbolic refs, and never have reflogs.  They also cannot be
 	updated through the normal ref update machinery.  Instead,
 	they are updated by directly writing to the files.  However,
-	they can be read as if they were refs, so `git rev-parse
+	they can be read as if they were refs, so `but rev-parse
 	MERGE_HEAD` will work.
 
 [[def_pull]]pull::
 	Pulling a <<def_branch,branch>> means to <<def_fetch,fetch>> it and
-	<<def_merge,merge>> it.  See also linkgit:git-pull[1].
+	<<def_merge,merge>> it.  See also linkbut:but-pull[1].
 
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
@@ -503,7 +503,7 @@ exclude;;
 	that points to an <<def_object_name,object name>> or another
 	ref (the latter is called a <<def_symref,symbolic ref>>).
 	For convenience, a ref can sometimes be abbreviated when used
-	as an argument to a Git command; see linkgit:gitrevisions[7]
+	as an argument to a Git command; see linkbut:butrevisions[7]
 	for details.
 	Refs are stored in the <<def_repository,repository>>.
 +
@@ -518,7 +518,7 @@ The most notable example is `HEAD`.
 	A reflog shows the local "history" of a ref.  In other words,
 	it can tell you what the 3rd last revision in _this_ repository
 	was, and what was the current state in _this_ repository,
-	yesterday 9:14pm.  See linkgit:git-reflog[1] for details.
+	yesterday 9:14pm.  See linkbut:but-reflog[1] for details.
 
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
@@ -568,7 +568,7 @@ The most notable example is `HEAD`.
 [[def_shallow_clone]]shallow clone::
 	Mostly a synonym to <<def_shallow_repository,shallow repository>>
 	but the phrase makes it more explicit that it was created by
-	running `git clone --depth=...` command.
+	running `but clone --depth=...` command.
 
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
@@ -578,8 +578,8 @@ The most notable example is `HEAD`.
 	object>>). This is sometimes useful when you are interested only in the
 	recent history of a project even though the real history recorded in the
 	upstream is much larger. A shallow repository
-	is created by giving the `--depth` option to linkgit:git-clone[1], and
-	its history can be later deepened with linkgit:git-fetch[1].
+	is created by giving the `--depth` option to linkbut:but-clone[1], and
+	its history can be later deepened with linkbut:but-fetch[1].
 
 [[def_stash]]stash entry::
 	An <<def_object,object>> used to temporarily store the contents of a
@@ -601,7 +601,7 @@ The most notable example is `HEAD`.
 	id itself, it is of the format 'ref: refs/some/thing' and when
 	referenced, it recursively dereferences to this reference.
 	'<<def_HEAD,HEAD>>' is a prime example of a symref. Symbolic
-	references are manipulated with the linkgit:git-symbolic-ref[1]
+	references are manipulated with the linkbut:but-symbolic-ref[1]
 	command.
 
 [[def_tag]]tag::

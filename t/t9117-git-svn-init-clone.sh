@@ -3,9 +3,9 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git svn init/clone tests'
+test_description='but svn init/clone tests'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches project/tags &&
@@ -16,39 +16,39 @@ test_expect_success 'setup svnrepo' '
 
 test_expect_success 'basic clone' '
 	test ! -d trunk &&
-	git svn clone "$svnrepo"/project/trunk &&
-	test -d trunk/.git/svn &&
+	but svn clone "$svnrepo"/project/trunk &&
+	test -d trunk/.but/svn &&
 	test -e trunk/foo &&
 	rm -rf trunk
 	'
 
 test_expect_success 'clone to target directory' '
 	test ! -d target &&
-	git svn clone "$svnrepo"/project/trunk target &&
-	test -d target/.git/svn &&
+	but svn clone "$svnrepo"/project/trunk target &&
+	test -d target/.but/svn &&
 	test -e target/foo &&
 	rm -rf target
 	'
 
 test_expect_success 'clone with --stdlayout' '
 	test ! -d project &&
-	git svn clone -s "$svnrepo"/project &&
-	test -d project/.git/svn &&
+	but svn clone -s "$svnrepo"/project &&
+	test -d project/.but/svn &&
 	test -e project/foo &&
 	rm -rf project
 	'
 
 test_expect_success 'clone to target directory with --stdlayout' '
 	test ! -d target &&
-	git svn clone -s "$svnrepo"/project target &&
-	test -d target/.git/svn &&
+	but svn clone -s "$svnrepo"/project target &&
+	test -d target/.but/svn &&
 	test -e target/foo &&
 	rm -rf target
 	'
 
 test_expect_success 'init without -s/-T/-b/-t does not warn' '
 	test ! -d trunk &&
-	git svn init "$svnrepo"/project/trunk trunk 2>warning &&
+	but svn init "$svnrepo"/project/trunk trunk 2>warning &&
 	! grep -q prefix warning &&
 	rm -rf trunk &&
 	rm -f warning
@@ -56,7 +56,7 @@ test_expect_success 'init without -s/-T/-b/-t does not warn' '
 
 test_expect_success 'clone without -s/-T/-b/-t does not warn' '
 	test ! -d trunk &&
-	git svn clone "$svnrepo"/project/trunk 2>warning &&
+	but svn clone "$svnrepo"/project/trunk 2>warning &&
 	! grep -q prefix warning &&
 	rm -rf trunk &&
 	rm -f warning
@@ -70,16 +70,16 @@ project/branches/*:refs/remotes/${prefix}*
 project/tags/*:refs/remotes/${prefix}tags/*
 EOF
 	test ! -f actual &&
-	git --git-dir=project/.git config svn-remote.svn.fetch >>actual &&
-	git --git-dir=project/.git config svn-remote.svn.branches >>actual &&
-	git --git-dir=project/.git config svn-remote.svn.tags >>actual &&
+	but --but-dir=project/.but config svn-remote.svn.fetch >>actual &&
+	but --but-dir=project/.but config svn-remote.svn.branches >>actual &&
+	but --but-dir=project/.but config svn-remote.svn.tags >>actual &&
 	test_cmp expect actual &&
 	rm -f expect actual
 }
 
 test_expect_success 'init with -s/-T/-b/-t assumes --prefix=origin/' '
 	test ! -d project &&
-	git svn init -s "$svnrepo"/project project 2>warning &&
+	but svn init -s "$svnrepo"/project project 2>warning &&
 	! grep -q prefix warning &&
 	test_svn_configured_prefix "origin/" &&
 	rm -rf project &&
@@ -88,7 +88,7 @@ test_expect_success 'init with -s/-T/-b/-t assumes --prefix=origin/' '
 
 test_expect_success 'clone with -s/-T/-b/-t assumes --prefix=origin/' '
 	test ! -d project &&
-	git svn clone -s "$svnrepo"/project 2>warning &&
+	but svn clone -s "$svnrepo"/project 2>warning &&
 	! grep -q prefix warning &&
 	test_svn_configured_prefix "origin/" &&
 	rm -rf project &&
@@ -97,7 +97,7 @@ test_expect_success 'clone with -s/-T/-b/-t assumes --prefix=origin/' '
 
 test_expect_success 'init with -s/-T/-b/-t and --prefix "" still works' '
 	test ! -d project &&
-	git svn init -s "$svnrepo"/project project --prefix "" 2>warning &&
+	but svn init -s "$svnrepo"/project project --prefix "" 2>warning &&
 	! grep -q prefix warning &&
 	test_svn_configured_prefix "" &&
 	rm -rf project &&
@@ -106,7 +106,7 @@ test_expect_success 'init with -s/-T/-b/-t and --prefix "" still works' '
 
 test_expect_success 'clone with -s/-T/-b/-t and --prefix "" still works' '
 	test ! -d project &&
-	git svn clone -s "$svnrepo"/project --prefix "" 2>warning &&
+	but svn clone -s "$svnrepo"/project --prefix "" 2>warning &&
 	! grep -q prefix warning &&
 	test_svn_configured_prefix "" &&
 	rm -rf project &&
@@ -115,7 +115,7 @@ test_expect_success 'clone with -s/-T/-b/-t and --prefix "" still works' '
 
 test_expect_success 'init with -T as a full url works' '
 	test ! -d project &&
-	git svn init -T "$svnrepo"/project/trunk project &&
+	but svn init -T "$svnrepo"/project/trunk project &&
 	rm -rf project
 	'
 

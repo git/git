@@ -9,13 +9,13 @@ Fixes since v2.3
    the candidate list was empty, against which the only "choice" the
    user could have made was to choose nothing.
 
- * "git apply --whitespace=fix" used to under-allocate the memory
+ * "but apply --whitespace=fix" used to under-allocate the memory
    when the fix resulted in a longer text than the original patch.
 
- * "git log --help" used to show rev-list options that are irrelevant
+ * "but log --help" used to show rev-list options that are irrelevant
    to the "log" command.
 
- * The error message from "git cummit", when a non-existing author
+ * The error message from "but cummit", when a non-existing author
    name was given as value to the "--author=" parameter, has been
    reworded to avoid misunderstanding.
 
@@ -29,24 +29,24 @@ Fixes since v2.3
 
  * Fix a misspelled conditional that is always true.
 
- * Code to read branch name from various files in .git/ directory
+ * Code to read branch name from various files in .but/ directory
    would have misbehaved if the code to write them left an empty file.
 
- * The "git push" documentation made the "--repo=<there>" option
+ * The "but push" documentation made the "--repo=<there>" option
    easily misunderstood.
 
  * After attempting and failing a password-less authentication
    (e.g. kerberos), libcURL refuses to fall back to password based
    Basic authentication without a bit of help/encouragement.
 
- * Setting diff.submodule to 'log' made "git format-patch" produce
+ * Setting diff.submodule to 'log' made "but format-patch" produce
    broken patches.
 
- * "git rerere" (invoked internally from many mergy operations) did
+ * "but rerere" (invoked internally from many mergy operations) did
    not correctly signal errors when told to update the working tree
    files and failed to do so for whatever reason.
 
- * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
+ * "but blame HEAD -- missing" failed to correctly say "HEAD" when it
    tried to say "No such path 'missing' in HEAD".
 
 Also contains typofixes, documentation updates and trivial code clean-ups.

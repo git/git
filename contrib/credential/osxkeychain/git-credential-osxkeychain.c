@@ -85,7 +85,7 @@ static void delete_internet_password(void)
 	SecKeychainItemRef item;
 
 	/*
-	 * Require at least a protocol and host for removal, which is what git
+	 * Require at least a protocol and host for removal, which is what but
 	 * will give us; if you want to do something more fancy, use the
 	 * Keychain manager.
 	 */
@@ -165,7 +165,7 @@ static void read_credential(void)
 int main(int argc, const char **argv)
 {
 	const char *usage =
-		"usage: git credential-osxkeychain <get|store|erase>";
+		"usage: but credential-osxkeychain <get|store|erase>";
 
 	if (!argv[1])
 		die(usage);

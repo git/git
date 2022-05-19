@@ -6,12 +6,12 @@ Updates since v2.25
 
 Backward compatibility notes
 
- * "git rebase" uses a different backend that is based on the 'merge'
+ * "but rebase" uses a different backend that is based on the 'merge'
    machinery by default.  There are a few known differences in the
    behaviour from the traditional machinery based on patch+apply.
 
    If your workflow is negatively affected by this change, please
-   report it to git@vger.kernel.org so that we can take a look into
+   report it to but@vger.kernel.org so that we can take a look into
    it.  After doing so, you can set the 'rebase.backend' configuration
    variable to 'apply', in order to use the old default behaviour in
    the meantime.
@@ -27,45 +27,45 @@ UI, Workflows & Features
    trust level.
 
  * The command line completion (in contrib/) learned to complete
-   subcommands and arguments to "git worktree".
+   subcommands and arguments to "but worktree".
 
  * Disambiguation logic to tell revisions and pathspec apart has been
    tweaked so that backslash-escaped glob special characters do not
    count in the "wildcards are pathspec" rule.
 
  * One effect of specifying where the GIT_DIR is (either with the
-   environment variable, or with the "git --git-dir=<where> cmd"
+   environment variable, or with the "but --but-dir=<where> cmd"
    option) is to disable the repository discovery.  This has been
    placed a bit more stress in the documentation, as new users often
    get confused.
 
- * Two help messages given when "git add" notices the user gave it
+ * Two help messages given when "but add" notices the user gave it
    nothing to add have been updated to use advise() API.
 
  * A new version of fsmonitor-watchman hook has been introduced, to
    avoid races.
 
- * "git config" learned to show in which "scope", in addition to in
+ * "but config" learned to show in which "scope", in addition to in
    which file, each config setting comes from.
 
  * The basic 7 colors learned the brighter counterparts
    (e.g. "brightred").
 
- * "git sparse-checkout" learned a new "add" subcommand.
+ * "but sparse-checkout" learned a new "add" subcommand.
 
  * A configuration element used for credential subsystem can now use
    wildcard pattern to specify for which set of URLs the entry
    applies.
 
- * "git clone --recurse-submodules --single-branch" now uses the same
+ * "but clone --recurse-submodules --single-branch" now uses the same
    single-branch option when cloning the submodules.
 
- * "git rm" and "git stash" learns the new "--pathspec-from-file"
+ * "but rm" and "but stash" learns the new "--pathspec-from-file"
    option.
 
- * "git am --show-current-patch" is a way to show the piece of e-mail
-   for the stopped step, which is not suitable to directly feed "git
-   apply" (it is designed to be a good "git am" input).  It learned a
+ * "but am --show-current-patch" is a way to show the piece of e-mail
+   for the stopped step, which is not suitable to directly feed "but
+   apply" (it is designed to be a good "but am" input).  It learned a
    new option to show only the patch part.
 
  * Handling of conflicting renames in merge-recursive have further
@@ -82,12 +82,12 @@ Performance, Internal Implementation, Development Support etc.
    construct, but did not check "VAR= shell_function", which has been
    corrected.
 
- * Replace "git config --bool" calls with "git config --type=bool" in
+ * Replace "but config --bool" calls with "but config --type=bool" in
    sample templates.
 
- * The effort to move "git-add--interactive" to C continues.
+ * The effort to move "but-add--interactive" to C continues.
 
- * Improve error message generation for "git submodule add".
+ * Improve error message generation for "but submodule add".
 
  * Preparation of test scripts for the day when the object names will
    use SHA-256 continues.
@@ -95,7 +95,7 @@ Performance, Internal Implementation, Development Support etc.
  * Warn programmers about pretend_object_file() that allows the code
    to tentatively use in-core objects.
 
- * The way "git pack-objects" reuses objects stored in existing pack
+ * The way "but pack-objects" reuses objects stored in existing pack
    to generate its result has been improved.
 
  * The transport protocol version 2 becomes the default one.
@@ -104,7 +104,7 @@ Performance, Internal Implementation, Development Support etc.
    (as opposed to files in the working tree) as accesses to the object
    layer is not thread-safe.  This limitation is getting lifted.
 
- * "git rebase -i" (and friends) used to unnecessarily check out the
+ * "but rebase -i" (and friends) used to unnecessarily check out the
    tip of the branch to be rebased, which has been corrected.
 
  * A low-level API function get_oid(), that accepts various ways to
@@ -119,14 +119,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * The diff-* plumbing family of subcommands now pay attention to the
    diff.wsErrorHighlight configuration, which has been ignored before;
-   this allows "git add -p" to also show the whitespace problems to
+   this allows "but add -p" to also show the whitespace problems to
    the end user.
 
  * Some codepaths were given a repository instance as a parameter to
    work in the repository, but passed the_repository instance to its
    callees, which has been cleaned up (somewhat).
 
- * Memory footprint and performance of "git name-rev" has been
+ * Memory footprint and performance of "but name-rev" has been
    improved.
 
  * The object reachability bitmap machinery and the partial cloning
@@ -136,20 +136,20 @@ Performance, Internal Implementation, Development Support etc.
    to bypass that object traversal.  There however are some cases
    where they can work together, and they were taught about them.
 
- * "git rebase" has learned to use the merge backend (i.e. the
+ * "but rebase" has learned to use the merge backend (i.e. the
    machinery that drives "rebase -i") by default, while allowing
    "--apply" option to use the "apply" backend (e.g. the moral
    equivalent of "format-patch piped to am").  The rebase.backend
    configuration variable can be set to customize.
 
- * Underlying machinery of "git bisect--helper" is being refactored
+ * Underlying machinery of "but bisect--helper" is being refactored
    into pieces that are more easily reused.
 
 
 Fixes since v2.25
 -----------------
 
- * "git cummit" gives output similar to "git status" when there is
+ * "but cummit" gives output similar to "but status" when there is
    nothing to cummit, but without honoring the advise.statusHints
    configuration variable, which has been corrected.
 
@@ -158,8 +158,8 @@ Fixes since v2.25
    read_object_file(), causing lazy fetch to attempt fetching an
    empty tree from promisor remotes.
 
- * Complete an update to tutorial that encourages "git switch" over
-   "git checkout" that was done only half-way.
+ * Complete an update to tutorial that encourages "but switch" over
+   "but checkout" that was done only half-way.
 
  * C pedantry ;-) fix.
 
@@ -170,7 +170,7 @@ Fixes since v2.25
  * Reduce unnecessary round-trip when running "ls-remote" over the
    stateless RPC mechanism.
 
- * "git restore --staged" did not correctly update the cache-tree
+ * "but restore --staged" did not correctly update the cache-tree
    structure, resulting in bogus trees to be written afterwards, which
    has been corrected.
 
@@ -179,7 +179,7 @@ Fixes since v2.25
    the number of entries to skip over incorrectly, which has been
    corrected.
 
- * Rendering by "git log --graph" of ancestry lines leading to a merge
+ * Rendering by "but log --graph" of ancestry lines leading to a merge
    cummit were made suboptimal to waste vertical space a bit with a
    recent update, which has been corrected.
 
@@ -187,17 +187,17 @@ Fixes since v2.25
    libasan, when address sanitizer is used with more recent versions
    of gcc and clang.
 
- * Minor bugfixes to "git add -i" that has recently been rewritten in C.
+ * Minor bugfixes to "but add -i" that has recently been rewritten in C.
 
- * "git fetch --refmap=" option has got a better documentation.
+ * "but fetch --refmap=" option has got a better documentation.
 
- * "git checkout X" did not correctly fail when X is not a local
+ * "but checkout X" did not correctly fail when X is not a local
    branch but could name more than one remote-tracking branches
    (i.e. to be dwimmed as the starting point to create a corresponding
    local branch), which has been corrected.
    (merge fa74180d08 am/checkout-file-and-ref-ref-ambiguity later to maint).
 
- * Corner case bugs in "git clean" that stems from a (necessarily for
+ * Corner case bugs in "but clean" that stems from a (necessarily for
    performance reasons) awkward calling convention in the directory
    enumeration API has been corrected.
 
@@ -214,13 +214,13 @@ Fixes since v2.25
  * Futureproofing a test not to depend on the current implementation
    detail.
 
- * Running "git rm" on a submodule failed unnecessarily when
-   .gitmodules is only cache-dirty, which has been corrected.
+ * Running "but rm" on a submodule failed unnecessarily when
+   .butmodules is only cache-dirty, which has been corrected.
 
  * C pedantry ;-) fix.
 
- * "git grep --no-index" should not get affected by the contents of
-   the .gitmodules file but when "--recurse-submodules" is given or
+ * "but grep --no-index" should not get affected by the contents of
+   the .butmodules file but when "--recurse-submodules" is given or
    the "submodule.recurse" variable is set, it did.  Now these
    settings are ignored in the "--no-index" mode.
 
@@ -228,7 +228,7 @@ Fixes since v2.25
 
  * Unhelpful warning messages during documentation build have been squelched.
 
- * "git rebase -i" identifies existing cummits in its todo file with
+ * "but rebase -i" identifies existing cummits in its todo file with
    their abbreviated object name, which could become ambiguous as it
    goes to create new cummits, and has a mechanism to avoid ambiguity
    in the main part of its execution.  A few other cases however were
@@ -239,9 +239,9 @@ Fixes since v2.25
    "rebase --edit-todo" and "rebase --continue" restarts the procedure.
    (merge 5a5445d878 ag/edit-todo-drop-check later to maint).
 
- * The way "git submodule status" reports an initialized but not yet
+ * The way "but submodule status" reports an initialized but not yet
    populated submodule has not been reimplemented correctly when a
-   part of the "git submodule" command was rewritten in C, which has
+   part of the "but submodule" command was rewritten in C, which has
    been corrected.
    (merge f38c92452d pk/status-of-uncloned-submodule later to maint).
 
@@ -259,7 +259,7 @@ Fixes since v2.25
    thing.
    (merge a7df60cac8 tb/cummit-graph-object-dir later to maint).
 
- * "git remote rename X Y" needs to adjust configuration variables
+ * "but remote rename X Y" needs to adjust configuration variables
    (e.g. branch.<name>.remote) whose value used to be X to Y.
    branch.<name>.pushRemote is now also updated.
 
@@ -267,8 +267,8 @@ Fixes since v2.25
 
  * Doc markup fix.
 
- * "git check-ignore" did not work when the given path is explicitly
-   marked as not ignored with a negative entry in the .gitignore file.
+ * "but check-ignore" did not work when the given path is explicitly
+   marked as not ignored with a negative entry in the .butignore file.
 
  * The merge-recursive machinery failed to refresh the cache entry for
    a merge result in a couple of places, resulting in an unnecessary
@@ -277,43 +277,43 @@ Fixes since v2.25
  * Fix for a bug revealed by a recent change to make the protocol v2
    the default.
 
- * In rare cases "git worktree add <path>" could think that <path>
+ * In rare cases "but worktree add <path>" could think that <path>
    was already a registered worktree even when it wasn't and refuse
    to add the new worktree. This has been corrected.
    (merge bb69b3b009 es/worktree-avoid-duplication-fix later to maint).
 
- * "git push" should stop from updating a branch that is checked out
+ * "but push" should stop from updating a branch that is checked out
    when receive.denyCurrentBranch configuration is set, but it failed
    to pay attention to checkouts in secondary worktrees.  This has
    been corrected.
    (merge 4d864895a2 hv/receive-denycurrent-everywhere later to maint).
 
- * "git rebase BASE BRANCH" rebased/updated the tip of BRANCH and
+ * "but rebase BASE BRANCH" rebased/updated the tip of BRANCH and
    checked it out, even when the BRANCH is checked out in a different
    worktree.  This has been corrected.
    (merge b5cabb4a96 es/do-not-let-rebase-switch-to-protected-branch later to maint).
 
- * "git describe" in a repository with multiple root cummits sometimes
+ * "but describe" in a repository with multiple root cummits sometimes
    gave up looking for the best tag to describe a given cummit with
    too early, which has been adjusted.
 
- * "git merge signed-tag" while lacking the public key started to say
+ * "but merge signed-tag" while lacking the public key started to say
    "No signature", which was utterly wrong.  This regression has been
    reverted.
 
  * MinGW's poll() emulation has been improved.
 
- * "git show" and others gave an object name in raw format in its
+ * "but show" and others gave an object name in raw format in its
    error output, which has been corrected to give it in hex.
 
- * "git fetch" over HTTP walker protocol did not show any progress
+ * "but fetch" over HTTP walker protocol did not show any progress
    output.  We inherently do not know how much work remains, but still
    we can show something not to bore users.
    (merge 7655b4119d rs/show-progress-in-dumb-http-fetch later to maint).
 
- * Both "git ls-remote -h" and "git grep -h" give short usage help,
+ * Both "but ls-remote -h" and "but grep -h" give short usage help,
    like any other Git subcommand, but it is not unreasonable to expect
-   that the former would behave the same as "git ls-remote --head"
+   that the former would behave the same as "but ls-remote --head"
    (there is no other sensible behaviour for the latter).  The
    documentation has been updated in an attempt to clarify this.
 

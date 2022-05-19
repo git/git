@@ -29,10 +29,10 @@
 #define FORMAT_PRESERVING(n) __attribute__((format_arg(n)))
 
 #ifndef NO_GETTEXT
-void git_setup_gettext(void);
+void but_setup_gettext(void);
 int gettext_width(const char *s);
 #else
-static inline void git_setup_gettext(void)
+static inline void but_setup_gettext(void)
 {
 }
 static inline int gettext_width(const char *s)

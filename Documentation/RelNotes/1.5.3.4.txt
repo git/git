@@ -4,14 +4,14 @@ GIT v1.5.3.4 Release Notes
 Fixes since v1.5.3.3
 --------------------
 
- * Change to "git-ls-files" in v1.5.3.3 that was introduced to support
+ * Change to "but-ls-files" in v1.5.3.3 that was introduced to support
    partial cummit of removal better had a segfaulting bug, which was
    diagnosed and fixed by Keith and Carl.
 
  * Performance improvements for rename detection has been backported
    from the 'master' branch.
 
- * "git-for-each-ref --format='%(numparent)'" was not working
+ * "but-for-each-ref --format='%(numparent)'" was not working
    correctly at all, and --format='%(parent)' was not working for
    merge cummits.
 
@@ -20,16 +20,16 @@ Fixes since v1.5.3.3
    cummit that happened to be at the tip of the branch that was
    pushed, not from the person who pushed.
 
- * "git-remote" did not exit non-zero status upon error.
+ * "but-remote" did not exit non-zero status upon error.
 
- * "git-add -i" did not respond very well to EOF from tty nor
+ * "but-add -i" did not respond very well to EOF from tty nor
    bogus input.
 
- * "git-rebase -i" squash subcommand incorrectly made the
+ * "but-rebase -i" squash subcommand incorrectly made the
    author of later cummit the author of resulting cummit,
    instead of taking from the first one in the squashed series.
 
- * "git-stash apply --index" was not documented.
+ * "but-stash apply --index" was not documented.
 
  * autoconfiguration learned that "ar" command is found as "gas" on
    some systems.

@@ -41,24 +41,24 @@
 static const char sign_off_header[] = "Signed-off-by: ";
 static const char cherry_picked_prefix[] = "(cherry picked from cummit ";
 
-GIT_PATH_FUNC(git_path_cummit_editmsg, "CUMMIT_EDITMSG")
+GIT_PATH_FUNC(but_path_cummit_editmsg, "CUMMIT_EDITMSG")
 
-static GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
+static GIT_PATH_FUNC(but_path_seq_dir, "sequencer")
 
-static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
-static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
-static GIT_PATH_FUNC(git_path_head_file, "sequencer/head")
-static GIT_PATH_FUNC(git_path_abort_safety_file, "sequencer/abort-safety")
+static GIT_PATH_FUNC(but_path_todo_file, "sequencer/todo")
+static GIT_PATH_FUNC(but_path_opts_file, "sequencer/opts")
+static GIT_PATH_FUNC(but_path_head_file, "sequencer/head")
+static GIT_PATH_FUNC(but_path_abort_safety_file, "sequencer/abort-safety")
 
 static GIT_PATH_FUNC(rebase_path, "rebase-merge")
 /*
  * The file containing rebase commands, comments, and empty lines.
- * This file is created by "git rebase -i" then edited by the user. As
+ * This file is created by "but rebase -i" then edited by the user. As
  * the lines are processed, they are removed from the front of this
  * file and written to the tail of 'done'.
  */
-GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/git-rebase-todo")
-GIT_PATH_FUNC(rebase_path_todo_backup, "rebase-merge/git-rebase-todo.backup")
+GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/but-rebase-todo")
+GIT_PATH_FUNC(rebase_path_todo_backup, "rebase-merge/but-rebase-todo.backup")
 
 GIT_PATH_FUNC(rebase_path_dropped, "rebase-merge/dropped")
 
@@ -113,7 +113,7 @@ static GIT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
 static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
 /*
  * When an "edit" rebase command is being processed, the SHA1 of the
- * cummit to be edited is recorded in this file.  When "git rebase
+ * cummit to be edited is recorded in this file.  When "but rebase
  * --continue" is executed, if there are any staged changes then they
  * will be amended to the HEAD cummit, but only provided the HEAD
  * cummit is still the cummit to be edited.  When any other rebase
@@ -148,7 +148,7 @@ static GIT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
 static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
 
 /*
- * The following files are written by git-rebase just after parsing the
+ * The following files are written by but-rebase just after parsing the
  * command-line.
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
@@ -169,7 +169,7 @@ static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-res
 static GIT_PATH_FUNC(rebase_path_drop_redundant_cummits, "rebase-merge/drop_redundant_cummits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_cummits, "rebase-merge/keep_redundant_cummits")
 
-static int git_sequencer_config(const char *k, const char *v, void *cb)
+static int but_sequencer_config(const char *k, const char *v, void *cb)
 {
 	struct replay_opts *opts = cb;
 	int status;
@@ -177,7 +177,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "cummit.cleanup")) {
 		const char *s;
 
-		status = git_config_string(&s, k, v);
+		status = but_config_string(&s, k, v);
 		if (status)
 			return status;
 
@@ -203,12 +203,12 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "cummit.gpgsign")) {
-		opts->gpg_sign = git_config_bool(k, v) ? xstrdup("") : NULL;
+		opts->gpg_sign = but_config_bool(k, v) ? xstrdup("") : NULL;
 		return 0;
 	}
 
 	if (!opts->default_strategy && !strcmp(k, "pull.twohead")) {
-		int ret = git_config_string((const char**)&opts->default_strategy, k, v);
+		int ret = but_config_string((const char**)&opts->default_strategy, k, v);
 		if (ret == 0) {
 			/*
 			 * pull.twohead is allowed to be multi-valued; we only
@@ -221,17 +221,17 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 		return ret;
 	}
 
-	status = git_gpg_config(k, v, NULL);
+	status = but_gpg_config(k, v, NULL);
 	if (status)
 		return status;
 
-	return git_diff_basic_config(k, v, NULL);
+	return but_diff_basic_config(k, v, NULL);
 }
 
 void sequencer_init_config(struct replay_opts *opts)
 {
 	opts->default_msg_cleanup = CUMMIT_MSG_CLEANUP_NONE;
-	git_config(git_sequencer_config, opts);
+	but_config(but_sequencer_config, opts);
 }
 
 static inline int is_rebase_i(const struct replay_opts *opts)
@@ -243,14 +243,14 @@ static const char *get_dir(const struct replay_opts *opts)
 {
 	if (is_rebase_i(opts))
 		return rebase_path();
-	return git_path_seq_dir();
+	return but_path_seq_dir();
 }
 
 static const char *get_todo_path(const struct replay_opts *opts)
 {
 	if (is_rebase_i(opts))
 		return rebase_path_todo();
-	return git_path_todo_file();
+	return but_path_todo_file();
 }
 
 /*
@@ -418,21 +418,21 @@ static void print_advice(struct repository *r, int show_hint,
 	if (show_hint) {
 		if (opts->no_cummit)
 			advise(_("after resolving the conflicts, mark the corrected paths\n"
-				 "with 'git add <paths>' or 'git rm <paths>'"));
+				 "with 'but add <paths>' or 'but rm <paths>'"));
 		else if (opts->action == REPLAY_PICK)
 			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git cherry-pick --continue\".\n"
-				 "You can instead skip this cummit with \"git cherry-pick --skip\".\n"
-				 "To abort and get back to the state before \"git cherry-pick\",\n"
-				 "run \"git cherry-pick --abort\"."));
+				 "\"but add/rm <pathspec>\", then run\n"
+				 "\"but cherry-pick --continue\".\n"
+				 "You can instead skip this cummit with \"but cherry-pick --skip\".\n"
+				 "To abort and get back to the state before \"but cherry-pick\",\n"
+				 "run \"but cherry-pick --abort\"."));
 		else if (opts->action == REPLAY_REVERT)
 			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git revert --continue\".\n"
-				 "You can instead skip this cummit with \"git revert --skip\".\n"
-				 "To abort and get back to the state before \"git revert\",\n"
-				 "run \"git revert --abort\"."));
+				 "\"but add/rm <pathspec>\", then run\n"
+				 "\"but revert --continue\".\n"
+				 "You can instead skip this cummit with \"but revert --skip\".\n"
+				 "To abort and get back to the state before \"but revert\",\n"
+				 "run \"but revert --abort\"."));
 		else
 			BUG("unexpected pick action in print_advice()");
 	}
@@ -509,13 +509,13 @@ static void update_abort_safety_file(void)
 	struct object_id head;
 
 	/* Do nothing on a single-pick */
-	if (!file_exists(git_path_seq_dir()))
+	if (!file_exists(but_path_seq_dir()))
 		return;
 
 	if (!get_oid("HEAD", &head))
-		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
+		write_file(but_path_abort_safety_file(), "%s", oid_to_hex(&head));
 	else
-		write_file(git_path_abort_safety_file(), "%s", "");
+		write_file(but_path_abort_safety_file(), "%s", "");
 }
 
 static int fast_forward_to(struct repository *r,
@@ -821,7 +821,7 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
  * with our parsing, as the file was meant to be eval'd in the now-removed
- * git-am.sh/git-rebase--interactive.sh scripts, and thus if the file differs
+ * but-am.sh/but-rebase--interactive.sh scripts, and thus if the file differs
  * from what this function expects, it is better to bail out than to do
  * something that the user does not expect.
  */
@@ -939,15 +939,15 @@ static const char staged_changes_advice[] =
 N_("you have staged changes in your working tree\n"
 "If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git cummit --amend %s\n"
+"  but cummit --amend %s\n"
 "\n"
 "If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git cummit %s\n"
+"  but cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n");
+"  but rebase --continue\n");
 
 #define ALLOW_EMPTY (1<<0)
 #define EDIT_MSG    (1<<1)
@@ -982,11 +982,11 @@ static int run_command_silent_on_success(struct child_process *cmd)
  * If we are revert, or if our cherry-pick results in a hand merge,
  * we had better say that the current user is responsible for that.
  *
- * An exception is when run_git_cummit() is called during an
+ * An exception is when run_but_cummit() is called during an
  * interactive rebase: in that case, we will want to retain the
  * author metadata.
  */
-static int run_git_cummit(const char *defmsg,
+static int run_but_cummit(const char *defmsg,
 			  struct replay_opts *opts,
 			  unsigned int flags)
 {
@@ -995,7 +995,7 @@ static int run_git_cummit(const char *defmsg,
 	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
 		BUG("CLEANUP_MSG and VERBATIM_MSG are mutually exclusive");
 
-	cmd.git_cmd = 1;
+	cmd.but_cmd = 1;
 
 	if (is_rebase_i(opts) &&
 	    ((opts->cummitter_date_is_author_date && !opts->ignore_date) ||
@@ -1198,7 +1198,7 @@ void cummit_post_rewrite(struct repository *r,
 	if (cfg) {
 		/* we are amending, so old_head is not NULL */
 		copy_note_for_rewrite(cfg, &old_head->object.oid, new_head);
-		finish_copy_notes_for_rewrite(r, cfg, "Notes added by 'git cummit --amend'");
+		finish_copy_notes_for_rewrite(r, cfg, "Notes added by 'but cummit --amend'");
 	}
 	run_rewrite_hook(&old_head->object.oid, new_head);
 }
@@ -1210,7 +1210,7 @@ static int run_prepare_cummit_msg_hook(struct repository *r,
 	int ret = 0;
 	const char *name, *arg1 = NULL, *arg2 = NULL;
 
-	name = git_path_cummit_editmsg();
+	name = but_path_cummit_editmsg();
 	if (write_message(msg->buf, msg->len, name, 0))
 		return -1;
 
@@ -1234,27 +1234,27 @@ N_("Your name and email address were configured automatically based\n"
 "following command and follow the instructions in your editor to edit\n"
 "your configuration file:\n"
 "\n"
-"    git config --global --edit\n"
+"    but config --global --edit\n"
 "\n"
 "After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git cummit --amend --reset-author\n");
+"    but cummit --amend --reset-author\n");
 
 static const char implicit_ident_advice_config[] =
 N_("Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
 "You can suppress this message by setting them explicitly:\n"
 "\n"
-"    git config --global user.name \"Your Name\"\n"
-"    git config --global user.email you@example.com\n"
+"    but config --global user.name \"Your Name\"\n"
+"    but config --global user.email you@example.com\n"
 "\n"
 "After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git cummit --amend --reset-author\n");
+"    but cummit --amend --reset-author\n");
 
 static const char *implicit_ident_advice(void)
 {
-	char *user_config = interpolate_path("~/.gitconfig", 0);
+	char *user_config = interpolate_path("~/.butconfig", 0);
 	char *xdg_config = xdg_config_home("config");
 	int config_exists = file_exists(user_config) || file_exists(xdg_config);
 
@@ -1373,13 +1373,13 @@ static int parse_head(struct repository *r, struct cummit **head)
 }
 
 /*
- * Try to cummit without forking 'git cummit'. In some cases we need
- * to run 'git cummit' to display an error message
+ * Try to cummit without forking 'but cummit'. In some cases we need
+ * to run 'but cummit' to display an error message
  *
  * Returns:
  *  -1 - error unable to cummit
  *   0 - success
- *   1 - run 'git cummit'
+ *   1 - run 'but cummit'
  */
 static int try_to_cummit(struct repository *r,
 			 struct strbuf *msg, const char *author,
@@ -1432,7 +1432,7 @@ static int try_to_cummit(struct repository *r,
 	}
 
 	if (write_index_as_tree(&tree, r->index, r->index_file, 0, NULL)) {
-		res = error(_("git write-tree failed to write a tree"));
+		res = error(_("but write-tree failed to write a tree"));
 		goto out;
 	}
 
@@ -1454,7 +1454,7 @@ static int try_to_cummit(struct repository *r,
 			  ? get_cummit_tree_oid(first_parent)
 			  : the_hash_algo->empty_tree,
 			  &tree)) {
-			res = 1; /* run 'git cummit' to display error message */
+			res = 1; /* run 'but cummit' to display error message */
 			goto out;
 		}
 	}
@@ -1463,11 +1463,11 @@ static int try_to_cummit(struct repository *r,
 		res = run_prepare_cummit_msg_hook(r, msg, hook_cummit);
 		if (res)
 			goto out;
-		if (strbuf_read_file(&cummit_msg, git_path_cummit_editmsg(),
+		if (strbuf_read_file(&cummit_msg, but_path_cummit_editmsg(),
 				     2048) < 0) {
 			res = error_errno(_("unable to read cummit message "
 					      "from '%s'"),
-					    git_path_cummit_editmsg());
+					    but_path_cummit_editmsg());
 			goto out;
 		}
 		msg = &cummit_msg;
@@ -1486,7 +1486,7 @@ static int try_to_cummit(struct repository *r,
 	if (cleanup != CUMMIT_MSG_CLEANUP_NONE)
 		strbuf_stripspace(msg, cleanup == CUMMIT_MSG_CLEANUP_ALL);
 	if ((flags & EDIT_MSG) && message_is_empty(msg, cleanup)) {
-		res = 1; /* run 'git cummit' to display error message */
+		res = 1; /* run 'but cummit' to display error message */
 		goto out;
 	}
 
@@ -1595,7 +1595,7 @@ static int do_cummit(struct repository *r,
 		if (!res) {
 			refs_delete_ref(get_main_ref_store(r), "",
 					"CHERRY_PICK_HEAD", NULL, 0);
-			unlink(git_path_merge_msg(r));
+			unlink(but_path_merge_msg(r));
 			if (!is_rebase_i(opts))
 				print_cummit_summary(r, NULL, &oid,
 						SUMMARY_SHOW_AUTHOR_DATE);
@@ -1606,7 +1606,7 @@ static int do_cummit(struct repository *r,
 		if (is_rebase_i(opts) && oid)
 			if (write_rebase_head(oid))
 			    return -1;
-		return run_git_cummit(msg_file, opts, flags);
+		return run_but_cummit(msg_file, opts, flags);
 	}
 
 	return res;
@@ -1659,7 +1659,7 @@ static int allow_empty(struct repository *r,
 	 * (4) we allow both.
 	 */
 	if (!opts->allow_empty)
-		return 0; /* let "git cummit" barf as necessary */
+		return 0; /* let "but cummit" barf as necessary */
 
 	index_unchanged = is_index_unchanged(r);
 	if (index_unchanged < 0)
@@ -2064,7 +2064,7 @@ static int do_pick_cummit(struct repository *r,
 			  int final_fixup, int *check_todo)
 {
 	unsigned int flags = should_edit(opts) ? EDIT_MSG : 0;
-	const char *msg_file = should_edit(opts) ? NULL : git_path_merge_msg(r);
+	const char *msg_file = should_edit(opts) ? NULL : but_path_merge_msg(r);
 	struct object_id head;
 	struct cummit *base, *next, *parent;
 	const char *base_label, *next_label;
@@ -2213,12 +2213,12 @@ static int do_pick_cummit(struct repository *r,
 			flags |= VERBATIM_MSG;
 			msg_file = rebase_path_fixup_msg();
 		} else {
-			const char *dest = git_path_squash_msg(r);
+			const char *dest = but_path_squash_msg(r);
 			unlink(dest);
 			if (copy_file(dest, rebase_path_squash_msg(), 0666))
 				return error(_("could not rename '%s' to '%s'"),
 					     rebase_path_squash_msg(), dest);
-			unlink(git_path_merge_msg(r));
+			unlink(but_path_merge_msg(r));
 			msg_file = dest;
 			flags |= EDIT_MSG;
 		}
@@ -2239,13 +2239,13 @@ static int do_pick_cummit(struct repository *r,
 			goto leave;
 
 		res |= write_message(msgbuf.buf, msgbuf.len,
-				     git_path_merge_msg(r), 0);
+				     but_path_merge_msg(r), 0);
 	} else {
 		struct cummit_list *common = NULL;
 		struct cummit_list *remotes = NULL;
 
 		res = write_message(msgbuf.buf, msgbuf.len,
-				    git_path_merge_msg(r), 0);
+				    but_path_merge_msg(r), 0);
 
 		cummit_list_insert(base, &common);
 		cummit_list_insert(next, &remotes);
@@ -2295,8 +2295,8 @@ static int do_pick_cummit(struct repository *r,
 		drop_cummit = 1;
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
 				NULL, 0);
-		unlink(git_path_merge_msg(r));
-		unlink(git_path_auto_merge(r));
+		unlink(but_path_merge_msg(r));
+		unlink(but_path_auto_merge(r));
 		fprintf(stderr,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&cummit->object.oid), msg.subject);
@@ -2310,7 +2310,7 @@ static int do_pick_cummit(struct repository *r,
 		*check_todo = !!(flags & EDIT_MSG);
 		if (!res && reword) {
 fast_forward_edit:
-			res = run_git_cummit(NULL, opts, EDIT_MSG |
+			res = run_but_cummit(NULL, opts, EDIT_MSG |
 					     VERIFY_MSG | AMEND_MSG |
 					     (flags & ALLOW_EMPTY));
 			*check_todo = 1;
@@ -2356,7 +2356,7 @@ static int read_and_refresh_cache(struct repository *r,
 	int index_fd = repo_hold_locked_index(r, &index_lock, 0);
 	if (repo_read_index(r) < 0) {
 		rollback_lock_file(&index_lock);
-		return error(_("git %s: failed to read the index"),
+		return error(_("but %s: failed to read the index"),
 			_(action_name(opts)));
 	}
 	refresh_index(r->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
@@ -2364,7 +2364,7 @@ static int read_and_refresh_cache(struct repository *r,
 	if (index_fd >= 0) {
 		if (write_locked_index(r->index, &index_lock,
 				       CUMMIT_LOCK | SKIP_IF_UNCHANGED)) {
-			return error(_("git %s: failed to refresh the index"),
+			return error(_("but %s: failed to refresh the index"),
 				_(action_name(opts)));
 		}
 	}
@@ -2516,7 +2516,7 @@ int sequencer_get_last_command(struct repository *r, enum replay_action *action)
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
 
-	todo_file = git_path_todo_file();
+	todo_file = but_path_todo_file();
 	if (strbuf_read_file(&buf, todo_file, 0) < 0) {
 		if (errno == ENOENT || errno == ENOTDIR)
 			return -1;
@@ -2624,7 +2624,7 @@ static int have_finished_the_last_pick(void)
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *eol;
-	const char *todo_path = git_path_todo_file();
+	const char *todo_path = but_path_todo_file();
 	int ret = 0;
 
 	if (strbuf_read_file(&buf, todo_path, 0) < 0) {
@@ -2668,7 +2668,7 @@ void sequencer_post_cummit_cleanup(struct repository *r, int verbose)
 		need_cleanup = 1;
 	}
 
-	unlink(git_path_auto_merge(r));
+	unlink(but_path_auto_merge(r));
 
 	if (!need_cleanup)
 		return;
@@ -2704,7 +2704,7 @@ static int read_populate_todo(struct repository *r,
 	if (res) {
 		if (is_rebase_i(opts))
 			return error(_("please fix this using "
-				       "'git rebase --edit-todo'."));
+				       "'but rebase --edit-todo'."));
 		return error(_("unusable instruction sheet: '%s'"), todo_file);
 	}
 
@@ -2745,7 +2745,7 @@ static int read_populate_todo(struct repository *r,
 	return 0;
 }
 
-static int git_config_string_dup(char **dest,
+static int but_config_string_dup(char **dest,
 				 const char *var, const char *value)
 {
 	if (!value)
@@ -2763,36 +2763,36 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 	if (!value)
 		error_flag = 0;
 	else if (!strcmp(key, "options.no-cummit"))
-		opts->no_cummit = git_config_bool_or_int(key, value, &error_flag);
+		opts->no_cummit = but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.edit"))
-		opts->edit = git_config_bool_or_int(key, value, &error_flag);
+		opts->edit = but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.allow-empty"))
 		opts->allow_empty =
-			git_config_bool_or_int(key, value, &error_flag);
+			but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.allow-empty-message"))
 		opts->allow_empty_message =
-			git_config_bool_or_int(key, value, &error_flag);
+			but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.keep-redundant-cummits"))
 		opts->keep_redundant_cummits =
-			git_config_bool_or_int(key, value, &error_flag);
+			but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.signoff"))
-		opts->signoff = git_config_bool_or_int(key, value, &error_flag);
+		opts->signoff = but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.record-origin"))
-		opts->record_origin = git_config_bool_or_int(key, value, &error_flag);
+		opts->record_origin = but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.allow-ff"))
-		opts->allow_ff = git_config_bool_or_int(key, value, &error_flag);
+		opts->allow_ff = but_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.mainline"))
-		opts->mainline = git_config_int(key, value);
+		opts->mainline = but_config_int(key, value);
 	else if (!strcmp(key, "options.strategy"))
-		git_config_string_dup(&opts->strategy, key, value);
+		but_config_string_dup(&opts->strategy, key, value);
 	else if (!strcmp(key, "options.gpg-sign"))
-		git_config_string_dup(&opts->gpg_sign, key, value);
+		but_config_string_dup(&opts->gpg_sign, key, value);
 	else if (!strcmp(key, "options.strategy-option")) {
 		ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
 		opts->xopts[opts->xopts_nr++] = xstrdup(value);
 	} else if (!strcmp(key, "options.allow-rerere-auto"))
 		opts->allow_rerere_auto =
-			git_config_bool_or_int(key, value, &error_flag) ?
+			but_config_bool_or_int(key, value, &error_flag) ?
 				RERERE_AUTOUPDATE : RERERE_NOAUTOUPDATE;
 	else if (!strcmp(key, "options.default-msg-cleanup")) {
 		opts->explicit_cleanup = 1;
@@ -2921,17 +2921,17 @@ done_rebase_i:
 		return ret;
 	}
 
-	if (!file_exists(git_path_opts_file()))
+	if (!file_exists(but_path_opts_file()))
 		return 0;
 	/*
-	 * The function git_parse_source(), called from git_config_from_file(),
+	 * The function but_parse_source(), called from but_config_from_file(),
 	 * may die() in case of a syntactically incorrect file. We do not care
 	 * about this case, though, because we wrote that file ourselves, so we
 	 * are pretty certain that it is syntactically correct.
 	 */
-	if (git_config_from_file(populate_opts_cb, git_path_opts_file(), opts) < 0)
+	if (but_config_from_file(populate_opts_cb, but_path_opts_file(), opts) < 0)
 		return error(_("malformed options sheet: '%s'"),
-			git_path_opts_file());
+			but_path_opts_file());
 	return 0;
 }
 
@@ -3044,12 +3044,12 @@ static int create_seq_dir(struct repository *r)
 		case REPLAY_REVERT:
 			in_progress_error = _("revert is already in progress");
 			in_progress_advice =
-			_("try \"git revert (--continue | %s--abort | --quit)\"");
+			_("try \"but revert (--continue | %s--abort | --quit)\"");
 			break;
 		case REPLAY_PICK:
 			in_progress_error = _("cherry-pick is already in progress");
 			in_progress_advice =
-			_("try \"git cherry-pick (--continue | %s--abort | --quit)\"");
+			_("try \"but cherry-pick (--continue | %s--abort | --quit)\"");
 			break;
 		default:
 			BUG("unexpected action in create_seq_dir");
@@ -3062,9 +3062,9 @@ static int create_seq_dir(struct repository *r)
 				advise_skip ? "--skip | " : "");
 		return -1;
 	}
-	if (mkdir(git_path_seq_dir(), 0777) < 0)
+	if (mkdir(but_path_seq_dir(), 0777) < 0)
 		return error_errno(_("could not create sequencer directory '%s'"),
-				   git_path_seq_dir());
+				   but_path_seq_dir());
 
 	return 0;
 }
@@ -3076,19 +3076,19 @@ static int save_head(const char *head)
 	int fd;
 	ssize_t written;
 
-	fd = hold_lock_file_for_update(&head_lock, git_path_head_file(), 0);
+	fd = hold_lock_file_for_update(&head_lock, but_path_head_file(), 0);
 	if (fd < 0)
 		return error_errno(_("could not lock HEAD"));
 	strbuf_addf(&buf, "%s\n", head);
 	written = write_in_full(fd, buf.buf, buf.len);
 	strbuf_release(&buf);
 	if (written < 0) {
-		error_errno(_("could not write to '%s'"), git_path_head_file());
+		error_errno(_("could not write to '%s'"), but_path_head_file());
 		rollback_lock_file(&head_lock);
 		return -1;
 	}
 	if (cummit_lock_file(&head_lock) < 0)
-		return error(_("failed to finalize '%s'"), git_path_head_file());
+		return error(_("failed to finalize '%s'"), but_path_head_file());
 	return 0;
 }
 
@@ -3097,18 +3097,18 @@ static int rollback_is_safe(void)
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id expected_head, actual_head;
 
-	if (strbuf_read_file(&sb, git_path_abort_safety_file(), 0) >= 0) {
+	if (strbuf_read_file(&sb, but_path_abort_safety_file(), 0) >= 0) {
 		strbuf_trim(&sb);
 		if (get_oid_hex(sb.buf, &expected_head)) {
 			strbuf_release(&sb);
-			die(_("could not parse %s"), git_path_abort_safety_file());
+			die(_("could not parse %s"), but_path_abort_safety_file());
 		}
 		strbuf_release(&sb);
 	}
 	else if (errno == ENOENT)
 		oidclr(&expected_head);
 	else
-		die_errno(_("could not read '%s'"), git_path_abort_safety_file());
+		die_errno(_("could not read '%s'"), but_path_abort_safety_file());
 
 	if (get_oid("HEAD", &actual_head))
 		oidclr(&actual_head);
@@ -3162,7 +3162,7 @@ int sequencer_rollback(struct repository *r, struct replay_opts *opts)
 	struct strbuf buf = STRBUF_INIT;
 	const char *p;
 
-	f = fopen(git_path_head_file(), "r");
+	f = fopen(but_path_head_file(), "r");
 	if (!f && errno == ENOENT) {
 		/*
 		 * There is no multiple-cherry-pick in progress.
@@ -3172,9 +3172,9 @@ int sequencer_rollback(struct repository *r, struct replay_opts *opts)
 		return rollback_single_pick(r);
 	}
 	if (!f)
-		return error_errno(_("cannot open '%s'"), git_path_head_file());
+		return error_errno(_("cannot open '%s'"), but_path_head_file());
 	if (strbuf_getline_lf(&buf, f)) {
-		error(_("cannot read '%s': %s"), git_path_head_file(),
+		error(_("cannot read '%s': %s"), but_path_head_file(),
 		      ferror(f) ?  strerror(errno) : _("unexpected end of file"));
 		fclose(f);
 		goto fail;
@@ -3182,7 +3182,7 @@ int sequencer_rollback(struct repository *r, struct replay_opts *opts)
 	fclose(f);
 	if (parse_oid_hex(buf.buf, &oid, &p) || *p != '\0') {
 		error(_("stored pre-cherry-pick HEAD file '%s' is corrupt"),
-			git_path_head_file());
+			but_path_head_file());
 		goto fail;
 	}
 	if (is_null_oid(&oid)) {
@@ -3214,7 +3214,7 @@ int sequencer_skip(struct repository *r, struct replay_opts *opts)
 	 * in progress and that it's safe to skip the cummit.
 	 *
 	 * opts->action tells us which subcommand requested to skip the cummit.
-	 * If the corresponding .git/<ACTION>_HEAD exists, we know that the
+	 * If the corresponding .but/<ACTION>_HEAD exists, we know that the
 	 * action is in progress and we can skip the cummit.
 	 *
 	 * Otherwise we check that the last instruction was related to the
@@ -3225,7 +3225,7 @@ int sequencer_skip(struct repository *r, struct replay_opts *opts)
 	 * moved? In this case, it doesn't make sense to "reset the merge" and
 	 * "skip the cummit" as the user already handled this by cummitting. But
 	 * we'd not want to barf here, instead give advice on how to proceed. We
-	 * only need to check that when .git/<ACTION>_HEAD doesn't exist because
+	 * only need to check that when .but/<ACTION>_HEAD doesn't exist because
 	 * it gets removed when the user cummits, so if it still exists we're
 	 * sure the user can't have cummitted before.
 	 */
@@ -3253,7 +3253,7 @@ int sequencer_skip(struct repository *r, struct replay_opts *opts)
 
 	if (skip_single_pick())
 		return error(_("failed to skip the cummit"));
-	if (!is_directory(git_path_seq_dir()))
+	if (!is_directory(but_path_seq_dir()))
 		return 0;
 
 	return sequencer_continue(r, opts);
@@ -3263,7 +3263,7 @@ give_advice:
 
 	if (advice_enabled(ADVICE_RESOLVE_CONFLICT)) {
 		advise(_("have you cummitted already?\n"
-			 "try \"git %s --continue\""),
+			 "try \"but %s --continue\""),
 			 action == REPLAY_REVERT ? "revert" : "cherry-pick");
 	}
 	return -1;
@@ -3276,7 +3276,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	int next = todo_list->current, offset, fd;
 
 	/*
-	 * rebase -i writes "git-rebase-todo" without the currently executing
+	 * rebase -i writes "but-rebase-todo" without the currently executing
 	 * command, appending it to "done" instead.
 	 */
 	if (is_rebase_i(opts))
@@ -3312,61 +3312,61 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 
 static int save_opts(struct replay_opts *opts)
 {
-	const char *opts_file = git_path_opts_file();
+	const char *opts_file = but_path_opts_file();
 	int res = 0;
 
 	if (opts->no_cummit)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.no-cummit", "true");
 	if (opts->edit >= 0)
-		res |= git_config_set_in_file_gently(opts_file, "options.edit",
+		res |= but_config_set_in_file_gently(opts_file, "options.edit",
 						     opts->edit ? "true" : "false");
 	if (opts->allow_empty)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.allow-empty", "true");
 	if (opts->allow_empty_message)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 				"options.allow-empty-message", "true");
 	if (opts->keep_redundant_cummits)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 				"options.keep-redundant-cummits", "true");
 	if (opts->signoff)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.signoff", "true");
 	if (opts->record_origin)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.record-origin", "true");
 	if (opts->allow_ff)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.allow-ff", "true");
 	if (opts->mainline) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "%d", opts->mainline);
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.mainline", buf.buf);
 		strbuf_release(&buf);
 	}
 	if (opts->strategy)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.strategy", opts->strategy);
 	if (opts->gpg_sign)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 					"options.gpg-sign", opts->gpg_sign);
 	if (opts->xopts) {
 		int i;
 		for (i = 0; i < opts->xopts_nr; i++)
-			res |= git_config_set_multivar_in_file_gently(opts_file,
+			res |= but_config_set_multivar_in_file_gently(opts_file,
 					"options.strategy-option",
 					opts->xopts[i], "^$", 0);
 	}
 	if (opts->allow_rerere_auto)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 				"options.allow-rerere-auto",
 				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 				"true" : "false");
 
 	if (opts->explicit_cleanup)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= but_config_set_in_file_gently(opts_file,
 				"options.default-msg-cleanup",
 				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
@@ -3440,9 +3440,9 @@ static int error_with_patch(struct repository *r,
 		if (make_patch(r, cummit, opts))
 			return -1;
 	} else if (copy_file(rebase_path_message(),
-			     git_path_merge_msg(r), 0666))
+			     but_path_merge_msg(r), 0666))
 		return error(_("unable to copy '%s' to '%s'"),
-			     git_path_merge_msg(r), rebase_path_message());
+			     but_path_merge_msg(r), rebase_path_message());
 
 	if (to_amend) {
 		if (intend_to_amend())
@@ -3451,11 +3451,11 @@ static int error_with_patch(struct repository *r,
 		fprintf(stderr,
 			_("You can amend the cummit now, with\n"
 			  "\n"
-			  "  git cummit --amend %s\n"
+			  "  but cummit --amend %s\n"
 			  "\n"
 			  "Once you are satisfied with your changes, run\n"
 			  "\n"
-			  "  git rebase --continue\n"),
+			  "  but rebase --continue\n"),
 			gpg_sign_opt_quoted(opts));
 	} else if (exit_code) {
 		if (cummit)
@@ -3482,11 +3482,11 @@ static int error_failed_squash(struct repository *r,
 	if (copy_file(rebase_path_message(), rebase_path_squash_msg(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
 			rebase_path_squash_msg(), rebase_path_message());
-	unlink(git_path_merge_msg(r));
-	if (copy_file(git_path_merge_msg(r), rebase_path_message(), 0666))
+	unlink(but_path_merge_msg(r));
+	if (copy_file(but_path_merge_msg(r), rebase_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
 			     rebase_path_message(),
-			     git_path_merge_msg(r));
+			     but_path_merge_msg(r));
 	return error_with_patch(r, cummit, subject, subject_len, opts, 1, 0);
 }
 
@@ -3509,7 +3509,7 @@ static int do_exec(struct repository *r, const char *command_line)
 		warning(_("execution failed: %s\n%s"
 			  "You can fix the problem, and then run\n"
 			  "\n"
-			  "  git rebase --continue\n"
+			  "  but rebase --continue\n"
 			  "\n"),
 			command_line,
 			dirty ? N_("and made changes to the index and/or the "
@@ -3522,7 +3522,7 @@ static int do_exec(struct repository *r, const char *command_line)
 			  "left changes to the index and/or the working tree\n"
 			  "cummit or stash your changes, and then run\n"
 			  "\n"
-			  "  git rebase --continue\n"
+			  "  but rebase --continue\n"
 			  "\n"), command_line);
 		status = 1;
 	}
@@ -3872,18 +3872,18 @@ static int do_merge(struct repository *r,
 		write_author_script(message);
 		find_cummit_subject(message, &body);
 		len = strlen(body);
-		ret = write_message(body, len, git_path_merge_msg(r), 0);
+		ret = write_message(body, len, but_path_merge_msg(r), 0);
 		unuse_cummit_buffer(cummit, message);
 		if (ret) {
 			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
+				    but_path_merge_msg(r));
 			goto leave_merge;
 		}
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 		int len;
 
-		strbuf_addf(&buf, "author %s", git_author_info(0));
+		strbuf_addf(&buf, "author %s", but_author_info(0));
 		write_author_script(buf.buf);
 		strbuf_reset(&buf);
 
@@ -3898,11 +3898,11 @@ static int do_merge(struct repository *r,
 			len = buf.len;
 		}
 
-		ret = write_message(p, len, git_path_merge_msg(r), 0);
+		ret = write_message(p, len, but_path_merge_msg(r), 0);
 		strbuf_release(&buf);
 		if (ret) {
 			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
+				    but_path_merge_msg(r));
 			goto leave_merge;
 		}
 	}
@@ -3926,7 +3926,7 @@ static int do_merge(struct repository *r,
 		if (opts->ignore_date)
 			strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
 
-		cmd.git_cmd = 1;
+		cmd.but_cmd = 1;
 		strvec_push(&cmd.args, "merge");
 		strvec_push(&cmd.args, "-s");
 		if (!strategy)
@@ -3945,7 +3945,7 @@ static int do_merge(struct repository *r,
 		strvec_push(&cmd.args, "--no-log");
 		strvec_push(&cmd.args, "--no-stat");
 		strvec_push(&cmd.args, "-F");
-		strvec_push(&cmd.args, git_path_merge_msg(r));
+		strvec_push(&cmd.args, but_path_merge_msg(r));
 		if (opts->gpg_sign)
 			strvec_pushf(&cmd.args, "-S%s", opts->gpg_sign);
 		else
@@ -3980,8 +3980,8 @@ static int do_merge(struct repository *r,
 	}
 
 	write_message(oid_to_hex(&merge_cummit->object.oid), the_hash_algo->hexsz,
-		      git_path_merge_head(r), 0);
-	write_message("no-ff", 5, git_path_merge_mode(r), 0);
+		      but_path_merge_head(r), 0);
+	write_message("no-ff", 5, but_path_merge_mode(r), 0);
 
 	bases = reverse_cummit_list(bases);
 
@@ -4038,14 +4038,14 @@ static int do_merge(struct repository *r,
 		 * value (a negative one would indicate that the `merge`
 		 * command needs to be rescheduled).
 		 */
-		ret = !!run_git_cummit(git_path_merge_msg(r), opts,
+		ret = !!run_but_cummit(but_path_merge_msg(r), opts,
 				       run_cummit_flags);
 
 	if (!ret && flags & TODO_EDIT_MERGE_MSG) {
 	fast_forward_edit:
 		*check_todo = 1;
 		run_cummit_flags |= AMEND_MSG | EDIT_MSG | VERIFY_MSG;
-		ret = !!run_git_cummit(NULL, opts, run_cummit_flags);
+		ret = !!run_but_cummit(NULL, opts, run_cummit_flags);
 	}
 
 
@@ -4102,7 +4102,7 @@ void create_autostash(struct repository *r, const char *path)
 
 		strvec_pushl(&stash.args,
 			     "stash", "create", "autostash", NULL);
-		stash.git_cmd = 1;
+		stash.but_cmd = 1;
 		stash.no_stdin = 1;
 		strbuf_reset(&buf);
 		if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
@@ -4134,7 +4134,7 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 	int ret = 0;
 
 	if (attempt_apply) {
-		child.git_cmd = 1;
+		child.but_cmd = 1;
 		child.no_stdout = 1;
 		child.no_stderr = 1;
 		strvec_push(&child.args, "stash");
@@ -4148,7 +4148,7 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
 
-		store.git_cmd = 1;
+		store.but_cmd = 1;
 		strvec_push(&store.args, "stash");
 		strvec_push(&store.args, "store");
 		strvec_push(&store.args, "-m");
@@ -4161,8 +4161,8 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
 			fprintf(stderr,
 				_("%s\n"
 				  "Your changes are safe in the stash.\n"
-				  "You can run \"git stash pop\" or"
-				  " \"git stash drop\" at any time.\n"),
+				  "You can run \"but stash pop\" or"
+				  " \"but stash drop\" at any time.\n"),
 				attempt_apply ?
 				_("Applying autostash resulted in conflicts.") :
 				_("Autostash exists; creating a new stash entry."));
@@ -4277,8 +4277,8 @@ N_("Could not execute the todo command\n"
 "It has been rescheduled; To edit the command before continuing, please\n"
 "edit the todo list first:\n"
 "\n"
-"    git rebase --edit-todo\n"
-"    git rebase --continue\n");
+"    but rebase --edit-todo\n"
+"    but rebase --continue\n");
 
 static int pick_cummits(struct repository *r,
 			struct todo_list *todo_list,
@@ -4325,8 +4325,8 @@ static int pick_cummits(struct repository *r,
 			unlink(rebase_path_author_script());
 			unlink(rebase_path_stopped_sha());
 			unlink(rebase_path_amend());
-			unlink(git_path_merge_head(r));
-			unlink(git_path_auto_merge(r));
+			unlink(but_path_merge_head(r));
+			unlink(but_path_auto_merge(r));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK) {
@@ -4533,7 +4533,7 @@ cleanup_head_ref:
 				find_hook("post-rewrite");
 
 			child.in = open(rebase_path_rewritten_list(), O_RDONLY);
-			child.git_cmd = 1;
+			child.but_cmd = 1;
 			strvec_push(&child.args, "notes");
 			strvec_push(&child.args, "copy");
 			strvec_push(&child.args, "--for-rewrite=rebase");
@@ -4569,7 +4569,7 @@ cleanup_head_ref:
 
 	/*
 	 * Sequence of picks finished successfully; cleanup by
-	 * removing the .git/sequencer directory
+	 * removing the .but/sequencer directory
 	 */
 	return sequencer_remove_state(opts);
 }
@@ -4629,7 +4629,7 @@ static int cummit_staged_changes(struct repository *r,
 		if (!is_clean && !oideq(&head, &to_amend))
 			return error(_("\nYou have uncummitted changes in your "
 				       "working tree. Please, cummit them\n"
-				       "first and then run 'git rebase "
+				       "first and then run 'but rebase "
 				       "--continue' again."));
 		/*
 		 * When skipping a failed fixup/squash, we need to edit the
@@ -4719,19 +4719,19 @@ static int cummit_staged_changes(struct repository *r,
 		    refs_delete_ref(get_main_ref_store(r), "",
 				    "CHERRY_PICK_HEAD", NULL, 0))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
-		if (unlink(git_path_merge_msg(r)) && errno != ENOENT)
+		if (unlink(but_path_merge_msg(r)) && errno != ENOENT)
 			return error_errno(_("could not remove '%s'"),
-					   git_path_merge_msg(r));
+					   but_path_merge_msg(r));
 		if (!final_fixup)
 			return 0;
 	}
 
-	if (run_git_cummit(final_fixup ? NULL : rebase_path_message(),
+	if (run_but_cummit(final_fixup ? NULL : rebase_path_message(),
 			   opts, flags))
 		return error(_("could not cummit staged changes."));
 	unlink(rebase_path_amend());
-	unlink(git_path_merge_head(r));
-	unlink(git_path_auto_merge(r));
+	unlink(but_path_merge_head(r));
+	unlink(but_path_auto_merge(r));
 	if (final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
@@ -4856,7 +4856,7 @@ int sequencer_pick_revisions(struct repository *r,
 	}
 
 	/*
-	 * If we were called as "git cherry-pick <cummit>", just
+	 * If we were called as "but cherry-pick <cummit>", just
 	 * cherry-pick/revert it, set CHERRY_PICK_HEAD /
 	 * REVERT_HEAD, and don't touch the sequencer state.
 	 * This means it is possible to cherry-pick in the middle
@@ -5363,7 +5363,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	revs.topo_order = 1;
 
 	revs.pretty_given = 1;
-	git_config_get_string("rebase.instructionFormat", &format);
+	but_config_get_string("rebase.instructionFormat", &format);
 	if (!format || !*format) {
 		free(format);
 		format = xstrdup("%s");
@@ -5886,7 +5886,7 @@ int sequencer_determine_whence(struct repository *r, enum cummit_whence *whence)
 	if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD")) {
 		struct object_id cherry_pick_head, rebase_head;
 
-		if (file_exists(git_path_seq_dir()))
+		if (file_exists(but_path_seq_dir()))
 			*whence = FROM_CHERRY_PICK_MULTI;
 		if (file_exists(rebase_path()) &&
 		    !get_oid("REBASE_HEAD", &rebase_head) &&

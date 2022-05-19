@@ -15,35 +15,35 @@ UI, Workflows & Features
  * The commands in the "diff" family learned to honor "diff.relative"
    configuration variable.
 
- * The check in "git fsck" to ensure that the tree objects are sorted
+ * The check in "but fsck" to ensure that the tree objects are sorted
    still had corner cases it missed unsorted entries.
 
  * The interface to redact sensitive information in the trace output
    has been simplified.
 
  * The command line completion (in contrib/) learned to complete
-   options that the "git switch" command takes.
+   options that the "but switch" command takes.
 
- * "git diff" used to take arguments in random and nonsense range
-   notation, e.g. "git diff A..B C", "git diff A..B C...D", etc.,
+ * "but diff" used to take arguments in random and nonsense range
+   notation, e.g. "but diff A..B C", "but diff A..B C...D", etc.,
    which has been cleaned up.
 
- * "git diff-files" has been taught to say paths that are marked as
+ * "but diff-files" has been taught to say paths that are marked as
    intent-to-add are new files, not modified from an empty blob.
 
- * "git status" learned to report the status of sparse checkout.
+ * "but status" learned to report the status of sparse checkout.
 
- * "git difftool" has trouble dealing with paths added to the index
+ * "but difftool" has trouble dealing with paths added to the index
    with the intent-to-add bit.
 
- * "git fast-export --anonymize" learned to take customized mapping to
+ * "but fast-export --anonymize" learned to take customized mapping to
    allow its users to tweak its output more usable for debugging.
 
  * The command line completion support (in contrib/) used to be
    prepared to work with "set -u" but recent changes got a bit more
    sloppy.  This has been corrected.
 
- * "git gui" now allows opening work trees from the start-up dialog.
+ * "but gui" now allows opening work trees from the start-up dialog.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -58,14 +58,14 @@ Performance, Internal Implementation, Development Support etc.
    time.  Start using -Wno-universal-initializer option to squelch
    it (the latest sparse has it on by default).
 
- * "git log -L..." now takes advantage of the "which paths are touched
+ * "but log -L..." now takes advantage of the "which paths are touched
    by this cummit?" info stored in the cummit-graph system.
 
  * As FreeBSD is not the only platform whose regexp library reports
    a REG_ILLSEQ error when fed invalid UTF-8, add logic to detect that
    automatically and skip the affected tests.
 
- * "git bugreport" learns to report what shell is in use.
+ * "but bugreport" learns to report what shell is in use.
 
  * Support for GIT_CURL_VERBOSE has been rewritten in terms of
    GIT_TRACE_CURL.
@@ -76,16 +76,16 @@ Performance, Internal Implementation, Development Support etc.
  * Workaround breakage in MSVC build, where "curl-config --cflags"
    gives settings appropriate for GCC build.
 
- * Code clean-up of "git clean" resulted in a fix of recent
+ * Code clean-up of "but clean" resulted in a fix of recent
    performance regression.
 
- * Code clean-up in the codepath that serves "git fetch" continues.
+ * Code clean-up in the codepath that serves "but fetch" continues.
 
- * "git merge-base --is-ancestor" is taught to take advantage of the
+ * "but merge-base --is-ancestor" is taught to take advantage of the
    cummit graph.
 
- * Rewrite of parts of the scripted "git submodule" Porcelain command
-   continues; this time it is "git submodule set-branch" subcommand's
+ * Rewrite of parts of the scripted "but submodule" Porcelain command
+   continues; this time it is "but submodule set-branch" subcommand's
    turn.
 
  * The "fetch/clone" protocol has been updated to allow the server to
@@ -109,7 +109,7 @@ Performance, Internal Implementation, Development Support etc.
    repositories, is made configurable, so that we can eventually wean
    ourselves off of the hardcoded 'master'.
 
- * The effort to avoid using test_must_fail on non-git command continues.
+ * The effort to avoid using test_must_fail on non-but command continues.
 
  * In 2.28-rc0, we corrected a bug that some repository extensions are
    honored by mistake even in a version 0 repositories (these
@@ -123,21 +123,21 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.27
 -----------------
 
- * The "--prepare-p4-only" option of "git p4" is supposed to stop
+ * The "--prepare-p4-only" option of "but p4" is supposed to stop
    after replaying one changeset, but kept going (by mistake?)
 
- * The error message from "git checkout -b foo -t bar baz" was
+ * The error message from "but checkout -b foo -t bar baz" was
    confusing.
 
  * Some repositories in the wild have cummits that record nonsense
-   cummitter timezone (e.g. rails.git); "git fast-import" learned an
+   cummitter timezone (e.g. rails.but); "but fast-import" learned an
    option to pass these nonsense timestamps intact to allow recreating
    existing repositories as-is.
    (merge d42a2fb72f en/fast-import-looser-date later to maint).
 
  * The command line completion script (in contrib/) tried to complete
-   "git stash -p" as if it were "git stash push -p", but it was too
-   aggressive and also affected "git stash show -p", which has been
+   "but stash -p" as if it were "but stash push -p", but it was too
+   aggressive and also affected "but stash show -p", which has been
    corrected.
    (merge fffd0cf520 vs/complete-stash-show-p-fix later to maint).
 
@@ -146,10 +146,10 @@ Fixes since v2.27
    prematurely throws an error and disconnects.  The communication has
    been updated to make it more robust.
 
- * "git checkout -p" did not handle a newly added path at all.
+ * "but checkout -p" did not handle a newly added path at all.
    (merge 2c8bd8471a js/checkout-p-new-file later to maint).
 
- * The code to parse "git bisect start" command line was lax in
+ * The code to parse "but bisect start" command line was lax in
    validating the arguments.
    (merge 4d9005ff5d cb/bisect-helper-parser-fix later to maint).
 
@@ -157,11 +157,11 @@ Fixes since v2.27
    many stat-unmatched paths.
    (merge d2d7fbe129 jk/diff-memuse-optim-with-stat-unmatch later to maint).
 
- * The reflog entries for "git clone" and "git fetch" did not
+ * The reflog entries for "but clone" and "but fetch" did not
    anonymize the URL they operated on.
    (merge 46da295a77 js/reflog-anonymize-for-clone-and-fetch later to maint).
 
- * The behaviour of "sparse-checkout" in the state "git clone
+ * The behaviour of "sparse-checkout" in the state "but clone
    --no-checkout" left was changed accidentally in 2.27, which has
    been corrected.
 
@@ -169,21 +169,21 @@ Fixes since v2.27
    untracked ones in the working tree, was broken.
 
  * The same worktree directory must be registered only once, but
-   "git worktree move" allowed this invariant to be violated, which
+   "but worktree move" allowed this invariant to be violated, which
    has been corrected.
    (merge 810382ed37 es/worktree-duplicate-paths later to maint).
 
  * The effect of sparse checkout settings on submodules is documented.
    (merge e7d7c73249 en/sparse-with-submodule-doc later to maint).
 
- * Code clean-up around "git branch" with a minor bugfix.
+ * Code clean-up around "but branch" with a minor bugfix.
    (merge dc44639904 dl/branch-cleanup later to maint).
 
  * A branch name used in a test has been clarified to match what is
    going on.
    (merge 08dc26061f pb/t4014-unslave later to maint).
 
- * An in-code comment in "git diff" has been updated.
+ * An in-code comment in "but diff" has been updated.
    (merge c592fd4c83 dl/diff-usage-comment-update later to maint).
 
  * The documentation and some tests have been adjusted for the recent
@@ -195,13 +195,13 @@ Fixes since v2.27
    object flag bits, which has been corrected.
    (merge 64472d15e9 bc/http-push-flagsfix later to maint).
 
- * "git send-email --in-reply-to=<msg>" did not use the In-Reply-To:
+ * "but send-email --in-reply-to=<msg>" did not use the In-Reply-To:
    header with the value given from the command line, and let it be
    overridden by the value on In-Reply-To: header in the messages
    being sent out (if exists).
    (merge f9f60d7066 ra/send-email-in-reply-to-from-command-line-wins later to maint).
 
- * "git log -Lx,y:path --before=date" lost track of where the range
+ * "but log -Lx,y:path --before=date" lost track of where the range
    should be because it didn't take the changes made by the youngest
    cummits that are omitted from the output into account.
 
@@ -210,22 +210,22 @@ Fixes since v2.27
    broken cummit-graph files that do not match the reality, which has
    been corrected.
 
- * "git checkout" failed to catch an error from fstat() after updating
+ * "but checkout" failed to catch an error from fstat() after updating
    a path in the working tree.
    (merge 35e6e212fd mt/entry-fstat-fallback-fix later to maint).
 
- * When an aliased command, whose output is piped to a pager by git,
+ * When an aliased command, whose output is piped to a pager by but,
    gets killed by a signal, the pager got into a funny state, which
    has been corrected (again).
    (merge c0d73a59c9 ta/wait-on-aliased-commands-upon-signal later to maint).
 
- * The code to produce progress output from "git cummit-graph --write"
+ * The code to produce progress output from "but cummit-graph --write"
    had a few breakages, which have been fixed.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 2c31a7aa44 jx/pkt-line-doc-count-fix later to maint).
    (merge d63ae31962 cb/t5608-cleanup later to maint).
-   (merge 788db145c7 dl/t-readme-spell-git-correctly later to maint).
+   (merge 788db145c7 dl/t-readme-spell-but-correctly later to maint).
    (merge 45a87a83bb dl/python-2.7-is-the-floor-version later to maint).
    (merge b75a219904 es/advertise-contribution-doc later to maint).
    (merge 0c9a4f638a rs/pull-leakfix later to maint).

@@ -274,7 +274,7 @@ static int get_default_delay(void)
 	static int delay_in_secs = -1;
 
 	if (delay_in_secs < 0)
-		delay_in_secs = git_env_ulong("GIT_PROGRESS_DELAY", 2);
+		delay_in_secs = but_env_ulong("GIT_PROGRESS_DELAY", 2);
 
 	return delay_in_secs;
 }

@@ -35,7 +35,7 @@ my $memo_backend;
 our $_follow_parent  = 1;
 our $_minimize_url   = 'unset';
 our $default_repo_id = 'svn';
-our $default_ref_id  = $ENV{GIT_SVN_ID} || 'git-svn';
+our $default_ref_id  = $ENV{GIT_SVN_ID} || 'but-svn';
 
 my ($_gc_nr, $_gc_period);
 
@@ -129,7 +129,7 @@ sub parse_revision_argument {
 	return ($head, $head) if ($::_revision eq 'HEAD');
 	return ($base, $1) if ($::_revision =~ /^BASE:(\d+)$/);
 	return ($1, $head) if ($::_revision =~ /^(\d+):HEAD$/);
-	die "revision argument: $::_revision not understood by git-svn\n";
+	die "revision argument: $::_revision not understood by but-svn\n";
 }
 
 sub fetch_all {
@@ -274,7 +274,7 @@ sub verify_remotes_sanity {
 				die "Remote ref refs/remote/$1 is tracked by",
 				    "\n  \"$_\"\nand\n  \"$seen{$1}\"\n",
 				    "Please resolve this ambiguity in ",
-				    "your git configuration file before ",
+				    "your but configuration file before ",
 				    "continuing\n";
 			}
 			$seen{$1} = $_;
@@ -481,7 +481,7 @@ sub refname {
 	# SVN can't have directories with a slash in their name, either:
 	if ($refname =~ m{/$}) {
 		die "ref: '$refname' ends with a trailing slash; this is ",
-		    "not permitted by git or Subversion\n";
+		    "not permitted by but or Subversion\n";
 	}
 
 	# It cannot have ASCII control character space, tilde ~, caret ^,
@@ -681,7 +681,7 @@ sub svnsync {
 }
 
 # this allows us to memoize our SVN::Ra UUID locally and avoid a
-# remote lookup (useful for 'git svn log').
+# remote lookup (useful for 'but svn log').
 sub ra_uuid {
 	my ($self) = @_;
 	unless ($self->{ra_uuid}) {
@@ -808,7 +808,7 @@ sub get_fetch_range {
 }
 
 sub svn_dir {
-	command_oneline(qw(rev-parse --git-path svn));
+	command_oneline(qw(rev-parse --but-path svn));
 }
 
 sub tmp_config {
@@ -829,7 +829,7 @@ sub tmp_config {
 			open my $fh, '>', $config or
 			    die "Can't open $config: $!\n";
 			print $fh "; This file is used internally by ",
-			          "git-svn\n" or die
+			          "but-svn\n" or die
 				  "Couldn't write to $config: $!\n";
 			print $fh "; You should not have to edit it\n" or
 			      die "Couldn't write to $config: $!\n";
@@ -1002,7 +1002,7 @@ sub gc {
 	command_noisy('gc', '--auto');
 };
 
-sub do_git_cummit {
+sub do_but_cummit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
 	if (defined $lr && $lr >= $log_entry->{revision}) {
@@ -1022,7 +1022,7 @@ sub do_git_cummit {
 	}
 	die "Tree is not a valid oid $tree\n" if $tree !~ /^$::oid$/o;
 
-	my @exec = ('git', 'cummit-tree', $tree);
+	my @exec = ('but', 'cummit-tree', $tree);
 	foreach ($self->get_cummit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}
@@ -1039,7 +1039,7 @@ sub do_git_cummit {
 	print $msg_fh $log_entry->{log} or croak $!;
 	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
-		print $msg_fh "\ngit-svn-id: $log_entry->{metadata}\n"
+		print $msg_fh "\nbut-svn-id: $log_entry->{metadata}\n"
 		              or croak $!;
 	}
 	$msg_fh->flush == 0 or croak $!;
@@ -1837,7 +1837,7 @@ sub find_extra_svn_parents {
 	memoize_svn_mergeinfo_functions();
 
 	# We first search for merged tips which are not in our
-	# history.  Then, we figure out which git revisions are in
+	# history.  Then, we figure out which but revisions are in
 	# that tip, but not this revision.  If all of those revisions
 	# are now marked as merge, we can add the tip as a parent.
 	my @merges = sort keys %$mergeinfo;
@@ -2154,7 +2154,7 @@ sub rebuild {
 			$c = $1;
 			next;
 		}
-		next unless s{^\s*(git-svn-id:)}{$1};
+		next unless s{^\s*(but-svn-id:)}{$1};
 		my ($url, $rev, $uuid) = ::extract_metadata($_);
 		remove_username($url);
 
@@ -2198,7 +2198,7 @@ sub rebuild {
 # The format is this:
 #   - 24 or 36 bytes for every record,
 #     * 4 bytes for the integer representing an SVN revision number
-#     * 20 or 32 bytes representing the oid of a git cummit
+#     * 20 or 32 bytes representing the oid of a but cummit
 #   - No empty padding records like the old format
 #     (except the last record, which can be overwritten)
 #   - new records are written append-only since SVN revision numbers
@@ -2209,7 +2209,7 @@ sub rebuild {
 #     ever arise.
 #   - The last record can be padding revision with an all-zero oid
 #     This is used to optimize fetch performance when using multiple
-#     "fetch" directives in .git/config
+#     "fetch" directives in .but/config
 #
 # These files are disposable unless noMetadata or useSvmProps is set
 
@@ -2434,7 +2434,7 @@ sub _rev_map_get {
 
 # Finds the first svn revision that exists on (if $eq_ok is true) or
 # before $rev for the current branch.  It will not search any lower
-# than $min_rev.  Returns the git commit hash and svn revision number
+# than $min_rev.  Returns the but commit hash and svn revision number
 # if found, else (undef, undef).
 sub find_rev_before {
 	my ($self, $rev, $eq_ok, $min_rev) = @_;
@@ -2453,7 +2453,7 @@ sub find_rev_before {
 
 # Finds the first svn revision that exists on (if $eq_ok is true) or
 # after $rev for the current branch.  It will not search any higher
-# than $max_rev.  Returns the git commit hash and svn revision number
+# than $max_rev.  Returns the but commit hash and svn revision number
 # if found, else (undef, undef).
 sub find_rev_after {
 	my ($self, $rev, $eq_ok, $max_rev) = @_;
@@ -2474,7 +2474,7 @@ sub _new {
 		$repo_id = $default_repo_id;
 	}
 	unless (defined $ref_id && length $ref_id) {
-		# Access the prefix option from the git-svn main program if it's loaded.
+		# Access the prefix option from the but-svn main program if it's loaded.
 		my $prefix = defined &::opt_prefix ? ::opt_prefix() : "";
 		$_[2] = $ref_id =
 		             "refs/remotes/$prefix$default_ref_id";

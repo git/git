@@ -39,17 +39,17 @@ to 'nodense'):
 --
 
 column.branch::
-	Specify whether to output branch listing in `git branch` in columns.
+	Specify whether to output branch listing in `but branch` in columns.
 	See `column.ui` for details.
 
 column.clean::
-	Specify the layout when list items in `git clean -i`, which always
+	Specify the layout when list items in `but clean -i`, which always
 	shows files and directories in columns. See `column.ui` for details.
 
 column.status::
-	Specify whether to output untracked files in `git status` in columns.
+	Specify whether to output untracked files in `but status` in columns.
 	See `column.ui` for details.
 
 column.tag::
-	Specify whether to output tag listing in `git tag` in columns.
+	Specify whether to output tag listing in `but tag` in columns.
 	See `column.ui` for details.

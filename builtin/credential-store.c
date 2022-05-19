@@ -61,7 +61,7 @@ static void rewrite_credential_file(const char *fn, struct credential *c,
 {
 	int timeout_ms = 1000;
 
-	git_config_get_int("credentialstore.locktimeoutms", &timeout_ms);
+	but_config_get_int("credentialstore.locktimeoutms", &timeout_ms);
 	if (hold_lock_file_for_update_timeout(&credential_lock, fn, 0, timeout_ms) < 0)
 		die_errno(_("unable to get credential storage lock in %d ms"), timeout_ms);
 	if (extra)
@@ -150,7 +150,7 @@ static void lookup_credential(const struct string_list *fns, struct credential *
 int cmd_credential_store(int argc, const char **argv, const char *prefix)
 {
 	const char * const usage[] = {
-		"git credential-store [<options>] <action>",
+		"but credential-store [<options>] <action>",
 		NULL
 	};
 	const char *op;
@@ -173,7 +173,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 	if (file) {
 		string_list_append(&fns, file);
 	} else {
-		if ((file = interpolate_path("~/.git-credentials", 0)))
+		if ((file = interpolate_path("~/.but-credentials", 0)))
 			string_list_append_nodup(&fns, file);
 		file = xdg_config_home("credentials");
 		if (file)

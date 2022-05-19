@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git merge
+test_description='but merge
 
 Testing octopus merge when reducing parents to independent branches.'
 
@@ -15,50 +15,50 @@ Testing octopus merge when reducing parents to independent branches.'
 
 test_expect_success 'setup' '
 	echo c0 > c0.c &&
-	git add c0.c &&
-	git cummit -m c0 &&
-	git tag c0 &&
+	but add c0.c &&
+	but cummit -m c0 &&
+	but tag c0 &&
 	echo c1 > c1.c &&
-	git add c1.c &&
-	git cummit -m c1 &&
-	git tag c1 &&
-	git reset --hard c0 &&
+	but add c1.c &&
+	but cummit -m c1 &&
+	but tag c1 &&
+	but reset --hard c0 &&
 	echo c2 > c2.c &&
-	git add c2.c &&
-	git cummit -m c2 &&
-	git tag c2 &&
-	git reset --hard c0 &&
+	but add c2.c &&
+	but cummit -m c2 &&
+	but tag c2 &&
+	but reset --hard c0 &&
 	echo c3 > c3.c &&
-	git add c3.c &&
-	git cummit -m c3 &&
-	git tag c3 &&
-	git reset --hard c0 &&
+	but add c3.c &&
+	but cummit -m c3 &&
+	but tag c3 &&
+	but reset --hard c0 &&
 	echo c4 > c4.c &&
-	git add c4.c &&
-	git cummit -m c4 &&
-	git tag c4 &&
+	but add c4.c &&
+	but cummit -m c4 &&
+	but tag c4 &&
 	echo c5 > c5.c &&
-	git add c5.c &&
-	git cummit -m c5 &&
-	git tag c5
+	but add c5.c &&
+	but cummit -m c5 &&
+	but tag c5
 '
 
 test_expect_success 'merge c1 with c2, c3, c4, c5' '
-	git reset --hard c1 &&
-	git merge c2 c3 c4 c5 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
-	test "$(git rev-parse c5)" = "$(git rev-parse HEAD^4)" &&
-	git diff --exit-code &&
+	but reset --hard c1 &&
+	but merge c2 c3 c4 c5 &&
+	test "$(but rev-parse c1)" != "$(but rev-parse HEAD)" &&
+	test "$(but rev-parse c1)" = "$(but rev-parse HEAD^1)" &&
+	test "$(but rev-parse c2)" = "$(but rev-parse HEAD^2)" &&
+	test "$(but rev-parse c3)" = "$(but rev-parse HEAD^3)" &&
+	test "$(but rev-parse c5)" = "$(but rev-parse HEAD^4)" &&
+	but diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
 	test -f c2.c &&
 	test -f c3.c &&
 	test -f c4.c &&
 	test -f c5.c &&
-	git show --format=%s -s >actual &&
+	but show --format=%s -s >actual &&
 	! grep c1 actual &&
 	grep c2 actual &&
 	grep c3 actual &&
@@ -67,21 +67,21 @@ test_expect_success 'merge c1 with c2, c3, c4, c5' '
 '
 
 test_expect_success 'pull c2, c3, c4, c5 into c1' '
-	git reset --hard c1 &&
-	git pull --no-rebase . c2 c3 c4 c5 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
-	test "$(git rev-parse c5)" = "$(git rev-parse HEAD^4)" &&
-	git diff --exit-code &&
+	but reset --hard c1 &&
+	but pull --no-rebase . c2 c3 c4 c5 &&
+	test "$(but rev-parse c1)" != "$(but rev-parse HEAD)" &&
+	test "$(but rev-parse c1)" = "$(but rev-parse HEAD^1)" &&
+	test "$(but rev-parse c2)" = "$(but rev-parse HEAD^2)" &&
+	test "$(but rev-parse c3)" = "$(but rev-parse HEAD^3)" &&
+	test "$(but rev-parse c5)" = "$(but rev-parse HEAD^4)" &&
+	but diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
 	test -f c2.c &&
 	test -f c3.c &&
 	test -f c4.c &&
 	test -f c5.c &&
-	git show --format=%s -s >actual &&
+	but show --format=%s -s >actual &&
 	! grep c1 actual &&
 	grep c2 actual &&
 	grep c3 actual &&
@@ -93,72 +93,72 @@ test_expect_success 'setup' '
 	for i in A B C D E
 	do
 		echo $i > $i.c &&
-		git add $i.c &&
-		git cummit -m $i &&
-		git tag $i || return 1
+		but add $i.c &&
+		but cummit -m $i &&
+		but tag $i || return 1
 	done &&
-	git reset --hard A &&
+	but reset --hard A &&
 	for i in F G H I
 	do
 		echo $i > $i.c &&
-		git add $i.c &&
-		git cummit -m $i &&
-		git tag $i || return 1
+		but add $i.c &&
+		but cummit -m $i &&
+		but tag $i || return 1
 	done
 '
 
 test_expect_success 'merge E and I' '
-	git reset --hard A &&
-	git merge E I
+	but reset --hard A &&
+	but merge E I
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD^1) = $(git rev-parse E) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse I)
+	test $(but rev-parse HEAD^1) = $(but rev-parse E) &&
+	test $(but rev-parse HEAD^2) = $(but rev-parse I)
 '
 
 test_expect_success 'add conflicts' '
-	git reset --hard E &&
+	but reset --hard E &&
 	echo foo > file.c &&
-	git add file.c &&
-	git cummit -m E2 &&
-	git tag E2 &&
-	git reset --hard I &&
+	but add file.c &&
+	but cummit -m E2 &&
+	but tag E2 &&
+	but reset --hard I &&
 	echo bar >file.c &&
-	git add file.c &&
-	git cummit -m I2 &&
-	git tag I2
+	but add file.c &&
+	but cummit -m I2 &&
+	but tag I2
 '
 
 test_expect_success 'merge E2 and I2, causing a conflict and resolve it' '
-	git reset --hard A &&
-	test_must_fail git merge E2 I2 &&
+	but reset --hard A &&
+	test_must_fail but merge E2 I2 &&
 	echo baz > file.c &&
-	git add file.c &&
-	git cummit -m "resolve conflict"
+	but add file.c &&
+	but cummit -m "resolve conflict"
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD^1) = $(git rev-parse E2) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse I2)
+	test $(but rev-parse HEAD^1) = $(but rev-parse E2) &&
+	test $(but rev-parse HEAD^2) = $(but rev-parse I2)
 '
 
 test_expect_success 'fast-forward to redundant refs' '
-	git reset --hard c0 &&
-	git merge c4 c5
+	but reset --hard c0 &&
+	but merge c4 c5
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD) = $(git rev-parse c5)
+	test $(but rev-parse HEAD) = $(but rev-parse c5)
 '
 
 test_expect_success 'merge up-to-date redundant refs' '
-	git reset --hard c5 &&
-	git merge c0 c4
+	but reset --hard c5 &&
+	but merge c0 c4
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD) = $(git rev-parse c5)
+	test $(but rev-parse HEAD) = $(but rev-parse c5)
 '
 
 test_done

@@ -27,7 +27,7 @@ count_expand ()
 	done
 	shift
 
-	# The remainder of the command line is "git show -s" options
+	# The remainder of the command line is "but show -s" options
 	case " $* " in
 	*' --pretty=short '*)
 		line=$title ;;
@@ -40,13 +40,13 @@ count_expand ()
 	# so that test_cmp would show the difference together with the
 	# breakage in a way easier to consume by the debugging user.
 	{
-		echo "git show -s $*"
+		echo "but show -s $*"
 		echo "$expect$line"
 	} | sed -e 's/ /./g' >expect
 
 	{
-		echo "git show -s $*"
-		git show -s "$@" |
+		echo "but show -s $*"
+		but show -s "$@" |
 		sed -n -e "/$line\$/p"
 	} | sed -e 's/ /./g' >actual
 
@@ -90,7 +90,7 @@ test_expect_success 'setup' '
 
 	Q$body
 	EOF
-	git cummit --allow-empty -F msg
+	but cummit --allow-empty -F msg
 '
 
 test_expand ""

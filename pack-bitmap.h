@@ -37,13 +37,13 @@ typedef int (*show_reachable_fn)(
 	enum object_type type,
 	int flags,
 	uint32_t hash,
-	struct packed_git *found_pack,
+	struct packed_but *found_pack,
 	off_t found_offset);
 
 struct bitmap_index;
 
-struct bitmap_index *prepare_bitmap_git(struct repository *r);
-struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx);
+struct bitmap_index *prepare_bitmap_but(struct repository *r);
+struct bitmap_index *prepare_midx_bitmap_but(struct multi_pack_index *midx);
 void count_bitmap_cummit_list(struct bitmap_index *, uint32_t *cummits,
 			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
 void traverse_bitmap_cummit_list(struct bitmap_index *,
@@ -54,9 +54,9 @@ int test_bitmap_cummits(struct repository *r);
 int test_bitmap_hashes(struct repository *r);
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 					 int filter_provided_objects);
-uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git);
+uint32_t midx_preferred_pack(struct bitmap_index *bitmap_but);
 int reuse_partial_packfile_from_bitmap(struct bitmap_index *,
-				       struct packed_git **packfile,
+				       struct packed_but **packfile,
 				       uint32_t *entries,
 				       struct bitmap **reuse_out);
 int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping,
@@ -79,12 +79,12 @@ void bitmap_writer_set_checksum(unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
-uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
+uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_but,
 				struct packing_data *mapping);
 int rebuild_bitmap(const uint32_t *reposition,
 		   struct ewah_bitmap *source,
 		   struct bitmap *dest);
-struct ewah_bitmap *bitmap_for_cummit(struct bitmap_index *bitmap_git,
+struct ewah_bitmap *bitmap_for_cummit(struct bitmap_index *bitmap_but,
 				      struct cummit *cummit);
 void bitmap_writer_select_cummits(struct cummit **indexed_cummits,
 		unsigned int indexed_cummits_nr, int max_bitmaps);
@@ -94,9 +94,9 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 			  const char *filename,
 			  uint16_t options);
 char *midx_bitmap_filename(struct multi_pack_index *midx);
-char *pack_bitmap_filename(struct packed_git *p);
+char *pack_bitmap_filename(struct packed_but *p);
 
-int bitmap_is_midx(struct bitmap_index *bitmap_git);
+int bitmap_is_midx(struct bitmap_index *bitmap_but);
 
 const struct string_list *bitmap_preferred_tips(struct repository *r);
 int bitmap_is_preferred_refname(struct repository *r, const char *refname);

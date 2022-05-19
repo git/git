@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git apply handling copy/rename patch.
+test_description='but apply handling copy/rename patch.
 
 '
 
@@ -13,7 +13,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 # setup
 
 cat >test-patch <<\EOF
-diff --git a/foo b/bar
+diff --but a/foo b/bar
 similarity index 47%
 rename from foo
 rename to bar
@@ -28,20 +28,20 @@ echo 'This is foo' >foo
 chmod +x foo
 
 test_expect_success setup \
-    'git update-index --add foo'
+    'but update-index --add foo'
 
 test_expect_success apply \
-    'git apply --index --stat --summary --apply test-patch'
+    'but apply --index --stat --summary --apply test-patch'
 
 test_expect_success FILEMODE validate \
 	    'test -f bar && ls -l bar | grep "^-..x......"'
 
 test_expect_success 'apply reverse' \
-    'git apply -R --index --stat --summary --apply test-patch &&
+    'but apply -R --index --stat --summary --apply test-patch &&
      test "$(cat foo)" = "This is foo"'
 
 cat >test-patch <<\EOF
-diff --git a/foo b/bar
+diff --but a/foo b/bar
 similarity index 47%
 copy from foo
 copy to bar
@@ -53,7 +53,7 @@ copy to bar
 EOF
 
 test_expect_success 'apply copy' \
-    'git apply --index --stat --summary --apply test-patch &&
+    'but apply --index --stat --summary --apply test-patch &&
      test "$(cat bar)" = "This is bar" && test "$(cat foo)" = "This is foo"'
 
 test_done

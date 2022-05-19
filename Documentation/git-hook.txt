@@ -1,32 +1,32 @@
-git-hook(1)
+but-hook(1)
 ===========
 
 NAME
 ----
-git-hook - Run git hooks
+but-hook - Run but hooks
 
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--ignore-missing] <hook-name> [-- <hook-args>]
+'but hook' run [--ignore-missing] <hook-name> [-- <hook-args>]
 
 DESCRIPTION
 -----------
 
-A command interface to running git hooks (see linkgit:githooks[5]),
-for use by other scripted git commands.
+A command interface to running but hooks (see linkbut:buthooks[5]),
+for use by other scripted but commands.
 
 SUBCOMMANDS
 -----------
 
 run::
-	Run the `<hook-name>` hook. See linkgit:githooks[5] for
+	Run the `<hook-name>` hook. See linkbut:buthooks[5] for
 	supported hook names.
 +
 
 Any positional arguments to the hook should be passed after a
-mandatory `--` (or `--end-of-options`, see linkgit:gitcli[7]). See
-linkgit:githooks[5] for arguments hooks might expect (if any).
+mandatory `--` (or `--end-of-options`, see linkbut:butcli[7]). See
+linkbut:buthooks[5] for arguments hooks might expect (if any).
 
 OPTIONS
 -------
@@ -38,8 +38,8 @@ OPTIONS
 
 SEE ALSO
 --------
-linkgit:githooks[5]
+linkbut:buthooks[5]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

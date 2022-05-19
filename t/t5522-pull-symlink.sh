@@ -17,15 +17,15 @@ test_description='pulling from symlinked subdir'
 test_expect_success SYMLINKS setup '
 	mkdir subdir &&
 	echo file >subdir/file &&
-	git add subdir/file &&
-	git cummit -q -m file &&
-	git clone -q . clone-repo &&
+	but add subdir/file &&
+	but cummit -q -m file &&
+	but clone -q . clone-repo &&
 	ln -s clone-repo/subdir/ subdir-link &&
 	(
 		cd clone-repo &&
-		git config receive.denyCurrentBranch warn
+		but config receive.denyCurrentBranch warn
 	) &&
-	git config receive.denyCurrentBranch warn
+	but config receive.denyCurrentBranch warn
 '
 
 # Demonstrate that things work if we just avoid the symlink
@@ -33,9 +33,9 @@ test_expect_success SYMLINKS setup '
 test_expect_success SYMLINKS 'pulling from real subdir' '
 	(
 		echo real >subdir/file &&
-		git cummit -m real subdir/file &&
+		but cummit -m real subdir/file &&
 		cd clone-repo/subdir/ &&
-		git pull &&
+		but pull &&
 		test real = $(cat file)
 	)
 '
@@ -45,40 +45,40 @@ test_expect_success SYMLINKS 'pulling from real subdir' '
 #
 # Instead, the error pull gave was:
 #
-#   fatal: 'origin': unable to chdir or not a git archive
+#   fatal: 'origin': unable to chdir or not a but archive
 #   fatal: The remote end hung up unexpectedly
 #
-# because git would find the .git/config for the "trash directory"
+# because but would find the .but/config for the "trash directory"
 # repo, not for the clone-repo repo.  The "trash directory" repo
-# had no entry for origin.  Git found the wrong .git because
-# git rev-parse --show-cdup printed a path relative to
+# had no entry for origin.  Git found the wrong .but because
+# but rev-parse --show-cdup printed a path relative to
 # clone-repo/subdir/, not subdir-link/.  Git rev-parse --show-cdup
-# used the correct .git, but when the git pull shell script did
-# "cd $(git rev-parse --show-cdup)", it ended up in the wrong
+# used the correct .but, but when the but pull shell script did
+# "cd $(but rev-parse --show-cdup)", it ended up in the wrong
 # directory.  A POSIX shell's "cd" works a little differently
 # than chdir() in C; "cd -P" is much closer to chdir().
 #
 test_expect_success SYMLINKS 'pulling from symlinked subdir' '
 	(
 		echo link >subdir/file &&
-		git cummit -m link subdir/file &&
+		but cummit -m link subdir/file &&
 		cd subdir-link/ &&
-		git pull &&
+		but pull &&
 		test link = $(cat file)
 	)
 '
 
 # Prove that the remote end really is a repo, and other commands
-# work fine in this context.  It's just that "git pull" breaks.
+# work fine in this context.  It's just that "but pull" breaks.
 #
 test_expect_success SYMLINKS 'pushing from symlinked subdir' '
 	(
 		cd subdir-link/ &&
 		echo push >file &&
-		git cummit -m push ./file &&
-		git push
+		but cummit -m push ./file &&
+		but push
 	) &&
-	test push = $(git show HEAD:subdir/file)
+	test push = $(but show HEAD:subdir/file)
 '
 
 test_done

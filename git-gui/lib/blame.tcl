@@ -1,4 +1,4 @@
-# git-gui blame viewer
+# but-gui blame viewer
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 class blame {
@@ -301,7 +301,7 @@ constructor new {i_cummit i_path i_jump} {
 	$w.ctxm add separator
 	$w.ctxm add command \
 		-label [mc "Show History Context"] \
-		-command [cb _gitkcummit]
+		-command [cb _butkcummit]
 	$w.ctxm add command \
 		-label [mc "Blame Parent cummit"] \
 		-command [cb _blameparent]
@@ -461,7 +461,7 @@ method _load {jump} {
 
 	# Index 0 is always empty.  There is never line 0 as
 	# we use only 1 based lines, as that matches both with
-	# git-blame output and with Tk's text widget.
+	# but-blame output and with Tk's text widget.
 	#
 	set amov_data [list [list]]
 	set asim_data [list [list]]
@@ -470,8 +470,8 @@ method _load {jump} {
 	$w_path conf -text [escape_path $path]
 
 	set do_textconv 0
-	if {![is_config_false gui.textconv] && [git-version >= 1.7.2]} {
-		set filter [gitattr $path diff set]
+	if {![is_config_false gui.textconv] && [but-version >= 1.7.2]} {
+		set filter [butattr $path diff set]
 		set textconv [get_config [join [list diff $filter textconv] .]]
 		if {$filter ne {set} && $textconv ne {}} {
 			set do_textconv 1
@@ -486,9 +486,9 @@ method _load {jump} {
 		fconfigure $fd -eofchar {}
 	} else {
 		if {$do_textconv ne 0} {
-			set fd [git_read cat-file --textconv "$cummit:$path"]
+			set fd [but_read cat-file --textconv "$cummit:$path"]
 		} else {
-			set fd [git_read cat-file blob "$cummit:$path"]
+			set fd [but_read cat-file blob "$cummit:$path"]
 		}
 	}
 	fconfigure $fd \
@@ -617,7 +617,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 
 	lappend options -- $path
-	set fd [eval git_read --nice blame $options]
+	set fd [eval but_read --nice blame $options]
 	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
@@ -807,7 +807,7 @@ method _read_blame {fd cur_w cur_d} {
 				# thorough copy search; insert before the threshold
 				set original_options [linsert $original_options 0 -C]
 			}
-			if {[git-version >= 1.5.3]} {
+			if {[but-version >= 1.5.3]} {
 				lappend original_options -w ; # ignore indentation changes
 			}
 
@@ -857,7 +857,7 @@ method _fullcopyblame {} {
 	set threshold [get_config gui.copyblamethreshold]
 	set original_options [list -C -C "-C$threshold"]
 
-	if {[git-version >= 1.5.3]} {
+	if {[but-version >= 1.5.3]} {
 		lappend original_options -w ; # ignore indentation changes
 	}
 
@@ -986,7 +986,7 @@ method _showcummit {cur_w lno} {
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
-				set fd [git_read cat-file cummit $cmit]
+				set fd [but_read cat-file cummit $cmit]
 				fconfigure $fd -encoding binary -translation lf
 				# By default cummits are assumed to be in utf-8
 				set enc utf-8
@@ -1055,7 +1055,7 @@ method _format_offset_date {base offset} {
 	return [clock format $exval -format {%Y-%m-%d}]
 }
 
-method _gitkcummit {} {
+method _butkcummit {} {
 	global nullid
 
 	set dat [_get_click_amov_info $this]
@@ -1064,7 +1064,7 @@ method _gitkcummit {} {
 
 		# If the line belongs to the working copy, use HEAD instead
 		if {$cmit eq $nullid} {
-			if {[catch {set cmit [git rev-parse --verify HEAD]} err]} {
+			if {[catch {set cmit [but rev-parse --verify HEAD]} err]} {
 				error_popup [strcat [mc "Cannot find HEAD cummit:"] "\n\n$err"]
 				return;
 			}
@@ -1101,7 +1101,7 @@ method _gitkcummit {} {
 			lappend cmdline $base_rev
 		}
 
-		do_gitk $cmdline
+		do_butk $cmdline
 	}
 }
 
@@ -1119,7 +1119,7 @@ method _blameparent {} {
 		} else {
 			set parent_ref "$cmit^"
 		}
-		if {[catch {set cparent [git rev-parse --verify $parent_ref]} err]} {
+		if {[catch {set cparent [but rev-parse --verify $parent_ref]} err]} {
 			error_popup [strcat [mc "Cannot find parent cummit:"] "\n\n$err"]
 			return;
 		}
@@ -1134,7 +1134,7 @@ method _blameparent {} {
 		} else {
 			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
 		}
-		if {[catch {set fd [eval git_read $diffcmd]} err]} {
+		if {[catch {set fd [eval but_read $diffcmd]} err]} {
 			$status_operation stop [mc "Unable to display parent"]
 			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 			return

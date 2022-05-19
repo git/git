@@ -7,12 +7,12 @@
 SUBDIRECTORY_OK='Yes'
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=
-OPTIONS_SPEC='git request-pull [options] start url [end]
+OPTIONS_SPEC='but request-pull [options] start url [end]
 --
 p    show patch text as well
 '
 
-. git-sh-setup
+. but-sh-setup
 
 GIT_PAGER=
 export GIT_PAGER
@@ -37,7 +37,7 @@ base=$1 url=$2 status=0
 
 test -n "$base" && test -n "$url" || usage
 
-baserev=$(git rev-parse --verify --quiet "$base"^0)
+baserev=$(but rev-parse --verify --quiet "$base"^0)
 if test -z "$baserev"
 then
     die "fatal: Not a valid revision: $base"
@@ -53,29 +53,29 @@ local=${local:-HEAD}
 remote=${3#*:}
 pretty_remote=${remote#refs/}
 pretty_remote=${pretty_remote#heads/}
-head=$(git symbolic-ref -q "$local")
-head=${head:-$(git show-ref --heads --tags "$local" | cut -d' ' -f2)}
-head=${head:-$(git rev-parse --quiet --verify "$local")}
+head=$(but symbolic-ref -q "$local")
+head=${head:-$(but show-ref --heads --tags "$local" | cut -d' ' -f2)}
+head=${head:-$(but rev-parse --quiet --verify "$local")}
 
 # None of the above? Bad.
 test -z "$head" && die "fatal: Not a valid revision: $local"
 
 # This also verifies that the resulting head is unique:
-# "git show-ref" could have shown multiple matching refs..
-headrev=$(git rev-parse --verify --quiet "$head"^0)
+# "but show-ref" could have shown multiple matching refs..
+headrev=$(but rev-parse --verify --quiet "$head"^0)
 test -z "$headrev" && die "fatal: Ambiguous revision: $local"
 
-local_sha1=$(git rev-parse --verify --quiet "$head")
+local_sha1=$(but rev-parse --verify --quiet "$head")
 
 # Was it a branch with a description?
 branch_name=${head#refs/heads/}
 if test "z$branch_name" = "z$headref" ||
-	! git config "branch.$branch_name.description" >/dev/null
+	! but config "branch.$branch_name.description" >/dev/null
 then
 	branch_name=
 fi
 
-merge_base=$(git merge-base $baserev $headrev) ||
+merge_base=$(but merge-base $baserev $headrev) ||
 die "fatal: No cummits in common between $base and $head"
 
 # $head is the refname from the command line.
@@ -112,7 +112,7 @@ find_matching_ref='
 	}
 '
 
-set fnord $(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
+set fnord $(but ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
 remote_sha1=$2
 ref=$3
 
@@ -134,25 +134,25 @@ then
 	pretty_remote=tags/$pretty_remote
 fi
 
-url=$(git ls-remote --get-url "$url")
+url=$(but ls-remote --get-url "$url")
 
-git show -s --format='The following changes since cummit %H:
+but show -s --format='The following changes since cummit %H:
 
   %s (%ci)
 
 are available in the Git repository at:
 ' $merge_base &&
 echo "  $url $pretty_remote" &&
-git show -s --format='
+but show -s --format='
 for you to fetch changes up to %H:
 
   %s (%ci)
 
 ----------------------------------------------------------------' $headrev &&
 
-if test $(git cat-file -t "$head") = tag
+if test $(but cat-file -t "$head") = tag
 then
-	git cat-file tag "$head" |
+	but cat-file tag "$head" |
 	sed -n -e '1,/^$/d' -e '/^-----BEGIN PGP /q' -e p
 	echo
 	echo "----------------------------------------------------------------"
@@ -162,11 +162,11 @@ if test -n "$branch_name"
 then
 	echo "(from the branch description for $branch_name local branch)"
 	echo
-	git config "branch.$branch_name.description"
+	but config "branch.$branch_name.description"
 	echo "----------------------------------------------------------------"
 fi &&
 
-git shortlog ^$baserev $headrev &&
-git diff -M --stat --summary $patch $merge_base..$headrev || status=1
+but shortlog ^$baserev $headrev &&
+but diff -M --stat --summary $patch $merge_base..$headrev || status=1
 
 exit $status

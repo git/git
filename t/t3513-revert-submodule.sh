@@ -11,29 +11,29 @@ test_description='revert can handle submodules'
 # first so we can restore the work tree test setup after doing the checkout
 # and revert.  We test here that the restored work tree content is identical
 # to that at the beginning. The last revert is then tested by the framework.
-git_revert () {
-	git status -su >expect &&
+but_revert () {
+	but status -su >expect &&
 	ls -1pR * >>expect &&
 	"$TAR" cf "$TRASH_DIRECTORY/tmp.tar" * &&
 	may_only_be_test_must_fail "$2" &&
-	$2 git checkout "$1" &&
+	$2 but checkout "$1" &&
 	if test -n "$2"
 	then
 		return
 	fi &&
-	git revert HEAD &&
+	but revert HEAD &&
 	rm -rf * &&
 	"$TAR" xf "$TRASH_DIRECTORY/tmp.tar" &&
-	git status -su >actual &&
+	but status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
-	git revert HEAD
+	but revert HEAD
 }
 
 if test "$GIT_TEST_MERGE_ALGORITHM" != ort
 then
 	KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
 fi
-test_submodule_switch_func "git_revert"
+test_submodule_switch_func "but_revert"
 
 test_done

@@ -94,9 +94,9 @@ void odb_clear_loose_cache(struct object_directory *odb);
 /* Clear and free the specified object directory */
 void free_object_directory(struct object_directory *odb);
 
-struct packed_git {
+struct packed_but {
 	struct hashmap_entry packmap_ent;
-	struct packed_git *next;
+	struct packed_but *next;
 	struct list_head mru;
 	struct pack_window *windows;
 	off_t pack_size;
@@ -121,7 +121,7 @@ struct packed_git {
 	const uint32_t *revindex_data;
 	const uint32_t *revindex_map;
 	size_t revindex_size;
-	/* something like ".git/objects/pack/xxxxx.pack" */
+	/* something like ".but/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
@@ -133,10 +133,10 @@ static inline int pack_map_entry_cmp(const void *unused_cmp_data,
 				     const void *keydata)
 {
 	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
+	const struct packed_but *pg1, *pg2;
 
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
+	pg1 = container_of(entry, const struct packed_but, packmap_ent);
+	pg2 = container_of(entry2, const struct packed_but, packmap_ent);
 
 	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
 }
@@ -162,7 +162,7 @@ struct raw_object_store {
 
 	/*
 	 * Objects that should be substituted by other objects
-	 * (see git-replace(1)).
+	 * (see but-replace(1)).
 	 */
 	struct oidmap *replace_map;
 	unsigned replace_map_initialized : 1;
@@ -184,17 +184,17 @@ struct raw_object_store {
 	 * should only be accessed directly by packfile.c
 	 */
 
-	struct packed_git *packed_git;
-	/* A most-recently-used ordered version of the packed_git list. */
-	struct list_head packed_git_mru;
+	struct packed_but *packed_but;
+	/* A most-recently-used ordered version of the packed_but list. */
+	struct list_head packed_but_mru;
 
 	struct {
-		struct packed_git **packs;
+		struct packed_but **packs;
 		unsigned flags;
 	} kept_pack_cache;
 
 	/*
-	 * A map of packfiles to packed_git structs for tracking which
+	 * A map of packfiles to packed_but structs for tracking which
 	 * packs have been loaded already.
 	 */
 	struct hashmap pack_map;
@@ -208,10 +208,10 @@ struct raw_object_store {
 	unsigned approximate_object_count_valid : 1;
 
 	/*
-	 * Whether packed_git has already been populated with this repository's
+	 * Whether packed_but has already been populated with this repository's
 	 * packs.
 	 */
-	unsigned packed_git_initialized : 1;
+	unsigned packed_but_initialized : 1;
 };
 
 struct raw_object_store *raw_object_store_new(void);
@@ -245,7 +245,7 @@ static inline void *repo_read_object_file(struct repository *r,
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
-void hash_object_file(const struct git_hash_algo *algo, const void *buf,
+void hash_object_file(const struct but_hash_algo *algo, const void *buf,
 		      unsigned long len, enum object_type type,
 		      struct object_id *oid);
 
@@ -397,7 +397,7 @@ struct object_info {
 		 * } loose;
 		 */
 		struct {
-			struct packed_git *pack;
+			struct packed_but *pack;
 			off_t offset;
 			unsigned int is_delta;
 		} packed;
@@ -520,10 +520,10 @@ int for_each_loose_object(each_loose_object_fn, void *,
  * pack are visited in pack-idx order (i.e., sorted by oid).
  */
 typedef int each_packed_object_fn(const struct object_id *oid,
-				  struct packed_git *pack,
+				  struct packed_but *pack,
 				  uint32_t pos,
 				  void *data);
-int for_each_object_in_pack(struct packed_git *p,
+int for_each_object_in_pack(struct packed_but *p,
 			    each_packed_object_fn, void *data,
 			    enum for_each_object_flags flags);
 int for_each_packed_object(each_packed_object_fn, void *,

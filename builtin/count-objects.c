@@ -1,5 +1,5 @@
 /*
- * Builtin "git count-objects".
+ * Builtin "but count-objects".
  *
  * Copyright (c) 2006 Junio C Hamano
  */
@@ -87,7 +87,7 @@ static int print_alternate(struct object_directory *odb, void *data)
 }
 
 static char const * const count_objects_usage[] = {
-	"git count-objects [-v] [-H | --human-readable]",
+	"but count-objects [-v] [-H | --human-readable]",
 	NULL
 };
 
@@ -101,7 +101,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
@@ -116,7 +116,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {
-		struct packed_git *p;
+		struct packed_but *p;
 		unsigned long num_pack = 0;
 		off_t size_pack = 0;
 		struct strbuf loose_buf = STRBUF_INIT;

@@ -90,8 +90,8 @@ static void init_gettext_charset(const char *domain)
 	 * messages from external functions like perror() emitted in
 	 * the wrong encoding.
 	 *
-	 * The bug affected e.g. git.git's own 7eb93c89651 ([PATCH]
-	 * Simplify git script, 2005-09-07), which is the origin of
+	 * The bug affected e.g. but.but's own 7eb93c89651 ([PATCH]
+	 * Simplify but script, 2005-09-07), which is the origin of
 	 * the "David_K\345gedal" test string.
 	 *
 	 * See a much longer comment added to this file in 5e9637c6297
@@ -102,7 +102,7 @@ static void init_gettext_charset(const char *domain)
 		setlocale(LC_CTYPE, "C");
 }
 
-void git_setup_gettext(void)
+void but_setup_gettext(void)
 {
 	const char *podir = getenv(GIT_TEXT_DOMAIN_DIR_ENVIRONMENT);
 	char *p = NULL;
@@ -115,11 +115,11 @@ void git_setup_gettext(void)
 		return;
 	}
 
-	bindtextdomain("git", podir);
+	bindtextdomain("but", podir);
 	setlocale(LC_MESSAGES, "");
 	setlocale(LC_TIME, "");
-	init_gettext_charset("git");
-	textdomain("git");
+	init_gettext_charset("but");
+	textdomain("but");
 
 	free(p);
 }

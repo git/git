@@ -45,7 +45,7 @@ int repo_in_merge_bases_many(struct repository *r,
  * Takes a list of cummits and returns a new list where those
  * have been removed that can be reached from other cummits in
  * the list. It is useful for, e.g., reducing the cummits
- * randomly thrown at the git-merge command and removing
+ * randomly thrown at the but-merge command and removing
  * redundant cummits that the user shouldn't have given to it.
  *
  * This function destroys the STALE bit of the cummit objects'

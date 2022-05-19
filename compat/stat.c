@@ -2,7 +2,7 @@
 #include <sys/stat.h>  /* *stat, S_IS* */
 #include <sys/types.h> /* mode_t       */
 
-static inline mode_t mode_native_to_git(mode_t native_mode)
+static inline mode_t mode_native_to_but(mode_t native_mode)
 {
 	mode_t perm_bits = native_mode & 07777;
 	if (S_ISREG(native_mode))
@@ -23,26 +23,26 @@ static inline mode_t mode_native_to_git(mode_t native_mode)
 	return perm_bits;
 }
 
-int git_stat(const char *path, struct stat *buf)
+int but_stat(const char *path, struct stat *buf)
 {
 	int rc = stat(path, buf);
 	if (rc == 0)
-		buf->st_mode = mode_native_to_git(buf->st_mode);
+		buf->st_mode = mode_native_to_but(buf->st_mode);
 	return rc;
 }
 
-int git_fstat(int fd, struct stat *buf)
+int but_fstat(int fd, struct stat *buf)
 {
 	int rc = fstat(fd, buf);
 	if (rc == 0)
-		buf->st_mode = mode_native_to_git(buf->st_mode);
+		buf->st_mode = mode_native_to_but(buf->st_mode);
 	return rc;
 }
 
-int git_lstat(const char *path, struct stat *buf)
+int but_lstat(const char *path, struct stat *buf)
 {
 	int rc = lstat(path, buf);
 	if (rc == 0)
-		buf->st_mode = mode_native_to_git(buf->st_mode);
+		buf->st_mode = mode_native_to_but(buf->st_mode);
 	return rc;
 }

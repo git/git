@@ -50,10 +50,10 @@ func (c *Client) Run() error {
 	// bind on the same address so long as the process is running.
 	defer hconn.Close()
 
-	// Start the git-remote-http subprocess.
+	// Start the but-remote-http subprocess.
 	cargs := []string{"-c", fmt.Sprintf("http.proxy=%v", addr), "remote-http"}
 	cargs = append(cargs, c.Args...)
-	cmd := exec.Command("git", cargs...)
+	cmd := exec.Command("but", cargs...)
 
 	for _, v := range os.Environ() {
 		if !strings.HasPrefix(v, "GIT_PERSISTENT_HTTPS_SECURE=") {
@@ -77,7 +77,7 @@ func (c *Client) Run() error {
 				os.Exit(stat.ExitStatus())
 			}
 		}
-		return fmt.Errorf("git-remote-http subprocess got error: %v", err)
+		return fmt.Errorf("but-remote-http subprocess got error: %v", err)
 	}
 	return nil
 }

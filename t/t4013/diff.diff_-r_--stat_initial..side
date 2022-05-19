@@ -1,4 +1,4 @@
-$ git diff -r --stat initial..side
+$ but diff -r --stat initial..side
  dir/sub | 2 ++
  file0   | 3 +++
  file3   | 4 ++++

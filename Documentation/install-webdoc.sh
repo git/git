@@ -36,4 +36,4 @@ do
 	echo >&2 "# rm -f $th"
 	rm -f "$th"
 done
-ln -sf git.html "$T/index.html"
+ln -sf but.html "$T/index.html"

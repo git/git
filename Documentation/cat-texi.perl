@@ -21,11 +21,11 @@ while (<STDIN>) {
 close $tmp;
 
 print '\input texinfo
-@setfilename gitman.info
+@setfilename butman.info
 @documentencoding UTF-8
 @dircategory Development
 @direntry
-* Git Man Pages: (gitman).  Manual pages for Git revision control system
+* Git Man Pages: (butman).  Manual pages for Git revision control system
 @end direntry
 @node Top,,, (dir)
 @top Git Manual Pages

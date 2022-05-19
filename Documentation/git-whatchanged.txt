@@ -1,43 +1,43 @@
-git-whatchanged(1)
+but-whatchanged(1)
 ==================
 
 NAME
 ----
-git-whatchanged - Show logs with difference each cummit introduces
+but-whatchanged - Show logs with difference each cummit introduces
 
 
 SYNOPSIS
 --------
 [verse]
-'git whatchanged' <option>...
+'but whatchanged' <option>...
 
 DESCRIPTION
 -----------
 
 Shows cummit logs and diff output each cummit introduces.
 
-New users are encouraged to use linkgit:git-log[1] instead.  The
-`whatchanged` command is essentially the same as linkgit:git-log[1]
+New users are encouraged to use linkbut:but-log[1] instead.  The
+`whatchanged` command is essentially the same as linkbut:but-log[1]
 but defaults to show the raw format diff output and to skip merges.
 
 The command is kept primarily for historical reasons; fingers of
-many people who learned Git long before `git log` was invented by
+many people who learned Git long before `but log` was invented by
 reading Linux kernel mailing list are trained to type it.
 
 
 Examples
 --------
-`git whatchanged -p v2.6.12.. include/scsi drivers/scsi`::
+`but whatchanged -p v2.6.12.. include/scsi drivers/scsi`::
 
 	Show as patches the cummits since version 'v2.6.12' that changed
 	any file in the include/scsi or drivers/scsi subdirectories
 
-`git whatchanged --since="2 weeks ago" -- gitk`::
+`but whatchanged --since="2 weeks ago" -- butk`::
 
-	Show the changes during the last two weeks to the file 'gitk'.
+	Show the changes during the last two weeks to the file 'butk'.
 	The "--" is necessary to avoid confusion with the *branch* named
-	'gitk'
+	'butk'
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

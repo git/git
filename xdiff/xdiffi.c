@@ -589,7 +589,7 @@ static void measure_split(const xdfile_t *xdf, long split,
  * stored in m. The weight factors were determined empirically using the tools
  * and corpus described in
  *
- *     https://github.com/mhagger/diff-slider-tools
+ *     https://buthub.com/mhagger/diff-slider-tools
  *
  * Also see that project if you want to improve the weights based on, for
  * example, a larger or more diverse corpus.

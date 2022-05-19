@@ -6,7 +6,7 @@
 #include "string-list.h"
 
 static const char * const for_each_repo_usage[] = {
-	N_("git for-each-repo --config=<config> <command-args>"),
+	N_("but for-each-repo --config=<config> <command-args>"),
 	NULL
 };
 
@@ -15,7 +15,7 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 	int i;
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	strvec_pushl(&child.args, "-C", path, NULL);
 
 	for (i = 0; i < argc; i++)

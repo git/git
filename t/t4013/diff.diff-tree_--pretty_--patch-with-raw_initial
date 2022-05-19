@@ -1,2 +1,2 @@
-$ git diff-tree --pretty --patch-with-raw initial
+$ but diff-tree --pretty --patch-with-raw initial
 $

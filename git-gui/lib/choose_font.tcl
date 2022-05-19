@@ -1,4 +1,4 @@
-# git-gui font chooser
+# but-gui font chooser
 # Copyright (C) 2007 Shawn Pearce
 
 class choose_font {

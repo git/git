@@ -4,8 +4,8 @@ Git 2.21 Release Notes
 Backward Compatibility Notes
 ----------------------------
 
- * Historically, the "-m" (mainline) option can only be used for "git
-   cherry-pick" and "git revert" when working with a merge cummit.
+ * Historically, the "-m" (mainline) option can only be used for "but
+   cherry-pick" and "but revert" when working with a merge cummit.
    This version of Git no longer warns or errors out when working with
    a single-parent cummit, as long as the argument to the "-m" option
    is 1 (i.e. it has only one parent, and the request is to pick or
@@ -25,26 +25,26 @@ UI, Workflows & Features
  * Small fixes and features for fast-export and fast-import, mostly on
    the fast-export side has been made.
 
- * "git push $there $src:$dst" rejects when $dst is not a fully
+ * "but push $there $src:$dst" rejects when $dst is not a fully
    qualified refname and it is not clear what the end user meant.  The
    codepath has been taught to give a clearer error message, and also
    guess where the push should go by taking the type of the pushed
    object into account (e.g. a tag object would want to go under
    refs/tags/).
 
- * "git checkout [<tree-ish>] path..." learned to report the number of
+ * "but checkout [<tree-ish>] path..." learned to report the number of
    paths that have been checked out of the index or the tree-ish,
    which gives it the same degree of noisy-ness as the case in which
-   the command checks out a branch.  "git checkout -m <pathspec>" to
+   the command checks out a branch.  "but checkout -m <pathspec>" to
    undo conflict resolution gives a similar message.
 
- * "git quiltimport" learned "--keep-non-patch" option.
+ * "but quiltimport" learned "--keep-non-patch" option.
 
- * "git worktree remove" and "git worktree move" refused to work when
+ * "but worktree remove" and "but worktree move" refused to work when
    there is a submodule involved.  This has been loosened to ignore
    uninitialized submodules.
 
- * "git cherry-pick -m1" was forbidden when picking a non-merge
+ * "but cherry-pick -m1" was forbidden when picking a non-merge
    cummit, even though there _is_ parent number 1 for such a cummit.
    This was done to avoid mistakes back when "cherry-pick" was about
    picking a single cummit, but is no longer useful with "cherry-pick"
@@ -52,23 +52,23 @@ UI, Workflows & Features
    allowed when picking any cummit, as long as $num names an existing
    parent of the cummit.
 
- * Update "git multimail" from the upstream.
+ * Update "but multimail" from the upstream.
 
- * "git p4" update.
+ * "but p4" update.
 
  * The "--format=<placeholder>" option of for-each-ref, branch and tag
    learned to show a few more traits of objects that can be learned by
    the object_info API.
 
- * "git rebase -i" learned to re-execute a command given with 'exec'
+ * "but rebase -i" learned to re-execute a command given with 'exec'
    to run after it failed the last time.
 
- * "git diff --color-moved-ws" updates.
+ * "but diff --color-moved-ws" updates.
 
  * Custom userformat "log --format" learned %S atom that stands for
    the tip the traversal reached the cummit from, i.e. --source.
 
- * "git instaweb" learned to drive http.server that comes with
+ * "but instaweb" learned to drive http.server that comes with
    "batteries included" Python installation (both Python2 & 3).
 
  * A new encoding UTF-16LE-BOM has been invented to force encoding to
@@ -109,14 +109,14 @@ Performance, Internal Implementation, Development Support etc.
  * Documentation/Makefile is getting prepared for manpage
    localization.
 
- * "git fetch-pack" now can talk the version 2 protocol.
+ * "but fetch-pack" now can talk the version 2 protocol.
 
  * sha-256 hash has been added and plumbed through the code to allow
    building Git with the "NewHash".
 
  * Debugging help for http transport.
 
- * "git fetch --deepen=<more>" has been corrected to work over v2
+ * "but fetch --deepen=<more>" has been corrected to work over v2
    protocol.
 
  * The code to walk tree objects has been taught that we may be
@@ -129,9 +129,9 @@ Performance, Internal Implementation, Development Support etc.
    issues will not get out of hand.
 
  * Micro-optimize the code that prepares cummit objects to be walked
-   by "git rev-list" when the cummit-graph is available.
+   by "but rev-list" when the cummit-graph is available.
 
- * "git fetch" and "git upload-pack" learned to send all exchanges over
+ * "but fetch" and "but upload-pack" learned to send all exchanges over
    the sideband channel while talking the v2 protocol.
 
  * The codepath to write out cummit-graph has been optimized by
@@ -142,13 +142,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Cocci rules have been updated to encourage use of strbuf_addbuf().
 
- * "git rebase --merge" has been reimplemented by reusing the internal
-   machinery used for "git rebase -i".
+ * "but rebase --merge" has been reimplemented by reusing the internal
+   machinery used for "but rebase -i".
 
- * More code in "git bisect" has been rewritten in C.
+ * More code in "but bisect" has been rewritten in C.
 
- * Instead of going through "git-rebase--am" scriptlet to use the "am"
-   backend, the built-in version of "git rebase" learned to drive the
+ * Instead of going through "but-rebase--am" scriptlet to use the "am"
+   backend, the built-in version of "but rebase" learned to drive the
    "am" backend directly.
 
  * The assumption to work on the single "in-core index" instance has
@@ -156,14 +156,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * The test lint learned to catch non-portable "sed" options.
 
- * "git pack-objects" learned another algorithm to compute the set of
+ * "but pack-objects" learned another algorithm to compute the set of
    objects to send, that trades the resulting packfile off to save
    traversal cost to favor small pushes.
 
  * The travis CI scripts have been corrected to build Git with the
    compiler(s) of our choice.
 
- * "git submodule update" learned to abort early when core.worktree
+ * "but submodule update" learned to abort early when core.worktree
    for the submodule is not set correctly to prevent spreading damage.
 
  * Test suite has been adjusted to run on Azure Pipeline.
@@ -194,7 +194,7 @@ Fixes since v2.20
  * Updates for corner cases in merge-recursive.
    (merge cc4cb0902c en/merge-path-collision later to maint).
 
- * "git checkout frotz" (without any double-dash) avoids ambiguity by
+ * "but checkout frotz" (without any double-dash) avoids ambiguity by
    making sure 'frotz' cannot be interpreted as a revision and as a
    path at the same time.  This safety has been updated to check also
    a unique remote-tracking branch 'frotz' in a remote, when dwimming
@@ -202,12 +202,12 @@ Fixes since v2.20
    'frotz' from a remote.
    (merge be4908f103 nd/checkout-dwim-fix later to maint).
 
- * Refspecs configured with "git -c var=val clone" did not propagate
+ * Refspecs configured with "but -c var=val clone" did not propagate
    to the resulting repository, which has been corrected.
    (merge 7eae4a3ac4 sg/clone-initial-fetch-configuration later to maint).
 
  * A properly configured username/email is required under
-   user.useConfigOnly in order to create cummits; now "git stash"
+   user.useConfigOnly in order to create cummits; now "but stash"
    (even though it creates cummit objects to represent stash entries)
    command is exempt from the requirement.
    (merge 3bc2111fc2 sd/stash-wo-user-name later to maint).
@@ -217,7 +217,7 @@ Fixes since v2.20
    which has been corrected.
    (merge 02818a98d7 mk/http-backend-kill-children-before-exit later to maint).
 
- * "git rev-list --exclude-promisor-objects" had to take an object
+ * "but rev-list --exclude-promisor-objects" had to take an object
    that does not exist locally (and is lazily available) from the
    command line without barfing, but the code dereferenced NULL.
    (merge 4cf67869b2 md/list-lazy-objects-fix later to maint).
@@ -239,18 +239,18 @@ Fixes since v2.20
    been corrected.
    (merge 1f67290450 hn/highlight-sideband-keywords later to maint).
 
- * "git log -G<regex>" looked for a hunk in the "git log -p" patch
+ * "but log -G<regex>" looked for a hunk in the "but log -p" patch
    output that contained a string that matches the given pattern.
    Optimize this code to ignore binary files, which by default will
    not show any hunk that would match any pattern (unless textconv or
    the --text option is in effect, that is).
    (merge e0e7cb8080 tb/log-G-binary later to maint).
 
- * "git submodule update" ought to use a single job unless asked, but
+ * "but submodule update" ought to use a single job unless asked, but
    by mistake used multiple jobs, which has been fixed.
    (merge e3a9d1aca9 sb/submodule-fetchjobs-default-to-one later to maint).
 
- * "git stripspace" should be usable outside a git repository, but
+ * "but stripspace" should be usable outside a but repository, but
    under the "-s" or "-c" mode, it didn't.
    (merge 957da75802 jn/stripspace-wo-repository later to maint).
 
@@ -263,10 +263,10 @@ Fixes since v2.20
    (e.g. getting deinit'ed), but the code did not properly maintain
    this invariant.
 
- * With zsh, "git cmd path<TAB>" was completed to "git cmd path name"
+ * With zsh, "but cmd path<TAB>" was completed to "but cmd path name"
    when the completed path has a special character like SP in it,
    without any attempt to keep "path name" a single filename.  This
-   has been fixed to complete it to "git cmd path\ name" just like
+   has been fixed to complete it to "but cmd path\ name" just like
    Bash completion does.
 
  * The test suite tried to see if it is run under bash, but the check
@@ -274,7 +274,7 @@ Fixes since v2.20
    under NetBSD).  This has been corrected.
    (merge 54ea72f09c sg/test-bash-version-fix later to maint).
 
- * "git gc" and "git repack" did not close the open packfiles that
+ * "but gc" and "but repack" did not close the open packfiles that
    they found unneeded before removing them, which didn't work on a
    platform incapable of removing an open file.  This has been
    corrected.
@@ -294,22 +294,22 @@ Fixes since v2.20
    hidden-ref configuration, which has been corrected.
    (merge e20b4192a3 jk/proto-v2-hidden-refs-fix later to maint).
 
- * "git fetch --recurse-submodules" may not fetch the necessary cummit
+ * "but fetch --recurse-submodules" may not fetch the necessary cummit
    that is bound to the superproject, which is getting corrected.
    (merge be76c21282 sb/submodule-recursive-fetch-gets-the-tip later to maint).
 
- * "git rebase" internally runs "checkout" to switch between branches,
+ * "but rebase" internally runs "checkout" to switch between branches,
    and the command used to call the post-checkout hook, but the
    reimplementation stopped doing so, which is getting fixed.
 
- * "git add -e" got confused when the change it wants to let the user
+ * "but add -e" got confused when the change it wants to let the user
    edit is smaller than the previous change that was left over in a
    temporary file.
    (merge fa6f225e01 js/add-e-clear-patch-before-stating later to maint).
 
- * "git p4" failed to update a shelved change when there were moved
+ * "but p4" failed to update a shelved change when there were moved
    files, which has been corrected.
-   (merge 7a10946ab9 ld/git-p4-shelve-update-fix later to maint).
+   (merge 7a10946ab9 ld/but-p4-shelve-update-fix later to maint).
 
  * The codepath to read from the cummit-graph file attempted to read
    past the end of it when the file's table-of-contents was corrupt.
@@ -321,12 +321,12 @@ Fixes since v2.20
  * An obvious typo in an assertion error message has been fixed.
    (merge 3c27e2e059 cc/test-ref-store-typofix later to maint).
 
- * In Git for Windows, "git clone \\server\share\path" etc. that uses
+ * In Git for Windows, "but clone \\server\share\path" etc. that uses
    UNC paths from command line had bad interaction with its shell
    emulation.
 
- * "git add --ignore-errors" did not work as advertised and instead
-   worked as an unintended synonym for "git add --renormalize", which
+ * "but add --ignore-errors" did not work as advertised and instead
+   worked as an unintended synonym for "but add --renormalize", which
    has been fixed.
    (merge e2c2a37545 jk/add-ignore-errors-bit-assignment-fix later to maint).
 
@@ -334,31 +334,31 @@ Fixes since v2.20
    the path that is above the worktree directory in an absolute
    pathname, which has been corrected.
 
- * Asking "git check-attr" about a macro (e.g. "binary") on a specific
-   path did not work correctly, even though "git check-attr -a" listed
+ * Asking "but check-attr" about a macro (e.g. "binary") on a specific
+   path did not work correctly, even though "but check-attr -a" listed
    such a macro correctly.  This has been corrected.
    (merge 7b95849be4 jk/attr-macro-fix later to maint).
 
- * "git pack-objects" incorrectly used uninitialized mutex, which has
+ * "but pack-objects" incorrectly used uninitialized mutex, which has
    been corrected.
    (merge edb673cf10 ph/pack-objects-mutex-fix later to maint).
 
- * "git checkout -b <new> [HEAD]" to create a new branch from the
+ * "but checkout -b <new> [HEAD]" to create a new branch from the
    current cummit and check it out ought to be a no-op in the index
    and the working tree in normal cases, but there are corner cases
    that do require updates to the index and the working tree.  Running
-   it immediately after "git clone --no-checkout" is one of these
+   it immediately after "but clone --no-checkout" is one of these
    cases that an earlier optimization kicked in incorrectly, which has
    been fixed.
    (merge 8424bfd45b bp/checkout-new-branch-optim later to maint).
 
- * "git diff --color-moved --cc --stat -p" did not work well due to
+ * "but diff --color-moved --cc --stat -p" did not work well due to
    funny interaction between a bug in color-moved and the rest, which
    has been fixed.
    (merge dac03b5518 jk/diff-cc-stat-fixes later to maint).
 
  * When GIT_SEQUENCE_EDITOR is set, the command was incorrectly
-   started when modes of "git rebase" that implicitly uses the
+   started when modes of "but rebase" that implicitly uses the
    machinery for the interactive rebase are run, which has been
    corrected.
    (merge 891d4a0313 pw/no-editor-in-rebase-i-implicit later to maint).
@@ -369,30 +369,30 @@ Fixes since v2.20
    corrected.
    (merge 4468d4435c sg/object-as-type-cummit-graph-fix later to maint).
 
- * "git fetch" output cleanup.
+ * "but fetch" output cleanup.
    (merge dc40b24df4 nd/fetch-compact-update later to maint).
 
- * "git cat-file --batch" reported a dangling symbolic link by
+ * "but cat-file --batch" reported a dangling symbolic link by
    mistake, when it wanted to report that a given name is ambiguous.
 
  * Documentation around core.crlf has been updated.
    (merge c9446f0504 jk/autocrlf-overrides-eol-doc later to maint).
 
- * The documentation of "git cummit-tree" said that the command
+ * The documentation of "but cummit-tree" said that the command
    understands "--gpg-sign" in addition to "-S", but the command line
    parser did not know about the longhand, which has been corrected.
 
- * "git rebase -x $cmd" did not reject multi-line command, even though
+ * "but rebase -x $cmd" did not reject multi-line command, even though
    the command is incapable of handling such a command.  It now is
    rejected upfront.
    (merge c762aada1a pw/rebase-x-sanity-check later to maint).
 
- * Output from "git help" was not correctly aligned, which has been
+ * Output from "but help" was not correctly aligned, which has been
    fixed.
    (merge 6195a76da4 nd/help-align-command-desc later to maint).
 
- * The "git submodule summary" subcommand showed shortened cummit
-   object names by mechanically truncating them at 7-hexdigit, which
+ * The "but submodule summary" subcommand showed shortened cummit
+   object names by mechanically truncating them at 7-hexdibut, which
    has been improved to let "rev-parse --short" scale the length of
    the abbreviation with the size of the repository.
    (merge 0586a438f6 sh/submodule-summary-abbrev-fix later to maint).
@@ -405,13 +405,13 @@ Fixes since v2.20
    has fixed itself already).
    (merge a1ccaedd62 sg/travis-osx-brew-breakage-workaround later to maint).
 
- * "git --work-tree=$there --git-dir=$here describe --dirty" did not
+ * "but --work-tree=$there --but-dir=$here describe --dirty" did not
    work correctly as it did not pay attention to the location of the
    worktree specified by the user by mistake, which has been
    corrected.
    (merge c801170b0c ss/describe-dirty-in-the-right-directory later to maint).
 
- * "git fetch" over protocol v2 that needs to make a second connection
+ * "but fetch" over protocol v2 that needs to make a second connection
    to backfill tags did not clear a variable that holds shallow
    repository information correctly, leading to an access of freed
    piece of memory.
@@ -424,8 +424,8 @@ Fixes since v2.20
    (merge d173e799ea sb/diff-color-moved-config-option-fixup later to maint).
    (merge a8f5a59067 en/directory-renames-nothanks-doc-update later to maint).
    (merge ec36c42a63 nd/indentation-fix later to maint).
-   (merge f116ee21cd do/gitweb-strict-export-conf-doc later to maint).
-   (merge 112ea42663 fd/gitweb-snapshot-conf-doc-fix later to maint).
+   (merge f116ee21cd do/butweb-strict-export-conf-doc later to maint).
+   (merge 112ea42663 fd/butweb-snapshot-conf-doc-fix later to maint).
    (merge 1cadad6f65 tb/use-common-win32-pathfuncs-on-cygwin later to maint).
    (merge 57e9dcaa65 km/rebase-doc-typofix later to maint).
    (merge b8b4cb27e6 ds/gc-doc-typofix later to maint).
@@ -438,7 +438,7 @@ Fixes since v2.20
    (merge 1747125e2c cc/partial-clone-doc-typofix later to maint).
    (merge e01378753d cc/fetch-error-message-fix later to maint).
    (merge 54e8c11215 jk/remote-insteadof-cleanup later to maint).
-   (merge d609615f48 js/test-git-installed later to maint).
+   (merge d609615f48 js/test-but-installed later to maint).
    (merge ba170517be ja/doc-style-fix later to maint).
    (merge 86fb1c4e77 km/init-doc-typofix later to maint).
    (merge 5cfd4a9d10 nd/cummit-doc later to maint).

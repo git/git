@@ -1,8 +1,8 @@
 #!/bin/sh
 # Copyright (c) 2008 Marcus Griep
 
-test_description='git svn multi-glob branch names'
-. ./lib-git-svn.sh
+test_description='but svn multi-glob branch names'
+. ./lib-but-svn.sh
 
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches \
@@ -17,20 +17,20 @@ test_expect_success 'setup svnrepo' '
 	'
 
 test_expect_success 'test clone with multi-glob in branch names' '
-	git svn clone -T trunk -b branches/*/* -t tags \
+	but svn clone -T trunk -b branches/*/* -t tags \
 	              "$svnrepo/project" project &&
 	(cd project &&
-		git rev-parse "refs/remotes/origin/v14.1/beta" &&
-		git rev-parse "refs/remotes/origin/v14.1/gold"
+		but rev-parse "refs/remotes/origin/v14.1/beta" &&
+		but rev-parse "refs/remotes/origin/v14.1/gold"
 	)
 	'
 
 test_expect_success 'test dcummit to multi-globbed branch' "
 	(cd project &&
-	git reset --hard 'refs/remotes/origin/v14.1/gold' &&
+	but reset --hard 'refs/remotes/origin/v14.1/gold' &&
 	echo hello >> foo &&
-	git cummit -m 'hello' -- foo &&
-	git svn dcummit
+	but cummit -m 'hello' -- foo &&
+	but svn dcummit
 	)
 	"
 

@@ -1,11 +1,11 @@
 #!/bin/sh
 
-test_description='git p4 tests for p4 branches'
+test_description='but p4 tests for p4 branches'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -65,90 +65,90 @@ test_expect_success 'basic p4 branches' '
 '
 
 test_expect_success 'import main, no branch detection' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot/main@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot/main@all &&
 	(
-		cd "$git" &&
-		git log --oneline --graph --decorate --all &&
-		git rev-list main -- >wc &&
+		cd "$but" &&
+		but log --oneline --graph --decorate --all &&
+		but rev-list main -- >wc &&
 		test_line_count = 4 wc
 	)
 '
 
 test_expect_success 'import branch1, no branch detection' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot/branch1@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot/branch1@all &&
 	(
-		cd "$git" &&
-		git log --oneline --graph --decorate --all &&
-		git rev-list main -- >wc &&
+		cd "$but" &&
+		but log --oneline --graph --decorate --all &&
+		but rev-list main -- >wc &&
 		test_line_count = 2 wc
 	)
 '
 
 test_expect_success 'import branch2, no branch detection' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot/branch2@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot/branch2@all &&
 	(
-		cd "$git" &&
-		git log --oneline --graph --decorate --all &&
-		git rev-list main -- >wc &&
+		cd "$but" &&
+		but log --oneline --graph --decorate --all &&
+		but rev-list main -- >wc &&
 		test_line_count = 2 wc
 	)
 '
 
 test_expect_success 'import depot, no branch detection' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot@all &&
 	(
-		cd "$git" &&
-		git log --oneline --graph --decorate --all &&
-		git rev-list main -- >wc &&
+		cd "$but" &&
+		but log --oneline --graph --decorate --all &&
+		but rev-list main -- >wc &&
 		test_line_count = 8 wc
 	)
 '
 
 test_expect_success 'import depot, branch detection' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" --detect-branches //depot@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" --detect-branches //depot@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 
-		git log --oneline --graph --decorate --all &&
+		but log --oneline --graph --decorate --all &&
 
 		# 4 main cummits
-		git rev-list main -- >wc &&
+		but rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
-		git rev-list p4/depot/branch2 >wc &&
+		but rev-list p4/depot/branch2 >wc &&
 		test_line_count = 5 wc &&
 
 		# no branch1, since no p4 branch created for it
-		test_must_fail git show-ref p4/depot/branch1
+		test_must_fail but show-ref p4/depot/branch1
 	)
 '
 
 test_expect_success 'import depot, branch detection, branchList branch definition' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList main:branch1 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
+		cd "$but" &&
+		but config but-p4.branchList main:branch1 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
 
-		git log --oneline --graph --decorate --all &&
+		but log --oneline --graph --decorate --all &&
 
 		# 4 main cummits
-		git rev-list main -- >wc &&
+		but rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
 		# 3 main, 1 integrate, 1 on branch2
-		git rev-list p4/depot/branch2 >wc &&
+		but rev-list p4/depot/branch2 >wc &&
 		test_line_count = 5 wc &&
 
 		# 2 main, 1 integrate, 1 on branch1
-		git rev-list p4/depot/branch1 >wc &&
+		but rev-list p4/depot/branch1 >wc &&
 		test_line_count = 4 wc
 	)
 '
@@ -189,30 +189,30 @@ test_expect_success 'add simple p4 branches' '
 	)
 '
 
-# Configure branches through git-config and clone them.
+# Configure branches through but-config and clone them.
 # All files are tested to make sure branches were cloned correctly.
 # Finally, make an update to branch1 on P4 side to check if it is imported
-# correctly by git p4.
-test_expect_success 'git p4 clone simple branches' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+# correctly by but p4.
+test_expect_success 'but p4 clone simple branches' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test ! -f file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
@@ -222,15 +222,15 @@ test_expect_success 'git p4 clone simple branches' '
 		p4 edit file2 &&
 		echo file2_ >>file2 &&
 		p4 submit -d "update file2 in branch1" &&
-		cd "$git" &&
-		git reset --hard p4/depot/branch1 &&
-		git p4 rebase &&
+		cd "$but" &&
+		but reset --hard p4/depot/branch1 &&
+		but p4 rebase &&
 		grep file2_ file2
 	)
 '
 
 # Create a complex branch structure in P4 depot to check if they are correctly
-# cloned. The branches are created from older changelists to check if git p4 is
+# cloned. The branches are created from older changelists to check if but p4 is
 # able to correctly detect them.
 # The final expected structure is:
 # `branch1
@@ -251,7 +251,7 @@ test_expect_success 'git p4 clone simple branches' '
 #   `- file1
 #   `- file2
 #   `- file3
-test_expect_success 'git p4 add complex branches' '
+test_expect_success 'but p4 add complex branches' '
 	(
 		cd "$cli" &&
 		changelist=$(p4 changes -m1 //depot/... | cut -d" " -f2) &&
@@ -264,53 +264,53 @@ test_expect_success 'git p4 add complex branches' '
 	)
 '
 
-# Configure branches through git-config and clone them. git p4 will only be able
+# Configure branches through but-config and clone them. but p4 will only be able
 # to clone the original structure if it is able to detect the origin changelist
 # of each branch.
-test_expect_success 'git p4 clone complex branches' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+test_expect_success 'but p4 clone complex branches' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git config --add git-p4.branchList branch1:branch4 &&
-		git config --add git-p4.branchList branch1:branch5 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but config --add but-p4.branchList branch1:branch4 &&
+		but config --add but-p4.branchList branch1:branch5 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch4 &&
-		git diff-tree --quiet HEAD &&
+		but reset --hard p4/depot/branch4 &&
+		but diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch5 &&
-		git diff-tree --quiet HEAD &&
+		but reset --hard p4/depot/branch5 &&
+		but diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		test_must_fail git show-ref --verify refs/git-p4-tmp
+		test_must_fail but show-ref --verify refs/but-p4-tmp
 	)
 '
 
 # Move branch3/file3 to branch4/file3 in a single changelist
-test_expect_success 'git p4 submit to two branches in a single changelist' '
+test_expect_success 'but p4 submit to two branches in a single changelist' '
 	(
 		cd "$cli" &&
 		p4 integrate //depot/branch3/file3 //depot/branch4/file3 &&
@@ -320,49 +320,49 @@ test_expect_success 'git p4 submit to two branches in a single changelist' '
 '
 
 # Confirm that changes to two branches done in a single changelist
-# are correctly imported by git p4
-test_expect_success 'git p4 sync changes to two branches in the same changelist' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+# are correctly imported by but p4
+test_expect_success 'but p4 sync changes to two branches in the same changelist' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git config --add git-p4.branchList branch1:branch4 &&
-		git config --add git-p4.branchList branch1:branch5 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but config --add but-p4.branchList branch1:branch4 &&
+		but config --add but-p4.branchList branch1:branch5 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch4 &&
+		but reset --hard p4/depot/branch4 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch5 &&
+		but reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		test_must_fail git show-ref --verify refs/git-p4-tmp
+		test_must_fail but show-ref --verify refs/but-p4-tmp
 	)
 '
 
 # Create a branch by integrating a single file
-test_expect_success 'git p4 file subset branch' '
+test_expect_success 'but p4 file subset branch' '
 	(
 		cd "$cli" &&
 		p4 integrate //depot/branch1/file1 //depot/branch6/file1 &&
@@ -370,46 +370,46 @@ test_expect_success 'git p4 file subset branch' '
 	)
 '
 
-# Check if git p4 creates a new branch containing a single file,
+# Check if but p4 creates a new branch containing a single file,
 # instead of keeping the old files from the original branch
-test_expect_failure 'git p4 clone file subset branch' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+test_expect_failure 'but p4 clone file subset branch' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git config --add git-p4.branchList branch1:branch4 &&
-		git config --add git-p4.branchList branch1:branch5 &&
-		git config --add git-p4.branchList branch1:branch6 &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but config --add but-p4.branchList branch1:branch4 &&
+		but config --add but-p4.branchList branch1:branch5 &&
+		but config --add but-p4.branchList branch1:branch6 &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch4 &&
+		but reset --hard p4/depot/branch4 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch5 &&
+		but reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch6 &&
+		but reset --hard p4/depot/branch6 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_missing file3
@@ -417,39 +417,39 @@ test_expect_failure 'git p4 clone file subset branch' '
 '
 
 # Check that excluded files are omitted during import
-test_expect_success 'git p4 clone complex branches with excluded files' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+test_expect_success 'but p4 clone complex branches with excluded files' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git config --add git-p4.branchList branch1:branch4 &&
-		git config --add git-p4.branchList branch1:branch5 &&
-		git config --add git-p4.branchList branch1:branch6 &&
-		git p4 clone --dest=. --detect-branches -//depot/branch1/file2 -//depot/branch2/file2 -//depot/branch3/file2 -//depot/branch4/file2 -//depot/branch5/file2 -//depot/branch6/file2 //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but config --add but-p4.branchList branch1:branch4 &&
+		but config --add but-p4.branchList branch1:branch5 &&
+		but config --add but-p4.branchList branch1:branch6 &&
+		but p4 clone --dest=. --detect-branches -//depot/branch1/file2 -//depot/branch2/file2 -//depot/branch3/file2 -//depot/branch4/file2 -//depot/branch5/file2 -//depot/branch6/file2 //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_missing file3 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_missing file3 &&
-		git reset --hard p4/depot/branch4 &&
+		but reset --hard p4/depot/branch4 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3 &&
-		git reset --hard p4/depot/branch5 &&
+		but reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3 &&
-		git reset --hard p4/depot/branch6 &&
+		but reset --hard p4/depot/branch6 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_missing file3
@@ -458,7 +458,7 @@ test_expect_success 'git p4 clone complex branches with excluded files' '
 
 # From a report in http://stackoverflow.com/questions/11893688
 # where --use-client-spec caused branch prefixes not to be removed;
-# every file in git appeared into a subdirectory of the branch name.
+# every file in but appeared into a subdirectory of the branch name.
 test_expect_success 'use-client-spec detect-branches setup' '
 	rm -rf "$cli" &&
 	mkdir "$cli" &&
@@ -484,18 +484,18 @@ test_expect_success 'use-client-spec detect-branches setup' '
 '
 
 test_expect_success 'use-client-spec detect-branches files in top-level' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
-		git checkout -b main p4/usecs/b1 &&
+		cd "$but" &&
+		but p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		but checkout -b main p4/usecs/b1 &&
 		test_path_is_file b1-file1 &&
 		test_path_is_missing b2-file2 &&
 		test_path_is_missing b1 &&
 		test_path_is_missing b2 &&
 
-		git checkout -b b2 p4/usecs/b2 &&
+		but checkout -b b2 p4/usecs/b2 &&
 		test_path_is_file b1-file1 &&
 		test_path_is_file b2-file2 &&
 		test_path_is_missing b1 &&
@@ -525,24 +525,24 @@ test_expect_success 'use-client-spec detect-branches skips branches setup' '
 test_expect_success 'use-client-spec detect-branches skips branches' '
 	client_view "//depot/usecs/... //client/..." \
 		    "-//depot/usecs/b3/... //client/b3/..." &&
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
-		test_must_fail git rev-parse refs/remotes/p4/usecs/b3
+		cd "$but" &&
+		but p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		test_must_fail but rev-parse refs/remotes/p4/usecs/b3
 	)
 '
 
 test_expect_success 'use-client-spec detect-branches skips files in branches' '
 	client_view "//depot/usecs/... //client/..." \
 		    "-//depot/usecs/b3/b3-file3_1 //client/b3/b3-file3_1" &&
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
-		git checkout -b main p4/usecs/b3 &&
+		cd "$but" &&
+		but p4 sync --detect-branches --use-client-spec //depot/usecs@all &&
+		but checkout -b main p4/usecs/b3 &&
 		test_path_is_file b1-file1 &&
 		test_path_is_file b3-file3_2 &&
 		test_path_is_missing b3-file3_1
@@ -593,33 +593,33 @@ test_expect_success 'add simple p4 branches with common base folder on each bran
 	)
 '
 
-# Configure branches through git-config and clone them.
+# Configure branches through but-config and clone them.
 # All files are tested to make sure branches were cloned correctly.
 # Finally, make an update to branch1 on P4 side to check if it is imported
-# correctly by git p4.
-# git p4 is expected to use the client view to also not include the common
+# correctly by but p4.
+# but p4 is expected to use the client view to also not include the common
 # "base" folder in the imported directory structure.
-test_expect_success 'git p4 clone simple branches with base folder on server side' '
-	test_create_repo "$git" &&
+test_expect_success 'but p4 clone simple branches with base folder on server side' '
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList branch1:branch2 &&
-		git config --add git-p4.branchList branch1:branch3 &&
-		git p4 clone --dest=. --use-client-spec  --detect-branches //depot@all &&
-		git log --all --graph --decorate --stat &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but config but-p4.branchList branch1:branch2 &&
+		but config --add but-p4.branchList branch1:branch3 &&
+		but p4 clone --dest=. --use-client-spec  --detect-branches //depot@all &&
+		but log --all --graph --decorate --stat &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		test_path_is_file sub_file1 &&
 		grep update file2 &&
-		git reset --hard p4/depot/branch2 &&
+		but reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test ! -f file3 &&
 		test_path_is_file sub_file1 &&
 		! grep update file2 &&
-		git reset --hard p4/depot/branch3 &&
+		but reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
@@ -630,24 +630,24 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		p4 edit file2 &&
 		echo file2_ >>file2 &&
 		p4 submit -d "update file2 in branch1" &&
-		cd "$git" &&
-		git reset --hard p4/depot/branch1 &&
-		git p4 rebase &&
+		cd "$but" &&
+		but reset --hard p4/depot/branch1 &&
+		but p4 rebase &&
 		grep file2_ file2
 	)
 '
 
-# Now update a file in one of the branches in git and submit to P4
-test_expect_success 'Update a file in git side and submit to P4 using client view' '
-	test_when_finished cleanup_git &&
+# Now update a file in one of the branches in but and submit to P4
+test_expect_success 'Update a file in but side and submit to P4 using client view' '
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git reset --hard p4/depot/branch1 &&
+		cd "$but" &&
+		but reset --hard p4/depot/branch1 &&
 		echo "client spec" >> file1 &&
-		git add -u . &&
-		git cummit -m "update file1 in branch1" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit --verbose &&
+		but add -u . &&
+		but cummit -m "update file1 in branch1" &&
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit --verbose &&
 		cd "$cli" &&
 		p4 sync ... &&
 		cd branch1 &&
@@ -695,24 +695,24 @@ test_expect_success !CASE_INSENSITIVE_FS 'basic p4 branches for case folding' '
 '
 
 # Check that files are properly split across branches when ignorecase is set
-test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+test_expect_success !CASE_INSENSITIVE_FS 'but p4 clone, branchList branch definition, ignorecase' '
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList main:branch1 &&
-		git config --type=bool core.ignoreCase true &&
-		git p4 clone --dest=. --detect-branches //depot@all &&
+		cd "$but" &&
+		but config but-p4.branchList main:branch1 &&
+		but config --type=bool core.ignoreCase true &&
+		but p4 clone --dest=. --detect-branches //depot@all &&
 
-		git log --all --graph --decorate --stat &&
+		but log --all --graph --decorate --stat &&
 
-		git reset --hard p4/master &&
+		but reset --hard p4/master &&
 		test_path_is_file mf1 &&
 		test_path_is_file mf2 &&
 		test_path_is_missing B1f3 &&
 		test_path_is_missing b1f4 &&
 
-		git reset --hard p4/depot/branch1 &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file mf1 &&
 		test_path_is_missing mf2 &&
 		test_path_is_file B1f3 &&
@@ -721,25 +721,25 @@ test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch defini
 '
 
 # Check that files are properly split across branches when ignorecase is set, use-client-spec case
-test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
+test_expect_success !CASE_INSENSITIVE_FS 'but p4 clone with client-spec, branchList branch definition, ignorecase' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	test_create_repo "$git" &&
+	test_when_finished cleanup_but &&
+	test_create_repo "$but" &&
 	(
-		cd "$git" &&
-		git config git-p4.branchList main:branch1 &&
-		git config --type=bool core.ignoreCase true &&
-		git p4 clone --dest=. --use-client-spec --detect-branches //depot@all &&
+		cd "$but" &&
+		but config but-p4.branchList main:branch1 &&
+		but config --type=bool core.ignoreCase true &&
+		but p4 clone --dest=. --use-client-spec --detect-branches //depot@all &&
 
-		git log --all --graph --decorate --stat &&
+		but log --all --graph --decorate --stat &&
 
-		git reset --hard p4/master &&
+		but reset --hard p4/master &&
 		test_path_is_file mf1 &&
 		test_path_is_file mf2 &&
 		test_path_is_missing B1f3 &&
 		test_path_is_missing b1f4 &&
 
-		git reset --hard p4/depot/branch1 &&
+		but reset --hard p4/depot/branch1 &&
 		test_path_is_file mf1 &&
 		test_path_is_missing mf2 &&
 		test_path_is_file B1f3 &&

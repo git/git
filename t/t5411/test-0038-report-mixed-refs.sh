@@ -13,9 +13,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         : (B)                   bar(A)  baz(A)  refs/for/next/topic(A)  foo(A)  refs/for/main/topic(A)
+# but push         : (B)                   bar(A)  baz(A)  refs/for/next/topic(A)  foo(A)  refs/for/main/topic(A)
 test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
-	test_must_fail git -C workbench push origin \
+	test_must_fail but -C workbench push origin \
 		$B:refs/heads/main \
 		HEAD:refs/heads/bar \
 		HEAD:refs/heads/baz \
@@ -54,7 +54,7 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic2        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/foo        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> main
 	>  * [new branch]      HEAD -> bar
 	>  * [new branch]      HEAD -> baz
@@ -79,9 +79,9 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL)" '
 test_expect_success "cleanup ($PROTOCOL)" '
 	(
 		cd "$upstream" &&
-		git update-ref refs/heads/main $A &&
-		git update-ref -d refs/heads/foo &&
-		git update-ref -d refs/heads/bar &&
-		git update-ref -d refs/heads/baz
+		but update-ref refs/heads/main $A &&
+		but update-ref -d refs/heads/foo &&
+		but update-ref -d refs/heads/bar &&
+		but update-ref -d refs/heads/baz
 	)
 '

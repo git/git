@@ -37,7 +37,7 @@ int cmd__reach(int ac, const char **av)
 	struct strbuf buf = STRBUF_INIT;
 	struct repository *r = the_repository;
 
-	setup_git_directory();
+	setup_but_directory();
 
 	if (ac < 2)
 		exit(1);

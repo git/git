@@ -28,19 +28,19 @@ else
 fi
 
 wiki_upload_file () {
-	"$CURR_DIR"/test-gitmw.pl upload_file "$@"
+	"$CURR_DIR"/test-butmw.pl upload_file "$@"
 }
 
 wiki_getpage () {
-	"$CURR_DIR"/test-gitmw.pl get_page "$@"
+	"$CURR_DIR"/test-butmw.pl get_page "$@"
 }
 
 wiki_delete_page () {
-	"$CURR_DIR"/test-gitmw.pl delete_page "$@"
+	"$CURR_DIR"/test-butmw.pl delete_page "$@"
 }
 
 wiki_editpage () {
-	"$CURR_DIR"/test-gitmw.pl edit_page "$@"
+	"$CURR_DIR"/test-butmw.pl edit_page "$@"
 }
 
 die () {
@@ -55,11 +55,11 @@ die_with_status () {
 }
 
 
-# Check the preconditions to run git-remote-mediawiki's tests
+# Check the preconditions to run but-remote-mediawiki's tests
 test_check_precond () {
 	if ! test_have_prereq PERL
 	then
-		skip_all='skipping gateway git-mw tests, perl not available'
+		skip_all='skipping gateway but-mw tests, perl not available'
 		test_done
 	fi
 
@@ -68,17 +68,17 @@ test_check_precond () {
 
 	if ! test -d "$WIKI_DIR_INST/$WIKI_DIR_NAME"
 	then
-		skip_all='skipping gateway git-mw tests, no mediawiki found'
+		skip_all='skipping gateway but-mw tests, no mediawiki found'
 		test_done
 	fi
 }
 
-# test_diff_directories <dir_git> <dir_wiki>
+# test_diff_directories <dir_but> <dir_wiki>
 #
-# Compare the contents of directories <dir_git> and <dir_wiki> with diff
+# Compare the contents of directories <dir_but> and <dir_wiki> with diff
 # and errors if they do not match. The program will
-# not look into .git in the process.
-# Warning: the first argument MUST be the directory containing the git data
+# not look into .but in the process.
+# Warning: the first argument MUST be the directory containing the but data
 test_diff_directories () {
 	rm -rf "$1_tmp"
 	mkdir -p "$1_tmp"
@@ -139,14 +139,14 @@ wiki_page_exist () {
 #
 # Fetch the name of each page on the wiki.
 wiki_getallpagename () {
-	"$CURR_DIR"/test-gitmw.pl getallpagename
+	"$CURR_DIR"/test-butmw.pl getallpagename
 }
 
 # wiki_getallpagecategory <category>
 #
 # Fetch the name of each page belonging to <category> on the wiki.
 wiki_getallpagecategory () {
-	"$CURR_DIR"/test-gitmw.pl getallpagename "$@"
+	"$CURR_DIR"/test-butmw.pl getallpagename "$@"
 }
 
 # wiki_getallpage <dest_dir> [<category>]
@@ -333,10 +333,10 @@ install_mediawiki () {
 	    "$WIKI_ADMIN" ||
 		error "Couldn't run $install_script, see errors above. Try to run ./install-wiki.sh delete first."
 	cat <<-'EOF' >>$localsettings
-# Custom settings added by test-gitmw-lib.sh
+# Custom settings added by test-butmw-lib.sh
 #
 # Uploading text files is needed for
-# t9363-mw-to-git-export-import.sh
+# t9363-mw-to-but-export-import.sh
 $wgEnableUploads = true;
 $wgFileExtensions[] = 'txt';
 EOF

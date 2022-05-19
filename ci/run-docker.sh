@@ -21,9 +21,9 @@ docker pull "$CI_CONTAINER"
 
 # Use the following command to debug the docker build locally:
 # <host-user-id> must be 0 if podman is used as drop-in replacement for docker
-# $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/sh "$CI_CONTAINER"
+# $ docker run -itv "${PWD}:/usr/src/but" --entrypoint /bin/sh "$CI_CONTAINER"
 # root@container:/# export jobname=<jobname>
-# root@container:/# /usr/src/git/ci/run-docker-build.sh <host-user-id>
+# root@container:/# /usr/src/but/ci/run-docker-build.sh <host-user-id>
 
 container_cache_dir=/tmp/container-cache
 
@@ -37,10 +37,10 @@ docker run \
 	--env MAKEFLAGS \
 	--env jobname \
 	--env cache_dir="$container_cache_dir" \
-	--volume "${PWD}:/usr/src/git" \
+	--volume "${PWD}:/usr/src/but" \
 	--volume "$cache_dir:$container_cache_dir" \
 	"$CI_CONTAINER" \
-	/usr/src/git/ci/run-docker-build.sh $(id -u $USER)
+	/usr/src/but/ci/run-docker-build.sh $(id -u $USER)
 
 check_unignored_build_artifacts
 

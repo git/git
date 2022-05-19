@@ -1,12 +1,12 @@
 #!/bin/sh
 
-test_description='git reflog --updateref'
+test_description='but reflog --updateref'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	git init -b main repo &&
+	but init -b main repo &&
 	(
 		cd repo &&
 
@@ -14,9 +14,9 @@ test_expect_success 'setup' '
 		test_cummit B &&
 		test_cummit C &&
 
-		cp .git/logs/HEAD HEAD.old &&
-		git reset --hard HEAD~ &&
-		cp HEAD.old .git/logs/HEAD
+		cp .but/logs/HEAD HEAD.old &&
+		but reset --hard HEAD~ &&
+		cp HEAD.old .but/logs/HEAD
 	)
 '
 
@@ -33,33 +33,33 @@ test_reflog_updateref () {
 			cd copy &&
 
 			$args &&
-			git rev-parse $exp >expect &&
-			git rev-parse HEAD >actual &&
+			but rev-parse $exp >expect &&
+			but rev-parse HEAD >actual &&
 
 			test_cmp expect actual
 		)
 	'
 }
 
-test_reflog_updateref B git reflog delete --updateref HEAD@{0}
-test_reflog_updateref B git reflog delete --updateref HEAD@{1}
-test_reflog_updateref C git reflog delete --updateref main@{0}
-test_reflog_updateref B git reflog delete --updateref main@{1}
-test_reflog_updateref B git reflog delete --updateref --rewrite HEAD@{0}
-test_reflog_updateref B git reflog delete --updateref --rewrite HEAD@{1}
-test_reflog_updateref C git reflog delete --updateref --rewrite main@{0}
-test_reflog_updateref B git reflog delete --updateref --rewrite main@{1}
-test_reflog_updateref B test_must_fail git reflog expire  HEAD@{0}
-test_reflog_updateref B test_must_fail git reflog expire  HEAD@{1}
-test_reflog_updateref B test_must_fail git reflog expire  main@{0}
-test_reflog_updateref B test_must_fail git reflog expire  main@{1}
-test_reflog_updateref B test_must_fail git reflog expire --updateref HEAD@{0}
-test_reflog_updateref B test_must_fail git reflog expire --updateref HEAD@{1}
-test_reflog_updateref B test_must_fail git reflog expire --updateref main@{0}
-test_reflog_updateref B test_must_fail git reflog expire --updateref main@{1}
-test_reflog_updateref B test_must_fail git reflog expire --updateref --rewrite HEAD@{0}
-test_reflog_updateref B test_must_fail git reflog expire --updateref --rewrite HEAD@{1}
-test_reflog_updateref B test_must_fail git reflog expire --updateref --rewrite main@{0}
-test_reflog_updateref B test_must_fail git reflog expire --updateref --rewrite main@{1}
+test_reflog_updateref B but reflog delete --updateref HEAD@{0}
+test_reflog_updateref B but reflog delete --updateref HEAD@{1}
+test_reflog_updateref C but reflog delete --updateref main@{0}
+test_reflog_updateref B but reflog delete --updateref main@{1}
+test_reflog_updateref B but reflog delete --updateref --rewrite HEAD@{0}
+test_reflog_updateref B but reflog delete --updateref --rewrite HEAD@{1}
+test_reflog_updateref C but reflog delete --updateref --rewrite main@{0}
+test_reflog_updateref B but reflog delete --updateref --rewrite main@{1}
+test_reflog_updateref B test_must_fail but reflog expire  HEAD@{0}
+test_reflog_updateref B test_must_fail but reflog expire  HEAD@{1}
+test_reflog_updateref B test_must_fail but reflog expire  main@{0}
+test_reflog_updateref B test_must_fail but reflog expire  main@{1}
+test_reflog_updateref B test_must_fail but reflog expire --updateref HEAD@{0}
+test_reflog_updateref B test_must_fail but reflog expire --updateref HEAD@{1}
+test_reflog_updateref B test_must_fail but reflog expire --updateref main@{0}
+test_reflog_updateref B test_must_fail but reflog expire --updateref main@{1}
+test_reflog_updateref B test_must_fail but reflog expire --updateref --rewrite HEAD@{0}
+test_reflog_updateref B test_must_fail but reflog expire --updateref --rewrite HEAD@{1}
+test_reflog_updateref B test_must_fail but reflog expire --updateref --rewrite main@{0}
+test_reflog_updateref B test_must_fail but reflog expire --updateref --rewrite main@{1}
 
 test_done

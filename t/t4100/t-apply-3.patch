@@ -1,19 +1,19 @@
 6af1f0192ff8740fe77db7cf02c739ccfbdf119c (from 2bc2564145835996734d6ed5d1880f85b17233d6)
-diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
---- a/Documentation/git-ls-tree.txt
-+++ b/Documentation/git-ls-tree.txt
+diff --but a/Documentation/but-ls-tree.txt b/Documentation/but-ls-tree.txt
+--- a/Documentation/but-ls-tree.txt
++++ b/Documentation/but-ls-tree.txt
 @@ -4,23 +4,26 @@ v0.1, May 2005
  
  NAME
  ----
--git-ls-tree - Displays a tree object in human readable form
-+git-ls-tree - Lists the contents of a tree object.
+-but-ls-tree - Displays a tree object in human readable form
++but-ls-tree - Lists the contents of a tree object.
  
  
  SYNOPSIS
  --------
--'git-ls-tree' [-r] [-z] <tree-ish> [paths...]
-+'git-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
+-'but-ls-tree' [-r] [-z] <tree-ish> [paths...]
++'but-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
  
  DESCRIPTION
  -----------
@@ -37,7 +37,7 @@ diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
  	\0 line termination on output
  
  paths::
--	Optionally, restrict the output of git-ls-tree to specific
+-	Optionally, restrict the output of but-ls-tree to specific
 -	paths. Directories will only list their tree blob ids.
 -	Implies -r.
 +	When paths are given, shows them.  Otherwise implicitly
@@ -57,7 +57,7 @@ diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
  
  Documentation
  --------------
-diff --git a/ls-tree.c b/ls-tree.c
+diff --but a/ls-tree.c b/ls-tree.c
 dissimilarity index 82%
 --- ls-tree.c
 +++ ls-tree.c
@@ -246,7 +246,7 @@ dissimilarity index 82%
 -	return 0;
 -}
 -
--static const char *ls_tree_usage = "git-ls-tree [-r] [-z] <key> [paths...]";
+-static const char *ls_tree_usage = "but-ls-tree [-r] [-z] <key> [paths...]";
 -
 -int main(int argc, char **argv)
 -{
@@ -485,7 +485,7 @@ dissimilarity index 82%
 +}
 +
 +static const char *ls_tree_usage =
-+	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
++	"but-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
 +
 +int main(int argc, char **argv)
 +{
@@ -521,12 +521,12 @@ dissimilarity index 82%
 +		die("list failed");
 +	return 0;
 +}
-diff --git a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
+diff --but a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
 --- a/t/t3100-ls-tree-restrict.sh
 +++ b/t/t3100-ls-tree-restrict.sh
 @@ -74,8 +74,8 @@ test_expect_success \
      'ls-tree filtered' \
-     'git-ls-tree $tree path1 path0 >current &&
+     'but-ls-tree $tree path1 path0 >current &&
       cat >expected <<\EOF &&
 -100644 blob X	path0
  120000 blob X	path1
@@ -542,7 +542,7 @@ diff --git a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
  120000 blob X	path2/bazbo
  100644 blob X	path2/foo
  EOF
-diff --git a/tree.c b/tree.c
+diff --but a/tree.c b/tree.c
 --- a/tree.c
 +++ b/tree.c
 @@ -133,7 +133,7 @@ int parse_tree_buffer(struct tree *item,
@@ -554,7 +554,7 @@ diff --git a/tree.c b/tree.c
  		*list_p = entry;
  		list_p = &entry->next;
  	}
-diff --git a/tree.h b/tree.h
+diff --but a/tree.h b/tree.h
 --- a/tree.h
 +++ b/tree.h
 @@ -16,6 +16,7 @@ struct tree_entry_list {

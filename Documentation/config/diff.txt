@@ -1,16 +1,16 @@
 diff.autoRefreshIndex::
-	When using 'git diff' to compare with work tree
+	When using 'but diff' to compare with work tree
 	files, do not consider stat-only change as changed.
-	Instead, silently run `git update-index --refresh` to
+	Instead, silently run `but update-index --refresh` to
 	update the cached stat information for paths whose
 	contents in the work tree match the contents in the
 	index.  This option defaults to true.  Note that this
-	affects only 'git diff' Porcelain, and not lower level
-	'diff' commands such as 'git diff-files'.
+	affects only 'but diff' Porcelain, and not lower level
+	'diff' commands such as 'but diff-files'.
 
 diff.dirstat::
 	A comma separated list of `--dirstat` parameters specifying the
-	default behavior of the `--dirstat` option to linkgit:git-diff[1]
+	default behavior of the `--dirstat` option to linkbut:but-diff[1]
 	and friends. The defaults can be overridden on the command line
 	(using `--dirstat=<param1,param2,...>`). The fallback defaults
 	(when not changed by `diff.dirstat`) are `changes,noncumulative,3`.
@@ -71,55 +71,55 @@ diff.external::
 	performed using the internal diff machinery, but using the
 	given command.  Can be overridden with the `GIT_EXTERNAL_DIFF'
 	environment variable.  The command is called with parameters
-	as described under "git Diffs" in linkgit:git[1].  Note: if
+	as described under "but Diffs" in linkbut:but[1].  Note: if
 	you want to use an external diff program only on a subset of
-	your files, you might want to use linkgit:gitattributes[5] instead.
+	your files, you might want to use linkbut:butattributes[5] instead.
 
 diff.ignoreSubmodules::
 	Sets the default value of --ignore-submodules. Note that this
-	affects only 'git diff' Porcelain, and not lower level 'diff'
-	commands such as 'git diff-files'. 'git checkout'
-	and 'git switch' also honor
+	affects only 'but diff' Porcelain, and not lower level 'diff'
+	commands such as 'but diff-files'. 'but checkout'
+	and 'but switch' also honor
 	this setting when reporting uncummitted changes. Setting it to
-	'all' disables the submodule summary normally shown by 'git cummit'
-	and 'git status' when `status.submoduleSummary` is set unless it is
+	'all' disables the submodule summary normally shown by 'but cummit'
+	and 'but status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
-	The 'git submodule' commands are not affected by this setting.
+	The 'but submodule' commands are not affected by this setting.
 	By default this is set to untracked so that any untracked
 	submodules are ignored.
 
 diff.mnemonicPrefix::
-	If set, 'git diff' uses a prefix pair that is different from the
+	If set, 'but diff' uses a prefix pair that is different from the
 	standard "a/" and "b/" depending on what is being compared.  When
 	this configuration is in effect, reverse diff output also swaps
 	the order of the prefixes:
-`git diff`;;
+`but diff`;;
 	compares the (i)ndex and the (w)ork tree;
-`git diff HEAD`;;
+`but diff HEAD`;;
 	 compares a (c)ommit and the (w)ork tree;
-`git diff --cached`;;
+`but diff --cached`;;
 	compares a (c)ommit and the (i)ndex;
-`git diff HEAD:file1 file2`;;
+`but diff HEAD:file1 file2`;;
 	compares an (o)bject and a (w)ork tree entity;
-`git diff --no-index a b`;;
-	compares two non-git things (1) and (2).
+`but diff --no-index a b`;;
+	compares two non-but things (1) and (2).
 
 diff.noprefix::
-	If set, 'git diff' does not show any source or destination prefix.
+	If set, 'but diff' does not show any source or destination prefix.
 
 diff.relative::
-	If set to 'true', 'git diff' does not show changes outside of the directory
+	If set to 'true', 'but diff' does not show changes outside of the directory
 	and show pathnames relative to the current directory.
 
 diff.orderFile::
 	File indicating how to order files within a diff.
-	See the '-O' option to linkgit:git-diff[1] for details.
+	See the '-O' option to linkbut:but-diff[1] for details.
 	If `diff.orderFile` is a relative pathname, it is treated as
 	relative to the top of the working tree.
 
 diff.renameLimit::
 	The number of files to consider in the exhaustive portion of
-	copy/rename detection; equivalent to the 'git diff' option
+	copy/rename detection; equivalent to the 'but diff' option
 	`-l`.  If not set, the default value is currently 1000.  This
 	setting has no effect if rename detection is turned off.
 
@@ -128,9 +128,9 @@ diff.renames::
 	rename detection is disabled. If set to "true", basic rename
 	detection is enabled.  If set to "copies" or "copy", Git will
 	detect copies, as well.  Defaults to true.  Note that this
-	affects only 'git diff' Porcelain like linkgit:git-diff[1] and
-	linkgit:git-log[1], and not lower level commands such as
-	linkgit:git-diff-files[1].
+	affects only 'but diff' Porcelain like linkbut:but-diff[1] and
+	linkbut:but-log[1], and not lower level commands such as
+	linkbut:but-diff-files[1].
 
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
@@ -140,7 +140,7 @@ diff.submodule::
 	Specify the format in which differences in submodules are
 	shown.  The "short" format just shows the names of the cummits
 	at the beginning and end of the range. The "log" format lists
-	the cummits in the range like linkgit:git-submodule[1] `summary`
+	the cummits in the range like linkbut:but-submodule[1] `summary`
 	does. The "diff" format shows an inline diff of the changed
 	contents of the submodule. Defaults to "short".
 
@@ -151,42 +151,42 @@ diff.wordRegex::
 	characters are *ignorable* whitespace.
 
 diff.<driver>.command::
-	The custom diff driver command.  See linkgit:gitattributes[5]
+	The custom diff driver command.  See linkbut:butattributes[5]
 	for details.
 
 diff.<driver>.xfuncname::
 	The regular expression that the diff driver should use to
 	recognize the hunk header.  A built-in pattern may also be used.
-	See linkgit:gitattributes[5] for details.
+	See linkbut:butattributes[5] for details.
 
 diff.<driver>.binary::
 	Set this option to true to make the diff driver treat files as
-	binary.  See linkgit:gitattributes[5] for details.
+	binary.  See linkbut:butattributes[5] for details.
 
 diff.<driver>.textconv::
 	The command that the diff driver should call to generate the
 	text-converted version of a file.  The result of the
 	conversion is used to generate a human-readable diff.  See
-	linkgit:gitattributes[5] for details.
+	linkbut:butattributes[5] for details.
 
 diff.<driver>.wordRegex::
 	The regular expression that the diff driver should use to
-	split words in a line.  See linkgit:gitattributes[5] for
+	split words in a line.  See linkbut:butattributes[5] for
 	details.
 
 diff.<driver>.cachetextconv::
 	Set this option to true to make the diff driver cache the text
-	conversion outputs.  See linkgit:gitattributes[5] for details.
+	conversion outputs.  See linkbut:butattributes[5] for details.
 
 diff.tool::
-	Controls which diff tool is used by linkgit:git-difftool[1].
+	Controls which diff tool is used by linkbut:but-difftool[1].
 	This variable overrides the value configured in `merge.tool`.
 	The list below shows the valid built-in values.
 	Any other value is treated as a custom diff tool and requires
 	that a corresponding difftool.<tool>.cmd variable is defined.
 
 diff.guitool::
-	Controls which diff tool is used by linkgit:git-difftool[1] when
+	Controls which diff tool is used by linkbut:but-difftool[1] when
 	the -g/--gui flag is specified. This variable overrides the value
 	configured in `merge.guitool`. The list below shows the valid
 	built-in values. Any other value is treated as a custom diff tool
@@ -228,11 +228,11 @@ diff.wsErrorHighlight::
 diff.colorMoved::
 	If set to either a valid `<mode>` or a true value, moved lines
 	in a diff are colored differently, for details of valid modes
-	see '--color-moved' in linkgit:git-diff[1]. If simply set to
+	see '--color-moved' in linkbut:but-diff[1]. If simply set to
 	true the default color mode will be used. When set to false,
 	moved lines are not colored.
 
 diff.colorMovedWS::
 	When moved lines are colored using e.g. the `diff.colorMoved` setting,
 	this option controls the `<mode>` how spaces are treated
-	for details of valid modes see '--color-moved-ws' in linkgit:git-diff[1].
+	for details of valid modes see '--color-moved-ws' in linkbut:but-diff[1].

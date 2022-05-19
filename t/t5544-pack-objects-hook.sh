@@ -9,7 +9,7 @@ test_expect_success 'create some history to fetch' '
 '
 
 test_expect_success 'create debugging hook script' '
-	write_script .git/hook <<-\EOF
+	write_script .but/hook <<-\EOF
 		echo >&2 "hook running"
 		echo "$*" >hook.args
 		cat >hook.stdin
@@ -19,53 +19,53 @@ test_expect_success 'create debugging hook script' '
 '
 
 clear_hook_results () {
-	rm -rf .git/hook.* dst.git
+	rm -rf .but/hook.* dst.but
 }
 
 test_expect_success 'hook runs via global config' '
 	clear_hook_results &&
 	test_config_global uploadpack.packObjectsHook ./hook &&
-	git clone --no-local . dst.git 2>stderr &&
+	but clone --no-local . dst.but 2>stderr &&
 	grep "hook running" stderr
 '
 
 test_expect_success 'hook outputs are sane' '
 	# check that we recorded a usable pack
-	git index-pack --stdin <.git/hook.stdout &&
+	but index-pack --stdin <.but/hook.stdout &&
 
 	# check that we recorded args and stdin. We do not check
 	# the full argument list or the exact pack contents, as it would make
 	# the test brittle. So just sanity check that we could replay
 	# the packing procedure.
-	grep "^git" .git/hook.args &&
-	$(cat .git/hook.args) <.git/hook.stdin >replay
+	grep "^but" .but/hook.args &&
+	$(cat .but/hook.args) <.but/hook.stdin >replay
 '
 
 test_expect_success 'hook runs from -c config' '
 	clear_hook_results &&
-	git clone --no-local \
-	  -u "git -c uploadpack.packObjectsHook=./hook upload-pack" \
-	  . dst.git 2>stderr &&
+	but clone --no-local \
+	  -u "but -c uploadpack.packObjectsHook=./hook upload-pack" \
+	  . dst.but 2>stderr &&
 	grep "hook running" stderr
 '
 
 test_expect_success 'hook does not run from repo config' '
 	clear_hook_results &&
 	test_config uploadpack.packObjectsHook "./hook" &&
-	git clone --no-local . dst.git 2>stderr &&
+	but clone --no-local . dst.but 2>stderr &&
 	! grep "hook running" stderr &&
-	test_path_is_missing .git/hook.args &&
-	test_path_is_missing .git/hook.stdin &&
-	test_path_is_missing .git/hook.stdout
+	test_path_is_missing .but/hook.args &&
+	test_path_is_missing .but/hook.stdin &&
+	test_path_is_missing .but/hook.stdout
 '
 
 test_expect_success 'hook works with partial clone' '
 	clear_hook_results &&
 	test_config_global uploadpack.packObjectsHook ./hook &&
 	test_config_global uploadpack.allowFilter true &&
-	git clone --bare --no-local --filter=blob:none . dst.git &&
-	git -C dst.git rev-list --objects --missing=allow-any --no-object-names --all >objects &&
-	git -C dst.git cat-file --batch-check="%(objecttype)" <objects >types &&
+	but clone --bare --no-local --filter=blob:none . dst.but &&
+	but -C dst.but rev-list --objects --missing=allow-any --no-object-names --all >objects &&
+	but -C dst.but cat-file --batch-check="%(objecttype)" <objects >types &&
 	! grep blob types
 '
 

@@ -1,4 +1,4 @@
-$ git format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
+$ but format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
 From 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
@@ -26,7 +26,7 @@ Content-Type: text/x-patch; name="0001-Second.patch"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline; filename="0001-Second.patch"
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -35,7 +35,7 @@ index 35d242b..8422d40 100644
  B
 +C
 +D
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..b414108 100644
 --- a/file0
 +++ b/file0
@@ -46,7 +46,7 @@ index 01e79c3..b414108 100644
 +4
 +5
 +6
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 deleted file mode 100644
 index 01e79c3..0000000
 --- a/file2
@@ -84,7 +84,7 @@ Content-Type: text/x-patch; name="0002-Third.patch"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline; filename="0002-Third.patch"
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -94,7 +94,7 @@ index 8422d40..cead32e 100644
  D
 +E
 +F
-diff --git a/file1 b/file1
+diff --but a/file1 b/file1
 new file mode 100644
 index 0000000..b1e6722
 --- /dev/null
@@ -133,7 +133,7 @@ Content-Type: text/x-patch; name="0003-Side.patch"
 Content-Transfer-Encoding: 8bit
 Content-Disposition: inline; filename="0003-Side.patch"
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -142,7 +142,7 @@ index 35d242b..7289e35 100644
  B
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index 01e79c3..f4615da 100644
 --- a/file0
 +++ b/file0
@@ -153,7 +153,7 @@ index 01e79c3..f4615da 100644
 +A
 +B
 +C
-diff --git a/file3 b/file3
+diff --but a/file3 b/file3
 new file mode 100644
 index 0000000..7289e35
 --- /dev/null

@@ -11,10 +11,10 @@
 #include "dir.h"
 
 static char const * const archive_usage[] = {
-	N_("git archive [<options>] <tree-ish> [<path>...]"),
-	"git archive --list",
-	N_("git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"),
-	N_("git archive --remote <repo> [--exec <cmd>] --list"),
+	N_("but archive [<options>] <tree-ish> [<path>...]"),
+	"but archive --list",
+	N_("but archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"),
+	N_("but archive --remote <repo> [--exec <cmd>] --list"),
 	NULL
 };
 
@@ -119,7 +119,7 @@ static const struct attr_check *get_archive_attrs(struct index_state *istate,
 	static struct attr_check *check;
 	if (!check)
 		check = attr_check_initl("export-ignore", "export-subst", NULL);
-	git_check_attr(istate, path, check);
+	but_check_attr(istate, path, check);
 	return check;
 }
 
@@ -309,7 +309,7 @@ int write_archive_entries(struct archiver_args *args,
 		init_tree_desc(&t, args->tree->buffer, args->tree->size);
 		if (unpack_trees(1, &t, &opts))
 			return -1;
-		git_attr_set_direction(GIT_ATTR_INDEX);
+		but_attr_set_direction(GIT_ATTR_INDEX);
 	}
 
 	err = read_tree(args->repo, args->tree,
@@ -557,7 +557,7 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING('o', "output", &output, N_("file"),
 			N_("write the archive to this file")),
 		OPT_BOOL(0, "worktree-attributes", &worktree_attributes,
-			N_("read .gitattributes in working directory")),
+			N_("read .butattributes in working directory")),
 		OPT__VERBOSE(&verbose, N_("report archived files on stderr")),
 		OPT_NUMBER_CALLBACK(&compression_level,
 			N_("set compression level"), number_callback),
@@ -568,7 +568,7 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING(0, "remote", &remote, N_("repo"),
 			N_("retrieve the archive from remote repository <repo>")),
 		OPT_STRING(0, "exec", &exec, N_("command"),
-			N_("path to the remote git-upload-archive command")),
+			N_("path to the remote but-upload-archive command")),
 		OPT_END()
 	};
 
@@ -634,8 +634,8 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	struct archiver_args args;
 	int rc;
 
-	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
-	git_config(git_default_config, NULL);
+	but_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
+	but_config(but_default_config, NULL);
 
 	describe_status.max_invocations = 1;
 	ctx.date_mode.type = DATE_NORMAL;
@@ -652,7 +652,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		 * die ourselves; but its error message will be more specific
 		 * than what we could write here.
 		 */
-		setup_git_directory();
+		setup_but_directory();
 	}
 
 	parse_treeish_arg(argv, &args, prefix, remote);

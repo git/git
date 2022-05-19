@@ -8,35 +8,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'setup binary merge conflict' '
 	echo oneQ1 | q_to_nul >binary &&
-	git add binary &&
-	git cummit -m one &&
+	but add binary &&
+	but cummit -m one &&
 	echo twoQ2 | q_to_nul >binary &&
-	git cummit -a -m two &&
-	two=$(git rev-parse --short HEAD:binary) &&
-	git checkout -b branch-binary HEAD^ &&
+	but cummit -a -m two &&
+	two=$(but rev-parse --short HEAD:binary) &&
+	but checkout -b branch-binary HEAD^ &&
 	echo threeQ3 | q_to_nul >binary &&
-	git cummit -a -m three &&
-	three=$(git rev-parse --short HEAD:binary) &&
-	test_must_fail git merge main &&
+	but cummit -a -m three &&
+	three=$(but rev-parse --short HEAD:binary) &&
+	test_must_fail but merge main &&
 	echo resolvedQhooray | q_to_nul >binary &&
-	git cummit -a -m resolved &&
-	res=$(git rev-parse --short HEAD:binary)
+	but cummit -a -m resolved &&
+	res=$(but rev-parse --short HEAD:binary)
 '
 
 cat >expect <<EOF
 resolved
 
-diff --git a/binary b/binary
+diff --but a/binary b/binary
 index $three..$res 100644
 Binary files a/binary and b/binary differ
 resolved
 
-diff --git a/binary b/binary
+diff --but a/binary b/binary
 index $two..$res 100644
 Binary files a/binary and b/binary differ
 EOF
 test_expect_success 'diff -m indicates binary-ness' '
-	git show --format=%s -m >actual &&
+	but show --format=%s -m >actual &&
 	test_cmp expect actual
 '
 
@@ -48,7 +48,7 @@ index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff -c indicates binary-ness' '
-	git show --format=%s -c >actual &&
+	but show --format=%s -c >actual &&
 	test_cmp expect actual
 '
 
@@ -60,38 +60,38 @@ index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff --cc indicates binary-ness' '
-	git show --format=%s --cc >actual &&
+	but show --format=%s --cc >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'setup non-binary with binary attribute' '
-	git checkout main &&
+	but checkout main &&
 	test_cummit one text &&
 	test_cummit two text &&
-	two=$(git rev-parse --short HEAD:text) &&
-	git checkout -b branch-text HEAD^ &&
+	two=$(but rev-parse --short HEAD:text) &&
+	but checkout -b branch-text HEAD^ &&
 	test_cummit three text &&
-	three=$(git rev-parse --short HEAD:text) &&
-	test_must_fail git merge main &&
+	three=$(but rev-parse --short HEAD:text) &&
+	test_must_fail but merge main &&
 	test_cummit resolved text &&
-	res=$(git rev-parse --short HEAD:text) &&
-	echo text -diff >.gitattributes
+	res=$(but rev-parse --short HEAD:text) &&
+	echo text -diff >.butattributes
 '
 
 cat >expect <<EOF
 resolved
 
-diff --git a/text b/text
+diff --but a/text b/text
 index $three..$res 100644
 Binary files a/text and b/text differ
 resolved
 
-diff --git a/text b/text
+diff --but a/text b/text
 index $two..$res 100644
 Binary files a/text and b/text differ
 EOF
 test_expect_success 'diff -m respects binary attribute' '
-	git show --format=%s -m >actual &&
+	but show --format=%s -m >actual &&
 	test_cmp expect actual
 '
 
@@ -103,7 +103,7 @@ index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff -c respects binary attribute' '
-	git show --format=%s -c >actual &&
+	but show --format=%s -c >actual &&
 	test_cmp expect actual
 '
 
@@ -115,19 +115,19 @@ index $three,$two..$res
 Binary files differ
 EOF
 test_expect_success 'diff --cc respects binary attribute' '
-	git show --format=%s --cc >actual &&
+	but show --format=%s --cc >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'setup textconv attribute' '
-	echo "text diff=upcase" >.gitattributes &&
-	git config diff.upcase.textconv "tr a-z A-Z <"
+	echo "text diff=upcase" >.butattributes &&
+	but config diff.upcase.textconv "tr a-z A-Z <"
 '
 
 cat >expect <<EOF
 resolved
 
-diff --git a/text b/text
+diff --but a/text b/text
 index $three..$res 100644
 --- a/text
 +++ b/text
@@ -136,7 +136,7 @@ index $three..$res 100644
 +RESOLVED
 resolved
 
-diff --git a/text b/text
+diff --but a/text b/text
 index $two..$res 100644
 --- a/text
 +++ b/text
@@ -145,7 +145,7 @@ index $two..$res 100644
 +RESOLVED
 EOF
 test_expect_success 'diff -m respects textconv attribute' '
-	git show --format=%s -m >actual &&
+	but show --format=%s -m >actual &&
 	test_cmp expect actual
 '
 
@@ -162,7 +162,7 @@ index $three,$two..$res
 ++RESOLVED
 EOF
 test_expect_success 'diff -c respects textconv attribute' '
-	git show --format=%s -c >actual &&
+	but show --format=%s -c >actual &&
 	test_cmp expect actual
 '
 
@@ -179,7 +179,7 @@ index $three,$two..$res
 ++RESOLVED
 EOF
 test_expect_success 'diff --cc respects textconv attribute' '
-	git show --format=%s --cc >actual &&
+	but show --format=%s --cc >actual &&
 	test_cmp expect actual
 '
 
@@ -194,7 +194,7 @@ index $three,$two..$res
 ++resolved
 EOF
 test_expect_success 'diff-tree plumbing does not respect textconv' '
-	git diff-tree HEAD -c -p >full &&
+	but diff-tree HEAD -c -p >full &&
 	tail -n +2 full >actual &&
 	test_cmp expect actual
 '
@@ -212,9 +212,9 @@ index $three,$two..0000000
 ++>>>>>>> MAIN
 EOF
 test_expect_success 'diff --cc respects textconv on worktree file' '
-	git reset --hard HEAD^ &&
-	test_must_fail git merge main &&
-	git diff >actual &&
+	but reset --hard HEAD^ &&
+	test_must_fail but merge main &&
+	but diff >actual &&
 	test_cmp expect actual
 '
 

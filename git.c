@@ -24,19 +24,19 @@ struct cmd_struct {
 	unsigned int option;
 };
 
-const char git_usage_string[] =
-	N_("git [--version] [--help] [-C <path>] [-c <name>=<value>]\n"
+const char but_usage_string[] =
+	N_("but [--version] [--help] [-C <path>] [-c <name>=<value>]\n"
 	   "           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
 	   "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n"
-	   "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
+	   "           [--but-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
 	   "           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
 	   "           <command> [<args>]");
 
-const char git_more_info_string[] =
-	N_("'git help -a' and 'git help -g' list available subcommands and some\n"
-	   "concept guides. See 'git help <command>' or 'git help <concept>'\n"
+const char but_more_info_string[] =
+	N_("'but help -a' and 'but help -g' list available subcommands and some\n"
+	   "concept guides. See 'but help <command>' or 'but help <concept>'\n"
 	   "to read about a specific subcommand or concept.\n"
-	   "See 'git help git' for an overview of the system.");
+	   "See 'but help but' for an overview of the system.");
 
 static int use_pager = -1;
 
@@ -65,13 +65,13 @@ static int list_cmds(const char *spec)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
 	int i;
-	int nongit;
+	int nonbut;
 
 	/*
 	* Set up the repository so we can pick up any repo-level config (like
 	* completion.commands).
 	*/
-	setup_git_directory_gently(&nongit);
+	setup_but_directory_gently(&nonbut);
 
 	while (*spec) {
 		const char *sep = strchrnul(spec, ',');
@@ -154,9 +154,9 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		 */
 		if (skip_prefix(cmd, "--exec-path", &cmd)) {
 			if (*cmd == '=')
-				git_set_exec_path(cmd + 1);
+				but_set_exec_path(cmd + 1);
 			else {
-				puts(git_exec_path());
+				puts(but_exec_path());
 				trace2_cmd_name("_query_");
 				exit(0);
 			}
@@ -183,24 +183,24 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			setenv(NO_REPLACE_OBJECTS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
-		} else if (!strcmp(cmd, "--git-dir")) {
+		} else if (!strcmp(cmd, "--but-dir")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no directory given for '%s' option\n" ), "--git-dir");
-				usage(git_usage_string);
+				fprintf(stderr, _("no directory given for '%s' option\n" ), "--but-dir");
+				usage(but_usage_string);
 			}
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		} else if (skip_prefix(cmd, "--git-dir=", &cmd)) {
+		} else if (skip_prefix(cmd, "--but-dir=", &cmd)) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--namespace")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no namespace given for --namespace\n" ));
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
 			setenv(GIT_NAMESPACE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
@@ -214,7 +214,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "--work-tree")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "--work-tree");
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
 			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
@@ -228,7 +228,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "--super-prefix")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no prefix given for --super-prefix\n" ));
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
 			setenv(GIT_SUPER_PREFIX_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
@@ -250,21 +250,21 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "-c")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("-c expects a configuration string\n" ));
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
-			git_config_push_parameter((*argv)[1]);
+			but_config_push_parameter((*argv)[1]);
 			(*argv)++;
 			(*argc)--;
 		} else if (!strcmp(cmd, "--config-env")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no config key given for --config-env\n" ));
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
-			git_config_push_env((*argv)[1]);
+			but_config_push_env((*argv)[1]);
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--config-env=", &cmd)) {
-			git_config_push_env(cmd);
+			but_config_push_env(cmd);
 		} else if (!strcmp(cmd, "--literal-pathspecs")) {
 			setenv(GIT_LITERAL_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
@@ -298,7 +298,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "-C")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "-C");
-				usage(git_usage_string);
+				usage(but_usage_string);
 			}
 			if ((*argv)[1][0]) {
 				if (chdir((*argv)[1]))
@@ -324,7 +324,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			}
 		} else {
 			fprintf(stderr, _("unknown option: %s\n"), cmd);
-			usage(git_usage_string);
+			usage(but_usage_string);
 		}
 
 		(*argv)++;
@@ -349,10 +349,10 @@ static int handle_alias(int *argcp, const char ***argv)
 				   alias_command, alias_string);
 		if (alias_string[0] == '!') {
 			struct child_process child = CHILD_PROCESS_INIT;
-			int nongit_ok;
+			int nonbut_ok;
 
 			/* Aliases expect GIT_PREFIX, GIT_DIR etc to be set */
-			setup_git_directory_gently(&nongit_ok);
+			setup_but_directory_gently(&nonbut_ok);
 
 			cummit_pager_choice();
 
@@ -382,7 +382,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		option_count = handle_options(&new_argv, &count, &envchanged);
 		if (envchanged)
 			die(_("alias '%s' changes environment variables.\n"
-			      "You can use '!git' in the alias to do this"),
+			      "You can use '!but' in the alias to do this"),
 			    alias_command);
 		MOVE_ARRAY(new_argv - option_count, new_argv, count);
 		new_argv -= option_count;
@@ -425,14 +425,14 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	help = argc == 2 && !strcmp(argv[1], "-h");
 	if (help && (run_setup & RUN_SETUP))
-		/* demote to GENTLY to allow 'git cmd -h' outside repo */
+		/* demote to GENTLY to allow 'but cmd -h' outside repo */
 		run_setup = RUN_SETUP_GENTLY;
 
 	if (run_setup & RUN_SETUP) {
-		prefix = setup_git_directory();
+		prefix = setup_but_directory();
 	} else if (run_setup & RUN_SETUP_GENTLY) {
-		int nongit_ok;
-		prefix = setup_git_directory_gently(&nongit_ok);
+		int nonbut_ok;
+		prefix = setup_but_directory_gently(&nonbut_ok);
 	} else {
 		prefix = NULL;
 	}
@@ -444,7 +444,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
 	if (run_setup && startup_info->have_repository)
-		/* get_git_dir() may set up repo, avoid that */
+		/* get_but_dir() may set up repo, avoid that */
 		trace_repo_setup(prefix);
 	cummit_pager_choice();
 
@@ -456,7 +456,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	if (!help && p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
-	trace_argv_printf(argv, "trace: built-in: git");
+	trace_argv_printf(argv, "trace: built-in: but");
 	trace2_cmd_name(p->cmd);
 	trace2_cmd_list_config();
 	trace2_cmd_list_env_vars();
@@ -665,11 +665,11 @@ void load_builtin_commands(const char *prefix, struct cmdnames *cmds)
 	/*
 	 * Callers can ask for a subset of the commands based on a certain
 	 * prefix, which is then dropped from the added names. The names in
-	 * the `commands[]` array do not have the `git-` prefix, though,
-	 * therefore we must expect the `prefix` to at least start with `git-`.
+	 * the `commands[]` array do not have the `but-` prefix, though,
+	 * therefore we must expect the `prefix` to at least start with `but-`.
 	 */
-	if (!skip_prefix(prefix, "git-", &prefix))
-		BUG("prefix '%s' must start with 'git-'", prefix);
+	if (!skip_prefix(prefix, "but-", &prefix))
+		BUG("prefix '%s' must start with 'but-'", prefix);
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++)
 		if (skip_prefix(commands[i].cmd, prefix, &name))
@@ -697,7 +697,7 @@ static void handle_builtin(int argc, const char **argv)
 	strip_extension(argv);
 	cmd = argv[0];
 
-	/* Turn "git cmd --help" into "git help --exclude-guides cmd" */
+	/* Turn "but cmd --help" into "but help --exclude-guides cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
 		int i;
 
@@ -732,7 +732,7 @@ static void execv_dashed_external(const char **argv)
 		use_pager = check_pager_config(argv[0]);
 	cummit_pager_choice();
 
-	strvec_pushf(&cmd.args, "git-%s", argv[0]);
+	strvec_pushf(&cmd.args, "but-%s", argv[0]);
 	strvec_pushv(&cmd.args, argv + 1);
 	cmd.clean_on_exit = 1;
 	cmd.wait_after_clean = 1;
@@ -795,14 +795,14 @@ static int run_argv(int *argcp, const char ***argv)
 			 * command verb to indicate this.  Note that the child
 			 * process will log the actual verb when it runs.
 			 */
-			trace2_cmd_name("_run_git_alias_");
+			trace2_cmd_name("_run_but_alias_");
 
 			if (get_super_prefix())
 				die("%s doesn't support --super-prefix", **argv);
 
 			cummit_pager_choice();
 
-			strvec_push(&args, "git");
+			strvec_push(&args, "but");
 			for (i = 0; i < *argcp; i++)
 				strvec_push(&args, (*argv)[i]);
 
@@ -813,7 +813,7 @@ static int run_argv(int *argcp, const char ***argv)
 			 * OK to return. Otherwise, we just pass along the status code.
 			 */
 			i = run_command_v_opt_tr2(args.v, RUN_SILENT_EXEC_FAILURE |
-						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "git_alias");
+						  RUN_CLEAN_ON_EXIT | RUN_WAIT_AFTER_CLEAN, "but_alias");
 			if (i >= 0 || errno != ENOENT)
 				exit(i);
 			die("could not execute builtin %s", **argv);
@@ -843,7 +843,7 @@ static int run_argv(int *argcp, const char ***argv)
 
 		/*
 		 * It could be an alias -- this works around the insanity
-		 * of overriding "git log" with "git show" by having
+		 * of overriding "but log" with "but show" by having
 		 * alias.log = show
 		 */
 		if (!handle_alias(argcp, argv))
@@ -863,7 +863,7 @@ int cmd_main(int argc, const char **argv)
 
 	cmd = argv[0];
 	if (!cmd)
-		cmd = "git-help";
+		cmd = "but-help";
 	else {
 		const char *slash = find_last_dir_sep(cmd);
 		if (slash)
@@ -873,16 +873,16 @@ int cmd_main(int argc, const char **argv)
 	trace_command_performance(argv);
 
 	/*
-	 * "git-xxxx" is the same as "git xxxx", but we obviously:
+	 * "but-xxxx" is the same as "but xxxx", but we obviously:
 	 *
-	 *  - cannot take flags in between the "git" and the "xxxx".
+	 *  - cannot take flags in between the "but" and the "xxxx".
 	 *  - cannot execute it externally (since it would just do
 	 *    the same thing over again)
 	 *
 	 * So we just directly call the builtin handler, and die if
 	 * that one cannot handle it.
 	 */
-	if (skip_prefix(cmd, "git-", &cmd)) {
+	if (skip_prefix(cmd, "but-", &cmd)) {
 		argv[0] = cmd;
 		handle_builtin(argc, argv);
 		die(_("cannot handle %s as a builtin"), cmd);
@@ -898,17 +898,17 @@ int cmd_main(int argc, const char **argv)
 	} else {
 		/* The user didn't specify a command; give them help */
 		cummit_pager_choice();
-		printf(_("usage: %s\n\n"), git_usage_string);
+		printf(_("usage: %s\n\n"), but_usage_string);
 		list_common_cmds_help();
-		printf("\n%s\n", _(git_more_info_string));
+		printf("\n%s\n", _(but_more_info_string));
 		exit(1);
 	}
 	cmd = argv[0];
 
 	/*
-	 * We use PATH to find git commands, but we prepend some higher
+	 * We use PATH to find but commands, but we prepend some higher
 	 * precedence paths: the "--exec-path" option, the GIT_EXEC_PATH
-	 * environment, and the $(gitexecdir) from the Makefile at build
+	 * environment, and the $(butexecdir) from the Makefile at build
 	 * time.
 	 */
 	setup_path();
@@ -919,7 +919,7 @@ int cmd_main(int argc, const char **argv)
 			break;
 		if (was_alias) {
 			fprintf(stderr, _("expansion of alias '%s' failed; "
-					  "'%s' is not a git command\n"),
+					  "'%s' is not a but command\n"),
 				cmd, argv[0]);
 			exit(1);
 		}

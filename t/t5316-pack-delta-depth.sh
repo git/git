@@ -20,7 +20,7 @@ test_description='pack-objects breaks long cross-pack delta chains'
 #    On the receiving end, "index-pack --fix-thin" will
 #    complete the pack with a base copy of blob X-1.
 #
-# 3. In older versions of git, if we used the delta from
+# 3. In older versions of but, if we used the delta from
 #    pack X, then we'd always find blob X-1 as a base in the
 #    same pack (and generate a fresh delta).
 #
@@ -53,19 +53,19 @@ test_expect_success 'create series of packs' '
 	do
 		cat content >file &&
 		echo $i >>file &&
-		git add file &&
-		git cummit -m $i &&
-		cur=$(git rev-parse HEAD^{tree}) &&
+		but add file &&
+		but cummit -m $i &&
+		cur=$(but rev-parse HEAD^{tree}) &&
 		{
 			if test -n "$prev"
 			then
 				echo "-$prev"
 			fi &&
 			echo $cur &&
-			echo "$(git rev-parse :file) file"
-		} | git pack-objects --stdout >tmp &&
+			echo "$(but rev-parse :file) file"
+		} | but pack-objects --stdout >tmp &&
 		GIT_TRACE2_EVENT=$PWD/trace \
-		git index-pack -v --stdin --fix-thin <tmp || return 1 &&
+		but index-pack -v --stdin --fix-thin <tmp || return 1 &&
 		grep -c region_enter.*progress trace >enter &&
 		grep -c region_leave.*progress trace >leave &&
 		test_cmp enter leave &&
@@ -74,7 +74,7 @@ test_expect_success 'create series of packs' '
 '
 
 max_chain() {
-	git index-pack --verify-stat-only "$1" >output &&
+	but index-pack --verify-stat-only "$1" >output &&
 	perl -lne '
 	  BEGIN { $len = 0 }
 	  /chain length = (\d+)/ and $len = $1;
@@ -89,28 +89,28 @@ max_chain() {
 test_expect_success 'packing produces a long delta' '
 	# Use --window=0 to make sure we are seeing reused deltas,
 	# not computing a new long chain.
-	pack=$(git pack-objects --all --window=0 </dev/null pack) &&
+	pack=$(but pack-objects --all --window=0 </dev/null pack) &&
 	echo 9 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--depth limits depth' '
-	pack=$(git pack-objects --all --depth=5 </dev/null pack) &&
+	pack=$(but pack-objects --all --depth=5 </dev/null pack) &&
 	echo 5 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--depth=0 disables deltas' '
-	pack=$(git pack-objects --all --depth=0 </dev/null pack) &&
+	pack=$(but pack-objects --all --depth=0 </dev/null pack) &&
 	echo 0 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'negative depth disables deltas' '
-	pack=$(git pack-objects --all --depth=-1 </dev/null pack) &&
+	pack=$(but pack-objects --all --depth=-1 </dev/null pack) &&
 	echo 0 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual

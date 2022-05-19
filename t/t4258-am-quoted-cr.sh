@@ -14,24 +14,24 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'am warn if quoted-cr is found' '
-	git reset --hard one &&
-	test_must_fail git am "$DATA/mbox" 2>err &&
+	but reset --hard one &&
+	test_must_fail but am "$DATA/mbox" 2>err &&
 	grep "quoted CRLF detected" err
 '
 
 test_expect_success 'am --quoted-cr=strip' '
-	test_might_fail git am --abort &&
-	git reset --hard one &&
-	git am --quoted-cr=strip "$DATA/mbox" &&
-	git diff --exit-code HEAD two
+	test_might_fail but am --abort &&
+	but reset --hard one &&
+	but am --quoted-cr=strip "$DATA/mbox" &&
+	but diff --exit-code HEAD two
 '
 
 test_expect_success 'am with config mailinfo.quotedCr=strip' '
-	test_might_fail git am --abort &&
-	git reset --hard one &&
+	test_might_fail but am --abort &&
+	but reset --hard one &&
 	test_config mailinfo.quotedCr strip &&
-	git am "$DATA/mbox" &&
-	git diff --exit-code HEAD two
+	but am "$DATA/mbox" &&
+	but diff --exit-code HEAD two
 '
 
 test_done

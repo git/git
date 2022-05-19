@@ -7,6 +7,6 @@ CVE-2019-1350, CVE-2019-1351, CVE-2019-1352, CVE-2019-1353,
 CVE-2019-1354, and CVE-2019-1387; see the release notes for those
 versions for details.
 
-In addition, `git fsck` was taught to identify `.gitmodules` entries
+In addition, `but fsck` was taught to identify `.butmodules` entries
 of the form `submodule.<name>.update=!command`, which have been
 disallowed in v2.15.4.

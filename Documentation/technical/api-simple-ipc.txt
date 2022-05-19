@@ -25,7 +25,7 @@ When received, the response is returned back the caller.
 For example, the `fsmonitor--daemon` feature will be built as a server
 application on top of the IPC-server library routines.  It will have
 threads watching for file system events and a thread pool waiting for
-client connections.  Clients, such as `git status` will request a list
+client connections.  Clients, such as `but status` will request a list
 of file system events since a point in time and the server will
 respond with a list of changed files and directories.  The formats of
 the request and response are application-specific; the IPC-client and

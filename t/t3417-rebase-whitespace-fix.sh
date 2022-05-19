@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git rebase --whitespace=fix
+test_description='but rebase --whitespace=fix
 
-This test runs git rebase --whitespace=fix and make sure that it works.
+This test runs but rebase --whitespace=fix and make sure that it works.
 '
 
 . ./test-lib.sh
@@ -49,12 +49,12 @@ f
 EOF
 
 test_expect_success 'blank line at end of file; extend at end of file' '
-	git cummit --allow-empty -m "Initial empty cummit" &&
-	git add file && git cummit -m first &&
+	but cummit --allow-empty -m "Initial empty cummit" &&
+	but add file && but cummit -m first &&
 	mv second file &&
-	git add file && git cummit -m second &&
-	git rebase --whitespace=fix HEAD^^ &&
-	git diff --exit-code HEAD^:file expect-first &&
+	but add file && but cummit -m second &&
+	but rebase --whitespace=fix HEAD^^ &&
+	but diff --exit-code HEAD^:file expect-first &&
 	test_cmp expect-second file
 '
 
@@ -79,18 +79,18 @@ EOF
 sed -e's/ //g' <third >expect-third
 
 test_expect_success 'two blanks line at end of file; extend at end of file' '
-	cp third file && git add file && git cummit -m third &&
-	git rebase --whitespace=fix HEAD^^ &&
-	git diff --exit-code HEAD^:file expect-second &&
+	cp third file && but add file && but cummit -m third &&
+	but rebase --whitespace=fix HEAD^^ &&
+	but diff --exit-code HEAD^:file expect-second &&
 	test_cmp expect-third file
 '
 
 test_expect_success 'same, but do not remove trailing spaces' '
-	git config core.whitespace "-blank-at-eol" &&
-	git reset --hard HEAD^ &&
-	cp third file && git add file && git cummit -m third &&
-	git rebase --whitespace=fix HEAD^^ &&
-	git diff --exit-code HEAD^:file expect-second &&
+	but config core.whitespace "-blank-at-eol" &&
+	but reset --hard HEAD^ &&
+	cp third file && but add file && but cummit -m third &&
+	but rebase --whitespace=fix HEAD^^ &&
+	but diff --exit-code HEAD^:file expect-second &&
 	test_cmp file third
 '
 
@@ -112,12 +112,12 @@ a
 EOF
 
 test_expect_success 'at beginning of file' '
-	git config core.whitespace "blank-at-eol" &&
+	but config core.whitespace "blank-at-eol" &&
 	cp beginning file &&
-	git cummit -m beginning file &&
+	but cummit -m beginning file &&
 	test_write_lines 1 2 3 4 5 >>file &&
-	git cummit -m more file &&
-	git rebase --whitespace=fix HEAD^^ &&
+	but cummit -m more file &&
+	but rebase --whitespace=fix HEAD^^ &&
 	test_cmp expect-beginning file
 '
 

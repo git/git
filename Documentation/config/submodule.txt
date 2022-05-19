@@ -1,37 +1,37 @@
 submodule.<name>.url::
-	The URL for a submodule. This variable is copied from the .gitmodules
-	file to the git config via 'git submodule init'. The user can change
-	the configured URL before obtaining the submodule via 'git submodule
+	The URL for a submodule. This variable is copied from the .butmodules
+	file to the but config via 'but submodule init'. The user can change
+	the configured URL before obtaining the submodule via 'but submodule
 	update'. If neither submodule.<name>.active or submodule.active are
 	set, the presence of this variable is used as a fallback to indicate
-	whether the submodule is of interest to git commands.
-	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+	whether the submodule is of interest to but commands.
+	See linkbut:but-submodule[1] and linkbut:butmodules[5] for details.
 
 submodule.<name>.update::
-	The method by which a submodule is updated by 'git submodule update',
+	The method by which a submodule is updated by 'but submodule update',
 	which is the only affected command, others such as
-	'git checkout --recurse-submodules' are unaffected. It exists for
-	historical reasons, when 'git submodule' was the only command to
+	'but checkout --recurse-submodules' are unaffected. It exists for
+	historical reasons, when 'but submodule' was the only command to
 	interact with submodules; settings like `submodule.active`
 	and `pull.rebase` are more specific. It is populated by
-	`git submodule init` from the linkgit:gitmodules[5] file.
-	See description of 'update' command in linkgit:git-submodule[1].
+	`but submodule init` from the linkbut:butmodules[5] file.
+	See description of 'update' command in linkbut:but-submodule[1].
 
 submodule.<name>.branch::
-	The remote branch name for a submodule, used by `git submodule
+	The remote branch name for a submodule, used by `but submodule
 	update --remote`.  Set this option to override the value found in
-	the `.gitmodules` file.  See linkgit:git-submodule[1] and
-	linkgit:gitmodules[5] for details.
+	the `.butmodules` file.  See linkbut:but-submodule[1] and
+	linkbut:butmodules[5] for details.
 
 submodule.<name>.fetchRecurseSubmodules::
 	This option can be used to control recursive fetching of this
 	submodule. It can be overridden by using the --[no-]recurse-submodules
-	command-line option to "git fetch" and "git pull".
-	This setting will override that from in the linkgit:gitmodules[5]
+	command-line option to "but fetch" and "but pull".
+	This setting will override that from in the linkbut:butmodules[5]
 	file.
 
 submodule.<name>.ignore::
-	Defines under what circumstances "git status" and the diff family show
+	Defines under what circumstances "but status" and the diff family show
 	a submodule as modified. When set to "all", it will never be considered
 	modified (but it will nonetheless show up in the output of status and
 	cummit when it has been staged), "dirty" will ignore all changes
@@ -41,21 +41,21 @@ submodule.<name>.ignore::
 	let submodules with modified tracked files in their work tree show up.
 	Using "none" (the default when this option is not set) also shows
 	submodules that have untracked files in their work tree as changed.
-	This setting overrides any setting made in .gitmodules for this submodule,
+	This setting overrides any setting made in .butmodules for this submodule,
 	both settings can be overridden on the command line by using the
-	"--ignore-submodules" option. The 'git submodule' commands are not
+	"--ignore-submodules" option. The 'but submodule' commands are not
 	affected by this setting.
 
 submodule.<name>.active::
-	Boolean value indicating if the submodule is of interest to git
+	Boolean value indicating if the submodule is of interest to but
 	commands.  This config option takes precedence over the
-	submodule.active config option. See linkgit:gitsubmodules[7] for
+	submodule.active config option. See linkbut:butsubmodules[7] for
 	details.
 
 submodule.active::
 	A repeated field which contains a pathspec used to match against a
-	submodule's path to determine if the submodule is of interest to git
-	commands. See linkgit:gitsubmodules[7] for details.
+	submodule's path to determine if the submodule is of interest to but
+	commands. See linkbut:butsubmodules[7] for details.
 
 submodule.recurse::
 	A boolean indicating if commands should enable the `--recurse-submodules`
@@ -64,10 +64,10 @@ submodule.recurse::
 When set to true, it can be deactivated via the
 `--no-recurse-submodules` option. Note that some Git commands
 lacking this option may call some of the above commands affected by
-`submodule.recurse`; for instance `git remote update` will call
-`git fetch` but does not have a `--no-recurse-submodules` option.
+`submodule.recurse`; for instance `but remote update` will call
+`but fetch` but does not have a `--no-recurse-submodules` option.
 For these commands a workaround is to temporarily change the
-configuration value by using `git -c submodule.recurse=0`.
+configuration value by using `but -c submodule.recurse=0`.
 +
 The following list shows the commands that accept
 `--recurse-submodules` and whether they are supported by this

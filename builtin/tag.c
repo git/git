@@ -1,9 +1,9 @@
 /*
- * Builtin "git tag"
+ * Builtin "but tag"
  *
  * Copyright (c) 2007 Kristian Høgsberg <krh@redhat.com>,
  *                    Carlos Rica <jasampler@gmail.com>
- * Based on git-tag.sh and mktag.c by Linus Torvalds.
+ * Based on but-tag.sh and mktag.c by Linus Torvalds.
  */
 
 #include "cache.h"
@@ -22,13 +22,13 @@
 #include "ref-filter.h"
 #include "date.h"
 
-static const char * const git_tag_usage[] = {
-	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
+static const char * const but_tag_usage[] = {
+	N_("but tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
 	   "        <tagname> [<head>]"),
-	N_("git tag -d <tagname>..."),
-	N_("git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--points-at <object>]\n"
+	N_("but tag -d <tagname>..."),
+	N_("but tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--points-at <object>]\n"
 	   "        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] [<pattern>...]"),
-	N_("git tag -v [--format=<format>] <tagname>..."),
+	N_("but tag -v [--format=<format>] <tagname>..."),
 	NULL
 };
 
@@ -176,12 +176,12 @@ static const char tag_template_nocleanup[] =
 	"Lines starting with '%c' will be kept; you may remove them"
 	" yourself if you want to.\n");
 
-static int git_tag_config(const char *var, const char *value, void *cb)
+static int but_tag_config(const char *var, const char *value, void *cb)
 {
 	int status;
 
 	if (!strcmp(var, "tag.gpgsign")) {
-		config_sign_tag = git_config_bool(var, value);
+		config_sign_tag = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -192,17 +192,17 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	status = git_gpg_config(var, value, cb);
+	status = but_gpg_config(var, value, cb);
 	if (status)
 		return status;
 	if (!strcmp(var, "tag.forcesignannotated")) {
-		force_sign_annotate = git_config_bool(var, value);
+		force_sign_annotate = but_config_bool(var, value);
 		return 0;
 	}
 
 	if (starts_with(var, "column."))
-		return git_column_config(var, value, "tag", &colopts);
-	return git_color_default_config(var, value, cb);
+		return but_column_config(var, value, "tag", &colopts);
+	return but_color_default_config(var, value, cb);
 }
 
 static void write_tag_body(int fd, const struct object_id *oid)
@@ -259,7 +259,7 @@ static const char message_advice_nested_tag[] =
 	N_("You have created a nested tag. The object referred to by your new tag is\n"
 	   "already a tag. If you meant to tag the object that it points to, use:\n"
 	   "\n"
-	   "\tgit tag -f %s %s^{}");
+	   "\tbut tag -f %s %s^{}");
 
 static void create_tag(const struct object_id *object, const char *object_ref,
 		       const char *tag,
@@ -286,13 +286,13 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 		    oid_to_hex(object),
 		    type_name(type),
 		    tag,
-		    git_cummitter_info(IDENT_STRICT));
+		    but_cummitter_info(IDENT_STRICT));
 
 	if (!opt->message_given || opt->use_editor) {
 		int fd;
 
 		/* write the template message before editing: */
-		path = git_pathdup("TAG_EDITMSG");
+		path = but_pathdup("TAG_EDITMSG");
 		fd = xopen(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (opt->message_given) {
@@ -488,14 +488,14 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	setup_ref_filter_porcelain_msg();
 
-	git_config(git_tag_config, &sorting_options);
+	but_config(but_tag_config, &sorting_options);
 
 	memset(&opt, 0, sizeof(opt));
 	memset(&filter, 0, sizeof(filter));
 	filter.lines = -1;
 	opt.sign = -1;
 
-	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, but_tag_usage, 0);
 
 	if (!cmdmode) {
 		if (argc == 0)
@@ -519,7 +519,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	create_tag_object = (opt.sign || annotate || msg.given || msgfile);
 
 	if ((create_tag_object || force) && (cmdmode != 0))
-		usage_with_options(git_tag_usage, options);
+		usage_with_options(but_tag_usage, options);
 
 	finalize_colopts(&colopts, -1);
 	if (cmdmode == 'l' && filter.lines != -1) {
@@ -563,7 +563,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	if (cmdmode == 'v') {
 		if (format.format && verify_ref_format(&format))
-			usage_with_options(git_tag_usage, options);
+			usage_with_options(but_tag_usage, options);
 		ret = for_each_tag_name(argv, verify_tag, &format);
 		goto cleanup;
 	}

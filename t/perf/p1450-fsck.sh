@@ -7,7 +7,7 @@ test_description='Test fsck performance'
 test_perf_large_repo
 
 test_perf 'fsck' '
-	git fsck
+	but fsck
 '
 
 test_done

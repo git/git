@@ -3,9 +3,9 @@
 # Copyright (c) 2008 Eric Wong
 #
 
-test_description='git svn authors file tests'
+test_description='but svn authors file tests'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 cat > svn-authors <<EOF
 aa = AAAAAAA AAAAAAA <aa@example.com>
@@ -20,17 +20,17 @@ test_expect_success 'setup svnrepo' '
 	'
 
 test_expect_success 'start import with incomplete authors file' '
-	test_must_fail git svn clone --authors-file=svn-authors "$svnrepo" x
+	test_must_fail but svn clone --authors-file=svn-authors "$svnrepo" x
 	'
 
 test_expect_success 'imported 2 revisions successfully' '
 	(
 		cd x &&
-		git rev-list refs/remotes/git-svn >actual &&
+		but rev-list refs/remotes/but-svn >actual &&
 		test_line_count = 2 actual &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
+		but rev-list -1 --pretty=raw refs/remotes/but-svn >actual &&
 		grep "^author BBBBBBB BBBBBBB <bb@example\.com> " actual &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
+		but rev-list -1 --pretty=raw refs/remotes/but-svn~1 >actual &&
 		grep "^author AAAAAAA AAAAAAA <aa@example\.com> " actual
 	)
 	'
@@ -43,12 +43,12 @@ EOF
 test_expect_success 'continues to import once authors have been added' '
 	(
 		cd x &&
-		git svn fetch --authors-file=../svn-authors &&
-		git rev-list refs/remotes/git-svn >actual &&
+		but svn fetch --authors-file=../svn-authors &&
+		but rev-list refs/remotes/but-svn >actual &&
 		test_line_count = 4 actual &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
+		but rev-list -1 --pretty=raw refs/remotes/but-svn >actual &&
 		grep "^author DDDDDDD DDDDDDD <dd@example\.com> " actual &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
+		but rev-list -1 --pretty=raw refs/remotes/but-svn~1 >actual &&
 		grep "^author CCCCCCC CCCCCCC <cc@example\.com> " actual
 	)
 	'
@@ -56,7 +56,7 @@ test_expect_success 'continues to import once authors have been added' '
 test_expect_success 'authors-file against globs' '
 	svn_cmd mkdir -m globs --username aa \
 	  "$svnrepo"/aa/trunk "$svnrepo"/aa/branches "$svnrepo"/aa/tags &&
-	git svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
+	but svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
 	for i in bb ee cc
 	do
 		branch="aa/branches/$i" &&
@@ -65,11 +65,11 @@ test_expect_success 'authors-file against globs' '
 	'
 
 test_expect_success 'fetch fails on ee' '
-	( cd aa-work && test_must_fail git svn fetch --authors-file=../svn-authors )
+	( cd aa-work && test_must_fail but svn fetch --authors-file=../svn-authors )
 	'
 
 tmp_config_get () {
-	git config --file=.git/svn/.metadata --get "$1"
+	but config --file=.but/svn/.metadata --get "$1"
 }
 
 test_expect_success 'failure happened without negative side effects' '
@@ -87,7 +87,7 @@ EOF
 test_expect_success 'fetch continues after authors-file is fixed' '
 	(
 		cd aa-work &&
-		git svn fetch --authors-file=../svn-authors &&
+		but svn fetch --authors-file=../svn-authors &&
 		test 8 -eq "$(tmp_config_get svn-remote.svn.branches-maxRev)" &&
 		test 8 -eq "$(tmp_config_get svn-remote.svn.tags-maxRev)"
 	)
@@ -96,17 +96,17 @@ test_expect_success 'fetch continues after authors-file is fixed' '
 test_expect_success !MINGW 'fresh clone with svn.authors-file in config' '
 	(
 		rm -r "$GIT_DIR" &&
-		test x = x"$(git config svn.authorsfile)" &&
-		test_config="$HOME"/.gitconfig &&
+		test x = x"$(but config svn.authorsfile)" &&
+		test_config="$HOME"/.butconfig &&
 		sane_unset GIT_DIR &&
-		git config --global \
+		but config --global \
 		  svn.authorsfile "$HOME"/svn-authors &&
-		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&
-		git svn clone "$svnrepo" gitconfig.clone &&
-		cd gitconfig.clone &&
-		git log >actual &&
+		test x"$HOME"/svn-authors = x"$(but config svn.authorsfile)" &&
+		but svn clone "$svnrepo" butconfig.clone &&
+		cd butconfig.clone &&
+		but log >actual &&
 		nr_ex=$(grep "^Author:.*example.com" actual | wc -l) &&
-		git rev-list HEAD >actual &&
+		but rev-list HEAD >actual &&
 		nr_rev=$(wc -l <actual) &&
 		test $nr_rev -eq $nr_ex
 	)
@@ -120,12 +120,12 @@ test_expect_success 'authors-file imported user without email' '
 	svn_cmd mkdir -m aa/branches/ff --username ff "$svnrepo/aa/branches/ff" &&
 	(
 		cd aa-work &&
-		git svn fetch --authors-file=../svn-authors &&
-		git rev-list -1 --pretty=raw refs/remotes/origin/ff | \
+		but svn fetch --authors-file=../svn-authors &&
+		but rev-list -1 --pretty=raw refs/remotes/origin/ff | \
 		  grep "^author FFFFFFF FFFFFFF <> "
 	)
 	'
 
-test_debug 'GIT_DIR=gitconfig.clone/.git git log'
+test_debug 'GIT_DIR=butconfig.clone/.but but log'
 
 test_done

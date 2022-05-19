@@ -5,7 +5,7 @@
 
 test_description='Test submodules set-branch subcommand
 
-This test verifies that the set-branch subcommand of git-submodule is working
+This test verifies that the set-branch subcommand of but-submodule is working
 as expected.
 '
 
@@ -15,38 +15,38 @@ TEST_NO_CREATE_REPO=1
 test_expect_success 'submodule config cache setup' '
 	mkdir submodule &&
 	(cd submodule &&
-		git init &&
+		but init &&
 		echo a >a &&
-		git add . &&
-		git cummit -ma &&
-		git checkout -b topic &&
+		but add . &&
+		but cummit -ma &&
+		but checkout -b topic &&
 		echo b >a &&
-		git add . &&
-		git cummit -mb
+		but add . &&
+		but cummit -mb
 	) &&
 	mkdir super &&
 	(cd super &&
-		git init &&
-		git submodule add ../submodule &&
-		git cummit -m "add submodule"
+		but init &&
+		but submodule add ../submodule &&
+		but cummit -m "add submodule"
 	)
 '
 
 test_expect_success 'ensure submodule branch is unset' '
 	(cd super &&
-		! grep branch .gitmodules
+		! grep branch .butmodules
 	)
 '
 
 test_expect_success 'test submodule set-branch --branch' '
 	(cd super &&
-		git submodule set-branch --branch topic submodule &&
-		grep "branch = topic" .gitmodules &&
-		git submodule update --remote &&
+		but submodule set-branch --branch topic submodule &&
+		grep "branch = topic" .butmodules &&
+		but submodule update --remote &&
 		cat <<-\EOF >expect &&
 		b
 		EOF
-		git -C submodule show -s --pretty=%s >actual &&
+		but -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
 	)
 '
@@ -54,13 +54,13 @@ test_expect_success 'test submodule set-branch --branch' '
 test_expect_success 'test submodule set-branch --default' '
 	test_cummit -C submodule c &&
 	(cd super &&
-		git submodule set-branch --default submodule &&
-		! grep branch .gitmodules &&
-		git submodule update --remote &&
+		but submodule set-branch --default submodule &&
+		! grep branch .butmodules &&
+		but submodule update --remote &&
 		cat <<-\EOF >expect &&
 		c
 		EOF
-		git -C submodule show -s --pretty=%s >actual &&
+		but -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
 	)
 '
@@ -68,13 +68,13 @@ test_expect_success 'test submodule set-branch --default' '
 test_expect_success 'test submodule set-branch -b' '
 	test_cummit -C submodule b &&
 	(cd super &&
-		git submodule set-branch -b topic submodule &&
-		grep "branch = topic" .gitmodules &&
-		git submodule update --remote &&
+		but submodule set-branch -b topic submodule &&
+		grep "branch = topic" .butmodules &&
+		but submodule update --remote &&
 		cat <<-\EOF >expect &&
 		b
 		EOF
-		git -C submodule show -s --pretty=%s >actual &&
+		but -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
 	)
 '
@@ -82,13 +82,13 @@ test_expect_success 'test submodule set-branch -b' '
 test_expect_success 'test submodule set-branch -d' '
 	test_cummit -C submodule d &&
 	(cd super &&
-		git submodule set-branch -d submodule &&
-		! grep branch .gitmodules &&
-		git submodule update --remote &&
+		but submodule set-branch -d submodule &&
+		! grep branch .butmodules &&
+		but submodule update --remote &&
 		cat <<-\EOF >expect &&
 		d
 		EOF
-		git -C submodule show -s --pretty=%s >actual &&
+		but -C submodule show -s --pretty=%s >actual &&
 		test_cmp expect actual
 	)
 '

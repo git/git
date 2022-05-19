@@ -17,51 +17,51 @@ check_head_equals() {
 
 test_expect_success setup '
 	echo first > file1 &&
-	git add file1 &&
+	but add file1 &&
 	test_tick &&
-	git cummit -m "first" &&
-	git tag first &&
+	but cummit -m "first" &&
+	but tag first &&
 
-	git checkout -b other &&
+	but checkout -b other &&
 	for val in second third fourth
 	do
 		echo $val >> file1 &&
-		git add file1 &&
+		but add file1 &&
 		test_tick &&
-		git cummit -m "$val" &&
-		git tag $val || return 1
+		but cummit -m "$val" &&
+		but tag $val || return 1
 	done
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick first..fourth &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
+	but cherry-pick first..fourth &&
+	but diff --quiet other &&
+	but diff --quiet HEAD other &&
 	check_head_differs_from fourth
 '
 
 test_expect_success 'cherry-pick three one two works' '
-	git checkout -f first &&
+	but checkout -f first &&
 	test_cummit one &&
 	test_cummit two &&
 	test_cummit three &&
-	git checkout -f main &&
-	git reset --hard first &&
-	git cherry-pick three one two &&
-	git diff --quiet three &&
-	git diff --quiet HEAD three &&
-	test "$(git log --reverse --format=%s first..)" = "three
+	but checkout -f main &&
+	but reset --hard first &&
+	but cherry-pick three one two &&
+	but diff --quiet three &&
+	but diff --quiet HEAD three &&
+	test "$(but log --reverse --format=%s first..)" = "three
 one
 two"
 '
 
 test_expect_success 'cherry-pick three one two: fails' '
-	git checkout -f main &&
-	git reset --hard first &&
-	test_must_fail git cherry-pick three one two:
+	but checkout -f main &&
+	but reset --hard first &&
+	test_must_fail but cherry-pick three one two:
 '
 
 test_expect_success 'output to keep user entertained during multi-pick' '
@@ -80,22 +80,22 @@ test_expect_success 'output to keep user entertained during multi-pick' '
 	 1 file changed, 1 insertion(+)
 	EOF
 
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick first..fourth >actual &&
+	but cherry-pick first..fourth >actual &&
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
 	test_line_count -ge 3 actual.fuzzy &&
 	test_cmp expected actual.fuzzy
 '
 
 test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick --strategy resolve first..fourth &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
+	but cherry-pick --strategy resolve first..fourth &&
+	but diff --quiet other &&
+	but diff --quiet HEAD other &&
 	check_head_differs_from fourth
 '
 
@@ -118,81 +118,81 @@ test_expect_success 'output during multi-pick indicates merge strategy' '
 	 1 file changed, 1 insertion(+)
 	EOF
 
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick --strategy resolve first..fourth >actual &&
+	but cherry-pick --strategy resolve first..fourth >actual &&
 	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
 	test_cmp expected actual.fuzzy
 '
 
 test_expect_success 'cherry-pick --ff first..fourth works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick --ff first..fourth &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
+	but cherry-pick --ff first..fourth &&
+	but diff --quiet other &&
+	but diff --quiet HEAD other &&
 	check_head_equals fourth
 '
 
 test_expect_success 'cherry-pick -n first..fourth works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick -n first..fourth &&
-	git diff --quiet other &&
-	git diff --cached --quiet other &&
-	git diff --quiet HEAD first
+	but cherry-pick -n first..fourth &&
+	but diff --quiet other &&
+	but diff --cached --quiet other &&
+	but diff --quiet HEAD first
 '
 
 test_expect_success 'revert first..fourth works' '
-	git checkout -f main &&
-	git reset --hard fourth &&
+	but checkout -f main &&
+	but reset --hard fourth &&
 	test_tick &&
-	git revert first..fourth &&
-	git diff --quiet first &&
-	git diff --cached --quiet first &&
-	git diff --quiet HEAD first
+	but revert first..fourth &&
+	but diff --quiet first &&
+	but diff --cached --quiet first &&
+	but diff --quiet HEAD first
 '
 
 test_expect_success 'revert ^first fourth works' '
-	git checkout -f main &&
-	git reset --hard fourth &&
+	but checkout -f main &&
+	but reset --hard fourth &&
 	test_tick &&
-	git revert ^first fourth &&
-	git diff --quiet first &&
-	git diff --cached --quiet first &&
-	git diff --quiet HEAD first
+	but revert ^first fourth &&
+	but diff --quiet first &&
+	but diff --cached --quiet first &&
+	but diff --quiet HEAD first
 '
 
 test_expect_success 'revert fourth fourth~1 fourth~2 works' '
-	git checkout -f main &&
-	git reset --hard fourth &&
+	but checkout -f main &&
+	but reset --hard fourth &&
 	test_tick &&
-	git revert fourth fourth~1 fourth~2 &&
-	git diff --quiet first &&
-	git diff --cached --quiet first &&
-	git diff --quiet HEAD first
+	but revert fourth fourth~1 fourth~2 &&
+	but diff --quiet first &&
+	but diff --cached --quiet first &&
+	but diff --quiet HEAD first
 '
 
 test_expect_success 'cherry-pick -3 fourth works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick -3 fourth &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
+	but cherry-pick -3 fourth &&
+	but diff --quiet other &&
+	but diff --quiet HEAD other &&
 	check_head_differs_from fourth
 '
 
 test_expect_success 'cherry-pick --stdin works' '
-	git checkout -f main &&
-	git reset --hard first &&
+	but checkout -f main &&
+	but reset --hard first &&
 	test_tick &&
-	git rev-list --reverse first..fourth | git cherry-pick --stdin &&
-	git diff --quiet other &&
-	git diff --quiet HEAD other &&
+	but rev-list --reverse first..fourth | but cherry-pick --stdin &&
+	but diff --quiet other &&
+	but diff --quiet HEAD other &&
 	check_head_differs_from fourth
 '
 

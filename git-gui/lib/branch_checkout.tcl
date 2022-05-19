@@ -1,4 +1,4 @@
-# git-gui branch checkout support
+# but-gui branch checkout support
 # Copyright (C) 2007 Shawn Pearce
 
 class branch_checkout {

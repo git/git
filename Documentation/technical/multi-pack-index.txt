@@ -33,7 +33,7 @@ Design Details
 --------------
 
 - The MIDX is stored in a file named 'multi-pack-index' in the
-  .git/objects/pack directory. This could be stored in the pack
+  .but/objects/pack directory. This could be stored in the pack
   directory of an alternate. It refers only to packfiles in that
   same directory.
 
@@ -51,8 +51,8 @@ Design Details
   modified packfile.
 
 - If there exist packfiles in the pack directory not registered in
-  the MIDX, then those packfiles are loaded into the `packed_git`
-  list and `packed_git_mru` cache.
+  the MIDX, then those packfiles are loaded into the `packed_but`
+  list and `packed_but_mru` cache.
 
 - The pack-indexes (.idx files) remain in the pack directory so we
   can delete the MIDX file, set core.midx to false, or downgrade
@@ -90,11 +90,11 @@ Future Work
 
 Related Links
 -------------
-[0] https://bugs.chromium.org/p/git/issues/detail?id=6
+[0] https://bugs.chromium.org/p/but/issues/detail?id=6
     Chromium work item for: Multi-Pack Index (MIDX)
 
-[1] https://lore.kernel.org/git/20180107181459.222909-1-dstolee@microsoft.com/
+[1] https://lore.kernel.org/but/20180107181459.222909-1-dstolee@microsoft.com/
     An earlier RFC for the multi-pack-index feature
 
-[2] https://lore.kernel.org/git/alpine.DEB.2.20.1803091557510.23109@alexmv-linux/
+[2] https://lore.kernel.org/but/alpine.DEB.2.20.1803091557510.23109@alexmv-linux/
     Git Merge 2018 Contributor's summit notes (includes discussion of MIDX)

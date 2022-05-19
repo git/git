@@ -93,19 +93,19 @@ zc () {
 expect_pattern () {
 	cnt="$1"
 	cat <<EOF
-diff --git a/file-a$cnt b/file-a$cnt
+diff --but a/file-a$cnt b/file-a$cnt
 --- a/file-a$cnt
 +++ b/file-a$cnt
 @@ -1 +1 @@
 -Z${cnt}a
 +Z${cnt}A
-diff --git a/file-b$cnt b/file-b$cnt
+diff --but a/file-b$cnt b/file-b$cnt
 --- a/file-b$cnt
 +++ b/file-b$cnt
 @@ -1 +1 @@
 -b
 +B
-diff --git a/file-c$cnt b/file-c$cnt
+diff --but a/file-c$cnt b/file-c$cnt
 --- a/file-c$cnt
 +++ b/file-c$cnt
 @@ -1 +1 @@
@@ -113,7 +113,7 @@ diff --git a/file-c$cnt b/file-c$cnt
 \ No newline at end of file
 +CZ$cnt
 \ No newline at end of file
-diff --git a/file-d$cnt b/file-d$cnt
+diff --but a/file-d$cnt b/file-d$cnt
 --- a/file-d$cnt
 +++ b/file-d$cnt
 @@ -1 +1 @@
@@ -133,7 +133,7 @@ test_expect_success setup '
 		( printf c && zs $n ) >file-c$n &&
 		( echo d && zs $n ) >file-d$n &&
 
-		git add file-a$n file-b$n file-c$n file-d$n &&
+		but add file-a$n file-b$n file-c$n file-d$n &&
 
 		( zs $n && echo A ) >file-a$n &&
 		( echo B && zs $n && echo ) >file-b$n &&
@@ -149,7 +149,7 @@ test_expect_success 'diff -U0' '
 
 	for n in $sample
 	do
-		git diff -U0 file-?$n || return 1
+		but diff -U0 file-?$n || return 1
 	done | zc >actual &&
 	test_cmp expect actual
 

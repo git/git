@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Catalin Marinas
 #
 
-test_description='git apply trying to add an ending line.
+test_description='but apply trying to add an ending line.
 
 '
 . ./test-lib.sh
@@ -11,7 +11,7 @@ test_description='git apply trying to add an ending line.
 # setup
 
 cat >test-patch <<\EOF
-diff --git a/file b/file
+diff --but a/file b/file
 --- a/file
 +++ b/file
 @@ -1,2 +1,3 @@
@@ -25,12 +25,12 @@ echo 'b' >>file
 echo 'c' >>file
 
 test_expect_success setup \
-    'git update-index --add file'
+    'but update-index --add file'
 
 # test
 
 test_expect_success 'apply at the end' \
-    'test_must_fail git apply --index test-patch'
+    'test_must_fail but apply --index test-patch'
 
 cat >test-patch <<\EOF
 diff a/file b/file
@@ -45,9 +45,9 @@ EOF
 echo >file 'a
 b
 c'
-git update-index file
+but update-index file
 
 test_expect_success 'apply at the beginning' \
-	'test_must_fail git apply --index test-patch'
+	'test_must_fail but apply --index test-patch'
 
 test_done

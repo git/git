@@ -23,7 +23,7 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "xmacros.h"
 #include "xdiff.h"
 #include "xtypes.h"

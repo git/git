@@ -4,11 +4,11 @@ Git v1.7.10.2 Release Notes
 Fixes since v1.7.10.1
 ---------------------
 
- * The test scaffolding for git-daemon was flaky.
+ * The test scaffolding for but-daemon was flaky.
 
  * The test scaffolding for fast-import was flaky.
 
- * The filesystem boundary was not correctly reported when .git directory
+ * The filesystem boundary was not correctly reported when .but directory
    discovery stopped at a mount point.
 
  * HTTP transport that requires authentication did not work correctly when
@@ -23,20 +23,20 @@ Fixes since v1.7.10.1
    mistake. Remove the newline from "cherry-pick" to make them match
    again.
 
- * The command line parser choked "git cherry-pick $name" when $name can
+ * The command line parser choked "but cherry-pick $name" when $name can
    be both revision name and a pathname, even though $name can never be a
    path in the context of the command.
 
  * The "include.path" facility in the configuration mechanism added in
    1.7.10 forgot to interpret "~/path" and "~user/path" as it should.
 
- * "git config --rename-section" to rename an existing section into a
+ * "but config --rename-section" to rename an existing section into a
    bogus one did not check the new name.
 
  * The "diff --no-index" codepath used limited-length buffers, risking
    pathnames getting truncated.  Update it to use the strbuf API.
 
- * The report from "git fetch" said "new branch" even for a non branch
+ * The report from "but fetch" said "new branch" even for a non branch
    ref.
 
  * The http-backend (the server side of the smart http transfer) used
@@ -52,10 +52,10 @@ Fixes since v1.7.10.1
  * Octopus merge strategy did not reduce heads that are recorded in the
    final cummit correctly.
 
- * "git push" over smart-http lost progress output a few releases ago;
+ * "but push" over smart-http lost progress output a few releases ago;
    this release resurrects it.
 
- * The error and advice messages given by "git push" when it fails due
+ * The error and advice messages given by "but push" when it fails due
    to non-ff were not very helpful to new users; it has been broken
    into three cases, and each is given a separate advice message.
 
@@ -63,23 +63,23 @@ Fixes since v1.7.10.1
    insn lines can be re-ordered to affect the order of the cummits in
    the resulting history.
 
- * "git repack" used to write out unreachable objects as loose objects
+ * "but repack" used to write out unreachable objects as loose objects
    when repacking, even if such loose objects will immediately pruned
    due to its age.
 
  * A contrib script "rerere-train" did not work out of the box unless
    user futzed with her $PATH.
 
- * "git rev-parse --show-prefix" used to emit nothing when run at the
+ * "but rev-parse --show-prefix" used to emit nothing when run at the
    top-level of the working tree, but now it gives a blank line.
 
- * The i18n of error message "git stash save" was not properly done.
+ * The i18n of error message "but stash save" was not properly done.
 
- * "git submodule" used a sed script that some platforms mishandled.
+ * "but submodule" used a sed script that some platforms mishandled.
 
  * When using a Perl script on a system where "perl" found on user's
    $PATH could be ancient or otherwise broken, we allow builders to
    specify the path to a good copy of Perl with $PERL_PATH.  The
-   gitweb test forgot to use that Perl when running its test.
+   butweb test forgot to use that Perl when running its test.
 
 Also contains minor fixes and documentation updates.

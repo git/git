@@ -1,14 +1,14 @@
-gitk(1)
+butk(1)
 =======
 
 NAME
 ----
-gitk - The Git repository browser
+butk - The Git repository browser
 
 SYNOPSIS
 --------
 [verse]
-'gitk' [<options>] [<revision range>] [--] [<path>...]
+'butk' [<options>] [<revision range>] [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -19,21 +19,21 @@ the files in the trees of each revision.
 OPTIONS
 -------
 
-To control which revisions to show, gitk supports most options
-applicable to the 'git rev-list' command.  It also supports a few
-options applicable to the 'git diff-*' commands to control how the
+To control which revisions to show, butk supports most options
+applicable to the 'but rev-list' command.  It also supports a few
+options applicable to the 'but diff-*' commands to control how the
 changes each cummit introduces are shown.  Finally, it supports some
-gitk-specific options.
+butk-specific options.
 
-gitk generally only understands options with arguments in the
-'sticked' form (see linkgit:gitcli[7]) due to limitations in the
+butk generally only understands options with arguments in the
+'sticked' form (see linkbut:butcli[7]) due to limitations in the
 command-line parser.
 
 rev-list options and arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This manual page describes only the most frequently used options.  See
-linkgit:git-rev-list[1] for a complete list.
+linkbut:but-rev-list[1] for a complete list.
 
 --all::
 
@@ -77,7 +77,7 @@ linkgit:git-rev-list[1] for a complete list.
 --full-history::
 
 	When filtering history with '<path>...', does not prune some
-	history.  (See "History simplification" in linkgit:git-log[1]
+	history.  (See "History simplification" in linkbut:but-log[1]
 	for a more detailed explanation.)
 
 --simplify-merges::
@@ -85,7 +85,7 @@ linkgit:git-rev-list[1] for a complete list.
 	Additional option to `--full-history` to remove some needless
 	merges from the resulting history, as there are no selected
 	cummits contributing to this merge.  (See "History
-	simplification" in linkgit:git-log[1] for a more detailed
+	simplification" in linkbut:but-log[1] for a more detailed
 	explanation.)
 
 --ancestry-path::
@@ -95,7 +95,7 @@ linkgit:git-rev-list[1] for a complete list.
 	display cummits that exist directly on the ancestry chain
 	between the 'cummit1' and 'cummit2', i.e. cummits that are
 	both descendants of 'cummit1', and ancestors of 'cummit2'.
-	(See "History simplification" in linkgit:git-log[1] for a more
+	(See "History simplification" in linkbut:but-log[1] for a more
 	detailed explanation.)
 
 include::line-range-options.txt[]
@@ -107,7 +107,7 @@ include::line-range-options.txt[]
 	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
 	back to '<to>'. Note, more advanced revision selection can be applied.
 	For a more complete list of ways to spell object names, see
-	linkgit:gitrevisions[7].
+	linkbut:butrevisions[7].
 
 <path>...::
 
@@ -115,12 +115,12 @@ include::line-range-options.txt[]
 	avoid ambiguity with respect to revision names use "--" to separate the paths
 	from any preceding options.
 
-gitk-specific options
+butk-specific options
 ~~~~~~~~~~~~~~~~~~~~~
 
 --argscmd=<command>::
 
-	Command to be run each time gitk has to determine the revision
+	Command to be run each time butk has to determine the revision
 	range to show.  The command is expected to print on its
 	standard output a list of additional revisions to be shown,
 	one per line.  Use this instead of explicitly specifying a
@@ -134,18 +134,18 @@ gitk-specific options
 
 Examples
 --------
-gitk v2.6.12.. include/scsi drivers/scsi::
+butk v2.6.12.. include/scsi drivers/scsi::
 
 	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
 
-gitk --since="2 weeks ago" \-- gitk::
+butk --since="2 weeks ago" \-- butk::
 
-	Show the changes during the last two weeks to the file 'gitk'.
+	Show the changes during the last two weeks to the file 'butk'.
 	The "--" is necessary to avoid confusion with the *branch* named
-	'gitk'
+	'butk'
 
-gitk --max-count=100 --all \-- Makefile::
+butk --max-count=100 --all \-- Makefile::
 
 	Show at most 100 changes made to the file 'Makefile'. Instead of only
 	looking for changes in the current branch look in all branches.
@@ -154,10 +154,10 @@ Files
 -----
 User configuration and preferences are stored at:
 
-* `$XDG_CONFIG_HOME/git/gitk` if it exists, otherwise
-* `$HOME/.gitk` if it exists
+* `$XDG_CONFIG_HOME/but/butk` if it exists, otherwise
+* `$HOME/.butk` if it exists
 
-If neither of the above exist then `$XDG_CONFIG_HOME/git/gitk` is created and
+If neither of the above exist then `$XDG_CONFIG_HOME/but/butk` is created and
 used by default. If '$XDG_CONFIG_HOME' is not set it defaults to
 `$HOME/.config` in all cases.
 
@@ -166,17 +166,17 @@ History
 Gitk was the first graphical repository browser. It's written in
 tcl/tk.
 
-'gitk' is actually maintained as an independent project, but stable
+'butk' is actually maintained as an independent project, but stable
 versions are distributed as part of the Git suite for the convenience
 of end users.
 
-gitk-git/ comes from Paul Mackerras's gitk project:
+butk-but/ comes from Paul Mackerras's butk project:
 
-	git://ozlabs.org/~paulus/gitk
+	but://ozlabs.org/~paulus/butk
 
 SEE ALSO
 --------
-'qgit(1)'::
+'qbut(1)'::
 	A repository browser written in C++ using Qt.
 
 'tig(1)'::
@@ -185,4 +185,4 @@ SEE ALSO
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

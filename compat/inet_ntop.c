@@ -15,7 +15,7 @@
  * SOFTWARE.
  */
 
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
 #ifndef NS_INADDRSZ
 #define NS_INADDRSZ	4

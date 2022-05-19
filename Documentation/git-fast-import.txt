@@ -1,22 +1,22 @@
-git-fast-import(1)
+but-fast-import(1)
 ==================
 
 NAME
 ----
-git-fast-import - Backend for fast Git data importers
+but-fast-import - Backend for fast Git data importers
 
 
 SYNOPSIS
 --------
 [verse]
-frontend | 'git fast-import' [<options>]
+frontend | 'but fast-import' [<options>]
 
 DESCRIPTION
 -----------
 This program is usually not what the end user wants to run directly.
 Most end users want to use one of the existing frontend programs,
 which parses a specific type of foreign source and feeds the contents
-stored there to 'git fast-import'.
+stored there to 'but fast-import'.
 
 fast-import reads a mixed command/data stream from standard input and
 writes one or more packfiles directly into the current repository.
@@ -25,7 +25,7 @@ updated branch and tag refs, fully updating the current repository
 with the newly imported data.
 
 The fast-import backend itself can import into an empty repository (one that
-has already been initialized by 'git init') or incrementally
+has already been initialized by 'but init') or incrementally
 update an existing populated repository.  Whether or not incremental
 imports are supported from a particular foreign source depends on
 the frontend program in use.
@@ -115,8 +115,8 @@ Locations of Marks Files
 	After specifying --relative-marks the paths specified
 	with --import-marks= and --export-marks= are relative
 	to an internal directory in the current repository.
-	In git-fast-import this means that the paths are relative
-	to the .git/info/fast-import directory. However, other
+	In but-fast-import this means that the paths are relative
+	to the .but/info/fast-import directory. However, other
 	importers may use a different location.
 +
 Relative and non-relative marks may be combined by interweaving
@@ -129,8 +129,8 @@ Submodule Rewriting
 --rewrite-submodules-to=<name>:<file>::
   Rewrite the object IDs for the submodule specified by <name> from the values
 	used in the from <file> to those used in the to <file>. The from marks should
-	have been created by `git fast-export`, and the to marks should have been
-	created by `git fast-import` when importing that same submodule.
+	have been created by `but fast-export`, and the to marks should have been
+	created by `but fast-import` when importing that same submodule.
 +
 <name> may be any arbitrary string not containing a colon character, but the
 same value must be used with both options when specifying corresponding marks.
@@ -166,14 +166,14 @@ Performance and Compression Tuning
 	This information may be useful after importing projects
 	whose total object set exceeds the 4 GiB packfile limit,
 	as these cummits can be used as edge points during calls
-	to 'git pack-objects'.
+	to 'but pack-objects'.
 
 --max-pack-size=<n>::
 	Maximum size of each output packfile.
 	The default is unlimited.
 
 fastimport.unpackLimit::
-	See linkgit:git-config[1]
+	See linkbut:but-config[1]
 
 PERFORMANCE
 -----------
@@ -203,9 +203,9 @@ an ideal situation, given that most conversion tools are throw-away
 
 PARALLEL OPERATION
 ------------------
-Like 'git push' or 'git fetch', imports handled by fast-import are safe to
-run alongside parallel `git repack -a -d` or `git gc` invocations,
-or any other Git operation (including 'git prune', as loose objects
+Like 'but push' or 'but fetch', imports handled by fast-import are safe to
+run alongside parallel `but repack -a -d` or `but gc` invocations,
+or any other Git operation (including 'but prune', as loose objects
 are never used by fast-import).
 
 fast-import does not lock the branch or tag refs it is actively importing.
@@ -307,7 +307,7 @@ and some sanity checks on the numeric values may also be performed.
 +
 An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
 parser is accurate, but a little on the lenient side.  It is the
-same parser used by 'git am' when applying patches
+same parser used by 'but am' when applying patches
 received from email.
 +
 Some malformed strings may be accepted as valid dates.  In some of
@@ -343,7 +343,7 @@ time zone.
 This particular format is supplied as it's short to implement and
 may be useful to a process that wants to create a new cummit
 right now, without needing to use a working directory or
-'git update-index'.
+'but update-index'.
 +
 If separate `author` and `cummitter` commands are used in a `cummit`
 the timestamps may not match, as the system clock will be polled
@@ -509,7 +509,7 @@ their syntax.
 ^^^^^^^^^^
 The optional `encoding` command indicates the encoding of the cummit
 message.  Most cummits are UTF-8 and the encoding is omitted, but this
-allows importing cummit messages into git without first reencoding them.
+allows importing cummit messages into but without first reencoding them.
 
 `from`
 ^^^^^^
@@ -544,14 +544,14 @@ The reason fast-import uses `:` to denote a mark reference is this character
 is not legal in a Git branch name.  The leading `:` makes it easy
 to distinguish between the mark 42 (`:42`) and the branch 42 (`42`
 or `refs/heads/42`), or an abbreviated SHA-1 which happened to
-consist only of base-10 digits.
+consist only of base-10 dibuts.
 +
 Marks must be declared (via `mark`) before they can be used.
 
 * A complete 40 byte or abbreviated cummit SHA-1 in hex.
 
 * Any valid Git SHA-1 expression that resolves to a cummit.  See
-  ``SPECIFYING REVISIONS'' in linkgit:gitrevisions[7] for details.
+  ``SPECIFYING REVISIONS'' in linkbut:butrevisions[7] for details.
 
 * The special null SHA-1 (40 zeros) specifies that the branch is to be
   removed.
@@ -621,7 +621,7 @@ in octal.  Git only supports the following modes:
   what you want.
 * `100755` or `755`: A normal, but executable, file.
 * `120000`: A symlink, the content of the file will be the link target.
-* `160000`: A gitlink, SHA-1 of the object refers to a cummit in
+* `160000`: A butlink, SHA-1 of the object refers to a cummit in
   another repository. Git links can only be specified by SHA or through
   a cummit mark. They are used to implement submodules.
 * `040000`: A subdirectory.  Subdirectories can only be specified by
@@ -859,7 +859,7 @@ recommended, as the frontend does not (easily) have access to the
 complete set of bytes which normally goes into such a signature.
 If signing is required, create lightweight tags from within fast-import with
 `reset`, then create the annotated versions of those tags offline
-with the standard 'git tag' process.
+with the standard 'but tag' process.
 
 `reset`
 ~~~~~~~
@@ -1024,7 +1024,7 @@ Callers may wish to process the output through a tool such as sed to
 remove the leading part of the line, for example:
 
 ====
-	frontend | git fast-import | sed 's/^progress //'
+	frontend | but fast-import | sed 's/^progress //'
 ====
 
 Placing a `progress` command immediately after a `checkpoint` will
@@ -1062,7 +1062,7 @@ The `<dataref>` can be either a mark reference (`:<idnum>`)
 set previously or a full 40-byte SHA-1 of a Git blob, preexisting or
 ready to be written.
 
-Output uses the same format as `git cat-file --batch`:
+Output uses the same format as `but cat-file --batch`:
 
 ====
 	<sha1> SP 'blob' SP <size> LF
@@ -1110,7 +1110,7 @@ Reading from a named tree::
 
 See `filemodify` above for a detailed description of `<path>`.
 
-Output uses the same format as `git ls-tree <tree> -- <path>`:
+Output uses the same format as `but ls-tree <tree> -- <path>`:
 
 ====
 	<mode> SP ('blob' | 'tree' | 'cummit') SP <dataref> HT <path> LF
@@ -1120,7 +1120,7 @@ The <dataref> represents the blob, tree, or cummit object at <path>
 and can be used in later 'get-mark', 'cat-blob', 'filemodify', or
 'ls' commands.
 
-If there is no file or subtree at that path, 'git fast-import' will
+If there is no file or subtree at that path, 'but fast-import' will
 instead report
 
 ====
@@ -1183,14 +1183,14 @@ done::
 	abruptly at a convenient point in the stream can go
 	undetected.  This may occur, for example, if an import
 	front end dies in mid-operation without emitting SIGTERM
-	or SIGKILL at its subordinate git fast-import instance.
+	or SIGKILL at its subordinate but fast-import instance.
 
 `option`
 ~~~~~~~~
-Processes the specified option so that git fast-import behaves in a
+Processes the specified option so that but fast-import behaves in a
 way that suits the frontend's needs.
 Note that options specified by the frontend are overridden by any
-options the user may specify to git fast-import itself.
+options the user may specify to but fast-import itself.
 
 ....
     'option' SP <option> LF
@@ -1241,7 +1241,7 @@ bidirectional pipes:
 ====
 	mkfifo fast-import-output
 	frontend <fast-import-output |
-	git fast-import >fast-import-output
+	but fast-import >fast-import-output
 ====
 
 A frontend set up this way can use `progress`, `get-mark`, `ls`, and
@@ -1285,18 +1285,18 @@ An example crash:
 	data <<EOF
 	this is my cummit
 	EOF
-	M 644 inline .gitignore
+	M 644 inline .butignore
 	data <<EOF
-	.gitignore
+	.butignore
 	EOF
 	M 777 inline bob
 	END_OF_INPUT
 
-	$ git fast-import <in
+	$ but fast-import <in
 	fatal: Corrupt mode: M 777 inline bob
-	fast-import: dumping crash report to .git/fast_import_crash_8434
+	fast-import: dumping crash report to .but/fast_import_crash_8434
 
-	$ cat .git/fast_import_crash_8434
+	$ cat .but/fast_import_crash_8434
 	fast-import crash report:
 	    fast-import process: 8434
 	    parent process     : 1391
@@ -1311,7 +1311,7 @@ An example crash:
 	  cummitter Shawn O. Pearce <spearce> 19283 -0400
 	  # who is that guy anyway?
 	  data <<EOF
-	  M 644 inline .gitignore
+	  M 644 inline .butignore
 	  data <<EOF
 	* M 777 inline bob
 
@@ -1396,11 +1396,11 @@ is not `refs/heads/TAG_FIXUP`).
 
 When cummitting fixups, consider using `merge` to connect the
 cummit(s) which are supplying file revisions to the fixup branch.
-Doing so will allow tools such as 'git blame' to track
+Doing so will allow tools such as 'but blame' to track
 through the real commit history and properly annotate the source
 files.
 
-After fast-import terminates the frontend will need to do `rm .git/TAG_FIXUP`
+After fast-import terminates the frontend will need to do `rm .but/TAG_FIXUP`
 to remove the dummy branch.
 
 Import Now, Repack Later
@@ -1425,7 +1425,7 @@ Repacking Historical Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are repacking very old imported data (e.g. older than the
 last year), consider expending some extra CPU time and supplying
---window=50 (or higher) when you run 'git repack'.
+--window=50 (or higher) when you run 'but repack'.
 This will take longer, but will also produce a smaller packfile.
 You only need to expend the effort once, and everyone using your
 project will benefit from the smaller repository.
@@ -1464,17 +1464,17 @@ appear before historical data.  Git also clusters cummits together,
 speeding up revision traversal through better cache locality.
 
 For this reason it is strongly recommended that users repack the
-repository with `git repack -a -d` after fast-import completes, allowing
+repository with `but repack -a -d` after fast-import completes, allowing
 Git to reorganize the packfiles for faster data access.  If blob
 deltas are suboptimal (see above) then also adding the `-f` option
 to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
 
-Instead of running `git repack` you can also run `git gc
+Instead of running `but repack` you can also run `but gc
 --aggressive`, which will also optimize other things after an import
 (e.g. pack loose refs). As noted in the "AGGRESSIVE" section in
-linkgit:git-gc[1] the `--aggressive` option will find new deltas with
-the `-f` option to linkgit:git-repack[1]. For the reasons elaborated
+linkbut:but-gc[1] the `--aggressive` option will find new deltas with
+the `-f` option to linkbut:but-repack[1]. For the reasons elaborated
 on above using `--aggressive` after a fast-import is one of the few
 cases where it's known to be worthwhile.
 
@@ -1558,7 +1558,7 @@ memory footprint (less than 2.7 MiB per active branch).
 
 SIGNALS
 -------
-Sending *SIGUSR1* to the 'git fast-import' process ends the current
+Sending *SIGUSR1* to the 'but fast-import' process ends the current
 packfile early, simulating a `checkpoint` command.  The impatient
 operator can use this facility to peek at the objects and refs from an
 import in progress, at the cost of some added running time and worse
@@ -1566,8 +1566,8 @@ compression.
 
 SEE ALSO
 --------
-linkgit:git-fast-export[1]
+linkbut:but-fast-export[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

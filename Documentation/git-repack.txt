@@ -1,15 +1,15 @@
-git-repack(1)
+but-repack(1)
 =============
 
 NAME
 ----
-git-repack - Pack unpacked objects in a repository
+but-repack - Pack unpacked objects in a repository
 
 
 SYNOPSIS
 --------
 [verse]
-'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>] [--write-midx]
+'but repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m] [--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>] [--write-midx]
 
 DESCRIPTION
 -----------
@@ -33,8 +33,8 @@ OPTIONS
 	pack everything referenced into a single pack.
 	Especially useful when packing a repository that is used
 	for private development. Use
-	with `-d`.  This will clean up the objects that `git prune`
-	leaves behind, but `git fsck --full --dangling` shows as
+	with `-d`.  This will clean up the objects that `but prune`
+	leaves behind, but `but fsck --full --dangling` shows as
 	dangling.
 +
 Note that users fetching over dumb protocols will have to fetch the
@@ -55,37 +55,37 @@ to the new separate pack will be written.
 	deleted by way of being left in the old pack and then
 	removed.  Instead, the loose unreachable objects
 	will be pruned according to normal expiry rules
-	with the next 'git gc' invocation. See linkgit:git-gc[1].
+	with the next 'but gc' invocation. See linkbut:but-gc[1].
 
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also run  'git prune-packed' to remove redundant
+	Also run  'but prune-packed' to remove redundant
 	loose object files.
 
 -l::
-	Pass the `--local` option to 'git pack-objects'. See
-	linkgit:git-pack-objects[1].
+	Pass the `--local` option to 'but pack-objects'. See
+	linkbut:but-pack-objects[1].
 
 -f::
-	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
-	linkgit:git-pack-objects[1].
+	Pass the `--no-reuse-delta` option to `but-pack-objects`, see
+	linkbut:but-pack-objects[1].
 
 -F::
-	Pass the `--no-reuse-object` option to `git-pack-objects`, see
-	linkgit:git-pack-objects[1].
+	Pass the `--no-reuse-object` option to `but-pack-objects`, see
+	linkbut:but-pack-objects[1].
 
 -q::
 --quiet::
 	Show no progress over the standard error stream and pass the `-q`
-	option to 'git pack-objects'. See linkgit:git-pack-objects[1].
+	option to 'but pack-objects'. See linkbut:but-pack-objects[1].
 
 -n::
 	Do not update the server information with
-	'git update-server-info'.  This option skips
+	'but update-server-info'.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
-	over HTTP or FTP.  See linkgit:git-update-server-info[1].
+	over HTTP or FTP.  See linkbut:but-update-server-info[1].
 
 --window=<n>::
 --depth=<n>::
@@ -101,7 +101,7 @@ The default value for --window is 10 and --depth is 50. The maximum
 depth is 4095.
 
 --threads=<n>::
-	This option is passed through to `git pack-objects`.
+	This option is passed through to `but pack-objects`.
 
 --window-memory=<n>::
 	This option provides an additional limit on top of `--window`;
@@ -114,7 +114,7 @@ depth is 4095.
 	`--window-memory=0` makes memory usage unlimited.  The default
 	is taken from the `pack.windowMemory` configuration variable.
 	Note that the actual memory usage will be the limit multiplied
-	by the number of threads used by linkgit:git-pack-objects[1].
+	by the number of threads used by linkbut:but-pack-objects[1].
 
 --max-pack-size=<n>::
 	Maximum size of each output pack file. The size can be suffixed with
@@ -155,7 +155,7 @@ depth is 4095.
 	When loosening unreachable objects, do not bother loosening any
 	objects older than `<when>`. This can be used to optimize out
 	the write of any objects that would be immediately pruned by
-	a follow-up `git prune`.
+	a follow-up `but prune`.
 
 -k::
 --keep-unreachable::
@@ -166,8 +166,8 @@ depth is 4095.
 
 -i::
 --delta-islands::
-	Pass the `--delta-islands` option to `git-pack-objects`, see
-	linkgit:git-pack-objects[1].
+	Pass the `--delta-islands` option to `but-pack-objects`, see
+	linkbut:but-pack-objects[1].
 
 -g=<factor>::
 --geometric=<factor>::
@@ -175,7 +175,7 @@ depth is 4095.
 	contains at least `<factor>` times the number of objects as the
 	next-largest pack.
 +
-`git repack` ensures this by determining a "cut" of packfiles that need
+`but repack` ensures this by determining a "cut" of packfiles that need
 to be repacked into one in order to ensure a geometric progression. It
 picks the smallest set of packfiles such that as many of the larger
 packfiles (by count of objects contained in that pack) may be left
@@ -190,25 +190,25 @@ When `--unpacked` is specified, loose objects are implicitly included in
 this "roll-up", without respect to their reachability. This is subject
 to change in the future. This option (implying a drastically different
 repack mode) is not guaranteed to work with all other combinations of
-option to `git repack`.
+option to `but repack`.
 +
-When writing a multi-pack bitmap, `git repack` selects the largest resulting
+When writing a multi-pack bitmap, `but repack` selects the largest resulting
 pack as the preferred pack for object selection by the MIDX (see
-linkgit:git-multi-pack-index[1]).
+linkbut:but-multi-pack-index[1]).
 
 -m::
 --write-midx::
-	Write a multi-pack index (see linkgit:git-multi-pack-index[1])
+	Write a multi-pack index (see linkbut:but-multi-pack-index[1])
 	containing the non-redundant packs.
 
 CONFIGURATION
 -------------
 
 Various configuration variables affect packing, see
-linkgit:git-config[1] (search for "pack" and "delta").
+linkbut:but-config[1] (search for "pack" and "delta").
 
 By default, the command passes `--delta-base-offset` option to
-'git pack-objects'; this typically results in slightly smaller packs,
+'but pack-objects'; this typically results in slightly smaller packs,
 but the generated packs are incompatible with versions of Git older than
 version 1.4.4. If you need to share your repository with such ancient Git
 versions, either directly or via the dumb http protocol, then you
@@ -223,9 +223,9 @@ attribute `delta` set to false.
 
 SEE ALSO
 --------
-linkgit:git-pack-objects[1]
-linkgit:git-prune-packed[1]
+linkbut:but-pack-objects[1]
+linkbut:but-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

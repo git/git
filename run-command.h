@@ -48,9 +48,9 @@ struct child_process {
 	 * it, e.g. strvec_pushv() to add an existing "const char **"
 	 * vector.
 	 *
-	 * If the command to run is a git command, set the first
+	 * If the command to run is a but command, set the first
 	 * element in the strvec to the command name without the
-	 * 'git-' prefix and set .git_cmd = 1.
+	 * 'but-' prefix and set .but_cmd = 1.
 	 *
 	 * The memory in .args will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
@@ -112,7 +112,7 @@ struct child_process {
 	unsigned no_stdin:1;
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
-	unsigned git_cmd:1; /* if this is to be git sub-command */
+	unsigned but_cmd:1; /* if this is to be but sub-command */
 
 	/**
 	 * If the program cannot be found, the functions return -1 and set
@@ -239,7 +239,7 @@ int run_auto_maintenance(int quiet);
  * specifies the program and its arguments. The argument opt is zero
  * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
  * `RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
- * that correspond to the members .no_stdin, .git_cmd,
+ * that correspond to the members .no_stdin, .but_cmd,
  * .stdout_to_stderr, .silent_exec_failure of `struct child_process`.
  * The argument dir corresponds the member .dir. The argument env
  * corresponds to the member .env.
@@ -483,10 +483,10 @@ int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
  * new repo. This adds all GIT_* environment variables to env_array with the
  * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
  * corresponding environment variables to be unset in the subprocess) and adds
- * an environment variable pointing to new_git_dir. See local_repo_env in
+ * an environment variable pointing to new_but_dir. See local_repo_env in
  * cache.h for more information.
  */
-void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir);
+void prepare_other_repo_env(struct strvec *env_array, const char *new_but_dir);
 
 /**
  * Possible return values for start_bg_command().

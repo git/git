@@ -1,13 +1,13 @@
-gitcore-tutorial(7)
+butcore-tutorial(7)
 ===================
 
 NAME
 ----
-gitcore-tutorial - A Git core tutorial for developers
+butcore-tutorial - A Git core tutorial for developers
 
 SYNOPSIS
 --------
-git *
+but *
 
 DESCRIPTION
 -----------
@@ -16,7 +16,7 @@ This tutorial explains how to use the "core" Git commands to set up and
 work with a Git repository.
 
 If you just need to use Git as a revision control system you may prefer
-to start with "A Tutorial Introduction to Git" (linkgit:gittutorial[7]) or
+to start with "A Tutorial Introduction to Git" (linkbut:buttutorial[7]) or
 link:user-manual.html[the Git User Manual].
 
 However, an understanding of these low-level tools can be helpful if
@@ -50,25 +50,25 @@ one for a totally new project, or an existing working tree that you want
 to import into Git.
 
 For our first example, we're going to start a totally new repository from
-scratch, with no pre-existing files, and we'll call it 'git-tutorial'.
+scratch, with no pre-existing files, and we'll call it 'but-tutorial'.
 To start up, create a subdirectory for it, change into that
-subdirectory, and initialize the Git infrastructure with 'git init':
+subdirectory, and initialize the Git infrastructure with 'but init':
 
 ------------------------------------------------
-$ mkdir git-tutorial
-$ cd git-tutorial
-$ git init
+$ mkdir but-tutorial
+$ cd but-tutorial
+$ but init
 ------------------------------------------------
 
 to which Git will reply
 
 ----------------
-Initialized empty Git repository in .git/
+Initialized empty Git repository in .but/
 ----------------
 
 which is just Git's way of saying that you haven't been doing anything
-strange, and that it will have created a local `.git` directory setup for
-your new project. You will now have a `.git` directory, and you can
+strange, and that it will have created a local `.but` directory setup for
+your new project. You will now have a `.but` directory, and you can
 inspect that with 'ls'. For your new empty project, it should show you
 three entries, among other things:
 
@@ -95,14 +95,14 @@ of different 'heads' of development (aka 'branches'), and to any
 repository.
 
 One note: the special `master` head is the default branch, which is
-why the `.git/HEAD` file was created points to it even if it
+why the `.but/HEAD` file was created points to it even if it
 doesn't yet exist. Basically, the `HEAD` link is supposed to always
 point to the branch you are working on right now, and you always
 start out expecting to work on the `master` branch.
 
 However, this is only a convention, and you can name your branches
 anything you want, and don't have to ever even 'have' a `master`
-branch. A number of the Git tools will assume that `.git/HEAD` is
+branch. A number of the Git tools will assume that `.but/HEAD` is
 valid, though.
 
 [NOTE]
@@ -116,7 +116,7 @@ references in these `refs` subdirectories when you actually start
 populating your tree.
 
 [NOTE]
-An advanced user may want to take a look at linkgit:gitrepository-layout[5]
+An advanced user may want to take a look at linkbut:butrepository-layout[5]
 after finishing this tutorial.
 
 You have now created your first Git repository. Of course, since it's
@@ -147,7 +147,7 @@ but to actually check in your hard work, you will have to go through two steps:
  - cummit that index file as an object.
 
 The first step is trivial: when you want to tell Git about any changes
-to your working tree, you use the 'git update-index' program. That
+to your working tree, you use the 'but update-index' program. That
 program normally just takes a list of filenames you want to update, but
 to avoid trivial mistakes, it refuses to add new entries to the index
 (or remove existing ones) unless you explicitly tell it that you're
@@ -157,7 +157,7 @@ adding a new entry with the `--add` flag (or removing an entry with the
 So to populate the index with the two files you just created, you can do
 
 ------------------------------------------------
-$ git update-index --add hello example
+$ but update-index --add hello example
 ------------------------------------------------
 
 and you have now told Git to track those two files.
@@ -168,32 +168,32 @@ database. If you did exactly the steps above, you should now be able to do
 
 
 ----------------
-$ ls .git/objects/??/*
+$ ls .but/objects/??/*
 ----------------
 
 and see two files:
 
 ----------------
-.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238
-.git/objects/f2/4c74a2e500f5ee1332c86b94199f52b1d1d962
+.but/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238
+.but/objects/f2/4c74a2e500f5ee1332c86b94199f52b1d1d962
 ----------------
 
 which correspond with the objects with names of `557db...` and
 `f24c7...` respectively.
 
-If you want to, you can use 'git cat-file' to look at those objects, but
+If you want to, you can use 'but cat-file' to look at those objects, but
 you'll have to use the object name, not the filename of the object:
 
 ----------------
-$ git cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
+$ but cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
 ----------------
 
-where the `-t` tells 'git cat-file' to tell you what the "type" of the
+where the `-t` tells 'but cat-file' to tell you what the "type" of the
 object is. Git will tell you that you have a "blob" object (i.e., just a
 regular file), and you can see the contents with
 
 ----------------
-$ git cat-file blob 557db03
+$ but cat-file blob 557db03
 ----------------
 
 which will print out "Hello World". The object `557db03` is nothing
@@ -208,16 +208,16 @@ we just looked at will never change. Objects are immutable.
 [NOTE]
 The second example demonstrates that you can
 abbreviate the object name to only the first several
-hexadecimal digits in most places.
+hexadecimal dibuts in most places.
 
 Anyway, as we mentioned previously, you normally never actually take a
 look at the objects themselves, and typing long 40-character hex
 names is not something you'd normally want to do. The above digression
-was just to show that 'git update-index' did something magical, and
+was just to show that 'but update-index' did something magical, and
 actually saved away the contents of your files into the Git object
 database.
 
-Updating the index did something else too: it created a `.git/index`
+Updating the index did something else too: it created a `.but/index`
 file. This is the index that describes your current working tree, and
 something you should be very aware of. Again, you normally never worry
 about the index file itself, but you should be aware of the fact that
@@ -231,15 +231,15 @@ In particular, let's not even check in the two files into Git yet, we'll
 start off by adding another line to `hello` first:
 
 ------------------------------------------------
-$ echo "It's a new day for git" >>hello
+$ echo "It's a new day for but" >>hello
 ------------------------------------------------
 
 and you can now, since you told Git about the previous state of `hello`, ask
 Git what has changed in the tree compared to your old index, using the
-'git diff-files' command:
+'but diff-files' command:
 
 ------------
-$ git diff-files
+$ but diff-files
 ------------
 
 Oops. That wasn't very readable. It just spit out its own internal
@@ -247,38 +247,38 @@ version of a 'diff', but that internal version really just tells you
 that it has noticed that "hello" has been modified, and that the old object
 contents it had have been replaced with something else.
 
-To make it readable, we can tell 'git diff-files' to output the
+To make it readable, we can tell 'but diff-files' to output the
 differences as a patch, using the `-p` flag:
 
 ------------
-$ git diff-files -p
-diff --git a/hello b/hello
+$ but diff-files -p
+diff --but a/hello b/hello
 index 557db03..263414f 100644
 --- a/hello
 +++ b/hello
 @@ -1 +1,2 @@
  Hello World
-+It's a new day for git
++It's a new day for but
 ------------
 
 i.e. the diff of the change we caused by adding another line to `hello`.
 
-In other words, 'git diff-files' always shows us the difference between
+In other words, 'but diff-files' always shows us the difference between
 what is recorded in the index, and what is currently in the working
 tree. That's very useful.
 
-A common shorthand for `git diff-files -p` is to just write `git
+A common shorthand for `but diff-files -p` is to just write `but
 diff`, which will do the same thing.
 
 ------------
-$ git diff
-diff --git a/hello b/hello
+$ but diff
+diff --but a/hello b/hello
 index 557db03..263414f 100644
 --- a/hello
 +++ b/hello
 @@ -1 +1,2 @@
  Hello World
-+It's a new day for git
++It's a new day for but
 ------------
 
 
@@ -291,15 +291,15 @@ that in two phases: creating a 'tree' object, and cummitting that 'tree'
 object as a 'cummit' object together with an explanation of what the
 tree was all about, along with information of how we came to that state.
 
-Creating a tree object is trivial, and is done with 'git write-tree'.
-There are no options or other input: `git write-tree` will take the
+Creating a tree object is trivial, and is done with 'but write-tree'.
+There are no options or other input: `but write-tree` will take the
 current index state, and write an object that describes that whole
 index. In other words, we're now tying together all the different
 filenames with their contents (and their permissions), and we're
 creating the equivalent of a Git "directory" object:
 
 ------------------------------------------------
-$ git write-tree
+$ but write-tree
 ------------------------------------------------
 
 and this will just output the name of the resulting tree, in this case
@@ -310,34 +310,34 @@ and this will just output the name of the resulting tree, in this case
 ----------------
 
 which is another incomprehensible object name. Again, if you want to,
-you can use `git cat-file -t 8988d...` to see that this time the object
+you can use `but cat-file -t 8988d...` to see that this time the object
 is not a "blob" object, but a "tree" object (you can also use
-`git cat-file` to actually output the raw object contents, but you'll see
+`but cat-file` to actually output the raw object contents, but you'll see
 mainly a binary mess, so that's less interesting).
 
-However -- normally you'd never use 'git write-tree' on its own, because
+However -- normally you'd never use 'but write-tree' on its own, because
 normally you always cummit a tree into a cummit object using the
-'git cummit-tree' command. In fact, it's easier to not actually use
-'git write-tree' on its own at all, but to just pass its result in as an
-argument to 'git cummit-tree'.
+'but cummit-tree' command. In fact, it's easier to not actually use
+'but write-tree' on its own at all, but to just pass its result in as an
+argument to 'but cummit-tree'.
 
-'git cummit-tree' normally takes several arguments -- it wants to know
+'but cummit-tree' normally takes several arguments -- it wants to know
 what the 'parent' of a cummit was, but since this is the first cummit
 ever in this new repository, and it has no parents, we only need to pass in
-the object name of the tree. However, 'git cummit-tree' also wants to get a
+the object name of the tree. However, 'but cummit-tree' also wants to get a
 cummit message on its standard input, and it will write out the resulting
 object name for the cummit to its standard output.
 
-And this is where we create the `.git/refs/heads/master` file
+And this is where we create the `.but/refs/heads/master` file
 which is pointed at by `HEAD`. This file is supposed to contain
 the reference to the top-of-tree of the master branch, and since
-that's exactly what 'git cummit-tree' spits out, we can do this
+that's exactly what 'but cummit-tree' spits out, we can do this
 all with a sequence of simple shell commands:
 
 ------------------------------------------------
-$ tree=$(git write-tree)
-$ cummit=$(echo 'Initial cummit' | git cummit-tree $tree)
-$ git update-ref HEAD $cummit
+$ tree=$(but write-tree)
+$ cummit=$(echo 'Initial cummit' | but cummit-tree $tree)
+$ but update-ref HEAD $cummit
 ------------------------------------------------
 
 In this case this creates a totally new cummit that is not related to
@@ -345,45 +345,45 @@ anything else. Normally you do this only *once* for a project ever, and
 all later cummits will be parented on top of an earlier cummit.
 
 Again, normally you'd never actually do this by hand. There is a
-helpful script called `git cummit` that will do all of this for you. So
-you could have just written `git cummit`
+helpful script called `but cummit` that will do all of this for you. So
+you could have just written `but cummit`
 instead, and it would have done the above magic scripting for you.
 
 
 Making a change
 ---------------
 
-Remember how we did the 'git update-index' on file `hello` and then we
+Remember how we did the 'but update-index' on file `hello` and then we
 changed `hello` afterward, and could compare the new state of `hello` with the
 state we saved in the index file?
 
-Further, remember how I said that 'git write-tree' writes the contents
+Further, remember how I said that 'but write-tree' writes the contents
 of the *index* file to the tree, and thus what we just cummitted was in
 fact the *original* contents of the file `hello`, not the new ones. We did
 that on purpose, to show the difference between the index state, and the
 state in the working tree, and how they don't have to match, even
 when we cummit things.
 
-As before, if we do `git diff-files -p` in our git-tutorial project,
+As before, if we do `but diff-files -p` in our but-tutorial project,
 we'll still see the same difference we saw last time: the index file
 hasn't changed by the act of cummitting anything. However, now that we
 have cummitted something, we can also learn to use a new command:
-'git diff-index'.
+'but diff-index'.
 
-Unlike 'git diff-files', which showed the difference between the index
-file and the working tree, 'git diff-index' shows the differences
+Unlike 'but diff-files', which showed the difference between the index
+file and the working tree, 'but diff-index' shows the differences
 between a cummitted *tree* and either the index file or the working
-tree. In other words, 'git diff-index' wants a tree to be diffed
+tree. In other words, 'but diff-index' wants a tree to be diffed
 against, and before we did the cummit, we couldn't do that, because we
 didn't have anything to diff against.
 
 But now we can do
 
 ----------------
-$ git diff-index -p HEAD
+$ but diff-index -p HEAD
 ----------------
 
-(where `-p` has the same meaning as it did in 'git diff-files'), and it
+(where `-p` has the same meaning as it did in 'but diff-files'), and it
 will show us the same difference, but for a totally different reason.
 Now we're comparing the working tree not against the index file,
 but against the tree we just wrote. It just so happens that those two
@@ -393,21 +393,21 @@ Again, because this is a common operation, you can also just shorthand
 it with
 
 ----------------
-$ git diff HEAD
+$ but diff HEAD
 ----------------
 
 which ends up doing the above for you.
 
-In other words, 'git diff-index' normally compares a tree against the
+In other words, 'but diff-index' normally compares a tree against the
 working tree, but when given the `--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
-file to HEAD, doing `git diff-index --cached -p HEAD` should thus return
+file to HEAD, doing `but diff-index --cached -p HEAD` should thus return
 an empty set of differences, and that's exactly what it does.
 
 [NOTE]
 ================
-'git diff-index' really always uses the index for its
+'but diff-index' really always uses the index for its
 comparisons, and saying that it compares a tree against the working
 tree is thus not strictly accurate. In particular, the list of
 files to compare (the "meta-data") *always* comes from the index file,
@@ -430,17 +430,17 @@ work through the index file, so the first thing we need to do is to
 update the index cache:
 
 ------------------------------------------------
-$ git update-index hello
+$ but update-index hello
 ------------------------------------------------
 
 (note how we didn't need the `--add` flag this time, since Git knew
 about the file already).
 
-Note what happens to the different 'git diff-{asterisk}' versions here.
-After we've updated `hello` in the index, `git diff-files -p` now shows no
-differences, but `git diff-index -p HEAD` still *does* show that the
+Note what happens to the different 'but diff-{asterisk}' versions here.
+After we've updated `hello` in the index, `but diff-files -p` now shows no
+differences, but `but diff-index -p HEAD` still *does* show that the
 current state is different from the state we cummitted. In fact, now
-'git diff-index' shows the same difference whether we use the `--cached`
+'but diff-index' shows the same difference whether we use the `--cached`
 flag or not, since now the index is coherent with the working tree.
 
 Now, since we've updated `hello` in the index, we can cummit the new
@@ -451,7 +451,7 @@ this wasn't an initial cummit any more), but you've done that once
 already, so let's just use the helpful script this time:
 
 ------------------------------------------------
-$ git cummit
+$ but cummit
 ------------------------------------------------
 
 which starts an editor for you to write the cummit message and tells you
@@ -461,14 +461,14 @@ Write whatever message you want, and all the lines that start with '#'
 will be pruned out, and the rest will be used as the cummit message for
 the change. If you decide you don't want to cummit anything after all at
 this point (you can continue to edit things and update the index), you
-can just leave an empty message. Otherwise `git cummit` will cummit
+can just leave an empty message. Otherwise `but cummit` will cummit
 the change for you.
 
 You've now made your first real Git cummit. And if you're interested in
-looking at what `git cummit` really does, feel free to investigate:
+looking at what `but cummit` really does, feel free to investigate:
 it's a few very simple shell scripts to generate the helpful (?) cummit
 message headers, and a few one-liners that actually do the
-cummit itself ('git cummit').
+cummit itself ('but cummit').
 
 
 Inspecting Changes
@@ -476,16 +476,16 @@ Inspecting Changes
 
 While creating changes is useful, it's even more useful if you can tell
 later what changed. The most useful command for this is another of the
-'diff' family, namely 'git diff-tree'.
+'diff' family, namely 'but diff-tree'.
 
-'git diff-tree' can be given two arbitrary trees, and it will tell you the
+'but diff-tree' can be given two arbitrary trees, and it will tell you the
 differences between them. Perhaps even more commonly, though, you can
 give it just a single cummit object, and it will figure out the parent
 of that cummit itself, and show the difference directly. Thus, to get
 the same diff that we've already seen several times, we can now do
 
 ----------------
-$ git diff-tree -p HEAD
+$ but diff-tree -p HEAD
 ----------------
 
 (again, `-p` means to show the difference as a human-readable patch),
@@ -526,17 +526,17 @@ various 'diff-{asterisk}' commands compare things.
                     +-----------+
 ============
 
-More interestingly, you can also give 'git diff-tree' the `--pretty` flag,
+More interestingly, you can also give 'but diff-tree' the `--pretty` flag,
 which tells it to also show the cummit message and author and date of the
 cummit, and you can tell it to show a whole series of diffs.
 Alternatively, you can tell it to be "silent", and not show the diffs at
 all, but just show the actual cummit message.
 
-In fact, together with the 'git rev-list' program (which generates a
-list of revisions), 'git diff-tree' ends up being a veritable fount of
-changes.  You can emulate `git log`, `git log -p`, etc. with a trivial
-script that pipes the output of `git rev-list` to `git diff-tree --stdin`,
-which was exactly how early versions of `git log` were implemented.
+In fact, together with the 'but rev-list' program (which generates a
+list of revisions), 'but diff-tree' ends up being a veritable fount of
+changes.  You can emulate `but log`, `but log -p`, etc. with a trivial
+script that pipes the output of `but rev-list` to `but diff-tree --stdin`,
+which was exactly how early versions of `but log` were implemented.
 
 
 Tagging a version
@@ -545,19 +545,19 @@ Tagging a version
 In Git, there are two kinds of tags, a "light" one, and an "annotated tag".
 
 A "light" tag is technically nothing more than a branch, except we put
-it in the `.git/refs/tags/` subdirectory instead of calling it a `head`.
+it in the `.but/refs/tags/` subdirectory instead of calling it a `head`.
 So the simplest form of tag involves nothing more than
 
 ------------------------------------------------
-$ git tag my-first-tag
+$ but tag my-first-tag
 ------------------------------------------------
 
-which just writes the current `HEAD` into the `.git/refs/tags/my-first-tag`
+which just writes the current `HEAD` into the `.but/refs/tags/my-first-tag`
 file, after which point you can then use this symbolic name for that
 particular state. You can, for example, do
 
 ----------------
-$ git diff my-first-tag
+$ but diff my-first-tag
 ----------------
 
 to diff your current state against that tag which at this point will
@@ -570,15 +570,15 @@ pointer to the state you want to tag, but also a small tag name and
 message, along with optionally a PGP signature that says that yes,
 you really did
 that tag. You create these annotated tags with either the `-a` or
-`-s` flag to 'git tag':
+`-s` flag to 'but tag':
 
 ----------------
-$ git tag -s <tagname>
+$ but tag -s <tagname>
 ----------------
 
 which will sign the current `HEAD` (but you can also give it another
 argument that specifies the thing to tag, e.g., you could have tagged the
-current `mybranch` point by using `git tag <tagname> mybranch`).
+current `mybranch` point by using `but tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
 like that, while the light-weight tags are useful for any marking you
@@ -593,7 +593,7 @@ Copying repositories
 Git repositories are normally totally self-sufficient and relocatable.
 Unlike CVS, for example, there is no separate notion of
 "repository" and "working tree". A Git repository normally *is* the
-working tree, with the local Git information hidden in the `.git`
+working tree, with the local Git information hidden in the `.but`
 subdirectory. There is nothing else. What you see is what you got.
 
 [NOTE]
@@ -610,17 +610,17 @@ This has two implications:
    made a mistake and want to start all over), you can just do simple
 +
 ----------------
-$ rm -rf git-tutorial
+$ rm -rf but-tutorial
 ----------------
 +
 and it will be gone. There's no external repository, and there's no
 history outside the project you created.
 
  - if you want to move or duplicate a Git repository, you can do so. There
-   is 'git clone' command, but if all you want to do is just to
+   is 'but clone' command, but if all you want to do is just to
    create a copy of your repository (with all the full history that
    went along with it), you can do so with a regular
-   `cp -a git-tutorial new-git-tutorial`.
+   `cp -a but-tutorial new-but-tutorial`.
 +
 Note that when you've moved or copied a Git repository, your Git index
 file (which caches various information, notably some of the "stat"
@@ -628,7 +628,7 @@ information for the files involved) will likely need to be refreshed.
 So after you do a `cp -a` to create a new copy, you'll want to do
 +
 ----------------
-$ git update-index --refresh
+$ but update-index --refresh
 ----------------
 +
 in the new repository to make sure that the index file is up to date.
@@ -641,54 +641,54 @@ When copying a remote repository, you'll want to at a minimum update the
 index cache when you do this, and especially with other peoples'
 repositories you often want to make sure that the index cache is in some
 known state (you don't know *what* they've done and not yet checked in),
-so usually you'll precede the 'git update-index' with a
+so usually you'll precede the 'but update-index' with a
 
 ----------------
-$ git read-tree --reset HEAD
-$ git update-index --refresh
+$ but read-tree --reset HEAD
+$ but update-index --refresh
 ----------------
 
 which will force a total index re-build from the tree pointed to by `HEAD`.
-It resets the index contents to `HEAD`, and then the 'git update-index'
+It resets the index contents to `HEAD`, and then the 'but update-index'
 makes sure to match up all index entries with the checked-out files.
 If the original repository had uncummitted changes in its
-working tree, `git update-index --refresh` notices them and
+working tree, `but update-index --refresh` notices them and
 tells you they need to be updated.
 
 The above can also be written as simply
 
 ----------------
-$ git reset
+$ but reset
 ----------------
 
 and in fact a lot of the common Git command combinations can be scripted
-with the `git xyz` interfaces.  You can learn things by just looking
-at what the various git scripts do.  For example, `git reset` used to be
-the above two lines implemented in 'git reset', but some things like
-'git status' and 'git cummit' are slightly more complex scripts around
+with the `but xyz` interfaces.  You can learn things by just looking
+at what the various but scripts do.  For example, `but reset` used to be
+the above two lines implemented in 'but reset', but some things like
+'but status' and 'but cummit' are slightly more complex scripts around
 the basic Git commands.
 
 Many (most?) public remote repositories will not contain any of
 the checked out files or even an index file, and will *only* contain the
 actual core Git files. Such a repository usually doesn't even have the
-`.git` subdirectory, but has all the Git files directly in the
+`.but` subdirectory, but has all the Git files directly in the
 repository.
 
 To create your own local live copy of such a "raw" Git repository, you'd
 first create your own subdirectory for the project, and then copy the
-raw repository contents into the `.git` directory. For example, to
+raw repository contents into the `.but` directory. For example, to
 create your own copy of the Git repository, you'd do the following
 
 ----------------
-$ mkdir my-git
-$ cd my-git
-$ rsync -rL rsync://rsync.kernel.org/pub/scm/git/git.git/ .git
+$ mkdir my-but
+$ cd my-but
+$ rsync -rL rsync://rsync.kernel.org/pub/scm/but/but.but/ .but
 ----------------
 
 followed by
 
 ----------------
-$ git read-tree HEAD
+$ but read-tree HEAD
 ----------------
 
 to populate the index. However, now you have populated the index, and
@@ -697,22 +697,22 @@ actually have any of the working tree files to work on. To get
 those, you'd check them out with
 
 ----------------
-$ git checkout-index -u -a
+$ but checkout-index -u -a
 ----------------
 
 where the `-u` flag means that you want the checkout to keep the index
 up to date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
-flag first, to tell 'git checkout-index' to *force* overwriting of any old
+flag first, to tell 'but checkout-index' to *force* overwriting of any old
 files).
 
 Again, this can all be simplified with
 
 ----------------
-$ git clone git://git.kernel.org/pub/scm/git/git.git/ my-git
-$ cd my-git
-$ git checkout
+$ but clone but://but.kernel.org/pub/scm/but/but.but/ my-but
+$ cd my-but
+$ but checkout
 ----------------
 
 which will end up doing all of the above for you.
@@ -725,23 +725,23 @@ Creating a new branch
 ---------------------
 
 Branches in Git are really nothing more than pointers into the Git
-object database from within the `.git/refs/` subdirectory, and as we
+object database from within the `.but/refs/` subdirectory, and as we
 already discussed, the `HEAD` branch is nothing but a symlink to one of
 these object pointers.
 
 You can at any time create a new branch by just picking an arbitrary
 point in the project history, and just writing the SHA-1 name of that
-object into a file under `.git/refs/heads/`. You can use any filename you
+object into a file under `.but/refs/heads/`. You can use any filename you
 want (and indeed, subdirectories), but the convention is that the
 "normal" branch is called `master`. That's just a convention, though,
 and nothing enforces it.
 
-To show that as an example, let's go back to the git-tutorial repository we
+To show that as an example, let's go back to the but-tutorial repository we
 used earlier, and create a branch in it. You do that by simply just
 saying that you want to check out a new branch:
 
 ------------
-$ git switch -c mybranch
+$ but switch -c mybranch
 ------------
 
 will create a new branch based at the current `HEAD` position, and switch
@@ -751,11 +751,11 @@ to it.
 ================================================
 If you make the decision to start your new branch at some
 other point in the history than the current `HEAD`, you can do so by
-just telling 'git switch' what the base of the checkout would be.
+just telling 'but switch' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
-$ git switch -c mybranch earlier-cummit
+$ but switch -c mybranch earlier-cummit
 ------------
 
 and it would create the new branch `mybranch` at the earlier cummit,
@@ -765,36 +765,36 @@ and check out the state at that time.
 You can always just jump back to your original `master` branch by doing
 
 ------------
-$ git switch master
+$ but switch master
 ------------
 
 (or any other branch-name, for that matter) and if you forget which
 branch you happen to be on, a simple
 
 ------------
-$ cat .git/HEAD
+$ cat .but/HEAD
 ------------
 
 will tell you where it's pointing.  To get the list of branches
 you have, you can say
 
 ------------
-$ git branch
+$ but branch
 ------------
 
-which used to be nothing more than a simple script around `ls .git/refs/heads`.
+which used to be nothing more than a simple script around `ls .but/refs/heads`.
 There will be an asterisk in front of the branch you are currently on.
 
 Sometimes you may wish to create a new branch _without_ actually
 checking it out and switching to it. If so, just use the command
 
 ------------
-$ git branch <branchname> [startingpoint]
+$ but branch <branchname> [startingpoint]
 ------------
 
 which will simply _create_ the branch, but will not do anything further.
 You can then later -- once you decide that you want to actually develop
-on that branch -- switch to that branch with a regular 'git switch'
+on that branch -- switch to that branch with a regular 'but switch'
 with the branchname as the argument.
 
 
@@ -808,14 +808,14 @@ being the same as the original `master` branch, let's make sure we're in
 that branch, and do some work there.
 
 ------------------------------------------------
-$ git switch mybranch
+$ but switch mybranch
 $ echo "Work, work, work" >>hello
-$ git cummit -m "Some work." -i hello
+$ but cummit -m "Some work." -i hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
-doing both `git update-index hello` and `git cummit` by just giving the
-filename directly to `git cummit`, with an `-i` flag (it tells
+doing both `but update-index hello` and `but cummit` by just giving the
+filename directly to `but cummit`, with an `-i` flag (it tells
 Git to 'include' that file in addition to what you have done to
 the index file so far when making the cummit).  The `-m` flag is to give the
 cummit log message from the command line.
@@ -825,7 +825,7 @@ does some work in the original branch, and simulate that by going back
 to the master branch, and editing the same file differently there:
 
 ------------
-$ git switch master
+$ but switch master
 ------------
 
 Here, take a moment to look at the contents of `hello`, and notice how they
@@ -835,7 +835,7 @@ hasn't happened in the `master` branch at all. Then do
 ------------
 $ echo "Play, play, play" >>hello
 $ echo "Lots of fun" >>example
-$ git cummit -m "Some fun." -i hello example
+$ but cummit -m "Some fun." -i hello example
 ------------
 
 since the master branch is obviously in a much better mood.
@@ -845,7 +845,7 @@ work done. Before we do that, let's introduce a cool graphical tool that
 helps you view what's going on:
 
 ----------------
-$ gitk --all
+$ butk --all
 ----------------
 
 will show you graphically both of your branches (that's what the `--all`
@@ -853,14 +853,14 @@ means: normally it will just show you your current `HEAD`) and their
 histories. You can also see exactly how they came to be from a common
 source.
 
-Anyway, let's exit 'gitk' (`^Q` or the File menu), and decide that we want
+Anyway, let's exit 'butk' (`^Q` or the File menu), and decide that we want
 to merge the work we did on the `mybranch` branch into the `master`
 branch (which is currently our `HEAD` too). To do that, there's a nice
-script called 'git merge', which wants to know which branches you want
+script called 'but merge', which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
-$ git merge -m "Merge work in mybranch" mybranch
+$ but merge -m "Merge work in mybranch" mybranch
 ------------
 
 where the first argument is going to be used as the cummit message if
@@ -887,7 +887,7 @@ I'd suggest just making it so that `hello` contains all four lines:
 
 ------------
 Hello World
-It's a new day for git
+It's a new day for but
 Play, play, play
 Work, work, work
 ------------
@@ -895,14 +895,14 @@ Work, work, work
 and once you're happy with your manual merge, just do a
 
 ------------
-$ git cummit -i hello
+$ but cummit -i hello
 ------------
 
 which will very loudly warn you that you're now cummitting a merge
 (which is correct, so never mind), and you can write a small merge
-message about your adventures in 'git merge'-land.
+message about your adventures in 'but merge'-land.
 
-After you're done, start up `gitk --all` to see graphically what the
+After you're done, start up `butk --all` to see graphically what the
 history looks like. Notice that `mybranch` still exists, and you can
 switch to it, and continue to work with it if you want to. The
 `mybranch` branch will not contain the merge, but next time you merge it
@@ -910,10 +910,10 @@ from the `master` branch, Git will know how you merged it, so you'll not
 have to do _that_ merge again.
 
 Another useful tool, especially if you do not always work in X-Window
-environment, is `git show-branch`.
+environment, is `but show-branch`.
 
 ------------------------------------------------
-$ git show-branch --topo-order --more=1 master mybranch
+$ but show-branch --topo-order --more=1 master mybranch
 * [master] Merge work in mybranch
  ! [mybranch] Some work.
 --
@@ -937,29 +937,29 @@ cummits from the master branch.  The string inside brackets
 before the cummit log message is a short name you can use to
 name the cummit.  In the above example, 'master' and 'mybranch'
 are branch heads.  'master^' is the first parent of 'master'
-branch head.  Please see linkgit:gitrevisions[7] if you want to
+branch head.  Please see linkbut:butrevisions[7] if you want to
 see more complex cases.
 
 [NOTE]
-Without the '--more=1' option, 'git show-branch' would not output the
+Without the '--more=1' option, 'but show-branch' would not output the
 '[master^]' cummit, as '[mybranch]' cummit is a common ancestor of
-both 'master' and 'mybranch' tips.  Please see linkgit:git-show-branch[1]
+both 'master' and 'mybranch' tips.  Please see linkbut:but-show-branch[1]
 for details.
 
 [NOTE]
 If there were more cummits on the 'master' branch after the merge, the
-merge cummit itself would not be shown by 'git show-branch' by
+merge cummit itself would not be shown by 'but show-branch' by
 default.  You would need to provide `--sparse` option to make the
 merge cummit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
 to the `master` branch. Let's go back to `mybranch`, and run
-'git merge' to get the "upstream changes" back to your branch.
+'but merge' to get the "upstream changes" back to your branch.
 
 ------------
-$ git switch mybranch
-$ git merge -m "Merge upstream changes." master
+$ but switch mybranch
+$ but merge -m "Merge upstream changes." master
 ------------
 
 This outputs something like this (the actual cummit object names
@@ -979,11 +979,11 @@ not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast-forward' merge.
 
-You can run `gitk --all` again to see how the cummit ancestry
+You can run `butk --all` again to see how the cummit ancestry
 looks like, or run 'show-branch', which tells you this.
 
 ------------------------------------------------
-$ git show-branch master mybranch
+$ but show-branch master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
@@ -997,24 +997,24 @@ Merging external work
 It's usually much more common that you merge with somebody else than
 merging with your own branches, so it's worth pointing out that Git
 makes that very easy too, and in fact, it's not that different from
-doing a 'git merge'. In fact, a remote merge ends up being nothing
+doing a 'but merge'. In fact, a remote merge ends up being nothing
 more than "fetch the work from a remote repository into a temporary tag"
-followed by a 'git merge'.
+followed by a 'but merge'.
 
 Fetching from a remote repository is done by, unsurprisingly,
-'git fetch':
+'but fetch':
 
 ----------------
-$ git fetch <remote-repository>
+$ but fetch <remote-repository>
 ----------------
 
 One of the following transports can be used to name the
 repository to download from:
 
 SSH::
-	`remote.machine:/path/to/repo.git/` or
+	`remote.machine:/path/to/repo.but/` or
 +
-`ssh://remote.machine/path/to/repo.git/`
+`ssh://remote.machine/path/to/repo.but/`
 +
 This transport can be used for both uploading and downloading,
 and requires you to have a log-in privilege over `ssh` to the
@@ -1024,27 +1024,27 @@ transfers (close to) minimum set of objects.  It is by far the
 most efficient way to exchange Git objects between repositories.
 
 Local directory::
-	`/path/to/repo.git/`
+	`/path/to/repo.but/`
 +
 This transport is the same as SSH transport but uses 'sh' to run
 both ends on the local machine instead of running other end on
 the remote machine via 'ssh'.
 
 Git Native::
-	`git://remote.machine/path/to/repo.git/`
+	`but://remote.machine/path/to/repo.but/`
 +
 This transport was designed for anonymous downloading.  Like SSH
 transport, it finds out the set of objects the downstream side
 lacks and transfers (close to) minimum set of objects.
 
 HTTP(S)::
-	`http://remote.machine/path/to/repo.git/`
+	`http://remote.machine/path/to/repo.but/`
 +
 Downloader from http and https URL
 first obtains the topmost cummit object name from the remote site
-by looking at the specified refname under `repo.git/refs/` directory,
+by looking at the specified refname under `repo.but/refs/` directory,
 and then tries to obtain the
-cummit object by downloading from `repo.git/objects/xx/xxx...`
+cummit object by downloading from `repo.but/objects/xx/xxx...`
 using the object name of that cummit object.  Then it reads the
 cummit object to find out its parent cummits and the associate
 tree object; it repeats this process until it gets all the
@@ -1055,18 +1055,18 @@ The 'cummit walkers' are sometimes also called 'dumb
 transports', because they do not require any Git aware smart
 server like Git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
-you must prepare your repository with 'git update-server-info'
+you must prepare your repository with 'but update-server-info'
 to help dumb transport downloaders.
 
 Once you fetch from the remote repository, you `merge` that
 with your current branch.
 
 However -- it's such a common thing to `fetch` and then
-immediately `merge`, that it's called `git pull`, and you can
+immediately `merge`, that it's called `but pull`, and you can
 simply do
 
 ----------------
-$ git pull <remote-repository>
+$ but pull <remote-repository>
 ----------------
 
 and optionally give a branch-name for the remote end as a second
@@ -1075,7 +1075,7 @@ argument.
 [NOTE]
 You could do without using any branches at all, by
 keeping as many local repositories as you would like to have
-branches, and merging between them with 'git pull', just like
+branches, and merging between them with 'but pull', just like
 you merge between branches. The advantage of this approach is
 that it lets you keep a set of files for each `branch` checked
 out and you may find it easier to switch back and forth if you
@@ -1089,20 +1089,20 @@ the remote repository URL in the local repository's config file
 like this:
 
 ------------------------------------------------
-$ git config remote.linus.url http://www.kernel.org/pub/scm/git/git.git/
+$ but config remote.linus.url http://www.kernel.org/pub/scm/but/but.but/
 ------------------------------------------------
 
-and use the "linus" keyword with 'git pull' instead of the full URL.
+and use the "linus" keyword with 'but pull' instead of the full URL.
 
 Examples.
 
-. `git pull linus`
-. `git pull linus tag v0.99.1`
+. `but pull linus`
+. `but pull linus tag v0.99.1`
 
 the above are equivalent to:
 
-. `git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD`
-. `git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
+. `but pull http://www.kernel.org/pub/scm/but/but.but/ HEAD`
+. `but pull http://www.kernel.org/pub/scm/but/but.but/ tag v0.99.1`
 
 
 How does the merge work?
@@ -1119,7 +1119,7 @@ back to the earlier repository with "hello" and "example" file,
 and bring ourselves back to the pre-merge state:
 
 ------------
-$ git show-branch --more=2 master mybranch
+$ but show-branch --more=2 master mybranch
 ! [master] Merge work in mybranch
  * [mybranch] Merge work in mybranch
 --
@@ -1128,20 +1128,20 @@ $ git show-branch --more=2 master mybranch
 +* [master^] Some fun.
 ------------
 
-Remember, before running 'git merge', our `master` head was at
+Remember, before running 'but merge', our `master` head was at
 "Some fun." cummit, while our `mybranch` head was at "Some
 work." cummit.
 
 ------------
-$ git switch -C mybranch master^2
-$ git switch master
-$ git reset --hard master^
+$ but switch -C mybranch master^2
+$ but switch master
+$ but reset --hard master^
 ------------
 
 After rewinding, the cummit structure should look like this:
 
 ------------
-$ git show-branch
+$ but show-branch
 * [master] Some fun.
  ! [mybranch] Some work.
 --
@@ -1152,12 +1152,12 @@ $ git show-branch
 
 Now we are ready to experiment with the merge by hand.
 
-`git merge` command, when merging two branches, uses 3-way merge
+`but merge` command, when merging two branches, uses 3-way merge
 algorithm.  First, it finds the common ancestor between them.
-The command it uses is 'git merge-base':
+The command it uses is 'but merge-base':
 
 ------------
-$ mb=$(git merge-base HEAD mybranch)
+$ mb=$(but merge-base HEAD mybranch)
 ------------
 
 The command writes the cummit object name of the common ancestor
@@ -1167,7 +1167,7 @@ ancestor cummit is the "Initial cummit" cummit in this case.  You can
 tell it by:
 
 ------------
-$ git name-rev --name-only --tags $mb
+$ but name-rev --name-only --tags $mb
 my-first-tag
 ------------
 
@@ -1175,10 +1175,10 @@ After finding out a common ancestor cummit, the second step is
 this:
 
 ------------
-$ git read-tree -m -u $mb HEAD mybranch
+$ but read-tree -m -u $mb HEAD mybranch
 ------------
 
-This is the same 'git read-tree' command we have already seen,
+This is the same 'but read-tree' command we have already seen,
 but it takes three trees, unlike previous examples.  This reads
 the contents of each tree into different 'stage' in the index
 file (the first tree goes to stage 1, the second to stage 2,
@@ -1194,7 +1194,7 @@ trees are left in non-zero stages.  At this point, you can
 inspect the index file with this command:
 
 ------------
-$ git ls-files --stage
+$ but ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
 100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
 100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
@@ -1211,7 +1211,7 @@ stages.
 To look at only non-zero stages, use `--unmerged` flag:
 
 ------------
-$ git ls-files --unmerged
+$ but ls-files --unmerged
 100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
 100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
@@ -1219,17 +1219,17 @@ $ git ls-files --unmerged
 
 The next step of merging is to merge these three versions of the
 file, using 3-way merge.  This is done by giving
-'git merge-one-file' command as one of the arguments to
-'git merge-index' command:
+'but merge-one-file' command as one of the arguments to
+'but merge-index' command:
 
 ------------
-$ git merge-index git-merge-one-file hello
+$ but merge-index but-merge-one-file hello
 Auto-merging hello
 ERROR: Merge conflict in hello
 fatal: merge program failed
 ------------
 
-'git merge-one-file' script is called with parameters to
+'but merge-one-file' script is called with parameters to
 describe those three versions, and is responsible to leave the
 merge results in the working tree.
 It is a fairly straightforward shell script, and
@@ -1240,7 +1240,7 @@ the working tree..  This can be seen if you run `ls-files
 --stage` again at this point:
 
 ------------
-$ git ls-files --stage
+$ but ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
 100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
 100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
@@ -1248,9 +1248,9 @@ $ git ls-files --stage
 ------------
 
 This is the state of the index file and the working file after
-'git merge' returns control back to you, leaving the conflicting
+'but merge' returns control back to you, leaving the conflicting
 merge for you to resolve.  Notice that the path `hello` is still
-unmerged, and what you see with 'git diff' at this point is
+unmerged, and what you see with 'but diff' at this point is
 differences since stage 2 (i.e. your version).
 
 
@@ -1262,7 +1262,7 @@ how can *you* prepare a repository to let other people pull from
 it?
 
 You do your real work in your working tree that has your
-primary repository hanging under it as its `.git` subdirectory.
+primary repository hanging under it as its `.but` subdirectory.
 You *could* make that repository accessible remotely and ask
 people to pull from it, but in practice that is not the way
 things are usually done. A recommended way is to have a public
@@ -1278,7 +1278,7 @@ how Git repositories at `kernel.org` are managed.
 Publishing the changes from your local (private) repository to
 your remote (public) repository requires a write privilege on
 the remote machine. You need to have an SSH account there to
-run a single command, 'git-receive-pack'.
+run a single command, 'but-receive-pack'.
 
 First, you need to create an empty repository on the remote
 machine that will house your public repository. This empty
@@ -1287,32 +1287,32 @@ into it later. Obviously, this repository creation needs to be
 done only once.
 
 [NOTE]
-'git push' uses a pair of commands,
-'git send-pack' on your local machine, and 'git-receive-pack'
+'but push' uses a pair of commands,
+'but send-pack' on your local machine, and 'but-receive-pack'
 on the remote machine. The communication between the two over
 the network internally uses an SSH connection.
 
-Your private repository's Git directory is usually `.git`, but
+Your private repository's Git directory is usually `.but`, but
 your public repository is often named after the project name,
-i.e. `<project>.git`. Let's create such a public repository for
-project `my-git`. After logging into the remote machine, create
+i.e. `<project>.but`. Let's create such a public repository for
+project `my-but`. After logging into the remote machine, create
 an empty directory:
 
 ------------
-$ mkdir my-git.git
+$ mkdir my-but.but
 ------------
 
 Then, make that directory into a Git repository by running
-'git init', but this time, since its name is not the usual
-`.git`, we do things slightly differently:
+'but init', but this time, since its name is not the usual
+`.but`, we do things slightly differently:
 
 ------------
-$ GIT_DIR=my-git.git git init
+$ GIT_DIR=my-but.but but init
 ------------
 
 Make sure this directory is available for others you want your
 changes to be pulled via the transport of your choice. Also
-you need to make sure that you have the 'git-receive-pack'
+you need to make sure that you have the 'but-receive-pack'
 program on the `$PATH`.
 
 [NOTE]
@@ -1320,21 +1320,21 @@ Many installations of sshd do not invoke your shell as the login
 shell when you directly run programs; what this means is that if
 your login shell is 'bash', only `.bashrc` is read and not
 `.bash_profile`. As a workaround, make sure `.bashrc` sets up
-`$PATH` so that you can run 'git-receive-pack' program.
+`$PATH` so that you can run 'but-receive-pack' program.
 
 [NOTE]
 If you plan to publish this repository to be accessed over http,
-you should do `mv my-git.git/hooks/post-update.sample
-my-git.git/hooks/post-update` at this point.
+you should do `mv my-but.but/hooks/post-update.sample
+my-but.but/hooks/post-update` at this point.
 This makes sure that every time you push into this
-repository, `git update-server-info` is run.
+repository, `but update-server-info` is run.
 
 Your "public repository" is now ready to accept your changes.
 Come back to the machine you have your private repository. From
 there, run this command:
 
 ------------
-$ git push <public-host>:/path/to/my-git.git master
+$ but push <public-host>:/path/to/my-but.but master
 ------------
 
 This synchronizes your public repository to match the named
@@ -1346,14 +1346,14 @@ repository. Kernel.org mirror network takes care of the
 propagation to other publicly visible machines:
 
 ------------
-$ git push master.kernel.org:/pub/scm/git/git.git/
+$ but push master.kernel.org:/pub/scm/but/but.but/
 ------------
 
 
 Packing your repository
 -----------------------
 
-Earlier, we saw that one file under `.git/objects/??/` directory
+Earlier, we saw that one file under `.but/objects/??/` directory
 is stored for each Git object you create. This representation
 is efficient to create atomically and safely, but
 not so convenient to transport over the network. Since Git objects are
@@ -1361,25 +1361,25 @@ immutable once they are created, there is a way to optimize the
 storage by "packing them together". The command
 
 ------------
-$ git repack
+$ but repack
 ------------
 
 will do it for you. If you followed the tutorial examples, you
-would have accumulated about 17 objects in `.git/objects/??/`
-directories by now. 'git repack' tells you how many objects it
-packed, and stores the packed file in the `.git/objects/pack`
+would have accumulated about 17 objects in `.but/objects/??/`
+directories by now. 'but repack' tells you how many objects it
+packed, and stores the packed file in the `.but/objects/pack`
 directory.
 
 [NOTE]
 You will see two files, `pack-*.pack` and `pack-*.idx`,
-in `.git/objects/pack` directory. They are closely related to
+in `.but/objects/pack` directory. They are closely related to
 each other, and if you ever copy them by hand to a different
 repository for whatever reason, you should make sure you copy
 them together. The former holds all the data from the objects
 in the pack, and the latter holds the index for random
 access.
 
-If you are paranoid, running 'git verify-pack' command would
+If you are paranoid, running 'but verify-pack' command would
 detect if you have a corrupt pack, but do not worry too much.
 Our programs are always perfect ;-).
 
@@ -1387,33 +1387,33 @@ Once you have packed objects, you do not need to leave the
 unpacked objects that are contained in the pack file anymore.
 
 ------------
-$ git prune-packed
+$ but prune-packed
 ------------
 
 would remove them for you.
 
-You can try running `find .git/objects -type f` before and after
-you run `git prune-packed` if you are curious.  Also `git
+You can try running `find .but/objects -type f` before and after
+you run `but prune-packed` if you are curious.  Also `but
 count-objects` would tell you how many unpacked objects are in
 your repository and how much space they are consuming.
 
 [NOTE]
-`git pull` is slightly cumbersome for HTTP transport, as a
+`but pull` is slightly cumbersome for HTTP transport, as a
 packed repository may contain relatively few objects in a
 relatively large pack. If you expect many HTTP pulls from your
 public repository you might want to repack & prune often, or
 never.
 
-If you run `git repack` again at this point, it will say
+If you run `but repack` again at this point, it will say
 "Nothing new to pack.". Once you continue your development and
-accumulate the changes, running `git repack` again will create a
+accumulate the changes, running `but repack` again will create a
 new pack, that contains objects created since you packed your
 repository the last time. We recommend that you pack your project
 soon after the initial import (unless you are starting your
-project from scratch), and then run `git repack` every once in a
+project from scratch), and then run `but repack` every once in a
 while, depending on how active your project is.
 
-When a repository is synchronized via `git push` and `git pull`
+When a repository is synchronized via `but push` and `but pull`
 objects packed in the source repository are usually stored
 unpacked in the destination.
 While this allows you to use different packing strategies on
@@ -1444,19 +1444,19 @@ A recommended workflow for a "project lead" goes like this:
 +
 If other people are pulling from your repository over dumb
 transport protocols (HTTP), you need to keep this repository
-'dumb transport friendly'.  After `git init`,
+'dumb transport friendly'.  After `but init`,
 `$GIT_DIR/hooks/post-update.sample` copied from the standard templates
-would contain a call to 'git update-server-info'
+would contain a call to 'but update-server-info'
 but you need to manually enable the hook with
 `mv post-update.sample post-update`.  This makes sure
-'git update-server-info' keeps the necessary files up to date.
+'but update-server-info' keeps the necessary files up to date.
 
 3. Push into the public repository from your primary
    repository.
 
-4. 'git repack' the public repository. This establishes a big
+4. 'but repack' the public repository. This establishes a big
    pack that contains the initial set of objects as the
-   baseline, and possibly 'git prune' if the transport
+   baseline, and possibly 'but prune' if the transport
    used for pulling from your repository supports packed
    repositories.
 
@@ -1470,14 +1470,14 @@ You can repack this private repository whenever you feel like.
 6. Push your changes to the public repository, and announce it
    to the public.
 
-7. Every once in a while, 'git repack' the public repository.
+7. Every once in a while, 'but repack' the public repository.
    Go back to step 5. and continue working.
 
 
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by running 'git clone' on the public
+1. Prepare your work repository, by running 'but clone' on the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
@@ -1492,7 +1492,7 @@ on that project and has an own "public repository" goes like this:
    point at the repository you are borrowing from.
 
 4. Push into the public repository from your primary
-   repository. Run 'git repack', and possibly 'git prune' if the
+   repository. Run 'but repack', and possibly 'but prune' if the
    transport used for pulling from your repository supports
    packed repositories.
 
@@ -1509,7 +1509,7 @@ like.
    "project lead" and possibly your "sub-subsystem
    maintainers" to pull from it.
 
-7. Every once in a while, 'git repack' the public repository.
+7. Every once in a while, 'but repack' the public repository.
    Go back to step 5. and continue working.
 
 
@@ -1517,7 +1517,7 @@ A recommended work cycle for an "individual developer" who does
 not have a "public" repository is somewhat different. It goes
 like this:
 
-1. Prepare your work repository, by 'git clone' the public
+1. Prepare your work repository, by 'but clone' the public
    repository of the "project lead" (or a "subsystem
    maintainer", if you work on a subsystem). The URL used for
    the initial cloning is stored in the remote.origin.url
@@ -1525,16 +1525,16 @@ like this:
 
 2. Do your work in your repository on 'master' branch.
 
-3. Run `git fetch origin` from the public repository of your
+3. Run `but fetch origin` from the public repository of your
    upstream every once in a while. This does only the first
-   half of `git pull` but does not merge. The head of the
-   public repository is stored in `.git/refs/remotes/origin/master`.
+   half of `but pull` but does not merge. The head of the
+   public repository is stored in `.but/refs/remotes/origin/master`.
 
-4. Use `git cherry origin` to see which ones of your patches
-   were accepted, and/or use `git rebase origin` to port your
+4. Use `but cherry origin` to see which ones of your patches
+   were accepted, and/or use `but rebase origin` to port your
    unmerged changes forward to the updated upstream.
 
-5. Use `git format-patch origin` to prepare patches for e-mail
+5. Use `but format-patch origin` to prepare patches for e-mail
    submission to your upstream and send it out. Go back to
    step 2. and continue.
 
@@ -1547,7 +1547,7 @@ suggested in the previous section may be new to you. You do not
 have to worry. Git supports the "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
-See linkgit:gitcvs-migration[7] for the details.
+See linkbut:butcvs-migration[7] for the details.
 
 Bundling your work together
 ---------------------------
@@ -1564,7 +1564,7 @@ branch, and two independent fixes in the "cummit-fix" and
 "diff-fix" branches:
 
 ------------
-$ git show-branch
+$ but show-branch
 ! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
   * [master] Release candidate #1
@@ -1581,14 +1581,14 @@ in both of them.  You could merge in 'diff-fix' first and then
 'cummit-fix' next, like this:
 
 ------------
-$ git merge -m "Merge fix in diff-fix" diff-fix
-$ git merge -m "Merge fix in cummit-fix" cummit-fix
+$ but merge -m "Merge fix in diff-fix" diff-fix
+$ but merge -m "Merge fix in cummit-fix" cummit-fix
 ------------
 
 Which would result in:
 
 ------------
-$ git show-branch
+$ but show-branch
 ! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
   * [master] Merge fix in cummit-fix
@@ -1611,17 +1611,17 @@ we just did and start over.  We would want to get the master
 branch before these two merges by resetting it to 'master~2':
 
 ------------
-$ git reset --hard master~2
+$ but reset --hard master~2
 ------------
 
-You can make sure `git show-branch` matches the state before
-those two 'git merge' you just did.  Then, instead of running
-two 'git merge' commands in a row, you would merge these two
+You can make sure `but show-branch` matches the state before
+those two 'but merge' you just did.  Then, instead of running
+two 'but merge' commands in a row, you would merge these two
 branch heads (this is known as 'making an Octopus'):
 
 ------------
-$ git merge cummit-fix diff-fix
-$ git show-branch
+$ but merge cummit-fix diff-fix
+$ but show-branch
 ! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
   * [master] Octopus merge of branches 'diff-fix' and 'cummit-fix'
@@ -1648,13 +1648,13 @@ to follow, not easier.
 
 SEE ALSO
 --------
-linkgit:gittutorial[7],
-linkgit:gittutorial-2[7],
-linkgit:gitcvs-migration[7],
-linkgit:git-help[1],
-linkgit:giteveryday[7],
+linkbut:buttutorial[7],
+linkbut:buttutorial-2[7],
+linkbut:butcvs-migration[7],
+linkbut:but-help[1],
+linkbut:buteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

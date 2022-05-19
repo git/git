@@ -6,7 +6,7 @@
 #     Guillaume Sasdy <guillaume.sasdy@ensimag.imag.fr>
 #     Simon Perrat <simon.perrat@ensimag.imag.fr>
 #
-## Test git-remote-mediawiki
+## Test but-remote-mediawiki
 
 all: test
 

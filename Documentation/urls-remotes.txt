@@ -11,13 +11,13 @@ of a URL as `<repository>` argument:
 * a file in the `$GIT_DIR/branches` directory.
 
 All of these also allow you to omit the refspec from the command line
-because they each contain a refspec which git will use by default.
+because they each contain a refspec which but will use by default.
 
 Named remote in configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can choose to provide the name of a remote which you had previously
-configured using linkgit:git-remote[1], linkgit:git-config[1]
+configured using linkbut:but-remote[1], linkbut:but-config[1]
 or even by a manual edit to the `$GIT_DIR/config` file.  The URL of
 this remote will be used to access the repository.  The refspec
 of this remote will be used by default when you do
@@ -52,8 +52,8 @@ following format:
 
 ------------
 
-`Push:` lines are used by 'git push' and
-`Pull:` lines are used by 'git pull' and 'git fetch'.
+`Push:` lines are used by 'but push' and
+`Pull:` lines are used by 'but pull' and 'but fetch'.
 Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 
@@ -72,18 +72,18 @@ This file should have the following format:
 
 `<URL>` is required; `#<head>` is optional.
 
-Depending on the operation, git will use one of the following
+Depending on the operation, but will use one of the following
 refspecs, if you don't provide one on the command line.
 `<branch>` is the name of this file in `$GIT_DIR/branches` and
 `<head>` defaults to `master`.
 
-git fetch uses:
+but fetch uses:
 
 ------------
 	refs/heads/<head>:refs/heads/<branch>
 ------------
 
-git push uses:
+but push uses:
 
 ------------
 	HEAD:refs/heads/<head>

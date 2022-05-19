@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 client view'
+test_description='but p4 client view'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -39,10 +39,10 @@ client_verify() {
 #
 # Make sure the named files, exactly, exist.
 #
-git_verify() {
+but_verify() {
 	(
-		cd "$git" &&
-		git ls-files >files &&
+		cd "$but" &&
+		but ls-files >files &&
 		check_files_exist "$@"
 	)
 }
@@ -78,52 +78,52 @@ test_expect_success 'init depot' '
 # double % for printf
 test_expect_success 'view wildcard %%n' '
 	client_view "//depot/%%%%1/sub/... //client/sub/%%%%1/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot
 '
 
 test_expect_success 'view wildcard *' '
 	client_view "//depot/*/bar/... //client/*/bar/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot
 '
 
 test_expect_success 'wildcard ... in the middle' '
 	client_view "//depot/.../file11 //client/.../file11" &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot
 '
 
 test_expect_success 'wildcard ... in the middle and at the end' '
 	client_view "//depot/.../a/... //client/.../a/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot
 '
 
 test_expect_success 'basic map' '
 	client_view "//depot/dir1/... //client/cli1/..." &&
 	files="cli1/file11 cli1/file12" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'client view with no mappings' '
 	client_view &&
 	client_verify &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify
 '
 
 test_expect_success 'single file map' '
 	client_view "//depot/dir1/file11 //client/file11" &&
 	files="file11" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'later mapping takes precedence (entire repo)' '
@@ -132,9 +132,9 @@ test_expect_success 'later mapping takes precedence (entire repo)' '
 	files="cli2/dir1/file11 cli2/dir1/file12
 	       cli2/dir2/file21 cli2/dir2/file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'later mapping takes precedence (partial repo)' '
@@ -142,9 +142,9 @@ test_expect_success 'later mapping takes precedence (partial repo)' '
 		    "//depot/dir2/... //client/..." &&
 	files="file21 file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 # Reading the view backwards,
@@ -158,9 +158,9 @@ test_expect_success 'depot path matching rejected client path' '
 		    "//depot/dir2/... //client/cli12/..." &&
 	files="cli12/file21 cli12/file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 # since both have the same //client/..., the exclusion
@@ -169,9 +169,9 @@ test_expect_success 'exclusion wildcard, client rhs same (odd)' '
 	client_view "//depot/... //client/..." \
 		    "-//depot/dir2/... //client/..." &&
 	client_verify &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify
 '
 
 test_expect_success 'exclusion wildcard, client rhs different (normal)' '
@@ -179,9 +179,9 @@ test_expect_success 'exclusion wildcard, client rhs different (normal)' '
 		    "-//depot/dir2/... //client/dir2/..." &&
 	files="dir1/file11 dir1/file12" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'exclusion single file' '
@@ -189,9 +189,9 @@ test_expect_success 'exclusion single file' '
 		    "-//depot/dir2/file22 //client/file22" &&
 	files="dir1/file11 dir1/file12 dir2/file21" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'overlay wildcard' '
@@ -199,9 +199,9 @@ test_expect_success 'overlay wildcard' '
 		    "+//depot/dir2/... //client/cli/..." &&
 	files="cli/file11 cli/file12 cli/file21 cli/file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'overlay single file' '
@@ -209,9 +209,9 @@ test_expect_success 'overlay single file' '
 		    "+//depot/dir2/file21 //client/cli/file21" &&
 	files="cli/file11 cli/file12 cli/file21" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'exclusion with later inclusion' '
@@ -220,17 +220,17 @@ test_expect_success 'exclusion with later inclusion' '
 		    "//depot/dir2/... //client/dir2incl/..." &&
 	files="dir1/file11 dir1/file12 dir2incl/file21 dir2incl/file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'quotes on rhs only' '
 	client_view "//depot/dir1/... \"//client/cdir 1/...\"" &&
 	client_verify "cdir 1/file11" "cdir 1/file12" &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify "cdir 1/file11" "cdir 1/file12"
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify "cdir 1/file11" "cdir 1/file12"
 '
 
 #
@@ -240,11 +240,11 @@ test_expect_success 'quotes on rhs only' '
 # clone sets variable
 test_expect_success 'clone --use-client-spec sets useClientSpec' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config --bool git-p4.useClientSpec >actual &&
+		cd "$but" &&
+		but config --bool but-p4.useClientSpec >actual &&
 		echo true >true &&
 		test_cmp actual true
 	)
@@ -255,9 +255,9 @@ test_expect_success 'subdir clone' '
 	client_view "//depot/... //client/..." &&
 	files="dir1/file11 dir1/file12 dir2/file21 dir2/file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
-	git_verify dir1/file11 dir1/file12
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
+	but_verify dir1/file11 dir1/file12
 '
 
 #
@@ -265,15 +265,15 @@ test_expect_success 'subdir clone' '
 #
 test_expect_success 'subdir clone, submit modify' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		echo line >>dir1/file12 &&
-		git add dir1/file12 &&
-		git cummit -m dir1/file12 &&
-		git p4 submit
+		but add dir1/file12 &&
+		but cummit -m dir1/file12 &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -284,15 +284,15 @@ test_expect_success 'subdir clone, submit modify' '
 
 test_expect_success 'subdir clone, submit add' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		echo file13 >dir1/file13 &&
-		git add dir1/file13 &&
-		git cummit -m dir1/file13 &&
-		git p4 submit
+		but add dir1/file13 &&
+		but cummit -m dir1/file13 &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -302,14 +302,14 @@ test_expect_success 'subdir clone, submit add' '
 
 test_expect_success 'subdir clone, submit delete' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git rm dir1/file12 &&
-		git cummit -m "delete dir1/file12" &&
-		git p4 submit
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but rm dir1/file12 &&
+		but cummit -m "delete dir1/file12" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -319,16 +319,16 @@ test_expect_success 'subdir clone, submit delete' '
 
 test_expect_success 'subdir clone, submit copy' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.detectCopies true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.detectCopies true &&
 		cp dir1/file11 dir1/file11a &&
-		git add dir1/file11a &&
-		git cummit -m "copy to dir1/file11a" &&
-		git p4 submit
+		but add dir1/file11a &&
+		but cummit -m "copy to dir1/file11a" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -339,15 +339,15 @@ test_expect_success 'subdir clone, submit copy' '
 
 test_expect_success 'subdir clone, submit rename' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.detectRenames true &&
-		git mv dir1/file13 dir1/file13a &&
-		git cummit -m "rename dir1/file13 to dir1/file13a" &&
-		git p4 submit
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.detectRenames true &&
+		but mv dir1/file13 dir1/file13a &&
+		but cummit -m "rename dir1/file13 to dir1/file13a" &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -360,39 +360,39 @@ test_expect_success 'subdir clone, submit rename' '
 # see t9800 for the non-client-spec case, and the rest of the wildcard tests
 test_expect_success 'wildcard files submit back to p4, client-spec case' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot/dir1 &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot/dir1 &&
 	(
-		cd "$git" &&
-		echo git-wild-hash >dir1/git-wild#hash &&
+		cd "$but" &&
+		echo but-wild-hash >dir1/but-wild#hash &&
 		if test_have_prereq !MINGW,!CYGWIN
 		then
-			echo git-wild-star >dir1/git-wild\*star
+			echo but-wild-star >dir1/but-wild\*star
 		fi &&
-		echo git-wild-at >dir1/git-wild@at &&
-		echo git-wild-percent >dir1/git-wild%percent &&
-		git add dir1/git-wild* &&
-		git cummit -m "add some wildcard filenames" &&
-		git config git-p4.skipSubmitEditCheck true &&
-		git p4 submit
+		echo but-wild-at >dir1/but-wild@at &&
+		echo but-wild-percent >dir1/but-wild%percent &&
+		but add dir1/but-wild* &&
+		but cummit -m "add some wildcard filenames" &&
+		but config but-p4.skipSubmitEditCheck true &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
-		test_path_is_file dir1/git-wild#hash &&
+		test_path_is_file dir1/but-wild#hash &&
 		if test_have_prereq !MINGW,!CYGWIN
 		then
-			test_path_is_file dir1/git-wild\*star
+			test_path_is_file dir1/but-wild\*star
 		fi &&
-		test_path_is_file dir1/git-wild@at &&
-		test_path_is_file dir1/git-wild%percent
+		test_path_is_file dir1/but-wild@at &&
+		test_path_is_file dir1/but-wild%percent
 	) &&
 	(
 		# delete these carefully, cannot just do "p4 delete"
-		# on files with wildcards; but git-p4 knows how
-		cd "$git" &&
-		git rm dir1/git-wild* &&
-		git cummit -m "clean up the wildcards" &&
-		git p4 submit
+		# on files with wildcards; but but-p4 knows how
+		cd "$but" &&
+		but rm dir1/but-wild* &&
+		but cummit -m "clean up the wildcards" &&
+		but p4 submit
 	)
 '
 
@@ -441,10 +441,10 @@ test_expect_success 'overlay collision 1 to 2' '
 	echo dir2/filecollide >actual &&
 	client_verify $files &&
 	test_cmp actual "$cli"/filecollide &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files &&
-	test_cmp actual "$git"/filecollide
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files &&
+	test_cmp actual "$but"/filecollide
 '
 
 test_expect_failure 'overlay collision 2 to 1' '
@@ -454,10 +454,10 @@ test_expect_failure 'overlay collision 2 to 1' '
 	echo dir1/filecollide >actual &&
 	client_verify $files &&
 	test_cmp actual "$cli"/filecollide &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files &&
-	test_cmp actual "$git"/filecollide
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files &&
+	test_cmp actual "$but"/filecollide
 '
 
 test_expect_success 'overlay collision delete 2' '
@@ -476,9 +476,9 @@ test_expect_failure 'overlay collision 1 to 2, but 2 deleted' '
 		    "+//depot/dir2/... //client/..." &&
 	files="file11 file12 file21 file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'overlay collision update 1' '
@@ -499,9 +499,9 @@ test_expect_failure 'overlay collision 1 to 2, but 2 deleted, then 1 updated' '
 		    "+//depot/dir2/... //client/..." &&
 	files="file11 file12 file21 file22" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files
 '
 
 test_expect_success 'overlay collision delete filecollides' '
@@ -549,16 +549,16 @@ test_expect_success 'overlay sync: add colA in dir1' '
 	)
 '
 
-test_expect_success 'overlay sync: initial git checkout' '
+test_expect_success 'overlay sync: initial but checkout' '
 	client_view "//depot/dir1/... //client/..." \
 		    "+//depot/dir2/... //client/..." &&
 	files="file11 file12 file21 file22 colA" &&
 	echo dir1/colA >actual &&
 	client_verify $files &&
 	test_cmp actual "$cli"/colA &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files &&
-	test_cmp actual "$git"/colA
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files &&
+	test_cmp actual "$but"/colA
 '
 
 test_expect_success 'overlay sync: add colA in dir2' '
@@ -580,12 +580,12 @@ test_expect_success 'overlay sync: colA content switch' '
 	client_verify $files &&
 	test_cmp actual "$cli"/colA &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files &&
-	test_cmp actual "$git"/colA
+	but_verify $files &&
+	test_cmp actual "$but"/colA
 '
 
 test_expect_success 'overlay sync: add colB in dir1' '
@@ -607,12 +607,12 @@ test_expect_success 'overlay sync: colB appears' '
 	client_verify $files &&
 	test_cmp actual "$cli"/colB &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files &&
-	test_cmp actual "$git"/colB
+	but_verify $files &&
+	test_cmp actual "$but"/colB
 '
 
 test_expect_success 'overlay sync: add/delete colB in dir2' '
@@ -633,13 +633,13 @@ test_expect_success 'overlay sync: colB disappears' '
 		    "+//depot/dir2/... //client/..." &&
 	files="file11 file12 file21 file22 colA" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files
+	but_verify $files
 '
 
 test_expect_success 'overlay sync: cleanup' '
@@ -687,16 +687,16 @@ test_expect_success 'overlay sync swap: add colA in dir1' '
 	)
 '
 
-test_expect_success 'overlay sync swap: initial git checkout' '
+test_expect_success 'overlay sync swap: initial but checkout' '
 	client_view "//depot/dir2/... //client/..." \
 		    "+//depot/dir1/... //client/..." &&
 	files="file11 file12 file21 file22 colA" &&
 	echo dir1/colA >actual &&
 	client_verify $files &&
 	test_cmp actual "$cli"/colA &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify $files &&
-	test_cmp actual "$git"/colA
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify $files &&
+	test_cmp actual "$but"/colA
 '
 
 test_expect_success 'overlay sync swap: add colA in dir2' '
@@ -718,12 +718,12 @@ test_expect_failure 'overlay sync swap: colA no content switch' '
 	client_verify $files &&
 	test_cmp actual "$cli"/colA &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files &&
-	test_cmp actual "$git"/colA
+	but_verify $files &&
+	test_cmp actual "$but"/colA
 '
 
 test_expect_success 'overlay sync swap: add colB in dir1' '
@@ -745,12 +745,12 @@ test_expect_success 'overlay sync swap: colB appears' '
 	client_verify $files &&
 	test_cmp actual "$cli"/colB &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files &&
-	test_cmp actual "$git"/colB
+	but_verify $files &&
+	test_cmp actual "$but"/colB
 '
 
 test_expect_success 'overlay sync swap: add/delete colB in dir2' '
@@ -773,13 +773,13 @@ test_expect_failure 'overlay sync swap: colB no change' '
 	echo dir1/colB >actual &&
 	client_verify $files &&
 	test_cmp actual "$cli"/colB &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git p4 sync --use-client-spec &&
-		git merge --ff-only p4/master
+		cd "$but" &&
+		but p4 sync --use-client-spec &&
+		but merge --ff-only p4/master
 	) &&
-	git_verify $files &&
+	but_verify $files &&
 	test_cmp actual "$cli"/colB
 '
 
@@ -823,17 +823,17 @@ test_expect_success 'quotes on lhs only' '
 	client_view "\"//depot/dir 1/...\" //client/cdir1/..." &&
 	files="cdir1/file11 cdir1/file12" &&
 	client_verify $files &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
 	client_verify $files
 '
 
 test_expect_success 'quotes on both sides' '
 	client_view "\"//depot/dir 1/...\" \"//client/cdir 1/...\"" &&
 	client_verify "cdir 1/file11" "cdir 1/file12" &&
-	test_when_finished cleanup_git &&
-	git p4 clone --use-client-spec --dest="$git" //depot &&
-	git_verify "cdir 1/file11" "cdir 1/file12"
+	test_when_finished cleanup_but &&
+	but p4 clone --use-client-spec --dest="$but" //depot &&
+	but_verify "cdir 1/file11" "cdir 1/file12"
 '
 
 test_done

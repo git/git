@@ -1,6 +1,6 @@
 #
 # Example implementation for the Git filter protocol version 2
-# See Documentation/gitattributes.txt, section "Filter Protocol"
+# See Documentation/butattributes.txt, section "Filter Protocol"
 #
 # Usage: rot13-filter.pl [--always-delay] <log path> <capabilities>
 #
@@ -37,10 +37,10 @@
 #
 
 use 5.008;
-sub gitperllib {
+sub butperllib {
 	# Git assumes that all path lists are Unix-y colon-separated ones. But
 	# when the Git for Windows executes the test suite, its MSYS2 Bash
-	# calls git.exe, and colon-separated path lists are converted into
+	# calls but.exe, and colon-separated path lists are converted into
 	# Windows-y semicolon-separated lists of *Windows* paths (which
 	# naturally contain a colon after the drive letter, so splitting by
 	# colons simply does not cut it).
@@ -52,7 +52,7 @@ sub gitperllib {
 	}
 	return split(/:/, $ENV{GITPERLLIB});
 }
-use lib (gitperllib());
+use lib (butperllib());
 use strict;
 use warnings;
 use IO::File;
@@ -89,7 +89,7 @@ sub rot13 {
 print $debug "START\n";
 $debug->flush();
 
-packet_initialize("git-filter", 2);
+packet_initialize("but-filter", 2);
 
 my %remote_caps = packet_read_and_check_capabilities("clean", "smudge", "delay");
 packet_check_and_write_capabilities(\%remote_caps, @capabilities);

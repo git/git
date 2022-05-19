@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-## zip archive frontend for git-fast-import
+## zip archive frontend for but-fast-import
 ##
 ## For example:
 ##
-##  mkdir project; cd project; git init
+##  mkdir project; cd project; but init
 ##  python import-zips.py *.zip
-##  git log --stat import-zips
+##  but log --stat import-zips
 
 from os import popen, path
 from sys import argv, exit, hexversion, stderr
@@ -26,7 +26,7 @@ branch_ref = 'refs/heads/import-zips'
 cummitter_name = 'Z Ip Creator'
 cummitter_email = 'zip@example.com'
 
-fast_import = popen('git fast-import --quiet', 'w')
+fast_import = popen('but fast-import --quiet', 'w')
 def printlines(list):
     for str in list:
         fast_import.write(str + "\n")

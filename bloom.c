@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "bloom.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -240,7 +240,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 			 * Add each leading directory of the changed file, i.e. for
 			 * 'dir/subdir/file' add 'dir' and 'dir/subdir' as well, so
 			 * the Bloom filter could be used to speed up commands like
-			 * 'git log dir/subdir', too.
+			 * 'but log dir/subdir', too.
 			 *
 			 * Note that directories are added without the trailing '/'.
 			 */

@@ -12,48 +12,48 @@ test_description='test handling of --alternate-refs traversal'
 # where "one" and "two" are on separate refs, and "merged" is available only in
 # the dependent child repository.
 test_expect_success 'set up local refs' '
-	git checkout -b one &&
+	but checkout -b one &&
 	test_tick &&
-	git cummit --allow-empty -m base &&
+	but cummit --allow-empty -m base &&
 	test_tick &&
-	git cummit --allow-empty -m one &&
-	git checkout -b two HEAD^ &&
+	but cummit --allow-empty -m one &&
+	but checkout -b two HEAD^ &&
 	test_tick &&
-	git cummit --allow-empty -m two
+	but cummit --allow-empty -m two
 '
 
 # We'll enter the child repository after it's set up since that's where
 # all of the subsequent tests will want to run (and it's easy to forget a
 # "-C child" and get nonsense results).
 test_expect_success 'set up shared clone' '
-	git clone -s . child &&
+	but clone -s . child &&
 	cd child &&
-	git merge origin/one
+	but merge origin/one
 '
 
 test_expect_success 'rev-list --alternate-refs' '
-	git rev-list --remotes=origin >expect &&
-	git rev-list --alternate-refs >actual &&
+	but rev-list --remotes=origin >expect &&
+	but rev-list --alternate-refs >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rev-list --not --alternate-refs' '
-	git rev-parse HEAD >expect &&
-	git rev-list HEAD --not --alternate-refs >actual &&
+	but rev-parse HEAD >expect &&
+	but rev-list HEAD --not --alternate-refs >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'limiting with alternateRefsPrefixes' '
 	test_config core.alternateRefsPrefixes refs/heads/one &&
-	git rev-list origin/one >expect &&
-	git rev-list --alternate-refs >actual &&
+	but rev-list origin/one >expect &&
+	but rev-list --alternate-refs >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'log --source shows .alternate marker' '
-	git log --oneline --source --remotes=origin >expect.orig &&
+	but log --oneline --source --remotes=origin >expect.orig &&
 	sed "s/origin.* /.alternate /" <expect.orig >expect &&
-	git log --oneline --source --alternate-refs >actual &&
+	but log --oneline --source --alternate-refs >actual &&
 	test_cmp expect actual
 '
 

@@ -1,8 +1,8 @@
-# git-gui index (add/remove) support
+# but-gui index (add/remove) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc _delete_indexlock {} {
-	if {[catch {file delete -- [gitdir index.lock]} err]} {
+	if {[catch {file delete -- [butdir index.lock]} err]} {
 		error_popup [strcat [mc "Unable to unlock the index."] "\n\n$err"]
 	}
 }
@@ -29,7 +29,7 @@ proc rescan_on_error {err {after {}}} {
 	wm withdraw $w
 	wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-	set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
+	set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize but-gui."]
 	text $w.msg -yscrollcommand [list $w.vs set] \
 		-width [string length $s] -relief flat \
 		-borderwidth 0 -highlightthickness 0 \
@@ -75,7 +75,7 @@ proc update_indexinfo {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index -z --index-info]
+	set fd [but_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -144,7 +144,7 @@ proc update_index {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index --add --remove -z --stdin]
+	set fd [but_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -218,7 +218,7 @@ proc checkout_index {msg path_list after capture_error} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write checkout-index \
+	set fd [but_write checkout-index \
 		--index \
 		--quiet \
 		--force \

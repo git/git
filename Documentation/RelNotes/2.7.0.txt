@@ -6,65 +6,65 @@ Updates since v2.6
 
 UI, Workflows & Features
 
- * The appearance of "gitk", particularly on high DPI monitors, have
-   been improved.  "gitk" also comes with an undated translation for
+ * The appearance of "butk", particularly on high DPI monitors, have
+   been improved.  "butk" also comes with an undated translation for
    Swedish and Japanese.
 
- * "git remote" learned "get-url" subcommand to show the URL for a
+ * "but remote" learned "get-url" subcommand to show the URL for a
    given remote name used for fetching and pushing.
 
  * There was no way to defeat a configured rebase.autostash variable
-   from the command line, as "git rebase --no-autostash" was missing.
+   from the command line, as "but rebase --no-autostash" was missing.
 
- * "git log --date=local" used to only show the normal (default)
+ * "but log --date=local" used to only show the normal (default)
    format in the local timezone.  The command learned to take 'local'
    as an instruction to use the local timezone with other formats,
 
- * The refs used during a "git bisect" session is now per-worktree so
+ * The refs used during a "but bisect" session is now per-worktree so
    that independent bisect sessions can be done in different worktrees
-   created with "git worktree add".
+   created with "but worktree add".
 
  * Users who are too busy to type three extra keystrokes to ask for
-   "git stash show -p" can now set stash.showPatch configuration
+   "but stash show -p" can now set stash.showPatch configuration
    variable to true to always see the actual patch, not just the list
    of paths affected with feel for the extent of damage via diffstat.
 
  * "quiltimport" allows to specify the series file by honoring the
    $QUILT_SERIES environment and also --series command line option.
 
- * The use of 'good/bad' in "git bisect" made it confusing to use when
+ * The use of 'good/bad' in "but bisect" made it confusing to use when
    hunting for a state change that is not a regression (e.g. bugfix).
    The command learned 'old/new' and then allows the end user to
    say e.g. "bisect start --term-old=fast --term-new=slow" to find a
    performance regression.
 
- * "git interpret-trailers" can now run outside of a Git repository.
+ * "but interpret-trailers" can now run outside of a Git repository.
 
- * "git p4" learned to re-encode the pathname it uses to communicate
+ * "but p4" learned to re-encode the pathname it uses to communicate
    with the p4 depot with a new option.
 
- * Give progress meter to "git filter-branch".
+ * Give progress meter to "but filter-branch".
 
  * Allow a later "!/abc/def" to override an earlier "/abc" that
-   appears in the same .gitignore file to make it easier to express
+   appears in the same .butignore file to make it easier to express
    "everything in /abc directory is ignored, except for ...".
 
- * Teach "git p4" to send large blobs outside the repository by
+ * Teach "but p4" to send large blobs outside the repository by
    talking to Git LFS.
 
  * Prepare for Git on-disk repository representation to undergo
    backward incompatible changes by introducing a new repository
    format version "1", with an extension mechanism.
 
- * "git worktree" learned a "list" subcommand.
+ * "but worktree" learned a "list" subcommand.
 
- * "git clone --dissociate" learned that it can be used even when
+ * "but clone --dissociate" learned that it can be used even when
    "--reference" was not used at the same time.
 
- * "git blame" learnt to take "--first-parent" and "--reverse" at the
+ * "but blame" learnt to take "--first-parent" and "--reverse" at the
    same time when it makes sense.
 
- * "git checkout" did not follow the usual "--[no-]progress"
+ * "but checkout" did not follow the usual "--[no-]progress"
    convention and implemented only "--quiet" that is essentially
    a superset of "--no-progress".  Extend the command to support the
    usual "--[no-]progress".
@@ -83,7 +83,7 @@ UI, Workflows & Features
  * The credential-cache daemon can be told to ignore SIGHUP to work
    around issue when running Git from inside emacs.
 
- * "git push" learned new configuration for doing "--recurse-submodules"
+ * "but push" learned new configuration for doing "--recurse-submodules"
    on each push.
 
  * "format-patch" has learned a new option to zero-out the cummit
@@ -92,13 +92,13 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, Development Support etc.
 
- * The infrastructure to rewrite "git submodule" in C is being built
+ * The infrastructure to rewrite "but submodule" in C is being built
    incrementally.  Let's polish these early parts well enough and make
    them graduate to 'next' and 'master', so that the more involved
    follow-up can start cooking on a solid ground.
 
- * Some features from "git tag -l" and "git branch -l" have been made
-   available to "git for-each-ref" so that eventually the unified
+ * Some features from "but tag -l" and "but branch -l" have been made
+   available to "but for-each-ref" so that eventually the unified
    implementation can be shared across all three.  The version merged
    to the 'master' branch earlier had a performance regression in "tag
    --contains", which has since been corrected.
@@ -111,13 +111,13 @@ Performance, Internal Implementation, Development Support etc.
  * The debugging infrastructure for pkt-line based communication has
    been improved to mark the side-band communication specifically.
 
- * Update "git branch" that list existing branches, using the
-   ref-filter API that is shared with "git tag" and "git
+ * Update "but branch" that list existing branches, using the
+   ref-filter API that is shared with "but tag" and "but
    for-each-ref".
 
  * The test for various line-ending conversions has been enhanced.
 
- * A few test scripts around "git p4" have been improved for
+ * A few test scripts around "but p4" have been improved for
    portability.
 
  * Many allocations that is manually counted (correctly) that are
@@ -126,16 +126,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * The internal stripspace() function has been moved to where it
    logically belongs to, i.e. strbuf API, and the command line parser
-   of "git stripspace" has been updated to use the parse_options API.
+   of "but stripspace" has been updated to use the parse_options API.
 
- * "git am" used to spawn "git mailinfo" via run_command() API once
+ * "but am" used to spawn "but mailinfo" via run_command() API once
    per each patch, but learned to make a direct call to mailinfo()
    instead.
 
- * The implementation of "git mailinfo" was refactored so that a
+ * The implementation of "but mailinfo" was refactored so that a
    mailinfo() function can be directly called from inside a process.
 
- * With a "debug" helper, debugging of a single "git" invocation in
+ * With a "debug" helper, debugging of a single "but" invocation in
    our test scripts has become a lot easier.
 
  * The "configure" script did not test for -lpthread correctly, which
@@ -159,7 +159,7 @@ Performance, Internal Implementation, Development Support etc.
  * The parse-options API has been updated to make "-h" command line
    option work more consistently in all commands.
 
- * "git svn rebase/mkdirs" got optimized by keeping track of empty
+ * "but svn rebase/mkdirs" got optimized by keeping track of empty
    directories better.
 
  * Fix some racy client/server tests by treating SIGPIPE the same as a
@@ -168,7 +168,7 @@ Performance, Internal Implementation, Development Support etc.
  * The necessary infrastructure to build topics using the free Travis
    CI has been added. Developers forking from this topic (and enabling
    Travis) can do their own builds, and we can turn on auto-builds for
-   git/git (including build-status for pull requests that people
+   but/but (including build-status for pull requests that people
    open).
 
  * The write(2) emulation for Windows learned to set errno to EPIPE
@@ -190,10 +190,10 @@ notes for details).
    of the command line).  Add notice to documentation of each and
    every one of them.
 
- * "git blame --first-parent v1.0..v2.0" was not rejected but did not
+ * "but blame --first-parent v1.0..v2.0" was not rejected but did not
    limit the blame to cummits on the first parent chain.
 
- * "git subtree" (in contrib/) now can take whitespaces in the
+ * "but subtree" (in contrib/) now can take whitespaces in the
    pathnames, not only in the in-tree pathname but the name of the
    directory that the repository is in.
 
@@ -203,7 +203,7 @@ notes for details).
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.
 
- * Correct "git p4 --detect-labels" so that it does not fail to create
+ * Correct "but p4 --detect-labels" so that it does not fail to create
    a tag that points at a cummit that is also being imported.
 
  * The Makefile always runs the library archiver with hardcoded "crs"
@@ -223,39 +223,39 @@ notes for details).
  * The way how --ref/--notes to specify the notes tree reference are
    DWIMmed was not clearly documented.
 
- * "git gc" used to barf when a symbolic ref has gone dangling
+ * "but gc" used to barf when a symbolic ref has gone dangling
    (e.g. the branch that used to be your upstream's default when you
    cloned from it is now gone, and you did "fetch --prune").
 
- * "git clone --dissociate" runs a big "git repack" process at the
+ * "but clone --dissociate" runs a big "but repack" process at the
    end, and it helps to close file descriptors that are open on the
    packs and their idx files before doing so on filesystems that
    cannot remove a file that is still open.
 
- * Description of the "log.follow" configuration variable in "git log"
-   documentation is now also copied to "git config" documentation.
+ * Description of the "log.follow" configuration variable in "but log"
+   documentation is now also copied to "but config" documentation.
 
- * "git rebase -i" had a minor regression recently, which stopped
+ * "but rebase -i" had a minor regression recently, which stopped
    considering a line that begins with an indented '#' in its insn
    sheet not a comment. Further, the code was still too picky on
    Windows where CRLF left by the editor is turned into a trailing CR
    on the line read via the "read" built-in command of bash.  Both of
    these issues are now fixed.
 
- * After "git checkout --detach", "git status" reported a fairly
+ * After "but checkout --detach", "but status" reported a fairly
    useless "HEAD detached at HEAD", instead of saying at which exact
    cummit.
 
- * When "git send-email" wanted to talk over Net::SMTP::SSL,
+ * When "but send-email" wanted to talk over Net::SMTP::SSL,
    Net::Cmd::datasend() did not like to be fed too many bytes at the
    same time and failed to send messages.  Send the payload one line
    at a time to work around the problem.
 
- * When "git am" was rewritten as a built-in, it stopped paying
+ * When "but am" was rewritten as a built-in, it stopped paying
    attention to user.signingkey, which was fixed.
 
- * It was not possible to use a repository-lookalike created by "git
-   worktree add" as a local source of "git clone".
+ * It was not possible to use a repository-lookalike created by "but
+   worktree add" as a local source of "but clone".
 
  * On a case insensitive filesystems, setting GIT_WORK_TREE variable
    using a random cases that does not agree with what the filesystem
@@ -266,20 +266,20 @@ notes for details).
  * A test script for the HTTP service had a timing dependent bug,
    which was fixed.
 
- * There were some classes of errors that "git fsck" diagnosed to its
+ * There were some classes of errors that "but fsck" diagnosed to its
    standard error that did not cause it to exit with non-zero status.
 
- * Work around "git p4" failing when the P4 depot records the contents
+ * Work around "but p4" failing when the P4 depot records the contents
    in UTF-16 without UTF-16 BOM.
 
- * When "git gc --auto" is backgrounded, its diagnosis message is
+ * When "but gc --auto" is backgrounded, its diagnosis message is
    lost.  Save it to a file in $GIT_DIR and show it next time the "gc
    --auto" is run.
 
  * The submodule code has been taught to work better with separate
-   work trees created via "git worktree add".
+   work trees created via "but worktree add".
 
- * "git gc" is safe to run anytime only because it has the built-in
+ * "but gc" is safe to run anytime only because it has the built-in
    grace period to protect young objects.  In order to run with no
    grace period, the user must make sure that the repository is
    quiescent.
@@ -302,7 +302,7 @@ notes for details).
    list of things from the standard input are often shown as if they
    only take input from a file on a filesystem, which was misleading.
 
- * "git am -3" had a small regression where it is aborted in its error
+ * "but am -3" had a small regression where it is aborted in its error
    handling codepath when underlying merge-recursive failed in certain
    ways, as it assumed that the internal call to merge-recursive will
    never die, which is not the case (yet).
@@ -318,25 +318,25 @@ notes for details).
    This was fixed by recording the path for each directory instead of
    borrowing cache entries and restructuring the API somewhat.
 
- * "git merge-file" tried to signal how many conflicts it found, which
+ * "but merge-file" tried to signal how many conflicts it found, which
    obviously would not work well when there are too many of them.
 
- * The error message from "git blame --contents --reverse" incorrectly
+ * The error message from "but blame --contents --reverse" incorrectly
    talked about "--contents --children".
 
- * "git imap-send" did not compile well with older version of cURL library.
+ * "but imap-send" did not compile well with older version of cURL library.
 
  * Merging a branch that removes a path and another that changes the
    mode bits on the same path should have conflicted at the path, but
    it didn't and silently favoured the removal.
 
- * "git --literal-pathspecs add -u/-A" without any command line
+ * "but --literal-pathspecs add -u/-A" without any command line
    argument misbehaved ever since Git 2.0.
 
- * "git daemon" uses "run_command()" without "finish_command()", so it
+ * "but daemon" uses "run_command()" without "finish_command()", so it
    needs to release resources itself, which it forgot to do.
 
- * "git status --branch --short" accessed beyond the constant string
+ * "but status --branch --short" accessed beyond the constant string
    "HEAD", which has been corrected.
 
  * We peek objects from submodule's object store by linking it to the
@@ -356,7 +356,7 @@ notes for details).
    and it did not kick in.
 
  * Having a leftover .idx file without corresponding .pack file in
-   the repository hurts performance; "git gc" learned to prune them.
+   the repository hurts performance; "but gc" learned to prune them.
 
  * Apple's common crypto implementation of SHA1_Update() does not take
    more than 4GB at a time, and we now have a compile-time workaround
@@ -369,25 +369,25 @@ notes for details).
    user's hostname, instead of getaddrinfo() that is used in other
    codepaths in such a build.
 
- * The exit code of git-fsck did not reflect some types of errors
+ * The exit code of but-fsck did not reflect some types of errors
    found in packed objects, which has been corrected.
 
  * The helper used to iterate over loose object directories to prune
    stale objects did not closedir() immediately when it is done with a
-   directory--a callback such as the one used for "git prune" may want
+   directory--a callback such as the one used for "but prune" may want
    to do rmdir(), but it would fail on open directory on platforms
    such as WinXP.
 
- * "git p4" used to import Perforce CLs that touch only paths outside
+ * "but p4" used to import Perforce CLs that touch only paths outside
    the client spec as empty cummits.  It has been corrected to ignore
-   them instead, with a new configuration git-p4.keepEmptycummits as a
+   them instead, with a new configuration but-p4.keepEmptycummits as a
    backward compatibility knob.
 
- * The completion script (in contrib/) used to list "git column"
+ * The completion script (in contrib/) used to list "but column"
    (which is not an end-user facing command) as one of the choices
    (merge 160fcdb sg/completion-no-column later to maint).
 
- * The error reporting from "git send-email", when SMTP TLS fails, has
+ * The error reporting from "but send-email", when SMTP TLS fails, has
    been improved.
    (merge 9d60524 jk/send-email-ssl-errors later to maint).
 
@@ -400,15 +400,15 @@ notes for details).
    in non-strict mode.
    (merge 92bcbb9 jk/ident-loosen-getpwuid later to maint).
 
- * "git symbolic-ref" forgot to report a failure with its exit status.
+ * "but symbolic-ref" forgot to report a failure with its exit status.
    (merge f91b273 jk/symbolic-ref-maint later to maint).
 
- * History traversal with "git log --source" that starts with an
+ * History traversal with "but log --source" that starts with an
    annotated tag failed to report the tag as "source", due to an
    old regression in the command line parser back in v2.2 days.
    (merge 728350b jk/pending-keep-tag-name later to maint).
 
- * "git p4" when interacting with multiple depots at the same time
+ * "but p4" when interacting with multiple depots at the same time
    used to incorrectly drop changes.
 
  * Code clean-up, minor fixes etc.

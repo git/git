@@ -7,7 +7,7 @@ coverage and maintaining the translation.
 The localization (l10n) coordinator, Jiang Xin <worldhello.net@gmail.com>,
 coordinates our localization effort in the l10 coordinator repository:
 
-    https://github.com/git-l10n/git-po/
+    https://buthub.com/but-l10n/but-po/
 
 The two character language translation codes are defined by ISO\_639-1, as
 stated in the gettext(1) full manual, appendix A.1, Usual Language Codes.
@@ -43,15 +43,15 @@ person per language.
 
 The core translation is the smallest set of work that must be completed
 for a new language translation. Because there are more than 5000 messages
-in the template message file "po/git.pot" that need to be translated,
+in the template message file "po/but.pot" that need to be translated,
 this is not a piece of cake for the contributor for a new language.
 
 The core template message file which contains a small set of messages
 will be generated in "po-core/core.pot" automatically by running a helper
-program named "git-po-helper" (described later).
+program named "but-po-helper" (described later).
 
 ```shell
-git-po-helper init --core XX.po
+but-po-helper init --core XX.po
 ```
 
 After translating the generated "po-core/XX.po", you can merge it to
@@ -60,7 +60,7 @@ After translating the generated "po-core/XX.po", you can merge it to
 ```shell
 msgcat po-core/XX.po po/XX.po -s -o /tmp/XX.po
 mv /tmp/XX.po po/XX.po
-git-po-helper update XX.po
+but-po-helper update XX.po
 ```
 
 Edit "po/XX.po" by hand to fix "fuzzy" messages, which may have misplaced
@@ -84,22 +84,22 @@ The overall data-flow looks like this:
 
 - Translatable strings are marked in the source file.
 - L10n coordinator pulls from the source (1)
-- L10n coordinator updates the message template "po/git.pot"
+- L10n coordinator updates the message template "po/but.pot"
 - Language team pulls from L10n coordinator (2)
 - Language team updates the message file "po/XX.po"
 - L10n coordinator pulls from Language team (3)
 - L10n coordinator asks the result to be pulled (4).
 
 
-## Maintaining the "po/git.pot" file
+## Maintaining the "po/but.pot" file
 
 (This is done by the l10n coordinator).
 
-The "po/git.pot" file contains a message catalog extracted from Git's
+The "po/but.pot" file contains a message catalog extracted from Git's
 sources. The l10n coordinator maintains it by adding new translations with
 msginit(1), or update existing ones with msgmerge(1).  In order to update
 the Git sources to extract the messages from, the l10n coordinator is
-expected to pull from the main git repository at strategic point in
+expected to pull from the main but repository at strategic point in
 history (e.g. when a major release and release candidates are tagged),
 and then run "make pot" at the top-level directory.
 
@@ -154,12 +154,12 @@ If you are replacing translation strings in an existing "XX.po" file to
 improve the translation, just edit the file.
 
 If there's an existing "XX.po" file for your language, but the repository
-of the l10n coordinator has newer "po/git.pot" file, you would need to first
+of the l10n coordinator has newer "po/but.pot" file, you would need to first
 pull from the l10n coordinator (see the beginning of this document for its
 URL), and then update the existing translation by running:
 
 ```shell
-msgmerge --add-location --backup=off -U XX.po git.pot
+msgmerge --add-location --backup=off -U XX.po but.pot
 ```
 
 in the "po/" directory, where "XX.po" is the file you want to update.
@@ -228,7 +228,7 @@ General advice:
 - If something is unclear or ambiguous you can use a "TRANSLATORS"
   comment to tell the translators what to make of it. These will be
   extracted by xgettext(1) and put in the "po/\*.po" files, e.g. from
-  git-am.sh:
+  but-am.sh:
 
   ```shell
   # TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -301,11 +301,11 @@ interface. We currently export these functions:
 ### Shell
 
 The Git gettext shell interface is just a wrapper for
-gettext.sh. Import it right after git-sh-setup like this:
+gettext.sh. Import it right after but-sh-setup like this:
 
 ```shell
-. git-sh-setup
-. git-sh-i18n
+. but-sh-setup
+. but-sh-i18n
 ```
 
 And then use the `gettext` or `eval_gettext` functions:
@@ -332,11 +332,11 @@ eval_gettextln "An error occurred: \$details"
 ```
 
 More documentation about the interface is available in the GNU info
-page: `info '(gettext)sh'`. Looking at git-am.sh (the first shell
+page: `info '(gettext)sh'`. Looking at but-am.sh (the first shell
 command to be translated) for examples is also useful:
 
 ```shell
-git log --reverse -p --grep=i18n git-am.sh
+but log --reverse -p --grep=i18n but-am.sh
 ```
 
 
@@ -363,35 +363,35 @@ changed to account for translations as they're added.
 ## PO helper
 
 To make the maintenance of "XX.po" easier, the l10n coordinator and l10n
-team leaders can use a helper program named "git-po-helper". It is a
+team leaders can use a helper program named "but-po-helper". It is a
 wrapper to gettext suite, specifically written for the purpose of Git
 l10n workflow.
 
 To build and install the helper program from source, see
-[git-po-helper/README][].
+[but-po-helper/README][].
 
-Usage for git-po-helper:
+Usage for but-po-helper:
 
 - To start a new language translation:
 
   ```shell
-  git-po-helper init XX.po
+  but-po-helper init XX.po
   ```
 
 - To update your "XX.po" file:
 
   ```shell
-  git-po-helper update XX.po
+  but-po-helper update XX.po
   ```
 
 - To check cummit log and syntax of "XX.po":
 
   ```shell
-  git-po-helper check-po XX.po
-  git-po-helper check-cummits
+  but-po-helper check-po XX.po
+  but-po-helper check-cummits
   ```
 
-Run "git-po-helper" without arguments to show usage.
+Run "but-po-helper" without arguments to show usage.
 
 
 ## Conventions
@@ -411,21 +411,21 @@ There are some conventions that l10n contributors must follow:
   the following command:
 
   ```shell
-  git cummit -s
+  but cummit -s
   ```
 
 - Check syntax with "msgfmt" or the following command before creating
   your cummit:
 
   ```shell
-  git-po-helper check-po <XX.po>
+  but-po-helper check-po <XX.po>
   ```
 
 - Squash trivial cummits to make history clear.
 
 - DO NOT edit files outside "po/" directory.
 
-- Other subsystems ("git-gui", "gitk", and Git itself) have their
+- Other subsystems ("but-gui", "butk", and Git itself) have their
   own workflow. See [Documentation/SubmittingPatches][] for
   instructions on how to contribute patches to these subsystems.
 
@@ -441,16 +441,16 @@ additional conventions:
   "po-core/XX.po" file:
 
   ```shell
-  git-po-helper init --core <your-language>
+  but-po-helper init --core <your-language>
   ```
 
 - Add a new entry in the "po/TEAMS" file with proper format, and check
   the syntax of "po/TEAMS" by running the following command:
 
   ```shell
-  git-po-helper team --check
+  but-po-helper team --check
   ```
 
 
-[git-po-helper/README]: https://github.com/git-l10n/git-po-helper#readme
+[but-po-helper/README]: https://buthub.com/but-l10n/but-po-helper#readme
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches

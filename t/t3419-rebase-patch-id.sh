@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase - test patch id computation'
+test_description='but rebase - test patch id computation'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -21,54 +21,54 @@ scramble () {
 }
 
 test_expect_success 'setup' '
-	git cummit --allow-empty -m initial &&
-	git tag root
+	but cummit --allow-empty -m initial &&
+	but tag root
 '
 
 test_expect_success 'setup: 500 lines' '
-	rm -f .gitattributes &&
-	git checkout -q -f main &&
-	git reset --hard root &&
+	rm -f .butattributes &&
+	but checkout -q -f main &&
+	but reset --hard root &&
 	test_seq 500 >file &&
-	git add file &&
-	git cummit -q -m initial &&
-	git branch -f other &&
+	but add file &&
+	but cummit -q -m initial &&
+	but branch -f other &&
 
 	scramble file &&
-	git add file &&
-	git cummit -q -m "change big file" &&
+	but add file &&
+	but cummit -q -m "change big file" &&
 
-	git checkout -q other &&
+	but checkout -q other &&
 	: >newfile &&
-	git add newfile &&
-	git cummit -q -m "add small file" &&
+	but add newfile &&
+	but cummit -q -m "add small file" &&
 
-	git cherry-pick main >/dev/null 2>&1
+	but cherry-pick main >/dev/null 2>&1
 '
 
 test_expect_success 'setup attributes' '
-	echo "file binary" >.gitattributes
+	echo "file binary" >.butattributes
 '
 
 test_expect_success 'detect upstream patch' '
-	git checkout -q main &&
+	but checkout -q main &&
 	scramble file &&
-	git add file &&
-	git cummit -q -m "change big file again" &&
-	git checkout -q other^{} &&
-	git rebase main &&
-	git rev-list main...HEAD~ >revs &&
+	but add file &&
+	but cummit -q -m "change big file again" &&
+	but checkout -q other^{} &&
+	but rebase main &&
+	but rev-list main...HEAD~ >revs &&
 	test_must_be_empty revs
 '
 
 test_expect_success 'do not drop patch' '
-	git branch -f squashed main &&
-	git checkout -q -f squashed &&
-	git reset -q --soft HEAD~2 &&
-	git cummit -q -m squashed &&
-	git checkout -q other^{} &&
-	test_must_fail git rebase squashed &&
-	git rebase --quit
+	but branch -f squashed main &&
+	but checkout -q -f squashed &&
+	but reset -q --soft HEAD~2 &&
+	but cummit -q -m squashed &&
+	but checkout -q other^{} &&
+	test_must_fail but rebase squashed &&
+	but rebase --quit
 '
 
 test_done

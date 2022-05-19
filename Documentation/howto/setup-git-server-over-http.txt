@@ -8,12 +8,12 @@ How to setup Git server over http
 
 NOTE: This document is from 2006.  A lot has happened since then, and this
 document is now relevant mainly if your web host is not CGI capable.
-Almost everyone else should instead look at linkgit:git-http-backend[1].
+Almost everyone else should instead look at linkbut:but-http-backend[1].
 
 Since Apache is one of those packages people like to compile
 themselves while others prefer the bureaucrat's dream Debian, it is
 impossible to give guidelines which will work for everyone. Just send
-some feedback to the mailing list at git@vger.kernel.org to get this
+some feedback to the mailing list at but@vger.kernel.org to get this
 document tailored to your favorite distro.
 
 
@@ -60,7 +60,7 @@ preconfigured WebDAV server.
 Step 1: setup a bare Git repository
 -----------------------------------
 
-At the time of writing, git-http-push cannot remotely create a Git
+At the time of writing, but-http-push cannot remotely create a Git
 repository. So we have to do that at the server side with Git. Another
 option is to generate an empty bare repository at the client and copy
 it to the server with a WebDAV client (which is the only option if Git
@@ -71,18 +71,18 @@ by Apache. As an example we take /usr/local/apache2, but try "grep
 DocumentRoot /where/ever/httpd.conf" to find your root:
 
     $ cd /usr/local/apache/htdocs
-    $ mkdir my-new-repo.git
+    $ mkdir my-new-repo.but
 
   On Debian:
 
     $ cd /var/www
-    $ mkdir my-new-repo.git
+    $ mkdir my-new-repo.but
 
 
 Initialize a bare repository
 
-    $ cd my-new-repo.git
-    $ git --bare init
+    $ cd my-new-repo.but
+    $ but --bare init
 
 
 Change the ownership to your web-server's credentials. Use `"grep ^User
@@ -99,7 +99,7 @@ If you do not know which user Apache runs as, you can alternatively do
 a "chmod -R a+w .", inspect the files which are created later on, and
 set the permissions appropriately.
 
-Restart apache2, and check whether http://server/my-new-repo.git gives
+Restart apache2, and check whether http://server/my-new-repo.but gives
 a directory listing. If not, check whether apache started up
 successfully.
 
@@ -132,22 +132,22 @@ be writable by the user Apache runs as.
 
 Then, add something like this to your httpd.conf
 
-  <Location /my-new-repo.git>
+  <Location /my-new-repo.but>
      DAV on
      AuthType Basic
      AuthName "Git"
-     AuthUserFile /usr/local/apache2/conf/passwd.git
+     AuthUserFile /usr/local/apache2/conf/passwd.but
      Require valid-user
   </Location>
 
   On Debian:
-    Create (or add to) /etc/apache2/conf.d/git.conf :
+    Create (or add to) /etc/apache2/conf.d/but.conf :
 
-    <Location /my-new-repo.git>
+    <Location /my-new-repo.but>
        DAV on
        AuthType Basic
        AuthName "Git"
-       AuthUserFile /etc/apache2/passwd.git
+       AuthUserFile /etc/apache2/passwd.but
        Require valid-user
     </Location>
 
@@ -157,10 +157,10 @@ The password file can be somewhere else, but it has to be readable by
 Apache and preferably not readable by the world.
 
 Create this file by
-    $ htpasswd -c /usr/local/apache2/conf/passwd.git <user>
+    $ htpasswd -c /usr/local/apache2/conf/passwd.but <user>
 
     On Debian:
-      $ htpasswd -c /etc/apache2/passwd.git <user>
+      $ htpasswd -c /etc/apache2/passwd.but <user>
 
 You will be asked a password, and the file is created. Subsequent calls
 to htpasswd should omit the '-c' option, since you want to append to the
@@ -168,7 +168,7 @@ existing file.
 
 You need to restart Apache.
 
-Now go to http://<username>@<servername>/my-new-repo.git in your
+Now go to http://<username>@<servername>/my-new-repo.but in your
 browser to check whether it asks for a password and accepts the right
 password.
 
@@ -177,7 +177,7 @@ On Debian:
    To test the WebDAV part, do:
 
    $ apt-get install litmus
-   $ litmus http://<servername>/my-new-repo.git <username> <password>
+   $ litmus http://<servername>/my-new-repo.but <username> <password>
 
    Most tests should pass.
 
@@ -187,14 +187,14 @@ example, konqueror can open WebDAV URLs as "webdav://..." or
 
 If you're into Windows, from XP onwards Internet Explorer supports
 WebDAV. For this, do Internet Explorer -> Open Location ->
-http://<servername>/my-new-repo.git [x] Open as webfolder -> login .
+http://<servername>/my-new-repo.but [x] Open as webfolder -> login .
 
 
 Step 3: setup the client
 ------------------------
 
 Make sure that you have HTTP support, i.e. your Git was built with
-libcurl (version more recent than 7.10). The command 'git http-push' with
+libcurl (version more recent than 7.10). The command 'but http-push' with
 no argument should display a usage message.
 
 Then, add the following to your $HOME/.netrc (you can do without, but will be
@@ -212,7 +212,7 @@ instead of the server name.
 
 To check whether all is OK, do:
 
-   curl --netrc --location -v http://<username>@<servername>/my-new-repo.git/HEAD
+   curl --netrc --location -v http://<username>@<servername>/my-new-repo.but/HEAD
 
 ...this should give something like 'ref: refs/heads/master', which is
 the content of the file HEAD on the server.
@@ -220,11 +220,11 @@ the content of the file HEAD on the server.
 Now, add the remote in your existing repository which contains the project
 you want to export:
 
-   $ git-config remote.upload.url \
-       http://<username>@<servername>/my-new-repo.git/
+   $ but-config remote.upload.url \
+       http://<username>@<servername>/my-new-repo.but/
 
 It is important to put the last '/'; Without it, the server will send
-a redirect which git-http-push does not (yet) understand, and git-http-push
+a redirect which but-http-push does not (yet) understand, and but-http-push
 will repeat the request infinitely.
 
 
@@ -233,11 +233,11 @@ Step 4: make the initial push
 
 From your client repository, do
 
-   $ git push upload master
+   $ but push upload master
 
 This pushes branch 'master' (which is assumed to be the branch you
 want to export) to repository called 'upload', which we previously
-defined with git-config.
+defined with but-config.
 
 
 Using a proxy:
@@ -252,7 +252,7 @@ curl' for details.
 Troubleshooting:
 ----------------
 
-If git-http-push says
+If but-http-push says
 
    Error: no DAV locking support on remote repo http://...
 
@@ -260,7 +260,7 @@ then it means the web-server did not accept your authentication. Make sure
 that the user name and password matches in httpd.conf, .netrc and the URL
 you are uploading to.
 
-If git-http-push shows you an error (22/502) when trying to MOVE a blob,
+If but-http-push shows you an error (22/502) when trying to MOVE a blob,
 it means that your web-server somehow does not recognize its name in the
 request; This can happen when you start Apache, but then disable the
 network interface. A simple restart of Apache helps.
@@ -281,5 +281,5 @@ Debian References: http://www.debian-administration.org/articles/285
 
 Authors
   Johannes Schindelin <Johannes.Schindelin@gmx.de>
-  Rutger Nijlunsing <git@wingding.demon.nl>
+  Rutger Nijlunsing <but@wingding.demon.nl>
   Matthieu Moy <Matthieu.Moy@imag.fr>

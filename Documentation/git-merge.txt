@@ -1,26 +1,26 @@
-git-merge(1)
+but-merge(1)
 ============
 
 NAME
 ----
-git-merge - Join two or more development histories together
+but-merge - Join two or more development histories together
 
 
 SYNOPSIS
 --------
 [verse]
-'git merge' [-n] [--stat] [--no-cummit] [--squash] [--[no-]edit]
+'but merge' [-n] [--stat] [--no-cummit] [--squash] [--[no-]edit]
 	[--no-verify] [-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>]
 	[--into-name <branch>] [<cummit>...]
-'git merge' (--continue | --abort | --quit)
+'but merge' (--continue | --abort | --quit)
 
 DESCRIPTION
 -----------
 Incorporates changes from the named cummits (since the time their
 histories diverged from the current branch) into the current
-branch.  This command is used by 'git pull' to incorporate changes
+branch.  This command is used by 'but pull' to incorporate changes
 from another repository and can be used by hand to merge changes
 from one branch into another.
 
@@ -33,7 +33,7 @@ Assume the following history exists and the current branch is
     D---E---F---G master
 ------------
 
-Then "`git merge topic`" will replay the changes made on the
+Then "`but merge topic`" will replay the changes made on the
 `topic` branch since it diverged from `master` (i.e., `E`) until
 its current cummit (`C`) on top of `master`, and record the result
 in a new cummit along with the names of the two parent cummits and
@@ -45,24 +45,24 @@ a log message from the user describing the changes.
     D---E---F---G---H master
 ------------
 
-The second syntax ("`git merge --abort`") can only be run after the
-merge has resulted in conflicts. 'git merge --abort' will abort the
+The second syntax ("`but merge --abort`") can only be run after the
+merge has resulted in conflicts. 'but merge --abort' will abort the
 merge process and try to reconstruct the pre-merge state. However,
 if there were uncummitted changes when the merge started (and
 especially if those changes were further modified after the merge
-was started), 'git merge --abort' will in some cases be unable to
+was started), 'but merge --abort' will in some cases be unable to
 reconstruct the original (pre-merge) changes. Therefore:
 
-*Warning*: Running 'git merge' with non-trivial uncummitted changes is
+*Warning*: Running 'but merge' with non-trivial uncummitted changes is
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
-The third syntax ("`git merge --continue`") can only be run after the
+The third syntax ("`but merge --continue`") can only be run after the
 merge has resulted in conflicts.
 
 OPTIONS
 -------
-:git-merge: 1
+:but-merge: 1
 
 include::merge-options.txt[]
 
@@ -73,8 +73,8 @@ include::merge-options.txt[]
 If `--log` is specified, a shortlog of the cummits being merged
 will be appended to the specified message.
 +
-The 'git fmt-merge-msg' command can be
-used to give a good default for automated 'git merge'
+The 'but fmt-merge-msg' command can be
+used to give a good default for automated 'but merge'
 invocations. The automated message can include the branch description.
 
 --into-name <branch>::
@@ -106,14 +106,14 @@ will be appended to the specified message.
 	present, apply it to the worktree.
 +
 If there were uncummitted worktree changes present when the merge
-started, 'git merge --abort' will in some cases be unable to
+started, 'but merge --abort' will in some cases be unable to
 reconstruct these changes. It is therefore recommended to always
-cummit or stash your changes before running 'git merge'.
+cummit or stash your changes before running 'but merge'.
 +
-'git merge --abort' is equivalent to 'git reset --merge' when
+'but merge --abort' is equivalent to 'but reset --merge' when
 `MERGE_HEAD` is present unless `MERGE_AUTOSTASH` is also present in
-which case 'git merge --abort' applies the stash entry to the worktree
-whereas 'git reset --merge' will save the stashed changes in the stash
+which case 'but merge --abort' applies the stash entry to the worktree
+whereas 'but reset --merge' will save the stashed changes in the stash
 list.
 
 --quit::
@@ -122,8 +122,8 @@ list.
 	stash entry will be saved to the stash list.
 
 --continue::
-	After a 'git merge' stops due to conflicts you can conclude the
-	merge by running 'git merge --continue' (see "HOW TO RESOLVE
+	After a 'but merge' stops due to conflicts you can conclude the
+	merge by running 'but merge --continue' (see "HOW TO RESOLVE
 	CONFLICTS" section below).
 
 <cummit>...::
@@ -136,8 +136,8 @@ branches that the current branch is configured to use as its upstream.
 See also the configuration section of this manual page.
 +
 When `FETCH_HEAD` (and no other cummit) is specified, the branches
-recorded in the `.git/FETCH_HEAD` file by the previous invocation
-of `git fetch` for merging are merged to the current branch.
+recorded in the `.but/FETCH_HEAD` file by the previous invocation
+of `but fetch` for merging are merged to the current branch.
 
 
 PRE-MERGE CHECKS
@@ -145,25 +145,25 @@ PRE-MERGE CHECKS
 
 Before applying outside changes, you should get your own work in
 good shape and cummitted locally, so it will not be clobbered if
-there are conflicts.  See also linkgit:git-stash[1].
-'git pull' and 'git merge' will stop without doing anything when
-local uncummitted changes overlap with files that 'git pull'/'git
+there are conflicts.  See also linkbut:but-stash[1].
+'but pull' and 'but merge' will stop without doing anything when
+local uncummitted changes overlap with files that 'but pull'/'but
 merge' may need to update.
 
 To avoid recording unrelated changes in the merge cummit,
-'git pull' and 'git merge' will also abort if there are any changes
+'but pull' and 'but merge' will also abort if there are any changes
 registered in the index relative to the `HEAD` cummit.  (Special
 narrow exceptions to this rule may exist depending on which merge
 strategy is in use, but generally, the index must match HEAD.)
 
-If all named cummits are already ancestors of `HEAD`, 'git merge'
+If all named cummits are already ancestors of `HEAD`, 'but merge'
 will exit early with the message "Already up to date."
 
 FAST-FORWARD MERGE
 ------------------
 
 Often the current branch head is an ancestor of the named cummit.
-This is the most common case especially when invoked from 'git
+This is the most common case especially when invoked from 'but
 pull': you are tracking an upstream repository, you have cummitted
 no local changes, and now you want to update to a newer upstream
 revision.  In this case, a new cummit is not needed to store the
@@ -195,7 +195,7 @@ happens:
 4. For conflicting paths, the index file records up to three
    versions: stage 1 stores the version from the common ancestor,
    stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
-   can inspect the stages with `git ls-files -u`).  The working
+   can inspect the stages with `but ls-files -u`).  The working
    tree files contain the result of the "merge" program; i.e. 3-way
    merge results with familiar conflict markers `<<<` `===` `>>>`.
 5. No other changes are made.  In particular, the local
@@ -204,7 +204,7 @@ happens:
    i.e. matching `HEAD`.
 
 If you tried a merge which resulted in complex conflicts and
-want to start over, you can recover with `git merge --abort`.
+want to start over, you can recover with `but merge --abort`.
 
 MERGING TAG
 -----------
@@ -213,20 +213,20 @@ When merging an annotated (and possibly signed) tag, Git always
 creates a merge cummit even if a fast-forward merge is possible, and
 the cummit message template is prepared with the tag message.
 Additionally, if the tag is signed, the signature check is reported
-as a comment in the message template. See also linkgit:git-tag[1].
+as a comment in the message template. See also linkbut:but-tag[1].
 
 When you want to just integrate with the work leading to the cummit
 that happens to be tagged, e.g. synchronizing with an upstream
 release point, you may not want to make an unnecessary merge cummit.
 
 In such a case, you can "unwrap" the tag yourself before feeding it
-to `git merge`, or pass `--ff-only` when you do not have any work on
+to `but merge`, or pass `--ff-only` when you do not have any work on
 your own. e.g.
 
 ----
-git fetch origin
-git merge v1.2.3^0
-git merge --ff-only v1.2.3
+but fetch origin
+but merge v1.2.3^0
+but merge --ff-only v1.2.3
 ----
 
 
@@ -321,32 +321,32 @@ After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` cummit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; `git merge --abort`
+   up working tree changes made by 2. and 3.; `but merge --abort`
    can be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git add' them to the index.  Use 'git cummit' or
-   'git merge --continue' to seal the deal. The latter command
+   'but add' them to the index.  Use 'but cummit' or
+   'but merge --continue' to seal the deal. The latter command
    checks whether there is a (interrupted) merge in progress
-   before calling 'git cummit'.
+   before calling 'but cummit'.
 
 You can work through the conflict with a number of tools:
 
- * Use a mergetool.  `git mergetool` to launch a graphical
+ * Use a mergetool.  `but mergetool` to launch a graphical
    mergetool which will work you through the merge.
 
- * Look at the diffs.  `git diff` will show a three-way diff,
+ * Look at the diffs.  `but diff` will show a three-way diff,
    highlighting changes from both the `HEAD` and `MERGE_HEAD`
    versions.
 
- * Look at the diffs from each branch. `git log --merge -p <path>`
+ * Look at the diffs from each branch. `but log --merge -p <path>`
    will show diffs first for the `HEAD` version and then the
    `MERGE_HEAD` version.
 
- * Look at the originals.  `git show :1:filename` shows the
-   common ancestor, `git show :2:filename` shows the `HEAD`
-   version, and `git show :3:filename` shows the `MERGE_HEAD`
+ * Look at the originals.  `but show :1:filename` shows the
+   common ancestor, `but show :2:filename` shows the `HEAD`
+   version, and `but show :3:filename` shows the `MERGE_HEAD`
    version.
 
 
@@ -357,21 +357,21 @@ EXAMPLES
   the current branch, making an octopus merge:
 +
 ------------------------------------------------
-$ git merge fixes enhancements
+$ but merge fixes enhancements
 ------------------------------------------------
 
 * Merge branch `obsolete` into the current branch, using `ours`
   merge strategy:
 +
 ------------------------------------------------
-$ git merge -s ours obsolete
+$ but merge -s ours obsolete
 ------------------------------------------------
 
 * Merge branch `maint` into the current branch, but do not make
   a new cummit automatically:
 +
 ------------------------------------------------
-$ git merge --no-cummit maint
+$ but merge --no-cummit maint
 ------------------------------------------------
 +
 This can be used when you want to include further changes to the
@@ -390,18 +390,18 @@ include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
-	supported options are the same as those of 'git merge', but option
+	supported options are the same as those of 'but merge', but option
 	values containing whitespace characters are currently not supported.
 
 SEE ALSO
 --------
-linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],
-linkgit:gitattributes[5],
-linkgit:git-reset[1],
-linkgit:git-diff[1], linkgit:git-ls-files[1],
-linkgit:git-add[1], linkgit:git-rm[1],
-linkgit:git-mergetool[1]
+linkbut:but-fmt-merge-msg[1], linkbut:but-pull[1],
+linkbut:butattributes[5],
+linkbut:but-reset[1],
+linkbut:but-diff[1], linkbut:but-ls-files[1],
+linkbut:but-add[1], linkbut:but-rm[1],
+linkbut:but-mergetool[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

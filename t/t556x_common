@@ -1,37 +1,37 @@
 #!/bin/sh
 
 find_file() {
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
 	find $1 -type f |
 	sed -e 1q
 }
 
 config() {
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" config $1 $2
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.but" config $1 $2
 }
 
 test_expect_success 'setup repository' '
 	echo content >file &&
-	git add file &&
-	git cummit -m one &&
+	but add file &&
+	but cummit -m one &&
 
-	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git --bare init &&
+	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	 but --bare init &&
 	 : >objects/info/alternates &&
 	 : >objects/info/http-alternates
 	) &&
-	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git push public main:main &&
+	but remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	but push public main:main &&
 
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git repack -a -d
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	 but repack -a -d
 	) &&
 
 	echo other >file &&
-	git add file &&
-	git cummit -m two &&
-	git push public main:main &&
+	but add file &&
+	but cummit -m two &&
+	but push public main:main &&
 
 	LOOSE_URL=$(find_file objects/??) &&
 	PACK_URL=$(find_file objects/pack/*.pack) &&
@@ -62,9 +62,9 @@ unset GIT_HTTP_EXPORT_ALL
 test_expect_success 'no export by default' '
 	get_static_files "404 Not Found"
 '
-test_expect_success 'export if git-daemon-export-ok' '
-        (cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 touch git-daemon-export-ok
+test_expect_success 'export if but-daemon-export-ok' '
+        (cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.but" &&
+	 touch but-daemon-export-ok
 	) &&
         get_static_files "200 OK"
 '
@@ -80,31 +80,31 @@ test_expect_success 'static file if http.getanyfile false fails' '
 '
 
 test_expect_success 'http.uploadpack default enabled' '
-	GET info/refs?service=git-upload-pack "200 OK"  &&
-	POST git-upload-pack 0000 "200 OK"
+	GET info/refs?service=but-upload-pack "200 OK"  &&
+	POST but-upload-pack 0000 "200 OK"
 '
 test_expect_success 'http.uploadpack true' '
 	config http.uploadpack true &&
-	GET info/refs?service=git-upload-pack "200 OK" &&
-	POST git-upload-pack 0000 "200 OK"
+	GET info/refs?service=but-upload-pack "200 OK" &&
+	POST but-upload-pack 0000 "200 OK"
 '
 test_expect_success 'http.uploadpack false' '
 	config http.uploadpack false &&
-	GET info/refs?service=git-upload-pack "403 Forbidden" &&
-	POST git-upload-pack 0000 "403 Forbidden"
+	GET info/refs?service=but-upload-pack "403 Forbidden" &&
+	POST but-upload-pack 0000 "403 Forbidden"
 '
 
 test_expect_success 'http.receivepack default disabled' '
-	GET info/refs?service=git-receive-pack "403 Forbidden"  &&
-	POST git-receive-pack 0000 "403 Forbidden"
+	GET info/refs?service=but-receive-pack "403 Forbidden"  &&
+	POST but-receive-pack 0000 "403 Forbidden"
 '
 test_expect_success 'http.receivepack true' '
 	config http.receivepack true &&
-	GET info/refs?service=git-receive-pack "200 OK" &&
-	POST git-receive-pack 0000 "200 OK"
+	GET info/refs?service=but-receive-pack "200 OK" &&
+	POST but-receive-pack 0000 "200 OK"
 '
 test_expect_success 'http.receivepack false' '
 	config http.receivepack false &&
-	GET info/refs?service=git-receive-pack "403 Forbidden" &&
-	POST git-receive-pack 0000 "403 Forbidden"
+	GET info/refs?service=but-receive-pack "403 Forbidden" &&
+	POST but-receive-pack 0000 "403 Forbidden"
 '

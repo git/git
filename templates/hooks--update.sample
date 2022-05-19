@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # An example hook script to block unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+# Called by "but receive-pack" with arguments: refname sha1-old sha1-new
 #
 # To enable this hook, rename this file to "update".
 #
@@ -43,11 +43,11 @@ if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
 fi
 
 # --- Config
-allowunannotated=$(git config --type=bool hooks.allowunannotated)
-allowdeletebranch=$(git config --type=bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --type=bool hooks.denycreatebranch)
-allowdeletetag=$(git config --type=bool hooks.allowdeletetag)
-allowmodifytag=$(git config --type=bool hooks.allowmodifytag)
+allowunannotated=$(but config --type=bool hooks.allowunannotated)
+allowdeletebranch=$(but config --type=bool hooks.allowdeletebranch)
+denycreatebranch=$(but config --type=bool hooks.denycreatebranch)
+allowdeletetag=$(but config --type=bool hooks.allowdeletetag)
+allowmodifytag=$(but config --type=bool hooks.allowmodifytag)
 
 # check for no description
 projectdesc=$(sed -e '1q' "$GIT_DIR/description")
@@ -60,11 +60,11 @@ esac
 
 # --- Check types
 # if $newrev is 0000...0000, it's a cummit to delete a ref.
-zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+zero=$(but hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
 if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
 else
-	newrev_type=$(git cat-file -t $newrev)
+	newrev_type=$(but cat-file -t $newrev)
 fi
 
 case "$refname","$newrev_type" in
@@ -73,7 +73,7 @@ case "$refname","$newrev_type" in
 		short_refname=${refname##refs/tags/}
 		if [ "$allowunannotated" != "true" ]; then
 			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			echo "*** Use 'but tag [ -a | -s ]' for tags you want to propagate." >&2
 			exit 1
 		fi
 		;;
@@ -86,7 +86,7 @@ case "$refname","$newrev_type" in
 		;;
 	refs/tags/*,tag)
 		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		if [ "$allowmodifytag" != "true" ] && but rev-parse $refname > /dev/null 2>&1
 		then
 			echo "*** Tag '$refname' already exists." >&2
 			echo "*** Modifying a tag is not allowed in this repository." >&2

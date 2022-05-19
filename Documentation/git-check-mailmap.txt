@@ -1,15 +1,15 @@
-git-check-mailmap(1)
+but-check-mailmap(1)
 ====================
 
 NAME
 ----
-git-check-mailmap - Show canonical names and email addresses of contacts
+but-check-mailmap - Show canonical names and email addresses of contacts
 
 
 SYNOPSIS
 --------
 [verse]
-'git check-mailmap' [<options>] <contact>...
+'but check-mailmap' [<options>] <contact>...
 
 
 DESCRIPTION
@@ -39,16 +39,16 @@ printed; otherwise only ``$$<user@host>$$'' is printed.
 CONFIGURATION
 -------------
 
-See `mailmap.file` and `mailmap.blob` in linkgit:git-config[1] for how
+See `mailmap.file` and `mailmap.blob` in linkbut:but-config[1] for how
 to specify a custom `.mailmap` target file or object.
 
 
 MAPPING AUTHORS
 ---------------
 
-See linkgit:gitmailmap[5].
+See linkbut:butmailmap[5].
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

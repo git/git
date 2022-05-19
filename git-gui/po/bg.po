@@ -1,12 +1,12 @@
-# Bulgarian translation of git-gui po-file.
+# Bulgarian translation of but-gui po-file.
 # Copyright (C) 2012, 2013, 2014, 2015, 2016 Alexander Shopov <ash@kambanaria.org>.
-# This file is distributed under the same license as the git package.
+# This file is distributed under the same license as the but package.
 # Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016.
 #
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui master\n"
+"Project-Id-Version: but-gui master\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-10-13 15:16+0300\n"
 "PO-Revision-Date: 2016-10-13 15:16+0300\n"
@@ -18,33 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: git-gui.sh:865
+#: but-gui.sh:865
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Указан е неправилен шрифт в „%s“:"
 
-#: git-gui.sh:919
+#: but-gui.sh:919
 msgid "Main Font"
 msgstr "Основен шрифт"
 
-#: git-gui.sh:920
+#: but-gui.sh:920
 msgid "Diff/Console Font"
 msgstr "Шрифт за разликите/конзолата"
 
-#: git-gui.sh:935 git-gui.sh:949 git-gui.sh:962 git-gui.sh:1052 git-gui.sh:1071
-#: git-gui.sh:3147
-msgid "git-gui: fatal error"
-msgstr "git-gui: фатална грешка"
+#: but-gui.sh:935 but-gui.sh:949 but-gui.sh:962 but-gui.sh:1052 but-gui.sh:1071
+#: but-gui.sh:3147
+msgid "but-gui: fatal error"
+msgstr "but-gui: фатална грешка"
 
-#: git-gui.sh:936
-msgid "Cannot find git in PATH."
-msgstr "Командата git липсва в пътя (PATH)."
+#: but-gui.sh:936
+msgid "Cannot find but in PATH."
+msgstr "Командата but липсва в пътя (PATH)."
 
-#: git-gui.sh:963
+#: but-gui.sh:963
 msgid "Cannot parse Git version string:"
 msgstr "Низът с версията на Git не може да бъде интерпретиран:"
 
-#: git-gui.sh:988
+#: but-gui.sh:988
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -63,43 +63,43 @@ msgstr ""
 "\n"
 "Да се приеме ли, че „%s“ е версия „1.5.0“?\n"
 
-#: git-gui.sh:1285
+#: but-gui.sh:1285
 msgid "Git directory not found:"
 msgstr "Директорията на Git не е открита:"
 
-#: git-gui.sh:1319
+#: but-gui.sh:1319
 msgid "Cannot move to top of working directory:"
 msgstr "Не може да се премине към родителската  директория."
 
-#: git-gui.sh:1327
+#: but-gui.sh:1327
 msgid "Cannot use bare repository:"
 msgstr "Голо хранилище не може да се използва:"
 
-#: git-gui.sh:1335
+#: but-gui.sh:1335
 msgid "No working directory"
 msgstr "Работната директория липсва"
 
-#: git-gui.sh:1507 lib/checkout_op.tcl:306
+#: but-gui.sh:1507 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr "Обновяване на състоянието на файла…"
 
-#: git-gui.sh:1567
+#: but-gui.sh:1567
 msgid "Scanning for modified files ..."
 msgstr "Проверка за променени файлове…"
 
-#: git-gui.sh:1645
+#: but-gui.sh:1645
 msgid "Calling prepare-cummit-msg hook..."
 msgstr "Куката „prepare-cummit-msg“ се изпълнява в момента…"
 
-#: git-gui.sh:1662
+#: but-gui.sh:1662
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr "Подаването е отхвърлено от куката „prepare-cummit-msg“."
 
-#: git-gui.sh:1820 lib/browser.tcl:252
+#: but-gui.sh:1820 lib/browser.tcl:252
 msgid "Ready."
 msgstr "Готово."
 
-#: git-gui.sh:1984
+#: but-gui.sh:1984
 #, tcl-format
 msgid ""
 "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
@@ -107,462 +107,462 @@ msgstr ""
 "Достигнат е максималният размер на списъка за извеждане(gui."
 "maxfilesdisplayed = %s), съответно не са показани всички %s файла."
 
-#: git-gui.sh:2107
+#: but-gui.sh:2107
 msgid "Unmodified"
 msgstr "Непроменен"
 
-#: git-gui.sh:2109
+#: but-gui.sh:2109
 msgid "Modified, not staged"
 msgstr "Променен, но не е в индекса"
 
-#: git-gui.sh:2110 git-gui.sh:2122
+#: but-gui.sh:2110 but-gui.sh:2122
 msgid "Staged for cummit"
 msgstr "В индекса за подаване"
 
-#: git-gui.sh:2111 git-gui.sh:2123
+#: but-gui.sh:2111 but-gui.sh:2123
 msgid "Portions staged for cummit"
 msgstr "Части са в индекса за подаване"
 
-#: git-gui.sh:2112 git-gui.sh:2124
+#: but-gui.sh:2112 but-gui.sh:2124
 msgid "Staged for cummit, missing"
 msgstr "В индекса за подаване, но липсва"
 
-#: git-gui.sh:2114
+#: but-gui.sh:2114
 msgid "File type changed, not staged"
 msgstr "Видът на файла е сменен, но не е в индекса"
 
-#: git-gui.sh:2115 git-gui.sh:2116
+#: but-gui.sh:2115 but-gui.sh:2116
 msgid "File type changed, old type staged for cummit"
 msgstr "Видът на файла е сменен, но новият вид не е в индекса"
 
-#: git-gui.sh:2117
+#: but-gui.sh:2117
 msgid "File type changed, staged"
 msgstr "Видът на файла е сменен и е в индекса"
 
-#: git-gui.sh:2118
+#: but-gui.sh:2118
 msgid "File type change staged, modification not staged"
 msgstr "Видът на файла е сменен в индекса, но не и съдържанието"
 
-#: git-gui.sh:2119
+#: but-gui.sh:2119
 msgid "File type change staged, file missing"
 msgstr "Видът на файла е сменен в индекса, но файлът липсва"
 
-#: git-gui.sh:2121
+#: but-gui.sh:2121
 msgid "Untracked, not staged"
 msgstr "Неследен"
 
-#: git-gui.sh:2126
+#: but-gui.sh:2126
 msgid "Missing"
 msgstr "Липсващ"
 
-#: git-gui.sh:2127
+#: but-gui.sh:2127
 msgid "Staged for removal"
 msgstr "В индекса за изтриване"
 
-#: git-gui.sh:2128
+#: but-gui.sh:2128
 msgid "Staged for removal, still present"
 msgstr "В индекса за изтриване, но още го има"
 
-#: git-gui.sh:2130 git-gui.sh:2131 git-gui.sh:2132 git-gui.sh:2133
-#: git-gui.sh:2134 git-gui.sh:2135
+#: but-gui.sh:2130 but-gui.sh:2131 but-gui.sh:2132 but-gui.sh:2133
+#: but-gui.sh:2134 but-gui.sh:2135
 msgid "Requires merge resolution"
 msgstr "Изисква коригиране при сливане"
 
-#: git-gui.sh:2170
-msgid "Starting gitk... please wait..."
-msgstr "Стартиране на „gitk“…, изчакайте…"
+#: but-gui.sh:2170
+msgid "Starting butk... please wait..."
+msgstr "Стартиране на „butk“…, изчакайте…"
 
-#: git-gui.sh:2182
-msgid "Couldn't find gitk in PATH"
-msgstr "Командата „gitk“ липсва в пътищата, определени от променливата PATH."
+#: but-gui.sh:2182
+msgid "Couldn't find butk in PATH"
+msgstr "Командата „butk“ липсва в пътищата, определени от променливата PATH."
 
-#: git-gui.sh:2241
-msgid "Couldn't find git gui in PATH"
+#: but-gui.sh:2241
+msgid "Couldn't find but gui in PATH"
 msgstr ""
-"Командата „git gui“ липсва в пътищата, определени от променливата PATH."
+"Командата „but gui“ липсва в пътищата, определени от променливата PATH."
 
-#: git-gui.sh:2676 lib/choose_repository.tcl:41
+#: but-gui.sh:2676 lib/choose_repository.tcl:41
 msgid "Repository"
 msgstr "Хранилище"
 
-#: git-gui.sh:2677
+#: but-gui.sh:2677
 msgid "Edit"
 msgstr "Редактиране"
 
-#: git-gui.sh:2679 lib/choose_rev.tcl:567
+#: but-gui.sh:2679 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr "Клон"
 
-#: git-gui.sh:2682 lib/choose_rev.tcl:554
+#: but-gui.sh:2682 lib/choose_rev.tcl:554
 msgid "cummit@@noun"
 msgstr "Подаване"
 
-#: git-gui.sh:2685 lib/merge.tcl:127 lib/merge.tcl:174
+#: but-gui.sh:2685 lib/merge.tcl:127 lib/merge.tcl:174
 msgid "Merge"
 msgstr "Сливане"
 
-#: git-gui.sh:2686 lib/choose_rev.tcl:563
+#: but-gui.sh:2686 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr "Отдалечено хранилище"
 
-#: git-gui.sh:2689
+#: but-gui.sh:2689
 msgid "Tools"
 msgstr "Команди"
 
-#: git-gui.sh:2698
+#: but-gui.sh:2698
 msgid "Explore Working Copy"
 msgstr "Разглеждане на работното копие"
 
-#: git-gui.sh:2704
+#: but-gui.sh:2704
 msgid "Git Bash"
 msgstr "Bash за Git"
 
-#: git-gui.sh:2714
+#: but-gui.sh:2714
 msgid "Browse Current Branch's Files"
 msgstr "Разглеждане на файловете в текущия клон"
 
-#: git-gui.sh:2718
+#: but-gui.sh:2718
 msgid "Browse Branch Files..."
 msgstr "Разглеждане на текущия клон…"
 
-#: git-gui.sh:2723
+#: but-gui.sh:2723
 msgid "Visualize Current Branch's History"
 msgstr "Визуализация на историята на текущия клон"
 
-#: git-gui.sh:2727
+#: but-gui.sh:2727
 msgid "Visualize All Branch History"
 msgstr "Визуализация на историята на всички клонове"
 
-#: git-gui.sh:2734
+#: but-gui.sh:2734
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "Разглеждане на файловете в „%s“"
 
-#: git-gui.sh:2736
+#: but-gui.sh:2736
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "Визуализация на историята на „%s“"
 
-#: git-gui.sh:2741 lib/database.tcl:40
+#: but-gui.sh:2741 lib/database.tcl:40
 msgid "Database Statistics"
 msgstr "Статистика на базата от данни"
 
-#: git-gui.sh:2744 lib/database.tcl:33
+#: but-gui.sh:2744 lib/database.tcl:33
 msgid "Compress Database"
 msgstr "Компресиране на базата от данни"
 
-#: git-gui.sh:2747
+#: but-gui.sh:2747
 msgid "Verify Database"
 msgstr "Проверка на базата от данни"
 
-#: git-gui.sh:2754 git-gui.sh:2758 git-gui.sh:2762
+#: but-gui.sh:2754 but-gui.sh:2758 but-gui.sh:2762
 msgid "Create Desktop Icon"
 msgstr "Добавяне на икона на работния плот"
 
-#: git-gui.sh:2770 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
+#: but-gui.sh:2770 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
 msgid "Quit"
 msgstr "Спиране на програмата"
 
-#: git-gui.sh:2778
+#: but-gui.sh:2778
 msgid "Undo"
 msgstr "Отмяна"
 
-#: git-gui.sh:2781
+#: but-gui.sh:2781
 msgid "Redo"
 msgstr "Повторение"
 
-#: git-gui.sh:2785 git-gui.sh:3399
+#: but-gui.sh:2785 but-gui.sh:3399
 msgid "Cut"
 msgstr "Отрязване"
 
-#: git-gui.sh:2788 git-gui.sh:3402 git-gui.sh:3476 git-gui.sh:3562
+#: but-gui.sh:2788 but-gui.sh:3402 but-gui.sh:3476 but-gui.sh:3562
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Копиране"
 
-#: git-gui.sh:2791 git-gui.sh:3405
+#: but-gui.sh:2791 but-gui.sh:3405
 msgid "Paste"
 msgstr "Поставяне"
 
-#: git-gui.sh:2794 git-gui.sh:3408 lib/branch_delete.tcl:28
+#: but-gui.sh:2794 but-gui.sh:3408 lib/branch_delete.tcl:28
 #: lib/remote_branch_delete.tcl:39
 msgid "Delete"
 msgstr "Изтриване"
 
-#: git-gui.sh:2798 git-gui.sh:3412 git-gui.sh:3566 lib/console.tcl:71
+#: but-gui.sh:2798 but-gui.sh:3412 but-gui.sh:3566 lib/console.tcl:71
 msgid "Select All"
 msgstr "Избиране на всичко"
 
-#: git-gui.sh:2807
+#: but-gui.sh:2807
 msgid "Create..."
 msgstr "Създаване…"
 
-#: git-gui.sh:2813
+#: but-gui.sh:2813
 msgid "Checkout..."
 msgstr "Изтегляне…"
 
-#: git-gui.sh:2819
+#: but-gui.sh:2819
 msgid "Rename..."
 msgstr "Преименуване…"
 
-#: git-gui.sh:2824
+#: but-gui.sh:2824
 msgid "Delete..."
 msgstr "Изтриване…"
 
-#: git-gui.sh:2829
+#: but-gui.sh:2829
 msgid "Reset..."
 msgstr "Отмяна на промените…"
 
-#: git-gui.sh:2839
+#: but-gui.sh:2839
 msgid "Done"
 msgstr "Готово"
 
-#: git-gui.sh:2841
+#: but-gui.sh:2841
 msgid "cummit@@verb"
 msgstr "Подаване"
 
-#: git-gui.sh:2850 git-gui.sh:3335
+#: but-gui.sh:2850 but-gui.sh:3335
 msgid "New cummit"
 msgstr "Ново подаване"
 
-#: git-gui.sh:2858 git-gui.sh:3342
+#: but-gui.sh:2858 but-gui.sh:3342
 msgid "Amend Last cummit"
 msgstr "Поправяне на последното подаване"
 
-#: git-gui.sh:2868 git-gui.sh:3296 lib/remote_branch_delete.tcl:101
+#: but-gui.sh:2868 but-gui.sh:3296 lib/remote_branch_delete.tcl:101
 msgid "Rescan"
 msgstr "Обновяване"
 
-#: git-gui.sh:2874
+#: but-gui.sh:2874
 msgid "Stage To cummit"
 msgstr "Към индекса за подаване"
 
-#: git-gui.sh:2880
+#: but-gui.sh:2880
 msgid "Stage Changed Files To cummit"
 msgstr "Всички променени файлове към индекса за подаване"
 
-#: git-gui.sh:2886
+#: but-gui.sh:2886
 msgid "Unstage From cummit"
 msgstr "Изваждане от индекса за подаване"
 
-#: git-gui.sh:2892 lib/index.tcl:442
+#: but-gui.sh:2892 lib/index.tcl:442
 msgid "Revert Changes"
 msgstr "Връщане на оригинала"
 
-#: git-gui.sh:2900 git-gui.sh:3613 git-gui.sh:3644
+#: but-gui.sh:2900 but-gui.sh:3613 but-gui.sh:3644
 msgid "Show Less Context"
 msgstr "По-малко контекст"
 
-#: git-gui.sh:2904 git-gui.sh:3617 git-gui.sh:3648
+#: but-gui.sh:2904 but-gui.sh:3617 but-gui.sh:3648
 msgid "Show More Context"
 msgstr "Повече контекст"
 
-#: git-gui.sh:2911 git-gui.sh:3309 git-gui.sh:3423
+#: but-gui.sh:2911 but-gui.sh:3309 but-gui.sh:3423
 msgid "Sign Off"
 msgstr "Подписване"
 
-#: git-gui.sh:2927
+#: but-gui.sh:2927
 msgid "Local Merge..."
 msgstr "Локално сливане…"
 
-#: git-gui.sh:2932
+#: but-gui.sh:2932
 msgid "Abort Merge..."
 msgstr "Преустановяване на сливане…"
 
-#: git-gui.sh:2944 git-gui.sh:2972
+#: but-gui.sh:2944 but-gui.sh:2972
 msgid "Add..."
 msgstr "Добавяне…"
 
-#: git-gui.sh:2948
+#: but-gui.sh:2948
 msgid "Push..."
 msgstr "Изтласкване…"
 
-#: git-gui.sh:2952
+#: but-gui.sh:2952
 msgid "Delete Branch..."
 msgstr "Изтриване на клон…"
 
-#: git-gui.sh:2962 git-gui.sh:3595
+#: but-gui.sh:2962 but-gui.sh:3595
 msgid "Options..."
 msgstr "Опции…"
 
-#: git-gui.sh:2973
+#: but-gui.sh:2973
 msgid "Remove..."
 msgstr "Премахване…"
 
-#: git-gui.sh:2982 lib/choose_repository.tcl:55
+#: but-gui.sh:2982 lib/choose_repository.tcl:55
 msgid "Help"
 msgstr "Помощ"
 
-#: git-gui.sh:2986 git-gui.sh:2990 lib/about.tcl:14
+#: but-gui.sh:2986 but-gui.sh:2990 lib/about.tcl:14
 #: lib/choose_repository.tcl:49 lib/choose_repository.tcl:58
 #, tcl-format
 msgid "About %s"
 msgstr "Относно %s"
 
-#: git-gui.sh:3014
+#: but-gui.sh:3014
 msgid "Online Documentation"
 msgstr "Документация в Интернет"
 
-#: git-gui.sh:3017 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
+#: but-gui.sh:3017 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
 msgid "Show SSH Key"
 msgstr "Показване на ключа за SSH"
 
-#: git-gui.sh:3032 git-gui.sh:3164
+#: but-gui.sh:3032 but-gui.sh:3164
 msgid "usage:"
 msgstr "употреба:"
 
-#: git-gui.sh:3036 git-gui.sh:3168
+#: but-gui.sh:3036 but-gui.sh:3168
 msgid "Usage"
 msgstr "Употреба"
 
-#: git-gui.sh:3117 lib/blame.tcl:573
+#: but-gui.sh:3117 lib/blame.tcl:573
 msgid "Error"
 msgstr "Грешка"
 
-#: git-gui.sh:3148
+#: but-gui.sh:3148
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "ФАТАЛНА ГРЕШКА: пътят %s не може да бъде открит: такъв файл или директория "
 "няма"
 
-#: git-gui.sh:3181
+#: but-gui.sh:3181
 msgid "Current Branch:"
 msgstr "Текущ клон:"
 
-#: git-gui.sh:3206
+#: but-gui.sh:3206
 msgid "Unstaged Changes"
 msgstr "Промени извън индекса"
 
-#: git-gui.sh:3228
+#: but-gui.sh:3228
 msgid "Staged Changes (Will cummit)"
 msgstr "Промени в индекса (за подаване)"
 
-#: git-gui.sh:3302
+#: but-gui.sh:3302
 msgid "Stage Changed"
 msgstr "Индексът е променен"
 
-#: git-gui.sh:3321 lib/transport.tcl:137
+#: but-gui.sh:3321 lib/transport.tcl:137
 msgid "Push"
 msgstr "Изтласкване"
 
-#: git-gui.sh:3356
+#: but-gui.sh:3356
 msgid "Initial cummit Message:"
 msgstr "Първоначално съобщение при подаване:"
 
-#: git-gui.sh:3357
+#: but-gui.sh:3357
 msgid "Amended cummit Message:"
 msgstr "Поправено съобщение при подаване:"
 
-#: git-gui.sh:3358
+#: but-gui.sh:3358
 msgid "Amended Initial cummit Message:"
 msgstr "Поправено първоначално съобщение при подаване:"
 
-#: git-gui.sh:3359
+#: but-gui.sh:3359
 msgid "Amended Merge cummit Message:"
 msgstr "Поправено съобщение при подаване със сливане:"
 
-#: git-gui.sh:3360
+#: but-gui.sh:3360
 msgid "Merge cummit Message:"
 msgstr "Съобщение при подаване със сливане:"
 
-#: git-gui.sh:3361
+#: but-gui.sh:3361
 msgid "cummit Message:"
 msgstr "Съобщение при подаване:"
 
-#: git-gui.sh:3415 git-gui.sh:3570 lib/console.tcl:73
+#: but-gui.sh:3415 but-gui.sh:3570 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Копиране на всичко"
 
-#: git-gui.sh:3439 lib/blame.tcl:105
+#: but-gui.sh:3439 lib/blame.tcl:105
 msgid "File:"
 msgstr "Файл:"
 
-#: git-gui.sh:3558
+#: but-gui.sh:3558
 msgid "Refresh"
 msgstr "Обновяване"
 
-#: git-gui.sh:3579
+#: but-gui.sh:3579
 msgid "Decrease Font Size"
 msgstr "По-едър шрифт"
 
-#: git-gui.sh:3583
+#: but-gui.sh:3583
 msgid "Increase Font Size"
 msgstr "По-дребен шрифт"
 
-#: git-gui.sh:3591 lib/blame.tcl:294
+#: but-gui.sh:3591 lib/blame.tcl:294
 msgid "Encoding"
 msgstr "Кодиране"
 
-#: git-gui.sh:3602
+#: but-gui.sh:3602
 msgid "Apply/Reverse Hunk"
 msgstr "Прилагане/връщане на парче"
 
-#: git-gui.sh:3607
+#: but-gui.sh:3607
 msgid "Apply/Reverse Line"
 msgstr "Прилагане/връщане на ред"
 
-#: git-gui.sh:3626
+#: but-gui.sh:3626
 msgid "Run Merge Tool"
 msgstr "Изпълнение на програмата за сливане"
 
-#: git-gui.sh:3631
+#: but-gui.sh:3631
 msgid "Use Remote Version"
 msgstr "Версия от отдалеченото хранилище"
 
-#: git-gui.sh:3635
+#: but-gui.sh:3635
 msgid "Use Local Version"
 msgstr "Локална версия"
 
-#: git-gui.sh:3639
+#: but-gui.sh:3639
 msgid "Revert To Base"
 msgstr "Връщане към родителската версия"
 
-#: git-gui.sh:3657
+#: but-gui.sh:3657
 msgid "Visualize These Changes In The Submodule"
 msgstr "Визуализиране на промените в подмодула"
 
-#: git-gui.sh:3661
+#: but-gui.sh:3661
 msgid "Visualize Current Branch History In The Submodule"
 msgstr "Визуализация на историята на текущия клон в историята за подмодула"
 
-#: git-gui.sh:3665
+#: but-gui.sh:3665
 msgid "Visualize All Branch History In The Submodule"
 msgstr "Визуализация на историята на всички клони в историята за подмодула"
 
-#: git-gui.sh:3670
-msgid "Start git gui In The Submodule"
-msgstr "Стартиране на „git gui“ за подмодула"
+#: but-gui.sh:3670
+msgid "Start but gui In The Submodule"
+msgstr "Стартиране на „but gui“ за подмодула"
 
-#: git-gui.sh:3705
+#: but-gui.sh:3705
 msgid "Unstage Hunk From cummit"
 msgstr "Изваждане на парчето от подаването"
 
-#: git-gui.sh:3707
+#: but-gui.sh:3707
 msgid "Unstage Lines From cummit"
 msgstr "Изваждане на редовете от подаването"
 
-#: git-gui.sh:3709
+#: but-gui.sh:3709
 msgid "Unstage Line From cummit"
 msgstr "Изваждане на реда от подаването"
 
-#: git-gui.sh:3712
+#: but-gui.sh:3712
 msgid "Stage Hunk For cummit"
 msgstr "Добавяне на парчето за подаване"
 
-#: git-gui.sh:3714
+#: but-gui.sh:3714
 msgid "Stage Lines For cummit"
 msgstr "Добавяне на редовете за подаване"
 
-#: git-gui.sh:3716
+#: but-gui.sh:3716
 msgid "Stage Line For cummit"
 msgstr "Добавяне на реда за подаване"
 
-#: git-gui.sh:3741
+#: but-gui.sh:3741
 msgid "Initializing..."
 msgstr "Инициализиране…"
 
-#: git-gui.sh:3886
+#: but-gui.sh:3886
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -579,7 +579,7 @@ msgstr ""
 "от %s:\n"
 "\n"
 
-#: git-gui.sh:3915
+#: but-gui.sh:3915
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -589,7 +589,7 @@ msgstr ""
 "Това е познат проблем и се дължи на\n"
 "версията на Tcl включена в Cygwin."
 
-#: git-gui.sh:3920
+#: but-gui.sh:3920
 #, tcl-format
 msgid ""
 "\n"
@@ -597,17 +597,17 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 "\n"
 "\n"
 "Добър заместител на „%s“\n"
 "е да поставите настройките „user.name“ и\n"
-"„user.email“ в личния си файл „~/.gitconfig“.\n"
+"„user.email“ в личния си файл „~/.butconfig“.\n"
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui — графичен интерфейс за Git."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui — графичен интерфейс за Git."
 
 #: lib/blame.tcl:73
 #, tcl-format
@@ -963,8 +963,8 @@ msgstr "Клонът „%s“ не съществува."
 
 #: lib/checkout_op.tcl:194
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
-msgstr "Неуспешно настройване на опростен git-pull за „%s“."
+msgid "Failed to configure simplified but-pull for '%s'."
+msgstr "Неуспешно настройване на опростен but-pull за „%s“."
 
 #: lib/checkout_op.tcl:229
 #, tcl-format
@@ -1823,10 +1823,10 @@ msgstr "Грешка в индекса"
 #: lib/index.tcl:19
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "Неуспешно обновяване на индекса на Git. Автоматично ще започне нова проверка "
-"за синхронизирането на git-gui."
+"за синхронизирането на but-gui."
 
 #: lib/index.tcl:30
 msgid "Continue"

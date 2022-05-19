@@ -9,9 +9,9 @@ test_expect_success "setup proc-receive hook (ft, $PROTOCOL)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(B)
+# but push         :                       refs/for/main/topic(B)
 test_expect_success "proc-receive: fall throught, let receive-pack to execute ($PROTOCOL)" '
-	git -C workbench push origin \
+	but -C workbench push origin \
 		$B:refs/for/main/topic \
 		>out 2>&1 &&
 	make_user_friendly_and_stable_output <out >actual &&
@@ -24,7 +24,7 @@ test_expect_success "proc-receive: fall throught, let receive-pack to execute ($
 	> remote: proc-receive> option fall-through        Z
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-B> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  * [new reference]   <CUMMIT-B> -> refs/for/main/topic
 	EOF
 	test_cmp expect actual &&
@@ -38,5 +38,5 @@ test_expect_success "proc-receive: fall throught, let receive-pack to execute ($
 # Refs of upstream : main(A)             refs/for/main/topic(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "cleanup ($PROTOCOL)" '
-	git -C "$upstream" update-ref -d refs/for/main/topic
+	but -C "$upstream" update-ref -d refs/for/main/topic
 '

@@ -9,7 +9,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success '--ignore-space-at-eol with a single appended character' '
 	printf "a\nb\nc\n" >pre &&
 	printf "a\nbX\nc\n" >post &&
-	test_must_fail git diff --no-index \
+	test_must_fail but diff --no-index \
 		--patience --ignore-space-at-eol pre post >diff &&
 	grep "^+.*X" diff
 '

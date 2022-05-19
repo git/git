@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# git-submodule.sh: add, init, update or list git submodules
+# but-submodule.sh: add, init, update or list but submodules
 #
 # Copyright (c) 2007 Lars Hjemli
 
@@ -16,15 +16,15 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [cummit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
-   or: $dashless [--quiet] absorbgitdirs [--] [<path>...]"
+   or: $dashless [--quiet] absorbbutdirs [--] [<path>...]"
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
-. git-sh-setup
+. but-sh-setup
 require_work_tree
-wt_prefix=$(git rev-parse --show-prefix)
+wt_prefix=$(but rev-parse --show-prefix)
 cd_to_toplevel
 
-# Tell the rest of git that any URLs we get don't come
+# Tell the rest of but that any URLs we get don't come
 # directly from the user, so it can apply policy as appropriate.
 GIT_PROTOCOL_FROM_USER=0
 export GIT_PROTOCOL_FROM_USER
@@ -56,19 +56,19 @@ isnumber()
 	n=$(($1 + 0)) 2>/dev/null && test "$n" = "$1"
 }
 
-# Sanitize the local git environment for use within a submodule. We
-# can't simply use clear_local_git_env since we want to preserve some
+# Sanitize the local but environment for use within a submodule. We
+# can't simply use clear_local_but_env since we want to preserve some
 # of the settings from GIT_CONFIG_PARAMETERS.
 sanitize_submodule_env()
 {
 	save_config=$GIT_CONFIG_PARAMETERS
-	clear_local_git_env
+	clear_local_but_env
 	GIT_CONFIG_PARAMETERS=$save_config
 	export GIT_CONFIG_PARAMETERS
 }
 
 #
-# Add a new submodule to the working tree, .gitmodules and the index
+# Add a new submodule to the working tree, .butmodules and the index
 #
 # $@ = repo path
 #
@@ -138,7 +138,7 @@ cmd_add()
 		usage
 	fi
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper add ${GIT_QUIET:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper add ${GIT_QUIET:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
 }
 
 #
@@ -169,11 +169,11 @@ cmd_foreach()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
 #
-# Register submodules in .git/config
+# Register submodules in .but/config
 #
 # $@ = requested paths (default to all)
 #
@@ -200,11 +200,11 @@ cmd_init()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${GIT_QUIET:+--quiet} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${GIT_QUIET:+--quiet} -- "$@"
 }
 
 #
-# Unregister submodules from .git/config and remove their work tree
+# Unregister submodules from .but/config and remove their work tree
 #
 cmd_deinit()
 {
@@ -236,7 +236,7 @@ cmd_deinit()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${GIT_QUIET:+--quiet} ${force:+--force} ${deinit_all:+--all} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${GIT_QUIET:+--quiet} ${force:+--force} ${deinit_all:+--all} -- "$@"
 }
 
 #
@@ -348,7 +348,7 @@ cmd_update()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
 		${GIT_QUIET:+--quiet} \
 		${force:+--force} \
 		${progress:+"--progress"} \
@@ -409,7 +409,7 @@ cmd_set_branch() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${GIT_QUIET:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${GIT_QUIET:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
 }
 
 #
@@ -438,7 +438,7 @@ cmd_set_url() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url ${GIT_QUIET:+--quiet} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url ${GIT_QUIET:+--quiet} -- "$@"
 }
 
 #
@@ -490,7 +490,7 @@ cmd_summary() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper summary ${files:+--files} ${cached:+--cached} ${for_status:+--for-status} ${summary_limit:+-n $summary_limit} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper summary ${files:+--files} ${cached:+--cached} ${for_status:+--for-status} ${summary_limit:+-n $summary_limit} -- "$@"
 }
 #
 # List all submodules, prefixed with:
@@ -531,12 +531,12 @@ cmd_status()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper status ${GIT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper status ${GIT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
 }
 #
 # Sync remote urls for submodules
 # This makes the value for remote.$remote.url match the value
-# specified in .gitmodules.
+# specified in .butmodules.
 #
 cmd_sync()
 {
@@ -564,12 +564,12 @@ cmd_sync()
 		esac
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
-cmd_absorbgitdirs()
+cmd_absorbbutdirs()
 {
-	git submodule--helper absorb-git-dirs --prefix "$wt_prefix" "$@"
+	but submodule--helper absorb-but-dirs --prefix "$wt_prefix" "$@"
 }
 
 # This loop parses the command line arguments to find the
@@ -581,7 +581,7 @@ cmd_absorbgitdirs()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | deinit | update | set-branch | set-url | status | summary | sync | absorbgitdirs)
+	add | foreach | init | deinit | update | set-branch | set-url | status | summary | sync | absorbbutdirs)
 		command=$1
 		;;
 	-q|--quiet)

@@ -50,8 +50,8 @@ int buffer_is_binary(const char *ptr, unsigned long size);
 
 void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);
 void xdiff_clear_find_func(xdemitconf_t *xecfg);
-int git_xmerge_config(const char *var, const char *value, void *cb);
-extern int git_xmerge_style;
+int but_xmerge_config(const char *var, const char *value, void *cb);
+extern int but_xmerge_style;
 
 /*
  * Compare the strings l1 with l2 which are of size s1 and s2 respectively.

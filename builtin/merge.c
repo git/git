@@ -1,9 +1,9 @@
 /*
- * Builtin "git merge"
+ * Builtin "but merge"
  *
  * Copyright (c) 2008 Miklos Vajna <vmiklos@frugalware.org>
  *
- * Based on git-merge.sh by Junio C Hamano.
+ * Based on but-merge.sh by Junio C Hamano.
  */
 
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
@@ -56,9 +56,9 @@ struct strategy {
 };
 
 static const char * const builtin_merge_usage[] = {
-	N_("git merge [<options>] [<cummit>...]"),
-	"git merge --abort",
-	"git merge --continue",
+	N_("but merge [<options>] [<cummit>...]"),
+	"but merge --abort",
+	"but merge --continue",
 	NULL
 };
 
@@ -184,7 +184,7 @@ static struct strategy *get_strategy(const char *name)
 		loaded = 1;
 
 		memset(&not_strategies, 0, sizeof(struct cmdnames));
-		load_command_list("git-merge-", &main_cmds, &other_cmds);
+		load_command_list("but-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
 			int j, found = 0;
 			struct cmdname *ent = main_cmds.names[i];
@@ -317,7 +317,7 @@ static int save_state(struct object_id *stash)
 
 	strvec_pushl(&cp.args, "stash", "create", NULL);
 	cp.out = -1;
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 
 	if (start_command(&cp))
 		die(_("could not run stash."));
@@ -441,7 +441,7 @@ static void squash_message(struct cummit *cummit, struct cummit_list *remotehead
 			oid_to_hex(&cummit->object.oid));
 		pretty_print_cummit(&ctx, cummit, &out);
 	}
-	write_file_buf(git_path_squash_msg(the_repository), out.buf, out.len);
+	write_file_buf(but_path_squash_msg(the_repository), out.buf, out.len);
 	strbuf_release(&out);
 }
 
@@ -492,7 +492,7 @@ static void finish(struct cummit *head_cummit,
 	/* Run a post-merge hook */
 	run_hooks_l("post-merge", squash ? "1" : "0", NULL);
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash(but_path_merge_autostash(the_repository));
 	strbuf_release(&reflog_message);
 }
 
@@ -548,7 +548,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 			int seen_nonzero = 0;
 
 			len++; /* count ~ */
-			while (*++ptr && isdigit(*ptr)) {
+			while (*++ptr && isdibut(*ptr)) {
 				seen_nonzero |= (*ptr != '0');
 				len++;
 			}
@@ -613,7 +613,7 @@ static void parse_branch_merge_options(char *bmo)
 	free(argv);
 }
 
-static int git_merge_config(const char *k, const char *v, void *cb)
+static int but_merge_config(const char *k, const char *v, void *cb)
 {
 	int status;
 	const char *str;
@@ -628,43 +628,43 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "merge.diffstat") || !strcmp(k, "merge.stat"))
-		show_diffstat = git_config_bool(k, v);
+		show_diffstat = but_config_bool(k, v);
 	else if (!strcmp(k, "merge.verifysignatures"))
-		verify_signatures = git_config_bool(k, v);
+		verify_signatures = but_config_bool(k, v);
 	else if (!strcmp(k, "pull.twohead"))
-		return git_config_string(&pull_twohead, k, v);
+		return but_config_string(&pull_twohead, k, v);
 	else if (!strcmp(k, "pull.octopus"))
-		return git_config_string(&pull_octopus, k, v);
+		return but_config_string(&pull_octopus, k, v);
 	else if (!strcmp(k, "cummit.cleanup"))
-		return git_config_string(&cleanup_arg, k, v);
+		return but_config_string(&cleanup_arg, k, v);
 	else if (!strcmp(k, "merge.ff")) {
-		int boolval = git_parse_maybe_bool(v);
+		int boolval = but_parse_maybe_bool(v);
 		if (0 <= boolval) {
 			fast_forward = boolval ? FF_ALLOW : FF_NO;
 		} else if (v && !strcmp(v, "only")) {
 			fast_forward = FF_ONLY;
-		} /* do not barf on values from future versions of git */
+		} /* do not barf on values from future versions of but */
 		return 0;
 	} else if (!strcmp(k, "merge.defaulttoupstream")) {
-		default_to_upstream = git_config_bool(k, v);
+		default_to_upstream = but_config_bool(k, v);
 		return 0;
 	} else if (!strcmp(k, "cummit.gpgsign")) {
-		sign_cummit = git_config_bool(k, v) ? "" : NULL;
+		sign_cummit = but_config_bool(k, v) ? "" : NULL;
 		return 0;
 	} else if (!strcmp(k, "gpg.mintrustlevel")) {
 		check_trust_level = 0;
 	} else if (!strcmp(k, "merge.autostash")) {
-		autostash = git_config_bool(k, v);
+		autostash = but_config_bool(k, v);
 		return 0;
 	}
 
 	status = fmt_merge_msg_config(k, v, cb);
 	if (status)
 		return status;
-	status = git_gpg_config(k, v, NULL);
+	status = but_gpg_config(k, v, NULL);
 	if (status)
 		return status;
-	return git_diff_ui_config(k, v, cb);
+	return but_diff_ui_config(k, v, cb);
 }
 
 static int read_tree_trivial(struct object_id *common, struct object_id *head,
@@ -707,7 +707,7 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 static void write_tree_trivial(struct object_id *oid)
 {
 	if (write_cache_as_tree(oid, 0, NULL))
-		die(_("git write-tree failed to write a tree"));
+		die(_("but write-tree failed to write a tree"));
 }
 
 static int try_merge_strategy(const char *strategy, struct cummit_list *common,
@@ -810,7 +810,7 @@ static void add_strategies(const char *string, unsigned attr)
 
 static void read_merge_msg(struct strbuf *msg)
 {
-	const char *filename = git_path_merge_msg(the_repository);
+	const char *filename = but_path_merge_msg(the_repository);
 	strbuf_reset(msg);
 	if (strbuf_read_file(msg, filename, 0) < 0)
 		die_errno(_("Could not read from '%s'"), filename);
@@ -822,7 +822,7 @@ static void abort_cummit(struct cummit_list *remoteheads, const char *err_msg)
 	if (err_msg)
 		error("%s", err_msg);
 	fprintf(stderr,
-		_("Not cummitting merge; use 'git cummit' to complete the merge.\n"));
+		_("Not cummitting merge; use 'but cummit' to complete the merge.\n"));
 	write_merge_state(remoteheads);
 	exit(1);
 }
@@ -879,19 +879,19 @@ static void prepare_to_cummit(struct cummit_list *remoteheads)
 	if (signoff)
 		append_signoff(&msg, ignore_non_trailer(msg.buf, msg.len), 0);
 	write_merge_heads(remoteheads);
-	write_file_buf(git_path_merge_msg(the_repository), msg.buf, msg.len);
+	write_file_buf(but_path_merge_msg(the_repository), msg.buf, msg.len);
 	if (run_commit_hook(0 < option_edit, get_index_file(), NULL,
 			    "prepare-cummit-msg",
-			    git_path_merge_msg(the_repository), "merge", NULL))
+			    but_path_merge_msg(the_repository), "merge", NULL))
 		abort_cummit(remoteheads, NULL);
 	if (0 < option_edit) {
-		if (launch_editor(git_path_merge_msg(the_repository), NULL, NULL))
+		if (launch_editor(but_path_merge_msg(the_repository), NULL, NULL))
 			abort_cummit(remoteheads, NULL);
 	}
 
 	if (!no_verify && run_commit_hook(0 < option_edit, get_index_file(),
 					  NULL, "cummit-msg",
-					  git_path_merge_msg(the_repository), NULL))
+					  but_path_merge_msg(the_repository), NULL))
 		abort_cummit(remoteheads, NULL);
 
 	read_merge_msg(&msg);
@@ -957,13 +957,13 @@ static int suggest_conflicts(void)
 	FILE *fp;
 	struct strbuf msgbuf = STRBUF_INIT;
 
-	filename = git_path_merge_msg(the_repository);
+	filename = but_path_merge_msg(the_repository);
 	fp = xfopen(filename, "a");
 
 	/*
 	 * We can't use cleanup_mode because if we're not using the editor,
 	 * get_cleanup_mode will return CUMMIT_MSG_CLEANUP_SPACE instead, even
-	 * though the message is meant to be processed later by git-cummit.
+	 * though the message is meant to be processed later by but-cummit.
 	 * Thus, we will get the cleanup mode which is returned when we _are_
 	 * using an editor.
 	 */
@@ -1048,12 +1048,12 @@ static void write_merge_heads(struct cummit_list *remoteheads)
 		}
 		strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 	}
-	write_file_buf(git_path_merge_head(the_repository), buf.buf, buf.len);
+	write_file_buf(but_path_merge_head(the_repository), buf.buf, buf.len);
 
 	strbuf_reset(&buf);
 	if (fast_forward == FF_NO)
 		strbuf_addstr(&buf, "no-ff");
-	write_file_buf(git_path_merge_mode(the_repository), buf.buf, buf.len);
+	write_file_buf(but_path_merge_mode(the_repository), buf.buf, buf.len);
 	strbuf_release(&buf);
 }
 
@@ -1061,7 +1061,7 @@ static void write_merge_state(struct cummit_list *remoteheads)
 {
 	write_merge_heads(remoteheads);
 	strbuf_addch(&merge_msg, '\n');
-	write_file_buf(git_path_merge_msg(the_repository), merge_msg.buf,
+	write_file_buf(but_path_merge_msg(the_repository), merge_msg.buf,
 		       merge_msg.len);
 }
 
@@ -1076,7 +1076,7 @@ static int default_edit_option(void)
 		return 0;
 
 	if (e) {
-		int v = git_parse_maybe_bool(e);
+		int v = but_parse_maybe_bool(e);
 		if (v < 0)
 			die(_("Bad value '%s' in environment '%s'"), e, name);
 		return v;
@@ -1147,7 +1147,7 @@ static void handle_fetch_head(struct cummit_list **remotes, struct strbuf *merge
 	if (!merge_names)
 		merge_names = &fetch_head_file;
 
-	filename = git_path_fetch_head(the_repository);
+	filename = but_path_fetch_head(the_repository);
 	fd = xopen(filename, O_RDONLY);
 
 	if (strbuf_read(merge_names, fd, 0) < 0)
@@ -1254,7 +1254,7 @@ static int merging_a_throwaway_tag(struct cummit *cummit)
 	 *
 	 * Otherwise, we are playing an integrator's role, making a
 	 * merge with a throw-away tag from a contributor with
-	 * something like "git pull $contributor $signed_tag".
+	 * something like "but pull $contributor $signed_tag".
 	 * We want to forbid such a merge from fast-forwarding
 	 * by default; otherwise we would not keep the signature
 	 * anywhere.
@@ -1304,7 +1304,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	init_diff_ui_defaults();
-	git_config(git_merge_config, NULL);
+	but_config(but_merge_config, NULL);
 
 	if (!branch || is_null_oid(&head_oid))
 		head_cummit = NULL;
@@ -1330,14 +1330,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			usage_msg_opt(_("--abort expects no arguments"),
 			      builtin_merge_usage, builtin_merge_options);
 
-		if (!file_exists(git_path_merge_head(the_repository)))
+		if (!file_exists(but_path_merge_head(the_repository)))
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
-		if (read_oneliner(&stash_oid, git_path_merge_autostash(the_repository),
+		if (read_oneliner(&stash_oid, but_path_merge_autostash(the_repository),
 		    READ_ONELINER_SKIP_IF_EMPTY))
-			unlink(git_path_merge_autostash(the_repository));
+			unlink(but_path_merge_autostash(the_repository));
 
-		/* Invoke 'git reset --merge' */
+		/* Invoke 'but reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
 
 		if (stash_oid.len)
@@ -1365,10 +1365,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			usage_msg_opt(_("--continue expects no arguments"),
 			      builtin_merge_usage, builtin_merge_options);
 
-		if (!file_exists(git_path_merge_head(the_repository)))
+		if (!file_exists(but_path_merge_head(the_repository)))
 			die(_("There is no merge in progress (MERGE_HEAD missing)."));
 
-		/* Invoke 'git cummit' */
+		/* Invoke 'but cummit' */
 		ret = cmd_cummit(nargc, nargv, prefix);
 		goto done;
 	}
@@ -1376,10 +1376,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (read_cache_unmerged())
 		die_resolve_conflict("merge");
 
-	if (file_exists(git_path_merge_head(the_repository))) {
+	if (file_exists(but_path_merge_head(the_repository))) {
 		/*
-		 * There is no unmerged entry, don't advise 'git
-		 * add/rm <file>', just 'git cummit'.
+		 * There is no unmerged entry, don't advise 'but
+		 * add/rm <file>', just 'but cummit'.
 		 */
 		if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 			die(_("You have not concluded your merge (MERGE_HEAD exists).\n"
@@ -1436,8 +1436,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!head_cummit) {
 		/*
 		 * If the merged head is a valid one there is no reason
-		 * to forbid "git merge" into a branch yet to be born.
-		 * We do the same for "git pull".
+		 * to forbid "but merge" into a branch yet to be born.
+		 * We do the same for "but pull".
 		 */
 		struct object_id *remote_head_oid;
 		if (squash)
@@ -1574,12 +1574,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		if (autostash)
 			create_autostash(the_repository,
-					 git_path_merge_autostash(the_repository));
+					 but_path_merge_autostash(the_repository));
 		if (checkout_fast_forward(the_repository,
 					  &head_cummit->object.oid,
 					  &cummit->object.oid,
 					  overwrite_ignore)) {
-			apply_autostash(git_path_merge_autostash(the_repository));
+			apply_autostash(but_path_merge_autostash(the_repository));
 			ret = 1;
 			goto done;
 		}
@@ -1602,7 +1602,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		refresh_cache(REFRESH_QUIET);
 		if (allow_trivial && fast_forward != FF_ONLY) {
 			/* See if it is really trivial. */
-			git_cummitter_info(IDENT_STRICT);
+			but_cummitter_info(IDENT_STRICT);
 			printf(_("Trying really trivial in-index merge...\n"));
 			if (!read_tree_trivial(&common->item->object.oid,
 					       &head_cummit->object.oid,
@@ -1625,7 +1625,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 			/*
 			 * Here we *have* to calculate the individual
-			 * merge_bases again, otherwise "git merge HEAD^
+			 * merge_bases again, otherwise "but merge HEAD^
 			 * HEAD^^" would be missed.
 			 */
 			common_one = get_merge_bases(head_cummit, j->item);
@@ -1645,10 +1645,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (autostash)
 		create_autostash(the_repository,
-				 git_path_merge_autostash(the_repository));
+				 but_path_merge_autostash(the_repository));
 
 	/* We are going to make a new cummit. */
-	git_cummitter_info(IDENT_STRICT);
+	but_cummitter_info(IDENT_STRICT);
 
 	/*
 	 * At this point, we need a real merge.  No matter what strategy
@@ -1728,7 +1728,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			fprintf(stderr, _("Merge with strategy %s failed.\n"),
 				use_strategies[0]->name);
-		apply_autostash(git_path_merge_autostash(the_repository));
+		apply_autostash(but_path_merge_autostash(the_repository));
 		ret = 2;
 		goto done;
 	} else if (best_strategy == wt_strategy)
@@ -1745,7 +1745,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (squash) {
 		finish(head_cummit, remoteheads, NULL, NULL);
 
-		git_test_write_cummit_graph_or_die();
+		but_test_write_cummit_graph_or_die();
 	} else
 		write_merge_state(remoteheads);
 

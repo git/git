@@ -1,8 +1,8 @@
 /*
- * Builtin "git cummit"
+ * Builtin "but cummit"
  *
  * Copyright (c) 2007 Kristian Høgsberg <krh@redhat.com>
- * Based on git-cummit.sh by Junio C Hamano and Linus Torvalds
+ * Based on but-cummit.sh by Junio C Hamano and Linus Torvalds
  */
 
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
@@ -40,42 +40,42 @@
 #include "pretty.h"
 
 static const char * const builtin_cummit_usage[] = {
-	N_("git cummit [<options>] [--] <pathspec>..."),
+	N_("but cummit [<options>] [--] <pathspec>..."),
 	NULL
 };
 
 static const char * const builtin_status_usage[] = {
-	N_("git status [<options>] [--] <pathspec>..."),
+	N_("but status [<options>] [--] <pathspec>..."),
 	NULL
 };
 
 static const char empty_amend_advice[] =
 N_("You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the cummit entirely with \"git reset HEAD^\".\n");
+"remove the cummit entirely with \"but reset HEAD^\".\n");
 
 static const char empty_cherry_pick_advice[] =
 N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
 "If you wish to cummit it anyway, use:\n"
 "\n"
-"    git cummit --allow-empty\n"
+"    but cummit --allow-empty\n"
 "\n");
 
 static const char empty_rebase_pick_advice[] =
-N_("Otherwise, please use 'git rebase --skip'\n");
+N_("Otherwise, please use 'but rebase --skip'\n");
 
 static const char empty_cherry_pick_advice_single[] =
-N_("Otherwise, please use 'git cherry-pick --skip'\n");
+N_("Otherwise, please use 'but cherry-pick --skip'\n");
 
 static const char empty_cherry_pick_advice_multi[] =
 N_("and then use:\n"
 "\n"
-"    git cherry-pick --continue\n"
+"    but cherry-pick --continue\n"
 "\n"
 "to resume cherry-picking the remaining cummits.\n"
 "If you wish to skip this cummit, use:\n"
 "\n"
-"    git cherry-pick --skip\n"
+"    but cherry-pick --skip\n"
 "\n");
 
 static const char *color_status_slots[] = {
@@ -191,7 +191,7 @@ static int opt_parse_rename_score(const struct option *opt, const char *arg, int
 
 static void determine_whence(struct wt_status *s)
 {
-	if (file_exists(git_path_merge_head(the_repository)))
+	if (file_exists(but_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
 	else if (!sequencer_determine_whence(the_repository, &whence))
 		whence = FROM_CUMMIT;
@@ -203,9 +203,9 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 {
 	wt_status_prepare(the_repository, s);
 	init_diff_ui_defaults();
-	git_config(fn, s);
+	but_config(fn, s);
 	determine_whence(s);
-	s->hints = advice_enabled(ADVICE_STATUS_HINTS); /* must come after git_config() */
+	s->hints = advice_enabled(ADVICE_STATUS_HINTS); /* must come after but_config() */
 }
 
 static void rollback_index_files(void)
@@ -510,7 +510,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		die(_("unable to write new_index file"));
 
 	hold_lock_file_for_update(&false_lock,
-				  git_path("next-index-%"PRIuMAX,
+				  but_path("next-index-%"PRIuMAX,
 					   (uintmax_t) getpid()),
 				  LOCK_DIE_ON_ERROR);
 
@@ -794,7 +794,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		 *
 		 * The other cummit message options `-c`/`-C`/`-F` are
 		 * incompatible with all the forms of `--fixup` and
-		 * have already errored out while parsing the `git cummit`
+		 * have already errored out while parsing the `but cummit`
 		 * options.
 		 */
 		if (have_option_m && !strcmp(fixup_prefix, "fixup"))
@@ -805,22 +805,22 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 				die(_("options '%s' and '%s:%s' cannot be used together"), "-m", "--fixup", fixup_message);
 			prepare_amend_cummit(cummit, &sb, &ctx);
 		}
-	} else if (!stat(git_path_merge_msg(the_repository), &statbuf)) {
+	} else if (!stat(but_path_merge_msg(the_repository), &statbuf)) {
 		size_t merge_msg_start;
 
 		/*
 		 * prepend SQUASH_MSG here if it exists and a
 		 * "merge --squash" was originally performed
 		 */
-		if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
-			if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
+		if (!stat(but_path_squash_msg(the_repository), &statbuf)) {
+			if (strbuf_read_file(&sb, but_path_squash_msg(the_repository), 0) < 0)
 				die_errno(_("could not read SQUASH_MSG"));
 			hook_arg1 = "squash";
 		} else
 			hook_arg1 = "merge";
 
 		merge_msg_start = sb.len;
-		if (strbuf_read_file(&sb, git_path_merge_msg(the_repository), 0) < 0)
+		if (strbuf_read_file(&sb, but_path_merge_msg(the_repository), 0) < 0)
 			die_errno(_("could not read MERGE_MSG"));
 
 		if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS &&
@@ -828,8 +828,8 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 					 sb.len - merge_msg_start) <
 				sb.len - merge_msg_start)
 			merge_contains_scissors = 1;
-	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
-		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
+	} else if (!stat(but_path_squash_msg(the_repository), &statbuf)) {
+		if (strbuf_read_file(&sb, but_path_squash_msg(the_repository), 0) < 0)
 			die_errno(_("could not read SQUASH_MSG"));
 		hook_arg1 = "squash";
 	} else if (template_file) {
@@ -860,9 +860,9 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		hook_arg2 = "";
 	}
 
-	s->fp = fopen_for_writing(git_path_cummit_editmsg());
+	s->fp = fopen_for_writing(but_path_cummit_editmsg());
 	if (s->fp == NULL)
-		die_errno(_("could not open '%s'"), git_path_cummit_editmsg());
+		die_errno(_("could not open '%s'"), but_path_cummit_editmsg());
 
 	/* Ignore status.displayCommentPrefix: we do need comments in CUMMIT_EDITMSG. */
 	old_display_comment_prefix = s->display_comment_prefix;
@@ -888,7 +888,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 	strbuf_release(&sb);
 
 	/* This checks if cummitter ident is explicitly given */
-	strbuf_addstr(&cummitter_ident, git_cummitter_info(IDENT_STRICT));
+	strbuf_addstr(&cummitter_ident, but_cummitter_info(IDENT_STRICT));
 	if (use_editor && include_status) {
 		int ident_shown = 0;
 		int saved_color_setting;
@@ -919,12 +919,12 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 					      _("\n"
 					  "It looks like you may be cummitting a merge.\n"
 					  "If this is not correct, please run\n"
-					  "	git update-ref -d MERGE_HEAD\n"
+					  "	but update-ref -d MERGE_HEAD\n"
 					  "and try again.\n") :
 					      _("\n"
 					  "It looks like you may be cummitting a cherry-pick.\n"
 					  "If this is not correct, please run\n"
-					  "	git update-ref -d CHERRY_PICK_HEAD\n"
+					  "	but update-ref -d CHERRY_PICK_HEAD\n"
 					  "and try again.\n"));
 		}
 
@@ -1022,9 +1022,9 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		struct child_process run_trailer = CHILD_PROCESS_INIT;
 
 		strvec_pushl(&run_trailer.args, "interpret-trailers",
-			     "--in-place", git_path_cummit_editmsg(), NULL);
+			     "--in-place", but_path_cummit_editmsg(), NULL);
 		strvec_pushv(&run_trailer.args, trailer_args.v);
-		run_trailer.git_cmd = 1;
+		run_trailer.but_cmd = 1;
 		if (run_command(&run_trailer))
 			die(_("unable to pass trailers to --trailers"));
 		strvec_clear(&trailer_args);
@@ -1071,14 +1071,14 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 	}
 
 	if (run_commit_hook(use_editor, index_file, NULL, "prepare-cummit-msg",
-			    git_path_cummit_editmsg(), hook_arg1, hook_arg2, NULL))
+			    but_path_cummit_editmsg(), hook_arg1, hook_arg2, NULL))
 		return 0;
 
 	if (use_editor) {
 		struct strvec env = STRVEC_INIT;
 
 		strvec_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
-		if (launch_editor(git_path_cummit_editmsg(), NULL, env.v)) {
+		if (launch_editor(but_path_cummit_editmsg(), NULL, env.v)) {
 			fprintf(stderr,
 			_("Please supply the message using either -m or -F option.\n"));
 			exit(1);
@@ -1088,7 +1088,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 
 	if (!no_verify &&
 	    run_commit_hook(use_editor, index_file, NULL, "cummit-msg",
-			    git_path_cummit_editmsg(), NULL)) {
+			    but_path_cummit_editmsg(), NULL)) {
 		return 0;
 	}
 
@@ -1153,8 +1153,8 @@ static void handle_untracked_files_arg(struct wt_status *s)
 	else if (!strcmp(untracked_files_arg, "all"))
 		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
 	/*
-	 * Please update $__git_untracked_file_modes in
-	 * git-completion.bash when you add new options
+	 * Please update $__but_untracked_file_modes in
+	 * but-completion.bash when you add new options
 	 */
 	else
 		die(_("Invalid untracked files mode '%s'"), untracked_files_arg);
@@ -1383,45 +1383,45 @@ static int parse_status_slot(const char *slot)
 	return LOOKUP_CONFIG(color_status_slots, slot);
 }
 
-static int git_status_config(const char *k, const char *v, void *cb)
+static int but_status_config(const char *k, const char *v, void *cb)
 {
 	struct wt_status *s = cb;
 	const char *slot_name;
 
 	if (starts_with(k, "column."))
-		return git_column_config(k, v, "status", &s->colopts);
+		return but_column_config(k, v, "status", &s->colopts);
 	if (!strcmp(k, "status.submodulesummary")) {
 		int is_bool;
-		s->submodule_summary = git_config_bool_or_int(k, v, &is_bool);
+		s->submodule_summary = but_config_bool_or_int(k, v, &is_bool);
 		if (is_bool && s->submodule_summary)
 			s->submodule_summary = -1;
 		return 0;
 	}
 	if (!strcmp(k, "status.short")) {
-		if (git_config_bool(k, v))
+		if (but_config_bool(k, v))
 			status_deferred_config.status_format = STATUS_FORMAT_SHORT;
 		else
 			status_deferred_config.status_format = STATUS_FORMAT_NONE;
 		return 0;
 	}
 	if (!strcmp(k, "status.branch")) {
-		status_deferred_config.show_branch = git_config_bool(k, v);
+		status_deferred_config.show_branch = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.aheadbehind")) {
-		status_deferred_config.ahead_behind = git_config_bool(k, v);
+		status_deferred_config.ahead_behind = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.showstash")) {
-		s->show_stash = git_config_bool(k, v);
+		s->show_stash = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
-		s->use_color = git_config_colorbool(k, v);
+		s->use_color = but_config_colorbool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.displaycommentprefix")) {
-		s->display_comment_prefix = git_config_bool(k, v);
+		s->display_comment_prefix = but_config_bool(k, v);
 		return 0;
 	}
 	if (skip_prefix(k, "status.color.", &slot_name) ||
@@ -1434,7 +1434,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		return color_parse(v, s->color_palette[slot]);
 	}
 	if (!strcmp(k, "status.relativepaths")) {
-		s->relative_paths = git_config_bool(k, v);
+		s->relative_paths = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.showuntrackedfiles")) {
@@ -1452,23 +1452,23 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "diff.renamelimit")) {
 		if (s->rename_limit == -1)
-			s->rename_limit = git_config_int(k, v);
+			s->rename_limit = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.renamelimit")) {
-		s->rename_limit = git_config_int(k, v);
+		s->rename_limit = but_config_int(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "diff.renames")) {
 		if (s->detect_rename == -1)
-			s->detect_rename = git_config_rename(k, v);
+			s->detect_rename = but_config_rename(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.renames")) {
-		s->detect_rename = git_config_rename(k, v);
+		s->detect_rename = but_config_rename(k, v);
 		return 0;
 	}
-	return git_diff_ui_config(k, v, NULL);
+	return but_diff_ui_config(k, v, NULL);
 }
 
 int cmd_status(int argc, const char **argv, const char *prefix)
@@ -1522,7 +1522,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	status_init_config(&s, git_status_config);
+	status_init_config(&s, but_status_config);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
@@ -1583,33 +1583,33 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int git_cummit_config(const char *k, const char *v, void *cb)
+static int but_cummit_config(const char *k, const char *v, void *cb)
 {
 	struct wt_status *s = cb;
 	int status;
 
 	if (!strcmp(k, "cummit.template"))
-		return git_config_pathname(&template_file, k, v);
+		return but_config_pathname(&template_file, k, v);
 	if (!strcmp(k, "cummit.status")) {
-		include_status = git_config_bool(k, v);
+		include_status = but_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "cummit.cleanup"))
-		return git_config_string(&cleanup_arg, k, v);
+		return but_config_string(&cleanup_arg, k, v);
 	if (!strcmp(k, "cummit.gpgsign")) {
-		sign_cummit = git_config_bool(k, v) ? "" : NULL;
+		sign_cummit = but_config_bool(k, v) ? "" : NULL;
 		return 0;
 	}
 	if (!strcmp(k, "cummit.verbose")) {
 		int is_bool;
-		config_cummit_verbose = git_config_bool_or_int(k, v, &is_bool);
+		config_cummit_verbose = but_config_bool_or_int(k, v, &is_bool);
 		return 0;
 	}
 
-	status = git_gpg_config(k, v, NULL);
+	status = but_gpg_config(k, v, NULL);
 	if (status)
 		return status;
-	return git_status_config(k, v, s);
+	return but_status_config(k, v, s);
 }
 
 int cmd_cummit(int argc, const char **argv, const char *prefix)
@@ -1694,7 +1694,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	status_init_config(&s, git_cummit_config);
+	status_init_config(&s, but_cummit_config);
 	s.cummit_template = 1;
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
 	s.colopts = 0;
@@ -1743,7 +1743,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 		if (!reflog_msg)
 			reflog_msg = "cummit (merge)";
 		pptr = cummit_list_append(current_head, pptr);
-		fp = xfopen(git_path_merge_head(the_repository), "r");
+		fp = xfopen(but_path_merge_head(the_repository), "r");
 		while (strbuf_getline_lf(&m, fp) != EOF) {
 			struct cummit *parent;
 
@@ -1754,8 +1754,8 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 		}
 		fclose(fp);
 		strbuf_release(&m);
-		if (!stat(git_path_merge_mode(the_repository), &statbuf)) {
-			if (strbuf_read_file(&sb, git_path_merge_mode(the_repository), 0) < 0)
+		if (!stat(but_path_merge_mode(the_repository), &statbuf)) {
+			if (strbuf_read_file(&sb, but_path_merge_mode(the_repository), 0) < 0)
 				die_errno(_("could not read MERGE_MODE"));
 			if (!strcmp(sb.buf, "no-ff"))
 				allow_fast_forward = 0;
@@ -1774,7 +1774,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 
 	/* Finally, get the cummit message */
 	strbuf_reset(&sb);
-	if (strbuf_read_file(&sb, git_path_cummit_editmsg(), 0) < 0) {
+	if (strbuf_read_file(&sb, but_path_cummit_editmsg(), 0) < 0) {
 		int saved_errno = errno;
 		rollback_index_files();
 		die(_("could not read cummit message: %s"), strerror(saved_errno));
@@ -1830,17 +1830,17 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 	}
 
 	sequencer_post_cummit_cleanup(the_repository, 0);
-	unlink(git_path_merge_head(the_repository));
-	unlink(git_path_merge_msg(the_repository));
-	unlink(git_path_merge_mode(the_repository));
-	unlink(git_path_squash_msg(the_repository));
+	unlink(but_path_merge_head(the_repository));
+	unlink(but_path_merge_msg(the_repository));
+	unlink(but_path_merge_mode(the_repository));
+	unlink(but_path_squash_msg(the_repository));
 
 	if (cummit_index_files())
 		die(_("repository has been updated, but unable to write\n"
 		      "new_index file. Check that disk is not full and quota is\n"
-		      "not exceeded, and then \"git restore --staged :/\" to recover."));
+		      "not exceeded, and then \"but restore --staged :/\" to recover."));
 
-	git_test_write_cummit_graph_or_die();
+	but_test_write_cummit_graph_or_die();
 
 	repo_rerere(the_repository, 0);
 	run_auto_maintenance(quiet);
@@ -1860,7 +1860,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 				     &oid, flags);
 	}
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash(but_path_merge_autostash(the_repository));
 
 	UNLEAK(err);
 	UNLEAK(sb);

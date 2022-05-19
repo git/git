@@ -1,10 +1,10 @@
 MERGE STRATEGIES
 ----------------
 
-The merge mechanism (`git merge` and `git pull` commands) allows the
+The merge mechanism (`but merge` and `but pull` commands) allows the
 backend 'merge strategies' to be chosen with `-s` option.  Some strategies
 can also take their own options, which can be passed by giving `-X<option>`
-arguments to `git merge` and/or `git pull`.
+arguments to `but merge` and/or `but pull`.
 
 ort::
 	This is the default merge strategy when pulling or merging one
@@ -45,7 +45,7 @@ ignore-cr-at-eol;;
 	Treats lines with the indicated type of whitespace change as
 	unchanged for the sake of a three-way merge.  Whitespace
 	changes mixed with other changes to a line are not ignored.
-	See also linkgit:git-diff[1] `-b`, `-w`,
+	See also linkbut:but-diff[1] `-b`, `-w`,
 	`--ignore-space-at-eol`, and `--ignore-cr-at-eol`.
 +
 * If 'their' version only introduces whitespace changes to a line,
@@ -60,7 +60,7 @@ renormalize;;
 	meant to be used when merging branches with different clean
 	filters or end-of-line normalization rules.  See "Merging
 	branches with differing checkin/checkout attributes" in
-	linkgit:gitattributes[5] for details.
+	linkbut:butattributes[5] for details.
 
 no-renormalize;;
 	Disables the `renormalize` option.  This overrides the
@@ -70,7 +70,7 @@ find-renames[=<n>];;
 	Turn on rename detection, optionally setting the similarity
 	threshold.  This is the default. This overrides the
 	'merge.renames' configuration variable.
-	See also linkgit:git-diff[1] `--find-renames`.
+	See also linkbut:but-diff[1] `--find-renames`.
 
 rename-threshold=<n>;;
 	Deprecated synonym for `find-renames=<n>`.
@@ -107,14 +107,14 @@ diff-algorithm=[patience|minimal|histogram|myers];;
 	Use a different diff algorithm while merging, which can help
 	avoid mismerges that occur due to unimportant matching lines
 	(such as braces from distinct functions).  See also
-	linkgit:git-diff[1] `--diff-algorithm`.  Note that `ort`
+	linkbut:but-diff[1] `--diff-algorithm`.  Note that `ort`
 	specifically uses `diff-algorithm=histogram`, while `recursive`
 	defaults to the `diff.algorithm` config setting.
 
 no-renames;;
 	Turn off rename detection. This overrides the `merge.renames`
 	configuration variable.
-	See also linkgit:git-diff[1] `--no-renames`.
+	See also linkbut:but-diff[1] `--no-renames`.
 
 resolve::
 	This can only resolve two heads (i.e. the current branch

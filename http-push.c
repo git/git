@@ -23,7 +23,7 @@
 #endif
 
 static const char http_push_usage[] =
-"git http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
+"but http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
@@ -97,7 +97,7 @@ struct repo {
 	int has_info_refs;
 	int can_update_info_refs;
 	int has_info_packs;
-	struct packed_git *packs;
+	struct packed_but *packs;
 	struct remote_lock *locks;
 };
 
@@ -117,7 +117,7 @@ enum transfer_state {
 
 struct transfer_request {
 	struct object *obj;
-	struct packed_git *target;
+	struct packed_but *target;
 	char *url;
 	char *dest;
 	struct remote_lock *lock;
@@ -298,7 +298,7 @@ static void start_mkcol(struct transfer_request *request)
 
 static void start_fetch_packed(struct transfer_request *request)
 {
-	struct packed_git *target;
+	struct packed_but *target;
 
 	struct transfer_request *check_request = request_queue_head;
 	struct http_pack_request *preq;
@@ -360,14 +360,14 @@ static void start_put(struct transfer_request *request)
 	unsigned long len;
 	int hdrlen;
 	ssize_t size;
-	git_zstream stream;
+	but_zstream stream;
 
 	unpacked = read_object_file(&request->obj->oid, &type, &len);
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 
 	/* Set it up */
-	git_deflate_init(&stream, zlib_compression_level);
-	size = git_deflate_bound(&stream, len + hdrlen);
+	but_deflate_init(&stream, zlib_compression_level);
+	size = but_deflate_bound(&stream, len + hdrlen);
 	strbuf_init(&request->buffer.buf, size);
 	request->buffer.posn = 0;
 
@@ -378,15 +378,15 @@ static void start_put(struct transfer_request *request)
 	/* First header.. */
 	stream.next_in = (void *)hdr;
 	stream.avail_in = hdrlen;
-	while (git_deflate(&stream, 0) == Z_OK)
+	while (but_deflate(&stream, 0) == Z_OK)
 		; /* nothing */
 
 	/* Then the data itself.. */
 	stream.next_in = unpacked;
 	stream.avail_in = len;
-	while (git_deflate(&stream, Z_FINISH) == Z_OK)
+	while (but_deflate(&stream, Z_FINISH) == Z_OK)
 		; /* nothing */
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 	free(unpacked);
 
 	request->buffer.buf.len = stream.total_out;
@@ -658,7 +658,7 @@ static void add_fetch_request(struct object *obj)
 static int add_send_request(struct object *obj, struct remote_lock *lock)
 {
 	struct transfer_request *request;
-	struct packed_git *target;
+	struct packed_but *target;
 
 	/* Keep locks active */
 	check_locks();
@@ -751,7 +751,7 @@ static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
 static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 {
 	struct remote_lock *lock = (struct remote_lock *)ctx->userData;
-	git_hash_ctx hash_ctx;
+	but_hash_ctx hash_ctx;
 	unsigned char lock_token_hash[GIT_MAX_RAWSZ];
 
 	if (tag_closed && ctx->cdata) {
@@ -1642,7 +1642,7 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("The branch '%s' is not an ancestor "
 				     "of your current HEAD.\n"
 				     "If you are sure you want to delete it,"
-				     " run:\n\t'git http-push -D %s %s'",
+				     " run:\n\t'but http-push -D %s %s'",
 				     remote_ref->name, repo->url, pattern);
 		}
 	}
@@ -1759,7 +1759,7 @@ int cmd_main(int argc, const char **argv)
 	if (delete_branch && rs.nr != 1)
 		die("You must specify only one branch name when deleting a remote branch");
 
-	setup_git_directory();
+	setup_but_directory();
 
 	memset(remote_dir_exists, -1, 256);
 
@@ -1909,7 +1909,7 @@ int cmd_main(int argc, const char **argv)
 		if (!push_all && !is_null_oid(&ref->old_oid))
 			strvec_pushf(&cummit_argv, "^%s",
 				     oid_to_hex(&ref->old_oid));
-		repo_init_revisions(the_repository, &revs, setup_git_directory());
+		repo_init_revisions(the_repository, &revs, setup_but_directory());
 		setup_revisions(cummit_argv.nr, cummit_argv.v, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
 

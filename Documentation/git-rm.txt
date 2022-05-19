@@ -1,21 +1,21 @@
-git-rm(1)
+but-rm(1)
 =========
 
 NAME
 ----
-git-rm - Remove files from the working tree and from the index
+but-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
 [verse]
-'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]
+'but rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]
 	  [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	  [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
 Remove files matching pathspec from the index, or from the working tree
-and the index. `git rm` will not remove a file from just your working
+and the index. `but rm` will not remove a file from just your working
 directory. (There is no option to remove a file only from the working
 tree and yet keep it in the index; use `/bin/rm` if you want to do
 that.) The files being removed have to be identical to the tip of the
@@ -24,8 +24,8 @@ though that default behavior can be overridden with the `-f` option.
 When `--cached` is given, the staged content has to
 match either the tip of the branch or the file on disk,
 allowing the file to be removed from just the index. When
-sparse-checkouts are in use (see linkgit:git-sparse-checkout[1]),
-`git rm` will only remove paths within the sparse-checkout patterns.
+sparse-checkouts are in use (see linkbut:but-sparse-checkout[1]),
+`but rm` will only remove paths within the sparse-checkout patterns.
 
 
 OPTIONS
@@ -40,10 +40,10 @@ The command removes only the paths that are known to Git.
 +
 File globbing matches across directory boundaries.  Thus, given two
 directories `d` and `d2`, there is a difference between using
-`git rm 'd*'` and `git rm 'd/*'`, as the former will also remove all
+`but rm 'd*'` and `but rm 'd/*'`, as the former will also remove all
 of directory `d2`.
 +
-For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+For more details, see the 'pathspec' entry in linkbut:butglossary[7].
 
 -f::
 --force::
@@ -74,13 +74,13 @@ For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 --sparse::
 	Allow updating index entries outside of the sparse-checkout cone.
-	Normally, `git rm` refuses to update index entries whose paths do
+	Normally, `but rm` refuses to update index entries whose paths do
 	not fit within the sparse-checkout cone. See
-	linkgit:git-sparse-checkout[1] for more.
+	linkbut:but-sparse-checkout[1] for more.
 
 -q::
 --quiet::
-	`git rm` normally outputs one line (in the form of an `rm` command)
+	`but rm` normally outputs one line (in the form of an `rm` command)
 	for each file removed. This option suppresses that output.
 
 --pathspec-from-file=<file>::
@@ -88,7 +88,7 @@ For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 	`<file>` is exactly `-` then standard input is used. Pathspec
 	elements are separated by LF or CR/LF. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
-	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	(see linkbut:but-config[1]). See also `--pathspec-file-nul` and
 	global `--literal-pathspecs`.
 
 --pathspec-file-nul::
@@ -99,21 +99,21 @@ For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 REMOVING FILES THAT HAVE DISAPPEARED FROM THE FILESYSTEM
 --------------------------------------------------------
-There is no option for `git rm` to remove from the index only
+There is no option for `but rm` to remove from the index only
 the paths that have disappeared from the filesystem. However,
 depending on the use case, there are several ways that can be
 done.
 
-Using ``git cummit -a''
+Using ``but cummit -a''
 ~~~~~~~~~~~~~~~~~~~~~~~
 If you intend that your next cummit should record all modifications
 of tracked files in the working tree and record all removals of
 files that have been removed from the working tree with `rm`
-(as opposed to `git rm`), use `git cummit -a`, as it will
+(as opposed to `but rm`), use `but cummit -a`, as it will
 automatically notice and record all removals.  You can also have a
-similar effect without cummitting by using `git add -u`.
+similar effect without cummitting by using `but add -u`.
 
-Using ``git add -A''
+Using ``but add -A''
 ~~~~~~~~~~~~~~~~~~~~
 When accepting a new code drop for a vendor branch, you probably
 want to record both the removal of paths and additions of new paths
@@ -123,7 +123,7 @@ Typically you would first remove all tracked files from the working
 tree using this command:
 
 ----------------
-git ls-files -z | xargs -0 rm -f
+but ls-files -z | xargs -0 rm -f
 ----------------
 
 and then untar the new code in the working tree. Alternately
@@ -133,32 +133,32 @@ After that, the easiest way to record all removals, additions, and
 modifications in the working tree is:
 
 ----------------
-git add -A
+but add -A
 ----------------
 
-See linkgit:git-add[1].
+See linkbut:but-add[1].
 
 Other ways
 ~~~~~~~~~~
 If all you really want to do is to remove from the index the files
 that are no longer present in the working tree (perhaps because
-your working tree is dirty so that you cannot use `git cummit -a`),
+your working tree is dirty so that you cannot use `but cummit -a`),
 use the following command:
 
 ----------------
-git diff --name-only --diff-filter=D -z | xargs -0 git rm --cached
+but diff --name-only --diff-filter=D -z | xargs -0 but rm --cached
 ----------------
 
 SUBMODULES
 ----------
-Only submodules using a gitfile (which means they were cloned
+Only submodules using a butfile (which means they were cloned
 with a Git version 1.7.8 or newer) will be removed from the work
-tree, as their repository lives inside the .git directory of the
+tree, as their repository lives inside the .but directory of the
 superproject. If a submodule (or one of those nested inside it)
-still uses a .git directory, `git rm` will move the submodules
-git directory into the superprojects git directory to protect
+still uses a .but directory, `but rm` will move the submodules
+but directory into the superprojects but directory to protect
 the submodule's history. If it exists the submodule.<name> section
-in the linkgit:gitmodules[5] file will also be removed and that file
+in the linkbut:butmodules[5] file will also be removed and that file
 will be staged (unless --cached or -n are used).
 
 A submodule is considered up to date when the HEAD is the same as
@@ -168,12 +168,12 @@ Ignored files are deemed expendable and won't stop a submodule's work
 tree from being removed.
 
 If you only want to remove the local checkout of a submodule from your
-work tree without cummitting the removal, use linkgit:git-submodule[1] `deinit`
-instead. Also see linkgit:gitsubmodules[7] for details on submodule removal.
+work tree without cummitting the removal, use linkbut:but-submodule[1] `deinit`
+instead. Also see linkbut:butsubmodules[7] for details on submodule removal.
 
 EXAMPLES
 --------
-`git rm Documentation/\*.txt`::
+`but rm Documentation/\*.txt`::
 	Removes all `*.txt` files from the index that are under the
 	`Documentation` directory and any of its subdirectories.
 +
@@ -181,24 +181,24 @@ Note that the asterisk `*` is quoted from the shell in this
 example; this lets Git, and not the shell, expand the pathnames
 of files and subdirectories under the `Documentation/` directory.
 
-`git rm -f git-*.sh`::
+`but rm -f but-*.sh`::
 	Because this example lets the shell expand the asterisk
 	(i.e. you are listing the files explicitly), it
-	does not remove `subdir/git-foo.sh`.
+	does not remove `subdir/but-foo.sh`.
 
 BUGS
 ----
 Each time a superproject update removes a populated submodule
 (e.g. when switching between cummits before and after the removal) a
 stale submodule checkout will remain in the old location. Removing the
-old directory is only safe when it uses a gitfile, as otherwise the
+old directory is only safe when it uses a butfile, as otherwise the
 history of the submodule will be deleted too. This step will be
 obsolete when recursive submodule update has been implemented.
 
 SEE ALSO
 --------
-linkgit:git-add[1]
+linkbut:but-add[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

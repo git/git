@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# wrap-for-bin.sh: Template for git executable wrapper scripts
+# wrap-for-bin.sh: Template for but executable wrapper scripts
 # to run test suite against sandbox, but with only bindir-installed
 # executables in PATH.  The Makefile copies this into various
 # files in bin-wrappers, substituting

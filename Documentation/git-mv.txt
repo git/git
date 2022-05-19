@@ -1,22 +1,22 @@
-git-mv(1)
+but-mv(1)
 =========
 
 NAME
 ----
-git-mv - Move or rename a file, a directory, or a symlink
+but-mv - Move or rename a file, a directory, or a symlink
 
 
 SYNOPSIS
 --------
 [verse]
-'git mv' <options>... <args>...
+'but mv' <options>... <args>...
 
 DESCRIPTION
 -----------
 Move or rename a file, directory or symlink.
 
- git mv [-v] [-f] [-n] [-k] <source> <destination>
- git mv [-v] [-f] [-n] [-k] <source> ... <destination directory>
+ but mv [-v] [-f] [-n] [-k] <source> <destination>
+ but mv [-v] [-f] [-n] [-k] <source> ... <destination directory>
 
 In the first form, it renames <source>, which must exist and be either
 a file, symlink or directory, to <destination>.
@@ -46,11 +46,11 @@ OPTIONS
 
 SUBMODULES
 ----------
-Moving a submodule using a gitfile (which means they were cloned
-with a Git version 1.7.8 or newer) will update the gitfile and
+Moving a submodule using a butfile (which means they were cloned
+with a Git version 1.7.8 or newer) will update the butfile and
 core.worktree setting to make the submodule work in the new location.
 It also will attempt to update the submodule.<name>.path setting in
-the linkgit:gitmodules[5] file and stage that file (unless -n is used).
+the linkbut:butmodules[5] file and stage that file (unless -n is used).
 
 BUGS
 ----
@@ -58,12 +58,12 @@ Each time a superproject update moves a populated submodule (e.g. when
 switching between cummits before and after the move) a stale submodule
 checkout will remain in the old location and an empty directory will
 appear in the new location. To populate the submodule again in the new
-location the user will have to run "git submodule update"
+location the user will have to run "but submodule update"
 afterwards. Removing the old directory is only safe when it uses a
-gitfile, as otherwise the history of the submodule will be deleted
+butfile, as otherwise the history of the submodule will be deleted
 too. Both steps will be obsolete when recursive submodule update has
 been implemented.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

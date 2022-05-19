@@ -1,7 +1,7 @@
 ---
  builtin-mailinfo.c  | 4 ++--
 
-diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c
+diff --but a/builtin-mailinfo.c b/builtin-mailinfo.c
 index 3e5fe51..aabfe5c 100644
 --- a/builtin-mailinfo.c
 +++ b/builtin-mailinfo.c

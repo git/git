@@ -5,7 +5,7 @@ tag.forceSignAnnotated::
 
 tag.sort::
 	This variable controls the sort ordering of tags when displayed by
-	linkgit:git-tag[1]. Without the "--sort=<value>" option provided, the
+	linkbut:but-tag[1]. Without the "--sort=<value>" option provided, the
 	value of this variable will be used as the default.
 
 tag.gpgSign::

@@ -7,28 +7,28 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'setup' '
 	test_seq 2 9 >foo &&
-	git add foo &&
-	git cummit -m orig &&
+	but add foo &&
+	but cummit -m orig &&
 
-	git branch A &&
-	git branch B &&
+	but branch A &&
+	but branch B &&
 
-	git checkout A &&
+	but checkout A &&
 	test_seq 1 9 >foo &&
-	git add foo &&
-	git cummit -m A &&
+	but add foo &&
+	but cummit -m A &&
 
-	git checkout B &&
+	but checkout B &&
 	echo "q qfoo();" | q_to_tab >>foo &&
-	git add foo &&
-	git cummit -m B
+	but add foo &&
+	but cummit -m B
 '
 
 #
 # Rebase has lots of useful options like --whitepsace=fix, which are
-# actually all built in terms of flags to git-am.  Since neither
+# actually all built in terms of flags to but-am.  Since neither
 # --merge nor --interactive (nor any options that imply those two) use
-# git-am, using them together will result in flags like --whitespace=fix
+# but-am, using them together will result in flags like --whitespace=fix
 # being ignored.  Make sure rebase warns the user and aborts instead.
 #
 
@@ -36,28 +36,28 @@ test_rebase_am_only () {
 	opt=$1
 	shift
 	test_expect_success "$opt incompatible with --merge" "
-		git checkout B^0 &&
-		test_must_fail git rebase $opt --merge A
+		but checkout B^0 &&
+		test_must_fail but rebase $opt --merge A
 	"
 
 	test_expect_success "$opt incompatible with --strategy=ours" "
-		git checkout B^0 &&
-		test_must_fail git rebase $opt --strategy=ours A
+		but checkout B^0 &&
+		test_must_fail but rebase $opt --strategy=ours A
 	"
 
 	test_expect_success "$opt incompatible with --strategy-option=ours" "
-		git checkout B^0 &&
-		test_must_fail git rebase $opt --strategy-option=ours A
+		but checkout B^0 &&
+		test_must_fail but rebase $opt --strategy-option=ours A
 	"
 
 	test_expect_success "$opt incompatible with --interactive" "
-		git checkout B^0 &&
-		test_must_fail git rebase $opt --interactive A
+		but checkout B^0 &&
+		test_must_fail but rebase $opt --interactive A
 	"
 
 	test_expect_success "$opt incompatible with --exec" "
-		git checkout B^0 &&
-		test_must_fail git rebase $opt --exec 'true' A
+		but checkout B^0 &&
+		test_must_fail but rebase $opt --exec 'true' A
 	"
 
 }

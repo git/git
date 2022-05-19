@@ -6,7 +6,7 @@ int cmd__dump_fsmonitor(int ac, const char **av)
 	struct index_state *istate = the_repository->index;
 	int i;
 
-	setup_git_directory();
+	setup_but_directory();
 	if (do_read_index(istate, the_repository->index_file, 0) < 0)
 		die("unable to read index file");
 	if (!istate->fsmonitor_last_update) {

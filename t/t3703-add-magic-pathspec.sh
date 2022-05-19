@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='magic pathspec tests using git-add'
+test_description='magic pathspec tests using but-add'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -18,7 +18,7 @@ test_expect_success 'add :/' "
 	add 'sub/actual'
 	add 'sub/foo'
 	EOF
-	(cd sub && git add -n :/ >actual) &&
+	(cd sub && but add -n :/ >actual) &&
 	test_cmp expected sub/actual
 "
 
@@ -27,12 +27,12 @@ add 'anothersub/foo'
 EOF
 
 test_expect_success 'add :/anothersub' '
-	(cd sub && git add -n :/anothersub >actual) &&
+	(cd sub && but add -n :/anothersub >actual) &&
 	test_cmp expected sub/actual
 '
 
 test_expect_success 'add :/non-existent' '
-	(cd sub && test_must_fail git add -n :/non-existent)
+	(cd sub && test_must_fail but add -n :/non-existent)
 '
 
 cat >expected <<EOF
@@ -46,14 +46,14 @@ fi
 
 test_expect_success COLON_DIR 'a file with the same (long) magic name exists' '
 	: >":(icase)ha" &&
-	test_must_fail git add -n ":(icase)ha" &&
-	git add -n "./:(icase)ha"
+	test_must_fail but add -n ":(icase)ha" &&
+	but add -n "./:(icase)ha"
 '
 
 test_expect_success COLON_DIR 'a file with the same (short) magic name exists' '
 	: >":/bar" &&
-	test_must_fail git add -n :/bar &&
-	git add -n "./:/bar"
+	test_must_fail but add -n :/bar &&
+	but add -n "./:/bar"
 '
 
 test_done

@@ -1,4 +1,4 @@
-# git Makefile configuration, included in main Makefile
+# but Makefile configuration, included in main Makefile
 # @configure_input@
 
 CC = @CC@
@@ -14,9 +14,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
-gitexecdir = @libexecdir@/git-core
+butexecdir = @libexecdir@/but-core
 datarootdir = @datarootdir@
-template_dir = @datadir@/git-core/templates
+template_dir = @datadir@/but-core/templates
 sysconfdir = @sysconfdir@
 docdir = @docdir@
 

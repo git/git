@@ -1,6 +1,6 @@
 test_expect_success "config receive.procReceiveRefs = refs ($PROTOCOL)" '
-	git -C "$upstream" config --unset-all receive.procReceiveRefs &&
-	git -C "$upstream" config --add receive.procReceiveRefs refs
+	but -C "$upstream" config --unset-all receive.procReceiveRefs &&
+	but -C "$upstream" config --add receive.procReceiveRefs refs
 '
 
 # Refs of upstream : main(A)
@@ -8,10 +8,10 @@ test_expect_success "config receive.procReceiveRefs = refs ($PROTOCOL)" '
 test_expect_success "setup upstream branches ($PROTOCOL)" '
 	(
 		cd "$upstream" &&
-		git update-ref refs/heads/main $B &&
-		git update-ref refs/heads/foo $A &&
-		git update-ref refs/heads/bar $A &&
-		git update-ref refs/heads/baz $A
+		but update-ref refs/heads/main $B &&
+		but update-ref refs/heads/foo $A &&
+		but update-ref refs/heads/bar $A &&
+		but update-ref refs/heads/baz $A
 	)
 
 '
@@ -40,9 +40,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL)" '
 
 # Refs of upstream : main(B)             foo(A)  bar(A))  baz(A)
 # Refs of workbench: main(A)  tags/v123
-# git push -f      : main(A)             (NULL)  (B)              refs/for/main/topic(A)  refs/for/next/topic(A)
+# but push -f      : main(A)             (NULL)  (B)              refs/for/main/topic(A)  refs/for/next/topic(A)
 test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
-	git -C workbench push -f origin \
+	but -C workbench push -f origin \
 		HEAD:refs/heads/main \
 		:refs/heads/foo \
 		$B:refs/heads/bar \
@@ -84,7 +84,7 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/heads/main        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/pull/123/head        Z
 	> remote: post-receive< <CUMMIT-B> <CUMMIT-A> refs/pull/124/head        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> bar
 	>  - [deleted]         foo
 	>  + <CUMMIT-B>...<CUMMIT-A> HEAD -> main (forced update)
@@ -105,7 +105,7 @@ test_expect_success "proc-receive: process all refs ($PROTOCOL)" '
 test_expect_success "cleanup ($PROTOCOL)" '
 	(
 		cd "$upstream" &&
-		git update-ref -d refs/heads/bar &&
-		git update-ref -d refs/heads/baz
+		but update-ref -d refs/heads/bar &&
+		but update-ref -d refs/heads/baz
 	)
 '

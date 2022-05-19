@@ -1,17 +1,17 @@
-git-reset(1)
+but-reset(1)
 ============
 
 NAME
 ----
-git-reset - Reset current HEAD to the specified state
+but-reset - Reset current HEAD to the specified state
 
 SYNOPSIS
 --------
 [verse]
-'git reset' [-q] [<tree-ish>] [--] <pathspec>...
-'git reset' [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]
-'git reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
-'git reset' [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<cummit>]
+'but reset' [-q] [<tree-ish>] [--] <pathspec>...
+'but reset' [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]
+'but reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
+'but reset' [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<cummit>]
 
 DESCRIPTION
 -----------
@@ -20,33 +20,33 @@ In the last form, set the current branch head (`HEAD`) to `<cummit>`,
 optionally modifying index and working tree to match.
 The `<tree-ish>`/`<cummit>` defaults to `HEAD` in all forms.
 
-'git reset' [-q] [<tree-ish>] [--] <pathspec>...::
-'git reset' [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]::
+'but reset' [-q] [<tree-ish>] [--] <pathspec>...::
+'but reset' [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]::
 	These forms reset the index entries for all paths that match the
 	`<pathspec>` to their state at `<tree-ish>`.  (It does not affect
 	the working tree or the current branch.)
 +
-This means that `git reset <pathspec>` is the opposite of `git add
+This means that `but reset <pathspec>` is the opposite of `but add
 <pathspec>`. This command is equivalent to
-`git restore [--source=<tree-ish>] --staged <pathspec>...`.
+`but restore [--source=<tree-ish>] --staged <pathspec>...`.
 +
-After running `git reset <pathspec>` to update the index entry, you can
-use linkgit:git-restore[1] to check the contents out of the index to
-the working tree. Alternatively, using linkgit:git-restore[1]
+After running `but reset <pathspec>` to update the index entry, you can
+use linkbut:but-restore[1] to check the contents out of the index to
+the working tree. Alternatively, using linkbut:but-restore[1]
 and specifying a cummit with `--source`, you
 can copy the contents of a path out of a cummit to the index and to the
 working tree in one go.
 
-'git reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]::
+'but reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]::
 	Interactively select hunks in the difference between the index
 	and `<tree-ish>` (defaults to `HEAD`).  The chosen hunks are applied
 	in reverse to the index.
 +
-This means that `git reset -p` is the opposite of `git add -p`, i.e.
+This means that `but reset -p` is the opposite of `but add -p`, i.e.
 you can use it to selectively reset hunks. See the ``Interactive Mode''
-section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+section of linkbut:but-add[1] to learn how to operate the `--patch` mode.
 
-'git reset' [<mode>] [<cummit>]::
+'but reset' [<mode>] [<cummit>]::
 	This form resets the current branch head to `<cummit>` and
 	possibly updates the index (resetting it to the tree of `<cummit>`) and
 	the working tree depending on `<mode>`. If `<mode>` is omitted,
@@ -56,7 +56,7 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 --soft::
 	Does not touch the index file or the working tree at all (but
 	resets the head to `<cummit>`, just like all modes do). This leaves
-	all your changed files "Changes to be cummitted", as `git status`
+	all your changed files "Changes to be cummitted", as `but status`
 	would put it.
 
 --mixed::
@@ -65,7 +65,7 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	been updated. This is the default action.
 +
 If `-N` is specified, removed paths are marked as intent-to-add (see
-linkgit:git-add[1]).
+linkbut:but-add[1]).
 
 --hard::
 	Resets the index and working tree. Any changes to tracked files in the
@@ -80,7 +80,7 @@ linkgit:git-add[1]).
 	If a file that is different between `<cummit>` and the index has
 	unstaged changes, reset is aborted.
 +
-In other words, `--merge` does something like a `git read-tree -u -m <cummit>`,
+In other words, `--merge` does something like a `but read-tree -u -m <cummit>`,
 but carries forward unmerged index entries.
 
 --keep::
@@ -96,7 +96,7 @@ but carries forward unmerged index entries.
 	the submodules' HEAD to be detached at that cummit.
 --
 
-See "Reset, restore and revert" in linkgit:git[1] for the differences
+See "Reset, restore and revert" in linkbut:but[1] for the differences
 between the three commands.
 
 
@@ -116,7 +116,7 @@ OPTIONS
 	`<file>` is exactly `-` then standard input is used. Pathspec
 	elements are separated by LF or CR/LF. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
-	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	(see linkbut:but-config[1]). See also `--pathspec-file-nul` and
 	global `--literal-pathspecs`.
 
 --pathspec-file-nul::
@@ -130,7 +130,7 @@ OPTIONS
 <pathspec>...::
 	Limits the paths affected by the operation.
 +
-For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+For more details, see the 'pathspec' entry in linkbut:butglossary[7].
 
 EXAMPLES
 --------
@@ -139,15 +139,15 @@ Undo add::
 +
 ------------
 $ edit                                     <1>
-$ git add frotz.c filfre.c
+$ but add frotz.c filfre.c
 $ mailx                                    <2>
-$ git reset                                <3>
-$ git pull git://info.example.com/ nitfol  <4>
+$ but reset                                <3>
+$ but pull but://info.example.com/ nitfol  <4>
 ------------
 +
 <1> You are happily working on something, and find the changes
     in these files are in good order.  You do not want to see them
-    when you run `git diff`, because you plan to work on other files
+    when you run `but diff`, because you plan to work on other files
     and changes with these files are distracting.
 <2> Somebody asks you to pull, and the changes sound worthy of merging.
 <3> However, you already dirtied the index (i.e. your index does
@@ -161,28 +161,28 @@ $ git pull git://info.example.com/ nitfol  <4>
 Undo a cummit and redo::
 +
 ------------
-$ git cummit ...
-$ git reset --soft HEAD^      <1>
+$ but cummit ...
+$ but reset --soft HEAD^      <1>
 $ edit                        <2>
-$ git cummit -a -c ORIG_HEAD  <3>
+$ but cummit -a -c ORIG_HEAD  <3>
 ------------
 +
 <1> This is most often done when you remembered what you
     just cummitted is incomplete, or you misspelled your cummit
     message, or both.  Leaves working tree as it was before "reset".
 <2> Make corrections to working tree files.
-<3> "reset" copies the old head to `.git/ORIG_HEAD`; redo the
+<3> "reset" copies the old head to `.but/ORIG_HEAD`; redo the
     cummit by starting with its log message.  If you do not need to
     edit the message further, you can give `-C` option instead.
 +
-See also the `--amend` option to linkgit:git-cummit[1].
+See also the `--amend` option to linkbut:but-cummit[1].
 
 Undo a cummit, making it a topic branch::
 +
 ------------
-$ git branch topic/wip          <1>
-$ git reset --hard HEAD~3       <2>
-$ git switch topic/wip          <3>
+$ but branch topic/wip          <1>
+$ but reset --hard HEAD~3       <2>
+$ but switch topic/wip          <3>
 ------------
 +
 <1> You have made some cummits, but realize they were premature
@@ -195,35 +195,35 @@ $ git switch topic/wip          <3>
 Undo cummits permanently::
 +
 ------------
-$ git cummit ...
-$ git reset --hard HEAD~3   <1>
+$ but cummit ...
+$ but reset --hard HEAD~3   <1>
 ------------
 +
 <1> The last three cummits (`HEAD`, `HEAD^`, and `HEAD~2`) were bad
     and you do not want to ever see them again.  Do *not* do this if
     you have already given these cummits to somebody else.  (See the
-    "RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1]
+    "RECOVERING FROM UPSTREAM REBASE" section in linkbut:but-rebase[1]
     for the implications of doing so.)
 
 Undo a merge or pull::
 +
 ------------
-$ git pull                         <1>
+$ but pull                         <1>
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
 Automatic merge failed; fix conflicts and then cummit the result.
-$ git reset --hard                 <2>
-$ git pull . topic/branch          <3>
+$ but reset --hard                 <2>
+$ but pull . topic/branch          <3>
 Updating from 41223... to 13134...
 Fast-forward
-$ git reset --hard ORIG_HEAD       <4>
+$ but reset --hard ORIG_HEAD       <4>
 ------------
 +
 <1> Try to update from the upstream resulted in a lot of
     conflicts; you were not ready to spend a lot of time merging
     right now, so you decide to do that later.
-<2> "pull" has not made merge cummit, so `git reset --hard`
-    which is a synonym for `git reset --hard HEAD` clears the mess
+<2> "pull" has not made merge cummit, so `but reset --hard`
+    which is a synonym for `but reset --hard HEAD` clears the mess
     from the index file and the working tree.
 <3> Merge a topic branch into the current branch, which resulted
     in a fast-forward.
@@ -236,23 +236,23 @@ $ git reset --hard ORIG_HEAD       <4>
 Undo a merge or pull inside a dirty working tree::
 +
 ------------
-$ git pull                         <1>
+$ but pull                         <1>
 Auto-merging nitfol
 Merge made by recursive.
  nitfol                |   20 +++++----
  ...
-$ git reset --merge ORIG_HEAD      <2>
+$ but reset --merge ORIG_HEAD      <2>
 ------------
 +
 <1> Even if you may have local modifications in your
-    working tree, you can safely say `git pull` when you know
+    working tree, you can safely say `but pull` when you know
     that the change in the other branch does not overlap with
     them.
 <2> After inspecting the result of the merge, you may find
     that the change in the other branch is unsatisfactory.  Running
-    `git reset --hard ORIG_HEAD` will let you go back to where you
+    `but reset --hard ORIG_HEAD` will let you go back to where you
     were, but it will discard your local changes, which you do not
-    want.  `git reset --merge` keeps your local changes.
+    want.  `but reset --merge` keeps your local changes.
 
 
 Interrupted workflow::
@@ -263,15 +263,15 @@ working tree are not in any shape to be cummitted yet, but you
 need to get to the other branch for a quick bugfix.
 +
 ------------
-$ git switch feature  ;# you were working in "feature" branch and
+$ but switch feature  ;# you were working in "feature" branch and
 $ work work work      ;# got interrupted
-$ git cummit -a -m "snapshot WIP"                 <1>
-$ git switch master
+$ but cummit -a -m "snapshot WIP"                 <1>
+$ but switch master
 $ fix fix fix
-$ git cummit ;# cummit with real log
-$ git switch feature
-$ git reset --soft HEAD^ ;# go back to WIP state  <2>
-$ git reset                                       <3>
+$ but cummit ;# cummit with real log
+$ but switch feature
+$ but reset --soft HEAD^ ;# go back to WIP state  <2>
+$ but reset                                       <3>
 ------------
 +
 <1> This cummit will get blown away so a throw-away log message is OK.
@@ -281,18 +281,18 @@ $ git reset                                       <3>
     cummitted as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncummitted.
 +
-See also linkgit:git-stash[1].
+See also linkbut:but-stash[1].
 
 Reset a single file in the index::
 +
 Suppose you have added a file to your index, but later decide you do not
 want to add it to your cummit. You can remove the file from the index
-while keeping your changes with git reset.
+while keeping your changes with but reset.
 +
 ------------
-$ git reset -- frotz.c                      <1>
-$ git cummit -m "cummit files in index"     <2>
-$ git add frotz.c                           <3>
+$ but reset -- frotz.c                      <1>
+$ but cummit -m "cummit files in index"     <2>
+$ but add frotz.c                           <3>
 ------------
 +
 <1> This removes the file from the index while keeping it in the working
@@ -309,19 +309,19 @@ with what you cummitted previously. You can start a new branch and
 reset it while keeping the changes in your working tree.
 +
 ------------
-$ git tag start
-$ git switch -c branch1
+$ but tag start
+$ but switch -c branch1
 $ edit
-$ git cummit ...                            <1>
+$ but cummit ...                            <1>
 $ edit
-$ git switch -c branch2                     <2>
-$ git reset --keep start                    <3>
+$ but switch -c branch2                     <2>
+$ but reset --keep start                    <3>
 ------------
 +
 <1> This cummits your first edits in `branch1`.
 <2> In the ideal world, you could have realized that the earlier
     cummit did not belong to the new topic when you created and switched
-    to `branch2` (i.e. `git switch -c branch2 start`), but nobody is
+    to `branch2` (i.e. `but switch -c branch2 start`), but nobody is
     perfect.
 <3> But you can use `reset --keep` to remove the unwanted cummit after
     you switched to `branch2`.
@@ -330,32 +330,32 @@ Split a cummit apart into a sequence of cummits::
 +
 Suppose that you have created lots of logically separate changes and cummitted
 them together. Then, later you decide that it might be better to have each
-logical chunk associated with its own cummit. You can use git reset to rewind
+logical chunk associated with its own cummit. You can use but reset to rewind
 history without changing the contents of your local files, and then successively
-use `git add -p` to interactively select which hunks to include into each cummit,
-using `git cummit -c` to pre-populate the cummit message.
+use `but add -p` to interactively select which hunks to include into each cummit,
+using `but cummit -c` to pre-populate the cummit message.
 +
 ------------
-$ git reset -N HEAD^                        <1>
-$ git add -p                                <2>
-$ git diff --cached                         <3>
-$ git cummit -c HEAD@{1}                    <4>
+$ but reset -N HEAD^                        <1>
+$ but add -p                                <2>
+$ but diff --cached                         <3>
+$ but cummit -c HEAD@{1}                    <4>
 ...                                         <5>
-$ git add ...                               <6>
-$ git diff --cached                         <7>
-$ git cummit ...                            <8>
+$ but add ...                               <6>
+$ but diff --cached                         <7>
+$ but cummit ...                            <8>
 ------------
 +
 <1> First, reset the history back one cummit so that we remove the original
     cummit, but leave the working tree with all the changes. The -N ensures
-    that any new files added with `HEAD` are still marked so that `git add -p`
+    that any new files added with `HEAD` are still marked so that `but add -p`
     will find them.
-<2> Next, we interactively select diff hunks to add using the `git add -p`
+<2> Next, we interactively select diff hunks to add using the `but add -p`
     facility. This will ask you about each diff hunk in sequence and you can
     use simple commands such as "yes, include this", "No don't include this"
     or even the very powerful "edit" facility.
 <3> Once satisfied with the hunks you want to include, you should verify what
-    has been prepared for the first cummit by using `git diff --cached`. This
+    has been prepared for the first cummit by using `but diff --cached`. This
     shows all the changes that have been moved into the index and are about
     to be cummitted.
 <4> Next, cummit the changes stored in the index. The `-c` option specifies to
@@ -363,15 +363,15 @@ $ git cummit ...                            <8>
     with in the first cummit. This is helpful to avoid retyping it. The
     `HEAD@{1}` is a special notation for the cummit that `HEAD` used to be at
     prior to the original reset cummit (1 change ago).
-    See linkgit:git-reflog[1] for more details. You may also use any other
+    See linkbut:but-reflog[1] for more details. You may also use any other
     valid cummit reference.
 <5> You can repeat steps 2-4 multiple times to break the original code into
     any number of cummits.
 <6> Now you've split out many of the changes into their own cummits, and might
-    no longer use the patch mode of `git add`, in order to select all remaining
+    no longer use the patch mode of `but add`, in order to select all remaining
     uncummitted changes.
 <7> Once again, check to verify that you've included what you want to. You may
-    also wish to verify that git diff doesn't show any remaining changes to be
+    also wish to verify that but diff doesn't show any remaining changes to be
     cummitted later.
 <8> And finally create the final cummit.
 
@@ -382,7 +382,7 @@ DISCUSSION
 The tables below show what happens when running:
 
 ----------
-git reset --option target
+but reset --option target
 ----------
 
 to reset the `HEAD` to another cummit (`target`) with the different
@@ -391,7 +391,7 @@ reset options depending on the state of the files.
 In these tables, `A`, `B`, `C` and `D` are some different states of a
 file. For example, the first line of the first table means that if a
 file is in state `A` in the working tree, in state `B` in the index, in
-state `C` in `HEAD` and in state `D` in the target, then `git reset --soft
+state `C` in `HEAD` and in state `D` in the target, then `but reset --soft
 target` will leave the file in the working tree in state `A` and in the
 index in state `B`.  It resets (i.e. moves) the `HEAD` (i.e. the tip of
 the current branch, if you are on one) to `target` (which has the file
@@ -502,4 +502,4 @@ working index HEAD target         working index HEAD
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

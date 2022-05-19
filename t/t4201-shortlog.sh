@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Johannes E. Schindelin
 #
 
-test_description='git shortlog
+test_description='but shortlog
 '
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -14,35 +14,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	test_tick &&
 	echo 1 >a1 &&
-	git add a1 &&
-	tree=$(git write-tree) &&
-	cummit=$(printf "%s\n" "Test" "" | git cummit-tree "$tree") &&
-	git update-ref HEAD "$cummit" &&
+	but add a1 &&
+	tree=$(but write-tree) &&
+	cummit=$(printf "%s\n" "Test" "" | but cummit-tree "$tree") &&
+	but update-ref HEAD "$cummit" &&
 
 	echo 2 >a1 &&
-	git cummit --quiet -m "This is a very, very long first line for the cummit message to see if it is wrapped correctly" a1 &&
+	but cummit --quiet -m "This is a very, very long first line for the cummit message to see if it is wrapped correctly" a1 &&
 
 	# test if the wrapping is still valid
 	# when replacing all is by treble clefs.
 	echo 3 >a1 &&
-	git cummit --quiet -m "$(
+	but cummit --quiet -m "$(
 		echo "This is a very, very long first line for the cummit message to see if it is wrapped correctly" |
 		sed "s/i/1234/g" |
 		tr 1234 "\360\235\204\236")" a1 &&
 
 	# now fsck up the utf8
-	git config i18n.cummitencoding non-utf-8 &&
+	but config i18n.cummitencoding non-utf-8 &&
 	echo 4 >a1 &&
-	git cummit --quiet -m "$(
+	but cummit --quiet -m "$(
 		echo "This is a very, very long first line for the cummit message to see if it is wrapped correctly" |
 		sed "s/i/1234/g" |
 		tr 1234 "\370\235\204\236")" a1 &&
 
 	echo 5 >a1 &&
-	git cummit --quiet -m "a								12	34	56	78" a1 &&
+	but cummit --quiet -m "a								12	34	56	78" a1 &&
 
 	echo 6 >a1 &&
-	git cummit --quiet -m "cummit by someone else" \
+	but cummit --quiet -m "cummit by someone else" \
 		--author="Someone else <not!me>" a1 &&
 
 	cat >expect.template <<-\EOF
@@ -71,28 +71,28 @@ fuzz() {
 }
 
 test_expect_success 'default output format' '
-	git shortlog HEAD >log &&
+	but shortlog HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect.template log.predictable
 '
 
 test_expect_success 'pretty format' '
 	sed s/SUBJECT/OBJECT_NAME/ expect.template >expect &&
-	git shortlog --format="%H" HEAD >log &&
+	but shortlog --format="%H" HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect log.predictable
 '
 
 test_expect_success '--abbrev' '
 	sed s/SUBJECT/OBJID/ expect.template >expect &&
-	git shortlog --format="%h" --abbrev=35 HEAD >log &&
+	but shortlog --format="%h" --abbrev=35 HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect log.predictable
 '
 
 test_expect_success 'output from user-defined format is re-wrapped' '
 	sed "s/SUBJECT/two lines/" expect.template >expect &&
-	git shortlog --format="two%nlines" HEAD >log &&
+	but shortlog --format="two%nlines" HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect log.predictable
 '
@@ -114,24 +114,24 @@ Someone else (1):
       cummit by someone else
 
 EOF
-	git shortlog -w HEAD >out &&
+	but shortlog -w HEAD >out &&
 	test_cmp expect out
 '
 
-test_expect_success !MINGW 'shortlog from non-git directory' '
-	git log --no-expand-tabs HEAD >log &&
-	GIT_DIR=non-existing git shortlog -w <log >out &&
+test_expect_success !MINGW 'shortlog from non-but directory' '
+	but log --no-expand-tabs HEAD >log &&
+	GIT_DIR=non-existing but shortlog -w <log >out &&
 	test_cmp expect out
 '
 
 test_expect_success !MINGW 'shortlog can read --format=raw output' '
-	git log --format=raw HEAD >log &&
-	GIT_DIR=non-existing git shortlog -w <log >out &&
+	but log --format=raw HEAD >log &&
+	GIT_DIR=non-existing but shortlog -w <log >out &&
 	test_cmp expect out
 '
 
-test_expect_success 'shortlog from non-git directory refuses extra arguments' '
-	test_must_fail env GIT_DIR=non-existing git shortlog foo 2>out &&
+test_expect_success 'shortlog from non-but directory refuses extra arguments' '
+	test_must_fail env GIT_DIR=non-existing but shortlog foo 2>out &&
 	test_i18ngrep "too many arguments" out
 '
 
@@ -142,7 +142,7 @@ A U Thor (2):
       aaaaaaaaaaaaaaaaaaaaaa: aaaaaa aaaaaaaaaa aaaa aaaaaaaa aa aaaa aa aaa
 
 EOF
-	git shortlog -w >out <<\EOF &&
+	but shortlog -w >out <<\EOF &&
 cummit 0000000000000000000000000000000000000001
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:14:13 2005 -0700
@@ -175,65 +175,65 @@ $DSCHO (2):
 EOF
 
 test_expect_success !MINGW 'shortlog encoding' '
-	git reset --hard "$cummit" &&
-	git config --unset i18n.cummitencoding &&
+	but reset --hard "$cummit" &&
+	but config --unset i18n.cummitencoding &&
 	echo 2 > a1 &&
-	git cummit --quiet -m "$MSG1" --author="$DSCHOE" a1 &&
-	git config i18n.cummitencoding "ISO8859-1" &&
+	but cummit --quiet -m "$MSG1" --author="$DSCHOE" a1 &&
+	but config i18n.cummitencoding "ISO8859-1" &&
 	echo 3 > a1 &&
-	git cummit --quiet -m "$(iconvfromutf8toiso88591 "$MSG2")" \
+	but cummit --quiet -m "$(iconvfromutf8toiso88591 "$MSG2")" \
 		--author="$(iconvfromutf8toiso88591 "$DSCHOE")" a1 &&
-	git config --unset i18n.cummitencoding &&
-	git shortlog HEAD~2.. > out &&
+	but config --unset i18n.cummitencoding &&
+	but shortlog HEAD~2.. > out &&
 test_cmp expect out'
 
 test_expect_success 'shortlog with revision pseudo options' '
-	git shortlog --all &&
-	git shortlog --branches &&
-	git shortlog --exclude=refs/heads/m* --all
+	but shortlog --all &&
+	but shortlog --branches &&
+	but shortlog --exclude=refs/heads/m* --all
 '
 
 test_expect_success 'shortlog with --output=<file>' '
-	git shortlog --output=shortlog -1 main >output &&
+	but shortlog --output=shortlog -1 main >output &&
 	test_must_be_empty output &&
 	test_line_count = 3 shortlog
 '
 
 test_expect_success 'shortlog --cummitter (internal)' '
-	git checkout --orphan side &&
-	git cummit --allow-empty -m one &&
-	git cummit --allow-empty -m two &&
-	GIT_CUMMITTER_NAME="Sin Nombre" git cummit --allow-empty -m three &&
+	but checkout --orphan side &&
+	but cummit --allow-empty -m one &&
+	but cummit --allow-empty -m two &&
+	GIT_CUMMITTER_NAME="Sin Nombre" but cummit --allow-empty -m three &&
 
 	cat >expect <<-\EOF &&
 	     2	C O Mitter
 	     1	Sin Nombre
 	EOF
-	git shortlog -nsc HEAD >actual &&
+	but shortlog -nsc HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'shortlog --cummitter (external)' '
-	git log --format=full | git shortlog -nsc >actual &&
+	but log --format=full | but shortlog -nsc >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--group=cummitter is the same as --cummitter' '
-	git shortlog -ns --group=cummitter HEAD >actual &&
+	but shortlog -ns --group=cummitter HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'shortlog --group=trailer:signed-off-by' '
-	git cummit --allow-empty -m foo -s &&
+	but cummit --allow-empty -m foo -s &&
 	GIT_CUMMITTER_NAME="SOB One" \
 	GIT_CUMMITTER_EMAIL=sob@example.com \
-		git cummit --allow-empty -m foo -s &&
-	git cummit --allow-empty --amend --no-edit -s &&
+		but cummit --allow-empty -m foo -s &&
+	but cummit --allow-empty --amend --no-edit -s &&
 	cat >expect <<-\EOF &&
 	     2	C O Mitter <cummitter@example.com>
 	     1	SOB One <sob@example.com>
 	EOF
-	git shortlog -nse --group=trailer:signed-off-by HEAD >actual &&
+	but shortlog -nse --group=trailer:signed-off-by HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -242,7 +242,7 @@ test_expect_success 'trailer idents are split' '
 	     2	C O Mitter
 	     1	SOB One
 	EOF
-	git shortlog -ns --group=trailer:signed-off-by HEAD >actual &&
+	but shortlog -ns --group=trailer:signed-off-by HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -252,13 +252,13 @@ test_expect_success 'trailer idents are mailmapped' '
 	     1	Another Name
 	EOF
 	echo "Another Name <sob@example.com>" >mail.map &&
-	git -c mailmap.file=mail.map shortlog -ns \
+	but -c mailmap.file=mail.map shortlog -ns \
 		--group=trailer:signed-off-by HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'shortlog de-duplicates trailers in a single cummit' '
-	git cummit --allow-empty -F - <<-\EOF &&
+	but cummit --allow-empty -F - <<-\EOF &&
 	subject one
 
 	this message has two distinct values, plus a repeat
@@ -268,7 +268,7 @@ test_expect_success 'shortlog de-duplicates trailers in a single cummit' '
 	Repeated-trailer: Foo
 	EOF
 
-	git cummit --allow-empty -F - <<-\EOF &&
+	but cummit --allow-empty -F - <<-\EOF &&
 	subject two
 
 	similar to the previous, but without the second distinct value
@@ -281,12 +281,12 @@ test_expect_success 'shortlog de-duplicates trailers in a single cummit' '
 	     2	Foo
 	     1	Bar
 	EOF
-	git shortlog -ns --group=trailer:repeated-trailer -2 HEAD >actual &&
+	but shortlog -ns --group=trailer:repeated-trailer -2 HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'shortlog can match multiple groups' '
-	git cummit --allow-empty -F - <<-\EOF &&
+	but cummit --allow-empty -F - <<-\EOF &&
 	subject one
 
 	this has two trailers that are distinct from the author; it will count
@@ -296,7 +296,7 @@ test_expect_success 'shortlog can match multiple groups' '
 	Another-trailer: User B <b@example.com>
 	EOF
 
-	git cummit --allow-empty -F - <<-\EOF &&
+	but cummit --allow-empty -F - <<-\EOF &&
 	subject two
 
 	this one has two trailers, one of which is a duplicate with the author;
@@ -311,7 +311,7 @@ test_expect_success 'shortlog can match multiple groups' '
 	     2	User B
 	     1	User A
 	EOF
-	git shortlog -ns \
+	but shortlog -ns \
 		--group=author \
 		--group=trailer:some-trailer \
 		--group=trailer:another-trailer \
@@ -320,7 +320,7 @@ test_expect_success 'shortlog can match multiple groups' '
 '
 
 test_expect_success 'set up option selection tests' '
-	git cummit --allow-empty -F - <<-\EOF
+	but cummit --allow-empty -F - <<-\EOF
 	subject
 
 	body
@@ -334,7 +334,7 @@ test_expect_success '--no-group resets group list to author' '
 	cat >expect <<-\EOF &&
 	     1	A U Thor
 	EOF
-	git shortlog -ns \
+	but shortlog -ns \
 		--group=cummitter \
 		--group=trailer:trailer-one \
 		--no-group \
@@ -346,7 +346,7 @@ test_expect_success '--no-group resets trailer list' '
 	cat >expect <<-\EOF &&
 	     1	value-two
 	EOF
-	git shortlog -ns \
+	but shortlog -ns \
 		--group=trailer:trailer-one \
 		--no-group \
 		--group=trailer:trailer-two \
@@ -355,8 +355,8 @@ test_expect_success '--no-group resets trailer list' '
 '
 
 test_expect_success 'stdin with multiple groups reports error' '
-	git log >log &&
-	test_must_fail git shortlog --group=author --group=cummitter <log
+	but log >log &&
+	test_must_fail but shortlog --group=author --group=cummitter <log
 '
 
 test_done

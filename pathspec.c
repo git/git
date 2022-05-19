@@ -179,7 +179,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	for_each_string_list_item(si, &list) {
 		size_t attr_len;
 		char *attr_name;
-		const struct git_attr *a;
+		const struct but_attr *a;
 
 		int j = item->attr_match_nr++;
 		const char *attr = si->string;
@@ -209,7 +209,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 		}
 
 		attr_name = xmemdupz(attr, attr_len);
-		a = git_attr(attr_name);
+		a = but_attr(attr_name);
 		if (!a)
 			die(_("invalid attribute name %s"), attr_name);
 
@@ -229,7 +229,7 @@ static inline int get_literal_global(void)
 	static int literal = -1;
 
 	if (literal < 0)
-		literal = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
+		literal = but_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
 
 	return literal;
 }
@@ -239,7 +239,7 @@ static inline int get_glob_global(void)
 	static int glob = -1;
 
 	if (glob < 0)
-		glob = git_env_bool(GIT_GLOB_PATHSPECS_ENVIRONMENT, 0);
+		glob = but_env_bool(GIT_GLOB_PATHSPECS_ENVIRONMENT, 0);
 
 	return glob;
 }
@@ -249,7 +249,7 @@ static inline int get_noglob_global(void)
 	static int noglob = -1;
 
 	if (noglob < 0)
-		noglob = git_env_bool(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
+		noglob = but_env_bool(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
 
 	return noglob;
 }
@@ -259,7 +259,7 @@ static inline int get_icase_global(void)
 	static int icase = -1;
 
 	if (icase < 0)
-		icase = git_env_bool(GIT_ICASE_PATHSPECS_ENVIRONMENT, 0);
+		icase = but_env_bool(GIT_ICASE_PATHSPECS_ENVIRONMENT, 0);
 
 	return icase;
 }
@@ -459,9 +459,9 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 		match = prefix_path_gently(prefix, prefixlen,
 					   &prefixlen, copyfrom);
 		if (!match) {
-			const char *hint_path = get_git_work_tree();
+			const char *hint_path = get_but_work_tree();
 			if (!hint_path)
-				hint_path = get_git_dir();
+				hint_path = get_but_dir();
 			die(_("%s: '%s' is outside repository at '%s'"), elt,
 			    copyfrom, absolute_path(hint_path));
 		}
@@ -732,7 +732,7 @@ int match_pathspec_attrs(struct index_state *istate,
 	if (name[namelen])
 		name = to_free = xmemdupz(name, namelen);
 
-	git_check_attr(istate, name, item->attr_check);
+	but_check_attr(istate, name, item->attr_check);
 
 	free(to_free);
 

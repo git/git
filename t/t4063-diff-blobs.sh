@@ -1,13 +1,13 @@
 #!/bin/sh
 
-test_description='test direct comparison of blobs via git-diff'
+test_description='test direct comparison of blobs via but-diff'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 run_diff () {
 	# use full-index to make it easy to match the index line
-	git diff --full-index "$@" >diff
+	but diff --full-index "$@" >diff
 }
 
 check_index () {
@@ -20,22 +20,22 @@ check_mode () {
 }
 
 check_paths () {
-	grep "^diff --git a/$1 b/$2" diff
+	grep "^diff --but a/$1 b/$2" diff
 }
 
 test_expect_success 'create some blobs' '
 	echo one >one &&
 	echo two >two &&
 	chmod +x two &&
-	git add . &&
+	but add . &&
 
 	# cover systems where modes are ignored
-	git update-index --chmod=+x two &&
+	but update-index --chmod=+x two &&
 
-	git cummit -m base &&
+	but cummit -m base &&
 
-	sha1_one=$(git rev-parse HEAD:one) &&
-	sha1_two=$(git rev-parse HEAD:two)
+	sha1_one=$(but rev-parse HEAD:one) &&
+	sha1_two=$(but rev-parse HEAD:two)
 '
 
 test_expect_success 'diff by sha1' '

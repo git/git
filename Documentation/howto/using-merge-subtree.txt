@@ -1,8 +1,8 @@
 Date: Sat, 5 Jan 2008 20:17:40 -0500
 From: Sean <seanlkml@sympatico.ca>
 To: Miklos Vajna <vmiklos@frugalware.org>
-Cc: git@vger.kernel.org
-Subject: how to use git merge -s subtree?
+Cc: but@vger.kernel.org
+Subject: how to use but merge -s subtree?
 Abstract: In this article, Sean demonstrates how one can use the subtree merge
  strategy.
 Content-type: text/asciidoc
@@ -32,12 +32,12 @@ branch.
 Here is the command sequence you need:
 
 ----------------
-$ git remote add -f Bproject /path/to/B <1>
-$ git merge -s ours --no-cummit --allow-unrelated-histories Bproject/master <2>
-$ git read-tree --prefix=dir-B/ -u Bproject/master <3>
-$ git cummit -m "Merge B project as our subdirectory" <4>
+$ but remote add -f Bproject /path/to/B <1>
+$ but merge -s ours --no-cummit --allow-unrelated-histories Bproject/master <2>
+$ but read-tree --prefix=dir-B/ -u Bproject/master <3>
+$ but cummit -m "Merge B project as our subdirectory" <4>
 
-$ git pull -s subtree Bproject master <5>
+$ but pull -s subtree Bproject master <5>
 ----------------
 <1> name the other project "Bproject", and fetch.
 <2> prepare for the later step to record the result as a merge.

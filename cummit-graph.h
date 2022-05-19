@@ -1,7 +1,7 @@
 #ifndef CUMMIT_GRAPH_H
 #define CUMMIT_GRAPH_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "object-store.h"
 #include "oidset.h"
 
@@ -16,7 +16,7 @@
  * call this method oustide of a builtin, and only if you know what
  * you are doing!
  */
-void git_test_write_cummit_graph_or_die(void);
+void but_test_write_cummit_graph_or_die(void);
 
 struct cummit;
 struct bloom_filter_settings;

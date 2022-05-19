@@ -12,60 +12,60 @@ test_expect_success 'setup directory structure and submodules' '
 	echo a >a &&
 	mkdir b &&
 	echo b >b/b &&
-	git add a b &&
-	git cummit -m "add a and b" &&
-	git init submodule &&
+	but add a b &&
+	but cummit -m "add a and b" &&
+	but init submodule &&
 	echo c >submodule/c &&
-	git -C submodule add c &&
-	git -C submodule cummit -m "add c" &&
-	git submodule add ./submodule &&
-	git cummit -m "added submodule"
+	but -C submodule add c &&
+	but -C submodule cummit -m "add c" &&
+	but submodule add ./submodule &&
+	but cummit -m "added submodule"
 '
 
 test_expect_success 'ls-files correctly outputs files in submodule' '
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	submodule/c
 	EOF
 
-	git ls-files --recurse-submodules >actual &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--stage' '
-	GITMODULES_HASH=$(git rev-parse HEAD:.gitmodules) &&
-	A_HASH=$(git rev-parse HEAD:a) &&
-	B_HASH=$(git rev-parse HEAD:b/b) &&
-	C_HASH=$(git -C submodule rev-parse HEAD:c) &&
+	GITMODULES_HASH=$(but rev-parse HEAD:.butmodules) &&
+	A_HASH=$(but rev-parse HEAD:a) &&
+	B_HASH=$(but rev-parse HEAD:b/b) &&
+	C_HASH=$(but -C submodule rev-parse HEAD:c) &&
 
 	cat >expect <<-EOF &&
-	100644 $GITMODULES_HASH 0	.gitmodules
+	100644 $GITMODULES_HASH 0	.butmodules
 	100644 $A_HASH 0	a
 	100644 $B_HASH 0	b/b
 	100644 $C_HASH 0	submodule/c
 	EOF
 
-	git ls-files --stage --recurse-submodules >actual &&
+	but ls-files --stage --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ls-files correctly outputs files in submodule with -z' '
 	lf_to_nul >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	submodule/c
 	EOF
 
-	git ls-files --recurse-submodules -z >actual &&
+	but ls-files --recurse-submodules -z >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ls-files does not output files not added to a repo' '
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	submodule/c
@@ -74,70 +74,70 @@ test_expect_success 'ls-files does not output files not added to a repo' '
 	echo a >not_added &&
 	echo b >b/not_added &&
 	echo c >submodule/not_added &&
-	git ls-files --recurse-submodules >actual &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ls-files recurses more than 1 level' '
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
-	submodule/.gitmodules
+	submodule/.butmodules
 	submodule/c
 	submodule/subsub/d
 	EOF
 
-	git init submodule/subsub &&
+	but init submodule/subsub &&
 	echo d >submodule/subsub/d &&
-	git -C submodule/subsub add d &&
-	git -C submodule/subsub cummit -m "add d" &&
-	git -C submodule submodule add ./subsub &&
-	git -C submodule cummit -m "added subsub" &&
-	git submodule absorbgitdirs &&
-	git ls-files --recurse-submodules >actual &&
+	but -C submodule/subsub add d &&
+	but -C submodule/subsub cummit -m "add d" &&
+	but -C submodule submodule add ./subsub &&
+	but -C submodule cummit -m "added subsub" &&
+	but submodule absorbbutdirs &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'ls-files works with GIT_DIR' '
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	c
 	subsub/d
 	EOF
 
-	git --git-dir=submodule/.git ls-files --recurse-submodules >actual &&
+	but --but-dir=submodule/.but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--recurse-submodules and pathspecs setup' '
 	echo e >submodule/subsub/e.txt &&
-	git -C submodule/subsub add e.txt &&
-	git -C submodule/subsub cummit -m "adding e.txt" &&
+	but -C submodule/subsub add e.txt &&
+	but -C submodule/subsub cummit -m "adding e.txt" &&
 	echo f >submodule/f.TXT &&
 	echo g >submodule/g.txt &&
-	git -C submodule add f.TXT g.txt &&
-	git -C submodule cummit -m "add f and g" &&
+	but -C submodule add f.TXT g.txt &&
+	but -C submodule cummit -m "add f and g" &&
 	echo h >h.txt &&
 	mkdir sib &&
 	echo sib >sib/file &&
-	git add h.txt sib/file &&
-	git cummit -m "add h and sib/file" &&
-	git init sub &&
+	but add h.txt sib/file &&
+	but cummit -m "add h and sib/file" &&
+	but init sub &&
 	echo sub >sub/file &&
-	git -C sub add file &&
-	git -C sub cummit -m "add file" &&
-	git submodule add ./sub &&
-	git cummit -m "added sub" &&
+	but -C sub add file &&
+	but -C sub cummit -m "add file" &&
+	but submodule add ./sub &&
+	but cummit -m "added sub" &&
 
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	h.txt
 	sib/file
 	sub/file
-	submodule/.gitmodules
+	submodule/.butmodules
 	submodule/c
 	submodule/f.TXT
 	submodule/g.txt
@@ -145,19 +145,19 @@ test_expect_success '--recurse-submodules and pathspecs setup' '
 	submodule/subsub/e.txt
 	EOF
 
-	git ls-files --recurse-submodules >actual &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "*" >actual &&
+	but ls-files --recurse-submodules "*" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'inactive submodule' '
-	test_when_finished "git config --bool submodule.submodule.active true" &&
-	test_when_finished "git -C submodule config --bool submodule.subsub.active true" &&
-	git config --bool submodule.submodule.active "false" &&
+	test_when_finished "but config --bool submodule.submodule.active true" &&
+	test_when_finished "but -C submodule config --bool submodule.subsub.active true" &&
+	but config --bool submodule.submodule.active "false" &&
 
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	h.txt
@@ -166,27 +166,27 @@ test_expect_success 'inactive submodule' '
 	submodule
 	EOF
 
-	git ls-files --recurse-submodules >actual &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual &&
 
-	git config --bool submodule.submodule.active "true" &&
-	git -C submodule config --bool submodule.subsub.active "false" &&
+	but config --bool submodule.submodule.active "true" &&
+	but -C submodule config --bool submodule.subsub.active "false" &&
 
 	cat >expect <<-\EOF &&
-	.gitmodules
+	.butmodules
 	a
 	b/b
 	h.txt
 	sib/file
 	sub/file
-	submodule/.gitmodules
+	submodule/.butmodules
 	submodule/c
 	submodule/f.TXT
 	submodule/g.txt
 	submodule/subsub
 	EOF
 
-	git ls-files --recurse-submodules >actual &&
+	but ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
@@ -197,7 +197,7 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	submodule/subsub/e.txt
 	EOF
 
-	git ls-files --recurse-submodules "*.txt" >actual &&
+	but ls-files --recurse-submodules "*.txt" >actual &&
 	test_cmp expect actual
 '
 
@@ -209,7 +209,7 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	submodule/subsub/e.txt
 	EOF
 
-	git ls-files --recurse-submodules ":(icase)*.txt" >actual &&
+	but ls-files --recurse-submodules ":(icase)*.txt" >actual &&
 	test_cmp expect actual
 '
 
@@ -220,7 +220,7 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	submodule/g.txt
 	EOF
 
-	git ls-files --recurse-submodules ":(icase)*.txt" ":(exclude)submodule/subsub/*" >actual &&
+	but ls-files --recurse-submodules ":(icase)*.txt" ":(exclude)submodule/subsub/*" >actual &&
 	test_cmp expect actual
 '
 
@@ -229,15 +229,15 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	sub/file
 	EOF
 
-	git ls-files --recurse-submodules "sub" >actual &&
+	but ls-files --recurse-submodules "sub" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "sub/" >actual &&
+	but ls-files --recurse-submodules "sub/" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "sub/file" >actual &&
+	but ls-files --recurse-submodules "sub/file" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "su*/file" >actual &&
+	but ls-files --recurse-submodules "su*/file" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "su?/file" >actual &&
+	but ls-files --recurse-submodules "su?/file" >actual &&
 	test_cmp expect actual
 '
 
@@ -247,11 +247,11 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	sub/file
 	EOF
 
-	git ls-files --recurse-submodules "s??/file" >actual &&
+	but ls-files --recurse-submodules "s??/file" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "s???file" >actual &&
+	but ls-files --recurse-submodules "s???file" >actual &&
 	test_cmp expect actual &&
-	git ls-files --recurse-submodules "s*file" >actual &&
+	but ls-files --recurse-submodules "s*file" >actual &&
 	test_cmp expect actual
 '
 
@@ -260,48 +260,48 @@ test_expect_success '--recurse-submodules and relative paths' '
 	cat >expect <<-\EOF &&
 	b
 	EOF
-	git -C b ls-files --recurse-submodules >actual &&
+	but -C b ls-files --recurse-submodules >actual &&
 	test_cmp expect actual &&
 
 	# Relative path to top
 	cat >expect <<-\EOF &&
-	../.gitmodules
+	../.butmodules
 	../a
 	b
 	../h.txt
 	../sib/file
 	../sub/file
-	../submodule/.gitmodules
+	../submodule/.butmodules
 	../submodule/c
 	../submodule/f.TXT
 	../submodule/g.txt
 	../submodule/subsub/d
 	../submodule/subsub/e.txt
 	EOF
-	git -C b ls-files --recurse-submodules -- .. >actual &&
+	but -C b ls-files --recurse-submodules -- .. >actual &&
 	test_cmp expect actual &&
 
 	# Relative path to submodule
 	cat >expect <<-\EOF &&
-	../submodule/.gitmodules
+	../submodule/.butmodules
 	../submodule/c
 	../submodule/f.TXT
 	../submodule/g.txt
 	../submodule/subsub/d
 	../submodule/subsub/e.txt
 	EOF
-	git -C b ls-files --recurse-submodules -- ../submodule >actual &&
+	but -C b ls-files --recurse-submodules -- ../submodule >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--recurse-submodules does not support --error-unmatch' '
-	test_must_fail git ls-files --recurse-submodules --error-unmatch 2>actual &&
+	test_must_fail but ls-files --recurse-submodules --error-unmatch 2>actual &&
 	test_i18ngrep "does not support --error-unmatch" actual
 '
 
 test_incompatible_with_recurse_submodules () {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
-		test_must_fail git ls-files --recurse-submodules $1 2>actual &&
+		test_must_fail but ls-files --recurse-submodules $1 2>actual &&
 		test_i18ngrep 'unsupported mode' actual
 	"
 }

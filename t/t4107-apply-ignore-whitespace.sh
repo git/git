@@ -3,7 +3,7 @@
 # Copyright (c) 2009 Giuseppe Bilotta
 #
 
-test_description='git-apply --ignore-whitespace.
+test_description='but-apply --ignore-whitespace.
 
 '
 . ./test-lib.sh
@@ -12,7 +12,7 @@ test_description='git-apply --ignore-whitespace.
 # Various patches with HT and other spaces are attempted in the test.
 
 cat > patch1.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 new file mode 100644
 --- /dev/null
 +++ b/main.c
@@ -49,7 +49,7 @@ EOF
 # This patch will fail unless whitespace differences are being ignored
 
 sed -e 's/Z/ /g' > patch2.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 --- a/main.c
 +++ b/main.c
 @@ -10,6 +10,8 @@
@@ -69,7 +69,7 @@ EOF
 # the final string.
 
 sed -e 's/Z/ /g' > patch3.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 --- a/main.c
 +++ b/main.c
 @@ -10,3 +10,4 @@
@@ -83,7 +83,7 @@ EOF
 # because of the missing EOL at EOF.
 
 sed -e 's/Z/ /g' > patch4.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 --- a/main.c
 +++ b/main.c
 @@ -21,1 +21,1 @@
@@ -95,7 +95,7 @@ EOF
 # This patch will fail unless whitespace differences are being ignored.
 
 sed -e 's/Z/ /g' > patch5.patch <<\EOF
-diff --git a/main.c b/main.c
+diff --but a/main.c b/main.c
 --- a/main.c
 +++ b/main.c
 @@ -2,2 +2,3 @@
@@ -135,53 +135,53 @@ void print_int(int num) {
 EOF
 
 test_expect_success 'file creation' '
-	git apply patch1.patch
+	but apply patch1.patch
 '
 
 test_expect_success 'patch2 fails (retab)' '
-	test_must_fail git apply patch2.patch
+	test_must_fail but apply patch2.patch
 '
 
 test_expect_success 'patch2 applies with --ignore-whitespace' '
-	git apply --ignore-whitespace patch2.patch
+	but apply --ignore-whitespace patch2.patch
 '
 
 test_expect_success 'patch2 reverse applies with --ignore-space-change' '
-	git apply -R --ignore-space-change patch2.patch
+	but apply -R --ignore-space-change patch2.patch
 '
 
-git config apply.ignorewhitespace change
+but config apply.ignorewhitespace change
 
 test_expect_success 'patch2 applies (apply.ignorewhitespace = change)' '
-	git apply patch2.patch &&
+	but apply patch2.patch &&
 	test_cmp main.c.final main.c
 '
 
 test_expect_success 'patch3 fails (missing string at EOL)' '
-	test_must_fail git apply patch3.patch
+	test_must_fail but apply patch3.patch
 '
 
 test_expect_success 'patch4 fails (missing EOL at EOF)' '
-	test_must_fail git apply patch4.patch
+	test_must_fail but apply patch4.patch
 '
 
 test_expect_success 'patch5 fails (leading whitespace differences matter)' '
-	test_must_fail git apply patch5.patch
+	test_must_fail but apply patch5.patch
 '
 
 test_expect_success 're-create file (with --ignore-whitespace)' '
 	rm -f main.c &&
-	git apply patch1.patch
+	but apply patch1.patch
 '
 
 test_expect_success 'patch5 fails (--no-ignore-whitespace)' '
-	test_must_fail git apply --no-ignore-whitespace patch5.patch
+	test_must_fail but apply --no-ignore-whitespace patch5.patch
 '
 
 test_expect_success 'apply --ignore-space-change --inaccurate-eof' '
 	echo 1 >file &&
-	git apply --ignore-space-change --inaccurate-eof <<-\EOF &&
-	diff --git a/file b/file
+	but apply --ignore-space-change --inaccurate-eof <<-\EOF &&
+	diff --but a/file b/file
 	--- a/file
 	+++ b/file
 	@@ -1 +1 @@

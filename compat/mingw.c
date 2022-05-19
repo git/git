@@ -1,4 +1,4 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 #include "win32.h"
 #include <aclapi.h>
 #include <conio.h>
@@ -236,10 +236,10 @@ static char *unset_environment_variables;
 int mingw_core_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "core.hidedotfiles")) {
-		if (value && !strcasecmp(value, "dotgitonly"))
+		if (value && !strcasecmp(value, "dotbutonly"))
 			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 		else
-			hide_dotfiles = git_config_bool(var, value);
+			hide_dotfiles = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -254,7 +254,7 @@ int mingw_core_config(const char *var, const char *value, void *cb)
 			core_restrict_inherited_handles = -1;
 		else
 			core_restrict_inherited_handles =
-				git_config_bool(var, value);
+				but_config_bool(var, value);
 		return 0;
 	}
 
@@ -424,7 +424,7 @@ static inline int needs_hiding(const char *path)
 		return *basename == '.';
 
 	assert(hide_dotfiles == HIDE_DOTFILES_DOTGITONLY);
-	return !strncasecmp(".git", basename, 4) &&
+	return !strncasecmp(".but", basename, 4) &&
 		(!basename[4] || is_dir_sep(basename[4]));
 }
 
@@ -674,7 +674,7 @@ int mingw_fflush(FILE *stream)
 
 	/*
 	 * write() is used behind the scenes of stdio output functions.
-	 * Since git code does not check for errors after each stdio write
+	 * Since but code does not check for errors after each stdio write
 	 * operation, it can happen that write() is called by a later
 	 * stdio function even if an earlier write() call failed. In the
 	 * case of a pipe whose readable end was closed, only the first
@@ -1403,7 +1403,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 
 	/*
 	 * If there is a deltaenv, let's accumulate all keys into `array`,
-	 * sort them using the stable git_stable_qsort() and then copy,
+	 * sort them using the stable but_stable_qsort() and then copy,
 	 * skipping duplicate keys
 	 */
 	for (p = wenv; p && *p; ) {
@@ -1427,7 +1427,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 		p += wlen + 1;
 	}
 
-	git_stable_qsort(array, nr, sizeof(*array), wenvcmp);
+	but_stable_qsort(array, nr, sizeof(*array), wenvcmp);
 	ALLOC_ARRAY(result, size + delta_size);
 
 	for (p = result, i = 0; i < nr; i++) {
@@ -1728,8 +1728,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 					    fl);
 			}
 			strbuf_addstr(&buf, "\nThis is a bug; please report it "
-				      "at\nhttps://github.com/git-for-windows/"
-				      "git/issues/new\n\n"
+				      "at\nhttps://buthub.com/but-for-windows/"
+				      "but/issues/new\n\n"
 				      "To suppress this warning, please set "
 				      "the environment variable\n\n"
 				      "\tSUPPRESS_HANDLE_INHERITANCE_WARNING=1"
@@ -1865,7 +1865,7 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 
 int mingw_execv(const char *cmd, char *const *argv)
 {
-	/* check if git_command is a shell script */
+	/* check if but_command is a shell script */
 	if (!try_shell_exec(cmd, argv)) {
 		int pid, status;
 		int exec_id;
@@ -2189,7 +2189,7 @@ repeat:
 
 /*
  * Note that this doesn't return the actual pagesize, but
- * the allocation granularity. If future Windows specific git code
+ * the allocation granularity. If future Windows specific but code
  * needs the real getpagesize function, we need to find another solution.
  */
 int mingw_getpagesize(void)
@@ -2796,7 +2796,7 @@ not_a_reserved_name:
 			case 'l': case 'L': /* LPT<N> */
 				if (((c = path[++i]) != 'p' && c != 'P') ||
 				    ((c = path[++i]) != 't' && c != 'T') ||
-				    !isdigit(path[++i]))
+				    !isdibut(path[++i]))
 					goto not_a_reserved_name;
 				break;
 			case 'n': case 'N': /* NUL */
@@ -2952,7 +2952,7 @@ static void maybe_redirect_std_handles(void)
  * so that we can handle non-ASCII command-line parameters
  * appropriately.
  *
- * To be more compatible with the core git code, we convert
+ * To be more compatible with the core but code, we convert
  * argv into UTF8 and pass them directly to main().
  */
 int wmain(int argc, const wchar_t **wargv)

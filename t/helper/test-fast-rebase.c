@@ -1,5 +1,5 @@
 /*
- * "git fast-rebase" builtin command
+ * "but fast-rebase" builtin command
  *
  * FAST: Forking Any Subprocesses (is) Taboo
  *
@@ -101,10 +101,10 @@ int cmd__fast_rebase(int argc, const char **argv)
 	struct strbuf branch_name = STRBUF_INIT;
 
 	/*
-	 * test-tool stuff doesn't set up the git directory by default; need to
+	 * test-tool stuff doesn't set up the but directory by default; need to
 	 * do that manually.
 	 */
-	setup_git_directory();
+	setup_but_directory();
 
 	if (argc == 2 && !strcmp(argv[1], "-h")) {
 		printf("Sorry, I am not a psychiatrist; I can not give you the help you need.  Oh, you meant usage...\n");

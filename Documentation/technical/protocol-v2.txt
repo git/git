@@ -43,16 +43,16 @@ In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
 found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
-`GIT_PROTOCOL` definition in `git.txt`. In all cases the
+`GIT_PROTOCOL` definition in `but.txt`. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
 ~~~~~~~~~~~~~
 
-When using the git:// transport, you can request to use protocol v2 by
+When using the but:// transport, you can request to use protocol v2 by
 sending "version=2" as an extra parameter:
 
-   003egit-upload-pack /project.git\0host=myserver.com\0\0version=2\0
+   003ebut-upload-pack /project.but\0host=myserver.com\0\0version=2\0
 
 SSH and File Transport
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +69,7 @@ When using the http:// or https:// transport a client makes a "smart"
 info/refs request as described in `http-protocol.txt` and requests that
 v2 be used by supplying "version=2" in the `Git-Protocol` header.
 
-   C: GET $GIT_URL/info/refs?service=git-upload-pack HTTP/1.0
+   C: GET $GIT_URL/info/refs?service=but-upload-pack HTTP/1.0
    C: Git-Protocol: version=2
 
 A v2 server would reply:
@@ -82,13 +82,13 @@ A v2 server would reply:
    S: <capability-advertisement>
 
 Subsequent requests are then made directly to the service
-`$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
+`$GIT_URL/but-upload-pack`. (This works the same for but-receive-pack).
 
 Uses the `--http-backend-info-refs` option to
-linkgit:git-upload-pack[1].
+linkbut:but-upload-pack[1].
 
 The server may need to be configured to pass this header's contents via
-the `GIT_PROTOCOL` variable. See the discussion in `git-http-backend.txt`.
+the `GIT_PROTOCOL` variable. See the discussion in `but-http-backend.txt`.
 
 Capability Advertisement
 ------------------------
@@ -175,7 +175,7 @@ request to the server (but it MUST NOT do so if the server did not
 advertise the agent capability). The `X` and `Y` strings may contain any
 printable ASCII characters except space (i.e., the byte range 32 < x <
 127), and are typically of the form "package/version" (e.g.,
-"git/1.8.3.1"). The agent strings are purely informative for statistics
+"but/1.8.3.1"). The agent strings are purely informative for statistics
 and debugging purposes, and MUST NOT be used to programmatically assume
 the presence or absence of particular features.
 
@@ -303,13 +303,13 @@ included in the clients request as well as the potential addition of the
     deepen-since <timestamp>
 	Requests that the shallow clone/fetch should be cut at a
 	specific time, instead of depth.  Internally it's equivalent to
-	doing "git rev-list --max-age=<timestamp>". Cannot be used with
+	doing "but rev-list --max-age=<timestamp>". Cannot be used with
 	"deepen".
 
     deepen-not <rev>
 	Requests that the shallow clone/fetch should be cut at a
 	specific revision specified by '<rev>', instead of a depth.
-	Internally it's equivalent of doing "git rev-list --not <rev>".
+	Internally it's equivalent of doing "but rev-list --not <rev>".
 	Cannot be used with "deepen", but can be used with
 	"deepen-since".
 
@@ -474,7 +474,7 @@ header. Most sections are sent only when the packfile is sent.
 	* Always begins with the section header "packfile-uris".
 
 	* For each URI the server sends, it sends a hash of the pack's
-	  contents (as output by git index-pack) followed by the URI.
+	  contents (as output by but index-pack) followed by the URI.
 
 	* The hashes are 40 hex characters long. When Git upgrades to a new
 	  hash algorithm, this might need to be updated. (It should match

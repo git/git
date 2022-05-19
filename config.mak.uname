@@ -150,7 +150,7 @@ ifeq ($(uname_S),Darwin)
 
 	# Workaround for `gettext` being keg-only and not even being linked via
 	# `brew link --force gettext`, should be obsolete as of
-	# https://github.com/Homebrew/homebrew-core/pull/53489
+	# https://buthub.com/Homebrew/homebrew-core/pull/53489
 	ifeq ($(shell test -d /usr/local/opt/gettext/ && echo y),y)
 		BASIC_CFLAGS += -I/usr/local/include -I/usr/local/opt/gettext/include
 		BASIC_LDFLAGS += -L/usr/local/lib -L/usr/local/opt/gettext/lib
@@ -354,7 +354,7 @@ ifeq ($(uname_S),IRIX)
 	NO_MKDTEMP = YesPlease
 	# When compiled with the MIPSpro 7.4.4m compiler, and without pthreads
 	# (i.e. NO_PTHREADS is set), and _with_ MMAP (i.e. NO_MMAP is not set),
-	# git dies with a segmentation fault when trying to access the first
+	# but dies with a segmentation fault when trying to access the first
 	# entry of a reflog.  The conservative choice is made to always set
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
@@ -372,7 +372,7 @@ ifeq ($(uname_S),IRIX64)
 	NO_MKDTEMP = YesPlease
 	# When compiled with the MIPSpro 7.4.4m compiler, and without pthreads
 	# (i.e. NO_PTHREADS is set), and _with_ MMAP (i.e. NO_MMAP is not set),
-	# git dies with a segmentation fault when trying to access the first
+	# but dies with a segmentation fault when trying to access the first
 	# entry of a reflog.  The conservative choice is made to always set
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
@@ -470,8 +470,8 @@ ifeq ($(uname_S),Windows)
 	DEFAULT_HELP_FORMAT = html
 ifeq (/mingw64,$(subst 32,64,$(prefix)))
 	# Move system config into top-level /etc/
-	ETC_GITCONFIG = ../etc/gitconfig
-	ETC_GITATTRIBUTES = ../etc/gitattributes
+	ETC_GITCONFIG = ../etc/butconfig
+	ETC_GITATTRIBUTES = ../etc/butattributes
 endif
 
 	CC = compat/vcbuild/scripts/clink.pl
@@ -567,8 +567,8 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 		CC += -WRVU=L16.05
 	endif
 	# Disable all optimization, seems to result in bad code, with -O or -O2
-	# or even -O1 (default), /usr/local/libexec/git-core/git-pack-objects
-	# abends on "git push". Needs more investigation.
+	# or even -O1 (default), /usr/local/libexec/but-core/but-pack-objects
+	# abends on "but push". Needs more investigation.
 	CFLAGS = -g -O0 -Winline
 	# We'd want it to be here.
 	prefix = /usr/local
@@ -577,7 +577,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	PERL_PATH = /usr/bin/perl
 	PYTHON_PATH = /usr/bin/python
 	# The current /usr/coreutils/rm at lowest support level does not work
-	# with the git test structure. Long paths as in
+	# with the but test structure. Long paths as in
 	# 'trash directory...' cause rm to terminate prematurely without fully
 	# removing the directory at OS releases J06.21 and L17.02.
 	# Default to the older rm until those two releases are deprecated.
@@ -668,13 +668,13 @@ ifeq ($(uname_S),MINGW)
 		compat/win32/dirent.o
 	BASIC_CFLAGS += -DWIN32
 	EXTLIBS += -lws2_32
-	GITLIBS += git.res
+	GITLIBS += but.res
 	PTHREAD_LIBS =
 	RC = windres -O coff
 	NATIVE_CRLF = YesPlease
 	X = .exe
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
-	htmldir = doc/git/html/
+	htmldir = doc/but/html/
 	prefix =
 	INSTALL = /bin/install
 	EXTLIBS += /mingw/lib/libz.a
@@ -719,8 +719,8 @@ else
 		USE_NED_ALLOCATOR = YesPlease
 		ifeq (/mingw64,$(subst 32,64,$(prefix)))
 			# Move system config into top-level /etc/
-			ETC_GITCONFIG = ../etc/gitconfig
-			ETC_GITATTRIBUTES = ../etc/gitattributes
+			ETC_GITCONFIG = ../etc/butconfig
+			ETC_GITATTRIBUTES = ../etc/butattributes
 		endif
 	else
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO
@@ -745,23 +745,23 @@ endif
 
 vcxproj:
 	# Require clean work tree
-	git update-index -q --refresh && \
-	git diff-files --quiet && \
-	git diff-index --cached --quiet HEAD --
+	but update-index -q --refresh && \
+	but diff-files --quiet && \
+	but diff-index --cached --quiet HEAD --
 
 	# Make .vcxproj files and add them
 	perl contrib/buildsystems/generate -g Vcxproj
-	git add -f git.sln {*,*/lib,t/helper/*}/*.vcxproj
+	but add -f but.sln {*,*/lib,t/helper/*}/*.vcxproj
 
 	# Generate the LinkOrCopyBuiltins.targets and LinkOrCopyRemoteHttp.targets file
 	(echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' && \
 	 echo '  <Target Name="CopyBuiltins_AfterBuild" AfterTargets="AfterBuild">' && \
 	 for name in $(BUILT_INS);\
 	 do \
-	   echo '    <Copy SourceFiles="$$(OutDir)\git.exe" DestinationFiles="$$(OutDir)\'"$$name"'" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />'; \
+	   echo '    <Copy SourceFiles="$$(OutDir)\but.exe" DestinationFiles="$$(OutDir)\'"$$name"'" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />'; \
 	 done && \
 	 echo '  </Target>' && \
-	 echo '</Project>') >git/LinkOrCopyBuiltins.targets
+	 echo '</Project>') >but/LinkOrCopyBuiltins.targets
 	(echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' && \
 	 echo '  <Target Name="CopyBuiltins_AfterBuild" AfterTargets="AfterBuild">' && \
 	 for name in $(REMOTE_CURL_ALIASES); \
@@ -769,23 +769,23 @@ vcxproj:
 	   echo '    <Copy SourceFiles="$$(OutDir)\'"$(REMOTE_CURL_PRIMARY)"'" DestinationFiles="$$(OutDir)\'"$$name"'" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />'; \
 	 done && \
 	 echo '  </Target>' && \
-	 echo '</Project>') >git-remote-http/LinkOrCopyRemoteHttp.targets
-	git add -f git/LinkOrCopyBuiltins.targets git-remote-http/LinkOrCopyRemoteHttp.targets
+	 echo '</Project>') >but-remote-http/LinkOrCopyRemoteHttp.targets
+	but add -f but/LinkOrCopyBuiltins.targets but-remote-http/LinkOrCopyRemoteHttp.targets
 
 	# Add generated headers
 	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 $(GENERATED_H)
-	git add -f $(GENERATED_H)
+	but add -f $(GENERATED_H)
 
 	# Add scripts
 	rm -f perl/perl.mak
 	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 $(SCRIPT_LIB) $(SCRIPTS)
 	# Strip out the sane tool path, needed only for building
-	sed -i '/^git_broken_path_fix ".*/d' git-sh-setup
-	git add -f $(SCRIPT_LIB) $(SCRIPTS)
+	sed -i '/^but_broken_path_fix ".*/d' but-sh-setup
+	but add -f $(SCRIPT_LIB) $(SCRIPTS)
 
 	# Add Perl module
 	$(MAKE) $(LIB_PERL_GEN)
-	git add -f perl/build
+	but add -f perl/build
 
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
@@ -799,26 +799,26 @@ vcxproj:
 	# Ensure that test-* helpers find the .dll files copied to top-level
 	sed -i 's|^PATH=.*|&:"$$GIT_EXEC_PATH"|' bin-wrappers/test-*
 	# We do not want to force hard-linking builtins
-	sed -i 's|\(git\)-\([-a-z]*\)\.exe"|\1.exe" \2|g' \
-		bin-wrappers/git-{receive-pack,upload-archive}
-	git add -f $(test_bindir_programs)
+	sed -i 's|\(but\)-\([-a-z]*\)\.exe"|\1.exe" \2|g' \
+		bin-wrappers/but-{receive-pack,upload-archive}
+	but add -f $(test_bindir_programs)
 	# remote-ext is a builtin, but invoked as if it were external
 	sed 's|receive-pack|remote-ext|g' \
-		<bin-wrappers/git-receive-pack >bin-wrappers/git-remote-ext
-	git add -f bin-wrappers/git-remote-ext
+		<bin-wrappers/but-receive-pack >bin-wrappers/but-remote-ext
+	but add -f bin-wrappers/but-remote-ext
 
 	# Add templates
 	$(MAKE) -C templates
-	git add -f templates/boilerplates.made templates/blt/
+	but add -f templates/boilerplates.made templates/blt/
 
 	# Add the translated messages
 	make MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 $(MOFILES)
-	git add -f $(MOFILES)
+	but add -f $(MOFILES)
 
 	# Add build options
 	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 GIT-BUILD-OPTIONS
-	git add -f GIT-BUILD-OPTIONS
+	but add -f GIT-BUILD-OPTIONS
 
 	# cummit the whole shebang
-	git cummit -m "Generate Visual Studio solution" \
+	but cummit -m "Generate Visual Studio solution" \
 		-m "Auto-generated by \`$(MAKE)$(MAKEFLAGS) $@\`"

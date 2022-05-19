@@ -8,110 +8,110 @@ test_description='avoid rewriting packed-refs unnecessarily'
 # shouldn't upset readers, and it should be omitted if the file is
 # ever rewritten.
 mark_packed_refs () {
-	sed -e "s/^\(#.*\)/\1 t1409 /" .git/packed-refs >.git/packed-refs.new &&
-	mv .git/packed-refs.new .git/packed-refs
+	sed -e "s/^\(#.*\)/\1 t1409 /" .but/packed-refs >.but/packed-refs.new &&
+	mv .but/packed-refs.new .but/packed-refs
 }
 
 # Verify that the packed-refs file is still marked.
 check_packed_refs_marked () {
-	grep -q '^#.* t1409 ' .git/packed-refs
+	grep -q '^#.* t1409 ' .but/packed-refs
 }
 
 test_expect_success 'setup' '
-	git cummit --allow-empty -m "cummit A" &&
-	A=$(git rev-parse HEAD) &&
-	git cummit --allow-empty -m "cummit B" &&
-	B=$(git rev-parse HEAD) &&
-	git cummit --allow-empty -m "cummit C" &&
-	C=$(git rev-parse HEAD)
+	but cummit --allow-empty -m "cummit A" &&
+	A=$(but rev-parse HEAD) &&
+	but cummit --allow-empty -m "cummit B" &&
+	B=$(but rev-parse HEAD) &&
+	but cummit --allow-empty -m "cummit C" &&
+	C=$(but rev-parse HEAD)
 '
 
 test_expect_success 'do not create packed-refs file gratuitously' '
-	test_path_is_missing .git/packed-refs &&
-	git update-ref refs/heads/foo $A &&
-	test_path_is_missing .git/packed-refs &&
-	git update-ref refs/heads/foo $B &&
-	test_path_is_missing .git/packed-refs &&
-	git update-ref refs/heads/foo $C $B &&
-	test_path_is_missing .git/packed-refs &&
-	git update-ref -d refs/heads/foo &&
-	test_path_is_missing .git/packed-refs
+	test_path_is_missing .but/packed-refs &&
+	but update-ref refs/heads/foo $A &&
+	test_path_is_missing .but/packed-refs &&
+	but update-ref refs/heads/foo $B &&
+	test_path_is_missing .but/packed-refs &&
+	but update-ref refs/heads/foo $C $B &&
+	test_path_is_missing .but/packed-refs &&
+	but update-ref -d refs/heads/foo &&
+	test_path_is_missing .but/packed-refs
 '
 
 test_expect_success 'check that marking the packed-refs file works' '
-	git for-each-ref >expected &&
-	git pack-refs --all &&
+	but for-each-ref >expected &&
+	but pack-refs --all &&
 	mark_packed_refs &&
 	check_packed_refs_marked &&
-	git for-each-ref >actual &&
+	but for-each-ref >actual &&
 	test_cmp expected actual &&
-	git pack-refs --all &&
+	but pack-refs --all &&
 	! check_packed_refs_marked &&
-	git for-each-ref >actual2 &&
+	but for-each-ref >actual2 &&
 	test_cmp expected actual2
 '
 
 test_expect_success 'leave packed-refs untouched on update of packed' '
-	git update-ref refs/heads/packed-update $A &&
-	git pack-refs --all &&
+	but update-ref refs/heads/packed-update $A &&
+	but pack-refs --all &&
 	mark_packed_refs &&
-	git update-ref refs/heads/packed-update $B &&
+	but update-ref refs/heads/packed-update $B &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on checked update of packed' '
-	git update-ref refs/heads/packed-checked-update $A &&
-	git pack-refs --all &&
+	but update-ref refs/heads/packed-checked-update $A &&
+	but pack-refs --all &&
 	mark_packed_refs &&
-	git update-ref refs/heads/packed-checked-update $B $A &&
+	but update-ref refs/heads/packed-checked-update $B $A &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on verify of packed' '
-	git update-ref refs/heads/packed-verify $A &&
-	git pack-refs --all &&
+	but update-ref refs/heads/packed-verify $A &&
+	but pack-refs --all &&
 	mark_packed_refs &&
-	echo "verify refs/heads/packed-verify $A" | git update-ref --stdin &&
+	echo "verify refs/heads/packed-verify $A" | but update-ref --stdin &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'touch packed-refs on delete of packed' '
-	git update-ref refs/heads/packed-delete $A &&
-	git pack-refs --all &&
+	but update-ref refs/heads/packed-delete $A &&
+	but pack-refs --all &&
 	mark_packed_refs &&
-	git update-ref -d refs/heads/packed-delete &&
+	but update-ref -d refs/heads/packed-delete &&
 	! check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on update of loose' '
-	git pack-refs --all &&
-	git update-ref refs/heads/loose-update $A &&
+	but pack-refs --all &&
+	but update-ref refs/heads/loose-update $A &&
 	mark_packed_refs &&
-	git update-ref refs/heads/loose-update $B &&
+	but update-ref refs/heads/loose-update $B &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on checked update of loose' '
-	git pack-refs --all &&
-	git update-ref refs/heads/loose-checked-update $A &&
+	but pack-refs --all &&
+	but update-ref refs/heads/loose-checked-update $A &&
 	mark_packed_refs &&
-	git update-ref refs/heads/loose-checked-update $B $A &&
+	but update-ref refs/heads/loose-checked-update $B $A &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on verify of loose' '
-	git pack-refs --all &&
-	git update-ref refs/heads/loose-verify $A &&
+	but pack-refs --all &&
+	but update-ref refs/heads/loose-verify $A &&
 	mark_packed_refs &&
-	echo "verify refs/heads/loose-verify $A" | git update-ref --stdin &&
+	echo "verify refs/heads/loose-verify $A" | but update-ref --stdin &&
 	check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on delete of loose' '
-	git pack-refs --all &&
-	git update-ref refs/heads/loose-delete $A &&
+	but pack-refs --all &&
+	but update-ref refs/heads/loose-delete $A &&
 	mark_packed_refs &&
-	git update-ref -d refs/heads/loose-delete &&
+	but update-ref -d refs/heads/loose-delete &&
 	check_packed_refs_marked
 '
 

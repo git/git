@@ -15,10 +15,10 @@ modify () {
 test_pull_autostash () {
 	expect_parent_num="$1" &&
 	shift &&
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 	echo dirty >new_file &&
-	git add new_file &&
-	git pull "$@" . copy &&
+	but add new_file &&
+	but pull "$@" . copy &&
 	test_cmp_rev HEAD^"$expect_parent_num" copy &&
 	echo dirty >expect &&
 	test_cmp expect new_file &&
@@ -27,24 +27,24 @@ test_pull_autostash () {
 }
 
 test_pull_autostash_fail () {
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 	echo dirty >new_file &&
-	git add new_file &&
-	test_must_fail git pull "$@" . copy 2>err &&
+	but add new_file &&
+	test_must_fail but pull "$@" . copy 2>err &&
 	test_i18ngrep -E "uncummitted changes.|overwritten by merge:" err
 }
 
 test_expect_success setup '
 	echo file >file &&
-	git add file &&
-	git cummit -a -m original
+	but add file &&
+	but cummit -a -m original
 '
 
 test_expect_success 'pulling into void' '
-	git init cloned &&
+	but init cloned &&
 	(
 		cd cloned &&
-		git pull ..
+		but pull ..
 	) &&
 	test_path_is_file file &&
 	test_path_is_file cloned/file &&
@@ -52,10 +52,10 @@ test_expect_success 'pulling into void' '
 '
 
 test_expect_success 'pulling into void using main:main' '
-	git init cloned-uho &&
+	but init cloned-uho &&
 	(
 		cd cloned-uho &&
-		git pull .. main:main
+		but pull .. main:main
 	) &&
 	test_path_is_file file &&
 	test_path_is_file cloned-uho/file &&
@@ -63,190 +63,190 @@ test_expect_success 'pulling into void using main:main' '
 '
 
 test_expect_success 'pulling into void does not overwrite untracked files' '
-	git init cloned-untracked &&
+	but init cloned-untracked &&
 	(
 		cd cloned-untracked &&
 		echo untracked >file &&
-		test_must_fail git pull .. main &&
+		test_must_fail but pull .. main &&
 		echo untracked >expect &&
 		test_cmp expect file
 	)
 '
 
 test_expect_success 'pulling into void does not overwrite staged files' '
-	git init cloned-staged-colliding &&
+	but init cloned-staged-colliding &&
 	(
 		cd cloned-staged-colliding &&
 		echo "alternate content" >file &&
-		git add file &&
-		test_must_fail git pull .. main &&
+		but add file &&
+		test_must_fail but pull .. main &&
 		echo "alternate content" >expect &&
 		test_cmp expect file &&
-		git cat-file blob :file >file.index &&
+		but cat-file blob :file >file.index &&
 		test_cmp expect file.index
 	)
 '
 
 test_expect_success 'pulling into void does not remove new staged files' '
-	git init cloned-staged-new &&
+	but init cloned-staged-new &&
 	(
 		cd cloned-staged-new &&
 		echo "new tracked file" >newfile &&
-		git add newfile &&
-		git pull .. main &&
+		but add newfile &&
+		but pull .. main &&
 		echo "new tracked file" >expect &&
 		test_cmp expect newfile &&
-		git cat-file blob :newfile >newfile.index &&
+		but cat-file blob :newfile >newfile.index &&
 		test_cmp expect newfile.index
 	)
 '
 
 test_expect_success 'pulling into void must not create an octopus' '
-	git init cloned-octopus &&
+	but init cloned-octopus &&
 	(
 		cd cloned-octopus &&
-		test_must_fail git pull .. main main &&
+		test_must_fail but pull .. main main &&
 		test_path_is_missing file
 	)
 '
 
 test_expect_success 'test . as a remote' '
-	git branch copy main &&
-	git config branch.copy.remote . &&
-	git config branch.copy.merge refs/heads/main &&
+	but branch copy main &&
+	but config branch.copy.remote . &&
+	but config branch.copy.merge refs/heads/main &&
 	echo updated >file &&
-	git cummit -a -m updated &&
-	git checkout copy &&
+	but cummit -a -m updated &&
+	but checkout copy &&
 	echo file >expect &&
 	test_cmp expect file &&
-	git pull &&
+	but pull &&
 	echo updated >expect &&
 	test_cmp expect file &&
-	git reflog -1 >reflog.actual &&
+	but reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_expect_success 'the default remote . should not break explicit pull' '
-	git checkout -b second main^ &&
+	but checkout -b second main^ &&
 	echo modified >file &&
-	git cummit -a -m modified &&
-	git checkout copy &&
-	git reset --hard HEAD^ &&
+	but cummit -a -m modified &&
+	but checkout copy &&
+	but reset --hard HEAD^ &&
 	echo file >expect &&
 	test_cmp expect file &&
-	git pull --no-rebase . second &&
+	but pull --no-rebase . second &&
 	echo modified >expect &&
 	test_cmp expect file &&
-	git reflog -1 >reflog.actual &&
+	but reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --no-rebase . second: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_expect_success 'fail if wildcard spec does not match any refs' '
-	git checkout -b test copy^ &&
-	test_when_finished "git checkout -f copy && git branch -D test" &&
+	but checkout -b test copy^ &&
+	test_when_finished "but checkout -f copy && but branch -D test" &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_must_fail git pull . "refs/nonexisting1/*:refs/nonexisting2/*" 2>err &&
+	test_must_fail but pull . "refs/nonexisting1/*:refs/nonexisting2/*" 2>err &&
 	test_i18ngrep "no candidates for merging" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'fail if no branches specified with non-default remote' '
-	git remote add test_remote . &&
-	test_when_finished "git remote remove test_remote" &&
-	git checkout -b test copy^ &&
-	test_when_finished "git checkout -f copy && git branch -D test" &&
+	but remote add test_remote . &&
+	test_when_finished "but remote remove test_remote" &&
+	but checkout -b test copy^ &&
+	test_when_finished "but checkout -f copy && but branch -D test" &&
 	echo file >expect &&
 	test_cmp expect file &&
 	test_config branch.test.remote origin &&
-	test_must_fail git pull test_remote 2>err &&
+	test_must_fail but pull test_remote 2>err &&
 	test_i18ngrep "specify a branch on the command line" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'fail if not on a branch' '
-	git remote add origin . &&
-	test_when_finished "git remote remove origin" &&
-	git checkout HEAD^ &&
-	test_when_finished "git checkout -f copy" &&
+	but remote add origin . &&
+	test_when_finished "but remote remove origin" &&
+	but checkout HEAD^ &&
+	test_when_finished "but checkout -f copy" &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_must_fail git pull 2>err &&
+	test_must_fail but pull 2>err &&
 	test_i18ngrep "not currently on a branch" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'fail if no configuration for current branch' '
-	git remote add test_remote . &&
-	test_when_finished "git remote remove test_remote" &&
-	git checkout -b test copy^ &&
-	test_when_finished "git checkout -f copy && git branch -D test" &&
+	but remote add test_remote . &&
+	test_when_finished "but remote remove test_remote" &&
+	but checkout -b test copy^ &&
+	test_when_finished "but checkout -f copy && but branch -D test" &&
 	test_config branch.test.remote test_remote &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_must_fail git pull 2>err &&
+	test_must_fail but pull 2>err &&
 	test_i18ngrep "no tracking information" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'pull --all: fail if no configuration for current branch' '
-	git remote add test_remote . &&
-	test_when_finished "git remote remove test_remote" &&
-	git checkout -b test copy^ &&
-	test_when_finished "git checkout -f copy && git branch -D test" &&
+	but remote add test_remote . &&
+	test_when_finished "but remote remove test_remote" &&
+	but checkout -b test copy^ &&
+	test_when_finished "but checkout -f copy && but branch -D test" &&
 	test_config branch.test.remote test_remote &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_must_fail git pull --all 2>err &&
+	test_must_fail but pull --all 2>err &&
 	test_i18ngrep "There is no tracking information" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'fail if upstream branch does not exist' '
-	git checkout -b test copy^ &&
-	test_when_finished "git checkout -f copy && git branch -D test" &&
+	but checkout -b test copy^ &&
+	test_when_finished "but checkout -f copy && but branch -D test" &&
 	test_config branch.test.remote . &&
 	test_config branch.test.merge refs/heads/nonexisting &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_must_fail git pull 2>err &&
+	test_must_fail but pull 2>err &&
 	test_i18ngrep "no such ref was fetched" err &&
 	test_cmp expect file
 '
 
 test_expect_success 'fail if the index has unresolved entries' '
-	git checkout -b third second^ &&
-	test_when_finished "git checkout -f copy && git branch -D third" &&
+	but checkout -b third second^ &&
+	test_when_finished "but checkout -f copy && but branch -D third" &&
 	echo file >expect &&
 	test_cmp expect file &&
 	test_cummit modified2 file &&
-	git ls-files -u >unmerged &&
+	but ls-files -u >unmerged &&
 	test_must_be_empty unmerged &&
-	test_must_fail git pull --no-rebase . second &&
-	git ls-files -u >unmerged &&
+	test_must_fail but pull --no-rebase . second &&
+	but ls-files -u >unmerged &&
 	test_file_not_empty unmerged &&
 	cp file expected &&
-	test_must_fail git pull . second 2>err &&
+	test_must_fail but pull . second 2>err &&
 	test_i18ngrep "Pulling is not possible because you have unmerged files." err &&
 	test_cmp expected file &&
-	git add file &&
-	git ls-files -u >unmerged &&
+	but add file &&
+	but ls-files -u >unmerged &&
 	test_must_be_empty unmerged &&
-	test_must_fail git pull . second 2>err &&
+	test_must_fail but pull . second 2>err &&
 	test_i18ngrep "You have not concluded your merge" err &&
 	test_cmp expected file
 '
 
 test_expect_success 'fast-forwards working tree if branch head is updated' '
-	git checkout -b third second^ &&
-	test_when_finished "git checkout -f copy && git branch -D third" &&
+	but checkout -b third second^ &&
+	test_when_finished "but checkout -f copy && but branch -D third" &&
 	echo file >expect &&
 	test_cmp expect file &&
-	git pull . second:third 2>err &&
+	but pull . second:third 2>err &&
 	test_i18ngrep "fetch updated the current branch head" err &&
 	echo modified >expect &&
 	test_cmp expect file &&
@@ -254,12 +254,12 @@ test_expect_success 'fast-forwards working tree if branch head is updated' '
 '
 
 test_expect_success 'fast-forward fails with conflicting work tree' '
-	git checkout -b third second^ &&
-	test_when_finished "git checkout -f copy && git branch -D third" &&
+	but checkout -b third second^ &&
+	test_when_finished "but checkout -f copy && but branch -D third" &&
 	echo file >expect &&
 	test_cmp expect file &&
 	echo conflict >file &&
-	test_must_fail git pull . second:third 2>err &&
+	test_must_fail but pull . second:third 2>err &&
 	test_i18ngrep "Cannot fast-forward your working tree" err &&
 	echo conflict >expect &&
 	test_cmp expect file &&
@@ -267,46 +267,46 @@ test_expect_success 'fast-forward fails with conflicting work tree' '
 '
 
 test_expect_success '--rebase' '
-	git branch to-rebase &&
+	but branch to-rebase &&
 	echo modified again >file &&
-	git cummit -m file file &&
-	git checkout to-rebase &&
+	but cummit -m file file &&
+	but checkout to-rebase &&
 	echo new >file2 &&
-	git add file2 &&
-	git cummit -m "new file" &&
-	git tag before-rebase &&
-	git pull --rebase . copy &&
+	but add file2 &&
+	but cummit -m "new file" &&
+	but tag before-rebase &&
+	but pull --rebase . copy &&
 	test_cmp_rev HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--rebase (merge) fast forward' '
-	git reset --hard before-rebase &&
-	git checkout -b ff &&
+	but reset --hard before-rebase &&
+	but checkout -b ff &&
 	echo another modification >file &&
-	git cummit -m third file &&
+	but cummit -m third file &&
 
-	git checkout to-rebase &&
-	git -c rebase.backend=merge pull --rebase . ff &&
+	but checkout to-rebase &&
+	but -c rebase.backend=merge pull --rebase . ff &&
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?
-	git reflog -1 >reflog.actual &&
+	but reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_expect_success '--rebase (am) fast forward' '
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 
-	git -c rebase.backend=apply pull --rebase . ff &&
+	but -c rebase.backend=apply pull --rebase . ff &&
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?
-	git reflog -1 >reflog.actual &&
+	but reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
@@ -314,74 +314,74 @@ test_expect_success '--rebase (am) fast forward' '
 
 test_expect_success '--rebase --autostash fast forward' '
 	test_when_finished "
-		git reset --hard
-		git checkout to-rebase
-		git branch -D to-rebase-ff
-		git branch -D behind" &&
-	git branch behind &&
-	git checkout -b to-rebase-ff &&
+		but reset --hard
+		but checkout to-rebase
+		but branch -D to-rebase-ff
+		but branch -D behind" &&
+	but branch behind &&
+	but checkout -b to-rebase-ff &&
 	echo another modification >>file &&
-	git add file &&
-	git cummit -m mod &&
+	but add file &&
+	but cummit -m mod &&
 
-	git checkout behind &&
+	but checkout behind &&
 	echo dirty >file &&
-	git pull --rebase --autostash . to-rebase-ff &&
+	but pull --rebase --autostash . to-rebase-ff &&
 	test_cmp_rev HEAD to-rebase-ff
 '
 
 test_expect_success '--rebase with rebase.autostash succeeds on ff' '
 	test_when_finished "rm -fr src dst actual" &&
-	git init src &&
+	but init src &&
 	test_cummit -C src "initial" file "content" &&
-	git clone src dst &&
+	but clone src dst &&
 	test_cummit -C src --printf "more_content" file "more content\ncontent\n" &&
 	echo "dirty" >>dst/file &&
 	test_config -C dst rebase.autostash true &&
-	git -C dst pull --rebase >actual 2>&1 &&
+	but -C dst pull --rebase >actual 2>&1 &&
 	grep -q "Fast-forward" actual &&
 	grep -q "Applied autostash." actual
 '
 
 test_expect_success '--rebase with conflicts shows advice' '
-	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
-	git checkout -b seq &&
+	test_when_finished "but rebase --abort; but checkout -f to-rebase" &&
+	but checkout -b seq &&
 	test_seq 5 >seq.txt &&
-	git add seq.txt &&
+	but add seq.txt &&
 	test_tick &&
-	git cummit -m "Add seq.txt" &&
+	but cummit -m "Add seq.txt" &&
 	echo 6 >>seq.txt &&
 	test_tick &&
-	git cummit -m "Append to seq.txt" seq.txt &&
-	git checkout -b with-conflicts HEAD^ &&
+	but cummit -m "Append to seq.txt" seq.txt &&
+	but checkout -b with-conflicts HEAD^ &&
 	echo conflicting >>seq.txt &&
 	test_tick &&
-	git cummit -m "Create conflict" seq.txt &&
-	test_must_fail git pull --rebase . seq 2>err >out &&
+	but cummit -m "Create conflict" seq.txt &&
+	test_must_fail but pull --rebase . seq 2>err >out &&
 	test_i18ngrep "Resolve all conflicts manually" err
 '
 
 test_expect_success 'failed --rebase shows advice' '
-	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
-	git checkout -b diverging &&
-	test_cummit attributes .gitattributes "* text=auto" attrs &&
-	sha1="$(printf "1\\r\\n" | git hash-object -w --stdin)" &&
-	git update-index --cacheinfo 0644 $sha1 file &&
-	git cummit -m v1-with-cr &&
-	# force checkout because `git reset --hard` will not leave clean `file`
-	git checkout -f -b fails-to-rebase HEAD^ &&
+	test_when_finished "but rebase --abort; but checkout -f to-rebase" &&
+	but checkout -b diverging &&
+	test_cummit attributes .butattributes "* text=auto" attrs &&
+	sha1="$(printf "1\\r\\n" | but hash-object -w --stdin)" &&
+	but update-index --cacheinfo 0644 $sha1 file &&
+	but cummit -m v1-with-cr &&
+	# force checkout because `but reset --hard` will not leave clean `file`
+	but checkout -f -b fails-to-rebase HEAD^ &&
 	test_cummit v2-without-cr file "2" file2-lf &&
-	test_must_fail git pull --rebase . diverging 2>err >out &&
+	test_must_fail but pull --rebase . diverging 2>err >out &&
 	test_i18ngrep "Resolve all conflicts manually" err
 '
 
 test_expect_success '--rebase fails with multiple branches' '
-	git reset --hard before-rebase &&
-	test_must_fail git pull --rebase . copy main 2>err &&
+	but reset --hard before-rebase &&
+	test_must_fail but pull --rebase . copy main 2>err &&
 	test_cmp_rev HEAD before-rebase &&
 	test_i18ngrep "Cannot rebase onto multiple branches" err &&
 	echo modified >expect &&
-	git show HEAD:file >actual &&
+	but show HEAD:file >actual &&
 	test_cmp expect actual
 '
 
@@ -456,12 +456,12 @@ test_expect_success 'pull --no-autostash & merge.autostash unset' '
 '
 
 test_expect_success 'pull.rebase' '
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 	test_config pull.rebase true &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual
 '
 
@@ -476,42 +476,42 @@ test_expect_success 'pull --no-autostash & pull.rebase=true' '
 '
 
 test_expect_success 'branch.to-rebase.rebase' '
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 	test_config branch.to-rebase.rebase true &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
-	git reset --hard before-rebase &&
+	but reset --hard before-rebase &&
 	test_config pull.rebase true &&
 	test_config branch.to-rebase.rebase false &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev ! HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pull --rebase warns on --verify-signatures' '
-	git reset --hard before-rebase &&
-	git pull --rebase --verify-signatures . copy 2>err &&
+	but reset --hard before-rebase &&
+	but pull --rebase --verify-signatures . copy 2>err &&
 	test_cmp_rev HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual &&
 	test_i18ngrep "ignoring --verify-signatures for rebase" err
 '
 
 test_expect_success 'pull --rebase does not warn on --no-verify-signatures' '
-	git reset --hard before-rebase &&
-	git pull --rebase --no-verify-signatures . copy 2>err &&
+	but reset --hard before-rebase &&
+	but pull --rebase --no-verify-signatures . copy 2>err &&
 	test_cmp_rev HEAD^ copy &&
 	echo new >expect &&
-	git show HEAD:file2 >actual &&
+	but show HEAD:file2 >actual &&
 	test_cmp expect actual &&
 	test_i18ngrep ! "verify-signatures" err
 '
@@ -520,42 +520,42 @@ test_expect_success 'pull --rebase does not warn on --no-verify-signatures' '
 # test can try preserving the merge cummit (or not) with various
 # --rebase flags/pull.rebase settings.
 test_expect_success 'preserve merge setup' '
-	git reset --hard before-rebase &&
-	git checkout -b keep-merge second^ &&
+	but reset --hard before-rebase &&
+	but checkout -b keep-merge second^ &&
 	test_cummit file3 &&
-	git checkout to-rebase &&
-	git merge keep-merge &&
-	git tag before-preserve-rebase
+	but checkout to-rebase &&
+	but merge keep-merge &&
+	but tag before-preserve-rebase
 '
 
 test_expect_success 'pull.rebase=false create a new merge cummit' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase false &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev HEAD^1 before-preserve-rebase &&
 	test_cmp_rev HEAD^2 copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pull.rebase=true flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev HEAD^^ copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase 1 &&
-	git pull . copy &&
+	but pull . copy &&
 	test_cmp_rev HEAD^^ copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
@@ -565,8 +565,8 @@ test_expect_success 'pull.rebase=interactive' '
 	false
 	EOF
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
-	test_when_finished "test_might_fail git rebase --abort" &&
-	test_must_fail git pull --rebase=interactive . copy &&
+	test_when_finished "test_might_fail but rebase --abort" &&
+	test_must_fail but pull --rebase=interactive . copy &&
 	echo "I was here" >expect &&
 	test_cmp expect fake.out
 '
@@ -577,66 +577,66 @@ test_expect_success 'pull --rebase=i' '
 	false
 	EOF
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
-	test_when_finished "test_might_fail git rebase --abort" &&
-	test_must_fail git pull --rebase=i . copy &&
+	test_when_finished "test_might_fail but rebase --abort" &&
+	test_must_fail but pull --rebase=i . copy &&
 	echo "I was here, too" >expect &&
 	test_cmp expect fake.out
 '
 
 test_expect_success 'pull.rebase=invalid fails' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase invalid &&
-	test_must_fail git pull . copy
+	test_must_fail but pull . copy
 '
 
 test_expect_success '--rebase=false create a new merge cummit' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
-	git pull --rebase=false . copy &&
+	but pull --rebase=false . copy &&
 	test_cmp_rev HEAD^1 before-preserve-rebase &&
 	test_cmp_rev HEAD^2 copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--rebase=true rebases and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase merges &&
-	git pull --rebase=true . copy &&
+	but pull --rebase=true . copy &&
 	test_cmp_rev HEAD^^ copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--rebase=invalid fails' '
-	git reset --hard before-preserve-rebase &&
-	test_must_fail git pull --rebase=invalid . copy
+	but reset --hard before-preserve-rebase &&
+	test_must_fail but pull --rebase=invalid . copy
 '
 
 test_expect_success '--rebase overrides pull.rebase=merges and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
+	but reset --hard before-preserve-rebase &&
 	test_config pull.rebase merges &&
-	git pull --rebase . copy &&
+	but pull --rebase . copy &&
 	test_cmp_rev HEAD^^ copy &&
 	echo file3 >expect &&
-	git show HEAD:file3.t >actual &&
+	but show HEAD:file3.t >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--rebase with rebased upstream' '
-	git remote add -f me . &&
-	git checkout copy &&
-	git tag copy-orig &&
-	git reset --hard HEAD^ &&
+	but remote add -f me . &&
+	but checkout copy &&
+	but tag copy-orig &&
+	but reset --hard HEAD^ &&
 	echo conflicting modification >file &&
-	git cummit -m conflict file &&
-	git checkout to-rebase &&
+	but cummit -m conflict file &&
+	but checkout to-rebase &&
 	echo file >file2 &&
-	git cummit -m to-rebase file2 &&
-	git tag to-rebase-orig &&
-	git pull --rebase me copy &&
+	but cummit -m to-rebase file2 &&
+	but tag to-rebase-orig &&
+	but pull --rebase me copy &&
 	echo "conflicting modification" >expect &&
 	test_cmp expect file &&
 	echo file >expect &&
@@ -644,9 +644,9 @@ test_expect_success '--rebase with rebased upstream' '
 '
 
 test_expect_success '--rebase -f with rebased upstream' '
-	test_when_finished "test_might_fail git rebase --abort" &&
-	git reset --hard to-rebase-orig &&
-	git pull --rebase -f me copy &&
+	test_when_finished "test_might_fail but rebase --abort" &&
+	but reset --hard to-rebase-orig &&
+	but pull --rebase -f me copy &&
 	echo "conflicting modification" >expect &&
 	test_cmp expect file &&
 	echo file >expect &&
@@ -654,10 +654,10 @@ test_expect_success '--rebase -f with rebased upstream' '
 '
 
 test_expect_success '--rebase with rebased default upstream' '
-	git update-ref refs/remotes/me/copy copy-orig &&
-	git checkout --track -b to-rebase2 me/copy &&
-	git reset --hard to-rebase-orig &&
-	git pull --rebase &&
+	but update-ref refs/remotes/me/copy copy-orig &&
+	but checkout --track -b to-rebase2 me/copy &&
+	but reset --hard to-rebase-orig &&
+	but pull --rebase &&
 	echo "conflicting modification" >expect &&
 	test_cmp expect file &&
 	echo file >expect &&
@@ -666,12 +666,12 @@ test_expect_success '--rebase with rebased default upstream' '
 
 test_expect_success 'rebased upstream + fetch + pull --rebase' '
 
-	git update-ref refs/remotes/me/copy copy-orig &&
-	git reset --hard to-rebase-orig &&
-	git checkout --track -b to-rebase3 me/copy &&
-	git reset --hard to-rebase-orig &&
-	git fetch &&
-	git pull --rebase &&
+	but update-ref refs/remotes/me/copy copy-orig &&
+	but reset --hard to-rebase-orig &&
+	but checkout --track -b to-rebase3 me/copy &&
+	but reset --hard to-rebase-orig &&
+	but fetch &&
+	but pull --rebase &&
 	echo "conflicting modification" >expect &&
 	test_cmp expect file &&
 	echo file >expect &&
@@ -680,48 +680,48 @@ test_expect_success 'rebased upstream + fetch + pull --rebase' '
 '
 
 test_expect_success 'pull --rebase dies early with dirty working directory' '
-	git checkout to-rebase &&
-	git update-ref refs/remotes/me/copy copy^ &&
-	COPY="$(git rev-parse --verify me/copy)" &&
-	git rebase --onto $COPY copy &&
+	but checkout to-rebase &&
+	but update-ref refs/remotes/me/copy copy^ &&
+	COPY="$(but rev-parse --verify me/copy)" &&
+	but rebase --onto $COPY copy &&
 	test_config branch.to-rebase.remote me &&
 	test_config branch.to-rebase.merge refs/heads/copy &&
 	test_config branch.to-rebase.rebase true &&
 	echo dirty >>file &&
-	git add file &&
-	test_must_fail git pull &&
+	but add file &&
+	test_must_fail but pull &&
 	test_cmp_rev "$COPY" me/copy &&
-	git checkout HEAD -- file &&
-	git pull &&
+	but checkout HEAD -- file &&
+	but pull &&
 	test_cmp_rev ! "$COPY" me/copy
 '
 
 test_expect_success 'pull --rebase works on branch yet to be born' '
-	git rev-parse main >expect &&
+	but rev-parse main >expect &&
 	mkdir empty_repo &&
 	(
 		cd empty_repo &&
-		git init &&
-		git pull --rebase .. main &&
-		git rev-parse HEAD >../actual
+		but init &&
+		but pull --rebase .. main &&
+		but rev-parse HEAD >../actual
 	) &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 	test_when_finished "rm -rf empty_repo2" &&
-	git init empty_repo2 &&
+	but init empty_repo2 &&
 	(
 		cd empty_repo2 &&
 		echo staged-file >staged-file &&
-		git add staged-file &&
+		but add staged-file &&
 		echo staged-file >expect &&
-		git ls-files >actual &&
+		but ls-files >actual &&
 		test_cmp expect actual &&
-		test_must_fail git pull --rebase .. main 2>err &&
-		git ls-files >actual &&
+		test_must_fail but pull --rebase .. main 2>err &&
+		but ls-files >actual &&
 		test_cmp expect actual &&
-		git show :staged-file >actual &&
+		but show :staged-file >actual &&
 		test_cmp expect actual &&
 		test_i18ngrep "unborn branch with changes added to the index" err
 	)
@@ -729,40 +729,40 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 
 test_expect_success 'pull --rebase fails on corrupt HEAD' '
 	test_when_finished "rm -rf corrupt" &&
-	git init corrupt &&
+	but init corrupt &&
 	(
 		cd corrupt &&
 		test_cummit one &&
-		git rev-parse --verify HEAD >head &&
+		but rev-parse --verify HEAD >head &&
 		obj=$(sed "s#^..#&/#" head) &&
-		rm -f .git/objects/$obj &&
-		test_must_fail git pull --rebase
+		rm -f .but/objects/$obj &&
+		test_must_fail but pull --rebase
 	)
 '
 
 test_expect_success 'setup for detecting upstreamed changes' '
 	test_create_repo src &&
 	test_cummit -C src --printf one stuff "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" &&
-	git clone src dst &&
+	but clone src dst &&
 	(
 		cd src &&
 		modify s/5/43/ stuff &&
-		git cummit -a -m "5->43" &&
+		but cummit -a -m "5->43" &&
 		modify s/6/42/ stuff &&
-		git cummit -a -m "Make it bigger"
+		but cummit -a -m "Make it bigger"
 	) &&
 	(
 		cd dst &&
 		modify s/5/43/ stuff &&
-		git cummit -a -m "Independent discovery of 5->43"
+		but cummit -a -m "Independent discovery of 5->43"
 	)
 '
 
-test_expect_success 'git pull --rebase detects upstreamed changes' '
+test_expect_success 'but pull --rebase detects upstreamed changes' '
 	(
 		cd dst &&
-		git pull --rebase &&
-		git ls-files -u >untracked &&
+		but pull --rebase &&
+		but ls-files -u >untracked &&
 		test_must_be_empty untracked
 	)
 '
@@ -770,41 +770,41 @@ test_expect_success 'git pull --rebase detects upstreamed changes' '
 test_expect_success 'setup for avoiding reapplying old patches' '
 	(
 		cd dst &&
-		test_might_fail git rebase --abort &&
-		git reset --hard origin/main
+		test_might_fail but rebase --abort &&
+		but reset --hard origin/main
 	) &&
-	git clone --bare src src-replace.git &&
+	but clone --bare src src-replace.but &&
 	rm -rf src &&
-	mv src-replace.git src &&
+	mv src-replace.but src &&
 	(
 		cd dst &&
 		modify s/2/22/ stuff &&
-		git cummit -a -m "Change 2" &&
+		but cummit -a -m "Change 2" &&
 		modify s/3/33/ stuff &&
-		git cummit -a -m "Change 3" &&
+		but cummit -a -m "Change 3" &&
 		modify s/4/44/ stuff &&
-		git cummit -a -m "Change 4" &&
-		git push &&
+		but cummit -a -m "Change 4" &&
+		but push &&
 
 		modify s/44/55/ stuff &&
-		git cummit --amend -a -m "Modified Change 4"
+		but cummit --amend -a -m "Modified Change 4"
 	)
 '
 
-test_expect_success 'git pull --rebase does not reapply old patches' '
+test_expect_success 'but pull --rebase does not reapply old patches' '
 	(
 		cd dst &&
-		test_must_fail git pull --rebase &&
-		cat .git/rebase-merge/done .git/rebase-merge/git-rebase-todo >work &&
+		test_must_fail but pull --rebase &&
+		cat .but/rebase-merge/done .but/rebase-merge/but-rebase-todo >work &&
 		grep -v -e \# -e ^$ work >patches &&
 		test_line_count = 1 patches &&
 		rm -f work
 	)
 '
 
-test_expect_success 'git pull --rebase against local branch' '
-	git checkout -b copy2 to-rebase-orig &&
-	git pull --rebase . to-rebase &&
+test_expect_success 'but pull --rebase against local branch' '
+	but checkout -b copy2 to-rebase-orig &&
+	but pull --rebase . to-rebase &&
 	echo "conflicting modification" >expect &&
 	test_cmp expect file &&
 	echo file >expect &&

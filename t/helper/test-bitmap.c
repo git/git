@@ -14,7 +14,7 @@ static int bitmap_dump_hashes(void)
 
 int cmd__bitmap(int argc, const char **argv)
 {
-	setup_git_directory();
+	setup_but_directory();
 
 	if (argc != 2)
 		goto usage;

@@ -197,13 +197,13 @@ static void *zlib_deflate_raw(void *data, unsigned long size,
 			      int compression_level,
 			      unsigned long *compressed_size)
 {
-	git_zstream stream;
+	but_zstream stream;
 	unsigned long maxsize;
 	void *buffer;
 	int result;
 
-	git_deflate_init_raw(&stream, compression_level);
-	maxsize = git_deflate_bound(&stream, size);
+	but_deflate_init_raw(&stream, compression_level);
+	maxsize = but_deflate_bound(&stream, size);
 	buffer = xmalloc(maxsize);
 
 	stream.next_in = data;
@@ -212,7 +212,7 @@ static void *zlib_deflate_raw(void *data, unsigned long size,
 	stream.avail_out = maxsize;
 
 	do {
-		result = git_deflate(&stream, Z_FINISH);
+		result = but_deflate(&stream, Z_FINISH);
 	} while (result == Z_OK);
 
 	if (result != Z_STREAM_END) {
@@ -220,7 +220,7 @@ static void *zlib_deflate_raw(void *data, unsigned long size,
 		return NULL;
 	}
 
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 	*compressed_size = stream.total_out;
 
 	return buffer;
@@ -301,7 +301,7 @@ static int write_zip_entry(struct archiver_args *args,
 	enum zip_method method;
 	unsigned char *out;
 	void *deflated = NULL;
-	struct git_istream *stream = NULL;
+	struct but_istream *stream = NULL;
 	unsigned long flags = 0;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
@@ -442,12 +442,12 @@ static int write_zip_entry(struct archiver_args *args,
 	} else if (stream && method == ZIP_METHOD_DEFLATE) {
 		unsigned char buf[STREAM_BUFFER_SIZE];
 		ssize_t readlen;
-		git_zstream zstream;
+		but_zstream zstream;
 		int result;
 		size_t out_len;
 		unsigned char compressed[STREAM_BUFFER_SIZE * 2];
 
-		git_deflate_init_raw(&zstream, args->compression_level);
+		but_deflate_init_raw(&zstream, args->compression_level);
 
 		compressed_size = 0;
 		zstream.next_out = compressed;
@@ -465,7 +465,7 @@ static int write_zip_entry(struct archiver_args *args,
 
 			zstream.next_in = buf;
 			zstream.avail_in = readlen;
-			result = git_deflate(&zstream, 0);
+			result = but_deflate(&zstream, 0);
 			if (result != Z_OK)
 				die(_("deflate error (%d)"), result);
 			out_len = zstream.next_out - compressed;
@@ -484,11 +484,11 @@ static int write_zip_entry(struct archiver_args *args,
 
 		zstream.next_in = buf;
 		zstream.avail_in = 0;
-		result = git_deflate(&zstream, Z_FINISH);
+		result = but_deflate(&zstream, Z_FINISH);
 		if (result != Z_STREAM_END)
 			die("deflate error (%d)", result);
 
-		git_deflate_end(&zstream);
+		but_deflate_end(&zstream);
 		out_len = zstream.next_out - compressed;
 		write_or_die(1, compressed, out_len);
 		compressed_size += out_len;
@@ -622,7 +622,7 @@ static int write_zip_archive(const struct archiver *ar,
 {
 	int err;
 
-	git_config(archive_zip_config, NULL);
+	but_config(archive_zip_config, NULL);
 
 	dos_time(&args->time, &zip_date, &zip_time);
 

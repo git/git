@@ -1,25 +1,25 @@
-githooks(5)
+buthooks(5)
 ===========
 
 NAME
 ----
-githooks - Hooks used by Git
+buthooks - Hooks used by Git
 
 SYNOPSIS
 --------
-$GIT_DIR/hooks/* (or \`git config core.hooksPath`/*)
+$GIT_DIR/hooks/* (or \`but config core.hooksPath`/*)
 
 
 DESCRIPTION
 -----------
 
 Hooks are programs you can place in a hooks directory to trigger
-actions at certain points in git's execution. Hooks that don't have
+actions at certain points in but's execution. Hooks that don't have
 the executable bit set are ignored.
 
 By default the hooks directory is `$GIT_DIR/hooks`, but that can be
 changed via the `core.hooksPath` configuration variable (see
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 Before Git invokes a hook, it changes its working directory to either
 $GIT_DIR in a bare repository or the root of the working tree in a non-bare
@@ -31,9 +31,9 @@ Hooks can get their arguments via the environment, command-line
 arguments, and stdin. See the documentation for each hook below for
 details.
 
-`git init` may copy hooks to the new repository, depending on its
+`but init` may copy hooks to the new repository, depending on its
 configuration. See the "TEMPLATE DIRECTORY" section in
-linkgit:git-init[1] for details. When the rest of this document refers
+linkbut:but-init[1] for details. When the rest of this document refers
 to "default hooks" it's talking about the default template shipped
 with Git.
 
@@ -45,9 +45,9 @@ HOOKS
 applypatch-msg
 ~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-am[1].  It takes a single
+This hook is invoked by linkbut:but-am[1].  It takes a single
 parameter, the name of the file that holds the proposed cummit
-log message.  Exiting with a non-zero status causes `git am` to abort
+log message.  Exiting with a non-zero status causes `but am` to abort
 before applying the patch.
 
 The hook is allowed to edit the message file in place, and can
@@ -61,7 +61,7 @@ The default 'applypatch-msg' hook, when enabled, runs the
 pre-applypatch
 ~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-am[1].  It takes no parameter, and is
+This hook is invoked by linkbut:but-am[1].  It takes no parameter, and is
 invoked after the patch is applied, but before a cummit is made.
 
 If it exits with non-zero status, then the working tree will not be
@@ -76,26 +76,26 @@ The default 'pre-applypatch' hook, when enabled, runs the
 post-applypatch
 ~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-am[1].  It takes no parameter,
+This hook is invoked by linkbut:but-am[1].  It takes no parameter,
 and is invoked after the patch is applied and a cummit is made.
 
 This hook is meant primarily for notification, and cannot affect
-the outcome of `git am`.
+the outcome of `but am`.
 
 pre-cummit
 ~~~~~~~~~~
 
-This hook is invoked by linkgit:git-cummit[1], and can be bypassed
+This hook is invoked by linkbut:but-cummit[1], and can be bypassed
 with the `--no-verify` option.  It takes no parameters, and is
 invoked before obtaining the proposed cummit log message and
 making a cummit.  Exiting with a non-zero status from this script
-causes the `git cummit` command to abort before creating a cummit.
+causes the `but cummit` command to abort before creating a cummit.
 
 The default 'pre-cummit' hook, when enabled, catches introduction
 of lines with trailing whitespaces and aborts the cummit when
 such a line is found.
 
-All the `git cummit` hooks are invoked with the environment
+All the `but cummit` hooks are invoked with the environment
 variable `GIT_EDITOR=:` if the command will not bring up an editor
 to modify the cummit message.
 
@@ -106,12 +106,12 @@ the use of non-ASCII filenames.
 pre-merge-cummit
 ~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-merge[1], and can be bypassed
+This hook is invoked by linkbut:but-merge[1], and can be bypassed
 with the `--no-verify` option.  It takes no parameters, and is
 invoked after the merge has been carried out successfully and before
 obtaining the proposed cummit log message to
 make a cummit.  Exiting with a non-zero status from this script
-causes the `git merge` command to abort before creating a cummit.
+causes the `but merge` command to abort before creating a cummit.
 
 The default 'pre-merge-cummit' hook, when enabled, runs the
 'pre-cummit' hook, if the latter is enabled.
@@ -122,13 +122,13 @@ to modify the cummit message.
 
 If the merge cannot be carried out automatically, the conflicts
 need to be resolved and the result cummitted separately (see
-linkgit:git-merge[1]). At that point, this hook will not be executed,
+linkbut:but-merge[1]). At that point, this hook will not be executed,
 but the 'pre-cummit' hook will, if it is enabled.
 
 prepare-cummit-msg
 ~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-cummit[1] right after preparing the
+This hook is invoked by linkbut:but-cummit[1] right after preparing the
 default log message, and before the editor is started.
 
 It takes one to three parameters.  The first is the name of the file
@@ -136,11 +136,11 @@ that contains the cummit log message.  The second is the source of the cummit
 message, and can be: `message` (if a `-m` or `-F` option was
 given); `template` (if a `-t` option was given or the
 configuration option `cummit.template` is set); `merge` (if the
-cummit is a merge or a `.git/MERGE_MSG` file exists); `squash`
-(if a `.git/SQUASH_MSG` file exists); or `cummit`, followed by
+cummit is a merge or a `.but/MERGE_MSG` file exists); `squash`
+(if a `.but/SQUASH_MSG` file exists); or `cummit`, followed by
 a cummit object name (if a `-c`, `-C` or `--amend` option was given).
 
-If the exit status is non-zero, `git cummit` will abort.
+If the exit status is non-zero, `but cummit` will abort.
 
 The purpose of the hook is to edit the message file in place, and
 it is not suppressed by the `--no-verify` option.  A non-zero exit
@@ -153,7 +153,7 @@ help message found in the commented portion of the cummit template.
 cummit-msg
 ~~~~~~~~~~
 
-This hook is invoked by linkgit:git-cummit[1] and linkgit:git-merge[1], and can be
+This hook is invoked by linkbut:but-cummit[1] and linkbut:but-merge[1], and can be
 bypassed with the `--no-verify` option.  It takes a single parameter,
 the name of the file that holds the proposed cummit log message.
 Exiting with a non-zero status causes the command to abort.
@@ -169,16 +169,16 @@ The default 'cummit-msg' hook, when enabled, detects duplicate
 post-cummit
 ~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-cummit[1]. It takes no parameters, and is
+This hook is invoked by linkbut:but-cummit[1]. It takes no parameters, and is
 invoked after a cummit is made.
 
 This hook is meant primarily for notification, and cannot affect
-the outcome of `git cummit`.
+the outcome of `but cummit`.
 
 pre-rebase
 ~~~~~~~~~~
 
-This hook is called by linkgit:git-rebase[1] and can be used to prevent a
+This hook is called by linkbut:but-rebase[1] and can be used to prevent a
 branch from getting rebased.  The hook may be called with one or
 two parameters.  The first parameter is the upstream from which
 the series was forked.  The second parameter is the branch being
@@ -187,19 +187,19 @@ rebased, and is not set when rebasing the current branch.
 post-checkout
 ~~~~~~~~~~~~~
 
-This hook is invoked when a linkgit:git-checkout[1] or
-linkgit:git-switch[1] is run after having updated the
+This hook is invoked when a linkbut:but-checkout[1] or
+linkbut:but-switch[1] is run after having updated the
 worktree.  The hook is given three parameters: the ref of the previous HEAD,
 the ref of the new HEAD (which may or may not have changed), and a flag
 indicating whether the checkout was a branch checkout (changing branches,
 flag=1) or a file checkout (retrieving a file from the index, flag=0).
-This hook cannot affect the outcome of `git switch` or `git checkout`,
+This hook cannot affect the outcome of `but switch` or `but checkout`,
 other than that the hook's exit status becomes the exit status of
 these two commands.
 
-It is also run after linkgit:git-clone[1], unless the `--no-checkout` (`-n`) option is
+It is also run after linkbut:but-clone[1], unless the `--no-checkout` (`-n`) option is
 used. The first parameter given to the hook is the null-ref, the second the
-ref of the new HEAD and the flag is always 1. Likewise for `git worktree add`
+ref of the new HEAD and the flag is always 1. Likewise for `but worktree add`
 unless `--no-checkout` is used.
 
 This hook can be used to perform repository validity checks, auto-display
@@ -209,21 +209,21 @@ properties.
 post-merge
 ~~~~~~~~~~
 
-This hook is invoked by linkgit:git-merge[1], which happens when a `git pull`
+This hook is invoked by linkbut:but-merge[1], which happens when a `but pull`
 is done on a local repository.  The hook takes a single parameter, a status
 flag specifying whether or not the merge being done was a squash merge.
-This hook cannot affect the outcome of `git merge` and is not executed,
+This hook cannot affect the outcome of `but merge` and is not executed,
 if the merge failed due to conflicts.
 
 This hook can be used in conjunction with a corresponding pre-commit hook to
 save and restore any form of metadata associated with the working tree
-(e.g.: permissions/ownership, ACLS, etc).  See contrib/hooks/setgitperms.perl
+(e.g.: permissions/ownership, ACLS, etc).  See contrib/hooks/setbutperms.perl
 for an example of how to do this.
 
 pre-push
 ~~~~~~~~
 
-This hook is called by linkgit:git-push[1] and can be used to prevent
+This hook is called by linkbut:but-push[1] and can be used to prevent
 a push from taking place.  The hook is called with two parameters
 which provide the name and location of the destination remote, if a
 named remote is not being used both values will be the same.
@@ -233,7 +233,7 @@ input with lines of the form:
 
   <local ref> SP <local object name> SP <remote ref> SP <remote object name> LF
 
-For instance, if the command +git push origin master:foreign+ were run the
+For instance, if the command +but push origin master:foreign+ were run the
 hook would receive a line like the following:
 
   refs/heads/master 67890 refs/heads/foreign 12345
@@ -245,7 +245,7 @@ ref is to be deleted, the `<local ref>` will be supplied as `(delete)` and the
 was specified by something other than a name which could be expanded (such as
 `HEAD~`, or an object name) it will be supplied as it was originally given.
 
-If this hook exits with a non-zero status, `git push` will abort without
+If this hook exits with a non-zero status, `but push` will abort without
 pushing anything.  Information about why the push is rejected may be sent
 to the user by writing to standard error.
 
@@ -253,8 +253,8 @@ to the user by writing to standard error.
 pre-receive
 ~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
-`git push` and updates reference(s) in its repository.
+This hook is invoked by linkbut:but-receive-pack[1] when it reacts to
+`but push` and updates reference(s) in its repository.
 Just before starting to update refs on the remote repository, the
 pre-receive hook is invoked.  Its exit status determines the success
 or failure of the update.
@@ -275,11 +275,11 @@ updated. If the hook exits with zero, updating of individual refs can
 still be prevented by the <<update,'update'>> hook.
 
 Both standard output and standard error output are forwarded to
-`git send-pack` on the other end, so you can simply `echo` messages
+`but send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
 The number of push options given on the command line of
-`git push --push-option=...` can be read from the environment
+`but push --push-option=...` can be read from the environment
 variable `GIT_PUSH_OPTION_COUNT`, and the options themselves are
 found in `GIT_PUSH_OPTION_0`, `GIT_PUSH_OPTION_1`,...
 If it is negotiated to not use the push options phase, the
@@ -288,14 +288,14 @@ to use push options, but doesn't transmit any, the count variable
 will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 
 See the section on "Quarantine Environment" in
-linkgit:git-receive-pack[1] for some caveats.
+linkbut:but-receive-pack[1] for some caveats.
 
 [[update]]
 update
 ~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
-`git push` and updates reference(s) in its repository.
+This hook is invoked by linkbut:but-receive-pack[1] when it reacts to
+`but push` and updates reference(s) in its repository.
 Just before updating the ref on the remote repository, the update hook
 is invoked.  Its exit status determines the success or failure of
 the ref update.
@@ -308,7 +308,7 @@ three parameters:
  - and the new object name to be stored in the ref.
 
 A zero exit from the update hook allows the ref to be updated.
-Exiting with a non-zero status prevents `git receive-pack`
+Exiting with a non-zero status prevents `but receive-pack`
 from updating that ref.
 
 This hook can be used to prevent 'forced' update on certain refs by
@@ -321,14 +321,14 @@ does not know the entire set of branches, so it would end up
 firing one e-mail per ref when used naively, though.  The
 <<post-receive,'post-receive'>> hook is more suited to that.
 
-In an environment that restricts the users' access only to git
+In an environment that restricts the users' access only to but
 commands over the wire, this hook can be used to implement access
 control without relying on filesystem ownership and group
-membership. See linkgit:git-shell[1] for how you might use the login
-shell to restrict the user's access to only git commands.
+membership. See linkbut:but-shell[1] for how you might use the login
+shell to restrict the user's access to only but commands.
 
 Both standard output and standard error output are forwarded to
-`git send-pack` on the other end, so you can simply `echo` messages
+`but send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
 The default 'update' hook, when enabled--and with
@@ -339,7 +339,7 @@ unannotated tags to be pushed.
 proc-receive
 ~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1].  If the server has
+This hook is invoked by linkbut:but-receive-pack[1].  If the server has
 set the multi-valued config variable `receive.procReceiveRefs`, and the
 commands sent to 'receive-pack' have matching reference names, these
 commands will be executed by this hook, instead of by the internal
@@ -401,8 +401,8 @@ atomic push is in use.
 post-receive
 ~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
-`git push` and updates reference(s) in its repository.
+This hook is invoked by linkbut:but-receive-pack[1] when it reacts to
+`but push` and updates reference(s) in its repository.
 It executes on the remote repository once after all the refs have
 been updated.
 
@@ -411,7 +411,7 @@ arguments, but gets the same information as the
 <<pre-receive,'pre-receive'>>
 hook does on its standard input.
 
-This hook does not affect the outcome of `git receive-pack`, as it
+This hook does not affect the outcome of `but receive-pack`, as it
 is called after the real work is done.
 
 This supersedes the <<post-update,'post-update'>> hook in that it gets
@@ -419,7 +419,7 @@ both old and new values of all the refs in addition to their
 names.
 
 Both standard output and standard error output are forwarded to
-`git send-pack` on the other end, so you can simply `echo` messages
+`but send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
 The default 'post-receive' hook is empty, but there is
@@ -428,7 +428,7 @@ directory in Git distribution, which implements sending cummit
 emails.
 
 The number of push options given on the command line of
-`git push --push-option=...` can be read from the environment
+`but push --push-option=...` can be read from the environment
 variable `GIT_PUSH_OPTION_COUNT`, and the options themselves are
 found in `GIT_PUSH_OPTION_0`, `GIT_PUSH_OPTION_1`,...
 If it is negotiated to not use the push options phase, the
@@ -440,8 +440,8 @@ will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 post-update
 ~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
-`git push` and updates reference(s) in its repository.
+This hook is invoked by linkbut:but-receive-pack[1] when it reacts to
+`but push` and updates reference(s) in its repository.
 It executes on the remote repository once after all the refs have
 been updated.
 
@@ -449,7 +449,7 @@ It takes a variable number of parameters, each of which is the
 name of ref that was actually updated.
 
 This hook is meant primarily for notification, and cannot affect
-the outcome of `git receive-pack`.
+the outcome of `but receive-pack`.
 
 The 'post-update' hook can tell what are the heads that were pushed,
 but it does not know what their original and updated values are,
@@ -459,13 +459,13 @@ updated values of the refs. You might consider it instead if you need
 them.
 
 When enabled, the default 'post-update' hook runs
-`git update-server-info` to keep the information used by dumb
+`but update-server-info` to keep the information used by dumb
 transports (e.g., HTTP) up to date.  If you are publishing
 a Git repository that is accessible via HTTP, you should
 probably enable this hook.
 
 Both standard output and standard error output are forwarded to
-`git send-pack` on the other end, so you can simply `echo` messages
+`but send-pack` on the other end, so you can simply `echo` messages
 for the user.
 
 reference-transaction
@@ -499,7 +499,7 @@ ref and `<ref-name>` is the full name of the ref. When force updating
 the reference regardless of its current value or when the reference is
 to be created anew, `<old-value>` is the all-zeroes object name. To
 distinguish these cases, you can inspect the current value of
-`<ref-name>` via `git rev-parse`.
+`<ref-name>` via `but rev-parse`.
 
 The exit status of the hook is ignored for any state except for the
 "prepared" state. In the "prepared" state, a non-zero exit status will
@@ -509,8 +509,8 @@ cause the transaction to be aborted. The hook will not be called with
 push-to-checkout
 ~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
-`git push` and updates reference(s) in its repository, and when
+This hook is invoked by linkbut:but-receive-pack[1] when it reacts to
+`but push` and updates reference(s) in its repository, and when
 the push tries to update the branch that is currently checked out
 and the `receive.denyCurrentBranch` configuration variable is set to
 `updateInstead`.  Such a push by default is refused if the working
@@ -528,10 +528,10 @@ working tree and to the index to bring them to the desired state
 when the tip of the current branch is updated to the new cummit, and
 exit with a zero status.
 
-For example, the hook can simply run `git read-tree -u -m HEAD "$1"`
-in order to emulate `git fetch` that is run in the reverse direction
-with `git push`, as the two-tree form of `git read-tree -u -m` is
-essentially the same as `git switch` or `git checkout`
+For example, the hook can simply run `but read-tree -u -m HEAD "$1"`
+in order to emulate `but fetch` that is run in the reverse direction
+with `but push`, as the two-tree form of `but read-tree -u -m` is
+essentially the same as `but switch` or `but checkout`
 that switches branches while
 keeping the local changes in the working tree that do not interfere
 with the difference between the branches.
@@ -540,18 +540,18 @@ with the difference between the branches.
 pre-auto-gc
 ~~~~~~~~~~~
 
-This hook is invoked by `git gc --auto` (see linkgit:git-gc[1]). It
+This hook is invoked by `but gc --auto` (see linkbut:but-gc[1]). It
 takes no parameter, and exiting with non-zero status from this script
-causes the `git gc --auto` to abort.
+causes the `but gc --auto` to abort.
 
 post-rewrite
 ~~~~~~~~~~~~
 
 This hook is invoked by commands that rewrite cummits
-(linkgit:git-cummit[1] when called with `--amend` and
-linkgit:git-rebase[1]; however, full-history (re)writing tools like
-linkgit:git-fast-import[1] or
-https://github.com/newren/git-filter-repo[git-filter-repo] typically
+(linkbut:but-cummit[1] when called with `--amend` and
+linkbut:but-rebase[1]; however, full-history (re)writing tools like
+linkbut:but-fast-import[1] or
+https://buthub.com/newren/but-filter-repo[but-filter-repo] typically
 do not call it!).  Its first argument denotes the command it was
 invoked by: currently one of `amend` or `rebase`.  Further
 command-dependent arguments may be passed in the future.
@@ -566,7 +566,7 @@ preceding SP is also omitted.  Currently, no commands pass any
 'extra-info'.
 
 The hook always runs after the automatic note copying (see
-"notes.rewrite.<command>" in linkgit:git-config[1]) has happened, and
+"notes.rewrite.<command>" in linkbut:but-config[1]) has happened, and
 thus has access to these notes.
 
 The following command-specific comments apply:
@@ -583,16 +583,16 @@ processed by rebase.
 sendemail-validate
 ~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-send-email[1].  It takes a single parameter,
+This hook is invoked by linkbut:but-send-email[1].  It takes a single parameter,
 the name of the file that holds the e-mail to be sent.  Exiting with a
-non-zero status causes `git send-email` to abort before sending any
+non-zero status causes `but send-email` to abort before sending any
 e-mails.
 
 fsmonitor-watchman
 ~~~~~~~~~~~~~~~~~~
 
 This hook is invoked when the configuration option `core.fsmonitor` is
-set to `.git/hooks/fsmonitor-watchman` or `.git/hooks/fsmonitor-watchmanv2`
+set to `.but/hooks/fsmonitor-watchman` or `.but/hooks/fsmonitor-watchmanv2`
 depending on the version of the hook to use.
 
 Version 1 takes two arguments, a version (1) and the time in elapsed
@@ -617,17 +617,17 @@ Git will limit what files it checks for changes as well as which
 directories are checked for untracked files based on the path names
 given.
 
-An optimized way to tell git "all files have changed" is to return
+An optimized way to tell but "all files have changed" is to return
 the filename `/`.
 
-The exit status determines whether git will use the data from the
+The exit status determines whether but will use the data from the
 hook to limit its search.  On error, it will fall back to verifying
 all files and folders.
 
 p4-changelist
 ~~~~~~~~~~~~~
 
-This hook is invoked by `git-p4 submit`.
+This hook is invoked by `but-p4 submit`.
 
 The `p4-changelist` hook is executed after the changelist
 message has been edited by the user. It can be bypassed with the
@@ -639,12 +639,12 @@ The hook is allowed to edit the changelist file and can be used
 to normalize the text into some project standard format. It can
 also be used to refuse the Submit after inspect the message file.
 
-Run `git-p4 submit --help` for details.
+Run `but-p4 submit --help` for details.
 
 p4-prepare-changelist
 ~~~~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by `git-p4 submit`.
+This hook is invoked by `but-p4 submit`.
 
 The `p4-prepare-changelist` hook is executed right after preparing
 the default changelist message and before the editor is started.
@@ -656,27 +656,27 @@ The purpose of the hook is to edit the message file in place,
 and it is not suppressed by the `--no-verify` option. This hook
 is called even if `--prepare-p4-only` is set.
 
-Run `git-p4 submit --help` for details.
+Run `but-p4 submit --help` for details.
 
 p4-post-changelist
 ~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by `git-p4 submit`.
+This hook is invoked by `but-p4 submit`.
 
 The `p4-post-changelist` hook is invoked after the submit has
 successfully occurred in P4. It takes no parameters and is meant
 primarily for notification and cannot affect the outcome of the
-git p4 submit action.
+but p4 submit action.
 
-Run `git-p4 submit --help` for details.
+Run `but-p4 submit --help` for details.
 
 p4-pre-submit
 ~~~~~~~~~~~~~
 
-This hook is invoked by `git-p4 submit`. It takes no parameters and nothing
+This hook is invoked by `but-p4 submit`. It takes no parameters and nothing
 from standard input. Exiting with non-zero status from this script prevent
-`git-p4 submit` from launching. It can be bypassed with the `--no-verify`
-command line option. Run `git-p4 submit --help` for details.
+`but-p4 submit` from launching. It can be bypassed with the `--no-verify`
+command line option. Run `but-p4 submit --help` for details.
 
 
 
@@ -700,8 +700,8 @@ running passing "1", "1" should not be possible.
 
 SEE ALSO
 --------
-linkgit:git-hook[1]
+linkbut:but-hook[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

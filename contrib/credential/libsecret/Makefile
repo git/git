@@ -1,4 +1,4 @@
-MAIN:=git-credential-libsecret
+MAIN:=but-credential-libsecret
 all:: $(MAIN)
 
 CC = gcc

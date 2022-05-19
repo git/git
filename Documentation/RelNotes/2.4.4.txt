@@ -8,7 +8,7 @@ Fixes since v2.4.3
 
  * An earlier leakfix to bitmap testing code was incomplete.
 
- * "git clean pathspec..." tried to lstat(2) and complain even for
+ * "but clean pathspec..." tried to lstat(2) and complain even for
    paths outside the given pathspec.
 
  * Communication between the HTTP server and http_backend process can
@@ -22,8 +22,8 @@ Fixes since v2.4.3
    an empty input is nonsense, but if the user wants to do strange
    things, then why not?
 
- * Make "git stash something --help" error out, so that users can
-   safely say "git stash drop --help".
+ * Make "but stash something --help" error out, so that users can
+   safely say "but stash drop --help".
 
  * Clarify that "log --raw" and "log --format=raw" are unrelated
    concepts.

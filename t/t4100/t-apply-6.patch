@@ -3,23 +3,23 @@ diff a/Makefile b/Makefile
 +++ b/Makefile
 @@ -20,7 +20,7 @@ INSTALL=install
  
- SCRIPTS=git-apply-patch-script git-merge-one-file-script git-prune-script \
- 	git-pull-script git-tag-script git-resolve-script git-whatchanged \
--	git-deltafy-script
-+	git-deltafy-script git-fetch-script
+ SCRIPTS=but-apply-patch-script but-merge-one-file-script but-prune-script \
+ 	but-pull-script but-tag-script but-resolve-script but-whatchanged \
+-	but-deltafy-script
++	but-deltafy-script but-fetch-script
  
- PROG=   git-update-index git-diff-files git-init-db git-write-tree \
- 	git-read-tree git-cummit-tree git-cat-file git-fsck-cache \
-diff a/git-fetch-script b/git-fetch-script
+ PROG=   but-update-index but-diff-files but-init-db but-write-tree \
+ 	but-read-tree but-cummit-tree but-cat-file but-fsck-cache \
+diff a/but-fetch-script b/but-fetch-script
 --- /dev/null
-+++ b/git-fetch-script
++++ b/but-fetch-script
 @@ -0,0 +1,41 @@
 +#!/bin/sh
 +#
 +merge_repo=$1
 +merge_name=${2:-HEAD}
 +
-+: ${GIT_DIR=.git}
++: ${GIT_DIR=.but}
 +: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
 +
 +download_one () {
@@ -38,10 +38,10 @@ diff a/git-fetch-script b/git-fetch-script
 +	# remote_repo="$1" head_sha1="$2"
 +	case "$1" in
 +	http://*)
-+		git-http-pull -a "$2" "$1/"
++		but-http-pull -a "$2" "$1/"
 +		;;
 +	/*)
-+		git-local-pull -l -a "$2" "$1/"
++		but-local-pull -l -a "$2" "$1/"
 +		;;
 +	*)
 +		rsync -avz --ignore-existing \
@@ -55,11 +55,11 @@ diff a/git-fetch-script b/git-fetch-script
 +
 +echo "Getting object database"
 +download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
-diff a/git-pull-script b/git-pull-script
---- a/git-pull-script
-+++ b/git-pull-script
+diff a/but-pull-script b/but-pull-script
+--- a/but-pull-script
++++ b/but-pull-script
 @@ -6,39 +6,7 @@ merge_name=${2:-HEAD}
- : ${GIT_DIR=.git}
+ : ${GIT_DIR=.but}
  : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
  
 -download_one () {
@@ -78,10 +78,10 @@ diff a/git-pull-script b/git-pull-script
 -	# remote_repo="$1" head_sha1="$2"
 -	case "$1" in
 -	http://*)
--		git-http-pull -a "$2" "$1/"
+-		but-http-pull -a "$2" "$1/"
 -		;;
 -	/*)
--		git-local-pull -l -a "$2" "$1/"
+-		but-local-pull -l -a "$2" "$1/"
 -		;;
 -	*)
 -		rsync -avz --ignore-existing \
@@ -95,7 +95,7 @@ diff a/git-pull-script b/git-pull-script
 -
 -echo "Getting object database"
 -download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
-+git-fetch-script "$merge_repo" "$merge_name"
++but-fetch-script "$merge_repo" "$merge_name"
  
- git-resolve-script \
+ but-resolve-script \
  	"$(cat "$GIT_DIR"/HEAD)" \

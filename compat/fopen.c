@@ -1,17 +1,17 @@
 /*
  *  The order of the following two lines is important.
  *
- *  SUPPRESS_FOPEN_REDEFINITION is defined before including git-compat-util.h
- *  to avoid the redefinition of fopen within git-compat-util.h. This is
+ *  SUPPRESS_FOPEN_REDEFINITION is defined before including but-compat-util.h
+ *  to avoid the redefinition of fopen within but-compat-util.h. This is
  *  necessary since fopen is a macro on some platforms which may be set
  *  based on compiler options. For example, on AIX fopen is set to fopen64
  *  when _LARGE_FILES is defined. The previous technique of merely undefining
- *  fopen after including git-compat-util.h is inadequate in this case.
+ *  fopen after including but-compat-util.h is inadequate in this case.
  */
 #define SUPPRESS_FOPEN_REDEFINITION
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-FILE *git_fopen(const char *path, const char *mode)
+FILE *but_fopen(const char *path, const char *mode)
 {
 	FILE *fp;
 	struct stat st;

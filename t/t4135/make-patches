@@ -5,13 +5,13 @@ do_filename() {
 	postimage=$2
 
 	rm -fr file-creation &&
-	git init file-creation &&
+	but init file-creation &&
 	(
 		cd file-creation &&
-		git cummit --allow-empty -m init &&
+		but cummit --allow-empty -m init &&
 		echo postimage >"$postimage" &&
-		git add -N "$postimage" &&
-		git diff HEAD >"../git-$desc.diff"
+		but add -N "$postimage" &&
+		but diff HEAD >"../but-$desc.diff"
 	) &&
 
 	rm -fr trad-modification &&

@@ -11,33 +11,33 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 cummit () {
 	test_tick &&
 	echo $1 > foo &&
-	git add foo &&
-	git cummit -m "$1"
+	but add foo &&
+	but cummit -m "$1"
 }
 
 test_expect_success 'set up --reverse example' '
 	cummit one &&
-	git tag root &&
+	but tag root &&
 	cummit two &&
-	git checkout -b side HEAD^ &&
+	but checkout -b side HEAD^ &&
 	cummit three &&
-	git checkout main &&
-	git merge -s ours side &&
+	but checkout main &&
+	but merge -s ours side &&
 	cummit five
 	'
 
 test_expect_success '--reverse --parents --full-history combines correctly' '
-	git rev-list --parents --full-history main -- foo |
+	but rev-list --parents --full-history main -- foo |
 		perl -e "print reverse <>" > expected &&
-	git rev-list --reverse --parents --full-history main -- foo \
+	but rev-list --reverse --parents --full-history main -- foo \
 		> actual &&
 	test_cmp expected actual
 	'
 
 test_expect_success '--boundary does too' '
-	git rev-list --boundary --parents --full-history main ^root -- foo |
+	but rev-list --boundary --parents --full-history main ^root -- foo |
 		perl -e "print reverse <>" > expected &&
-	git rev-list --boundary --reverse --parents --full-history \
+	but rev-list --boundary --reverse --parents --full-history \
 		main ^root -- foo > actual &&
 	test_cmp expected actual
 	'

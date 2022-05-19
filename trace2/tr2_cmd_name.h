@@ -5,8 +5,8 @@
  * Append the current command name to the list being maintained
  * in the environment.
  *
- * The hierarchy for a top-level git command is just the current
- * command name.  For a child git process, the hierarchy includes the
+ * The hierarchy for a top-level but command is just the current
+ * command name.  For a child but process, the hierarchy includes the
  * names of the parent processes.
  *
  * The hierarchy for the current process will be exported to the

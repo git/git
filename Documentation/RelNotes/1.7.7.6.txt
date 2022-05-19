@@ -9,7 +9,7 @@ Fixes since v1.7.7.5
    the name of the one directory is a prefix of the other.
 
  * A wildcard that matches deeper hierarchy given to the "diff-index" command,
-   e.g. "git diff-index HEAD -- '*.txt'", incorrectly reported additions of
+   e.g. "but diff-index HEAD -- '*.txt'", incorrectly reported additions of
    matching files even when there is no change.
 
  * When producing a "thin pack" (primarily used in bundles and smart

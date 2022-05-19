@@ -59,7 +59,7 @@ command $switch_cmd su -m -l $CI_USER -c "
 	export GIT_TEST_CLONE_2GB='$GIT_TEST_CLONE_2GB'
 	export MAKEFLAGS='$MAKEFLAGS'
 	export cache_dir='$cache_dir'
-	cd /usr/src/git
+	cd /usr/src/but
 	test -n '$cache_dir' && ln -s '$cache_dir/.prove' t/.prove
 	make
 	make test

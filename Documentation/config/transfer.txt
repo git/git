@@ -7,13 +7,13 @@ When set, the fetch or receive will abort in the case of a malformed
 object or a link to a nonexistent object. In addition, various other
 issues are checked for, including legacy issues (see `fsck.<msg-id>`),
 and potential security issues like the existence of a `.GIT` directory
-or a malicious `.gitmodules` file (see the release notes for v2.2.1
+or a malicious `.butmodules` file (see the release notes for v2.2.1
 and v2.17.1 for details). Other sanity and security checks may be
 added in future releases.
 +
 On the receiving side, failing fsckObjects will make those objects
 unreachable, see "QUARANTINE ENVIRONMENT" in
-linkgit:git-receive-pack[1]. On the fetch side, malformed objects will
+linkbut:but-receive-pack[1]. On the fetch side, malformed objects will
 instead be left unreferenced in the repository.
 +
 Due to the non-quarantine nature of the `fetch.fsckObjects`
@@ -42,7 +42,7 @@ transfer.hideRefs::
 	refs to omit from their initial advertisements.  Use more than
 	one definition to specify multiple prefix strings. A ref that is
 	under the hierarchies listed in the value of this variable is
-	excluded, and is hidden when responding to `git push` or `git
+	excluded, and is hidden when responding to `but push` or `but
 	fetch`.  See `receive.hideRefs` and `uploadpack.hideRefs` for
 	program-specific versions of this config.
 +
@@ -66,7 +66,7 @@ ref is pointing to without mentioning its name (a so-called ".have" line).
 +
 Even if you hide refs, a client may still be able to steal the target
 objects via the techniques described in the "SECURITY" section of the
-linkgit:gitnamespaces[7] man page; it's best to keep private data in a
+linkbut:butnamespaces[7] man page; it's best to keep private data in a
 separate repository.
 
 transfer.unpackLimit::

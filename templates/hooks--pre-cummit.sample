@@ -1,22 +1,22 @@
 #!/bin/sh
 #
 # An example hook script to verify what is about to be cummitted.
-# Called by "git cummit" with no arguments.  The hook should
+# Called by "but cummit" with no arguments.  The hook should
 # exit with non-zero status after issuing an appropriate message if
 # it wants to stop the cummit.
 #
 # To enable this hook, rename this file to "pre-cummit".
 
-if git rev-parse --verify HEAD >/dev/null 2>&1
+if but rev-parse --verify HEAD >/dev/null 2>&1
 then
 	against=HEAD
 else
 	# Initial cummit: diff against an empty tree object
-	against=$(git hash-object -t tree /dev/null)
+	against=$(but hash-object -t tree /dev/null)
 fi
 
 # If you want to allow non-ASCII filenames set this variable to true.
-allownonascii=$(git config --type=bool hooks.allownonascii)
+allownonascii=$(but config --type=bool hooks.allownonascii)
 
 # Redirect output to stderr.
 exec 1>&2
@@ -28,7 +28,7 @@ if [ "$allownonascii" != "true" ] &&
 	# Note that the use of brackets around a tr range is ok here, (it's
 	# even required, for portability to Solaris 10's /usr/bin/tr), since
 	# the square bracket bytes happen to fall in the designated range.
-	test $(git diff --cached --name-only --diff-filter=A -z $against |
+	test $(but diff --cached --name-only --diff-filter=A -z $against |
 	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
 then
 	cat <<\EOF
@@ -40,10 +40,10 @@ To be portable it is advisable to rename the file.
 
 If you know what you are doing you can disable this check using:
 
-  git config hooks.allownonascii true
+  but config hooks.allownonascii true
 EOF
 	exit 1
 fi
 
 # If there are whitespace errors, print the offending file names and fail.
-exec git diff-index --check --cached $against --
+exec but diff-index --check --cached $against --

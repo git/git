@@ -18,7 +18,7 @@ test_expect_success 'shared = 0400 (faulty permission u-w)' '
 	test_when_finished "rm -rf sub" &&
 	mkdir sub && (
 		cd sub &&
-		test_must_fail git init --shared=0400
+		test_must_fail but init --shared=0400
 	)
 '
 
@@ -28,16 +28,16 @@ do
 		mkdir sub && (
 			cd sub &&
 			umask $u &&
-			git init --shared=1 &&
-			test 1 = "$(git config core.sharedrepository)"
+			but init --shared=1 &&
+			test 1 = "$(but config core.sharedrepository)"
 		) &&
-		actual=$(ls -l sub/.git/HEAD) &&
+		actual=$(ls -l sub/.but/HEAD) &&
 		case "$actual" in
 		-rw-rw-r--*)
 			: happy
 			;;
 		*)
-			echo Oops, .git/HEAD is not 0664 but $actual
+			echo Oops, .but/HEAD is not 0664 but $actual
 			false
 			;;
 		esac
@@ -48,24 +48,24 @@ done
 test_expect_success 'shared=all' '
 	mkdir sub &&
 	cd sub &&
-	git init --shared=all &&
-	test 2 = $(git config core.sharedrepository)
+	but init --shared=all &&
+	test 2 = $(but config core.sharedrepository)
 '
 
 test_expect_success POSIXPERM 'update-server-info honors core.sharedRepository' '
 	: > a1 &&
-	git add a1 &&
+	but add a1 &&
 	test_tick &&
-	git cummit -m a1 &&
+	but cummit -m a1 &&
 	umask 0277 &&
-	git update-server-info &&
-	actual="$(ls -l .git/info/refs)" &&
+	but update-server-info &&
+	actual="$(ls -l .but/info/refs)" &&
 	case "$actual" in
 	-r--r--r--*)
 		: happy
 		;;
 	*)
-		echo Oops, .git/info/refs is not 0444
+		echo Oops, .but/info/refs is not 0444
 		false
 		;;
 	esac
@@ -80,14 +80,14 @@ do
 	x=$(expr "$u" : ".*:\([rw-]*\)") &&
 	y=$(echo "$x" | sed -e "s/w/-/g") &&
 	u=$(expr "$u" : "\([0-7]*\)") &&
-	git config core.sharedrepository "$u" &&
+	but config core.sharedrepository "$u" &&
 	umask 0277 &&
 
 	test_expect_success POSIXPERM "shared = $u ($y) ro" '
 
-		rm -f .git/info/refs &&
-		git update-server-info &&
-		actual="$(test_modebits .git/info/refs)" &&
+		rm -f .but/info/refs &&
+		but update-server-info &&
+		actual="$(test_modebits .but/info/refs)" &&
 		verbose test "x$actual" = "x-$y"
 
 	'
@@ -95,9 +95,9 @@ do
 	umask 077 &&
 	test_expect_success POSIXPERM "shared = $u ($x) rw" '
 
-		rm -f .git/info/refs &&
-		git update-server-info &&
-		actual="$(test_modebits .git/info/refs)" &&
+		rm -f .but/info/refs &&
+		but update-server-info &&
+		actual="$(test_modebits .but/info/refs)" &&
 		verbose test "x$actual" = "x-$x"
 
 	'
@@ -105,26 +105,26 @@ do
 done
 
 test_expect_success POSIXPERM 'info/refs respects umask in unshared repo' '
-	rm -f .git/info/refs &&
+	rm -f .but/info/refs &&
 	test_unconfig core.sharedrepository &&
 	umask 002 &&
-	git update-server-info &&
+	but update-server-info &&
 	echo "-rw-rw-r--" >expect &&
-	test_modebits .git/info/refs >actual &&
+	test_modebits .but/info/refs >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
+test_expect_success POSIXPERM 'but reflog expire honors core.sharedRepository' '
 	umask 077 &&
-	git config core.sharedRepository group &&
-	git reflog expire --all &&
-	actual="$(ls -l .git/logs/refs/heads/main)" &&
+	but config core.sharedRepository group &&
+	but reflog expire --all &&
+	actual="$(ls -l .but/logs/refs/heads/main)" &&
 	case "$actual" in
 	-rw-rw-*)
 		: happy
 		;;
 	*)
-		echo Ooops, .git/logs/refs/heads/main is not 066x [$actual]
+		echo Ooops, .but/logs/refs/heads/main is not 066x [$actual]
 		false
 		;;
 	esac
@@ -139,16 +139,16 @@ test_expect_success POSIXPERM 'forced modes' '
 	(
 		cd new &&
 		umask 002 &&
-		git init --shared=0660 --template=templates &&
+		but init --shared=0660 --template=templates &&
 		>frotz &&
-		git add frotz &&
-		git cummit -a -m initial &&
-		git repack
+		but add frotz &&
+		but cummit -a -m initial &&
+		but repack
 	) &&
 	# List repository files meant to be protected; note that
 	# CUMMIT_EDITMSG does not matter---0mode is not about a
 	# repository with a work tree.
-	find new/.git -type f -name CUMMIT_EDITMSG -prune -o -print |
+	find new/.but -type f -name CUMMIT_EDITMSG -prune -o -print |
 	xargs ls -ld >actual &&
 
 	# Everything must be unaccessible to others
@@ -172,43 +172,43 @@ test_expect_success POSIXPERM 'forced modes' '
 '
 
 test_expect_success POSIXPERM 'remote init does not use config from cwd' '
-	git config core.sharedrepository 0666 &&
+	but config core.sharedrepository 0666 &&
 	umask 0022 &&
-	git init --bare child.git &&
+	but init --bare child.but &&
 	echo "-rw-r--r--" >expect &&
-	test_modebits child.git/config >actual &&
+	test_modebits child.but/config >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success POSIXPERM 're-init respects core.sharedrepository (local)' '
-	git config core.sharedrepository 0666 &&
+	but config core.sharedrepository 0666 &&
 	umask 0022 &&
 	echo whatever >templates/foo &&
-	git init --template=templates &&
+	but init --template=templates &&
 	echo "-rw-rw-rw-" >expect &&
-	test_modebits .git/foo >actual &&
+	test_modebits .but/foo >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success POSIXPERM 're-init respects core.sharedrepository (remote)' '
-	rm -rf child.git &&
+	rm -rf child.but &&
 	umask 0022 &&
-	git init --bare --shared=0666 child.git &&
-	test_path_is_missing child.git/foo &&
-	git init --bare --template=templates child.git &&
+	but init --bare --shared=0666 child.but &&
+	test_path_is_missing child.but/foo &&
+	but init --bare --template=templates child.but &&
 	echo "-rw-rw-rw-" >expect &&
-	test_modebits child.git/foo >actual &&
+	test_modebits child.but/foo >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success POSIXPERM 'template can set core.sharedrepository' '
-	rm -rf child.git &&
+	rm -rf child.but &&
 	umask 0022 &&
-	git config core.sharedrepository 0666 &&
-	cp .git/config templates/config &&
-	git init --bare --template=templates child.git &&
+	but config core.sharedrepository 0666 &&
+	cp .but/config templates/config &&
+	but init --bare --template=templates child.but &&
 	echo "-rw-rw-rw-" >expect &&
-	test_modebits child.git/HEAD >actual &&
+	test_modebits child.but/HEAD >actual &&
 	test_cmp expect actual
 '
 

@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "parse-options.h"
 #include "branch.h"
 #include "cache.h"
@@ -50,7 +50,7 @@ int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
 
 	if (!arg)
 		arg = unset ? "never" : (const char *)opt->defval;
-	value = git_config_colorbool(NULL, arg);
+	value = but_config_colorbool(NULL, arg);
 	if (value < 0)
 		return error(_("option `%s' expects \"always\", \"auto\", or \"never\""),
 			     opt->long_name);

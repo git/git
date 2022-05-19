@@ -22,46 +22,46 @@ test_perf_default_repo
 # branch to be the ballast.
 
 test_expect_success "setup repo" '
-	if git rev-parse --verify refs/heads/p0006-ballast^{cummit}
+	if but rev-parse --verify refs/heads/p0006-ballast^{cummit}
 	then
 		echo Assuming synthetic repo from many-files.sh &&
-		git branch br_base            master &&
-		git branch br_ballast         p0006-ballast^ &&
-		git branch br_ballast_alias   p0006-ballast^ &&
-		git branch br_ballast_plus_1  p0006-ballast &&
-		git config --local core.sparsecheckout 1 &&
-		cat >.git/info/sparse-checkout <<-EOF
+		but branch br_base            master &&
+		but branch br_ballast         p0006-ballast^ &&
+		but branch br_ballast_alias   p0006-ballast^ &&
+		but branch br_ballast_plus_1  p0006-ballast &&
+		but config --local core.sparsecheckout 1 &&
+		cat >.but/info/sparse-checkout <<-EOF
 		/*
 		!ballast/*
 		EOF
 	else
 		echo Assuming non-synthetic repo... &&
-		git branch br_base            $(git rev-list HEAD | tail -n 1) &&
-		git branch br_ballast         HEAD^ || error "no ancestor cummit from current head" &&
-		git branch br_ballast_alias   HEAD^ &&
-		git branch br_ballast_plus_1  HEAD
+		but branch br_base            $(but rev-list HEAD | tail -n 1) &&
+		but branch br_ballast         HEAD^ || error "no ancestor cummit from current head" &&
+		but branch br_ballast_alias   HEAD^ &&
+		but branch br_ballast_plus_1  HEAD
 	fi &&
-	git checkout -q br_ballast &&
-	nr_files=$(git ls-files | wc -l)
+	but checkout -q br_ballast &&
+	nr_files=$(but ls-files | wc -l)
 '
 
 test_perf "read-tree br_base br_ballast ($nr_files)" '
-	git read-tree -m br_base br_ballast -n
+	but read-tree -m br_base br_ballast -n
 '
 
 test_perf "switch between br_base br_ballast ($nr_files)" '
-	git checkout -q br_base &&
-	git checkout -q br_ballast
+	but checkout -q br_base &&
+	but checkout -q br_ballast
 '
 
 test_perf "switch between br_ballast br_ballast_plus_1 ($nr_files)" '
-	git checkout -q br_ballast_plus_1 &&
-	git checkout -q br_ballast
+	but checkout -q br_ballast_plus_1 &&
+	but checkout -q br_ballast
 '
 
 test_perf "switch between aliases ($nr_files)" '
-	git checkout -q br_ballast_alias &&
-	git checkout -q br_ballast
+	but checkout -q br_ballast_alias &&
+	but checkout -q br_ballast
 '
 
 test_done

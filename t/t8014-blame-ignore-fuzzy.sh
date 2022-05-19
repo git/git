@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git blame ignore fuzzy heuristic'
+test_description='but blame ignore fuzzy heuristic'
 . ./test-lib.sh
 
 pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'
@@ -9,7 +9,7 @@ pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'
 # titleN - the test name
 # aN - the initial content
 # bN - the final content
-# expectedN - the line numbers from aN that we expect git blame
+# expectedN - the line numbers from aN that we expect but blame
 #             on bN to identify, or "Final" if bN itself should
 #             be identified as the origin of that line.
 
@@ -308,9 +308,9 @@ test_expect_success setup '
 		do
 			line_count=$((line_count+1)) &&
 			echo "$line" >>"$i" &&
-			git add "$i" &&
+			but add "$i" &&
 			test_tick &&
-			GIT_AUTHOR_NAME="$line_count" git cummit -m "$line_count" || return 1
+			GIT_AUTHOR_NAME="$line_count" but cummit -m "$line_count" || return 1
 		done <"a$i"
 	done &&
 
@@ -318,21 +318,21 @@ test_expect_success setup '
 	do
 		# Overwrite the files with the final content.
 		cp b$i $i &&
-		git add $i || return 1
+		but add $i || return 1
 	done &&
 	test_tick &&
 
 	# cummit the final content all at once so it can all be
 	# referred to with the same cummit ID.
-	GIT_AUTHOR_NAME=Final git cummit -m Final &&
+	GIT_AUTHOR_NAME=Final but cummit -m Final &&
 
-	IGNOREME=$(git rev-parse HEAD)
+	IGNOREME=$(but rev-parse HEAD)
 '
 
 for i in $(test_seq 2 $last_test); do
 	eval title="\$title$i"
 	test_expect_success "$title" \
-	"git blame -M9 --ignore-rev $IGNOREME $i >output &&
+	"but blame -M9 --ignore-rev $IGNOREME $i >output &&
 	sed -e \"$pick_author\" output >actual &&
 	test_cmp expected$i actual"
 done
@@ -341,25 +341,25 @@ done
 # with a zero length parent chunk and there were no more suspects.
 test_expect_success 'Diff chunks with no suspects' '
 	test_write_lines xy1 A B C xy1 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
+	GIT_AUTHOR_NAME=1 but cummit -m 1 &&
 
 	test_write_lines xy2 A B xy2 C xy2 >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
-	REV_2=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=2 but cummit -m 2 &&
+	REV_2=$(but rev-parse HEAD) &&
 
 	test_write_lines xy3 A >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
-	REV_3=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=3 but cummit -m 3 &&
+	REV_3=$(but rev-parse HEAD) &&
 
 	test_write_lines 1 1 >expected &&
 
-	git blame --ignore-rev $REV_2 --ignore-rev $REV_3 file >output &&
+	but blame --ignore-rev $REV_2 --ignore-rev $REV_3 file >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual
@@ -367,30 +367,30 @@ test_expect_success 'Diff chunks with no suspects' '
 
 test_expect_success 'position matching' '
 	test_write_lines abc def >file2 &&
-	git add file2 &&
+	but add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
+	GIT_AUTHOR_NAME=1 but cummit -m 1 &&
 
 	test_write_lines abc def abc def >file2 &&
-	git add file2 &&
+	but add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
+	GIT_AUTHOR_NAME=2 but cummit -m 2 &&
 
 	test_write_lines abcx defx abcx defx >file2 &&
-	git add file2 &&
+	but add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
-	REV_3=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=3 but cummit -m 3 &&
+	REV_3=$(but rev-parse HEAD) &&
 
 	test_write_lines abcy defy abcx defx >file2 &&
-	git add file2 &&
+	but add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=4 git cummit -m 4 &&
-	REV_4=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=4 but cummit -m 4 &&
+	REV_4=$(but rev-parse HEAD) &&
 
 	test_write_lines 1 1 2 2 >expected &&
 
-	git blame --ignore-rev $REV_3 --ignore-rev $REV_4 file2 >output &&
+	but blame --ignore-rev $REV_3 --ignore-rev $REV_4 file2 >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual
@@ -400,35 +400,35 @@ test_expect_success 'position matching' '
 # processing each diff change in full.
 test_expect_success 'preserve order' '
 	test_write_lines bcde >file3 &&
-	git add file3 &&
+	but add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
+	GIT_AUTHOR_NAME=1 but cummit -m 1 &&
 
 	test_write_lines bcde fghij >file3 &&
-	git add file3 &&
+	but add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
+	GIT_AUTHOR_NAME=2 but cummit -m 2 &&
 
 	test_write_lines bcde fghij abcd >file3 &&
-	git add file3 &&
+	but add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
+	GIT_AUTHOR_NAME=3 but cummit -m 3 &&
 
 	test_write_lines abcdx fghijx bcdex >file3 &&
-	git add file3 &&
+	but add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=4 git cummit -m 4 &&
-	REV_4=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=4 but cummit -m 4 &&
+	REV_4=$(but rev-parse HEAD) &&
 
 	test_write_lines abcdx fghijy bcdex >file3 &&
-	git add file3 &&
+	but add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=5 git cummit -m 5 &&
-	REV_5=$(git rev-parse HEAD) &&
+	GIT_AUTHOR_NAME=5 but cummit -m 5 &&
+	REV_5=$(but rev-parse HEAD) &&
 
 	test_write_lines 1 2 3 >expected &&
 
-	git blame --ignore-rev $REV_4 --ignore-rev $REV_5 file3 >output &&
+	but blame --ignore-rev $REV_4 --ignore-rev $REV_5 file3 >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual

@@ -7,25 +7,25 @@ Fixes since v1.7.5.2
  * The bash completion scripts should correctly work using zsh's bash
    completion emulation layer now.
 
- * Setting $(prefix) in config.mak did not affect where etc/gitconfig
+ * Setting $(prefix) in config.mak did not affect where etc/butconfig
    file is read from, even though passing it from the command line of
    $(MAKE) did.
 
  * The logic to handle "&" (expand to UNIX username) in GECOS field
    miscounted the length of the name it formatted.
 
- * "git cherry-pick -s resolve" failed to cherry-pick a root cummit.
+ * "but cherry-pick -s resolve" failed to cherry-pick a root cummit.
 
- * "git diff --word-diff" misbehaved when diff.suppress-blank-empty was
+ * "but diff --word-diff" misbehaved when diff.suppress-blank-empty was
    in effect.
 
- * "git log --stdin path" with an input that has additional pathspec
+ * "but log --stdin path" with an input that has additional pathspec
    used to corrupt memory.
 
- * "git send-pack" (hence "git push") over smart-HTTP protocol could
+ * "but send-pack" (hence "but push") over smart-HTTP protocol could
    deadlock when the client side pack-object died early.
 
- * Compressed tarball gitweb generates used to be made with the timestamp
+ * Compressed tarball butweb generates used to be made with the timestamp
    of the tarball generation; this was bad because snapshot from the same
    tree should result in a same tarball.
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='blob conversion via gitattributes'
+test_description='blob conversion via butattributes'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -27,15 +27,15 @@ generate_random_characters () {
 		perl -pe "s/./chr((ord($&) % 26) + ord('a'))/sge" >"$TEST_ROOT/$NAME"
 }
 
-filter_git () {
+filter_but () {
 	rm -f *.log &&
-	git "$@"
+	but "$@"
 }
 
 # Compare two files and ensure that `clean` and `smudge` respectively are
 # called at least once if specified in the `expect` file. The actual
 # invocation count is not relevant because their number can vary.
-# c.f. https://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
+# c.f. https://lore.kernel.org/but/xmqqshv18i8i.fsf@butster.mtv.corp.google.com/
 test_cmp_count () {
 	expect=$1
 	actual=$2
@@ -50,7 +50,7 @@ test_cmp_count () {
 
 # Compare two files but exclude all `clean` invocations because Git can
 # call `clean` zero or more times.
-# c.f. https://lore.kernel.org/git/xmqqshv18i8i.fsf@gitster.mtv.corp.google.com/
+# c.f. https://lore.kernel.org/but/xmqqshv18i8i.fsf@butster.mtv.corp.google.com/
 test_cmp_exclude_clean () {
 	expect=$1
 	actual=$2
@@ -67,18 +67,18 @@ test_cmp_exclude_clean () {
 test_cmp_cummitted_rot13 () {
 	test_cmp "$1" "$2" &&
 	rot13.sh <"$1" >expected &&
-	git cat-file blob :"$2" >actual &&
+	but cat-file blob :"$2" >actual &&
 	test_cmp expected actual
 }
 
 test_expect_success setup '
-	git config filter.rot13.smudge ./rot13.sh &&
-	git config filter.rot13.clean ./rot13.sh &&
+	but config filter.rot13.smudge ./rot13.sh &&
+	but config filter.rot13.clean ./rot13.sh &&
 
 	{
 	    echo "*.t filter=rot13" &&
 	    echo "*.i ident"
-	} >.gitattributes &&
+	} >.butattributes &&
 
 	{
 	    echo a b c d e f g h i j k l m &&
@@ -88,9 +88,9 @@ test_expect_success setup '
 	cat test >test.t &&
 	cat test >test.o &&
 	cat test >test.i &&
-	git add test test.t test.i &&
+	but add test test.t test.i &&
 	rm -f test test.t test.i &&
-	git checkout -- test test.t test.i &&
+	but checkout -- test test.t test.i &&
 
 	echo "content-test2" >test2.o &&
 	echo "content-test3 - filename with special characters" >"test3 '\''sq'\'',\$x=.o"
@@ -104,12 +104,12 @@ test_expect_success check '
 	test_cmp test.o test.t &&
 
 	# ident should be stripped in the repository
-	git diff --raw --exit-code :test :test.i &&
-	id=$(git rev-parse --verify :test) &&
+	but diff --raw --exit-code :test :test.i &&
+	id=$(but rev-parse --verify :test) &&
 	embedded=$(sed -ne "$script" test.i) &&
 	test "z$id" = "z$embedded" &&
 
-	git cat-file blob :test.t >test.r &&
+	but cat-file blob :test.t >test.r &&
 
 	./rot13.sh <test.o >test.t &&
 	test_cmp test.r test.t
@@ -135,9 +135,9 @@ test_expect_success expanded_in_repo '
 		printf "\$Id: NoTerminatingSymbolAtEOF"
 	} >expanded-keywords &&
 	cat expanded-keywords >expanded-keywords-crlf &&
-	git add expanded-keywords expanded-keywords-crlf &&
-	git cummit -m "File with keywords expanded" &&
-	id=$(git rev-parse --verify :expanded-keywords) &&
+	but add expanded-keywords expanded-keywords-crlf &&
+	but cummit -m "File with keywords expanded" &&
+	id=$(but rev-parse --verify :expanded-keywords) &&
 
 	cat >expected-output.0 <<-EOF &&
 	File with expanded keywords
@@ -161,21 +161,21 @@ test_expect_success expanded_in_repo '
 	{
 		echo "expanded-keywords ident" &&
 		echo "expanded-keywords-crlf ident text eol=crlf"
-	} >>.gitattributes &&
+	} >>.butattributes &&
 
 	rm -f expanded-keywords expanded-keywords-crlf &&
 
-	git checkout -- expanded-keywords &&
+	but checkout -- expanded-keywords &&
 	test_cmp expected-output expanded-keywords &&
 
-	git checkout -- expanded-keywords-crlf &&
+	but checkout -- expanded-keywords-crlf &&
 	test_cmp expected-output-crlf expanded-keywords-crlf
 '
 
 # The use of %f in a filter definition is expanded to the path to
 # the filename being smudged or cleaned.  It must be shell escaped.
 # First, set up some interesting file names and pet them in
-# .gitattributes.
+# .butattributes.
 test_expect_success 'filter shell-escaped filenames' '
 	cat >argc.sh <<-EOF &&
 	#!$SHELL_PATH
@@ -186,15 +186,15 @@ test_expect_success 'filter shell-escaped filenames' '
 	special="name  with '\''sq'\'' and \$x" &&
 	echo some test text >"$normal" &&
 	echo some test text >"$special" &&
-	git add "$normal" "$special" &&
-	git cummit -q -m "add files" &&
-	echo "name* filter=argc" >.gitattributes &&
+	but add "$normal" "$special" &&
+	but cummit -q -m "add files" &&
+	echo "name* filter=argc" >.butattributes &&
 
 	# delete the files and check them out again, using a smudge filter
 	# that will count the args and echo the command-line back to us
 	test_config filter.argc.smudge "sh ./argc.sh %f" &&
 	rm "$normal" "$special" &&
-	git checkout -- "$normal" "$special" &&
+	but checkout -- "$normal" "$special" &&
 
 	# make sure argc.sh counted the right number of args
 	echo "argc: 1 $normal" >expect &&
@@ -205,7 +205,7 @@ test_expect_success 'filter shell-escaped filenames' '
 	# do the same thing, but with more args in the filter expression
 	test_config filter.argc.smudge "sh ./argc.sh %f --my-extra-arg" &&
 	rm "$normal" "$special" &&
-	git checkout -- "$normal" "$special" &&
+	but checkout -- "$normal" "$special" &&
 
 	# make sure argc.sh counted the right number of args
 	echo "argc: 2 $normal --my-extra-arg" >expect &&
@@ -220,17 +220,17 @@ test_expect_success 'required filter should filter data' '
 	test_config filter.required.clean ./rot13.sh &&
 	test_config filter.required.required true &&
 
-	echo "*.r filter=required" >.gitattributes &&
+	echo "*.r filter=required" >.butattributes &&
 
 	cat test.o >test.r &&
-	git add test.r &&
+	but add test.r &&
 
 	rm -f test.r &&
-	git checkout -- test.r &&
+	but checkout -- test.r &&
 	test_cmp test.o test.r &&
 
 	./rot13.sh <test.o >expected &&
-	git cat-file blob :test.r >actual &&
+	but cat-file blob :test.r >actual &&
 	test_cmp expected actual
 '
 
@@ -239,12 +239,12 @@ test_expect_success 'required filter smudge failure' '
 	test_config filter.failsmudge.clean cat &&
 	test_config filter.failsmudge.required true &&
 
-	echo "*.fs filter=failsmudge" >.gitattributes &&
+	echo "*.fs filter=failsmudge" >.butattributes &&
 
 	echo test >test.fs &&
-	git add test.fs &&
+	but add test.fs &&
 	rm -f test.fs &&
-	test_must_fail git checkout -- test.fs
+	test_must_fail but checkout -- test.fs
 '
 
 test_expect_success 'required filter clean failure' '
@@ -252,20 +252,20 @@ test_expect_success 'required filter clean failure' '
 	test_config filter.failclean.clean false &&
 	test_config filter.failclean.required true &&
 
-	echo "*.fc filter=failclean" >.gitattributes &&
+	echo "*.fc filter=failclean" >.butattributes &&
 
 	echo test >test.fc &&
-	test_must_fail git add test.fc
+	test_must_fail but add test.fc
 '
 
 test_expect_success 'required filter with absent clean field' '
 	test_config filter.absentclean.smudge cat &&
 	test_config filter.absentclean.required true &&
 
-	echo "*.ac filter=absentclean" >.gitattributes &&
+	echo "*.ac filter=absentclean" >.butattributes &&
 
 	echo test >test.ac &&
-	test_must_fail git add test.ac 2>stderr &&
+	test_must_fail but add test.ac 2>stderr &&
 	test_i18ngrep "fatal: test.ac: clean filter .absentclean. failed" stderr
 '
 
@@ -273,12 +273,12 @@ test_expect_success 'required filter with absent smudge field' '
 	test_config filter.absentsmudge.clean cat &&
 	test_config filter.absentsmudge.required true &&
 
-	echo "*.as filter=absentsmudge" >.gitattributes &&
+	echo "*.as filter=absentsmudge" >.butattributes &&
 
 	echo test >test.as &&
-	git add test.as &&
+	but add test.as &&
 	rm -f test.as &&
-	test_must_fail git checkout -- test.as 2>stderr &&
+	test_must_fail but checkout -- test.as 2>stderr &&
 	test_i18ngrep "fatal: test.as: smudge filter absentsmudge failed" stderr
 '
 
@@ -286,16 +286,16 @@ test_expect_success 'filtering large input to small output should use little mem
 	test_config filter.devnull.clean "cat >/dev/null" &&
 	test_config filter.devnull.required true &&
 	for i in $(test_seq 1 30); do printf "%1048576d" 1 || return 1; done >30MB &&
-	echo "30MB filter=devnull" >.gitattributes &&
-	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m git add 30MB
+	echo "30MB filter=devnull" >.butattributes &&
+	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m but add 30MB
 '
 
 test_expect_success 'filter that does not read is fine' '
 	test-tool genrandom foo $((128 * 1024 + 1)) >big &&
-	echo "big filter=epipe" >.gitattributes &&
+	echo "big filter=epipe" >.butattributes &&
 	test_config filter.epipe.clean "echo xyzzy" &&
-	git add big &&
-	git cat-file blob :big >actual &&
+	but add big &&
+	but cat-file blob :big >actual &&
 	echo xyzzy >expect &&
 	test_cmp expect actual
 '
@@ -304,11 +304,11 @@ test_expect_success EXPENSIVE 'filter large file' '
 	test_config filter.largefile.smudge cat &&
 	test_config filter.largefile.clean cat &&
 	for i in $(test_seq 1 2048); do printf "%1048576d" 1 || return 1; done >2GB &&
-	echo "2GB filter=largefile" >.gitattributes &&
-	git add 2GB 2>err &&
+	echo "2GB filter=largefile" >.butattributes &&
+	but add 2GB 2>err &&
 	test_must_be_empty err &&
 	rm -f 2GB &&
-	git checkout -- 2GB 2>err &&
+	but checkout -- 2GB 2>err &&
 	test_must_be_empty err
 '
 
@@ -316,12 +316,12 @@ test_expect_success "filter: clean empty file" '
 	test_config filter.in-repo-header.clean  "echo cleaned && cat" &&
 	test_config filter.in-repo-header.smudge "sed 1d" &&
 
-	echo "empty-in-worktree    filter=in-repo-header" >>.gitattributes &&
+	echo "empty-in-worktree    filter=in-repo-header" >>.butattributes &&
 	>empty-in-worktree &&
 
 	echo cleaned >expected &&
-	git add empty-in-worktree &&
-	git show :empty-in-worktree >actual &&
+	but add empty-in-worktree &&
+	but show :empty-in-worktree >actual &&
 	test_cmp expected actual
 '
 
@@ -329,12 +329,12 @@ test_expect_success "filter: smudge empty file" '
 	test_config filter.empty-in-repo.clean "cat >/dev/null" &&
 	test_config filter.empty-in-repo.smudge "echo smudged && cat" &&
 
-	echo "empty-in-repo filter=empty-in-repo" >>.gitattributes &&
+	echo "empty-in-repo filter=empty-in-repo" >>.butattributes &&
 	echo dead data walking >empty-in-repo &&
-	git add empty-in-repo &&
+	but add empty-in-repo &&
 
 	echo smudged >expected &&
-	git checkout-index --prefix=filtered- empty-in-repo &&
+	but checkout-index --prefix=filtered- empty-in-repo &&
 	test_cmp expected filtered-empty-in-repo
 '
 
@@ -344,24 +344,24 @@ test_expect_success 'disable filter with empty override' '
 	test_config filter.disable.smudge false &&
 	test_config filter.disable.clean false &&
 
-	echo "*.disable filter=disable" >.gitattributes &&
+	echo "*.disable filter=disable" >.butattributes &&
 
 	echo test >test.disable &&
-	git -c filter.disable.clean= add test.disable 2>err &&
+	but -c filter.disable.clean= add test.disable 2>err &&
 	test_must_be_empty err &&
 	rm -f test.disable &&
-	git -c filter.disable.smudge= checkout -- test.disable 2>err &&
+	but -c filter.disable.smudge= checkout -- test.disable 2>err &&
 	test_must_be_empty err
 '
 
 test_expect_success 'diff does not reuse worktree files that need cleaning' '
 	test_config filter.counter.clean "echo . >>count; sed s/^/clean:/" &&
-	echo "file filter=counter" >.gitattributes &&
+	echo "file filter=counter" >.butattributes &&
 	test_cummit one file &&
 	test_cummit two file &&
 
 	>count &&
-	git diff-tree -p HEAD &&
+	but diff-tree -p HEAD &&
 	test_line_count = 0 count
 '
 
@@ -372,12 +372,12 @@ test_expect_success PERL 'required process filter should filter data' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
-		git add . &&
-		git cummit -m "test cummit 1" &&
-		git branch empty-branch &&
+		echo "*.r filter=protocol" >.butattributes &&
+		but add . &&
+		but cummit -m "test cummit 1" &&
+		but branch empty-branch &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		cp "$TEST_ROOT/test2.o" test2.r &&
@@ -388,12 +388,12 @@ test_expect_success PERL 'required process filter should filter data' '
 		S=$(test_file_size test.r) &&
 		S2=$(test_file_size test2.r) &&
 		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
-		M=$(git hash-object test.r) &&
-		M2=$(git hash-object test2.r) &&
-		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
-		EMPTY=$(git hash-object /dev/null) &&
+		M=$(but hash-object test.r) &&
+		M2=$(but hash-object test2.r) &&
+		M3=$(but hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		EMPTY=$(but hash-object /dev/null) &&
 
-		filter_git add . &&
+		filter_but add . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -405,12 +405,12 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_count expected.log debug.log &&
 
-		git cummit -m "test cummit 2" &&
-		MAIN=$(git rev-parse --verify main) &&
+		but cummit -m "test cummit 2" &&
+		MAIN=$(but rev-parse --verify main) &&
 		META="ref=refs/heads/main treeish=$MAIN" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
-		filter_git checkout --quiet --no-progress . &&
+		filter_but checkout --quiet --no-progress . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -423,7 +423,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		# Make sure that the file appears dirty, so checkout below has to
 		# run the configured filter.
 		touch test.r &&
-		filter_git checkout --quiet --no-progress empty-branch &&
+		filter_but checkout --quiet --no-progress empty-branch &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -432,7 +432,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		filter_git checkout --quiet --no-progress main &&
+		filter_but checkout --quiet --no-progress main &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -459,19 +459,19 @@ test_expect_success PERL 'required process filter should filter data for various
 		S=$(test_file_size test.r) &&
 		S2=$(test_file_size test2.r) &&
 		S3=$(test_file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
-		M=$(git hash-object test.r) &&
-		M2=$(git hash-object test2.r) &&
-		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
-		EMPTY=$(git hash-object /dev/null) &&
+		M=$(but hash-object test.r) &&
+		M2=$(but hash-object test2.r) &&
+		M3=$(but hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		EMPTY=$(but hash-object /dev/null) &&
 
-		MAIN=$(git rev-parse --verify main) &&
+		MAIN=$(but rev-parse --verify main) &&
 
 		cp "$TEST_ROOT/test.o" test5.r &&
-		git add test5.r &&
-		git cummit -m "test cummit 3" &&
-		git checkout empty-branch &&
-		filter_git rebase --onto empty-branch main^^ main &&
-		MAIN2=$(git rev-parse --verify main) &&
+		but add test5.r &&
+		but cummit -m "test cummit 3" &&
+		but checkout empty-branch &&
+		filter_but rebase --onto empty-branch main^^ main &&
+		MAIN2=$(but rev-parse --verify main) &&
 		META="ref=refs/heads/main treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -485,8 +485,8 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		git reset --hard empty-branch &&
-		filter_git reset --hard $MAIN &&
+		but reset --hard empty-branch &&
+		filter_but reset --hard $MAIN &&
 		META="treeish=$MAIN" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -499,9 +499,9 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		git branch old-main $MAIN &&
-		git reset --hard empty-branch &&
-		filter_git reset --hard old-main &&
+		but branch old-main $MAIN &&
+		but reset --hard empty-branch &&
+		filter_but reset --hard old-main &&
 		META="ref=refs/heads/old-main treeish=$MAIN" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -514,9 +514,9 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		git checkout -b merge empty-branch &&
-		git branch -f main $MAIN2 &&
-		filter_git merge main &&
+		but checkout -b merge empty-branch &&
+		but branch -f main $MAIN2 &&
+		filter_but merge main &&
 		META="treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -530,7 +530,7 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		filter_git archive main >/dev/null &&
+		filter_but archive main >/dev/null &&
 		META="ref=refs/heads/main treeish=$MAIN2" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -544,8 +544,8 @@ test_expect_success PERL 'required process filter should filter data for various
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		TREE="$(git rev-parse $MAIN2^{tree})" &&
-		filter_git archive $TREE >/dev/null &&
+		TREE="$(but rev-parse $MAIN2^{tree})" &&
+		filter_but archive $TREE >/dev/null &&
 		META="treeish=$TREE" &&
 		cat >expected.log <<-EOF &&
 			START
@@ -569,14 +569,14 @@ test_expect_success PERL 'required process filter takes precedence' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
 		S=$(test_file_size test.r) &&
 
 		# Check that the process filter is invoked here
-		filter_git add . &&
+		filter_but add . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -593,13 +593,13 @@ test_expect_success PERL 'required process filter should be used only for "clean
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 		cp "$TEST_ROOT/test.o" test.r &&
 		S=$(test_file_size test.r) &&
 
-		filter_git add . &&
+		filter_but add . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -610,7 +610,7 @@ test_expect_success PERL 'required process filter should be used only for "clean
 
 		rm test.r &&
 
-		filter_git checkout --quiet --no-progress . &&
+		filter_but checkout --quiet --no-progress . &&
 		# If the filter would be used for "smudge", too, we would see
 		# "IN: smudge test.r 57 [OK] -- OUT: 57 . [OK]" here
 		cat >expected.log <<-EOF &&
@@ -630,7 +630,7 @@ test_expect_success PERL 'required process filter should process multiple packet
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
 		# Generate data requiring 1, 2, 3 packets
 		S=65516 && # PKTLINE_DATA_MAXLEN -> Maximal size of a packet
@@ -646,8 +646,8 @@ test_expect_success PERL 'required process filter should process multiple packet
 			rot13.sh <"$FILE" >"$FILE.rot13" || return 1
 		done &&
 
-		echo "*.file filter=protocol" >.gitattributes &&
-		filter_git add *.file .gitattributes &&
+		echo "*.file filter=protocol" >.butattributes &&
+		filter_but add *.file .butattributes &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -660,14 +660,14 @@ test_expect_success PERL 'required process filter should process multiple packet
 		EOF
 		test_cmp_count expected.log debug.log &&
 
-		M1="blob=$(git hash-object 1pkt_1__.file)" &&
-		M2="blob=$(git hash-object 2pkt_1+1.file)" &&
-		M3="blob=$(git hash-object 2pkt_2-1.file)" &&
-		M4="blob=$(git hash-object 2pkt_2__.file)" &&
-		M5="blob=$(git hash-object 3pkt_2+1.file)" &&
+		M1="blob=$(but hash-object 1pkt_1__.file)" &&
+		M2="blob=$(but hash-object 2pkt_1+1.file)" &&
+		M3="blob=$(but hash-object 2pkt_2-1.file)" &&
+		M4="blob=$(but hash-object 2pkt_2__.file)" &&
+		M5="blob=$(but hash-object 3pkt_2+1.file)" &&
 		rm -f *.file debug.log &&
 
-		filter_git checkout --quiet --no-progress -- *.file &&
+		filter_but checkout --quiet --no-progress -- *.file &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -694,15 +694,15 @@ test_expect_success PERL 'required process filter with clean error should fail' 
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		echo "this is going to fail" >clean-write-fail.r &&
 		echo "content-test3-subdir" >test3.r &&
 
-		test_must_fail git add .
+		test_must_fail but add .
 	)
 '
 
@@ -712,9 +712,9 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		cp "$TEST_ROOT/test2.o" test2.r &&
@@ -724,19 +724,19 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		S=$(test_file_size test.r) &&
 		S2=$(test_file_size test2.r) &&
 		SF=$(test_file_size smudge-write-fail.r) &&
-		M=$(git hash-object test.r) &&
-		M2=$(git hash-object test2.r) &&
-		MF=$(git hash-object smudge-write-fail.r) &&
+		M=$(but hash-object test.r) &&
+		M2=$(but hash-object test2.r) &&
+		MF=$(but hash-object smudge-write-fail.r) &&
 		rm -f debug.log &&
 
-		git add . &&
+		but add . &&
 		rm -f *.r &&
 
 		rm -f debug.log &&
-		git checkout --quiet --no-progress . 2>git-stderr.log &&
+		but checkout --quiet --no-progress . 2>but-stderr.log &&
 
-		grep "smudge write error at" git-stderr.log &&
-		test_i18ngrep "error: external filter" git-stderr.log &&
+		grep "smudge write error at" but-stderr.log &&
+		test_i18ngrep "error: external filter" but-stderr.log &&
 
 		cat >expected.log <<-EOF &&
 			START
@@ -756,7 +756,7 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		# Smudge failed
 		! test_cmp smudge-write-fail.o smudge-write-fail.r &&
 		rot13.sh <smudge-write-fail.o >expected &&
-		git cat-file blob :smudge-write-fail.r >actual &&
+		but cat-file blob :smudge-write-fail.r >actual &&
 		test_cmp expected actual
 	)
 '
@@ -767,9 +767,9 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		cp "$TEST_ROOT/test2.o" test2.r &&
@@ -779,15 +779,15 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		S=$(test_file_size test.r) &&
 		S2=$(test_file_size test2.r) &&
 		SE=$(test_file_size error.r) &&
-		M=$(git hash-object test.r) &&
-		M2=$(git hash-object test2.r) &&
-		ME=$(git hash-object error.r) &&
+		M=$(but hash-object test.r) &&
+		M2=$(but hash-object test2.r) &&
+		ME=$(but hash-object error.r) &&
 		rm -f debug.log &&
 
-		git add . &&
+		but add . &&
 		rm -f *.r &&
 
-		filter_git checkout --quiet --no-progress . &&
+		filter_but checkout --quiet --no-progress . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -810,26 +810,26 @@ test_expect_success PERL 'process filter abort stops processing of all further f
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		cp "$TEST_ROOT/test2.o" test2.r &&
 		echo "error this blob and all future blobs" >abort.o &&
 		cp abort.o abort.r &&
 
-		M="blob=$(git hash-object abort.r)" &&
+		M="blob=$(but hash-object abort.r)" &&
 		rm -f debug.log &&
 		SA=$(test_file_size abort.r) &&
 
-		git add . &&
+		but add . &&
 		rm -f *.r &&
 
 
 		# Note: This test assumes that Git filters files in alphabetical
 		# order ("abort.r" before "test.r").
-		filter_git checkout --quiet --no-progress . &&
+		filter_but checkout --quiet --no-progress . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -851,13 +851,13 @@ test_expect_success PERL 'invalid process filter must fail (and not hang!)' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
+		but init &&
 
-		echo "*.r filter=protocol" >.gitattributes &&
+		echo "*.r filter=protocol" >.butattributes &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
-		test_must_fail git add . 2>git-stderr.log &&
-		grep "expected git-filter-server" git-stderr.log
+		test_must_fail but add . 2>but-stderr.log &&
+		grep "expected but-filter-server" but-stderr.log
 	)
 '
 
@@ -871,21 +871,21 @@ test_expect_success PERL 'delayed checkout in process filter' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
-		echo "*.a filter=a" >.gitattributes &&
-		echo "*.b filter=b" >>.gitattributes &&
+		but init &&
+		echo "*.a filter=a" >.butattributes &&
+		echo "*.b filter=b" >>.butattributes &&
 		cp "$TEST_ROOT/test.o" test.a &&
 		cp "$TEST_ROOT/test.o" test-delay10.a &&
 		cp "$TEST_ROOT/test.o" test-delay11.a &&
 		cp "$TEST_ROOT/test.o" test-delay20.a &&
 		cp "$TEST_ROOT/test.o" test-delay10.b &&
-		git add . &&
-		git cummit -m "test cummit"
+		but add . &&
+		but cummit -m "test cummit"
 	) &&
 
 	S=$(test_file_size "$TEST_ROOT/test.o") &&
-	PM="ref=refs/heads/main treeish=$(git -C repo rev-parse --verify main) " &&
-	M="${PM}blob=$(git -C repo rev-parse --verify main:test.a)" &&
+	PM="ref=refs/heads/main treeish=$(but -C repo rev-parse --verify main) " &&
+	M="${PM}blob=$(but -C repo rev-parse --verify main:test.a)" &&
 	cat >a.exp <<-EOF &&
 		START
 		init handshake complete
@@ -912,7 +912,7 @@ test_expect_success PERL 'delayed checkout in process filter' '
 	EOF
 
 	rm -rf repo-cloned &&
-	filter_git clone repo repo-cloned &&
+	filter_but clone repo repo-cloned &&
 	test_cmp_count a.exp repo-cloned/a.log &&
 	test_cmp_count b.exp repo-cloned/b.log &&
 
@@ -925,7 +925,7 @@ test_expect_success PERL 'delayed checkout in process filter' '
 		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay10.b &&
 
 		rm *.a *.b &&
-		filter_git checkout . &&
+		filter_but checkout . &&
 		# We are not checking out a ref here, so filter out ref metadata.
 		sed -e "s!$PM!!" ../a.exp >a.exp.filtered &&
 		sed -e "s!$PM!!" ../b.exp >b.exp.filtered &&
@@ -948,16 +948,16 @@ test_expect_success PERL 'missing file in delayed checkout' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
-		echo "*.a filter=bug" >.gitattributes &&
+		but init &&
+		echo "*.a filter=bug" >.butattributes &&
 		cp "$TEST_ROOT/test.o" missing-delay.a &&
-		git add . &&
-		git cummit -m "test cummit"
+		but add . &&
+		but cummit -m "test cummit"
 	) &&
 
 	rm -rf repo-cloned &&
-	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
-	grep "error: .missing-delay\.a. was not filtered properly" git-stderr.log
+	test_must_fail but clone repo repo-cloned 2>but-stderr.log &&
+	grep "error: .missing-delay\.a. was not filtered properly" but-stderr.log
 '
 
 test_expect_success PERL 'invalid file in delayed checkout' '
@@ -968,17 +968,17 @@ test_expect_success PERL 'invalid file in delayed checkout' '
 	mkdir repo &&
 	(
 		cd repo &&
-		git init &&
-		echo "*.a filter=bug" >.gitattributes &&
+		but init &&
+		echo "*.a filter=bug" >.butattributes &&
 		cp "$TEST_ROOT/test.o" invalid-delay.a &&
 		cp "$TEST_ROOT/test.o" unfiltered &&
-		git add . &&
-		git cummit -m "test cummit"
+		but add . &&
+		but cummit -m "test cummit"
 	) &&
 
 	rm -rf repo-cloned &&
-	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
-	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
+	test_must_fail but clone repo repo-cloned 2>but-stderr.log &&
+	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" but-stderr.log
 '
 
 for mode in 'case' 'utf-8'
@@ -996,28 +996,28 @@ do
 			"\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
 		test_config_global filter.delay.required true &&
 
-		git init $mode-collision &&
+		but init $mode-collision &&
 		(
 			cd $mode-collision &&
 			mkdir target-dir &&
 
-			empty_oid=$(printf "" | git hash-object -w --stdin) &&
-			symlink_oid=$(printf "%s" "$PWD/target-dir" | git hash-object -w --stdin) &&
-			attr_oid=$(echo "$dir/z filter=delay" | git hash-object -w --stdin) &&
+			empty_oid=$(printf "" | but hash-object -w --stdin) &&
+			symlink_oid=$(printf "%s" "$PWD/target-dir" | but hash-object -w --stdin) &&
+			attr_oid=$(echo "$dir/z filter=delay" | but hash-object -w --stdin) &&
 
 			cat >objs <<-EOF &&
 			100644 blob $empty_oid	$dir/x
 			100644 blob $empty_oid	$dir/y
 			100644 blob $empty_oid	$dir/z
 			120000 blob $symlink_oid	$symlink
-			100644 blob $attr_oid	.gitattributes
+			100644 blob $attr_oid	.butattributes
 			EOF
 
-			git update-index --index-info <objs &&
-			git cummit -m "test cummit"
+			but update-index --index-info <objs &&
+			but cummit -m "test cummit"
 		) &&
 
-		git clone $mode-collision $mode-collision-cloned &&
+		but clone $mode-collision $mode-collision-cloned &&
 		# Make sure z was really delayed
 		grep "IN: smudge $dir/z .* \\[DELAYED\\]" $mode-collision-cloned/delayed.log &&
 
@@ -1028,51 +1028,51 @@ done
 
 test_expect_success PERL,SYMLINKS,CASE_INSENSITIVE_FS \
 "delayed checkout with submodule collision don't write to the wrong place" '
-	git init collision-with-submodule &&
+	but init collision-with-submodule &&
 	(
 		cd collision-with-submodule &&
-		git config filter.delay.process "\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
-		git config filter.delay.required true &&
+		but config filter.delay.process "\"$TEST_ROOT/rot13-filter.pl\" --always-delay delayed.log clean smudge delay" &&
+		but config filter.delay.required true &&
 
 		# We need Git to treat the submodule "a" and the
 		# leading dir "A" as different paths in the index.
-		git config --local core.ignoreCase false &&
+		but config --local core.ignoreCase false &&
 
-		empty_oid=$(printf "" | git hash-object -w --stdin) &&
-		attr_oid=$(echo "A/B/y filter=delay" | git hash-object -w --stdin) &&
+		empty_oid=$(printf "" | but hash-object -w --stdin) &&
+		attr_oid=$(echo "A/B/y filter=delay" | but hash-object -w --stdin) &&
 		cat >objs <<-EOF &&
 		100644 blob $empty_oid	A/B/x
 		100644 blob $empty_oid	A/B/y
-		100644 blob $attr_oid	.gitattributes
+		100644 blob $attr_oid	.butattributes
 		EOF
-		git update-index --index-info <objs &&
+		but update-index --index-info <objs &&
 
-		git init a &&
+		but init a &&
 		mkdir target-dir &&
-		symlink_oid=$(printf "%s" "$PWD/target-dir" | git -C a hash-object -w --stdin) &&
+		symlink_oid=$(printf "%s" "$PWD/target-dir" | but -C a hash-object -w --stdin) &&
 		echo "120000 blob $symlink_oid	b" >objs &&
-		git -C a update-index --index-info <objs &&
-		git -C a cummit -m sub &&
-		git submodule add ./a &&
-		git cummit -m super &&
+		but -C a update-index --index-info <objs &&
+		but -C a cummit -m sub &&
+		but submodule add ./a &&
+		but cummit -m super &&
 
-		git checkout --recurse-submodules . &&
+		but checkout --recurse-submodules . &&
 		grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
 		test_path_is_missing target-dir/y
 	)
 '
 
 test_expect_success PERL 'setup for progress tests' '
-	git init progress &&
+	but init progress &&
 	(
 		cd progress &&
-		git config filter.delay.process "rot13-filter.pl delay-progress.log clean smudge delay" &&
-		git config filter.delay.required true &&
+		but config filter.delay.process "rot13-filter.pl delay-progress.log clean smudge delay" &&
+		but config filter.delay.required true &&
 
-		echo "*.a filter=delay" >.gitattributes &&
+		echo "*.a filter=delay" >.butattributes &&
 		touch test-delay10.a &&
-		git add . &&
-		git cummit -m files
+		but add . &&
+		but cummit -m files
 	)
 '
 
@@ -1115,20 +1115,20 @@ do
 	esac
 
 	test_expect_success PERL,TTY "delayed checkout shows progress by default on tty ($mode checkout)" '
-		test_delayed_checkout_progress test_terminal git checkout $opt
+		test_delayed_checkout_progress test_terminal but checkout $opt
 	'
 
 	test_expect_success PERL "delayed checkout ommits progress on non-tty ($mode checkout)" '
-		test_delayed_checkout_progress ! git checkout $opt
+		test_delayed_checkout_progress ! but checkout $opt
 	'
 
 	test_expect_success PERL,TTY "delayed checkout ommits progress with --quiet ($mode checkout)" '
-		test_delayed_checkout_progress ! test_terminal git checkout --quiet $opt
+		test_delayed_checkout_progress ! test_terminal but checkout --quiet $opt
 	'
 
 	test_expect_success PERL,TTY "delayed checkout honors --[no]-progress ($mode checkout)" '
-		test_delayed_checkout_progress ! test_terminal git checkout --no-progress $opt &&
-		test_delayed_checkout_progress test_terminal git checkout --quiet --progress $opt
+		test_delayed_checkout_progress ! test_terminal but checkout --no-progress $opt &&
+		test_delayed_checkout_progress test_terminal but checkout --quiet --progress $opt
 	'
 done
 

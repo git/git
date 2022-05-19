@@ -3,8 +3,8 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-test_description='git svn fetching'
-. ./lib-git-svn.sh
+test_description='but svn fetching'
+. ./lib-but-svn.sh
 
 test_expect_success 'initialize repo' '
 	mkdir import &&
@@ -29,26 +29,26 @@ test_expect_success 'initialize repo' '
 	'
 
 test_expect_success 'init and fetch a moved directory' '
-	git svn init --minimize-url -i thunk "$svnrepo"/thunk &&
-	git svn fetch -i thunk &&
-	test "$(git rev-parse --verify refs/remotes/thunk@2)" \
-	   = "$(git rev-parse --verify refs/remotes/thunk~1)" &&
-	git cat-file blob refs/remotes/thunk:readme >actual &&
+	but svn init --minimize-url -i thunk "$svnrepo"/thunk &&
+	but svn fetch -i thunk &&
+	test "$(but rev-parse --verify refs/remotes/thunk@2)" \
+	   = "$(but rev-parse --verify refs/remotes/thunk~1)" &&
+	but cat-file blob refs/remotes/thunk:readme >actual &&
 	test "$(sed -n -e "3p" actual)" = goodbye &&
-	test -z "$(git config --get svn-remote.svn.fetch \
+	test -z "$(but config --get svn-remote.svn.fetch \
 		 "^trunk:refs/remotes/thunk@2$")"
 	'
 
 test_expect_success 'init and fetch from one svn-remote' '
-        git config svn-remote.svn.url "$svnrepo" &&
-        git config --add svn-remote.svn.fetch \
+        but config svn-remote.svn.url "$svnrepo" &&
+        but config --add svn-remote.svn.fetch \
           trunk:refs/remotes/svn/trunk &&
-        git config --add svn-remote.svn.fetch \
+        but config --add svn-remote.svn.fetch \
           thunk:refs/remotes/svn/thunk &&
-        git svn fetch -i svn/thunk &&
-	test "$(git rev-parse --verify refs/remotes/svn/trunk)" \
-	   = "$(git rev-parse --verify refs/remotes/svn/thunk~1)" &&
-	git cat-file blob refs/remotes/svn/thunk:readme >actual &&
+        but svn fetch -i svn/thunk &&
+	test "$(but rev-parse --verify refs/remotes/svn/trunk)" \
+	   = "$(but rev-parse --verify refs/remotes/svn/thunk~1)" &&
+	but cat-file blob refs/remotes/svn/thunk:readme >actual &&
 	test "$(sed -n -e "3p" actual)" = goodbye
         '
 
@@ -57,13 +57,13 @@ test_expect_success 'follow deleted parent' '
                "$svnrepo"/trunk@2 "$svnrepo"/junk ||
          svn cp -m "resurrecting trunk as junk" \
                -r2 "$svnrepo"/trunk "$svnrepo"/junk) &&
-        git config --add svn-remote.svn.fetch \
+        but config --add svn-remote.svn.fetch \
           junk:refs/remotes/svn/junk &&
-        git svn fetch -i svn/thunk &&
-        git svn fetch -i svn/junk &&
-	test -z "$(git diff svn/junk svn/trunk)" &&
-	test "$(git merge-base svn/junk svn/trunk)" \
-	   = "$(git rev-parse svn/trunk)"
+        but svn fetch -i svn/thunk &&
+        but svn fetch -i svn/junk &&
+	test -z "$(but diff svn/junk svn/trunk)" &&
+	test "$(but merge-base svn/junk svn/trunk)" \
+	   = "$(but rev-parse svn/trunk)"
         '
 
 test_expect_success 'follow larger parent' '
@@ -71,19 +71,19 @@ test_expect_success 'follow larger parent' '
         echo hi > import/trunk/thunk/bump/thud/file &&
         svn import -m "import a larger parent" import "$svnrepo"/larger-parent &&
         svn cp -m "hi" "$svnrepo"/larger-parent "$svnrepo"/another-larger &&
-        git svn init --minimize-url -i larger \
+        but svn init --minimize-url -i larger \
 	  "$svnrepo"/larger-parent/trunk/thunk/bump/thud &&
-        git svn fetch -i larger &&
-	git svn init --minimize-url -i larger-parent \
+        but svn fetch -i larger &&
+	but svn init --minimize-url -i larger-parent \
 	  "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
-	git svn fetch -i larger-parent &&
-        git rev-parse --verify refs/remotes/larger &&
-        git rev-parse --verify \
+	but svn fetch -i larger-parent &&
+        but rev-parse --verify refs/remotes/larger &&
+        but rev-parse --verify \
 	   refs/remotes/larger-parent &&
-	test "$(git merge-base \
+	test "$(but merge-base \
 		 refs/remotes/larger-parent \
 		 refs/remotes/larger)" = \
-	     "$(git rev-parse refs/remotes/larger)"
+	     "$(but rev-parse refs/remotes/larger)"
         '
 
 test_expect_success 'follow higher-level parent' '
@@ -97,17 +97,17 @@ test_expect_success 'follow higher-level parent' '
 	) &&
 	svn mkdir -m "new glob at top level" "$svnrepo"/glob &&
 	svn mv -m "move blob down a level" "$svnrepo"/blob "$svnrepo"/glob/blob &&
-	git svn init --minimize-url -i blob "$svnrepo"/glob/blob &&
-        git svn fetch -i blob
+	but svn init --minimize-url -i blob "$svnrepo"/glob/blob &&
+        but svn fetch -i blob
         '
 
 test_expect_success 'follow deleted directory' '
 	svn_cmd mv -m "bye!" "$svnrepo"/glob/blob/hi "$svnrepo"/glob/blob/bye &&
 	svn_cmd rm -m "remove glob" "$svnrepo"/glob &&
-	git svn init --minimize-url -i glob "$svnrepo"/glob &&
-	git svn fetch -i glob &&
-	test "$(git cat-file blob refs/remotes/glob:blob/bye)" = hi &&
-	git ls-tree refs/remotes/glob >actual &&
+	but svn init --minimize-url -i glob "$svnrepo"/glob &&
+	but svn fetch -i glob &&
+	test "$(but cat-file blob refs/remotes/glob:blob/bye)" = hi &&
+	but ls-tree refs/remotes/glob >actual &&
 	test_line_count = 1 actual
 	'
 
@@ -140,24 +140,24 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 		poke native/t/c.t &&
 		svn cummit -m "reorg test"
 	) &&
-	git svn init --minimize-url -i r9270-t \
+	but svn init --minimize-url -i r9270-t \
 	  "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl/native/t &&
-	git svn fetch -i r9270-t &&
-	test $(git rev-list r9270-t | wc -l) -eq 2 &&
-	test "$(git ls-tree --name-only r9270-t~1)" = \
-	     "$(git ls-tree --name-only r9270-t)"
+	but svn fetch -i r9270-t &&
+	test $(but rev-list r9270-t | wc -l) -eq 2 &&
+	test "$(but ls-tree --name-only r9270-t~1)" = \
+	     "$(but ls-tree --name-only r9270-t)"
 	'
 
 test_expect_success "track initial change if it was only made to parent" '
 	svn_cmd cp -m "wheee!" "$svnrepo"/r9270/trunk "$svnrepo"/r9270/drunk &&
-	git svn init --minimize-url -i r9270-d \
+	but svn init --minimize-url -i r9270-d \
 	  "$svnrepo"/r9270/drunk/subversion/bindings/swig/perl/native/t &&
-	git svn fetch -i r9270-d &&
-	test $(git rev-list r9270-d | wc -l) -eq 3 &&
-	test "$(git ls-tree --name-only r9270-t)" = \
-	     "$(git ls-tree --name-only r9270-d)" &&
-	test "$(git rev-parse r9270-t)" = \
-	     "$(git rev-parse r9270-d~1)"
+	but svn fetch -i r9270-d &&
+	test $(but rev-list r9270-d | wc -l) -eq 3 &&
+	test "$(but ls-tree --name-only r9270-t)" = \
+	     "$(but ls-tree --name-only r9270-d)" &&
+	test "$(but rev-parse r9270-t)" = \
+	     "$(but rev-parse r9270-d~1)"
 	'
 
 test_expect_success "follow-parent is atomic" '
@@ -179,51 +179,51 @@ test_expect_success "follow-parent is atomic" '
 		"$svnrepo"/stunk@17 "$svnrepo"/flunked ||
 	svn_cmd cp -m "early stunk flunked too" \
 		-r17 "$svnrepo"/stunk "$svnrepo"/flunked; } &&
-	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
-	git svn fetch -i stunk &&
-	git update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
-	git update-ref -d refs/remotes/stunk &&
-	git config --unset svn-remote.svn.fetch stunk &&
+	but svn init --minimize-url -i stunk "$svnrepo"/stunk &&
+	but svn fetch -i stunk &&
+	but update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
+	but update-ref -d refs/remotes/stunk &&
+	but config --unset svn-remote.svn.fetch stunk &&
 	mkdir -p "$GIT_DIR"/svn/refs/remotes/flunk@18 &&
 	rev_map=$(cd "$GIT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
 	dd if="$GIT_DIR"/svn/refs/remotes/stunk/$rev_map \
 	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=$record_size count=1 &&
 	rm -rf "$GIT_DIR"/svn/refs/remotes/stunk &&
-	git svn init --minimize-url -i flunk "$svnrepo"/flunk &&
-	git svn fetch -i flunk &&
-	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
-	git svn fetch -i stunk &&
-	git svn init --minimize-url -i flunked "$svnrepo"/flunked &&
-	git svn fetch -i flunked &&
-	test "$(git rev-parse --verify refs/remotes/flunk@18)" \
-	   = "$(git rev-parse --verify refs/remotes/stunk)" &&
-	test "$(git rev-parse --verify refs/remotes/flunk~1)" \
-	   = "$(git rev-parse --verify refs/remotes/stunk)" &&
-	test "$(git rev-parse --verify refs/remotes/flunked~1)" \
-	   = "$(git rev-parse --verify refs/remotes/stunk~1)"
+	but svn init --minimize-url -i flunk "$svnrepo"/flunk &&
+	but svn fetch -i flunk &&
+	but svn init --minimize-url -i stunk "$svnrepo"/stunk &&
+	but svn fetch -i stunk &&
+	but svn init --minimize-url -i flunked "$svnrepo"/flunked &&
+	but svn fetch -i flunked &&
+	test "$(but rev-parse --verify refs/remotes/flunk@18)" \
+	   = "$(but rev-parse --verify refs/remotes/stunk)" &&
+	test "$(but rev-parse --verify refs/remotes/flunk~1)" \
+	   = "$(but rev-parse --verify refs/remotes/stunk)" &&
+	test "$(but rev-parse --verify refs/remotes/flunked~1)" \
+	   = "$(but rev-parse --verify refs/remotes/stunk~1)"
 	'
 
 test_expect_success "track multi-parent paths" '
 	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
-	git svn multi-fetch &&
-	git cat-file cummit refs/remotes/glob >actual &&
+	but svn multi-fetch &&
+	but cat-file cummit refs/remotes/glob >actual &&
 	grep "^parent " actual >actual2 &&
 	test_line_count = 2 actual2
 	'
 
 test_expect_success "multi-fetch continues to work" "
-	git svn multi-fetch
+	but svn multi-fetch
 	"
 
 test_expect_success "multi-fetch works off a 'clean' repository" '
 	rm -rf "$GIT_DIR/svn" &&
-	git for-each-ref --format="option no-deref%0adelete %(refname)" refs/remotes |
-	git update-ref --stdin &&
-	git reflog expire --all --expire=all &&
+	but for-each-ref --format="option no-deref%0adelete %(refname)" refs/remotes |
+	but update-ref --stdin &&
+	but reflog expire --all --expire=all &&
 	mkdir "$GIT_DIR/svn" &&
-	git svn multi-fetch
+	but svn multi-fetch
 	'
 
-test_debug 'gitk --all &'
+test_debug 'butk --all &'
 
 test_done

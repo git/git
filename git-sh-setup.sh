@@ -1,5 +1,5 @@
 # This shell scriplet is meant to be included by other shell scripts
-# to set up some variables pointing at the normal git directories and
+# to set up some variables pointing at the normal but directories and
 # a few helper shell functions.
 
 # Having this variable in your environment would break scripts because
@@ -15,7 +15,7 @@ unset CDPATH
 IFS=' 	
 '
 
-git_broken_path_fix () {
+but_broken_path_fix () {
 	case ":$PATH:" in
 	*:$1:*) : ok ;;
 	*)
@@ -43,8 +43,8 @@ git_broken_path_fix () {
 
 # @@BROKEN_PATH_FIX@@
 
-# Source git-sh-i18n for gettext support.
-. "$(git --exec-path)/git-sh-i18n"
+# Source but-sh-i18n for gettext support.
+. "$(but --exec-path)/but-sh-i18n"
 
 die () {
 	die_with_status 1 "$@"
@@ -80,7 +80,7 @@ if test -n "$OPTIONS_SPEC"; then
 
 	eval "$(
 		echo "$OPTIONS_SPEC" |
-			git rev-parse --parseopt $parseopt_extra -- "$@" ||
+			but rev-parse --parseopt $parseopt_extra -- "$@" ||
 		echo exit $?
 	)"
 else
@@ -107,18 +107,18 @@ fi
 
 # Set the name of the end-user facing command in the reflog when the
 # script may update refs.  When GIT_REFLOG_ACTION is already set, this
-# will not overwrite it, so that a scripted Porcelain (e.g. "git
+# will not overwrite it, so that a scripted Porcelain (e.g. "but
 # rebase") can set it to its own name (e.g. "rebase") and then call
-# another scripted Porcelain (e.g. "git am") and a call to this
+# another scripted Porcelain (e.g. "but am") and a call to this
 # function in the latter will keep the name of the end-user facing
 # program (e.g. "rebase") in GIT_REFLOG_ACTION, ensuring whatever it
 # does will be record as actions done as part of the end-user facing
 # operation (e.g. "rebase").
 #
 # NOTE NOTE NOTE: consequently, after assigning a specific message to
-# GIT_REFLOG_ACTION when calling a "git" command to record a custom
+# GIT_REFLOG_ACTION when calling a "but" command to record a custom
 # reflog message, do not leave that custom value in GIT_REFLOG_ACTION,
-# after you are done.  Other callers of "git" commands that rely on
+# after you are done.  Other callers of "but" commands that rely on
 # writing the default "program name" in reflog expect the variable to
 # contain the value set by this function.
 #
@@ -126,18 +126,18 @@ fi
 #
 # (a) use a single-shot export form:
 #     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz" \
-#         git command-that-updates-a-ref
+#         but command-that-updates-a-ref
 #
 # (b) save the original away and restore:
 #     SAVED_ACTION=$GIT_REFLOG_ACTION
 #     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
-#     git command-that-updates-a-ref
+#     but command-that-updates-a-ref
 #     GIT_REFLOG_ACITON=$SAVED_ACTION
 #
 # (c) assign the variable in a subshell:
 #     (
 #         GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
-#         git command-that-updates-a-ref
+#         but command-that-updates-a-ref
 #     )
 set_reflog_action() {
 	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
@@ -147,19 +147,19 @@ set_reflog_action() {
 	fi
 }
 
-git_editor() {
+but_editor() {
 	if test -z "${GIT_EDITOR:+set}"
 	then
-		GIT_EDITOR="$(git var GIT_EDITOR)" || return $?
+		GIT_EDITOR="$(but var GIT_EDITOR)" || return $?
 	fi
 
 	eval "$GIT_EDITOR" '"$@"'
 }
 
-git_pager() {
+but_pager() {
 	if test -t 1
 	then
-		GIT_PAGER=$(git var GIT_PAGER)
+		GIT_PAGER=$(but var GIT_PAGER)
 	else
 		GIT_PAGER=cat
 	fi
@@ -173,11 +173,11 @@ git_pager() {
 }
 
 is_bare_repository () {
-	git rev-parse --is-bare-repository
+	but rev-parse --is-bare-repository
 }
 
 cd_to_toplevel () {
-	cdup=$(git rev-parse --show-toplevel) &&
+	cdup=$(but rev-parse --show-toplevel) &&
 	cd "$cdup" || {
 		gettextln "Cannot chdir to \$cdup, the toplevel of the working tree" >&2
 		exit 1
@@ -185,7 +185,7 @@ cd_to_toplevel () {
 }
 
 require_work_tree_exists () {
-	if test "z$(git rev-parse --is-bare-repository)" != zfalse
+	if test "z$(but rev-parse --is-bare-repository)" != zfalse
 	then
 		program_name=$0
 		die "$(eval_gettext "fatal: \$program_name cannot be used without a working tree.")"
@@ -193,18 +193,18 @@ require_work_tree_exists () {
 }
 
 require_work_tree () {
-	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true || {
+	test "$(but rev-parse --is-inside-work-tree 2>/dev/null)" = true || {
 		program_name=$0
 		die "$(eval_gettext "fatal: \$program_name cannot be used without a working tree.")"
 	}
 }
 
 require_clean_work_tree () {
-	git rev-parse --verify HEAD >/dev/null || exit 1
-	git update-index -q --ignore-submodules --refresh
+	but rev-parse --verify HEAD >/dev/null || exit 1
+	but update-index -q --ignore-submodules --refresh
 	err=0
 
-	if ! git diff-files --quiet --ignore-submodules
+	if ! but diff-files --quiet --ignore-submodules
 	then
 		action=$1
 		case "$action" in
@@ -218,7 +218,7 @@ require_clean_work_tree () {
 		err=1
 	fi
 
-	if ! git diff-index --cached --quiet --ignore-submodules HEAD --
+	if ! but diff-index --cached --quiet --ignore-submodules HEAD --
 	then
 		if test $err = 0
 		then
@@ -280,23 +280,23 @@ parse_ident_from_cummit () {
 # Parse the author from a cummit given as an argument. Stdout is suitable for
 # feeding to eval to set the usual GIT_* ident variables.
 get_author_ident_from_cummit () {
-	encoding=$(git config i18n.cummitencoding || echo UTF-8)
-	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
+	encoding=$(but config i18n.cummitencoding || echo UTF-8)
+	but show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	parse_ident_from_cummit author AUTHOR
 }
 
 # Clear repo-local GIT_* environment variables. Useful when switching to
 # another repository (e.g. when entering a submodule). See also the env
-# list in git_connect()
-clear_local_git_env() {
-	unset $(git rev-parse --local-env-vars)
+# list in but_connect()
+clear_local_but_env() {
+	unset $(but rev-parse --local-env-vars)
 }
 
-# Generate a virtual base file for a two-file merge. Uses git apply to
+# Generate a virtual base file for a two-file merge. Uses but apply to
 # remove lines from $1 that are not in $2, leaving only common lines.
 create_virtual_base() {
 	sz0=$(wc -c <"$1")
-	@@DIFF@@ -u -La/"$1" -Lb/"$1" "$1" "$2" | git apply --no-add
+	@@DIFF@@ -u -La/"$1" -Lb/"$1" "$1" "$2" | but apply --no-add
 	sz1=$(wc -c <"$1")
 
 	# If we do not have enough common material, it is not
@@ -315,7 +315,7 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
-	# git sees Windows-style pwd
+	# but sees Windows-style pwd
 	pwd () {
 		builtin pwd -W
 	}
@@ -338,37 +338,37 @@ case $(uname -s) in
 esac
 
 # Make sure we are in a valid repository of a vintage we understand,
-# if we require to be in a git repository.
-git_dir_init () {
-	GIT_DIR=$(git rev-parse --git-dir) || exit
+# if we require to be in a but repository.
+but_dir_init () {
+	GIT_DIR=$(but rev-parse --but-dir) || exit
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
-		test -z "$(git rev-parse --show-cdup)" || {
+		test -z "$(but rev-parse --show-cdup)" || {
 			exit=$?
 			gettextln "You need to run this command from the toplevel of the working tree." >&2
 			exit $exit
 		}
 	fi
 	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
-		gettextln "Unable to determine absolute path of git directory" >&2
+		gettextln "Unable to determine absolute path of but directory" >&2
 		exit 1
 	}
-	: "${GIT_OBJECT_DIRECTORY="$(git rev-parse --git-path objects)"}"
+	: "${GIT_OBJECT_DIRECTORY="$(but rev-parse --but-path objects)"}"
 }
 
 if test -z "$NONGIT_OK"
 then
-	git_dir_init
+	but_dir_init
 fi
 
 peel_cummittish () {
 	case "$1" in
 	:/*)
-		peeltmp=$(git rev-parse --verify "$1") &&
-		git rev-parse --verify "${peeltmp}^0"
+		peeltmp=$(but rev-parse --verify "$1") &&
+		but rev-parse --verify "${peeltmp}^0"
 		;;
 	*)
-		git rev-parse --verify "${1}^0"
+		but rev-parse --verify "${1}^0"
 		;;
 	esac
 }

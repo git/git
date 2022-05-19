@@ -1,18 +1,18 @@
-git-verify-tag(1)
+but-verify-tag(1)
 =================
 
 NAME
 ----
-git-verify-tag - Check the GPG signature of tags
+but-verify-tag - Check the GPG signature of tags
 
 SYNOPSIS
 --------
 [verse]
-'git verify-tag' [--format=<format>] <tag>...
+'but verify-tag' [--format=<format>] <tag>...
 
 DESCRIPTION
 -----------
-Validates the gpg signature created by 'git tag'.
+Validates the gpg signature created by 'but tag'.
 
 OPTIONS
 -------
@@ -29,4 +29,4 @@ OPTIONS
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

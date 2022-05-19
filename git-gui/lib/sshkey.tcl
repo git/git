@@ -1,4 +1,4 @@
-# git-gui about git-gui dialog
+# but-gui about but-gui dialog
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc find_ssh_key {} {

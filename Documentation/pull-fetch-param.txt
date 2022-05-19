@@ -4,24 +4,24 @@
 	(see the section <<URLS,GIT URLS>> below) or the name
 	of a remote (see the section <<REMOTES,REMOTES>> below).
 
-ifndef::git-pull[]
+ifndef::but-pull[]
 <group>::
 	A name referring to a list of repositories as the value
 	of remotes.<group> in the configuration file.
-	(See linkgit:git-config[1]).
-endif::git-pull[]
+	(See linkbut:but-config[1]).
+endif::but-pull[]
 
 <refspec>::
 	Specifies which refs to fetch and which local refs to update.
 	When no <refspec>s appear on the command line, the refs to fetch
 	are read from `remote.<repository>.fetch` variables instead
-ifndef::git-pull[]
+ifndef::but-pull[]
 	(see <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> below).
-endif::git-pull[]
-ifdef::git-pull[]
+endif::but-pull[]
+ifdef::but-pull[]
 	(see the section "CONFIGURED REMOTE-TRACKING BRANCHES"
-	in linkgit:git-fetch[1]).
-endif::git-pull[]
+	in linkbut:but-fetch[1]).
+endif::but-pull[]
 +
 The format of a <refspec> parameter is an optional plus
 `+`, followed by the source <src>, followed
@@ -57,28 +57,28 @@ Whether that update is allowed without `--force` depends on the ref
 namespace it's being fetched to, the type of object being fetched, and
 whether the update is considered to be a fast-forward. Generally, the
 same rules apply for fetching as when pushing, see the `<refspec>...`
-section of linkgit:git-push[1] for what those are. Exceptions to those
-rules particular to 'git fetch' are noted below.
+section of linkbut:but-push[1] for what those are. Exceptions to those
+rules particular to 'but fetch' are noted below.
 +
 Until Git version 2.20, and unlike when pushing with
-linkgit:git-push[1], any updates to `refs/tags/*` would be accepted
+linkbut:but-push[1], any updates to `refs/tags/*` would be accepted
 without `+` in the refspec (or `--force`). When fetching, we promiscuously
 considered all tag updates from a remote to be forced fetches.  Since
 Git version 2.20, fetching to update `refs/tags/*` works the same way
 as when pushing. I.e. any updates will be rejected without `+` in the
 refspec (or `--force`).
 +
-Unlike when pushing with linkgit:git-push[1], any updates outside of
+Unlike when pushing with linkbut:but-push[1], any updates outside of
 `refs/{tags,heads}/*` will be accepted without `+` in the refspec (or
 `--force`), whether that's swapping e.g. a tree object for a blob, or
 a cummit for another cummit that's doesn't have the previous cummit as
 an ancestor etc.
 +
-Unlike when pushing with linkgit:git-push[1], there is no
+Unlike when pushing with linkbut:but-push[1], there is no
 configuration which'll amend these rules, and nothing like a
 `pre-fetch` hook analogous to the `pre-receive` hook.
 +
-As with pushing with linkgit:git-push[1], all of the rules described
+As with pushing with linkbut:but-push[1], all of the rules described
 above about what's not allowed as an update can be overridden by
 adding an the optional leading `+` to a refspec (or using `--force`
 command line option). The only exception to this is that no amount of
@@ -96,19 +96,19 @@ will be needed for such branches.  There is no way to
 determine or declare that a branch will be made available
 in a repository with this behavior; the pulling user simply
 must know this is the expected usage pattern for a branch.
-ifdef::git-pull[]
+ifdef::but-pull[]
 +
 [NOTE]
 There is a difference between listing multiple <refspec>
-directly on 'git pull' command line and having multiple
+directly on 'but pull' command line and having multiple
 `remote.<repository>.fetch` entries in your configuration
 for a <repository> and running a
-'git pull' command without any explicit <refspec> parameters.
+'but pull' command without any explicit <refspec> parameters.
 <refspec>s listed explicitly on the command line are always
 merged into the current branch after fetching.  In other words,
-if you list more than one remote ref, 'git pull' will create
+if you list more than one remote ref, 'but pull' will create
 an Octopus merge.  On the other hand, if you do not list any
-explicit <refspec> parameter on the command line, 'git pull'
+explicit <refspec> parameter on the command line, 'but pull'
 will fetch all the <refspec>s it finds in the
 `remote.<repository>.fetch` configuration and merge
 only the first <refspec> found into the current branch.
@@ -116,4 +116,4 @@ This is because making an
 Octopus from remote refs is rarely done, while keeping track
 of multiple remote heads in one-go by fetching more than one
 is often useful.
-endif::git-pull[]
+endif::but-pull[]

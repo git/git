@@ -4,7 +4,7 @@
 # It requires a web server with PHP and SQLite running. In addition, if you
 # do not have MediaWiki sources on your computer, the option 'install'
 # downloads them for you.
-# Please set the CONFIGURATION VARIABLES in ./test-gitmw-lib.sh
+# Please set the CONFIGURATION VARIABLES in ./test-butmw-lib.sh
 
 WIKI_TEST_DIR=$(cd "$(dirname "$0")" && pwd)
 
@@ -13,7 +13,7 @@ then
 	WIKI_TEST_DIR=.
 fi
 
-. "$WIKI_TEST_DIR"/test-gitmw-lib.sh
+. "$WIKI_TEST_DIR"/test-butmw-lib.sh
 usage () {
 	echo "usage: "
 	echo "	./install-wiki.sh <install | delete | --help>"

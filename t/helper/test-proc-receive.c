@@ -127,7 +127,7 @@ static void proc_receive_read_push_options(struct packet_reader *reader,
 
 int cmd__proc_receive(int argc, const char **argv)
 {
-	int nongit_ok = 0;
+	int nonbut_ok = 0;
 	struct packet_reader reader;
 	struct command *commands = NULL;
 	struct string_list push_options = STRING_LIST_INIT_DUP;
@@ -153,7 +153,7 @@ int cmd__proc_receive(int argc, const char **argv)
 		OPT_END()
 	};
 
-	setup_git_directory_gently(&nongit_ok);
+	setup_but_directory_gently(&nonbut_ok);
 
 	argc = parse_options(argc, argv, "test-tools", options, proc_receive_usage, 0);
 	if (argc > 0)

@@ -1,4 +1,4 @@
-$ git log --decorate --all
+$ but log --decorate --all
 cummit b7e0bc69303b488b47deca799a7d723971dfa6cd (mode)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
@@ -24,7 +24,7 @@ cummit cbacedd14cb8b89255a2c02b59e77a2e9a8021a0 (refs/notes/cummits)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 
-    Notes added by 'git notes add'
+    Notes added by 'but notes add'
 
 cummit 59d314ad6f356dd08601a4cd5e530381da3e3c64 (HEAD -> master)
 Merge: 9a6d494 c7a2ab9

@@ -8,7 +8,7 @@ Fixes since v2.10
    documentation.
 
  * "diff-highlight" script (in contrib/) learned to work better with
-   "git log -p --graph" output.
+   "but log -p --graph" output.
 
  * The test framework left the number of tests and success/failure
    count in the t/test-results directory, keyed by the name of the
@@ -16,10 +16,10 @@ Fixes since v2.10
    to serve any useful purpose.  The process ID part of the filename
    has been removed.
 
- * Having a submodule whose ".git" repository is somehow corrupt
+ * Having a submodule whose ".but" repository is somehow corrupt
    caused a few commands that recurse into submodules loop forever.
 
- * "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+ * "but symbolic-ref -d HEAD" happily removes the symbolic ref, but
    the resulting repository becomes an invalid one.  Teach the command
    to forbid removal of HEAD.
 
@@ -30,17 +30,17 @@ Fixes since v2.10
  * Update a few tests that used to use GIT_CURL_VERBOSE to use the
    newer GIT_TRACE_CURL.
 
- * Update Japanese translation for "git-gui".
+ * Update Japanese translation for "but-gui".
 
- * "git fetch http::/site/path" did not die correctly and segfaulted
+ * "but fetch http::/site/path" did not die correctly and segfaulted
    instead.
 
- * "git cummit-tree" stopped reading cummit.gpgsign configuration
-   variable that was meant for Porcelain "git cummit" in Git 2.9; we
-   forgot to update "git gui" to look at the configuration to match
+ * "but cummit-tree" stopped reading cummit.gpgsign configuration
+   variable that was meant for Porcelain "but cummit" in Git 2.9; we
+   forgot to update "but gui" to look at the configuration to match
    this change.
 
- * "git log --cherry-pick" used to include merge cummits as candidates
+ * "but log --cherry-pick" used to include merge cummits as candidates
    to be matched up with other cummits, resulting a lot of wasted time.
    The patch-id generation logic has been updated to ignore merges to
    avoid the wastage.
@@ -49,7 +49,7 @@ Fixes since v2.10
    these days) failed to remove curl-easy handle from a curlm session,
    which led to unnecessary API failures.
 
- * "git diff -W" output needs to extend the context backward to
+ * "but diff -W" output needs to extend the context backward to
    include the header line of the current function and also forward to
    include the body of the entire current function up to the header
    line of the next one.  This process may have to merge to adjacent
@@ -59,20 +59,20 @@ Fixes since v2.10
    build configuration if the user relied on autoconf generated
    configuration.
 
- * "git format-patch --base=..." feature that was recently added
+ * "but format-patch --base=..." feature that was recently added
    showed the base cummit information after "-- " e-mail signature
    line, which turned out to be inconvenient.  The base information
    has been moved above the signature line.
 
- * Even when "git pull --rebase=preserve" (and the underlying "git
+ * Even when "but pull --rebase=preserve" (and the underlying "but
    rebase --preserve") can complete without creating any new cummit
    (i.e. fast-forwards), it still insisted on having a usable ident
    information (read: user.email is set correctly), which was less
-   than nice.  As the underlying commands used inside "git rebase"
+   than nice.  As the underlying commands used inside "but rebase"
    would fail with a more meaningful error message and advice text
    when the bogus ident matters, this extra check was removed.
 
- * "git gc --aggressive" used to limit the delta-chain length to 250,
+ * "but gc --aggressive" used to limit the delta-chain length to 250,
    which is way too deep for gaining additional space savings and is
    detrimental for runtime performance.  The limit has been reduced to
    50.
@@ -87,14 +87,14 @@ Fixes since v2.10
  * A shell script example in check-ref-format documentation has been
    fixed.
 
- * "git checkout <word>" does not follow the usual disambiguation
+ * "but checkout <word>" does not follow the usual disambiguation
    rules when the <word> can be both a rev and a path, to allow
    checking out a branch 'foo' in a project that happens to have a
    file 'foo' in the working tree without having to disambiguate.
    This was poorly documented and the check was incorrect when the
    command was run from a subdirectory.
 
- * Some codepaths in "git diff" used regexec(3) on a buffer that was
+ * Some codepaths in "but diff" used regexec(3) on a buffer that was
    mmap(2)ed, which may not have a terminating NUL, leading to a read
    beyond the end of the mapped region.  This was fixed by introducing
    a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
@@ -105,19 +105,19 @@ Fixes since v2.10
    no-no.  The procedure has been updated to ask HomeBrew things we
    need to know to fix this.
 
- * When "git rebase -i" is given a broken instruction, it told the
+ * When "but rebase -i" is given a broken instruction, it told the
    user to fix it with "--edit-todo", but didn't say what the step
    after that was (i.e. "--continue").
 
- * "git add --chmod=+x" added recently lacked documentation, which has
+ * "but add --chmod=+x" added recently lacked documentation, which has
    been corrected.
 
- * "git add --chmod=+x <pathspec>" added recently only toggled the
+ * "but add --chmod=+x <pathspec>" added recently only toggled the
    executable bit for paths that are either new or modified. This has
    been corrected to flip the executable bit for all paths that match
    the given pathspec.
 
- * "git pack-objects --include-tag" was taught that when we know that
+ * "but pack-objects --include-tag" was taught that when we know that
    we are sending an object C, we want a tag B that directly points at
    C but also a tag A that points at the tag B.  We used to miss the
    intermediate tag B in some cases.

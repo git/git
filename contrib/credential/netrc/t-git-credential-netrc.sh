@@ -1,7 +1,7 @@
 #!/bin/sh
 (
 	cd ../../../t
-	test_description='git-credential-netrc'
+	test_description='but-credential-netrc'
 	. ./test-lib.sh
 
 	if ! test_have_prereq PERL; then
@@ -18,14 +18,14 @@
 
 	test_expect_success \
 		'set up test repository' \
-		'git config --add gpg.program test.git-config-gpg'
+		'but config --add gpg.program test.but-config-gpg'
 
 	# The external test will outputs its own plan
 	test_external_has_tap=1
 
 	export PERL5LIB="$GITPERLLIB"
 	test_external \
-		'git-credential-netrc' \
+		'but-credential-netrc' \
 		perl "$GIT_BUILD_DIR"/contrib/credential/netrc/test.pl
 
 	test_done

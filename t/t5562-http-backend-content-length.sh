@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git-http-backend respects CONTENT_LENGTH'
+test_description='test but-http-backend respects CONTENT_LENGTH'
 . ./test-lib.sh
 
 test_lazy_prereq GZIP 'gzip --version'
@@ -26,14 +26,14 @@ test_http_env() {
 	request_body="$2"
 	shift
 	env \
-		CONTENT_TYPE="application/x-git-$handler_type-pack-request" \
-		QUERY_STRING="/repo.git/git-$handler_type-pack" \
-		PATH_TRANSLATED="$PWD/.git/git-$handler_type-pack" \
+		CONTENT_TYPE="application/x-but-$handler_type-pack-request" \
+		QUERY_STRING="/repo.but/but-$handler_type-pack" \
+		PATH_TRANSLATED="$PWD/.but/but-$handler_type-pack" \
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		"$PERL_PATH" \
 		"$TEST_DIRECTORY"/t5562/invoke-with-content-length.pl \
-		    "$request_body" git http-backend >act.out.$test_count 2>act.err.$test_count
+		    "$request_body" but http-backend >act.out.$test_count 2>act.err.$test_count
 }
 
 ssize_b100dots() {
@@ -48,11 +48,11 @@ ssize_b100dots() {
 test_expect_success 'setup' '
 	HTTP_CONTENT_ENCODING="identity" &&
 	export HTTP_CONTENT_ENCODING &&
-	git config http.receivepack true &&
+	but config http.receivepack true &&
 	test_cummit c0 &&
 	test_cummit c1 &&
-	hash_head=$(git rev-parse HEAD) &&
-	hash_prev=$(git rev-parse HEAD~1) &&
+	hash_head=$(but rev-parse HEAD) &&
+	hash_prev=$(but rev-parse HEAD~1) &&
 	{
 		packetize "want $hash_head" &&
 		printf 0000 &&
@@ -60,12 +60,12 @@ test_expect_success 'setup' '
 		packetize "done"
 	} >fetch_body &&
 	test_copy_bytes 10 <fetch_body >fetch_body.trunc &&
-	hash_next=$(git cummit-tree -p HEAD -m next HEAD^{tree}) &&
+	hash_next=$(but cummit-tree -p HEAD -m next HEAD^{tree}) &&
 	{
 		printf "%s %s refs/heads/newbranch\\0report-status object-format=%s\\n" \
 			"$ZERO_OID" "$hash_next" "$(test_oid algo)" | packetize_raw &&
 		printf 0000 &&
-		echo "$hash_next" | git pack-objects --stdout
+		echo "$hash_next" | but pack-objects --stdout
 	} >push_body &&
 	test_copy_bytes 10 <push_body >push_body.trunc &&
 	: >empty_body
@@ -109,10 +109,10 @@ test_expect_success GZIP 'fetch gzipped empty' '
 '
 
 test_expect_success GZIP 'push plain' '
-	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "but branch -D newbranch" &&
 	test_http_env receive push_body &&
 	verify_http_result "200 OK" &&
-	git rev-parse newbranch >act.head &&
+	but rev-parse newbranch >act.head &&
 	echo "$hash_next" >exp.head &&
 	test_cmp act.head exp.head
 '
@@ -128,10 +128,10 @@ test_expect_success 'push plain empty' '
 '
 
 test_expect_success GZIP 'push gzipped' '
-	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "but branch -D newbranch" &&
 	test_env HTTP_CONTENT_ENCODING="gzip" test_http_env receive push_body.gz &&
 	verify_http_result "200 OK" &&
-	git rev-parse newbranch >act.head &&
+	but rev-parse newbranch >act.head &&
 	echo "$hash_next" >exp.head &&
 	test_cmp act.head exp.head
 '
@@ -149,24 +149,24 @@ test_expect_success GZIP 'push gzipped empty' '
 test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 	NOT_FIT_IN_SSIZE=$(ssize_b100dots) &&
 	env \
-		CONTENT_TYPE=application/x-git-upload-pack-request \
-		QUERY_STRING=/repo.git/git-upload-pack \
-		PATH_TRANSLATED="$PWD"/.git/git-upload-pack \
+		CONTENT_TYPE=application/x-but-upload-pack-request \
+		QUERY_STRING=/repo.but/but-upload-pack \
+		PATH_TRANSLATED="$PWD"/.but/but-upload-pack \
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
-		git http-backend </dev/null >/dev/null 2>err &&
+		but http-backend </dev/null >/dev/null 2>err &&
 	grep "fatal:.*CONTENT_LENGTH" err
 '
 
 test_expect_success 'empty CONTENT_LENGTH' '
 	env \
-		QUERY_STRING="service=git-receive-pack" \
-		PATH_TRANSLATED="$PWD"/.git/info/refs \
+		QUERY_STRING="service=but-receive-pack" \
+		PATH_TRANSLATED="$PWD"/.but/info/refs \
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=GET \
 		CONTENT_LENGTH="" \
-		git http-backend <empty_body >act.out.$test_count 2>act.err.$test_count &&
+		but http-backend <empty_body >act.out.$test_count 2>act.err.$test_count &&
 	verify_http_result "200 OK"
 '
 

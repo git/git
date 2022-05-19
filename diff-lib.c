@@ -42,7 +42,7 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 		struct object_id sub;
 
 		/*
-		 * If ce is already a gitlink, we can have a plain
+		 * If ce is already a butlink, we can have a plain
 		 * directory (i.e. the submodule is not checked out),
 		 * or a checked out submodule.  Either case this is not
 		 * a case where something was removed from the work tree,
@@ -53,7 +53,7 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 		 * a directory --- the blob was removed!
 		 */
 		if (!S_ISGITLINK(ce->ce_mode) &&
-		    resolve_gitlink_ref(ce->name, "HEAD", &sub))
+		    resolve_butlink_ref(ce->name, "HEAD", &sub))
 			return 1;
 	}
 	return 0;

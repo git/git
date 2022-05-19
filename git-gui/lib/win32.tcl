@@ -1,4 +1,4 @@
-# git-gui Misc. native Windows 32 support
+# but-gui Misc. native Windows 32 support
 # Copyright (C) 2007 Shawn Pearce
 
 proc win32_read_lnk {lnk_path} {
@@ -20,7 +20,7 @@ proc win32_create_lnk {lnk_path lnk_exec lnk_dir} {
 		/nologo \
 		[file nativename [file join $oguilib win32_shortcut.js]] \
 		$lnk_path \
-		[file nativename [file join $oguilib git-gui.ico]] \
+		[file nativename [file join $oguilib but-gui.ico]] \
 		$lnk_dir \
 		$lnk_exec] $lnk_args
 }

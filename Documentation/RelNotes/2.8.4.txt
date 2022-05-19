@@ -4,27 +4,27 @@ Git v2.8.4 Release Notes
 Fixes since v2.8.3
 ------------------
 
- * Documentation for "git merge --verify-signatures" has been updated
+ * Documentation for "but merge --verify-signatures" has been updated
    to clarify that the signature of only the cummit at the tip is
    verified.  Also the phrasing used for signature and key validity is
    adjusted to align with that used by OpenPGP.
 
- * On Windows, .git and optionally any files whose name starts with a
+ * On Windows, .but and optionally any files whose name starts with a
    dot are now marked as hidden, with a core.hideDotFiles knob to
    customize this behaviour.
 
  * Portability enhancement for "rebase -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
 
- * "git fsck" learned to catch NUL byte in a cummit object as
+ * "but fsck" learned to catch NUL byte in a cummit object as
    potential error and warn.
 
  * CI test was taught to build documentation pages.
 
- * Many 'linkgit:<git documentation page>' references were broken,
+ * Many 'linkbut:<but documentation page>' references were broken,
    which are all fixed with this.
 
- * "git describe --contains" often made a hard-to-justify choice of
+ * "but describe --contains" often made a hard-to-justify choice of
    tag to give name to a given cummit, because it tried to come up
    with a name with smallest number of hops from a tag, causing an old
    cummit whose close descendant that is recently tagged were not
@@ -47,19 +47,19 @@ Fixes since v2.8.3
  * "http.cookieFile" configuration variable clearly wants a pathname,
    but we forgot to treat it as such by e.g. applying tilde expansion.
 
- * When de-initialising all submodules, "git submodule deinit" gave a
-   faulty recommendation to use "git submodule deinit .", which would
+ * When de-initialising all submodules, "but submodule deinit" gave a
+   faulty recommendation to use "but submodule deinit .", which would
    result in a strange error message in a pathological corner case.
    This has been corrected to suggest "submodule deinit --all" instead.
 
  * Many commands normalize command line arguments from NFD to NFC
    variant of UTF-8 on OSX, but commands in the "diff" family did
-   not, causing "git diff $path" to complain that no such path is
+   not, causing "but diff $path" to complain that no such path is
    known to Git.  They have been taught to do the normalization.
 
  * A couple of bugs around core.autocrlf have been fixed.
 
- * "git difftool" learned to handle unmerged paths correctly in
+ * "but difftool" learned to handle unmerged paths correctly in
    dir-diff mode.
 
  * The "are we talking with TTY, doing an interactive session?"

@@ -1,14 +1,14 @@
-git-mergetool{litdd}lib(1)
+but-mergetool{litdd}lib(1)
 ==========================
 
 NAME
 ----
-git-mergetool--lib - Common Git merge tool shell scriptlets
+but-mergetool--lib - Common Git merge tool shell scriptlets
 
 SYNOPSIS
 --------
 [verse]
-'TOOL_MODE=(diff|merge) . "$(git --exec-path)/git-mergetool{litdd}lib"'
+'TOOL_MODE=(diff|merge) . "$(but --exec-path)/but-mergetool{litdd}lib"'
 
 DESCRIPTION
 -----------
@@ -17,11 +17,11 @@ This is not a command the end user would want to run.  Ever.
 This documentation is meant for people who are studying the
 Porcelain-ish scripts and/or are writing new ones.
 
-The 'git-mergetool{litdd}lib' scriptlet is designed to be sourced (using
+The 'but-mergetool{litdd}lib' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up functions for working
 with Git merge tools.
 
-Before sourcing 'git-mergetool{litdd}lib', your script must set `TOOL_MODE`
+Before sourcing 'but-mergetool{litdd}lib', your script must set `TOOL_MODE`
 to define the operation mode for the functions listed below.
 'diff' and 'merge' are valid values.
 
@@ -50,4 +50,4 @@ run_merge_tool::
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

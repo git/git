@@ -6,22 +6,22 @@ Fixes since v1.5.1.2
 
 * Bugfixes
 
-  - git-add tried to optimize by finding common leading
+  - but-add tried to optimize by finding common leading
     directories across its arguments but botched, causing very
     confused behaviour.
 
-  - unofficial rpm.spec file shipped with git was letting
-    ETC_GITCONFIG set to /usr/etc/gitconfig.  Tweak the official
+  - unofficial rpm.spec file shipped with but was letting
+    ETC_GITCONFIG set to /usr/etc/butconfig.  Tweak the official
     Makefile to make it harder for distro people to make the
-    same mistake, by setting the variable to /etc/gitconfig if
+    same mistake, by setting the variable to /etc/butconfig if
     prefix is set to /usr.
 
-  - git-svn inconsistently stripped away username from the URL
+  - but-svn inconsistently stripped away username from the URL
     only when svnsync_props was in use.
 
-  - git-svn got confused when handling symlinks on Mac OS.
+  - but-svn got confused when handling symlinks on Mac OS.
 
-  - git-send-email was not quoting recipient names that have
+  - but-send-email was not quoting recipient names that have
     period '.' in them.  Also it did not allow overriding
     envelope sender, which made it impossible to send patches to
     certain subscriber-only lists.
@@ -36,10 +36,10 @@ Fixes since v1.5.1.2
   - import-tars contributed front-end for fastimport was passing
     wrong directory modes without checking.
 
-  - git-fastimport trusted its input too much and allowed to
+  - but-fastimport trusted its input too much and allowed to
     create corrupt tree objects with entries without a name.
 
-  - git-fetch needlessly barfed when too long reflog action
+  - but-fetch needlessly barfed when too long reflog action
     description was given by the caller.
 
 Also contains various documentation updates.

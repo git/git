@@ -71,16 +71,16 @@ test_expect_success GETTEXT_ISO_LOCALE 'gettext: Fetching a UTF-8 msgid -> ISO-8
     grep "$(echo tvöfaldar | iconv -f UTF-8 -t ISO8859-1)" actual
 '
 
-test_expect_success GETTEXT_LOCALE 'gettext.c: git init UTF-8 -> UTF-8' '
+test_expect_success GETTEXT_LOCALE 'gettext.c: but init UTF-8 -> UTF-8' '
     printf "Bjó til tóma Git lind" >expect &&
-    LANGUAGE=is LC_ALL="$is_IS_locale" git init repo >actual &&
+    LANGUAGE=is LC_ALL="$is_IS_locale" but init repo >actual &&
     test_when_finished "rm -rf repo" &&
     grep "^$(cat expect) " actual
 '
 
-test_expect_success GETTEXT_ISO_LOCALE 'gettext.c: git init UTF-8 -> ISO-8859-1' '
+test_expect_success GETTEXT_ISO_LOCALE 'gettext.c: but init UTF-8 -> ISO-8859-1' '
     printf "Bjó til tóma Git lind" >expect &&
-    LANGUAGE=is LC_ALL="$is_IS_iso_locale" git init repo >actual &&
+    LANGUAGE=is LC_ALL="$is_IS_iso_locale" but init repo >actual &&
     test_when_finished "rm -rf repo" &&
     grep "^$(cat expect | iconv -f UTF-8 -t ISO8859-1) " actual
 '

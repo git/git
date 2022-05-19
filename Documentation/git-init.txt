@@ -1,16 +1,16 @@
-git-init(1)
+but-init(1)
 ===========
 
 NAME
 ----
-git-init - Create an empty Git repository or reinitialize an existing one
+but-init - Create an empty Git repository or reinitialize an existing one
 
 
 SYNOPSIS
 --------
 [verse]
-'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
-	  [--separate-git-dir <git-dir>] [--object-format=<format>]
+'but init' [-q | --quiet] [--bare] [--template=<template-directory>]
+	  [--separate-but-dir <but-dir>] [--object-format=<format>]
 	  [-b <branch-name> | --initial-branch=<branch-name>]
 	  [--shared[=<permissions>]] [<directory>]
 
@@ -18,24 +18,24 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This command creates an empty Git repository - basically a `.git`
+This command creates an empty Git repository - basically a `.but`
 directory with subdirectories for `objects`, `refs/heads`,
 `refs/tags`, and template files.  An initial branch without any
 cummits will be created (see the `--initial-branch` option below
 for its name).
 
 If the `$GIT_DIR` environment variable is set then it specifies a path
-to use instead of `./.git` for the base of the repository.
+to use instead of `./.but` for the base of the repository.
 
 If the object storage directory is specified via the
 `$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
 are created underneath - otherwise the default `$GIT_DIR/objects`
 directory is used.
 
-Running 'git init' in an existing repository is safe. It will not
+Running 'but init' in an existing repository is safe. It will not
 overwrite things that are already there. The primary reason for
-rerunning 'git init' is to pick up newly added templates (or to move
-the repository to another place if --separate-git-dir is given).
+rerunning 'but init' is to pick up newly added templates (or to move
+the repository to another place if --separate-but-dir is given).
 
 OPTIONS
 -------
@@ -62,10 +62,10 @@ include::object-format-disclaimer.txt[]
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---separate-git-dir=<git-dir>::
+--separate-but-dir=<but-dir>::
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
-`./.git/`, create a text file there containing the path to the actual
+`./.but/`, create a text file there containing the path to the actual
 repository.  This file acts as filesystem-agnostic Git symbolic link to the
 repository.
 +
@@ -99,7 +99,7 @@ specified.
 
 'group' (or 'true')::
 
-Make the repository group-writable, (and g+sx, since the git group may be not
+Make the repository group-writable, (and g+sx, since the but group may be not
 the primary group of all users). This is used to loosen the permissions of an
 otherwise safe umask(2) value. Note that the umask still applies to the other
 permission bits (e.g. if umask is '0022', using 'group' will not remove read
@@ -112,7 +112,7 @@ Same as 'group', but make the repository readable by all users.
 
 '<perm>'::
 
-'<perm>' is a 3-digit octal number prefixed with `0` and each file
+'<perm>' is a 3-dibut octal number prefixed with `0` and each file
 will have mode '<perm>'. '<perm>' will override users' umask(2)
 value (and not only loosen permissions as 'group' and 'all'
 does). '0640' will create a repository which is group-readable, but
@@ -143,15 +143,15 @@ The template directory will be one of the following (in order):
 
  - the `init.templateDir` configuration variable; or
 
- - the default template directory: `/usr/share/git-core/templates`.
+ - the default template directory: `/usr/share/but-core/templates`.
 
 The default template directory includes some directory structure, suggested
-"exclude patterns" (see linkgit:gitignore[5]), and sample hook files.
+"exclude patterns" (see linkbut:butignore[5]), and sample hook files.
 
 The sample hooks are all disabled by default. To enable one of the
 sample hooks rename it by removing its `.sample` suffix.
 
-See linkgit:githooks[5] for more general info on hook execution.
+See linkbut:buthooks[5] for more general info on hook execution.
 
 EXAMPLES
 --------
@@ -160,15 +160,15 @@ Start a new Git repository for an existing code base::
 +
 ----------------
 $ cd /path/to/my/codebase
-$ git init      <1>
-$ git add .     <2>
-$ git cummit    <3>
+$ but init      <1>
+$ but add .     <2>
+$ but cummit    <3>
 ----------------
 +
-<1> Create a /path/to/my/codebase/.git directory.
+<1> Create a /path/to/my/codebase/.but directory.
 <2> Add all existing files to the index.
 <3> Record the pristine state as the first cummit in the history.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

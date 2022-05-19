@@ -1,14 +1,14 @@
-git-request-pull(1)
+but-request-pull(1)
 ===================
 
 NAME
 ----
-git-request-pull - Generates a summary of pending changes
+but-request-pull - Generates a summary of pending changes
 
 SYNOPSIS
 --------
 [verse]
-'git request-pull' [-p] <start> <URL> [<end>]
+'but request-pull' [-p] <start> <URL> [<end>]
 
 DESCRIPTION
 -----------
@@ -54,11 +54,11 @@ the `v1.0` release, and want it to be integrated to the project.
 First you push that change to your public repository for others to
 see:
 
-	git push https://git.ko.xz/project master
+	but push https://but.ko.xz/project master
 
 Then, you run this command:
 
-	git request-pull v1.0 https://git.ko.xz/project master
+	but request-pull v1.0 https://but.ko.xz/project master
 
 which will produce a request to the upstream, summarizing the
 changes between the `v1.0` release and your `master`, to pull it
@@ -67,13 +67,13 @@ from your public repository.
 If you pushed your change to a branch whose name is different from
 the one you have locally, e.g.
 
-	git push https://git.ko.xz/project master:for-linus
+	but push https://but.ko.xz/project master:for-linus
 
 then you can ask that to be pulled with
 
-	git request-pull v1.0 https://git.ko.xz/project master:for-linus
+	but request-pull v1.0 https://but.ko.xz/project master:for-linus
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

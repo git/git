@@ -94,34 +94,34 @@ set_cat_todo_editor () {
 # checks that the revisions in "$2" represent a linear range with the
 # subjects in "$1"
 test_linear_range () {
-	revlist_merges=$(git rev-list --merges "$2") &&
+	revlist_merges=$(but rev-list --merges "$2") &&
 	test -z "$revlist_merges" &&
 	expected=$1
-	set -- $(git log --reverse --format=%s "$2")
+	set -- $(but log --reverse --format=%s "$2")
 	test "$expected" = "$*"
 }
 
 reset_rebase () {
-	test_might_fail git rebase --abort &&
-	git reset --hard &&
-	git clean -f
+	test_might_fail but rebase --abort &&
+	but reset --hard &&
+	but clean -f
 }
 
 cherry_pick () {
-	git cherry-pick -n "$2" &&
-	git cummit -m "$1" &&
-	git tag "$1"
+	but cherry-pick -n "$2" &&
+	but cummit -m "$1" &&
+	but tag "$1"
 }
 
 revert () {
-	git revert -n "$2" &&
-	git cummit -m "$1" &&
-	git tag "$1"
+	but revert -n "$2" &&
+	but cummit -m "$1" &&
+	but tag "$1"
 }
 
 make_empty () {
-	git cummit --allow-empty -m "$1" &&
-	git tag "$1"
+	but cummit --allow-empty -m "$1" &&
+	but tag "$1"
 }
 
 # Call this (inside test_expect_success) at the end of a test file to
@@ -136,8 +136,8 @@ test_editor_unchanged () {
 	FAKE_LINES=$FAKE_LINES
 	GIT_EDITOR=$GIT_EDITOR
 	GIT_SEQUENCE_EDITOR=$GIT_SEQUENCE_EDITOR
-	core.editor=$(git config core.editor)
-	sequence.editor=$(git config sequence.editor)
+	core.editor=$(but config core.editor)
+	sequence.editor=$(but config sequence.editor)
 	EOF'
 	cat >expect <<-\EOF
 	EDITOR=:
@@ -166,29 +166,29 @@ set_reword_editor () {
 
 	write_script reword-sequence-editor.sh <<-\EOF &&
 	todo="$(cat "$1")" &&
-	echo "exec git log -1 --pretty=format:'%an <%ae> %at%n%B%n' \
+	echo "exec but log -1 --pretty=format:'%an <%ae> %at%n%B%n' \
 		>>reword-actual" >"$1" &&
 	printf "%s\n" "$todo" >>"$1"
 	EOF
 
 	write_script reword-editor.sh <<-EOF &&
 	# Save the oid of the first reworded cummit so we can check rebase
-	# fast-forwards to it. Also check that we do not write .git/MERGE_MSG
+	# fast-forwards to it. Also check that we do not write .but/MERGE_MSG
 	# when fast-forwarding
 	if ! test -s reword-oid
 	then
-		git rev-parse HEAD >reword-oid &&
-		if test -f .git/MERGE_MSG
+		but rev-parse HEAD >reword-oid &&
+		if test -f .but/MERGE_MSG
 		then
-			echo 1>&2 "error: .git/MERGE_MSG exists"
+			echo 1>&2 "error: .but/MERGE_MSG exists"
 			exit 1
 		fi
 	fi &&
 	# There should be no uncummited changes
-	git diff --exit-code HEAD &&
+	but diff --exit-code HEAD &&
 	# The todo-list should be re-read after a reword
 	GIT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \
-		git rebase --edit-todo &&
+		but rebase --edit-todo &&
 	echo edited >>"\$1"
 	EOF
 
@@ -200,10 +200,10 @@ set_reword_editor () {
 # Expects the first pick to be a fast-forward
 check_reworded_cummits () {
 	test_cmp_rev "$(cat reword-oid)" "$1^{cummit}" &&
-	git log --format="%an <%ae> %at%n%B%nedited%n" --no-walk=unsorted "$@" \
+	but log --format="%an <%ae> %at%n%B%nedited%n" --no-walk=unsorted "$@" \
 		>reword-expected &&
 	test_cmp reword-expected reword-actual &&
-	git log --format="%an <%ae> %at%n%B" -n $# --first-parent --reverse \
+	but log --format="%an <%ae> %at%n%B" -n $# --first-parent --reverse \
 		>reword-log &&
 	test_cmp reword-expected reword-log
 }

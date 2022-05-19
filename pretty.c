@@ -43,7 +43,7 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 	rev->cummit_format = CMIT_FMT_USERFORMAT;
 }
 
-static int git_pretty_formats_config(const char *var, const char *value, void *cb)
+static int but_pretty_formats_config(const char *var, const char *value, void *cb)
 {
 	struct cmt_fmt_map *cummit_format = NULL;
 	const char *name;
@@ -75,7 +75,7 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 
 	cummit_format->name = xstrdup(name);
 	cummit_format->format = CMIT_FMT_USERFORMAT;
-	if (git_config_string(&fmt, var, value))
+	if (but_config_string(&fmt, var, value))
 		return -1;
 
 	if (skip_prefix(fmt, "format:", &fmt))
@@ -103,8 +103,8 @@ static void setup_cummit_formats(void)
 		{ "reference",	CMIT_FMT_USERFORMAT,	1,	0,
 			0, DATE_SHORT, "%C(auto)%h (%s, %ad)" },
 		/*
-		 * Please update $__git_log_pretty_formats in
-		 * git-completion.bash when you add new formats.
+		 * Please update $__but_log_pretty_formats in
+		 * but-completion.bash when you add new formats.
 		 */
 	};
 	cummit_formats_len = ARRAY_SIZE(builtin_formats);
@@ -113,7 +113,7 @@ static void setup_cummit_formats(void)
 	COPY_ARRAY(cummit_formats, builtin_formats,
 		   ARRAY_SIZE(builtin_formats));
 
-	git_config(git_pretty_formats_config, NULL);
+	but_config(but_pretty_formats_config, NULL);
 }
 
 static struct cmt_fmt_map *find_cummit_format_recursive(const char *sought,
@@ -336,7 +336,7 @@ static int is_rfc2047_special(char ch, enum rfc2047_type type)
 	 *
 	 *    In this case the set of characters that may be used in a "Q"-encoded
 	 *    'encoded-word' is restricted to: <upper and lower case ASCII
-	 *    letters, decimal digits, "!", "*", "+", "-", "/", "=", and "_"
+	 *    letters, decimal dibuts, "!", "*", "+", "-", "/", "=", and "_"
 	 *    (underscore, ASCII 95.)>.  An 'encoded-word' that appears within a
 	 *    'phrase' MUST be separated from any adjacent 'word', 'text' or
 	 *    'special' by 'linear-white-space'.
@@ -1192,7 +1192,7 @@ static int match_placeholder_bool_arg(const char *to_parse, const char *candidat
 	}
 
 	strval = xstrndup(argval, arglen);
-	v = git_parse_maybe_bool(strval);
+	v = but_parse_maybe_bool(strval);
 	free(strval);
 
 	if (v == -1)
@@ -1417,7 +1417,7 @@ static size_t format_cummit_one(struct strbuf *sb, /* in UTF-8 */
 			describe_status->max_invocations--;
 		}
 
-		cmd.git_cmd = 1;
+		cmd.but_cmd = 1;
 		strvec_push(&cmd.args, "describe");
 
 		if (*arg == ':') {

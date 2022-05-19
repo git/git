@@ -19,22 +19,22 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 	test_tick &&
 	echo ichi >file &&
-	git add file &&
-	git cummit -m L &&
-	L=$(git rev-parse --verify HEAD) &&
+	but add file &&
+	but cummit -m L &&
+	L=$(but rev-parse --verify HEAD) &&
 
 	(
 		mkdir cloned &&
 		cd cloned &&
-		git init-db &&
-		git remote add -f origin ..
+		but init-db &&
+		but remote add -f origin ..
 	) &&
 
 	test_tick &&
 	echo A >file &&
-	git add file &&
-	git cummit -m A &&
-	A=$(git rev-parse --verify HEAD)
+	but add file &&
+	but cummit -m A &&
+	A=$(but rev-parse --verify HEAD)
 '
 
 U=UPLOAD_LOG
@@ -59,23 +59,23 @@ test_expect_success 'fetch A (new cummit : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH git fetch &&
-		test $A = $(git rev-parse --verify origin/main)
+		GIT_TRACE_PACKET=$UPATH but fetch &&
+		test $A = $(but rev-parse --verify origin/main)
 	) &&
 	get_needs $U >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success "create tag T on A, create C on branch cat" '
-	git tag -a -m tag1 tag1 $A &&
-	T=$(git rev-parse --verify tag1) &&
+	but tag -a -m tag1 tag1 $A &&
+	T=$(but rev-parse --verify tag1) &&
 
-	git checkout -b cat &&
+	but checkout -b cat &&
 	echo C >file &&
-	git add file &&
-	git cummit -m C &&
-	C=$(git rev-parse --verify HEAD) &&
-	git checkout main
+	but add file &&
+	but cummit -m C &&
+	C=$(but rev-parse --verify HEAD) &&
+	but checkout main
 '
 
 test_expect_success 'setup expect' '
@@ -89,10 +89,10 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH git fetch &&
-		test $C = $(git rev-parse --verify origin/cat) &&
-		test $T = $(git rev-parse --verify tag1) &&
-		test $A = $(git rev-parse --verify tag1^0)
+		GIT_TRACE_PACKET=$UPATH but fetch &&
+		test $C = $(but rev-parse --verify origin/cat) &&
+		test $T = $(but rev-parse --verify tag1) &&
+		test $A = $(but rev-parse --verify tag1^0)
 	) &&
 	get_needs $U >actual &&
 	test_cmp expect actual
@@ -101,17 +101,17 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 test_expect_success "create cummits O, B, tag S on B" '
 	test_tick &&
 	echo O >file &&
-	git add file &&
-	git cummit -m O &&
+	but add file &&
+	but cummit -m O &&
 
 	test_tick &&
 	echo B >file &&
-	git add file &&
-	git cummit -m B &&
-	B=$(git rev-parse --verify HEAD) &&
+	but add file &&
+	but cummit -m B &&
+	B=$(but rev-parse --verify HEAD) &&
 
-	git tag -a -m tag2 tag2 $B &&
-	S=$(git rev-parse --verify tag2)
+	but tag -a -m tag2 tag2 $B &&
+	S=$(but rev-parse --verify tag2)
 '
 
 test_expect_success 'setup expect' '
@@ -125,10 +125,10 @@ test_expect_success 'fetch B, S (cummit and tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH git fetch &&
-		test $B = $(git rev-parse --verify origin/main) &&
-		test $B = $(git rev-parse --verify tag2^0) &&
-		test $S = $(git rev-parse --verify tag2)
+		GIT_TRACE_PACKET=$UPATH but fetch &&
+		test $B = $(but rev-parse --verify origin/main) &&
+		test $B = $(but rev-parse --verify tag2^0) &&
+		test $S = $(but rev-parse --verify tag2)
 	) &&
 	get_needs $U >actual &&
 	test_cmp expect actual
@@ -142,19 +142,19 @@ EOF
 '
 
 test_expect_success 'new clone fetch main and tags' '
-	test_might_fail git branch -D cat &&
+	test_might_fail but branch -D cat &&
 	rm -f $U &&
 	(
 		mkdir clone2 &&
 		cd clone2 &&
-		git init &&
-		git remote add origin .. &&
-		GIT_TRACE_PACKET=$UPATH git fetch &&
-		test $B = $(git rev-parse --verify origin/main) &&
-		test $S = $(git rev-parse --verify tag2) &&
-		test $B = $(git rev-parse --verify tag2^0) &&
-		test $T = $(git rev-parse --verify tag1) &&
-		test $A = $(git rev-parse --verify tag1^0)
+		but init &&
+		but remote add origin .. &&
+		GIT_TRACE_PACKET=$UPATH but fetch &&
+		test $B = $(but rev-parse --verify origin/main) &&
+		test $S = $(but rev-parse --verify tag2) &&
+		test $B = $(but rev-parse --verify tag2^0) &&
+		test $T = $(but rev-parse --verify tag1) &&
+		test $A = $(but rev-parse --verify tag1^0)
 	) &&
 	get_needs $U >actual &&
 	test_cmp expect actual

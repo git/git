@@ -19,10 +19,10 @@ static int fetch_objects(struct repository *repo,
 	int i;
 	FILE *child_in;
 
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	child.in = -1;
 	if (repo != the_repository)
-		prepare_other_repo_env(&child.env_array, repo->gitdir);
+		prepare_other_repo_env(&child.env_array, repo->butdir);
 	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
@@ -109,7 +109,7 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 	if (!strcmp(subkey, "promisor")) {
 		char *remote_name;
 
-		if (!git_config_bool(var, value))
+		if (!but_config_bool(var, value))
 			return 0;
 
 		remote_name = xmemdupz(name, namelen);
@@ -133,7 +133,7 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 		if (!r)
 			return 0;
 
-		return git_config_string(&r->partial_clone_filter, var, value);
+		return but_config_string(&r->partial_clone_filter, var, value);
 	}
 
 	return 0;

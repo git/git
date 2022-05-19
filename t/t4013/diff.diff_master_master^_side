@@ -1,4 +1,4 @@
-$ git diff master master^ side
+$ but diff master master^ side
 diff --cc dir/sub
 index cead32e,7289e35..992913c
 --- a/dir/sub

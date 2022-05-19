@@ -714,7 +714,7 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 
 	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
-	entries = read_index_from(index_state, index_path, get_git_dir());
+	entries = read_index_from(index_state, index_path, get_but_dir());
 	if (entries < 0) {
 		ret = WRITE_TREE_UNREADABLE_INDEX;
 		goto out;

@@ -32,4 +32,4 @@ follows:
 --
 +
 Except for the `simple` variant, command-line parameters are likely to
-change as git gains new features.
+change as but gains new features.

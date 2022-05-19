@@ -3,8 +3,8 @@
 # Copyright (c) 2009 Eric Wong
 #
 
-test_description='git svn shallow clone'
-. ./lib-git-svn.sh
+test_description='but svn shallow clone'
+. ./lib-but-svn.sh
 
 test_expect_success 'setup test repository' '
 	svn_cmd mkdir -m "create standard layout" \
@@ -22,8 +22,8 @@ test_expect_success 'setup test repository' '
 '
 
 test_expect_success 'clone trunk with "-r HEAD"' '
-	git svn clone -r HEAD "$svnrepo/trunk" g &&
-	( cd g && git rev-parse --symbolic --verify HEAD )
+	but svn clone -r HEAD "$svnrepo/trunk" g &&
+	( cd g && but rev-parse --symbolic --verify HEAD )
 '
 
 test_done

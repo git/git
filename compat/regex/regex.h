@@ -41,10 +41,10 @@
 extern "C" {
 #endif
 
-#define regcomp git_regcomp
-#define regexec git_regexec
-#define regerror git_regerror
-#define regfree git_regfree
+#define regcomp but_regcomp
+#define regexec but_regexec
+#define regerror but_regerror
+#define regfree but_regfree
 
 /* The following two types have to be signed and unsigned integer type
    wide enough to hold a value of a pointer.  For most ANSI compilers
@@ -71,7 +71,7 @@ typedef unsigned long int reg_syntax_t;
 # define RE_BK_PLUS_QM (RE_BACKSLASH_ESCAPE_IN_LISTS << 1)
 
 /* If this bit is set, then character classes are supported.  They are:
-     [:alpha:], [:upper:], [:lower:],  [:digit:], [:alnum:], [:xdigit:],
+     [:alpha:], [:upper:], [:lower:],  [:dibut:], [:alnum:], [:xdibut:],
      [:space:], [:print:], [:punct:], [:graph:], and [:cntrl:].
    If not set, then character classes are not supported.  */
 # define RE_CHAR_CLASSES (RE_BK_PLUS_QM << 1)
@@ -136,8 +136,8 @@ typedef unsigned long int reg_syntax_t;
    If not set, \(...\) defines a group, and ( and ) are literals.  */
 # define RE_NO_BK_PARENS (RE_NO_BK_BRACES << 1)
 
-/* If this bit is set, then \<digit> matches <digit>.
-   If not set, then \<digit> is a back-reference.  */
+/* If this bit is set, then \<dibut> matches <dibut>.
+   If not set, then \<dibut> is a back-reference.  */
 # define RE_NO_BK_REFS (RE_NO_BK_PARENS << 1)
 
 /* If this bit is set, then | is an alternation operator, and \| is literal.

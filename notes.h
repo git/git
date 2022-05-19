@@ -65,7 +65,7 @@ extern struct notes_tree {
  * is passed to init_notes().
  *
  * This the first of the following to be defined:
- * 1. The '--ref' option to 'git notes', if given
+ * 1. The '--ref' option to 'but notes', if given
  * 2. The $GIT_NOTES_REF environment variable, if set
  * 3. The value of the core.notesRef config variable, if set
  * 4. GIT_NOTES_DEFAULT_REF (i.e. "refs/notes/cummits")

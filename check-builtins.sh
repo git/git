@@ -14,11 +14,11 @@ sort |
     bad=0
     while read builtin
     do
-	base=$(expr "$builtin" : 'git-\(.*\)')
-	x=$(sed -ne 's/.*{ "'$base'", \(cmd_[^, ]*\).*/'$base'	\1/p' git.c)
+	base=$(expr "$builtin" : 'but-\(.*\)')
+	x=$(sed -ne 's/.*{ "'$base'", \(cmd_[^, ]*\).*/'$base'	\1/p' but.c)
 	if test -z "$x"
 	then
-		echo "$base is builtin but not listed in git.c command list"
+		echo "$base is builtin but not listed in but.c command list"
 		bad=1
 	fi
 	for sfx in sh perl py

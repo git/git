@@ -20,9 +20,9 @@ test_expect_success 'setup' '
 	exit 0
 	EOF
 	echo 1 >file &&
-	git add file &&
-	git cummit -m 1 &&
-	git clone . child &&
+	but add file &&
+	but cummit -m 1 &&
+	but clone . child &&
 	(
 		cd child &&
 		test_cummit message2 file content2
@@ -30,7 +30,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'keywords' '
-	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/keywords 2>output &&
+	but --but-dir child/.but -c color.remote=always push -f origin HEAD:refs/heads/keywords 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<BOLD;RED>error<RESET>: error" decoded &&
 	grep "<YELLOW>hint<RESET>:" decoded &&
@@ -40,7 +40,7 @@ test_expect_success 'keywords' '
 '
 
 test_expect_success 'whole words at line start' '
-	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/whole-words 2>output &&
+	but --but-dir child/.but -c color.remote=always push -f origin HEAD:refs/heads/whole-words 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<YELLOW>hint<RESET>:" decoded &&
 	grep "hinting: not highlighted" decoded &&
@@ -48,38 +48,38 @@ test_expect_success 'whole words at line start' '
 '
 
 test_expect_success 'short line' '
-	git -C child -c color.remote=always push -f origin HEAD:short-line 2>output &&
+	but -C child -c color.remote=always push -f origin HEAD:short-line 2>output &&
 	test_decode_color <output >decoded &&
 	grep "remote: Err" decoded
 '
 
 test_expect_success 'case-insensitive' '
-	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/case-insensitive 2>output &&
+	but --but-dir child/.but -c color.remote=always push -f origin HEAD:refs/heads/case-insensitive 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<BOLD;RED>error<RESET>: error" decoded &&
 	grep "<BOLD;RED>ERROR<RESET>: also highlighted" decoded
 '
 
 test_expect_success 'leading space' '
-	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/leading-space 2>output &&
+	but --but-dir child/.but -c color.remote=always push -f origin HEAD:refs/heads/leading-space 2>output &&
 	test_decode_color <output >decoded &&
 	grep "  <BOLD;RED>error<RESET>: leading space" decoded
 '
 
 test_expect_success 'spaces only' '
-	git -C child -c color.remote=always push -f origin HEAD:only-space 2>output &&
+	but -C child -c color.remote=always push -f origin HEAD:only-space 2>output &&
 	test_decode_color <output >decoded &&
 	grep "remote:     " decoded
 '
 
 test_expect_success 'no coloring for redirected output' '
-	git --git-dir child/.git push -f origin HEAD:refs/heads/redirected-output 2>output &&
+	but --but-dir child/.but push -f origin HEAD:refs/heads/redirected-output 2>output &&
 	test_decode_color <output >decoded &&
 	grep "error: error" decoded
 '
 
 test_expect_success 'push with customized color' '
-	git --git-dir child/.git -c color.remote=always -c color.remote.error=blue push -f origin HEAD:refs/heads/customized-color 2>output &&
+	but --but-dir child/.but -c color.remote=always -c color.remote.error=blue push -f origin HEAD:refs/heads/customized-color 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<BLUE>error<RESET>:" decoded &&
 	grep "<BOLD;GREEN>success<RESET>:" decoded
@@ -87,13 +87,13 @@ test_expect_success 'push with customized color' '
 
 
 test_expect_success 'error in customized color' '
-	git --git-dir child/.git -c color.remote=always -c color.remote.error=i-am-not-a-color push -f origin HEAD:refs/heads/error-customized-color 2>output &&
+	but --but-dir child/.but -c color.remote=always -c color.remote.error=i-am-not-a-color push -f origin HEAD:refs/heads/error-customized-color 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<BOLD;GREEN>success<RESET>:" decoded
 '
 
 test_expect_success 'fallback to color.ui' '
-	git --git-dir child/.git -c color.ui=always push -f origin HEAD:refs/heads/fallback-color-ui 2>output &&
+	but --but-dir child/.but -c color.ui=always push -f origin HEAD:refs/heads/fallback-color-ui 2>output &&
 	test_decode_color <output >decoded &&
 	grep "<BOLD;RED>error<RESET>: error" decoded
 '

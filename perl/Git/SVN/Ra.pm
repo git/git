@@ -311,7 +311,7 @@ sub gs_do_update {
 
 	$reporter->finish_report($pool);
 	$pool->clear;
-	$editor->{git_cummit_ok};
+	$editor->{but_cummit_ok};
 }
 
 # this requires SVN 1.4.3 or later (do_switch didn't work before 1.4.3, and
@@ -356,7 +356,7 @@ sub gs_do_switch {
 	}
 
 	$pool->clear;
-	$editor->{git_cummit_ok};
+	$editor->{but_cummit_ok};
 }
 
 sub longest_common_path {
@@ -474,7 +474,7 @@ sub gs_fetch_loop_common {
 				}
 				my $log_entry = $gs->do_fetch($paths, $r);
 				if ($log_entry) {
-					$gs->do_git_cummit($log_entry);
+					$gs->do_but_cummit($log_entry);
 				}
 				$Git::SVN::INDEX_FILES{$gs->{index}} = 1;
 			}
@@ -652,7 +652,7 @@ sub skip_unknown_revs {
 			     "does not exist: ($errno): ",
 			     $err->expanded_message,"\n";
 			warn "W: Do not be alarmed at the above message ",
-			     "git-svn is just searching aggressively for ",
+			     "but-svn is just searching aggressively for ",
 			     "old history.\n",
 			     "This may take a while on large repositories\n";
 			$ignored_err{$err_key} = 1;
@@ -667,7 +667,7 @@ __END__
 
 =head1 NAME
 
-Git::SVN::Ra - Subversion remote access functions for git-svn
+Git::SVN::Ra - Subversion remote access functions for but-svn
 
 =head1 SYNOPSIS
 
@@ -679,13 +679,13 @@ Git::SVN::Ra - Subversion remote access functions for git-svn
 
 =head1 DESCRIPTION
 
-This is a wrapper around the L<SVN::Ra> module for use by B<git-svn>.
+This is a wrapper around the L<SVN::Ra> module for use by B<but-svn>.
 It fills in some default parameters (such as the authentication
 scheme), smooths over incompatibilities between libsvn versions, adds
-caching, and implements some functions specific to B<git-svn>.
+caching, and implements some functions specific to B<but-svn>.
 
-Do not use it unless you are developing git-svn.  The interface will
-change as git-svn evolves.
+Do not use it unless you are developing but-svn.  The interface will
+change as but-svn evolves.
 
 =head1 DEPENDENCIES
 
@@ -693,7 +693,7 @@ Subversion perl bindings,
 L<Git::SVN>.
 
 C<Git::SVN::Ra> has not been tested using callers other than
-B<git-svn> itself.
+B<but-svn> itself.
 
 =head1 SEE ALSO
 

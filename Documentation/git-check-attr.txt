@@ -1,21 +1,21 @@
-git-check-attr(1)
+but-check-attr(1)
 =================
 
 NAME
 ----
-git-check-attr - Display gitattributes information
+but-check-attr - Display butattributes information
 
 
 SYNOPSIS
 --------
 [verse]
-'git check-attr' [-a | --all | <attr>...] [--] <pathname>...
-'git check-attr' --stdin [-z] [-a | --all | <attr>...]
+'but check-attr' [-a | --all | <attr>...] [--] <pathname>...
+'but check-attr' --stdin [-z] [-a | --all | <attr>...]
 
 DESCRIPTION
 -----------
 For every pathname, this command will list if each attribute is 'unspecified',
-'set', or 'unset' as a gitattribute on that pathname.
+'set', or 'unset' as a butattribute on that pathname.
 
 OPTIONS
 -------
@@ -25,7 +25,7 @@ OPTIONS
 	will not be included in the output.
 
 --cached::
-	Consider `.gitattributes` in the index only, ignoring the working tree.
+	Consider `.butattributes` in the index only, ignoring the working tree.
 
 --stdin::
 	Read pathnames from the standard input, one per line,
@@ -63,14 +63,14 @@ being queried and <info> can be either:
 <value>;;	when a value has been assigned to the attribute.
 
 Buffering happens as documented under the `GIT_FLUSH` option in
-linkgit:git[1].  The caller is responsible for avoiding deadlocks
+linkbut:but[1].  The caller is responsible for avoiding deadlocks
 caused by overfilling an input buffer or reading from an empty output
 buffer.
 
 EXAMPLES
 --------
 
-In the examples, the following '.gitattributes' file is used:
+In the examples, the following '.butattributes' file is used:
 ---------------
 *.java diff=java -crlf myAttr
 NoMyAttr.java !myAttr
@@ -79,13 +79,13 @@ README caveat=unspecified
 
 * Listing a single attribute:
 ---------------
-$ git check-attr diff org/example/MyClass.java
+$ but check-attr diff org/example/MyClass.java
 org/example/MyClass.java: diff: java
 ---------------
 
 * Listing multiple attributes for a file:
 ---------------
-$ git check-attr crlf diff myAttr -- org/example/MyClass.java
+$ but check-attr crlf diff myAttr -- org/example/MyClass.java
 org/example/MyClass.java: crlf: unset
 org/example/MyClass.java: diff: java
 org/example/MyClass.java: myAttr: set
@@ -93,28 +93,28 @@ org/example/MyClass.java: myAttr: set
 
 * Listing all attributes for a file:
 ---------------
-$ git check-attr --all -- org/example/MyClass.java
+$ but check-attr --all -- org/example/MyClass.java
 org/example/MyClass.java: diff: java
 org/example/MyClass.java: myAttr: set
 ---------------
 
 * Listing an attribute for multiple files:
 ---------------
-$ git check-attr myAttr -- org/example/MyClass.java org/example/NoMyAttr.java
+$ but check-attr myAttr -- org/example/MyClass.java org/example/NoMyAttr.java
 org/example/MyClass.java: myAttr: set
 org/example/NoMyAttr.java: myAttr: unspecified
 ---------------
 
 * Not all values are equally unambiguous:
 ---------------
-$ git check-attr caveat README
+$ but check-attr caveat README
 README: caveat: unspecified
 ---------------
 
 SEE ALSO
 --------
-linkgit:gitattributes[5].
+linkbut:butattributes[5].
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

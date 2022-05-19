@@ -146,7 +146,7 @@ static void unique_in_midx(struct multi_pack_index *m,
 	}
 }
 
-static void unique_in_pack(struct packed_git *p,
+static void unique_in_pack(struct packed_but *p,
 			   struct disambiguate_state *ds)
 {
 	uint32_t num, i, first = 0;
@@ -177,12 +177,12 @@ static void unique_in_pack(struct packed_git *p,
 static void find_short_packed_object(struct disambiguate_state *ds)
 {
 	struct multi_pack_index *m;
-	struct packed_git *p;
+	struct packed_but *p;
 
 	for (m = get_multi_pack_index(ds->repo); m && !ds->ambiguous;
 	     m = m->next)
 		unique_in_midx(m, ds);
-	for (p = get_packed_git(ds->repo); p && !ds->ambiguous;
+	for (p = get_packed_but(ds->repo); p && !ds->ambiguous;
 	     p = p->next)
 		unique_in_pack(p, ds);
 }
@@ -552,7 +552,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 * or migrated from loose to packed.
 	 */
 	if (status == MISSING_OBJECT) {
-		reprepare_packed_git(r);
+		reprepare_packed_but(r);
 		find_short_object_filename(&ds);
 		find_short_packed_object(&ds);
 		status = finish_object_disambiguation(&ds, oid);
@@ -708,7 +708,7 @@ static void find_abbrev_len_for_midx(struct multi_pack_index *m,
 	mad->init_len = mad->cur_len;
 }
 
-static void find_abbrev_len_for_pack(struct packed_git *p,
+static void find_abbrev_len_for_pack(struct packed_but *p,
 				     struct min_abbrev_data *mad)
 {
 	int match = 0;
@@ -750,11 +750,11 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 {
 	struct multi_pack_index *m;
-	struct packed_git *p;
+	struct packed_but *p;
 
 	for (m = get_multi_pack_index(mad->repo); m; m = m->next)
 		find_abbrev_len_for_midx(m, mad);
-	for (p = get_packed_git(mad->repo); p; p = p->next)
+	for (p = get_packed_but(mad->repo); p; p = p->next)
 		find_abbrev_len_for_pack(p, mad);
 }
 
@@ -889,11 +889,11 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	"because it will be ignored when you just specify 40-hex. These refs\n"
 	"may be created by mistake. For example,\n"
 	"\n"
-	"  git switch -c $br $(git rev-parse ...)\n"
+	"  but switch -c $br $(but rev-parse ...)\n"
 	"\n"
 	"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 	"examine these refs and maybe delete them. Turn this message off by\n"
-	"running \"git config advice.objectNameWarning false\"");
+	"running \"but config advice.objectNameWarning false\"");
 	struct object_id tmp_oid;
 	char *real_ref = NULL;
 	int refs_found = 0;
@@ -1209,7 +1209,7 @@ static int get_describe_name(struct repository *r,
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
-		if (!isxdigit(ch)) {
+		if (!isxdibut(ch)) {
 			/* We must be looking at g in "SOMETHING-g"
 			 * for it to be describe output.
 			 */
@@ -1250,13 +1250,13 @@ static enum get_oid_result get_oid_1(struct repository *r,
 		int len1 = cp - name;
 		cp++;
 		while (cp < name + len) {
-			unsigned int digit = *cp++ - '0';
+			unsigned int dibut = *cp++ - '0';
 			if (unsigned_mult_overflows(num, 10))
 				return MISSING_OBJECT;
 			num *= 10;
-			if (unsigned_add_overflows(num, digit))
+			if (unsigned_add_overflows(num, dibut))
 				return MISSING_OBJECT;
-			num += digit;
+			num += dibut;
 		}
 		if (!num && len1 == len - 1)
 			num = 1;
@@ -1285,7 +1285,7 @@ static enum get_oid_result get_oid_1(struct repository *r,
 }
 
 /*
- * This interprets names like ':/Initial revision of "git"' by searching
+ * This interprets names like ':/Initial revision of "but"' by searching
  * through history and returning the first cummit whose message starts
  * the given regular expression.
  *

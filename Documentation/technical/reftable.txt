@@ -58,8 +58,8 @@ Space used, packed-refs vs. reftable:
 |repository |packed-refs |reftable |% original |avg ref |avg obj
 |android |62.2 M |36.1 M |58.0% |33 bytes |5 bytes
 |rails |1.8 M |1.1 M |57.7% |29 bytes |4 bytes
-|git |78.7 K |48.1 K |61.0% |50 bytes |4 bytes
-|git (heads) |332 b |269 b |81.0% |33 bytes |0 bytes
+|but |78.7 K |48.1 K |61.0% |50 bytes |4 bytes
+|but (heads) |332 b |269 b |81.0% |33 bytes |0 bytes
 |===============================================================
 
 Scan (read 866k refs), by reference name lookup (single ref from 866k
@@ -97,7 +97,7 @@ Reference name encoding
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Reference names are an uninterpreted sequence of bytes that must pass
-linkgit:git-check-ref-format[1] as a valid reference name.
+linkbut:but-check-ref-format[1] as a valid reference name.
 
 Key unicity
 ^^^^^^^^^^^
@@ -492,7 +492,7 @@ Like in reference blocks, abbreviations are prefix compressed within an
 obj block. On large reftables with many unique objects, higher block
 sizes (64k), and higher restart interval (128), a `prefix_length` of 2
 or 3 and `suffix_length` of 3 may be common in obj records (unique
-abbreviation of 5-6 raw bytes, 10-12 hex digits).
+abbreviation of 5-6 raw bytes, 10-12 hex dibuts).
 
 Each record contains `position_count` number of positions for matching
 ref blocks. For 1-7 positions the count is stored in `cnt_3`. When
@@ -631,15 +631,15 @@ key described above.
 Log record entries use `log_type` to indicate what follows:
 
 * `0x0`: deletion; no log data.
-* `0x1`: standard git reflog data using `log_data` above.
+* `0x1`: standard but reflog data using `log_data` above.
 
-The `log_type = 0x0` is mostly useful for `git stash drop`, removing an
+The `log_type = 0x0` is mostly useful for `but stash drop`, removing an
 entry from the reflog of `refs/stash` in a transaction file (below),
 without needing to rewrite larger files. Readers reading a stack of
 reflogs must treat this as a deletion.
 
 For `log_type = 0x1`, the `log_data` section follows
-linkgit:git-update-ref[1] logging and includes:
+linkbut:but-update-ref[1] logging and includes:
 
 * two object names (old id, new id)
 * varint string of cummitter's name
@@ -653,7 +653,7 @@ at the time of the update. For example `GMT-0800` is encoded in reftable
 as `sint16(-480)` and `GMT+0230` is `sint16(150)`.
 
 The cummitter email does not contain `<` or `>`, it's the value normally
-found between the `<>` in a git cummit object header.
+found between the `<>` in a but cummit object header.
 
 The `message_length` may be 0, in which case there was no message
 supplied for the update.
@@ -808,7 +808,7 @@ reference.
 Low overhead
 ^^^^^^^^^^^^
 
-A reftable with very few references (e.g. git.git with 5 heads) is 269
+A reftable with very few references (e.g. but.but with 5 heads) is 269
 bytes for reftable, vs. 332 bytes for packed-refs. This supports
 reftable scaling down for transaction logs (below).
 
@@ -886,7 +886,7 @@ current files, one per line, in order, from oldest (base) to newest
 (most recent):
 
 ....
-$ cat .git/reftable/tables.list
+$ cat .but/reftable/tables.list
 00000001-00000001-RANDOM1.log
 00000002-00000002-RANDOM2.ref
 00000003-00000003-RANDOM3.ref
@@ -903,14 +903,14 @@ pruned.
 Backward compatibility
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Older clients should continue to recognize the directory as a git
+Older clients should continue to recognize the directory as a but
 repository so they don't look for an enclosing repository in parent
 directories. To this end, a reftable-enabled repository must contain the
 following dummy files
 
-* `.git/HEAD`, a regular file containing `ref: refs/heads/.invalid`.
-* `.git/refs/`, a directory
-* `.git/refs/heads`, a regular file
+* `.but/HEAD`, a regular file containing `ref: refs/heads/.invalid`.
+* `.but/refs/`, a directory
+* `.but/refs/heads`, a regular file
 
 Readers
 ^^^^^^^
@@ -1043,7 +1043,7 @@ Michael Haggerty's alternate format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Michael Haggerty proposed
-link:https://lore.kernel.org/git/CAMy9T_HCnyc1g8XWOOWhe7nN0aEFyyBskV2aOMb_fe%2BwGvEJ7A%40mail.gmail.com/[an
+link:https://lore.kernel.org/but/CAMy9T_HCnyc1g8XWOOWhe7nN0aEFyyBskV2aOMb_fe%2BwGvEJ7A%40mail.gmail.com/[an
 alternate] format to reftable on the Git mailing list. This format uses
 smaller chunks, without the restart table, and avoids block alignment
 with padding. Reflog entries immediately follow each ref, and are thus
@@ -1063,9 +1063,9 @@ larger file (+ ~3.2%, 28.3M vs 29.2M):
 JGit Ketch RefTree
 ^^^^^^^^^^^^^^^^^^
 
-https://dev.eclipse.org/mhonarc/lists/jgit-dev/msg03073.html[JGit Ketch]
+https://dev.eclipse.org/mhonarc/lists/jbut-dev/msg03073.html[JGit Ketch]
 proposed
-link:https://lore.kernel.org/git/CAJo%3DhJvnAPNAdDcAAwAvU9C4RVeQdoS3Ev9WTguHx4fD0V_nOg%40mail.gmail.com/[RefTree],
+link:https://lore.kernel.org/but/CAJo%3DhJvnAPNAdDcAAwAvU9C4RVeQdoS3Ev9WTguHx4fD0V_nOg%40mail.gmail.com/[RefTree],
 an encoding of references inside Git tree objects stored as part of the
 repository's object database.
 
@@ -1085,7 +1085,7 @@ LMDB
 ^^^^
 
 David Turner proposed
-https://lore.kernel.org/git/1455772670-21142-26-git-send-email-dturner@twopensource.com/[using
+https://lore.kernel.org/but/1455772670-21142-26-but-send-email-dturner@twopensource.com/[using
 LMDB], as LMDB is lightweight (64k of runtime code) and GPL-compatible
 license.
 
@@ -1095,4 +1095,4 @@ difficult, and hoisting onto virtual storage (for JGit DFS) virtually
 impossible.
 
 A common format that can be supported by all major Git implementations
-(git-core, JGit, libgit2) is strongly preferred.
+(but-core, JGit, libbut2) is strongly preferred.

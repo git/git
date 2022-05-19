@@ -26,28 +26,28 @@ test_expect_success \
      echo "in directory1" >> directory1/file &&
      mkdir directory2 &&
      echo "in directory2" >> directory2/file &&
-     git add . &&
-     git cummit -m "first cummit" &&
+     but add . &&
+     but cummit -m "first cummit" &&
 
      echo "new file in subdir 2" > directory2/file2 &&
-     git add . &&
-     git cummit -m "cummit in directory2" &&
+     but add . &&
+     but cummit -m "cummit in directory2" &&
 
      echo "changed file 1" > file1 &&
-     git cummit -a -m "second cummit" &&
+     but cummit -a -m "second cummit" &&
 
-     git config --add color.test.slot1 green &&
-     git config --add test.string value &&
-     git config --add test.dupstring value1 &&
-     git config --add test.dupstring value2 &&
-     git config --add test.booltrue true &&
-     git config --add test.boolfalse no &&
-     git config --add test.boolother other &&
-     git config --add test.int 2k &&
-     git config --add test.path "~/foo" &&
-     git config --add test.pathexpanded "$HOME/foo" &&
-     git config --add test.pathmulti foo &&
-     git config --add test.pathmulti bar
+     but config --add color.test.slot1 green &&
+     but config --add test.string value &&
+     but config --add test.dupstring value1 &&
+     but config --add test.dupstring value2 &&
+     but config --add test.booltrue true &&
+     but config --add test.boolfalse no &&
+     but config --add test.boolother other &&
+     but config --add test.int 2k &&
+     but config --add test.path "~/foo" &&
+     but config --add test.pathexpanded "$HOME/foo" &&
+     but config --add test.pathmulti foo &&
+     but config --add test.pathmulti bar
      '
 
 # The external test will outputs its own plan

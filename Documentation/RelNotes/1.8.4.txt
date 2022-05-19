@@ -4,7 +4,7 @@ Git v1.8.4 Release Notes
 Backward compatibility notes (for Git 2.0)
 ------------------------------------------
 
-When "git push [$there]" does not say what to push, we have used the
+When "but push [$there]" does not say what to push, we have used the
 traditional "matching" semantics so far (all your branches were sent
 to the remote as long as there already are branches of the same name
 over there).  In Git 2.0, the default will change to the "simple"
@@ -23,23 +23,23 @@ semantics, you can set the variable to "matching" to keep the
 traditional behaviour.  If you want to live in the future early, you
 can set it to "simple" today without waiting for Git 2.0.
 
-When "git add -u" (and "git add -A") is run inside a subdirectory and
+When "but add -u" (and "but add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git cummit -a" and other commands.  There will be no
-mechanism to make plain "git add -u" behave like "git add -u .".
-Current users of "git add -u" (without a pathspec) should start
-training their fingers to explicitly say "git add -u ."
+with "but cummit -a" and other commands.  There will be no
+mechanism to make plain "but add -u" behave like "but add -u .".
+Current users of "but add -u" (without a pathspec) should start
+training their fingers to explicitly say "but add -u ."
 before Git 2.0 comes.  A warning is issued when these commands are
 run without a pathspec and when you have local changes outside the
 current directory, because the behaviour in Git 2.0 will be different
 from today's version in such a situation.
 
-In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
-that "git add dir/" will notice paths you removed from the directory
+In Git 2.0, "but add <path>" will behave as "but add -A <path>", so
+that "but add dir/" will notice paths you removed from the directory
 and record the removal.  Versions before Git 2.0, including this
 release, will keep ignoring removals, but the users who rely on this
-behaviour are encouraged to start using "git add --ignore-removal <path>"
+behaviour are encouraged to start using "but add --ignore-removal <path>"
 now before 2.0 is released.
 
 
@@ -50,7 +50,7 @@ Foreign interfaces, subsystems and ports.
 
  * Cygwin port has been updated for more recent Cygwin 1.7.
 
- * "git rebase -i" now honors --strategy and -X options.
+ * "but rebase -i" now honors --strategy and -X options.
 
  * Git-gui has been updated to its 0.18.0 version.
 
@@ -73,12 +73,12 @@ Foreign interfaces, subsystems and ports.
    does not work yet, and (2) the helper may not know how to do
    --dry-run; these problematic cases are disabled for now.
 
- * git-remote-hg/bzr (in contrib/) updates.
+ * but-remote-hg/bzr (in contrib/) updates.
 
- * git-remote-mw (in contrib/) hints users to check the certificate,
+ * but-remote-mw (in contrib/) hints users to check the certificate,
    when https:// connection failed.
 
- * git-remote-mw (in contrib/) adds a command to allow previewing the
+ * but-remote-mw (in contrib/) adds a command to allow previewing the
    contents locally before pushing it out, when working with a
    MediaWiki remote.
 
@@ -88,12 +88,12 @@ UI, Workflows & Features
  * Sample "post-receive-email" hook script got an enhanced replacement
    "multimail" (in contrib/).
 
- * Also in contrib/ is a new "contacts" script that runs "git blame"
+ * Also in contrib/ is a new "contacts" script that runs "but blame"
    to find out the people who may be interested in a set of changes.
 
- * "git clean" command learned an interactive mode.
+ * "but clean" command learned an interactive mode.
 
- * The "--head" option to "git show-ref" was only to add "HEAD" to the
+ * The "--head" option to "but show-ref" was only to add "HEAD" to the
    list of candidate refs to be filtered by the usual rules
    (e.g. "--heads" that only show refs under refs/heads).  The meaning
    of the option has been changed to always show "HEAD" regardless of
@@ -102,23 +102,23 @@ UI, Workflows & Features
    This is a backward incompatible change and might cause breakages to
    people's existing scripts.
 
- * "git show -s" was less discoverable than it should have been.  It
-   now has a natural synonym "git show --no-patch".
+ * "but show -s" was less discoverable than it should have been.  It
+   now has a natural synonym "but show --no-patch".
 
- * "git check-mailmap" is a new command that lets you map usernames
+ * "but check-mailmap" is a new command that lets you map usernames
    and e-mail addresses through the mailmap mechanism, just like many
    built-in commands do.
 
- * "git name-rev" learned to name an annotated tag object back to its
-   tagname; "git name-rev $(git rev-parse v1.0.0)" gives "tags/v1.0.0",
+ * "but name-rev" learned to name an annotated tag object back to its
+   tagname; "but name-rev $(but rev-parse v1.0.0)" gives "tags/v1.0.0",
    for example.
 
- * "git cat-file --batch-check=<format>" is added, primarily to allow
+ * "but cat-file --batch-check=<format>" is added, primarily to allow
    on-disk footprint of objects in packfiles (often they are a lot
    smaller than their true size, when expressed as deltas) to be
    reported.
 
- * "git rebase [-i]" used to leave just "rebase" as its reflog messages
+ * "but rebase [-i]" used to leave just "rebase" as its reflog messages
    for some operations. They have been reworded to be more informative.
 
  * In addition to the choice from "rebase, merge, or checkout-detach",
@@ -126,10 +126,10 @@ UI, Workflows & Features
    update the working tree of submodules via the "submodule.*.update"
    configuration variable.
 
- * "git submodule update" can optionally clone the submodule
+ * "but submodule update" can optionally clone the submodule
    repositories shallowly.
 
- * "git format-patch" learned "--from[=whom]" option, which sets the
+ * "but format-patch" learned "--from[=whom]" option, which sets the
    "From: " header to the specified person (or the person who runs the
    command, if "=whom" part is missing) and move the original author
    information to an in-body From: header as necessary.
@@ -142,37 +142,37 @@ UI, Workflows & Features
    "last one wins, and command line overrides the configuration"
    correctly.
 
- * "gitweb" learned to optionally place extra links that point at the
+ * "butweb" learned to optionally place extra links that point at the
    levels higher than the Gitweb pages themselves in the breadcrumbs,
    so that it can be used as part of a larger installation.
 
- * "git log --format=" now honors i18n.logoutputencoding configuration
+ * "but log --format=" now honors i18n.logoutputencoding configuration
    variable.
 
- * The "push.default=simple" mode of "git push" has been updated to
+ * The "push.default=simple" mode of "but push" has been updated to
    behave like "current" without requiring a remote tracking
    information, when you push to a remote that is different from where
    you fetch from (i.e. a triangular workflow).
 
  * Having multiple "fixup!" on a line in the rebase instruction sheet
-   did not work very well with "git rebase -i --autosquash".
+   did not work very well with "but rebase -i --autosquash".
 
- * "git log" learned the "--author-date-order" option, with which the
+ * "but log" learned the "--author-date-order" option, with which the
    output is topologically sorted and cummits in parallel histories
    are shown intermixed together based on the author timestamp.
 
- * Various subcommands of "git submodule" refused to run from anywhere
+ * Various subcommands of "but submodule" refused to run from anywhere
    other than the top of the working tree of the superproject, but
    they have been taught to let you run from a subdirectory.
 
- * "git diff" learned a mode that ignores hunks whose change consists
+ * "but diff" learned a mode that ignores hunks whose change consists
    only of additions and removals of blank lines, which is the same as
    "diff -B" (ignore blank lines) of GNU diff.
 
- * "git rm" gives a single message followed by list of paths to report
+ * "but rm" gives a single message followed by list of paths to report
    multiple paths that cannot be removed.
 
- * "git rebase" can be told with ":/look for this string" syntax cummits
+ * "but rebase" can be told with ":/look for this string" syntax cummits
    to replay the changes onto and where the work to be replayed begins.
 
  * Many tutorials teach users to set "color.ui" to "auto" as the first
@@ -182,53 +182,53 @@ UI, Workflows & Features
  * On Cygwin, "cygstart" is now recognised as a possible way to start
    a web browser (used in "help -w" and "instaweb" among others).
 
- * "git status" learned status.branch and status.short configuration
+ * "but status" learned status.branch and status.short configuration
    variables to use --branch and --short options by default (override
    with --no-branch and --no-short options from the command line).
 
- * "git cmd <name>", when <name> happens to be a 40-hex string,
+ * "but cmd <name>", when <name> happens to be a 40-hex string,
    directly uses the 40-hex string as an object name, even if a ref
    "refs/<some hierarchy>/<name>" exists.  This disambiguation order
    is unlikely to change, but we should warn about the ambiguity just
    like we warn when more than one refs/ hierarchies share the same
    name.
 
- * "git rebase" learned "--[no-]autostash" option to save local
+ * "but rebase" learned "--[no-]autostash" option to save local
    changes instead of refusing to run (to which people's normal
    response was to stash them and re-run).  This introduced a corner
-   case breakage to "git am --abort" but it has been fixed.
+   case breakage to "but am --abort" but it has been fixed.
 
  * "check-ignore" (new feature since 1.8.2) has been updated to work
    more like "check-attr" over bidi-pipes.
 
- * "git describe" learned "--first-parent" option to limit its closest
+ * "but describe" learned "--first-parent" option to limit its closest
    tagged cummit search to the first-parent chain.
 
- * "git merge foo" that might have meant "git merge origin/foo" is
+ * "but merge foo" that might have meant "but merge origin/foo" is
    diagnosed with a more informative error message.
 
- * "git log -L<line>,<range>:<filename>" has been added.  This may
+ * "but log -L<line>,<range>:<filename>" has been added.  This may
    still have leaks and rough edges, though.
 
  * We used the approxidate() parser for "--expire=<timestamp>" options
    of various commands, but it is better to treat --expire=all and
    --expire=now a bit more specially than using the current timestamp.
-   "git gc" and "git reflog" have been updated with a new parsing
+   "but gc" and "but reflog" have been updated with a new parsing
    function for expiry dates.
 
  * Updates to completion (both bash and zsh) helpers.
 
- * The behaviour of the "--chain-reply-to" option of "git send-email"
+ * The behaviour of the "--chain-reply-to" option of "but send-email"
    have changed at 1.7.0, and we added a warning/advice message to
    help users adjust to the new behaviour back then, but we kept it
    around for too long.  The message has finally been removed.
 
- * "git fetch origin master" unlike "git fetch origin" or "git fetch"
+ * "but fetch origin master" unlike "but fetch origin" or "but fetch"
    did not update "refs/remotes/origin/master"; this was an early
    design decision to keep the update of remote tracking branches
    predictable, but in practice it turns out that people find it more
    convenient to opportunistically update them whenever we have a
-   chance, and we have been updating them when we run "git push" which
+   chance, and we have been updating them when we run "but push" which
    already breaks the original "predictability" anyway.
 
  * The configuration variable core.checkstat was advertised in the
@@ -257,13 +257,13 @@ Performance, Internal Implementation, etc.
  * Fetching between repositories with many refs employed O(n^2)
    algorithm to match up the common objects, which has been corrected.
 
- * The original way to specify remote repository using .git/branches/
+ * The original way to specify remote repository using .but/branches/
    used to have a nifty feature.  The code to support the feature was
    still in a function but the caller was changed not to call it 5
    years ago, breaking that feature and leaving the supporting code
    unreachable.  The dead code has been removed.
 
- * "git pack-refs" that races with new ref creation or deletion have
+ * "but pack-refs" that races with new ref creation or deletion have
    been susceptible to lossage of refs under right conditions, which
    has been tightened up.
 
@@ -274,7 +274,7 @@ Performance, Internal Implementation, etc.
    race is detected, instead of outright failing.
 
  * Uses of the platform fnmatch(3) function (many places in the code,
-   matching pathspec, .gitignore and .gitattributes to name a few)
+   matching pathspec, .butignore and .butattributes to name a few)
    have been replaced with wildmatch, allowing "foo/**/bar" that would
    match foo/bar, foo/a/bar, foo/a/b/bar, etc.
 
@@ -302,7 +302,7 @@ Performance, Internal Implementation, etc.
    inconsistently between the test framework and t/Makefile, and logic
    to summarize the results looked at a wrong place.
 
- * "git clone" uses a lighter-weight implementation when making sure
+ * "but clone" uses a lighter-weight implementation when making sure
    that the history behind refs are complete.
 
  * Many warnings from sparse source checker in compat/ area has been
@@ -328,7 +328,7 @@ details).
    mechanism to turn it off if needed.
    (merge 35035bb rr/send-email-ssl-verify later to maint).
 
- * When "git" is spawned in such a way that any of the low 3 file
+ * When "but" is spawned in such a way that any of the low 3 file
    descriptors is closed, our first open() may yield file descriptor 2,
    and writing error message to it would screw things up in a big way.
    (merge a11c396 tr/protect-low-3-fds later to maint).
@@ -351,7 +351,7 @@ details).
    This allows GSSAPI codepath to match with the hostname given.
    (merge 1a741bf bc/send-email-use-port-as-separate-param later to maint).
 
- * "git diff" refused to even show difference when core.safecrlf is
+ * "but diff" refused to even show difference when core.safecrlf is
    set to true (i.e. error out) and there are offending lines in the
    working tree files.
    (merge 5430bb2 jc/maint-diff-core-safecrlf later to maint).
@@ -360,39 +360,39 @@ details).
    to be corrected.
    (merge 94d75d1 jc/t1512-fix later to maint).
 
- * An overlong path to a .git directory may have overflown the
+ * An overlong path to a .but directory may have overflown the
    temporary path buffer used to create a name for lockfiles.
    (merge 2fbd4f9 mh/maint-lockfile-overflow later to maint).
 
- * Invocations of "git checkout" used internally by "git rebase" were
-   counted as "checkout", and affected later "git checkout -", which took
+ * Invocations of "but checkout" used internally by "but rebase" were
+   counted as "checkout", and affected later "but checkout -", which took
    the user to an unexpected place.
    (merge 3bed291 rr/rebase-checkout-reflog later to maint).
 
  * The configuration variable column.ui was poorly documented.
    (merge 5e62cc1 rr/column-doc later to maint).
 
- * "git name-rev --refs=tags/v*" were forbidden, which was a bit
+ * "but name-rev --refs=tags/v*" were forbidden, which was a bit
    inconvenient (you had to give a pattern to match refs fully, like
    --refs=refs/tags/v*).
    (merge 98c5c4a nk/name-rev-abbreviated-refs later to maint).
 
- * "git apply" parsed patches that add new files, generated by
+ * "but apply" parsed patches that add new files, generated by
    programs other than Git, incorrectly.  This is an old breakage in
    v1.7.11 and will need to be merged down to the maintenance tracks.
 
  * Older cURL wanted piece of memory we call it with to be stable, but
    we updated the auth material after handing it to a call.
 
- * "git pull" into nothing trashed "local changes" that were in the
+ * "but pull" into nothing trashed "local changes" that were in the
    index, and this avoids it.
 
- * Many "git submodule" operations do not work on a submodule at a
+ * Many "but submodule" operations do not work on a submodule at a
    path whose name is not in ASCII.
 
  * "cherry-pick" had a small leak in an error codepath.
 
- * Logic used by git-send-email to suppress cc mishandled names like
+ * Logic used by but-send-email to suppress cc mishandled names like
    "A U. Thor" <author@example.xz>, where the human readable part
    needs to be quoted (the user input may not have the double quotes
    around the name, and comparison was done between quoted and
@@ -405,13 +405,13 @@ details).
    entries, which has been plugged.
    (merge a0fc4db rs/discard-index-discard-array later to maint).
 
- * "gitweb" forgot to clear a global variable $search_regexp upon each
+ * "butweb" forgot to clear a global variable $search_regexp upon each
    request, mistakenly carrying over the previous search to a new one
    when used as a persistent CGI.
 
  * The wildmatch engine did not honor WM_CASEFOLD option correctly.
 
- * "git log -c --follow $path" segfaulted upon hitting the cummit that
+ * "but log -c --follow $path" segfaulted upon hitting the cummit that
    renamed the $path being followed.
 
  * When a reflog notation is used for implicit "current branch", we
@@ -421,7 +421,7 @@ details).
    end-user in the diff tool backend to the working tree in some
    cases.
 
- * "git push $there HEAD:branch" did not resolve HEAD early enough, so
+ * "but push $there HEAD:branch" did not resolve HEAD early enough, so
    it was easy to flip it around while push is still going on and push
    out a branch that the user did not originally intended when the
    command was started.
@@ -441,22 +441,22 @@ details).
    can take in the HTML documentation was made into a clickable link
    by mistake.
 
- * "git push --[no-]verify" was not documented.
+ * "but push --[no-]verify" was not documented.
 
- * Stop installing the git-remote-testpy script that is only used for
+ * Stop installing the but-remote-testpy script that is only used for
    testing.
 
- * "git cummit --allow-empty-message -m ''" should not start an
+ * "but cummit --allow-empty-message -m ''" should not start an
    editor.
 
- * "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
+ * "but merge @{-1}~22" was rewritten to "but merge frotz@{1}~22"
    incorrectly when your previous branch was "frotz" (it should be
-   rewritten to "git merge frotz~22" instead).
+   rewritten to "but merge frotz~22" instead).
 
- * "git diff -c -p" was not showing a deleted line from a hunk when
+ * "but diff -c -p" was not showing a deleted line from a hunk when
    another hunk immediately begins where the earlier one ends.
 
- * "git log --ancestry-path A...B" did not work as expected, as it did
+ * "but log --ancestry-path A...B" did not work as expected, as it did
    not pay attention to the fact that the merge base between A and B
    was the bottom of the range being specified.
 
@@ -466,21 +466,21 @@ details).
  * Newer MacOS X encourages the programs to compile and link with
    their CommonCrypto, not with OpenSSL.
 
- * "git clone foo/bar:baz" cannot be a request to clone from a remote
-   over git-over-ssh specified in the scp style.  This case is now
+ * "but clone foo/bar:baz" cannot be a request to clone from a remote
+   over but-over-ssh specified in the scp style.  This case is now
    detected and clones from a local repository at "foo/bar:baz".
 
  * When $HOME is misconfigured to point at an unreadable directory, we
    used to complain and die. Loosen the check.
 
- * "git subtree" (in contrib/) had one codepath with loose error
+ * "but subtree" (in contrib/) had one codepath with loose error
    checks to lose data at the remote side.
 
- * "git fetch" into a shallow repository from a repository that does
+ * "but fetch" into a shallow repository from a repository that does
    not know about the shallow boundary cummits (e.g. a different fork
    from the repository the current shallow repository was cloned from)
    did not work correctly.
 
- * "git checkout foo" DWIMs the intended "upstream" and turns it into
-   "git checkout -t -b foo remotes/origin/foo". This codepath has been
+ * "but checkout foo" DWIMs the intended "upstream" and turns it into
+   "but checkout -t -b foo remotes/origin/foo". This codepath has been
    updated to correctly take existing remote definitions into account.

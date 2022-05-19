@@ -9,13 +9,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	test_cummit PRE &&
-	PRE_OID=$(git rev-parse PRE) &&
+	PRE_OID=$(but rev-parse PRE) &&
 	test_cummit POST &&
-	POST_OID=$(git rev-parse POST)
+	POST_OID=$(but rev-parse POST)
 '
 
 test_expect_success 'hook allows updating ref if successful' '
-	git reset --hard PRE &&
+	but reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
 		echo "$*" >>actual
 	EOF
@@ -23,25 +23,25 @@ test_expect_success 'hook allows updating ref if successful' '
 		prepared
 		cummitted
 	EOF
-	git update-ref HEAD POST &&
+	but update-ref HEAD POST &&
 	test_cmp expect actual
 '
 
 test_expect_success 'hook aborts updating ref in prepared state' '
-	git reset --hard PRE &&
+	but reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
 			exit 1
 		fi
 	EOF
-	test_must_fail git update-ref HEAD POST 2>err &&
+	test_must_fail but update-ref HEAD POST 2>err &&
 	test_i18ngrep "ref updates aborted by hook" err
 '
 
 test_expect_success 'hook gets all queued updates in prepared state' '
 	test_when_finished "rm actual" &&
-	git reset --hard PRE &&
+	but reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = prepared
 		then
@@ -55,7 +55,7 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 		$ZERO_OID $POST_OID HEAD
 		$ZERO_OID $POST_OID refs/heads/main
 	EOF
-	git update-ref HEAD POST <<-EOF &&
+	but update-ref HEAD POST <<-EOF &&
 		update HEAD $ZERO_OID $POST_OID
 		update refs/heads/main $ZERO_OID $POST_OID
 	EOF
@@ -64,7 +64,7 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 
 test_expect_success 'hook gets all queued updates in cummitted state' '
 	test_when_finished "rm actual" &&
-	git reset --hard PRE &&
+	but reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = cummitted
 		then
@@ -78,13 +78,13 @@ test_expect_success 'hook gets all queued updates in cummitted state' '
 		$ZERO_OID $POST_OID HEAD
 		$ZERO_OID $POST_OID refs/heads/main
 	EOF
-	git update-ref HEAD POST &&
+	but update-ref HEAD POST &&
 	test_cmp expect actual
 '
 
 test_expect_success 'hook gets all queued updates in aborted state' '
 	test_when_finished "rm actual" &&
-	git reset --hard PRE &&
+	but reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
 		if test "$1" = aborted
 		then
@@ -98,7 +98,7 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 		$ZERO_OID $POST_OID HEAD
 		$ZERO_OID $POST_OID refs/heads/main
 	EOF
-	git update-ref --stdin <<-EOF &&
+	but update-ref --stdin <<-EOF &&
 		start
 		update HEAD POST $ZERO_OID
 		update refs/heads/main POST $ZERO_OID
@@ -108,15 +108,15 @@ test_expect_success 'hook gets all queued updates in aborted state' '
 '
 
 test_expect_success 'interleaving hook calls succeed' '
-	test_when_finished "rm -r target-repo.git" &&
+	test_when_finished "rm -r target-repo.but" &&
 
-	git init --bare target-repo.git &&
+	but init --bare target-repo.but &&
 
-	test_hook -C target-repo.git reference-transaction <<-\EOF &&
+	test_hook -C target-repo.but reference-transaction <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 
-	test_hook -C target-repo.git update <<-\EOF &&
+	test_hook -C target-repo.but update <<-\EOF &&
 		echo $0 "$@" >>actual
 	EOF
 
@@ -129,8 +129,8 @@ test_expect_success 'interleaving hook calls succeed' '
 		hooks/reference-transaction cummitted
 	EOF
 
-	git push ./target-repo.git PRE POST &&
-	test_cmp expect target-repo.git/actual
+	but push ./target-repo.but PRE POST &&
+	test_cmp expect target-repo.but/actual
 '
 
 test_done

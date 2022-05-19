@@ -1,7 +1,7 @@
 Description
 ^^^^^^^^^^^
 
-When specifying `--tool=vimdiff` in `git mergetool` Git will open Vim with a 4
+When specifying `--tool=vimdiff` in `but mergetool` Git will open Vim with a 4
 windows layout distributed in the following way:
 ....
 ------------------------------------------

@@ -9,16 +9,16 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'create annotated tag in refs/tags' '
 	test_cummit base &&
-	git tag -m annotated foo
+	but tag -m annotated foo
 '
 
 test_expect_success 'create annotated tag outside of refs/tags' '
-	git update-ref refs/outside/foo refs/tags/foo
+	but update-ref refs/outside/foo refs/tags/foo
 '
 
 # This matches show-ref's output
 print_ref() {
-	echo "$(git rev-parse "$1") $1"
+	echo "$(but rev-parse "$1") $1"
 }
 
 test_expect_success 'set up expected show-ref output' '
@@ -33,13 +33,13 @@ test_expect_success 'set up expected show-ref output' '
 '
 
 test_expect_success 'refs are peeled outside of refs/tags (loose)' '
-	git show-ref -d >actual &&
+	but show-ref -d >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'refs are peeled outside of refs/tags (packed)' '
-	git pack-refs --all &&
-	git show-ref -d >actual &&
+	but pack-refs --all &&
+	but show-ref -d >actual &&
 	test_cmp expect actual
 '
 
@@ -48,30 +48,30 @@ test_expect_success 'create old-style pack-refs without fully-peeled' '
 	# from scratch; we could also munge the existing file to remove the
 	# fully-peeled bits, but that seems even more prone to failure,
 	# especially if the format ever changes again. At least this way we
-	# know we are emulating exactly what an older git would have written.
+	# know we are emulating exactly what an older but would have written.
 	{
 		echo "# pack-refs with: peeled " &&
 		print_ref "refs/heads/main" &&
 		print_ref "refs/outside/foo" &&
 		print_ref "refs/tags/base" &&
 		print_ref "refs/tags/foo" &&
-		echo "^$(git rev-parse "refs/tags/foo^{}")"
+		echo "^$(but rev-parse "refs/tags/foo^{}")"
 	} >tmp &&
-	mv tmp .git/packed-refs
+	mv tmp .but/packed-refs
 '
 
 test_expect_success 'refs are peeled outside of refs/tags (old packed)' '
-	git show-ref -d >actual &&
+	but show-ref -d >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'peeled refs survive deletion of packed ref' '
-	git pack-refs --all &&
-	cp .git/packed-refs fully-peeled &&
-	git branch yadda &&
-	git pack-refs --all &&
-	git branch -d yadda &&
-	test_cmp fully-peeled .git/packed-refs
+	but pack-refs --all &&
+	cp .but/packed-refs fully-peeled &&
+	but branch yadda &&
+	but pack-refs --all &&
+	but branch -d yadda &&
+	test_cmp fully-peeled .but/packed-refs
 '
 
 test_done

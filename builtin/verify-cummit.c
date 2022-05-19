@@ -1,9 +1,9 @@
 /*
- * Builtin "git cummit-cummit"
+ * Builtin "but cummit-cummit"
  *
- * Copyright (c) 2014 Michael J Gruber <git@drmicha.warpmail.net>
+ * Copyright (c) 2014 Michael J Gruber <but@drmicha.warpmail.net>
  *
- * Based on git-verify-tag
+ * Based on but-verify-tag
  */
 #include "cache.h"
 #include "config.h"
@@ -16,7 +16,7 @@
 #include "gpg-interface.h"
 
 static const char * const verify_cummit_usage[] = {
-		N_("git verify-cummit [-v | --verbose] <cummit>..."),
+		N_("but verify-cummit [-v | --verbose] <cummit>..."),
 		NULL
 };
 
@@ -52,12 +52,12 @@ static int verify_cummit(const char *name, unsigned flags)
 	return run_gpg_verify((struct cummit *)obj, flags);
 }
 
-static int git_verify_cummit_config(const char *var, const char *value, void *cb)
+static int but_verify_cummit_config(const char *var, const char *value, void *cb)
 {
-	int status = git_gpg_config(var, value, cb);
+	int status = but_gpg_config(var, value, cb);
 	if (status)
 		return status;
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 int cmd_verify_cummit(int argc, const char **argv, const char *prefix)
@@ -70,7 +70,7 @@ int cmd_verify_cummit(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_verify_cummit_config, NULL);
+	but_config(but_verify_cummit_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, verify_cummit_options,
 			     verify_cummit_usage, PARSE_OPT_KEEP_ARGV0);

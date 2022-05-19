@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 handling of EDITOR'
+test_description='but p4 handling of EDITOR'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -18,16 +18,16 @@ test_expect_success 'init depot' '
 '
 
 # Check that the P4EDITOR argument can be given command-line
-# options, which git-p4 will then pass through to the shell.
+# options, which but-p4 will then pass through to the shell.
 test_expect_success 'EDITOR with options' '
-	git p4 clone --dest="$git" //depot &&
-	test_when_finished cleanup_git &&
+	but p4 clone --dest="$but" //depot &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo change >file1 &&
-		git cummit -m "change" file1 &&
-		P4EDITOR=": >\"$git/touched\" && test-tool chmtime +5" git p4 submit &&
-		test_path_is_file "$git/touched"
+		but cummit -m "change" file1 &&
+		P4EDITOR=": >\"$but/touched\" && test-tool chmtime +5" but p4 submit &&
+		test_path_is_file "$but/touched"
 	)
 '
 

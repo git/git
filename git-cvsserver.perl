@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ####
-#### This application is a CVS emulation layer for git.
+#### This application is a CVS emulation layer for but.
 #### It is intended for clients to connect over SSH.
 #### See the documentation for more details.
 ####
@@ -107,17 +107,17 @@ my $work =
 $log->info("--------------- STARTING -----------------");
 
 my $usage =
-    "usage: git cvsserver [options] [pserver|server] [<directory> ...]\n".
+    "usage: but cvsserver [options] [pserver|server] [<directory> ...]\n".
     "    --base-path <path>  : Prepend to requested CVSROOT\n".
     "                          Can be read from GIT_CVSSERVER_BASE_PATH\n".
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
-    "    --export-all        : Don't check for gitcvs.enabled in config\n".
+    "    --export-all        : Don't check for butcvs.enabled in config\n".
     "    --version, -V       : Print version information and exit\n".
     "    -h, -H              : Print usage information and exit\n".
     "\n".
     "<directory> ... is a list of allowed directories. If no directories\n".
-    "are given, all are allowed. This is an additional restriction, gitcvs\n".
-    "access still needs to be enabled by the gitcvs.enabled config option.\n".
+    "are given, all are allowed. This is an additional restriction, butcvs\n".
+    "access still needs to be enabled by the butcvs.enabled config option.\n".
     "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
 
 my @opts = ( 'h|H', 'version|V',
@@ -126,7 +126,7 @@ GetOptions( $state, @opts )
     or die $usage;
 
 if ($state->{version}) {
-    print "git-cvsserver version $VERSION\n";
+    print "but-cvsserver version $VERSION\n";
     exit;
 }
 if ($state->{help}) {
@@ -155,7 +155,7 @@ if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
     die "--export-all can only be used together with an explicit whitelist\n";
 }
 
-# Environment handling for running under git-shell
+# Environment handling for running under but-shell
 if (exists $ENV{GIT_CVSSERVER_BASE_PATH}) {
     if ($state->{'base-path'}) {
 	die "Cannot specify base path both ways.\n";
@@ -204,16 +204,16 @@ if ($state->{method} eq 'pserver') {
         # Fall through to LOVE
     } else {
         # Trying to authenticate a user
-        if (not exists $cfg->{gitcvs}->{authdb}) {
-            print "E the repo config file needs a [gitcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
+        if (not exists $cfg->{butcvs}->{authdb}) {
+            print "E the repo config file needs a [butcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
             print "I HATE YOU\n";
             exit 1;
         }
 
-        my $authdb = $cfg->{gitcvs}->{authdb};
+        my $authdb = $cfg->{butcvs}->{authdb};
 
         unless (-e $authdb) {
-            print "E The authentication database specified in [gitcvs.authdb] does not exist\n";
+            print "E The authentication database specified in [butcvs.authdb] does not exist\n";
             print "I HATE YOU\n";
             exit 1;
         }
@@ -357,16 +357,16 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = safe_pipe_capture(qw(git config -l));
+    my @butvars = safe_pipe_capture(qw(but config -l));
     if ($?) {
-       print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
+       print "E problems executing but-config on the server -- this is not a but repository or the PATH is not set correctly.\n";
         print "E \n";
-        print "error 1 - problem executing git-config\n";
+        print "error 1 - problem executing but-config\n";
        return 0;
     }
-    foreach my $line ( @gitvars )
+    foreach my $line ( @butvars )
     {
-        next unless ( $line =~ /^(gitcvs|extensions)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
+        next unless ( $line =~ /^(butcvs|extensions)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
         unless ($2) {
             $cfg->{$1}{$3} = $4;
         } else {
@@ -374,18 +374,18 @@ sub req_Root
         }
     }
 
-    my $enabled = ($cfg->{gitcvs}{$state->{method}}{enabled}
-		   || $cfg->{gitcvs}{enabled});
+    my $enabled = ($cfg->{butcvs}{$state->{method}}{enabled}
+		   || $cfg->{butcvs}{enabled});
     unless ($state->{'export-all'} ||
 	    ($enabled && $enabled =~ /^\s*(1|true|yes)\s*$/i)) {
         print "E GITCVS emulation needs to be enabled on this repo\n";
-        print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
+        print "E the repo config file needs a [butcvs] section added, and the parameter 'enabled' set to 1\n";
         print "E \n";
         print "error 1 GITCVS emulation disabled\n";
         return 0;
     }
 
-    my $logfile = $cfg->{gitcvs}{$state->{method}}{logfile} || $cfg->{gitcvs}{logfile};
+    my $logfile = $cfg->{butcvs}{$state->{method}}{logfile} || $cfg->{butcvs}{logfile};
     if ( $logfile )
     {
         $log->setfile($logfile);
@@ -845,7 +845,7 @@ sub req_Modified
     # Save the file data in $state
     $state->{entries}{$state->{directory}.$data}{modified_filename} = $filename;
     $state->{entries}{$state->{directory}.$data}{modified_mode} = $mode;
-    $state->{entries}{$state->{directory}.$data}{modified_hash} = safe_pipe_capture('git','hash-object',$filename);
+    $state->{entries}{$state->{directory}.$data}{modified_hash} = safe_pipe_capture('but','hash-object',$filename);
     $state->{entries}{$state->{directory}.$data}{modified_hash} =~ s/\s.*$//s;
 
     #$log->debug("req_Modified : file=$data mode=$mode size=$size");
@@ -947,7 +947,7 @@ sub req_co
 
     # Provide list of modules, if -c was used.
     if (exists $state->{opt}{c}) {
-        my $showref = safe_pipe_capture(qw(git show-ref --heads));
+        my $showref = safe_pipe_capture(qw(but show-ref --heads));
         for my $line (split '\n', $showref) {
             if ( $line =~ m% refs/heads/(.*)$% ) {
                 print "M $1\t$1\n";
@@ -1002,47 +1002,47 @@ sub req_co
             'checkout',
             $state->{dirArgs} );
 
-    foreach my $git ( @{$updater->getAnyHead($headHash)} )
+    foreach my $but ( @{$updater->getAnyHead($headHash)} )
     {
         # Don't want to check out deleted files
-        next if ( $git->{filehash} eq "deleted" );
+        next if ( $but->{filehash} eq "deleted" );
 
-        my $fullName = $git->{name};
-        ( $git->{name}, $git->{dir} ) = filenamesplit($git->{name});
+        my $fullName = $but->{name};
+        ( $but->{name}, $but->{dir} ) = filenamesplit($but->{name});
 
-        unless (exists($seendirs{$git->{dir}})) {
-            prepDirForOutput($git->{dir}, $state->{CVSROOT} . "/$module/",
+        unless (exists($seendirs{$but->{dir}})) {
+            prepDirForOutput($but->{dir}, $state->{CVSROOT} . "/$module/",
                              $checkout_path, \%seendirs, 'checkout',
                              $state->{dirArgs} );
-            $lastdir = $git->{dir};
-            $seendirs{$git->{dir}} = 1;
+            $lastdir = $but->{dir};
+            $seendirs{$but->{dir}} = 1;
         }
 
         # modification time of this file
-        print "Mod-time $git->{modified}\n";
+        print "Mod-time $but->{modified}\n";
 
         # print some information to the client
-        if ( defined ( $git->{dir} ) and $git->{dir} ne "./" )
+        if ( defined ( $but->{dir} ) and $but->{dir} ne "./" )
         {
-            print "M U $checkout_path/$git->{dir}$git->{name}\n";
+            print "M U $checkout_path/$but->{dir}$but->{name}\n";
         } else {
-            print "M U $checkout_path/$git->{name}\n";
+            print "M U $checkout_path/$but->{name}\n";
         }
 
        # instruct client we're sending a file to put in this path
-       print "Created $checkout_path/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "\n";
+       print "Created $checkout_path/" . ( defined ( $but->{dir} ) and $but->{dir} ne "./" ? $but->{dir} . "/" : "" ) . "\n";
 
-       print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
+       print $state->{CVSROOT} . "/$module/" . ( defined ( $but->{dir} ) and $but->{dir} ne "./" ? $but->{dir} . "/" : "" ) . "$but->{name}\n";
 
         # this is an "entries" line
-        my $kopts = kopts_from_path($fullName,"sha1",$git->{filehash});
-        print "/$git->{name}/$git->{revision}//$kopts/" .
+        my $kopts = kopts_from_path($fullName,"sha1",$but->{filehash});
+        print "/$but->{name}/$but->{revision}//$kopts/" .
                         getStickyTagOrDate($stickyInfo) . "\n";
         # permissions
-        print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
+        print "u=$but->{mode},g=$but->{mode},o=$but->{mode}\n";
 
         # transmit file
-        transmitfile($git->{filehash});
+        transmitfile($but->{filehash});
     }
 
     print "ok\n";
@@ -1185,7 +1185,7 @@ sub req_update
     # projects (heads in this case) to checkout.
     #
     if ($state->{module} eq '') {
-        my $showref = safe_pipe_capture(qw(git show-ref --heads));
+        my $showref = safe_pipe_capture(qw(but show-ref --heads));
         print "E cvs update: Updating .\n";
         for my $line (split '\n', $showref) {
             if ( $line =~ m% refs/heads/(.*)$% ) {
@@ -1408,7 +1408,7 @@ sub req_update
 
             $log->debug("Temporary directory for merge is $mergeDir");
 
-            my $return = system("git", "merge-file", $file_local, $file_old, $file_new);
+            my $return = system("but", "merge-file", $file_local, $file_old, $file_new);
             $return >>= 8;
 
             cleanupTmpDir();
@@ -1535,8 +1535,8 @@ sub req_ci
 
     if ( -e $state->{CVSROOT} . "/index" )
     {
-        $log->warn("file 'index' already exists in the git repository");
-        print "error 1 Index already exists in git repo\n";
+        $log->warn("file 'index' already exists in the but repository");
+        print "error 1 Index already exists in but repo\n";
         cleanupWorkTree();
         exit;
     }
@@ -1583,7 +1583,7 @@ sub req_ci
                 $branchRef = "refs/heads/$stickyInfo->{tag}";
             }
 
-            $parenthash = safe_pipe_capture('git', 'show-ref', '-s', $branchRef);
+            $parenthash = safe_pipe_capture('but', 'show-ref', '-s', $branchRef);
             chomp $parenthash;
             if ($parenthash !~ /^[0-9a-f]{$state->{hexsz}}$/)
             {
@@ -1608,7 +1608,7 @@ sub req_ci
         elsif( !refHashEqual($stickyInfo,$fileStickyInfo) )
         {
             #TODO: We could split the cvs cummit into multiple
-            #  git cummits by distinct stickyTag values, but that
+            #  but cummits by distinct stickyTag values, but that
             #  is lowish priority.
             print "error 1 cummitting different files to different"
                   . " branches is not currently supported\n";
@@ -1628,9 +1628,9 @@ sub req_ci
 
 	# do a checkout of the file if it is part of this tree
         if ($wrev) {
-            system('git', 'checkout-index', '-f', '-u', $filename);
+            system('but', 'checkout-index', '-f', '-u', $filename);
             unless ($? == 0) {
-                die "Error running git-checkout-index -f -u $filename : $!";
+                die "Error running but-checkout-index -f -u $filename : $!";
             }
         }
 
@@ -1671,15 +1671,15 @@ sub req_ci
         {
             $log->info("Removing file '$filename'");
             unlink($filename);
-            system("git", "update-index", "--remove", $filename);
+            system("but", "update-index", "--remove", $filename);
         }
         elsif ( $addflag )
         {
             $log->info("Adding file '$filename'");
-            system("git", "update-index", "--add", $filename);
+            system("but", "update-index", "--add", $filename);
         } else {
             $log->info("UpdatingX2 file '$filename'");
-            system("git", "update-index", $filename);
+            system("but", "update-index", $filename);
         }
     }
 
@@ -1691,7 +1691,7 @@ sub req_ci
         return;
     }
 
-    my $treehash = safe_pipe_capture(qw(git write-tree));
+    my $treehash = safe_pipe_capture(qw(but write-tree));
     chomp $treehash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
@@ -1699,16 +1699,16 @@ sub req_ci
     # write our cummit message out if we have one ...
     my ( $msg_fh, $msg_filename ) = tempfile( DIR => $TEMP_DIR );
     print $msg_fh $state->{opt}{m};# if ( exists ( $state->{opt}{m} ) );
-    if ( defined ( $cfg->{gitcvs}{cummitmsgannotation} ) ) {
-        if ($cfg->{gitcvs}{cummitmsgannotation} !~ /^\s*$/ ) {
-            print $msg_fh "\n\n".$cfg->{gitcvs}{cummitmsgannotation}."\n"
+    if ( defined ( $cfg->{butcvs}{cummitmsgannotation} ) ) {
+        if ($cfg->{butcvs}{cummitmsgannotation} !~ /^\s*$/ ) {
+            print $msg_fh "\n\n".$cfg->{butcvs}{cummitmsgannotation}."\n"
         }
     } else {
-        print $msg_fh "\n\nvia git-CVS emulator\n";
+        print $msg_fh "\n\nvia but-CVS emulator\n";
     }
     close $msg_fh;
 
-    my $cummithash = safe_pipe_capture('git', 'cummit-tree', $treehash, '-p', $parenthash, '-F', $msg_filename);
+    my $cummithash = safe_pipe_capture('but', 'cummit-tree', $treehash, '-p', $parenthash, '-F', $msg_filename);
     chomp($cummithash);
     $log->info("Commit hash : $cummithash");
 
@@ -1720,7 +1720,7 @@ sub req_ci
         exit;
     }
 
-	### Emulate git-receive-pack by running hooks/update
+	### Emulate but-receive-pack by running hooks/update
 	my @hook = ( $ENV{GIT_DIR}.'hooks/update', $branchRef,
 			$parenthash, $cummithash );
 	if( -x $hook[0] ) {
@@ -1734,7 +1734,7 @@ sub req_ci
 	}
 
 	### Update the ref
-	if (system(qw(git update-ref -m), "cvsserver ci",
+	if (system(qw(but update-ref -m), "cvsserver ci",
 			$branchRef, $cummithash, $parenthash)) {
 		$log->warn("update-ref for $state->{module} failed.");
 		print "error 1 Cannot cummit -- update first\n";
@@ -1742,7 +1742,7 @@ sub req_ci
 		exit;
 	}
 
-	### Emulate git-receive-pack by running hooks/post-receive
+	### Emulate but-receive-pack by running hooks/post-receive
 	my $hook = $ENV{GIT_DIR}.'hooks/post-receive';
 	if( -x $hook ) {
 		open(my $pipe, "| $hook") || die "can't fork $!";
@@ -2159,7 +2159,7 @@ sub req_diff
         # TODO: Real CVS seems to include a date in the label, before
         #  the revision part, without the keyword "revision".  The following
         #  has minimal changes compared to original versions of
-        #  git-cvsserver.perl.  (Mostly tab vs space after filename.)
+        #  but-cvsserver.perl.  (Mostly tab vs space after filename.)
 
         my (@diffCmd) = ( 'diff' );
         if ( exists($state->{opt}{N}) )
@@ -2329,18 +2329,18 @@ sub req_annotate
 	# TODO: if we got a revision from the client, use that instead
 	# to look up the cummithash in sqlite (still good to default to
 	# the current head as we do now)
-	system("git", "read-tree", $lastseenin);
+	system("but", "read-tree", $lastseenin);
 	unless ($? == 0)
 	{
-	    print "E error running git-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
+	    print "E error running but-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
 	    return;
 	}
 	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with cummit $lastseenin - exit status $?");
 
         # do a checkout of the file
-        system('git', 'checkout-index', '-f', '-u', $filename);
+        system('but', 'checkout-index', '-f', '-u', $filename);
         unless ($? == 0) {
-            print "E error running git-checkout-index -f -u $filename : $!\n";
+            print "E error running but-checkout-index -f -u $filename : $!\n";
             return;
         }
 
@@ -2348,7 +2348,7 @@ sub req_annotate
 
         # Prepare a file with the cummits from the linearized
         # history that annotate should know about. This prevents
-        # git-jsannotate telling us about cummits we are hiding
+        # but-jsannotate telling us about cummits we are hiding
         # from the client.
 
         my $a_hints = "$work->{workDir}/.annotate_hints";
@@ -2369,7 +2369,7 @@ sub req_annotate
         close ANNOTATEHINTS
             or (print "E failed to write $a_hints: $!\n"), return;
 
-        my @cmd = (qw(git annotate -l -S), $a_hints, $filename);
+        my @cmd = (qw(but annotate -l -S), $a_hints, $filename);
         if (!open(ANNOTATE, "-|", @cmd)) {
             print "E error invoking ". join(' ',@cmd) .": $!\n";
             return;
@@ -2858,17 +2858,17 @@ sub transmitfile
 
     die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
-    my $type = safe_pipe_capture('git', 'cat-file', '-t', $filehash);
+    my $type = safe_pipe_capture('but', 'cat-file', '-t', $filehash);
     chomp $type;
 
     die ( "Invalid type '$type' (expected 'blob')" ) unless ( defined ( $type ) and $type eq "blob" );
 
-    my $size = safe_pipe_capture('git', 'cat-file', '-s', $filehash);
+    my $size = safe_pipe_capture('but', 'cat-file', '-s', $filehash);
     chomp $size;
 
     $log->debug("transmitfile($filehash) size=$size, type=$type");
 
-    if ( open my $fh, '-|', "git", "cat-file", "blob", $filehash )
+    if ( open my $fh, '-|', "but", "cat-file", "blob", $filehash )
     {
         if ( defined ( $options->{targetfile} ) )
         {
@@ -2890,7 +2890,7 @@ sub transmitfile
         }
         close $fh or die ("Couldn't close filehandle for transmitfile(): $!");
     } else {
-        die("Couldn't execute git-cat-file");
+        die("Couldn't execute but-cat-file");
     }
 }
 
@@ -3009,11 +3009,11 @@ sub setupWorkTree
 
     if($ver)
     {
-        system("git","read-tree",$ver);
+        system("but","read-tree",$ver);
         unless ($? == 0)
         {
-            $log->warn("Error running git-read-tree");
-            die "Error running git-read-tree $ver in $work->{workDir} $!\n";
+            $log->warn("Error running but-read-tree");
+            die "Error running but-read-tree $ver in $work->{workDir} $!\n";
         }
     }
     # else # req_annotate reads tree for each file
@@ -3044,11 +3044,11 @@ sub ensureWorkTree
     chdir $work->{emptyDir} or
         die "Unable to chdir to $work->{emptyDir}\n";
 
-    my $ver = safe_pipe_capture('git', 'show-ref', '-s', "refs/heads/$state->{module}");
+    my $ver = safe_pipe_capture('but', 'show-ref', '-s', "refs/heads/$state->{module}");
     chomp $ver;
     if ($ver !~ /^[0-9a-f]{$state->{hexsz}}$/)
     {
-        $log->warn("Error from git show-ref -s refs/head$state->{module}");
+        $log->warn("Error from but show-ref -s refs/head$state->{module}");
         print "error 1 cannot find the current HEAD of module";
         cleanupWorkTree();
         exit;
@@ -3063,10 +3063,10 @@ sub ensureWorkTree
     $ENV{GIT_INDEX_FILE} = $work->{index};
     $work->{state} = 1;
 
-    system("git","read-tree",$ver);
+    system("but","read-tree",$ver);
     unless ($? == 0)
     {
-        die "Error running git-read-tree $ver $!\n";
+        die "Error running but-read-tree $ver $!\n";
     }
 }
 
@@ -3138,8 +3138,8 @@ sub kopts_from_path
 {
     my ($path, $srcType, $name) = @_;
 
-    if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
-         $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
+    if ( defined ( $cfg->{butcvs}{usecrlfattr} ) and
+         $cfg->{butcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
     {
         my ($val) = check_attr( "text", $path );
         if ( $val eq "unspecified" )
@@ -3161,13 +3161,13 @@ sub kopts_from_path
         }
     }
 
-    if ( defined ( $cfg->{gitcvs}{allbinary} ) )
+    if ( defined ( $cfg->{butcvs}{allbinary} ) )
     {
-        if( ($cfg->{gitcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i) )
+        if( ($cfg->{butcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i) )
         {
             return "-kb";
         }
-        elsif( ($cfg->{gitcvs}{allbinary} =~ /^\s*guess\s*$/i) )
+        elsif( ($cfg->{butcvs}{allbinary} =~ /^\s*guess\s*$/i) )
         {
             if( is_binary($srcType,$name) )
             {
@@ -3188,7 +3188,7 @@ sub check_attr
 {
     my ($attr,$path) = @_;
     ensureWorkTree();
-    if ( open my $fh, '-|', "git", "check-attr", $attr, "--", $path )
+    if ( open my $fh, '-|', "but", "check-attr", $attr, "--", $path )
     {
         my $val = <$fh>;
         close $fh;
@@ -3291,7 +3291,7 @@ sub open_blob_or_die
             die "Need filehash\n";
         }
 
-        my $type = safe_pipe_capture('git', 'cat-file', '-t', $name);
+        my $type = safe_pipe_capture('but', 'cat-file', '-t', $name);
         chomp $type;
 
         unless ( defined ( $type ) and $type eq "blob" )
@@ -3300,12 +3300,12 @@ sub open_blob_or_die
             die ( "Invalid type '$type' (expected 'blob')" )
         }
 
-        my $size = safe_pipe_capture('git', 'cat-file', '-s', $name);
+        my $size = safe_pipe_capture('but', 'cat-file', '-s', $name);
         chomp $size;
 
         $log->debug("open_blob_or_die($name) size=$size, type=$type");
 
-        unless( open $fh, '-|', "git", "cat-file", "blob", $name )
+        unless( open $fh, '-|', "but", "cat-file", "blob", $name )
         {
             $log->warn("Unable to open sha1 $name");
             die "Unable to open sha1 $name\n";
@@ -3616,7 +3616,7 @@ sub use_fsync {
         if (defined $x) {
             local $ENV{GIT_CONFIG};
             delete $ENV{GIT_CONFIG};
-            my $v = ::safe_pipe_capture('git', '-c', "test.fsync=$x",
+            my $v = ::safe_pipe_capture('but', '-c', "test.fsync=$x",
                                         qw(config --type=bool test.fsync));
             $_use_fsync = defined($v) ? ($v eq "true\n") : 1;
         }
@@ -3638,7 +3638,7 @@ sub new
     my $module = shift;
     my $log = shift;
 
-    die "Need to specify a git repository" unless ( defined($config) and -d $config );
+    die "Need to specify a but repository" unless ( defined($config) and -d $config );
     die "Need to specify a module" unless ( defined($module) );
 
     $class = ref($class) || $class;
@@ -3656,30 +3656,30 @@ sub new
                              'cummitmsgs' => 1};
 
     $self->{module} = $module;
-    $self->{git_path} = $config . "/";
+    $self->{but_path} = $config . "/";
 
     $self->{log} = $log;
 
-    die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
+    die "Git repo '$self->{but_path}' doesn't exist" unless ( -d $self->{but_path} );
 
     # Stores full sha1's for various branch/tag names, abbreviations, etc:
     $self->{cummitRefCache} = {};
 
-    $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
-        $cfg->{gitcvs}{dbdriver} || "SQLite";
-    $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
-        $cfg->{gitcvs}{dbname} || "%Ggitcvs.%m.sqlite";
-    $self->{dbuser} = $cfg->{gitcvs}{$state->{method}}{dbuser} ||
-        $cfg->{gitcvs}{dbuser} || "";
-    $self->{dbpass} = $cfg->{gitcvs}{$state->{method}}{dbpass} ||
-        $cfg->{gitcvs}{dbpass} || "";
-    $self->{dbtablenameprefix} = $cfg->{gitcvs}{$state->{method}}{dbtablenameprefix} ||
-        $cfg->{gitcvs}{dbtablenameprefix} || "";
+    $self->{dbdriver} = $cfg->{butcvs}{$state->{method}}{dbdriver} ||
+        $cfg->{butcvs}{dbdriver} || "SQLite";
+    $self->{dbname} = $cfg->{butcvs}{$state->{method}}{dbname} ||
+        $cfg->{butcvs}{dbname} || "%Gbutcvs.%m.sqlite";
+    $self->{dbuser} = $cfg->{butcvs}{$state->{method}}{dbuser} ||
+        $cfg->{butcvs}{dbuser} || "";
+    $self->{dbpass} = $cfg->{butcvs}{$state->{method}}{dbpass} ||
+        $cfg->{butcvs}{dbpass} || "";
+    $self->{dbtablenameprefix} = $cfg->{butcvs}{$state->{method}}{dbtablenameprefix} ||
+        $cfg->{butcvs}{dbtablenameprefix} || "";
     my %mapping = ( m => $module,
                     a => $state->{method},
                     u => getlogin || getpwuid($<) || $<,
-                    G => $self->{git_path},
-                    g => mangle_dirname($self->{git_path}),
+                    G => $self->{but_path},
+                    g => mangle_dirname($self->{but_path}),
                     );
     $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
     $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
@@ -3710,7 +3710,7 @@ sub new
     # files except files that were modified by that cummit (also,
     # some places in the code ignore/effectively strip out -r in
     # some cases, before it gets passed to getmeta()).
-    # The "filehash" field typically has a git blob hash, but can also
+    # The "filehash" field typically has a but blob hash, but can also
     # be set to "dead" to indicate that the given version of the file
     # should not exist in the sandbox.
     unless ( $self->{tables}{$self->tablename("revision")} )
@@ -3821,7 +3821,7 @@ sub tablename
 =head2 update
 
 Bring the database up to date with the latest changes from
-the git repository.
+the but repository.
 
 Internal working state is read out of the "head" table and the
 "last_cummit" property, then it updates "revisions" based on that, and
@@ -3834,19 +3834,19 @@ sub update
     my $self = shift;
 
     # first lets get the cummit list
-    $ENV{GIT_DIR} = $self->{git_path};
+    $ENV{GIT_DIR} = $self->{but_path};
 
-    my $commitsha1 = ::safe_pipe_capture('git', 'rev-parse', $self->{module});
+    my $commitsha1 = ::safe_pipe_capture('but', 'rev-parse', $self->{module});
     chomp $commitsha1;
 
-    my $cummitinfo = ::safe_pipe_capture('git', 'cat-file', 'cummit', $self->{module});
+    my $cummitinfo = ::safe_pipe_capture('but', 'cat-file', 'cummit', $self->{module});
     unless ( $cummitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
         die("Invalid module '$self->{module}'");
     }
 
 
-    my $git_log;
+    my $but_log;
     my $lastcummit = $self->_get_prop("last_cummit");
 
     if (defined $lastcummit && $lastcummit eq $commitsha1) { # up-to-date
@@ -3861,18 +3861,18 @@ sub update
     # TODO: log processing is memory bound
     # if we can parse into a 2nd file that is in reverse order
     # we can probably do something really efficient
-    my @git_log_params = ('--pretty', '--parents', '--topo-order');
+    my @but_log_params = ('--pretty', '--parents', '--topo-order');
 
     if (defined $lastcummit) {
-        push @git_log_params, "$lastcummit..$self->{module}";
+        push @but_log_params, "$lastcummit..$self->{module}";
     } else {
-        push @git_log_params, $self->{module};
+        push @but_log_params, $self->{module};
     }
-    # git-rev-list is the backend / plumbing version of git-log
-    open(my $gitLogPipe, '-|', 'git', 'rev-list', @git_log_params)
-                or die "Cannot call git-rev-list: $!";
-    my @cummits=readcummits($gitLogPipe);
-    close $gitLogPipe;
+    # but-rev-list is the backend / plumbing version of but-log
+    open(my $butLogPipe, '-|', 'but', 'rev-list', @but_log_params)
+                or die "Cannot call but-rev-list: $!";
+    my @cummits=readcummits($butLogPipe);
+    close $butLogPipe;
 
     # Now all the cummits are in the @cummits bucket
     # ordered by time DESC. for each cummit that needs processing,
@@ -3917,11 +3917,11 @@ sub update
                     if ($parent eq $lastpicked) {
                         next;
                     }
-                    # git-merge-base can potentially (but rarely) throw
+                    # but-merge-base can potentially (but rarely) throw
                     # several candidate merge bases. let's assume
                     # that the first one is the best one.
 		    my $base = eval {
-			    ::safe_pipe_capture('git', 'merge-base',
+			    ::safe_pipe_capture('but', 'merge-base',
 						 $lastpicked, $parent);
 		    };
 		    # The two branches may not be related at all,
@@ -3933,8 +3933,8 @@ sub update
                     if ($base) {
                         my @merged;
                         # print "want to log between  $base $parent \n";
-                        open(GITLOG, '-|', 'git', 'log', '--pretty=medium', "$base..$parent")
-			  or die "Cannot call git-log: $!";
+                        open(GITLOG, '-|', 'but', 'log', '--pretty=medium', "$base..$parent")
+			  or die "Cannot call but-log: $!";
                         my $mergedhash;
                         while (<GITLOG>) {
                             chomp;
@@ -3975,14 +3975,14 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $cummit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'but', 'diff-tree', '-z', '-r', $lastpicked, $cummit->{hash}) or die("Cannot call but-diff-tree : $!");
 	    local ($/) = "\0";
             while ( <FILELIST> )
             {
 		chomp;
                 unless ( /^:\d{6}\s+([0-7]{6})\s+[a-f0-9]{$state->{hexsz}}\s+([a-f0-9]{$state->{hexsz}})\s+(\w)$/o )
                 {
-                    die("Couldn't process git-diff-tree line : $_");
+                    die("Couldn't process but-diff-tree line : $_");
                 }
 		my ($mode, $hash, $change) = ($1, $2, $3);
 		my $name = <FILELIST>;
@@ -4045,37 +4045,37 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $cummit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'but', 'ls-tree', '-z', '-r', $cummit->{hash}) or die("Cannot call but-ls-tree : $!");
 	    local $/ = "\0";
             while ( <FILELIST> )
             {
 		chomp;
                 unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
-                    die("Couldn't process git-ls-tree line : $_");
+                    die("Couldn't process but-ls-tree line : $_");
                 }
 
-                my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
+                my ( $mode, $but_type, $but_hash, $but_filename ) = ( $1, $2, $3, $4 );
 
-                $seen_files->{$git_filename} = 1;
+                $seen_files->{$but_filename} = 1;
 
                 my ( $oldhash, $oldrevision, $oldmode ) = (
-                    $head->{$git_filename}{filehash},
-                    $head->{$git_filename}{revision},
-                    $head->{$git_filename}{mode}
+                    $head->{$but_filename}{filehash},
+                    $head->{$but_filename}{revision},
+                    $head->{$but_filename}{mode}
                 );
 
                 my $dbMode = convertToDbMode($mode);
 
                 # unless the file exists with the same hash, we need to update it ...
-                unless ( defined($oldhash) and $oldhash eq $git_hash and defined($oldmode) and $oldmode eq $dbMode )
+                unless ( defined($oldhash) and $oldhash eq $but_hash and defined($oldmode) and $oldmode eq $dbMode )
                 {
                     my $newrevision = ( $oldrevision or 0 ) + 1;
 
-                    $head->{$git_filename} = {
-                        name => $git_filename,
+                    $head->{$but_filename} = {
+                        name => $but_filename,
                         revision => $newrevision,
-                        filehash => $git_hash,
+                        filehash => $but_hash,
                         cummithash => $cummit->{hash},
                         modified => $cvsDate,
                         author => $cummit->{author},
@@ -4083,7 +4083,7 @@ sub update
                     };
 
 
-                    $self->insert_rev($git_filename, $newrevision, $git_hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
+                    $self->insert_rev($but_filename, $newrevision, $but_hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
                 }
             }
             close FILELIST;
@@ -4183,7 +4183,7 @@ sub readcummits
 sub convertToCvsDate
 {
     my $date = shift;
-    # Convert from: "git rev-list --pretty" formatted date
+    # Convert from: "but rev-list --pretty" formatted date
     # Convert to: "the format specified by RFC822 as modified by RFC1123."
     # Example: 26 May 1997 13:01:40 -0400
     if( $date =~ /^\w+\s+(\w+)\s+(\d+)\s+(\d+:\d+:\d+)\s+(\d+)\s+([+-]\d+)$/ )
@@ -4350,8 +4350,8 @@ sub getAnyHead
 
     my @files;
     {
-        open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
-                or die("Cannot call git-ls-tree : $!");
+        open(my $filePipe, '-|', 'but', 'ls-tree', '-z', '-r', $hash)
+                or die("Cannot call but-ls-tree : $!");
         local $/ = "\0";
         @files=<$filePipe>;
         close $filePipe;
@@ -4364,11 +4364,11 @@ sub getAnyHead
         $line=~s/\0$//;
         unless ( $line=~/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
         {
-            die("Couldn't process git-ls-tree line : $_");
+            die("Couldn't process but-ls-tree line : $_");
         }
 
-        my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
-        push @$tree, $self->getMetaFromcummithash($git_filename,$hash);
+        my($mode, $but_type, $but_hash, $but_filename) = ($1, $2, $3, $4);
+        push @$tree, $self->getMetaFromcummithash($but_filename,$hash);
     }
 
     return $tree;
@@ -4429,20 +4429,20 @@ sub getRevisionDirMap
             return $self->{revisionDirMapCache}{$cacheKey};
         }
 
-        open(my $filePipe, '-|', 'git', 'ls-tree', '-z', '-r', $hash)
-                or die("Cannot call git-ls-tree : $!");
+        open(my $filePipe, '-|', 'but', 'ls-tree', '-z', '-r', $hash)
+                or die("Cannot call but-ls-tree : $!");
         local $/ = "\0";
         while ( <$filePipe> )
         {
             chomp;
             unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
             {
-                die("Couldn't process git-ls-tree line : $_");
+                die("Couldn't process but-ls-tree line : $_");
             }
 
-            my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
+            my($mode, $but_type, $but_hash, $but_filename) = ($1, $2, $3, $4);
 
-            push @fileList, $git_filename;
+            push @fileList, $but_filename;
         }
         close $filePipe;
     }
@@ -4565,7 +4565,7 @@ There are several ways $revision can be specified:
      "1." prefix),
    - Complex CVS-compatible "special" revision number for
      non-linear history (see comment below)
-   - git cummit sha1 hash
+   - but cummit sha1 hash
    - branch or tag name
 
 =cut
@@ -4607,8 +4607,8 @@ sub getmeta
     #     to use "strange" revision numbers for fast-forward-merged
     #     branch tip when CVS client is asking for the main branch.)
     #
-    # git-cvsserver CVS-compatible special numbering schemes:
-    #   - Currently git-cvsserver only tries to be identical to CVS for
+    # but-cvsserver CVS-compatible special numbering schemes:
+    #   - Currently but-cvsserver only tries to be identical to CVS for
     #     simple "1.x" numbers on the "main" branch (as identified
     #     by the module name that was originally cvs checkout'ed).
     #   - The database only stores the "x" part, for historical reasons.
@@ -4617,7 +4617,7 @@ sub getmeta
     #   - To handle non-linear history, it uses a version of the form
     #     "2.1.1.2000.b.b.b."..., where the 2.1.1.2000 is to help uniquely
     #     identify this as a special revision number, and there are
-    #     20 b's that together encode the sha1 git cummit from which
+    #     20 b's that together encode the sha1 but cummit from which
     #     this version of this file originated.  Each b is
     #     the numerical value of the corresponding byte plus
     #     100.
@@ -4731,7 +4731,7 @@ sub getMetaFromcummithash
 
     # NOTE: This function doesn't scale well (lots of forks), especially
     #   if you have many files that have not been modified for many cummits
-    #   (each git-rev-parse redoes a lot of work for each file
+    #   (each but-rev-parse redoes a lot of work for each file
     #   that theoretically could be done in parallel by smarter
     #   graph traversal).
     #
@@ -4739,10 +4739,10 @@ sub getMetaFromcummithash
     #   - Solve the issue of assigning and remembering "real" CVS
     #     revision numbers for branches, and ensure the
     #     data structure can do this efficiently.  Perhaps something
-    #     similar to "git notes", and carefully structured to take
+    #     similar to "but notes", and carefully structured to take
     #     advantage same-sha1-is-same-contents, to roll the same
     #     unmodified subdirectory data onto multiple cummits?
-    #   - Write and use a C tool that is like git-blame, but
+    #   - Write and use a C tool that is like but-blame, but
     #     operates on multiple files with file granularity, instead
     #     of one file with line granularity.  Cache
     #     most-recently-modified in $self->{cummitRefCache}{$revcummit}.
@@ -4788,7 +4788,7 @@ sub getMetaFromcummithash
         return $retVal;
     }
 
-    my($fileHash) = ::safe_pipe_capture("git","rev-parse","$revcummit:$filename");
+    my($fileHash) = ::safe_pipe_capture("but","rev-parse","$revcummit:$filename");
     chomp $fileHash;
     if(!($fileHash=~/^[0-9a-f]{$state->{hexsz}}$/))
     {
@@ -4797,12 +4797,12 @@ sub getMetaFromcummithash
     }
 
     # information about most recent cummit to modify $filename:
-    open(my $gitLogPipe, '-|', 'git', 'rev-list',
+    open(my $butLogPipe, '-|', 'but', 'rev-list',
          '--max-count=1', '--pretty', '--parents',
          $revcummit, '--', $filename)
-                or die "Cannot call git-rev-list: $!";
-    my @cummits=readcummits($gitLogPipe);
-    close $gitLogPipe;
+                or die "Cannot call but-rev-list: $!";
+    my @cummits=readcummits($butLogPipe);
+    close $butLogPipe;
     if(scalar(@cummits)!=1)
     {
         die "Can't find most recent cummit changing $filename\n";
@@ -4833,24 +4833,24 @@ sub getMetaFromcummithash
     $revision="2.1.1.2000$revision";
 
     # meta data about $filename:
-    open(my $filePipe, '-|', 'git', 'ls-tree', '-z',
+    open(my $filePipe, '-|', 'but', 'ls-tree', '-z',
                 $cummit->{hash}, '--', $filename)
-            or die("Cannot call git-ls-tree : $!");
+            or die("Cannot call but-ls-tree : $!");
     local $/ = "\0";
     my $line;
     $line=<$filePipe>;
     if(defined(<$filePipe>))
     {
-        die "Expected only a single file for git-ls-tree $filename\n";
+        die "Expected only a single file for but-ls-tree $filename\n";
     }
     close $filePipe;
 
     chomp $line;
     unless ( $line=~m/^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
     {
-        die("Couldn't process git-ls-tree line : $line\n");
+        die("Couldn't process but-ls-tree line : $line\n");
     }
-    my ( $mode, $git_type, $git_hash, $git_filename ) = ( $1, $2, $3, $4 );
+    my ( $mode, $but_type, $but_hash, $but_filename ) = ( $1, $2, $3, $4 );
 
     # save result:
     my($retVal)={};
@@ -4883,7 +4883,7 @@ sub lookupcummitRef
         return $cummitHash;
     }
 
-    $cummitHash = ::safe_pipe_capture("git","rev-parse","--verify","--quiet",
+    $cummitHash = ::safe_pipe_capture("but","rev-parse","--verify","--quiet",
 				      $self->unescapeRefName($ref));
     $cummitHash=~s/\s*$//;
     if(!($cummitHash=~/^[0-9a-f]{$state->{hexsz}}$/))
@@ -4893,7 +4893,7 @@ sub lookupcummitRef
 
     if( defined($cummitHash) )
     {
-        my $type = ::safe_pipe_capture("git","cat-file","-t",$cummitHash);
+        my $type = ::safe_pipe_capture("but","cat-file","-t",$cummitHash);
         if( ! ($type=~/^cummit\s*$/ ) )
         {
             $cummitHash=undef;
@@ -4946,7 +4946,7 @@ sub cummitmessage
         return $message;
     }
 
-    my @lines = ::safe_pipe_capture("git", "cat-file", "cummit", $cummithash);
+    my @lines = ::safe_pipe_capture("but", "cat-file", "cummit", $cummithash);
     shift @lines while ( $lines[0] =~ /\S/ );
     $message = join("",@lines);
     $message .= " " if ( $message =~ /\n$/ );
@@ -4959,8 +4959,8 @@ This function takes a filename (with path) argument and returns an arrayofarrays
 containing revision,filehash,cummithash ordered by revision descending.
 
 This version of gethistory skips deleted entries -- so it is useful for annotate.
-The 'dense' part is a reference to a '--dense' option available for git-rev-list
-and other git tools that depend on it.
+The 'dense' part is a reference to a '--dense' option available for but-rev-list
+and other but tools that depend on it.
 
 See also getlog().
 
@@ -4989,7 +4989,7 @@ sub gethistorydense
 =head2 escapeRefName
 
 Apply an escape mechanism to compensate for characters that
-git ref names can have that CVS tags can not.
+but ref names can have that CVS tags can not.
 
 =cut
 sub escapeRefName
@@ -5021,7 +5021,7 @@ sub escapeRefName
 =head2 unescapeRefName
 
 Undo an escape mechanism to compensate for characters that
-git ref names can have that CVS tags can not.
+but ref names can have that CVS tags can not.
 
 =cut
 sub unescapeRefName
@@ -5033,7 +5033,7 @@ sub unescapeRefName
     $refName=~s/_-([spu]|[0-9a-f][0-9a-f])-/unescapeRefNameChar($1)/eg;
 
     # allowed tag names
-    # TODO: Perhaps use git check-ref-format, with an in-process cache of
+    # TODO: Perhaps use but check-ref-format, with an in-process cache of
     #  validated names?
     if( !( $refName=~m%^[^-][-a-zA-Z0-9_/.]*$% ) ||
         ( $refName=~m%[/.]$% ) ||

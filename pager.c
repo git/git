@@ -41,11 +41,11 @@ static void wait_for_pager_signal(int signo)
 static int core_pager_config(const char *var, const char *value, void *data)
 {
 	if (!strcmp(var, "core.pager"))
-		return git_config_string(&pager_program, var, value);
+		return but_config_string(&pager_program, var, value);
 	return 0;
 }
 
-const char *git_pager(int stdout_is_tty)
+const char *but_pager(int stdout_is_tty)
 {
 	const char *pager;
 
@@ -105,7 +105,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 
 void setup_pager(void)
 {
-	const char *pager = git_pager(isatty(1));
+	const char *pager = but_pager(isatty(1));
 
 	if (!pager)
 		return;
@@ -146,7 +146,7 @@ void setup_pager(void)
 
 int pager_in_use(void)
 {
-	return git_env_bool("GIT_PAGER_IN_USE", 0);
+	return but_env_bool("GIT_PAGER_IN_USE", 0);
 }
 
 /*
@@ -229,7 +229,7 @@ static int pager_command_config(const char *var, const char *value, void *vdata)
 	const char *cmd;
 
 	if (skip_prefix(var, "pager.", &cmd) && !strcmp(cmd, data->cmd)) {
-		int b = git_parse_maybe_bool(value);
+		int b = but_parse_maybe_bool(value);
 		if (b >= 0)
 			data->want = b;
 		else {

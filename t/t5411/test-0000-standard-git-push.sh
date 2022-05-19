@@ -1,8 +1,8 @@
 # Refs of upstream : main(A)  
 # Refs of workbench: main(A)  tags/v123
-# git-push         : main(B)             next(A)
-test_expect_success "git-push ($PROTOCOL)" '
-	git -C workbench push origin \
+# but-push         : main(B)             next(A)
+test_expect_success "but-push ($PROTOCOL)" '
+	but -C workbench push origin \
 		$B:refs/heads/main \
 		HEAD:refs/heads/next \
 		>out 2>&1 &&
@@ -14,7 +14,7 @@ test_expect_success "git-push ($PROTOCOL)" '
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/main        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> main
 	>  * [new branch]      HEAD -> next
 	EOF
@@ -28,9 +28,9 @@ test_expect_success "git-push ($PROTOCOL)" '
 
 # Refs of upstream : main(B)  next(A)
 # Refs of workbench: main(A)           tags/v123
-# git-push --atomic: main(A)  next(B)
-test_expect_success "git-push --atomic ($PROTOCOL)" '
-	test_must_fail git -C workbench push --atomic origin \
+# but-push --atomic: main(A)  next(B)
+test_expect_success "but-push --atomic ($PROTOCOL)" '
+	test_must_fail but -C workbench push --atomic origin \
 		main \
 		$B:refs/heads/next \
 		>out-$test_count 2>&1 &&
@@ -39,7 +39,7 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 		-e "/^ ! / { p; }" \
 		<out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  ! [rejected]        main -> main (non-fast-forward)
 	>  ! [rejected]        <CUMMIT-B> -> next (atomic push failed)
 	EOF
@@ -53,9 +53,9 @@ test_expect_success "git-push --atomic ($PROTOCOL)" '
 
 # Refs of upstream : main(B)  next(A)
 # Refs of workbench: main(A)           tags/v123
-# git-push         : main(A)  next(B)
-test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
-	test_must_fail git \
+# but-push         : main(A)  next(B)
+test_expect_success "non-fast-forward but-push ($PROTOCOL)" '
+	test_must_fail but \
 		-C workbench \
 		-c advice.pushUpdateRejected=false \
 		push origin \
@@ -68,7 +68,7 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 	> remote: pre-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/next        Z
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/heads/next        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>    <CUMMIT-A>..<CUMMIT-B>  <CUMMIT-B> -> next
 	>  ! [rejected]        main -> main (non-fast-forward)
 	EOF
@@ -82,9 +82,9 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL)" '
 
 # Refs of upstream : main(B)  next(B)
 # Refs of workbench: main(A)           tags/v123
-# git-push -f      : main(A)  NULL     tags/v123  refs/review/main/topic(A)  a/b/c(A)
-test_expect_success "git-push -f ($PROTOCOL)" '
-	git -C workbench push -f origin \
+# but-push -f      : main(A)  NULL     tags/v123  refs/review/main/topic(A)  a/b/c(A)
+test_expect_success "but-push -f ($PROTOCOL)" '
+	but -C workbench push -f origin \
 		refs/tags/v123 \
 		:refs/heads/next \
 		main \
@@ -105,7 +105,7 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/review/main/topic        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/a/b/c        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  + <CUMMIT-B>...<CUMMIT-A> main -> main (forced update)
 	>  - [deleted]         next
 	>  * [new tag]         v123 -> v123
@@ -127,8 +127,8 @@ test_expect_success "git-push -f ($PROTOCOL)" '
 test_expect_success "cleanup ($PROTOCOL)" '
 	(
 		cd "$upstream" &&
-		git update-ref -d refs/review/main/topic &&
-		git update-ref -d refs/tags/v123 &&
-		git update-ref -d refs/heads/a/b/c
+		but update-ref -d refs/review/main/topic &&
+		but update-ref -d refs/tags/v123 &&
+		but update-ref -d refs/heads/a/b/c
 	)
 '

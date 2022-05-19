@@ -8,12 +8,12 @@
 # License: GPL v2 or later
 
 # Usage:
-#       ./test-gitmw.pl <command> [argument]*
+#       ./test-butmw.pl <command> [argument]*
 # Execute in terminal using the name of the function to call as first
 # parameter, and the function's arguments as following parameters
 #
 # Example:
-#     ./test-gitmw.pl "get_page" foo .
+#     ./test-butmw.pl "get_page" foo .
 # will call <wiki_getpage> with arguments <foo> and <.>
 #
 # Available functions are:

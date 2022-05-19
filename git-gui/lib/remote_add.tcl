@@ -1,4 +1,4 @@
-# git-gui remote adding support
+# but-gui remote adding support
 # Copyright (C) 2008 Petr Baudis
 
 class remote_add {
@@ -104,7 +104,7 @@ method _add {} {
 
 	# XXX: We abuse check-ref-format here, but
 	# that should be ok.
-	if {[catch {git check-ref-format "remotes/$name"}]} {
+	if {[catch {but check-ref-format "remotes/$name"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -131,22 +131,22 @@ method _add {} {
 		set c [console::new \
 			[mc "fetch %s" $name] \
 			[mc "Fetching the %s" $name]]
-		console::exec $c [list git fetch $name]
+		console::exec $c [list but fetch $name]
 	}
 	push {
 		set cmds [list]
 
 		# Parse the location
-		if { [regexp {(?:git\+)?ssh://([^/]+)(/.+)} $location xx host path]
+		if { [regexp {(?:but\+)?ssh://([^/]+)(/.+)} $location xx host path]
 		     || [regexp {([^:][^:]+):(.+)} $location xx host path]} {
 			set ssh ssh
 			if {[info exists env(GIT_SSH)]} {
 				set ssh $env(GIT_SSH)
 			}
-			lappend cmds [list exec $ssh $host mkdir -p $location && git --git-dir=$path init --bare]
+			lappend cmds [list exec $ssh $host mkdir -p $location && but --but-dir=$path init --bare]
 		} elseif { ! [regexp {://} $location xx] } {
 			lappend cmds [list exec mkdir -p $location]
-			lappend cmds [list exec git --git-dir=$location init --bare]
+			lappend cmds [list exec but --but-dir=$location init --bare]
 		} else {
 			tk_messageBox \
 				-icon error \
@@ -162,7 +162,7 @@ method _add {} {
 			[mc "push %s" $name] \
 			[mc "Setting up the %s (at %s)" $name $location]]
 
-		lappend cmds [list exec git push -v --all $name]
+		lappend cmds [list exec but push -v --all $name]
 		console::chain $c $cmds
 	}
 	none {

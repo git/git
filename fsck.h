@@ -114,7 +114,7 @@ int fsck_error_function(struct fsck_options *o,
 			const struct object_id *oid, enum object_type object_type,
 			enum fsck_msg_type msg_type, enum fsck_msg_id msg_id,
 			const char *message);
-int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
+int fsck_error_cb_print_missing_butmodules(struct fsck_options *o,
 					   const struct object_id *oid,
 					   enum object_type object_type,
 					   enum fsck_msg_type msg_type,
@@ -127,28 +127,28 @@ struct fsck_options {
 	unsigned strict:1;
 	enum fsck_msg_type *msg_type;
 	struct oidset skiplist;
-	struct oidset gitmodules_found;
-	struct oidset gitmodules_done;
+	struct oidset butmodules_found;
+	struct oidset butmodules_done;
 	kh_oid_map_t *object_names;
 };
 
 #define FSCK_OPTIONS_DEFAULT { \
 	.skiplist = OIDSET_INIT, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
+	.butmodules_found = OIDSET_INIT, \
+	.butmodules_done = OIDSET_INIT, \
 	.error_func = fsck_error_function \
 }
 #define FSCK_OPTIONS_STRICT { \
 	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
+	.butmodules_found = OIDSET_INIT, \
+	.butmodules_done = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
 }
 #define FSCK_OPTIONS_MISSING_GITMODULES { \
 	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.error_func = fsck_error_cb_print_missing_gitmodules, \
+	.butmodules_found = OIDSET_INIT, \
+	.butmodules_done = OIDSET_INIT, \
+	.error_func = fsck_error_cb_print_missing_butmodules, \
 }
 
 /* descend in all linked child objects
@@ -169,7 +169,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 
 /*
  * fsck a tag, and pass info about it back to the caller. This is
- * exposed fsck_object() internals for git-mktag(1).
+ * exposed fsck_object() internals for but-mktag(1).
  */
 int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 			unsigned long size, struct fsck_options *options,
@@ -209,9 +209,9 @@ const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 
 /*
- * git_config() callback for use by fsck-y tools that want to support
+ * but_config() callback for use by fsck-y tools that want to support
  * fsck.<msg> fsck.skipList etc.
  */
-int git_fsck_config(const char *var, const char *value, void *cb);
+int but_fsck_config(const char *var, const char *value, void *cb);
 
 #endif

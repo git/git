@@ -3,7 +3,7 @@ versionsort.prereleaseSuffix (deprecated)::
 	`versionsort.suffix` is set.
 
 versionsort.suffix::
-	Even when version sort is used in linkgit:git-tag[1], tagnames
+	Even when version sort is used in linkbut:but-tag[1], tagnames
 	with the same base version but different suffixes are still sorted
 	lexicographically, resulting e.g. in prerelease tags appearing
 	after the main release (e.g. "1.0-rc1" after "1.0").  This

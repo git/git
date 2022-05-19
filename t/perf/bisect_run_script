@@ -10,7 +10,7 @@ die () {
 	exit 255
 }
 
-bisect_head=$(git rev-parse --verify BISECT_HEAD) || die "Failed to find BISECT_HEAD ref"
+bisect_head=$(but rev-parse --verify BISECT_HEAD) || die "Failed to find BISECT_HEAD ref"
 
 script_number=$(echo "$script" | sed -e "s/^p\([0-9]*\).*\$/\1/") || die "Failed to get script number for '$script'"
 

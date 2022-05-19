@@ -30,7 +30,7 @@ type Socket struct {
 }
 
 func defaultDir() string {
-	sockPath := ".git-credential-cache"
+	sockPath := ".but-credential-cache"
 	if home := os.Getenv("HOME"); home != "" {
 		return filepath.Join(home, sockPath)
 	}
@@ -38,7 +38,7 @@ func defaultDir() string {
 	return sockPath
 }
 
-// DefaultSocket is a Socket in the $HOME/.git-credential-cache directory.
+// DefaultSocket is a Socket in the $HOME/.but-credential-cache directory.
 var DefaultSocket = Socket{Dir: defaultDir()}
 
 // Listen announces the local network address of the unix socket. The

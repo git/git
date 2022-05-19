@@ -54,24 +54,24 @@ static void repo_set_commondir(struct repository *repo,
 		return;
 	}
 
-	repo->different_commondir = get_common_dir_noenv(&sb, repo->gitdir);
+	repo->different_commondir = get_common_dir_noenv(&sb, repo->butdir);
 	repo->commondir = strbuf_detach(&sb, NULL);
 }
 
-void repo_set_gitdir(struct repository *repo,
+void repo_set_butdir(struct repository *repo,
 		     const char *root,
-		     const struct set_gitdir_args *o)
+		     const struct set_butdir_args *o)
 {
-	const char *gitfile = read_gitfile(root);
+	const char *butfile = read_butfile(root);
 	/*
-	 * repo->gitdir is saved because the caller could pass "root"
-	 * that also points to repo->gitdir. We want to keep it alive
+	 * repo->butdir is saved because the caller could pass "root"
+	 * that also points to repo->butdir. We want to keep it alive
 	 * until after xstrdup(root). Then we can free it.
 	 */
-	char *old_gitdir = repo->gitdir;
+	char *old_butdir = repo->butdir;
 
-	repo->gitdir = xstrdup(gitfile ? gitfile : root);
-	free(old_gitdir);
+	repo->butdir = xstrdup(butfile ? butfile : root);
+	free(old_butdir);
 
 	repo_set_commondir(repo, o->commondir);
 
@@ -89,7 +89,7 @@ void repo_set_gitdir(struct repository *repo,
 	expand_base_dir(&repo->graft_file, o->graft_file,
 			repo->commondir, "info/grafts");
 	expand_base_dir(&repo->index_file, o->index_file,
-			repo->gitdir, "index");
+			repo->butdir, "index");
 }
 
 void repo_set_hash_algo(struct repository *repo, int hash_algo)
@@ -98,31 +98,31 @@ void repo_set_hash_algo(struct repository *repo, int hash_algo)
 }
 
 /*
- * Attempt to resolve and set the provided 'gitdir' for repository 'repo'.
+ * Attempt to resolve and set the provided 'butdir' for repository 'repo'.
  * Return 0 upon success and a non-zero value upon failure.
  */
-static int repo_init_gitdir(struct repository *repo, const char *gitdir)
+static int repo_init_butdir(struct repository *repo, const char *butdir)
 {
 	int ret = 0;
 	int error = 0;
 	char *abspath = NULL;
-	const char *resolved_gitdir;
-	struct set_gitdir_args args = { NULL };
+	const char *resolved_butdir;
+	struct set_butdir_args args = { NULL };
 
-	abspath = real_pathdup(gitdir, 0);
+	abspath = real_pathdup(butdir, 0);
 	if (!abspath) {
 		ret = -1;
 		goto out;
 	}
 
-	/* 'gitdir' must reference the gitdir directly */
-	resolved_gitdir = resolve_gitdir_gently(abspath, &error);
-	if (!resolved_gitdir) {
+	/* 'butdir' must reference the butdir directly */
+	resolved_butdir = resolve_butdir_gently(abspath, &error);
+	if (!resolved_butdir) {
 		ret = -1;
 		goto out;
 	}
 
-	repo_set_gitdir(repo, resolved_gitdir, &args);
+	repo_set_butdir(repo, resolved_butdir, &args);
 
 out:
 	free(abspath);
@@ -156,11 +156,11 @@ static int read_and_verify_repository_format(struct repository_format *format,
 }
 
 /*
- * Initialize 'repo' based on the provided 'gitdir'.
+ * Initialize 'repo' based on the provided 'butdir'.
  * Return 0 upon success and a non-zero value upon failure.
  */
 int repo_init(struct repository *repo,
-	      const char *gitdir,
+	      const char *butdir,
 	      const char *worktree)
 {
 	struct repository_format format = REPOSITORY_FORMAT_INIT;
@@ -170,7 +170,7 @@ int repo_init(struct repository *repo,
 	repo->parsed_objects = parsed_object_pool_new();
 	repo->remote_state = remote_state_new();
 
-	if (repo_init_gitdir(repo, gitdir))
+	if (repo_init_butdir(repo, butdir))
 		goto error;
 
 	if (read_and_verify_repository_format(&format, repo->commondir))
@@ -198,18 +198,18 @@ int repo_submodule_init(struct repository *subrepo,
 			const char *path,
 			const struct object_id *treeish_name)
 {
-	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf butdir = STRBUF_INIT;
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", path);
+	strbuf_repo_worktree_path(&butdir, superproject, "%s/.but", path);
 	strbuf_repo_worktree_path(&worktree, superproject, "%s", path);
 
-	if (repo_init(subrepo, gitdir.buf, worktree.buf)) {
+	if (repo_init(subrepo, butdir.buf, worktree.buf)) {
 		/*
 		 * If initialization fails then it may be due to the submodule
 		 * not being populated in the superproject's worktree.  Instead
-		 * we can try to initialize the submodule by finding it's gitdir
+		 * we can try to initialize the submodule by finding it's butdir
 		 * in the superproject's 'modules' directory.  In this case the
 		 * submodule would not have a worktree.
 		 */
@@ -220,10 +220,10 @@ int repo_submodule_init(struct repository *subrepo,
 			goto out;
 		}
 
-		strbuf_reset(&gitdir);
-		submodule_name_to_gitdir(&gitdir, superproject, sub->name);
+		strbuf_reset(&butdir);
+		submodule_name_to_butdir(&butdir, superproject, sub->name);
 
-		if (repo_init(subrepo, gitdir.buf, NULL)) {
+		if (repo_init(subrepo, butdir.buf, NULL)) {
 			ret = -1;
 			goto out;
 		}
@@ -235,7 +235,7 @@ int repo_submodule_init(struct repository *subrepo,
 					    "", path);
 
 out:
-	strbuf_release(&gitdir);
+	strbuf_release(&butdir);
 	strbuf_release(&worktree);
 	return ret;
 }
@@ -256,7 +256,7 @@ static void repo_clear_path_cache(struct repo_path_cache *cache)
 
 void repo_clear(struct repository *repo)
 {
-	FREE_AND_NULL(repo->gitdir);
+	FREE_AND_NULL(repo->butdir);
 	FREE_AND_NULL(repo->commondir);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
@@ -270,7 +270,7 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->parsed_objects);
 
 	if (repo->config) {
-		git_configset_clear(repo->config);
+		but_configset_clear(repo->config);
 		FREE_AND_NULL(repo->config);
 	}
 
@@ -311,7 +311,7 @@ int repo_read_index(struct repository *repo)
 	else if (repo->index->repo != repo)
 		BUG("repo's index should point back at itself");
 
-	res = read_index_from(repo->index, repo->index_file, repo->gitdir);
+	res = read_index_from(repo->index, repo->index_file, repo->butdir);
 
 	prepare_repo_settings(repo);
 	if (repo->settings.command_requires_full_index)

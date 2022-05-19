@@ -3,13 +3,13 @@
  * as a drop-in replacement for the "recursive" merge strategy, allowing one
  * to replace
  *
- *   git merge [-s recursive]
+ *   but merge [-s recursive]
  *
  * with
  *
- *   git merge -s ort
+ *   but merge -s ort
  *
- * Note: git's parser allows the space between '-s' and its argument to be
+ * Note: but's parser allows the space between '-s' and its argument to be
  * missing.  (Should I have backronymed "ham", "alsa", "kip", "nap, "alvo",
  * "cale", "peedy", or "ins" instead of "ort"?)
  */
@@ -366,7 +366,7 @@ struct merge_options_internal {
 	 * attr_index: hacky minimal index used for renormalization
 	 *
 	 * renormalization code _requires_ an index, though it only needs to
-	 * find a .gitattributes file within the index.  So, when
+	 * find a .butattributes file within the index.  So, when
 	 * renormalization is important, we create a special index with just
 	 * that one file.
 	 */
@@ -1699,7 +1699,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("If this is correct simply add it to the index "
 			   "for example\n"
 			   "by using:\n\n"
-			   "  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
+			   "  but update-index --cacheinfo 160000 %s \"%s\"\n\n"
 			   "which will accept this suggestion.\n"),
 			 oid_to_hex(&merges.objects[0].item->oid), path);
 		strbuf_release(&sb);
@@ -3551,7 +3551,7 @@ static void write_completed_directory(struct merge_options *opt,
 		dir_info->is_null = 1;
 	} else {
 		/*
-		 * Write out the tree to the git object directory, and also
+		 * Write out the tree to the but object directory, and also
 		 * record the mode and oid in dir_info->result.
 		 */
 		dir_info->is_null = 0;
@@ -4098,7 +4098,7 @@ static int checkout(struct merge_options *opt,
 	setup_unpack_trees_porcelain(&unpack_opts, "merge");
 
 	/*
-	 * NOTE: if this were just "git checkout" code, we would probably
+	 * NOTE: if this were just "but checkout" code, we would probably
 	 * read or refresh the cache and check for a conflicted index, but
 	 * builtin/merge.c or sequencer.c really needs to read the index
 	 * and check for conflicted entries before starting merging for a
@@ -4287,7 +4287,7 @@ void merge_switch_to_result(struct merge_options *opt,
 		trace2_region_leave("merge", "record_conflicted", opt->repo);
 
 		trace2_region_enter("merge", "write_auto_merge", opt->repo);
-		filename = git_path_auto_merge(opt->repo);
+		filename = but_path_auto_merge(opt->repo);
 		fp = xfopen(filename, "w");
 		fprintf(fp, "%s\n", oid_to_hex(&result->tree->object.oid));
 		fclose(fp);
@@ -4340,7 +4340,7 @@ void merge_finalize(struct merge_options *opt,
 	struct merge_options_internal *opti = result->priv;
 
 	if (opt->renormalize)
-		git_attr_set_direction(GIT_ATTR_CHECKIN);
+		but_attr_set_direction(GIT_ATTR_CHECKIN);
 	assert(opt->priv == NULL);
 
 	clear_or_reinit_internal_opts(opti, 0);
@@ -4443,7 +4443,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 
 	/* Handle attr direction stuff for renormalization */
 	if (opt->renormalize)
-		git_attr_set_direction(GIT_ATTR_CHECKOUT);
+		but_attr_set_direction(GIT_ATTR_CHECKOUT);
 
 	/* Initialization of opt->priv, our internal merge data */
 	trace2_region_enter("merge", "allocate/init", opt->repo);

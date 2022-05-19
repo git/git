@@ -1,14 +1,14 @@
-git-blame(1)
+but-blame(1)
 ============
 
 NAME
 ----
-git-blame - Show what revision and author last modified each line of a file
+but-blame - Show what revision and author last modified each line of a file
 
 SYNOPSIS
 --------
 [verse]
-'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
+'but blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
 	    [-L <range>] [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
 	    [--ignore-rev <rev>] [--ignore-revs-file <file>]
 	    [--color-lines] [--color-by-age] [--progress] [--abbrev=<n>]
@@ -30,7 +30,7 @@ lines that were copied and pasted from another file, etc., see the
 `-C` and `-M` options.
 
 The report does not tell you anything about lines which have been deleted or
-replaced; you need to use a tool such as 'git diff' or the "pickaxe"
+replaced; you need to use a tool such as 'but diff' or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, Git also supports searching the
@@ -41,9 +41,9 @@ a text string in the diff. A small example of the pickaxe interface
 that searches for `blame_usage`:
 
 -----------------------------------------------------------------------------
-$ git log --pretty=oneline -S'blame_usage'
+$ but log --pretty=oneline -S'blame_usage'
 5040f17eba15504bad66b14a645bddd9b015ebb7 blame -S <ancestry-file>
-ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 git-blame: Make the output
+ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 but-blame: Make the output
 -----------------------------------------------------------------------------
 
 OPTIONS
@@ -51,7 +51,7 @@ OPTIONS
 include::blame-options.txt[]
 
 -c::
-	Use the same output mode as linkgit:git-annotate[1] (Default: off).
+	Use the same output mode as linkbut:but-annotate[1] (Default: off).
 
 --score-debug::
 	Include debugging information related to the movement of
@@ -59,7 +59,7 @@ include::blame-options.txt[]
 	file (see `-M`).  The first number listed is the score.
 	This is the number of alphanumeric characters detected
 	as having been moved between or within files.  This must be above
-	a certain threshold for 'git blame' to consider those lines
+	a certain threshold for 'but blame' to consider those lines
 	of code to have been moved.
 
 -f::
@@ -86,8 +86,8 @@ include::blame-options.txt[]
 	the child's to find where the lines came from.
 
 --abbrev=<n>::
-	Instead of using the default 7+1 hexadecimal digits as the
-	abbreviated object name, use <m>+1 digits, where <m> is at
+	Instead of using the default 7+1 hexadecimal dibuts as the
+	abbreviated object name, use <m>+1 dibuts, where <m> is at
 	least <n> but ensures the cummit object names are unique.
 	Note that 1 column
 	is used for a caret to mark the boundary cummit.
@@ -97,7 +97,7 @@ THE DEFAULT FORMAT
 ------------------
 
 When neither `--porcelain` nor `--incremental` option is specified,
-`git blame` will output annotation for each line with:
+`but blame` will output annotation for each line with:
 
 - abbreviated object name for the cummit the line came from;
 - author ident (by default author name and date, unless `-s` or `-e`
@@ -141,7 +141,7 @@ cummit information for each line, allowing simpler (but less efficient)
 usage like:
 
 	# count the number of lines attributed to each author
-	git blame --line-porcelain file |
+	but blame --line-porcelain file |
 	sed -n 's/^author //p' |
 	sort | uniq -c | sort -rn
 
@@ -149,7 +149,7 @@ usage like:
 SPECIFYING RANGES
 -----------------
 
-Unlike 'git blame' and 'git annotate' in older versions of git, the extent
+Unlike 'but blame' and 'but annotate' in older versions of but, the extent
 of the annotation can be limited to both line ranges and revision
 ranges. The `-L` option, which limits annotation to a range of lines, may be
 specified multiple times.
@@ -159,21 +159,21 @@ lines 40-60 for file `foo`, you can use the `-L` option like so
 (they mean the same thing -- both ask for 21 lines starting at
 line 40):
 
-	git blame -L 40,60 foo
-	git blame -L 40,+21 foo
+	but blame -L 40,60 foo
+	but blame -L 40,+21 foo
 
 Also you can use a regular expression to specify the line range:
 
-	git blame -L '/^sub hello {/,/^}$/' foo
+	but blame -L '/^sub hello {/,/^}$/' foo
 
 which limits the annotation to the body of the `hello` subroutine.
 
 When you are not interested in changes older than version
 v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to 'git rev-list':
+range specifiers  similar to 'but rev-list':
 
-	git blame v2.6.18.. -- foo
-	git blame --since=3.weeks -- foo
+	but blame v2.6.18.. -- foo
+	but blame --since=3.weeks -- foo
 
 When revision range specifiers are used to limit the annotation,
 lines that have not changed since the range boundary (either the
@@ -187,12 +187,12 @@ indicates that the developer was being sloppy and did not
 refactor the code properly.  You can first find the cummit that
 introduced the file with:
 
-	git log --diff-filter=A --pretty=short -- foo
+	but log --diff-filter=A --pretty=short -- foo
 
 and then annotate the change between the cummit and its
 parents, using `cummit^!` notation:
 
-	git blame -C -C -f $cummit^! -- foo
+	but blame -C -C -f $cummit^! -- foo
 
 
 INCREMENTAL OUTPUT
@@ -239,13 +239,13 @@ cummit commentary), a blame viewer will not care.
 MAPPING AUTHORS
 ---------------
 
-See linkgit:gitmailmap[5].
+See linkbut:butmailmap[5].
 
 
 SEE ALSO
 --------
-linkgit:git-annotate[1]
+linkbut:but-annotate[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

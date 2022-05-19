@@ -15,7 +15,7 @@
 #include "parse-options.h"
 
 static const char * const cummit_tree_usage[] = {
-	N_("git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] "
+	N_("but cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] "
 		"[(-F <file>)...] <tree>"),
 	NULL
 };
@@ -38,10 +38,10 @@ static void new_parent(struct cummit *parent, struct cummit_list **parents_p)
 
 static int cummit_tree_config(const char *var, const char *value, void *cb)
 {
-	int status = git_gpg_config(var, value, NULL);
+	int status = but_gpg_config(var, value, NULL);
 	if (status)
 		return status;
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static int parse_parent_arg_callback(const struct option *opt,
@@ -91,9 +91,9 @@ static int parse_file_arg_callback(const struct option *opt,
 		fd = xopen(arg, O_RDONLY);
 	}
 	if (strbuf_read(buf, fd, 0) < 0)
-		die_errno(_("git cummit-tree: failed to read '%s'"), arg);
+		die_errno(_("but cummit-tree: failed to read '%s'"), arg);
 	if (fd && close(fd))
-		die_errno(_("git cummit-tree: failed to close '%s'"), arg);
+		die_errno(_("but cummit-tree: failed to close '%s'"), arg);
 
 	return 0;
 }
@@ -120,7 +120,7 @@ int cmd_cummit_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(cummit_tree_config, NULL);
+	but_config(cummit_tree_config, NULL);
 
 	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage_with_options(cummit_tree_usage, options);
@@ -135,7 +135,7 @@ int cmd_cummit_tree(int argc, const char **argv, const char *prefix)
 
 	if (!buffer.len) {
 		if (strbuf_read(&buffer, 0, 0) < 0)
-			die_errno(_("git cummit-tree: failed to read"));
+			die_errno(_("but cummit-tree: failed to read"));
 	}
 
 	if (cummit_tree(buffer.buf, buffer.len, &tree_oid, parents, &cummit_oid,

@@ -1,25 +1,25 @@
-git-update-ref(1)
+but-update-ref(1)
 =================
 
 NAME
 ----
-git-update-ref - Update the object name stored in a ref safely
+but-update-ref - Update the object name stored in a ref safely
 
 SYNOPSIS
 --------
 [verse]
-'git update-ref' [-m <reason>] [--no-deref] (-d <ref> [<oldvalue>] | [--create-reflog] <ref> <newvalue> [<oldvalue>] | --stdin [-z])
+'but update-ref' [-m <reason>] [--no-deref] (-d <ref> [<oldvalue>] | [--create-reflog] <ref> <newvalue> [<oldvalue>] | --stdin [-z])
 
 DESCRIPTION
 -----------
 Given two arguments, stores the <newvalue> in the <ref>, possibly
-dereferencing the symbolic refs.  E.g. `git update-ref HEAD
+dereferencing the symbolic refs.  E.g. `but update-ref HEAD
 <newvalue>` updates the current branch head to the new object.
 
 Given three arguments, stores the <newvalue> in the <ref>,
 possibly dereferencing the symbolic refs, after verifying that
 the current value of the <ref> matches <oldvalue>.
-E.g. `git update-ref refs/heads/master <newvalue> <oldvalue>`
+E.g. `but update-ref refs/heads/master <newvalue> <oldvalue>`
 updates the master branch head to <newvalue> only if its current
 value is <oldvalue>.  You can specify 40 "0" or an empty string
 as <oldvalue> to make sure that the ref you are creating does
@@ -42,7 +42,7 @@ the result of following the symbolic pointers.
 
 In general, using
 
-	git update-ref HEAD "$head"
+	but update-ref HEAD "$head"
 
 should be a _lot_ safer than doing
 
@@ -152,7 +152,7 @@ LOGGING UPDATES
 If config parameter "core.logAllRefUpdates" is true and the ref is one
 under "refs/heads/", "refs/remotes/", "refs/notes/", or a pseudoref
 like HEAD or ORIG_HEAD; or the file "$GIT_DIR/logs/<ref>" exists then
-`git update-ref` will append a line to the log file
+`but update-ref` will append a line to the log file
 "$GIT_DIR/logs/<ref>" (dereferencing all symbolic refs before creating
 the log name) describing the change in ref value.  Log lines are
 formatted as:
@@ -177,4 +177,4 @@ or does not have cummitter information available.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

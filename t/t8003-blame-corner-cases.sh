@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git blame corner cases'
+test_description='but blame corner cases'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -15,27 +15,27 @@ test_expect_success setup '
 	echo ABC >mouse &&
 	test_write_lines 1 2 3 4 5 6 7 8 9 >nine_lines &&
 	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
-	git add one two tres mouse nine_lines ten_lines &&
+	but add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Initial git cummit -m Initial &&
+	GIT_AUTHOR_NAME=Initial but cummit -m Initial &&
 
 	cat one >uno &&
 	mv two dos &&
 	cat one >>tres &&
 	echo DEF >>mouse &&
-	git add uno dos tres mouse &&
+	but add uno dos tres mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Second git cummit -a -m Second &&
+	GIT_AUTHOR_NAME=Second but cummit -a -m Second &&
 
 	echo GHIJK >>mouse &&
-	git add mouse &&
+	but add mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Third git cummit -m Third &&
+	GIT_AUTHOR_NAME=Third but cummit -m Third &&
 
 	cat mouse >cow &&
-	git add cow &&
+	but add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fourth git cummit -m Fourth &&
+	GIT_AUTHOR_NAME=Fourth but cummit -m Fourth &&
 
 	cat >cow <<-\EOF &&
 	ABC
@@ -43,74 +43,74 @@ test_expect_success setup '
 	XXXX
 	GHIJK
 	EOF
-	git add cow &&
+	but add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fifth git cummit -m Fifth
+	GIT_AUTHOR_NAME=Fifth but cummit -m Fifth
 '
 
 test_expect_success 'straight copy without -C' '
 
-	git blame uno | grep Second
+	but blame uno | grep Second
 
 '
 
 test_expect_success 'straight move without -C' '
 
-	git blame dos | grep Initial
+	but blame dos | grep Initial
 
 '
 
 test_expect_success 'straight copy with -C' '
 
-	git blame -C1 uno | grep Second
+	but blame -C1 uno | grep Second
 
 '
 
 test_expect_success 'straight move with -C' '
 
-	git blame -C1 dos | grep Initial
+	but blame -C1 dos | grep Initial
 
 '
 
 test_expect_success 'straight copy with -C -C' '
 
-	git blame -C -C1 uno | grep Initial
+	but blame -C -C1 uno | grep Initial
 
 '
 
 test_expect_success 'straight move with -C -C' '
 
-	git blame -C -C1 dos | grep Initial
+	but blame -C -C1 dos | grep Initial
 
 '
 
 test_expect_success 'append without -C' '
 
-	git blame -L2 tres | grep Second
+	but blame -L2 tres | grep Second
 
 '
 
 test_expect_success 'append with -C' '
 
-	git blame -L2 -C1 tres | grep Second
+	but blame -L2 -C1 tres | grep Second
 
 '
 
 test_expect_success 'append with -C -C' '
 
-	git blame -L2 -C -C1 tres | grep Second
+	but blame -L2 -C -C1 tres | grep Second
 
 '
 
 test_expect_success 'append with -C -C -C' '
 
-	git blame -L2 -C -C -C1 tres | grep Initial
+	but blame -L2 -C -C -C1 tres | grep Initial
 
 '
 
 test_expect_success 'blame wholesale copy' '
 
-	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
+	but blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -122,7 +122,7 @@ test_expect_success 'blame wholesale copy' '
 
 test_expect_success 'blame wholesale copy and more' '
 
-	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
+	but blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -142,9 +142,9 @@ test_expect_success 'blame wholesale copy and more in the index' '
 	YYYY
 	GHIJK
 	EOF
-	git add horse &&
-	test_when_finished "git rm -f horse" &&
-	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	but add horse &&
+	test_when_finished "but rm -f horse" &&
+	but blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -158,17 +158,17 @@ test_expect_success 'blame wholesale copy and more in the index' '
 
 test_expect_success 'blame during cherry-pick with file rename conflict' '
 
-	test_when_finished "git reset --hard && git checkout main" &&
-	git checkout HEAD~3 &&
+	test_when_finished "but reset --hard && but checkout main" &&
+	but checkout HEAD~3 &&
 	echo MOUSE >> mouse &&
-	git mv mouse rodent &&
-	git add rodent &&
-	GIT_AUTHOR_NAME=Rodent git cummit -m "rodent" &&
-	git checkout --detach main &&
-	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
-	git show HEAD@{1}:rodent > rodent &&
-	git add rodent &&
-	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	but mv mouse rodent &&
+	but add rodent &&
+	GIT_AUTHOR_NAME=Rodent but cummit -m "rodent" &&
+	but checkout --detach main &&
+	(but cherry-pick HEAD@{1} || test $? -eq 1) &&
+	but show HEAD@{1}:rodent > rodent &&
+	but add rodent &&
+	but blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -181,19 +181,19 @@ test_expect_success 'blame path that used to be a directory' '
 	mkdir path &&
 	echo A A A A A >path/file &&
 	echo B B B B B >path/elif &&
-	git add path &&
+	but add path &&
 	test_tick &&
-	git cummit -m "path was a directory" &&
+	but cummit -m "path was a directory" &&
 	rm -fr path &&
 	echo A A A A A >path &&
-	git add path &&
+	but add path &&
 	test_tick &&
-	git cummit -m "path is a regular file" &&
-	git blame HEAD^.. -- path
+	but cummit -m "path is a regular file" &&
+	but blame HEAD^.. -- path
 '
 
 test_expect_success 'blame to a cummit with no author name' '
-  TREE=$(git rev-parse HEAD:) &&
+  TREE=$(but rev-parse HEAD:) &&
   cat >badcummit <<EOF &&
 tree $TREE
 author <noname> 1234567890 +0000
@@ -201,72 +201,72 @@ cummitter David Reiss <dreiss@facebook.com> 1234567890 +0000
 
 some message
 EOF
-  cummit=$(git hash-object -t cummit -w badcummit) &&
-  git --no-pager blame $cummit -- uno >/dev/null
+  cummit=$(but hash-object -t cummit -w badcummit) &&
+  but --no-pager blame $cummit -- uno >/dev/null
 '
 
 test_expect_success 'blame -L with invalid start' '
-	test_must_fail git blame -L5 tres 2>errors &&
+	test_must_fail but blame -L5 tres 2>errors &&
 	test_i18ngrep "has only 2 lines" errors
 '
 
 test_expect_success 'blame -L with invalid end' '
-	git blame -L1,5 tres >out &&
+	but blame -L1,5 tres >out &&
 	test_line_count = 2 out
 '
 
 test_expect_success 'blame parses <end> part of -L' '
-	git blame -L1,1 tres >out &&
+	but blame -L1,1 tres >out &&
 	test_line_count = 1 out
 '
 
 test_expect_success 'blame -Ln,-(n+1)' '
-	git blame -L3,-4 nine_lines >out &&
+	but blame -L3,-4 nine_lines >out &&
 	test_line_count = 3 out
 '
 
 test_expect_success 'indent of line numbers, nine lines' '
-	git blame nine_lines >actual &&
+	but blame nine_lines >actual &&
 	test $(grep -c "  " actual) = 0
 '
 
 test_expect_success 'indent of line numbers, ten lines' '
-	git blame ten_lines >actual &&
+	but blame ten_lines >actual &&
 	test $(grep -c "  " actual) = 9
 '
 
 test_expect_success 'setup file with CRLF newlines' '
-	git config core.autocrlf false &&
+	but config core.autocrlf false &&
 	printf "testcase\n" >crlffile &&
-	git add crlffile &&
-	git cummit -m testcase &&
+	but add crlffile &&
+	but cummit -m testcase &&
 	printf "testcase\r\n" >crlffile
 '
 
 test_expect_success 'blame file with CRLF core.autocrlf true' '
-	git config core.autocrlf true &&
-	git blame crlffile >actual &&
+	but config core.autocrlf true &&
+	but blame crlffile >actual &&
 	grep "A U Thor" actual
 '
 
 test_expect_success 'blame file with CRLF attributes text' '
-	git config core.autocrlf false &&
-	echo "crlffile text" >.gitattributes &&
-	git blame crlffile >actual &&
+	but config core.autocrlf false &&
+	echo "crlffile text" >.butattributes &&
+	but blame crlffile >actual &&
 	grep "A U Thor" actual
 '
 
 test_expect_success 'blame file with CRLF core.autocrlf=true' '
-	git config core.autocrlf false &&
+	but config core.autocrlf false &&
 	printf "testcase\r\n" >crlfinrepo &&
-	>.gitattributes &&
-	git add crlfinrepo &&
-	git cummit -m "add crlfinrepo" &&
-	git config core.autocrlf true &&
+	>.butattributes &&
+	but add crlfinrepo &&
+	but cummit -m "add crlfinrepo" &&
+	but config core.autocrlf true &&
 	mv crlfinrepo tmp &&
-	git checkout crlfinrepo &&
+	but checkout crlfinrepo &&
 	rm tmp &&
-	git blame crlfinrepo >actual &&
+	but blame crlfinrepo >actual &&
 	grep "A U Thor" actual
 '
 
@@ -275,26 +275,26 @@ test_expect_success 'setup coalesce tests' '
 	ABC
 	DEF
 	EOF
-	git add giraffe &&
-	git cummit -m "original file" &&
-	orig=$(git rev-parse HEAD) &&
+	but add giraffe &&
+	but cummit -m "original file" &&
+	orig=$(but rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
 	ABC
 	SPLIT
 	DEF
 	EOF
-	git add giraffe &&
-	git cummit -m "interior SPLIT line" &&
-	split=$(git rev-parse HEAD) &&
+	but add giraffe &&
+	but cummit -m "interior SPLIT line" &&
+	split=$(but rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
 	ABC
 	DEF
 	EOF
-	git add giraffe &&
-	git cummit -m "same contents as original" &&
-	final=$(git rev-parse HEAD)
+	but add giraffe &&
+	but cummit -m "same contents as original" &&
+	final=$(but rev-parse HEAD)
 '
 
 test_expect_success 'blame coalesce' '
@@ -302,7 +302,7 @@ test_expect_success 'blame coalesce' '
 	$orig 1 1 2
 	$orig 2 2
 	EOF
-	git blame --porcelain $final giraffe >actual.raw &&
+	but blame --porcelain $final giraffe >actual.raw &&
 	grep "^$orig" actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -312,7 +312,7 @@ test_expect_success 'blame does not coalesce non-adjacent result lines' '
 	$orig 1) ABC
 	$orig 3) DEF
 	EOF
-	git blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
+	but blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
 	test_cmp expect actual
 '
 

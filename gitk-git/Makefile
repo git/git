@@ -4,8 +4,8 @@ all::
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 sharedir ?= $(prefix)/share
-gitk_libdir   ?= $(sharedir)/gitk/lib
-msgsdir    ?= $(gitk_libdir)/msgs
+butk_libdir   ?= $(sharedir)/butk/lib
+msgsdir    ?= $(butk_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 
 TCL_PATH ?= tclsh
@@ -38,7 +38,7 @@ else
 	endif
 endif
 
-PO_TEMPLATE = po/gitk.pot
+PO_TEMPLATE = po/butk.pot
 ALL_POFILES = $(wildcard po/*.po)
 ALL_MSGFILES = $(subst .po,.msg,$(ALL_POFILES))
 
@@ -47,29 +47,29 @@ ifndef V
 	QUIET_GEN      = $(QUIET)echo '   ' GEN $@ &&
 endif
 
-all:: gitk-wish $(ALL_MSGFILES)
+all:: butk-wish $(ALL_MSGFILES)
 
 install:: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) -m 755 gitk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
+	$(INSTALL) -m 755 butk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/butk
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(msgsdir_SQ)'
 	$(foreach p,$(ALL_MSGFILES), $(INSTALL) -m 644 $p '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
 
 uninstall::
 	$(foreach p,$(ALL_MSGFILES), $(RM) '$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) &&) true
-	$(RM) '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
+	$(RM) '$(DESTDIR_SQ)$(bindir_SQ)'/butk
 
 clean::
-	$(RM) gitk-wish po/*.msg GIT-TCLTK-VARS
+	$(RM) butk-wish po/*.msg GIT-TCLTK-VARS
 
-gitk-wish: gitk GIT-TCLTK-VARS
+butk-wish: butk GIT-TCLTK-VARS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
-	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
+	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <butk >$@+ && \
 	chmod +x $@+ && \
 	mv -f $@+ $@
 
-$(PO_TEMPLATE): gitk
-	$(XGETTEXT) -kmc -LTcl -o $@ gitk
+$(PO_TEMPLATE): butk
+	$(XGETTEXT) -kmc -LTcl -o $@ butk
 update-po:: $(PO_TEMPLATE)
 	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
 $(ALL_MSGFILES): %.msg : %.po

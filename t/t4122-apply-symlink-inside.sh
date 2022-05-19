@@ -11,77 +11,77 @@ test_expect_success setup '
 	mkdir -p arch/i386/boot arch/x86_64 &&
 	test_write_lines 1 2 3 4 5 >arch/i386/boot/Makefile &&
 	test_ln_s_add ../i386/boot arch/x86_64/boot &&
-	git add . &&
+	but add . &&
 	test_tick &&
-	git cummit -m initial &&
-	git branch test &&
+	but cummit -m initial &&
+	but branch test &&
 
 	rm arch/x86_64/boot &&
 	mkdir arch/x86_64/boot &&
 	test_write_lines 2 3 4 5 6 >arch/x86_64/boot/Makefile &&
-	git add . &&
+	but add . &&
 	test_tick &&
-	git cummit -a -m second &&
+	but cummit -a -m second &&
 
-	git format-patch --binary -1 --stdout >test.patch
+	but format-patch --binary -1 --stdout >test.patch
 
 '
 
 test_expect_success apply '
 
-	git checkout test &&
-	git diff --exit-code test &&
-	git diff --exit-code --cached test &&
-	git apply --index test.patch
+	but checkout test &&
+	but diff --exit-code test &&
+	but diff --exit-code --cached test &&
+	but apply --index test.patch
 
 '
 
 test_expect_success 'check result' '
 
-	git diff --exit-code main &&
-	git diff --exit-code --cached main &&
+	but diff --exit-code main &&
+	but diff --exit-code --cached main &&
 	test_tick &&
-	git cummit -m replay &&
-	T1=$(git rev-parse "main^{tree}") &&
-	T2=$(git rev-parse "HEAD^{tree}") &&
+	but cummit -m replay &&
+	T1=$(but rev-parse "main^{tree}") &&
+	T2=$(but rev-parse "HEAD^{tree}") &&
 	test "z$T1" = "z$T2"
 
 '
 
 test_expect_success SYMLINKS 'do not read from beyond symbolic link' '
-	git reset --hard &&
+	but reset --hard &&
 	mkdir -p arch/x86_64/dir &&
 	>arch/x86_64/dir/file &&
-	git add arch/x86_64/dir/file &&
+	but add arch/x86_64/dir/file &&
 	echo line >arch/x86_64/dir/file &&
-	git diff >patch &&
-	git reset --hard &&
+	but diff >patch &&
+	but reset --hard &&
 
 	mkdir arch/i386/dir &&
 	>arch/i386/dir/file &&
 	ln -s ../i386/dir arch/x86_64/dir &&
 
-	test_must_fail git apply patch &&
-	test_must_fail git apply --cached patch &&
-	test_must_fail git apply --index patch
+	test_must_fail but apply patch &&
+	test_must_fail but apply --cached patch &&
+	test_must_fail but apply --index patch
 
 '
 
 test_expect_success SYMLINKS 'do not follow symbolic link (setup)' '
 
 	rm -rf arch/i386/dir arch/x86_64/dir &&
-	git reset --hard &&
+	but reset --hard &&
 	ln -s ../i386/dir arch/x86_64/dir &&
-	git add arch/x86_64/dir &&
-	git diff HEAD >add_symlink.patch &&
-	git reset --hard &&
+	but add arch/x86_64/dir &&
+	but diff HEAD >add_symlink.patch &&
+	but reset --hard &&
 
 	mkdir arch/x86_64/dir &&
 	>arch/x86_64/dir/file &&
-	git add arch/x86_64/dir/file &&
-	git diff HEAD >add_file.patch &&
-	git diff -R HEAD >del_file.patch &&
-	git reset --hard &&
+	but add arch/x86_64/dir/file &&
+	but diff HEAD >add_file.patch &&
+	but diff -R HEAD >del_file.patch &&
+	but reset --hard &&
 	rm -fr arch/x86_64/dir &&
 
 	cat add_symlink.patch add_file.patch >patch &&
@@ -93,65 +93,65 @@ test_expect_success SYMLINKS 'do not follow symbolic link (setup)' '
 test_expect_success SYMLINKS 'do not follow symbolic link (same input)' '
 
 	# same input creates a confusing symbolic link
-	test_must_fail git apply patch 2>error-wt &&
+	test_must_fail but apply patch 2>error-wt &&
 	test_i18ngrep "beyond a symbolic link" error-wt &&
 	test_path_is_missing arch/x86_64/dir &&
 	test_path_is_missing arch/i386/dir/file &&
 
-	test_must_fail git apply --index patch 2>error-ix &&
+	test_must_fail but apply --index patch 2>error-ix &&
 	test_i18ngrep "beyond a symbolic link" error-ix &&
 	test_path_is_missing arch/x86_64/dir &&
 	test_path_is_missing arch/i386/dir/file &&
-	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
-	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
+	test_must_fail but ls-files --error-unmatch arch/x86_64/dir &&
+	test_must_fail but ls-files --error-unmatch arch/i386/dir &&
 
-	test_must_fail git apply --cached patch 2>error-ct &&
+	test_must_fail but apply --cached patch 2>error-ct &&
 	test_i18ngrep "beyond a symbolic link" error-ct &&
-	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
-	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
+	test_must_fail but ls-files --error-unmatch arch/x86_64/dir &&
+	test_must_fail but ls-files --error-unmatch arch/i386/dir &&
 
 	>arch/i386/dir/file &&
-	git add arch/i386/dir/file &&
+	but add arch/i386/dir/file &&
 
-	test_must_fail git apply tricky_del &&
+	test_must_fail but apply tricky_del &&
 	test_path_is_file arch/i386/dir/file &&
 
-	test_must_fail git apply --index tricky_del &&
+	test_must_fail but apply --index tricky_del &&
 	test_path_is_file arch/i386/dir/file &&
-	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
-	git ls-files --error-unmatch arch/i386/dir &&
+	test_must_fail but ls-files --error-unmatch arch/x86_64/dir &&
+	but ls-files --error-unmatch arch/i386/dir &&
 
-	test_must_fail git apply --cached tricky_del &&
-	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
-	git ls-files --error-unmatch arch/i386/dir
+	test_must_fail but apply --cached tricky_del &&
+	test_must_fail but ls-files --error-unmatch arch/x86_64/dir &&
+	but ls-files --error-unmatch arch/i386/dir
 '
 
 test_expect_success SYMLINKS 'do not follow symbolic link (existing)' '
 
 	# existing symbolic link
-	git reset --hard &&
+	but reset --hard &&
 	ln -s ../i386/dir arch/x86_64/dir &&
-	git add arch/x86_64/dir &&
+	but add arch/x86_64/dir &&
 
-	test_must_fail git apply add_file.patch 2>error-wt-add &&
+	test_must_fail but apply add_file.patch 2>error-wt-add &&
 	test_i18ngrep "beyond a symbolic link" error-wt-add &&
 	test_path_is_missing arch/i386/dir/file &&
 
 	mkdir arch/i386/dir &&
 	>arch/i386/dir/file &&
-	test_must_fail git apply del_file.patch 2>error-wt-del &&
+	test_must_fail but apply del_file.patch 2>error-wt-del &&
 	test_i18ngrep "beyond a symbolic link" error-wt-del &&
 	test_path_is_file arch/i386/dir/file &&
 	rm arch/i386/dir/file &&
 
-	test_must_fail git apply --index add_file.patch 2>error-ix-add &&
+	test_must_fail but apply --index add_file.patch 2>error-ix-add &&
 	test_i18ngrep "beyond a symbolic link" error-ix-add &&
 	test_path_is_missing arch/i386/dir/file &&
-	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
+	test_must_fail but ls-files --error-unmatch arch/i386/dir &&
 
-	test_must_fail git apply --cached add_file.patch 2>error-ct-file &&
+	test_must_fail but apply --cached add_file.patch 2>error-ct-file &&
 	test_i18ngrep "beyond a symbolic link" error-ct-file &&
-	test_must_fail git ls-files --error-unmatch arch/i386/dir
+	test_must_fail but ls-files --error-unmatch arch/i386/dir
 '
 
 test_done

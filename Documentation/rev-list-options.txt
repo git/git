@@ -29,11 +29,11 @@ ordering and formatting options, such as `--reverse`.
 --before=<date>::
 	Show cummits older than a specific date.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --max-age=<timestamp>::
 --min-age=<timestamp>::
 	Limit the cummits output to specified time range.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --author=<pattern>::
 --cummitter=<pattern>::
@@ -56,11 +56,11 @@ endif::git-rev-list[]
 	more than one `--grep=<pattern>`, cummits whose message
 	matches any of the given patterns are chosen (but see
 	`--all-match`).
-ifndef::git-rev-list[]
+ifndef::but-rev-list[]
 +
 When `--notes` is in effect, the message from the notes is
 matched as if it were part of the log message.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --all-match::
 	Limit the cummits output to ones that match all given `--grep`,
@@ -130,11 +130,11 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	from time to time, and this option allows you to ignore
 	the individual cummits brought in to your history by such
 	a merge.
-ifdef::git-log[]
+ifdef::but-log[]
 +
 This option also changes default diff format for merge cummits
 to `first-parent`, see `--diff-merges=first-parent` for details.
-endif::git-log[]
+endif::but-log[]
 
 --exclude-first-parent-only::
 	When finding cummits to exclude (with a '{caret}'), follow only
@@ -200,12 +200,12 @@ explicitly.
 	repository is any repository whose object directory is specified
 	in `objects/info/alternates`.  The set of included objects may
 	be modified by `core.alternateRefsCommand`, etc. See
-	linkgit:git-config[1].
+	linkbut:but-config[1].
 
 --single-worktree::
 	By default, all working trees will be examined by the
 	following options when there are more than one (see
-	linkgit:git-worktree[1]): `--all`, `--reflog` and
+	linkbut:but-worktree[1]): `--all`, `--reflog` and
 	`--indexed-objects`.
 	This option forces them to examine the current working tree
 	only.
@@ -214,13 +214,13 @@ explicitly.
 	Upon seeing an invalid object name in the input, pretend as if
 	the bad input was not given.
 
-ifndef::git-rev-list[]
+ifndef::but-rev-list[]
 --bisect::
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
 	line.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --stdin::
 	In addition to the '<cummit>' listed on the command
@@ -228,7 +228,7 @@ endif::git-rev-list[]
 	seen, stop reading cummits and start reading paths to limit the
 	result.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --quiet::
 	Don't print anything to standard output.  This form
 	is primarily meant to allow the caller to
@@ -239,12 +239,12 @@ ifdef::git-rev-list[]
 --disk-usage::
 	Suppress normal output; instead, print the sum of the bytes used
 	for on-disk storage by the selected cummits or objects. This is
-	equivalent to piping the output into `git cat-file
+	equivalent to piping the output into `but cat-file
 	--batch-check='%(objectsize:disk)'`, except that it runs much
 	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
-	section in linkgit:git-cat-file[1] for the limitations of what
+	section in linkbut:but-cat-file[1] for the limitations of what
 	"on-disk storage" means.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --cherry-mark::
 	Like `--cherry-pick` (see below) but mark equivalent cummits
@@ -271,7 +271,7 @@ excluded from the output.
 +
 For example, `--cherry-pick --right-only A...B` omits those
 cummits from `B` which are in `A` or are patch-equivalent to a cummit in
-`A`. In other words, this lists the `+` cummits from `git cherry A B`.
+`A`. In other words, this lists the `+` cummits from `but cherry A B`.
 More precisely, `--cherry-pick --right-only --no-merges` gives the exact
 list.
 
@@ -279,8 +279,8 @@ list.
 	A synonym for `--right-only --cherry-mark --no-merges`; useful to
 	limit the output to the cummits on our side and mark those that
 	have been applied to the other side of a forked history with
-	`git log --cherry upstream...mybranch`, similar to
-	`git cherry upstream mybranch`.
+	`but log --cherry upstream...mybranch`, similar to
+	`but cherry upstream mybranch`.
 
 -g::
 --walk-reflogs::
@@ -313,7 +313,7 @@ depending on a few rules:
 Under `--pretty=oneline`, the cummit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
-See also linkgit:git-reflog[1].
+See also linkbut:but-reflog[1].
 +
 Under `--pretty=reference`, this information will not be shown at all.
 
@@ -325,7 +325,7 @@ Under `--pretty=reference`, this information will not be shown at all.
 	Output excluded boundary cummits. Boundary cummits are
 	prefixed with `-`.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --use-bitmap-index::
 
 	Try to speed up the traversal using the pack bitmap index (if
@@ -335,7 +335,7 @@ ifdef::git-rev-list[]
 --progress=<header>::
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -737,8 +737,8 @@ above) if (1) they are referenced by tags, or (2) they change the
 contents of the paths given on the command line.  All other
 cummits are marked as TREESAME (subject to be simplified away).
 
-ifndef::git-shortlog[]
-ifdef::git-rev-list[]
+ifndef::but-shortlog[]
+ifdef::but-rev-list[]
 Bisection Helpers
 ~~~~~~~~~~~~~~~~~
 
@@ -751,14 +751,14 @@ Bisection Helpers
 	are no refs in `refs/bisect/`, if
 +
 -----------------------------------------------------------------------
-	$ git rev-list --bisect foo ^bar ^baz
+	$ but rev-list --bisect foo ^bar ^baz
 -----------------------------------------------------------------------
 +
 outputs 'midpoint', the output of the two commands
 +
 -----------------------------------------------------------------------
-	$ git rev-list foo ^midpoint
-	$ git rev-list midpoint ^bar ^baz
+	$ but rev-list foo ^midpoint
+	$ but rev-list midpoint ^bar ^baz
 -----------------------------------------------------------------------
 +
 would be of roughly the same length.  Finding the change which
@@ -792,10 +792,10 @@ may not compile for example).
 This option can be used along with `--bisect-vars`, in this case,
 after all the sorted cummit objects, there will be the same text as if
 `--bisect-vars` had been used alone.
-endif::git-rev-list[]
-endif::git-shortlog[]
+endif::but-rev-list[]
+endif::but-shortlog[]
 
-ifndef::git-shortlog[]
+ifndef::but-shortlog[]
 cummit Ordering
 ~~~~~~~~~~~~~~~
 
@@ -824,7 +824,7 @@ For example, in a commit history like this:
 
 ----------------------------------------------------------------
 +
-where the numbers denote the order of cummit timestamps, `git
+where the numbers denote the order of cummit timestamps, `but
 rev-list` and friends with `--date-order` show the cummits in the
 timestamp order: 8 7 6 5 4 3 2 1.
 +
@@ -837,15 +837,15 @@ together.
 	Output the cummits chosen to be shown (see cummit Limiting
 	section above) in reverse order. Cannot be combined with
 	`--walk-reflogs`.
-endif::git-shortlog[]
+endif::but-shortlog[]
 
-ifndef::git-shortlog[]
+ifndef::but-shortlog[]
 Object Traversal
 ~~~~~~~~~~~~~~~~
 
 These options are mostly targeted for packing of Git repositories.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --objects::
 	Print the object IDs of any object referenced by the listed
 	cummits.  `--objects foo ^bar` thus means ``send me
@@ -860,7 +860,7 @@ ifdef::git-rev-list[]
 --objects-edge::
 	Similar to `--objects`, but also print the IDs of excluded
 	cummits prefixed with a ``-'' character.  This is used by
-	linkgit:git-pack-objects[1] to build a ``thin'' pack, which records
+	linkbut:but-pack-objects[1] to build a ``thin'' pack, which records
 	objects in deltified form based on objects contained in these
 	excluded cummits to reduce network traffic.
 
@@ -886,7 +886,7 @@ ifdef::git-rev-list[]
 	Only useful with `--objects`; does not print the names of the object
 	IDs that are found. This inverts `--object-names`. This flag allows
 	the output to be more easily parsed by commands such as
-	linkgit:git-cat-file[1].
+	linkbut:but-cat-file[1].
 
 --filter=<filter-spec>::
 	Only useful with one of the `--objects*`; omits objects (usually
@@ -974,7 +974,7 @@ list of the missing objects.  Object IDs are prefixed with a ``?'' character.
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given cummits, but do not traverse their ancestors.
@@ -987,17 +987,17 @@ endif::git-rev-list[]
 
 --do-walk::
 	Overrides a previous `--no-walk`.
-endif::git-shortlog[]
+endif::but-shortlog[]
 
-ifndef::git-shortlog[]
+ifndef::but-shortlog[]
 cummit Formatting
 ~~~~~~~~~~~~~~~~~
 
-ifdef::git-rev-list[]
-Using these options, linkgit:git-rev-list[1] will act similar to the
-more specialized family of cummit log tools: linkgit:git-log[1],
-linkgit:git-show[1], and linkgit:git-whatchanged[1]
-endif::git-rev-list[]
+ifdef::but-rev-list[]
+Using these options, linkbut:but-rev-list[1] will act similar to the
+more specialized family of cummit log tools: linkbut:but-log[1],
+linkbut:but-show[1], and linkbut:but-whatchanged[1]
+endif::but-rev-list[]
 
 include::pretty-options.txt[]
 
@@ -1036,7 +1036,7 @@ format, often found in email messages.
 
 `--date=raw` shows the date as seconds since the epoch (1970-01-01
 00:00:00 UTC), followed by a space, and then the timezone as an offset
-from UTC (a `+` or `-` with four digits; the first two are hours, and
+from UTC (a `+` or `-` with four dibuts; the first two are hours, and
 the second two are minutes). I.e., as if the timestamp were formatted
 with `strftime("%s %z")`).
 Note that the `-local` option does not affect the seconds-since-epoch
@@ -1068,7 +1068,7 @@ format placeholders. When using `-local`, the correct syntax is
 
 	- the time zone is omitted when the local time zone is used
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --header::
 	Print the contents of the cummit in raw-format; each record is
 	separated with a NUL character.
@@ -1080,7 +1080,7 @@ ifdef::git-rev-list[]
 
 --commit-header::
 	Overrides a previous `--no-commit-header`.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --parents::
 	Print also the parents of the cummit (in the form "cummit parent...").
@@ -1090,10 +1090,10 @@ endif::git-rev-list[]
 	Print also the children of the cummit (in the form "cummit child...").
 	Also enables parent rewriting, see 'History Simplification' above.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --timestamp::
 	Print the raw cummit timestamp.
-endif::git-rev-list[]
+endif::but-rev-list[]
 
 --left-right::
 	Mark which side of a symmetric difference a cummit is reachable from.
@@ -1114,7 +1114,7 @@ For example, if you have this topology:
 you would get an output like this:
 +
 -----------------------------------------------------------------------
-	$ git rev-list --left-right --boundary --pretty=oneline A...B
+	$ but rev-list --left-right --boundary --pretty=oneline A...B
 
 	>bbbbbbb... 3rd on b
 	>bbbbbbb... 2nd on b
@@ -1143,7 +1143,7 @@ This implies the `--topo-order` option by default, but the
 	in between them in that case. If `<barrier>` is specified, it
 	is the string that will be shown instead of the default one.
 
-ifdef::git-rev-list[]
+ifdef::but-rev-list[]
 --count::
 	Print a number stating how many cummits would have been
 	listed, and suppress all other output.  When used together
@@ -1152,5 +1152,5 @@ ifdef::git-rev-list[]
 	`--cherry-mark`, omit patch equivalent cummits from these
 	counts and print the count for equivalent cummits separated
 	by a tab.
-endif::git-rev-list[]
-endif::git-shortlog[]
+endif::but-rev-list[]
+endif::but-shortlog[]

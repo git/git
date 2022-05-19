@@ -6,7 +6,7 @@ INSTALL ?= install
 TAR ?= tar
 RM ?= rm -f
 prefix ?= $(HOME)
-template_instdir ?= $(prefix)/share/git-core/templates
+template_instdir ?= $(prefix)/share/but-core/templates
 # DESTDIR=
 
 ifndef SHELL_PATH

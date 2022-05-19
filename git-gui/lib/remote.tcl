@@ -1,4 +1,4 @@
-# git-gui remote management
+# but-gui remote management
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 set some_heads_tracking 0;  # assume not
@@ -32,7 +32,7 @@ proc all_tracking_branches {} {
 	}
 
 	if {$pat ne {}} {
-		set fd [eval git_read for-each-ref --format=%(refname) $cmd]
+		set fd [eval but_read for-each-ref --format=%(refname) $cmd]
 		while {[gets $fd n] > 0} {
 			foreach spec $pat {
 				set dst [string range [lindex $spec 0] 0 end-2]
@@ -65,7 +65,7 @@ proc load_all_remotes {} {
 
 	set rh_str refs/heads/
 	set rh_len [string length $rh_str]
-	set rm_dir [gitdir remotes]
+	set rm_dir [butdir remotes]
 	if {[file isdirectory $rm_dir]} {
 		set all_remotes [glob \
 			-types f \
@@ -145,7 +145,7 @@ proc add_fetch_entry {r} {
 		}
 	} else {
 		catch {
-			set fd [open [gitdir remotes $r] r]
+			set fd [open [butdir remotes $r] r]
 			while {[gets $fd n] >= 0} {
 				if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
 					set enable 1
@@ -182,7 +182,7 @@ proc add_push_entry {r} {
 		}
 	} else {
 		catch {
-			set fd [open [gitdir remotes $r] r]
+			set fd [open [butdir remotes $r] r]
 			while {[gets $fd n] >= 0} {
 				if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
 					set enable 1
@@ -233,7 +233,7 @@ proc make_sure_remote_submenues_exist {remote_m} {
 proc update_all_remotes_menu_entry {} {
 	global all_remotes
 
-	if {[git-version < 1.6.6]} { return }
+	if {[but-version < 1.6.6]} { return }
 
 	set have_remote 0
 	foreach r $all_remotes {
@@ -288,10 +288,10 @@ proc add_single_remote {name location} {
 	global all_remotes repo_config
 	lappend all_remotes $name
 
-	git remote add $name $location
+	but remote add $name $location
 
 	# XXX: Better re-read the config so that we will never get out
-	# of sync with git remote implementation?
+	# of sync with but remote implementation?
 	set repo_config(remote.$name.url) $location
 	set repo_config(remote.$name.fetch) "+refs/heads/*:refs/remotes/$name/*"
 
@@ -310,7 +310,7 @@ proc delete_from_menu {menu name} {
 proc remove_remote {name} {
 	global all_remotes repo_config
 
-	git remote rm $name
+	but remote rm $name
 
 	catch {
 		# Missing values are ok

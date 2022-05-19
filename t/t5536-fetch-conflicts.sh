@@ -7,30 +7,30 @@ test_description='fetch handles conflicting refspecs correctly'
 D=$(pwd)
 
 setup_repository () {
-	git init "$1" && (
+	but init "$1" && (
 		cd "$1" &&
-		git config remote.origin.url "$D" &&
+		but config remote.origin.url "$D" &&
 		shift &&
 		for refspec in "$@"
 		do
-			git config --add remote.origin.fetch "$refspec"
+			but config --add remote.origin.fetch "$refspec"
 		done
 	)
 }
 
 test_expect_success 'setup' '
-	git cummit --allow-empty -m "Initial" &&
-	git branch branch1 &&
-	git tag tag1 &&
-	git cummit --allow-empty -m "First" &&
-	git branch branch2 &&
-	git tag tag2
+	but cummit --allow-empty -m "Initial" &&
+	but branch branch1 &&
+	but tag tag1 &&
+	but cummit --allow-empty -m "First" &&
+	but branch branch2 &&
+	but tag tag2
 '
 
 test_expect_success 'fetch with no conflict' '
 	setup_repository ok "+refs/heads/*:refs/remotes/origin/*" && (
 		cd ok &&
-		git fetch origin
+		but fetch origin
 	)
 '
 
@@ -39,7 +39,7 @@ test_expect_success 'fetch conflict: config vs. config' '
 		"+refs/heads/branch1:refs/remotes/origin/branch1" \
 		"+refs/heads/branch2:refs/remotes/origin/branch1" && (
 		cd ccc &&
-		test_must_fail git fetch origin 2>error &&
+		test_must_fail but fetch origin 2>error &&
 		test_i18ngrep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
 	)
 '
@@ -49,7 +49,7 @@ test_expect_success 'fetch duplicate: config vs. config' '
 		"+refs/heads/*:refs/remotes/origin/*" \
 		"+refs/heads/branch1:refs/remotes/origin/branch1" && (
 		cd dcc &&
-		git fetch origin
+		but fetch origin
 	)
 '
 
@@ -57,14 +57,14 @@ test_expect_success 'fetch conflict: arg overrides config' '
 	setup_repository aoc \
 		"+refs/heads/*:refs/remotes/origin/*" && (
 		cd aoc &&
-		git fetch origin refs/heads/branch2:refs/remotes/origin/branch1
+		but fetch origin refs/heads/branch2:refs/remotes/origin/branch1
 	)
 '
 
 test_expect_success 'fetch conflict: arg vs. arg' '
 	setup_repository caa && (
 		cd caa &&
-		test_must_fail git fetch origin \
+		test_must_fail but fetch origin \
 			refs/heads/*:refs/remotes/origin/* \
 			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
 		test_i18ngrep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
@@ -75,7 +75,7 @@ test_expect_success 'fetch conflict: criss-cross args' '
 	setup_repository xaa \
 		"+refs/heads/*:refs/remotes/origin/*" && (
 		cd xaa &&
-		git fetch origin \
+		but fetch origin \
 			refs/heads/branch1:refs/remotes/origin/branch2 \
 			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
 		test_i18ngrep "warning: refs/remotes/origin/branch1 usually tracks refs/heads/branch1, not refs/heads/branch2" error &&

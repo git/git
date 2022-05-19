@@ -3,9 +3,9 @@
 # Copyright (c) 2005 Amos Waterland
 #
 
-test_description='git rebase assorted tests
+test_description='but rebase assorted tests
 
-This test runs git rebase and checks that the author information is not lost
+This test runs but rebase and checks that the author information is not lost
 among other things.
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -19,91 +19,91 @@ export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 test_expect_success 'prepare repository with topic branches' '
 	test_cummit "Add A." A First First &&
-	git checkout -b force-3way &&
+	but checkout -b force-3way &&
 	echo Dummy >Y &&
-	git update-index --add Y &&
-	git cummit -m "Add Y." &&
-	git checkout -b filemove &&
-	git reset --soft main &&
+	but update-index --add Y &&
+	but cummit -m "Add Y." &&
+	but checkout -b filemove &&
+	but reset --soft main &&
 	mkdir D &&
-	git mv A D/A &&
-	git cummit -m "Move A." &&
-	git checkout -b my-topic-branch main &&
+	but mv A D/A &&
+	but cummit -m "Move A." &&
+	but checkout -b my-topic-branch main &&
 	test_cummit "Add B." B Second Second &&
-	git checkout -f main &&
+	but checkout -f main &&
 	echo Third >>A &&
-	git update-index A &&
-	git cummit -m "Modify A." &&
-	git checkout -b side my-topic-branch &&
+	but update-index A &&
+	but cummit -m "Modify A." &&
+	but checkout -b side my-topic-branch &&
 	echo Side >>C &&
-	git add C &&
-	git cummit -m "Add C" &&
-	git checkout -f my-topic-branch &&
-	git tag topic
+	but add C &&
+	but cummit -m "Add C" &&
+	but checkout -f my-topic-branch &&
+	but tag topic
 '
 
 test_expect_success 'rebase on dirty worktree' '
 	echo dirty >>A &&
-	test_must_fail git rebase main
+	test_must_fail but rebase main
 '
 
 test_expect_success 'rebase on dirty cache' '
-	git add A &&
-	test_must_fail git rebase main
+	but add A &&
+	test_must_fail but rebase main
 '
 
 test_expect_success 'rebase against main' '
-	git reset --hard HEAD &&
-	git rebase main
+	but reset --hard HEAD &&
+	but rebase main
 '
 
 test_expect_success 'rebase sets ORIG_HEAD to pre-rebase state' '
-	git checkout -b orig-head topic &&
-	pre="$(git rev-parse --verify HEAD)" &&
-	git rebase main &&
+	but checkout -b orig-head topic &&
+	pre="$(but rev-parse --verify HEAD)" &&
+	but rebase main &&
 	test_cmp_rev "$pre" ORIG_HEAD &&
 	test_cmp_rev ! "$pre" HEAD
 '
 
 test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' '
-	test_when_finished "git branch -D torebase" &&
-	git checkout -b torebase my-topic-branch^ &&
-	upstream=$(git rev-parse ":/Add B") &&
-	onto=$(git rev-parse ":/Add A") &&
-	git rebase --onto $onto $upstream &&
-	git reset --hard my-topic-branch^ &&
-	git rebase --onto ":/Add A" ":/Add B" &&
-	git checkout my-topic-branch
+	test_when_finished "but branch -D torebase" &&
+	but checkout -b torebase my-topic-branch^ &&
+	upstream=$(but rev-parse ":/Add B") &&
+	onto=$(but rev-parse ":/Add A") &&
+	but rebase --onto $onto $upstream &&
+	but reset --hard my-topic-branch^ &&
+	but rebase --onto ":/Add A" ":/Add B" &&
+	but checkout my-topic-branch
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information' '
-	! (git log | grep "Author:" | grep "<>")
+	! (but log | grep "Author:" | grep "<>")
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information (2)' "
-	git log -1 |
+	but log -1 |
 	grep 'Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>'
 "
 
 test_expect_success 'HEAD was detached during rebase' '
-	test $(git rev-parse HEAD@{1}) != $(git rev-parse my-topic-branch@{1})
+	test $(but rev-parse HEAD@{1}) != $(but rev-parse my-topic-branch@{1})
 '
 
 test_expect_success 'rebase from ambiguous branch name' '
-	git checkout -b topic side &&
-	git rebase main
+	but checkout -b topic side &&
+	but rebase main
 '
 
 test_expect_success 'rebase off of the previous branch using "-"' '
-	git checkout main &&
-	git checkout HEAD^ &&
-	git rebase @{-1} >expect.messages &&
-	git merge-base main HEAD >expect.forkpoint &&
+	but checkout main &&
+	but checkout HEAD^ &&
+	but rebase @{-1} >expect.messages &&
+	but merge-base main HEAD >expect.forkpoint &&
 
-	git checkout main &&
-	git checkout HEAD^ &&
-	git rebase - >actual.messages &&
-	git merge-base main HEAD >actual.forkpoint &&
+	but checkout main &&
+	but checkout HEAD^ &&
+	but rebase - >actual.messages &&
+	but merge-base main HEAD >actual.forkpoint &&
 
 	test_cmp expect.forkpoint actual.forkpoint &&
 	# the next one is dubious---we may want to say "-",
@@ -112,106 +112,106 @@ test_expect_success 'rebase off of the previous branch using "-"' '
 '
 
 test_expect_success 'rebase a single mode change' '
-	git checkout main &&
-	git branch -D topic &&
+	but checkout main &&
+	but branch -D topic &&
 	echo 1 >X &&
-	git add X &&
+	but add X &&
 	test_tick &&
-	git cummit -m prepare &&
-	git checkout -b modechange HEAD^ &&
+	but cummit -m prepare &&
+	but checkout -b modechange HEAD^ &&
 	echo 1 >X &&
-	git add X &&
+	but add X &&
 	test_chmod +x A &&
 	test_tick &&
-	git cummit -m modechange &&
-	GIT_TRACE=1 git rebase main
+	but cummit -m modechange &&
+	GIT_TRACE=1 but rebase main
 '
 
 test_expect_success 'rebase is not broken by diff.renames' '
 	test_config diff.renames copies &&
-	git checkout filemove &&
-	GIT_TRACE=1 git rebase force-3way
+	but checkout filemove &&
+	GIT_TRACE=1 but rebase force-3way
 '
 
 test_expect_success 'setup: recover' '
-	test_might_fail git rebase --abort &&
-	git reset --hard &&
-	git checkout modechange
+	test_might_fail but rebase --abort &&
+	but reset --hard &&
+	but checkout modechange
 '
 
 test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
 	test_when_finished "rm -f B" &&
-	test_must_fail git rebase topic 2>output.err >output.out &&
+	test_must_fail but rebase topic 2>output.err >output.out &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
 	test_i18ngrep B output.err
 '
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
-	git checkout topic &&
-	test_must_fail git rebase
+	but checkout topic &&
+	test_must_fail but rebase
 '
 
 test_expect_success 'fail when upstream arg is missing and not configured' '
-	git checkout -b no-config topic &&
-	test_must_fail git rebase
+	but checkout -b no-config topic &&
+	test_must_fail but rebase
 '
 
 test_expect_success 'rebase works with format.useAutoBase' '
 	test_config format.useAutoBase true &&
-	git checkout topic &&
-	git rebase main
+	but checkout topic &&
+	but rebase main
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg (--merge)' '
-	git checkout -b default-base main &&
-	git checkout -b default topic &&
-	git config branch.default.remote . &&
-	git config branch.default.merge refs/heads/default-base &&
-	git rebase --merge &&
-	git rev-parse --verify default-base >expect &&
-	git rev-parse default~1 >actual &&
+	but checkout -b default-base main &&
+	but checkout -b default topic &&
+	but config branch.default.remote . &&
+	but config branch.default.merge refs/heads/default-base &&
+	but rebase --merge &&
+	but rev-parse --verify default-base >expect &&
+	but rev-parse default~1 >actual &&
 	test_cmp expect actual &&
-	git checkout default-base &&
-	git reset --hard HEAD^ &&
-	git checkout default &&
-	git rebase --merge &&
-	git rev-parse --verify default-base >expect &&
-	git rev-parse default~1 >actual &&
+	but checkout default-base &&
+	but reset --hard HEAD^ &&
+	but checkout default &&
+	but rebase --merge &&
+	but rev-parse --verify default-base >expect &&
+	but rev-parse default~1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg (--apply)' '
-	git checkout -B default-base main &&
-	git checkout -B default topic &&
-	git config branch.default.remote . &&
-	git config branch.default.merge refs/heads/default-base &&
-	git rebase --apply &&
-	git rev-parse --verify default-base >expect &&
-	git rev-parse default~1 >actual &&
+	but checkout -B default-base main &&
+	but checkout -B default topic &&
+	but config branch.default.remote . &&
+	but config branch.default.merge refs/heads/default-base &&
+	but rebase --apply &&
+	but rev-parse --verify default-base >expect &&
+	but rev-parse default~1 >actual &&
 	test_cmp expect actual &&
-	git checkout default-base &&
-	git reset --hard HEAD^ &&
-	git checkout default &&
-	git rebase --apply &&
-	git rev-parse --verify default-base >expect &&
-	git rev-parse default~1 >actual &&
+	but checkout default-base &&
+	but reset --hard HEAD^ &&
+	but checkout default &&
+	but rebase --apply &&
+	but rev-parse --verify default-base >expect &&
+	but rev-parse default~1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'cherry-picked cummits and fork-point work together' '
-	git checkout default-base &&
+	but checkout default-base &&
 	echo Amended >A &&
-	git cummit -a --no-edit --amend &&
+	but cummit -a --no-edit --amend &&
 	test_cummit B B &&
 	test_cummit new_B B "New B" &&
 	test_cummit C C &&
-	git checkout default &&
-	git reset --hard default-base@{4} &&
+	but checkout default &&
+	but reset --hard default-base@{4} &&
 	test_cummit D D &&
-	git cherry-pick -2 default-base^ &&
+	but cherry-pick -2 default-base^ &&
 	test_cummit final_B B "Final B" &&
-	git rebase &&
+	but rebase &&
 	echo Amended >expect &&
 	test_cmp expect A &&
 	echo "Final B" >expect &&
@@ -223,14 +223,14 @@ test_expect_success 'cherry-picked cummits and fork-point work together' '
 '
 
 test_expect_success 'rebase --apply -q is quiet' '
-	git checkout -b quiet topic &&
-	git rebase --apply -q main >output.out 2>&1 &&
+	but checkout -b quiet topic &&
+	but rebase --apply -q main >output.out 2>&1 &&
 	test_must_be_empty output.out
 '
 
 test_expect_success 'rebase --merge -q is quiet' '
-	git checkout -B quiet topic &&
-	git rebase --merge -q main >output.out 2>&1 &&
+	but checkout -B quiet topic &&
+	but rebase --merge -q main >output.out 2>&1 &&
 	test_must_be_empty output.out
 '
 
@@ -242,57 +242,57 @@ test_expect_success 'Rebase a cummit that sprinkles CRs in' '
 		echo "FQur" &&
 		echo "Five"
 	) | q_to_cr >CR &&
-	git add CR &&
+	but add CR &&
 	test_tick &&
-	git cummit -a -m "A file with a line with CR" &&
-	git tag file-with-cr &&
-	git checkout HEAD^0 &&
-	git rebase --onto HEAD^^ HEAD^ &&
-	git diff --exit-code file-with-cr:CR HEAD:CR
+	but cummit -a -m "A file with a line with CR" &&
+	but tag file-with-cr &&
+	but checkout HEAD^0 &&
+	but rebase --onto HEAD^^ HEAD^ &&
+	but diff --exit-code file-with-cr:CR HEAD:CR
 '
 
 test_expect_success 'rebase can copy notes' '
-	git config notes.rewrite.rebase true &&
-	git config notes.rewriteRef "refs/notes/*" &&
+	but config notes.rewrite.rebase true &&
+	but config notes.rewriteRef "refs/notes/*" &&
 	test_cummit n1 &&
 	test_cummit n2 &&
 	test_cummit n3 &&
-	git notes add -m"a note" n3 &&
-	git rebase --onto n1 n2 &&
-	test "a note" = "$(git notes show HEAD)"
+	but notes add -m"a note" n3 &&
+	but rebase --onto n1 n2 &&
+	test "a note" = "$(but notes show HEAD)"
 '
 
 test_expect_success 'rebase -m can copy notes' '
-	git reset --hard n3 &&
-	git rebase -m --onto n1 n2 &&
-	test "a note" = "$(git notes show HEAD)"
+	but reset --hard n3 &&
+	but rebase -m --onto n1 n2 &&
+	test "a note" = "$(but notes show HEAD)"
 '
 
 test_expect_success 'rebase cummit with an ancient timestamp' '
-	git reset --hard &&
+	but reset --hard &&
 
-	>old.one && git add old.one && test_tick &&
-	git cummit --date="@12345 +0400" -m "Old one" &&
-	>old.two && git add old.two && test_tick &&
-	git cummit --date="@23456 +0500" -m "Old two" &&
-	>old.three && git add old.three && test_tick &&
-	git cummit --date="@34567 +0600" -m "Old three" &&
+	>old.one && but add old.one && test_tick &&
+	but cummit --date="@12345 +0400" -m "Old one" &&
+	>old.two && but add old.two && test_tick &&
+	but cummit --date="@23456 +0500" -m "Old two" &&
+	>old.three && but add old.three && test_tick &&
+	but cummit --date="@34567 +0600" -m "Old three" &&
 
-	git cat-file commit HEAD^^ >actual &&
+	but cat-file commit HEAD^^ >actual &&
 	grep "author .* 12345 +0400$" actual &&
-	git cat-file commit HEAD^ >actual &&
+	but cat-file commit HEAD^ >actual &&
 	grep "author .* 23456 +0500$" actual &&
-	git cat-file commit HEAD >actual &&
+	but cat-file commit HEAD >actual &&
 	grep "author .* 34567 +0600$" actual &&
 
-	git rebase --onto HEAD^^ HEAD^ &&
+	but rebase --onto HEAD^^ HEAD^ &&
 
-	git cat-file commit HEAD >actual &&
+	but cat-file commit HEAD >actual &&
 	grep "author .* 34567 +0600$" actual
 '
 
 test_expect_success 'rebase with "From " line in cummit message' '
-	git checkout -b preserve-from main~1 &&
+	but checkout -b preserve-from main~1 &&
 	cat >From_.msg <<EOF &&
 Somebody embedded an mbox in a cummit message
 
@@ -306,10 +306,10 @@ Subject: not this message
 something
 EOF
 	>From_ &&
-	git add From_ &&
-	git cummit -F From_.msg &&
-	git rebase main &&
-	git log -1 --pretty=format:%B >out &&
+	but add From_ &&
+	but cummit -F From_.msg &&
+	but rebase main &&
+	but log -1 --pretty=format:%B >out &&
 	test_cmp From_.msg out
 '
 
@@ -319,48 +319,48 @@ test_expect_success 'rebase --apply and --show-current-patch' '
 		cd conflict-apply &&
 		test_cummit init &&
 		echo one >>init.t &&
-		git cummit -a -m one &&
+		but cummit -a -m one &&
 		echo two >>init.t &&
-		git cummit -a -m two &&
-		git tag two &&
-		test_must_fail git rebase --apply -f --onto init HEAD^ &&
-		GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
-		grep "show.*$(git rev-parse two)" stderr
+		but cummit -a -m two &&
+		but tag two &&
+		test_must_fail but rebase --apply -f --onto init HEAD^ &&
+		GIT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
+		grep "show.*$(but rev-parse two)" stderr
 	)
 '
 
-test_expect_success 'rebase --apply and .gitattributes' '
+test_expect_success 'rebase --apply and .butattributes' '
 	test_create_repo attributes &&
 	(
 		cd attributes &&
 		test_cummit init &&
-		git config filter.test.clean "sed -e '\''s/smudged/clean/g'\''" &&
-		git config filter.test.smudge "sed -e '\''s/clean/smudged/g'\''" &&
+		but config filter.test.clean "sed -e '\''s/smudged/clean/g'\''" &&
+		but config filter.test.smudge "sed -e '\''s/clean/smudged/g'\''" &&
 
 		test_cummit second &&
-		git checkout -b test HEAD^ &&
+		but checkout -b test HEAD^ &&
 
-		echo "*.txt filter=test" >.gitattributes &&
-		git add .gitattributes &&
+		echo "*.txt filter=test" >.butattributes &&
+		but add .butattributes &&
 		test_cummit third &&
 
 		echo "This text is smudged." >a.txt &&
-		git add a.txt &&
+		but add a.txt &&
 		test_cummit fourth &&
 
-		git checkout -b removal HEAD^ &&
-		git rm .gitattributes &&
-		git add -u &&
+		but checkout -b removal HEAD^ &&
+		but rm .butattributes &&
+		but add -u &&
 		test_cummit fifth &&
-		git cherry-pick test &&
+		but cherry-pick test &&
 
-		git checkout test &&
-		git rebase main &&
+		but checkout test &&
+		but rebase main &&
 		grep "smudged" a.txt &&
 
-		git checkout removal &&
-		git reset --hard &&
-		git rebase main &&
+		but checkout removal &&
+		but reset --hard &&
+		but rebase main &&
 		grep "clean" a.txt
 	)
 '
@@ -371,73 +371,73 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 		cd conflict-merge &&
 		test_cummit init &&
 		echo one >>init.t &&
-		git cummit -a -m one &&
+		but cummit -a -m one &&
 		echo two >>init.t &&
-		git cummit -a -m two &&
-		git tag two &&
-		test_must_fail git rebase --merge --onto init HEAD^ &&
-		git rebase --show-current-patch >actual.patch &&
-		GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
+		but cummit -a -m two &&
+		but tag two &&
+		test_must_fail but rebase --merge --onto init HEAD^ &&
+		but rebase --show-current-patch >actual.patch &&
+		GIT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
 		grep "show.*REBASE_HEAD" stderr &&
-		test "$(git rev-parse REBASE_HEAD)" = "$(git rev-parse two)"
+		test "$(but rev-parse REBASE_HEAD)" = "$(but rev-parse two)"
 	)
 '
 
 test_expect_success 'switch to branch checked out here' '
-	git checkout main &&
-	git rebase main main
+	but checkout main &&
+	but rebase main main
 '
 
 test_expect_success 'switch to branch not checked out' '
-	git checkout main &&
-	git branch other &&
-	git rebase main other
+	but checkout main &&
+	but branch other &&
+	but rebase main other
 '
 
 test_expect_success 'switch to non-branch detaches HEAD' '
-	git checkout main &&
-	old_main=$(git rev-parse HEAD) &&
-	git rebase First Second^0 &&
+	but checkout main &&
+	old_main=$(but rev-parse HEAD) &&
+	but rebase First Second^0 &&
 	test_cmp_rev HEAD Second &&
 	test_cmp_rev main $old_main &&
-	test_must_fail git symbolic-ref HEAD
+	test_must_fail but symbolic-ref HEAD
 '
 
 test_expect_success 'refuse to switch to branch checked out elsewhere' '
-	git checkout main &&
-	git worktree add wt &&
-	test_must_fail git -C wt rebase main main 2>err &&
+	but checkout main &&
+	but worktree add wt &&
+	test_must_fail but -C wt rebase main main 2>err &&
 	test_i18ngrep "already checked out" err
 '
 
-test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
-	git checkout main &&
-	mv .git/logs actual_logs &&
-	cmd //c "mklink /D .git\logs ..\actual_logs" &&
-	git rebase -f HEAD^ &&
-	test -L .git/logs &&
-	rm .git/logs &&
-	mv actual_logs .git/logs
+test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .but/logs is a symlink' '
+	but checkout main &&
+	mv .but/logs actual_logs &&
+	cmd //c "mklink /D .but\logs ..\actual_logs" &&
+	but rebase -f HEAD^ &&
+	test -L .but/logs &&
+	rm .but/logs &&
+	mv actual_logs .but/logs
 '
 
 test_expect_success 'rebase when inside worktree subdirectory' '
-	git init main-wt &&
+	but init main-wt &&
 	(
 		cd main-wt &&
-		git cummit --allow-empty -m "initial" &&
+		but cummit --allow-empty -m "initial" &&
 		mkdir -p foo/bar &&
 		test_cummit foo/bar/baz &&
 		mkdir -p a/b &&
 		test_cummit a/b/c &&
 		# create another branch for our other worktree
-		git branch other &&
-		git worktree add ../other-wt other &&
+		but branch other &&
+		but worktree add ../other-wt other &&
 		cd ../other-wt &&
 		# create and cd into a subdirectory
 		mkdir -p random/dir &&
 		cd random/dir &&
 		# now do the rebase
-		git rebase --onto HEAD^^ HEAD^  # drops the HEAD^ cummit
+		but rebase --onto HEAD^^ HEAD^  # drops the HEAD^ cummit
 	)
 '
 

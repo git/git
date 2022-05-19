@@ -10,19 +10,19 @@ sanitize_log_output () {
 }
 
 lib_test_cmp_graph () {
-	git log --graph "$@" >output &&
+	but log --graph "$@" >output &&
 	sed 's/ *$//' >output.sanitized <output &&
 	test_cmp expect output.sanitized
 }
 
 lib_test_cmp_short_graph () {
-	git log --graph --pretty=short "$@" >output &&
+	but log --graph --pretty=short "$@" >output &&
 	sanitize_log_output >output.sanitized <output &&
 	test_cmp expect output.sanitized
 }
 
 lib_test_cmp_colored_graph () {
-	git log --graph --color=always "$@" >output.colors.raw &&
+	but log --graph --color=always "$@" >output.colors.raw &&
 	test_decode_color <output.colors.raw | sed "s/ *\$//" >output.colors &&
 	test_cmp expect.colors output.colors
 }

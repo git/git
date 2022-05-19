@@ -4,14 +4,14 @@ Git v1.9.1 Release Notes
 Fixes since v1.9.0
 ------------------
 
- * "git clean -d pathspec" did not use the given pathspec correctly
+ * "but clean -d pathspec" did not use the given pathspec correctly
    and ended up cleaning too much.
 
- * "git difftool" misbehaved when the repository is bound to the
-   working tree with the ".git file" mechanism, where a textual file
-   ".git" tells us where it is.
+ * "but difftool" misbehaved when the repository is bound to the
+   working tree with the ".but file" mechanism, where a textual file
+   ".but" tells us where it is.
 
- * "git push" did not pay attention to branch.*.pushremote if it is
+ * "but push" did not pay attention to branch.*.pushremote if it is
    defined earlier than remote.pushdefault; the order of these two
    variables in the configuration file should not matter, but it did
    by mistake.
@@ -19,24 +19,24 @@ Fixes since v1.9.0
  * Codepaths that parse timestamps in cummit objects have been
    tightened.
 
- * "git diff --external-diff" incorrectly fed the submodule directory
+ * "but diff --external-diff" incorrectly fed the submodule directory
    in the working tree to the external diff driver when it knew it is
    the same as one of the versions being compared.
 
- * "git reset" needs to refresh the index when working in a working
+ * "but reset" needs to refresh the index when working in a working
    tree (it can also be used to match the index to the HEAD in an
    otherwise bare repository), but it failed to set up the working
    tree properly, causing GIT_WORK_TREE to be ignored.
 
- * "git check-attr" when working on a repository with a working tree
+ * "but check-attr" when working on a repository with a working tree
    did not work well when the working tree was specified via the
-   --work-tree (and obviously with --git-dir) option.
+   --work-tree (and obviously with --but-dir) option.
 
  * "merge-recursive" was broken in 1.7.7 era and stopped working in
    an empty (temporary) working tree, when there are renames
    involved.  This has been corrected.
 
- * "git rev-parse" was loose in rejecting command line arguments
+ * "but rev-parse" was loose in rejecting command line arguments
    that do not make sense, e.g. "--default" without the required
    value for that option.
 
@@ -44,7 +44,7 @@ Fixes since v1.9.0
    can use ~username expansion) in the configuration file is not a
    boolean, but the code failed to check it.
 
- * "git diff --quiet -- pathspec1 pathspec2" sometimes did not return
+ * "but diff --quiet -- pathspec1 pathspec2" sometimes did not return
    correct status value.
 
  * Attempting to deepen a shallow repository by fetching over smart
@@ -53,7 +53,7 @@ Fixes since v1.9.0
    shallow boundary cummits after the sending end stopped talking to
    it.
 
- * Allow "git cmd path/", when the 'path' is where a submodule is
+ * Allow "but cmd path/", when the 'path' is where a submodule is
    bound to the top-level working tree, to match 'path', despite the
    extra and unnecessary trailing slash (such a slash is often
    given by command line completion).

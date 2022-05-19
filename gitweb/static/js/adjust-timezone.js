@@ -2,7 +2,7 @@
 //               2011, Jakub Narebski <jnareb@gmail.com>
 
 /**
- * @fileOverview Manipulate dates in gitweb output, adjusting timezone
+ * @fileOverview Manipulate dates in butweb output, adjusting timezone
  * @license GPLv2 or later
  */
 
@@ -24,14 +24,14 @@ function onloadTZSetup(tzDefault, tzCookieInfo, tzClassName) {
 	if (tzCookieTZ) {
 		// set timezone to value saved in a cookie
 		tz = tzCookieTZ;
-		// refresh cookie, so its expiration counts from last use of gitweb
+		// refresh cookie, so its expiration counts from last use of butweb
 		setCookie(tzCookieInfo.name, tzCookieTZ, tzCookieInfo);
 	}
 
 	// add UI for changing timezone
 	addChangeTZ(tz, tzCookieInfo, tzClassName);
 
-	// server-side of gitweb produces datetime in UTC,
+	// server-side of butweb produces datetime in UTC,
 	// so if tz is 'utc' there is no need for changes
 	var nochange = tz === 'utc';
 
@@ -83,7 +83,7 @@ function fixDatetimeTZ(tz, tzClassName, nochange) {
 
 /**
  * Adds triggers for UI to change common timezone used for dates in
- * gitweb output: it marks up and/or creates item to click to invoke
+ * butweb output: it marks up and/or creates item to click to invoke
  * timezone change UI, creates timezone UI fragment to be attached,
  * and installs appropriate onclick trigger (via event delegation).
  *
@@ -211,7 +211,7 @@ function removeChangeTZForm(documentFragment, target, tzClassName) {
 
 
 /**
- * Display UI for changing common timezone for dates in gitweb output.
+ * Display UI for changing common timezone for dates in butweb output.
  * To be used from 'onclick' event handler.
  *
  * @param {HTMLElement} target: where to install/display UI

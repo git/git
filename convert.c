@@ -369,7 +369,7 @@ static int check_roundtrip(const char *enc_name)
 
 static const char *default_encoding = "UTF-8";
 
-static int encode_to_git(const char *path, const char *src, size_t src_len,
+static int encode_to_but(const char *path, const char *src, size_t src_len,
 			 struct strbuf *buf, const char *enc, int conv_flags)
 {
 	char *dst;
@@ -384,7 +384,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 		return 0;
 
 	/*
-	 * Looks like we got called from "would_convert_to_git()".
+	 * Looks like we got called from "would_convert_to_but()".
 	 * This means Git wants to know if it would encode (= modify!)
 	 * the content. Let's answer with "yes", since an encoding was
 	 * specified.
@@ -485,7 +485,7 @@ static int encode_to_worktree(const char *path, const char *src, size_t src_len,
 	return 1;
 }
 
-static int crlf_to_git(struct index_state *istate,
+static int crlf_to_but(struct index_state *istate,
 		       const char *path, const char *src, size_t len,
 		       struct strbuf *buf,
 		       enum convert_crlf_action crlf_action, int conv_flags)
@@ -526,12 +526,12 @@ static int crlf_to_git(struct index_state *istate,
 	     ((conv_flags & CONV_EOL_RNDTRP_DIE) && len))) {
 		struct text_stat new_stats;
 		memcpy(&new_stats, &stats, sizeof(new_stats));
-		/* simulate "git add" */
+		/* simulate "but add" */
 		if (convert_crlf_into_lf) {
 			new_stats.lonelf += new_stats.crlf;
 			new_stats.crlf = 0;
 		}
-		/* simulate "git checkout" */
+		/* simulate "but checkout" */
 		if (will_convert_lf_to_crlf(&new_stats, crlf_action)) {
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
@@ -751,7 +751,7 @@ static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 		{ NULL, 0 }
 	};
 	struct cmd2process *entry = (struct cmd2process *)subprocess;
-	return subprocess_handshake(subprocess, "git-filter", versions, NULL,
+	return subprocess_handshake(subprocess, "but-filter", versions, NULL,
 				    capabilities,
 				    &entry->supported_capabilities);
 }
@@ -1040,16 +1040,16 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	 */
 
 	if (!strcmp("smudge", key))
-		return git_config_string(&drv->smudge, var, value);
+		return but_config_string(&drv->smudge, var, value);
 
 	if (!strcmp("clean", key))
-		return git_config_string(&drv->clean, var, value);
+		return but_config_string(&drv->clean, var, value);
 
 	if (!strcmp("process", key))
-		return git_config_string(&drv->process, var, value);
+		return but_config_string(&drv->process, var, value);
 
 	if (!strcmp("required", key)) {
-		drv->required = git_config_bool(var, value);
+		drv->required = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -1098,7 +1098,7 @@ static int count_ident(const char *cp, unsigned long size)
 	return cnt;
 }
 
-static int ident_to_git(const char *src, size_t len,
+static int ident_to_but(const char *src, size_t len,
 			struct strbuf *buf, int ident)
 {
 	char *dst, *dollar;
@@ -1185,7 +1185,7 @@ static int ident_to_worktree(const char *src, size_t len,
 			 * repository, we cope with that by stripping the expansion out.
 			 * This is probably not a good idea, since it will cause changes
 			 * on checkout, which won't go away by stash, but let's keep it
-			 * for git-style ids.
+			 * for but-style ids.
 			 */
 			dollar = memchr(src + 3, '$', len - 3);
 			if (!dollar) {
@@ -1225,7 +1225,7 @@ static int ident_to_worktree(const char *src, size_t len,
 	return 1;
 }
 
-static const char *git_path_check_encoding(struct attr_check_item *check)
+static const char *but_path_check_encoding(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -1243,7 +1243,7 @@ static const char *git_path_check_encoding(struct attr_check_item *check)
 	return value;
 }
 
-static enum convert_crlf_action git_path_check_crlf(struct attr_check_item *check)
+static enum convert_crlf_action but_path_check_crlf(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -1260,7 +1260,7 @@ static enum convert_crlf_action git_path_check_crlf(struct attr_check_item *chec
 	return CRLF_UNDEFINED;
 }
 
-static enum eol git_path_check_eol(struct attr_check_item *check)
+static enum eol but_path_check_eol(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -1273,7 +1273,7 @@ static enum eol git_path_check_eol(struct attr_check_item *check)
 	return EOL_UNSET;
 }
 
-static struct convert_driver *git_path_check_convert(struct attr_check_item *check)
+static struct convert_driver *but_path_check_convert(struct attr_check_item *check)
 {
 	const char *value = check->value;
 	struct convert_driver *drv;
@@ -1286,7 +1286,7 @@ static struct convert_driver *git_path_check_convert(struct attr_check_item *che
 	return NULL;
 }
 
-static int git_path_check_ident(struct attr_check_item *check)
+static int but_path_check_ident(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -1305,18 +1305,18 @@ void convert_attrs(struct index_state *istate,
 					 "eol", "text", "working-tree-encoding",
 					 NULL);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config, NULL);
+		but_config(read_convert_config, NULL);
 	}
 
-	git_check_attr(istate, path, check);
+	but_check_attr(istate, path, check);
 	ccheck = check->items;
-	ca->crlf_action = git_path_check_crlf(ccheck + 4);
+	ca->crlf_action = but_path_check_crlf(ccheck + 4);
 	if (ca->crlf_action == CRLF_UNDEFINED)
-		ca->crlf_action = git_path_check_crlf(ccheck + 0);
-	ca->ident = git_path_check_ident(ccheck + 1);
-	ca->drv = git_path_check_convert(ccheck + 2);
+		ca->crlf_action = but_path_check_crlf(ccheck + 0);
+	ca->ident = but_path_check_ident(ccheck + 1);
+	ca->drv = but_path_check_convert(ccheck + 2);
 	if (ca->crlf_action != CRLF_BINARY) {
-		enum eol eol_attr = git_path_check_eol(ccheck + 3);
+		enum eol eol_attr = but_path_check_eol(ccheck + 3);
 		if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
 			ca->crlf_action = CRLF_AUTO_INPUT;
 		else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
@@ -1326,7 +1326,7 @@ void convert_attrs(struct index_state *istate,
 		else if (eol_attr == EOL_CRLF)
 			ca->crlf_action = CRLF_TEXT_CRLF;
 	}
-	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
+	ca->working_tree_encoding = but_path_check_encoding(ccheck + 5);
 
 	/* Save attr and make a decision for action */
 	ca->attr_action = ca->crlf_action;
@@ -1357,7 +1357,7 @@ void reset_parsed_attributes(void)
 	user_convert_tail = NULL;
 }
 
-int would_convert_to_git_filter_fd(struct index_state *istate, const char *path)
+int would_convert_to_but_filter_fd(struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
@@ -1402,7 +1402,7 @@ const char *get_convert_attr_ascii(struct index_state *istate, const char *path)
 	return "";
 }
 
-int convert_to_git(struct index_state *istate,
+int convert_to_but(struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags)
 {
@@ -1420,23 +1420,23 @@ int convert_to_git(struct index_state *istate,
 		len = dst->len;
 	}
 
-	ret |= encode_to_git(path, src, len, dst, ca.working_tree_encoding, conv_flags);
+	ret |= encode_to_but(path, src, len, dst, ca.working_tree_encoding, conv_flags);
 	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
 
 	if (!(conv_flags & CONV_EOL_KEEP_CRLF)) {
-		ret |= crlf_to_git(istate, path, src, len, dst, ca.crlf_action, conv_flags);
+		ret |= crlf_to_but(istate, path, src, len, dst, ca.crlf_action, conv_flags);
 		if (ret && dst) {
 			src = dst->buf;
 			len = dst->len;
 		}
 	}
-	return ret | ident_to_git(src, len, dst, ca.ident);
+	return ret | ident_to_but(src, len, dst, ca.ident);
 }
 
-void convert_to_git_filter_fd(struct index_state *istate,
+void convert_to_but_filter_fd(struct index_state *istate,
 			      const char *path, int fd, struct strbuf *dst,
 			      int conv_flags)
 {
@@ -1448,9 +1448,9 @@ void convert_to_git_filter_fd(struct index_state *istate,
 	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN, NULL, NULL))
 		die(_("%s: clean filter '%s' failed"), path, ca.drv->name);
 
-	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
-	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
-	ident_to_git(dst->buf, dst->len, dst, ca.ident);
+	encode_to_but(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
+	crlf_to_but(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
+	ident_to_but(dst->buf, dst->len, dst, ca.ident);
 }
 
 static int convert_to_working_tree_ca_internal(const struct conv_attrs *ca,
@@ -1526,7 +1526,7 @@ int renormalize_buffer(struct index_state *istate, const char *path,
 		src = dst->buf;
 		len = dst->len;
 	}
-	return ret | convert_to_git(istate, path, src, len, dst, CONV_EOL_RENORMALIZE);
+	return ret | convert_to_but(istate, path, src, len, dst, CONV_EOL_RENORMALIZE);
 }
 
 /*****************************************************************

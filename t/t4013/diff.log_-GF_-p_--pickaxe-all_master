@@ -1,11 +1,11 @@
-$ git log -GF -p --pickaxe-all master
+$ but log -GF -p --pickaxe-all master
 cummit 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:02:00 2006 +0000
 
     Third
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -15,7 +15,7 @@ index 8422d40..cead32e 100644
  D
 +E
 +F
-diff --git a/file1 b/file1
+diff --but a/file1 b/file1
 new file mode 100644
 index 0000000..b1e6722
 --- /dev/null

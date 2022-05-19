@@ -36,7 +36,7 @@ static int fsmonitor_hook_version(void)
 {
 	int hook_version;
 
-	if (git_config_get_int("core.fsmonitorhookversion", &hook_version))
+	if (but_config_get_int("core.fsmonitorhookversion", &hook_version))
 		return -1;
 
 	if (hook_version == HOOK_INTERFACE_VERSION1 ||
@@ -164,7 +164,7 @@ static int query_fsmonitor_hook(struct repository *r,
 	strvec_pushf(&cp.args, "%d", version);
 	strvec_pushf(&cp.args, "%s", last_update);
 	cp.use_shell = 1;
-	cp.dir = get_git_work_tree();
+	cp.dir = get_but_work_tree();
 
 	trace2_region_enter("fsm_hook", "query", NULL);
 
@@ -251,7 +251,7 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
  *
  * The value chosen here does not need to be precise.  The index
  * will be updated automatically the first time the user touches
- * a tracked file and causes a command like `git status` to
+ * a tracked file and causes a command like `but status` to
  * update an mtime to be updated and/or set a flag bit.
  */
 static int fsmonitor_force_update_threshold = 100;

@@ -11,14 +11,14 @@ working tree for cummit X something like `y/z.txt`).
 
 A related concept is the revision walk, which is focused on cummit objects and
 their parent relationships and does not delve into other object types. The
-revision walk is used for operations like `git log`.
+revision walk is used for operations like `but log`.
 
 === Related Reading
 
 - `Documentation/user-manual.txt` under "Hacking Git" contains some coverage of
   the revision walker in its various incarnations.
 - `revision.h`
-- https://eagain.net/articles/git-for-computer-scientists/[Git for Computer Scientists]
+- https://eagain.net/articles/but-for-computer-scientists/[Git for Computer Scientists]
   gives a good overview of the types of objects in Git and what your object
   walk is really describing.
 
@@ -27,15 +27,15 @@ revision walk is used for operations like `git log`.
 Create a new branch from `master`.
 
 ----
-git checkout -b revwalk origin/master
+but checkout -b revwalk origin/master
 ----
 
-We'll put our fiddling into a new command. For fun, let's name it `git walken`.
+We'll put our fiddling into a new command. For fun, let's name it `but walken`.
 Open up a new file `builtin/walken.c` and set up the command handler:
 
 ----
 /*
- * "git walken"
+ * "but walken"
  *
  * Part of the "My First Object Walk" tutorial.
  */
@@ -68,7 +68,7 @@ We'll need to include the `parse-options.h` header.
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	const char * const walken_usage[] = {
-		N_("git walken"),
+		N_("but walken"),
 		NULL,
 	};
 	struct option options[] = {
@@ -87,7 +87,7 @@ Also add the relevant line in `builtin.h` near `cmd_whatchanged()`:
 int cmd_walken(int argc, const char **argv, const char *prefix);
 ----
 
-Include the command in `git.c` in `commands[]` near the entry for `whatchanged`,
+Include the command in `but.c` in `commands[]` near the entry for `whatchanged`,
 maintaining alphabetical ordering:
 
 ----
@@ -106,14 +106,14 @@ flag is set, and with `GIT_TRACE` enabled so the debug output can be seen:
 ----
 $ echo DEVELOPER=1 >>config.mak
 $ make
-$ GIT_TRACE=1 ./bin-wrappers/git walken
+$ GIT_TRACE=1 ./bin-wrappers/but walken
 ----
 
 NOTE: For a more exhaustive overview of the new command process, take a look at
 `Documentation/MyFirstContribution.txt`.
 
 NOTE: A reference implementation can be found at
-https://github.com/nasamuffin/git/tree/revwalk.
+https://buthub.com/nasamuffin/but/tree/revwalk.
 
 === `struct rev_cmdline_info`
 
@@ -130,7 +130,7 @@ used to track the allocated size of the list.
 Per entry, we find:
 
 `item` is the object provided upon which to base the object walk. Items in Git
-can be blobs, trees, cummits, or tags. (See `Documentation/gittutorial-2.txt`.)
+can be blobs, trees, cummits, or tags. (See `Documentation/buttutorial-2.txt`.)
 
 `name` is the object ID (OID) of the object - a hex string you may be familiar
 with from using Git to organize your source in the past. Check the tutorial
@@ -156,7 +156,7 @@ good idea to take some time and read through that document.
 
 == Basic cummit Walk
 
-First, let's see if we can replicate the output of `git log --oneline`. We'll
+First, let's see if we can replicate the output of `but log --oneline`. We'll
 refer back to the implementation frequently to discover norms when performing
 an object walk of our own.
 
@@ -182,22 +182,22 @@ Preparing for your object walk has some distinct stages.
 Before examining configuration files which may modify command behavior, set up
 default state for switches or options your command may have. If your command
 utilizes other Git components, ask them to set up their default states as well.
-For instance, `git log` takes advantage of `grep` and `diff` functionality, so
+For instance, `but log` takes advantage of `grep` and `diff` functionality, so
 its `init_log_defaults()` sets its own state (`decoration_style`) and asks
 `grep` and `diff` to initialize themselves by calling each of their
 initialization functions.
 
-==== Configuring From `.gitconfig`
+==== Configuring From `.butconfig`
 
 Next, we should have a look at any relevant configuration settings (i.e.,
-settings readable and settable from `git config`). This is done by providing a
-callback to `git_config()`; within that callback, you can also invoke methods
+settings readable and settable from `but config`). This is done by providing a
+callback to `but_config()`; within that callback, you can also invoke methods
 from other components you may need that need to intercept these options. Your
 callback will be invoked once per each configuration value which Git knows about
 (global, local, worktree, etc.).
 
 Similarly to the default values, we don't have anything to do here yet
-ourselves; however, we should call `git_default_config()` if we aren't calling
+ourselves; however, we should call `but_default_config()` if we aren't calling
 any other existing config callbacks.
 
 Add a new function to `builtin/walken.c`.
@@ -208,24 +208,24 @@ We'll also need to include the `config.h` header:
 
 ...
 
-static int git_walken_config(const char *var, const char *value, void *cb)
+static int but_walken_config(const char *var, const char *value, void *cb)
 {
 	/*
 	 * For now, we don't have any custom configuration, so fall back to
 	 * the default config.
 	 */
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 ----
 
-Make sure to invoke `git_config()` with it in your `cmd_walken()`:
+Make sure to invoke `but_config()` with it in your `cmd_walken()`:
 
 ----
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	...
 
-	git_config(git_walken_config, NULL);
+	but_config(but_walken_config, NULL);
 
 	...
 }
@@ -253,7 +253,7 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	...
 
-	/* This should go after the git_config() call. */
+	/* This should go after the but_config() call. */
 	repo_init_revisions(the_repository, &rev, prefix);
 
 	...
@@ -270,7 +270,7 @@ helper for clarity, so let's add one:
 static void final_rev_info_setup(struct rev_info *rev)
 {
 	/*
-	 * We want to mimic the appearance of `git log --oneline`, so let's
+	 * We want to mimic the appearance of `but log --oneline`, so let's
 	 * force oneline format.
 	 */
 	get_cummit_format("oneline", rev);
@@ -364,12 +364,12 @@ Give it a shot.
 
 ----
 $ make
-$ ./bin-wrappers/git walken
+$ ./bin-wrappers/but walken
 ----
 
 You should see all of the subject lines of all the cummits in
 your tree's history, in order, ending with the initial cummit, "Initial revision
-of "git", the information manager from hell". Congratulations! You've written
+of "but", the information manager from hell". Congratulations! You've written
 your first revision walk. You can play with printing some additional fields
 from each cummit if you're curious; have a look at the functions available in
 `cummit.h`.
@@ -377,16 +377,16 @@ from each cummit if you're curious; have a look at the functions available in
 === Adding a Filter
 
 Next, let's try to filter the cummits we see based on their author. This is
-equivalent to running `git log --author=<pattern>`. We can add a filter by
+equivalent to running `but log --author=<pattern>`. We can add a filter by
 modifying `rev_info.grep_filter`, which is a `struct grep_opt`.
 
-First some setup. Add `grep_config()` to `git_walken_config()`:
+First some setup. Add `grep_config()` to `but_walken_config()`:
 
 ----
-static int git_walken_config(const char *var, const char *value, void *cb)
+static int but_walken_config(const char *var, const char *value, void *cb)
 {
 	grep_config(var, value, cb);
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 ----
 
@@ -431,9 +431,9 @@ There are a few ways that we can change the order of the cummits during a
 revision walk. Firstly, we can use the `enum rev_sort_order` to choose from some
 typical orderings.
 
-`topo_order` is the same as `git log --topo-order`: we avoid showing a parent
+`topo_order` is the same as `but log --topo-order`: we avoid showing a parent
 before all of its children have been shown, and we avoid mixing cummits which
-are in different lines of history. (`git help log`'s section on `--topo-order`
+are in different lines of history. (`but help log`'s section on `--topo-order`
 has a very nice diagram to illustrate this.)
 
 Let's see what happens when we run with `REV_SORT_BY_CUMMIT_DATE` as opposed to
@@ -457,7 +457,7 @@ author date.
 
 ----
 $ make
-$ ./bin-wrappers/git walken > cummit-date.txt
+$ ./bin-wrappers/but walken > cummit-date.txt
 ----
 
 Then, let's sort by author date and run it again.
@@ -477,7 +477,7 @@ static void final_rev_info_setup(int argc, const char **argv,
 
 ----
 $ make
-$ ./bin-wrappers/git walken > author-date.txt
+$ ./bin-wrappers/but walken > author-date.txt
 ----
 
 Finally, compare the two. This is a little less helpful without object names or
@@ -488,7 +488,7 @@ $ diff -u cummit-date.txt author-date.txt
 ----
 
 This display indicates that cummits can be reordered after they're written, for
-example with `git rebase`.
+example with `but rebase`.
 
 Let's try one more reordering of cummits. `rev_info` exposes a `reverse` flag.
 Set that flag somewhere inside of `final_rev_info_setup()`:
@@ -515,7 +515,7 @@ So far we've been walking only cummits. But Git has more types of objects than
 that! Let's see if we can walk _all_ objects, and find out some information
 about each one.
 
-We can base our work on an example. `git pack-objects` prepares all kinds of
+We can base our work on an example. `but pack-objects` prepares all kinds of
 objects for packing into a bitmap or packfile. The work we are interested in
 resides in `builtins/pack-objects.c:get_object_list()`; examination of that
 function shows that the all-object walk is being performed by
@@ -740,13 +740,13 @@ a hardcoded string using `parse_list_objects_filter()`.
 
 With the filter spec "tree:1", we are expecting to see _only_ the root tree for
 each cummit; therefore, the tree object count should be less than or equal to
-the number of cummits. (For an example of why that's true: `git cummit --revert`
+the number of cummits. (For an example of why that's true: `but cummit --revert`
 points to the same tree object as its grandparent.)
 
 === Counting Omitted Objects
 
 We also have the capability to enumerate all objects which were omitted by a
-filter, like with `git log --filter=<spec> --filter-print-omitted`. Asking
+filter, like with `but log --filter=<spec> --filter-print-omitted`. Asking
 `traverse_cummit_list_filtered()` to populate the `omitted` list means that our
 object walk does not perform any better than an unfiltered object walk; all
 reachable objects are walked in order to populate the list.
@@ -829,11 +829,11 @@ those lines without having to recompile.
 With only that change, run again (but save yourself some scrollback):
 
 ----
-$ GIT_TRACE=1 ./bin-wrappers/git walken | head -n 10
+$ GIT_TRACE=1 ./bin-wrappers/but walken | head -n 10
 ----
 
-Take a look at the top cummit with `git show` and the object ID you printed; it
-should be the same as the output of `git show HEAD`.
+Take a look at the top cummit with `but show` and the object ID you printed; it
+should be the same as the output of `but show HEAD`.
 
 Next, let's change a setting on our `struct rev_info` within
 `walken_object_walk()`. Find where you're changing the other settings on `rev`,
@@ -857,12 +857,12 @@ of the first handful:
 
 ----
 $ make
-$ GIT_TRACE=1 ./bin-wrappers git walken | tail -n 10
+$ GIT_TRACE=1 ./bin-wrappers but walken | tail -n 10
 ----
 
 The last cummit object given should have the same OID as the one we saw at the
-top before, and running `git show <oid>` with that OID should give you again
-the same results as `git show HEAD`. Furthermore, if you run and examine the
+top before, and running `but show <oid>` with that OID should give you again
+the same results as `but show HEAD`. Furthermore, if you run and examine the
 first ten lines again (with `head` instead of `tail` like we did before applying
 the `reverse` setting), you should see that now the first cummit printed is the
 initial cummit, `e83c5163`.

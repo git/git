@@ -1,6 +1,6 @@
 Date: Fri, 9 Nov 2007 08:28:38 -0800 (PST)
 From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: corrupt object on git-gc
+Subject: corrupt object on but-gc
 Abstract: Some tricks to reconstruct blob objects in order to fix
  a corrupted repository.
 Content-type: text/asciidoc
@@ -40,7 +40,7 @@ non-corrupt version.
 -----------------------------------------------------------
 So:
 
-> ib]$ mv .git/objects/4b/9458b3786228369c63936db65827de3cc06200 ../
+> ib]$ mv .but/objects/4b/9458b3786228369c63936db65827de3cc06200 ../
 -----------------------------------------------------------
 
 This is the right thing to do, although it's usually best to save it under
@@ -49,7 +49,7 @@ it's full SHA-1 name (you just dropped the "4b" from the result ;).
 Let's see what that tells us:
 
 -----------------------------------------------------------
-> ib]$ git-fsck --full
+> ib]$ but-fsck --full
 > broken link from    tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
 >              to    blob 4b9458b3786228369c63936db65827de3cc06200
 > missing blob 4b9458b3786228369c63936db65827de3cc06200
@@ -62,11 +62,11 @@ we now know which tree points to it!
 
 Now you can do
 
-	git ls-tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
+	but ls-tree 2d9263c6d23595e7cb2a21e5ebbb53655278dff8
 
 which will show something like
 
-	100644 blob 8d14531846b95bfa3564b58ccfb7913a034323b8    .gitignore
+	100644 blob 8d14531846b95bfa3564b58ccfb7913a034323b8    .butignore
 	100644 blob ebf9bf84da0aab5ed944264a5db2a65fe3a3e883    .mailmap
 	100644 blob ca442d313d86dc67e0a2e5d584b465bd382cbf5c    COPYING
 	100644 blob ee909f2cc49e54f0799a4739d24c4cb9151ae453    CREDITS
@@ -87,7 +87,7 @@ Now, it doesn't tell you quite enough, though: it doesn't tell what
 lucky, and it may be the version that you already have checked out in your
 working tree, in which case fixing this problem is really simple, just do
 
-	git hash-object -w my-magic-file
+	but hash-object -w my-magic-file
 
 again, and if it outputs the missing SHA-1 (4b945..) you're now all done!
 
@@ -96,7 +96,7 @@ version that was broken. How do you tell which version it was?
 
 The easiest way to do it is to do
 
-	git log --raw --all --full-history -- subdirectory/my-magic-file
+	but log --raw --all --full-history -- subdirectory/my-magic-file
 
 and that will show you the whole log for that file (please realize that
 the tree you had may not be the top-level tree, so you need to figure out
@@ -125,13 +125,13 @@ newer versions!
 
 If you can do that, you can now recreate the missing object with
 
-	git hash-object -w <recreated-file>
+	but hash-object -w <recreated-file>
 
 and your repository is good again!
 
 (Btw, you could have ignored the fsck, and started with doing a
 
-	git log --raw --all
+	but log --raw --all
 
 and just looked for the sha of the missing object (4b9458b..) in that
 whole thing. It's up to you - Git does *have* a lot of information, it is

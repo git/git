@@ -22,10 +22,10 @@ make doc > >(tee stdout.log) 2> >(tee stderr.raw >&2)
 cat stderr.raw
 filter_log stderr.raw >stderr.log
 test ! -s stderr.log
-test -s Documentation/git.html
-test -s Documentation/git.xml
-test -s Documentation/git.1
-grep '<meta name="generator" content="AsciiDoc ' Documentation/git.html
+test -s Documentation/but.html
+test -s Documentation/but.xml
+test -s Documentation/but.1
+grep '<meta name="generator" content="AsciiDoc ' Documentation/but.html
 
 rm -f stdout.log stderr.log stderr.raw
 check_unignored_build_artifacts
@@ -36,8 +36,8 @@ make USE_ASCIIDOCTOR=1 doc > >(tee stdout.log) 2> >(tee stderr.raw >&2)
 cat stderr.raw
 filter_log stderr.raw >stderr.log
 test ! -s stderr.log
-test -s Documentation/git.html
-grep '<meta name="generator" content="Asciidoctor ' Documentation/git.html
+test -s Documentation/but.html
+grep '<meta name="generator" content="Asciidoctor ' Documentation/but.html
 
 rm -f stdout.log stderr.log stderr.raw
 check_unignored_build_artifacts

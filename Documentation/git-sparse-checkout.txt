@@ -1,15 +1,15 @@
-git-sparse-checkout(1)
+but-sparse-checkout(1)
 ======================
 
 NAME
 ----
-git-sparse-checkout - Reduce your working tree to a subset of tracked files
+but-sparse-checkout - Reduce your working tree to a subset of tracked files
 
 
 SYNOPSIS
 --------
 [verse]
-'git sparse-checkout <subcommand> [<options>]'
+'but sparse-checkout <subcommand> [<options>]'
 
 
 DESCRIPTION
@@ -27,7 +27,7 @@ in non-cone mode.
 
 When in a sparse-checkout, other Git commands behave a bit differently.
 For example, switching branches will not update paths outside the
-sparse-checkout directories/patterns, and `git cummit -a` will not record
+sparse-checkout directories/patterns, and `but cummit -a` will not record
 paths outside the sparse-checkout directories/patterns as deleted.
 
 THIS COMMAND IS EXPERIMENTAL. ITS BEHAVIOR, AND THE BEHAVIOR OF OTHER
@@ -53,8 +53,8 @@ does not alter the sparse-checkout settings in other worktrees, the 'set'
 subcommand will upgrade your repository config to use worktree-specific
 config if not already present. The sparsity defined by the arguments to
 the 'set' subcommand are stored in the worktree-specific sparse-checkout
-file. See linkgit:git-worktree[1] and the documentation of
-`extensions.worktreeConfig` in linkgit:git-config[1] for more details.
+file. See linkbut:but-worktree[1] and the documentation of
+`extensions.worktreeConfig` in linkbut:but-config[1] for more details.
 +
 When the `--stdin` option is provided, the directories or patterns are
 read from standard in as a newline-delimited list instead of from the
@@ -63,7 +63,7 @@ arguments.
 When `--cone` is passed or `core.sparseCheckoutCone` is enabled, the
 input list is considered a list of directories.  This allows for
 better performance with a limited set of patterns (see 'CONE PATTERN
-SET' below).  The input format matches the output of `git ls-tree
+SET' below).  The input format matches the output of `but ls-tree
 --name-only`.  This includes interpreting pathnames that begin with a
 double quote (") as C-style quoted strings.  Note that the set command
 will write patterns to the sparse-checkout file to include all files
@@ -74,20 +74,20 @@ future; --no-cone can be passed to request non-cone mode.
 When `--no-cone` is passed or `core.sparseCheckoutCone` is not enabled,
 the input list is considered a list of patterns.  This mode is harder
 to use and less performant, and is thus not recommended.  See the
-"Sparse Checkout" section of linkgit:git-read-tree[1] and the "Pattern
+"Sparse Checkout" section of linkbut:but-read-tree[1] and the "Pattern
 Set" sections below for more details.
 +
 Use the `--[no-]sparse-index` option to use a sparse index (the
 default is to not use it).  A sparse index reduces the size of the
 index to be more closely aligned with your sparse-checkout
 definition. This can have significant performance advantages for
-commands such as `git status` or `git add`.  This feature is still
+commands such as `but status` or `but add`.  This feature is still
 experimental. Some commands might be slower with a sparse index until
 they are properly integrated with the feature.
 +
 **WARNING:** Using a sparse index requires modifying the index in a way
 that is not completely understood by external tools. If you have trouble
-with this compatibility, then run `git sparse-checkout init --no-sparse-index`
+with this compatibility, then run `but sparse-checkout init --no-sparse-index`
 to rewrite your index to not be sparse. Older versions of Git will not
 understand the sparse directory entries index extension and may fail to
 interact with your repository until it is disabled.
@@ -104,7 +104,7 @@ interact with your repository until it is disabled.
 	work (e.g. in order to show you a conflict), and other
 	sparse-checkout commands might fail to sparsify an individual file
 	(e.g. because it has unstaged changes or conflicts).  In such
-	cases, it can make sense to run `git sparse-checkout reapply` later
+	cases, it can make sense to run `but sparse-checkout reapply` later
 	after cleaning up affected paths (e.g. resolving conflicts, undoing
 	or cummitting changes, etc.).
 +
@@ -141,7 +141,7 @@ SPARSE CHECKOUT
 ---------------
 
 "Sparse checkout" allows populating the working directory sparsely.  It
-uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell Git
+uses the skip-worktree bit (see linkbut:but-update-index[1]) to tell Git
 whether a file in the working directory is worth looking at. If the
 skip-worktree bit is set, and the file is not present in the working tree,
 then its absence is ignored. Git will avoid populating the contents of
@@ -155,17 +155,17 @@ directory, it updates the skip-worktree bits in the index based
 on this file. The files matching the patterns in the file will
 appear in the working directory, and the rest will not.
 
-To enable the sparse-checkout feature, run `git sparse-checkout set` to
+To enable the sparse-checkout feature, run `but sparse-checkout set` to
 set the patterns you want to use.
 
 To repopulate the working directory with all files, use the
-`git sparse-checkout disable` command.
+`but sparse-checkout disable` command.
 
 
 FULL PATTERN SET
 ----------------
 
-By default, the sparse-checkout file uses the same syntax as `.gitignore`
+By default, the sparse-checkout file uses the same syntax as `.butignore`
 files.
 
 While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
@@ -197,7 +197,7 @@ In addition to the above two patterns, we also expect that all files in the
 root directory are included. If a recursive pattern is added, then all
 leading directories are added as parent patterns.
 
-By default, when running `git sparse-checkout init`, the root directory is
+By default, when running `but sparse-checkout init`, the root directory is
 added as a parent pattern. At this point, the sparse-checkout file contains
 the following patterns:
 
@@ -208,9 +208,9 @@ the following patterns:
 
 This says "include everything in root, but nothing two levels below root."
 
-When in cone mode, the `git sparse-checkout set` subcommand takes a list of
+When in cone mode, the `but sparse-checkout set` subcommand takes a list of
 directories instead of a list of sparse-checkout patterns. In this mode,
-the command `git sparse-checkout set A/B/C` sets the directory `A/B/C` as
+the command `but sparse-checkout set A/B/C` sets the directory `A/B/C` as
 a recursive pattern, the directories `A` and `A/B` are added as parent
 patterns. The resulting sparse-checkout file is now
 
@@ -232,28 +232,28 @@ expecting patterns of these types. Git will warn if the patterns do not match.
 If the patterns do match the expected format, then Git will use faster hash-
 based algorithms to compute inclusion in the sparse-checkout.
 
-In the cone mode case, the `git sparse-checkout list` subcommand will list the
+In the cone mode case, the `but sparse-checkout list` subcommand will list the
 directories that define the recursive patterns. For the example sparse-checkout
 file above, the output is as follows:
 
 --------------------------
-$ git sparse-checkout list
+$ but sparse-checkout list
 A/B/C
 --------------------------
 
 If `core.ignoreCase=true`, then the pattern-matching algorithm will use a
 case-insensitive check. This corrects for case mismatched filenames in the
-'git sparse-checkout set' command to reflect the expected cone in the working
+'but sparse-checkout set' command to reflect the expected cone in the working
 directory.
 
 When changing the sparse-checkout patterns in cone mode, Git will inspect each
 tracked directory that is not within the sparse-checkout cone to see if it
 contains any untracked files. If all of those files are ignored due to the
-`.gitignore` patterns, then the directory will be deleted. If any of the
+`.butignore` patterns, then the directory will be deleted. If any of the
 untracked files within that directory is not ignored, then no deletions will
 occur within that directory and a warning message will appear. If these files
 are important, then reset your sparse-checkout definition so they are included,
-use `git add` and `git cummit` to store them, then remove any remaining files
+use `but add` and `but cummit` to store them, then remove any remaining files
 manually to ensure Git can behave optimally.
 
 
@@ -261,9 +261,9 @@ SUBMODULES
 ----------
 
 If your repository contains one or more submodules, then submodules
-are populated based on interactions with the `git submodule` command.
-Specifically, `git submodule init -- <path>` will ensure the submodule
-at `<path>` is present, while `git submodule deinit [-f] -- <path>`
+are populated based on interactions with the `but submodule` command.
+Specifically, `but submodule init -- <path>` will ensure the submodule
+at `<path>` is present, while `but submodule deinit [-f] -- <path>`
 will remove the files for the submodule at `<path>` (including any
 untracked files, uncummitted changes, and unpushed history).  Similar
 to how sparse-checkout removes files from the working tree but still
@@ -283,7 +283,7 @@ deinitialized or initialized either.
 Further, the above facts mean that there are multiple reasons that
 "tracked" files might not be present in the working copy: sparsity
 pattern application from sparse-checkout, and submodule initialization
-state.  Thus, commands like `git grep` that work on tracked files in
+state.  Thus, commands like `but grep` that work on tracked files in
 the working copy may return results that are limited by either or both
 of these restrictions.
 
@@ -291,9 +291,9 @@ of these restrictions.
 SEE ALSO
 --------
 
-linkgit:git-read-tree[1]
-linkgit:gitignore[5]
+linkbut:but-read-tree[1]
+linkbut:butignore[5]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

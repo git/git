@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test Git when git repository is located at root
+test_description='Test Git when but repository is located at root
 
 This test requires write access in root. Do not bother if you do not
 have a throwaway chroot or VM.
@@ -18,83 +18,83 @@ test_cmp_val() {
 }
 
 test_vars() {
-	test_expect_success "$1: gitdir" '
-		test_cmp_val "'"$2"'" "$(git rev-parse --git-dir)"
+	test_expect_success "$1: butdir" '
+		test_cmp_val "'"$2"'" "$(but rev-parse --but-dir)"
 	'
 
 	test_expect_success "$1: worktree" '
-		test_cmp_val "'"$3"'" "$(git rev-parse --show-toplevel)"
+		test_cmp_val "'"$3"'" "$(but rev-parse --show-toplevel)"
 	'
 
 	test_expect_success "$1: prefix" '
-		test_cmp_val "'"$4"'" "$(git rev-parse --show-prefix)"
+		test_cmp_val "'"$4"'" "$(but rev-parse --show-prefix)"
 	'
 }
 
 test_foobar_root() {
 	test_expect_success 'add relative' '
-		test -z "$(cd / && git ls-files)" &&
-		git add foo/foome &&
-		git add foo/bar/barme &&
-		git add me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add foo/foome &&
+		but add foo/bar/barme &&
+		but add me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 
 	test_expect_success 'add absolute' '
-		test -z "$(cd / && git ls-files)" &&
-		git add /foo/foome &&
-		git add /foo/bar/barme &&
-		git add /me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add /foo/foome &&
+		but add /foo/bar/barme &&
+		but add /me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 
 }
 
 test_foobar_foo() {
 	test_expect_success 'add relative' '
-		test -z "$(cd / && git ls-files)" &&
-		git add foome &&
-		git add bar/barme &&
-		git add ../me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add foome &&
+		but add bar/barme &&
+		but add ../me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 
 	test_expect_success 'add absolute' '
-		test -z "$(cd / && git ls-files)" &&
-		git add /foo/foome &&
-		git add /foo/bar/barme &&
-		git add /me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add /foo/foome &&
+		but add /foo/bar/barme &&
+		but add /me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 }
 
 test_foobar_foobar() {
 	test_expect_success 'add relative' '
-		test -z "$(cd / && git ls-files)" &&
-		git add ../foome &&
-		git add barme &&
-		git add ../../me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add ../foome &&
+		but add barme &&
+		but add ../../me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 
 	test_expect_success 'add absolute' '
-		test -z "$(cd / && git ls-files)" &&
-		git add /foo/foome &&
-		git add /foo/bar/barme &&
-		git add /me &&
-		( cd / && git ls-files --stage ) > result &&
+		test -z "$(cd / && but ls-files)" &&
+		but add /foo/foome &&
+		but add /foo/bar/barme &&
+		but add /me &&
+		( cd / && but ls-files --stage ) > result &&
 		test_cmp /ls.expected result &&
-		rm "$(git rev-parse --git-dir)/index"
+		rm "$(but rev-parse --but-dir)/index"
 	'
 }
 
@@ -105,7 +105,7 @@ then
 fi
 
 if  test -e /refs || test -e /objects || test -e /info || test -e /hooks ||
-    test -e /.git || test -e /foo || test -e /me
+    test -e /.but || test -e /foo || test -e /me
 then
 	skip_all="Skip test that clobbers existing files in /"
 	test_done
@@ -143,101 +143,101 @@ cat >ls.expected <<EOF
 100644 $ONE_SHA1 0	me
 EOF
 
-GIT_DIR="$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_DIR="$TRASH_DIRECTORY/.but" && export GIT_DIR
 GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
-test_vars 'abs gitdir, root' "$GIT_DIR" "/" ""
+test_vars 'abs butdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-test_vars 'abs gitdir, foo' "$GIT_DIR" "/" "foo/"
+test_vars 'abs butdir, foo' "$GIT_DIR" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-test_vars 'abs gitdir, foo/bar' "$GIT_DIR" "/" "foo/bar/"
+test_vars 'abs butdir, foo/bar' "$GIT_DIR" "/" "foo/bar/"
 test_foobar_foobar
 
 say "GIT_DIR relative, GIT_WORK_TREE set"
 
 test_expect_success 'go to /' 'cd /'
 
-GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git" && export GIT_DIR
+GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export GIT_DIR
 GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, root' "$GIT_DIR" "/" ""
+test_vars 'rel butdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-GIT_DIR="../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_DIR="../$TRASH_DIRECTORY/.but" && export GIT_DIR
 GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, foo' "$TRASH_DIRECTORY/.git" "/" "foo/"
+test_vars 'rel butdir, foo' "$TRASH_DIRECTORY/.but" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-GIT_DIR="../../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_DIR="../../$TRASH_DIRECTORY/.but" && export GIT_DIR
 GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, foo/bar' "$TRASH_DIRECTORY/.git" "/" "foo/bar/"
+test_vars 'rel butdir, foo/bar' "$TRASH_DIRECTORY/.but" "/" "foo/bar/"
 test_foobar_foobar
 
 say "GIT_DIR relative, GIT_WORK_TREE relative"
 
 test_expect_success 'go to /' 'cd /'
 
-GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git" && export GIT_DIR
+GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export GIT_DIR
 GIT_WORK_TREE=. && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, root' "$GIT_DIR" "/" ""
+test_vars 'rel butdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /' 'cd /foo'
 
-GIT_DIR="../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_DIR="../$TRASH_DIRECTORY/.but" && export GIT_DIR
 GIT_WORK_TREE=.. && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, foo' "$TRASH_DIRECTORY/.git" "/" "foo/"
+test_vars 'rel butdir, foo' "$TRASH_DIRECTORY/.but" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-GIT_DIR="../../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_DIR="../../$TRASH_DIRECTORY/.but" && export GIT_DIR
 GIT_WORK_TREE=../.. && export GIT_WORK_TREE
 
-test_vars 'rel gitdir, foo/bar' "$TRASH_DIRECTORY/.git" "/" "foo/bar/"
+test_vars 'rel butdir, foo/bar' "$TRASH_DIRECTORY/.but" "/" "foo/bar/"
 test_foobar_foobar
 
-say ".git at root"
+say ".but at root"
 
 unset GIT_DIR
 unset GIT_WORK_TREE
 
 test_expect_success 'go to /' 'cd /'
 test_expect_success 'setup' '
-	rm -rf /.git &&
-	echo "Initialized empty Git repository in /.git/" > expected &&
-	git init > result &&
+	rm -rf /.but &&
+	echo "Initialized empty Git repository in /.but/" > expected &&
+	but init > result &&
 	test_cmp expected result
 '
 
-test_vars 'auto gitdir, root' ".git" "/" ""
+test_vars 'auto butdir, root' ".but" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
-test_vars 'auto gitdir, foo' "/.git" "/" "foo/"
+test_vars 'auto butdir, foo' "/.but" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
-test_vars 'auto gitdir, foo/bar' "/.git" "/" "foo/bar/"
+test_vars 'auto butdir, foo/bar' "/.but" "/" "foo/bar/"
 test_foobar_foobar
 
-test_expect_success 'cleanup' 'rm -rf /.git'
+test_expect_success 'cleanup' 'rm -rf /.but'
 
-say "auto bare gitdir"
+say "auto bare butdir"
 
 # DESTROYYYYY!!!!!
 test_expect_success 'setup' '
@@ -245,14 +245,14 @@ test_expect_success 'setup' '
 	rm -f /expected /ls.expected /me /result &&
 	cd / &&
 	echo "Initialized empty Git repository in /" > expected &&
-	git init --bare > result &&
+	but init --bare > result &&
 	test_cmp expected result
 '
 
-test_vars 'auto gitdir, root' "." "" ""
+test_vars 'auto butdir, root' "." "" ""
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-test_vars 'auto gitdir, root' "/" "" ""
+test_vars 'auto butdir, root' "/" "" ""
 
 test_done

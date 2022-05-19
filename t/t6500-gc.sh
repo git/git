@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='basic git gc tests
+test_description='basic but gc tests
 '
 
 . ./test-lib.sh
@@ -10,7 +10,7 @@ test_expect_success 'setup' '
 	# do not let the amount of physical memory affects gc
 	# behavior, make sure we always pack everything to one pack by
 	# default
-	git config gc.bigPackThreshold 2g &&
+	but config gc.bigPackThreshold 2g &&
 
 	# These are simply values which, when hashed as a blob with a newline,
 	# produce a hash where the first byte is 0x17 in their respective
@@ -31,40 +31,40 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'gc empty repository' '
-	git gc
+	but gc
 '
 
 test_expect_success 'gc does not leave behind pid file' '
-	git gc &&
-	test_path_is_missing .git/gc.pid
+	but gc &&
+	test_path_is_missing .but/gc.pid
 '
 
 test_expect_success 'gc --gobbledegook' '
-	test_expect_code 129 git gc --nonsense 2>err &&
-	test_i18ngrep "[Uu]sage: git gc" err
+	test_expect_code 129 but gc --nonsense 2>err &&
+	test_i18ngrep "[Uu]sage: but gc" err
 '
 
 test_expect_success 'gc -h with invalid configuration' '
 	mkdir broken &&
 	(
 		cd broken &&
-		git init &&
-		echo "[gc] pruneexpire = CORRUPT" >>.git/config &&
-		test_expect_code 129 git gc -h >usage 2>&1
+		but init &&
+		echo "[gc] pruneexpire = CORRUPT" >>.but/config &&
+		test_expect_code 129 but gc -h >usage 2>&1
 	) &&
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'gc is not aborted due to a stale symref' '
-	git init remote &&
+	but init remote &&
 	(
 		cd remote &&
 		test_cummit initial &&
-		git clone . ../client &&
-		git branch -m develop &&
+		but clone . ../client &&
+		but branch -m develop &&
 		cd ../client &&
-		git fetch --prune &&
-		git gc
+		but fetch --prune &&
+		but gc
 	)
 '
 
@@ -75,23 +75,23 @@ test_expect_success 'gc --keep-largest-pack' '
 		test_cummit one &&
 		test_cummit two &&
 		test_cummit three &&
-		git gc &&
-		( cd .git/objects/pack && ls *.pack ) >pack-list &&
+		but gc &&
+		( cd .but/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 1 pack-list &&
 		cp pack-list base-pack-list &&
 		test_cummit four &&
-		git repack -d &&
+		but repack -d &&
 		test_cummit five &&
-		git repack -d &&
-		( cd .git/objects/pack && ls *.pack ) >pack-list &&
+		but repack -d &&
+		( cd .but/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 3 pack-list &&
-		git gc --keep-largest-pack &&
-		( cd .git/objects/pack && ls *.pack ) >pack-list &&
+		but gc --keep-largest-pack &&
+		( cd .but/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 2 pack-list &&
-		awk "/^P /{print \$2}" <.git/objects/info/packs >pack-info &&
+		awk "/^P /{print \$2}" <.but/objects/info/packs >pack-info &&
 		test_line_count = 2 pack-info &&
-		test_path_is_file .git/objects/pack/$(cat base-pack-list) &&
-		git fsck
+		test_path_is_file .but/objects/pack/$(cat base-pack-list) &&
+		but fsck
 	)
 '
 
@@ -100,7 +100,7 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	no gc for you
 	EOF
 
-	git init pre-auto-gc-hook &&
+	but init pre-auto-gc-hook &&
 	test_hook -C pre-auto-gc-hook pre-auto-gc <<-\EOF &&
 	echo >&2 no gc for you &&
 	exit 1
@@ -108,16 +108,16 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	(
 		cd pre-auto-gc-hook &&
 
-		git config gc.auto 3 &&
-		git config gc.autoDetach false &&
+		but config gc.auto 3 &&
+		but config gc.autoDetach false &&
 
 		# We need to create two object whose sha1s start with 17
-		# since this is what git gc counts.  As it happens, these
+		# since this is what but gc counts.  As it happens, these
 		# two blobs will do so.
 		test_cummit "$(test_oid obj1)" &&
 		test_cummit "$(test_oid obj2)" &&
 
-		git gc --auto >../out.actual 2>../err.actual
+		but gc --auto >../out.actual 2>../err.actual
 	) &&
 	test_must_be_empty out.actual &&
 	test_cmp err.expect err.actual &&
@@ -125,7 +125,7 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	cat >err.expect <<-\EOF &&
 	will gc for you
 	Auto packing the repository for optimum performance.
-	See "git help gc" for manual housekeeping.
+	See "but help gc" for manual housekeeping.
 	EOF
 
 	test_hook -C pre-auto-gc-hook --clobber pre-auto-gc <<-\EOF &&
@@ -133,7 +133,7 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 	exit 0
 	EOF
 
-	git -C pre-auto-gc-hook gc --auto >out.actual 2>err.actual &&
+	but -C pre-auto-gc-hook gc --auto >out.actual 2>err.actual &&
 
 	test_must_be_empty out.actual &&
 	test_cmp err.expect err.actual
@@ -144,19 +144,19 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	test_config gc.autodetach false &&
 	test_config pack.writebitmaps true &&
 	# We need to create two object whose sha1s start with 17
-	# since this is what git gc counts.  As it happens, these
+	# since this is what but gc counts.  As it happens, these
 	# two blobs will do so.
 	test_cummit "$(test_oid obj1)" &&
 	test_cummit "$(test_oid obj2)" &&
 	# Our first gc will create a pack; our second will create a second pack
-	git gc --auto &&
-	ls .git/objects/pack/pack-*.pack | sort >existing_packs &&
+	but gc --auto &&
+	ls .but/objects/pack/pack-*.pack | sort >existing_packs &&
 	test_cummit "$(test_oid obj3)" &&
 	test_cummit "$(test_oid obj4)" &&
 
-	git gc --auto 2>err &&
+	but gc --auto 2>err &&
 	test_i18ngrep ! "^warning:" err &&
-	ls .git/objects/pack/pack-*.pack | sort >post_packs &&
+	ls .but/objects/pack/pack-*.pack | sort >post_packs &&
 	comm -1 -3 existing_packs post_packs >new &&
 	comm -2 -3 existing_packs post_packs >del &&
 	test_line_count = 0 del && # No packs are deleted
@@ -164,21 +164,21 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 '
 
 test_expect_success 'gc --no-quiet' '
-	GIT_PROGRESS_DELAY=0 git -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
+	GIT_PROGRESS_DELAY=0 but -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Computing cummit graph generation numbers" stderr
 '
 
 test_expect_success TTY 'with TTY: gc --no-quiet' '
 	test_terminal env GIT_PROGRESS_DELAY=0 \
-		git -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
+		but -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Enumerating objects" stderr &&
 	test_i18ngrep "Computing cummit graph generation numbers" stderr
 '
 
 test_expect_success 'gc --quiet' '
-	git -c gc.writecummitGraph=true gc --quiet >stdout 2>stderr &&
+	but -c gc.writecummitGraph=true gc --quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_must_be_empty stderr
 '
@@ -187,19 +187,19 @@ test_expect_success 'gc.reflogExpire{Unreachable,}=never skips "expire" via "gc"
 	test_config gc.reflogExpire never &&
 	test_config gc.reflogExpireUnreachable never &&
 
-	GIT_TRACE=$(pwd)/trace.out git gc &&
+	GIT_TRACE=$(pwd)/trace.out but gc &&
 
-	# Check that git-pack-refs is run as a sanity check (done via
-	# gc_before_repack()) but that git-expire is not.
-	grep -E "^trace: (built-in|exec|run_command): git pack-refs --" trace.out &&
-	! grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
+	# Check that but-pack-refs is run as a sanity check (done via
+	# gc_before_repack()) but that but-expire is not.
+	grep -E "^trace: (built-in|exec|run_command): but pack-refs --" trace.out &&
+	! grep -E "^trace: (built-in|exec|run_command): but reflog expire --" trace.out
 '
 
 test_expect_success 'one of gc.reflogExpire{Unreachable,}=never does not skip "expire" via "gc"' '
 	>trace.out &&
 	test_config gc.reflogExpire never &&
-	GIT_TRACE=$(pwd)/trace.out git gc &&
-	grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
+	GIT_TRACE=$(pwd)/trace.out but gc &&
+	grep -E "^trace: (built-in|exec|run_command): but reflog expire --" trace.out
 '
 
 run_and_wait_for_auto_gc () {
@@ -209,37 +209,37 @@ run_and_wait_for_auto_gc () {
 	# exit status of the main gc process.
 	# Note: this fd trickery doesn't work on Windows, but there is no
 	# need to, because on Win the auto gc always runs in the foreground.
-	doesnt_matter=$(git gc --auto 9>&1)
+	doesnt_matter=$(but gc --auto 9>&1)
 }
 
 test_expect_success 'background auto gc does not run if gc.log is present and recent but does if it is old' '
 	test_cummit foo &&
 	test_cummit bar &&
-	git repack &&
+	but repack &&
 	test_config gc.autopacklimit 1 &&
 	test_config gc.autodetach true &&
-	echo fleem >.git/gc.log &&
-	git gc --auto 2>err &&
+	echo fleem >.but/gc.log &&
+	but gc --auto 2>err &&
 	test_i18ngrep "^warning:" err &&
 	test_config gc.logexpiry 5.days &&
-	test-tool chmtime =-345600 .git/gc.log &&
-	git gc --auto &&
+	test-tool chmtime =-345600 .but/gc.log &&
+	but gc --auto &&
 	test_config gc.logexpiry 2.days &&
 	run_and_wait_for_auto_gc &&
-	ls .git/objects/pack/pack-*.pack >packs &&
+	ls .but/objects/pack/pack-*.pack >packs &&
 	test_line_count = 1 packs
 '
 
 test_expect_success 'background auto gc respects lock for all operations' '
 	# make sure we run a background auto-gc
 	test_cummit make-pack &&
-	git repack &&
+	but repack &&
 	test_config gc.autopacklimit 1 &&
 	test_config gc.autodetach true &&
 
 	# create a ref whose loose presence we can use to detect a pack-refs run
-	git update-ref refs/heads/should-be-loose HEAD &&
-	(ls -1 .git/refs/heads .git/reftable >expect || true) &&
+	but update-ref refs/heads/should-be-loose HEAD &&
+	(ls -1 .but/refs/heads .but/reftable >expect || true) &&
 
 	# now fake a concurrent gc that holds the lock; we can use our
 	# shell pid so that it looks valid.
@@ -248,15 +248,15 @@ test_expect_success 'background auto gc respects lock for all operations' '
 	if test_have_prereq MINGW && test -f /proc/$shell_pid/winpid
 	then
 		# In Git for Windows, Bash (actually, the MSYS2 runtime) has a
-		# different idea of PIDs than git.exe (actually Windows). Use
+		# different idea of PIDs than but.exe (actually Windows). Use
 		# the Windows PID in this case.
 		shell_pid=$(cat /proc/$shell_pid/winpid)
 	fi &&
-	printf "%d %s" "$shell_pid" "$hostname" >.git/gc.pid &&
+	printf "%d %s" "$shell_pid" "$hostname" >.but/gc.pid &&
 
 	# our gc should exit zero without doing anything
 	run_and_wait_for_auto_gc &&
-	(ls -1 .git/refs/heads .git/reftable >actual || true) &&
+	(ls -1 .but/refs/heads .but/reftable >actual || true) &&
 	test_cmp expect actual
 '
 

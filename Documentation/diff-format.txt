@@ -1,25 +1,25 @@
 Raw output format
 -----------------
 
-The raw output format from "git-diff-index", "git-diff-tree",
-"git-diff-files" and "git diff --raw" are very similar.
+The raw output format from "but-diff-index", "but-diff-tree",
+"but-diff-files" and "but diff --raw" are very similar.
 
 These commands all compare two sets of things; what is
 compared differs:
 
-git-diff-index <tree-ish>::
+but-diff-index <tree-ish>::
         compares the <tree-ish> and the files on the filesystem.
 
-git-diff-index --cached <tree-ish>::
+but-diff-index --cached <tree-ish>::
         compares the <tree-ish> and the index.
 
-git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
+but-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
         compares the trees named by the two arguments.
 
-git-diff-files [<pattern>...]::
+but-diff-files [<pattern>...]::
         compares the index and the files on the filesystem.
 
-The "git-diff-tree" command begins its output by printing the hash of
+The "but-diff-tree" command begins its output by printing the hash of
 what is being compared. After that, all the commands print one output
 line per changed file.
 
@@ -80,13 +80,13 @@ Example:
 
 Without the `-z` option, pathnames with "unusual" characters are
 quoted as explained for the configuration variable `core.quotePath`
-(see linkgit:git-config[1]).  Using `-z` the filename is output
+(see linkbut:but-config[1]).  Using `-z` the filename is output
 verbatim and the line is terminated by a NUL byte.
 
 diff format for merges
 ----------------------
 
-"git-diff-tree", "git-diff-files" and "git-diff --raw"
+"but-diff-tree", "but-diff-files" and "but-diff --raw"
 can take `-c` or `--cc` option
 to generate diff output also for merge cummits.  The output differs
 from the format described above in the following way:

@@ -10,48 +10,48 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 
 	>file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 
 	echo hello >file &&
 	test_tick &&
-	git cummit -a -m "A sample cummit log message that has a long
+	but cummit -a -m "A sample cummit log message that has a long
 summary that spills over multiple lines.
 
 But otherwise with a sane description." &&
 
-	git branch side &&
+	but branch side &&
 
-	git reset --hard HEAD^ &&
+	but reset --hard HEAD^ &&
 	>elif &&
-	git add elif &&
+	but add elif &&
 	test_tick &&
-	git cummit -m second &&
+	but cummit -m second &&
 
-	git checkout -b side2 &&
+	but checkout -b side2 &&
 	>afile &&
-	git add afile &&
+	but add afile &&
 	test_tick &&
-	git cummit -m third &&
+	but cummit -m third &&
 	echo hello >afile &&
 	test_tick &&
-	git cummit -a -m fourth &&
-	git checkout -b side-merge &&
-	git reset --hard HEAD^^ &&
-	git merge --no-ff -m "A merge cummit log message that has a long
+	but cummit -a -m fourth &&
+	but checkout -b side-merge &&
+	but reset --hard HEAD^^ &&
+	but merge --no-ff -m "A merge cummit log message that has a long
 summary that spills over multiple lines.
 
 But otherwise with a sane description." side2 &&
-	git branch side-merge-original
+	but branch side-merge-original
 '
 
 test_expect_success rebase '
 
-	git checkout side &&
-	git rebase main &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
-	git cat-file cummit side@{1} | sed -e "1,/^\$/d" >expect &&
+	but checkout side &&
+	but rebase main &&
+	but cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	but cat-file cummit side@{1} | sed -e "1,/^\$/d" >expect &&
 	test_cmp expect actual
 
 '

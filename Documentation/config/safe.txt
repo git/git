@@ -5,10 +5,10 @@ safe.directory::
 	config of a repository owned by someone else, let alone run its
 	hooks, and this config setting allows users to specify exceptions,
 	e.g. for intentionally shared repositories (see the `--shared`
-	option in linkgit:git-init[1]).
+	option in linkbut:but-init[1]).
 +
 This is a multi-valued setting, i.e. you can add more than one directory
-via `git config --add`. To reset the list of safe directories (e.g. to
+via `but config --add`. To reset the list of safe directories (e.g. to
 override any such directories specified in the system config), add a
 `safe.directory` entry with an empty value.
 +

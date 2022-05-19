@@ -9,96 +9,96 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'Initialize repository' '
 	mkdir a &&
 	>a/f &&
-	git add a &&
-	git cummit -m a
+	but add a &&
+	but cummit -m a
 '
 
 test_expect_success 'Setup rename across paths each below D/F conflicts' '
 	mkdir b &&
 	test_ln_s_add ../a b/a &&
-	git cummit -m b &&
+	but cummit -m b &&
 
-	git checkout -b branch &&
+	but checkout -b branch &&
 	rm b/a &&
-	git mv a b/a &&
+	but mv a b/a &&
 	test_ln_s_add b/a a &&
-	git cummit -m swap &&
+	but cummit -m swap &&
 
 	>f1 &&
-	git add f1 &&
-	git cummit -m f1
+	but add f1 &&
+	but cummit -m f1
 '
 
 test_expect_success 'Cherry-pick succeeds with rename across D/F conflicts' '
-	git reset --hard &&
-	git checkout main^0 &&
-	git cherry-pick branch
+	but reset --hard &&
+	but checkout main^0 &&
+	but cherry-pick branch
 '
 
 test_expect_success 'Setup rename with file on one side matching directory name on other' '
-	git checkout --orphan nick-testcase &&
-	git rm -rf . &&
+	but checkout --orphan nick-testcase &&
+	but rm -rf . &&
 
 	>empty &&
-	git add empty &&
-	git cummit -m "Empty file" &&
+	but add empty &&
+	but cummit -m "Empty file" &&
 
-	git checkout -b simple &&
+	but checkout -b simple &&
 	mv empty file &&
 	mkdir empty &&
 	mv file empty &&
-	git add empty/file &&
-	git cummit -m "Empty file under empty dir" &&
+	but add empty/file &&
+	but cummit -m "Empty file under empty dir" &&
 
 	echo content >newfile &&
-	git add newfile &&
-	git cummit -m "New file"
+	but add newfile &&
+	but cummit -m "New file"
 '
 
 test_expect_success 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (resolve)' '
-	git reset --hard &&
-	git checkout -q nick-testcase^0 &&
-	git cherry-pick --strategy=resolve simple
+	but reset --hard &&
+	but checkout -q nick-testcase^0 &&
+	but cherry-pick --strategy=resolve simple
 '
 
 test_expect_success 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (recursive)' '
-	git reset --hard &&
-	git checkout -q nick-testcase^0 &&
-	git cherry-pick --strategy=recursive simple
+	but reset --hard &&
+	but checkout -q nick-testcase^0 &&
+	but cherry-pick --strategy=recursive simple
 '
 
 test_expect_success 'Setup rename with file on one side matching different dirname on other' '
-	git reset --hard &&
-	git checkout --orphan mergeme &&
-	git rm -rf . &&
+	but reset --hard &&
+	but checkout --orphan mergeme &&
+	but rm -rf . &&
 
 	mkdir sub &&
 	mkdir othersub &&
 	echo content > sub/file &&
 	echo foo > othersub/whatever &&
-	git add -A &&
-	git cummit -m "Common cummit" &&
+	but add -A &&
+	but cummit -m "Common cummit" &&
 
-	git rm -rf othersub &&
-	git mv sub/file othersub &&
-	git cummit -m "cummit to merge" &&
+	but rm -rf othersub &&
+	but mv sub/file othersub &&
+	but cummit -m "cummit to merge" &&
 
-	git checkout -b newhead mergeme~1 &&
+	but checkout -b newhead mergeme~1 &&
 	>independent-change &&
-	git add independent-change &&
-	git cummit -m "Completely unrelated change"
+	but add independent-change &&
+	but cummit -m "Completely unrelated change"
 '
 
 test_expect_success 'Cherry-pick with rename to different D/F conflict succeeds (resolve)' '
-	git reset --hard &&
-	git checkout -q newhead^0 &&
-	git cherry-pick --strategy=resolve mergeme
+	but reset --hard &&
+	but checkout -q newhead^0 &&
+	but cherry-pick --strategy=resolve mergeme
 '
 
 test_expect_success 'Cherry-pick with rename to different D/F conflict succeeds (recursive)' '
-	git reset --hard &&
-	git checkout -q newhead^0 &&
-	git cherry-pick --strategy=recursive mergeme
+	but reset --hard &&
+	but checkout -q newhead^0 &&
+	but cherry-pick --strategy=recursive mergeme
 '
 
 test_done

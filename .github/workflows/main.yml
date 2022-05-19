@@ -14,37 +14,37 @@ jobs:
     steps:
       - name: try to clone ci-config branch
         run: |
-          git -c protocol.version=2 clone \
+          but -c protocol.version=2 clone \
             --no-tags \
             --single-branch \
             -b ci-config \
             --depth 1 \
             --no-checkout \
             --filter=blob:none \
-            https://github.com/${{ github.repository }} \
+            https://buthub.com/${{ buthub.repository }} \
             config-repo &&
           cd config-repo &&
-          git checkout HEAD -- ci/config || : ignore
+          but checkout HEAD -- ci/config || : ignore
       - id: check-ref
         name: check whether CI is enabled for ref
         run: |
           enabled=yes
           if test -x config-repo/ci/config/allow-ref &&
-             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+             ! config-repo/ci/config/allow-ref '${{ buthub.ref }}'
           then
             enabled=no
           fi
           echo "::set-output name=enabled::$enabled"
       - name: skip if the cummit or tree was already tested
         id: skip-if-redundant
-        uses: actions/github-script@v3
+        uses: actions/buthub-script@v3
         if: steps.check-ref.outputs.enabled == 'yes'
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          buthub-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             try {
               // Figure out workflow ID, cummit and tree
-              const { data: run } = await github.actions.getWorkflowRun({
+              const { data: run } = await buthub.actions.getWorkflowRun({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 run_id: context.runId,
@@ -54,7 +54,7 @@ jobs:
               const tree_id = run.head_cummit.tree_id;
 
               // See whether there is a successful run for that cummit or tree
-              const { data: runs } = await github.actions.listWorkflowRuns({
+              const { data: runs } = await buthub.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 per_page: 500,
@@ -84,7 +84,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - uses: but-for-windows/setup-but-for-windows-sdk@v1
     - name: build
       shell: bash
       env:
@@ -92,7 +92,7 @@ jobs:
         NO_PERL: 1
       run: . /etc/profile && ci/make-test-artifacts.sh artifacts
     - name: zip up tracked files
-      run: git archive -o artifacts/tracked.tar.gz HEAD
+      run: but archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -111,11 +111,11 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: windows-artifacts
-        path: ${{github.workspace}}
+        path: ${{buthub.workspace}}
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - uses: but-for-windows/setup-but-for-windows-sdk@v1
     - name: test
       shell: bash
       run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
@@ -135,11 +135,11 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       NO_PERL: 1
-      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
+      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@but'"
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - uses: but-for-windows/setup-but-for-windows-sdk@v1
     - name: initialize vcpkg
       uses: actions/checkout@v2
       with:
@@ -148,7 +148,7 @@ jobs:
     - name: download vcpkg artifacts
       shell: powershell
       run: |
-        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
+        $urlbase = "https://dev.azure.com/but/but/_apis/build/builds"
         $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
         $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
         (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
@@ -165,17 +165,17 @@ jobs:
         cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
         -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: msbuild but.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
     - name: bundle artifact tar
       shell: bash
       env:
         MSVC: 1
-        VCPKG_ROOT: ${{github.workspace}}\compat\vcbuild\vcpkg
+        VCPKG_ROOT: ${{buthub.workspace}}\compat\vcbuild\vcpkg
       run: |
         mkdir -p artifacts &&
         eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts NO_GETTEXT=YesPlease 2>&1 | grep ^tar)"
     - name: zip up tracked files
-      run: git archive -o artifacts/tracked.tar.gz HEAD
+      run: but archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -190,12 +190,12 @@ jobs:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - uses: but-for-windows/setup-but-for-windows-sdk@v1
     - name: download tracked files and build artifacts
       uses: actions/download-artifact@v2
       with:
         name: vs-artifacts
-        path: ${{github.workspace}}
+        path: ${{buthub.workspace}}
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
@@ -320,9 +320,9 @@ jobs:
     steps:
     - name: Download a current `sparse` package
       # Ubuntu's `sparse` version is too old for us
-      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      uses: but-for-windows/get-azure-pipelines-artifact@v0
       with:
-        repository: git/git
+        repository: but/but
         definitionId: 10
         artifact: sparse-20.04
     - name: Install the current `sparse` package

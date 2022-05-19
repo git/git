@@ -11,7 +11,7 @@
 #include "shallow.h"
 
 static const char * const prune_usage[] = {
-	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
+	N_("but prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
 	NULL
 };
 static int show_only;

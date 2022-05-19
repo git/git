@@ -53,7 +53,7 @@ struct merge_result {
  *       pass the merge_bases in the order of oldest cummit to the
  *       newest[1][2].
  *
- *       [1] https://lore.kernel.org/git/nycvar.QRO.7.76.6.1907252055500.21907@tvgsbejvaqbjf.bet/
+ *       [1] https://lore.kernel.org/but/nycvar.QRO.7.76.6.1907252055500.21907@tvgsbejvaqbjf.bet/
  *       [2] cummit 8918b0c9c2 ("merge-recur: try to merge older merge bases
  *           first", 2006-08-09)
  */

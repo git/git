@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 rcs keywords'
+test_description='but p4 rcs keywords'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 CP1252="\223\224"
 
@@ -62,22 +62,22 @@ test_expect_success 'scrub scripts' '
 
 #
 # Compare $cli/file to its scrubbed version, should be different.
-# Compare scrubbed $cli/file to $git/file, should be same.
+# Compare scrubbed $cli/file to $but/file, should be same.
 #
 scrub_k_check () {
 	file="$1" &&
 	scrub="$TRASH_DIRECTORY/$file" &&
-	"$PYTHON_PATH" "$TRASH_DIRECTORY/scrub_k.py" <"$git/$file" >"$scrub" &&
+	"$PYTHON_PATH" "$TRASH_DIRECTORY/scrub_k.py" <"$but/$file" >"$scrub" &&
 	! test_cmp "$cli/$file" "$scrub" &&
-	test_cmp "$git/$file" "$scrub" &&
+	test_cmp "$but/$file" "$scrub" &&
 	rm "$scrub"
 }
 scrub_ko_check () {
 	file="$1" &&
 	scrub="$TRASH_DIRECTORY/$file" &&
-	"$PYTHON_PATH" "$TRASH_DIRECTORY/scrub_ko.py" <"$git/$file" >"$scrub" &&
+	"$PYTHON_PATH" "$TRASH_DIRECTORY/scrub_ko.py" <"$but/$file" >"$scrub" &&
 	! test_cmp "$cli/$file" "$scrub" &&
-	test_cmp "$git/$file" "$scrub" &&
+	test_cmp "$but/$file" "$scrub" &&
 	rm "$scrub"
 }
 
@@ -86,15 +86,15 @@ scrub_ko_check () {
 # in the diff, there is no conflict.
 #
 test_expect_success 'edit far away from RCS lines' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
 		sed "s/^line7/line7 edit/" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git cummit -m "filek line7 edit" filek &&
-		git p4 submit &&
+		but cummit -m "filek line7 edit" filek &&
+		but p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -103,16 +103,16 @@ test_expect_success 'edit far away from RCS lines' '
 # Modify near the keywords.  This will require RCS scrubbing.
 #
 test_expect_success 'edit near RCS lines' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git cummit -m "filek line4 edit" filek &&
-		git p4 submit &&
+		but cummit -m "filek line4 edit" filek &&
+		but p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -121,16 +121,16 @@ test_expect_success 'edit near RCS lines' '
 # Modify the keywords themselves.  This also will require RCS scrubbing.
 #
 test_expect_success 'edit keyword lines' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
 		sed "/Revision/d" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git cummit -m "filek remove Revision line" filek &&
-		git p4 submit &&
+		but cummit -m "filek remove Revision line" filek &&
+		but p4 submit &&
 		scrub_k_check filek
 	)
 '
@@ -139,22 +139,22 @@ test_expect_success 'edit keyword lines' '
 # Scrubbing text+ko files should not alter all keywords, just Id, Header.
 #
 test_expect_success 'scrub ko files differently' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <fileko >fileko.tmp &&
 		mv -f fileko.tmp fileko &&
-		git cummit -m "fileko line4 edit" fileko &&
-		git p4 submit &&
+		but cummit -m "fileko line4 edit" fileko &&
+		but p4 submit &&
 		scrub_ko_check fileko &&
 		! scrub_k_check fileko
 	)
 '
 
-# hack; git p4 submit should do it on its own
+# hack; but p4 submit should do it on its own
 test_expect_success 'cleanup after failure' '
 	(
 		cd "$cli" &&
@@ -173,10 +173,10 @@ test_expect_success 'ktext expansion should not expand multi-line $File::' '
 		p4 add -t ktext lv.pm &&
 		p4 submit -d "lv.pm"
 	) &&
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		test_cmp "$cli/lv.pm" lv.pm
 	)
 '
@@ -186,19 +186,19 @@ test_expect_success 'ktext expansion should not expand multi-line $File::' '
 # the cli file so that submit will get a conflict.  Make sure that
 # scrubbing doesn't make a mess of things.
 #
-# This might happen only if the git repo is behind the p4 repo at
+# This might happen only if the but repo is behind the p4 repo at
 # submit time, and there is a conflict.
 #
 test_expect_success 'do not scrub plain text' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <file_text >file_text.tmp &&
 		mv -f file_text.tmp file_text &&
-		git cummit -m "file_text line4 edit" file_text &&
+		but cummit -m "file_text line4 edit" file_text &&
 		(
 			cd "$cli" &&
 			p4 open file_text &&
@@ -206,7 +206,7 @@ test_expect_success 'do not scrub plain text' '
 			mv -f file_text.tmp file_text &&
 			p4 submit -d "file5 p4 edit"
 		) &&
-		echo s | test_expect_code 1 git p4 submit &&
+		echo s | test_expect_code 1 but p4 submit &&
 		(
 			# make sure the file is not left open
 			cd "$cli" &&
@@ -215,7 +215,7 @@ test_expect_success 'do not scrub plain text' '
 	)
 '
 
-# hack; git p4 submit should do it on its own
+# hack; but p4 submit should do it on its own
 test_expect_success 'cleanup after failure 2' '
 	(
 		cd "$cli" &&
@@ -260,40 +260,40 @@ p4_append_to_file () {
 # results in a merge conflict if we touch the RCS kw lines,
 # even though the change itself would otherwise apply cleanly.
 test_expect_success 'cope with rcs keyword expansion damage' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
+		cd "$but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
 		(cd "$cli" && p4_append_to_file kwfile1.c) &&
 		old_lines=$(wc -l <kwfile1.c) &&
 		perl -n -i -e "print unless m/Revision:/" kwfile1.c &&
 		new_lines=$(wc -l <kwfile1.c) &&
 		test $new_lines = $(($old_lines - 1)) &&
 
-		git add kwfile1.c &&
-		git cummit -m "Zap an RCS kw line" &&
-		git p4 submit &&
-		git p4 rebase &&
-		git diff p4/master &&
-		git p4 cummit &&
+		but add kwfile1.c &&
+		but cummit -m "Zap an RCS kw line" &&
+		but p4 submit &&
+		but p4 rebase &&
+		but diff p4/master &&
+		but p4 cummit &&
 		echo "try modifying in both" &&
 		cd "$cli" &&
 		p4 edit kwfile1.c &&
 		echo "line from p4" >>kwfile1.c &&
 		p4 submit -d "add a line in p4" kwfile1.c &&
-		cd "$git" &&
-		echo "line from git at the top" | cat - kwfile1.c >kwfile1.c.new &&
+		cd "$but" &&
+		echo "line from but at the top" | cat - kwfile1.c >kwfile1.c.new &&
 		mv kwfile1.c.new kwfile1.c &&
-		git cummit -m "Add line in git at the top" kwfile1.c &&
-		git p4 rebase &&
-		git p4 submit
+		but cummit -m "Add line in but at the top" kwfile1.c &&
+		but p4 rebase &&
+		but p4 submit
 	)
 '
 
 test_expect_success 'cope with rcs keyword file deletion' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		echo "\$Revision\$" >kwdelfile.c &&
@@ -301,15 +301,15 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		p4 submit -d "Add file to be deleted" &&
 		grep 1 kwdelfile.c
 	) &&
-	git p4 clone --dest="$git" //depot &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		grep Revision kwdelfile.c &&
-		git rm -f kwdelfile.c &&
-		git cummit -m "Delete a file containing RCS keywords" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
-		git p4 submit
+		but rm -f kwdelfile.c &&
+		but cummit -m "Delete a file containing RCS keywords" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -318,19 +318,19 @@ test_expect_success 'cope with rcs keyword file deletion' '
 	)
 '
 
-# If you add keywords in git of the form $Header$ then everything should
+# If you add keywords in but of the form $Header$ then everything should
 # work fine without any special handling.
-test_expect_success 'Add keywords in git which match the default p4 values' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+test_expect_success 'Add keywords in but which match the default p4 values' '
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo "NewKW: \$Revision\$" >>kwfile1.c &&
-		git add kwfile1.c &&
-		git cummit -m "Adding RCS keywords in git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
-		git p4 submit
+		but add kwfile1.c &&
+		but cummit -m "Adding RCS keywords in but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -341,20 +341,20 @@ test_expect_success 'Add keywords in git which match the default p4 values' '
 	)
 '
 
-# If you add keywords in git of the form $Header:#1$ then things will fail
-# unless git-p4 takes steps to scrub the *git* cummit.
+# If you add keywords in but of the form $Header:#1$ then things will fail
+# unless but-p4 takes steps to scrub the *but* cummit.
 #
-test_expect_failure 'Add keywords in git which do not match the default p4 values' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+test_expect_failure 'Add keywords in but which do not match the default p4 values' '
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		echo "NewKW2: \$Revision:1\$" >>kwfile1.c &&
-		git add kwfile1.c &&
-		git cummit -m "Adding RCS keywords in git" &&
-		git config git-p4.skipSubmitEdit true &&
-		git config git-p4.attemptRCSCleanup true &&
-		git p4 submit
+		but add kwfile1.c &&
+		but cummit -m "Adding RCS keywords in but" &&
+		but config but-p4.skipSubmitEdit true &&
+		but config but-p4.attemptRCSCleanup true &&
+		but p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -365,10 +365,10 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 '
 
 test_expect_success 'check cp1252 smart quote are preserved through RCS keyword processing' '
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		printf "$CP1252" >expect &&
 		test_cmp_bin expect fileko_cp1252
 	)

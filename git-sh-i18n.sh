@@ -5,7 +5,7 @@
 #
 
 # Export the TEXTDOMAIN* data that we need for Git
-TEXTDOMAIN=git
+TEXTDOMAIN=but
 export TEXTDOMAIN
 if test -z "$GIT_TEXTDOMAINDIR"
 then
@@ -46,8 +46,8 @@ gettext_without_eval_gettext)
 	# Solaris has a gettext(1) but no eval_gettext(1)
 	eval_gettext () {
 		gettext "$1" | (
-			export PATH $(git sh-i18n--envsubst --variables "$1");
-			git sh-i18n--envsubst "$1"
+			export PATH $(but sh-i18n--envsubst --variables "$1");
+			but sh-i18n--envsubst "$1"
 		)
 	}
 
@@ -59,8 +59,8 @@ gettext_without_eval_gettext)
 
 	eval_gettext () {
 		printf "%s" "$1" | (
-			export PATH $(git sh-i18n--envsubst --variables "$1");
-			git sh-i18n--envsubst "$1"
+			export PATH $(but sh-i18n--envsubst --variables "$1");
+			but sh-i18n--envsubst "$1"
 		)
 	}
 

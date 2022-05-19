@@ -1,6 +1,6 @@
 #!/bin/sh
 # Generate test data repository using the given parameters.
-# When omitted, we create "gen-many-files-d-w-f.git".
+# When omitted, we create "gen-many-files-d-w-f.but".
 #
 # Usage: [-r repo] [-d depth] [-w width] [-f files]
 #
@@ -71,40 +71,40 @@ fill_index() {
 		END { make_paths(arg_dir, arg_depth, arg_width, arg_files) }
 		' </dev/null |
 	sed "s/^/100644 $EMPTY_BLOB	/" |
-	git update-index --index-info
+	but update-index --index-info
 	return 0
 }
 
-[ -z "$repo" ] && repo=gen-many-files-$depth.$width.$files.git
+[ -z "$repo" ] && repo=gen-many-files-$depth.$width.$files.but
 
 mkdir $repo
 cd $repo
-git init .
+but init .
 
 # Create an initial cummit just to define master.
 touch many-files.empty
 echo "$depth $width $files" >many-files.params
-git add many-files.*
-git cummit -q -m params
+but add many-files.*
+but cummit -q -m params
 
 # Create ballast for p0006 based upon the given params and
 # inflate the index with thousands of empty files and cummit.
-git checkout -b p0006-ballast
+but checkout -b p0006-ballast
 fill_index "ballast" $depth $width $files
-git cummit -q -m "ballast"
+but cummit -q -m "ballast"
 
-nr_files=$(git ls-files | wc -l)
+nr_files=$(but ls-files | wc -l)
 
 # Modify 1 file and cummit.
 echo "$depth $width $files" >>many-files.params
-git add many-files.params
-git cummit -q -m "ballast plus 1"
+but add many-files.params
+but cummit -q -m "ballast plus 1"
 
 # Checkout master to put repo in canonical state (because
 # the perf test may need to clone and enable sparse-checkout
 # before attempting to checkout a cummit with the ballast
 # (because it may contain 100K directories and 1M files)).
-git checkout master
+but checkout master
 
 echo "Repository "$repo" ($depth, $width, $files) created.  Ballast $nr_files."
 exit 0

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description='git-cvsserver and git refspecs
+test_description='but-cvsserver and but refspecs
 
-tests ability for git-cvsserver to switch between and compare
-tags, branches and other git refspecs'
+tests ability for but-cvsserver to switch between and compare
+tags, branches and other but refspecs'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -21,7 +21,7 @@ check_file() {
 	sandbox="$1"
 	file="$2"
 	ver="$3"
-	GIT_DIR=$SERVERDIR git show "${ver}:${file}" \
+	GIT_DIR=$SERVERDIR but show "${ver}:${file}" \
 		>"$WORKDIR/check.got" 2>"$WORKDIR/check.stderr"
 	test_cmp "$WORKDIR/check.got" "$sandbox/$file"
 	stat=$?
@@ -45,7 +45,7 @@ check_end_full_tree() {
 	find "$sandbox" -name CVS -prune -o -type f -print |
 	sed -e "s%$sandbox/%%" | sort >act1 &&
 	test_cmp expected act1 &&
-	git ls-tree --name-only -r "$2" | sort >act2 &&
+	but ls-tree --name-only -r "$2" | sort >act2 &&
 	test_cmp expected act2 &&
 	rm expected act1 act2
 }
@@ -57,12 +57,12 @@ check_diff() {
 	vOld="$2"
 	vNew="$3"
 	rm -rf diffSandbox
-	git clone -q -n . diffSandbox &&
+	but clone -q -n . diffSandbox &&
 	(
 		cd diffSandbox &&
-		git checkout "$vOld" &&
-		git apply -p0 --index <"../$diffFile" &&
-		git diff --exit-code "$vNew"
+		but checkout "$vOld" &&
+		but apply -p0 --index <"../$diffFile" &&
+		but diff --exit-code "$vNew"
 	) >check_diff_apply.out 2>&1
 }
 
@@ -71,26 +71,26 @@ check_diff() {
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-	skip_all='skipping git-cvsserver tests, cvs not found'
+	skip_all='skipping but-cvsserver tests, cvs not found'
 	test_done
 fi
 if ! test_have_prereq PERL
 then
-	skip_all='skipping git-cvsserver tests, perl not available'
+	skip_all='skipping but-cvsserver tests, perl not available'
 	test_done
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-	skip_all='skipping git-cvsserver tests, Perl SQLite interface unavailable'
+	skip_all='skipping but-cvsserver tests, Perl SQLite interface unavailable'
 	test_done
 }
 
 unset GIT_DIR GIT_CONFIG
 WORKDIR=$PWD
-SERVERDIR=$PWD/gitcvs.git
-git_config="$SERVERDIR/config"
+SERVERDIR=$PWD/butcvs.but
+but_config="$SERVERDIR/config"
 CVSROOT=":fork:$SERVERDIR"
 CVSWORK="$PWD/cvswork"
-CVS_SERVER=git-cvsserver
+CVS_SERVER=but-cvsserver
 export CVSROOT CVS_SERVER
 
 rm -rf "$CVSWORK" "$SERVERDIR"
@@ -107,13 +107,13 @@ test_expect_success 'setup v1, b1' '
 	echo "adir/bdir/bfile line 1" >adir/bdir/bfile &&
 	echo "adir/bdir/bfile line 2" >>adir/bdir/bfile &&
 	echo "adir/bdir/b2file" >adir/bdir/b2file &&
-	git add textfile.c t2 adir &&
-	git cummit -q -m "First cummit (v1)" &&
-	git tag v1 &&
-	git branch b1 &&
-	git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
-	GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
-	GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
+	but add textfile.c t2 adir &&
+	but cummit -q -m "First cummit (v1)" &&
+	but tag v1 &&
+	but branch b1 &&
+	but clone -q --bare "$WORKDIR/.but" "$SERVERDIR" >/dev/null 2>&1 &&
+	GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+	GIT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log"
 '
 
 rm -rf cvswork
@@ -168,7 +168,7 @@ test_expect_success 'edit cvswork3 and save diff' '
 '
 
 test_expect_success 'setup v1.2 on b1' '
-	git checkout b1 &&
+	but checkout b1 &&
 	echo "new v1.2" >t3 &&
 	rm t2 &&
 	sed -e "s/line3/line3 - more data/" adir/afile >adir/afileNEW &&
@@ -180,10 +180,10 @@ test_expect_success 'setup v1.2 on b1' '
 	echo "b3file" >adir/bdir/b3file &&
 	mkdir cdir &&
 	echo "cdir/cfile" >cdir/cfile &&
-	git add -A cdir adir t3 t2 &&
-	git cummit -q -m "v1.2" &&
-	git tag v1.2 &&
-	git push --tags gitcvs.git b1:b1
+	but add -A cdir adir t3 t2 &&
+	but cummit -q -m "v1.2" &&
+	but tag v1.2 &&
+	but push --tags butcvs.but b1:b1
 '
 
 test_expect_success 'cvs -f up (on b1 adir)' '
@@ -263,8 +263,8 @@ test_expect_success 'cvs up (again; check CVS/Tag files)' '
 '
 
 test_expect_success 'setup simple b2' '
-	git branch b2 v1 &&
-	git push --tags gitcvs.git b2:b2
+	but branch b2 v1 &&
+	but push --tags butcvs.but b2:b2
 '
 
 test_expect_success 'cvs co b2 [into cvswork2]' '
@@ -308,7 +308,7 @@ test_expect_success 'subdir edit/add/rm files [cvswork2]' '
 		echo "4th file" >bdir/b4file &&
 		cvs -f add bdir/b4file &&
 		! cvs -f diff -N -u >"$WORKDIR/cvsEdit3.diff" &&
-		git fetch gitcvs.git b2:b2 &&
+		but fetch butcvs.but b2:b2 &&
 		(
 		  cd .. &&
 		  ! cvs -f diff -u -N -r v1.2 >"$WORKDIR/cvsEdit3-v1.2.diff" &&
@@ -319,9 +319,9 @@ test_expect_success 'subdir edit/add/rm files [cvswork2]' '
 '
 
 test_expect_success 'validate result of edits [cvswork2]' '
-	git fetch gitcvs.git b2:b2 &&
-	git tag v2 b2 &&
-	git push --tags gitcvs.git b2:b2 &&
+	but fetch butcvs.but b2:b2 &&
+	but tag v2 b2 &&
+	but push --tags butcvs.but b2:b2 &&
 	check_start_tree cvswork2 &&
 	check_file cvswork2 textfile.c v2 &&
 	check_file cvswork2 adir/afile v2 &&
@@ -337,14 +337,14 @@ test_expect_success 'validate basic diffs saved during above cvswork2 edits' '
 	test $(grep Index: cvsEdit2-N.diff | wc -l) = 1 &&
 	test $(grep Index: cvsEdit3.diff | wc -l) = 3 &&
 	rm -rf diffSandbox &&
-	git clone -q -n . diffSandbox &&
+	but clone -q -n . diffSandbox &&
 	(
 		cd diffSandbox &&
-		git checkout v1 &&
-		git apply -p0 --index <"$WORKDIR/cvsEdit1.diff" &&
-		git apply -p0 --index <"$WORKDIR/cvsEdit2-N.diff" &&
-		git apply -p0 --directory=adir --index <"$WORKDIR/cvsEdit3.diff" &&
-		git diff --exit-code v2
+		but checkout v1 &&
+		but apply -p0 --index <"$WORKDIR/cvsEdit1.diff" &&
+		but apply -p0 --index <"$WORKDIR/cvsEdit2-N.diff" &&
+		but apply -p0 --directory=adir --index <"$WORKDIR/cvsEdit3.diff" &&
+		but diff --exit-code v2
 	) >"check_diff_apply.out" 2>&1
 '
 
@@ -443,8 +443,8 @@ test_expect_success 'cvs up -r heads_-s-b2 (cvsserver escape mechanism)' '
 	check_end_full_tree cvswork v2
 '
 
-v1hash=$(git rev-parse v1)
-test_expect_success 'cvs up -r $(git rev-parse v1)' '
+v1hash=$(but rev-parse v1)
+test_expect_success 'cvs up -r $(but rev-parse v1)' '
 	test -n "$v1hash" &&
 	( cd cvswork && cvs -f up -r "$v1hash" ) >cvs.log 2>&1 &&
 	check_start_tree cvswork &&
@@ -478,15 +478,15 @@ test_expect_success 'cvs diff -N -r v2 -r v1.2' '
 '
 
 test_expect_success 'apply early [cvswork3] diff to b3' '
-	git clone -q . gitwork3 &&
+	but clone -q . butwork3 &&
 	(
-		cd gitwork3 &&
-		git checkout -b b3 v1 &&
-		git apply -p0 --index <"$WORKDIR/cvswork3edit.diff" &&
-		git cummit -m "cvswork3 edits applied"
+		cd butwork3 &&
+		but checkout -b b3 v1 &&
+		but apply -p0 --index <"$WORKDIR/cvswork3edit.diff" &&
+		but cummit -m "cvswork3 edits applied"
 	) &&
-	git fetch gitwork3 b3:b3 &&
-	git tag v3 b3
+	but fetch butwork3 b3:b3 &&
+	but tag v3 b3
 '
 
 test_expect_success 'check [cvswork3] diff' '
@@ -499,10 +499,10 @@ test_expect_success 'check [cvswork3] diff' '
 '
 
 test_expect_success 'merge early [cvswork3] b3 with b1' '
-	( cd gitwork3 && git merge -m "message" b1 ) &&
-	git fetch gitwork3 b3:b3 &&
-	git tag v3merged b3 &&
-	git push --tags gitcvs.git b3:b3
+	( cd butwork3 && but merge -m "message" b1 ) &&
+	but fetch butwork3 b3:b3 &&
+	but tag v3merged b3 &&
+	but push --tags butcvs.but b3:b3
 '
 
 # This test would fail if cvsserver properly created a ".#afile"* file
@@ -546,9 +546,9 @@ test_expect_success 'cvs cummit [cvswork3]' '
 	check_file cvswork3 adir/bdir/b3file v3merged &&
 	check_file cvswork3 cdir/cfile v3merged &&
 	check_end_full_tree cvswork3 v3merged &&
-	git fetch gitcvs.git b3:b4 &&
-	git tag v4.1 b4 &&
-	git diff --exit-code v4.1 v3merged >check_diff_apply.out 2>&1
+	but fetch butcvs.but b3:b4 &&
+	but tag v4.1 b4 &&
+	but diff --exit-code v4.1 v3merged >check_diff_apply.out 2>&1
 '
 
 test_done

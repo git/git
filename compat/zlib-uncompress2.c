@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 #if ZLIB_VERNUM < 0x1290
 /* taken from zlib's uncompr.c

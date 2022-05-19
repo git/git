@@ -1,11 +1,11 @@
-# Translation of git-gui glossary to Simplified Chinese
+# Translation of but-gui glossary to Simplified Chinese
 # Copyright (C) 2007 Shawn Pearce, et al.
-# This file is distributed under the same license as the git package.
+# This file is distributed under the same license as the but package.
 # Xudong Guan <xudong.guan@gmail.com> and the zh-kernel.org mailing list, 2007
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui glossary\n"
+"Project-Id-Version: but-gui glossary\n"
 "PO-Revision-Date: 2007-07-23 22:07+0200\n"
 "Last-Translator: Xudong Guan <xudong.guan@gmail.com>\n"
 "Language-Team: Simplified Chinese \n"
@@ -28,7 +28,7 @@ msgid "amend"
 msgstr "修订"
 
 #. ""
-#. git annotate 文件名：用来标注文件的每一行在什么时候被谁最后修改。
+#. but annotate 文件名：用来标注文件的每一行在什么时候被谁最后修改。
 #. [WANG Cong]: "标记"一般是mark。;)
 #. [ZHANG Le]: 标注，或者干脆用原意：注解，或注释
 msgid "annotate"
@@ -45,7 +45,7 @@ msgstr "建立分支"
 #. ""
 #. [WANG Cong]: 网上有人翻译成“检出”，我感觉更好一些，毕竟把check的意思翻译出来了。
 #. [ZHNAG Le]: 提取吧，提取分支／版本
-#. [rae l]: 签出。subversion软件中的大多词汇已有翻译，既然git与subversion同是SCM管理，可以参考同类软件的翻译也不错。
+#. [rae l]: 签出。subversion软件中的大多词汇已有翻译，既然but与subversion同是SCM管理，可以参考同类软件的翻译也不错。
 msgid "checkout [noun]"
 msgstr "签出"
 
@@ -53,11 +53,11 @@ msgstr "签出"
 msgid "checkout [verb]"
 msgstr "签出"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "提交"
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr "提交"
 
@@ -82,7 +82,7 @@ msgstr "获取"
 
 #. "A collection of files. The index is a stored version of your working tree."
 #. index是working tree和repository之间的缓存
-msgid "index (in git-gui: staging area)"
+msgid "index (in but-gui: staging area)"
 msgstr "工作缓存？"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
@@ -131,7 +131,7 @@ msgid "sign off"
 msgstr "签名"
 
 #. ""
-#. 似乎是git-gui里面显示的本次提交的文件清单区域
+#. 似乎是but-gui里面显示的本次提交的文件清单区域
 msgid "staging area"
 msgstr "提交暂存区"
 
@@ -147,7 +147,7 @@ msgstr "标签"
 msgid "tag [verb]"
 msgstr "添加标签"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr "跟踪分支"
 

@@ -2,12 +2,12 @@
 #define TR2_SYSENV_H
 
 /*
- * The Trace2 settings that can be loaded from /etc/gitconfig
+ * The Trace2 settings that can be loaded from /etc/butconfig
  * and/or user environment variables.
  *
  * Note that this set does not contain any of the transient
  * environment variables used to pass information from parent
- * to child git processes, such "GIT_TRACE2_PARENT_SID".
+ * to child but processes, such "GIT_TRACE2_PARENT_SID".
  */
 enum tr2_sysenv_variable {
 	TR2_SYSENV_CFG_PARAM = 0,

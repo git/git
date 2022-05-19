@@ -30,7 +30,7 @@
 struct fsmonitor_daemon_backend_data
 {
 	CFStringRef cfsr_worktree_path;
-	CFStringRef cfsr_gitdir_path;
+	CFStringRef cfsr_butdir_path;
 
 	CFArrayRef cfar_paths_to_watch;
 	int nr_paths_watching;
@@ -185,7 +185,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 			 * in this callback after this dropped event
 			 * may still be valid, so we continue rather
 			 * than break.  (And just in case there is a
-			 * delete of ".git" hiding in there.)
+			 * delete of ".but" hiding in there.)
 			 */
 			continue;
 		}
@@ -194,7 +194,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 
 		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
 		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
-			/* special case cookie files within .git or gitdir */
+			/* special case cookie files within .but or butdir */
 
 			/* Use just the filename of the cookie file. */
 			slash = find_last_dir_sep(path_k);
@@ -204,23 +204,23 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 
 		case IS_INSIDE_DOT_GIT:
 		case IS_INSIDE_GITDIR:
-			/* ignore all other paths inside of .git or gitdir */
+			/* ignore all other paths inside of .but or butdir */
 			break;
 
 		case IS_DOT_GIT:
 		case IS_GITDIR:
 			/*
-			 * If .git directory is deleted or renamed away,
+			 * If .but directory is deleted or renamed away,
 			 * we have to quit.
 			 */
 			if (ef_is_root_delete(event_flags[k])) {
 				trace_printf_key(&trace_fsmonitor,
-						 "event: gitdir removed");
+						 "event: butdir removed");
 				goto force_shutdown;
 			}
 			if (ef_is_root_renamed(event_flags[k])) {
 				trace_printf_key(&trace_fsmonitor,
-						 "event: gitdir renamed");
+						 "event: butdir renamed");
 				goto force_shutdown;
 			}
 			break;
@@ -329,10 +329,10 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 	dir_array[data->nr_paths_watching++] = data->cfsr_worktree_path;
 
 	if (state->nr_paths_watching > 1) {
-		data->cfsr_gitdir_path = CFStringCreateWithCString(
-			NULL, state->path_gitdir_watch.buf,
+		data->cfsr_butdir_path = CFStringCreateWithCString(
+			NULL, state->path_butdir_watch.buf,
 			kCFStringEncodingUTF8);
-		dir_array[data->nr_paths_watching++] = data->cfsr_gitdir_path;
+		dir_array[data->nr_paths_watching++] = data->cfsr_butdir_path;
 	}
 
 	data->cfar_paths_to_watch = CFArrayCreate(NULL, dir_array,

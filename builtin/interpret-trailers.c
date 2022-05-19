@@ -1,5 +1,5 @@
 /*
- * Builtin "git interpret-trailers"
+ * Builtin "but interpret-trailers"
  *
  * Copyright (c) 2013, 2014 Christian Couder <chriscool@tuxfamily.org>
  *
@@ -12,8 +12,8 @@
 #include "trailer.h"
 #include "config.h"
 
-static const char * const git_interpret_trailers_usage[] = {
-	N_("git interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]"),
+static const char * const but_interpret_trailers_usage[] = {
+	N_("but interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]"),
 	NULL
 };
 
@@ -113,15 +113,15 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options,
-			     git_interpret_trailers_usage, 0);
+			     but_interpret_trailers_usage, 0);
 
 	if (opts.only_input && !list_empty(&trailers))
 		usage_msg_opt(
 			_("--trailer with --only-input does not make sense"),
-			git_interpret_trailers_usage,
+			but_interpret_trailers_usage,
 			options);
 
 	if (argc) {

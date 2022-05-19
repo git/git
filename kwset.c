@@ -1,5 +1,5 @@
 /*
- * This file has been copied from cummit e7ac713d^ in the GNU grep git
+ * This file has been copied from cummit e7ac713d^ in the GNU grep but
  * repository. A few small changes have been made to adapt the code to
  * Git.
  */

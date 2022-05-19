@@ -26,7 +26,7 @@ https://developers.google.com/open-source/licenses/bsd
 struct reftable_stack;
 
 /* open a new reftable stack. The tables along with the table list will be
- *  stored in 'dir'. Typically, this should be .git/reftables.
+ *  stored in 'dir'. Typically, this should be .but/reftables.
  */
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 		       struct reftable_write_options config);

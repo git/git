@@ -4,7 +4,7 @@ GIT v1.5.4.5 Release Notes
 Fixes since v1.5.4.4
 --------------------
 
- * "git fetch there" when the URL information came from the Cogito style
+ * "but fetch there" when the URL information came from the Cobuto style
    branches/there file did not update refs/heads/there (regression in
    1.5.4).
 
@@ -14,32 +14,32 @@ Fixes since v1.5.4.4
  * You couldn't specify a custom editor whose path contains a whitespace
    via GIT_EDITOR (and core.editor).
 
- * The subdirectory filter to "git filter-branch" mishandled a history
+ * The subdirectory filter to "but filter-branch" mishandled a history
    where the subdirectory becomes empty and then later becomes non-empty.
 
- * "git shortlog" gave an empty line if the original cummit message was
+ * "but shortlog" gave an empty line if the original cummit message was
    malformed (e.g. a botched import from foreign SCM).  Now it finds the
    first non-empty line and uses it for better information.
 
- * When the user fails to give a revision parameter to "git svn", an error
+ * When the user fails to give a revision parameter to "but svn", an error
    from the Perl interpreter was issued because the script lacked proper
    error checking.
 
- * After "git rebase" stopped due to conflicts, if the user played with
-   "git reset" and friends, "git rebase --abort" failed to go back to the
+ * After "but rebase" stopped due to conflicts, if the user played with
+   "but reset" and friends, "but rebase --abort" failed to go back to the
    correct cummit.
 
- * Additional work trees prepared with git-new-workdir (in contrib/) did
-   not share git-svn metadata directory .git/svn with the original.
+ * Additional work trees prepared with but-new-workdir (in contrib/) did
+   not share but-svn metadata directory .but/svn with the original.
 
- * "git-merge-recursive" did not mark addition of the same path with
+ * "but-merge-recursive" did not mark addition of the same path with
    different filemodes correctly as a conflict.
 
- * "gitweb" gave malformed URL when pathinfo stype paths are in use.
+ * "butweb" gave malformed URL when pathinfo stype paths are in use.
 
- * "-n" stands for "--no-tags" again for "git fetch".
+ * "-n" stands for "--no-tags" again for "but fetch".
 
- * "git format-patch" did not detect the need to add 8-bit MIME header
+ * "but format-patch" did not detect the need to add 8-bit MIME header
    when the user used format.header configuration.
 
  * "rev~" revision specifier used to mean "rev", which was inconsistent
@@ -47,10 +47,10 @@ Fixes since v1.5.4.4
    also is the same as "rev^1"), and "rev~0" is the same as "rev^0"
    (i.e. it has to be a cummit).
 
- * "git quiltimport" did not grok empty lines, lines in "file -pNNN"
+ * "but quiltimport" did not grok empty lines, lines in "file -pNNN"
    format to specify the prefix levels and lines with trailing comments.
 
- * "git rebase -m" triggered pre-cummit verification, which made
+ * "but rebase -m" triggered pre-cummit verification, which made
    "rebase --continue" impossible.
 
 As usual, it also comes with many documentation fixes and clarifications.

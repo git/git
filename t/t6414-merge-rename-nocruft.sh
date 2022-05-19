@@ -44,39 +44,39 @@ test_expect_success 'setup' '
 	O OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 	EOF
 
-	git add A M &&
-	git cummit -m "initial has A and M" &&
-	git branch white &&
-	git branch red &&
-	git branch blue &&
+	but add A M &&
+	but cummit -m "initial has A and M" &&
+	but branch white &&
+	but branch red &&
+	but branch blue &&
 
-	git checkout white &&
+	but checkout white &&
 	sed -e "/^g /s/.*/g : white changes a line/" <A >B &&
 	sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 	rm -f A M &&
-	git update-index --add --remove A B M N &&
-	git cummit -m "white renames A->B, M->N" &&
+	but update-index --add --remove A B M N &&
+	but cummit -m "white renames A->B, M->N" &&
 
-	git checkout red &&
+	but checkout red &&
 	echo created by red >R &&
-	git update-index --add R &&
-	git cummit -m "red creates R" &&
+	but update-index --add R &&
+	but cummit -m "red creates R" &&
 
-	git checkout blue &&
+	but checkout blue &&
 	sed -e "/^o /s/.*/g : blue changes a line/" <A >B &&
 	rm -f A &&
 	mv B A &&
-	git update-index A &&
-	git cummit -m "blue modify A" &&
+	but update-index A &&
+	but cummit -m "blue modify A" &&
 
-	git checkout main
+	but checkout main
 '
 
 # This test broke in 65ac6e9c3f47807cb603af07a6a9e1a43bc119ae
 test_expect_success 'merge white into red (A->B,M->N)' '
-	git checkout -b red-white red &&
-	git merge white &&
-	git write-tree &&
+	but checkout -b red-white red &&
+	but merge white &&
+	but write-tree &&
 	test_path_is_file B &&
 	test_path_is_file N &&
 	test_path_is_file R &&
@@ -86,10 +86,10 @@ test_expect_success 'merge white into red (A->B,M->N)' '
 
 # This test broke in 8371234ecaaf6e14fe3f2082a855eff1bbd79ae9
 test_expect_success 'merge blue into white (A->B, mod A, A untracked)' '
-	git checkout -b white-blue white &&
+	but checkout -b white-blue white &&
 	echo dirty >A &&
-	git merge blue &&
-	git write-tree &&
+	but merge blue &&
+	but write-tree &&
 	test_path_is_file A &&
 	echo dirty >expect &&
 	test_cmp expect A &&

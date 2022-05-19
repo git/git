@@ -15,33 +15,33 @@ Fixes since v1.5.6.3
 * Bash completion wasted too many cycles; this has been optimized to be
   usable again.
 
-* Bash completion lost ref part when completing something like "git show
+* Bash completion lost ref part when completing something like "but show
   pu:Makefile".
 
-* "git-cvsserver" did not clean up its temporary working area after annotate
+* "but-cvsserver" did not clean up its temporary working area after annotate
   request.
 
-* "git-daemon" called syslog() from its signal handler, which was a
+* "but-daemon" called syslog() from its signal handler, which was a
   no-no.
 
-* "git-fetch" into an empty repository used to remind that the fetch will
+* "but-fetch" into an empty repository used to remind that the fetch will
    be huge by saying "no common cummits", but this was an unnecessary
    noise; it is already known by the user anyway.
 
-* "git-http-fetch" would have segfaulted when pack idx file retrieved
+* "but-http-fetch" would have segfaulted when pack idx file retrieved
   from the other side was corrupt.
 
-* "git-index-pack" used too much memory when dealing with a deep delta chain.
+* "but-index-pack" used too much memory when dealing with a deep delta chain.
 
-* "git-mailinfo" (hence "git-am") did not correctly handle in-body [PATCH]
+* "but-mailinfo" (hence "but-am") did not correctly handle in-body [PATCH]
   line to override the cummit title taken from the mail Subject header.
 
-* "git-rebase -i -p" lost parents that are not involved in the history
+* "but-rebase -i -p" lost parents that are not involved in the history
   being rewritten.
 
-* "git-rm" lost track of where the index file was when GIT_DIR was
+* "but-rm" lost track of where the index file was when GIT_DIR was
   specified as a relative path.
 
-* "git-rev-list --quiet" was not quiet as advertised.
+* "but-rev-list --quiet" was not quiet as advertised.
 
 Contains other various documentation fixes.

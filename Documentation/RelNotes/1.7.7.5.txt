@@ -7,7 +7,7 @@ Fixes since v1.7.7.4
  * After fetching from a remote that has very long refname, the reporting
    output could have corrupted by overrunning a static buffer.
 
- * "git checkout" and "git merge" treated in-tree .gitignore and exclude
+ * "but checkout" and "but merge" treated in-tree .butignore and exclude
    file in $GIT_DIR/info/ directory inconsistently when deciding which
    untracked files are ignored and expendable.
 

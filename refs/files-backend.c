@@ -59,7 +59,7 @@ struct files_ref_store {
 	struct ref_store base;
 	unsigned int store_flags;
 
-	char *gitcommondir;
+	char *butcommondir;
 
 	struct ref_cache *loose;
 
@@ -79,23 +79,23 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
  * set of caches.
  */
 static struct ref_store *files_ref_store_create(struct repository *repo,
-						const char *gitdir,
+						const char *butdir,
 						unsigned int flags)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_store_init(ref_store, repo, gitdir, &refs_be_files);
+	base_ref_store_init(ref_store, repo, butdir, &refs_be_files);
 	refs->store_flags = flags;
-	get_common_dir_noenv(&sb, gitdir);
-	refs->gitcommondir = strbuf_detach(&sb, NULL);
+	get_common_dir_noenv(&sb, butdir);
+	refs->butcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =
-		packed_ref_store_create(repo, refs->gitcommondir, flags);
+		packed_ref_store_create(repo, refs->butcommondir, flags);
 
-	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
+	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.butdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
-			      &refs->gitcommondir);
+			      &refs->butcommondir);
 
 	return ref_store;
 }
@@ -150,10 +150,10 @@ static void files_reflog_path_other_worktrees(struct files_ref_store *refs,
 		BUG("refname %s is not a other-worktree ref", refname);
 
 	if (worktree_name)
-		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->gitcommondir,
+		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->butcommondir,
 			    length, worktree_name, real_ref);
 	else
-		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir,
+		strbuf_addf(sb, "%s/logs/%s", refs->butcommondir,
 			    real_ref);
 }
 
@@ -164,14 +164,14 @@ static void files_reflog_path(struct files_ref_store *refs,
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
-		strbuf_addf(sb, "%s/logs/%s", refs->base.gitdir, refname);
+		strbuf_addf(sb, "%s/logs/%s", refs->base.butdir, refname);
 		break;
 	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_MAIN_PSEUDOREF:
 		files_reflog_path_other_worktrees(refs, sb, refname);
 		break;
 	case REF_TYPE_NORMAL:
-		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
+		strbuf_addf(sb, "%s/logs/%s", refs->butcommondir, refname);
 		break;
 	default:
 		BUG("unknown ref type %d of ref %s",
@@ -186,7 +186,7 @@ static void files_ref_path(struct files_ref_store *refs,
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
-		strbuf_addf(sb, "%s/%s", refs->base.gitdir, refname);
+		strbuf_addf(sb, "%s/%s", refs->base.butdir, refname);
 		break;
 	case REF_TYPE_MAIN_PSEUDOREF:
 		if (!skip_prefix(refname, "main-worktree/", &refname))
@@ -194,7 +194,7 @@ static void files_ref_path(struct files_ref_store *refs,
 		/* fallthrough */
 	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_NORMAL:
-		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
+		strbuf_addf(sb, "%s/%s", refs->butcommondir, refname);
 		break;
 	default:
 		BUG("unknown ref type %d of ref %s",
@@ -1308,8 +1308,8 @@ error:
 }
 
 /*
- * People using contrib's git-new-workdir have .git/logs/refs ->
- * /some/other/path/.git/logs/refs, and that may live on another device.
+ * People using contrib's but-new-workdir have .but/logs/refs ->
+ * /some/other/path/.but/logs/refs, and that may live on another device.
  *
  * IOW, to avoid cross device rename errors, the temporary renamed log must
  * live into logs/refs.
@@ -1740,7 +1740,7 @@ static int files_log_ref_write(struct files_ref_store *refs,
 	if (logfd < 0)
 		return 0;
 	result = log_ref_write_fd(logfd, old_oid, new_oid,
-				  git_cummitter_info(0), msg);
+				  but_cummitter_info(0), msg);
 	if (result) {
 		struct strbuf sb = STRBUF_INIT;
 		int save_errno = errno;
@@ -1997,8 +1997,8 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 	    !(timestamp = parse_timestamp(email_end + 2, &message, 10)) ||
 	    !message || message[0] != ' ' ||
 	    (message[1] != '+' && message[1] != '-') ||
-	    !isdigit(message[2]) || !isdigit(message[3]) ||
-	    !isdigit(message[4]) || !isdigit(message[5]))
+	    !isdibut(message[2]) || !isdibut(message[3]) ||
+	    !isdibut(message[4]) || !isdibut(message[5]))
 		return 0; /* corrupt? */
 	email_end[1] = '\0';
 	tz = strtol(message + 1, NULL, 10);
@@ -2228,14 +2228,14 @@ static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 };
 
 static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
-						  const char *gitdir)
+						  const char *butdir)
 {
 	struct dir_iterator *diter;
 	struct files_reflog_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_addf(&sb, "%s/logs", gitdir);
+	strbuf_addf(&sb, "%s/logs", butdir);
 
 	diter = dir_iterator_begin(sb.buf, 0);
 	if (!diter) {
@@ -2285,12 +2285,12 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 		files_downcast(ref_store, REF_STORE_READ,
 			       "reflog_iterator_begin");
 
-	if (!strcmp(refs->base.gitdir, refs->gitcommondir)) {
-		return reflog_iterator_begin(ref_store, refs->gitcommondir);
+	if (!strcmp(refs->base.butdir, refs->butcommondir)) {
+		return reflog_iterator_begin(ref_store, refs->butcommondir);
 	} else {
 		return merge_ref_iterator_begin(
-			0, reflog_iterator_begin(ref_store, refs->base.gitdir),
-			reflog_iterator_begin(ref_store, refs->gitcommondir),
+			0, reflog_iterator_begin(ref_store, refs->base.butdir),
+			reflog_iterator_begin(ref_store, refs->butcommondir),
 			reflog_iterator_select, refs);
 	}
 }
@@ -3266,7 +3266,7 @@ static int files_init_db(struct ref_store *ref_store, struct strbuf *err)
 	struct strbuf sb = STRBUF_INIT;
 
 	/*
-	 * Create .git/refs/{heads,tags}
+	 * Create .but/refs/{heads,tags}
 	 */
 	files_ref_path(refs, &sb, "refs/heads");
 	safe_create_dir(sb.buf, 1);

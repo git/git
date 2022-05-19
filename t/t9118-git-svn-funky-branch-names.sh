@@ -3,8 +3,8 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git svn funky branch names'
-. ./lib-git-svn.sh
+test_description='but svn funky branch names'
+. ./lib-but-svn.sh
 
 # Abo-Uebernahme (Bug #994)
 scary_uri='Abo-Uebernahme%20%28Bug%20%23994%29'
@@ -41,49 +41,49 @@ test_expect_success 'setup svnrepo' '
 non_reflog=$(svn_cmd ls "$svnrepo/pr ject/branches" | grep not-a | sed 's/\///' | sed 's/@/%40/')
 
 test_expect_success 'test clone with funky branch names' '
-	git svn clone -s "$svnrepo/pr ject" project &&
+	but svn clone -s "$svnrepo/pr ject" project &&
 	(
 		cd project &&
-		git rev-parse "refs/remotes/origin/fun%20plugin" &&
-		git rev-parse "refs/remotes/origin/more%20fun%20plugin!" &&
-		git rev-parse "refs/remotes/origin/$scary_ref" &&
-		git rev-parse "refs/remotes/origin/%2Eleading_dot" &&
+		but rev-parse "refs/remotes/origin/fun%20plugin" &&
+		but rev-parse "refs/remotes/origin/more%20fun%20plugin!" &&
+		but rev-parse "refs/remotes/origin/$scary_ref" &&
+		but rev-parse "refs/remotes/origin/%2Eleading_dot" &&
 		if test_have_prereq !MINGW
 		then
-			git rev-parse "refs/remotes/origin/trailing_dot%2E"
+			but rev-parse "refs/remotes/origin/trailing_dot%2E"
 		fi &&
-		git rev-parse "refs/remotes/origin/trailing_dotlock%2Elock" &&
-		git rev-parse "refs/remotes/origin/$non_reflog"
+		but rev-parse "refs/remotes/origin/trailing_dotlock%2Elock" &&
+		but rev-parse "refs/remotes/origin/$non_reflog"
 	)
 	'
 
 test_expect_success 'test dcummit to funky branch' "
 	(
 		cd project &&
-		git reset --hard 'refs/remotes/origin/more%20fun%20plugin!' &&
+		but reset --hard 'refs/remotes/origin/more%20fun%20plugin!' &&
 		echo hello >> foo &&
-		git cummit -m 'hello' -- foo &&
-		git svn dcummit
+		but cummit -m 'hello' -- foo &&
+		but svn dcummit
 	)
 	"
 
 test_expect_success 'test dcummit to scary branch' '
 	(
 		cd project &&
-		git reset --hard "refs/remotes/origin/$scary_ref" &&
+		but reset --hard "refs/remotes/origin/$scary_ref" &&
 		echo urls are scary >> foo &&
-		git cummit -m "eep" -- foo &&
-		git svn dcummit
+		but cummit -m "eep" -- foo &&
+		but svn dcummit
 	)
 	'
 
 test_expect_success 'test dcummit to trailing_dotlock branch' '
 	(
 		cd project &&
-		git reset --hard "refs/remotes/origin/trailing_dotlock%2Elock" &&
+		but reset --hard "refs/remotes/origin/trailing_dotlock%2Elock" &&
 		echo who names branches like this anyway? >> foo &&
-		git cummit -m "bar" -- foo &&
-		git svn dcummit
+		but cummit -m "bar" -- foo &&
+		but svn dcummit
 	)
 	'
 

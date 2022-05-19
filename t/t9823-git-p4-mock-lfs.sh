@@ -2,7 +2,7 @@
 
 test_description='Clone repositories and store files in Mock LFS'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_file_is_not_in_mock_lfs () {
 	FILE="$1" &&
@@ -15,8 +15,8 @@ test_file_is_not_in_mock_lfs () {
 test_file_is_in_mock_lfs () {
 	FILE="$1" &&
 	CONTENT="$2" &&
-	LOCAL_STORAGE=".git/mock-storage/local/$CONTENT" &&
-	SERVER_STORAGE=".git/mock-storage/remote/$CONTENT" &&
+	LOCAL_STORAGE=".but/mock-storage/local/$CONTENT" &&
+	SERVER_STORAGE=".but/mock-storage/remote/$CONTENT" &&
 	echo "pointer-$CONTENT" >expect_pointer &&
 	echo "$CONTENT" >expect_content &&
 	test_path_is_file "$FILE" &&
@@ -30,8 +30,8 @@ test_file_is_in_mock_lfs () {
 test_file_is_deleted_in_mock_lfs () {
 	FILE="$1" &&
 	CONTENT="$2" &&
-	LOCAL_STORAGE=".git/mock-storage/local/$CONTENT" &&
-	SERVER_STORAGE=".git/mock-storage/remote/$CONTENT" &&
+	LOCAL_STORAGE=".but/mock-storage/local/$CONTENT" &&
+	SERVER_STORAGE=".but/mock-storage/remote/$CONTENT" &&
 	echo "pointer-$CONTENT" >expect_pointer &&
 	echo "$CONTENT" >expect_content &&
 	test_path_is_missing "$FILE" &&
@@ -76,67 +76,67 @@ test_expect_success 'Create repo with binary files' '
 
 test_expect_success 'Store files in Mock LFS based on size (>24 bytes)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem MockLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git config git-p4.largeFilePush True &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem MockLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but config but-p4.largeFilePush True &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_is_not_in_mock_lfs file1.txt "content 1 txt 23 bytes" &&
 		test_file_is_in_mock_lfs file2.dat "content 2-3 bin 25 bytes" &&
 		test_file_is_in_mock_lfs "path with spaces/file3.bin" "content 2-3 bin 25 bytes" &&
 		test_file_is_in_mock_lfs file4.bin "content 4 bin 26 bytes XX" &&
 
-		test_file_count_in_dir ".git/mock-storage/local" 2 &&
-		test_file_count_in_dir ".git/mock-storage/remote" 2
+		test_file_count_in_dir ".but/mock-storage/local" 2 &&
+		test_file_count_in_dir ".but/mock-storage/remote" 2
 	)
 '
 
 test_expect_success 'Store files in Mock LFS based on extension (dat)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem MockLFS &&
-		git config git-p4.largeFileExtensions dat &&
-		git config git-p4.largeFilePush True &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem MockLFS &&
+		but config but-p4.largeFileExtensions dat &&
+		but config but-p4.largeFilePush True &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_is_not_in_mock_lfs file1.txt "content 1 txt 23 bytes" &&
 		test_file_is_in_mock_lfs file2.dat "content 2-3 bin 25 bytes" &&
 		test_file_is_not_in_mock_lfs "path with spaces/file3.bin" "content 2-3 bin 25 bytes" &&
 		test_file_is_not_in_mock_lfs file4.bin "content 4 bin 26 bytes XX" &&
 
-		test_file_count_in_dir ".git/mock-storage/local" 1 &&
-		test_file_count_in_dir ".git/mock-storage/remote" 1
+		test_file_count_in_dir ".but/mock-storage/local" 1 &&
+		test_file_count_in_dir ".but/mock-storage/remote" 1
 	)
 '
 
-test_expect_success 'Store files in Mock LFS based on extension (dat) and use git p4 sync and no client spec' '
-	test_when_finished cleanup_git &&
+test_expect_success 'Store files in Mock LFS based on extension (dat) and use but p4 sync and no client spec' '
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem MockLFS &&
-		git config git-p4.largeFileExtensions dat &&
-		git config git-p4.largeFilePush True &&
-		git p4 sync //depot &&
-		git checkout p4/master &&
+		cd "$but" &&
+		but init &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem MockLFS &&
+		but config but-p4.largeFileExtensions dat &&
+		but config but-p4.largeFilePush True &&
+		but p4 sync //depot &&
+		but checkout p4/master &&
 
 		test_file_is_not_in_mock_lfs file1.txt "content 1 txt 23 bytes" &&
 		test_file_is_in_mock_lfs file2.dat "content 2-3 bin 25 bytes" &&
 		test_file_is_not_in_mock_lfs "path with spaces/file3.bin" "content 2-3 bin 25 bytes" &&
 		test_file_is_not_in_mock_lfs file4.bin "content 4 bin 26 bytes XX" &&
 
-		test_file_count_in_dir ".git/mock-storage/local" 1 &&
-		test_file_count_in_dir ".git/mock-storage/remote" 1
+		test_file_count_in_dir ".but/mock-storage/local" 1 &&
+		test_file_count_in_dir ".but/mock-storage/remote" 1
 	)
 '
 
@@ -149,39 +149,39 @@ test_expect_success 'Remove file from repo and store files in Mock LFS based on 
 	) &&
 
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem MockLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git config git-p4.largeFilePush True &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem MockLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but config but-p4.largeFilePush True &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_is_not_in_mock_lfs file1.txt "content 1 txt 23 bytes" &&
 		test_file_is_in_mock_lfs file2.dat "content 2-3 bin 25 bytes" &&
 		test_file_is_in_mock_lfs "path with spaces/file3.bin" "content 2-3 bin 25 bytes" &&
 		test_file_is_deleted_in_mock_lfs file4.bin "content 4 bin 26 bytes XX" &&
 
-		test_file_count_in_dir ".git/mock-storage/local" 2 &&
-		test_file_count_in_dir ".git/mock-storage/remote" 2
+		test_file_count_in_dir ".but/mock-storage/local" 2 &&
+		test_file_count_in_dir ".but/mock-storage/remote" 2
 	)
 '
 
-test_expect_success 'Run git p4 submit in repo configured with large file system' '
+test_expect_success 'Run but p4 submit in repo configured with large file system' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem MockLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git config git-p4.largeFilePush True &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem MockLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but config but-p4.largeFilePush True &&
+		but p4 clone --destination="$but" //depot@all &&
 
-		test_must_fail git p4 submit
+		test_must_fail but p4 submit
 	)
 '
 

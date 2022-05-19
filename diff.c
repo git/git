@@ -143,14 +143,14 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 			options->flags.dirstat_cumulative = 0;
 		} else if (!strcmp(p, "cumulative")) {
 			options->flags.dirstat_cumulative = 1;
-		} else if (isdigit(*p)) {
+		} else if (isdibut(*p)) {
 			char *end;
 			int permille = strtoul(p, &end, 10) * 10;
-			if (*end == '.' && isdigit(*++end)) {
-				/* only use first digit */
+			if (*end == '.' && isdibut(*++end)) {
+				/* only use first dibut */
 				permille += *end - '0';
-				/* .. and ignore any further digits */
-				while (isdigit(*++end))
+				/* .. and ignore any further dibuts */
+				while (isdibut(*++end))
 					; /* nothing */
 			}
 			if (!*end)
@@ -180,21 +180,21 @@ static int parse_submodule_params(struct diff_options *options, const char *valu
 	else if (!strcmp(value, "diff"))
 		options->submodule_format = DIFF_SUBMODULE_INLINE_DIFF;
 	/*
-	 * Please update $__git_diff_submodule_formats in
-	 * git-completion.bash when you add new formats.
+	 * Please update $__but_diff_submodule_formats in
+	 * but-completion.bash when you add new formats.
 	 */
 	else
 		return -1;
 	return 0;
 }
 
-int git_config_rename(const char *var, const char *value)
+int but_config_rename(const char *var, const char *value)
 {
 	if (!value)
 		return DIFF_DETECT_RENAME;
 	if (!strcasecmp(value, "copies") || !strcasecmp(value, "copy"))
 		return  DIFF_DETECT_COPY;
-	return git_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
+	return but_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
 }
 
 long parse_algorithm_value(const char *value)
@@ -210,7 +210,7 @@ long parse_algorithm_value(const char *value)
 	else if (!strcasecmp(value, "histogram"))
 		return XDF_HISTOGRAM_DIFF;
 	/*
-	 * Please update $__git_diff_algorithms in git-completion.bash
+	 * Please update $__but_diff_algorithms in but-completion.bash
 	 * when you add new algorithms.
 	 */
 	return -1;
@@ -255,7 +255,7 @@ static int parse_ws_error_highlight(const char *arg)
 
 /*
  * These are to give UI layer defaults.
- * The core-level commands such as git-diff-files should
+ * The core-level commands such as but-diff-files should
  * never be affected by the setting of diff.renames
  * the user happens to have in the configuration file.
  */
@@ -264,16 +264,16 @@ void init_diff_ui_defaults(void)
 	diff_detect_rename_default = DIFF_DETECT_RENAME;
 }
 
-int git_diff_heuristic_config(const char *var, const char *value, void *cb)
+int but_diff_heuristic_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.indentheuristic"))
-		diff_indent_heuristic = git_config_bool(var, value);
+		diff_indent_heuristic = but_config_bool(var, value);
 	return 0;
 }
 
 static int parse_color_moved(const char *arg)
 {
-	switch (git_parse_maybe_bool(arg)) {
+	switch (but_parse_maybe_bool(arg)) {
 	case 0:
 		return COLOR_MOVED_NO;
 	case 1:
@@ -342,10 +342,10 @@ static unsigned parse_color_moved_ws(const char *arg)
 	return ret;
 }
 
-int git_diff_ui_config(const char *var, const char *value, void *cb)
+int but_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
-		diff_use_color_default = git_config_colorbool(var, value);
+		diff_use_color_default = but_config_colorbool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.colormoved")) {
@@ -363,47 +363,47 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "diff.context")) {
-		diff_context_default = git_config_int(var, value);
+		diff_context_default = but_config_int(var, value);
 		if (diff_context_default < 0)
 			return -1;
 		return 0;
 	}
 	if (!strcmp(var, "diff.interhunkcontext")) {
-		diff_interhunk_context_default = git_config_int(var, value);
+		diff_interhunk_context_default = but_config_int(var, value);
 		if (diff_interhunk_context_default < 0)
 			return -1;
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
-		diff_detect_rename_default = git_config_rename(var, value);
+		diff_detect_rename_default = but_config_rename(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.autorefreshindex")) {
-		diff_auto_refresh_index = git_config_bool(var, value);
+		diff_auto_refresh_index = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.mnemonicprefix")) {
-		diff_mnemonic_prefix = git_config_bool(var, value);
+		diff_mnemonic_prefix = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.noprefix")) {
-		diff_no_prefix = git_config_bool(var, value);
+		diff_no_prefix = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.relative")) {
-		diff_relative = git_config_bool(var, value);
+		diff_relative = but_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.statgraphwidth")) {
-		diff_stat_graph_width = git_config_int(var, value);
+		diff_stat_graph_width = but_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.external"))
-		return git_config_string(&external_diff_cmd_cfg, var, value);
+		return but_config_string(&external_diff_cmd_cfg, var, value);
 	if (!strcmp(var, "diff.wordregex"))
-		return git_config_string(&diff_word_regex_cfg, var, value);
+		return but_config_string(&diff_word_regex_cfg, var, value);
 	if (!strcmp(var, "diff.orderfile"))
-		return git_config_pathname(&diff_order_file_cfg, var, value);
+		return but_config_pathname(&diff_order_file_cfg, var, value);
 
 	if (!strcmp(var, "diff.ignoresubmodules"))
 		handle_ignore_submodules_arg(&default_diff_options, value);
@@ -422,18 +422,18 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_color_config(var, value, cb) < 0)
+	if (but_color_config(var, value, cb) < 0)
 		return -1;
 
-	return git_diff_basic_config(var, value, cb);
+	return but_diff_basic_config(var, value, cb);
 }
 
-int git_diff_basic_config(const char *var, const char *value, void *cb)
+int but_diff_basic_config(const char *var, const char *value, void *cb)
 {
 	const char *name;
 
 	if (!strcmp(var, "diff.renamelimit")) {
-		diff_rename_limit_default = git_config_int(var, value);
+		diff_rename_limit_default = but_config_int(var, value);
 		return 0;
 	}
 
@@ -462,7 +462,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.suppressblankempty") ||
 			/* for backwards compatibility */
 			!strcmp(var, "diff.suppress-blank-empty")) {
-		diff_suppress_blank_empty = git_config_bool(var, value);
+		diff_suppress_blank_empty = but_config_bool(var, value);
 		return 0;
 	}
 
@@ -477,10 +477,10 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_diff_heuristic_config(var, value, cb) < 0)
+	if (but_diff_heuristic_config(var, value, cb) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static char *quote_two(const char *one, const char *two)
@@ -3216,19 +3216,19 @@ static unsigned char *deflate_it(char *data,
 {
 	int bound;
 	unsigned char *deflated;
-	git_zstream stream;
+	but_zstream stream;
 
-	git_deflate_init(&stream, zlib_compression_level);
-	bound = git_deflate_bound(&stream, size);
+	but_deflate_init(&stream, zlib_compression_level);
+	bound = but_deflate_bound(&stream, size);
 	deflated = xmalloc(bound);
 	stream.next_out = deflated;
 	stream.avail_out = bound;
 
 	stream.next_in = (unsigned char *)data;
 	stream.avail_in = size;
-	while (git_deflate(&stream, Z_FINISH) == Z_OK)
+	while (but_deflate(&stream, Z_FINISH) == Z_OK)
 		; /* nothing */
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 	*result_size = stream.total_out;
 	return deflated;
 }
@@ -3456,7 +3456,7 @@ static void builtin_diff(const char *name_a,
 		lbl[0] = a_one;
 		lbl[1] = b_two;
 	}
-	strbuf_addf(&header, "%s%sdiff --git %s %s%s\n", line_prefix, meta, a_one, b_two, reset);
+	strbuf_addf(&header, "%s%sdiff --but %s %s%s\n", line_prefix, meta, a_one, b_two, reset);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
 		strbuf_addf(&header, "%s%snew file mode %06o%s\n", line_prefix, meta, two->mode, reset);
@@ -3897,7 +3897,7 @@ static int reuse_worktree_file(struct index_state *istate,
 	 * Similarly, if we'd have to convert the file contents anyway, that
 	 * makes the optimization not worthwhile.
 	 */
-	if (!want_file && would_convert_to_git(istate, name))
+	if (!want_file && would_convert_to_but(istate, name))
 		return 0;
 
 	/*
@@ -3937,7 +3937,7 @@ static int reuse_worktree_file(struct index_state *istate,
 	return 0;
 }
 
-static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
+static int diff_populate_butlink(struct diff_filespec *s, int size_only)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *dirty = "";
@@ -3991,7 +3991,7 @@ int diff_populate_filespec(struct repository *r,
 		return 0;
 
 	if (S_ISGITLINK(s->mode))
-		return diff_populate_gitlink(s, size_only);
+		return diff_populate_butlink(s, size_only);
 
 	if (!s->oid_valid ||
 	    reuse_worktree_file(r->index, s->path, &s->oid, 0)) {
@@ -4027,13 +4027,13 @@ int diff_populate_filespec(struct repository *r,
 		 * point if the path requires us to run the content
 		 * conversion.
 		 */
-		if (size_only && !would_convert_to_git(r->index, s->path))
+		if (size_only && !would_convert_to_but(r->index, s->path))
 			return 0;
 
 		/*
 		 * Note: this check uses xsize_t(st.st_size) that may
 		 * not be the true size of the blob after it goes
-		 * through convert_to_git().  This may not strictly be
+		 * through convert_to_but().  This may not strictly be
 		 * correct, but the whole point of big_file_threshold
 		 * and is_binary check being that we want to avoid
 		 * opening the file and inspecting the contents, this
@@ -4052,9 +4052,9 @@ int diff_populate_filespec(struct repository *r,
 		s->should_munmap = 1;
 
 		/*
-		 * Convert from working tree format to canonical git format
+		 * Convert from working tree format to canonical but format
 		 */
-		if (convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags)) {
+		if (convert_to_but(r->index, s->path, s->data, s->size, &buf, conv_flags)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
@@ -5606,10 +5606,10 @@ static void prep_parse_options(struct diff_options *options)
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
 			       diff_opt_submodule),
 		OPT_SET_INT_F(0, "ita-invisible-in-index", &options->ita_invisible_in_index,
-			      N_("hide 'git add -N' entries from the index"),
+			      N_("hide 'but add -N' entries from the index"),
 			      1, PARSE_OPT_NONEG),
 		OPT_SET_INT_F(0, "ita-visible-in-index", &options->ita_invisible_in_index,
-			      N_("treat 'git add -N' entries as real in the index"),
+			      N_("treat 'but add -N' entries as real in the index"),
 			      0, PARSE_OPT_NONEG),
 		OPT_CALLBACK_F('S', NULL, options, N_("<string>"),
 			       N_("look for differences that change the number of occurrences of the specified string"),
@@ -6119,7 +6119,7 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	git_hash_ctx *ctx;
+	but_hash_ctx *ctx;
 	int patchlen;
 };
 
@@ -6136,7 +6136,7 @@ static int remove_space(char *line, int len)
 	return dst - line;
 }
 
-void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx)
+void flush_one_hunk(struct object_id *result, but_hash_ctx *ctx)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned short carry = 0;
@@ -6166,12 +6166,12 @@ static int patch_id_consume(void *priv, char *line, unsigned long len)
 	return 0;
 }
 
-static void patch_id_add_string(git_hash_ctx *ctx, const char *str)
+static void patch_id_add_string(but_hash_ctx *ctx, const char *str)
 {
 	the_hash_algo->update_fn(ctx, str, strlen(str));
 }
 
-static void patch_id_add_mode(git_hash_ctx *ctx, unsigned mode)
+static void patch_id_add_mode(but_hash_ctx *ctx, unsigned mode)
 {
 	/* large enough for 2^32 in octal */
 	char buf[12];
@@ -6184,7 +6184,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 	struct patch_id_t data;
 
 	the_hash_algo->init_fn(&ctx);
@@ -6218,7 +6218,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
 		len2 = remove_space(p->two->path, strlen(p->two->path));
-		patch_id_add_string(&ctx, "diff--git");
+		patch_id_add_string(&ctx, "diff--but");
 		patch_id_add_string(&ctx, "a/");
 		the_hash_algo->update_fn(&ctx, p->one->path, len1);
 		patch_id_add_string(&ctx, "b/");
@@ -7093,7 +7093,7 @@ void setup_diff_pager(struct diff_options *opt)
 	 * former case, as we will generate no output. Since we still properly
 	 * report our exit code even when a pager is run, we _could_ run a
 	 * pager with --exit-code. But since we have not done so historically,
-	 * and because it is easy to find people oneline advising "git diff
+	 * and because it is easy to find people oneline advising "but diff
 	 * --exit-code" in hooks and other scripts, we do not do so.
 	 */
 	if (!opt->flags.exit_with_status &&

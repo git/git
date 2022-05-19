@@ -11,7 +11,7 @@ Backward compatibility notes and other notable changes.
    this (mis)feature.  That is now scheduled to happen in Git v2.16,
    the next major release after this one.
 
- * Git now avoids blindly falling back to ".git" when the setup
+ * Git now avoids blindly falling back to ".but" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
    happens to work right now may be broken by a call to BUG().
    We've tried hard to locate such cases and fixed them, but there
@@ -31,41 +31,41 @@ UI, Workflows & Features
    and an old example in it that added a sign-off manually has been
    improved to use the interpret-trailers command.
 
- * The advice message given when "git rebase" stops for conflicting
+ * The advice message given when "but rebase" stops for conflicting
    changes has been improved.
 
  * The "rerere-train" script (in contrib/) learned the "--overwrite"
    option to allow overwriting existing recorded resolutions.
 
- * "git contacts" (in contrib/) now lists the address on the
+ * "but contacts" (in contrib/) now lists the address on the
    "Reported-by:" trailer to its output, in addition to those on
    S-o-b: and other trailers, to make it easier to notify (and thank)
    the original bug reporter.
 
- * "git rebase", especially when it is run by mistake and ends up
+ * "but rebase", especially when it is run by mistake and ends up
    trying to replay many changes, spent long time in silence.  The
    command has been taught to show progress report when it spends
    long time preparing these many changes to replay (which would give
    the user a chance to abort with ^C).
 
- * "git merge" learned a "--signoff" option to add the Signed-off-by:
+ * "but merge" learned a "--signoff" option to add the Signed-off-by:
    trailer with the cummitter's name.
 
- * "git diff" learned to optionally paint new lines that are the same
+ * "but diff" learned to optionally paint new lines that are the same
    as deleted lines elsewhere differently from genuinely new lines.
 
- * "git interpret-trailers" learned to take the trailer specifications
+ * "but interpret-trailers" learned to take the trailer specifications
    from the command line that overrides the configured values.
 
- * "git interpret-trailers" has been taught a "--parse" and a few
+ * "but interpret-trailers" has been taught a "--parse" and a few
    other options to make it easier for scripts to grab existing
    trailer lines from a cummit log message.
 
- * The "--format=%(trailers)" option "git log" and its friends take
+ * The "--format=%(trailers)" option "but log" and its friends take
    learned to take the 'unfold' and 'only' modifiers to normalize its
-   output, e.g. "git log --format=%(trailers:only,unfold)".
+   output, e.g. "but log --format=%(trailers:only,unfold)".
 
- * "gitweb" shows a link to visit the 'raw' contents of blobs in the
+ * "butweb" shows a link to visit the 'raw' contents of blobs in the
    history overview page.
 
  * "[gc] rerereResolved = 5.days" used to be invalid, as the variable
@@ -84,22 +84,22 @@ UI, Workflows & Features
  * The codepath to call external process filter for smudge/clean
    operation learned to show the progress meter.
 
- * "git rev-parse" learned "--is-shallow-repository", that is to be
+ * "but rev-parse" learned "--is-shallow-repository", that is to be
    used in a way similar to existing "--is-bare-repository" and
    friends.
 
- * "git describe --match <pattern>" has been taught to play well with
+ * "but describe --match <pattern>" has been taught to play well with
    the "--all" option.
 
- * "git branch" learned "-c/-C" to create a new branch by copying an
+ * "but branch" learned "-c/-C" to create a new branch by copying an
    existing one.
 
- * Some commands (most notably "git status") makes an opportunistic
+ * Some commands (most notably "but status") makes an opportunistic
    update when performing a read-only operation to help optimize later
    operations in the same repository.  The new "--no-optional-locks"
    option can be passed to Git to disable them.
 
- * "git for-each-ref --format=..." learned a new format element,
+ * "but for-each-ref --format=..." learned a new format element,
    %(trailers), to show only the cummit log trailer part of the log
    message.
 
@@ -123,10 +123,10 @@ Performance, Internal Implementation, Development Support etc.
    pointers and cast them to the type they expect instead.
 
  * Because recent Git for Windows do come with a real msgfmt, the
-   build procedure for git-gui has been updated to use it instead of a
+   build procedure for but-gui has been updated to use it instead of a
    hand-rolled substitute.
 
- * "git grep --recurse-submodules" has been reworked to give a more
+ * "but grep --recurse-submodules" has been reworked to give a more
    consistent output across submodule boundary (and do its thing
    without having to fork a separate process).
 
@@ -136,7 +136,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The "ref-store" code reorganization continues.
 
- * "git cummit" used to discard the index and re-read from the filesystem
+ * "but cummit" used to discard the index and re-read from the filesystem
    just in case the pre-commit hook has updated it in the middle; this
    has been optimized out when we know we do not run the pre-commit hook.
    (merge 680ee550d7 kw/cummit-keep-index-when-pre-cummit-is-not-run later to maint).
@@ -151,8 +151,8 @@ Performance, Internal Implementation, Development Support etc.
    been simplified.
    (merge 8aade107dd jc/simplify-progress later to maint).
 
- * Code clean-up to avoid mixing values read from the .gitmodules file
-   and values read from the .git/config file.
+ * Code clean-up to avoid mixing values read from the .butmodules file
+   and values read from the .but/config file.
 
  * We used to spend more than necessary cycles allocating and freeing
    piece of memory while writing each index entry out.  This has been
@@ -181,24 +181,24 @@ Performance, Internal Implementation, Development Support etc.
    a mechanism for developers to mark that the region of memory
    pointed by a pointer is not lost/leaking to help these tools.
 
- * As "git cummit" to conclude a conflicted "git merge" honors the
-   cummit-msg hook, "git merge" that records a merge cummit that
+ * As "but cummit" to conclude a conflicted "but merge" honors the
+   cummit-msg hook, "but merge" that records a merge cummit that
    cleanly auto-merges should, but it didn't.
 
- * The codepath for "git merge-recursive" has been cleaned up.
+ * The codepath for "but merge-recursive" has been cleaned up.
 
  * Many leaks of strbuf have been fixed.
 
- * "git imap-send" has our own implementation of the protocol and also
+ * "but imap-send" has our own implementation of the protocol and also
    can use more recent libCurl with the imap protocol support.  Update
    the latter so that it can use the credential subsystem, and then
    make it the default option to use, so that we can eventually
    deprecate and remove the former.
 
- * "make style" runs git-clang-format to help developers by pointing
+ * "make style" runs but-clang-format to help developers by pointing
    out coding style issues.
 
- * A test to demonstrate "git mv" failing to adjust nested submodules
+ * A test to demonstrate "but mv" failing to adjust nested submodules
    has been added.
    (merge c514167df2 hv/mv-nested-submodules-test later to maint).
 
@@ -213,12 +213,12 @@ Performance, Internal Implementation, Development Support etc.
  * Add a helper for DLL loading in anticipation for its need in a
    future topic RSN.
 
- * "git status --ignored", when noticing that a directory without any
+ * "but status --ignored", when noticing that a directory without any
    tracked path is ignored, still enumerated all the ignored paths in
    the directory, which is unnecessary.  The codepath has been
    optimized to avoid this overhead.
 
- * The final batch to "git rebase -i" updates to move more code from
+ * The final batch to "but rebase -i" updates to move more code from
    the shell script to C has been merged.
 
  * Operations that do not touch (majority of) packed refs have been
@@ -257,11 +257,11 @@ Fixes since v2.14
  * Numerous bugs in walking of reflogs via "log -g" and friends have
    been fixed.
 
- * "git cummit" when seeing an totally empty message said "you did not
+ * "but cummit" when seeing an totally empty message said "you did not
    edit the message", which is clearly wrong.  The message has been
    corrected.
 
- * When a directory is not readable, "gitweb" fails to build the
+ * When a directory is not readable, "butweb" fails to build the
    project list.  Work this around by skipping such a directory.
 
  * Some versions of GnuPG fails to kill gpg-agent it auto-spawned
@@ -273,93 +273,93 @@ Fixes since v2.14
    daemon is torn down were flaky.  This was fixed by reacting to
    ECONNRESET and behaving as if we got an EOF.
 
- * "git log --tag=no-such-tag" showed log starting from HEAD, which
+ * "but log --tag=no-such-tag" showed log starting from HEAD, which
    has been fixed---it now shows nothing.
 
  * The "tag.pager" configuration variable was useless for those who
    actually create tag objects, as it interfered with the use of an
    editor.  A new mechanism has been introduced for commands to enable
    pager depending on what operation is being carried out to fix this,
-   and then "git tag -l" is made to run pager by default.
+   and then "but tag -l" is made to run pager by default.
 
- * "git push --recurse-submodules $there HEAD:$target" was not
+ * "but push --recurse-submodules $there HEAD:$target" was not
    propagated down to the submodules, but now it is.
 
- * Commands like "git rebase" accepted the --rerere-autoupdate option
+ * Commands like "but rebase" accepted the --rerere-autoupdate option
    from the command line, but did not always use it.  This has been
    fixed.
 
- * "git clone --recurse-submodules --quiet" did not pass the quiet
+ * "but clone --recurse-submodules --quiet" did not pass the quiet
    option down to submodules.
 
  * Test portability fix for OBSD.
 
  * Portability fix for OBSD.
 
- * "git am -s" has been taught that some input may end with a trailer
+ * "but am -s" has been taught that some input may end with a trailer
    block that is not Signed-off-by: and it should refrain from adding
    an extra blank line before adding a new sign-off in such a case.
 
- * "git svn" used with "--localtime" option did not compute the tz
+ * "but svn" used with "--localtime" option did not compute the tz
    offset for the timestamp in question and instead always used the
    current time, which has been corrected.
 
  * Memory leak in an error codepath has been plugged.
 
- * "git stash -u" used the contents of the cummitted version of the
-   ".gitignore" file to decide which paths are ignored, even when the
+ * "but stash -u" used the contents of the cummitted version of the
+   ".butignore" file to decide which paths are ignored, even when the
    file has local changes.  The command has been taught to instead use
    the locally modified contents.
 
  * bash 4.4 or newer gave a warning on NUL byte in command
-   substitution done in "git stash"; this has been squelched.
+   substitution done in "but stash"; this has been squelched.
 
- * "git grep -L" and "git grep --quiet -L" reported different exit
+ * "but grep -L" and "but grep --quiet -L" reported different exit
    codes; this has been corrected.
 
  * When handshake with a subprocess filter notices that the process
    asked for an unknown capability, Git did not report what program
    the offending subprocess was running.  This has been corrected.
 
- * "git apply" that is used as a better "patch -p1" failed to apply a
+ * "but apply" that is used as a better "patch -p1" failed to apply a
    taken from a file with CRLF line endings to a file with CRLF line
-   endings.  The root cause was because it misused convert_to_git()
+   endings.  The root cause was because it misused convert_to_but()
    that tried to do "safe-crlf" processing by looking at the index
    entry at the same path, which is a nonsense---in that mode, "apply"
    is not working on the data in (or derived from) the index at all.
    This has been fixed.
 
- * Killing "git merge --edit" before the editor returns control left
+ * Killing "but merge --edit" before the editor returns control left
    the repository in a state with MERGE_MSG but without MERGE_HEAD,
-   which incorrectly tells the subsequent "git cummit" that there was
+   which incorrectly tells the subsequent "but cummit" that there was
    a squash merge in progress.  This has been fixed.
 
- * "git archive" did not work well with pathspecs and the
+ * "but archive" did not work well with pathspecs and the
    export-ignore attribute.
 
  * In addition to "cc: <a@dd.re.ss> # cruft", "cc: a@dd.re.ss # cruft"
-   was taught to "git send-email" as a valid way to tell it that it
+   was taught to "but send-email" as a valid way to tell it that it
    needs to also send a carbon copy to <a@dd.re.ss> in the trailer
    section.
 
- * "git branch -M a b" while on a branch that is completely unrelated
+ * "but branch -M a b" while on a branch that is completely unrelated
    to either branch a or branch b misbehaved when multiple worktree
    was in use.  This has been fixed.
    (merge 31824d180d nd/worktree-kill-parse-ref later to maint).
 
- * "git gc" and friends when multiple worktrees are used off of a
+ * "but gc" and friends when multiple worktrees are used off of a
    single repository did not consider the index and per-worktree refs
    of other worktrees as the root for reachability traversal, making
    objects that are in use only in other worktrees to be subject to
    garbage collection.
 
- * A regression to "gitk --bisect" by a recent update has been fixed.
+ * A regression to "butk --bisect" by a recent update has been fixed.
 
- * "git -c submodule.recurse=yes pull" did not work as if the
+ * "but -c submodule.recurse=yes pull" did not work as if the
    "--recurse-submodules" option was given from the command line.
    This has been corrected.
 
- * Unlike "git cummit-tree < file", "git cummit-tree -F file" did not
+ * Unlike "but cummit-tree < file", "but cummit-tree -F file" did not
    pass the contents of the file verbatim and instead completed an
    incomplete line at the end, if exists.  The latter has been updated
    to match the behaviour of the former.
@@ -369,10 +369,10 @@ Fixes since v2.14
    which have been corrected.
    (merge f48ecd38cb jk/write-in-full-fix later to maint).
 
- * "git help co" now says "co is aliased to ...", not "git co is".
+ * "but help co" now says "co is aliased to ...", not "but co is".
    (merge b3a8076e0d ks/help-alias-label later to maint).
 
- * "git archive", especially when used with pathspec, stored an empty
+ * "but archive", especially when used with pathspec, stored an empty
    directory in its output, even though Git itself never does so.
    This has been fixed.
 
@@ -382,7 +382,7 @@ Fixes since v2.14
    slightly tweaked.
    (merge 8c4b1a3593 ks/cummit-do-not-touch-cut-line later to maint).
 
- * "git gc" tries to avoid running two instances at the same time by
+ * "but gc" tries to avoid running two instances at the same time by
    reading and writing pid/host from and to a lock file; it used to
    use an incorrect fscanf() format when reading, which has been
    corrected.
@@ -400,23 +400,23 @@ Fixes since v2.14
    alternate object stores overrun the end of the string.
    (merge f0f7bebef7 jk/info-alternates-fix later to maint).
 
- * "git describe --match" learned to take multiple patterns in v2.13
+ * "but describe --match" learned to take multiple patterns in v2.13
    series, but the feature ignored the patterns after the first one
    and did not work at all.  This has been fixed.
 
- * "git filter-branch" cannot reproduce a history with a tag without
+ * "but filter-branch" cannot reproduce a history with a tag without
    the tagger field, which only ancient versions of Git allowed to be
    created.  This has been corrected.
    (merge b2c1ca6b4b ic/fix-filter-branch-to-handle-tag-without-tagger later to maint).
 
- * "git cat-file --textconv" started segfaulting recently, which
+ * "but cat-file --textconv" started segfaulting recently, which
    has been corrected.
 
  * The built-in pattern to detect the "function header" for HTML did
    not match <H1>..<H6> elements without any attributes, which has
    been fixed.
 
- * "git mailinfo" was loose in decoding quoted printable and produced
+ * "but mailinfo" was loose in decoding quoted printable and produced
    garbage when the two letters after the equal sign are not
    hexadecimal.  This has been fixed.
 
@@ -433,7 +433,7 @@ Fixes since v2.14
  * The documentation for '-X<option>' for merges was misleadingly
    written to suggest that "-s theirs" exists, which is not the case.
 
- * "git fast-export" with -M/-C option issued "copy" instruction on a
+ * "but fast-export" with -M/-C option issued "copy" instruction on a
    path that is simultaneously modified, which was incorrect.
    (merge b3e8ca89cf jt/fast-export-copy-modify-fix later to maint).
 
@@ -444,12 +444,12 @@ Fixes since v2.14
  * Memory leaks in various codepaths have been plugged.
    (merge 4d01a7fa65 ma/leakplugs later to maint).
 
- * Recent versions of "git rev-parse --parseopt" did not parse the
+ * Recent versions of "but rev-parse --parseopt" did not parse the
    option specification that does not have the optional flags (*=?!)
    correctly, which has been corrected.
    (merge a6304fa4c2 bc/rev-parse-parseopt-fix later to maint).
 
- * The checkpoint command "git fast-import" did not flush updates to
+ * The checkpoint command "but fast-import" did not flush updates to
    refs and marks unless at least one object was created since the
    last checkpoint, which has been corrected, as these things can
    happen without any new object getting created.
@@ -465,12 +465,12 @@ Fixes since v2.14
 
  * Users with "color.ui = always" in their configuration were broken
    by a recent change that made plumbing commands to pay attention to
-   them as the patch created internally by "git add -p" were colored
+   them as the patch created internally by "but add -p" were colored
    (heh) and made unusable.  This has been fixed by reverting the
    offending change.
 
- * In the "--format=..." option of the "git for-each-ref" command (and
-   its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
+ * In the "--format=..." option of the "but for-each-ref" command (and
+   its friends, i.e. the listing mode of "but branch/tag"), "%(atom:)"
    (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
    them as if the colon and an empty string that follows it were not
    there.
@@ -478,12 +478,12 @@ Fixes since v2.14
  * An ancient bug that made Git misbehave with creation/renaming of
    refs has been fixed.
 
- * "git fetch <there> <src>:<dst>" allows an object name on the <src>
+ * "but fetch <there> <src>:<dst>" allows an object name on the <src>
    side when the other side accepts such a request since Git v2.5, but
    the documentation was left stale.
    (merge 83558a412a jc/fetch-refspec-doc-update later to maint).
 
- * Update the documentation for "git filter-branch" so that the filter
+ * Update the documentation for "but filter-branch" so that the filter
    options are listed in the same order as they are applied, as
    described in an earlier part of the doc.
    (merge 07c4984508 dg/filter-branch-filter-order-doc later to maint).

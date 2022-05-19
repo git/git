@@ -13,7 +13,7 @@ test_expect_success 'setup' '
 	version sha256:1
 	EOF
 	cat >test.patch <<-\EOF &&
-	diff --git a/test.txt b/test.txt
+	diff --but a/test.txt b/test.txt
 	new file mode 100644
 	--- /dev/null
 	+++ b/test.txt
@@ -23,45 +23,45 @@ test_expect_success 'setup' '
 
 	test_create_repo "test" &&
 	test_create_repo "test2" &&
-	git config --file=test2/.git/config core.repositoryformatversion 99
+	but config --file=test2/.but/config core.repositoryformatversion 99
 '
 
-test_expect_success 'gitdir selection on normal repos' '
+test_expect_success 'butdir selection on normal repos' '
 	echo $(test_oid version) >expect &&
-	git config core.repositoryformatversion >actual &&
-	git -C test config core.repositoryformatversion >actual2 &&
+	but config core.repositoryformatversion >actual &&
+	but -C test config core.repositoryformatversion >actual2 &&
 	test_cmp expect actual &&
 	test_cmp expect actual2
 '
 
-test_expect_success 'gitdir selection on unsupported repo' '
+test_expect_success 'butdir selection on unsupported repo' '
 	# Make sure it would stop at test2, not trash
-	test_expect_code 1 git -C test2 config core.repositoryformatversion >actual
+	test_expect_code 1 but -C test2 config core.repositoryformatversion >actual
 '
 
-test_expect_success 'gitdir not required mode' '
-	git apply --stat test.patch &&
-	git -C test apply --stat ../test.patch &&
-	git -C test2 apply --stat ../test.patch
+test_expect_success 'butdir not required mode' '
+	but apply --stat test.patch &&
+	but -C test apply --stat ../test.patch &&
+	but -C test2 apply --stat ../test.patch
 '
 
-test_expect_success 'gitdir required mode' '
-	git apply --check --index test.patch &&
-	git -C test apply --check --index ../test.patch &&
-	test_must_fail git -C test2 apply --check --index ../test.patch
+test_expect_success 'butdir required mode' '
+	but apply --check --index test.patch &&
+	but -C test apply --check --index ../test.patch &&
+	test_must_fail but -C test2 apply --check --index ../test.patch
 '
 
 check_allow () {
-	git rev-parse --git-dir >actual &&
-	echo .git >expect &&
+	but rev-parse --but-dir >actual &&
+	echo .but >expect &&
 	test_cmp expect actual
 }
 
 check_abort () {
-	test_must_fail git rev-parse --git-dir
+	test_must_fail but rev-parse --but-dir
 }
 
-# avoid git-config, since it cannot be trusted to run
+# avoid but-config, since it cannot be trusted to run
 # in a repository with a broken version
 mkconfig () {
 	echo '[core]' &&
@@ -78,7 +78,7 @@ mkconfig () {
 
 while read outcome version extensions; do
 	test_expect_success "$outcome version=$version $extensions" "
-		mkconfig $version $extensions >.git/config &&
+		mkconfig $version $extensions >.but/config &&
 		check_${outcome}
 	"
 done <<\EOF
@@ -93,25 +93,25 @@ allow 1 noop-v1
 EOF
 
 test_expect_success 'precious-objects allowed' '
-	mkconfig 1 preciousObjects >.git/config &&
+	mkconfig 1 preciousObjects >.but/config &&
 	check_allow
 '
 
 test_expect_success 'precious-objects blocks destructive repack' '
-	test_must_fail git repack -ad
+	test_must_fail but repack -ad
 '
 
 test_expect_success 'other repacks are OK' '
 	test_cummit foo &&
-	git repack
+	but repack
 '
 
 test_expect_success 'precious-objects blocks prune' '
-	test_must_fail git prune
+	test_must_fail but prune
 '
 
 test_expect_success 'gc runs without complaint' '
-	git gc
+	but gc
 '
 
 test_done

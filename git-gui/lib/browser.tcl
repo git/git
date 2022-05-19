@@ -1,4 +1,4 @@
-# git-gui tree browser
+# but-gui tree browser
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 class browser {
@@ -196,7 +196,7 @@ method _ls {tree_id {name {}}} {
 	lappend browser_stack [list $tree_id $name]
 	$w conf -state disabled
 
-	set fd [git_read ls-tree -z $tree_id]
+	set fd [but_read ls-tree -z $tree_id]
 	fconfigure $fd -blocking 0 -translation binary -encoding utf-8
 	fileevent $fd readable [cb _read $fd]
 }

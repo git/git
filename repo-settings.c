@@ -18,7 +18,7 @@ void prepare_repo_settings(struct repository *r)
 	char *strval;
 	int manyfiles;
 
-	if (!r->gitdir)
+	if (!r->butdir)
 		BUG("Cannot add settings for uninitialized repository");
 
 	if (r->settings.initialized++)
@@ -58,7 +58,7 @@ void prepare_repo_settings(struct repository *r)
 	 * the environment variable if it exists (even if false) over
 	 * any config, as in most other cases.
 	 */
-	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0))
+	if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0))
 		r->settings.core_multi_pack_index = 1;
 
 	/*
@@ -68,7 +68,7 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.index_version = value;
 
 	if (!repo_config_get_string(r, "core.untrackedcache", &strval)) {
-		int v = git_parse_maybe_bool(strval);
+		int v = but_parse_maybe_bool(strval);
 
 		/*
 		 * If it's set to "keep", or some other non-boolean

@@ -6,9 +6,9 @@
 #include "revision.h"
 
 static const char * const builtin_range_diff_usage[] = {
-N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
-N_("git range-diff [<options>] <old-tip>...<new-tip>"),
-N_("git range-diff [<options>] <base> <old-tip> <new-tip>"),
+N_("but range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
+N_("but range-diff [<options>] <old-tip>...<new-tip>"),
+N_("but range-diff [<options>] <base> <old-tip> <new-tip>"),
 NULL
 };
 
@@ -29,7 +29,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "no-dual-color", &simple_color,
 			    N_("use simple diff colors")),
 		OPT_PASSTHRU_ARGV(0, "notes", &other_arg,
-				  N_("notes"), N_("passed to 'git log'"),
+				  N_("notes"), N_("passed to 'but log'"),
 				  PARSE_OPT_OPTARG),
 		OPT_BOOL(0, "left-only", &left_only,
 			 N_("only emit output related to the first range")),
@@ -41,7 +41,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	int res = 0;
 	struct strbuf range1 = STRBUF_INIT, range2 = STRBUF_INIT;
 
-	git_config(git_diff_ui_config, NULL);
+	but_config(but_diff_ui_config, NULL);
 
 	repo_diff_setup(the_repository, &diffopt);
 

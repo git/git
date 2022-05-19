@@ -6,37 +6,37 @@ test_description='performance of partial clones'
 test_perf_default_repo
 
 test_expect_success 'enable server-side config' '
-	git config uploadpack.allowFilter true &&
-	git config uploadpack.allowAnySHA1InWant true
+	but config uploadpack.allowFilter true &&
+	but config uploadpack.allowAnySHA1InWant true
 '
 
 test_perf 'clone without blobs' '
-	rm -rf bare.git &&
-	git clone --no-local --bare --filter=blob:none . bare.git
+	rm -rf bare.but &&
+	but clone --no-local --bare --filter=blob:none . bare.but
 '
 
 test_perf 'checkout of result' '
 	rm -rf worktree &&
-	mkdir -p worktree/.git &&
-	tar -C bare.git -cf - . | tar -C worktree/.git -xf - &&
-	git -C worktree config core.bare false &&
-	git -C worktree checkout -f
+	mkdir -p worktree/.but &&
+	tar -C bare.but -cf - . | tar -C worktree/.but -xf - &&
+	but -C worktree config core.bare false &&
+	but -C worktree checkout -f
 '
 
 test_perf 'fsck' '
-	git -C bare.git fsck
+	but -C bare.but fsck
 '
 
 test_perf 'count cummits' '
-	git -C bare.git rev-list --all --count
+	but -C bare.but rev-list --all --count
 '
 
 test_perf 'count non-promisor cummits' '
-	git -C bare.git rev-list --all --count --exclude-promisor-objects
+	but -C bare.but rev-list --all --count --exclude-promisor-objects
 '
 
 test_perf 'gc' '
-	git -C bare.git gc
+	but -C bare.but gc
 '
 
 test_done

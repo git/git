@@ -4,8 +4,8 @@ Git v1.7.11.3 Release Notes
 Fixes since v1.7.11.3
 ---------------------
 
- * The error message from "git push $there :bogo" (and its equivalent
-   "git push $there --delete bogo") mentioned that we tried and failed
+ * The error message from "but push $there :bogo" (and its equivalent
+   "but push $there --delete bogo") mentioned that we tried and failed
    to guess what ref is being deleted based on the LHS of the refspec,
    which we don't.
 
@@ -16,7 +16,7 @@ Fixes since v1.7.11.3
  * "cummit --amend" used to refuse amending a cummit with an empty log
    message, with or without "--allow-empty-message".
 
- * "git cummit --amend --only --" was meant to allow "Clever" people to
+ * "but cummit --amend --only --" was meant to allow "Clever" people to
    rewrite the cummit message without making any change even when they
    have already changes for the next cummit added to their index, but
    it never worked as advertised since it was introduced in 1.3.0 era.
@@ -25,24 +25,24 @@ Fixes since v1.7.11.3
    in some places we were not comparing them in full, potentially
    replacing index entries instead of adding.
 
- * "git show"'s auto-walking behaviour was an unreliable and
-   unpredictable hack; it now behaves just like "git log" does when it
+ * "but show"'s auto-walking behaviour was an unreliable and
+   unpredictable hack; it now behaves just like "but log" does when it
    walks.
 
- * "git diff", "git status" and anything that internally uses the
+ * "but diff", "but status" and anything that internally uses the
    comparison machinery was utterly broken when the difference
-   involved a file with "-" as its name.  This was due to the way "git
+   involved a file with "-" as its name.  This was due to the way "but
    diff --no-index" was incorrectly bolted on to the system, making
    any comparison that involves a file "-" at the root level
    incorrectly read from the standard input.
 
- * We did not have test to make sure "git rebase" without extra options
+ * We did not have test to make sure "but rebase" without extra options
    filters out an empty cummit in the original history.
 
- * "git fast-export" produced an input stream for fast-import without
+ * "but fast-export" produced an input stream for fast-import without
    properly quoting pathnames when they contain SPs in them.
 
- * "git checkout --detach", when you are still on an unborn branch,
+ * "but checkout --detach", when you are still on an unborn branch,
    should be forbidden, but it wasn't.
 
  * Some implementations of Perl terminates "lines" with CRLF even when

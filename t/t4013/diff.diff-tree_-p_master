@@ -1,2 +1,2 @@
-$ git diff-tree -p master
+$ but diff-tree -p master
 $

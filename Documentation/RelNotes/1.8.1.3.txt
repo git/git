@@ -24,18 +24,18 @@ Fixes since v1.8.1.2
    /etc/mailname to come up with a default e-mail ident, but a bug
    lost the "user@" part.
 
- * "git am" did not parse datestamp correctly from Hg generated patch,
+ * "but am" did not parse datestamp correctly from Hg generated patch,
    when it is run in a locale outside C (or en).
 
  * Attempt to "branch --edit-description" an existing branch, while
    being on a detached HEAD, errored out.
 
- * "git cherry-pick" did not replay a root cummit to an unborn branch.
+ * "but cherry-pick" did not replay a root cummit to an unborn branch.
 
  * We forgot to close the file descriptor reading from "gpg" output,
-   killing "git log --show-signature" on a long history.
+   killing "but log --show-signature" on a long history.
 
- * "git rebase --preserve-merges" lost empty merges in recent versions
+ * "but rebase --preserve-merges" lost empty merges in recent versions
    of Git.
 
  * Rebasing the history of superproject with change in the submodule

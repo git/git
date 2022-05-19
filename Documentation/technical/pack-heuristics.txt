@@ -145,7 +145,7 @@ included my results below.  To be fair, it has changed some over time.
 And through the magic of Revisionistic History, I draw upon this entry
 from The Git IRC Logs on my father's birthday, March 1:
 
-    <gitster> The quote from the above linus should be rewritten a
+    <butster> The quote from the above linus should be rewritten a
         bit (wait for it):
         - first sort by type.  Different objects never delta with
 	  each other.
@@ -161,7 +161,7 @@ In one swell-foop, clarification and obscurification!  Nonetheless,
 authoritative.  Cryptic, yet concise.  It even solicits notions of
 quotes from The Source Code.  Clearly, more study is needed.
 
-    <gitster> That's the sort order.  What this means is:
+    <butster> That's the sort order.  What this means is:
         - we do not delta different object types.
 	- we prefer to delta the objects with the same full path, but
           allow files with the same name from different directories.
@@ -178,23 +178,23 @@ is a 'thin' pack?"  So I ask:
 
     <jdl> What is a "thin" pack?
 
-    <gitster> Use of --objects-edge to rev-list as the upstream of
+    <butster> Use of --objects-edge to rev-list as the upstream of
         pack-objects.  The pack transfer protocol negotiates that.
 
 Woo hoo!  Cleared that _right_ up!
 
-    <gitster> There are two directions - push and fetch.
+    <butster> There are two directions - push and fetch.
 
 There!  Did you see it?  It is not '"push" and "pull"'!  How often the
 confusion has started here.  So casually mentioned, too!
 
-    <gitster> For push, git-send-pack invokes git-receive-pack on the
+    <butster> For push, but-send-pack invokes but-receive-pack on the
         other end.  The receive-pack says "I have up to these cummits".
         send-pack looks at them, and computes what are missing from
         the other end.  So "thin" could be the default there.
 
-        In the other direction, fetch, git-fetch-pack and
-        git-clone-pack invokes git-upload-pack on the other end
+        In the other direction, fetch, but-fetch-pack and
+        but-clone-pack invokes but-upload-pack on the other end
 	(via ssh or by talking to the daemon).
 
 	There are two cases: fetch-pack with -k and clone-pack is one,
@@ -218,7 +218,7 @@ Let's return to the previous conversation still in progress.
         we just declare all cummit and tag objects to have the same
         basename" or something?
 
-Luckily, that too is a point that gitster clarified for us!
+Luckily, that too is a point that butster clarified for us!
 
 If I might add, the trick is to make files that _might_ be similar be
 located close to each other in the hash buckets based on their file
@@ -333,7 +333,7 @@ Yeah, no.  I missed that on the first two or three readings myself.
 
     <linus> Uhhuh. I hope I didn't blow njs` mind.
 
-    *** njs` has joined channel #git
+    *** njs` has joined channel #but
 
     <pasky> :)
 

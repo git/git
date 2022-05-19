@@ -37,8 +37,8 @@ static inline uint64_t default_bswap64(uint64_t val)
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define bswap32 git_bswap32
-static inline uint32_t git_bswap32(uint32_t x)
+#define bswap32 but_bswap32
+static inline uint32_t but_bswap32(uint32_t x)
 {
 	uint32_t result;
 	if (__builtin_constant_p(x))
@@ -48,9 +48,9 @@ static inline uint32_t git_bswap32(uint32_t x)
 	return result;
 }
 
-#define bswap64 git_bswap64
+#define bswap64 but_bswap64
 #if defined(__x86_64__)
-static inline uint64_t git_bswap64(uint64_t x)
+static inline uint64_t but_bswap64(uint64_t x)
 {
 	uint64_t result;
 	if (__builtin_constant_p(x))
@@ -60,15 +60,15 @@ static inline uint64_t git_bswap64(uint64_t x)
 	return result;
 }
 #else
-static inline uint64_t git_bswap64(uint64_t x)
+static inline uint64_t but_bswap64(uint64_t x)
 {
 	union { uint64_t i64; uint32_t i32[2]; } tmp, result;
 	if (__builtin_constant_p(x))
 		result.i64 = default_bswap64(x);
 	else {
 		tmp.i64 = x;
-		result.i32[0] = git_bswap32(tmp.i32[1]);
-		result.i32[1] = git_bswap32(tmp.i32[0]);
+		result.i32[0] = but_bswap32(tmp.i32[1]);
+		result.i32[1] = but_bswap32(tmp.i32[0]);
 	}
 	return result.i64;
 }

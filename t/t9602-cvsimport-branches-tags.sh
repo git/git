@@ -3,7 +3,7 @@
 # A description of the repository used for this test can be found in
 # t9602/README.
 
-test_description='git cvsimport handling of branches and tags'
+test_description='but cvsimport handling of branches and tags'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -13,7 +13,7 @@ setup_cvs_test_repository t9602
 
 test_expect_success PERL 'import module' '
 
-	git cvsimport -C module-git module
+	but cvsimport -C module-but module
 
 '
 

@@ -40,7 +40,7 @@ struct fsmonitor_daemon_state {
 	pthread_mutex_t main_lock;
 
 	struct strbuf path_worktree_watch;
-	struct strbuf path_gitdir_watch;
+	struct strbuf path_butdir_watch;
 	int nr_paths_watching;
 
 	struct fsmonitor_token_data *current_token_data;
@@ -68,20 +68,20 @@ struct fsmonitor_daemon_state {
  * within the working directory (proper).
  *
  * The client should only care about paths within the working
- * directory proper (inside the working directory and not ".git" nor
- * inside of ".git/").  That is, the client has read the index and is
+ * directory proper (inside the working directory and not ".but" nor
+ * inside of ".but/").  That is, the client has read the index and is
  * asking for a list of any paths in the working directory that have
  * been modified since the last token.  The client does not care about
- * file system changes within the ".git/" directory (such as new loose
+ * file system changes within the ".but/" directory (such as new loose
  * objects or packfiles).  So the client will only receive paths that
  * are classified as IS_WORKDIR_PATH.
  *
- * Note that ".git" is usually a directory and is therefore inside
+ * Note that ".but" is usually a directory and is therefore inside
  * the cone of the FS watch that we have on the working directory root,
- * so we will also get FS events for disk activity on and within ".git/"
+ * so we will also get FS events for disk activity on and within ".but/"
  * that we need to respond to or filter from the client.
  *
- * But Git also allows ".git" to be a *file* that points to a GITDIR
+ * But Git also allows ".but" to be a *file* that points to a GITDIR
  * outside of the working directory.  When this happens, we need to
  * create FS watches on both the working directory root *and* on the
  * (external) GITDIR root.  (The latter is required because we put
@@ -89,19 +89,19 @@ struct fsmonitor_daemon_state {
  * stream.)
  *
  * Note that in the context of this discussion, I'm using "GITDIR"
- * to only mean an external GITDIR referenced by a ".git" file.
+ * to only mean an external GITDIR referenced by a ".but" file.
  *
  * The platform FS event backends will receive watch-specific
  * relative paths (except for those OS's that always emit absolute
  * paths).  We use the following enum and routines to classify each
  * path so that we know how to handle it.  There is a slight asymmetry
- * here because ".git/" is inside the working directory and the
+ * here because ".but/" is inside the working directory and the
  * (external) GITDIR is not, and therefore how we handle events may
  * vary slightly, so I have different enums for "IS...DOT_GIT..." and
  * "IS...GITDIR...".
  *
  * The daemon uses the IS_DOT_GIT and IS_GITDIR internally to mean the
- * exact ".git" file/directory or GITDIR directory.  If the daemon
+ * exact ".but" file/directory or GITDIR directory.  If the daemon
  * receives a delete event for either of these paths, it will
  * automatically shutdown, for example.
  *
@@ -130,10 +130,10 @@ enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	const char *relative_path);
 
 /*
- * Classify a pathname relative to a <gitdir> that is external to the
+ * Classify a pathname relative to a <butdir> that is external to the
  * worktree directory.
  */
-enum fsmonitor_path_type fsmonitor_classify_path_gitdir_relative(
+enum fsmonitor_path_type fsmonitor_classify_path_butdir_relative(
 	const char *relative_path);
 
 /*

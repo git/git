@@ -77,7 +77,7 @@ clear_exit:
 
 	strbuf_release(&packname);
 	/* Make objects we just wrote available to ourselves */
-	reprepare_packed_git(the_repository);
+	reprepare_packed_but(the_repository);
 }
 
 static int already_written(struct bulk_checkin_state *state, struct object_id *oid)
@@ -113,11 +113,11 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
  * with a new pack.
  */
 static int stream_to_pack(struct bulk_checkin_state *state,
-			  git_hash_ctx *ctx, off_t *already_hashed_to,
+			  but_hash_ctx *ctx, off_t *already_hashed_to,
 			  int fd, size_t size, enum object_type type,
 			  const char *path, unsigned flags)
 {
-	git_zstream s;
+	but_zstream s;
 	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
@@ -125,7 +125,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 	int write_object = (flags & HASH_WRITE_OBJECT);
 	off_t offset = 0;
 
-	git_deflate_init(&s, pack_compression_level);
+	but_deflate_init(&s, pack_compression_level);
 
 	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), type, size);
 	s.next_out = obuf + hdrlen;
@@ -154,7 +154,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 			size -= rsize;
 		}
 
-		status = git_deflate(&s, size ? 0 : Z_FINISH);
+		status = but_deflate(&s, size ? 0 : Z_FINISH);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			if (write_object) {
@@ -164,7 +164,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 				if (state->nr_written &&
 				    pack_size_limit_cfg &&
 				    pack_size_limit_cfg < state->offset + written) {
-					git_deflate_abort(&s);
+					but_deflate_abort(&s);
 					return -1;
 				}
 
@@ -184,7 +184,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 			die("unexpected deflate failure: %d", status);
 		}
 	}
-	git_deflate_end(&s);
+	but_deflate_end(&s);
 	return 0;
 }
 
@@ -211,7 +211,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 			   unsigned flags)
 {
 	off_t seekback, already_hashed_to;
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
 	struct hashfile_checkpoint checkpoint = {0};

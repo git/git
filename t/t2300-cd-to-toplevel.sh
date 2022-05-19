@@ -5,7 +5,7 @@ test_description='cd_to_toplevel'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-EXEC_PATH="$(git --exec-path)"
+EXEC_PATH="$(but --exec-path)"
 test_have_prereq !MINGW ||
 case "$EXEC_PATH" in
 [A-Za-z]:/*)
@@ -18,7 +18,7 @@ test_cd_to_toplevel () {
 		(
 			cd '"'$1'"' &&
 			PATH="$EXEC_PATH:$PATH" &&
-			. git-sh-setup &&
+			. but-sh-setup &&
 			cd_to_toplevel &&
 			[ "$(pwd -P)" = "$TOPLEVEL" ]
 		)
@@ -27,7 +27,7 @@ test_cd_to_toplevel () {
 
 TOPLEVEL="$(pwd -P)/repo"
 mkdir -p repo/sub/dir
-mv .git repo/
+mv .but repo/
 SUBDIRECTORY_OK=1
 
 test_cd_to_toplevel repo 'at physical root'

@@ -344,7 +344,7 @@ const char *branch_get_upstream(struct branch *branch, struct strbuf *err);
 
 /**
  * Return the tracking branch that corresponds to the ref we would push to
- * given a bare `git push` while `branch` is checked out.
+ * given a bare `but push` while `branch` is checked out.
  *
  * The return value and `err` conventions match those of `branch_get_upstream`.
  */

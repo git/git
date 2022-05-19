@@ -18,7 +18,7 @@ $opt_h && usage();
 
 die "Need at least one cummit identifier!" unless @ARGV;
 
-# Get git-config settings
+# Get but-config settings
 my $repo = Git->repository();
 $opt_w = $repo->config('cvsexportcummit.cvsdir') unless defined $opt_w;
 
@@ -30,7 +30,7 @@ if ($opt_w || $opt_W) {
 	# Remember where GIT_DIR is before changing to CVS checkout
 	unless ($ENV{GIT_DIR}) {
 		# No GIT_DIR set. Figure it out for ourselves
-		my $gd =`git rev-parse --git-dir`;
+		my $gd =`but rev-parse --but-dir`;
 		chomp($gd);
 		$ENV{GIT_DIR} = $gd;
 	}
@@ -66,7 +66,7 @@ if ($opt_d) {
 # resolve target cummit
 my $cummit;
 $cummit = pop @ARGV;
-$cummit = safe_pipe_capture('git', 'rev-parse', '--verify', "$cummit^0");
+$cummit = safe_pipe_capture('but', 'rev-parse', '--verify', "$cummit^0");
 chomp $cummit;
 if ($?) {
     die "The cummit reference $cummit did not resolve!";
@@ -76,7 +76,7 @@ if ($?) {
 my $parent;
 if (@ARGV) {
     $parent = pop @ARGV;
-    $parent =  safe_pipe_capture('git', 'rev-parse', '--verify', "$parent^0");
+    $parent =  safe_pipe_capture('but', 'rev-parse', '--verify', "$parent^0");
     chomp $parent;
     if ($?) {
 	die "The parent reference did not resolve!";
@@ -84,7 +84,7 @@ if (@ARGV) {
 }
 
 # find parents from the cummit itself
-my @cummit  = safe_pipe_capture('git', 'cat-file', 'cummit', $cummit);
+my @cummit  = safe_pipe_capture('but', 'cat-file', 'cummit', $cummit);
 my @parents;
 my $cummitter;
 my $author;
@@ -140,9 +140,9 @@ my $go_back_to = 0;
 
 if ($opt_W) {
     $opt_v && print "Resetting to $parent\n";
-    $go_back_to = `git symbolic-ref HEAD 2> /dev/null ||
-	git rev-parse HEAD` || die "Could not determine current branch";
-    system("git checkout -q $parent^0") && die "Could not check out $parent^0";
+    $go_back_to = `but symbolic-ref HEAD 2> /dev/null ||
+	but rev-parse HEAD` || die "Could not determine current branch";
+    system("but checkout -q $parent^0") && die "Could not check out $parent^0";
 }
 
 $opt_v && print "Applying to CVS cummit $cummit from parent $parent\n";
@@ -162,9 +162,9 @@ if ($opt_a) {
 close MSG;
 
 if ($parent eq $noparent) {
-    `git diff-tree --binary -p --root $cummit >.cvsexportcummit.diff`;# || die "Cannot diff";
+    `but diff-tree --binary -p --root $cummit >.cvsexportcummit.diff`;# || die "Cannot diff";
 } else {
-    `git diff-tree --binary -p $parent $cummit >.cvsexportcummit.diff`;# || die "Cannot diff";
+    `but diff-tree --binary -p $parent $cummit >.cvsexportcummit.diff`;# || die "Cannot diff";
 }
 
 ## apply non-binary changes
@@ -178,7 +178,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_INDEX_FILE=$tmpdir/index git apply $context --summary --numstat<.cvsexportcummit.diff|" || die "cannot patch";
+open APPLY, "GIT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat<.cvsexportcummit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -331,9 +331,9 @@ if ($dirty) {
 
 print "Applying\n";
 if ($opt_W) {
-    system("git checkout -q $cummit^0") && die "cannot patch";
+    system("but checkout -q $cummit^0") && die "cannot patch";
 } else {
-    `GIT_INDEX_FILE=$tmpdir/index git apply $context --summary --numstat --apply <.cvsexportcummit.diff` || die "cannot patch";
+    `GIT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat --apply <.cvsexportcummit.diff` || die "cannot patch";
 }
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
@@ -388,7 +388,7 @@ if ($dirtypatch) {
     print "problems you may cummit using:";
     print "\n    cd \"$opt_w\"" if $opt_w;
     print "\n    $cmd\n";
-    print "\n    git checkout $go_back_to\n" if $go_back_to;
+    print "\n    but checkout $go_back_to\n" if $go_back_to;
     print "\n";
     exit(1);
 }
@@ -410,9 +410,9 @@ if ($opt_c) {
 unlink(".cvsexportcummit.diff");
 
 if ($opt_W) {
-    system("git checkout $go_back_to") && die "cannot move back to $go_back_to";
+    system("but checkout $go_back_to") && die "cannot move back to $go_back_to";
     if (!($go_back_to =~ /^[0-9a-fA-F]{$hexsz}$/)) {
-	system("git symbolic-ref HEAD $go_back_to") &&
+	system("but symbolic-ref HEAD $go_back_to") &&
 	    die "cannot move back to $go_back_to";
     }
 }
@@ -424,7 +424,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-usage: GIT_DIR=/path/to/.git git cvsexportcummit [-h] [-p] [-v] [-c] [-f] [-u] [-k] [-w cvsworkdir] [-m msgprefix] [ parent ] cummit
+usage: GIT_DIR=/path/to/.but but cvsexportcummit [-h] [-p] [-v] [-c] [-f] [-u] [-k] [-w cvsworkdir] [-m msgprefix] [ parent ] cummit
 END
 	exit(1);
 }

@@ -6,19 +6,19 @@
 #include "reflog.h"
 
 #define BUILTIN_REFLOG_SHOW_USAGE \
-	N_("git reflog [show] [<log-options>] [<ref>]")
+	N_("but reflog [show] [<log-options>] [<ref>]")
 
 #define BUILTIN_REFLOG_EXPIRE_USAGE \
-	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
+	N_("but reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
 	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
 	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
 
 #define BUILTIN_REFLOG_DELETE_USAGE \
-	N_("git reflog delete [--rewrite] [--updateref]\n" \
+	N_("but reflog delete [--rewrite] [--updateref]\n" \
 	   "                  [--dry-run | -n] [--verbose] <ref>@{<specifier>}...")
 
 #define BUILTIN_REFLOG_EXISTS_USAGE \
-	N_("git reflog exists <ref>")
+	N_("but reflog exists <ref>")
 
 static const char *const reflog_show_usage[] = {
 	BUILTIN_REFLOG_SHOW_USAGE,
@@ -113,18 +113,18 @@ static int reflog_expire_config(const char *var, const char *value, void *cb)
 	struct reflog_expire_cfg *ent;
 
 	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
-		return git_default_config(var, value, cb);
+		return but_default_config(var, value, cb);
 
 	if (!strcmp(key, "reflogexpire")) {
 		slot = EXPIRE_TOTAL;
-		if (git_config_expiry_date(&expire, var, value))
+		if (but_config_expiry_date(&expire, var, value))
 			return -1;
 	} else if (!strcmp(key, "reflogexpireunreachable")) {
 		slot = EXPIRE_UNREACH;
-		if (git_config_expiry_date(&expire, var, value))
+		if (but_config_expiry_date(&expire, var, value))
 			return -1;
 	} else
-		return git_default_config(var, value, cb);
+		return but_default_config(var, value, cb);
 
 	if (!pattern) {
 		switch (slot) {
@@ -264,7 +264,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
 	default_reflog_expire = now - 90 * 24 * 3600;
-	git_config(reflog_expire_config, NULL);
+	but_config(reflog_expire_config, NULL);
 
 	save_cummit_buffer = 0;
 	do_all = status = 0;
@@ -281,7 +281,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	/*
 	 * We can trust the cummits and objects reachable from refs
 	 * even in older repository.  We cannot trust what's reachable
-	 * from reflog if the repository was pruned with older git.
+	 * from reflog if the repository was pruned with older but.
 	 */
 	if (cmd.stalefix) {
 		struct rev_info revs;
@@ -413,7 +413,7 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_NO_INTERNAL_HELP);
 
 	/*
-	 * With "git reflog" we default to showing it. !argc is
+	 * With "but reflog" we default to showing it. !argc is
 	 * impossible with PARSE_OPT_KEEP_ARGV0.
 	 */
 	if (argc == 1)
@@ -434,8 +434,8 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
 		return cmd_reflog_exists(argc - 1, argv + 1, prefix);
 
 	/*
-	 * Fall-through for e.g. "git reflog -1", "git reflog master",
-	 * as well as the plain "git reflog" above goto above.
+	 * Fall-through for e.g. "but reflog -1", "but reflog master",
+	 * as well as the plain "but reflog" above goto above.
 	 */
 log_reflog:
 	return cmd_log_reflog(argc, argv, prefix);

@@ -320,7 +320,7 @@ static int column_config(const char *var, const char *value,
 	return 0;
 }
 
-int git_column_config(const char *var, const char *value,
+int but_column_config(const char *var, const char *value,
 		      const char *command, unsigned int *colopts)
 {
 	const char *it;
@@ -378,7 +378,7 @@ int run_column_filter(int colopts, const struct column_options *opts)
 	fflush(stdout);
 	column_process.in = -1;
 	column_process.out = dup(1);
-	column_process.git_cmd = 1;
+	column_process.but_cmd = 1;
 
 	if (start_command(&column_process))
 		return -2;

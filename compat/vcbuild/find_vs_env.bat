@@ -1,6 +1,6 @@
 @ECHO OFF
 REM ================================================================
-REM You can use either GCC (the default) or MSVC to build git
+REM You can use either GCC (the default) or MSVC to build but
 REM using the GIT-SDK command line tools.
 REM        $ make
 REM        $ make MSVC=1
@@ -9,11 +9,11 @@ REM GIT-SDK BASH windows inherit environment variables with all of
 REM the bin/lib/include paths for GCC.  It DOES NOT inherit values
 REM for the corresponding MSVC tools.
 REM
-REM During normal (non-git) Windows development, you launch one
+REM During normal (non-but) Windows development, you launch one
 REM of the provided "developer command prompts" to set environment
 REM variables for the MSVC tools.
 REM
-REM Therefore, to allow MSVC command line builds of git from BASH
+REM Therefore, to allow MSVC command line builds of but from BASH
 REM and MAKE, we must blend these two different worlds.  This script
 REM attempts to do that.
 REM ================================================================
@@ -43,7 +43,7 @@ REM of previous versions of VS (which have a completely different
 REM layout on disk).
 REM
 REM VS2017 Update 2 introduced a "vswhere.exe" command:
-REM https://github.com/Microsoft/vswhere
+REM https://buthub.com/Microsoft/vswhere
 REM https://blogs.msdn.microsoft.com/heaths/2017/02/25/vswhere-available/
 REM https://blogs.msdn.microsoft.com/vcblog/2017/03/06/finding-the-visual-c-compiler-tools-in-visual-studio-2017/
 REM
@@ -61,7 +61,7 @@ REM than "if exist <path>" because of script problems with pathnames
 REM containing spaces.
 REM ================================================================
 
-REM Sanitize PATH to prevent git-sdk paths from confusing "wmic.exe"
+REM Sanitize PATH to prevent but-sdk paths from confusing "wmic.exe"
 REM (called internally in some of the system BAT files).
 SET PATH=%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;
 

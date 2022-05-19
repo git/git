@@ -17,118 +17,118 @@ test_expect_success setup '
 
 	>A &&
 	>B &&
-	git add A B &&
-	git cummit -m "Initial" &&
-	git tag initial &&
-	git branch side &&
+	but add A B &&
+	but cummit -m "Initial" &&
+	but tag initial &&
+	but branch side &&
 	echo new line >A &&
-	git cummit -m "add line to A" A &&
-	git tag a &&
-	git checkout side &&
+	but cummit -m "add line to A" A &&
+	but tag a &&
+	but checkout side &&
 	echo new line >B &&
-	git cummit -m "add line to B" B &&
-	git tag b &&
-	git checkout main &&
-	git merge side &&
-	git tag c
+	but cummit -m "add line to B" B &&
+	but tag b &&
+	but checkout main &&
+	but merge side &&
+	but tag c
 
 '
 
 test_expect_success 'cherry-pick -m complains of bogus numbers' '
 	# expect 129 here to distinguish between cases where
 	# there was nothing to cherry-pick
-	test_expect_code 129 git cherry-pick -m &&
-	test_expect_code 129 git cherry-pick -m foo b &&
-	test_expect_code 129 git cherry-pick -m -1 b &&
-	test_expect_code 129 git cherry-pick -m 0 b
+	test_expect_code 129 but cherry-pick -m &&
+	test_expect_code 129 but cherry-pick -m foo b &&
+	test_expect_code 129 but cherry-pick -m -1 b &&
+	test_expect_code 129 but cherry-pick -m 0 b
 '
 
 test_expect_success 'cherry-pick explicit first parent of a non-merge' '
 
-	git reset --hard &&
-	git checkout a^0 &&
-	git cherry-pick -m 1 b &&
-	git diff --exit-code c --
+	but reset --hard &&
+	but checkout a^0 &&
+	but cherry-pick -m 1 b &&
+	but diff --exit-code c --
 
 '
 
 test_expect_success 'cherry pick a merge without -m should fail' '
 
-	git reset --hard &&
-	git checkout a^0 &&
-	test_must_fail git cherry-pick c &&
-	git diff --exit-code a --
+	but reset --hard &&
+	but checkout a^0 &&
+	test_must_fail but cherry-pick c &&
+	but diff --exit-code a --
 
 '
 
 test_expect_success 'cherry pick a merge (1)' '
 
-	git reset --hard &&
-	git checkout a^0 &&
-	git cherry-pick -m 1 c &&
-	git diff --exit-code c
+	but reset --hard &&
+	but checkout a^0 &&
+	but cherry-pick -m 1 c &&
+	but diff --exit-code c
 
 '
 
 test_expect_success 'cherry pick a merge (2)' '
 
-	git reset --hard &&
-	git checkout b^0 &&
-	git cherry-pick -m 2 c &&
-	git diff --exit-code c
+	but reset --hard &&
+	but checkout b^0 &&
+	but cherry-pick -m 2 c &&
+	but diff --exit-code c
 
 '
 
 test_expect_success 'cherry pick a merge relative to nonexistent parent should fail' '
 
-	git reset --hard &&
-	git checkout b^0 &&
-	test_must_fail git cherry-pick -m 3 c
+	but reset --hard &&
+	but checkout b^0 &&
+	test_must_fail but cherry-pick -m 3 c
 
 '
 
 test_expect_success 'revert explicit first parent of a non-merge' '
 
-	git reset --hard &&
-	git checkout c^0 &&
-	git revert -m 1 b &&
-	git diff --exit-code a --
+	but reset --hard &&
+	but checkout c^0 &&
+	but revert -m 1 b &&
+	but diff --exit-code a --
 
 '
 
 test_expect_success 'revert a merge without -m should fail' '
 
-	git reset --hard &&
-	git checkout c^0 &&
-	test_must_fail git revert c &&
-	git diff --exit-code c
+	but reset --hard &&
+	but checkout c^0 &&
+	test_must_fail but revert c &&
+	but diff --exit-code c
 
 '
 
 test_expect_success 'revert a merge (1)' '
 
-	git reset --hard &&
-	git checkout c^0 &&
-	git revert -m 1 c &&
-	git diff --exit-code a --
+	but reset --hard &&
+	but checkout c^0 &&
+	but revert -m 1 c &&
+	but diff --exit-code a --
 
 '
 
 test_expect_success 'revert a merge (2)' '
 
-	git reset --hard &&
-	git checkout c^0 &&
-	git revert -m 2 c &&
-	git diff --exit-code b --
+	but reset --hard &&
+	but checkout c^0 &&
+	but revert -m 2 c &&
+	but diff --exit-code b --
 
 '
 
 test_expect_success 'revert a merge relative to nonexistent parent should fail' '
 
-	git reset --hard &&
-	git checkout c^0 &&
-	test_must_fail git revert -m 3 c &&
-	git diff --exit-code c
+	but reset --hard &&
+	but checkout c^0 &&
+	test_must_fail but revert -m 3 c &&
+	but diff --exit-code c
 
 '
 

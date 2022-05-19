@@ -1,7 +1,7 @@
 alias.*::
-	Command aliases for the linkgit:git[1] command wrapper - e.g.
+	Command aliases for the linkbut:but[1] command wrapper - e.g.
 	after defining `alias.last = cat-file commit HEAD`, the invocation
-	`git last` is equivalent to `git cat-file commit HEAD`. To avoid
+	`but last` is equivalent to `but cat-file commit HEAD`. To avoid
 	confusion and troubles with script usage, aliases that
 	hide existing Git commands are ignored. Arguments are split by
 	spaces, the usual shell quoting and escaping is supported.
@@ -9,20 +9,20 @@ alias.*::
 +
 Note that the first word of an alias does not necessarily have to be a
 command. It can be a command-line option that will be passed into the
-invocation of `git`. In particular, this is useful when used with `-c`
+invocation of `but`. In particular, this is useful when used with `-c`
 to pass in one-time configurations or `-p` to force pagination. For example,
 `loud-rebase = -c cummit.verbose=true rebase` can be defined such that
-running `git loud-rebase` would be equivalent to
-`git -c cummit.verbose=true rebase`. Also, `ps = -p status` would be a
-helpful alias since `git ps` would paginate the output of `git status`
+running `but loud-rebase` would be equivalent to
+`but -c cummit.verbose=true rebase`. Also, `ps = -p status` would be a
+helpful alias since `but ps` would paginate the output of `but status`
 where the original command does not.
 +
 If the alias expansion is prefixed with an exclamation point,
 it will be treated as a shell command.  For example, defining
-`alias.new = !gitk --all --not ORIG_HEAD`, the invocation
-`git new` is equivalent to running the shell command
-`gitk --all --not ORIG_HEAD`.  Note that shell commands will be
+`alias.new = !butk --all --not ORIG_HEAD`, the invocation
+`but new` is equivalent to running the shell command
+`butk --all --not ORIG_HEAD`.  Note that shell commands will be
 executed from the top-level directory of a repository, which may
 not necessarily be the current directory.
-`GIT_PREFIX` is set as returned by running `git rev-parse --show-prefix`
-from the original current directory. See linkgit:git-rev-parse[1].
+`GIT_PREFIX` is set as returned by running `but rev-parse --show-prefix`
+from the original current directory. See linkbut:but-rev-parse[1].

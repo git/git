@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git apply handling criss-cross rename patch.'
+test_description='but apply handling criss-cross rename patch.'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -22,8 +22,8 @@ test_expect_success 'setup' '
 	create_file file1 "some content" &&
 	create_file file2 "some other content" &&
 	create_file file3 "again something else" &&
-	git add file1 file2 file3 &&
-	git cummit -m 1
+	but add file1 file2 file3 &&
+	but cummit -m 1
 '
 
 test_expect_success 'criss-cross rename' '
@@ -35,19 +35,19 @@ test_expect_success 'criss-cross rename' '
 '
 
 test_expect_success 'diff -M -B' '
-	git diff -M -B > diff &&
-	git reset --hard
+	but diff -M -B > diff &&
+	but reset --hard
 
 '
 
 test_expect_success 'apply' '
-	git apply diff &&
+	but apply diff &&
 	test_cmp file1 file1-swapped &&
 	test_cmp file2 file2-swapped
 '
 
 test_expect_success 'criss-cross rename' '
-	git reset --hard &&
+	but reset --hard &&
 	mv file1 tmp &&
 	mv file2 file1 &&
 	mv file3 file2 &&
@@ -58,12 +58,12 @@ test_expect_success 'criss-cross rename' '
 '
 
 test_expect_success 'diff -M -B' '
-	git diff -M -B > diff &&
-	git reset --hard
+	but diff -M -B > diff &&
+	but reset --hard
 '
 
 test_expect_success 'apply' '
-	git apply diff &&
+	but apply diff &&
 	test_cmp file1 file1-swapped &&
 	test_cmp file2 file2-swapped &&
 	test_cmp file3 file3-swapped

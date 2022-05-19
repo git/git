@@ -1,6 +1,6 @@
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
-size_t gitstrlcpy(char *dest, const char *src, size_t size)
+size_t butstrlcpy(char *dest, const char *src, size_t size)
 {
 	size_t ret = strlen(src);
 

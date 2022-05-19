@@ -14,8 +14,8 @@ check() {
 	read_chunk >stdin &&
 	read_chunk >expect-stdout &&
 	read_chunk >expect-stderr &&
-	if ! eval "git $credential_opts credential $credential_cmd <stdin >stdout 2>stderr"; then
-		echo "git credential failed with code $?" &&
+	if ! eval "but $credential_opts credential $credential_cmd <stdin >stdout 2>stderr"; then
+		echo "but credential failed with code $?" &&
 		cat stderr &&
 		false
 	fi &&
@@ -53,7 +53,7 @@ reject() {
 		echo protocol=$2
 		echo host=$3
 		echo username=$4
-	) | git -c credential.helper=$1 credential reject
+	) | but -c credential.helper=$1 credential reject
 }
 
 helper_test() {
@@ -146,23 +146,23 @@ helper_test() {
 		check approve $HELPER <<-\EOF &&
 		protocol=http
 		host=path.tld
-		path=foo.git
+		path=foo.but
 		username=user
 		password=pass
 		EOF
 		check fill $HELPER <<-\EOF
 		protocol=http
 		host=path.tld
-		path=bar.git
+		path=bar.but
 		--
 		protocol=http
 		host=path.tld
-		path=bar.git
+		path=bar.but
 		username=askpass-username
 		password=askpass-password
 		--
-		askpass: Username for '\''http://path.tld/bar.git'\'':
-		askpass: Password for '\''http://askpass-username@path.tld/bar.git'\'':
+		askpass: Username for '\''http://path.tld/bar.but'\'':
+		askpass: Password for '\''http://askpass-username@path.tld/bar.but'\'':
 		EOF
 	'
 

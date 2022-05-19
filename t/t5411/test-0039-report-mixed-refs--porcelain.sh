@@ -13,9 +13,9 @@ test_expect_success "setup proc-receive hook ($PROTOCOL/porcelain)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         : (B)                   bar(A)  baz(A)  refs/for/next/topic(A)  foo(A)  refs/for/main/topic(A)
+# but push         : (B)                   bar(A)  baz(A)  refs/for/next/topic(A)  foo(A)  refs/for/main/topic(A)
 test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		$B:refs/heads/main \
 		HEAD:refs/heads/bar \
 		HEAD:refs/heads/baz \
@@ -54,7 +54,7 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcel
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/for/next/topic2        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/foo        Z
 	> remote: post-receive< <CUMMIT-A> <CUMMIT-B> refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	>  	<CUMMIT-B>:refs/heads/main	<CUMMIT-A>..<CUMMIT-B>
 	> *	HEAD:refs/heads/bar	[new branch]
 	> *	HEAD:refs/heads/baz	[new branch]
@@ -80,10 +80,10 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcel
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
 	(
 		cd "$upstream" &&
-		git update-ref refs/heads/main $A &&
-		git update-ref -d refs/heads/foo &&
-		git update-ref -d refs/heads/bar &&
-		git update-ref -d refs/heads/baz
+		but update-ref refs/heads/main $A &&
+		but update-ref -d refs/heads/foo &&
+		but update-ref -d refs/heads/bar &&
+		but update-ref -d refs/heads/baz
 	)
 
 '

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git bugreport'
+test_description='but bugreport'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -25,41 +25,41 @@ check_all_headers_populated () {
 }
 
 test_expect_success 'creates a report with content in the right places' '
-	test_when_finished rm git-bugreport-check-headers.txt &&
-	git bugreport -s check-headers &&
-	check_all_headers_populated <git-bugreport-check-headers.txt
+	test_when_finished rm but-bugreport-check-headers.txt &&
+	but bugreport -s check-headers &&
+	check_all_headers_populated <but-bugreport-check-headers.txt
 '
 
 test_expect_success 'dies if file with same name as report already exists' '
-	test_when_finished rm git-bugreport-duplicate.txt &&
-	>>git-bugreport-duplicate.txt &&
-	test_must_fail git bugreport --suffix duplicate
+	test_when_finished rm but-bugreport-duplicate.txt &&
+	>>but-bugreport-duplicate.txt &&
+	test_must_fail but bugreport --suffix duplicate
 '
 
 test_expect_success '--output-directory puts the report in the provided dir' '
 	test_when_finished rm -fr foo/ &&
-	git bugreport -o foo/ &&
-	test_path_is_file foo/git-bugreport-*
+	but bugreport -o foo/ &&
+	test_path_is_file foo/but-bugreport-*
 '
 
 test_expect_success 'incorrect arguments abort with usage' '
-	test_must_fail git bugreport --false 2>output &&
+	test_must_fail but bugreport --false 2>output &&
 	test_i18ngrep usage output &&
-	test_path_is_missing git-bugreport-*
+	test_path_is_missing but-bugreport-*
 '
 
-test_expect_success 'runs outside of a git dir' '
-	test_when_finished rm non-repo/git-bugreport-* &&
-	nongit git bugreport
+test_expect_success 'runs outside of a but dir' '
+	test_when_finished rm non-repo/but-bugreport-* &&
+	nonbut but bugreport
 '
 
-test_expect_success 'can create leading directories outside of a git dir' '
+test_expect_success 'can create leading directories outside of a but dir' '
 	test_when_finished rm -fr foo/bar/baz &&
-	nongit git bugreport -o foo/bar/baz
+	nonbut but bugreport -o foo/bar/baz
 '
 
 test_expect_success 'indicates populated hooks' '
-	test_when_finished rm git-bugreport-hooks.txt &&
+	test_when_finished rm but-bugreport-hooks.txt &&
 
 	test_hook applypatch-msg <<-\EOF &&
 	true
@@ -67,14 +67,14 @@ test_expect_success 'indicates populated hooks' '
 	test_hook unknown-hook <<-\EOF &&
 	true
 	EOF
-	git bugreport -s hooks &&
+	but bugreport -s hooks &&
 
 	sort >expect <<-\EOF &&
 	[Enabled Hooks]
 	applypatch-msg
 	EOF
 
-	sed -ne "/^\[Enabled Hooks\]$/,/^$/p" <git-bugreport-hooks.txt >actual &&
+	sed -ne "/^\[Enabled Hooks\]$/,/^$/p" <but-bugreport-hooks.txt >actual &&
 	test_cmp expect actual
 '
 

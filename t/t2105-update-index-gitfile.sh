@@ -3,37 +3,37 @@
 # Copyright (c) 2010 Brad King
 #
 
-test_description='git update-index for gitlink to .git file.
+test_description='but update-index for butlink to .but file.
 '
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-test_expect_success 'submodule with absolute .git file' '
+test_expect_success 'submodule with absolute .but file' '
 	mkdir sub1 &&
 	(cd sub1 &&
-	 git init &&
+	 but init &&
 	 REAL="$(pwd)/.real" &&
-	 mv .git "$REAL" &&
-	 echo "gitdir: $REAL" >.git &&
+	 mv .but "$REAL" &&
+	 echo "butdir: $REAL" >.but &&
 	 test_cummit first)
 '
 
-test_expect_success 'add gitlink to absolute .git file' '
-	git update-index --add -- sub1
+test_expect_success 'add butlink to absolute .but file' '
+	but update-index --add -- sub1
 '
 
-test_expect_success 'submodule with relative .git file' '
+test_expect_success 'submodule with relative .but file' '
 	mkdir sub2 &&
 	(cd sub2 &&
-	 git init &&
-	 mv .git .real &&
-	 echo "gitdir: .real" >.git &&
+	 but init &&
+	 mv .but .real &&
+	 echo "butdir: .real" >.but &&
 	 test_cummit first)
 '
 
-test_expect_success 'add gitlink to relative .git file' '
-	git update-index --add -- sub2
+test_expect_success 'add butlink to relative .but file' '
+	but update-index --add -- sub2
 '
 
 test_done

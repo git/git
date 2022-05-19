@@ -4,24 +4,24 @@ Git v1.7.1.2 Release Notes
 Fixes since v1.7.1.1
 --------------------
 
- * "git cummit" did not honor GIT_REFLOG_ACTION environment variable, resulting
+ * "but cummit" did not honor GIT_REFLOG_ACTION environment variable, resulting
    reflog messages for cherry-pick and revert actions to be recorded as "cummit".
 
- * "git clone/fetch/pull" issued an incorrect error message when a ref and
+ * "but clone/fetch/pull" issued an incorrect error message when a ref and
    a symref that points to the ref were updated at the same time.  This
    obviously would update them to the same value, and should not result in
    an error condition.
 
- * "git diff" inside a tree with many pathnames that have certain
+ * "but diff" inside a tree with many pathnames that have certain
    characters has become very slow in 1.7.0 by mistake.
 
- * "git rev-parse --parseopt --stop-at-non-option" did not stop at non option
+ * "but rev-parse --parseopt --stop-at-non-option" did not stop at non option
    when --keep-dashdash was in effect.
 
- * An overlong line after ".gitdir: " in a git file caused out of bounds
+ * An overlong line after ".butdir: " in a but file caused out of bounds
    access to an array on the stack.
 
- * "git config --path conf.var" to attempt to expand a variable conf.var
+ * "but config --path conf.var" to attempt to expand a variable conf.var
    that uses "~/" short-hand segfaulted when $HOME environment variable
    was not set.
 

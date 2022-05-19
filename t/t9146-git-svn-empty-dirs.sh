@@ -2,8 +2,8 @@
 #
 # Copyright (c) 2009 Eric Wong
 
-test_description='git svn creates empty directories'
-. ./lib-git-svn.sh
+test_description='but svn creates empty directories'
+. ./lib-but-svn.sh
 
 test_expect_success 'initialize repo' '
 	for i in a b c d d/e d/e/f "weird file name"
@@ -12,7 +12,7 @@ test_expect_success 'initialize repo' '
 	done
 '
 
-test_expect_success 'clone' 'git svn clone "$svnrepo" cloned'
+test_expect_success 'clone' 'but svn clone "$svnrepo" cloned'
 
 test_expect_success 'empty directories exist' '
 	(
@@ -30,10 +30,10 @@ test_expect_success 'empty directories exist' '
 
 test_expect_success 'option automkdirs set to false' '
 	(
-		git svn init "$svnrepo" cloned-no-mkdirs &&
+		but svn init "$svnrepo" cloned-no-mkdirs &&
 		cd cloned-no-mkdirs &&
-		git config svn-remote.svn.automkdirs false &&
-		git svn fetch &&
+		but config svn-remote.svn.automkdirs false &&
+		but svn fetch &&
 		for i in a b c d d/e d/e/f "weird file name"
 		do
 			if test -d "$i"
@@ -49,16 +49,16 @@ test_expect_success 'more emptiness' '
 	svn_cmd mkdir -m "bang bang"  "$svnrepo"/"! !"
 '
 
-test_expect_success 'git svn rebase creates empty directory' '
-	( cd cloned && git svn rebase ) &&
+test_expect_success 'but svn rebase creates empty directory' '
+	( cd cloned && but svn rebase ) &&
 	test -d cloned/"! !"
 '
 
-test_expect_success 'git svn mkdirs recreates empty directories' '
+test_expect_success 'but svn mkdirs recreates empty directories' '
 	(
 		cd cloned &&
 		rm -r * &&
-		git svn mkdirs &&
+		but svn mkdirs &&
 		for i in a b c d d/e d/e/f "weird file name" "! !"
 		do
 			if ! test -d "$i"
@@ -70,11 +70,11 @@ test_expect_success 'git svn mkdirs recreates empty directories' '
 	)
 '
 
-test_expect_success 'git svn mkdirs -r works' '
+test_expect_success 'but svn mkdirs -r works' '
 	(
 		cd cloned &&
 		rm -r * &&
-		git svn mkdirs -r7 &&
+		but svn mkdirs -r7 &&
 		for i in a b c d d/e d/e/f "weird file name"
 		do
 			if ! test -d "$i"
@@ -90,7 +90,7 @@ test_expect_success 'git svn mkdirs -r works' '
 			exit 1
 		fi &&
 
-		git svn mkdirs -r8 &&
+		but svn mkdirs -r8 &&
 		if ! test -d "! !"
 		then
 			echo >&2 "$i not exist" &&
@@ -106,7 +106,7 @@ test_expect_success 'initialize trunk' '
 	done
 '
 
-test_expect_success 'clone trunk' 'git svn clone -s "$svnrepo" trunk'
+test_expect_success 'clone trunk' 'but svn clone -s "$svnrepo" trunk'
 
 test_expect_success 'empty directories in trunk exist' '
 	(
@@ -127,21 +127,21 @@ test_expect_success 'remove a top-level directory from svn' '
 '
 
 test_expect_success 'removed top-level directory does not exist' '
-	git svn clone "$svnrepo" removed &&
+	but svn clone "$svnrepo" removed &&
 	test ! -e removed/d
 
 '
-unhandled=.git/svn/refs/remotes/git-svn/unhandled.log
-test_expect_success 'git svn gc-ed files work' '
+unhandled=.but/svn/refs/remotes/but-svn/unhandled.log
+test_expect_success 'but svn gc-ed files work' '
 	(
 		cd removed &&
-		git svn gc &&
+		but svn gc &&
 		: Compress::Zlib may not be available &&
 		if test -f "$unhandled".gz
 		then
 			svn_cmd mkdir -m gz "$svnrepo"/gz &&
-			git reset --hard $(git rev-list HEAD | tail -1) &&
-			git svn rebase &&
+			but reset --hard $(but rev-list HEAD | tail -1) &&
+			but svn rebase &&
 			test -f "$unhandled".gz &&
 			test -f "$unhandled" &&
 			for i in a b c "weird file name" gz "! !"

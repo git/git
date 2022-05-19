@@ -1,5 +1,5 @@
 /*
- * "git add" builtin command
+ * "but add" builtin command
  *
  * Copyright (C) 2006 Linus Torvalds
  */
@@ -23,7 +23,7 @@
 #include "add-interactive.h"
 
 static const char * const builtin_add_usage[] = {
-	N_("git add [<options>] [--] <pathspec>..."),
+	N_("but add [<options>] [--] <pathspec>..."),
 	NULL
 };
 static int patch_interactive, add_interactive, edit_interactive;
@@ -234,14 +234,14 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	int status, i;
 	struct strvec argv = STRVEC_INIT;
 	int use_builtin_add_i =
-		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
+		but_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
 	if (use_builtin_add_i < 0) {
 		int experimental;
-		if (!git_config_get_bool("add.interactive.usebuiltin",
+		if (!but_config_get_bool("add.interactive.usebuiltin",
 					 &use_builtin_add_i))
 			; /* ok */
-		else if (!git_config_get_bool("feature.experimental", &experimental) &&
+		else if (!but_config_get_bool("feature.experimental", &experimental) &&
 			 experimental)
 			use_builtin_add_i = 1;
 	}
@@ -300,13 +300,13 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
 {
-	char *file = git_pathdup("ADD_EDIT.patch");
+	char *file = but_pathdup("ADD_EDIT.patch");
 	struct child_process child = CHILD_PROCESS_INIT;
 	struct rev_info rev;
 	int out;
 	struct stat st;
 
-	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	but_config(but_diff_basic_config, NULL); /* no "diff" UI options */
 
 	if (read_cache() < 0)
 		die(_("Could not read the index"));
@@ -332,7 +332,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	if (!st.st_size)
 		die(_("Empty patch. Aborted."));
 
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	strvec_pushl(&child.args, "apply", "--recount", "--cached", file,
 		     NULL);
 	if (run_command(&child))
@@ -344,7 +344,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 }
 
 static const char ignore_error[] =
-N_("The following paths are ignored by one of your .gitignore files:\n");
+N_("The following paths are ignored by one of your .butignore files:\n");
 
 static int verbose, show_only, ignored_too, refresh_only;
 static int ignore_add_errors, intent_to_add, ignore_missing;
@@ -396,27 +396,27 @@ static int add_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "add.ignoreerrors") ||
 	    !strcmp(var, "add.ignore-errors")) {
-		ignore_add_errors = git_config_bool(var, value);
+		ignore_add_errors = but_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 static const char embedded_advice[] = N_(
-"You've added another git repository inside your current repository.\n"
+"You've added another but repository inside your current repository.\n"
 "Clones of the outer repository will not contain the contents of\n"
 "the embedded repository and will not know how to obtain it.\n"
 "If you meant to add a submodule, use:\n"
 "\n"
-"	git submodule add <url> %s\n"
+"	but submodule add <url> %s\n"
 "\n"
 "If you added this path by mistake, you can remove it from the\n"
 "index with:\n"
 "\n"
-"	git rm --cached %s\n"
+"	but rm --cached %s\n"
 "\n"
-"See \"git help submodule\" for more information."
+"See \"but help submodule\" for more information."
 );
 
 static void check_embedded_repo(const char *path)
@@ -433,7 +433,7 @@ static void check_embedded_repo(const char *path)
 	strbuf_addstr(&name, path);
 	strbuf_strip_suffix(&name, "/");
 
-	warning(_("adding embedded git repository: %s"), name.buf);
+	warning(_("adding embedded but repository: %s"), name.buf);
 	if (!adviced_on_embedded_repo &&
 	    advice_enabled(ADVICE_ADD_EMBEDDED_REPO)) {
 		advise(embedded_advice, name.buf, name.buf);
@@ -455,7 +455,7 @@ static int add_files(struct dir_struct *dir, int flags)
 		if (advice_enabled(ADVICE_ADD_IGNORED_FILE))
 			advise(_("Use -f if you really want to add them.\n"
 				"Turn this message off by running\n"
-				"\"git config advice.addIgnoredFile false\""));
+				"\"but config advice.addIgnoredFile false\""));
 		exit_status = 1;
 	}
 
@@ -496,7 +496,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	char *seen = NULL;
 	struct lock_file lock_file = LOCK_INIT;
 
-	git_config(add_config, NULL);
+	but_config(add_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_add_options,
 			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
@@ -565,14 +565,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (require_pathspec && pathspec.nr == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
 		if (advice_enabled(ADVICE_ADD_EMPTY_PATHSPEC))
-			advise( _("Maybe you wanted to say 'git add .'?\n"
+			advise( _("Maybe you wanted to say 'but add .'?\n"
 				"Turn this message off by running\n"
-				"\"git config advice.addEmptyPathspec false\""));
+				"\"but config advice.addEmptyPathspec false\""));
 		return 0;
 	}
 
 	if (!take_worktree_changes && addremove_explicit < 0 && pathspec.nr)
-		/* Turn "git add pathspec..." to "git add -A pathspec..." */
+		/* Turn "but add pathspec..." to "but add -A pathspec..." */
 		addremove = 1;
 
 	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
@@ -591,7 +591,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (add_new_files) {
 		int baselen;
 
-		/* Set up the default git porcelain excludes */
+		/* Set up the default but porcelain excludes */
 		if (!ignored_too) {
 			dir.flags |= DIR_COLLECT_IGNORED;
 			setup_standard_excludes(&dir);
@@ -642,7 +642,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 
-			/* Don't complain at 'git add .' on empty repo */
+			/* Don't complain at 'but add .' on empty repo */
 			if (!path[0])
 				continue;
 

@@ -10,36 +10,36 @@ exec wish "$0" -- "$@"
 package require Tk
 
 proc hasworktree {} {
-    return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
-                  [exec git rev-parse --is-inside-git-dir] == "false"}]
+    return [expr {[exec but rev-parse --is-bare-repository] == "false" &&
+                  [exec but rev-parse --is-inside-but-dir] == "false"}]
 }
 
 proc reponame {} {
-    global gitdir
-    set n [file normalize $gitdir]
-    if {[string match "*/.git" $n]} {
+    global butdir
+    set n [file normalize $butdir]
+    if {[string match "*/.but" $n]} {
         set n [string range $n 0 end-5]
     }
     return [file tail $n]
 }
 
-proc gitworktree {} {
-    variable _gitworktree
-    if {[info exists _gitworktree]} {
-        return $_gitworktree
+proc butworktree {} {
+    variable _butworktree
+    if {[info exists _butworktree]} {
+        return $_butworktree
     }
     # v1.7.0 introduced --show-toplevel to return the canonical work-tree
-    if {[catch {set _gitworktree [exec git rev-parse --show-toplevel]}]} {
+    if {[catch {set _butworktree [exec but rev-parse --show-toplevel]}]} {
         # try to set work tree from environment, core.worktree or use
         # cdup to obtain a relative path to the top of the worktree. If
         # run from the top, the ./ prefix ensures normalize expands pwd.
-        if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-            if {[catch {set _gitworktree [exec git config --get core.worktree]}]} {
-                set _gitworktree [file normalize ./[exec git rev-parse --show-cdup]]
+        if {[catch { set _butworktree $env(GIT_WORK_TREE) }]} {
+            if {[catch {set _butworktree [exec but config --get core.worktree]}]} {
+                set _butworktree [file normalize ./[exec but rev-parse --show-cdup]]
             }
         }
     }
-    return $_gitworktree
+    return $_butworktree
 }
 
 # A simple scheduler for compute-intensive stuff.
@@ -134,7 +134,7 @@ proc unmerged_files {files} {
     set mlist {}
     set nr_unmerged 0
     if {[catch {
-        set fd [open "| git ls-files -u" r]
+        set fd [open "| but ls-files -u" r]
     } err]} {
         show_error {} . "[mc "Couldn't get list of unmerged files:"] $err"
         exit 1
@@ -156,7 +156,7 @@ proc unmerged_files {files} {
 proc parseviewargs {n arglist} {
     global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
     global vinlinediff
-    global worddiff git_version
+    global worddiff but_version
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -201,18 +201,18 @@ proc parseviewargs {n arglist} {
             "--no-color" - "-g" - "--walk-reflogs" - "--no-walk" -
             "--timestamp" - "relative-date" - "--date=*" - "--stdin" -
             "--objects" - "--objects-edge" - "--reverse" {
-                # These cause our parsing of git log's output to fail, or else
+                # These cause our parsing of but log's output to fail, or else
                 # they're options we want to set ourselves, so ignore them.
             }
             "--color-words*" - "--word-diff=color" {
                 # These trigger a word diff in the console interface,
                 # so help the user by enabling our own support
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
+                if {[package vcompare $but_version "1.7.2"] >= 0} {
                     set worddiff [mc "Color words"]
                 }
             }
             "--word-diff*" {
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
+                if {[package vcompare $but_version "1.7.2"] >= 0} {
                     set worddiff [mc "Markup words"]
                 }
             }
@@ -254,15 +254,15 @@ proc parseviewargs {n arglist} {
             }
             "--merge" {
                 set vmergeonly($n) 1
-                # git rev-parse doesn't understand --merge
-                lappend revargs --gitk-symmetric-diff-marker MERGE_HEAD...HEAD
+                # but rev-parse doesn't understand --merge
+                lappend revargs --butk-symmetric-diff-marker MERGE_HEAD...HEAD
             }
             "--no-replace-objects" {
                 set env(GIT_NO_REPLACE_OBJECTS) "1"
             }
             "-*" {
                 # Other flag arguments including -<n>
-                if {[string is digit -strict [string range $arg 1 end]]} {
+                if {[string is dibut -strict [string range $arg 1 end]]} {
                     set filtered 1
                 } else {
                     # a flag argument that we don't recognize;
@@ -274,7 +274,7 @@ proc parseviewargs {n arglist} {
             default {
                 # Non-flag arguments specify cummits or ranges of cummits
                 if {[string match "*...*" $arg]} {
-                    lappend revargs --gitk-symmetric-diff-marker
+                    lappend revargs --butk-symmetric-diff-marker
                 }
                 lappend revargs $arg
             }
@@ -296,14 +296,14 @@ proc parseviewrevs {view revs} {
     } elseif {[lsearch -exact $revs --all] >= 0} {
         lappend revs HEAD
     }
-    if {[catch {set ids [eval exec git rev-parse $revs]} err]} {
+    if {[catch {set ids [eval exec but rev-parse $revs]} err]} {
         # we get stdout followed by stderr in $err
-        # for an unknown rev, git rev-parse echoes it and then errors out
+        # for an unknown rev, but rev-parse echoes it and then errors out
         set errlines [split $err "\n"]
         set badrev {}
         for {set l 0} {$l < [llength $errlines]} {incr l} {
             set line [lindex $errlines $l]
-            if {!([string length $line] == 40 && [string is xdigit $line])} {
+            if {!([string length $line] == 40 && [string is xdibut $line])} {
                 if {[string match "fatal:*" $line]} {
                     if {[string match "fatal: ambiguous argument*" $line]
                         && $badrev ne {}} {
@@ -328,7 +328,7 @@ proc parseviewrevs {view revs} {
     set neg {}
     set sdm 0
     foreach id [split $ids "\n"] {
-        if {$id eq "--gitk-symmetric-diff-marker"} {
+        if {$id eq "--butk-symmetric-diff-marker"} {
             set sdm 4
         } elseif {[string match "^*" $id]} {
             if {$sdm != 1} {
@@ -353,7 +353,7 @@ proc parseviewrevs {view revs} {
     return $ret
 }
 
-# Start off a git log process and arrange to read its output
+# Start off a but log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs cummitidx viewcomplete curview
     global tclencoding
@@ -411,10 +411,10 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+        set fd [open [concat | but log --no-color -z --pretty=raw $show_notes \
                         --parents --boundary $args "--" $files] r]
     } err]} {
-        error_popup "[mc "Error executing git log:"] $err"
+        error_popup "[mc "Error executing but log:"] $err"
         return 0
     }
     set i [reg_instance $fd]
@@ -532,8 +532,8 @@ proc updatecummits {} {
             return
         }
         # note: getting the delta when negative refs change is hard,
-        # and could require multiple git log invocations, so in that
-        # case we ask git log for all the cummits (not just the delta)
+        # and could require multiple but log invocations, so in that
+        # case we ask but log for all the cummits (not just the delta)
         if {$oldneg eq $vnegids($view)} {
             set newrevs {}
             set npos 0
@@ -559,10 +559,10 @@ proc updatecummits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+        set fd [open [concat | but log --no-color -z --pretty=raw $show_notes \
                         --parents --boundary $args "--" $vfilelimit($view)] r]
     } err]} {
-        error_popup "[mc "Error executing git log:"] $err"
+        error_popup "[mc "Error executing but log:"] $err"
         return
     }
     if {$viewactive($view) == 0} {
@@ -630,7 +630,7 @@ proc strrep {n} {
     return [format "z%.8x" $n]
 }
 
-# Procedures used in reordering cummits from git log (without
+# Procedures used in reordering cummits from but log (without
 # --topo-order) into the order for display.
 
 proc varcinit {view} {
@@ -1420,7 +1420,7 @@ proc getcummitlines {fd inst view updating}  {
     global varccummits varcid varctok vtokmod vfilelimit vshortids
 
     set stuff [read $fd 500000]
-    # git log doesn't terminate the last cummit with a null...
+    # but log doesn't terminate the last cummit with a null...
     if {$stuff == {} && $leftover($inst) ne {} && [eof $fd]} {
         set stuff "\0"
     }
@@ -1444,10 +1444,10 @@ proc getcummitlines {fd inst view updating}  {
             }
             if {[string range $err 0 4] == "usage"} {
                 set err "Gitk: error reading cummits$fv:\
-                        bad arguments to git log."
+                        bad arguments to but log."
                 if {$viewname($view) eq [mc "Command line"]} {
                     append err \
-                        "  (Note: arguments to gitk are passed to git log\
+                        "  (Note: arguments to butk are passed to but log\
                          to allow selection of cummits to be displayed.)"
                 }
             } else {
@@ -1511,7 +1511,7 @@ proc getcummitlines {fd inst view updating}  {
             if {[string length $shortcmit] > 80} {
                 set shortcmit "[string range $shortcmit 0 80]..."
             }
-            error_popup "[mc "Can't parse git log output:"] {$shortcmit}"
+            error_popup "[mc "Can't parse but log output:"] {$shortcmit}"
             exit 1
         }
         set id [lindex $ids 0]
@@ -1521,13 +1521,13 @@ proc getcummitlines {fd inst view updating}  {
 
         if {!$listed && $updating && ![info exists varcid($vid)] &&
             $vfilelimit($view) ne {}} {
-            # git log doesn't rewrite parents for unlisted cummits
+            # but log doesn't rewrite parents for unlisted cummits
             # when doing path limiting, so work around that here
-            # by working out the rewritten parent with git rev-list
+            # by working out the rewritten parent with but rev-list
             # and if we already know about it, using the rewritten
             # parent as a substitute parent for $id's children.
             if {![catch {
-                set rwid [exec git rev-list --first-parent --max-count=1 \
+                set rwid [exec but rev-list --first-parent --max-count=1 \
                               $id -- $vfilelimit($view)]
             }]} {
                 if {$rwid ne {} && [info exists varcid($view,$rwid)]} {
@@ -1647,8 +1647,8 @@ proc chewcummits {} {
 proc do_readcummit {id} {
     global tclencoding
 
-    # Invoke git-log to handle automatic encoding conversion
-    set fd [open [concat | git log --no-color --pretty=raw -1 $id] r]
+    # Invoke but-log to handle automatic encoding conversion
+    set fd [open [concat | but log --no-color --pretty=raw -1 $id] r]
     # Read the results using i18n.logoutputencoding
     fconfigure $fd -translation lf -eofchar {}
     if {$tclencoding != {}} {
@@ -1708,8 +1708,8 @@ proc parsecummit {id contents listed} {
         set headline [string trimright [string range $headline 0 $i]]
     }
     if {!$listed} {
-        # git log indents the comment by 4 spaces;
-        # if we got this via git cat-file, add the indentation
+        # but log indents the comment by 4 spaces;
+        # if we got this via but cat-file, add the indentation
         set newcomment {}
         foreach line [split $comment "\n"] {
             append newcomment "    "
@@ -1720,7 +1720,7 @@ proc parsecummit {id contents listed} {
     }
     set hasnote [string first "\nNotes:\n" $contents]
     set diff ""
-    # If there is diff output shown in the git-log stream, split it
+    # If there is diff output shown in the but-log stream, split it
     # out.  But get rid of the empty line that always precedes the
     # diff.
     set i [string first "\n\ndiff" $comment]
@@ -1784,7 +1784,7 @@ proc readrefs {} {
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
         unset -nocomplain $v
     }
-    set refd [open [list | git show-ref -d] r]
+    set refd [open [list | but show-ref -d] r]
     if {$tclencoding != {}} {
         fconfigure $refd -encoding $tclencoding
     }
@@ -1823,8 +1823,8 @@ proc readrefs {} {
     set mainhead {}
     set mainheadid {}
     catch {
-        set mainheadid [exec git rev-parse HEAD]
-        set thehead [exec git symbolic-ref HEAD]
+        set mainheadid [exec but rev-parse HEAD]
+        set thehead [exec but symbolic-ref HEAD]
         if {[string match "refs/heads/*" $thehead]} {
             set mainhead [string range $thehead 11 end]
         }
@@ -1832,7 +1832,7 @@ proc readrefs {} {
     set selectheadid {}
     if {$selecthead ne {}} {
         catch {
-            set selectheadid [exec git rev-parse --verify $selecthead]
+            set selectheadid [exec but rev-parse --verify $selecthead]
         }
     }
 }
@@ -2077,10 +2077,10 @@ proc makewindow {} {
     global filesepbgcolor filesepfgcolor
     global mergecolors foundbgcolor currentsearchhitbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
-    global fprogitem fprogcoord lastprogupdate progupdatepending
-    global rprogitem rprogcoord rownumsel numcummits
+    global fprobutem fprogcoord lastprogupdate progupdatepending
+    global rprobutem rprogcoord rownumsel numcummits
     global have_tk85 use_ttk NS
-    global git_version
+    global but_version
     global worddiff
 
     # The "mc" arguments here are purely so that xgettext
@@ -2092,7 +2092,7 @@ proc makewindow {} {
             {mc "Reread re&ferences" command rereadrefs}
             {mc "&List references" command showrefs -accelerator F2}
             {xx "" separator}
-            {mc "Start git &gui" command {exec git gui &}}
+            {mc "Start but &gui" command {exec but gui &}}
             {xx "" separator}
             {mc "&Quit" command doquit -accelerator Meta1-Q}
         }}
@@ -2111,7 +2111,7 @@ proc makewindow {} {
     if {[tk windowingsystem] ne "aqua"} {
         set help {
         mc "&Help" cascade {
-            {mc "&About gitk" command about}
+            {mc "&About butk" command about}
             {mc "&Key bindings" command keys}
         }}
         set bar [list $file $edit $view $help]
@@ -2121,7 +2121,7 @@ proc makewindow {} {
         lset file end [lreplace [lindex $file end] end-1 end]
         set apple {
         xx "&Apple" cascade {
-            {mc "&About gitk" command about}
+            {mc "&About butk" command about}
             {xx "" separator}
         }}
         set help {
@@ -2273,8 +2273,8 @@ proc makewindow {} {
         set progresscanv .tf.bar.progress
         canvas $progresscanv -relief sunken -height $h -borderwidth 2
         set progressitem [$progresscanv create rect -1 0 0 $h -fill "#00ff00"]
-        set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
-        set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
+        set fprobutem [$progresscanv create rect -1 0 0 $h -fill yellow]
+        set rprobutem [$progresscanv create rect -1 0 0 $h -fill red]
     }
     pack $progresscanv -side right -expand 1 -fill x -padx {0 2}
     set progresscoords {0 0}
@@ -2401,7 +2401,7 @@ proc makewindow {} {
     pack .bleft.mid.ignspace -side left -padx 5
 
     set worddiff [mc "Line diff"]
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
+    if {[package vcompare $but_version "1.7.2"] >= 0} {
         makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
             [mc "Markup words"] [mc "Color words"]
         trace add variable worddiff write changeworddiff
@@ -2700,7 +2700,7 @@ proc makewindow {} {
     set diff_menu .diffctxmenu
     makemenu $diff_menu {
         {mc "Show origin of this line" command show_line_source}
-        {mc "Run git gui blame on this line" command {external_blame_diff}}
+        {mc "Run but gui blame on this line" command {external_blame_diff}}
     }
     $diff_menu configure -tearoff 0
 }
@@ -2786,8 +2786,8 @@ proc click {w} {
 # Adjust the progress bar for a change in requested extent or canvas size
 proc adjustprogress {} {
     global progresscanv progressitem progresscoords
-    global fprogitem fprogcoord lastprogupdate progupdatepending
-    global rprogitem rprogcoord use_ttk
+    global fprobutem fprogcoord lastprogupdate progupdatepending
+    global rprobutem rprogcoord use_ttk
 
     if {$use_ttk} {
         $progresscanv configure -value [expr {int($fprogcoord * 100)}]
@@ -2799,8 +2799,8 @@ proc adjustprogress {} {
     set x1 [expr {$w * [lindex $progresscoords 1]}]
     set h [winfo height $progresscanv]
     $progresscanv coords $progressitem $x0 0 $x1 $h
-    $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
-    $progresscanv coords $rprogitem 0 0 [expr {$w * $rprogcoord}] $h
+    $progresscanv coords $fprobutem 0 0 [expr {$w * $fprogcoord}] $h
+    $progresscanv coords $rprobutem 0 0 [expr {$w * $rprogcoord}] $h
     set now [clock clicks -milliseconds]
     if {$now >= $lastprogupdate + 100} {
         set progupdatepending 0
@@ -2830,8 +2830,8 @@ proc config_check_tmp_exists {tries_left} {
             after 100 [list config_check_tmp_exists $tries_left]
         } else {
             error_popup "There appears to be a stale $config_file_tmp\
- file, which will prevent gitk from saving its configuration on exit.\
- Please remove it if it is not being used by any existing gitk process."
+ file, which will prevent butk from saving its configuration on exit.\
+ Please remove it if it is not being used by any existing butk process."
         }
     }
 }
@@ -3054,10 +3054,10 @@ proc about {} {
         return
     }
     ttk_toplevel $w
-    wm title $w [mc "About gitk"]
+    wm title $w [mc "About butk"]
     make_transient $w .
     message $w.m -text [mc "
-Gitk - a cummit viewer for git
+Gitk - a cummit viewer for but
 
 Copyright \u00a9 2005-2016 Paul Mackerras
 
@@ -3578,30 +3578,30 @@ proc flist_hl {only} {
     set gdttype [mc "touching paths:"]
 }
 
-proc gitknewtmpdir {} {
-    global diffnum gitktmpdir gitdir env
+proc butknewtmpdir {} {
+    global diffnum butktmpdir butdir env
 
-    if {![info exists gitktmpdir]} {
+    if {![info exists butktmpdir]} {
         if {[info exists env(GITK_TMPDIR)]} {
             set tmpdir $env(GITK_TMPDIR)
         } elseif {[info exists env(TMPDIR)]} {
             set tmpdir $env(TMPDIR)
         } else {
-            set tmpdir $gitdir
+            set tmpdir $butdir
         }
-        set gitktmpformat [file join $tmpdir ".gitk-tmp.XXXXXX"]
-        if {[catch {set gitktmpdir [exec mktemp -d $gitktmpformat]}]} {
-            set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
+        set butktmpformat [file join $tmpdir ".butk-tmp.XXXXXX"]
+        if {[catch {set butktmpdir [exec mktemp -d $butktmpformat]}]} {
+            set butktmpdir [file join $butdir [format ".butk-tmp.%s" [pid]]]
         }
-        if {[catch {file mkdir $gitktmpdir} err]} {
-            error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
-            unset gitktmpdir
+        if {[catch {file mkdir $butktmpdir} err]} {
+            error_popup "[mc "Error creating temporary directory %s:" $butktmpdir] $err"
+            unset butktmpdir
             return {}
         }
         set diffnum 0
     }
     incr diffnum
-    set diffdir [file join $gitktmpdir $diffnum]
+    set diffdir [file join $butktmpdir $diffnum]
     if {[catch {file mkdir $diffdir} err]} {
         error_popup "[mc "Error creating temporary directory %s:" $diffdir] $err"
         return {}
@@ -3612,7 +3612,7 @@ proc gitknewtmpdir {} {
 proc save_file_from_cummit {filename output what} {
     global nullfile
 
-    if {[catch {exec git show $filename -- > $output} err]} {
+    if {[catch {exec but show $filename -- > $output} err]} {
         if {[string match "fatal: bad revision *" $err]} {
             return $nullfile
         }
@@ -3668,7 +3668,7 @@ proc external_diff {} {
     }
 
     # make sure that several diffs wont collide
-    set diffdir [gitknewtmpdir]
+    set diffdir [butknewtmpdir]
     if {$diffdir eq {}} return
 
     # gather files to diff
@@ -3781,7 +3781,7 @@ proc external_blame_diff {} {
 # Find the SHA1 ID of the blob for file $fname in the index
 # at stage 0 or 2
 proc index_sha1 {fname} {
-    set f [open [list | git ls-files -s $fname] r]
+    set f [open [list | but ls-files -s $fname] r]
     while {[gets $f line] >= 0} {
         set info [lindex [split $line "\t"] 0]
         set stage [lindex $info 2]
@@ -3832,24 +3832,24 @@ proc external_blame {parent_idx {line {}}} {
         return
     }
 
-    set cmdline [list git gui blame]
+    set cmdline [list but gui blame]
     if {$line ne {} && $line > 1} {
         lappend cmdline "--line=$line"
     }
     set f [file join $cdup $flist_menu_file]
-    # Unfortunately it seems git gui blame doesn't like
+    # Unfortunately it seems but gui blame doesn't like
     # being given an absolute path...
     set f [make_relative $f]
     lappend cmdline $base_cummit $f
     if {[catch {eval exec $cmdline &} err]} {
-        error_popup "[mc "git gui blame: command failed:"] $err"
+        error_popup "[mc "but gui blame: command failed:"] $err"
     }
 }
 
 proc show_line_source {} {
     global cmitmode currentid parents curview blamestuff blameinst
     global diff_menu_line diff_menu_filebase flist_menu_file
-    global nullid nullid2 gitdir cdup
+    global nullid nullid2 butdir cdup
 
     set from_index {}
     if {$cmitmode eq "tree"} {
@@ -3868,8 +3868,8 @@ proc show_line_source {} {
             if {$pi > 0} {
                 # must be a merge in progress...
                 if {[catch {
-                    # get the last line from .git/MERGE_HEAD
-                    set f [open [file join $gitdir MERGE_HEAD] r]
+                    # get the last line from .but/MERGE_HEAD
+                    set f [open [file join $butdir MERGE_HEAD] r]
                     set id [lindex [split [read $f] "\n"] end-1]
                     close $f
                 } err]} {
@@ -3894,9 +3894,9 @@ proc show_line_source {} {
     }
     set blameargs {}
     if {$from_index ne {}} {
-        lappend blameargs | git cat-file blob $from_index
+        lappend blameargs | but cat-file blob $from_index
     }
-    lappend blameargs | git blame -p -L$line,+1
+    lappend blameargs | but blame -p -L$line,+1
     if {$from_index ne {}} {
         lappend blameargs --contents -
     } else {
@@ -3906,7 +3906,7 @@ proc show_line_source {} {
     if {[catch {
         set f [open $blameargs r]
     } err]} {
-        error_popup [mc "Couldn't start git blame: %s" $err]
+        error_popup [mc "Couldn't start but blame: %s" $err]
         return
     }
     nowbusy blaming [mc "Searching"]
@@ -3941,7 +3941,7 @@ proc read_line_source {fd inst} {
     notbusy blaming
     fconfigure $fd -blocking 1
     if {[catch {close $fd} err]} {
-        error_popup [mc "Error running git blame: %s" $err]
+        error_popup [mc "Error running but blame: %s" $err]
         return 0
     }
 
@@ -3949,8 +3949,8 @@ proc read_line_source {fd inst} {
     set line [split [lindex $blamestuff($inst) 0] " "]
     set id [lindex $line 0]
     set lnum [lindex $line 1]
-    if {[string length $id] == 40 && [string is xdigit $id] &&
-        [string is digit -strict $lnum]} {
+    if {[string length $id] == 40 && [string is xdibut $id] &&
+        [string is dibut -strict $lnum]} {
         # look for "filename" line
         foreach l $blamestuff($inst) {
             if {[string match "filename *" $l]} {
@@ -3973,7 +3973,7 @@ proc read_line_source {fd inst} {
                              which is not in this view" [shortids $id]]
         }
     } else {
-        puts "oops couldn't parse git blame output"
+        puts "oops couldn't parse but blame output"
     }
     return 0
 }
@@ -4090,7 +4090,7 @@ proc set_window_title {} {
     set rev [mc "All files"]
     if {$curview ne 0} {
         if {$viewname($curview) eq [mc "Command line"]} {
-            set rev [string map {"--gitk-symmetric-diff-marker" "--merge"} $vrevs($curview)]
+            set rev [string map {"--butk-symmetric-diff-marker" "--merge"} $vrevs($curview)]
         } else {
             set rev $viewname($curview)
         }
@@ -4105,7 +4105,7 @@ proc newview {ishighlight} {
     global revtreeargs viewargscmd newviewopts curview
 
     set newishighlight $ishighlight
-    set top .gitkview
+    set top .butkview
     if {[winfo exists $top]} {
         raise $top
         return
@@ -4146,12 +4146,12 @@ set known_view_options {
     {lright    b    .  "--left-right"   {mc "Mark branch sides"}}
     {first     b    .  "--first-parent" {mc "Limit to first parent"}}
     {smplhst   b    .  "--simplify-by-decoration"   {mc "Simple history"}}
-    {args      t50  *. {}               {mc "Additional arguments to git log:"}}
+    {args      t50  *. {}               {mc "Additional arguments to but log:"}}
     {allpaths  path +  {}               {mc "Enter files and directories to include, one per line:"}}
     {cmd       t50= +  {}               {mc "Command to generate more cummits to include:"}}
     }
 
-# Convert $newviewopts($n, ...) into args for git log.
+# Convert $newviewopts($n, ...) into args for but log.
 proc encode_view_opts {n} {
     global known_view_options newviewopts
 
@@ -4185,7 +4185,7 @@ proc encode_view_opts {n} {
     return [concat $rargs [shellsplit $newviewopts($n,args)]]
 }
 
-# Fill $newviewopts($n, ...) based on args for git log.
+# Fill $newviewopts($n, ...) based on args for but log.
 proc decode_view_opts {n view_args} {
     global known_view_options newviewopts
 
@@ -4263,7 +4263,7 @@ proc editview {} {
     global viewname viewperm newviewname newviewopts
     global viewargs viewargscmd
 
-    set top .gitkvedit-$curview
+    set top .butkvedit-$curview
     if {[winfo exists $top]} {
         raise $top
         return
@@ -4829,7 +4829,7 @@ proc do_file_hl {serial} {
         # must be "containing:", i.e. we're searching cummit info
         return
     }
-    set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
+    set cmd [concat | but diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
     filerun $filehighlight readfhighlight
@@ -4882,7 +4882,7 @@ proc readfhighlight {} {
     }
     if {[eof $filehighlight]} {
         # strange...
-        puts "oops, git diff-tree died"
+        puts "oops, but diff-tree died"
         catch {close $filehighlight}
         unset filehighlight
         return 0
@@ -5253,13 +5253,13 @@ proc layoutmore {} {
 }
 
 # With path limiting, we mightn't get the actual HEAD cummit,
-# so ask git rev-list what is the first ancestor of HEAD that
+# so ask but rev-list what is the first ancestor of HEAD that
 # touches a file in the path limit.
 proc get_viewmainhead {view} {
     global viewmainheadid vfilelimit viewinstances mainheadid
 
     catch {
-        set rfd [open [concat | git rev-list -1 $mainheadid \
+        set rfd [open [concat | but rev-list -1 $mainheadid \
                            -- $vfilelimit($view)] r]
         set j [reg_instance $rfd]
         lappend viewinstances($view) $j
@@ -5269,7 +5269,7 @@ proc get_viewmainhead {view} {
     }
 }
 
-# git rev-list should give us just 1 line to use as viewmainheadid($view)
+# but rev-list should give us just 1 line to use as viewmainheadid($view)
 proc getviewhead {fd inst view} {
     global viewmainheadid commfd curview viewinstances showlocalchanges
 
@@ -5278,7 +5278,7 @@ proc getviewhead {fd inst view} {
         if {![eof $fd]} {
             return 1
         }
-    } elseif {[string length $line] == 40 && [string is xdigit $line]} {
+    } elseif {[string length $line] == 40 && [string is xdibut $line]} {
         set id $line
     }
     set viewmainheadid($view) $id
@@ -5317,17 +5317,17 @@ proc dohidelocalchanges {} {
     incr lserial
 }
 
-# spawn off a process to do git diff-index --cached HEAD
+# spawn off a process to do but diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges vfilelimit curview
-    global hasworktree git_version
+    global hasworktree but_version
 
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
-        set cmd "|git diff-index --cached --ignore-submodules=dirty HEAD"
+    if {[package vcompare $but_version "1.7.2"] >= 0} {
+        set cmd "|but diff-index --cached --ignore-submodules=dirty HEAD"
     } else {
-        set cmd "|git diff-index --cached HEAD"
+        set cmd "|but diff-index --cached HEAD"
     }
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
@@ -5357,7 +5357,7 @@ proc readdiffindex {fd serial inst} {
     }
 
     # now see if there are any local changes not checked in to the index
-    set cmd "|git diff-files"
+    set cmd "|but diff-files"
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
@@ -6881,7 +6881,7 @@ proc findmore {} {
                 set arowend [expr {$arow + [llength $ids]}]
             }
             set id [lindex $ids [expr {$l - $arow}]]
-            # shouldn't happen unless git log doesn't give all the cummits...
+            # shouldn't happen unless but log doesn't give all the cummits...
             if {![info exists cummitdata($id)] ||
                 ![doesmatch $cummitdata($id)]} {
                 continue
@@ -7653,11 +7653,11 @@ proc gettree {id} {
     if {![info exists treefilelist($id)]} {
         if {![info exists treepending]} {
             if {$id eq $nullid} {
-                set cmd [list | git ls-files]
+                set cmd [list | but ls-files]
             } elseif {$id eq $nullid2} {
-                set cmd [list | git ls-files --stage -t]
+                set cmd [list | but ls-files --stage -t]
             } else {
-                set cmd [list | git ls-tree -r $id]
+                set cmd [list | but ls-tree -r $id]
             }
             if {[catch {set gtf [open $cmd r]}]} {
                 return
@@ -7729,7 +7729,7 @@ proc showfile {f} {
         }
     } else {
         set blob [lindex $treeidlist($diffids) $i]
-        if {[catch {set bf [open [concat | git cat-file blob $blob] r]} err]} {
+        if {[catch {set bf [open [concat | but cat-file blob $blob] r]} err]} {
             puts "oops, error reading blob $blob: $err"
             return
         }
@@ -7853,7 +7853,7 @@ proc showinlinediff {ids} {
 # If the filename (name) is under any of the passed filter paths
 # then return true to include the file in the listing.
 proc path_filter {filter name} {
-    set worktree [gitworktree]
+    set worktree [butworktree]
     foreach p $filter {
         set fq_p [file normalize $p]
         set fq_n [file normalize [file join $worktree $name]]
@@ -7872,14 +7872,14 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global log_showroot nullid nullid2 git_version
+    global log_showroot nullid nullid2 but_version
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
     if {$i >= 0} {
         if {[llength $ids] > 1 && $j < 0} {
             # comparing working directory with some specific revision
-            set cmd [concat | git diff-index $flags]
+            set cmd [concat | but diff-index $flags]
             if {$i == 0} {
                 lappend cmd -R [lindex $ids 1]
             } else {
@@ -7887,16 +7887,16 @@ proc diffcmd {ids flags} {
             }
         } else {
             # comparing working directory with index
-            set cmd [concat | git diff-files $flags]
+            set cmd [concat | but diff-files $flags]
             if {$j == 1} {
                 lappend cmd -R
             }
         }
     } elseif {$j >= 0} {
-        if {[package vcompare $git_version "1.7.2"] >= 0} {
+        if {[package vcompare $but_version "1.7.2"] >= 0} {
             set flags "$flags --ignore-submodules=dirty"
         }
-        set cmd [concat | git diff-index --cached $flags]
+        set cmd [concat | but diff-index --cached $flags]
         if {[llength $ids] > 1} {
             # comparing index with specific revision
             if {$j == 0} {
@@ -7912,7 +7912,7 @@ proc diffcmd {ids flags} {
         if {$log_showroot} {
             lappend flags --root
         }
-        set cmd [concat | git diff-tree -r $flags $ids]
+        set cmd [concat | but diff-tree -r $flags $ids]
     }
     return $cmd
 }
@@ -7940,7 +7940,7 @@ proc gettreediffline {gdtf ids} {
     set sublist {}
     set max 1000
     if {$perfile_attrs} {
-        # cache_gitattr is slow, and even slower on win32 where we
+        # cache_butattr is slow, and even slower on win32 where we
         # have to invoke it for only about 30 paths at a time
         set max 500
         if {[tk windowingsystem] == "win32"} {
@@ -7962,7 +7962,7 @@ proc gettreediffline {gdtf ids} {
         }
     }
     if {$perfile_attrs} {
-        cache_gitattr encoding $sublist
+        cache_butattr encoding $sublist
     }
     if {![eof $gdtf]} {
         return [expr {$nr >= $max? 2: 1}]
@@ -8024,14 +8024,14 @@ proc getblobdiffs {ids} {
     global ignorespace
     global worddiff
     global limitdiffs vfilelimit curview
-    global git_version
+    global but_version
 
     set textconv {}
-    if {[package vcompare $git_version "1.6.1"] >= 0} {
+    if {[package vcompare $but_version "1.6.1"] >= 0} {
         set textconv "--textconv"
     }
     set submodule {}
-    if {[package vcompare $git_version "1.6.6"] >= 0} {
+    if {[package vcompare $but_version "1.6.6"] >= 0} {
         set submodule "--submodule"
     }
     set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-cummit-id -U$diffcontext"]
@@ -8160,7 +8160,7 @@ proc parseblobdiffline {ids line} {
     global worddiff diffseehere
 
     if {![string compare -length 5 "diff " $line]} {
-        if {![regexp {^diff (--cc|--git) } $line m type]} {
+        if {![regexp {^diff (--cc|--but) } $line m type]} {
             set line [encoding convertfrom $line]
             $ctext insert end "$line\n" hunksep
             continue
@@ -8761,7 +8761,7 @@ proc gotocummit {} {
                 set id [lindex $matches 0]
             }
         } else {
-            if {[catch {set id [exec git rev-parse --verify $sha1string]}]} {
+            if {[catch {set id [exec but rev-parse --verify $sha1string]}]} {
                 error_popup [mc "Revision %s is not known" $sha1string]
                 return
             }
@@ -9070,7 +9070,7 @@ proc getpatchid {id} {
         # trim off the initial "|"
         set cmd [lrange $cmd 1 end]
         if {[catch {
-            set x [eval exec $cmd | git patch-id]
+            set x [eval exec $cmd | but patch-id]
             set patchids($id) [lindex $x 0]
         }]} {
             set patchids($id) "error"
@@ -9162,12 +9162,12 @@ proc do_cmp_cummits {a b} {
 proc diffcummits {a b} {
     global diffcontext diffids blobdifffd diffinhdr currdiffsubmod
 
-    set tmpdir [gitknewtmpdir]
+    set tmpdir [butknewtmpdir]
     set fna [file join $tmpdir "cummit-[string range $a 0 7]"]
     set fnb [file join $tmpdir "cummit-[string range $b 0 7]"]
     if {[catch {
-        exec git diff-tree -p --pretty $a >$fna
-        exec git diff-tree -p --pretty $b >$fnb
+        exec but diff-tree -p --pretty $a >$fna
+        exec but diff-tree -p --pretty $b >$fnb
     } err]} {
         error_popup [mc "Error writing cummit to file: %s" $err]
         return
@@ -9385,9 +9385,9 @@ proc domktag {} {
     }
     if {[catch {
         if {$msg != {}} {
-            exec git tag -a -m $msg $tag $id
+            exec but tag -a -m $msg $tag $id
         } else {
-            exec git tag $tag $id
+            exec but tag $tag $id
         }
     } err]} {
         error_popup "[mc "Error creating tag:"] $err" $mktagtop
@@ -9451,7 +9451,7 @@ proc copyreference {} {
     global rowmenuid autosellen
 
     set format "%h (\"%s\", %ad)"
-    set cmd [list git show -s --pretty=format:$format --date=short]
+    set cmd [list but show -s --pretty=format:$format --date=short]
     if {$autosellen < 40} {
         lappend cmd --abbrev=$autosellen
     }
@@ -9609,7 +9609,7 @@ proc mkbrgo {top} {
     nowbusy newbranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        eval exec but branch $cmdargs
     } err]} {
         notbusy newbranch
         error_popup $err
@@ -9650,7 +9650,7 @@ proc mvbrgo {top prevname} {
     nowbusy renamebranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        eval exec but branch $cmdargs
     } err]} {
         notbusy renamebranch
         error_popup $err
@@ -9691,7 +9691,7 @@ proc exec_citool {tool_args {baseid {}}} {
         }
     }
 
-    eval exec git citool $tool_args &
+    eval exec but citool $tool_args &
 
     array unset env GIT_AUTHOR_*
     array set env $save_env
@@ -9700,9 +9700,9 @@ proc exec_citool {tool_args {baseid {}}} {
 proc cherrypick {} {
     global rowmenuid curview
     global mainhead mainheadid
-    global gitdir
+    global butdir
 
-    set oldhead [exec git rev-parse HEAD]
+    set oldhead [exec but rev-parse HEAD]
     set dheads [descheads $rowmenuid]
     if {$dheads ne {} && [lsearch -exact $dheads $oldhead] >= 0} {
         set ok [confirm_popup [mc "cummit %s is already\
@@ -9712,9 +9712,9 @@ proc cherrypick {} {
     }
     nowbusy cherrypick [mc "Cherry-picking"]
     update
-    # Unfortunately git-cherry-pick writes stuff to stderr even when
+    # Unfortunately but-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
-    if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
+    if {[catch {exec sh -c "but cherry-pick -r $rowmenuid 2>&1"} err]} {
         notbusy cherrypick
         if {[regexp -line \
                  {Entry '(.*)' (would be overwritten by merge|not uptodate)} \
@@ -9726,10 +9726,10 @@ proc cherrypick {} {
                        {^(CONFLICT \(.*\):|Automatic cherry-pick failed|error: could not apply)} \
                        $err]} {
             if {[confirm_popup [mc "Cherry-pick failed because of merge\
-                        conflict.\nDo you wish to run git citool to\
+                        conflict.\nDo you wish to run but citool to\
                         resolve it?"]]} {
                 # Force citool to read MERGE_MSG
-                file delete [file join $gitdir "GITGUI_MSG"]
+                file delete [file join $butdir "GITGUI_MSG"]
                 exec_citool {} $rowmenuid
             }
         } else {
@@ -9738,7 +9738,7 @@ proc cherrypick {} {
         run updatecummits
         return
     }
-    set newhead [exec git rev-parse HEAD]
+    set newhead [exec but rev-parse HEAD]
     if {$newhead eq $oldhead} {
         notbusy cherrypick
         error_popup [mc "No changes cummitted"]
@@ -9763,9 +9763,9 @@ proc cherrypick {} {
 proc revert {} {
     global rowmenuid curview
     global mainhead mainheadid
-    global gitdir
+    global butdir
 
-    set oldhead [exec git rev-parse HEAD]
+    set oldhead [exec but rev-parse HEAD]
     set dheads [descheads $rowmenuid]
     if { $dheads eq {} || [lsearch -exact $dheads $oldhead] == -1 } {
        set ok [confirm_popup [mc "cummit %s is not\
@@ -9776,7 +9776,7 @@ proc revert {} {
     nowbusy revert [mc "Reverting"]
     update
 
-    if [catch {exec git revert --no-edit $rowmenuid} err] {
+    if [catch {exec but revert --no-edit $rowmenuid} err] {
         notbusy revert
         if [regexp {files would be overwritten by merge:(\n(( |\t)+[^\n]+\n)+)}\
                 $err match files] {
@@ -9786,9 +9786,9 @@ proc revert {} {
                 your changes and try again." $files]
         } elseif [regexp {error: could not revert} $err] {
             if [confirm_popup [mc "Revert failed because of merge conflict.\n\
-                Do you wish to run git citool to resolve it?"]] {
+                Do you wish to run but citool to resolve it?"]] {
                 # Force citool to read MERGE_MSG
-                file delete [file join $gitdir "GITGUI_MSG"]
+                file delete [file join $butdir "GITGUI_MSG"]
                 exec_citool {} $rowmenuid
             }
         } else { error_popup $err }
@@ -9796,7 +9796,7 @@ proc revert {} {
         return
     }
 
-    set newhead [exec git rev-parse HEAD]
+    set newhead [exec but rev-parse HEAD]
     if { $newhead eq $oldhead } {
         notbusy revert
         error_popup [mc "No changes cummitted"]
@@ -9853,7 +9853,7 @@ proc resethead {} {
     tkwait window $w
     if {!$confirm_ok} return
     if {[catch {set fd [open \
-            [list | git reset --$resettype $rowmenuid 2>@1] r]} err]} {
+            [list | but reset --$resettype $rowmenuid 2>@1] r]} err]} {
         error_popup $err
     } else {
         dohidelocalchanges
@@ -9880,7 +9880,7 @@ proc readresetstat {fd} {
         error_popup $err
     }
     set oldhead $mainheadid
-    set newhead [exec git rev-parse HEAD]
+    set newhead [exec but rev-parse HEAD]
     if {$newhead ne $oldhead} {
         movehead $newhead $mainhead
         movedhead $newhead $mainhead
@@ -9924,7 +9924,7 @@ proc cobranch {} {
 
     # check the tree is clean first??
     set newhead $headmenuhead
-    set command [list | git checkout]
+    set command [list | but checkout]
     if {[string match "remotes/*" $newhead]} {
         set remote $newhead
         set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
@@ -10009,7 +10009,7 @@ proc rmbranch {} {
     }
     nowbusy rmbranch
     update
-    if {[catch {exec git branch -D $head} err]} {
+    if {[catch {exec but branch -D $head} err]} {
         notbusy rmbranch
         error_popup $err
         return
@@ -10190,7 +10190,7 @@ proc refill_reflist {} {
 proc getallcummits {} {
     global allcummits nextarc seeds allccache allcwait cachedarcs allcupdate
     global idheads idtags idotherrefs allparents tagobjid
-    global gitdir
+    global butdir
 
     if {![info exists allcummits]} {
         set nextarc 0
@@ -10198,7 +10198,7 @@ proc getallcummits {} {
         set seeds {}
         set allcwait 0
         set cachedarcs 0
-        set allccache [file join $gitdir "gitk.cache"]
+        set allccache [file join $butdir "butk.cache"]
         if {![catch {
             set f [open $allccache r]
             set allcwait 1
@@ -10209,7 +10209,7 @@ proc getallcummits {} {
     if {$allcwait} {
         return
     }
-    set cmd [list | git rev-list --parents]
+    set cmd [list | but rev-list --parents]
     set allcupdate [expr {$seeds ne {}}]
     if {!$allcupdate} {
         set ids "--all"
@@ -11327,7 +11327,7 @@ proc add_tag_ctext {tag} {
 
     if {![info exists cached_tagcontent($tag)]} {
         catch {
-            set cached_tagcontent($tag) [exec git cat-file -p $tag]
+            set cached_tagcontent($tag) [exec but cat-file -p $tag]
         }
     }
     $ctext insert end "[mc "Tag"]: $tag\n" bold
@@ -11378,14 +11378,14 @@ proc showtags {id isnew} {
 
 proc doquit {} {
     global stopped
-    global gitktmpdir
+    global butktmpdir
 
     set stopped 100
     savestuff .
     destroy .
 
-    if {[info exists gitktmpdir]} {
-        catch {file delete -force $gitktmpdir}
+    if {[info exists butktmpdir]} {
+        catch {file delete -force $butktmpdir}
     }
 }
 
@@ -11410,7 +11410,7 @@ proc choosefont {font which} {
     set fontparam(size) $fontattr($font,size)
     set fontparam(weight) $fontattr($font,weight)
     set fontparam(slant) $fontattr($font,slant)
-    set top .gitkfont
+    set top .butkfont
     set fonttop $top
     if {![winfo exists $top]} {
         font create sample
@@ -11701,7 +11701,7 @@ proc doprefs {} {
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk
 
-    set top .gitkprefs
+    set top .butkprefs
     set prefstop $top
     if {[winfo exists $top]} {
         raise $top
@@ -12207,13 +12207,13 @@ proc tcl_encoding {enc} {
     return $tclenc
 }
 
-proc gitattr {path attr default} {
+proc butattr {path attr default} {
     global path_attr_cache
     if {[info exists path_attr_cache($attr,$path)]} {
         set r $path_attr_cache($attr,$path)
     } else {
         set r "unspecified"
-        if {![catch {set line [exec git check-attr $attr -- $path]}]} {
+        if {![catch {set line [exec but check-attr $attr -- $path]}]} {
             regexp "(.*): $attr: (.*)" $line m f r
         }
         set path_attr_cache($attr,$path) $r
@@ -12224,7 +12224,7 @@ proc gitattr {path attr default} {
     return $r
 }
 
-proc cache_gitattr {attr pathlist} {
+proc cache_butattr {attr pathlist} {
     global path_attr_cache
     set newlist {}
     foreach path $pathlist {
@@ -12240,7 +12240,7 @@ proc cache_gitattr {attr pathlist} {
     while {$newlist ne {}} {
         set head [lrange $newlist 0 [expr {$lim - 1}]]
         set newlist [lrange $newlist $lim end]
-        if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
+        if {![catch {set rlist [eval exec but check-attr $attr -- $head]}]} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
@@ -12257,7 +12257,7 @@ proc get_path_encoding {path} {
     global gui_encoding perfile_attrs
     set tcl_enc $gui_encoding
     if {$path ne {} && $perfile_attrs} {
-        set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+        set enc2 [tcl_encoding [butattr $path encoding $tcl_enc]]
         if {$enc2 ne {}} {
             set tcl_enc $enc2
         }
@@ -12268,13 +12268,13 @@ proc get_path_encoding {path} {
 ## For msgcat loading, first locate the installation location.
 if { [info exists ::env(GITK_MSGSDIR)] } {
     ## Msgsdir was manually set in the environment.
-    set gitk_msgsdir $::env(GITK_MSGSDIR)
+    set butk_msgsdir $::env(GITK_MSGSDIR)
 } else {
     ## Let's guess the prefix from argv0.
-    set gitk_prefix [file dirname [file dirname [file normalize $argv0]]]
-    set gitk_libdir [file join $gitk_prefix share gitk lib]
-    set gitk_msgsdir [file join $gitk_libdir msgs]
-    unset gitk_prefix
+    set butk_prefix [file dirname [file dirname [file normalize $argv0]]]
+    set butk_libdir [file join $butk_prefix share butk lib]
+    set butk_msgsdir [file join $butk_libdir msgs]
+    unset butk_prefix
 }
 
 ## Internationalization (i18n) through msgcat and gettext. See
@@ -12282,11 +12282,11 @@ if { [info exists ::env(GITK_MSGSDIR)] } {
 package require msgcat
 namespace import ::msgcat::mc
 ## And eventually load the actual message catalog
-::msgcat::mcload $gitk_msgsdir
+::msgcat::mcload $butk_msgsdir
 
 # First check that Tcl/Tk is recent enough
 if {[catch {package require Tk 8.4} err]} {
-    show_error {} . [mc "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
+    show_error {} . [mc "Sorry, butk cannot run with this version of Tcl/Tk.\n\
                          Gitk requires at least Tcl/Tk 8.4."]
     exit 1
 }
@@ -12306,26 +12306,26 @@ if { [info exists ::env(GIT_TRACE)] } {
 }
 
 # defaults...
-set wrcomcmd "git diff-tree --stdin -p --pretty=email"
+set wrcomcmd "but diff-tree --stdin -p --pretty=email"
 
-set gitencoding {}
+set butencoding {}
 catch {
-    set gitencoding [exec git config --get i18n.cummitencoding]
+    set butencoding [exec but config --get i18n.cummitencoding]
 }
 catch {
-    set gitencoding [exec git config --get i18n.logoutputencoding]
+    set butencoding [exec but config --get i18n.logoutputencoding]
 }
-if {$gitencoding == ""} {
-    set gitencoding "utf-8"
+if {$butencoding == ""} {
+    set butencoding "utf-8"
 }
-set tclencoding [tcl_encoding $gitencoding]
+set tclencoding [tcl_encoding $butencoding]
 if {$tclencoding == {}} {
-    puts stderr "Warning: encoding $gitencoding is not supported by Tcl/Tk"
+    puts stderr "Warning: encoding $butencoding is not supported by Tcl/Tk"
 }
 
 set gui_encoding [encoding system]
 catch {
-    set enc [exec git config --get gui.encoding]
+    set enc [exec but config --get gui.encoding]
     if {$enc ne {}} {
         set tclenc [tcl_encoding $enc]
         if {$tclenc ne {}} {
@@ -12338,7 +12338,7 @@ catch {
 
 set log_showroot true
 catch {
-    set log_showroot [exec git config --bool --get log.showroot]
+    set log_showroot [exec but config --bool --get log.showroot]
 }
 
 if {[tk windowingsystem] eq "aqua"} {
@@ -12449,18 +12449,18 @@ catch {
     # http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
     if {[info exists env(XDG_CONFIG_HOME)] && $env(XDG_CONFIG_HOME) ne ""} {
         # XDG_CONFIG_HOME environment variable is set
-        set config_file [file join $env(XDG_CONFIG_HOME) git gitk]
-        set config_file_tmp [file join $env(XDG_CONFIG_HOME) git gitk-tmp]
+        set config_file [file join $env(XDG_CONFIG_HOME) but butk]
+        set config_file_tmp [file join $env(XDG_CONFIG_HOME) but butk-tmp]
     } else {
         # default XDG_CONFIG_HOME
-        set config_file "~/.config/git/gitk"
-        set config_file_tmp "~/.config/git/gitk-tmp"
+        set config_file "~/.config/but/butk"
+        set config_file_tmp "~/.config/but/butk-tmp"
     }
     if {![file exists $config_file]} {
         # for backward compatibility use the old config file if it exists
-        if {[file exists "~/.gitk"]} {
-            set config_file "~/.gitk"
-            set config_file_tmp "~/.gitk-tmp"
+        if {[file exists "~/.butk"]} {
+            set config_file "~/.butk"
+            set config_file_tmp "~/.butk-tmp"
         } elseif {![file exists [file dirname $config_file]]} {
             file mkdir [file dirname $config_file]
         }
@@ -12502,9 +12502,9 @@ setui $uicolor
 
 setoptions
 
-# check that we can find a .git directory somewhere...
-if {[catch {set gitdir [exec git rev-parse --git-dir]}]} {
-    show_error {} . [mc "Cannot find a git repository here."]
+# check that we can find a .but directory somewhere...
+if {[catch {set butdir [exec but rev-parse --but-dir]}]} {
+    show_error {} . [mc "Cannot find a but repository here."]
     exit 1
 }
 
@@ -12542,13 +12542,13 @@ if {$selecthead eq "HEAD"} {
 if {$i >= [llength $argv] && $revtreeargs ne {}} {
     # no -- on command line, but some arguments (other than --argscmd)
     if {[catch {
-        set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
+        set f [eval exec but rev-parse --no-revs --no-flags $revtreeargs]
         set cmdline_files [split $f "\n"]
         set n [llength $cmdline_files]
         set revtreeargs [lrange $revtreeargs 0 end-$n]
-        # Unfortunately git rev-parse doesn't produce an error when
+        # Unfortunately but rev-parse doesn't produce an error when
         # something is both a revision and a filename.  To be consistent
-        # with git log and git rev-list, check revtreeargs for filenames.
+        # with but log and but rev-list, check revtreeargs for filenames.
         foreach arg $revtreeargs {
             if {[file exists $arg]} {
                 show_error {} . [mc "Ambiguous argument '%s': both revision\
@@ -12563,7 +12563,7 @@ if {$i >= [llength $argv] && $revtreeargs ne {}} {
         if {$i > 0} {
             set err [string range $err [expr {$i + 6}] end]
         }
-        show_error {} . "[mc "Bad arguments to gitk:"]\n$err"
+        show_error {} . "[mc "Bad arguments to butk:"]\n$err"
         exit 1
     }
 }
@@ -12583,14 +12583,14 @@ if {$use_ttk} {
     setttkstyle
 }
 
-regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
+regexp {^but version ([\d.]*\d)} [exec but version] _ but_version
 
 set show_notes {}
-if {[package vcompare $git_version "1.6.6.2"] >= 0} {
+if {[package vcompare $but_version "1.6.6.2"] >= 0} {
     set show_notes "--show-notes"
 }
 
-set appname "gitk"
+set appname "butk"
 
 set runq {}
 set history {}
@@ -12631,34 +12631,34 @@ set patchnum 0
 set lserial 0
 set hasworktree [hasworktree]
 set cdup {}
-if {[expr {[exec git rev-parse --is-inside-work-tree] == "true"}]} {
-    set cdup [exec git rev-parse --show-cdup]
+if {[expr {[exec but rev-parse --is-inside-work-tree] == "true"}]} {
+    set cdup [exec but rev-parse --show-cdup]
 }
-set worktree [gitworktree]
+set worktree [butworktree]
 setcoords
 makewindow
 catch {
-    image create photo gitlogo      -width 16 -height 16
+    image create photo butlogo      -width 16 -height 16
 
-    image create photo gitlogominus -width  4 -height  2
-    gitlogominus put #C00000 -to 0 0 4 2
-    gitlogo copy gitlogominus -to  1 5
-    gitlogo copy gitlogominus -to  6 5
-    gitlogo copy gitlogominus -to 11 5
-    image delete gitlogominus
+    image create photo butlogominus -width  4 -height  2
+    butlogominus put #C00000 -to 0 0 4 2
+    butlogo copy butlogominus -to  1 5
+    butlogo copy butlogominus -to  6 5
+    butlogo copy butlogominus -to 11 5
+    image delete butlogominus
 
-    image create photo gitlogoplus  -width  4 -height  4
-    gitlogoplus  put #008000 -to 1 0 3 4
-    gitlogoplus  put #008000 -to 0 1 4 3
-    gitlogo copy gitlogoplus  -to  1 9
-    gitlogo copy gitlogoplus  -to  6 9
-    gitlogo copy gitlogoplus  -to 11 9
-    image delete gitlogoplus
+    image create photo butlogoplus  -width  4 -height  4
+    butlogoplus  put #008000 -to 1 0 3 4
+    butlogoplus  put #008000 -to 0 1 4 3
+    butlogo copy butlogoplus  -to  1 9
+    butlogo copy butlogoplus  -to  6 9
+    butlogo copy butlogoplus  -to 11 9
+    image delete butlogoplus
 
-    image create photo gitlogo32    -width 32 -height 32
-    gitlogo32 copy gitlogo -zoom 2 2
+    image create photo butlogo32    -width 32 -height 32
+    butlogo32 copy butlogo -zoom 2 2
 
-    wm iconphoto . -default gitlogo gitlogo32
+    wm iconphoto . -default butlogo butlogo32
 }
 # wait for the window to become visible
 tkwait visibility .

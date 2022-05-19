@@ -10,68 +10,68 @@ test_expect_success setup '
 	echo >c &&
 	echo >a/d &&
 	echo >b/e &&
-	git add . &&
+	but add . &&
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 	echo " " >a/d &&
 	test_tick &&
-	git cummit -a -m second &&
+	but cummit -a -m second &&
 	echo "  " >a/d &&
 	echo " " >b/e &&
-	git add a/d
+	but add a/d
 '
 
 test_expect_success 'diff-tree --exit-code' '
-	test_must_fail git diff --exit-code HEAD^ HEAD &&
-	test_must_fail git diff-tree --exit-code HEAD^ HEAD
+	test_must_fail but diff --exit-code HEAD^ HEAD &&
+	test_must_fail but diff-tree --exit-code HEAD^ HEAD
 '
 
 test_expect_success 'diff-tree -b --exit-code' '
-	git diff -b --exit-code HEAD^ HEAD &&
-	git diff-tree -b -p --exit-code HEAD^ HEAD &&
-	git diff-tree -b --exit-code HEAD^ HEAD
+	but diff -b --exit-code HEAD^ HEAD &&
+	but diff-tree -b -p --exit-code HEAD^ HEAD &&
+	but diff-tree -b --exit-code HEAD^ HEAD
 '
 
 test_expect_success 'diff-index --cached --exit-code' '
-	test_must_fail git diff --cached --exit-code HEAD &&
-	test_must_fail git diff-index --cached --exit-code HEAD
+	test_must_fail but diff --cached --exit-code HEAD &&
+	test_must_fail but diff-index --cached --exit-code HEAD
 '
 
 test_expect_success 'diff-index -b -p --cached --exit-code' '
-	git diff -b --cached --exit-code HEAD &&
-	git diff-index -b -p --cached --exit-code HEAD
+	but diff -b --cached --exit-code HEAD &&
+	but diff-index -b -p --cached --exit-code HEAD
 '
 
 test_expect_success 'diff-index --exit-code' '
-	test_must_fail git diff --exit-code HEAD &&
-	test_must_fail git diff-index --exit-code HEAD
+	test_must_fail but diff --exit-code HEAD &&
+	test_must_fail but diff-index --exit-code HEAD
 '
 
 test_expect_success 'diff-index -b -p --exit-code' '
-	git diff -b --exit-code HEAD &&
-	git diff-index -b -p --exit-code HEAD
+	but diff -b --exit-code HEAD &&
+	but diff-index -b -p --exit-code HEAD
 '
 
 test_expect_success 'diff-files --exit-code' '
-	test_must_fail git diff --exit-code &&
-	test_must_fail git diff-files --exit-code
+	test_must_fail but diff --exit-code &&
+	test_must_fail but diff-files --exit-code
 '
 
 test_expect_success 'diff-files -b -p --exit-code' '
-	git diff -b --exit-code &&
-	git diff-files -b -p --exit-code
+	but diff -b --exit-code &&
+	but diff-files -b -p --exit-code
 '
 
 test_expect_success 'diff-files --diff-filter --quiet' '
-	git reset --hard &&
+	but reset --hard &&
 	rm a/d &&
 	echo x >>b/e &&
-	test_must_fail git diff-files --diff-filter=M --quiet
+	test_must_fail but diff-files --diff-filter=M --quiet
 '
 
 test_expect_success 'diff-tree --diff-filter --quiet' '
-	git cummit -a -m "worktree state" &&
-	test_must_fail git diff-tree --diff-filter=M --quiet HEAD^ HEAD
+	but cummit -a -m "worktree state" &&
+	test_must_fail but diff-tree --diff-filter=M --quiet HEAD^ HEAD
 '
 
 test_done

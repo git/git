@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase with its hook(s)'
+test_description='but rebase with its hook(s)'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -9,93 +9,93 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	echo hello >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 	echo goodbye >file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m second &&
-	git checkout -b side HEAD^ &&
-	echo world >git &&
-	git add git &&
+	but cummit -m second &&
+	but checkout -b side HEAD^ &&
+	echo world >but &&
+	but add but &&
 	test_tick &&
-	git cummit -m side &&
-	git checkout main &&
-	git log --pretty=oneline --abbrev-cummit --graph --all &&
-	git branch test side
+	but cummit -m side &&
+	but checkout main &&
+	but log --pretty=oneline --abbrev-cummit --graph --all &&
+	but branch test side
 '
 
 test_expect_success 'rebase' '
-	git checkout test &&
-	git reset --hard side &&
-	git rebase main &&
-	test "z$(cat git)" = zworld
+	but checkout test &&
+	but reset --hard side &&
+	but rebase main &&
+	test "z$(cat but)" = zworld
 '
 
 test_expect_success 'rebase -i' '
-	git checkout test &&
-	git reset --hard side &&
-	EDITOR=true git rebase -i main &&
-	test "z$(cat git)" = zworld
+	but checkout test &&
+	but reset --hard side &&
+	EDITOR=true but rebase -i main &&
+	test "z$(cat but)" = zworld
 '
 
 test_expect_success 'setup pre-rebase hook' '
 	test_hook --setup pre-rebase <<-\EOF
-	echo "$1,$2" >.git/PRE-REBASE-INPUT
+	echo "$1,$2" >.but/PRE-REBASE-INPUT
 	EOF
 '
 
 test_expect_success 'pre-rebase hook gets correct input (1)' '
-	git checkout test &&
-	git reset --hard side &&
-	git rebase main &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,
+	but checkout test &&
+	but reset --hard side &&
+	but rebase main &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,
 
 '
 
 test_expect_success 'pre-rebase hook gets correct input (2)' '
-	git checkout test &&
-	git reset --hard side &&
-	git rebase main test &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,test
+	but checkout test &&
+	but reset --hard side &&
+	but rebase main test &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,test
 '
 
 test_expect_success 'pre-rebase hook gets correct input (3)' '
-	git checkout test &&
-	git reset --hard side &&
-	git checkout main &&
-	git rebase main test &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,test
+	but checkout test &&
+	but reset --hard side &&
+	but checkout main &&
+	but rebase main test &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,test
 '
 
 test_expect_success 'pre-rebase hook gets correct input (4)' '
-	git checkout test &&
-	git reset --hard side &&
-	EDITOR=true git rebase -i main &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,
+	but checkout test &&
+	but reset --hard side &&
+	EDITOR=true but rebase -i main &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,
 
 '
 
 test_expect_success 'pre-rebase hook gets correct input (5)' '
-	git checkout test &&
-	git reset --hard side &&
-	EDITOR=true git rebase -i main test &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,test
+	but checkout test &&
+	but reset --hard side &&
+	EDITOR=true but rebase -i main test &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,test
 '
 
 test_expect_success 'pre-rebase hook gets correct input (6)' '
-	git checkout test &&
-	git reset --hard side &&
-	git checkout main &&
-	EDITOR=true git rebase -i main test &&
-	test "z$(cat git)" = zworld &&
-	test "z$(cat .git/PRE-REBASE-INPUT)" = zmain,test
+	but checkout test &&
+	but reset --hard side &&
+	but checkout main &&
+	EDITOR=true but rebase -i main test &&
+	test "z$(cat but)" = zworld &&
+	test "z$(cat .but/PRE-REBASE-INPUT)" = zmain,test
 '
 
 test_expect_success 'setup pre-rebase hook that fails' '
@@ -105,35 +105,35 @@ test_expect_success 'setup pre-rebase hook that fails' '
 '
 
 test_expect_success 'pre-rebase hook stops rebase (1)' '
-	git checkout test &&
-	git reset --hard side &&
-	test_must_fail git rebase main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test 0 = $(git rev-list HEAD...side | wc -l)
+	but checkout test &&
+	but reset --hard side &&
+	test_must_fail but rebase main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/test &&
+	test 0 = $(but rev-list HEAD...side | wc -l)
 '
 
 test_expect_success 'pre-rebase hook stops rebase (2)' '
-	git checkout test &&
-	git reset --hard side &&
-	test_must_fail env EDITOR=: git rebase -i main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test 0 = $(git rev-list HEAD...side | wc -l)
+	but checkout test &&
+	but reset --hard side &&
+	test_must_fail env EDITOR=: but rebase -i main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/test &&
+	test 0 = $(but rev-list HEAD...side | wc -l)
 '
 
 test_expect_success 'rebase --no-verify overrides pre-rebase (1)' '
-	git checkout test &&
-	git reset --hard side &&
-	git rebase --no-verify main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test "z$(cat git)" = zworld
+	but checkout test &&
+	but reset --hard side &&
+	but rebase --no-verify main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/test &&
+	test "z$(cat but)" = zworld
 '
 
 test_expect_success 'rebase --no-verify overrides pre-rebase (2)' '
-	git checkout test &&
-	git reset --hard side &&
-	EDITOR=true git rebase --no-verify -i main &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test "z$(cat git)" = zworld
+	but checkout test &&
+	but reset --hard side &&
+	EDITOR=true but rebase --no-verify -i main &&
+	test "z$(but symbolic-ref HEAD)" = zrefs/heads/test &&
+	test "z$(cat but)" = zworld
 '
 
 test_done

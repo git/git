@@ -1,9 +1,9 @@
 #
-# Library code for git p4 tests
+# Library code for but p4 tests
 #
 
 # p4 tests never use the top-level repo; always build/clone into
-# a subdirectory called "$git"
+# a subdirectory called "$but"
 TEST_NO_CREATE_REPO=NoThanks
 
 # Some operations require multiple attempts to be successful. Define
@@ -18,11 +18,11 @@ P4D_TIMEOUT=300
 
 if ! test_have_prereq PYTHON
 then
-	skip_all='skipping git p4 tests; python not available'
+	skip_all='skipping but p4 tests; python not available'
 	test_done
 fi
 ( p4 -h && p4d -h ) >/dev/null 2>&1 || {
-	skip_all='skipping git p4 tests; no p4 or p4d'
+	skip_all='skipping but p4 tests; no p4 or p4d'
 	test_done
 }
 
@@ -55,14 +55,14 @@ export P4PORT P4CLIENT P4USER P4EDITOR P4CHARSET
 
 db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"
-git="$TRASH_DIRECTORY/git"
+but="$TRASH_DIRECTORY/but"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
 stop_p4d_and_watchdog () {
 	kill -9 $p4d_pid $watchdog_pid
 }
 
-# git p4 submit generates a temp file, which will
+# but p4 submit generates a temp file, which will
 # not get cleaned up if the submission fails.  Don't
 # clutter up /tmp on the test machine.
 TMPDIR="$TRASH_DIRECTORY"
@@ -78,7 +78,7 @@ start_p4d () {
 		registered_stop_p4d_atexit_handler=AlreadyDone
 	fi
 
-	mkdir -p "$db" "$cli" "$git" &&
+	mkdir -p "$db" "$cli" "$but" &&
 	rm -f "$pidfile" &&
 	(
 		cd "$db" &&
@@ -173,10 +173,10 @@ stop_and_cleanup_p4d () {
 	rm -rf "$db" "$cli" "$pidfile"
 }
 
-cleanup_git () {
-	retry_until_success rm -r "$git"
-	test_path_is_missing "$git" &&
-	retry_until_success mkdir "$git"
+cleanup_but () {
+	retry_until_success rm -r "$but"
+	test_path_is_missing "$but" &&
+	retry_until_success mkdir "$but"
 }
 
 marshal_dump () {

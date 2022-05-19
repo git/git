@@ -8,9 +8,9 @@ test_expect_success "setup proc-receive hook (ng, no message, $PROTOCOL/porcelai
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic
+# but push         :                       refs/for/main/topic
 test_expect_success "proc-receive: fail to update (ng, no message, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -20,7 +20,7 @@ test_expect_success "proc-receive: fail to update (ng, no message, $PROTOCOL/por
 	> remote: # proc-receive hook        Z
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ng refs/for/main/topic        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (failed)
 	> Done
 	EOF
@@ -41,9 +41,9 @@ test_expect_success "setup proc-receive hook (ng message, $PROTOCOL/porcelain)" 
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic
+# but push         :                       refs/for/main/topic
 test_expect_success "proc-receive: fail to update (ng, with message, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -53,7 +53,7 @@ test_expect_success "proc-receive: fail to update (ng, with message, $PROTOCOL/p
 	> remote: # proc-receive hook        Z
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ng refs/for/main/topic error msg        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (error msg)
 	> Done
 	EOF

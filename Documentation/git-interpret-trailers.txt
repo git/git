@@ -1,15 +1,15 @@
-git-interpret-trailers(1)
+but-interpret-trailers(1)
 =========================
 
 NAME
 ----
-git-interpret-trailers - Add or parse structured information in cummit messages
+but-interpret-trailers - Add or parse structured information in cummit messages
 
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [<options>] [(--trailer <token>[(=|:)<value>])...] [<file>...]
-'git interpret-trailers' [<options>] [--parse] [<file>...]
+'but interpret-trailers' [<options>] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'but interpret-trailers' [<options>] [--parse] [<file>...]
 
 DESCRIPTION
 -----------
@@ -129,7 +129,7 @@ OPTIONS
 --no-divider::
 	Do not treat `---` as the end of the cummit message. Use this
 	when you know your input contains just the cummit message itself
-	(and not an email or the output of `git format-patch`).
+	(and not an email or the output of `but format-patch`).
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -138,7 +138,7 @@ trailer.separators::
 	This option tells which characters are recognized as trailer
 	separators. By default only ':' is recognized as a trailer
 	separator, except that '=' is always accepted on the command
-	line for compatibility with other git commands.
+	line for compatibility with other but commands.
 +
 The first character given by this option will be the default character
 used when another separator is not specified in the config for this
@@ -254,7 +254,7 @@ trailer.<token>.cmd::
 When the specified command is first called to add a trailer
 with the specified <token>, the behavior is as if a special
 '--trailer <token>=<value>' argument was added at the beginning
-of the "git interpret-trailers" command, where <value>
+of the "but interpret-trailers" command, where <value>
 is taken to be the standard output of the command with any
 leading and trailing whitespace trimmed off.
 +
@@ -272,12 +272,12 @@ EXAMPLES
   add two of these trailers to a message:
 +
 ------------
-$ git config trailer.sign.key "Signed-off-by"
+$ but config trailer.sign.key "Signed-off-by"
 $ cat msg.txt
 subject
 
 message
-$ cat msg.txt | git interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>'
+$ cat msg.txt | but interpret-trailers --trailer 'sign: Alice <alice@example.com>' --trailer 'sign: Bob <bob@example.com>'
 subject
 
 message
@@ -295,7 +295,7 @@ subject
 message
 
 Signed-off-by: Bob <bob@example.com>
-$ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
+$ but interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
 $ cat msg.txt
 subject
 
@@ -309,9 +309,9 @@ Acked-by: Alice <alice@example.com>
   'Reviewed-by' trailer to it:
 +
 ------------
-$ git format-patch -1
+$ but format-patch -1
 0001-foo.patch
-$ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Reviewed-by: Bob <bob@example.com>' 0001-foo.patch >0001-bar.patch
+$ but interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Reviewed-by: Bob <bob@example.com>' 0001-foo.patch >0001-bar.patch
 ------------
 
 * Configure a 'sign' trailer with a command to automatically add a
@@ -319,15 +319,15 @@ $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Re
   'Signed-off-by: ' already, and show how it works:
 +
 ------------
-$ git config trailer.sign.key "Signed-off-by: "
-$ git config trailer.sign.ifmissing add
-$ git config trailer.sign.ifexists doNothing
-$ git config trailer.sign.command 'echo "$(git config user.name) <$(git config user.email)>"'
-$ git interpret-trailers <<EOF
+$ but config trailer.sign.key "Signed-off-by: "
+$ but config trailer.sign.ifmissing add
+$ but config trailer.sign.ifexists doNothing
+$ but config trailer.sign.command 'echo "$(but config user.name) <$(but config user.email)>"'
+$ but interpret-trailers <<EOF
 > EOF
 
 Signed-off-by: Bob <bob@example.com>
-$ git interpret-trailers <<EOF
+$ but interpret-trailers <<EOF
 > Signed-off-by: Alice <alice@example.com>
 > EOF
 
@@ -338,26 +338,26 @@ Signed-off-by: Alice <alice@example.com>
   space after this character, and show how it works:
 +
 ------------
-$ git config trailer.separators ":#"
-$ git config trailer.fix.key "Fix #"
-$ echo "subject" | git interpret-trailers --trailer fix=42
+$ but config trailer.separators ":#"
+$ but config trailer.fix.key "Fix #"
+$ echo "subject" | but interpret-trailers --trailer fix=42
 subject
 
 Fix #42
 ------------
 
 * Configure a 'help' trailer with a cmd use a script `glog-find-author`
-  which search specified author identity from git log in git repository
+  which search specified author identity from but log in but repository
   and show how it works:
 +
 ------------
 $ cat ~/bin/glog-find-author
 #!/bin/sh
-test -n "$1" && git log --author="$1" --pretty="%an <%ae>" -1 || true
-$ git config trailer.help.key "Helped-by: "
-$ git config trailer.help.ifExists "addIfDifferentNeighbor"
-$ git config trailer.help.cmd "~/bin/glog-find-author"
-$ git interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <<EOF
+test -n "$1" && but log --author="$1" --pretty="%an <%ae>" -1 || true
+$ but config trailer.help.key "Helped-by: "
+$ but config trailer.help.ifExists "addIfDifferentNeighbor"
+$ but config trailer.help.cmd "~/bin/glog-find-author"
+$ but interpret-trailers --trailer="help:Junio" --trailer="help:Couder" <<EOF
 > subject
 >
 > message
@@ -367,22 +367,22 @@ subject
 
 message
 
-Helped-by: Junio C Hamano <gitster@pobox.com>
+Helped-by: Junio C Hamano <butster@pobox.com>
 Helped-by: Christian Couder <christian.couder@gmail.com>
 ------------
 
 * Configure a 'ref' trailer with a cmd use a script `glog-grep`
-  to grep last relevant cummit from git log in the git repository
+  to grep last relevant cummit from but log in the but repository
   and show how it works:
 +
 ------------
 $ cat ~/bin/glog-grep
 #!/bin/sh
-test -n "$1" && git log --grep "$1" --pretty=reference -1 || true
-$ git config trailer.ref.key "Reference-to: "
-$ git config trailer.ref.ifExists "replace"
-$ git config trailer.ref.cmd "~/bin/glog-grep"
-$ git interpret-trailers --trailer="ref:Add copyright notices." <<EOF
+test -n "$1" && but log --grep "$1" --pretty=reference -1 || true
+$ but config trailer.ref.key "Reference-to: "
+$ but config trailer.ref.ifExists "replace"
+$ but config trailer.ref.cmd "~/bin/glog-grep"
+$ but interpret-trailers --trailer="ref:Add copyright notices." <<EOF
 > subject
 >
 > message
@@ -399,11 +399,11 @@ Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
   cummit that is related, and show how it works:
 +
 ------------
-$ git config trailer.see.key "See-also: "
-$ git config trailer.see.ifExists "replace"
-$ git config trailer.see.ifMissing "doNothing"
-$ git config trailer.see.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG"
-$ git interpret-trailers <<EOF
+$ but config trailer.see.key "See-also: "
+$ but config trailer.see.ifExists "replace"
+$ but config trailer.see.ifMissing "doNothing"
+$ but config trailer.see.command "but log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG"
+$ but interpret-trailers <<EOF
 > subject
 > 
 > message
@@ -420,8 +420,8 @@ See-also: fe3187489d69c4 (subject of related cummit)
 * Configure a cummit template with some trailers with empty values
   (using sed to show and keep the trailing spaces at the end of the
   trailers), then configure a cummit-msg hook that uses
-  'git interpret-trailers' to remove trailers with empty values and
-  to add a 'git-version' trailer:
+  'but interpret-trailers' to remove trailers with empty values and
+  to add a 'but-version' trailer:
 +
 ------------
 $ sed -e 's/ Z$/ /' >cummit_template.txt <<EOF
@@ -434,19 +434,19 @@ $ sed -e 's/ Z$/ /' >cummit_template.txt <<EOF
 > Reviewed-by: Z
 > Signed-off-by: Z
 > EOF
-$ git config cummit.template cummit_template.txt
-$ cat >.git/hooks/cummit-msg <<EOF
+$ but config cummit.template cummit_template.txt
+$ cat >.but/hooks/cummit-msg <<EOF
 > #!/bin/sh
-> git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
+> but interpret-trailers --trim-empty --trailer "but-version: \$(but describe)" "\$1" > "\$1.new"
 > mv "\$1.new" "\$1"
 > EOF
-$ chmod +x .git/hooks/cummit-msg
+$ chmod +x .but/hooks/cummit-msg
 ------------
 
 SEE ALSO
 --------
-linkgit:git-cummit[1], linkgit:git-format-patch[1], linkgit:git-config[1]
+linkbut:but-cummit[1], linkbut:but-format-patch[1], linkbut:but-config[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

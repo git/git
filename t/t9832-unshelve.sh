@@ -4,9 +4,9 @@ last_shelved_change () {
 	p4 changes -s shelved -m1 | cut -d " " -f 2
 }
 
-test_description='git p4 unshelve'
+test_description='but p4 unshelve'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -32,8 +32,8 @@ test_expect_success 'init depot' '
 # Create an initial clone, with a cummit unrelated to the P4 change
 # on HEAD
 test_expect_success 'initial clone' '
-	git p4 clone --dest="$git" //depot/@all &&
-    test_cummit -C "$git" "unrelated"
+	but p4 clone --dest="$but" //depot/@all &&
+    test_cummit -C "$but" "unrelated"
 '
 
 test_expect_success 'create shelved changelist' '
@@ -65,12 +65,12 @@ EOF
 
 	) &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		change=$(last_shelved_change) &&
-		git p4 unshelve $change &&
-		git show refs/remotes/p4-unshelved/$change >actual &&
+		but p4 unshelve $change &&
+		but show refs/remotes/p4-unshelved/$change >actual &&
 		grep -q "Further description" actual &&
-		git cherry-pick refs/remotes/p4-unshelved/$change &&
+		but cherry-pick refs/remotes/p4-unshelved/$change &&
 		test_path_is_file file2 &&
 		test_cmp file1 "$cli"/file1 &&
 		test_cmp file2 "$cli"/file2 &&
@@ -82,7 +82,7 @@ EOF
 '
 
 test_expect_success 'update shelved changelist and re-unshelve' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		cd "$cli" &&
 		change=$(last_shelved_change) &&
@@ -103,10 +103,10 @@ EOF
 		p4 describe $change
 	) &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		change=$(last_shelved_change) &&
-		git p4 unshelve $change &&
-		git diff refs/remotes/p4-unshelved/$change.0 refs/remotes/p4-unshelved/$change | grep -q file3
+		but p4 unshelve $change &&
+		but diff refs/remotes/p4-unshelved/$change.0 refs/remotes/p4-unshelved/$change | grep -q file3
 	)
 '
 
@@ -123,13 +123,13 @@ EOF
 }
 
 # This is the tricky case where the shelved changelist base revision doesn't
-# match git-p4's idea of the base revision
+# match but-p4's idea of the base revision
 #
 # We will attempt to unshelve a change that is based on a change one cummit
 # ahead of p4/master
 
 test_expect_success 'create shelved changelist based on p4 change ahead of p4/master' '
-	git p4 clone --dest="$git" //depot/@all &&
+	but p4 clone --dest="$but" //depot/@all &&
 	(
 		cd "$cli" &&
 		p4 revert ... &&
@@ -147,11 +147,11 @@ test_expect_success 'create shelved changelist based on p4 change ahead of p4/ma
 
 # Now try to unshelve it.
 test_expect_success 'try to unshelve the change' '
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
 		change=$(last_shelved_change) &&
-		cd "$git" &&
-		git p4 unshelve $change >out.txt &&
+		cd "$but" &&
+		but p4 unshelve $change >out.txt &&
 		grep -q "unshelved changelist $change" out.txt
 	)
 '
@@ -172,13 +172,13 @@ test_expect_success 'unshelve specifying the origin' '
 		p4 add file_to_shelve &&
 		shelve_one_file //depot/file_to_shelve
 	) &&
-	test_when_finished cleanup_git &&
-	git p4 clone --dest="$git" //depot/@all &&
+	test_when_finished cleanup_but &&
+	but p4 clone --dest="$but" //depot/@all &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		change=$(last_shelved_change) &&
-		git p4 unshelve --origin HEAD~ $change &&
-		git checkout refs/remotes/p4-unshelved/$change &&
+		but p4 unshelve --origin HEAD~ $change &&
+		but checkout refs/remotes/p4-unshelved/$change &&
 		test_path_is_file unrelated_file0 &&
 		test_path_is_missing unrelated_file1 &&
 		test_path_is_file file_to_shelve

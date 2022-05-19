@@ -1,5 +1,5 @@
 /*
- * A git credential helper that interface with Windows' Credential Manager
+ * A but credential helper that interface with Windows' Credential Manager
  *
  */
 #include <windows.h>
@@ -171,7 +171,7 @@ static int match_cred(const CREDENTIALW *cred)
 	if (wusername && wcscmp(wusername, cred->UserName ? cred->UserName : L""))
 		return 0;
 
-	return match_part(&target, L"git", L":") &&
+	return match_part(&target, L"but", L":") &&
 		match_part(&target, protocol, L"://") &&
 		match_part_last(&target, wusername, L"@") &&
 		match_part(&target, host, L"/") &&
@@ -184,7 +184,7 @@ static void get_credential(void)
 	DWORD num_creds;
 	int i;
 
-	if (!CredEnumerateW(L"git:*", 0, &num_creds, &creds))
+	if (!CredEnumerateW(L"but:*", 0, &num_creds, &creds))
 		return;
 
 	/* search for the first credential that matches username */
@@ -211,7 +211,7 @@ static void store_credential(void)
 	cred.Flags = 0;
 	cred.Type = CRED_TYPE_GENERIC;
 	cred.TargetName = target;
-	cred.Comment = L"saved by git-credential-wincred";
+	cred.Comment = L"saved by but-credential-wincred";
 	cred.CredentialBlobSize = (wcslen(password)) * sizeof(WCHAR);
 	cred.CredentialBlob = (LPVOID)password;
 	cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
@@ -230,7 +230,7 @@ static void erase_credential(void)
 	DWORD num_creds;
 	int i;
 
-	if (!CredEnumerateW(L"git:*", 0, &num_creds, &creds))
+	if (!CredEnumerateW(L"but:*", 0, &num_creds, &creds))
 		return;
 
 	for (i = 0; i < num_creds; ++i) {
@@ -286,12 +286,12 @@ static void read_credential(void)
 int main(int argc, char *argv[])
 {
 	const char *usage =
-	    "usage: git credential-wincred <get|store|erase>\n";
+	    "usage: but credential-wincred <get|store|erase>\n";
 
 	if (!argv[1])
 		die(usage);
 
-	/* git use binary pipes to avoid CRLF-issues */
+	/* but use binary pipes to avoid CRLF-issues */
 	_setmode(_fileno(stdin), _O_BINARY);
 	_setmode(_fileno(stdout), _O_BINARY);
 
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 		return 0;
 
 	/* prepare 'target', the unique key for the credential */
-	wcscpy(target, L"git:");
+	wcscpy(target, L"but:");
 	wcsncat(target, protocol, ARRAY_SIZE(target));
 	wcsncat(target, L"://", ARRAY_SIZE(target));
 	if (wusername) {

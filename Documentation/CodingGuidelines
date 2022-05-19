@@ -166,7 +166,7 @@ For shell scripts specifically (not exhaustive):
      are ERE elements not BRE (note that \? and \+ are not even part
      of BRE -- making them accessible from BRE is a GNU extension).
 
- - Use Git's gettext wrappers in git-sh-i18n to make the user
+ - Use Git's gettext wrappers in but-sh-i18n to make the user
    interface translatable. See "Marking strings for translation" in
    po/README.
 
@@ -426,7 +426,7 @@ For C programs:
    detail.
 
  - The first #include in C files, except in platform specific compat/
-   implementations, must be either "git-compat-util.h", "cache.h" or
+   implementations, must be either "but-compat-util.h", "cache.h" or
    "builtin.h".  You do not have to include more than one of these.
 
  - A C file must directly include the header files that declare the
@@ -457,10 +457,10 @@ For C programs:
    declarations should not use "extern", as that is already the default.
 
  - You can launch gdb around your program using the shorthand GIT_DEBUGGER.
-   Run `GIT_DEBUGGER=1 ./bin-wrappers/git foo` to simply use gdb as is, or
-   run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/git foo` to
+   Run `GIT_DEBUGGER=1 ./bin-wrappers/but foo` to simply use gdb as is, or
+   run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/but foo` to
    use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
-   ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
+   ./bin-wrappers/but log` (See `wrap-for-bin.sh`.)
 
 For Perl programs:
 
@@ -525,13 +525,13 @@ Program Output
  As such, primary output should be sent to the standard output stream
  (stdout), and chatty output should be sent to the standard error
  stream (stderr). Examples of commands which produce primary output
- include `git log`, `git show`, and `git branch --list` which generate
+ include `but log`, `but show`, and `but branch --list` which generate
  output on the stdout stream.
 
  Not all Git commands have primary output; this is often true of
  commands whose main function is to perform an action. Some action
  commands are silent, whereas others are chatty. An example of a
- chatty action commands is `git clone` with its "Cloning into
+ chatty action commands is `but clone` with its "Cloning into
  '<path>'..." and "Checking connectivity..." status messages which it
  sends to the stderr stream.
 
@@ -579,8 +579,8 @@ Externally Visible Names
 Writing Documentation:
 
  Most (if not all) of the documentation pages are written in the
- AsciiDoc format in *.txt files (e.g. Documentation/git.txt), and
- processed into HTML and manpages (e.g. git.html and git.1 in the
+ AsciiDoc format in *.txt files (e.g. Documentation/but.txt), and
+ processed into HTML and manpages (e.g. but.html and but.1 in the
  same directory).
 
  The documentation liberally mixes US and UK English (en_US/UK)
@@ -681,7 +681,7 @@ Writing Documentation:
    [(-p <parent>)...]
    (Any number of option -p, each with one <parent> argument.)
 
-   git remote set-head <name> (-a | -d | <branch>)
+   but remote set-head <name> (-a | -d | <branch>)
    (One and only one of "-a", "-d" or "<branch>" _must_ (no square
    brackets) be provided.)
 
@@ -693,7 +693,7 @@ Writing Documentation:
    also provided.
 
   A note on notation:
-   Use 'git' (all lowercase) when talking about commands i.e. something
+   Use 'but' (all lowercase) when talking about commands i.e. something
    the user would type into a shell and use 'Git' (uppercase first letter)
    when talking about the version control system and its properties.
 
@@ -706,10 +706,10 @@ Writing Documentation:
  environment variables) must be typeset in monospace (i.e. wrapped with
  backticks):
    `--pretty=oneline`
-   `git rev-list`
+   `but rev-list`
    `remote.pushDefault`
-   `http://git.example.com`
-   `.git/config`
+   `http://but.example.com`
+   `.but/config`
    `GIT_DIR`
    `HEAD`
 

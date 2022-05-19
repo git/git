@@ -9,7 +9,7 @@ Fixes since v2.13.3
  * A recent update broke an alias that contained an uppercase letter,
    which has been fixed.
 
- * On Cygwin, similar to Windows, "git push //server/share/repository"
+ * On Cygwin, similar to Windows, "but push //server/share/repository"
    ought to mean a repository on a network share that can be accessed
    locally, but this did not work correctly due to stripping the double
    slashes at the beginning.
@@ -19,7 +19,7 @@ Fixes since v2.13.3
    show the overall throughput rate at the end, which is a much more
    useful number.
 
- * We run an early part of "git gc" that deals with refs before
+ * We run an early part of "but gc" that deals with refs before
    daemonising (and not under lock) even when running a background
    auto-gc, which caused multiple gc processes attempting to run the
    early part at the same time.  This is now prevented by running the

@@ -11,24 +11,24 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success setup '
 	echo one >a &&
-	git add a &&
-	git cummit -m initial &&
-	git tag initial &&
+	but add a &&
+	but cummit -m initial &&
+	but tag initial &&
 	echo two >b &&
-	git add b &&
-	git cummit -m second &&
-	git checkout -b side initial &&
+	but add b &&
+	but cummit -m second &&
+	but checkout -b side initial &&
 	echo three >a &&
 	mkdir b &&
 	echo four >b/c &&
-	git add b/c &&
-	git cummit -m third
+	but add b/c &&
+	but cummit -m third
 '
 
 test_expect_success 'multi-read' '
 	read_tree_must_succeed initial main side &&
 	test_write_lines a b/c >expect &&
-	git ls-files >actual &&
+	but ls-files >actual &&
 	test_cmp expect actual
 '
 

@@ -34,7 +34,7 @@ static int fn_init(void)
 
 	brief = tr2_sysenv_get(TR2_SYSENV_NORMAL_BRIEF);
 	if (brief && *brief &&
-	    ((want_brief = git_parse_maybe_bool(brief)) != -1))
+	    ((want_brief = but_parse_maybe_bool(brief)) != -1))
 		tr2env_normal_be_brief = want_brief;
 
 	return want;
@@ -78,7 +78,7 @@ static void fn_version_fl(const char *file, int line)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "version %s", git_version_string);
+	strbuf_addf(&buf_payload, "version %s", but_version_string);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -232,8 +232,8 @@ static void fn_child_start_fl(const char *file, int line,
 	 */
 
 	strbuf_addch(&buf_payload, ' ');
-	if (cmd->git_cmd)
-		strbuf_addstr(&buf_payload, "git ");
+	if (cmd->but_cmd)
+		strbuf_addstr(&buf_payload, "but ");
 	sq_append_quote_argv_pretty(&buf_payload, cmd->args.v);
 
 	normal_io_write_fl(file, line, &buf_payload);

@@ -12,7 +12,7 @@ fi
 
 stop_daemon_delete_repo () {
 	r=$1 &&
-	test_might_fail git -C $r fsmonitor--daemon stop &&
+	test_might_fail but -C $r fsmonitor--daemon stop &&
 	rm -rf $1
 }
 
@@ -67,8 +67,8 @@ start_daemon () {
 			export GIT_TEST_FSMONITOR_TOKEN
 		fi &&
 
-		git $r fsmonitor--daemon start &&
-		git $r fsmonitor--daemon status
+		but $r fsmonitor--daemon start &&
+		but $r fsmonitor--daemon status
 	)
 }
 
@@ -85,18 +85,18 @@ have_t2_data_event () {
 test_expect_success 'explicit daemon start and stop' '
 	test_when_finished "stop_daemon_delete_repo test_explicit" &&
 
-	git init test_explicit &&
+	but init test_explicit &&
 	start_daemon -C test_explicit &&
 
-	git -C test_explicit fsmonitor--daemon stop &&
-	test_must_fail git -C test_explicit fsmonitor--daemon status
+	but -C test_explicit fsmonitor--daemon stop &&
+	test_must_fail but -C test_explicit fsmonitor--daemon status
 '
 
 test_expect_success 'implicit daemon start' '
 	test_when_finished "stop_daemon_delete_repo test_implicit" &&
 
-	git init test_implicit &&
-	test_must_fail git -C test_implicit fsmonitor--daemon status &&
+	but init test_implicit &&
+	test_must_fail but -C test_implicit fsmonitor--daemon status &&
 
 	# query will implicitly start the daemon.
 	#
@@ -106,7 +106,7 @@ test_expect_success 'implicit daemon start' '
 	# but this test case is only concerned with whether the daemon was
 	# implicitly started.)
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace" \
+	GIT_TRACE2_EVENT="$PWD/.but/trace" \
 		test-tool -C test_implicit fsmonitor-client query --token 0 >actual &&
 	nul_to_q <actual >actual.filtered &&
 	grep "builtin:" actual.filtered &&
@@ -117,24 +117,24 @@ test_expect_success 'implicit daemon start' '
 	# dependent, just confirm that the foreground command received a
 	# response from the daemon.
 
-	have_t2_data_event fsm_client query/response-length <.git/trace &&
+	have_t2_data_event fsm_client query/response-length <.but/trace &&
 
-	git -C test_implicit fsmonitor--daemon status &&
-	git -C test_implicit fsmonitor--daemon stop &&
-	test_must_fail git -C test_implicit fsmonitor--daemon status
+	but -C test_implicit fsmonitor--daemon status &&
+	but -C test_implicit fsmonitor--daemon stop &&
+	test_must_fail but -C test_implicit fsmonitor--daemon status
 '
 
-test_expect_success 'implicit daemon stop (delete .git)' '
+test_expect_success 'implicit daemon stop (delete .but)' '
 	test_when_finished "stop_daemon_delete_repo test_implicit_1" &&
 
-	git init test_implicit_1 &&
+	but init test_implicit_1 &&
 
 	start_daemon -C test_implicit_1 &&
 
-	# deleting the .git directory will implicitly stop the daemon.
-	rm -rf test_implicit_1/.git &&
+	# deleting the .but directory will implicitly stop the daemon.
+	rm -rf test_implicit_1/.but &&
 
-	# [1] Create an empty .git directory so that the following Git
+	# [1] Create an empty .but directory so that the following Git
 	#     command will stay relative to the `-C` directory.
 	#
 	#     Without this, the Git command will override the requested
@@ -143,41 +143,41 @@ test_expect_success 'implicit daemon stop (delete .git)' '
 	#     were using fsmonitor on our development worktree.
 	#
 	sleep 1 &&
-	mkdir test_implicit_1/.git &&
+	mkdir test_implicit_1/.but &&
 
-	test_must_fail git -C test_implicit_1 fsmonitor--daemon status
+	test_must_fail but -C test_implicit_1 fsmonitor--daemon status
 '
 
-test_expect_success 'implicit daemon stop (rename .git)' '
+test_expect_success 'implicit daemon stop (rename .but)' '
 	test_when_finished "stop_daemon_delete_repo test_implicit_2" &&
 
-	git init test_implicit_2 &&
+	but init test_implicit_2 &&
 
 	start_daemon -C test_implicit_2 &&
 
-	# renaming the .git directory will implicitly stop the daemon.
-	mv test_implicit_2/.git test_implicit_2/.xxx &&
+	# renaming the .but directory will implicitly stop the daemon.
+	mv test_implicit_2/.but test_implicit_2/.xxx &&
 
 	# See [1] above.
 	#
 	sleep 1 &&
-	mkdir test_implicit_2/.git &&
+	mkdir test_implicit_2/.but &&
 
-	test_must_fail git -C test_implicit_2 fsmonitor--daemon status
+	test_must_fail but -C test_implicit_2 fsmonitor--daemon status
 '
 
 test_expect_success 'cannot start multiple daemons' '
 	test_when_finished "stop_daemon_delete_repo test_multiple" &&
 
-	git init test_multiple &&
+	but init test_multiple &&
 
 	start_daemon -C test_multiple &&
 
-	test_must_fail git -C test_multiple fsmonitor--daemon start 2>actual &&
+	test_must_fail but -C test_multiple fsmonitor--daemon start 2>actual &&
 	grep "fsmonitor--daemon is already running" actual &&
 
-	git -C test_multiple fsmonitor--daemon stop &&
-	test_must_fail git -C test_multiple fsmonitor--daemon status
+	but -C test_multiple fsmonitor--daemon stop &&
+	test_must_fail but -C test_multiple fsmonitor--daemon status
 '
 
 # These tests use the main repo in the trash directory
@@ -201,58 +201,58 @@ test_expect_success 'setup' '
 	>dirtorename/a &&
 	>dirtorename/b &&
 
-	cat >.gitignore <<-\EOF &&
-	.gitignore
+	cat >.butignore <<-\EOF &&
+	.butignore
 	expect*
 	actual*
 	flush*
 	trace*
 	EOF
 
-	git -c core.fsmonitor=false add . &&
+	but -c core.fsmonitor=false add . &&
 	test_tick &&
-	git -c core.fsmonitor=false cummit -m initial &&
+	but -c core.fsmonitor=false cummit -m initial &&
 
-	git config core.fsmonitor true
+	but config core.fsmonitor true
 '
 
 # The test already explicitly stopped (or tried to stop) the daemon.
 # This is here in case something else fails first.
 #
 redundant_stop_daemon () {
-	test_might_fail git fsmonitor--daemon stop
+	test_might_fail but fsmonitor--daemon stop
 }
 
 test_expect_success 'update-index implicitly starts daemon' '
 	test_when_finished redundant_stop_daemon &&
 
-	test_must_fail git fsmonitor--daemon status &&
+	test_must_fail but fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace_implicit_1" \
-		git update-index --fsmonitor &&
+	GIT_TRACE2_EVENT="$PWD/.but/trace_implicit_1" \
+		but update-index --fsmonitor &&
 
-	git fsmonitor--daemon status &&
-	test_might_fail git fsmonitor--daemon stop &&
+	but fsmonitor--daemon status &&
+	test_might_fail but fsmonitor--daemon stop &&
 
 	# Confirm that the trace2 log contains a record of the
 	# daemon starting.
-	test_subcommand git fsmonitor--daemon start <.git/trace_implicit_1
+	test_subcommand but fsmonitor--daemon start <.but/trace_implicit_1
 '
 
 test_expect_success 'status implicitly starts daemon' '
 	test_when_finished redundant_stop_daemon &&
 
-	test_must_fail git fsmonitor--daemon status &&
+	test_must_fail but fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.git/trace_implicit_2" \
-		git status >actual &&
+	GIT_TRACE2_EVENT="$PWD/.but/trace_implicit_2" \
+		but status >actual &&
 
-	git fsmonitor--daemon status &&
-	test_might_fail git fsmonitor--daemon stop &&
+	but fsmonitor--daemon status &&
+	test_might_fail but fsmonitor--daemon stop &&
 
 	# Confirm that the trace2 log contains a record of the
 	# daemon starting.
-	test_subcommand git fsmonitor--daemon start <.git/trace_implicit_2
+	test_subcommand but fsmonitor--daemon start <.but/trace_implicit_2
 '
 
 edit_files () {
@@ -294,7 +294,7 @@ directory_to_file () {
 # The next few test cases confirm that our fsmonitor daemon sees each type
 # of OS filesystem notification that we care about.  At this layer we just
 # ensure we are getting the OS notifications and do not try to confirm what
-# is reported by `git status`.
+# is reported by `but status`.
 #
 # We run a simple query after modifying the filesystem just to introduce
 # a bit of a delay so that the trace logging from the daemon has time to
@@ -304,108 +304,108 @@ directory_to_file () {
 # daemon) because these commands might implicitly restart the daemon.
 
 clean_up_repo_and_stop_daemon () {
-	git reset --hard HEAD &&
-	git clean -fd &&
-	test_might_fail git fsmonitor--daemon stop &&
-	rm -f .git/trace
+	but reset --hard HEAD &&
+	but clean -fd &&
+	test_might_fail but fsmonitor--daemon stop &&
+	rm -f .but/trace
 }
 
 test_expect_success 'edit some files' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	edit_files &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dir1/modified$"  .git/trace &&
-	grep "^event: dir2/modified$"  .git/trace &&
-	grep "^event: modified$"       .git/trace &&
-	grep "^event: dir1/untracked$" .git/trace
+	grep "^event: dir1/modified$"  .but/trace &&
+	grep "^event: dir2/modified$"  .but/trace &&
+	grep "^event: modified$"       .but/trace &&
+	grep "^event: dir1/untracked$" .but/trace
 '
 
 test_expect_success 'create some files' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	create_files &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dir1/new$" .git/trace &&
-	grep "^event: dir2/new$" .git/trace &&
-	grep "^event: new$"      .git/trace
+	grep "^event: dir1/new$" .but/trace &&
+	grep "^event: dir2/new$" .but/trace &&
+	grep "^event: new$"      .but/trace
 '
 
 test_expect_success 'delete some files' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	delete_files &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dir1/delete$" .git/trace &&
-	grep "^event: dir2/delete$" .git/trace &&
-	grep "^event: delete$"      .git/trace
+	grep "^event: dir1/delete$" .but/trace &&
+	grep "^event: dir2/delete$" .but/trace &&
+	grep "^event: delete$"      .but/trace
 '
 
 test_expect_success 'rename some files' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	rename_files &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dir1/rename$"  .git/trace &&
-	grep "^event: dir2/rename$"  .git/trace &&
-	grep "^event: rename$"       .git/trace &&
-	grep "^event: dir1/renamed$" .git/trace &&
-	grep "^event: dir2/renamed$" .git/trace &&
-	grep "^event: renamed$"      .git/trace
+	grep "^event: dir1/rename$"  .but/trace &&
+	grep "^event: dir2/rename$"  .but/trace &&
+	grep "^event: rename$"       .but/trace &&
+	grep "^event: dir1/renamed$" .but/trace &&
+	grep "^event: dir2/renamed$" .but/trace &&
+	grep "^event: renamed$"      .but/trace
 '
 
 test_expect_success 'rename directory' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	mv dirtorename dirrenamed &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dirtorename/*$" .git/trace &&
-	grep "^event: dirrenamed/*$"  .git/trace
+	grep "^event: dirtorename/*$" .but/trace &&
+	grep "^event: dirrenamed/*$"  .but/trace
 '
 
 test_expect_success 'file changes to directory' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	file_to_directory &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: delete$"     .git/trace &&
-	grep "^event: delete/new$" .git/trace
+	grep "^event: delete$"     .but/trace &&
+	grep "^event: delete/new$" .but/trace
 '
 
 test_expect_success 'directory changes to a file' '
 	test_when_finished clean_up_repo_and_stop_daemon &&
 
-	start_daemon --tf "$PWD/.git/trace" &&
+	start_daemon --tf "$PWD/.but/trace" &&
 
 	directory_to_file &&
 
 	test-tool fsmonitor-client query --token 0 &&
 
-	grep "^event: dir1$" .git/trace
+	grep "^event: dir1$" .but/trace
 '
 
 # The next few test cases exercise the token-resync code.  When filesystem
@@ -419,9 +419,9 @@ test_expect_success 'directory changes to a file' '
 test_expect_success 'flush cached data' '
 	test_when_finished "stop_daemon_delete_repo test_flush" &&
 
-	git init test_flush &&
+	but init test_flush &&
 
-	start_daemon -C test_flush --tf "$PWD/.git/trace_daemon" --tk true &&
+	start_daemon -C test_flush --tf "$PWD/.but/trace_daemon" --tk true &&
 
 	# The daemon should have an initial token with no events in _0 and
 	# then a few (probably platform-specific number of) events in _1.
@@ -459,33 +459,33 @@ test_expect_success 'flush cached data' '
 	grep "file_3" actual_q3
 '
 
-# The next few test cases create repos where the .git directory is NOT
-# inside the one of the working directory.  That is, where .git is a file
+# The next few test cases create repos where the .but directory is NOT
+# inside the one of the working directory.  That is, where .but is a file
 # that points to a directory elsewhere.  This happens for submodules and
 # non-primary worktrees.
 
 test_expect_success 'setup worktree base' '
-	git init wt-base &&
+	but init wt-base &&
 	echo 1 >wt-base/file1 &&
-	git -C wt-base add file1 &&
-	git -C wt-base cummit -m "c1"
+	but -C wt-base add file1 &&
+	but -C wt-base cummit -m "c1"
 '
 
-test_expect_success 'worktree with .git file' '
-	git -C wt-base worktree add ../wt-secondary &&
+test_expect_success 'worktree with .but file' '
+	but -C wt-base worktree add ../wt-secondary &&
 
 	start_daemon -C wt-secondary \
 		--tf "$PWD/trace_wt_secondary" \
 		--t2 "$PWD/trace2_wt_secondary" &&
 
-	git -C wt-secondary fsmonitor--daemon stop &&
-	test_must_fail git -C wt-secondary fsmonitor--daemon status
+	but -C wt-secondary fsmonitor--daemon stop &&
+	test_must_fail but -C wt-secondary fsmonitor--daemon status
 '
 
 # NEEDSWORK: Repeat one of the "edit" tests on wt-secondary and
 # confirm that we get the same events and behavior -- that is, that
 # fsmonitor--daemon correctly watches BOTH the working directory and
-# the external GITDIR directory and behaves the same as when ".git"
+# the external GITDIR directory and behaves the same as when ".but"
 # is a directory inside the working directory.
 
 test_expect_success 'cleanup worktrees' '
@@ -499,18 +499,18 @@ test_expect_success 'cleanup worktrees' '
 # cause incorrect results when the untracked-cache is enabled.
 
 test_lazy_prereq UNTRACKED_CACHE '
-	git update-index --test-untracked-cache
+	but update-index --test-untracked-cache
 '
 
 test_expect_success 'Matrix: setup for untracked-cache,fsmonitor matrix' '
 	test_unconfig core.fsmonitor &&
-	git update-index --no-fsmonitor &&
-	test_might_fail git fsmonitor--daemon stop
+	but update-index --no-fsmonitor &&
+	test_might_fail but fsmonitor--daemon stop
 '
 
 matrix_clean_up_repo () {
-	git reset --hard HEAD &&
-	git clean -fd
+	but reset --hard HEAD &&
+	but clean -fd
 }
 
 matrix_try () {
@@ -545,10 +545,10 @@ matrix_try () {
 		$fn &&
 		if test $uc = false && test $fsm = false
 		then
-			git status --porcelain=v1 >.git/expect.$fn
+			but status --porcelain=v1 >.but/expect.$fn
 		else
-			git status --porcelain=v1 >.git/actual.$fn &&
-			test_cmp .git/expect.$fn .git/actual.$fn
+			but status --porcelain=v1 >.but/actual.$fn &&
+			test_cmp .but/expect.$fn .but/actual.$fn
 		fi
 	'
 }
@@ -560,13 +560,13 @@ do
 	if test $uc_val = false
 	then
 		test_expect_success "Matrix[uc:$uc_val] disable untracked cache" '
-			git config core.untrackedcache false &&
-			git update-index --no-untracked-cache
+			but config core.untrackedcache false &&
+			but update-index --no-untracked-cache
 		'
 	else
 		test_expect_success "Matrix[uc:$uc_val] enable untracked cache" '
-			git config core.untrackedcache true &&
-			git update-index --untracked-cache
+			but config core.untrackedcache true &&
+			but update-index --untracked-cache
 		'
 	fi
 
@@ -577,14 +577,14 @@ do
 		then
 			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] disable fsmonitor" '
 				test_unconfig core.fsmonitor &&
-				git update-index --no-fsmonitor &&
-				test_might_fail git fsmonitor--daemon stop
+				but update-index --no-fsmonitor &&
+				test_might_fail but fsmonitor--daemon stop
 			'
 		else
 			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] enable fsmonitor" '
-				git config core.fsmonitor true &&
-				git fsmonitor--daemon start &&
-				git update-index --fsmonitor
+				but config core.fsmonitor true &&
+				but fsmonitor--daemon start &&
+				but update-index --fsmonitor
 			'
 		fi
 
@@ -599,8 +599,8 @@ do
 		then
 			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] disable fsmonitor at end" '
 				test_unconfig core.fsmonitor &&
-				git update-index --no-fsmonitor &&
-				test_might_fail git fsmonitor--daemon stop
+				but update-index --no-fsmonitor &&
+				test_might_fail but fsmonitor--daemon stop
 			'
 		fi
 	done

@@ -6,9 +6,9 @@ test_description='Basic sort performance tests'
 test_perf_default_repo
 
 test_expect_success 'setup' '
-	git ls-files --stage "*.[ch]" "*.sh" |
+	but ls-files --stage "*.[ch]" "*.sh" |
 	cut -f2 -d" " |
-	git cat-file --batch >unsorted
+	but cat-file --batch >unsorted
 '
 
 test_perf 'sort(1) unsorted' '

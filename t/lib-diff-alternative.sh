@@ -59,10 +59,10 @@ int main(int argc, char **argv)
 }
 EOF
 
-	file1=$(git rev-parse --short $(git hash-object file1))
-	file2=$(git rev-parse --short $(git hash-object file2))
+	file1=$(but rev-parse --short $(but hash-object file1))
+	file2=$(but rev-parse --short $(but hash-object file2))
 	cat >expect <<EOF
-diff --git a/file1 b/file2
+diff --but a/file1 b/file2
 index $file1..$file2 100644
 --- a/file1
 +++ b/file2
@@ -108,13 +108,13 @@ EOF
 	STRATEGY=$1
 
 	test_expect_success "$STRATEGY diff" '
-		test_must_fail git diff --no-index "--$STRATEGY" file1 file2 > output &&
+		test_must_fail but diff --no-index "--$STRATEGY" file1 file2 > output &&
 		test_cmp expect output
 	'
 
 	test_expect_success "$STRATEGY diff output is valid" '
 		mv file2 expect &&
-		git apply < output &&
+		but apply < output &&
 		test_cmp expect file2
 	'
 }
@@ -138,10 +138,10 @@ e
 f
 EOF
 
-	uniq1=$(git rev-parse --short $(git hash-object uniq1))
-	uniq2=$(git rev-parse --short $(git hash-object uniq2))
+	uniq1=$(but rev-parse --short $(but hash-object uniq1))
+	uniq2=$(but rev-parse --short $(but hash-object uniq2))
 	cat >expect <<EOF
-diff --git a/uniq1 b/uniq2
+diff --but a/uniq1 b/uniq2
 index $uniq1..$uniq2 100644
 --- a/uniq1
 +++ b/uniq2
@@ -163,7 +163,7 @@ EOF
 	STRATEGY=$1
 
 	test_expect_success 'completely different files' '
-		test_must_fail git diff --no-index "--$STRATEGY" uniq1 uniq2 > output &&
+		test_must_fail but diff --no-index "--$STRATEGY" uniq1 uniq2 > output &&
 		test_cmp expect output
 	'
 }

@@ -4,80 +4,80 @@ test_description='ext::cmd remote "connect" helper'
 . ./test-lib.sh
 
 test_expect_success setup '
-	git config --global protocol.ext.allow user &&
+	but config --global protocol.ext.allow user &&
 	test_tick &&
-	git cummit --allow-empty -m initial &&
+	but cummit --allow-empty -m initial &&
 	test_tick &&
-	git cummit --allow-empty -m second &&
+	but cummit --allow-empty -m second &&
 	test_tick &&
-	git cummit --allow-empty -m third &&
+	but cummit --allow-empty -m third &&
 	test_tick &&
-	git tag -a -m "tip three" three &&
+	but tag -a -m "tip three" three &&
 
 	test_tick &&
-	git cummit --allow-empty -m fourth
+	but cummit --allow-empty -m fourth
 '
 
 test_expect_success clone '
 	cmd=$(echo "echo >&2 ext::sh invoked && %S .." | sed -e "s/ /% /g") &&
-	git clone "ext::sh -c %S% ." dst &&
-	git for-each-ref refs/heads/ refs/tags/ >expect &&
+	but clone "ext::sh -c %S% ." dst &&
+	but for-each-ref refs/heads/ refs/tags/ >expect &&
 	(
 		cd dst &&
-		git config remote.origin.url "ext::sh -c $cmd" &&
-		git for-each-ref refs/heads/ refs/tags/
+		but config remote.origin.url "ext::sh -c $cmd" &&
+		but for-each-ref refs/heads/ refs/tags/
 	) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'update following tag' '
 	test_tick &&
-	git cummit --allow-empty -m fifth &&
+	but cummit --allow-empty -m fifth &&
 	test_tick &&
-	git tag -a -m "tip five" five &&
-	git for-each-ref refs/heads/ refs/tags/ >expect &&
+	but tag -a -m "tip five" five &&
+	but for-each-ref refs/heads/ refs/tags/ >expect &&
 	(
 		cd dst &&
-		git pull &&
-		git for-each-ref refs/heads/ refs/tags/ >../actual
+		but pull &&
+		but for-each-ref refs/heads/ refs/tags/ >../actual
 	) &&
 	test_cmp expect actual
 '
 
 test_expect_success 'update backfilled tag' '
 	test_tick &&
-	git cummit --allow-empty -m sixth &&
+	but cummit --allow-empty -m sixth &&
 	test_tick &&
-	git tag -a -m "tip two" two three^1 &&
-	git for-each-ref refs/heads/ refs/tags/ >expect &&
+	but tag -a -m "tip two" two three^1 &&
+	but for-each-ref refs/heads/ refs/tags/ >expect &&
 	(
 		cd dst &&
-		git pull &&
-		git for-each-ref refs/heads/ refs/tags/ >../actual
+		but pull &&
+		but for-each-ref refs/heads/ refs/tags/ >../actual
 	) &&
 	test_cmp expect actual
 '
 
 test_expect_success 'update backfilled tag without primary transfer' '
 	test_tick &&
-	git tag -a -m "tip one " one two^1 &&
-	git for-each-ref refs/heads/ refs/tags/ >expect &&
+	but tag -a -m "tip one " one two^1 &&
+	but for-each-ref refs/heads/ refs/tags/ >expect &&
 	(
 		cd dst &&
-		git pull &&
-		git for-each-ref refs/heads/ refs/tags/ >../actual
+		but pull &&
+		but for-each-ref refs/heads/ refs/tags/ >../actual
 	) &&
 	test_cmp expect actual
 '
 
 
-test_expect_success 'set up fake git-daemon' '
+test_expect_success 'set up fake but-daemon' '
 	mkdir remote &&
-	git init --bare remote/one.git &&
+	but init --bare remote/one.but &&
 	mkdir remote/host &&
-	git init --bare remote/host/two.git &&
+	but init --bare remote/host/two.but &&
 	write_script fake-daemon <<-\EOF &&
-	git daemon --inetd \
+	but daemon --inetd \
 		--informative-errors \
 		--export-all \
 		--base-path="$TRASH_DIRECTORY/remote" \
@@ -88,14 +88,14 @@ test_expect_success 'set up fake git-daemon' '
 	PATH=$TRASH_DIRECTORY:$PATH
 '
 
-test_expect_success 'ext command can connect to git daemon (no vhost)' '
+test_expect_success 'ext command can connect to but daemon (no vhost)' '
 	rm -rf dst &&
-	git clone "ext::fake-daemon %G/one.git" dst
+	but clone "ext::fake-daemon %G/one.but" dst
 '
 
-test_expect_success 'ext command can connect to git daemon (vhost)' '
+test_expect_success 'ext command can connect to but daemon (vhost)' '
 	rm -rf dst &&
-	git clone "ext::fake-daemon %G/two.git %Vhost" dst
+	but clone "ext::fake-daemon %G/two.but %Vhost" dst
 '
 
 test_done

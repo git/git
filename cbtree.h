@@ -2,7 +2,7 @@
  * crit-bit tree implementation, does no allocations internally
  * For more information on crit-bit trees: https://cr.yp.to/critbit.html
  * Based on Adam Langley's adaptation of Dan Bernstein's public domain code
- * git clone https://github.com/agl/critbit.git
+ * but clone https://buthub.com/agl/critbit.but
  *
  * This is adapted to store arbitrary data (not just NUL-terminated C strings
  * and allocates no memory internally.  The user needs to allocate
@@ -14,7 +14,7 @@
 #ifndef CBTREE_H
 #define CBTREE_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 struct cb_node;
 struct cb_node {

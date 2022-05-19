@@ -28,7 +28,7 @@ struct column_options {
 
 struct option;
 int parseopt_column_callback(const struct option *, const char *, int);
-int git_column_config(const char *var, const char *value,
+int but_column_config(const char *var, const char *value,
 		      const char *command, unsigned int *colopts);
 int finalize_colopts(unsigned int *colopts, int stdout_is_tty);
 static inline int column_active(unsigned int colopts)

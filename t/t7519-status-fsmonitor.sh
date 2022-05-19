@@ -1,16 +1,16 @@
 #!/bin/sh
 
-test_description='git status with file system watcher'
+test_description='but status with file system watcher'
 
 . ./test-lib.sh
 
-# Note, after "git reset --hard HEAD" no extensions exist other than 'TREE'
-# "git update-index --fsmonitor" can be used to get the extension written
+# Note, after "but reset --hard HEAD" no extensions exist other than 'TREE'
+# "but update-index --fsmonitor" can be used to get the extension written
 # before testing the results.
 
 clean_repo () {
-	git reset --hard HEAD &&
-	git clean -fd
+	but reset --hard HEAD &&
+	but clean -fd
 }
 
 dirty_repo () {
@@ -51,7 +51,7 @@ write_integration_script () {
 }
 
 test_lazy_prereq UNTRACKED_CACHE '
-	{ git update-index --test-untracked-cache; ret=$?; } &&
+	{ but update-index --test-untracked-cache; ret=$?; } &&
 	test $ret -ne 1
 '
 
@@ -64,11 +64,11 @@ test_expect_success 'setup' '
 	mkdir dir2 &&
 	: >dir2/tracked &&
 	: >dir2/modified &&
-	git -c core.fsmonitor= add . &&
-	git -c core.fsmonitor= cummit -m initial &&
-	git config core.fsmonitor .git/hooks/fsmonitor-test &&
-	cat >.gitignore <<-\EOF
-	.gitignore
+	but -c core.fsmonitor= add . &&
+	but -c core.fsmonitor= cummit -m initial &&
+	but config core.fsmonitor .but/hooks/fsmonitor-test &&
+	cat >.butignore <<-\EOF
+	.butignore
 	expect*
 	actual*
 	marker*
@@ -84,14 +84,14 @@ test_expect_success 'fsmonitor extension is off by default' '
 
 # test that "update-index --fsmonitor" adds the fsmonitor extension
 test_expect_success 'update-index --fsmonitor" adds the fsmonitor extension' '
-	git update-index --fsmonitor &&
+	but update-index --fsmonitor &&
 	test-tool dump-fsmonitor >actual &&
 	grep "^fsmonitor last update" actual
 '
 
 # test that "update-index --no-fsmonitor" removes the fsmonitor extension
 test_expect_success 'update-index --no-fsmonitor" removes the fsmonitor extension' '
-	git update-index --no-fsmonitor &&
+	but update-index --no-fsmonitor &&
 	test-tool dump-fsmonitor >actual &&
 	grep "^no fsmonitor" actual
 '
@@ -110,11 +110,11 @@ test_expect_success 'update-index --fsmonitor-valid" sets the fsmonitor valid bi
 	test_hook fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
-	git update-index --fsmonitor &&
-	git update-index --fsmonitor-valid dir1/modified &&
-	git update-index --fsmonitor-valid dir2/modified &&
-	git update-index --fsmonitor-valid modified &&
-	git ls-files -f >actual &&
+	but update-index --fsmonitor &&
+	but update-index --fsmonitor-valid dir1/modified &&
+	but update-index --fsmonitor-valid dir2/modified &&
+	but update-index --fsmonitor-valid modified &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -129,10 +129,10 @@ EOF
 
 # test that "update-index --no-fsmonitor-valid" clears the fsmonitor valid bit
 test_expect_success 'update-index --no-fsmonitor-valid" clears the fsmonitor valid bit' '
-	git update-index --no-fsmonitor-valid dir1/modified &&
-	git update-index --no-fsmonitor-valid dir2/modified &&
-	git update-index --no-fsmonitor-valid modified &&
-	git ls-files -f >actual &&
+	but update-index --no-fsmonitor-valid dir1/modified &&
+	but update-index --no-fsmonitor-valid dir2/modified &&
+	but update-index --no-fsmonitor-valid modified &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -149,8 +149,8 @@ EOF
 test_expect_success 'all files returned by integration script get flagged as invalid' '
 	write_integration_script &&
 	dirty_repo &&
-	git update-index --fsmonitor &&
-	git ls-files -f >actual &&
+	but update-index --fsmonitor &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -171,10 +171,10 @@ test_expect_success 'newly added files are marked valid' '
 	test_hook --setup --clobber fsmonitor-test<<-\EOF &&
 		printf "last_update_token\0"
 	EOF
-	git add new &&
-	git add dir1/new &&
-	git add dir2/new &&
-	git ls-files -f >actual &&
+	but add new &&
+	but add dir1/new &&
+	but add dir2/new &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -193,8 +193,8 @@ EOF
 # test that all unmodified files get marked valid
 test_expect_success 'all unmodified files get marked valid' '
 	# modified files result in update-index returning 1
-	test_must_fail git update-index --refresh --force-write-index &&
-	git ls-files -f >actual &&
+	test_must_fail but update-index --refresh --force-write-index &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -214,12 +214,12 @@ test_expect_success '*only* files returned by the integration script get flagged
 	printf "dir1/modified\0"
 	EOF
 	clean_repo &&
-	git update-index --refresh --force-write-index &&
+	but update-index --refresh --force-write-index &&
 	echo 1 >modified &&
 	echo 2 >dir1/modified &&
 	echo 3 >dir2/modified &&
-	test_must_fail git update-index --refresh --force-write-index &&
-	git ls-files -f >actual &&
+	test_must_fail but update-index --refresh --force-write-index &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
@@ -229,13 +229,13 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	clean_repo &&
 	dirty_repo &&
 	write_integration_script &&
-	git add . &&
+	but add . &&
 	test_hook --clobber fsmonitor-test<<-\EOF &&
 	EOF
-	git cummit -m "to reset" &&
-	git reset HEAD~1 &&
-	git status >actual &&
-	git -c core.fsmonitor= status >expect &&
+	but cummit -m "to reset" &&
+	but reset HEAD~1 &&
+	but status >actual &&
+	but -c core.fsmonitor= status >expect &&
 	test_cmp expect actual
 '
 
@@ -244,7 +244,7 @@ preload_values="false true"
 for preload_val in $preload_values
 do
 	test_expect_success "setup preloadIndex to $preload_val" '
-		git config core.preloadIndex $preload_val &&
+		but config core.preloadIndex $preload_val &&
 		if test $preload_val = true
 		then
 			GIT_TEST_PRELOAD_INDEX=$preload_val && export GIT_TEST_PRELOAD_INDEX
@@ -259,7 +259,7 @@ do
 	for uc_val in $uc_values
 	do
 		test_expect_success "setup untracked cache to $uc_val" '
-			git config core.untrackedcache $uc_val
+			but config core.untrackedcache $uc_val
 		'
 
 		# Status is well tested elsewhere so we'll just ensure that the results are
@@ -268,11 +268,11 @@ do
 			write_integration_script &&
 			clean_repo &&
 			dirty_repo &&
-			git add new &&
-			git add dir1/new &&
-			git add dir2/new &&
-			git status >actual &&
-			git -c core.fsmonitor= status >expect &&
+			but add new &&
+			but add dir1/new &&
+			but add dir2/new &&
+			but status >actual &&
+			but -c core.fsmonitor= status >expect &&
 			test_cmp expect actual
 		'
 
@@ -284,11 +284,11 @@ do
 			:>marker
 			EOF
 			clean_repo &&
-			git status &&
+			but status &&
 			test_path_is_file marker &&
 			dirty_repo &&
 			rm -f marker &&
-			git status >actual &&
+			but status >actual &&
 			test_path_is_file marker &&
 			test_i18ngrep ! "Changes not staged for cummit:" actual &&
 			if test $uc_val = true
@@ -308,19 +308,19 @@ done
 test_expect_success 'splitting the index results in the same state' '
 	write_integration_script &&
 	dirty_repo &&
-	git update-index --fsmonitor  &&
-	git ls-files -f >expect &&
+	but update-index --fsmonitor  &&
+	but ls-files -f >expect &&
 	test-tool dump-fsmonitor >&2 && echo &&
-	git update-index --fsmonitor --split-index &&
+	but update-index --fsmonitor --split-index &&
 	test-tool dump-fsmonitor >&2 && echo &&
-	git ls-files -f >actual &&
+	but ls-files -f >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR' '
-	test_create_repo dot-git &&
+test_expect_success UNTRACKED_CACHE 'ignore .but changes when invalidating UNTR' '
+	test_create_repo dot-but &&
 	(
-		cd dot-git &&
+		cd dot-but &&
 		: >tracked &&
 		test-tool chmtime =-60 tracked &&
 		: >modified &&
@@ -336,24 +336,24 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		: >dir2/modified &&
 		test-tool chmtime =-60 dir2/modified &&
 		write_integration_script &&
-		git config core.fsmonitor .git/hooks/fsmonitor-test &&
-		git update-index --untracked-cache &&
-		git update-index --fsmonitor &&
-		git status &&
+		but config core.fsmonitor .but/hooks/fsmonitor-test &&
+		but update-index --untracked-cache &&
+		but update-index --fsmonitor &&
+		but status &&
 		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
-		git status &&
+		but status &&
 		test-tool dump-untracked-cache >../before
 	) &&
-	cat >>dot-git/.git/hooks/fsmonitor-test <<-\EOF &&
-	printf ".git\0"
-	printf ".git/index\0"
-	printf "dir1/.git\0"
-	printf "dir1/.git/index\0"
+	cat >>dot-but/.but/hooks/fsmonitor-test <<-\EOF &&
+	printf ".but\0"
+	printf ".but/index\0"
+	printf "dir1/.but\0"
+	printf "dir1/.but/index\0"
 	EOF
 	(
-		cd dot-git &&
+		cd dot-but &&
 		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-after" \
-		git status &&
+		but status &&
 		test-tool dump-untracked-cache >../after
 	) &&
 	grep "directory-invalidation" trace-before | cut -d"|" -f 9 >>before &&
@@ -364,7 +364,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 
 test_expect_success 'discard_index() also discards fsmonitor info' '
 	test_config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-all" &&
-	test_might_fail git update-index --refresh &&
+	test_might_fail but update-index --refresh &&
 	test-tool read-cache --print-and-refresh=tracked 2 >actual &&
 	printf "tracked is%s up to date\n" "" " not" >expect &&
 	test_cmp expect actual
@@ -379,24 +379,24 @@ test_expect_success 'status succeeds after staging/unstaging' '
 	(
 		cd fsmonitor-stage-unstage &&
 		test_cummit initial &&
-		git update-index --fsmonitor &&
+		but update-index --fsmonitor &&
 		removed=$(test_seq 1 100 | sed "s/^/z/") &&
 		touch $removed &&
-		git add $removed &&
-		git config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-env" &&
-		FSMONITOR_LIST="$removed" git restore -S $removed &&
-		FSMONITOR_LIST="$removed" git status
+		but add $removed &&
+		but config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-env" &&
+		FSMONITOR_LIST="$removed" but restore -S $removed &&
+		FSMONITOR_LIST="$removed" but status
 	)
 '
 
 # Usage:
 # check_sparse_index_behavior [!]
 # If "!" is supplied, then we verify that we do not call ensure_full_index
-# during a call to 'git status'. Otherwise, we verify that we _do_ call it.
+# during a call to 'but status'. Otherwise, we verify that we _do_ call it.
 check_sparse_index_behavior () {
-	git -C full status --porcelain=v2 >expect &&
+	but -C full status --porcelain=v2 >expect &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
-		git -C sparse status --porcelain=v2 >actual &&
+		but -C sparse status --porcelain=v2 >actual &&
 	test_region $1 index ensure_full_index trace2.txt &&
 	test_region fsm_hook query trace2.txt &&
 	test_cmp expect actual &&
@@ -407,16 +407,16 @@ test_expect_success 'status succeeds with sparse index' '
 	(
 		sane_unset GIT_TEST_SPLIT_INDEX &&
 
-		git clone . full &&
-		git clone --sparse . sparse &&
-		git -C sparse sparse-checkout init --cone --sparse-index &&
-		git -C sparse sparse-checkout set dir1 dir2 &&
+		but clone . full &&
+		but clone --sparse . sparse &&
+		but -C sparse sparse-checkout init --cone --sparse-index &&
+		but -C sparse sparse-checkout set dir1 dir2 &&
 
 		test_hook --clobber fsmonitor-test <<-\EOF &&
 			printf "last_update_token\0"
 		EOF
-		git -C full config core.fsmonitor ../.git/hooks/fsmonitor-test &&
-		git -C sparse config core.fsmonitor ../.git/hooks/fsmonitor-test &&
+		but -C full config core.fsmonitor ../.but/hooks/fsmonitor-test &&
+		but -C sparse config core.fsmonitor ../.but/hooks/fsmonitor-test &&
 		check_sparse_index_behavior ! &&
 
 		test_hook --clobber fsmonitor-test <<-\EOF &&
@@ -425,15 +425,15 @@ test_expect_success 'status succeeds with sparse index' '
 		EOF
 		check_sparse_index_behavior ! &&
 
-		git -C sparse sparse-checkout add dir1a &&
+		but -C sparse sparse-checkout add dir1a &&
 
 		for repo in full sparse
 		do
 			cp -r $repo/dir1 $repo/dir1a &&
-			git -C $repo add dir1a &&
-			git -C $repo cummit -m "add dir1a" || return 1
+			but -C $repo add dir1a &&
+			but -C $repo cummit -m "add dir1a" || return 1
 		done &&
-		git -C sparse sparse-checkout set dir1 dir2 &&
+		but -C sparse sparse-checkout set dir1 dir2 &&
 
 		# This one modifies outside the sparse-checkout definition
 		# and hence we expect to expand the sparse-index.

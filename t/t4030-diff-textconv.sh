@@ -31,100 +31,100 @@ test_expect_success 'setup binary file with history' '
 '
 
 test_expect_success 'file is considered binary by porcelain' '
-	git diff HEAD^ HEAD >diff &&
+	but diff HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.binary actual
 '
 
 test_expect_success 'file is considered binary by plumbing' '
-	git diff-tree -p HEAD^ HEAD >diff &&
+	but diff-tree -p HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.binary actual
 '
 
 test_expect_success 'setup textconv filters' '
-	echo file diff=foo >.gitattributes &&
-	git config diff.foo.textconv "\"$(pwd)\""/hexdump &&
-	git config diff.fail.textconv false
+	echo file diff=foo >.butattributes &&
+	but config diff.foo.textconv "\"$(pwd)\""/hexdump &&
+	but config diff.fail.textconv false
 '
 
 test_expect_success 'diff produces text' '
-	git diff HEAD^ HEAD >diff &&
+	but diff HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual
 '
 
 test_expect_success 'show cummit produces text' '
-	git show HEAD >diff &&
+	but show HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual
 '
 
 test_expect_success 'diff-tree produces binary' '
-	git diff-tree -p HEAD^ HEAD >diff &&
+	but diff-tree -p HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.binary actual
 '
 
 test_expect_success 'log produces text' '
-	git log -1 -p >log &&
+	but log -1 -p >log &&
 	find_diff <log >actual &&
 	test_cmp expect.text actual
 '
 
 test_expect_success 'format-patch produces binary' '
-	git format-patch --no-binary --stdout HEAD^ >patch &&
+	but format-patch --no-binary --stdout HEAD^ >patch &&
 	find_diff <patch >actual &&
 	test_cmp expect.binary actual
 '
 
 test_expect_success 'status -v produces text' '
-	git reset --soft HEAD^ &&
-	git status -v >diff &&
+	but reset --soft HEAD^ &&
+	but status -v >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual &&
-	git reset --soft HEAD@{1}
+	but reset --soft HEAD@{1}
 '
 
 test_expect_success 'show blob produces binary' '
-	git show HEAD:file >actual &&
+	but show HEAD:file >actual &&
 	printf "\\0\\n\\01\\n" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show --textconv blob produces text' '
-	git show --textconv HEAD:file >actual &&
+	but show --textconv HEAD:file >actual &&
 	printf "0\\n1\\n" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show --no-textconv blob produces binary' '
-	git show --no-textconv HEAD:file >actual &&
+	but show --no-textconv HEAD:file >actual &&
 	printf "\\0\\n\\01\\n" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep-diff (-G) operates on textconv data (add)' '
 	echo one >expect &&
-	git log --root --format=%s -G0 >actual &&
+	but log --root --format=%s -G0 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'grep-diff (-G) operates on textconv data (modification)' '
 	echo two >expect &&
-	git log --root --format=%s -G1 >actual &&
+	but log --root --format=%s -G1 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pickaxe (-S) operates on textconv data (add)' '
 	echo one >expect &&
-	git log --root --format=%s -S0 >actual &&
+	but log --root --format=%s -S0 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'pickaxe (-S) operates on textconv data (modification)' '
 	echo two >expect &&
-	git log --root --format=%s -S1 >actual &&
+	but log --root --format=%s -S1 >actual &&
 	test_cmp expect actual
 '
 
@@ -133,8 +133,8 @@ cat >expect.stat <<'EOF'
  1 file changed, 0 insertions(+), 0 deletions(-)
 EOF
 test_expect_success 'diffstat does not run textconv' '
-	echo file diff=fail >.gitattributes &&
-	git diff --stat HEAD^ HEAD >actual &&
+	echo file diff=fail >.butattributes &&
+	but diff --stat HEAD^ HEAD >actual &&
 	test_cmp expect.stat actual &&
 
 	head -n1 <expect.stat >expect.line1 &&
@@ -142,16 +142,16 @@ test_expect_success 'diffstat does not run textconv' '
 	test_cmp expect.line1 actual.line1
 '
 # restore working setup
-echo file diff=foo >.gitattributes
+echo file diff=foo >.butattributes
 
-symlink=$(git rev-parse --short $(printf frotz | git hash-object --stdin))
+symlink=$(but rev-parse --short $(printf frotz | but hash-object --stdin))
 cat >expect.typechange <<EOF
 --- a/file
 +++ /dev/null
 @@ -1,2 +0,0 @@
 -0
 -1
-diff --git a/file b/file
+diff --but a/file b/file
 new file mode 120000
 index 0000000..$symlink
 --- /dev/null
@@ -164,8 +164,8 @@ EOF
 test_expect_success 'textconv does not act on symlinks' '
 	rm -f file &&
 	test_ln_s_add frotz file &&
-	git cummit -m typechange &&
-	git show >diff &&
+	but cummit -m typechange &&
+	but show >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.typechange actual
 '

@@ -17,35 +17,35 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.36
 -----------------
 
- * "git submodule update" without pathspec should silently skip an
+ * "but submodule update" without pathspec should silently skip an
    uninitialized submodule, but it started to become noisy by mistake.
    (merge 4f1ccef87c gc/submodule-update-part2 later to maint).
 
  * "diff-tree --stdin" has been broken for about a year, but 2.36
    release broke it even worse by breaking running the command with
-   <pathspec>, which in turn broke "gitk" and got noticed.  This has
+   <pathspec>, which in turn broke "butk" and got noticed.  This has
    been corrected by aligning its behaviour to that of "log".
    (merge f8781bfda3 jc/diff-tree-stdin-fix later to maint).
 
- * Regression fix for 2.36 where "git name-rev" started to sometimes
+ * Regression fix for 2.36 where "but name-rev" started to sometimes
    reference strings after they are freed.
    (merge 45a14f578e rs/name-rev-fix-free-after-use later to maint).
 
- * "git show <cummit1> <cummit2>... -- <pathspec>" lost the pathspec
+ * "but show <cummit1> <cummit2>... -- <pathspec>" lost the pathspec
    when showing the second and subsequent cummits, which has been
    corrected.
    (merge 5cdb38458e jc/show-pathspec-fix later to maint).
 
- * "git fast-export -- <pathspec>" lost the pathspec when showing the
+ * "but fast-export -- <pathspec>" lost the pathspec when showing the
    second and subsequent cummits, which has been corrected.
    (merge d1c25272f5 rs/fast-export-pathspec-fix later to maint).
 
- * "git format-patch <args> -- <pathspec>" lost the pathspec when
+ * "but format-patch <args> -- <pathspec>" lost the pathspec when
    showing the second and subsequent cummits, which has been
    corrected.
    (merge 91f8f7e46f rs/format-patch-pathspec-fix later to maint).
 
- * "git clone --origin X" leaked piece of memory that held value read
+ * "but clone --origin X" leaked piece of memory that held value read
    from the clone.defaultRemoteName configuration variable, which has
    been plugged.
    (merge 6dfadc8981 jc/clone-remote-name-leak-fix later to maint).
@@ -53,7 +53,7 @@ Fixes since v2.36
  * Get rid of a bogus and over-eager coccinelle rule.
    (merge 08bdd3a185 jc/cocci-xstrdup-or-null-fix later to maint).
 
- * The path taken by "git multi-pack-index" command from the end user
+ * The path taken by "but multi-pack-index" command from the end user
    was compared with path internally prepared by the tool withut first
    normalizing, which lead to duplicated paths not being noticed,
    which has been corrected.
@@ -62,14 +62,14 @@ Fixes since v2.36
  * Correct choices of C compilers used in various CI jobs.
    (merge 3506cae04f ab/cc-package-fixes later to maint).
 
- * Various cleanups to "git p4".
+ * Various cleanups to "but p4".
    (merge 4ff0108d9e jh/p4-various-fixups later to maint).
 
- * The progress meter of "git blame" was showing incorrect numbers
+ * The progress meter of "but blame" was showing incorrect numbers
    when processing only parts of the file.
    (merge e5f5d7d42e ea/progress-partial-blame later to maint).
 
- * "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
+ * "but rebase --keep-base <upstream> <branch-to-rebase>" computed the
    cummit to rebase onto incorrectly, which has been corrected.
    (merge 9e5ebe9668 ah/rebase-keep-base-fix later to maint).
 
@@ -81,7 +81,7 @@ Fixes since v2.36
    (merge 067109a5e7 pw/test-malloc-with-sanitize-address later to maint).
 
  * The cummit summary shown after making a cummit is matched to what
-   is given in "git status" not to use the break-rewrite heuristics.
+   is given in "but status" not to use the break-rewrite heuristics.
    (merge 84792322ed rs/cummit-summary-wo-break-rewrite later to maint).
 
  * Other code cleanup, docfix, build fix, etc.

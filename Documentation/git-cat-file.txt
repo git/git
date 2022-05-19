@@ -1,21 +1,21 @@
-git-cat-file(1)
+but-cat-file(1)
 ===============
 
 NAME
 ----
-git-cat-file - Provide content or type and size information for repository objects
+but-cat-file - Provide content or type and size information for repository objects
 
 
 SYNOPSIS
 --------
 [verse]
-'git cat-file' <type> <object>
-'git cat-file' (-e | -p) <object>
-'git cat-file' (-t | -s) [--allow-unknown-type] <object>
-'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
+'but cat-file' <type> <object>
+'but cat-file' (-e | -p) <object>
+'but cat-file' (-t | -s) [--allow-unknown-type] <object>
+'but cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
 	     [--textconv | --filters]
-'git cat-file' (--textconv | --filters)
+'but cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
 DESCRIPTION
@@ -37,7 +37,7 @@ OPTIONS
 <object>::
 	The name of the object to show.
 	For a more complete list of ways to spell object names, see
-	the "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
+	the "SPECIFYING REVISIONS" section in linkbut:butrevisions[7].
 
 -t::
 	Instead of the content, show the object type identified by
@@ -130,7 +130,7 @@ flush::
 	Requires `--batch` or `--batch-check` be specified. By default,
 	the objects are visited in order sorted by their hashes; see
 	also `--unordered` below. Objects are presented as-is, without
-	respecting the "replace" mechanism of linkgit:git-replace[1].
+	respecting the "replace" mechanism of linkbut:but-replace[1].
 
 --buffer::
 	Normally batch output is flushed after each object is output, so
@@ -169,7 +169,7 @@ one in the tree.
 This option cannot (currently) be used unless `--batch` or
 `--batch-check` is used.
 +
-For example, consider a git repository containing:
+For example, consider a but repository containing:
 +
 --
 	f: a file containing "hello\n"
@@ -179,13 +179,13 @@ For example, consider a git repository containing:
 	alink: a symlink to /etc/passwd
 --
 +
-For a regular file `f`, `echo HEAD:f | git cat-file --batch` would print
+For a regular file `f`, `echo HEAD:f | but cat-file --batch` would print
 +
 --
 	ce013625030ba8dba906f756967f9e9ca394464a blob 6
 --
 +
-And `echo HEAD:link | git cat-file --batch --follow-symlinks` would
+And `echo HEAD:link | but cat-file --batch --follow-symlinks` would
 print the same thing, as would `HEAD:dir/link`, as they both point at
 `HEAD:f`.
 +
@@ -227,7 +227,7 @@ BATCH OUTPUT
 If `--batch` or `--batch-check` is given, `cat-file` will read objects
 from stdin, one per line, and print information about them. By default,
 the whole line is considered as an object, as if it were fed to
-linkgit:git-rev-parse[1].
+linkbut:but-rev-parse[1].
 
 When `--batch-command` is given, `cat-file` will read commands from stdin,
 one per line, and print information based on the command given. With
@@ -359,4 +359,4 @@ will be reported.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

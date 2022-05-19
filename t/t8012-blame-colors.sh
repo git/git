@@ -1,17 +1,17 @@
 #!/bin/sh
 
-test_description='colored git blame'
+test_description='colored but blame'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-PROG='git blame -c'
+PROG='but blame -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 
 test_expect_success 'colored blame colors contiguous lines' '
-	git -c color.blame.repeatedLines=yellow blame --color-lines --abbrev=12 hello.c >actual.raw &&
-	git -c color.blame.repeatedLines=yellow -c blame.coloring=repeatedLines blame --abbrev=12 hello.c >actual.raw.2 &&
+	but -c color.blame.repeatedLines=yellow blame --color-lines --abbrev=12 hello.c >actual.raw &&
+	but -c color.blame.repeatedLines=yellow -c blame.coloring=repeatedLines blame --abbrev=12 hello.c >actual.raw.2 &&
 	test_cmp actual.raw actual.raw.2 &&
 	test_decode_color <actual.raw >actual &&
 	grep "<YELLOW>" <actual >darkened &&
@@ -22,8 +22,8 @@ test_expect_success 'colored blame colors contiguous lines' '
 '
 
 test_expect_success 'color by age consistently colors old code' '
-	git blame --color-by-age hello.c >actual.raw &&
-	git -c blame.coloring=highlightRecent blame hello.c >actual.raw.2 &&
+	but blame --color-by-age hello.c >actual.raw &&
+	but -c blame.coloring=highlightRecent blame hello.c >actual.raw.2 &&
 	test_cmp actual.raw actual.raw.2 &&
 	test_decode_color <actual.raw >actual &&
 	grep "<BLUE>" <actual >colored &&
@@ -34,10 +34,10 @@ test_expect_success 'blame color by age: new code is different' '
 	cat >>hello.c <<-EOF &&
 		void qfunc();
 	EOF
-	git add hello.c &&
-	GIT_AUTHOR_DATE="" git cummit -m "new cummit" &&
+	but add hello.c &&
+	GIT_AUTHOR_DATE="" but cummit -m "new cummit" &&
 
-	git -c color.blame.highlightRecent="yellow,1 month ago, cyan" blame --color-by-age hello.c >actual.raw &&
+	but -c color.blame.highlightRecent="yellow,1 month ago, cyan" blame --color-by-age hello.c >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 
 	grep "<YELLOW>" <actual >colored &&

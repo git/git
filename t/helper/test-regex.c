@@ -32,7 +32,7 @@ static int test_regex_bug(void)
 
 	/* http://sourceware.org/bugzilla/show_bug.cgi?id=3957  */
 	if (m[0].rm_so == 3) /* matches '\n' when it should not */
-		die("regex bug confirmed: re-build git with NO_REGEX=1");
+		die("regex bug confirmed: re-build but with NO_REGEX=1");
 
 	return 0;
 }
@@ -83,7 +83,7 @@ int cmd__regex(int argc, const char **argv)
 			argv++;
 		}
 	}
-	git_setup_gettext();
+	but_setup_gettext();
 
 	ret = regcomp(&r, pat, flags);
 	if (ret) {

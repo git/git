@@ -10,19 +10,19 @@ pull.ff::
 
 pull.rebase::
 	When true, rebase branches on top of the fetched branch, instead
-	of merging the default branch from the default remote when "git
+	of merging the default branch from the default remote when "but
 	pull" is run. See "branch.<name>.rebase" for setting this on a
 	per-branch basis.
 +
-When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
+When `merges` (or just 'm'), pass the `--rebase-merges` option to 'but rebase'
 so that the local merge cummits are included in the rebase (see
-linkgit:git-rebase[1] for details).
+linkbut:but-rebase[1] for details).
 +
 When the value is `interactive` (or just 'i'), the rebase is run in interactive
 mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
-it unless you understand the implications (see linkgit:git-rebase[1]
+it unless you understand the implications (see linkbut:but-rebase[1]
 for details).
 
 pull.octopus::

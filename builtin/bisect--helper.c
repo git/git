@@ -10,28 +10,28 @@
 #include "quote.h"
 #include "revision.h"
 
-static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
-static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
-static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
-static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
-static GIT_PATH_FUNC(git_path_head_name, "head-name")
-static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
-static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
-static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
+static GIT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
+static GIT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static GIT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static GIT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
+static GIT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
+static GIT_PATH_FUNC(but_path_head_name, "head-name")
+static GIT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
+static GIT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
+static GIT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
 
-static const char * const git_bisect_helper_usage[] = {
-	N_("git bisect--helper --bisect-reset [<cummit>]"),
-	"git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]",
-	N_("git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}=<term>]"
+static const char * const but_bisect_helper_usage[] = {
+	N_("but bisect--helper --bisect-reset [<cummit>]"),
+	"but bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]",
+	N_("but bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}=<term>]"
 					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
-	"git bisect--helper --bisect-next",
-	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
-	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
-	N_("git bisect--helper --bisect-replay <filename>"),
-	N_("git bisect--helper --bisect-skip [(<rev>|<range>)...]"),
-	"git bisect--helper --bisect-visualize",
-	N_("git bisect--helper --bisect-run <cmd>..."),
+	"but bisect--helper --bisect-next",
+	N_("but bisect--helper --bisect-state (bad|new) [<rev>]"),
+	N_("but bisect--helper --bisect-state (good|old) [<rev>...]"),
+	N_("but bisect--helper --bisect-replay <filename>"),
+	N_("but bisect--helper --bisect-skip [(<rev>|<range>)...]"),
+	"but bisect--helper --bisect-visualize",
+	N_("but bisect--helper --bisect-run <cmd>..."),
 	NULL
 };
 
@@ -196,7 +196,7 @@ static int write_terms(const char *bad, const char *good)
 	if (check_term_format(bad, "bad") || check_term_format(good, "good"))
 		return -1;
 
-	res = write_to_file(git_path_bisect_terms(), "%s\n%s\n", bad, good);
+	res = write_to_file(but_path_bisect_terms(), "%s\n%s\n", bad, good);
 
 	return res;
 }
@@ -206,7 +206,7 @@ static int bisect_reset(const char *cummit)
 	struct strbuf branch = STRBUF_INIT;
 
 	if (!cummit) {
-		if (strbuf_read_file(&branch, git_path_bisect_start(), 0) < 1) {
+		if (strbuf_read_file(&branch, but_path_bisect_start(), 0) < 1) {
 			printf(_("We are not bisecting.\n"));
 			return 0;
 		}
@@ -225,7 +225,7 @@ static int bisect_reset(const char *cummit)
 		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
 		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 			error(_("could not check out original"
-				" HEAD '%s'. Try 'git bisect"
+				" HEAD '%s'. Try 'but bisect"
 				" reset <cummit>'."), branch.buf);
 			strbuf_release(&branch);
 			strvec_clear(&argv);
@@ -283,9 +283,9 @@ static int bisect_write(const char *state, const char *rev,
 		goto finish;
 	}
 
-	fp = fopen(git_path_bisect_log(), "a");
+	fp = fopen(but_path_bisect_log(), "a");
 	if (!fp) {
-		res = error_errno(_("couldn't open the file '%s'"), git_path_bisect_log());
+		res = error_errno(_("couldn't open the file '%s'"), but_path_bisect_log());
 		goto finish;
 	}
 
@@ -293,7 +293,7 @@ static int bisect_write(const char *state, const char *rev,
 	log_cummit(fp, "%s", state, cummit);
 
 	if (!nolog)
-		fprintf(fp, "git bisect %s %s\n", state, rev);
+		fprintf(fp, "but bisect %s %s\n", state, rev);
 
 finish:
 	if (fp)
@@ -304,7 +304,7 @@ finish:
 
 static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 {
-	int has_term_file = !is_empty_or_missing_file(git_path_bisect_terms());
+	int has_term_file = !is_empty_or_missing_file(but_path_bisect_terms());
 
 	if (one_of(cmd, "skip", "start", "terms", NULL))
 		return 0;
@@ -339,12 +339,12 @@ static int mark_good(const char *refname, const struct object_id *oid,
 
 static const char need_bad_and_good_revision_warning[] =
 	N_("You need to give me at least one %s and %s revision.\n"
-	   "You can use \"git bisect %s\" and \"git bisect %s\" for that.");
+	   "You can use \"but bisect %s\" and \"but bisect %s\" for that.");
 
 static const char need_bisect_start_warning[] =
-	N_("You need to start by \"git bisect start\".\n"
+	N_("You need to start by \"but bisect start\".\n"
 	   "You then need to give me at least one %s and %s revision.\n"
-	   "You can use \"git bisect %s\" and \"git bisect %s\" for that.");
+	   "You can use \"but bisect %s\" and \"but bisect %s\" for that.");
 
 static int decide_next(const struct bisect_terms *terms,
 		       const char *current_term, int missing_good,
@@ -370,13 +370,13 @@ static int decide_next(const struct bisect_terms *terms,
 		 * translation. The program will only accept English input
 		 * at this point.
 		 */
-		yesno = git_prompt(_("Are you sure [Y/n]? "), PROMPT_ECHO);
+		yesno = but_prompt(_("Are you sure [Y/n]? "), PROMPT_ECHO);
 		if (starts_with(yesno, "N") || starts_with(yesno, "n"))
 			return -1;
 		return 0;
 	}
 
-	if (!is_empty_or_missing_file(git_path_bisect_start()))
+	if (!is_empty_or_missing_file(but_path_bisect_start()))
 		return error(_(need_bad_and_good_revision_warning),
 			     vocab_bad, vocab_good, vocab_bad, vocab_good);
 	else
@@ -409,7 +409,7 @@ static int get_terms(struct bisect_terms *terms)
 	FILE *fp = NULL;
 	int res = 0;
 
-	fp = fopen(git_path_bisect_terms(), "r");
+	fp = fopen(but_path_bisect_terms(), "r");
 	if (!fp) {
 		res = -1;
 		goto finish;
@@ -444,7 +444,7 @@ static int bisect_terms(struct bisect_terms *terms, const char *option)
 	else if (one_of(option, "--term-bad", "--term-new", NULL))
 		printf("%s\n", terms->term_bad);
 	else
-		return error(_("invalid argument %s for 'git bisect terms'.\n"
+		return error(_("invalid argument %s for 'but bisect terms'.\n"
 			       "Supported options are: "
 			       "--term-good|--term-old and "
 			       "--term-bad|--term-new."), option);
@@ -455,13 +455,13 @@ static int bisect_terms(struct bisect_terms *terms, const char *option)
 static int bisect_append_log_quoted(const char **argv)
 {
 	int res = 0;
-	FILE *fp = fopen(git_path_bisect_log(), "a");
+	FILE *fp = fopen(but_path_bisect_log(), "a");
 	struct strbuf orig_args = STRBUF_INIT;
 
 	if (!fp)
 		return -1;
 
-	if (fprintf(fp, "git bisect start") < 1) {
+	if (fprintf(fp, "but bisect start") < 1) {
 		res = -1;
 		goto finish;
 	}
@@ -531,13 +531,13 @@ static int bisect_skipped_cummits(struct bisect_terms *terms)
 	if (res)
 		return res;
 
-	fp = fopen(git_path_bisect_log(), "a");
+	fp = fopen(but_path_bisect_log(), "a");
 	if (!fp)
 		return error_errno(_("could not open '%s' for appending"),
-				  git_path_bisect_log());
+				  but_path_bisect_log());
 
 	if (fprintf(fp, "# only skipped cummits left to test\n") < 0)
-		return error_errno(_("failed to write to '%s'"), git_path_bisect_log());
+		return error_errno(_("failed to write to '%s'"), but_path_bisect_log());
 
 	while ((cummit = get_revision(&revs)) != NULL) {
 		strbuf_reset(&cummit_name);
@@ -572,7 +572,7 @@ static int bisect_successful(struct bisect_terms *terms)
 	cummit = lookup_cummit_reference_by_name(bad_ref);
 	format_cummit_message(cummit, "%s", &cummit_name, &pp);
 
-	res = append_to_file(git_path_bisect_log(), "# first %s cummit: [%s] %s\n",
+	res = append_to_file(but_path_bisect_log(), "# first %s cummit: [%s] %s\n",
 			    terms->term_bad, oid_to_hex(&cummit->object.oid),
 			    cummit_name.buf);
 
@@ -688,7 +688,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 	pathspec_pos = i;
 
 	/*
-	 * The user ran "git bisect start <sha1> <sha1>", hence did not
+	 * The user ran "but bisect start <sha1> <sha1>", hence did not
 	 * explicitly specify the terms, but we are already starting to
 	 * set references named with the default terms, and won't be able
 	 * to change afterwards.
@@ -715,9 +715,9 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 	/*
 	 * Check if we are bisecting
 	 */
-	if (!is_empty_or_missing_file(git_path_bisect_start())) {
+	if (!is_empty_or_missing_file(but_path_bisect_start())) {
 		/* Reset to the rev from where we started */
-		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
+		strbuf_read_file(&start_head, but_path_bisect_start(), 0);
 		strbuf_trim(&start_head);
 		if (!no_checkout) {
 			struct strvec argv = STRVEC_INIT;
@@ -726,7 +726,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 				     "--", NULL);
 			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 				res = error(_("checking out '%s' failed."
-						 " Try 'git bisect start "
+						 " Try 'but bisect start "
 						 "<valid-branch>'."),
 					       start_head.buf);
 				goto finish;
@@ -742,10 +742,10 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 			   skip_prefix(head, "refs/heads/", &head)) {
 			/*
 			 * This error message should only be triggered by
-			 * cogito usage, and cogito users should understand
+			 * cobuto usage, and cobuto users should understand
 			 * it relates to cg-seek.
 			 */
-			if (!is_empty_or_missing_file(git_path_head_name()))
+			if (!is_empty_or_missing_file(but_path_head_name()))
 				return error(_("won't bisect on cg-seek'ed tree"));
 			strbuf_addstr(&start_head, head);
 		} else {
@@ -762,10 +762,10 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 	/*
 	 * Write new start state
 	 */
-	write_file(git_path_bisect_start(), "%s\n", start_head.buf);
+	write_file(but_path_bisect_start(), "%s\n", start_head.buf);
 
 	if (first_parent_only)
-		write_file(git_path_bisect_first_parent(), "\n");
+		write_file(but_path_bisect_first_parent(), "\n");
 
 	if (no_checkout) {
 		if (get_oid(start_head.buf, &oid) < 0) {
@@ -781,7 +781,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 
 	if (pathspec_pos < argc - 1)
 		sq_quote_argv(&bisect_names, argv + pathspec_pos);
-	write_file(git_path_bisect_names(), "%s\n", bisect_names.buf);
+	write_file(but_path_bisect_names(), "%s\n", bisect_names.buf);
 
 	for (i = 0; i < states.nr; i++)
 		if (bisect_write(states.items[i].string,
@@ -824,10 +824,10 @@ static int bisect_autostart(struct bisect_terms *terms)
 	int res;
 	const char *yesno;
 
-	if (file_is_not_empty(git_path_bisect_start()))
+	if (file_is_not_empty(but_path_bisect_start()))
 		return 0;
 
-	fprintf_ln(stderr, _("You need to start by \"git bisect "
+	fprintf_ln(stderr, _("You need to start by \"but bisect "
 			  "start\"\n"));
 
 	if (!isatty(STDIN_FILENO))
@@ -838,7 +838,7 @@ static int bisect_autostart(struct bisect_terms *terms)
 	 * translation. The program will only accept English input
 	 * at this point.
 	 */
-	yesno = git_prompt(_("Do you want me to do it for you "
+	yesno = but_prompt(_("Do you want me to do it for you "
 			     "[Y/n]? "), PROMPT_ECHO);
 	res = tolower(*yesno) == 'n' ?
 		-1 : bisect_start(terms, empty_strvec, 0);
@@ -869,7 +869,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 	argv++;
 	argc--;
 	if (argc > 1 && !strcmp(state, terms->term_bad))
-		return error(_("'git bisect %s' can take only one argument."), terms->term_bad);
+		return error(_("'but bisect %s' can take only one argument."), terms->term_bad);
 
 	if (argc == 0) {
 		const char *head = "BISECT_HEAD";
@@ -906,7 +906,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 		oid_array_append(&revs, &cummit->object.oid);
 	}
 
-	if (strbuf_read_file(&buf, git_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
+	if (strbuf_read_file(&buf, but_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
 	    get_oid_hex(buf.buf, &expected) < 0)
 		verify_expected = 0; /* Ignore invalid file contents */
 	strbuf_release(&buf);
@@ -917,8 +917,8 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 			return BISECT_FAILED;
 		}
 		if (verify_expected && !oideq(&revs.oid[i], &expected)) {
-			unlink_or_warn(git_path_bisect_ancestors_ok());
-			unlink_or_warn(git_path_bisect_expected_rev());
+			unlink_or_warn(but_path_bisect_ancestors_ok());
+			unlink_or_warn(but_path_bisect_expected_rev());
 			verify_expected = 0;
 		}
 	}
@@ -930,7 +930,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 static enum bisect_error bisect_log(void)
 {
 	int fd, status;
-	const char* filename = git_path_bisect_log();
+	const char* filename = but_path_bisect_log();
 
 	if (is_empty_or_missing_file(filename))
 		return error(_("We are not bisecting."));
@@ -949,8 +949,8 @@ static int process_replay_line(struct bisect_terms *terms, struct strbuf *line)
 	const char *p = line->buf + strspn(line->buf, " \t");
 	char *word_end, *rev;
 
-	if ((!skip_prefix(p, "git bisect", &p) &&
-	!skip_prefix(p, "git-bisect", &p)) || !isspace(*p))
+	if ((!skip_prefix(p, "but bisect", &p) &&
+	!skip_prefix(p, "but-bisect", &p)) || !isspace(*p))
 		return 0;
 	p += strspn(p, " \t");
 
@@ -1062,8 +1062,8 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 
 	if (!argc) {
 		if ((getenv("DISPLAY") || getenv("SESSIONNAME") || getenv("MSYSTEM") ||
-		     getenv("SECURITYSESSIONID")) && exists_in_PATH("gitk")) {
-			strvec_push(&args, "gitk");
+		     getenv("SECURITYSESSIONID")) && exists_in_PATH("butk")) {
+			strvec_push(&args, "butk");
 		} else {
 			strvec_push(&args, "log");
 			flags |= RUN_GIT_CMD;
@@ -1072,7 +1072,7 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 		if (argv[0][0] == '-') {
 			strvec_push(&args, "log");
 			flags |= RUN_GIT_CMD;
-		} else if (strcmp(argv[0], "tig") && !starts_with(argv[0], "git"))
+		} else if (strcmp(argv[0], "tig") && !starts_with(argv[0], "but"))
 			flags |= RUN_GIT_CMD;
 
 		strvec_pushv(&args, argv);
@@ -1080,7 +1080,7 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 
 	strvec_pushl(&args, "--bisect", "--", NULL);
 
-	strbuf_read_file(&sb, git_path_bisect_names(), 0);
+	strbuf_read_file(&sb, but_path_bisect_names(), 0);
 	sq_dequote_to_strvec(sb.buf, &args);
 	strbuf_release(&sb);
 
@@ -1189,10 +1189,10 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		else
 			new_state = terms->term_bad;
 
-		temporary_stdout_fd = open(git_path_bisect_run(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
+		temporary_stdout_fd = open(but_path_bisect_run(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
 
 		if (temporary_stdout_fd < 0) {
-			res = error_errno(_("cannot open file '%s' for writing"), git_path_bisect_run());
+			res = error_errno(_("cannot open file '%s' for writing"), but_path_bisect_run());
 			break;
 		}
 
@@ -1207,7 +1207,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 		close(saved_stdout);
 		close(temporary_stdout_fd);
 
-		print_file_to_stdout(git_path_bisect_run());
+		print_file_to_stdout(but_path_bisect_run());
 
 		if (res == BISECT_ONLY_SKIPPED_LEFT)
 			error(_("bisect run cannot continue any more"));
@@ -1218,7 +1218,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 			printf(_("bisect found first bad cummit"));
 			res = BISECT_OK;
 		} else if (res) {
-			error(_("bisect run failed: 'git bisect--helper --bisect-state"
+			error(_("bisect run failed: 'but bisect--helper --bisect-state"
 			" %s' exited with error code %d"), new_state, res);
 		} else {
 			continue;
@@ -1278,11 +1278,11 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	struct bisect_terms terms = { .term_good = NULL, .term_bad = NULL };
 
 	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage,
+			     but_bisect_helper_usage,
 			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN);
 
 	if (!cmdmode)
-		usage_with_options(git_bisect_helper_usage, options);
+		usage_with_options(but_bisect_helper_usage, options);
 
 	switch (cmdmode) {
 	case BISECT_RESET:

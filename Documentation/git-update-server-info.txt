@@ -1,15 +1,15 @@
-git-update-server-info(1)
+but-update-server-info(1)
 =========================
 
 NAME
 ----
-git-update-server-info - Update auxiliary info file to help dumb servers
+but-update-server-info - Update auxiliary info file to help dumb servers
 
 
 SYNOPSIS
 --------
 [verse]
-'git update-server-info'
+'but update-server-info'
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ OUTPUT
 ------
 
 Currently the command updates the following files.  Please see
-linkgit:gitrepository-layout[5] for description of
+linkbut:butrepository-layout[5] for description of
 what they are for:
 
 * objects/info/packs
@@ -32,4 +32,4 @@ what they are for:
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

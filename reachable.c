@@ -131,7 +131,7 @@ static int add_recent_loose(const struct object_id *oid,
 }
 
 static int add_recent_packed(const struct object_id *oid,
-			     struct packed_git *p, uint32_t pos,
+			     struct packed_but *p, uint32_t pos,
 			     void *data)
 {
 	struct object *obj = lookup_object(the_repository, oid);
@@ -163,7 +163,7 @@ static int mark_object_seen(const struct object_id *oid,
 			     enum object_type type,
 			     int exclude,
 			     uint32_t name_hash,
-			     struct packed_git *found_pack,
+			     struct packed_but *found_pack,
 			     off_t found_offset)
 {
 	struct object *obj = lookup_object_by_type(the_repository, oid, type);
@@ -178,7 +178,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 			    timestamp_t mark_recent, struct progress *progress)
 {
 	struct connectivity_progress cp;
-	struct bitmap_index *bitmap_git;
+	struct bitmap_index *bitmap_but;
 
 	/*
 	 * Set up revision parsing, and mark us as being interested
@@ -205,10 +205,10 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	cp.progress = progress;
 	cp.count = 0;
 
-	bitmap_git = prepare_bitmap_walk(revs, 0);
-	if (bitmap_git) {
-		traverse_bitmap_cummit_list(bitmap_git, revs, mark_object_seen);
-		free_bitmap_index(bitmap_git);
+	bitmap_but = prepare_bitmap_walk(revs, 0);
+	if (bitmap_but) {
+		traverse_bitmap_cummit_list(bitmap_but, revs, mark_object_seen);
+		free_bitmap_index(bitmap_but);
 	} else {
 		if (prepare_revision_walk(revs))
 			die("revision walk setup failed");

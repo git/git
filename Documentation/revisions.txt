@@ -7,7 +7,7 @@ syntax.  Here are various ways to spell object names.  The
 ones listed near the end of this list name trees and
 blobs contained in a cummit.
 
-NOTE: This document shows the "raw" syntax as seen by git. The shell
+NOTE: This document shows the "raw" syntax as seen by but. The shell
 and other UIs might require additional quoting to protect special
 characters and to avoid word splitting.
 
@@ -19,7 +19,7 @@ characters and to avoid word splitting.
   your repository whose object name starts with dae86e.
 
 '<describeOutput>', e.g. 'v1.7.4.2-679-g3bee7fb'::
-  Output from `git describe`; i.e. a closest tag, optionally
+  Output from `but describe`; i.e. a closest tag, optionally
   followed by a dash and a number of cummits, followed by a dash, a
   'g', and an abbreviated object name.
 
@@ -47,15 +47,15 @@ characters and to avoid word splitting.
 +
 `HEAD` names the cummit on which you based the changes in the working tree.
 `FETCH_HEAD` records the branch which you fetched from a remote repository
-with your last `git fetch` invocation.
+with your last `but fetch` invocation.
 `ORIG_HEAD` is created by commands that move your `HEAD` in a drastic
 way, to record the position of the `HEAD` before their operation, so that
 you can easily change the tip of the branch back to the state before you ran
 them.
 `MERGE_HEAD` records the cummit(s) which you are merging into your branch
-when you run `git merge`.
+when you run `but merge`.
 `CHERRY_PICK_HEAD` records the cummit which you are cherry-picking
-when you run `git cherry-pick`.
+when you run `but cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
 the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
@@ -105,7 +105,7 @@ some output processing may assume ref names in UTF-8.
 
 '[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
-  `git push` were run while `branchname` was checked out (or the current
+  `but push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Since our push destination is
   in a remote repository, of course, we report the local tracking branch
   that corresponds to that branch (i.e., something in `refs/remotes/`).
@@ -113,14 +113,14 @@ some output processing may assume ref names in UTF-8.
 Here's an example to make it more clear:
 +
 ------------------------------
-$ git config push.default current
-$ git config remote.pushdefault myfork
-$ git switch -c mybranch origin/master
+$ but config push.default current
+$ but config remote.pushdefault myfork
+$ but switch -c mybranch origin/master
 
-$ git rev-parse --symbolic-full-name @{upstream}
+$ but rev-parse --symbolic-full-name @{upstream}
 refs/remotes/origin/master
 
-$ git rev-parse --symbolic-full-name @{push}
+$ but rev-parse --symbolic-full-name @{push}
 refs/remotes/myfork/mybranch
 ------------------------------
 +
@@ -246,7 +246,7 @@ G   H   I   J
 SPECIFYING RANGES
 -----------------
 
-History traversing commands such as `git log` operate on a set
+History traversing commands such as `but log` operate on a set
 of cummits, not just a single cummit.
 
 For these commands,
@@ -286,7 +286,7 @@ The '..' (two-dot) Range Notation::
 The '...' (three-dot) Symmetric Difference Notation::
  A similar notation 'r1\...r2' is called symmetric difference
  of 'r1' and 'r2' and is defined as
- 'r1 r2 --not $(git merge-base --all r1 r2)'.
+ 'r1 r2 --not $(but merge-base --all r1 r2)'.
  It is the set of cummits that are reachable from either one of
  'r1' (left side) or 'r2' (right side) but not from both.
 
@@ -298,13 +298,13 @@ I forked from them?"  Note that '..' would mean 'HEAD..HEAD' which is an
 empty range that is both reachable and unreachable from HEAD.
 
 Commands that are specifically designed to take two distinct ranges
-(e.g. "git range-diff R1 R2" to compare two ranges) do exist, but
-they are exceptions.  Unless otherwise noted, all "git" commands
+(e.g. "but range-diff R1 R2" to compare two ranges) do exist, but
+they are exceptions.  Unless otherwise noted, all "but" commands
 that operate on a set of cummits work on a single revision range.
 In other words, writing two "two-dot range notation" next to each
 other, e.g.
 
-    $ git log A..B C..D
+    $ but log A..B C..D
 
 does *not* specify two revision ranges for most commands.  Instead
 it will name a single connected set of cummits, i.e. those that are

@@ -16,7 +16,7 @@ $chkms
 TXT
 ) &&
 
-	subfiles=$(git ls-files) &&
+	subfiles=$(but ls-files) &&
 	check_equal "$subfiles" "$chkms
 $chks"
 )

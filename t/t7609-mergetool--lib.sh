@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git mergetool
+test_description='but mergetool
 
 Testing basic merge tools options'
 

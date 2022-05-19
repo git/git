@@ -424,7 +424,7 @@ static int getchar_with_timeout(int timeout)
 #define FORCE_TEXT
 #endif
 
-char *git_terminal_prompt(const char *prompt, int echo)
+char *but_terminal_prompt(const char *prompt, int echo)
 {
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
@@ -591,7 +591,7 @@ void restore_term(void)
 {
 }
 
-char *git_terminal_prompt(const char *prompt, int echo)
+char *but_terminal_prompt(const char *prompt, int echo)
 {
 	return getpass(prompt);
 }

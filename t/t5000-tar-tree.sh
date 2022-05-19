@@ -3,7 +3,7 @@
 # Copyright (C) 2005 Rene Scharfe
 #
 
-test_description='git archive and git get-tar-cummit-id test
+test_description='but archive and but get-tar-cummit-id test
 
 This test covers the topics of file contents, cummit date handling and
 cummit id embedding:
@@ -13,13 +13,13 @@ cummit id embedding:
   binary file (/bin/sh).  Only paths shorter than 99 characters are
   used.
 
-  git archive applies the cummit date to every file in the archive it
+  but archive applies the cummit date to every file in the archive it
   creates.  The test sets the cummit date to a specific value and checks
   if the tar archive contains that value.
 
-  When giving git archive a cummit id (in contrast to a tree id) it
+  When giving but archive a cummit id (in contrast to a tree id) it
   embeds this cummit id into the tar archive as a comment.  The test
-  checks the ability of git get-tar-cummit-id to figure it out from the
+  checks the ability of but get-tar-cummit-id to figure it out from the
   tar file.
 
 '
@@ -143,57 +143,57 @@ test_expect_success 'populate workdir' '
 test_expect_success \
     'add ignored file' \
     'echo ignore me >a/ignored &&
-     echo ignored export-ignore >.git/info/attributes'
+     echo ignored export-ignore >.but/info/attributes'
 
 test_expect_success 'add files to repository' '
-	git add a &&
-	GIT_CUMMITTER_DATE="2005-05-27 22:00" git cummit -m initial
+	but add a &&
+	GIT_CUMMITTER_DATE="2005-05-27 22:00" but cummit -m initial
 '
 
 test_expect_success 'setup export-subst' '
-	echo "substfile?" export-subst >>.git/info/attributes &&
-	git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+	echo "substfile?" export-subst >>.but/info/attributes &&
+	but log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
 		>a/substfile1
 '
 
 test_expect_success 'create bare clone' '
-	git clone --bare . bare.git &&
-	cp .git/info/attributes bare.git/info/attributes
+	but clone --bare . bare.but &&
+	cp .but/info/attributes bare.but/info/attributes
 '
 
 test_expect_success 'remove ignored file' '
 	rm a/ignored
 '
 
-test_expect_success 'git archive' '
-	git archive HEAD >b.tar
+test_expect_success 'but archive' '
+	but archive HEAD >b.tar
 '
 
 check_tar b
 
-test_expect_success 'git archive --prefix=prefix/' '
-	git archive --prefix=prefix/ HEAD >with_prefix.tar
+test_expect_success 'but archive --prefix=prefix/' '
+	but archive --prefix=prefix/ HEAD >with_prefix.tar
 '
 
 check_tar with_prefix prefix/
 
-test_expect_success 'git-archive --prefix=olde-' '
-	git archive --prefix=olde- HEAD >with_olde-prefix.tar
+test_expect_success 'but-archive --prefix=olde-' '
+	but archive --prefix=olde- HEAD >with_olde-prefix.tar
 '
 
 check_tar with_olde-prefix olde-
 
-test_expect_success 'git archive --add-file' '
+test_expect_success 'but archive --add-file' '
 	echo untracked >untracked &&
-	git archive --add-file=untracked HEAD >with_untracked.tar
+	but archive --add-file=untracked HEAD >with_untracked.tar
 '
 
 check_tar with_untracked
 check_added with_untracked untracked untracked
 
-test_expect_success 'git archive --add-file twice' '
+test_expect_success 'but archive --add-file twice' '
 	echo untracked >untracked &&
-	git archive --prefix=one/ --add-file=untracked \
+	but archive --prefix=one/ --add-file=untracked \
 		--prefix=two/ --add-file=untracked \
 		--prefix= HEAD >with_untracked2.tar
 '
@@ -202,35 +202,35 @@ check_tar with_untracked2
 check_added with_untracked2 untracked one/untracked
 check_added with_untracked2 untracked two/untracked
 
-test_expect_success 'git archive on large files' '
+test_expect_success 'but archive on large files' '
 	test_config core.bigfilethreshold 1 &&
-	git archive HEAD >b3.tar &&
+	but archive HEAD >b3.tar &&
 	test_cmp_bin b.tar b3.tar
 '
 
-test_expect_success 'git archive in a bare repo' '
-	git --git-dir bare.git archive HEAD >b3.tar
+test_expect_success 'but archive in a bare repo' '
+	but --but-dir bare.but archive HEAD >b3.tar
 '
 
-test_expect_success 'git archive vs. the same in a bare repo' '
+test_expect_success 'but archive vs. the same in a bare repo' '
 	test_cmp_bin b.tar b3.tar
 '
 
-test_expect_success 'git archive with --output' '
-	git archive --output=b4.tar HEAD &&
+test_expect_success 'but archive with --output' '
+	but archive --output=b4.tar HEAD &&
 	test_cmp_bin b.tar b4.tar
 '
 
-test_expect_success 'git archive --remote' '
-	git archive --remote=. HEAD >b5.tar &&
+test_expect_success 'but archive --remote' '
+	but archive --remote=. HEAD >b5.tar &&
 	test_cmp_bin b.tar b5.tar
 '
 
-test_expect_success 'git archive --remote with configured remote' '
-	git config remote.foo.url . &&
+test_expect_success 'but archive --remote with configured remote' '
+	but config remote.foo.url . &&
 	(
 		cd a &&
-		git archive --remote=foo --output=../b5-nick.tar HEAD
+		but archive --remote=foo --output=../b5-nick.tar HEAD
 	) &&
 	test_cmp_bin b.tar b5-nick.tar
 '
@@ -243,118 +243,118 @@ test_expect_success 'validate file modification time' '
 	test_cmp expected.mtime b.mtime
 '
 
-test_expect_success 'git get-tar-cummit-id' '
-	git get-tar-cummit-id <b.tar >actual &&
-	git rev-parse HEAD >expect &&
+test_expect_success 'but get-tar-cummit-id' '
+	but get-tar-cummit-id <b.tar >actual &&
+	but rev-parse HEAD >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git archive with --output, override inferred format' '
-	git archive --format=tar --output=d4.zip HEAD &&
+test_expect_success 'but archive with --output, override inferred format' '
+	but archive --format=tar --output=d4.zip HEAD &&
 	test_cmp_bin b.tar d4.zip
 '
 
-test_expect_success GZIP 'git archive with --output and --remote creates .tgz' '
-	git archive --output=d5.tgz --remote=. HEAD &&
+test_expect_success GZIP 'but archive with --output and --remote creates .tgz' '
+	but archive --output=d5.tgz --remote=. HEAD &&
 	gzip -d -c <d5.tgz >d5.tar &&
 	test_cmp_bin b.tar d5.tar
 '
 
-test_expect_success 'git archive --list outside of a git repo' '
-	nongit git archive --list
+test_expect_success 'but archive --list outside of a but repo' '
+	nonbut but archive --list
 '
 
-test_expect_success 'git archive --remote outside of a git repo' '
-	git archive HEAD >expect.tar &&
-	nongit git archive --remote="$PWD" HEAD >actual.tar &&
+test_expect_success 'but archive --remote outside of a but repo' '
+	but archive HEAD >expect.tar &&
+	nonbut but archive --remote="$PWD" HEAD >actual.tar &&
 	test_cmp_bin expect.tar actual.tar
 '
 
 test_expect_success 'clients cannot access unreachable cummits' '
 	test_cummit unreachable &&
-	sha1=$(git rev-parse HEAD) &&
-	git reset --hard HEAD^ &&
-	git archive $sha1 >remote.tar &&
-	test_must_fail git archive --remote=. $sha1 >remote.tar
+	sha1=$(but rev-parse HEAD) &&
+	but reset --hard HEAD^ &&
+	but archive $sha1 >remote.tar &&
+	test_must_fail but archive --remote=. $sha1 >remote.tar
 '
 
 test_expect_success 'upload-archive can allow unreachable cummits' '
 	test_cummit unreachable1 &&
-	sha1=$(git rev-parse HEAD) &&
-	git reset --hard HEAD^ &&
-	git archive $sha1 >remote.tar &&
+	sha1=$(but rev-parse HEAD) &&
+	but reset --hard HEAD^ &&
+	but archive $sha1 >remote.tar &&
 	test_config uploadarchive.allowUnreachable true &&
-	git archive --remote=. $sha1 >remote.tar
+	but archive --remote=. $sha1 >remote.tar
 '
 
 test_expect_success 'setup tar filters' '
-	git config tar.tar.foo.command "tr ab ba" &&
-	git config tar.bar.command "tr ab ba" &&
-	git config tar.bar.remote true &&
-	git config tar.invalid baz
+	but config tar.tar.foo.command "tr ab ba" &&
+	but config tar.bar.command "tr ab ba" &&
+	but config tar.bar.remote true &&
+	but config tar.invalid baz
 '
 
 test_expect_success 'archive --list mentions user filter' '
-	git archive --list >output &&
+	but archive --list >output &&
 	grep "^tar\.foo\$" output &&
 	grep "^bar\$" output
 '
 
 test_expect_success 'archive --list shows only enabled remote filters' '
-	git archive --list --remote=. >output &&
+	but archive --list --remote=. >output &&
 	! grep "^tar\.foo\$" output &&
 	grep "^bar\$" output
 '
 
 test_expect_success 'invoke tar filter by format' '
-	git archive --format=tar.foo HEAD >config.tar.foo &&
+	but archive --format=tar.foo HEAD >config.tar.foo &&
 	tr ab ba <config.tar.foo >config.tar &&
 	test_cmp_bin b.tar config.tar &&
-	git archive --format=bar HEAD >config.bar &&
+	but archive --format=bar HEAD >config.bar &&
 	tr ab ba <config.bar >config.tar &&
 	test_cmp_bin b.tar config.tar
 '
 
 test_expect_success 'invoke tar filter by extension' '
-	git archive -o config-implicit.tar.foo HEAD &&
+	but archive -o config-implicit.tar.foo HEAD &&
 	test_cmp_bin config.tar.foo config-implicit.tar.foo &&
-	git archive -o config-implicit.bar HEAD &&
+	but archive -o config-implicit.bar HEAD &&
 	test_cmp_bin config.tar.foo config-implicit.bar
 '
 
 test_expect_success 'default output format remains tar' '
-	git archive -o config-implicit.baz HEAD &&
+	but archive -o config-implicit.baz HEAD &&
 	test_cmp_bin b.tar config-implicit.baz
 '
 
 test_expect_success 'extension matching requires dot' '
-	git archive -o config-implicittar.foo HEAD &&
+	but archive -o config-implicittar.foo HEAD &&
 	test_cmp_bin b.tar config-implicittar.foo
 '
 
 test_expect_success 'only enabled filters are available remotely' '
-	test_must_fail git archive --remote=. --format=tar.foo HEAD \
+	test_must_fail but archive --remote=. --format=tar.foo HEAD \
 		>remote.tar.foo &&
-	git archive --remote=. --format=bar >remote.bar HEAD &&
+	but archive --remote=. --format=bar >remote.bar HEAD &&
 	test_cmp_bin remote.bar config.bar
 '
 
-test_expect_success GZIP 'git archive --format=tgz' '
-	git archive --format=tgz HEAD >j.tgz
+test_expect_success GZIP 'but archive --format=tgz' '
+	but archive --format=tgz HEAD >j.tgz
 '
 
-test_expect_success GZIP 'git archive --format=tar.gz' '
-	git archive --format=tar.gz HEAD >j1.tar.gz &&
+test_expect_success GZIP 'but archive --format=tar.gz' '
+	but archive --format=tar.gz HEAD >j1.tar.gz &&
 	test_cmp_bin j.tgz j1.tar.gz
 '
 
 test_expect_success GZIP 'infer tgz from .tgz filename' '
-	git archive --output=j2.tgz HEAD &&
+	but archive --output=j2.tgz HEAD &&
 	test_cmp_bin j.tgz j2.tgz
 '
 
 test_expect_success GZIP 'infer tgz from .tar.gz filename' '
-	git archive --output=j3.tar.gz HEAD &&
+	but archive --output=j3.tar.gz HEAD &&
 	test_cmp_bin j.tgz j3.tar.gz
 '
 
@@ -364,18 +364,18 @@ test_expect_success GZIP 'extract tgz file' '
 '
 
 test_expect_success GZIP 'remote tar.gz is allowed by default' '
-	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
+	but archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
 	test_cmp_bin j.tgz remote.tar.gz
 '
 
 test_expect_success GZIP 'remote tar.gz can be disabled' '
-	git config tar.tar.gz.remote false &&
-	test_must_fail git archive --remote=. --format=tar.gz HEAD \
+	but config tar.tar.gz.remote false &&
+	test_must_fail but archive --remote=. --format=tar.gz HEAD \
 		>remote.tar.gz
 '
 
 test_expect_success 'archive and :(glob)' '
-	git archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
+	but archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
 	cat >expect <<EOF &&
 a/
 a/bin/
@@ -385,7 +385,7 @@ EOF
 '
 
 test_expect_success 'catch non-matching pathspec' '
-	test_must_fail git archive -v HEAD -- "*.abc" >/dev/null
+	test_must_fail but archive -v HEAD -- "*.abc" >/dev/null
 '
 
 # Pull the size and date of each entry in a tarfile using the system tar.
@@ -419,18 +419,18 @@ test_lazy_prereq TAR_HUGE '
 test_expect_success LONG_IS_64BIT 'set up repository with huge blob' '
 	obj=$(test_oid obj) &&
 	path=$(test_oid_to_path $obj) &&
-	mkdir -p .git/objects/$(dirname $path) &&
-	cp "$TEST_DIRECTORY"/t5000/huge-object .git/objects/$path &&
-	rm -f .git/index &&
-	git update-index --add --cacheinfo 100644,$obj,huge &&
-	git cummit -m huge
+	mkdir -p .but/objects/$(dirname $path) &&
+	cp "$TEST_DIRECTORY"/t5000/huge-object .but/objects/$path &&
+	rm -f .but/index &&
+	but update-index --add --cacheinfo 100644,$obj,huge &&
+	but cummit -m huge
 '
 
-# We expect git to die with SIGPIPE here (otherwise we
+# We expect but to die with SIGPIPE here (otherwise we
 # would generate the whole 64GB).
 test_expect_success LONG_IS_64BIT 'generate tar with huge size' '
 	{
-		git archive HEAD
+		but archive HEAD
 		echo $? >exit-code
 	} | test_copy_bytes 4096 >huge.tar &&
 	echo 141 >expect &&
@@ -444,15 +444,15 @@ test_expect_success TAR_HUGE,LONG_IS_64BIT 'system tar can read our huge size' '
 '
 
 test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) cummit' '
-	rm -f .git/index &&
+	rm -f .but/index &&
 	echo foo >file &&
-	git add file &&
+	but add file &&
 	GIT_CUMMITTER_DATE="@17179869183 +0000" \
-		git cummit -m "tempori parendum"
+		but cummit -m "tempori parendum"
 '
 
 test_expect_success TIME_IS_64BIT 'generate tar with far-future mtime' '
-	git archive HEAD >future.tar
+	but archive HEAD >future.tar
 '
 
 test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read our future mtime' '
@@ -462,15 +462,15 @@ test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read 
 '
 
 test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 + 1) cummit' '
-	rm -f .git/index &&
+	rm -f .but/index &&
 	echo content >file &&
-	git add file &&
+	but add file &&
 	GIT_TEST_CUMMIT_GRAPH=0 GIT_CUMMITTER_DATE="@68719476737 +0000" \
-		git cummit -m "tempori parendum"
+		but cummit -m "tempori parendum"
 '
 
 test_expect_success TIME_IS_64BIT 'generate tar with far-far-future mtime' '
-	git archive HEAD >future.tar
+	but archive HEAD >future.tar
 '
 
 test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read our future mtime' '

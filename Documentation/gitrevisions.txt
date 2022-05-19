@@ -1,13 +1,13 @@
-gitrevisions(7)
+butrevisions(7)
 ===============
 
 NAME
 ----
-gitrevisions - Specifying revisions and ranges for Git
+butrevisions - Specifying revisions and ranges for Git
 
 SYNOPSIS
 --------
-gitrevisions
+butrevisions
 
 
 DESCRIPTION
@@ -15,12 +15,12 @@ DESCRIPTION
 
 Many Git commands take revision parameters as arguments. Depending on
 the command, they denote a specific cummit or, for commands which
-walk the revision graph (such as linkgit:git-log[1]), all cummits which are
+walk the revision graph (such as linkbut:but-log[1]), all cummits which are
 reachable from that cummit. For commands that walk the revision graph one can
 also specify a range of revisions explicitly.
 
-In addition, some Git commands (such as linkgit:git-show[1] and
-linkgit:git-push[1]) can also take revision parameters which denote
+In addition, some Git commands (such as linkbut:but-show[1] and
+linkbut:but-push[1]) can also take revision parameters which denote
 other objects than cummits, e.g. blobs ("files") or trees
 ("directories of files").
 
@@ -29,8 +29,8 @@ include::revisions.txt[]
 
 SEE ALSO
 --------
-linkgit:git-rev-parse[1]
+linkbut:but-rev-parse[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

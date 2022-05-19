@@ -18,14 +18,14 @@
  *
  * Add more types to the union if the current set is insufficient.
  */
-struct git_max_alignment {
+struct but_max_alignment {
 	char unalign;
 	union {
 		uintmax_t max_align_uintmax;
 		void *max_align_pointer;
 	} aligned;
 };
-#define GIT_MAX_ALIGNMENT offsetof(struct git_max_alignment, aligned)
+#define GIT_MAX_ALIGNMENT offsetof(struct but_max_alignment, aligned)
 
 /*
  * Allocate a new mp_block and insert it after the block specified in

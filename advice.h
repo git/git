@@ -1,7 +1,7 @@
 #ifndef ADVICE_H
 #define ADVICE_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 
 struct string_list;
 
@@ -52,7 +52,7 @@ struct string_list;
 	ADVICE_SKIPPED_CHERRY_PICKS,
 };
 
-int git_default_advice_config(const char *var, const char *value);
+int but_default_advice_config(const char *var, const char *value);
 __attribute__((format (printf, 1, 2)))
 void advise(const char *advice, ...);
 

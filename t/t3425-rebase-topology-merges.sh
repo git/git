@@ -7,7 +7,7 @@ test_description='rebase topology tests with merges'
 test_revision_subjects () {
 	expected="$1"
 	shift
-	set -- $(git log --format=%s --no-walk=unsorted "$@")
+	set -- $(but log --format=%s --no-walk=unsorted "$@")
 	test "$expected" = "$*"
 }
 
@@ -22,25 +22,25 @@ test_expect_success 'setup of non-linear-history' '
 	test_cummit a &&
 	test_cummit b &&
 	test_cummit c &&
-	git checkout b &&
+	but checkout b &&
 	test_cummit d &&
 	test_cummit e &&
 
-	git checkout c &&
+	but checkout c &&
 	test_cummit g &&
 	revert h g &&
-	git checkout d &&
+	but checkout d &&
 	cherry_pick gp g &&
 	test_cummit i &&
-	git checkout b &&
+	but checkout b &&
 	test_cummit f &&
 
-	git checkout d &&
+	but checkout d &&
 	test_cummit n &&
 	test_cummit o &&
 	test_merge w e &&
 	test_merge v c &&
-	git checkout o &&
+	but checkout o &&
 	test_cummit z
 '
 
@@ -49,7 +49,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* after merge from upstream" "
 		reset_rebase &&
-		git rebase $* e w &&
+		but rebase $* e w &&
 		test_cmp_rev e HEAD~2 &&
 		test_linear_range 'n o' e..
 	"
@@ -65,7 +65,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* of non-linear history is linearized in place" "
 		reset_rebase &&
-		git rebase $* d w &&
+		but rebase $* d w &&
 		test_cmp_rev d HEAD~3 &&
 		test_linear_range "\'"$expected"\'" d..
 	"
@@ -81,7 +81,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* of non-linear history is linearized upstream" "
 		reset_rebase &&
-		git rebase $* c w &&
+		but rebase $* c w &&
 		test_cmp_rev c HEAD~4 &&
 		test_linear_range "\'"$expected"\'" c..
 	"
@@ -97,7 +97,7 @@ test_run_rebase () {
 	shift
 	test_expect_$result "rebase $* of non-linear history with merges after upstream merge is linearized" "
 		reset_rebase &&
-		git rebase $* c v &&
+		but rebase $* c v &&
 		test_cmp_rev c HEAD~4 &&
 		test_linear_range "\'"$expected"\'" c..
 	"

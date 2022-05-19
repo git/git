@@ -33,7 +33,7 @@ merge_cmd () {
 }
 
 create_empty_file () {
-	empty_file="${TMPDIR:-/tmp}/git-difftool-p4merge-empty-file.$$"
+	empty_file="${TMPDIR:-/tmp}/but-difftool-p4merge-empty-file.$$"
 	>"$empty_file"
 
 	printf "%s" "$empty_file"

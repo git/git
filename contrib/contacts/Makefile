@@ -5,10 +5,10 @@ all::
 -include ../../config.mak
 
 prefix ?= /usr/local
-gitexecdir ?= $(prefix)/libexec/git-core
+butexecdir ?= $(prefix)/libexec/but-core
 mandir ?= $(prefix)/share/man
 man1dir ?= $(mandir)/man1
-htmldir ?= $(prefix)/share/doc/git-doc
+htmldir ?= $(prefix)/share/doc/but-doc
 
 ../../GIT-VERSION-FILE: FORCE
 	$(MAKE) -C ../../ GIT-VERSION-FILE
@@ -30,18 +30,18 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 ASCIIDOC_CONF = ../../Documentation/asciidoc.conf
 MANPAGE_XSL   = ../../Documentation/manpage-normal.xsl
 
-GIT_CONTACTS := git-contacts
+GIT_CONTACTS := but-contacts
 
-GIT_CONTACTS_DOC := git-contacts.1
-GIT_CONTACTS_XML := git-contacts.xml
-GIT_CONTACTS_TXT := git-contacts.txt
-GIT_CONTACTS_HTML := git-contacts.html
+GIT_CONTACTS_DOC := but-contacts.1
+GIT_CONTACTS_XML := but-contacts.xml
+GIT_CONTACTS_TXT := but-contacts.txt
+GIT_CONTACTS_HTML := but-contacts.html
 
 doc: $(GIT_CONTACTS_DOC) $(GIT_CONTACTS_HTML)
 
 install: $(GIT_CONTACTS)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
-	$(INSTALL) -m 755 $(GIT_CONTACTS) $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(butexecdir)
+	$(INSTALL) -m 755 $(GIT_CONTACTS) $(DESTDIR)$(butexecdir)
 
 install-doc: install-man install-html
 
@@ -58,11 +58,11 @@ $(GIT_CONTACTS_DOC): $(GIT_CONTACTS_XML)
 
 $(GIT_CONTACTS_XML): $(GIT_CONTACTS_TXT)
 	$(ASCIIDOC) -b docbook -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $^
+		-abut_version=$(GIT_VERSION) $^
 
 $(GIT_CONTACTS_HTML): $(GIT_CONTACTS_TXT)
 	$(ASCIIDOC) -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $^
+		-abut_version=$(GIT_VERSION) $^
 
 clean:
 	$(RM) $(GIT_CONTACTS)

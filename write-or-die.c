@@ -59,15 +59,15 @@ void fprintf_or_die(FILE *f, const char *fmt, ...)
 static int maybe_fsync(int fd)
 {
 	if (use_fsync < 0)
-		use_fsync = git_env_bool("GIT_TEST_FSYNC", 1);
+		use_fsync = but_env_bool("GIT_TEST_FSYNC", 1);
 	if (!use_fsync)
 		return 0;
 
 	if (fsync_method == FSYNC_METHOD_WRITEOUT_ONLY &&
-	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) >= 0)
+	    but_fsync(fd, FSYNC_WRITEOUT_ONLY) >= 0)
 		return 0;
 
-	return git_fsync(fd, FSYNC_HARDWARE_FLUSH);
+	return but_fsync(fd, FSYNC_HARDWARE_FLUSH);
 }
 
 void fsync_or_die(int fd, const char *msg)

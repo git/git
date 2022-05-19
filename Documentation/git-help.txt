@@ -1,22 +1,22 @@
-git-help(1)
+but-help(1)
 ===========
 
 NAME
 ----
-git-help - Display help information about Git
+but-help - Display help information about Git
 
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]
-'git help' [[-i|--info] [-m|--man] [-w|--web]] [<command>|<guide>]
-'git help' [-g|--guides]
-'git help' [-c|--config]
+'but help' [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]
+'but help' [[-i|--info] [-m|--man] [-w|--web]] [<command>|<guide>]
+'but help' [-g|--guides]
+'but help' [-c|--config]
 
 DESCRIPTION
 -----------
 
-With no options and no '<command>' or '<guide>' given, the synopsis of the 'git'
+With no options and no '<command>' or '<guide>' given, the synopsis of the 'but'
 command and a list of the most commonly used Git commands are printed
 on the standard output.
 
@@ -31,16 +31,16 @@ guide is brought up. The 'man' program is used by default for this
 purpose, but this can be overridden by other options or configuration
 variables.
 
-If an alias is given, git shows the definition of the alias on
+If an alias is given, but shows the definition of the alias on
 standard output. To get the manual page for the aliased command, use
-`git <command> --help`.
+`but <command> --help`.
 
-Note that `git --help ...` is identical to `git help ...` because the
+Note that `but --help ...` is identical to `but help ...` because the
 former is internally converted into the latter.
 
-To display the linkgit:git[1] man page, use `git help git`.
+To display the linkbut:but[1] man page, use `but help but`.
 
-This page can be displayed with 'git help help' or `git help --help`
+This page can be displayed with 'but help help' or `but help --help`
 
 OPTIONS
 -------
@@ -49,7 +49,7 @@ OPTIONS
 	Prints all the available commands on the standard output.
 
 --no-external-commands::
-	When used with `--all`, exclude the listing of external "git-*"
+	When used with `--all`, exclude the listing of external "but-*"
 	commands found in the `$PATH`.
 
 --no-aliases::
@@ -63,7 +63,7 @@ OPTIONS
 -c::
 --config::
 	List all available configuration variables. This is a short
-	summary of the list in linkgit:git-config[1].
+	summary of the list in linkbut:but-config[1].
 
 -g::
 --guides::
@@ -91,9 +91,9 @@ other display programs (see below).
 +
 The web browser can be specified using the configuration variable
 `help.browser`, or `web.browser` if the former is not set. If none of
-these config variables is set, the 'git web{litdd}browse' helper script
-(called by 'git help') will pick a suitable default. See
-linkgit:git-web{litdd}browse[1] for more information about this.
+these config variables is set, the 'but web{litdd}browse' helper script
+(called by 'but help') will pick a suitable default. See
+linkbut:but-web{litdd}browse[1] for more information about this.
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -103,7 +103,7 @@ help.format
 
 If no command-line option is passed, the `help.format` configuration
 variable will be checked. The following values are supported for this
-variable; they make 'git help' behave as their corresponding command-
+variable; they make 'but help' behave as their corresponding command-
 line option:
 
 * "man" corresponds to '-m|--man',
@@ -116,7 +116,7 @@ help.browser, web.browser and browser.<tool>.path
 The `help.browser`, `web.browser` and `browser.<tool>.path` will also
 be checked if the 'web' format is chosen (either by command-line
 option or configuration variable). See '-w|--web' in the OPTIONS
-section above and linkgit:git-web{litdd}browse[1].
+section above and linkbut:but-web{litdd}browse[1].
 
 man.viewer
 ~~~~~~~~~~
@@ -158,7 +158,7 @@ man.<tool>.path
 You can explicitly provide a full path to your preferred man viewer by
 setting the configuration variable `man.<tool>.path`. For example, you
 can configure the absolute path to konqueror by setting
-'man.konqueror.path'. Otherwise, 'git help' assumes the tool is
+'man.konqueror.path'. Otherwise, 'but help' assumes the tool is
 available in PATH.
 
 man.<tool>.cmd
@@ -193,20 +193,20 @@ the following:
 		cmd = A_PATH_TO/konqueror
 ------------------------------------------------
 
-Note about git config --global
+Note about but config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that all these configuration variables should probably be set
 using the `--global` flag, for example like this:
 
 ------------------------------------------------
-$ git config --global help.format web
-$ git config --global web.browser firefox
+$ but config --global help.format web
+$ but config --global web.browser firefox
 ------------------------------------------------
 
 as they are probably more user specific than repository specific.
-See linkgit:git-config[1] for more information about this.
+See linkbut:but-config[1] for more information about this.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -3,7 +3,7 @@
 #include "prune-packed.h"
 
 static const char * const prune_packed_usage[] = {
-	"git prune-packed [-n | --dry-run] [-q | --quiet]",
+	"but prune-packed [-n | --dry-run] [-q | --quiet]",
 	NULL
 };
 

@@ -1,15 +1,15 @@
-git-mailinfo(1)
+but-mailinfo(1)
 ===============
 
 NAME
 ----
-git-mailinfo - Extracts patch and authorship from a single e-mail message
+but-mailinfo - Extracts patch and authorship from a single e-mail message
 
 
 SYNOPSIS
 --------
 [verse]
-'git mailinfo' [-k|-b] [-u | --encoding=<encoding> | -n]
+'but mailinfo' [-k|-b] [-u | --encoding=<encoding> | -n]
 	       [--[no-]scissors] [--quoted-cr=<action>]
 	       <msg> <patch>
 
@@ -19,9 +19,9 @@ DESCRIPTION
 Reads a single e-mail message from the standard input, and
 writes the cummit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by 'git am'
+written out to the standard output to be used by 'but am'
 to create a cummit.  It is usually not necessary to use this
-command directly.  See linkgit:git-am[1] instead.
+command directly.  See linkbut:but-am[1] instead.
 
 
 OPTIONS
@@ -30,7 +30,7 @@ OPTIONS
 	Usually the program removes email cruft from the Subject:
 	header line to extract the title line for the cummit log
 	message.  This option prevents this munging, and is most
-	useful when used to read back 'git format-patch -k' output.
+	useful when used to read back 'but format-patch -k' output.
 +
 Specifically, the following are removed until none of them remain:
 +
@@ -117,4 +117,4 @@ If no such configuration option has been set, `warn` will be used.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

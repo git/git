@@ -1,2 +1,2 @@
-$ git diff-tree -r --abbrev=4 initial
+$ but diff-tree -r --abbrev=4 initial
 $

@@ -67,7 +67,7 @@ void SHA1DCInit(SHA1_CTX*);
 
    Enabling safe SHA-1 hashing will result in the correct SHA-1 hash for messages where no collision attack was detected,
    but it will result in a different SHA-1 hash for messages where a collision attack was detected.
-   This will automatically invalidate SHA-1 based digital signature forgeries.
+   This will automatically invalidate SHA-1 based dibutal signature forgeries.
    Enabled by default.
 */
 void SHA1DCSetSafeHash(SHA1_CTX*, int);

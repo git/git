@@ -10,7 +10,7 @@ test_expect_success 'setup' '
 
 check_at() {
 	echo "$2" >expect &&
-	git log -1 --format=%s "$1" >actual &&
+	but log -1 --format=%s "$1" >actual &&
 	test_cmp expect actual
 }
 
@@ -35,11 +35,11 @@ test_expect_success 'silly approxidates work' '
 '
 
 test_expect_success 'notice misspelled upstream' '
-	test_must_fail git log -1 --format=%s @{usptream}
+	test_must_fail but log -1 --format=%s @{usptream}
 '
 
 test_expect_success 'complain about total nonsense' '
-	test_must_fail git log -1 --format=%s @{utter.bogosity}
+	test_must_fail but log -1 --format=%s @{utter.bogosity}
 '
 
 test_done

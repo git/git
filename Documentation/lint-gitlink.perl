@@ -5,7 +5,7 @@ use warnings;
 
 # Parse arguments, a simple state machine for input like:
 #
-# <file-to-check.txt> <valid-files-to-link-to> --section=1 git.txt git-add.txt [...] --to-lint git-add.txt a-file.txt [...]
+# <file-to-check.txt> <valid-files-to-link-to> --section=1 but.txt but-add.txt [...] --to-lint but-add.txt a-file.txt [...]
 my %TXT;
 my %SECTION;
 my $section;
@@ -37,11 +37,11 @@ sub report {
 }
 
 @ARGV = sort values %TXT;
-die "BUG: No list of valid linkgit:* files given" unless @ARGV;
+die "BUG: No list of valid linkbut:* files given" unless @ARGV;
 @ARGV = $to_check;
 while (<>) {
 	my $line = $_;
-	while ($line =~ m/linkgit:((.*?)\[(\d)\])/g) {
+	while ($line =~ m/linkbut:((.*?)\[(\d)\])/g) {
 		my $pos = pos $line;
 		my ($target, $page, $section) = ($1, $2, $3);
 

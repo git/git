@@ -4,11 +4,11 @@ Git v2.2.2 Release Notes
 Fixes since v2.2.1
 ------------------
 
- * "git checkout $treeish $path", when $path in the index and the
+ * "but checkout $treeish $path", when $path in the index and the
    working tree already matched what is in $treeish at the $path,
    still overwrote the $path unnecessarily.
 
- * "git config --get-color" did not parse its command line arguments
+ * "but config --get-color" did not parse its command line arguments
    carefully.
 
  * open() emulated on Windows platforms did not give EISDIR upon
@@ -17,13 +17,13 @@ Fixes since v2.2.1
  * A few code paths used abs() when they should have used labs() on
    long integers.
 
- * "gitweb" used to depend on a behaviour recent CGI.pm deprecated.
+ * "butweb" used to depend on a behaviour recent CGI.pm deprecated.
 
- * "git init" (hence "git clone") initialized the per-repository
-   configuration file .git/config with x-bit by mistake.
+ * "but init" (hence "but clone") initialized the per-repository
+   configuration file .but/config with x-bit by mistake.
 
  * Git 2.0 was supposed to make the "simple" mode for the default of
-   "git push", but it didn't.
+   "but push", but it didn't.
 
  * "Everyday" document had a broken link.
 
@@ -34,7 +34,7 @@ Fixes since v2.2.1
    did not handle an entry that crosses a boundary of block it uses to
    read them correctly.
 
- * "git apply" was described in the documentation to take --ignore-date
+ * "but apply" was described in the documentation to take --ignore-date
    option, which it does not.
 
  * Traditionally we tried to avoid interpreting date strings given by
@@ -54,7 +54,7 @@ Fixes since v2.2.1
  * The code to abbreviate an object name to its short unique prefix
    has been optimized when no abbreviation was requested.
 
- * "git add --ignore-errors ..." did not ignore an error to
+ * "but add --ignore-errors ..." did not ignore an error to
    give a file that did not exist.
 
  * Git did not correctly read an overlong refname from a packed refs

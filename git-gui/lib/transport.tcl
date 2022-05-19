@@ -1,4 +1,4 @@
-# git-gui transport (fetch/push) support
+# but-gui transport (fetch/push) support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc fetch_from {remote} {
@@ -6,9 +6,9 @@ proc fetch_from {remote} {
 		[mc "fetch %s" $remote] \
 		[mc "Fetching new changes from %s" $remote]]
 	set cmds [list]
-	lappend cmds [list exec git fetch $remote]
+	lappend cmds [list exec but fetch $remote]
 	if {[is_config_true gui.pruneduringfetch]} {
-		lappend cmds [list exec git remote prune $remote]
+		lappend cmds [list exec but remote prune $remote]
 	}
 	console::chain $w $cmds
 }
@@ -17,7 +17,7 @@ proc prune_from {remote} {
 	set w [console::new \
 		[mc "remote prune %s" $remote] \
 		[mc "Pruning tracking branches deleted from %s" $remote]]
-	console::exec $w [list git remote prune $remote]
+	console::exec $w [list but remote prune $remote]
 }
 
 proc fetch_from_all {} {
@@ -25,7 +25,7 @@ proc fetch_from_all {} {
 		[mc "fetch all remotes"] \
 		[mc "Fetching new changes from all remotes"]]
 
-	set cmd [list git fetch --all]
+	set cmd [list but fetch --all]
 	if {[is_config_true gui.pruneduringfetch]} {
 		lappend cmd --prune
 	}
@@ -40,7 +40,7 @@ proc prune_from_all {} {
 		[mc "remote prune all remotes"] \
 		[mc "Pruning tracking branches deleted from all remotes"]]
 
-	set cmd [list git remote prune]
+	set cmd [list but remote prune]
 
 	foreach r $all_remotes {
 		lappend cmd $r
@@ -53,7 +53,7 @@ proc push_to {remote} {
 	set w [console::new \
 		[mc "push %s" $remote] \
 		[mc "Pushing changes to %s" $remote]]
-	set cmd [list git push]
+	set cmd [list but push]
 	lappend cmd -v
 	lappend cmd $remote
 	console::exec $w $cmd
@@ -75,7 +75,7 @@ proc start_push_anywhere_action {w} {
 	}
 	if {$r_url eq {}} return
 
-	set cmd [list git push]
+	set cmd [list but push]
 	lappend cmd -v
 	if {$push_thin} {
 		lappend cmd --thin

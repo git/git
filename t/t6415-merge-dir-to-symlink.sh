@@ -11,54 +11,54 @@ test_expect_success 'create a cummit where dir a/b changed to symlink' '
 	> a/b/c/d &&
 	> a/b-2/c/d &&
 	> a/x &&
-	git add -A &&
-	git cummit -m base &&
-	git tag start &&
+	but add -A &&
+	but cummit -m base &&
+	but tag start &&
 	rm -rf a/b &&
-	git add -A &&
+	but add -A &&
 	test_ln_s_add b-2 a/b &&
-	git cummit -m "dir to symlink"
+	but cummit -m "dir to symlink"
 '
 
 test_expect_success 'checkout does not clobber untracked symlink' '
-	git checkout HEAD^0 &&
-	git reset --hard main &&
-	git rm --cached a/b &&
-	git cummit -m "untracked symlink remains" &&
-	test_must_fail git checkout start^0 &&
-	git clean -fd    # Do not leave the untracked symlink in the way
+	but checkout HEAD^0 &&
+	but reset --hard main &&
+	but rm --cached a/b &&
+	but cummit -m "untracked symlink remains" &&
+	test_must_fail but checkout start^0 &&
+	but clean -fd    # Do not leave the untracked symlink in the way
 '
 
 test_expect_success 'a/b-2/c/d is kept when clobbering symlink b' '
-	git checkout HEAD^0 &&
-	git reset --hard main &&
-	git rm --cached a/b &&
-	git cummit -m "untracked symlink remains" &&
-	git checkout -f start^0 &&
+	but checkout HEAD^0 &&
+	but reset --hard main &&
+	but rm --cached a/b &&
+	but cummit -m "untracked symlink remains" &&
+	but checkout -f start^0 &&
 	test_path_is_file a/b-2/c/d &&
-	git clean -fd    # Do not leave the untracked symlink in the way
+	but clean -fd    # Do not leave the untracked symlink in the way
 '
 
 test_expect_success 'checkout should not have deleted a/b-2/c/d' '
-	git checkout HEAD^0 &&
-	git reset --hard main &&
-	 git checkout start^0 &&
+	but checkout HEAD^0 &&
+	but reset --hard main &&
+	 but checkout start^0 &&
 	 test_path_is_file a/b-2/c/d
 '
 
 test_expect_success 'setup for merge test' '
-	git reset --hard &&
+	but reset --hard &&
 	test_path_is_file a/b-2/c/d &&
 	echo x > a/x &&
-	git add a/x &&
-	git cummit -m x &&
-	git tag baseline
+	but add a/x &&
+	but cummit -m x &&
+	but tag baseline
 '
 
 test_expect_success 'Handle D/F conflict, do not lose a/b-2/c/d in merge (resolve)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
-	git merge -s resolve main &&
+	but reset --hard &&
+	but checkout baseline^0 &&
+	but merge -s resolve main &&
 	test_path_is_file a/b-2/c/d
 '
 
@@ -67,9 +67,9 @@ test_expect_success SYMLINKS 'a/b was resolved as symlink' '
 '
 
 test_expect_success 'Handle D/F conflict, do not lose a/b-2/c/d in merge (recursive)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
-	git merge -s recursive main &&
+	but reset --hard &&
+	but checkout baseline^0 &&
+	but merge -s recursive main &&
 	test_path_is_file a/b-2/c/d
 '
 
@@ -78,9 +78,9 @@ test_expect_success SYMLINKS 'a/b was resolved as symlink' '
 '
 
 test_expect_success 'Handle F/D conflict, do not lose a/b-2/c/d in merge (resolve)' '
-	git reset --hard &&
-	git checkout main^0 &&
-	git merge -s resolve baseline^0 &&
+	but reset --hard &&
+	but checkout main^0 &&
+	but merge -s resolve baseline^0 &&
 	test_path_is_file a/b-2/c/d
 '
 
@@ -89,9 +89,9 @@ test_expect_success SYMLINKS 'a/b was resolved as symlink' '
 '
 
 test_expect_success 'Handle F/D conflict, do not lose a/b-2/c/d in merge (recursive)' '
-	git reset --hard &&
-	git checkout main^0 &&
-	git merge -s recursive baseline^0 &&
+	but reset --hard &&
+	but checkout main^0 &&
+	but merge -s recursive baseline^0 &&
 	test_path_is_file a/b-2/c/d
 '
 
@@ -100,51 +100,51 @@ test_expect_success SYMLINKS 'a/b was resolved as symlink' '
 '
 
 test_expect_failure 'do not lose untracked in merge (resolve)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
 	>a/b/c/e &&
-	test_must_fail git merge -s resolve main &&
+	test_must_fail but merge -s resolve main &&
 	test_path_is_file a/b/c/e &&
 	test_path_is_file a/b-2/c/d
 '
 
 test_expect_success 'do not lose untracked in merge (recursive)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
 	>a/b/c/e &&
-	test_must_fail git merge -s recursive main &&
+	test_must_fail but merge -s recursive main &&
 	test_path_is_file a/b/c/e &&
 	test_path_is_file a/b-2/c/d
 '
 
 test_expect_success 'do not lose modifications in merge (resolve)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
 	echo more content >>a/b/c/d &&
-	test_must_fail git merge -s resolve main
+	test_must_fail but merge -s resolve main
 '
 
 test_expect_success 'do not lose modifications in merge (recursive)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
 	echo more content >>a/b/c/d &&
-	test_must_fail git merge -s recursive main
+	test_must_fail but merge -s recursive main
 '
 
 test_expect_success 'setup a merge where dir a/b-2 changed to symlink' '
-	git reset --hard &&
-	git checkout start^0 &&
+	but reset --hard &&
+	but checkout start^0 &&
 	rm -rf a/b-2 &&
-	git add -A &&
+	but add -A &&
 	test_ln_s_add b a/b-2 &&
-	git cummit -m "dir a/b-2 to symlink" &&
-	git tag test2
+	but cummit -m "dir a/b-2 to symlink" &&
+	but tag test2
 '
 
 test_expect_success 'merge should not have D/F conflicts (resolve)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
-	git merge -s resolve test2 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
+	but merge -s resolve test2 &&
 	test_path_is_file a/b/c/d
 '
 
@@ -153,9 +153,9 @@ test_expect_success SYMLINKS 'a/b-2 was resolved as symlink' '
 '
 
 test_expect_success 'merge should not have D/F conflicts (recursive)' '
-	git reset --hard &&
-	git checkout baseline^0 &&
-	git merge -s recursive test2 &&
+	but reset --hard &&
+	but checkout baseline^0 &&
+	but merge -s recursive test2 &&
 	test_path_is_file a/b/c/d
 '
 
@@ -164,9 +164,9 @@ test_expect_success SYMLINKS 'a/b-2 was resolved as symlink' '
 '
 
 test_expect_success 'merge should not have F/D conflicts (recursive)' '
-	git reset --hard &&
-	git checkout -b foo test2 &&
-	git merge -s recursive baseline^0 &&
+	but reset --hard &&
+	but checkout -b foo test2 &&
+	but merge -s recursive baseline^0 &&
 	test_path_is_file a/b/c/d
 '
 

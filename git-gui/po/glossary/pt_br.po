@@ -1,11 +1,11 @@
-# Translation of git-gui to Brazilian Portuguese
+# Translation of but-gui to Brazilian Portuguese
 # Copyright (C) 2007 Shawn Pearce, et al.
-# This file is distributed under the same license as the git-gui package.
+# This file is distributed under the same license as the but-gui package.
 #
 # Alexandre Erwin Ittner <alexandre@ittner.com.br>, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui\n"
+"Project-Id-Version: but-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-01-26 15:47-0800\n"
 "PO-Revision-Date: 2010-09-18 11:09-0300\n"
@@ -48,11 +48,11 @@ msgstr "efetuar checkout"
 msgid "clone [verb]"
 msgstr "clonar"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "revisão"
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr "salvar revisão"
 
@@ -77,7 +77,7 @@ msgid "hunk"
 msgstr "trecho"
 
 #. "A collection of files. The index is a stored version of your working tree."
-msgid "index (in git-gui: staging area)"
+msgid "index (in but-gui: staging area)"
 msgstr "índice"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
@@ -148,7 +148,7 @@ msgstr "etiqueta"
 msgid "tag [verb]"
 msgstr "marcar etiqueta"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr "ramo de rastreamento"
 

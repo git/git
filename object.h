@@ -16,7 +16,7 @@ struct parsed_object_pool {
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
 
-	/* parent substitutions from .git/info/grafts and .git/shallow */
+	/* parent substitutions from .but/info/grafts and .but/shallow */
 	struct cummit_graft **grafts;
 	int grafts_alloc, grafts_nr;
 

@@ -12,14 +12,14 @@ create_packs () {
 			print "checkpoint"
 		}
 	' "$@" |
-	git fast-import
+	but fast-import
 }
 
 # create a large number of packs, disabling any gc which might
 # cause us to repack them
 setup_many_packs () {
-	git config gc.auto 0 &&
-	git config gc.autopacklimit 0 &&
-	git config fastimport.unpacklimit 0 &&
+	but config gc.auto 0 &&
+	but config gc.autopacklimit 0 &&
+	but config fastimport.unpacklimit 0 &&
 	create_packs 500
 }

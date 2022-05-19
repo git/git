@@ -17,7 +17,7 @@
 #include "promisor-remote.h"
 
 static const char index_pack_usage[] =
-"git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
+"but index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
 
 struct object_entry {
 	struct pack_idx_entry idx;
@@ -135,7 +135,7 @@ static unsigned int input_offset, input_len;
 static off_t consumed_bytes;
 static off_t max_input_size;
 static unsigned deepest_delta;
-static git_hash_ctx input_ctx;
+static but_hash_ctx input_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd;
 static const char *curr_pack;
@@ -446,9 +446,9 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 {
 	static char fixed_buf[8192];
 	int status;
-	git_zstream stream;
+	but_zstream stream;
 	void *buf;
-	git_hash_ctx c;
+	but_hash_ctx c;
 	char hdr[32];
 	int hdrlen;
 
@@ -464,7 +464,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 		buf = xmallocz(size);
 
 	memset(&stream, 0, sizeof(stream));
-	git_inflate_init(&stream);
+	but_inflate_init(&stream);
 	stream.next_out = buf;
 	stream.avail_out = buf == fixed_buf ? sizeof(fixed_buf) : size;
 
@@ -472,7 +472,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 		unsigned char *last_out = stream.next_out;
 		stream.next_in = fill(1);
 		stream.avail_in = input_len;
-		status = git_inflate(&stream, 0);
+		status = but_inflate(&stream, 0);
 		use(input_len - stream.avail_in);
 		if (oid)
 			the_hash_algo->update_fn(&c, last_out, stream.next_out - last_out);
@@ -483,7 +483,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	} while (status == Z_OK);
 	if (stream.total_out != size || status != Z_STREAM_END)
 		bad_object(offset, _("inflate returned %d"), status);
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 	if (oid)
 		the_hash_algo->final_oid_fn(oid, &c);
 	return buf == fixed_buf ? NULL : buf;
@@ -563,14 +563,14 @@ static void *unpack_data(struct object_entry *obj,
 	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	off_t len = obj[1].idx.offset - from;
 	unsigned char *data, *inbuf;
-	git_zstream stream;
+	but_zstream stream;
 	int status;
 
 	data = xmallocz(consume ? 64*1024 : obj->size);
 	inbuf = xmalloc((len < 64*1024) ? (int)len : 64*1024);
 
 	memset(&stream, 0, sizeof(stream));
-	git_inflate_init(&stream);
+	but_inflate_init(&stream);
 	stream.next_out = data;
 	stream.avail_out = consume ? 64*1024 : obj->size;
 
@@ -589,10 +589,10 @@ static void *unpack_data(struct object_entry *obj,
 		stream.next_in = inbuf;
 		stream.avail_in = n;
 		if (!consume)
-			status = git_inflate(&stream, 0);
+			status = but_inflate(&stream, 0);
 		else {
 			do {
-				status = git_inflate(&stream, 0);
+				status = but_inflate(&stream, 0);
 				if (consume(data, stream.next_out - data, cb_data)) {
 					free(inbuf);
 					free(data);
@@ -608,7 +608,7 @@ static void *unpack_data(struct object_entry *obj,
 	if (status != Z_STREAM_END || stream.total_out != obj->size)
 		die(_("serious inflate inconsistency"));
 
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 	free(inbuf);
 	if (consume) {
 		FREE_AND_NULL(data);
@@ -732,7 +732,7 @@ static void find_ref_delta_children(const struct object_id *oid,
 
 struct compare_data {
 	struct object_entry *entry;
-	struct git_istream *st;
+	struct but_istream *st;
 	unsigned char *buf;
 	unsigned long buf_size;
 };
@@ -1309,25 +1309,25 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 
 static int write_compressed(struct hashfile *f, void *in, unsigned int size)
 {
-	git_zstream stream;
+	but_zstream stream;
 	int status;
 	unsigned char outbuf[4096];
 
-	git_deflate_init(&stream, zlib_compression_level);
+	but_deflate_init(&stream, zlib_compression_level);
 	stream.next_in = in;
 	stream.avail_in = size;
 
 	do {
 		stream.next_out = outbuf;
 		stream.avail_out = sizeof(outbuf);
-		status = git_deflate(&stream, Z_FINISH);
+		status = but_deflate(&stream, Z_FINISH);
 		hashwrite(f, outbuf, sizeof(outbuf) - stream.avail_out);
 	} while (status == Z_OK);
 
 	if (status != Z_STREAM_END)
 		die(_("unable to deflate appended object (%d)"), status);
 	size = stream.total_out;
-	git_deflate_end(&stream);
+	but_deflate_end(&stream);
 	return size;
 }
 
@@ -1535,10 +1535,10 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 			    hash, "idx", 1);
 
 	if (do_fsck_object) {
-		struct packed_git *p;
-		p = add_packed_git(final_index_name, strlen(final_index_name), 0);
+		struct packed_but *p;
+		p = add_packed_but(final_index_name, strlen(final_index_name), 0);
 		if (p)
-			install_packed_git(the_repository, p);
+			install_packed_but(the_repository, p);
 	}
 
 	if (!from_stdin) {
@@ -1551,7 +1551,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		strbuf_release(&buf);
 
 		/*
-		 * Let's just mimic git-unpack-objects here and write
+		 * Let's just mimic but-unpack-objects here and write
 		 * the last part of the input buffer to stdout.
 		 */
 		while (input_len) {
@@ -1568,18 +1568,18 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	strbuf_release(&pack_name);
 }
 
-static int git_index_pack_config(const char *k, const char *v, void *cb)
+static int but_index_pack_config(const char *k, const char *v, void *cb)
 {
 	struct pack_idx_option *opts = cb;
 
 	if (!strcmp(k, "pack.indexversion")) {
-		opts->version = git_config_int(k, v);
+		opts->version = but_config_int(k, v);
 		if (opts->version > 2)
 			die(_("bad pack.indexversion=%"PRIu32), opts->version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
-		nr_threads = git_config_int(k, v);
+		nr_threads = but_config_int(k, v);
 		if (nr_threads < 0)
 			die(_("invalid number of threads specified (%d)"),
 			    nr_threads);
@@ -1590,12 +1590,12 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 	if (!strcmp(k, "pack.writereverseindex")) {
-		if (git_config_bool(k, v))
+		if (but_config_bool(k, v))
 			opts->flags |= WRITE_REV;
 		else
 			opts->flags &= ~WRITE_REV;
 	}
-	return git_default_config(k, v, cb);
+	return but_default_config(k, v, cb);
 }
 
 static int cmp_uint32(const void *a_, const void *b_)
@@ -1606,7 +1606,7 @@ static int cmp_uint32(const void *a_, const void *b_)
 	return (a < b) ? -1 : (a != b);
 }
 
-static void read_v2_anomalous_offsets(struct packed_git *p,
+static void read_v2_anomalous_offsets(struct packed_but *p,
 				      struct pack_idx_option *opts)
 {
 	const uint32_t *idx1, *idx2;
@@ -1642,7 +1642,7 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 
 static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 {
-	struct packed_git *p = add_packed_git(pack_name, strlen(pack_name), 1);
+	struct packed_but *p = add_packed_but(pack_name, strlen(pack_name), 1);
 
 	if (!p)
 		die(_("Cannot open existing pack file '%s'"), pack_name);
@@ -1743,11 +1743,11 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
-	git_config(git_index_pack_config, &opts);
+	but_config(but_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
 		die(_("Cannot come back to cwd"));
 
-	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
+	if (but_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
 		rev_index = 1;
 	else
 		rev_index = !!(opts.flags & (WRITE_REV_VERIFY | WRITE_REV));
@@ -1853,7 +1853,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (fix_thin_pack && !from_stdin)
 		die(_("the option '%s' requires '%s'"), "--fix-thin", "--stdin");
 	if (from_stdin && !startup_info->have_repository)
-		die(_("--stdin requires a git repository"));
+		die(_("--stdin requires a but repository"));
 	if (from_stdin && hash_algo)
 		die(_("options '%s' and '%s' cannot be used together"), "--object-format", "--stdin");
 	if (!index_name && pack_name)

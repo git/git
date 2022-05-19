@@ -1,38 +1,38 @@
 #!/bin/sh
 
 USAGE='[help|start|bad|good|new|old|terms|skip|next|reset|visualize|view|replay|log|run]'
-LONG_USAGE='git bisect help
+LONG_USAGE='but bisect help
 	print this long help message.
-git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
+but bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
 		 [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
 	reset bisect state and start bisection.
-git bisect (bad|new) [<rev>]
+but bisect (bad|new) [<rev>]
 	mark <rev> a known-bad revision/
 		a revision after change in a given property.
-git bisect (good|old) [<rev>...]
+but bisect (good|old) [<rev>...]
 	mark <rev>... known-good revisions/
 		revisions before change in a given property.
-git bisect terms [--term-good | --term-bad]
+but bisect terms [--term-good | --term-bad]
 	show the terms used for old and new cummits (default: bad, good)
-git bisect skip [(<rev>|<range>)...]
+but bisect skip [(<rev>|<range>)...]
 	mark <rev>... untestable revisions.
-git bisect next
+but bisect next
 	find next bisection to test and check it out.
-git bisect reset [<cummit>]
+but bisect reset [<cummit>]
 	finish bisection search and go back to cummit.
-git bisect (visualize|view)
-	show bisect status in gitk.
-git bisect replay <logfile>
+but bisect (visualize|view)
+	show bisect status in butk.
+but bisect replay <logfile>
 	replay bisection log.
-git bisect log
+but bisect log
 	show bisect log.
-git bisect run <cmd>...
+but bisect run <cmd>...
 	use <cmd>... to automatically bisect.
 
-Please use "git help bisect" to get the full man page.'
+Please use "but help bisect" to get the full man page.'
 
 OPTIONS_SPEC=
-. git-sh-setup
+. but-sh-setup
 
 TERM_BAD=bad
 TERM_GOOD=good
@@ -56,28 +56,28 @@ case "$#" in
 	shift
 	case "$cmd" in
 	help)
-		git bisect -h ;;
+		but bisect -h ;;
 	start)
-		git bisect--helper --bisect-start "$@" ;;
+		but bisect--helper --bisect-start "$@" ;;
 	bad|good|new|old|"$TERM_BAD"|"$TERM_GOOD")
-		git bisect--helper --bisect-state "$cmd" "$@" ;;
+		but bisect--helper --bisect-state "$cmd" "$@" ;;
 	skip)
-		git bisect--helper --bisect-skip "$@" || exit;;
+		but bisect--helper --bisect-skip "$@" || exit;;
 	next)
 		# Not sure we want "next" at the UI level anymore.
-		git bisect--helper --bisect-next "$@" || exit ;;
+		but bisect--helper --bisect-next "$@" || exit ;;
 	visualize|view)
-		git bisect--helper --bisect-visualize "$@" || exit;;
+		but bisect--helper --bisect-visualize "$@" || exit;;
 	reset)
-		git bisect--helper --bisect-reset "$@" ;;
+		but bisect--helper --bisect-reset "$@" ;;
 	replay)
-		git bisect--helper --bisect-replay "$@" || exit;;
+		but bisect--helper --bisect-replay "$@" || exit;;
 	log)
-		git bisect--helper --bisect-log || exit ;;
+		but bisect--helper --bisect-log || exit ;;
 	run)
-		git bisect--helper --bisect-run "$@" || exit;;
+		but bisect--helper --bisect-run "$@" || exit;;
 	terms)
-		git bisect--helper --bisect-terms "$@" || exit;;
+		but bisect--helper --bisect-terms "$@" || exit;;
 	*)
 		usage ;;
 	esac

@@ -9,7 +9,7 @@ color.advice.hint::
 	Use customized color for hints.
 
 color.blame.highlightRecent::
-	Specify the line annotation color for `git blame --color-by-age`
+	Specify the line annotation color for `but blame --color-by-age`
 	depending upon the age of the line.
 +
 This setting should be set to a comma-separated list of color and
@@ -28,12 +28,12 @@ within the last month are colored red.
 
 color.blame.repeatedLines::
 	Use the specified color to colorize line annotations for
-	`git blame --color-lines`, if they come from the same cummit as the
+	`but blame --color-lines`, if they come from the same cummit as the
 	preceding line. Defaults to cyan.
 
 color.branch::
 	A boolean to enable/disable color in the output of
-	linkgit:git-branch[1]. May be set to `always`,
+	linkbut:but-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. If unset, then the
 	value of `color.ui` is used (`auto` by default).
@@ -47,15 +47,15 @@ color.branch.<slot>::
 
 color.diff::
 	Whether to use ANSI escape sequences to add color to patches.
-	If this is set to `always`, linkgit:git-diff[1],
-	linkgit:git-log[1], and linkgit:git-show[1] will use color
+	If this is set to `always`, linkbut:but-diff[1],
+	linkbut:but-log[1], and linkbut:but-show[1] will use color
 	for all patches.  If it is set to `true` or `auto`, those
 	commands will only use color when output is to the terminal.
 	If unset, then the value of `color.ui` is used (`auto` by
 	default).
 +
-This does not affect linkgit:git-format-patch[1] or the
-'git-diff-{asterisk}' plumbing commands.  Can be overridden on the
+This does not affect linkbut:but-format-patch[1] or the
+'but-diff-{asterisk}' plumbing commands.  Can be overridden on the
 command line with the `--color[=<when>]` option.
 
 color.diff.<slot>::
@@ -69,12 +69,12 @@ color.diff.<slot>::
 	`newMoved` (added lines), `oldMovedDimmed`, `oldMovedAlternative`,
 	`oldMovedAlternativeDimmed`, `newMovedDimmed`, `newMovedAlternative`
 	`newMovedAlternativeDimmed` (See the '<mode>'
-	setting of '--color-moved' in linkgit:git-diff[1] for details),
+	setting of '--color-moved' in linkbut:but-diff[1] for details),
 	`contextDimmed`, `oldDimmed`, `newDimmed`, `contextBold`,
-	`oldBold`, and `newBold` (see linkgit:git-range-diff[1] for details).
+	`oldBold`, and `newBold` (see linkbut:but-range-diff[1] for details).
 
 color.decorate.<slot>::
-	Use customized color for 'git log --decorate' output.  `<slot>` is one
+	Use customized color for 'but log --decorate' output.  `<slot>` is one
 	of `branch`, `remoteBranch`, `tag`, `stash` or `HEAD` for local
 	branches, remote-tracking branches, tags, stash and HEAD, respectively
 	and `grafted` for grafted cummits.
@@ -106,10 +106,10 @@ color.grep.<slot>::
 	matching text in context lines
 `matchSelected`;;
 	matching text in selected lines. Also, used to customize the following
-	linkgit:git-log[1] subcommands: `--grep`, `--author` and `--cummitter`.
+	linkbut:but-log[1] subcommands: `--grep`, `--author` and `--cummitter`.
 `selected`;;
 	non-matching text in selected lines. Also, used to customize the
-	following linkgit:git-log[1] subcommands: `--grep`, `--author` and
+	following linkbut:but-log[1] subcommands: `--grep`, `--author` and
 	`--cummitter`.
 `separator`;;
 	separators between fields on a line (`:`, `-`, and `=`)
@@ -118,14 +118,14 @@ color.grep.<slot>::
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
-	and displays (such as those used by "git-add --interactive" and
-	"git-clean --interactive"). When false (or `never`), never.
+	and displays (such as those used by "but-add --interactive" and
+	"but-clean --interactive"). When false (or `never`), never.
 	When set to `true` or `auto`, use colors only when the output is
 	to the terminal. If unset, then the value of `color.ui` is
 	used (`auto` by default).
 
 color.interactive.<slot>::
-	Use customized color for 'git add --interactive' and 'git clean
+	Use customized color for 'but add --interactive' and 'but clean
 	--interactive' output. `<slot>` may be `prompt`, `header`, `help`
 	or `error`, for four distinct types of normal output from
 	interactive commands.
@@ -158,14 +158,14 @@ color.remote.<slot>::
 
 color.showBranch::
 	A boolean to enable/disable color in the output of
-	linkgit:git-show-branch[1]. May be set to `always`,
+	linkbut:but-show-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. If unset, then the
 	value of `color.ui` is used (`auto` by default).
 
 color.status::
 	A boolean to enable/disable color in the output of
-	linkgit:git-status[1]. May be set to `always`,
+	linkbut:but-status[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
 	only when the output is to a terminal. If unset, then the
 	value of `color.ui` is used (`auto` by default).

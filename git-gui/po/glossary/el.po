@@ -1,10 +1,10 @@
-# Translation of git-gui glossary to Greek
+# Translation of but-gui glossary to Greek
 # Copyright (C) 2009 Jimmy Angelakos
-# This file is distributed under the same license as the git-gui package.
+# This file is distributed under the same license as the but-gui package.
 # Jimmy Angelakos <vyruss@hellug.gr>, 2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui-glossary\n"
+"Project-Id-Version: but-gui-glossary\n"
 "POT-Creation-Date: 2008-01-07 21:20+0100\n"
 "PO-Revision-Date: 2009-06-23 20:41+0300\n"
 "Last-Translator: Jimmy Angelakos <vyruss@hellug.gr>\n"
@@ -47,11 +47,11 @@ msgstr "εξαγωγή [ενέργεια]"
 msgid "clone [verb]"
 msgstr "κλωνοποίηση [ενέργεια]"
 
-#. "A single point in the git history."
+#. "A single point in the but history."
 msgid "cummit [noun]"
 msgstr "υποβολή [αντικείμενο] "
 
-#. "The action of storing a new snapshot of the project's state in the git history."
+#. "The action of storing a new snapshot of the project's state in the but history."
 msgid "cummit [verb]"
 msgstr "υποβολή [ενέργεια]"
 
@@ -76,8 +76,8 @@ msgid "hunk"
 msgstr "κομμάτι"
 
 #. "A collection of files. The index is a stored version of your working tree."
-msgid "index (in git-gui: staging area)"
-msgstr "ευρετήριο (στο git-gui: περιοχή σταδιοποίησης)"
+msgid "index (in but-gui: staging area)"
+msgstr "ευρετήριο (στο but-gui: περιοχή σταδιοποίησης)"
 
 #. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
@@ -148,7 +148,7 @@ msgstr "ετικέτα [αντικείμενο]"
 msgid "tag [verb]"
 msgstr "ετικέτα [ενέργεια]"
 
-#. "A regular git branch that is used to follow changes from another repository."
+#. "A regular but branch that is used to follow changes from another repository."
 msgid "tracking branch"
 msgstr "κλάδος παρακολούθησης"
 

@@ -1,25 +1,25 @@
-git-shortlog(1)
+but-shortlog(1)
 ===============
 
 NAME
 ----
-git-shortlog - Summarize 'git log' output
+but-shortlog - Summarize 'but log' output
 
 SYNOPSIS
 --------
 [verse]
-'git shortlog' [<options>] [<revision-range>] [[--] <path>...]
-git log --pretty=short | 'git shortlog' [<options>]
+'but shortlog' [<options>] [<revision-range>] [[--] <path>...]
+but log --pretty=short | 'but shortlog' [<options>]
 
 DESCRIPTION
 -----------
-Summarizes 'git log' output in a format suitable for inclusion
+Summarizes 'but log' output in a format suitable for inclusion
 in release announcements. Each cummit will be grouped by author and title.
 
 Additionally, "[PATCH]" will be stripped from the cummit description.
 
 If no revisions are passed on the command line and either standard input
-is not a terminal or there is no current branch, 'git shortlog' will
+is not a terminal or there is no current branch, 'but shortlog' will
 output a summary of the log read from standard input, without
 reference to the current repository.
 
@@ -42,8 +42,8 @@ OPTIONS
 --format[=<format>]::
 	Instead of the cummit subject, use some other information to
 	describe each cummit.  '<format>' can be any string accepted
-	by the `--format` option of 'git log', such as '* [%h] %s'.
-	(See the "PRETTY FORMATS" section of linkgit:git-log[1].)
+	by the `--format` option of 'but log', such as '* [%h] %s'.
+	(See the "PRETTY FORMATS" section of linkbut:but-log[1].)
 
 	Each pretty-printed cummit will be rewrapped before it is shown.
 
@@ -55,10 +55,10 @@ OPTIONS
  - `author`, cummits are grouped by author
  - `cummitter`, cummits are grouped by cummitter (the same as `-c`)
  - `trailer:<field>`, the `<field>` is interpreted as a case-insensitive
-   cummit message trailer (see linkgit:git-interpret-trailers[1]). For
+   cummit message trailer (see linkbut:but-interpret-trailers[1]). For
    example, if your project uses `Reviewed-by` trailers, you might want
    to see who has been reviewing with
-   `git shortlog -ns --group=trailer:reviewed-by`.
+   `but shortlog -ns --group=trailer:reviewed-by`.
 +
 Note that cummits that do not include the trailer will not be counted.
 Likewise, cummits with multiple trailers (e.g., multiple signoffs) may
@@ -73,7 +73,7 @@ as an identity, it will be taken literally and completely.
 +
 If `--group` is specified multiple times, cummits are counted under each
 value (but again, only once per unique value in that cummit). For
-example, `git shortlog --group=author --group=trailer:co-authored-by`
+example, `but shortlog --group=author --group=trailer:co-authored-by`
 counts both authors and co-authors.
 
 -c::
@@ -96,7 +96,7 @@ them.
 	specifies all the cummits reachable from the current cummit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
 	ways to spell <revision-range>, see the "Specifying Ranges"
-	section of linkgit:gitrevisions[7].
+	section of linkbut:butrevisions[7].
 
 [--] <path>...::
 	Consider only cummits that are enough to explain how the files
@@ -105,18 +105,18 @@ them.
 Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
-:git-shortlog: 1
+:but-shortlog: 1
 include::rev-list-options.txt[]
 
 MAPPING AUTHORS
 ---------------
 
-See linkgit:gitmailmap[5].
+See linkbut:butmailmap[5].
 
-Note that if `git shortlog` is run outside of a repository (to process
+Note that if `but shortlog` is run outside of a repository (to process
 log contents on standard input), it will look for a `.mailmap` file in
 the current directory.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

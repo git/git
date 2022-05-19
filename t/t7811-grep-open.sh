@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git grep --open-files-in-pager
+test_description='but grep --open-files-in-pager
 '
 
 TEST_PASSES_SANITIZE_LEAK=true
@@ -41,7 +41,7 @@ static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token
 	echo GREP_PATTERN >untracked
 '
 
-test_expect_success SIMPLEPAGER 'git grep -O' '
+test_expect_success SIMPLEPAGER 'but grep -O' '
 	cat >$less <<-\EOF &&
 	#!/bin/sh
 	printf "%s\n" "$@" >pager-args
@@ -53,7 +53,7 @@ test_expect_success SIMPLEPAGER 'git grep -O' '
 	EOF
 	echo grep.h >expect.notless &&
 
-	PATH=.:$PATH git grep -O GREP_PATTERN >out &&
+	PATH=.:$PATH but grep -O GREP_PATTERN >out &&
 	{
 		test_cmp expect.less pager-args ||
 		test_cmp expect.notless pager-args
@@ -61,12 +61,12 @@ test_expect_success SIMPLEPAGER 'git grep -O' '
 	test_must_be_empty out
 '
 
-test_expect_success 'git grep -O --cached' '
-	test_must_fail git grep --cached -O GREP_PATTERN >out 2>msg &&
+test_expect_success 'but grep -O --cached' '
+	test_must_fail but grep --cached -O GREP_PATTERN >out 2>msg &&
 	test_i18ngrep open-files-in-pager msg
 '
 
-test_expect_success 'git grep -O --no-index' '
+test_expect_success 'but grep -O --no-index' '
 	rm -f expect.less pager-args out &&
 	cat >expect <<-\EOF &&
 	grep.h
@@ -76,7 +76,7 @@ test_expect_success 'git grep -O --no-index' '
 	(
 		GIT_PAGER='\''printf "%s\n" >pager-args'\'' &&
 		export GIT_PAGER &&
-		git grep --no-index -O GREP_PATTERN >out
+		but grep --no-index -O GREP_PATTERN >out
 	) &&
 	test_cmp expect pager-args &&
 	test_must_be_empty out
@@ -90,17 +90,17 @@ test_expect_success 'setup: fake "less"' '
 	chmod +x less
 '
 
-test_expect_success 'git grep -O jumps to line in less' '
+test_expect_success 'but grep -O jumps to line in less' '
 	cat >expect <<-\EOF &&
 	+/*GREP_PATTERN
 	grep.h
 	EOF
 
-	GIT_PAGER=./less git grep -O GREP_PATTERN >out &&
+	GIT_PAGER=./less but grep -O GREP_PATTERN >out &&
 	test_cmp expect actual &&
 	test_must_be_empty out &&
 
-	git grep -O./less GREP_PATTERN >out2 &&
+	but grep -O./less GREP_PATTERN >out2 &&
 	test_cmp expect actual &&
 	test_must_be_empty out2
 '
@@ -115,9 +115,9 @@ test_expect_success 'modified file' '
 	unrelated
 	EOF
 
-	test_when_finished "git reset --hard" &&
+	test_when_finished "but reset --hard" &&
 	echo "enum grep_pat_token" >unrelated &&
-	GIT_PAGER=./less git grep -F -O "enum grep_pat_token" >out &&
+	GIT_PAGER=./less but grep -F -O "enum grep_pat_token" >out &&
 	test_cmp expect actual &&
 	test_must_be_empty out
 '
@@ -128,7 +128,7 @@ test_expect_success 'copes with color settings' '
 	test_config color.grep always &&
 	test_config color.grep.filename yellow &&
 	test_config color.grep.separator green &&
-	git grep -O'\''printf "%s\n" >actual'\'' GREP_AND &&
+	but grep -O'\''printf "%s\n" >actual'\'' GREP_AND &&
 	test_cmp expect actual
 '
 
@@ -140,8 +140,8 @@ test_expect_success 'run from subdir' '
 		cd subdir &&
 		export GIT_PAGER &&
 		GIT_PAGER='\''printf "%s\n" >../args'\'' &&
-		git grep -O "enum grep_pat_token" >../out &&
-		git grep -O"pwd >../dir; :" "enum grep_pat_token" >../out2
+		but grep -O "enum grep_pat_token" >../out &&
+		but grep -O"pwd >../dir; :" "enum grep_pat_token" >../out2
 	) &&
 	case $(cat dir) in
 	*subdir)

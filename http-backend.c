@@ -174,7 +174,7 @@ static void send_strbuf(struct strbuf *hdr,
 static void send_local_file(struct strbuf *hdr, const char *the_type,
 				const char *name)
 {
-	char *p = git_pathdup("%s", name);
+	char *p = but_pathdup("%s", name);
 	size_t buf_alloc = 8192;
 	char *buf = xmalloc(buf_alloc);
 	int fd;
@@ -215,21 +215,21 @@ static void get_loose_object(struct strbuf *hdr, char *name)
 {
 	select_getanyfile(hdr);
 	hdr_cache_forever(hdr);
-	send_local_file(hdr, "application/x-git-loose-object", name);
+	send_local_file(hdr, "application/x-but-loose-object", name);
 }
 
 static void get_pack_file(struct strbuf *hdr, char *name)
 {
 	select_getanyfile(hdr);
 	hdr_cache_forever(hdr);
-	send_local_file(hdr, "application/x-git-packed-objects", name);
+	send_local_file(hdr, "application/x-but-packed-objects", name);
 }
 
 static void get_idx_file(struct strbuf *hdr, char *name)
 {
 	select_getanyfile(hdr);
 	hdr_cache_forever(hdr);
-	send_local_file(hdr, "application/x-git-packed-objects-toc", name);
+	send_local_file(hdr, "application/x-but-packed-objects-toc", name);
 }
 
 static void http_config(void)
@@ -237,13 +237,13 @@ static void http_config(void)
 	int i, value = 0;
 	struct strbuf var = STRBUF_INIT;
 
-	git_config_get_bool("http.getanyfile", &getanyfile);
-	git_config_get_ulong("http.maxrequestbuffer", &max_request_buffer);
+	but_config_get_bool("http.getanyfile", &getanyfile);
+	but_config_get_ulong("http.maxrequestbuffer", &max_request_buffer);
 
 	for (i = 0; i < ARRAY_SIZE(rpc_service); i++) {
 		struct rpc_service *svc = &rpc_service[i];
 		strbuf_addf(&var, "http.%s", svc->config_name);
-		if (!git_config_get_bool(var.buf, &value))
+		if (!but_config_get_bool(var.buf, &value))
 			svc->enabled = value;
 		strbuf_reset(&var);
 	}
@@ -257,7 +257,7 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
 	struct rpc_service *svc = NULL;
 	int i;
 
-	if (!skip_prefix(name, "git-", &svc_name))
+	if (!skip_prefix(name, "but-", &svc_name))
 		forbidden(hdr, "Unsupported service: '%s'", name);
 
 	for (i = 0; i < ARRAY_SIZE(rpc_service); i++) {
@@ -354,7 +354,7 @@ static ssize_t get_content_length(void)
 	ssize_t val = -1;
 	const char *str = getenv("CONTENT_LENGTH");
 
-	if (str && *str && !git_parse_ssize_t(str, &val))
+	if (str && *str && !but_parse_ssize_t(str, &val))
 		die("failed to parse CONTENT_LENGTH: %s", str);
 	return val;
 }
@@ -369,7 +369,7 @@ static ssize_t read_request(int fd, unsigned char **out, ssize_t req_len)
 
 static void inflate_request(const char *prog_name, int out, int buffer_input, ssize_t req_len)
 {
-	git_zstream stream;
+	but_zstream stream;
 	unsigned char *full_request = NULL;
 	unsigned char in_buf[8192];
 	unsigned char out_buf[8192];
@@ -378,7 +378,7 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 	size_t req_remaining_len = req_len;
 
 	memset(&stream, 0, sizeof(stream));
-	git_inflate_init_gzip_only(&stream);
+	but_inflate_init_gzip_only(&stream);
 
 	while (1) {
 		ssize_t n;
@@ -411,7 +411,7 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 			stream.next_out = out_buf;
 			stream.avail_out = sizeof(out_buf);
 
-			ret = git_inflate(&stream, Z_NO_FLUSH);
+			ret = but_inflate(&stream, Z_NO_FLUSH);
 			if (ret != Z_OK && ret != Z_STREAM_END)
 				die("zlib error inflating request, result %d", ret);
 
@@ -425,7 +425,7 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 	}
 
 done:
-	git_inflate_end(&stream);
+	but_inflate_end(&stream);
 	close(out);
 	free(full_request);
 }
@@ -484,7 +484,7 @@ static void run_service(const char **argv, int buffer_input)
 	strvec_pushv(&cld.args, argv);
 	if (buffer_input || gzipped_request || req_len >= 0)
 		cld.in = -1;
-	cld.git_cmd = 1;
+	cld.but_cmd = 1;
 	cld.clean_on_exit = 1;
 	cld.wait_after_clean = 1;
 	if (start_command(&cld))
@@ -537,14 +537,14 @@ static void get_info_refs(struct strbuf *hdr, char *arg)
 			".", NULL};
 		struct rpc_service *svc = select_service(hdr, service_name);
 
-		strbuf_addf(&buf, "application/x-git-%s-advertisement",
+		strbuf_addf(&buf, "application/x-but-%s-advertisement",
 			svc->name);
 		hdr_str(hdr, content_type, buf.buf);
 		end_headers(hdr);
 
 
 		if (determine_protocol_version_server() != protocol_v2) {
-			packet_write_fmt(1, "# service=git-%s\n", svc->name);
+			packet_write_fmt(1, "# service=but-%s\n", svc->name);
 			packet_flush(1);
 		}
 
@@ -592,7 +592,7 @@ static void get_info_packs(struct strbuf *hdr, char *arg)
 {
 	size_t objdirlen = strlen(get_object_directory());
 	struct strbuf buf = STRBUF_INIT;
-	struct packed_git *p;
+	struct packed_but *p;
 	size_t cnt = 0;
 
 	select_getanyfile(hdr);
@@ -639,13 +639,13 @@ static void service_rpc(struct strbuf *hdr, char *service_name)
 	struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	strbuf_addf(&buf, "application/x-git-%s-request", svc->name);
+	strbuf_addf(&buf, "application/x-but-%s-request", svc->name);
 	check_content_type(hdr, buf.buf);
 
 	hdr_nocache(hdr);
 
 	strbuf_reset(&buf);
-	strbuf_addf(&buf, "application/x-git-%s-result", svc->name);
+	strbuf_addf(&buf, "application/x-but-%s-result", svc->name);
 	hdr_str(hdr, content_type, buf.buf);
 
 	end_headers(hdr);
@@ -717,8 +717,8 @@ static struct service_cmd {
 	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file},
 	{"GET", "/objects/pack/pack-[0-9a-f]{64}\\.idx$", get_idx_file},
 
-	{"POST", "/git-upload-pack$", service_rpc},
-	{"POST", "/git-receive-pack$", service_rpc}
+	{"POST", "/but-upload-pack$", service_rpc},
+	{"POST", "/but-receive-pack$", service_rpc}
 };
 
 static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
@@ -782,13 +782,13 @@ int cmd_main(int argc, const char **argv)
 
 	setup_path();
 	if (!enter_repo(dir, 0))
-		not_found(&hdr, "Not a git repository: '%s'", dir);
+		not_found(&hdr, "Not a but repository: '%s'", dir);
 	if (!getenv("GIT_HTTP_EXPORT_ALL") &&
-	    access("git-daemon-export-ok", F_OK) )
+	    access("but-daemon-export-ok", F_OK) )
 		not_found(&hdr, "Repository not exported: '%s'", dir);
 
 	http_config();
-	max_request_buffer = git_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
+	max_request_buffer = but_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
 					   max_request_buffer);
 	proto_header = getenv("HTTP_GIT_PROTOCOL");
 	if (proto_header)

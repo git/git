@@ -8,47 +8,47 @@ ZEROS=$ZERO_OID
 
 test_expect_success setup '
 	MISSING=$(test_oid deadbeef) &&
-	git cummit --allow-empty -m "Initial" &&
-	git tag testtag &&
-	git for-each-ref >full-list &&
-	git for-each-ref --format="%(objectname) %(refname)" >brief-list
+	but cummit --allow-empty -m "Initial" &&
+	but tag testtag &&
+	but for-each-ref >full-list &&
+	but for-each-ref --format="%(objectname) %(refname)" >brief-list
 '
 
 test_expect_success 'Broken refs are reported correctly' '
 	r=refs/heads/bogus &&
-	: >.git/$r &&
-	test_when_finished "rm -f .git/$r" &&
+	: >.but/$r &&
+	test_when_finished "rm -f .but/$r" &&
 	echo "warning: ignoring broken ref $r" >broken-err &&
-	git for-each-ref >out 2>err &&
+	but for-each-ref >out 2>err &&
 	test_cmp full-list out &&
 	test_cmp broken-err err
 '
 
 test_expect_success 'NULL_SHA1 refs are reported correctly' '
 	r=refs/heads/zeros &&
-	echo $ZEROS >.git/$r &&
-	test_when_finished "rm -f .git/$r" &&
+	echo $ZEROS >.but/$r &&
+	test_when_finished "rm -f .but/$r" &&
 	echo "warning: ignoring broken ref $r" >zeros-err &&
-	git for-each-ref >out 2>err &&
+	but for-each-ref >out 2>err &&
 	test_cmp full-list out &&
 	test_cmp zeros-err err &&
-	git for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
+	but for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
 	test_cmp brief-list brief-out &&
 	test_cmp zeros-err brief-err
 '
 
 test_expect_success 'Missing objects are reported correctly' '
 	r=refs/heads/missing &&
-	echo $MISSING >.git/$r &&
-	test_when_finished "rm -f .git/$r" &&
+	echo $MISSING >.but/$r &&
+	test_when_finished "rm -f .but/$r" &&
 	echo "fatal: missing object $MISSING for $r" >missing-err &&
-	test_must_fail git for-each-ref 2>err &&
+	test_must_fail but for-each-ref 2>err &&
 	test_cmp missing-err err &&
 	(
 		cat brief-list &&
 		echo "$MISSING $r"
 	) | sort -k 2 >missing-brief-expected &&
-	git for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
+	but for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
 	test_cmp missing-brief-expected brief-out &&
 	test_must_be_empty brief-err
 '

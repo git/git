@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git rev-parse --parseopt'
+test_description='test but rev-parse --parseopt'
 . ./test-lib.sh
 
 test_expect_success 'setup optionspec' '
@@ -94,7 +94,7 @@ test_expect_success 'test --parseopt help output' '
 |
 |EOF
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
+	test_expect_code 129 but rev-parse --parseopt -- -h > output < optionspec &&
 	test_cmp expect output
 '
 
@@ -107,7 +107,7 @@ test_expect_success 'test --parseopt help output no switches' '
 |
 |EOF
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_no_switches &&
+	test_expect_code 129 but rev-parse --parseopt -- -h > output < optionspec_no_switches &&
 	test_cmp expect output
 '
 
@@ -120,7 +120,7 @@ test_expect_success 'test --parseopt help output hidden switches' '
 |
 |EOF
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_only_hidden_switches &&
+	test_expect_code 129 but rev-parse --parseopt -- -h > output < optionspec_only_hidden_switches &&
 	test_cmp expect output
 '
 
@@ -135,7 +135,7 @@ test_expect_success 'test --parseopt help-all output hidden switches' '
 |
 |EOF
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- --help-all > output < optionspec_only_hidden_switches &&
+	test_expect_code 129 but rev-parse --parseopt -- --help-all > output < optionspec_only_hidden_switches &&
 	test_cmp expect output
 '
 
@@ -175,7 +175,7 @@ test_expect_success 'test --parseopt invalid switch help output' '
 |    --extra1              line above used to cause a segfault but no longer does
 |
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
+	test_expect_code 129 but rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
 	test_cmp expect output
 '
 
@@ -186,12 +186,12 @@ EOF
 "
 
 test_expect_success 'test --parseopt' '
-	git rev-parse --parseopt -- --foo --bar=ham --baz --aswitch arg < optionspec > output &&
+	but rev-parse --parseopt -- --foo --bar=ham --baz --aswitch arg < optionspec > output &&
 	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt with mixed options and arguments' '
-	git rev-parse --parseopt -- --foo arg --bar=ham --baz --aswitch < optionspec > output &&
+	but rev-parse --parseopt -- --foo arg --bar=ham --baz --aswitch < optionspec > output &&
 	test_cmp expect output
 '
 
@@ -202,12 +202,12 @@ EOF
 "
 
 test_expect_success 'test --parseopt with --' '
-	git rev-parse --parseopt -- --foo -- arg --bar=ham < optionspec > output &&
+	but rev-parse --parseopt -- --foo -- arg --bar=ham < optionspec > output &&
 	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt --stop-at-non-option' '
-	git rev-parse --parseopt --stop-at-non-option -- --foo arg --bar=ham < optionspec > output &&
+	but rev-parse --parseopt --stop-at-non-option -- --foo arg --bar=ham < optionspec > output &&
 	test_cmp expect output
 '
 
@@ -218,7 +218,7 @@ EOF
 "
 
 test_expect_success 'test --parseopt --keep-dashdash' '
-	git rev-parse --parseopt --keep-dashdash -- --foo -- arg --bar=ham < optionspec > output &&
+	but rev-parse --parseopt --keep-dashdash -- --foo -- arg --bar=ham < optionspec > output &&
 	test_cmp expect output
 '
 
@@ -229,7 +229,7 @@ EOF
 "
 
 test_expect_success 'test --parseopt --keep-dashdash --stop-at-non-option with --' '
-	git rev-parse --parseopt --keep-dashdash --stop-at-non-option -- --foo -- arg --spam=ham <optionspec >output &&
+	but rev-parse --parseopt --keep-dashdash --stop-at-non-option -- --foo -- arg --spam=ham <optionspec >output &&
 	test_cmp expect output
 '
 
@@ -240,7 +240,7 @@ EOF
 "
 
 test_expect_success 'test --parseopt --keep-dashdash --stop-at-non-option without --' '
-	git rev-parse --parseopt --keep-dashdash --stop-at-non-option -- --foo arg --spam=ham <optionspec >output &&
+	but rev-parse --parseopt --keep-dashdash --stop-at-non-option -- --foo arg --spam=ham <optionspec >output &&
 	test_cmp expect output
 '
 
@@ -251,7 +251,7 @@ EOF
 "
 
 test_expect_success 'test --parseopt --stuck-long' '
-	git rev-parse --parseopt --stuck-long -- --foo --bar=z -b arg -CZ -dA <optionspec >output &&
+	but rev-parse --parseopt --stuck-long -- --foo --bar=z -b arg -CZ -dA <optionspec >output &&
 	test_cmp expect output
 '
 
@@ -262,7 +262,7 @@ EOF
 "
 
 test_expect_success 'test --parseopt --stuck-long and empty optional argument' '
-	git rev-parse --parseopt --stuck-long -- --data= arg -C -b <optionspec >output &&
+	but rev-parse --parseopt --stuck-long -- --data= arg -C -b <optionspec >output &&
 	test_cmp expect output
 '
 
@@ -273,12 +273,12 @@ EOF
 "
 
 test_expect_success 'test --parseopt --stuck-long and long option with unset optional argument' '
-	git rev-parse --parseopt --stuck-long -- --data arg -b <optionspec >output &&
+	but rev-parse --parseopt --stuck-long -- --data arg -b <optionspec >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt --stuck-long and short option with unset optional argument' '
-	git rev-parse --parseopt --stuck-long -- -d arg -b <optionspec >output &&
+	but rev-parse --parseopt --stuck-long -- -d arg -b <optionspec >output &&
 	test_cmp expect output
 '
 
@@ -302,7 +302,7 @@ test_expect_success 'test --parseopt help output: "wrapped" options normal "or:"
 	|EOF
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h >out <spec >actual &&
+	test_must_fail but rev-parse --parseopt -- -h >out <spec >actual &&
 	test_cmp expect actual
 '
 
@@ -332,7 +332,7 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	|EOF
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h >out <spec >actual &&
+	test_must_fail but rev-parse --parseopt -- -h >out <spec >actual &&
 	test_cmp expect actual
 '
 

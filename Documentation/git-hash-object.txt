@@ -1,16 +1,16 @@
-git-hash-object(1)
+but-hash-object(1)
 ==================
 
 NAME
 ----
-git-hash-object - Compute object ID and optionally creates a blob from a file
+but-hash-object - Compute object ID and optionally creates a blob from a file
 
 
 SYNOPSIS
 --------
 [verse]
-'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin [--literally]] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters]
+'but hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin [--literally]] [--] <file>...
+'but hash-object' [-t <type>] [-w] --stdin-paths [--no-filters]
 
 DESCRIPTION
 -----------
@@ -54,10 +54,10 @@ OPTIONS
 
 --literally::
 	Allow `--stdin` to hash any garbage into a loose object which might not
-	otherwise pass standard object parsing or git-fsck checks. Useful for
+	otherwise pass standard object parsing or but-fsck checks. Useful for
 	stress-testing Git itself or reproducing characteristics of corrupt or
 	bogus objects encountered in the wild.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

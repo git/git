@@ -1,14 +1,14 @@
-git-sh-setup(1)
+but-sh-setup(1)
 ===============
 
 NAME
 ----
-git-sh-setup - Common Git shell script setup code
+but-sh-setup - Common Git shell script setup code
 
 SYNOPSIS
 --------
 [verse]
-'. "$(git --exec-path)/git-sh-setup"'
+'. "$(but --exec-path)/but-sh-setup"'
 
 DESCRIPTION
 -----------
@@ -17,7 +17,7 @@ This is not a command the end user would want to run.  Ever.
 This documentation is meant for people who are studying the
 Porcelain-ish scripts and/or are writing new ones.
 
-The 'git sh-setup' scriptlet is designed to be sourced (using
+The 'but sh-setup' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up some variables pointing at
 the normal Git directories and a few helper shell functions.
 
@@ -43,11 +43,11 @@ usage::
 set_reflog_action::
 	Set `GIT_REFLOG_ACTION` environment to a given string (typically
 	the name of the program) unless it is already set.  Whenever
-	the script runs a `git` command that updates refs, a reflog
+	the script runs a `but` command that updates refs, a reflog
 	entry is created using the value of this string to leave the
 	record of what command updated the ref.
 
-git_editor::
+but_editor::
 	runs an editor of user's choice (GIT_EDITOR, core.editor, VISUAL or
 	EDITOR) on a given file, but error out if no editor is specified
 	and the terminal is dumb.
@@ -92,4 +92,4 @@ create_virtual_base::
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

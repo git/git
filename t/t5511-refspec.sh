@@ -7,17 +7,17 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_refspec () {
 	kind=$1 refspec=$2 expect=$3
-	git config remote.frotz.url "." &&
-	git config --remove-section remote.frotz &&
-	git config remote.frotz.url "." &&
-	git config "remote.frotz.$kind" "$refspec" &&
+	but config remote.frotz.url "." &&
+	but config --remove-section remote.frotz &&
+	but config remote.frotz.url "." &&
+	but config "remote.frotz.$kind" "$refspec" &&
 	if test "$expect" != invalid
 	then
 		title="$kind $refspec"
-		test='git ls-remote frotz'
+		test='but ls-remote frotz'
 	else
 		title="$kind $refspec (invalid)"
-		test='test_must_fail git ls-remote frotz'
+		test='test_must_fail but ls-remote frotz'
 	fi
 	test_expect_success "$title" "$test"
 }

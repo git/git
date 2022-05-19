@@ -10,9 +10,9 @@ Handshake
 ---------
 
 Git starts by sending a welcome message (for example,
-"git-filter-client"), a list of supported protocol version numbers, and
+"but-filter-client"), a list of supported protocol version numbers, and
 a flush packet. Git expects to read the welcome message with "server"
-instead of "client" (for example, "git-filter-server"), exactly one
+instead of "client" (for example, "but-filter-server"), exactly one
 protocol version number from the previously sent list, and a flush
 packet. All further communication will be based on the selected version.
 The remaining protocol description below documents "version=2". Please
@@ -25,20 +25,20 @@ it supports and a flush packet. Git expects to read a list of desired
 capabilities, which must be a subset of the supported capabilities list,
 and a flush packet as response:
 ------------------------
-packet:          git> git-filter-client
-packet:          git> version=2
-packet:          git> version=42
-packet:          git> 0000
-packet:          git< git-filter-server
-packet:          git< version=2
-packet:          git< 0000
-packet:          git> capability=clean
-packet:          git> capability=smudge
-packet:          git> capability=not-yet-invented
-packet:          git> 0000
-packet:          git< capability=clean
-packet:          git< capability=smudge
-packet:          git< 0000
+packet:          but> but-filter-client
+packet:          but> version=2
+packet:          but> version=42
+packet:          but> 0000
+packet:          but< but-filter-server
+packet:          but< version=2
+packet:          but< 0000
+packet:          but> capability=clean
+packet:          but> capability=smudge
+packet:          but> capability=not-yet-invented
+packet:          but> 0000
+packet:          but< capability=clean
+packet:          but< capability=smudge
+packet:          but< 0000
 ------------------------
 
 Shutdown

@@ -10,7 +10,7 @@
 #include "pathspec.h"
 
 static const char * const rerere_usage[] = {
-	N_("git rerere [clear | forget <path>... | status | remaining | diff | gc]"),
+	N_("but rerere [clear | forget <path>... | status | remaining | diff | gc]"),
 	NULL,
 };
 
@@ -61,7 +61,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, rerere_usage, 0);
 
-	git_config(git_xmerge_config, NULL);
+	but_config(but_xmerge_config, NULL);
 
 	if (autoupdate == 1)
 		flags = RERERE_AUTOUPDATE;
@@ -74,7 +74,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (!strcmp(argv[0], "forget")) {
 		struct pathspec pathspec;
 		if (argc < 2)
-			warning(_("'git rerere forget' without paths is deprecated"));
+			warning(_("'but rerere forget' without paths is deprecated"));
 		parse_pathspec(&pathspec, 0, PATHSPEC_PREFER_CWD,
 			       prefix, argv + 1);
 		return rerere_forget(the_repository, &pathspec);

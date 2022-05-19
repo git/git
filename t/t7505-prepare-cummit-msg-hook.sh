@@ -11,39 +11,39 @@ test_expect_success 'set up cummits for rebasing' '
 	test_cummit root &&
 	test_cummit a a a &&
 	test_cummit b b b &&
-	git checkout -b rebase-me root &&
+	but checkout -b rebase-me root &&
 	test_cummit rebase-a a aa &&
 	test_cummit rebase-b b bb &&
 	for i in $(test_seq 1 13)
 	do
 		test_cummit rebase-$i c $i || return 1
 	done &&
-	git checkout main &&
+	but checkout main &&
 
 	cat >rebase-todo <<-EOF
-	pick $(git rev-parse rebase-a)
-	pick $(git rev-parse rebase-b)
-	fixup $(git rev-parse rebase-1)
-	fixup $(git rev-parse rebase-2)
-	pick $(git rev-parse rebase-3)
-	fixup $(git rev-parse rebase-4)
-	squash $(git rev-parse rebase-5)
-	reword $(git rev-parse rebase-6)
-	squash $(git rev-parse rebase-7)
-	fixup $(git rev-parse rebase-8)
-	fixup $(git rev-parse rebase-9)
-	edit $(git rev-parse rebase-10)
-	squash $(git rev-parse rebase-11)
-	squash $(git rev-parse rebase-12)
-	edit $(git rev-parse rebase-13)
+	pick $(but rev-parse rebase-a)
+	pick $(but rev-parse rebase-b)
+	fixup $(but rev-parse rebase-1)
+	fixup $(but rev-parse rebase-2)
+	pick $(but rev-parse rebase-3)
+	fixup $(but rev-parse rebase-4)
+	squash $(but rev-parse rebase-5)
+	reword $(but rev-parse rebase-6)
+	squash $(but rev-parse rebase-7)
+	fixup $(but rev-parse rebase-8)
+	fixup $(but rev-parse rebase-9)
+	edit $(but rev-parse rebase-10)
+	squash $(but rev-parse rebase-11)
+	squash $(but rev-parse rebase-12)
+	edit $(but rev-parse rebase-13)
 	EOF
 '
 
 test_expect_success 'with no hook' '
 
 	echo "foo" > file &&
-	git add file &&
-	git cummit -m "first"
+	but add file &&
+	but cummit -m "first"
 
 '
 
@@ -60,7 +60,7 @@ test_expect_success 'setup fake editor for interactive editing' '
 
 test_expect_success 'setup prepare-cummit-msg hook' '
 	test_hook --setup prepare-cummit-msg <<\EOF
-GIT_DIR=$(git rev-parse --git-dir)
+GIT_DIR=$(but rev-parse --but-dir)
 if test -d "$GIT_DIR/rebase-merge"
 then
 	rebasing=1
@@ -71,7 +71,7 @@ fi
 get_last_cmd () {
 	tail -n1 "$GIT_DIR/rebase-merge/done" | {
 		read cmd id _
-		git log --pretty="[$cmd %s]" -n1 $id
+		but log --pretty="[$cmd %s]" -n1 $id
 	}
 }
 
@@ -81,7 +81,7 @@ then
 	then
 		source="$3"
 	else
-		source=$(git rev-parse "$3")
+		source=$(but rev-parse "$3")
 	fi
 else
 	source=${2-default}
@@ -99,114 +99,114 @@ exit 0
 EOF
 '
 
-echo dummy template > "$(git rev-parse --git-dir)/template"
+echo dummy template > "$(but rev-parse --but-dir)/template"
 
 test_expect_success 'with hook (-m)' '
 
 	echo "more" >> file &&
-	git add file &&
-	git cummit -m "more" &&
-	test "$(git log -1 --pretty=format:%s)" = "message (no editor)"
+	but add file &&
+	but cummit -m "more" &&
+	test "$(but log -1 --pretty=format:%s)" = "message (no editor)"
 
 '
 
 test_expect_success 'with hook (-m editor)' '
 
 	echo "more" >> file &&
-	git add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit -e -m "more more" &&
-	test "$(git log -1 --pretty=format:%s)" = message
+	but add file &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -m "more more" &&
+	test "$(but log -1 --pretty=format:%s)" = message
 
 '
 
 test_expect_success 'with hook (-t)' '
 
 	echo "more" >> file &&
-	git add file &&
-	git cummit -t "$(git rev-parse --git-dir)/template" &&
-	test "$(git log -1 --pretty=format:%s)" = template
+	but add file &&
+	but cummit -t "$(but rev-parse --but-dir)/template" &&
+	test "$(but log -1 --pretty=format:%s)" = template
 
 '
 
 test_expect_success 'with hook (-F)' '
 
 	echo "more" >> file &&
-	git add file &&
-	(echo more | git cummit -F -) &&
-	test "$(git log -1 --pretty=format:%s)" = "message (no editor)"
+	but add file &&
+	(echo more | but cummit -F -) &&
+	test "$(but log -1 --pretty=format:%s)" = "message (no editor)"
 
 '
 
 test_expect_success 'with hook (-F editor)' '
 
 	echo "more" >> file &&
-	git add file &&
-	(echo more more | GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit -e -F -) &&
-	test "$(git log -1 --pretty=format:%s)" = message
+	but add file &&
+	(echo more more | GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -F -) &&
+	test "$(but log -1 --pretty=format:%s)" = message
 
 '
 
 test_expect_success 'with hook (-C)' '
 
-	head=$(git rev-parse HEAD) &&
+	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
-	git add file &&
-	git cummit -C $head &&
-	test "$(git log -1 --pretty=format:%s)" = "$head (no editor)"
+	but add file &&
+	but cummit -C $head &&
+	test "$(but log -1 --pretty=format:%s)" = "$head (no editor)"
 
 '
 
 test_expect_success 'with hook (editor)' '
 
 	echo "more more" >> file &&
-	git add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit &&
-	test "$(git log -1 --pretty=format:%s)" = default
+	but add file &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
+	test "$(but log -1 --pretty=format:%s)" = default
 
 '
 
 test_expect_success 'with hook (--amend)' '
 
-	head=$(git rev-parse HEAD) &&
+	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
-	git add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --amend &&
-	test "$(git log -1 --pretty=format:%s)" = "$head"
+	but add file &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --amend &&
+	test "$(but log -1 --pretty=format:%s)" = "$head"
 
 '
 
 test_expect_success 'with hook (-c)' '
 
-	head=$(git rev-parse HEAD) &&
+	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
-	git add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit -c $head &&
-	test "$(git log -1 --pretty=format:%s)" = "$head"
+	but add file &&
+	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head &&
+	test "$(but log -1 --pretty=format:%s)" = "$head"
 
 '
 
 test_expect_success 'with hook (merge)' '
 
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other HEAD@{1} &&
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
-	git add file &&
-	git cummit -m other &&
-	git checkout - &&
-	git merge --no-ff other &&
-	test "$(git log -1 --pretty=format:%s)" = "merge (no editor)"
+	but add file &&
+	but cummit -m other &&
+	but checkout - &&
+	but merge --no-ff other &&
+	test "$(but log -1 --pretty=format:%s)" = "merge (no editor)"
 '
 
 test_expect_success 'with hook and editor (merge)' '
 
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other HEAD@{1} &&
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other HEAD@{1} &&
 	echo "more" >>file &&
-	git add file &&
-	git cummit -m other &&
-	git checkout - &&
-	env GIT_EDITOR="\"\$FAKE_EDITOR\"" git merge --no-ff -e other &&
-	test "$(git log -1 --pretty=format:%s)" = "merge"
+	but add file &&
+	but cummit -m other &&
+	but checkout - &&
+	env GIT_EDITOR="\"\$FAKE_EDITOR\"" but merge --no-ff -e other &&
+	test "$(but log -1 --pretty=format:%s)" = "merge"
 '
 
 test_rebase () {
@@ -214,31 +214,31 @@ test_rebase () {
 	mode=$2 &&
 	test_expect_$expect "with hook (rebase ${mode:--i})" '
 		test_when_finished "\
-			git rebase --abort
-			git checkout -f main
-			git branch -D tmp" &&
-		git checkout -b tmp rebase-me &&
+			but rebase --abort
+			but checkout -f main
+			but branch -D tmp" &&
+		but checkout -b tmp rebase-me &&
 		GIT_SEQUENCE_EDITOR="cp rebase-todo" &&
 		GIT_EDITOR="\"$FAKE_EDITOR\"" &&
 		(
 			export GIT_SEQUENCE_EDITOR GIT_EDITOR &&
-			test_must_fail git rebase -i $mode b &&
+			test_must_fail but rebase -i $mode b &&
 			echo x >a &&
-			git add a &&
-			test_must_fail git rebase --continue &&
+			but add a &&
+			test_must_fail but rebase --continue &&
 			echo x >b &&
-			git add b &&
-			git cummit &&
-			git rebase --continue &&
+			but add b &&
+			but cummit &&
+			but rebase --continue &&
 			echo y >a &&
-			git add a &&
-			git cummit &&
-			git rebase --continue &&
+			but add a &&
+			but cummit &&
+			but rebase --continue &&
 			echo y >b &&
-			git add b &&
-			git rebase --continue
+			but add b &&
+			but rebase --continue
 		) &&
-		git log --pretty=%s -g -n18 HEAD@{1} >actual &&
+		but log --pretty=%s -g -n18 HEAD@{1} >actual &&
 		test_cmp "$TEST_DIRECTORY/t7505/expected-rebase${mode:--i}" actual
 	'
 }
@@ -246,17 +246,17 @@ test_rebase () {
 test_rebase success
 
 test_expect_success 'with hook (cherry-pick)' '
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other b &&
-	git cherry-pick rebase-1 &&
-	test "$(git log -1 --pretty=format:%s)" = "message (no editor)"
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other b &&
+	but cherry-pick rebase-1 &&
+	test "$(but log -1 --pretty=format:%s)" = "message (no editor)"
 '
 
 test_expect_success 'with hook and editor (cherry-pick)' '
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other b &&
-	git cherry-pick -e rebase-1 &&
-	test "$(git log -1 --pretty=format:%s)" = merge
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other b &&
+	but cherry-pick -e rebase-1 &&
+	test "$(but log -1 --pretty=format:%s)" = merge
 '
 
 test_expect_success 'setup: cummit-msg hook that always fails' '
@@ -267,44 +267,44 @@ test_expect_success 'setup: cummit-msg hook that always fails' '
 
 test_expect_success 'with failing hook' '
 
-	test_when_finished "git checkout -f main" &&
-	head=$(git rev-parse HEAD) &&
+	test_when_finished "but checkout -f main" &&
+	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
-	git add file &&
-	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit -c $head
+	but add file &&
+	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head
 
 '
 
 test_expect_success 'with failing hook (--no-verify)' '
 
-	test_when_finished "git checkout -f main" &&
-	head=$(git rev-parse HEAD) &&
+	test_when_finished "but checkout -f main" &&
+	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
-	git add file &&
-	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" git cummit --no-verify -c $head
+	but add file &&
+	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify -c $head
 
 '
 
 test_expect_success 'with failing hook (merge)' '
 
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other HEAD@{1} &&
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other HEAD@{1} &&
 	echo "more" >> file &&
-	git add file &&
+	but add file &&
 	test_hook --remove prepare-cummit-msg &&
-	git cummit -m other &&
+	but cummit -m other &&
 	test_hook --setup prepare-cummit-msg <<-\EOF &&
 	exit 1
 	EOF
-	git checkout - &&
-	test_must_fail git merge --no-ff other
+	but checkout - &&
+	test_must_fail but merge --no-ff other
 
 '
 
 test_expect_success 'with failing hook (cherry-pick)' '
-	test_when_finished "git checkout -f main" &&
-	git checkout -B other b &&
-	test_must_fail git cherry-pick rebase-1 2>actual &&
+	test_when_finished "but checkout -f main" &&
+	but checkout -B other b &&
+	test_must_fail but cherry-pick rebase-1 2>actual &&
 	test $(grep -c prepare-cummit-msg actual) = 1
 '
 

@@ -1,62 +1,62 @@
-git-worktree(1)
+but-worktree(1)
 ===============
 
 NAME
 ----
-git-worktree - Manage multiple working trees
+but-worktree - Manage multiple working trees
 
 
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<cummit-ish>]
-'git worktree list' [-v | --porcelain [-z]]
-'git worktree lock' [--reason <string>] <worktree>
-'git worktree move' <worktree> <new-path>
-'git worktree prune' [-n] [-v] [--expire <expire>]
-'git worktree remove' [-f] <worktree>
-'git worktree repair' [<path>...]
-'git worktree unlock' <worktree>
+'but worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<cummit-ish>]
+'but worktree list' [-v | --porcelain [-z]]
+'but worktree lock' [--reason <string>] <worktree>
+'but worktree move' <worktree> <new-path>
+'but worktree prune' [-n] [-v] [--expire <expire>]
+'but worktree remove' [-f] <worktree>
+'but worktree repair' [<path>...]
+'but worktree unlock' <worktree>
 
 DESCRIPTION
 -----------
 
 Manage multiple working trees attached to the same repository.
 
-A git repository can support multiple working trees, allowing you to check
-out more than one branch at a time.  With `git worktree add` a new working
+A but repository can support multiple working trees, allowing you to check
+out more than one branch at a time.  With `but worktree add` a new working
 tree is associated with the repository, along with additional metadata
 that differentiates that working tree from others in the same repository.
 The working tree, along with this metadata, is called a "worktree".
 
 This new worktree is called a "linked worktree" as opposed to the "main
-worktree" prepared by linkgit:git-init[1] or linkgit:git-clone[1].
+worktree" prepared by linkbut:but-init[1] or linkbut:but-clone[1].
 A repository has one main worktree (if it's not a bare repository) and
 zero or more linked worktrees. When you are done with a linked worktree,
-remove it with `git worktree remove`.
+remove it with `but worktree remove`.
 
-In its simplest form, `git worktree add <path>` automatically creates a
+In its simplest form, `but worktree add <path>` automatically creates a
 new branch whose name is the final component of `<path>`, which is
-convenient if you plan to work on a new topic. For instance, `git
+convenient if you plan to work on a new topic. For instance, `but
 worktree add ../hotfix` creates new branch `hotfix` and checks it out at
 path `../hotfix`. To instead work on an existing branch in a new worktree,
-use `git worktree add <path> <branch>`. On the other hand, if you just
+use `but worktree add <path> <branch>`. On the other hand, if you just
 plan to make some experimental changes or do testing without disturbing
 existing development, it is often convenient to create a 'throwaway'
 worktree not associated with any branch. For instance,
-`git worktree add -d <path>` creates a new worktree with a detached `HEAD`
+`but worktree add -d <path>` creates a new worktree with a detached `HEAD`
 at the same cummit as the current branch.
 
-If a working tree is deleted without using `git worktree remove`, then
+If a working tree is deleted without using `but worktree remove`, then
 its associated administrative files, which reside in the repository
 (see "DETAILS" below), will eventually be removed automatically (see
-`gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
-`git worktree prune` in the main or any linked worktree to clean up any
+`gc.worktreePruneExpire` in linkbut:but-config[1]), or you can run
+`but worktree prune` in the main or any linked worktree to clean up any
 stale administrative files.
 
 If the working tree for a linked worktree is stored on a portable device
 or network share which is not always mounted, you can prevent its
-administrative files from being pruned by issuing the `git worktree lock`
+administrative files from being pruned by issuing the `but worktree lock`
 command, optionally specifying `--reason` to explain why the worktree is
 locked.
 
@@ -75,7 +75,7 @@ exist a tracking branch in exactly one remote (call it `<remote>`)
 with a matching name, treat as equivalent to:
 +
 ------------
-$ git worktree add --track -b <branch> <path> <remote>/<branch>
+$ but worktree add --track -b <branch> <path> <remote>/<branch>
 ------------
 +
 If the branch exists in multiple remotes and one of them is named by
@@ -85,7 +85,7 @@ unique across all remotes. Set it to
 e.g. `checkout.defaultRemote=origin` to always checkout remote
 branches from there if `<branch>` is ambiguous but exists on the
 `origin` remote. See also `checkout.defaultRemote` in
-linkgit:git-config[1].
+linkbut:but-config[1].
 +
 If `<cummit-ish>` is omitted and neither `-b` nor `-B` nor `--detach` used,
 then, as a convenience, the new worktree is associated with a branch (call
@@ -115,7 +115,7 @@ move::
 
 Move a worktree to a new location. Note that the main worktree or linked
 worktrees containing submodules cannot be moved with this command. (The
-`git worktree repair` command, however, can reestablish the connection
+`but worktree repair` command, however, can reestablish the connection
 with linked worktrees if you move the main worktree manually.)
 
 prune::
@@ -140,7 +140,7 @@ worktree will reestablish the connection from linked worktrees back to the
 main worktree.
 +
 Similarly, if the working tree for a linked worktree is moved without
-using `git worktree move`, the main worktree (or bare repository) will be
+using `but worktree move`, the main worktree (or bare repository) will be
 unable to locate it. Running `repair` within the recently-moved worktree
 will reestablish the connection. If multiple linked worktrees are moved,
 running `repair` from any worktree with each tree's new `<path>` as an
@@ -187,13 +187,13 @@ To remove a locked worktree, specify `--force` twice.
 -d::
 --detach::
 	With `add`, detach `HEAD` in the new worktree. See "DETACHED HEAD"
-	in linkgit:git-checkout[1].
+	in linkbut:but-checkout[1].
 
 --[no-]checkout::
 	By default, `add` checks out `<cummit-ish>`, however, `--no-checkout` can
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
-	in linkgit:git-read-tree[1].
+	in linkbut:but-read-tree[1].
 
 --[no-]guess-remote::
 	With `worktree add <path>`, without `<cummit-ish>`, instead
@@ -209,11 +209,11 @@ This can also be set up as the default behaviour by using the
 	When creating a new branch, if `<cummit-ish>` is a branch,
 	mark it as "upstream" from the new branch.  This is the
 	default if `<cummit-ish>` is a remote-tracking branch.  See
-	`--track` in linkgit:git-branch[1] for details.
+	`--track` in linkbut:but-branch[1] for details.
 
 --lock::
 	Keep the worktree locked after creation. This is the
-	equivalent of `git worktree lock` after `git worktree add`,
+	equivalent of `but worktree lock` after `but worktree add`,
 	but without a race condition.
 
 -n::
@@ -286,7 +286,7 @@ resolve to the same value as the main worktree's `HEAD` and
 `$GIT_COMMON_DIR/worktrees/bar/refs/bisect/bad`.
 
 To access refs, it's best not to look inside `$GIT_DIR` directly. Instead
-use commands such as linkgit:git-rev-parse[1] or linkgit:git-update-ref[1]
+use commands such as linkbut:but-rev-parse[1] or linkbut:but-update-ref[1]
 which will handle refs correctly.
 
 CONFIGURATION FILE
@@ -300,12 +300,12 @@ In order to have worktree-specific configuration, you can turn on the
 `worktreeConfig` extension, e.g.:
 
 ------------
-$ git config extensions.worktreeConfig true
+$ but config extensions.worktreeConfig true
 ------------
 
-In this mode, specific configuration stays in the path pointed by `git
-rev-parse --git-path config.worktree`. You can add or update
-configuration in this file with `git config --worktree`. Older Git
+In this mode, specific configuration stays in the path pointed by `but
+rev-parse --but-path config.worktree`. You can add or update
+configuration in this file with `but config --worktree`. Older Git
 versions will refuse to access repositories with this extension.
 
 Note that in this file, the exception for `core.bare` and `core.worktree`
@@ -322,61 +322,61 @@ share to all worktrees:
    always use sparse checkout for all worktrees.
 
 See the documentation of `extensions.worktreeConfig` in
-linkgit:git-config[1] for more details.
+linkbut:but-config[1] for more details.
 
 DETAILS
 -------
 Each linked worktree has a private sub-directory in the repository's
 `$GIT_DIR/worktrees` directory.  The private sub-directory's name is usually
 the base name of the linked worktree's path, possibly appended with a
-number to make it unique.  For example, when `$GIT_DIR=/path/main/.git` the
-command `git worktree add /path/other/test-next next` creates the linked
+number to make it unique.  For example, when `$GIT_DIR=/path/main/.but` the
+command `but worktree add /path/other/test-next next` creates the linked
 worktree in `/path/other/test-next` and also creates a
 `$GIT_DIR/worktrees/test-next` directory (or `$GIT_DIR/worktrees/test-next1`
 if `test-next` is already taken).
 
 Within a linked worktree, `$GIT_DIR` is set to point to this private
-directory (e.g. `/path/main/.git/worktrees/test-next` in the example) and
+directory (e.g. `/path/main/.but/worktrees/test-next` in the example) and
 `$GIT_COMMON_DIR` is set to point back to the main worktree's `$GIT_DIR`
-(e.g. `/path/main/.git`). These settings are made in a `.git` file located at
+(e.g. `/path/main/.but`). These settings are made in a `.but` file located at
 the top directory of the linked worktree.
 
-Path resolution via `git rev-parse --git-path` uses either
+Path resolution via `but rev-parse --but-path` uses either
 `$GIT_DIR` or `$GIT_COMMON_DIR` depending on the path. For example, in the
-linked worktree `git rev-parse --git-path HEAD` returns
-`/path/main/.git/worktrees/test-next/HEAD` (not
-`/path/other/test-next/.git/HEAD` or `/path/main/.git/HEAD`) while `git
-rev-parse --git-path refs/heads/master` uses
-`$GIT_COMMON_DIR` and returns `/path/main/.git/refs/heads/master`,
+linked worktree `but rev-parse --but-path HEAD` returns
+`/path/main/.but/worktrees/test-next/HEAD` (not
+`/path/other/test-next/.but/HEAD` or `/path/main/.but/HEAD`) while `but
+rev-parse --but-path refs/heads/master` uses
+`$GIT_COMMON_DIR` and returns `/path/main/.but/refs/heads/master`,
 since refs are shared across all worktrees, except `refs/bisect` and
 `refs/worktree`.
 
-See linkgit:gitrepository-layout[5] for more information. The rule of
+See linkbut:butrepository-layout[5] for more information. The rule of
 thumb is do not make any assumption about whether a path belongs to
 `$GIT_DIR` or `$GIT_COMMON_DIR` when you need to directly access something
-inside `$GIT_DIR`. Use `git rev-parse --git-path` to get the final path.
+inside `$GIT_DIR`. Use `but rev-parse --but-path` to get the final path.
 
-If you manually move a linked worktree, you need to update the `gitdir` file
+If you manually move a linked worktree, you need to update the `butdir` file
 in the entry's directory. For example, if a linked worktree is moved
-to `/newpath/test-next` and its `.git` file points to
-`/path/main/.git/worktrees/test-next`, then update
-`/path/main/.git/worktrees/test-next/gitdir` to reference `/newpath/test-next`
-instead. Better yet, run `git worktree repair` to reestablish the connection
+to `/newpath/test-next` and its `.but` file points to
+`/path/main/.but/worktrees/test-next`, then update
+`/path/main/.but/worktrees/test-next/butdir` to reference `/newpath/test-next`
+instead. Better yet, run `but worktree repair` to reestablish the connection
 automatically.
 
 To prevent a `$GIT_DIR/worktrees` entry from being pruned (which
 can be useful in some situations, such as when the
 entry's worktree is stored on a portable device), use the
-`git worktree lock` command, which adds a file named
+`but worktree lock` command, which adds a file named
 `locked` to the entry's directory. The file contains the reason in
-plain text. For example, if a linked worktree's `.git` file points
-to `/path/main/.git/worktrees/test-next` then a file named
-`/path/main/.git/worktrees/test-next/locked` will prevent the
+plain text. For example, if a linked worktree's `.but` file points
+to `/path/main/.but/worktrees/test-next` then a file named
+`/path/main/.but/worktrees/test-next/locked` will prevent the
 `test-next` entry from being pruned.  See
-linkgit:gitrepository-layout[5] for details.
+linkbut:butrepository-layout[5] for details.
 
 When `extensions.worktreeConfig` is enabled, the config file
-`.git/worktrees/<id>/config.worktree` is read after `.git/config` is.
+`.but/worktrees/<id>/config.worktree` is read after `.but/config` is.
 
 LIST OUTPUT FORMAT
 ------------------
@@ -384,7 +384,7 @@ The `worktree list` command has two output formats. The default format shows the
 details on a single line with columns.  For example:
 
 ------------
-$ git worktree list
+$ but worktree list
 /path/to/bare-source            (bare)
 /path/to/linked-worktree        abcd1234 [master]
 /path/to/other-linked-worktree  1234abc  (detached HEAD)
@@ -394,10 +394,10 @@ The command also shows annotations for each worktree, according to its state.
 These annotations are:
 
  * `locked`, if the worktree is locked.
- * `prunable`, if the worktree can be pruned via `git worktree prune`.
+ * `prunable`, if the worktree can be pruned via `but worktree prune`.
 
 ------------
-$ git worktree list
+$ but worktree list
 /path/to/linked-worktree    abcd1234 [master]
 /path/to/locked-worktree    acbd5678 (brancha) locked
 /path/to/prunable-worktree  5678abc  (detached HEAD) prunable
@@ -408,13 +408,13 @@ seen using the verbose mode. The annotation is then moved to the next line
 indented followed by the additional information.
 
 ------------
-$ git worktree list --verbose
+$ but worktree list --verbose
 /path/to/linked-worktree              abcd1234 [master]
 /path/to/locked-worktree-no-reason    abcd5678 (detached HEAD) locked
 /path/to/locked-worktree-with-reason  1234abcd (brancha)
 	locked: worktree path is mounted on a portable device
 /path/to/prunable-worktree            5678abc1 (detached HEAD)
-	prunable: gitdir file points to non-existent location
+	prunable: butdir file points to non-existent location
 ------------
 
 Note that the annotation is moved to the next line if the additional
@@ -433,7 +433,7 @@ attribute of a worktree is always `worktree`, an empty line indicates the
 end of the record.  For example:
 
 ------------
-$ git worktree list --porcelain
+$ but worktree list --porcelain
 worktree /path/to/bare-source
 bare
 
@@ -458,17 +458,17 @@ locked reason why is locked
 worktree /path/to/linked-worktree-prunable
 HEAD 1233def1234def1234def1234def1234def1234b
 detached
-prunable gitdir file points to non-existent location
+prunable butdir file points to non-existent location
 
 ------------
 
 Unless `-z` is used any "unusual" characters in the lock reason such as newlines
 are escaped and the entire reason is quoted as explained for the
-configuration variable `core.quotePath` (see linkgit:git-config[1]).
+configuration variable `core.quotePath` (see linkbut:but-config[1]).
 For Example:
 
 ------------
-$ git worktree list --porcelain
+$ but worktree list --porcelain
 ...
 locked "reason\nwhy is locked"
 ...
@@ -478,7 +478,7 @@ EXAMPLES
 --------
 You are in the middle of a refactoring session and your boss comes in and
 demands that you fix something immediately. You might typically use
-linkgit:git-stash[1] to store your changes away temporarily, however, your
+linkbut:but-stash[1] to store your changes away temporarily, however, your
 working tree is in such a state of disarray (with new, moved, and removed
 files, and other bits and pieces strewn around) that you don't want to risk
 disturbing any of it. Instead, you create a temporary linked worktree to
@@ -486,12 +486,12 @@ make the emergency fix, remove it when done, and then resume your earlier
 refactoring session.
 
 ------------
-$ git worktree add -b emergency-fix ../temp master
+$ but worktree add -b emergency-fix ../temp master
 $ pushd ../temp
 # ... hack hack hack ...
-$ git cummit -a -m 'emergency fix for boss'
+$ but cummit -a -m 'emergency fix for boss'
 $ popd
-$ git worktree remove ../temp
+$ but worktree remove ../temp
 ------------
 
 BUGS
@@ -502,4 +502,4 @@ checkouts of a superproject.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

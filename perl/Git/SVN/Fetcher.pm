@@ -17,19 +17,19 @@ BEGIN {
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
-	my ($class, $git_svn, $switch_path) = @_;
+	my ($class, $but_svn, $switch_path) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
-	if (exists $git_svn->{last_cummit}) {
-		$self->{c} = $git_svn->{last_cummit};
+	if (exists $but_svn->{last_cummit}) {
+		$self->{c} = $but_svn->{last_cummit};
 		$self->{empty_symlinks} =
-		                  _mark_empty_symlinks($git_svn, $switch_path);
+		                  _mark_empty_symlinks($but_svn, $switch_path);
 	}
 
 	# some options are read globally, but can be overridden locally
 	# per [svn-remote "..."] section.  Command-line options will *NOT*
 	# override options set in an [svn-remote "..."] section
-	$repo_id = $git_svn->{repo_id};
+	$repo_id = $but_svn->{repo_id};
 	my $k = "svn-remote.$repo_id.ignore-paths";
 	my $v = eval { command_oneline('config', '--get', $k) };
 	$self->{ignore_regex} = $v;
@@ -63,7 +63,7 @@ sub new {
 	$self->{absent_dir} = {};
 	$self->{absent_file} = {};
 	require Git::IndexInfo;
-	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
+	$self->{gii} = $but_svn->tmp_index_do(sub { Git::IndexInfo->new });
 	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
 	$self;
 }
@@ -72,22 +72,22 @@ sub new {
 # not inside them (when the Git::SVN::Fetcher object is passed) to
 # do_{switch,update}
 sub _mark_empty_symlinks {
-	my ($git_svn, $switch_path) = @_;
+	my ($but_svn, $switch_path) = @_;
 	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
 	return {} if (!defined($bool)) || (defined($bool) && ! $bool);
 
 	my %ret;
-	my ($rev, $cmt) = $git_svn->last_rev_cummit;
+	my ($rev, $cmt) = $but_svn->last_rev_cummit;
 	return {} unless ($rev && $cmt);
 
 	# allow the warning to be printed for each revision we fetch to
 	# ensure the user sees it.  The user can also disable the workaround
-	# on the repository even while git svn is running and the next
+	# on the repository even while but svn is running and the next
 	# revision fetched will skip this expensive function.
 	my $printed_warning;
-	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
+	chomp(my $empty_blob = `but hash-object -t blob --stdin < /dev/null`);
 	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
-	my $pfx = defined($switch_path) ? $switch_path : $git_svn->path;
+	my $pfx = defined($switch_path) ? $switch_path : $but_svn->path;
 	$pfx .= '/' if length($pfx);
 	while (defined($_ = get_record($ls, "\0"))) {
 		s/\A100644 blob $empty_blob\t//o or next;
@@ -96,16 +96,16 @@ sub _mark_empty_symlinks {
 			             "this may take a while if you have ",
 				     "many empty files\n",
 				     "You may disable this with `",
-				     "git config svn.brokenSymlinkWorkaround ",
+				     "but config svn.brokenSymlinkWorkaround ",
 				     "false'.\n",
 				     "This may be done in a different ",
 				     "terminal without restarting ",
-				     "git svn\n";
+				     "but svn\n";
 			$printed_warning = 1;
 		}
 		my $path = $_;
 		my (undef, $props) =
-		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
+		               $but_svn->ra->get_file($pfx.$path, $rev, undef);
 		if ($props->{'svn:special'}) {
 			$ret{$path} = 1;
 		}
@@ -114,16 +114,16 @@ sub _mark_empty_symlinks {
 	\%ret;
 }
 
-# returns true if a given path is inside a ".git" directory
-sub in_dot_git {
-	$_[0] =~ m{(?:^|/)\.git(?:/|$)};
+# returns true if a given path is inside a ".but" directory
+sub in_dot_but {
+	$_[0] =~ m{(?:^|/)\.but(?:/|$)};
 }
 
 # return value: 0 -- don't ignore, 1 -- ignore
 # This will also check whether the path is explicitly included
 sub is_path_ignored {
 	my ($self, $path) = @_;
-	return 1 if in_dot_git($path);
+	return 1 if in_dot_but($path);
 	return 1 if defined($self->{ignore_regex}) &&
 	            $path =~ m!$self->{ignore_regex}!;
 	return 0 if defined($self->{include_regex}) &&
@@ -151,7 +151,7 @@ sub open_directory {
 	{ path => $path };
 }
 
-sub git_path {
+sub but_path {
 	my ($self, $path) = @_;
 	if (my $enc = $self->{pathnameencoding}) {
 		require Encode;
@@ -168,7 +168,7 @@ sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
 	return undef if $self->is_path_ignored($path);
 
-	my $gpath = $self->git_path($path);
+	my $gpath = $self->but_path($path);
 	return undef if ($gpath eq '');
 
 	# remove entire directories.
@@ -201,7 +201,7 @@ sub open_file {
 
 	goto out if $self->is_path_ignored($path);
 
-	my $gpath = $self->git_path($path);
+	my $gpath = $self->but_path($path);
 	($mode, $blob) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
 	                     =~ /\A(\d{6}) blob ($::oid)\t\Q$gpath\E\0/);
 	unless (defined $mode && defined $blob) {
@@ -239,7 +239,7 @@ sub add_file {
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
 	goto out if $self->is_path_ignored($path);
-	my $gpath = $self->git_path($path);
+	my $gpath = $self->but_path($path);
 	if ($gpath eq '') {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
 		                                     -r --name-only -z/,
@@ -315,7 +315,7 @@ sub apply_textdelta {
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = $::_repository->temp_acquire("git_blob_${$}_$suffix");
+	my $base = $::_repository->temp_acquire("but_blob_${$}_$suffix");
 	# close_file may call temp_acquire on 'svn_hash', but because of the
 	# call chain, if the temp_acquire call from close_file ends up being the
 	# call that first creates the 'svn_hash' temp file, then the FileHandle
@@ -368,7 +368,7 @@ sub close_file {
 	return undef if $self->is_path_ignored($fb->{path});
 
 	my $hash;
-	my $path = $self->git_path($fb->{path});
+	my $path = $self->but_path($fb->{path});
 	if (my $fh = $fb->{fh}) {
 		if (defined $exp) {
 			seek($fh, 0, 0) or croak $!;
@@ -455,7 +455,7 @@ sub close_edit {
 		$self->stash_placeholder_list();
 	}
 
-	$self->{git_cummit_ok} = 1;
+	$self->{but_cummit_ok} = 1;
 	$self->{nr} = $self->{gii}->{nr};
 	delete $self->{gii};
 	$self->SUPER::close_edit(@_);
@@ -483,7 +483,7 @@ sub find_empty_directories {
 		}
 		next if $skip_added;
 
-		# Use `git ls-tree` to get the filenames of this directory
+		# Use `but ls-tree` to get the filenames of this directory
 		# that existed prior to this particular cummit.
 		my $ls = command('ls-tree', '-z', '--name-only',
 				 $self->{c}, "$dir/");
@@ -501,7 +501,7 @@ sub find_empty_directories {
 sub add_placeholder_file {
 	my ($self, $dir) = @_;
 	my $path = "$dir/$_placeholder_filename";
-	my $gpath = $self->git_path($path);
+	my $gpath = $self->but_path($path);
 
 	my $fh = $::_repository->temp_acquire($gpath);
 	my $hash = $::_repository->hash_and_insert_object(Git::temp_path($fh));
@@ -530,7 +530,7 @@ __END__
 
 =head1 NAME
 
-Git::SVN::Fetcher - tree delta consumer for "git svn fetch"
+Git::SVN::Fetcher - tree delta consumer for "but svn fetch"
 
 =head1 SYNOPSIS
 
@@ -572,15 +572,15 @@ Git::SVN::Fetcher - tree delta consumer for "git svn fetch"
 This is a subclass of C<SVN::Delta::Editor>, which means it implements
 callbacks to act as a consumer of Subversion tree deltas.  This
 particular implementation of those callbacks is meant to store
-information about the resulting content which B<git svn fetch> could
+information about the resulting content which B<but svn fetch> could
 use to populate new cummits and new entries for F<unhandled.log>.
 More specifically:
 
 =over
 
 =item * Additions, removals, and modifications of files are propagated
-to git-svn's index file F<$GIT_DIR/svn/$refname/index> using
-B<git update-index>.
+to but-svn's index file F<$GIT_DIR/svn/$refname/index> using
+B<but update-index>.
 
 =item * Changes in Subversion path properties are recorded in the
 C<dir_prop> and C<file_prop> fields (which are hashes).
@@ -597,16 +597,16 @@ could not be conveyed.
 =back
 
 The interface is unstable.  Do not use this module unless you are
-developing git-svn.
+developing but-svn.
 
 =head1 DEPENDENCIES
 
 L<SVN::Delta> from the Subversion perl bindings,
 the core L<Carp> and L<File::Basename> modules,
-and git's L<Git> helper module.
+and but's L<Git> helper module.
 
 C<Git::SVN::Fetcher> has not been tested using callers other than
-B<git-svn> itself.
+B<but-svn> itself.
 
 =head1 SEE ALSO
 

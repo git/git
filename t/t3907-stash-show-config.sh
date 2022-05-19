@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test git stash show configuration.'
+test_description='Test but stash show configuration.'
 
 . ./test-lib.sh
 
@@ -31,10 +31,10 @@ test_stat_and_patch () {
 	echo 2 >file.t &&
 	if test $# != 0
 	then
-		git diff "$@" >expect
+		but diff "$@" >expect
 	fi &&
-	git stash &&
-	git stash show >actual &&
+	but stash &&
+	but stash show >actual &&
 
 	if test $# = 0
 	then

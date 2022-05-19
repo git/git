@@ -15,33 +15,33 @@ test_expect_success setup '
 	echo 1 >fileB.t &&
 	echo 1 >fileC.t &&
 	echo 1 >fileD.t &&
-	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
-	git cummit -m "files 1" &&
+	but add dir1 fileA.t fileB.t fileC.t fileD.t &&
+	but cummit -m "files 1" &&
 
 	echo 2 >dir1/file &&
 	echo 2 >fileA.t &&
 	echo 2 >fileB.t &&
 	echo 2 >fileC.t &&
 	echo 2 >fileD.t &&
-	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
-	git cummit -m "files 2" &&
+	but add dir1 fileA.t fileB.t fileC.t fileD.t &&
+	but cummit -m "files 2" &&
 
-	git tag checkpoint
+	but tag checkpoint
 '
 
 restore_checkpoint () {
-	git reset --hard checkpoint
+	but reset --hard checkpoint
 }
 
 verify_expect () {
-	git status --porcelain --untracked-files=no -- dir1 fileA.t fileB.t fileC.t fileD.t >actual &&
+	but status --porcelain --untracked-files=no -- dir1 fileA.t fileB.t fileC.t fileD.t >actual &&
 	test_cmp expect actual
 }
 
 test_expect_success '--pathspec-from-file from stdin' '
 	restore_checkpoint &&
 
-	echo fileA.t | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	echo fileA.t | but restore --pathspec-from-file=- --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -53,7 +53,7 @@ test_expect_success '--pathspec-from-file from file' '
 	restore_checkpoint &&
 
 	echo fileA.t >list &&
-	git restore --pathspec-from-file=list --source=HEAD^1 &&
+	but restore --pathspec-from-file=list --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -64,7 +64,7 @@ test_expect_success '--pathspec-from-file from file' '
 test_expect_success 'NUL delimiters' '
 	restore_checkpoint &&
 
-	printf "fileA.t\0fileB.t\0" | git restore --pathspec-from-file=- --pathspec-file-nul --source=HEAD^1 &&
+	printf "fileA.t\0fileB.t\0" | but restore --pathspec-from-file=- --pathspec-file-nul --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -76,7 +76,7 @@ test_expect_success 'NUL delimiters' '
 test_expect_success 'LF delimiters' '
 	restore_checkpoint &&
 
-	printf "fileA.t\nfileB.t\n" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	printf "fileA.t\nfileB.t\n" | but restore --pathspec-from-file=- --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -88,7 +88,7 @@ test_expect_success 'LF delimiters' '
 test_expect_success 'no trailing delimiter' '
 	restore_checkpoint &&
 
-	printf "fileA.t\nfileB.t" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	printf "fileA.t\nfileB.t" | but restore --pathspec-from-file=- --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -100,7 +100,7 @@ test_expect_success 'no trailing delimiter' '
 test_expect_success 'CRLF delimiters' '
 	restore_checkpoint &&
 
-	printf "fileA.t\r\nfileB.t\r\n" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	printf "fileA.t\r\nfileB.t\r\n" | but restore --pathspec-from-file=- --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -116,7 +116,7 @@ test_expect_success 'quotes' '
 	"file\101.t"
 	EOF
 
-	git restore --pathspec-from-file=list --source=HEAD^1 &&
+	but restore --pathspec-from-file=list --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileA.t
@@ -131,13 +131,13 @@ test_expect_success 'quotes not compatible with --pathspec-file-nul' '
 	"file\101.t"
 	EOF
 
-	test_must_fail git restore --pathspec-from-file=list --pathspec-file-nul --source=HEAD^1
+	test_must_fail but restore --pathspec-from-file=list --pathspec-file-nul --source=HEAD^1
 '
 
 test_expect_success 'only touches what was listed' '
 	restore_checkpoint &&
 
-	printf "fileB.t\nfileC.t\n" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	printf "fileB.t\nfileC.t\n" | but restore --pathspec-from-file=- --source=HEAD^1 &&
 
 	cat >expect <<-\EOF &&
 	 M fileB.t
@@ -151,23 +151,23 @@ test_expect_success 'error conditions' '
 	echo fileA.t >list &&
 	>empty_list &&
 
-	test_must_fail git restore --pathspec-from-file=list --patch --source=HEAD^1 2>err &&
+	test_must_fail but restore --pathspec-from-file=list --patch --source=HEAD^1 2>err &&
 	test_i18ngrep -e "options .--pathspec-from-file. and .--patch. cannot be used together" err &&
 
-	test_must_fail git restore --pathspec-from-file=list --source=HEAD^1 -- fileA.t 2>err &&
+	test_must_fail but restore --pathspec-from-file=list --source=HEAD^1 -- fileA.t 2>err &&
 	test_i18ngrep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
 
-	test_must_fail git restore --pathspec-file-nul --source=HEAD^1 2>err &&
+	test_must_fail but restore --pathspec-file-nul --source=HEAD^1 2>err &&
 	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
-	test_must_fail git restore --pathspec-from-file=empty_list --source=HEAD^1 2>err &&
+	test_must_fail but restore --pathspec-from-file=empty_list --source=HEAD^1 2>err &&
 	test_i18ngrep -e "you must specify path(s) to restore" err
 '
 
 test_expect_success 'wildcard pathspec matches file in subdirectory' '
 	restore_checkpoint &&
 
-	echo "*file" | git restore --pathspec-from-file=- --source=HEAD^1 &&
+	echo "*file" | but restore --pathspec-from-file=- --source=HEAD^1 &&
 	cat >expect <<-\EOF &&
 	 M dir1/file
 	EOF

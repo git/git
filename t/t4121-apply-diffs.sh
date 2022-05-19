@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git apply for contextually independent diffs'
+test_description='but apply for contextually independent diffs'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -17,20 +17,20 @@ echo '1
 8' >file
 
 test_expect_success 'setup' \
-	'git add file &&
-	git cummit -q -m 1 &&
-	git checkout -b test &&
+	'but add file &&
+	but cummit -q -m 1 &&
+	but checkout -b test &&
 	mv file file.tmp &&
 	echo 0 >file &&
 	cat file.tmp >>file &&
 	rm file.tmp &&
-	git cummit -a -q -m 2 &&
+	but cummit -a -q -m 2 &&
 	echo 9 >>file &&
-	git cummit -a -q -m 3 &&
-	git checkout main'
+	but cummit -a -q -m 3 &&
+	but checkout main'
 
 test_expect_success \
 	'check if contextually independent diffs for the same file apply' \
-	'( git diff test~2 test~1 && git diff test~1 test~0 )| git apply'
+	'( but diff test~2 test~1 && but diff test~1 test~0 )| but apply'
 
 test_done

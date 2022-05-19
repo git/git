@@ -1,6 +1,6 @@
-$ git diff-tree -p -m master
+$ but diff-tree -p -m master
 59d314ad6f356dd08601a4cd5e530381da3e3c64
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index cead32e..992913c 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -10,7 +10,7 @@ index cead32e..992913c 100644
  F
 +1
 +2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index b414108..10a8a9f 100644
 --- a/file0
 +++ b/file0
@@ -22,7 +22,7 @@ index b414108..10a8a9f 100644
 +B
 +C
 59d314ad6f356dd08601a4cd5e530381da3e3c64
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 7289e35..992913c 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -35,7 +35,7 @@ index 7289e35..992913c 100644
 +F
  1
  2
-diff --git a/file0 b/file0
+diff --but a/file0 b/file0
 index f4615da..10a8a9f 100644
 --- a/file0
 +++ b/file0
@@ -49,7 +49,7 @@ index f4615da..10a8a9f 100644
  A
  B
  C
-diff --git a/file1 b/file1
+diff --but a/file1 b/file1
 new file mode 100644
 index 0000000..b1e6722
 --- /dev/null
@@ -58,7 +58,7 @@ index 0000000..b1e6722
 +A
 +B
 +C
-diff --git a/file2 b/file2
+diff --but a/file2 b/file2
 deleted file mode 100644
 index 01e79c3..0000000
 --- a/file2
@@ -67,7 +67,7 @@ index 01e79c3..0000000
 -1
 -2
 -3
-diff --git a/file3 b/file3
+diff --but a/file3 b/file3
 deleted file mode 100644
 index 7289e35..0000000
 --- a/file3

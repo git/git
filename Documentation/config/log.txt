@@ -1,12 +1,12 @@
 log.abbrevcummit::
-	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
-	linkgit:git-whatchanged[1] assume `--abbrev-cummit`. You may
+	If true, makes linkbut:but-log[1], linkbut:but-show[1], and
+	linkbut:but-whatchanged[1] assume `--abbrev-cummit`. You may
 	override this option with `--no-abbrev-cummit`.
 
 log.date::
 	Set the default date-time mode for the 'log' command.
-	Setting a value for log.date is similar to using 'git log''s
-	`--date` option.  See linkgit:git-log[1] for details.
+	Setting a value for log.date is similar to using 'but log''s
+	`--date` option.  See linkbut:but-log[1] for details.
 
 log.decorate::
 	Print out the ref names of any cummits that are shown by the log
@@ -16,7 +16,7 @@ log.decorate::
 	If 'auto' is specified, then if the output is going to a terminal,
 	the ref names are shown as if 'short' were given, otherwise no ref
 	names are shown. This is the same as the `--decorate` option
-	of the `git log`.
+	of the `but log`.
 
 log.excludeDecoration::
 	Exclude the specified patterns from the log decorations. This is
@@ -26,30 +26,30 @@ log.excludeDecoration::
 
 log.diffMerges::
 	Set default diff format to be used for merge cummits. See
-	`--diff-merges` in linkgit:git-log[1] for details.
+	`--diff-merges` in linkbut:but-log[1] for details.
 	Defaults to `separate`.
 
 log.follow::
-	If `true`, `git log` will act as if the `--follow` option was used when
+	If `true`, `but log` will act as if the `--follow` option was used when
 	a single <path> is given.  This has the same limitations as `--follow`,
 	i.e. it cannot be used to follow multiple files and does not work well
 	on non-linear history.
 
 log.graphColors::
 	A list of colors, separated by commas, that can be used to draw
-	history lines in `git log --graph`.
+	history lines in `but log --graph`.
 
 log.showRoot::
 	If true, the initial cummit will be shown as a big creation event.
 	This is equivalent to a diff against an empty tree.
-	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
+	Tools like linkbut:but-log[1] or linkbut:but-whatchanged[1], which
 	normally hide the root cummit will now show it. True by default.
 
 log.showSignature::
-	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
-	linkgit:git-whatchanged[1] assume `--show-signature`.
+	If true, makes linkbut:but-log[1], linkbut:but-show[1], and
+	linkbut:but-whatchanged[1] assume `--show-signature`.
 
 log.mailmap::
-	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
-	linkgit:git-whatchanged[1] assume `--use-mailmap`, otherwise
+	If true, makes linkbut:but-log[1], linkbut:but-show[1], and
+	linkbut:but-whatchanged[1] assume `--use-mailmap`, otherwise
 	assume `--no-use-mailmap`. True by default.

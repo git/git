@@ -11,73 +11,73 @@ has_cr() {
 
 test_expect_success setup '
 
-	git config core.autocrlf false &&
+	but config core.autocrlf false &&
 
-	echo "one text" > .gitattributes &&
+	echo "one text" > .butattributes &&
 
 	test_write_lines Hello world how are you >one &&
 	test_write_lines I am very very fine thank you >two &&
-	git add . &&
+	but add . &&
 
-	git cummit -m initial &&
+	but cummit -m initial &&
 
-	one=$(git rev-parse HEAD:one) &&
-	two=$(git rev-parse HEAD:two) &&
+	one=$(but rev-parse HEAD:one) &&
+	two=$(but rev-parse HEAD:two) &&
 
 	echo happy.
 '
 
 test_expect_success 'eol=lf puts LFs in normalized file' '
 
-	rm -f .gitattributes tmp one two &&
-	git config core.eol lf &&
-	git read-tree --reset -u HEAD &&
+	rm -f .butattributes tmp one two &&
+	but config core.eol lf &&
+	but read-tree --reset -u HEAD &&
 
 	! has_cr one &&
 	! has_cr two &&
-	onediff=$(git diff one) &&
-	twodiff=$(git diff two) &&
+	onediff=$(but diff one) &&
+	twodiff=$(but diff two) &&
 	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'eol=crlf puts CRLFs in normalized file' '
 
-	rm -f .gitattributes tmp one two &&
-	git config core.eol crlf &&
-	git read-tree --reset -u HEAD &&
+	rm -f .butattributes tmp one two &&
+	but config core.eol crlf &&
+	but read-tree --reset -u HEAD &&
 
 	has_cr one &&
 	! has_cr two &&
-	onediff=$(git diff one) &&
-	twodiff=$(git diff two) &&
+	onediff=$(but diff one) &&
+	twodiff=$(but diff two) &&
 	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'autocrlf=true overrides eol=lf' '
 
-	rm -f .gitattributes tmp one two &&
-	git config core.eol lf &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	rm -f .butattributes tmp one two &&
+	but config core.eol lf &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
 	has_cr one &&
 	has_cr two &&
-	onediff=$(git diff one) &&
-	twodiff=$(git diff two) &&
+	onediff=$(but diff one) &&
+	twodiff=$(but diff two) &&
 	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'autocrlf=true overrides unset eol' '
 
-	rm -f .gitattributes tmp one two &&
-	git config --unset-all core.eol &&
-	git config core.autocrlf true &&
-	git read-tree --reset -u HEAD &&
+	rm -f .butattributes tmp one two &&
+	but config --unset-all core.eol &&
+	but config core.autocrlf true &&
+	but read-tree --reset -u HEAD &&
 
 	has_cr one &&
 	has_cr two &&
-	onediff=$(git diff one) &&
-	twodiff=$(git diff two) &&
+	onediff=$(but diff one) &&
+	twodiff=$(but diff two) &&
 	test -z "$onediff" && test -z "$twodiff"
 '
 
@@ -86,16 +86,16 @@ test_expect_success NATIVE_CRLF 'eol native is crlf' '
 	rm -rf native_eol && mkdir native_eol &&
 	(
 		cd native_eol &&
-		printf "*.txt text\n" >.gitattributes &&
+		printf "*.txt text\n" >.butattributes &&
 		printf "one\r\ntwo\r\nthree\r\n" >filedos.txt &&
 		printf "one\ntwo\nthree\n" >fileunix.txt &&
-		git init &&
-		git config core.autocrlf false &&
-		git config core.eol native &&
-		git add filedos.txt fileunix.txt &&
-		git cummit -m "first" &&
+		but init &&
+		but config core.autocrlf false &&
+		but config core.eol native &&
+		but add filedos.txt fileunix.txt &&
+		but cummit -m "first" &&
 		rm file*.txt &&
-		git reset --hard HEAD &&
+		but reset --hard HEAD &&
 		has_cr filedos.txt &&
 		has_cr fileunix.txt
 	)

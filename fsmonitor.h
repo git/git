@@ -84,7 +84,7 @@ static inline void mark_fsmonitor_valid(struct index_state *istate, struct cache
 /*
  * Clear the given cache entry's CE_FSMONITOR_VALID bit and invalidate
  * any corresponding untracked cache directory structures. This should
- * be called any time git creates or modifies a file that should
+ * be called any time but creates or modifies a file that should
  * trigger an lstat() or invalidate the untracked cache for the
  * corresponding directory
  */

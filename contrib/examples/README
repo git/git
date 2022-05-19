@@ -11,10 +11,10 @@ be instructive.
 
 Other things that can be useful:
 
- * Some commands such as git-gc wrap other commands, and what they're
+ * Some commands such as but-gc wrap other commands, and what they're
    doing behind the scenes can be seen by running them under
    GIT_TRACE=1
 
- * Doing `git log` on paths matching '*--helper.c' will show
+ * Doing `but log` on paths matching '*--helper.c' will show
    incremental effort in the direction of moving existing shell
    scripts to C.

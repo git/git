@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # An example hook script to verify if you are on battery, in case you
-# are running Linux or OS X. Called by git-gc --auto with no arguments.
+# are running Linux or OS X. Called by but-gc --auto with no arguments.
 # The hook should exit with non-zero status after issuing an appropriate
 # message if it wants to stop the auto repacking.
 #
@@ -11,10 +11,10 @@
 # you would like to use it in.
 #
 # For example, if the hook is stored in
-# /usr/share/git-core/contrib/hooks/pre-auto-gc-battery:
+# /usr/share/but-core/contrib/hooks/pre-auto-gc-battery:
 #
-# cd /path/to/your/repository.git
-# ln -sf /usr/share/git-core/contrib/hooks/pre-auto-gc-battery \
+# cd /path/to/your/repository.but
+# ln -sf /usr/share/but-core/contrib/hooks/pre-auto-gc-battery \
 #	hooks/pre-auto-gc
 
 if test -x /sbin/on_ac_power && (/sbin/on_ac_power;test $? -ne 1)

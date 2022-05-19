@@ -1,6 +1,6 @@
-# Norwegian (Bokmål) translation of git-gui.
+# Norwegian (Bokmål) translation of but-gui.
 # Copyright (C) 2007-2008 Shawn Pearce, et al.
-# This file is distributed under the same license as the git-gui package.
+# This file is distributed under the same license as the but-gui package.
 #
 # Fredrik Skolmli <fredrik@frsk.net>, 2008.
 #
@@ -16,33 +16,33 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: git-gui.sh:41 git-gui.sh:737 git-gui.sh:751 git-gui.sh:764 git-gui.sh:847
-#: git-gui.sh:866
-msgid "git-gui: fatal error"
-msgstr "git-gui: Kritisk feil"
+#: but-gui.sh:41 but-gui.sh:737 but-gui.sh:751 but-gui.sh:764 but-gui.sh:847
+#: but-gui.sh:866
+msgid "but-gui: fatal error"
+msgstr "but-gui: Kritisk feil"
 
-#: git-gui.sh:689
+#: but-gui.sh:689
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Ugyldig font spesifisert i %s:"
 
-#: git-gui.sh:723
+#: but-gui.sh:723
 msgid "Main Font"
 msgstr "Hovedskrifttype"
 
-#: git-gui.sh:724
+#: but-gui.sh:724
 msgid "Diff/Console Font"
 msgstr "Diff-/Konsollskrifttype"
 
-#: git-gui.sh:738
-msgid "Cannot find git in PATH."
-msgstr "Kan ikke finne git i PATH"
+#: but-gui.sh:738
+msgid "Cannot find but in PATH."
+msgstr "Kan ikke finne but i PATH"
 
-#: git-gui.sh:765
+#: but-gui.sh:765
 msgid "Cannot parse Git version string:"
-msgstr "Kan ikke tyde Git's oppgitte versjon:"
+msgstr "Kan ikke tyde Git's oppbutte versjon:"
 
-#: git-gui.sh:783
+#: but-gui.sh:783
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -61,445 +61,445 @@ msgstr ""
 "\n"
 "Anta at '%s' er versjon 1.5.0?\n"
 
-#: git-gui.sh:1062
+#: but-gui.sh:1062
 msgid "Git directory not found:"
 msgstr "Git-katalog ikke funnet:"
 
-#: git-gui.sh:1069
+#: but-gui.sh:1069
 msgid "Cannot move to top of working directory:"
 msgstr "Kan ikke gå til toppen av arbeidskatalogen:"
 
-#: git-gui.sh:1076
-msgid "Cannot use funny .git directory:"
+#: but-gui.sh:1076
+msgid "Cannot use funny .but directory:"
 msgstr ""
 
-#: git-gui.sh:1081
+#: but-gui.sh:1081
 msgid "No working directory"
 msgstr "Ingen arbeidskatalog"
 
-#: git-gui.sh:1247 lib/checkout_op.tcl:305
+#: but-gui.sh:1247 lib/checkout_op.tcl:305
 msgid "Refreshing file status..."
 msgstr "Oppdaterer filstatus..."
 
-#: git-gui.sh:1303
+#: but-gui.sh:1303
 msgid "Scanning for modified files ..."
 msgstr "Søker etter endrede filer..."
 
-#: git-gui.sh:1367
+#: but-gui.sh:1367
 msgid "Calling prepare-cummit-msg hook..."
 msgstr ""
 
-#: git-gui.sh:1384
+#: but-gui.sh:1384
 msgid "cummit declined by prepare-cummit-msg hook."
 msgstr ""
 
-#: git-gui.sh:1542 lib/browser.tcl:246
+#: but-gui.sh:1542 lib/browser.tcl:246
 msgid "Ready."
 msgstr "Klar."
 
-#: git-gui.sh:1819
+#: but-gui.sh:1819
 msgid "Unmodified"
 msgstr "Uendret"
 
-#: git-gui.sh:1821
+#: but-gui.sh:1821
 msgid "Modified, not staged"
 msgstr "Endret, ikke køet"
 
-#: git-gui.sh:1822 git-gui.sh:1830
+#: but-gui.sh:1822 but-gui.sh:1830
 msgid "Staged for cummit"
 msgstr "Køet for innsjekking"
 
-#: git-gui.sh:1823 git-gui.sh:1831
+#: but-gui.sh:1823 but-gui.sh:1831
 msgid "Portions staged for cummit"
 msgstr "Delvis køet for innsjekking"
 
-#: git-gui.sh:1824 git-gui.sh:1832
+#: but-gui.sh:1824 but-gui.sh:1832
 msgid "Staged for cummit, missing"
 msgstr "Klar for innsjekking, fraværende"
 
-#: git-gui.sh:1826
+#: but-gui.sh:1826
 msgid "File type changed, not staged"
 msgstr "Filtype endret, ikke køet"
 
-#: git-gui.sh:1827
+#: but-gui.sh:1827
 msgid "File type changed, staged"
 msgstr "Filtype endret, køet"
 
-#: git-gui.sh:1829
+#: but-gui.sh:1829
 msgid "Untracked, not staged"
 msgstr "Usporet, ikke køet"
 
-#: git-gui.sh:1834
+#: but-gui.sh:1834
 msgid "Missing"
 msgstr "Fraværende"
 
-#: git-gui.sh:1835
+#: but-gui.sh:1835
 msgid "Staged for removal"
 msgstr "Køet for fjerning"
 
-#: git-gui.sh:1836
+#: but-gui.sh:1836
 msgid "Staged for removal, still present"
 msgstr "Køet for fjerning, fortsatt tilstede"
 
-#: git-gui.sh:1838 git-gui.sh:1839 git-gui.sh:1840 git-gui.sh:1841
-#: git-gui.sh:1842 git-gui.sh:1843
+#: but-gui.sh:1838 but-gui.sh:1839 but-gui.sh:1840 but-gui.sh:1841
+#: but-gui.sh:1842 but-gui.sh:1843
 msgid "Requires merge resolution"
 msgstr "Sammenslåingen krever konflikthåndtering"
 
-#: git-gui.sh:1878
-msgid "Starting gitk... please wait..."
-msgstr "Starter gitk... Vennligst vent..."
+#: but-gui.sh:1878
+msgid "Starting butk... please wait..."
+msgstr "Starter butk... Vennligst vent..."
 
-#: git-gui.sh:1887
-msgid "Couldn't find gitk in PATH"
-msgstr "Kunne ikke finne gitk i PATH"
+#: but-gui.sh:1887
+msgid "Couldn't find butk in PATH"
+msgstr "Kunne ikke finne butk i PATH"
 
-#: git-gui.sh:2280 lib/choose_repository.tcl:36
+#: but-gui.sh:2280 lib/choose_repository.tcl:36
 msgid "Repository"
 msgstr "Arkiv"
 
-#: git-gui.sh:2281
+#: but-gui.sh:2281
 msgid "Edit"
 msgstr "Redigere"
 
-#: git-gui.sh:2283 lib/choose_rev.tcl:561
+#: but-gui.sh:2283 lib/choose_rev.tcl:561
 msgid "Branch"
 msgstr "Gren"
 
-#: git-gui.sh:2286 lib/choose_rev.tcl:548
+#: but-gui.sh:2286 lib/choose_rev.tcl:548
 msgid "cummit@@noun"
 msgstr "Innsjekking"
 
-#: git-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+#: but-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
 msgstr "Sammenslåing"
 
-#: git-gui.sh:2290 lib/choose_rev.tcl:557
+#: but-gui.sh:2290 lib/choose_rev.tcl:557
 msgid "Remote"
 msgstr "Fjernarkiv"
 
-#: git-gui.sh:2293
+#: but-gui.sh:2293
 msgid "Tools"
 msgstr "Verktøy"
 
-#: git-gui.sh:2302
+#: but-gui.sh:2302
 msgid "Explore Working Copy"
 msgstr "Utforsk arbeidskopien"
 
-#: git-gui.sh:2307
+#: but-gui.sh:2307
 msgid "Browse Current Branch's Files"
 msgstr "Utforsk denne grens filer"
 
-#: git-gui.sh:2311
+#: but-gui.sh:2311
 msgid "Browse Branch Files..."
 msgstr "Bla igjennom filer på gren..."
 
-#: git-gui.sh:2316
+#: but-gui.sh:2316
 msgid "Visualize Current Branch's History"
 msgstr "Visualiser denne grens historikk"
 
-#: git-gui.sh:2320
+#: but-gui.sh:2320
 msgid "Visualize All Branch History"
 msgstr "Visualiser alle greners historikk"
 
-#: git-gui.sh:2327
+#: but-gui.sh:2327
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr "Bla i filene til %s"
 
-#: git-gui.sh:2329
+#: but-gui.sh:2329
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr "Visualiser historien til %s"
 
-#: git-gui.sh:2334 lib/database.tcl:27 lib/database.tcl:67
+#: but-gui.sh:2334 lib/database.tcl:27 lib/database.tcl:67
 msgid "Database Statistics"
 msgstr "Databasestatistikk"
 
-#: git-gui.sh:2337 lib/database.tcl:34
+#: but-gui.sh:2337 lib/database.tcl:34
 msgid "Compress Database"
 msgstr "Kompress databasen"
 
-#: git-gui.sh:2340
+#: but-gui.sh:2340
 msgid "Verify Database"
 msgstr "Verifiser databasen"
 
-#: git-gui.sh:2347 git-gui.sh:2351 git-gui.sh:2355 lib/shortcut.tcl:7
+#: but-gui.sh:2347 but-gui.sh:2351 but-gui.sh:2355 lib/shortcut.tcl:7
 #: lib/shortcut.tcl:39 lib/shortcut.tcl:71
 msgid "Create Desktop Icon"
 msgstr "Lag skrivebordsikon"
 
-#: git-gui.sh:2363 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
+#: but-gui.sh:2363 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
 msgid "Quit"
 msgstr "Avslutt"
 
-#: git-gui.sh:2371
+#: but-gui.sh:2371
 msgid "Undo"
 msgstr "Angre"
 
-#: git-gui.sh:2374
+#: but-gui.sh:2374
 msgid "Redo"
 msgstr "Gjør om"
 
-#: git-gui.sh:2378 git-gui.sh:2923
+#: but-gui.sh:2378 but-gui.sh:2923
 msgid "Cut"
 msgstr "Klipp ut"
 
-#: git-gui.sh:2381 git-gui.sh:2926 git-gui.sh:3000 git-gui.sh:3082
+#: but-gui.sh:2381 but-gui.sh:2926 but-gui.sh:3000 but-gui.sh:3082
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Kopier"
 
-#: git-gui.sh:2384 git-gui.sh:2929
+#: but-gui.sh:2384 but-gui.sh:2929
 msgid "Paste"
 msgstr "Lim inn"
 
-#: git-gui.sh:2387 git-gui.sh:2932 lib/branch_delete.tcl:26
+#: but-gui.sh:2387 but-gui.sh:2932 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr "Slett"
 
-#: git-gui.sh:2391 git-gui.sh:2936 git-gui.sh:3086 lib/console.tcl:71
+#: but-gui.sh:2391 but-gui.sh:2936 but-gui.sh:3086 lib/console.tcl:71
 msgid "Select All"
 msgstr "Velg alle"
 
-#: git-gui.sh:2400
+#: but-gui.sh:2400
 msgid "Create..."
 msgstr "Opprett..."
 
-#: git-gui.sh:2406
+#: but-gui.sh:2406
 msgid "Checkout..."
 msgstr "Sjekk ut..."
 
-#: git-gui.sh:2412
+#: but-gui.sh:2412
 msgid "Rename..."
 msgstr "Endre navn..."
 
-#: git-gui.sh:2417
+#: but-gui.sh:2417
 msgid "Delete..."
 msgstr "Slett..."
 
-#: git-gui.sh:2422
+#: but-gui.sh:2422
 msgid "Reset..."
 msgstr "Tilbakestill..."
 
-#: git-gui.sh:2432
+#: but-gui.sh:2432
 msgid "Done"
 msgstr "Ferdig"
 
-#: git-gui.sh:2434
+#: but-gui.sh:2434
 msgid "cummit@@verb"
 msgstr "Sjekk inn"
 
-#: git-gui.sh:2443 git-gui.sh:2864
+#: but-gui.sh:2443 but-gui.sh:2864
 msgid "New cummit"
 msgstr "Ny innsjekking"
 
-#: git-gui.sh:2451 git-gui.sh:2871
+#: but-gui.sh:2451 but-gui.sh:2871
 msgid "Amend Last cummit"
 msgstr "Legg til forrige innsjekking"
 
-#: git-gui.sh:2461 git-gui.sh:2825 lib/remote_branch_delete.tcl:99
+#: but-gui.sh:2461 but-gui.sh:2825 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Søk på ny"
 
-#: git-gui.sh:2467
+#: but-gui.sh:2467
 msgid "Stage To cummit"
 msgstr "Legg til i innsjekkingskøen"
 
-#: git-gui.sh:2473
+#: but-gui.sh:2473
 msgid "Stage Changed Files To cummit"
 msgstr "Legg til endrede filer i innsjekkingskøen"
 
-#: git-gui.sh:2479
+#: but-gui.sh:2479
 msgid "Unstage From cummit"
 msgstr "Fjern fra innsjekkingskøen"
 
-#: git-gui.sh:2484 lib/index.tcl:410
+#: but-gui.sh:2484 lib/index.tcl:410
 msgid "Revert Changes"
 msgstr "Tilbakestill endringer"
 
-#: git-gui.sh:2491 git-gui.sh:3069
+#: but-gui.sh:2491 but-gui.sh:3069
 msgid "Show Less Context"
 msgstr "Vis mindre innhold"
 
-#: git-gui.sh:2495 git-gui.sh:3073
+#: but-gui.sh:2495 but-gui.sh:3073
 msgid "Show More Context"
 msgstr "Vis mer innhold"
 
-#: git-gui.sh:2502 git-gui.sh:2838 git-gui.sh:2947
+#: but-gui.sh:2502 but-gui.sh:2838 but-gui.sh:2947
 msgid "Sign Off"
 msgstr "Signér"
 
-#: git-gui.sh:2518
+#: but-gui.sh:2518
 msgid "Local Merge..."
 msgstr "Lokal sammenslåing..."
 
-#: git-gui.sh:2523
+#: but-gui.sh:2523
 msgid "Abort Merge..."
 msgstr "Avbryt sammenslåing..."
 
-#: git-gui.sh:2535 git-gui.sh:2575
+#: but-gui.sh:2535 but-gui.sh:2575
 msgid "Add..."
 msgstr "Legg til..."
 
-#: git-gui.sh:2539
+#: but-gui.sh:2539
 msgid "Push..."
 msgstr "Send..."
 
-#: git-gui.sh:2543
+#: but-gui.sh:2543
 msgid "Delete Branch..."
 msgstr "Fjern gren..."
 
-#: git-gui.sh:2553 git-gui.sh:2589 lib/about.tcl:14
+#: but-gui.sh:2553 but-gui.sh:2589 lib/about.tcl:14
 #: lib/choose_repository.tcl:44 lib/choose_repository.tcl:53
 #, tcl-format
 msgid "About %s"
 msgstr "Om %s"
 
-#: git-gui.sh:2557
+#: but-gui.sh:2557
 msgid "Preferences..."
 msgstr "Innstillinger..."
 
-#: git-gui.sh:2565 git-gui.sh:3115
+#: but-gui.sh:2565 but-gui.sh:3115
 msgid "Options..."
 msgstr "Alternativer..."
 
-#: git-gui.sh:2576
+#: but-gui.sh:2576
 msgid "Remove..."
 msgstr "Fjern..."
 
-#: git-gui.sh:2585 lib/choose_repository.tcl:50
+#: but-gui.sh:2585 lib/choose_repository.tcl:50
 msgid "Help"
 msgstr "Hjelp"
 
-#: git-gui.sh:2611
+#: but-gui.sh:2611
 msgid "Online Documentation"
 msgstr "Online dokumentasjon"
 
-#: git-gui.sh:2614 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
+#: but-gui.sh:2614 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
 msgid "Show SSH Key"
 msgstr "Vis SSH-nøkkel"
 
-#: git-gui.sh:2707
+#: but-gui.sh:2707
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "kritisk: kunne ikke finne status for sti %s: Ingen slik fil eller katalog"
 
-#: git-gui.sh:2740
+#: but-gui.sh:2740
 msgid "Current Branch:"
 msgstr "Nåværende gren:"
 
-#: git-gui.sh:2761
+#: but-gui.sh:2761
 msgid "Staged Changes (Will cummit)"
 msgstr "Køede endringer (til innsjekking)"
 
-#: git-gui.sh:2781
+#: but-gui.sh:2781
 msgid "Unstaged Changes"
 msgstr "Ukøede endringer"
 
-#: git-gui.sh:2831
+#: but-gui.sh:2831
 msgid "Stage Changed"
 msgstr "Kø endret"
 
-#: git-gui.sh:2850 lib/transport.tcl:93 lib/transport.tcl:182
+#: but-gui.sh:2850 lib/transport.tcl:93 lib/transport.tcl:182
 msgid "Push"
 msgstr "Send"
 
-#: git-gui.sh:2885
+#: but-gui.sh:2885
 msgid "Initial cummit Message:"
 msgstr "Innledende innsjekkingsmelding:"
 
-#: git-gui.sh:2886
+#: but-gui.sh:2886
 msgid "Amended cummit Message:"
 msgstr "Utdypt innsjekkingsmelding"
 
-#: git-gui.sh:2887
+#: but-gui.sh:2887
 msgid "Amended Initial cummit Message:"
 msgstr "Utdypt innledende innsjekkingsmelding:"
 
-#: git-gui.sh:2888
+#: but-gui.sh:2888
 msgid "Amended Merge cummit Message:"
 msgstr "Utdypt innsjekkingsmelding for sammenslåing:"
 
-#: git-gui.sh:2889
+#: but-gui.sh:2889
 msgid "Merge cummit Message:"
 msgstr "Revisjonsmelding for sammenslåing:"
 
-#: git-gui.sh:2890
+#: but-gui.sh:2890
 msgid "cummit Message:"
 msgstr "Revisjonsmelding:"
 
-#: git-gui.sh:2939 git-gui.sh:3090 lib/console.tcl:73
+#: but-gui.sh:2939 but-gui.sh:3090 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Kopier alle"
 
-#: git-gui.sh:2963 lib/blame.tcl:104
+#: but-gui.sh:2963 lib/blame.tcl:104
 msgid "File:"
 msgstr "Fil:"
 
-#: git-gui.sh:3078
+#: but-gui.sh:3078
 msgid "Refresh"
 msgstr "Oppdater"
 
-#: git-gui.sh:3099
+#: but-gui.sh:3099
 msgid "Decrease Font Size"
 msgstr "Gjør teksten mindre"
 
-#: git-gui.sh:3103
+#: but-gui.sh:3103
 msgid "Increase Font Size"
 msgstr "Gjør teksten større"
 
-#: git-gui.sh:3111 lib/blame.tcl:281
+#: but-gui.sh:3111 lib/blame.tcl:281
 msgid "Encoding"
 msgstr "Tekstkoding"
 
-#: git-gui.sh:3122
+#: but-gui.sh:3122
 msgid "Apply/Reverse Hunk"
 msgstr "Bruk/tilbakestill del"
 
-#: git-gui.sh:3127
+#: but-gui.sh:3127
 msgid "Apply/Reverse Line"
 msgstr "Bruk/tilbakestill linje"
 
-#: git-gui.sh:3137
+#: but-gui.sh:3137
 msgid "Run Merge Tool"
 msgstr "Start sammenslåingsprosess"
 
-#: git-gui.sh:3142
+#: but-gui.sh:3142
 msgid "Use Remote Version"
 msgstr "Bruk versjon fra fjernarkiv"
 
-#: git-gui.sh:3146
+#: but-gui.sh:3146
 msgid "Use Local Version"
 msgstr "Bruk lokal versjon"
 
-#: git-gui.sh:3150
+#: but-gui.sh:3150
 msgid "Revert To Base"
 msgstr "Tilbakestill til baseversjonen"
 
-#: git-gui.sh:3169
+#: but-gui.sh:3169
 msgid "Unstage Hunk From cummit"
 msgstr "Fjern delen fra innsjekkingskøen"
 
-#: git-gui.sh:3170
+#: but-gui.sh:3170
 msgid "Unstage Line From cummit"
 msgstr "Fjern linjen fra innsjekkingskøen"
 
-#: git-gui.sh:3172
+#: but-gui.sh:3172
 msgid "Stage Hunk For cummit"
 msgstr "Legg del i innsjekkingskøen"
 
-#: git-gui.sh:3173
+#: but-gui.sh:3173
 msgid "Stage Line For cummit"
 msgstr "Legg til linje i innsjekkingskøen"
 
-#: git-gui.sh:3196
+#: but-gui.sh:3196
 msgid "Initializing..."
 msgstr "Initsialiserer..."
 
-#: git-gui.sh:3301
+#: but-gui.sh:3301
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -510,14 +510,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-gui.sh:3331
+#: but-gui.sh:3331
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
 "Tcl binary distributed by Cygwin."
 msgstr ""
 
-#: git-gui.sh:3336
+#: but-gui.sh:3336
 #, tcl-format
 msgid ""
 "\n"
@@ -525,12 +525,12 @@ msgid ""
 "A good replacement for %s\n"
 "is placing values for the user.name and\n"
 "user.email settings into your personal\n"
-"~/.gitconfig file.\n"
+"~/.butconfig file.\n"
 msgstr ""
 
 #: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui - Et grafisk brukergrensesnitt for Git."
+msgid "but-gui - a graphical user interface for Git."
+msgstr "but-gui - Et grafisk brukergrensesnitt for Git."
 
 #: lib/blame.tcl:72
 msgid "File Viewer"
@@ -849,8 +849,8 @@ msgstr "Grenen '%s' eksisterer ikke."
 
 #: lib/checkout_op.tcl:193
 #, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
-msgstr "Kunne ikke konfigurere forenklet git-pull for '%s'."
+msgid "Failed to configure simplified but-pull for '%s'."
+msgstr "Kunne ikke konfigurere forenklet but-pull for '%s'."
 
 #: lib/checkout_op.tcl:228
 #, tcl-format
@@ -1623,10 +1623,10 @@ msgstr "Feil på index"
 #: lib/index.tcl:21
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
-"resynchronize git-gui."
+"resynchronize but-gui."
 msgstr ""
 "Oppdatering av Git's index mislyktes. Et nytt søk vil bli startet for å "
-"resynkronisere git-gui."
+"resynkronisere but-gui."
 
 #: lib/index.tcl:27
 msgid "Continue"

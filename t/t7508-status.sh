@@ -3,20 +3,20 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='git status'
+test_description='but status'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'status -h in broken repository' '
-	git config --global advice.statusuoption false &&
+	but config --global advice.statusuoption false &&
 	mkdir broken &&
 	test_when_finished "rm -fr broken" &&
 	(
 		cd broken &&
-		git init &&
-		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
-		test_expect_code 129 git status -h >usage 2>&1
+		but init &&
+		echo "[status] showuntrackedfiles = CORRUPT" >>.but/config &&
+		test_expect_code 129 but status -h >usage 2>&1
 	) &&
 	test_i18ngrep "[Uu]sage" broken/usage
 '
@@ -26,22 +26,22 @@ test_expect_success 'cummit -h in broken repository' '
 	test_when_finished "rm -fr broken" &&
 	(
 		cd broken &&
-		git init &&
-		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
-		test_expect_code 129 git cummit -h >usage 2>&1
+		but init &&
+		echo "[status] showuntrackedfiles = CORRUPT" >>.but/config &&
+		test_expect_code 129 but cummit -h >usage 2>&1
 	) &&
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'create upstream branch' '
-	git checkout -b upstream &&
+	but checkout -b upstream &&
 	test_cummit upstream1 &&
 	test_cummit upstream2 &&
 	# leave the first cummit on main as root because several
 	# tests depend on this case; for our upstream we only
 	# care about cummit counts anyway, so a totally divergent
 	# history is OK
-	git checkout --orphan main
+	but checkout --orphan main
 '
 
 test_expect_success 'setup' '
@@ -53,25 +53,25 @@ test_expect_success 'setup' '
 	mkdir dir2 &&
 	: >dir1/tracked &&
 	: >dir1/modified &&
-	git add . &&
+	but add . &&
 
-	git status >output &&
+	but status >output &&
 
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 	: >untracked &&
 	: >dir1/untracked &&
 	: >dir2/untracked &&
 	echo 1 >dir1/modified &&
 	echo 2 >dir2/modified &&
 	echo 3 >dir2/added &&
-	git add dir2/added &&
+	but add dir2/added &&
 
-	git branch --set-upstream-to=upstream
+	but branch --set-upstream-to=upstream
 '
 
 test_expect_success 'status (1)' '
-	test_i18ngrep "use \"git rm --cached <file>\.\.\.\" to unstage" output
+	test_i18ngrep "use \"but rm --cached <file>\.\.\.\" to unstage" output
 '
 
 strip_comments () {
@@ -80,8 +80,8 @@ strip_comments () {
 	rm "$1" && mv "$1".tmp "$1"
 }
 
-cat >.gitignore <<\EOF
-.gitignore
+cat >.butignore <<\EOF
+.butignore
 expect*
 output*
 EOF
@@ -91,30 +91,30 @@ test_expect_success 'status --column' '
 # On branch main
 # Your branch and '\''upstream'\'' have diverged,
 # and have 1 and 2 different cummits each, respectively.
-#   (use "git pull" to merge the remote branch into yours)
+#   (use "but pull" to merge the remote branch into yours)
 #
 # Changes to be cummitted:
-#   (use "git restore --staged <file>..." to unstage)
+#   (use "but restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for cummit:
-#   (use "git add <file>..." to update what will be cummitted)
-#   (use "git restore <file>..." to discard changes in working directory)
+#   (use "but add <file>..." to update what will be cummitted)
+#   (use "but restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
-#   (use "git add <file>..." to include in what will be cummitted)
+#   (use "but add <file>..." to include in what will be cummitted)
 #	dir1/untracked dir2/untracked
 #	dir2/modified  untracked
 #
 EOF
-	COLUMNS=50 git -c status.displayCommentPrefix=true status --column="column dense" >output &&
+	COLUMNS=50 but -c status.displayCommentPrefix=true status --column="column dense" >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status --column status.displayCommentPrefix=false' '
 	strip_comments expect &&
-	COLUMNS=49 git -c status.displayCommentPrefix=false status --column="column dense" >output &&
+	COLUMNS=49 but -c status.displayCommentPrefix=false status --column="column dense" >output &&
 	test_cmp expect output
 '
 
@@ -122,19 +122,19 @@ cat >expect <<\EOF
 # On branch main
 # Your branch and 'upstream' have diverged,
 # and have 1 and 2 different cummits each, respectively.
-#   (use "git pull" to merge the remote branch into yours)
+#   (use "but pull" to merge the remote branch into yours)
 #
 # Changes to be cummitted:
-#   (use "git restore --staged <file>..." to unstage)
+#   (use "but restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for cummit:
-#   (use "git add <file>..." to update what will be cummitted)
-#   (use "git restore <file>..." to discard changes in working directory)
+#   (use "but add <file>..." to update what will be cummitted)
+#   (use "but restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
-#   (use "git add <file>..." to include in what will be cummitted)
+#   (use "but add <file>..." to include in what will be cummitted)
 #	dir1/untracked
 #	dir2/modified
 #	dir2/untracked
@@ -143,47 +143,47 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'status with status.displayCommentPrefix=true' '
-	git -c status.displayCommentPrefix=true status >output &&
+	but -c status.displayCommentPrefix=true status >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status with status.displayCommentPrefix=false' '
 	strip_comments expect &&
-	git -c status.displayCommentPrefix=false status >output &&
+	but -c status.displayCommentPrefix=false status >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status -v' '
-	(cat expect && git diff --cached) >expect-with-v &&
-	git status -v >output &&
+	(cat expect && but diff --cached) >expect-with-v &&
+	but status -v >output &&
 	test_cmp expect-with-v output
 '
 
 test_expect_success 'status -v -v' '
 	(cat expect &&
 	 echo "Changes to be cummitted:" &&
-	 git -c diff.mnemonicprefix=true diff --cached &&
+	 but -c diff.mnemonicprefix=true diff --cached &&
 	 echo "--------------------------------------------------" &&
 	 echo "Changes not staged for cummit:" &&
-	 git -c diff.mnemonicprefix=true diff) >expect-with-v &&
-	git status -v -v >output &&
+	 but -c diff.mnemonicprefix=true diff) >expect-with-v &&
+	but status -v -v >output &&
 	test_cmp expect-with-v output
 '
 
 test_expect_success 'setup fake editor' '
-	cat >.git/editor <<-\EOF &&
+	cat >.but/editor <<-\EOF &&
 	#! /bin/sh
 	cp "$1" output
 EOF
-	chmod 755 .git/editor
+	chmod 755 .but/editor
 '
 
 cummit_template_commented () {
 	(
-		EDITOR=.git/editor &&
+		EDITOR=.but/editor &&
 		export EDITOR &&
 		# Fails due to empty message
-		test_must_fail git cummit
+		test_must_fail but cummit
 	) &&
 	! grep '^[^#]' output
 }
@@ -213,7 +213,7 @@ EOF
 
 test_expect_success 'status (advice.statusHints false)' '
 	test_config advice.statusHints false &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 
 '
@@ -229,32 +229,32 @@ EOF
 
 test_expect_success 'status -s' '
 
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output
 
 '
 
-test_expect_success 'status with gitignore' '
+test_expect_success 'status with butignore' '
 	{
-		echo ".gitignore" &&
+		echo ".butignore" &&
 		echo "expect*" &&
 		echo "output" &&
 		echo "untracked"
-	} >.gitignore &&
+	} >.butignore &&
 
 	cat >expect <<-\EOF &&
 	 M dir1/modified
 	A  dir2/added
 	?? dir2/modified
 	EOF
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-\EOF &&
 	 M dir1/modified
 	A  dir2/added
 	?? dir2/modified
-	!! .gitignore
+	!! .butignore
 	!! dir1/untracked
 	!! dir2/untracked
 	!! expect
@@ -262,31 +262,31 @@ test_expect_success 'status with gitignore' '
 	!! output
 	!! untracked
 	EOF
-	git status -s --ignored >output &&
+	but status -s --ignored >output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir2/modified
 
 Ignored files:
-  (use "git add -f <file>..." to include in what will be cummitted)
-	.gitignore
+  (use "but add -f <file>..." to include in what will be cummitted)
+	.butignore
 	dir1/untracked
 	dir2/untracked
 	expect
@@ -295,30 +295,30 @@ Ignored files:
 	untracked
 
 EOF
-	git status --ignored >output &&
+	but status --ignored >output &&
 	test_cmp expect output
 '
 
-test_expect_success 'status with gitignore (nothing untracked)' '
+test_expect_success 'status with butignore (nothing untracked)' '
 	{
-		echo ".gitignore" &&
+		echo ".butignore" &&
 		echo "expect*" &&
 		echo "dir2/modified" &&
 		echo "output" &&
 		echo "untracked"
-	} >.gitignore &&
+	} >.butignore &&
 
 	cat >expect <<-\EOF &&
 	 M dir1/modified
 	A  dir2/added
 	EOF
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-\EOF &&
 	 M dir1/modified
 	A  dir2/added
-	!! .gitignore
+	!! .butignore
 	!! dir1/untracked
 	!! dir2/modified
 	!! dir2/untracked
@@ -327,27 +327,27 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	!! output
 	!! untracked
 	EOF
-	git status -s --ignored >output &&
+	but status -s --ignored >output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Ignored files:
-  (use "git add -f <file>..." to include in what will be cummitted)
-	.gitignore
+  (use "but add -f <file>..." to include in what will be cummitted)
+	.butignore
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -357,12 +357,12 @@ Ignored files:
 	untracked
 
 EOF
-	git status --ignored >output &&
+	but status --ignored >output &&
 	test_cmp expect output
 '
 
-cat >.gitignore <<\EOF
-.gitignore
+cat >.butignore <<\EOF
+.butignore
 expect*
 output*
 EOF
@@ -379,7 +379,7 @@ EOF
 
 test_expect_success 'status -s -b' '
 
-	git status -s -b >output &&
+	but status -s -b >output &&
 	test_cmp expect output
 
 '
@@ -387,7 +387,7 @@ test_expect_success 'status -s -b' '
 test_expect_success 'status -s -z -b' '
 	tr "\\n" Q <expect >expect.q &&
 	mv expect.q expect &&
-	git status -s -z -b >output &&
+	but status -s -z -b >output &&
 	nul_to_q <output >output.q &&
 	mv output.q output &&
 	test_cmp expect output
@@ -404,26 +404,26 @@ test_expect_success 'status -uno' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
-	git status -uno >output &&
+	but status -uno >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles no)' '
 	test_config status.showuntrackedfiles no &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 '
 
@@ -442,7 +442,7 @@ Changes not staged for cummit:
 Untracked files not listed
 EOF
 	test_config advice.statusHints false &&
-	git status -uno >output &&
+	but status -uno >output &&
 	test_cmp expect output
 '
 
@@ -451,13 +451,13 @@ cat >expect << EOF
 A  dir2/added
 EOF
 test_expect_success 'status -s -uno' '
-	git status -s -uno >output &&
+	but status -s -uno >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status -s (status.showUntrackedFiles no)' '
-	git config status.showuntrackedfiles no &&
-	git status -s >output &&
+	but config status.showuntrackedfiles no &&
+	but status -s >output &&
 	test_cmp expect output
 '
 
@@ -466,19 +466,19 @@ test_expect_success 'status -unormal' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -486,13 +486,13 @@ Untracked files:
 	untracked
 
 EOF
-	git status -unormal >output &&
+	but status -unormal >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles normal)' '
 	test_config status.showuntrackedfiles normal &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 '
 
@@ -506,13 +506,13 @@ A  dir2/added
 ?? untracked
 EOF
 test_expect_success 'status -s -unormal' '
-	git status -s -unormal >output &&
+	but status -s -unormal >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status -s (status.showUntrackedFiles normal)' '
-	git config status.showuntrackedfiles normal &&
-	git status -s >output &&
+	but config status.showuntrackedfiles normal &&
+	but status -s >output &&
 	test_cmp expect output
 '
 
@@ -521,19 +521,19 @@ test_expect_success 'status -uall' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -542,13 +542,13 @@ Untracked files:
 	untracked
 
 EOF
-	git status -uall >output &&
+	but status -uall >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status (status.showUntrackedFiles all)' '
 	test_config status.showuntrackedfiles all &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 '
 
@@ -566,12 +566,12 @@ A  dir2/added
 EOF
 test_expect_success 'status -s -uall' '
 	test_unconfig status.showuntrackedfiles &&
-	git status -s -uall >output &&
+	but status -s -uall >output &&
 	test_cmp expect output
 '
 test_expect_success 'status -s (status.showUntrackedFiles all)' '
 	test_config status.showuntrackedfiles all &&
-	git status -s >output &&
+	but status -s >output &&
 	rm -rf dir3 &&
 	test_cmp expect output
 '
@@ -581,26 +581,26 @@ test_expect_success 'status with relative paths' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   ../dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	untracked
 	../dir2/modified
 	../dir2/untracked
 	../untracked
 
 EOF
-	(cd dir1 && git status) >output &&
+	(cd dir1 && but status) >output &&
 	test_cmp expect output
 '
 
@@ -614,7 +614,7 @@ A  ../dir2/added
 EOF
 test_expect_success 'status -s with relative paths' '
 
-	(cd dir1 && git status -s) >output &&
+	(cd dir1 && but status -s) >output &&
 	test_cmp expect output
 
 '
@@ -630,17 +630,17 @@ EOF
 
 test_expect_success 'status --porcelain ignores relative paths setting' '
 
-	(cd dir1 && git status --porcelain) >output &&
+	(cd dir1 && but status --porcelain) >output &&
 	test_cmp expect output
 
 '
 
 test_expect_success 'setup unique colors' '
 
-	git config status.color.untracked blue &&
-	git config status.color.branch green &&
-	git config status.color.localBranch yellow &&
-	git config status.color.remoteBranch cyan
+	but config status.color.untracked blue &&
+	but config status.color.branch green &&
+	but config status.color.localBranch yellow &&
+	but config status.color.remoteBranch cyan
 
 '
 
@@ -649,19 +649,19 @@ test_expect_success TTY 'status with color.ui' '
 On branch <GREEN>main<RESET>
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	<GREEN>new file:   dir2/added<RESET>
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	<RED>modified:   dir1/modified<RESET>
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	<BLUE>dir1/untracked<RESET>
 	<BLUE>dir2/modified<RESET>
 	<BLUE>dir2/untracked<RESET>
@@ -669,13 +669,13 @@ Untracked files:
 
 EOF
 	test_config color.ui auto &&
-	test_terminal git status | test_decode_color >output &&
+	test_terminal but status | test_decode_color >output &&
 	test_cmp expect output
 '
 
 test_expect_success TTY 'status with color.status' '
 	test_config color.status auto &&
-	test_terminal git status | test_decode_color >output &&
+	test_terminal but status | test_decode_color >output &&
 	test_cmp expect output
 '
 
@@ -690,17 +690,17 @@ EOF
 
 test_expect_success TTY 'status -s with color.ui' '
 
-	git config color.ui auto &&
-	test_terminal git status -s | test_decode_color >output &&
+	but config color.ui auto &&
+	test_terminal but status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
 test_expect_success TTY 'status -s with color.status' '
 
-	git config --unset color.ui &&
-	git config color.status auto &&
-	test_terminal git status -s | test_decode_color >output &&
+	but config --unset color.ui &&
+	but config color.status auto &&
+	test_terminal but status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
@@ -717,7 +717,7 @@ EOF
 
 test_expect_success TTY 'status -s -b with color.status' '
 
-	test_terminal git status -s -b | test_decode_color >output &&
+	test_terminal but status -s -b | test_decode_color >output &&
 	test_cmp expect output
 
 '
@@ -733,29 +733,29 @@ EOF
 
 test_expect_success TTY 'status --porcelain ignores color.ui' '
 
-	git config --unset color.status &&
-	git config color.ui auto &&
-	test_terminal git status --porcelain | test_decode_color >output &&
+	but config --unset color.status &&
+	but config color.ui auto &&
+	test_terminal but status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
 test_expect_success TTY 'status --porcelain ignores color.status' '
 
-	git config --unset color.ui &&
-	git config color.status auto &&
-	test_terminal git status --porcelain | test_decode_color >output &&
+	but config --unset color.ui &&
+	but config color.status auto &&
+	test_terminal but status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
 # recover unconditionally from color tests
-git config --unset color.status
-git config --unset color.ui
+but config --unset color.status
+but config --unset color.ui
 
 test_expect_success 'status --porcelain respects -b' '
 
-	git status --porcelain -b >output &&
+	but status --porcelain -b >output &&
 	{
 		echo "## main...upstream [ahead 1, behind 2]" &&
 		cat expect
@@ -772,19 +772,19 @@ test_expect_success 'status without relative paths' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -792,7 +792,7 @@ Untracked files:
 
 EOF
 	test_config status.relativePaths false &&
-	(cd dir1 && git status) >output &&
+	(cd dir1 && but status) >output &&
 	test_cmp expect output
 
 '
@@ -809,7 +809,7 @@ EOF
 test_expect_success 'status -s without relative paths' '
 
 	test_config status.relativePaths false &&
-	(cd dir1 && git status -s) >output &&
+	(cd dir1 && but status -s) >output &&
 	test_cmp expect output
 
 '
@@ -826,16 +826,16 @@ A  "file with spaces"
 EOF
 
 test_expect_success 'status -s without relative paths' '
-	test_when_finished "git rm --cached \"file with spaces\"; rm -f file*" &&
+	test_when_finished "but rm --cached \"file with spaces\"; rm -f file*" &&
 	>"file with spaces" &&
 	>"file with spaces 2" &&
 	>"expect with spaces" &&
-	git add "file with spaces" &&
+	but add "file with spaces" &&
 
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output &&
 
-	git status -s --ignored >output &&
+	but status -s --ignored >output &&
 	grep "^!! \"expect with spaces\"$" output &&
 	grep -v "^!! " output >output-wo-ignored &&
 	test_cmp expect output-wo-ignored
@@ -846,20 +846,20 @@ test_expect_success 'dry-run of partial cummit excluding new file in index' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/
 	untracked
 
 EOF
-	git cummit --dry-run dir1/modified >output &&
+	but cummit --dry-run dir1/modified >output &&
 	test_cmp expect output
 '
 
@@ -868,8 +868,8 @@ cat >expect <<EOF
 EOF
 test_expect_success 'status refreshes the index' '
 	touch dir2/added &&
-	git status &&
-	git diff-files >output &&
+	but status &&
+	but diff-files >output &&
 	test_cmp expect output
 '
 
@@ -879,9 +879,9 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	test_create_repo upstream &&
 	test_cummit -C upstream foo &&
 
-	git clone upstream downstream &&
-	git -C downstream checkout @{u} &&
-	git -C downstream status >actual &&
+	but clone upstream downstream &&
+	but -C downstream checkout @{u} &&
+	but -C downstream status >actual &&
 	grep -E "HEAD detached at [0-9a-f]+" actual
 '
 
@@ -889,10 +889,10 @@ test_expect_success 'setup status submodule summary' '
 	test_create_repo sm && (
 		cd sm &&
 		>foo &&
-		git add foo &&
-		git cummit -m "Add foo"
+		but add foo &&
+		but cummit -m "Add foo"
 	) &&
-	git add sm
+	but add sm
 '
 
 test_expect_success 'status submodule summary is disabled by default' '
@@ -900,33 +900,33 @@ test_expect_success 'status submodule summary is disabled by default' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 '
 
 # we expect the same as the previous test
 test_expect_success 'status --untracked-files=all does not show submodule' '
-	git status --untracked-files=all >output &&
+	but status --untracked-files=all >output &&
 	test_cmp expect output
 '
 
@@ -940,33 +940,33 @@ A  sm
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary is disabled by default' '
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output
 '
 
 # we expect the same as the previous test
 test_expect_success 'status -s --untracked-files=all does not show submodule' '
-	git status -s --untracked-files=all >output &&
+	but status -s --untracked-files=all >output &&
 	test_cmp expect output
 '
 
-head=$(cd sm && git rev-parse --short=7 --verify HEAD)
+head=$(cd sm && but rev-parse --short=7 --verify HEAD)
 
 test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 1 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be cummitted:
@@ -975,21 +975,21 @@ Submodule changes to be cummitted:
   > Add foo
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git config status.submodulesummary 10 &&
-	git status >output &&
+	but config status.submodulesummary 10 &&
+	but status >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status submodule summary with status.displayCommentPrefix=false' '
 	strip_comments expect &&
-	git -c status.displayCommentPrefix=false status >output &&
+	but -c status.displayCommentPrefix=false status >output &&
 	test_cmp expect output
 '
 
@@ -1007,7 +1007,7 @@ A  sm
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary' '
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output
 '
 
@@ -1016,27 +1016,27 @@ test_expect_success 'status submodule summary (clean submodule): cummit' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
-no changes added to cummit (use "git add" and/or "git cummit -a")
+no changes added to cummit (use "but add" and/or "but cummit -a")
 EOF
-	git cummit -m "cummit submodule" &&
-	git config status.submodulesummary 10 &&
-	test_must_fail git cummit --dry-run >output &&
+	but cummit -m "cummit submodule" &&
+	but config status.submodulesummary 10 &&
+	test_must_fail but cummit --dry-run >output &&
 	test_cmp expect output &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output
 '
 
@@ -1048,14 +1048,14 @@ cat >expect <<EOF
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary (clean submodule)' '
-	git status -s >output &&
+	but status -s >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'status -z implies porcelain' '
-	git status --porcelain |
+	but status --porcelain |
 	perl -pe "s/\012/\000/g" >expect &&
-	git status -z >output &&
+	but status -z >output &&
 	test_cmp expect output
 '
 
@@ -1064,16 +1064,16 @@ test_expect_success 'cummit --dry-run submodule summary (--amend)' '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
+  (use "but restore --source=HEAD^1 --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be cummitted:
@@ -1082,49 +1082,49 @@ Submodule changes to be cummitted:
   > Add foo
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
+  (use "but add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git config status.submodulesummary 10 &&
-	git cummit --dry-run --amend >output &&
+	but config status.submodulesummary 10 &&
+	but cummit --dry-run --amend >output &&
 	test_cmp expect output
 '
 
 test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository' '
-	test_when_finished "chmod 775 .git" &&
+	test_when_finished "chmod 775 .but" &&
 	(
-		chmod a-w .git &&
+		chmod a-w .but &&
 		# make dir1/tracked stat-dirty
 		>dir1/tracked1 && mv -f dir1/tracked1 dir1/tracked &&
-		git status -s >output &&
+		but status -s >output &&
 		! grep dir1/tracked output &&
 		# make sure "status" succeeded without writing index out
-		git diff-files | grep dir1/tracked
+		but diff-files | grep dir1/tracked
 	)
 '
 
-(cd sm && echo > bar && git add bar && git cummit -q -m 'Add bar') && git add sm
-new_head=$(cd sm && git rev-parse --short=7 --verify HEAD)
-touch .gitmodules
+(cd sm && echo > bar && but add bar && but cummit -q -m 'Add bar') && but add sm
+new_head=$(cd sm && but rev-parse --short=7 --verify HEAD)
+touch .butmodules
 
 test_expect_success '--ignore-submodules=untracked suppresses submodules with untracked content' '
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be cummitted:
@@ -1133,8 +1133,8 @@ Submodule changes to be cummitted:
   > Add bar
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
-	.gitmodules
+  (use "but add <file>..." to include in what will be cummitted)
+	.butmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1142,82 +1142,82 @@ Untracked files:
 
 EOF
 	echo modified  sm/untracked &&
-	git status --ignore-submodules=untracked >output &&
+	but status --ignore-submodules=untracked >output &&
 	test_cmp expect output
 '
 
-test_expect_success '.gitmodules ignore=untracked suppresses submodules with untracked content' '
+test_expect_success '.butmodules ignore=untracked suppresses submodules with untracked content' '
 	test_config diff.ignoreSubmodules dirty &&
-	git status >output &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --add -f .gitmodules submodule.subname.ignore untracked &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+	but config --add -f .butmodules submodule.subname.ignore untracked &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success '.git/config ignore=untracked suppresses submodules with untracked content' '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore untracked &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success '.but/config ignore=untracked suppresses submodules with untracked content' '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore untracked &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config --remove-section -f .gitmodules submodule.subname
+	but config --remove-section submodule.subname &&
+	but config --remove-section -f .butmodules submodule.subname
 '
 
 test_expect_success '--ignore-submodules=dirty suppresses submodules with untracked content' '
-	git status --ignore-submodules=dirty >output &&
+	but status --ignore-submodules=dirty >output &&
 	test_cmp expect output
 '
 
-test_expect_success '.gitmodules ignore=dirty suppresses submodules with untracked content' '
+test_expect_success '.butmodules ignore=dirty suppresses submodules with untracked content' '
 	test_config diff.ignoreSubmodules dirty &&
-	git status >output &&
+	but status >output &&
 	! test -s actual &&
-	git config --add -f .gitmodules submodule.subname.ignore dirty &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+	but config --add -f .butmodules submodule.subname.ignore dirty &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success '.git/config ignore=dirty suppresses submodules with untracked content' '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore dirty &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success '.but/config ignore=dirty suppresses submodules with untracked content' '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore dirty &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 test_expect_success '--ignore-submodules=dirty suppresses submodules with modified content' '
 	echo modified >sm/foo &&
-	git status --ignore-submodules=dirty >output &&
+	but status --ignore-submodules=dirty >output &&
 	test_cmp expect output
 '
 
-test_expect_success '.gitmodules ignore=dirty suppresses submodules with modified content' '
-	git config --add -f .gitmodules submodule.subname.ignore dirty &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+test_expect_success '.butmodules ignore=dirty suppresses submodules with modified content' '
+	but config --add -f .butmodules submodule.subname.ignore dirty &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success '.git/config ignore=dirty suppresses submodules with modified content' '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore dirty &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success '.but/config ignore=dirty suppresses submodules with modified content' '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore dirty &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodules with modified content" '
@@ -1225,15 +1225,15 @@ test_expect_success "--ignore-submodules=untracked doesn't suppress submodules w
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
   (cummit or discard the untracked or modified content in submodules)
 	modified:   dir1/modified
 	modified:   sm (modified content)
@@ -1244,53 +1244,53 @@ Submodule changes to be cummitted:
   > Add bar
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
-	.gitmodules
+  (use "but add <file>..." to include in what will be cummitted)
+	.butmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git status --ignore-submodules=untracked > output &&
+	but status --ignore-submodules=untracked > output &&
 	test_cmp expect output
 '
 
-test_expect_success ".gitmodules ignore=untracked doesn't suppress submodules with modified content" '
-	git config --add -f .gitmodules submodule.subname.ignore untracked &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".butmodules ignore=untracked doesn't suppress submodules with modified content" '
+	but config --add -f .butmodules submodule.subname.ignore untracked &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success ".git/config ignore=untracked doesn't suppress submodules with modified content" '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore untracked &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".but/config ignore=untracked doesn't suppress submodules with modified content" '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore untracked &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-head2=$(cd sm && git cummit -q -m "2nd cummit" foo && git rev-parse --short=7 --verify HEAD)
+head2=$(cd sm && but cummit -q -m "2nd cummit" foo && but rev-parse --short=7 --verify HEAD)
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 	modified:   sm (new cummits)
 
@@ -1305,73 +1305,73 @@ Submodules changed but not updated:
   > 2nd cummit
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
-	.gitmodules
+  (use "but add <file>..." to include in what will be cummitted)
+	.butmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git status --ignore-submodules=untracked > output &&
+	but status --ignore-submodules=untracked > output &&
 	test_cmp expect output
 '
 
-test_expect_success ".gitmodules ignore=untracked doesn't suppress submodule summary" '
-	git config --add -f .gitmodules submodule.subname.ignore untracked &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".butmodules ignore=untracked doesn't suppress submodule summary" '
+	but config --add -f .butmodules submodule.subname.ignore untracked &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success ".git/config ignore=untracked doesn't suppress submodule summary" '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore untracked &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".but/config ignore=untracked doesn't suppress submodule summary" '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore untracked &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 test_expect_success "--ignore-submodules=dirty doesn't suppress submodule summary" '
-	git status --ignore-submodules=dirty > output &&
+	but status --ignore-submodules=dirty > output &&
 	test_cmp expect output
 '
-test_expect_success ".gitmodules ignore=dirty doesn't suppress submodule summary" '
-	git config --add -f .gitmodules submodule.subname.ignore dirty &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".butmodules ignore=dirty doesn't suppress submodule summary" '
+	but config --add -f .butmodules submodule.subname.ignore dirty &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary" '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore dirty &&
-	git config --add submodule.subname.path sm &&
-	git status >output &&
+test_expect_success ".but/config ignore=dirty doesn't suppress submodule summary" '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore dirty &&
+	but config --add submodule.subname.path sm &&
+	but status >output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 cat > expect << EOF
 ; On branch main
 ; Your branch and 'upstream' have diverged,
 ; and have 2 and 2 different cummits each, respectively.
-;   (use "git pull" to merge the remote branch into yours)
+;   (use "but pull" to merge the remote branch into yours)
 ;
 ; Changes to be cummitted:
-;   (use "git restore --staged <file>..." to unstage)
+;   (use "but restore --staged <file>..." to unstage)
 ;	modified:   sm
 ;
 ; Changes not staged for cummit:
-;   (use "git add <file>..." to update what will be cummitted)
-;   (use "git restore <file>..." to discard changes in working directory)
+;   (use "but add <file>..." to update what will be cummitted)
+;   (use "but restore <file>..." to discard changes in working directory)
 ;	modified:   dir1/modified
 ;	modified:   sm (new cummits)
 ;
@@ -1386,8 +1386,8 @@ cat > expect << EOF
 ;   > 2nd cummit
 ;
 ; Untracked files:
-;   (use "git add <file>..." to include in what will be cummitted)
-;	.gitmodules
+;   (use "but add <file>..." to include in what will be cummitted)
+;	.butmodules
 ;	dir1/untracked
 ;	dir2/modified
 ;	dir2/untracked
@@ -1397,13 +1397,13 @@ EOF
 
 test_expect_success "status (core.commentchar with submodule summary)" '
 	test_config core.commentchar ";" &&
-	git -c status.displayCommentPrefix=true status >output &&
+	but -c status.displayCommentPrefix=true status >output &&
 	test_cmp expect output
 '
 
 test_expect_success "status (core.commentchar with two chars with submodule summary)" '
 	test_config core.commentchar ";;" &&
-	test_must_fail git -c status.displayCommentPrefix=true status
+	test_must_fail but -c status.displayCommentPrefix=true status
 '
 
 test_expect_success "--ignore-submodules=all suppresses submodule summary" '
@@ -1411,269 +1411,269 @@ test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
-	.gitmodules
+  (use "but add <file>..." to include in what will be cummitted)
+	.butmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
-no changes added to cummit (use "git add" and/or "git cummit -a")
+no changes added to cummit (use "but add" and/or "but cummit -a")
 EOF
-	git status --ignore-submodules=all > output &&
+	but status --ignore-submodules=all > output &&
 	test_cmp expect output
 '
 
-test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summary' '
+test_expect_success '.butmodules ignore=all suppresses unstaged submodule summary' '
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be cummitted)
-	.gitmodules
+  (use "but add <file>..." to include in what will be cummitted)
+	.butmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
 EOF
-	git config --add -f .gitmodules submodule.subname.ignore all &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git status > output &&
+	but config --add -f .butmodules submodule.subname.ignore all &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but status > output &&
 	test_cmp expect output &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
-test_expect_success '.git/config ignore=all suppresses unstaged submodule summary' '
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore all &&
-	git config --add submodule.subname.path sm &&
-	git status > output &&
+test_expect_success '.but/config ignore=all suppresses unstaged submodule summary' '
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore all &&
+	but config --add submodule.subname.path sm &&
+	but status > output &&
 	test_cmp expect output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 test_expect_success 'setup of test environment' '
-	git config status.showUntrackedFiles no &&
-	git status -s >expected_short &&
-	git status --no-short >expected_noshort
+	but config status.showUntrackedFiles no &&
+	but status -s >expected_short &&
+	but status --no-short >expected_noshort
 '
 
 test_expect_success '"status.short=true" same as "-s"' '
-	git -c status.short=true status >actual &&
+	but -c status.short=true status >actual &&
 	test_cmp expected_short actual
 '
 
 test_expect_success '"status.short=true" weaker than "--no-short"' '
-	git -c status.short=true status --no-short >actual &&
+	but -c status.short=true status --no-short >actual &&
 	test_cmp expected_noshort actual
 '
 
 test_expect_success '"status.short=false" same as "--no-short"' '
-	git -c status.short=false status >actual &&
+	but -c status.short=false status >actual &&
 	test_cmp expected_noshort actual
 '
 
 test_expect_success '"status.short=false" weaker than "-s"' '
-	git -c status.short=false status -s >actual &&
+	but -c status.short=false status -s >actual &&
 	test_cmp expected_short actual
 '
 
 test_expect_success '"status.branch=true" same as "-b"' '
-	git status -sb >expected_branch &&
-	git -c status.branch=true status -s >actual &&
+	but status -sb >expected_branch &&
+	but -c status.branch=true status -s >actual &&
 	test_cmp expected_branch actual
 '
 
 test_expect_success '"status.branch=true" different from "--no-branch"' '
-	git status -s --no-branch  >expected_nobranch &&
-	git -c status.branch=true status -s >actual &&
+	but status -s --no-branch  >expected_nobranch &&
+	but -c status.branch=true status -s >actual &&
 	! test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=true" weaker than "--no-branch"' '
-	git -c status.branch=true status -s --no-branch >actual &&
+	but -c status.branch=true status -s --no-branch >actual &&
 	test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=true" weaker than "--porcelain"' '
-       git -c status.branch=true status --porcelain >actual &&
+       but -c status.branch=true status --porcelain >actual &&
        test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=false" same as "--no-branch"' '
-	git -c status.branch=false status -s >actual &&
+	but -c status.branch=false status -s >actual &&
 	test_cmp expected_nobranch actual
 '
 
 test_expect_success '"status.branch=false" weaker than "-b"' '
-	git -c status.branch=false status -sb >actual &&
+	but -c status.branch=false status -sb >actual &&
 	test_cmp expected_branch actual
 '
 
 test_expect_success 'Restore default test environment' '
-	git config --unset status.showUntrackedFiles
+	but config --unset status.showUntrackedFiles
 '
 
-test_expect_success 'git cummit will cummit a staged but ignored submodule' '
-	git config --add -f .gitmodules submodule.subname.ignore all &&
-	git config --add -f .gitmodules submodule.subname.path sm &&
-	git config --add submodule.subname.ignore all &&
-	git status -s --ignore-submodules=dirty >output &&
+test_expect_success 'but cummit will cummit a staged but ignored submodule' '
+	but config --add -f .butmodules submodule.subname.ignore all &&
+	but config --add -f .butmodules submodule.subname.path sm &&
+	but config --add submodule.subname.ignore all &&
+	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep "^M. sm" output &&
 	GIT_EDITOR="echo hello >>\"\$1\"" &&
 	export GIT_EDITOR &&
-	git cummit -uno &&
-	git status -s --ignore-submodules=dirty >output &&
+	but cummit -uno &&
+	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep ! "^M. sm" output
 '
 
-test_expect_success 'git cummit --dry-run will show a staged but ignored submodule' '
-	git reset HEAD^ &&
-	git add sm &&
+test_expect_success 'but cummit --dry-run will show a staged but ignored submodule' '
+	but reset HEAD^ &&
+	but add sm &&
 	cat >expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
 and have 2 and 2 different cummits each, respectively.
-  (use "git pull" to merge the remote branch into yours)
+  (use "but pull" to merge the remote branch into yours)
 
 Changes to be cummitted:
-  (use "git restore --staged <file>..." to unstage)
+  (use "but restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for cummit:
-  (use "git add <file>..." to update what will be cummitted)
-  (use "git restore <file>..." to discard changes in working directory)
+  (use "but add <file>..." to update what will be cummitted)
+  (use "but restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
-	git cummit -uno --dry-run >output &&
+	but cummit -uno --dry-run >output &&
 	test_cmp expect output &&
-	git status -s --ignore-submodules=dirty >output &&
+	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep "^M. sm" output
 '
 
-test_expect_success 'git cummit -m will cummit a staged but ignored submodule' '
-	git cummit -uno -m message &&
-	git status -s --ignore-submodules=dirty >output &&
+test_expect_success 'but cummit -m will cummit a staged but ignored submodule' '
+	but cummit -uno -m message &&
+	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep ! "^M. sm" output &&
-	git config --remove-section submodule.subname &&
-	git config -f .gitmodules  --remove-section submodule.subname
+	but config --remove-section submodule.subname &&
+	but config -f .butmodules  --remove-section submodule.subname
 '
 
 test_expect_success 'show stash info with "--show-stash"' '
-	git reset --hard &&
-	git stash clear &&
+	but reset --hard &&
+	but stash clear &&
 	echo 1 >file &&
-	git add file &&
-	git stash &&
-	git status >expected_default &&
-	git status --show-stash >expected_with_stash &&
+	but add file &&
+	but stash &&
+	but status >expected_default &&
+	but status --show-stash >expected_with_stash &&
 	test_i18ngrep "^Your stash currently has 1 entry$" expected_with_stash
 '
 
 test_expect_success 'no stash info with "--show-stash --no-show-stash"' '
-	git status --show-stash --no-show-stash >expected_without_stash &&
+	but status --show-stash --no-show-stash >expected_without_stash &&
 	test_cmp expected_default expected_without_stash
 '
 
 test_expect_success '"status.showStash=false" weaker than "--show-stash"' '
-	git -c status.showStash=false status --show-stash >actual &&
+	but -c status.showStash=false status --show-stash >actual &&
 	test_cmp expected_with_stash actual
 '
 
 test_expect_success '"status.showStash=true" weaker than "--no-show-stash"' '
-	git -c status.showStash=true status --no-show-stash >actual &&
+	but -c status.showStash=true status --no-show-stash >actual &&
 	test_cmp expected_without_stash actual
 '
 
 test_expect_success 'no additional info if no stash entries' '
-	git stash clear &&
-	git -c status.showStash=true status >actual &&
+	but stash clear &&
+	but -c status.showStash=true status >actual &&
 	test_cmp expected_without_stash actual
 '
 
 test_expect_success '"No cummits yet" should be noted in status output' '
-	git checkout --orphan empty-branch-1 &&
-	git status >output &&
+	but checkout --orphan empty-branch-1 &&
+	but status >output &&
 	test_i18ngrep "No cummits yet" output
 '
 
 test_expect_success '"No cummits yet" should not be noted in status output' '
-	git checkout --orphan empty-branch-2 &&
+	but checkout --orphan empty-branch-2 &&
 	test_cummit test-cummit-1 &&
-	git status >output &&
+	but status >output &&
 	test_i18ngrep ! "No cummits yet" output
 '
 
 test_expect_success '"Initial cummit" should be noted in cummit template' '
-	git checkout --orphan empty-branch-3 &&
+	but checkout --orphan empty-branch-3 &&
 	touch to_be_cummitted_1 &&
-	git add to_be_cummitted_1 &&
-	git cummit --dry-run >output &&
+	but add to_be_cummitted_1 &&
+	but cummit --dry-run >output &&
 	test_i18ngrep "Initial cummit" output
 '
 
 test_expect_success '"Initial cummit" should not be noted in cummit template' '
-	git checkout --orphan empty-branch-4 &&
+	but checkout --orphan empty-branch-4 &&
 	test_cummit test-cummit-2 &&
 	touch to_be_cummitted_2 &&
-	git add to_be_cummitted_2 &&
-	git cummit --dry-run >output &&
+	but add to_be_cummitted_2 &&
+	but cummit --dry-run >output &&
 	test_i18ngrep ! "Initial cummit" output
 '
 
 test_expect_success '--no-optional-locks prevents index update' '
-	test_set_magic_mtime .git/index &&
-	git --no-optional-locks status &&
-	test_is_magic_mtime .git/index &&
-	git status &&
-	! test_is_magic_mtime .git/index
+	test_set_magic_mtime .but/index &&
+	but --no-optional-locks status &&
+	test_is_magic_mtime .but/index &&
+	but status &&
+	! test_is_magic_mtime .but/index
 '
 
 test_expect_success 'racy timestamps will be fixed for clean worktree' '
 	echo content >racy-dirty &&
 	echo content >racy-racy &&
-	git add racy* &&
-	git cummit -m "racy test files" &&
+	but add racy* &&
+	but cummit -m "racy test files" &&
 	# let status rewrite the index, if necessary; after that we expect
 	# no more index writes unless caused by racy timestamps; note that
 	# timestamps may already be racy now (depending on previous tests)
-	git status &&
-	test_set_magic_mtime .git/index &&
-	git status &&
-	! test_is_magic_mtime .git/index
+	but status &&
+	test_set_magic_mtime .but/index &&
+	but status &&
+	! test_is_magic_mtime .but/index
 '
 
 test_expect_success 'racy timestamps will be fixed for dirty worktree' '
 	echo content2 >racy-dirty &&
-	git status &&
-	test_set_magic_mtime .git/index &&
-	git status &&
-	! test_is_magic_mtime .git/index
+	but status &&
+	test_set_magic_mtime .but/index &&
+	but status &&
+	! test_is_magic_mtime .but/index
 '
 
 test_done

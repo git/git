@@ -20,8 +20,8 @@ Instructions to run CMake manually:
     cd contrib/buildsystems/out
     cmake ../ -DCMAKE_BUILD_TYPE=Release
 
-This will build the git binaries in contrib/buildsystems/out
-directory (our top-level .gitignore file knows to ignore contents of
+This will build the but binaries in contrib/buildsystems/out
+directory (our top-level .butignore file knows to ignore contents of
 this directory).
 
 Possible build configurations(-DCMAKE_BUILD_TYPE) with corresponding
@@ -37,7 +37,7 @@ this option is ignored
 
 This process generates a Makefile(Linux/*BSD/MacOS) , Visual Studio solution(Windows) by default.
 Run `make` to build Git on Linux/*BSD/MacOS.
-Open git.sln on Windows and build Git.
+Open but.sln on Windows and build Git.
 
 NOTE: By default CMake uses Makefile as the build tool on Linux and Visual Studio in Windows,
 to use another tool say `ninja` add this to the command line when configuring.
@@ -49,7 +49,7 @@ to avoid this, add `-DNO_VCPKG=TRUE` to the command line when configuring.
 ]]
 cmake_minimum_required(VERSION 3.14)
 
-#set the source directory to root of git
+#set the source directory to root of but
 set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
 
 option(USE_VCPKG "Whether or not to use vcpkg for obtaining dependencies.  Only applicable to Windows platforms" ON)
@@ -80,7 +80,7 @@ endif()
 find_program(SH_EXE sh PATHS "C:/Program Files/Git/bin")
 if(NOT SH_EXE)
 	message(FATAL_ERROR "sh: shell interpreter was not found in your path, please install one."
-			"On Windows, you can get it as part of 'Git for Windows' install at https://gitforwindows.org/")
+			"On Windows, you can get it as part of 'Git for Windows' install at https://butforwindows.org/")
 endif()
 
 #Create GIT-VERSION-FILE using GIT-VERSION-GEN
@@ -91,22 +91,22 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/GIT-VERSION-FILE)
 endif()
 
 #Parse GIT-VERSION-FILE to get the version
-file(STRINGS ${CMAKE_SOURCE_DIR}/GIT-VERSION-FILE git_version REGEX "GIT_VERSION = (.*)")
-string(REPLACE "GIT_VERSION = " "" git_version ${git_version})
-string(FIND ${git_version} "GIT" location)
+file(STRINGS ${CMAKE_SOURCE_DIR}/GIT-VERSION-FILE but_version REGEX "GIT_VERSION = (.*)")
+string(REPLACE "GIT_VERSION = " "" but_version ${but_version})
+string(FIND ${but_version} "GIT" location)
 if(location EQUAL -1)
-	string(REGEX MATCH "[0-9]*\\.[0-9]*\\.[0-9]*" git_version ${git_version})
+	string(REGEX MATCH "[0-9]*\\.[0-9]*\\.[0-9]*" but_version ${but_version})
 else()
-	string(REGEX MATCH "[0-9]*\\.[0-9]*" git_version ${git_version})
-	string(APPEND git_version ".0") #for building from a snapshot
+	string(REGEX MATCH "[0-9]*\\.[0-9]*" but_version ${but_version})
+	string(APPEND but_version ".0") #for building from a snapshot
 endif()
 
-project(git
-	VERSION ${git_version}
+project(but
+	VERSION ${but_version}
 	LANGUAGES C)
 
 
-#TODO gitk git-gui gitweb
+#TODO butk but-gui butweb
 #TODO Enable NLS on windows natively
 #TODO Add pcre support
 
@@ -114,7 +114,7 @@ project(git
 macro(parse_makefile_for_sources list_var regex)
 	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
-	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) #remove "$(COMPAT_OBJS)" This is only for libgit.
+	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) #remove "$(COMPAT_OBJS)" This is only for libbut.
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
 	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) #change .o to .c, ; is for converting the string into a list
 	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
@@ -132,10 +132,10 @@ macro(parse_makefile_for_scripts list_var regex lang)
 endmacro()
 
 macro(parse_makefile_for_executables list_var regex)
-	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+= git-(.*)")
+	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+= but-(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
-	string(REPLACE "git-" "" ${list_var} ${${list_var}}) #strip `git-` prefix
+	string(REPLACE "but-" "" ${list_var} ${${list_var}}) #strip `but-` prefix
 	string(REPLACE "\$X" ";" ${list_var} ${${list_var}}) #strip $X, ; is for converting the string into a list
 	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
 	list(REMOVE_ITEM ${list_var} "") #remove empty list elements
@@ -218,20 +218,20 @@ add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
 			SHA1DC_CUSTOM_INCLUDE_SHA1_C="cache.h"
-			SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="git-compat-util.h" )
-list(APPEND compat_SOURCES sha1dc_git.c sha1dc/sha1.c sha1dc/ubc_check.c block-sha1/sha1.c sha256/block/sha256.c compat/qsort_s.c)
+			SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="but-compat-util.h" )
+list(APPEND compat_SOURCES sha1dc_but.c sha1dc/sha1.c sha1dc/ubc_check.c block-sha1/sha1.c sha256/block/sha256.c compat/qsort_s.c)
 
 
 add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
-			GIT_EXEC_PATH="libexec/git-core"
+			GIT_EXEC_PATH="libexec/but-core"
 			GIT_LOCALE_PATH="share/locale"
 			GIT_MAN_PATH="share/man"
 			GIT_INFO_PATH="share/info"
-			GIT_HTML_PATH="share/doc/git-doc"
+			GIT_HTML_PATH="share/doc/but-doc"
 			DEFAULT_HELP_FORMAT="html"
-			DEFAULT_GIT_TEMPLATE_DIR="share/git-core/templates"
+			DEFAULT_GIT_TEMPLATE_DIR="share/but-core/templates"
 			GIT_VERSION="${PROJECT_VERSION}.GIT"
-			GIT_USER_AGENT="git/${PROJECT_VERSION}.GIT"
+			GIT_USER_AGENT="but/${PROJECT_VERSION}.GIT"
 			BINDIR="bin"
 			GIT_BUILT_FROM_CUMMIT="")
 
@@ -239,13 +239,13 @@ if(WIN32)
 	set(FALLBACK_RUNTIME_PREFIX /mingw64)
 	# Move system config into top-level /etc/
 	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
-		ETC_GITATTRIBUTES="../etc/gitattributes"
-		ETC_GITCONFIG="../etc/gitconfig")
+		ETC_GITATTRIBUTES="../etc/butattributes"
+		ETC_GITCONFIG="../etc/butconfig")
 else()
 	set(FALLBACK_RUNTIME_PREFIX /home/$ENV{USER})
 	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
-		ETC_GITATTRIBUTES="etc/gitattributes"
-		ETC_GITCONFIG="etc/gitconfig")
+		ETC_GITATTRIBUTES="etc/butattributes"
+		ETC_GITCONFIG="etc/butconfig")
 endif()
 
 
@@ -591,25 +591,25 @@ unset(CMAKE_REQUIRED_INCLUDES)
 
 #programs
 set(PROGRAMS_BUILT
-	git git-daemon git-http-backend git-sh-i18n--envsubst
-	git-shell)
+	but but-daemon but-http-backend but-sh-i18n--envsubst
+	but-shell)
 
 if(NOT CURL_FOUND)
-	list(APPEND excluded_progs git-http-fetch git-http-push)
+	list(APPEND excluded_progs but-http-fetch but-http-push)
 	add_compile_definitions(NO_CURL)
-	message(WARNING "git-http-push and git-http-fetch will not be built")
+	message(WARNING "but-http-push and but-http-fetch will not be built")
 else()
-	list(APPEND PROGRAMS_BUILT git-http-fetch git-http-push git-imap-send git-remote-http)
+	list(APPEND PROGRAMS_BUILT but-http-fetch but-http-push but-imap-send but-remote-http)
 	if(CURL_VERSION_STRING VERSION_GREATER_EQUAL 7.34.0)
 		add_compile_definitions(USE_CURL_FOR_IMAP_SEND)
 	endif()
 endif()
 
 if(NOT EXPAT_FOUND)
-	list(APPEND excluded_progs git-http-push)
+	list(APPEND excluded_progs but-http-push)
 	add_compile_definitions(NO_EXPAT)
 else()
-	list(APPEND PROGRAMS_BUILT git-http-push)
+	list(APPEND PROGRAMS_BUILT but-http-push)
 	if(EXPAT_VERSION_STRING VERSION_LESS_EQUAL 1.2)
 		add_compile_definitions(EXPAT_NEEDS_XMLPARSE_H)
 	endif()
@@ -652,12 +652,12 @@ endif()
 include_directories(${CMAKE_BINARY_DIR})
 
 #build
-#libgit
-parse_makefile_for_sources(libgit_SOURCES "LIB_OBJS")
+#libbut
+parse_makefile_for_sources(libbut_SOURCES "LIB_OBJS")
 
-list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
+list(TRANSFORM libbut_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
+add_library(libbut ${libbut_SOURCES} ${compat_SOURCES})
 
 #libxdiff
 parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
@@ -673,27 +673,27 @@ add_library(reftable STATIC ${reftable_SOURCES})
 
 if(WIN32)
 	if(NOT MSVC)#use windres when compiling with gcc and clang
-		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/git.res
+		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/but.res
 				COMMAND ${WINDRES_EXE} -O coff -DMAJOR=${PROJECT_VERSION_MAJOR} -DMINOR=${PROJECT_VERSION_MINOR}
 					-DMICRO=${PROJECT_VERSION_PATCH} -DPATCHLEVEL=0 -DGIT_VERSION="\\\"${PROJECT_VERSION}.GIT\\\""
-					-i ${CMAKE_SOURCE_DIR}/git.rc -o ${CMAKE_BINARY_DIR}/git.res
+					-i ${CMAKE_SOURCE_DIR}/but.rc -o ${CMAKE_BINARY_DIR}/but.res
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 				VERBATIM)
 	else()#MSVC use rc
-		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/git.res
+		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/but.res
 				COMMAND ${CMAKE_RC_COMPILER} /d MAJOR=${PROJECT_VERSION_MAJOR} /d MINOR=${PROJECT_VERSION_MINOR}
 					/d MICRO=${PROJECT_VERSION_PATCH} /d PATCHLEVEL=0 /d GIT_VERSION="${PROJECT_VERSION}.GIT"
-					/fo ${CMAKE_BINARY_DIR}/git.res ${CMAKE_SOURCE_DIR}/git.rc
+					/fo ${CMAKE_BINARY_DIR}/but.res ${CMAKE_SOURCE_DIR}/but.rc
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 				VERBATIM)
 	endif()
-	add_custom_target(git-rc DEPENDS ${CMAKE_BINARY_DIR}/git.res)
+	add_custom_target(but-rc DEPENDS ${CMAKE_BINARY_DIR}/but.res)
 endif()
 
 #link all required libraries to common-main
 add_library(common-main OBJECT ${CMAKE_SOURCE_DIR}/common-main.c)
 
-target_link_libraries(common-main libgit xdiff reftable ${ZLIB_LIBRARIES})
+target_link_libraries(common-main libbut xdiff reftable ${ZLIB_LIBRARIES})
 if(Intl_FOUND)
 	target_link_libraries(common-main ${Intl_LIBRARIES})
 endif()
@@ -701,8 +701,8 @@ if(Iconv_FOUND)
 	target_link_libraries(common-main ${Iconv_LIBRARIES})
 endif()
 if(WIN32)
-	target_link_libraries(common-main ws2_32 ntdll ${CMAKE_BINARY_DIR}/git.res)
-	add_dependencies(common-main git-rc)
+	target_link_libraries(common-main ws2_32 ntdll ${CMAKE_BINARY_DIR}/but.res)
+	add_dependencies(common-main but-rc)
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 		target_link_options(common-main PUBLIC -municode -Wl,--nxcompat -Wl,--dynamicbase -Wl,--pic-executable,-e,mainCRTStartup)
 	elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -716,70 +716,70 @@ elseif(UNIX)
 	target_link_libraries(common-main pthread rt)
 endif()
 
-#git
-parse_makefile_for_sources(git_SOURCES "BUILTIN_OBJS")
+#but
+parse_makefile_for_sources(but_SOURCES "BUILTIN_OBJS")
 
-list(TRANSFORM git_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_executable(git ${CMAKE_SOURCE_DIR}/git.c ${git_SOURCES})
-target_link_libraries(git common-main)
+list(TRANSFORM but_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
+add_executable(but ${CMAKE_SOURCE_DIR}/but.c ${but_SOURCES})
+target_link_libraries(but common-main)
 
-add_executable(git-daemon ${CMAKE_SOURCE_DIR}/daemon.c)
-target_link_libraries(git-daemon common-main)
+add_executable(but-daemon ${CMAKE_SOURCE_DIR}/daemon.c)
+target_link_libraries(but-daemon common-main)
 
-add_executable(git-http-backend ${CMAKE_SOURCE_DIR}/http-backend.c)
-target_link_libraries(git-http-backend common-main)
+add_executable(but-http-backend ${CMAKE_SOURCE_DIR}/http-backend.c)
+target_link_libraries(but-http-backend common-main)
 
-add_executable(git-sh-i18n--envsubst ${CMAKE_SOURCE_DIR}/sh-i18n--envsubst.c)
-target_link_libraries(git-sh-i18n--envsubst common-main)
+add_executable(but-sh-i18n--envsubst ${CMAKE_SOURCE_DIR}/sh-i18n--envsubst.c)
+target_link_libraries(but-sh-i18n--envsubst common-main)
 
-add_executable(git-shell ${CMAKE_SOURCE_DIR}/shell.c)
-target_link_libraries(git-shell common-main)
+add_executable(but-shell ${CMAKE_SOURCE_DIR}/shell.c)
+target_link_libraries(but-shell common-main)
 
 if(CURL_FOUND)
 	add_library(http_obj OBJECT ${CMAKE_SOURCE_DIR}/http.c)
 
-	add_executable(git-imap-send ${CMAKE_SOURCE_DIR}/imap-send.c)
-	target_link_libraries(git-imap-send http_obj common-main ${CURL_LIBRARIES})
+	add_executable(but-imap-send ${CMAKE_SOURCE_DIR}/imap-send.c)
+	target_link_libraries(but-imap-send http_obj common-main ${CURL_LIBRARIES})
 
-	add_executable(git-http-fetch ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/http-fetch.c)
-	target_link_libraries(git-http-fetch http_obj common-main ${CURL_LIBRARIES})
+	add_executable(but-http-fetch ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/http-fetch.c)
+	target_link_libraries(but-http-fetch http_obj common-main ${CURL_LIBRARIES})
 
-	add_executable(git-remote-http ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/remote-curl.c)
-	target_link_libraries(git-remote-http http_obj common-main ${CURL_LIBRARIES} )
+	add_executable(but-remote-http ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/remote-curl.c)
+	target_link_libraries(but-remote-http http_obj common-main ${CURL_LIBRARIES} )
 
 	if(EXPAT_FOUND)
-		add_executable(git-http-push ${CMAKE_SOURCE_DIR}/http-push.c)
-		target_link_libraries(git-http-push http_obj common-main ${CURL_LIBRARIES} ${EXPAT_LIBRARIES})
+		add_executable(but-http-push ${CMAKE_SOURCE_DIR}/http-push.c)
+		target_link_libraries(but-http-push http_obj common-main ${CURL_LIBRARIES} ${EXPAT_LIBRARIES})
 	endif()
 endif()
 
-parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
+parse_makefile_for_executables(but_builtin_extra "BUILT_INS")
 
 option(SKIP_DASHED_BUILT_INS "Skip hardlinking the dashed versions of the built-ins")
 
 #Creating hardlinks
 if(NOT SKIP_DASHED_BUILT_INS)
-foreach(s ${git_SOURCES} ${git_builtin_extra})
+foreach(s ${but_SOURCES} ${but_builtin_extra})
 	string(REPLACE "${CMAKE_SOURCE_DIR}/builtin/" "" s ${s})
 	string(REPLACE ".c" "" s ${s})
-	file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK git${EXE_EXTENSION} git-${s}${EXE_EXTENSION})\n")
-	list(APPEND git_links ${CMAKE_BINARY_DIR}/git-${s}${EXE_EXTENSION})
+	file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK but${EXE_EXTENSION} but-${s}${EXE_EXTENSION})\n")
+	list(APPEND but_links ${CMAKE_BINARY_DIR}/but-${s}${EXE_EXTENSION})
 endforeach()
 endif()
 
 if(CURL_FOUND)
 	set(remote_exes
-		git-remote-https git-remote-ftp git-remote-ftps)
+		but-remote-https but-remote-ftp but-remote-ftps)
 	foreach(s ${remote_exes})
-		file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK git-remote-http${EXE_EXTENSION} ${s}${EXE_EXTENSION})\n")
-		list(APPEND git_http_links ${CMAKE_BINARY_DIR}/${s}${EXE_EXTENSION})
+		file(APPEND ${CMAKE_BINARY_DIR}/CreateLinks.cmake "file(CREATE_LINK but-remote-http${EXE_EXTENSION} ${s}${EXE_EXTENSION})\n")
+		list(APPEND but_http_links ${CMAKE_BINARY_DIR}/${s}${EXE_EXTENSION})
 	endforeach()
 endif()
 
-add_custom_command(OUTPUT ${git_links} ${git_http_links}
+add_custom_command(OUTPUT ${but_links} ${but_http_links}
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CreateLinks.cmake
-		DEPENDS git git-remote-http)
-add_custom_target(git-links ALL DEPENDS ${git_links} ${git_http_links})
+		DEPENDS but but-remote-http)
+add_custom_target(but-links ALL DEPENDS ${but_links} ${but_http_links})
 
 
 #creating required scripts
@@ -790,12 +790,12 @@ set(GITWEBDIR ${FALLBACK_RUNTIME_PREFIX}/share/locale)
 set(INSTLIBDIR ${FALLBACK_RUNTIME_PREFIX}/share/perl5)
 
 #shell scripts
-parse_makefile_for_scripts(git_sh_scripts "SCRIPT_SH" ".sh")
-parse_makefile_for_scripts(git_shlib_scripts "SCRIPT_LIB" "")
-set(git_shell_scripts
-	${git_sh_scripts} ${git_shlib_scripts} git-instaweb)
+parse_makefile_for_scripts(but_sh_scripts "SCRIPT_SH" ".sh")
+parse_makefile_for_scripts(but_shlib_scripts "SCRIPT_LIB" "")
+set(but_shell_scripts
+	${but_sh_scripts} ${but_shlib_scripts} but-instaweb)
 
-foreach(script ${git_shell_scripts})
+foreach(script ${but_shell_scripts})
 	file(STRINGS ${CMAKE_SOURCE_DIR}/${script}.sh content NEWLINE_CONSUME)
 	string(REPLACE "@SHELL_PATH@" "${SHELL_PATH}" content "${content}")
 	string(REPLACE "@@DIFF@@" "diff" content "${content}")
@@ -810,14 +810,14 @@ foreach(script ${git_shell_scripts})
 endforeach()
 
 #perl scripts
-parse_makefile_for_scripts(git_perl_scripts "SCRIPT_PERL" ".perl")
+parse_makefile_for_scripts(but_perl_scripts "SCRIPT_PERL" ".perl")
 
 #create perl header
 file(STRINGS ${CMAKE_SOURCE_DIR}/perl/header_templates/fixed_prefix.template.pl perl_header )
 string(REPLACE "@@PATHSEP@@" ":" perl_header "${perl_header}")
 string(REPLACE "@@INSTLIBDIR@@" "${INSTLIBDIR}" perl_header "${perl_header}")
 
-foreach(script ${git_perl_scripts})
+foreach(script ${but_perl_scripts})
 	file(STRINGS ${CMAKE_SOURCE_DIR}/${script}.perl content NEWLINE_CONSUME)
 	string(REPLACE "#!/usr/bin/perl" "#!/usr/bin/perl\n${perl_header}\n" content "${content}")
 	string(REPLACE "@@GIT_VERSION@@" "${PROJECT_VERSION}" content "${content}")
@@ -825,9 +825,9 @@ foreach(script ${git_perl_scripts})
 endforeach()
 
 #python script
-file(STRINGS ${CMAKE_SOURCE_DIR}/git-p4.py content NEWLINE_CONSUME)
+file(STRINGS ${CMAKE_SOURCE_DIR}/but-p4.py content NEWLINE_CONSUME)
 string(REPLACE "#!/usr/bin/env python" "#!/usr/bin/python" content "${content}")
-file(WRITE ${CMAKE_BINARY_DIR}/git-p4 ${content})
+file(WRITE ${CMAKE_BINARY_DIR}/but-p4 ${content})
 
 #perl modules
 file(GLOB_RECURSE perl_modules "${CMAKE_SOURCE_DIR}/perl/*.pm")
@@ -845,7 +845,7 @@ endforeach()
 #templates
 file(GLOB templates "${CMAKE_SOURCE_DIR}/templates/*")
 list(TRANSFORM templates REPLACE "${CMAKE_SOURCE_DIR}/templates/" "")
-list(REMOVE_ITEM templates ".gitignore")
+list(REMOVE_ITEM templates ".butignore")
 list(REMOVE_ITEM templates "Makefile")
 list(REMOVE_ITEM templates "blt")# Prevents an error when reconfiguring for in source builds
 
@@ -867,59 +867,59 @@ if(MSGFMT_EXE)
 	list(TRANSFORM po_files REPLACE ".po" "")
 	foreach(po ${po_files})
 		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES)
-		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/git.mo
-				COMMAND ${MSGFMT_EXE} --check --statistics -o ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/git.mo ${CMAKE_SOURCE_DIR}/po/${po}.po)
-		list(APPEND po_gen ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/git.mo)
+		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/but.mo
+				COMMAND ${MSGFMT_EXE} --check --statistics -o ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/but.mo ${CMAKE_SOURCE_DIR}/po/${po}.po)
+		list(APPEND po_gen ${CMAKE_BINARY_DIR}/po/build/locale/${po}/LC_MESSAGES/but.mo)
 	endforeach()
 	add_custom_target(po-gen ALL DEPENDS ${po_gen})
 endif()
 
 
 #to help with the install
-list(TRANSFORM git_shell_scripts PREPEND "${CMAKE_BINARY_DIR}/")
-list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
+list(TRANSFORM but_shell_scripts PREPEND "${CMAKE_BINARY_DIR}/")
+list(TRANSFORM but_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
 foreach(program ${PROGRAMS_BUILT})
-if(program STREQUAL "git" OR program STREQUAL "git-shell")
+if(program STREQUAL "but" OR program STREQUAL "but-shell")
 install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
 else()
 install(TARGETS ${program}
-	RUNTIME DESTINATION libexec/git-core)
+	RUNTIME DESTINATION libexec/but-core)
 endif()
 endforeach()
 
-install(PROGRAMS ${CMAKE_BINARY_DIR}/git-cvsserver
+install(PROGRAMS ${CMAKE_BINARY_DIR}/but-cvsserver
 	DESTINATION bin)
 
 set(bin_links
-	git-receive-pack git-upload-archive git-upload-pack)
+	but-receive-pack but-upload-archive but-upload-pack)
 
 foreach(b ${bin_links})
-install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/bin/${b}${EXE_EXTENSION})")
+install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/but${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/bin/${b}${EXE_EXTENSION})")
 endforeach()
 
-install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/git${EXE_EXTENSION})")
-install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git-shell${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/git-shell${EXE_EXTENSION})")
+install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/but${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/but-core/but${EXE_EXTENSION})")
+install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/but-shell${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/but-core/but-shell${EXE_EXTENSION})")
 
-foreach(b ${git_links})
+foreach(b ${but_links})
 	string(REPLACE "${CMAKE_BINARY_DIR}" "" b ${b})
-	install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/git${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b})")
+	install(CODE "file(CREATE_LINK ${CMAKE_INSTALL_PREFIX}/bin/but${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/but-core/${b})")
 endforeach()
 
-foreach(b ${git_http_links})
+foreach(b ${but_http_links})
 	string(REPLACE "${CMAKE_BINARY_DIR}" "" b ${b})
-	install(CODE "file(CREATE_LINK  ${CMAKE_INSTALL_PREFIX}/libexec/git-core/git-remote-http${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/git-core/${b})")
+	install(CODE "file(CREATE_LINK  ${CMAKE_INSTALL_PREFIX}/libexec/but-core/but-remote-http${EXE_EXTENSION} ${CMAKE_INSTALL_PREFIX}/libexec/but-core/${b})")
 endforeach()
 
-install(PROGRAMS ${git_shell_scripts} ${git_perl_scripts} ${CMAKE_BINARY_DIR}/git-p4
-	DESTINATION libexec/git-core)
+install(PROGRAMS ${but_shell_scripts} ${but_perl_scripts} ${CMAKE_BINARY_DIR}/but-p4
+	DESTINATION libexec/but-core)
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/mergetools DESTINATION libexec/git-core)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/mergetools DESTINATION libexec/but-core)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/perl/build/lib/ DESTINATION share/perl5
 	FILES_MATCHING PATTERN "*.pm")
-install(DIRECTORY ${CMAKE_BINARY_DIR}/templates/blt/ DESTINATION share/git-core/templates)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/templates/blt/ DESTINATION share/but-core/templates)
 
 if(MSGFMT_EXE)
 	install(DIRECTORY ${CMAKE_BINARY_DIR}/po/build/locale DESTINATION share)
@@ -955,7 +955,7 @@ endif()
 
 #wrapper scripts
 set(wrapper_scripts
-	git git-upload-pack git-receive-pack git-upload-archive git-shell git-remote-ext)
+	but but-upload-pack but-receive-pack but-upload-archive but-shell but-remote-ext)
 
 set(wrapper_test_scripts
 	test-fake-ssh test-tool)
@@ -977,8 +977,8 @@ endforeach()
 
 file(STRINGS ${CMAKE_SOURCE_DIR}/wrap-for-bin.sh content NEWLINE_CONSUME)
 string(REPLACE "@@BUILD_DIR@@" "${CMAKE_BINARY_DIR}" content "${content}")
-string(REPLACE "@@PROG@@" "git-cvsserver" content "${content}")
-file(WRITE ${CMAKE_BINARY_DIR}/bin-wrappers/git-cvsserver ${content})
+string(REPLACE "@@PROG@@" "but-cvsserver" content "${content}")
+file(WRITE ${CMAKE_BINARY_DIR}/bin-wrappers/but-cvsserver ${content})
 
 #options for configuring test options
 option(PERL_TESTS "Perform tests that use perl" ON)
@@ -1057,8 +1057,8 @@ if(NOT ${CMAKE_BINARY_DIR}/CMakeCache.txt STREQUAL ${CACHE_PATH})
 	file(COPY ${CMAKE_SOURCE_DIR}/t/chainlint.sed DESTINATION ${CMAKE_BINARY_DIR}/t/)
 	file(COPY ${CMAKE_SOURCE_DIR}/po/is.po DESTINATION ${CMAKE_BINARY_DIR}/po/)
 	file(COPY ${CMAKE_SOURCE_DIR}/mergetools/tkdiff DESTINATION ${CMAKE_BINARY_DIR}/mergetools/)
-	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/git-prompt.sh DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
-	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/git-completion.bash DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
+	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/but-prompt.sh DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
+	file(COPY ${CMAKE_SOURCE_DIR}/contrib/completion/but-completion.bash DESTINATION ${CMAKE_BINARY_DIR}/contrib/completion/)
 endif()
 
 file(GLOB test_scipts "${CMAKE_SOURCE_DIR}/t/t[0-9]*.sh")

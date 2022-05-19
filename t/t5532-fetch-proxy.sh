@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description='fetching via git:// using core.gitproxy'
+test_description='fetching via but:// using core.butproxy'
 . ./test-lib.sh
 
 test_expect_success 'setup remote repo' '
-	git init remote &&
+	but init remote &&
 	(cd remote &&
 	 echo content >file &&
-	 git add file &&
-	 git cummit -m one
+	 but add file &&
+	 but cummit -m one
 	)
 '
 
@@ -32,19 +32,19 @@ test_expect_success 'setup proxy script' '
 '
 
 test_expect_success 'setup local repo' '
-	git remote add fake git://example.com/remote &&
-	git config core.gitproxy ./proxy
+	but remote add fake but://example.com/remote &&
+	but config core.butproxy ./proxy
 '
 
 test_expect_success 'fetch through proxy works' '
-	git fetch fake &&
+	but fetch fake &&
 	echo one >expect &&
-	git log -1 --format=%s FETCH_HEAD >actual &&
+	but log -1 --format=%s FETCH_HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'funny hostnames are rejected before running proxy' '
-	test_must_fail git fetch git://-remote/repo.git 2>stderr &&
+	test_must_fail but fetch but://-remote/repo.but 2>stderr &&
 	! grep "proxying for" stderr
 '
 

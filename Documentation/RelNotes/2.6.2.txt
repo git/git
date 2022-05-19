@@ -4,7 +4,7 @@ Git v2.6.2 Release Notes
 Fixes since v2.6.1
 ------------------
 
- * There were some classes of errors that "git fsck" diagnosed to its
+ * There were some classes of errors that "but fsck" diagnosed to its
    standard error that did not cause it to exit with non-zero status.
 
  * A test script for the HTTP service had a timing dependent bug,
@@ -16,19 +16,19 @@ Fixes since v2.6.1
    using a random cases that does not agree with what the filesystem
    thinks confused Git that it wasn't inside the working tree.
 
- * When "git am" was rewritten as a built-in, it stopped paying
+ * When "but am" was rewritten as a built-in, it stopped paying
    attention to user.signingkey, which was fixed.
 
- * After "git checkout --detach", "git status" reported a fairly
+ * After "but checkout --detach", "but status" reported a fairly
    useless "HEAD detached at HEAD", instead of saying at which exact
    cummit.
 
- * "git rebase -i" had a minor regression recently, which stopped
+ * "but rebase -i" had a minor regression recently, which stopped
    considering a line that begins with an indented '#' in its insn
    sheet not a comment, which is now fixed.
 
- * Description of the "log.follow" configuration variable in "git log"
-   documentation is now also copied to "git config" documentation.
+ * Description of the "log.follow" configuration variable in "but log"
+   documentation is now also copied to "but config" documentation.
 
  * Allocation related functions and stdio are unsafe things to call
    inside a signal handler, and indeed killing the pager can cause
@@ -53,7 +53,7 @@ Fixes since v2.6.1
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.
 
- * "git blame --first-parent v1.0..v2.0" was not rejected but did not
+ * "but blame --first-parent v1.0..v2.0" was not rejected but did not
    limit the blame to cummits on the first parent chain.
 
  * Very small number of options take a parameter that is optional

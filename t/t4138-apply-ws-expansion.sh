@@ -3,7 +3,7 @@
 # Copyright (C) 2015 Kyle J. McKay
 #
 
-test_description='git apply test patches with whitespace expansion.'
+test_description='but apply test patches with whitespace expansion.'
 
 . ./test-lib.sh
 
@@ -17,7 +17,7 @@ test_expect_success setup '
 	printf "\t%s\n" 1 2 3 >after &&
 	printf "%64s\n" a b c >>after &&
 	printf "\t%s\n" 4 5 6 >>after &&
-	test_expect_code 1 git diff --no-index before after >patch1.patch.raw &&
+	test_expect_code 1 but diff --no-index before after >patch1.patch.raw &&
 	sed -e "s/before/test-1/" -e "s/after/test-1/" patch1.patch.raw >patch1.patch &&
 	printf "%64s\n" 1 2 3 4 5 6 >test-1 &&
 	printf "%64s\n" 1 2 3 a b c 4 5 6 >expect-1 &&
@@ -33,7 +33,7 @@ test_expect_success setup '
 		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "\t%s\n" d e f >>after &&
-	test_expect_code 1 git diff --no-index before after >patch2.patch.raw &&
+	test_expect_code 1 but diff --no-index before after >patch2.patch.raw &&
 	sed -e "s/before/test-2/" -e "s/after/test-2/" patch2.patch.raw >patch2.patch &&
 	printf "%64s\n" a b c d e f >test-2 &&
 	printf "%64s\n" a b c >expect-2 &&
@@ -56,7 +56,7 @@ test_expect_success setup '
 		x=$(( $x + 1 )) || return 1
 	done &&
 	printf "\t%s\n" d e f >>after &&
-	test_expect_code 1 git diff --no-index before after >patch3.patch.raw &&
+	test_expect_code 1 but diff --no-index before after >patch3.patch.raw &&
 	sed -e "s/before/test-3/" -e "s/after/test-3/" patch3.patch.raw >patch3.patch &&
 	printf "%64s\n" a b c d e f >test-3 &&
 	printf "%64s\n" a b c >expect-3 &&
@@ -84,7 +84,7 @@ test_expect_success setup '
 		printf "\t%02d\n" $x >>after &&
 		x=$(( $x + 1 )) || return 1
 	done &&
-	test_expect_code 1 git diff --no-index before after >patch4.patch.raw &&
+	test_expect_code 1 but diff --no-index before after >patch4.patch.raw &&
 	sed -e "s/before/test-4/" -e "s/after/test-4/" patch4.patch.raw >patch4.patch &&
 	>test-4 &&
 	x=0 &&
@@ -102,8 +102,8 @@ test_expect_success setup '
 		x=$(( $x + 1 )) || return 1
 	done &&
 
-	git config core.whitespace tab-in-indent,tabwidth=63 &&
-	git config apply.whitespace fix
+	but config core.whitespace tab-in-indent,tabwidth=63 &&
+	but config apply.whitespace fix
 
 '
 
@@ -113,7 +113,7 @@ test_expect_success setup '
 for t in 1 2 3 4
 do
 	test_expect_success 'apply with ws expansion (t=$t)' '
-		git apply patch$t.patch &&
+		but apply patch$t.patch &&
 		test_cmp expect-$t test-$t
 	'
 done

@@ -9,23 +9,23 @@ test_perf_default_repo
 SPARSE_CONE=f2/f4
 
 test_expect_success 'setup repo and indexes' '
-	git reset --hard HEAD &&
+	but reset --hard HEAD &&
 
 	# Remove submodules from the example repo, because our
 	# duplication of the entire repo creates an unlikely data shape.
-	if git config --file .gitmodules --get-regexp "submodule.*.path" >modules
+	if but config --file .butmodules --get-regexp "submodule.*.path" >modules
 	then
-		git rm $(awk "{print \$2}" modules) &&
-		git cummit -m "remove submodules" || return 1
+		but rm $(awk "{print \$2}" modules) &&
+		but cummit -m "remove submodules" || return 1
 	fi &&
 
 	echo bogus >a &&
 	cp a b &&
-	git add a b &&
-	git cummit -m "level 0" &&
-	BLOB=$(git rev-parse HEAD:a) &&
-	OLD_CUMMIT=$(git rev-parse HEAD) &&
-	OLD_TREE=$(git rev-parse HEAD^{tree}) &&
+	but add a b &&
+	but cummit -m "level 0" &&
+	BLOB=$(but rev-parse HEAD:a) &&
+	OLD_CUMMIT=$(but rev-parse HEAD) &&
+	OLD_TREE=$(but rev-parse HEAD^{tree}) &&
 
 	for i in $(test_seq 1 3)
 	do
@@ -36,57 +36,57 @@ test_expect_success 'setup repo and indexes' '
 			040000 tree $OLD_TREE	f3
 			040000 tree $OLD_TREE	f4
 		EOF
-		NEW_TREE=$(git mktree <in) &&
-		NEW_cummit=$(git cummit-tree $NEW_TREE -p $OLD_CUMMIT -m "level $i") &&
+		NEW_TREE=$(but mktree <in) &&
+		NEW_cummit=$(but cummit-tree $NEW_TREE -p $OLD_CUMMIT -m "level $i") &&
 		OLD_TREE=$NEW_TREE &&
 		OLD_cummit=$NEW_CUMMIT || return 1
 	done &&
 
-	git sparse-checkout init --cone &&
-	git sparse-checkout set $SPARSE_CONE &&
-	git checkout -b wide $OLD_CUMMIT &&
+	but sparse-checkout init --cone &&
+	but sparse-checkout set $SPARSE_CONE &&
+	but checkout -b wide $OLD_CUMMIT &&
 
 	for l2 in f1 f2 f3 f4
 	do
 		echo more bogus >>$SPARSE_CONE/$l2/a &&
-		git cummit -a -m "edit $SPARSE_CONE/$l2/a" || return 1
+		but cummit -a -m "edit $SPARSE_CONE/$l2/a" || return 1
 	done &&
 
-	git -c core.sparseCheckoutCone=true clone --branch=wide --sparse . full-v3 &&
+	but -c core.sparseCheckoutCone=true clone --branch=wide --sparse . full-v3 &&
 	(
 		cd full-v3 &&
-		git sparse-checkout init --cone &&
-		git sparse-checkout set $SPARSE_CONE &&
-		git config index.version 3 &&
-		git update-index --index-version=3 &&
-		git checkout HEAD~4
+		but sparse-checkout init --cone &&
+		but sparse-checkout set $SPARSE_CONE &&
+		but config index.version 3 &&
+		but update-index --index-version=3 &&
+		but checkout HEAD~4
 	) &&
-	git -c core.sparseCheckoutCone=true clone --branch=wide --sparse . full-v4 &&
+	but -c core.sparseCheckoutCone=true clone --branch=wide --sparse . full-v4 &&
 	(
 		cd full-v4 &&
-		git sparse-checkout init --cone &&
-		git sparse-checkout set $SPARSE_CONE &&
-		git config index.version 4 &&
-		git update-index --index-version=4 &&
-		git checkout HEAD~4
+		but sparse-checkout init --cone &&
+		but sparse-checkout set $SPARSE_CONE &&
+		but config index.version 4 &&
+		but update-index --index-version=4 &&
+		but checkout HEAD~4
 	) &&
-	git -c core.sparseCheckoutCone=true clone --branch=wide --sparse . sparse-v3 &&
+	but -c core.sparseCheckoutCone=true clone --branch=wide --sparse . sparse-v3 &&
 	(
 		cd sparse-v3 &&
-		git sparse-checkout init --cone --sparse-index &&
-		git sparse-checkout set $SPARSE_CONE &&
-		git config index.version 3 &&
-		git update-index --index-version=3 &&
-		git checkout HEAD~4
+		but sparse-checkout init --cone --sparse-index &&
+		but sparse-checkout set $SPARSE_CONE &&
+		but config index.version 3 &&
+		but update-index --index-version=3 &&
+		but checkout HEAD~4
 	) &&
-	git -c core.sparseCheckoutCone=true clone --branch=wide --sparse . sparse-v4 &&
+	but -c core.sparseCheckoutCone=true clone --branch=wide --sparse . sparse-v4 &&
 	(
 		cd sparse-v4 &&
-		git sparse-checkout init --cone --sparse-index &&
-		git sparse-checkout set $SPARSE_CONE &&
-		git config index.version 4 &&
-		git update-index --index-version=4 &&
-		git checkout HEAD~4
+		but sparse-checkout init --cone --sparse-index &&
+		but sparse-checkout set $SPARSE_CONE &&
+		but config index.version 4 &&
+		but update-index --index-version=4 &&
+		but checkout HEAD~4
 	)
 '
 
@@ -105,20 +105,20 @@ test_perf_on_all () {
 	done
 }
 
-test_perf_on_all git status
-test_perf_on_all git add -A
-test_perf_on_all git add .
-test_perf_on_all git cummit -a -m A
-test_perf_on_all git checkout -f -
-test_perf_on_all git reset
-test_perf_on_all git reset --hard
-test_perf_on_all git reset -- does-not-exist
-test_perf_on_all git diff
-test_perf_on_all git diff --cached
-test_perf_on_all git blame $SPARSE_CONE/a
-test_perf_on_all git blame $SPARSE_CONE/f3/a
-test_perf_on_all git read-tree -mu HEAD
-test_perf_on_all git checkout-index -f --all
-test_perf_on_all git update-index --add --remove $SPARSE_CONE/a
+test_perf_on_all but status
+test_perf_on_all but add -A
+test_perf_on_all but add .
+test_perf_on_all but cummit -a -m A
+test_perf_on_all but checkout -f -
+test_perf_on_all but reset
+test_perf_on_all but reset --hard
+test_perf_on_all but reset -- does-not-exist
+test_perf_on_all but diff
+test_perf_on_all but diff --cached
+test_perf_on_all but blame $SPARSE_CONE/a
+test_perf_on_all but blame $SPARSE_CONE/f3/a
+test_perf_on_all but read-tree -mu HEAD
+test_perf_on_all but checkout-index -f --all
+test_perf_on_all but update-index --add --remove $SPARSE_CONE/a
 
 test_done

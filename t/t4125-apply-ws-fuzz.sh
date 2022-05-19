@@ -7,15 +7,15 @@ test_description='applying patch that has broken whitespaces in context'
 test_expect_success setup '
 
 	>file &&
-	git add file &&
+	but add file &&
 
 	# file-0 is full of whitespace breakages
 	printf "%s \n" a bb c d eeee f ggg h >file-0 &&
 
 	# patch-0 creates a whitespace broken file
 	cat file-0 >file &&
-	git diff >patch-0 &&
-	git add file &&
+	but diff >patch-0 &&
+	but add file &&
 
 	# file-1 is still full of whitespace breakages,
 	# but has one line updated, without fixing any
@@ -23,13 +23,13 @@ test_expect_success setup '
 	# patch-1 records that change.
 	sed -e "s/d/D/" file-0 >file-1 &&
 	cat file-1 >file &&
-	git diff >patch-1 &&
+	but diff >patch-1 &&
 
 	# patch-all is the effect of both patch-0 and patch-1
 	>file &&
-	git add file &&
+	but add file &&
 	cat file-1 >file &&
-	git diff >patch-all &&
+	but diff >patch-all &&
 
 	# patch-2 is the same as patch-1 but is based
 	# on a version that already has whitespace fixed,
@@ -45,12 +45,12 @@ test_expect_success setup '
 test_expect_success nofix '
 
 	>file &&
-	git add file &&
+	but add file &&
 
 	# Baseline.  Applying without fixing any whitespace
 	# breakages.
-	git apply --whitespace=nowarn patch-0 &&
-	git apply --whitespace=nowarn patch-1 &&
+	but apply --whitespace=nowarn patch-0 &&
+	but apply --whitespace=nowarn patch-1 &&
 
 	# The result should obviously match.
 	test_cmp file-1 file
@@ -59,13 +59,13 @@ test_expect_success nofix '
 test_expect_success 'withfix (forward)' '
 
 	>file &&
-	git add file &&
+	but add file &&
 
 	# The first application will munge the context lines
 	# the second patch depends on.  We should be able to
 	# adjust and still apply.
-	git apply --whitespace=fix patch-0 &&
-	git apply --whitespace=fix patch-1 &&
+	but apply --whitespace=fix patch-0 &&
+	but apply --whitespace=fix patch-1 &&
 
 	test_cmp file-fixed file
 '
@@ -73,14 +73,14 @@ test_expect_success 'withfix (forward)' '
 test_expect_success 'withfix (backward)' '
 
 	>file &&
-	git add file &&
+	but add file &&
 
 	# Now we have a whitespace breakages on our side.
-	git apply --whitespace=nowarn patch-0 &&
+	but apply --whitespace=nowarn patch-0 &&
 
 	# And somebody sends in a patch based on image
 	# with whitespace already fixed.
-	git apply --whitespace=fix patch-2 &&
+	but apply --whitespace=fix patch-2 &&
 
 	# The result should accept the whitespace fixed
 	# postimage.  But the line with "h" is beyond context

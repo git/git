@@ -4,38 +4,38 @@ Git v1.8.3.2 Release Notes
 Fixes since v1.8.3.1
 --------------------
 
- * Cloning with "git clone --depth N" while fetch.fsckobjects (or
+ * Cloning with "but clone --depth N" while fetch.fsckobjects (or
    transfer.fsckobjects) is set to true did not tell the cut-off
    points of the shallow history to the process that validates the
    objects and the history received, causing the validation to fail.
 
- * "git checkout foo" DWIMs the intended "upstream" and turns it into
-   "git checkout -t -b foo remotes/origin/foo". This codepath has been
+ * "but checkout foo" DWIMs the intended "upstream" and turns it into
+   "but checkout -t -b foo remotes/origin/foo". This codepath has been
    updated to correctly take existing remote definitions into account.
 
- * "git fetch" into a shallow repository from a repository that does
+ * "but fetch" into a shallow repository from a repository that does
    not know about the shallow boundary cummits (e.g. a different fork
    from the repository the current shallow repository was cloned from)
    did not work correctly.
 
- * "git subtree" (in contrib/) had one codepath with loose error
+ * "but subtree" (in contrib/) had one codepath with loose error
    checks to lose data at the remote side.
 
- * "git log --ancestry-path A...B" did not work as expected, as it did
+ * "but log --ancestry-path A...B" did not work as expected, as it did
    not pay attention to the fact that the merge base between A and B
    was the bottom of the range being specified.
 
- * "git diff -c -p" was not showing a deleted line from a hunk when
+ * "but diff -c -p" was not showing a deleted line from a hunk when
    another hunk immediately begins where the earlier one ends.
 
- * "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
+ * "but merge @{-1}~22" was rewritten to "but merge frotz@{1}~22"
    incorrectly when your previous branch was "frotz" (it should be
-   rewritten to "git merge frotz~22" instead).
+   rewritten to "but merge frotz~22" instead).
 
- * "git cummit --allow-empty-message -m ''" should not start an
+ * "but cummit --allow-empty-message -m ''" should not start an
    editor.
 
- * "git push --[no-]verify" was not documented.
+ * "but push --[no-]verify" was not documented.
 
  * An entry for "file://" scheme in the enumeration of URL types Git
    can take in the HTML documentation was made into a clickable link
@@ -49,7 +49,7 @@ Fixes since v1.8.3.1
    being rebased when "rebase -i/-m/-p" modes are in use, but not the
    plain vanilla "rebase".
 
- * "git push $there HEAD:branch" did not resolve HEAD early enough, so
+ * "but push $there HEAD:branch" did not resolve HEAD early enough, so
    it was easy to flip it around while push is still going on and push
    out a branch that the user did not originally intended when the
    command was started.

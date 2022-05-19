@@ -5,7 +5,7 @@ sendemail.identity::
 	the value of `sendemail.identity`.
 
 sendemail.smtpEncryption::
-	See linkgit:git-send-email[1] for description.  Note that this
+	See linkbut:but-send-email[1] for description.  Note that this
 	setting is not subject to the 'identity' mechanism.
 
 sendemail.smtpsslcertpath::
@@ -44,7 +44,7 @@ sendemail.thread::
 sendemail.transferEncoding::
 sendemail.validate::
 sendemail.xmailer::
-	See linkgit:git-send-email[1] for description.
+	See linkbut:but-send-email[1] for description.
 
 sendemail.signedoffcc (deprecated)::
 	Deprecated alias for `sendemail.signedoffbycc`.
@@ -53,13 +53,13 @@ sendemail.smtpBatchSize::
 	Number of messages to be sent per connection, after that a relogin
 	will happen.  If the value is 0 or undefined, send all messages in
 	one connection.
-	See also the `--batch-size` option of linkgit:git-send-email[1].
+	See also the `--batch-size` option of linkbut:but-send-email[1].
 
 sendemail.smtpReloginDelay::
 	Seconds wait before reconnecting to smtp server.
-	See also the `--relogin-delay` option of linkgit:git-send-email[1].
+	See also the `--relogin-delay` option of linkbut:but-send-email[1].
 
 sendemail.forbidSendmailVariables::
-	To avoid common misconfiguration mistakes, linkgit:git-send-email[1]
+	To avoid common misconfiguration mistakes, linkbut:but-send-email[1]
 	will abort with a warning if any configuration options for "sendmail"
 	exist. Set this variable to bypass the check.

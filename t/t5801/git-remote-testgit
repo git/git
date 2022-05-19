@@ -3,17 +3,17 @@
 
 # The first argument can be a url when the fetch/push command was a url
 # instead of a configured remote. In this case, use a generic alias.
-if test "$1" = "testgit::$2"; then
+if test "$1" = "testbut::$2"; then
 	alias=_
 else
 	alias=$1
 fi
 url=$2
 
-dir="$GIT_DIR/testgit/$alias"
+dir="$GIT_DIR/testbut/$alias"
 
-h_refspec="refs/heads/*:refs/testgit/$alias/heads/*"
-t_refspec="refs/tags/*:refs/testgit/$alias/tags/*"
+h_refspec="refs/heads/*:refs/testbut/$alias/heads/*"
+t_refspec="refs/tags/*:refs/testbut/$alias/tags/*"
 
 if test -n "$GIT_REMOTE_TESTGIT_NOREFSPEC"
 then
@@ -21,7 +21,7 @@ then
 	t_refspec=""
 fi
 
-GIT_DIR="$url/.git"
+GIT_DIR="$url/.but"
 export GIT_DIR
 
 force=
@@ -30,10 +30,10 @@ mkdir -p "$dir"
 
 if test -z "$GIT_REMOTE_TESTGIT_NO_MARKS"
 then
-	gitmarks="$dir/git.marks"
-	testgitmarks="$dir/testgit.marks"
-	test -e "$gitmarks" || >"$gitmarks"
-	test -e "$testgitmarks" || >"$testgitmarks"
+	butmarks="$dir/but.marks"
+	testbutmarks="$dir/testbut.marks"
+	test -e "$butmarks" || >"$butmarks"
+	test -e "$testbutmarks" || >"$testbutmarks"
 fi
 
 while read line
@@ -44,10 +44,10 @@ do
 		echo 'export'
 		test -n "$h_refspec" && echo "refspec $h_refspec"
 		test -n "$t_refspec" && echo "refspec $t_refspec"
-		if test -n "$gitmarks"
+		if test -n "$butmarks"
 		then
-			echo "*import-marks $gitmarks"
-			echo "*export-marks $gitmarks"
+			echo "*import-marks $butmarks"
+			echo "*export-marks $butmarks"
 		fi
 		test -n "$GIT_REMOTE_TESTGIT_SIGNED_TAGS" && echo "signed-tags"
 		test -n "$GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE" && echo "no-private-update"
@@ -56,9 +56,9 @@ do
 		echo
 		;;
 	list)
-		echo ":object-format $(git rev-parse --show-object-format=storage)"
-		git for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
-		head=$(git symbolic-ref HEAD)
+		echo ":object-format $(but rev-parse --show-object-format=storage)"
+		but for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
+		head=$(but symbolic-ref HEAD)
 		echo "@$head HEAD"
 		echo
 		;;
@@ -72,10 +72,10 @@ do
 			test "${line%% *}" != "import" && break
 		done
 
-		if test -n "$gitmarks"
+		if test -n "$butmarks"
 		then
-			echo "feature import-marks=$gitmarks"
-			echo "feature export-marks=$gitmarks"
+			echo "feature import-marks=$butmarks"
+			echo "feature export-marks=$butmarks"
 		fi
 
 		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
@@ -85,11 +85,11 @@ do
 		fi
 
 		echo "feature done"
-		git fast-export \
+		but fast-export \
 			${h_refspec:+"--refspec=$h_refspec"} \
 			${t_refspec:+"--refspec=$t_refspec"} \
-			${testgitmarks:+"--import-marks=$testgitmarks"} \
-			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			${testbutmarks:+"--import-marks=$testbutmarks"} \
+			${testbutmarks:+"--export-marks=$testbutmarks"} \
 			$refs
 		echo "done"
 		;;
@@ -97,7 +97,7 @@ do
 		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
 		then
 			# consume input so fast-export doesn't get SIGPIPE;
-			# git would also notice that case, but we want
+			# but would also notice that case, but we want
 			# to make sure we are exercising the later
 			# error checks
 			while read line; do
@@ -106,16 +106,16 @@ do
 			exit 1
 		fi
 
-		before=$(git for-each-ref --format=' %(refname) %(objectname) ')
+		before=$(but for-each-ref --format=' %(refname) %(objectname) ')
 
-		git fast-import \
+		but fast-import \
 			${force:+--force} \
-			${testgitmarks:+"--import-marks=$testgitmarks"} \
-			${testgitmarks:+"--export-marks=$testgitmarks"} \
+			${testbutmarks:+"--import-marks=$testbutmarks"} \
+			${testbutmarks:+"--export-marks=$testbutmarks"} \
 			--quiet
 
 		# figure out which refs were updated
-		git for-each-ref --format='%(refname) %(objectname)' |
+		but for-each-ref --format='%(refname) %(objectname)' |
 		while read ref a
 		do
 			case "$before" in

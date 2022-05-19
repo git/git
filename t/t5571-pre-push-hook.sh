@@ -11,20 +11,20 @@ test_expect_success 'setup' '
 	cat >actual
 	EOF
 
-	git config push.default upstream &&
-	git init --bare repo1 &&
-	git remote add parent1 repo1 &&
+	but config push.default upstream &&
+	but init --bare repo1 &&
+	but remote add parent1 repo1 &&
 	test_cummit one &&
 	cat >expect <<-EOF &&
-	HEAD $(git rev-parse HEAD) refs/heads/foreign $(test_oid zero)
+	HEAD $(but rev-parse HEAD) refs/heads/foreign $(test_oid zero)
 	EOF
 
 	test_when_finished "rm actual" &&
-	git push parent1 HEAD:foreign &&
+	but push parent1 HEAD:foreign &&
 	test_cmp expect actual
 '
 
-cummit1="$(git rev-parse HEAD)"
+cummit1="$(but rev-parse HEAD)"
 export cummit1
 
 test_expect_success 'push with failing hook' '
@@ -35,20 +35,20 @@ test_expect_success 'push with failing hook' '
 
 	test_cummit two &&
 	cat >expect <<-EOF &&
-	HEAD $(git rev-parse HEAD) refs/heads/main $(test_oid zero)
+	HEAD $(but rev-parse HEAD) refs/heads/main $(test_oid zero)
 	EOF
 
 	test_when_finished "rm actual" &&
-	test_must_fail git push parent1 HEAD &&
+	test_must_fail but push parent1 HEAD &&
 	test_cmp expect actual
 '
 
 test_expect_success '--no-verify bypasses hook' '
-	git push --no-verify parent1 HEAD &&
+	but push --no-verify parent1 HEAD &&
 	test_path_is_missing actual
 '
 
-cummit2="$(git rev-parse HEAD)"
+cummit2="$(but rev-parse HEAD)"
 export cummit2
 
 test_expect_success 'push with hook' '
@@ -64,16 +64,16 @@ test_expect_success 'push with hook' '
 	refs/heads/main $cummit2 refs/heads/foreign $cummit1
 	EOF
 
-	git push parent1 main:foreign &&
+	but push parent1 main:foreign &&
 	test_cmp expect actual
 '
 
 test_expect_success 'add a branch' '
-	git checkout -b other parent1/foreign &&
+	but checkout -b other parent1/foreign &&
 	test_cummit three
 '
 
-cummit3="$(git rev-parse HEAD)"
+cummit3="$(but rev-parse HEAD)"
 export cummit3
 
 test_expect_success 'push to default' '
@@ -82,7 +82,7 @@ test_expect_success 'push to default' '
 	repo1
 	refs/heads/other $cummit3 refs/heads/foreign $cummit2
 	EOF
-	git push &&
+	but push &&
 	test_cmp expect actual
 '
 
@@ -94,7 +94,7 @@ test_expect_success 'push non-branches' '
 	HEAD~ $cummit2 refs/heads/prev $ZERO_OID
 	EOF
 
-	git push parent1 one:tag1 HEAD~:refs/heads/prev &&
+	but push parent1 one:tag1 HEAD~:refs/heads/prev &&
 	test_cmp expect actual
 '
 
@@ -105,7 +105,7 @@ test_expect_success 'push delete' '
 	(delete) $ZERO_OID refs/heads/prev $cummit2
 	EOF
 
-	git push parent1 :prev &&
+	but push parent1 :prev &&
 	test_cmp expect actual
 '
 
@@ -116,7 +116,7 @@ test_expect_success 'push to URL' '
 	HEAD $cummit3 refs/heads/other $ZERO_OID
 	EOF
 
-	git push repo1 HEAD &&
+	but push repo1 HEAD &&
 	test_cmp expect actual
 '
 
@@ -128,14 +128,14 @@ test_expect_success 'set up many-ref tests' '
 			nr=$(( $nr + 1 )) &&
 			echo "create refs/heads/b/$nr $cummit3" || return 1
 		done
-	} | git update-ref --stdin
+	} | but update-ref --stdin
 '
 
 test_expect_success 'sigpipe does not cause pre-push hook failure' '
 	test_hook --clobber pre-push <<-\EOF &&
 	exit 0
 	EOF
-	git push parent1 "refs/heads/b/*:refs/heads/b/*"
+	but push parent1 "refs/heads/b/*:refs/heads/b/*"
 '
 
 test_done

@@ -1,2 +1,2 @@
-$ git diff-tree --pretty initial
+$ but diff-tree --pretty initial
 $

@@ -1,31 +1,31 @@
-git-fast-export(1)
+but-fast-export(1)
 ==================
 
 NAME
 ----
-git-fast-export - Git data exporter
+but-fast-export - Git data exporter
 
 
 SYNOPSIS
 --------
 [verse]
-'git fast-export [<options>]' | 'git fast-import'
+'but fast-export [<options>]' | 'but fast-import'
 
 DESCRIPTION
 -----------
 This program dumps the given revisions in a form suitable to be piped
-into 'git fast-import'.
+into 'but fast-import'.
 
 You can use it as a human-readable bundle replacement (see
-linkgit:git-bundle[1]), or as a format that can be edited before being
-fed to 'git fast-import' in order to do history rewrites (an ability
-relied on by tools like 'git filter-repo').
+linkbut:but-bundle[1]), or as a format that can be edited before being
+fed to 'but fast-import' in order to do history rewrites (an ability
+relied on by tools like 'but filter-repo').
 
 OPTIONS
 -------
 --progress=<n>::
 	Insert 'progress' statements every <n> objects, to be shown by
-	'git fast-import' during import.
+	'but fast-import' during import.
 
 --signed-tags=(verbatim|warn|warn-strip|strip|abort)::
 	Specify how to handle signed tags.  Since any transformation
@@ -48,12 +48,12 @@ When asking to 'abort' (which is the default), this program will die
 when encountering such a tag.  With 'drop' it will omit such tags from
 the output.  With 'rewrite', if the tagged object is a cummit, it will
 rewrite the tag to tag an ancestor cummit (via parent rewriting; see
-linkgit:git-rev-list[1])
+linkbut:but-rev-list[1])
 
 -M::
 -C::
 	Perform move and/or copy detection, as described in the
-	linkgit:git-diff[1] manual page, and use it to generate
+	linkbut:but-diff[1] manual page, and use it to generate
 	rename and copy commands in the output dump.
 +
 Note that earlier versions of this command did not complain and
@@ -125,7 +125,7 @@ by keeping the marks the same across runs.
 	anonymize it). See the section on `ANONYMIZING` below.
 
 --reference-excluded-parents::
-	By default, running a command such as `git fast-export
+	By default, running a command such as `but fast-export
 	master~5..master` will not include the cummit master{tilde}5
 	and will make master{tilde}4 no longer have master{tilde}5 as
 	a parent (though both the old master{tilde}4 and new
@@ -139,7 +139,7 @@ by keeping the marks the same across runs.
 --show-original-ids::
 	Add an extra directive to the output for cummits and blobs,
 	`original-oid <SHA1SUM>`.  While such directives will likely be
-	ignored by importers such as git-fast-import, it may be useful
+	ignored by importers such as but-fast-import, it may be useful
 	for intermediary filters (e.g. for rewriting cummit messages
 	which refer to older cummits, or for stripping blobs by id).
 
@@ -154,9 +154,9 @@ by keeping the marks the same across runs.
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.
 
-[<git-rev-list-args>...]::
-	A list of arguments, acceptable to 'git rev-parse' and
-	'git rev-list', that specifies the specific objects and references
+[<but-rev-list-args>...]::
+	A list of arguments, acceptable to 'but rev-parse' and
+	'but rev-list', that specifies the specific objects and references
 	to export.  For example, `master~10..master` causes the
 	current master reference to be exported along with all objects
 	added since its 10th ancestor cummit and (unless the
@@ -167,7 +167,7 @@ EXAMPLES
 --------
 
 -------------------------------------------------------------------
-$ git fast-export --all | (cd /empty/repository && git fast-import)
+$ but fast-export --all | (cd /empty/repository && but fast-import)
 -------------------------------------------------------------------
 
 This will export the whole repository and import it into the existing
@@ -175,9 +175,9 @@ empty repository.  Except for reencoding cummits that are not in
 UTF-8, it would be a one-to-one mirror.
 
 -----------------------------------------------------
-$ git fast-export master~5..master |
+$ but fast-export master~5..master |
 	sed "s|refs/heads/master|refs/heads/other|" |
-	git fast-import
+	but fast-import
 -----------------------------------------------------
 
 This makes a new branch called 'other' from 'master~5..master'
@@ -191,14 +191,14 @@ referenced by that revision range contains the string
 ANONYMIZING
 -----------
 
-If the `--anonymize` option is given, git will attempt to remove all
+If the `--anonymize` option is given, but will attempt to remove all
 identifying information from the repository while still retaining enough
 of the original tree and history patterns to reproduce some bugs. The
-goal is that a git bug which is found on a private repository will
+goal is that a but bug which is found on a private repository will
 persist in the anonymized repository, and the latter can be shared with
-git developers to help solve the bug.
+but developers to help solve the bug.
 
-With this option, git will replace all refnames, paths, blob contents,
+With this option, but will replace all refnames, paths, blob contents,
 cummit and tag messages, names, and email addresses in the output with
 anonymized data.  Two instances of the same string will be replaced
 equivalently (e.g., two cummits with the same author will have the same
@@ -210,11 +210,11 @@ the tree is retained (e.g., if you have a root tree with 10 files and 3
 trees, so will the output), but their names and the contents of the
 files will be replaced.
 
-If you think you have found a git bug, you can start by exporting an
+If you think you have found a but bug, you can start by exporting an
 anonymized stream of the whole repository:
 
 ---------------------------------------------------
-$ git fast-export --anonymize --all >anon-stream
+$ but fast-export --anonymize --all >anon-stream
 ---------------------------------------------------
 
 Then confirm that the bug persists in a repository created from that
@@ -222,9 +222,9 @@ stream (many bugs will not, as they really do depend on the exact
 repository contents):
 
 ---------------------------------------------------
-$ git init anon-repo
+$ but init anon-repo
 $ cd anon-repo
-$ git fast-import <../anon-stream
+$ but fast-import <../anon-stream
 $ ... test your bug ...
 ---------------------------------------------------
 
@@ -247,16 +247,16 @@ Reproducing some bugs may require referencing particular cummits or
 paths, which becomes challenging after refnames and paths have been
 anonymized. You can ask for a particular token to be left as-is or
 mapped to a new value. For example, if you have a bug which reproduces
-with `git rev-list sensitive -- secret.c`, you can run:
+with `but rev-list sensitive -- secret.c`, you can run:
 
 ---------------------------------------------------
-$ git fast-export --anonymize --all \
+$ but fast-export --anonymize --all \
       --anonymize-map=sensitive:foo \
       --anonymize-map=secret.c:bar.c \
       >stream
 ---------------------------------------------------
 
-After importing the stream, you can then run `git rev-list foo -- bar.c`
+After importing the stream, you can then run `but rev-list foo -- bar.c`
 in the anonymized repository.
 
 Note that paths and refnames are split into tokens at slash boundaries.
@@ -271,14 +271,14 @@ final pathname would be `publicdir/bar.c`.
 LIMITATIONS
 -----------
 
-Since 'git fast-import' cannot tag trees, you will not be
-able to export the linux.git repository completely, as it contains
+Since 'but fast-import' cannot tag trees, you will not be
+able to export the linux.but repository completely, as it contains
 a tag referencing a tree instead of a cummit.
 
 SEE ALSO
 --------
-linkgit:git-fast-import[1]
+linkbut:but-fast-import[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

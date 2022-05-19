@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "cache.h"
 #include "config.h"
 #include "branch.h"
@@ -107,7 +107,7 @@ static int install_branch_config_multiple_remotes(int flag, const char *local,
 			}
 
 	strbuf_addf(&key, "branch.%s.remote", local);
-	if (git_config_set_gently(key.buf, origin ? origin : ".") < 0)
+	if (but_config_set_gently(key.buf, origin ? origin : ".") < 0)
 		goto out_err;
 
 	strbuf_reset(&key);
@@ -118,16 +118,16 @@ static int install_branch_config_multiple_remotes(int flag, const char *local,
 	 * more than one is provided, use CONFIG_REGEX_NONE to preserve what
 	 * we've written so far.
 	 */
-	if (git_config_set_gently(key.buf, NULL) < 0)
+	if (but_config_set_gently(key.buf, NULL) < 0)
 		goto out_err;
 	for_each_string_list_item(item, remotes)
-		if (git_config_set_multivar_gently(key.buf, item->string, CONFIG_REGEX_NONE, 0) < 0)
+		if (but_config_set_multivar_gently(key.buf, item->string, CONFIG_REGEX_NONE, 0) < 0)
 			goto out_err;
 
 	if (rebasing) {
 		strbuf_reset(&key);
 		strbuf_addf(&key, "branch.%s.rebase", local);
-		if (git_config_set_gently(key.buf, "true") < 0)
+		if (but_config_set_gently(key.buf, "true") < 0)
 			goto out_err;
 	}
 	strbuf_release(&key);
@@ -178,15 +178,15 @@ out_err:
 	advise(_("\nAfter fixing the error cause you may try to fix up\n"
 		"the remote tracking information by invoking:"));
 	if (remotes->nr == 1)
-		advise("  git branch --set-upstream-to=%s%s%s",
+		advise("  but branch --set-upstream-to=%s%s%s",
 			origin ? origin : "",
 			origin ? "/" : "",
 			remotes->items[0].string);
 	else {
-		advise("  git config --add branch.\"%s\".remote %s",
+		advise("  but config --add branch.\"%s\".remote %s",
 			local, origin ? origin : ".");
 		for_each_string_list_item(item, remotes)
-			advise("  git config --add branch.\"%s\".merge %s",
+			advise("  but config --add branch.\"%s\".merge %s",
 				local, item->string);
 	}
 
@@ -323,7 +323,7 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	char *v = NULL;
 	struct strbuf name = STRBUF_INIT;
 	strbuf_addf(&name, "branch.%s.description", branch_name);
-	if (git_config_get_string(name.buf, &v)) {
+	if (but_config_get_string(name.buf, &v)) {
 		strbuf_release(&name);
 		return -1;
 	}
@@ -397,11 +397,11 @@ static const char upstream_advice[] =
 N_("\n"
 "If you are planning on basing your work on an upstream\n"
 "branch that already exists at the remote, you may need to\n"
-"run \"git fetch\" to retrieve it.\n"
+"run \"but fetch\" to retrieve it.\n"
 "\n"
 "If you are planning to push out a new local branch that\n"
 "will track its remote counterpart, you may want to use\n"
-"\"git push -u\" to set the upstream config as you push.");
+"\"but push -u\" to set the upstream config as you push.");
 
 /**
  * DWIMs a user-provided ref to determine the starting point for a
@@ -560,15 +560,15 @@ static int submodule_create_branch(struct repository *r,
 	struct strbuf child_err = STRBUF_INIT;
 	struct strbuf out_buf = STRBUF_INIT;
 	char *out_prefix = xstrfmt("submodule '%s': ", submodule->name);
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	child.err = -1;
 	child.stdout_to_stderr = 1;
 
-	prepare_other_repo_env(&child.env_array, r->gitdir);
+	prepare_other_repo_env(&child.env_array, r->butdir);
 	/*
-	 * submodule_create_branch() is indirectly invoked by "git
-	 * branch", but we cannot invoke "git branch" in the child
-	 * process. "git branch" accepts a branch name and start point,
+	 * submodule_create_branch() is indirectly invoked by "but
+	 * branch", but we cannot invoke "but branch" in the child
+	 * process. "but branch" accepts a branch name and start point,
 	 * where the start point is assumed to provide both the OID
 	 * (start_oid) and the branch to use for tracking
 	 * (tracking_name). But when recursing through submodules,
@@ -600,9 +600,9 @@ static int submodule_create_branch(struct repository *r,
 		strvec_push(&child.args, "--track=inherit");
 		break;
 	case BRANCH_TRACK_UNSPECIFIED:
-		/* Default for "git checkout". Do not pass --track. */
+		/* Default for "but checkout". Do not pass --track. */
 	case BRANCH_TRACK_REMOTE:
-		/* Default for "git branch". Do not pass --track. */
+		/* Default for "but branch". Do not pass --track. */
 		break;
 	}
 
@@ -658,7 +658,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				_("submodule '%s': unable to find submodule"),
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
-				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
+				advise(_("You may try updating the submodules using 'but checkout %s && but submodule update --init'"),
 				       start_cummitish);
 			exit(code);
 		}
@@ -680,7 +680,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 		return;
 	/*
 	 * NEEDSWORK If tracking was set up in the superproject but not the
-	 * submodule, users might expect "git branch --recurse-submodules" to
+	 * submodule, users might expect "but branch --recurse-submodules" to
 	 * fail or give a warning, but this is not yet implemented because it is
 	 * tedious to determine whether or not tracking was set up in the
 	 * superproject.
@@ -704,18 +704,18 @@ void create_branches_recursively(struct repository *r, const char *name,
 
 void remove_merge_branch_state(struct repository *r)
 {
-	unlink(git_path_merge_head(r));
-	unlink(git_path_merge_rr(r));
-	unlink(git_path_merge_msg(r));
-	unlink(git_path_merge_mode(r));
-	unlink(git_path_auto_merge(r));
-	save_autostash(git_path_merge_autostash(r));
+	unlink(but_path_merge_head(r));
+	unlink(but_path_merge_rr(r));
+	unlink(but_path_merge_msg(r));
+	unlink(but_path_merge_mode(r));
+	unlink(but_path_auto_merge(r));
+	save_autostash(but_path_merge_autostash(r));
 }
 
 void remove_branch_state(struct repository *r, int verbose)
 {
 	sequencer_post_cummit_cleanup(r, verbose);
-	unlink(git_path_squash_msg(r));
+	unlink(but_path_squash_msg(r));
 	remove_merge_branch_state(r);
 }
 

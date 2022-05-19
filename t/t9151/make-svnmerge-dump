@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # this script sets up a Subversion repository for Makefile in the
-# first ever git merge, as if it were done with svnmerge (SVN 1.5+)
+# first ever but merge, as if it were done with svnmerge (SVN 1.5+)
 #
 
 rm -rf foo.svn foo
@@ -30,7 +30,7 @@ mkdir tags
 svn add trunk branches tags
 i=$(cummit $i "Setup trunk, branches, and tags")
 
-git cat-file blob 6683463e:Makefile > trunk/Makefile
+but cat-file blob 6683463e:Makefile > trunk/Makefile
 svn add trunk/Makefile 
 
 say "cummitting ANCESTOR"
@@ -45,18 +45,18 @@ say "cummitting other BRANCH POINT"
 i=$(cummit $i "make right branch")
 
 say "cummitting LEFT UPDATE"
-git cat-file blob 5873b67e:Makefile > branches/left/Makefile
+but cat-file blob 5873b67e:Makefile > branches/left/Makefile
 i=$(cummit $i "left update 1")
 
-git cat-file blob 75118b13:Makefile > branches/right/Makefile
+but cat-file blob 75118b13:Makefile > branches/right/Makefile
 say "cummitting RIGHT UPDATE"
 pre_right_update_1=$i
 i=$(cummit $i "right update 1")
 
 say "Making more cummits on LEFT"
-git cat-file blob ff5ebe39:Makefile > branches/left/Makefile
+but cat-file blob ff5ebe39:Makefile > branches/left/Makefile
 i=$(cummit $i "left update 2")
-git cat-file blob b5039db6:Makefile > branches/left/Makefile
+but cat-file blob b5039db6:Makefile > branches/left/Makefile
 i=$(cummit $i "left update 3")
 
 say "Making a LEFT SUB-BRANCH"
@@ -73,7 +73,7 @@ say "Merging LEFT to TRUNK"
 svn update
 cd trunk
 svn merge ../branches/left --accept postpone
-git cat-file blob b5039db6:Makefile > Makefile
+but cat-file blob b5039db6:Makefile > Makefile
 svn resolved Makefile
 i=$(cummit $i "Merge left to trunk 1")
 cd ..
@@ -97,7 +97,7 @@ say "Merging RIGHT to TRUNK"
 svn update
 cd trunk
 svn merge ../branches/right --accept postpone
-git cat-file blob b51ad431:Makefile > Makefile
+but cat-file blob b51ad431:Makefile > Makefile
 svn resolved Makefile
 i=$(cummit $i "Merge right to trunk 1")
 cd ..
@@ -114,7 +114,7 @@ say "Merging RIGHT to LEFT SUB-BRANCH"
 svn update
 cd branches/left-sub
 svn merge ../right --accept postpone
-git cat-file blob b51ad431:Makefile > Makefile
+but cat-file blob b51ad431:Makefile > Makefile
 svn resolved Makefile
 i=$(cummit $i "Merge right to left sub-branch")
 cd ../..
@@ -151,7 +151,7 @@ svn merge ../branches/left --accept postpone
 svn resolved bang
 i=$(cummit $i "Merge left to trunk 2")
 # this merge, svn happily updates the mergeinfo, but there is actually
-# nothing to merge.  git-svn will not make a meaningless merge cummit.
+# nothing to merge.  but-svn will not make a meaningless merge cummit.
 svn merge ../branches/right --accept postpone
 i=$(cummit $i "non-merge right to trunk 2")
 cd ..

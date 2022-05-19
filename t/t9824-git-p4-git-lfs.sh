@@ -2,10 +2,10 @@
 
 test_description='Clone repositories and store files in Git LFS'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
-git lfs help >/dev/null 2>&1 || {
-	skip_all='skipping git p4 Git LFS tests; Git LFS not found'
+but lfs help >/dev/null 2>&1 || {
+	skip_all='skipping but p4 Git LFS tests; Git LFS not found'
 	test_done
 }
 
@@ -19,7 +19,7 @@ test_file_in_lfs () {
 	test_line_count = 3 "$FILE" &&
 	cat "$FILE" | grep "size $SIZE" &&
 	HASH=$(cat "$FILE" | grep "oid sha256:" | sed -e "s/oid sha256://g") &&
-	LFS_FILE=".git/lfs/objects/$(echo "$HASH" | cut -c1-2)/$(echo "$HASH" | cut -c3-4)/$HASH" &&
+	LFS_FILE=".but/lfs/objects/$(echo "$HASH" | cut -c1-2)/$(echo "$HASH" | cut -c3-4)/$HASH" &&
 	echo $EXPECTED_CONTENT >expect &&
 	test_path_is_file "$FILE" &&
 	test_path_is_file "$LFS_FILE" &&
@@ -63,113 +63,113 @@ test_expect_success 'Create repo with binary files' '
 
 test_expect_success 'Store files in LFS based on size (>24 bytes)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file2.dat 25 "content 2-3 bin 25 bytes" &&
 		test_file_in_lfs "path with spaces/file3.bin" 25 "content 2-3 bin 25 bytes" &&
 		test_file_in_lfs file4.bin 26 "content 4 bin 26 bytes XX" &&
 
-		test_file_count_in_dir ".git/lfs/objects" 2 &&
+		test_file_count_in_dir ".but/lfs/objects" 2 &&
 
 		cat >expect <<-\EOF &&
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		/file2.dat filter=lfs diff=lfs merge=lfs -text
 		/file4.bin filter=lfs diff=lfs merge=lfs -text
 		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
 test_expect_success 'Store files in LFS based on size (>25 bytes)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileThreshold 25 &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileThreshold 25 &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file4.bin 26 "content 4 bin 26 bytes XX" &&
-		test_file_count_in_dir ".git/lfs/objects" 1 &&
+		test_file_count_in_dir ".but/lfs/objects" 1 &&
 
 		cat >expect <<-\EOF &&
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		/file4.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
 test_expect_success 'Store files in LFS based on extension (dat)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileExtensions dat &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileExtensions dat &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file2.dat 25 "content 2-3 bin 25 bytes" &&
-		test_file_count_in_dir ".git/lfs/objects" 1 &&
+		test_file_count_in_dir ".but/lfs/objects" 1 &&
 
 		cat >expect <<-\EOF &&
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		*.dat filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
 test_expect_success 'Store files in LFS based on size (>25 bytes) and extension (dat)' '
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileExtensions dat &&
-		git config git-p4.largeFileThreshold 25 &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileExtensions dat &&
+		but config but-p4.largeFileThreshold 25 &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file2.dat 25 "content 2-3 bin 25 bytes" &&
 		test_file_in_lfs file4.bin 26 "content 4 bin 26 bytes XX" &&
-		test_file_count_in_dir ".git/lfs/objects" 2 &&
+		test_file_count_in_dir ".but/lfs/objects" 2 &&
 
 		cat >expect <<-\EOF &&
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		*.dat filter=lfs diff=lfs merge=lfs -text
 		/file4.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
@@ -182,68 +182,68 @@ test_expect_success 'Remove file from repo and store files in LFS based on size 
 	) &&
 
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file2.dat 25 "content 2-3 bin 25 bytes" &&
 		test_file_in_lfs "path with spaces/file3.bin" 25 "content 2-3 bin 25 bytes" &&
 		test_path_is_missing file4.bin &&
-		test_file_count_in_dir ".git/lfs/objects" 2 &&
+		test_file_count_in_dir ".but/lfs/objects" 2 &&
 
 		cat >expect <<-\EOF &&
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		/file2.dat filter=lfs diff=lfs merge=lfs -text
 		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
-test_expect_success 'Add .gitattributes and store files in LFS based on size (>24 bytes)' '
+test_expect_success 'Add .butattributes and store files in LFS based on size (>24 bytes)' '
 	client_view "//depot/... //client/..." &&
 	(
 		cd "$cli" &&
-		echo "*.txt text" >.gitattributes &&
-		p4 add .gitattributes &&
-		p4 submit -d "Add .gitattributes"
+		echo "*.txt text" >.butattributes &&
+		p4 add .butattributes &&
+		p4 submit -d "Add .butattributes"
 	) &&
 
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileThreshold 24 &&
-		git p4 clone --destination="$git" //depot@all &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileThreshold 24 &&
+		but p4 clone --destination="$but" //depot@all &&
 
 		test_file_in_lfs file2.dat 25 "content 2-3 bin 25 bytes" &&
 		test_file_in_lfs "path with spaces/file3.bin" 25 "content 2-3 bin 25 bytes" &&
 		test_path_is_missing file4.bin &&
-		test_file_count_in_dir ".git/lfs/objects" 2 &&
+		test_file_count_in_dir ".but/lfs/objects" 2 &&
 
 		cat >expect <<-\EOF &&
 		*.txt text
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		/file2.dat filter=lfs diff=lfs merge=lfs -text
 		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 
@@ -261,29 +261,29 @@ test_expect_success 'Add big files to repo and store files in LFS based on compr
 	) &&
 
 	client_view "//depot/... //client/..." &&
-	test_when_finished cleanup_git &&
+	test_when_finished cleanup_but &&
 	(
-		cd "$git" &&
-		git init . &&
-		git config git-p4.useClientSpec true &&
-		git config git-p4.largeFileSystem GitLFS &&
-		git config git-p4.largeFileCompressedThreshold 28 &&
+		cd "$but" &&
+		but init . &&
+		but config but-p4.useClientSpec true &&
+		but config but-p4.largeFileSystem GitLFS &&
+		but config but-p4.largeFileCompressedThreshold 28 &&
 		# We only import HEAD here ("@all" is missing!)
-		git p4 clone --destination="$git" //depot &&
+		but p4 clone --destination="$but" //depot &&
 
 		test_file_in_lfs file6.bin 39 "content 6 bin 39 bytes XXXXXYYYYYZZZZZ" &&
-		test_file_count_in_dir ".git/lfs/objects" 1 &&
+		test_file_count_in_dir ".but/lfs/objects" 1 &&
 
 		cat >expect <<-\EOF &&
 		*.txt text
 
 		#
-		# Git LFS (see https://git-lfs.github.com/)
+		# Git LFS (see https://but-lfs.buthub.com/)
 		#
 		/file6.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
-		test_path_is_file .gitattributes &&
-		test_cmp expect .gitattributes
+		test_path_is_file .butattributes &&
+		test_cmp expect .butattributes
 	)
 '
 

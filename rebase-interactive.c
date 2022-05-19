@@ -8,9 +8,9 @@
 #include "dir.h"
 
 static const char edit_todo_list_advice[] =
-N_("You can fix this with 'git rebase --edit-todo' "
-"and then run 'git rebase --continue'.\n"
-"Or you can abort the rebase with 'git rebase"
+N_("You can fix this with 'but rebase --edit-todo' "
+"and then run 'but rebase --continue'.\n"
+"Or you can abort the rebase with 'but rebase"
 " --abort'.\n");
 
 enum missing_cummit_check_level {
@@ -23,7 +23,7 @@ static enum missing_cummit_check_level get_missing_cummit_check_level(void)
 {
 	const char *value;
 
-	if (git_config_get_value("rebase.missingcummitscheck", &value) ||
+	if (but_config_get_value("rebase.missingcummitscheck", &value) ||
 			!strcasecmp("ignore", value))
 		return MISSING_CUMMIT_CHECK_IGNORE;
 	if (!strcasecmp("warn", value))
@@ -49,7 +49,7 @@ void append_todo_help(int command_count,
 "                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
-"b, break = stop here (continue rebase later with 'git rebase --continue')\n"
+"b, break = stop here (continue rebase later with 'but rebase --continue')\n"
 "d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
@@ -84,7 +84,7 @@ void append_todo_help(int command_count,
 		msg = _("\nYou are editing the todo file "
 			"of an ongoing interactive rebase.\n"
 			"To continue rebase after editing, run:\n"
-			"    git rebase --continue\n\n");
+			"    but rebase --continue\n\n");
 	else
 		msg = _("\nHowever, if you remove everything, "
 			"the rebase will be aborted.\n\n");
@@ -165,14 +165,14 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 	if (check_level == MISSING_CUMMIT_CHECK_IGNORE)
 		goto leave_check;
 
-	/* Mark the cummits in git-rebase-todo as seen */
+	/* Mark the cummits in but-rebase-todo as seen */
 	for (i = 0; i < new_todo->nr; i++) {
 		struct cummit *cummit = new_todo->items[i].cummit;
 		if (cummit)
 			*cummit_seen_at(&cummit_seen, cummit) = 1;
 	}
 
-	/* Find cummits in git-rebase-todo.backup yet unseen */
+	/* Find cummits in but-rebase-todo.backup yet unseen */
 	for (i = old_todo->nr - 1; i >= 0; i--) {
 		struct todo_item *item = old_todo->items + i;
 		struct cummit *cummit = item->cummit;
@@ -202,7 +202,7 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 
 	fprintf(stderr, _("To avoid this message, use \"drop\" to "
 		"explicitly remove a cummit.\n\n"
-		"Use 'git config rebase.missingcummitsCheck' to change "
+		"Use 'but config rebase.missingcummitsCheck' to change "
 		"the level of warnings.\n"
 		"The possible behaviours are: ignore, warn, error.\n\n"));
 

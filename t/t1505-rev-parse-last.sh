@@ -11,21 +11,21 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 make_cummit () {
 	echo "$1" > "$1" &&
-	git add "$1" &&
-	git cummit -m "$1"
+	but add "$1" &&
+	but cummit -m "$1"
 }
 
 
 test_expect_success 'setup' '
 
 	make_cummit 1 &&
-	git branch side &&
+	but branch side &&
 	make_cummit 2 &&
 	make_cummit 3 &&
-	git checkout side &&
+	but checkout side &&
 	make_cummit 4 &&
-	git merge main &&
-	git checkout main
+	but merge main &&
+	but checkout main
 
 '
 
@@ -57,7 +57,7 @@ test_expect_success '@{-2} works' '
 '
 
 test_expect_success '@{-3} fails' '
-	test_must_fail git rev-parse @{-3}
+	test_must_fail but rev-parse @{-3}
 '
 
 test_done

@@ -15,14 +15,14 @@ fi
 
 test_expect_success 'setup' '
 
-	git init --bare upstream.git &&
-	git init --bare downstream.git &&
-	git clone upstream.git upstream-private &&
-	git clone downstream.git local &&
+	but init --bare upstream.but &&
+	but init --bare downstream.but &&
+	but clone upstream.but upstream-private &&
+	but clone downstream.but local &&
 
 	trash_url="file://$TRASH_DIRECTORY" &&
-	downstream_url="$trash_url/downstream.git/" &&
-	upstream_url="$trash_url/upstream.git/" &&
+	downstream_url="$trash_url/downstream.but/" &&
+	upstream_url="$trash_url/upstream.but/" &&
 
 	(
 		cd upstream-private &&
@@ -30,17 +30,17 @@ test_expect_success 'setup' '
 		Thirtey days hath November,
 		Aprile, June, and September:
 		EOT
-		git add mnemonic.txt &&
+		but add mnemonic.txt &&
 		test_tick &&
-		git cummit -m "\"Thirty days\", a reminder of month lengths" &&
-		git tag -m "version 1" -a initial &&
-		git push --tags origin main
+		but cummit -m "\"Thirty days\", a reminder of month lengths" &&
+		but tag -m "version 1" -a initial &&
+		but push --tags origin main
 	) &&
 	(
 		cd local &&
-		git remote add upstream "$trash_url/upstream.git" &&
-		git fetch upstream &&
-		git pull upstream main &&
+		but remote add upstream "$trash_url/upstream.but" &&
+		but fetch upstream &&
+		but pull upstream main &&
 		cat <<-\EOT >>mnemonic.txt &&
 		Of twyecescore-eightt is but eine,
 		And all the remnante be thrycescore-eine.
@@ -48,21 +48,21 @@ test_expect_success 'setup' '
 		Ev’rie foure yares, gote it ryghth.
 		An’twyecescore-eight is but twyecescore-nyne.
 		EOT
-		git add mnemonic.txt &&
+		but add mnemonic.txt &&
 		test_tick &&
-		git cummit -m "More detail" &&
-		git tag -m "version 2" -a full &&
-		git checkout -b simplify HEAD^ &&
+		but cummit -m "More detail" &&
+		but tag -m "version 2" -a full &&
+		but checkout -b simplify HEAD^ &&
 		mv mnemonic.txt mnemonic.standard &&
 		cat <<-\EOT >mnemonic.clarified &&
 		Thirty days has September,
 		All the rest I can’t remember.
 		EOT
-		git add -N mnemonic.standard mnemonic.clarified &&
-		git cummit -a -m "Adapt to use modern, simpler English
+		but add -N mnemonic.standard mnemonic.clarified &&
+		but cummit -a -m "Adapt to use modern, simpler English
 
 But keep the old version, too, in case some people prefer it." &&
-		git checkout main
+		but checkout main
 	)
 
 '
@@ -127,13 +127,13 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 
 test_expect_success 'pull request when forgot to push' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		test_must_fail git request-pull initial "$downstream_url" \
+		but checkout initial &&
+		but merge --ff-only main &&
+		test_must_fail but request-pull initial "$downstream_url" \
 			2>../err
 	) &&
 	grep "No match for cummit .*" err &&
@@ -143,14 +143,14 @@ test_expect_success 'pull request when forgot to push' '
 
 test_expect_success 'pull request after push' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push origin main:for-upstream &&
-		git request-pull initial origin main:for-upstream >../request
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push origin main:for-upstream &&
+		but request-pull initial origin main:for-upstream >../request
 	) &&
 	sed -nf read-request.sed <request >digest &&
 	{
@@ -160,8 +160,8 @@ test_expect_success 'pull request after push' '
 	} <digest &&
 	(
 		cd upstream-private &&
-		git checkout initial &&
-		git pull --ff-only "$repository" "$branch"
+		but checkout initial &&
+		but pull --ff-only "$repository" "$branch"
 	) &&
 	test "$branch" = for-upstream &&
 	test_cmp local/mnemonic.txt upstream-private/mnemonic.txt
@@ -170,15 +170,15 @@ test_expect_success 'pull request after push' '
 
 test_expect_success 'request asks HEAD to be pulled' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push --tags origin main simplify &&
-		git push origin main:for-upstream &&
-		git request-pull initial "$downstream_url" >../request
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push --tags origin main simplify &&
+		but push origin main:for-upstream &&
+		but request-pull initial "$downstream_url" >../request
 	) &&
 	sed -nf read-request.sed <request >digest &&
 	{
@@ -192,8 +192,8 @@ test_expect_success 'request asks HEAD to be pulled' '
 
 test_expect_success 'pull request format' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	cat <<-\EOT >expect &&
 	The following changes since cummit OBJECT_NAME:
 
@@ -217,24 +217,24 @@ test_expect_success 'pull request format' '
 	EOT
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push origin tags/full &&
-		git request-pull initial "$downstream_url" tags/full >../request
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push origin tags/full &&
+		but request-pull initial "$downstream_url" tags/full >../request
 	) &&
 	<request sed -nf fuzz.sed >request.fuzzy &&
 	test_cmp expect request.fuzzy &&
 
 	(
 		cd local &&
-		git request-pull initial "$downstream_url" tags/full:refs/tags/full
+		but request-pull initial "$downstream_url" tags/full:refs/tags/full
 	) >request &&
 	sed -nf fuzz.sed <request >request.fuzzy &&
 	test_cmp expect request.fuzzy &&
 
 	(
 		cd local &&
-		git request-pull initial "$downstream_url" full
+		but request-pull initial "$downstream_url" full
 	) >request &&
 	grep " tags/full\$" request
 '
@@ -245,25 +245,25 @@ test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
 		cd local &&
 		OPTIONS_KEEPDASHDASH=Yes &&
 		export OPTIONS_KEEPDASHDASH &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push origin main:for-upstream &&
-		git request-pull -- initial "$downstream_url" main:for-upstream >../request
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push origin main:for-upstream &&
+		but request-pull -- initial "$downstream_url" main:for-upstream >../request
 	)
 
 '
 
 test_expect_success 'request-pull quotes regex metacharacters properly' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git tag -mrelease v2.0 &&
-		git push origin refs/tags/v2.0:refs/tags/v2-0 &&
-		test_must_fail git request-pull initial "$downstream_url" tags/v2.0 \
+		but checkout initial &&
+		but merge --ff-only main &&
+		but tag -mrelease v2.0 &&
+		but push origin refs/tags/v2.0:refs/tags/v2-0 &&
+		test_must_fail but request-pull initial "$downstream_url" tags/v2.0 \
 			2>../err
 	) &&
 	grep "No match for cummit .*" err &&
@@ -273,14 +273,14 @@ test_expect_success 'request-pull quotes regex metacharacters properly' '
 
 test_expect_success 'pull request with mismatched object' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push origin HEAD:refs/tags/full &&
-		test_must_fail git request-pull initial "$downstream_url" tags/full \
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push origin HEAD:refs/tags/full &&
+		test_must_fail but request-pull initial "$downstream_url" tags/full \
 			2>../err
 	) &&
 	grep "points to a different object" err &&
@@ -290,15 +290,15 @@ test_expect_success 'pull request with mismatched object' '
 
 test_expect_success 'pull request with stale object' '
 
-	rm -fr downstream.git &&
-	git init --bare downstream.git &&
+	rm -fr downstream.but &&
+	but init --bare downstream.but &&
 	(
 		cd local &&
-		git checkout initial &&
-		git merge --ff-only main &&
-		git push origin refs/tags/full &&
-		git tag -f -m"Thirty-one days" full &&
-		test_must_fail git request-pull initial "$downstream_url" tags/full \
+		but checkout initial &&
+		but merge --ff-only main &&
+		but push origin refs/tags/full &&
+		but tag -f -m"Thirty-one days" full &&
+		test_must_fail but request-pull initial "$downstream_url" tags/full \
 			2>../err
 	) &&
 	grep "points to a different object" err &&

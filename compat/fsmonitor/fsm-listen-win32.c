@@ -39,7 +39,7 @@ struct one_watch
 struct fsmonitor_daemon_backend_data
 {
 	struct one_watch *watch_worktree;
-	struct one_watch *watch_gitdir;
+	struct one_watch *watch_butdir;
 
 	HANDLE hEventShutdown;
 
@@ -220,9 +220,9 @@ static int recv_rdcw_watch(struct one_watch *watch)
 	}
 
 	/*
-	 * NEEDSWORK: If an external <gitdir> is deleted, the above
+	 * NEEDSWORK: If an external <butdir> is deleted, the above
 	 * returns an error.  I'm not sure that there's anything that
-	 * we can do here other than failing -- the <worktree>/.git
+	 * we can do here other than failing -- the <worktree>/.but
 	 * link file would be broken anyway.  We might try to check
 	 * for that and return a better error message, but I'm not
 	 * sure it is worth it.
@@ -261,9 +261,9 @@ static void cancel_rdcw_watch(struct one_watch *watch)
 /*
  * Process filesystem events that happen anywhere (recursively) under the
  * <worktree> root directory.  For a normal working directory, this includes
- * both version controlled files and the contents of the .git/ directory.
+ * both version controlled files and the contents of the .but/ directory.
  *
- * If <worktree>/.git is a file, then we only see events for the file
+ * If <worktree>/.but is a file, then we only see events for the file
  * itself.
  */
 static int process_worktree_events(struct fsmonitor_daemon_state *state)
@@ -317,7 +317,7 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 
 		switch (t) {
 		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
-			/* special case cookie files within .git */
+			/* special case cookie files within .but */
 
 			/* Use just the filename of the cookie file. */
 			slash = find_last_dir_sep(path.buf);
@@ -326,15 +326,15 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 			break;
 
 		case IS_INSIDE_DOT_GIT:
-			/* ignore everything inside of "<worktree>/.git/" */
+			/* ignore everything inside of "<worktree>/.but/" */
 			break;
 
 		case IS_DOT_GIT:
-			/* "<worktree>/.git" was deleted (or renamed away) */
+			/* "<worktree>/.but" was deleted (or renamed away) */
 			if ((info->Action == FILE_ACTION_REMOVED) ||
 			    (info->Action == FILE_ACTION_RENAMED_OLD_NAME)) {
 				trace2_data_string("fsmonitor", NULL,
-						   "fsm-listen/dotgit",
+						   "fsm-listen/dotbut",
 						   "removed");
 				goto force_shutdown;
 			}
@@ -376,17 +376,17 @@ force_shutdown:
 
 /*
  * Process filesystem events that happened anywhere (recursively) under the
- * external <gitdir> (such as non-primary worktrees or submodules).
+ * external <butdir> (such as non-primary worktrees or submodules).
  * We only care about cookie files that our client threads created here.
  *
- * Note that we DO NOT get filesystem events on the external <gitdir>
+ * Note that we DO NOT get filesystem events on the external <butdir>
  * itself (it is not inside something that we are watching).  In particular,
- * we do not get an event if the external <gitdir> is deleted.
+ * we do not get an event if the external <butdir> is deleted.
  */
-static int process_gitdir_events(struct fsmonitor_daemon_state *state)
+static int process_butdir_events(struct fsmonitor_daemon_state *state)
 {
 	struct fsmonitor_daemon_backend_data *data = state->backend_data;
-	struct one_watch *watch = data->watch_gitdir;
+	struct one_watch *watch = data->watch_butdir;
 	struct strbuf path = STRBUF_INIT;
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
 	const char *p = watch->buffer;
@@ -407,11 +407,11 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 		if (normalize_path_in_utf8(info, &path) == -1)
 			goto skip_this_path;
 
-		t = fsmonitor_classify_path_gitdir_relative(path.buf);
+		t = fsmonitor_classify_path_butdir_relative(path.buf);
 
 		switch (t) {
 		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
-			/* special case cookie files within gitdir */
+			/* special case cookie files within butdir */
 
 			/* Use just the filename of the cookie file. */
 			slash = find_last_dir_sep(path.buf);
@@ -450,8 +450,8 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	if (start_rdcw_watch(data, data->watch_worktree) == -1)
 		goto force_error_stop;
 
-	if (data->watch_gitdir &&
-	    start_rdcw_watch(data, data->watch_gitdir) == -1)
+	if (data->watch_butdir &&
+	    start_rdcw_watch(data, data->watch_butdir) == -1)
 		goto force_error_stop;
 
 	for (;;) {
@@ -481,22 +481,22 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 		}
 
 		if (dwWait == WAIT_OBJECT_0 + LISTENER_HAVE_DATA_GITDIR) {
-			result = recv_rdcw_watch(data->watch_gitdir);
+			result = recv_rdcw_watch(data->watch_butdir);
 			if (result == -1) {
 				/* hard error */
 				goto force_error_stop;
 			}
 			if (result == -2) {
 				/* retryable error */
-				if (start_rdcw_watch(data, data->watch_gitdir) == -1)
+				if (start_rdcw_watch(data, data->watch_butdir) == -1)
 					goto force_error_stop;
 				continue;
 			}
 
 			/* have data */
-			if (process_gitdir_events(state) == LISTENER_SHUTDOWN)
+			if (process_butdir_events(state) == LISTENER_SHUTDOWN)
 				goto force_shutdown;
-			if (start_rdcw_watch(data, data->watch_gitdir) == -1)
+			if (start_rdcw_watch(data, data->watch_butdir) == -1)
 				goto force_error_stop;
 			continue;
 		}
@@ -522,7 +522,7 @@ force_shutdown:
 
 clean_shutdown:
 	cancel_rdcw_watch(data->watch_worktree);
-	cancel_rdcw_watch(data->watch_gitdir);
+	cancel_rdcw_watch(data->watch_butdir);
 }
 
 int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
@@ -539,9 +539,9 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 		goto failed;
 
 	if (state->nr_paths_watching > 1) {
-		data->watch_gitdir = create_watch(state,
-						  state->path_gitdir_watch.buf);
-		if (!data->watch_gitdir)
+		data->watch_butdir = create_watch(state,
+						  state->path_butdir_watch.buf);
+		if (!data->watch_butdir)
 			goto failed;
 	}
 
@@ -552,9 +552,9 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 		data->watch_worktree->hEvent;
 	data->nr_listener_handles++;
 
-	if (data->watch_gitdir) {
+	if (data->watch_butdir) {
 		data->hListener[LISTENER_HAVE_DATA_GITDIR] =
-			data->watch_gitdir->hEvent;
+			data->watch_butdir->hEvent;
 		data->nr_listener_handles++;
 	}
 
@@ -564,7 +564,7 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 failed:
 	CloseHandle(data->hEventShutdown);
 	destroy_watch(data->watch_worktree);
-	destroy_watch(data->watch_gitdir);
+	destroy_watch(data->watch_butdir);
 
 	return -1;
 }
@@ -580,7 +580,7 @@ void fsm_listen__dtor(struct fsmonitor_daemon_state *state)
 
 	CloseHandle(data->hEventShutdown);
 	destroy_watch(data->watch_worktree);
-	destroy_watch(data->watch_gitdir);
+	destroy_watch(data->watch_butdir);
 
 	FREE_AND_NULL(state->backend_data);
 }

@@ -23,32 +23,32 @@ test_expect_success 'set up rev-list --graph test' '
 	test_cummit A1 foo.txt &&
 	test_cummit A2 bar.txt &&
 	test_cummit A3 bar.txt &&
-	git branch -m main A &&
+	but branch -m main A &&
 
 	# 2 cummits on branch B, started from A1
-	git checkout -b B A1 &&
+	but checkout -b B A1 &&
 	test_cummit B1 foo.txt &&
 	test_cummit B2 abc.txt &&
 
 	# 2 cummits on branch C, started from A2
-	git checkout -b C A2 &&
+	but checkout -b C A2 &&
 	test_cummit C1 xyz.txt &&
 	test_cummit C2 xyz.txt &&
 
 	# Octopus merge B and C into branch A
-	git checkout A &&
-	git merge B C -m A4 &&
-	git tag A4 &&
+	but checkout A &&
+	but merge B C -m A4 &&
+	but tag A4 &&
 
 	test_cummit A5 bar.txt &&
 
 	# More cummits on C, then merge C into A
-	git checkout C &&
+	but checkout C &&
 	test_cummit C3 foo.txt &&
 	test_cummit C4 bar.txt &&
-	git checkout A &&
-	git merge -s ours C -m A6 &&
-	git tag A6 &&
+	but checkout A &&
+	but merge -s ours C -m A6 &&
+	but tag A6 &&
 
 	test_cummit A7 bar.txt
 '
@@ -81,7 +81,7 @@ test_expect_success '--graph --all' '
 # Make sure the graph_is_interesting() code still realizes
 # that undecorated merges are interesting, even with --simplify-by-decoration
 test_expect_success '--graph --simplify-by-decoration' '
-	git tag -d A4 &&
+	but tag -d A4 &&
 	check_graph --all --simplify-by-decoration <<-\EOF
 	* A7
 	*   A6
@@ -107,9 +107,9 @@ test_expect_success '--graph --simplify-by-decoration' '
 '
 
 test_expect_success 'setup: get rid of decorations on B' '
-	git tag -d B2 &&
-	git tag -d B1 &&
-	git branch -d B
+	but tag -d B2 &&
+	but tag -d B1 &&
+	but branch -d B
 '
 
 # Graph with branch B simplified away

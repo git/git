@@ -11,34 +11,34 @@ test_expect_success setup '
 	mkdir subdir &&
 	echo >fileA fileA &&
 	echo >subdir/fileB fileB &&
-	git add fileA subdir/fileB &&
-	git cummit -a -m "Initial in one history." &&
-	A0=$(git rev-parse --verify HEAD) &&
+	but add fileA subdir/fileB &&
+	but cummit -a -m "Initial in one history." &&
+	A0=$(but rev-parse --verify HEAD) &&
 
 	echo >fileA fileA modified &&
-	git cummit -a -m "Second in one history." &&
-	A1=$(git rev-parse --verify HEAD) &&
+	but cummit -a -m "Second in one history." &&
+	A1=$(but rev-parse --verify HEAD) &&
 
 	echo >subdir/fileB fileB modified &&
-	git cummit -a -m "Third in one history." &&
-	A2=$(git rev-parse --verify HEAD) &&
+	but cummit -a -m "Third in one history." &&
+	A2=$(but rev-parse --verify HEAD) &&
 
-	git update-ref -d refs/heads/main &&
-	rm -f .git/index &&
+	but update-ref -d refs/heads/main &&
+	rm -f .but/index &&
 
 	echo >fileA fileA again &&
 	echo >subdir/fileB fileB again &&
-	git add fileA subdir/fileB &&
-	git cummit -a -m "Initial in alternate history." &&
-	B0=$(git rev-parse --verify HEAD) &&
+	but add fileA subdir/fileB &&
+	but cummit -a -m "Initial in alternate history." &&
+	B0=$(but rev-parse --verify HEAD) &&
 
 	echo >fileA fileA modified in alternate history &&
-	git cummit -a -m "Second in alternate history." &&
-	B1=$(git rev-parse --verify HEAD) &&
+	but cummit -a -m "Second in alternate history." &&
+	B1=$(but rev-parse --verify HEAD) &&
 
 	echo >subdir/fileB fileB modified in alternate history &&
-	git cummit -a -m "Third in alternate history." &&
-	B2=$(git rev-parse --verify HEAD) &&
+	but cummit -a -m "Third in alternate history." &&
+	B2=$(but rev-parse --verify HEAD) &&
 	: done
 '
 
@@ -79,13 +79,13 @@ check () {
 	fi
 	if test $type = basic
 	then
-		git rev-list $arg >test.actual
+		but rev-list $arg >test.actual
 	elif test $type = parents
 	then
-		git rev-list --parents $arg >test.actual
+		but rev-list --parents $arg >test.actual
 	elif test $type = parents-raw
 	then
-		git rev-list --parents --pretty=raw $arg |
+		but rev-list --parents --pretty=raw $arg |
 		sed -n -e 's/^cummit //p' >test.actual
 	fi
 	test_cmp test.expect test.actual
@@ -94,33 +94,33 @@ check () {
 for type in basic parents parents-raw
 do
 	test_expect_success 'without grafts' "
-		rm -f .git/info/grafts &&
+		rm -f .but/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0
 	"
 
 	test_expect_success 'with grafts' "
-		echo '$B0 $A2' >.git/info/grafts &&
+		echo '$B0 $A2' >.but/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0 $A2 $A1 $A0
 	"
 
 	test_expect_success 'without grafts, with pathlimit' "
-		rm -f .git/info/grafts &&
+		rm -f .but/info/grafts &&
 		check $type $B2 subdir -- $B2 $B0
 	"
 
 	test_expect_success 'with grafts, with pathlimit' "
-		echo '$B0 $A2' >.git/info/grafts &&
+		echo '$B0 $A2' >.but/info/grafts &&
 		check $type $B2 subdir -- $B2 $B0 $A2 $A0
 	"
 
 done
 
 test_expect_success 'show advice that grafts are deprecated' '
-	git show HEAD 2>err &&
-	test_i18ngrep "git replace" err &&
+	but show HEAD 2>err &&
+	test_i18ngrep "but replace" err &&
 	test_config advice.graftFileDeprecated false &&
-	git show HEAD 2>err &&
-	test_i18ngrep ! "git replace" err
+	but show HEAD 2>err &&
+	test_i18ngrep ! "but replace" err
 '
 
 test_done

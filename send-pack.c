@@ -24,7 +24,7 @@ int option_parse_push_signed(const struct option *opt,
 		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
 		return 0;
 	}
-	switch (git_parse_maybe_bool(arg)) {
+	switch (but_parse_maybe_bool(arg)) {
 	case 1:
 		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_ALWAYS;
 		return 0;
@@ -86,10 +86,10 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		strvec_push(&po.args, "--shallow");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
-	po.git_cmd = 1;
+	po.but_cmd = 1;
 	po.clean_on_exit = 1;
 	if (start_command(&po))
-		die_errno("git pack-objects failed");
+		die_errno("but pack-objects failed");
 
 	/*
 	 * We feed the pack-objects we just spawned with revision
@@ -322,8 +322,8 @@ static int check_to_send_update(const struct ref *ref, const struct send_pack_ar
 /*
  * the beginning of the next line, or the end of buffer.
  *
- * NEEDSWORK: perhaps move this to git-compat-util.h or somewhere and
- * convert many similar uses found by "git grep -A4 memchr".
+ * NEEDSWORK: perhaps move this to but-compat-util.h or somewhere and
+ * convert many similar uses found by "but grep -A4 memchr".
  */
 static const char *next_line(const char *line, size_t len)
 {
@@ -421,7 +421,7 @@ static void get_commons_through_negotiation(const char *url,
 	const struct ref *ref;
 	int len = the_hash_algo->hexsz + 1; /* hash + NL */
 
-	child.git_cmd = 1;
+	child.but_cmd = 1;
 	child.no_stdin = 1;
 	child.out = -1;
 	strvec_pushl(&child.args, "fetch", "--negotiate-only", NULL);
@@ -494,11 +494,11 @@ int send_pack(struct send_pack_args *args,
 		return 0;
 	}
 
-	git_config_get_bool("push.negotiate", &push_negotiate);
+	but_config_get_bool("push.negotiate", &push_negotiate);
 	if (push_negotiate)
 		get_commons_through_negotiation(args->url, remote_refs, &commons);
 
-	git_config_get_bool("transfer.advertisesid", &advertise_sid);
+	but_config_get_bool("transfer.advertisesid", &advertise_sid);
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status-v2"))
@@ -567,7 +567,7 @@ int send_pack(struct send_pack_args *args,
 	if (object_format_supported)
 		strbuf_addf(&cap_buf, " object-format=%s", the_hash_algo->name);
 	if (agent_supported)
-		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
+		strbuf_addf(&cap_buf, " agent=%s", but_user_agent_sanitized());
 	if (advertise_sid)
 		strbuf_addf(&cap_buf, " session-id=%s", trace2_session_id());
 
@@ -684,7 +684,7 @@ int send_pack(struct send_pack_args *args,
 		if (pack_objects(out, remote_refs, extra_have, &commons, args) < 0) {
 			if (args->stateless_rpc)
 				close(out);
-			if (git_connection_is_socket(conn))
+			if (but_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
 
 			/*

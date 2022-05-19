@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase --onto A...B'
+test_description='but rebase --onto A...B'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -24,171 +24,171 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 	test_cummit A &&
 	test_cummit B &&
-	git branch side &&
+	but branch side &&
 	test_cummit C &&
-	git branch topic &&
-	git checkout side &&
+	but branch topic &&
+	but checkout side &&
 	test_commit H &&
-	git checkout main &&
+	but checkout main &&
 	test_tick &&
-	git merge H &&
-	git tag D &&
+	but merge H &&
+	but tag D &&
 	test_cummit E &&
-	git checkout topic &&
+	but checkout topic &&
 	test_cummit F &&
 	test_cummit G &&
-	git checkout side &&
+	but checkout side &&
 	test_tick &&
-	git merge C &&
-	git tag I &&
+	but merge C &&
+	but tag I &&
 	test_cummit J &&
 	test_cummit K
 '
 
 test_expect_success 'rebase --onto main...topic' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 
-	git rebase --onto main...topic F &&
-	git rev-parse HEAD^1 >actual &&
-	git rev-parse C^0 >expect &&
+	but rebase --onto main...topic F &&
+	but rev-parse HEAD^1 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --onto main...' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 
-	git rebase --onto main... F &&
-	git rev-parse HEAD^1 >actual &&
-	git rev-parse C^0 >expect &&
+	but rebase --onto main... F &&
+	but rev-parse HEAD^1 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --onto main...side' '
-	git reset --hard &&
-	git checkout side &&
-	git reset --hard K &&
+	but reset --hard &&
+	but checkout side &&
+	but reset --hard K &&
 
-	test_must_fail git rebase --onto main...side J
+	test_must_fail but rebase --onto main...side J
 '
 
 test_expect_success 'rebase -i --onto main...topic' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 	set_fake_editor &&
-	EXPECT_COUNT=1 git rebase -i --onto main...topic F &&
-	git rev-parse HEAD^1 >actual &&
-	git rev-parse C^0 >expect &&
+	EXPECT_COUNT=1 but rebase -i --onto main...topic F &&
+	but rev-parse HEAD^1 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i --onto main...' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 	set_fake_editor &&
-	EXPECT_COUNT=1 git rebase -i --onto main... F &&
-	git rev-parse HEAD^1 >actual &&
-	git rev-parse C^0 >expect &&
+	EXPECT_COUNT=1 but rebase -i --onto main... F &&
+	but rev-parse HEAD^1 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i --onto main...side' '
-	git reset --hard &&
-	git checkout side &&
-	git reset --hard K &&
+	but reset --hard &&
+	but checkout side &&
+	but reset --hard K &&
 
 	set_fake_editor &&
-	test_must_fail git rebase -i --onto main...side J
+	test_must_fail but rebase -i --onto main...side J
 '
 
 test_expect_success 'rebase --keep-base --onto incompatible' '
-	test_must_fail git rebase --keep-base --onto main...
+	test_must_fail but rebase --keep-base --onto main...
 '
 
 test_expect_success 'rebase --keep-base --root incompatible' '
-	test_must_fail git rebase --keep-base --root
+	test_must_fail but rebase --keep-base --root
 '
 
 test_expect_success 'rebase --keep-base main from topic' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 
-	git rebase --keep-base main &&
-	git rev-parse C >base.expect &&
-	git merge-base main HEAD >base.actual &&
+	but rebase --keep-base main &&
+	but rev-parse C >base.expect &&
+	but merge-base main HEAD >base.actual &&
 	test_cmp base.expect base.actual &&
 
-	git rev-parse HEAD~2 >actual &&
-	git rev-parse C^0 >expect &&
+	but rev-parse HEAD~2 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --keep-base main topic from main' '
-	git checkout main &&
-	git branch -f topic G &&
+	but checkout main &&
+	but branch -f topic G &&
 
-	git rebase --keep-base main topic &&
-	git rev-parse C >base.expect &&
-	git merge-base main HEAD >base.actual &&
+	but rebase --keep-base main topic &&
+	but rev-parse C >base.expect &&
+	but merge-base main HEAD >base.actual &&
 	test_cmp base.expect base.actual &&
 
-	git rev-parse HEAD~2 >actual &&
-	git rev-parse C^0 >expect &&
+	but rev-parse HEAD~2 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase --keep-base main from side' '
-	git reset --hard &&
-	git checkout side &&
-	git reset --hard K &&
+	but reset --hard &&
+	but checkout side &&
+	but reset --hard K &&
 
-	test_must_fail git rebase --keep-base main
+	test_must_fail but rebase --keep-base main
 '
 
 test_expect_success 'rebase -i --keep-base main from topic' '
-	git reset --hard &&
-	git checkout topic &&
-	git reset --hard G &&
+	but reset --hard &&
+	but checkout topic &&
+	but reset --hard G &&
 
 	set_fake_editor &&
-	EXPECT_COUNT=2 git rebase -i --keep-base main &&
-	git rev-parse C >base.expect &&
-	git merge-base main HEAD >base.actual &&
+	EXPECT_COUNT=2 but rebase -i --keep-base main &&
+	but rev-parse C >base.expect &&
+	but merge-base main HEAD >base.actual &&
 	test_cmp base.expect base.actual &&
 
-	git rev-parse HEAD~2 >actual &&
-	git rev-parse C^0 >expect &&
+	but rev-parse HEAD~2 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i --keep-base main topic from main' '
-	git checkout main &&
-	git branch -f topic G &&
+	but checkout main &&
+	but branch -f topic G &&
 
 	set_fake_editor &&
-	EXPECT_COUNT=2 git rebase -i --keep-base main topic &&
-	git rev-parse C >base.expect &&
-	git merge-base main HEAD >base.actual &&
+	EXPECT_COUNT=2 but rebase -i --keep-base main topic &&
+	but rev-parse C >base.expect &&
+	but merge-base main HEAD >base.actual &&
 	test_cmp base.expect base.actual &&
 
-	git rev-parse HEAD~2 >actual &&
-	git rev-parse C^0 >expect &&
+	but rev-parse HEAD~2 >actual &&
+	but rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i --keep-base main from side' '
-	git reset --hard &&
-	git checkout side &&
-	git reset --hard K &&
+	but reset --hard &&
+	but checkout side &&
+	but reset --hard K &&
 
 	set_fake_editor &&
-	test_must_fail git rebase -i --keep-base main
+	test_must_fail but rebase -i --keep-base main
 '
 
 test_done

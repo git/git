@@ -628,7 +628,7 @@ int get_tree_entry(struct repository *r,
 
 /*
  * This is Linux's built-in max for the number of symlinks to follow.
- * That limit, of course, does not affect git, but it's a reasonable
+ * That limit, of course, does not affect but, but it's a reasonable
  * choice.
  */
 #define GET_TREE_ENTRY_FOLLOW_SYMLINKS_MAX_LINKS 40
@@ -1084,7 +1084,7 @@ static enum interesting do_match(struct index_state *istate,
 				goto interesting;
 
 			if (item->nowildcard_len < item->len) {
-				if (!git_fnmatch(item, match + baselen, entry->path,
+				if (!but_fnmatch(item, match + baselen, entry->path,
 						 item->nowildcard_len - baselen))
 					goto interesting;
 
@@ -1130,7 +1130,7 @@ match_wildcards:
 		 * realloc, it turns out not worth it. Measurement on
 		 * linux-2.6 does not show any clear improvements,
 		 * partly because of the nowildcard_len optimization
-		 * in git_fnmatch(). Avoid micro-optimizations here.
+		 * in but_fnmatch(). Avoid micro-optimizations here.
 		 *
 		 * [1] if match_wildcard_base() says the base
 		 * directory is already matched, we only need to match
@@ -1139,7 +1139,7 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!git_fnmatch(item, match, base->buf + base_offset,
+		if (!but_fnmatch(item, match, base->buf + base_offset,
 				 item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
 			goto interesting;
@@ -1166,7 +1166,7 @@ match_wildcards:
 		 * later on.
 		 * max_depth is ignored but we may consider support it
 		 * in future, see
-		 * https://lore.kernel.org/git/7vmxo5l2g4.fsf@alter.siamese.dyndns.org/
+		 * https://lore.kernel.org/but/7vmxo5l2g4.fsf@alter.siamese.dyndns.org/
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
 			return entry_interesting;

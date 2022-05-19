@@ -1,21 +1,21 @@
 #!/bin/sh
 
-test_description='git status ignored modes'
+test_description='but status ignored modes'
 
 . ./test-lib.sh
 
 test_expect_success 'setup initial cummit and ignore file' '
-	cat >.gitignore <<-\EOF &&
+	cat >.butignore <<-\EOF &&
 	*.ign
 	ignored_dir/
 	!*.unignore
 	EOF
-	git add . &&
-	git cummit -m "Initial cummit"
+	but add . &&
+	but cummit -m "Initial cummit"
 '
 
 test_expect_success 'Verify behavior of status on directories with ignored files' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -29,12 +29,12 @@ test_expect_success 'Verify behavior of status on directories with ignored files
 	touch ignored/ignored_1.ign ignored/ignored_2.ign \
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on directory with tracked & ignored files' '
-	test_when_finished "git clean -fdx && git reset HEAD~1 --hard" &&
+	test_when_finished "but clean -fdx && but reset HEAD~1 --hard" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -50,16 +50,16 @@ test_expect_success 'Verify status behavior on directory with tracked & ignored 
 		dir/tracked_ignored/tracked_1 dir/tracked_ignored/tracked_2 \
 		dir/tracked_ignored/ignored_1.ign dir/tracked_ignored/ignored_2.ign &&
 
-	git add tracked_ignored/tracked_1 tracked_ignored/tracked_2 \
+	but add tracked_ignored/tracked_1 tracked_ignored/tracked_2 \
 		dir/tracked_ignored/tracked_1 dir/tracked_ignored/tracked_2 &&
-	git cummit -m "cummit tracked files" &&
+	but cummit -m "cummit tracked files" &&
 
-	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on directory with untracked and ignored files' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? dir/untracked_ignored/untracked_1
 	? dir/untracked_ignored/untracked_2
@@ -79,12 +79,12 @@ test_expect_success 'Verify status behavior on directory with untracked and igno
 		dir/untracked_ignored/untracked_1 dir/untracked_ignored/untracked_2 \
 		dir/untracked_ignored/ignored_1.ign dir/untracked_ignored/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify status matching ignored files on ignored directory' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -95,12 +95,12 @@ test_expect_success 'Verify status matching ignored files on ignored directory' 
 	touch ignored_dir/ignored_1 ignored_dir/ignored_2 \
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on ignored directory containing tracked file' '
-	test_when_finished "git clean -fdx && git reset HEAD~1 --hard" &&
+	test_when_finished "but clean -fdx && but reset HEAD~1 --hard" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -114,14 +114,14 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 	touch ignored_dir/ignored_1 ignored_dir/ignored_2 \
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign \
 		ignored_dir/tracked &&
-	git add -f ignored_dir/tracked &&
-	git cummit -m "Force add file in ignored directory" &&
-	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	but add -f ignored_dir/tracked &&
+	but cummit -m "Force add file in ignored directory" &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify matching ignored files with --untracked-files=normal' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -135,12 +135,12 @@ test_expect_success 'Verify matching ignored files with --untracked-files=normal
 	touch ignored_dir/ignored_1 ignored_dir/ignored_2 \
 		ignored_files/ignored_1.ign ignored_files/ignored_2.ign \
 		untracked_dir/untracked &&
-	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify matching ignored files with --untracked-files=normal' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -154,12 +154,12 @@ test_expect_success 'Verify matching ignored files with --untracked-files=normal
 	touch ignored_dir/ignored_1 ignored_dir/ignored_2 \
 		ignored_files/ignored_1.ign ignored_files/ignored_2.ign \
 		untracked_dir/untracked &&
-	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify status behavior on ignored directory containing tracked file' '
-	test_when_finished "git clean -fdx && git reset HEAD~1 --hard" &&
+	test_when_finished "but clean -fdx && but reset HEAD~1 --hard" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -173,14 +173,14 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 	touch ignored_dir/ignored_1 ignored_dir/ignored_2 \
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign \
 		ignored_dir/tracked &&
-	git add -f ignored_dir/tracked &&
-	git cummit -m "Force add file in ignored directory" &&
-	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
+	but add -f ignored_dir/tracked &&
+	but cummit -m "Force add file in ignored directory" &&
+	but status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=no' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -190,12 +190,12 @@ test_expect_success 'Verify behavior of status with --ignored=no' '
 	touch ignored/ignored_1.ign ignored/ignored_2.ign \
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=no --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=no --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=traditional and --untracked-files=all' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -209,12 +209,12 @@ test_expect_success 'Verify behavior of status with --ignored=traditional and --
 	touch ignored/ignored_1.ign ignored/ignored_2.ign \
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=traditional --untracked-files=all >output &&
+	but status --porcelain=v2 --ignored=traditional --untracked-files=all >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'Verify behavior of status with --ignored=traditional and --untracked-files=normal' '
-	test_when_finished "git clean -fdx" &&
+	test_when_finished "but clean -fdx" &&
 	cat >expect <<-\EOF &&
 	? expect
 	? output
@@ -226,7 +226,7 @@ test_expect_success 'Verify behavior of status with --ignored=traditional and --
 	touch ignored/ignored_1.ign ignored/ignored_2.ign \
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
-	git status --porcelain=v2 --ignored=traditional --untracked-files=normal >output &&
+	but status --porcelain=v2 --ignored=traditional --untracked-files=normal >output &&
 	test_cmp expect output
 '
 

@@ -1,4 +1,4 @@
-$ git whatchanged --patch-with-stat master -- dir/
+$ but whatchanged --patch-with-stat master -- dir/
 cummit c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:03:00 2006 +0000
@@ -8,7 +8,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -27,7 +27,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -49,7 +49,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
 --- a/dir/sub
 +++ b/dir/sub

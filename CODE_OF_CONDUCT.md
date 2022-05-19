@@ -66,11 +66,11 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-git@sfconservancy.org, or individually:
+but@sfconservancy.org, or individually:
 
   - Ævar Arnfjörð Bjarmason <avarab@gmail.com>
   - Christian Couder <christian.couder@gmail.com>
-  - Junio C Hamano <gitster@pobox.com>
+  - Junio C Hamano <butster@pobox.com>
   - Taylor Blau <me@ttaylorr.com>
 
 All complaints will be reviewed and investigated promptly and fairly.
@@ -139,7 +139,7 @@ at [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
 [v2.0]: https://www.contributor-covenant.org/version/2/0/code_of_conduct.html
-[Mozilla CoC]: https://github.com/mozilla/diversity
+[Mozilla CoC]: https://buthub.com/mozilla/diversity
 [FAQ]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations
 

@@ -1,29 +1,29 @@
-git-config(1)
+but-config(1)
 =============
 
 NAME
 ----
-git-config - Get and set repository or global options
+but-config - Get and set repository or global options
 
 
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [--type=<type>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
-'git config' [<file-option>] [--type=<type>] --add <name> <value>
-'git config' [<file-option>] [--type=<type>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp <name-regex> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [-z|--null] --get-urlmatch <name> <URL>
-'git config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
-'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
-'git config' [<file-option>] --rename-section <old-name> <new-name>
-'git config' [<file-option>] --remove-section <name>
-'git config' [<file-option>] [--show-origin] [--show-scope] [-z|--null] [--name-only] -l | --list
-'git config' [<file-option>] --get-color <name> [<default>]
-'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
-'git config' [<file-option>] -e | --edit
+'but config' [<file-option>] [--type=<type>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
+'but config' [<file-option>] [--type=<type>] --add <name> <value>
+'but config' [<file-option>] [--type=<type>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
+'but config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get <name> [<value-pattern>]
+'but config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all <name> [<value-pattern>]
+'but config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp <name-regex> [<value-pattern>]
+'but config' [<file-option>] [--type=<type>] [-z|--null] --get-urlmatch <name> <URL>
+'but config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
+'but config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
+'but config' [<file-option>] --rename-section <old-name> <new-name>
+'but config' [<file-option>] --remove-section <name>
+'but config' [<file-option>] [--show-origin] [--show-scope] [-z|--null] [--name-only] -l | --list
+'but config' [<file-option>] --get-color <name> [<default>]
+'but config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
+'but config' [<file-option>] -e | --edit
 
 DESCRIPTION
 -----------
@@ -41,7 +41,7 @@ prepend a single exclamation mark in front (see also <<EXAMPLES>>),
 but note that this only works when the `--fixed-value` option is not
 in use.
 
-The `--type=<type>` option instructs 'git config' to ensure that incoming and
+The `--type=<type>` option instructs 'but config' to ensure that incoming and
 outgoing values are canonicalize-able under the given <type>.  If no
 `--type=<type>` is given, no canonicalization will be performed. Callers may
 unset an existing `--type` specifier with `--no-type`.
@@ -72,7 +72,7 @@ codes are:
 On success, the command returns the exit code 0.
 
 A list of all available configuration variables can be obtained using the
-`git help --config` command.
+`but help --config` command.
 
 [[OPTIONS]]
 OPTIONS
@@ -111,31 +111,31 @@ OPTIONS
 	list them.  Returns error code 1 if no value is found.
 
 --global::
-	For writing options: write to global `~/.gitconfig` file
-	rather than the repository `.git/config`, write to
-	`$XDG_CONFIG_HOME/git/config` file if this file exists and the
-	`~/.gitconfig` file doesn't.
+	For writing options: write to global `~/.butconfig` file
+	rather than the repository `.but/config`, write to
+	`$XDG_CONFIG_HOME/but/config` file if this file exists and the
+	`~/.butconfig` file doesn't.
 +
-For reading options: read only from global `~/.gitconfig` and from
-`$XDG_CONFIG_HOME/git/config` rather than from all available files.
+For reading options: read only from global `~/.butconfig` and from
+`$XDG_CONFIG_HOME/but/config` rather than from all available files.
 +
 See also <<FILES>>.
 
 --system::
 	For writing options: write to system-wide
-	`$(prefix)/etc/gitconfig` rather than the repository
-	`.git/config`.
+	`$(prefix)/etc/butconfig` rather than the repository
+	`.but/config`.
 +
-For reading options: read only from system-wide `$(prefix)/etc/gitconfig`
+For reading options: read only from system-wide `$(prefix)/etc/butconfig`
 rather than from all available files.
 +
 See also <<FILES>>.
 
 --local::
-	For writing options: write to the repository `.git/config` file.
+	For writing options: write to the repository `.but/config` file.
 	This is the default behavior.
 +
-For reading options: read only from the repository `.git/config` rather than
+For reading options: read only from the repository `.but/config` rather than
 from all available files.
 +
 See also <<FILES>>.
@@ -146,13 +146,13 @@ See also <<FILES>>.
 	enabled. If not it's the same as `--local`. Note that `$GIT_DIR`
 	is equal to `$GIT_COMMON_DIR` for the main working tree, but is of
 	the form `$GIT_DIR/worktrees/<id>/` for other working trees. See
-	linkgit:git-worktree[1] to learn how to enable
+	linkbut:but-worktree[1] to learn how to enable
 	`extensions.worktreeConfig`.
 
 -f <config-file>::
 --file <config-file>::
 	For writing options: write to the specified file rather than the
-	repository `.git/config`.
+	repository `.but/config`.
 +
 For reading options: read only from the specified file rather than from all
 available files.
@@ -161,9 +161,9 @@ See also <<FILES>>.
 
 --blob <blob>::
 	Similar to `--file` but use the given blob instead of a file. E.g.
-	you can use 'master:.gitmodules' to read values from the file
-	'.gitmodules' in the master branch. See "SPECIFYING REVISIONS"
-	section in linkgit:gitrevisions[7] for a more complete list of
+	you can use 'master:.butmodules' to read values from the file
+	'.butmodules' in the master branch. See "SPECIFYING REVISIONS"
+	section in linkbut:butrevisions[7] for a more complete list of
 	ways to spell blob names.
 
 --remove-section::
@@ -189,7 +189,7 @@ See also <<FILES>>.
 	is exactly equal to the `value-pattern`.
 
 --type <type>::
-  'git config' will ensure that any input or output is valid under the given
+  'but config' will ensure that any input or output is valid under the given
   type constraint(s), and will canonicalize outgoing values in `<type>`'s
   canonical form.
 +
@@ -203,7 +203,7 @@ Valid `<type>`'s include:
   above.
 - 'path': canonicalize by adding a leading `~` to the value of `$HOME` and
   `~user` to the home directory for the specified user. This specifier has no
-  effect when setting the value (but you can use `git config section.variable
+  effect when setting the value (but you can use `but config section.variable
   ~/` from the command line to let your shell do the expansion.)
 - 'expiry-date': canonicalize by converting from a fixed or relative date-string
   to a timestamp. This specifier has no effect when setting the value.
@@ -223,7 +223,7 @@ Valid `<type>`'s include:
 
 --no-type::
   Un-sets the previously set type specifier (if one was previously set). This
-  option requests that 'git config' not canonicalize the retrieved variable.
+  option requests that 'but config' not canonicalize the retrieved variable.
   `--no-type` has no effect without `--type=<type>` or `--<type>`.
 
 -z::
@@ -298,20 +298,20 @@ FILES
 -----
 
 If not set explicitly with `--file`, there are four files where
-'git config' will search for configuration options:
+'but config' will search for configuration options:
 
-$(prefix)/etc/gitconfig::
+$(prefix)/etc/butconfig::
 	System-wide configuration file.
 
-$XDG_CONFIG_HOME/git/config::
+$XDG_CONFIG_HOME/but/config::
 	Second user-specific configuration file. If $XDG_CONFIG_HOME is not set
-	or empty, `$HOME/.config/git/config` will be used. Any single-valued
+	or empty, `$HOME/.config/but/config` will be used. Any single-valued
 	variable set in this file will be overwritten by whatever is in
-	`~/.gitconfig`.  It is a good idea not to create this file if
+	`~/.butconfig`.  It is a good idea not to create this file if
 	you sometimes use older versions of Git, as support for this
 	file was added fairly recently.
 
-~/.gitconfig::
+~/.butconfig::
 	User-specific configuration file. Also called "global"
 	configuration file.
 
@@ -325,19 +325,19 @@ $GIT_DIR/config.worktree::
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
 file are not available they will be ignored. If the repository configuration
-file is not available or readable, 'git config' will exit with a non-zero
+file is not available or readable, 'but config' will exit with a non-zero
 error code. However, in neither case will an error message be issued.
 
 The files are read in the order given above, with last value found taking
 precedence over values read earlier.  When multiple values are taken then all
 values of a key from all files will be used.
 
-You may override individual configuration parameters when running any git
-command by using the `-c` option. See linkgit:git[1] for details.
+You may override individual configuration parameters when running any but
+command by using the `-c` option. See linkbut:but[1] for details.
 
 All writing options will per default write to the repository specific
 configuration file. Note that this also affects options like `--replace-all`
-and `--unset`. *'git config' will only ever change one file at a time*.
+and `--unset`. *'but config' will only ever change one file at a time*.
 
 You can override these rules using the `--global`, `--system`,
 `--local`, `--worktree`, and `--file` command-line options; see
@@ -350,11 +350,11 @@ ENVIRONMENT
 GIT_CONFIG_GLOBAL::
 GIT_CONFIG_SYSTEM::
 	Take the configuration from the given files instead from global or
-	system-level configuration. See linkgit:git[1] for details.
+	system-level configuration. See linkbut:but[1] for details.
 
 GIT_CONFIG_NOSYSTEM::
 	Whether to skip reading settings from the system-wide
-	$(prefix)/etc/gitconfig file. See linkgit:git[1] for details.
+	$(prefix)/etc/butconfig file. See linkbut:but[1] for details.
 
 See also <<FILES>>.
 
@@ -368,14 +368,14 @@ GIT_CONFIG_VALUE_<n>::
 	GIT_CONFIG_COUNT is treated the same as GIT_CONFIG_COUNT=0, namely no
 	pairs are processed. These environment variables will override values
 	in configuration files, but will be overridden by any explicit options
-	passed via `git -c`.
+	passed via `but -c`.
 +
-This is useful for cases where you want to spawn multiple git commands
+This is useful for cases where you want to spawn multiple but commands
 with a common configuration but cannot depend on a configuration file,
 for example when writing scripts.
 
 GIT_CONFIG::
-	If no `--file` option is provided to `git config`, use the file
+	If no `--file` option is provided to `but config`, use the file
 	given by `GIT_CONFIG` as if it were provided via `--file`. This
 	variable has no effect on other Git commands, and is mostly for
 	historical compatibility; there is generally no reason to use it
@@ -385,7 +385,7 @@ GIT_CONFIG::
 EXAMPLES
 --------
 
-Given a .git/config like this:
+Given a .but/config like this:
 
 ------------
 #
@@ -406,8 +406,8 @@ Given a .git/config like this:
 
 ; Proxy settings
 [core]
-	gitproxy=proxy-command for kernel.org
-	gitproxy=default-proxy ; for all the rest
+	butproxy=proxy-command for kernel.org
+	butproxy=default-proxy ; for all the rest
 
 ; HTTP
 [http]
@@ -420,7 +420,7 @@ Given a .git/config like this:
 you can set the filemode to true with
 
 ------------
-% git config core.filemode true
+% but config core.filemode true
 ------------
 
 The hypothetical proxy command entries actually have a postfix to discern
@@ -428,7 +428,7 @@ what URL they apply to. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
-% git config core.gitproxy '"ssh" for kernel.org' 'for kernel.org$'
+% but config core.butproxy '"ssh" for kernel.org' 'for kernel.org$'
 ------------
 
 This makes sure that only the key/value pair for kernel.org is replaced.
@@ -436,60 +436,60 @@ This makes sure that only the key/value pair for kernel.org is replaced.
 To delete the entry for renames, do
 
 ------------
-% git config --unset diff.renames
+% but config --unset diff.renames
 ------------
 
-If you want to delete an entry for a multivar (like core.gitproxy above),
+If you want to delete an entry for a multivar (like core.butproxy above),
 you have to provide a regex matching the value of exactly one line.
 
 To query the value for a given key, do
 
 ------------
-% git config --get core.filemode
+% but config --get core.filemode
 ------------
 
 or
 
 ------------
-% git config core.filemode
+% but config core.filemode
 ------------
 
 or, to query a multivar:
 
 ------------
-% git config --get core.gitproxy "for kernel.org$"
+% but config --get core.butproxy "for kernel.org$"
 ------------
 
 If you want to know all the values for a multivar, do:
 
 ------------
-% git config --get-all core.gitproxy
+% but config --get-all core.butproxy
 ------------
 
-If you like to live dangerously, you can replace *all* core.gitproxy by a
+If you like to live dangerously, you can replace *all* core.butproxy by a
 new one with
 
 ------------
-% git config --replace-all core.gitproxy ssh
+% but config --replace-all core.butproxy ssh
 ------------
 
 However, if you really only want to replace the line for the default proxy,
 i.e. the one without a "for ..." postfix, do something like this:
 
 ------------
-% git config core.gitproxy ssh '! for '
+% but config core.butproxy ssh '! for '
 ------------
 
 To actually match only values with an exclamation mark, you have to
 
 ------------
-% git config section.key value '[!]'
+% but config section.key value '[!]'
 ------------
 
 To add a new proxy, without altering any of the existing ones, use
 
 ------------
-% git config --add core.gitproxy '"proxy-command" for example.com'
+% but config --add core.butproxy '"proxy-command" for example.com'
 ------------
 
 An example to use customized color from the configuration in your
@@ -497,8 +497,8 @@ script:
 
 ------------
 #!/bin/sh
-WS=$(git config --get-color color.diff.whitespace "blue reverse")
-RESET=$(git config --get-color "" "reset")
+WS=$(but config --get-color color.diff.whitespace "blue reverse")
+RESET=$(but config --get-color "" "reset")
 echo "${WS}your whitespace color or blue reverse${RESET}"
 ------------
 
@@ -506,11 +506,11 @@ For URLs in `https://weak.example.com`, `http.sslVerify` is set to
 false, while it is set to `true` for all others:
 
 ------------
-% git config --type=bool --get-urlmatch http.sslverify https://good.example.com
+% but config --type=bool --get-urlmatch http.sslverify https://good.example.com
 true
-% git config --type=bool --get-urlmatch http.sslverify https://weak.example.com
+% but config --type=bool --get-urlmatch http.sslverify https://weak.example.com
 false
-% git config --get-urlmatch http https://weak.example.com
+% but config --get-urlmatch http https://weak.example.com
 http.cookieFile /tmp/cookie.txt
 http.sslverify false
 ------------
@@ -529,7 +529,7 @@ looks like
     key = value1
 --------
 
-and running `git config section.Subsection.key value2` will result in
+and running `but config section.Subsection.key value2` will result in
 
 --------
   [section.subsection]
@@ -540,4 +540,4 @@ and running `git config section.Subsection.key value2` will result in
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

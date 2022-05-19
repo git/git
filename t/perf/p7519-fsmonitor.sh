@@ -5,7 +5,7 @@ test_description="Test core.fsmonitor"
 . ./perf-lib.sh
 
 #
-# Performance test for the fsmonitor feature which enables git to talk to a
+# Performance test for the fsmonitor feature which enables but to talk to a
 # file system change monitor and avoid having to scan the working directory
 # for new or modified files.
 #
@@ -39,7 +39,7 @@ test_perf_large_repo
 test_checkout_worktree
 
 test_lazy_prereq UNTRACKED_CACHE '
-	{ git update-index --test-untracked-cache; ret=$?; } &&
+	{ but update-index --test-untracked-cache; ret=$?; } &&
 	test $ret -ne 1
 '
 
@@ -109,20 +109,20 @@ test_expect_success "one time repo setup" '
 	# set untrackedCache depending on the environment
 	if test -n "$GIT_PERF_7519_UNTRACKED_CACHE"
 	then
-		git config core.untrackedCache "$GIT_PERF_7519_UNTRACKED_CACHE"
+		but config core.untrackedCache "$GIT_PERF_7519_UNTRACKED_CACHE"
 	else
 		if test_have_prereq UNTRACKED_CACHE
 		then
-			git config core.untrackedCache true
+			but config core.untrackedCache true
 		else
-			git config core.untrackedCache false
+			but config core.untrackedCache false
 		fi
 	fi &&
 
 	# set core.splitindex depending on the environment
 	if test -n "$GIT_PERF_7519_SPLIT_INDEX"
 	then
-		git config core.splitIndex "$GIT_PERF_7519_SPLIT_INDEX"
+		but config core.splitIndex "$GIT_PERF_7519_SPLIT_INDEX"
 	fi &&
 
 	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
@@ -131,8 +131,8 @@ test_expect_success "one time repo setup" '
 	touch_files 100 &&
 	touch_files 1000 &&
 	touch_files 10000 &&
-	git add 1_file 10_files 100_files 1000_files 10000_files &&
-	git cummit -qm "Add files" &&
+	but add 1_file 10_files 100_files 1000_files 10000_files &&
+	but cummit -qm "Add files" &&
 
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then
@@ -151,20 +151,20 @@ setup_for_fsmonitor_hook () {
 		# Choose integration script based on existence of Watchman.
 		# Fall back to an empty integration script.
 		#
-		mkdir .git/hooks &&
+		mkdir .but/hooks &&
 		if test_have_prereq WATCHMAN
 		then
-			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-watchman" &&
+			INTEGRATION_SCRIPT=".but/hooks/fsmonitor-watchman" &&
 			cp "$TEST_DIRECTORY/../templates/hooks--fsmonitor-watchman.sample" "$INTEGRATION_SCRIPT"
 		else
-			INTEGRATION_SCRIPT=".git/hooks/fsmonitor-empty" &&
+			INTEGRATION_SCRIPT=".but/hooks/fsmonitor-empty" &&
 			write_script "$INTEGRATION_SCRIPT"<<-\EOF
 			EOF
 		fi
 	fi &&
 
-	git config core.fsmonitor "$INTEGRATION_SCRIPT" &&
-	git update-index --fsmonitor 2>error &&
+	but config core.fsmonitor "$INTEGRATION_SCRIPT" &&
+	but update-index --fsmonitor 2>error &&
 	if test_have_prereq WATCHMAN
 	then
 		test_must_be_empty error  # ensure no silent error
@@ -193,20 +193,20 @@ test_fsmonitor_suite () {
 	fi
 
 	test_expect_success "test_initialization" '
-		git reset --hard &&
-		git status  # Warm caches
+		but reset --hard &&
+		but status  # Warm caches
 	'
 
 	test_perf_w_drop_caches "status ($DESC)" '
-		git status
+		but status
 	'
 
 	test_perf_w_drop_caches "status -uno ($DESC)" '
-		git status -uno
+		but status -uno
 	'
 
 	test_perf_w_drop_caches "status -uall ($DESC)" '
-		git status -uall
+		but status -uall
 	'
 
 	# Update the mtimes on upto 100k files to make status think
@@ -216,44 +216,44 @@ test_fsmonitor_suite () {
 	# properly.
 	#
 	test_perf_w_drop_caches "status (dirty) ($DESC)" '
-		git ls-files | \
+		but ls-files | \
 			head -100000 | \
 			grep -v \" | \
 			grep -v " ." | \
 			xargs test-tool chmtime -300 &&
-		git status
+		but status
 	'
 
 	test_perf_w_drop_caches "diff ($DESC)" '
-		git diff
+		but diff
 	'
 
 	test_perf_w_drop_caches "diff HEAD ($DESC)" '
-		git diff HEAD
+		but diff HEAD
 	'
 
 	test_perf_w_drop_caches "diff -- 0_files ($DESC)" '
-		git diff -- 1_file
+		but diff -- 1_file
 	'
 
 	test_perf_w_drop_caches "diff -- 10_files ($DESC)" '
-		git diff -- 10_files
+		but diff -- 10_files
 	'
 
 	test_perf_w_drop_caches "diff -- 100_files ($DESC)" '
-		git diff -- 100_files
+		but diff -- 100_files
 	'
 
 	test_perf_w_drop_caches "diff -- 1000_files ($DESC)" '
-		git diff -- 1000_files
+		but diff -- 1000_files
 	'
 
 	test_perf_w_drop_caches "diff -- 10000_files ($DESC)" '
-		git diff -- 10000_files
+		but diff -- 10000_files
 	'
 
 	test_perf_w_drop_caches "add ($DESC)" '
-		git add  --all
+		but add  --all
 	'
 }
 
@@ -290,8 +290,8 @@ trace_stop
 trace_start fsmonitor-disabled
 test_expect_success "setup without fsmonitor" '
 	unset INTEGRATION_SCRIPT &&
-	git config --unset core.fsmonitor &&
-	git update-index --no-fsmonitor
+	but config --unset core.fsmonitor &&
+	but update-index --no-fsmonitor
 '
 
 test_fsmonitor_suite
@@ -309,17 +309,17 @@ then
 
 	test_expect_success "setup for builtin fsmonitor" '
 		trace_start fsmonitor--daemon--server &&
-		git fsmonitor--daemon start &&
+		but fsmonitor--daemon start &&
 
 		trace_start fsmonitor--daemon--client &&
 
-		git config core.fsmonitor true &&
-		git update-index --fsmonitor
+		but config core.fsmonitor true &&
+		but update-index --fsmonitor
 	'
 
 	test_fsmonitor_suite
 
-	git fsmonitor--daemon stop
+	but fsmonitor--daemon stop
 	trace_stop
 fi
 

@@ -25,7 +25,7 @@ INPUT_END
 }
 
 verify_notes () {
-	git log | grep "^    " > output &&
+	but log | grep "^    " > output &&
 	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
 		echo "    cummit #$i" &&
@@ -66,13 +66,13 @@ file in cummit #2
 EOF
 
 INPUT_END
-	git fast-import --quiet <input
+	but fast-import --quiet <input
 '
 
 test_expect_success "create a notes tree with both notes and non-notes" '
 
-	cummit1=$(git rev-parse refs/heads/main^) &&
-	cummit2=$(git rev-parse refs/heads/main) &&
+	cummit1=$(but rev-parse refs/heads/main^) &&
+	cummit2=$(but rev-parse refs/heads/main) &&
 	test_tick &&
 	cat <<INPUT_END >input &&
 cummit refs/notes/cummits
@@ -146,8 +146,8 @@ yet another non-note with SHA1-like name
 EOF
 
 INPUT_END
-	git fast-import --quiet <input &&
-	git config core.notesRef refs/notes/cummits
+	but fast-import --quiet <input &&
+	but config core.notesRef refs/notes/cummits
 '
 
 cat >expect <<EXPECT_END
@@ -159,7 +159,7 @@ EXPECT_END
 
 test_expect_success "verify contents of notes" '
 
-	git log | grep "^    " > actual &&
+	but log | grep "^    " > actual &&
 	test_cmp expect actual
 '
 
@@ -178,31 +178,31 @@ EXPECT_END
 
 test_expect_success "verify contents of non-notes" '
 
-	git cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
+	but cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
 	test_cmp expect_nn1 actual_nn1 &&
-	git cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
+	but cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
 	test_cmp expect_nn2 actual_nn2 &&
-	git cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
+	but cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
 	test_cmp expect_nn3 actual_nn3 &&
-	git cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
+	but cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
 	test_cmp expect_nn4 actual_nn4
 '
 
-test_expect_success "git-notes preserves non-notes" '
+test_expect_success "but-notes preserves non-notes" '
 
 	test_tick &&
-	git notes add -f -m "foo bar"
+	but notes add -f -m "foo bar"
 '
 
-test_expect_success "verify contents of non-notes after git-notes" '
+test_expect_success "verify contents of non-notes after but-notes" '
 
-	git cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
+	but cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
 	test_cmp expect_nn1 actual_nn1 &&
-	git cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
+	but cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
 	test_cmp expect_nn2 actual_nn2 &&
-	git cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
+	but cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
 	test_cmp expect_nn3 actual_nn3 &&
-	git cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
+	but cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
 	test_cmp expect_nn4 actual_nn4
 '
 

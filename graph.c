@@ -15,7 +15,7 @@
  * next, it will simply output a line of vertical padding, extending the
  * branch lines downwards, but leaving them otherwise unchanged.
  */
-static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
+static void graph_padding_line(struct but_graph *graph, struct strbuf *sb);
 
 /*
  * Print a strbuf.  If the graph is non-NULL, all lines but the first will be
@@ -36,13 +36,13 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  * graph_show_strbuf can be called even with a NULL graph.
  * If a NULL graph is supplied, the strbuf is printed as-is.
  */
-static void graph_show_strbuf(struct git_graph *graph,
+static void graph_show_strbuf(struct but_graph *graph,
 			      FILE *file,
 			      struct strbuf const *sb);
 
 /*
  * TODO:
- * - Limit the number of columns, similar to the way gitk does.
+ * - Limit the number of columns, similar to the way butk does.
  *   If we reach more than a specified number of columns, omit
  *   sections of some columns.
  */
@@ -151,7 +151,7 @@ static void graph_line_write_column(struct graph_line *line, const struct column
 		graph_line_addcolor(line, column_colors_max);
 }
 
-struct git_graph {
+struct but_graph {
 	/*
 	 * The cummit currently being processed
 	 */
@@ -313,7 +313,7 @@ struct git_graph {
 
 static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void *data)
 {
-	struct git_graph *graph = data;
+	struct but_graph *graph = data;
 	static struct strbuf msgbuf = STRBUF_INIT;
 
 	assert(opt);
@@ -339,13 +339,13 @@ void graph_setup_line_prefix(struct diff_options *diffopt)
 }
 
 
-struct git_graph *graph_init(struct rev_info *opt)
+struct but_graph *graph_init(struct rev_info *opt)
 {
-	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
+	struct but_graph *graph = xmalloc(sizeof(struct but_graph));
 
 	if (!column_colors) {
 		char *string;
-		if (git_config_get_string("log.graphcolors", &string)) {
+		if (but_config_get_string("log.graphcolors", &string)) {
 			/* not configured -- use default */
 			graph_set_column_colors(column_colors_ansi,
 						column_colors_ansi_max);
@@ -401,7 +401,7 @@ struct git_graph *graph_init(struct rev_info *opt)
 	return graph;
 }
 
-void graph_clear(struct git_graph *graph)
+void graph_clear(struct but_graph *graph)
 {
 	if (!graph)
 		return;
@@ -413,13 +413,13 @@ void graph_clear(struct git_graph *graph)
 	free(graph);
 }
 
-static void graph_update_state(struct git_graph *graph, enum graph_state s)
+static void graph_update_state(struct but_graph *graph, enum graph_state s)
 {
 	graph->prev_state = graph->state;
 	graph->state = s;
 }
 
-static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
+static void graph_ensure_capacity(struct but_graph *graph, int num_columns)
 {
 	if (graph->column_capacity >= num_columns)
 		return;
@@ -438,7 +438,7 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
  * Returns 1 if the cummit will be printed in the graph output,
  * and 0 otherwise.
  */
-static int graph_is_interesting(struct git_graph *graph, struct cummit *cummit)
+static int graph_is_interesting(struct but_graph *graph, struct cummit *cummit)
 {
 	/*
 	 * If revs->boundary is set, cummits whose children have
@@ -457,7 +457,7 @@ static int graph_is_interesting(struct git_graph *graph, struct cummit *cummit)
 	return get_cummit_action(graph->revs, cummit) == cummit_show;
 }
 
-static struct cummit_list *next_interesting_parent(struct git_graph *graph,
+static struct cummit_list *next_interesting_parent(struct but_graph *graph,
 						   struct cummit_list *orig)
 {
 	struct cummit_list *list;
@@ -480,7 +480,7 @@ static struct cummit_list *next_interesting_parent(struct git_graph *graph,
 	return NULL;
 }
 
-static struct cummit_list *first_interesting_parent(struct git_graph *graph)
+static struct cummit_list *first_interesting_parent(struct but_graph *graph)
 {
 	struct cummit_list *parents = graph->cummit->parents;
 
@@ -503,7 +503,7 @@ static struct cummit_list *first_interesting_parent(struct git_graph *graph)
 	return next_interesting_parent(graph, parents);
 }
 
-static unsigned short graph_get_current_column_color(const struct git_graph *graph)
+static unsigned short graph_get_current_column_color(const struct but_graph *graph)
 {
 	if (!want_color(graph->revs->diffopt.use_color))
 		return column_colors_max;
@@ -513,13 +513,13 @@ static unsigned short graph_get_current_column_color(const struct git_graph *gra
 /*
  * Update the graph's default column color.
  */
-static void graph_increment_column_color(struct git_graph *graph)
+static void graph_increment_column_color(struct but_graph *graph)
 {
 	graph->default_column_color = (graph->default_column_color + 1) %
 		column_colors_max;
 }
 
-static unsigned short graph_find_cummit_color(const struct git_graph *graph,
+static unsigned short graph_find_cummit_color(const struct but_graph *graph,
 					      const struct cummit *cummit)
 {
 	int i;
@@ -530,7 +530,7 @@ static unsigned short graph_find_cummit_color(const struct git_graph *graph,
 	return graph_get_current_column_color(graph);
 }
 
-static int graph_find_new_column_by_cummit(struct git_graph *graph,
+static int graph_find_new_column_by_cummit(struct but_graph *graph,
 					   struct cummit *cummit)
 {
 	int i;
@@ -541,7 +541,7 @@ static int graph_find_new_column_by_cummit(struct git_graph *graph,
 	return -1;
 }
 
-static void graph_insert_into_new_columns(struct git_graph *graph,
+static void graph_insert_into_new_columns(struct but_graph *graph,
 					  struct cummit *cummit,
 					  int idx)
 {
@@ -596,7 +596,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	graph->mapping[mapping_idx] = i;
 }
 
-static void graph_update_columns(struct git_graph *graph)
+static void graph_update_columns(struct but_graph *graph)
 {
 	struct cummit_list *parent;
 	int max_new_columns;
@@ -697,12 +697,12 @@ static void graph_update_columns(struct git_graph *graph)
 		graph->mapping_size--;
 }
 
-static int graph_num_dashed_parents(struct git_graph *graph)
+static int graph_num_dashed_parents(struct but_graph *graph)
 {
 	return graph->num_parents + graph->merge_layout - 3;
 }
 
-static int graph_num_expansion_rows(struct git_graph *graph)
+static int graph_num_expansion_rows(struct but_graph *graph)
 {
 	/*
 	 * Normally, we need two expansion rows for each dashed parent line from
@@ -727,14 +727,14 @@ static int graph_num_expansion_rows(struct git_graph *graph)
 	return graph_num_dashed_parents(graph) * 2;
 }
 
-static int graph_needs_pre_cummit_line(struct git_graph *graph)
+static int graph_needs_pre_cummit_line(struct but_graph *graph)
 {
 	return graph->num_parents >= 3 &&
 	       graph->cummit_index < (graph->num_columns - 1) &&
 	       graph->expansion_row < graph_num_expansion_rows(graph);
 }
 
-void graph_update(struct git_graph *graph, struct cummit *cummit)
+void graph_update(struct but_graph *graph, struct cummit *cummit)
 {
 	struct cummit_list *parent;
 
@@ -795,7 +795,7 @@ void graph_update(struct git_graph *graph, struct cummit *cummit)
 		graph->state = GRAPH_CUMMIT;
 }
 
-static int graph_is_mapping_correct(struct git_graph *graph)
+static int graph_is_mapping_correct(struct but_graph *graph)
 {
 	int i;
 
@@ -817,7 +817,7 @@ static int graph_is_mapping_correct(struct git_graph *graph)
 	return 1;
 }
 
-static void graph_pad_horizontally(struct git_graph *graph, struct graph_line *line)
+static void graph_pad_horizontally(struct but_graph *graph, struct graph_line *line)
 {
 	/*
 	 * Add additional spaces to the end of the strbuf, so that all
@@ -830,7 +830,7 @@ static void graph_pad_horizontally(struct git_graph *graph, struct graph_line *l
 		graph_line_addchars(line, ' ', graph->width - line->width);
 }
 
-static void graph_output_padding_line(struct git_graph *graph,
+static void graph_output_padding_line(struct but_graph *graph,
 				      struct graph_line *line)
 {
 	int i;
@@ -845,13 +845,13 @@ static void graph_output_padding_line(struct git_graph *graph,
 }
 
 
-int graph_width(struct git_graph *graph)
+int graph_width(struct but_graph *graph)
 {
 	return graph->width;
 }
 
 
-static void graph_output_skip_line(struct git_graph *graph, struct graph_line *line)
+static void graph_output_skip_line(struct but_graph *graph, struct graph_line *line)
 {
 	/*
 	 * Output an ellipsis to indicate that a portion
@@ -865,7 +865,7 @@ static void graph_output_skip_line(struct git_graph *graph, struct graph_line *l
 		graph_update_state(graph, GRAPH_CUMMIT);
 }
 
-static void graph_output_pre_cummit_line(struct git_graph *graph,
+static void graph_output_pre_cummit_line(struct but_graph *graph,
 					 struct graph_line *line)
 {
 	int i, seen_this;
@@ -928,7 +928,7 @@ static void graph_output_pre_cummit_line(struct git_graph *graph,
 		graph_update_state(graph, GRAPH_CUMMIT);
 }
 
-static void graph_output_cummit_char(struct git_graph *graph, struct graph_line *line)
+static void graph_output_cummit_char(struct but_graph *graph, struct graph_line *line)
 {
 	/*
 	 * For boundary cummits, print 'o'
@@ -949,7 +949,7 @@ static void graph_output_cummit_char(struct git_graph *graph, struct graph_line 
 /*
  * Draw the horizontal dashes of an octopus merge.
  */
-static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line *line)
+static void graph_draw_octopus_merge(struct but_graph *graph, struct graph_line *line)
 {
 	/*
 	 * The parents of a merge cummit can be arbitrarily reordered as they
@@ -993,7 +993,7 @@ static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line 
 	return;
 }
 
-static void graph_output_cummit_line(struct git_graph *graph, struct graph_line *line)
+static void graph_output_cummit_line(struct but_graph *graph, struct graph_line *line)
 {
 	int seen_this = 0;
 	int i;
@@ -1069,7 +1069,7 @@ static void graph_output_cummit_line(struct git_graph *graph, struct graph_line 
 
 static const char merge_chars[] = {'/', '|', '\\'};
 
-static void graph_output_post_merge_line(struct git_graph *graph, struct graph_line *line)
+static void graph_output_post_merge_line(struct but_graph *graph, struct graph_line *line)
 {
 	int seen_this = 0;
 	int i, j;
@@ -1151,7 +1151,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 		graph_update_state(graph, GRAPH_COLLAPSING);
 }
 
-static void graph_output_collapsing_line(struct git_graph *graph, struct graph_line *line)
+static void graph_output_collapsing_line(struct but_graph *graph, struct graph_line *line)
 {
 	int i;
 	short used_horizontal = 0;
@@ -1304,7 +1304,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 		graph_update_state(graph, GRAPH_PADDING);
 }
 
-int graph_next_line(struct git_graph *graph, struct strbuf *sb)
+int graph_next_line(struct but_graph *graph, struct strbuf *sb)
 {
 	int shown_cummit_line = 0;
 	struct graph_line line = { .buf = sb, .width = 0 };
@@ -1345,7 +1345,7 @@ int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 	return shown_cummit_line;
 }
 
-static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
+static void graph_padding_line(struct but_graph *graph, struct strbuf *sb)
 {
 	int i;
 	struct graph_line line = { .buf = sb, .width = 0 };
@@ -1383,12 +1383,12 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	graph->prev_state = GRAPH_PADDING;
 }
 
-int graph_is_cummit_finished(struct git_graph const *graph)
+int graph_is_cummit_finished(struct but_graph const *graph)
 {
 	return (graph->state == GRAPH_PADDING);
 }
 
-void graph_show_cummit(struct git_graph *graph)
+void graph_show_cummit(struct but_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
 	int shown_cummit_line = 0;
@@ -1422,7 +1422,7 @@ void graph_show_cummit(struct git_graph *graph)
 	strbuf_release(&msgbuf);
 }
 
-void graph_show_oneline(struct git_graph *graph)
+void graph_show_oneline(struct but_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
 
@@ -1436,7 +1436,7 @@ void graph_show_oneline(struct git_graph *graph)
 	strbuf_release(&msgbuf);
 }
 
-void graph_show_padding(struct git_graph *graph)
+void graph_show_padding(struct but_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
 
@@ -1450,7 +1450,7 @@ void graph_show_padding(struct git_graph *graph)
 	strbuf_release(&msgbuf);
 }
 
-int graph_show_remainder(struct git_graph *graph)
+int graph_show_remainder(struct but_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
 	int shown = 0;
@@ -1482,7 +1482,7 @@ int graph_show_remainder(struct git_graph *graph)
 	return shown;
 }
 
-static void graph_show_strbuf(struct git_graph *graph,
+static void graph_show_strbuf(struct but_graph *graph,
 			      FILE *file,
 			      struct strbuf const *sb)
 {
@@ -1509,7 +1509,7 @@ static void graph_show_strbuf(struct git_graph *graph,
 	}
 }
 
-void graph_show_cummit_msg(struct git_graph *graph,
+void graph_show_cummit_msg(struct but_graph *graph,
 			   FILE *file,
 			   struct strbuf const *sb)
 {

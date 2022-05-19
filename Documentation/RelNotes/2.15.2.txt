@@ -11,30 +11,30 @@ Fixes since v2.15.1
  * The SubmittingPatches document has been converted to produce an
    HTML version via AsciiDoc/Asciidoctor.
 
- * Contrary to the documentation, "git pull -4/-6 other-args" did not
-   ask the underlying "git fetch" to go over IPv4/IPv6, which has been
+ * Contrary to the documentation, "but pull -4/-6 other-args" did not
+   ask the underlying "but fetch" to go over IPv4/IPv6, which has been
    corrected.
 
- * When "git rebase" prepared an mailbox of changes and fed it to "git
+ * When "but rebase" prepared an mailbox of changes and fed it to "but
    am" to replay them, it was confused when a stray "From " happened
    to be in the log message of one of the replayed changes.  This has
    been corrected.
 
  * Command line completion (in contrib/) has been taught about the
-   "--copy" option of "git branch".
+   "--copy" option of "but branch".
 
- * "git apply --inaccurate-eof" when used with "--ignore-space-change"
+ * "but apply --inaccurate-eof" when used with "--ignore-space-change"
    triggered an internal sanity check, which has been fixed.
 
- * The sequencer machinery (used by "git cherry-pick A..B", and "git
+ * The sequencer machinery (used by "but cherry-pick A..B", and "but
    rebase -i", among other things) would have lost a cummit if stopped
    due to an unlockable index file, which has been fixed.
 
- * The three-way merge performed by "git cherry-pick" was confused
+ * The three-way merge performed by "but cherry-pick" was confused
    when a new submodule was added in the meantime, which has been
    fixed (or "papered over").
 
- * "git notes" sent its error message to its standard output stream,
+ * "but notes" sent its error message to its standard output stream,
    which was corrected.
 
  * A few scripts (both in production and tests) incorrectly redirected

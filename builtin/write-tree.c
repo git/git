@@ -12,7 +12,7 @@
 #include "parse-options.h"
 
 static const char * const write_tree_usage[] = {
-	N_("git write-tree [--missing-ok] [--prefix=<prefix>/]"),
+	N_("but write-tree [--missing-ok] [--prefix=<prefix>/]"),
 	NULL
 };
 
@@ -21,7 +21,7 @@ int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 	int flags = 0, ret;
 	const char *tree_prefix = NULL;
 	struct object_id oid;
-	const char *me = "git-write-tree";
+	const char *me = "but-write-tree";
 	struct option write_tree_options[] = {
 		OPT_BIT(0, "missing-ok", &flags, N_("allow missing objects"),
 			WRITE_TREE_MISSING_OK),
@@ -34,7 +34,7 @@ int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	argc = parse_options(argc, argv, cmd_prefix, write_tree_options,
 			     write_tree_usage, 0);
 

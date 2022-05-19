@@ -11,12 +11,12 @@ check() {
 		echo '$3' >expect &&
 		if test '$2' = 'cummit'
 		then
-			git log -1 --format=%s '$1' >actual
+			but log -1 --format=%s '$1' >actual
 		elif test '$2' = 'ref'
 		then
-			git rev-parse --symbolic-full-name '$1' >actual
+			but rev-parse --symbolic-full-name '$1' >actual
 		else
-			git cat-file -p '$1' >actual
+			but cat-file -p '$1' >actual
 		fi &&
 		test_cmp expect actual
 	"
@@ -24,7 +24,7 @@ check() {
 
 nonsense() {
 	test_expect_${2:-success} "$1 is nonsensical" "
-		test_must_fail git rev-parse --verify '$1'
+		test_must_fail but rev-parse --verify '$1'
 	"
 }
 
@@ -35,23 +35,23 @@ fail() {
 test_expect_success 'setup' '
 	test_cummit main-one &&
 	test_cummit main-two &&
-	git checkout -b upstream-branch &&
+	but checkout -b upstream-branch &&
 	test_cummit upstream-one &&
 	test_cummit upstream-two &&
 	if test_have_prereq !MINGW
 	then
-		git checkout -b @/at-test
+		but checkout -b @/at-test
 	fi &&
-	git checkout -b @@/at-test &&
-	git checkout -b @at-test &&
-	git checkout -b old-branch &&
+	but checkout -b @@/at-test &&
+	but checkout -b @at-test &&
+	but checkout -b old-branch &&
 	test_cummit old-one &&
 	test_cummit old-two &&
-	git checkout -b new-branch &&
+	but checkout -b new-branch &&
 	test_cummit new-one &&
 	test_cummit new-two &&
-	git branch -u main old-branch &&
-	git branch -u upstream-branch new-branch
+	but branch -u main old-branch &&
+	but branch -u upstream-branch new-branch
 '
 
 check HEAD ref refs/heads/new-branch
@@ -85,7 +85,7 @@ check "HEAD@{3}" cummit old-two
 nonsense "@{3}"
 
 test_expect_success 'switch to old-branch' '
-	git checkout old-branch
+	but checkout old-branch
 '
 
 check HEAD ref refs/heads/old-branch
@@ -95,23 +95,23 @@ check "@{1}" cummit old-one
 test_expect_success 'create path with @' '
 	echo content >normal &&
 	echo content >fun@ny &&
-	git add normal fun@ny &&
-	git cummit -m "funny path"
+	but add normal fun@ny &&
+	but cummit -m "funny path"
 '
 
 check "@:normal" blob content
 check "@:fun@ny" blob content
 
 test_expect_success '@{1} works with only one reflog entry' '
-	git checkout -B newbranch main &&
-	git reflog expire --expire=now refs/heads/newbranch &&
-	git cummit --allow-empty -m "first after expiration" &&
+	but checkout -B newbranch main &&
+	but reflog expire --expire=now refs/heads/newbranch &&
+	but cummit --allow-empty -m "first after expiration" &&
 	test_cmp_rev newbranch~ newbranch@{1}
 '
 
 test_expect_success '@{0} works with empty reflog' '
-	git checkout -B newbranch main &&
-	git reflog expire --expire=now refs/heads/newbranch &&
+	but checkout -B newbranch main &&
+	but reflog expire --expire=now refs/heads/newbranch &&
 	test_cmp_rev newbranch newbranch@{0}
 '
 

@@ -1,4 +1,4 @@
-git-jump
+but-jump
 ========
 
 Git-jump is a script for helping you jump to "interesting" parts of your
@@ -8,7 +8,7 @@ queue of places to visit (this feature is usually used to jump to errors
 produced by a compiler). For example, given a diff like this:
 
 ------------------------------------
-diff --git a/foo.c b/foo.c
+diff --but a/foo.c b/foo.c
 index a655540..5a59044 100644
 --- a/foo.c
 +++ b/foo.c
@@ -19,14 +19,14 @@ index a655540..5a59044 100644
  }
 -----------------------------------
 
-git-jump will feed this to the editor:
+but-jump will feed this to the editor:
 
 -----------------------------------
 foo.c:2: printf("hello word!\n");
 -----------------------------------
 
-Or, when running 'git jump grep', column numbers will also be emitted,
-e.g. `git jump grep "hello"` would return:
+Or, when running 'but jump grep', column numbers will also be emitted,
+e.g. `but jump grep "hello"` would return:
 
 -----------------------------------
 foo.c:2:9: printf("hello word!\n");
@@ -45,38 +45,38 @@ Git-jump can generate four types of interesting lists:
   3. Any grep matches, including the column of the first match on a
      line.
 
-  4. Any whitespace errors detected by `git diff --check`.
+  4. Any whitespace errors detected by `but diff --check`.
 
 
-Using git-jump
+Using but-jump
 --------------
 
-To use it, just drop git-jump in your PATH, and then invoke it like
+To use it, just drop but-jump in your PATH, and then invoke it like
 this:
 
 --------------------------------------------------
 # jump to changes not yet staged for cummit
-git jump diff
+but jump diff
 
 # jump to changes that are staged for cummit; you can give
 # arbitrary diff options
-git jump diff --cached
+but jump diff --cached
 
 # jump to merge conflicts
-git jump merge
+but jump merge
 
 # documentation conflicts are hard; skip past them for now
-git jump merge :^Documentation
+but jump merge :^Documentation
 
 # jump to all instances of foo_bar
-git jump grep foo_bar
+but jump grep foo_bar
 
 # same as above, but case-insensitive; you can give
 # arbitrary grep options
-git jump grep -i foo_bar
+but jump grep -i foo_bar
 
-# use the silver searcher for git jump grep
-git config jump.grepCmd "ag --column"
+# use the silver searcher for but jump grep
+but config jump.grepCmd "ag --column"
 --------------------------------------------------
 
 
@@ -84,15 +84,15 @@ Related Programs
 ----------------
 
 You can accomplish some of the same things with individual tools. For
-example, you can use `git mergetool` to start vimdiff on each unmerged
-file. `git jump merge` is for the vim-wielding luddite who just wants to
+example, you can use `but mergetool` to start vimdiff on each unmerged
+file. `but jump merge` is for the vim-wielding luddite who just wants to
 jump straight to the conflict text with no fanfare.
 
-As of git v1.7.2, `git grep` knows the `--open-files-in-pager` option,
-which does something similar to `git jump grep`. However, it is limited
+As of but v1.7.2, `but grep` knows the `--open-files-in-pager` option,
+which does something similar to `but jump grep`. However, it is limited
 to positioning the cursor to the correct line in only the first file,
 leaving you to locate subsequent hits in that file or other files using
-the editor or pager. By contrast, git-jump provides the editor with a
+the editor or pager. By contrast, but-jump provides the editor with a
 complete list of files, lines, and a column number for each match.
 
 
@@ -111,5 +111,5 @@ Contributing
 ------------
 
 Bug fixes, bug reports, and feature requests should be discussed on the
-Git mailing list <git@vger.kernel.org>, and cc'd to the git-jump
+Git mailing list <but@vger.kernel.org>, and cc'd to the but-jump
 maintainer, Jeff King <peff@peff.net>.

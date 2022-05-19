@@ -1,17 +1,17 @@
 #!/bin/sh
 
-test_description='git cvsimport timestamps'
+test_description='but cvsimport timestamps'
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9604
 
 test_expect_success PERL 'check timestamps are UTC (TZ=CST6CDT)' '
 
-	TZ=CST6CDT git cvsimport -p"-x" -C module-1 module &&
-	git cvsimport -p"-x" -C module-1 module &&
+	TZ=CST6CDT but cvsimport -p"-x" -C module-1 module &&
+	but cvsimport -p"-x" -C module-1 module &&
 	(
 		cd module-1 &&
-		git log --format="%s %ai"
+		but log --format="%s %ai"
 	) >actual-1 &&
 	cat >expect-1 <<-EOF &&
 	Rev 16 2006-10-29 07:00:01 +0000
@@ -42,10 +42,10 @@ test_expect_success PERL 'check timestamps with author-specific timezones' '
 	user3=User Three <user3@domain.org> EST5EDT
 	user4=User Four <user4@domain.org> MST7MDT
 	EOF
-	git cvsimport -p"-x" -A cvs-authors -C module-2 module &&
+	but cvsimport -p"-x" -A cvs-authors -C module-2 module &&
 	(
 		cd module-2 &&
-		git log --format="%s %ai %an"
+		but log --format="%s %ai %an"
 	) >actual-2 &&
 	cat >expect-2 <<-EOF &&
 	Rev 16 2006-10-29 01:00:01 -0600 User Two

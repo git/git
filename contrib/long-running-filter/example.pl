@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Example implementation for the Git filter protocol version 2
-# See Documentation/gitattributes.txt, section "Filter Protocol"
+# See Documentation/butattributes.txt, section "Filter Protocol"
 #
 # Please note, this pass-thru filter is a minimal skeleton. No proper
 # error handling was implemented.
@@ -64,11 +64,11 @@ sub packet_flush {
 	STDOUT->flush();
 }
 
-( packet_txt_read() eq ( 0, "git-filter-client" ) ) || die "bad initialize";
+( packet_txt_read() eq ( 0, "but-filter-client" ) ) || die "bad initialize";
 ( packet_txt_read() eq ( 0, "version=2" ) )         || die "bad version";
 ( packet_bin_read() eq ( 1, "" ) )                  || die "bad version end";
 
-packet_txt_write("git-filter-server");
+packet_txt_write("but-filter-server");
 packet_txt_write("version=2");
 packet_flush();
 

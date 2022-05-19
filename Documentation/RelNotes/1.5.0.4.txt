@@ -6,16 +6,16 @@ Fixes since v1.5.0.3
 
 * Bugfixes
 
-  - git.el does not add duplicate sign-off lines.
+  - but.el does not add duplicate sign-off lines.
 
-  - git-cummit shows the full stat of the resulting cummit, not
+  - but-cummit shows the full stat of the resulting cummit, not
     just about the files in the current directory, when run from
     a subdirectory.
 
-  - "git-checkout -m '@{8 hours ago}'" had a funny failure from
+  - "but-checkout -m '@{8 hours ago}'" had a funny failure from
     eval; fixed.
 
-  - git-gui updates.
+  - but-gui updates.
 
 * Documentation updates
 

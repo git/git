@@ -475,7 +475,7 @@ int bitmap_writer_build(struct packing_data *to_pack)
 	trace2_region_enter("pack-bitmap-write", "building_bitmaps_total",
 			    the_repository);
 
-	old_bitmap = prepare_bitmap_git(to_pack->repo);
+	old_bitmap = prepare_bitmap_but(to_pack->repo);
 	if (old_bitmap)
 		mapping = create_bitmap_mapping(old_bitmap, to_pack);
 	else

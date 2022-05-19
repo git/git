@@ -7,7 +7,7 @@
 #include "list-objects-filter-options.h"
 #include "string-list.h"
 
-struct git_transport_options {
+struct but_transport_options {
 	unsigned thin : 1;
 	unsigned keep : 1;
 	unsigned followtags : 1;
@@ -118,14 +118,14 @@ struct transport {
 	unsigned progress : 1;
 	/*
 	 * If transport is at least potentially smart, this points to
-	 * git_transport_options structure to use in case transport
+	 * but_transport_options structure to use in case transport
 	 * actually turns out to be smart.
 	 */
-	struct git_transport_options *smart_options;
+	struct but_transport_options *smart_options;
 
 	enum transport_family family;
 
-	const struct git_hash_algo *hash_algo;
+	const struct but_hash_algo *hash_algo;
 };
 
 #define TRANSPORT_PUSH_ALL			(1<<0)
@@ -155,7 +155,7 @@ struct transport *transport_get(struct remote *, const char *);
  * Check whether a transport is allowed by the environment.
  *
  * Type should generally be the URL scheme, as described in
- * Documentation/git.txt
+ * Documentation/but.txt
  *
  * from_user specifies if the transport was given by the user.  If unknown pass
  * a -1 to read from the environment to determine if the transport was given by
@@ -170,7 +170,7 @@ int is_transport_allowed(const char *type, int from_user);
  */
 void transport_check_allowed(const char *type);
 
-/* Transport options which apply to git:// and scp-style URLs */
+/* Transport options which apply to but:// and scp-style URLs */
 
 /* The program to use on the remote side to send a pack */
 #define TRANS_OPT_UPLOADPACK "uploadpack"
@@ -205,7 +205,7 @@ void transport_check_allowed(const char *type);
 /* Reject shallow repo transport */
 #define TRANS_OPT_REJECT_SHALLOW "rejectshallow"
 
-/* Accept refs that may update .git/shallow without --depth */
+/* Accept refs that may update .but/shallow without --depth */
 #define TRANS_OPT_UPDATE_SHALLOW "updateshallow"
 
 /* Send push certificates */
@@ -285,7 +285,7 @@ const struct ref *transport_get_remote_refs(struct transport *transport,
  *
  * This can only be called after fetching the remote refs.
  */
-const struct git_hash_algo *transport_get_hash_algo(struct transport *transport);
+const struct but_hash_algo *transport_get_hash_algo(struct transport *transport);
 int transport_fetch_refs(struct transport *transport, struct ref *refs);
 
 /*

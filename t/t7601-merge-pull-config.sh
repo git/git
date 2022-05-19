@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git merge
+test_description='but merge
 
 Testing pull.* configuration parsing and other things.'
 
@@ -8,147 +8,147 @@ Testing pull.* configuration parsing and other things.'
 
 test_expect_success 'setup' '
 	echo c0 >c0.c &&
-	git add c0.c &&
-	git cummit -m c0 &&
-	git tag c0 &&
+	but add c0.c &&
+	but cummit -m c0 &&
+	but tag c0 &&
 	echo c1 >c1.c &&
-	git add c1.c &&
-	git cummit -m c1 &&
-	git tag c1 &&
-	git reset --hard c0 &&
+	but add c1.c &&
+	but cummit -m c1 &&
+	but tag c1 &&
+	but reset --hard c0 &&
 	echo c2 >c2.c &&
-	git add c2.c &&
-	git cummit -m c2 &&
-	git tag c2 &&
-	git reset --hard c0 &&
+	but add c2.c &&
+	but cummit -m c2 &&
+	but tag c2 &&
+	but reset --hard c0 &&
 	echo c3 >c3.c &&
-	git add c3.c &&
-	git cummit -m c3 &&
-	git tag c3
+	but add c3.c &&
+	but cummit -m c3 &&
+	but tag c3
 '
 
 test_expect_success 'pull.rebase not set, ff possible' '
-	git reset --hard c0 &&
-	git pull . c1 2>err &&
+	but reset --hard c0 &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config pull.ff true &&
-	git pull . c1 2>err &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=false' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config pull.ff false &&
-	git pull . c1 2>err &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=only' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config pull.ff only &&
-	git pull . c1 2>err &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --rebase given' '
-	git reset --hard c0 &&
-	git pull --rebase . c1 2>err &&
+	but reset --hard c0 &&
+	but pull --rebase . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-rebase given' '
-	git reset --hard c0 &&
-	git pull --no-rebase . c1 2>err &&
+	but reset --hard c0 &&
+	but pull --no-rebase . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff given' '
-	git reset --hard c0 &&
-	git pull --ff . c1 2>err &&
+	but reset --hard c0 &&
+	but pull --ff . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-ff given' '
-	git reset --hard c0 &&
-	git pull --no-ff . c1 2>err &&
+	but reset --hard c0 &&
+	but pull --no-ff . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff-only given' '
-	git reset --hard c0 &&
-	git pull --ff-only . c1 2>err &&
+	but reset --hard c0 &&
+	but pull --ff-only . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set (not-fast-forward)' '
-	git reset --hard c2 &&
-	test_must_fail git -c color.advice=always pull . c1 2>err &&
+	but reset --hard c2 &&
+	test_must_fail but -c color.advice=always pull . c1 2>err &&
 	test_decode_color <err >decoded &&
 	test_i18ngrep "<YELLOW>hint: " decoded &&
 	test_i18ngrep "You have divergent branches" decoded
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=true (not-fast-forward)' '
-	git reset --hard c2 &&
+	but reset --hard c2 &&
 	test_config pull.ff true &&
-	git pull . c1 2>err &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=false (not-fast-forward)' '
-	git reset --hard c2 &&
+	but reset --hard c2 &&
 	test_config pull.ff false &&
-	git pull . c1 2>err &&
+	but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and pull.ff=only (not-fast-forward)' '
-	git reset --hard c2 &&
+	but reset --hard c2 &&
 	test_config pull.ff only &&
-	test_must_fail git pull . c1 2>err &&
+	test_must_fail but pull . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --rebase given (not-fast-forward)' '
-	git reset --hard c2 &&
-	git pull --rebase . c1 2>err &&
+	but reset --hard c2 &&
+	but pull --rebase . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-rebase given (not-fast-forward)' '
-	git reset --hard c2 &&
-	git pull --no-rebase . c1 2>err &&
+	but reset --hard c2 &&
+	but pull --no-rebase . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff given (not-fast-forward)' '
-	git reset --hard c2 &&
-	git pull --ff . c1 2>err &&
+	but reset --hard c2 &&
+	but pull --ff . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --no-ff given (not-fast-forward)' '
-	git reset --hard c2 &&
-	git pull --no-ff . c1 2>err &&
+	but reset --hard c2 &&
+	but pull --no-ff . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_expect_success 'pull.rebase not set and --ff-only given (not-fast-forward)' '
-	git reset --hard c2 &&
-	test_must_fail git pull --ff-only . c1 2>err &&
+	but reset --hard c2 &&
+	test_must_fail but pull --ff-only . c1 2>err &&
 	test_i18ngrep ! "You have divergent branches" err
 '
 
 test_does_rebase () {
-	git reset --hard c2 &&
-	git "$@" . c1 &&
+	but reset --hard c2 &&
+	but "$@" . c1 &&
 	# Check that we actually did a rebase
-	git rev-list --count HEAD >actual &&
-	git rev-list --merges --count HEAD >>actual &&
+	but rev-list --count HEAD >actual &&
+	but rev-list --merges --count HEAD >>actual &&
 	test_write_lines 3 0 >expect &&
 	test_cmp expect actual &&
 	rm actual expect
@@ -156,11 +156,11 @@ test_does_rebase () {
 
 # Prefers merge over fast-forward
 test_does_merge_when_ff_possible () {
-	git reset --hard c0 &&
-	git "$@" . c1 &&
+	but reset --hard c0 &&
+	but "$@" . c1 &&
 	# Check that we actually did a merge
-	git rev-list --count HEAD >actual &&
-	git rev-list --merges --count HEAD >>actual &&
+	but rev-list --count HEAD >actual &&
+	but rev-list --merges --count HEAD >>actual &&
 	test_write_lines 3 1 >expect &&
 	test_cmp expect actual &&
 	rm actual expect
@@ -168,18 +168,18 @@ test_does_merge_when_ff_possible () {
 
 # Prefers fast-forward over merge or rebase
 test_does_fast_forward () {
-	git reset --hard c0 &&
-	git "$@" . c1 &&
+	but reset --hard c0 &&
+	but "$@" . c1 &&
 
 	# Check that we did not get any merges
-	git rev-list --count HEAD >actual &&
-	git rev-list --merges --count HEAD >>actual &&
+	but rev-list --count HEAD >actual &&
+	but rev-list --merges --count HEAD >>actual &&
 	test_write_lines 2 0 >expect &&
 	test_cmp expect actual &&
 
 	# Check that we ended up at c1
-	git rev-parse HEAD >actual &&
-	git rev-parse c1^{cummit} >expect &&
+	but rev-parse HEAD >actual &&
+	but rev-parse c1^{cummit} >expect &&
 	test_cmp actual expect &&
 
 	# Remove temporary files
@@ -188,11 +188,11 @@ test_does_fast_forward () {
 
 # Doesn't fail when fast-forward not possible; does a merge
 test_falls_back_to_full_merge () {
-	git reset --hard c2 &&
-	git "$@" . c1 &&
+	but reset --hard c2 &&
+	but "$@" . c1 &&
 	# Check that we actually did a merge
-	git rev-list --count HEAD >actual &&
-	git rev-list --merges --count HEAD >>actual &&
+	but rev-list --count HEAD >actual &&
+	but rev-list --merges --count HEAD >>actual &&
 	test_write_lines 4 1 >expect &&
 	test_cmp expect actual &&
 	rm actual expect
@@ -200,8 +200,8 @@ test_falls_back_to_full_merge () {
 
 # Attempts fast forward, which is impossible, and bails
 test_attempts_fast_forward () {
-	git reset --hard c2 &&
-	test_must_fail git "$@" . c1 2>err &&
+	but reset --hard c2 &&
+	test_must_fail but "$@" . c1 2>err &&
 	test_i18ngrep "Not possible to fast-forward, aborting" err
 }
 
@@ -326,14 +326,14 @@ test_expect_success 'pull.rebase=false and --ff, ff not possible' '
 # End of groupings for conflicting merge vs. rebase flags/options
 
 test_expect_success 'Multiple heads warns about inability to fast forward' '
-	git reset --hard c1 &&
-	test_must_fail git pull . c2 c3 2>err &&
+	but reset --hard c1 &&
+	test_must_fail but pull . c2 c3 2>err &&
 	test_i18ngrep "You have divergent branches" err
 '
 
 test_expect_success 'Multiple can never be fast forwarded' '
-	git reset --hard c0 &&
-	test_must_fail git -c pull.ff=only pull . c1 c2 c3 2>err &&
+	but reset --hard c0 &&
+	test_must_fail but -c pull.ff=only pull . c1 c2 c3 2>err &&
 	test_i18ngrep ! "You have divergent branches" err &&
 	# In addition to calling out "cannot fast-forward", we very much
 	# want the "multiple branches" piece to be called out to users.
@@ -341,96 +341,96 @@ test_expect_success 'Multiple can never be fast forwarded' '
 '
 
 test_expect_success 'Cannot rebase with multiple heads' '
-	git reset --hard c0 &&
-	test_must_fail git -c pull.rebase=true pull . c1 c2 c3 2>err &&
+	but reset --hard c0 &&
+	test_must_fail but -c pull.rebase=true pull . c1 c2 c3 2>err &&
 	test_i18ngrep ! "You have divergent branches" err &&
 	test_i18ngrep "Cannot rebase onto multiple branches." err
 '
 
 test_expect_success 'merge c1 with c2' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	test -f c0.c &&
 	test -f c1.c &&
 	test ! -f c2.c &&
 	test ! -f c3.c &&
-	git merge c2 &&
+	but merge c2 &&
 	test -f c1.c &&
 	test -f c2.c
 '
 
 test_expect_success 'fast-forward pull succeeds with "true" in pull.ff' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config pull.ff true &&
-	git pull . c1 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	but pull . c1 &&
+	test "$(but rev-parse HEAD)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'pull.ff=true overrides merge.ff=false' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config merge.ff false &&
 	test_config pull.ff true &&
-	git pull . c1 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	but pull . c1 &&
+	test "$(but rev-parse HEAD)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'fast-forward pull creates merge with "false" in pull.ff' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	test_config pull.ff false &&
-	git pull . c1 &&
-	test "$(git rev-parse HEAD^1)" = "$(git rev-parse c0)" &&
-	test "$(git rev-parse HEAD^2)" = "$(git rev-parse c1)"
+	but pull . c1 &&
+	test "$(but rev-parse HEAD^1)" = "$(but rev-parse c0)" &&
+	test "$(but rev-parse HEAD^2)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'pull prevents non-fast-forward with "only" in pull.ff' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	test_config pull.ff only &&
-	test_must_fail git pull . c3
+	test_must_fail but pull . c3
 '
 
 test_expect_success 'already-up-to-date pull succeeds with unspecified pull.ff' '
-	git reset --hard c1 &&
-	git pull . c0 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	but reset --hard c1 &&
+	but pull . c0 &&
+	test "$(but rev-parse HEAD)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'already-up-to-date pull succeeds with "only" in pull.ff' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	test_config pull.ff only &&
-	git pull . c0 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	but pull . c0 &&
+	test "$(but rev-parse HEAD)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'already-up-to-date pull/rebase succeeds with "only" in pull.ff' '
-	git reset --hard c1 &&
+	but reset --hard c1 &&
 	test_config pull.ff only &&
-	git -c pull.rebase=true pull . c0 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	but -c pull.rebase=true pull . c0 &&
+	test "$(but rev-parse HEAD)" = "$(but rev-parse c1)"
 '
 
 test_expect_success 'merge c1 with c2 (ours in pull.twohead)' '
-	git reset --hard c1 &&
-	git config pull.twohead ours &&
-	git merge c2 &&
+	but reset --hard c1 &&
+	but config pull.twohead ours &&
+	but merge c2 &&
 	test -f c1.c &&
 	! test -f c2.c
 '
 
 test_expect_success 'merge c1 with c2 and c3 (recursive in pull.octopus)' '
-	git reset --hard c1 &&
-	git config pull.octopus "recursive" &&
-	test_must_fail git merge c2 c3 &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD)"
+	but reset --hard c1 &&
+	but config pull.octopus "recursive" &&
+	test_must_fail but merge c2 c3 &&
+	test "$(but rev-parse c1)" = "$(but rev-parse HEAD)"
 '
 
 test_expect_success 'merge c1 with c2 and c3 (recursive and octopus in pull.octopus)' '
-	git reset --hard c1 &&
-	git config pull.octopus "recursive octopus" &&
-	git merge c2 c3 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
-	git diff --exit-code &&
+	but reset --hard c1 &&
+	but config pull.octopus "recursive octopus" &&
+	but merge c2 c3 &&
+	test "$(but rev-parse c1)" != "$(but rev-parse HEAD)" &&
+	test "$(but rev-parse c1)" = "$(but rev-parse HEAD^1)" &&
+	test "$(but rev-parse c2)" = "$(but rev-parse HEAD^2)" &&
+	test "$(but rev-parse c3)" = "$(but rev-parse HEAD^3)" &&
+	but diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
 	test -f c2.c &&
@@ -440,8 +440,8 @@ test_expect_success 'merge c1 with c2 and c3 (recursive and octopus in pull.octo
 conflict_count()
 {
 	{
-		git diff-files --name-only
-		git ls-files --unmerged
+		but diff-files --name-only
+		but ls-files --unmerged
 	} | wc -l
 }
 
@@ -456,70 +456,70 @@ conflict_count()
 # 2) One in conflict.c and that will always fail.
 
 test_expect_success 'setup conflicted merge' '
-	git reset --hard c0 &&
+	but reset --hard c0 &&
 	echo A >conflict.c &&
-	git add conflict.c &&
+	but add conflict.c &&
 	echo contents >foo.c &&
-	git add foo.c &&
-	git cummit -m c4 &&
-	git tag c4 &&
+	but add foo.c &&
+	but cummit -m c4 &&
+	but tag c4 &&
 	echo B >conflict.c &&
-	git add conflict.c &&
-	git mv foo.c bar.c &&
-	git cummit -m c5 &&
-	git tag c5 &&
-	git reset --hard c4 &&
+	but add conflict.c &&
+	but mv foo.c bar.c &&
+	but cummit -m c5 &&
+	but tag c5 &&
+	but reset --hard c4 &&
 	echo C >conflict.c &&
-	git add conflict.c &&
+	but add conflict.c &&
 	echo secondline >> foo.c &&
-	git add foo.c &&
-	git cummit -m c6 &&
-	git tag c6
+	but add foo.c &&
+	but cummit -m c6 &&
+	but tag c6
 '
 
 # First do the merge with resolve and recursive then verify that
 # recursive is chosen.
 
 test_expect_success 'merge picks up the best result' '
-	git config --unset-all pull.twohead &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s resolve c6 &&
+	but config --unset-all pull.twohead &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s resolve c6 &&
 	resolve_count=$(conflict_count) &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s recursive c6 &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s recursive c6 &&
 	recursive_count=$(conflict_count) &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s recursive -s resolve c6 &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s recursive -s resolve c6 &&
 	auto_count=$(conflict_count) &&
 	test $auto_count = $recursive_count &&
 	test $auto_count != $resolve_count
 '
 
 test_expect_success 'merge picks up the best result (from config)' '
-	git config pull.twohead "recursive resolve" &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s resolve c6 &&
+	but config pull.twohead "recursive resolve" &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s resolve c6 &&
 	resolve_count=$(conflict_count) &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s recursive c6 &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s recursive c6 &&
 	recursive_count=$(conflict_count) &&
-	git reset --hard c5 &&
-	test_must_fail git merge c6 &&
+	but reset --hard c5 &&
+	test_must_fail but merge c6 &&
 	auto_count=$(conflict_count) &&
 	test $auto_count = $recursive_count &&
 	test $auto_count != $resolve_count
 '
 
 test_expect_success 'merge errors out on invalid strategy' '
-	git config pull.twohead "foobar" &&
-	git reset --hard c5 &&
-	test_must_fail git merge c6
+	but config pull.twohead "foobar" &&
+	but reset --hard c5 &&
+	test_must_fail but merge c6
 '
 
 test_expect_success 'merge errors out on invalid strategy' '
-	git config --unset-all pull.twohead &&
-	git reset --hard c5 &&
-	test_must_fail git merge -s "resolve recursive" c6
+	but config --unset-all pull.twohead &&
+	but reset --hard c5 &&
+	test_must_fail but merge -s "resolve recursive" c6
 '
 
 test_done

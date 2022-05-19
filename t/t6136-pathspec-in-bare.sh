@@ -7,30 +7,30 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'setup a bare and non-bare repository' '
 	test_cummit file1 &&
-	git clone --bare . bare
+	but clone --bare . bare
 '
 
 test_expect_success 'log and ls-files in a bare repository' '
 	(
 		cd bare &&
-		test_must_fail git log -- .. >out 2>err &&
+		test_must_fail but log -- .. >out 2>err &&
 		test_must_be_empty out &&
 		test_i18ngrep "outside repository" err &&
 
-		test_must_fail git ls-files -- .. >out 2>err &&
+		test_must_fail but ls-files -- .. >out 2>err &&
 		test_must_be_empty out &&
 		test_i18ngrep "outside repository" err
 	)
 '
 
-test_expect_success 'log and ls-files in .git directory' '
+test_expect_success 'log and ls-files in .but directory' '
 	(
-		cd .git &&
-		test_must_fail git log -- .. >out 2>err &&
+		cd .but &&
+		test_must_fail but log -- .. >out 2>err &&
 		test_must_be_empty out &&
 		test_i18ngrep "outside repository" err &&
 
-		test_must_fail git ls-files -- .. >out 2>err &&
+		test_must_fail but ls-files -- .. >out 2>err &&
 		test_must_be_empty out &&
 		test_i18ngrep "outside repository" err
 	)

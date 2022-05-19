@@ -1,14 +1,14 @@
-git-branch(1)
+but-branch(1)
 =============
 
 NAME
 ----
-git-branch - List, create, or delete branches
+but-branch - List, create, or delete branches
 
 SYNOPSIS
 --------
 [verse]
-'git branch' [--color[=<when>] | --no-color] [--show-current]
+'but branch' [--color[=<when>] | --no-color] [--show-current]
 	[-v [--abbrev=<n> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[--merged [<cummit>]] [--no-merged [<cummit>]]
@@ -16,14 +16,14 @@ SYNOPSIS
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
-'git branch' [--track[=(direct|inherit)] | --no-track] [-f]
+'but branch' [--track[=(direct|inherit)] | --no-track] [-f]
 	[--recurse-submodules] <branchname> [<start-point>]
-'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
-'git branch' --unset-upstream [<branchname>]
-'git branch' (-m | -M) [<oldbranch>] <newbranch>
-'git branch' (-c | -C) [<oldbranch>] <newbranch>
-'git branch' (-d | -D) [-r] <branchname>...
-'git branch' --edit-description [<branchname>]
+'but branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
+'but branch' --unset-upstream [<branchname>]
+'but branch' (-m | -M) [<oldbranch>] <newbranch>
+'but branch' (-c | -C) [<oldbranch>] <newbranch>
+'but branch' (-d | -D) [-r] <branchname>...
+'but branch' --edit-description [<branchname>]
 
 DESCRIPTION
 -----------
@@ -61,16 +61,16 @@ can leave out at most one of `A` and `B`, in which case it defaults to
 `HEAD`.
 
 Note that this will create the new branch, but it will not switch the
-working tree to it; use "git switch <newbranch>" to switch to the
+working tree to it; use "but switch <newbranch>" to switch to the
 new branch.
 
 When a local branch is started off a remote-tracking branch, Git sets up the
 branch (specifically the `branch.<name>.remote` and `branch.<name>.merge`
-configuration entries) so that 'git pull' will appropriately merge from
+configuration entries) so that 'but pull' will appropriately merge from
 the remote-tracking branch. This behavior may be changed via the global
 `branch.autoSetupMerge` configuration flag. That setting can be
 overridden by using the `--track` and `--no-track` options, and
-changed later using `git branch --set-upstream-to`.
+changed later using `but branch --set-upstream-to`.
 
 With a `-m` or `-M` option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
@@ -88,8 +88,8 @@ has a reflog then the reflog will also be deleted.
 
 Use `-r` together with `-d` to delete remote-tracking branches. Note, that it
 only makes sense to delete remote-tracking branches if they no longer exist
-in the remote repository or if 'git fetch' was configured not to fetch
-them again. See also the 'prune' subcommand of linkgit:git-remote[1] for a
+in the remote repository or if 'but fetch' was configured not to fetch
+them again. See also the 'prune' subcommand of linkbut:but-remote[1] for a
 way to clean up all obsolete remote-tracking branches.
 
 
@@ -117,7 +117,7 @@ OPTIONS
 -f::
 --force::
 	Reset <branchname> to <startpoint>, even if <branchname> exists
-	already. Without `-f`, 'git branch' refuses to change an existing branch.
+	already. Without `-f`, 'but branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
 	branch irrespective of its merged status, or whether it even
 	points to a valid cummit. In combination with
@@ -172,7 +172,7 @@ This option is only applicable in non-verbose mode.
 
 -l::
 --list::
-	List branches.  With optional `<pattern>...`, e.g. `git
+	List branches.  With optional `<pattern>...`, e.g. `but
 	branch --list 'maint-*'`, list only the branches that match
 	the pattern(s).
 
@@ -187,7 +187,7 @@ This option is only applicable in non-verbose mode.
 	show sha1 and cummit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
 	the path of the linked worktree (if any) and the name of the upstream
-	branch, as well (see also `git remote show <remote>`).  Note that the
+	branch, as well (see also `but remote show <remote>`).  Note that the
 	current worktree's HEAD will not have its path printed (it will always
 	be your current directory).
 
@@ -198,7 +198,7 @@ This option is only applicable in non-verbose mode.
 
 --abbrev=<n>::
 	In the verbose listing that show the cummit object name,
-	show the shortest prefix that is at least '<n>' hexdigits
+	show the shortest prefix that is at least '<n>' hexdibuts
 	long that uniquely refers the object.
 	The default value is 7 and can be overridden by the `core.abbrev`
 	config option.
@@ -211,9 +211,9 @@ This option is only applicable in non-verbose mode.
 	When creating a new branch, set up `branch.<name>.remote` and
 	`branch.<name>.merge` configuration entries to set "upstream" tracking
 	configuration for the new branch. This
-	configuration will tell git to show the relationship between the
-	two branches in `git status` and `git branch -v`. Furthermore,
-	it directs `git pull` without arguments to pull from the
+	configuration will tell but to show the relationship between the
+	two branches in `but status` and `but branch -v`. Furthermore,
+	it directs `but pull` without arguments to pull from the
 	upstream when the new branch is checked out.
 +
 The exact upstream branch is chosen depending on the optional argument:
@@ -223,13 +223,13 @@ configuration of the start-point branch.
 +
 `--track=direct` is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git switch`, `git checkout` and `git branch` to always behave as if `--no-track`
+want `but switch`, `but checkout` and `but branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch. Set it to
 `inherit` if you want to copy the tracking configuration from the
 branch point.
 +
-See linkgit:git-pull[1] and linkgit:git-config[1] for additional discussion on
+See linkbut:but-pull[1] and linkbut:but-config[1] for additional discussion on
 how the `branch.<name>.remote` and `branch.<name>.merge` options are used.
 
 --no-track::
@@ -240,7 +240,7 @@ how the `branch.<name>.remote` and `branch.<name>.merge` options are used.
 	THIS OPTION IS EXPERIMENTAL! Causes the current command to
 	recurse into submodules if `submodule.propagateBranches` is
 	enabled. See `submodule.propagateBranches` in
-	linkgit:git-config[1]. Currently, only branch creation is
+	linkbut:but-config[1]. Currently, only branch creation is
 	supported.
 +
 When used in branch creation, a new branch <branchname> will be created
@@ -248,7 +248,7 @@ in the superproject and all of the submodules in the superproject's
 <start-point>. In submodules, the branch will point to the submodule
 cummit in the superproject's <start-point> but the branch's tracking
 information will be set up based on the submodule's branches and remotes
-e.g. `git branch --recurse-submodules topic origin/main` will create the
+e.g. `but branch --recurse-submodules topic origin/main` will create the
 submodule branch "topic" that points to the submodule cummit in the
 superproject's "origin/main", but tracks the submodule's "origin/main".
 
@@ -291,7 +291,7 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 <branchname>::
 	The name of the branch to create or delete.
 	The new branch name must pass all checks defined by
-	linkgit:git-check-ref-format[1].  Some of these checks
+	linkbut:but-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
 
 <start-point>::
@@ -310,12 +310,12 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 	Sort based on the key given. Prefix `-` to sort in descending
 	order of the value. You may use the --sort=<key> option
 	multiple times, in which case the last key becomes the primary
-	key. The keys supported are the same as those in `git
+	key. The keys supported are the same as those in `but
 	for-each-ref`. Sort order defaults to the value configured for the
 	`branch.sort` variable if exists, or to sorting based on the
 	full refname (including `refs/...` prefix). This lists
 	detached HEAD (if present) first, then local branches and
-	finally remote-tracking branches. See linkgit:git-config[1].
+	finally remote-tracking branches. See linkbut:but-config[1].
 
 
 --points-at <object>::
@@ -324,13 +324,13 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 --format <format>::
 	A string that interpolates `%(fieldname)` from a branch ref being shown
 	and the object it points at.  The format is the same as
-	that of linkgit:git-for-each-ref[1].
+	that of linkbut:but-for-each-ref[1].
 
 CONFIGURATION
 -------------
 `pager.branch` is only respected when listing branches, i.e., when
 `--list` is used or implied. The default is to use a pager.
-See linkgit:git-config[1].
+See linkbut:but-config[1].
 
 EXAMPLES
 --------
@@ -338,10 +338,10 @@ EXAMPLES
 Start development from a known tag::
 +
 ------------
-$ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
+$ but clone but://but.kernel.org/pub/scm/.../linux-2.6 my2.6
 $ cd my2.6
-$ git branch my2.6.14 v2.6.14   <1>
-$ git switch my2.6.14
+$ but branch my2.6.14 v2.6.14   <1>
+$ but switch my2.6.14
 ------------
 +
 <1> This step and the next one could be combined into a single step with
@@ -350,28 +350,28 @@ $ git switch my2.6.14
 Delete an unneeded branch::
 +
 ------------
-$ git clone git://git.kernel.org/.../git.git my.git
-$ cd my.git
-$ git branch -d -r origin/todo origin/html origin/man   <1>
-$ git branch -D test                                    <2>
+$ but clone but://but.kernel.org/.../but.but my.but
+$ cd my.but
+$ but branch -d -r origin/todo origin/html origin/man   <1>
+$ but branch -D test                                    <2>
 ------------
 +
 <1> Delete the remote-tracking branches "todo", "html" and "man". The next
     'fetch' or 'pull' will create them again unless you configure them not to.
-    See linkgit:git-fetch[1].
+    See linkbut:but-fetch[1].
 <2> Delete the "test" branch even if the "master" branch (or whichever branch
     is currently checked out) does not have all cummits from the test branch.
 
 Listing branches from a specific remote::
 +
 ------------
-$ git branch -r -l '<remote>/<pattern>'                 <1>
-$ git for-each-ref 'refs/remotes/<remote>/<pattern>'    <2>
+$ but branch -r -l '<remote>/<pattern>'                 <1>
+$ but for-each-ref 'refs/remotes/<remote>/<pattern>'    <2>
 ------------
 +
 <1> Using `-a` would conflate <remote> with any local branches you happen to
     have been prefixed with the same <remote> pattern.
-<2> `for-each-ref` can take a wide range of options. See linkgit:git-for-each-ref[1]
+<2> `for-each-ref` can take a wide range of options. See linkbut:but-for-each-ref[1]
 
 Patterns will normally need quoting.
 
@@ -379,7 +379,7 @@ NOTES
 -----
 
 If you are creating a branch that you want to switch to immediately,
-it is easier to use the "git switch" command with its `-c` option to
+it is easier to use the "but switch" command with its `-c` option to
 do the same thing with a single command.
 
 The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
@@ -402,12 +402,12 @@ include::ref-reachability-filters.txt[]
 
 SEE ALSO
 --------
-linkgit:git-check-ref-format[1],
-linkgit:git-fetch[1],
-linkgit:git-remote[1],
+linkbut:but-check-ref-format[1],
+linkbut:but-fetch[1],
+linkbut:but-remote[1],
 link:user-manual.html#what-is-a-branch[``Understanding history: What is
 a branch?''] in the Git User's Manual.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

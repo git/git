@@ -9,8 +9,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 cummit() {
 	echo "$1" >tracked &&
-	git add tracked &&
-	git cummit -m "$1"
+	but add tracked &&
+	but cummit -m "$1"
 }
 
 test_expect_success 'setup' '
@@ -18,7 +18,7 @@ test_expect_success 'setup' '
 	cummit 2 &&
 	cummit 3 &&
 	cummit 4 &&
-	git config --global transfer.fsckObjects true &&
+	but config --global transfer.fsckObjects true &&
 	test_oid_cache <<-\EOF
 	perl sha1:s/0034shallow %s/0036unshallow %s/
 	perl sha256:s/004cshallow %s/004eunshallow %s/
@@ -26,18 +26,18 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'setup shallow clone' '
-	git clone --no-local --depth=2 .git shallow &&
-	git --git-dir=shallow/.git log --format=%s >actual &&
+	but clone --no-local --depth=2 .but shallow &&
+	but --but-dir=shallow/.but log --format=%s >actual &&
 	test_write_lines 4 3 >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'clone from shallow clone' '
-	git clone --no-local shallow shallow2 &&
+	but clone --no-local shallow shallow2 &&
 	(
 	cd shallow2 &&
-	git fsck &&
-	git log --format=%s >actual &&
+	but fsck &&
+	but log --format=%s >actual &&
 	test_write_lines 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -50,9 +50,9 @@ test_expect_success 'fetch from shallow clone' '
 	) &&
 	(
 	cd shallow2 &&
-	git fetch &&
-	git fsck &&
-	git log --format=%s origin/main >actual &&
+	but fetch &&
+	but fsck &&
+	but log --format=%s origin/main >actual &&
 	test_write_lines 5 4 3 >expect &&
 	test_cmp expect actual
 	)
@@ -65,9 +65,9 @@ test_expect_success 'fetch --depth from shallow clone' '
 	) &&
 	(
 	cd shallow2 &&
-	git fetch --depth=2 &&
-	git fsck &&
-	git log --format=%s origin/main >actual &&
+	but fetch --depth=2 &&
+	but fsck &&
+	but log --format=%s origin/main >actual &&
 	test_write_lines 6 5 >expect &&
 	test_cmp expect actual
 	)
@@ -76,60 +76,60 @@ test_expect_success 'fetch --depth from shallow clone' '
 test_expect_success 'fetch --unshallow from shallow clone' '
 	(
 	cd shallow2 &&
-	git fetch --unshallow &&
-	git fsck &&
-	git log --format=%s origin/main >actual &&
+	but fetch --unshallow &&
+	but fsck &&
+	but log --format=%s origin/main >actual &&
 	test_write_lines 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
 
 test_expect_success 'fetch --unshallow from a full clone' '
-	git clone --no-local --depth=2 .git shallow3 &&
+	but clone --no-local --depth=2 .but shallow3 &&
 	(
 	cd shallow3 &&
-	git log --format=%s >actual &&
+	but log --format=%s >actual &&
 	test_write_lines 4 3 >expect &&
 	test_cmp expect actual &&
-	git -c fetch.writecummitGraph fetch --unshallow &&
-	git log origin/main --format=%s >actual &&
+	but -c fetch.writecummitGraph fetch --unshallow &&
+	but log origin/main --format=%s >actual &&
 	test_write_lines 4 3 2 1 >expect &&
 	test_cmp expect actual
 	)
 '
 
 test_expect_success 'fetch something upstream has but hidden by clients shallow boundaries' '
-	# the blob "1" is available in .git but hidden by the
-	# shallow2/.git/shallow and it should be resent
-	! git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null &&
+	# the blob "1" is available in .but but hidden by the
+	# shallow2/.but/shallow and it should be resent
+	! but --but-dir=shallow2/.but cat-file blob $(echo 1|but hash-object --stdin) >/dev/null &&
 	echo 1 >1.t &&
-	git add 1.t &&
-	git cummit -m add-1-back &&
+	but add 1.t &&
+	but cummit -m add-1-back &&
 	(
 	cd shallow2 &&
-	git fetch ../.git +refs/heads/main:refs/remotes/top/main &&
-	git fsck &&
-	git log --format=%s top/main >actual &&
+	but fetch ../.but +refs/heads/main:refs/remotes/top/main &&
+	but fsck &&
+	but log --format=%s top/main >actual &&
 	test_write_lines add-1-back 4 3 >expect &&
 	test_cmp expect actual
 	) &&
-	git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null
+	but --but-dir=shallow2/.but cat-file blob $(echo 1|but hash-object --stdin) >/dev/null
 '
 
-test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
+test_expect_success 'fetch that requires changes in .but/shallow is filtered' '
 	(
 	cd shallow &&
-	git checkout --orphan no-shallow &&
+	but checkout --orphan no-shallow &&
 	cummit no-shallow
 	) &&
-	git init notshallow &&
+	but init notshallow &&
 	(
 	cd notshallow &&
-	git fetch ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
-	git for-each-ref --format="%(refname)" >actual.refs &&
+	but fetch ../shallow/.but refs/heads/*:refs/remotes/shallow/* &&
+	but for-each-ref --format="%(refname)" >actual.refs &&
 	echo refs/remotes/shallow/no-shallow >expect.refs &&
 	test_cmp expect.refs actual.refs &&
-	git log --format=%s shallow/no-shallow >actual &&
+	but log --format=%s shallow/no-shallow >actual &&
 	echo no-shallow >expect &&
 	test_cmp expect actual
 	)
@@ -138,16 +138,16 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 test_expect_success 'fetch --update-shallow' '
 	(
 	cd shallow &&
-	git checkout main &&
+	but checkout main &&
 	cummit 7 &&
-	git tag -m foo heavy-tag HEAD^ &&
-	git tag light-tag HEAD^:tracked
+	but tag -m foo heavy-tag HEAD^ &&
+	but tag light-tag HEAD^:tracked
 	) &&
 	(
 	cd notshallow &&
-	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
-	git fsck &&
-	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
+	but fetch --update-shallow ../shallow/.but refs/heads/*:refs/remotes/shallow/* &&
+	but fsck &&
+	but for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
 	cat <<-\EOF >expect.refs &&
 	refs/remotes/shallow/main
 	refs/remotes/shallow/no-shallow
@@ -155,35 +155,35 @@ test_expect_success 'fetch --update-shallow' '
 	refs/tags/light-tag
 	EOF
 	test_cmp expect.refs actual.refs &&
-	git log --format=%s shallow/main >actual &&
+	but log --format=%s shallow/main >actual &&
 	test_write_lines 7 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
 
 test_expect_success 'fetch --update-shallow into a repo with submodules' '
-	git init a-submodule &&
+	but init a-submodule &&
 	test_cummit -C a-submodule foo &&
-	git init repo-with-sub &&
-	git -C repo-with-sub submodule add ../a-submodule a-submodule &&
-	git -C repo-with-sub cummit -m "added submodule" &&
-	git -C repo-with-sub fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/*
+	but init repo-with-sub &&
+	but -C repo-with-sub submodule add ../a-submodule a-submodule &&
+	but -C repo-with-sub cummit -m "added submodule" &&
+	but -C repo-with-sub fetch --update-shallow ../shallow/.but refs/heads/*:refs/remotes/shallow/*
 '
 
 test_expect_success 'fetch --update-shallow (with fetch.writecummitGraph)' '
 	(
 	cd shallow &&
-	git checkout main &&
+	but checkout main &&
 	cummit 8 &&
-	git tag -m foo heavy-tag-for-graph HEAD^ &&
-	git tag light-tag-for-graph HEAD^:tracked
+	but tag -m foo heavy-tag-for-graph HEAD^ &&
+	but tag light-tag-for-graph HEAD^:tracked
 	) &&
 	test_config -C notshallow fetch.writecummitGraph true &&
 	(
 	cd notshallow &&
-	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
-	git fsck &&
-	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
+	but fetch --update-shallow ../shallow/.but refs/heads/*:refs/remotes/shallow/* &&
+	but fsck &&
+	but for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
 	cat <<-EOF >expect.refs &&
 	refs/remotes/shallow/main
 	refs/remotes/shallow/no-shallow
@@ -193,46 +193,46 @@ test_expect_success 'fetch --update-shallow (with fetch.writecummitGraph)' '
 	refs/tags/light-tag-for-graph
 	EOF
 	test_cmp expect.refs actual.refs &&
-	git log --format=%s shallow/main >actual &&
+	but log --format=%s shallow/main >actual &&
 	test_write_lines 8 7 6 5 4 3 >expect &&
 	test_cmp expect actual
 	)
 '
 
 test_expect_success POSIXPERM,SANITY 'shallow fetch from a read-only repo' '
-	cp -R .git read-only.git &&
-	test_when_finished "find read-only.git -type d -print | xargs chmod +w" &&
-	find read-only.git -print | xargs chmod -w &&
-	git clone --no-local --depth=2 read-only.git from-read-only &&
-	git --git-dir=from-read-only/.git log --format=%s >actual &&
+	cp -R .but read-only.but &&
+	test_when_finished "find read-only.but -type d -print | xargs chmod +w" &&
+	find read-only.but -print | xargs chmod -w &&
+	but clone --no-local --depth=2 read-only.but from-read-only &&
+	but --but-dir=from-read-only/.but log --format=%s >actual &&
 	test_write_lines add-1-back 4 >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success '.git/shallow is edited by repack' '
-	git init shallow-server &&
+test_expect_success '.but/shallow is edited by repack' '
+	but init shallow-server &&
 	test_cummit -C shallow-server A &&
 	test_cummit -C shallow-server B &&
-	git -C shallow-server checkout -b branch &&
+	but -C shallow-server checkout -b branch &&
 	test_cummit -C shallow-server C &&
 	test_cummit -C shallow-server E &&
 	test_cummit -C shallow-server D &&
-	d="$(git -C shallow-server rev-parse --verify D^0)" &&
-	git -C shallow-server checkout main &&
+	d="$(but -C shallow-server rev-parse --verify D^0)" &&
+	but -C shallow-server checkout main &&
 
-	git clone --depth=1 --no-tags --no-single-branch \
+	but clone --depth=1 --no-tags --no-single-branch \
 		"file://$PWD/shallow-server" shallow-client &&
 
 	: now remove the branch and fetch with prune &&
-	git -C shallow-server branch -D branch &&
-	git -C shallow-client fetch --prune --depth=1 \
+	but -C shallow-server branch -D branch &&
+	but -C shallow-client fetch --prune --depth=1 \
 		origin "+refs/heads/*:refs/remotes/origin/*" &&
-	git -C shallow-client repack -adfl &&
-	test_must_fail git -C shallow-client rev-parse --verify $d^0 &&
-	! grep $d shallow-client/.git/shallow &&
+	but -C shallow-client repack -adfl &&
+	test_must_fail but -C shallow-client rev-parse --verify $d^0 &&
+	! grep $d shallow-client/.but/shallow &&
 
-	git -C shallow-server branch branch-orig $d &&
-	git -C shallow-client fetch --prune --depth=2 \
+	but -C shallow-server branch branch-orig $d &&
+	but -C shallow-client fetch --prune --depth=2 \
 		origin "+refs/heads/*:refs/remotes/origin/*"
 '
 
@@ -244,29 +244,29 @@ REPO="$HTTPD_DOCUMENT_ROOT_PATH/repo"
 test_expect_success 'shallow fetches check connectivity before writing shallow file' '
 	rm -rf "$REPO" client &&
 
-	git init "$REPO" &&
+	but init "$REPO" &&
 	test_cummit -C "$REPO" one &&
 	test_cummit -C "$REPO" two &&
 	test_cummit -C "$REPO" three &&
 
-	git init client &&
+	but init client &&
 
 	# Use protocol v2 to ensure that shallow information is sent exactly
 	# once by the server, since we are planning to manipulate it.
-	git -C "$REPO" config protocol.version 2 &&
-	git -C client config protocol.version 2 &&
+	but -C "$REPO" config protocol.version 2 &&
+	but -C client config protocol.version 2 &&
 
-	git -C client fetch --depth=2 "$HTTPD_URL/one_time_perl/repo" main:a_branch &&
+	but -C client fetch --depth=2 "$HTTPD_URL/one_time_perl/repo" main:a_branch &&
 
 	# Craft a situation in which the server sends back an unshallow request
 	# with an empty packfile. This is done by refetching with a shorter
 	# depth (to ensure that the packfile is empty), and overwriting the
 	# shallow line in the response with the unshallow line we want.
 	printf "$(test_oid perl)" \
-	       "$(git -C "$REPO" rev-parse HEAD)" \
-	       "$(git -C "$REPO" rev-parse HEAD^)" \
+	       "$(but -C "$REPO" rev-parse HEAD)" \
+	       "$(but -C "$REPO" rev-parse HEAD^)" \
 	       >"$HTTPD_ROOT_PATH/one-time-perl" &&
-	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 git -C client \
+	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 but -C client \
 		fetch --depth=1 "$HTTPD_URL/one_time_perl/repo" \
 		main:a_branch &&
 
@@ -275,7 +275,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 
 	# Ensure that the resulting repo is consistent, despite our failure to
 	# fetch.
-	git -C client fsck
+	but -C client fsck
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

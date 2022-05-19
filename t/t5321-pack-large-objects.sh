@@ -3,7 +3,7 @@
 # Copyright (c) 2018 Johannes Schindelin
 #
 
-test_description='git pack-object with "large" deltas
+test_description='but pack-object with "large" deltas
 
 '
 . ./test-lib.sh
@@ -21,12 +21,12 @@ test_expect_success 'setup' '
 		pack_obj $B
 	} >ab.pack &&
 	pack_trailer ab.pack &&
-	git index-pack --stdin <ab.pack
+	but index-pack --stdin <ab.pack
 '
 
 test_expect_success 'repack large deltas' '
 	printf "%s\\n" $A $B |
-	GIT_TEST_OE_DELTA_SIZE=2 git pack-objects tmp-pack
+	GIT_TEST_OE_DELTA_SIZE=2 but pack-objects tmp-pack
 '
 
 test_done

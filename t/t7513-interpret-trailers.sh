@@ -3,7 +3,7 @@
 # Copyright (c) 2013, 2014 Christian Couder
 #
 
-test_description='git interpret-trailers'
+test_description='but interpret-trailers'
 
 . ./test-lib.sh
 
@@ -36,7 +36,7 @@ test_expect_success 'setup' '
 		 foo.txt | 2 +-
 		 1 file changed, 1 insertion(+), 1 deletion(-)
 
-		diff --git a/foo.txt b/foo.txt
+		diff --but a/foo.txt b/foo.txt
 		index 0353767..1d91aa1 100644
 		--- a/foo.txt
 		+++ b/foo.txt
@@ -52,54 +52,54 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'with cmd' '
-	test_when_finished "git config --remove-section trailer.bug" &&
-	git config trailer.bug.key "Bug-maker: " &&
-	git config trailer.bug.ifExists "add" &&
-	git config trailer.bug.cmd "echo \"maybe is\"" &&
+	test_when_finished "but config --remove-section trailer.bug" &&
+	but config trailer.bug.key "Bug-maker: " &&
+	but config trailer.bug.ifExists "add" &&
+	but config trailer.bug.cmd "echo \"maybe is\"" &&
 	cat >expected2 <<-EOF &&
 
 	Bug-maker: maybe is him
 	Bug-maker: maybe is me
 	EOF
-	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+	but interpret-trailers --trailer "bug: him" --trailer "bug:me" \
 		>actual2 &&
 	test_cmp expected2 actual2
 '
 
 test_expect_success 'with cmd and $1' '
-	test_when_finished "git config --remove-section trailer.bug" &&
-	git config trailer.bug.key "Bug-maker: " &&
-	git config trailer.bug.ifExists "add" &&
-	git config trailer.bug.cmd "echo \"\$1\" is" &&
+	test_when_finished "but config --remove-section trailer.bug" &&
+	but config trailer.bug.key "Bug-maker: " &&
+	but config trailer.bug.ifExists "add" &&
+	but config trailer.bug.cmd "echo \"\$1\" is" &&
 	cat >expected2 <<-EOF &&
 
 	Bug-maker: him is him
 	Bug-maker: me is me
 	EOF
-	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+	but interpret-trailers --trailer "bug: him" --trailer "bug:me" \
 		>actual2 &&
 	test_cmp expected2 actual2
 '
 
 test_expect_success 'with cmd and $1 with sh -c' '
-	test_when_finished "git config --remove-section trailer.bug" &&
-	git config trailer.bug.key "Bug-maker: " &&
-	git config trailer.bug.ifExists "replace" &&
-	git config trailer.bug.cmd "sh -c \"echo who is \"\$1\"\"" &&
+	test_when_finished "but config --remove-section trailer.bug" &&
+	but config trailer.bug.key "Bug-maker: " &&
+	but config trailer.bug.ifExists "replace" &&
+	but config trailer.bug.cmd "sh -c \"echo who is \"\$1\"\"" &&
 	cat >expected2 <<-EOF &&
 
 	Bug-maker: who is me
 	EOF
-	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+	but interpret-trailers --trailer "bug: him" --trailer "bug:me" \
 		>actual2 &&
 	test_cmp expected2 actual2
 '
 
 test_expect_success 'with cmd and $1 with shell script' '
-	test_when_finished "git config --remove-section trailer.bug" &&
-	git config trailer.bug.key "Bug-maker: " &&
-	git config trailer.bug.ifExists "replace" &&
-	git config trailer.bug.cmd "./echoscript" &&
+	test_when_finished "but config --remove-section trailer.bug" &&
+	but config trailer.bug.key "Bug-maker: " &&
+	but config trailer.bug.ifExists "replace" &&
+	but config trailer.bug.cmd "./echoscript" &&
 	cat >expected2 <<-EOF &&
 
 	Bug-maker: who is me
@@ -109,7 +109,7 @@ test_expect_success 'with cmd and $1 with shell script' '
 	echo who is "\$1"
 	EOF
 	chmod +x echoscript &&
-	git interpret-trailers --trailer "bug: him" --trailer "bug:me" \
+	but interpret-trailers --trailer "bug: him" --trailer "bug:me" \
 		>actual2 &&
 	test_cmp expected2 actual2
 '
@@ -121,7 +121,7 @@ test_expect_success 'without config' '
 		Reviewed-by: Z
 		Acked-by: Johan
 	EOF
-	git interpret-trailers --trailer "ack = Peff" --trailer "Reviewed-by" \
+	but interpret-trailers --trailer "ack = Peff" --trailer "Reviewed-by" \
 		--trailer "Acked-by: Johan" empty >actual &&
 	test_cmp expected actual
 '
@@ -133,7 +133,7 @@ test_expect_success 'without config in another order' '
 		Reviewed-by: Z
 		ack: Peff
 	EOF
-	git interpret-trailers --trailer "Acked-by: Johan" --trailer "Reviewed-by" \
+	but interpret-trailers --trailer "Acked-by: Johan" --trailer "Reviewed-by" \
 		--trailer "ack = Peff" empty >actual &&
 	test_cmp expected actual
 '
@@ -144,7 +144,7 @@ test_expect_success '--trim-empty without config' '
 		ack: Peff
 		Acked-by: Johan
 	EOF
-	git interpret-trailers --trim-empty --trailer ack=Peff \
+	but interpret-trailers --trim-empty --trailer ack=Peff \
 		--trailer "Reviewed-by" --trailer "Acked-by: Johan" \
 		--trailer "sob:" empty >actual &&
 	test_cmp expected actual
@@ -157,7 +157,7 @@ test_expect_success 'with config option on the command line' '
 		Reviewed-by: Peff
 	EOF
 	{ echo && echo "Acked-by: Johan"; } |
-	git -c "trailer.Acked-by.ifexists=addifdifferent" interpret-trailers \
+	but -c "trailer.Acked-by.ifexists=addifdifferent" interpret-trailers \
 		--trailer "Reviewed-by: Peff" --trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
 '
@@ -170,7 +170,7 @@ test_expect_success 'with only a title in the message' '
 		Acked-by: Johan
 	EOF
 	echo "area: change" |
-	git interpret-trailers --trailer "Reviewed-by: Peff" \
+	but interpret-trailers --trailer "Reviewed-by: Peff" \
 		--trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
 '
@@ -184,7 +184,7 @@ test_expect_success 'with multiline title in the message' '
 		Acked-by: Johan
 	EOF
 	printf "%s\n" "place of" "code: change" |
-	git interpret-trailers --trailer "Reviewed-by: Peff" \
+	but interpret-trailers --trailer "Reviewed-by: Peff" \
 		--trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
 '
@@ -205,7 +205,7 @@ test_expect_success 'with non-trailer lines mixed with Signed-off-by' '
 		this is not a trailer
 		token: value
 	EOF
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -225,7 +225,7 @@ test_expect_success 'with non-trailer lines mixed with cherry picked from' '
 		this is not a trailer
 		token: value
 	EOF
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -246,7 +246,7 @@ test_expect_success 'with non-trailer lines mixed with a configured trailer' '
 		token: value
 	EOF
 	test_config trailer.my.key "My-trailer: " &&
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -268,7 +268,7 @@ test_expect_success 'with non-trailer lines mixed with a non-configured trailer'
 		token: value
 	EOF
 	test_config trailer.my.key "My-trailer: " &&
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -285,7 +285,7 @@ test_expect_success 'with all non-configured trailers' '
 		token: value
 	EOF
 	test_config trailer.my.key "My-trailer: " &&
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -300,7 +300,7 @@ test_expect_success 'with non-trailer lines only' '
 
 		token: value
 	EOF
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -315,7 +315,7 @@ test_expect_success 'line with leading whitespace is not trailer' '
 
 		token: value
 	EOF
-	git interpret-trailers --trailer "token: value" patch >actual &&
+	but interpret-trailers --trailer "token: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -345,7 +345,7 @@ test_expect_success 'multiline field treated as one trailer for 25% check' '
 		this is not a trailer
 		name: value
 	EOF
-	git interpret-trailers --trailer "name: value" patch >actual &&
+	but interpret-trailers --trailer "name: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -366,7 +366,7 @@ test_expect_success 'multiline field treated as atomic for placement' '
 		another: trailer
 	EOF
 	test_config trailer.name.where after &&
-	git interpret-trailers --trailer "name: value" patch >actual &&
+	but interpret-trailers --trailer "name: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -385,7 +385,7 @@ test_expect_success 'multiline field treated as atomic for replacement' '
 		name: value
 	EOF
 	test_config trailer.name.ifexists replace &&
-	git interpret-trailers --trailer "name: value" patch >actual &&
+	but interpret-trailers --trailer "name: value" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -410,7 +410,7 @@ test_expect_success 'multiline field treated as atomic for difference check' '
 		Qsecond line
 		another: trailer
 	EOF
-	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	but interpret-trailers --trailer "$(cat trailer)" patch >actual &&
 	test_cmp expected actual &&
 
 	q_to_tab >trailer <<-\EOF &&
@@ -426,7 +426,7 @@ test_expect_success 'multiline field treated as atomic for difference check' '
 		name: first line
 		QQQQQsecond line
 	EOF
-	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	but interpret-trailers --trailer "$(cat trailer)" patch >actual &&
 	test_cmp expected actual &&
 
 	q_to_tab >trailer <<-\EOF &&
@@ -442,7 +442,7 @@ test_expect_success 'multiline field treated as atomic for difference check' '
 		name: first line *DIFFERENT*
 		Qsecond line
 	EOF
-	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	but interpret-trailers --trailer "$(cat trailer)" patch >actual &&
 	test_cmp expected actual
 '
 
@@ -468,7 +468,7 @@ test_expect_success 'multiline field treated as atomic for neighbor check' '
 		Qsecond line
 		another: trailer
 	EOF
-	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	but interpret-trailers --trailer "$(cat trailer)" patch >actual &&
 	test_cmp expected actual &&
 
 	q_to_tab >trailer <<-\EOF &&
@@ -484,48 +484,48 @@ test_expect_success 'multiline field treated as atomic for neighbor check' '
 		QQQQQsecond line
 		another: trailer
 	EOF
-	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	but interpret-trailers --trailer "$(cat trailer)" patch >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with config setup' '
-	git config trailer.ack.key "Acked-by: " &&
+	but config trailer.ack.key "Acked-by: " &&
 	cat >expected <<-\EOF &&
 
 		Acked-by: Peff
 	EOF
-	git interpret-trailers --trim-empty --trailer "ack = Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "ack = Peff" empty >actual &&
 	test_cmp expected actual &&
-	git interpret-trailers --trim-empty --trailer "Acked-by = Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "Acked-by = Peff" empty >actual &&
 	test_cmp expected actual &&
-	git interpret-trailers --trim-empty --trailer "Acked-by :Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "Acked-by :Peff" empty >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with config setup and ":=" as separators' '
-	git config trailer.separators ":=" &&
-	git config trailer.ack.key "Acked-by= " &&
+	but config trailer.separators ":=" &&
+	but config trailer.ack.key "Acked-by= " &&
 	cat >expected <<-\EOF &&
 
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trim-empty --trailer "ack = Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "ack = Peff" empty >actual &&
 	test_cmp expected actual &&
-	git interpret-trailers --trim-empty --trailer "Acked-by= Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "Acked-by= Peff" empty >actual &&
 	test_cmp expected actual &&
-	git interpret-trailers --trim-empty --trailer "Acked-by : Peff" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "Acked-by : Peff" empty >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with config setup and "%" as separators' '
-	git config trailer.separators "%" &&
+	but config trailer.separators "%" &&
 	cat >expected <<-\EOF &&
 
 		bug% 42
 		count% 10
 		bug% 422
 	EOF
-	git interpret-trailers --trim-empty --trailer "bug = 42" \
+	but interpret-trailers --trim-empty --trailer "bug = 42" \
 		--trailer count%10 --trailer "test: stuff" \
 		--trailer "bug % 422" empty >actual &&
 	test_cmp expected actual
@@ -547,26 +547,26 @@ test_expect_success 'with "%" as separators and a message with trailers' '
 		bug% 422
 		count% 100
 	EOF
-	git interpret-trailers --trailer count%100 \
+	but interpret-trailers --trailer count%100 \
 		special_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with config setup and ":=#" as separators' '
-	git config trailer.separators ":=#" &&
-	git config trailer.bug.key "Bug #" &&
+	but config trailer.separators ":=#" &&
+	but config trailer.bug.key "Bug #" &&
 	cat >expected <<-\EOF &&
 
 		Bug #42
 	EOF
-	git interpret-trailers --trim-empty --trailer "bug = 42" empty >actual &&
+	but interpret-trailers --trim-empty --trailer "bug = 42" empty >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with cummit basic message' '
 	cat basic_message >expected &&
 	echo >>expected &&
-	git interpret-trailers <basic_message >actual &&
+	but interpret-trailers <basic_message >actual &&
 	test_cmp expected actual
 '
 
@@ -576,7 +576,7 @@ test_expect_success 'with basic patch' '
 	cat basic_message >expected &&
 	echo >>expected &&
 	cat basic_patch >>expected &&
-	git interpret-trailers <input >actual &&
+	but interpret-trailers <input >actual &&
 	test_cmp expected actual
 '
 
@@ -589,7 +589,7 @@ test_expect_success 'with cummit complex message as argument' '
 		Reviewed-by: Z
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers complex_message >actual &&
+	but interpret-trailers complex_message >actual &&
 	test_cmp expected actual
 '
 
@@ -597,7 +597,7 @@ test_expect_success 'with 2 files arguments' '
 	cat basic_message >>expected &&
 	echo >>expected &&
 	cat basic_patch >>expected &&
-	git interpret-trailers complex_message input >actual &&
+	but interpret-trailers complex_message input >actual &&
 	test_cmp expected actual
 '
 
@@ -639,7 +639,7 @@ do
 
 		EOF
 		cat basic_patch >>expected &&
-		git $config interpret-trailers \
+		but $config interpret-trailers \
 			--trim-empty --trailer "Cc: Peff" \
 			message_with_comments >actual &&
 		test_cmp expected actual
@@ -672,7 +672,7 @@ test_expect_success 'with message that has an old style conflict block' '
 		Conflicts:
 
 	EOF
-	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
+	but interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
 	test_cmp expected actual
 '
 
@@ -686,7 +686,7 @@ test_expect_success 'with cummit complex message and trailer args' '
 		Acked-by= Peff
 		Bug #42
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "bug: 42" <complex_message >actual &&
 	test_cmp expected actual
 '
@@ -700,7 +700,7 @@ test_expect_success 'with complex patch, args and --trim-empty' '
 		Bug #42
 	EOF
 	cat basic_patch >>expected &&
-	git interpret-trailers --trim-empty --trailer "ack: Peff" \
+	but interpret-trailers --trim-empty --trailer "ack: Peff" \
 		--trailer "bug: 42" <complex_patch >actual &&
 	test_cmp expected actual
 '
@@ -711,7 +711,7 @@ test_expect_success 'in-place editing with basic patch' '
 	cat basic_message >expected &&
 	echo >>expected &&
 	cat basic_patch >>expected &&
-	git interpret-trailers --in-place message &&
+	but interpret-trailers --in-place message &&
 	test_cmp expected message
 '
 
@@ -724,29 +724,29 @@ test_expect_success 'in-place editing with additional trailer' '
 		Reviewed-by: Alice
 	EOF
 	cat basic_patch >>expected &&
-	git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	but interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
 	test_cmp expected message
 '
 
 test_expect_success 'in-place editing on stdin disallowed' '
-	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place < basic_message
+	test_must_fail but interpret-trailers --trailer "Reviewed-by: Alice" --in-place < basic_message
 '
 
 test_expect_success 'in-place editing on non-existing file' '
-	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place nonexisting &&
+	test_must_fail but interpret-trailers --trailer "Reviewed-by: Alice" --in-place nonexisting &&
 	test_path_is_missing nonexisting
 '
 
 test_expect_success POSIXPERM,SANITY "in-place editing doesn't clobber original file on error" '
 	cat basic_message >message &&
 	chmod -r message &&
-	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	test_must_fail but interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
 	chmod +r message &&
 	test_cmp message basic_message
 '
 
 test_expect_success 'using "where = before"' '
-	git config trailer.bug.where "before" &&
+	but config trailer.bug.where "before" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -756,13 +756,13 @@ test_expect_success 'using "where = before"' '
 		Signed-off-by: Z
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "bug: 42" complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'overriding configuration with "--where after"' '
-	git config trailer.ack.where "before" &&
+	but config trailer.ack.where "before" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -771,7 +771,7 @@ test_expect_success 'overriding configuration with "--where after"' '
 		Reviewed-by: Z
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --where after --trailer "ack: Peff" \
+	but interpret-trailers --where after --trailer "ack: Peff" \
 		complex_message >actual &&
 	test_cmp expected actual
 '
@@ -786,13 +786,13 @@ test_expect_success 'using "where = before" with "--no-where"' '
 		Reviewed-by: Z
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --where after --no-where --trailer "ack: Peff" \
+	but interpret-trailers --where after --no-where --trailer "ack: Peff" \
 		--trailer "bug: 42" complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "where = after"' '
-	git config trailer.ack.where "after" &&
+	but config trailer.ack.where "after" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -802,14 +802,14 @@ test_expect_success 'using "where = after"' '
 		Reviewed-by: Z
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "bug: 42" complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "where = end"' '
-	git config trailer.review.key "Reviewed-by" &&
-	git config trailer.review.where "end" &&
+	but config trailer.review.key "Reviewed-by" &&
+	but config trailer.review.where "end" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -820,15 +820,15 @@ test_expect_success 'using "where = end"' '
 		Reviewed-by: Junio
 		Reviewed-by: Johannes
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "Reviewed-by: Junio" --trailer "Reviewed-by: Johannes" \
 		complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "where = start"' '
-	git config trailer.review.key "Reviewed-by" &&
-	git config trailer.review.where "start" &&
+	but config trailer.review.key "Reviewed-by" &&
+	but config trailer.review.where "start" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Reviewed-by: Johannes
@@ -839,15 +839,15 @@ test_expect_success 'using "where = start"' '
 		Reviewed-by: Z
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "Reviewed-by: Junio" --trailer "Reviewed-by: Johannes" \
 		complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "where = before" for a token in the middle of the message' '
-	git config trailer.review.key "Reviewed-by:" &&
-	git config trailer.review.where "before" &&
+	but config trailer.review.key "Reviewed-by:" &&
+	but config trailer.review.where "before" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -858,7 +858,7 @@ test_expect_success 'using "where = before" for a token in the middle of the mes
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "bug: 42" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "bug: 42" \
 		--trailer "review: Johan" <complex_message >actual &&
 	test_cmp expected actual
 '
@@ -871,7 +871,7 @@ test_expect_success 'using "where = before" and --trim-empty' '
 		Acked-by= Peff
 		Reviewed-by:Johan
 	EOF
-	git interpret-trailers --trim-empty --trailer "ack: Peff" \
+	but interpret-trailers --trim-empty --trailer "ack: Peff" \
 		--trailer "bug: 42" --trailer "review: Johan" \
 		--trailer "Bug: 46" <complex_message >actual &&
 	test_cmp expected actual
@@ -889,14 +889,14 @@ test_expect_success 'the default is "ifExists = addIfDifferentNeighbor"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" --trailer "ack: Peff" \
 		--trailer "ack: Peff" <complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'default "ifExists" is now "addIfDifferent"' '
-	git config trailer.ifexists "addIfDifferent" &&
+	but config trailer.ifexists "addIfDifferent" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -907,15 +907,15 @@ test_expect_success 'default "ifExists" is now "addIfDifferent"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" --trailer "ack: Peff" \
 		--trailer "ack: Peff" <complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "ifExists = addIfDifferent" with "where = end"' '
-	git config trailer.ack.ifExists "addIfDifferent" &&
-	git config trailer.ack.where "end" &&
+	but config trailer.ack.ifExists "addIfDifferent" &&
+	but config trailer.ack.where "end" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -925,15 +925,15 @@ test_expect_success 'using "ifExists = addIfDifferent" with "where = end"' '
 		Signed-off-by: Z
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "ifExists = addIfDifferent" with "where = before"' '
-	git config trailer.ack.ifExists "addIfDifferent" &&
-	git config trailer.ack.where "before" &&
+	but config trailer.ack.ifExists "addIfDifferent" &&
+	but config trailer.ack.where "before" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -943,15 +943,15 @@ test_expect_success 'using "ifExists = addIfDifferent" with "where = before"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "ifExists = addIfDifferentNeighbor" with "where = end"' '
-	git config trailer.ack.ifExists "addIfDifferentNeighbor" &&
-	git config trailer.ack.where "end" &&
+	but config trailer.ack.ifExists "addIfDifferentNeighbor" &&
+	but config trailer.ack.where "end" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -965,7 +965,7 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor" with "where = end
 		Acked-by= Junio
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" \
 		--trailer "Tested-by: Jakub" --trailer "ack: Junio" \
 		--trailer "ack: Junio" --trailer "ack: Peff" <complex_message >actual &&
@@ -973,8 +973,8 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor" with "where = end
 '
 
 test_expect_success 'using "ifExists = addIfDifferentNeighbor"  with "where = after"' '
-	git config trailer.ack.ifExists "addIfDifferentNeighbor" &&
-	git config trailer.ack.where "after" &&
+	but config trailer.ack.ifExists "addIfDifferentNeighbor" &&
+	but config trailer.ack.where "after" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -987,7 +987,7 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor"  with "where = af
 		Signed-off-by: Z
 		Tested-by: Jakub
 	EOF
-	git interpret-trailers --trailer "ack: Peff" --trailer "review:" \
+	but interpret-trailers --trailer "ack: Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" \
 		--trailer "Tested-by: Jakub" --trailer "ack: Junio" \
 		--trailer "ack: Junio" --trailer "ack: Peff" <complex_message >actual &&
@@ -995,7 +995,7 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor"  with "where = af
 '
 
 test_expect_success 'using "ifExists = addIfDifferentNeighbor" and --trim-empty' '
-	git config trailer.ack.ifExists "addIfDifferentNeighbor" &&
+	but config trailer.ack.ifExists "addIfDifferentNeighbor" &&
 	cat complex_message_body >expected &&
 	cat >>expected <<-\EOF &&
 		Bug #42
@@ -1003,7 +1003,7 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor" and --trim-empty'
 		Acked-by= Junio
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trim-empty --trailer "ack: Peff" \
+	but interpret-trailers --trim-empty --trailer "ack: Peff" \
 		--trailer "Acked-by= Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" \
 		--trailer "ack: Peff" <complex_message >actual &&
@@ -1011,8 +1011,8 @@ test_expect_success 'using "ifExists = addIfDifferentNeighbor" and --trim-empty'
 '
 
 test_expect_success 'using "ifExists = add" with "where = end"' '
-	git config trailer.ack.ifExists "add" &&
-	git config trailer.ack.where "end" &&
+	but config trailer.ack.ifExists "add" &&
+	but config trailer.ack.where "end" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1027,7 +1027,7 @@ test_expect_success 'using "ifExists = add" with "where = end"' '
 		Tested-by: Johannes
 		Acked-by= Peff
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "Acked-by= Peff" --trailer "review:" \
 		--trailer "Tested-by: Jakub" --trailer "ack: Junio" \
 		--trailer "bug: 42" --trailer "Tested-by: Johannes" \
@@ -1036,8 +1036,8 @@ test_expect_success 'using "ifExists = add" with "where = end"' '
 '
 
 test_expect_success 'using "ifExists = add" with "where = after"' '
-	git config trailer.ack.ifExists "add" &&
-	git config trailer.ack.where "after" &&
+	but config trailer.ack.ifExists "add" &&
+	but config trailer.ack.where "after" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1050,7 +1050,7 @@ test_expect_success 'using "ifExists = add" with "where = after"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "Acked-by= Peff" --trailer "review:" \
 		--trailer "ack: Junio" --trailer "bug: 42" \
 		--trailer "ack: Peff" <complex_message >actual &&
@@ -1058,8 +1058,8 @@ test_expect_success 'using "ifExists = add" with "where = after"' '
 '
 
 test_expect_success 'overriding configuration with "--if-exists replace"' '
-	git config trailer.fix.key "Fixes: " &&
-	git config trailer.fix.ifExists "add" &&
+	but config trailer.fix.key "Fixes: " &&
+	but config trailer.fix.ifExists "add" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1068,15 +1068,15 @@ test_expect_success 'overriding configuration with "--if-exists replace"' '
 		Signed-off-by: Z
 		Fixes: 22
 	EOF
-	git interpret-trailers --if-exists replace --trailer "review:" \
+	but interpret-trailers --if-exists replace --trailer "review:" \
 		--trailer "fix=53" --trailer "fix=22" --trailer "bug: 42" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'using "ifExists = replace"' '
-	git config trailer.fix.key "Fixes: " &&
-	git config trailer.fix.ifExists "replace" &&
+	but config trailer.fix.key "Fixes: " &&
+	but config trailer.fix.ifExists "replace" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1087,7 +1087,7 @@ test_expect_success 'using "ifExists = replace"' '
 		Signed-off-by: Z
 		Fixes: 22
 	EOF
-	git interpret-trailers --trailer "review:" \
+	but interpret-trailers --trailer "review:" \
 		--trailer "fix=53" --trailer "ack: Junio" --trailer "fix=22" \
 		--trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1095,7 +1095,7 @@ test_expect_success 'using "ifExists = replace"' '
 '
 
 test_expect_success 'using "ifExists = replace" with "where = after"' '
-	git config trailer.fix.where "after" &&
+	but config trailer.fix.where "after" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1106,7 +1106,7 @@ test_expect_success 'using "ifExists = replace" with "where = after"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" \
+	but interpret-trailers --trailer "review:" \
 		--trailer "fix=53" --trailer "ack: Junio" --trailer "fix=22" \
 		--trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1114,7 +1114,7 @@ test_expect_success 'using "ifExists = replace" with "where = after"' '
 '
 
 test_expect_success 'using "ifExists = doNothing"' '
-	git config trailer.fix.ifExists "doNothing" &&
+	but config trailer.fix.ifExists "doNothing" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1125,7 +1125,7 @@ test_expect_success 'using "ifExists = doNothing"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "ack: Junio" --trailer "fix=22" \
 		--trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1133,8 +1133,8 @@ test_expect_success 'using "ifExists = doNothing"' '
 '
 
 test_expect_success 'the default is "ifMissing = add"' '
-	git config trailer.cc.key "Cc: " &&
-	git config trailer.cc.where "before" &&
+	but config trailer.cc.key "Cc: " &&
+	but config trailer.cc.where "before" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1146,7 +1146,7 @@ test_expect_success 'the default is "ifMissing = add"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1154,7 +1154,7 @@ test_expect_success 'the default is "ifMissing = add"' '
 '
 
 test_expect_success 'overriding configuration with "--if-missing doNothing"' '
-	git config trailer.ifmissing "add" &&
+	but config trailer.ifmissing "add" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1164,7 +1164,7 @@ test_expect_success 'overriding configuration with "--if-missing doNothing"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --if-missing doNothing \
+	but interpret-trailers --if-missing doNothing \
 		--trailer "review:" --trailer "fix=53" \
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
@@ -1173,7 +1173,7 @@ test_expect_success 'overriding configuration with "--if-missing doNothing"' '
 '
 
 test_expect_success 'when default "ifMissing" is "doNothing"' '
-	git config trailer.ifmissing "doNothing" &&
+	but config trailer.ifmissing "doNothing" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1183,18 +1183,18 @@ test_expect_success 'when default "ifMissing" is "doNothing"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
 	test_cmp expected actual &&
-	git config trailer.ifmissing "add"
+	but config trailer.ifmissing "add"
 '
 
 test_expect_success 'using "ifMissing = add" with "where = end"' '
-	git config trailer.cc.key "Cc: " &&
-	git config trailer.cc.where "end" &&
-	git config trailer.cc.ifMissing "add" &&
+	but config trailer.cc.key "Cc: " &&
+	but config trailer.cc.where "end" &&
+	but config trailer.cc.ifMissing "add" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1206,7 +1206,7 @@ test_expect_success 'using "ifMissing = add" with "where = end"' '
 		Signed-off-by: Z
 		Cc: Linus
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "ack: Junio" --trailer "fix=22" \
 		--trailer "bug: 42" --trailer "cc=Linus" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1214,9 +1214,9 @@ test_expect_success 'using "ifMissing = add" with "where = end"' '
 '
 
 test_expect_success 'using "ifMissing = add" with "where = before"' '
-	git config trailer.cc.key "Cc: " &&
-	git config trailer.cc.where "before" &&
-	git config trailer.cc.ifMissing "add" &&
+	but config trailer.cc.key "Cc: " &&
+	but config trailer.cc.where "before" &&
+	but config trailer.cc.ifMissing "add" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Cc: Linus
@@ -1228,7 +1228,7 @@ test_expect_success 'using "ifMissing = add" with "where = before"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "ack: Junio" --trailer "fix=22" \
 		--trailer "bug: 42" --trailer "cc=Linus" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1236,7 +1236,7 @@ test_expect_success 'using "ifMissing = add" with "where = before"' '
 '
 
 test_expect_success 'using "ifMissing = doNothing"' '
-	git config trailer.cc.ifMissing "doNothing" &&
+	but config trailer.cc.ifMissing "doNothing" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1247,7 +1247,7 @@ test_expect_success 'using "ifMissing = doNothing"' '
 		Reviewed-by:
 		Signed-off-by: Z
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+	but interpret-trailers --trailer "review:" --trailer "fix=53" \
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -1255,8 +1255,8 @@ test_expect_success 'using "ifMissing = doNothing"' '
 '
 
 test_expect_success 'default "where" is now "after"' '
-	git config trailer.where "after" &&
-	git config --unset trailer.ack.where &&
+	but config trailer.where "after" &&
+	but config --unset trailer.ack.where &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Bug #42
@@ -1271,7 +1271,7 @@ test_expect_success 'default "where" is now "after"' '
 		Tested-by: Jakub
 		Tested-by: Johannes
 	EOF
-	git interpret-trailers --trailer "ack: Peff" \
+	but interpret-trailers --trailer "ack: Peff" \
 		--trailer "Acked-by= Peff" --trailer "review:" \
 		--trailer "Tested-by: Jakub" --trailer "ack: Junio" \
 		--trailer "bug: 42" --trailer "Tested-by: Johannes" \
@@ -1280,10 +1280,10 @@ test_expect_success 'default "where" is now "after"' '
 '
 
 test_expect_success 'with simple command' '
-	git config trailer.sign.key "Signed-off-by: " &&
-	git config trailer.sign.where "after" &&
-	git config trailer.sign.ifExists "addIfDifferentNeighbor" &&
-	git config trailer.sign.command "echo \"A U Thor <author@example.com>\"" &&
+	but config trailer.sign.key "Signed-off-by: " &&
+	but config trailer.sign.where "after" &&
+	but config trailer.sign.ifExists "addIfDifferentNeighbor" &&
+	but config trailer.sign.command "echo \"A U Thor <author@example.com>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1292,14 +1292,14 @@ test_expect_success 'with simple command' '
 		Signed-off-by: Z
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=22" \
+	but interpret-trailers --trailer "review:" --trailer "fix=22" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with command using cummitter information' '
-	git config trailer.sign.ifExists "addIfDifferent" &&
-	git config trailer.sign.command "echo \"\$GIT_CUMMITTER_NAME <\$GIT_CUMMITTER_EMAIL>\"" &&
+	but config trailer.sign.ifExists "addIfDifferent" &&
+	but config trailer.sign.command "echo \"\$GIT_CUMMITTER_NAME <\$GIT_CUMMITTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1308,16 +1308,16 @@ test_expect_success 'with command using cummitter information' '
 		Signed-off-by: Z
 		Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=22" \
+	but interpret-trailers --trailer "review:" --trailer "fix=22" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with command using author information' '
-	git config trailer.sign.key "Signed-off-by: " &&
-	git config trailer.sign.where "after" &&
-	git config trailer.sign.ifExists "addIfDifferentNeighbor" &&
-	git config trailer.sign.command "echo \"\$GIT_AUTHOR_NAME <\$GIT_AUTHOR_EMAIL>\"" &&
+	but config trailer.sign.key "Signed-off-by: " &&
+	but config trailer.sign.where "after" &&
+	but config trailer.sign.ifExists "addIfDifferentNeighbor" &&
+	but config trailer.sign.command "echo \"\$GIT_AUTHOR_NAME <\$GIT_AUTHOR_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1326,25 +1326,25 @@ test_expect_success 'with command using author information' '
 		Signed-off-by: Z
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=22" \
+	but interpret-trailers --trailer "review:" --trailer "fix=22" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'setup a cummit' '
 	echo "Content of the first cummit." > a.txt &&
-	git add a.txt &&
-	git cummit -m "Add file a.txt"
+	but add a.txt &&
+	but cummit -m "Add file a.txt"
 '
 
 test_expect_success 'cmd takes precedence over command' '
-	test_when_finished "git config --unset trailer.fix.cmd" &&
-	git config trailer.fix.ifExists "replace" &&
-	git config trailer.fix.cmd "test -n \"\$1\" && git log -1 --oneline --format=\"%h (%aN)\" \
+	test_when_finished "but config --unset trailer.fix.cmd" &&
+	but config trailer.fix.ifExists "replace" &&
+	but config trailer.fix.cmd "test -n \"\$1\" && but log -1 --oneline --format=\"%h (%aN)\" \
 	--abbrev-cummit --abbrev=14 \"\$1\" || true" &&
-	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" \
+	but config trailer.fix.command "but log -1 --oneline --format=\"%h (%s)\" \
 		--abbrev-cummit --abbrev=14 \$ARG" &&
-	FIXED=$(git log -1 --oneline --format="%h (%aN)" --abbrev-cummit --abbrev=14 HEAD) &&
+	FIXED=$(but log -1 --oneline --format="%h (%aN)" --abbrev-cummit --abbrev=14 HEAD) &&
 	cat complex_message_body >expected2 &&
 	sed -e "s/ Z\$/ /" >>expected2 <<-EOF &&
 		Fixes: $FIXED
@@ -1353,15 +1353,15 @@ test_expect_success 'cmd takes precedence over command' '
 		Signed-off-by: Z
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
+	but interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
 		<complex_message >actual2 &&
 	test_cmp expected2 actual2
 '
 
 test_expect_success 'with command using $ARG' '
-	git config trailer.fix.ifExists "replace" &&
-	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG" &&
-	FIXED=$(git log -1 --oneline --format="%h (%s)" --abbrev-cummit --abbrev=14 HEAD) &&
+	but config trailer.fix.ifExists "replace" &&
+	but config trailer.fix.command "but log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG" &&
+	FIXED=$(but log -1 --oneline --format="%h (%s)" --abbrev-cummit --abbrev=14 HEAD) &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-EOF &&
 		Fixes: $FIXED
@@ -1370,14 +1370,14 @@ test_expect_success 'with command using $ARG' '
 		Signed-off-by: Z
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
+	but interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with failing command using $ARG' '
-	git config trailer.fix.ifExists "replace" &&
-	git config trailer.fix.command "false \$ARG" &&
+	but config trailer.fix.ifExists "replace" &&
+	but config trailer.fix.command "false \$ARG" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-EOF &&
 		Fixes: Z
@@ -1386,41 +1386,41 @@ test_expect_success 'with failing command using $ARG' '
 		Signed-off-by: Z
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
+	but interpret-trailers --trailer "review:" --trailer "fix=HEAD" \
 		<complex_message >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'with empty tokens' '
-	git config --unset trailer.fix.command &&
+	but config --unset trailer.fix.command &&
 	cat >expected <<-EOF &&
 
 		Signed-off-by: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer ":" --trailer ":test" >actual <<-EOF &&
+	but interpret-trailers --trailer ":" --trailer ":test" >actual <<-EOF &&
 	EOF
 	test_cmp expected actual
 '
 
 test_expect_success 'with command but no key' '
-	git config --unset trailer.sign.key &&
+	but config --unset trailer.sign.key &&
 	cat >expected <<-EOF &&
 
 		sign: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers >actual <<-EOF &&
+	but interpret-trailers >actual <<-EOF &&
 	EOF
 	test_cmp expected actual
 '
 
 test_expect_success 'with no command and no key' '
-	git config --unset trailer.review.key &&
+	but config --unset trailer.review.key &&
 	cat >expected <<-EOF &&
 
 		review: Junio
 		sign: A U Thor <author@example.com>
 	EOF
-	git interpret-trailers --trailer "review:Junio" >actual <<-EOF &&
+	but interpret-trailers --trailer "review:Junio" >actual <<-EOF &&
 	EOF
 	test_cmp expected actual
 '
@@ -1434,7 +1434,7 @@ test_expect_success 'with cut line' '
 		# ------------------------ >8 ------------------------
 		ignore this
 	EOF
-	git interpret-trailers --trailer review:Brian >actual <<-\EOF &&
+	but interpret-trailers --trailer review:Brian >actual <<-\EOF &&
 		my subject
 		# ------------------------ >8 ------------------------
 		ignore this
@@ -1443,13 +1443,13 @@ test_expect_success 'with cut line' '
 '
 
 test_expect_success 'only trailers' '
-	git config trailer.sign.command "echo config-value" &&
+	but config trailer.sign.command "echo config-value" &&
 	cat >expected <<-\EOF &&
 		existing: existing-value
 		sign: config-value
 		added: added-value
 	EOF
-	git interpret-trailers \
+	but interpret-trailers \
 		--trailer added:added-value \
 		--only-trailers >actual <<-\EOF &&
 		my subject
@@ -1462,13 +1462,13 @@ test_expect_success 'only trailers' '
 '
 
 test_expect_success 'only-trailers omits non-trailer in middle of block' '
-	git config trailer.sign.command "echo config-value" &&
+	but config trailer.sign.command "echo config-value" &&
 	cat >expected <<-\EOF &&
 		Signed-off-by: nobody <nobody@nowhere>
 		Signed-off-by: somebody <somebody@somewhere>
 		sign: config-value
 	EOF
-	git interpret-trailers --only-trailers >actual <<-\EOF &&
+	but interpret-trailers --only-trailers >actual <<-\EOF &&
 		subject
 
 		it is important that the trailers below are signed-off-by
@@ -1482,11 +1482,11 @@ test_expect_success 'only-trailers omits non-trailer in middle of block' '
 '
 
 test_expect_success 'only input' '
-	git config trailer.sign.command "echo config-value" &&
+	but config trailer.sign.command "echo config-value" &&
 	cat >expected <<-\EOF &&
 		existing: existing-value
 	EOF
-	git interpret-trailers \
+	but interpret-trailers \
 		--only-trailers --only-input >actual <<-\EOF &&
 		my subject
 
@@ -1514,14 +1514,14 @@ test_expect_success 'unfold' '
 		_____lines
 		___
 	EOF
-	git interpret-trailers --only-trailers --only-input --unfold >actual &&
+	but interpret-trailers --only-trailers --only-input --unfold >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'handling of --- lines in input' '
 	echo "real-trailer: just right" >expected &&
 
-	git interpret-trailers --parse >actual <<-\EOF &&
+	but interpret-trailers --parse >actual <<-\EOF &&
 	subject
 
 	body
@@ -1543,7 +1543,7 @@ test_expect_success 'handling of --- lines in input' '
 test_expect_success 'suppress --- handling' '
 	echo "real-trailer: just right" >expected &&
 
-	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	but interpret-trailers --parse --no-divider >actual <<-\EOF &&
 	subject
 
 	This cummit message has a "---" in it, but because we tell

@@ -19,36 +19,36 @@ test_expect_success 'setup remote repository' '
 	cd "$ROOT_PATH" &&
 	mkdir test_repo &&
 	cd test_repo &&
-	git init &&
+	but init &&
 	: >path1 &&
-	git add path1 &&
+	but add path1 &&
 	test_tick &&
-	git cummit -m initial &&
+	but cummit -m initial &&
 	cd - &&
-	git clone --bare test_repo test_repo.git &&
-	cd test_repo.git &&
-	git config http.receivepack true &&
-	git config core.logallrefupdates true &&
-	ORIG_HEAD=$(git rev-parse --verify HEAD) &&
+	but clone --bare test_repo test_repo.but &&
+	cd test_repo.but &&
+	but config http.receivepack true &&
+	but config core.logallrefupdates true &&
+	ORIG_HEAD=$(but rev-parse --verify HEAD) &&
 	cd - &&
-	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
+	mv test_repo.but "$HTTPD_DOCUMENT_ROOT_PATH"
 '
 
 setup_askpass_helper
 
 cat >exp <<EOF
-GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-upload-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-upload-pack HTTP/1.1 200
 EOF
 test_expect_success 'no empty path components' '
 	# Clear the log, so that it does not affect the "used receive-pack
 	# service" test which reads the log too.
 	test_when_finished ">\"\$HTTPD_ROOT_PATH\"/access.log" &&
 
-	# In the URL, add a trailing slash, and see if git appends yet another
+	# In the URL, add a trailing slash, and see if but appends yet another
 	# slash.
 	cd "$ROOT_PATH" &&
-	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
+	but clone $HTTPD_URL/smart/test_repo.but/ test_repo_clone &&
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
@@ -60,80 +60,80 @@ test_expect_success 'no empty path components' '
 
 test_expect_success 'clone remote repository' '
 	rm -rf test_repo_clone &&
-	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone &&
+	but clone $HTTPD_URL/smart/test_repo.but test_repo_clone &&
 	(
-		cd test_repo_clone && git config push.default matching
+		cd test_repo_clone && but config push.default matching
 	)
 '
 
 test_expect_success 'push to remote repository (standard)' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
-	git add path2 &&
+	but add path2 &&
 	test_tick &&
-	git cummit -m path2 &&
-	HEAD=$(git rev-parse --verify HEAD) &&
-	GIT_TRACE_CURL=true git push -v -v 2>err &&
+	but cummit -m path2 &&
+	HEAD=$(but rev-parse --verify HEAD) &&
+	GIT_TRACE_CURL=true but push -v -v 2>err &&
 	! grep "Expect: 100-continue" err &&
-	grep "POST git-receive-pack ([0-9]* bytes)" err &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
-	 test $HEAD = $(git rev-parse --verify HEAD))
+	grep "POST but-receive-pack ([0-9]* bytes)" err &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but &&
+	 test $HEAD = $(but rev-parse --verify HEAD))
 '
 
 test_expect_success 'push already up-to-date' '
-	git push
+	but push
 '
 
 test_expect_success 'create and delete remote branch' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	git checkout -b dev &&
+	but checkout -b dev &&
 	: >path3 &&
-	git add path3 &&
+	but add path3 &&
 	test_tick &&
-	git cummit -m dev &&
-	git push origin dev &&
-	git push origin :dev &&
-	test_must_fail git show-ref --verify refs/remotes/origin/dev
+	but cummit -m dev &&
+	but push origin dev &&
+	but push origin :dev &&
+	test_must_fail but show-ref --verify refs/remotes/origin/dev
 '
 
 test_expect_success 'setup rejected update hook' '
-	test_hook --setup -C "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" update <<-\EOF &&
+	test_hook --setup -C "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but" update <<-\EOF &&
 	exit 1
 	EOF
 
 	cat >exp <<-EOF
 	remote: error: hook declined to update refs/heads/dev2
-	To http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git
+	To http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.but
 	 ! [remote rejected] dev2 -> dev2 (hook declined)
-	error: failed to push some refs to '\''http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.git'\''
+	error: failed to push some refs to '\''http://127.0.0.1:$LIB_HTTPD_PORT/smart/test_repo.but'\''
 	EOF
 '
 
 test_expect_success 'rejected update prints status' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	git checkout -b dev2 &&
+	but checkout -b dev2 &&
 	: >path4 &&
-	git add path4 &&
+	but add path4 &&
 	test_tick &&
-	git cummit -m dev2 &&
-	test_must_fail git push origin dev2 2>act &&
+	but cummit -m dev2 &&
+	test_must_fail but push origin dev2 2>act &&
 	sed -e "/^remote: /s/ *$//" <act >cmp &&
 	test_cmp exp cmp
 '
-rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
+rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but/hooks/update"
 
 cat >exp <<EOF
-GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
-GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
-POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-upload-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-upload-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-receive-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-receive-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-receive-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-receive-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-receive-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-receive-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-receive-pack HTTP/1.1 200
+GET  /smart/test_repo.but/info/refs?service=but-receive-pack HTTP/1.1 200
+POST /smart/test_repo.but/but-receive-pack HTTP/1.1 200
 EOF
 test_expect_success 'used receive-pack service' '
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
@@ -144,20 +144,20 @@ test_expect_success 'used receive-pack service' '
 	fi
 '
 
-test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
+test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but \
 	"$ROOT_PATH"/test_repo_clone main 		success
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper' '
-	# create a dissimilarly-named remote ref so that git is unable to match the
+	# create a dissimilarly-named remote ref so that but is unable to match the
 	# two refs (viz. local, remote) unless an explicit refspec is provided.
-	git push origin main:niam &&
+	but push origin main:niam &&
 
 	echo "change changed" > path2 &&
-	git cummit -a -m path2 --amend &&
+	but cummit -a -m path2 --amend &&
 
 	# push main too; this ensures there is at least one '"'push'"' command to
 	# the remote helper and triggers interaction with the helper.
-	test_must_fail git push -v origin +main main:niam >output 2>&1'
+	test_must_fail but push -v origin +main main:niam >output 2>&1'
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: remote output' '
 	grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *main -> main (forced update)$" output &&
@@ -170,14 +170,14 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 '
 
 test_expect_success 'push (chunked)' '
-	git checkout main &&
+	but checkout main &&
 	test_cummit cummit path3 &&
-	HEAD=$(git rev-parse --verify HEAD) &&
+	HEAD=$(but rev-parse --verify HEAD) &&
 	test_config http.postbuffer 4 &&
-	git push -v -v origin $BRANCH 2>err &&
-	grep "POST git-receive-pack (chunked)" err &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
-	 test $HEAD = $(git rev-parse --verify HEAD))
+	but push -v -v origin $BRANCH 2>err &&
+	grep "POST but-receive-pack (chunked)" err &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but &&
+	 test $HEAD = $(but rev-parse --verify HEAD))
 '
 
 ## References of remote: atomic1(1)            main(2) collateral(2) other(2)
@@ -185,45 +185,45 @@ test_expect_success 'push (chunked)' '
 ## Atomic push         :                       main(1) collateral(3)                         atomic(1)
 test_expect_success 'push --atomic also prevents branch creation, reports collateral' '
 	# Setup upstream repo - empty for now
-	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.git &&
-	git init --bare "$d" &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.but &&
+	but init --bare "$d" &&
 	test_config -C "$d" http.receivepack true &&
-	up="$HTTPD_URL"/smart/atomic-branches.git &&
+	up="$HTTPD_URL"/smart/atomic-branches.but &&
 
 	# Tell "$up" about three branches for now
 	test_cummit atomic1 &&
 	test_cummit atomic2 &&
-	git branch collateral &&
-	git branch other &&
-	git push "$up" atomic1 main collateral other &&
-	git tag -d atomic1 &&
+	but branch collateral &&
+	but branch other &&
+	but push "$up" atomic1 main collateral other &&
+	but tag -d atomic1 &&
 
 	# collateral is a valid push, but should be failed by atomic push
-	git checkout collateral &&
+	but checkout collateral &&
 	test_cummit collateral1 &&
 
 	# Make main incompatible with upstream to provoke atomic
-	git checkout main &&
-	git reset --hard HEAD^ &&
+	but checkout main &&
+	but reset --hard HEAD^ &&
 
 	# Add a new branch which should be failed by atomic push. This is a
 	# regression case.
-	git branch atomic &&
+	but branch atomic &&
 
 	# --atomic should cause entire push to be rejected
-	test_must_fail git push --atomic "$up" main atomic collateral 2>output &&
+	test_must_fail but push --atomic "$up" main atomic collateral 2>output &&
 
 	# the new branch should not have been created upstream
-	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+	test_must_fail but -C "$d" show-ref --verify refs/heads/atomic &&
 
 	# upstream should still reflect atomic2, the last thing we pushed
 	# successfully
-	git rev-parse atomic2 >expected &&
+	but rev-parse atomic2 >expected &&
 	# on main...
-	git -C "$d" rev-parse refs/heads/main >actual &&
+	but -C "$d" rev-parse refs/heads/main >actual &&
 	test_cmp expected actual &&
 	# ...and collateral.
-	git -C "$d" rev-parse refs/heads/collateral >actual &&
+	but -C "$d" rev-parse refs/heads/collateral >actual &&
 	test_cmp expected actual &&
 
 	# the failed refs should be indicated to the user
@@ -240,31 +240,31 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 
 test_expect_success 'push --atomic fails on server-side errors' '
 	# Use previously set up repository
-	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.git &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.but &&
 	test_config -C "$d" http.receivepack true &&
-	up="$HTTPD_URL"/smart/atomic-branches.git &&
+	up="$HTTPD_URL"/smart/atomic-branches.but &&
 
 	# break ref updates for other on the remote site
 	mkdir "$d/refs/heads/other.lock" &&
 
 	# add the new cummit to other
-	git branch -f other collateral &&
+	but branch -f other collateral &&
 
 	# --atomic should cause entire push to be rejected
-	test_must_fail git push --atomic "$up" atomic other 2>output  &&
+	test_must_fail but push --atomic "$up" atomic other 2>output  &&
 
 	# the new branch should not have been created upstream
-	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+	test_must_fail but -C "$d" show-ref --verify refs/heads/atomic &&
 
 	# upstream should still reflect atomic2, the last thing we pushed
 	# successfully
-	git rev-parse atomic2 >expected &&
+	but rev-parse atomic2 >expected &&
 	# ...to other.
-	git -C "$d" rev-parse refs/heads/other >actual &&
+	but -C "$d" rev-parse refs/heads/other >actual &&
 	test_cmp expected actual &&
 
 	# the new branch should not have been created upstream
-	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+	test_must_fail but -C "$d" show-ref --verify refs/heads/atomic &&
 
 	# the failed refs should be indicated to the user
 	grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&
@@ -274,55 +274,55 @@ test_expect_success 'push --atomic fails on server-side errors' '
 '
 
 test_expect_success 'push --all can push to empty repo' '
-	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.git &&
-	git init --bare "$d" &&
-	git --git-dir="$d" config http.receivepack true &&
-	git push --all "$HTTPD_URL"/smart/empty-all.git
+	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.but &&
+	but init --bare "$d" &&
+	but --but-dir="$d" config http.receivepack true &&
+	but push --all "$HTTPD_URL"/smart/empty-all.but
 '
 
 test_expect_success 'push --mirror can push to empty repo' '
-	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-mirror.git &&
-	git init --bare "$d" &&
-	git --git-dir="$d" config http.receivepack true &&
-	git push --mirror "$HTTPD_URL"/smart/empty-mirror.git
+	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-mirror.but &&
+	but init --bare "$d" &&
+	but --but-dir="$d" config http.receivepack true &&
+	but push --mirror "$HTTPD_URL"/smart/empty-mirror.but
 '
 
 test_expect_success 'push --all to repo with alternates' '
-	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git &&
-	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-all.git &&
-	git clone --bare --shared "$s" "$d" &&
-	git --git-dir="$d" config http.receivepack true &&
-	git --git-dir="$d" repack -adl &&
-	git push --all "$HTTPD_URL"/smart/alternates-all.git
+	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-all.but &&
+	but clone --bare --shared "$s" "$d" &&
+	but --but-dir="$d" config http.receivepack true &&
+	but --but-dir="$d" repack -adl &&
+	but push --all "$HTTPD_URL"/smart/alternates-all.but
 '
 
 test_expect_success 'push --mirror to repo with alternates' '
-	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git &&
-	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-mirror.git &&
-	git clone --bare --shared "$s" "$d" &&
-	git --git-dir="$d" config http.receivepack true &&
-	git --git-dir="$d" repack -adl &&
-	git push --mirror "$HTTPD_URL"/smart/alternates-mirror.git
+	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-mirror.but &&
+	but clone --bare --shared "$s" "$d" &&
+	but --but-dir="$d" config http.receivepack true &&
+	but --but-dir="$d" repack -adl &&
+	but push --mirror "$HTTPD_URL"/smart/alternates-mirror.but
 '
 
 test_expect_success TTY 'push shows progress when stderr is a tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit noisy &&
-	test_terminal git push >output 2>&1 &&
+	test_terminal but push >output 2>&1 &&
 	test_i18ngrep "^Writing objects" output
 '
 
 test_expect_success TTY 'push --quiet silences status and progress' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit quiet &&
-	test_terminal git push --quiet >output 2>&1 &&
+	test_terminal but push --quiet >output 2>&1 &&
 	test_must_be_empty output
 '
 
 test_expect_success TTY 'push --no-progress silences progress but not status' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit no-progress &&
-	test_terminal git push --no-progress >output 2>&1 &&
+	test_terminal but push --no-progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
 	test_i18ngrep ! "^Writing objects" output
 '
@@ -330,7 +330,7 @@ test_expect_success TTY 'push --no-progress silences progress but not status' '
 test_expect_success 'push --progress shows progress to non-tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit progress &&
-	git push --progress >output 2>&1 &&
+	but push --progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
 	test_i18ngrep "^Writing objects" output
 '
@@ -338,8 +338,8 @@ test_expect_success 'push --progress shows progress to non-tty' '
 test_expect_success 'http push gives sane defaults to reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit reflog-test &&
-	git push "$HTTPD_URL"/smart/test_repo.git &&
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+	but push "$HTTPD_URL"/smart/test_repo.but &&
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but" \
 		log -g -1 --format="%gn <%ge>" >actual &&
 	echo "anonymous <anonymous@http.127.0.0.1>" >expect &&
 	test_cmp expect actual
@@ -348,8 +348,8 @@ test_expect_success 'http push gives sane defaults to reflog' '
 test_expect_success 'http push respects GIT_CUMMITTER_* in reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit custom-reflog-test &&
-	git push "$HTTPD_URL"/smart_custom_env/test_repo.git &&
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+	but push "$HTTPD_URL"/smart_custom_env/test_repo.but &&
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but" \
 		log -g -1 --format="%gn <%ge>" >actual &&
 	echo "Custom User <custom@example.com>" >expect &&
 	test_cmp expect actual
@@ -360,8 +360,8 @@ test_expect_success 'push over smart http with auth' '
 	echo push-auth-test >expect &&
 	test_cummit push-auth-test &&
 	set_askpass user@host pass@host &&
-	git push "$HTTPD_URL"/auth/smart/test_repo.git &&
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+	but push "$HTTPD_URL"/auth/smart/test_repo.but &&
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but" \
 		log -1 --format=%s >actual &&
 	expect_askpass both user@host &&
 	test_cmp expect actual
@@ -372,8 +372,8 @@ test_expect_success 'push to auth-only-for-push repo' '
 	echo push-half-auth >expect &&
 	test_cummit push-half-auth &&
 	set_askpass user@host pass@host &&
-	git push "$HTTPD_URL"/auth-push/smart/test_repo.git &&
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+	but push "$HTTPD_URL"/auth-push/smart/test_repo.but &&
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.but" \
 		log -1 --format=%s >actual &&
 	expect_askpass both user@host &&
 	test_cmp expect actual
@@ -381,18 +381,18 @@ test_expect_success 'push to auth-only-for-push repo' '
 
 test_expect_success 'create repo without http.receivepack set' '
 	cd "$ROOT_PATH" &&
-	git init half-auth &&
+	but init half-auth &&
 	(
 		cd half-auth &&
 		test_cummit one
 	) &&
-	git clone --bare half-auth "$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git"
+	but clone --bare half-auth "$HTTPD_DOCUMENT_ROOT_PATH/half-auth.but"
 '
 
 test_expect_success 'clone via half-auth-complete does not need password' '
 	cd "$ROOT_PATH" &&
 	set_askpass wrong &&
-	git clone "$HTTPD_URL"/half-auth-complete/smart/half-auth.git \
+	but clone "$HTTPD_URL"/half-auth-complete/smart/half-auth.but \
 		half-auth-clone &&
 	expect_askpass none
 '
@@ -402,30 +402,30 @@ test_expect_success 'push into half-auth-complete requires password' '
 	echo two >expect &&
 	test_cummit two &&
 	set_askpass user@host pass@host &&
-	git push "$HTTPD_URL/half-auth-complete/smart/half-auth.git" &&
-	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git" \
+	but push "$HTTPD_URL/half-auth-complete/smart/half-auth.but" &&
+	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/half-auth.but" \
 		log -1 --format=%s >actual &&
 	expect_askpass both user@host &&
 	test_cmp expect actual
 '
 
 test_expect_success CMDLINE_LIMIT 'push 2000 tags over http' '
-	sha1=$(git rev-parse HEAD) &&
+	sha1=$(but rev-parse HEAD) &&
 	test_seq 2000 |
 	  sort |
 	  sed "s|.*|$sha1 refs/tags/really-long-tag-name-&|" \
-	  >.git/packed-refs &&
-	run_with_limited_cmdline git push --mirror
+	  >.but/packed-refs &&
+	run_with_limited_cmdline but push --mirror
 '
 
 test_expect_success GPG 'push with post-receive to inspect certificate' '
-	test_hook -C "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git post-receive <<-\EOF &&
+	test_hook -C "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but post-receive <<-\EOF &&
 		# discard the update list
 		cat >/dev/null
 		# record the push certificate
 		if test -n "${GIT_PUSH_CERT-}"
 		then
-			git cat-file blob $GIT_PUSH_CERT >../push-cert
+			but cat-file blob $GIT_PUSH_CERT >../push-cert
 		fi &&
 		cat >../push-cert-status <<E_O_F
 		SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
@@ -436,13 +436,13 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 		E_O_F
 	EOF
 	(
-		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
-		git config receive.certnonceseed sekrit &&
-		git config receive.certnonceslop 30
+		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but &&
+		but config receive.certnonceseed sekrit &&
+		but config receive.certnonceslop 30
 	) &&
 	cd "$ROOT_PATH/test_repo_clone" &&
 	test_cummit cert-test &&
-	git push --signed "$HTTPD_URL/smart/test_repo.git" &&
+	but push --signed "$HTTPD_URL/smart/test_repo.but" &&
 	(
 		cd "$HTTPD_DOCUMENT_ROOT_PATH" &&
 		cat <<-\EOF &&
@@ -458,46 +458,46 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 
 test_expect_success 'push status output scrubs password' '
 	cd "$ROOT_PATH/test_repo_clone" &&
-	git push --porcelain \
-		"$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+	but push --porcelain \
+		"$HTTPD_URL_USER_PASS/smart/test_repo.but" \
 		+HEAD:scrub >status &&
 	# should have been scrubbed down to vanilla URL
-	grep "^To $HTTPD_URL/smart/test_repo.git" status
+	grep "^To $HTTPD_URL/smart/test_repo.but" status
 '
 
 test_expect_success 'clone/fetch scrubs password from reflogs' '
 	cd "$ROOT_PATH" &&
-	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+	but clone "$HTTPD_URL_USER_PASS/smart/test_repo.but" \
 		reflog-test &&
 	cd reflog-test &&
 	test_cummit prepare-for-force-fetch &&
-	git switch -c away &&
-	git fetch "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+	but switch -c away &&
+	but fetch "$HTTPD_URL_USER_PASS/smart/test_repo.but" \
 		+main:main &&
 	# should have been scrubbed down to vanilla URL
-	git log -g main >reflog &&
+	but log -g main >reflog &&
 	grep "$HTTPD_URL" reflog &&
 	! grep "$HTTPD_URL_USER_PASS" reflog
 '
 
 test_expect_success 'Non-ASCII branch name can be used with --force-with-lease' '
 	cd "$ROOT_PATH" &&
-	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" non-ascii &&
+	but clone "$HTTPD_URL_USER_PASS/smart/test_repo.but" non-ascii &&
 	cd non-ascii &&
-	git checkout -b rama-de-árbol &&
+	but checkout -b rama-de-árbol &&
 	test_cummit F &&
-	git push --force-with-lease origin rama-de-árbol &&
-	git ls-remote origin refs/heads/rama-de-árbol >actual &&
-	git ls-remote . refs/heads/rama-de-árbol >expect &&
+	but push --force-with-lease origin rama-de-árbol &&
+	but ls-remote origin refs/heads/rama-de-árbol >actual &&
+	but ls-remote . refs/heads/rama-de-árbol >expect &&
 	test_cmp expect actual &&
-	git push --delete --force-with-lease origin rama-de-árbol &&
-	git ls-remote origin refs/heads/rama-de-árbol >actual &&
+	but push --delete --force-with-lease origin rama-de-árbol &&
+	but ls-remote origin refs/heads/rama-de-árbol >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'colorize errors/hints' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_must_fail git -c color.transport=always -c color.advice=always \
+	test_must_fail but -c color.transport=always -c color.advice=always \
 		-c color.push=always \
 		push origin origin/main^:main 2>act &&
 	test_decode_color <act >decoded &&
@@ -508,12 +508,12 @@ test_expect_success 'colorize errors/hints' '
 '
 
 test_expect_success 'report error server does not provide ref status' '
-	git init "$HTTPD_DOCUMENT_ROOT_PATH/no_report" &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" config http.receivepack true &&
-	test_must_fail git push --porcelain \
+	but init "$HTTPD_DOCUMENT_ROOT_PATH/no_report" &&
+	but -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" config http.receivepack true &&
+	test_must_fail but push --porcelain \
 		$HTTPD_URL_USER_PASS/smart/no_report \
 		HEAD:refs/tags/will-fail >actual &&
-	test_must_fail git -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" \
+	test_must_fail but -C "$HTTPD_DOCUMENT_ROOT_PATH/no_report" \
 		rev-parse --verify refs/tags/will-fail &&
 	cat >expect <<-EOF &&
 	To $HTTPD_URL/smart/no_report

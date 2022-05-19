@@ -17,35 +17,35 @@ OBSOLETE_HTML =
 MAN1_TXT += $(filter-out \
 		$(patsubst %,%.txt,$(EXCLUDED_PROGRAMS)) \
 		$(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
-		$(wildcard git-*.txt))
-MAN1_TXT += git.txt
-MAN1_TXT += gitk.txt
-MAN1_TXT += gitweb.txt
+		$(wildcard but-*.txt))
+MAN1_TXT += but.txt
+MAN1_TXT += butk.txt
+MAN1_TXT += butweb.txt
 
 # man5 / man7 guides (note: new guides should also be added to command-list.txt)
-MAN5_TXT += gitattributes.txt
-MAN5_TXT += githooks.txt
-MAN5_TXT += gitignore.txt
-MAN5_TXT += gitmailmap.txt
-MAN5_TXT += gitmodules.txt
-MAN5_TXT += gitrepository-layout.txt
-MAN5_TXT += gitweb.conf.txt
+MAN5_TXT += butattributes.txt
+MAN5_TXT += buthooks.txt
+MAN5_TXT += butignore.txt
+MAN5_TXT += butmailmap.txt
+MAN5_TXT += butmodules.txt
+MAN5_TXT += butrepository-layout.txt
+MAN5_TXT += butweb.conf.txt
 
-MAN7_TXT += gitcli.txt
-MAN7_TXT += gitcore-tutorial.txt
-MAN7_TXT += gitcredentials.txt
-MAN7_TXT += gitcvs-migration.txt
-MAN7_TXT += gitdiffcore.txt
-MAN7_TXT += giteveryday.txt
-MAN7_TXT += gitfaq.txt
-MAN7_TXT += gitglossary.txt
-MAN7_TXT += gitnamespaces.txt
-MAN7_TXT += gitremote-helpers.txt
-MAN7_TXT += gitrevisions.txt
-MAN7_TXT += gitsubmodules.txt
-MAN7_TXT += gittutorial-2.txt
-MAN7_TXT += gittutorial.txt
-MAN7_TXT += gitworkflows.txt
+MAN7_TXT += butcli.txt
+MAN7_TXT += butcore-tutorial.txt
+MAN7_TXT += butcredentials.txt
+MAN7_TXT += butcvs-migration.txt
+MAN7_TXT += butdiffcore.txt
+MAN7_TXT += buteveryday.txt
+MAN7_TXT += butfaq.txt
+MAN7_TXT += butglossary.txt
+MAN7_TXT += butnamespaces.txt
+MAN7_TXT += butremote-helpers.txt
+MAN7_TXT += butrevisions.txt
+MAN7_TXT += butsubmodules.txt
+MAN7_TXT += buttutorial-2.txt
+MAN7_TXT += buttutorial.txt
+MAN7_TXT += butworkflows.txt
 
 HOWTO_TXT += $(wildcard howto/*.txt)
 
@@ -64,20 +64,20 @@ MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
 GIT_MAN_REF = master
 
 OBSOLETE_HTML += everyday.html
-OBSOLETE_HTML += git-remote-helpers.html
+OBSOLETE_HTML += but-remote-helpers.html
 
 ARTICLES += howto-index
-ARTICLES += git-tools
-ARTICLES += git-bisect-lk2009
+ARTICLES += but-tools
+ARTICLES += but-bisect-lk2009
 # with their own formatting rules.
 SP_ARTICLES += user-manual
 SP_ARTICLES += howto/new-command
 SP_ARTICLES += howto/revert-branch-rebase
 SP_ARTICLES += howto/using-merge-subtree
 SP_ARTICLES += howto/using-signed-tag-in-pull-request
-SP_ARTICLES += howto/use-git-daemon
+SP_ARTICLES += howto/use-but-daemon
 SP_ARTICLES += howto/update-hook-example
-SP_ARTICLES += howto/setup-git-server-over-http
+SP_ARTICLES += howto/setup-but-server-over-http
 SP_ARTICLES += howto/separating-topic-branches
 SP_ARTICLES += howto/revert-a-faulty-merge
 SP_ARTICLES += howto/recover-corrupted-blob-object
@@ -85,7 +85,7 @@ SP_ARTICLES += howto/recover-corrupted-object-harder
 SP_ARTICLES += howto/rebuild-from-update-hook
 SP_ARTICLES += howto/rebase-from-internal-branch
 SP_ARTICLES += howto/keep-canonical-history-correct
-SP_ARTICLES += howto/maintain-git
+SP_ARTICLES += howto/maintain-but
 SP_ARTICLES += howto/coordinate-embargoed-releases
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
@@ -107,7 +107,7 @@ TECH_DOCS += technical/partial-clone
 TECH_DOCS += technical/protocol-capabilities
 TECH_DOCS += technical/protocol-common
 TECH_DOCS += technical/protocol-v2
-TECH_DOCS += technical/racy-git
+TECH_DOCS += technical/racy-but
 TECH_DOCS += technical/reftable
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
@@ -126,9 +126,9 @@ DOC_MAN7 = $(patsubst %.txt,%.7,$(filter $(MAN_FILTER),$(MAN7_TXT)))
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
-htmldir ?= $(prefix)/share/doc/git-doc
+htmldir ?= $(prefix)/share/doc/but-doc
 infodir ?= $(prefix)/share/info
-pdfdir ?= $(prefix)/share/doc/git-doc
+pdfdir ?= $(prefix)/share/doc/but-doc
 mandir ?= $(prefix)/share/man
 man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
@@ -151,8 +151,8 @@ XMLTO = xmlto
 XMLTO_EXTRA =
 INSTALL ?= install
 RM ?= rm -f
-MAN_REPO = ../../git-manpages
-HTML_REPO = ../../git-htmldocs
+MAN_REPO = ../../but-manpages
+HTML_REPO = ../../but-htmldocs
 
 MAKEINFO = makeinfo
 INSTALL_INFO = install-info
@@ -175,7 +175,7 @@ endif
 # this is not set, and if set it shows an absolute link.  Older
 # stylesheets simply ignore this parameter.
 #
-# Distros may want to use MAN_BASE_URL=file:///path/to/git/docs/
+# Distros may want to use MAN_BASE_URL=file:///path/to/but/docs/
 # or similar.
 ifndef MAN_BASE_URL
 MAN_BASE_URL = file://$(htmldir)/
@@ -210,12 +210,12 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
 ifdef DEFAULT_PAGER
 DEFAULT_PAGER_SQ = $(subst ','\'',$(DEFAULT_PAGER))
-ASCIIDOC_EXTRA += -a 'git-default-pager=$(DEFAULT_PAGER_SQ)'
+ASCIIDOC_EXTRA += -a 'but-default-pager=$(DEFAULT_PAGER_SQ)'
 endif
 
 ifdef DEFAULT_EDITOR
 DEFAULT_EDITOR_SQ = $(subst ','\'',$(DEFAULT_EDITOR))
-ASCIIDOC_EXTRA += -a 'git-default-editor=$(DEFAULT_EDITOR_SQ)'
+ASCIIDOC_EXTRA += -a 'but-default-editor=$(DEFAULT_EDITOR_SQ)'
 endif
 
 all: html man
@@ -227,7 +227,7 @@ man1: $(DOC_MAN1)
 man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
-info: git.info gitman.info
+info: but.info butman.info
 
 pdf: user-manual.pdf
 
@@ -243,10 +243,10 @@ install-man: man
 
 install-info: info
 	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
-	$(INSTALL) -m 644 git.info gitman.info $(DESTDIR)$(infodir)
+	$(INSTALL) -m 644 but.info butman.info $(DESTDIR)$(infodir)
 	if test -r $(DESTDIR)$(infodir)/dir; then \
-	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) git.info ;\
-	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) gitman.info ;\
+	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) but.info ;\
+	  $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) butman.info ;\
 	else \
 	  echo "No directory found in $(DESTDIR)$(infodir)" >&2 ; \
 	fi
@@ -300,13 +300,13 @@ mergetools_txt = mergetools-diff.txt mergetools-merge.txt
 
 $(mergetools_txt): mergetools-list.made
 
-mergetools-list.made: ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
+mergetools-list.made: ../but-mergetool--lib.sh $(wildcard ../mergetools/*)
 	$(QUIET_GEN) \
 	$(SHELL_PATH) -c 'MERGE_TOOLS_DIR=../mergetools && TOOL_MODE=diff && \
-		. ../git-mergetool--lib.sh && \
+		. ../but-mergetool--lib.sh && \
 		show_tool_names can_diff' | sed -e "s/\([a-z0-9]*\)/\`\1\`;;/" >mergetools-diff.txt && \
 	$(SHELL_PATH) -c 'MERGE_TOOLS_DIR=../mergetools && TOOL_MODE=merge && \
-		. ../git-mergetool--lib.sh && \
+		. ../but-mergetool--lib.sh && \
 		show_tool_names can_merge' | sed -e "s/\([a-z0-9]*\)/\`\1\`;;/" >mergetools-merge.txt && \
 	date >$@
 
@@ -322,7 +322,7 @@ GIT-ASCIIDOCFLAGS: FORCE
 clean:
 	$(RM) -rf .build/
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
-	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
+	$(RM) *.texi *.texi+ *.texi++ but.info butman.info
 	$(RM) *.pdf
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/*.html technical/api-index.txt
@@ -353,7 +353,7 @@ technical/api-index.txt: technical/api-index-skel.txt \
 	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
 	$(QUIET_GEN)cd technical && '$(SHELL_PATH_SQ)' ./api-index.sh
 
-technical/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
+technical/%.html: ASCIIDOC_EXTRA += -a but-relative-html-prefix=../
 $(patsubst %,%.html,$(API_DOCS) technical/api-index $(TECH_DOCS)): %.html : %.txt \
 	asciidoc.conf GIT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
@@ -370,7 +370,7 @@ XSLTOPTS += --param generate.consistent.ids 1
 user-manual.html: user-manual.xml $(XSLT)
 	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
-git.info: user-manual.texi
+but.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
 user-manual.texi: user-manual.xml
@@ -381,7 +381,7 @@ user-manual.texi: user-manual.xml
 user-manual.pdf: user-manual.xml
 	$(QUIET_DBLATEX)$(DBLATEX) -o $@ $(DBLATEX_COMMON) $<
 
-gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
+butman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(QUIET_DB2TEXI) \
 	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
 		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
@@ -389,7 +389,7 @@ gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(PERL_PATH) cat-texi.perl $@ <$@+ >$@ && \
 	$(RM) $@+
 
-gitman.info: gitman.texi
+butman.info: butman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $<
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
@@ -401,9 +401,9 @@ howto-index.txt: howto-index.sh $(HOWTO_TXT)
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
 
-WEBDOC_DEST = /pub/software/scm/git/docs
+WEBDOC_DEST = /pub/software/scm/but/docs
 
-howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
+howto/%.html: ASCIIDOC_EXTRA += -a but-relative-html-prefix=../
 $(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC) \
 	sed -e '1,/^$$/d' $< | \
@@ -412,21 +412,21 @@ $(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
 install-webdoc : html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(WEBDOC_DEST)
 
-# You must have a clone of 'git-htmldocs' and 'git-manpages' repositories
-# next to the 'git' repository itself for the following to work.
+# You must have a clone of 'but-htmldocs' and 'but-manpages' repositories
+# next to the 'but' repository itself for the following to work.
 
 quick-install: quick-install-man
 
 require-manrepo::
 	@if test ! -d $(MAN_REPO); \
-	then echo "git-manpages repository must exist at $(MAN_REPO)"; exit 1; fi
+	then echo "but-manpages repository must exist at $(MAN_REPO)"; exit 1; fi
 
 quick-install-man: require-manrepo
 	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(MAN_REPO) $(DESTDIR)$(mandir) $(GIT_MAN_REF)
 
 require-htmlrepo::
 	@if test ! -d $(HTML_REPO); \
-	then echo "git-htmldocs repository must exist at $(HTML_REPO)"; exit 1; fi
+	then echo "but-htmldocs repository must exist at $(HTML_REPO)"; exit 1; fi
 
 quick-install-html: require-htmlrepo
 	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir) $(GIT_MAN_REF)
@@ -434,19 +434,19 @@ quick-install-html: require-htmlrepo
 print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
 
-## Lint: gitlink
-LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/gitlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
-$(LINT_DOCS_GITLINK): lint-gitlink.perl
-$(LINT_DOCS_GITLINK): .build/lint-docs/gitlink/%.ok: %.txt
+## Lint: butlink
+LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/butlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
+$(LINT_DOCS_GITLINK): lint-butlink.perl
+$(LINT_DOCS_GITLINK): .build/lint-docs/butlink/%.ok: %.txt
 	$(call mkdir_p_parent_template)
-	$(QUIET_LINT_GITLINK)$(PERL_PATH) lint-gitlink.perl \
+	$(QUIET_LINT_GITLINK)$(PERL_PATH) lint-butlink.perl \
 		$< \
 		$(HOWTO_TXT) $(DOC_DEP_TXT) \
 		--section=1 $(MAN1_TXT) \
 		--section=5 $(MAN5_TXT) \
 		--section=7 $(MAN7_TXT) >$@
-.PHONY: lint-docs-gitlink
-lint-docs-gitlink: $(LINT_DOCS_GITLINK)
+.PHONY: lint-docs-butlink
+lint-docs-butlink: $(LINT_DOCS_GITLINK)
 
 ## Lint: man-end-blurb
 LINT_DOCS_MAN_END_BLURB = $(patsubst %.txt,.build/lint-docs/man-end-blurb/%.ok,$(MAN_TXT))
@@ -467,7 +467,7 @@ lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
 
 ## Lint: list of targets above
 .PHONY: lint-docs
-lint-docs: lint-docs-gitlink
+lint-docs: lint-docs-butlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
 

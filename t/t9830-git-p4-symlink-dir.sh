@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git p4 symlinked directories'
+test_description='but p4 symlinked directories'
 
-. ./lib-git-p4.sh
+. ./lib-but-p4.sh
 
 test_expect_success 'start p4d' '
 	start_p4d
@@ -15,17 +15,17 @@ test_expect_success 'symlinked directory' '
 		p4 add first_file.t &&
 		p4 submit -d "first change"
 	) &&
-	git p4 clone --dest "$git" //depot &&
+	but p4 clone --dest "$but" //depot &&
 	(
-		cd "$git" &&
+		cd "$but" &&
 		mkdir -p some/sub/directory &&
 		mkdir -p other/subdir2 &&
 		: > other/subdir2/file.t &&
 		(cd some/sub/directory && ln -s ../../../other/subdir2 .) &&
-		git add some other &&
-		git cummit -m "symlinks" &&
-		git config git-p4.skipSubmitEdit true &&
-		git p4 submit -v
+		but add some other &&
+		but cummit -m "symlinks" &&
+		but config but-p4.skipSubmitEdit true &&
+		but p4 submit -v
 	) &&
 	(
 		cd "$cli" &&

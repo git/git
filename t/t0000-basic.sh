@@ -5,7 +5,7 @@
 
 test_description='Test the very basics part #1.
 
-The rest of the test suite does not check the basic operation of git
+The rest of the test suite does not check the basic operation of but
 plumbing commands to work very carefully.  Their job is to concentrate
 on tricky features that caused bugs in the past to detect regression.
 
@@ -32,7 +32,7 @@ try_local_xy () {
 #
 # If your shell fails this test, the results of other tests may be
 # unreliable. You may wish to report the problem to the Git mailing
-# list <git@vger.kernel.org>, as it could cause us to reconsider
+# list <but@vger.kernel.org>, as it could cause us to reconsider
 # relying on "local".
 test_expect_success 'verify that the running shell supports "local"' '
 	x="notlocal" &&
@@ -46,18 +46,18 @@ test_expect_success 'verify that the running shell supports "local"' '
 '
 
 ################################################################
-# git init has been done in an empty repository.
+# but init has been done in an empty repository.
 # make sure it is empty.
 
-test_expect_success '.git/objects should be empty after git init in an empty repo' '
-	find .git/objects -type f -print >should-be-empty &&
+test_expect_success '.but/objects should be empty after but init in an empty repo' '
+	find .but/objects -type f -print >should-be-empty &&
 	test_line_count = 0 should-be-empty
 '
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.
 # 3 is counting "objects" itself
-test_expect_success '.git/objects should have 3 subdirectories' '
-	find .git/objects -type d -print >full-of-directories &&
+test_expect_success '.but/objects should have 3 subdirectories' '
+	find .but/objects -type d -print >full-of-directories &&
 	test_line_count = 3 full-of-directories
 '
 
@@ -272,15 +272,15 @@ test_expect_success 'subtest: skip one with GIT_SKIP_TESTS' '
 
 test_expect_success 'subtest: skip several with GIT_SKIP_TESTS' '
 	(
-		write_and_run_sub_test_lib_test git-skip-tests-several \
-			--skip="git.2 git.5" <<-\EOF &&
+		write_and_run_sub_test_lib_test but-skip-tests-several \
+			--skip="but.2 but.5" <<-\EOF &&
 		for i in 1 2 3 4 5 6
 		do
 			test_expect_success "passing test #$i" "true"
 		done
 		test_done
 		EOF
-		check_sub_test_lib_test git-skip-tests-several <<-\EOF
+		check_sub_test_lib_test but-skip-tests-several <<-\EOF
 		> ok 1 - passing test #1
 		> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
 		> ok 3 - passing test #3
@@ -295,9 +295,9 @@ test_expect_success 'subtest: skip several with GIT_SKIP_TESTS' '
 
 test_expect_success 'subtest: sh pattern skipping with GIT_SKIP_TESTS' '
 	(
-		run_sub_test_lib_test git-skip-tests-several \
-			--skip="git.[2-5]" &&
-		check_sub_test_lib_test git-skip-tests-several <<-\EOF
+		run_sub_test_lib_test but-skip-tests-several \
+			--skip="but.[2-5]" &&
+		check_sub_test_lib_test but-skip-tests-several <<-\EOF
 		> ok 1 - passing test #1
 		> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
 		> ok 3 # skip passing test #3 (GIT_SKIP_TESTS)
@@ -312,18 +312,18 @@ test_expect_success 'subtest: sh pattern skipping with GIT_SKIP_TESTS' '
 
 test_expect_success 'subtest: skip entire test suite with GIT_SKIP_TESTS' '
 	(
-		GIT_SKIP_TESTS="git" && export GIT_SKIP_TESTS &&
-		run_sub_test_lib_test git-skip-tests-several \
-			--skip="git" &&
-		check_sub_test_lib_test git-skip-tests-several <<-\EOF
-		> 1..0 # SKIP skip all tests in git
+		GIT_SKIP_TESTS="but" && export GIT_SKIP_TESTS &&
+		run_sub_test_lib_test but-skip-tests-several \
+			--skip="but" &&
+		check_sub_test_lib_test but-skip-tests-several <<-\EOF
+		> 1..0 # SKIP skip all tests in but
 		EOF
 	)
 '
 
 test_expect_success 'subtest: GIT_SKIP_TESTS does not skip unmatched suite' '
 	(
-		GIT_SKIP_TESTS="notgit" && export GIT_SKIP_TESTS &&
+		GIT_SKIP_TESTS="notbut" && export GIT_SKIP_TESTS &&
 		run_sub_test_lib_test full-pass \
 			--skip="notfull" &&
 		check_sub_test_lib_test full-pass <<-\EOF
@@ -337,8 +337,8 @@ test_expect_success 'subtest: GIT_SKIP_TESTS does not skip unmatched suite' '
 '
 
 test_expect_success 'subtest: --run basic' '
-	run_sub_test_lib_test git-skip-tests-several --run="1,3,5" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	run_sub_test_lib_test but-skip-tests-several --run="1,3,5" &&
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 # skip passing test #2 (--run)
 	> ok 3 - passing test #3
@@ -351,9 +351,9 @@ test_expect_success 'subtest: --run basic' '
 '
 
 test_expect_success 'subtest: --run with a range' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="1-3" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 - passing test #3
@@ -366,9 +366,9 @@ test_expect_success 'subtest: --run with a range' '
 '
 
 test_expect_success 'subtest: --run with two ranges' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="1-2,5-6" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -381,9 +381,9 @@ test_expect_success 'subtest: --run with two ranges' '
 '
 
 test_expect_success 'subtest: --run with a left open range' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="-3" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 - passing test #3
@@ -396,9 +396,9 @@ test_expect_success 'subtest: --run with a left open range' '
 '
 
 test_expect_success 'subtest: --run with a right open range' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="4-" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 # skip passing test #1 (--run)
 	> ok 2 # skip passing test #2 (--run)
 	> ok 3 # skip passing test #3 (--run)
@@ -411,9 +411,9 @@ test_expect_success 'subtest: --run with a right open range' '
 '
 
 test_expect_success 'subtest: --run with basic negation' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="!3" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -426,9 +426,9 @@ test_expect_success 'subtest: --run with basic negation' '
 '
 
 test_expect_success 'subtest: --run with two negations' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="!3,!6" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -441,9 +441,9 @@ test_expect_success 'subtest: --run with two negations' '
 '
 
 test_expect_success 'subtest: --run a range and negation' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="-4,!2" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 # skip passing test #2 (--run)
 	> ok 3 - passing test #3
@@ -456,9 +456,9 @@ test_expect_success 'subtest: --run a range and negation' '
 '
 
 test_expect_success 'subtest: --run range negation' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="!1-3" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 # skip passing test #1 (--run)
 	> ok 2 # skip passing test #2 (--run)
 	> ok 3 # skip passing test #3 (--run)
@@ -471,9 +471,9 @@ test_expect_success 'subtest: --run range negation' '
 '
 
 test_expect_success 'subtest: --run include, exclude and include' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="1-5,!1-3,2" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 # skip passing test #1 (--run)
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -486,9 +486,9 @@ test_expect_success 'subtest: --run include, exclude and include' '
 '
 
 test_expect_success 'subtest: --run include, exclude and include, comma separated' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run=1-5,!1-3,2 &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 # skip passing test #1 (--run)
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -501,9 +501,9 @@ test_expect_success 'subtest: --run include, exclude and include, comma separate
 '
 
 test_expect_success 'subtest: --run exclude and include' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="!3-,5" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 # skip passing test #3 (--run)
@@ -516,9 +516,9 @@ test_expect_success 'subtest: --run exclude and include' '
 '
 
 test_expect_success 'subtest: --run empty selectors' '
-	run_sub_test_lib_test git-skip-tests-several \
+	run_sub_test_lib_test but-skip-tests-several \
 		--run="1,,3,,,5" &&
-	check_sub_test_lib_test git-skip-tests-several <<-\EOF
+	check_sub_test_lib_test but-skip-tests-several <<-\EOF
 	> ok 1 - passing test #1
 	> ok 2 # skip passing test #2 (--run)
 	> ok 3 - passing test #3
@@ -861,17 +861,17 @@ simpletree sha256:1710c07a6c86f9a3c7376364df04c47ee39e5a5e221fcdd84b743bc9bb7e2b
 EOF
 
 # updating a new file without --add should fail.
-test_expect_success 'git update-index without --add should fail adding' '
-	test_must_fail git update-index should-be-empty
+test_expect_success 'but update-index without --add should fail adding' '
+	test_must_fail but update-index should-be-empty
 '
 
 # and with --add it should succeed, even if it is empty (it used to fail).
-test_expect_success 'git update-index with --add should succeed' '
-	git update-index --add should-be-empty
+test_expect_success 'but update-index with --add should succeed' '
+	but update-index --add should-be-empty
 '
 
-test_expect_success 'writing tree out with git write-tree' '
-	tree=$(git write-tree)
+test_expect_success 'writing tree out with but write-tree' '
+	tree=$(but write-tree)
 '
 
 # we know the shape and contents of the tree and know the object ID for it.
@@ -880,18 +880,18 @@ test_expect_success 'validate object ID of a known tree' '
     '
 
 # Removing paths.
-test_expect_success 'git update-index without --remove should fail removing' '
+test_expect_success 'but update-index without --remove should fail removing' '
 	rm -f should-be-empty full-of-directories &&
-	test_must_fail git update-index should-be-empty
+	test_must_fail but update-index should-be-empty
 '
 
-test_expect_success 'git update-index with --remove should be able to remove' '
-	git update-index --remove should-be-empty
+test_expect_success 'but update-index with --remove should be able to remove' '
+	but update-index --remove should-be-empty
 '
 
 # Empty tree can be written with recent write-tree.
-test_expect_success 'git write-tree should be able to write an empty tree' '
-	tree=$(git write-tree)
+test_expect_success 'but write-tree should be able to write an empty tree' '
+	tree=$(but write-tree)
 '
 
 test_expect_success 'validate object ID of a known tree' '
@@ -900,7 +900,7 @@ test_expect_success 'validate object ID of a known tree' '
 
 # Various types of objects
 
-test_expect_success 'adding various types of objects with git update-index --add' '
+test_expect_success 'adding various types of objects with but update-index --add' '
 	mkdir path2 path3 path3/subp3 &&
 	paths="path0 path2/file2 path3/file3 path3/subp3/file3" &&
 	(
@@ -910,15 +910,15 @@ test_expect_success 'adding various types of objects with git update-index --add
 			test_ln_s_add "hello $p" ${p}sym || exit 1
 		done
 	) &&
-	find path* ! -type d -print | xargs git update-index --add
+	find path* ! -type d -print | xargs but update-index --add
 '
 
 # Show them and see that matches what we expect.
-test_expect_success 'showing stage with git ls-files --stage' '
-	git ls-files --stage >current
+test_expect_success 'showing stage with but ls-files --stage' '
+	but ls-files --stage >current
 '
 
-test_expect_success 'validate git ls-files output for a known tree' '
+test_expect_success 'validate but ls-files output for a known tree' '
 	cat >expected <<-EOF &&
 	100644 $(test_oid path0f) 0	path0
 	120000 $(test_oid path0s) 0	path0sym
@@ -932,19 +932,19 @@ test_expect_success 'validate git ls-files output for a known tree' '
 	test_cmp expected current
 '
 
-test_expect_success 'writing tree out with git write-tree' '
-	tree=$(git write-tree)
+test_expect_success 'writing tree out with but write-tree' '
+	tree=$(but write-tree)
 '
 
 test_expect_success 'validate object ID for a known tree' '
 	test "$tree" = "$(test_oid root)"
 '
 
-test_expect_success 'showing tree with git ls-tree' '
-    git ls-tree $tree >current
+test_expect_success 'showing tree with but ls-tree' '
+    but ls-tree $tree >current
 '
 
-test_expect_success 'git ls-tree output for a known tree' '
+test_expect_success 'but ls-tree output for a known tree' '
 	cat >expected <<-EOF &&
 	100644 blob $(test_oid path0f)	path0
 	120000 blob $(test_oid path0s)	path0sym
@@ -956,11 +956,11 @@ test_expect_success 'git ls-tree output for a known tree' '
 
 # This changed in ls-tree pathspec change -- recursive does
 # not show tree nodes anymore.
-test_expect_success 'showing tree with git ls-tree -r' '
-	git ls-tree -r $tree >current
+test_expect_success 'showing tree with but ls-tree -r' '
+	but ls-tree -r $tree >current
 '
 
-test_expect_success 'git ls-tree -r output for a known tree' '
+test_expect_success 'but ls-tree -r output for a known tree' '
 	cat >expected <<-EOF &&
 	100644 blob $(test_oid path0f)	path0
 	120000 blob $(test_oid path0s)	path0sym
@@ -975,11 +975,11 @@ test_expect_success 'git ls-tree -r output for a known tree' '
 '
 
 # But with -r -t we can have both.
-test_expect_success 'showing tree with git ls-tree -r -t' '
-	git ls-tree -r -t $tree >current
+test_expect_success 'showing tree with but ls-tree -r -t' '
+	but ls-tree -r -t $tree >current
 '
 
-test_expect_success 'git ls-tree -r output for a known tree' '
+test_expect_success 'but ls-tree -r output for a known tree' '
 	cat >expected <<-EOF &&
 	100644 blob $(test_oid path0f)	path0
 	120000 blob $(test_oid path0s)	path0sym
@@ -996,16 +996,16 @@ test_expect_success 'git ls-tree -r output for a known tree' '
 	test_cmp expected current
 '
 
-test_expect_success 'writing partial tree out with git write-tree --prefix' '
-	ptree=$(git write-tree --prefix=path3)
+test_expect_success 'writing partial tree out with but write-tree --prefix' '
+	ptree=$(but write-tree --prefix=path3)
 '
 
 test_expect_success 'validate object ID for a known tree' '
 	test "$ptree" = $(test_oid path3d)
 '
 
-test_expect_success 'writing partial tree out with git write-tree --prefix' '
-	ptree=$(git write-tree --prefix=path3/subp3)
+test_expect_success 'writing partial tree out with but write-tree --prefix' '
+	ptree=$(but write-tree --prefix=path3/subp3)
 '
 
 test_expect_success 'validate object ID for a known tree' '
@@ -1013,7 +1013,7 @@ test_expect_success 'validate object ID for a known tree' '
 '
 
 test_expect_success 'put invalid objects into the index' '
-	rm -f .git/index &&
+	rm -f .but/index &&
 	suffix=$(echo $ZERO_OID | sed -e "s/^.//") &&
 	cat >badobjects <<-EOF &&
 	100644 blob $(test_oid 001)	dir/file1
@@ -1022,28 +1022,28 @@ test_expect_success 'put invalid objects into the index' '
 	100644 blob $(test_oid 004)	dir/file4
 	100644 blob $(test_oid 005)	dir/file5
 	EOF
-	git update-index --index-info <badobjects
+	but update-index --index-info <badobjects
 '
 
 test_expect_success 'writing this tree without --missing-ok' '
-	test_must_fail git write-tree
+	test_must_fail but write-tree
 '
 
 test_expect_success 'writing this tree with --missing-ok' '
-	git write-tree --missing-ok
+	but write-tree --missing-ok
 '
 
 
 ################################################################
-test_expect_success 'git read-tree followed by write-tree should be idempotent' '
-	rm -f .git/index &&
-	git read-tree $tree &&
-	test_path_is_file .git/index &&
-	newtree=$(git write-tree) &&
+test_expect_success 'but read-tree followed by write-tree should be idempotent' '
+	rm -f .but/index &&
+	but read-tree $tree &&
+	test_path_is_file .but/index &&
+	newtree=$(but write-tree) &&
 	test "$newtree" = "$tree"
 '
 
-test_expect_success 'validate git diff-files output for a know cache/work tree state' '
+test_expect_success 'validate but diff-files output for a know cache/work tree state' '
 	cat >expected <<EOF &&
 :100644 100644 $(test_oid path0f) $ZERO_OID M	path0
 :120000 120000 $(test_oid path0s) $ZERO_OID M	path0sym
@@ -1054,46 +1054,46 @@ test_expect_success 'validate git diff-files output for a know cache/work tree s
 :100644 100644 $(test_oid subp3f) $ZERO_OID M	path3/subp3/file3
 :120000 120000 $(test_oid subp3s) $ZERO_OID M	path3/subp3/file3sym
 EOF
-	git diff-files >current &&
+	but diff-files >current &&
 	test_cmp expected current
 '
 
-test_expect_success 'git update-index --refresh should succeed' '
-	git update-index --refresh
+test_expect_success 'but update-index --refresh should succeed' '
+	but update-index --refresh
 '
 
-test_expect_success 'no diff after checkout and git update-index --refresh' '
-	git diff-files >current &&
+test_expect_success 'no diff after checkout and but update-index --refresh' '
+	but diff-files >current &&
 	cmp -s current /dev/null
 '
 
 ################################################################
 P=$(test_oid root)
 
-test_expect_success 'git cummit-tree records the correct tree in a cummit' '
-	cummit0=$(echo NO | git cummit-tree $P) &&
-	git show --pretty=raw $cummit0 >out &&
+test_expect_success 'but cummit-tree records the correct tree in a cummit' '
+	cummit0=$(echo NO | but cummit-tree $P) &&
+	but show --pretty=raw $cummit0 >out &&
 	tree=$(sed -n -e "s/^tree //p" -e "/^author /q" out) &&
 	test "z$tree" = "z$P"
 '
 
-test_expect_success 'git cummit-tree records the correct parent in a cummit' '
-	cummit1=$(echo NO | git cummit-tree $P -p $cummit0) &&
-	git show --pretty=raw $cummit1 >out &&
+test_expect_success 'but cummit-tree records the correct parent in a cummit' '
+	cummit1=$(echo NO | but cummit-tree $P -p $cummit0) &&
+	but show --pretty=raw $cummit1 >out &&
 	parent=$(sed -n -e "s/^parent //p" -e "/^author /q" out) &&
 	test "z$cummit0" = "z$parent"
 '
 
-test_expect_success 'git cummit-tree omits duplicated parent in a cummit' '
-	cummit2=$(echo NO | git cummit-tree $P -p $cummit0 -p $cummit0) &&
-	git show --pretty=raw $cummit2 >out &&
+test_expect_success 'but cummit-tree omits duplicated parent in a cummit' '
+	cummit2=$(echo NO | but cummit-tree $P -p $cummit0 -p $cummit0) &&
+	but show --pretty=raw $cummit2 >out &&
 	cat >match.sed <<-\EOF &&
 	s/^parent //p
 	/^author /q
 	EOF
 	parent=$(sed -n -f match.sed out | sort -u) &&
 	test "z$cummit0" = "z$parent" &&
-	git show --pretty=raw $cummit2 >out &&
+	but show --pretty=raw $cummit2 >out &&
 	test_stdout_line_count = 1 sed -n -f match.sed out
 '
 
@@ -1101,8 +1101,8 @@ test_expect_success 'update-index D/F conflict' '
 	mv path0 tmp &&
 	mv path2 path0 &&
 	mv tmp path2 &&
-	git update-index --add --replace path2 path0/file2 &&
-	git ls-files path0 >tmp &&
+	but update-index --add --replace path2 path0/file2 &&
+	but ls-files path0 >tmp &&
 	numpath0=$(wc -l <tmp) &&
 	test $numpath0 = 1
 '
@@ -1116,34 +1116,34 @@ test_expect_success 'very long name in the index handled sanely' '
 	a=${a}q &&
 
 	>path4 &&
-	git update-index --add path4 &&
-	git ls-files -s path4 >tmp &&
+	but update-index --add path4 &&
+	but ls-files -s path4 >tmp &&
 	(
 		sed -e "s/	.*/	/" tmp |
 		tr -d "\012" &&
 		echo "$a"
-	) | git update-index --index-info &&
-	git ls-files "a*" >tmp &&
+	) | but update-index --index-info &&
+	but ls-files "a*" >tmp &&
 	len=$(wc -c <tmp) &&
 	test $len = 4098
 '
 
-test_expect_success 'test_must_fail on a failing git command' '
-	test_must_fail git notacommand
+test_expect_success 'test_must_fail on a failing but command' '
+	test_must_fail but notacommand
 '
 
-test_expect_success 'test_must_fail on a failing git command with env' '
-	test_must_fail env var1=a var2=b git notacommand
+test_expect_success 'test_must_fail on a failing but command with env' '
+	test_must_fail env var1=a var2=b but notacommand
 '
 
-test_expect_success 'test_must_fail rejects a non-git command' '
+test_expect_success 'test_must_fail rejects a non-but command' '
 	! test_must_fail grep ^$ notafile 2>err &&
-	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+	grep -F "test_must_fail: only '"'"'but'"'"' is allowed" err
 '
 
-test_expect_success 'test_must_fail rejects a non-git command with env' '
+test_expect_success 'test_must_fail rejects a non-but command with env' '
 	! test_must_fail env var1=a var2=b grep ^$ notafile 2>err &&
-	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+	grep -F "test_must_fail: only '"'"'but'"'"' is allowed" err
 '
 
 test_done

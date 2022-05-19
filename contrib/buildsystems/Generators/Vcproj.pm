@@ -21,23 +21,23 @@ sub generate_guid ($) {
 }
 
 sub generate {
-    my ($git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($but_dir, $out_dir, $rel_dir, %build_structure) = @_;
     my @libs = @{$build_structure{"LIBS"}};
     foreach (@libs) {
-        createLibProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
+        createLibProject($_, $but_dir, $out_dir, $rel_dir, \%build_structure);
     }
 
     my @apps = @{$build_structure{"APPS"}};
     foreach (@apps) {
-        createAppProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
+        createAppProject($_, $but_dir, $out_dir, $rel_dir, \%build_structure);
     }
 
-    createGlueProject($git_dir, $out_dir, $rel_dir, %build_structure);
+    createGlueProject($but_dir, $out_dir, $rel_dir, %build_structure);
     return 0;
 }
 
 sub createLibProject {
-    my ($libname, $git_dir, $out_dir, $rel_dir, $build_structure) = @_;
+    my ($libname, $but_dir, $out_dir, $rel_dir, $build_structure) = @_;
     print "Generate $libname vcproj lib project\n";
     $rel_dir = "..\\$rel_dir";
     $rel_dir =~ s/\//\\/g;
@@ -253,7 +253,7 @@ EOM
 }
 
 sub createAppProject {
-    my ($appname, $git_dir, $out_dir, $rel_dir, $build_structure) = @_;
+    my ($appname, $but_dir, $out_dir, $rel_dir, $build_structure) = @_;
     print "Generate $appname vcproj app project\n";
     $rel_dir = "..\\$rel_dir";
     $rel_dir =~ s/\//\\/g;
@@ -487,7 +487,7 @@ EOM
 }
 
 sub createGlueProject {
-    my ($git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my ($but_dir, $out_dir, $rel_dir, %build_structure) = @_;
     print "Generate solutions file\n";
     $rel_dir = "..\\$rel_dir";
     $rel_dir =~ s/\//\\/g;
@@ -509,7 +509,7 @@ sub createGlueProject {
     foreach (@apps) {
         $_ =~ s/\//_/g;
         $_ =~ s/\.exe//;
-        if ($_ eq "git" ) {
+        if ($_ eq "but" ) {
             unshift(@tmp, $_);
         } else {
             push(@tmp, $_);
@@ -517,11 +517,11 @@ sub createGlueProject {
     }
     @apps = @tmp;
 
-    open F, ">git.sln" || die "Could not open git.sln for writing!\n";
+    open F, ">but.sln" || die "Could not open but.sln for writing!\n";
     binmode F, ":crlf";
     print F "$SLN_HEAD";
 
-    my $uuid_libgit = $build_structure{"LIBS_libgit_GUID"};
+    my $uuid_libbut = $build_structure{"LIBS_libbut_GUID"};
     my $uuid_xdiff_lib = $build_structure{"LIBS_xdiff_lib_GUID"};
     foreach (@apps) {
         my $appname = $_;
@@ -529,7 +529,7 @@ sub createGlueProject {
         print F "$SLN_PRE";
         print F "\"${appname}\", \"${appname}\\${appname}.vcproj\", \"${uuid}\"\n";
         print F "	ProjectSection(ProjectDependencies) = postProject\n";
-        print F "		${uuid_libgit} = ${uuid_libgit}\n";
+        print F "		${uuid_libbut} = ${uuid_libbut}\n";
         print F "		${uuid_xdiff_lib} = ${uuid_xdiff_lib}\n";
         print F "	EndProjectSection";
         print F "$SLN_POST";

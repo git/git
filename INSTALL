@@ -2,7 +2,7 @@
 		Git installation
 
 Normally you can just do "make" followed by "make install", and that
-will install the git programs in your own ~/bin/ directory.  If you want
+will install the but programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
 	$ make prefix=/usr all doc info ;# as yourself
@@ -14,7 +14,7 @@ which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
 The beginning of the Makefile documents many variables that affect the way
-git is built.  You can override them either from the command line, or in a
+but is built.  You can override them either from the command line, or in a
 config.mak file.
 
 Alternatively you can use autoconf generated ./configure script to
@@ -26,24 +26,24 @@ set up install paths (via config.mak.autogen), so you can write instead
 	# make install install-doc install-html;# as root
 
 If you're willing to trade off (much) longer build time for a later
-faster git you can also do a profile feedback build with
+faster but you can also do a profile feedback build with
 
 	$ make prefix=/usr profile
 	# make prefix=/usr PROFILE=BUILD install
 
 This will run the complete test suite as training workload and then
-rebuild git with the generated profile feedback. This results in a git
+rebuild but with the generated profile feedback. This results in a but
 which is a few percent faster on CPU intensive workloads.  This
 may be a good tradeoff for distribution packagers.
 
-Alternatively you can run profile feedback only with the git benchmark
+Alternatively you can run profile feedback only with the but benchmark
 suite. This runs significantly faster than the full test suite, but
 has less coverage:
 
 	$ make prefix=/usr profile-fast
 	# make prefix=/usr PROFILE=BUILD install
 
-Or if you just want to install a profile-optimized version of git into
+Or if you just want to install a profile-optimized version of but into
 your home directory, you could run:
 
 	$ make profile-install
@@ -52,7 +52,7 @@ or
 	$ make profile-fast-install
 
 As a caveat: a profile-optimized build takes a *lot* longer since the
-git tree must be built twice, and in order for the profiling
+but tree must be built twice, and in order for the profiling
 measurements to work properly, ccache must be disabled and the test
 suite has to be run using only a single CPU.  In addition, the profile
 feedback build stage currently generates a lot of additional compiler
@@ -61,24 +61,24 @@ warnings.
 Issues of note:
 
  - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
-   program "git", whose name conflicts with this program.  But with
+   program "but", whose name conflicts with this program.  But with
    version 4.9.2, after long hiatus without active maintenance (since
    around 1997), it changed its name to gnuit and the name conflict is no
    longer a problem.
 
    NOTE: When compiled with backward compatibility option, the GNU
-   Interactive Tools package still can install "git", but you can build it
+   Interactive Tools package still can install "but", but you can build it
    with --disable-transition option to avoid this.
 
- - You can use git after building but without installing if you want
-   to test drive it.  Simply run git found in bin-wrappers directory
+ - You can use but after building but without installing if you want
+   to test drive it.  Simply run but found in bin-wrappers directory
    in the build directory, or prepend that directory to your $PATH.
-   This however is less efficient than running an installed git, as
-   you always need an extra fork+exec to run any git subcommand.
+   This however is less efficient than running an installed but, as
+   you always need an extra fork+exec to run any but subcommand.
 
-   It is still possible to use git without installing by setting a few
+   It is still possible to use but without installing by setting a few
    environment variables, which was the way this was done
-   traditionally.  But using git found in bin-wrappers directory in
+   traditionally.  But using but found in bin-wrappers directory in
    the build directory is far simpler.  As a historical reference, the
    old way went like this:
 
@@ -120,8 +120,8 @@ Issues of note:
 	  for everyday use (e.g. "bisect", "request-pull").
 
 	- "Perl" version 5.8 or later is needed to use some of the
-	  features (e.g. preparing a partial cummit using "git add -i/-p",
-	  interacting with svn repositories with "git svn").  If you can
+	  features (e.g. preparing a partial cummit using "but add -i/-p",
+	  interacting with svn repositories with "but svn").  If you can
 	  live without these, use NO_PERL.  Note that recent releases of
 	  Redhat/Fedora are reported to ship Perl binary package with some
 	  core modules stripped away (see http://lwn.net/Articles/477234/),
@@ -129,18 +129,18 @@ Issues of note:
 	  itself, e.g. Digest::MD5, File::Spec, File::Temp, Net::Domain,
 	  Net::SMTP, and Time::HiRes.
 
-	- git-imap-send needs the OpenSSL library to talk IMAP over SSL if
+	- but-imap-send needs the OpenSSL library to talk IMAP over SSL if
 	  you are using libcurl older than 7.34.0.  Otherwise you can use
-	  NO_OPENSSL without losing git-imap-send.
+	  NO_OPENSSL without losing but-imap-send.
 
-	  By default, git uses OpenSSL for SHA1 but it will use its own
+	  By default, but uses OpenSSL for SHA1 but it will use its own
 	  library (inspired by Mozilla's) with either NO_OPENSSL or
 	  BLK_SHA1.  Also included is a version optimized for PowerPC
 	  (PPC_SHA1).
 
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by
-	  git-imap-send if the curl version is >= 7.34.0. If you do
+	  but-imap-send if the curl version is >= 7.34.0. If you do
 	  not need that functionality, use NO_CURL to build without
 	  it.
 
@@ -148,13 +148,13 @@ Issues of note:
 	  without NO_CURL. This version requirement may be bumped in
 	  the future.
 
-	- "expat" library; git-http-push uses it for remote lock
+	- "expat" library; but-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional
 	  (with NO_EXPAT).
 
-	- "wish", the Tcl/Tk windowing shell is used in gitk to show the
-	  history graphically, and in git-gui.  If you don't want gitk or
-	  git-gui, you can use NO_TCLTK.
+	- "wish", the Tcl/Tk windowing shell is used in butk to show the
+	  history graphically, and in but-gui.  If you don't want butk or
+	  but-gui, you can use NO_TCLTK.
 
 	- A gettext library is used by default for localizing Git. The
 	  primary target is GNU libintl, but the Solaris gettext
@@ -168,7 +168,7 @@ Issues of note:
 	  use English. Under autoconf the configure script will do this
 	  automatically if it can't find libintl on the system.
 
-	- Python version 2.7 or later is needed to use the git-p4 interface
+	- Python version 2.7 or later is needed to use the but-p4 interface
 	  to Perforce.
 
  - Some platform specific issues are dealt with Makefile rules,
@@ -207,8 +207,8 @@ Issues of note:
    There are also "make quick-install-doc", "make quick-install-man"
    and "make quick-install-html" which install preformatted man pages
    and html documentation. To use these build targets, you need to
-   clone two separate git-htmldocs and git-manpages repositories next
-   to the clone of git itself.
+   clone two separate but-htmldocs and but-manpages repositories next
+   to the clone of but itself.
 
    The minimum supported version of docbook-xsl is 1.74.
 

@@ -5,7 +5,7 @@
 #
 # GPL v2 (See COPYING)
 #
-# Ported to support git "mbox" format files by Ryan Anderson <ryan@michonline.com>
+# Ported to support but "mbox" format files by Ryan Anderson <ryan@michonline.com>
 #
 # Sends a collection of emails to the given email addresses, disturbingly fast.
 #
@@ -40,9 +40,9 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email' [<options>] <file|directory>
-git send-email' [<options>] <format-patch options>
-git send-email --dump-aliases
+but send-email' [<options>] <file|directory>
+but send-email' [<options>] <format-patch options>
+but send-email --dump-aliases
 
   Composing:
     --from                  <str>  * Email From:
@@ -104,7 +104,7 @@ git send-email --dump-aliases
     --dry-run                      * Don't actually send the emails.
     --[no-]validate                * Perform patch sanity checks. Default on.
     --[no-]format-patch            * understand any non optional arguments as
-                                     `git format-patch` ones.
+                                     `but format-patch` ones.
     --force                        * Send even if safety checks would prevent it.
 
   Information:
@@ -122,7 +122,7 @@ sub uniq {
 sub completion_helper {
 	my ($original_opts) = @_;
 	my %not_for_completion = (
-		"git-completion-helper" => undef,
+		"but-completion-helper" => undef,
 		"h" => undef,
 	);
 	my @send_email_opts = ();
@@ -140,7 +140,7 @@ sub completion_helper {
 		}
 	}
 
-	my @format_patch_opts = split(/ /, Git::command('format-patch', '--git-completion-helper'));
+	my @format_patch_opts = split(/ /, Git::command('format-patch', '--but-completion-helper'));
 	my @opts = (@send_email_opts, @format_patch_opts);
 	@opts = uniq (grep !/^$/, @opts);
 	# There's an implicit '\n' here already, no need to add an explicit one.
@@ -439,7 +439,7 @@ sub config_regexp {
 	return @ret;
 }
 
-# Save ourselves a lot of work of shelling out to 'git config' (it
+# Save ourselves a lot of work of shelling out to 'but config' (it
 # parses 'bool' etc.) by only doing so for config keys that exist.
 my %known_config_keys;
 {
@@ -474,7 +474,7 @@ undef $identity if $no_identity;
 # needing, first, from the command line:
 
 my $help;
-my $git_completion_helper;
+my $but_completion_helper;
 my %dump_aliases_options = (
 	"h" => \$help,
 	"dump-aliases" => \$dump_aliases,
@@ -541,7 +541,7 @@ my %options = (
 		    "no-xmailer" => sub {$use_xmailer = 0},
 		    "batch-size=i" => \$batch_size,
 		    "relogin-delay=i" => \$relogin_delay,
-		    "git-completion-helper" => \$git_completion_helper,
+		    "but-completion-helper" => \$but_completion_helper,
 );
 $rc = GetOptions(%options);
 
@@ -552,18 +552,18 @@ my @initial_bcc = @getopt_bcc ? @getopt_bcc : ($no_bcc ? () : @config_bcc);
 
 usage() if $help;
 my %all_options = (%options, %dump_aliases_options, %identity_options);
-completion_helper(\%all_options) if $git_completion_helper;
+completion_helper(\%all_options) if $but_completion_helper;
 unless ($rc) {
     usage();
 }
 
 if ($forbid_sendmail_variables && grep { /^sendmail/s } keys %known_config_keys) {
 	die __("fatal: found configuration options for 'sendmail'\n" .
-		"git-send-email is configured with the sendemail.* options - note the 'e'.\n" .
+		"but-send-email is configured with the sendemail.* options - note the 'e'.\n" .
 		"Set sendemail.forbidSendmailVariables to false to disable this check.\n");
 }
 
-die __("Cannot run git format-patch from outside a repository\n")
+die __("Cannot run but format-patch from outside a repository\n")
 	if $format_patch and not $repo;
 
 die __("`batch-size` and `relogin` must be specified together " .
@@ -577,8 +577,8 @@ $smtp_encryption = '' unless (defined $smtp_encryption);
 my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
-		# Please update $__git_send_email_suppresscc_options
-		# in git-completion.bash when you add new options.
+		# Please update $__but_send_email_suppresscc_options
+		# in but-completion.bash when you add new options.
 		die sprintf(__("Unknown --suppress-cc field: '%s'\n"), $entry)
 			unless $entry =~ /^(?:all|cccmd|cc|author|self|sob|body|bodycc|misc-by)$/;
 		$suppress_cc{$entry} = 1;
@@ -608,8 +608,8 @@ my $confirm_unconfigured = !defined $confirm;
 if ($confirm_unconfigured) {
 	$confirm = scalar %suppress_cc ? 'compose' : 'auto';
 };
-# Please update $__git_send_email_confirm_options in
-# git-completion.bash when you add new options.
+# Please update $__but_send_email_confirm_options in
+# but-completion.bash when you add new options.
 die sprintf(__("Unknown --confirm setting: '%s'\n"), $confirm)
 	unless $confirm =~ /^(?:auto|cc|compose|always|never)/;
 
@@ -716,7 +716,7 @@ my %parse_alias = (
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
 		}}}
-	# Please update _git_config() in git-completion.bash when you
+	# Please update _but_config() in but-completion.bash when you
 	# add new MUAs.
 );
 
@@ -779,7 +779,7 @@ while (defined(my $f = shift @ARGV)) {
 }
 
 if (@rev_list_opts) {
-	die __("Cannot run git format-patch from outside a repository\n")
+	die __("Cannot run but format-patch from outside a repository\n")
 		unless $repo;
 	require File::Temp;
 	push @files, $repo->command('format-patch', '-o', File::Temp::tempdir(CLEANUP => 1), @rev_list_opts);
@@ -821,8 +821,8 @@ if ($compose) {
 	# effort to have it be unique
 	require File::Temp;
 	$compose_filename = ($repo ?
-		File::Temp::tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
-		File::Temp::tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
+		File::Temp::tempfile(".butsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
+		File::Temp::tempfile(".butsendemail.msg.XXXXXX", DIR => "."))[1];
 	open my $c, ">", $compose_filename
 		or die sprintf(__("Failed to open for writing %s: %s"), $compose_filename, $!);
 
@@ -933,8 +933,8 @@ sub term {
 	my $term = eval {
 		require Term::ReadLine;
 		$ENV{"GIT_SEND_EMAIL_NOTTY"}
-			? Term::ReadLine->new('git-send-email', \*STDIN, \*STDOUT)
-			: Term::ReadLine->new('git-send-email');
+			? Term::ReadLine->new('but-send-email', \*STDIN, \*STDOUT)
+			: Term::ReadLine->new('but-send-email');
 	};
 	if ($@) {
 		$term = FakeTerm->new("$@: going non-interactive");
@@ -1430,7 +1430,7 @@ sub smtp_auth_maybe {
 		'protocol' => 'smtp',
 		'host' => smtp_host_string(),
 		'username' => $smtp_authuser,
-		# if there's no password, "git credential fill" will
+		# if there's no password, "but credential fill" will
 		# give us one, otherwise it'll just pass this one.
 		'password' => $smtp_authpass
 	}, sub {
@@ -1514,9 +1514,9 @@ sub send_message {
 	@recipients = unique_email_list(@recipients,@cc,@initial_bcc);
 	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
 	my $date = format_2822_time($time++);
-	my $gitversion = '@@GIT_VERSION@@';
-	if ($gitversion =~ m/..GIT_VERSION../) {
-	    $gitversion = Git::version();
+	my $butversion = '@@GIT_VERSION@@';
+	if ($butversion =~ m/..GIT_VERSION../) {
+	    $butversion = Git::version();
 	}
 
 	my $cc = join(",\n\t", unique_email_list(@cc));
@@ -1533,7 +1533,7 @@ Date: $date
 Message-Id: $message_id
 ";
 	if ($use_xmailer) {
-		$header .= "X-Mailer: git-send-email $gitversion\n";
+		$header .= "X-Mailer: but-send-email $butversion\n";
 	}
 	if ($in_reply_to) {
 
@@ -1568,9 +1568,9 @@ Message-Id: $message_id
     This behavior is controlled by the sendemail.confirm
     configuration setting.
 
-    For additional information, run 'git send-email --help'.
+    For additional information, run 'but send-email --help'.
     To retain the current behavior, but squelch this message,
-    run 'git config --global sendemail.confirm auto'.
+    run 'but config --global sendemail.confirm auto'.
 
 EOF
 		}
@@ -2076,7 +2076,7 @@ sub validate_patch {
 
 	if ($repo) {
 		my $hook_name = 'sendemail-validate';
-		my $hooks_path = $repo->command_oneline('rev-parse', '--git-path', 'hooks');
+		my $hooks_path = $repo->command_oneline('rev-parse', '--but-path', 'hooks');
 		require File::Spec;
 		my $validate_hook = File::Spec->catfile($hooks_path, $hook_name);
 		my $hook_error;
@@ -2088,7 +2088,7 @@ sub validate_patch {
 			chdir($repo->wc_path() or $repo->repo_path())
 				or die("chdir: $!");
 			local $ENV{"GIT_DIR"} = $repo->repo_path();
-			my @cmd = ("git", "hook", "run", "--ignore-missing",
+			my @cmd = ("but", "hook", "run", "--ignore-missing",
 				    $hook_name, "--");
 			my @cmd_msg = (@cmd, "<patch>");
 			my @cmd_run = (@cmd, $target);

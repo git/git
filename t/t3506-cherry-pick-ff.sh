@@ -9,17 +9,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	echo first > file1 &&
-	git add file1 &&
+	but add file1 &&
 	test_tick &&
-	git cummit -m "first" &&
-	git tag first &&
+	but cummit -m "first" &&
+	but tag first &&
 
-	git checkout -b other &&
+	but checkout -b other &&
 	echo second >> file1 &&
-	git add file1 &&
+	but add file1 &&
 	test_tick &&
-	git cummit -m "second" &&
-	git tag second &&
+	but cummit -m "second" &&
+	but tag second &&
 	test_oid_cache <<-EOF
 	cp_ff sha1:1df192cd8bc58a2b275d842cede4d221ad9000d1
 	cp_ff sha256:e70d6b7fc064bddb516b8d512c9057094b96ce6ff08e12080acc4fe7f1d60a1d
@@ -27,19 +27,19 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick using --ff fast forwards' '
-	git checkout main &&
-	git reset --hard first &&
+	but checkout main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick --ff second &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify second)"
+	but cherry-pick --ff second &&
+	test "$(but rev-parse --verify HEAD)" = "$(but rev-parse --verify second)"
 '
 
 test_expect_success 'cherry-pick not using --ff does not fast forwards' '
-	git checkout main &&
-	git reset --hard first &&
+	but checkout main &&
+	but reset --hard first &&
 	test_tick &&
-	git cherry-pick second &&
-	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify second)"
+	but cherry-pick second &&
+	test "$(but rev-parse --verify HEAD)" != "$(but rev-parse --verify second)"
 '
 
 #
@@ -52,71 +52,71 @@ test_expect_success 'cherry-pick not using --ff does not fast forwards' '
 # (This has been taken from t3502-cherry-pick-merge.sh)
 #
 test_expect_success 'merge setup' '
-	git checkout main &&
-	git reset --hard first &&
+	but checkout main &&
+	but reset --hard first &&
 	echo new line >A &&
-	git add A &&
+	but add A &&
 	test_tick &&
-	git cummit -m "add line to A" A &&
-	git tag A &&
-	git checkout -b side first &&
+	but cummit -m "add line to A" A &&
+	but tag A &&
+	but checkout -b side first &&
 	echo new line >B &&
-	git add B &&
+	but add B &&
 	test_tick &&
-	git cummit -m "add line to B" B &&
-	git tag B &&
-	git checkout main &&
-	git merge side &&
-	git tag C &&
-	git checkout -b new A
+	but cummit -m "add line to B" B &&
+	but tag B &&
+	but checkout main &&
+	but merge side &&
+	but tag C &&
+	but checkout -b new A
 '
 
 test_expect_success 'cherry-pick explicit first parent of a non-merge with --ff' '
-	git reset --hard A -- &&
-	git cherry-pick --ff -m 1 B &&
-	git diff --exit-code C --
+	but reset --hard A -- &&
+	but cherry-pick --ff -m 1 B &&
+	but diff --exit-code C --
 '
 
 test_expect_success 'cherry pick a merge with --ff but without -m should fail' '
-	git reset --hard A -- &&
-	test_must_fail git cherry-pick --ff C &&
-	git diff --exit-code A --
+	but reset --hard A -- &&
+	test_must_fail but cherry-pick --ff C &&
+	but diff --exit-code A --
 '
 
 test_expect_success 'cherry pick with --ff a merge (1)' '
-	git reset --hard A -- &&
-	git cherry-pick --ff -m 1 C &&
-	git diff --exit-code C &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify C)"
+	but reset --hard A -- &&
+	but cherry-pick --ff -m 1 C &&
+	but diff --exit-code C &&
+	test "$(but rev-parse --verify HEAD)" = "$(but rev-parse --verify C)"
 '
 
 test_expect_success 'cherry pick with --ff a merge (2)' '
-	git reset --hard B -- &&
-	git cherry-pick --ff -m 2 C &&
-	git diff --exit-code C &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify C)"
+	but reset --hard B -- &&
+	but cherry-pick --ff -m 2 C &&
+	but diff --exit-code C &&
+	test "$(but rev-parse --verify HEAD)" = "$(but rev-parse --verify C)"
 '
 
 test_expect_success 'cherry pick a merge relative to nonexistent parent with --ff should fail' '
-	git reset --hard B -- &&
-	test_must_fail git cherry-pick --ff -m 3 C
+	but reset --hard B -- &&
+	test_must_fail but cherry-pick --ff -m 3 C
 '
 
 test_expect_success 'cherry pick a root cummit with --ff' '
-	git reset --hard first -- &&
-	git rm file1 &&
+	but reset --hard first -- &&
+	but rm file1 &&
 	echo first >file2 &&
-	git add file2 &&
-	git cummit --amend -m "file2" &&
-	git cherry-pick --ff first &&
-	test "$(git rev-parse --verify HEAD)" = "$(test_oid cp_ff)"
+	but add file2 &&
+	but cummit --amend -m "file2" &&
+	but cherry-pick --ff first &&
+	test "$(but rev-parse --verify HEAD)" = "$(test_oid cp_ff)"
 '
 
 test_expect_success 'cherry-pick --ff on unborn branch' '
-	git checkout --orphan unborn &&
-	git rm --cached -r . &&
+	but checkout --orphan unborn &&
+	but rm --cached -r . &&
 	rm -rf * &&
-	git cherry-pick --ff first &&
+	but cherry-pick --ff first &&
 	test_cmp_rev first HEAD
 '
 

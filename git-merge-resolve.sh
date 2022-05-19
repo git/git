@@ -37,15 +37,15 @@ then
 	exit 2
 fi
 
-git update-index -q --refresh
-git read-tree -u -m --aggressive $bases $head $remotes || exit 2
+but update-index -q --refresh
+but read-tree -u -m --aggressive $bases $head $remotes || exit 2
 echo "Trying simple merge."
-if result_tree=$(git write-tree 2>/dev/null)
+if result_tree=$(but write-tree 2>/dev/null)
 then
 	exit 0
 else
 	echo "Simple merge failed, trying Automatic merge."
-	if git merge-index -o git-merge-one-file -a
+	if but merge-index -o but-merge-one-file -a
 	then
 		exit 0
 	else

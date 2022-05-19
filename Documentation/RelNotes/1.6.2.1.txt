@@ -4,16 +4,16 @@ GIT v1.6.2.1 Release Notes
 Fixes since v1.6.2
 ------------------
 
-* .gitignore learned to handle backslash as a quoting mechanism for
+* .butignore learned to handle backslash as a quoting mechanism for
   comment introduction character "#".
 
 * timestamp output in --date=relative mode used to display timestamps that
   are long time ago in the default mode; it now uses "N years M months
   ago", and "N years ago".
 
-* git-add -i/-p now works with non-ASCII pathnames.
+* but-add -i/-p now works with non-ASCII pathnames.
 
-* "git hash-object -w" did not read from the configuration file from the
-  correct .git directory.
+* "but hash-object -w" did not read from the configuration file from the
+  correct .but directory.
 
-* git-send-email learned to correctly handle multiple Cc: addresses.
+* but-send-email learned to correctly handle multiple Cc: addresses.

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='check output directory names used by git-clone'
+test_description='check output directory names used by but-clone'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -10,7 +10,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 # as the real test is what clone does on the local side
 test_expect_success 'setup ssh wrapper' '
 	write_script "$TRASH_DIRECTORY/ssh-wrapper" <<-\EOF &&
-	git upload-pack "$TRASH_DIRECTORY"
+	but upload-pack "$TRASH_DIRECTORY"
 	EOF
 	GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper" &&
 	GIT_SSH_VARIANT=ssh &&
@@ -40,43 +40,43 @@ test_clone_dir () {
 	done
 	test_expect_$expect "clone of $url goes to $dir ($bare)" "
 		rm -rf $dir &&
-		git clone $clone_opts $url &&
+		but clone $clone_opts $url &&
 		test_path_is_dir $dir
 	"
 }
 
 # basic syntax with bare and non-bare variants
 test_clone_dir host:foo foo
-test_clone_dir host:foo foo.git bare
-test_clone_dir host:foo.git foo
-test_clone_dir host:foo.git foo.git bare
-test_clone_dir host:foo/.git foo
-test_clone_dir host:foo/.git foo.git bare
+test_clone_dir host:foo foo.but bare
+test_clone_dir host:foo.but foo
+test_clone_dir host:foo.but foo.but bare
+test_clone_dir host:foo/.but foo
+test_clone_dir host:foo/.but foo.but bare
 
 # similar, but using ssh URL rather than host:path syntax
 test_clone_dir ssh://host/foo foo
-test_clone_dir ssh://host/foo foo.git bare
-test_clone_dir ssh://host/foo.git foo
-test_clone_dir ssh://host/foo.git foo.git bare
-test_clone_dir ssh://host/foo/.git foo
-test_clone_dir ssh://host/foo/.git foo.git bare
+test_clone_dir ssh://host/foo foo.but bare
+test_clone_dir ssh://host/foo.but foo
+test_clone_dir ssh://host/foo.but foo.but bare
+test_clone_dir ssh://host/foo/.but foo
+test_clone_dir ssh://host/foo/.but foo.but bare
 
-# we should remove trailing slashes and .git suffixes
+# we should remove trailing slashes and .but suffixes
 test_clone_dir ssh://host/foo/ foo
 test_clone_dir ssh://host/foo/// foo
-test_clone_dir ssh://host/foo/.git/ foo
-test_clone_dir ssh://host/foo.git/ foo
-test_clone_dir ssh://host/foo.git/// foo
-test_clone_dir ssh://host/foo///.git/ foo
-test_clone_dir ssh://host/foo/.git/// foo
+test_clone_dir ssh://host/foo/.but/ foo
+test_clone_dir ssh://host/foo.but/ foo
+test_clone_dir ssh://host/foo.but/// foo
+test_clone_dir ssh://host/foo///.but/ foo
+test_clone_dir ssh://host/foo/.but/// foo
 
 test_clone_dir host:foo/ foo
 test_clone_dir host:foo/// foo
-test_clone_dir host:foo.git/ foo
-test_clone_dir host:foo/.git/ foo
-test_clone_dir host:foo.git/// foo
-test_clone_dir host:foo///.git/ foo
-test_clone_dir host:foo/.git/// foo
+test_clone_dir host:foo.but/ foo
+test_clone_dir host:foo/.but/ foo
+test_clone_dir host:foo.but/// foo
+test_clone_dir host:foo///.but/ foo
+test_clone_dir host:foo/.but/// foo
 
 # omitting the path should default to the hostname
 test_clone_dir ssh://host/ host
@@ -94,17 +94,17 @@ test_clone_dir user:passw@rd@host:/ host
 
 # auth-like material should not be dropped
 test_clone_dir ssh://host/foo@bar foo@bar
-test_clone_dir ssh://host/foo@bar.git foo@bar
+test_clone_dir ssh://host/foo@bar.but foo@bar
 test_clone_dir ssh://user:password@host/foo@bar foo@bar
-test_clone_dir ssh://user:passw@rd@host/foo@bar.git foo@bar
+test_clone_dir ssh://user:passw@rd@host/foo@bar.but foo@bar
 
 test_clone_dir host:/foo@bar foo@bar
-test_clone_dir host:/foo@bar.git foo@bar
+test_clone_dir host:/foo@bar.but foo@bar
 test_clone_dir user:password@host:/foo@bar foo@bar
-test_clone_dir user:passw@rd@host:/foo@bar.git foo@bar
+test_clone_dir user:passw@rd@host:/foo@bar.but foo@bar
 
 # trailing port-like numbers should not be stripped for paths
 test_clone_dir ssh://user:password@host/test:1234 1234
-test_clone_dir ssh://user:password@host/test:1234.git 1234
+test_clone_dir ssh://user:password@host/test:1234.but 1234
 
 test_done

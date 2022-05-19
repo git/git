@@ -10,20 +10,20 @@ test_expect_success 'setup simple repo' '
 	test_cummit base &&
 	test_cummit foo &&
 	test_cummit retain-me &&
-	git checkout -b other HEAD^ &&
+	but checkout -b other HEAD^ &&
 	mkdir subdir &&
 	test_cummit subdir/bar &&
 	test_cummit subdir/xyzzy &&
 	fake_cummit=$(echo $ZERO_OID | sed s/0/a/) &&
-	git update-index --add --cacheinfo 160000,$fake_cummit,link1 &&
-	git update-index --add --cacheinfo 160000,$fake_cummit,link2 &&
-	git cummit -m "add gitlink" &&
-	git tag -m "annotated tag" mytag &&
-	git tag -m "annotated tag with long message" longtag
+	but update-index --add --cacheinfo 160000,$fake_cummit,link1 &&
+	but update-index --add --cacheinfo 160000,$fake_cummit,link2 &&
+	but cummit -m "add butlink" &&
+	but tag -m "annotated tag" mytag &&
+	but tag -m "annotated tag with long message" longtag
 '
 
 test_expect_success 'export anonymized stream' '
-	git fast-export --anonymize --all \
+	but fast-export --anonymize --all \
 		--anonymize-map=retain-me \
 		--anonymize-map=xyzzy:custom-name \
 		--anonymize-map=other \
@@ -44,7 +44,7 @@ test_expect_success 'stream contains user-specified names' '
 	grep custom-name stream
 '
 
-test_expect_success 'stream omits gitlink oids' '
+test_expect_success 'stream omits butlink oids' '
 	# avoid relying on the whole oid to remain hash-agnostic; this is
 	# plenty to be unique within our test case
 	! grep a000000000000000000 stream
@@ -74,13 +74,13 @@ test_expect_success 'stream omits tag message' '
 # NOTE: we chdir to the new, anonymized repository
 # after this. All further tests should assume this.
 test_expect_success 'import stream to new repository' '
-	git init new &&
+	but init new &&
 	cd new &&
-	git fast-import <../stream
+	but fast-import <../stream
 '
 
 test_expect_success 'result has two branches' '
-	git for-each-ref --format="%(refname)" refs/heads >branches &&
+	but for-each-ref --format="%(refname)" refs/heads >branches &&
 	test_line_count = 2 branches &&
 	other_branch=refs/heads/other &&
 	main_branch=$(grep -v $other_branch branches)
@@ -88,7 +88,7 @@ test_expect_success 'result has two branches' '
 
 test_expect_success 'repo has original shape and timestamps' '
 	shape () {
-		git log --format="%m %ct" --left-right --boundary "$@"
+		but log --format="%m %ct" --left-right --boundary "$@"
 	} &&
 	(cd .. && shape main...other) >expect &&
 	shape $main_branch...$other_branch >actual &&
@@ -99,38 +99,38 @@ test_expect_success 'root tree has original shape' '
 	# the output entries are not necessarily in the same
 	# order, but we should at least have the same set of
 	# object types.
-	git -C .. ls-tree HEAD >orig-root &&
+	but -C .. ls-tree HEAD >orig-root &&
 	cut -d" " -f2 <orig-root | sort >expect &&
-	git ls-tree $other_branch >root &&
+	but ls-tree $other_branch >root &&
 	cut -d" " -f2 <root | sort >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'paths in subdir ended up in one tree' '
-	git -C .. ls-tree other:subdir >orig-subdir &&
+	but -C .. ls-tree other:subdir >orig-subdir &&
 	cut -d" " -f2 <orig-subdir | sort >expect &&
 	tree=$(grep tree root | cut -f2) &&
-	git ls-tree $other_branch:$tree >tree &&
+	but ls-tree $other_branch:$tree >tree &&
 	cut -d" " -f2 <tree >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'identical gitlinks got identical oid' '
+test_expect_success 'identical butlinks got identical oid' '
 	awk "/cummit/ { print \$3 }" <root | sort -u >cummits &&
 	test_line_count = 1 cummits
 '
 
 test_expect_success 'all tags point to branch tip' '
-	git rev-parse $other_branch >expect &&
-	git for-each-ref --format="%(*objectname)" | grep . | uniq >actual &&
+	but rev-parse $other_branch >expect &&
+	but for-each-ref --format="%(*objectname)" | grep . | uniq >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'idents are shared' '
-	git log --all --format="%an <%ae>" >authors &&
+	but log --all --format="%an <%ae>" >authors &&
 	sort -u authors >unique &&
 	test_line_count = 1 unique &&
-	git log --all --format="%cn <%ce>" >cummitters &&
+	but log --all --format="%cn <%ce>" >cummitters &&
 	sort -u cummitters >unique &&
 	test_line_count = 1 unique &&
 	! test_cmp authors cummitters

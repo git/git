@@ -50,7 +50,7 @@ AC_DEFUN([GIT_CONF_APPEND_PATH],
 		GIT_CONF_SUBST([NO_]GIT_UC_PROGRAM, [YesPlease])
 		GIT_CONF_SUBST(GIT_UC_PROGRAM[]_PATH, [])
 	else
-		AC_MSG_ERROR([You cannot use git without $1])
+		AC_MSG_ERROR([You cannot use but without $1])
 	fi
     else
 	if test "$withval" = "yes"; then
@@ -142,9 +142,9 @@ fi
 ## Configure body starts here.
 
 AC_PREREQ(2.59)
-AC_INIT([git], [@@GIT_VERSION@@], [git@vger.kernel.org])
+AC_INIT([but], [@@GIT_VERSION@@], [but@vger.kernel.org])
 
-AC_CONFIG_SRCDIR([git.c])
+AC_CONFIG_SRCDIR([but.c])
 
 config_file=config.mak.autogen
 config_in=config.mak.in
@@ -306,8 +306,8 @@ case $ac_cv_working_alloca_h in
 esac
 GIT_CONF_SUBST([HAVE_ALLOCA_H])
 #
-# Define NO_CURL if you do not have curl installed.  git-http-pull and
-# git-http-push are not built, and you cannot use http:// and https://
+# Define NO_CURL if you do not have curl installed.  but-http-pull and
+# but-http-push are not built, and you cannot use http:// and https://
 # transports.
 #
 # Define CURLDIR=/foo/bar if your curl header and library files are in
@@ -317,14 +317,14 @@ AS_HELP_STRING([--with-curl],[support http(s):// transports (default is YES)])
 AS_HELP_STRING([],           [ARG can be also prefix for curl library and headers]),
 GIT_PARSE_WITH(curl))
 #
-# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# Define NO_EXPAT if you do not have expat installed.  but-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 #
 # Define EXPATDIR=/foo/bar if your expat header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 AC_ARG_WITH(expat,
 AS_HELP_STRING([--with-expat],
-[support git-push using http:// and https:// transports via WebDAV (default is YES)])
+[support but-push using http:// and https:// transports via WebDAV (default is YES)])
 AS_HELP_STRING([],            [ARG can be also prefix for expat library and headers]),
 GIT_PARSE_WITH(expat))
 #
@@ -354,28 +354,28 @@ GIT_PARSE_WITH(iconv))
 
 ## --enable-FEATURE[=ARG] and --disable-FEATURE
 #
-# Define USE_NSEC below if you want git to care about sub-second file mtimes
+# Define USE_NSEC below if you want but to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
 #
-# Define USE_STDEV below if you want git to care about the underlying device
+# Define USE_STDEV below if you want but to care about the underlying device
 # change being considered an inode change from the update-index perspective.
 
 #
 # Allow user to set ETC_GITCONFIG variable
-GIT_PARSE_WITH_SET_MAKE_VAR(gitconfig, ETC_GITCONFIG,
-			Use VALUE instead of /etc/gitconfig as the
-			global git configuration file.
+GIT_PARSE_WITH_SET_MAKE_VAR(butconfig, ETC_GITCONFIG,
+			Use VALUE instead of /etc/butconfig as the
+			global but configuration file.
 			If VALUE is not fully qualified it will be interpreted
 			as a path relative to the computed prefix at runtime.)
 
 #
 # Allow user to set ETC_GITATTRIBUTES variable
-GIT_PARSE_WITH_SET_MAKE_VAR(gitattributes, ETC_GITATTRIBUTES,
-			Use VALUE instead of /etc/gitattributes as the
-			global git attributes file.
+GIT_PARSE_WITH_SET_MAKE_VAR(butattributes, ETC_GITATTRIBUTES,
+			Use VALUE instead of /etc/butattributes as the
+			global but attributes file.
 			If VALUE is not fully qualified it will be interpreted
 			as a path relative to the computed prefix at runtime.)
 
@@ -383,14 +383,14 @@ GIT_PARSE_WITH_SET_MAKE_VAR(gitattributes, ETC_GITATTRIBUTES,
 # Allow user to set the default pager
 GIT_PARSE_WITH_SET_MAKE_VAR(pager, DEFAULT_PAGER,
 			Use VALUE as the fall-back pager instead of 'less'.
-			This is used by things like 'git log' when the user
+			This is used by things like 'but log' when the user
 			does not specify a pager to use through alternate
 			methods. eg: /usr/bin/pager)
 #
 # Allow user to set the default editor
 GIT_PARSE_WITH_SET_MAKE_VAR(editor, DEFAULT_EDITOR,
 			Use VALUE as the fall-back editor instead of 'vi'.
-			This is used by things like 'git cummit' when the user
+			This is used by things like 'but cummit' when the user
 			does not specify a preferred editor through other
 			methods. eg: /usr/bin/editor)
 
@@ -429,40 +429,40 @@ esac
 GIT_CONF_SUBST([INLINE])
 
 # which switch to pass runtime path to dynamic libraries to the linker
-AC_CACHE_CHECK([if linker supports -R], git_cv_ld_dashr, [
+AC_CACHE_CHECK([if linker supports -R], but_cv_ld_dashr, [
    SAVE_LDFLAGS="${LDFLAGS}"
    LDFLAGS="${SAVE_LDFLAGS} -R /"
-   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_dashr=yes], [git_cv_ld_dashr=no])
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [but_cv_ld_dashr=yes], [but_cv_ld_dashr=no])
    LDFLAGS="${SAVE_LDFLAGS}"
 ])
-if test "$git_cv_ld_dashr" = "yes"; then
+if test "$but_cv_ld_dashr" = "yes"; then
    CC_LD_DYNPATH=-R
 else
-   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], git_cv_ld_wl_rpath, [
+   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], but_cv_ld_wl_rpath, [
       SAVE_LDFLAGS="${LDFLAGS}"
       LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
-      AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_wl_rpath=yes], [git_cv_ld_wl_rpath=no])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [but_cv_ld_wl_rpath=yes], [but_cv_ld_wl_rpath=no])
       LDFLAGS="${SAVE_LDFLAGS}"
    ])
-   if test "$git_cv_ld_wl_rpath" = "yes"; then
+   if test "$but_cv_ld_wl_rpath" = "yes"; then
       CC_LD_DYNPATH=-Wl,-rpath,
    else
-      AC_CACHE_CHECK([if linker supports -rpath], git_cv_ld_rpath, [
+      AC_CACHE_CHECK([if linker supports -rpath], but_cv_ld_rpath, [
          SAVE_LDFLAGS="${LDFLAGS}"
          LDFLAGS="${SAVE_LDFLAGS} -rpath /"
-         AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_rpath=yes], [git_cv_ld_rpath=no])
+         AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [but_cv_ld_rpath=yes], [but_cv_ld_rpath=no])
          LDFLAGS="${SAVE_LDFLAGS}"
       ])
-      if test "$git_cv_ld_rpath" = "yes"; then
+      if test "$but_cv_ld_rpath" = "yes"; then
          CC_LD_DYNPATH=-rpath
       else
-         AC_CACHE_CHECK([if linker supports -Wl,+b,], git_cv_ld_wl_b, [
+         AC_CACHE_CHECK([if linker supports -Wl,+b,], but_cv_ld_wl_b, [
             SAVE_LDFLAGS="${LDFLAGS}"
             LDFLAGS="${SAVE_LDFLAGS} -Wl,+b,/"
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_wl_b=yes], [git_cv_ld_wl_b=no])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [but_cv_ld_wl_b=yes], [but_cv_ld_wl_b=no])
             LDFLAGS="${SAVE_LDFLAGS}"
          ])
-         if test "$git_cv_ld_wl_b" = "yes"; then
+         if test "$but_cv_ld_wl_b" = "yes"; then
             CC_LD_DYNPATH=-Wl,+b,
           else
              CC_LD_DYNPATH=
@@ -545,8 +545,8 @@ GIT_CONF_SUBST([USE_LIBPCRE2])
 fi
 
 #
-# Define NO_CURL if you do not have libcurl installed.  git-http-pull and
-# git-http-push are not built, and you cannot use http:// and https://
+# Define NO_CURL if you do not have libcurl installed.  but-http-pull and
+# but-http-push are not built, and you cannot use http:// and https://
 # transports.
 
 GIT_STASH_FLAGS($CURLDIR)
@@ -581,7 +581,7 @@ fi
 
 
 #
-# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# Define NO_EXPAT if you do not have expat installed.  but-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 
 GIT_STASH_FLAGS($EXPATDIR)
@@ -862,7 +862,7 @@ AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 TYPE_SOCKLEN_T
 case $ac_cv_type_socklen_t in
   yes)	SOCKLEN_T='';;
-  *)  	SOCKLEN_T=$git_cv_socklen_t_equiv;;
+  *)  	SOCKLEN_T=$but_cv_socklen_t_equiv;;
 esac
 GIT_CONF_SUBST([SOCKLEN_T])
 
@@ -1189,7 +1189,7 @@ AC_COMPILE_IFELSE([BSD_SYSCTL_SRC],
 GIT_CONF_SUBST([HAVE_BSD_SYSCTL])
 
 ## Other checks.
-# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
+# Define NO_SYMLINK_HEAD if you never want .but/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
 # Define NO_PTHREADS if we do not have pthreads.

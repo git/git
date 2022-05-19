@@ -45,11 +45,11 @@ Use
 You can try out the diff-highlight program with:
 
 ---------------------------------------------
-git log -p --color | /path/to/diff-highlight
+but log -p --color | /path/to/diff-highlight
 ---------------------------------------------
 
 If you want to use it all the time, drop it in your $PATH and put the
-following in your git configuration:
+following in your but configuration:
 
 ---------------------------------------------
 [pager]
@@ -62,7 +62,7 @@ following in your git configuration:
 Color Config
 ------------
 
-You can configure the highlight colors and attributes using git's
+You can configure the highlight colors and attributes using but's
 config. The colors for "old" and "new" lines can be specified
 independently. There are two "modes" of configuration:
 

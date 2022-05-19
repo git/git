@@ -1,7 +1,7 @@
 /*
- * Builtin "git pull"
+ * Builtin "but pull"
  *
- * Based on git-pull.sh by Junio C Hamano
+ * Based on but-pull.sh by Junio C Hamano
  *
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
@@ -64,7 +64,7 @@ static int parse_opt_rebase(const struct option *opt, const char *arg, int unset
 }
 
 static const char * const pull_usage[] = {
-	N_("git pull [<options>] [<repository> [<refspec>...]]"),
+	N_("but pull [<options>] [<repository> [<refspec>...]]"),
 	NULL
 };
 
@@ -73,7 +73,7 @@ static int opt_verbosity;
 static char *opt_progress;
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 
-/* Options passed to git-merge or git-rebase */
+/* Options passed to but-merge or but-rebase */
 static enum rebase_type opt_rebase = -1;
 static char *opt_diffstat;
 static char *opt_log;
@@ -93,7 +93,7 @@ static struct strvec opt_strategy_opts = STRVEC_INIT;
 static char *opt_gpg_sign;
 static int opt_allow_unrelated_histories;
 
-/* Options passed to git-fetch */
+/* Options passed to but-fetch */
 static char *opt_all;
 static char *opt_append;
 static char *opt_upload_pack;
@@ -124,7 +124,7 @@ static struct option pull_options[] = {
 		   N_("control for recursive fetching of submodules"),
 		   PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules),
 
-	/* Options passed to git-merge or git-rebase */
+	/* Options passed to but-merge or but-rebase */
 	OPT_GROUP(N_("Options related to merging")),
 	OPT_CALLBACK_F('r', "rebase", &opt_rebase,
 		"(false|true|merges|interactive)",
@@ -183,13 +183,13 @@ static struct option pull_options[] = {
 		    &opt_allow_unrelated_histories,
 		    N_("allow merging unrelated histories"), 1),
 
-	/* Options passed to git-fetch */
+	/* Options passed to but-fetch */
 	OPT_GROUP(N_("Options related to fetching")),
 	OPT_PASSTHRU(0, "all", &opt_all, NULL,
 		N_("fetch from all remotes"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU('a', "append", &opt_append, NULL,
-		N_("append to .git/FETCH_HEAD instead of overwriting"),
+		N_("append to .but/FETCH_HEAD instead of overwriting"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "upload-pack", &opt_upload_pack, N_("path"),
 		N_("path to upload pack on remote end"),
@@ -225,7 +225,7 @@ static struct option pull_options[] = {
 		N_("convert to a complete repository"),
 		PARSE_OPT_NONEG | PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "update-shallow", &opt_update_shallow, NULL,
-		N_("accept refs that update .git/shallow"),
+		N_("accept refs that update .but/shallow"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "refmap", &opt_refmap, N_("refmap"),
 		N_("specify fetch refmap"),
@@ -246,7 +246,7 @@ static struct option pull_options[] = {
 	OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
 	OPT_PASSTHRU(0, "set-upstream", &set_upstream, NULL,
-		N_("set upstream for git pull/fetch"),
+		N_("set upstream for but pull/fetch"),
 		PARSE_OPT_NOARG),
 
 	OPT_END()
@@ -305,10 +305,10 @@ static const char *config_get_ff(void)
 {
 	const char *value;
 
-	if (git_config_get_value("pull.ff", &value))
+	if (but_config_get_value("pull.ff", &value))
 		return NULL;
 
-	switch (git_parse_maybe_bool(value)) {
+	switch (but_parse_maybe_bool(value)) {
 	case 0:
 		return "--no-ff";
 	case 1:
@@ -336,7 +336,7 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 	if (curr_branch) {
 		char *key = xstrfmt("branch.%s.rebase", curr_branch->name);
 
-		if (!git_config_get_value(key, &value)) {
+		if (!but_config_get_value(key, &value)) {
 			enum rebase_type ret = parse_config_rebase(key, value, 1);
 			free(key);
 			return ret;
@@ -345,7 +345,7 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 		free(key);
 	}
 
-	if (!git_config_get_value("pull.rebase", &value))
+	if (!but_config_get_value("pull.rebase", &value))
 		return parse_config_rebase("pull.rebase", value, 1);
 
 	*rebase_unspecified = 1;
@@ -356,26 +356,26 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 /**
  * Read config variables.
  */
-static int git_pull_config(const char *var, const char *value, void *cb)
+static int but_pull_config(const char *var, const char *value, void *cb)
 {
 	int status;
 
 	if (!strcmp(var, "rebase.autostash")) {
-		config_autostash = git_config_bool(var, value);
+		config_autostash = but_config_bool(var, value);
 		return 0;
 	} else if (!strcmp(var, "submodule.recurse")) {
-		recurse_submodules = git_config_bool(var, value) ?
+		recurse_submodules = but_config_bool(var, value) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
 		return 0;
 	} else if (!strcmp(var, "gpg.mintrustlevel")) {
 		check_trust_level = 0;
 	}
 
-	status = git_gpg_config(var, value, cb);
+	status = but_gpg_config(var, value, cb);
 	if (status)
 		return status;
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 /**
@@ -384,7 +384,7 @@ static int git_pull_config(const char *var, const char *value, void *cb)
  */
 static void get_merge_heads(struct oid_array *merge_heads)
 {
-	const char *filename = git_path_fetch_head(the_repository);
+	const char *filename = but_path_fetch_head(the_repository);
 	FILE *fp;
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
@@ -462,9 +462,9 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
-		fprintf_ln(stderr, _("See git-pull(1) for details."));
+		fprintf_ln(stderr, _("See but-pull(1) for details."));
 		fprintf(stderr, "\n");
-		fprintf_ln(stderr, "    git pull %s %s", _("<remote>"), _("<branch>"));
+		fprintf_ln(stderr, "    but pull %s %s", _("<remote>"), _("<branch>"));
 		fprintf(stderr, "\n");
 	} else if (!curr_branch->merge_nr) {
 		const char *remote_name = NULL;
@@ -477,13 +477,13 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
-		fprintf_ln(stderr, _("See git-pull(1) for details."));
+		fprintf_ln(stderr, _("See but-pull(1) for details."));
 		fprintf(stderr, "\n");
-		fprintf_ln(stderr, "    git pull %s %s", _("<remote>"), _("<branch>"));
+		fprintf_ln(stderr, "    but pull %s %s", _("<remote>"), _("<branch>"));
 		fprintf(stderr, "\n");
 		fprintf_ln(stderr, _("If you wish to set tracking information for this branch you can do so with:"));
 		fprintf(stderr, "\n");
-		fprintf_ln(stderr, "    git branch --set-upstream-to=%s/%s %s\n",
+		fprintf_ln(stderr, "    but branch --set-upstream-to=%s/%s %s\n",
 				remote_name, _("<branch>"), curr_branch->name);
 	} else
 		fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
@@ -509,7 +509,7 @@ static void parse_repo_refspecs(int argc, const char **argv, const char **repo,
 }
 
 /**
- * Runs git-fetch, returning its exit status. `repo` and `refspecs` are the
+ * Runs but-fetch, returning its exit status. `repo` and `refspecs` are the
  * repository and refspecs to fetch, or NULL if they are not provided.
  */
 static int run_fetch(const char *repo, const char **refspecs)
@@ -524,7 +524,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 	if (opt_progress)
 		strvec_push(&args, opt_progress);
 
-	/* Options passed to git-fetch */
+	/* Options passed to but-fetch */
 	if (opt_all)
 		strvec_push(&args, opt_all);
 	if (opt_append)
@@ -625,7 +625,7 @@ static int rebase_submodules(void)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	cp.no_stdin = 1;
 	strvec_pushl(&cp.args, "submodule", "update",
 		     "--recursive", "--rebase", NULL);
@@ -638,7 +638,7 @@ static int update_submodules(void)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 	cp.no_stdin = 1;
 	strvec_pushl(&cp.args, "submodule", "update",
 		     "--recursive", "--checkout", NULL);
@@ -648,7 +648,7 @@ static int update_submodules(void)
 }
 
 /**
- * Runs git-merge, returning its exit status.
+ * Runs but-merge, returning its exit status.
  */
 static int run_merge(void)
 {
@@ -662,7 +662,7 @@ static int run_merge(void)
 	if (opt_progress)
 		strvec_push(&args, opt_progress);
 
-	/* Options passed to git-merge */
+	/* Options passed to but-merge */
 	if (opt_diffstat)
 		strvec_push(&args, opt_diffstat);
 	if (opt_log)
@@ -797,7 +797,7 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 		     remote_branch, curr_branch->name, NULL);
 	cp.no_stdin = 1;
 	cp.no_stderr = 1;
-	cp.git_cmd = 1;
+	cp.but_cmd = 1;
 
 	ret = capture_command(&cp, &sb, GIT_MAX_HEXSZ);
 	if (ret)
@@ -844,9 +844,9 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 }
 
 /**
- * Given the current HEAD oid, the merge head returned from git-fetch and the
+ * Given the current HEAD oid, the merge head returned from but-fetch and the
  * fork point calculated by get_rebase_fork_point(), compute the <newbase> and
- * <upstream> arguments to use for the upcoming git-rebase invocation.
+ * <upstream> arguments to use for the upcoming but-rebase invocation.
  */
 static int get_rebase_newbase_and_upstream(struct object_id *newbase,
 		struct object_id *upstream,
@@ -872,7 +872,7 @@ static int get_rebase_newbase_and_upstream(struct object_id *newbase,
 
 /**
  * Given the <newbase> and <upstream> calculated by
- * get_rebase_newbase_and_upstream(), runs git-rebase with the
+ * get_rebase_newbase_and_upstream(), runs but-rebase with the
  * appropriate arguments and returns its exit status.
  */
 static int run_rebase(const struct object_id *newbase,
@@ -886,7 +886,7 @@ static int run_rebase(const struct object_id *newbase,
 	/* Shared options */
 	argv_push_verbosity(&args);
 
-	/* Options passed to git-rebase */
+	/* Options passed to but-rebase */
 	if (opt_rebase == REBASE_MERGES)
 		strvec_push(&args, "--rebase-merges");
 	else if (opt_rebase == REBASE_INTERACTIVE)
@@ -970,11 +970,11 @@ static void show_advice_pull_non_ff(void)
 		 "You can do so by running one of the following commands sometime before\n"
 		 "your next pull:\n"
 		 "\n"
-		 "  git config pull.rebase false  # merge\n"
-		 "  git config pull.rebase true   # rebase\n"
-		 "  git config pull.ff only       # fast-forward only\n"
+		 "  but config pull.rebase false  # merge\n"
+		 "  but config pull.rebase true   # rebase\n"
+		 "  but config pull.ff only       # fast-forward only\n"
 		 "\n"
-		 "You can replace \"git config\" with \"git config --global\" to set a default\n"
+		 "You can replace \"but config\" with \"but config --global\" to set a default\n"
 		 "preference for all repositories. You can also pass --rebase, --no-rebase,\n"
 		 "or --ff-only on the command line to override the configured default per\n"
 		 "invocation.\n"));
@@ -993,8 +993,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
-	git_config(git_pull_config, NULL);
-	if (the_repository->gitdir) {
+	but_config(but_pull_config, NULL);
+	if (the_repository->butdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
 	}
@@ -1033,7 +1033,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");
 
-	if (file_exists(git_path_merge_head(the_repository)))
+	if (file_exists(but_path_merge_head(the_repository)))
 		die_conclude_merge();
 
 	if (get_oid("HEAD", &orig_head))
@@ -1082,9 +1082,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 					  &curr_head, 0))
 			die(_("Cannot fast-forward your working tree.\n"
 				"After making sure that you saved anything precious from\n"
-				"$ git diff %s\n"
+				"$ but diff %s\n"
 				"output, run\n"
-				"$ git reset --hard\n"
+				"$ but reset --hard\n"
 				"to recover."), oid_to_hex(&orig_head));
 	}
 

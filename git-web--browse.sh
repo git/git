@@ -1,31 +1,31 @@
 #!/bin/sh
 #
 # This program launch a web browser on the html page
-# describing a git command.
+# describing a but command.
 #
 # Copyright (c) 2007 Christian Couder
 # Copyright (c) 2006 Theodore Y. Ts'o
 #
-# This file is heavily stolen from git-mergetool.sh, by
+# This file is heavily stolen from but-mergetool.sh, by
 # Theodore Y. Ts'o (thanks) that is:
 #
 # Copyright (c) 2006 Theodore Y. Ts'o
 #
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Junio C Hamano or any other official
-# git maintainer.
+# but maintainer.
 #
 
 USAGE='[--browser=browser|--tool=browser] [--config=conf.var] url/file ...'
 
-# This must be capable of running outside of git directory, so
-# the vanilla git-sh-setup should not be used.
+# This must be capable of running outside of but directory, so
+# the vanilla but-sh-setup should not be used.
 NONGIT_OK=Yes
-. git-sh-setup
+. but-sh-setup
 
 valid_custom_tool()
 {
-	browser_cmd="$(git config "browser.$1.cmd")"
+	browser_cmd="$(but config "browser.$1.cmd")"
 	test -n "$browser_cmd"
 }
 
@@ -43,7 +43,7 @@ valid_tool() {
 }
 
 init_browser_path() {
-	browser_path=$(git config "browser.$1.path")
+	browser_path=$(but config "browser.$1.path")
 	if test -z "$browser_path" &&
 	   test "$1" = chromium &&
 	   type chromium-browser >/dev/null 2>&1
@@ -100,11 +100,11 @@ then
 	for opt in "$conf" "web.browser"
 	do
 		test -z "$opt" && continue
-		browser="$(git config $opt)"
+		browser="$(but config $opt)"
 		test -z "$browser" || break
 	done
 	if test -n "$browser" && ! valid_tool "$browser"; then
-		echo >&2 "git config option $opt set to unknown browser: $browser"
+		echo >&2 "but config option $opt set to unknown browser: $browser"
 		echo >&2 "Resetting to default..."
 		unset browser
 	fi

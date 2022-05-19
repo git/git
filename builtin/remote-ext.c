@@ -4,7 +4,7 @@
 #include "pkt-line.h"
 
 static const char usage_msg[] =
-	"git remote-ext <remote> <url>";
+	"but remote-ext <remote> <url>";
 
 /*
  * URL syntax:
@@ -12,21 +12,21 @@ static const char usage_msg[] =
  *	Special characters:
  *	'% ': Literal space in argument.
  *	'%%': Literal percent sign.
- *	'%S': Name of service (git-upload-pack/git-upload-archive/
- *		git-receive-pack.
- *	'%s': Same as \s, but with possible git- prefix stripped.
+ *	'%S': Name of service (but-upload-pack/but-upload-archive/
+ *		but-receive-pack.
+ *	'%s': Same as \s, but with possible but- prefix stripped.
  *	'%G': Only allowed as first 'character' of argument. Do not pass this
  *		Argument to command, instead send this as name of repository
- *		in in-line git://-style request (also activates sending this
+ *		in in-line but://-style request (also activates sending this
  *		style of request).
  *	'%V': Only allowed as first 'character' of argument. Used in
  *		conjunction with '%G': Do not pass this argument to command,
- *		instead send this as vhost in git://-style request (note: does
- *		not activate sending git:// style request).
+ *		instead send this as vhost in but://-style request (note: does
+ *		not activate sending but:// style request).
  */
 
-static char *git_req;
-static char *git_req_vhost;
+static char *but_req;
+static char *but_req_vhost;
 
 static char *strip_escapes(const char *str, const char *service,
 	const char **next)
@@ -37,7 +37,7 @@ static char *strip_escapes(const char *str, const char *service,
 	const char *service_noprefix = service;
 	struct strbuf ret = STRBUF_INIT;
 
-	skip_prefix(service_noprefix, "git-", &service_noprefix);
+	skip_prefix(service_noprefix, "but-", &service_noprefix);
 
 	/* Pass the service to command. */
 	setenv("GIT_EXT_SERVICE", service, 1);
@@ -107,10 +107,10 @@ static char *strip_escapes(const char *str, const char *service,
 	}
 	switch (special) {
 	case 'G':
-		git_req = strbuf_detach(&ret, NULL);
+		but_req = strbuf_detach(&ret, NULL);
 		return NULL;
 	case 'V':
-		git_req_vhost = strbuf_detach(&ret, NULL);
+		but_req_vhost = strbuf_detach(&ret, NULL);
 		return NULL;
 	default:
 		return strbuf_detach(&ret, NULL);
@@ -127,7 +127,7 @@ static void parse_argv(struct strvec *out, const char *arg, const char *service)
 	}
 }
 
-static void send_git_request(int stdin_fd, const char *serv, const char *repo,
+static void send_but_request(int stdin_fd, const char *serv, const char *repo,
 	const char *vhost)
 {
 	if (!vhost)
@@ -150,8 +150,8 @@ static int run_child(const char *arg, const char *service)
 	if (start_command(&child) < 0)
 		die("Can't run specified command");
 
-	if (git_req)
-		send_git_request(child.in, service, git_req, git_req_vhost);
+	if (but_req)
+		send_but_request(child.in, service, but_req, but_req_vhost);
 
 	r = bidirectional_transfer_loop(child.out, child.in);
 	if (!r)

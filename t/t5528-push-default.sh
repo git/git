@@ -7,21 +7,21 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup bare remotes' '
-	git init --bare repo1 &&
-	git remote add parent1 repo1 &&
-	git init --bare repo2 &&
-	git remote add parent2 repo2 &&
+	but init --bare repo1 &&
+	but remote add parent1 repo1 &&
+	but init --bare repo2 &&
+	but remote add parent2 repo2 &&
 	test_cummit one &&
-	git push parent1 HEAD &&
-	git push parent2 HEAD
+	but push parent1 HEAD &&
+	but push parent2 HEAD
 '
 
 # $1 = local revision
 # $2 = remote revision (tested to be equal to the local one)
 # $3 = [optional] repo to check for actual output (repo1 by default)
 check_pushed_cummit () {
-	git log -1 --format='%h %s' "$1" >expect &&
-	git --git-dir="${3:-repo1}" log -1 --format='%h %s' "$2" >actual &&
+	but log -1 --format='%h %s' "$1" >expect &&
+	but --but-dir="${3:-repo1}" log -1 --format='%h %s' "$2" >actual &&
 	test_cmp expect actual
 }
 
@@ -29,16 +29,16 @@ check_pushed_cummit () {
 # $2 = expected target branch for the push
 # $3 = [optional] repo to check for actual output (repo1 by default)
 test_push_success () {
-	git ${1:+-c} ${1:+push.default="$1"} push &&
+	but ${1:+-c} ${1:+push.default="$1"} push &&
 	check_pushed_commit HEAD "$2" "$3"
 }
 
 # $1 = push.default value
 # check that push fails and does not modify any remote branch
 test_push_failure () {
-	git --git-dir=repo1 log --no-walk --format='%h %s' --all >expect &&
-	test_must_fail git ${1:+-c} ${1:+push.default="$1"} push &&
-	git --git-dir=repo1 log --no-walk --format='%h %s' --all >actual &&
+	but --but-dir=repo1 log --no-walk --format='%h %s' --all >expect &&
+	test_must_fail but ${1:+-c} ${1:+push.default="$1"} push &&
+	but --but-dir=repo1 log --no-walk --format='%h %s' --all >actual &&
 	test_cmp expect actual
 }
 
@@ -63,7 +63,7 @@ test_pushdefault_workflow () {
 }
 
 test_expect_success '"upstream" pushes to configured upstream' '
-	git checkout main &&
+	but checkout main &&
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
 	test_cummit two &&
@@ -71,14 +71,14 @@ test_expect_success '"upstream" pushes to configured upstream' '
 '
 
 test_expect_success '"upstream" does not push on unconfigured remote' '
-	git checkout main &&
+	but checkout main &&
 	test_unconfig branch.main.remote &&
 	test_cummit three &&
 	test_push_failure upstream
 '
 
 test_expect_success '"upstream" does not push on unconfigured branch' '
-	git checkout main &&
+	but checkout main &&
 	test_config branch.main.remote parent1 &&
 	test_unconfig branch.main.merge &&
 	test_cummit four &&
@@ -86,32 +86,32 @@ test_expect_success '"upstream" does not push on unconfigured branch' '
 '
 
 test_expect_success '"upstream" does not push when remotes do not match' '
-	git checkout main &&
+	but checkout main &&
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
 	test_config push.default upstream &&
 	test_cummit five &&
-	test_must_fail git push parent2
+	test_must_fail but push parent2
 '
 
 test_expect_success 'push from/to new branch with upstream, matching and simple' '
-	git checkout -b new-branch &&
+	but checkout -b new-branch &&
 	test_push_failure simple &&
 	test_push_failure matching &&
 	test_push_failure upstream
 '
 
 test_expect_success '"matching" fails if none match' '
-	git init --bare empty &&
-	test_must_fail git push empty : 2>actual &&
+	but init --bare empty &&
+	test_must_fail but push empty : 2>actual &&
 	test_i18ngrep "Perhaps you should specify a branch" actual
 '
 
 test_expect_success 'push ambiguously named branch with upstream, matching and simple' '
-	git checkout -b ambiguous &&
+	but checkout -b ambiguous &&
 	test_config branch.ambiguous.remote parent1 &&
 	test_config branch.ambiguous.merge refs/heads/ambiguous &&
-	git tag ambiguous &&
+	but tag ambiguous &&
 	test_push_success simple ambiguous &&
 	test_push_success matching ambiguous &&
 	test_push_success upstream ambiguous
@@ -119,13 +119,13 @@ test_expect_success 'push ambiguously named branch with upstream, matching and s
 
 test_expect_success 'push from/to new branch with current creates remote branch' '
 	test_config branch.new-branch.remote repo1 &&
-	git checkout new-branch &&
+	but checkout new-branch &&
 	test_push_success current new-branch
 '
 
 test_expect_success 'push to existing branch, with no upstream configured' '
 	test_config branch.main.remote repo1 &&
-	git checkout main &&
+	but checkout main &&
 	test_push_failure simple &&
 	test_push_failure upstream
 '
@@ -133,7 +133,7 @@ test_expect_success 'push to existing branch, with no upstream configured' '
 test_expect_success 'push to existing branch, upstream configured with same name' '
 	test_config branch.main.remote repo1 &&
 	test_config branch.main.merge refs/heads/main &&
-	git checkout main &&
+	but checkout main &&
 	test_cummit six &&
 	test_push_success upstream main &&
 	test_cummit seven &&
@@ -143,14 +143,14 @@ test_expect_success 'push to existing branch, upstream configured with same name
 test_expect_success 'push to existing branch, upstream configured with different name' '
 	test_config branch.main.remote repo1 &&
 	test_config branch.main.merge refs/heads/other-name &&
-	git checkout main &&
+	but checkout main &&
 	test_cummit eight &&
 	test_push_success upstream other-name &&
 	test_cummit nine &&
 	test_push_failure simple &&
-	git --git-dir=repo1 log -1 --format="%h %s" "other-name" >expect-other-name &&
+	but --but-dir=repo1 log -1 --format="%h %s" "other-name" >expect-other-name &&
 	test_push_success current main &&
-	git --git-dir=repo1 log -1 --format="%h %s" "other-name" >actual-other-name &&
+	but --but-dir=repo1 log -1 --format="%h %s" "other-name" >actual-other-name &&
 	test_cmp expect-other-name actual-other-name
 '
 

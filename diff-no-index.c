@@ -234,7 +234,7 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 }
 
 static const char * const diff_no_index_usage[] = {
-	N_("git diff --no-index [<options>] <path> <path>"),
+	N_("but diff --no-index [<options>] <path> <path>"),
 	NULL
 };
 
@@ -259,7 +259,7 @@ int diff_no_index(struct rev_info *revs,
 			     diff_no_index_usage, 0);
 	if (argc != 2) {
 		if (implicit_no_index)
-			warning(_("Not a git repository. Use --no-index to "
+			warning(_("Not a but repository. Use --no-index to "
 				  "compare two paths outside a working tree"));
 		usage_with_options(diff_no_index_usage, options);
 	}

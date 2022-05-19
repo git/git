@@ -5,10 +5,10 @@ all::
 -include ../../config.mak
 
 prefix ?= /usr/local
-gitexecdir ?= $(prefix)/libexec/git-core
+butexecdir ?= $(prefix)/libexec/but-core
 mandir ?= $(prefix)/share/man
 man1dir ?= $(mandir)/man1
-htmldir ?= $(prefix)/share/doc/git-doc
+htmldir ?= $(prefix)/share/doc/but-doc
 
 ../../GIT-VERSION-FILE: FORCE
 	$(MAKE) -C ../../ GIT-VERSION-FILE
@@ -44,14 +44,14 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
 MANPAGE_XSL   = ../../Documentation/manpage-normal.xsl
 
-GIT_SUBTREE_SH := git-subtree.sh
-GIT_SUBTREE    := git-subtree
+GIT_SUBTREE_SH := but-subtree.sh
+GIT_SUBTREE    := but-subtree
 
-GIT_SUBTREE_DOC := git-subtree.1
-GIT_SUBTREE_XML := git-subtree.xml
-GIT_SUBTREE_TXT := git-subtree.txt
-GIT_SUBTREE_HTML := git-subtree.html
-GIT_SUBTREE_TEST := ../../git-subtree
+GIT_SUBTREE_DOC := but-subtree.1
+GIT_SUBTREE_XML := but-subtree.xml
+GIT_SUBTREE_TXT := but-subtree.txt
+GIT_SUBTREE_HTML := but-subtree.html
+GIT_SUBTREE_TEST := ../../but-subtree
 
 all:: $(GIT_SUBTREE)
 
@@ -66,8 +66,8 @@ man: $(GIT_SUBTREE_DOC)
 html: $(GIT_SUBTREE_HTML)
 
 install: $(GIT_SUBTREE)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
-	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(butexecdir)
+	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(butexecdir)
 
 install-doc: install-man install-html
 
@@ -84,11 +84,11 @@ $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
 
 $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
 	$(ASCIIDOC) -b $(ASCIIDOC_DOCBOOK) -d manpage $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
+		-abut_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
 
 $(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
 	$(ASCIIDOC) -b $(ASCIIDOC_HTML) -d manpage $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
+		-abut_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
 
 $(GIT_SUBTREE_TEST): $(GIT_SUBTREE)
 	cp $< $@

@@ -1,5 +1,5 @@
 /*
- * "git rm" builtin command
+ * "but rm" builtin command
  *
  * Copyright (C) Linus Torvalds 2006
  */
@@ -17,7 +17,7 @@
 #include "pathspec.h"
 
 static const char * const builtin_rm_usage[] = {
-	N_("git rm [<options>] [--] <file>..."),
+	N_("but rm [<options>] [--] <file>..."),
 	NULL
 };
 
@@ -62,7 +62,7 @@ static void print_error_files(struct string_list *files_list,
 	}
 }
 
-static void submodules_absorb_gitdir_if_needed(void)
+static void submodules_absorb_butdir_if_needed(void)
 {
 	int i;
 	for (i = 0; i < list.nr; i++) {
@@ -83,8 +83,8 @@ static void submodules_absorb_gitdir_if_needed(void)
 		    is_empty_dir(name))
 			continue;
 
-		if (!submodule_uses_gitfile(name))
-			absorb_git_dir_into_superproject(name,
+		if (!submodule_uses_butfile(name))
+			absorb_but_dir_into_superproject(name,
 				ABSORB_GITDIR_RECURSE_SUBMODULES);
 	}
 }
@@ -140,7 +140,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		else if (S_ISDIR(st.st_mode)) {
 			/* if a file was removed and it is now a
 			 * directory, that is the same as ENOENT as
-			 * far as git is concerned; we do not track
+			 * far as but is concerned; we do not track
 			 * directories unless they are submodules.
 			 */
 			if (!S_ISGITLINK(ce->ce_mode))
@@ -188,8 +188,8 @@ static int check_local_mod(struct object_id *head, int index_only)
 		/*
 		 * If the index does not match the file in the work
 		 * tree and if it does not match the HEAD cummit
-		 * either, (1) "git rm" without --cached definitely
-		 * will lose information; (2) "git rm --cached" will
+		 * either, (1) "but rm" without --cached definitely
+		 * will lose information; (2) "but rm --cached" will
 		 * lose information unless it is about removing an
 		 * "intent to add" entry.
 		 */
@@ -261,7 +261,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	struct pathspec pathspec;
 	char *seen;
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_rm_options,
 			     builtin_rm_usage, 0);
@@ -311,8 +311,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		list.entry[list.nr].name = xstrdup(ce->name);
 		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
-		    !is_staging_gitmodules_ok(&the_index))
-			die(_("please stage your changes to .gitmodules or stash them to proceed"));
+		    !is_staging_butmodules_ok(&the_index))
+			die(_("please stage your changes to .butmodules or stash them to proceed"));
 	}
 
 	if (pathspec.nr) {
@@ -352,14 +352,14 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	free(seen);
 
 	if (!index_only)
-		submodules_absorb_gitdir_if_needed();
+		submodules_absorb_butdir_if_needed();
 
 	/*
 	 * If not forced, the file, the index and the HEAD (if exists)
 	 * must match; but the file can already been removed, since
 	 * this sequence is a natural "novice" way:
 	 *
-	 *	rm F; git rm F
+	 *	rm F; but rm F
 	 *
 	 * Further, if HEAD cummit exists, "diff-index --cached" must
 	 * report no changes unless forced.
@@ -382,7 +382,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die(_("git rm: unable to remove %s"), path);
+			die(_("but rm: unable to remove %s"), path);
 	}
 
 	if (show_only)
@@ -391,13 +391,13 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	/*
 	 * Then, unless we used "--cached", remove the filenames from
 	 * the workspace. If we fail to remove the first one, we
-	 * abort the "git rm" (but once we've successfully removed
+	 * abort the "but rm" (but once we've successfully removed
 	 * any file at all, we'll go ahead and cummit to it all:
 	 * by then we've already cummitted ourselves and can't fail
 	 * in the middle)
 	 */
 	if (!index_only) {
-		int removed = 0, gitmodules_modified = 0;
+		int removed = 0, butmodules_modified = 0;
 		struct strbuf buf = STRBUF_INIT;
 		int flag = force ? REMOVE_DIR_PURGE_ORIGINAL_CWD : 0;
 		for (i = 0; i < list.nr; i++) {
@@ -409,8 +409,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 					die(_("could not remove '%s'"), path);
 
 				removed = 1;
-				if (!remove_path_from_gitmodules(path))
-					gitmodules_modified = 1;
+				if (!remove_path_from_butmodules(path))
+					butmodules_modified = 1;
 				continue;
 			}
 			if (!remove_path(path)) {
@@ -418,11 +418,11 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!removed)
-				die_errno("git rm: '%s'", path);
+				die_errno("but rm: '%s'", path);
 		}
 		strbuf_release(&buf);
-		if (gitmodules_modified)
-			stage_updated_gitmodules(&the_index);
+		if (butmodules_modified)
+			stage_updated_butmodules(&the_index);
 	}
 
 	if (write_locked_index(&the_index, &lock_file,

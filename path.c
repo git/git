@@ -360,15 +360,15 @@ static int check_common(const char *unmatched, void *value, void *baton)
 	return 0;
 }
 
-static void update_common_dir(struct strbuf *buf, int git_dir_len,
+static void update_common_dir(struct strbuf *buf, int but_dir_len,
 			      const char *common_dir)
 {
-	char *base = buf->buf + git_dir_len;
+	char *base = buf->buf + but_dir_len;
 	int has_lock_suffix = strbuf_strip_suffix(buf, LOCK_SUFFIX);
 
 	init_common_trie();
 	if (trie_find(&common_trie, base, check_common, NULL) > 0)
-		replace_dir(buf, git_dir_len, common_dir);
+		replace_dir(buf, but_dir_len, common_dir);
 
 	if (has_lock_suffix)
 		strbuf_addstr(buf, LOCK_SUFFIX);
@@ -382,7 +382,7 @@ void report_linked_checkout_garbage(void)
 
 	if (!the_repository->different_commondir)
 		return;
-	strbuf_addf(&sb, "%s/", get_git_dir());
+	strbuf_addf(&sb, "%s/", get_but_dir());
 	len = sb.len;
 	for (p = common_list; p->path; p++) {
 		const char *path = p->path;
@@ -396,10 +396,10 @@ void report_linked_checkout_garbage(void)
 	strbuf_release(&sb);
 }
 
-static void adjust_git_path(const struct repository *repo,
-			    struct strbuf *buf, int git_dir_len)
+static void adjust_but_path(const struct repository *repo,
+			    struct strbuf *buf, int but_dir_len)
 {
-	const char *base = buf->buf + git_dir_len;
+	const char *base = buf->buf + but_dir_len;
 	if (is_dir_file(base, "info", "grafts"))
 		strbuf_splice(buf, 0, buf->len,
 			      repo->graft_file, strlen(repo->graft_file));
@@ -407,95 +407,95 @@ static void adjust_git_path(const struct repository *repo,
 		strbuf_splice(buf, 0, buf->len,
 			      repo->index_file, strlen(repo->index_file));
 	else if (dir_prefix(base, "objects"))
-		replace_dir(buf, git_dir_len + 7, repo->objects->odb->path);
-	else if (git_hooks_path && dir_prefix(base, "hooks"))
-		replace_dir(buf, git_dir_len + 5, git_hooks_path);
+		replace_dir(buf, but_dir_len + 7, repo->objects->odb->path);
+	else if (but_hooks_path && dir_prefix(base, "hooks"))
+		replace_dir(buf, but_dir_len + 5, but_hooks_path);
 	else if (repo->different_commondir)
-		update_common_dir(buf, git_dir_len, repo->commondir);
+		update_common_dir(buf, but_dir_len, repo->commondir);
 }
 
-static void strbuf_worktree_gitdir(struct strbuf *buf,
+static void strbuf_worktree_butdir(struct strbuf *buf,
 				   const struct repository *repo,
 				   const struct worktree *wt)
 {
 	if (!wt)
-		strbuf_addstr(buf, repo->gitdir);
+		strbuf_addstr(buf, repo->butdir);
 	else if (!wt->id)
 		strbuf_addstr(buf, repo->commondir);
 	else
-		strbuf_git_common_path(buf, repo, "worktrees/%s", wt->id);
+		strbuf_but_common_path(buf, repo, "worktrees/%s", wt->id);
 }
 
-static void do_git_path(const struct repository *repo,
+static void do_but_path(const struct repository *repo,
 			const struct worktree *wt, struct strbuf *buf,
 			const char *fmt, va_list args)
 {
-	int gitdir_len;
-	strbuf_worktree_gitdir(buf, repo, wt);
+	int butdir_len;
+	strbuf_worktree_butdir(buf, repo, wt);
 	if (buf->len && !is_dir_sep(buf->buf[buf->len - 1]))
 		strbuf_addch(buf, '/');
-	gitdir_len = buf->len;
+	butdir_len = buf->len;
 	strbuf_vaddf(buf, fmt, args);
 	if (!wt)
-		adjust_git_path(repo, buf, gitdir_len);
+		adjust_but_path(repo, buf, butdir_len);
 	strbuf_cleanup_path(buf);
 }
 
-char *repo_git_path(const struct repository *repo,
+char *repo_but_path(const struct repository *repo,
 		    const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(repo, NULL, &path, fmt, args);
+	do_but_path(repo, NULL, &path, fmt, args);
 	va_end(args);
 	return strbuf_detach(&path, NULL);
 }
 
-void strbuf_repo_git_path(struct strbuf *sb,
+void strbuf_repo_but_path(struct strbuf *sb,
 			  const struct repository *repo,
 			  const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(repo, NULL, sb, fmt, args);
+	do_but_path(repo, NULL, sb, fmt, args);
 	va_end(args);
 }
 
-char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
+char *but_path_buf(struct strbuf *buf, const char *fmt, ...)
 {
 	va_list args;
 	strbuf_reset(buf);
 	va_start(args, fmt);
-	do_git_path(the_repository, NULL, buf, fmt, args);
+	do_but_path(the_repository, NULL, buf, fmt, args);
 	va_end(args);
 	return buf->buf;
 }
 
-void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
+void strbuf_but_path(struct strbuf *sb, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(the_repository, NULL, sb, fmt, args);
+	do_but_path(the_repository, NULL, sb, fmt, args);
 	va_end(args);
 }
 
-const char *git_path(const char *fmt, ...)
+const char *but_path(const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(the_repository, NULL, pathname, fmt, args);
+	do_but_path(the_repository, NULL, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
 
-char *git_pathdup(const char *fmt, ...)
+char *but_pathdup(const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(the_repository, NULL, &path, fmt, args);
+	do_but_path(the_repository, NULL, &path, fmt, args);
 	va_end(args);
 	return strbuf_detach(&path, NULL);
 }
@@ -521,12 +521,12 @@ const char *mkpath(const char *fmt, ...)
 	return cleanup_path(pathname->buf);
 }
 
-const char *worktree_git_path(const struct worktree *wt, const char *fmt, ...)
+const char *worktree_but_path(const struct worktree *wt, const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
 	va_start(args, fmt);
-	do_git_path(the_repository, wt, pathname, fmt, args);
+	do_but_path(the_repository, wt, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
@@ -576,30 +576,30 @@ void strbuf_repo_worktree_path(struct strbuf *sb,
 static int do_submodule_path(struct strbuf *buf, const char *path,
 			     const char *fmt, va_list args)
 {
-	struct strbuf git_submodule_common_dir = STRBUF_INIT;
-	struct strbuf git_submodule_dir = STRBUF_INIT;
+	struct strbuf but_submodule_common_dir = STRBUF_INIT;
+	struct strbuf but_submodule_dir = STRBUF_INIT;
 	int ret;
 
-	ret = submodule_to_gitdir(&git_submodule_dir, path);
+	ret = submodule_to_butdir(&but_submodule_dir, path);
 	if (ret)
 		goto cleanup;
 
-	strbuf_complete(&git_submodule_dir, '/');
-	strbuf_addbuf(buf, &git_submodule_dir);
+	strbuf_complete(&but_submodule_dir, '/');
+	strbuf_addbuf(buf, &but_submodule_dir);
 	strbuf_vaddf(buf, fmt, args);
 
-	if (get_common_dir_noenv(&git_submodule_common_dir, git_submodule_dir.buf))
-		update_common_dir(buf, git_submodule_dir.len, git_submodule_common_dir.buf);
+	if (get_common_dir_noenv(&but_submodule_common_dir, but_submodule_dir.buf))
+		update_common_dir(buf, but_submodule_dir.len, but_submodule_common_dir.buf);
 
 	strbuf_cleanup_path(buf);
 
 cleanup:
-	strbuf_release(&git_submodule_dir);
-	strbuf_release(&git_submodule_common_dir);
+	strbuf_release(&but_submodule_dir);
+	strbuf_release(&but_submodule_common_dir);
 	return ret;
 }
 
-char *git_pathdup_submodule(const char *path, const char *fmt, ...)
+char *but_pathdup_submodule(const char *path, const char *fmt, ...)
 {
 	int err;
 	va_list args;
@@ -614,7 +614,7 @@ char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 	return strbuf_detach(&buf, NULL);
 }
 
-int strbuf_git_path_submodule(struct strbuf *buf, const char *path,
+int strbuf_but_path_submodule(struct strbuf *buf, const char *path,
 			      const char *fmt, ...)
 {
 	int err;
@@ -626,7 +626,7 @@ int strbuf_git_path_submodule(struct strbuf *buf, const char *path,
 	return err;
 }
 
-static void do_git_common_path(const struct repository *repo,
+static void do_but_common_path(const struct repository *repo,
 			       struct strbuf *buf,
 			       const char *fmt,
 			       va_list args)
@@ -638,23 +638,23 @@ static void do_git_common_path(const struct repository *repo,
 	strbuf_cleanup_path(buf);
 }
 
-const char *git_common_path(const char *fmt, ...)
+const char *but_common_path(const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
 	va_start(args, fmt);
-	do_git_common_path(the_repository, pathname, fmt, args);
+	do_but_common_path(the_repository, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
 
-void strbuf_git_common_path(struct strbuf *sb,
+void strbuf_but_common_path(struct strbuf *sb,
 			    const struct repository *repo,
 			    const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	do_git_common_path(repo, sb, fmt, args);
+	do_but_common_path(repo, sb, fmt, args);
 	va_end(args);
 }
 
@@ -779,8 +779,8 @@ return_null:
  * (3) "relative/path" to mean cwd relative directory; or
  * (4) "/absolute/path" to mean absolute directory.
  *
- * Unless "strict" is given, we check "%s/.git", "%s", "%s.git/.git", "%s.git"
- * in this order. We select the first one that is a valid git repository, and
+ * Unless "strict" is given, we check "%s/.but", "%s", "%s.but/.but", "%s.but"
+ * in this order. We select the first one that is a valid but repository, and
  * chdir() to it. If none match, or we fail to chdir, we return NULL.
  *
  * If all goes well, we return the directory we used to chdir() (but
@@ -798,9 +798,9 @@ const char *enter_repo(const char *path, int strict)
 
 	if (!strict) {
 		static const char *suffix[] = {
-			"/.git", "", ".git/.git", ".git", NULL,
+			"/.but", "", ".but/.but", ".but", NULL,
 		};
-		const char *gitfile;
+		const char *butfile;
 		int len = strlen(path);
 		int i;
 		while ((1 < len) && (path[len-1] == '/'))
@@ -831,7 +831,7 @@ const char *enter_repo(const char *path, int strict)
 			strbuf_addstr(&used_path, suffix[i]);
 			if (!stat(used_path.buf, &st) &&
 			    (S_ISREG(st.st_mode) ||
-			    (S_ISDIR(st.st_mode) && is_git_directory(used_path.buf)))) {
+			    (S_ISDIR(st.st_mode) && is_but_directory(used_path.buf)))) {
 				strbuf_addstr(&validated_path, suffix[i]);
 				break;
 			}
@@ -839,25 +839,25 @@ const char *enter_repo(const char *path, int strict)
 		}
 		if (!suffix[i])
 			return NULL;
-		gitfile = read_gitfile(used_path.buf);
-		if (gitfile) {
+		butfile = read_butfile(used_path.buf);
+		if (butfile) {
 			strbuf_reset(&used_path);
-			strbuf_addstr(&used_path, gitfile);
+			strbuf_addstr(&used_path, butfile);
 		}
 		if (chdir(used_path.buf))
 			return NULL;
 		path = validated_path.buf;
 	}
 	else {
-		const char *gitfile = read_gitfile(path);
-		if (gitfile)
-			path = gitfile;
+		const char *butfile = read_butfile(path);
+		if (butfile)
+			path = butfile;
 		if (chdir(path))
 			return NULL;
 	}
 
-	if (is_git_directory(".")) {
-		set_git_dir(".", 0);
+	if (is_but_directory(".")) {
+		set_but_dir(".", 0);
 		check_repository_format(NULL);
 		return path;
 	}
@@ -1039,7 +1039,7 @@ const char *relative_path(const char *in, const char *prefix,
  * A simpler implementation of relative_path
  *
  * Get relative path by removing "prefix" from "in". This function
- * first appears in v1.5.6-1-g044bbbc, and makes git_dir shorter
+ * first appears in v1.5.6-1-g044bbbc, and makes but_dir shorter
  * to increase performance when traversing the path to work_tree.
  */
 const char *remove_leading_path(const char *in, const char *prefix)
@@ -1348,61 +1348,61 @@ int daemon_avoid_alias(const char *p)
 }
 
 /*
- * On NTFS, we need to be careful to disallow certain synonyms of the `.git/`
+ * On NTFS, we need to be careful to disallow certain synonyms of the `.but/`
  * directory:
  *
  * - For historical reasons, file names that end in spaces or periods are
- *   automatically trimmed. Therefore, `.git . . ./` is a valid way to refer
- *   to `.git/`.
+ *   automatically trimmed. Therefore, `.but . . ./` is a valid way to refer
+ *   to `.but/`.
  *
  * - For other historical reasons, file names that do not conform to the 8.3
  *   format (up to eight characters for the basename, three for the file
  *   extension, certain characters not allowed such as `+`, etc) are associated
  *   with a so-called "short name", at least on the `C:` drive by default.
- *   Which means that `git~1/` is a valid way to refer to `.git/`.
+ *   Which means that `but~1/` is a valid way to refer to `.but/`.
  *
- *   Note: Technically, `.git/` could receive the short name `git~2` if the
- *   short name `git~1` were already used. In Git, however, we guarantee that
- *   `.git` is the first item in a directory, therefore it will be associated
- *   with the short name `git~1` (unless short names are disabled).
+ *   Note: Technically, `.but/` could receive the short name `but~2` if the
+ *   short name `but~1` were already used. In Git, however, we guarantee that
+ *   `.but` is the first item in a directory, therefore it will be associated
+ *   with the short name `but~1` (unless short names are disabled).
  *
  * - For yet other historical reasons, NTFS supports so-called "Alternate Data
  *   Streams", i.e. metadata associated with a given file, referred to via
  *   `<filename>:<stream-name>:<stream-type>`. There exists a default stream
- *   type for directories, allowing `.git/` to be accessed via
- *   `.git::$INDEX_ALLOCATION/`.
+ *   type for directories, allowing `.but/` to be accessed via
+ *   `.but::$INDEX_ALLOCATION/`.
  *
  * When this function returns 1, it indicates that the specified file/directory
- * name refers to a `.git` file or directory, or to any of these synonyms, and
+ * name refers to a `.but` file or directory, or to any of these synonyms, and
  * Git should therefore not track it.
  *
- * For performance reasons, _all_ Alternate Data Streams of `.git/` are
+ * For performance reasons, _all_ Alternate Data Streams of `.but/` are
  * forbidden, not just `::$INDEX_ALLOCATION`.
  *
- * This function is intended to be used by `git fsck` even on platforms where
+ * This function is intended to be used by `but fsck` even on platforms where
  * the backslash is a regular filename character, therefore it needs to handle
  * backlash characters in the provided `name` specially: they are interpreted
  * as directory separators.
  */
-int is_ntfs_dotgit(const char *name)
+int is_ntfs_dotbut(const char *name)
 {
 	char c;
 
 	/*
-	 * Note that when we don't find `.git` or `git~1` we end up with `name`
+	 * Note that when we don't find `.but` or `but~1` we end up with `name`
 	 * advanced partway through the string. That's okay, though, as we
 	 * return immediately in those cases, without looking at `name` any
 	 * further.
 	 */
 	c = *(name++);
 	if (c == '.') {
-		/* .git */
+		/* .but */
 		if (((c = *(name++)) != 'g' && c != 'G') ||
 		    ((c = *(name++)) != 'i' && c != 'I') ||
 		    ((c = *(name++)) != 't' && c != 'T'))
 			return 0;
 	} else if (c == 'g' || c == 'G') {
-		/* git ~1 */
+		/* but ~1 */
 		if (((c = *(name++)) != 'i' && c != 'I') ||
 		    ((c = *(name++)) != 't' && c != 'T') ||
 		    *(name++) != '~' ||
@@ -1421,14 +1421,14 @@ int is_ntfs_dotgit(const char *name)
 }
 
 static int is_ntfs_dot_generic(const char *name,
-			       const char *dotgit_name,
+			       const char *dotbut_name,
 			       size_t len,
-			       const char *dotgit_ntfs_shortname_prefix)
+			       const char *dotbut_ntfs_shortname_prefix)
 {
 	int saw_tilde;
 	size_t i;
 
-	if ((name[0] == '.' && !strncasecmp(name + 1, dotgit_name, len))) {
+	if ((name[0] == '.' && !strncasecmp(name + 1, dotbut_name, len))) {
 		i = len + 1;
 only_spaces_and_periods:
 		for (;;) {
@@ -1444,7 +1444,7 @@ only_spaces_and_periods:
 	 * Is it a regular NTFS short name, i.e. shortened to 6 characters,
 	 * followed by ~1, ... ~4?
 	 */
-	if (!strncasecmp(name, dotgit_name, 6) && name[6] == '~' &&
+	if (!strncasecmp(name, dotbut_name, 6) && name[6] == '~' &&
 	    name[7] >= '1' && name[7] <= '4') {
 		i = 8;
 		goto only_spaces_and_periods;
@@ -1472,7 +1472,7 @@ only_spaces_and_periods:
 			 * here to make the results of tolower() sane.
 			 */
 			return 0;
-		} else if (tolower(name[i]) != dotgit_ntfs_shortname_prefix[i])
+		} else if (tolower(name[i]) != dotbut_ntfs_shortname_prefix[i])
 			return 0;
 
 	goto only_spaces_and_periods;
@@ -1482,26 +1482,26 @@ only_spaces_and_periods:
  * Inline helper to make sure compiler resolves strlen() on literals at
  * compile time.
  */
-static inline int is_ntfs_dot_str(const char *name, const char *dotgit_name,
-				  const char *dotgit_ntfs_shortname_prefix)
+static inline int is_ntfs_dot_str(const char *name, const char *dotbut_name,
+				  const char *dotbut_ntfs_shortname_prefix)
 {
-	return is_ntfs_dot_generic(name, dotgit_name, strlen(dotgit_name),
-				   dotgit_ntfs_shortname_prefix);
+	return is_ntfs_dot_generic(name, dotbut_name, strlen(dotbut_name),
+				   dotbut_ntfs_shortname_prefix);
 }
 
-int is_ntfs_dotgitmodules(const char *name)
+int is_ntfs_dotbutmodules(const char *name)
 {
-	return is_ntfs_dot_str(name, "gitmodules", "gi7eba");
+	return is_ntfs_dot_str(name, "butmodules", "gi7eba");
 }
 
-int is_ntfs_dotgitignore(const char *name)
+int is_ntfs_dotbutignore(const char *name)
 {
-	return is_ntfs_dot_str(name, "gitignore", "gi250a");
+	return is_ntfs_dot_str(name, "butignore", "gi250a");
 }
 
-int is_ntfs_dotgitattributes(const char *name)
+int is_ntfs_dotbutattributes(const char *name)
 {
-	return is_ntfs_dot_str(name, "gitattributes", "gi7d29");
+	return is_ntfs_dot_str(name, "butattributes", "gi7d29");
 }
 
 int is_ntfs_dotmailmap(const char *name)
@@ -1533,7 +1533,7 @@ char *xdg_config_home_for(const char *subdir, const char *filename)
 
 char *xdg_config_home(const char *filename)
 {
-	return xdg_config_home_for("git", filename);
+	return xdg_config_home_for("but", filename);
 }
 
 char *xdg_cache_home(const char *filename)
@@ -1543,11 +1543,11 @@ char *xdg_cache_home(const char *filename)
 	assert(filename);
 	cache_home = getenv("XDG_CACHE_HOME");
 	if (cache_home && *cache_home)
-		return mkpathdup("%s/git/%s", cache_home, filename);
+		return mkpathdup("%s/but/%s", cache_home, filename);
 
 	home = getenv("HOME");
 	if (home)
-		return mkpathdup("%s/.cache/git/%s", home, filename);
+		return mkpathdup("%s/.cache/but/%s", home, filename);
 	return NULL;
 }
 

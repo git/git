@@ -1,7 +1,7 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "strbuf.h"
 
 /**
@@ -13,7 +13,7 @@
  * all trace messages. E.g.:
  *
  * ------------
- * 23:59:59.123456 git.c:312               trace: built-in: git 'foo'
+ * 23:59:59.123456 but.c:312               trace: built-in: but 'foo'
  * 00:00:00.000001 builtin/foo.c:99        foo: some message
  * ------------
  *
@@ -39,25 +39,25 @@
  * print any performance information:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=2 git log -1
+ * GIT_TRACE_PERFORMANCE=2 but log -1
  * ------------
  *
  * you may want to use:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=2 git --no-pager log -1
+ * GIT_TRACE_PERFORMANCE=2 but --no-pager log -1
  * ------------
  *
  * or:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=3 3>&2 git log -1
+ * GIT_TRACE_PERFORMANCE=3 3>&2 but log -1
  * ------------
  *
  * or:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=/path/to/log/file git log -1
+ * GIT_TRACE_PERFORMANCE=/path/to/log/file but log -1
  * ------------
  *
  */

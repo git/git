@@ -1,25 +1,25 @@
-git-notes(1)
+but-notes(1)
 ============
 
 NAME
 ----
-git-notes - Add or inspect object notes
+but-notes - Add or inspect object notes
 
 SYNOPSIS
 --------
 [verse]
-'git notes' [list [<object>]]
-'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
-'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-'git notes' edit [--allow-empty] [<object>]
-'git notes' show [<object>]
-'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
-'git notes' merge --cummit [-v | -q]
-'git notes' merge --abort [-v | -q]
-'git notes' remove [--ignore-missing] [--stdin] [<object>...]
-'git notes' prune [-n] [-v]
-'git notes' get-ref
+'but notes' [list [<object>]]
+'but notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'but notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
+'but notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'but notes' edit [--allow-empty] [<object>]
+'but notes' show [<object>]
+'but notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
+'but notes' merge --cummit [-v | -q]
+'but notes' merge --abort [-v | -q]
+'but notes' remove [--ignore-missing] [--stdin] [<object>...]
+'but notes' prune [-n] [-v]
+'but notes' get-ref
 
 
 DESCRIPTION
@@ -33,18 +33,18 @@ ENVIRONMENT sections below.  If this ref does not exist, it will be
 quietly created when it is first needed to store a note.
 
 A typical use of notes is to supplement a cummit message without
-changing the cummit itself. Notes can be shown by 'git log' along with
+changing the cummit itself. Notes can be shown by 'but log' along with
 the original cummit message. To distinguish these notes from the
 message stored in the cummit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
 "Notes:" for `refs/notes/cummits`).
 
-Notes can also be added to patches prepared with `git format-patch` by
+Notes can also be added to patches prepared with `but format-patch` by
 using the `--notes` option. Such notes are added as a patch commentary
 after a three dash separator line.
 
-To change which notes are shown by 'git log', see the
-"notes.displayRef" configuration in linkgit:git-log[1].
+To change which notes are shown by 'but log', see the
+"notes.displayRef" configuration in linkbut:but-log[1].
 
 See the "notes.rewrite.<command>" configuration for a way to carry
 notes across commands that rewrite cummits.
@@ -72,7 +72,7 @@ copy::
 	HEAD). Abort if the second object already has notes, or if the first
 	object has none (use -f to overwrite existing notes to the
 	second object). This subcommand is equivalent to:
-	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
+	`but notes add [-f] -C $(but notes list <from-object>) <to-object>`
 +
 In `--stdin` mode, take lines in the format
 +
@@ -103,11 +103,11 @@ merge::
 If conflicts arise and a strategy for automatically resolving
 conflicting notes (see the "NOTES MERGE STRATEGIES" section) is not given,
 the "manual" resolver is used. This resolver checks out the
-conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
+conflicting notes in a special worktree (`.but/NOTES_MERGE_WORKTREE`),
 and instructs the user to manually resolve the conflicts there.
 When done, the user can either finalize the merge with
-'git notes merge --cummit', or abort the merge with
-'git notes merge --abort'.
+'but notes merge --cummit', or abort the merge with
+'but notes merge --abort'.
 
 remove::
 	Remove the notes for given objects (defaults to HEAD). When
@@ -147,7 +147,7 @@ OPTIONS
 -C <object>::
 --reuse-message=<object>::
 	Take the given blob object (for example, another note) as the
-	note message. (Use `git notes copy <object>` instead to
+	note message. (Use `but notes copy <object>` instead to
 	copy notes between objects.)
 
 -c <object>::
@@ -190,16 +190,16 @@ OPTIONS
 	information on each notes merge strategy.
 
 --cummit::
-	Finalize an in-progress 'git notes merge'. Use this option
-	when you have resolved the conflicts that 'git notes merge'
-	stored in .git/NOTES_MERGE_WORKTREE. This amends the partial
-	merge cummit created by 'git notes merge' (stored in
-	.git/NOTES_MERGE_PARTIAL) by adding the notes in
-	.git/NOTES_MERGE_WORKTREE. The notes ref stored in the
-	.git/NOTES_MERGE_REF symref is updated to the resulting cummit.
+	Finalize an in-progress 'but notes merge'. Use this option
+	when you have resolved the conflicts that 'but notes merge'
+	stored in .but/NOTES_MERGE_WORKTREE. This amends the partial
+	merge cummit created by 'but notes merge' (stored in
+	.but/NOTES_MERGE_PARTIAL) by adding the notes in
+	.but/NOTES_MERGE_WORKTREE. The notes ref stored in the
+	.but/NOTES_MERGE_REF symref is updated to the resulting cummit.
 
 --abort::
-	Abort/reset an in-progress 'git notes merge', i.e. a notes merge
+	Abort/reset an in-progress 'but notes merge', i.e. a notes merge
 	with conflicts. This simply removes all files related to the
 	notes merge.
 
@@ -224,19 +224,19 @@ contains "files" whose paths are the object names for the objects
 they describe, with some directory separators included for performance
 reasons footnote:[Permitted pathnames have the form
 'bf'`/`'fe'`/`'30'`/`'...'`/`'680d5a...': a sequence of directory
-names of two hexadecimal digits each followed by a filename with the
+names of two hexadecimal dibuts each followed by a filename with the
 rest of the object ID.].
 
 Every notes change creates a new cummit at the specified notes ref.
 You can therefore inspect the history of the notes by invoking, e.g.,
-`git log -p notes/cummits`.  Currently the cummit message only records
+`but log -p notes/cummits`.  Currently the cummit message only records
 which operation triggered the update, and the cummit authorship is
-determined according to the usual rules (see linkgit:git-cummit[1]).
+determined according to the usual rules (see linkbut:but-cummit[1]).
 These details may change in the future.
 
 It is also permitted for a notes ref to point directly to a tree
 object, in which case the history of the notes can be read with
-`git log -p -g <refname>`.
+`but log -p -g <refname>`.
 
 
 NOTES MERGE STRATEGIES
@@ -244,11 +244,11 @@ NOTES MERGE STRATEGIES
 
 The default notes merge strategy is "manual", which checks out
 conflicting notes in a special work tree for resolving notes conflicts
-(`.git/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
+(`.but/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
 conflicts in that work tree.
 When done, the user can either finalize the merge with
-'git notes merge --cummit', or abort the merge with
-'git notes merge --abort'.
+'but notes merge --cummit', or abort the merge with
+'but notes merge --abort'.
 
 Users may select an automated merge strategy from among the following using
 either -s/--strategy option or configuring notes.mergeStrategy accordingly:
@@ -281,10 +281,10 @@ You can use notes to add annotations with information that was not
 available at the time a cummit was written.
 
 ------------
-$ git notes add -m 'Tested-by: Johannes Sixt <j6t@kdbg.org>' 72a144e2
-$ git show -s 72a144e
+$ but notes add -m 'Tested-by: Johannes Sixt <j6t@kdbg.org>' 72a144e2
+$ but show -s 72a144e
 [...]
-    Signed-off-by: Junio C Hamano <gitster@pobox.com>
+    Signed-off-by: Junio C Hamano <butster@pobox.com>
 
 Notes:
     Tested-by: Johannes Sixt <j6t@kdbg.org>
@@ -292,18 +292,18 @@ Notes:
 
 In principle, a note is a regular Git blob, and any kind of
 (non-)format is accepted.  You can binary-safely create notes from
-arbitrary files using 'git hash-object':
+arbitrary files using 'but hash-object':
 
 ------------
 $ cc *.c
-$ blob=$(git hash-object -w a.out)
-$ git notes --ref=built add --allow-empty -C "$blob" HEAD
+$ blob=$(but hash-object -w a.out)
+$ but notes --ref=built add --allow-empty -C "$blob" HEAD
 ------------
 
-(You cannot simply use `git notes --ref=built add -F a.out HEAD`
+(You cannot simply use `but notes --ref=built add -F a.out HEAD`
 because that is not binary-safe.)
 Of course, it doesn't make much sense to display non-text-format notes
-with 'git log', so if you use such notes, you'll probably need to write
+with 'but log', so if you use such notes, you'll probably need to write
 some special-purpose tools to do something useful with them.
 
 
@@ -334,14 +334,14 @@ notes.displayRef::
 	Which ref (or refs, if a glob or specified more than once), in
 	addition to the default set by `core.notesRef` or
 	`GIT_NOTES_REF`, to read notes from when showing cummit
-	messages with the 'git log' family of commands.
+	messages with the 'but log' family of commands.
 	This setting can be overridden on the command line or by the
 	`GIT_NOTES_DISPLAY_REF` environment variable.
-	See linkgit:git-log[1].
+	See linkbut:but-log[1].
 
 notes.rewrite.<command>::
 	When rewriting cummits with <command> (currently `amend` or
-	`rebase`), if this variable is `false`, git will not copy
+	`rebase`), if this variable is `false`, but will not copy
 	notes from the original to the rewritten cummit.  Defaults to
 	`true`.  See also "`notes.rewriteRef`" below.
 +
@@ -402,4 +402,4 @@ on the `notes.rewrite.<command>` and `notes.rewriteRef` settings.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

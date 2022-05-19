@@ -1,15 +1,15 @@
-git-merge-index(1)
+but-merge-index(1)
 ==================
 
 NAME
 ----
-git-merge-index - Run a merge for files needing merging
+but-merge-index - Run a merge for files needing merging
 
 
 SYNOPSIS
 --------
 [verse]
-'git merge-index' [-o] [-q] <merge-program> (-a | ( [--] <file>...) )
+'but merge-index' [-o] [-q] <merge-program> (-a | ( [--] <file>...) )
 
 DESCRIPTION
 -----------
@@ -37,14 +37,14 @@ OPTIONS
 	failure usually indicates conflicts during the merge). This is for
 	porcelains which might want to emit custom messages.
 
-If 'git merge-index' is called with multiple <file>s (or -a) then it
+If 'but merge-index' is called with multiple <file>s (or -a) then it
 processes them in turn only stopping if merge returns a non-zero exit
 code.
 
 Typically this is run with a script calling Git's imitation of
 the 'merge' command from the RCS package.
 
-A sample script called 'git merge-one-file' is included in the
+A sample script called 'but merge-one-file' is included in the
 distribution.
 
 ALERT ALERT ALERT! The Git "merge object order" is different from the
@@ -55,7 +55,7 @@ original is first. But the argument order to the 3-way merge program
 Examples:
 
 ----
-torvalds@ppc970:~/merge-test> git merge-index cat MM
+torvalds@ppc970:~/merge-test> but merge-index cat MM
 This is MM from the original tree.		# original
 This is modified MM in the branch A.		# merge1
 This is modified MM in the branch B.		# merge2
@@ -65,7 +65,7 @@ This is modified MM in the branch B.		# current contents
 or
 
 ----
-torvalds@ppc970:~/merge-test> git merge-index cat AA MM
+torvalds@ppc970:~/merge-test> but merge-index cat AA MM
 cat: : No such file or directory
 This is added AA in the branch A.
 This is added AA in the branch B.
@@ -73,11 +73,11 @@ This is added AA in the branch B.
 fatal: merge program failed
 ----
 
-where the latter example shows how 'git merge-index' will stop trying to
+where the latter example shows how 'but merge-index' will stop trying to
 merge once anything has returned an error (i.e., `cat` returned an error
 for the AA file, because it didn't exist in the original, and thus
-'git merge-index' didn't even try to merge the MM thing).
+'but merge-index' didn't even try to merge the MM thing).
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

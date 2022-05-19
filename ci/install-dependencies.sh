@@ -6,7 +6,7 @@
 . ${0%/*}/lib.sh
 
 P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
-LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
+LFSWHENCE=https://buthub.com/buthub/but-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
  libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
@@ -25,9 +25,9 @@ ubuntu-latest)
 	popd
 	mkdir --parents "$GIT_LFS_PATH"
 	pushd "$GIT_LFS_PATH"
-		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
+		wget --quiet "$LFSWHENCE/but-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		tar --extract --gunzip --file "but-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		cp but-lfs-$LINUX_GIT_LFS_VERSION/but-lfs .
 	popd
 	;;
 macos-latest)
@@ -40,7 +40,7 @@ macos-latest)
 	brew install --cask --no-quarantine perforce || {
 		# Update the definitions and try again
 		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
-		git -C "$cask_repo" pull --no-stat --ff-only &&
+		but -C "$cask_repo" pull --no-stat --ff-only &&
 		brew install --cask --no-quarantine perforce
 	} ||
 	brew install homebrew/cask/perforce
@@ -85,8 +85,8 @@ then
 	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
 	p4 -V | grep Rev.
 fi
-if type git-lfs >/dev/null
+if type but-lfs >/dev/null
 then
 	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
-	git-lfs version
+	but-lfs version
 fi

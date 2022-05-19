@@ -6,7 +6,7 @@
 #include "refs.h"
 
 static const char * const ls_remote_usage[] = {
-	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+	N_("but ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
 	   "              [-q | --quiet] [--exit-code] [--get-url]\n"
 	   "              [--symref] [<repository> [<refs>...]]"),
 	NULL
@@ -59,9 +59,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("do not print remote URL")),
 		OPT_STRING(0, "upload-pack", &uploadpack, N_("exec"),
-			   N_("path of git-upload-pack on the remote host")),
+			   N_("path of but-upload-pack on the remote host")),
 		{ OPTION_STRING, 0, "exec", &uploadpack, N_("exec"),
-			   N_("path of git-upload-pack on the remote host"),
+			   N_("path of but-upload-pack on the remote host"),
 			   PARSE_OPT_HIDDEN },
 		OPT_BIT('t', "tags", &flags, N_("limit to tags"), REF_TAGS),
 		OPT_BIT('h', "heads", &flags, N_("limit to heads"), REF_HEADS),

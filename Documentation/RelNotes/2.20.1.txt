@@ -12,7 +12,7 @@ Fixes since v2.20
 
  * Portability fix for a recent update to parse-options API.
 
- * "git help -a" did not work well when an overly long alias is
+ * "but help -a" did not work well when an overly long alias is
    defined, which has been corrected.
 
  * A recent update accidentally squelched an error message when the

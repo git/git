@@ -1,4 +1,4 @@
-MAIN:=git-credential-gnome-keyring
+MAIN:=but-credential-gnome-keyring
 all:: $(MAIN)
 
 CC = gcc

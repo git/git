@@ -17,20 +17,20 @@ test_expect_success 'setup repo' '
 			echo $j >f$i/f$j/data.txt || return 1
 		done
 	done &&
-	git add . &&
-	git cummit -m "Initialized trees" &&
+	but add . &&
+	but cummit -m "Initialized trees" &&
 	for i in $(test_seq 1 3)
 	do
-		git checkout -b topic$i main &&
+		but checkout -b topic$i main &&
 		echo change-$i >f$i/f$i/data.txt &&
-		git cummit -a -m "Changed f$i/f$i/data.txt" || return 1
+		but cummit -a -m "Changed f$i/f$i/data.txt" || return 1
 	done &&
 	cat >packinput.txt <<-EOF &&
 	topic1
 	^topic2
 	^topic3
 	EOF
-	git rev-parse			\
+	but rev-parse			\
 		topic1			\
 		topic1^{tree}		\
 		topic1:f1		\
@@ -39,24 +39,24 @@ test_expect_success 'setup repo' '
 '
 
 test_expect_success 'non-sparse pack-objects' '
-	git pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
-	git index-pack -o nonsparse.idx nonsparse.pack &&
-	git show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
+	but pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
+	but index-pack -o nonsparse.idx nonsparse.pack &&
+	but show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
 	test_cmp expect_objects.txt nonsparse_objects.txt
 '
 
 test_expect_success 'sparse pack-objects' '
-	git pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
-	git index-pack -o sparse.idx sparse.pack &&
-	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
+	but pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
+	but index-pack -o sparse.idx sparse.pack &&
+	but show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp expect_objects.txt sparse_objects.txt
 '
 
 test_expect_success 'duplicate a folder from f3 and cummit to topic1' '
-	git checkout topic1 &&
+	but checkout topic1 &&
 	echo change-3 >f3/f3/data.txt &&
-	git cummit -a -m "Changed f3/f3/data.txt" &&
-	git rev-parse			\
+	but cummit -a -m "Changed f3/f3/data.txt" &&
+	but rev-parse			\
 		topic1~1		\
 		topic1~1^{tree}		\
 		topic1^{tree}		\
@@ -67,17 +67,17 @@ test_expect_success 'duplicate a folder from f3 and cummit to topic1' '
 '
 
 test_expect_success 'non-sparse pack-objects' '
-	git pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
-	git index-pack -o nonsparse.idx nonsparse.pack &&
-	git show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
+	but pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
+	but index-pack -o nonsparse.idx nonsparse.pack &&
+	but show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
 	comm -1 -2 required_objects.txt nonsparse_objects.txt >nonsparse_required_objects.txt &&
 	test_cmp required_objects.txt nonsparse_required_objects.txt
 '
 
 test_expect_success 'sparse pack-objects' '
-	git pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
-	git index-pack -o sparse.idx sparse.pack &&
-	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
+	but pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
+	but index-pack -o sparse.idx sparse.pack &&
+	but show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	comm -1 -2 required_objects.txt sparse_objects.txt >sparse_required_objects.txt &&
 	test_cmp required_objects.txt sparse_required_objects.txt
 '
@@ -88,22 +88,22 @@ test_expect_success 'sparse pack-objects' '
 test_expect_success 'duplicate a folder from f1 into f3' '
 	mkdir f3/f4 &&
 	cp -r f1/f1/* f3/f4 &&
-	git add f3/f4 &&
-	git cummit -m "Copied f1/f1 to f3/f4" &&
+	but add f3/f4 &&
+	but cummit -m "Copied f1/f1 to f3/f4" &&
 	cat >packinput.txt <<-EOF &&
 	topic1
 	^topic1~1
 	EOF
-	git rev-parse		\
+	but rev-parse		\
 		topic1		\
 		topic1^{tree}   \
 		topic1:f3 | sort >required_objects.txt
 '
 
 test_expect_success 'non-sparse pack-objects' '
-	git pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
-	git index-pack -o nonsparse.idx nonsparse.pack &&
-	git show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
+	but pack-objects --stdout --revs --no-sparse <packinput.txt >nonsparse.pack &&
+	but index-pack -o nonsparse.idx nonsparse.pack &&
+	but show-index <nonsparse.idx | awk "{print \$2}" >nonsparse_objects.txt &&
 	comm -1 -2 required_objects.txt nonsparse_objects.txt >nonsparse_required_objects.txt &&
 	test_cmp required_objects.txt nonsparse_required_objects.txt
 '
@@ -111,30 +111,30 @@ test_expect_success 'non-sparse pack-objects' '
 # --sparse is enabled by default by pack.useSparse
 test_expect_success 'sparse pack-objects' '
 	GIT_TEST_PACK_SPARSE=-1 &&
-	git rev-parse			\
+	but rev-parse			\
 		topic1			\
 		topic1^{tree}		\
 		topic1:f3		\
 		topic1:f3/f4		\
 		topic1:f3/f4/data.txt | sort >expect_sparse_objects.txt &&
-	git pack-objects --stdout --revs <packinput.txt >sparse.pack &&
-	git index-pack -o sparse.idx sparse.pack &&
-	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
+	but pack-objects --stdout --revs <packinput.txt >sparse.pack &&
+	but index-pack -o sparse.idx sparse.pack &&
+	but show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp expect_sparse_objects.txt sparse_objects.txt
 '
 
 test_expect_success 'pack.useSparse enables algorithm' '
-	git config pack.useSparse true &&
-	git pack-objects --stdout --revs <packinput.txt >sparse.pack &&
-	git index-pack -o sparse.idx sparse.pack &&
-	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
+	but config pack.useSparse true &&
+	but pack-objects --stdout --revs <packinput.txt >sparse.pack &&
+	but index-pack -o sparse.idx sparse.pack &&
+	but show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp expect_sparse_objects.txt sparse_objects.txt
 '
 
 test_expect_success 'pack.useSparse overridden' '
-	git pack-objects --stdout --revs --no-sparse <packinput.txt >sparse.pack &&
-	git index-pack -o sparse.idx sparse.pack &&
-	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
+	but pack-objects --stdout --revs --no-sparse <packinput.txt >sparse.pack &&
+	but index-pack -o sparse.idx sparse.pack &&
+	but show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp required_objects.txt sparse_objects.txt
 '
 

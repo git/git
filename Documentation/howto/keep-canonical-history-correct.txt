@@ -1,11 +1,11 @@
-From: Junio C Hamano <gitster@pobox.com>
+From: Junio C Hamano <butster@pobox.com>
 Date: Wed, 07 May 2014 13:15:39 -0700
 Subject: Beginner question on "Pull is mostly evil"
 Abstract: This how-to explains a method for keeping a
- project's history correct when using git pull.
+ project's history correct when using but pull.
 Content-type: text/asciidoc
 
-Keep authoritative canonical history correct with git pull
+Keep authoritative canonical history correct with but pull
 ==========================================================
 
 Sometimes a new project integrator will end up with project history
@@ -38,12 +38,12 @@ central repository:
     ---o---o---A---X---Y---Z
 ------------
 
-Now, if you `git push` at this point, because your history that leads
+Now, if you `but push` at this point, because your history that leads
 to `C` lacks `X`, `Y` and `Z`, it will fail.  You need to somehow make
 the tip of your history a descendant of `Z`.
 
 One suggested way to solve the problem is "fetch and then merge", aka
-`git pull`. When you fetch, your repository will have a history like
+`but pull`. When you fetch, your repository will have a history like
 this:
 
 ------------
@@ -70,7 +70,7 @@ it as "cummits you see by following the first-parent chain", and use
 this command to view it:
 
 ------------
-    $ git log --first-parent
+    $ but log --first-parent
 ------------
 
 For all other people who observed the central repository after your
@@ -92,7 +92,7 @@ did `X` and then `Y` and then `Z` and merged a change that consists of
 two cummits `B` and `C` that achieves a single goal.  You may have
 worked on fixing the bug #12345 with these two patches, and the merge
 `M'` with swapped parents can say in its log message "Merge
-fix-bug-12345". Having a way to tell `git pull` to create a merge
+fix-bug-12345". Having a way to tell `but pull` to create a merge
 but record the parents in reverse order may be a way to do so.
 
 Note that I said "achieves a single goal" above, because this is
@@ -112,7 +112,7 @@ There are multiple schools of thought about the "trunk" management.
     ---o---o---A---X---Y---Z---B---C
 ------------
 +
-with `git pull --rebase` or something.
+with `but pull --rebase` or something.
 
  2. Some projects tolerate merges in their history, but do not worry
     too much about the first-parent order, and allow fast-forward
@@ -120,7 +120,7 @@ with `git pull --rebase` or something.
     it is unnecessary.
 
  3. Some projects want each cummit on the "trunk" to do one single
-    thing.  The output of `git log --first-parent` in such a project
+    thing.  The output of `but log --first-parent` in such a project
     would show either a merge of a side branch that completes a single
     theme, or a single cummit that completes a single theme by itself.
     If your two cummits `B` and `C` (or they may even be two groups of
@@ -145,18 +145,18 @@ That is, keeping separate topics on separate branches, perhaps like
 so:
 
 ------------
-    $ git clone $URL work && cd work
-    $ git checkout -b topic-b master
+    $ but clone $URL work && cd work
+    $ but checkout -b topic-b master
     $ ... work to create B0, B1 and B2 to complete one theme
-    $ git checkout -b topic-c master
+    $ but checkout -b topic-c master
     $ ... same for the theme of topic-c
 ------------
 
 And then
 
 ------------
-    $ git checkout master
-    $ git pull --ff-only
+    $ but checkout master
+    $ but pull --ff-only
 ------------
 
 would grab `X`, `Y` and `Z` from the upstream and advance your master
@@ -173,8 +173,8 @@ branch:
 And then you would merge these two branches separately:
 
 ------------
-    $ git merge topic-b
-    $ git merge topic-c
+    $ but merge topic-b
+    $ but merge topic-c
 ------------
 
 to result in
@@ -191,16 +191,16 @@ and push it back to the central repository.
 
 It is very much possible that while you are merging topic-b and
 topic-c, somebody again advanced the history in the central repository
-to put `W` on top of `Z`, and make your `git push` fail.
+to put `W` on top of `Z`, and make your `but push` fail.
 
 In such a case, you would rewind to discard `M` and `N`, update the
 tip of your 'master' again and redo the two merges:
 
 ------------
-    $ git reset --hard origin/master
-    $ git pull --ff-only
-    $ git merge topic-b
-    $ git merge topic-c
+    $ but reset --hard origin/master
+    $ but pull --ff-only
+    $ but merge topic-b
+    $ but merge topic-c
 ------------
 
 The procedure will result in a history that looks like this:
@@ -213,4 +213,4 @@ The procedure will result in a history that looks like this:
 		 B0--B1---------B2
 ------------
 
-See also http://git-blame.blogspot.com/2013/09/fun-with-first-parent-history.html
+See also http://but-blame.blogspot.com/2013/09/fun-with-first-parent-history.html

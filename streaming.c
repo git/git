@@ -8,17 +8,17 @@
 #include "replace-object.h"
 #include "packfile.h"
 
-typedef int (*open_istream_fn)(struct git_istream *,
+typedef int (*open_istream_fn)(struct but_istream *,
 			       struct repository *,
 			       const struct object_id *,
 			       enum object_type *);
-typedef int (*close_istream_fn)(struct git_istream *);
-typedef ssize_t (*read_istream_fn)(struct git_istream *, char *, size_t);
+typedef int (*close_istream_fn)(struct but_istream *);
+typedef ssize_t (*read_istream_fn)(struct but_istream *, char *, size_t);
 
 #define FILTER_BUFFER (1024*16)
 
 struct filtered_istream {
-	struct git_istream *upstream;
+	struct but_istream *upstream;
 	struct stream_filter *filter;
 	char ibuf[FILTER_BUFFER];
 	char obuf[FILTER_BUFFER];
@@ -27,13 +27,13 @@ struct filtered_istream {
 	int input_finished;
 };
 
-struct git_istream {
+struct but_istream {
 	open_istream_fn open;
 	close_istream_fn close;
 	read_istream_fn read;
 
 	unsigned long size; /* inflated size of full object */
-	git_zstream z;
+	but_zstream z;
 	enum { z_unused, z_used, z_done, z_error } z_state;
 
 	union {
@@ -51,7 +51,7 @@ struct git_istream {
 		} loose;
 
 		struct {
-			struct packed_git *pack;
+			struct packed_but *pack;
 			off_t pos;
 		} in_pack;
 
@@ -65,10 +65,10 @@ struct git_istream {
  *
  *****************************************************************/
 
-static void close_deflated_stream(struct git_istream *st)
+static void close_deflated_stream(struct but_istream *st)
 {
 	if (st->z_state == z_used)
-		git_inflate_end(&st->z);
+		but_inflate_end(&st->z);
 }
 
 
@@ -78,13 +78,13 @@ static void close_deflated_stream(struct git_istream *st)
  *
  *****************************************************************/
 
-static int close_istream_filtered(struct git_istream *st)
+static int close_istream_filtered(struct but_istream *st)
 {
 	free_stream_filter(st->u.filtered.filter);
 	return close_istream(st->u.filtered.upstream);
 }
 
-static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
+static ssize_t read_istream_filtered(struct but_istream *st, char *buf,
 				     size_t sz)
 {
 	struct filtered_istream *fs = &(st->u.filtered);
@@ -144,10 +144,10 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
 	return filled;
 }
 
-static struct git_istream *attach_stream_filter(struct git_istream *st,
+static struct but_istream *attach_stream_filter(struct but_istream *st,
 						struct stream_filter *filter)
 {
-	struct git_istream *ifs = xmalloc(sizeof(*ifs));
+	struct but_istream *ifs = xmalloc(sizeof(*ifs));
 	struct filtered_istream *fs = &(ifs->u.filtered);
 
 	ifs->close = close_istream_filtered;
@@ -167,7 +167,7 @@ static struct git_istream *attach_stream_filter(struct git_istream *st,
  *
  *****************************************************************/
 
-static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
+static ssize_t read_istream_loose(struct but_istream *st, char *buf, size_t sz)
 {
 	size_t total_read = 0;
 
@@ -194,17 +194,17 @@ static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
 
 		st->z.next_out = (unsigned char *)buf + total_read;
 		st->z.avail_out = sz - total_read;
-		status = git_inflate(&st->z, Z_FINISH);
+		status = but_inflate(&st->z, Z_FINISH);
 
 		total_read = st->z.next_out - (unsigned char *)buf;
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
+			but_inflate_end(&st->z);
 			st->z_state = z_done;
 			break;
 		}
 		if (status != Z_OK && (status != Z_BUF_ERROR || total_read < sz)) {
-			git_inflate_end(&st->z);
+			but_inflate_end(&st->z);
 			st->z_state = z_error;
 			return -1;
 		}
@@ -212,14 +212,14 @@ static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
 	return total_read;
 }
 
-static int close_istream_loose(struct git_istream *st)
+static int close_istream_loose(struct but_istream *st)
 {
 	close_deflated_stream(st);
 	munmap(st->u.loose.mapped, st->u.loose.mapsize);
 	return 0;
 }
 
-static int open_istream_loose(struct git_istream *st, struct repository *r,
+static int open_istream_loose(struct but_istream *st, struct repository *r,
 			      const struct object_id *oid,
 			      enum object_type *type)
 {
@@ -250,7 +250,7 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 
 	return 0;
 error:
-	git_inflate_end(&st->z);
+	but_inflate_end(&st->z);
 	munmap(st->u.loose.mapped, st->u.loose.mapsize);
 	return -1;
 }
@@ -262,7 +262,7 @@ error:
  *
  *****************************************************************/
 
-static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
+static ssize_t read_istream_pack_non_delta(struct but_istream *st, char *buf,
 					   size_t sz)
 {
 	size_t total_read = 0;
@@ -270,7 +270,7 @@ static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
 	switch (st->z_state) {
 	case z_unused:
 		memset(&st->z, 0, sizeof(st->z));
-		git_inflate_init(&st->z);
+		but_inflate_init(&st->z);
 		st->z_state = z_used;
 		break;
 	case z_done:
@@ -292,14 +292,14 @@ static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
 		st->z.next_out = (unsigned char *)buf + total_read;
 		st->z.avail_out = sz - total_read;
 		st->z.next_in = mapped;
-		status = git_inflate(&st->z, Z_FINISH);
+		status = but_inflate(&st->z, Z_FINISH);
 
 		st->u.in_pack.pos += st->z.next_in - mapped;
 		total_read = st->z.next_out - (unsigned char *)buf;
 		unuse_pack(&window);
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
+			but_inflate_end(&st->z);
 			st->z_state = z_done;
 			break;
 		}
@@ -313,7 +313,7 @@ static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
 		 * or truncated), then use_pack() catches that and will die().
 		 */
 		if (status != Z_OK && status != Z_BUF_ERROR) {
-			git_inflate_end(&st->z);
+			but_inflate_end(&st->z);
 			st->z_state = z_error;
 			return -1;
 		}
@@ -321,13 +321,13 @@ static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
 	return total_read;
 }
 
-static int close_istream_pack_non_delta(struct git_istream *st)
+static int close_istream_pack_non_delta(struct but_istream *st)
 {
 	close_deflated_stream(st);
 	return 0;
 }
 
-static int open_istream_pack_non_delta(struct git_istream *st,
+static int open_istream_pack_non_delta(struct but_istream *st,
 				       struct repository *r,
 				       const struct object_id *oid,
 				       enum object_type *type)
@@ -365,13 +365,13 @@ static int open_istream_pack_non_delta(struct git_istream *st,
  *
  *****************************************************************/
 
-static int close_istream_incore(struct git_istream *st)
+static int close_istream_incore(struct but_istream *st)
 {
 	free(st->u.incore.buf);
 	return 0;
 }
 
-static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
+static ssize_t read_istream_incore(struct but_istream *st, char *buf, size_t sz)
 {
 	size_t read_size = sz;
 	size_t remainder = st->size - st->u.incore.read_ptr;
@@ -385,7 +385,7 @@ static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
 	return read_size;
 }
 
-static int open_istream_incore(struct git_istream *st, struct repository *r,
+static int open_istream_incore(struct but_istream *st, struct repository *r,
 			       const struct object_id *oid, enum object_type *type)
 {
 	st->u.incore.buf = read_object_file_extended(r, oid, type, &st->size, 0);
@@ -400,7 +400,7 @@ static int open_istream_incore(struct git_istream *st, struct repository *r,
  * static helpers variables and functions for users of streaming interface
  *****************************************************************************/
 
-static int istream_source(struct git_istream *st,
+static int istream_source(struct but_istream *st,
 			  struct repository *r,
 			  const struct object_id *oid,
 			  enum object_type *type)
@@ -437,25 +437,25 @@ static int istream_source(struct git_istream *st,
  * Users of streaming interface
  ****************************************************************/
 
-int close_istream(struct git_istream *st)
+int close_istream(struct but_istream *st)
 {
 	int r = st->close(st);
 	free(st);
 	return r;
 }
 
-ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
+ssize_t read_istream(struct but_istream *st, void *buf, size_t sz)
 {
 	return st->read(st, buf, sz);
 }
 
-struct git_istream *open_istream(struct repository *r,
+struct but_istream *open_istream(struct repository *r,
 				 const struct object_id *oid,
 				 enum object_type *type,
 				 unsigned long *size,
 				 struct stream_filter *filter)
 {
-	struct git_istream *st = xmalloc(sizeof(*st));
+	struct but_istream *st = xmalloc(sizeof(*st));
 	const struct object_id *real = lookup_replace_object(r, oid);
 	int ret = istream_source(st, r, real, type);
 
@@ -472,7 +472,7 @@ struct git_istream *open_istream(struct repository *r,
 	}
 	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
-		struct git_istream *nst = attach_stream_filter(st, filter);
+		struct but_istream *nst = attach_stream_filter(st, filter);
 		if (!nst) {
 			close_istream(st);
 			return NULL;
@@ -487,7 +487,7 @@ struct git_istream *open_istream(struct repository *r,
 int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter *filter,
 		      int can_seek)
 {
-	struct git_istream *st;
+	struct but_istream *st;
 	enum object_type type;
 	unsigned long sz;
 	ssize_t kept = 0;

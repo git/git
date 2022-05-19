@@ -106,7 +106,7 @@ pack_obj () {
 	# trailer (20 bytes).
 	if test -z "$2"
 	then
-		echo "$1" | git pack-objects --stdout >pack_obj.tmp &&
+		echo "$1" | but pack-objects --stdout >pack_obj.tmp &&
 		size=$(wc -c <pack_obj.tmp) &&
 		dd if=pack_obj.tmp bs=1 count=$((size - $(test_oid rawsz) - 12)) skip=12 &&
 		rm -f pack_obj.tmp
@@ -128,7 +128,7 @@ pack_trailer () {
 # whatever we index next will be the pack that we
 # actually use.
 clear_packs () {
-	rm -f .git/objects/pack/*
+	rm -f .but/objects/pack/*
 }
 
 test_oid_cache <<-EOF

@@ -7,13 +7,13 @@ test_description='test for-each-refs usage of ref-filter APIs'
 
 test_expect_success 'setup some history and refs' '
 	test_cummit one &&
-	git branch -M main &&
+	but branch -M main &&
 	test_cummit two &&
 	test_cummit three &&
-	git checkout -b side &&
+	but checkout -b side &&
 	test_cummit four &&
-	git tag -m "An annotated tag" annotated-tag &&
-	git tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
+	but tag -m "An annotated tag" annotated-tag &&
+	but tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
 
 	# Note that these "signed" tags might not actually be signed.
 	# Tests which care about the distinction should be marked
@@ -24,11 +24,11 @@ test_expect_success 'setup some history and refs' '
 	else
 		sign=
 	fi &&
-	git tag $sign -m "A signed tag" signed-tag &&
-	git tag $sign -m "Signed doubly" doubly-signed-tag signed-tag &&
+	but tag $sign -m "A signed tag" signed-tag &&
+	but tag $sign -m "Signed doubly" doubly-signed-tag signed-tag &&
 
-	git checkout main &&
-	git update-ref refs/odd/spot main
+	but checkout main &&
+	but update-ref refs/odd/spot main
 '
 
 test_expect_success 'filtering with --points-at' '
@@ -37,7 +37,7 @@ test_expect_success 'filtering with --points-at' '
 	refs/odd/spot
 	refs/tags/three
 	EOF
-	git for-each-ref --format="%(refname)" --points-at=main >actual &&
+	but for-each-ref --format="%(refname)" --points-at=main >actual &&
 	test_cmp expect actual
 '
 
@@ -48,7 +48,7 @@ test_expect_success 'check signed tags with --points-at' '
 	refs/tags/four Z
 	refs/tags/signed-tag four
 	EOF
-	git for-each-ref --format="%(refname) %(*subject)" --points-at=side >actual &&
+	but for-each-ref --format="%(refname) %(*subject)" --points-at=side >actual &&
 	test_cmp expect actual
 '
 
@@ -60,7 +60,7 @@ test_expect_success 'filtering with --merged' '
 	refs/tags/three
 	refs/tags/two
 	EOF
-	git for-each-ref --format="%(refname)" --merged=main >actual &&
+	but for-each-ref --format="%(refname)" --merged=main >actual &&
 	test_cmp expect actual
 '
 
@@ -73,7 +73,7 @@ test_expect_success 'filtering with --no-merged' '
 	refs/tags/four
 	refs/tags/signed-tag
 	EOF
-	git for-each-ref --format="%(refname)" --no-merged=main >actual &&
+	but for-each-ref --format="%(refname)" --no-merged=main >actual &&
 	test_cmp expect actual
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'filtering with --contains' '
 	refs/tags/three
 	refs/tags/two
 	EOF
-	git for-each-ref --format="%(refname)" --contains=two >actual &&
+	but for-each-ref --format="%(refname)" --contains=two >actual &&
 	test_cmp expect actual
 '
 
@@ -98,7 +98,7 @@ test_expect_success 'filtering with --no-contains' '
 	cat >expect <<-\EOF &&
 	refs/tags/one
 	EOF
-	git for-each-ref --format="%(refname)" --no-contains=two >actual &&
+	but for-each-ref --format="%(refname)" --no-contains=two >actual &&
 	test_cmp expect actual
 '
 
@@ -106,29 +106,29 @@ test_expect_success 'filtering with --contains and --no-contains' '
 	cat >expect <<-\EOF &&
 	refs/tags/two
 	EOF
-	git for-each-ref --format="%(refname)" --contains=two --no-contains=three >actual &&
+	but for-each-ref --format="%(refname)" --contains=two --no-contains=three >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '%(color) must fail' '
-	test_must_fail git for-each-ref --format="%(color)%(refname)"
+	test_must_fail but for-each-ref --format="%(color)%(refname)"
 '
 
 test_expect_success '%(color:#aa22ac) must succeed' '
 	test_when_finished rm -rf test &&
-	git init test &&
+	but init test &&
 	(
 		cd test &&
 		test_cummit initial &&
-		git branch -M main &&
+		but branch -M main &&
 		cat >expect <<-\EOF &&
 		refs/heads/main
 		refs/tags/initial
 		EOF
-		git remote add origin nowhere &&
-		git config branch.main.remote origin &&
-		git config branch.main.merge refs/heads/main &&
-		git for-each-ref --format="%(color:#aa22ac)%(refname)" >actual &&
+		but remote add origin nowhere &&
+		but config branch.main.remote origin &&
+		but config branch.main.merge refs/heads/main &&
+		but for-each-ref --format="%(color:#aa22ac)%(refname)" >actual &&
 		test_cmp expect actual
 	)
 '
@@ -147,7 +147,7 @@ test_expect_success 'left alignment is default' '
 	refname is refs/tags/three    |refs/tags/three
 	refname is refs/tags/two      |refs/tags/two
 	EOF
-	git for-each-ref --format="%(align:30)refname is %(refname)%(end)|%(refname)" >actual &&
+	but for-each-ref --format="%(align:30)refname is %(refname)%(end)|%(refname)" >actual &&
 	test_cmp expect actual
 '
 
@@ -165,7 +165,7 @@ test_expect_success 'middle alignment' '
 	|  refname is refs/tags/three  |refs/tags/three
 	|   refname is refs/tags/two   |refs/tags/two
 	EOF
-	git for-each-ref --format="|%(align:middle,30)refname is %(refname)%(end)|%(refname)" >actual &&
+	but for-each-ref --format="|%(align:middle,30)refname is %(refname)%(end)|%(refname)" >actual &&
 	test_cmp expect actual
 '
 
@@ -183,7 +183,7 @@ test_expect_success 'right alignment' '
 	|    refname is refs/tags/three|refs/tags/three
 	|      refname is refs/tags/two|refs/tags/two
 	EOF
-	git for-each-ref --format="|%(align:30,right)refname is %(refname)%(end)|%(refname)" >actual &&
+	but for-each-ref --format="|%(align:30,right)refname is %(refname)%(end)|%(refname)" >actual &&
 	test_cmp expect actual
 '
 
@@ -205,7 +205,7 @@ test_align_permutations() {
 	while read -r option
 	do
 		test_expect_success "align:$option" '
-			git for-each-ref --format="|%(align:$option)refname is %(refname)%(end)|%(refname)" >actual &&
+			but for-each-ref --format="|%(align:$option)refname is %(refname)%(end)|%(refname)" >actual &&
 			test_cmp expect actual
 		'
 	done
@@ -247,7 +247,7 @@ test_expect_success 'alignment with format quote' "
 	|'      '\''three| A U Thor'\''       '|
 	|'       '\''two| A U Thor'\''        '|
 	EOF
-	git for-each-ref --shell --format=\"|%(align:30,middle)'%(refname:short)| %(authorname)'%(end)|\" >actual &&
+	but for-each-ref --shell --format=\"|%(align:30,middle)'%(refname:short)| %(authorname)'%(end)|\" >actual &&
 	test_cmp expect actual
 "
 
@@ -265,7 +265,7 @@ test_expect_success 'nested alignment with quote formatting' "
 	|'          three               '|
 	|'            two               '|
 	EOF
-	git for-each-ref --shell --format='|%(align:30,left)%(align:15,right)%(refname:short)%(end)%(end)|' >actual &&
+	but for-each-ref --shell --format='|%(align:30,left)%(align:15,right)%(refname:short)%(end)%(end)|' >actual &&
 	test_cmp expect actual
 "
 
@@ -283,7 +283,7 @@ test_expect_success 'check `%(contents:lines=1)`' '
 	three |three
 	two |two
 	EOF
-	git for-each-ref --format="%(refname:short) |%(contents:lines=1)" >actual &&
+	but for-each-ref --format="%(refname:short) |%(contents:lines=1)" >actual &&
 	test_cmp expect actual
 '
 
@@ -301,7 +301,7 @@ test_expect_success 'check `%(contents:lines=0)`' '
 	three |
 	two |
 	EOF
-	git for-each-ref --format="%(refname:short) |%(contents:lines=0)" >actual &&
+	but for-each-ref --format="%(refname:short) |%(contents:lines=0)" >actual &&
 	test_cmp expect actual
 '
 
@@ -319,12 +319,12 @@ test_expect_success 'check `%(contents:lines=99999)`' '
 	three |three
 	two |two
 	EOF
-	git for-each-ref --format="%(refname:short) |%(contents:lines=99999)" >actual &&
+	but for-each-ref --format="%(refname:short) |%(contents:lines=99999)" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '`%(contents:lines=-1)` should fail' '
-	test_must_fail git for-each-ref --format="%(refname:short) |%(contents:lines=-1)"
+	test_must_fail but for-each-ref --format="%(refname:short) |%(contents:lines=-1)"
 '
 
 test_expect_success 'setup for version sort' '
@@ -334,7 +334,7 @@ test_expect_success 'setup for version sort' '
 '
 
 test_expect_success 'version sort' '
-	git for-each-ref --sort=version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	but for-each-ref --sort=version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.3
 	foo1.6
@@ -344,7 +344,7 @@ test_expect_success 'version sort' '
 '
 
 test_expect_success 'version sort (shortened)' '
-	git for-each-ref --sort=v:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	but for-each-ref --sort=v:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.3
 	foo1.6
@@ -354,7 +354,7 @@ test_expect_success 'version sort (shortened)' '
 '
 
 test_expect_success 'reverse version sort' '
-	git for-each-ref --sort=-version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	but for-each-ref --sort=-version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.10
 	foo1.6
@@ -364,21 +364,21 @@ test_expect_success 'reverse version sort' '
 '
 
 test_expect_success 'improper usage of %(if), %(then), %(else) and %(end) atoms' '
-	test_must_fail git for-each-ref --format="%(if)" &&
-	test_must_fail git for-each-ref --format="%(then) %(end)" &&
-	test_must_fail git for-each-ref --format="%(else) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(else) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(then) %(then) %(end)" &&
-	test_must_fail git for-each-ref --format="%(then) %(else) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(else) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(then) %(else)" &&
-	test_must_fail git for-each-ref --format="%(if) %(else) %(then) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(then) %(else) %(else) %(end)" &&
-	test_must_fail git for-each-ref --format="%(if) %(end)"
+	test_must_fail but for-each-ref --format="%(if)" &&
+	test_must_fail but for-each-ref --format="%(then) %(end)" &&
+	test_must_fail but for-each-ref --format="%(else) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(else) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(then) %(then) %(end)" &&
+	test_must_fail but for-each-ref --format="%(then) %(else) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(else) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(then) %(else)" &&
+	test_must_fail but for-each-ref --format="%(if) %(else) %(then) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(then) %(else) %(else) %(end)" &&
+	test_must_fail but for-each-ref --format="%(if) %(end)"
 '
 
 test_expect_success 'check %(if)...%(then)...%(end) atoms' '
-	git for-each-ref --format="%(refname)%(if)%(authorname)%(then) Author: %(authorname)%(end)" >actual &&
+	but for-each-ref --format="%(refname)%(if)%(authorname)%(then) Author: %(authorname)%(end)" >actual &&
 	cat >expect <<-\EOF &&
 	refs/heads/main Author: A U Thor
 	refs/heads/side Author: A U Thor
@@ -399,7 +399,7 @@ test_expect_success 'check %(if)...%(then)...%(end) atoms' '
 '
 
 test_expect_success 'check %(if)...%(then)...%(else)...%(end) atoms' '
-	git for-each-ref --format="%(if)%(authorname)%(then)%(authorname)%(else)No author%(end): %(refname)" >actual &&
+	but for-each-ref --format="%(if)%(authorname)%(then)%(authorname)%(else)No author%(end): %(refname)" >actual &&
 	cat >expect <<-\EOF &&
 	A U Thor: refs/heads/main
 	A U Thor: refs/heads/side
@@ -419,7 +419,7 @@ test_expect_success 'check %(if)...%(then)...%(else)...%(end) atoms' '
 	test_cmp expect actual
 '
 test_expect_success 'ignore spaces in %(if) atom usage' '
-	git for-each-ref --format="%(refname:short): %(if)%(HEAD)%(then)Head ref%(else)Not Head ref%(end)" >actual &&
+	but for-each-ref --format="%(refname:short): %(if)%(HEAD)%(then)Head ref%(else)Not Head ref%(end)" >actual &&
 	cat >expect <<-\EOF &&
 	main: Head ref
 	side: Not Head ref
@@ -440,7 +440,7 @@ test_expect_success 'ignore spaces in %(if) atom usage' '
 '
 
 test_expect_success 'check %(if:equals=<string>)' '
-	git for-each-ref --format="%(if:equals=main)%(refname:short)%(then)Found main%(else)Not main%(end)" refs/heads/ >actual &&
+	but for-each-ref --format="%(if:equals=main)%(refname:short)%(then)Found main%(else)Not main%(end)" refs/heads/ >actual &&
 	cat >expect <<-\EOF &&
 	Found main
 	Not main
@@ -449,7 +449,7 @@ test_expect_success 'check %(if:equals=<string>)' '
 '
 
 test_expect_success 'check %(if:notequals=<string>)' '
-	git for-each-ref --format="%(if:notequals=main)%(refname:short)%(then)Not main%(else)Found main%(end)" refs/heads/ >actual &&
+	but for-each-ref --format="%(if:notequals=main)%(refname:short)%(then)Not main%(else)Found main%(end)" refs/heads/ >actual &&
 	cat >expect <<-\EOF &&
 	Found main
 	Not main
@@ -458,7 +458,7 @@ test_expect_success 'check %(if:notequals=<string>)' '
 '
 
 test_expect_success '--merged is compatible with --no-merged' '
-	git for-each-ref --merged HEAD --no-merged HEAD
+	but for-each-ref --merged HEAD --no-merged HEAD
 '
 
 test_expect_success 'validate worktree atom' '
@@ -467,10 +467,10 @@ test_expect_success 'validate worktree atom' '
 	main_worktree: $(pwd)/worktree_dir
 	side: not checked out
 	EOF
-	git worktree add -b main_worktree worktree_dir main &&
-	git for-each-ref --format="%(refname:short): %(if)%(worktreepath)%(then)%(worktreepath)%(else)not checked out%(end)" refs/heads/ >actual &&
+	but worktree add -b main_worktree worktree_dir main &&
+	but for-each-ref --format="%(refname:short): %(if)%(worktreepath)%(then)%(worktreepath)%(else)not checked out%(end)" refs/heads/ >actual &&
 	rm -r worktree_dir &&
-	git worktree prune &&
+	but worktree prune &&
 	test_cmp expect actual
 '
 

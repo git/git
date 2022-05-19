@@ -7,10 +7,10 @@
 #include "ref-filter.h"
 
 static char const * const for_each_ref_usage[] = {
-	N_("git for-each-ref [<options>] [<pattern>]"),
-	N_("git for-each-ref [--points-at <object>]"),
-	N_("git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"),
-	N_("git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"),
+	N_("but for-each-ref [<options>] [<pattern>]"),
+	N_("but for-each-ref [--points-at <object>]"),
+	N_("but for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"),
+	N_("but for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"),
 	NULL
 };
 
@@ -57,7 +57,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	format.format = "%(objectname) %(objecttype)\t%(refname)";
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
 	if (maxcount < 0) {

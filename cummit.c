@@ -197,11 +197,11 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 		advise(_("Support for <GIT_DIR>/info/grafts is deprecated\n"
 			 "and will be removed in a future Git version.\n"
 			 "\n"
-			 "Please use \"git replace --convert-graft-file\"\n"
+			 "Please use \"but replace --convert-graft-file\"\n"
 			 "to convert the grafts into replace refs.\n"
 			 "\n"
 			 "Turn this message off by running\n"
-			 "\"git config advice.graftFileDeprecated false\""));
+			 "\"but config advice.graftFileDeprecated false\""));
 	while (!strbuf_getwholeline(&buf, fp, '\n')) {
 		/* The format is just "cummit Parent1 Parent2 ...\n" */
 		struct cummit_graft *graft = read_graft_line(&buf);
@@ -1066,7 +1066,7 @@ int sign_with_header(struct strbuf *buf, const char *keyid)
 
 int parse_signed_cummit(const struct cummit *cummit,
 			struct strbuf *payload, struct strbuf *signature,
-			const struct git_hash_algo *algop)
+			const struct but_hash_algo *algop)
 {
 	unsigned long size;
 	const char *buffer = get_cummit_buffer(cummit, &size);
@@ -1080,7 +1080,7 @@ int parse_buffer_signed_by_header(const char *buffer,
 				  unsigned long size,
 				  struct strbuf *payload,
 				  struct strbuf *signature,
-				  const struct git_hash_algo *algop)
+				  const struct but_hash_algo *algop)
 {
 	int in_signature = 0, saw_signature = 0, other_signature = 0;
 	const char *line, *tail, *p;
@@ -1534,7 +1534,7 @@ int cummit_tree_extended(const char *msg, size_t msg_len,
 		return error("a NUL byte in cummit log message not allowed.");
 
 	/* Not having i18n.cummitencoding is the same as having utf-8 */
-	encoding_is_utf8 = is_encoding_utf8(git_cummit_encoding);
+	encoding_is_utf8 = is_encoding_utf8(but_cummit_encoding);
 
 	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
 	strbuf_addf(&buffer, "tree %s\n", oid_to_hex(tree));
@@ -1552,13 +1552,13 @@ int cummit_tree_extended(const char *msg, size_t msg_len,
 
 	/* Person/date information */
 	if (!author)
-		author = git_author_info(IDENT_STRICT);
+		author = but_author_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "author %s\n", author);
 	if (!cummitter)
-		cummitter = git_cummitter_info(IDENT_STRICT);
+		cummitter = but_cummitter_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "cummitter %s\n", cummitter);
 	if (!encoding_is_utf8)
-		strbuf_addf(&buffer, "encoding %s\n", git_cummit_encoding);
+		strbuf_addf(&buffer, "encoding %s\n", but_cummit_encoding);
 
 	while (extra) {
 		add_extra_header(&buffer, extra);
@@ -1679,9 +1679,9 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 /*
  * Inspect the given string and determine the true "end" of the log message, in
  * order to find where to put a new Signed-off-by trailer.  Ignored are
- * trailing comment lines and blank lines.  To support "git cummit -s
+ * trailing comment lines and blank lines.  To support "but cummit -s
  * --amend" on an existing cummit, we also ignore "Conflicts:".  To
- * support "git cummit -v", we truncate at cut lines.
+ * support "but cummit -v", we truncate at cut lines.
  *
  * Returns the number of bytes from the tail to ignore, to be fed as
  * the second parameter to append_signoff().

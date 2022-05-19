@@ -7,8 +7,8 @@ test_description="Tests index-pack performance"
 test_perf_large_repo
 
 test_expect_success 'repack' '
-	git repack -ad &&
-	PACK=$(ls .git/objects/pack/*.pack | head -n1) &&
+	but repack -ad &&
+	PACK=$(ls .but/objects/pack/*.pack | head -n1) &&
 	test -f "$PACK" &&
 	export PACK
 '
@@ -27,9 +27,9 @@ test_expect_success 'set up thread-counting tests' '
 '
 
 test_perf PERF_EXTRA 'index-pack 0 threads' '
-	rm -rf repo.git &&
-	git init --bare repo.git &&
-	GIT_DIR=repo.git git index-pack --threads=1 --stdin < $PACK
+	rm -rf repo.but &&
+	but init --bare repo.but &&
+	GIT_DIR=repo.but but index-pack --threads=1 --stdin < $PACK
 '
 
 for t in $threads
@@ -37,17 +37,17 @@ do
 	THREADS=$t
 	export THREADS
 	test_perf PERF_EXTRA "index-pack $t threads" '
-		rm -rf repo.git &&
-		git init --bare repo.git &&
-		GIT_DIR=repo.git GIT_FORCE_THREADS=1 \
-		git index-pack --threads=$THREADS --stdin <$PACK
+		rm -rf repo.but &&
+		but init --bare repo.but &&
+		GIT_DIR=repo.but GIT_FORCE_THREADS=1 \
+		but index-pack --threads=$THREADS --stdin <$PACK
 	'
 done
 
 test_perf 'index-pack default number of threads' '
-	rm -rf repo.git &&
-	git init --bare repo.git &&
-	GIT_DIR=repo.git git index-pack --stdin < $PACK
+	rm -rf repo.but &&
+	but init --bare repo.but &&
+	GIT_DIR=repo.but but index-pack --stdin < $PACK
 '
 
 test_done

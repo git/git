@@ -1,22 +1,22 @@
-git-check-ignore(1)
+but-check-ignore(1)
 ===================
 
 NAME
 ----
-git-check-ignore - Debug gitignore / exclude files
+but-check-ignore - Debug butignore / exclude files
 
 
 SYNOPSIS
 --------
 [verse]
-'git check-ignore' [<options>] <pathname>...
-'git check-ignore' [<options>] --stdin
+'but check-ignore' [<options>] <pathname>...
+'but check-ignore' [<options>] --stdin
 
 DESCRIPTION
 -----------
 
 For each pathname given via the command-line or from a file via
-`--stdin`, check whether the file is excluded by .gitignore (or other
+`--stdin`, check whether the file is excluded by .butignore (or other
 input files to the exclude mechanism) and output the path if it is
 excluded.
 
@@ -38,7 +38,7 @@ OPTIONS
 	NOT excluded.)
 +
 For precedence rules within and between exclude sources, see
-linkgit:gitignore[5].
+linkbut:butignore[5].
 
 --stdin::
 	Read pathnames from the standard input, one per line,
@@ -57,10 +57,10 @@ linkgit:gitignore[5].
 
 --no-index::
 	Don't look in the index when undertaking the checks. This can
-	be used to debug why a path became tracked by e.g. `git add .`
+	be used to debug why a path became tracked by e.g. `but add .`
 	and was not ignored by the rules as expected by the user or when
 	developing patterns including negation to match a path previously
-	added with `git add -f`.
+	added with `but add -f`.
 
 OUTPUT
 ------
@@ -80,7 +80,7 @@ is the line number of the pattern within that source.  If the pattern
 contained a "`!`" prefix or "`/`" suffix, it will be preserved in the
 output.  <source> will be an absolute path when referring to the file
 configured by `core.excludesFile`, or relative to the repository root
-when referring to `.git/info/exclude` or a per-directory exclude file.
+when referring to `.but/info/exclude` or a per-directory exclude file.
 
 If `-z` is specified, the pathnames in the output are delimited by the
 null character; if `--verbose` is also specified then null characters
@@ -99,7 +99,7 @@ absence of output for a given file meant that it didn't match any
 pattern, or that the output hadn't been generated yet.)
 
 Buffering happens as documented under the `GIT_FLUSH` option in
-linkgit:git[1].  The caller is responsible for avoiding deadlocks
+linkbut:but[1].  The caller is responsible for avoiding deadlocks
 caused by overfilling an input buffer or reading from an empty output
 buffer.
 
@@ -117,10 +117,10 @@ EXIT STATUS
 
 SEE ALSO
 --------
-linkgit:gitignore[5]
-linkgit:git-config[1]
-linkgit:git-ls-files[1]
+linkbut:butignore[5]
+linkbut:but-config[1]
+linkbut:but-ls-files[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

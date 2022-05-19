@@ -1,8 +1,8 @@
-From: Junio C Hamano <gitster@pobox.com>
-To: git@vger.kernel.org
+From: Junio C Hamano <butster@pobox.com>
+To: but@vger.kernel.org
 Subject: [HOWTO] Reverting an existing cummit
 Abstract: In this article, JC gives a small real-life example of using
- 'git revert' command, and using a temporary branch and tag for safety
+ 'but revert' command, and using a temporary branch and tag for safety
  and easier sanity checking.
 Date: Mon, 29 Aug 2005 21:39:02 -0700
 Content-type: text/asciidoc
@@ -21,7 +21,7 @@ barebone Porcelain.
 First, prepare a throw-away branch in case I screw things up.
 
 ------------------------------------------------
-$ git checkout -b revert-c99 master
+$ but checkout -b revert-c99 master
 ------------------------------------------------
 
 Now I am on the 'revert-c99' branch.  Let's figure out which cummit to
@@ -31,7 +31,7 @@ the change I would want to undo.  Further I happen to know that that
 merge introduced 5 cummits or so:
 
 ------------------------------------------------
-$ git show-branch --more=4 master master^2 | head
+$ but show-branch --more=4 master master^2 | head
 * [master] Merge refs/heads/portable from http://www.cs.berkeley....
  ! [master^2] Replace C99 array initializers with code.
 --
@@ -41,30 +41,30 @@ $ git show-branch --more=4 master master^2 | head
 *+ [master^2~2] Include sys/time.h in daemon.c.
 *+ [master^2~3] Fix ?: statements.
 *+ [master^2~4] Replace zero-length array decls with [].
-*  [master~1] tutorial note about git branch
+*  [master~1] tutorial note about but branch
 ------------------------------------------------
 
 The '--more=4' above means "after we reach the merge base of refs,
 show until we display four more common cummits".  That last cummit
 would have been where the "portable" branch was forked from the main
-git.git repository, so this would show everything on both branches
+but.but repository, so this would show everything on both branches
 since then.  I just limited the output to the first handful using
 'head'.
 
 Now I know 'master^2~4' (pronounce it as "find the second parent of
 the 'master', and then go four generations back following the first
 parent") is the one I would want to revert.  Since I also want to say
-why I am reverting it, the '-n' flag is given to 'git revert'.  This
-prevents it from actually making a cummit, and instead 'git revert'
+why I am reverting it, the '-n' flag is given to 'but revert'.  This
+prevents it from actually making a cummit, and instead 'but revert'
 leaves the cummit log message it wanted to use in '.msg' file:
 
 ------------------------------------------------
-$ git revert -n master^2~4
+$ but revert -n master^2~4
 $ cat .msg
 Revert "Replace zero-length array decls with []."
 
 This reverts 6c5f9baa3bc0d63e141e0afc23110205379905a4 cummit.
-$ git diff HEAD ;# to make sure what we are reverting makes sense.
+$ but diff HEAD ;# to make sure what we are reverting makes sense.
 $ make CC=gcc-2.95 clean test ;# make sure it fixed the breakage.
 $ make clean test ;# make sure it did not cause other breakage.
 ------------------------------------------------
@@ -74,18 +74,18 @@ fix the problem (from 'make CC=gcc-2.95' test), and does not cause new
 breakage (from the last 'make test').  I'm ready to cummit:
 
 ------------------------------------------------
-$ git cummit -a -s ;# read .msg into the log,
+$ but cummit -a -s ;# read .msg into the log,
                     # and explain why I am reverting.
 ------------------------------------------------
 
 I could have screwed up in any of the above steps, but in the worst
-case I could just have done 'git checkout master' to start over.
+case I could just have done 'but checkout master' to start over.
 Fortunately I did not have to; what I have in the current branch
 'revert-c99' is what I want.  So merge that back into 'master':
 
 ------------------------------------------------
-$ git checkout master
-$ git merge revert-c99 ;# this should be a fast-forward
+$ but checkout master
+$ but merge revert-c99 ;# this should be a fast-forward
 Updating from 10d781b9caa4f71495c7b34963bef137216f86a8 to e3a693c...
  cache.h        |    8 ++++----
  cummit.c       |    2 +-
@@ -99,7 +99,7 @@ There is no need to redo the test at this point.  We fast-forwarded
 and we know 'master' matches 'revert-c99' exactly.  In fact:
 
 ------------------------------------------------
-$ git diff master..revert-c99
+$ but diff master..revert-c99
 ------------------------------------------------
 
 says nothing.
@@ -107,17 +107,17 @@ says nothing.
 Then we rebase the 'seen' branch as usual.
 
 ------------------------------------------------
-$ git checkout seen
-$ git tag seen-anchor seen
-$ git rebase master
+$ but checkout seen
+$ but tag seen-anchor seen
+$ but rebase master
 * Applying: Redo "revert" using three-way merge machinery.
 First trying simple merge strategy to cherry-pick.
-* Applying: Remove git-apply-patch-script.
+* Applying: Remove but-apply-patch-script.
 First trying simple merge strategy to cherry-pick.
 Simple cherry-pick fails; trying Automatic cherry-pick.
-Removing Documentation/git-apply-patch-script.txt
-Removing git-apply-patch-script
-* Applying: Document "git cherry-pick" and "git revert"
+Removing Documentation/but-apply-patch-script.txt
+Removing but-apply-patch-script
+* Applying: Document "but cherry-pick" and "but revert"
 First trying simple merge strategy to cherry-pick.
 * Applying: mailinfo and applymbox updates
 First trying simple merge strategy to cherry-pick.
@@ -127,11 +127,11 @@ First trying simple merge strategy to cherry-pick.
 First trying simple merge strategy to cherry-pick.
 ------------------------------------------------
 
-The temporary tag 'seen-anchor' is me just being careful, in case 'git
+The temporary tag 'seen-anchor' is me just being careful, in case 'but
 rebase' screws up.  After this, I can do these for sanity check:
 
 ------------------------------------------------
-$ git diff seen-anchor..seen ;# make sure we got the master fix.
+$ but diff seen-anchor..seen ;# make sure we got the master fix.
 $ make CC=gcc-2.95 clean test ;# make sure it fixed the breakage.
 $ make clean test ;# make sure it did not cause other breakage.
 ------------------------------------------------
@@ -140,8 +140,8 @@ Everything is in the good order.  I do not need the temporary branch
 or tag anymore, so remove them:
 
 ------------------------------------------------
-$ rm -f .git/refs/tags/seen-anchor
-$ git branch -d revert-c99
+$ rm -f .but/refs/tags/seen-anchor
+$ but branch -d revert-c99
 ------------------------------------------------
 
 It was an emergency fix, so we might as well merge it into the
@@ -149,8 +149,8 @@ It was an emergency fix, so we might as well merge it into the
 be some days off:
 
 ------------------------------------------------
-$ git checkout rc
-$ git pull . master
+$ but checkout rc
+$ but pull . master
 Packing 0 objects
 Unpacking 0 objects
 
@@ -168,17 +168,17 @@ cummitted merge 7fb9b7262a1d1e0a47bbfdcbbcf50ce0635d3f8f
 And the final repository status looks like this:
 
 ------------------------------------------------
-$ git show-branch --more=1 master seen rc
+$ but show-branch --more=1 master seen rc
 ! [master] Revert "Replace zero-length array decls with []."
- ! [seen] git-repack: Add option to repack all objects.
+ ! [seen] but-repack: Add option to repack all objects.
   * [rc] Merge refs/heads/master from .
 ---
- +  [seen] git-repack: Add option to repack all objects.
+ +  [seen] but-repack: Add option to repack all objects.
  +  [seen~1] More documentation updates.
  +  [seen~2] Show cummits in topo order and name all cummits.
  +  [seen~3] mailinfo and applymbox updates
- +  [seen~4] Document "git cherry-pick" and "git revert"
- +  [seen~5] Remove git-apply-patch-script.
+ +  [seen~4] Document "but cherry-pick" and "but revert"
+ +  [seen~5] Remove but-apply-patch-script.
  +  [seen~6] Redo "revert" using three-way merge machinery.
   - [rc] Merge refs/heads/master from .
 ++* [master] Revert "Replace zero-length array decls with []."

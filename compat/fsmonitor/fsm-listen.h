@@ -29,7 +29,7 @@ void fsm_listen__dtor(struct fsmonitor_daemon_state *state);
  *
  * It should call `ipc_server_stop_async()` if the listener thread
  * prematurely terminates (because of a filesystem error or if it
- * detects that the .git directory has been deleted).  (It should NOT
+ * detects that the .but directory has been deleted).  (It should NOT
  * do so if the listener thread receives a normal shutdown signal from
  * the IPC layer.)
  *

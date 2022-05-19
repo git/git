@@ -13,97 +13,97 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'git add (absolute)' '
+test_expect_success 'but add (absolute)' '
 
-	git add "$D/a/b/c/d" &&
-	git ls-files >current &&
+	but add "$D/a/b/c/d" &&
+	but ls-files >current &&
 	echo a/b/c/d >expect &&
 	test_cmp expect current
 
 '
 
 
-test_expect_success 'git add (funny relative)' '
+test_expect_success 'but add (funny relative)' '
 
-	rm -f .git/index &&
+	rm -f .but/index &&
 	(
 		cd a/b &&
-		git add "../e/./f"
+		but add "../e/./f"
 	) &&
-	git ls-files >current &&
+	but ls-files >current &&
 	echo a/e/f >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git rm (absolute)' '
+test_expect_success 'but rm (absolute)' '
 
-	rm -f .git/index &&
-	git add a &&
-	git rm -f --cached "$D/a/b/c/d" &&
-	git ls-files >current &&
+	rm -f .but/index &&
+	but add a &&
+	but rm -f --cached "$D/a/b/c/d" &&
+	but ls-files >current &&
 	echo a/e/f >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git rm (funny relative)' '
+test_expect_success 'but rm (funny relative)' '
 
-	rm -f .git/index &&
-	git add a &&
+	rm -f .but/index &&
+	but add a &&
 	(
 		cd a/b &&
-		git rm -f --cached "../e/./f"
+		but rm -f --cached "../e/./f"
 	) &&
-	git ls-files >current &&
+	but ls-files >current &&
 	echo a/b/c/d >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git ls-files (absolute)' '
+test_expect_success 'but ls-files (absolute)' '
 
-	rm -f .git/index &&
-	git add a &&
-	git ls-files "$D/a/e/../b" >current &&
+	rm -f .but/index &&
+	but add a &&
+	but ls-files "$D/a/e/../b" >current &&
 	echo a/b/c/d >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git ls-files (relative #1)' '
+test_expect_success 'but ls-files (relative #1)' '
 
-	rm -f .git/index &&
-	git add a &&
+	rm -f .but/index &&
+	but add a &&
 	(
 		cd a/b &&
-		git ls-files "../b/c"
+		but ls-files "../b/c"
 	)  >current &&
 	echo c/d >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git ls-files (relative #2)' '
+test_expect_success 'but ls-files (relative #2)' '
 
-	rm -f .git/index &&
-	git add a &&
+	rm -f .but/index &&
+	but add a &&
 	(
 		cd a/b &&
-		git ls-files --full-name "../e/f"
+		but ls-files --full-name "../e/f"
 	)  >current &&
 	echo a/e/f >expect &&
 	test_cmp expect current
 
 '
 
-test_expect_success 'git ls-files (relative #3)' '
+test_expect_success 'but ls-files (relative #3)' '
 
-	rm -f .git/index &&
-	git add a &&
+	rm -f .but/index &&
+	but add a &&
 	(
 		cd a/b &&
-		git ls-files "../e/f"
+		but ls-files "../e/f"
 	)  >current &&
 	echo ../e/f >expect &&
 	test_cmp expect current
@@ -111,23 +111,23 @@ test_expect_success 'git ls-files (relative #3)' '
 '
 
 test_expect_success 'cummit using absolute path names' '
-	git cummit -m "foo" &&
+	but cummit -m "foo" &&
 	echo aa >>a/b/c/d &&
-	git cummit -m "aa" "$(pwd)/a/b/c/d"
+	but cummit -m "aa" "$(pwd)/a/b/c/d"
 '
 
 test_expect_success 'log using absolute path names' '
 	echo bb >>a/b/c/d &&
-	git cummit -m "bb" "$(pwd)/a/b/c/d" &&
+	but cummit -m "bb" "$(pwd)/a/b/c/d" &&
 
-	git log a/b/c/d >f1.txt &&
-	git log "$(pwd)/a/b/c/d" >f2.txt &&
+	but log a/b/c/d >f1.txt &&
+	but log "$(pwd)/a/b/c/d" >f2.txt &&
 	test_cmp f1.txt f2.txt
 '
 
 test_expect_success 'blame using absolute path names' '
-	git blame a/b/c/d >f1.txt &&
-	git blame "$(pwd)/a/b/c/d" >f2.txt &&
+	but blame a/b/c/d >f1.txt &&
+	but blame "$(pwd)/a/b/c/d" >f2.txt &&
 	test_cmp f1.txt f2.txt
 '
 
@@ -138,7 +138,7 @@ test_expect_success 'setup deeper work tree' '
 test_expect_success 'add a directory outside the work tree' '(
 	cd tester &&
 	d1="$(cd .. && pwd)" &&
-	test_must_fail git add "$d1"
+	test_must_fail but add "$d1"
 )'
 
 
@@ -147,7 +147,7 @@ test_expect_success 'add a file outside the work tree, nasty case 1' '(
 	f="$(pwd)x" &&
 	echo "$f" &&
 	touch "$f" &&
-	test_must_fail git add "$f"
+	test_must_fail but add "$f"
 )'
 
 test_expect_success 'add a file outside the work tree, nasty case 2' '(
@@ -155,7 +155,7 @@ test_expect_success 'add a file outside the work tree, nasty case 2' '(
 	f="$(pwd | sed "s/.$//")x" &&
 	echo "$f" &&
 	touch "$f" &&
-	test_must_fail git add "$f"
+	test_must_fail but add "$f"
 )'
 
 test_done

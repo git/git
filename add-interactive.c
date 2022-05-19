@@ -37,7 +37,7 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 		s->use_color = -1;
 	else
 		s->use_color =
-			git_config_colorbool("color.interactive", value);
+			but_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
 	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
@@ -62,14 +62,14 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 		s->use_color ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
-	git_config_get_string("interactive.difffilter",
+	but_config_get_string("interactive.difffilter",
 			      &s->interactive_diff_filter);
 
 	FREE_AND_NULL(s->interactive_diff_algorithm);
-	git_config_get_string("diff.algorithm",
+	but_config_get_string("diff.algorithm",
 			      &s->interactive_diff_algorithm);
 
-	git_config_get_bool("interactive.singlekey", &s->use_single_key);
+	but_config_get_bool("interactive.singlekey", &s->use_single_key);
 	if (s->use_single_key)
 		setbuf(stdin, NULL);
 }
@@ -304,7 +304,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 		fputs(singleton ? "> " : ">> ", stdout);
 		fflush(stdout);
 
-		if (git_read_line_interactively(&input) == EOF) {
+		if (but_read_line_interactively(&input) == EOF) {
 			putchar('\n');
 			if (immediate)
 				res = LIST_AND_CHOOSE_QUIT;
@@ -343,7 +343,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 			if (sep == 1 && *p == '*') {
 				from = 0;
 				to = items->items.nr;
-			} else if (isdigit(*p)) {
+			} else if (isdibut(*p)) {
 				char *endp;
 				/*
 				 * A range can be specified like 5-7 or 5-.
@@ -358,7 +358,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				if (endp == p + sep)
 					to = from + 1;
 				else if (*endp == '-') {
-					if (isdigit(*(++endp)))
+					if (isdibut(*(++endp)))
 						to = strtoul(endp, &endp, 10);
 					else
 						to = items->items.nr;
@@ -606,7 +606,7 @@ static int is_valid_prefix(const char *prefix, size_t prefix_len)
 		 */
 		strcspn(prefix, " \t\r\n,") >= prefix_len &&	/* separators */
 		*prefix != '-' &&				/* deselection */
-		!isdigit(*prefix) &&				/* selection */
+		!isdibut(*prefix) &&				/* selection */
 		(prefix_len != 1 ||
 		 (*prefix != '*' &&				/* "all" wildcard */
 		  *prefix != '?'));				/* prompt help */
@@ -992,7 +992,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	if (count > 0) {
 		struct strvec args = STRVEC_INIT;
 
-		strvec_pushl(&args, "git", "diff", "-p", "--cached",
+		strvec_pushl(&args, "but", "diff", "-p", "--cached",
 			     oid_to_hex(!is_initial ? &oid :
 					s->r->hash_algo->empty_tree),
 			     "--", NULL);

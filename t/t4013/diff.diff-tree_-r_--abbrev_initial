@@ -1,2 +1,2 @@
-$ git diff-tree -r --abbrev initial
+$ but diff-tree -r --abbrev initial
 $

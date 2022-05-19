@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description='giving ignored paths to git add'
+test_description='giving ignored paths to but add'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
 	mkdir sub dir dir/sub &&
-	echo sub >.gitignore &&
-	echo ign >>.gitignore &&
+	echo sub >.butignore &&
+	echo ign >>.butignore &&
 	for p in . sub dir dir/sub
 	do
 		>"$p/ign" &&
@@ -19,9 +19,9 @@ test_expect_success setup '
 for i in file dir/file dir 'd*'
 do
 	test_expect_success "no complaints for unignored $i" '
-		rm -f .git/index &&
-		git add "$i" &&
-		git ls-files "$i" >out &&
+		rm -f .but/index &&
+		but add "$i" &&
+		but ls-files "$i" >out &&
 		test -s out
 	'
 done
@@ -29,9 +29,9 @@ done
 for i in ign dir/ign dir/sub dir/sub/*ign sub/file sub sub/*
 do
 	test_expect_success "complaints for ignored $i" '
-		rm -f .git/index &&
-		test_must_fail git add "$i" 2>err &&
-		git ls-files "$i" >out &&
+		rm -f .but/index &&
+		test_must_fail but add "$i" 2>err &&
+		but ls-files "$i" >out &&
 		test_must_be_empty out
 	'
 
@@ -40,9 +40,9 @@ do
 	'
 
 	test_expect_success "complaints for ignored $i with unignored file" '
-		rm -f .git/index &&
-		test_must_fail git add "$i" file 2>err &&
-		git ls-files "$i" >out &&
+		rm -f .but/index &&
+		test_must_fail but add "$i" file 2>err &&
+		but ls-files "$i" >out &&
 		test_must_be_empty out
 	'
 	test_expect_success "complaints for ignored $i with unignored file output" '
@@ -53,11 +53,11 @@ done
 for i in sub sub/*
 do
 	test_expect_success "complaints for ignored $i in dir" '
-		rm -f .git/index &&
+		rm -f .but/index &&
 		(
 			cd dir &&
-			test_must_fail git add "$i" 2>err &&
-			git ls-files "$i" >out &&
+			test_must_fail but add "$i" 2>err &&
+			but ls-files "$i" >out &&
 			test_must_be_empty out
 		)
 	'
@@ -73,11 +73,11 @@ done
 for i in ign file
 do
 	test_expect_success "complaints for ignored $i in sub" '
-		rm -f .git/index &&
+		rm -f .but/index &&
 		(
 			cd sub &&
-			test_must_fail git add "$i" 2>err &&
-			git ls-files "$i" >out &&
+			test_must_fail but add "$i" 2>err &&
+			but ls-files "$i" >out &&
 			test_must_be_empty out
 		)
 	'

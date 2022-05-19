@@ -20,8 +20,8 @@ Fixes since v1.5.2.2
 
  * Documentation Fixes and Updates
 
-   - git-config --regexp was not documented properly.
+   - but-config --regexp was not documented properly.
 
-   - git-repack -a was not documented properly.
+   - but-repack -a was not documented properly.
 
-   - git-remote -n was not documented properly.
+   - but-remote -n was not documented properly.

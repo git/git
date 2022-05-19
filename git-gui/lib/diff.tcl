@@ -1,4 +1,4 @@
-# git-gui diff viewer
+# but-gui diff viewer
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc apply_tab_size {{firsttab {}}} {
@@ -285,13 +285,13 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	set is_submodule_diff 0
 	set diff_active 1
 	set current_diff_header {}
-	set conflict_size [gitattr $path conflict-marker-size 7]
+	set conflict_size [butattr $path conflict-marker-size 7]
 
 	set cmd [list]
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
-		if {[git-version >= "1.7.2"]} {
+		if {[but-version >= "1.7.2"]} {
 			lappend cmd --ignore-submodules=dirty
 		}
 	} elseif {$w eq $ui_workdir} {
@@ -301,7 +301,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 			lappend cmd diff-files
 		}
 	}
-	if {![is_config_false gui.textconv] && [git-version >= 1.6.1]} {
+	if {![is_config_false gui.textconv] && [but-version >= 1.6.1]} {
 		lappend cmd --textconv
 	}
 
@@ -309,7 +309,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	 || [string match {160000 *} [lindex $s 3]]} {
 		set is_submodule_diff 1
 
-		if {[git-version >= "1.6.6"]} {
+		if {[but-version >= "1.6.6"]} {
 			lappend cmd --submodule
 		}
 	}
@@ -330,7 +330,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		lappend cmd $path
 	}
 
-	if {$is_submodule_diff && [git-version < "1.6.6"]} {
+	if {$is_submodule_diff && [but-version < "1.6.6"]} {
 		if {$w eq $ui_index} {
 			set cmd [list submodule summary --cached -- $path]
 		} else {
@@ -338,7 +338,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		}
 	}
 
-	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
+	if {[catch {set fd [eval but_read --nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
 		ui_status [mc "Unable to display %s" [escape_path $path]]
@@ -397,7 +397,7 @@ proc read_diff {fd conflict_size cont_info} {
 		set tags {}
 
 		# -- Check for start of diff header.
-		if {   [string match {diff --git *}      $line]
+		if {   [string match {diff --but *}      $line]
 		    || [string match {diff --cc *}       $line]
 		    || [string match {diff --combined *} $line]} {
 			set ::current_diff_inheader 1
@@ -426,7 +426,7 @@ proc read_diff {fd conflict_size cont_info} {
 
 			# -- Cleanup uninteresting diff header lines.
 			#
-			if {   [string match {diff --git *}      $line]
+			if {   [string match {diff --but *}      $line]
 			    || [string match {diff --cc *}       $line]
 			    || [string match {diff --combined *} $line]
 			    || [string match {--- *}             $line]
@@ -617,7 +617,7 @@ proc apply_or_revert_hunk {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [eval but_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
@@ -853,7 +853,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [eval but_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $wholepatch
@@ -890,7 +890,7 @@ proc undo_last_revert {} {
 
 	if {[catch {
 		set enc $last_revert_enc
-		set p [eval git_write $apply_cmd]
+		set p [eval but_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $last_revert
 		close $p} err]} {

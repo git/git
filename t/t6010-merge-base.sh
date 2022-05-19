@@ -11,10 +11,10 @@ test_description='Merge base and parent list computation.
 M=1130000000
 Z=+0000
 
-GIT_CUMMITTER_EMAIL=git@comm.iter.xz
+GIT_CUMMITTER_EMAIL=but@comm.iter.xz
 GIT_CUMMITTER_NAME='C O Mmiter'
 GIT_AUTHOR_NAME='A U Thor'
-GIT_AUTHOR_EMAIL=git@au.thor.xz
+GIT_AUTHOR_EMAIL=but@au.thor.xz
 export GIT_CUMMITTER_EMAIL GIT_CUMMITTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 doit () {
@@ -32,14 +32,14 @@ doit () {
 	GIT_AUTHOR_DATE=$GIT_CUMMITTER_DATE &&
 	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE &&
 
-	cummit=$(echo $NAME | git cummit-tree $T $PARENTS) &&
+	cummit=$(echo $NAME | but cummit-tree $T $PARENTS) &&
 
-	git update-ref "refs/tags/$NAME" "$cummit" &&
+	but update-ref "refs/tags/$NAME" "$cummit" &&
 	echo $cummit
 }
 
 test_expect_success 'setup' '
-	T=$(git mktree </dev/null)
+	T=$(but mktree </dev/null)
 '
 
 test_expect_success 'set up G and H' '
@@ -59,16 +59,16 @@ test_expect_success 'set up G and H' '
 '
 
 test_expect_success 'merge-base G H' '
-	git name-rev $B >expected &&
+	but name-rev $B >expected &&
 
-	MB=$(git merge-base G H) &&
-	git name-rev "$MB" >actual.single &&
+	MB=$(but merge-base G H) &&
+	but name-rev "$MB" >actual.single &&
 
-	MB=$(git merge-base --all G H) &&
-	git name-rev "$MB" >actual.all &&
+	MB=$(but merge-base --all G H) &&
+	but name-rev "$MB" >actual.all &&
 
-	MB=$(git show-branch --merge-base G H) &&
-	git name-rev "$MB" >actual.sb &&
+	MB=$(but show-branch --merge-base G H) &&
+	but name-rev "$MB" >actual.sb &&
 
 	test_cmp expected actual.single &&
 	test_cmp expected actual.all &&
@@ -76,18 +76,18 @@ test_expect_success 'merge-base G H' '
 '
 
 test_expect_success 'merge-base/show-branch --independent' '
-	git name-rev "$H" >expected1 &&
-	git name-rev "$H" "$G" >expected2 &&
+	but name-rev "$H" >expected1 &&
+	but name-rev "$H" "$G" >expected2 &&
 
-	parents=$(git merge-base --independent H) &&
-	git name-rev $parents >actual1.mb &&
-	parents=$(git merge-base --independent A H G) &&
-	git name-rev $parents >actual2.mb &&
+	parents=$(but merge-base --independent H) &&
+	but name-rev $parents >actual1.mb &&
+	parents=$(but merge-base --independent A H G) &&
+	but name-rev $parents >actual2.mb &&
 
-	parents=$(git show-branch --independent H) &&
-	git name-rev $parents >actual1.sb &&
-	parents=$(git show-branch --independent A H G) &&
-	git name-rev $parents >actual2.sb &&
+	parents=$(but show-branch --independent H) &&
+	but name-rev $parents >actual1.sb &&
+	parents=$(but show-branch --independent A H G) &&
+	but name-rev $parents >actual2.sb &&
 
 	test_cmp expected1 actual1.mb &&
 	test_cmp expected2 actual2.mb &&
@@ -133,13 +133,13 @@ test_expect_success 'unsynchronized clocks' '
 	PL=$(doit  4 PL $L2 $C2) &&
 	PR=$(doit  4 PR $C2 $R2) &&
 
-	git name-rev $C2 >expected &&
+	but name-rev $C2 >expected &&
 
-	MB=$(git merge-base PL PR) &&
-	git name-rev "$MB" >actual.single &&
+	MB=$(but merge-base PL PR) &&
+	but name-rev "$MB" >actual.single &&
 
-	MB=$(git merge-base --all PL PR) &&
-	git name-rev "$MB" >actual.all &&
+	MB=$(but merge-base --all PL PR) &&
+	but name-rev "$MB" >actual.all &&
 
 	test_cmp expected actual.single &&
 	test_cmp expected actual.all
@@ -158,7 +158,7 @@ test_expect_success '--independent with unsynchronized clocks' '
 	IH=$(doit  -2 IH $I8) &&
 
 	echo $IH >expected &&
-	git merge-base --independent IB IH >actual &&
+	but merge-base --independent IB IH >actual &&
 	test_cmp expected actual
 '
 
@@ -183,12 +183,12 @@ test_expect_success 'merge-base for octopus-step (setup)' '
 	test_cummit MM-p &&
 	test_cummit MM-q &&
 	test_cummit MMA &&
-	git checkout MM1 &&
+	but checkout MM1 &&
 	test_cummit MM-r &&
 	test_cummit MM-s &&
 	test_cummit MM-t &&
 	test_cummit MMB &&
-	git checkout MMR &&
+	but checkout MMR &&
 	test_cummit MM-u &&
 	test_cummit MM-v &&
 	test_cummit MM-w &&
@@ -197,12 +197,12 @@ test_expect_success 'merge-base for octopus-step (setup)' '
 '
 
 test_expect_success 'merge-base A B C' '
-	git rev-parse --verify MM1 >expected &&
-	git rev-parse --verify MMR >expected.sb &&
+	but rev-parse --verify MM1 >expected &&
+	but rev-parse --verify MMR >expected.sb &&
 
-	git merge-base --all MMA MMB MMC >actual &&
-	git merge-base --all --octopus MMA MMB MMC >actual.common &&
-	git show-branch --merge-base MMA MMB MMC >actual.sb &&
+	but merge-base --all MMA MMB MMC >actual &&
+	but merge-base --all --octopus MMA MMB MMC >actual.common &&
+	but show-branch --merge-base MMA MMB MMC >actual.sb &&
 
 	test_cmp expected actual &&
 	test_cmp expected.sb actual.common &&
@@ -210,22 +210,22 @@ test_expect_success 'merge-base A B C' '
 '
 
 test_expect_success 'criss-cross merge-base for octopus-step' '
-	git reset --hard MMR &&
+	but reset --hard MMR &&
 	test_cummit CC1 &&
-	git reset --hard E &&
+	but reset --hard E &&
 	test_cummit CC2 &&
 	test_tick &&
 	# E is a root cummit unrelated to MMR root on which CC1 is based
-	git merge -s ours --allow-unrelated-histories CC1 &&
+	but merge -s ours --allow-unrelated-histories CC1 &&
 	test_cummit CC-o &&
 	test_cummit CCB &&
-	git reset --hard CC1 &&
+	but reset --hard CC1 &&
 	# E is a root cummit unrelated to MMR root on which CC1 is based
-	git merge -s ours --allow-unrelated-histories CC2 &&
+	but merge -s ours --allow-unrelated-histories CC2 &&
 	test_cummit CCA &&
 
-	git rev-parse CC1 CC2 >expected &&
-	git merge-base --all CCB CCA^^ CCA^^2 >actual &&
+	but rev-parse CC1 CC2 >expected &&
+	but merge-base --all CCB CCA^^ CCA^^2 >actual &&
 
 	sort expected >expected.sorted &&
 	sort actual >actual.sorted &&
@@ -233,36 +233,36 @@ test_expect_success 'criss-cross merge-base for octopus-step' '
 '
 
 test_expect_success 'using reflog to find the fork point' '
-	git reset --hard &&
-	git checkout -b base $E &&
+	but reset --hard &&
+	but checkout -b base $E &&
 
 	(
 		for count in 1 2 3
 		do
-			git cummit --allow-empty -m "Base cummit #$count" &&
-			git rev-parse HEAD >expect$count &&
-			git checkout -B derived &&
-			git cummit --allow-empty -m "Derived #$count" &&
-			git rev-parse HEAD >derived$count &&
-			git checkout -B base $E || exit 1
+			but cummit --allow-empty -m "Base cummit #$count" &&
+			but rev-parse HEAD >expect$count &&
+			but checkout -B derived &&
+			but cummit --allow-empty -m "Derived #$count" &&
+			but rev-parse HEAD >derived$count &&
+			but checkout -B base $E || exit 1
 		done &&
 
 		for count in 1 2 3
 		do
-			git merge-base --fork-point base $(cat derived$count) >actual &&
+			but merge-base --fork-point base $(cat derived$count) >actual &&
 			test_cmp expect$count actual || exit 1
 		done
 
 	) &&
 	# check that we correctly default to HEAD
-	git checkout derived &&
-	git merge-base --fork-point base >actual &&
+	but checkout derived &&
+	but merge-base --fork-point base >actual &&
 	test_cmp expect3 actual
 '
 
 test_expect_success '--fork-point works with empty reflog' '
-	git -c core.logallrefupdates=false branch no-reflog base &&
-	git merge-base --fork-point no-reflog derived &&
+	but -c core.logallrefupdates=false branch no-reflog base &&
+	but merge-base --fork-point no-reflog derived &&
 	test_cmp expect3 actual
 '
 
@@ -287,21 +287,21 @@ test_expect_success 'merge-base --octopus --all for complex tree' '
 	#        J
 	test_cummit J &&
 	test_cummit JB &&
-	git reset --hard J &&
+	but reset --hard J &&
 	test_cummit JC &&
-	git reset --hard J &&
+	but reset --hard J &&
 	test_cummit JTEMP1 &&
 	test_merge JA JB &&
 	test_merge JAA JC &&
-	git reset --hard J &&
+	but reset --hard J &&
 	test_cummit JTEMP2 &&
 	test_merge JD JB &&
 	test_merge JDD JC &&
-	git reset --hard J &&
+	but reset --hard J &&
 	test_cummit JTEMP3 &&
 	test_merge JE JC &&
-	git rev-parse JC >expected &&
-	git merge-base --all --octopus JAA JDD JE >actual &&
+	but rev-parse JC >expected &&
+	but merge-base --all --octopus JAA JDD JE >actual &&
 	test_cmp expected actual
 '
 

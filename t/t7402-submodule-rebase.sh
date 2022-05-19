@@ -10,18 +10,18 @@ test_description='Test rebasing, stashing, etc. with submodules'
 test_expect_success setup '
 
 	echo file > file &&
-	git add file &&
+	but add file &&
 	test_tick &&
-	git cummit -m initial &&
-	git clone . submodule &&
-	git add submodule &&
+	but cummit -m initial &&
+	but clone . submodule &&
+	but add submodule &&
 	test_tick &&
-	git cummit -m submodule &&
+	but cummit -m submodule &&
 	echo second line >> file &&
-	(cd submodule && git pull) &&
+	(cd submodule && but pull) &&
 	test_tick &&
-	git cummit -m file-and-submodule -a &&
-	git branch added-submodule
+	but cummit -m file-and-submodule -a &&
+	but branch added-submodule
 
 '
 
@@ -30,20 +30,20 @@ test_expect_success 'rebase with a dirty submodule' '
 	(cd submodule &&
 	 echo 3rd line >> file &&
 	 test_tick &&
-	 git cummit -m fork -a) &&
+	 but cummit -m fork -a) &&
 	echo unrelated >> file2 &&
-	git add file2 &&
+	but add file2 &&
 	test_tick &&
-	git cummit -m unrelated file2 &&
+	but cummit -m unrelated file2 &&
 	echo other line >> file &&
 	test_tick &&
-	git cummit -m update file &&
-	CURRENT=$(cd submodule && git rev-parse HEAD) &&
-	EXPECTED=$(git rev-parse HEAD~2:submodule) &&
-	GIT_TRACE=1 git rebase --onto HEAD~2 HEAD^ &&
-	STORED=$(git rev-parse HEAD:submodule) &&
+	but cummit -m update file &&
+	CURRENT=$(cd submodule && but rev-parse HEAD) &&
+	EXPECTED=$(but rev-parse HEAD~2:submodule) &&
+	GIT_TRACE=1 but rebase --onto HEAD~2 HEAD^ &&
+	STORED=$(but rev-parse HEAD:submodule) &&
 	test $EXPECTED = $STORED &&
-	test $CURRENT = $(cd submodule && git rev-parse HEAD)
+	test $CURRENT = $(cd submodule && but rev-parse HEAD)
 
 '
 
@@ -55,11 +55,11 @@ chmod a+x fake-editor.sh
 
 test_expect_success 'interactive rebase with a dirty submodule' '
 
-	test submodule = $(git diff --name-only) &&
-	HEAD=$(git rev-parse HEAD) &&
+	test submodule = $(but diff --name-only) &&
+	HEAD=$(but rev-parse HEAD) &&
 	GIT_EDITOR="\"$(pwd)/fake-editor.sh\"" EDITOR_TEXT="pick $HEAD" \
-		git rebase -i HEAD^ &&
-	test submodule = $(git diff --name-only)
+		but rebase -i HEAD^ &&
+	test submodule = $(but diff --name-only)
 
 '
 
@@ -67,50 +67,50 @@ test_expect_success 'rebase with dirty file and submodule fails' '
 
 	echo yet another line >> file &&
 	test_tick &&
-	git cummit -m next file &&
+	but cummit -m next file &&
 	echo rewrite > file &&
 	test_tick &&
-	git cummit -m rewrite file &&
+	but cummit -m rewrite file &&
 	echo dirty > file &&
-	test_must_fail git rebase --onto HEAD~2 HEAD^
+	test_must_fail but rebase --onto HEAD~2 HEAD^
 
 '
 
 test_expect_success 'stash with a dirty submodule' '
 
 	echo new > file &&
-	CURRENT=$(cd submodule && git rev-parse HEAD) &&
-	git stash &&
+	CURRENT=$(cd submodule && but rev-parse HEAD) &&
+	but stash &&
 	test new != $(cat file) &&
-	test submodule = $(git diff --name-only) &&
-	test $CURRENT = $(cd submodule && git rev-parse HEAD) &&
-	git stash apply &&
+	test submodule = $(but diff --name-only) &&
+	test $CURRENT = $(cd submodule && but rev-parse HEAD) &&
+	but stash apply &&
 	test new = $(cat file) &&
-	test $CURRENT = $(cd submodule && git rev-parse HEAD)
+	test $CURRENT = $(cd submodule && but rev-parse HEAD)
 
 '
 
 test_expect_success 'rebasing submodule that should conflict' '
-	git reset --hard &&
-	git checkout added-submodule &&
-	git add submodule &&
+	but reset --hard &&
+	but checkout added-submodule &&
+	but add submodule &&
 	test_tick &&
-	git cummit -m third &&
+	but cummit -m third &&
 	(
 		cd submodule &&
-		git cummit --allow-empty -m extra
+		but cummit --allow-empty -m extra
 	) &&
-	git add submodule &&
+	but add submodule &&
 	test_tick &&
-	git cummit -m fourth &&
+	but cummit -m fourth &&
 
-	test_must_fail git rebase --onto HEAD^^ HEAD^ HEAD^0 &&
-	git ls-files -s submodule >actual &&
+	test_must_fail but rebase --onto HEAD^^ HEAD^ HEAD^0 &&
+	but ls-files -s submodule >actual &&
 	(
 		cd submodule &&
-		echo "160000 $(git rev-parse HEAD^) 1	submodule" &&
-		echo "160000 $(git rev-parse HEAD^^) 2	submodule" &&
-		echo "160000 $(git rev-parse HEAD) 3	submodule"
+		echo "160000 $(but rev-parse HEAD^) 1	submodule" &&
+		echo "160000 $(but rev-parse HEAD^^) 2	submodule" &&
+		echo "160000 $(but rev-parse HEAD) 3	submodule"
 	) >expect &&
 	test_cmp expect actual
 '

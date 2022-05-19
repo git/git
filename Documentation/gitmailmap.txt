@@ -1,9 +1,9 @@
-gitmailmap(5)
+butmailmap(5)
 =============
 
 NAME
 ----
-gitmailmap - Map author/cummitter names and/or E-Mail addresses
+butmailmap - Map author/cummitter names and/or E-Mail addresses
 
 SYNOPSIS
 --------
@@ -15,7 +15,7 @@ DESCRIPTION
 
 If the file `.mailmap` exists at the toplevel of the repository, or at
 the location pointed to by the `mailmap.file` or `mailmap.blob`
-configuration options (see linkgit:git-config[1]), it
+configuration options (see linkbut:but-config[1]), it
 is used to map author and cummitter names and email addresses to
 canonical real names and email addresses.
 
@@ -122,9 +122,9 @@ Jane Doe <jane@example.com> Jane <bugs@example.com>
 
 SEE ALSO
 --------
-linkgit:git-check-mailmap[1]
+linkbut:but-check-mailmap[1]
 
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

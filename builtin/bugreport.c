@@ -12,8 +12,8 @@ static void get_system_info(struct strbuf *sys_info)
 	struct utsname uname_info;
 	char *shell = NULL;
 
-	/* get git version from native cmd */
-	strbuf_addstr(sys_info, _("git version:\n"));
+	/* get but version from native cmd */
+	strbuf_addstr(sys_info, _("but version:\n"));
 	get_version_info(sys_info, 1);
 
 	/* system call for other version info */
@@ -40,13 +40,13 @@ static void get_system_info(struct strbuf *sys_info)
 		    shell ? shell : "<unset>");
 }
 
-static void get_populated_hooks(struct strbuf *hook_info, int nongit)
+static void get_populated_hooks(struct strbuf *hook_info, int nonbut)
 {
 	const char **p;
 
-	if (nongit) {
+	if (nonbut) {
 		strbuf_addstr(hook_info,
-			_("not run from a git repository - no hooks to show\n"));
+			_("not run from a but repository - no hooks to show\n"));
 		return;
 	}
 
@@ -59,7 +59,7 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 }
 
 static const char * const bugreport_usage[] = {
-	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
+	N_("but bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
 };
 
@@ -120,7 +120,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&report_path, prefixed_filename);
 	strbuf_complete(&report_path, '/');
 
-	strbuf_addstr(&report_path, "git-bugreport-");
+	strbuf_addstr(&report_path, "but-bugreport-");
 	strbuf_addftime(&report_path, option_suffix, localtime_r(&now, &tm), 0, 0);
 	strbuf_addstr(&report_path, ".txt");
 

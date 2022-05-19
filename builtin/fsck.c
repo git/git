@@ -238,7 +238,7 @@ static int mark_loose_unreachable_referents(const struct object_id *oid,
 }
 
 static int mark_packed_unreachable_referents(const struct object_id *oid,
-					     struct packed_git *pack,
+					     struct packed_but *pack,
 					     uint32_t pos,
 					     void *data)
 {
@@ -312,7 +312,7 @@ static void check_unreachable_object(struct object *obj)
 				  printable_type(&obj->oid, obj->type),
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
-			char *filename = git_pathdup("lost-found/%s/%s",
+			char *filename = but_pathdup("lost-found/%s/%s",
 				obj->type == OBJ_CUMMIT ? "cummit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
@@ -772,7 +772,7 @@ static int mark_loose_for_connectivity(const struct object_id *oid,
 }
 
 static int mark_packed_for_connectivity(const struct object_id *oid,
-					struct packed_git *pack,
+					struct packed_but *pack,
 					uint32_t pos,
 					void *data)
 {
@@ -781,7 +781,7 @@ static int mark_packed_for_connectivity(const struct object_id *oid,
 }
 
 static char const * const fsck_usage[] = {
-	N_("git fsck [<options>] [<object>...]"),
+	N_("but fsck [<options>] [<object>...]"),
 	NULL
 };
 
@@ -797,7 +797,7 @@ static struct option fsck_opts[] = {
 	OPT_BOOL(0, "connectivity-only", &connectivity_only, N_("check only connectivity")),
 	OPT_BOOL(0, "strict", &check_strict, N_("enable more strict checking")),
 	OPT_BOOL(0, "lost-found", &write_lost_and_found,
-				N_("write dangling objects in .git/lost-found")),
+				N_("write dangling objects in .but/lost-found")),
 	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
 	OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
 	OPT_END(),
@@ -835,7 +835,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	git_config(git_fsck_config, &fsck_obj_options);
+	but_config(but_fsck_config, &fsck_obj_options);
 	prepare_repo_settings(the_repository);
 
 	if (connectivity_only) {
@@ -847,7 +847,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			fsck_object_dir(odb->path);
 
 		if (check_full) {
-			struct packed_git *p;
+			struct packed_but *p;
 			uint32_t total = 0, count = 0;
 			struct progress *progress = NULL;
 
@@ -904,7 +904,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * If we've not been given any explicit head information, do the
-	 * default ones from .git/refs. We also consider the index file
+	 * default ones from .but/refs. We also consider the index file
 	 * in this case (ie this implies --cache).
 	 */
 	if (!argc) {
@@ -948,7 +948,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		prepare_alt_odb(the_repository);
 		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
 			child_process_init(&cummit_graph_verify);
-			cummit_graph_verify.git_cmd = 1;
+			cummit_graph_verify.but_cmd = 1;
 			strvec_pushl(&cummit_graph_verify.args, "cummit-graph",
 				     "verify", "--object-dir", odb->path, NULL);
 			if (run_command(&cummit_graph_verify))
@@ -962,7 +962,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		prepare_alt_odb(the_repository);
 		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
 			child_process_init(&midx_verify);
-			midx_verify.git_cmd = 1;
+			midx_verify.but_cmd = 1;
 			strvec_pushl(&midx_verify.args, "multi-pack-index",
 				     "verify", "--object-dir", odb->path, NULL);
 			if (run_command(&midx_verify))

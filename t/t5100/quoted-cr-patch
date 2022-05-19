@@ -2,7 +2,7 @@
  configure | 2 +-%%
  1 file changed, 1 insertion(+), 1 deletion(-)%%
 %%
-diff --git a/configure b/configure%%
+diff --but a/configure b/configure%%
 index db3538b3..f7c1c095 100755%%
 --- a/configure%%
 +++ b/configure%%

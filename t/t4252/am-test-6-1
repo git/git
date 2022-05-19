@@ -4,7 +4,7 @@ Subject: Huh
 
 Should fail and leave rejects
 
-diff --git i/file-2 w/file-2
+diff --but i/file-2 w/file-2
 index 06e567b..b6f3a16 100644
 --- i/file-2
 +++ w/file-2

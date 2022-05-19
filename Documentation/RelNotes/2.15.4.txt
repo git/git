@@ -7,5 +7,5 @@ CVE-2019-1351, CVE-2019-1352, CVE-2019-1353, CVE-2019-1354, and
 CVE-2019-1387; see the release notes for that version for details.
 
 In conjunction with a vulnerability that was fixed in v2.20.2,
-`.gitmodules` is no longer allowed to contain entries of the form
+`.butmodules` is no longer allowed to contain entries of the form
 `submodule.<name>.update=!command`.

@@ -1,5 +1,5 @@
-# git-gui merge conflict resolution
-# parts based on git-mergetool (c) 2006 Theodore Y. Ts'o
+# but-gui merge conflict resolution
+# parts based on but-mergetool (c) 2006 Theodore Y. Ts'o
 
 proc merge_resolve_one {stage} {
 	global current_diff_path
@@ -66,7 +66,7 @@ proc merge_force_stage {stage} {
 	global current_diff_path merge_stages
 
 	if {$merge_stages($stage) ne {}} {
-		git checkout-index -f --stage=$stage -- $current_diff_path
+		but checkout-index -f --stage=$stage -- $current_diff_path
 	} else {
 		file delete -- $current_diff_path
 	}
@@ -88,7 +88,7 @@ proc merge_load_stages {path cont} {
 	set merge_stages(3) {}
 	set merge_stages_buf {}
 
-	set merge_stages_fd [eval git_read ls-files -u -z -- {$path}]
+	set merge_stages_fd [eval but_read ls-files -u -z -- {$path}]
 
 	fconfigure $merge_stages_fd -blocking 0 -translation binary -encoding binary
 	fileevent $merge_stages_fd readable [list read_merge_stages $merge_stages_fd $cont]
@@ -296,7 +296,7 @@ proc merge_tool_get_stages {target stages} {
 			catch { close [open $fname w] }
 		} else {
 			# A hack to support autocrlf properly
-			git checkout-index -f --stage=$i -- $target
+			but checkout-index -f --stage=$i -- $target
 			file rename -force -- $target $fname
 		}
 		incr i

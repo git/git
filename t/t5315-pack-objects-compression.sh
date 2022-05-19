@@ -6,18 +6,18 @@ test_description='pack-object compression configuration'
 
 test_expect_success setup '
 	printf "%2000000s" X |
-	git hash-object -w --stdin >object-name &&
+	but hash-object -w --stdin >object-name &&
 	# make sure it resulted in a loose object
 	ob=$(sed -e "s/\(..\).*/\1/" object-name) &&
 	ject=$(sed -e "s/..\(.*\)/\1/" object-name) &&
-	test -f .git/objects/$ob/$ject
+	test -f .but/objects/$ob/$ject
 '
 
 while read expect config
 do
 	test_expect_success "pack-objects with $config" '
 		test_when_finished "rm -f pack-*.*" &&
-		git $config pack-objects pack <object-name &&
+		but $config pack-objects pack <object-name &&
 		sz=$(test_file_size pack-*.pack) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;

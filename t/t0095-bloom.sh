@@ -68,13 +68,13 @@ test_expect_success 'compute bloom key for test string 2' '
 '
 
 test_expect_success 'get bloom filters for cummit with no changes' '
-	git init &&
-	git cummit --allow-empty -m "c0" &&
+	but init &&
+	but cummit --allow-empty -m "c0" &&
 	cat >expect <<-\EOF &&
 	Filter_Length:1
 	Filter_Data:00|
 	EOF
-	test-tool bloom get_filter_for_cummit "$(git rev-parse HEAD)" >actual &&
+	test-tool bloom get_filter_for_cummit "$(but rev-parse HEAD)" >actual &&
 	test_cmp expect actual
 '
 
@@ -86,13 +86,13 @@ test_expect_success 'get bloom filter for cummit with 10 changes' '
 	do
 		echo $i >smallDir/$i || return 1
 	done &&
-	git add smallDir &&
-	git cummit -m "cummit with 10 changes" &&
+	but add smallDir &&
+	but cummit -m "cummit with 10 changes" &&
 	cat >expect <<-\EOF &&
 	Filter_Length:14
 	Filter_Data:02|b3|c4|a0|34|e7|fe|eb|cb|47|fe|a0|e8|72|
 	EOF
-	test-tool bloom get_filter_for_cummit "$(git rev-parse HEAD)" >actual &&
+	test-tool bloom get_filter_for_cummit "$(but rev-parse HEAD)" >actual &&
 	test_cmp expect actual
 '
 
@@ -104,13 +104,13 @@ test_expect_success EXPENSIVE 'get bloom filter for cummit with 513 changes' '
 	do
 		echo $i >bigDir/$i || return 1
 	done &&
-	git add bigDir &&
-	git cummit -m "cummit with 513 changes" &&
+	but add bigDir &&
+	but cummit -m "cummit with 513 changes" &&
 	cat >expect <<-\EOF &&
 	Filter_Length:1
 	Filter_Data:ff|
 	EOF
-	test-tool bloom get_filter_for_cummit "$(git rev-parse HEAD)" >actual &&
+	test-tool bloom get_filter_for_cummit "$(but rev-parse HEAD)" >actual &&
 	test_cmp expect actual
 '
 

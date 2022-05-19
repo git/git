@@ -53,20 +53,20 @@ do
 	esac
 done
 
-. "$(git --exec-path)/git-sh-setup"
+. "$(but --exec-path)/but-sh-setup"
 require_work_tree
 cd_to_toplevel
 
 # Remember original branch
-branch=$(git symbolic-ref -q HEAD) ||
-original_HEAD=$(git rev-parse --verify HEAD) || {
+branch=$(but symbolic-ref -q HEAD) ||
+original_HEAD=$(but rev-parse --verify HEAD) || {
 	echo >&2 "Not on any branch and no cummit yet?"
 	exit 1
 }
 
 mkdir -p "$GIT_DIR/rr-cache" || exit
 
-git rev-list --parents "$@" |
+but rev-list --parents "$@" |
 while read cummit parent1 other_parents
 do
 	if test -z "$other_parents"
@@ -74,29 +74,29 @@ do
 		# Skip non-merges
 		continue
 	fi
-	git checkout -q "$parent1^0"
-	if git merge $other_parents >/dev/null 2>&1
+	but checkout -q "$parent1^0"
+	if but merge $other_parents >/dev/null 2>&1
 	then
 		# Cleanly merges
 		continue
 	fi
 	if test $overwrite = 1
 	then
-		git rerere forget .
+		but rerere forget .
 	fi
 	if test -s "$GIT_DIR/MERGE_RR"
 	then
-		git --no-pager show -s --format="Learning from %h %s" "$cummit"
-		git rerere
-		git checkout -q $cummit -- .
-		git rerere
+		but --no-pager show -s --format="Learning from %h %s" "$cummit"
+		but rerere
+		but checkout -q $cummit -- .
+		but rerere
 	fi
-	git reset -q --hard  # Might nuke untracked files...
+	but reset -q --hard  # Might nuke untracked files...
 done
 
 if test -z "$branch"
 then
-	git checkout "$original_HEAD"
+	but checkout "$original_HEAD"
 else
-	git checkout "${branch#refs/heads/}"
+	but checkout "${branch#refs/heads/}"
 fi

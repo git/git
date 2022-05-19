@@ -24,16 +24,16 @@ static int remove_space(char *line)
 
 static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 {
-	static const char digits[] = "0123456789";
+	static const char dibuts[] = "0123456789";
 	const char *q, *r;
 	int n;
 
 	q = p + 4;
-	n = strspn(q, digits);
+	n = strspn(q, dibuts);
 	if (q[n] == ',') {
 		q += n + 1;
 		*p_before = atoi(q);
-		n = strspn(q, digits);
+		n = strspn(q, dibuts);
 	} else {
 		*p_before = 1;
 	}
@@ -42,11 +42,11 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 		return 0;
 
 	r = q + n + 2;
-	n = strspn(r, digits);
+	n = strspn(r, dibuts);
 	if (r[n] == ',') {
 		r += n + 1;
 		*p_after = atoi(r);
-		n = strspn(r, digits);
+		n = strspn(r, dibuts);
 	} else {
 		*p_after = 1;
 	}
@@ -61,7 +61,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 {
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
-	git_hash_ctx ctx;
+	but_hash_ctx ctx;
 
 	the_hash_algo->init_fn(&ctx);
 	oidclr(result);
@@ -149,25 +149,25 @@ static void generate_id_list(int stable)
 	strbuf_release(&line_buf);
 }
 
-static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
+static const char patch_id_usage[] = "but patch-id [--stable | --unstable]";
 
-static int git_patch_id_config(const char *var, const char *value, void *cb)
+static int but_patch_id_config(const char *var, const char *value, void *cb)
 {
 	int *stable = cb;
 
 	if (!strcmp(var, "patchid.stable")) {
-		*stable = git_config_bool(var, value);
+		*stable = but_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return but_default_config(var, value, cb);
 }
 
 int cmd_patch_id(int argc, const char **argv, const char *prefix)
 {
 	int stable = -1;
 
-	git_config(git_patch_id_config, &stable);
+	but_config(but_patch_id_config, &stable);
 
 	/* If nothing is set, default to unstable. */
 	if (stable < 0)

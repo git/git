@@ -27,13 +27,13 @@ add () {
 	done &&
 
 	echo "$text" > test.txt &&
-	git update-index --add test.txt &&
-	tree=$(git write-tree) &&
+	but update-index --add test.txt &&
+	tree=$(but write-tree) &&
 	# make sure timestamps are in correct order
 	test_tick &&
-	cummit=$(echo "$text" | git cummit-tree $tree $parents) &&
+	cummit=$(echo "$text" | but cummit-tree $tree $parents) &&
 	eval "$name=$cummit; export $name" &&
-	git update-ref "refs/heads/$branch" "$cummit" &&
+	but update-ref "refs/heads/$branch" "$cummit" &&
 	eval ${branch}TIP=$cummit
 }
 
@@ -44,30 +44,30 @@ pull_to_client () {
 	test_expect_success "$number pull" '
 		(
 			cd client &&
-			git fetch-pack -k -v .. $heads &&
+			but fetch-pack -k -v .. $heads &&
 
 			case "$heads" in
 			    *A*)
-				    git update-ref refs/heads/A "$ATIP";;
+				    but update-ref refs/heads/A "$ATIP";;
 			esac &&
 			case "$heads" in *B*)
-			    git update-ref refs/heads/B "$BTIP";;
+			    but update-ref refs/heads/B "$BTIP";;
 			esac &&
 
-			git symbolic-ref HEAD refs/heads/$(
+			but symbolic-ref HEAD refs/heads/$(
 				echo $heads |
 				sed -e "s/^\(.\).*$/\1/"
 			) &&
 
-			git fsck --full &&
+			but fsck --full &&
 
-			mv .git/objects/pack/pack-* . &&
+			mv .but/objects/pack/pack-* . &&
 			p=$(ls -1 pack-*.pack) &&
-			git unpack-objects <$p &&
-			git fsck --full &&
+			but unpack-objects <$p &&
+			but fsck --full &&
 
 			idx=$(echo pack-*.idx) &&
-			pack_count=$(git show-index <$idx | wc -l) &&
+			pack_count=$(but show-index <$idx | wc -l) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -86,8 +86,8 @@ test_expect_success 'setup' '
 	mkdir client &&
 	(
 		cd client &&
-		git init &&
-		git config transfer.unpacklimit 0
+		but init &&
+		but config transfer.unpacklimit 0
 	) &&
 	add A1 &&
 	prev=1 &&
@@ -98,9 +98,9 @@ test_expect_success 'setup' '
 		cur=$(($cur+1)) || return 1
 	done &&
 	add B1 $A1 &&
-	git update-ref refs/heads/A "$ATIP" &&
-	git update-ref refs/heads/B "$BTIP" &&
-	git symbolic-ref HEAD refs/heads/B
+	but update-ref refs/heads/A "$ATIP" &&
+	but update-ref refs/heads/B "$BTIP" &&
+	but symbolic-ref HEAD refs/heads/B
 '
 
 pull_to_client 1st "refs/heads/B refs/heads/A" $((11*3))
@@ -121,45 +121,45 @@ pull_to_client 2nd "refs/heads/B" $((64*3))
 pull_to_client 3rd "refs/heads/A" $((1*3))
 
 test_expect_success 'single branch clone' '
-	git clone --single-branch "file://$(pwd)/." singlebranch
+	but clone --single-branch "file://$(pwd)/." singlebranch
 '
 
 test_expect_success 'single branch object count' '
-	GIT_DIR=singlebranch/.git git count-objects -v |
+	GIT_DIR=singlebranch/.but but count-objects -v |
 		grep "^in-pack:" > count.singlebranch &&
 	echo "in-pack: 198" >expected &&
 	test_cmp expected count.singlebranch
 '
 
 test_expect_success 'single given branch clone' '
-	git clone --single-branch --branch A "file://$(pwd)/." branch-a &&
-	test_must_fail git --git-dir=branch-a/.git rev-parse origin/B
+	but clone --single-branch --branch A "file://$(pwd)/." branch-a &&
+	test_must_fail but --but-dir=branch-a/.but rev-parse origin/B
 '
 
 test_expect_success 'clone shallow depth 1' '
-	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
-	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1
+	but clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
+	test "$(but --but-dir=shallow0/.but rev-list --count HEAD)" = 1
 '
 
 test_expect_success 'clone shallow depth 1 with fsck' '
-	git config --global fetch.fsckobjects true &&
-	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
-	test "$(git --git-dir=shallow0fsck/.git rev-list --count HEAD)" = 1 &&
-	git config --global --unset fetch.fsckobjects
+	but config --global fetch.fsckobjects true &&
+	but clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
+	test "$(but --but-dir=shallow0fsck/.but rev-list --count HEAD)" = 1 &&
+	but config --global --unset fetch.fsckobjects
 '
 
 test_expect_success 'clone shallow' '
-	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
+	but clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 2
+	test "$(but --but-dir=shallow/.but rev-list --count HEAD)" = 2
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow &&
 	grep "^in-pack: 12" count.shallow
 '
@@ -173,21 +173,21 @@ test_expect_success 'clone shallow object count (part 2)' '
 test_expect_success 'fsck in shallow repo' '
 	(
 		cd shallow &&
-		git fsck --full
+		but fsck --full
 	)
 '
 
 test_expect_success 'simple fetch in shallow repo' '
 	(
 		cd shallow &&
-		git fetch
+		but fetch
 	)
 '
 
 test_expect_success 'no changes expected' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow.2 &&
 	cmp count.shallow count.shallow.2
 '
@@ -195,14 +195,14 @@ test_expect_success 'no changes expected' '
 test_expect_success 'fetch same depth in shallow repo' '
 	(
 		cd shallow &&
-		git fetch --depth=2
+		but fetch --depth=2
 	)
 '
 
 test_expect_success 'no changes expected' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow.3 &&
 	cmp count.shallow count.shallow.3
 '
@@ -215,14 +215,14 @@ test_expect_success 'add two more' '
 test_expect_success 'pull in shallow repo' '
 	(
 		cd shallow &&
-		git pull .. B
+		but pull .. B
 	)
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow &&
 	grep "^count: 6" count.shallow
 '
@@ -235,14 +235,14 @@ test_expect_success 'add two more (part 2)' '
 test_expect_success 'deepening pull in shallow repo' '
 	(
 		cd shallow &&
-		git pull --depth 4 .. B
+		but pull --depth 4 .. B
 	)
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow &&
 	grep "^count: 12" count.shallow
 '
@@ -250,14 +250,14 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'deepening fetch in shallow repo' '
 	(
 		cd shallow &&
-		git fetch --depth 4 .. A:A
+		but fetch --depth 4 .. A:A
 	)
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow &&
 	grep "^count: 18" count.shallow
 '
@@ -265,134 +265,134 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		git fetch --depth 4 .. A &&
-		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
+		but fetch --depth 4 .. A &&
+		test_must_fail but merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
 test_expect_success 'additional simple shallow deepenings' '
 	(
 		cd shallow &&
-		git fetch --depth=8 &&
-		git fetch --depth=10 &&
-		git fetch --depth=11
+		but fetch --depth=8 &&
+		but fetch --depth=10 &&
+		but fetch --depth=11
 	)
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 11
+	test "$(but --but-dir=shallow/.but rev-list --count HEAD)" = 11
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
-		git prune &&
-		git count-objects -v
+		but prune &&
+		but count-objects -v
 	) > count.shallow &&
 	grep "^count: 54" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '
-	test_must_fail git fetch --noshallow
+	test_must_fail but fetch --noshallow
 '
 
 test_expect_success 'fetch --depth --no-shallow' '
 	(
 		cd shallow &&
-		test_must_fail git fetch --depth=1 --noshallow
+		test_must_fail but fetch --depth=1 --noshallow
 	)
 '
 
 test_expect_success 'turn shallow to complete repository' '
 	(
 		cd shallow &&
-		git fetch --unshallow &&
-		! test -f .git/shallow &&
-		git fsck --full
+		but fetch --unshallow &&
+		! test -f .but/shallow &&
+		but fsck --full
 	)
 '
 
 test_expect_success 'clone shallow without --no-single-branch' '
-	git clone --depth 1 "file://$(pwd)/." shallow2
+	but clone --depth 1 "file://$(pwd)/." shallow2
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow2 &&
-		git count-objects -v
+		but count-objects -v
 	) > count.shallow2 &&
 	grep "^in-pack: 3" count.shallow2
 '
 
 test_expect_success 'clone shallow with --branch' '
-	git clone --depth 1 --branch A "file://$(pwd)/." shallow3
+	but clone --depth 1 --branch A "file://$(pwd)/." shallow3
 '
 
 test_expect_success 'clone shallow object count' '
 	echo "in-pack: 3" > count3.expected &&
-	GIT_DIR=shallow3/.git git count-objects -v |
+	GIT_DIR=shallow3/.but but count-objects -v |
 		grep "^in-pack" > count3.actual &&
 	test_cmp count3.expected count3.actual
 '
 
 test_expect_success 'clone shallow with detached HEAD' '
-	git checkout HEAD^ &&
-	git clone --depth 1 "file://$(pwd)/." shallow5 &&
-	git checkout - &&
-	GIT_DIR=shallow5/.git git rev-parse HEAD >actual &&
-	git rev-parse HEAD^ >expected &&
+	but checkout HEAD^ &&
+	but clone --depth 1 "file://$(pwd)/." shallow5 &&
+	but checkout - &&
+	GIT_DIR=shallow5/.but but rev-parse HEAD >actual &&
+	but rev-parse HEAD^ >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'shallow clone pulling tags' '
-	git tag -a -m A TAGA1 A &&
-	git tag -a -m B TAGB1 B &&
-	git tag TAGA2 A &&
-	git tag TAGB2 B &&
-	git clone --depth 1 "file://$(pwd)/." shallow6 &&
+	but tag -a -m A TAGA1 A &&
+	but tag -a -m B TAGB1 B &&
+	but tag TAGA2 A &&
+	but tag TAGB2 B &&
+	but clone --depth 1 "file://$(pwd)/." shallow6 &&
 
 	cat >taglist.expected <<\EOF &&
 TAGB1
 TAGB2
 EOF
-	GIT_DIR=shallow6/.git git tag -l >taglist.actual &&
+	GIT_DIR=shallow6/.but but tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count6.expected &&
-	GIT_DIR=shallow6/.git git count-objects -v |
+	GIT_DIR=shallow6/.but but count-objects -v |
 		grep "^in-pack" > count6.actual &&
 	test_cmp count6.expected count6.actual
 '
 
 test_expect_success 'shallow cloning single tag' '
-	git clone --depth 1 --branch=TAGB1 "file://$(pwd)/." shallow7 &&
+	but clone --depth 1 --branch=TAGB1 "file://$(pwd)/." shallow7 &&
 	cat >taglist.expected <<\EOF &&
 TAGB1
 TAGB2
 EOF
-	GIT_DIR=shallow7/.git git tag -l >taglist.actual &&
+	GIT_DIR=shallow7/.but but tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count7.expected &&
-	GIT_DIR=shallow7/.git git count-objects -v |
+	GIT_DIR=shallow7/.but but count-objects -v |
 		grep "^in-pack" > count7.actual &&
 	test_cmp count7.expected count7.actual
 '
 
 test_expect_success 'clone shallow with packed refs' '
-	git pack-refs --all &&
-	git clone --depth 1 --branch A "file://$(pwd)/." shallow8 &&
+	but pack-refs --all &&
+	but clone --depth 1 --branch A "file://$(pwd)/." shallow8 &&
 	echo "in-pack: 4" > count8.expected &&
-	GIT_DIR=shallow8/.git git count-objects -v |
+	GIT_DIR=shallow8/.but but count-objects -v |
 		grep "^in-pack" > count8.actual &&
 	test_cmp count8.expected count8.actual
 '
 
 test_expect_success 'in_vain not triggered before first ACK' '
 	rm -rf myserver myclient &&
-	git init myserver &&
+	but init myserver &&
 	test_cummit -C myserver foo &&
-	git clone "file://$(pwd)/myserver" myclient &&
+	but clone "file://$(pwd)/myserver" myclient &&
 
 	# MAX_IN_VAIN is 256. Because of batching, the client will send 496
 	# (16+32+64+128+256) cummits, not 256, before giving up. So create 496
@@ -402,59 +402,59 @@ test_expect_success 'in_vain not triggered before first ACK' '
 	# The new cummit that the client wants to fetch.
 	test_cummit -C myserver bar &&
 
-	git -C myclient fetch --progress origin 2>log &&
+	but -C myclient fetch --progress origin 2>log &&
 	test_i18ngrep "remote: Total 3 " log
 '
 
 test_expect_success 'in_vain resetted upon ACK' '
 	rm -rf myserver myclient &&
-	git init myserver &&
+	but init myserver &&
 
 	# Linked list of cummits on main. The first is common; the rest are
 	# not.
 	test_cummit -C myserver first_main_cummit &&
-	git clone "file://$(pwd)/myserver" myclient &&
+	but clone "file://$(pwd)/myserver" myclient &&
 	test_cummit_bulk -C myclient 255 &&
 
 	# Another linked list of cummits on anotherbranch with no connection to
 	# main. The first is common; the rest are not.
-	git -C myserver checkout --orphan anotherbranch &&
+	but -C myserver checkout --orphan anotherbranch &&
 	test_cummit -C myserver first_anotherbranch_cummit &&
-	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
-	git -C myclient checkout anotherbranch &&
+	but -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
+	but -C myclient checkout anotherbranch &&
 	test_cummit_bulk -C myclient 255 &&
 
 	# The new cummit that the client wants to fetch.
-	git -C myserver checkout main &&
+	but -C myserver checkout main &&
 	test_cummit -C myserver to_fetch &&
 
 	# The client will send (as "have"s) all 256 cummits in anotherbranch
 	# first. The 256th cummit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
 	# the client reports that first_anotherbranch_cummit is common.
-	git -C myclient fetch --progress origin main 2>log &&
+	but -C myclient fetch --progress origin main 2>log &&
 	test_i18ngrep "Total 3 " log
 '
 
 test_expect_success 'fetch in shallow repo unreachable shallow objects' '
 	(
-		git clone --bare --branch B --single-branch "file://$(pwd)/." no-reflog &&
-		git clone --depth 1 "file://$(pwd)/no-reflog" shallow9 &&
+		but clone --bare --branch B --single-branch "file://$(pwd)/." no-reflog &&
+		but clone --depth 1 "file://$(pwd)/no-reflog" shallow9 &&
 		cd no-reflog &&
-		git tag -d TAGB1 TAGB2 &&
-		git update-ref refs/heads/B B~~ &&
-		git gc --prune=now &&
+		but tag -d TAGB1 TAGB2 &&
+		but update-ref refs/heads/B B~~ &&
+		but gc --prune=now &&
 		cd ../shallow9 &&
-		git fetch origin &&
-		git fsck --no-dangling
+		but fetch origin &&
+		but fsck --no-dangling
 	)
 '
 test_expect_success 'fetch creating new shallow root' '
 	(
-		git clone "file://$(pwd)/." shallow10 &&
-		git cummit --allow-empty -m empty &&
+		but clone "file://$(pwd)/." shallow10 &&
+		but cummit --allow-empty -m empty &&
 		cd shallow10 &&
-		git fetch --depth=1 --progress 2>actual &&
+		but fetch --depth=1 --progress 2>actual &&
 		# This should fetch only the empty cummit, no tree or
 		# blob objects
 		test_i18ngrep "remote: Total 1" actual
@@ -468,7 +468,7 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	done &&
 	for head in A B C D E F
 	do
-		git tag $head $head || return 1
+		but tag $head $head || return 1
 	done &&
 	cat >input <<-\EOF &&
 	refs/heads/C
@@ -501,7 +501,7 @@ do
 	test_expect_success "protocol.version=$version fetch refs from cmdline" "
 		(
 			cd client$version &&
-			GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+			GIT_TEST_PROTOCOL_VERSION=$version but fetch-pack --no-progress .. \$(cat ../input)
 		) >output &&
 		cut -d ' ' -f 2 <output | sort >actual &&
 		test_cmp expect actual
@@ -511,7 +511,7 @@ done
 test_expect_success 'fetch refs from stdin' '
 	(
 		cd client &&
-		git fetch-pack --stdin --no-progress .. <../input
+		but fetch-pack --stdin --no-progress .. <../input
 	) >output &&
 	cut -d " " -f 2 <output | sort >actual &&
 	test_cmp expect actual
@@ -521,7 +521,7 @@ test_expect_success 'fetch mixed refs from cmdline and stdin' '
 	(
 		cd client &&
 		tail -n +5 ../input |
-		git fetch-pack --stdin --no-progress .. $(head -n 4 ../input)
+		but fetch-pack --stdin --no-progress .. $(head -n 4 ../input)
 	) >output &&
 	cut -d " " -f 2 <output | sort >actual &&
 	test_cmp expect actual
@@ -530,7 +530,7 @@ test_expect_success 'fetch mixed refs from cmdline and stdin' '
 test_expect_success 'test duplicate refs from stdin' '
 	(
 	cd client &&
-	git fetch-pack --stdin --no-progress .. <../input.dup
+	but fetch-pack --stdin --no-progress .. <../input.dup
 	) >output &&
 	cut -d " " -f 2 <output | sort >actual &&
 	test_cmp expect actual
@@ -545,7 +545,7 @@ test_expect_success 'set up tests of missing reference' '
 test_expect_success 'test lonely missing ref' '
 	(
 		cd client &&
-		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy 2>../error-m
+		test_must_fail but fetch-pack --no-progress .. refs/heads/xyzzy 2>../error-m
 	) &&
 	test_cmp expect-error error-m
 '
@@ -553,7 +553,7 @@ test_expect_success 'test lonely missing ref' '
 test_expect_success 'test missing ref after existing' '
 	(
 		cd client &&
-		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy 2>../error-em
+		test_must_fail but fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy 2>../error-em
 	) &&
 	test_cmp expect-error error-em
 '
@@ -561,7 +561,7 @@ test_expect_success 'test missing ref after existing' '
 test_expect_success 'test missing ref before existing' '
 	(
 		cd client &&
-		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A 2>../error-me
+		test_must_fail but fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A 2>../error-me
 	) &&
 	test_cmp expect-error error-me
 '
@@ -569,43 +569,43 @@ test_expect_success 'test missing ref before existing' '
 test_expect_success 'test --all, --depth, and explicit head' '
 	(
 		cd client &&
-		git fetch-pack --no-progress --all --depth=1 .. refs/heads/A
+		but fetch-pack --no-progress --all --depth=1 .. refs/heads/A
 	) >out-adh 2>error-adh
 '
 
 test_expect_success 'test --all, --depth, and explicit tag' '
-	git tag OLDTAG refs/heads/B~5 &&
+	but tag OLDTAG refs/heads/B~5 &&
 	(
 		cd client &&
-		git fetch-pack --no-progress --all --depth=1 .. refs/tags/OLDTAG
+		but fetch-pack --no-progress --all --depth=1 .. refs/tags/OLDTAG
 	) >out-adt 2>error-adt
 '
 
 test_expect_success 'test --all with tag to non-tip' '
-	git cummit --allow-empty -m non-tip &&
-	git cummit --allow-empty -m tip &&
-	git tag -m "annotated" non-tip HEAD^ &&
+	but cummit --allow-empty -m non-tip &&
+	but cummit --allow-empty -m tip &&
+	but tag -m "annotated" non-tip HEAD^ &&
 	(
 		cd client &&
-		git fetch-pack --all ..
+		but fetch-pack --all ..
 	)
 '
 
 test_expect_success 'test --all wrt tag to non-cummits' '
 	# create tag-to-{blob,tree,cummit,tag}, making sure all tagged objects
 	# are reachable only via created tag references.
-	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
-	git tag -a -m "tag -> blob" tag-to-blob $blob &&
+	blob=$(echo "hello blob" | but hash-object -t blob -w --stdin) &&
+	but tag -a -m "tag -> blob" tag-to-blob $blob &&
 
-	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
-	git tag -a -m "tag -> tree" tag-to-tree $tree &&
+	tree=$(printf "100644 blob $blob\tfile" | but mktree) &&
+	but tag -a -m "tag -> tree" tag-to-tree $tree &&
 
-	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
-	cummit=$(git cummit-tree -m "hello cummit" $tree) &&
-	git tag -a -m "tag -> cummit" tag-to-cummit $cummit &&
+	tree2=$(printf "100644 blob $blob\tfile2" | but mktree) &&
+	cummit=$(but cummit-tree -m "hello cummit" $tree) &&
+	but tag -a -m "tag -> cummit" tag-to-cummit $cummit &&
 
-	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
-	tag=$(git mktag <<-EOF
+	blob2=$(echo "hello blob2" | but hash-object -t blob -w --stdin) &&
+	tag=$(but mktag <<-EOF
 		object $blob2
 		type blob
 		tag tag-to-blob2
@@ -614,18 +614,18 @@ test_expect_success 'test --all wrt tag to non-cummits' '
 		hello tag
 	EOF
 	) &&
-	git tag -a -m "tag -> tag" tag-to-tag $tag &&
+	but tag -a -m "tag -> tag" tag-to-tag $tag &&
 
 	# `fetch-pack --all` should succeed fetching all those objects.
 	mkdir fetchall &&
 	(
 		cd fetchall &&
-		git init &&
-		git fetch-pack --all .. &&
-		git cat-file blob $blob >/dev/null &&
-		git cat-file tree $tree >/dev/null &&
-		git cat-file cummit $cummit >/dev/null &&
-		git cat-file tag $tag >/dev/null
+		but init &&
+		but fetch-pack --all .. &&
+		but cat-file blob $blob >/dev/null &&
+		but cat-file tree $tree >/dev/null &&
+		but cat-file cummit $cummit >/dev/null &&
+		but cat-file tag $tag >/dev/null
 	)
 '
 
@@ -633,65 +633,65 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 	mkdir repo1 &&
 	(
 		cd repo1 &&
-		git init &&
+		but init &&
 		test_cummit 1 &&
 		test_cummit 2 &&
 		test_cummit 3 &&
 		mkdir repo2 &&
 		cd repo2 &&
-		git init &&
-		git fetch --depth=2 ../.git main:branch &&
-		git fsck
+		but init &&
+		but fetch --depth=2 ../.but main:branch &&
+		but fsck
 	)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1' '
-	git init hidden &&
+	but init hidden &&
 	(
 		cd hidden &&
 		test_cummit 1 &&
 		test_cummit 2 &&
-		git update-ref refs/hidden/one HEAD^ &&
-		git config transfer.hiderefs refs/hidden &&
-		git config uploadpack.allowtipsha1inwant true
+		but update-ref refs/hidden/one HEAD^ &&
+		but config transfer.hiderefs refs/hidden &&
+		but config uploadpack.allowtipsha1inwant true
 	) &&
-	git fetch-pack hidden $(git -C hidden rev-parse refs/hidden/one)
+	but fetch-pack hidden $(but -C hidden rev-parse refs/hidden/one)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref' '
 	rm -rf server client &&
-	git init server &&
+	but init server &&
 	test_cummit -C server 1 &&
 
-	git init client &&
-	git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/main)
+	but init client &&
+	but -C client fetch-pack ../server \
+		$(but -C server rev-parse refs/heads/main)
 '
 
 test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
 	rm -rf server client &&
-	git init server &&
+	but init server &&
 	test_cummit -C server 1 &&
 	test_cummit -C server 2 &&
 
-	git init client &&
-	git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/tags/1) refs/tags/1
+	but init client &&
+	but -C client fetch-pack ../server \
+		$(but -C server rev-parse refs/tags/1) refs/tags/1
 '
 
 test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised as a ref' '
 	rm -rf server &&
 
-	git init server &&
+	but init server &&
 	test_cummit -C server 5 &&
-	git -C server tag -d 5 &&
+	but -C server tag -d 5 &&
 	test_cummit -C server 6 &&
 
-	git init client &&
+	but init client &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
-		$(git -C server rev-parse refs/heads/main^) 2>err &&
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 but -C client fetch-pack ../server \
+		$(but -C server rev-parse refs/heads/main^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
 
@@ -701,7 +701,7 @@ check_prot_path () {
 	Diag: protocol=$2
 	Diag: path=$3
 	EOF
-	git fetch-pack --diag-url "$1" | grep -v hostandport= >actual &&
+	but fetch-pack --diag-url "$1" | grep -v hostandport= >actual &&
 	test_cmp expected actual
 }
 
@@ -728,14 +728,14 @@ check_prot_host_port_path () {
 	Diag: path=$5
 	EOF
 	grep -v "^$" exp >expected
-	git fetch-pack --diag-url "$1" >actual &&
+	but fetch-pack --diag-url "$1" >actual &&
 	test_cmp expected actual
 }
 
 for r in repo re:po re/po
 do
-	# git or ssh with scheme
-	for p in "ssh+git" "git+ssh" git ssh
+	# but or ssh with scheme
+	for p in "ssh+but" "but+ssh" but ssh
 	do
 		for h in host user@host user@[::1] user@::1
 		do
@@ -813,19 +813,19 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
-	git clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
-	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
+	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	but clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
+	but -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
 	test_cmp expected actual
 	)
 '
 
 test_expect_success 'fetch shallow since ...' '
-	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
-	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
+	but -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
+	but -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
@@ -837,10 +837,10 @@ test_expect_success 'clone shallow since selects no cummits' '
 	test_create_repo shallow-since-the-future &&
 	(
 	cd shallow-since-the-future &&
-	GIT_CUMMITTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
-	test_must_fail git clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
+	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	test_must_fail but clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
 	)
 '
 
@@ -867,17 +867,17 @@ test_expect_success 'shallow since with cummit graph and already-seen cummit' '
 	cd shallow-since-graph &&
 	test_cummit base &&
 	test_cummit main &&
-	git checkout -b other HEAD^ &&
+	but checkout -b other HEAD^ &&
 	test_cummit other &&
-	git cummit-graph write --reachable &&
-	git config core.cummitGraph true &&
+	but cummit-graph write --reachable &&
+	but config core.cummitGraph true &&
 
-	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
+	GIT_PROTOCOL=version=2 but upload-pack . <<-EOF >/dev/null
 	0012command=fetch
 	$(echo "object-format=$(test_oid algo)" | packetize)
 	00010013deepen-since 1
-	$(echo "want $(git rev-parse other)" | packetize)
-	$(echo "have $(git rev-parse main)" | packetize)
+	$(echo "want $(but rev-parse other)" | packetize)
+	$(echo "have $(but rev-parse main)" | packetize)
 	0000
 	EOF
 	)
@@ -890,16 +890,16 @@ test_expect_success 'shallow clone exclude tag two' '
 	test_cummit one &&
 	test_cummit two &&
 	test_cummit three &&
-	git clone --shallow-exclude two "file://$(pwd)/." ../shallow12 &&
-	git -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
+	but clone --shallow-exclude two "file://$(pwd)/." ../shallow12 &&
+	but -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
 	test_cmp expected actual
 	)
 '
 
 test_expect_success 'fetch exclude tag one' '
-	git -C shallow12 fetch --shallow-exclude one origin &&
-	git -C shallow12 log --pretty=tformat:%s origin/main >actual &&
+	but -C shallow12 fetch --shallow-exclude one origin &&
+	but -C shallow12 log --pretty=tformat:%s origin/main >actual &&
 	test_write_lines three two >expected &&
 	test_cmp expected actual
 '
@@ -911,13 +911,13 @@ test_expect_success 'fetching deepen' '
 	test_cummit one &&
 	test_cummit two &&
 	test_cummit three &&
-	git clone --depth 1 "file://$(pwd)/." deepen &&
+	but clone --depth 1 "file://$(pwd)/." deepen &&
 	test_cummit four &&
-	git -C deepen log --pretty=tformat:%s main >actual &&
+	but -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
-	git -C deepen fetch --deepen=1 &&
-	git -C deepen log --pretty=tformat:%s origin/main >actual &&
+	but -C deepen fetch --deepen=1 &&
+	but -C deepen log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	four
 	three
@@ -930,12 +930,12 @@ test_expect_success 'fetching deepen' '
 test_negotiation_algorithm_default () {
 	test_when_finished rm -rf clientv0 clientv2 &&
 	rm -rf server client &&
-	git init server &&
+	but init server &&
 	test_cummit -C server both_have_1 &&
-	git -C server tag -d both_have_1 &&
+	but -C server tag -d both_have_1 &&
 	test_cummit -C server both_have_2 &&
 
-	git clone server client &&
+	but clone server client &&
 	test_cummit -C server server_has &&
 	test_cummit -C client client_has &&
 
@@ -946,19 +946,19 @@ test_negotiation_algorithm_default () {
 
 	rm -f trace &&
 	cp -r client clientv0 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv0 \
+	GIT_TRACE_PACKET="$(pwd)/trace" but -C clientv0 \
 		"$@" fetch origin server_has both_have_2 &&
-	grep "have $(git -C client rev-parse client_has)" trace &&
-	grep "have $(git -C client rev-parse both_have_2)" trace &&
-	! grep "have $(git -C client rev-parse both_have_2^)" trace &&
+	grep "have $(but -C client rev-parse client_has)" trace &&
+	grep "have $(but -C client rev-parse both_have_2)" trace &&
+	! grep "have $(but -C client rev-parse both_have_2^)" trace &&
 
 	rm -f trace &&
 	cp -r client clientv2 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv2 -c protocol.version=2 \
+	GIT_TRACE_PACKET="$(pwd)/trace" but -C clientv2 -c protocol.version=2 \
 		"$@" fetch origin server_has both_have_2 &&
-	grep "have $(git -C client rev-parse client_has)" trace &&
-	grep "have $(git -C client rev-parse both_have_2)" trace &&
-	! grep "have $(git -C client rev-parse both_have_2^)" trace
+	grep "have $(but -C client rev-parse client_has)" trace &&
+	grep "have $(but -C client rev-parse both_have_2)" trace &&
+	! grep "have $(but -C client rev-parse both_have_2^)" trace
 }
 
 test_expect_success 'use ref advertisement to prune "have" lines sent' '
@@ -974,7 +974,7 @@ test_expect_success 'same as last but with config overrides' '
 test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
 	test_when_finished rm -rf clientv0 &&
 	cp -r client clientv0 &&
-	test_must_fail git -C clientv0 --fetch.negotiationAlgorithm=bogus \
+	test_must_fail but -C clientv0 --fetch.negotiationAlgorithm=bogus \
 		       fetch origin server_has both_have_2
 '
 
@@ -985,12 +985,12 @@ test_expect_success 'filtering by size' '
 	test_config -C server uploadpack.allowfilter 1 &&
 
 	test_create_repo client &&
-	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
+	but -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
 
 	# Ensure that object is not inadvertently fetched
-	cummit=$(git -C server rev-parse HEAD) &&
-	blob=$(git hash-object server/one.t) &&
-	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
+	cummit=$(but -C server rev-parse HEAD) &&
+	blob=$(but hash-object server/one.t) &&
+	but -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
 	! grep "$blob" oids
 '
 
@@ -1000,12 +1000,12 @@ test_expect_success 'filtering by size has no effect if support for it is not ad
 	test_cummit -C server one &&
 
 	test_create_repo client &&
-	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD 2> err &&
+	but -C client fetch-pack --filter=blob:limit=0 ../server HEAD 2> err &&
 
 	# Ensure that object is fetched
-	cummit=$(git -C server rev-parse HEAD) &&
-	blob=$(git hash-object server/one.t) &&
-	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
+	cummit=$(but -C server rev-parse HEAD) &&
+	blob=$(but hash-object server/one.t) &&
+	but -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
 	grep "$blob" oids &&
 
 	test_i18ngrep "filtering not recognized by server" err
@@ -1020,16 +1020,16 @@ fetch_filter_blob_limit_zero () {
 	test_cummit -C "$SERVER" one &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 
-	git clone "$URL" client &&
+	but clone "$URL" client &&
 
 	test_cummit -C "$SERVER" two &&
 
-	git -C client fetch --filter=blob:limit=0 origin HEAD:somewhere &&
+	but -C client fetch --filter=blob:limit=0 origin HEAD:somewhere &&
 
 	# Ensure that cummit is fetched, but blob is not
-	cummit=$(git -C "$SERVER" rev-parse two) &&
-	blob=$(git hash-object server/two.t) &&
-	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
+	cummit=$(but -C "$SERVER" rev-parse two) &&
+	blob=$(but hash-object server/two.t) &&
+	but -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
 	grep "$cummit" oids &&
 	! grep "$blob" oids
 }

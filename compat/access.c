@@ -1,11 +1,11 @@
 #define COMPAT_CODE_ACCESS
-#include "../git-compat-util.h"
+#include "../but-compat-util.h"
 
 /* Do the same thing access(2) does, but use the effective uid,
  * and don't make the mistake of telling root that any file is
  * executable.  This version uses stat(2).
  */
-int git_access(const char *path, int mode)
+int but_access(const char *path, int mode)
 {
 	struct stat st;
 

@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const fmt_merge_msg_usage[] = {
-	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
+	N_("but fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
 	NULL
 };
 
@@ -35,7 +35,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct fmt_merge_msg_opts opts;
 
-	git_config(fmt_merge_msg_config, NULL);
+	but_config(fmt_merge_msg_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
 			     0);
 	if (argc > 0)

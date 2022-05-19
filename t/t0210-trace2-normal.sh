@@ -16,13 +16,13 @@ sane_unset GIT_TRACE2_CONFIG_PARAMS
 TTDIR="$GIT_BUILD_DIR/t/helper/" && export TTDIR
 PATH="$TTDIR:$PATH" && export PATH
 
-# Warning: use of 'test_cmp' may run test-tool.exe and/or git.exe
+# Warning: use of 'test_cmp' may run test-tool.exe and/or but.exe
 # Warning: to do the actual diff/comparison, so the HEREDOCs here
-# Warning: only cover our actual calls to test-tool and/or git.
+# Warning: only cover our actual calls to test-tool and/or but.
 # Warning: So you may see extra lines in artifact files when
 # Warning: interactively debugging.
 
-V=$(git version | sed -e 's/^git version //') && export V
+V=$(but version | sed -e 's/^but version //') && export V
 
 # There are multiple trace2 targets: normal, perf, and event.
 # Trace2 events will/can be written to each active target (subject
@@ -30,7 +30,7 @@ V=$(git version | sed -e 's/^git version //') && export V
 # This script tests the normal target in isolation.
 #
 # Defer setting GIT_TRACE2 until the actual command line we want to test
-# because hidden git and test-tool commands run by the test harness
+# because hidden but and test-tool commands run by the test harness
 # can contaminate our output.
 
 # Enable "brief" feature which turns off "<clock> <file>:<line> " prefix.
@@ -190,11 +190,11 @@ test_expect_success 'using global config, normal stream, return code 0' '
 '
 
 test_expect_success 'using global config with include' '
-	test_when_finished "rm trace.normal actual expect real.gitconfig" &&
+	test_when_finished "rm trace.normal actual expect real.butconfig" &&
 	test_config_global trace2.normalBrief 1 &&
 	test_config_global trace2.normalTarget "$(pwd)/trace.normal" &&
-	mv "$(pwd)/.gitconfig" "$(pwd)/real.gitconfig" &&
-	test_config_global include.path "$(pwd)/real.gitconfig" &&
+	mv "$(pwd)/.butconfig" "$(pwd)/real.butconfig" &&
+	test_config_global include.path "$(pwd)/real.butconfig" &&
 	test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&

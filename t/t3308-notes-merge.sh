@@ -14,13 +14,13 @@ test_expect_success setup '
 	test_cummit 4th &&
 	test_cummit 5th &&
 	# Create notes on 4 first cummits
-	git config core.notesRef refs/notes/x &&
-	git notes add -m "Notes on 1st cummit" 1st &&
-	git notes add -m "Notes on 2nd cummit" 2nd &&
-	git notes add -m "Notes on 3rd cummit" 3rd &&
-	git notes add -m "Notes on 4th cummit" 4th &&
+	but config core.notesRef refs/notes/x &&
+	but notes add -m "Notes on 1st cummit" 1st &&
+	but notes add -m "Notes on 2nd cummit" 2nd &&
+	but notes add -m "Notes on 3rd cummit" 3rd &&
+	but notes add -m "Notes on 4th cummit" 4th &&
 	# Copy notes to remote-notes
-	git fetch . refs/notes/*:refs/remote-notes/origin/* &&
+	but fetch . refs/notes/*:refs/remote-notes/origin/* &&
 
 	test_oid_cache <<-EOF
 	hash4a sha1:5e93d24084d32e1cb61f7070505b9d2530cca987
@@ -49,18 +49,18 @@ test_expect_success setup '
 	EOF
 '
 
-cummit_sha1=$(git rev-parse 1st^{cummit})
-cummit_sha2=$(git rev-parse 2nd^{cummit})
-cummit_sha3=$(git rev-parse 3rd^{cummit})
-cummit_sha4=$(git rev-parse 4th^{cummit})
-cummit_sha5=$(git rev-parse 5th^{cummit})
+cummit_sha1=$(but rev-parse 1st^{cummit})
+cummit_sha2=$(but rev-parse 2nd^{cummit})
+cummit_sha3=$(but rev-parse 3rd^{cummit})
+cummit_sha4=$(but rev-parse 4th^{cummit})
+cummit_sha5=$(but rev-parse 5th^{cummit})
 
 verify_notes () {
 	notes_ref="$1"
-	git -c core.notesRef="refs/notes/$notes_ref" notes |
+	but -c core.notesRef="refs/notes/$notes_ref" notes |
 		sort >"output_notes_$notes_ref" &&
 	test_cmp "expect_notes_$notes_ref" "output_notes_$notes_ref" &&
-	git -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
+	but -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
 		>"output_log_$notes_ref" &&
 	test_cmp "expect_log_$notes_ref" "output_log_$notes_ref"
 }
@@ -99,56 +99,56 @@ cp expect_log_x expect_log_y
 cp expect_log_x expect_log_v
 
 test_expect_success 'fail to merge empty notes ref into empty notes ref (z => y)' '
-	test_must_fail git -c "core.notesRef=refs/notes/y" notes merge z
+	test_must_fail but -c "core.notesRef=refs/notes/y" notes merge z
 '
 
 test_expect_success 'fail to merge into various non-notes refs' '
-	test_must_fail git -c "core.notesRef=refs/notes" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/notes/" notes merge x &&
-	git update-ref refs/notes/dir/foo HEAD &&
-	test_must_fail git -c "core.notesRef=refs/notes/dir" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/notes/dir/" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/heads/main" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/notes/y:" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/notes/y:foo" notes merge x &&
-	test_must_fail git -c "core.notesRef=refs/notes/foo^{bar" notes merge x
+	test_must_fail but -c "core.notesRef=refs/notes" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/notes/" notes merge x &&
+	but update-ref refs/notes/dir/foo HEAD &&
+	test_must_fail but -c "core.notesRef=refs/notes/dir" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/notes/dir/" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/heads/main" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/notes/y:" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/notes/y:foo" notes merge x &&
+	test_must_fail but -c "core.notesRef=refs/notes/foo^{bar" notes merge x
 '
 
 test_expect_success 'merge non-notes ref into empty notes ref (remote-notes/origin/x => v)' '
-	git config core.notesRef refs/notes/v &&
-	git notes merge refs/remote-notes/origin/x &&
+	but config core.notesRef refs/notes/v &&
+	but notes merge refs/remote-notes/origin/x &&
 	verify_notes v &&
 	# refs/remote-notes/origin/x and v should point to the same notes cummit
-	test "$(git rev-parse refs/remote-notes/origin/x)" = "$(git rev-parse refs/notes/v)"
+	test "$(but rev-parse refs/remote-notes/origin/x)" = "$(but rev-parse refs/notes/v)"
 '
 
 test_expect_success 'merge notes into empty notes ref (x => y)' '
-	git config core.notesRef refs/notes/y &&
-	git notes merge x &&
+	but config core.notesRef refs/notes/y &&
+	but notes merge x &&
 	verify_notes y &&
 	# x and y should point to the same notes cummit
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test "$(but rev-parse refs/notes/x)" = "$(but rev-parse refs/notes/y)"
 '
 
 test_expect_success 'merge empty notes ref (z => y)' '
-	git notes merge z &&
+	but notes merge z &&
 	# y should not change (still == x)
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test "$(but rev-parse refs/notes/x)" = "$(but rev-parse refs/notes/y)"
 '
 
 test_expect_success 'change notes on other notes ref (y)' '
 	# Not touching notes to 1st cummit
-	git notes remove 2nd &&
-	git notes append -m "More notes on 3rd cummit" 3rd &&
-	git notes add -f -m "New notes on 4th cummit" 4th &&
-	git notes add -m "Notes on 5th cummit" 5th
+	but notes remove 2nd &&
+	but notes append -m "More notes on 3rd cummit" 3rd &&
+	but notes add -f -m "New notes on 4th cummit" 4th &&
+	but notes add -m "Notes on 5th cummit" 5th
 '
 
 test_expect_success 'merge previous notes cummit (y^ => y) => No-op' '
-	pre_state="$(git rev-parse refs/notes/y)" &&
-	git notes merge y^ &&
+	pre_state="$(but rev-parse refs/notes/y)" &&
+	but notes merge y^ &&
 	# y should not move
-	test "$pre_state" = "$(git rev-parse refs/notes/y)"
+	test "$pre_state" = "$(but rev-parse refs/notes/y)"
 '
 
 cat <<EOF | sort >expect_notes_y
@@ -186,7 +186,7 @@ test_expect_success 'verify unchanged notes on original notes ref (x)' '
 '
 
 test_expect_success 'merge original notes (x) into changed notes (y) => No-op' '
-	git notes merge -vvv x &&
+	but notes merge -vvv x &&
 	verify_notes y &&
 	verify_notes x
 '
@@ -195,27 +195,27 @@ cp expect_notes_y expect_notes_x
 cp expect_log_y expect_log_x
 
 test_expect_success 'merge changed (y) into original (x) => Fast-forward' '
-	git config core.notesRef refs/notes/x &&
-	git notes merge y &&
+	but config core.notesRef refs/notes/x &&
+	but notes merge y &&
 	verify_notes x &&
 	verify_notes y &&
 	# x and y should point to same the notes cummit
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test "$(but rev-parse refs/notes/x)" = "$(but rev-parse refs/notes/y)"
 '
 
 test_expect_success 'merge empty notes ref (z => y)' '
 	# Prepare empty (but valid) notes ref (z)
-	git config core.notesRef refs/notes/z &&
-	git notes add -m "foo" &&
-	git notes remove &&
-	git notes >output_notes_z &&
+	but config core.notesRef refs/notes/z &&
+	but notes add -m "foo" &&
+	but notes remove &&
+	but notes >output_notes_z &&
 	test_must_be_empty output_notes_z &&
 	# Do the merge (z => y)
-	git config core.notesRef refs/notes/y &&
-	git notes merge z &&
+	but config core.notesRef refs/notes/y &&
+	but notes merge z &&
 	verify_notes y &&
 	# y should no longer point to the same notes cummit as x
-	test "$(git rev-parse refs/notes/x)" != "$(git rev-parse refs/notes/y)"
+	test "$(but rev-parse refs/notes/x)" != "$(but rev-parse refs/notes/y)"
 '
 
 cat <<EOF | sort >expect_notes_y
@@ -250,9 +250,9 @@ EOF
 
 test_expect_success 'change notes on other notes ref (y)' '
 	# Append to 1st cummit notes
-	git notes append -m "More notes on 1st cummit" 1st &&
+	but notes append -m "More notes on 1st cummit" 1st &&
 	# Add new notes to 2nd cummit
-	git notes add -m "New notes on 2nd cummit" 2nd &&
+	but notes add -m "New notes on 2nd cummit" 2nd &&
 	verify_notes y
 '
 
@@ -281,9 +281,9 @@ Notes on 1st cummit
 EOF
 
 test_expect_success 'change notes on notes ref (x)' '
-	git config core.notesRef refs/notes/x &&
-	git notes remove 3rd &&
-	git notes append -m "More notes on 4th cummit" 4th &&
+	but config core.notesRef refs/notes/x &&
+	but notes remove 3rd &&
+	but notes append -m "More notes on 4th cummit" 4th &&
 	verify_notes x
 '
 
@@ -316,7 +316,7 @@ More notes on 1st cummit
 EOF
 
 test_expect_success 'merge y into x => Non-conflicting 3-way merge' '
-	git notes merge y &&
+	but notes merge y &&
 	verify_notes x &&
 	verify_notes y
 '
@@ -342,11 +342,11 @@ $cummit_sha1 1st
 EOF
 
 test_expect_success 'create notes on new, separate notes ref (w)' '
-	git config core.notesRef refs/notes/w &&
+	but config core.notesRef refs/notes/w &&
 	# Add same note as refs/notes/y on 2nd cummit
-	git notes add -m "New notes on 2nd cummit" 2nd &&
+	but notes add -m "New notes on 2nd cummit" 2nd &&
 	# Add new note on 3rd cummit (non-conflicting)
-	git notes add -m "New notes on 3rd cummit" 3rd &&
+	but notes add -m "New notes on 3rd cummit" 3rd &&
 	# Verify state of notes on new, separate notes ref (w)
 	verify_notes w
 '
@@ -382,8 +382,8 @@ More notes on 1st cummit
 EOF
 
 test_expect_success 'merge w into x => Non-conflicting history-less merge' '
-	git config core.notesRef refs/notes/x &&
-	git notes merge w &&
+	but config core.notesRef refs/notes/x &&
+	but notes merge w &&
 	# Verify new state of notes on other notes ref (x)
 	verify_notes x &&
 	# Also verify that nothing changed on other notes refs (y and w)

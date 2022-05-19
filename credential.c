@@ -65,7 +65,7 @@ static int credential_config_callback(const char *var, const char *value,
 		}
 	}
 	else if (!strcmp(key, "usehttppath"))
-		c->use_http_path = git_config_bool(var, value);
+		c->use_http_path = but_config_bool(var, value);
 
 	return 0;
 }
@@ -127,7 +127,7 @@ static void credential_apply_config(struct credential *c)
 	credential_format(c, &url);
 	normalized_url = url_normalize(url.buf, &config.url);
 
-	git_config(urlmatch_config_entry, &config);
+	but_config(urlmatch_config_entry, &config);
 	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	urlmatch_config_release(&config);
@@ -183,7 +183,7 @@ static char *credential_ask_one(const char *what, struct credential *c,
 	else
 		strbuf_addf(&prompt, "%s: ", what);
 
-	r = git_prompt(prompt.buf, flags);
+	r = but_prompt(prompt.buf, flags);
 
 	strbuf_release(&desc);
 	strbuf_release(&prompt);
@@ -237,11 +237,11 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
-			c->quit = !!git_config_bool("quit", value);
+			c->quit = !!but_config_bool("quit", value);
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
-		 * this future-proofs us when later versions of git do
+		 * this future-proofs us when later versions of but do
 		 * learn new lines, and the helpers are updated to match.
 		 */
 	}
@@ -322,7 +322,7 @@ static int credential_do(struct credential *c, const char *helper,
 	else if (is_absolute_path(helper))
 		strbuf_addstr(&cmd, helper);
 	else
-		strbuf_addf(&cmd, "git credential-%s", helper);
+		strbuf_addf(&cmd, "but credential-%s", helper);
 
 	strbuf_addf(&cmd, " %s", operation);
 	r = run_credential_helper(c, cmd.buf, !strcmp(operation, "get"));
@@ -413,7 +413,7 @@ static int check_url_component(const char *url, int quiet,
  *
  * Missing parts will be left unset in `struct credential`. Thus, `https://`
  * will have only the `protocol` set, `example.com` only the host name, and
- * `/git` only the path.
+ * `/but` only the path.
  *
  * Note that an empty host name in an otherwise fully-qualified URL (e.g.
  * `cert:///path/to/cert.pem`) will be treated as unset if we expect the URL to

@@ -105,13 +105,13 @@ sub handle_line {
 	}
 
 	# Most of the time there is enough output to keep things streaming,
-	# but for something like "git log -Sfoo", you can get one early
+	# but for something like "but log -Sfoo", you can get one early
 	# cummit and then many seconds of nothing. We want to show
 	# that one cummit as soon as possible.
 	#
 	# Since we can receive arbitrary input, there's no optimal
 	# place to flush. Flushing on a blank line is a heuristic that
-	# happens to match git-log output.
+	# happens to match but-log output.
 	if (/^$/) {
 		$flush_cb->();
 	}
@@ -133,13 +133,13 @@ sub highlight_stdin {
 }
 
 # Ideally we would feed the default as a human-readable color to
-# git-config as the fallback value. But diff-highlight does
-# not otherwise depend on git at all, and there are reports
+# but-config as the fallback value. But diff-highlight does
+# not otherwise depend on but at all, and there are reports
 # of it being used in other settings. Let's handle our own
-# fallback, which means we will work even if git can't be run.
+# fallback, which means we will work even if but can't be run.
 sub color_config {
 	my ($key, $default) = @_;
-	my $s = `git config --get-color $key 2>$NULL`;
+	my $s = `but config --get-color $key 2>$NULL`;
 	return length($s) ? $s : $default;
 }
 

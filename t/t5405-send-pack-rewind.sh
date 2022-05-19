@@ -9,18 +9,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 
-	>file1 && git add file1 && test_tick &&
-	git cummit -m Initial &&
-	git config receive.denyCurrentBranch warn &&
+	>file1 && but add file1 && test_tick &&
+	but cummit -m Initial &&
+	but config receive.denyCurrentBranch warn &&
 
 	mkdir another && (
 		cd another &&
-		git init &&
-		git fetch --update-head-ok .. main:main
+		but init &&
+		but fetch --update-head-ok .. main:main
 	) &&
 
-	>file2 && git add file2 && test_tick &&
-	git cummit -m Second
+	>file2 && but add file2 && test_tick &&
+	but cummit -m Second
 
 '
 
@@ -28,7 +28,7 @@ test_expect_success 'non forced push should die not segfault' '
 
 	(
 		cd another &&
-		test_must_fail git push .. main:main
+		test_must_fail but push .. main:main
 	)
 
 '
@@ -37,7 +37,7 @@ test_expect_success 'forced push should succeed' '
 
 	(
 		cd another &&
-		git push .. +main:main
+		but push .. +main:main
 	)
 
 '

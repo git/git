@@ -10,9 +10,9 @@ Fixes since v2.3.9
    our input files, for example.  Cap the input size to somewhere
    around 1GB for now.
 
- * Some protocols (like git-remote-ext) can execute arbitrary code
+ * Some protocols (like but-remote-ext) can execute arbitrary code
    found in the URL.  The URLs that submodules use may come from
-   arbitrary sources (e.g., .gitmodules files in a remote
+   arbitrary sources (e.g., .butmodules files in a remote
    repository), and can hurt those who blindly enable recursive
    fetch.  Restrict the allowed protocols to well known and safe
    ones.

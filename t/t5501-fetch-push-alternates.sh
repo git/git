@@ -9,7 +9,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 count_objects () {
 	loose=0 inpack=0
 	eval "$(
-		git count-objects -v |
+		but count-objects -v |
 		sed -n -e 's/^count: \(.*\)/loose=\1/p' \
 		    -e 's/^in-pack: \(.*\)/inpack=\1/p'
 	)" &&
@@ -19,36 +19,36 @@ count_objects () {
 
 test_expect_success setup '
 	(
-		git init original &&
+		but init original &&
 		cd original &&
 		i=0 &&
 		while test $i -le 100
 		do
 			echo "$i" >count &&
-			git add count &&
-			git cummit -m "$i" || exit
+			but add count &&
+			but cummit -m "$i" || exit
 			i=$(($i + 1))
 		done
 	) &&
 	(
-		git clone --reference=original "file://$(pwd)/original" one &&
+		but clone --reference=original "file://$(pwd)/original" one &&
 		cd one &&
 		echo Z >count &&
-		git add count &&
-		git cummit -m Z &&
+		but add count &&
+		but cummit -m Z &&
 		count_objects >../one.count
 	) &&
-	A=$(pwd)/original/.git/objects &&
-	git init receiver &&
-	echo "$A" >receiver/.git/objects/info/alternates &&
-	git init fetcher &&
-	echo "$A" >fetcher/.git/objects/info/alternates
+	A=$(pwd)/original/.but/objects &&
+	but init receiver &&
+	echo "$A" >receiver/.but/objects/info/alternates &&
+	but init fetcher &&
+	echo "$A" >fetcher/.but/objects/info/alternates
 '
 
 test_expect_success 'pushing into a repository with the same alternate' '
 	(
 		cd one &&
-		git push ../receiver main:refs/heads/it
+		but push ../receiver main:refs/heads/it
 	) &&
 	(
 		cd receiver &&
@@ -60,7 +60,7 @@ test_expect_success 'pushing into a repository with the same alternate' '
 test_expect_success 'fetching from a repository with the same alternate' '
 	(
 		cd fetcher &&
-		git fetch ../one main:refs/heads/it &&
+		but fetch ../one main:refs/heads/it &&
 		count_objects >../fetcher.count
 	) &&
 	test_cmp one.count fetcher.count

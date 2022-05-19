@@ -1,9 +1,9 @@
-gitglossary(7)
+butglossary(7)
 ==============
 
 NAME
 ----
-gitglossary - A Git Glossary
+butglossary - A Git Glossary
 
 SYNOPSIS
 --------
@@ -16,12 +16,12 @@ include::glossary-content.txt[]
 
 SEE ALSO
 --------
-linkgit:gittutorial[7],
-linkgit:gittutorial-2[7],
-linkgit:gitcvs-migration[7],
-linkgit:giteveryday[7],
+linkbut:buttutorial[7],
+linkbut:buttutorial-2[7],
+linkbut:butcvs-migration[7],
+linkbut:buteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

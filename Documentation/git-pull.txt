@@ -1,15 +1,15 @@
-git-pull(1)
+but-pull(1)
 ===========
 
 NAME
 ----
-git-pull - Fetch from and integrate with another repository or a local branch
+but-pull - Fetch from and integrate with another repository or a local branch
 
 
 SYNOPSIS
 --------
 [verse]
-'git pull' [<options>] [<repository> [<refspec>...]]
+'but pull' [<options>] [<repository> [<refspec>...]]
 
 
 DESCRIPTION
@@ -22,13 +22,13 @@ branch and the remote have diverged, the user needs to specify how to
 reconcile the divergent branches with `--rebase` or `--no-rebase` (or
 the corresponding configuration option in `pull.rebase`).
 
-More precisely, `git pull` runs `git fetch` with the given parameters
+More precisely, `but pull` runs `but fetch` with the given parameters
 and then depending on configuration options or command line flags,
-will call either `git rebase` or `git merge` to reconcile diverging
+will call either `but rebase` or `but merge` to reconcile diverging
 branches.
 
 <repository> should be the name of a remote repository as
-passed to linkgit:git-fetch[1].  <refspec> can name an
+passed to linkbut:but-fetch[1].  <refspec> can name an
 arbitrary remote ref (for example, the name of a tag) or even
 a collection of refs with corresponding remote-tracking branches
 (e.g., refs/heads/{asterisk}:refs/remotes/origin/{asterisk}),
@@ -36,7 +36,7 @@ but usually it is the name of a branch in the remote repository.
 
 Default values for <repository> and <branch> are read from the
 "remote" and "merge" configuration for the current branch
-as set by linkgit:git-branch[1] `--track`.
+as set by linkbut:but-branch[1] `--track`.
 
 Assume the following history exists and the current branch is
 "`master`":
@@ -49,7 +49,7 @@ Assume the following history exists and the current branch is
 	origin/master in your repository
 ------------
 
-Then "`git pull`" will fetch and replay the changes from the remote
+Then "`but pull`" will fetch and replay the changes from the remote
 `master` branch since it diverged from the local `master` (i.e., `E`)
 until its current cummit (`C`) on top of `master` and record the
 result in a new cummit along with the names of the two parent cummits
@@ -61,37 +61,37 @@ and a log message from the user describing the changes.
     D---E---F---G---H master
 ------------
 
-See linkgit:git-merge[1] for details, including how conflicts
+See linkbut:but-merge[1] for details, including how conflicts
 are presented and handled.
 
 In Git 1.7.0 or later, to cancel a conflicting merge, use
-`git reset --merge`.  *Warning*: In older versions of Git, running 'git pull'
+`but reset --merge`.  *Warning*: In older versions of Git, running 'but pull'
 with uncummitted changes is discouraged: while possible, it leaves you
 in a state that may be hard to back out of in the case of a conflict.
 
 If any of the remote changes overlap with local uncummitted changes,
 the merge will be automatically canceled and the work tree untouched.
 It is generally best to get any local changes in working order before
-pulling or stash them away with linkgit:git-stash[1].
+pulling or stash them away with linkbut:but-stash[1].
 
 OPTIONS
 -------
 
 -q::
 --quiet::
-	This is passed to both underlying git-fetch to squelch reporting of
-	during transfer, and underlying git-merge to squelch output during
+	This is passed to both underlying but-fetch to squelch reporting of
+	during transfer, and underlying but-merge to squelch output during
 	merging.
 
 -v::
 --verbose::
-	Pass --verbose to git-fetch and git-merge.
+	Pass --verbose to but-fetch and but-merge.
 
 --[no-]recurse-submodules[=yes|on-demand|no]::
 	This option controls if new cummits of populated submodules should
 	be fetched, and if the working trees of active submodules should be
-	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
-	linkgit:gitmodules[5]).
+	updated, too (see linkbut:but-fetch[1], linkbut:but-config[1] and
+	linkbut:butmodules[5]).
 +
 If the checkout is done via rebase, local submodule cummits are rebased as well.
 +
@@ -100,7 +100,7 @@ If the update is done via merge, the submodule conflicts are resolved and checke
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:git-pull: 1
+:but-pull: 1
 
 include::merge-options.txt[]
 
@@ -112,23 +112,23 @@ include::merge-options.txt[]
 	was rebased since last fetched, the rebase uses that information
 	to avoid rebasing non-local changes.
 +
-When set to `merges`, rebase using `git rebase --rebase-merges` so that
+When set to `merges`, rebase using `but rebase --rebase-merges` so that
 the local merge cummits are included in the rebase (see
-linkgit:git-rebase[1] for details).
+linkbut:but-rebase[1] for details).
 +
 When false, merge the upstream branch into the current branch.
 +
 When `interactive`, enable the interactive mode of rebase.
 +
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
-linkgit:git-config[1] if you want to make `git pull` always use
+linkbut:but-config[1] if you want to make `but pull` always use
 `--rebase` instead of merging.
 +
 [NOTE]
 This is a potentially _dangerous_ mode of operation.
 It rewrites history, which does not bode well when you
 published that history already.  Do *not* use this option
-unless you have read linkgit:git-rebase[1] carefully.
+unless you have read linkbut:but-rebase[1] carefully.
 
 --no-rebase::
 	This is shorthand for --rebase=false.
@@ -147,8 +147,8 @@ include::merge-strategies.txt[]
 DEFAULT BEHAVIOUR
 -----------------
 
-Often people use `git pull` without giving any parameter.
-Traditionally, this has been equivalent to saying `git pull
+Often people use `but pull` without giving any parameter.
+Traditionally, this has been equivalent to saying `but pull
 origin`.  However, when configuration `branch.<name>.remote` is
 present while on branch `<name>`, that value is used instead of
 `origin`.
@@ -182,9 +182,9 @@ fetching is a bit involved, in order not to break backward
 compatibility.
 
 If explicit refspecs were given on the command
-line of `git pull`, they are all merged.
+line of `but pull`, they are all merged.
 
-When no refspec was given on the command line, then `git pull`
+When no refspec was given on the command line, then `but pull`
 uses the refspec from the configuration or
 `$GIT_DIR/remotes/<origin>`.  In such cases, the following
 rules apply:
@@ -206,18 +206,18 @@ EXAMPLES
   current branch:
 +
 ------------------------------------------------
-$ git pull
-$ git pull origin
+$ but pull
+$ but pull origin
 ------------------------------------------------
 +
 Normally the branch merged in is the HEAD of the remote repository,
 but the choice is determined by the branch.<name>.remote and
-branch.<name>.merge options; see linkgit:git-config[1] for details.
+branch.<name>.merge options; see linkbut:but-config[1] for details.
 
 * Merge into the current branch the remote branch `next`:
 +
 ------------------------------------------------
-$ git pull origin next
+$ but pull origin next
 ------------------------------------------------
 +
 This leaves a copy of `next` temporarily in FETCH_HEAD, and
@@ -225,13 +225,13 @@ updates the remote-tracking branch `origin/next`.
 The same can be done by invoking fetch and merge:
 +
 ------------------------------------------------
-$ git fetch origin
-$ git merge origin/next
+$ but fetch origin
+$ but merge origin/next
 ------------------------------------------------
 
 
 If you tried a pull which resulted in complex conflicts and
-would want to start over, you can recover with 'git reset'.
+would want to start over, you can recover with 'but reset'.
 
 
 include::transfer-data-leaks.txt[]
@@ -247,8 +247,8 @@ version.
 
 SEE ALSO
 --------
-linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
+linkbut:but-fetch[1], linkbut:but-merge[1], linkbut:but-config[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

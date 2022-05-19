@@ -1,14 +1,14 @@
-# Japanese translations for gitk package.
+# Japanese translations for butk package.
 # Copyright (C) 2005-2015 Paul Mackerras
-# This file is distributed under the same license as the gitk package.
+# This file is distributed under the same license as the butk package.
 #
 # Mizar <mizar.jp@gmail.com>, 2009.
-# Junio C Hamano <gitster@pobox.com>, 2009.
+# Junio C Hamano <butster@pobox.com>, 2009.
 # YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>, 2015.
 # Satoshi Yasushima <s.yasushima@gmail.com>, 2016.
 msgid ""
 msgstr ""
-"Project-Id-Version: gitk\n"
+"Project-Id-Version: butk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
 "PO-Revision-Date: 2015-11-12 13:00+0900\n"
@@ -20,33 +20,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: gitk:140
+#: butk:140
 msgid "Couldn't get list of unmerged files:"
 msgstr "マージされていないファイルのリストを取得できません:"
 
-#: gitk:212 gitk:2381
+#: butk:212 butk:2381
 msgid "Color words"
 msgstr "変更を着色"
 
-#: gitk:217 gitk:2381 gitk:8221 gitk:8254
+#: butk:217 butk:2381 butk:8221 butk:8254
 msgid "Markup words"
 msgstr "変更をマークアップ"
 
-#: gitk:324
+#: butk:324
 msgid "Error parsing revisions:"
 msgstr "リビジョン解析エラー:"
 
-#: gitk:380
+#: butk:380
 msgid "Error executing --argscmd command:"
 msgstr "--argscmd コマンド実行エラー:"
 
-#: gitk:393
+#: butk:393
 msgid "No files selected: --merge specified but no files are unmerged."
 msgstr ""
 "ファイル未選択: --merge が指定されましたが、マージされていないファイルはあり"
 "ません。"
 
-#: gitk:396
+#: butk:396
 msgid ""
 "No files selected: --merge specified but no unmerged files are within file "
 "limit."
@@ -54,654 +54,654 @@ msgstr ""
 "ファイル未選択: --merge が指定されましたが、ファイル制限内にマージされていな"
 "いファイルはありません。"
 
-#: gitk:418 gitk:566
-msgid "Error executing git log:"
-msgstr "git log 実行エラー:"
+#: butk:418 butk:566
+msgid "Error executing but log:"
+msgstr "but log 実行エラー:"
 
-#: gitk:436 gitk:582
+#: butk:436 butk:582
 msgid "Reading"
 msgstr "読み込み中"
 
-#: gitk:496 gitk:4526
+#: butk:496 butk:4526
 msgid "Reading cummits..."
 msgstr "コミット読み込み中..."
 
-#: gitk:499 gitk:1637 gitk:4529
+#: butk:499 butk:1637 butk:4529
 msgid "No cummits selected"
 msgstr "コミットが選択されていません"
 
-#: gitk:1445 gitk:4046 gitk:12447
+#: butk:1445 butk:4046 butk:12447
 msgid "Command line"
 msgstr "コマンド行"
 
-#: gitk:1511
-msgid "Can't parse git log output:"
-msgstr "git log の出力を解析できません:"
+#: butk:1511
+msgid "Can't parse but log output:"
+msgstr "but log の出力を解析できません:"
 
-#: gitk:1740
+#: butk:1740
 msgid "No cummit information available"
 msgstr "有効なコミットの情報がありません"
 
-#: gitk:1903 gitk:1932 gitk:4316 gitk:9684 gitk:11256 gitk:11536
+#: butk:1903 butk:1932 butk:4316 butk:9684 butk:11256 butk:11536
 msgid "OK"
 msgstr "OK"
 
-#: gitk:1934 gitk:4318 gitk:9197 gitk:9276 gitk:9406 gitk:9455 gitk:9686
-#: gitk:11257 gitk:11537
+#: butk:1934 butk:4318 butk:9197 butk:9276 butk:9406 butk:9455 butk:9686
+#: butk:11257 butk:11537
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: gitk:2069
+#: butk:2069
 msgid "&Update"
 msgstr "更新(&U)"
 
-#: gitk:2070
+#: butk:2070
 msgid "&Reload"
 msgstr "リロード(&R)"
 
-#: gitk:2071
+#: butk:2071
 msgid "Reread re&ferences"
 msgstr "リファレンスを再読み込み(&F)"
 
-#: gitk:2072
+#: butk:2072
 msgid "&List references"
 msgstr "リファレンスリストを表示(&L)"
 
-#: gitk:2074
-msgid "Start git &gui"
-msgstr "git gui の開始(&G)"
+#: butk:2074
+msgid "Start but &gui"
+msgstr "but gui の開始(&G)"
 
-#: gitk:2076
+#: butk:2076
 msgid "&Quit"
 msgstr "終了(&Q)"
 
-#: gitk:2068
+#: butk:2068
 msgid "&File"
 msgstr "ファイル(&F)"
 
-#: gitk:2080
+#: butk:2080
 msgid "&Preferences"
 msgstr "設定(&P)"
 
-#: gitk:2079
+#: butk:2079
 msgid "&Edit"
 msgstr "編集(&E)"
 
-#: gitk:2084
+#: butk:2084
 msgid "&New view..."
 msgstr "新規ビュー(&N)..."
 
-#: gitk:2085
+#: butk:2085
 msgid "&Edit view..."
 msgstr "ビュー編集(&E)..."
 
-#: gitk:2086
+#: butk:2086
 msgid "&Delete view"
 msgstr "ビュー削除(&D)"
 
-#: gitk:2088
+#: butk:2088
 msgid "&All files"
 msgstr "全てのファイル(&A)"
 
-#: gitk:2083
+#: butk:2083
 msgid "&View"
 msgstr "ビュー(&V)"
 
-#: gitk:2093 gitk:2103
-msgid "&About gitk"
-msgstr "gitk について(&A)"
+#: butk:2093 butk:2103
+msgid "&About butk"
+msgstr "butk について(&A)"
 
-#: gitk:2094 gitk:2108
+#: butk:2094 butk:2108
 msgid "&Key bindings"
 msgstr "キーバインディング(&K)"
 
-#: gitk:2092 gitk:2107
+#: butk:2092 butk:2107
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
-#: gitk:2185 gitk:8653
+#: butk:2185 butk:8653
 msgid "SHA1 ID:"
 msgstr "SHA1 ID:"
 
-#: gitk:2229
+#: butk:2229
 msgid "Row"
 msgstr "行"
 
-#: gitk:2267
+#: butk:2267
 msgid "Find"
 msgstr "検索"
 
-#: gitk:2295
+#: butk:2295
 msgid "cummit"
 msgstr "コミット"
 
-#: gitk:2299 gitk:2301 gitk:4688 gitk:4711 gitk:4735 gitk:6756 gitk:6828
-#: gitk:6913
+#: butk:2299 butk:2301 butk:4688 butk:4711 butk:4735 butk:6756 butk:6828
+#: butk:6913
 msgid "containing:"
 msgstr "含む:"
 
-#: gitk:2302 gitk:3527 gitk:3532 gitk:4764
+#: butk:2302 butk:3527 butk:3532 butk:4764
 msgid "touching paths:"
 msgstr "パスの一部:"
 
-#: gitk:2303 gitk:4778
+#: butk:2303 butk:4778
 msgid "adding/removing string:"
 msgstr "追加/除去される文字列:"
 
-#: gitk:2304 gitk:4780
+#: butk:2304 butk:4780
 msgid "changing lines matching:"
 msgstr "変更される文字列"
 
-#: gitk:2313 gitk:2315 gitk:4767
+#: butk:2313 butk:2315 butk:4767
 msgid "Exact"
 msgstr "英字の大小を区別する"
 
-#: gitk:2315 gitk:4855 gitk:6724
+#: butk:2315 butk:4855 butk:6724
 msgid "IgnCase"
 msgstr "英字の大小を区別しない"
 
-#: gitk:2315 gitk:4737 gitk:4853 gitk:6720
+#: butk:2315 butk:4737 butk:4853 butk:6720
 msgid "Regexp"
 msgstr "正規表現"
 
-#: gitk:2317 gitk:2318 gitk:4875 gitk:4905 gitk:4912 gitk:6849 gitk:6917
+#: butk:2317 butk:2318 butk:4875 butk:4905 butk:4912 butk:6849 butk:6917
 msgid "All fields"
 msgstr "全ての項目"
 
-#: gitk:2318 gitk:4872 gitk:4905 gitk:6787
+#: butk:2318 butk:4872 butk:4905 butk:6787
 msgid "Headline"
 msgstr "ヘッドライン"
 
-#: gitk:2319 gitk:4872 gitk:6787 gitk:6917 gitk:7390
+#: butk:2319 butk:4872 butk:6787 butk:6917 butk:7390
 msgid "Comments"
 msgstr "コメント"
 
-#: gitk:2319 gitk:4872 gitk:4877 gitk:4912 gitk:6787 gitk:7325 gitk:8831
-#: gitk:8846
+#: butk:2319 butk:4872 butk:4877 butk:4912 butk:6787 butk:7325 butk:8831
+#: butk:8846
 msgid "Author"
 msgstr "作者"
 
-#: gitk:2319 gitk:4872 gitk:6787 gitk:7327
+#: butk:2319 butk:4872 butk:6787 butk:7327
 msgid "cummitter"
 msgstr "コミット者"
 
-#: gitk:2350
+#: butk:2350
 msgid "Search"
 msgstr "検索"
 
-#: gitk:2358
+#: butk:2358
 msgid "Diff"
 msgstr "Diff"
 
-#: gitk:2360
+#: butk:2360
 msgid "Old version"
 msgstr "旧バージョン"
 
-#: gitk:2362
+#: butk:2362
 msgid "New version"
 msgstr "新バージョン"
 
-#: gitk:2364
+#: butk:2364
 msgid "Lines of context"
 msgstr "文脈行数"
 
-#: gitk:2374
+#: butk:2374
 msgid "Ignore space change"
 msgstr "空白の違いを無視"
 
-#: gitk:2378 gitk:2380 gitk:7960 gitk:8207
+#: butk:2378 butk:2380 butk:7960 butk:8207
 msgid "Line diff"
 msgstr "行毎のdiff"
 
-#: gitk:2445
+#: butk:2445
 msgid "Patch"
 msgstr "パッチ"
 
-#: gitk:2447
+#: butk:2447
 msgid "Tree"
 msgstr "ツリー"
 
-#: gitk:2617 gitk:2638
+#: butk:2617 butk:2638
 msgid "Diff this -> selected"
 msgstr "これと選択したコミットのdiffを見る"
 
-#: gitk:2618 gitk:2639
+#: butk:2618 butk:2639
 msgid "Diff selected -> this"
 msgstr "選択したコミットとこれのdiffを見る"
 
-#: gitk:2619 gitk:2640
+#: butk:2619 butk:2640
 msgid "Make patch"
 msgstr "パッチ作成"
 
-#: gitk:2620 gitk:9255
+#: butk:2620 butk:9255
 msgid "Create tag"
 msgstr "タグ生成"
 
-#: gitk:2621
+#: butk:2621
 msgid "Copy cummit summary"
 msgstr "コミットの要約をコピーする"
 
-#: gitk:2622 gitk:9386
+#: butk:2622 butk:9386
 msgid "Write cummit to file"
 msgstr "コミットをファイルに書き出す"
 
-#: gitk:2623 gitk:9443
+#: butk:2623 butk:9443
 msgid "Create new branch"
 msgstr "新規ブランチ生成"
 
-#: gitk:2624
+#: butk:2624
 msgid "Cherry-pick this cummit"
 msgstr "このコミットをチェリーピックする"
 
-#: gitk:2625
+#: butk:2625
 msgid "Reset HEAD branch to here"
 msgstr "ブランチのHEADをここにリセットする"
 
-#: gitk:2626
+#: butk:2626
 msgid "Mark this cummit"
 msgstr "このコミットにマークをつける"
 
-#: gitk:2627
+#: butk:2627
 msgid "Return to mark"
 msgstr "マークを付けた所に戻る"
 
-#: gitk:2628
+#: butk:2628
 msgid "Find descendant of this and mark"
 msgstr "これとマークをつけた所との子孫を見つける"
 
-#: gitk:2629
+#: butk:2629
 msgid "Compare with marked cummit"
 msgstr "マークを付けたコミットと比較する"
 
-#: gitk:2630 gitk:2641
+#: butk:2630 butk:2641
 msgid "Diff this -> marked cummit"
 msgstr "これとマークを付けたコミットのdiffを見る"
 
-#: gitk:2631 gitk:2642
+#: butk:2631 butk:2642
 msgid "Diff marked cummit -> this"
 msgstr "マークを付けたコミットとこれのdiffを見る"
 
-#: gitk:2632
+#: butk:2632
 msgid "Revert this cummit"
 msgstr "このコミットを撤回する"
 
-#: gitk:2648
+#: butk:2648
 msgid "Check out this branch"
 msgstr "このブランチをチェックアウトする"
 
-#: gitk:2649
+#: butk:2649
 msgid "Remove this branch"
 msgstr "このブランチを除去する"
 
-#: gitk:2650
+#: butk:2650
 msgid "Copy branch name"
 msgstr "ブランチ名をコピーする"
 
-#: gitk:2657
+#: butk:2657
 msgid "Highlight this too"
 msgstr "これもハイライトさせる"
 
-#: gitk:2658
+#: butk:2658
 msgid "Highlight this only"
 msgstr "これだけをハイライトさせる"
 
-#: gitk:2659
+#: butk:2659
 msgid "External diff"
 msgstr "外部diffツール"
 
-#: gitk:2660
+#: butk:2660
 msgid "Blame parent cummit"
 msgstr "親コミットから blame をかける"
 
-#: gitk:2661
+#: butk:2661
 msgid "Copy path"
 msgstr "パス名をコピーする"
 
-#: gitk:2668
+#: butk:2668
 msgid "Show origin of this line"
 msgstr "この行の出自を表示する"
 
-#: gitk:2669
-msgid "Run git gui blame on this line"
-msgstr "この行に git gui で blame をかける"
+#: butk:2669
+msgid "Run but gui blame on this line"
+msgstr "この行に but gui で blame をかける"
 
-#: gitk:3013
-msgid "About gitk"
-msgstr "gitk について"
+#: butk:3013
+msgid "About butk"
+msgstr "butk について"
 
-#: gitk:3015
+#: butk:3015
 msgid ""
 "\n"
-"Gitk - a cummit viewer for git\n"
+"Gitk - a cummit viewer for but\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - gitコミットビューア\n"
+"Gitk - butコミットビューア\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "使用および再配布は GNU General Public License に従ってください"
 
-#: gitk:3023 gitk:3090 gitk:9872
+#: butk:3023 butk:3090 butk:9872
 msgid "Close"
 msgstr "閉じる"
 
-#: gitk:3044
+#: butk:3044
 msgid "Gitk key bindings"
 msgstr "Gitk キーバインディング"
 
-#: gitk:3047
+#: butk:3047
 msgid "Gitk key bindings:"
 msgstr "Gitk キーバインディング:"
 
-#: gitk:3049
+#: butk:3049
 #, tcl-format
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\t終了"
 
-#: gitk:3050
+#: butk:3050
 #, tcl-format
 msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tウィンドウを閉じる"
 
-#: gitk:3051
+#: butk:3051
 msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\t最初のコミットに移動"
 
-#: gitk:3052
+#: butk:3052
 msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\t最後のコミットに移動"
 
-#: gitk:3053
+#: butk:3053
 msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\t一つ上のコミットに移動"
 
-#: gitk:3054
+#: butk:3054
 msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\t一つ下のコミットに移動"
 
-#: gitk:3055
+#: butk:3055
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Left>, z, h\t履歴の前に戻る"
 
-#: gitk:3056
+#: butk:3056
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Right>, x, l\t履歴の次へ進む"
 
-#: gitk:3057
+#: butk:3057
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n(数字)>\t履歴上で現在のコミットの親コミットの内のn(数字)番目のコミットへ移動"
 
-#: gitk:3058
+#: butk:3058
 msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tコミットリストの一つ上のページに移動"
 
-#: gitk:3059
+#: butk:3059
 msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tコミットリストの一つ下のページに移動"
 
-#: gitk:3060
+#: butk:3060
 #, tcl-format
 msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tコミットリストの一番上にスクロールする"
 
-#: gitk:3061
+#: butk:3061
 #, tcl-format
 msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tコミットリストの一番下にスクロールする"
 
-#: gitk:3062
+#: butk:3062
 #, tcl-format
 msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tコミットリストの一つ下の行にスクロールする"
 
-#: gitk:3063
+#: butk:3063
 #, tcl-format
 msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tコミットリストの一つ下の行にスクロールする"
 
-#: gitk:3064
+#: butk:3064
 #, tcl-format
 msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tコミットリストの上のページにスクロールする"
 
-#: gitk:3065
+#: butk:3065
 #, tcl-format
 msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tコミットリストの下のページにスクロールする"
 
-#: gitk:3066
+#: butk:3066
 msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\t後方を検索 (上方の・新しいコミット)"
 
-#: gitk:3067
+#: butk:3067
 msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Shift-Down>\t前方を検索（下方の・古いコミット）"
 
-#: gitk:3068
+#: butk:3068
 msgid "<Delete>, b\tScroll diff view up one page"
 msgstr "<Delete>, b\tdiff画面を上のページにスクロールする"
 
-#: gitk:3069
+#: butk:3069
 msgid "<Backspace>\tScroll diff view up one page"
 msgstr "<Backspace>\tdiff画面を上のページにスクロールする"
 
-#: gitk:3070
+#: butk:3070
 msgid "<Space>\t\tScroll diff view down one page"
 msgstr "<Space>\t\tdiff画面を下のページにスクロールする"
 
-#: gitk:3071
+#: butk:3071
 msgid "u\t\tScroll diff view up 18 lines"
 msgstr "u\t\tdiff画面を上に18行スクロールする"
 
-#: gitk:3072
+#: butk:3072
 msgid "d\t\tScroll diff view down 18 lines"
 msgstr "d\t\tdiff画面を下に18行スクロールする"
 
-#: gitk:3073
+#: butk:3073
 #, tcl-format
 msgid "<%s-F>\t\tFind"
 msgstr "<%s-F>\t\t検索"
 
-#: gitk:3074
+#: butk:3074
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
 msgstr "<%s-G>\t\t次を検索して移動"
 
-#: gitk:3075
+#: butk:3075
 msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t次を検索して移動"
 
-#: gitk:3076
+#: butk:3076
 msgid "g\t\tGo to cummit"
 msgstr "g\t\t指定してコミットに移動"
 
-#: gitk:3077
+#: butk:3077
 msgid "/\t\tFocus the search box"
 msgstr "/\t\t検索ボックスにフォーカス"
 
-#: gitk:3078
+#: butk:3078
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\t前を検索して移動"
 
-#: gitk:3079
+#: butk:3079
 msgid "f\t\tScroll diff view to next file"
 msgstr "f\t\t次のファイルにdiff画面をスクロールする"
 
-#: gitk:3080
+#: butk:3080
 #, tcl-format
 msgid "<%s-S>\t\tSearch for next hit in diff view"
 msgstr "<%s-S>\t\tdiff画面の次を検索"
 
-#: gitk:3081
+#: butk:3081
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
 msgstr "<%s-R>\t\tdiff画面の前を検索"
 
-#: gitk:3082
+#: butk:3082
 #, tcl-format
 msgid "<%s-KP+>\tIncrease font size"
 msgstr "<%s-KP+>\t文字サイズを拡大"
 
-#: gitk:3083
+#: butk:3083
 #, tcl-format
 msgid "<%s-plus>\tIncrease font size"
 msgstr "<%s-plus>\t文字サイズを拡大"
 
-#: gitk:3084
+#: butk:3084
 #, tcl-format
 msgid "<%s-KP->\tDecrease font size"
 msgstr "<%s-KP->\t文字サイズを縮小"
 
-#: gitk:3085
+#: butk:3085
 #, tcl-format
 msgid "<%s-minus>\tDecrease font size"
 msgstr "<%s-minus>\t文字サイズを縮小"
 
-#: gitk:3086
+#: butk:3086
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\t更新"
 
-#: gitk:3551 gitk:3560
+#: butk:3551 butk:3560
 #, tcl-format
 msgid "Error creating temporary directory %s:"
 msgstr "一時ディレクトリ %s 生成時エラー:"
 
-#: gitk:3573
+#: butk:3573
 #, tcl-format
 msgid "Error getting \"%s\" from %s:"
 msgstr "\"%s\" のエラーが %s に発生:"
 
-#: gitk:3636
+#: butk:3636
 msgid "command failed:"
 msgstr "コマンド失敗:"
 
-#: gitk:3785
+#: butk:3785
 msgid "No such cummit"
 msgstr "そのようなコミットはありません"
 
-#: gitk:3799
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: コマンド失敗:"
+#: butk:3799
+msgid "but gui blame: command failed:"
+msgstr "but gui blame: コマンド失敗:"
 
-#: gitk:3830
+#: butk:3830
 #, tcl-format
 msgid "Couldn't read merge head: %s"
 msgstr "マージする HEAD を読み込めません: %s"
 
-#: gitk:3838
+#: butk:3838
 #, tcl-format
 msgid "Error reading index: %s"
 msgstr "インデックス読み込みエラー: %s"
 
-#: gitk:3863
+#: butk:3863
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "git blame を始められません: %s"
+msgid "Couldn't start but blame: %s"
+msgstr "but blame を始められません: %s"
 
-#: gitk:3866 gitk:6755
+#: butk:3866 butk:6755
 msgid "Searching"
 msgstr "検索中"
 
-#: gitk:3898
+#: butk:3898
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "git blame 実行エラー: %s"
+msgid "Error running but blame: %s"
+msgstr "but blame 実行エラー: %s"
 
-#: gitk:3926
+#: butk:3926
 #, tcl-format
 msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "コミット %s に由来するその行は、このビューに表示されていません"
 
-#: gitk:3940
+#: butk:3940
 msgid "External diff viewer failed:"
 msgstr "外部diffビューアが失敗:"
 
-#: gitk:4044
+#: butk:4044
 msgid "All files"
 msgstr "全てのファイル"
 
-#: gitk:4068
+#: butk:4068
 msgid "View"
 msgstr "ビュー"
 
-#: gitk:4071
+#: butk:4071
 msgid "Gitk view definition"
 msgstr "Gitk ビュー定義"
 
-#: gitk:4075
+#: butk:4075
 msgid "Remember this view"
 msgstr "このビューを記憶する"
 
-#: gitk:4076
+#: butk:4076
 msgid "References (space separated list):"
 msgstr "リファレンス（スペース区切りのリスト）:"
 
-#: gitk:4077
+#: butk:4077
 msgid "Branches & tags:"
 msgstr "ブランチ＆タグ:"
 
-#: gitk:4078
+#: butk:4078
 msgid "All refs"
 msgstr "全てのリファレンス"
 
-#: gitk:4079
+#: butk:4079
 msgid "All (local) branches"
 msgstr "全ての（ローカルな）ブランチ"
 
-#: gitk:4080
+#: butk:4080
 msgid "All tags"
 msgstr "全てのタグ"
 
-#: gitk:4081
+#: butk:4081
 msgid "All remote-tracking branches"
 msgstr "全てのリモート追跡ブランチ"
 
-#: gitk:4082
+#: butk:4082
 msgid "cummit Info (regular expressions):"
 msgstr "コミット情報（正規表現）:"
 
-#: gitk:4083
+#: butk:4083
 msgid "Author:"
 msgstr "作者:"
 
-#: gitk:4084
+#: butk:4084
 msgid "cummitter:"
 msgstr "コミット者:"
 
-#: gitk:4085
+#: butk:4085
 msgid "cummit Message:"
 msgstr "コミットメッセージ:"
 
-#: gitk:4086
+#: butk:4086
 msgid "Matches all cummit Info criteria"
 msgstr "コミット情報の全ての条件に一致"
 
-#: gitk:4087
+#: butk:4087
 msgid "Matches no cummit Info criteria"
 msgstr "コミット情報の全ての条件に不一致"
 
-#: gitk:4088
+#: butk:4088
 msgid "Changes to Files:"
 msgstr "変更したファイル:"
 
-#: gitk:4089
+#: butk:4089
 msgid "Fixed String"
 msgstr "固定文字列"
 
-#: gitk:4090
+#: butk:4090
 msgid "Regular Expression"
 msgstr "正規表現"
 
-#: gitk:4091
+#: butk:4091
 msgid "Search string:"
 msgstr "検索文字列:"
 
-#: gitk:4092
+#: butk:4092
 msgid ""
 "cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
@@ -709,201 +709,201 @@ msgstr ""
 "コミット日時 (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 
-#: gitk:4093
+#: butk:4093
 msgid "Since:"
 msgstr "期間の始め:"
 
-#: gitk:4094
+#: butk:4094
 msgid "Until:"
 msgstr "期間の終わり:"
 
-#: gitk:4095
+#: butk:4095
 msgid "Limit and/or skip a number of revisions (positive integer):"
 msgstr "制限・省略するリビジョンの数（正の整数）:"
 
-#: gitk:4096
+#: butk:4096
 msgid "Number to show:"
 msgstr "表示する数:"
 
-#: gitk:4097
+#: butk:4097
 msgid "Number to skip:"
 msgstr "省略する数:"
 
-#: gitk:4098
+#: butk:4098
 msgid "Miscellaneous options:"
 msgstr "その他のオプション:"
 
-#: gitk:4099
+#: butk:4099
 msgid "Strictly sort by date"
 msgstr "厳密に日付順で並び替え"
 
-#: gitk:4100
+#: butk:4100
 msgid "Mark branch sides"
 msgstr "側枝マーク"
 
-#: gitk:4101
+#: butk:4101
 msgid "Limit to first parent"
 msgstr "最初の親に制限"
 
-#: gitk:4102
+#: butk:4102
 msgid "Simple history"
 msgstr "簡易な履歴"
 
-#: gitk:4103
-msgid "Additional arguments to git log:"
-msgstr "git log への追加の引数:"
+#: butk:4103
+msgid "Additional arguments to but log:"
+msgstr "but log への追加の引数:"
 
-#: gitk:4104
+#: butk:4104
 msgid "Enter files and directories to include, one per line:"
 msgstr "含まれるファイル・ディレクトリを一行ごとに入力:"
 
-#: gitk:4105
+#: butk:4105
 msgid "Command to generate more cummits to include:"
 msgstr "コミット追加コマンド:"
 
-#: gitk:4229
+#: butk:4229
 msgid "Gitk: edit view"
 msgstr "Gitk: ビュー編集"
 
-#: gitk:4237
+#: butk:4237
 msgid "-- criteria for selecting revisions"
 msgstr "― リビジョンの選択条件"
 
-#: gitk:4242
+#: butk:4242
 msgid "View Name"
 msgstr "ビュー名:"
 
-#: gitk:4317
+#: butk:4317
 msgid "Apply (F5)"
 msgstr "適用 (F5)"
 
-#: gitk:4355
+#: butk:4355
 msgid "Error in cummit selection arguments:"
 msgstr "コミット選択引数のエラー:"
 
-#: gitk:4410 gitk:4463 gitk:4925 gitk:4939 gitk:6209 gitk:12388 gitk:12389
+#: butk:4410 butk:4463 butk:4925 butk:4939 butk:6209 butk:12388 butk:12389
 msgid "None"
 msgstr "無し"
 
-#: gitk:5022 gitk:5027
+#: butk:5022 butk:5027
 msgid "Descendant"
 msgstr "子孫"
 
-#: gitk:5023
+#: butk:5023
 msgid "Not descendant"
 msgstr "非子孫"
 
-#: gitk:5030 gitk:5035
+#: butk:5030 butk:5035
 msgid "Ancestor"
 msgstr "祖先"
 
-#: gitk:5031
+#: butk:5031
 msgid "Not ancestor"
 msgstr "非祖先"
 
-#: gitk:5325
+#: butk:5325
 msgid "Local changes checked in to index but not cummitted"
 msgstr "ステージされた、コミット前のローカルな変更"
 
-#: gitk:5361
+#: butk:5361
 msgid "Local uncummitted changes, not checked in to index"
 msgstr "ステージされていない、コミット前のローカルな変更"
 
-#: gitk:7135
+#: butk:7135
 msgid "and many more"
 msgstr "他多数"
 
-#: gitk:7138
+#: butk:7138
 msgid "many"
 msgstr "多数"
 
-#: gitk:7329
+#: butk:7329
 msgid "Tags:"
 msgstr "タグ:"
 
-#: gitk:7346 gitk:7352 gitk:8826
+#: butk:7346 butk:7352 butk:8826
 msgid "Parent"
 msgstr "親"
 
-#: gitk:7357
+#: butk:7357
 msgid "Child"
 msgstr "子"
 
-#: gitk:7366
+#: butk:7366
 msgid "Branch"
 msgstr "ブランチ"
 
-#: gitk:7369
+#: butk:7369
 msgid "Follows"
 msgstr "下位"
 
-#: gitk:7372
+#: butk:7372
 msgid "Precedes"
 msgstr "上位"
 
-#: gitk:7967
+#: butk:7967
 #, tcl-format
 msgid "Error getting diffs: %s"
 msgstr "diff取得エラー: %s"
 
-#: gitk:8651
+#: butk:8651
 msgid "Goto:"
 msgstr "Goto:"
 
-#: gitk:8672
+#: butk:8672
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
 msgstr "%s を含む SHA1 ID は複数存在します"
 
-#: gitk:8679
+#: butk:8679
 #, tcl-format
 msgid "Revision %s is not known"
 msgstr "リビジョン %s は不明です"
 
-#: gitk:8689
+#: butk:8689
 #, tcl-format
 msgid "SHA1 id %s is not known"
 msgstr "SHA1 id %s は不明です"
 
-#: gitk:8691
+#: butk:8691
 #, tcl-format
 msgid "Revision %s is not in the current view"
 msgstr "リビジョン %s は現在のビューにはありません"
 
-#: gitk:8833 gitk:8848
+#: butk:8833 butk:8848
 msgid "Date"
 msgstr "日付"
 
-#: gitk:8836
+#: butk:8836
 msgid "Children"
 msgstr "子"
 
-#: gitk:8899
+#: butk:8899
 #, tcl-format
 msgid "Reset %s branch to here"
 msgstr "%s ブランチをここにリセットする"
 
-#: gitk:8901
+#: butk:8901
 msgid "Detached head: can't reset"
 msgstr "切り離されたHEAD: リセットできません"
 
-#: gitk:9006 gitk:9012
+#: butk:9006 butk:9012
 msgid "Skipping merge cummit "
 msgstr "コミットマージをスキップ: "
 
-#: gitk:9021 gitk:9026
+#: butk:9021 butk:9026
 msgid "Error getting patch ID for "
 msgstr "パッチ取得エラー: ID "
 
-#: gitk:9022 gitk:9027
+#: butk:9022 butk:9027
 msgid " - stopping\n"
 msgstr " - 停止\n"
 
-#: gitk:9032 gitk:9035 gitk:9043 gitk:9057 gitk:9066
+#: butk:9032 butk:9035 butk:9043 butk:9057 butk:9066
 msgid "cummit "
 msgstr "コミット "
 
-#: gitk:9036
+#: butk:9036
 msgid ""
 " is the same patch as\n"
 "       "
@@ -911,7 +911,7 @@ msgstr ""
 " は下記のパッチと同等\n"
 "       "
 
-#: gitk:9044
+#: butk:9044
 msgid ""
 " differs from\n"
 "       "
@@ -919,7 +919,7 @@ msgstr ""
 " 下記からのdiff\n"
 "       "
 
-#: gitk:9046
+#: butk:9046
 msgid ""
 "Diff of cummits:\n"
 "\n"
@@ -927,130 +927,130 @@ msgstr ""
 "コミットのdiff:\n"
 "\n"
 
-#: gitk:9058 gitk:9067
+#: butk:9058 butk:9067
 #, tcl-format
 msgid " has %s children - stopping\n"
 msgstr " には %s の子があります - 停止\n"
 
-#: gitk:9086
+#: butk:9086
 #, tcl-format
 msgid "Error writing cummit to file: %s"
 msgstr "ファイルへのコミット書き出しエラー: %s"
 
-#: gitk:9092
+#: butk:9092
 #, tcl-format
 msgid "Error diffing cummits: %s"
 msgstr "コミットのdiff実行エラー: %s"
 
-#: gitk:9138
+#: butk:9138
 msgid "Top"
 msgstr "Top"
 
-#: gitk:9139
+#: butk:9139
 msgid "From"
 msgstr "From"
 
-#: gitk:9144
+#: butk:9144
 msgid "To"
 msgstr "To"
 
-#: gitk:9168
+#: butk:9168
 msgid "Generate patch"
 msgstr "パッチ生成"
 
-#: gitk:9170
+#: butk:9170
 msgid "From:"
 msgstr "From:"
 
-#: gitk:9179
+#: butk:9179
 msgid "To:"
 msgstr "To:"
 
-#: gitk:9188
+#: butk:9188
 msgid "Reverse"
 msgstr "逆"
 
-#: gitk:9190 gitk:9400
+#: butk:9190 butk:9400
 msgid "Output file:"
 msgstr "出力ファイル:"
 
-#: gitk:9196
+#: butk:9196
 msgid "Generate"
 msgstr "生成"
 
-#: gitk:9234
+#: butk:9234
 msgid "Error creating patch:"
 msgstr "パッチ生成エラー:"
 
-#: gitk:9257 gitk:9388 gitk:9445
+#: butk:9257 butk:9388 butk:9445
 msgid "ID:"
 msgstr "ID:"
 
-#: gitk:9266
+#: butk:9266
 msgid "Tag name:"
 msgstr "タグ名:"
 
-#: gitk:9269
+#: butk:9269
 msgid "Tag message is optional"
 msgstr "タグメッセージを付ける事も出来ます"
 
-#: gitk:9271
+#: butk:9271
 msgid "Tag message:"
 msgstr "タグメッセージ:"
 
-#: gitk:9275 gitk:9454
+#: butk:9275 butk:9454
 msgid "Create"
 msgstr "生成"
 
-#: gitk:9293
+#: butk:9293
 msgid "No tag name specified"
 msgstr "タグの名称が指定されていません"
 
-#: gitk:9297
+#: butk:9297
 #, tcl-format
 msgid "Tag \"%s\" already exists"
 msgstr "タグ \"%s\" は既に存在します"
 
-#: gitk:9307
+#: butk:9307
 msgid "Error creating tag:"
 msgstr "タグ生成エラー:"
 
-#: gitk:9397
+#: butk:9397
 msgid "Command:"
 msgstr "コマンド:"
 
-#: gitk:9405
+#: butk:9405
 msgid "Write"
 msgstr "書き出し"
 
-#: gitk:9423
+#: butk:9423
 msgid "Error writing cummit:"
 msgstr "コミット書き出しエラー:"
 
-#: gitk:9450
+#: butk:9450
 msgid "Name:"
 msgstr "名前:"
 
-#: gitk:9473
+#: butk:9473
 msgid "Please specify a name for the new branch"
 msgstr "新しいブランチの名前を指定してください"
 
-#: gitk:9478
+#: butk:9478
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
 msgstr "ブランチ '%s' は既に存在します。上書きしますか？"
 
-#: gitk:9545
+#: butk:9545
 #, tcl-format
 msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "コミット %s は既にブランチ %s に含まれています ― 本当にこれを再適用しますか？"
 
-#: gitk:9550
+#: butk:9550
 msgid "Cherry-picking"
 msgstr "チェリーピック中"
 
-#: gitk:9559
+#: butk:9559
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
@@ -1060,64 +1060,64 @@ msgstr ""
 "あなたの変更に cummit, reset, stash のいずれかを行ってからやり直してくださ"
 "い。"
 
-#: gitk:9565
+#: butk:9565
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
-"Do you wish to run git citool to resolve it?"
+"Do you wish to run but citool to resolve it?"
 msgstr ""
 "マージの衝突によってチェリーピックは失敗しました。\n"
-"この解決のために git citool を実行したいですか？"
+"この解決のために but citool を実行したいですか？"
 
-#: gitk:9581 gitk:9639
+#: butk:9581 butk:9639
 msgid "No changes cummitted"
 msgstr "何の変更もコミットされていません"
 
-#: gitk:9608
+#: butk:9608
 #, tcl-format
 msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "コミット %s は既にブランチ %s に含まれています ― 本当にこれを撤回しますか？"
 
-#: gitk:9613
+#: butk:9613
 msgid "Reverting"
 msgstr "撤回中"
 
-#: gitk:9621
+#: butk:9621
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
 "cummit, reset or stash  your changes and try again."
 msgstr "ファイル '%s' のローカルな変更のために撤回は失敗しました。 あなたの変更に cummit, reset, stash のいずれかを行ってからやり直してください。"
 
-#: gitk:9625
+#: butk:9625
 msgid ""
 "Revert failed because of merge conflict.\n"
-" Do you wish to run git citool to resolve it?"
+" Do you wish to run but citool to resolve it?"
 msgstr ""
 "マージの衝突によって撤回は失敗しました。\n"
-"この解決のために git citool を実行したいですか？"
+"この解決のために but citool を実行したいですか？"
 
-#: gitk:9668
+#: butk:9668
 msgid "Confirm reset"
 msgstr "確認を取り消す"
 
-#: gitk:9670
+#: butk:9670
 #, tcl-format
 msgid "Reset branch %s to %s?"
 msgstr "ブランチ %s を %s にリセットしますか？"
 
-#: gitk:9672
+#: butk:9672
 msgid "Reset type:"
 msgstr "Reset タイプ:"
 
-#: gitk:9675
+#: butk:9675
 msgid "Soft: Leave working tree and index untouched"
 msgstr "Soft: 作業ツリーもインデックスもそのままにする"
 
-#: gitk:9678
+#: butk:9678
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr "Mixed: 作業ツリーをそのままにして、インデックスをリセット"
 
-#: gitk:9681
+#: butk:9681
 msgid ""
 "Hard: Reset working tree and index\n"
 "(discard ALL local changes)"
@@ -1125,19 +1125,19 @@ msgstr ""
 "Hard: 作業ツリーやインデックスをリセット\n"
 "（「全ての」ローカルな変更を破棄）"
 
-#: gitk:9698
+#: butk:9698
 msgid "Resetting"
 msgstr "リセット中"
 
-#: gitk:9758
+#: butk:9758
 msgid "Checking out"
 msgstr "チェックアウト"
 
-#: gitk:9811
+#: butk:9811
 msgid "Cannot delete the currently checked-out branch"
 msgstr "現在チェックアウトされているブランチを削除することはできません"
 
-#: gitk:9817
+#: butk:9817
 #, tcl-format
 msgid ""
 "The cummits on branch %s aren't on any other branch.\n"
@@ -1146,16 +1146,16 @@ msgstr ""
 "ブランチ %s には他のブランチに存在しないコミットがあります。\n"
 "本当にブランチ %s を削除しますか？"
 
-#: gitk:9848
+#: butk:9848
 #, tcl-format
 msgid "Tags and heads: %s"
 msgstr "タグとHEAD: %s"
 
-#: gitk:9865
+#: butk:9865
 msgid "Filter"
 msgstr "フィルター"
 
-#: gitk:10161
+#: butk:10161
 msgid ""
 "Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -1163,217 +1163,217 @@ msgstr ""
 "コミット構造情報読み込みエラー; ブランチ及び上位/下位のタグ情報が不完全である"
 "ようです。"
 
-#: gitk:11138
+#: butk:11138
 msgid "Tag"
 msgstr "タグ"
 
-#: gitk:11142
+#: butk:11142
 msgid "Id"
 msgstr "ID"
 
-#: gitk:11225
+#: butk:11225
 msgid "Gitk font chooser"
 msgstr "Gitk フォント選択"
 
-#: gitk:11242
+#: butk:11242
 msgid "B"
 msgstr "B"
 
-#: gitk:11245
+#: butk:11245
 msgid "I"
 msgstr "I"
 
-#: gitk:11363
+#: butk:11363
 msgid "cummit list display options"
 msgstr "コミットリスト表示オプション"
 
-#: gitk:11366
+#: butk:11366
 msgid "Maximum graph width (lines)"
 msgstr "最大グラフ幅（線の本数）"
 
-#: gitk:11370
+#: butk:11370
 #, no-tcl-format
 msgid "Maximum graph width (% of pane)"
 msgstr "最大グラフ幅（ペインに対する％）"
 
-#: gitk:11373
+#: butk:11373
 msgid "Show local changes"
 msgstr "ローカルな変更を表示"
 
-#: gitk:11376
+#: butk:11376
 msgid "Auto-select SHA1 (length)"
 msgstr "SHA1 の自動選択 (選択文字数指定)"
 
-#: gitk:11380
+#: butk:11380
 msgid "Hide remote refs"
 msgstr "リモートリファレンスを隠す"
 
-#: gitk:11384
+#: butk:11384
 msgid "Diff display options"
 msgstr "diff表示オプション"
 
-#: gitk:11386
+#: butk:11386
 msgid "Tab spacing"
 msgstr "タブ空白幅"
 
-#: gitk:11389
+#: butk:11389
 msgid "Display nearby tags/heads"
 msgstr "近くの タグ/head を表示する"
 
-#: gitk:11392
+#: butk:11392
 msgid "Maximum # tags/heads to show"
 msgstr "タグ/head の最大表示数"
 
-#: gitk:11395
+#: butk:11395
 msgid "Limit diffs to listed paths"
 msgstr "diff をリストのパスに制限"
 
-#: gitk:11398
+#: butk:11398
 msgid "Support per-file encodings"
 msgstr "ファイルごとのエンコーディングのサポート"
 
-#: gitk:11404 gitk:11551
+#: butk:11404 butk:11551
 msgid "External diff tool"
 msgstr "外部diffツール"
 
-#: gitk:11405
+#: butk:11405
 msgid "Choose..."
 msgstr "選択..."
 
-#: gitk:11410
+#: butk:11410
 msgid "General options"
 msgstr "全体設定"
 
-#: gitk:11413
+#: butk:11413
 msgid "Use themed widgets"
 msgstr "テーマウィジェットを使用する"
 
-#: gitk:11415
+#: butk:11415
 msgid "(change requires restart)"
 msgstr "(変更には再起動が必要です)"
 
-#: gitk:11417
+#: butk:11417
 msgid "(currently unavailable)"
 msgstr "(現在は使用出来ません)"
 
-#: gitk:11428
+#: butk:11428
 msgid "Colors: press to choose"
 msgstr "色: ボタンを押して選択"
 
-#: gitk:11431
+#: butk:11431
 msgid "Interface"
 msgstr "インターフェイス"
 
-#: gitk:11432
+#: butk:11432
 msgid "interface"
 msgstr "インターフェイス"
 
-#: gitk:11435
+#: butk:11435
 msgid "Background"
 msgstr "背景"
 
-#: gitk:11436 gitk:11466
+#: butk:11436 butk:11466
 msgid "background"
 msgstr "背景"
 
-#: gitk:11439
+#: butk:11439
 msgid "Foreground"
 msgstr "前景"
 
-#: gitk:11440
+#: butk:11440
 msgid "foreground"
 msgstr "前景"
 
-#: gitk:11443
+#: butk:11443
 msgid "Diff: old lines"
 msgstr "Diff: 旧バージョン"
 
-#: gitk:11444
+#: butk:11444
 msgid "diff old lines"
 msgstr "diff 旧バージョン"
 
-#: gitk:11448
+#: butk:11448
 msgid "Diff: new lines"
 msgstr "Diff: 新バージョン"
 
-#: gitk:11449
+#: butk:11449
 msgid "diff new lines"
 msgstr "diff 新バージョン"
 
-#: gitk:11453
+#: butk:11453
 msgid "Diff: hunk header"
 msgstr "Diff: hunkヘッダ"
 
-#: gitk:11455
+#: butk:11455
 msgid "diff hunk header"
 msgstr "diff hunkヘッダ"
 
-#: gitk:11459
+#: butk:11459
 msgid "Marked line bg"
 msgstr "マーク行の背景"
 
-#: gitk:11461
+#: butk:11461
 msgid "marked line background"
 msgstr "マーク行の背景"
 
-#: gitk:11465
+#: butk:11465
 msgid "Select bg"
 msgstr "選択の背景"
 
-#: gitk:11474
+#: butk:11474
 msgid "Fonts: press to choose"
 msgstr "フォント: ボタンを押して選択"
 
-#: gitk:11476
+#: butk:11476
 msgid "Main font"
 msgstr "主フォント"
 
-#: gitk:11477
+#: butk:11477
 msgid "Diff display font"
 msgstr "Diff表示用フォント"
 
-#: gitk:11478
+#: butk:11478
 msgid "User interface font"
 msgstr "UI用フォント"
 
-#: gitk:11500
+#: butk:11500
 msgid "Gitk preferences"
 msgstr "Gitk 設定"
 
-#: gitk:11509
+#: butk:11509
 msgid "General"
 msgstr "一般"
 
-#: gitk:11510
+#: butk:11510
 msgid "Colors"
 msgstr "色"
 
-#: gitk:11511
+#: butk:11511
 msgid "Fonts"
 msgstr "フォント"
 
-#: gitk:11561
+#: butk:11561
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: 「%s」 の色を選択"
 
-#: gitk:12074
+#: butk:12074
 msgid ""
-"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+"Sorry, butk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
-"申し訳ありませんが、このバージョンの Tcl/Tk では gitk を実行出来ません。\n"
+"申し訳ありませんが、このバージョンの Tcl/Tk では butk を実行出来ません。\n"
 "Gitkの実行には Tcl/Tk 8.4 以上が必要です。"
 
-#: gitk:12284
-msgid "Cannot find a git repository here."
-msgstr "ここにはgitリポジトリがありません。"
+#: butk:12284
+msgid "Cannot find a but repository here."
+msgstr "ここにはbutリポジトリがありません。"
 
-#: gitk:12331
+#: butk:12331
 #, tcl-format
 msgid "Ambiguous argument '%s': both revision and filename"
 msgstr "あいまいな引数 '%s': リビジョンとファイル名の両方に解釈できます"
 
-#: gitk:12343
-msgid "Bad arguments to gitk:"
-msgstr "gitkへの不正な引数:"
+#: butk:12343
+msgid "Bad arguments to butk:"
+msgstr "butkへの不正な引数:"

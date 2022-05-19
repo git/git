@@ -18,15 +18,15 @@ cummit_in () {
 	(
 		cd "$1" &&
 		echo "$2" >"$2" &&
-		git add "$2" &&
-		git cummit -m "$2"
+		but add "$2" &&
+		but cummit -m "$2"
 	)
 }
 
 # check that there are $2 loose objects in repo $1
 test_objcount () {
 	echo "$2" >expect &&
-	git -C "$1" count-objects >actual.raw &&
+	but -C "$1" count-objects >actual.raw &&
 	cut -d' ' -f1 <actual.raw >actual &&
 	test_cmp expect actual
 }
@@ -37,22 +37,22 @@ test_expect_success 'preparing first repository' '
 '
 
 test_expect_success 'preparing second repository' '
-	git clone A B &&
+	but clone A B &&
 	cummit_in B file2 &&
-	git -C B repack -ad &&
-	git -C B prune
+	but -C B repack -ad &&
+	but -C B prune
 '
 
 test_expect_success 'cloning with reference (-l -s)' '
-	git clone -l -s --reference B A C
+	but clone -l -s --reference B A C
 '
 
 test_expect_success 'existence of info/alternates' '
-	test_line_count = 2 C/.git/objects/info/alternates
+	test_line_count = 2 C/.but/objects/info/alternates
 '
 
 test_expect_success 'pulling from reference' '
-	git -C C pull ../B main
+	but -C C pull ../B main
 '
 
 test_expect_success 'that reference gets used' '
@@ -60,7 +60,7 @@ test_expect_success 'that reference gets used' '
 '
 
 test_expect_success 'cloning with reference (no -l -s)' '
-	GIT_TRACE_PACKET=$U.D git clone --reference B "file://$(pwd)/A" D
+	GIT_TRACE_PACKET=$U.D but clone --reference B "file://$(pwd)/A" D
 '
 
 test_expect_success 'fetched no objects' '
@@ -69,11 +69,11 @@ test_expect_success 'fetched no objects' '
 '
 
 test_expect_success 'existence of info/alternates' '
-	test_line_count = 1 D/.git/objects/info/alternates
+	test_line_count = 1 D/.but/objects/info/alternates
 '
 
 test_expect_success 'pulling from reference' '
-	git -C D pull ../B main
+	but -C D pull ../B main
 '
 
 test_expect_success 'that reference gets used' '
@@ -82,12 +82,12 @@ test_expect_success 'that reference gets used' '
 
 test_expect_success 'updating origin' '
 	cummit_in A file3 &&
-	git -C A repack -ad &&
-	git -C A prune
+	but -C A repack -ad &&
+	but -C A prune
 '
 
 test_expect_success 'pulling changes from origin' '
-	git -C C pull --no-rebase origin
+	but -C C pull --no-rebase origin
 '
 
 # the 2 local objects are cummit and tree from the merge
@@ -96,7 +96,7 @@ test_expect_success 'that alternate to origin gets used' '
 '
 
 test_expect_success 'pulling changes from origin' '
-	git -C D pull --no-rebase origin
+	but -C D pull --no-rebase origin
 '
 
 # the 5 local objects are expected; file3 blob, cummit in A to add it
@@ -111,104 +111,104 @@ test_expect_success 'preparing alternate repository #1' '
 '
 
 test_expect_success 'cloning alternate repo #2 and adding changes to repo #1' '
-	git clone F G &&
+	but clone F G &&
 	cummit_in F file2
 '
 
 test_expect_success 'cloning alternate repo #1, using #2 as reference' '
-	git clone --reference G F H
+	but clone --reference G F H
 '
 
 test_expect_success 'cloning with reference being subset of source (-l -s)' '
-	git clone -l -s --reference A B E
+	but clone -l -s --reference A B E
 '
 
 test_expect_success 'cloning with multiple references drops duplicates' '
-	git clone -s --reference B --reference A --reference B A dups &&
-	test_line_count = 2 dups/.git/objects/info/alternates
+	but clone -s --reference B --reference A --reference B A dups &&
+	test_line_count = 2 dups/.but/objects/info/alternates
 '
 
 test_expect_success 'clone with reference from a tagged repository' '
 	(
-		cd A && git tag -a -m tagged HEAD
+		cd A && but tag -a -m tagged HEAD
 	) &&
-	git clone --reference=A A I
+	but clone --reference=A A I
 '
 
 test_expect_success 'prepare branched repository' '
-	git clone A J &&
+	but clone A J &&
 	(
 		cd J &&
-		git checkout -b other main^ &&
+		but checkout -b other main^ &&
 		echo other >otherfile &&
-		git add otherfile &&
-		git cummit -m other &&
-		git checkout main
+		but add otherfile &&
+		but cummit -m other &&
+		but checkout main
 	)
 '
 
 test_expect_success 'fetch with incomplete alternates' '
-	git init K &&
-	echo "$base_dir/A/.git/objects" >K/.git/objects/info/alternates &&
+	but init K &&
+	echo "$base_dir/A/.but/objects" >K/.but/objects/info/alternates &&
 	(
 		cd K &&
-		git remote add J "file://$base_dir/J" &&
-		GIT_TRACE_PACKET=$U.K git fetch J
+		but remote add J "file://$base_dir/J" &&
+		GIT_TRACE_PACKET=$U.K but fetch J
 	) &&
-	main_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/main) &&
+	main_object=$(cd A && but for-each-ref --format="%(objectname)" refs/heads/main) &&
 	test -s "$U.K" &&
 	! grep " want $main_object" "$U.K" &&
-	tag_object=$(cd A && git for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
+	tag_object=$(cd A && but for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
 	! grep " want $tag_object" "$U.K"
 '
 
-test_expect_success 'clone using repo with gitfile as a reference' '
-	git clone --separate-git-dir=L A M &&
-	git clone --reference=M A N &&
+test_expect_success 'clone using repo with butfile as a reference' '
+	but clone --separate-but-dir=L A M &&
+	but clone --reference=M A N &&
 	echo "$base_dir/L/objects" >expected &&
-	test_cmp expected "$base_dir/N/.git/objects/info/alternates"
+	test_cmp expected "$base_dir/N/.but/objects/info/alternates"
 '
 
-test_expect_success 'clone using repo pointed at by gitfile as reference' '
-	git clone --reference=M/.git A O &&
+test_expect_success 'clone using repo pointed at by butfile as reference' '
+	but clone --reference=M/.but A O &&
 	echo "$base_dir/L/objects" >expected &&
-	test_cmp expected "$base_dir/O/.git/objects/info/alternates"
+	test_cmp expected "$base_dir/O/.but/objects/info/alternates"
 '
 
 test_expect_success 'clone and dissociate from reference' '
-	git init P &&
+	but init P &&
 	(
 		cd P && test_cummit one
 	) &&
-	git clone P Q &&
+	but clone P Q &&
 	(
 		cd Q && test_cummit two
 	) &&
-	git clone --no-local --reference=P Q R &&
-	git clone --no-local --reference=P --dissociate Q S &&
+	but clone --no-local --reference=P Q R &&
+	but clone --no-local --reference=P --dissociate Q S &&
 	# removing the reference P would corrupt R but not S
 	rm -fr P &&
-	test_must_fail git -C R fsck &&
-	git -C S fsck
+	test_must_fail but -C R fsck &&
+	but -C S fsck
 '
 test_expect_success 'clone, dissociate from partial reference and repack' '
 	rm -fr P Q R &&
-	git init P &&
+	but init P &&
 	(
 		cd P &&
 		test_cummit one &&
-		git repack &&
+		but repack &&
 		test_cummit two &&
-		git repack
+		but repack
 	) &&
-	git clone --bare P Q &&
+	but clone --bare P Q &&
 	(
 		cd P &&
-		git checkout -b second &&
+		but checkout -b second &&
 		test_cummit three &&
-		git repack
+		but repack
 	) &&
-	git clone --bare --dissociate --reference=P Q R &&
+	but clone --bare --dissociate --reference=P Q R &&
 	ls R/objects/pack/*.pack >packs.txt &&
 	test_line_count = 1 packs.txt
 '
@@ -217,20 +217,20 @@ test_expect_success 'clone, dissociate from alternates' '
 	rm -fr A B C &&
 	test_create_repo A &&
 	cummit_in A file1 &&
-	git clone --reference=A A B &&
-	test_line_count = 1 B/.git/objects/info/alternates &&
-	git clone --local --dissociate B C &&
-	! test -f C/.git/objects/info/alternates &&
-	( cd C && git fsck )
+	but clone --reference=A A B &&
+	test_line_count = 1 B/.but/objects/info/alternates &&
+	but clone --local --dissociate B C &&
+	! test -f C/.but/objects/info/alternates &&
+	( cd C && but fsck )
 '
 
 test_expect_success 'setup repo with garbage in objects/*' '
-	git init S &&
+	but init S &&
 	(
 		cd S &&
 		test_cummit A &&
 
-		cd .git/objects &&
+		cd .but/objects &&
 		>.some-hidden-file &&
 		>some-file &&
 		mkdir .some-hidden-dir &&
@@ -245,49 +245,49 @@ test_expect_success 'setup repo with garbage in objects/*' '
 test_expect_success 'clone a repo with garbage in objects/*' '
 	for option in --local --no-hardlinks --shared --dissociate
 	do
-		git clone $option S S$option || return 1 &&
-		git -C S$option fsck || return 1
+		but clone $option S S$option || return 1 &&
+		but -C S$option fsck || return 1
 	done &&
 	find S-* -name "*some*" | sort >actual &&
 	cat >expected <<-EOF &&
-	S--dissociate/.git/objects/.some-hidden-dir
-	S--dissociate/.git/objects/.some-hidden-dir/.some-dot-file
-	S--dissociate/.git/objects/.some-hidden-dir/some-file
-	S--dissociate/.git/objects/.some-hidden-file
-	S--dissociate/.git/objects/some-dir
-	S--dissociate/.git/objects/some-dir/.some-dot-file
-	S--dissociate/.git/objects/some-dir/some-file
-	S--dissociate/.git/objects/some-file
-	S--local/.git/objects/.some-hidden-dir
-	S--local/.git/objects/.some-hidden-dir/.some-dot-file
-	S--local/.git/objects/.some-hidden-dir/some-file
-	S--local/.git/objects/.some-hidden-file
-	S--local/.git/objects/some-dir
-	S--local/.git/objects/some-dir/.some-dot-file
-	S--local/.git/objects/some-dir/some-file
-	S--local/.git/objects/some-file
-	S--no-hardlinks/.git/objects/.some-hidden-dir
-	S--no-hardlinks/.git/objects/.some-hidden-dir/.some-dot-file
-	S--no-hardlinks/.git/objects/.some-hidden-dir/some-file
-	S--no-hardlinks/.git/objects/.some-hidden-file
-	S--no-hardlinks/.git/objects/some-dir
-	S--no-hardlinks/.git/objects/some-dir/.some-dot-file
-	S--no-hardlinks/.git/objects/some-dir/some-file
-	S--no-hardlinks/.git/objects/some-file
+	S--dissociate/.but/objects/.some-hidden-dir
+	S--dissociate/.but/objects/.some-hidden-dir/.some-dot-file
+	S--dissociate/.but/objects/.some-hidden-dir/some-file
+	S--dissociate/.but/objects/.some-hidden-file
+	S--dissociate/.but/objects/some-dir
+	S--dissociate/.but/objects/some-dir/.some-dot-file
+	S--dissociate/.but/objects/some-dir/some-file
+	S--dissociate/.but/objects/some-file
+	S--local/.but/objects/.some-hidden-dir
+	S--local/.but/objects/.some-hidden-dir/.some-dot-file
+	S--local/.but/objects/.some-hidden-dir/some-file
+	S--local/.but/objects/.some-hidden-file
+	S--local/.but/objects/some-dir
+	S--local/.but/objects/some-dir/.some-dot-file
+	S--local/.but/objects/some-dir/some-file
+	S--local/.but/objects/some-file
+	S--no-hardlinks/.but/objects/.some-hidden-dir
+	S--no-hardlinks/.but/objects/.some-hidden-dir/.some-dot-file
+	S--no-hardlinks/.but/objects/.some-hidden-dir/some-file
+	S--no-hardlinks/.but/objects/.some-hidden-file
+	S--no-hardlinks/.but/objects/some-dir
+	S--no-hardlinks/.but/objects/some-dir/.some-dot-file
+	S--no-hardlinks/.but/objects/some-dir/some-file
+	S--no-hardlinks/.but/objects/some-file
 	EOF
 	test_cmp expected actual
 '
 
 test_expect_success SYMLINKS 'setup repo with manually symlinked or unknown files at objects/' '
-	git init T &&
+	but init T &&
 	(
 		cd T &&
-		git config gc.auto 0 &&
+		but config gc.auto 0 &&
 		test_cummit A &&
-		git gc &&
+		but gc &&
 		test_cummit B &&
 
-		cd .git/objects &&
+		cd .but/objects &&
 		mv pack packs &&
 		ln -s packs pack &&
 		find ?? -type d >loose-dirs &&
@@ -307,20 +307,20 @@ test_expect_success SYMLINKS 'setup repo with manually symlinked or unknown file
 		find . -type l | sort >../../../T.objects-symlinks.raw &&
 		echo unknown_content >unknown_file
 	) &&
-	git -C T fsck &&
-	git -C T rev-list --all --objects >T.objects
+	but -C T fsck &&
+	but -C T rev-list --all --objects >T.objects
 '
 
 
 test_expect_success SYMLINKS 'clone repo with symlinked or unknown files at objects/' '
 	for option in --local --no-hardlinks --shared --dissociate
 	do
-		git clone $option T T$option || return 1 &&
-		git -C T$option fsck || return 1 &&
-		git -C T$option rev-list --all --objects >T$option.objects &&
+		but clone $option T T$option || return 1 &&
+		but -C T$option fsck || return 1 &&
+		but -C T$option rev-list --all --objects >T$option.objects &&
 		test_cmp T.objects T$option.objects &&
 		(
-			cd T$option/.git/objects &&
+			cd T$option/.but/objects &&
 			find . -type f | sort >../../../T$option.objects-files.raw &&
 			find . -type l | sort >../../../T$option.objects-symlinks.raw
 		)

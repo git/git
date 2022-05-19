@@ -1,19 +1,19 @@
-git-show-branch(1)
+but-show-branch(1)
 ==================
 
 NAME
 ----
-git-show-branch - Show branches and their cummits
+but-show-branch - Show branches and their cummits
 
 SYNOPSIS
 --------
 [verse]
-'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
+'but show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
 		[--current] [--color[=<when>] | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics]
 		[(<rev> | <glob>)...]
-'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
+'but show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
 -----------
@@ -31,7 +31,7 @@ no <rev> or <glob> is given on the command line.
 OPTIONS
 -------
 <rev>::
-	Arbitrary extended SHA-1 expression (see linkgit:gitrevisions[7])
+	Arbitrary extended SHA-1 expression (see linkbut:butrevisions[7])
 	that typically names a branch head or a tag.
 
 <glob>::
@@ -84,7 +84,7 @@ OPTIONS
 	Instead of showing the cummit list, determine possible
 	merge bases for the specified cummits. All merge bases
 	will be contained in all specified cummits. This is
-	different from how linkgit:git-merge-base[1] handles
+	different from how linkbut:but-merge-base[1] handles
 	the case of three or more cummits.
 
 --independent::
@@ -104,8 +104,8 @@ OPTIONS
 	Shows only cummits that are NOT on the first branch given.
 	This helps track topic branches by hiding any cummit that
 	is already in the main line of development.  When given
-	"git show-branch --topics master topic1 topic2", this
-	will show the revisions given by "git rev-list {caret}master
+	"but show-branch --topics master topic1 topic2", this
+	will show the revisions given by "but rev-list {caret}master
 	topic1 topic2"
 
 -g::
@@ -148,28 +148,28 @@ The following example shows three branches, "master", "fixes"
 and "mhf":
 
 ------------------------------------------------
-$ git show-branch master fixes mhf
-* [master] Add 'git show-branch'.
- ! [fixes] Introduce "reset type" flag to "git reset"
+$ but show-branch master fixes mhf
+* [master] Add 'but show-branch'.
+ ! [fixes] Introduce "reset type" flag to "but reset"
   ! [mhf] Allow "+remote:local" refspec to cause --force when fetching.
 ---
   + [mhf] Allow "+remote:local" refspec to cause --force when fetching.
-  + [mhf~1] Use git-octopus when pulling more than one heads.
- +  [fixes] Introduce "reset type" flag to "git reset"
-  + [mhf~2] "git fetch --force".
-  + [mhf~3] Use .git/remote/origin, not .git/branches/origin.
-  + [mhf~4] Make "git pull" and "git fetch" default to origin
+  + [mhf~1] Use but-octopus when pulling more than one heads.
+ +  [fixes] Introduce "reset type" flag to "but reset"
+  + [mhf~2] "but fetch --force".
+  + [mhf~3] Use .but/remote/origin, not .but/branches/origin.
+  + [mhf~4] Make "but pull" and "but fetch" default to origin
   + [mhf~5] Infamous 'octopus merge'
-  + [mhf~6] Retire git-parse-remote.
+  + [mhf~6] Retire but-parse-remote.
   + [mhf~7] Multi-head fetch.
   + [mhf~8] Start adding the $GIT_DIR/remotes/ support.
-*++ [master] Add 'git show-branch'.
+*++ [master] Add 'but show-branch'.
 ------------------------------------------------
 
 These three branches all forked from a common cummit, [master],
-whose cummit message is "Add \'git show-branch'".
+whose cummit message is "Add \'but show-branch'".
 The "fixes" branch adds one cummit "Introduce "reset type" flag to
-"git reset"". The "mhf" branch adds many other cummits.
+"but reset"". The "mhf" branch adds many other cummits.
 The current branch is "master".
 
 
@@ -187,12 +187,12 @@ it, having the following in the configuration file may help:
 
 ------------
 
-With this, `git show-branch` without extra parameters would show
+With this, `but show-branch` without extra parameters would show
 only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
 ------------
-$ git show-branch --reflog="10,1 hour ago" --list master
+$ but show-branch --reflog="10,1 hour ago" --list master
 ------------
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.
@@ -201,4 +201,4 @@ topologically related with each other.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

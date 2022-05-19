@@ -1,34 +1,34 @@
-git-prune(1)
+but-prune(1)
 ============
 
 NAME
 ----
-git-prune - Prune all unreachable objects from the object database
+but-prune - Prune all unreachable objects from the object database
 
 
 SYNOPSIS
 --------
 [verse]
-'git prune' [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]
+'but prune' [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]
 
 DESCRIPTION
 -----------
 
-NOTE: In most cases, users should run 'git gc', which calls
-'git prune'. See the section "NOTES", below.
+NOTE: In most cases, users should run 'but gc', which calls
+'but prune'. See the section "NOTES", below.
 
-This runs 'git fsck --unreachable' using all the refs
+This runs 'but fsck --unreachable' using all the refs
 available in `refs/`, optionally with additional set of
 objects specified on the command line, and prunes all unpacked
 objects unreachable from any of these head objects from the object database.
 In addition, it
 prunes the unpacked objects that are also found in packs by
-running 'git prune-packed'.
-It also removes entries from .git/shallow that are not reachable by
+running 'but prune-packed'.
+It also removes entries from .but/shallow that are not reachable by
 any ref.
 
 Note that unreachable, packed objects will remain.  If this is
-not desired, see linkgit:git-repack[1].
+not desired, see linkbut:but-repack[1].
 
 OPTIONS
 -------
@@ -61,29 +61,29 @@ EXAMPLES
 
 To prune objects not used by your repository or another that
 borrows from your repository via its
-`.git/objects/info/alternates`:
+`.but/objects/info/alternates`:
 
 ------------
-$ git prune $(cd ../another && git rev-parse --all)
+$ but prune $(cd ../another && but rev-parse --all)
 ------------
 
 NOTES
 -----
 
-In most cases, users will not need to call 'git prune' directly, but
-should instead call 'git gc', which handles pruning along with
+In most cases, users will not need to call 'but prune' directly, but
+should instead call 'but gc', which handles pruning along with
 many other housekeeping tasks.
 
 For a description of which objects are considered for pruning, see
-'git fsck''s --unreachable option.
+'but fsck''s --unreachable option.
 
 SEE ALSO
 --------
 
-linkgit:git-fsck[1],
-linkgit:git-gc[1],
-linkgit:git-reflog[1]
+linkbut:but-fsck[1],
+linkbut:but-gc[1],
+linkbut:but-reflog[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -11,30 +11,30 @@ test_expect_success setup '
 	mkdir alice-pub &&
 	(
 		cd alice-pub &&
-		GIT_DIR=. git init
+		GIT_DIR=. but init
 	) &&
 	mkdir alice-work &&
 	(
 		cd alice-work &&
-		git init &&
+		but init &&
 		>file &&
-		git add . &&
-		git cummit -m initial &&
-		git push ../alice-pub main
+		but add . &&
+		but cummit -m initial &&
+		but push ../alice-pub main
 	) &&
 
 	# Project Bob is a fork of project Alice
 	mkdir bob-pub &&
 	(
 		cd bob-pub &&
-		GIT_DIR=. git init &&
+		GIT_DIR=. but init &&
 		mkdir -p objects/info &&
 		echo ../../alice-pub/objects >objects/info/alternates
 	) &&
-	git clone alice-pub bob-work &&
+	but clone alice-pub bob-work &&
 	(
 		cd bob-work &&
-		git push ../bob-pub main
+		but push ../bob-pub main
 	)
 '
 
@@ -42,8 +42,8 @@ test_expect_success 'alice works and pushes' '
 	(
 		cd alice-work &&
 		echo more >file &&
-		git cummit -a -m second &&
-		git push ../alice-pub :
+		but cummit -a -m second &&
+		but push ../alice-pub :
 	)
 '
 
@@ -57,19 +57,19 @@ test_expect_success 'bob fetches from alice, works and pushes' '
 		# has at her public repository are available to it
 		# via its alternates.
 		cd bob-work &&
-		git pull ../alice-pub main &&
+		but pull ../alice-pub main &&
 		echo more bob >file &&
-		git cummit -a -m third &&
-		git push ../bob-pub :
+		but cummit -a -m third &&
+		but push ../bob-pub :
 	) &&
 
 	# Check that the second cummit by Alice is not sent
 	# to ../bob-pub
 	(
 		cd bob-pub &&
-		second=$(git rev-parse HEAD^) &&
+		second=$(but rev-parse HEAD^) &&
 		rm -f objects/info/alternates &&
-		test_must_fail git cat-file -t $second &&
+		test_must_fail but cat-file -t $second &&
 		echo ../../alice-pub/objects >objects/info/alternates
 	)
 '
@@ -88,8 +88,8 @@ test_expect_success 'alice works and pushes again' '
 		# keeps working and pushing
 		cd alice-work &&
 		echo more alice >file &&
-		git cummit -a -m fourth &&
-		git push ../alice-pub :
+		but cummit -a -m fourth &&
+		but push ../alice-pub :
 	)
 '
 
@@ -101,8 +101,8 @@ test_expect_success 'bob works and pushes' '
 		# not prevent the push by Bob from succeeding.
 		cd bob-work &&
 		echo yet more bob >file &&
-		git cummit -a -m fifth &&
-		git push ../bob-pub :
+		but cummit -a -m fifth &&
+		but push ../bob-pub :
 	)
 '
 
@@ -113,19 +113,19 @@ test_expect_success 'alice works and pushes yet again' '
 		# keeps working and pushing
 		cd alice-work &&
 		echo more and more alice >file &&
-		git cummit -a -m sixth.1 &&
+		but cummit -a -m sixth.1 &&
 		echo more and more alice >>file &&
-		git cummit -a -m sixth.2 &&
+		but cummit -a -m sixth.2 &&
 		echo more and more alice >>file &&
-		git cummit -a -m sixth.3 &&
-		git push ../alice-pub :
+		but cummit -a -m sixth.3 &&
+		but push ../alice-pub :
 	)
 '
 
 test_expect_success 'bob works and pushes again' '
 	(
 		cd alice-pub &&
-		git cat-file cummit main >../bob-work/cummit
+		but cat-file cummit main >../bob-work/cummit
 	) &&
 	(
 		# This time Bob does not pull from Alice, and
@@ -136,10 +136,10 @@ test_expect_success 'bob works and pushes again' '
 		# This should not prevent the push by Bob from
 		# succeeding.
 		cd bob-work &&
-		git hash-object -t cummit -w cummit &&
+		but hash-object -t cummit -w cummit &&
 		echo even more bob >file &&
-		git cummit -a -m seventh &&
-		git push ../bob-pub :
+		but cummit -a -m seventh &&
+		but push ../bob-pub :
 	)
 '
 

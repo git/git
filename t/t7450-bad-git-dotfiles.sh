@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='check broken or malicious patterns in .git* files
+test_description='check broken or malicious patterns in .but* files
 
 Such as:
 
@@ -10,7 +10,7 @@ Such as:
 
   - nested submodule names
 
-  - symlinked .gitmodules, etc
+  - symlinked .butmodules, etc
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
@@ -21,7 +21,7 @@ test_expect_success 'check names' '
 	valid/with/paths
 	EOF
 
-	git submodule--helper check-name >actual <<-\EOF &&
+	but submodule--helper check-name >actual <<-\EOF &&
 	valid
 	valid/with/paths
 
@@ -40,103 +40,103 @@ test_expect_success 'check names' '
 '
 
 test_expect_success 'create innocent subrepo' '
-	git init innocent &&
-	git -C innocent cummit --allow-empty -m foo
+	but init innocent &&
+	but -C innocent cummit --allow-empty -m foo
 '
 
 test_expect_success 'submodule add refuses invalid names' '
 	test_must_fail \
-		git submodule add --name ../../modules/evil "$PWD/innocent" evil
+		but submodule add --name ../../modules/evil "$PWD/innocent" evil
 '
 
 test_expect_success 'add evil submodule' '
-	git submodule add "$PWD/innocent" evil &&
+	but submodule add "$PWD/innocent" evil &&
 
 	mkdir modules &&
-	cp -r .git/modules/evil modules &&
+	cp -r .but/modules/evil modules &&
 	write_script modules/evil/hooks/post-checkout <<-\EOF &&
 	echo >&2 "RUNNING POST CHECKOUT"
 	EOF
 
-	git config -f .gitmodules submodule.evil.update checkout &&
-	git config -f .gitmodules --rename-section \
+	but config -f .butmodules submodule.evil.update checkout &&
+	but config -f .butmodules --rename-section \
 		submodule.evil submodule.../../modules/evil &&
-	git add modules &&
-	git cummit -am evil
+	but add modules &&
+	but cummit -am evil
 '
 
 # This step seems like it shouldn't be necessary, since the payload is
 # contained entirely in the evil submodule. But due to the vagaries of the
-# submodule code, checking out the evil module will fail unless ".git/modules"
+# submodule code, checking out the evil module will fail unless ".but/modules"
 # exists. Adding another submodule (with a name that sorts before "evil") is an
 # easy way to make sure this is the case in the victim clone.
 test_expect_success 'add other submodule' '
-	git submodule add "$PWD/innocent" another-module &&
-	git add another-module &&
-	git cummit -am another
+	but submodule add "$PWD/innocent" another-module &&
+	but add another-module &&
+	but cummit -am another
 '
 
 test_expect_success 'clone evil superproject' '
-	git clone --recurse-submodules . victim >output 2>&1 &&
+	but clone --recurse-submodules . victim >output 2>&1 &&
 	! grep "RUNNING POST CHECKOUT" output
 '
 
 test_expect_success 'fsck detects evil superproject' '
-	test_must_fail git fsck
+	test_must_fail but fsck
 '
 
 test_expect_success 'transfer.fsckObjects detects evil superproject (unpack)' '
-	rm -rf dst.git &&
-	git init --bare dst.git &&
-	git -C dst.git config transfer.fsckObjects true &&
-	test_must_fail git push dst.git HEAD
+	rm -rf dst.but &&
+	but init --bare dst.but &&
+	but -C dst.but config transfer.fsckObjects true &&
+	test_must_fail but push dst.but HEAD
 '
 
 test_expect_success 'transfer.fsckObjects detects evil superproject (index)' '
-	rm -rf dst.git &&
-	git init --bare dst.git &&
-	git -C dst.git config transfer.fsckObjects true &&
-	git -C dst.git config transfer.unpackLimit 1 &&
-	test_must_fail git push dst.git HEAD
+	rm -rf dst.but &&
+	but init --bare dst.but &&
+	but -C dst.but config transfer.fsckObjects true &&
+	but -C dst.but config transfer.unpackLimit 1 &&
+	test_must_fail but push dst.but HEAD
 '
 
 # Normally our packs contain cummits followed by trees followed by blobs. This
 # reverses the order, which requires backtracking to find the context of a
-# blob. We'll start with a fresh gitmodules-only tree to make it simpler.
+# blob. We'll start with a fresh butmodules-only tree to make it simpler.
 test_expect_success 'create oddly ordered pack' '
-	git checkout --orphan odd &&
-	git rm -rf --cached . &&
-	git add .gitmodules &&
-	git cummit -m odd &&
+	but checkout --orphan odd &&
+	but rm -rf --cached . &&
+	but add .butmodules &&
+	but cummit -m odd &&
 	{
 		pack_header 3 &&
-		pack_obj $(git rev-parse HEAD:.gitmodules) &&
-		pack_obj $(git rev-parse HEAD^{tree}) &&
-		pack_obj $(git rev-parse HEAD)
+		pack_obj $(but rev-parse HEAD:.butmodules) &&
+		pack_obj $(but rev-parse HEAD^{tree}) &&
+		pack_obj $(but rev-parse HEAD)
 	} >odd.pack &&
 	pack_trailer odd.pack
 '
 
 test_expect_success 'transfer.fsckObjects handles odd pack (unpack)' '
-	rm -rf dst.git &&
-	git init --bare dst.git &&
-	test_must_fail git -C dst.git unpack-objects --strict <odd.pack
+	rm -rf dst.but &&
+	but init --bare dst.but &&
+	test_must_fail but -C dst.but unpack-objects --strict <odd.pack
 '
 
 test_expect_success 'transfer.fsckObjects handles odd pack (index)' '
-	rm -rf dst.git &&
-	git init --bare dst.git &&
-	test_must_fail git -C dst.git index-pack --strict --stdin <odd.pack
+	rm -rf dst.but &&
+	but init --bare dst.but &&
+	test_must_fail but -C dst.but index-pack --strict --stdin <odd.pack
 '
 
 test_expect_success 'index-pack --strict works for non-repo pack' '
-	rm -rf dst.git &&
-	git init --bare dst.git &&
-	cp odd.pack dst.git &&
-	test_must_fail git -C dst.git index-pack --strict odd.pack 2>output &&
-	# Make sure we fail due to bad gitmodules content, not because we
+	rm -rf dst.but &&
+	but init --bare dst.but &&
+	cp odd.pack dst.but &&
+	test_must_fail but -C dst.but index-pack --strict odd.pack 2>output &&
+	# Make sure we fail due to bad butmodules content, not because we
 	# could not read the blob in the first place.
-	grep gitmodulesName output
+	grep butmodulesName output
 '
 
 check_dotx_symlink () {
@@ -158,24 +158,24 @@ check_dotx_symlink () {
 	dir=symlink-$name-$type
 
 	test_expect_success "set up repo with symlinked $name ($type)" '
-		git init $dir &&
+		but init $dir &&
 		(
 			cd $dir &&
 
 			# Make the tree directly to avoid index restrictions.
 			#
 			# Because symlinks store the target as a blob, choose
-			# a pathname that could be parsed as a .gitmodules file
+			# a pathname that could be parsed as a .butmodules file
 			# to trick naive non-symlink-aware checking.
 			tricky="[foo]bar=true" &&
-			content=$(git hash-object -w ../.gitmodules) &&
-			target=$(printf "$tricky" | git hash-object -w --stdin) &&
+			content=$(but hash-object -w ../.butmodules) &&
+			target=$(printf "$tricky" | but hash-object -w --stdin) &&
 			{
 				printf "100644 blob $content\t$tricky\n" &&
 				printf "120000 blob $target\t$path\n"
 			} >bad-tree
 		) &&
-		tree=$(git -C $dir mktree <$dir/bad-tree)
+		tree=$(but -C $dir mktree <$dir/bad-tree)
 	'
 
 	test_expect_success "fsck detects symlinked $name ($type)" '
@@ -184,7 +184,7 @@ check_dotx_symlink () {
 
 			# Check not only that we fail, but that it is due to the
 			# symlink detector
-			$fsck_must_fail git fsck 2>output &&
+			$fsck_must_fail but fsck 2>output &&
 			grep "$fsck_prefix.*tree $tree: ${name}Symlink" output
 		)
 	'
@@ -192,108 +192,108 @@ check_dotx_symlink () {
 	test -n "$refuse_index" &&
 	test_expect_success "refuse to load symlinked $name into index ($type)" '
 		test_must_fail \
-			git -C $dir \
+			but -C $dir \
 			    -c core.protectntfs \
 			    -c core.protecthfs \
 			    read-tree $tree 2>err &&
 		grep "invalid path.*$name" err &&
-		git -C $dir ls-files -s >out &&
+		but -C $dir ls-files -s >out &&
 		test_must_be_empty out
 	'
 }
 
-check_dotx_symlink gitmodules vanilla .gitmodules
-check_dotx_symlink gitmodules ntfs ".gitmodules ."
-check_dotx_symlink gitmodules hfs ".${u200c}gitmodules"
+check_dotx_symlink butmodules vanilla .butmodules
+check_dotx_symlink butmodules ntfs ".butmodules ."
+check_dotx_symlink butmodules hfs ".${u200c}butmodules"
 
-check_dotx_symlink --warning gitattributes vanilla .gitattributes
-check_dotx_symlink --warning gitattributes ntfs ".gitattributes ."
-check_dotx_symlink --warning gitattributes hfs ".${u200c}gitattributes"
+check_dotx_symlink --warning butattributes vanilla .butattributes
+check_dotx_symlink --warning butattributes ntfs ".butattributes ."
+check_dotx_symlink --warning butattributes hfs ".${u200c}butattributes"
 
-check_dotx_symlink --warning gitignore vanilla .gitignore
-check_dotx_symlink --warning gitignore ntfs ".gitignore ."
-check_dotx_symlink --warning gitignore hfs ".${u200c}gitignore"
+check_dotx_symlink --warning butignore vanilla .butignore
+check_dotx_symlink --warning butignore ntfs ".butignore ."
+check_dotx_symlink --warning butignore hfs ".${u200c}butignore"
 
 check_dotx_symlink --warning mailmap vanilla .mailmap
 check_dotx_symlink --warning mailmap ntfs ".mailmap ."
 check_dotx_symlink --warning mailmap hfs ".${u200c}mailmap"
 
-test_expect_success 'fsck detects non-blob .gitmodules' '
-	git init non-blob &&
+test_expect_success 'fsck detects non-blob .butmodules' '
+	but init non-blob &&
 	(
 		cd non-blob &&
 
 		# As above, make the funny tree directly to avoid index
 		# restrictions.
 		mkdir subdir &&
-		cp ../.gitmodules subdir/file &&
-		git add subdir/file &&
-		git cummit -m ok &&
-		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
+		cp ../.butmodules subdir/file &&
+		but add subdir/file &&
+		but cummit -m ok &&
+		but ls-tree HEAD | sed s/subdir/.butmodules/ | but mktree &&
 
-		test_must_fail git fsck 2>output &&
-		test_i18ngrep gitmodulesBlob output
+		test_must_fail but fsck 2>output &&
+		test_i18ngrep butmodulesBlob output
 	)
 '
 
-test_expect_success 'fsck detects corrupt .gitmodules' '
-	git init corrupt &&
+test_expect_success 'fsck detects corrupt .butmodules' '
+	but init corrupt &&
 	(
 		cd corrupt &&
 
-		echo "[broken" >.gitmodules &&
-		git add .gitmodules &&
-		git cummit -m "broken gitmodules" &&
+		echo "[broken" >.butmodules &&
+		but add .butmodules &&
+		but cummit -m "broken butmodules" &&
 
-		git fsck 2>output &&
-		test_i18ngrep gitmodulesParse output &&
+		but fsck 2>output &&
+		test_i18ngrep butmodulesParse output &&
 		test_i18ngrep ! "bad config" output
 	)
 '
 
-test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
-	git init squatting &&
+test_expect_success WINDOWS 'prevent but~1 squatting on Windows' '
+	but init squatting &&
 	(
 		cd squatting &&
 		mkdir a &&
-		touch a/..git &&
-		git add a/..git &&
+		touch a/..but &&
+		but add a/..but &&
 		test_tick &&
-		git cummit -m initial &&
+		but cummit -m initial &&
 
 		modules="$(test_write_lines \
 			"[submodule \"b.\"]" "url = ." "path = c" \
 			"[submodule \"b\"]" "url = ." "path = d\\\\a" |
-			git hash-object -w --stdin)" &&
-		rev="$(git rev-parse --verify HEAD)" &&
-		hash="$(echo x | git hash-object -w --stdin)" &&
-		test_must_fail git update-index --add \
+			but hash-object -w --stdin)" &&
+		rev="$(but rev-parse --verify HEAD)" &&
+		hash="$(echo x | but hash-object -w --stdin)" &&
+		test_must_fail but update-index --add \
 			--cacheinfo 160000,$rev,d\\a 2>err &&
 		test_i18ngrep "Invalid path" err &&
-		git -c core.protectNTFS=false update-index --add \
-			--cacheinfo 100644,$modules,.gitmodules \
+		but -c core.protectNTFS=false update-index --add \
+			--cacheinfo 100644,$modules,.butmodules \
 			--cacheinfo 160000,$rev,c \
 			--cacheinfo 160000,$rev,d\\a \
 			--cacheinfo 100644,$hash,d./a/x \
-			--cacheinfo 100644,$hash,d./a/..git &&
+			--cacheinfo 100644,$hash,d./a/..but &&
 		test_tick &&
-		git -c core.protectNTFS=false cummit -m "module"
+		but -c core.protectNTFS=false cummit -m "module"
 	) &&
 	if test_have_prereq MINGW
 	then
-		test_must_fail git -c core.protectNTFS=false \
+		test_must_fail but -c core.protectNTFS=false \
 			clone --recurse-submodules squatting squatting-clone 2>err &&
 		test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
-		! grep gitdir squatting-clone/d/a/git~2
+		! grep butdir squatting-clone/d/a/but~2
 	fi
 '
 
-test_expect_success 'git dirs of sibling submodules must not be nested' '
-	git init nested &&
+test_expect_success 'but dirs of sibling submodules must not be nested' '
+	but init nested &&
 	test_cummit -C nested nested &&
 	(
 		cd nested &&
-		cat >.gitmodules <<-EOF &&
+		cat >.butmodules <<-EOF &&
 		[submodule "hippo"]
 			url = .
 			path = thing1
@@ -301,14 +301,14 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 			url = .
 			path = thing2
 		EOF
-		git clone . thing1 &&
-		git clone . thing2 &&
-		git add .gitmodules thing1 thing2 &&
+		but clone . thing1 &&
+		but clone . thing2 &&
+		but add .butmodules thing1 thing2 &&
 		test_tick &&
-		git cummit -m nested
+		but cummit -m nested
 	) &&
-	test_must_fail git clone --recurse-submodules nested clone 2>err &&
-	test_i18ngrep "is inside git dir" err
+	test_must_fail but clone --recurse-submodules nested clone 2>err &&
+	test_i18ngrep "is inside but dir" err
 '
 
 test_done

@@ -10,8 +10,8 @@ static int all_attrs;
 static int cached_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
-N_("git check-attr [-a | --all | <attr>...] [--] <pathname>..."),
-N_("git check-attr --stdin [-z] [-a | --all | <attr>...]"),
+N_("but check-attr [-a | --all | <attr>...] [--] <pathname>..."),
+N_("but check-attr --stdin [-z] [-a | --all | <attr>...]"),
 NULL
 };
 
@@ -19,7 +19,7 @@ static int nul_term_line;
 
 static const struct option check_attr_options[] = {
 	OPT_BOOL('a', "all", &all_attrs, N_("report all attributes set on file")),
-	OPT_BOOL(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
+	OPT_BOOL(0,  "cached", &cached_attrs, N_("use .butattributes only from the index")),
 	OPT_BOOL(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
 	OPT_BOOL('z', NULL, &nul_term_line,
 		 N_("terminate input and output records by a NUL character")),
@@ -46,11 +46,11 @@ static void output_attr(struct attr_check *check, const char *file)
 			       "%s%c" /* attrname */
 			       "%s%c" /* attrvalue */,
 			       file, 0,
-			       git_attr_name(check->items[j].attr), 0, value, 0);
+			       but_attr_name(check->items[j].attr), 0, value, 0);
 		} else {
 			quote_c_style(file, NULL, stdout, 0);
 			printf(": %s: %s\n",
-			       git_attr_name(check->items[j].attr), value);
+			       but_attr_name(check->items[j].attr), value);
 		}
 	}
 }
@@ -64,9 +64,9 @@ static void check_attr(const char *prefix,
 		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 
 	if (collect_all) {
-		git_all_attrs(&the_index, full_path, check);
+		but_all_attrs(&the_index, full_path, check);
 	} else {
-		git_check_attr(&the_index, full_path, check);
+		but_check_attr(&the_index, full_path, check);
 	}
 	output_attr(check, file);
 
@@ -110,7 +110,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	if (!is_bare_repository())
 		setup_work_tree();
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);
@@ -120,7 +120,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cached_attrs)
-		git_attr_set_direction(GIT_ATTR_INDEX);
+		but_attr_set_direction(GIT_ATTR_INDEX);
 
 	doubledash = -1;
 	for (i = 0; doubledash < 0 && i < argc; i++) {
@@ -167,7 +167,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	check = attr_check_alloc();
 	if (!all_attrs) {
 		for (i = 0; i < cnt; i++) {
-			const struct git_attr *a = git_attr(argv[i]);
+			const struct but_attr *a = but_attr(argv[i]);
 
 			if (!a)
 				return error("%s: not a valid attribute name",

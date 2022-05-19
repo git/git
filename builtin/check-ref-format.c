@@ -8,8 +8,8 @@
 #include "strbuf.h"
 
 static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--normalize] [<options>] <refname>\n"
-"   or: git check-ref-format --branch <branchname-shorthand>";
+"but check-ref-format [--normalize] [<options>] <refname>\n"
+"   or: but check-ref-format --branch <branchname-shorthand>";
 
 /*
  * Return a copy of refname but with leading slashes removed and runs
@@ -40,9 +40,9 @@ static int check_ref_format_branch(const char *arg)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *name;
-	int nongit;
+	int nonbut;
 
-	setup_git_directory_gently(&nongit);
+	setup_but_directory_gently(&nonbut);
 	if (strbuf_check_branch_ref(&sb, arg) ||
 	    !skip_prefix(sb.buf, "refs/heads/", &name))
 		die("'%s' is not a valid branch name", arg);

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2007 Eric Wong
-test_description='git svn globbing refspecs'
-. ./lib-git-svn.sh
+test_description='but svn globbing refspecs'
+. ./lib-but-svn.sh
 
 cat > expect.end <<EOF
 the end
@@ -39,22 +39,22 @@ test_expect_success 'test refspec globbing' '
 		poke tags/end/src/b/readme &&
 		svn_cmd cummit -m "nothing to see here"
 	) &&
-	git config --add svn-remote.svn.url "$svnrepo" &&
-	git config --add svn-remote.svn.fetch \
+	but config --add svn-remote.svn.url "$svnrepo" &&
+	but config --add svn-remote.svn.fetch \
 	                 "trunk/src/a:refs/remotes/trunk" &&
-	git config --add svn-remote.svn.branches \
+	but config --add svn-remote.svn.branches \
 	                 "branches/*/*/src/a:refs/remotes/branches/*/*" &&
-	git config --add svn-remote.svn.tags\
+	but config --add svn-remote.svn.tags\
 	                 "tags/*/src/a:refs/remotes/tags/*" &&
-	git svn multi-fetch &&
-	git log --pretty=oneline refs/remotes/tags/end >actual &&
+	but svn multi-fetch &&
+	but log --pretty=oneline refs/remotes/tags/end >actual &&
 	cut -d" " -f2- actual >output.end &&
 	test_cmp expect.end output.end &&
-	test "$(git rev-parse refs/remotes/tags/end~1)" = \
-		"$(git rev-parse refs/remotes/branches/v1/start)" &&
-	test "$(git rev-parse refs/remotes/branches/v1/start~2)" = \
-		"$(git rev-parse refs/remotes/trunk)" &&
-	test_must_fail git rev-parse refs/remotes/tags/end@3
+	test "$(but rev-parse refs/remotes/tags/end~1)" = \
+		"$(but rev-parse refs/remotes/branches/v1/start)" &&
+	test "$(but rev-parse refs/remotes/branches/v1/start~2)" = \
+		"$(but rev-parse refs/remotes/trunk)" &&
+	test_must_fail but rev-parse refs/remotes/tags/end@3
 	'
 
 echo try to try > expect.two
@@ -62,11 +62,11 @@ echo nothing to see here >> expect.two
 cat expect.end >> expect.two
 
 test_expect_success 'test left-hand-side only globbing' '
-	git config --add svn-remote.two.url "$svnrepo" &&
-	git config --add svn-remote.two.fetch trunk:refs/remotes/two/trunk &&
-	git config --add svn-remote.two.branches \
+	but config --add svn-remote.two.url "$svnrepo" &&
+	but config --add svn-remote.two.fetch trunk:refs/remotes/two/trunk &&
+	but config --add svn-remote.two.branches \
 	                 "branches/*/*:refs/remotes/two/branches/*/*" &&
-	git config --add svn-remote.two.tags \
+	but config --add svn-remote.two.tags \
 	                 "tags/*:refs/remotes/two/tags/*" &&
 	(
 		cd tmp &&
@@ -74,16 +74,16 @@ test_expect_success 'test left-hand-side only globbing' '
 		poke tags/end/src/b/readme &&
 		svn_cmd cummit -m "try to try"
 	) &&
-	git svn fetch two &&
-	git rev-list refs/remotes/two/tags/end >actual &&
+	but svn fetch two &&
+	but rev-list refs/remotes/two/tags/end >actual &&
 	test_line_count = 6 actual &&
-	git rev-list refs/remotes/two/branches/v1/start >actual &&
+	but rev-list refs/remotes/two/branches/v1/start >actual &&
 	test_line_count = 3 actual &&
-	test $(git rev-parse refs/remotes/two/branches/v1/start~2) = \
-	     $(git rev-parse refs/remotes/two/trunk) &&
-	test $(git rev-parse refs/remotes/two/tags/end~3) = \
-	     $(git rev-parse refs/remotes/two/branches/v1/start) &&
-	git log --pretty=oneline refs/remotes/two/tags/end >actual &&
+	test $(but rev-parse refs/remotes/two/branches/v1/start~2) = \
+	     $(but rev-parse refs/remotes/two/trunk) &&
+	test $(but rev-parse refs/remotes/two/tags/end~3) = \
+	     $(but rev-parse refs/remotes/two/branches/v1/start) &&
+	but log --pretty=oneline refs/remotes/two/tags/end >actual &&
 	cut -d" " -f2- actual >output.two &&
 	test_cmp expect.two output.two
 	'
@@ -119,22 +119,22 @@ test_expect_success 'test another branch' '
 		poke tags/next/src/b/readme &&
 		svn_cmd cummit -m "adios"
 	) &&
-	git config --add svn-remote.four.url "$svnrepo" &&
-	git config --add svn-remote.four.fetch trunk:refs/remotes/four/trunk &&
-	git config --add svn-remote.four.branches \
+	but config --add svn-remote.four.url "$svnrepo" &&
+	but config --add svn-remote.four.fetch trunk:refs/remotes/four/trunk &&
+	but config --add svn-remote.four.branches \
 	                 "branches/*/*:refs/remotes/four/branches/*/*" &&
-	git config --add svn-remote.four.tags \
+	but config --add svn-remote.four.tags \
 	                 "tags/*:refs/remotes/four/tags/*" &&
-	git svn fetch four &&
-	git rev-list refs/remotes/four/tags/next >actual &&
+	but svn fetch four &&
+	but rev-list refs/remotes/four/tags/next >actual &&
 	test_line_count = 5 actual &&
-	git rev-list refs/remotes/four/branches/v2/start >actual &&
+	but rev-list refs/remotes/four/branches/v2/start >actual &&
 	test_line_count = 3 actual &&
-	test $(git rev-parse refs/remotes/four/branches/v2/start~2) = \
-	     $(git rev-parse refs/remotes/four/trunk) &&
-	test $(git rev-parse refs/remotes/four/tags/next~2) = \
-	     $(git rev-parse refs/remotes/four/branches/v2/start) &&
-	git log --pretty=oneline refs/remotes/four/tags/next >actual &&
+	test $(but rev-parse refs/remotes/four/branches/v2/start~2) = \
+	     $(but rev-parse refs/remotes/four/trunk) &&
+	test $(but rev-parse refs/remotes/four/tags/next~2) = \
+	     $(but rev-parse refs/remotes/four/branches/v2/start) &&
+	but log --pretty=oneline refs/remotes/four/tags/next >actual &&
 	cut -d" " -f2- actual >output.four &&
 	test_cmp expect.four output.four
 	'
@@ -147,12 +147,12 @@ EOF
 	"
 
 test_expect_success 'test disallow multiple globs' '
-	git config --add svn-remote.three.url "$svnrepo" &&
-	git config --add svn-remote.three.fetch \
+	but config --add svn-remote.three.url "$svnrepo" &&
+	but config --add svn-remote.three.fetch \
 	                 trunk:refs/remotes/three/trunk &&
-	git config --add svn-remote.three.branches \
+	but config --add svn-remote.three.branches \
 	                 "branches/*/t/*:refs/remotes/three/branches/*/*" &&
-	git config --add svn-remote.three.tags \
+	but config --add svn-remote.three.tags \
 	                 "tags/*:refs/remotes/three/tags/*" &&
 	(
 		cd tmp &&
@@ -160,7 +160,7 @@ test_expect_success 'test disallow multiple globs' '
 		poke tags/end/src/b/readme &&
 		svn_cmd cummit -m "try to try"
 	) &&
-	test_must_fail git svn fetch three 2> stderr.three &&
+	test_must_fail but svn fetch three 2> stderr.three &&
 	test_cmp expect.three stderr.three
 	'
 

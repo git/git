@@ -4,10 +4,10 @@ Git 2.32 Release Notes
 Backward compatibility notes
 ----------------------------
 
- * ".gitattributes", ".gitignore", and ".mailmap" files that are
+ * ".butattributes", ".butignore", and ".mailmap" files that are
    symbolic links are ignored.
 
- * "git apply --3way" used to first attempt a straight application,
+ * "but apply --3way" used to first attempt a straight application,
    and only fell back to the 3-way merge algorithm when the stright
    application failed.  Starting with this version, the command will
    first try the 3-way merge algorithm and only when it fails (either
@@ -20,19 +20,19 @@ Updates since v2.31
 
 UI, Workflows & Features
 
- * It does not make sense to make ".gitattributes", ".gitignore" and
+ * It does not make sense to make ".butattributes", ".butignore" and
    ".mailmap" symlinks, as they are supposed to be usable from the
    object store (think: bare repositories where HEAD:.mailmap etc. are
    used).  When these files are symbolic links, we used to read the
    contents of the files pointed by them by mistake, which has been
    corrected.
 
- * "git stash show" learned to optionally show untracked part of the
+ * "but stash show" learned to optionally show untracked part of the
    stash.
 
- * "git log --format='...'" learned "%(describe)" placeholder.
+ * "but log --format='...'" learned "%(describe)" placeholder.
 
- * "git repack" so far has been only capable of repacking everything
+ * "but repack" so far has been only capable of repacking everything
    under the sun into a single pack (or split by size).  A cleverer
    strategy to reduce the cost of repacking a repository has been
    introduced.
@@ -41,37 +41,37 @@ UI, Workflows & Features
    password used to unlock a certificate that has successfully been
    used.
 
- * "git cummit --fixup=<cummit>", which was to tweak the changes made
+ * "but cummit --fixup=<cummit>", which was to tweak the changes made
    to the contents while keeping the original log message intact,
    learned "--fixup=(amend|reword):<cummit>", that can be used to
    tweak both the message and the contents, and only the message,
    respectively.
 
- * "git send-email" learned to honor the core.hooksPath configuration.
+ * "but send-email" learned to honor the core.hooksPath configuration.
 
- * "git format-patch -v<n>" learned to allow a reroll count that is
+ * "but format-patch -v<n>" learned to allow a reroll count that is
    not an integer.
 
- * "git cummit" learned "--trailer <key>[=<value>]" option; together
+ * "but cummit" learned "--trailer <key>[=<value>]" option; together
    with the interpret-trailers command, this will make it easier to
    support custom trailers.
 
- * "git clone --reject-shallow" option fails the clone as soon as we
+ * "but clone --reject-shallow" option fails the clone as soon as we
    notice that we are cloning from a shallow repository.
 
  * A configuration variable has been added to force tips of certain
    refs to be given a reachability bitmap.
 
- * "gitweb" learned "e-mail privacy" feature to redact strings that
+ * "butweb" learned "e-mail privacy" feature to redact strings that
    look like e-mail addresses on various pages.
 
- * "git apply --3way" has always been "to fall back to 3-way merge
+ * "but apply --3way" has always been "to fall back to 3-way merge
    only when straight application fails". Swap the order of falling
    back so that 3-way is always attempted first (only when the option
    is given, of course) and then straight patch application is used as
    a fallback when it fails.
 
- * "git apply" now takes "--3way" and "--cached" at the same time, and
+ * "but apply" now takes "--3way" and "--cached" at the same time, and
    work and record results only in the index.
 
  * The command line completion (in contrib/) has learned that
@@ -79,10 +79,10 @@ UI, Workflows & Features
 
  * Userdiff patterns for "Scheme" has been added.
 
- * "git log" learned "--diff-merges=<style>" option, with an
+ * "but log" learned "--diff-merges=<style>" option, with an
    associated configuration variable log.diffMerges.
 
- * "git log --format=..." placeholders learned %ah/%ch placeholders to
+ * "but log --format=..." placeholders learned %ah/%ch placeholders to
    request the --date=human output.
 
  * Replace GIT_CONFIG_NOSYSTEM mechanism to decline from reading the
@@ -90,23 +90,23 @@ UI, Workflows & Features
    users specify from which file to read the system-wide configuration
    (setting it to an empty file would essentially be the same as
    setting NOSYSTEM), and introduce GIT_CONFIG_GLOBAL to override the
-   per-user configuration in $HOME/.gitconfig.
+   per-user configuration in $HOME/.butconfig.
 
- * "git add" and "git rm" learned not to touch those paths that are
+ * "but add" and "but rm" learned not to touch those paths that are
    outside of sparse checkout.
 
- * "git rev-list" learns the "--filter=object:type=<type>" option,
+ * "but rev-list" learns the "--filter=object:type=<type>" option,
    which can be used to exclude objects of the given kind from the
    packfile generated by pack-objects.
 
- * The command line completion (in contrib/) for "git stash" has been
+ * The command line completion (in contrib/) for "but stash" has been
    updated.
 
- * "git subtree" updates.
+ * "but subtree" updates.
 
  * It is now documented that "format-patch" skips merges.
 
- * Options to "git pack-objects" that take numeric values like
+ * Options to "but pack-objects" that take numeric values like
    --window and --depth should not accept negative values; the input
    validation has been tightened.
 
@@ -116,15 +116,15 @@ UI, Workflows & Features
    same goal in a safer and more intuitive way has been added, as
    the trailer.<token>.cmd configuration variable, to replace it.
 
- * "git add -i --dry-run" does not dry-run, which was surprising.  The
+ * "but add -i --dry-run" does not dry-run, which was surprising.  The
    combination of options has taught to error out.
 
- * "git push" learns to discover common ancestor with the receiving
-   end over protocol v2.  This will hopefully make "git push" as
-   efficient as "git fetch" in avoiding objects from getting
+ * "but push" learns to discover common ancestor with the receiving
+   end over protocol v2.  This will hopefully make "but push" as
+   efficient as "but fetch" in avoiding objects from getting
    transferred unnecessarily.
 
- * "git mailinfo" (hence "git am") learned the "--quoted-cr" option to
+ * "but mailinfo" (hence "but am") learned the "--quoted-cr" option to
    control how lines ending with CRLF wrapped in base64 or qp are
    handled.
 
@@ -139,11 +139,11 @@ Performance, Internal Implementation, Development Support etc.
    prerequisites were involved.
    (merge 27d578d904 jk/fail-prereq-testfix later to maint).
 
- * "git diff-index" codepath has been taught to trust fsmonitor status
+ * "but diff-index" codepath has been taught to trust fsmonitor status
    to reduce number of lstat() calls.
    (merge 7e5aa13d2c nk/diff-index-fsmonitor later to maint).
 
- * Reorganize Makefile to allow building git.o and other essential
+ * Reorganize Makefile to allow building but.o and other essential
    objects without extra stuff needed only for testing.
 
  * Preparatory API changes for parallel checkout.
@@ -168,7 +168,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Generate [ec]tags under $(QUIET_GEN).
 
- * Clean-up codepaths that implements "git send-email --validate"
+ * Clean-up codepaths that implements "but send-email --validate"
    option and improves the message from it.
 
  * The last remnant of gettext-poison has been removed.
@@ -216,7 +216,7 @@ Fixes since v2.31
  * The data structure used by fsmonitor interface was not properly
    duplicated during an in-core merge, leading to use-after-free etc.
 
- * "git bisect" reimplemented more in C during 2.30 timeframe did not
+ * "but bisect" reimplemented more in C during 2.30 timeframe did not
    take an annotated tag as a good/bad endpoint well.  This regression
    has been corrected.
 
@@ -226,7 +226,7 @@ Fixes since v2.31
 
  * Update insn in Makefile comments to run fuzz-all target.
 
- * Fix a corner case bug in "git mv" on case insensitive systems,
+ * Fix a corner case bug in "but mv" on case insensitive systems,
    which was introduced in 2.29 timeframe.
 
  * We had a code to diagnose and die cleanly when a required
@@ -250,11 +250,11 @@ Fixes since v2.31
  * Updates to memory allocation code around the use of pcre2 library.
    (merge c1760352e0 ab/grep-pcre2-allocfix later to maint).
 
- * "git -c core.bare=false clone --bare ..." would have segfaulted,
+ * "but -c core.bare=false clone --bare ..." would have segfaulted,
    which has been corrected.
    (merge 75555676ad bc/clone-bare-with-conflicting-config later to maint).
 
- * When "git checkout" removes a path that does not exist in the
+ * When "but checkout" removes a path that does not exist in the
    cummit it is checking out, it wasn't careful enough not to follow
    symbolic links, which has been corrected.
    (merge fab78a0c3d mt/checkout-remove-nofollow later to maint).
@@ -272,17 +272,17 @@ Fixes since v2.31
    easier to understand.
    (merge ddaf1f62e3 ds/clarify-hashwrite later to maint).
 
- * "git cherry-pick/revert" with or without "--[no-]edit" did not spawn
+ * "but cherry-pick/revert" with or without "--[no-]edit" did not spawn
    the editor as expected (e.g. "revert --no-edit" after a conflict
    still asked to edit the message), which has been corrected.
    (merge 39edfd5cbc en/sequencer-edit-upon-conflict-fix later to maint).
 
- * "git daemon" has been tightened against systems that take backslash
+ * "but daemon" has been tightened against systems that take backslash
    as directory separator.
    (merge 9a7f1ce8b7 rs/daemon-sanitize-dir-sep later to maint).
 
  * A NULL-dereference bug has been corrected in an error codepath in
-   "git for-each-ref", "git branch --list" etc.
+   "but for-each-ref", "but branch --list" etc.
    (merge c685450880 jk/ref-filter-segfault-fix later to maint).
 
  * Streamline the codepath to fix the UTF-8 encoding issues in the
@@ -294,7 +294,7 @@ Fixes since v2.31
    option.
    (merge c5c0548d79 vs/completion-with-set-u later to maint).
 
- * When "git pack-objects" makes a literal copy of a part of existing
+ * When "but pack-objects" makes a literal copy of a part of existing
    packfile using the reachability bitmaps, its update to the progress
    meter was broken.
    (merge 8e118e8490 jk/pack-objects-bitmap-progress-fix later to maint).
@@ -304,11 +304,11 @@ Fixes since v2.31
    corrected.
    (merge 56550ea718 sg/bugreport-fixes later to maint).
 
- * "git push --quiet --set-upstream" was not quiet when setting the
+ * "but push --quiet --set-upstream" was not quiet when setting the
    upstream branch configuration, which has been corrected.
    (merge f3cce896a8 ow/push-quiet-set-upstream later to maint).
 
- * The prefetch task in "git maintenance" assumed that "git fetch"
+ * The prefetch task in "but maintenance" assumed that "but fetch"
    from any remote would fetch all its local branches, which would
    fetch too much if the user is interested in only a subset of
    branches there.
@@ -318,7 +318,7 @@ Fixes since v2.31
    not necessarily) encoded in UTF-8.
    (merge 9364bf465d ab/pathname-encoding-doc later to maint).
 
- * "git --config-env var=val cmd" weren't accepted (only
+ * "but --config-env var=val cmd" weren't accepted (only
    --config-env=var=val was).
    (merge c331551ccf ps/config-env-option-with-separate-value later to maint).
 
@@ -331,25 +331,25 @@ Fixes since v2.31
  * Cygwin pathname handling fix.
    (merge bccc37fdc7 ad/cygwin-no-backslashes-in-paths later to maint).
 
- * "git rebase --[no-]reschedule-failed-exec" did not work well with
+ * "but rebase --[no-]reschedule-failed-exec" did not work well with
    its configuration variable, which has been corrected.
    (merge e5b32bffd1 ab/rebase-no-reschedule-failed-exec later to maint).
 
  * Portability fix for command line completion script (in contrib/).
    (merge f2acf763e2 si/zsh-complete-comment-fix later to maint).
 
- * "git repack -A -d" in a partial clone unnecessarily loosened
+ * "but repack -A -d" in a partial clone unnecessarily loosened
    objects in promisor pack.
 
- * "git bisect skip" when custom words are used for new/old did not
+ * "but bisect skip" when custom words are used for new/old did not
    work, which has been corrected.
 
  * A few variants of informational message "Already up-to-date" has
    been rephrased.
    (merge ad9322da03 js/merge-already-up-to-date-message-reword later to maint).
 
- * "git submodule update --quiet" did not propagate the quiet option
-   down to underlying "git fetch", which has been corrected.
+ * "but submodule update --quiet" did not propagate the quiet option
+   down to underlying "but fetch", which has been corrected.
    (merge 62af4bdd42 nc/submodule-update-quiet later to maint).
 
  * Document that our test can use "local" keyword.
@@ -359,14 +359,14 @@ Fixes since v2.31
    regexp that can match an empty string.
    (merge 0324e8fc6b pw/word-diff-zero-width-matches later to maint).
 
- * "git p4" learned to find branch points more efficiently.
+ * "but p4" learned to find branch points more efficiently.
    (merge 6b79818bfb jk/p4-locate-branch-point-optim later to maint).
 
- * When "git update-ref -d" removes a ref that is packed, it left
+ * When "but update-ref -d" removes a ref that is packed, it left
    empty directories under $GIT_DIR/refs/ for
    (merge 5f03e5126d wc/packed-ref-removal-cleanup later to maint).
 
- * "git clean" and "git ls-files -i" had confusion around working on
+ * "but clean" and "but ls-files -i" had confusion around working on
    or showing ignored paths inside an ignored directory, which has
    been corrected.
    (merge b548f0f156 en/dir-traversal later to maint).

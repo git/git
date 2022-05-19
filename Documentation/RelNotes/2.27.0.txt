@@ -6,20 +6,20 @@ Updates since v2.26
 
 Backward compatibility notes
 
- * When "git describe C" finds that cummit C is pointed by a signed or
+ * When "but describe C" finds that cummit C is pointed by a signed or
    annotated tag, which records T as its tagname in the object, the
    command gives T as its answer.  Even if the user renames or moves
    such a tag from its natural location in the "refs/tags/" hierarchy,
-   "git describe C" would still give T as the answer, but in such a
-   case "git show T^0" would no longer work as expected.  There may be
+   "but describe C" would still give T as the answer, but in such a
+   case "but show T^0" would no longer work as expected.  There may be
    nothing at "refs/tags/T" or even worse there may be a different tag
    instead.
 
-   Starting from this version, "git describe" will always use the
+   Starting from this version, "but describe" will always use the
    "long" version, as if the "--long" option were given, when giving
    its output based on such a misplaced tag to work around the problem.
 
- * "git pull" issues a warning message until the pull.rebase
+ * "but pull" issues a warning message until the pull.rebase
    configuration variable is explicitly given, which some existing
    users may find annoying---those who prefer not to rebase need to
    set the variable to false to squelch the warning.
@@ -38,35 +38,35 @@ UI, Workflows & Features
    (e.g. the object of the tree-ish in which the blob being converted
    appears, in addition to its path, which has already been given).
 
- * When "git describe C" finds an annotated tag with tagname A to be
+ * When "but describe C" finds an annotated tag with tagname A to be
    the best name to explain cummit C, and the tag is stored in a
    "wrong" place in the refs/tags hierarchy, e.g. refs/tags/B, the
    command gave a warning message but used A (not B) to describe C.
    If C is exactly at the tag, the describe output would be "A", but
-   "git rev-parse A^0" would not be equal as "git rev-parse C^0".  The
+   "but rev-parse A^0" would not be equal as "but rev-parse C^0".  The
    behavior of the command has been changed to use the "long" form
    i.e. A-0-gOBJECTNAME, which is correctly interpreted by rev-parse.
 
- * "git pull" learned to warn when no pull.rebase configuration
+ * "but pull" learned to warn when no pull.rebase configuration
    exists, and neither --[no-]rebase nor --ff-only is given (which
    would result a merge).
 
- * "git p4" learned four new hooks and also "--no-verify" option to
+ * "but p4" learned four new hooks and also "--no-verify" option to
    bypass them (and the existing "p4-pre-submit" hook).
 
- * "git pull" shares many options with underlying "git fetch", but
+ * "but pull" shares many options with underlying "but fetch", but
    some of them were not documented and some of those that would make
    sense to pass down were not passed down.
 
- * "git rebase" learned the "--no-gpg-sign" option to countermand
+ * "but rebase" learned the "--no-gpg-sign" option to countermand
    cummit.gpgSign the user may have.
 
- * The output from "git format-patch" uses RFC 2047 encoding for
+ * The output from "but format-patch" uses RFC 2047 encoding for
    non-ASCII letters on From: and Subject: headers, so that it can
    directly be fed to e-mail programs.  A new option has been added
    to produce these headers in raw.
 
- * "git log" learned "--show-pulls" that helps pathspec limited
+ * "but log" learned "--show-pulls" that helps pathspec limited
    history views; a merge cummit that takes the whole change from a
    side branch, which is normally omitted from the output, is shown
    in addition to the cummits that introduce real changes.
@@ -74,26 +74,26 @@ UI, Workflows & Features
  * The interactive input from various codepaths are consolidated and
    any prompt possibly issued earlier are fflush()ed before we read.
 
- * Allow "git rebase" to reapply all local cummits, even if the may be
+ * Allow "but rebase" to reapply all local cummits, even if the may be
    already in the upstream, without checking first.
 
  * The 'pack.useSparse' configuration variable now defaults to 'true',
    enabling an optimization that has been experimental since Git 2.21.
 
- * "git rebase" happens to call some hooks meant for "checkout" and
+ * "but rebase" happens to call some hooks meant for "checkout" and
    "cummit" by this was not a designed behaviour than historical
    accident.  This has been documented.
 
- * "git merge" learns the "--autostash" option.
+ * "but merge" learns the "--autostash" option.
 
  * "sparse-checkout" UI improvements.
 
- * "git update-ref --stdin" learned a handful of new verbs to let the
+ * "but update-ref --stdin" learned a handful of new verbs to let the
    user control ref update transactions more explicitly, which helps
    as an ingredient to implement two-phase cummit-style atomic
    ref-updates across multiple repositories.
 
- * "git cummit-graph write" learned different ways to write out split
+ * "but cummit-graph write" learned different ways to write out split
    files.
 
  * Introduce an extension to the cummit-graph to make it efficient to
@@ -109,14 +109,14 @@ UI, Workflows & Features
    paths, leaving an empty working tree, for a long time.  This
    limitation has been lifted.
 
- * "git restore --staged --worktree" now defaults to take the contents
+ * "but restore --staged --worktree" now defaults to take the contents
    out of "HEAD", instead of erring out.
 
- * "git p4" learned to recover from a (broken) state where a directory
+ * "but p4" learned to recover from a (broken) state where a directory
    and a file are recorded at the same path in the Perforce repository
    the same way as their clients do.
 
- * "git multi-pack-index repack" has been taught to honor some
+ * "but multi-pack-index repack" has been taught to honor some
    repack.* configuration variables.
 
 
@@ -129,7 +129,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to interface with GnuPG has been refactored.
 
- * "git stash" has kept an escape hatch to use the scripted version
+ * "but stash" has kept an escape hatch to use the scripted version
    for a few releases, which got stale.  It has been removed.
 
  * Enable tests that require GnuPG on Windows.
@@ -152,7 +152,7 @@ Performance, Internal Implementation, Development Support etc.
    length of various pieces of text it parsed, which has been updated
    to use the correct type (i.e. size_t) throughout.
 
- * The "--decorate-refs" and "--decorate-refs-exclude" options "git
+ * The "--decorate-refs" and "--decorate-refs-exclude" options "but
    log" takes have learned a companion configuration variable
    log.excludeDecoration that sits at the lowest priority in the
    family.
@@ -167,7 +167,7 @@ Performance, Internal Implementation, Development Support etc.
    made its performance characteristics exponential with respect to
    the depth of the tree, which was corrected.
 
- * "git blame" learns to take advantage of the "changed-paths" Bloom
+ * "but blame" learns to take advantage of the "changed-paths" Bloom
    filter stored in the cummit-graph file.
 
  * The "bugreport" tool has been added.
@@ -183,7 +183,7 @@ Performance, Internal Implementation, Development Support etc.
    traced.
 
  * Instead of downloading Windows SDK for CI jobs for windows builds
-   from an external site (wingit.blob.core.windows.net), use the one
+   from an external site (winbut.blob.core.windows.net), use the one
    created in the windows-build job, to work around quota issues at
    the external site.
 
@@ -196,19 +196,19 @@ Fixes since v2.26
    eliminated.
    (merge 49d3c4b481 am/real-path-fix later to maint).
 
- * Update "git p4" to work with Python 3.
+ * Update "but p4" to work with Python 3.
    (merge 6bb40ed20a yz/p4-py3 later to maint).
 
- * The mechanism to prevent "git cummit" from making an empty cummit
+ * The mechanism to prevent "but cummit" from making an empty cummit
    or amending during an interrupted cherry-pick was broken during the
-   rewrite of "git rebase" in C, which has been corrected.
+   rewrite of "but rebase" in C, which has been corrected.
    (merge 430b75f720 pw/advise-rebase-skip later to maint).
 
- * Fix "git checkout --recurse-submodules" of a nested submodule
+ * Fix "but checkout --recurse-submodules" of a nested submodule
    hierarchy.
    (merge 846f34d351 pb/recurse-submodules-fix later to maint).
 
- * The "--fork-point" mode of "git rebase" regressed when the command
+ * The "--fork-point" mode of "but rebase" regressed when the command
    was rewritten in C back in 2.20 era, which has been corrected.
    (merge f08132f889 at/rebase-fork-point-regression-fix later to maint).
 
@@ -224,7 +224,7 @@ Fixes since v2.26
    lazily on-demand from promisor remote repositories.
    (merge 2b98478c6f jt/connectivity-check-optim-in-partial-clone later to maint).
 
- * The server-end of the v2 protocol to serve "git clone" and "git
+ * The server-end of the v2 protocol to serve "but clone" and "but
    fetch" was not prepared to see a delim packets at unexpected
    places, which led to a crash.
    (merge cacae4329f jk/harden-protocol-v2-delim-handling later to maint).
@@ -241,21 +241,21 @@ Fixes since v2.26
    backslashes.
    (merge 05ac8582bc ak/run-command-on-cygwin-fix later to maint).
 
- * "git pull --rebase" tried to run a rebase even after noticing that
+ * "but pull --rebase" tried to run a rebase even after noticing that
    the pull results in a fast-forward and no rebase is needed nor
    sensible, for the past few years due to a mistake nobody noticed.
    (merge fbae70ddc6 en/pull-do-not-rebase-after-fast-forwarding later to maint).
 
- * "git rebase" with the merge backend did not work well when the
+ * "but rebase" with the merge backend did not work well when the
    rebase.abbreviateCommands configuration was set.
    (merge de9f1d3ef4 ag/rebase-merge-allow-ff-under-abbrev-command later to maint).
 
- * The logic to auto-follow tags by "git clone --single-branch" was
+ * The logic to auto-follow tags by "but clone --single-branch" was
    not careful to avoid lazy-fetching unnecessary tags, which has been
    corrected.
    (merge 167a575e2d jk/use-quick-lookup-in-clone-for-tag-following later to maint).
 
- * "git rebase -i" did not leave the reflog entries correctly.
+ * "but rebase -i" did not leave the reflog entries correctly.
    (merge 1f6965f994 en/sequencer-reflog-action later to maint).
 
  * The more aggressive updates to remote-tracking branches we had for
@@ -263,7 +263,7 @@ Fixes since v2.26
    which has been corrected.
    (merge a44088435c pb/pull-fetch-doc later to maint).
 
- * We've left the command line parsing of "git log :/a/b/" broken for
+ * We've left the command line parsing of "but log :/a/b/" broken for
    about a full year without anybody noticing, which has been
    corrected.
    (merge 0220461071 jc/missing-ref-store-fix later to maint).
@@ -271,7 +271,7 @@ Fixes since v2.26
  * Misc fixes for Windows.
    (merge 3efc128cd5 js/mingw-fixes later to maint).
 
- * "git rebase" (again) learns to honor "--no-keep-empty", which lets
+ * "but rebase" (again) learns to honor "--no-keep-empty", which lets
    the user to discard cummits that are empty from the beginning (as
    opposed to the ones that become empty because of rebasing).  The
    interactive rebase also marks cummits that are empty in the todo.
@@ -292,12 +292,12 @@ Fixes since v2.26
    timing attacks.
    (merge 719483e547 bc/constant-memequal later to maint).
 
- * The custom hash function used by "git fast-import" has been
+ * The custom hash function used by "but fast-import" has been
    replaced with the one from hashmap.c, which gave us a nice
    performance boost.
    (merge d8410a816b jk/fast-import-use-hashmap later to maint).
 
- * The "git submodule" command did not initialize a few variables it
+ * The "but submodule" command did not initialize a few variables it
    internally uses and was affected by variable settings leaked from
    the environment.
    (merge 65d100c4dd lx/submodule-clear-variables later to maint).
@@ -307,43 +307,43 @@ Fixes since v2.26
    drop compatibility cruft from our documentation suite.
    (merge 3c255ad660 ma/doc-discard-docbook-xsl-1.73 later to maint).
 
- * "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
+ * "but log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
    (merge 88acccda38 jc/log-no-mailmap later to maint).
 
- * "git cummit-graph write --expire-time=<timestamp>" did not use the
+ * "but cummit-graph write --expire-time=<timestamp>" did not use the
    given timestamp correctly, which has been corrected.
    (merge b09b785c78 ds/cummit-graph-expiry-fix later to maint).
 
  * Tests update to use "test-chmtime" instead of "touch -t".
    (merge e892a56845 ds/t5319-touch-fix later to maint).
 
- * "git diff" in a partial clone learned to avoid lazy loading blob
+ * "but diff" in a partial clone learned to avoid lazy loading blob
    objects in more casese when they are not needed.
    (merge 95acf11a3d jt/avoid-prefetch-when-able-in-diff later to maint).
 
- * "git push --atomic" used to show failures for refs that weren't
+ * "but push --atomic" used to show failures for refs that weren't
    even pushed, which has been corrected.
    (merge dfe1b7f19c jx/atomic-push later to maint).
 
  * Code in builtin/*, i.e. those can only be called from within
    built-in subcommands, that implements bulk of a couple of
-   subcommands have been moved to libgit.a so that they could be used
+   subcommands have been moved to libbut.a so that they could be used
    by others.
    (merge 9460fd48b5 dl/libify-a-few later to maint).
 
- * Allowing the user to split a patch hunk while "git stash -p" does
+ * Allowing the user to split a patch hunk while "but stash -p" does
    not work well; a band-aid has been added to make this (partially)
    work better.
 
- * "git diff-tree --pretty --notes" used to hit an assertion failure,
+ * "but diff-tree --pretty --notes" used to hit an assertion failure,
    as it forgot to initialize the notes subsystem.
    (merge 5778b22b3d tb/diff-tree-with-notes later to maint).
 
- * "git range-diff" fixes.
+ * "but range-diff" fixes.
    (merge 8d1675eb7f vd/range-diff-with-custom-pretty-format-fix later to maint).
 
- * "git grep" did not quote a path with unusual character like other
-   commands (like "git diff", "git status") do, but did quote when run
+ * "but grep" did not quote a path with unusual character like other
+   commands (like "but diff", "but status") do, but did quote when run
    from a subdirectory, both of which has been corrected.
    (merge 45115d8490 mt/grep-cquote-path later to maint).
 
@@ -365,7 +365,7 @@ Fixes since v2.26
    files correctly for a custom-built installation.
    (merge 0573831950 jk/build-with-right-curl later to maint).
 
- * Tighten "git mailinfo" to notice and error out when decoded result
+ * Tighten "but mailinfo" to notice and error out when decoded result
    contains NUL in it.
    (merge 3919997447 dd/mailinfo-with-nul later to maint).
 
@@ -385,11 +385,11 @@ Fixes since v2.26
    moving gettext library and necessary headers.
    (merge a0b3108618 ds/build-homebrew-gettext-fix later to maint).
 
- * Incompatible options "--root" and "--fork-point" of "git rebase"
+ * Incompatible options "--root" and "--fork-point" of "but rebase"
    have been marked and documented as being incompatible.
    (merge a35413c378 en/rebase-root-and-fork-point-are-incompatible later to maint).
 
- * Error and verbose trace messages from "git push" did not redact
+ * Error and verbose trace messages from "but push" did not redact
    credential material embedded in URLs.
    (merge d192fa5006 js/anonymise-push-url-in-errors later to maint).
 
@@ -407,7 +407,7 @@ Fixes since v2.26
    correctly honor the core.sharedRepository settings and some were
    left read-write.
 
- * In error messages that "git switch" mentions its option to create a
+ * In error messages that "but switch" mentions its option to create a
    new branch, "-b/-B" options were shown, where "-c/-C" options
    should be, which has been corrected.
    (merge 7c16ef7577 dl/switch-c-option-in-error-message later to maint).
@@ -420,11 +420,11 @@ Fixes since v2.26
    (merge c03859a665 cb/credential-store-ignore-bogus-lines later to maint).
 
  * The samples in the credential documentation has been updated to
-   make it clear that we depict what would appear in the .git/config
+   make it clear that we depict what would appear in the .but/config
    file, by adding appropriate quotes as needed..
    (merge 177681a07e jk/credential-sample-update later to maint).
 
- * "git branch" and other "for-each-ref" variants accepted multiple
+ * "but branch" and other "for-each-ref" variants accepted multiple
    --sort=<key> options in the increasing order of precedence, but it
    had a few breakages around "--ignore-case" handling, and tie-breaking
    with the refname, which have been fixed.
@@ -458,13 +458,13 @@ Fixes since v2.26
    is in use would have made out-of-bound access of the in-core index
    when the last path was unmerged, which has been corrected.
 
- * Serving a "git fetch" client over "git://" and "ssh://" protocols
+ * Serving a "but fetch" client over "but://" and "ssh://" protocols
    using the on-wire protocol version 2 was buggy on the server end
    when the client needs to make a follow-up request to
    e.g. auto-follow tags.
    (merge 08450ef791 cc/upload-pack-v2-fetch-fix later to maint).
 
- * "git bisect replay" had trouble with input files when they used
+ * "but bisect replay" had trouble with input files when they used
    CRLF line ending, which has been corrected.
    (merge 6c722cbe5a cw/bisect-replay-with-dos later to maint).
 
@@ -473,7 +473,7 @@ Fixes since v2.26
    fix-up of yet another step).
    (merge 02471e7e20 js/rebase-autosquash-double-fixup-fix later to maint).
 
- * "git fsck" ensures that the paths recorded in tree objects are
+ * "but fsck" ensures that the paths recorded in tree objects are
    sorted and without duplicates, but it failed to notice a case where
    a blob is followed by entries that sort before a tree with the same
    name.  This has been corrected.
@@ -510,7 +510,7 @@ Fixes since v2.26
    (merge 344420bf0f pb/rebase-doc-typofix later to maint).
    (merge 7cd54d37dc dl/wrapper-fix-indentation later to maint).
    (merge 78725ebda9 jc/allow-strlen-substitution-in-shell-scripts later to maint).
-   (merge 2ecfcdecc6 jm/gitweb-fastcgi-utf8 later to maint).
+   (merge 2ecfcdecc6 jm/butweb-fastcgi-utf8 later to maint).
    (merge 0740d0a5d3 jk/oid-array-cleanups later to maint).
    (merge a1aba0c95c js/t0007-typofix later to maint).
    (merge 76ba7fa225 ma/config-doc-fix later to maint).
@@ -518,7 +518,7 @@ Fixes since v2.26
    (merge 88eaf361e0 eb/mboxrd-doc later to maint).
    (merge 051cc54941 tm/zsh-complete-switch-restore later to maint).
    (merge 39102cf4fe ms/doc-revision-illustration-fix later to maint).
-   (merge 4d9378bfad eb/gitweb-more-trailers later to maint).
+   (merge 4d9378bfad eb/butweb-more-trailers later to maint).
    (merge bdccbf7047 mt/doc-worktree-ref later to maint).
    (merge ce9baf234f dl/push-recurse-submodules-fix later to maint).
    (merge 4153274052 bc/doc-credential-helper-value later to maint).

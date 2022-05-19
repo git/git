@@ -62,7 +62,7 @@ int is_repository_shallow(struct repository *r)
 		return r->parsed_objects->is_shallow;
 
 	if (!path)
-		path = git_path_shallow(r);
+		path = but_path_shallow(r);
 	/*
 	 * fetch-pack sets '--shallow-file ""' as an indicator that no
 	 * shallow file should be used. We could just open it and it
@@ -271,7 +271,7 @@ static void check_shallow_file_for_update(struct repository *r)
 		BUG("shallow must be initialized by now");
 
 	if (!stat_validity_check(r->parsed_objects->shallow_stat,
-				 git_path_shallow(r)))
+				 but_path_shallow(r)))
 		die("shallow file has changed since we read it");
 }
 
@@ -299,7 +299,7 @@ static int write_one_shallow(const struct cummit_graft *graft, void *cb_data)
 		struct cummit *c = lookup_cummit(the_repository, &graft->oid);
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
-				printf("Removing %s from .git/shallow\n",
+				printf("Removing %s from .but/shallow\n",
 				       oid_to_hex(&c->object.oid));
 			return 0;
 		}
@@ -347,7 +347,7 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
 	struct strbuf sb = STRBUF_INIT;
 
 	if (write_shallow_cummits(&sb, 0, extra)) {
-		temp = xmks_tempfile(git_path("shallow_XXXXXX"));
+		temp = xmks_tempfile(but_path("shallow_XXXXXX"));
 
 		if (write_in_full(temp->fd, sb.buf, sb.len) < 0 ||
 		    close_tempfile_gently(temp) < 0)
@@ -371,7 +371,7 @@ void setup_alternate_shallow(struct shallow_lock *shallow_lock,
 	int fd;
 
 	fd = hold_lock_file_for_update(&shallow_lock->lock,
-				       git_path_shallow(the_repository),
+				       but_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update(the_repository);
 	if (write_shallow_cummits(&sb, 0, extra)) {
@@ -426,7 +426,7 @@ void prune_shallow(unsigned options)
 		return;
 	}
 	fd = hold_lock_file_for_update(&shallow_lock.lock,
-				       git_path_shallow(the_repository),
+				       but_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update(the_repository);
 	if (write_shallow_cummits_1(&sb, 0, NULL, flags)) {
@@ -435,7 +435,7 @@ void prune_shallow(unsigned options)
 				  get_lock_file_path(&shallow_lock.lock));
 		cummit_shallow_file(the_repository, &shallow_lock);
 	} else {
-		unlink(git_path_shallow(the_repository));
+		unlink(but_path_shallow(the_repository));
 		rollback_shallow_file(the_repository, &shallow_lock);
 	}
 	strbuf_release(&sb);
@@ -445,7 +445,7 @@ struct trace_key trace_shallow = TRACE_KEY_INIT(SHALLOW);
 
 /*
  * Step 1, split sender shallow cummits into "ours" and "theirs"
- * Step 2, clean "ours" based on .git/shallow
+ * Step 2, clean "ours" based on .but/shallow
  */
 void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 {

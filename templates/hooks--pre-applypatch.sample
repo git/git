@@ -8,7 +8,7 @@
 #
 # To enable this hook, rename this file to "pre-applypatch".
 
-. git-sh-setup
-precummit="$(git rev-parse --git-path hooks/pre-cummit)"
+. but-sh-setup
+precummit="$(but rev-parse --but-path hooks/pre-cummit)"
 test -x "$precummit" && exec "$precummit" ${1+"$@"}
 :

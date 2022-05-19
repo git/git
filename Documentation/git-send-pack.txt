@@ -1,38 +1,38 @@
-git-send-pack(1)
+but-send-pack(1)
 ================
 
 NAME
 ----
-git-send-pack - Push objects over Git protocol to another repository
+but-send-pack - Push objects over Git protocol to another repository
 
 
 SYNOPSIS
 --------
 [verse]
-'git send-pack' [--dry-run] [--force] [--receive-pack=<git-receive-pack>]
+'but send-pack' [--dry-run] [--force] [--receive-pack=<but-receive-pack>]
 		[--verbose] [--thin] [--atomic]
 		[--[no-]signed|--signed=(true|false|if-asked)]
 		[<host>:]<directory> (--all | <ref>...)
 
 DESCRIPTION
 -----------
-Usually you would want to use 'git push', which is a
-higher-level wrapper of this command, instead. See linkgit:git-push[1].
+Usually you would want to use 'but push', which is a
+higher-level wrapper of this command, instead. See linkbut:but-push[1].
 
-Invokes 'git-receive-pack' on a possibly remote repository, and
+Invokes 'but-receive-pack' on a possibly remote repository, and
 updates it from the current repository, sending named refs.
 
 
 OPTIONS
 -------
---receive-pack=<git-receive-pack>::
-	Path to the 'git-receive-pack' program on the remote
+--receive-pack=<but-receive-pack>::
+	Path to the 'but-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
---exec=<git-receive-pack>::
-	Same as --receive-pack=<git-receive-pack>.
+--exec=<but-receive-pack>::
+	Same as --receive-pack=<but-receive-pack>.
 
 --all::
 	Instead of explicitly specifying which refs to update,
@@ -79,17 +79,17 @@ be in a separate packet, and the list must end with a flush packet.
 	server does not support signed pushes.  If set to `if-asked`,
 	sign if and only if the server supports signed pushes.  The push
 	will also fail if the actual call to `gpg --sign` fails.  See
-	linkgit:git-receive-pack[1] for the details on the receiving end.
+	linkbut:but-receive-pack[1] for the details on the receiving end.
 
 --push-option=<string>::
 	Pass the specified string as a push option for consumption by
 	hooks on the server side.  If the server doesn't support push
-	options, error out.  See linkgit:git-push[1] and
-	linkgit:githooks[5] for details.
+	options, error out.  See linkbut:but-push[1] and
+	linkbut:buthooks[5] for details.
 
 <host>::
 	A remote host to house the repository.  When this
-	part is specified, 'git-receive-pack' is invoked via
+	part is specified, 'but-receive-pack' is invoked via
 	ssh.
 
 <directory>::
@@ -123,8 +123,8 @@ and the destination side (after the colon).  The ref to be
 pushed is determined by finding a match that matches the source
 side, and where it is pushed is determined by using the
 destination side. The rules used to match a ref are the same
-rules used by 'git rev-parse' to resolve a symbolic ref
-name. See linkgit:git-rev-parse[1].
+rules used by 'but rev-parse' to resolve a symbolic ref
+name. See linkbut:but-rev-parse[1].
 
  - It is an error if <src> does not match exactly one of the
    local refs.
@@ -153,4 +153,4 @@ to disable the fast-forward check only on that ref.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

@@ -8,18 +8,18 @@
 #include "repository.h"
 #include "tree.h"
 
-static void test_parse_cummit_in_graph(const char *gitdir, const char *worktree,
+static void test_parse_cummit_in_graph(const char *butdir, const char *worktree,
 				       const struct object_id *cummit_oid)
 {
 	struct repository r;
 	struct cummit *c;
 	struct cummit_list *parent;
 
-	setup_git_env(gitdir);
+	setup_but_env(butdir);
 
 	memset(the_repository, 0, sizeof(*the_repository));
 
-	if (repo_init(&r, gitdir, worktree))
+	if (repo_init(&r, butdir, worktree))
 		die("Couldn't init repo");
 
 	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
@@ -37,7 +37,7 @@ static void test_parse_cummit_in_graph(const char *gitdir, const char *worktree,
 	repo_clear(&r);
 }
 
-static void test_get_cummit_tree_in_graph(const char *gitdir,
+static void test_get_cummit_tree_in_graph(const char *butdir,
 					  const char *worktree,
 					  const struct object_id *cummit_oid)
 {
@@ -45,11 +45,11 @@ static void test_get_cummit_tree_in_graph(const char *gitdir,
 	struct cummit *c;
 	struct tree *tree;
 
-	setup_git_env(gitdir);
+	setup_but_env(butdir);
 
 	memset(the_repository, 0, sizeof(*the_repository));
 
-	if (repo_init(&r, gitdir, worktree))
+	if (repo_init(&r, butdir, worktree))
 		die("Couldn't init repo");
 
 	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
@@ -73,9 +73,9 @@ static void test_get_cummit_tree_in_graph(const char *gitdir,
 
 int cmd__repository(int argc, const char **argv)
 {
-	int nongit_ok = 0;
+	int nonbut_ok = 0;
 
-	setup_git_directory_gently(&nongit_ok);
+	setup_but_directory_gently(&nonbut_ok);
 
 	if (argc < 2)
 		die("must have at least 2 arguments");

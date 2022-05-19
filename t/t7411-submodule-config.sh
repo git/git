@@ -5,7 +5,7 @@
 
 test_description='Test submodules config cache infrastructure
 
-This test verifies that parsing .gitmodules configurations directly
+This test verifies that parsing .butmodules configurations directly
 from the database and from the worktree works.
 '
 
@@ -15,26 +15,26 @@ TEST_NO_CREATE_REPO=1
 test_expect_success 'submodule config cache setup' '
 	mkdir submodule &&
 	(cd submodule &&
-		git init &&
+		but init &&
 		echo a >a &&
-		git add . &&
-		git cummit -ma
+		but add . &&
+		but cummit -ma
 	) &&
 	mkdir super &&
 	(cd super &&
-		git init &&
-		git submodule add ../submodule &&
-		git submodule add ../submodule a &&
-		git cummit -m "add as submodule and as a" &&
-		git mv a b &&
-		git cummit -m "move a to b"
+		but init &&
+		but submodule add ../submodule &&
+		but submodule add ../submodule a &&
+		but cummit -m "add as submodule and as a" &&
+		but mv a b &&
+		but cummit -m "move a to b"
 	)
 '
 
 test_expect_success 'configuration parsing with error' '
 	test_when_finished "rm -rf repo" &&
 	test_create_repo repo &&
-	cat >repo/.gitmodules <<-\EOF &&
+	cat >repo/.butmodules <<-\EOF &&
 	[submodule "s"]
 		path
 		ignore
@@ -83,31 +83,31 @@ Submodule name: 'submodule' for path 'submodule'
 EOF
 
 test_expect_success 'error in history of one submodule config lets continue, stderr message contains blob ref' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		cp .gitmodules .gitmodules.bak &&
-		echo "	value = \"" >>.gitmodules &&
-		git add .gitmodules &&
-		mv .gitmodules.bak .gitmodules &&
-		git cummit -m "add error" &&
-		sha1=$(git rev-parse HEAD) &&
+		cp .butmodules .butmodules.bak &&
+		echo "	value = \"" >>.butmodules &&
+		but add .butmodules &&
+		mv .butmodules.bak .butmodules &&
+		but cummit -m "add error" &&
+		sha1=$(but rev-parse HEAD) &&
 		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
 				>actual \
 				2>actual_stderr &&
 		test_cmp expect_error actual &&
-		test_i18ngrep "submodule-blob $sha1:.gitmodules" actual_stderr >/dev/null
+		test_i18ngrep "submodule-blob $sha1:.butmodules" actual_stderr >/dev/null
 	)
 '
 
 test_expect_success 'using different treeishs works' '
 	(
 		cd super &&
-		git tag new_tag &&
-		tree=$(git rev-parse HEAD^{tree}) &&
-		cummit=$(git rev-parse HEAD^{cummit}) &&
+		but tag new_tag &&
+		tree=$(but rev-parse HEAD^{tree}) &&
+		cummit=$(but rev-parse HEAD^{cummit}) &&
 		test-tool submodule-config $cummit b >expect &&
 		test-tool submodule-config $tree b >actual.1 &&
 		test-tool submodule-config new_tag b >actual.2 &&
@@ -117,15 +117,15 @@ test_expect_success 'using different treeishs works' '
 '
 
 test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		git config -f .gitmodules \
+		but config -f .butmodules \
 			submodule.submodule.fetchrecursesubmodules blabla &&
-		git add .gitmodules &&
-		git config --unset -f .gitmodules \
+		but add .butmodules &&
+		but config --unset -f .butmodules \
 			submodule.submodule.fetchrecursesubmodules &&
-		git cummit -m "add error in fetchrecursesubmodules" &&
+		but cummit -m "add error in fetchrecursesubmodules" &&
 		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
@@ -137,15 +137,15 @@ test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
 test_expect_success 'reading submodules config from the working tree with "submodule--helper config"' '
 	(cd super &&
 		echo "../submodule" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'unsetting submodules config from the working tree with "submodule--helper config --unset"' '
 	(cd super &&
-		git submodule--helper config --unset submodule.submodule.url &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config --unset submodule.submodule.url &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_must_be_empty actual
 	)
 '
@@ -154,88 +154,88 @@ test_expect_success 'unsetting submodules config from the working tree with "sub
 test_expect_success 'writing submodules config with "submodule--helper config"' '
 	(cd super &&
 		echo "new_url" >expect &&
-		git submodule--helper config submodule.submodule.url "new_url" &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config submodule.submodule.url "new_url" &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'overwriting unstaged submodules config with "submodule--helper config"' '
-	test_when_finished "git -C super checkout .gitmodules" &&
+	test_when_finished "but -C super checkout .butmodules" &&
 	(cd super &&
 		echo "newer_url" >expect &&
-		git submodule--helper config submodule.submodule.url "newer_url" &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config submodule.submodule.url "newer_url" &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success 'writeable .gitmodules when it is in the working tree' '
-	git -C super submodule--helper config --check-writeable
+test_expect_success 'writeable .butmodules when it is in the working tree' '
+	but -C super submodule--helper config --check-writeable
 '
 
-test_expect_success 'writeable .gitmodules when it is nowhere in the repository' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+test_expect_success 'writeable .butmodules when it is nowhere in the repository' '
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		git rm .gitmodules &&
-		git cummit -m "remove .gitmodules from the current branch" &&
-		git submodule--helper config --check-writeable
+		but rm .butmodules &&
+		but cummit -m "remove .butmodules from the current branch" &&
+		but submodule--helper config --check-writeable
 	)
 '
 
-test_expect_success 'non-writeable .gitmodules when it is in the index but not in the working tree' '
-	test_when_finished "git -C super checkout .gitmodules" &&
+test_expect_success 'non-writeable .butmodules when it is in the index but not in the working tree' '
+	test_when_finished "but -C super checkout .butmodules" &&
 	(cd super &&
-		rm -f .gitmodules &&
-		test_must_fail git submodule--helper config --check-writeable
+		rm -f .butmodules &&
+		test_must_fail but submodule--helper config --check-writeable
 	)
 '
 
-test_expect_success 'non-writeable .gitmodules when it is in the current branch but not in the index' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+test_expect_success 'non-writeable .butmodules when it is in the current branch but not in the index' '
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		git rm .gitmodules &&
-		test_must_fail git submodule--helper config --check-writeable
+		but rm .butmodules &&
+		test_must_fail but submodule--helper config --check-writeable
 	)
 '
 
-test_expect_success 'reading submodules config from the index when .gitmodules is not in the working tree' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+test_expect_success 'reading submodules config from the index when .butmodules is not in the working tree' '
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		git submodule--helper config submodule.submodule.url "staged_url" &&
-		git add .gitmodules &&
-		rm -f .gitmodules &&
+		but submodule--helper config submodule.submodule.url "staged_url" &&
+		but add .butmodules &&
+		rm -f .butmodules &&
 		echo "staged_url" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success 'reading submodules config from the current branch when .gitmodules is not in the index' '
-	ORIG=$(git -C super rev-parse HEAD) &&
-	test_when_finished "git -C super reset --hard $ORIG" &&
+test_expect_success 'reading submodules config from the current branch when .butmodules is not in the index' '
+	ORIG=$(but -C super rev-parse HEAD) &&
+	test_when_finished "but -C super reset --hard $ORIG" &&
 	(cd super &&
-		git rm .gitmodules &&
+		but rm .butmodules &&
 		echo "../submodule" >expect &&
-		git submodule--helper config submodule.submodule.url >actual &&
+		but submodule--helper config submodule.submodule.url >actual &&
 		test_cmp expect actual
 	)
 '
 
 test_expect_success 'reading nested submodules config' '
 	(cd super &&
-		git init submodule/nested_submodule &&
+		but init submodule/nested_submodule &&
 		echo "a" >submodule/nested_submodule/a &&
-		git -C submodule/nested_submodule add a &&
-		git -C submodule/nested_submodule cummit -m "add a" &&
-		git -C submodule submodule add ./nested_submodule &&
-		git -C submodule add nested_submodule &&
-		git -C submodule cummit -m "added nested_submodule" &&
-		git add submodule &&
-		git cummit -m "updated submodule" &&
+		but -C submodule/nested_submodule add a &&
+		but -C submodule/nested_submodule cummit -m "add a" &&
+		but -C submodule submodule add ./nested_submodule &&
+		but -C submodule add nested_submodule &&
+		but -C submodule cummit -m "added nested_submodule" &&
+		but add submodule &&
+		but cummit -m "updated submodule" &&
 		echo "./nested_submodule" >expect &&
 		test-tool submodule-nested-repo-config \
 			submodule submodule.nested_submodule.url >actual &&
@@ -243,11 +243,11 @@ test_expect_success 'reading nested submodules config' '
 	)
 '
 
-test_expect_success 'reading nested submodules config when .gitmodules is not in the working tree' '
-	test_when_finished "git -C super/submodule checkout .gitmodules" &&
+test_expect_success 'reading nested submodules config when .butmodules is not in the working tree' '
+	test_when_finished "but -C super/submodule checkout .butmodules" &&
 	(cd super &&
 		echo "./nested_submodule" >expect &&
-		rm submodule/.gitmodules &&
+		rm submodule/.butmodules &&
 		test-tool submodule-nested-repo-config \
 			submodule submodule.nested_submodule.url >actual 2>warning &&
 		test_must_be_empty warning &&

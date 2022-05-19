@@ -1,4 +1,4 @@
-$ git log --patch-with-stat --summary master -- dir/
+$ but log --patch-with-stat --summary master -- dir/
 cummit 59d314ad6f356dd08601a4cd5e530381da3e3c64
 Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
@@ -15,7 +15,7 @@ Date:   Mon Jun 26 00:03:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -34,7 +34,7 @@ Date:   Mon Jun 26 00:02:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
 --- a/dir/sub
 +++ b/dir/sub
@@ -56,7 +56,7 @@ Date:   Mon Jun 26 00:01:00 2006 +0000
  dir/sub | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/dir/sub b/dir/sub
+diff --but a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
 --- a/dir/sub
 +++ b/dir/sub

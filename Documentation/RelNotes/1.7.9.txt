@@ -4,11 +4,11 @@ Git v1.7.9 Release Notes
 Updates since v1.7.8
 --------------------
 
- * gitk updates accumulated since early 2011.
+ * butk updates accumulated since early 2011.
 
- * git-gui updated to 0.16.0.
+ * but-gui updated to 0.16.0.
 
- * git-p4 (in contrib/) updates.
+ * but-p4 (in contrib/) updates.
 
  * Git uses gettext to translate its most common interface messages
    into the user's language if translations are available and the
@@ -16,7 +16,7 @@ Updates since v1.7.8
    in po/ to add new translations.
 
  * The code to handle username/password for HTTP transactions used in
-   "git push" & "git fetch" learned to talk "credential API" to
+   "but push" & "but fetch" learned to talk "credential API" to
    external programs to cache or store them, to allow integration with
    platform native keychain mechanisms.
 
@@ -29,32 +29,32 @@ Updates since v1.7.8
    building more generic "sequencer" on top of the implementation that
    drives them.
 
- * "git rev-parse FETCH_HEAD" after "git fetch" without specifying
+ * "but rev-parse FETCH_HEAD" after "but fetch" without specifying
    what to fetch from the command line will now show the cummit that
-   would be merged if the command were "git pull".
+   would be merged if the command were "but pull".
 
- * "git add" learned to stream large files directly into a packfile
+ * "but add" learned to stream large files directly into a packfile
    instead of writing them into individual loose object files.
 
- * "git checkout -B <current branch> <elsewhere>" is a more intuitive
-   way to spell "git reset --keep <elsewhere>".
+ * "but checkout -B <current branch> <elsewhere>" is a more intuitive
+   way to spell "but reset --keep <elsewhere>".
 
- * "git checkout" and "git merge" learned "--no-overwrite-ignore" option
+ * "but checkout" and "but merge" learned "--no-overwrite-ignore" option
    to tell Git that untracked and ignored files are not expendable.
 
- * "git cummit --amend" learned "--no-edit" option to say that the
+ * "but cummit --amend" learned "--no-edit" option to say that the
    user is amending the tree being recorded, without updating the
    cummit log message.
 
- * "git cummit" and "git reset" re-learned the optimization to prime
+ * "but cummit" and "but reset" re-learned the optimization to prime
    the cache-tree information in the index, which makes it faster to
    write a tree object out after the index entries are updated.
 
- * "git cummit" detects and rejects an attempt to stuff NUL byte in
+ * "but cummit" detects and rejects an attempt to stuff NUL byte in
    the cummit log message.
 
- * "git cummit" learned "-S" to GPG-sign the cummit; this can be shown
-   with the "--show-signature" option to "git log".
+ * "but cummit" learned "-S" to GPG-sign the cummit; this can be shown
+   with the "--show-signature" option to "but log".
 
  * fsck and prune are relatively lengthy operations that still go
    silent while making the end-user wait. They learned to give progress
@@ -63,27 +63,27 @@ Updates since v1.7.8
  * The set of built-in function-header patterns for various languages
    knows MATLAB.
 
- * "git log --format='<format>'" learned new %g[nNeE] specifiers to
+ * "but log --format='<format>'" learned new %g[nNeE] specifiers to
    show information from the reflog entries when walking the reflog
    (i.e. with "-g").
 
- * "git pull" can be used to fetch and merge an annotated/signed tag,
+ * "but pull" can be used to fetch and merge an annotated/signed tag,
    instead of the tip of a topic branch. The GPG signature from the
    signed tag is recorded in the resulting merge cummit for later
    auditing.
 
- * "git log" learned "--show-signature" option to show the signed tag
+ * "but log" learned "--show-signature" option to show the signed tag
    that was merged that is embedded in the merge cummit. It also can
-   show the signature made on the cummit with "git cummit -S".
+   show the signature made on the cummit with "but cummit -S".
 
- * "git branch --edit-description" can be used to add descriptive text
+ * "but branch --edit-description" can be used to add descriptive text
    to explain what a topic branch is about.
 
- * "git fmt-merge-msg" learned to take the branch description into
-   account when preparing a merge summary that "git merge" records
+ * "but fmt-merge-msg" learned to take the branch description into
+   account when preparing a merge summary that "but merge" records
    when merging a local branch.
 
- * "git request-pull" has been updated to convey more information
+ * "but request-pull" has been updated to convey more information
    useful for integrators to decide if a topic is worth merging and
    what is pulled is indeed what the requestor asked to pull,
    including:
@@ -92,14 +92,14 @@ Updates since v1.7.8
    - the branch description describing what the topic is about;
    - the contents of the annotated tag, when requesting to pull a tag.
 
- * "git pull" learned to notice 'pull.rebase' configuration variable,
+ * "but pull" learned to notice 'pull.rebase' configuration variable,
    which serves as a global fallback for setting 'branch.<name>.rebase'
    configuration variable per branch.
 
- * "git tag" learned "--cleanup" option to control how the whitespaces
+ * "but tag" learned "--cleanup" option to control how the whitespaces
    and empty lines in tag message are cleaned up.
 
- * "gitweb" learned to show side-by-side diff.
+ * "butweb" learned to show side-by-side diff.
 
 Also contains minor documentation updates and code clean-ups.
 

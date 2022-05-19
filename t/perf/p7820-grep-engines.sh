@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description="Comparison of git-grep's regex engines
+test_description="Comparison of but-grep's regex engines
 
 Set GIT_PERF_7820_GREP_OPTS in the environment to pass options to
-git-grep. Make sure to include a leading space,
+but-grep. Make sure to include a leading space,
 e.g. GIT_PERF_7820_GREP_OPTS=' -i'. Some options to try:
 
 	-i
@@ -50,13 +50,13 @@ do
 		if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 		then
 			test_perf $prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern'" "
-				git -c grep.patternType=$engine grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine' || :
+				but -c grep.patternType=$engine grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine' || :
 			"
 		else
 			for threads in $GIT_PERF_GREP_THREADS
 			do
 				test_perf PTHREADS,$prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern' with $threads threads" "
-					git -c grep.patternType=$engine -c grep.threads=$threads grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine.$threads' || :
+					but -c grep.patternType=$engine -c grep.threads=$threads grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine.$threads' || :
 				"
 			done
 		fi

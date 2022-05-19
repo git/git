@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2010, Jens Lehmann
 
-test_description='Recursive "git fetch" for submodules'
+test_description='Recursive "but fetch" for submodules'
 
 GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
 export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
@@ -57,18 +57,18 @@ add_submodule_cummits () {
 		cd submodule &&
 		echo new >> subfile &&
 		test_tick &&
-		git add subfile &&
-		git cummit -m new subfile &&
-		new_head=$(git rev-parse --short HEAD) &&
+		but add subfile &&
+		but cummit -m new subfile &&
+		new_head=$(but rev-parse --short HEAD) &&
 		write_expected_sub $new_head
 	) &&
 	(
 		cd deepsubmodule &&
 		echo new >> deepsubfile &&
 		test_tick &&
-		git add deepsubfile &&
-		git cummit -m new deepsubfile &&
-		new_head=$(git rev-parse --short HEAD) &&
+		but add deepsubfile &&
+		but cummit -m new deepsubfile &&
+		new_head=$(but rev-parse --short HEAD) &&
 		write_expected_deep $new_head
 	)
 }
@@ -77,22 +77,22 @@ add_submodule_cummits () {
 # submodule and create a new cummit with the submodule change.
 #
 # This requires add_submodule_cummits() to be called first, otherwise
-# the submodules will not have changed and cannot be "git add"-ed.
+# the submodules will not have changed and cannot be "but add"-ed.
 add_superproject_cummits () {
 	(
 		cd submodule &&
 		(
 			cd subdir/deepsubmodule &&
-			git fetch &&
-			git checkout -q FETCH_HEAD
+			but fetch &&
+			but checkout -q FETCH_HEAD
 		) &&
-		git add subdir/deepsubmodule &&
-		git cummit -m "new deep submodule"
+		but add subdir/deepsubmodule &&
+		but cummit -m "new deep submodule"
 	) &&
-	git add submodule &&
-	git cummit -m "new submodule" &&
-	super_head=$(git rev-parse --short HEAD) &&
-	sub_head=$(git -C submodule rev-parse --short HEAD) &&
+	but add submodule &&
+	but cummit -m "new submodule" &&
+	super_head=$(but rev-parse --short HEAD) &&
+	sub_head=$(but -C submodule rev-parse --short HEAD) &&
 	write_expected_super $super_head &&
 	write_expected_sub $sub_head
 }
@@ -130,29 +130,29 @@ test_expect_success setup '
 	mkdir deepsubmodule &&
 	(
 		cd deepsubmodule &&
-		git init &&
+		but init &&
 		echo deepsubcontent > deepsubfile &&
-		git add deepsubfile &&
-		git cummit -m new deepsubfile &&
-		git branch -M deep
+		but add deepsubfile &&
+		but cummit -m new deepsubfile &&
+		but branch -M deep
 	) &&
 	mkdir submodule &&
 	(
 		cd submodule &&
-		git init &&
+		but init &&
 		echo subcontent > subfile &&
-		git add subfile &&
-		git submodule add "$pwd/deepsubmodule" subdir/deepsubmodule &&
-		git cummit -a -m new &&
-		git branch -M sub
+		but add subfile &&
+		but submodule add "$pwd/deepsubmodule" subdir/deepsubmodule &&
+		but cummit -a -m new &&
+		but branch -M sub
 	) &&
-	git submodule add "$pwd/submodule" submodule &&
-	git cummit -am initial &&
-	git branch -M super &&
-	git clone . downstream &&
+	but submodule add "$pwd/submodule" submodule &&
+	but cummit -am initial &&
+	but branch -M super &&
+	but clone . downstream &&
 	(
 		cd downstream &&
-		git submodule update --init --recursive
+		but submodule update --init --recursive
 	)
 '
 
@@ -160,7 +160,7 @@ test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err
+		but fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -170,7 +170,7 @@ test_expect_success "submodule.recurse option triggers recursive fetch" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git -c submodule.recurse fetch >../actual.out 2>../actual.err
+		but -c submodule.recurse fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -180,7 +180,7 @@ test_expect_success "fetch --recurse-submodules -j2 has the same output behaviou
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		GIT_TRACE="$TRASH_DIRECTORY/trace.out" git fetch --recurse-submodules -j2 2>../actual.err
+		GIT_TRACE="$TRASH_DIRECTORY/trace.out" but fetch --recurse-submodules -j2 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err &&
@@ -191,7 +191,7 @@ test_expect_success "fetch alone only fetches superproject" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
@@ -200,48 +200,48 @@ test_expect_success "fetch alone only fetches superproject" '
 test_expect_success "fetch --no-recurse-submodules only fetches superproject" '
 	(
 		cd downstream &&
-		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+		but fetch --no-recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
 '
 
-test_expect_success "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
+test_expect_success "using fetchRecurseSubmodules=true in .butmodules recurses into submodules" '
 	(
 		cd downstream &&
-		git config -f .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
-		git fetch >../actual.out 2>../actual.err
+		but config -f .butmodules submodule.submodule.fetchRecurseSubmodules true &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
 '
 
-test_expect_success "--no-recurse-submodules overrides .gitmodules config" '
+test_expect_success "--no-recurse-submodules overrides .butmodules config" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+		but fetch --no-recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
 '
 
-test_expect_success "using fetchRecurseSubmodules=false in .git/config overrides setting in .gitmodules" '
+test_expect_success "using fetchRecurseSubmodules=false in .but/config overrides setting in .butmodules" '
 	(
 		cd downstream &&
-		git config submodule.submodule.fetchRecurseSubmodules false &&
-		git fetch >../actual.out 2>../actual.err
+		but config submodule.submodule.fetchRecurseSubmodules false &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
 '
 
-test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config" '
+test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setting from .but/config" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err &&
-		git config --unset -f .gitmodules submodule.submodule.fetchRecurseSubmodules &&
-		git config --unset submodule.submodule.fetchRecurseSubmodules
+		but fetch --recurse-submodules >../actual.out 2>../actual.err &&
+		but config --unset -f .butmodules submodule.submodule.fetchRecurseSubmodules &&
+		but config --unset submodule.submodule.fetchRecurseSubmodules
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -250,7 +250,7 @@ test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setti
 test_expect_success "--quiet propagates to submodules" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules --quiet >../actual.out 2>../actual.err
+		but fetch --recurse-submodules --quiet >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
@@ -259,7 +259,7 @@ test_expect_success "--quiet propagates to submodules" '
 test_expect_success "--quiet propagates to parallel submodules" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules -j 2 --quiet  >../actual.out 2>../actual.err
+		but fetch --recurse-submodules -j 2 --quiet  >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
@@ -269,7 +269,7 @@ test_expect_success "--dry-run propagates to submodules" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules --dry-run >../actual.out 2>../actual.err
+		but fetch --recurse-submodules --dry-run >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -278,7 +278,7 @@ test_expect_success "--dry-run propagates to submodules" '
 test_expect_success "Without --dry-run propagates to submodules" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err
+		but fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -288,8 +288,8 @@ test_expect_success "recurseSubmodules=true propagates into submodules" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git config fetch.recurseSubmodules true &&
-		git fetch >../actual.out 2>../actual.err
+		but config fetch.recurseSubmodules true &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -301,9 +301,9 @@ test_expect_success "--recurse-submodules overrides config in submodule" '
 		cd downstream &&
 		(
 			cd submodule &&
-			git config fetch.recurseSubmodules false
+			but config fetch.recurseSubmodules false
 		) &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err
+		but fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -313,8 +313,8 @@ test_expect_success "--no-recurse-submodules overrides config setting" '
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git config fetch.recurseSubmodules true &&
-		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+		but config fetch.recurseSubmodules true &&
+		but fetch --no-recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
@@ -325,24 +325,24 @@ test_expect_success "Recursion doesn't happen when no new cummits are fetched in
 		cd downstream &&
 		(
 			cd submodule &&
-			git config --unset fetch.recurseSubmodules
+			but config --unset fetch.recurseSubmodules
 		) &&
-		git config --unset fetch.recurseSubmodules &&
-		git fetch >../actual.out 2>../actual.err
+		but config --unset fetch.recurseSubmodules &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
 '
 
 test_expect_success "Recursion stops when no new submodule cummits are fetched" '
-	git add submodule &&
-	git cummit -m "new submodule" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add submodule &&
+	but cummit -m "new submodule" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	verify_fetch_result actual.err &&
 	test_must_be_empty actual.out
@@ -351,15 +351,15 @@ test_expect_success "Recursion stops when no new submodule cummits are fetched" 
 test_expect_success "Recursion doesn't happen when new superproject cummits don't change any submodules" '
 	add_submodule_cummits &&
 	echo a > file &&
-	git add file &&
-	git cummit -m "new file" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add file &&
+	but cummit -m "new file" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.sub &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -368,23 +368,23 @@ test_expect_success "Recursion doesn't happen when new superproject cummits don'
 test_expect_success "Recursion picks up config in submodule" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules &&
+		but fetch --recurse-submodules &&
 		(
 			cd submodule &&
-			git config fetch.recurseSubmodules true
+			but config fetch.recurseSubmodules true
 		)
 	) &&
 	add_submodule_cummits &&
-	git add submodule &&
-	git cummit -m "new submodule" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add submodule &&
+	but cummit -m "new submodule" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err &&
+		but fetch >../actual.out 2>../actual.err &&
 		(
 			cd submodule &&
-			git config --unset fetch.recurseSubmodules
+			but config --unset fetch.recurseSubmodules
 		)
 	) &&
 	verify_fetch_result actual.err &&
@@ -396,7 +396,7 @@ test_expect_success "Recursion picks up all submodules when necessary" '
 	add_superproject_cummits &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	verify_fetch_result actual.err &&
 	test_must_be_empty actual.out
@@ -406,9 +406,9 @@ test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no ne
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		git config fetch.recurseSubmodules true &&
-		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
-		git config --unset fetch.recurseSubmodules
+		but config fetch.recurseSubmodules true &&
+		but fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
+		but config --unset fetch.recurseSubmodules
 	) &&
 	test_must_be_empty actual.out &&
 	test_must_be_empty actual.err
@@ -419,16 +419,16 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 	add_superproject_cummits &&
 	(
 		cd downstream &&
-		git config fetch.recurseSubmodules false &&
+		but config fetch.recurseSubmodules false &&
 		(
 			cd submodule &&
-			git config -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive false
+			but config -f .butmodules submodule.subdir/deepsubmodule.fetchRecursive false
 		) &&
-		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
-		git config --unset fetch.recurseSubmodules &&
+		but fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
+		but config --unset fetch.recurseSubmodules &&
 		(
 			cd submodule &&
-			git config --unset -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive
+			but config --unset -f .butmodules submodule.subdir/deepsubmodule.fetchRecursive
 		)
 	) &&
 	test_must_be_empty actual.out &&
@@ -443,11 +443,11 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 test_expect_success 'setup downstream branch without submodules' '
 	(
 		cd downstream &&
-		git checkout --recurse-submodules -b no-submodules &&
-		git rm .gitmodules &&
-		git rm submodule &&
-		git cummit -m "no submodules" &&
-		git checkout --recurse-submodules super
+		but checkout --recurse-submodules -b no-submodules &&
+		but rm .butmodules &&
+		but rm submodule &&
+		but cummit -m "no submodules" &&
+		but checkout --recurse-submodules super
 	)
 '
 
@@ -457,12 +457,12 @@ test_expect_success "'--recurse-submodules=on-demand' should fetch submodule cum
 	# Fetch the new superproject cummit
 	(
 		cd downstream &&
-		git switch --recurse-submodules no-submodules &&
-		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
+		but switch --recurse-submodules no-submodules &&
+		but fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
 	) &&
-	super_head=$(git rev-parse --short HEAD) &&
-	sub_head=$(git -C submodule rev-parse --short HEAD) &&
-	deep_head=$(git -C submodule/subdir/deepsubmodule rev-parse --short HEAD) &&
+	super_head=$(but rev-parse --short HEAD) &&
+	sub_head=$(but -C submodule rev-parse --short HEAD) &&
+	deep_head=$(but -C submodule/subdir/deepsubmodule rev-parse --short HEAD) &&
 
 	# assert that these are fetched from cummits, not the index
 	write_expected_sub $sub_head $super_head &&
@@ -478,12 +478,12 @@ test_expect_success "'--recurse-submodules' should fetch submodule cummits if th
 	# Fetch the new superproject cummit
 	(
 		cd downstream &&
-		git switch --recurse-submodules no-submodules &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err
+		but switch --recurse-submodules no-submodules &&
+		but fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
-	super_head=$(git rev-parse --short HEAD) &&
-	sub_head=$(git -C submodule rev-parse --short HEAD) &&
-	deep_head=$(git -C submodule/subdir/deepsubmodule rev-parse --short HEAD) &&
+	super_head=$(but rev-parse --short HEAD) &&
+	sub_head=$(but -C submodule rev-parse --short HEAD) &&
+	deep_head=$(but -C submodule/subdir/deepsubmodule rev-parse --short HEAD) &&
 
 	# assert that these are fetched from cummits, not the index
 	write_expected_sub $sub_head $super_head &&
@@ -500,11 +500,11 @@ test_expect_success "'--recurse-submodules' should ignore changed, inactive subm
 	# Fetch the new superproject cummit
 	(
 		cd downstream &&
-		git switch --recurse-submodules no-submodules &&
-		git -c submodule.submodule.active=false fetch --recurse-submodules >../actual.out 2>../actual.err
+		but switch --recurse-submodules no-submodules &&
+		but -c submodule.submodule.active=false fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
-	super_head=$(git rev-parse --short HEAD) &&
+	super_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $super_head &&
 	# Neither should be fetched because the submodule is inactive
 	rm expect.err.sub &&
@@ -519,24 +519,24 @@ test_expect_success 'setup downstream branch with other submodule' '
 	mkdir submodule2 &&
 	(
 		cd submodule2 &&
-		git init &&
+		but init &&
 		echo sub2content >sub2file &&
-		git add sub2file &&
-		git cummit -a -m new &&
-		git branch -M sub2
+		but add sub2file &&
+		but cummit -a -m new &&
+		but branch -M sub2
 	) &&
-	git checkout -b super-sub2-only &&
-	git submodule add "$pwd/submodule2" submodule2 &&
-	git cummit -m "add sub2" &&
-	git checkout super &&
+	but checkout -b super-sub2-only &&
+	but submodule add "$pwd/submodule2" submodule2 &&
+	but cummit -m "add sub2" &&
+	but checkout super &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin &&
-		git checkout super-sub2-only &&
-		# Explicitly run "git submodule update" because sub2 is new
+		but fetch --recurse-submodules origin &&
+		but checkout super-sub2-only &&
+		# Explicitly run "but submodule update" because sub2 is new
 		# and has not been cloned.
-		git submodule update --init &&
-		git checkout --recurse-submodules super
+		but submodule update --init &&
+		but checkout --recurse-submodules super
 	)
 '
 
@@ -547,23 +547,23 @@ test_expect_success "'--recurse-submodules' should fetch submodule cummits in ch
 	add_superproject_cummits &&
 
 	# Create new cummit in origin/super-sub2-only
-	git checkout super-sub2-only &&
+	but checkout super-sub2-only &&
 	(
 		cd submodule2 &&
 		test_cummit --no-tag foo
 	) &&
-	git add submodule2 &&
-	git cummit -m "new submodule2" &&
+	but add submodule2 &&
+	but cummit -m "new submodule2" &&
 
-	git checkout super &&
+	but checkout super &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules >../actual.out 2>../actual.err
+		but fetch --recurse-submodules >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
-	sub2_head=$(git -C submodule2 rev-parse --short HEAD) &&
-	super_head=$(git rev-parse --short super) &&
-	super_sub2_only_head=$(git rev-parse --short super-sub2-only) &&
+	sub2_head=$(but -C submodule2 rev-parse --short HEAD) &&
+	super_head=$(but rev-parse --short super) &&
+	super_sub2_only_head=$(but rev-parse --short super-sub2-only) &&
 	write_expected_sub2 $sub2_head $super_sub2_only_head &&
 
 	# write_expected_super cannot handle >1 branch. Since this is a
@@ -579,15 +579,15 @@ test_expect_success "'--recurse-submodules' should fetch submodule cummits in ch
 test_expect_success "'--recurse-submodules=on-demand' stops when no new submodule cummits are found in the superproject (and ignores config)" '
 	add_submodule_cummits &&
 	echo a >> file &&
-	git add file &&
-	git cummit -m "new file" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add file &&
+	but cummit -m "new file" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.sub &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
+		but fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -596,24 +596,24 @@ test_expect_success "'--recurse-submodules=on-demand' stops when no new submodul
 test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules
+		but fetch --recurse-submodules
 	) &&
 	add_submodule_cummits &&
-	git config --global fetch.recurseSubmodules false &&
-	git add submodule &&
-	git cummit -m "new submodule" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but config --global fetch.recurseSubmodules false &&
+	but add submodule &&
+	but cummit -m "new submodule" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		git config fetch.recurseSubmodules on-demand &&
-		git fetch >../actual.out 2>../actual.err
+		but config fetch.recurseSubmodules on-demand &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
-	git config --global --unset fetch.recurseSubmodules &&
+	but config --global --unset fetch.recurseSubmodules &&
 	(
 		cd downstream &&
-		git config --unset fetch.recurseSubmodules
+		but config --unset fetch.recurseSubmodules
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -622,24 +622,24 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config
 test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' overrides fetch.recurseSubmodules" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules
+		but fetch --recurse-submodules
 	) &&
 	add_submodule_cummits &&
-	git config fetch.recurseSubmodules false &&
-	git add submodule &&
-	git cummit -m "new submodule" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but config fetch.recurseSubmodules false &&
+	but add submodule &&
+	but cummit -m "new submodule" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		git config submodule.submodule.fetchRecurseSubmodules on-demand &&
-		git fetch >../actual.out 2>../actual.err
+		but config submodule.submodule.fetchRecurseSubmodules on-demand &&
+		but fetch >../actual.out 2>../actual.err
 	) &&
-	git config --unset fetch.recurseSubmodules &&
+	but config --unset fetch.recurseSubmodules &&
 	(
 		cd downstream &&
-		git config --unset submodule.submodule.fetchRecurseSubmodules
+		but config --unset submodule.submodule.fetchRecurseSubmodules
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err
@@ -648,137 +648,137 @@ test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' override
 test_expect_success "don't fetch submodule when newly recorded cummits are already present" '
 	(
 		cd submodule &&
-		git checkout -q HEAD^^
+		but checkout -q HEAD^^
 	) &&
-	git add submodule &&
-	git cummit -m "submodule rewound" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add submodule &&
+	but cummit -m "submodule rewound" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.sub &&
 	# This file does not exist, but rm -f for readability
 	rm -f expect.err.deep &&
 	(
 		cd downstream &&
-		git fetch >../actual.out 2>../actual.err
+		but fetch >../actual.out 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err &&
 	(
 		cd submodule &&
-		git checkout -q sub
+		but checkout -q sub
 	)
 '
 
-test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .gitmodules entry" '
+test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .butmodules entry" '
 	(
 		cd downstream &&
-		git fetch --recurse-submodules
+		but fetch --recurse-submodules
 	) &&
 	add_submodule_cummits &&
-	git add submodule &&
-	git rm .gitmodules &&
-	git cummit -m "new submodule without .gitmodules" &&
-	new_head=$(git rev-parse --short HEAD) &&
+	but add submodule &&
+	but rm .butmodules &&
+	but cummit -m "new submodule without .butmodules" &&
+	new_head=$(but rev-parse --short HEAD) &&
 	write_expected_super $new_head &&
 	rm expect.err.deep &&
 	(
 		cd downstream &&
-		rm .gitmodules &&
-		git config fetch.recurseSubmodules on-demand &&
+		rm .butmodules &&
+		but config fetch.recurseSubmodules on-demand &&
 		# fake submodule configuration to avoid skipping submodule handling
-		git config -f .gitmodules submodule.fake.path fake &&
-		git config -f .gitmodules submodule.fake.url fakeurl &&
-		git add .gitmodules &&
-		git config --unset submodule.submodule.url &&
-		git fetch >../actual.out 2>../actual.err &&
+		but config -f .butmodules submodule.fake.path fake &&
+		but config -f .butmodules submodule.fake.url fakeurl &&
+		but add .butmodules &&
+		but config --unset submodule.submodule.url &&
+		but fetch >../actual.out 2>../actual.err &&
 		# cleanup
-		git config --unset fetch.recurseSubmodules &&
-		git reset --hard
+		but config --unset fetch.recurseSubmodules &&
+		but reset --hard
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err &&
-	git checkout HEAD^ -- .gitmodules &&
-	git add .gitmodules &&
-	git cummit -m "new submodule restored .gitmodules"
+	but checkout HEAD^ -- .butmodules &&
+	but add .butmodules &&
+	but cummit -m "new submodule restored .butmodules"
 '
 
 test_expect_success 'fetching submodules respects parallel settings' '
-	git config fetch.recurseSubmodules true &&
+	but config fetch.recurseSubmodules true &&
 	(
 		cd downstream &&
-		GIT_TRACE=$(pwd)/trace.out git fetch &&
+		GIT_TRACE=$(pwd)/trace.out but fetch &&
 		grep "1 tasks" trace.out &&
-		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 7 &&
+		GIT_TRACE=$(pwd)/trace.out but fetch --jobs 7 &&
 		grep "7 tasks" trace.out &&
-		git config submodule.fetchJobs 8 &&
-		GIT_TRACE=$(pwd)/trace.out git fetch &&
+		but config submodule.fetchJobs 8 &&
+		GIT_TRACE=$(pwd)/trace.out but fetch &&
 		grep "8 tasks" trace.out &&
-		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 9 &&
+		GIT_TRACE=$(pwd)/trace.out but fetch --jobs 9 &&
 		grep "9 tasks" trace.out
 	)
 '
 
 test_expect_success 'fetching submodule into a broken repository' '
 	# Prepare src and src/sub nested in it
-	git init src &&
+	but init src &&
 	(
 		cd src &&
-		git init sub &&
-		git -C sub cummit --allow-empty -m "initial in sub" &&
-		git submodule add -- ./sub sub &&
-		git cummit -m "initial in top"
+		but init sub &&
+		but -C sub cummit --allow-empty -m "initial in sub" &&
+		but submodule add -- ./sub sub &&
+		but cummit -m "initial in top"
 	) &&
 
 	# Clone the old-fashoned way
-	git clone src dst &&
-	git -C dst clone ../src/sub sub &&
+	but clone src dst &&
+	but -C dst clone ../src/sub sub &&
 
 	# Make sure that old-fashoned layout is still supported
-	git -C dst status &&
+	but -C dst status &&
 
 	# "diff" would find no change
-	git -C dst diff --exit-code &&
+	but -C dst diff --exit-code &&
 
 	# Recursive-fetch works fine
-	git -C dst fetch --recurse-submodules &&
+	but -C dst fetch --recurse-submodules &&
 
 	# Break the receiving submodule
-	rm -f dst/sub/.git/HEAD &&
+	rm -f dst/sub/.but/HEAD &&
 
 	# NOTE: without the fix the following tests will recurse forever!
 	# They should terminate with an error.
 
-	test_must_fail git -C dst status &&
-	test_must_fail git -C dst diff &&
-	test_must_fail git -C dst fetch --recurse-submodules
+	test_must_fail but -C dst status &&
+	test_must_fail but -C dst diff &&
+	test_must_fail but -C dst fetch --recurse-submodules
 '
 
 test_expect_success "fetch new cummits when submodule got renamed" '
-	git clone . downstream_rename &&
+	but clone . downstream_rename &&
 	(
 		cd downstream_rename &&
-		git submodule update --init --recursive &&
-		git checkout -b rename &&
-		git mv submodule submodule_renamed &&
+		but submodule update --init --recursive &&
+		but checkout -b rename &&
+		but mv submodule submodule_renamed &&
 		(
 			cd submodule_renamed &&
-			git checkout -b rename_sub &&
+			but checkout -b rename_sub &&
 			echo a >a &&
-			git add a &&
-			git cummit -ma &&
-			git push origin rename_sub &&
-			git rev-parse HEAD >../../expect
+			but add a &&
+			but cummit -ma &&
+			but push origin rename_sub &&
+			but rev-parse HEAD >../../expect
 		) &&
-		git add submodule_renamed &&
-		git cummit -m "update renamed submodule" &&
-		git push origin rename
+		but add submodule_renamed &&
+		but cummit -m "update renamed submodule" &&
+		but push origin rename
 	) &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules=on-demand &&
+		but fetch --recurse-submodules=on-demand &&
 		(
 			cd submodule &&
-			git rev-parse origin/rename_sub >../../actual
+			but rev-parse origin/rename_sub >../../actual
 		)
 	) &&
 	test_cmp expect actual
@@ -786,118 +786,118 @@ test_expect_success "fetch new cummits when submodule got renamed" '
 
 test_expect_success "fetch new submodule cummits on-demand outside standard refspec" '
 	# add a second submodule and ensure it is around in downstream first
-	git clone submodule sub1 &&
-	git submodule add ./sub1 &&
-	git cummit -m "adding a second submodule" &&
-	git -C downstream pull &&
-	git -C downstream submodule update --init --recursive &&
+	but clone submodule sub1 &&
+	but submodule add ./sub1 &&
+	but cummit -m "adding a second submodule" &&
+	but -C downstream pull &&
+	but -C downstream submodule update --init --recursive &&
 
-	git checkout --detach &&
+	but checkout --detach &&
 
-	C=$(git -C submodule cummit-tree -m "new change outside refs/heads" HEAD^{tree}) &&
-	git -C submodule update-ref refs/changes/1 $C &&
-	git update-index --cacheinfo 160000 $C submodule &&
+	C=$(but -C submodule cummit-tree -m "new change outside refs/heads" HEAD^{tree}) &&
+	but -C submodule update-ref refs/changes/1 $C &&
+	but update-index --cacheinfo 160000 $C submodule &&
 	test_tick &&
 
-	D=$(git -C sub1 cummit-tree -m "new change outside refs/heads" HEAD^{tree}) &&
-	git -C sub1 update-ref refs/changes/2 $D &&
-	git update-index --cacheinfo 160000 $D sub1 &&
+	D=$(but -C sub1 cummit-tree -m "new change outside refs/heads" HEAD^{tree}) &&
+	but -C sub1 update-ref refs/changes/2 $D &&
+	but update-index --cacheinfo 160000 $D sub1 &&
 
-	git cummit -m "updated submodules outside of refs/heads" &&
-	E=$(git rev-parse HEAD) &&
-	git update-ref refs/changes/3 $E &&
+	but cummit -m "updated submodules outside of refs/heads" &&
+	E=$(but rev-parse HEAD) &&
+	but update-ref refs/changes/3 $E &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin refs/changes/3:refs/heads/my_branch &&
-		git -C submodule cat-file -t $C &&
-		git -C sub1 cat-file -t $D &&
-		git checkout --recurse-submodules FETCH_HEAD
+		but fetch --recurse-submodules origin refs/changes/3:refs/heads/my_branch &&
+		but -C submodule cat-file -t $C &&
+		but -C sub1 cat-file -t $D &&
+		but checkout --recurse-submodules FETCH_HEAD
 	)
 '
 
 test_expect_success 'fetch new submodule cummit on-demand in FETCH_HEAD' '
 	# depends on the previous test for setup
 
-	C=$(git -C submodule cummit-tree -m "another change outside refs/heads" HEAD^{tree}) &&
-	git -C submodule update-ref refs/changes/4 $C &&
-	git update-index --cacheinfo 160000 $C submodule &&
+	C=$(but -C submodule cummit-tree -m "another change outside refs/heads" HEAD^{tree}) &&
+	but -C submodule update-ref refs/changes/4 $C &&
+	but update-index --cacheinfo 160000 $C submodule &&
 	test_tick &&
 
-	D=$(git -C sub1 cummit-tree -m "another change outside refs/heads" HEAD^{tree}) &&
-	git -C sub1 update-ref refs/changes/5 $D &&
-	git update-index --cacheinfo 160000 $D sub1 &&
+	D=$(but -C sub1 cummit-tree -m "another change outside refs/heads" HEAD^{tree}) &&
+	but -C sub1 update-ref refs/changes/5 $D &&
+	but update-index --cacheinfo 160000 $D sub1 &&
 
-	git cummit -m "updated submodules outside of refs/heads" &&
-	E=$(git rev-parse HEAD) &&
-	git update-ref refs/changes/6 $E &&
+	but cummit -m "updated submodules outside of refs/heads" &&
+	E=$(but rev-parse HEAD) &&
+	but update-ref refs/changes/6 $E &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin refs/changes/6 &&
-		git -C submodule cat-file -t $C &&
-		git -C sub1 cat-file -t $D &&
-		git checkout --recurse-submodules FETCH_HEAD
+		but fetch --recurse-submodules origin refs/changes/6 &&
+		but -C submodule cat-file -t $C &&
+		but -C sub1 cat-file -t $D &&
+		but checkout --recurse-submodules FETCH_HEAD
 	)
 '
 
-test_expect_success 'fetch new submodule cummits on-demand without .gitmodules entry' '
+test_expect_success 'fetch new submodule cummits on-demand without .butmodules entry' '
 	# depends on the previous test for setup
 
-	git config -f .gitmodules --remove-section submodule.sub1 &&
-	git add .gitmodules &&
-	git cummit -m "delete gitmodules file" &&
-	git checkout -B super &&
-	git -C downstream fetch &&
-	git -C downstream checkout origin/super &&
+	but config -f .butmodules --remove-section submodule.sub1 &&
+	but add .butmodules &&
+	but cummit -m "delete butmodules file" &&
+	but checkout -B super &&
+	but -C downstream fetch &&
+	but -C downstream checkout origin/super &&
 
-	C=$(git -C submodule cummit-tree -m "yet another change outside refs/heads" HEAD^{tree}) &&
-	git -C submodule update-ref refs/changes/7 $C &&
-	git update-index --cacheinfo 160000 $C submodule &&
+	C=$(but -C submodule cummit-tree -m "yet another change outside refs/heads" HEAD^{tree}) &&
+	but -C submodule update-ref refs/changes/7 $C &&
+	but update-index --cacheinfo 160000 $C submodule &&
 	test_tick &&
 
-	D=$(git -C sub1 cummit-tree -m "yet another change outside refs/heads" HEAD^{tree}) &&
-	git -C sub1 update-ref refs/changes/8 $D &&
-	git update-index --cacheinfo 160000 $D sub1 &&
+	D=$(but -C sub1 cummit-tree -m "yet another change outside refs/heads" HEAD^{tree}) &&
+	but -C sub1 update-ref refs/changes/8 $D &&
+	but update-index --cacheinfo 160000 $D sub1 &&
 
-	git cummit -m "updated submodules outside of refs/heads" &&
-	E=$(git rev-parse HEAD) &&
-	git update-ref refs/changes/9 $E &&
+	but cummit -m "updated submodules outside of refs/heads" &&
+	E=$(but rev-parse HEAD) &&
+	but update-ref refs/changes/9 $E &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin refs/changes/9 &&
-		git -C submodule cat-file -t $C &&
-		git -C sub1 cat-file -t $D &&
-		git checkout --recurse-submodules FETCH_HEAD
+		but fetch --recurse-submodules origin refs/changes/9 &&
+		but -C submodule cat-file -t $C &&
+		but -C sub1 cat-file -t $D &&
+		but checkout --recurse-submodules FETCH_HEAD
 	)
 '
 
 test_expect_success 'fetch new submodule cummit intermittently referenced by superproject' '
 	# depends on the previous test for setup
 
-	D=$(git -C sub1 cummit-tree -m "change 10 outside refs/heads" HEAD^{tree}) &&
-	E=$(git -C sub1 cummit-tree -m "change 11 outside refs/heads" HEAD^{tree}) &&
-	F=$(git -C sub1 cummit-tree -m "change 12 outside refs/heads" HEAD^{tree}) &&
+	D=$(but -C sub1 cummit-tree -m "change 10 outside refs/heads" HEAD^{tree}) &&
+	E=$(but -C sub1 cummit-tree -m "change 11 outside refs/heads" HEAD^{tree}) &&
+	F=$(but -C sub1 cummit-tree -m "change 12 outside refs/heads" HEAD^{tree}) &&
 
-	git -C sub1 update-ref refs/changes/10 $D &&
-	git update-index --cacheinfo 160000 $D sub1 &&
-	git cummit -m "updated submodules outside of refs/heads" &&
+	but -C sub1 update-ref refs/changes/10 $D &&
+	but update-index --cacheinfo 160000 $D sub1 &&
+	but cummit -m "updated submodules outside of refs/heads" &&
 
-	git -C sub1 update-ref refs/changes/11 $E &&
-	git update-index --cacheinfo 160000 $E sub1 &&
-	git cummit -m "updated submodules outside of refs/heads" &&
+	but -C sub1 update-ref refs/changes/11 $E &&
+	but update-index --cacheinfo 160000 $E sub1 &&
+	but cummit -m "updated submodules outside of refs/heads" &&
 
-	git -C sub1 update-ref refs/changes/12 $F &&
-	git update-index --cacheinfo 160000 $F sub1 &&
-	git cummit -m "updated submodules outside of refs/heads" &&
+	but -C sub1 update-ref refs/changes/12 $F &&
+	but update-index --cacheinfo 160000 $F sub1 &&
+	but cummit -m "updated submodules outside of refs/heads" &&
 
-	G=$(git rev-parse HEAD) &&
-	git update-ref refs/changes/13 $G &&
+	G=$(but rev-parse HEAD) &&
+	but update-ref refs/changes/13 $G &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin refs/changes/13 &&
+		but fetch --recurse-submodules origin refs/changes/13 &&
 
-		git -C sub1 cat-file -t $D &&
-		git -C sub1 cat-file -t $E &&
-		git -C sub1 cat-file -t $F
+		but -C sub1 cat-file -t $D &&
+		but -C sub1 cat-file -t $E &&
+		but -C sub1 cat-file -t $F
 	)
 '
 
@@ -905,9 +905,9 @@ add_cummit_push () {
 	dir="$1" &&
 	msg="$2" &&
 	shift 2 &&
-	git -C "$dir" add "$@" &&
-	git -C "$dir" cummit -a -m "$msg" &&
-	git -C "$dir" push
+	but -C "$dir" add "$@" &&
+	but -C "$dir" cummit -a -m "$msg" &&
+	but -C "$dir" push
 }
 
 compare_refs_in_dir () {
@@ -917,8 +917,8 @@ compare_refs_in_dir () {
 		fail='!' &&
 		shift
 	fi &&
-	git -C "$1" rev-parse --verify "$2" >expect &&
-	git -C "$3" rev-parse --verify "$4" >actual &&
+	but -C "$1" rev-parse --verify "$2" >expect &&
+	but -C "$3" rev-parse --verify "$4" >actual &&
 	eval $fail test_cmp expect actual
 }
 
@@ -928,21 +928,21 @@ test_expect_success 'setup nested submodule fetch test' '
 
 	for repo in outer middle inner
 	do
-		git init --bare $repo &&
-		git clone $repo ${repo}_content &&
+		but init --bare $repo &&
+		but clone $repo ${repo}_content &&
 		echo "$repo" >"${repo}_content/file" &&
 		add_cummit_push ${repo}_content "initial" file ||
 		return 1
 	done &&
 
-	git clone outer A &&
-	git -C A submodule add "$pwd/middle" &&
-	git -C A/middle/ submodule add "$pwd/inner" &&
-	add_cummit_push A/middle/ "adding inner sub" .gitmodules inner &&
-	add_cummit_push A/ "adding middle sub" .gitmodules middle &&
+	but clone outer A &&
+	but -C A submodule add "$pwd/middle" &&
+	but -C A/middle/ submodule add "$pwd/inner" &&
+	add_cummit_push A/middle/ "adding inner sub" .butmodules inner &&
+	add_cummit_push A/ "adding middle sub" .butmodules middle &&
 
-	git clone outer B &&
-	git -C B/ submodule update --init middle &&
+	but clone outer B &&
+	but -C B/ submodule update --init middle &&
 
 	compare_refs_in_dir A HEAD B HEAD &&
 	compare_refs_in_dir A/middle HEAD B/middle HEAD &&
@@ -959,22 +959,22 @@ test_expect_success 'setup nested submodule fetch test' '
 test_expect_success 'fetching a superproject containing an uninitialized sub/sub project' '
 	# depends on previous test for setup
 
-	git -C B/ fetch &&
+	but -C B/ fetch &&
 	compare_refs_in_dir A origin/HEAD B origin/HEAD
 '
 
 fetch_with_recursion_abort () {
-	# In a regression the following git call will run into infinite recursion.
-	# To handle that, we connect the sed command to the git call by a pipe
+	# In a regression the following but call will run into infinite recursion.
+	# To handle that, we connect the sed command to the but call by a pipe
 	# so that sed can kill the infinite recursion when detected.
-	# The recursion creates git output like:
+	# The recursion creates but output like:
 	# Fetching submodule sub
 	# Fetching submodule sub/sub              <-- [1]
 	# Fetching submodule sub/sub/sub
 	# ...
-	# [1] sed will stop reading and cause git to eventually stop and die
+	# [1] sed will stop reading and cause but to eventually stop and die
 
-	git -C "$1" fetch --recurse-submodules 2>&1 |
+	but -C "$1" fetch --recurse-submodules 2>&1 |
 		sed "/Fetching submodule $2[^$]/q" >out &&
 	! grep "Fetching submodule $2[^$]" out
 }
@@ -986,13 +986,13 @@ test_expect_success 'setup recursive fetch with uninit submodule' '
 	test_cummit -C super initial &&
 	test_create_repo sub &&
 	test_cummit -C sub initial &&
-	git -C sub rev-parse HEAD >expect &&
+	but -C sub rev-parse HEAD >expect &&
 
-	git -C super submodule add ../sub &&
-	git -C super cummit -m "add sub" &&
+	but -C super submodule add ../sub &&
+	but -C super cummit -m "add sub" &&
 
-	git clone super superclone &&
-	git -C superclone submodule status >out &&
+	but clone super superclone &&
+	but -C superclone submodule status >out &&
 	sed -e "s/^-//" -e "s/ sub.*$//" out >actual &&
 	test_cmp expect actual
 '
@@ -1001,7 +1001,7 @@ test_expect_success 'recursive fetch with uninit submodule' '
 	# depends on previous test for setup
 
 	fetch_with_recursion_abort superclone sub &&
-	git -C superclone submodule status >out &&
+	but -C superclone submodule status >out &&
 	sed -e "s/^-//" -e "s/ sub$//" out >actual &&
 	test_cmp expect actual
 '
@@ -1009,11 +1009,11 @@ test_expect_success 'recursive fetch with uninit submodule' '
 test_expect_success 'recursive fetch after deinit a submodule' '
 	# depends on previous test for setup
 
-	git -C superclone submodule update --init sub &&
-	git -C superclone submodule deinit -f sub &&
+	but -C superclone submodule update --init sub &&
+	but -C superclone submodule deinit -f sub &&
 
 	fetch_with_recursion_abort superclone sub &&
-	git -C superclone submodule status >out &&
+	but -C superclone submodule status >out &&
 	sed -e "s/^-//" -e "s/ sub$//" out >actual &&
 	test_cmp expect actual
 '
@@ -1022,106 +1022,106 @@ test_expect_success 'setup repo with upstreams that share a submodule name' '
 	mkdir same-name-1 &&
 	(
 		cd same-name-1 &&
-		git init -b main &&
+		but init -b main &&
 		test_cummit --no-tag a
 	) &&
-	git clone same-name-1 same-name-2 &&
+	but clone same-name-1 same-name-2 &&
 	# same-name-1 and same-name-2 both add a submodule with the
 	# name "submodule"
 	(
 		cd same-name-1 &&
 		mkdir submodule &&
-		git -C submodule init -b main &&
+		but -C submodule init -b main &&
 		test_cummit -C submodule --no-tag a1 &&
-		git submodule add "$pwd/same-name-1/submodule" &&
-		git add submodule &&
-		git cummit -m "super-a1"
+		but submodule add "$pwd/same-name-1/submodule" &&
+		but add submodule &&
+		but cummit -m "super-a1"
 	) &&
 	(
 		cd same-name-2 &&
 		mkdir submodule &&
-		git -C submodule init -b main &&
+		but -C submodule init -b main &&
 		test_cummit -C submodule --no-tag a2 &&
-		git submodule add "$pwd/same-name-2/submodule" &&
-		git add submodule &&
-		git cummit -m "super-a2"
+		but submodule add "$pwd/same-name-2/submodule" &&
+		but add submodule &&
+		but cummit -m "super-a2"
 	) &&
-	git clone same-name-1 -o same-name-1 same-name-downstream &&
+	but clone same-name-1 -o same-name-1 same-name-downstream &&
 	(
 		cd same-name-downstream &&
-		git remote add same-name-2 ../same-name-2 &&
-		git fetch --all &&
+		but remote add same-name-2 ../same-name-2 &&
+		but fetch --all &&
 		# init downstream with same-name-1
-		git submodule update --init
+		but submodule update --init
 	)
 '
 
 test_expect_success 'fetch --recurse-submodules updates name-conflicted, populated submodule' '
-	test_when_finished "git -C same-name-downstream checkout main" &&
+	test_when_finished "but -C same-name-downstream checkout main" &&
 	(
 		cd same-name-1 &&
 		test_cummit -C submodule --no-tag b1 &&
-		git add submodule &&
-		git cummit -m "super-b1"
+		but add submodule &&
+		but cummit -m "super-b1"
 	) &&
 	(
 		cd same-name-2 &&
 		test_cummit -C submodule --no-tag b2 &&
-		git add submodule &&
-		git cummit -m "super-b2"
+		but add submodule &&
+		but cummit -m "super-b2"
 	) &&
 	(
 		cd same-name-downstream &&
-		# even though the .gitmodules is correct, we cannot
+		# even though the .butmodules is correct, we cannot
 		# fetch from same-name-2
-		git checkout same-name-2/main &&
-		git fetch --recurse-submodules same-name-1 &&
-		test_must_fail git fetch --recurse-submodules same-name-2
+		but checkout same-name-2/main &&
+		but fetch --recurse-submodules same-name-1 &&
+		test_must_fail but fetch --recurse-submodules same-name-2
 	) &&
-	super_head1=$(git -C same-name-1 rev-parse HEAD) &&
-	git -C same-name-downstream cat-file -e $super_head1 &&
+	super_head1=$(but -C same-name-1 rev-parse HEAD) &&
+	but -C same-name-downstream cat-file -e $super_head1 &&
 
-	super_head2=$(git -C same-name-2 rev-parse HEAD) &&
-	git -C same-name-downstream cat-file -e $super_head2 &&
+	super_head2=$(but -C same-name-2 rev-parse HEAD) &&
+	but -C same-name-downstream cat-file -e $super_head2 &&
 
-	sub_head1=$(git -C same-name-1/submodule rev-parse HEAD) &&
-	git -C same-name-downstream/submodule cat-file -e $sub_head1 &&
+	sub_head1=$(but -C same-name-1/submodule rev-parse HEAD) &&
+	but -C same-name-downstream/submodule cat-file -e $sub_head1 &&
 
-	sub_head2=$(git -C same-name-2/submodule rev-parse HEAD) &&
-	test_must_fail git -C same-name-downstream/submodule cat-file -e $sub_head2
+	sub_head2=$(but -C same-name-2/submodule rev-parse HEAD) &&
+	test_must_fail but -C same-name-downstream/submodule cat-file -e $sub_head2
 '
 
 test_expect_success 'fetch --recurse-submodules updates name-conflicted, unpopulated submodule' '
 	(
 		cd same-name-1 &&
 		test_cummit -C submodule --no-tag c1 &&
-		git add submodule &&
-		git cummit -m "super-c1"
+		but add submodule &&
+		but cummit -m "super-c1"
 	) &&
 	(
 		cd same-name-2 &&
 		test_cummit -C submodule --no-tag c2 &&
-		git add submodule &&
-		git cummit -m "super-c2"
+		but add submodule &&
+		but cummit -m "super-c2"
 	) &&
 	(
 		cd same-name-downstream &&
-		git checkout main &&
-		git rm .gitmodules &&
-		git rm submodule &&
-		git cummit -m "no submodules" &&
-		git fetch --recurse-submodules same-name-1
+		but checkout main &&
+		but rm .butmodules &&
+		but rm submodule &&
+		but cummit -m "no submodules" &&
+		but fetch --recurse-submodules same-name-1
 	) &&
-	head1=$(git -C same-name-1/submodule rev-parse HEAD) &&
-	head2=$(git -C same-name-2/submodule rev-parse HEAD) &&
+	head1=$(but -C same-name-1/submodule rev-parse HEAD) &&
+	head2=$(but -C same-name-2/submodule rev-parse HEAD) &&
 	(
-		cd same-name-downstream/.git/modules/submodule &&
-		# The submodule has core.worktree pointing to the "git
+		cd same-name-downstream/.but/modules/submodule &&
+		# The submodule has core.worktree pointing to the "but
 		# rm"-ed directory, overwrite the invalid value. See
 		# comment in get_fetch_task_from_changed() for more
 		# information.
-		git --work-tree=. cat-file -e $head1 &&
-		test_must_fail git --work-tree=. cat-file -e $head2
+		but --work-tree=. cat-file -e $head1 &&
+		test_must_fail but --work-tree=. cat-file -e $head2
 	)
 '
 

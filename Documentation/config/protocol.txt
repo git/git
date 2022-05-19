@@ -1,7 +1,7 @@
 protocol.allow::
 	If set, provide a user defined default policy for all protocols which
 	don't explicitly have a policy (`protocol.<name>.allow`).  By default,
-	if unset, known-safe protocols (http, https, git, ssh, file) have a
+	if unset, known-safe protocols (http, https, but, ssh, file) have a
 	default policy of `always`, known-dangerous protocols (ext) have a
 	default policy of `never`, and all other protocols have a default
 	policy of `user`.  Supported policies:
@@ -24,24 +24,24 @@ protocol.<name>.allow::
 	Set a policy to be used by protocol `<name>` with clone/fetch/push
 	commands. See `protocol.allow` above for the available policies.
 +
-The protocol names currently used by git are:
+The protocol names currently used by but are:
 +
 --
   - `file`: any local file-based path (including `file://` URLs,
     or local paths)
 
-  - `git`: the anonymous git protocol over a direct TCP
+  - `but`: the anonymous but protocol over a direct TCP
     connection (or proxy, if configured)
 
-  - `ssh`: git over ssh (including `host:path` syntax,
+  - `ssh`: but over ssh (including `host:path` syntax,
     `ssh://`, etc).
 
-  - `http`: git over http, both "smart http" and "dumb http".
+  - `http`: but over http, both "smart http" and "dumb http".
     Note that this does _not_ include `https`; if you want to configure
     both, you must do so individually.
 
   - any external helpers are named by their protocol (e.g., use
-    `hg` to allow the `git-remote-hg` helper)
+    `hg` to allow the `but-remote-hg` helper)
 --
 
 protocol.version::

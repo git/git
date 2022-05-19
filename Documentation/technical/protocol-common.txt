@@ -21,7 +21,7 @@ We also define the following common rules:
 ----
 
 A refname is a hierarchical octet string beginning with "refs/" and
-not violating the 'git-check-ref-format' command's validation rules.
+not violating the 'but-check-ref-format' command's validation rules.
 More specifically, they:
 
 . They can include slash `/` for hierarchical (directory)

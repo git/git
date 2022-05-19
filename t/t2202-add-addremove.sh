@@ -1,54 +1,54 @@
 #!/bin/sh
 
-test_description='git add --all'
+test_description='but add --all'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
 	(
-		echo .gitignore &&
+		echo .butignore &&
 		echo will-remove
 	) >expect &&
 	(
 		echo actual &&
 		echo expect &&
 		echo ignored
-	) >.gitignore &&
-	git --literal-pathspecs add --all &&
+	) >.butignore &&
+	but --literal-pathspecs add --all &&
 	>will-remove &&
-	git add --all &&
+	but add --all &&
 	test_tick &&
-	git cummit -m initial &&
-	git ls-files >actual &&
+	but cummit -m initial &&
+	but ls-files >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git add --all' '
+test_expect_success 'but add --all' '
 	(
-		echo .gitignore &&
+		echo .butignore &&
 		echo not-ignored &&
-		echo "M	.gitignore" &&
+		echo "M	.butignore" &&
 		echo "A	not-ignored" &&
 		echo "D	will-remove"
 	) >expect &&
 	>ignored &&
 	>not-ignored &&
-	echo modification >>.gitignore &&
+	echo modification >>.butignore &&
 	rm -f will-remove &&
-	git add --all &&
-	git update-index --refresh &&
-	git ls-files >actual &&
-	git diff-index --name-status --cached HEAD >>actual &&
+	but add --all &&
+	but update-index --refresh &&
+	but ls-files >actual &&
+	but diff-index --name-status --cached HEAD >>actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'Just "git add" is a no-op' '
-	git reset --hard &&
+test_expect_success 'Just "but add" is a no-op' '
+	but reset --hard &&
 	echo >will-remove &&
 	>will-not-be-added &&
-	git add &&
-	git diff-index --name-status --cached HEAD >actual &&
+	but add &&
+	but diff-index --name-status --cached HEAD >actual &&
 	test_must_be_empty actual
 '
 

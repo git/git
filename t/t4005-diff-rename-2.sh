@@ -13,14 +13,14 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup reference tree' '
 	COPYING_test_data >COPYING &&
 	echo frotz >rezrov &&
-	git update-index --add COPYING rezrov &&
-	tree=$(git write-tree) &&
+	but update-index --add COPYING rezrov &&
+	tree=$(but write-tree) &&
 	echo $tree &&
 	sed -e "s/HOWEVER/However/" <COPYING >COPYING.1 &&
 	sed -e "s/GPL/G.P.L/g" <COPYING >COPYING.2 &&
-	origoid=$(git hash-object COPYING) &&
-	oid1=$(git hash-object COPYING.1) &&
-	oid2=$(git hash-object COPYING.2)
+	origoid=$(but hash-object COPYING) &&
+	oid1=$(but hash-object COPYING.1) &&
+	oid2=$(but hash-object COPYING.2)
 '
 
 ################################################################
@@ -31,13 +31,13 @@ test_expect_success 'setup reference tree' '
 
 test_expect_success 'validate output from rename/copy detection (#1)' '
 	rm -f COPYING &&
-	git update-index --add --remove COPYING COPYING.? &&
+	but update-index --add --remove COPYING COPYING.? &&
 
 	cat <<-EOF >expected &&
 	:100644 100644 $origoid $oid1 C1234	COPYING	COPYING.1
 	:100644 100644 $origoid $oid2 R1234	COPYING	COPYING.2
 	EOF
-	git diff-index -C $tree >current &&
+	but diff-index -C $tree >current &&
 	compare_diff_raw expected current
 '
 
@@ -49,13 +49,13 @@ test_expect_success 'validate output from rename/copy detection (#1)' '
 
 test_expect_success 'validate output from rename/copy detection (#2)' '
 	mv COPYING.2 COPYING &&
-	git update-index --add --remove COPYING COPYING.1 COPYING.2 &&
+	but update-index --add --remove COPYING COPYING.1 COPYING.2 &&
 
 	cat <<-EOF >expected &&
 	:100644 100644 $origoid $oid2 M	COPYING
 	:100644 100644 $origoid $oid1 C1234	COPYING	COPYING.1
 	EOF
-	git diff-index -C $tree >current &&
+	but diff-index -C $tree >current &&
 	compare_diff_raw current expected
 '
 
@@ -67,12 +67,12 @@ test_expect_success 'validate output from rename/copy detection (#2)' '
 
 test_expect_success 'validate output from rename/copy detection (#3)' '
 	COPYING_test_data >COPYING &&
-	git update-index --add --remove COPYING COPYING.1 &&
+	but update-index --add --remove COPYING COPYING.1 &&
 
 	cat <<-EOF >expected &&
 	:100644 100644 $origoid $oid1 C1234	COPYING	COPYING.1
 	EOF
-	git diff-index -C --find-copies-harder $tree >current &&
+	but diff-index -C --find-copies-harder $tree >current &&
 	compare_diff_raw current expected
 '
 

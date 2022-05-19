@@ -534,7 +534,7 @@ static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
 	return fanout + 1;
 }
 
-/* hex oid + '/' between each pair of hex digits + NUL */
+/* hex oid + '/' between each pair of hex dibuts + NUL */
 #define FANOUT_PATH_MAX GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS_MAX + 1
 
 static void construct_path_with_fanout(const unsigned char *hash,
@@ -1100,7 +1100,7 @@ void load_display_notes(struct display_notes_opt *opt)
 			load_config_refs = 1;
 	}
 
-	git_config(notes_display_config, &load_config_refs);
+	but_config(notes_display_config, &load_config_refs);
 
 	if (opt) {
 		struct string_list_item *item;

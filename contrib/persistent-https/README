@@ -1,22 +1,22 @@
-git-remote-persistent-https
+but-remote-persistent-https
 
-The git-remote-persistent-https binary speeds up SSL operations
-by running a daemon job (git-remote-persistent-https--proxy) that
+The but-remote-persistent-https binary speeds up SSL operations
+by running a daemon job (but-remote-persistent-https--proxy) that
 keeps a connection open to a server.
 
 
 PRE-BUILT BINARIES
 
 Darwin amd64:
-https://commondatastorage.googleapis.com/git-remote-persistent-https/darwin_amd64.tar.gz
+https://commondatastorage.googleapis.com/but-remote-persistent-https/darwin_amd64.tar.gz
 
 Linux amd64:
-https://commondatastorage.googleapis.com/git-remote-persistent-https/linux_amd64.tar.gz
+https://commondatastorage.googleapis.com/but-remote-persistent-https/linux_amd64.tar.gz
 
 
 INSTALLING
 
-Move all of the git-remote-persistent-http* binaries to a directory
+Move all of the but-remote-persistent-http* binaries to a directory
 in PATH.
 
 
@@ -25,9 +25,9 @@ USAGE
 HTTPS requests can be delegated to the proxy by using the
 "persistent-https" scheme, e.g.
 
-git clone persistent-https://kernel.googlesource.com/pub/scm/git/git
+but clone persistent-https://kernel.googlesource.com/pub/scm/but/but
 
-Likewise, .gitconfig can be updated as follows to rewrite https urls
+Likewise, .butconfig can be updated as follows to rewrite https urls
 to use persistent-https:
 
 [url "persistent-https"]
@@ -54,8 +54,8 @@ LOCATION
 
 The source is available in the contrib/persistent-https directory of
 the Git source repository. The Git source repository is available at
-git://git.kernel.org/pub/scm/git/git.git/
-https://kernel.googlesource.com/pub/scm/git/git
+but://but.kernel.org/pub/scm/but/but.but/
+https://kernel.googlesource.com/pub/scm/but/but
 
 
 PREREQUISITES

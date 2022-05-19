@@ -1,6 +1,6 @@
 #
-# This list is used by git-shortlog to fix a few botched name translations
-# in the git archive, either because the author's full name was messed up
+# This list is used by but-shortlog to fix a few botched name translations
+# in the but archive, either because the author's full name was messed up
 # and/or not always written the same way, making contributions from the
 # same person appearing not to be so.
 #
@@ -31,7 +31,7 @@ Brandon Casey <drafnel@gmail.com> <casey@nrlssc.navy.mil>
 Brandon Williams <bwilliams.eng@gmail.com> <bmwill@google.com>
 brian m. carlson <sandals@crustytoothpaste.net>
 brian m. carlson <sandals@crustytoothpaste.net> <sandals@crustytoothpaste.ath.cx>
-brian m. carlson <sandals@crustytoothpaste.net> <bk2204@github.com>
+brian m. carlson <sandals@crustytoothpaste.net> <bk2204@buthub.com>
 Bryan Larsen <bryan@larsen.st> <bryan.larsen@gmail.com>
 Bryan Larsen <bryan@larsen.st> <bryanlarsen@yahoo.com>
 Cheng Renquan <crquan@gmail.com>
@@ -52,16 +52,16 @@ Daniel Barkalow <barkalow@iabervon.org>
 Daniel Knittl-Frank <knittl89@googlemail.com> knittl
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <daniel.trstenjak@online.de>
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <trsten@science-computing.de>
-David Brown <git@davidb.org> <davidb@quicinc.com>
+David Brown <but@davidb.org> <davidb@quicinc.com>
 David D. Kilzer <ddkilzer@kilzer.net>
 David Kågedal <davidk@lysator.liu.se>
 David Reiss <dreiss@facebook.com> <dreiss@dreiss-vmware.(none)>
 David S. Miller <davem@davemloft.net>
 David Turner <novalis@novalis.org> <dturner@twopensource.com>
 David Turner <novalis@novalis.org> <dturner@twosigma.com>
-Derrick Stolee <derrickstolee@github.com> <stolee@gmail.com>
-Derrick Stolee <derrickstolee@github.com> Derrick Stolee via GitGitGadget <gitgitgadget@gmail.com>
-Derrick Stolee <derrickstolee@github.com> <dstolee@microsoft.com>
+Derrick Stolee <derrickstolee@buthub.com> <stolee@gmail.com>
+Derrick Stolee <derrickstolee@buthub.com> Derrick Stolee via GitGitGadget <butbutgadget@gmail.com>
+Derrick Stolee <derrickstolee@buthub.com> <dstolee@microsoft.com>
 Deskin Miller <deskinm@umich.edu>
 Đoàn Trần Công Danh <congdanhqx@gmail.com> Doan Tran Cong Danh
 Dirk Süsserott <newsletter@dirk.my1.cc>
@@ -70,7 +70,7 @@ Eric Hanchrow <eric.hanchrow@gmail.com> <offby1@blarg.net>
 Eric S. Raymond <esr@thyrsus.com>
 Eric Wong <e@80x24.org> <normalperson@yhbt.net>
 Erik Faye-Lund <kusmabite@gmail.com> <kusmabite@googlemail.com>
-Eyvind Bernhardsen <eyvind.bernhardsen@gmail.com> <eyvind-git@orakel.ntnu.no>
+Eyvind Bernhardsen <eyvind.bernhardsen@gmail.com> <eyvind-but@orakel.ntnu.no>
 Fangyi Zhou <fangyi.zhou@yuriko.moe> Zhou Fangyi
 Florian Achleitner <florian.achleitner.2.6.31@gmail.com> <florian.achleitner2.6.31@gmail.com>
 Franck Bui-Huu <vagabon.xyz@gmail.com> <fbuihuu@gmail.com>
@@ -81,7 +81,7 @@ Frédéric Heitzmann <frederic.heitzmann@gmail.com>
 Garry Dolley <gdolley@ucla.edu> <gdolley@arpnetworks.com>
 Greg Price <price@mit.edu> <price@MIT.EDU>
 Greg Price <price@mit.edu> <price@ksplice.com>
-Heiko Voigt <hvoigt@hvoigt.net> <git-list@hvoigt.net>
+Heiko Voigt <hvoigt@hvoigt.net> <but-list@hvoigt.net>
 H. Merijn Brand <h.m.brand@xs4all.nl> H.Merijn Brand <h.m.brand@xs4all.nl>
 H. Peter Anvin <hpa@zytor.com> <hpa@bonde.sc.orionmulti.com>
 H. Peter Anvin <hpa@zytor.com> <hpa@smyrno.hos.anvin.org>
@@ -100,10 +100,10 @@ Jason McMullan <jason.mcmullan@timesys.com>
 Jason McMullan <mcmullan@netapp.com>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@EECS.Berkeley.EDU>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@cs.berkeley.edu>
-Jay Soffian <jaysoffian@gmail.com> <jaysoffian+git@gmail.com>
+Jay Soffian <jaysoffian@gmail.com> <jaysoffian+but@gmail.com>
 Jean-Noël Avila <jn.avila@free.fr> Jean-Noel Avila
 Jean-Noël Avila <jn.avila@free.fr> Jean-Noël AVILA
-Jeff King <peff@peff.net> <peff@github.com>
+Jeff King <peff@peff.net> <peff@buthub.com>
 Jeff Muizelaar <jmuizelaar@mozilla.com> <jeff@infidigm.net>
 Jens Axboe <axboe@kernel.dk> <axboe@suse.de>
 Jens Axboe <axboe@kernel.dk> <jens.axboe@oracle.com>
@@ -112,7 +112,7 @@ Jim Meyering <jim@meyering.net> <meyering@redhat.com>
 Joachim Berdal Haga <cjhaga@fys.uio.no>
 Joachim Jablon <joachim.jablon@people-doc.com> <ewjoachim@gmail.com>
 Johannes Schindelin <Johannes.Schindelin@gmx.de> <johannes.schindelin@gmx.de>
-Johannes Schindelin <Johannes.Schindelin@gmx.de> Johannes Schindelin via GitGitGadget <gitgitgadget@gmail.com>
+Johannes Schindelin <Johannes.Schindelin@gmx.de> Johannes Schindelin via GitGitGadget <butbutgadget@gmail.com>
 Johannes Sixt <j6t@kdbg.org> <J.Sixt@eudaptics.com>
 Johannes Sixt <j6t@kdbg.org> <j.sixt@viscovery.net>
 Johannes Sixt <j6t@kdbg.org> <johannes.sixt@telecom.at>
@@ -125,13 +125,13 @@ Jonathan del Strother <jon.delStrother@bestbefore.tv> <maillist@steelskies.com>
 Josh Triplett <josh@joshtriplett.org> <josh@freedesktop.org>
 Josh Triplett <josh@joshtriplett.org> <josht@us.ibm.com>
 Julian Phillips <julian@quantumfyre.co.uk> <jp3@quantumfyre.co.uk>
-Junio C Hamano <gitster@pobox.com> <gitster@pobox.com>
-Junio C Hamano <gitster@pobox.com> <junio@hera.kernel.org>
-Junio C Hamano <gitster@pobox.com> <junio@kernel.org>
-Junio C Hamano <gitster@pobox.com> <junio@pobox.com>
-Junio C Hamano <gitster@pobox.com> <junio@twinsun.com>
-Junio C Hamano <gitster@pobox.com> <junkio@cox.net>
-Junio C Hamano <gitster@pobox.com> <junkio@twinsun.com>
+Junio C Hamano <butster@pobox.com> <butster@pobox.com>
+Junio C Hamano <butster@pobox.com> <junio@hera.kernel.org>
+Junio C Hamano <butster@pobox.com> <junio@kernel.org>
+Junio C Hamano <butster@pobox.com> <junio@pobox.com>
+Junio C Hamano <butster@pobox.com> <junio@twinsun.com>
+Junio C Hamano <butster@pobox.com> <junkio@cox.net>
+Junio C Hamano <butster@pobox.com> <junkio@twinsun.com>
 Kaartic Sivaraam <kaartic.sivaraam@gmail.com> <kaarticsivaraam91196@gmail.com>
 Karl Wiberg <kha@treskal.com> Karl  Hasselström
 Karl Wiberg <kha@treskal.com> <kha@yoghurt.hemma.treskal.com>
@@ -172,10 +172,10 @@ Matthias Kestenholz <matthias@spinlock.ch> <mk@spinlock.ch>
 Matthias Rüster <matthias.ruester@gmail.com> Matthias Ruester
 Matthias Urlichs <matthias@urlichs.de> <smurf@kiste.(none)>
 Matthias Urlichs <matthias@urlichs.de> <smurf@smurf.noris.de>
-Matthieu Moy <git@matthieu-moy.fr> <Matthieu.Moy@imag.fr>
+Matthieu Moy <but@matthieu-moy.fr> <Matthieu.Moy@imag.fr>
 Michael Coleman <tutufan@gmail.com>
-Michael J Gruber <git@grubix.eu> <michaeljgruber+gmane@fastmail.fm>
-Michael J Gruber <git@grubix.eu> <git@drmicha.warpmail.net>
+Michael J Gruber <but@grubix.eu> <michaeljgruber+gmane@fastmail.fm>
+Michael J Gruber <but@grubix.eu> <but@drmicha.warpmail.net>
 Michael S. Tsirkin <mst@kernel.org> <mst@redhat.com>
 Michael S. Tsirkin <mst@kernel.org> <mst@mellanox.co.il>
 Michael S. Tsirkin <mst@kernel.org> <mst@dev.mellanox.co.il>
@@ -194,11 +194,11 @@ Nelson Elhage <nelhage@mit.edu> <nelhage@ksplice.com>
 Nguyễn Thái Ngọc Duy <pclouds@gmail.com>
 Nick Stokoe <nick@noodlefactory.co.uk> Nick Woolley <nick@noodlefactory.co.uk>
 Nick Stokoe <nick@noodlefactory.co.uk> Nick Woolley <nickwoolley@yahoo.co.uk>
-Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nicolas.morey@free.fr>
-Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nmorey@kalray.eu>
-Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nicolas@morey-chaisemartin.com>
-Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <NMoreyChaisemartin@suse.com>
-Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nmoreychaisemartin@suse.com>
+Nicolas Morey-Chaisemartin <devel-but@morey-chaisemartin.com> <nicolas.morey@free.fr>
+Nicolas Morey-Chaisemartin <devel-but@morey-chaisemartin.com> <nmorey@kalray.eu>
+Nicolas Morey-Chaisemartin <devel-but@morey-chaisemartin.com> <nicolas@morey-chaisemartin.com>
+Nicolas Morey-Chaisemartin <devel-but@morey-chaisemartin.com> <NMoreyChaisemartin@suse.com>
+Nicolas Morey-Chaisemartin <devel-but@morey-chaisemartin.com> <nmoreychaisemartin@suse.com>
 Nicolas Sebrecht <nicolas.s.dev@gmx.fr> <ni.s@laposte.net>
 Orgad Shaneh <orgads@gmail.com> <orgad.shaneh@audiocodes.com>
 Paolo Bonzini <bonzini@gnu.org> <paolo.bonzini@lu.unisi.ch>
@@ -232,7 +232,7 @@ Robert Shearman <robertshearman@gmail.com> <rob@codeweavers.com>
 Robert Zeh <robert.a.zeh@gmail.com>
 Robin Rosenberg <robin.rosenberg@dewire.com> <robin.rosenberg.lists@dewire.com>
 Rutger Nijlunsing <rutger.nijlunsing@gmail.com> <rutger@nospam.com>
-Rutger Nijlunsing <rutger.nijlunsing@gmail.com> <git@tux.tmfweb.nl>
+Rutger Nijlunsing <rutger.nijlunsing@gmail.com> <but@tux.tmfweb.nl>
 Ryan Anderson <ryan@michonline.com> <rda@google.com>
 Salikh Zakirov <salikh.zakirov@gmail.com> <Salikh.Zakirov@Intel.com>
 Sam Vilain <sam@vilain.net> <sam.vilain@catalyst.net.nz>
@@ -274,7 +274,7 @@ Toby Allsopp <Toby.Allsopp@navman.co.nz> <toby.allsopp@navman.co.nz>
 Tom Grennan <tmgrennan@gmail.com> <tgrennan@redback.com>
 Tommi Virtanen <tv@debian.org> <tv@eagain.net>
 Tommi Virtanen <tv@debian.org> <tv@inoi.fi>
-Tommy Thorn <tommy-git@thorn.ws> <tt1729@yahoo.com>
+Tommy Thorn <tommy-but@thorn.ws> <tt1729@yahoo.com>
 Tony Luck <tony.luck@intel.com>
 Tor Arne Vestbø <torarnv@gmail.com> <tavestbo@trolltech.com>
 Trần Ngọc Quân <vnwildman@gmail.com> Tran Ngoc Quan <vnwildman@gmail.com>
@@ -289,7 +289,7 @@ Vitaly "_Vi" Shukela <vi0oss@gmail.com> <public_vi@tut.by>
 Vitaly "_Vi" Shukela <vi0oss@gmail.com> Vitaly _Vi Shukela
 W. Trevor King <wking@tremily.us> <wking@drexel.edu>
 William Pursell <bill.pursell@gmail.com>
-YONETANI Tomokazu <y0n3t4n1@gmail.com> <qhwt+git@les.ath.cx>
+YONETANI Tomokazu <y0n3t4n1@gmail.com> <qhwt+but@les.ath.cx>
 YONETANI Tomokazu <y0n3t4n1@gmail.com> <y0netan1@dragonflybsd.org>
 YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
 Yi-Jyun Pan <pan93412@gmail.com>

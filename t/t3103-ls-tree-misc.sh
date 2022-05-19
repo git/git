@@ -1,9 +1,9 @@
 #!/bin/sh
 
 test_description='
-Miscellaneous tests for git ls-tree.
+Miscellaneous tests for but ls-tree.
 
-	      1. git ls-tree fails in presence of tree damage.
+	      1. but ls-tree fails in presence of tree damage.
 
 '
 
@@ -13,14 +13,14 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	mkdir a &&
 	touch a/one &&
-	git add a/one &&
-	git cummit -m test
+	but add a/one &&
+	but cummit -m test
 '
 
 test_expect_success 'ls-tree fails with non-zero exit code on broken tree' '
-	tree=$(git rev-parse HEAD:a) &&
-	rm -f .git/objects/$(echo $tree | sed -e "s,^\(..\),\1/,") &&
-	test_must_fail git ls-tree -r HEAD
+	tree=$(but rev-parse HEAD:a) &&
+	rm -f .but/objects/$(echo $tree | sed -e "s,^\(..\),\1/,") &&
+	test_must_fail but ls-tree -r HEAD
 '
 
 for opts in \
@@ -30,12 +30,12 @@ for opts in \
 	"--object-only --long"
 do
 	test_expect_success "usage: incompatible options: $opts" '
-		test_expect_code 129 git ls-tree $opts $tree
+		test_expect_code 129 but ls-tree $opts $tree
 	'
 
 	one_opt=$(echo "$opts" | cut -d' '  -f1)
 	test_expect_success "usage: incompatible options: $one_opt and --format" '
-		test_expect_code 129 git ls-tree $one_opt --format=fmt $tree
+		test_expect_code 129 but ls-tree $one_opt --format=fmt $tree
 	'
 done
 test_done

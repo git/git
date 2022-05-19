@@ -11,23 +11,23 @@ Fixes since v1.8.4
 
  * In FreeBSD's and NetBSD's "sh", a return in a dot script in a
    function returns from the function, not only in the dot script,
-   breaking "git rebase" on these platforms (regression introduced
+   breaking "but rebase" on these platforms (regression introduced
    in 1.8.4-rc1).
 
- * "git rebase -i" and other scripted commands were feeding a
+ * "but rebase -i" and other scripted commands were feeding a
    random, data dependent error message to 'echo' and expecting it
    to come out literally.
 
  * Setting the "submodule.<name>.path" variable to the empty
    "true" caused the configuration parser to segfault.
 
- * Output from "git log --full-diff -- <pathspec>" looked strange
+ * Output from "but log --full-diff -- <pathspec>" looked strange
    because comparison was done with the previous ancestor that
    touched the specified <pathspec>, causing the patches for paths
    outside the pathspec to show more than the single commit has
    changed.
 
- * The auto-tag-following code in "git fetch" tries to reuse the
+ * The auto-tag-following code in "but fetch" tries to reuse the
    same transport twice when the serving end does not cooperate and
    does not give tags that point to cummits that are asked for as
    part of the primary transfer.  Unfortunately, Git-aware transport
@@ -62,7 +62,7 @@ Fixes since v1.8.4
 
  * Subversion's serf access method (the only one available in
    Subversion 1.8) for http and https URLs in skelta mode tells its
-   caller to open multiple files at a time, which made "git svn
+   caller to open multiple files at a time, which made "but svn
    fetch" complain that "Temp file with moniker 'svn_delta' already
    in use" instead of fetching.
 

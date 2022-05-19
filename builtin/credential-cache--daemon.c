@@ -267,7 +267,7 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 	const char *socket_path;
 	int ignore_sighup = 0;
 	static const char *usage[] = {
-		"git-credential-cache--daemon [opts] <socket_path>",
+		"but-credential-cache--daemon [opts] <socket_path>",
 		NULL
 	};
 	int debug = 0;
@@ -277,7 +277,7 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config_get_bool("credentialcache.ignoresighup", &ignore_sighup);
+	but_config_get_bool("credentialcache.ignoresighup", &ignore_sighup);
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	socket_path = argv[0];
@@ -305,7 +305,7 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 {
 	const char * const usage[] = {
-		"git credential-cache--daemon [options] <action>",
+		"but credential-cache--daemon [options] <action>",
 		"",
 		"credential-cache--daemon is disabled in this build of Git",
 		NULL

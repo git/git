@@ -6,7 +6,7 @@ test_description='Tests whether perf-lib facilities work'
 test_perf_default_repo
 
 test_perf 'test_perf_default_repo works' '
-	foo=$(git rev-parse HEAD) &&
+	foo=$(but rev-parse HEAD) &&
 	test_export foo
 '
 
@@ -14,7 +14,7 @@ test_checkout_worktree
 
 test_perf 'test_checkout_worktree works' '
 	wt=$(find . | wc -l) &&
-	idx=$(git ls-files | wc -l) &&
+	idx=$(but ls-files | wc -l) &&
 	test $wt -gt $idx
 '
 
@@ -23,7 +23,7 @@ test_export baz
 
 test_expect_success 'test_export works' '
 	echo "$foo" &&
-	test "$foo" = "$(git rev-parse HEAD)" &&
+	test "$foo" = "$(but rev-parse HEAD)" &&
 	echo "$baz" &&
 	test "$baz" = baz
 '

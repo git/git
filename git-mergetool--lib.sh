@@ -1,6 +1,6 @@
-# git-mergetool--lib is a shell library for common merge tool functions
+# but-mergetool--lib is a shell library for common merge tool functions
 
-: ${MERGE_TOOLS_DIR=$(git --exec-path)/mergetools}
+: ${MERGE_TOOLS_DIR=$(but --exec-path)/mergetools}
 
 IFS='
 '
@@ -26,7 +26,7 @@ list_config_tools () {
 	section=$1
 	line_prefix=${2:-}
 
-	git config --get-regexp $section'\..*\.cmd' |
+	but config --get-regexp $section'\..*\.cmd' |
 	while read -r key value
 	do
 		toolname=${key#$section.}
@@ -243,15 +243,15 @@ get_merge_tool_cmd () {
 	merge_tool="$1"
 	if diff_mode
 	then
-		git config "difftool.$merge_tool.cmd" ||
-		git config "mergetool.$merge_tool.cmd"
+		but config "difftool.$merge_tool.cmd" ||
+		but config "mergetool.$merge_tool.cmd"
 	else
-		git config "mergetool.$merge_tool.cmd"
+		but config "mergetool.$merge_tool.cmd"
 	fi
 }
 
 trust_exit_code () {
-	if git config --bool "mergetool.$1.trustExitCode"
+	if but config --bool "mergetool.$1.trustExitCode"
 	then
 		:; # OK
 	elif exit_code_trustable
@@ -336,7 +336,7 @@ list_merge_tool_candidates () {
 }
 
 show_tool_help () {
-	tool_opt="'git ${TOOL_MODE}tool --tool=<tool>'"
+	tool_opt="'but ${TOOL_MODE}tool --tool=<tool>'"
 
 	tab='	'
 	LF='
@@ -356,7 +356,7 @@ show_tool_help () {
 
 	show_tool_names 'mode_ok && is_available' "$tab$tab" \
 		"$tool_opt may be set to one of the following:" \
-		"No suitable tool for 'git $cmd_name --tool=<tool>' found." \
+		"No suitable tool for 'but $cmd_name --tool=<tool>' found." \
 		"$extra_content" &&
 		any_shown=yes
 
@@ -378,8 +378,8 @@ guess_merge_tool () {
 	cat >&2 <<-EOF
 
 	This message is displayed because '$TOOL_MODE.tool' is not configured.
-	See 'git ${TOOL_MODE}tool --tool-help' or 'git help config' for more details.
-	'git ${TOOL_MODE}tool' will now attempt to use one of the following tools:
+	See 'but ${TOOL_MODE}tool --tool-help' or 'but help config' for more details.
+	'but ${TOOL_MODE}tool' will now attempt to use one of the following tools:
 	$tools
 	EOF
 
@@ -417,7 +417,7 @@ get_configured_merge_tool () {
 		IFS=' '
 		for key in $keys
 		do
-			selected=$(git config $key)
+			selected=$(but config $key)
 			if test -n "$selected"
 			then
 				echo "$selected"
@@ -427,7 +427,7 @@ get_configured_merge_tool () {
 
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"
 	then
-		echo >&2 "git config option $TOOL_MODE.${gui_prefix}tool set to unknown tool: $merge_tool"
+		echo >&2 "but config option $TOOL_MODE.${gui_prefix}tool set to unknown tool: $merge_tool"
 		echo >&2 "Resetting to default..."
 		return 1
 	fi
@@ -444,10 +444,10 @@ get_merge_tool_path () {
 	fi
 	if diff_mode
 	then
-		merge_tool_path=$(git config difftool."$merge_tool".path ||
-				  git config mergetool."$merge_tool".path)
+		merge_tool_path=$(but config difftool."$merge_tool".path ||
+				  but config mergetool."$merge_tool".path)
 	else
-		merge_tool_path=$(git config mergetool."$merge_tool".path)
+		merge_tool_path=$(but config mergetool."$merge_tool".path)
 	fi
 	if test -z "$merge_tool_path"
 	then

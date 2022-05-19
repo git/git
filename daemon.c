@@ -20,7 +20,7 @@ static int reuseaddr;
 static int informative_errors;
 
 static const char daemon_usage[] =
-"git daemon [--verbose] [--syslog] [--export-all]\n"
+"but daemon [--verbose] [--syslog] [--export-all]\n"
 "           [--timeout=<n>] [--init-timeout=<n>] [--max-connections=<n>]\n"
 "           [--strict-paths] [--base-path=<path>] [--base-path-relaxed]\n"
 "           [--user-path | --user-path=<path>]\n"
@@ -37,7 +37,7 @@ static const char daemon_usage[] =
 static const char **ok_paths;
 static int strict_paths;
 
-/* If this is set, git-daemon-export-ok is not required */
+/* If this is set, but-daemon-export-ok is not required */
 static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
@@ -46,8 +46,8 @@ static const char *interpolated_path;
 static int base_path_relaxed;
 
 /* If defined, ~user notation is allowed and the string is inserted
- * after ~user/.  E.g. a request to git://host/~alice/frotz would
- * go to /home/alice/pub_git/frotz with --user-path=pub_git.
+ * after ~user/.  E.g. a request to but://host/~alice/frotz would
+ * go to /home/alice/pub_but/frotz with --user-path=pub_but.
  */
 static const char *user_path;
 
@@ -268,7 +268,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 	}
 
 	if (!path) {
-		logerror("'%s' does not appear to be a git repository", dir);
+		logerror("'%s' does not appear to be a but repository", dir);
 		return NULL;
 	}
 
@@ -277,7 +277,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 		int pathlen = strlen(path);
 
 		/* The validation is done on the paths after enter_repo
-		 * appends optional {.git,.git/.git} and friends, but
+		 * appends optional {.but,.but/.but} and friends, but
 		 * it does not use getcwd().  So if your /pub is
 		 * a symlink to /mnt/pub, you can whitelist /pub and
 		 * do not have to say /mnt/pub.
@@ -400,14 +400,14 @@ static int run_service(const char *dir, struct daemon_service *service,
 	 * Security on the cheap.
 	 *
 	 * We want a readable HEAD, usable "objects" directory, and
-	 * a "git-daemon-export-ok" flag that says that the other side
+	 * a "but-daemon-export-ok" flag that says that the other side
 	 * is ok with us doing this.
 	 *
 	 * path_ok() uses enter_repo() and does whitelist checking.
 	 * We only need to make sure the repository is exported.
 	 */
 
-	if (!export_all_trees && access("git-daemon-export-ok", F_OK)) {
+	if (!export_all_trees && access("but-daemon-export-ok", F_OK)) {
 		logerror("'%s': repository not exported.", path);
 		errno = EACCES;
 		return daemon_error(dir, "repository not exported");
@@ -415,7 +415,7 @@ static int run_service(const char *dir, struct daemon_service *service,
 
 	if (service->overridable) {
 		strbuf_addf(&var, "daemon.%s", service->config_name);
-		git_config_get_bool(var.buf, &enabled);
+		but_config_get_bool(var.buf, &enabled);
 		strbuf_release(&var);
 	}
 	if (!enabled) {
@@ -465,7 +465,7 @@ static void copy_to_log(int fd)
 static int run_service_command(struct child_process *cld)
 {
 	strvec_push(&cld->args, ".");
-	cld->git_cmd = 1;
+	cld->but_cmd = 1;
 	cld->err = -1;
 	if (start_command(cld))
 		return -1;
@@ -639,7 +639,7 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 			     char *extra_args, int buflen)
 {
 	const char *end = extra_args + buflen;
-	struct strbuf git_protocol = STRBUF_INIT;
+	struct strbuf but_protocol = STRBUF_INIT;
 
 	/* First look for the host argument */
 	extra_args = parse_host_arg(hi, extra_args, buflen);
@@ -649,27 +649,27 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 		const char *arg = extra_args;
 
 		/*
-		 * Parse the extra arguments, adding most to 'git_protocol'
+		 * Parse the extra arguments, adding most to 'but_protocol'
 		 * which will be used to set the 'GIT_PROTOCOL' envvar in the
 		 * service that will be run.
 		 *
 		 * If there ends up being a particular arg in the future that
-		 * git-daemon needs to parse specifically (like the 'host' arg)
-		 * then it can be parsed here and not added to 'git_protocol'.
+		 * but-daemon needs to parse specifically (like the 'host' arg)
+		 * then it can be parsed here and not added to 'but_protocol'.
 		 */
 		if (*arg) {
-			if (git_protocol.len > 0)
-				strbuf_addch(&git_protocol, ':');
-			strbuf_addstr(&git_protocol, arg);
+			if (but_protocol.len > 0)
+				strbuf_addch(&but_protocol, ':');
+			strbuf_addstr(&but_protocol, arg);
 		}
 	}
 
-	if (git_protocol.len > 0) {
-		loginfo("Extended attribute \"protocol\": %s", git_protocol.buf);
+	if (but_protocol.len > 0) {
+		loginfo("Extended attribute \"protocol\": %s", but_protocol.buf);
 		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
-			     git_protocol.buf);
+			     but_protocol.buf);
 	}
-	strbuf_release(&git_protocol);
+	strbuf_release(&but_protocol);
 }
 
 /*
@@ -776,7 +776,7 @@ static int execute(void)
 		struct daemon_service *s = &(daemon_service[i]);
 		const char *arg;
 
-		if (skip_prefix(line, "git-", &arg) &&
+		if (skip_prefix(line, "but-", &arg) &&
 		    skip_prefix(arg, s->name, &arg) &&
 		    *arg++ == ' ') {
 			/*
@@ -1423,7 +1423,7 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (log_destination == LOG_DESTINATION_SYSLOG) {
-		openlog("git-daemon", LOG_PID, LOG_DAEMON);
+		openlog("but-daemon", LOG_PID, LOG_DAEMON);
 		set_die_routine(daemon_die);
 	} else
 		/* avoid splitting a message in the middle */
@@ -1467,7 +1467,7 @@ int cmd_main(int argc, const char **argv)
 		write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
 
 	/* prepare argv for serving-processes */
-	strvec_push(&cld_argv, argv[0]); /* git-daemon */
+	strvec_push(&cld_argv, argv[0]); /* but-daemon */
 	strvec_push(&cld_argv, "--serve");
 	for (i = 1; i < argc; ++i)
 		strvec_push(&cld_argv, argv[i]);

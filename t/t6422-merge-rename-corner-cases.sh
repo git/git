@@ -15,34 +15,34 @@ test_setup_rename_delete_untracked () {
 		cd rename-delete-untracked &&
 
 		echo "A pretty inscription" >ring &&
-		git add ring &&
+		but add ring &&
 		test_tick &&
-		git cummit -m beginning &&
+		but cummit -m beginning &&
 
-		git branch people &&
-		git checkout -b rename-the-ring &&
-		git mv ring one-ring-to-rule-them-all &&
+		but branch people &&
+		but checkout -b rename-the-ring &&
+		but mv ring one-ring-to-rule-them-all &&
 		test_tick &&
-		git cummit -m fullname &&
+		but cummit -m fullname &&
 
-		git checkout people &&
-		git rm ring &&
+		but checkout people &&
+		but rm ring &&
 		echo gollum >owner &&
-		git add owner &&
+		but add owner &&
 		test_tick &&
-		git cummit -m track-people-instead-of-objects &&
+		but cummit -m track-people-instead-of-objects &&
 		echo "Myyy PRECIOUSSS" >ring
 	)
 }
 
-test_expect_success "Does git preserve Gollum's precious artifact?" '
+test_expect_success "Does but preserve Gollum's precious artifact?" '
 	test_setup_rename_delete_untracked &&
 	(
 		cd rename-delete-untracked &&
 
-		test_must_fail git merge -s recursive rename-the-ring &&
+		test_must_fail but merge -s recursive rename-the-ring &&
 
-		# Make sure git did not delete an untracked file
+		# Make sure but did not delete an untracked file
 		test_path_is_file ring
 	)
 '
@@ -60,20 +60,20 @@ test_setup_rename_modify_add_source () {
 		cd rename-modify-add-source &&
 
 		printf "1\n2\n3\n4\n5\n6\n7\n" >a &&
-		git add a &&
-		git cummit -m A &&
-		git tag A &&
+		but add a &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
+		but checkout -b B A &&
 		echo 8 >>a &&
-		git add a &&
-		git cummit -m B &&
+		but add a &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
-		git mv a b &&
+		but checkout -b C A &&
+		but mv a b &&
 		echo something completely different >a &&
-		git add a &&
-		git cummit -m C
+		but add a &&
+		but cummit -m C
 	)
 }
 
@@ -82,13 +82,13 @@ test_expect_failure 'rename/modify/add-source conflict resolvable' '
 	(
 		cd rename-modify-add-source &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
-		git merge -s recursive C^0 &&
+		but merge -s recursive C^0 &&
 
-		git rev-parse >expect \
+		but rev-parse >expect \
 			B:a   C:a     &&
-		git rev-parse >actual \
+		but rev-parse >actual \
 			b     c       &&
 		test_cmp expect actual
 	)
@@ -101,20 +101,20 @@ test_setup_break_detection_1 () {
 
 		printf "1\n2\n3\n4\n5\n" >a &&
 		echo foo >b &&
-		git add a b &&
-		git cummit -m A &&
-		git tag A &&
+		but add a b &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a c &&
+		but checkout -b B A &&
+		but mv a c &&
 		echo "Completely different content" >a &&
-		git add a &&
-		git cummit -m B &&
+		but add a &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
+		but checkout -b C A &&
 		echo 6 >>a &&
-		git add a &&
-		git cummit -m C
+		but add a &&
+		but cummit -m C
 	)
 }
 
@@ -123,20 +123,20 @@ test_expect_failure 'conflict caused if rename not detected' '
 	(
 		cd break-detection-1 &&
 
-		git checkout -q C^0 &&
-		git merge -s recursive B^0 &&
+		but checkout -q C^0 &&
+		but merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_line_count = 6 c &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			B:a   A:b     &&
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:a  :0:b    &&
 		test_cmp expect actual
 	)
@@ -149,23 +149,23 @@ test_setup_break_detection_2 () {
 
 		printf "1\n2\n3\n4\n5\n" >a &&
 		echo foo >b &&
-		git add a b &&
-		git cummit -m A &&
-		git tag A &&
+		but add a b &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b D A &&
+		but checkout -b D A &&
 		echo 7 >>a &&
-		git add a &&
-		git mv a c &&
+		but add a &&
+		but mv a c &&
 		echo "Completely different content" >a &&
-		git add a &&
-		git cummit -m D &&
+		but add a &&
+		but cummit -m D &&
 
-		git checkout -b E A &&
-		git rm a &&
+		but checkout -b E A &&
+		but rm a &&
 		echo "Completely different content" >>a &&
-		git add a &&
-		git cummit -m E
+		but add a &&
+		but cummit -m E
 	)
 }
 
@@ -174,8 +174,8 @@ test_expect_failure 'missed conflict if rename not detected' '
 	(
 		cd break-detection-2 &&
 
-		git checkout -q E^0 &&
-		test_must_fail git merge -s recursive D^0
+		but checkout -q E^0 &&
+		test_must_fail but merge -s recursive D^0
 	)
 '
 
@@ -185,7 +185,7 @@ test_expect_failure 'missed conflict if rename not detected' '
 # This test uses a rename/rename(1to1)+add-source conflict (1to1 means the
 # same file is renamed on both sides to the same thing; it should trigger
 # the 1to2 logic, which it would do if the add-source didn't cause issues
-# for git's rename detection):
+# for but's rename detection):
 #   cummit A: new file: a
 #   cummit B: rename a->b
 #   cummit C: rename a->b, add unrelated a
@@ -196,19 +196,19 @@ test_setup_break_detection_3 () {
 		cd break-detection-3 &&
 
 		printf "1\n2\n3\n4\n5\n" >a &&
-		git add a &&
-		git cummit -m A &&
-		git tag A &&
+		but add a &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a b &&
-		git cummit -m B &&
+		but checkout -b B A &&
+		but mv a b &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
-		git mv a b &&
+		but checkout -b C A &&
+		but mv a b &&
 		echo foobar >a &&
-		git add a &&
-		git cummit -m C
+		but add a &&
+		but cummit -m C
 	)
 }
 
@@ -217,23 +217,23 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 	(
 		cd break-detection-3 &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
-		git merge -s recursive C^0 &&
+		but merge -s recursive C^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_file a &&
 		test_path_is_file b &&
 
-		git rev-parse >expect \
+		but rev-parse >expect \
 			A:a   C:a     &&
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:b  :0:a    &&
 		test_cmp expect actual
 	)
@@ -244,23 +244,23 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 	(
 		cd break-detection-3 &&
 
-		git checkout C^0 &&
+		but checkout C^0 &&
 
-		git merge -s recursive B^0 &&
+		but merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_file a &&
 		test_path_is_file b &&
 
-		git rev-parse >expect \
+		but rev-parse >expect \
 			A:a   C:a     &&
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:b  :0:a    &&
 		test_cmp expect actual
 	)
@@ -272,33 +272,33 @@ test_setup_rename_directory () {
 		cd rename-directory-$1 &&
 
 		printf "1\n2\n3\n4\n5\n6\n" >file &&
-		git add file &&
+		but add file &&
 		test_tick &&
-		git cummit -m base &&
-		git tag base &&
+		but cummit -m base &&
+		but tag base &&
 
-		git checkout -b right &&
+		but checkout -b right &&
 		echo 7 >>file &&
 		mkdir newfile &&
 		echo junk >newfile/realfile &&
-		git add file newfile/realfile &&
+		but add file newfile/realfile &&
 		test_tick &&
-		git cummit -m right &&
+		but cummit -m right &&
 
-		git checkout -b left-conflict base &&
+		but checkout -b left-conflict base &&
 		echo 8 >>file &&
-		git add file &&
-		git mv file newfile &&
+		but add file &&
+		but mv file newfile &&
 		test_tick &&
-		git cummit -m left &&
+		but cummit -m left &&
 
-		git checkout -b left-clean base &&
+		but checkout -b left-clean base &&
 		echo 0 >newfile &&
 		cat file >>newfile &&
-		git add newfile &&
-		git rm file &&
+		but add newfile &&
+		but rm file &&
 		test_tick &&
-		git cummit -m left
+		but cummit -m left
 	)
 }
 
@@ -307,15 +307,15 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 	(
 		cd rename-directory-1a &&
 
-		git checkout left-clean^0 &&
+		but checkout left-clean^0 &&
 
-		test_must_fail git merge -s recursive right^0 &&
+		test_must_fail but merge -s recursive right^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 1 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out
@@ -324,7 +324,7 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 		fi &&
 
 		echo 0 >expect &&
-		git cat-file -p base:file >>expect &&
+		but cat-file -p base:file >>expect &&
 		echo 7 >>expect &&
 		test_cmp expect newfile~HEAD &&
 
@@ -338,18 +338,18 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 	(
 		cd rename-directory-1b &&
 
-		git reset --hard &&
-		git clean -fdqx &&
+		but reset --hard &&
+		but clean -fdqx &&
 
-		git checkout left-conflict^0 &&
+		but checkout left-conflict^0 &&
 
-		test_must_fail git merge -s recursive right^0 &&
+		test_must_fail but merge -s recursive right^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 3 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out
@@ -357,24 +357,24 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 			test_line_count = 2 out
 		fi &&
 
-		git cat-file -p left-conflict:newfile >left &&
-		git cat-file -p base:file    >base &&
-		git cat-file -p right:file   >right &&
-		test_must_fail git merge-file \
+		but cat-file -p left-conflict:newfile >left &&
+		but cat-file -p base:file    >base &&
+		but cat-file -p right:file   >right &&
+		test_must_fail but merge-file \
 			-L "HEAD:newfile" \
 			-L "" \
 			-L "right^0:file" \
 			left base right &&
 		test_cmp left newfile~HEAD &&
 
-		git rev-parse >expect   \
+		but rev-parse >expect   \
 			base:file       left-conflict:newfile right:file &&
 		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 		then
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:1:newfile~HEAD :2:newfile~HEAD :3:newfile~HEAD
 		else
-			git rev-parse >actual \
+			but rev-parse >actual \
 				:1:newfile      :2:newfile      :3:newfile
 		fi &&
 		test_cmp expect actual &&
@@ -391,25 +391,25 @@ test_setup_rename_directory_2 () {
 
 		mkdir sub &&
 		printf "1\n2\n3\n4\n5\n6\n" >sub/file &&
-		git add sub/file &&
+		but add sub/file &&
 		test_tick &&
-		git cummit -m base &&
-		git tag base &&
+		but cummit -m base &&
+		but tag base &&
 
-		git checkout -b right &&
+		but checkout -b right &&
 		echo 7 >>sub/file &&
-		git add sub/file &&
+		but add sub/file &&
 		test_tick &&
-		git cummit -m right &&
+		but cummit -m right &&
 
-		git checkout -b left base &&
+		but checkout -b left base &&
 		echo 0 >newfile &&
 		cat sub/file >>newfile &&
-		git rm sub/file &&
+		but rm sub/file &&
 		mv newfile sub &&
-		git add sub &&
+		but add sub &&
 		test_tick &&
-		git cummit -m left
+		but cummit -m left
 	)
 }
 
@@ -418,19 +418,19 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 	(
 		cd rename-directory-2 &&
 
-		git checkout left^0 &&
+		but checkout left^0 &&
 
-		git merge -s recursive right^0 &&
+		but merge -s recursive right^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 1 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 0 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		echo 0 >expect &&
-		git cat-file -p base:sub/file >>expect &&
+		but cat-file -p base:sub/file >>expect &&
 		echo 7 >>expect &&
 		test_cmp expect sub &&
 
@@ -449,21 +449,21 @@ test_setup_rename_with_content_merge_and_add () {
 		cd rename-with-content-merge-and-add-$1 &&
 
 		test_seq 1 5 >a &&
-		git add a &&
-		git cummit -m O &&
-		git tag O &&
+		but add a &&
+		but cummit -m O &&
+		but tag O &&
 
-		git checkout -b A O &&
-		git mv a b &&
+		but checkout -b A O &&
+		but mv a b &&
 		test_seq 0 5 >b &&
-		git add b &&
-		git cummit -m A &&
+		but add b &&
+		but cummit -m A &&
 
-		git checkout -b B O &&
+		but checkout -b B O &&
 		echo 6 >>a &&
 		echo hello world >b &&
-		git add a b &&
-		git cummit -m B
+		but add a b &&
+		but cummit -m B
 	)
 }
 
@@ -472,36 +472,36 @@ test_expect_success 'handle rename-with-content-merge vs. add' '
 	(
 		cd rename-with-content-merge-and-add-AB &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out &&
+		test_must_fail but merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (.*/add)" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
 		# Also, make sure both unmerged entries are for "b"
-		git ls-files -u b >out &&
+		but ls-files -u b >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_missing a &&
 		test_path_is_file b &&
 
 		test_seq 0 6 >tmp &&
-		git hash-object tmp >expect &&
-		git rev-parse B:b >>expect &&
-		git rev-parse >actual  \
+		but hash-object tmp >expect &&
+		but rev-parse B:b >>expect &&
+		but rev-parse >actual  \
 			:2:b    :3:b   &&
 		test_cmp expect actual &&
 
 		# Test that the two-way merge in b is as expected
-		git cat-file -p :2:b >>ours &&
-		git cat-file -p :3:b >>theirs &&
+		but cat-file -p :2:b >>ours &&
+		but cat-file -p :3:b >>theirs &&
 		>empty &&
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD" \
 			-L "" \
 			-L "B^0" \
@@ -515,39 +515,39 @@ test_expect_success 'handle rename-with-content-merge vs. add, merge other way' 
 	(
 		cd rename-with-content-merge-and-add-BA &&
 
-		git reset --hard &&
-		git clean -fdx &&
+		but reset --hard &&
+		but clean -fdx &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
-		test_must_fail git merge -s recursive A^0 >out &&
+		test_must_fail but merge -s recursive A^0 >out &&
 		test_i18ngrep "CONFLICT (.*/add)" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
 		# Also, make sure both unmerged entries are for "b"
-		git ls-files -u b >out &&
+		but ls-files -u b >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_missing a &&
 		test_path_is_file b &&
 
 		test_seq 0 6 >tmp &&
-		git rev-parse B:b >expect &&
-		git hash-object tmp >>expect &&
-		git rev-parse >actual  \
+		but rev-parse B:b >expect &&
+		but hash-object tmp >>expect &&
+		but rev-parse >actual  \
 			:2:b    :3:b   &&
 		test_cmp expect actual &&
 
 		# Test that the two-way merge in b is as expected
-		git cat-file -p :2:b >>ours &&
-		git cat-file -p :3:b >>theirs &&
+		but cat-file -p :2:b >>ours &&
+		but cat-file -p :3:b >>theirs &&
 		>empty &&
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD" \
 			-L "" \
 			-L "A^0" \
@@ -575,21 +575,21 @@ test_setup_rename_rename_2to1 () {
 
 		printf "1\n2\n3\n4\n5\n" >a &&
 		printf "5\n4\n3\n2\n1\n" >b &&
-		git add a b &&
-		git cummit -m A &&
-		git tag A &&
+		but add a b &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a c &&
+		but checkout -b B A &&
+		but mv a c &&
 		echo 0 >>b &&
-		git add b &&
-		git cummit -m B &&
+		but add b &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
-		git mv b c &&
+		but checkout -b C A &&
+		but mv b c &&
 		echo 6 >>a &&
-		git add a &&
-		git cummit -m C
+		but add a &&
+		but cummit -m C
 	)
 }
 
@@ -598,40 +598,40 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 	(
 		cd rename-rename-2to1 &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
-		test_must_fail git merge -s recursive C^0 >out &&
+		test_must_fail but merge -s recursive C^0 >out &&
 		test_i18ngrep "CONFLICT (\(.*\)/\1)" out &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
-		git ls-files -u c >out &&
+		but ls-files -u c >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_missing a &&
 		test_path_is_missing b &&
 
-		git rev-parse >expect  \
+		but rev-parse >expect  \
 			C:a     B:b    &&
-		git rev-parse >actual  \
+		but rev-parse >actual  \
 			:2:c    :3:c   &&
 		test_cmp expect actual &&
 
 		# Test that the two-way merge in new_a is as expected
-		git cat-file -p :2:c >>ours &&
-		git cat-file -p :3:c >>theirs &&
+		but cat-file -p :2:c >>ours &&
+		but cat-file -p :3:c >>theirs &&
 		>empty &&
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD" \
 			-L "" \
 			-L "C^0" \
 			ours empty theirs &&
-		git hash-object c >actual &&
-		git hash-object ours >expect &&
+		but hash-object c >actual &&
+		but hash-object ours >expect &&
 		test_cmp expect actual
 	)
 '
@@ -646,20 +646,20 @@ test_setup_rename_rename_1to2 () {
 		cd rename-rename-1to2 &&
 
 		echo stuff >a &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m A &&
-		git tag A &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a b &&
+		but checkout -b B A &&
+		but mv a b &&
 		test_tick &&
-		git cummit -m B &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
-		git mv a c &&
+		but checkout -b C A &&
+		but mv a c &&
 		test_tick &&
-		git cummit -m C
+		but cummit -m C
 	)
 }
 
@@ -668,24 +668,24 @@ test_expect_success 'merge has correct working tree contents' '
 	(
 		cd rename-rename-1to2 &&
 
-		git checkout C^0 &&
+		but checkout C^0 &&
 
-		test_must_fail git merge -s recursive B^0 &&
+		test_must_fail but merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 3 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 3 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		test_path_is_missing a &&
-		git rev-parse >expect   \
+		but rev-parse >expect   \
 			A:a   A:a   A:a \
 			A:a   A:a       &&
-		git rev-parse >actual    \
+		but rev-parse >actual    \
 			:1:a  :3:b  :2:c &&
-		git hash-object >>actual \
+		but hash-object >>actual \
 			b     c          &&
 		test_cmp expect actual
 	)
@@ -704,19 +704,19 @@ test_setup_rename_rename_1to2_add_source_1 () {
 		cd rename-rename-1to2-add-source-1 &&
 
 		printf "1\n2\n3\n4\n5\n6\n7\n" >a &&
-		git add a &&
-		git cummit -m A &&
-		git tag A &&
+		but add a &&
+		but cummit -m A &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a b &&
-		git cummit -m B &&
+		but checkout -b B A &&
+		but mv a b &&
+		but cummit -m B &&
 
-		git checkout -b C A &&
-		git mv a c &&
+		but checkout -b C A &&
+		but mv a c &&
 		echo something completely different >a &&
-		git add a &&
-		git cummit -m C
+		but add a &&
+		but cummit -m C
 	)
 }
 
@@ -725,18 +725,18 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 	(
 		cd rename-rename-1to2-add-source-1 &&
 
-		git checkout B^0 &&
+		but checkout B^0 &&
 
-		test_must_fail git merge -s recursive C^0 &&
+		test_must_fail but merge -s recursive C^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 4 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >expect         \
+		but rev-parse >expect         \
 			C:a   A:a   B:b   C:C &&
-		git rev-parse >actual          \
+		but rev-parse >actual          \
 			:3:a  :1:a  :2:b  :3:c &&
 		test_cmp expect actual &&
 
@@ -752,22 +752,22 @@ test_setup_rename_rename_1to2_add_source_2 () {
 		cd rename-rename-1to2-add-source-2 &&
 
 		>a &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m base &&
-		git tag A &&
+		but cummit -m base &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a b &&
+		but checkout -b B A &&
+		but mv a b &&
 		test_tick &&
-		git cummit -m one &&
+		but cummit -m one &&
 
-		git checkout -b C A &&
-		git mv a b &&
+		but checkout -b C A &&
+		but mv a b &&
 		echo important-info >a &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m two
+		but cummit -m two
 	)
 }
 
@@ -776,17 +776,17 @@ test_expect_failure 'rename/rename/add-source still tracks new a file' '
 	(
 		cd rename-rename-1to2-add-source-2 &&
 
-		git checkout C^0 &&
-		git merge -s recursive B^0 &&
+		but checkout C^0 &&
+		but merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >expect \
+		but rev-parse >expect \
 			C:a   A:a     &&
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:0:a  :0:b    &&
 		test_cmp expect actual
 	)
@@ -798,24 +798,24 @@ test_setup_rename_rename_1to2_add_dest () {
 		cd rename-rename-1to2-add-dest &&
 
 		echo stuff >a &&
-		git add a &&
+		but add a &&
 		test_tick &&
-		git cummit -m base &&
-		git tag A &&
+		but cummit -m base &&
+		but tag A &&
 
-		git checkout -b B A &&
-		git mv a b &&
+		but checkout -b B A &&
+		but mv a b &&
 		echo precious-data >c &&
-		git add c &&
+		but add c &&
 		test_tick &&
-		git cummit -m one &&
+		but cummit -m one &&
 
-		git checkout -b C A &&
-		git mv a c &&
+		but checkout -b C A &&
+		but mv a c &&
 		echo important-info >b &&
-		git add b &&
+		but add b &&
 		test_tick &&
-		git cummit -m two
+		but cummit -m two
 	)
 }
 
@@ -824,32 +824,32 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 	(
 		cd rename-rename-1to2-add-dest &&
 
-		git checkout C^0 &&
-		test_must_fail git merge -s recursive B^0 &&
+		but checkout C^0 &&
+		test_must_fail but merge -s recursive B^0 &&
 
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 5 out &&
-		git ls-files -u b >out &&
+		but ls-files -u b >out &&
 		test_line_count = 2 out &&
-		git ls-files -u c >out &&
+		but ls-files -u c >out &&
 		test_line_count = 2 out &&
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >expect               \
+		but rev-parse >expect               \
 			A:a   C:b   B:b   C:c   B:c &&
-		git rev-parse >actual                \
+		but rev-parse >actual                \
 			:1:a  :2:b  :3:b  :2:c  :3:c &&
 		test_cmp expect actual &&
 
 		# Record some contents for re-doing merges
-		git cat-file -p A:a >stuff &&
-		git cat-file -p C:b >important_info &&
-		git cat-file -p B:c >precious_data &&
+		but cat-file -p A:a >stuff &&
+		but cat-file -p C:b >important_info &&
+		but cat-file -p B:c >precious_data &&
 		>empty &&
 
 		# Test the merge in b
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD" \
 			-L "" \
 			-L "B^0" \
@@ -857,7 +857,7 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 		test_cmp important_info b &&
 
 		# Test the merge in c
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD" \
 			-L "" \
 			-L "B^0" \
@@ -877,22 +877,22 @@ test_setup_rad () {
 	(
 		cd rad &&
 		echo "original file" >foo &&
-		git add foo &&
-		git cummit -m "original" &&
+		but add foo &&
+		but cummit -m "original" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git rm foo &&
+		but checkout A &&
+		but rm foo &&
 		echo "different file" >bar &&
-		git add bar &&
-		git cummit -m "Remove foo, add bar" &&
+		but add bar &&
+		but cummit -m "Remove foo, add bar" &&
 
-		git checkout B &&
-		git mv foo bar &&
-		git cummit -m "rename foo to bar"
+		but checkout B &&
+		but mv foo bar &&
+		but cummit -m "rename foo to bar"
 	)
 }
 
@@ -901,8 +901,8 @@ test_expect_merge_algorithm failure success 'rad-check: rename/add/delete confli
 	(
 		cd rad &&
 
-		git checkout B^0 &&
-		test_must_fail git merge -s recursive A^0 >out 2>err &&
+		but checkout B^0 &&
+		test_must_fail but merge -s recursive A^0 >out 2>err &&
 
 		# Instead of requiring the output to contain one combined line
 		#   CONFLICT (rename/add/delete)
@@ -917,16 +917,16 @@ test_expect_merge_algorithm failure success 'rad-check: rename/add/delete confli
 		test_i18ngrep "CONFLICT (rename.*/delete)" out &&
 		test_must_be_empty err &&
 
-		git ls-files -s >file_count &&
+		but ls-files -s >file_count &&
 		test_line_count = 2 file_count &&
-		git ls-files -u >file_count &&
+		but ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
-		git ls-files -o >file_count &&
+		but ls-files -o >file_count &&
 		test_line_count = 3 file_count &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:2:bar :3:bar &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			B:bar  A:bar  &&
 
 		test_path_is_missing foo &&
@@ -950,22 +950,22 @@ test_setup_rrdd () {
 		cd rrdd &&
 		echo foo >foo &&
 		echo bar >bar &&
-		git add foo bar &&
-		git cummit -m O &&
+		but add foo bar &&
+		but cummit -m O &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv foo baz &&
-		git rm bar &&
-		git cummit -m "Rename foo, remove bar" &&
+		but checkout A &&
+		but mv foo baz &&
+		but rm bar &&
+		but cummit -m "Rename foo, remove bar" &&
 
-		git checkout B &&
-		git mv bar baz &&
-		git rm foo &&
-		git cummit -m "Rename bar, remove foo"
+		but checkout B &&
+		but mv bar baz &&
+		but rm foo &&
+		but cummit -m "Rename bar, remove foo"
 	)
 }
 
@@ -974,8 +974,8 @@ test_expect_merge_algorithm failure success 'rrdd-check: rename/rename(2to1)/del
 	(
 		cd rrdd &&
 
-		git checkout A^0 &&
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		but checkout A^0 &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		# Instead of requiring the output to contain one combined line
 		#   CONFLICT (rename/rename/delete/delete)
@@ -991,16 +991,16 @@ test_expect_merge_algorithm failure success 'rrdd-check: rename/rename(2to1)/del
 		test_i18ngrep "CONFLICT (rename.*delete)" out &&
 		test_must_be_empty err &&
 
-		git ls-files -s >file_count &&
+		but ls-files -s >file_count &&
 		test_line_count = 2 file_count &&
-		git ls-files -u >file_count &&
+		but ls-files -u >file_count &&
 		test_line_count = 2 file_count &&
-		git ls-files -o >file_count &&
+		but ls-files -o >file_count &&
 		test_line_count = 3 file_count &&
 
-		git rev-parse >actual \
+		but rev-parse >actual \
 			:2:baz :3:baz &&
-		git rev-parse >expect \
+		but rev-parse >expect \
 			O:foo  O:bar  &&
 
 		test_path_is_missing foo &&
@@ -1027,34 +1027,34 @@ test_setup_mod6 () {
 		test_seq 11 19 >one &&
 		test_seq 31 39 >three &&
 		test_seq 51 59 >five &&
-		git add . &&
+		but add . &&
 		test_tick &&
-		git cummit -m "O" &&
+		but cummit -m "O" &&
 
-		git branch O &&
-		git branch A &&
-		git branch B &&
+		but branch O &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
+		but checkout A &&
 		test_seq 10 19 >one &&
 		echo 40        >>three &&
-		git add one three &&
-		git mv  one   two  &&
-		git mv  three four &&
-		git mv  five  six  &&
+		but add one three &&
+		but mv  one   two  &&
+		but mv  three four &&
+		but mv  five  six  &&
 		test_tick &&
-		git cummit -m "A" &&
+		but cummit -m "A" &&
 
-		git checkout B &&
+		but checkout B &&
 		echo 20    >>one       &&
 		echo forty >>three     &&
 		echo 60    >>five      &&
-		git add one three five &&
-		git mv  one   six  &&
-		git mv  three two  &&
-		git mv  five  four &&
+		but add one three five &&
+		but mv  one   six  &&
+		but mv  three two  &&
+		but mv  five  four &&
 		test_tick &&
-		git cummit -m "B"
+		but cummit -m "B"
 	)
 }
 
@@ -1063,18 +1063,18 @@ test_expect_merge_algorithm failure success 'mod6-check: chains of rename/rename
 	(
 		cd mod6 &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 >out 2>err &&
+		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep "CONFLICT (rename/rename)" out &&
 		test_must_be_empty err &&
 
-		git ls-files -s >file_count &&
+		but ls-files -s >file_count &&
 		test_line_count = 9 file_count &&
-		git ls-files -u >file_count &&
+		but ls-files -u >file_count &&
 		test_line_count = 9 file_count &&
-		git ls-files -o >file_count &&
+		but ls-files -o >file_count &&
 		test_line_count = 3 file_count &&
 
 		test_seq 10 20 >merged-one &&
@@ -1084,7 +1084,7 @@ test_expect_merge_algorithm failure success 'mod6-check: chains of rename/rename
 		test_seq 31 40 >three-side-A &&
 		test_seq 31 39 >three-side-B &&
 		echo forty >>three-side-B &&
-		test_must_fail git merge-file \
+		test_must_fail but merge-file \
 			-L "HEAD:four" \
 			-L "" \
 			-L "B^0:two" \
@@ -1092,34 +1092,34 @@ test_expect_merge_algorithm failure success 'mod6-check: chains of rename/rename
 		sed -e "s/^\([<=>]\)/\1\1/" three-side-A >merged-three &&
 
 		# Verify the index is as expected
-		git rev-parse >actual         \
+		but rev-parse >actual         \
 			:2:two       :3:two   \
 			:2:four      :3:four  \
 			:2:six       :3:six   &&
-		git hash-object >expect           \
+		but hash-object >expect           \
 			merged-one   merged-three \
 			merged-three merged-five  \
 			merged-five  merged-one   &&
 		test_cmp expect actual &&
 
-		git cat-file -p :2:two >expect &&
-		git cat-file -p :3:two >other &&
+		but cat-file -p :2:two >expect &&
+		but cat-file -p :3:two >other &&
 		>empty &&
-		test_must_fail git merge-file    \
+		test_must_fail but merge-file    \
 			-L "HEAD"  -L ""  -L "B^0" \
 			expect     empty  other &&
 		test_cmp expect two &&
 
-		git cat-file -p :2:four >expect &&
-		git cat-file -p :3:four >other &&
-		test_must_fail git merge-file    \
+		but cat-file -p :2:four >expect &&
+		but cat-file -p :3:four >other &&
+		test_must_fail but merge-file    \
 			-L "HEAD"  -L ""  -L "B^0" \
 			expect     empty  other &&
 		test_cmp expect four &&
 
-		git cat-file -p :2:six >expect &&
-		git cat-file -p :3:six >other &&
-		test_must_fail git merge-file    \
+		but cat-file -p :2:six >expect &&
+		but cat-file -p :3:six >other &&
+		test_must_fail but merge-file    \
 			-L "HEAD"  -L ""  -L "B^0" \
 			expect     empty  other &&
 		test_cmp expect six
@@ -1178,62 +1178,62 @@ test_conflicts_with_adds_and_renames() {
 
 			# Use a tag to record both these files for simple
 			# access, and clean out these untracked files
-			git tag file_v1 $(git hash-object -w file_v1) &&
-			git tag file_v2 $(git hash-object -w file_v2) &&
-			git tag file_v3 $(git hash-object -w file_v3) &&
-			git tag file_v4 $(git hash-object -w file_v4) &&
-			git clean -f &&
+			but tag file_v1 $(but hash-object -w file_v1) &&
+			but tag file_v2 $(but hash-object -w file_v2) &&
+			but tag file_v3 $(but hash-object -w file_v3) &&
+			but tag file_v4 $(but hash-object -w file_v4) &&
+			but clean -f &&
 
 			# Setup original cummit (or merge-base), consisting of
 			# files named "one" and "two" if renames were involved.
 			touch irrelevant_file &&
-			git add irrelevant_file &&
+			but add irrelevant_file &&
 			if [ $sideL = "rename" ]
 			then
-				git show file_v1 >one &&
-				git add one
+				but show file_v1 >one &&
+				but add one
 			fi &&
 			if [ $sideR = "rename" ]
 			then
-				git show file_v3 >two &&
-				git add two
+				but show file_v3 >two &&
+				but add two
 			fi &&
-			test_tick && git cummit -m initial &&
+			test_tick && but cummit -m initial &&
 
-			git branch L &&
-			git branch R &&
+			but branch L &&
+			but branch R &&
 
 			# Handle the left side
-			git checkout L &&
+			but checkout L &&
 			if [ $sideL = "rename" ]
 			then
-				git mv one three
+				but mv one three
 			else
-				git show file_v2 >three &&
-				git add three
+				but show file_v2 >three &&
+				but add three
 			fi &&
 			if [ $sideR = "rename" ]
 			then
-				git show file_v4 >two &&
-				git add two
+				but show file_v4 >two &&
+				but add two
 			fi &&
-			test_tick && git cummit -m L &&
+			test_tick && but cummit -m L &&
 
 			# Handle the right side
-			git checkout R &&
+			but checkout R &&
 			if [ $sideL = "rename" ]
 			then
-				git show file_v2 >one &&
-				git add one
+				but show file_v2 >one &&
+				but add one
 			fi &&
 			if [ $sideR = "rename" ]
 			then
-				git mv two three
+				but mv two three
 			else
-				git show file_v4 >three &&
-				git add three
+				but show file_v4 >three &&
+				but add three
 			fi &&
-			test_tick && git cummit -m R
+			test_tick && but cummit -m R
 		)
 	#'
 	}
@@ -1243,26 +1243,26 @@ test_conflicts_with_adds_and_renames() {
 		(
 			cd simple_${sideL}_${sideR} &&
 
-			git checkout L^0 &&
+			but checkout L^0 &&
 
 			# Merge must fail; there is a conflict
-			test_must_fail git merge -s recursive R^0 &&
+			test_must_fail but merge -s recursive R^0 &&
 
 			# Make sure the index has the right number of entries
-			git ls-files -s >out &&
+			but ls-files -s >out &&
 			test_line_count = 3 out &&
-			git ls-files -u >out &&
+			but ls-files -u >out &&
 			test_line_count = 2 out &&
 			# Ensure we have the correct number of untracked files
-			git ls-files -o >out &&
+			but ls-files -o >out &&
 			test_line_count = 1 out &&
 
 			# Nothing should have touched irrelevant_file
-			git rev-parse >actual      \
+			but rev-parse >actual      \
 				:0:irrelevant_file \
 				:2:three           \
 				:3:three           &&
-			git rev-parse >expected        \
+			but rev-parse >expected        \
 				main:irrelevant_file \
 				file_v2                \
 				file_v4                &&
@@ -1270,7 +1270,7 @@ test_conflicts_with_adds_and_renames() {
 
 			# Make sure we have the correct merged contents for
 			# three
-			git show file_v1 >expected &&
+			but show file_v1 >expected &&
 			cat <<-\EOF >>expected &&
 			<<<<<<< HEAD
 			modification
@@ -1335,27 +1335,27 @@ test_setup_nested_conflicts_from_rename_rename () {
 		# files named "one" and "two".
 		mv file_v1 one &&
 		mv file_v4 two &&
-		git add one two &&
-		test_tick && git cummit -m english &&
+		but add one two &&
+		test_tick && but cummit -m english &&
 
-		git branch L &&
-		git branch R &&
+		but branch L &&
+		but branch R &&
 
 		# Handle the left side
-		git checkout L &&
-		git rm one two &&
+		but checkout L &&
+		but rm one two &&
 		mv -f file_v2 three &&
 		mv -f file_v5 two &&
-		git add two three &&
-		test_tick && git cummit -m spanish &&
+		but add two three &&
+		test_tick && but cummit -m spanish &&
 
 		# Handle the right side
-		git checkout R &&
-		git rm one two &&
+		but checkout R &&
+		but rm one two &&
 		mv -f file_v3 one &&
 		mv -f file_v6 three &&
-		git add one three &&
-		test_tick && git cummit -m german
+		but add one three &&
+		test_tick && but cummit -m german
 	)
 }
 
@@ -1364,45 +1364,45 @@ test_expect_success 'check nested conflicts from rename/rename(2to1)' '
 	(
 		cd nested_conflicts_from_rename_rename &&
 
-		git checkout L^0 &&
+		but checkout L^0 &&
 
 		# Merge must fail; there is a conflict
-		test_must_fail git merge -s recursive R^0 &&
+		test_must_fail but merge -s recursive R^0 &&
 
 		# Make sure the index has the right number of entries
-		git ls-files -s >out &&
+		but ls-files -s >out &&
 		test_line_count = 2 out &&
-		git ls-files -u >out &&
+		but ls-files -u >out &&
 		test_line_count = 2 out &&
 		# Ensure we have the correct number of untracked files
-		git ls-files -o >out &&
+		but ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		# Compare :2:three to expected values
-		git cat-file -p main:one >base &&
-		git cat-file -p L:three >ours &&
-		git cat-file -p R:one >theirs &&
-		test_must_fail git merge-file    \
+		but cat-file -p main:one >base &&
+		but cat-file -p L:three >ours &&
+		but cat-file -p R:one >theirs &&
+		test_must_fail but merge-file    \
 			-L "HEAD:three"  -L ""  -L "R^0:one" \
 			ours             base   theirs &&
 		sed -e "s/^\([<=>]\)/\1\1/" ours >L-three &&
-		git cat-file -p :2:three >expect &&
+		but cat-file -p :2:three >expect &&
 		test_cmp expect L-three &&
 
 		# Compare :2:three to expected values
-		git cat-file -p main:two >base &&
-		git cat-file -p L:two >ours &&
-		git cat-file -p R:three >theirs &&
-		test_must_fail git merge-file    \
+		but cat-file -p main:two >base &&
+		but cat-file -p L:two >ours &&
+		but cat-file -p R:three >theirs &&
+		test_must_fail but merge-file    \
 			-L "HEAD:two"  -L ""  -L "R^0:three" \
 			ours           base   theirs &&
 		sed -e "s/^\([<=>]\)/\1\1/" ours >R-three &&
-		git cat-file -p :3:three >expect &&
+		but cat-file -p :3:three >expect &&
 		test_cmp expect R-three &&
 
 		# Compare three to expected contents
 		>empty &&
-		test_must_fail git merge-file    \
+		test_must_fail but merge-file    \
 			-L "HEAD"  -L ""  -L "R^0" \
 			L-three    empty  R-three &&
 		test_cmp three L-three
@@ -1420,27 +1420,27 @@ test_setup_rename_rename_1_to_2_binary () {
 	(
 		cd rename_rename_1_to_2_binary &&
 
-		echo '* binary' >.gitattributes &&
-		git add .gitattributes &&
+		echo '* binary' >.butattributes &&
+		but add .butattributes &&
 
 		test_seq 1 10 >orig &&
-		git add orig &&
-		git cummit -m orig &&
+		but add orig &&
+		but cummit -m orig &&
 
-		git branch A &&
-		git branch B &&
+		but branch A &&
+		but branch B &&
 
-		git checkout A &&
-		git mv orig orig-A &&
+		but checkout A &&
+		but mv orig orig-A &&
 		test_seq 1 11 >orig-A &&
-		git add orig-A &&
-		git cummit -m orig-A &&
+		but add orig-A &&
+		but cummit -m orig-A &&
 
-		git checkout B &&
-		git mv orig orig-B &&
+		but checkout B &&
+		but mv orig orig-B &&
 		test_seq 0 10 >orig-B &&
-		git add orig-B &&
-		git cummit -m orig-B
+		but add orig-B &&
+		but cummit -m orig-B
 
 	)
 }
@@ -1450,16 +1450,16 @@ test_expect_success 'rename/rename(1to2) with a binary file' '
 	(
 		cd rename_rename_1_to_2_binary &&
 
-		git checkout A^0 &&
+		but checkout A^0 &&
 
-		test_must_fail git merge -s recursive B^0 &&
+		test_must_fail but merge -s recursive B^0 &&
 
 		# Make sure the index has the right number of entries
-		git ls-files -s >actual &&
+		but ls-files -s >actual &&
 		test_line_count = 4 actual &&
 
-		git rev-parse A:orig-A B:orig-B >expect &&
-		git hash-object orig-A orig-B >actual &&
+		but rev-parse A:orig-A B:orig-B >expect &&
+		but hash-object orig-A orig-B >actual &&
 		test_cmp expect actual
 	)
 '

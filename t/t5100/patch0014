@@ -2,7 +2,7 @@
  builtin-mailinfo.c | 37 ++++++++++++++++++++++++++++++++++++-
  1 files changed, 36 insertions(+), 1 deletions(-)
 
-diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c
+diff --but a/builtin-mailinfo.c b/builtin-mailinfo.c
 index b0b5d8f..461c47e 100644
 --- a/builtin-mailinfo.c
 +++ b/builtin-mailinfo.c

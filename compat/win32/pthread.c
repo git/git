@@ -7,7 +7,7 @@
  * no need for double-checking.
  */
 
-#include "../../git-compat-util.h"
+#include "../../but-compat-util.h"
 #include "pthread.h"
 
 #include <errno.h>

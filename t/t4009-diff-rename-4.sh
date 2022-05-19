@@ -15,9 +15,9 @@ test_expect_success \
     'prepare reference tree' \
     'COPYING_test_data >COPYING &&
      echo frotz >rezrov &&
-    git update-index --add COPYING rezrov &&
-    orig=$(git hash-object COPYING) &&
-    tree=$(git write-tree) &&
+    but update-index --add COPYING rezrov &&
+    orig=$(but hash-object COPYING) &&
+    tree=$(but write-tree) &&
     echo $tree'
 
 test_expect_success \
@@ -25,16 +25,16 @@ test_expect_success \
     'sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
     sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
     rm -f COPYING &&
-    c1=$(git hash-object COPYING.1) &&
-    c2=$(git hash-object COPYING.2) &&
-    git update-index --add --remove COPYING COPYING.?'
+    c1=$(but hash-object COPYING.1) &&
+    c2=$(but hash-object COPYING.2) &&
+    but update-index --add --remove COPYING COPYING.?'
 
 # tree has COPYING and rezrov.  work tree has COPYING.1 and COPYING.2,
 # both are slightly edited, and unchanged rezrov.  We say COPYING.1
 # and COPYING.2 are based on COPYING, and do not say anything about
 # rezrov.
 
-git diff-index -z -C $tree >current
+but diff-index -z -C $tree >current
 
 cat >expected <<EOF
 :100644 100644 $orig $c1 C1234
@@ -54,14 +54,14 @@ test_expect_success \
 test_expect_success \
     'prepare work tree again' \
     'mv COPYING.2 COPYING &&
-     git update-index --add --remove COPYING COPYING.1 COPYING.2'
+     but update-index --add --remove COPYING COPYING.1 COPYING.2'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
 # both are slightly edited, and unchanged rezrov.  We say COPYING.1
 # is based on COPYING and COPYING is still there, and do not say anything
 # about rezrov.
 
-git diff-index -z -C $tree >current
+but diff-index -z -C $tree >current
 cat >expected <<EOF
 :100644 100644 $orig $c2 M
 COPYING
@@ -84,9 +84,9 @@ test_expect_success \
 test_expect_success \
     'prepare work tree once again' \
     'COPYING_test_data >COPYING &&
-     git update-index --add --remove COPYING COPYING.1'
+     but update-index --add --remove COPYING COPYING.1'
 
-git diff-index -z -C --find-copies-harder $tree >current
+but diff-index -z -C --find-copies-harder $tree >current
 cat >expected <<EOF
 :100644 100644 $orig $c1 C1234
 COPYING

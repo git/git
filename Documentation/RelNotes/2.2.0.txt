@@ -17,19 +17,19 @@ Ports
 
 UI, Workflows & Features
 
- * "git archive" learned to filter what gets archived with a pathspec.
+ * "but archive" learned to filter what gets archived with a pathspec.
 
- * "git config --edit --global" starts from a skeletal per-user
+ * "but config --edit --global" starts from a skeletal per-user
    configuration file contents, instead of a total blank, when the
    user does not already have any global config.  This immediately
    reduces the need to later ask "Have you forgotten to set
    core.user?", and we can add more to the template as we gain
    more experience.
 
- * "git stash list -p" used to be almost always a no-op because each
+ * "but stash list -p" used to be almost always a no-op because each
    stash entry is represented as a merge cummit.  It learned to show
    the difference between the base cummit version and the working tree
-   version, which is in line with what "git stash show" gives.
+   version, which is in line with what "but stash show" gives.
 
  * Sometimes users want to report a bug they experience on their
    repository, but they are not at liberty to share the contents of
@@ -37,17 +37,17 @@ UI, Workflows & Features
    to replace blob contents, names of people, paths and log
    messages with bland and simple strings to help them.
 
- * "git difftool" learned an option to stop feeding paths to the
+ * "but difftool" learned an option to stop feeding paths to the
    diff backend when it exits with a non-zero status.
 
- * "git grep" learned to paint (or not paint) partial matches on
+ * "but grep" learned to paint (or not paint) partial matches on
    context lines when showing "grep -C<num>" output in color.
 
  * "log --date=iso" uses a slight variant of the ISO 8601 format that is
    more human readable.  A new "--date=iso-strict" option gives
    datetime output that conforms more strictly.
 
- * The logic "git prune" uses is more resilient against various corner
+ * The logic "but prune" uses is more resilient against various corner
    cases.
 
  * A broken reimplementation of Git could write an invalid index that
@@ -57,28 +57,28 @@ UI, Workflows & Features
    forgot to remove the higher-stage entries, or if it wanted to unresolve
    and forgot to remove the stage #0 entry).
 
- * The temporary files "git mergetool" uses are renamed to avoid too
+ * The temporary files "but mergetool" uses are renamed to avoid too
    many dots in them (e.g. a temporary file for "hello.c" used to be
    named e.g. "hello.BASE.4321.c" but now uses underscore instead,
    e.g. "hello_BASE_4321.c", to allow us to have multiple variants).
 
- * The temporary files "git mergetool" uses can be placed in a newly
+ * The temporary files "but mergetool" uses can be placed in a newly
    created temporary directory, instead of the current directory, by
    setting the mergetool.writeToTemp configuration variable.
 
- * "git mergetool" understands "--tool bc" now, as version 4 of
+ * "but mergetool" understands "--tool bc" now, as version 4 of
    BeyondCompare can be driven the same way as its version 3 and it
    feels awkward to say "--tool bc3" to run version 4.
 
  * The "pre-receive" and "post-receive" hooks are no longer required
    to consume their input fully (not following this requirement used
-   to result in intermittent errors in "git push").
+   to result in intermittent errors in "but push").
 
  * The pretty-format specifier "%d", which expands to " (tagname)"
    for a tagged cummit, gained a cousin "%D" that just gives the
    "tagname" without frills.
 
- * "git push" learned "--signed" push, that allows a push (i.e.
+ * "but push" learned "--signed" push, that allows a push (i.e.
    request to update the refs on the other side to point at a new
    history, together with the transmission of necessary objects) to be
    signed, so that it can be verified and audited, using the GPG
@@ -86,14 +86,14 @@ UI, Workflows & Features
    public repository really point the cummits the pusher wanted to,
    without having to "trust" the server.
 
- * "git interpret-trailers" is a new filter to programmatically edit
+ * "but interpret-trailers" is a new filter to programmatically edit
    the tail end of the cummit log messages, e.g. "Signed-off-by:".
 
- * "git help everyday" shows the "Everyday Git in 20 commands or so"
+ * "but help everyday" shows the "Everyday Git in 20 commands or so"
    document, whose contents have been updated to match more modern
    Git practice.
 
- * On the "git svn" front, work progresses to reduce memory consumption and
+ * On the "but svn" front, work progresses to reduce memory consumption and
    to improve handling of mergeinfo.
 
 
@@ -154,9 +154,9 @@ Performance, Internal Implementation, Development Support etc.
    especially matters in a repository with a large number of existing
    refs.
 
- * "git fsck" was taught to check the contents of tag objects a bit more.
+ * "but fsck" was taught to check the contents of tag objects a bit more.
 
- * "git hash-object" was taught a "--literally" option to help
+ * "but hash-object" was taught a "--literally" option to help
    debugging.
 
  * When running a required clean filter, we do not have to mmap the
@@ -186,23 +186,23 @@ Unless otherwise noted, all the fixes since v2.1 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * "git log --pretty/format=" with an empty format string did not
+ * "but log --pretty/format=" with an empty format string did not
    mean the more obvious "No output whatsoever" but "Use default
    format", which was counterintuitive.
 
- * "git -c section.var command" and "git -c section.var= command"
+ * "but -c section.var command" and "but -c section.var= command"
    should pass the configuration value differently (the former should be a
    boolean true, the latter should be an empty string).
 
  * Applying a patch not generated by Git in a subdirectory used to
    check for whitespace breakage using the attributes of incorrect
    paths. Also whitespace checks were performed even for paths
-   excluded via the "git apply --exclude=<path>" mechanism.
+   excluded via the "but apply --exclude=<path>" mechanism.
 
- * "git bundle create" with a date-range specification was meant to
+ * "but bundle create" with a date-range specification was meant to
    exclude tags outside the range, but it didn't.
 
- * "git add x" where x used to be a directory and is now a
+ * "but add x" where x used to be a directory and is now a
    symbolic link to a directory misbehaved.
 
  * The prompt script checked the $GIT_DIR/ref/stash file to see if there
@@ -210,31 +210,31 @@ notes for details).
 
  * Pack-protocol documentation had a minor typo.
 
- * "git checkout -m" did not switch to another branch while carrying
+ * "but checkout -m" did not switch to another branch while carrying
    the local changes forward when a path was deleted from the index.
 
- * "git daemon" (with NO_IPV6 build configuration) used to incorrectly
+ * "but daemon" (with NO_IPV6 build configuration) used to incorrectly
    use the hostname even when gethostbyname() reported that the given
    hostname is not found.
    (merge 107efbe rs/daemon-fixes later to maint).
 
- * With sufficiently long refnames, "git fast-import" could have
+ * With sufficiently long refnames, "but fast-import" could have
    overflowed an on-stack buffer.
 
  * After "pack-refs --prune" packed refs at the top-level, it failed
    to prune them.
 
- * Progress output from "git gc --auto" was visible in "git fetch -q".
+ * Progress output from "but gc --auto" was visible in "but fetch -q".
 
  * We used to pass -1000 to poll(2), expecting it to also mean "no
    timeout", which should be spelled as -1.
 
- * "git rebase" documentation was unclear that it is required to
+ * "but rebase" documentation was unclear that it is required to
    specify on what <upstream> the rebase is to be done when telling it
    to first check out <branch>.
    (merge 95c6826 so/rebase-doc later to maint).
 
- * "git push" over HTTP transport had an artificial limit on the number of
+ * "but push" over HTTP transport had an artificial limit on the number of
    refs that can be pushed, imposed by the command line length.
    (merge 26be19b jk/send-pack-many-refspecs later to maint).
 
@@ -242,28 +242,28 @@ notes for details).
    twice, multiple threads got confused due to a race.
    (merge ab791dd jk/index-pack-threading-races later to maint).
 
- * An attempt to remove the entire tree in the "git fast-import" input
+ * An attempt to remove the entire tree in the "but fast-import" input
    stream caused it to misbehave.
    (merge 2668d69 mb/fast-import-delete-root later to maint).
 
- * Reachability check (used in "git prune" and friends) did not add a
+ * Reachability check (used in "but prune" and friends) did not add a
    detached HEAD as a starting point to traverse objects still in use.
    (merge c40fdd0 mk/reachable-protect-detached-head later to maint).
 
- * "git config --add section.var val" when section.var already has an
+ * "but config --add section.var val" when section.var already has an
    empty-string value used to lose the empty-string value.
    (merge c1063be ta/config-add-to-empty-or-true-fix later to maint).
 
- * "git fsck" failed to report that it found corrupt objects via its
+ * "but fsck" failed to report that it found corrupt objects via its
    exit status in some cases.
    (merge 30d1038 jk/fsck-exit-code-fix later to maint).
 
- * Use of the "--verbose" option used to break "git branch --merged".
+ * Use of the "--verbose" option used to break "but branch --merged".
    (merge 12994dd jk/maint-branch-verbose-merged later to maint).
 
  * Some MUAs mangle a line in a message that begins with "From " to
    ">From " when writing to a mailbox file, and feeding such an input
-   to "git am" used to lose such a line.
+   to "but am" used to lose such a line.
    (merge 85de86a jk/mbox-from-line later to maint).
 
  * "rev-parse --verify --quiet $name" is meant to quietly exit with a
@@ -271,7 +271,7 @@ notes for details).
    gave error messages in some cases.
 
  * A handful of C source files have been updated to include
-   "git-compat-util.h" as the first thing, to conform better to our
+   "but-compat-util.h" as the first thing, to conform better to our
    coding guidelines.
    (merge 1c4b660 da/include-compat-util-first-in-c later to maint).
 
@@ -285,15 +285,15 @@ notes for details).
    (merge c30c43c bc/asciidoc-pretty-formats-fix later to maint).
    (merge f8a48af bc/asciidoc later to maint).
 
- * "gitweb" used deprecated CGI::startfrom, which was removed from
+ * "butweb" used deprecated CGI::startfrom, which was removed from
    CGI.pm as of 4.04; use CGI::start_from instead.
-   (merge 4750f4b rm/gitweb-start-form later to maint).
+   (merge 4750f4b rm/butweb-start-form later to maint).
 
  * Newer versions of 'meld' break the auto-detection we use to see if
    they are new enough to support the `--output` option.
    (merge b12d045 da/mergetool-meld later to maint).
 
- * "git pack-objects" forgot to disable the codepath to generate the
+ * "but pack-objects" forgot to disable the codepath to generate the
    object reachability bitmap when it needs to split the resulting
    pack.
    (merge 2113471 jk/pack-objects-no-bitmap-when-splitting later to maint).
@@ -301,13 +301,13 @@ notes for details).
  * The code to use cache-tree trusted the on-disk data too much and
    fell into an infinite loop upon seeing an incorrectly recorded
    index file.
-   (merge 729dbbd jk/cache-tree-protect-from-broken-libgit2 later to maint).
+   (merge 729dbbd jk/cache-tree-protect-from-broken-libbut2 later to maint).
 
- * "git fetch" into a repository where branch B was deleted earlier,
+ * "but fetch" into a repository where branch B was deleted earlier,
    back when it had reflog enabled, and then branch B/C is fetched
    into it without reflog enabled, which is arguably an unlikely
    corner case, unnecessarily failed.
    (merge aae828b jk/fetch-reflog-df-conflict later to maint).
 
- * "git log --first-parent -L..." used to crash.
+ * "but log --first-parent -L..." used to crash.
    (merge a8787c5 tm/line-log-first-parent later to maint).

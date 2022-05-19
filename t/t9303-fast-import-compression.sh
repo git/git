@@ -11,16 +11,16 @@ import_large () {
 		echo "data <<EOD"
 		printf "%2000000s\n" "$*"
 		echo EOD
-	) | git "$@" fast-import
+	) | but "$@" fast-import
 }
 
 while read expect config
 do
 	test_expect_success "fast-import (packed) with $config" '
-		test_when_finished "rm -f .git/objects/pack/pack-*.*" &&
-		test_when_finished "rm -rf .git/objects/??" &&
+		test_when_finished "rm -f .but/objects/pack/pack-*.*" &&
+		test_when_finished "rm -rf .but/objects/??" &&
 		import_large -c fastimport.unpacklimit=0 $config &&
-		sz=$(test_file_size .git/objects/pack/pack-*.pack) &&
+		sz=$(test_file_size .but/objects/pack/pack-*.pack) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;
 		large) test "$sz" -ge 100000 ;;
@@ -40,10 +40,10 @@ EOF
 while read expect config
 do
 	test_expect_success "fast-import (loose) with $config" '
-		test_when_finished "rm -f .git/objects/pack/pack-*.*" &&
-		test_when_finished "rm -rf .git/objects/??" &&
+		test_when_finished "rm -f .but/objects/pack/pack-*.*" &&
+		test_when_finished "rm -rf .but/objects/??" &&
 		import_large -c fastimport.unpacklimit=9 $config &&
-		sz=$(test_file_size .git/objects/??/????*) &&
+		sz=$(test_file_size .but/objects/??/????*) &&
 		case "$expect" in
 		small) test "$sz" -le 100000 ;;
 		large) test "$sz" -ge 100000 ;;

@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "git-compat-util.h"
+#include "but-compat-util.h"
 #include "thread-utils.h"
 
 int cmd__online_cpus(int argc, const char **argv)

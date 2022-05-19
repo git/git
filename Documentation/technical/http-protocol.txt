@@ -30,18 +30,18 @@ supplied `$GIT_URL` string.
 
 An example of a dumb client requesting for a loose object:
 
-  $GIT_URL:     http://example.com:8080/git/repo.git
-  URL request:  http://example.com:8080/git/repo.git/objects/d0/49f6c27a2244e12041955e262a404c7faba355
+  $GIT_URL:     http://example.com:8080/but/repo.but
+  URL request:  http://example.com:8080/but/repo.but/objects/d0/49f6c27a2244e12041955e262a404c7faba355
 
 An example of a smart request to a catch-all gateway:
 
-  $GIT_URL:     http://example.com/daemon.cgi?svc=git&q=
-  URL request:  http://example.com/daemon.cgi?svc=git&q=/info/refs&service=git-receive-pack
+  $GIT_URL:     http://example.com/daemon.cgi?svc=but&q=
+  URL request:  http://example.com/daemon.cgi?svc=but&q=/info/refs&service=but-receive-pack
 
 An example of a request to a submodule:
 
-  $GIT_URL:     http://example.com/git/repo.git/path/submodule.git
-  URL request:  http://example.com/git/repo.git/path/submodule.git/info/refs
+  $GIT_URL:     http://example.com/but/repo.but/path/submodule.but
+  URL request:  http://example.com/but/repo.but/path/submodule.but/info/refs
 
 Clients MUST strip a trailing `/`, if present, from the user supplied
 `$GIT_URL` string to prevent empty path tokens (`//`) from appearing
@@ -164,7 +164,7 @@ The Content-Type of the returned info/refs entity SHOULD be
 `text/plain; charset=utf-8`, but MAY be any content type.
 Clients MUST NOT attempt to validate the returned Content-Type.
 Dumb servers MUST NOT return a return type starting with
-`application/x-git-`.
+`application/x-but-`.
 
 Cache-Control headers MAY be returned to disable caching of the
 returned entity.
@@ -196,7 +196,7 @@ The request MUST contain exactly one query parameter,
 name the client wishes to contact to complete the operation.
 The request MUST NOT contain additional query parameters.
 
-   C: GET $GIT_URL/info/refs?service=git-upload-pack HTTP/1.0
+   C: GET $GIT_URL/info/refs?service=but-upload-pack HTTP/1.0
 
 dumb server reply:
 
@@ -210,10 +210,10 @@ dumb server reply:
 smart server reply:
 
    S: 200 OK
-   S: Content-Type: application/x-git-upload-pack-advertisement
+   S: Content-Type: application/x-but-upload-pack-advertisement
    S: Cache-Control: no-cache
    S:
-   S: 001e# service=git-upload-pack\n
+   S: 001e# service=but-upload-pack\n
    S: 0000
    S: 004895dcfa3633004da0049d3d0fa03f80589cbcaf31 refs/heads/maint\0multi_ack\n
    S: 003fd049f6c27a2244e12041955e262a404c7faba355 refs/heads/master\n
@@ -226,7 +226,7 @@ Documentation/technical/pack-protocol.txt) as a colon-separated string
 in the Git-Protocol HTTP header.
 
 Uses the `--http-backend-info-refs` option to
-linkgit:git-upload-pack[1].
+linkbut:but-upload-pack[1].
 
 Dumb Server Response
 ^^^^^^^^^^^^^^^^^^^^
@@ -303,22 +303,22 @@ Extra Parameter.
 		     PKT-LINE(obj-id SP name "^{}" LF
 
 
-Smart Service git-upload-pack
+Smart Service but-upload-pack
 ------------------------------
 This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with
-`$GIT_URL/info/refs?service=git-upload-pack`.
+`$GIT_URL/info/refs?service=but-upload-pack`.
 
-   C: POST $GIT_URL/git-upload-pack HTTP/1.0
-   C: Content-Type: application/x-git-upload-pack-request
+   C: POST $GIT_URL/but-upload-pack HTTP/1.0
+   C: Content-Type: application/x-but-upload-pack-request
    C:
    C: 0032want 0a53e9ddeaddad63ad106860237bbf53411d11a7\n
    C: 0032have 441b40d833fdfa93eb2908e52742248faf0ee993\n
    C: 0000
 
    S: 200 OK
-   S: Content-Type: application/x-git-upload-pack-result
+   S: Content-Type: application/x-but-upload-pack-result
    S: Cache-Control: no-cache
    S:
    S: ....ACK %s, continue
@@ -375,7 +375,7 @@ C: Start a queue, `c_pending`, ordered by cummit time (popping newest
 
 'one compute step:'
 
-C: Send one `$GIT_URL/git-upload-pack` request:
+C: Send one `$GIT_URL/but-upload-pack` request:
 
    C: 0032want <want #1>...............................
    C: 0032want <want #2>...............................
@@ -418,7 +418,7 @@ the server know it won't proceed:
 
    C: 0009done
 
-S: Parse the git-upload-pack request:
+S: Parse the but-upload-pack request:
 
 Verify all objects in `want` are directly reachable from refs.
 
@@ -441,7 +441,7 @@ For each object, if the server has the object reachable from
 a ref, add it to `s_common`.  If a cummit is added to `s_common`,
 do not add any ancestors, even if they also appear in `have`.
 
-S: Send the git-upload-pack response:
+S: Send the but-upload-pack response:
 
 If the server has found a closed set of objects to pack or the
 request ends with "done", it replies with the pack.
@@ -450,7 +450,7 @@ TODO: Document the pack based response
    S: PACK...
 
 The returned stream is the side-band-64k protocol supported
-by the git-upload-pack service, and the pack is embedded into
+by the but-upload-pack service, and the pack is embedded into
 stream 1.  Progress messages from the server side MAY appear
 in stream 2.
 
@@ -467,22 +467,22 @@ C: Parse the upload-pack response:
 'Do another compute step.'
 
 
-Smart Service git-receive-pack
+Smart Service but-receive-pack
 ------------------------------
 This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with
-`$GIT_URL/info/refs?service=git-receive-pack`.
+`$GIT_URL/info/refs?service=but-receive-pack`.
 
-   C: POST $GIT_URL/git-receive-pack HTTP/1.0
-   C: Content-Type: application/x-git-receive-pack-request
+   C: POST $GIT_URL/but-receive-pack HTTP/1.0
+   C: Content-Type: application/x-but-receive-pack-request
    C:
    C: ....0a53e9ddeaddad63ad106860237bbf53411d11a7 441b40d833fdfa93eb2908e52742248faf0ee993 refs/heads/maint\0 report-status
    C: 0000
    C: PACK....
 
    S: 200 OK
-   S: Content-Type: application/x-git-receive-pack-result
+   S: Content-Type: application/x-but-receive-pack-result
    S: Cache-Control: no-cache
    S:
    S: ....

@@ -7,19 +7,19 @@ test_expect_success "setup proc-receive hook (unknown version, $PROTOCOL/porcela
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 
-	# Check status report for git-push
+	# Check status report for but-push
 	sed -n \
 		-e "/^To / { p; n; p; n; p; }" \
 		<actual >actual-report &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -48,16 +48,16 @@ test_expect_success "setup proc-receive hook (hook --die-read-version, $PROTOCOL
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (hook --die-read-version, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	filter_out_user_friendly_and_stable_output \
 		-e "/^To / { p; n; p; n; p; }" \
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -79,16 +79,16 @@ test_expect_success "setup proc-receive hook (hook --die-write-version, $PROTOCO
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (hook --die-write-version, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	filter_out_user_friendly_and_stable_output \
 		-e "/^To / { p; n; p; n; p; }" \
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -110,16 +110,16 @@ test_expect_success "setup proc-receive hook (hook --die-read-commands, $PROTOCO
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (hook --die-read-commands, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	filter_out_user_friendly_and_stable_output \
 		-e "/^To / { p; n; p; n; p; }" \
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -140,10 +140,10 @@ test_expect_success "setup proc-receive hook (hook --die-read-push-options, $PRO
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $PROTOCOL/porcelain)" '
-	git -C "$upstream" config receive.advertisePushOptions true &&
-	test_must_fail git -C workbench push --porcelain origin \
+	but -C "$upstream" config receive.advertisePushOptions true &&
+	test_must_fail but -C workbench push --porcelain origin \
 		-o reviewers=user1,user2 \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
@@ -151,7 +151,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $
 		-e "/^To / { p; n; p; n; p; }" \
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -172,16 +172,16 @@ test_expect_success "setup proc-receive hook (hook --die-write-report, $PROTOCOL
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic(A)
+# but push         :                       refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (hook --die-write-report, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic \
 		>out-$test_count 2>&1 &&
 	filter_out_user_friendly_and_stable_output \
 		-e "/^To / { p; n; p; n; p; }" \
 		<out-$test_count >actual &&
 	cat >expect <<-EOF &&
-	To <URL/of/upstream.git>
+	To <URL/of/upstream.but>
 	!	HEAD:refs/for/main/topic	[remote rejected] (fail to run proc-receive hook)
 	Done
 	EOF
@@ -202,9 +202,9 @@ test_expect_success "setup proc-receive hook (no report, $PROTOCOL/porcelain)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       next(A)  refs/for/main/topic(A)
+# but push         :                       next(A)  refs/for/main/topic(A)
 test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/heads/next \
 		HEAD:refs/for/main/topic >out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -216,7 +216,7 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL/porcelain)
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
 	> remote: post-receive< <ZERO-OID> <CUMMIT-A> refs/heads/next        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> *	HEAD:refs/heads/next	[new branch]
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
 	> Done
@@ -232,7 +232,7 @@ test_expect_success "proc-receive: bad protocol (no report, $PROTOCOL/porcelain)
 # Refs of upstream : main(A)             next(A)
 # Refs of workbench: main(A)  tags/v123
 test_expect_success "cleanup ($PROTOCOL/porcelain)" '
-	git -C "$upstream" update-ref -d refs/heads/next
+	but -C "$upstream" update-ref -d refs/heads/next
 '
 
 test_expect_success "setup proc-receive hook (no ref, $PROTOCOL/porcelain)" '
@@ -245,9 +245,9 @@ test_expect_success "setup proc-receive hook (no ref, $PROTOCOL/porcelain)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic
+# but push         :                       refs/for/main/topic
 test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 		HEAD:refs/for/main/topic\
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -258,7 +258,7 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL/porcelain)" '
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok        Z
 	> remote: error: proc-receive reported incomplete status line: "ok"        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
 	> Done
 	EOF
@@ -279,9 +279,9 @@ test_expect_success "setup proc-receive hook (unknown status, $PROTOCOL/porcelai
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git push         :                       refs/for/main/topic
+# but push         :                       refs/for/main/topic
 test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+	test_must_fail but -C workbench push --porcelain origin \
 			HEAD:refs/for/main/topic \
 			>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
@@ -292,7 +292,7 @@ test_expect_success "proc-receive: bad protocol (unknown status, $PROTOCOL/porce
 	> remote: proc-receive< <ZERO-OID> <CUMMIT-A> refs/for/main/topic        Z
 	> remote: proc-receive> xx refs/for/main/topic        Z
 	> remote: error: proc-receive reported bad status "xx" on ref "refs/for/main/topic"        Z
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
 	> Done
 	EOF

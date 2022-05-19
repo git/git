@@ -18,7 +18,7 @@ There are two main costs here:
 The cummit-graph file is a supplemental data structure that accelerates
 cummit graph walks. If a user downgrades or disables the 'core.cummitGraph'
 config setting, then the existing ODB is sufficient. The file is stored
-as "cummit-graph" either in the .git/objects/info directory or in the info
+as "cummit-graph" either in the .but/objects/info directory or in the info
 directory of an alternate.
 
 The cummit-graph file stores the cummit graph structure along with some
@@ -90,9 +90,9 @@ numbers, the general heuristic is the following:
 In absence of corrected cummit dates (for example, old versions of Git or
 mixed generation graph chains),
 this heuristic is currently used whenever the computation is allowed to
-violate topological relationships due to clock skew (such as "git log"
+violate topological relationships due to clock skew (such as "but log"
 with default order), but is not used when the topological order is
-required (such as merge base calculations, "git log --graph").
+required (such as merge base calculations, "but log --graph").
 
 In practice, we expect some cummits to be created recently and not stored
 in the cummit graph. We can treat these cummits as having "infinite"
@@ -126,7 +126,7 @@ Design Details
 --------------
 
 - The cummit-graph file is stored in a file named 'cummit-graph' in the
-  .git/objects/info directory. This could be stored in the info directory
+  .but/objects/info directory. This could be stored in the info directory
   of an alternate.
 
 - The core.cummitGraph config setting must be on to consume graph files.
@@ -371,17 +371,17 @@ their custom environment:
 
 Related Links
 -------------
-[0] https://bugs.chromium.org/p/git/issues/detail?id=8
+[0] https://bugs.chromium.org/p/but/issues/detail?id=8
     Chromium work item for: Serialized cummit Graph
 
-[1] https://lore.kernel.org/git/20110713070517.GC18566@sigill.intra.peff.net/
+[1] https://lore.kernel.org/but/20110713070517.GC18566@sigill.intra.peff.net/
     An abandoned patch that introduced generation numbers.
 
-[2] https://lore.kernel.org/git/20170908033403.q7e6dj7benasrjes@sigill.intra.peff.net/
+[2] https://lore.kernel.org/but/20170908033403.q7e6dj7benasrjes@sigill.intra.peff.net/
     Discussion about generation numbers on cummits and how they interact
     with fsck.
 
-[3] https://lore.kernel.org/git/20170908034739.4op3w4f2ma5s65ku@sigill.intra.peff.net/
+[3] https://lore.kernel.org/but/20170908034739.4op3w4f2ma5s65ku@sigill.intra.peff.net/
     More discussion about generation numbers and not storing them inside
     cummit objects. A valuable quote:
 
@@ -393,9 +393,9 @@ Related Links
      cummit objects (i.e., packv4 or something like the "metapacks" I
      proposed a few years ago)."
 
-[4] https://lore.kernel.org/git/20180108154822.54829-1-git@jeffhostetler.com/T/#u
+[4] https://lore.kernel.org/but/20180108154822.54829-1-but@jeffhostetler.com/T/#u
     A patch to remove the ahead-behind calculation from 'status'.
 
-[5] https://lore.kernel.org/git/f27db281-abad-5043-6d71-cbb083b1c877@gmail.com/
+[5] https://lore.kernel.org/but/f27db281-abad-5043-6d71-cbb083b1c877@gmail.com/
     A discussion of a "two-dimensional graph position" that can allow reading
     multiple cummit-graph chains at the same time.

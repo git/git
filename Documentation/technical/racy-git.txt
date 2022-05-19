@@ -13,9 +13,9 @@ often does not, match the files in the working tree.
 
 There are cases Git needs to examine the differences between the
 virtual working tree state in the index and the files in the
-working tree.  The most obvious case is when the user asks `git
-diff` (or its low level implementation, `git diff-files`) or
-`git-ls-files --modified`.  In addition, Git internally checks
+working tree.  The most obvious case is when the user asks `but
+diff` (or its low level implementation, `but diff-files`) or
+`but-ls-files --modified`.  In addition, Git internally checks
 if the files in the working tree are different from what are
 recorded in the index to avoid stomping on local changes in them
 during patch application, switching branches, and merging.
@@ -45,7 +45,7 @@ members are also compared. On Linux, this is not enabled by default
 because in-core timestamps can have finer granularity than
 on-disk timestamps, resulting in meaningless changes when an
 inode is evicted from the inode cache.  See cummit 8ce13b0
-of git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+of but://but.kernel.org/pub/scm/linux/kernel/but/tglx/history.but
 ([PATCH] Sync in core time granularity with filesystems,
 2005-01-04). This patch is included in kernel 2.6.11 and newer, but
 only fixes the issue for file systems with exactly 1 ns or 1 s
@@ -60,7 +60,7 @@ There is one slight problem with the optimization based on the
 cached stat information.  Consider this sequence:
 
   : modify 'foo'
-  $ git update-index 'foo'
+  $ but update-index 'foo'
   : modify 'foo' again, in-place, without changing its size
 
 The first `update-index` computes the object name of the
@@ -81,7 +81,7 @@ To avoid this problem, Git does two things:
 
 . When the cached stat information says the file has not been
   modified, and the `st_mtime` is the same as (or newer than)
-  the timestamp of the index file itself (which is the time `git
+  the timestamp of the index file itself (which is the time `but
   update-index foo` finished running in the above example), it
   also compares the contents with the object registered in the
   index entry to make sure they match.
@@ -94,7 +94,7 @@ Because the index file itself is written after collecting all
 the stat information from updated paths, `st_mtime` timestamp of
 it is usually the same as or newer than any of the paths the
 index contains.  And no matter how quick the modification that
-follows `git update-index foo` finishes, the resulting
+follows `but update-index foo` finishes, the resulting
 `st_mtime` timestamp on `foo` cannot get a value earlier
 than the index file.  Therefore, index entries that can be
 racily clean are limited to the ones that have the same
@@ -109,10 +109,10 @@ actually clean after comparing the cached stat information using
 
 The problem the latter solves is this sequence:
 
-  $ git update-index 'foo'
+  $ but update-index 'foo'
   : modify 'foo' in-place without changing its size
   : wait for enough time
-  $ git update-index 'bar'
+  $ but update-index 'bar'
 
 Without the latter, the timestamp of the index file gets a newer
 value, and falsely clean entry `foo` would not be caught by the
@@ -131,32 +131,32 @@ The runtime penalty of falling back to `ce_modified_check_fs()`
 from `ce_match_stat()` can be very expensive when there are many
 racily clean entries.  An obvious way to artificially create
 this situation is to give the same timestamp to all the files in
-the working tree in a large project, run `git update-index` on
+the working tree in a large project, run `but update-index` on
 them, and give the same timestamp to the index file:
 
   $ date >.datestamp
-  $ git ls-files | xargs touch -r .datestamp
-  $ git ls-files | git update-index --stdin
-  $ touch -r .datestamp .git/index
+  $ but ls-files | xargs touch -r .datestamp
+  $ but ls-files | but update-index --stdin
+  $ touch -r .datestamp .but/index
 
 This will make all index entries racily clean.  The linux project, for
 example, there are over 20,000 files in the working tree.  On my
 Athlon 64 X2 3800+, after the above:
 
-  $ /usr/bin/time git diff-files
+  $ /usr/bin/time but diff-files
   1.68user 0.54system 0:02.22elapsed 100%CPU (0avgtext+0avgdata 0maxresident)k
   0inputs+0outputs (0major+67111minor)pagefaults 0swaps
-  $ git update-index MAINTAINERS
-  $ /usr/bin/time git diff-files
+  $ but update-index MAINTAINERS
+  $ /usr/bin/time but diff-files
   0.02user 0.12system 0:00.14elapsed 100%CPU (0avgtext+0avgdata 0maxresident)k
   0inputs+0outputs (0major+935minor)pagefaults 0swaps
 
-Running `git update-index` in the middle checked the racily
+Running `but update-index` in the middle checked the racily
 clean entries, and left the cached `st_mtime` for all the paths
 intact because they were actually clean (so this step took about
-the same amount of time as the first `git diff-files`).  After
+the same amount of time as the first `but diff-files`).  After
 that, they are not racily clean anymore but are truly clean, so
-the second invocation of `git diff-files` fully took advantage
+the second invocation of `but diff-files` fully took advantage
 of the cached stat information.
 
 
@@ -174,12 +174,12 @@ I suspected that in practice the situation where many paths in the
 index are all racily clean was quite rare.  The only code paths
 that can record recent timestamp for large number of paths are:
 
-. Initial `git add .` of a large project.
+. Initial `but add .` of a large project.
 
-. `git checkout` of a large project from an empty index into an
+. `but checkout` of a large project from an empty index into an
   unpopulated working tree.
 
-Note: switching branches with `git checkout` keeps the cached
+Note: switching branches with `but checkout` keeps the cached
 stat information of existing working tree files that are the
 same between the current branch and the new branch, which are
 all older than the resulting index file, and they will not

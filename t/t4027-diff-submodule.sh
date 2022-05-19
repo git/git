@@ -11,41 +11,41 @@ test_expect_success setup '
 	(
 		cd sub &&
 		echo hello >world &&
-		git add world &&
-		git cummit -m submodule
+		but add world &&
+		but cummit -m submodule
 	) &&
 
 	test_tick &&
 	echo frotz >nitfol &&
-	git add nitfol sub &&
-	git cummit -m superproject &&
+	but add nitfol sub &&
+	but cummit -m superproject &&
 
 	(
 		cd sub &&
 		echo goodbye >world &&
-		git add world &&
-		git cummit -m "submodule #2"
+		but add world &&
+		but cummit -m "submodule #2"
 	) &&
 
-	git -C sub rev-list HEAD >revs &&
+	but -C sub rev-list HEAD >revs &&
 	set x $(cat revs) &&
 	echo ":160000 160000 $3 $ZERO_OID M	sub" >expect &&
 	subtip=$3 subprev=$2
 '
 
-test_expect_success 'git diff --raw HEAD' '
+test_expect_success 'but diff --raw HEAD' '
 	hexsz=$(test_oid hexsz) &&
-	git diff --raw --abbrev=$hexsz HEAD >actual &&
+	but diff --raw --abbrev=$hexsz HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git diff-index --raw HEAD' '
-	git diff-index --raw HEAD >actual.index &&
+test_expect_success 'but diff-index --raw HEAD' '
+	but diff-index --raw HEAD >actual.index &&
 	test_cmp expect actual.index
 '
 
-test_expect_success 'git diff-files --raw' '
-	git diff-files --raw >actual.files &&
+test_expect_success 'but diff-files --raw' '
+	but diff-files --raw >actual.files &&
 	test_cmp expect actual.files
 '
 
@@ -54,200 +54,200 @@ expect_from_to () {
 		"-" "$1" "$2"
 }
 
-test_expect_success 'git diff HEAD' '
-	git diff HEAD >actual &&
+test_expect_success 'but diff HEAD' '
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (work tree)' '
+test_expect_success 'but diff HEAD with dirty submodule (work tree)' '
 	echo >>sub/world &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev-dirty &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (index)' '
+test_expect_success 'but diff HEAD with dirty submodule (index)' '
 	(
 		cd sub &&
-		git reset --hard &&
+		but reset --hard &&
 		echo >>world &&
-		git add world
+		but add world
 	) &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev-dirty &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (untracked)' '
+test_expect_success 'but diff HEAD with dirty submodule (untracked)' '
 	(
 		cd sub &&
-		git reset --hard &&
-		git clean -qfdx &&
+		but reset --hard &&
+		but clean -qfdx &&
 		>cruft
 	) &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (untracked) (none ignored)' '
+test_expect_success 'but diff HEAD with dirty submodule (untracked) (none ignored)' '
 	test_config diff.ignoreSubmodules none &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev-dirty &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)' '
-	git cummit -m "x" sub &&
+test_expect_success 'but diff HEAD with dirty submodule (work tree, refs match)' '
+	but cummit -m "x" sub &&
 	echo >>sub/world &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git diff --ignore-submodules HEAD >actual2 &&
+	but diff --ignore-submodules HEAD >actual2 &&
 	test_must_be_empty actual2 &&
-	git diff --ignore-submodules=untracked HEAD >actual3 &&
+	but diff --ignore-submodules=untracked HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
-	git diff --ignore-submodules=dirty HEAD >actual4 &&
+	but diff --ignore-submodules=dirty HEAD >actual4 &&
 	test_must_be_empty actual4
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.gitmodules]' '
-	git config diff.ignoreSubmodules dirty &&
-	git diff HEAD >actual &&
+test_expect_success 'but diff HEAD with dirty submodule (work tree, refs match) [.butmodules]' '
+	but config diff.ignoreSubmodules dirty &&
+	but diff HEAD >actual &&
 	test_must_be_empty actual &&
-	git config --add -f .gitmodules submodule.subname.ignore none &&
-	git config --add -f .gitmodules submodule.subname.path sub &&
-	git diff HEAD >actual &&
+	but config --add -f .butmodules submodule.subname.ignore none &&
+	but config --add -f .butmodules submodule.subname.path sub &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config -f .gitmodules submodule.subname.ignore all &&
-	git config -f .gitmodules submodule.subname.path sub &&
-	git diff HEAD >actual2 &&
+	but config -f .butmodules submodule.subname.ignore all &&
+	but config -f .butmodules submodule.subname.path sub &&
+	but diff HEAD >actual2 &&
 	test_must_be_empty actual2 &&
-	git config -f .gitmodules submodule.subname.ignore untracked &&
-	git diff HEAD >actual3 &&
+	but config -f .butmodules submodule.subname.ignore untracked &&
+	but diff HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
-	git config -f .gitmodules submodule.subname.ignore dirty &&
-	git diff HEAD >actual4 &&
+	but config -f .butmodules submodule.subname.ignore dirty &&
+	but diff HEAD >actual4 &&
 	test_must_be_empty actual4 &&
-	git config submodule.subname.ignore none &&
-	git config submodule.subname.path sub &&
-	git diff HEAD >actual &&
+	but config submodule.subname.ignore none &&
+	but config submodule.subname.path sub &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.subname &&
-	git config --remove-section -f .gitmodules submodule.subname &&
-	git config --unset diff.ignoreSubmodules &&
-	rm .gitmodules
+	but config --remove-section submodule.subname &&
+	but config --remove-section -f .butmodules submodule.subname &&
+	but config --unset diff.ignoreSubmodules &&
+	rm .butmodules
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (index, refs match)' '
+test_expect_success 'but diff HEAD with dirty submodule (index, refs match)' '
 	(
 		cd sub &&
-		git reset --hard &&
+		but reset --hard &&
 		echo >>world &&
-		git add world
+		but add world
 	) &&
-	git diff HEAD >actual &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match)' '
+test_expect_success 'but diff HEAD with dirty submodule (untracked, refs match)' '
 	(
 		cd sub &&
-		git reset --hard &&
-		git clean -qfdx &&
+		but reset --hard &&
+		but clean -qfdx &&
 		>cruft
 	) &&
-	git diff --ignore-submodules=none HEAD >actual &&
+	but diff --ignore-submodules=none HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git diff --ignore-submodules=all HEAD >actual2 &&
+	but diff --ignore-submodules=all HEAD >actual2 &&
 	test_must_be_empty actual2 &&
-	git diff HEAD >actual3 &&
+	but diff HEAD >actual3 &&
 	test_must_be_empty actual3 &&
-	git diff --ignore-submodules=dirty HEAD >actual4 &&
+	but diff --ignore-submodules=dirty HEAD >actual4 &&
 	test_must_be_empty actual4
 '
 
-test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) [.gitmodules]' '
-	git config --add -f .gitmodules submodule.subname.ignore all &&
-	git config --add -f .gitmodules submodule.subname.path sub &&
-	git diff HEAD >actual2 &&
+test_expect_success 'but diff HEAD with dirty submodule (untracked, refs match) [.butmodules]' '
+	but config --add -f .butmodules submodule.subname.ignore all &&
+	but config --add -f .butmodules submodule.subname.path sub &&
+	but diff HEAD >actual2 &&
 	test_must_be_empty actual2 &&
-	git config -f .gitmodules submodule.subname.ignore untracked &&
-	git diff HEAD >actual3 &&
+	but config -f .butmodules submodule.subname.ignore untracked &&
+	but diff HEAD >actual3 &&
 	test_must_be_empty actual3 &&
-	git config -f .gitmodules submodule.subname.ignore dirty &&
-	git diff HEAD >actual4 &&
+	but config -f .butmodules submodule.subname.ignore dirty &&
+	but diff HEAD >actual4 &&
 	test_must_be_empty actual4 &&
-	git config submodule.subname.ignore none &&
-	git config submodule.subname.path sub &&
-	git diff HEAD >actual &&
+	but config submodule.subname.ignore none &&
+	but config submodule.subname.path sub &&
+	but diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.subname &&
-	git config --remove-section -f .gitmodules submodule.subname &&
-	rm .gitmodules
+	but config --remove-section submodule.subname &&
+	but config --remove-section -f .butmodules submodule.subname &&
+	rm .butmodules
 '
 
-test_expect_success 'git diff between submodule cummits' '
-	git diff HEAD^..HEAD >actual &&
+test_expect_success 'but diff between submodule cummits' '
+	but diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git diff --ignore-submodules=dirty HEAD^..HEAD >actual &&
+	but diff --ignore-submodules=dirty HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git diff --ignore-submodules HEAD^..HEAD >actual &&
+	but diff --ignore-submodules HEAD^..HEAD >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'git diff between submodule cummits [.gitmodules]' '
-	git diff HEAD^..HEAD >actual &&
+test_expect_success 'but diff between submodule cummits [.butmodules]' '
+	but diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config --add -f .gitmodules submodule.subname.ignore dirty &&
-	git config --add -f .gitmodules submodule.subname.path sub &&
-	git diff HEAD^..HEAD >actual &&
+	but config --add -f .butmodules submodule.subname.ignore dirty &&
+	but config --add -f .butmodules submodule.subname.path sub &&
+	but diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config -f .gitmodules submodule.subname.ignore all &&
-	git diff HEAD^..HEAD >actual &&
+	but config -f .butmodules submodule.subname.ignore all &&
+	but diff HEAD^..HEAD >actual &&
 	test_must_be_empty actual &&
-	git config submodule.subname.ignore dirty &&
-	git config submodule.subname.path sub &&
-	git diff  HEAD^..HEAD >actual &&
+	but config submodule.subname.ignore dirty &&
+	but config submodule.subname.path sub &&
+	but diff  HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
-	git config --remove-section submodule.subname &&
-	git config --remove-section -f .gitmodules submodule.subname &&
-	rm .gitmodules
+	but config --remove-section submodule.subname &&
+	but config --remove-section -f .butmodules submodule.subname &&
+	rm .butmodules
 '
 
-test_expect_success 'git diff (empty submodule dir)' '
-	rm -rf sub/* sub/.git &&
-	git diff > actual.empty &&
+test_expect_success 'but diff (empty submodule dir)' '
+	rm -rf sub/* sub/.but &&
+	but diff > actual.empty &&
 	test_must_be_empty actual.empty
 '
 
@@ -258,7 +258,7 @@ test_expect_success 'conflicted submodule setup' '
 		echo "160000 1$c 1	sub" &&
 		echo "160000 2$c 2	sub" &&
 		echo "160000 3$c 3	sub"
-	) | git update-index --index-info &&
+	) | but update-index --index-info &&
 	echo >expect.nosub "diff --cc sub
 index 2ffffff,3ffffff..0000000
 --- a/sub
@@ -268,21 +268,21 @@ index 2ffffff,3ffffff..0000000
  -Subproject cummit 3$c
 ++Subproject cummit $ZERO_OID" &&
 
-	hh=$(git rev-parse HEAD) &&
+	hh=$(but rev-parse HEAD) &&
 	sed -e "s/$ZERO_OID/$hh/" expect.nosub >expect.withsub
 
 '
 
 test_expect_success 'combined (empty submodule)' '
 	rm -fr sub && mkdir sub &&
-	git diff >actual &&
+	but diff >actual &&
 	test_cmp expect.nosub actual
 '
 
 test_expect_success 'combined (with submodule)' '
 	rm -fr sub &&
-	git clone --no-checkout . sub &&
-	git diff >actual &&
+	but clone --no-checkout . sub &&
+	but diff >actual &&
 	test_cmp expect.withsub actual
 '
 

@@ -48,14 +48,14 @@ static int transport_color_config(void)
 		return 0;
 	initialized = 1;
 
-	if (!git_config_get_string(key, &value))
-		transport_use_color = git_config_colorbool(key, value);
+	if (!but_config_get_string(key, &value))
+		transport_use_color = but_config_colorbool(key, value);
 
 	if (!want_color_stderr(transport_use_color))
 		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(keys); i++)
-		if (!git_config_get_string(keys[i], &value)) {
+		if (!but_config_get_string(keys[i], &value)) {
 			if (!value)
 				return config_error_nonbool(keys[i]);
 			if (color_parse(value, transport_colors[i]) < 0)
@@ -193,8 +193,8 @@ static int close_bundle(struct transport *transport)
 	return 0;
 }
 
-struct git_transport_data {
-	struct git_transport_options options;
+struct but_transport_data {
+	struct but_transport_options options;
 	struct child_process *conn;
 	int fd[2];
 	unsigned got_remote_heads : 1;
@@ -203,7 +203,7 @@ struct git_transport_data {
 	struct oid_array shallow;
 };
 
-static int set_git_option(struct git_transport_options *opts,
+static int set_but_option(struct but_transport_options *opts,
 			  const char *name, const char *value)
 {
 	if (!strcmp(name, TRANS_OPT_UPLOADPACK)) {
@@ -262,7 +262,7 @@ static int set_git_option(struct git_transport_options *opts,
 
 static int connect_setup(struct transport *transport, int for_push)
 {
-	struct git_transport_data *data = transport->data;
+	struct but_transport_data *data = transport->data;
 	int flags = transport->verbose > 0 ? CONNECT_VERBOSE : 0;
 
 	if (data->conn)
@@ -274,7 +274,7 @@ static int connect_setup(struct transport *transport, int for_push)
 	case TRANSPORT_FAMILY_IPV6: flags |= CONNECT_IPV6; break;
 	}
 
-	data->conn = git_connect(data->fd, transport->url,
+	data->conn = but_connect(data->fd, transport->url,
 				 for_push ? data->options.receivepack :
 				 data->options.uploadpack,
 				 flags);
@@ -286,7 +286,7 @@ static void die_if_server_options(struct transport *transport)
 {
 	if (!transport->server_options || !transport->server_options->nr)
 		return;
-	advise(_("see protocol.version in 'git help config' for more details"));
+	advise(_("see protocol.version in 'but help config' for more details"));
 	die(_("server options require protocol version 2 or later"));
 }
 
@@ -303,7 +303,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 			     struct transport_ls_refs_options *options,
 			     int must_list_refs)
 {
-	struct git_transport_data *data = transport->data;
+	struct but_transport_data *data = transport->data;
 	struct ref *refs = NULL;
 	struct packet_reader reader;
 	int sid_len;
@@ -363,7 +363,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	int ret = 0;
-	struct git_transport_data *data = transport->data;
+	struct but_transport_data *data = transport->data;
 	struct ref *refs = NULL;
 	struct fetch_pack_args args;
 	struct ref *refs_tmp = NULL;
@@ -808,9 +808,9 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	free(head);
 }
 
-static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
+static int but_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
-	struct git_transport_data *data = transport->data;
+	struct but_transport_data *data = transport->data;
 	struct send_pack_args args;
 	int ret = 0;
 
@@ -858,7 +858,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	/*
 	 * Atomic push may abort the connection early and close the pipe,
 	 * which may cause an error for `finish_connect()`. Ignore this error
-	 * for atomic git-push.
+	 * for atomic but-push.
 	 */
 	if (ret || args.atomic)
 		finish_connect(data->conn);
@@ -870,20 +870,20 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	return ret;
 }
 
-static int connect_git(struct transport *transport, const char *name,
+static int connect_but(struct transport *transport, const char *name,
 		       const char *executable, int fd[2])
 {
-	struct git_transport_data *data = transport->data;
-	data->conn = git_connect(data->fd, transport->url,
+	struct but_transport_data *data = transport->data;
+	data->conn = but_connect(data->fd, transport->url,
 				 executable, 0);
 	fd[0] = data->fd[0];
 	fd[1] = data->fd[1];
 	return 0;
 }
 
-static int disconnect_git(struct transport *transport)
+static int disconnect_but(struct transport *transport)
 {
-	struct git_transport_data *data = transport->data;
+	struct but_transport_data *data = transport->data;
 	if (data->conn) {
 		if (data->got_remote_heads && !transport->stateless_rpc)
 			packet_flush(data->fd[1]);
@@ -900,14 +900,14 @@ static int disconnect_git(struct transport *transport)
 static struct transport_vtable taken_over_vtable = {
 	.get_refs_list	= get_refs_via_connect,
 	.fetch_refs	= fetch_refs_via_pack,
-	.push_refs	= git_transport_push,
-	.disconnect	= disconnect_git
+	.push_refs	= but_transport_push,
+	.disconnect	= disconnect_but
 };
 
 void transport_take_over(struct transport *transport,
 			 struct child_process *child)
 {
-	struct git_transport_data *data;
+	struct but_transport_data *data;
 
 	if (!transport->smart_options)
 		BUG("taking over transport requires non-NULL "
@@ -984,7 +984,7 @@ static enum protocol_allow_config get_protocol_config(const char *type)
 	char *value;
 
 	/* first check the per-protocol config */
-	if (!git_config_get_string(key, &value)) {
+	if (!but_config_get_string(key, &value)) {
 		enum protocol_allow_config ret =
 			parse_protocol_config(key, value);
 		free(key);
@@ -994,7 +994,7 @@ static enum protocol_allow_config get_protocol_config(const char *type)
 	free(key);
 
 	/* if defined, fallback to user-defined default for unknown protocols */
-	if (!git_config_get_string("protocol.allow", &value)) {
+	if (!but_config_get_string("protocol.allow", &value)) {
 		enum protocol_allow_config ret =
 			parse_protocol_config("protocol.allow", value);
 		free(value);
@@ -1005,7 +1005,7 @@ static enum protocol_allow_config get_protocol_config(const char *type)
 	/* known safe */
 	if (!strcmp(type, "http") ||
 	    !strcmp(type, "https") ||
-	    !strcmp(type, "git") ||
+	    !strcmp(type, "but") ||
 	    !strcmp(type, "ssh") ||
 	    !strcmp(type, "file"))
 		return PROTOCOL_ALLOW_ALWAYS;
@@ -1031,7 +1031,7 @@ int is_transport_allowed(const char *type, int from_user)
 		return 0;
 	case PROTOCOL_ALLOW_USER_ONLY:
 		if (from_user < 0)
-			from_user = git_env_bool("GIT_PROTOCOL_FROM_USER", 1);
+			from_user = but_env_bool("GIT_PROTOCOL_FROM_USER", 1);
 		return from_user;
 	}
 
@@ -1053,9 +1053,9 @@ static struct transport_vtable bundle_vtable = {
 static struct transport_vtable builtin_smart_vtable = {
 	.get_refs_list	= get_refs_via_connect,
 	.fetch_refs	= fetch_refs_via_pack,
-	.push_refs	= git_transport_push,
-	.connect	= connect_git,
-	.disconnect	= disconnect_git
+	.push_refs	= but_transport_push,
+	.connect	= connect_but,
+	.disconnect	= disconnect_but
 };
 
 struct transport *transport_get(struct remote *remote, const char *url)
@@ -1090,7 +1090,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	if (helper) {
 		transport_helper_init(ret, helper);
 	} else if (starts_with(url, "rsync:")) {
-		die(_("git-over-rsync is no longer supported"));
+		die(_("but-over-rsync is no longer supported"));
 	} else if (url_is_local_not_ssh(url) && is_file(url) && is_bundle(url, 1)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		bundle_header_init(&data->header);
@@ -1100,16 +1100,16 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->smart_options = NULL;
 	} else if (!is_url(url)
 		|| starts_with(url, "file://")
-		|| starts_with(url, "git://")
+		|| starts_with(url, "but://")
 		|| starts_with(url, "ssh://")
-		|| starts_with(url, "git+ssh://") /* deprecated - do not use */
-		|| starts_with(url, "ssh+git://") /* deprecated - do not use */
+		|| starts_with(url, "but+ssh://") /* deprecated - do not use */
+		|| starts_with(url, "ssh+but://") /* deprecated - do not use */
 		) {
 		/*
 		 * These are builtin smart transports; "allowed" transports
-		 * will be checked individually in git_connect.
+		 * will be checked individually in but_connect.
 		 */
-		struct git_transport_data *data = xcalloc(1, sizeof(*data));
+		struct but_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
 		ret->vtable = &builtin_smart_vtable;
 		ret->smart_options = &(data->options);
@@ -1125,10 +1125,10 @@ struct transport *transport_get(struct remote *remote, const char *url)
 
 	if (ret->smart_options) {
 		ret->smart_options->thin = 1;
-		ret->smart_options->uploadpack = "git-upload-pack";
+		ret->smart_options->uploadpack = "but-upload-pack";
 		if (remote->uploadpack)
 			ret->smart_options->uploadpack = remote->uploadpack;
-		ret->smart_options->receivepack = "git-receive-pack";
+		ret->smart_options->receivepack = "but-receive-pack";
 		if (remote->receivepack)
 			ret->smart_options->receivepack = remote->receivepack;
 	}
@@ -1138,7 +1138,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	return ret;
 }
 
-const struct git_hash_algo *transport_get_hash_algo(struct transport *transport)
+const struct but_hash_algo *transport_get_hash_algo(struct transport *transport)
 {
 	return transport->hash_algo;
 }
@@ -1146,10 +1146,10 @@ const struct git_hash_algo *transport_get_hash_algo(struct transport *transport)
 int transport_set_option(struct transport *transport,
 			 const char *name, const char *value)
 {
-	int git_reports = 1, protocol_reports = 1;
+	int but_reports = 1, protocol_reports = 1;
 
 	if (transport->smart_options)
-		git_reports = set_git_option(transport->smart_options,
+		but_reports = set_but_option(transport->smart_options,
 					     name, value);
 
 	if (transport->vtable->set_option)
@@ -1157,10 +1157,10 @@ int transport_set_option(struct transport *transport,
 								 name, value);
 
 	/* If either report is 0, report 0 (success). */
-	if (!git_reports || !protocol_reports)
+	if (!but_reports || !protocol_reports)
 		return 0;
 	/* If either reports -1 (invalid value), report -1. */
-	if ((git_reports == -1) || (protocol_reports == -1))
+	if ((but_reports == -1) || (protocol_reports == -1))
 		return -1;
 	/* Otherwise if both report unknown, report unknown. */
 	return 1;
@@ -1198,9 +1198,9 @@ static void die_with_unpushed_submodules(struct string_list *needs_pushing)
 	for (i = 0; i < needs_pushing->nr; i++)
 		fprintf(stderr, "  %s\n", needs_pushing->items[i].string);
 	fprintf(stderr, _("\nPlease try\n\n"
-			  "	git push --recurse-submodules=on-demand\n\n"
+			  "	but push --recurse-submodules=on-demand\n\n"
 			  "or cd to the path and use\n\n"
-			  "	git push\n\n"
+			  "	but push\n\n"
 			  "to push them to a remote.\n\n"));
 
 	string_list_clear(needs_pushing, 0);

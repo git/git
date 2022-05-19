@@ -23,8 +23,8 @@
 define_cummit_slab(cummit_names, struct cummit_name *);
 
 static const char * const describe_usage[] = {
-	N_("git describe [<options>] [<cummit-ish>...]"),
-	N_("git describe [<options>] --dirty"),
+	N_("but describe [<options>] [<cummit-ish>...]"),
+	N_("but describe [<options>] --dirty"),
 	NULL
 };
 
@@ -577,7 +577,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	but_config(but_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, describe_usage, 0);
 	if (abbrev < 0)
 		abbrev = DEFAULT_ABBREV;
@@ -625,7 +625,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		if (broken) {
 			struct child_process cp = CHILD_PROCESS_INIT;
 			strvec_pushv(&cp.args, diff_index_args);
-			cp.git_cmd = 1;
+			cp.but_cmd = 1;
 			cp.no_stdin = 1;
 			cp.no_stdout = 1;
 

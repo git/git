@@ -9,7 +9,7 @@ splitIndex.maxPercentChange::
 	By default the value is 20, so a new shared index is written
 	if the number of entries in the split index would be greater
 	than 20 percent of the total number of entries.
-	See linkgit:git-update-index[1].
+	See linkbut:but-update-index[1].
 
 splitIndex.sharedIndexExpire::
 	When the split index feature is used, shared index files that
@@ -21,4 +21,4 @@ splitIndex.sharedIndexExpire::
 	Note that a shared index file is considered modified (for the
 	purpose of expiration) each time a new split-index file is
 	either created based on it or read from it.
-	See linkgit:git-update-index[1].
+	See linkbut:but-update-index[1].

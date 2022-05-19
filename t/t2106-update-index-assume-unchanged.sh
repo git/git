@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git update-index --assume-unchanged test.
+test_description='but update-index --assume-unchanged test.
 '
 
 TEST_PASSES_SANITIZE_LEAK=true
@@ -8,20 +8,20 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'setup' '
 	: >file &&
-	git add file &&
-	git cummit -m initial &&
-	git branch other &&
+	but add file &&
+	but cummit -m initial &&
+	but branch other &&
 	echo upstream >file &&
-	git add file &&
-	git cummit -m upstream
+	but add file &&
+	but cummit -m upstream
 '
 
 test_expect_success 'do not switch branches with dirty file' '
-	git reset --hard &&
-	git checkout other &&
+	but reset --hard &&
+	but checkout other &&
 	echo dirt >file &&
-	git update-index --assume-unchanged file &&
-	test_must_fail git checkout - 2>err &&
+	but update-index --assume-unchanged file &&
+	test_must_fail but checkout - 2>err &&
 	test_i18ngrep overwritten err
 '
 

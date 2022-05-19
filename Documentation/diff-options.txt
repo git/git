@@ -1,39 +1,39 @@
 // Please don't remove this comment as asciidoc behaves badly when
 // the first non-empty line is ifdef/ifndef. The symptom is that
-// without this comment the <git-diff-core> attribute conditionally
+// without this comment the <but-diff-core> attribute conditionally
 // defined below ends up being defined unconditionally.
 // Last checked with asciidoc 7.0.2.
 
-ifndef::git-format-patch[]
-ifndef::git-diff[]
-ifndef::git-log[]
-:git-diff-core: 1
-endif::git-log[]
-endif::git-diff[]
-endif::git-format-patch[]
+ifndef::but-format-patch[]
+ifndef::but-diff[]
+ifndef::but-log[]
+:but-diff-core: 1
+endif::but-log[]
+endif::but-diff[]
+endif::but-format-patch[]
 
-ifdef::git-format-patch[]
+ifdef::but-format-patch[]
 -p::
 --no-stat::
 	Generate plain patches without any diffstats.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 -p::
 -u::
 --patch::
 	Generate patch (see section on generating patches).
-ifdef::git-diff[]
+ifdef::but-diff[]
 	This is the default.
-endif::git-diff[]
+endif::but-diff[]
 
 -s::
 --no-patch::
-	Suppress diff output. Useful for commands like `git show` that
+	Suppress diff output. Useful for commands like `but show` that
 	show the patch by default, or to cancel the effect of `--patch`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
-ifdef::git-log[]
+ifdef::but-log[]
 --diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc|remerge|r)::
 --no-diff-merges::
 	Specify diff format to be used for merge cummits. Default is
@@ -101,15 +101,15 @@ documented).
 	effect when `--diff-merges=[dense-]combined` is in use, and
 	is likely only useful if filename changes are detected (i.e.
 	when either rename or copy detection have been requested).
-endif::git-log[]
+endif::but-log[]
 
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
 	the usual three.
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 	Implies `--patch`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 --output=<file>::
 	Output to a specific file instead of stdout.
@@ -121,32 +121,32 @@ endif::git-format-patch[]
 	lines in the generated patch. Normally they are '+', '-' and
 	' ' respectively.
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 --raw::
-ifndef::git-log[]
+ifndef::but-log[]
 	Generate the diff in raw format.
-ifdef::git-diff-core[]
+ifdef::but-diff-core[]
 	This is the default.
-endif::git-diff-core[]
-endif::git-log[]
-ifdef::git-log[]
+endif::but-diff-core[]
+endif::but-log[]
+ifdef::but-log[]
 	For each cummit, show a summary of changes using the raw diff
 	format. See the "RAW OUTPUT FORMAT" section of
-	linkgit:git-diff[1]. This is different from showing the log
+	linkbut:but-diff[1]. This is different from showing the log
 	itself in raw format, which you can achieve with
 	`--format=raw`.
-endif::git-log[]
-endif::git-format-patch[]
+endif::but-log[]
+endif::but-format-patch[]
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 --patch-with-raw::
 	Synonym for `-p --raw`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
-ifdef::git-log[]
+ifdef::but-log[]
 -t::
 	Show the tree objects in the diff output.
-endif::git-log[]
+endif::but-log[]
 
 --indent-heuristic::
 	Enable the heuristic that shifts diff hunk boundaries to make patches
@@ -205,7 +205,7 @@ have to use `--diff-algorithm=default` option.
 	of the graph part can be limited by using
 	`--stat-graph-width=<width>` (affects all commands generating
 	a stat graph) or by setting `diff.statGraphWidth=<width>`
-	(does not affect `git format-patch`).
+	(does not affect `but format-patch`).
 	By giving a third parameter `<count>`, you can limit the
 	output to the first `<count>` lines, followed by `...` if
 	there are more.
@@ -239,7 +239,7 @@ These parameters can also be set individually with `--stat-width=<width>`,
 	sub-directory. The behavior of `--dirstat` can be customized by
 	passing it a comma separated list of parameters.
 	The defaults are controlled by the `diff.dirstat` configuration
-	variable (see linkgit:git-config[1]).
+	variable (see linkbut:but-config[1]).
 	The following parameters are available:
 +
 --
@@ -288,32 +288,32 @@ and accumulating child directory counts in the parent directories:
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 --patch-with-stat::
 	Synonym for `-p --stat`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 
 -z::
-ifdef::git-log[]
+ifdef::but-log[]
 	Separate the cummits with NULs instead of with new newlines.
 +
 Also, when `--raw` or `--numstat` has been given, do not munge
 pathnames and use NULs as output field terminators.
-endif::git-log[]
-ifndef::git-log[]
+endif::but-log[]
+ifndef::but-log[]
 	When `--raw`, `--numstat`, `--name-only` or `--name-status` has been
 	given, do not munge pathnames and use NULs as output field terminators.
-endif::git-log[]
+endif::but-log[]
 +
 Without this option, pathnames with "unusual" characters are quoted as
 explained for the configuration variable `core.quotePath` (see
-linkgit:git-config[1]).
+linkbut:but-config[1]).
 
 --name-only::
 	Show only names of changed files. The file names are often encoded in UTF-8.
-	For more information see the discussion about encoding in the linkgit:git-log[1]
+	For more information see the discussion about encoding in the linkbut:but-log[1]
 	manual page.
 
 --name-status::
@@ -327,7 +327,7 @@ linkgit:git-config[1]).
 	shows the names of the cummits at the beginning and end of the range.
 	When `--submodule` or `--submodule=log` is specified, the 'log'
 	format is used.  This format lists the cummits in the range like
-	linkgit:git-submodule[1] `summary` does.  When `--submodule=diff`
+	linkbut:but-submodule[1] `summary` does.  When `--submodule=diff`
 	is specified, the 'diff' format is used.  This format shows an
 	inline diff of the changes in the submodule contents between the
 	cummit range.  Defaults to `diff.submodule` or the 'short' format
@@ -337,23 +337,23 @@ linkgit:git-config[1]).
 	Show colored diff.
 	`--color` (i.e. without '=<when>') is the same as `--color=always`.
 	'<when>' can be one of `always`, `never`, or `auto`.
-ifdef::git-diff[]
+ifdef::but-diff[]
 	It can be changed by the `color.ui` and `color.diff`
 	configuration settings.
-endif::git-diff[]
+endif::but-diff[]
 
 --no-color::
 	Turn off colored diff.
-ifdef::git-diff[]
+ifdef::but-diff[]
 	This can be used to override configuration settings.
-endif::git-diff[]
+endif::but-diff[]
 	It is the same as `--color=never`.
 
 --color-moved[=<mode>]::
 	Moved lines of code are colored differently.
-ifdef::git-diff[]
+ifdef::but-diff[]
 	It can be changed by the `diff.colorMoved` configuration setting.
-endif::git-diff[]
+endif::but-diff[]
 	The <mode> defaults to 'no' if the option is not given
 	and to 'zebra' if the option with no mode is given.
 	The mode must be one of:
@@ -395,9 +395,9 @@ dimmed-zebra::
 --color-moved-ws=<modes>::
 	This configures how whitespace is ignored when performing the
 	move detection for `--color-moved`.
-ifdef::git-diff[]
+ifdef::but-diff[]
 	It can be set by the `diff.colorMovedWS` configuration setting.
-endif::git-diff[]
+endif::but-diff[]
 	These modes can be given as a comma separated list:
 +
 --
@@ -468,14 +468,14 @@ For example, `--word-diff-regex=.` will treat each character as a word
 and, correspondingly, show differences character by character.
 +
 The regex can also be set via a diff driver or configuration option, see
-linkgit:gitattributes[5] or linkgit:git-config[1].  Giving it explicitly
+linkbut:butattributes[5] or linkbut:but-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
 override configuration settings.
 
 --color-words[=<regex>]::
 	Equivalent to `--word-diff=color` plus (if a regex was
 	specified) `--word-diff-regex=<regex>`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 --no-renames::
 	Turn off rename detection, even when the configuration
@@ -484,7 +484,7 @@ endif::git-format-patch[]
 --[no-]rename-empty::
 	Whether to use empty blobs as rename source.
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 --check::
 	Warn if changes introduce conflict markers or whitespace errors.
 	What are considered whitespace errors is controlled by `core.whitespace`
@@ -505,7 +505,7 @@ ifndef::git-format-patch[]
 	`new` lines are highlighted. The whitespace errors are colored
 	with `color.diff.whitespace`.
 
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 --full-index::
 	Instead of the first handful of characters, show the full
@@ -514,20 +514,20 @@ endif::git-format-patch[]
 
 --binary::
 	In addition to `--full-index`, output a binary diff that
-	can be applied with `git-apply`.
-ifndef::git-format-patch[]
+	can be applied with `but-apply`.
+ifndef::but-format-patch[]
 	Implies `--patch`.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
 	lines, show the shortest prefix that is at least '<n>'
-	hexdigits long that uniquely refers the object.
+	hexdibuts long that uniquely refers the object.
 	In diff-patch output format, `--full-index` takes higher
 	precedence, i.e. if `--full-index` is specified, full blob
 	names will be shown regardless of `--abbrev`.
-	Non default number of digits can be specified with `--abbrev=<n>`.
+	Non default number of dibuts can be specified with `--abbrev=<n>`.
 
 -B[<n>][/<m>]::
 --break-rewrites[=[<n>][/<m>]]::
@@ -554,14 +554,14 @@ another file.
 
 -M[<n>]::
 --find-renames[=<n>]::
-ifndef::git-log[]
+ifndef::but-log[]
 	Detect renames.
-endif::git-log[]
-ifdef::git-log[]
+endif::but-log[]
+ifdef::but-log[]
 	If generating diffs, detect and report renames for each cummit.
 	For following files across renames while traversing history, see
 	`--follow`.
-endif::git-log[]
+endif::but-log[]
 	If `n` is specified, it is a threshold on the similarity
 	index (i.e. amount of addition/deletions compared to the
 	file's size). For example, `-M90%` means Git should consider a
@@ -590,7 +590,7 @@ endif::git-log[]
 --irreversible-delete::
 	Omit the preimage for deletes, i.e. print only the header but not
 	the diff between the preimage and `/dev/null`. The resulting patch
-	is not meant to be applied with `patch` or `git apply`; this is
+	is not meant to be applied with `patch` or `but apply`; this is
 	solely for people who want to just concentrate on reviewing the
 	text after the change. In addition, the output obviously lacks
 	enough information to apply such a patch in reverse, even manually,
@@ -612,7 +612,7 @@ of a delete/create pair.
 	exceeds the specified number.  Defaults to diff.renameLimit.
 	Note that a value of 0 is treated as unlimited.
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
@@ -658,14 +658,14 @@ file:
 -    hit = frotz(nitfol, mf2.ptr, 1, 0);
 ----
 +
-While `git log -G"frotz\(nitfol"` will show this cummit, `git log
+While `but log -G"frotz\(nitfol"` will show this cummit, `but log
 -S"frotz\(nitfol" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
 +
 Unless `--text` is supplied patches of binary files without a textconv
 filter will be ignored.
 +
-See the 'pickaxe' entry in linkgit:gitdiffcore[7] for more
+See the 'pickaxe' entry in linkbut:butdiffcore[7] for more
 information.
 
 --find-object=<object-id>::
@@ -675,7 +675,7 @@ information.
 	object id.
 +
 The object can be a blob or a submodule cummit. It implies the `-t` option in
-`git-log` to also find trees.
+`but-log` to also find trees.
 
 --pickaxe-all::
 	When `-S` or `-G` finds a change, show all the changes in that
@@ -686,12 +686,12 @@ The object can be a blob or a submodule cummit. It implies the `-t` option in
 	Treat the <string> given to `-S` as an extended POSIX regular
 	expression to match.
 
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 -O<orderfile>::
 	Control the order in which files appear in the output.
 	This overrides the `diff.orderFile` configuration variable
-	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
+	(see linkbut:but-config[1]).  To cancel `diff.orderFile`,
 	use `-O/dev/null`.
 +
 The output order is determined by the order of glob patterns in
@@ -730,14 +730,14 @@ matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 	Discard the files before the named <file> from the output
 	(i.e. 'skip to'), or move them to the end of the output
 	(i.e. 'rotate to').  These were invented primarily for use
-	of the `git difftool` command, and may not be very useful
+	of the `but difftool` command, and may not be very useful
 	otherwise.
 
-ifndef::git-format-patch[]
+ifndef::but-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
-endif::git-format-patch[]
+endif::but-format-patch[]
 
 --relative[=<path>]::
 --no-relative::
@@ -790,11 +790,11 @@ endif::git-format-patch[]
 --function-context::
 	Show whole function as context lines for each change.
 	The function names are determined in the same way as
-	`git diff` works out patch hunk headers (see 'Defining a
-	custom hunk-header' in linkgit:gitattributes[5]).
+	`but diff` works out patch hunk headers (see 'Defining a
+	custom hunk-header' in linkbut:butattributes[5]).
 
-ifndef::git-format-patch[]
-ifndef::git-log[]
+ifndef::but-format-patch[]
+ifndef::but-log[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
@@ -802,13 +802,13 @@ ifndef::git-log[]
 
 --quiet::
 	Disable all output of the program. Implies `--exit-code`.
-endif::git-log[]
-endif::git-format-patch[]
+endif::but-log[]
+endif::but-format-patch[]
 
 --ext-diff::
 	Allow an external diff helper to be executed. If you set an
-	external diff driver with linkgit:gitattributes[5], you need
-	to use this option with linkgit:git-log[1] and friends.
+	external diff driver with linkbut:butattributes[5], you need
+	to use this option with linkbut:but-log[1] and friends.
 
 --no-ext-diff::
 	Disallow external diff drivers.
@@ -816,12 +816,12 @@ endif::git-format-patch[]
 --textconv::
 --no-textconv::
 	Allow (or disallow) external text conversion filters to be run
-	when comparing binary files. See linkgit:gitattributes[5] for
+	when comparing binary files. See linkbut:butattributes[5] for
 	details. Because textconv filters are typically a one-way
 	conversion, the resulting diff is suitable for human
 	consumption, but cannot be applied. For this reason, textconv
-	filters are enabled by default only for linkgit:git-diff[1] and
-	linkgit:git-log[1], but not for linkgit:git-format-patch[1] or
+	filters are enabled by default only for linkbut:but-diff[1] and
+	linkbut:but-log[1], but not for linkbut:but-format-patch[1] or
 	diff plumbing commands.
 
 --ignore-submodules[=<when>]::
@@ -830,7 +830,7 @@ endif::git-format-patch[]
 	Using "none" will consider the submodule modified when it either contains
 	untracked or modified files or its HEAD differs from the cummit recorded
 	in the superproject and can be used to override any settings of the
-	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
+	'ignore' option in linkbut:but-config[1] or linkbut:butmodules[5]. When
 	"untracked" is used submodules are not considered dirty when they only
 	contain untracked content (but they are still scanned for modified
 	content). Using "dirty" ignores all changes to the work tree of submodules,
@@ -850,12 +850,12 @@ endif::git-format-patch[]
 	Prepend an additional prefix to every line of output.
 
 --ita-invisible-in-index::
-	By default entries added by "git add -N" appear as an existing
-	empty file in "git diff" and a new file in "git diff --cached".
-	This option makes the entry appear as a new file in "git diff"
-	and non-existent in "git diff --cached". This option could be
+	By default entries added by "but add -N" appear as an existing
+	empty file in "but diff" and a new file in "but diff --cached".
+	This option makes the entry appear as a new file in "but diff"
+	and non-existent in "but diff --cached". This option could be
 	reverted with `--ita-visible-in-index`. Both options are
 	experimental and could be removed in future.
 
 For more detailed explanation on these common options, see also
-linkgit:gitdiffcore[7].
+linkbut:butdiffcore[7].

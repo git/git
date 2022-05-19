@@ -4,7 +4,7 @@ Date:   Thu Feb 28 10:47:40 2013 +0100
 
     change at very beginning
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
 @@ -1,3 +1,4 @@
@@ -19,7 +19,7 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
 
     touch both functions
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
 @@ -1,3 +1,3 @@
@@ -34,7 +34,7 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
 
     initial
 
-diff --git a/a.c b/a.c
+diff --but a/a.c b/a.c
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +1,3 @@

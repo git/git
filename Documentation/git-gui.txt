@@ -1,30 +1,30 @@
-git-gui(1)
+but-gui(1)
 ==========
 
 NAME
 ----
-git-gui - A portable graphical interface to Git
+but-gui - A portable graphical interface to Git
 
 SYNOPSIS
 --------
 [verse]
-'git gui' [<command>] [<arguments>]
+'but gui' [<command>] [<arguments>]
 
 DESCRIPTION
 -----------
-A Tcl/Tk based graphical user interface to Git.  'git gui' focuses
+A Tcl/Tk based graphical user interface to Git.  'but gui' focuses
 on allowing users to make changes to their repository by making
 new cummits, amending existing ones, creating branches, performing
 local merges, and fetching/pushing to remote repositories.
 
-Unlike 'gitk', 'git gui' focuses on cummit generation
+Unlike 'butk', 'but gui' focuses on cummit generation
 and single file annotation and does not show project history.
-It does however supply menu actions to start a 'gitk' session from
-within 'git gui'.
+It does however supply menu actions to start a 'butk' session from
+within 'but gui'.
 
-'git gui' is known to work on all popular UNIX systems, Mac OS X,
+'but gui' is known to work on all popular UNIX systems, Mac OS X,
 and Windows (under both Cygwin and MSYS).  To the extent possible
-OS specific user interface guidelines are followed, making 'git gui'
+OS specific user interface guidelines are followed, making 'but gui'
 a fairly native interface for users.
 
 COMMANDS
@@ -39,18 +39,18 @@ browser::
 	browser are opened in the blame viewer.
 
 citool::
-	Start 'git gui' and arrange to make exactly one cummit before
+	Start 'but gui' and arrange to make exactly one cummit before
 	exiting and returning to the shell.  The interface is limited
 	to only cummit actions, slightly reducing the application's
 	startup time and simplifying the menubar.
 
 version::
-	Display the currently running version of 'git gui'.
+	Display the currently running version of 'but gui'.
 
 
 Examples
 --------
-`git gui blame Makefile`::
+`but gui blame Makefile`::
 
 	Show the contents of the file 'Makefile' in the current
 	working directory, and provide annotations for both the
@@ -59,41 +59,41 @@ Examples
 	uncummitted changes (if any) are explicitly attributed to
 	'Not Yet cummitted'.
 
-`git gui blame v0.99.8 Makefile`::
+`but gui blame v0.99.8 Makefile`::
 
 	Show the contents of 'Makefile' in revision 'v0.99.8'
 	and provide annotations for each line.  Unlike the above
 	example the file is read from the object database and not
 	the working directory.
 
-`git gui blame --line=100 Makefile`::
+`but gui blame --line=100 Makefile`::
 
 	Loads annotations as described above and automatically
 	scrolls the view to center on line '100'.
 
-`git gui citool`::
+`but gui citool`::
 
 	Make one cummit and return to the shell when it is complete.
 	This command returns a non-zero exit code if the window was
 	closed in any way other than by making a cummit.
 
-`git gui citool --amend`::
+`but gui citool --amend`::
 
 	Automatically enter the 'Amend Last cummit' mode of
 	the interface.
 
-`git gui citool --nocummit`::
+`but gui citool --nocummit`::
 
 	Behave as normal citool, but instead of making a cummit
 	simply terminate with a zero exit code. It still checks
 	that the index does not contain any unmerged entries, so
-	you can use it as a GUI version of linkgit:git-mergetool[1]
+	you can use it as a GUI version of linkbut:but-mergetool[1]
 
-`git citool`::
+`but citool`::
 
-	Same as `git gui citool` (above).
+	Same as `but gui citool` (above).
 
-`git gui browser maint`::
+`but gui browser maint`::
 
 	Show a browser for the tree of the 'maint' branch.  Files
 	selected in the browser can be viewed with the internal
@@ -101,21 +101,21 @@ Examples
 
 SEE ALSO
 --------
-linkgit:gitk[1]::
+linkbut:butk[1]::
 	The Git repository browser.  Shows branches, commit history
-	and file differences.  gitk is the utility started by
-	'git gui''s Repository Visualize actions.
+	and file differences.  butk is the utility started by
+	'but gui''s Repository Visualize actions.
 
 Other
 -----
-'git gui' is actually maintained as an independent project, but stable
+'but gui' is actually maintained as an independent project, but stable
 versions are distributed as part of the Git suite for the convenience
 of end users.
 
-The official repository of the 'git gui' project can be found at:
+The official repository of the 'but gui' project can be found at:
 
-  https://github.com/prati0100/git-gui.git/
+  https://buthub.com/prati0100/but-gui.but/
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

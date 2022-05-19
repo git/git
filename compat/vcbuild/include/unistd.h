@@ -1,7 +1,7 @@
 #ifndef _UNISTD_
 #define _UNISTD_
 
-/* Win32 define for porting git*/
+/* Win32 define for porting but*/
 
 #ifndef _MODE_T_
 #define	_MODE_T_

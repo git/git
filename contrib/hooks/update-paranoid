@@ -3,15 +3,15 @@
 use strict;
 use File::Spec;
 
-$ENV{PATH}     = '/opt/git/bin';
-my $acl_git    = '/vcs/acls.git';
+$ENV{PATH}     = '/opt/but/bin';
+my $acl_but    = '/vcs/acls.but';
 my $acl_branch = 'refs/heads/master';
 my $debug      = 0;
 
 =doc
 Invoked as: update refname old-sha1 new-sha1
 
-This script is run by git-receive-pack once for each ref that the
+This script is run by but-receive-pack once for each ref that the
 client is trying to modify.  If we exit with a non-zero exit value
 then the update for that particular ref is denied, but updates for
 other refs in the same run of receive-pack may still be allowed.
@@ -22,10 +22,10 @@ look for "new" cummits and tags (the new objects won't show up in
 `rev-list --all`).
 
 This script loads and parses the content of the config file
-"users/$this_user.acl" from the $acl_branch cummit of $acl_git ODB.
-The acl file is a git-config style file, but uses a slightly more
+"users/$this_user.acl" from the $acl_branch cummit of $acl_but ODB.
+The acl file is a but-config style file, but uses a slightly more
 restricted syntax as the Perl parser contained within this script
-is not nearly as permissive as git-config.
+is not nearly as permissive as but-config.
 
 Example:
 
@@ -47,7 +47,7 @@ repository section must be matched for both the refname and the
 opcode.
 
 Repository sections are matched on the basename of the repository
-(after removing the .git suffix).
+(after removing the .but suffix).
 
 The opcode abbreviations are:
 
@@ -92,8 +92,8 @@ correctly.
 
 =cut
 
-my $git_dir = $ENV{GIT_DIR};
-my $new_cummit_check = "$git_dir/info/new-cummit-check";
+my $but_dir = $ENV{GIT_DIR};
+my $new_cummit_check = "$but_dir/info/new-cummit-check";
 my $ref = $ARGV[0];
 my $old = $ARGV[1];
 my $new = $ARGV[2];
@@ -120,8 +120,8 @@ sub info ($) {
 	print STDERR "-Info-    $_[0]\n" if $debug;
 }
 
-sub git_value (@) {
-	open(T,'-|','git',@_); local $_ = <T>; chop; close T; $_;
+sub but_value (@) {
+	open(T,'-|','but',@_); local $_ = <T>; chop; close T; $_;
 }
 
 sub match_string ($$) {
@@ -136,9 +136,9 @@ sub parse_config ($$$$) {
 	local $ENV{GIT_DIR} = shift;
 	my $br = shift;
 	my $fn = shift;
-	return unless git_value('rev-list','--max-count=1',$br,'--',$fn);
+	return unless but_value('rev-list','--max-count=1',$br,'--',$fn);
 	info "Loading $br:$fn";
-	open(I,'-|','git','cat-file','blob',"$br:$fn");
+	open(I,'-|','but','cat-file','blob',"$br:$fn");
 	my $section = '';
 	while (<I>) {
 		chomp;
@@ -157,12 +157,12 @@ sub parse_config ($$$$) {
 }
 
 sub all_new_cummitters () {
-	local $ENV{GIT_DIR} = $git_dir;
+	local $ENV{GIT_DIR} = $but_dir;
 	$ENV{GIT_DIR} = $new_cummit_check if -d $new_cummit_check;
 
 	info "Getting cummitters of new cummits.";
 	my %used;
-	open(T,'-|','git','rev-list','--pretty=raw',$new,'--not','--all');
+	open(T,'-|','but','rev-list','--pretty=raw',$new,'--not','--all');
 	while (<T>) {
 		next unless s/^cummitter //;
 		chop;
@@ -176,7 +176,7 @@ sub all_new_cummitters () {
 
 sub all_new_taggers () {
 	my %exists;
-	open(T,'-|','git','for-each-ref','--format=%(objectname)','refs/tags');
+	open(T,'-|','but','for-each-ref','--format=%(objectname)','refs/tags');
 	while (<T>) {
 		chop;
 		$exists{$_} = 1;
@@ -190,7 +190,7 @@ sub all_new_taggers () {
 	while ($obj_type eq 'tag') {
 		last if $exists{$obj};
 		$obj_type = '';
-		open(T,'-|','git','cat-file','tag',$obj);
+		open(T,'-|','but','cat-file','tag',$obj);
 		while (<T>) {
 			chop;
 			if (/^object ([a-z0-9]{40})$/) {
@@ -233,7 +233,7 @@ sub load_diff ($) {
 			# branch creation.
 			#
 		} else {
-			open(T,'-|','git','diff-tree',
+			open(T,'-|','but','diff-tree',
 				'-r','--name-status','-z',
 				$base,$new) or return undef;
 			while (<T>) {
@@ -253,7 +253,7 @@ sub load_diff ($) {
 	return $d;
 }
 
-deny "No GIT_DIR inherited from caller" unless $git_dir;
+deny "No GIT_DIR inherited from caller" unless $but_dir;
 deny "Need a ref name" unless $ref;
 deny "Refusing funny ref $ref" unless $ref =~ s,^refs/,,;
 deny "Bad old value $old" unless $old =~ /^[a-z0-9]{40}$/;
@@ -261,8 +261,8 @@ deny "Bad new value $new" unless $new =~ /^[a-z0-9]{40}$/;
 deny "Cannot determine who you are." unless $this_user;
 grant "No change requested." if $old eq $new;
 
-$repository_name = File::Spec->rel2abs($git_dir);
-$repository_name =~ m,/([^/]+)(?:\.git|/\.git)$,;
+$repository_name = File::Spec->rel2abs($but_dir);
+$repository_name =~ m,/([^/]+)(?:\.but|/\.but)$,;
 $repository_name = $1;
 info "Updating in '$repository_name'.";
 
@@ -276,18 +276,18 @@ else                      { $op = 'R'; }
 #
 $op = 'U' if ($op eq 'R'
 	&& $ref =~ m,^heads/,
-	&& $old eq git_value('merge-base',$old,$new));
+	&& $old eq but_value('merge-base',$old,$new));
 
 # Load the user's ACL file. Expand groups (user.memberof) one level.
 {
 	my %data = ('user.cummitter' => []);
-	parse_config(\%data,$acl_git,$acl_branch,"external/$repository_name.acl");
+	parse_config(\%data,$acl_but,$acl_branch,"external/$repository_name.acl");
 
 	%data = (
 		'user.cummitter' => $data{'user.cummitter'},
 		'user.memberof' => [],
 	);
-	parse_config(\%data,$acl_git,$acl_branch,"users/$this_user.acl");
+	parse_config(\%data,$acl_but,$acl_branch,"users/$this_user.acl");
 
 	%user_cummitter = map {$_ => $_} @{$data{'user.cummitter'}};
 	my $rule_key = "repository.$repository_name.allow";
@@ -295,7 +295,7 @@ $op = 'U' if ($op eq 'R'
 
 	foreach my $group (@{$data{'user.memberof'}}) {
 		my %g;
-		parse_config(\%g,$acl_git,$acl_branch,"groups/$group.acl");
+		parse_config(\%g,$acl_but,$acl_branch,"groups/$group.acl");
 		my $group_rules = $g{$rule_key};
 		push @$rules, @$group_rules if $group_rules;
 	}
@@ -339,7 +339,7 @@ RULE:
 }
 
 if ($op ne 'D') {
-	$new_type = git_value('cat-file','-t',$new);
+	$new_type = but_value('cat-file','-t',$new);
 
 	if ($ref =~ m,^heads/,) {
 		deny "$ref must be a cummit." unless $new_type eq 'cummit';

@@ -1,15 +1,15 @@
-git-push(1)
+but-push(1)
 ===========
 
 NAME
 ----
-git-push - Update remote refs along with associated objects
+but-push - Update remote refs along with associated objects
 
 
 SYNOPSIS
 --------
 [verse]
-'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
+'but push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<but-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
 	   [-u | --set-upstream] [-o <string> | --push-option=<string>]
 	   [--[no-]signed|--signed=(true|false|if-asked)]
@@ -24,7 +24,7 @@ necessary to complete the given refs.
 
 You can make interesting things happen to a repository
 every time you push into it, by setting up 'hooks' there.  See
-documentation for linkgit:git-receive-pack[1].
+documentation for linkbut:but-receive-pack[1].
 
 When the command line does not specify where to push with the
 `<repository>` argument, `branch.*.remote` configuration for the
@@ -35,7 +35,7 @@ When the command line does not specify what to push with `<refspec>...`
 arguments or `--all`, `--mirror`, `--tags` options, the command finds
 the default `<refspec>` by consulting `remote.*.push` configuration,
 and if it is not found, honors `push.default` configuration to decide
-what to push (See linkgit:git-config[1] for the meaning of `push.default`).
+what to push (See linkbut:but-config[1] for the meaning of `push.default`).
 
 When neither the command-line nor the configuration specify what to
 push, the default behavior is used, which corresponds to the `simple`
@@ -61,12 +61,12 @@ OPTIONS[[OPTIONS]]
 +
 The <src> is often the name of the branch you would want to push, but
 it can be any arbitrary "SHA-1 expression", such as `master~4` or
-`HEAD` (see linkgit:gitrevisions[7]).
+`HEAD` (see linkbut:butrevisions[7]).
 +
 The <dst> tells which ref on the remote side is updated with this
 push. Arbitrary expressions cannot be used here, an actual ref must
 be named.
-If `git push [<repository>]` without any `<refspec>` argument is set to
+If `but push [<repository>]` without any `<refspec>` argument is set to
 update some ref at the destination with `<src>` with
 `remote.<repository>.push` configuration variable, `:<dst>` part can
 be omitted--such a push will update a ref that `<src>` normally updates
@@ -88,7 +88,7 @@ is ambiguous.
 * Other ambiguity resolutions might be added in the future, but for
   now any other cases will error out with an error indicating what we
   tried, and depending on the `advice.pushUnqualifiedRefname`
-  configuration (see linkgit:git-config[1]) suggest what refs/
+  configuration (see linkbut:but-config[1]) suggest what refs/
   namespace you may have wanted to push to.
 
 --
@@ -130,14 +130,14 @@ can be overridden by adding an the optional leading `+` to a refspec
 is that no amount of forcing will make the `refs/heads/*` namespace
 accept a non-cummit object. Hooks and configuration can also override
 or amend these rules, see e.g. `receive.denyNonFastForwards` in
-linkgit:git-config[1] and `pre-receive` and `update` in
-linkgit:githooks[5].
+linkbut:but-config[1] and `pre-receive` and `update` in
+linkbut:buthooks[5].
 +
 Pushing an empty <src> allows you to delete the <dst> ref from the
 remote repository. Deletions are always accepted without a leading `+`
 in the refspec (or `--force`), except when forbidden by configuration
-or hooks. See `receive.denyDeletes` in linkgit:git-config[1] and
-`pre-receive` and `update` in linkgit:githooks[5].
+or hooks. See `receive.denyDeletes` in linkbut:but-config[1] and
+`pre-receive` and `update` in linkbut:buthooks[5].
 +
 The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs Git to push "matching" branches: for every branch that exists on
@@ -154,7 +154,7 @@ already exists on the remote side.
 	Remove remote branches that don't have a local counterpart. For example
 	a remote branch `tmp` will be removed if a local branch with the same
 	name doesn't exist any more. This also respects refspecs, e.g.
-	`git push --prune remote refs/heads/*:refs/tmp/*` would
+	`but push --prune remote refs/heads/*:refs/tmp/*` would
 	make sure that remote `refs/tmp/foo` will be removed if `refs/heads/foo`
 	doesn't exist.
 
@@ -194,7 +194,7 @@ already exists on the remote side.
 	from the remote but are pointing at cummit-ish that are
 	reachable from the refs being pushed.  This can also be specified
 	with configuration variable `push.followTags`.  For more
-	information, see `push.followTags` in linkgit:git-config[1].
+	information, see `push.followTags` in linkbut:but-config[1].
 
 --[no-]signed::
 --signed=(true|false|if-asked)::
@@ -205,7 +205,7 @@ already exists on the remote side.
 	server does not support signed pushes.  If set to `if-asked`,
 	sign if and only if the server supports signed pushes.  The push
 	will also fail if the actual call to `gpg --sign` fails.  See
-	linkgit:git-receive-pack[1] for the details on the receiving end.
+	linkbut:but-receive-pack[1] for the details on the receiving end.
 
 --[no-]atomic::
 	Use an atomic transaction on the remote side if available.
@@ -224,9 +224,9 @@ already exists on the remote side.
 	line, the values of configuration variable `push.pushOption`
 	are used instead.
 
---receive-pack=<git-receive-pack>::
---exec=<git-receive-pack>::
-	Path to the 'git-receive-pack' program on the remote
+--receive-pack=<but-receive-pack>::
+--exec=<but-receive-pack>::
+	Path to the 'but-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
@@ -234,11 +234,11 @@ already exists on the remote side.
 --[no-]force-with-lease::
 --force-with-lease=<refname>::
 --force-with-lease=<refname>:<expect>::
-	Usually, "git push" refuses to update a remote ref that is
+	Usually, "but push" refuses to update a remote ref that is
 	not an ancestor of the local ref used to overwrite it.
 +
 This option overrides this restriction if the current value of the
-remote ref is the expected value.  "git push" fails otherwise.
+remote ref is the expected value.  "but push" fails otherwise.
 +
 Imagine that you have to rebase what you have already published.
 You will have to bypass the "must fast-forward" rule in order to
@@ -282,8 +282,8 @@ command line.
 +
 A general note on safety: supplying this option without an expected
 value, i.e. as `--force-with-lease` or `--force-with-lease=<refname>`
-interacts very badly with anything that implicitly runs `git fetch` on
-the remote to be pushed to in the background, e.g. `git fetch origin`
+interacts very badly with anything that implicitly runs `but fetch` on
+the remote to be pushed to in the background, e.g. `but fetch origin`
 on your repository in a cronjob.
 +
 The protection it offers over `--force` is ensuring that subsequent
@@ -293,27 +293,27 @@ background. We don't have anything except the remote tracking info to
 go by as a heuristic for refs you're expected to have seen & are
 willing to clobber.
 +
-If your editor or some other system is running `git fetch` in the
+If your editor or some other system is running `but fetch` in the
 background for you a way to mitigate this is to simply set up another
 remote:
 +
-	git remote add origin-push $(git config remote.origin.url)
-	git fetch origin-push
+	but remote add origin-push $(but config remote.origin.url)
+	but fetch origin-push
 +
-Now when the background process runs `git fetch origin` the references
+Now when the background process runs `but fetch origin` the references
 on `origin-push` won't be updated, and thus commands like:
 +
-	git push --force-with-lease origin-push
+	but push --force-with-lease origin-push
 +
-Will fail unless you manually run `git fetch origin-push`. This method
-is of course entirely defeated by something that runs `git fetch
+Will fail unless you manually run `but fetch origin-push`. This method
+is of course entirely defeated by something that runs `but fetch
 --all`, in that case you'd need to either disable it or do something
 more tedious like:
 +
-	git fetch              # update 'master' from remote
-	git tag base master    # mark our base point
-	git rebase -i master   # rewrite some cummits
-	git push --force-with-lease=master:base master:master
+	but fetch              # update 'master' from remote
+	but tag base master    # mark our base point
+	but rebase -i master   # rewrite some cummits
+	but push --force-with-lease=master:base master:master
 +
 I.e. create a `base` tag for versions of the upstream code that you've
 seen and are willing to overwrite, then rewrite history, and finally
@@ -345,7 +345,7 @@ using it with `push.default` set to `matching` or with multiple push
 destinations configured with `remote.*.push` may overwrite refs
 other than the current branch (including local refs that are
 strictly behind their remote counterpart).  To force a push to only
-one branch, use a `+` in front of the refspec to push (e.g `git push
+one branch, use a `+` in front of the refspec to push (e.g `but push
 origin +master` to force a push to the `master` branch). See the
 `<refspec>...` section above for details.
 
@@ -373,11 +373,11 @@ Specifying `--no-force-if-includes` disables this behavior.
 --set-upstream::
 	For every branch that is up to date or successfully pushed, add
 	upstream (tracking) reference, used by argument-less
-	linkgit:git-pull[1] and other commands. For more information,
-	see `branch.<name>.merge` in linkgit:git-config[1].
+	linkbut:but-pull[1] and other commands. For more information,
+	see `branch.<name>.merge` in linkbut:but-config[1].
 
 --[no-]thin::
-	These options are passed to linkgit:git-send-pack[1]. A thin transfer
+	These options are passed to linkbut:but-send-pack[1]. A thin transfer
 	significantly reduces the amount of sent data when the sender and
 	receiver share many of the same objects in common. The default is
 	`--thin`.
@@ -415,7 +415,7 @@ Specifying `--no-force-if-includes` disables this behavior.
 	submodule recursion is required.
 
 --[no-]verify::
-	Toggle the pre-push hook (see linkgit:githooks[5]).  The
+	Toggle the pre-push hook (see linkbut:buthooks[5]).  The
 	default is --verify, giving the hook a chance to prevent the
 	push.  With --no-verify, the hook is bypassed completely.
 
@@ -432,7 +432,7 @@ include::urls-remotes.txt[]
 OUTPUT
 ------
 
-The output of "git push" depends on the transport method used; this
+The output of "but push" depends on the transport method used; this
 section describes the output when pushing over the Git protocol (either
 locally or via ssh).
 
@@ -464,7 +464,7 @@ flag::
 summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
-	`git log` (this is `<old>..<new>` in most cases, and
+	`but log` (this is `<old>..<new>` in most cases, and
 	`<old>...<new>` for forced non-fast-forward updates).
 +
 For a failed update, more details are given:
@@ -481,7 +481,7 @@ remote rejected::
 	`receive.denyCurrentBranch` (for pushes to the checked out
 	branch), `receive.denyNonFastForwards` (for forced
 	non-fast-forward updates), `receive.denyDeletes` or
-	`receive.denyDeleteCurrent`.  See linkgit:git-config[1].
+	`receive.denyDeleteCurrent`.  See linkbut:but-config[1].
 
 remote failure::
 	The remote end did not report the successful update of the ref,
@@ -547,8 +547,8 @@ the other person (history from X to A), you would need to first fetch the
 history from the repository, create a history that contains changes done
 by both parties, and push the result back.
 
-You can perform "git pull", resolve potential conflicts, and "git push"
-the result.  A "git pull" will create a merge cummit C between cummits A
+You can perform "but pull", resolve potential conflicts, and "but push"
+the result.  A "but pull" will create a merge cummit C between cummits A
 and B.
 
 ----------------
@@ -563,7 +563,7 @@ Updating A with the resulting merge cummit will fast-forward and your
 push will be accepted.
 
 Alternatively, you can rebase your change between X and B on top of A,
-with "git pull --rebase", and push the result back.  The rebase will
+with "but pull --rebase", and push the result back.  The rebase will
 create a new cummit D that builds the change between X and B on top of
 A.
 
@@ -581,24 +581,24 @@ accepted.
 There is another common situation where you may encounter non-fast-forward
 rejection when you try to push, and it is possible even when you are
 pushing into a repository nobody else pushes into. After you push cummit
-A yourself (in the first picture in this section), replace it with "git
+A yourself (in the first picture in this section), replace it with "but
 cummit --amend" to produce cummit B, and you try to push it out, because
 forgot that you have pushed A out already. In such a case, and only if
 you are certain that nobody in the meantime fetched your earlier cummit A
-(and started building on top of it), you can run "git push --force" to
-overwrite it. In other words, "git push --force" is a method reserved for
+(and started building on top of it), you can run "but push --force" to
+overwrite it. In other words, "but push --force" is a method reserved for
 a case where you do mean to lose history.
 
 
 EXAMPLES
 --------
 
-`git push`::
-	Works like `git push <remote>`, where <remote> is the
+`but push`::
+	Works like `but push <remote>`, where <remote> is the
 	current branch's remote (or `origin`, if no remote is
 	configured for the current branch).
 
-`git push origin`::
+`but push origin`::
 	Without additional configuration, pushes the current branch to
 	the configured upstream (`branch.<name>.merge` configuration
 	variable) if it has the same name as the current branch, and
@@ -609,27 +609,27 @@ configured by setting the `push` option of the remote, or the `push.default`
 configuration variable.
 +
 For example, to default to pushing only the current branch to `origin`
-use `git config remote.origin.push HEAD`.  Any valid <refspec> (like
+use `but config remote.origin.push HEAD`.  Any valid <refspec> (like
 the ones in the examples below) can be configured as the default for
-`git push origin`.
+`but push origin`.
 
-`git push origin :`::
+`but push origin :`::
 	Push "matching" branches to `origin`. See
 	<refspec> in the <<OPTIONS,OPTIONS>> section above for a
 	description of "matching" branches.
 
-`git push origin master`::
+`but push origin master`::
 	Find a ref that matches `master` in the source repository
 	(most likely, it would find `refs/heads/master`), and update
 	the same ref (e.g. `refs/heads/master`) in `origin` repository
 	with it.  If `master` did not exist remotely, it would be
 	created.
 
-`git push origin HEAD`::
+`but push origin HEAD`::
 	A handy way to push the current branch to the same name on the
 	remote.
 
-`git push mothership master:satellite/master dev:satellite/dev`::
+`but push mothership master:satellite/master dev:satellite/dev`::
 	Use the source ref that matches `master` (e.g. `refs/heads/master`)
 	to update the ref that matches `satellite/master` (most probably
 	`refs/remotes/satellite/master`) in the `mothership` repository;
@@ -638,35 +638,35 @@ the ones in the examples below) can be configured as the default for
 See the section describing `<refspec>...` above for a discussion of
 the matching semantics.
 +
-This is to emulate `git fetch` run on the `mothership` using `git
+This is to emulate `but fetch` run on the `mothership` using `but
 push` that is run in the opposite direction in order to integrate
 the work done on `satellite`, and is often necessary when you can
 only make connection in one way (i.e. satellite can ssh into
 mothership but mothership cannot initiate connection to satellite
 because the latter is behind a firewall or does not run sshd).
 +
-After running this `git push` on the `satellite` machine, you would
-ssh into the `mothership` and run `git merge` there to complete the
-emulation of `git pull` that were run on `mothership` to pull changes
+After running this `but push` on the `satellite` machine, you would
+ssh into the `mothership` and run `but merge` there to complete the
+emulation of `but pull` that were run on `mothership` to pull changes
 made on `satellite`.
 
-`git push origin HEAD:master`::
+`but push origin HEAD:master`::
 	Push the current branch to the remote ref matching `master` in the
 	`origin` repository. This form is convenient to push the current
 	branch without thinking about its local name.
 
-`git push origin master:refs/heads/experimental`::
+`but push origin master:refs/heads/experimental`::
 	Create the branch `experimental` in the `origin` repository
 	by copying the current `master` branch.  This form is only
 	needed to create a new branch or tag in the remote repository when
 	the local name and the remote name are different; otherwise,
 	the ref name on its own will work.
 
-`git push origin :experimental`::
+`but push origin :experimental`::
 	Find a ref that matches `experimental` in the `origin` repository
 	(e.g. `refs/heads/experimental`), and delete it.
 
-`git push origin +dev:master`::
+`but push origin +dev:master`::
 	Update the origin repository's master branch with the dev branch,
 	allowing non-fast-forward updates.  *This can leave unreferenced
 	cummits dangling in the origin repository.*  Consider the
@@ -688,10 +688,10 @@ The above command would change the origin repository to
 +
 cummits A and B would no longer belong to a branch with a symbolic name,
 and so would be unreachable.  As such, these cummits would be removed by
-a `git gc` command on the origin repository.
+a `but gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the linkbut:but[1] suite

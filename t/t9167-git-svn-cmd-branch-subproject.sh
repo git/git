@@ -3,9 +3,9 @@
 # Copyright (c) 2013 Tobias Schulte
 #
 
-test_description='git svn branch for subproject clones'
+test_description='but svn branch for subproject clones'
 
-. ./lib-git-svn.sh
+. ./lib-but-svn.sh
 
 test_expect_success 'initialize svnrepo' '
 	mkdir import &&
@@ -16,7 +16,7 @@ test_expect_success 'initialize svnrepo' '
 			cd trunk/project &&
 			echo foo > foo
 		) &&
-		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null
+		svn_cmd import -m "import for but-svn" . "$svnrepo" >/dev/null
 	) &&
 	rm -rf import &&
 	svn_cmd co "$svnrepo"/trunk/project trunk/project &&
@@ -28,22 +28,22 @@ test_expect_success 'initialize svnrepo' '
 	rm -rf trunk
 '
 
-test_expect_success 'import into git' '
-	git svn init --trunk=trunk/project --branches=branches/*/project \
+test_expect_success 'import into but' '
+	but svn init --trunk=trunk/project --branches=branches/*/project \
 		--tags=tags/*/project "$svnrepo" &&
-	git svn fetch &&
-	git checkout remotes/origin/trunk
+	but svn fetch &&
+	but checkout remotes/origin/trunk
 '
 
-test_expect_success 'git svn branch tests' '
-	test_must_fail git svn branch a &&
-	git svn branch --parents a &&
-	test_must_fail git svn branch -t tag1 &&
-	git svn branch --parents -t tag1 &&
-	test_must_fail git svn branch --tag tag2 &&
-	git svn branch --parents --tag tag2 &&
-	test_must_fail git svn tag tag3 &&
-	git svn tag --parents tag3
+test_expect_success 'but svn branch tests' '
+	test_must_fail but svn branch a &&
+	but svn branch --parents a &&
+	test_must_fail but svn branch -t tag1 &&
+	but svn branch --parents -t tag1 &&
+	test_must_fail but svn branch --tag tag2 &&
+	but svn branch --parents --tag tag2 &&
+	test_must_fail but svn tag tag3 &&
+	but svn tag --parents tag3
 '
 
 test_done

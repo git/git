@@ -19,17 +19,17 @@ Fixes since v1.7.11.4
    address is spelled as "[HOST]:PORT", we did not parse the address
    correctly and failed to connect.
 
- * git-blame.el (in compat/) have been updated to use Elisp more
+ * but-blame.el (in compat/) have been updated to use Elisp more
    correctly.
 
- * "git checkout <branchname>" to come back from a detached HEAD state
+ * "but checkout <branchname>" to come back from a detached HEAD state
    incorrectly computed reachability of the detached HEAD, resulting
    in unnecessary warnings.
 
- * "git mergetool" did not support --tool-help option to give the list
-   of supported backends, like "git difftool" does.
+ * "but mergetool" did not support --tool-help option to give the list
+   of supported backends, like "but difftool" does.
 
- * "git grep" stopped spawning an external "grep" long time ago, but a
+ * "but grep" stopped spawning an external "grep" long time ago, but a
    duplicated test to check internal and external "grep" was left
    behind.
 

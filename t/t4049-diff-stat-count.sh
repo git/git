@@ -11,12 +11,12 @@ test_expect_success 'setup' '
 	>b &&
 	>c &&
 	>d &&
-	git add a b c d &&
-	git cummit -m initial
+	but add a b c d &&
+	but cummit -m initial
 '
 
 test_expect_success 'mode-only change show as a 0-line change' '
-	git reset --hard &&
+	but reset --hard &&
 	test_chmod +x b d &&
 	echo a >a &&
 	echo c >c &&
@@ -26,12 +26,12 @@ test_expect_success 'mode-only change show as a 0-line change' '
 	 ...
 	 4 files changed, 2 insertions(+)
 	EOF
-	git diff --stat --stat-count=2 HEAD >actual &&
+	but diff --stat --stat-count=2 HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'binary changes do not count in lines' '
-	git reset --hard &&
+	but reset --hard &&
 	echo a >a &&
 	echo c >c &&
 	cat "$TEST_DIRECTORY"/test-binary-1.png >d &&
@@ -41,21 +41,21 @@ test_expect_success 'binary changes do not count in lines' '
 	 ...
 	 3 files changed, 2 insertions(+)
 	EOF
-	git diff --stat --stat-count=2 >actual &&
+	but diff --stat --stat-count=2 >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'exclude unmerged entries from total file count' '
-	git reset --hard &&
+	but reset --hard &&
 	echo a >a &&
 	echo b >b &&
-	git ls-files -s a >x &&
-	git rm -f d &&
+	but ls-files -s a >x &&
+	but rm -f d &&
 	for stage in 1 2 3
 	do
 		sed -e "s/ 0	a/ $stage	d/" x || return 1
 	done |
-	git update-index --index-info &&
+	but update-index --index-info &&
 	echo d >d &&
 	cat >expect <<-\EOF &&
 	 a | 1 +
@@ -63,7 +63,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	 ...
 	 3 files changed, 3 insertions(+)
 	EOF
-	git diff --stat --stat-count=2 >actual &&
+	but diff --stat --stat-count=2 >actual &&
 	test_cmp expect actual
 '
 

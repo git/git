@@ -4,10 +4,10 @@
 # record for the process.
 #
 # Git.exe generates one or more "event" records for each API method,
-# such as "start <argv>" and "exit <code>", during the life of the git
+# such as "start <argv>" and "exit <code>", during the life of the but
 # process.  Additionally, the input may contain interleaved events
-# from multiple concurrent git processes and/or multiple threads from
-# within a git process.
+# from multiple concurrent but processes and/or multiple threads from
+# within a but process.
 #
 # Accumulate events for each process (based on its unique SID) in a
 # dictionary and emit process summary records.
@@ -37,7 +37,7 @@ my $show_threads  = 1;
 # Usage:
 #    cd "t/trash directory.t0212-trace2-event"
 #    $TT trace ... >trace.event
-#    VV=$(../../git.exe version | sed -e 's/^git version //')
+#    VV=$(../../but.exe version | sed -e 's/^but version //')
 #    perl ../t0212/parse_events.perl --HEREDOC --VERSION=$VV <trace.event >heredoc
 # Then paste heredoc into your new test.
 
@@ -89,10 +89,10 @@ while (<>) {
 	$processes->{$sid}->{'version'} = $line->{'exe'};
 	if ($gen_heredoc == 1 && $gen_version eq $line->{'exe'}) {
 	    # If we are generating data FOR the test script, replace
-	    # the reported git.exe version with a reference to an
+	    # the reported but.exe version with a reference to an
 	    # environment variable.  When our output is pasted into
 	    # the test script, it will then be expanded in future
-	    # test runs to the THEN current version of git.exe.
+	    # test runs to the THEN current version of but.exe.
 	    # We assume that the test script uses env var $V.
 	    $processes->{$sid}->{'version'} = "\$V";
 	}

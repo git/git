@@ -7,15 +7,15 @@ test_expect_success "setup pre-receive hook ($PROTOCOL/porcelain)" '
 
 # Refs of upstream : main(A)
 # Refs of workbench: main(A)  tags/v123
-# git-push         : main(B)             next(A)
-test_expect_success "git-push is declined ($PROTOCOL/porcelain)" '
-	test_must_fail git -C workbench push --porcelain origin \
+# but-push         : main(B)             next(A)
+test_expect_success "but-push is declined ($PROTOCOL/porcelain)" '
+	test_must_fail but -C workbench push --porcelain origin \
 		$B:refs/heads/main \
 		HEAD:refs/heads/next \
 		>out-$test_count 2>&1 &&
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
-	> To <URL/of/upstream.git>
+	> To <URL/of/upstream.but>
 	> !	<CUMMIT-B>:refs/heads/main	[remote rejected] (pre-receive hook declined)
 	> !	HEAD:refs/heads/next	[remote rejected] (pre-receive hook declined)
 	Done

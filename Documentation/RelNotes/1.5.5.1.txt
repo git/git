@@ -4,41 +4,41 @@ GIT v1.5.5.1 Release Notes
 Fixes since v1.5.5
 ------------------
 
- * "git archive --prefix=$path/" mishandled gitattributes.
+ * "but archive --prefix=$path/" mishandled butattributes.
 
- * "git fetch -v" that fetches into FETCH_HEAD did not report the summary
+ * "but fetch -v" that fetches into FETCH_HEAD did not report the summary
    the same way as done for updating the tracking refs.
 
- * "git svn" misbehaved when the configuration file customized the "git
+ * "but svn" misbehaved when the configuration file customized the "but
    log" output format using format.pretty.
 
- * "git submodule status" leaked an unnecessary error message.
+ * "but submodule status" leaked an unnecessary error message.
 
- * "git log --date-order --topo-order" did not override the earlier
+ * "but log --date-order --topo-order" did not override the earlier
    date-order with topo-order as expected.
 
- * "git bisect good $this" did not check the validity of the revision
+ * "but bisect good $this" did not check the validity of the revision
    given properly.
 
  * "url.<there>.insteadOf" did not work correctly.
 
- * "git clean" ran inside subdirectory behaved as if the directory was
+ * "but clean" ran inside subdirectory behaved as if the directory was
    explicitly specified for removal by the end user from the top level.
 
- * "git bisect" from a detached head leaked an unnecessary error message.
+ * "but bisect" from a detached head leaked an unnecessary error message.
 
- * "git bisect good $a $b" when $a is Ok but $b is bogus should have
+ * "but bisect good $a $b" when $a is Ok but $b is bogus should have
    atomically failed before marking $a as good.
 
- * "git fmt-merge-msg" did not clean up leading empty lines from cummit
-   log messages like "git log" family does.
+ * "but fmt-merge-msg" did not clean up leading empty lines from cummit
+   log messages like "but log" family does.
 
- * "git am" recorded a cummit with empty Subject: line without
+ * "but am" recorded a cummit with empty Subject: line without
    complaining.
 
  * when given a cummit log message whose first paragraph consists of
-   multiple lines, "git rebase" squashed it into a single line.
+   multiple lines, "but rebase" squashed it into a single line.
 
- * "git remote add $bogus_name $url" did not complain properly.
+ * "but remote add $bogus_name $url" did not complain properly.
 
 Also comes with various documentation updates.
