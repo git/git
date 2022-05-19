@@ -1810,7 +1810,7 @@ struct ident_filter {
 	struct stream_filter filter;
 	struct strbuf left;
 	int state;
-	char ident[GIT_MAX_HEXSZ + 5]; /* ": x40 $" */
+	char ident[BUT_MAX_HEXSZ + 5]; /* ": x40 $" */
 };
 
 static int is_foreign_ident(const char *str)

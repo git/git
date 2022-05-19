@@ -52,7 +52,7 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 		 * repository, that means ce which was a blob turned into
 		 * a directory --- the blob was removed!
 		 */
-		if (!S_ISGITLINK(ce->ce_mode) &&
+		if (!S_ISBUTLINK(ce->ce_mode) &&
 		    resolve_butlink_ref(ce->name, "HEAD", &sub))
 			return 1;
 	}
@@ -73,7 +73,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 				     unsigned *dirty_submodule)
 {
 	int changed = ie_match_stat(diffopt->repo->index, ce, st, ce_option);
-	if (S_ISGITLINK(ce->ce_mode)) {
+	if (S_ISBUTLINK(ce->ce_mode)) {
 		struct diff_flags orig_flags = diffopt->flags;
 		if (!diffopt->flags.override_submodule_config)
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
@@ -600,7 +600,7 @@ int run_diff_index(struct rev_info *revs, unsigned int option)
 	int merge_base = !!(option & DIFF_INDEX_MERGE_BASE);
 	struct object_id oid;
 	const char *name;
-	char merge_base_hex[GIT_MAX_HEXSZ + 1];
+	char merge_base_hex[BUT_MAX_HEXSZ + 1];
 	struct index_state *istate = revs->diffopt.repo->index;
 
 	if (revs->pending.nr != 1)

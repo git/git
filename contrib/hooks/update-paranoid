@@ -92,7 +92,7 @@ correctly.
 
 =cut
 
-my $but_dir = $ENV{GIT_DIR};
+my $but_dir = $ENV{BUT_DIR};
 my $new_cummit_check = "$but_dir/info/new-cummit-check";
 my $ref = $ARGV[0];
 my $old = $ARGV[1];
@@ -133,7 +133,7 @@ sub match_string ($$) {
 
 sub parse_config ($$$$) {
 	my $data = shift;
-	local $ENV{GIT_DIR} = shift;
+	local $ENV{BUT_DIR} = shift;
 	my $br = shift;
 	my $fn = shift;
 	return unless but_value('rev-list','--max-count=1',$br,'--',$fn);
@@ -157,8 +157,8 @@ sub parse_config ($$$$) {
 }
 
 sub all_new_cummitters () {
-	local $ENV{GIT_DIR} = $but_dir;
-	$ENV{GIT_DIR} = $new_cummit_check if -d $new_cummit_check;
+	local $ENV{BUT_DIR} = $but_dir;
+	$ENV{BUT_DIR} = $new_cummit_check if -d $new_cummit_check;
 
 	info "Getting cummitters of new cummits.";
 	my %used;
@@ -253,7 +253,7 @@ sub load_diff ($) {
 	return $d;
 }
 
-deny "No GIT_DIR inherited from caller" unless $but_dir;
+deny "No BUT_DIR inherited from caller" unless $but_dir;
 deny "Need a ref name" unless $ref;
 deny "Refusing funny ref $ref" unless $ref =~ s,^refs/,,;
 deny "Bad old value $old" unless $old =~ /^[a-z0-9]{40}$/;

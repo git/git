@@ -49,7 +49,7 @@ int read_tree_at(struct repository *r,
 
 		if (S_ISDIR(entry.mode))
 			oidcpy(&oid, &entry.oid);
-		else if (S_ISGITLINK(entry.mode)) {
+		else if (S_ISBUTLINK(entry.mode)) {
 			struct cummit *cummit;
 
 			cummit = lookup_cummit(r, &entry.oid);

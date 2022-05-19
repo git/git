@@ -38,7 +38,7 @@ test_expect_success 'looping aliases - internal execution' '
 #'
 
 test_expect_success 'run-command formats empty args properly' '
-    test_must_fail env GIT_TRACE=1 but frotz a "" b " " c 2>actual.raw &&
+    test_must_fail env BUT_TRACE=1 but frotz a "" b " " c 2>actual.raw &&
     sed -ne "/run_command:/s/.*trace: run_command: //p" actual.raw >actual &&
     echo "but-frotz a '\'''\'' b '\'' '\'' c" >expect &&
     test_cmp expect actual

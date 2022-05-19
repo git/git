@@ -1774,7 +1774,7 @@ static enum exist_status directory_exists_in_index_icase(struct index_state *ist
 		return index_directory;
 
 	ce = index_file_exists(istate, dirname, len, ignore_case);
-	if (ce && S_ISGITLINK(ce->ce_mode))
+	if (ce && S_ISBUTLINK(ce->ce_mode))
 		return index_butdir;
 
 	return index_nonexistent;
@@ -1809,7 +1809,7 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
 			break;
 		if (endchar == '/')
 			return index_directory;
-		if (!endchar && S_ISGITLINK(ce->ce_mode))
+		if (!endchar && S_ISBUTLINK(ce->ce_mode))
 			return index_butdir;
 	}
 	return index_nonexistent;
@@ -1844,7 +1844,7 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
  *      also true, in which case we need to check if it contains any
  *      untracked and / or ignored files.
  *  (b) if it looks like a but directory and we don't have the
- *      DIR_NO_GITLINKS flag, then we treat it as a butlink, and
+ *      DIR_NO_BUTLINKS flag, then we treat it as a butlink, and
  *      show it as a directory.
  *  (c) otherwise, we recurse into it.
  */
@@ -1891,15 +1891,15 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	}
 
 
-	if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
-		!(dir->flags & DIR_NO_GITLINKS)) {
+	if ((dir->flags & DIR_SKIP_NESTED_BUT) ||
+		!(dir->flags & DIR_NO_BUTLINKS)) {
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addstr(&sb, dirname);
 		nested_repo = is_nonbare_repository_dir(&sb);
 		strbuf_release(&sb);
 	}
 	if (nested_repo) {
-		if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
+		if ((dir->flags & DIR_SKIP_NESTED_BUT) ||
 		    (matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC))
 			return path_none;
 		return excluded ? path_excluded : path_untracked;
@@ -2168,7 +2168,7 @@ static int get_index_dtype(struct index_state *istate,
 	if (ce) {
 		if (!ce_uptodate(ce))
 			return DT_UNKNOWN;
-		if (S_ISGITLINK(ce->ce_mode))
+		if (S_ISBUTLINK(ce->ce_mode))
 			return DT_DIR;
 		/*
 		 * Nobody actually cares about the
@@ -2811,12 +2811,12 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	if (!dir->untracked)
 		return NULL;
 	if (untracked_cache_disabled < 0)
-		untracked_cache_disabled = but_env_bool("GIT_DISABLE_UNTRACKED_CACHE", 0);
+		untracked_cache_disabled = but_env_bool("BUT_DISABLE_UNTRACKED_CACHE", 0);
 	if (untracked_cache_disabled)
 		return NULL;
 
 	/*
-	 * We only support $GIT_DIR/info/exclude and core.excludesfile
+	 * We only support $BUT_DIR/info/exclude and core.excludesfile
 	 * as the global ignore rule files. Any other additions
 	 * (e.g. from command line) invalidate the cache. This
 	 * condition also catches running setup_standard_excludes()
@@ -2909,7 +2909,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		istate->cache_changed |= UNTRACKED_CHANGED;
 	}
 
-	/* Validate $GIT_DIR/info/exclude and core.excludesfile */
+	/* Validate $BUT_DIR/info/exclude and core.excludesfile */
 	root = dir->untracked->root;
 	if (!oideq(&dir->ss_info_exclude.oid,
 		   &dir->untracked->ss_info_exclude.oid)) {
@@ -2997,7 +2997,7 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 
 		if (force_untracked_cache < 0)
 			force_untracked_cache =
-				but_env_bool("GIT_FORCE_UNTRACKED_CACHE", -1);
+				but_env_bool("BUT_FORCE_UNTRACKED_CACHE", -1);
 		if (force_untracked_cache < 0)
 			force_untracked_cache = (istate->repo->settings.core_untracked_cache == UNTRACKED_CACHE_WRITE);
 		if (force_untracked_cache &&
@@ -3224,7 +3224,7 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	int purge_original_cwd = (flag & REMOVE_DIR_PURGE_ORIGINAL_CWD);
 	struct object_id submodule_head;
 
-	if ((flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
+	if ((flag & REMOVE_DIR_KEEP_NESTED_BUT) &&
 	    !resolve_butlink_ref(path->buf, "HEAD", &submodule_head)) {
 		/* Do not descend and nuke a nested but work tree. */
 		if (kept_up)
@@ -3298,7 +3298,7 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 	return remove_dir_recurse(path, flag, NULL);
 }
 
-static GIT_PATH_FUNC(but_path_info_exclude, "info/exclude")
+static BUT_PATH_FUNC(but_path_info_exclude, "info/exclude")
 
 void setup_standard_excludes(struct dir_struct *dir)
 {
@@ -3867,7 +3867,7 @@ static void connect_wt_butdir_in_nested(const char *sub_worktree,
 	for (i = 0; i < subrepo.index->cache_nr; i++) {
 		const struct cache_entry *ce = subrepo.index->cache[i];
 
-		if (!S_ISGITLINK(ce->ce_mode))
+		if (!S_ISBUTLINK(ce->ce_mode))
 			continue;
 
 		while (i + 1 < subrepo.index->cache_nr &&

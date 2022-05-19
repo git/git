@@ -33,7 +33,7 @@
  * data parameter remains valid for the rest of the program.
  *
  * The "name" argument is used only for printing trace output from
- * $GIT_TRACE_SETUP. It may be NULL, but if non-NULL should point to
+ * $BUT_TRACE_SETUP. It may be NULL, but if non-NULL should point to
  * storage which lasts as long as the registration is active.
  */
 typedef void (*chdir_notify_callback)(const char *name,

@@ -25,15 +25,15 @@ static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
-	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
-	GIT_COLOR_RED,    /* WT_STATUS_CHANGED */
-	GIT_COLOR_RED,    /* WT_STATUS_UNTRACKED */
-	GIT_COLOR_RED,    /* WT_STATUS_NOBRANCH */
-	GIT_COLOR_RED,    /* WT_STATUS_UNMERGED */
-	GIT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
-	GIT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
-	GIT_COLOR_NIL,    /* WT_STATUS_ONBRANCH */
+	BUT_COLOR_NORMAL, /* WT_STATUS_HEADER */
+	BUT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
+	BUT_COLOR_RED,    /* WT_STATUS_CHANGED */
+	BUT_COLOR_RED,    /* WT_STATUS_UNTRACKED */
+	BUT_COLOR_RED,    /* WT_STATUS_NOBRANCH */
+	BUT_COLOR_RED,    /* WT_STATUS_UNMERGED */
+	BUT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
+	BUT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
+	BUT_COLOR_NIL,    /* WT_STATUS_ONBRANCH */
 };
 
 static const char *color(int slot, struct wt_status *s)
@@ -421,7 +421,7 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
 		strbuf_release(&extra);
 	}
-	status_printf_more(s, GIT_COLOR_NORMAL, "\n");
+	status_printf_more(s, BUT_COLOR_NORMAL, "\n");
 	strbuf_release(&onebuf);
 	strbuf_release(&twobuf);
 }
@@ -461,7 +461,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		}
 		if (!d->worktree_status)
 			d->worktree_status = p->status;
-		if (S_ISGITLINK(p->two->mode)) {
+		if (S_ISBUTLINK(p->two->mode)) {
 			d->dirty_submodule = p->two->dirty_submodule;
 			d->new_submodule_cummits = !oideq(&p->one->oid,
 							  &p->two->oid);
@@ -969,7 +969,7 @@ static void wt_longstatus_print_stash_summary(struct wt_status *s)
 	int stash_count = count_stash_entries();
 
 	if (stash_count > 0)
-		status_printf_ln(s, GIT_COLOR_NORMAL,
+		status_printf_ln(s, BUT_COLOR_NORMAL,
 				 Q_("Your stash currently has %d entry",
 				    "Your stash currently has %d entries", stash_count),
 				 stash_count);
@@ -982,7 +982,7 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncum
 	struct strbuf summary = STRBUF_INIT;
 	char *summary_content;
 
-	strvec_pushf(&sm_summary.env_array, "GIT_INDEX_FILE=%s", s->index_file);
+	strvec_pushf(&sm_summary.env_array, "BUT_INDEX_FILE=%s", s->index_file);
 
 	strvec_push(&sm_summary.args, "submodule");
 	strvec_push(&sm_summary.args, "summary");
@@ -1061,12 +1061,12 @@ static void wt_longstatus_print_other(struct wt_status *s,
 	copts.padding = 1;
 	copts.indent = buf.buf;
 	if (want_color(s->use_color))
-		copts.nl = GIT_COLOR_RESET "\n";
+		copts.nl = BUT_COLOR_RESET "\n";
 	print_columns(&output, s->colopts, &copts);
 	string_list_clear(&output, 0);
 	strbuf_release(&buf);
 conclude:
-	status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
+	status_printf_ln(s, BUT_COLOR_NORMAL, "%s", "");
 }
 
 size_t wt_status_locate_end(const char *s, size_t len)
@@ -1867,15 +1867,15 @@ static void wt_longstatus_print(struct wt_status *s)
 		if (s->show_ignored_mode)
 			wt_longstatus_print_other(s, &s->ignored, _("Ignored files"), "add -f");
 		if (advice_enabled(ADVICE_STATUS_U_OPTION) && 2000 < s->untracked_in_ms) {
-			status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
-			status_printf_ln(s, GIT_COLOR_NORMAL,
+			status_printf_ln(s, BUT_COLOR_NORMAL, "%s", "");
+			status_printf_ln(s, BUT_COLOR_NORMAL,
 					 _("It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
 					   "may speed it up, but you have to be careful not to forget to add\n"
 					   "new files yourself (see 'but help status')."),
 					 s->untracked_in_ms / 1000.0);
 		}
 	} else if (s->cummittable)
-		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
+		status_printf_ln(s, BUT_COLOR_NORMAL, _("Untracked files not listed%s"),
 			s->hints
 			? _(" (use -u option to show untracked files)") : "");
 
@@ -1883,7 +1883,7 @@ static void wt_longstatus_print(struct wt_status *s)
 		wt_longstatus_print_verbose(s);
 	if (!s->cummittable) {
 		if (s->amend)
-			status_printf_ln(s, GIT_COLOR_NORMAL, _("No changes"));
+			status_printf_ln(s, BUT_COLOR_NORMAL, _("No changes"));
 		else if (s->nowarn)
 			; /* nothing */
 		else if (s->workdir_dirty) {
@@ -2217,9 +2217,9 @@ static void wt_porcelain_v2_submodule_state(
 	struct wt_status_change_data *d,
 	char sub[5])
 {
-	if (S_ISGITLINK(d->mode_head) ||
-		S_ISGITLINK(d->mode_index) ||
-		S_ISGITLINK(d->mode_worktree)) {
+	if (S_ISBUTLINK(d->mode_head) ||
+		S_ISBUTLINK(d->mode_index) ||
+		S_ISBUTLINK(d->mode_worktree)) {
 		sub[0] = 'S';
 		sub[1] = d->new_submodule_cummits ? 'C' : '.';
 		sub[2] = (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED) ? 'M' : '.';

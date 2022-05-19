@@ -59,12 +59,12 @@ static const char *color_interactive_slots[] = {
 
 static int clean_use_color = -1;
 static char clean_colors[][COLOR_MAXLEN] = {
-	[CLEAN_COLOR_ERROR] = GIT_COLOR_BOLD_RED,
-	[CLEAN_COLOR_HEADER] = GIT_COLOR_BOLD,
-	[CLEAN_COLOR_HELP] = GIT_COLOR_BOLD_RED,
-	[CLEAN_COLOR_PLAIN] = GIT_COLOR_NORMAL,
-	[CLEAN_COLOR_PROMPT] = GIT_COLOR_BOLD_BLUE,
-	[CLEAN_COLOR_RESET] = GIT_COLOR_RESET,
+	[CLEAN_COLOR_ERROR] = BUT_COLOR_BOLD_RED,
+	[CLEAN_COLOR_HEADER] = BUT_COLOR_BOLD,
+	[CLEAN_COLOR_HELP] = BUT_COLOR_BOLD_RED,
+	[CLEAN_COLOR_PLAIN] = BUT_COLOR_NORMAL,
+	[CLEAN_COLOR_PROMPT] = BUT_COLOR_BOLD_BLUE,
+	[CLEAN_COLOR_RESET] = BUT_COLOR_RESET,
 };
 
 #define MENU_OPTS_SINGLETON		01
@@ -163,7 +163,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 
 	*dir_gone = 1;
 
-	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
+	if ((force_flag & REMOVE_DIR_KEEP_NESTED_BUT) &&
 	    is_nonbare_repository_dir(path)) {
 		if (!quiet) {
 			quote_path(path->buf, prefix, &quoted, 0);
@@ -913,7 +913,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int i, res;
 	int dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;
 	int ignored_only = 0, config_set = 0, errors = 0, gone = 1;
-	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
+	int rm_flags = REMOVE_DIR_KEEP_NESTED_BUT;
 	struct strbuf abs_path = STRBUF_INIT;
 	struct dir_struct dir = DIR_INIT;
 	struct pathspec pathspec;
@@ -958,7 +958,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	if (force > 1)
 		rm_flags = 0;
 	else
-		dir.flags |= DIR_SKIP_NESTED_GIT;
+		dir.flags |= DIR_SKIP_NESTED_BUT;
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 

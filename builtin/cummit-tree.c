@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */

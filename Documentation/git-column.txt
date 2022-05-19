@@ -74,6 +74,6 @@ v2.4.3  v2.4.4      v2.4.5      v2.4.6      v2.4.7
 v2.4.8  v2.4.9
 ------------
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

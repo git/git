@@ -19,8 +19,8 @@ diff a/but-fetch-script b/but-fetch-script
 +merge_repo=$1
 +merge_name=${2:-HEAD}
 +
-+: ${GIT_DIR=.but}
-+: ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
++: ${BUT_DIR=.but}
++: ${BUT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$BUT_DIR/objects"}"}
 +
 +download_one () {
 +	# remote_path="$1" local_file="$2"
@@ -45,22 +45,22 @@ diff a/but-fetch-script b/but-fetch-script
 +		;;
 +	*)
 +		rsync -avz --ignore-existing \
-+			"$1/objects/." "$GIT_OBJECT_DIRECTORY"/.
++			"$1/objects/." "$BUT_OBJECT_DIRECTORY"/.
 +		;;
 +	esac
 +}
 +
 +echo "Getting remote $merge_name"
-+download_one "$merge_repo/$merge_name" "$GIT_DIR"/MERGE_HEAD
++download_one "$merge_repo/$merge_name" "$BUT_DIR"/MERGE_HEAD
 +
 +echo "Getting object database"
-+download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
++download_objects "$merge_repo" "$(cat "$BUT_DIR"/MERGE_HEAD)"
 diff a/but-pull-script b/but-pull-script
 --- a/but-pull-script
 +++ b/but-pull-script
 @@ -6,39 +6,7 @@ merge_name=${2:-HEAD}
- : ${GIT_DIR=.but}
- : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
+ : ${BUT_DIR=.but}
+ : ${BUT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$BUT_DIR/objects"}"}
  
 -download_one () {
 -	# remote_path="$1" local_file="$2"
@@ -85,17 +85,17 @@ diff a/but-pull-script b/but-pull-script
 -		;;
 -	*)
 -		rsync -avz --ignore-existing \
--			"$1/objects/." "$GIT_OBJECT_DIRECTORY"/.
+-			"$1/objects/." "$BUT_OBJECT_DIRECTORY"/.
 -		;;
 -	esac
 -}
 -
 -echo "Getting remote $merge_name"
--download_one "$merge_repo/$merge_name" "$GIT_DIR"/MERGE_HEAD
+-download_one "$merge_repo/$merge_name" "$BUT_DIR"/MERGE_HEAD
 -
 -echo "Getting object database"
--download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
+-download_objects "$merge_repo" "$(cat "$BUT_DIR"/MERGE_HEAD)"
 +but-fetch-script "$merge_repo" "$merge_name"
  
  but-resolve-script \
- 	"$(cat "$GIT_DIR"/HEAD)" \
+ 	"$(cat "$BUT_DIR"/HEAD)" \

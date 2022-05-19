@@ -41,7 +41,7 @@ mkdir -p "$R$(pwd)"
 rsync --exclude-from t/t1509/excludes -Ha . "$R$(pwd)"
 # Fake perl to reduce dependency, t1509 does not use perl, but some
 # env might slip through, see test-lib.sh, unset.*PERL_PATH
-sed 's|^PERL_PATH=.*|PERL_PATH=/bin/true|' GIT-BUILD-OPTIONS > "$R$(pwd)/GIT-BUILD-OPTIONS"
+sed 's|^PERL_PATH=.*|PERL_PATH=/bin/true|' BUT-BUILD-OPTIONS > "$R$(pwd)/BUT-BUILD-OPTIONS"
 for cmd in but $BB;do
 	ldd $cmd | grep '/' | sed 's,.*\s\(/[^ ]*\).*,\1,' | while read i; do
 		mkdir -p "$R$(dirname $i)"

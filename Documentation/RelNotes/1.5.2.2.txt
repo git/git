@@ -1,4 +1,4 @@
-GIT v1.5.2.2 Release Notes
+BUT v1.5.2.2 Release Notes
 ==========================
 
 Fixes since v1.5.2.1
@@ -28,7 +28,7 @@ Fixes since v1.5.2.1
     integers more than 8 dibuts as such, which allows us to
     express timestamps more recent than March 1973.
 
-  - but-cvsimport did not work when you have GIT_DIR to point
+  - but-cvsimport did not work when you have BUT_DIR to point
     your repository at a nonstandard location.
 
   - Some systems (notably, Solaris) lack hstrerror() to make

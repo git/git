@@ -4,7 +4,7 @@
 int cmd_hash_impl(int ac, const char **av, int algo)
 {
 	but_hash_ctx ctx;
-	unsigned char hash[GIT_MAX_HEXSZ];
+	unsigned char hash[BUT_MAX_HEXSZ];
 	unsigned bufsz = 8192;
 	int binary = 0;
 	char *buffer;

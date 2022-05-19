@@ -14,7 +14,7 @@ local $/;
 while (my $slurp = <>) {
 	report($ARGV, "has no 'Part of the linkbut:but[1] suite' end blurb")
 		unless $slurp =~ m[
-		^GIT\n
+		^BUT\n
 		 ---\n
 		\QPart of the linkbut:but[1] suite\E \n
 		\z

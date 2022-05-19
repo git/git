@@ -7,8 +7,8 @@ test_description='but mergetool
 
 Testing basic merge tool invocation'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -535,7 +535,7 @@ test_expect_success 'file vs modified submodule' '
 	yes "" | but mergetool file1 file2 spaced\ name subdir/file3 &&
 	yes "" | but mergetool both &&
 	yes "d" | but mergetool file11 file12 &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		yes "c" | but mergetool submod~HEAD &&
 		but rm submod &&
@@ -559,7 +559,7 @@ test_expect_success 'file vs modified submodule' '
 	yes "" | but mergetool file1 file2 spaced\ name subdir/file3 &&
 	yes "" | but mergetool both &&
 	yes "d" | but mergetool file11 file12 &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		mv submod submod.orig &&
 		but rm --cached submod &&
@@ -585,7 +585,7 @@ test_expect_success 'file vs modified submodule' '
 	yes "" | but mergetool both &&
 	yes "d" | but mergetool file11 file12 &&
 	yes "l" | but mergetool submod &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		yes "d" | but mergetool submod~test19
 	fi &&
@@ -686,7 +686,7 @@ test_expect_success 'directory vs modified submodule' '
 	test_must_fail but merge main &&
 	test -n "$(but ls-files -u)" &&
 	test ! -e submod.orig &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		yes "r" | but mergetool submod~main &&
 		but mv submod submod.orig &&

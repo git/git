@@ -151,6 +151,6 @@ With `--force`, the fast-forward check is disabled for all refs.
 Optionally, a <ref> parameter can be prefixed with a plus '+' sign
 to disable the fast-forward check only on that ref.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

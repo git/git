@@ -500,6 +500,6 @@ working index HEAD target         working index HEAD
 
 `X` means any state and `U` means an unmerged index.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -12,12 +12,12 @@ Compatibility Notes
    If you have a script that runs "but merge" and keeps its standard
    input and output attached to the user's terminal, and if you do not
    want the user to explain the resulting merge cummits, you can
-   export GIT_MERGE_AUTOEDIT environment variable set to "no", like
+   export BUT_MERGE_AUTOEDIT environment variable set to "no", like
    this:
 
 	#!/bin/sh
-	GIT_MERGE_AUTOEDIT=no
-	export GIT_MERGE_AUTOEDIT
+	BUT_MERGE_AUTOEDIT=no
+	export BUT_MERGE_AUTOEDIT
 
    to disable this behavior (if you want your users to explain their
    merge cummits, you do not have to do anything).  Alternatively, you
@@ -109,7 +109,7 @@ UI, Workflows & Features
  * "but merge" in an interactive session learned to spawn the editor
    by default to let the user edit the auto-generated merge message,
    to encourage people to explain their merges better. Legacy scripts
-   can export GIT_MERGE_AUTOEDIT=no to retain the historical behavior.
+   can export BUT_MERGE_AUTOEDIT=no to retain the historical behavior.
    Both "but merge" and "but pull" can be given --no-edit from the
    command line to accept the auto-generated merge message.
 

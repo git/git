@@ -4,8 +4,8 @@
 #
 
 test_description='Test the post-merge hook.'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -20,15 +20,15 @@ test_expect_success setup '
 	cummit1=$(echo modify | but cummit-tree $tree1 -p $cummit0) &&
 	but update-ref refs/heads/main $cummit0 &&
 	but clone ./. clone1 &&
-	GIT_DIR=clone1/.but but update-index --add a &&
+	BUT_DIR=clone1/.but but update-index --add a &&
 	but clone ./. clone2 &&
-	GIT_DIR=clone2/.but but update-index --add a
+	BUT_DIR=clone2/.but but update-index --add a
 '
 
 test_expect_success 'setup clone hooks' '
 	test_when_finished "rm -f hook" &&
 	cat >hook <<-\EOF &&
-	echo $@ >>$GIT_DIR/post-merge.args
+	echo $@ >>$BUT_DIR/post-merge.args
 	EOF
 
 	test_hook --setup -C clone1 post-merge <hook &&
@@ -36,12 +36,12 @@ test_expect_success 'setup clone hooks' '
 '
 
 test_expect_success 'post-merge does not run for up-to-date ' '
-	GIT_DIR=clone1/.but but merge $cummit0 &&
+	BUT_DIR=clone1/.but but merge $cummit0 &&
 	! test -f clone1/.but/post-merge.args
 '
 
 test_expect_success 'post-merge runs as expected ' '
-	GIT_DIR=clone1/.but but merge $cummit1 &&
+	BUT_DIR=clone1/.but but merge $cummit1 &&
 	test -e clone1/.but/post-merge.args
 '
 
@@ -50,7 +50,7 @@ test_expect_success 'post-merge from normal merge receives the right argument ' 
 '
 
 test_expect_success 'post-merge from squash merge runs as expected ' '
-	GIT_DIR=clone2/.but but merge --squash $cummit1 &&
+	BUT_DIR=clone2/.but but merge --squash $cummit1 &&
 	test -e clone2/.but/post-merge.args
 '
 

@@ -43,7 +43,7 @@ Fixes since v1.7.5.1
    variables did not override the fallback default merge.<option>
    configuration variables such as merge.ff, merge.log, etc.
 
- * "but merge-one-file" did not honor GIT_WORK_TREE settings when
+ * "but merge-one-file" did not honor BUT_WORK_TREE settings when
    handling a "both sides added, differently" conflict.
 
  * "but mergetool" did not handle conflicted submoudules gracefully.

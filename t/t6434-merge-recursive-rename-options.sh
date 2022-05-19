@@ -26,8 +26,8 @@ they are rounded down (see, e.g., Documentation/diff-generate-patch.txt, which
 mentions this in a different context).
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 

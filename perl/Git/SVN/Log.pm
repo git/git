@@ -1,6 +1,6 @@
 package Git::SVN::Log;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Git::SVN::Utils qw(fatal);
 use Git qw(command
            command_oneline
@@ -95,15 +95,15 @@ sub but_svn_log_cmd {
 # adapted from pager.c
 sub config_pager {
 	if (! -t *STDOUT) {
-		$ENV{GIT_PAGER_IN_USE} = 'false';
+		$ENV{BUT_PAGER_IN_USE} = 'false';
 		$pager = undef;
 		return;
 	}
-	chomp($pager = command_oneline(qw(var GIT_PAGER)));
+	chomp($pager = command_oneline(qw(var BUT_PAGER)));
 	if ($pager eq 'cat') {
 		$pager = undef;
 	}
-	$ENV{GIT_PAGER_IN_USE} = defined($pager);
+	$ENV{BUT_PAGER_IN_USE} = defined($pager);
 }
 
 sub run_pager {

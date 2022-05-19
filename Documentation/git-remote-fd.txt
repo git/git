@@ -30,7 +30,7 @@ context.
 
 ENVIRONMENT VARIABLES
 ---------------------
-GIT_TRANSLOOP_DEBUG::
+BUT_TRANSLOOP_DEBUG::
 	If set, prints debugging information about various reads/writes.
 
 EXAMPLES
@@ -54,6 +54,6 @@ SEE ALSO
 --------
 linkbut:butremote-helpers[7]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

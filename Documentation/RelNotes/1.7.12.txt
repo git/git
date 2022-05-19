@@ -128,8 +128,8 @@ releases are contained in this release (see release notes to them for
 details).
 
  * "but submodule add" was confused when the superproject did not have
-   its repository in its usual place in the working tree and GIT_DIR
-   and GIT_WORK_TREE was used to access it.
+   its repository in its usual place in the working tree and BUT_DIR
+   and BUT_WORK_TREE was used to access it.
 
  * "but cummit --amend" let the user edit the log message and then died
    when the human-readable cummitter name was given insufficiently by

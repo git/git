@@ -433,7 +433,7 @@ static const char *find_end_of_record(const char *p, const char *end)
 /*
  * We want to be able to compare mmapped reference records quickly,
  * without totally parsing them. We can do so because the records are
- * LF-terminated, and the refname should start exactly (GIT_SHA1_HEXSZ
+ * LF-terminated, and the refname should start exactly (BUT_SHA1_HEXSZ
  * + 1) bytes past the beginning of the record.
  *
  * But what if the `packed-refs` file contains garbage? We're willing
@@ -445,7 +445,7 @@ static const char *find_end_of_record(const char *p, const char *end)
  *
  * Guarantee that minimum level of safety by verifying that the last
  * record in the file is LF-terminated, and that it has at least
- * (GIT_SHA1_HEXSZ + 1) characters before the LF. Die if either of
+ * (BUT_SHA1_HEXSZ + 1) characters before the LF. Die if either of
  * these checks fails.
  */
 static void verify_buffer_safe(struct snapshot *snapshot)

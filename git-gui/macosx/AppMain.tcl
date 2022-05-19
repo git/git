@@ -1,8 +1,8 @@
 set butexecdir {@@butexecdir@@}
-if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
-	set butguilib $::env(GIT_GUI_LIB_DIR)
+if { [info exists ::env(BUT_GUI_LIB_DIR) ] } {
+	set butguilib $::env(BUT_GUI_LIB_DIR)
 } else {
-	set butguilib {@@GITGUI_LIBDIR@@}
+	set butguilib {@@BUTGUI_LIBDIR@@}
 }
 
 set env(PATH) "$butexecdir:$env(PATH)"

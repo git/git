@@ -408,6 +408,6 @@ linkbut:but-remote[1],
 link:user-manual.html#what-is-a-branch[``Understanding history: What is
 a branch?''] in the Git User's Manual.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

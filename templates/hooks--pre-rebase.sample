@@ -109,7 +109,7 @@ The workflow assumed here is:
 
 The script, being an example, hardcodes the publish branch name
 to be "next", but it is trivial to make it configurable via
-$GIT_DIR/config mechanism.
+$BUT_DIR/config mechanism.
 
 With this workflow, you would want to know:
 

@@ -35,7 +35,7 @@ Fixes since v2.6.2
    work trees created via "but worktree add".
 
  * When "but gc --auto" is backgrounded, its diagnosis message is
-   lost.  It now is saved to a file in $GIT_DIR and is shown next time
+   lost.  It now is saved to a file in $BUT_DIR and is shown next time
    the "gc --auto" is run.
 
  * Work around "but p4" failing when the P4 depot records the contents

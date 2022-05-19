@@ -239,7 +239,7 @@ notes for details).
 
  * When it is not necessary to edit a cummit log message (e.g. "but
    cummit -m" is given a message without specifying "-e"), we used to
-   disable the spawning of the editor by overriding GIT_EDITOR, but
+   disable the spawning of the editor by overriding BUT_EDITOR, but
    this means all the uses of the editor, other than to edit the
    cummit log message, are also affected.
    (merge b549be0 bp/cummit-p-editor later to maint).
@@ -313,7 +313,7 @@ notes for details).
  * "but reset" needs to refresh the index when working in a working
    tree (it can also be used to match the index to the HEAD in an
    otherwise bare repository), but it failed to set up the working
-   tree properly, causing GIT_WORK_TREE to be ignored.
+   tree properly, causing BUT_WORK_TREE to be ignored.
    (merge b7756d4 nd/reset-setup-worktree later to maint).
 
  * "but check-attr" when working on a repository with a working tree

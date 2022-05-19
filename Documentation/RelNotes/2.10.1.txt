@@ -27,8 +27,8 @@ Fixes since v2.10
    prevented the test directory from getting removed at the end of the
    script on some platforms.
 
- * Update a few tests that used to use GIT_CURL_VERBOSE to use the
-   newer GIT_TRACE_CURL.
+ * Update a few tests that used to use BUT_CURL_VERBOSE to use the
+   newer BUT_TRACE_CURL.
 
  * Update Japanese translation for "but-gui".
 

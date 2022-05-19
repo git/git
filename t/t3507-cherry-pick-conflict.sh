@@ -9,8 +9,8 @@ test_description='test cherry-pick and revert with conflicts
 
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -112,11 +112,11 @@ test_expect_success \
 	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
 '
 
-test_expect_success 'GIT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
+test_expect_success 'BUT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
 	(
-		GIT_CHERRY_PICK_HELP="and then do something else" &&
-		export GIT_CHERRY_PICK_HELP &&
+		BUT_CHERRY_PICK_HELP="and then do something else" &&
+		export BUT_CHERRY_PICK_HELP &&
 		test_must_fail but cherry-pick picked
 	) &&
 	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD
@@ -149,8 +149,8 @@ test_expect_success 'cancelled cummit does not clear CHERRY_PICK_HEAD' '
 	but update-index --refresh -q &&
 	test_must_fail but diff-index --exit-code HEAD &&
 	(
-		GIT_EDITOR=false &&
-		export GIT_EDITOR &&
+		BUT_EDITOR=false &&
+		export BUT_EDITOR &&
 		test_must_fail but cummit
 	) &&
 
@@ -383,12 +383,12 @@ test_expect_success 'revert w/dirty tree does not set REVERT_HEAD' '
 	test_must_fail but rev-parse --verify REVERT_HEAD
 '
 
-test_expect_success 'GIT_CHERRY_PICK_HELP does not suppress REVERT_HEAD' '
+test_expect_success 'BUT_CHERRY_PICK_HELP does not suppress REVERT_HEAD' '
 	pristine_detach initial &&
 	(
-		GIT_CHERRY_PICK_HELP="and then do something else" &&
-		GIT_REVERT_HELP="and then do something else, again" &&
-		export GIT_CHERRY_PICK_HELP GIT_REVERT_HELP &&
+		BUT_CHERRY_PICK_HELP="and then do something else" &&
+		BUT_REVERT_HELP="and then do something else, again" &&
+		export BUT_CHERRY_PICK_HELP BUT_REVERT_HELP &&
 		test_must_fail but revert picked
 	) &&
 	test_must_fail but rev-parse --verify CHERRY_PICK_HEAD &&

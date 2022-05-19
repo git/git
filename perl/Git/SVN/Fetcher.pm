@@ -3,7 +3,7 @@ use vars qw/@ISA $_ignore_regex $_include_regex $_preserve_empty_dirs
             $_placeholder_filename @deleted_gpath %added_placeholder
             $repo_id/;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use SVN::Delta;
 use Carp qw/croak/;
 use File::Basename qw/dirname/;
@@ -579,7 +579,7 @@ More specifically:
 =over
 
 =item * Additions, removals, and modifications of files are propagated
-to but-svn's index file F<$GIT_DIR/svn/$refname/index> using
+to but-svn's index file F<$BUT_DIR/svn/$refname/index> using
 B<but update-index>.
 
 =item * Changes in Subversion path properties are recorded in the

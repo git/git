@@ -89,7 +89,7 @@ void tmp_objdir_discard_objects(struct tmp_objdir *t)
  * "replace" variant overrides the value of any existing variable with that
  * "key". The "append" variant puts our new value at the end of a list,
  * separated by PATH_SEP (which is what separate values in
- * GIT_ALTERNATE_OBJECT_DIRECTORIES).
+ * BUT_ALTERNATE_OBJECT_DIRECTORIES).
  */
 static void env_append(struct strvec *env, const char *key, const char *val)
 {
@@ -181,7 +181,7 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	env_append(&t->env, ALTERNATE_DB_ENVIRONMENT,
 		   absolute_path(get_object_directory()));
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
-	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
+	env_replace(&t->env, BUT_QUARANTINE_ENVIRONMENT,
 		    absolute_path(t->path.buf));
 
 	return t;

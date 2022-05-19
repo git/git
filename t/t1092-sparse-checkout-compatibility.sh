@@ -2,15 +2,15 @@
 
 test_description='compare full workdir to sparse workdir'
 
-GIT_TEST_SPLIT_INDEX=0
-GIT_TEST_SPARSE_INDEX=
+BUT_TEST_SPLIT_INDEX=0
+BUT_TEST_SPARSE_INDEX=
 
 . ./test-lib.sh
 
 test_expect_success 'setup' '
 	but init initial-repo &&
 	(
-		GIT_TEST_SPARSE_INDEX=0 &&
+		BUT_TEST_SPARSE_INDEX=0 &&
 		cd initial-repo &&
 		echo a >a &&
 		echo "after deep" >e &&
@@ -165,18 +165,18 @@ init_repos () {
 run_on_sparse () {
 	(
 		cd sparse-checkout &&
-		GIT_PROGRESS_DELAY=100000 "$@" >../sparse-checkout-out 2>../sparse-checkout-err
+		BUT_PROGRESS_DELAY=100000 "$@" >../sparse-checkout-out 2>../sparse-checkout-err
 	) &&
 	(
 		cd sparse-index &&
-		GIT_PROGRESS_DELAY=100000 "$@" >../sparse-index-out 2>../sparse-index-err
+		BUT_PROGRESS_DELAY=100000 "$@" >../sparse-index-out 2>../sparse-index-err
 	)
 }
 
 run_on_all () {
 	(
 		cd full-checkout &&
-		GIT_PROGRESS_DELAY=100000 "$@" >../full-checkout-out 2>../full-checkout-err
+		BUT_PROGRESS_DELAY=100000 "$@" >../full-checkout-out 2>../full-checkout-err
 	) &&
 	run_on_sparse "$@"
 }
@@ -1177,14 +1177,14 @@ test_expect_success 'submodule handling' '
 test_expect_success 'sparse-index is expanded and converted back' '
 	init_repos &&
 
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		but -C sparse-index reset -- folder1/a &&
 	test_region index convert_to_sparse trace2.txt &&
 	test_region index ensure_full_index trace2.txt &&
 
 	# ls-files expands on read, but does not write.
 	rm trace2.txt &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" BUT_TRACE2_EVENT_NESTING=10 \
 		but -C sparse-index ls-files &&
 	test_region index ensure_full_index trace2.txt
 '
@@ -1196,7 +1196,7 @@ test_expect_success 'index.sparse disabled inline uses full index' '
 	# index is expanded at the beginning of the execution then never
 	# converted back to sparse. It is then written to disk as a full index.
 	rm -f trace2.txt &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" BUT_TRACE2_EVENT_NESTING=10 \
 		but -C sparse-index -c index.sparse=false status &&
 	! test_region index convert_to_sparse trace2.txt &&
 	test_region index ensure_full_index trace2.txt &&
@@ -1206,7 +1206,7 @@ test_expect_success 'index.sparse disabled inline uses full index' '
 	# over the course of `but status`. It is written to disk as a sparse
 	# index.
 	rm -f trace2.txt &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" BUT_TRACE2_EVENT_NESTING=10 \
 		but -C sparse-index status &&
 	test_region index convert_to_sparse trace2.txt &&
 	! test_region index ensure_full_index trace2.txt &&
@@ -1214,7 +1214,7 @@ test_expect_success 'index.sparse disabled inline uses full index' '
 	# Now that the index has been written to disk as sparse, it is not
 	# converted to sparse (or expanded to full) when read by `but status`.
 	rm -f trace2.txt &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" GIT_TRACE2_EVENT_NESTING=10 \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" BUT_TRACE2_EVENT_NESTING=10 \
 		but -C sparse-index status &&
 	! test_region index convert_to_sparse trace2.txt &&
 	! test_region index ensure_full_index trace2.txt
@@ -1228,10 +1228,10 @@ ensure_not_expanded () {
 	then
 		shift &&
 		test_must_fail env \
-			GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			BUT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 			but -C sparse-index "$@" || return 1
 	else
-		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		BUT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 			but -C sparse-index "$@" || return 1
 	fi &&
 	test_region ! index ensure_full_index trace2.txt
@@ -1300,7 +1300,7 @@ test_expect_success 'sparse-index is not expanded' '
 	ensure_not_expanded checkout -f update-deep &&
 	test_config -C sparse-index pull.twohead ort &&
 	(
-		sane_unset GIT_TEST_MERGE_ALGORITHM &&
+		sane_unset BUT_TEST_MERGE_ALGORITHM &&
 		for OPERATION in "merge -m merge" cherry-pick rebase
 		do
 			ensure_not_expanded merge -m merge update-folder1 &&
@@ -1320,7 +1320,7 @@ test_expect_success 'sparse-index is not expanded: merge conflict in cone' '
 	done &&
 
 	(
-		sane_unset GIT_TEST_MERGE_ALGORITHM &&
+		sane_unset BUT_TEST_MERGE_ALGORITHM &&
 		but -C sparse-index config pull.twohead ort &&
 		ensure_not_expanded ! merge -m merged expand-right
 	)

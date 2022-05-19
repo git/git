@@ -47,10 +47,10 @@ sub butperllib {
 	#
 	# Detect semicolon-separated path list and handle them appropriately.
 
-	if ($ENV{GITPERLLIB} =~ /;/) {
-		return split(/;/, $ENV{GITPERLLIB});
+	if ($ENV{BUTPERLLIB} =~ /;/) {
+		return split(/;/, $ENV{BUTPERLLIB});
 	}
-	return split(/:/, $ENV{GITPERLLIB});
+	return split(/:/, $ENV{BUTPERLLIB});
 }
 use lib (butperllib());
 use strict;

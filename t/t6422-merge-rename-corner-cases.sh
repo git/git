@@ -3,8 +3,8 @@
 test_description="recursive merge corner cases w/ renames but not criss-crosses"
 # t6036 has corner cases that involve both criss-cross merges and renames
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
@@ -316,7 +316,7 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 		but ls-files -u >out &&
 		test_line_count = 1 out &&
 		but ls-files -o >out &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out
 		else
@@ -350,7 +350,7 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		but ls-files -u >out &&
 		test_line_count = 3 out &&
 		but ls-files -o >out &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out
 		else
@@ -369,7 +369,7 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 
 		but rev-parse >expect   \
 			base:file       left-conflict:newfile right:file &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but rev-parse >actual \
 				:1:newfile~HEAD :2:newfile~HEAD :3:newfile~HEAD

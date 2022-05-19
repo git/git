@@ -63,7 +63,7 @@ static int repack_config(const char *var, const char *value, void *cb)
 }
 
 /*
- * Remove temporary $GIT_OBJECT_DIRECTORY/pack/.tmp-$$-pack-* files.
+ * Remove temporary $BUT_OBJECT_DIRECTORY/pack/.tmp-$$-pack-* files.
  */
 static void remove_temporary_files(void)
 {
@@ -692,8 +692,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		    (!(pack_everything & ALL_INTO_ONE) || !is_bare_repository()))
 			write_bitmaps = 0;
 	} else if (write_bitmaps &&
-		   but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0) &&
-		   but_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0)) {
+		   but_env_bool(BUT_TEST_MULTI_PACK_INDEX, 0) &&
+		   but_env_bool(BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0)) {
 		write_bitmaps = 0;
 	}
 	if (pack_kept_objects < 0)
@@ -947,9 +947,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		update_server_info(0);
 	remove_temporary_files();
 
-	if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
+	if (but_env_bool(BUT_TEST_MULTI_PACK_INDEX, 0)) {
 		unsigned flags = 0;
-		if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0))
+		if (but_env_bool(BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP, 0))
 			flags |= MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX;
 		write_midx_file(get_object_directory(), NULL, NULL, flags);
 	}

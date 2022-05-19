@@ -27,13 +27,13 @@ n,dry-run            don't recreate the branch"
 
 search_reflog () {
 	sed -ne 's~^\([^ ]*\) .*	checkout: moving from '"$1"' .*~\1~p' \
-		< "$GIT_DIR"/logs/HEAD
+		< "$BUT_DIR"/logs/HEAD
 }
 
 search_reflog_merges () {
 	but rev-parse $(
 		sed -ne 's~^[^ ]* \([^ ]*\) .*	merge '"$1"':.*~\1^2~p' \
-			< "$GIT_DIR"/logs/HEAD
+			< "$BUT_DIR"/logs/HEAD
 	)
 }
 
@@ -129,19 +129,19 @@ branch="$1"
 test -z "$new_name" && new_name="$branch"
 
 if test ! -z "$scan_reflog"; then
-	if test -r "$GIT_DIR"/logs/HEAD; then
+	if test -r "$BUT_DIR"/logs/HEAD; then
 		candidates="$(search_reflog $branch)"
 	else
 		die 'reflog scanning requested, but' \
-			'$GIT_DIR/logs/HEAD not readable'
+			'$BUT_DIR/logs/HEAD not readable'
 	fi
 fi
 if test ! -z "$scan_reflog_merges"; then
-	if test -r "$GIT_DIR"/logs/HEAD; then
+	if test -r "$BUT_DIR"/logs/HEAD; then
 		candidates="$candidates $(search_reflog_merges $branch)"
 	else
 		die 'reflog scanning requested, but' \
-			'$GIT_DIR/logs/HEAD not readable'
+			'$BUT_DIR/logs/HEAD not readable'
 	fi
 fi
 if test ! -z "$scan_merges"; then

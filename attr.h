@@ -200,9 +200,9 @@ void but_all_attrs(struct index_state *istate,
 		   const char *path, struct attr_check *check);
 
 enum but_attr_direction {
-	GIT_ATTR_CHECKIN,
-	GIT_ATTR_CHECKOUT,
-	GIT_ATTR_INDEX
+	BUT_ATTR_CHECKIN,
+	BUT_ATTR_CHECKOUT,
+	BUT_ATTR_INDEX
 };
 void but_attr_set_direction(enum but_attr_direction new_direction);
 

@@ -36,53 +36,53 @@
 #include "rebase-interactive.h"
 #include "reset.h"
 
-#define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
+#define BUT_REFLOG_ACTION "BUT_REFLOG_ACTION"
 
 static const char sign_off_header[] = "Signed-off-by: ";
 static const char cherry_picked_prefix[] = "(cherry picked from cummit ";
 
-GIT_PATH_FUNC(but_path_cummit_editmsg, "CUMMIT_EDITMSG")
+BUT_PATH_FUNC(but_path_cummit_editmsg, "CUMMIT_EDITMSG")
 
-static GIT_PATH_FUNC(but_path_seq_dir, "sequencer")
+static BUT_PATH_FUNC(but_path_seq_dir, "sequencer")
 
-static GIT_PATH_FUNC(but_path_todo_file, "sequencer/todo")
-static GIT_PATH_FUNC(but_path_opts_file, "sequencer/opts")
-static GIT_PATH_FUNC(but_path_head_file, "sequencer/head")
-static GIT_PATH_FUNC(but_path_abort_safety_file, "sequencer/abort-safety")
+static BUT_PATH_FUNC(but_path_todo_file, "sequencer/todo")
+static BUT_PATH_FUNC(but_path_opts_file, "sequencer/opts")
+static BUT_PATH_FUNC(but_path_head_file, "sequencer/head")
+static BUT_PATH_FUNC(but_path_abort_safety_file, "sequencer/abort-safety")
 
-static GIT_PATH_FUNC(rebase_path, "rebase-merge")
+static BUT_PATH_FUNC(rebase_path, "rebase-merge")
 /*
  * The file containing rebase commands, comments, and empty lines.
  * This file is created by "but rebase -i" then edited by the user. As
  * the lines are processed, they are removed from the front of this
  * file and written to the tail of 'done'.
  */
-GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/but-rebase-todo")
-GIT_PATH_FUNC(rebase_path_todo_backup, "rebase-merge/but-rebase-todo.backup")
+BUT_PATH_FUNC(rebase_path_todo, "rebase-merge/but-rebase-todo")
+BUT_PATH_FUNC(rebase_path_todo_backup, "rebase-merge/but-rebase-todo.backup")
 
-GIT_PATH_FUNC(rebase_path_dropped, "rebase-merge/dropped")
+BUT_PATH_FUNC(rebase_path_dropped, "rebase-merge/dropped")
 
 /*
  * The rebase command lines that have already been processed. A line
  * is moved here when it is first handled, before any associated user
  * actions.
  */
-static GIT_PATH_FUNC(rebase_path_done, "rebase-merge/done")
+static BUT_PATH_FUNC(rebase_path_done, "rebase-merge/done")
 /*
  * The file to keep track of how many commands were already processed (e.g.
  * for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgnum, "rebase-merge/msgnum")
+static BUT_PATH_FUNC(rebase_path_msgnum, "rebase-merge/msgnum")
 /*
  * The file to keep track of how many commands are to be processed in total
  * (e.g. for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgtotal, "rebase-merge/end")
+static BUT_PATH_FUNC(rebase_path_msgtotal, "rebase-merge/end")
 /*
  * The cummit message that is planned to be used for any changes that
  * need to be cummitted following a user interaction.
  */
-static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
+static BUT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
 /*
  * The file into which is accumulated the suggested cummit message for
  * squash/fixup commands. When the first of a series of squash/fixups
@@ -91,7 +91,7 @@ static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
  * to it. The cummit message for each subsequent squash/fixup cummit
  * is appended to the file as it is processed.
  */
-static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
+static BUT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
 /*
  * If the current series of squash/fixups has not yet included a squash
  * command, then this file exists and holds the cummit message of the
@@ -99,18 +99,18 @@ static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
  * command, then this can be used as the cummit message of the combined
  * cummit without opening the editor.)
  */
-static GIT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
+static BUT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
 /*
  * This file contains the list fixup/squash commands that have been
  * accumulated into message-fixup or message-squash so far.
  */
-static GIT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
+static BUT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
 /*
- * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
- * GIT_AUTHOR_DATE that will be used for the cummit that is currently
+ * A script to set the BUT_AUTHOR_NAME, BUT_AUTHOR_EMAIL, and
+ * BUT_AUTHOR_DATE that will be used for the cummit that is currently
  * being rebased.
  */
-static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
+static BUT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
 /*
  * When an "edit" rebase command is being processed, the SHA1 of the
  * cummit to be edited is recorded in this file.  When "but rebase
@@ -119,55 +119,55 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
  * cummit is still the cummit to be edited.  When any other rebase
  * command is processed, this file is deleted.
  */
-static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
+static BUT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
 /*
  * When we stop at a given patch via the "edit" command, this file contains
  * the cummit object name of the corresponding patch.
  */
-static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
+static BUT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
 /*
  * For the post-rewrite hook, we make a list of rewritten cummits and
  * their new sha1s.  The rewritten-pending list keeps the sha1s of
  * cummits that have been processed, but not cummitted yet,
  * e.g. because they are waiting for a 'squash' command.
  */
-static GIT_PATH_FUNC(rebase_path_rewritten_list, "rebase-merge/rewritten-list")
-static GIT_PATH_FUNC(rebase_path_rewritten_pending,
+static BUT_PATH_FUNC(rebase_path_rewritten_list, "rebase-merge/rewritten-list")
+static BUT_PATH_FUNC(rebase_path_rewritten_pending,
 	"rebase-merge/rewritten-pending")
 
 /*
  * The path of the file containing the OID of the "squash onto" cummit, i.e.
  * the dummy cummit used for `reset [new root]`.
  */
-static GIT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
+static BUT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
 
 /*
  * The path of the file listing refs that need to be deleted after the rebase
  * finishes. This is used by the `label` command to record the need for cleanup.
  */
-static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
+static BUT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
 
 /*
  * The following files are written by but-rebase just after parsing the
  * command-line.
  */
-static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
-static GIT_PATH_FUNC(rebase_path_cdate_is_adate, "rebase-merge/cdate_is_adate")
-static GIT_PATH_FUNC(rebase_path_ignore_date, "rebase-merge/ignore_date")
-static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
-static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
-static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
-static GIT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
-static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
-static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
-static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
-static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
-static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
-static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
-static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
-static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-reschedule-failed-exec")
-static GIT_PATH_FUNC(rebase_path_drop_redundant_cummits, "rebase-merge/drop_redundant_cummits")
-static GIT_PATH_FUNC(rebase_path_keep_redundant_cummits, "rebase-merge/keep_redundant_cummits")
+static BUT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
+static BUT_PATH_FUNC(rebase_path_cdate_is_adate, "rebase-merge/cdate_is_adate")
+static BUT_PATH_FUNC(rebase_path_ignore_date, "rebase-merge/ignore_date")
+static BUT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
+static BUT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
+static BUT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
+static BUT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
+static BUT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
+static BUT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
+static BUT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
+static BUT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
+static BUT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
+static BUT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
+static BUT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
+static BUT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-reschedule-failed-exec")
+static BUT_PATH_FUNC(rebase_path_drop_redundant_cummits, "rebase-merge/drop_redundant_cummits")
+static BUT_PATH_FUNC(rebase_path_keep_redundant_cummits, "rebase-merge/keep_redundant_cummits")
 
 static int but_sequencer_config(const char *k, const char *v, void *cb)
 {
@@ -401,7 +401,7 @@ static void free_message(struct cummit *cummit, struct cummit_message *msg)
 static void print_advice(struct repository *r, int show_hint,
 			 struct replay_opts *opts)
 {
-	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+	char *msg = getenv("BUT_CHERRY_PICK_HELP");
 
 	if (msg) {
 		advise("%s\n", msg);
@@ -750,7 +750,7 @@ missing_author:
 		else
 			goto missing_author;
 
-	strbuf_addstr(&buf, "GIT_AUTHOR_NAME='");
+	strbuf_addstr(&buf, "BUT_AUTHOR_NAME='");
 	while (*message && *message != '\n' && *message != '\r')
 		if (skip_prefix(message, " <", &message))
 			break;
@@ -758,7 +758,7 @@ missing_author:
 			strbuf_addch(&buf, *(message++));
 		else
 			strbuf_addf(&buf, "'\\%c'", *(message++));
-	strbuf_addstr(&buf, "'\nGIT_AUTHOR_EMAIL='");
+	strbuf_addstr(&buf, "'\nBUT_AUTHOR_EMAIL='");
 	while (*message && *message != '\n' && *message != '\r')
 		if (skip_prefix(message, "> ", &message))
 			break;
@@ -766,7 +766,7 @@ missing_author:
 			strbuf_addch(&buf, *(message++));
 		else
 			strbuf_addf(&buf, "'\\%c'", *(message++));
-	strbuf_addstr(&buf, "'\nGIT_AUTHOR_DATE='@");
+	strbuf_addstr(&buf, "'\nBUT_AUTHOR_DATE='@");
 	while (*message && *message != '\n' && *message != '\r')
 		if (*message != '\'')
 			strbuf_addch(&buf, *(message++));
@@ -815,9 +815,9 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  *
  * The author script is of the format:
  *
- *	GIT_AUTHOR_NAME='$author_name'
- *	GIT_AUTHOR_EMAIL='$author_email'
- *	GIT_AUTHOR_DATE='$author_date'
+ *	BUT_AUTHOR_NAME='$author_name'
+ *	BUT_AUTHOR_EMAIL='$author_email'
+ *	BUT_AUTHOR_DATE='$author_date'
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
  * with our parsing, as the file was meant to be eval'd in the now-removed
@@ -846,19 +846,19 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 		goto finish;
 
 	for (i = 0; i < kv.nr; i++) {
-		if (!strcmp(kv.items[i].string, "GIT_AUTHOR_NAME")) {
+		if (!strcmp(kv.items[i].string, "BUT_AUTHOR_NAME")) {
 			if (name_i != -2)
-				name_i = error(_("'GIT_AUTHOR_NAME' already given"));
+				name_i = error(_("'BUT_AUTHOR_NAME' already given"));
 			else
 				name_i = i;
-		} else if (!strcmp(kv.items[i].string, "GIT_AUTHOR_EMAIL")) {
+		} else if (!strcmp(kv.items[i].string, "BUT_AUTHOR_EMAIL")) {
 			if (email_i != -2)
-				email_i = error(_("'GIT_AUTHOR_EMAIL' already given"));
+				email_i = error(_("'BUT_AUTHOR_EMAIL' already given"));
 			else
 				email_i = i;
-		} else if (!strcmp(kv.items[i].string, "GIT_AUTHOR_DATE")) {
+		} else if (!strcmp(kv.items[i].string, "BUT_AUTHOR_DATE")) {
 			if (date_i != -2)
-				date_i = error(_("'GIT_AUTHOR_DATE' already given"));
+				date_i = error(_("'BUT_AUTHOR_DATE' already given"));
 			else
 				date_i = i;
 		} else {
@@ -867,11 +867,11 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 		}
 	}
 	if (name_i == -2)
-		error(_("missing 'GIT_AUTHOR_NAME'"));
+		error(_("missing 'BUT_AUTHOR_NAME'"));
 	if (email_i == -2)
-		error(_("missing 'GIT_AUTHOR_EMAIL'"));
+		error(_("missing 'BUT_AUTHOR_EMAIL'"));
 	if (date_i == -2)
-		error(_("missing 'GIT_AUTHOR_DATE'"));
+		error(_("missing 'BUT_AUTHOR_DATE'"));
 	if (date_i < 0 || email_i < 0 || date_i < 0 || err)
 		goto finish;
 	*name = kv.items[name_i].util;
@@ -885,7 +885,7 @@ finish:
 }
 
 /*
- * Read a GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL AND GIT_AUTHOR_DATE from a
+ * Read a BUT_AUTHOR_NAME, BUT_AUTHOR_EMAIL AND BUT_AUTHOR_DATE from a
  * file with shell quoting into struct strvec. Returns -1 on
  * error, 0 otherwise.
  */
@@ -897,9 +897,9 @@ static int read_env_script(struct strvec *env)
 			       &name, &email, &date, 0))
 		return -1;
 
-	strvec_pushf(env, "GIT_AUTHOR_NAME=%s", name);
-	strvec_pushf(env, "GIT_AUTHOR_EMAIL=%s", email);
-	strvec_pushf(env, "GIT_AUTHOR_DATE=%s", date);
+	strvec_pushf(env, "BUT_AUTHOR_NAME=%s", name);
+	strvec_pushf(env, "BUT_AUTHOR_EMAIL=%s", email);
+	strvec_pushf(env, "BUT_AUTHOR_DATE=%s", date);
 	free(name);
 	free(email);
 	free(date);
@@ -926,13 +926,13 @@ static const char *author_date_from_env_array(const struct strvec *env)
 
 	for (i = 0; i < env->nr; i++)
 		if (skip_prefix(env->v[i],
-				"GIT_AUTHOR_DATE=", &date))
+				"BUT_AUTHOR_DATE=", &date))
 			return date;
 	/*
-	 * If GIT_AUTHOR_DATE is missing we should have already errored out when
+	 * If BUT_AUTHOR_DATE is missing we should have already errored out when
 	 * reading the script
 	 */
-	BUG("GIT_AUTHOR_DATE missing from author script");
+	BUG("BUT_AUTHOR_DATE missing from author script");
 }
 
 static const char staged_changes_advice[] =
@@ -1008,12 +1008,12 @@ static int run_but_cummit(const char *defmsg,
 	}
 
 	if (opts->cummitter_date_is_author_date)
-		strvec_pushf(&cmd.env_array, "GIT_CUMMITTER_DATE=%s",
+		strvec_pushf(&cmd.env_array, "BUT_CUMMITTER_DATE=%s",
 			     opts->ignore_date ?
 			     "" :
 			     author_date_from_env_array(&cmd.env_array));
 	if (opts->ignore_date)
-		strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
+		strvec_push(&cmd.env_array, "BUT_AUTHOR_DATE=");
 
 	strvec_push(&cmd.args, "cummit");
 
@@ -1513,8 +1513,8 @@ static int try_to_cummit(struct repository *r,
 		} else {
 			reset_ident_date();
 		}
-		cummitter = fmt_ident(getenv("GIT_CUMMITTER_NAME"),
-				      getenv("GIT_CUMMITTER_EMAIL"),
+		cummitter = fmt_ident(getenv("BUT_CUMMITTER_NAME"),
+				      getenv("BUT_CUMMITTER_EMAIL"),
 				      WANT_CUMMITTER_IDENT,
 				      opts->ignore_date ? NULL : date.buf,
 				      IDENT_STRICT);
@@ -1546,7 +1546,7 @@ static int try_to_cummit(struct repository *r,
 	}
 
 	if (update_head_with_reflog(current_head, oid,
-				    getenv("GIT_REFLOG_ACTION"), msg, &err)) {
+				    getenv("BUT_REFLOG_ACTION"), msg, &err)) {
 		res = error("%s", err.buf);
 		goto out;
 	}
@@ -2013,7 +2013,7 @@ static void flush_rewritten_pending(void)
 	struct object_id newoid;
 	FILE *out;
 
-	if (strbuf_read_file(&buf, rebase_path_rewritten_pending(), (GIT_MAX_HEXSZ + 1) * 2) > 0 &&
+	if (strbuf_read_file(&buf, rebase_path_rewritten_pending(), (BUT_MAX_HEXSZ + 1) * 2) > 0 &&
 	    !get_oid("HEAD", &newoid) &&
 	    (out = fopen_or_warn(rebase_path_rewritten_list(), "a"))) {
 		char *bol = buf.buf, *eol;
@@ -3126,7 +3126,7 @@ static int reset_merge(const struct object_id *oid)
 	if (!is_null_oid(oid))
 		strvec_push(&argv, oid_to_hex(oid));
 
-	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(argv.v, RUN_BUT_CMD);
 	strvec_clear(&argv);
 
 	return ret;
@@ -3379,7 +3379,7 @@ static int make_patch(struct repository *r,
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info log_tree_opt;
 	const char *subject;
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	int res = 0;
 
 	oid_to_hex_r(hex, &cummit->object.oid);
@@ -3396,7 +3396,7 @@ static int make_patch(struct repository *r,
 	log_tree_opt.disable_stdin = 1;
 	log_tree_opt.no_cummit_id = 1;
 	log_tree_opt.diffopt.file = fopen(buf.buf, "w");
-	log_tree_opt.diffopt.use_color = GIT_COLOR_NEVER;
+	log_tree_opt.diffopt.use_color = BUT_COLOR_NEVER;
 	if (!log_tree_opt.diffopt.file)
 		res |= error_errno(_("could not open '%s'"), buf.buf);
 	else {
@@ -3614,7 +3614,7 @@ static const char *reflog_message(struct replay_opts *opts,
 {
 	va_list ap;
 	static struct strbuf buf = STRBUF_INIT;
-	char *reflog_action = getenv(GIT_REFLOG_ACTION);
+	char *reflog_action = getenv(BUT_REFLOG_ACTION);
 
 	va_start(ap, fmt);
 	strbuf_reset(&buf);
@@ -3919,12 +3919,12 @@ static int do_merge(struct repository *r,
 		}
 
 		if (opts->cummitter_date_is_author_date)
-			strvec_pushf(&cmd.env_array, "GIT_CUMMITTER_DATE=%s",
+			strvec_pushf(&cmd.env_array, "BUT_CUMMITTER_DATE=%s",
 				     opts->ignore_date ?
 				     "" :
 				     author_date_from_env_array(&cmd.env_array));
 		if (opts->ignore_date)
-			strvec_push(&cmd.env_array, "GIT_AUTHOR_DATE=");
+			strvec_push(&cmd.env_array, "BUT_AUTHOR_DATE=");
 
 		cmd.but_cmd = 1;
 		strvec_push(&cmd.args, "merge");
@@ -4105,7 +4105,7 @@ void create_autostash(struct repository *r, const char *path)
 		stash.but_cmd = 1;
 		stash.no_stdin = 1;
 		strbuf_reset(&buf);
-		if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
+		if (capture_command(&stash, &buf, BUT_MAX_HEXSZ))
 			die(_("Cannot autostash"));
 		strbuf_trim_trailing_newline(&buf);
 		if (get_oid(buf.buf, &oid))
@@ -4288,8 +4288,8 @@ static int pick_cummits(struct repository *r,
 	char *prev_reflog_action;
 
 	/* Note that 0 for 3rd parameter of setenv means set only if not set */
-	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
-	prev_reflog_action = xstrdup(getenv(GIT_REFLOG_ACTION));
+	setenv(BUT_REFLOG_ACTION, action_name(opts), 0);
+	prev_reflog_action = xstrdup(getenv(BUT_REFLOG_ACTION));
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_cummit ||
 			 opts->record_origin || should_edit(opts) ||
@@ -4337,14 +4337,14 @@ static int pick_cummits(struct repository *r,
 		}
 		if (item->command <= TODO_SQUASH) {
 			if (is_rebase_i(opts))
-				setenv(GIT_REFLOG_ACTION, reflog_message(opts,
+				setenv(BUT_REFLOG_ACTION, reflog_message(opts,
 					command_to_string(item->command), NULL),
 					1);
 			res = do_pick_cummit(r, item, opts,
 					     is_final_fixup(todo_list),
 					     &check_todo);
 			if (is_rebase_i(opts))
-				setenv(GIT_REFLOG_ACTION, prev_reflog_action, 1);
+				setenv(BUT_REFLOG_ACTION, prev_reflog_action, 1);
 			if (is_rebase_i(opts) && res < 0) {
 				/* Reschedule */
 				advise(_(rescheduled_advice),
@@ -4598,7 +4598,7 @@ static int continue_single_pick(struct repository *r, struct replay_opts *opts)
 		 */
 		strvec_pushl(&argv, "--no-edit", "--cleanup=strip", NULL);
 
-	ret = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(argv.v, RUN_BUT_CMD);
 	strvec_clear(&argv);
 	return ret;
 }
@@ -4820,7 +4820,7 @@ static int single_pick(struct repository *r,
 			TODO_PICK : TODO_REVERT;
 	item.cummit = cmit;
 
-	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
+	setenv(BUT_REFLOG_ACTION, action_name(opts), 0);
 	return do_pick_cummit(r, &item, opts, 0, &check_todo);
 }
 
@@ -5014,7 +5014,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	if (!label) {
 		char *p;
 
-		strbuf_grow(&state->buf, GIT_MAX_HEXSZ);
+		strbuf_grow(&state->buf, BUT_MAX_HEXSZ);
 		label = p = state->buf.buf;
 
 		find_unique_abbrev_r(p, oid, default_abbrev);
@@ -5609,7 +5609,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		    struct string_list *commands, unsigned autosquash,
 		    struct todo_list *todo_list)
 {
-	char shortonto[GIT_MAX_HEXSZ + 1];
+	char shortonto[BUT_MAX_HEXSZ + 1];
 	const char *todo_file = rebase_path_todo();
 	struct todo_list new_todo = TODO_LIST_INIT;
 	struct strbuf *buf = &todo_list->buf, buf2 = STRBUF_INIT;

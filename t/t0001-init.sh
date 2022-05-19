@@ -55,8 +55,8 @@ test_expect_success 'plain through aliased command, outside any but repo' '
 		mkdir alias-config &&
 		echo "[alias] aliasedinit = init" >alias-config/.butconfig &&
 
-		GIT_CEILING_DIRECTORIES=$(pwd) &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES=$(pwd) &&
+		export BUT_CEILING_DIRECTORIES &&
 
 		mkdir plain-aliased &&
 		cd plain-aliased &&
@@ -89,14 +89,14 @@ test_expect_success 'plain nested in bare through aliased command' '
 	check_config bare-ancestor-aliased.but/plain-nested/.but false unset
 '
 
-test_expect_success 'No extra GIT_* on alias scripts' '
+test_expect_success 'No extra BUT_* on alias scripts' '
 	write_script script <<-\EOF &&
 	env |
 		sed -n \
-			-e "/^GIT_PREFIX=/d" \
-			-e "/^GIT_TEXTDOMAINDIR=/d" \
-			-e "/^GIT_TRACE2_PARENT/d" \
-			-e "/^GIT_/s/=.*//p" |
+			-e "/^BUT_PREFIX=/d" \
+			-e "/^BUT_TEXTDOMAINDIR=/d" \
+			-e "/^BUT_TRACE2_PARENT/d" \
+			-e "/^BUT_/s/=.*//p" |
 		sort
 	EOF
 	./script >expected &&
@@ -105,9 +105,9 @@ test_expect_success 'No extra GIT_* on alias scripts' '
 	test_cmp expected actual
 '
 
-test_expect_success 'plain with GIT_WORK_TREE' '
+test_expect_success 'plain with BUT_WORK_TREE' '
 	mkdir plain-wt &&
-	test_must_fail env GIT_WORK_TREE="$(pwd)/plain-wt" but init plain-wt
+	test_must_fail env BUT_WORK_TREE="$(pwd)/plain-wt" but init plain-wt
 '
 
 test_expect_success 'plain bare' '
@@ -115,16 +115,16 @@ test_expect_success 'plain bare' '
 	check_config plain-bare-1 true unset
 '
 
-test_expect_success 'plain bare with GIT_WORK_TREE' '
+test_expect_success 'plain bare with BUT_WORK_TREE' '
 	mkdir plain-bare-2 &&
 	test_must_fail \
-		env GIT_WORK_TREE="$(pwd)/plain-bare-2" \
+		env BUT_WORK_TREE="$(pwd)/plain-bare-2" \
 		but --bare init plain-bare-2
 '
 
-test_expect_success 'GIT_DIR bare' '
+test_expect_success 'BUT_DIR bare' '
 	mkdir but-dir-bare.but &&
-	GIT_DIR=but-dir-bare.but but init &&
+	BUT_DIR=but-dir-bare.but but init &&
 	check_config but-dir-bare.but true unset
 '
 
@@ -133,30 +133,30 @@ test_expect_success 'init --bare' '
 	check_config init-bare.but true unset
 '
 
-test_expect_success 'GIT_DIR non-bare' '
+test_expect_success 'BUT_DIR non-bare' '
 
 	(
 		mkdir non-bare &&
 		cd non-bare &&
-		GIT_DIR=.but but init
+		BUT_DIR=.but but init
 	) &&
 	check_config non-bare/.but false unset
 '
 
-test_expect_success 'GIT_DIR & GIT_WORK_TREE (1)' '
+test_expect_success 'BUT_DIR & BUT_WORK_TREE (1)' '
 
 	(
 		mkdir but-dir-wt-1.but &&
-		GIT_WORK_TREE=$(pwd) GIT_DIR=but-dir-wt-1.but but init
+		BUT_WORK_TREE=$(pwd) BUT_DIR=but-dir-wt-1.but but init
 	) &&
 	check_config but-dir-wt-1.but false "$(pwd)"
 '
 
-test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
+test_expect_success 'BUT_DIR & BUT_WORK_TREE (2)' '
 	mkdir but-dir-wt-2.but &&
 	test_must_fail env \
-		GIT_WORK_TREE="$(pwd)" \
-		GIT_DIR=but-dir-wt-2.but \
+		BUT_WORK_TREE="$(pwd)" \
+		BUT_DIR=but-dir-wt-2.but \
 		but --bare init
 '
 
@@ -190,9 +190,9 @@ test_expect_success 'init with --template (blank)' '
 
 init_no_templatedir_env () {
 	(
-		sane_unset GIT_TEMPLATE_DIR &&
-		NO_SET_GIT_TEMPLATE_DIR=t &&
-		export NO_SET_GIT_TEMPLATE_DIR &&
+		sane_unset BUT_TEMPLATE_DIR &&
+		NO_SET_BUT_TEMPLATE_DIR=t &&
+		export NO_SET_BUT_TEMPLATE_DIR &&
 		but init "$1"
 	)
 }
@@ -314,10 +314,10 @@ test_expect_success 'init creates a new bare directory with global --bare' '
 	test_path_is_dir newdir/refs
 '
 
-test_expect_success 'init prefers command line to GIT_DIR' '
+test_expect_success 'init prefers command line to BUT_DIR' '
 	rm -rf newdir &&
 	mkdir otherdir &&
-	GIT_DIR=otherdir but --bare init newdir &&
+	BUT_DIR=otherdir but --bare init newdir &&
 	test_path_is_dir newdir/refs &&
 	test_path_is_missing otherdir/refs
 '
@@ -338,7 +338,7 @@ test_expect_success 'explicit bare & --separate-but-dir incompatible' '
 test_expect_success 'implicit bare & --separate-but-dir incompatible' '
 	test_when_finished "rm -rf bare.but" &&
 	mkdir -p bare.but &&
-	test_must_fail env GIT_DIR=. \
+	test_must_fail env BUT_DIR=. \
 		but -C bare.but init --separate-but-dir goop.but 2>err &&
 	test_i18ngrep "incompatible" err
 '
@@ -453,7 +453,7 @@ test_expect_success 're-init to move butdir within linked worktree' '
 test_expect_success MINGW '.but hidden' '
 	rm -rf newdir &&
 	(
-		sane_unset GIT_DIR GIT_WORK_TREE &&
+		sane_unset BUT_DIR BUT_WORK_TREE &&
 		mkdir newdir &&
 		cd newdir &&
 		but init &&
@@ -465,7 +465,7 @@ test_expect_success MINGW '.but hidden' '
 test_expect_success MINGW 'bare but dir not hidden' '
 	rm -rf newdir &&
 	(
-		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
+		sane_unset BUT_DIR BUT_WORK_TREE BUT_CONFIG &&
 		mkdir newdir &&
 		cd newdir &&
 		but --bare init
@@ -499,12 +499,12 @@ test_expect_success 're-init from a linked worktree' '
 	)
 '
 
-test_expect_success 'init honors GIT_DEFAULT_HASH' '
-	GIT_DEFAULT_HASH=sha1 but init sha1 &&
+test_expect_success 'init honors BUT_DEFAULT_HASH' '
+	BUT_DEFAULT_HASH=sha1 but init sha1 &&
 	but -C sha1 rev-parse --show-object-format >actual &&
 	echo sha1 >expected &&
 	test_cmp expected actual &&
-	GIT_DEFAULT_HASH=sha256 but init sha256 &&
+	BUT_DEFAULT_HASH=sha256 but init sha256 &&
 	but -C sha256 rev-parse --show-object-format >actual &&
 	echo sha256 >expected &&
 	test_cmp expected actual
@@ -537,19 +537,19 @@ test_expect_success MINGW 'core.hidedotfiles = false' '
 	rm -rf newdir &&
 	mkdir newdir &&
 	(
-		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
+		sane_unset BUT_DIR BUT_WORK_TREE BUT_CONFIG &&
 		but -C newdir init
 	) &&
 	! is_hidden newdir/.but
 '
 
 test_expect_success MINGW 'redirect std handles' '
-	GIT_REDIRECT_STDOUT=output.txt but rev-parse --but-dir &&
+	BUT_REDIRECT_STDOUT=output.txt but rev-parse --but-dir &&
 	test .but = "$(cat output.txt)" &&
-	test -z "$(GIT_REDIRECT_STDOUT=off but rev-parse --but-dir)" &&
+	test -z "$(BUT_REDIRECT_STDOUT=off but rev-parse --but-dir)" &&
 	test_must_fail env \
-		GIT_REDIRECT_STDOUT=output.txt \
-		GIT_REDIRECT_STDERR="2>&1" \
+		BUT_REDIRECT_STDOUT=output.txt \
+		BUT_REDIRECT_STDERR="2>&1" \
 		but rev-parse --but-dir --verify refs/invalid &&
 	grep "^\\.but\$" output.txt &&
 	grep "Needed a single revision" output.txt
@@ -570,13 +570,13 @@ test_expect_success '--initial-branch' '
 
 test_expect_success 'overridden default initial branch name (config)' '
 	test_config_global init.defaultBranch nmb &&
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= but init initial-branch-config &&
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= but init initial-branch-config &&
 	but -C initial-branch-config symbolic-ref HEAD >actual &&
 	grep nmb actual
 '
 
 test_expect_success 'advice on unconfigured init.defaultBranch' '
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= but -c color.advice=always \
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= but -c color.advice=always \
 		init unconfigured-default-branch-name 2>err &&
 	test_decode_color <err >decoded &&
 	test_i18ngrep "<YELLOW>hint: " decoded
@@ -584,13 +584,13 @@ test_expect_success 'advice on unconfigured init.defaultBranch' '
 
 test_expect_success 'overridden default main branch name (env)' '
 	test_config_global init.defaultBranch nmb &&
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=env but init main-branch-env &&
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=env but init main-branch-env &&
 	but -C main-branch-env symbolic-ref HEAD >actual &&
 	grep env actual
 '
 
 test_expect_success 'invalid default branch name' '
-	test_must_fail env GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME="with space" \
+	test_must_fail env BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME="with space" \
 		but init initial-branch-invalid 2>err &&
 	test_i18ngrep "invalid branch name" err
 '

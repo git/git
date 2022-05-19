@@ -64,7 +64,7 @@ original_HEAD=$(but rev-parse --verify HEAD) || {
 	exit 1
 }
 
-mkdir -p "$GIT_DIR/rr-cache" || exit
+mkdir -p "$BUT_DIR/rr-cache" || exit
 
 but rev-list --parents "$@" |
 while read cummit parent1 other_parents
@@ -84,7 +84,7 @@ do
 	then
 		but rerere forget .
 	fi
-	if test -s "$GIT_DIR/MERGE_RR"
+	if test -s "$BUT_DIR/MERGE_RR"
 	then
 		but --no-pager show -s --format="Learning from %h %s" "$cummit"
 		but rerere

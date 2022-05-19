@@ -55,7 +55,7 @@ Fixes since v1.7.1
  * The memory usage by "but index-pack" (run during "but fetch" and "but
    push") got leaner.
 
- * "GIT_DIR=foo.but but init --bare bar.but" created foo.but instead of bar.but.
+ * "BUT_DIR=foo.but but init --bare bar.but" created foo.but instead of bar.but.
 
  * "but log --abbrev=$num --format='%h' ignored --abbrev=$num.
 

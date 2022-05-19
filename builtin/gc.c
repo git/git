@@ -168,7 +168,7 @@ static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *
 	struct strvec pack_refs_cmd = STRVEC_INIT;
 	strvec_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
 
-	return run_command_v_opt(pack_refs_cmd.v, RUN_GIT_CMD);
+	return run_command_v_opt(pack_refs_cmd.v, RUN_BUT_CMD);
 }
 
 static int too_many_loose_objects(void)
@@ -269,7 +269,7 @@ static uint64_t total_ram(void)
 	length = sizeof(int64_t);
 	if (!sysctl(mib, 2, &physical_memory, &length, NULL, 0))
 		return physical_memory;
-#elif defined(GIT_WINDOWS_NATIVE)
+#elif defined(BUT_WINDOWS_NATIVE)
 	MEMORYSTATUSEX memInfo;
 
 	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -530,7 +530,7 @@ static void gc_before_repack(void)
 	if (pack_refs && maintenance_task_pack_refs(NULL))
 		die(FAILED_RUN, "pack-refs");
 
-	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_GIT_CMD))
+	if (prune_reflogs && run_command_v_opt(reflog.v, RUN_BUT_CMD))
 		die(FAILED_RUN, reflog.v[0]);
 }
 
@@ -666,7 +666,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (!repository_format_precious_objects) {
 		if (run_command_v_opt(repack.v,
-				      RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE))
+				      RUN_BUT_CMD | RUN_CLOSE_OBJECT_STORE))
 			die(FAILED_RUN, repack.v[0]);
 
 		if (prune_expire) {
@@ -676,18 +676,18 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			if (has_promisor_remote())
 				strvec_push(&prune,
 					    "--exclude-promisor-objects");
-			if (run_command_v_opt(prune.v, RUN_GIT_CMD))
+			if (run_command_v_opt(prune.v, RUN_BUT_CMD))
 				die(FAILED_RUN, prune.v[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
 		strvec_push(&prune_worktrees, prune_worktrees_expire);
-		if (run_command_v_opt(prune_worktrees.v, RUN_GIT_CMD))
+		if (run_command_v_opt(prune_worktrees.v, RUN_BUT_CMD))
 			die(FAILED_RUN, prune_worktrees.v[0]);
 	}
 
-	if (run_command_v_opt(rerere.v, RUN_GIT_CMD))
+	if (run_command_v_opt(rerere.v, RUN_BUT_CMD))
 		die(FAILED_RUN, rerere.v[0]);
 
 	report_garbage = report_pack_garbage;
@@ -1525,17 +1525,17 @@ static const char *get_frequency(enum schedule_priority schedule)
 }
 
 /*
- * get_schedule_cmd` reads the GIT_TEST_MAINT_SCHEDULER environment variable
+ * get_schedule_cmd` reads the BUT_TEST_MAINT_SCHEDULER environment variable
  * to mock the schedulers that `but maintenance start` rely on.
  *
- * For test purpose, GIT_TEST_MAINT_SCHEDULER can be set to a comma-separated
+ * For test purpose, BUT_TEST_MAINT_SCHEDULER can be set to a comma-separated
  * list of colon-separated key/value pairs where each pair contains a scheduler
  * and its corresponding mock.
  *
- * * If $GIT_TEST_MAINT_SCHEDULER is not set, return false and leave the
+ * * If $BUT_TEST_MAINT_SCHEDULER is not set, return false and leave the
  *   arguments unmodified.
  *
- * * If $GIT_TEST_MAINT_SCHEDULER is set, return true.
+ * * If $BUT_TEST_MAINT_SCHEDULER is set, return true.
  *   In this case, the *cmd value is read as input.
  *
  *   * if the input value *cmd is the key of one of the comma-separated list
@@ -1546,7 +1546,7 @@ static const char *get_frequency(enum schedule_priority schedule)
  *     item, then *is_available is set to false.
  *
  * Ex.:
- *   GIT_TEST_MAINT_SCHEDULER not set
+ *   BUT_TEST_MAINT_SCHEDULER not set
  *     +-------+-------------------------------------------------+
  *     | Input |                     Output                      |
  *     | *cmd  | return code |       *cmd        | *is_available |
@@ -1554,7 +1554,7 @@ static const char *get_frequency(enum schedule_priority schedule)
  *     | "foo" |    false    | "foo" (unchanged) |  (unchanged)  |
  *     +-------+-------------+-------------------+---------------+
  *
- *   GIT_TEST_MAINT_SCHEDULER set to “foo:./mock_foo.sh,bar:./mock_bar.sh”
+ *   BUT_TEST_MAINT_SCHEDULER set to “foo:./mock_foo.sh,bar:./mock_bar.sh”
  *     +-------+-------------------------------------------------+
  *     | Input |                     Output                      |
  *     | *cmd  | return code |       *cmd        | *is_available |
@@ -1565,7 +1565,7 @@ static const char *get_frequency(enum schedule_priority schedule)
  */
 static int get_schedule_cmd(const char **cmd, int *is_available)
 {
-	char *testing = xstrdup_or_null(getenv("GIT_TEST_MAINT_SCHEDULER"));
+	char *testing = xstrdup_or_null(getenv("BUT_TEST_MAINT_SCHEDULER"));
 	struct string_list_item *item;
 	struct string_list list = STRING_LIST_INIT_NODUP;
 
@@ -1827,7 +1827,7 @@ static int is_schtasks_available(void)
 	if (get_schedule_cmd(&cmd, &is_available))
 		return is_available;
 
-#ifdef GIT_WINDOWS_NATIVE
+#ifdef BUT_WINDOWS_NATIVE
 	return 1;
 #else
 	return 0;
@@ -2039,8 +2039,8 @@ static int is_crontab_available(void)
 #endif
 }
 
-#define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
-#define END_LINE "# END GIT MAINTENANCE SCHEDULE"
+#define BEGIN_LINE "# BEGIN BUT MAINTENANCE SCHEDULE"
+#define END_LINE "# END BUT MAINTENANCE SCHEDULE"
 
 static int crontab_update_schedule(int run_maintenance, int fd)
 {
@@ -2408,7 +2408,7 @@ static enum scheduler resolve_scheduler(enum scheduler scheduler)
 #if defined(__APPLE__)
 	return SCHEDULER_LAUNCHCTL;
 
-#elif defined(GIT_WINDOWS_NATIVE)
+#elif defined(BUT_WINDOWS_NATIVE)
 	return SCHEDULER_SCHTASKS;
 
 #elif defined(__linux__)

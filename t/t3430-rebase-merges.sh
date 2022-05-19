@@ -18,8 +18,8 @@ Initial setup:
      \
       Conflicting-G
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -181,7 +181,7 @@ test_expect_success 'merge -c cummits before rewording and reloads todo-list' '
 	but checkout -b merge-c H &&
 	(
 		set_reword_editor &&
-		GIT_SEQUENCE_EDITOR="\"$PWD/replace-editor.sh\"" \
+		BUT_SEQUENCE_EDITOR="\"$PWD/replace-editor.sh\"" \
 			but rebase -i -r D
 	) &&
 	check_reworded_cummits E H
@@ -195,8 +195,8 @@ test_expect_success 'merge -c rewords when a strategy is given' '
 	EOF
 
 	PATH="$PWD:$PATH" \
-	GIT_SEQUENCE_EDITOR="echo merge -c H G >" \
-	GIT_EDITOR="echo edited >>" \
+	BUT_SEQUENCE_EDITOR="echo merge -c H G >" \
+	BUT_EDITOR="echo edited >>" \
 		but rebase --no-ff -ir -s override -Xxopt E &&
 	test_write_lines overridden--xopt >expect &&
 	test_cmp expect G.t &&
@@ -255,7 +255,7 @@ test_expect_success 'refs/rewritten/* is worktree-local' '
 	but worktree add wt &&
 	cat >wt/script-from-scratch <<-\EOF &&
 	label xyz
-	exec GIT_DIR=../.but but rev-parse --verify refs/rewritten/xyz >a || :
+	exec BUT_DIR=../.but but rev-parse --verify refs/rewritten/xyz >a || :
 	exec but rev-parse --verify refs/rewritten/xyz >b
 	EOF
 
@@ -267,7 +267,7 @@ test_expect_success 'refs/rewritten/* is worktree-local' '
 
 test_expect_success '--abort cleans up refs/rewritten' '
 	but checkout -b abort-cleans-refs-rewritten H &&
-	GIT_SEQUENCE_EDITOR="echo break >>" but rebase -ir @^ &&
+	BUT_SEQUENCE_EDITOR="echo break >>" but rebase -ir @^ &&
 	but rev-parse --verify refs/rewritten/onto &&
 	but rebase --abort &&
 	test_must_fail but rev-parse --verify refs/rewritten/onto
@@ -275,7 +275,7 @@ test_expect_success '--abort cleans up refs/rewritten' '
 
 test_expect_success '--quit cleans up refs/rewritten' '
 	but checkout -b quit-cleans-refs-rewritten H &&
-	GIT_SEQUENCE_EDITOR="echo break >>" but rebase -ir @^ &&
+	BUT_SEQUENCE_EDITOR="echo break >>" but rebase -ir @^ &&
 	but rev-parse --verify refs/rewritten/onto &&
 	but rebase --quit &&
 	test_must_fail but rev-parse --verify refs/rewritten/onto
@@ -316,7 +316,7 @@ test_expect_success 'refuse to merge ancestors of HEAD' '
 
 test_expect_success 'root cummits' '
 	but checkout --orphan unrelated &&
-	(GIT_AUTHOR_NAME="Parsnip" GIT_AUTHOR_EMAIL="root@example.com" \
+	(BUT_AUTHOR_NAME="Parsnip" BUT_AUTHOR_EMAIL="root@example.com" \
 	 test_cummit second-root) &&
 	test_cummit third-root &&
 	cat >script-from-scratch <<-\EOF &&
@@ -411,7 +411,7 @@ test_expect_success 'octopus merges' '
 	but checkout -b one HEAD^ &&
 	test_cummit one &&
 	test_tick &&
-	(GIT_AUTHOR_NAME="Hank" GIT_AUTHOR_EMAIL="hank@sea.world" \
+	(BUT_AUTHOR_NAME="Hank" BUT_AUTHOR_EMAIL="hank@sea.world" \
 	 but merge -m "Tüntenfüsch" two three) &&
 
 	: fast forward if possible &&

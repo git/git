@@ -5,7 +5,7 @@ Fixes since v2.13.6
 -------------------
 
  * Submodule "names" come from the untrusted .butmodules file, but we
-   blindly append them to $GIT_DIR/modules to create our on-disk repo
+   blindly append them to $BUT_DIR/modules to create our on-disk repo
    paths. This means you can do bad things by putting "../" into the
    name. We now enforce some rules for submodule names which will cause
    Git to ignore these malicious names (CVE-2018-11235).

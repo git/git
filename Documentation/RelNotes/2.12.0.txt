@@ -71,7 +71,7 @@ UI, Workflows & Features
 
  * "but rm" used to refuse to remove a submodule when it has its own
    but repository embedded in its working tree.  It learned to move
-   the repository away to $GIT_DIR/modules/ of the superproject
+   the repository away to $BUT_DIR/modules/ of the superproject
    instead, and allow the submodule to be deleted (as long as there
    will be no loss of local modifications, that is).
 
@@ -288,7 +288,7 @@ notes for details).
  * Code cleanup in shallow boundary computation.
 
  * A recent update to receive-pack to make it easier to drop garbage
-   objects made it clear that GIT_ALTERNATE_OBJECT_DIRECTORIES cannot
+   objects made it clear that BUT_ALTERNATE_OBJECT_DIRECTORIES cannot
    have a pathname with a colon in it (no surprise!), and this in turn
    made it impossible to push into a repository at such a path.  This
    has been fixed by introducing a quoting mechanism used when
@@ -431,7 +431,7 @@ notes for details).
 
  * Names of the various hook scripts must be spelled exactly, but on
    Windows, an .exe binary must be named with .exe suffix; notice
-   $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
+   $BUT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
    (merge 235be51fbe js/mingw-hooks-with-exe-suffix later to maint).
 
  * Asciidoctor, an alternative reimplementation of AsciiDoc, still

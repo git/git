@@ -500,7 +500,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	if (opts->patch_mode) {
 		const char *patch_mode;
 		const char *rev = new_branch_info->name;
-		char rev_oid[GIT_MAX_HEXSZ + 1];
+		char rev_oid[BUT_MAX_HEXSZ + 1];
 
 		/*
 		 * Since rev can be in the form of `<a>...<b>` (which is not
@@ -928,7 +928,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	if (!old_desc && old_branch_info->cummit)
 		old_desc = oid_to_hex(&old_branch_info->cummit->object.oid);
 
-	reflog_msg = getenv("GIT_REFLOG_ACTION");
+	reflog_msg = getenv("BUT_REFLOG_ACTION");
 	if (!reflog_msg)
 		strbuf_addf(&msg, "checkout: moving from %s to %s",
 			old_desc ? old_desc : "(invalid)", new_branch_info->name);

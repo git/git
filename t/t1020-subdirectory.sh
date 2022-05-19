@@ -128,27 +128,27 @@ test_expect_success !MINGW '!alias expansion' '
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_PREFIX for !alias' '
+test_expect_success 'BUT_PREFIX for !alias' '
 	printf "dir/" >expect &&
 	(
-		but config alias.test-alias-directory "!sh -c \"printf \$GIT_PREFIX\"" &&
+		but config alias.test-alias-directory "!sh -c \"printf \$BUT_PREFIX\"" &&
 		cd dir &&
 		but test-alias-directory >../actual
 	) &&
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_PREFIX for built-ins' '
-	# Use GIT_EXTERNAL_DIFF to test that the "diff" built-in
-	# receives the GIT_PREFIX variable.
+test_expect_success 'BUT_PREFIX for built-ins' '
+	# Use BUT_EXTERNAL_DIFF to test that the "diff" built-in
+	# receives the BUT_PREFIX variable.
 	echo "dir/" >expect &&
 	write_script diff <<-\EOF &&
-	printf "%s\n" "$GIT_PREFIX"
+	printf "%s\n" "$BUT_PREFIX"
 	EOF
 	(
 		cd dir &&
 		echo "change" >two &&
-		GIT_EXTERNAL_DIFF=./diff but diff >../actual &&
+		BUT_EXTERNAL_DIFF=./diff but diff >../actual &&
 		but checkout -- two
 	) &&
 	test_cmp expect actual
@@ -162,15 +162,15 @@ test_expect_success 'no file/rev ambiguity check inside .but' '
 	)
 '
 
-test_expect_success 'no file/rev ambiguity check inside a bare repo (explicit GIT_DIR)' '
+test_expect_success 'no file/rev ambiguity check inside a bare repo (explicit BUT_DIR)' '
 	test_when_finished "rm -fr foo.but" &&
 	but clone -s --bare .but foo.but &&
 	(
 		cd foo.but &&
-		# older Git needed help by exporting GIT_DIR=.
+		# older Git needed help by exporting BUT_DIR=.
 		# to realize that it is inside a bare repository.
 		# We keep this test around for regression testing.
-		GIT_DIR=. but show -s HEAD
+		BUT_DIR=. but show -s HEAD
 	)
 '
 

@@ -29,7 +29,7 @@ test_http_env() {
 		CONTENT_TYPE="application/x-but-$handler_type-pack-request" \
 		QUERY_STRING="/repo.but/but-$handler_type-pack" \
 		PATH_TRANSLATED="$PWD/.but/but-$handler_type-pack" \
-		GIT_HTTP_EXPORT_ALL=TRUE \
+		BUT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		"$PERL_PATH" \
 		"$TEST_DIRECTORY"/t5562/invoke-with-content-length.pl \
@@ -152,7 +152,7 @@ test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 		CONTENT_TYPE=application/x-but-upload-pack-request \
 		QUERY_STRING=/repo.but/but-upload-pack \
 		PATH_TRANSLATED="$PWD"/.but/but-upload-pack \
-		GIT_HTTP_EXPORT_ALL=TRUE \
+		BUT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
 		but http-backend </dev/null >/dev/null 2>err &&
@@ -163,7 +163,7 @@ test_expect_success 'empty CONTENT_LENGTH' '
 	env \
 		QUERY_STRING="service=but-receive-pack" \
 		PATH_TRANSLATED="$PWD"/.but/info/refs \
-		GIT_HTTP_EXPORT_ALL=TRUE \
+		BUT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=GET \
 		CONTENT_LENGTH="" \
 		but http-backend <empty_body >act.out.$test_count 2>act.err.$test_count &&

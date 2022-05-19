@@ -48,10 +48,10 @@ test_expect_success 'setup: helper for testing rev-parse' '
 '
 
 test_expect_success 'setup: core.worktree = relative path' '
-	sane_unset GIT_WORK_TREE &&
-	GIT_DIR=repo.but &&
-	GIT_CONFIG="$(pwd)"/$GIT_DIR/config &&
-	export GIT_DIR GIT_CONFIG &&
+	sane_unset BUT_WORK_TREE &&
+	BUT_DIR=repo.but &&
+	BUT_CONFIG="$(pwd)"/$BUT_DIR/config &&
+	export BUT_DIR BUT_CONFIG &&
 	but config core.worktree ../work
 '
 
@@ -62,8 +62,8 @@ test_expect_success 'outside' '
 test_expect_success 'inside work tree' '
 	(
 		cd work &&
-		GIT_DIR=../repo.but &&
-		GIT_CONFIG="$(pwd)"/$GIT_DIR/config &&
+		BUT_DIR=../repo.but &&
+		BUT_CONFIG="$(pwd)"/$BUT_DIR/config &&
 		test_rev_parse false false true ""
 	)
 '
@@ -72,8 +72,8 @@ test_expect_success 'empty prefix is actually written out' '
 	echo >expected &&
 	(
 		cd work &&
-		GIT_DIR=../repo.but &&
-		GIT_CONFIG="$(pwd)"/$GIT_DIR/config &&
+		BUT_DIR=../repo.but &&
+		BUT_CONFIG="$(pwd)"/$BUT_DIR/config &&
 		but rev-parse --show-prefix >../actual
 	) &&
 	test_cmp expected actual
@@ -82,17 +82,17 @@ test_expect_success 'empty prefix is actually written out' '
 test_expect_success 'subdir of work tree' '
 	(
 		cd work/sub/dir &&
-		GIT_DIR=../../../repo.but &&
-		GIT_CONFIG="$(pwd)"/$GIT_DIR/config &&
+		BUT_DIR=../../../repo.but &&
+		BUT_CONFIG="$(pwd)"/$BUT_DIR/config &&
 		test_rev_parse false false true sub/dir/
 	)
 '
 
 test_expect_success 'setup: core.worktree = absolute path' '
-	sane_unset GIT_WORK_TREE &&
-	GIT_DIR=$(pwd)/repo.but &&
-	GIT_CONFIG=$GIT_DIR/config &&
-	export GIT_DIR GIT_CONFIG &&
+	sane_unset BUT_WORK_TREE &&
+	BUT_DIR=$(pwd)/repo.but &&
+	BUT_CONFIG=$BUT_DIR/config &&
+	export BUT_DIR BUT_CONFIG &&
 	but config core.worktree "$(pwd)/work"
 '
 
@@ -118,12 +118,12 @@ test_expect_success 'subdir of work tree' '
 	)
 '
 
-test_expect_success 'setup: GIT_WORK_TREE=relative (override core.worktree)' '
-	GIT_DIR=$(pwd)/repo.but &&
-	GIT_CONFIG=$GIT_DIR/config &&
+test_expect_success 'setup: BUT_WORK_TREE=relative (override core.worktree)' '
+	BUT_DIR=$(pwd)/repo.but &&
+	BUT_CONFIG=$BUT_DIR/config &&
 	but config core.worktree non-existent &&
-	GIT_WORK_TREE=work &&
-	export GIT_DIR GIT_CONFIG GIT_WORK_TREE
+	BUT_WORK_TREE=work &&
+	export BUT_DIR BUT_CONFIG BUT_WORK_TREE
 '
 
 test_expect_success 'outside' '
@@ -137,7 +137,7 @@ test_expect_success 'outside' '
 test_expect_success 'inside work tree' '
 	(
 		cd work &&
-		GIT_WORK_TREE=. &&
+		BUT_WORK_TREE=. &&
 		test_rev_parse false false true ""
 	)
 '
@@ -145,18 +145,18 @@ test_expect_success 'inside work tree' '
 test_expect_success 'subdir of work tree' '
 	(
 		cd work/sub/dir &&
-		GIT_WORK_TREE=../.. &&
+		BUT_WORK_TREE=../.. &&
 		test_rev_parse false false true sub/dir/
 	)
 '
 
-test_expect_success 'setup: GIT_WORK_TREE=absolute, below but dir' '
+test_expect_success 'setup: BUT_WORK_TREE=absolute, below but dir' '
 	mv work repo.but/work &&
 	mv work2 repo.but/work2 &&
-	GIT_DIR=$(pwd)/repo.but &&
-	GIT_CONFIG=$GIT_DIR/config &&
-	GIT_WORK_TREE=$(pwd)/repo.but/work &&
-	export GIT_DIR GIT_CONFIG GIT_WORK_TREE
+	BUT_DIR=$(pwd)/repo.but &&
+	BUT_CONFIG=$BUT_DIR/config &&
+	BUT_WORK_TREE=$(pwd)/repo.but/work &&
+	export BUT_DIR BUT_CONFIG BUT_WORK_TREE
 '
 
 test_expect_success 'outside' '
@@ -222,13 +222,13 @@ test_expect_success 'find work tree from work tree' '
 	test_cmp expected actual
 '
 
-test_expect_success '_gently() groks relative GIT_DIR & GIT_WORK_TREE' '
+test_expect_success '_gently() groks relative BUT_DIR & BUT_WORK_TREE' '
 	(
 		cd repo.but/work/sub/dir &&
-		GIT_DIR=../../.. &&
-		GIT_WORK_TREE=../.. &&
-		GIT_PAGER= &&
-		export GIT_DIR GIT_WORK_TREE GIT_PAGER &&
+		BUT_DIR=../../.. &&
+		BUT_WORK_TREE=../.. &&
+		BUT_PAGER= &&
+		export BUT_DIR BUT_WORK_TREE BUT_PAGER &&
 
 		but diff --exit-code tracked &&
 		echo changed >tracked &&
@@ -245,9 +245,9 @@ test_expect_success 'diff-index respects work tree under .but dir' '
 	EOF
 
 	(
-		GIT_DIR=repo.but &&
-		GIT_WORK_TREE=repo.but/work &&
-		export GIT_DIR GIT_WORK_TREE &&
+		BUT_DIR=repo.but &&
+		BUT_WORK_TREE=repo.but/work &&
+		export BUT_DIR BUT_WORK_TREE &&
 		but diff-index $EMPTY_TREE >diff-index.actual &&
 		but diff-index --cached $EMPTY_TREE >diff-index-cached.actual
 	) &&
@@ -261,9 +261,9 @@ test_expect_success 'diff-files respects work tree under .but dir' '
 	EOF
 
 	(
-		GIT_DIR=repo.but &&
-		GIT_WORK_TREE=repo.but/work &&
-		export GIT_DIR GIT_WORK_TREE &&
+		BUT_DIR=repo.but &&
+		BUT_WORK_TREE=repo.but/work &&
+		export BUT_DIR BUT_WORK_TREE &&
 		but diff-files >diff-files.actual
 	) &&
 	test_cmp diff-files.expected diff-files.actual
@@ -294,9 +294,9 @@ test_expect_success 'but diff respects work tree under .but dir' '
 	EOF
 
 	(
-		GIT_DIR=repo.but &&
-		GIT_WORK_TREE=repo.but/work &&
-		export GIT_DIR GIT_WORK_TREE &&
+		BUT_DIR=repo.but &&
+		BUT_WORK_TREE=repo.but/work &&
+		export BUT_DIR BUT_WORK_TREE &&
 		but diff $EMPTY_TREE >diff-TREE.actual &&
 		but diff --cached $EMPTY_TREE >diff-TREE-cached.actual &&
 		but diff >diff-FILES.actual
@@ -310,9 +310,9 @@ test_expect_success 'but grep' '
 	echo dir/tracked >expected.grep &&
 	(
 		cd repo.but/work/sub &&
-		GIT_DIR=../.. &&
-		GIT_WORK_TREE=.. &&
-		export GIT_DIR GIT_WORK_TREE &&
+		BUT_DIR=../.. &&
+		BUT_WORK_TREE=.. &&
+		export BUT_DIR BUT_WORK_TREE &&
 		but grep -l changed >../../../actual.grep
 	) &&
 	test_cmp expected.grep actual.grep
@@ -321,7 +321,7 @@ test_expect_success 'but grep' '
 test_expect_success 'but cummit' '
 	(
 		cd repo.but &&
-		GIT_DIR=. GIT_WORK_TREE=work but cummit -a -m done
+		BUT_DIR=. BUT_WORK_TREE=work but cummit -a -m done
 	)
 '
 
@@ -333,14 +333,14 @@ test_expect_success 'absolute pathspec should fail gracefully' '
 	)
 '
 
-test_expect_success 'make_relative_path handles double slashes in GIT_DIR' '
+test_expect_success 'make_relative_path handles double slashes in BUT_DIR' '
 	>dummy_file &&
 	echo but --but-dir="$(pwd)//repo.but" --work-tree="$(pwd)" add dummy_file &&
 	but --but-dir="$(pwd)//repo.but" --work-tree="$(pwd)" add dummy_file
 '
 
-test_expect_success 'relative $GIT_WORK_TREE and but subprocesses' '
-	GIT_DIR=repo.but GIT_WORK_TREE=repo.but/work \
+test_expect_success 'relative $BUT_WORK_TREE and but subprocesses' '
+	BUT_DIR=repo.but BUT_WORK_TREE=repo.but/work \
 	test-tool subprocess --setup-work-tree rev-parse --show-toplevel >actual &&
 	echo "$(pwd)/repo.but/work" >expected &&
 	test_cmp expected actual
@@ -351,26 +351,26 @@ test_expect_success 'Multi-worktree setup' '
 	mkdir -p repo.but/repos/foo &&
 	cp repo.but/HEAD repo.but/index repo.but/repos/foo &&
 	{ cp repo.but/sharedindex.* repo.but/repos/foo || :; } &&
-	sane_unset GIT_DIR GIT_CONFIG GIT_WORK_TREE
+	sane_unset BUT_DIR BUT_CONFIG BUT_WORK_TREE
 '
 
-test_expect_success 'GIT_DIR set (1)' '
+test_expect_success 'BUT_DIR set (1)' '
 	echo "butdir: repo.but/repos/foo" >butfile &&
 	echo ../.. >repo.but/repos/foo/commondir &&
 	(
 		cd work &&
-		GIT_DIR=../butfile but rev-parse --but-common-dir >actual &&
+		BUT_DIR=../butfile but rev-parse --but-common-dir >actual &&
 		test-tool path-utils real_path "$TRASH_DIRECTORY/repo.but" >expect &&
 		test_cmp expect actual
 	)
 '
 
-test_expect_success 'GIT_DIR set (2)' '
+test_expect_success 'BUT_DIR set (2)' '
 	echo "butdir: repo.but/repos/foo" >butfile &&
 	echo "$(pwd)/repo.but" >repo.but/repos/foo/commondir &&
 	(
 		cd work &&
-		GIT_DIR=../butfile but rev-parse --but-common-dir >actual &&
+		BUT_DIR=../butfile but rev-parse --but-common-dir >actual &&
 		test-tool path-utils real_path "$TRASH_DIRECTORY/repo.but" >expect &&
 		test_cmp expect actual
 	)
@@ -392,7 +392,7 @@ test_expect_success 'Auto discovery' '
 	)
 '
 
-test_expect_success '$GIT_DIR/common overrides core.worktree' '
+test_expect_success '$BUT_DIR/common overrides core.worktree' '
 	mkdir elsewhere &&
 	but --but-dir=repo.but config core.worktree "$TRASH_DIRECTORY/elsewhere" &&
 	echo "butdir: repo.but/repos/foo" >.but &&
@@ -410,7 +410,7 @@ test_expect_success '$GIT_DIR/common overrides core.worktree' '
 	)
 '
 
-test_expect_success '$GIT_WORK_TREE overrides $GIT_DIR/common' '
+test_expect_success '$BUT_WORK_TREE overrides $BUT_DIR/common' '
 	echo "butdir: repo.but/repos/foo" >.but &&
 	echo ../.. >repo.but/repos/foo/commondir &&
 	(
@@ -423,10 +423,10 @@ test_expect_success '$GIT_WORK_TREE overrides $GIT_DIR/common' '
 	)
 '
 
-test_expect_success 'error out gracefully on invalid $GIT_WORK_TREE' '
+test_expect_success 'error out gracefully on invalid $BUT_WORK_TREE' '
 	(
-		GIT_WORK_TREE=/.invalid/work/tree &&
-		export GIT_WORK_TREE &&
+		BUT_WORK_TREE=/.invalid/work/tree &&
+		export BUT_WORK_TREE &&
 		test_expect_code 128 but rev-parse
 	)
 '
@@ -436,7 +436,7 @@ test_expect_success 'refs work with relative butdir and work tree' '
 	but -C relative cummit --allow-empty -m one &&
 	but -C relative cummit --allow-empty -m two &&
 
-	GIT_DIR=relative/.but GIT_WORK_TREE=relative but reset HEAD^ &&
+	BUT_DIR=relative/.but BUT_WORK_TREE=relative but reset HEAD^ &&
 
 	but -C relative log -1 --format=%s >actual &&
 	echo one >expect &&

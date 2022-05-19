@@ -324,7 +324,7 @@ static int write_zip_entry(struct archiver_args *args,
 				(int)pathlen, oid_to_hex(oid), path);
 	}
 
-	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
+	if (S_ISDIR(mode) || S_ISBUTLINK(mode)) {
 		method = ZIP_METHOD_STORE;
 		attr2 = 16;
 		out = NULL;

@@ -17,7 +17,7 @@ int is_terminal_dumb(void)
 
 const char *but_editor(void)
 {
-	const char *editor = getenv("GIT_EDITOR");
+	const char *editor = getenv("BUT_EDITOR");
 	int terminal_is_dumb = is_terminal_dumb();
 
 	if (!editor && editor_program)
@@ -38,7 +38,7 @@ const char *but_editor(void)
 
 const char *but_sequence_editor(void)
 {
-	const char *editor = getenv("GIT_SEQUENCE_EDITOR");
+	const char *editor = getenv("BUT_SEQUENCE_EDITOR");
 
 	if (!editor)
 		but_config_get_string_tmp("sequence.editor", &editor);

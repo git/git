@@ -151,9 +151,9 @@ Performance, Internal Implementation, Development Support etc.
  * In-core storage of the reverse index for .pack files (which lets
    you go from a pack offset to an object name) has been streamlined.
 
- * d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
-   $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
-   handling by overwriting GIT_WORK_TREE environment variable to
+ * d95138e6 (setup: set env $BUT_WORK_TREE when work tree is set, like
+   $BUT_DIR, 2015-06-26) attempted to work around a glitch in alias
+   handling by overwriting BUT_WORK_TREE environment variable to
    affect subprocesses when set_but_work_tree() gets called, which
    resulted in a rather unpleasant regression to "clone" and "init".
    Try to address the same issue by always restoring the environment
@@ -265,9 +265,9 @@ track are contained in this release (see the maintenance releases'
 notes for details).
 
  * An earlier change in 2.5.x-era broke users' hooks and aliases by
-   exporting GIT_WORK_TREE to point at the root of the working tree,
+   exporting BUT_WORK_TREE to point at the root of the working tree,
    interfering when they tried to use a different working tree without
-   setting GIT_WORK_TREE environment themselves.
+   setting BUT_WORK_TREE environment themselves.
 
  * The "exclude_list" structure has the usual "alloc, nr" pair of
    fields to be used by ALLOC_GROW(), but clear_pattern_list() forgot
@@ -294,7 +294,7 @@ notes for details).
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
 
- * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+ * Some codepaths used fopen(3) when opening a fixed path in $BUT_DIR
    (e.g. CUMMIT_EDITMSG) that is meant to be left after the command is
    done.  This however did not work well if the repository is set to
    be shared with core.sharedRepository and the umask of the previous

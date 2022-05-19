@@ -27,22 +27,22 @@ my $hash_algo = $repo->config('extensions.objectformat') || 'sha1';
 my $hexsz = $hash_algo eq 'sha256' ? 64 : 40;
 
 if ($opt_w || $opt_W) {
-	# Remember where GIT_DIR is before changing to CVS checkout
-	unless ($ENV{GIT_DIR}) {
-		# No GIT_DIR set. Figure it out for ourselves
+	# Remember where BUT_DIR is before changing to CVS checkout
+	unless ($ENV{BUT_DIR}) {
+		# No BUT_DIR set. Figure it out for ourselves
 		my $gd =`but rev-parse --but-dir`;
 		chomp($gd);
-		$ENV{GIT_DIR} = $gd;
+		$ENV{BUT_DIR} = $gd;
 	}
 
 	# On MSYS, convert a Windows-style path to an MSYS-style path
 	# so that rel2abs() below works correctly.
 	if ($^O eq 'msys') {
-		$ENV{GIT_DIR} =~ s#^([[:alpha:]]):/#/$1/#;
+		$ENV{BUT_DIR} =~ s#^([[:alpha:]]):/#/$1/#;
 	}
 
-	# Make sure GIT_DIR is absolute
-	$ENV{GIT_DIR} = File::Spec->rel2abs($ENV{GIT_DIR});
+	# Make sure BUT_DIR is absolute
+	$ENV{BUT_DIR} = File::Spec->rel2abs($ENV{BUT_DIR});
 }
 
 if ($opt_w) {
@@ -51,8 +51,8 @@ if ($opt_w) {
 	}
 	chdir $opt_w or die "Cannot change to CVS checkout at $opt_w";
 }
-unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
-    die "GIT_DIR is not defined or is unreadable";
+unless ($ENV{BUT_DIR} && -r $ENV{BUT_DIR}){
+    die "BUT_DIR is not defined or is unreadable";
 }
 
 
@@ -178,7 +178,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat<.cvsexportcummit.diff|" || die "cannot patch";
+open APPLY, "BUT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat<.cvsexportcummit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -302,7 +302,7 @@ foreach my $f (@files) {
 	warn "File $f not up to date but has status '$cvsstat{$f}' in your CVS checkout!\n";
     }
 
-    # Depending on how your GIT tree got imported from CVS you may
+    # Depending on how your BUT tree got imported from CVS you may
     # have a conflict between expanded keywords in your CVS tree and
     # unexpanded keywords in the patch about to be applied.
     if ($opt_k) {
@@ -333,7 +333,7 @@ print "Applying\n";
 if ($opt_W) {
     system("but checkout -q $cummit^0") && die "cannot patch";
 } else {
-    `GIT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat --apply <.cvsexportcummit.diff` || die "cannot patch";
+    `BUT_INDEX_FILE=$tmpdir/index but apply $context --summary --numstat --apply <.cvsexportcummit.diff` || die "cannot patch";
 }
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
@@ -424,7 +424,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-usage: GIT_DIR=/path/to/.but but cvsexportcummit [-h] [-p] [-v] [-c] [-f] [-u] [-k] [-w cvsworkdir] [-m msgprefix] [ parent ] cummit
+usage: BUT_DIR=/path/to/.but but cvsexportcummit [-h] [-p] [-v] [-c] [-f] [-u] [-k] [-w cvsworkdir] [-m msgprefix] [ parent ] cummit
 END
 	exit(1);
 }

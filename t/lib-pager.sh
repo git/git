@@ -3,8 +3,8 @@
 test_expect_success 'determine default pager' '
 	test_might_fail but config --unset core.pager &&
 	less=$(
-		sane_unset PAGER GIT_PAGER &&
-		but var GIT_PAGER
+		sane_unset PAGER BUT_PAGER &&
+		but var BUT_PAGER
 	) &&
 	test -n "$less"
 '

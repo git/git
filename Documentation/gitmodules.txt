@@ -7,7 +7,7 @@ butmodules - Defining submodule properties
 
 SYNOPSIS
 --------
-$GIT_WORK_TREE/.butmodules
+$BUT_WORK_TREE/.butmodules
 
 
 DESCRIPTION
@@ -130,6 +130,6 @@ SEE ALSO
 --------
 linkbut:but-submodule[1], linkbut:butsubmodules[7], linkbut:but-config[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

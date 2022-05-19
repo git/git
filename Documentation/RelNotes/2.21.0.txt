@@ -280,7 +280,7 @@ Fixes since v2.20
    corrected.
    (merge 5bdece0d70 js/gc-repack-close-before-remove later to maint).
 
- * The code to drive GIT_EXTERNAL_DIFF command relied on the string
+ * The code to drive BUT_EXTERNAL_DIFF command relied on the string
    returned from getenv() to be non-volatile, which is not true, that
    has been corrected.
    (merge 6776a84dae kg/external-diff-save-env later to maint).
@@ -357,7 +357,7 @@ Fixes since v2.20
    has been fixed.
    (merge dac03b5518 jk/diff-cc-stat-fixes later to maint).
 
- * When GIT_SEQUENCE_EDITOR is set, the command was incorrectly
+ * When BUT_SEQUENCE_EDITOR is set, the command was incorrectly
    started when modes of "but rebase" that implicitly uses the
    machinery for the interactive rebase are run, which has been
    corrected.

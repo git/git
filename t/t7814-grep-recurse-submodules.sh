@@ -8,8 +8,8 @@ submodules.
 
 . ./test-lib.sh
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 test_expect_success 'setup directory structure and submodule' '
 	echo "(1|2)d(3|4)" >a &&
@@ -577,7 +577,7 @@ test_expect_success 'grep partially-cloned submodule' '
 		HEAD^:super-file:Some content for super-file
 		EOF
 
-		GIT_TRACE2_EVENT="$(pwd)/trace2.log" but grep -e content \
+		BUT_TRACE2_EVENT="$(pwd)/trace2.log" but grep -e content \
 			--recurse-submodules HEAD^ >actual &&
 		test_cmp expect actual &&
 		# Verify that we actually fetched data from the promisor remote:

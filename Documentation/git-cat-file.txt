@@ -357,6 +357,6 @@ Note also that multiple copies of an object may be present in the object
 database; in this case, it is undefined which copy's size or delta base
 will be reported.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

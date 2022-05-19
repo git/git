@@ -606,9 +606,9 @@ static void determine_author_info(struct strbuf *author_ident)
 	char *name, *email, *date;
 	struct ident_split author;
 
-	name = xstrdup_or_null(getenv("GIT_AUTHOR_NAME"));
-	email = xstrdup_or_null(getenv("GIT_AUTHOR_EMAIL"));
-	date = xstrdup_or_null(getenv("GIT_AUTHOR_DATE"));
+	name = xstrdup_or_null(getenv("BUT_AUTHOR_NAME"));
+	email = xstrdup_or_null(getenv("BUT_AUTHOR_EMAIL"));
+	date = xstrdup_or_null(getenv("BUT_AUTHOR_DATE"));
 
 	if (author_message) {
 		struct ident_split ident;
@@ -653,9 +653,9 @@ static void determine_author_info(struct strbuf *author_ident)
 	strbuf_addstr(author_ident, fmt_ident(name, email, WANT_AUTHOR_IDENT, date,
 				IDENT_STRICT));
 	assert_split_ident(&author, author_ident);
-	export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
-	export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
-	export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
+	export_one("BUT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
+	export_one("BUT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
+	export_one("BUT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 	free(name);
 	free(email);
 	free(date);
@@ -914,7 +914,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 				!merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
 			status_printf_ln(
-				s, GIT_COLOR_NORMAL,
+				s, BUT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
 					      _("\n"
 					  "It looks like you may be cummitting a merge.\n"
@@ -930,12 +930,12 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 
 		fprintf(s->fp, "\n");
 		if (cleanup_mode == CUMMIT_MSG_CLEANUP_ALL)
-			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
+			status_printf(s, BUT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
 		else if (cleanup_mode == CUMMIT_MSG_CLEANUP_SCISSORS) {
 			if (whence == FROM_CUMMIT && !merge_contains_scissors)
 				wt_status_add_cut_line(s->fp);
 		} else /* CUMMIT_MSG_CLEANUP_SPACE, that is. */
-			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
+			status_printf(s, BUT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
 
 		/*
 		 * These should never fail because they come from our own
@@ -947,7 +947,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 		assert_split_ident(&ci, &cummitter_ident);
 
 		if (ident_cmp(&ai, &ci))
-			status_printf_ln(s, GIT_COLOR_NORMAL,
+			status_printf_ln(s, BUT_COLOR_NORMAL,
 				_("%s"
 				"Author:    %.*s <%.*s>"),
 				ident_shown++ ? "" : "\n",
@@ -955,21 +955,21 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 				(int)(ai.mail_end - ai.mail_begin), ai.mail_begin);
 
 		if (author_date_is_interesting())
-			status_printf_ln(s, GIT_COLOR_NORMAL,
+			status_printf_ln(s, BUT_COLOR_NORMAL,
 				_("%s"
 				"Date:      %s"),
 				ident_shown++ ? "" : "\n",
 				show_ident_date(&ai, DATE_MODE(NORMAL)));
 
 		if (!cummitter_ident_sufficiently_given())
-			status_printf_ln(s, GIT_COLOR_NORMAL,
+			status_printf_ln(s, BUT_COLOR_NORMAL,
 				_("%s"
 				"cummitter: %.*s <%.*s>"),
 				ident_shown++ ? "" : "\n",
 				(int)(ci.name_end - ci.name_begin), ci.name_begin,
 				(int)(ci.mail_end - ci.mail_begin), ci.mail_begin);
 
-		status_printf_ln(s, GIT_COLOR_NORMAL, "%s", ""); /* Add new line for clarity */
+		status_printf_ln(s, BUT_COLOR_NORMAL, "%s", ""); /* Add new line for clarity */
 
 		saved_color_setting = s->use_color;
 		s->use_color = 0;
@@ -1077,7 +1077,7 @@ static int prepare_to_cummit(const char *index_file, const char *prefix,
 	if (use_editor) {
 		struct strvec env = STRVEC_INIT;
 
-		strvec_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
+		strvec_pushf(&env, "BUT_INDEX_FILE=%s", index_file);
 		if (launch_editor(but_path_cummit_editmsg(), NULL, env.v)) {
 			fprintf(stderr,
 			_("Please supply the message using either -m or -F option.\n"));
@@ -1726,7 +1726,7 @@ int cmd_cummit(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Determine parents */
-	reflog_msg = getenv("GIT_REFLOG_ACTION");
+	reflog_msg = getenv("BUT_REFLOG_ACTION");
 	if (!current_head) {
 		if (!reflog_msg)
 			reflog_msg = "cummit (initial)";

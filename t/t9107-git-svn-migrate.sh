@@ -4,7 +4,7 @@ test_description='but svn metadata migrations from previous versions'
 . ./lib-but-svn.sh
 
 test_expect_success 'setup old-looking metadata' '
-	cp "$GIT_DIR"/config "$GIT_DIR"/config-old-but-svn &&
+	cp "$BUT_DIR"/config "$BUT_DIR"/config-old-but-svn &&
 	mkdir import &&
 	(
 		cd import &&
@@ -18,7 +18,7 @@ test_expect_success 'setup old-looking metadata' '
 	) &&
 	but svn init "$svnrepo" &&
 	but svn fetch &&
-	rm -rf "$GIT_DIR"/svn &&
+	rm -rf "$BUT_DIR"/svn &&
 	but update-ref refs/heads/but-svn-HEAD refs/remotes/but-svn &&
 	but update-ref refs/heads/svn-HEAD refs/remotes/but-svn &&
 	but update-ref -d refs/remotes/but-svn refs/remotes/but-svn
@@ -31,11 +31,11 @@ test_expect_success 'but-svn-HEAD is a real HEAD' '
 svnrepo_escaped=$(echo $svnrepo | sed 's/ /%20/g')
 
 test_expect_success 'initialize old-style (v0) but svn layout' '
-	mkdir -p "$GIT_DIR"/but-svn/info "$GIT_DIR"/svn/info &&
-	echo "$svnrepo" > "$GIT_DIR"/but-svn/info/url &&
-	echo "$svnrepo" > "$GIT_DIR"/svn/info/url &&
+	mkdir -p "$BUT_DIR"/but-svn/info "$BUT_DIR"/svn/info &&
+	echo "$svnrepo" > "$BUT_DIR"/but-svn/info/url &&
+	echo "$svnrepo" > "$BUT_DIR"/svn/info/url &&
 	but svn migrate &&
-	! test -d "$GIT_DIR"/but-svn &&
+	! test -d "$BUT_DIR"/but-svn &&
 	but rev-parse --verify refs/remotes/but-svn^0 &&
 	but rev-parse --verify refs/remotes/svn^0 &&
 	test "$(but config --get svn-remote.svn.url)" = "$svnrepo_escaped" &&
@@ -95,15 +95,15 @@ test_expect_success 'multi-fetch works on partial urls + paths' '
 test_expect_success 'migrate --minimize on old inited layout' '
 	but config --unset-all svn-remote.svn.fetch &&
 	but config --unset-all svn-remote.svn.url &&
-	rm -rf "$GIT_DIR"/svn &&
+	rm -rf "$BUT_DIR"/svn &&
 	for i in $(cat fetch.out)
 	do
 		path=${i%%:*} &&
 		ref=${i#*:} &&
 		if test "$ref" = "${ref#refs/remotes/}"; then continue; fi &&
 		if test -n "$path"; then path="/$path"; fi &&
-		mkdir -p "$GIT_DIR"/svn/$ref/info/ &&
-		echo "$svnrepo"$path >"$GIT_DIR"/svn/$ref/info/url ||
+		mkdir -p "$BUT_DIR"/svn/$ref/info/ &&
+		echo "$svnrepo"$path >"$BUT_DIR"/svn/$ref/info/url ||
 		return 1
 	done &&
 	but svn migrate --minimize &&
@@ -120,16 +120,16 @@ test_expect_success 'migrate --minimize on old inited layout' '
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '
 	but svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
-	expect="$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_map.*)" &&
+	test -z "$(ls "$BUT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
+	expect="$(ls "$BUT_DIR"/svn/refs/remotes/origin/trunk/.rev_map.*)" &&
 	test -n "$expect" &&
 	rev_db="$(echo $expect | sed -e "s,_map,_db,")" &&
 	convert_to_rev_db "$expect" "$rev_db" &&
 	rm -f "$expect" &&
 	test -f "$rev_db" &&
 	but svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
-	test ! -e "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db &&
+	test -z "$(ls "$BUT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
+	test ! -e "$BUT_DIR"/svn/refs/remotes/origin/trunk/.rev_db &&
 	test -f "$expect"
 	'
 

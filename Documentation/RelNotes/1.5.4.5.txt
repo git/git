@@ -1,4 +1,4 @@
-GIT v1.5.4.5 Release Notes
+BUT v1.5.4.5 Release Notes
 ==========================
 
 Fixes since v1.5.4.4
@@ -12,7 +12,7 @@ Fixes since v1.5.4.4
    detected as errors (regression in 1.5.4).
 
  * You couldn't specify a custom editor whose path contains a whitespace
-   via GIT_EDITOR (and core.editor).
+   via BUT_EDITOR (and core.editor).
 
  * The subdirectory filter to "but filter-branch" mishandled a history
    where the subdirectory becomes empty and then later becomes non-empty.

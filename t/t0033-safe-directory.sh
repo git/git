@@ -4,8 +4,8 @@ test_description='verify safe.directory checks'
 
 . ./test-lib.sh
 
-GIT_TEST_ASSUME_DIFFERENT_OWNER=1
-export GIT_TEST_ASSUME_DIFFERENT_OWNER
+BUT_TEST_ASSUME_DIFFERENT_OWNER=1
+export BUT_TEST_ASSUME_DIFFERENT_OWNER
 
 expect_rejected_dir () {
 	test_must_fail but status 2>err &&

@@ -704,8 +704,8 @@ static ucs_char_t next_hfs_char(const char **in)
 		case 0x206b: /* ACTIVATE SYMMETRIC SWAPPING */
 		case 0x206c: /* INHIBIT ARABIC FORM SHAPING */
 		case 0x206d: /* ACTIVATE ARABIC FORM SHAPING */
-		case 0x206e: /* NATIONAL DIGIT SHAPES */
-		case 0x206f: /* NOMINAL DIGIT SHAPES */
+		case 0x206e: /* NATIONAL DIBUT SHAPES */
+		case 0x206f: /* NOMINAL DIBUT SHAPES */
 		case 0xfeff: /* ZERO WIDTH NO-BREAK SPACE */
 			continue;
 		}

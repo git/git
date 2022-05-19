@@ -65,8 +65,8 @@ unsigned long but_deflate_bound(but_zstream *, unsigned long);
  * The value 0160000 is not normally a valid mode, and
  * also just happens to be S_IFDIR + S_IFLNK
  */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
+#define S_IFBUTLINK	0160000
+#define S_ISBUTLINK(m)	(((m) & S_IFMT) == S_IFBUTLINK)
 
 /*
  * Some mode bits are also used internally for computations.
@@ -102,7 +102,7 @@ unsigned long but_deflate_bound(but_zstream *, unsigned long);
  *
  * See http://www.iana.org/assignments/port-numbers
  */
-#define DEFAULT_GIT_PORT 9418
+#define DEFAULT_BUT_PORT 9418
 
 /*
  * Basic data structures for the directory cache
@@ -252,8 +252,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return S_IFLNK;
 	if (S_ISSPARSEDIR(mode))
 		return S_IFDIR;
-	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return S_IFGITLINK;
+	if (S_ISDIR(mode) || S_ISBUTLINK(mode))
+		return S_IFBUTLINK;
 	return S_IFREG | ce_permissions(mode);
 }
 static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
@@ -275,7 +275,7 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 	unsigned ce_mode = ntohl(ce->ce_mode);
 	if (S_ISREG(ce_mode))
 		return DT_REG;
-	else if (S_ISDIR(ce_mode) || S_ISGITLINK(ce_mode))
+	else if (S_ISDIR(ce_mode) || S_ISBUTLINK(ce_mode))
 		return DT_DIR;
 	else if (S_ISLNK(ce_mode))
 		return DT_LNK;
@@ -290,7 +290,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 		return S_IFLNK;
 	if (S_ISDIR(mode))
 		return S_IFDIR;
-	return S_IFGITLINK;
+	return S_IFBUTLINK;
 }
 
 #define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
@@ -408,7 +408,7 @@ struct cache_entry *dup_cache_entry(const struct cache_entry *ce, struct index_s
 void validate_cache_entries(const struct index_state *istate);
 
 /*
- * Bulk prefetch all missing cache entries that are not GITLINKs and that match
+ * Bulk prefetch all missing cache entries that are not BUTLINKs and that match
  * the given predicate. This function should only be called if
  * has_promisor_remote() returns true.
  */
@@ -478,48 +478,48 @@ enum object_type {
 static inline enum object_type object_type(unsigned int mode)
 {
 	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_CUMMIT :
+		S_ISBUTLINK(mode) ? OBJ_CUMMIT :
 		OBJ_BLOB;
 }
 
 /* Double-check local_repo_env below if you add to this list. */
-#define GIT_DIR_ENVIRONMENT "GIT_DIR"
-#define GIT_COMMON_DIR_ENVIRONMENT "GIT_COMMON_DIR"
-#define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
-#define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
-#define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
-#define GIT_SUPER_PREFIX_ENVIRONMENT "GIT_INTERNAL_SUPER_PREFIX"
-#define DEFAULT_GIT_DIR_ENVIRONMENT ".but"
-#define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
-#define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
-#define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
-#define GIT_SHALLOW_FILE_ENVIRONMENT "GIT_SHALLOW_FILE"
-#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
-#define CONFIG_ENVIRONMENT "GIT_CONFIG"
-#define CONFIG_DATA_ENVIRONMENT "GIT_CONFIG_PARAMETERS"
-#define CONFIG_COUNT_ENVIRONMENT "GIT_CONFIG_COUNT"
-#define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
-#define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
-#define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
-#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
-#define GITATTRIBUTES_FILE ".butattributes"
+#define BUT_DIR_ENVIRONMENT "BUT_DIR"
+#define BUT_COMMON_DIR_ENVIRONMENT "BUT_COMMON_DIR"
+#define BUT_NAMESPACE_ENVIRONMENT "BUT_NAMESPACE"
+#define BUT_WORK_TREE_ENVIRONMENT "BUT_WORK_TREE"
+#define BUT_PREFIX_ENVIRONMENT "BUT_PREFIX"
+#define BUT_SUPER_PREFIX_ENVIRONMENT "BUT_INTERNAL_SUPER_PREFIX"
+#define DEFAULT_BUT_DIR_ENVIRONMENT ".but"
+#define DB_ENVIRONMENT "BUT_OBJECT_DIRECTORY"
+#define INDEX_ENVIRONMENT "BUT_INDEX_FILE"
+#define GRAFT_ENVIRONMENT "BUT_GRAFT_FILE"
+#define BUT_SHALLOW_FILE_ENVIRONMENT "BUT_SHALLOW_FILE"
+#define TEMPLATE_DIR_ENVIRONMENT "BUT_TEMPLATE_DIR"
+#define CONFIG_ENVIRONMENT "BUT_CONFIG"
+#define CONFIG_DATA_ENVIRONMENT "BUT_CONFIG_PARAMETERS"
+#define CONFIG_COUNT_ENVIRONMENT "BUT_CONFIG_COUNT"
+#define EXEC_PATH_ENVIRONMENT "BUT_EXEC_PATH"
+#define CEILING_DIRECTORIES_ENVIRONMENT "BUT_CEILING_DIRECTORIES"
+#define NO_REPLACE_OBJECTS_ENVIRONMENT "BUT_NO_REPLACE_OBJECTS"
+#define BUT_REPLACE_REF_BASE_ENVIRONMENT "BUT_REPLACE_REF_BASE"
+#define BUTATTRIBUTES_FILE ".butattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"
-#define GITMODULES_FILE ".butmodules"
-#define GITMODULES_INDEX ":.butmodules"
-#define GITMODULES_HEAD "HEAD:.butmodules"
-#define GIT_NOTES_REF_ENVIRONMENT "GIT_NOTES_REF"
-#define GIT_NOTES_DEFAULT_REF "refs/notes/cummits"
-#define GIT_NOTES_DISPLAY_REF_ENVIRONMENT "GIT_NOTES_DISPLAY_REF"
-#define GIT_NOTES_REWRITE_REF_ENVIRONMENT "GIT_NOTES_REWRITE_REF"
-#define GIT_NOTES_REWRITE_MODE_ENVIRONMENT "GIT_NOTES_REWRITE_MODE"
-#define GIT_LITERAL_PATHSPECS_ENVIRONMENT "GIT_LITERAL_PATHSPECS"
-#define GIT_GLOB_PATHSPECS_ENVIRONMENT "GIT_GLOB_PATHSPECS"
-#define GIT_NOGLOB_PATHSPECS_ENVIRONMENT "GIT_NOGLOB_PATHSPECS"
-#define GIT_ICASE_PATHSPECS_ENVIRONMENT "GIT_ICASE_PATHSPECS"
-#define GIT_QUARANTINE_ENVIRONMENT "GIT_QUARANTINE_PATH"
-#define GIT_OPTIONAL_LOCKS_ENVIRONMENT "GIT_OPTIONAL_LOCKS"
-#define GIT_TEXT_DOMAIN_DIR_ENVIRONMENT "GIT_TEXTDOMAINDIR"
+#define BUTMODULES_FILE ".butmodules"
+#define BUTMODULES_INDEX ":.butmodules"
+#define BUTMODULES_HEAD "HEAD:.butmodules"
+#define BUT_NOTES_REF_ENVIRONMENT "BUT_NOTES_REF"
+#define BUT_NOTES_DEFAULT_REF "refs/notes/cummits"
+#define BUT_NOTES_DISPLAY_REF_ENVIRONMENT "BUT_NOTES_DISPLAY_REF"
+#define BUT_NOTES_REWRITE_REF_ENVIRONMENT "BUT_NOTES_REWRITE_REF"
+#define BUT_NOTES_REWRITE_MODE_ENVIRONMENT "BUT_NOTES_REWRITE_MODE"
+#define BUT_LITERAL_PATHSPECS_ENVIRONMENT "BUT_LITERAL_PATHSPECS"
+#define BUT_GLOB_PATHSPECS_ENVIRONMENT "BUT_GLOB_PATHSPECS"
+#define BUT_NOGLOB_PATHSPECS_ENVIRONMENT "BUT_NOGLOB_PATHSPECS"
+#define BUT_ICASE_PATHSPECS_ENVIRONMENT "BUT_ICASE_PATHSPECS"
+#define BUT_QUARANTINE_ENVIRONMENT "BUT_QUARANTINE_PATH"
+#define BUT_OPTIONAL_LOCKS_ENVIRONMENT "BUT_OPTIONAL_LOCKS"
+#define BUT_TEXT_DOMAIN_DIR_ENVIRONMENT "BUT_TEXTDOMAINDIR"
 
 /*
  * Environment variable used in handshaking the wire protocol.
@@ -527,24 +527,24 @@ static inline enum object_type object_type(unsigned int mode)
  * 'key[=value]'.  Presence of unknown keys and values must be
  * ignored.
  */
-#define GIT_PROTOCOL_ENVIRONMENT "GIT_PROTOCOL"
+#define BUT_PROTOCOL_ENVIRONMENT "BUT_PROTOCOL"
 /* HTTP header used to handshake the wire protocol */
-#define GIT_PROTOCOL_HEADER "Git-Protocol"
+#define BUT_PROTOCOL_HEADER "Git-Protocol"
 
 /*
  * This environment variable is expected to contain a boolean indicating
  * whether we should or should not treat:
  *
- *   GIT_DIR=foo.but but ...
+ *   BUT_DIR=foo.but but ...
  *
- * as if GIT_WORK_TREE=. was given. It's not expected that users will make use
+ * as if BUT_WORK_TREE=. was given. It's not expected that users will make use
  * of this, but we use it internally to communicate to sub-processes that we
  * are in a bare repo. If not set, defaults to true.
  */
-#define GIT_IMPLICIT_WORK_TREE_ENVIRONMENT "GIT_IMPLICIT_WORK_TREE"
+#define BUT_IMPLICIT_WORK_TREE_ENVIRONMENT "BUT_IMPLICIT_WORK_TREE"
 
 /*
- * Repository-local GIT_* environment variables; these will be cleared
+ * Repository-local BUT_* environment variables; these will be cleared
  * when but spawns a sub-process that runs inside another repository.
  * The array is NULL-terminated, which makes it easy to pass in the "env"
  * parameter of a run-command invocation, or to do a simple walk.
@@ -555,7 +555,7 @@ void setup_but_env(const char *but_dir);
 
 /*
  * Returns true iff we have a configured but repository (either via
- * setup_but_directory, or in the environment via $GIT_DIR).
+ * setup_but_directory, or in the environment via $BUT_DIR).
  */
 int have_but_dir(void);
 
@@ -596,14 +596,14 @@ int is_but_directory(const char *path);
  */
 int is_nonbare_repository_dir(struct strbuf *path);
 
-#define READ_GITFILE_ERR_STAT_FAILED 1
-#define READ_GITFILE_ERR_NOT_A_FILE 2
-#define READ_GITFILE_ERR_OPEN_FAILED 3
-#define READ_GITFILE_ERR_READ_FAILED 4
-#define READ_GITFILE_ERR_INVALID_FORMAT 5
-#define READ_GITFILE_ERR_NO_PATH 6
-#define READ_GITFILE_ERR_NOT_A_REPO 7
-#define READ_GITFILE_ERR_TOO_LARGE 8
+#define READ_BUTFILE_ERR_STAT_FAILED 1
+#define READ_BUTFILE_ERR_NOT_A_FILE 2
+#define READ_BUTFILE_ERR_OPEN_FAILED 3
+#define READ_BUTFILE_ERR_READ_FAILED 4
+#define READ_BUTFILE_ERR_INVALID_FORMAT 5
+#define READ_BUTFILE_ERR_NO_PATH 6
+#define READ_BUTFILE_ERR_NOT_A_REPO 7
+#define READ_BUTFILE_ERR_TOO_LARGE 8
 void read_butfile_error_die(int error_code, const char *path, const char *dir);
 const char *read_butfile_gently(const char *path, int *return_error_code);
 #define read_butfile(path) read_butfile_gently((path), NULL)
@@ -612,7 +612,7 @@ const char *resolve_butdir_gently(const char *suspect, int *return_error_code);
 
 void set_but_work_tree(const char *tree);
 
-#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
+#define ALTERNATE_DB_ENVIRONMENT "BUT_ALTERNATE_OBJECT_DIRECTORIES"
 
 void setup_work_tree(void);
 /*
@@ -987,7 +987,7 @@ void reset_shared_repository(void);
 /*
  * Do replace refs need to be checked this run?  This variable is
  * initialized to true unless --no-replace-object is used or
- * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
+ * $BUT_NO_REPLACE_OBJECTS is set, but is set to false by some
  * commands that do not want replace references to be active.
  */
 extern int read_replace_refs;
@@ -1054,7 +1054,7 @@ extern int core_sparse_checkout_cone;
 extern int sparse_expect_files_outside_of_patterns;
 
 /*
- * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
+ * Returns the boolean value of $BUT_OPTIONAL_LOCKS (or the default value).
  */
 int use_optional_locks(void);
 
@@ -1104,12 +1104,12 @@ extern char *notes_ref_name;
 extern int grafts_replace_parents;
 
 /*
- * GIT_REPO_VERSION is the version we write by default. The
+ * BUT_REPO_VERSION is the version we write by default. The
  * _READ variant is the highest number we know how to
  * handle.
  */
-#define GIT_REPO_VERSION 0
-#define GIT_REPO_VERSION_READ 1
+#define BUT_REPO_VERSION 0
+#define BUT_REPO_VERSION_READ 1
 extern int repository_format_precious_objects;
 extern int repository_format_worktree_config;
 
@@ -1139,7 +1139,7 @@ struct repository_format {
 { \
 	.version = -1, \
 	.is_bare = -1, \
-	.hash_algo = GIT_HASH_SHA1, \
+	.hash_algo = BUT_HASH_SHA1, \
 	.unknown_extensions = STRING_LIST_INIT_DUP, \
 	.v1_only_extensions = STRING_LIST_INIT_DUP, \
 }
@@ -1195,7 +1195,7 @@ void check_repository_format(struct repository_format *fmt);
  * more calls to find_unique_abbrev are made.
  *
  * The `_r` variant writes to a buffer supplied by the caller, which must be at
- * least `GIT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes
+ * least `BUT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes
  * written (excluding the NUL terminator).
  *
  * Note that while this version avoids the static buffer, it is not fully
@@ -1517,7 +1517,7 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
  * Convert a binary hash in "unsigned char []" or an object name in
  * "struct object_id *" to its hex equivalent. The `_r` variant is reentrant,
  * and writes the NUL-terminated output to the buffer `out`, which must be at
- * least `GIT_MAX_HEXSZ + 1` bytes, and returns a pointer to out for
+ * least `BUT_MAX_HEXSZ + 1` bytes, and returns a pointer to out for
  * convenience.
  *
  * The non-`_r` variant returns a static buffer, but uses a ring of 4
@@ -1550,7 +1550,7 @@ int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse
  * a hex value for any algorithm. The algorithm is detected based on the length
  * and the algorithm in use is returned. If this is not a hex object ID in any
- * algorithm, returns GIT_HASH_UNKNOWN.
+ * algorithm, returns BUT_HASH_UNKNOWN.
  */
 int get_oid_hex_any(const char *hex, struct object_id *oid);
 int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
@@ -1911,7 +1911,7 @@ int versioncmp(const char *s1, const char *s2);
 /*
  * Create a directory and (if share is nonzero) adjust its permissions
  * according to the shared_repository setting. Only use this for
- * directories under $GIT_DIR.  Don't use it for working tree
+ * directories under $BUT_DIR.  Don't use it for working tree
  * directories.
  */
 void safe_create_dir(const char *dir, int share);

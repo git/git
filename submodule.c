@@ -36,13 +36,13 @@ static struct oid_array ref_tips_after_fetch;
  */
 int is_butmodules_unmerged(struct index_state *istate)
 {
-	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	int pos = index_name_pos(istate, BUTMODULES_FILE, strlen(BUTMODULES_FILE));
 	if (pos < 0) { /* .butmodules not found or isn't merged */
 		pos = -1 - pos;
 		if (istate->cache_nr > pos) {  /* there is a .butmodules */
 			const struct cache_entry *ce = istate->cache[pos];
-			if (ce_namelen(ce) == strlen(GITMODULES_FILE) &&
-			    !strcmp(ce->name, GITMODULES_FILE))
+			if (ce_namelen(ce) == strlen(BUTMODULES_FILE) &&
+			    !strcmp(ce->name, BUTMODULES_FILE))
 				return 1;
 		}
 	}
@@ -64,8 +64,8 @@ int is_butmodules_unmerged(struct index_state *istate)
 int is_writing_butmodules_ok(void)
 {
 	struct object_id oid;
-	return file_exists(GITMODULES_FILE) ||
-		(get_oid(GITMODULES_INDEX, &oid) < 0 && get_oid(GITMODULES_HEAD, &oid) < 0);
+	return file_exists(BUTMODULES_FILE) ||
+		(get_oid(BUTMODULES_INDEX, &oid) < 0 && get_oid(BUTMODULES_HEAD, &oid) < 0);
 }
 
 /*
@@ -78,11 +78,11 @@ int is_writing_butmodules_ok(void)
  */
 int is_staging_butmodules_ok(struct index_state *istate)
 {
-	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	int pos = index_name_pos(istate, BUTMODULES_FILE, strlen(BUTMODULES_FILE));
 
 	if ((pos >= 0) && (pos < istate->cache_nr)) {
 		struct stat st;
-		if (lstat(GITMODULES_FILE, &st) == 0 &&
+		if (lstat(BUTMODULES_FILE, &st) == 0 &&
 		    ie_modified(istate, istate->cache[pos], &st, 0) & DATA_CHANGED)
 			return 0;
 	}
@@ -108,7 +108,7 @@ int update_path_in_butmodules(const char *oldpath, const char *newpath)
 	const struct submodule *submodule;
 	int ret;
 
-	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .butmodules */
+	if (!file_exists(BUTMODULES_FILE)) /* Do nothing without .butmodules */
 		return -1;
 
 	if (is_butmodules_unmerged(the_repository->index))
@@ -137,7 +137,7 @@ int remove_path_from_butmodules(const char *path)
 	struct strbuf sect = STRBUF_INIT;
 	const struct submodule *submodule;
 
-	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .butmodules */
+	if (!file_exists(BUTMODULES_FILE)) /* Do nothing without .butmodules */
 		return -1;
 
 	if (is_butmodules_unmerged(the_repository->index))
@@ -150,7 +150,7 @@ int remove_path_from_butmodules(const char *path)
 	}
 	strbuf_addstr(&sect, "submodule.");
 	strbuf_addstr(&sect, submodule->name);
-	if (but_config_rename_section_in_file(GITMODULES_FILE, sect.buf, NULL) < 0) {
+	if (but_config_rename_section_in_file(BUTMODULES_FILE, sect.buf, NULL) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not remove .butmodules entry for %s"), path);
 		strbuf_release(&sect);
@@ -162,7 +162,7 @@ int remove_path_from_butmodules(const char *path)
 
 void stage_updated_butmodules(struct index_state *istate)
 {
-	if (add_file_to_index(istate, GITMODULES_FILE, 0))
+	if (add_file_to_index(istate, BUTMODULES_FILE, 0))
 		die(_("staging updated .butmodules failed"));
 }
 
@@ -184,7 +184,7 @@ int register_all_submodule_odb_as_alternates(void)
 		string_list_clear(&added_submodule_odb_paths, 0);
 		trace2_data_intmax("submodule", the_repository,
 				   "register_all_submodule_odb_as_alternates/registered", ret);
-		if (but_env_bool("GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
+		if (but_env_bool("BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
 			BUG("register_all_submodule_odb_as_alternates() called");
 	}
 	return ret;
@@ -334,7 +334,7 @@ void die_in_unpopulated_submodule(struct index_state *istate,
 		struct cache_entry *ce = istate->cache[i];
 		int ce_len = ce_namelen(ce);
 
-		if (!S_ISGITLINK(ce->ce_mode))
+		if (!S_ISBUTLINK(ce->ce_mode))
 			continue;
 		if (prefixlen <= ce_len)
 			continue;
@@ -359,7 +359,7 @@ void die_path_inside_submodule(struct index_state *istate,
 		struct cache_entry *ce = istate->cache[i];
 		int ce_len = ce_namelen(ce);
 
-		if (!S_ISGITLINK(ce->ce_mode))
+		if (!S_ISBUTLINK(ce->ce_mode))
 			continue;
 
 		for (j = 0; j < ps->nr ; j++) {
@@ -504,7 +504,7 @@ static void print_submodule_diff_summary(struct repository *r, struct rev_info *
 
 void prepare_submodule_repo_env(struct strvec *out)
 {
-	prepare_other_repo_env(out, DEFAULT_GIT_DIR_ENVIRONMENT);
+	prepare_other_repo_env(out, DEFAULT_BUT_DIR_ENVIRONMENT);
 }
 
 static void prepare_submodule_repo_env_in_butdir(struct strvec *out)
@@ -718,8 +718,8 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 		if (!sub)
 			goto done;
 		cp.dir = sub->butdir;
-		strvec_push(&cp.env_array, GIT_DIR_ENVIRONMENT "=.");
-		strvec_push(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT "=.");
+		strvec_push(&cp.env_array, BUT_DIR_ENVIRONMENT "=.");
+		strvec_push(&cp.env_array, BUT_WORK_TREE_ENVIRONMENT "=.");
 	}
 
 	if (start_command(&cp)) {
@@ -754,7 +754,7 @@ int should_update_submodules(void)
 
 const struct submodule *submodule_from_ce(const struct cache_entry *ce)
 {
-	if (!S_ISGITLINK(ce->ce_mode))
+	if (!S_ISBUTLINK(ce->ce_mode))
 		return NULL;
 
 	if (!should_update_submodules())
@@ -849,7 +849,7 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 		struct string_list_item *item;
 		struct changed_submodule_data *cs_data;
 
-		if (!S_ISGITLINK(p->two->mode))
+		if (!S_ISBUTLINK(p->two->mode))
 			continue;
 
 		submodule = submodule_from_path(me->repo,
@@ -1024,7 +1024,7 @@ static int submodule_has_cummits(struct repository *r,
 		cp.no_stdin = 1;
 		cp.dir = path;
 
-		if (capture_command(&cp, &out, GIT_MAX_HEXSZ + 1) || out.len)
+		if (capture_command(&cp, &out, BUT_MAX_HEXSZ + 1) || out.len)
 			has_cummit.result = 0;
 
 		strbuf_release(&out);
@@ -1262,11 +1262,11 @@ void check_for_new_submodule_cummits(struct object_id *oid)
 
 /*
  * Returns 1 if there is at least one submodule butdir in
- * $GIT_DIR/modules and 0 otherwise. This follows
+ * $BUT_DIR/modules and 0 otherwise. This follows
  * submodule_name_to_butdir(), which looks for submodules in
- * $GIT_DIR/modules, not $GIT_COMMON_DIR.
+ * $BUT_DIR/modules, not $BUT_COMMON_DIR.
  *
- * A submodule can be moved to $GIT_DIR/modules manually by running "but
+ * A submodule can be moved to $BUT_DIR/modules manually by running "but
  * submodule absorbbutdirs", or it may be initialized there by "but
  * submodule update".
  */
@@ -1555,7 +1555,7 @@ get_fetch_task_from_index(struct submodule_parallel_fetch *spf,
 			spf->r->index->cache[spf->index_count];
 		struct fetch_task *task;
 
-		if (!S_ISGITLINK(ce->ce_mode))
+		if (!S_ISBUTLINK(ce->ce_mode))
 			continue;
 
 		task = fetch_task_create(spf, ce->name, null_oid());
@@ -1582,7 +1582,7 @@ get_fetch_task_from_index(struct submodule_parallel_fetch *spf,
 			strbuf_addf(&empty_submodule_path, "%s/%s/",
 							spf->r->worktree,
 							ce->name);
-			if (S_ISGITLINK(ce->ce_mode) &&
+			if (S_ISBUTLINK(ce->ce_mode) &&
 			    !is_empty_dir(empty_submodule_path.buf)) {
 				spf->result = 1;
 				strbuf_addf(err,
@@ -2132,7 +2132,7 @@ int submodule_move_head(const char *path,
 		if (old_head) {
 			if (!submodule_uses_butfile(path))
 				absorb_but_dir_into_superproject(path,
-					ABSORB_GITDIR_RECURSE_SUBMODULES);
+					ABSORB_BUTDIR_RECURSE_SUBMODULES);
 		} else {
 			struct strbuf butdir = STRBUF_INIT;
 			submodule_name_to_butdir(&butdir, the_repository,
@@ -2321,13 +2321,13 @@ void absorb_but_dir_into_superproject(const char *path,
 		const struct submodule *sub;
 		struct strbuf sub_butdir = STRBUF_INIT;
 
-		if (err_code == READ_GITFILE_ERR_STAT_FAILED) {
+		if (err_code == READ_BUTFILE_ERR_STAT_FAILED) {
 			/* unpopulated as expected */
 			strbuf_release(&butdir);
 			return;
 		}
 
-		if (err_code != READ_GITFILE_ERR_NOT_A_REPO)
+		if (err_code != READ_BUTFILE_ERR_NOT_A_REPO)
 			/* We don't know what broke here. */
 			read_butfile_error_die(err_code, path, NULL);
 
@@ -2357,11 +2357,11 @@ void absorb_but_dir_into_superproject(const char *path,
 	}
 	strbuf_release(&butdir);
 
-	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
+	if (flags & ABSORB_BUTDIR_RECURSE_SUBMODULES) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		struct strbuf sb = STRBUF_INIT;
 
-		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
+		if (flags & ~ABSORB_BUTDIR_RECURSE_SUBMODULES)
 			BUG("we don't know how to pass the flags down?");
 
 		strbuf_addstr(&sb, get_super_prefix_or_empty());

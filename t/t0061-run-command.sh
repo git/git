@@ -170,14 +170,14 @@ test_expect_success 'run_command outputs ' '
 test_trace () {
 	expect="$1"
 	shift
-	GIT_TRACE=1 test-tool run-command "$@" run-command true 2>&1 >/dev/null | \
+	BUT_TRACE=1 test-tool run-command "$@" run-command true 2>&1 >/dev/null | \
 		sed -e 's/.* run_command: //' -e '/trace: .*/d' \
 			-e '/RUNTIME_PREFIX requested/d' >actual &&
 	echo "$expect true" >expect &&
 	test_cmp expect actual
 }
 
-test_expect_success 'GIT_TRACE with environment variables' '
+test_expect_success 'BUT_TRACE with environment variables' '
 	test_trace "abc=1 def=2" env abc=1 env def=2 &&
 	test_trace "abc=2" env abc env abc=1 env abc=2 &&
 	test_trace "abc=2" env abc env abc=2 &&
@@ -223,11 +223,11 @@ test_expect_success MINGW 'can spawn .bat with argv[0] containing spaces' '
 	echo "echo %* >>out" >"$bat" &&
 
 	# Ask but to invoke .bat; clone will fail due to fake SSH helper
-	test_must_fail env GIT_SSH="$bat" but clone myhost:src ssh-clone &&
+	test_must_fail env BUT_SSH="$bat" but clone myhost:src ssh-clone &&
 
 	# Spawning .bat can fail if there are two quoted cmd.exe arguments.
 	# .bat itself is first (due to spaces in name), so just one more is
-	# needed to verify. GIT_SSH will invoke .bat multiple times:
+	# needed to verify. BUT_SSH will invoke .bat multiple times:
 	# 1) -G myhost
 	# 2) myhost "but-upload-pack src"
 	# First invocation will always succeed. Test the second one.

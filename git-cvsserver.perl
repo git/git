@@ -26,9 +26,9 @@ use File::Path qw/rmtree/;
 use File::Basename;
 use Getopt::Long qw(:config require_order no_ignore_case);
 
-my $VERSION = '@@GIT_VERSION@@';
+my $VERSION = '@@BUT_VERSION@@';
 
-my $log = GITCVS::log->new();
+my $log = BUTCVS::log->new();
 my $cfg;
 
 my $DATE_LIST = {
@@ -109,7 +109,7 @@ $log->info("--------------- STARTING -----------------");
 my $usage =
     "usage: but cvsserver [options] [pserver|server] [<directory> ...]\n".
     "    --base-path <path>  : Prepend to requested CVSROOT\n".
-    "                          Can be read from GIT_CVSSERVER_BASE_PATH\n".
+    "                          Can be read from BUT_CVSSERVER_BASE_PATH\n".
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
     "    --export-all        : Don't check for butcvs.enabled in config\n".
     "    --version, -V       : Print version information and exit\n".
@@ -118,7 +118,7 @@ my $usage =
     "<directory> ... is a list of allowed directories. If no directories\n".
     "are given, all are allowed. This is an additional restriction, butcvs\n".
     "access still needs to be enabled by the butcvs.enabled config option.\n".
-    "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
+    "Alternately, one directory may be specified in BUT_CVSSERVER_ROOT.\n";
 
 my @opts = ( 'h|H', 'version|V',
 	     'base-path=s', 'strict-paths', 'export-all' );
@@ -156,19 +156,19 @@ if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
 }
 
 # Environment handling for running under but-shell
-if (exists $ENV{GIT_CVSSERVER_BASE_PATH}) {
+if (exists $ENV{BUT_CVSSERVER_BASE_PATH}) {
     if ($state->{'base-path'}) {
 	die "Cannot specify base path both ways.\n";
     }
-    my $base_path = $ENV{GIT_CVSSERVER_BASE_PATH};
+    my $base_path = $ENV{BUT_CVSSERVER_BASE_PATH};
     $state->{'base-path'} = $base_path;
     $log->debug("Picked up base path '$base_path' from environment.\n");
 }
-if (exists $ENV{GIT_CVSSERVER_ROOT}) {
+if (exists $ENV{BUT_CVSSERVER_ROOT}) {
     if (@{$state->{allowed_roots}}) {
 	die "Cannot specify roots both ways: @ARGV\n";
     }
-    my $allowed_root = $ENV{GIT_CVSSERVER_ROOT};
+    my $allowed_root = $ENV{BUT_CVSSERVER_ROOT};
     $state->{allowed_roots} = [ $allowed_root ];
     $log->debug("Picked up allowed root '$allowed_root' from environment.\n");
 }
@@ -324,7 +324,7 @@ sub req_Root
 
     $state->{CVSROOT} = $cvsroot;
 
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    $ENV{BUT_DIR} = $state->{CVSROOT} . "/";
 
     if (@{$state->{allowed_roots}}) {
 	my $allowed = 0;
@@ -332,28 +332,28 @@ sub req_Root
 	    next unless $dir =~ m#^/#;
 	    $dir =~ s#/+$##;
 	    if ($state->{'strict-paths'}) {
-		if ($ENV{GIT_DIR} =~ m#^\Q$dir\E/?$#) {
+		if ($ENV{BUT_DIR} =~ m#^\Q$dir\E/?$#) {
 		    $allowed = 1;
 		    last;
 		}
-	    } elsif ($ENV{GIT_DIR} =~ m#^\Q$dir\E(/?$|/)#) {
+	    } elsif ($ENV{BUT_DIR} =~ m#^\Q$dir\E(/?$|/)#) {
 		$allowed = 1;
 		last;
 	    }
 	}
 
 	unless ($allowed) {
-	    print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+	    print "E $ENV{BUT_DIR} does not seem to be a valid BUT repository\n";
 	    print "E \n";
-	    print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+	    print "error 1 $ENV{BUT_DIR} is not a valid repository\n";
 	    return 0;
 	}
     }
 
-    unless (-d $ENV{GIT_DIR} && -e $ENV{GIT_DIR}.'HEAD') {
-       print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+    unless (-d $ENV{BUT_DIR} && -e $ENV{BUT_DIR}.'HEAD') {
+       print "E $ENV{BUT_DIR} does not seem to be a valid BUT repository\n";
        print "E \n";
-       print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+       print "error 1 $ENV{BUT_DIR} is not a valid repository\n";
        return 0;
     }
 
@@ -378,10 +378,10 @@ sub req_Root
 		   || $cfg->{butcvs}{enabled});
     unless ($state->{'export-all'} ||
 	    ($enabled && $enabled =~ /^\s*(1|true|yes)\s*$/i)) {
-        print "E GITCVS emulation needs to be enabled on this repo\n";
+        print "E BUTCVS emulation needs to be enabled on this repo\n";
         print "E the repo config file needs a [butcvs] section added, and the parameter 'enabled' set to 1\n";
         print "E \n";
-        print "error 1 GITCVS emulation disabled\n";
+        print "error 1 BUTCVS emulation disabled\n";
         return 0;
     }
 
@@ -606,7 +606,7 @@ sub req_add
 
     argsplit("add");
 
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     my $addcount = 0;
@@ -727,7 +727,7 @@ sub req_remove
     argsplit("remove");
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     #$log->debug("add state : " . Dumper($state));
@@ -971,10 +971,10 @@ sub req_co
 
     $log->info("Checking out module '$module' ($state->{CVSROOT}) to '$checkout_path'");
 
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+    $ENV{BUT_DIR} = $state->{CVSROOT} . "/";
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $module, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $module, $log);
     $updater->update();
 
     my $headHash;
@@ -1198,7 +1198,7 @@ sub req_update
 
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
 
     $updater->update();
 
@@ -1542,7 +1542,7 @@ sub req_ci
     }
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     my @cummittedfiles = ();
@@ -1721,7 +1721,7 @@ sub req_ci
     }
 
 	### Emulate but-receive-pack by running hooks/update
-	my @hook = ( $ENV{GIT_DIR}.'hooks/update', $branchRef,
+	my @hook = ( $ENV{BUT_DIR}.'hooks/update', $branchRef,
 			$parenthash, $cummithash );
 	if( -x $hook[0] ) {
 		unless( system( @hook ) == 0 )
@@ -1743,7 +1743,7 @@ sub req_ci
 	}
 
 	### Emulate but-receive-pack by running hooks/post-receive
-	my $hook = $ENV{GIT_DIR}.'hooks/post-receive';
+	my $hook = $ENV{BUT_DIR}.'hooks/post-receive';
 	if( -x $hook ) {
 		open(my $pipe, "| $hook") || die "can't fork $!";
 
@@ -1757,7 +1757,7 @@ sub req_ci
     $updater->update();
 
 	### Then hooks/post-update
-	$hook = $ENV{GIT_DIR}.'hooks/post-update';
+	$hook = $ENV{BUT_DIR}.'hooks/post-update';
 	if (-x $hook) {
 		system($hook, $branchRef);
 	}
@@ -1811,7 +1811,7 @@ sub req_status
 
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater;
-    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     # if no files were specified, we need to work out what files we should
@@ -1990,7 +1990,7 @@ sub req_diff
 
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater;
-    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     # if no files were specified, we need to work out what files we should
@@ -2230,7 +2230,7 @@ sub req_log
 
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater;
-    $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     # if no files were specified, we need to work out what files we
@@ -2299,7 +2299,7 @@ sub req_annotate
     #$log->debug("status state : " . Dumper($state));
 
     # Grab a handle to the SQLite db and do any necessary updates
-    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    my $updater = BUTCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing annotate on ...
@@ -2308,7 +2308,7 @@ sub req_annotate
     # we'll need a temporary checkout dir
     setupWorkTree();
 
-    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$work->{workDir}', index file is '$ENV{GIT_INDEX_FILE}'");
+    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$work->{workDir}', index file is '$ENV{BUT_INDEX_FILE}'");
 
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
@@ -2332,10 +2332,10 @@ sub req_annotate
 	system("but", "read-tree", $lastseenin);
 	unless ($? == 0)
 	{
-	    print "E error running but-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
+	    print "E error running but-read-tree $lastseenin $ENV{BUT_INDEX_FILE} $!\n";
 	    return;
 	}
-	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with cummit $lastseenin - exit status $?");
+	$log->info("Created index '$ENV{BUT_INDEX_FILE}' with cummit $lastseenin - exit status $?");
 
         # do a checkout of the file
         system('but', 'checkout-index', '-f', '-u', $filename);
@@ -2966,7 +2966,7 @@ sub validateGitDir
         cleanupWorkTree();
         exit;
     }
-    if( $ENV{GIT_DIR} ne ($state->{CVSROOT} . '/') )
+    if( $ENV{BUT_DIR} ne ($state->{CVSROOT} . '/') )
     {
         print "error 1 Internally inconsistent CVSROOT\n";
         cleanupWorkTree();
@@ -3001,10 +3001,10 @@ sub setupWorkTree
     chdir $work->{workDir} or
         die "Unable to chdir to $work->{workDir}\n";
 
-    $log->info("Setting up GIT_WORK_TREE as '.' in '$work->{workDir}', index file is '$work->{index}'");
+    $log->info("Setting up BUT_WORK_TREE as '.' in '$work->{workDir}', index file is '$work->{index}'");
 
-    $ENV{GIT_WORK_TREE} = ".";
-    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $ENV{BUT_WORK_TREE} = ".";
+    $ENV{BUT_INDEX_FILE} = $work->{index};
     $work->{state} = 2;
 
     if($ver)
@@ -3059,8 +3059,8 @@ sub ensureWorkTree
         (undef, $work->{index}) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
     }
 
-    $ENV{GIT_WORK_TREE} = ".";
-    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $ENV{BUT_WORK_TREE} = ".";
+    $ENV{BUT_INDEX_FILE} = $work->{index};
     $work->{state} = 1;
 
     system("but","read-tree",$ver);
@@ -3427,7 +3427,7 @@ sub safe_pipe_capture {
 }
 
 
-package GITCVS::log;
+package BUTCVS::log;
 
 ####
 #### Copyright The Open University UK - 2006.
@@ -3442,7 +3442,7 @@ use warnings;
 
 =head1 NAME
 
-GITCVS::log
+BUTCVS::log
 
 =head1 DESCRIPTION
 
@@ -3594,7 +3594,7 @@ sub DESTROY
     }
 }
 
-package GITCVS::updater;
+package BUTCVS::updater;
 
 ####
 #### Copyright The Open University UK - 2006.
@@ -3612,10 +3612,10 @@ our $_use_fsync;
 # n.b. consider using Git.pm
 sub use_fsync {
     if (!defined($_use_fsync)) {
-        my $x = $ENV{GIT_TEST_FSYNC};
+        my $x = $ENV{BUT_TEST_FSYNC};
         if (defined $x) {
-            local $ENV{GIT_CONFIG};
-            delete $ENV{GIT_CONFIG};
+            local $ENV{BUT_CONFIG};
+            delete $ENV{BUT_CONFIG};
             my $v = ::safe_pipe_capture('but', '-c', "test.fsync=$x",
                                         qw(config --type=bool test.fsync));
             $_use_fsync = defined($v) ? ($v eq "true\n") : 1;
@@ -3834,7 +3834,7 @@ sub update
     my $self = shift;
 
     # first lets get the cummit list
-    $ENV{GIT_DIR} = $self->{but_path};
+    $ENV{BUT_DIR} = $self->{but_path};
 
     my $commitsha1 = ::safe_pipe_capture('but', 'rev-parse', $self->{module});
     chomp $commitsha1;
@@ -3897,7 +3897,7 @@ sub update
 
     foreach my $cummit ( @cummits )
     {
-        $self->{log}->debug("GITCVS::updater - Processing cummit $cummit->{hash} (" . (++$cummitcount) . " of $cummittotal)");
+        $self->{log}->debug("BUTCVS::updater - Processing cummit $cummit->{hash} (" . (++$cummitcount) . " of $cummittotal)");
         if (defined $lastpicked)
         {
             if (!in_array($lastpicked, @{$cummit->{parents}}))
@@ -3933,10 +3933,10 @@ sub update
                     if ($base) {
                         my @merged;
                         # print "want to log between  $base $parent \n";
-                        open(GITLOG, '-|', 'but', 'log', '--pretty=medium', "$base..$parent")
+                        open(BUTLOG, '-|', 'but', 'log', '--pretty=medium', "$base..$parent")
 			  or die "Cannot call but-log: $!";
                         my $mergedhash;
-                        while (<GITLOG>) {
+                        while (<BUTLOG>) {
                             chomp;
                             if (!defined $mergedhash) {
                                 if (m/^cummit\s+(.+)$/) {
@@ -3955,7 +3955,7 @@ sub update
                                 }
                             }
                         }
-                        close GITLOG;
+                        close BUTLOG;
                         if (@merged) {
                             $cummit->{mergemsg} = $cummit->{message};
                             $cummit->{mergemsg} .= "\nSummary of merged cummits:\n\n";

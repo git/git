@@ -2438,8 +2438,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Benutzername konnte nicht bestimmt werden:"
 
 #: lib/cummit.tcl:88
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "Ungültiger Wert von GIT_CUMMITTER_INDENT:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "Ungültiger Wert von BUT_CUMMITTER_INDENT:"
 
 #: lib/cummit.tcl:138
 #, tcl-format

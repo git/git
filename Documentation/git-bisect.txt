@@ -505,6 +505,6 @@ SEE ALSO
 link:but-bisect-lk2009.html[Fighting regressions with but bisect],
 linkbut:but-blame[1].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

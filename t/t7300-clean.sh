@@ -755,7 +755,7 @@ test_expect_success 'avoid traversing into ignored directories' '
 		mkdir -p untracked/subdir/with/a &&
 		>untracked/subdir/with/a/random-file.txt &&
 
-		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+		BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 		but clean -ffdxn -e untracked
 	) &&
 

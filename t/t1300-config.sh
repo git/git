@@ -5,8 +5,8 @@
 
 test_description='Test but config in different settings'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -486,17 +486,17 @@ cat > expect << EOF
 ein.bahn=strasse
 EOF
 
-test_expect_success 'alternative GIT_CONFIG' '
-	GIT_CONFIG=other-config but config --list >output &&
+test_expect_success 'alternative BUT_CONFIG' '
+	BUT_CONFIG=other-config but config --list >output &&
 	test_cmp expect output
 '
 
-test_expect_success 'alternative GIT_CONFIG (--file)' '
+test_expect_success 'alternative BUT_CONFIG (--file)' '
 	but config --file other-config --list >output &&
 	test_cmp expect output
 '
 
-test_expect_success 'alternative GIT_CONFIG (--file=-)' '
+test_expect_success 'alternative BUT_CONFIG (--file=-)' '
 	but config --file - --list <other-config >output &&
 	test_cmp expect output
 '
@@ -1294,14 +1294,14 @@ do
 done
 
 test_expect_success 'but -c is not confused by empty environment' '
-	GIT_CONFIG_PARAMETERS="" but -c x.one=1 config --list
+	BUT_CONFIG_PARAMETERS="" but -c x.one=1 config --list
 '
 
-test_expect_success 'GIT_CONFIG_PARAMETERS handles old-style entries' '
+test_expect_success 'BUT_CONFIG_PARAMETERS handles old-style entries' '
 	v="${SQ}key.one=foo${SQ}" &&
 	v="$v  ${SQ}key.two=bar${SQ}" &&
 	v="$v ${SQ}key.ambiguous=section.whatever=value${SQ}" &&
-	GIT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
+	BUT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
 	cat >expect <<-EOF &&
 	key.one foo
 	key.two bar
@@ -1310,11 +1310,11 @@ test_expect_success 'GIT_CONFIG_PARAMETERS handles old-style entries' '
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_CONFIG_PARAMETERS handles new-style entries' '
+test_expect_success 'BUT_CONFIG_PARAMETERS handles new-style entries' '
 	v="${SQ}key.one${SQ}=${SQ}foo${SQ}" &&
 	v="$v  ${SQ}key.two${SQ}=${SQ}bar${SQ}" &&
 	v="$v ${SQ}key.ambiguous=section.whatever${SQ}=${SQ}value${SQ}" &&
-	GIT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
+	BUT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
 	cat >expect <<-EOF &&
 	key.one foo
 	key.two bar
@@ -1328,7 +1328,7 @@ test_expect_success 'old and new-style entries can mix' '
 	v="$v ${SQ}key.newone${SQ}=${SQ}newfoo${SQ}" &&
 	v="$v ${SQ}key.oldtwo=oldbar${SQ}" &&
 	v="$v ${SQ}key.newtwo${SQ}=${SQ}newbar${SQ}" &&
-	GIT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
+	BUT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
 	cat >expect <<-EOF &&
 	key.oldone oldfoo
 	key.newone newfoo
@@ -1341,7 +1341,7 @@ test_expect_success 'old and new-style entries can mix' '
 test_expect_success 'old and new bools with ambiguous subsection' '
 	v="${SQ}key.with=equals.oldbool${SQ}" &&
 	v="$v ${SQ}key.with=equals.newbool${SQ}=" &&
-	GIT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
+	BUT_CONFIG_PARAMETERS=$v but config --get-regexp "key.*" >actual &&
 	cat >expect <<-EOF &&
 	key.with equals.oldbool
 	key.with=equals.newbool
@@ -1349,12 +1349,12 @@ test_expect_success 'old and new bools with ambiguous subsection' '
 	test_cmp expect actual
 '
 
-test_expect_success 'detect bogus GIT_CONFIG_PARAMETERS' '
+test_expect_success 'detect bogus BUT_CONFIG_PARAMETERS' '
 	cat >expect <<-\EOF &&
 	env.one one
 	env.two two
 	EOF
-	GIT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ} ${SQ}env.two=two${SQ}" \
+	BUT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ} ${SQ}env.two=two${SQ}" \
 		but config --get-regexp "env.*" >actual &&
 	test_cmp expect actual &&
 
@@ -1362,12 +1362,12 @@ test_expect_success 'detect bogus GIT_CONFIG_PARAMETERS' '
 	env.one one${SQ}
 	env.two two
 	EOF
-	GIT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ}\\$SQ$SQ$SQ ${SQ}env.two=two${SQ}" \
+	BUT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ}\\$SQ$SQ$SQ ${SQ}env.two=two${SQ}" \
 		but config --get-regexp "env.*" >actual &&
 	test_cmp expect actual &&
 
 	test_must_fail env \
-		GIT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ}\\$SQ ${SQ}env.two=two${SQ}" \
+		BUT_CONFIG_PARAMETERS="${SQ}env.one=one${SQ}\\$SQ ${SQ}env.two=two${SQ}" \
 		but config --get-regexp "env.*"
 '
 
@@ -1441,9 +1441,9 @@ test_expect_success '--config-env handles keys with equals' '
 '
 
 test_expect_success 'but config handles environment config pairs' '
-	GIT_CONFIG_COUNT=2 \
-		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="foo" \
-		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="bar" \
+	BUT_CONFIG_COUNT=2 \
+		BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="foo" \
+		BUT_CONFIG_KEY_1="pair.two" BUT_CONFIG_VALUE_1="bar" \
 		but config --get-regexp "pair.*" >actual &&
 	cat >expect <<-EOF &&
 	pair.one foo
@@ -1453,22 +1453,22 @@ test_expect_success 'but config handles environment config pairs' '
 '
 
 test_expect_success 'but config ignores pairs without count' '
-	test_must_fail env GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+	test_must_fail env BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="value" \
 		but config pair.one 2>error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'but config ignores pairs with zero count' '
 	test_must_fail env \
-		GIT_CONFIG_COUNT=0 \
-		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		BUT_CONFIG_COUNT=0 \
+		BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="value" \
 		but config pair.one
 '
 
 test_expect_success 'but config ignores pairs exceeding count' '
-	GIT_CONFIG_COUNT=1 \
-		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="value" \
+	BUT_CONFIG_COUNT=1 \
+		BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="value" \
+		BUT_CONFIG_KEY_1="pair.two" BUT_CONFIG_VALUE_1="value" \
 		but config --get-regexp "pair.*" >actual &&
 	cat >expect <<-EOF &&
 	pair.one value
@@ -1478,43 +1478,43 @@ test_expect_success 'but config ignores pairs exceeding count' '
 
 test_expect_success 'but config ignores pairs with zero count' '
 	test_must_fail env \
-		GIT_CONFIG_COUNT=0 GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		BUT_CONFIG_COUNT=0 BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="value" \
 		but config pair.one >error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'but config ignores pairs with empty count' '
 	test_must_fail env \
-		GIT_CONFIG_COUNT= GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
+		BUT_CONFIG_COUNT= BUT_CONFIG_KEY_0="pair.one" BUT_CONFIG_VALUE_0="value" \
 		but config pair.one >error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'but config fails with invalid count' '
-	test_must_fail env GIT_CONFIG_COUNT=10a but config --list 2>error &&
+	test_must_fail env BUT_CONFIG_COUNT=10a but config --list 2>error &&
 	test_i18ngrep "bogus count" error &&
-	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 but config --list 2>error &&
+	test_must_fail env BUT_CONFIG_COUNT=9999999999999999 but config --list 2>error &&
 	test_i18ngrep "too many entries" error
 '
 
 test_expect_success 'but config fails with missing config key' '
-	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_VALUE_0="value" \
+	test_must_fail env BUT_CONFIG_COUNT=1 BUT_CONFIG_VALUE_0="value" \
 		but config --list 2>error &&
 	test_i18ngrep "missing config key" error
 '
 
 test_expect_success 'but config fails with missing config value' '
-	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="pair.one" \
+	test_must_fail env BUT_CONFIG_COUNT=1 BUT_CONFIG_KEY_0="pair.one" \
 		but config --list 2>error &&
 	test_i18ngrep "missing config value" error
 '
 
 test_expect_success 'but config fails with invalid config pair key' '
-	test_must_fail env GIT_CONFIG_COUNT=1 \
-		GIT_CONFIG_KEY_0= GIT_CONFIG_VALUE_0=value \
+	test_must_fail env BUT_CONFIG_COUNT=1 \
+		BUT_CONFIG_KEY_0= BUT_CONFIG_VALUE_0=value \
 		but config --list &&
-	test_must_fail env GIT_CONFIG_COUNT=1 \
-		GIT_CONFIG_KEY_0=missing-section GIT_CONFIG_VALUE_0=value \
+	test_must_fail env BUT_CONFIG_COUNT=1 \
+		BUT_CONFIG_KEY_0=missing-section BUT_CONFIG_VALUE_0=value \
 		but config --list
 '
 
@@ -1524,7 +1524,7 @@ test_expect_success 'environment overrides config file' '
 	[pair]
 	one = value
 	EOF
-	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=override \
+	BUT_CONFIG_COUNT=1 BUT_CONFIG_KEY_0=pair.one BUT_CONFIG_VALUE_0=override \
 		but config pair.one >actual &&
 	cat >expect <<-EOF &&
 	override
@@ -1532,9 +1532,9 @@ test_expect_success 'environment overrides config file' '
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_CONFIG_PARAMETERS overrides environment config' '
-	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=value \
-		GIT_CONFIG_PARAMETERS="${SQ}pair.one=override${SQ}" \
+test_expect_success 'BUT_CONFIG_PARAMETERS overrides environment config' '
+	BUT_CONFIG_COUNT=1 BUT_CONFIG_KEY_0=pair.one BUT_CONFIG_VALUE_0=value \
+		BUT_CONFIG_PARAMETERS="${SQ}pair.one=override${SQ}" \
 		but config pair.one >actual &&
 	cat >expect <<-EOF &&
 	override
@@ -1543,7 +1543,7 @@ test_expect_success 'GIT_CONFIG_PARAMETERS overrides environment config' '
 '
 
 test_expect_success 'command line overrides environment config' '
-	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=pair.one GIT_CONFIG_VALUE_0=value \
+	BUT_CONFIG_COUNT=1 BUT_CONFIG_KEY_0=pair.one BUT_CONFIG_VALUE_0=value \
 		but -c pair.one=override config pair.one >actual &&
 	cat >expect <<-EOF &&
 	override
@@ -1554,7 +1554,7 @@ test_expect_success 'command line overrides environment config' '
 test_expect_success 'but config --edit works' '
 	but config -f tmp test.value no &&
 	echo test.value=yes >expect &&
-	GIT_EDITOR="echo [test]value=yes >" but config -f tmp --edit &&
+	BUT_EDITOR="echo [test]value=yes >" but config -f tmp --edit &&
 	but config -f tmp --list >actual &&
 	test_cmp expect actual
 '
@@ -1899,7 +1899,7 @@ test_expect_success '--show-origin with --list' '
 	command line:	user.environ=true
 	command line:	user.cmdline=true
 	EOF
-	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.environ GIT_CONFIG_VALUE_0=true\
+	BUT_CONFIG_COUNT=1 BUT_CONFIG_KEY_0=user.environ BUT_CONFIG_VALUE_0=true\
 		but -c user.cmdline=true config --list --show-origin >output &&
 	test_cmp expect output
 '
@@ -2111,35 +2111,35 @@ test_expect_success 'override global and system config' '
 	global	global.config=true
 	local	local.config=true
 	EOF
-	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=custom-system-config GIT_CONFIG_GLOBAL=custom-global-config \
+	BUT_CONFIG_NOSYSTEM=false BUT_CONFIG_SYSTEM=custom-system-config BUT_CONFIG_GLOBAL=custom-global-config \
 		but config --show-scope --list >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-EOF &&
 	local	local.config=true
 	EOF
-	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_GLOBAL=/dev/null \
+	BUT_CONFIG_NOSYSTEM=false BUT_CONFIG_SYSTEM=/dev/null BUT_CONFIG_GLOBAL=/dev/null \
 		but config --show-scope --list >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'override global and system config with missing file' '
-	test_must_fail env GIT_CONFIG_GLOBAL=does-not-exist GIT_CONFIG_SYSTEM=/dev/null but config --global --list &&
-	test_must_fail env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=does-not-exist but config --system --list &&
-	GIT_CONFIG_GLOBAL=does-not-exist GIT_CONFIG_SYSTEM=does-not-exist but version
+	test_must_fail env BUT_CONFIG_GLOBAL=does-not-exist BUT_CONFIG_SYSTEM=/dev/null but config --global --list &&
+	test_must_fail env BUT_CONFIG_GLOBAL=/dev/null BUT_CONFIG_SYSTEM=does-not-exist but config --system --list &&
+	BUT_CONFIG_GLOBAL=does-not-exist BUT_CONFIG_SYSTEM=does-not-exist but version
 '
 
-test_expect_success 'system override has no effect with GIT_CONFIG_NOSYSTEM' '
+test_expect_success 'system override has no effect with BUT_CONFIG_NOSYSTEM' '
 	# `but config --system` has different semantics compared to other
-	# commands as it ignores GIT_CONFIG_NOSYSTEM. We thus test whether the
+	# commands as it ignores BUT_CONFIG_NOSYSTEM. We thus test whether the
 	# variable has an effect via a different proxy.
 	cat >alias-config <<-EOF &&
 	[alias]
 		hello-world = !echo "hello world"
 	EOF
-	test_must_fail env GIT_CONFIG_NOSYSTEM=true GIT_CONFIG_SYSTEM=alias-config \
+	test_must_fail env BUT_CONFIG_NOSYSTEM=true BUT_CONFIG_SYSTEM=alias-config \
 		but hello-world &&
-	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=alias-config \
+	BUT_CONFIG_NOSYSTEM=false BUT_CONFIG_SYSTEM=alias-config \
 		but hello-world >actual &&
 	echo "hello world" >expect &&
 	test_cmp expect actual
@@ -2151,10 +2151,10 @@ test_expect_success 'write to overridden global and system config' '
 	key = value
 EOF
 
-	GIT_CONFIG_GLOBAL=write-to-global but config --global config.key value &&
+	BUT_CONFIG_GLOBAL=write-to-global but config --global config.key value &&
 	test_cmp expect write-to-global &&
 
-	GIT_CONFIG_SYSTEM=write-to-system but config --system config.key value &&
+	BUT_CONFIG_SYSTEM=write-to-system but config --system config.key value &&
 	test_cmp expect write-to-system
 '
 

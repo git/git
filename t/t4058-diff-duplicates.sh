@@ -145,7 +145,7 @@ test_expect_failure 'reset --hard does not segfault' '
 
 test_expect_failure 'but diff HEAD does not segfault' '
 	but checkout base &&
-	GIT_TEST_CHECK_CACHE_TREE=false &&
+	BUT_TEST_CHECK_CACHE_TREE=false &&
 	but reset --hard &&
 	test_might_fail but diff HEAD
 '
@@ -177,7 +177,7 @@ test_expect_failure 'clean status, switch branches, status still clean' '
 
 test_expect_success 'switch to base branch and force status to be clean' '
 	but checkout base &&
-	GIT_TEST_CHECK_CACHE_TREE=false but reset --hard &&
+	BUT_TEST_CHECK_CACHE_TREE=false but reset --hard &&
 	but status --porcelain -uno >actual &&
 	test_must_be_empty actual
 '

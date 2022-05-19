@@ -8,8 +8,8 @@ test_description='but-cvsserver access
 tests read access to a but repository with the
 cvs CLI client via but-cvsserver server'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -58,16 +58,16 @@ test_expect_success 'setup' '
   but fetch secondroot main &&
   but merge --allow-unrelated-histories FETCH_HEAD &&
   but clone -q --bare "$WORKDIR/.but" "$SERVERDIR" >/dev/null 2>&1 &&
-  GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
-  GIT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log" &&
-  GIT_DIR="$SERVERDIR" but config butcvs.authdb "$SERVERDIR/auth.db" &&
+  BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+  BUT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log" &&
+  BUT_DIR="$SERVERDIR" but config butcvs.authdb "$SERVERDIR/auth.db" &&
   echo "cvsuser:$PWDHASH" >"$SERVERDIR/auth.db"
 '
 
 # note that cvs doesn't accept absolute pathnames
 # as argument to co -d
 test_expect_success 'basic checkout' \
-  'GIT_CONFIG="$but_config" cvs -Q co -d cvswork main &&
+  'BUT_CONFIG="$but_config" cvs -Q co -d cvswork main &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | head -n 1))" = "empty/1.1/" &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5 | sed -ne \$p))" = "secondrootfile/1.1/"'
 
@@ -215,7 +215,7 @@ test_expect_success 'req_Root failure (base-path)' '
     but-cvsserver --strict-paths --base-path "$WORKDIR" pserver "$SERVERDIR" >log 2>&1
 '
 
-GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled false || exit 1
+BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled false || exit 1
 
 test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | but-cvsserver --export-all pserver "$WORKDIR" >log 2>&1 &&
@@ -228,60 +228,60 @@ test_expect_success 'req_Root (everything together)' \
   'cat request-base | but-cvsserver --export-all --strict-paths --base-path "$WORKDIR/" pserver "$SERVERDIR" >log 2>&1 &&
    sed -ne \$p log | grep "^I LOVE YOU\$"'
 
-GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true || exit 1
+BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled true || exit 1
 
 #--------------
 # CONFIG TESTS
 #--------------
 
 test_expect_success 'butcvs.enabled = false' \
-  'GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled false &&
-   if GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
+  'BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled false &&
+   if BUT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
    then
      echo unexpected cvs success
      false
    else
      true
    fi &&
-   grep "GITCVS emulation disabled" cvs.log &&
+   grep "BUTCVS emulation disabled" cvs.log &&
    test ! -d cvswork2'
 
 rm -fr cvswork2
 test_expect_success 'butcvs.ext.enabled = true' \
-  'GIT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
-   GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled false &&
-   GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
+  'BUT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
+   BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled false &&
+   BUT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2'
 
 rm -fr cvswork2
 test_expect_success 'butcvs.ext.enabled = false' \
-  'GIT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled false &&
-   GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
-   if GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
+  'BUT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled false &&
+   BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+   if BUT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1
    then
      echo unexpected cvs success
      false
    else
      true
    fi &&
-   grep "GITCVS emulation disabled" cvs.log &&
+   grep "BUTCVS emulation disabled" cvs.log &&
    test ! -d cvswork2'
 
 rm -fr cvswork2
 test_expect_success 'butcvs.dbname' \
-  'GIT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
-   GIT_DIR="$SERVERDIR" but config butcvs.dbname %Gbutcvs.%a.%m.sqlite &&
-   GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
+  'BUT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
+   BUT_DIR="$SERVERDIR" but config butcvs.dbname %Gbutcvs.%a.%m.sqlite &&
+   BUT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2 &&
    test -f "$SERVERDIR/butcvs.ext.main.sqlite" &&
    cmp "$SERVERDIR/butcvs.main.sqlite" "$SERVERDIR/butcvs.ext.main.sqlite"'
 
 rm -fr cvswork2
 test_expect_success 'butcvs.ext.dbname' \
-  'GIT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
-   GIT_DIR="$SERVERDIR" but config butcvs.ext.dbname %Gbutcvs1.%a.%m.sqlite &&
-   GIT_DIR="$SERVERDIR" but config butcvs.dbname %Gbutcvs2.%a.%m.sqlite &&
-   GIT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
+  'BUT_DIR="$SERVERDIR" but config --bool butcvs.ext.enabled true &&
+   BUT_DIR="$SERVERDIR" but config butcvs.ext.dbname %Gbutcvs1.%a.%m.sqlite &&
+   BUT_DIR="$SERVERDIR" but config butcvs.dbname %Gbutcvs2.%a.%m.sqlite &&
+   BUT_CONFIG="$but_config" cvs -Q co -d cvswork2 main >cvs.log 2>&1 &&
    test_cmp cvswork cvswork2 &&
    test -f "$SERVERDIR/butcvs1.ext.main.sqlite" &&
    test ! -f "$SERVERDIR/butcvs2.ext.main.sqlite" &&
@@ -295,8 +295,8 @@ test_expect_success 'butcvs.ext.dbname' \
 rm -fr "$SERVERDIR"
 cd "$WORKDIR" &&
 but clone -q --bare "$WORKDIR/.but" "$SERVERDIR" >/dev/null 2>&1 &&
-GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
-GIT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log" ||
+BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+BUT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log" ||
 exit 1
 
 test_expect_success 'cvs update (create new file)' \
@@ -305,7 +305,7 @@ test_expect_success 'cvs update (create new file)' \
    but cummit -q -m "Add testfile1" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.1/" &&
    test_cmp testfile1 ../testfile1'
 
@@ -316,7 +316,7 @@ test_expect_success 'cvs update (update existing file)' \
    but cummit -q -m "Append to testfile1" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.2/" &&
    test_cmp testfile1 ../testfile1'
 
@@ -329,7 +329,7 @@ test_expect_failure "cvs update w/o -d doesn't create subdir (TODO)" '
    but cummit -q -m "Single Subdirectory" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test ! -d test
 '
 
@@ -343,7 +343,7 @@ test_expect_success 'cvs update (subdirectories)' \
    but cummit -q -m "deep sub directory structure" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update -d &&
+   BUT_CONFIG="$but_config" cvs -Q update -d &&
    (for dir in A A/B A/B/C A/D E; do
       filename="file_in_$(echo $dir|sed -e "s#/# #g")" &&
       if test "$(echo $(grep -v ^D $dir/CVS/Entries|cut -d/ -f2,3,5))" = "$filename/1.1/" &&
@@ -360,7 +360,7 @@ test_expect_success 'cvs update (delete file)' \
    but cummit -q -m "Remove testfile1" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test -z "$(grep testfile1 CVS/Entries)" &&
    test ! -f testfile1'
 
@@ -371,7 +371,7 @@ test_expect_success 'cvs update (re-add deleted file)' \
    but cummit -q -m "Re-Add testfile1" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.4/" &&
    test_cmp testfile1 ../testfile1'
 
@@ -388,7 +388,7 @@ test_expect_success 'cvs update (merge)' \
    but cummit -q -m "Merge test (pre-merge)" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test "$(echo $(grep merge CVS/Entries|cut -d/ -f2,3,5))" = "merge/1.1/" &&
    test_cmp merge ../merge &&
    ( echo Line 0 && cat merge ) >merge.tmp &&
@@ -400,7 +400,7 @@ test_expect_success 'cvs update (merge)' \
    but push butcvs.but >/dev/null &&
    cd cvswork &&
    sleep 1 && touch merge &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test_cmp merge ../expected'
 
 cd "$WORKDIR"
@@ -425,13 +425,13 @@ test_expect_success 'cvs update (conflict merge)' \
    but cummit -q -m "Merge test (conflict)" &&
    but push butcvs.but >/dev/null &&
    cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update &&
+   BUT_CONFIG="$but_config" cvs -Q update &&
    test_cmp merge ../expected.C'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (-C)' \
   'cd cvswork &&
-   GIT_CONFIG="$but_config" cvs -Q update -C &&
+   BUT_CONFIG="$but_config" cvs -Q update -C &&
    test_cmp merge ../merge'
 
 cd "$WORKDIR"
@@ -443,7 +443,7 @@ test_expect_success 'cvs update (merge no-op)' \
     but push butcvs.but >/dev/null &&
     cd cvswork &&
     sleep 1 && touch merge &&
-    GIT_CONFIG="$but_config" cvs -Q update &&
+    BUT_CONFIG="$but_config" cvs -Q update &&
     test_cmp merge ../merge'
 
 cd "$WORKDIR"
@@ -455,17 +455,17 @@ test_expect_success 'cvs update (-p)' '
     but cummit -q -m "Update -p test" &&
     but push butcvs.but >/dev/null &&
     cd cvswork &&
-    GIT_CONFIG="$but_config" cvs update &&
+    BUT_CONFIG="$but_config" cvs update &&
     for i in merge no-lf empty really-empty; do
-	GIT_CONFIG="$but_config" cvs update -p "$i" >$i.out &&
+	BUT_CONFIG="$but_config" cvs update -p "$i" >$i.out &&
 	test_cmp $i.out ../$i || return 1
     done
 '
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (module list supports packed refs)' '
-    GIT_DIR="$SERVERDIR" but pack-refs --all &&
-    GIT_CONFIG="$but_config" cvs -n up -d 2> out &&
+    BUT_DIR="$SERVERDIR" but pack-refs --all &&
+    BUT_CONFIG="$but_config" cvs -n up -d 2> out &&
     grep "cvs update: New directory \`main'\''" < out
 '
 
@@ -482,22 +482,22 @@ test_expect_success 'cvs status' '
     but cummit -q -m "Status test" &&
     but push butcvs.but >/dev/null &&
     cd cvswork &&
-    GIT_CONFIG="$but_config" cvs update &&
-    GIT_CONFIG="$but_config" cvs status | grep "^File: status.file" >../out &&
+    BUT_CONFIG="$but_config" cvs update &&
+    BUT_CONFIG="$but_config" cvs status | grep "^File: status.file" >../out &&
     test_line_count = 2 ../out
 '
 
 cd "$WORKDIR"
 test_expect_success 'cvs status (nonrecursive)' '
     cd cvswork &&
-    GIT_CONFIG="$but_config" cvs status -l | grep "^File: status.file" >../out &&
+    BUT_CONFIG="$but_config" cvs status -l | grep "^File: status.file" >../out &&
     test_line_count = 1 ../out
 '
 
 cd "$WORKDIR"
 test_expect_success 'cvs status (no subdirs in header)' '
     cd cvswork &&
-    GIT_CONFIG="$but_config" cvs status | grep ^File: >../out &&
+    BUT_CONFIG="$but_config" cvs status | grep ^File: >../out &&
     ! grep / <../out
 '
 
@@ -507,7 +507,7 @@ test_expect_success 'cvs status (no subdirs in header)' '
 
 cd "$WORKDIR"
 test_expect_success 'cvs co -c (shows module database)' '
-    GIT_CONFIG="$but_config" cvs co -c > out &&
+    BUT_CONFIG="$but_config" cvs co -c > out &&
     grep "^main[	 ][ 	]*main$" <out &&
     ! grep -v "^main[	 ][ 	]*main$" <out
 '
@@ -577,7 +577,7 @@ cd "$WORKDIR"
 test_expect_success 'cvs log' '
     cd cvswork &&
     test x"$expectStat" = x"0" &&
-    GIT_CONFIG="$but_config" cvs log merge >../out &&
+    BUT_CONFIG="$but_config" cvs log merge >../out &&
     sed -e "s%2[0-9][0-9][0-9]/[01][0-9]/[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]%__DATE__%" ../out > ../actual &&
     test_cmp ../expect ../actual
 '
@@ -589,7 +589,7 @@ test_expect_success 'cvs log' '
 cd "$WORKDIR"
 test_expect_success 'cvs annotate' '
     cd cvswork &&
-    GIT_CONFIG="$but_config" cvs annotate merge >../out &&
+    BUT_CONFIG="$but_config" cvs annotate merge >../out &&
     sed -e "s/ .*//" ../out >../actual &&
     printf "1.%d\n" 3 1 1 1 1 1 1 1 2 4 >../expect &&
     test_cmp ../expect ../actual

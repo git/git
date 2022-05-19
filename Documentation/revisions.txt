@@ -31,7 +31,7 @@ characters and to avoid word splitting.
   When ambiguous, a '<refname>' is disambiguated by taking the
   first match in the following rules:
 
-  . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
+  . If '$BUT_DIR/<refname>' exists, that is what you mean (this is usually
     useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`
     and `CHERRY_PICK_HEAD`);
 
@@ -58,7 +58,7 @@ when you run `but merge`.
 when you run `but cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
-the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
+the `$BUT_DIR/refs` directory or from the `$BUT_DIR/packed-refs` file.
 While the ref name encoding is unspecified, UTF-8 is preferred as
 some output processing may assume ref names in UTF-8.
 
@@ -72,7 +72,7 @@ some output processing may assume ref names in UTF-8.
   second ago}' or '{1979-02-26 18:30:00}') specifies the value
   of the ref at a prior point in time.  This suffix may only be
   used immediately following a ref name and the ref must have an
-  existing log ('$GIT_DIR/logs/<ref>'). Note that this looks up the state
+  existing log ('$BUT_DIR/logs/<ref>'). Note that this looks up the state
   of your *local* ref at a given time; e.g., what was in your local
   'master' branch last week. If you want to look at cummits made during
   certain times, see `--since` and `--until`.
@@ -84,7 +84,7 @@ some output processing may assume ref names in UTF-8.
   is the immediate prior value of 'master' while 'master@\{5\}'
   is the 5th prior value of 'master'. This suffix may only be used
   immediately following a ref name and the ref must have an existing
-  log ('$GIT_DIR/logs/<refname>').
+  log ('$BUT_DIR/logs/<refname>').
 
 '@{<n>}', e.g. '@\{1\}'::
   You can use the '@' construct with an empty ref part to get at a

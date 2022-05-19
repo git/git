@@ -86,7 +86,7 @@ Rename the remote named <old> to <new>. All remote-tracking branches and
 configuration settings for the remote are updated.
 +
 In case <old> and <new> are the same, and <old> is a file under
-`$GIT_DIR/remotes` or `$GIT_DIR/branches`, the remote is converted to
+`$BUT_DIR/remotes` or `$BUT_DIR/branches`, the remote is converted to
 the configuration file format.
 
 'remove'::
@@ -262,6 +262,6 @@ linkbut:but-fetch[1]
 linkbut:but-branch[1]
 linkbut:but-config[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

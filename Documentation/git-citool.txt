@@ -20,6 +20,6 @@ to the less interactive 'but cummit' program.
 'but citool' is actually a standard alias for `but gui citool`.
 See linkbut:but-gui[1] for more details.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

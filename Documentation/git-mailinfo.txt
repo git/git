@@ -115,6 +115,6 @@ If no such configuration option has been set, `warn` will be used.
 <patch>::
 	The patch extracted from e-mail.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

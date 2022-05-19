@@ -11,8 +11,8 @@ delete objects that cannot be recovered.
 Note that we do assert command failure in these cases, because that is
 what currently happens. If that changes, these tests should be revisited.
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -54,9 +54,9 @@ test_expect_success 'non-destructive repack bails on bogus ref' '
 	test_must_fail but repack -adk
 '
 
-test_expect_success 'GIT_REF_PARANOIA=0 overrides safety' '
+test_expect_success 'BUT_REF_PARANOIA=0 overrides safety' '
 	create_bogus_ref &&
-	GIT_REF_PARANOIA=0 but repack -adk
+	BUT_REF_PARANOIA=0 but repack -adk
 '
 
 

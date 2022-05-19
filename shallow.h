@@ -12,7 +12,7 @@ int unregister_shallow(const struct object_id *oid);
 int is_repository_shallow(struct repository *r);
 
 /*
- * Lock for updating the $GIT_DIR/shallow file.
+ * Lock for updating the $BUT_DIR/shallow file.
  *
  * Use `cummit_shallow_file()` to cummit an update, or
  * `rollback_shallow_file()` to roll it back. In either case, any
@@ -27,9 +27,9 @@ struct shallow_lock {
 	.lock = LOCK_INIT, \
 }
 
-/* cummit $GIT_DIR/shallow and reset stat-validity checks */
+/* cummit $BUT_DIR/shallow and reset stat-validity checks */
 int cummit_shallow_file(struct repository *r, struct shallow_lock *lk);
-/* rollback $GIT_DIR/shallow and reset stat-validity checks */
+/* rollback $BUT_DIR/shallow and reset stat-validity checks */
 void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
 struct cummit_list *get_shallow_cummits(struct object_array *heads,

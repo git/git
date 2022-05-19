@@ -2,8 +2,8 @@
 
 test_description='test untracked cache'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -17,8 +17,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # See <20160803174522.5571-1-pclouds@gmail.com> if you want to know
 # more.
 
-GIT_FORCE_UNTRACKED_CACHE=true
-export GIT_FORCE_UNTRACKED_CACHE
+BUT_FORCE_UNTRACKED_CACHE=true
+export BUT_FORCE_UNTRACKED_CACHE
 
 sync_mtime () {
 	find . -type d -exec ls -ld {} + >/dev/null
@@ -42,8 +42,8 @@ iuc () {
 	but ls-files -s >../current-index-entries
 	but ls-files -t | sed -ne s/^S.//p >../current-sparse-entries
 
-	GIT_INDEX_FILE=.but/tmp_index
-	export GIT_INDEX_FILE
+	BUT_INDEX_FILE=.but/tmp_index
+	export BUT_INDEX_FILE
 	but update-index --index-info <../current-index-entries
 	but update-index --skip-worktree $(cat ../current-sparse-entries)
 
@@ -51,14 +51,14 @@ iuc () {
 	ret=$?
 
 	rm ../current-index-entries
-	rm $GIT_INDEX_FILE
-	unset GIT_INDEX_FILE
+	rm $BUT_INDEX_FILE
+	unset BUT_INDEX_FILE
 
 	return $ret
 }
 
 get_relevant_traces () {
-	# From the GIT_TRACE2_PERF data of the form
+	# From the BUT_TRACE2_PERF data of the form
 	#    $TIME $FILE:$LINE | d0 | main | data | r1 | ? | ? | read_directo | $RELEVANT_STAT
 	# extract the $RELEVANT_STAT fields.  We don't care about region_enter
 	# or region_leave, or stats for things outside read_directory.
@@ -146,7 +146,7 @@ EOF
 
 test_expect_success 'status first time (empty cache)' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	test_cmp ../status.expect ../status.iuc &&
@@ -169,7 +169,7 @@ test_expect_success 'untracked cache after first status' '
 
 test_expect_success 'status second time (fully populated cache)' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	test_cmp ../status.expect ../status.iuc &&
@@ -205,7 +205,7 @@ EOF
 # correctly used in a -uall run - it would yield incorrect output.
 test_expect_success 'untracked cache is bypassed with -uall' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status -uall --porcelain >../actual &&
 	iuc status -uall --porcelain >../status.iuc &&
 	test_cmp ../status_uall.expect ../status.iuc &&
@@ -225,7 +225,7 @@ test_expect_success 'untracked cache remains after bypass' '
 test_expect_success 'if -uall is configured, untracked cache gets populated by default' '
 	test_config status.showuntrackedfiles all &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	test_cmp ../status_uall.expect ../status.iuc &&
@@ -263,7 +263,7 @@ test_expect_success 'if -uall was configured, untracked cache is populated' '
 test_expect_success 'if -uall is configured, untracked cache is used by default' '
 	test_config status.showuntrackedfiles all &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	test_cmp ../status_uall.expect ../status.iuc &&
@@ -287,7 +287,7 @@ EOF
 test_expect_success 'if -uall is configured, untracked cache is bypassed with -unormal' '
 	test_config status.showuntrackedfiles all &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status -unormal --porcelain >../actual &&
 	iuc status -unormal --porcelain >../status.iuc &&
 	test_cmp ../status.expect ../status.iuc &&
@@ -307,7 +307,7 @@ test_expect_success 'modify in root directory, one dir invalidation' '
 	: >four &&
 	test-tool chmtime =-240 four &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -357,7 +357,7 @@ EOF
 test_expect_success 'new .butignore invalidates recursively' '
 	echo four >.butignore &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -407,7 +407,7 @@ EOF
 test_expect_success 'new info/exclude invalidates everything' '
 	echo three >>.but/info/exclude &&
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -467,7 +467,7 @@ EOF
 
 test_expect_success 'status after the move' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -528,7 +528,7 @@ EOF
 
 test_expect_success 'status after the move' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -579,7 +579,7 @@ test_expect_success 'set up for sparse checkout testing' '
 
 test_expect_success 'status after cummit' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -640,7 +640,7 @@ test_expect_success 'create/modify files, some of which are butignored' '
 
 test_expect_success 'test sparse status with untracked cache' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -683,7 +683,7 @@ EOF
 
 test_expect_success 'test sparse status again with untracked cache' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -714,7 +714,7 @@ test_expect_success 'set up for test of subdir and sparse checkouts' '
 
 test_expect_success 'test sparse status with untracked cache and subdir' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
 	cat >../status.expect <<EOF &&
@@ -763,7 +763,7 @@ EOF
 
 test_expect_success 'test sparse status again with untracked cache and subdir' '
 	: >../trace.output &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	but status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
 	test_cmp ../status.expect ../status.iuc &&
@@ -877,7 +877,7 @@ test_expect_success 'setting core.untrackedCache to keep' '
 test_expect_success 'test ident field is working' '
 	mkdir ../other_worktree &&
 	cp -R done dthree dtwo four three ../other_worktree &&
-	GIT_WORK_TREE=../other_worktree but status 2>../err &&
+	BUT_WORK_TREE=../other_worktree but status 2>../err &&
 	echo "warning: untracked cache is disabled on this system or location" >../expect &&
 	test_cmp ../expect ../err
 '

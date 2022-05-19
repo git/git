@@ -112,7 +112,7 @@ int merge_recursive(struct merge_options *opt,
  *   - See RETURN VALUES above
  *   - *result is treated as scratch space for temporary recursive merges
  *   - opt->repo->index has the new index
- *   - new index also written to $GIT_INDEX_FILE on disk
+ *   - new index also written to $BUT_INDEX_FILE on disk
  *   - The working tree is updated with results of the merge
  */
 int merge_recursive_generic(struct merge_options *opt,

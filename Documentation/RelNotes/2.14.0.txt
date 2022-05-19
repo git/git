@@ -344,7 +344,7 @@ notes for details).
  * The shell completion script (in contrib/) learned "but stash" has
    a new "push" subcommand.
 
- * "but interpret-trailers", when used as GIT_EDITOR for "but cummit
+ * "but interpret-trailers", when used as BUT_EDITOR for "but cummit
    -v", looked for and appended to a trailer block at the very end,
    i.e. at the end of the "diff" output.  The command has been
    corrected to pay attention to the cut-mark line "cummit -v" adds to

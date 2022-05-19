@@ -23,6 +23,6 @@ OPTIONS
 	Include additional information about how but was built for diagnostic
 	purposes.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

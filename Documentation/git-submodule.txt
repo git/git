@@ -253,7 +253,7 @@ registered submodules, and sync any nested submodules within.
 absorbbutdirs::
 	If a but directory of a submodule is inside the submodule,
 	move the but directory of the submodule into its superproject's
-	`$GIT_DIR/modules` path and then connect the but directory and
+	`$BUT_DIR/modules` path and then connect the but directory and
 	its working directory by setting the `core.worktree` and adding
 	a .but file pointing to the but directory embedded in the
 	superprojects but directory.
@@ -447,7 +447,7 @@ FILES
 -----
 When initializing submodules, a `.butmodules` file in the top-level directory
 of the containing repository is used to find the url of each submodule.
-This file should be formatted in the same way as `$GIT_DIR/config`. The key
+This file should be formatted in the same way as `$BUT_DIR/config`. The key
 to each submodule url is "submodule.$name.url".  See linkbut:butmodules[5]
 for details.
 
@@ -455,6 +455,6 @@ SEE ALSO
 --------
 linkbut:butsubmodules[7], linkbut:butmodules[5].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

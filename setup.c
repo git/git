@@ -289,7 +289,7 @@ void verify_non_filename(const char *prefix, const char *arg)
 
 int get_common_dir(struct strbuf *sb, const char *butdir)
 {
-	const char *but_env_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT);
+	const char *but_env_common_dir = getenv(BUT_COMMON_DIR_ENVIRONMENT);
 	if (but_env_common_dir) {
 		strbuf_addstr(sb, but_env_common_dir);
 		return 1;
@@ -332,7 +332,7 @@ int get_common_dir_noenv(struct strbuf *sb, const char *butdir)
  * We want to see:
  *
  *  - either an objects/ directory _or_ the proper
- *    GIT_OBJECT_DIRECTORY environment variable
+ *    BUT_OBJECT_DIRECTORY environment variable
  *  - a refs/ directory
  *  - either a HEAD symlink or a HEAD file that is formatted as
  *    a proper "ref:", or a regular file HEAD that has a properly
@@ -388,8 +388,8 @@ int is_nonbare_repository_dir(struct strbuf *path)
 	strbuf_addstr(path, ".but");
 	if (read_butfile_gently(path->buf, &butfile_error) || is_but_directory(path->buf))
 		ret = 1;
-	if (butfile_error == READ_GITFILE_ERR_OPEN_FAILED ||
-	    butfile_error == READ_GITFILE_ERR_READ_FAILED)
+	if (butfile_error == READ_BUTFILE_ERR_OPEN_FAILED ||
+	    butfile_error == READ_BUTFILE_ERR_READ_FAILED)
 		ret = 1;
 	strbuf_setlen(path, orig_path_len);
 	return ret;
@@ -426,10 +426,10 @@ void setup_work_tree(void)
 
 	/*
 	 * Make sure subsequent but processes find correct worktree
-	 * if $GIT_WORK_TREE is set relative
+	 * if $BUT_WORK_TREE is set relative
 	 */
-	if (getenv(GIT_WORK_TREE_ENVIRONMENT))
-		setenv(GIT_WORK_TREE_ENVIRONMENT, ".", 1);
+	if (getenv(BUT_WORK_TREE_ENVIRONMENT))
+		setenv(BUT_WORK_TREE_ENVIRONMENT, ".", 1);
 
 	initialized = 1;
 }
@@ -559,7 +559,7 @@ static enum extension_result handle_extension(const char *var,
 		if (!value)
 			return config_error_nonbool(var);
 		format = hash_algo_by_name(value);
-		if (format == GIT_HASH_UNKNOWN)
+		if (format == BUT_HASH_UNKNOWN)
 			return error(_("invalid value for '%s': '%s'"),
 				     "extensions.objectformat", value);
 		data->hash_algo = format;
@@ -720,9 +720,9 @@ void clear_repository_format(struct repository_format *format)
 int verify_repository_format(const struct repository_format *format,
 			     struct strbuf *err)
 {
-	if (GIT_REPO_VERSION_READ < format->version) {
+	if (BUT_REPO_VERSION_READ < format->version) {
 		strbuf_addf(err, _("Expected but repo version <= %d, found %d"),
-			    GIT_REPO_VERSION_READ, format->version);
+			    BUT_REPO_VERSION_READ, format->version);
 		return -1;
 	}
 
@@ -759,21 +759,21 @@ int verify_repository_format(const struct repository_format *format,
 void read_butfile_error_die(int error_code, const char *path, const char *dir)
 {
 	switch (error_code) {
-	case READ_GITFILE_ERR_STAT_FAILED:
-	case READ_GITFILE_ERR_NOT_A_FILE:
+	case READ_BUTFILE_ERR_STAT_FAILED:
+	case READ_BUTFILE_ERR_NOT_A_FILE:
 		/* non-fatal; follow return path */
 		break;
-	case READ_GITFILE_ERR_OPEN_FAILED:
+	case READ_BUTFILE_ERR_OPEN_FAILED:
 		die_errno(_("error opening '%s'"), path);
-	case READ_GITFILE_ERR_TOO_LARGE:
+	case READ_BUTFILE_ERR_TOO_LARGE:
 		die(_("too large to be a .but file: '%s'"), path);
-	case READ_GITFILE_ERR_READ_FAILED:
+	case READ_BUTFILE_ERR_READ_FAILED:
 		die(_("error reading %s"), path);
-	case READ_GITFILE_ERR_INVALID_FORMAT:
+	case READ_BUTFILE_ERR_INVALID_FORMAT:
 		die(_("invalid butfile format: %s"), path);
-	case READ_GITFILE_ERR_NO_PATH:
+	case READ_BUTFILE_ERR_NO_PATH:
 		die(_("no path in butfile: %s"), path);
-	case READ_GITFILE_ERR_NOT_A_REPO:
+	case READ_BUTFILE_ERR_NOT_A_REPO:
 		die(_("not a but repository: %s"), dir);
 	default:
 		BUG("unknown error code");
@@ -804,37 +804,37 @@ const char *read_butfile_gently(const char *path, int *return_error_code)
 
 	if (stat(path, &st)) {
 		/* NEEDSWORK: discern between ENOENT vs other errors */
-		error_code = READ_GITFILE_ERR_STAT_FAILED;
+		error_code = READ_BUTFILE_ERR_STAT_FAILED;
 		goto cleanup_return;
 	}
 	if (!S_ISREG(st.st_mode)) {
-		error_code = READ_GITFILE_ERR_NOT_A_FILE;
+		error_code = READ_BUTFILE_ERR_NOT_A_FILE;
 		goto cleanup_return;
 	}
 	if (st.st_size > max_file_size) {
-		error_code = READ_GITFILE_ERR_TOO_LARGE;
+		error_code = READ_BUTFILE_ERR_TOO_LARGE;
 		goto cleanup_return;
 	}
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		error_code = READ_GITFILE_ERR_OPEN_FAILED;
+		error_code = READ_BUTFILE_ERR_OPEN_FAILED;
 		goto cleanup_return;
 	}
 	buf = xmallocz(st.st_size);
 	len = read_in_full(fd, buf, st.st_size);
 	close(fd);
 	if (len != st.st_size) {
-		error_code = READ_GITFILE_ERR_READ_FAILED;
+		error_code = READ_BUTFILE_ERR_READ_FAILED;
 		goto cleanup_return;
 	}
 	if (!starts_with(buf, "butdir: ")) {
-		error_code = READ_GITFILE_ERR_INVALID_FORMAT;
+		error_code = READ_BUTFILE_ERR_INVALID_FORMAT;
 		goto cleanup_return;
 	}
 	while (buf[len - 1] == '\n' || buf[len - 1] == '\r')
 		len--;
 	if (len < 9) {
-		error_code = READ_GITFILE_ERR_NO_PATH;
+		error_code = READ_BUTFILE_ERR_NO_PATH;
 		goto cleanup_return;
 	}
 	buf[len] = '\0';
@@ -848,7 +848,7 @@ const char *read_butfile_gently(const char *path, int *return_error_code)
 		buf = dir;
 	}
 	if (!is_but_directory(dir)) {
-		error_code = READ_GITFILE_ERR_NOT_A_REPO;
+		error_code = READ_BUTFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
 
@@ -870,13 +870,13 @@ static const char *setup_explicit_but_dir(const char *butdirenv,
 					  struct repository_format *repo_fmt,
 					  int *nonbut_ok)
 {
-	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	const char *work_tree_env = getenv(BUT_WORK_TREE_ENVIRONMENT);
 	const char *worktree;
 	char *butfile;
 	int offset;
 
 	if (PATH_MAX - 40 < strlen(butdirenv))
-		die(_("'$%s' too big"), GIT_DIR_ENVIRONMENT);
+		die(_("'$%s' too big"), BUT_DIR_ENVIRONMENT);
 
 	butfile = (char*)read_butfile(butdirenv);
 	if (butfile) {
@@ -929,7 +929,7 @@ static const char *setup_explicit_but_dir(const char *butdirenv,
 			free(core_worktree);
 		}
 	}
-	else if (!but_env_bool(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1)) {
+	else if (!but_env_bool(BUT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1)) {
 		/* #16d */
 		set_but_dir(butdirenv, 0);
 		free(butfile);
@@ -973,7 +973,7 @@ static const char *setup_discovered_but_dir(const char *butdir,
 		return NULL;
 
 	/* --work-tree is set without --but-dir; use discovered one */
-	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || but_work_tree_cfg) {
+	if (getenv(BUT_WORK_TREE_ENVIRONMENT) || but_work_tree_cfg) {
 		char *to_free = NULL;
 		const char *ret;
 
@@ -996,7 +996,7 @@ static const char *setup_discovered_but_dir(const char *butdir,
 
 	/* #0, #1, #5, #8, #9, #12, #13 */
 	set_but_work_tree(".");
-	if (strcmp(butdir, DEFAULT_GIT_DIR_ENVIRONMENT))
+	if (strcmp(butdir, DEFAULT_BUT_DIR_ENVIRONMENT))
 		set_but_dir(butdir, 0);
 	inside_but_dir = 0;
 	inside_work_tree = 1;
@@ -1021,10 +1021,10 @@ static const char *setup_bare_but_dir(struct strbuf *cwd, int offset,
 	if (check_repository_format_gently(".", repo_fmt, nonbut_ok))
 		return NULL;
 
-	setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
+	setenv(BUT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
 
 	/* --work-tree is set without --but-dir; use discovered one */
-	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || but_work_tree_cfg) {
+	if (getenv(BUT_WORK_TREE_ENVIRONMENT) || but_work_tree_cfg) {
 		static const char *butdir;
 
 		butdir = offset == cwd->len ? "." : xmemdupz(cwd->buf, offset);
@@ -1061,9 +1061,9 @@ static dev_t get_device_or_die(const char *path, const char *prefix, int prefix_
 
 /*
  * A "string_list_each_func_t" function that canonicalizes an entry
- * from GIT_CEILING_DIRECTORIES using real_pathdup(), or
+ * from BUT_CEILING_DIRECTORIES using real_pathdup(), or
  * discards it if unusable.  The presence of an empty entry in
- * GIT_CEILING_DIRECTORIES turns off canonicalization for all
+ * BUT_CEILING_DIRECTORIES turns off canonicalization for all
  * subsequent entries.
  */
 static int canonicalize_ceiling_entry(struct string_list_item *item,
@@ -1124,7 +1124,7 @@ static int ensure_valid_ownership(const char *path)
 {
 	struct safe_directory_data data = { .path = path };
 
-	if (!but_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
+	if (!but_env_bool("BUT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
 	    is_path_owned_by_current_user(path))
 		return 1;
 
@@ -1134,15 +1134,15 @@ static int ensure_valid_ownership(const char *path)
 }
 
 enum discovery_result {
-	GIT_DIR_NONE = 0,
-	GIT_DIR_EXPLICIT,
-	GIT_DIR_DISCOVERED,
-	GIT_DIR_BARE,
+	BUT_DIR_NONE = 0,
+	BUT_DIR_EXPLICIT,
+	BUT_DIR_DISCOVERED,
+	BUT_DIR_BARE,
 	/* these are errors */
-	GIT_DIR_HIT_CEILING = -1,
-	GIT_DIR_HIT_MOUNT_POINT = -2,
-	GIT_DIR_INVALID_GITFILE = -3,
-	GIT_DIR_INVALID_OWNERSHIP = -4
+	BUT_DIR_HIT_CEILING = -1,
+	BUT_DIR_HIT_MOUNT_POINT = -2,
+	BUT_DIR_INVALID_BUTFILE = -3,
+	BUT_DIR_INVALID_OWNERSHIP = -4
 };
 
 /*
@@ -1170,14 +1170,14 @@ static enum discovery_result setup_but_directory_gently_1(struct strbuf *dir,
 	int one_filesystem = 1;
 
 	/*
-	 * If GIT_DIR is set explicitly, we're not going
+	 * If BUT_DIR is set explicitly, we're not going
 	 * to do any discovery, but we still do repository
 	 * validation.
 	 */
-	butdirenv = getenv(GIT_DIR_ENVIRONMENT);
+	butdirenv = getenv(BUT_DIR_ENVIRONMENT);
 	if (butdirenv) {
 		strbuf_addstr(butdir, butdirenv);
-		return GIT_DIR_EXPLICIT;
+		return BUT_DIR_EXPLICIT;
 	}
 
 	if (env_ceiling_dirs) {
@@ -1210,7 +1210,7 @@ static enum discovery_result setup_but_directory_gently_1(struct strbuf *dir,
 	 * - ../../.but
 	 *   etc.
 	 */
-	one_filesystem = !but_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
+	one_filesystem = !but_env_bool("BUT_DISCOVERY_ACROSS_FILESYSTEM", 0);
 	if (one_filesystem)
 		current_device = get_device_or_die(dir->buf, NULL, 0);
 	for (;;) {
@@ -1218,45 +1218,45 @@ static enum discovery_result setup_but_directory_gently_1(struct strbuf *dir,
 
 		if (offset > min_offset)
 			strbuf_addch(dir, '/');
-		strbuf_addstr(dir, DEFAULT_GIT_DIR_ENVIRONMENT);
+		strbuf_addstr(dir, DEFAULT_BUT_DIR_ENVIRONMENT);
 		butdirenv = read_butfile_gently(dir->buf, die_on_error ?
 						NULL : &error_code);
 		if (!butdirenv) {
 			if (die_on_error ||
-			    error_code == READ_GITFILE_ERR_NOT_A_FILE) {
+			    error_code == READ_BUTFILE_ERR_NOT_A_FILE) {
 				/* NEEDSWORK: fail if .but is not file nor dir */
 				if (is_but_directory(dir->buf))
-					butdirenv = DEFAULT_GIT_DIR_ENVIRONMENT;
-			} else if (error_code != READ_GITFILE_ERR_STAT_FAILED)
-				return GIT_DIR_INVALID_GITFILE;
+					butdirenv = DEFAULT_BUT_DIR_ENVIRONMENT;
+			} else if (error_code != READ_BUTFILE_ERR_STAT_FAILED)
+				return BUT_DIR_INVALID_BUTFILE;
 		}
 		strbuf_setlen(dir, offset);
 		if (butdirenv) {
 			if (!ensure_valid_ownership(dir->buf))
-				return GIT_DIR_INVALID_OWNERSHIP;
+				return BUT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(butdir, butdirenv);
-			return GIT_DIR_DISCOVERED;
+			return BUT_DIR_DISCOVERED;
 		}
 
 		if (is_but_directory(dir->buf)) {
 			if (!ensure_valid_ownership(dir->buf))
-				return GIT_DIR_INVALID_OWNERSHIP;
+				return BUT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(butdir, ".");
-			return GIT_DIR_BARE;
+			return BUT_DIR_BARE;
 		}
 
 		if (offset <= min_offset)
-			return GIT_DIR_HIT_CEILING;
+			return BUT_DIR_HIT_CEILING;
 
 		while (--offset > ceil_offset && !is_dir_sep(dir->buf[offset]))
 			; /* continue */
 		if (offset <= ceil_offset)
-			return GIT_DIR_HIT_CEILING;
+			return BUT_DIR_HIT_CEILING;
 
 		strbuf_setlen(dir, offset > min_offset ?  offset : min_offset);
 		if (one_filesystem &&
 		    current_device != get_device_or_die(dir->buf, NULL, offset))
-			return GIT_DIR_HIT_MOUNT_POINT;
+			return BUT_DIR_HIT_MOUNT_POINT;
 	}
 }
 
@@ -1345,34 +1345,34 @@ const char *setup_but_directory_gently(int *nonbut_ok)
 	strbuf_addbuf(&dir, &cwd);
 
 	switch (setup_but_directory_gently_1(&dir, &butdir, 1)) {
-	case GIT_DIR_EXPLICIT:
+	case BUT_DIR_EXPLICIT:
 		prefix = setup_explicit_but_dir(butdir.buf, &cwd, &repo_fmt, nonbut_ok);
 		break;
-	case GIT_DIR_DISCOVERED:
+	case BUT_DIR_DISCOVERED:
 		if (dir.len < cwd.len && chdir(dir.buf))
 			die(_("cannot change to '%s'"), dir.buf);
 		prefix = setup_discovered_but_dir(butdir.buf, &cwd, dir.len,
 						  &repo_fmt, nonbut_ok);
 		break;
-	case GIT_DIR_BARE:
+	case BUT_DIR_BARE:
 		if (dir.len < cwd.len && chdir(dir.buf))
 			die(_("cannot change to '%s'"), dir.buf);
 		prefix = setup_bare_but_dir(&cwd, dir.len, &repo_fmt, nonbut_ok);
 		break;
-	case GIT_DIR_HIT_CEILING:
+	case BUT_DIR_HIT_CEILING:
 		if (!nonbut_ok)
 			die(_("not a but repository (or any of the parent directories): %s"),
-			    DEFAULT_GIT_DIR_ENVIRONMENT);
+			    DEFAULT_BUT_DIR_ENVIRONMENT);
 		*nonbut_ok = 1;
 		break;
-	case GIT_DIR_HIT_MOUNT_POINT:
+	case BUT_DIR_HIT_MOUNT_POINT:
 		if (!nonbut_ok)
 			die(_("not a but repository (or any parent up to mount point %s)\n"
-			      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
+			      "Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
 			    dir.buf);
 		*nonbut_ok = 1;
 		break;
-	case GIT_DIR_INVALID_OWNERSHIP:
+	case BUT_DIR_INVALID_OWNERSHIP:
 		if (!nonbut_ok) {
 			struct strbuf quoted = STRBUF_INIT;
 
@@ -1385,7 +1385,7 @@ const char *setup_but_directory_gently(int *nonbut_ok)
 		}
 		*nonbut_ok = 1;
 		break;
-	case GIT_DIR_NONE:
+	case BUT_DIR_NONE:
 		/*
 		 * As a safeguard against setup_but_directory_gently_1 returning
 		 * this value, fallthrough to BUG. Otherwise it is possible to
@@ -1403,7 +1403,7 @@ const char *setup_but_directory_gently(int *nonbut_ok)
 	 * this.
 	 *
 	 * Regardless of the state of nonbut_ok, startup_info->prefix and
-	 * the GIT_PREFIX environment variable must always match. For details
+	 * the BUT_PREFIX environment variable must always match. For details
 	 * see Documentation/config/alias.txt.
 	 */
 	if (nonbut_ok && *nonbut_ok)
@@ -1417,19 +1417,19 @@ const char *setup_but_directory_gently(int *nonbut_ok)
 	 * environment is in a consistent state after setup, explicitly setup
 	 * the environment if we have a repository.
 	 *
-	 * NEEDSWORK: currently we allow bogus GIT_DIR values to be set in some
+	 * NEEDSWORK: currently we allow bogus BUT_DIR values to be set in some
 	 * code paths so we also need to explicitly setup the environment if
-	 * the user has set GIT_DIR.  It may be beneficial to disallow bogus
-	 * GIT_DIR values at some point in the future.
+	 * the user has set BUT_DIR.  It may be beneficial to disallow bogus
+	 * BUT_DIR values at some point in the future.
 	 */
-	if (/* GIT_DIR_EXPLICIT, GIT_DIR_DISCOVERED, GIT_DIR_BARE */
+	if (/* BUT_DIR_EXPLICIT, BUT_DIR_DISCOVERED, BUT_DIR_BARE */
 	    startup_info->have_repository ||
-	    /* GIT_DIR_EXPLICIT */
-	    getenv(GIT_DIR_ENVIRONMENT)) {
+	    /* BUT_DIR_EXPLICIT */
+	    getenv(BUT_DIR_ENVIRONMENT)) {
 		if (!the_repository->butdir) {
-			const char *butdir = getenv(GIT_DIR_ENVIRONMENT);
+			const char *butdir = getenv(BUT_DIR_ENVIRONMENT);
 			if (!butdir)
-				butdir = DEFAULT_GIT_DIR_ENVIRONMENT;
+				butdir = DEFAULT_BUT_DIR_ENVIRONMENT;
 			setup_but_env(butdir);
 		}
 		if (startup_info->have_repository) {
@@ -1450,10 +1450,10 @@ const char *setup_but_directory_gently(int *nonbut_ok)
 	if (prefix) {
 		prefix = precompose_string_if_needed(prefix);
 		startup_info->prefix = prefix;
-		setenv(GIT_PREFIX_ENVIRONMENT, prefix, 1);
+		setenv(BUT_PREFIX_ENVIRONMENT, prefix, 1);
 	} else {
 		startup_info->prefix = NULL;
-		setenv(GIT_PREFIX_ENVIRONMENT, "", 1);
+		setenv(BUT_PREFIX_ENVIRONMENT, "", 1);
 	}
 
 	setup_original_cwd();

@@ -10,8 +10,8 @@ commandline, and checks that it produces the correct output, either
 in the HTTP header or the actual script output.'
 
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-butweb.sh
 

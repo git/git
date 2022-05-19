@@ -1431,8 +1431,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Идентификацията ви не може да бъде определена:"
 
 #: lib/cummit.tcl:80
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "Неправилно поле „GIT_CUMMITTER_IDENT“:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "Неправилно поле „BUT_CUMMITTER_IDENT“:"
 
 #: lib/cummit.tcl:129
 #, tcl-format

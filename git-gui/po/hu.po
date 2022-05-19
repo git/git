@@ -1316,8 +1316,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Nem sikerült megállapítani az azonosítót:"
 
 #: lib/cummit.tcl:80
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "Érvénytelen GIT_CUMMITTER_IDENT:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "Érvénytelen BUT_CUMMITTER_IDENT:"
 
 #: lib/cummit.tcl:132
 msgid ""

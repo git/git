@@ -78,6 +78,6 @@ merge once anything has returned an error (i.e., `cat` returned an error
 for the AA file, because it didn't exist in the original, and thus
 'but merge-index' didn't even try to merge the MM thing).
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

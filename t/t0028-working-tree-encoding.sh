@@ -2,13 +2,13 @@
 
 test_description='working-tree-encoding conversion via butattributes'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-encoding.sh"
 
-GIT_TRACE_WORKING_TREE_ENCODING=1 && export GIT_TRACE_WORKING_TREE_ENCODING
+BUT_TRACE_WORKING_TREE_ENCODING=1 && export BUT_TRACE_WORKING_TREE_ENCODING
 
 test_expect_success 'setup test files' '
 	but config core.eol lf &&
@@ -65,7 +65,7 @@ test_expect_success 're-encode to UTF-16-LE-BOM on checkout' '
 	test_cmp_bin test.utf16lebom.raw test.utf16lebom
 '
 
-test_expect_success 'check $GIT_DIR/info/attributes support' '
+test_expect_success 'check $BUT_DIR/info/attributes support' '
 	test_when_finished "rm -f test.utf32.but" &&
 	test_when_finished "but reset --hard HEAD" &&
 
@@ -231,30 +231,30 @@ test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 	echo "*.shift text working-tree-encoding=SHIFT-JIS" >>.butattributes &&
 
 	# SHIFT-JIS encoded files are round-trip checked by default...
-	GIT_TRACE=1 but add .butattributes roundtrip.shift 2>&1 |
+	BUT_TRACE=1 but add .butattributes roundtrip.shift 2>&1 |
 		grep "Checking roundtrip encoding for SHIFT-JIS" &&
 	but reset &&
 
 	# ... unless we overwrite the Git config!
-	! GIT_TRACE=1 but -c core.checkRoundtripEncoding=garbage \
+	! BUT_TRACE=1 but -c core.checkRoundtripEncoding=garbage \
 		add .butattributes roundtrip.shift 2>&1 |
 		grep "Checking roundtrip encoding for SHIFT-JIS" &&
 	but reset &&
 
 	# UTF-16 encoded files should not be round-trip checked by default...
-	! GIT_TRACE=1 but add roundtrip.utf16 2>&1 |
+	! BUT_TRACE=1 but add roundtrip.utf16 2>&1 |
 		grep "Checking roundtrip encoding for UTF-16" &&
 	but reset &&
 
 	# ... unless we tell Git to check it!
-	GIT_TRACE=1 but -c core.checkRoundtripEncoding="UTF-16, UTF-32" \
+	BUT_TRACE=1 but -c core.checkRoundtripEncoding="UTF-16, UTF-32" \
 		add roundtrip.utf16 2>&1 |
 		grep "Checking roundtrip encoding for utf-16" &&
 	but reset &&
 
 	# ... unless we tell Git to check it!
 	# (here we also check that the casing of the encoding is irrelevant)
-	GIT_TRACE=1 but -c core.checkRoundtripEncoding="UTF-32, utf-16" \
+	BUT_TRACE=1 but -c core.checkRoundtripEncoding="UTF-32, utf-16" \
 		add roundtrip.utf16 2>&1 |
 		grep "Checking roundtrip encoding for utf-16" &&
 	but reset

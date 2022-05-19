@@ -6,31 +6,31 @@
 # files in bin-wrappers, substituting
 # @@BUILD_DIR@@ and @@PROG@@.
 
-GIT_EXEC_PATH='@@BUILD_DIR@@'
-if test -n "$NO_SET_GIT_TEMPLATE_DIR"
+BUT_EXEC_PATH='@@BUILD_DIR@@'
+if test -n "$NO_SET_BUT_TEMPLATE_DIR"
 then
-	unset GIT_TEMPLATE_DIR
+	unset BUT_TEMPLATE_DIR
 else
-	GIT_TEMPLATE_DIR='@@BUILD_DIR@@/templates/blt'
-	export GIT_TEMPLATE_DIR
+	BUT_TEMPLATE_DIR='@@BUILD_DIR@@/templates/blt'
+	export BUT_TEMPLATE_DIR
 fi
-GITPERLLIB='@@BUILD_DIR@@/perl/build/lib'"${GITPERLLIB:+:$GITPERLLIB}"
-GIT_TEXTDOMAINDIR='@@BUILD_DIR@@/po/build/locale'
+BUTPERLLIB='@@BUILD_DIR@@/perl/build/lib'"${BUTPERLLIB:+:$BUTPERLLIB}"
+BUT_TEXTDOMAINDIR='@@BUILD_DIR@@/po/build/locale'
 PATH='@@BUILD_DIR@@/bin-wrappers:'"$PATH"
 
-export GIT_EXEC_PATH GITPERLLIB PATH GIT_TEXTDOMAINDIR
+export BUT_EXEC_PATH BUTPERLLIB PATH BUT_TEXTDOMAINDIR
 
-case "$GIT_DEBUGGER" in
+case "$BUT_DEBUGGER" in
 '')
-	exec "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	exec "${BUT_EXEC_PATH}/@@PROG@@" "$@"
 	;;
 1)
-	unset GIT_DEBUGGER
-	exec gdb --args "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	unset BUT_DEBUGGER
+	exec gdb --args "${BUT_EXEC_PATH}/@@PROG@@" "$@"
 	;;
 *)
-	GIT_DEBUGGER_ARGS="$GIT_DEBUGGER"
-	unset GIT_DEBUGGER
-	exec ${GIT_DEBUGGER_ARGS} "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	BUT_DEBUGGER_ARGS="$BUT_DEBUGGER"
+	unset BUT_DEBUGGER
+	exec ${BUT_DEBUGGER_ARGS} "${BUT_EXEC_PATH}/@@PROG@@" "$@"
 	;;
 esac

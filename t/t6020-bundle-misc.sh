@@ -5,8 +5,8 @@
 
 test_description='Test but-bundle'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
@@ -122,7 +122,7 @@ format_and_save_expect () {
 	sed -e 's/Z$//' >expect
 }
 
-HASH_MESSAGE="The bundle uses this hash algorithm: $GIT_DEFAULT_HASH"
+HASH_MESSAGE="The bundle uses this hash algorithm: $BUT_DEFAULT_HASH"
 
 #            (C)   (D, pull/1/head, topic/1)
 #             o --- o

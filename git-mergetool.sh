@@ -11,7 +11,7 @@
 
 USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-g|--gui|--no-gui] [-O<orderfile>] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
-NONGIT_OK=Yes
+NONBUT_OK=Yes
 OPTIONS_SPEC=
 TOOL_MODE=merge
 . but-sh-setup
@@ -220,7 +220,7 @@ stage_submodule () {
 	# Find $path relative to work tree
 	work_tree_root=$(cd_to_toplevel && pwd)
 	work_rel_path=$(cd "$path" &&
-		GIT_WORK_TREE="${work_tree_root}" but rev-parse --show-prefix
+		BUT_WORK_TREE="${work_tree_root}" but rev-parse --show-prefix
 	)
 	test -n "$work_rel_path" ||
 	die "fatal: unable to get path of module $path relative to work tree"
@@ -451,7 +451,7 @@ print_noop_and_exit () {
 
 main () {
 	prompt=$(but config --bool mergetool.prompt)
-	GIT_MERGETOOL_GUI=false
+	BUT_MERGETOOL_GUI=false
 	guessed_merge_tool=false
 	orderfile=
 
@@ -478,10 +478,10 @@ main () {
 			esac
 			;;
 		--no-gui)
-			GIT_MERGETOOL_GUI=false
+			BUT_MERGETOOL_GUI=false
 			;;
 		-g|--gui)
-			GIT_MERGETOOL_GUI=true
+			BUT_MERGETOOL_GUI=true
 			;;
 		-y|--no-prompt)
 			prompt=false
@@ -530,7 +530,7 @@ main () {
 		)
 	fi
 
-	if test $# -eq 0 && test -e "$GIT_DIR/MERGE_RR"
+	if test $# -eq 0 && test -e "$BUT_DIR/MERGE_RR"
 	then
 		set -- $(but rerere remaining)
 		if test $# -eq 0

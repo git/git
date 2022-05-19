@@ -133,7 +133,7 @@ test_expect_success 'setup' '
 	echo 1 > /me
 '
 
-say "GIT_DIR absolute, GIT_WORK_TREE set"
+say "BUT_DIR absolute, BUT_WORK_TREE set"
 
 test_expect_success 'go to /' 'cd /'
 
@@ -143,78 +143,78 @@ cat >ls.expected <<EOF
 100644 $ONE_SHA1 0	me
 EOF
 
-GIT_DIR="$TRASH_DIRECTORY/.but" && export GIT_DIR
-GIT_WORK_TREE=/ && export GIT_WORK_TREE
+BUT_DIR="$TRASH_DIRECTORY/.but" && export BUT_DIR
+BUT_WORK_TREE=/ && export BUT_WORK_TREE
 
-test_vars 'abs butdir, root' "$GIT_DIR" "/" ""
+test_vars 'abs butdir, root' "$BUT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-test_vars 'abs butdir, foo' "$GIT_DIR" "/" "foo/"
+test_vars 'abs butdir, foo' "$BUT_DIR" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-test_vars 'abs butdir, foo/bar' "$GIT_DIR" "/" "foo/bar/"
+test_vars 'abs butdir, foo/bar' "$BUT_DIR" "/" "foo/bar/"
 test_foobar_foobar
 
-say "GIT_DIR relative, GIT_WORK_TREE set"
+say "BUT_DIR relative, BUT_WORK_TREE set"
 
 test_expect_success 'go to /' 'cd /'
 
-GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export GIT_DIR
-GIT_WORK_TREE=/ && export GIT_WORK_TREE
+BUT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export BUT_DIR
+BUT_WORK_TREE=/ && export BUT_WORK_TREE
 
-test_vars 'rel butdir, root' "$GIT_DIR" "/" ""
+test_vars 'rel butdir, root' "$BUT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-GIT_DIR="../$TRASH_DIRECTORY/.but" && export GIT_DIR
-GIT_WORK_TREE=/ && export GIT_WORK_TREE
+BUT_DIR="../$TRASH_DIRECTORY/.but" && export BUT_DIR
+BUT_WORK_TREE=/ && export BUT_WORK_TREE
 
 test_vars 'rel butdir, foo' "$TRASH_DIRECTORY/.but" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-GIT_DIR="../../$TRASH_DIRECTORY/.but" && export GIT_DIR
-GIT_WORK_TREE=/ && export GIT_WORK_TREE
+BUT_DIR="../../$TRASH_DIRECTORY/.but" && export BUT_DIR
+BUT_WORK_TREE=/ && export BUT_WORK_TREE
 
 test_vars 'rel butdir, foo/bar' "$TRASH_DIRECTORY/.but" "/" "foo/bar/"
 test_foobar_foobar
 
-say "GIT_DIR relative, GIT_WORK_TREE relative"
+say "BUT_DIR relative, BUT_WORK_TREE relative"
 
 test_expect_success 'go to /' 'cd /'
 
-GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export GIT_DIR
-GIT_WORK_TREE=. && export GIT_WORK_TREE
+BUT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.but" && export BUT_DIR
+BUT_WORK_TREE=. && export BUT_WORK_TREE
 
-test_vars 'rel butdir, root' "$GIT_DIR" "/" ""
+test_vars 'rel butdir, root' "$BUT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /' 'cd /foo'
 
-GIT_DIR="../$TRASH_DIRECTORY/.but" && export GIT_DIR
-GIT_WORK_TREE=.. && export GIT_WORK_TREE
+BUT_DIR="../$TRASH_DIRECTORY/.but" && export BUT_DIR
+BUT_WORK_TREE=.. && export BUT_WORK_TREE
 
 test_vars 'rel butdir, foo' "$TRASH_DIRECTORY/.but" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-GIT_DIR="../../$TRASH_DIRECTORY/.but" && export GIT_DIR
-GIT_WORK_TREE=../.. && export GIT_WORK_TREE
+BUT_DIR="../../$TRASH_DIRECTORY/.but" && export BUT_DIR
+BUT_WORK_TREE=../.. && export BUT_WORK_TREE
 
 test_vars 'rel butdir, foo/bar' "$TRASH_DIRECTORY/.but" "/" "foo/bar/"
 test_foobar_foobar
 
 say ".but at root"
 
-unset GIT_DIR
-unset GIT_WORK_TREE
+unset BUT_DIR
+unset BUT_WORK_TREE
 
 test_expect_success 'go to /' 'cd /'
 test_expect_success 'setup' '

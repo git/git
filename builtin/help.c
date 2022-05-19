@@ -438,7 +438,7 @@ static void setup_man_path(void)
 {
 	struct strbuf new_path = STRBUF_INIT;
 	const char *old_path = getenv("MANPATH");
-	char *but_man_path = system_path(GIT_MAN_PATH);
+	char *but_man_path = system_path(BUT_MAN_PATH);
 
 	/* We should always put ':' after our path. If there is no
 	 * old_path, the ':' at the end will let 'man' to try
@@ -474,7 +474,7 @@ static void exec_viewer(const char *name, const char *page)
 static void show_man_page(const char *page)
 {
 	struct man_viewer_list *viewer;
-	const char *fallback = getenv("GIT_MAN_VIEWER");
+	const char *fallback = getenv("BUT_MAN_VIEWER");
 
 	setup_man_path();
 	for (viewer = man_viewer_list; viewer; viewer = viewer->next)
@@ -489,7 +489,7 @@ static void show_man_page(const char *page)
 
 static void show_info_page(const char *page)
 {
-	setenv("INFOPATH", system_path(GIT_INFO_PATH), 1);
+	setenv("INFOPATH", system_path(BUT_INFO_PATH), 1);
 	execlp("info", "info", "butman", page, (char *)NULL);
 	die(_("no info viewer handled the request"));
 }
@@ -500,7 +500,7 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 	char *to_free = NULL;
 
 	if (!html_path)
-		html_path = to_free = system_path(GIT_HTML_PATH);
+		html_path = to_free = system_path(BUT_HTML_PATH);
 
 	/*
 	 * Check that the page we're looking for exists.

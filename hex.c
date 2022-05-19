@@ -82,11 +82,11 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid,
 int get_oid_hex_any(const char *hex, struct object_id *oid)
 {
 	int i;
-	for (i = GIT_HASH_NALGOS - 1; i > 0; i--) {
+	for (i = BUT_HASH_NALGOS - 1; i > 0; i--) {
 		if (!get_oid_hex_algop(hex, oid, &hash_algos[i]))
 			return i;
 	}
-	return GIT_HASH_UNKNOWN;
+	return BUT_HASH_UNKNOWN;
 }
 
 int get_oid_hex(const char *hex, struct object_id *oid)
@@ -149,7 +149,7 @@ char *oid_to_hex_r(char *buffer, const struct object_id *oid)
 char *hash_to_hex_algop(const unsigned char *hash, const struct but_hash_algo *algop)
 {
 	static int bufno;
-	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
+	static char hexbuffer[4][BUT_MAX_HEXSZ + 1];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
 	return hash_to_hex_algop_r(hexbuffer[bufno], hash, algop);
 }

@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  * Copyright (C) Johannes Schindelin, 2005
@@ -724,7 +724,7 @@ int but_config_from_parameters(config_fn_t fn, void *data)
 		for (i = 0; i < count; i++) {
 			const char *key, *value;
 
-			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%d", i);
+			strbuf_addf(&envvar, "BUT_CONFIG_KEY_%d", i);
 			key = getenv_safe(&to_free, envvar.buf);
 			if (!key) {
 				ret = error(_("missing config key %s"), envvar.buf);
@@ -732,7 +732,7 @@ int but_config_from_parameters(config_fn_t fn, void *data)
 			}
 			strbuf_reset(&envvar);
 
-			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%d", i);
+			strbuf_addf(&envvar, "BUT_CONFIG_VALUE_%d", i);
 			value = getenv_safe(&to_free, envvar.buf);
 			if (!value) {
 				ret = error(_("missing config value %s"), envvar.buf);
@@ -2038,16 +2038,16 @@ static int but_config_from_blob_ref(config_fn_t fn,
 
 char *but_system_config(void)
 {
-	char *system_config = xstrdup_or_null(getenv("GIT_CONFIG_SYSTEM"));
+	char *system_config = xstrdup_or_null(getenv("BUT_CONFIG_SYSTEM"));
 	if (!system_config)
-		system_config = system_path(ETC_GITCONFIG);
+		system_config = system_path(ETC_BUTCONFIG);
 	normalize_path_copy(system_config, system_config);
 	return system_config;
 }
 
 void but_global_config(char **user_out, char **xdg_out)
 {
-	char *user_config = xstrdup_or_null(getenv("GIT_CONFIG_GLOBAL"));
+	char *user_config = xstrdup_or_null(getenv("BUT_CONFIG_GLOBAL"));
 	char *xdg_config = NULL;
 
 	if (!user_config) {
@@ -2083,7 +2083,7 @@ unsigned long but_env_ulong(const char *k, unsigned long val)
 
 int but_config_system(void)
 {
-	return !but_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+	return !but_env_bool("BUT_CONFIG_NOSYSTEM", 0);
 }
 
 static int do_but_config_sequence(const struct config_options *opts,
@@ -2222,7 +2222,7 @@ void read_early_config(config_fn_t cb, void *data)
 		opts.but_dir = get_but_dir();
 	/*
 	 * When setup_but_directory() was not yet asked to discover the
-	 * GIT_DIR, we ask discover_but_directory() to figure out whether there
+	 * BUT_DIR, we ask discover_but_directory() to figure out whether there
 	 * is any repository config we should use (but unlike
 	 * setup_but_directory_gently(), no global state is changed, most
 	 * notably, the current working directory is still the same after the
@@ -2739,7 +2739,7 @@ int but_config_get_index_threads(int *dest)
 {
 	int is_bool, val;
 
-	val = but_env_ulong("GIT_TEST_INDEX_THREADS", 0);
+	val = but_env_ulong("BUT_TEST_INDEX_THREADS", 0);
 	if (val) {
 		*dest = val;
 		return 0;

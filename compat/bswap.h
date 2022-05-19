@@ -106,36 +106,36 @@ static inline uint64_t but_bswap64(uint64_t x)
 
 #if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
 
-# define GIT_BYTE_ORDER __BYTE_ORDER
-# define GIT_LITTLE_ENDIAN __LITTLE_ENDIAN
-# define GIT_BIG_ENDIAN __BIG_ENDIAN
+# define BUT_BYTE_ORDER __BYTE_ORDER
+# define BUT_LITTLE_ENDIAN __LITTLE_ENDIAN
+# define BUT_BIG_ENDIAN __BIG_ENDIAN
 
 #elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
 
-# define GIT_BYTE_ORDER BYTE_ORDER
-# define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
-# define GIT_BIG_ENDIAN BIG_ENDIAN
+# define BUT_BYTE_ORDER BYTE_ORDER
+# define BUT_LITTLE_ENDIAN LITTLE_ENDIAN
+# define BUT_BIG_ENDIAN BIG_ENDIAN
 
 #else
 
-# define GIT_BIG_ENDIAN 4321
-# define GIT_LITTLE_ENDIAN 1234
+# define BUT_BIG_ENDIAN 4321
+# define BUT_LITTLE_ENDIAN 1234
 
 # if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
-#  define GIT_BYTE_ORDER GIT_BIG_ENDIAN
+#  define BUT_BYTE_ORDER BUT_BIG_ENDIAN
 # elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
-#  define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
+#  define BUT_BYTE_ORDER BUT_LITTLE_ENDIAN
 # elif defined(__THW_BIG_ENDIAN__) && !defined(__THW_LITTLE_ENDIAN__)
-#  define GIT_BYTE_ORDER GIT_BIG_ENDIAN
+#  define BUT_BYTE_ORDER BUT_BIG_ENDIAN
 # elif defined(__THW_LITTLE_ENDIAN__) && !defined(__THW_BIG_ENDIAN__)
-#  define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
+#  define BUT_BYTE_ORDER BUT_LITTLE_ENDIAN
 # else
 #  error "Cannot determine endianness"
 # endif
 
 #endif
 
-#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
+#if BUT_BYTE_ORDER == BUT_BIG_ENDIAN
 # define ntohll(n) (n)
 # define htonll(n) (n)
 #else

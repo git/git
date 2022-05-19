@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Eric Biederman, 2005
  */
@@ -38,11 +38,11 @@ struct but_var {
 	const char *(*read)(int);
 };
 static struct but_var but_vars[] = {
-	{ "GIT_CUMMITTER_IDENT", but_cummitter_info },
-	{ "GIT_AUTHOR_IDENT",   but_author_info },
-	{ "GIT_EDITOR", editor },
-	{ "GIT_PAGER", pager },
-	{ "GIT_DEFAULT_BRANCH", default_branch },
+	{ "BUT_CUMMITTER_IDENT", but_cummitter_info },
+	{ "BUT_AUTHOR_IDENT",   but_author_info },
+	{ "BUT_EDITOR", editor },
+	{ "BUT_PAGER", pager },
+	{ "BUT_DEFAULT_BRANCH", default_branch },
 	{ "", NULL },
 };
 

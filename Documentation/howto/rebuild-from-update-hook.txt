@@ -38,7 +38,7 @@ script:
     #!/bin/sh
     cd $HOME/doc-but/docgen || exit
 
-    unset GIT_DIR
+    unset BUT_DIR
 
     but pull /pub/scm/but/but.but/ master &&
     cd Documentation &&
@@ -75,7 +75,7 @@ There are four things worth mentioning:
    runs the dododoc.sh script only when the master head is
    updated.
 
- - When update-hook is run, GIT_DIR is set to '.' by the calling
+ - When update-hook is run, BUT_DIR is set to '.' by the calling
    receive-pack.  This is inherited by the dododoc.sh run via
    the "at" command, and needs to be unset; otherwise, "but
    pull" it does into $HOME/doc-but/docgen/ repository would not

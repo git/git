@@ -272,10 +272,10 @@ test_expect_success 'but-credential respects core.askPass' '
 	EOF
 	test_config core.askpass "$PWD/alternate-askpass" &&
 	(
-		# unset GIT_ASKPASS set by lib-credential.sh which would
+		# unset BUT_ASKPASS set by lib-credential.sh which would
 		# override our config, but do so in a subshell so that we do
 		# not interfere with other tests
-		sane_unset GIT_ASKPASS &&
+		sane_unset BUT_ASKPASS &&
 		check fill <<-\EOF
 		protocol=http
 		host=example.com

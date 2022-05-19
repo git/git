@@ -2,8 +2,8 @@
 
 test_description='unpack-trees error messages'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -43,8 +43,8 @@ test_expect_success 'untracked files overwritten by merge (fast and non-fast for
 	test_cmp out expect &&
 	but cummit --allow-empty -m empty &&
 	(
-		GIT_MERGE_VERBOSITY=0 &&
-		export GIT_MERGE_VERBOSITY &&
+		BUT_MERGE_VERBOSITY=0 &&
+		export BUT_MERGE_VERBOSITY &&
 		test_must_fail but merge branch 2>out2
 	) &&
 	test_cmp out2 expect &&

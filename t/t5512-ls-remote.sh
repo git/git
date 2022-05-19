@@ -2,8 +2,8 @@
 
 test_description='but ls-remote'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -234,7 +234,7 @@ test_expect_success 'ls-remote --symref' '
 		refs/tags/mark1.2 >>expect &&
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref >actual &&
+	BUT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref >actual &&
 	test_cmp expect actual
 '
 
@@ -246,7 +246,7 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . HEAD >actual &&
+	BUT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -259,7 +259,7 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
+	BUT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
 	test_cmp expect actual
 '
 
@@ -270,29 +270,29 @@ test_expect_success 'ls-remote --symref omits filtered-out matches' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
+	BUT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref --heads . >actual &&
 	test_cmp expect actual &&
-	GIT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . "refs/heads/*" >actual &&
+	BUT_TEST_PROTOCOL_VERSION=0 but ls-remote --symref . "refs/heads/*" >actual &&
 	test_cmp expect actual
 '
 
-test_lazy_prereq GIT_DAEMON '
-	test_bool_env GIT_TEST_GIT_DAEMON true
+test_lazy_prereq BUT_DAEMON '
+	test_bool_env BUT_TEST_BUT_DAEMON true
 '
 
 # This test spawns a daemon, so run it only if the user would be OK with
 # testing with but-daemon.
-test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-compliant empty remote' '
-	test_set_port JGIT_DAEMON_PORT &&
-	JGIT_DAEMON_PID= &&
+test_expect_success PIPE,JBUT,BUT_DAEMON 'indicate no refs in standards-compliant empty remote' '
+	test_set_port JBUT_DAEMON_PORT &&
+	JBUT_DAEMON_PID= &&
 	but init --bare empty.but &&
 	>empty.but/but-daemon-export-ok &&
 	mkfifo jbut_daemon_output &&
 	{
-		jbut daemon --port="$JGIT_DAEMON_PORT" . >jbut_daemon_output &
-		JGIT_DAEMON_PID=$!
+		jbut daemon --port="$JBUT_DAEMON_PORT" . >jbut_daemon_output &
+		JBUT_DAEMON_PID=$!
 	} &&
-	test_when_finished kill "$JGIT_DAEMON_PID" &&
+	test_when_finished kill "$JBUT_DAEMON_PID" &&
 	{
 		read line &&
 		case $line in
@@ -313,7 +313,7 @@ test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-complian
 	} <jbut_daemon_output &&
 	# --exit-code asks the command to exit with 2 when no
 	# matching refs are found.
-	test_expect_code 2 but ls-remote --exit-code but://localhost:$JGIT_DAEMON_PORT/empty.but
+	test_expect_code 2 but ls-remote --exit-code but://localhost:$JBUT_DAEMON_PORT/empty.but
 '
 
 test_expect_success 'ls-remote works outside repository' '

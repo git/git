@@ -7,8 +7,8 @@ test_description='but tag
 
 Tests for operations with tags.'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
@@ -471,7 +471,7 @@ test_expect_success 'set up editor' '
 '
 test_expect_success \
 	'creating an annotated tag with -m message --edit should succeed' '
-	GIT_EDITOR=./fakeeditor but tag -m "A message" --edit annotated-tag-edit &&
+	BUT_EDITOR=./fakeeditor but tag -m "A message" --edit annotated-tag-edit &&
 	get_tag_msg annotated-tag-edit >actual &&
 	test_cmp expect actual
 '
@@ -499,7 +499,7 @@ test_expect_success 'set up editor' '
 '
 test_expect_success \
 	'creating an annotated tag with -F messagefile --edit should succeed' '
-	GIT_EDITOR=./fakeeditor but tag -F msgfile --edit file-annotated-tag-edit &&
+	BUT_EDITOR=./fakeeditor but tag -F msgfile --edit file-annotated-tag-edit &&
 	get_tag_msg file-annotated-tag-edit >actual &&
 	test_cmp expect actual
 '
@@ -859,7 +859,7 @@ get_tag_header implied-sign $cummit cummit $time >expect
 ./fakeeditor >>expect
 echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success GPG '-u implies signed tag' '
-	GIT_EDITOR=./fakeeditor but tag -u CDDE430D implied-sign &&
+	BUT_EDITOR=./fakeeditor but tag -u CDDE430D implied-sign &&
 	get_tag_msg implied-sign >actual &&
 	test_cmp expect actual
 '
@@ -895,7 +895,7 @@ get_tag_header implied-annotate $cummit cummit $time >expect
 ./fakeeditor >>expect
 echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success GPG '-s implies annotated tag' '
-	GIT_EDITOR=./fakeeditor but tag -s implied-annotate &&
+	BUT_EDITOR=./fakeeditor but tag -s implied-annotate &&
 	get_tag_msg implied-annotate >actual &&
 	test_cmp expect actual
 '
@@ -1322,7 +1322,7 @@ test_expect_success GPG,RFC1991 \
 	'reediting a signed tag body omits signature' '
 	echo "rfc1991" >gpghome/gpg.conf &&
 	echo "RFC1991 signed tag" >expect &&
-	GIT_EDITOR=./fakeeditor but tag -f -s rfc1991-signed-tag $cummit &&
+	BUT_EDITOR=./fakeeditor but tag -f -s rfc1991-signed-tag $cummit &&
 	test_cmp expect actual
 '
 
@@ -1365,7 +1365,7 @@ test_expect_success GPG,RFC1991 \
 test_expect_success GPG,RFC1991 \
 	'reediting a signed tag body omits signature' '
 	echo "RFC1991 signed tag" >expect &&
-	GIT_EDITOR=./fakeeditor but tag -f -s rfc1991-signed-tag $cummit &&
+	BUT_EDITOR=./fakeeditor but tag -f -s rfc1991-signed-tag $cummit &&
 	test_cmp expect actual
 '
 
@@ -1422,12 +1422,12 @@ test_expect_success GPG \
 
 test_expect_success \
 	'but tag -a fails if tag annotation is empty' '
-	! (GIT_EDITOR=cat but tag -a initial-comment)
+	! (BUT_EDITOR=cat but tag -a initial-comment)
 '
 
 test_expect_success \
 	'message in editor has initial comment' '
-	! (GIT_EDITOR=cat but tag -a initial-comment > actual)
+	! (BUT_EDITOR=cat but tag -a initial-comment > actual)
 '
 
 test_expect_success 'message in editor has initial comment: first line' '
@@ -1449,7 +1449,7 @@ echo "An annotation to be reused" >> expect
 test_expect_success \
 	'overwriting an annotated tag should use its previous body' '
 	but tag -a -m "An annotation to be reused" reuse &&
-	GIT_EDITOR=true but tag -f -a reuse &&
+	BUT_EDITOR=true but tag -f -a reuse &&
 	get_tag_msg reuse >actual &&
 	test_cmp expect actual
 '

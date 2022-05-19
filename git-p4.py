@@ -1939,7 +1939,7 @@ class P4Submit(Command, P4UserMap):
         if "P4EDITOR" in os.environ and (os.environ.get("P4EDITOR") != ""):
             editor = os.environ.get("P4EDITOR")
         else:
-            editor = read_pipe(["but", "var", "GIT_EDITOR"]).strip()
+            editor = read_pipe(["but", "var", "BUT_EDITOR"]).strip()
         system(["sh", "-c", ('%s "$@"' % editor), editor, template_file])
 
         # If the file was not saved, prompt to see if this patch should
@@ -4090,7 +4090,7 @@ class P4Sync(Command, P4UserMap):
         if self.tempBranches != []:
             for branch in self.tempBranches:
                 read_pipe(["but", "update-ref", "-d", branch])
-            os.rmdir(os.path.join(os.environ.get("GIT_DIR", ".but"), self.tempBranchLocation))
+            os.rmdir(os.path.join(os.environ.get("BUT_DIR", ".but"), self.tempBranchLocation))
 
         # Create a symbolic ref p4/HEAD pointing to p4/<branch> to allow
         # a convenient shortcut refname "p4".
@@ -4409,7 +4409,7 @@ def main():
         sys.exit(2)
 
     options = cmd.options
-    cmd.butdir = os.environ.get("GIT_DIR", None)
+    cmd.butdir = os.environ.get("BUT_DIR", None)
 
     args = sys.argv[2:]
 
@@ -4448,7 +4448,7 @@ def main():
                 die("fatal: cannot locate but repository at %s" % cmd.butdir)
 
         # so but commands invoked from the P4 workspace will succeed
-        os.environ["GIT_DIR"] = cmd.butdir
+        os.environ["BUT_DIR"] = cmd.butdir
 
     if not cmd.run(args):
         parser.print_help()

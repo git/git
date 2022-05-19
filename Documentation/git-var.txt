@@ -25,23 +25,23 @@ OPTIONS
 
 EXAMPLES
 --------
-	$ but var GIT_AUTHOR_IDENT
+	$ but var BUT_AUTHOR_IDENT
 	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 
 VARIABLES
 ---------
-GIT_AUTHOR_IDENT::
+BUT_AUTHOR_IDENT::
     The author of a piece of code.
 
-GIT_CUMMITTER_IDENT::
+BUT_CUMMITTER_IDENT::
     The person who put a piece of code into Git.
 
-GIT_EDITOR::
+BUT_EDITOR::
     Text editor for use by Git commands.  The value is meant to be
     interpreted by the shell when it is used.  Examples: `~/bin/vi`,
     `$SOME_ENVIRONMENT_VARIABLE`, `"C:\Program Files\Vim\gvim.exe"
-    --nofork`.  The order of preference is the `$GIT_EDITOR`
+    --nofork`.  The order of preference is the `$BUT_EDITOR`
     environment variable, then `core.editor` configuration, then
     `$VISUAL`, then `$EDITOR`, and then the default chosen at compile
     time, which is usually 'vi'.
@@ -49,17 +49,17 @@ ifdef::but-default-editor[]
     The build you are using chose '{but-default-editor}' as the default.
 endif::but-default-editor[]
 
-GIT_PAGER::
+BUT_PAGER::
     Text viewer for use by Git commands (e.g., 'less').  The value
     is meant to be interpreted by the shell.  The order of preference
-    is the `$GIT_PAGER` environment variable, then `core.pager`
+    is the `$BUT_PAGER` environment variable, then `core.pager`
     configuration, then `$PAGER`, and then the default chosen at
     compile time (usually 'less').
 ifdef::but-default-pager[]
     The build you are using chose '{but-default-pager}' as the default.
 endif::but-default-pager[]
 
-GIT_DEFAULT_BRANCH::
+BUT_DEFAULT_BRANCH::
     The name of the first branch created in newly initialized repositories.
 
 SEE ALSO
@@ -68,6 +68,6 @@ linkbut:but-cummit-tree[1]
 linkbut:but-tag[1]
 linkbut:but-config[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

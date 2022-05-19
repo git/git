@@ -4,8 +4,8 @@
 #
 
 test_description='test clone --reference'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -60,7 +60,7 @@ test_expect_success 'that reference gets used' '
 '
 
 test_expect_success 'cloning with reference (no -l -s)' '
-	GIT_TRACE_PACKET=$U.D but clone --reference B "file://$(pwd)/A" D
+	BUT_TRACE_PACKET=$U.D but clone --reference B "file://$(pwd)/A" D
 '
 
 test_expect_success 'fetched no objects' '
@@ -153,7 +153,7 @@ test_expect_success 'fetch with incomplete alternates' '
 	(
 		cd K &&
 		but remote add J "file://$base_dir/J" &&
-		GIT_TRACE_PACKET=$U.K but fetch J
+		BUT_TRACE_PACKET=$U.K but fetch J
 	) &&
 	main_object=$(cd A && but for-each-ref --format="%(objectname)" refs/heads/main) &&
 	test -s "$U.K" &&

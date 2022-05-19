@@ -16,7 +16,7 @@ test_expect_success 'extra delim packet in v2 ls-refs args' '
 		# protocol expects 0000 flush here
 		printf 0001
 	} >input &&
-	test_must_fail env GIT_PROTOCOL=version=2 \
+	test_must_fail env BUT_PROTOCOL=version=2 \
 		but upload-pack . <input 2>err &&
 	test_i18ngrep "expected flush after ls-refs arguments" err
 '
@@ -29,7 +29,7 @@ test_expect_success 'extra delim packet in v2 fetch args' '
 		# protocol expects 0000 flush here
 		printf 0001
 	} >input &&
-	test_must_fail env GIT_PROTOCOL=version=2 \
+	test_must_fail env BUT_PROTOCOL=version=2 \
 		but upload-pack . <input 2>err &&
 	test_i18ngrep "expected flush after fetch arguments" err
 '
@@ -40,7 +40,7 @@ test_expect_success 'bogus symref in v0 capabilities' '
 	dst=refs/heads/foo &&
 	{
 		printf "%s HEAD\0symref object-format=%s symref=HEAD:%s\n" \
-			"$oid" "$GIT_DEFAULT_HASH" "$dst" |
+			"$oid" "$BUT_DEFAULT_HASH" "$dst" |
 			test-tool pkt-line pack-raw-stdin &&
 		printf "0000"
 	} >input &&

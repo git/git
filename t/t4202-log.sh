@@ -2,8 +2,8 @@
 
 test_description='but log'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
@@ -1805,7 +1805,7 @@ test_expect_success GPGSM 'setup signed branch x509' '
 	echo foo >foo &&
 	but add foo &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but cummit -S -m signed_cummit
 '
 
@@ -2001,7 +2001,7 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	test_when_finished "but reset --hard && but checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but checkout -b plain-x509 main &&
 	echo aaa >bar &&
 	but add bar &&
@@ -2022,7 +2022,7 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 missing key' '
 	test_when_finished "but reset --hard && but checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but checkout -b plain-x509-nokey main &&
 	echo aaa >bar &&
 	but add bar &&
@@ -2043,7 +2043,7 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 miss
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 bad signature' '
 	test_when_finished "but reset --hard && but checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but checkout -b plain-x509-bad main &&
 	echo aaa >bar &&
 	but add bar &&

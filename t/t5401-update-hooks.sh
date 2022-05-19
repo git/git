@@ -18,35 +18,35 @@ test_expect_success setup '
 	but update-ref refs/heads/main $cummit0 &&
 	but update-ref refs/heads/tofail $cummit1 &&
 	but clone --bare ./. victim.but &&
-	GIT_DIR=victim.but but update-ref refs/heads/tofail $cummit1 &&
+	BUT_DIR=victim.but but update-ref refs/heads/tofail $cummit1 &&
 	but update-ref refs/heads/main $cummit1 &&
 	but update-ref refs/heads/tofail $cummit0 &&
 
 	test_hook --setup -C victim.but pre-receive <<-\EOF &&
-	printf %s "$@" >>$GIT_DIR/pre-receive.args
-	cat - >$GIT_DIR/pre-receive.stdin
+	printf %s "$@" >>$BUT_DIR/pre-receive.args
+	cat - >$BUT_DIR/pre-receive.stdin
 	echo STDOUT pre-receive
 	echo STDERR pre-receive >&2
 	EOF
 
 	test_hook --setup -C victim.but update <<-\EOF &&
-	echo "$@" >>$GIT_DIR/update.args
-	read x; printf %s "$x" >$GIT_DIR/update.stdin
+	echo "$@" >>$BUT_DIR/update.args
+	read x; printf %s "$x" >$BUT_DIR/update.stdin
 	echo STDOUT update $1
 	echo STDERR update $1 >&2
 	test "$1" = refs/heads/main || exit
 	EOF
 
 	test_hook --setup -C victim.but post-receive <<-\EOF &&
-	printf %s "$@" >>$GIT_DIR/post-receive.args
-	cat - >$GIT_DIR/post-receive.stdin
+	printf %s "$@" >>$BUT_DIR/post-receive.args
+	cat - >$BUT_DIR/post-receive.stdin
 	echo STDOUT post-receive
 	echo STDERR post-receive >&2
 	EOF
 
 	test_hook --setup -C victim.but post-update <<-\EOF
-	echo "$@" >>$GIT_DIR/post-update.args
-	read x; printf %s "$x" >$GIT_DIR/post-update.stdin
+	echo "$@" >>$BUT_DIR/post-update.args
+	read x; printf %s "$x" >$BUT_DIR/post-update.stdin
 	echo STDOUT post-update
 	echo STDERR post-update >&2
 	EOF
@@ -58,8 +58,8 @@ test_expect_success push '
 '
 
 test_expect_success 'updated as expected' '
-	test $(GIT_DIR=victim.but but rev-parse main) = $cummit1 &&
-	test $(GIT_DIR=victim.but but rev-parse tofail) = $cummit1
+	test $(BUT_DIR=victim.but but rev-parse main) = $cummit1 &&
+	test $(BUT_DIR=victim.but but rev-parse tofail) = $cummit1
 '
 
 test_expect_success 'hooks ran' '

@@ -21,8 +21,8 @@ status if it is not.
 A reference is used in Git to specify branches and tags.  A
 branch head is stored in the `refs/heads` hierarchy, while
 a tag is stored in the `refs/tags` hierarchy of the ref namespace
-(typically in `$GIT_DIR/refs/heads` and `$GIT_DIR/refs/tags`
-directories or, as entries in file `$GIT_DIR/packed-refs`
+(typically in `$BUT_DIR/refs/heads` and `$BUT_DIR/refs/tags`
+directories or, as entries in file `$BUT_DIR/packed-refs`
 if refs are packed by `but gc`).
 
 Git imposes the following rules on how references are named:
@@ -135,6 +135,6 @@ $ ref=$(but check-ref-format --normalize "refs/heads/$newbranch")||
 { echo "we do not like '$newbranch' as a branch name." >&2 ; exit 1 ; }
 ------------
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

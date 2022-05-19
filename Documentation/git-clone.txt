@@ -158,7 +158,7 @@ objects from the source repository into a pack in the cloned repository.
 	Make a 'bare' Git repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.but`, make the `<directory>`
-	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
+	itself the `$BUT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
 	to corresponding local branch heads, without mapping
@@ -313,7 +313,7 @@ or `--mirror` is given)
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the
-	<<URLS,GIT URLS>> section below for more information on specifying
+	<<URLS,BUT URLS>> section below for more information on specifying
 	repositories.
 
 <directory>::
@@ -364,6 +364,6 @@ $ but clone --bare -l /home/proj/.but /pub/scm/proj.but
 ------------
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -54,7 +54,7 @@ static int verify_packfile(struct repository *r,
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
 	but_hash_ctx ctx;
-	unsigned char hash[GIT_MAX_RAWSZ], *pack_sig;
+	unsigned char hash[BUT_MAX_RAWSZ], *pack_sig;
 	off_t offset = 0, pack_sig_ofs = 0;
 	uint32_t nr_objects, i;
 	int err = 0;

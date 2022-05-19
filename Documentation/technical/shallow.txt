@@ -8,7 +8,7 @@ repo, and therefore grafts are introduced pretending that
 these cummits have no parents.
 *********************************************************
 
-$GIT_DIR/shallow lists cummit object names and tells Git to
+$BUT_DIR/shallow lists cummit object names and tells Git to
 pretend as if they are root cummits (e.g. "but log" traversal
 stops after showing them; "but fsck" does not complain saying
 the cummits listed on their "parent" lines do not exist).
@@ -38,7 +38,7 @@ There are some unfinished ends of the whole shallow business:
   client does not support shallow repositories). There is no
   support at all for this in this patch series.
 
-- Instead of locking $GIT_DIR/shallow at the start, just
+- Instead of locking $BUT_DIR/shallow at the start, just
   the timestamp of it is noted, and when it comes to writing it,
   a check is performed if the mtime is still the same, dying if
   it is not.
@@ -50,11 +50,11 @@ There are some unfinished ends of the whole shallow business:
 
 To make a shallow clone, you can call "but-clone --depth 20 repo".
 The result contains only cummit chains with a length of at most 20.
-It also writes an appropriate $GIT_DIR/shallow.
+It also writes an appropriate $BUT_DIR/shallow.
 
 You can deepen a shallow repository with "but-fetch --depth 20
 repo branch", which will fetch branch from repo, but stop at depth
-20, updating $GIT_DIR/shallow.
+20, updating $BUT_DIR/shallow.
 
 The special depth 2147483647 (or 0x7fffffff, the largest positive
 number a signed 32-bit integer can contain) means infinite depth.

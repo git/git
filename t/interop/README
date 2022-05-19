@@ -28,7 +28,7 @@ You can run a single test like:
     1..3
 
 Each test contains default versions to run against. You may override
-these by setting `GIT_TEST_VERSION_A` and `GIT_TEST_VERSION_B` in the
+these by setting `BUT_TEST_VERSION_A` and `BUT_TEST_VERSION_B` in the
 environment. Note that not all combinations will give sensible outcomes
 for all tests (e.g., a test checking for a specific old/new interaction
 may want something "old" enough" and something "new" enough; see
@@ -43,7 +43,7 @@ contents of your working tree.
 
 You can set the following variables (in the environment or in your config.mak):
 
-    GIT_INTEROP_MAKE_OPTS
+    BUT_INTEROP_MAKE_OPTS
 	Options to pass to `make` when building a but version (e.g.,
 	`-j8`).
 

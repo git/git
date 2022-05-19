@@ -288,7 +288,7 @@ include::transfer-data-leaks.txt[]
 BUGS
 ----
 Using --recurse-submodules can only fetch new cummits in submodules that are
-present locally e.g. in `$GIT_DIR/modules/`. If the upstream adds a new
+present locally e.g. in `$BUT_DIR/modules/`. If the upstream adds a new
 submodule, that submodule cannot be fetched until it is cloned e.g. by `but
 submodule update`. This is expected to be fixed in a future Git version.
 
@@ -296,6 +296,6 @@ SEE ALSO
 --------
 linkbut:but-pull[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

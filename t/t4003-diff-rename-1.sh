@@ -31,7 +31,7 @@ test_expect_success \
 # copy-and-edit one, and rename-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 but diff-index -C -p $tree >current
+BUT_DIFF_OPTS=--unified=0 but diff-index -C -p $tree >current
 cat >expected <<\EOF
 diff --but a/COPYING b/COPYING.1
 copy from COPYING
@@ -71,7 +71,7 @@ test_expect_success \
 # edited one, and copy-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 but diff-index -C -p $tree >current
+BUT_DIFF_OPTS=--unified=0 but diff-index -C -p $tree >current
 cat >expected <<\EOF
 diff --but a/COPYING b/COPYING
 --- a/COPYING
@@ -110,7 +110,7 @@ test_expect_success \
 # the diff-core.  Unchanged rezrov, although being fed to
 # but diff-index as well, should not be mentioned.
 
-GIT_DIFF_OPTS=--unified=0 \
+BUT_DIFF_OPTS=--unified=0 \
     but diff-index -C --find-copies-harder -p $tree >current
 cat >expected <<\EOF
 diff --but a/COPYING b/COPYING.1

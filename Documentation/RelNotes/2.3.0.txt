@@ -22,9 +22,9 @@ Ports
 
 UI, Workflows & Features
 
- * It was cumbersome to use "GIT_SSH" mechanism when the user wanted
+ * It was cumbersome to use "BUT_SSH" mechanism when the user wanted
    to pass an extra set of arguments to the underlying ssh.  A new
-   environment variable GIT_SSH_COMMAND can be used for this.
+   environment variable BUT_SSH_COMMAND can be used for this.
 
  * A request to store an empty note via "but notes" meant to remove
    note from the object but with --allow-empty we will store a
@@ -62,7 +62,7 @@ UI, Workflows & Features
    positive response, which is cumbersome to turn off when you need to
    run Git in an automated setting.  The credential helper interface
    learned to allow a helper to say "stop, don't ask other helpers."
-   Also GIT_TERMINAL_PROMPT environment can be set to false to disable
+   Also BUT_TERMINAL_PROMPT environment can be set to false to disable
    our built-in prompt mechanism for passwords.
 
  * "but branch -d" (delete) and "but branch -m" (move) learned to
@@ -84,11 +84,11 @@ UI, Workflows & Features
    This allows you to use authenticate method other than CRAM-MD5,
    among other things.
 
- * "but imap-send" now allows GIT_CURL_VERBOSE environment variable to
+ * "but imap-send" now allows BUT_CURL_VERBOSE environment variable to
    control the verbosity when talking via the cURL library.
 
  * The prompt script (in contrib/) learned to optionally hide prompt
-   when in an ignored directory by setting GIT_PS1_HIDE_IF_PWD_IGNORED
+   when in an ignored directory by setting BUT_PS1_HIDE_IF_PWD_IGNORED
    shell variable.
 
 
@@ -175,7 +175,7 @@ notes for details).
    (merge fa137f6 nd/lockfile-absolute later to maint).
 
  * Traditionally we tried to avoid interpreting date strings given by
-   the user as future dates, e.g. GIT_CUMMITTER_DATE=2014-12-10 when
+   the user as future dates, e.g. BUT_CUMMITTER_DATE=2014-12-10 when
    used early November 2014 was taken as "October 12, 2014" because it
    is likely that a date in the future, December 10, is a mistake.
    This heuristics has been loosened to allow people to express future

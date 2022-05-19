@@ -1299,7 +1299,7 @@ test_expect_success 'with simple command' '
 
 test_expect_success 'with command using cummitter information' '
 	but config trailer.sign.ifExists "addIfDifferent" &&
-	but config trailer.sign.command "echo \"\$GIT_CUMMITTER_NAME <\$GIT_CUMMITTER_EMAIL>\"" &&
+	but config trailer.sign.command "echo \"\$BUT_CUMMITTER_NAME <\$BUT_CUMMITTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1317,7 +1317,7 @@ test_expect_success 'with command using author information' '
 	but config trailer.sign.key "Signed-off-by: " &&
 	but config trailer.sign.where "after" &&
 	but config trailer.sign.ifExists "addIfDifferentNeighbor" &&
-	but config trailer.sign.command "echo \"\$GIT_AUTHOR_NAME <\$GIT_AUTHOR_EMAIL>\"" &&
+	but config trailer.sign.command "echo \"\$BUT_AUTHOR_NAME <\$BUT_AUTHOR_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z

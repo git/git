@@ -349,7 +349,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	int subject_len = 0;
 	const char *subject_start;
 
-	char *rla = getenv("GIT_REFLOG_ACTION");
+	char *rla = getenv("BUT_REFLOG_ACTION");
 	if (rla) {
 		strbuf_addstr(sb, rla);
 	} else {

@@ -148,7 +148,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 			t->object.flags |= NOT_USER_GIVEN;
 			process_tree(ctx, t, base, entry.path);
 		}
-		else if (S_ISGITLINK(entry.mode))
+		else if (S_ISBUTLINK(entry.mode))
 			process_butlink(ctx, entry.oid.hash,
 					base, entry.path);
 		else {

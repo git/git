@@ -63,11 +63,11 @@ do
 		exit 2
 	esac
 
-	eval pretty_name=\${GITHEAD_$SHA1:-$SHA1}
+	eval pretty_name=\${BUTHEAD_$SHA1:-$SHA1}
 	if test "$SHA1" = "$pretty_name"
 	then
 		SHA1_UP="$(echo "$SHA1" | tr a-z A-Z)"
-		eval pretty_name=\${GITHEAD_$SHA1_UP:-$pretty_name}
+		eval pretty_name=\${BUTHEAD_$SHA1_UP:-$pretty_name}
 	fi
 	common=$(but merge-base --all $SHA1 $MRC) ||
 		die "$(eval_gettext "Unable to find common cummit with \$pretty_name")"

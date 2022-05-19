@@ -4,8 +4,8 @@
 #
 test_description='Tests replace refs functionality'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
@@ -112,9 +112,9 @@ test_expect_success 'test --no-replace-objects option' '
      but --no-replace-objects show $HASH2 | grep "A U Thor"
 '
 
-test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
-     GIT_NO_REPLACE_OBJECTS=1 but cat-file cummit $HASH2 | grep "author A U Thor" &&
-     GIT_NO_REPLACE_OBJECTS=1 but show $HASH2 | grep "A U Thor"
+test_expect_success 'test BUT_NO_REPLACE_OBJECTS env variable' '
+     BUT_NO_REPLACE_OBJECTS=1 but cat-file cummit $HASH2 | grep "author A U Thor" &&
+     BUT_NO_REPLACE_OBJECTS=1 but show $HASH2 | grep "A U Thor"
 '
 
 test_expect_success 'test core.usereplacerefs config option' '
@@ -274,7 +274,7 @@ test_expect_success 'bisect and replacements' '
      but bisect start $HASH7 $HASH1 &&
      test "$PARA3" = "$(but rev-parse --verify HEAD)" &&
      but bisect reset &&
-     GIT_NO_REPLACE_OBJECTS=1 but bisect start $HASH7 $HASH1 &&
+     BUT_NO_REPLACE_OBJECTS=1 but bisect start $HASH7 $HASH1 &&
      test "$HASH4" = "$(but rev-parse --verify HEAD)" &&
      but bisect reset &&
      but --no-replace-objects bisect start $HASH7 $HASH1 &&
@@ -371,21 +371,21 @@ test_expect_success 'setup fake editors' '
 '
 
 test_expect_success '--edit with and without already replaced object' '
-	test_must_fail env GIT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
-	GIT_EDITOR=./fakeeditor but replace --force --edit "$PARA3" &&
+	test_must_fail env BUT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
+	BUT_EDITOR=./fakeeditor but replace --force --edit "$PARA3" &&
 	but replace -l | grep "$PARA3" &&
 	but cat-file cummit "$PARA3" | grep "A fake Thor" &&
 	but replace -d "$PARA3" &&
-	GIT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
+	BUT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
 	but replace -l | grep "$PARA3" &&
 	but cat-file cummit "$PARA3" | grep "A fake Thor"
 '
 
 test_expect_success '--edit and change nothing or command failed' '
 	but replace -d "$PARA3" &&
-	test_must_fail env GIT_EDITOR=true but replace --edit "$PARA3" &&
-	test_must_fail env GIT_EDITOR="./failingfakeeditor" but replace --edit "$PARA3" &&
-	GIT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
+	test_must_fail env BUT_EDITOR=true but replace --edit "$PARA3" &&
+	test_must_fail env BUT_EDITOR="./failingfakeeditor" but replace --edit "$PARA3" &&
+	BUT_EDITOR=./fakeeditor but replace --edit "$PARA3" &&
 	but replace -l | grep "$PARA3" &&
 	but cat-file cummit "$PARA3" | grep "A fake Thor"
 '

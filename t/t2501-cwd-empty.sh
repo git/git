@@ -117,7 +117,7 @@ test_expect_success 'merge fails if cwd needs to be removed; recursive friendly'
 	grep "Refusing to remove the current working directory" error
 '
 
-GIT_TEST_MERGE_ALGORITHM=ort
+BUT_TEST_MERGE_ALGORITHM=ort
 
 test_expect_success 'merge fails if cwd needs to be removed' '
 	test_required_dir_removal but merge fd_conflict

@@ -3,7 +3,7 @@
 
 /*
  * This API allows you to create a temporary object directory, advertise it to
- * sub-processes via GIT_OBJECT_DIRECTORY and GIT_ALTERNATE_OBJECT_DIRECTORIES,
+ * sub-processes via BUT_OBJECT_DIRECTORY and BUT_ALTERNATE_OBJECT_DIRECTORIES,
  * and then either migrate its object into the main object directory, or remove
  * it. The library handles unexpected signal/exit death by cleaning up the
  * temporary directory.

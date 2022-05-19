@@ -18,7 +18,7 @@ struct bitmap_disk_header {
 	uint16_t version;
 	uint16_t options;
 	uint32_t entry_count;
-	unsigned char checksum[GIT_MAX_RAWSZ];
+	unsigned char checksum[BUT_MAX_RAWSZ];
 };
 
 #define NEEDS_BITMAP (1u<<22)

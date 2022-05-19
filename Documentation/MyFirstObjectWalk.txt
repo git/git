@@ -54,7 +54,7 @@ off at runtime. For the purposes of this tutorial, we will write `walken` as
 though it is intended for use as a "plumbing" command: that is, a command which
 is used primarily in scripts, rather than interactively by humans (a "porcelain"
 command). So we will send our debug output to `trace_printf()` instead. When
-running, enable trace output by setting the environment variable `GIT_TRACE`.
+running, enable trace output by setting the environment variable `BUT_TRACE`.
 
 Add usage text and `-h` handling, like all subcommands should consistently do
 (our test suite will notice and complain if you fail to do so).
@@ -101,12 +101,12 @@ BUILTIN_OBJS += builtin/walken.o
 ----
 
 Build and test out your command, without forgetting to ensure the `DEVELOPER`
-flag is set, and with `GIT_TRACE` enabled so the debug output can be seen:
+flag is set, and with `BUT_TRACE` enabled so the debug output can be seen:
 
 ----
 $ echo DEVELOPER=1 >>config.mak
 $ make
-$ GIT_TRACE=1 ./bin-wrappers/but walken
+$ BUT_TRACE=1 ./bin-wrappers/but walken
 ----
 
 NOTE: For a more exhaustive overview of the new command process, take a look at
@@ -829,7 +829,7 @@ those lines without having to recompile.
 With only that change, run again (but save yourself some scrollback):
 
 ----
-$ GIT_TRACE=1 ./bin-wrappers/but walken | head -n 10
+$ BUT_TRACE=1 ./bin-wrappers/but walken | head -n 10
 ----
 
 Take a look at the top cummit with `but show` and the object ID you printed; it
@@ -857,7 +857,7 @@ of the first handful:
 
 ----
 $ make
-$ GIT_TRACE=1 ./bin-wrappers but walken | tail -n 10
+$ BUT_TRACE=1 ./bin-wrappers but walken | tail -n 10
 ----
 
 The last cummit object given should have the same OID as the one we saw at the

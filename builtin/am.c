@@ -59,8 +59,8 @@ static int str_isspace(const char *str)
 enum patch_format {
 	PATCH_FORMAT_UNKNOWN = 0,
 	PATCH_FORMAT_MBOX,
-	PATCH_FORMAT_STGIT,
-	PATCH_FORMAT_STGIT_SERIES,
+	PATCH_FORMAT_STBUT,
+	PATCH_FORMAT_STBUT_SERIES,
 	PATCH_FORMAT_HG,
 	PATCH_FORMAT_MBOXRD
 };
@@ -297,9 +297,9 @@ static int read_state_file(struct strbuf *sb, const struct am_state *state,
  *
  * The author script is of the format:
  *
- *	GIT_AUTHOR_NAME='$author_name'
- *	GIT_AUTHOR_EMAIL='$author_email'
- *	GIT_AUTHOR_DATE='$author_date'
+ *	BUT_AUTHOR_NAME='$author_name'
+ *	BUT_AUTHOR_EMAIL='$author_email'
+ *	BUT_AUTHOR_DATE='$author_date'
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
  * with our parsing, as the file was meant to be eval'd in the old but-am.sh
@@ -326,15 +326,15 @@ static void write_author_script(const struct am_state *state)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_addstr(&sb, "GIT_AUTHOR_NAME=");
+	strbuf_addstr(&sb, "BUT_AUTHOR_NAME=");
 	sq_quote_buf(&sb, state->author_name);
 	strbuf_addch(&sb, '\n');
 
-	strbuf_addstr(&sb, "GIT_AUTHOR_EMAIL=");
+	strbuf_addstr(&sb, "BUT_AUTHOR_EMAIL=");
 	sq_quote_buf(&sb, state->author_email);
 	strbuf_addch(&sb, '\n');
 
-	strbuf_addstr(&sb, "GIT_AUTHOR_DATE=");
+	strbuf_addstr(&sb, "BUT_AUTHOR_DATE=");
 	sq_quote_buf(&sb, state->author_date);
 	strbuf_addch(&sb, '\n');
 
@@ -648,8 +648,8 @@ static int detect_patch_format(const char **paths)
 		goto done;
 	}
 
-	if (starts_with(l1.buf, "# This series applies on GIT cummit")) {
-		ret = PATCH_FORMAT_STGIT_SERIES;
+	if (starts_with(l1.buf, "# This series applies on BUT cummit")) {
+		ret = PATCH_FORMAT_STBUT_SERIES;
 		goto done;
 	}
 
@@ -669,7 +669,7 @@ static int detect_patch_format(const char **paths)
 		(starts_with(l3.buf, "From:") ||
 		 starts_with(l3.buf, "Author:") ||
 		 starts_with(l3.buf, "Date:"))) {
-		ret = PATCH_FORMAT_STGIT;
+		ret = PATCH_FORMAT_STBUT;
 		goto done;
 	}
 
@@ -839,7 +839,7 @@ static int split_mail_stbut_series(struct am_state *state, const char **paths,
 	int ret;
 
 	if (!paths[0] || paths[1])
-		return error(_("Only one StGIT patch series can be applied at once"));
+		return error(_("Only one StBUT patch series can be applied at once"));
 
 	series_dir_buf = xstrdup(*paths);
 	series_dir = dirname(series_dir_buf);
@@ -964,9 +964,9 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 	switch (patch_format) {
 	case PATCH_FORMAT_MBOX:
 		return split_mail_mbox(state, paths, keep_cr, 0);
-	case PATCH_FORMAT_STGIT:
+	case PATCH_FORMAT_STBUT:
 		return split_mail_conv(stbut_patch_to_mail, state, paths, keep_cr);
-	case PATCH_FORMAT_STGIT_SERIES:
+	case PATCH_FORMAT_STBUT_SERIES:
 		return split_mail_stbut_series(state, paths, keep_cr);
 	case PATCH_FORMAT_HG:
 		return split_mail_conv(hg_patch_to_mail, state, paths, keep_cr);
@@ -1658,8 +1658,8 @@ static void do_cummit(const struct am_state *state)
 			IDENT_STRICT);
 
 	if (state->cummitter_date_is_author_date)
-		cummitter = fmt_ident(getenv("GIT_CUMMITTER_NAME"),
-				      getenv("GIT_CUMMITTER_EMAIL"),
+		cummitter = fmt_ident(getenv("BUT_CUMMITTER_NAME"),
+				      getenv("BUT_CUMMITTER_EMAIL"),
 				      WANT_CUMMITTER_IDENT,
 				      state->ignore_date ? NULL
 							 : state->author_date,
@@ -1670,7 +1670,7 @@ static void do_cummit(const struct am_state *state)
 				 NULL))
 		die(_("failed to write cummit object"));
 
-	reflog_msg = getenv("GIT_REFLOG_ACTION");
+	reflog_msg = getenv("BUT_REFLOG_ACTION");
 	if (!reflog_msg)
 		reflog_msg = "am";
 
@@ -2189,7 +2189,7 @@ static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 		int ret;
 
 		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_cummit));
-		ret = run_command_v_opt(av, RUN_GIT_CMD);
+		ret = run_command_v_opt(av, RUN_BUT_CMD);
 		free(new_oid_str);
 		return ret;
 	}
@@ -2228,9 +2228,9 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 	else if (!strcmp(arg, "mbox"))
 		*opt_value = PATCH_FORMAT_MBOX;
 	else if (!strcmp(arg, "stbut"))
-		*opt_value = PATCH_FORMAT_STGIT;
+		*opt_value = PATCH_FORMAT_STBUT;
 	else if (!strcmp(arg, "stbut-series"))
-		*opt_value = PATCH_FORMAT_STGIT_SERIES;
+		*opt_value = PATCH_FORMAT_STBUT_SERIES;
 	else if (!strcmp(arg, "hg"))
 		*opt_value = PATCH_FORMAT_HG;
 	else if (!strcmp(arg, "mboxrd"))

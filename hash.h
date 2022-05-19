@@ -87,40 +87,40 @@ static inline void but_SHA256_Clone(but_SHA256_CTX *dst, const but_SHA256_CTX *s
  * the format_id field for fixed-length fields on disk.
  */
 /* An unknown hash function. */
-#define GIT_HASH_UNKNOWN 0
+#define BUT_HASH_UNKNOWN 0
 /* SHA-1 */
-#define GIT_HASH_SHA1 1
+#define BUT_HASH_SHA1 1
 /* SHA-256  */
-#define GIT_HASH_SHA256 2
+#define BUT_HASH_SHA256 2
 /* Number of algorithms supported (including unknown). */
-#define GIT_HASH_NALGOS (GIT_HASH_SHA256 + 1)
+#define BUT_HASH_NALGOS (BUT_HASH_SHA256 + 1)
 
 /* "sha1", big-endian */
-#define GIT_SHA1_FORMAT_ID 0x73686131
+#define BUT_SHA1_FORMAT_ID 0x73686131
 
 /* The length in bytes and in hex dibuts of an object name (SHA-1 value). */
-#define GIT_SHA1_RAWSZ 20
-#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
+#define BUT_SHA1_RAWSZ 20
+#define BUT_SHA1_HEXSZ (2 * BUT_SHA1_RAWSZ)
 /* The block size of SHA-1. */
-#define GIT_SHA1_BLKSZ 64
+#define BUT_SHA1_BLKSZ 64
 
 /* "s256", big-endian */
-#define GIT_SHA256_FORMAT_ID 0x73323536
+#define BUT_SHA256_FORMAT_ID 0x73323536
 
 /* The length in bytes and in hex dibuts of an object name (SHA-256 value). */
-#define GIT_SHA256_RAWSZ 32
-#define GIT_SHA256_HEXSZ (2 * GIT_SHA256_RAWSZ)
+#define BUT_SHA256_RAWSZ 32
+#define BUT_SHA256_HEXSZ (2 * BUT_SHA256_RAWSZ)
 /* The block size of SHA-256. */
-#define GIT_SHA256_BLKSZ 64
+#define BUT_SHA256_BLKSZ 64
 
 /* The length in byte and in hex dibuts of the largest possible hash value. */
-#define GIT_MAX_RAWSZ GIT_SHA256_RAWSZ
-#define GIT_MAX_HEXSZ GIT_SHA256_HEXSZ
+#define BUT_MAX_RAWSZ BUT_SHA256_RAWSZ
+#define BUT_MAX_HEXSZ BUT_SHA256_HEXSZ
 /* The largest possible block size for any supported hash. */
-#define GIT_MAX_BLKSZ GIT_SHA256_BLKSZ
+#define BUT_MAX_BLKSZ BUT_SHA256_BLKSZ
 
 struct object_id {
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	int algo;	/* XXX requires 4-byte alignment */
 };
 
@@ -180,10 +180,10 @@ struct but_hash_algo {
 	/* The all-zeros OID. */
 	const struct object_id *null_oid;
 };
-extern const struct but_hash_algo hash_algos[GIT_HASH_NALGOS];
+extern const struct but_hash_algo hash_algos[BUT_HASH_NALGOS];
 
 /*
- * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
+ * Return a BUT_HASH_* constant based on the name.  Returns BUT_HASH_UNKNOWN if
  * the name doesn't match a known algorithm.
  */
 int hash_algo_by_name(const char *name);
@@ -207,9 +207,9 @@ static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *
 	 * Teach the compiler that there are only two possibilities of hash size
 	 * here, so that it can optimize for this case as much as possible.
 	 */
-	if (algop->rawsz == GIT_MAX_RAWSZ)
-		return memcmp(sha1, sha2, GIT_MAX_RAWSZ);
-	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+	if (algop->rawsz == BUT_MAX_RAWSZ)
+		return memcmp(sha1, sha2, BUT_MAX_RAWSZ);
+	return memcmp(sha1, sha2, BUT_SHA1_RAWSZ);
 }
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
@@ -233,9 +233,9 @@ static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *s
 	 * We write this here instead of deferring to hashcmp so that the
 	 * compiler can properly inline it and avoid calling memcmp.
 	 */
-	if (algop->rawsz == GIT_MAX_RAWSZ)
-		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
-	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+	if (algop->rawsz == BUT_MAX_RAWSZ)
+		return !memcmp(sha1, sha2, BUT_MAX_RAWSZ);
+	return !memcmp(sha1, sha2, BUT_SHA1_RAWSZ);
 }
 
 static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
@@ -265,7 +265,7 @@ static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {
-	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);
+	memcpy(dst->hash, src->hash, BUT_MAX_RAWSZ);
 	dst->algo = src->algo;
 }
 
@@ -281,7 +281,7 @@ static inline void oidcpy_with_padding(struct object_id *dst,
 		hashsz = hash_algos[src->algo].rawsz;
 
 	memcpy(dst->hash, src->hash, hashsz);
-	memset(dst->hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
+	memset(dst->hash + hashsz, 0, BUT_MAX_RAWSZ - hashsz);
 	dst->algo = src->algo;
 }
 
@@ -299,7 +299,7 @@ static inline void hashclr(unsigned char *hash)
 
 static inline void oidclr(struct object_id *oid)
 {
-	memset(oid->hash, 0, GIT_MAX_RAWSZ);
+	memset(oid->hash, 0, BUT_MAX_RAWSZ);
 	oid->algo = hash_algo_by_ptr(the_hash_algo);
 }
 

@@ -5,7 +5,7 @@
 
 /*
  * A "string_list_each_func_t" function that normalizes an entry from
- * GIT_CEILING_DIRECTORIES.  If the path is unusable for some reason,
+ * BUT_CEILING_DIRECTORIES.  If the path is unusable for some reason,
  * die with an explanation.
  */
 static int normalize_ceiling_entry(struct string_list_item *item, void *unused)

@@ -20,7 +20,7 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 ### Detect Tck/Tk interpreter path changes
 TRACK_TCLTK = $(subst ','\'',-DTCLTK_PATH='$(TCLTK_PATH_SQ)')
 
-GIT-TCLTK-VARS: FORCE
+BUT-TCLTK-VARS: FORCE
 	@VARS='$(TRACK_TCLTK)'; \
 		if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
 			echo 1>&2 "    * new Tcl/Tk interpreter location"; \
@@ -60,9 +60,9 @@ uninstall::
 	$(RM) '$(DESTDIR_SQ)$(bindir_SQ)'/butk
 
 clean::
-	$(RM) butk-wish po/*.msg GIT-TCLTK-VARS
+	$(RM) butk-wish po/*.msg BUT-TCLTK-VARS
 
-butk-wish: butk GIT-TCLTK-VARS
+butk-wish: butk BUT-TCLTK-VARS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <butk >$@+ && \
 	chmod +x $@+ && \

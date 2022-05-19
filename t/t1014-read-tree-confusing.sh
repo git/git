@@ -43,13 +43,13 @@ done <<-EOF
 .
 ..
 .but
-.GIT
+.BUT
 ${u200c}.Git {u200c}.Git
 .gI${u200c}T .gI{u200c}T
 .GiT${u200c} .GiT{u200c}
 but~1
 .but.SPACE .but.{space}
-.\\\\.GIT\\\\foobar backslashes
+.\\\\.BUT\\\\foobar backslashes
 .but\\\\foobar backslashes2
 .but...:alternate-stream
 EOF

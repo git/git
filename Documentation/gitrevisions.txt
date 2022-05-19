@@ -31,6 +31,6 @@ SEE ALSO
 --------
 linkbut:but-rev-parse[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

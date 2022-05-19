@@ -1,4 +1,4 @@
-GIT v1.5.5 Release Notes
+BUT v1.5.5 Release Notes
 ========================
 
 Updates since v1.5.4

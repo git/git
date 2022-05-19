@@ -101,6 +101,6 @@ ssh(1),
 linkbut:but-daemon[1],
 contrib/but-shell-commands/README
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

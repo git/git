@@ -2029,8 +2029,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			output_directory = config_output_directory;
 		output_directory = set_outdir(prefix, output_directory);
 
-		if (rev.diffopt.use_color != GIT_COLOR_ALWAYS)
-			rev.diffopt.use_color = GIT_COLOR_NEVER;
+		if (rev.diffopt.use_color != BUT_COLOR_ALWAYS)
+			rev.diffopt.use_color = BUT_COLOR_NEVER;
 		/*
 		 * We consider <outdir> as 'outside of butdir', therefore avoid
 		 * applying adjust_shared_perm in s-c-l-d.

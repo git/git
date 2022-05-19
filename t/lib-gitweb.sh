@@ -12,7 +12,7 @@ butweb_init () {
 # butweb configuration for tests
 
 our \$version = 'current';
-our \$GIT = 'but';
+our \$BUT = 'but';
 our \$projectroot = "$safe_pwd";
 our \$project_maxdepth = 8;
 our \$home_link_str = 'projects';
@@ -21,9 +21,9 @@ our \$site_html_head_string = '';
 our \$site_header = '';
 our \$site_footer = '';
 our \$home_text = 'indextext.html';
-our @stylesheets = ('file:///$GIT_BUILD_DIR/butweb/static/butweb.css');
-our \$logo = 'file:///$GIT_BUILD_DIR/butweb/static/but-logo.png';
-our \$favicon = 'file:///$GIT_BUILD_DIR/butweb/static/but-favicon.png';
+our @stylesheets = ('file:///$BUT_BUILD_DIR/butweb/static/butweb.css');
+our \$logo = 'file:///$BUT_BUILD_DIR/butweb/static/but-logo.png';
+our \$favicon = 'file:///$BUT_BUILD_DIR/butweb/static/but-favicon.png';
 our \$projects_list = '';
 our \$export_ok = '';
 our \$strict_export = '';
@@ -35,21 +35,21 @@ EOF
 $0 test repository
 EOF
 
-	# You can set the GITWEB_TEST_INSTALLED environment variable to
+	# You can set the BUTWEB_TEST_INSTALLED environment variable to
 	# the butwebdir (the directory where butweb is installed / deployed to)
 	# of an existing butweb installation to test that installation,
 	# or simply to pathname of installed butweb script.
-	if test -n "$GITWEB_TEST_INSTALLED" ; then
-		if test -d $GITWEB_TEST_INSTALLED; then
-			SCRIPT_NAME="$GITWEB_TEST_INSTALLED/butweb.cgi"
+	if test -n "$BUTWEB_TEST_INSTALLED" ; then
+		if test -d $BUTWEB_TEST_INSTALLED; then
+			SCRIPT_NAME="$BUTWEB_TEST_INSTALLED/butweb.cgi"
 		else
-			SCRIPT_NAME="$GITWEB_TEST_INSTALLED"
+			SCRIPT_NAME="$BUTWEB_TEST_INSTALLED"
 		fi
 		test -f "$SCRIPT_NAME" ||
-		error "Cannot find butweb at $GITWEB_TEST_INSTALLED."
+		error "Cannot find butweb at $BUTWEB_TEST_INSTALLED."
 		say "# Testing $SCRIPT_NAME"
 	else # normal case, use source version of butweb
-		SCRIPT_NAME="$GIT_BUILD_DIR/butweb/butweb.perl"
+		SCRIPT_NAME="$BUT_BUILD_DIR/butweb/butweb.perl"
 	fi
 	export SCRIPT_NAME
 }
@@ -64,8 +64,8 @@ butweb_run () {
 	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
 		QUERY_STRING PATH_INFO REQUEST_URI
 
-	GITWEB_CONFIG=$(pwd)/butweb_config.perl
-	export GITWEB_CONFIG
+	BUTWEB_CONFIG=$(pwd)/butweb_config.perl
+	export BUTWEB_CONFIG
 
 	# some of but commands write to STDERR on error, but this is not
 	# written to web server logs, so we are not interested in that:

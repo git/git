@@ -1,4 +1,4 @@
-GIT v1.5.3 Release Notes
+BUT v1.5.3 Release Notes
 ========================
 
 Updates since v1.5.2
@@ -45,16 +45,16 @@ Updates since v1.5.2
   - "but rebase" learned an "interactive" mode that let you
     pick and reorder which cummits to rebuild.
 
-  - "but fsck" can save its findings in $GIT_DIR/lost-found, without a
+  - "but fsck" can save its findings in $BUT_DIR/lost-found, without a
     separate invocation of "but lost-found" command.  The blobs stored by
     lost-found are stored in plain format to allow you to grep in them.
 
-  - $GIT_WORK_TREE environment variable can be used together with
-    $GIT_DIR to work in a subdirectory of a working tree that is
-    not located at "$GIT_DIR/..".
+  - $BUT_WORK_TREE environment variable can be used together with
+    $BUT_DIR to work in a subdirectory of a working tree that is
+    not located at "$BUT_DIR/..".
 
   - Giving "--file=<file>" option to "but config" is the same as
-    running the command with GIT_CONFIG=<file> environment.
+    running the command with BUT_CONFIG=<file> environment.
 
   - "but log" learned a new option "--follow", to follow
     renaming history of a single file.
@@ -170,7 +170,7 @@ Updates since v1.5.2
     asterisk on the sides you want to wildcard yourself.
 
   - The editor to use with many interactive commands can be
-    overridden with GIT_EDITOR environment variable, or if it
+    overridden with BUT_EDITOR environment variable, or if it
     does not exist, with core.editor configuration variable.  As
     before, if you have neither, environment variables VISUAL
     and EDITOR are consulted in this order, and then finally we
@@ -348,8 +348,8 @@ this release, unless otherwise noted.
   - "but-write-tree" had a bad interaction with racy-but avoidance and
     butattributes mechanisms.
 
-  - "but --bare command" overrode existing GIT_DIR setting and always
-    made it treat the current working directory as GIT_DIR.
+  - "but --bare command" overrode existing BUT_DIR setting and always
+    made it treat the current working directory as BUT_DIR.
 
   - "but ls-files --error-unmatch" does not complain if you give the
     same path pattern twice by mistake.

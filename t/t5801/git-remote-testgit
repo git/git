@@ -10,25 +10,25 @@ else
 fi
 url=$2
 
-dir="$GIT_DIR/testbut/$alias"
+dir="$BUT_DIR/testbut/$alias"
 
 h_refspec="refs/heads/*:refs/testbut/$alias/heads/*"
 t_refspec="refs/tags/*:refs/testbut/$alias/tags/*"
 
-if test -n "$GIT_REMOTE_TESTGIT_NOREFSPEC"
+if test -n "$BUT_REMOTE_TESTBUT_NOREFSPEC"
 then
 	h_refspec=""
 	t_refspec=""
 fi
 
-GIT_DIR="$url/.but"
-export GIT_DIR
+BUT_DIR="$url/.but"
+export BUT_DIR
 
 force=
 
 mkdir -p "$dir"
 
-if test -z "$GIT_REMOTE_TESTGIT_NO_MARKS"
+if test -z "$BUT_REMOTE_TESTBUT_NO_MARKS"
 then
 	butmarks="$dir/but.marks"
 	testbutmarks="$dir/testbut.marks"
@@ -49,8 +49,8 @@ do
 			echo "*import-marks $butmarks"
 			echo "*export-marks $butmarks"
 		fi
-		test -n "$GIT_REMOTE_TESTGIT_SIGNED_TAGS" && echo "signed-tags"
-		test -n "$GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE" && echo "no-private-update"
+		test -n "$BUT_REMOTE_TESTBUT_SIGNED_TAGS" && echo "signed-tags"
+		test -n "$BUT_REMOTE_TESTBUT_NO_PRIVATE_UPDATE" && echo "no-private-update"
 		echo 'option'
 		echo 'object-format'
 		echo
@@ -78,7 +78,7 @@ do
 			echo "feature export-marks=$butmarks"
 		fi
 
-		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		if test -n "$BUT_REMOTE_TESTBUT_FAILURE"
 		then
 			echo "feature done"
 			exit 1
@@ -94,7 +94,7 @@ do
 		echo "done"
 		;;
 	export)
-		if test -n "$GIT_REMOTE_TESTGIT_FAILURE"
+		if test -n "$BUT_REMOTE_TESTBUT_FAILURE"
 		then
 			# consume input so fast-export doesn't get SIGPIPE;
 			# but would also notice that case, but we want
@@ -122,11 +122,11 @@ do
 			*" $ref $a "*)
 				continue ;;	# unchanged
 			esac
-			if test -z "$GIT_REMOTE_TESTGIT_PUSH_ERROR"
+			if test -z "$BUT_REMOTE_TESTBUT_PUSH_ERROR"
 			then
 				echo "ok $ref"
 			else
-				echo "error $ref $GIT_REMOTE_TESTGIT_PUSH_ERROR"
+				echo "error $ref $BUT_REMOTE_TESTBUT_PUSH_ERROR"
 			fi
 		done
 

@@ -8,8 +8,8 @@ test_description='Gettext support for Git'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
-test_expect_success "sanity: \$GIT_INTERNAL_GETTEXT_SH_SCHEME is set (to $GIT_INTERNAL_GETTEXT_SH_SCHEME)" '
-    test -n "$GIT_INTERNAL_GETTEXT_SH_SCHEME"
+test_expect_success "sanity: \$BUT_INTERNAL_GETTEXT_SH_SCHEME is set (to $BUT_INTERNAL_GETTEXT_SH_SCHEME)" '
+    test -n "$BUT_INTERNAL_GETTEXT_SH_SCHEME"
 '
 
 test_expect_success 'sanity: $TEXTDOMAIN is but' '
@@ -17,23 +17,23 @@ test_expect_success 'sanity: $TEXTDOMAIN is but' '
 '
 
 test_expect_success 'xgettext sanity: Perl _() strings are not extracted' '
-    ! grep "A Perl string xgettext will not get" "$GIT_PO_PATH"/is.po
+    ! grep "A Perl string xgettext will not get" "$BUT_PO_PATH"/is.po
 '
 
 test_expect_success 'xgettext sanity: Comment extraction with --add-comments' '
     grep "TRANSLATORS: This is a test" "$TEST_DIRECTORY"/t0200/* | wc -l >expect &&
-    grep "TRANSLATORS: This is a test" "$GIT_PO_PATH"/is.po  | wc -l >actual &&
+    grep "TRANSLATORS: This is a test" "$BUT_PO_PATH"/is.po  | wc -l >actual &&
     test_cmp expect actual
 '
 
 test_expect_success 'xgettext sanity: Comment extraction with --add-comments stops at statements' '
-    ! grep "This is a phony" "$GIT_PO_PATH"/is.po &&
-    ! grep "the above comment" "$GIT_PO_PATH"/is.po
+    ! grep "This is a phony" "$BUT_PO_PATH"/is.po &&
+    ! grep "the above comment" "$BUT_PO_PATH"/is.po
 '
 
 test_expect_success GETTEXT 'sanity: $TEXTDOMAINDIR exists without NO_GETTEXT=YesPlease' '
     test -d "$TEXTDOMAINDIR" &&
-    test "$TEXTDOMAINDIR" = "$GIT_TEXTDOMAINDIR"
+    test "$TEXTDOMAINDIR" = "$BUT_TEXTDOMAINDIR"
 '
 
 test_expect_success GETTEXT 'sanity: Icelandic locale was compiled' '

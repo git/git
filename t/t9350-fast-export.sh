@@ -4,8 +4,8 @@
 #
 
 test_description='but fast-export'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -310,8 +310,8 @@ test_expect_success 'submodule fast-export | fast-import' '
 
 '
 
-GIT_AUTHOR_NAME='A U Thor'; export GIT_AUTHOR_NAME
-GIT_CUMMITTER_NAME='C O Mitter'; export GIT_CUMMITTER_NAME
+BUT_AUTHOR_NAME='A U Thor'; export BUT_AUTHOR_NAME
+BUT_CUMMITTER_NAME='C O Mitter'; export BUT_CUMMITTER_NAME
 
 test_expect_success 'setup copies' '
 
@@ -569,7 +569,7 @@ test_expect_success 'handling tags of blobs' '
 
 	tag blobtag
 	from :1
-	tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	tagger $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 	data 14
 	Tag of a blob
 

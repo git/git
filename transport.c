@@ -25,8 +25,8 @@
 
 static int transport_use_color = -1;
 static char transport_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_RED		/* REJECTED */
+	BUT_COLOR_RESET,
+	BUT_COLOR_RED		/* REJECTED */
 };
 
 enum color_transport {
@@ -739,7 +739,7 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 
 static int measure_abbrev(const struct object_id *oid, int sofar)
 {
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	int w = find_unique_abbrev_r(hex, oid, DEFAULT_ABBREV);
 
 	return (w < sofar) ? sofar : w;
@@ -946,7 +946,7 @@ static const struct string_list *protocol_whitelist(void)
 	static struct string_list allowed = STRING_LIST_INIT_DUP;
 
 	if (enabled < 0) {
-		const char *v = getenv("GIT_ALLOW_PROTOCOL");
+		const char *v = getenv("BUT_ALLOW_PROTOCOL");
 		if (v) {
 			string_list_split(&allowed, v, ':', -1);
 			string_list_sort(&allowed);
@@ -1031,7 +1031,7 @@ int is_transport_allowed(const char *type, int from_user)
 		return 0;
 	case PROTOCOL_ALLOW_USER_ONLY:
 		if (from_user < 0)
-			from_user = but_env_bool("GIT_PROTOCOL_FROM_USER", 1);
+			from_user = but_env_bool("BUT_PROTOCOL_FROM_USER", 1);
 		return from_user;
 	}
 
@@ -1133,7 +1133,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 			ret->smart_options->receivepack = remote->receivepack;
 	}
 
-	ret->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	ret->hash_algo = &hash_algos[BUT_HASH_SHA1];
 
 	return ret;
 }

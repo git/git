@@ -38,7 +38,7 @@ Fixes since v1.8.1
    way that made NetBSD's implementation of "tar" sometimes unhappy.
 
  * When "but clone --separate-but-dir=$over_there" is interrupted, it
-   failed to remove the real location of the $GIT_DIR it created.
+   failed to remove the real location of the $BUT_DIR it created.
    This was most visible when interrupting a submodule update.
 
  * "but fetch --mirror" and fetch that uses other forms of refspec
@@ -62,7 +62,7 @@ Fixes since v1.8.1
    to add a newline after such a line.
 
  * The way "but svn" asked for password using SSH_ASKPASS and
-   GIT_ASKPASS was not in line with the rest of the system.
+   BUT_ASKPASS was not in line with the rest of the system.
 
  * "butweb", when sorting by age to show repositories with new
    activities first, used to sort repositories with absolutely

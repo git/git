@@ -8,7 +8,7 @@ test_expect_success 'create loose objects on import' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/main
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 	data <<cummit
 	initial
 	cummit
@@ -26,14 +26,14 @@ test_expect_success 'bigger packs are preserved' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	cummit refs/heads/main
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 	data <<cummit
 	incremental should create a pack
 	cummit
 	from refs/heads/main^0
 
 	cummit refs/heads/branch
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 	data <<cummit
 	branch
 	cummit
@@ -49,7 +49,7 @@ test_expect_success 'bigger packs are preserved' '
 
 test_expect_success 'lookups after checkpoint works' '
 	hello_id=$(echo hello | but hash-object --stdin -t blob) &&
-	id="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" &&
+	id="$BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE" &&
 	before=$(but rev-parse refs/heads/main^0) &&
 	(
 		cat <<-INPUT_END &&

@@ -5,8 +5,8 @@ test_description='but merge --signoff
 This test runs but merge --signoff and makes sure that it works.
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -16,7 +16,7 @@ test_setup() {
 	cat >expected-signed <<EOF &&
 Merge branch 'main' into other-branch
 
-Signed-off-by: $(but var GIT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(but var BUT_CUMMITTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
 	# Expected cummit message after merge without --signoff (or with --no-signoff)

@@ -3,7 +3,7 @@ guitool.<name>.cmd::
 	of the linkbut:but-gui[1] `Tools` menu is invoked. This option is
 	mandatory for every tool. The command is executed from the root of
 	the working directory, and in the environment it receives the name of
-	the tool as `GIT_GUITOOL`, the name of the currently selected file as
+	the tool as `BUT_GUITOOL`, the name of the currently selected file as
 	'FILENAME', and the name of the current branch as 'CUR_BRANCH' (if
 	the head is detached, 'CUR_BRANCH' is empty).
 

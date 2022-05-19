@@ -24,6 +24,6 @@ merge results outside of the index, and stuff the results back into the
 index.  For this reason, the output from the command omits
 entries that match the <branch1> tree.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

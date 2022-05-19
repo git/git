@@ -190,7 +190,7 @@ ifeq ($(uname_S),SunOS)
 		NO_SETENV = YesPlease
 		NO_STRLCPY = YesPlease
 		NO_STRTOUMAX = YesPlease
-		GIT_TEST_CMP = cmp
+		BUT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.7)
 		NEEDS_RESOLV = YesPlease
@@ -200,19 +200,19 @@ ifeq ($(uname_S),SunOS)
 		NO_SETENV = YesPlease
 		NO_STRLCPY = YesPlease
 		NO_STRTOUMAX = YesPlease
-		GIT_TEST_CMP = cmp
+		BUT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_STRTOUMAX = YesPlease
-		GIT_TEST_CMP = cmp
+		BUT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_STRTOUMAX = YesPlease
-		GIT_TEST_CMP = cmp
+		BUT_TEST_CMP = cmp
 	endif
 	INSTALL = /usr/ucb/install
 	TAR = gtar
@@ -336,7 +336,7 @@ ifeq ($(uname_S),AIX)
 	ifeq ($(shell expr "$(uname_V).$(uname_R)" : '5\.1'),3)
 		INLINE = ''
 	endif
-	GIT_TEST_CMP = cmp
+	BUT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
@@ -407,10 +407,10 @@ ifeq ($(uname_S),HP-UX)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
 	endif
-	GIT_TEST_CMP = cmp
+	BUT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),Windows)
-	GIT_VERSION := $(GIT_VERSION).MSVC
+	BUT_VERSION := $(BUT_VERSION).MSVC
 	pathsep = ;
 	# Assume that this is built in Git for Windows' SDK
 	ifeq (MINGW32,$(MSYSTEM))
@@ -470,8 +470,8 @@ ifeq ($(uname_S),Windows)
 	DEFAULT_HELP_FORMAT = html
 ifeq (/mingw64,$(subst 32,64,$(prefix)))
 	# Move system config into top-level /etc/
-	ETC_GITCONFIG = ../etc/butconfig
-	ETC_GITATTRIBUTES = ../etc/butattributes
+	ETC_BUTCONFIG = ../etc/butconfig
+	ETC_BUTATTRIBUTES = ../etc/butattributes
 endif
 
 	CC = compat/vcbuild/scripts/clink.pl
@@ -522,7 +522,7 @@ else
 endif
 	X = .exe
 
-compat/msvc.o: compat/msvc.c compat/mingw.c GIT-CFLAGS
+compat/msvc.o: compat/msvc.c compat/mingw.c BUT-CFLAGS
 endif
 ifeq ($(uname_S),Interix)
 	NO_INITGROUPS = YesPlease
@@ -668,12 +668,12 @@ ifeq ($(uname_S),MINGW)
 		compat/win32/dirent.o
 	BASIC_CFLAGS += -DWIN32
 	EXTLIBS += -lws2_32
-	GITLIBS += but.res
+	BUTLIBS += but.res
 	PTHREAD_LIBS =
 	RC = windres -O coff
 	NATIVE_CRLF = YesPlease
 	X = .exe
-ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
+ifneq (,$(wildcard ../THIS_IS_MSYSBUT))
 	htmldir = doc/but/html/
 	prefix =
 	INSTALL = /bin/install
@@ -719,8 +719,8 @@ else
 		USE_NED_ALLOCATOR = YesPlease
 		ifeq (/mingw64,$(subst 32,64,$(prefix)))
 			# Move system config into top-level /etc/
-			ETC_GITCONFIG = ../etc/butconfig
-			ETC_GITATTRIBUTES = ../etc/butattributes
+			ETC_BUTCONFIG = ../etc/butconfig
+			ETC_BUTATTRIBUTES = ../etc/butattributes
 		endif
 	else
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO
@@ -790,14 +790,14 @@ vcxproj:
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
 	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 $(test_bindir_programs)
-	# Ensure that the GIT_EXEC_PATH is a Unix-y one, and that the absolute
-	# path of the repository is not hard-coded (GIT_EXEC_PATH will be set
+	# Ensure that the BUT_EXEC_PATH is a Unix-y one, and that the absolute
+	# path of the repository is not hard-coded (BUT_EXEC_PATH will be set
 	# by test-lib.sh according to the current setup)
-	sed -i -e 's/^\(GIT_EXEC_PATH\)=.*/test -n "$${\1##*:*}" ||\
+	sed -i -e 's/^\(BUT_EXEC_PATH\)=.*/test -n "$${\1##*:*}" ||\
 			\1="$$(cygpath -u "$$\1")"/' \
-		-e "s|'$$(pwd)|\"\$$GIT_EXEC_PATH\"'|g" bin-wrappers/*
+		-e "s|'$$(pwd)|\"\$$BUT_EXEC_PATH\"'|g" bin-wrappers/*
 	# Ensure that test-* helpers find the .dll files copied to top-level
-	sed -i 's|^PATH=.*|&:"$$GIT_EXEC_PATH"|' bin-wrappers/test-*
+	sed -i 's|^PATH=.*|&:"$$BUT_EXEC_PATH"|' bin-wrappers/test-*
 	# We do not want to force hard-linking builtins
 	sed -i 's|\(but\)-\([-a-z]*\)\.exe"|\1.exe" \2|g' \
 		bin-wrappers/but-{receive-pack,upload-archive}
@@ -816,8 +816,8 @@ vcxproj:
 	but add -f $(MOFILES)
 
 	# Add build options
-	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 GIT-BUILD-OPTIONS
-	but add -f GIT-BUILD-OPTIONS
+	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 BUT-BUILD-OPTIONS
+	but add -f BUT-BUILD-OPTIONS
 
 	# cummit the whole shebang
 	but cummit -m "Generate Visual Studio solution" \

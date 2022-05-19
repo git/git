@@ -318,7 +318,7 @@ static ssize_t read_request_eof(int fd, unsigned char **out)
 		/* otherwise, grow and try again (if we can) */
 		if (alloc == max_request_buffer)
 			die("request was larger than our maximum size (%lu);"
-			    " try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+			    " try setting BUT_HTTP_MAX_REQUEST_BUFFER",
 			    max_request_buffer);
 
 		alloc = alloc_nr(alloc);
@@ -335,7 +335,7 @@ static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **o
 
 	if (max_request_buffer < req_len) {
 		die("request was larger than our maximum size (%lu): "
-		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+		    "%" PRIuMAX "; try setting BUT_HTTP_MAX_REQUEST_BUFFER",
 		    max_request_buffer, (uintmax_t)req_len);
 	}
 
@@ -475,11 +475,11 @@ static void run_service(const char **argv, int buffer_input)
 	if (!host || !*host)
 		host = "(none)";
 
-	if (!getenv("GIT_CUMMITTER_NAME"))
-		strvec_pushf(&cld.env_array, "GIT_CUMMITTER_NAME=%s", user);
-	if (!getenv("GIT_CUMMITTER_EMAIL"))
+	if (!getenv("BUT_CUMMITTER_NAME"))
+		strvec_pushf(&cld.env_array, "BUT_CUMMITTER_NAME=%s", user);
+	if (!getenv("BUT_CUMMITTER_EMAIL"))
 		strvec_pushf(&cld.env_array,
-			     "GIT_CUMMITTER_EMAIL=%s@http.%s", user, host);
+			     "BUT_CUMMITTER_EMAIL=%s@http.%s", user, host);
 
 	strvec_pushv(&cld.args, argv);
 	if (buffer_input || gzipped_request || req_len >= 0)
@@ -680,12 +680,12 @@ static char* getdir(void)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *pathinfo = getenv("PATH_INFO");
-	char *root = getenv("GIT_PROJECT_ROOT");
+	char *root = getenv("BUT_PROJECT_ROOT");
 	char *path = getenv("PATH_TRANSLATED");
 
 	if (root && *root) {
 		if (!pathinfo || !*pathinfo)
-			die("GIT_PROJECT_ROOT is set but PATH_INFO is not");
+			die("BUT_PROJECT_ROOT is set but PATH_INFO is not");
 		if (daemon_avoid_alias(pathinfo))
 			die("'%s': aliased", pathinfo);
 		end_url_with_slash(&buf, root);
@@ -696,7 +696,7 @@ static char* getdir(void)
 	} else if (path && *path) {
 		return xstrdup(path);
 	} else
-		die("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server");
+		die("No BUT_PROJECT_ROOT or PATH_TRANSLATED from server");
 	return NULL;
 }
 
@@ -783,16 +783,16 @@ int cmd_main(int argc, const char **argv)
 	setup_path();
 	if (!enter_repo(dir, 0))
 		not_found(&hdr, "Not a but repository: '%s'", dir);
-	if (!getenv("GIT_HTTP_EXPORT_ALL") &&
+	if (!getenv("BUT_HTTP_EXPORT_ALL") &&
 	    access("but-daemon-export-ok", F_OK) )
 		not_found(&hdr, "Repository not exported: '%s'", dir);
 
 	http_config();
-	max_request_buffer = but_env_ulong("GIT_HTTP_MAX_REQUEST_BUFFER",
+	max_request_buffer = but_env_ulong("BUT_HTTP_MAX_REQUEST_BUFFER",
 					   max_request_buffer);
-	proto_header = getenv("HTTP_GIT_PROTOCOL");
+	proto_header = getenv("HTTP_BUT_PROTOCOL");
 	if (proto_header)
-		setenv(GIT_PROTOCOL_ENVIRONMENT, proto_header, 0);
+		setenv(BUT_PROTOCOL_ENVIRONMENT, proto_header, 0);
 
 	cmd->imp(&hdr, cmd_arg);
 	return 0;

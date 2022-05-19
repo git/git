@@ -6,8 +6,8 @@
 test_description='but grep various.
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -887,12 +887,12 @@ test_expect_success 'log --all-match --grep --grep --author takes intersection' 
 '
 
 test_expect_success 'log --author does not search in timestamp' '
-	but log --author="$GIT_AUTHOR_DATE" >actual &&
+	but log --author="$BUT_AUTHOR_DATE" >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'log --cummitter does not search in timestamp' '
-	but log --cummitter="$GIT_CUMMITTER_DATE" >actual &&
+	but log --cummitter="$BUT_CUMMITTER_DATE" >actual &&
 	test_must_be_empty actual
 '
 
@@ -1059,8 +1059,8 @@ test_expect_success 'outside of but repository' '
 	} >non/expect.full &&
 	echo file2:world >non/expect.sub &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		test_must_fail but grep o &&
 		but grep --no-index o >../actual.full &&
@@ -1073,8 +1073,8 @@ test_expect_success 'outside of but repository' '
 
 	echo ".*o*" >non/but/.butignore &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		test_must_fail but grep o &&
 		but grep --no-index --exclude-standard o >../actual.full &&
@@ -1100,8 +1100,8 @@ test_expect_success 'outside of but repository with fallbackToNoIndex' '
 	EOF
 	echo file2:world >non/expect.sub &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		test_must_fail but -c grep.fallbackToNoIndex=false grep o &&
 		but -c grep.fallbackToNoIndex=true grep o >../actual.full &&
@@ -1114,8 +1114,8 @@ test_expect_success 'outside of but repository with fallbackToNoIndex' '
 
 	echo ".*o*" >non/but/.butignore &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		test_must_fail but -c grep.fallbackToNoIndex=false grep o &&
 		but -c grep.fallbackToNoIndex=true grep --exclude-standard o >../actual.full &&
@@ -1176,8 +1176,8 @@ test_expect_success 'grep --no-index descends into repos, but not .but' '
 	rm -fr non &&
 	mkdir -p non/but &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 
 		echo magic >file &&
@@ -1269,8 +1269,8 @@ test_expect_success 'grep --no-index pattern -- path' '
 	rm -fr non &&
 	mkdir -p non/but &&
 	(
-		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		echo hello >hello &&
 		echo goodbye >goodbye &&

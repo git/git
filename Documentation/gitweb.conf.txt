@@ -7,7 +7,7 @@ butweb.conf - Gitweb (Git web interface) configuration file
 
 SYNOPSIS
 --------
-/etc/butweb.conf, /etc/butweb-common.conf, $GITWEBDIR/butweb_config.perl
+/etc/butweb.conf, /etc/butweb-common.conf, $BUTWEBDIR/butweb_config.perl
 
 DESCRIPTION
 -----------
@@ -62,12 +62,12 @@ in the above sequence.
 Locations of the common system-wide configuration file, the fallback
 system-wide configuration file and the per-instance configuration file
 are defined at compile time using build-time Makefile configuration
-variables, respectively `GITWEB_CONFIG_COMMON`, `GITWEB_CONFIG_SYSTEM`
-and `GITWEB_CONFIG`.
+variables, respectively `BUTWEB_CONFIG_COMMON`, `BUTWEB_CONFIG_SYSTEM`
+and `BUTWEB_CONFIG`.
 
 You can also override locations of butweb configuration files during
 runtime by setting the following environment variables:
-`GITWEB_CONFIG_COMMON`, `GITWEB_CONFIG_SYSTEM` and `GITWEB_CONFIG`
+`BUTWEB_CONFIG_COMMON`, `BUTWEB_CONFIG_SYSTEM` and `BUTWEB_CONFIG`
 to a non-empty value.
 
 
@@ -120,7 +120,7 @@ See also "Repositories" and later subsections in linkbut:butweb[1] manpage.
 $projectroot::
 	Absolute filesystem path which will be prepended to project path;
 	the path to repository is `$projectroot/$project`.  Set to
-	`$GITWEB_PROJECTROOT` during installation.  This variable has to be
+	`$BUTWEB_PROJECTROOT` during installation.  This variable has to be
 	set correctly for butweb to find repositories.
 +
 For example, if `$projectroot` is set to "/srv/but" by putting the following
@@ -155,7 +155,7 @@ having the following format
 <URI-encoded filesystem path to repository> SP <URI-encoded repository owner>
 -----------------------------------------------------------------------------
 +
-The default value of this variable is determined by the `GITWEB_LIST`
+The default value of this variable is determined by the `BUTWEB_LIST`
 makefile variable at installation time.  If this variable is empty, butweb
 will fall back to scanning the `$projectroot` directory for repositories.
 
@@ -171,14 +171,14 @@ where recursive directory traversal is slow.  Gitweb follows symbolic
 links, but it detects cycles, ignoring any duplicate files and directories.
 +
 The default value of this variable is determined by the build-time
-configuration variable `GITWEB_PROJECT_MAXDEPTH`, which defaults to
+configuration variable `BUTWEB_PROJECT_MAXDEPTH`, which defaults to
 2007.
 
 $export_ok::
 	Show repository only if this file exists (in repository).  Only
 	effective if this variable evaluates to true.  Can be set when
-	building butweb by setting `GITWEB_EXPORT_OK`.  This path is
-	relative to `GIT_DIR`.  but-daemon[1] uses 'but-daemon-export-ok',
+	building butweb by setting `BUTWEB_EXPORT_OK`.  This path is
+	relative to `BUT_DIR`.  but-daemon[1] uses 'but-daemon-export-ok',
 	unless started with `--export-all`.  By default this variable is
 	not set, which means that this feature is turned off.
 
@@ -211,7 +211,7 @@ $strict_export::
 	available and not only if it is shown.  If `$projects_list` points to
 	file with list of project, only those repositories listed would be
 	available for butweb.  Can be set during building butweb via
-	`GITWEB_STRICT_EXPORT`.  By default this variable is not set, which
+	`BUTWEB_STRICT_EXPORT`.  By default this variable is not set, which
 	means that you can directly access those repositories that are hidden
 	from projects list page (e.g. the are not listed in the $projects_list
 	file).
@@ -222,8 +222,8 @@ Finding files
 The following configuration variables tell butweb where to find files.
 The values of these variables are paths on the filesystem.
 
-$GIT::
-	Core but executable to use.  By default set to `$GIT_BINDIR/but`, which
+$BUT::
+	Core but executable to use.  By default set to `$BUT_BINDIR/but`, which
 	in turn is by default set to `$(bindir)/but`.  If you use Git installed
 	from a binary package, you should usually set this to "/usr/bin/but".
 	This can just be "but" if your web server has a sensible PATH; from
@@ -296,7 +296,7 @@ in the butweb config file.  Those values that are relative paths are
 relative to base URI of butweb.
 +
 This list should contain the URI of butweb's standard stylesheet.  The default
-URI of butweb stylesheet can be set at build time using the `GITWEB_CSS`
+URI of butweb stylesheet can be set at build time using the `BUTWEB_CSS`
 makefile variable.  Its default value is `static/butweb.css`
 (or `static/butweb.min.css` if the `CSSMIN` variable is defined,
 i.e. if CSS minifier is used during build).
@@ -310,7 +310,7 @@ $logo::
 	server, or to be more the generic URI of logo, 72x27 size).  This image
 	is displayed in the top right corner of each butweb page and used as
 	a logo for the Atom feed.  Relative to the base URI of butweb (as a path).
-	Can be adjusted when building butweb using `GITWEB_LOGO` variable
+	Can be adjusted when building butweb using `BUTWEB_LOGO` variable
 	By default set to `static/but-logo.png`.
 
 $favicon::
@@ -319,14 +319,14 @@ $favicon::
 	as "image/png" type.  Web browsers that support favicons (website icons)
 	may display them in the browser's URL bar and next to the site name in
 	bookmarks.  Relative to the base URI of butweb.  Can be adjusted at
-	build time using `GITWEB_FAVICON` variable.
+	build time using `BUTWEB_FAVICON` variable.
 	By default set to `static/but-favicon.png`.
 
 $javascript::
 	Points to the location where you put 'butweb.js' on your web server,
 	or to be more generic the URI of JavaScript code used by butweb.
 	Relative to the base URI of butweb.  Can be set at build time using
-	the `GITWEB_JS` build-time configuration variable.
+	the `BUTWEB_JS` build-time configuration variable.
 +
 The default value is either `static/butweb.js`, or `static/butweb.min.js` if
 the `JSMIN` build variable was defined, i.e. if JavaScript minifier was used
@@ -344,7 +344,7 @@ $home_link_str::
 	(usually the main butweb page, which contains the projects list).  It is
 	used as the first component of butweb's "breadcrumb trail":
 	`<home link> / <project> / <action>`.  Can be set at build time using
-	the `GITWEB_HOME_LINK_STR` variable.  By default it is set to "projects",
+	the `BUTWEB_HOME_LINK_STR` variable.  By default it is set to "projects",
 	as this link leads to the list of projects.  Another popular choice is to
 	set it to the name of site.  Note that it is treated as raw HTML so it
 	should not be set from untrusted sources.
@@ -390,30 +390,30 @@ $site_name::
 	or "Untitled Git" if this variable is not set (e.g. if running butweb
 	as standalone script).
 +
-Can be set using the `GITWEB_SITENAME` at build time.  Unset by default.
+Can be set using the `BUTWEB_SITENAME` at build time.  Unset by default.
 
 $site_html_head_string::
 	HTML snippet to be included in the <head> section of each page.
-	Can be set using `GITWEB_SITE_HTML_HEAD_STRING` at build time.
+	Can be set using `BUTWEB_SITE_HTML_HEAD_STRING` at build time.
 	No default value.
 
 $site_header::
 	Name of a file with HTML to be included at the top of each page.
 	Relative to the directory containing the 'butweb.cgi' script.
-	Can be set using `GITWEB_SITE_HEADER` at build time.  No default
+	Can be set using `BUTWEB_SITE_HEADER` at build time.  No default
 	value.
 
 $site_footer::
 	Name of a file with HTML to be included at the bottom of each page.
 	Relative to the directory containing the 'butweb.cgi' script.
-	Can be set using `GITWEB_SITE_FOOTER` at build time.  No default
+	Can be set using `BUTWEB_SITE_FOOTER` at build time.  No default
 	value.
 
 $home_text::
 	Name of a HTML file which, if it exists, is included on the
 	butweb projects overview page ("projects_list" view).  Relative to
 	the directory containing the butweb.cgi script.  Default value
-	can be adjusted during build time using `GITWEB_HOMETEXT` variable.
+	can be adjusted during build time using `BUTWEB_HOMETEXT` variable.
 	By default set to 'indextext.html'.
 
 $projects_list_description_width::
@@ -486,20 +486,20 @@ affects how "summary" pages look like, or load limiting).
 	(for example one for `but://` protocol, and one for `http://`
 	protocol).
 +
-Note that per repository configuration can be set in `$GIT_DIR/cloneurl`
+Note that per repository configuration can be set in `$BUT_DIR/cloneurl`
 file, or as values of multi-value `butweb.url` configuration variable in
 project config.  Per-repository configuration takes precedence over value
 composed from `@but_base_url_list` elements and project name.
 +
 You can setup one single value (single entry/item in this list) at build
-time by setting the `GITWEB_BASE_URL` build-time configuration variable.
+time by setting the `BUTWEB_BASE_URL` build-time configuration variable.
 By default it is set to (), i.e. an empty list.  This means that butweb
 would not try to create project URL (to fetch) from project name.
 
 $projects_list_group_categories::
 	Whether to enable the grouping of projects by category on the project
 	list page. The category of a project is determined by the
-	`$GIT_DIR/category` file or the `butweb.category` variable in each
+	`$BUT_DIR/category` file or the `butweb.category` variable in each
 	repository's configuration.  Disabled by default (set to 0).
 
 $project_list_default_category::
@@ -596,7 +596,7 @@ $base_url::
 	See `$per_request_config` if you need to override it anyway.
 
 
-CONFIGURING GITWEB FEATURES
+CONFIGURING BUTWEB FEATURES
 ---------------------------
 Many butweb features can be enabled (or disabled) and configured using the
 `%feature` hash.  Names of butweb features are keys of this hash.
@@ -913,7 +913,7 @@ EXAMPLES
 
 To enable blame, pickaxe search, and snapshot support (allowing "tar.gz" and
 "zip" snapshots), while allowing individual projects to turn them off, put
-the following in your GITWEB_CONFIG file:
+the following in your BUTWEB_CONFIG file:
 
 --------------------------------------------------------------------------------
 $feature{'blame'}{'default'} = [1];
@@ -939,7 +939,7 @@ BUGS
 ----
 Debugging would be easier if the fallback configuration file
 (`/etc/butweb.conf`) and environment variable to override its location
-('GITWEB_CONFIG_SYSTEM') had names reflecting their "fallback" role.
+('BUTWEB_CONFIG_SYSTEM') had names reflecting their "fallback" role.
 The current names are kept to avoid breaking working setups.
 
 ENVIRONMENT
@@ -947,12 +947,12 @@ ENVIRONMENT
 The location of per-instance and system-wide configuration files can be
 overridden using the following environment variables:
 
-GITWEB_CONFIG::
+BUTWEB_CONFIG::
 	Sets location of per-instance configuration file.
-GITWEB_CONFIG_SYSTEM::
+BUTWEB_CONFIG_SYSTEM::
 	Sets location of fallback system-wide configuration file.
 	This file is read only if per-instance one does not exist.
-GITWEB_CONFIG_COMMON::
+BUTWEB_CONFIG_COMMON::
 	Sets location of common system-wide configuration file.
 
 
@@ -976,6 +976,6 @@ linkbut:butweb[1], linkbut:but-instaweb[1]
 
 'butweb/README', 'butweb/INSTALL'
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

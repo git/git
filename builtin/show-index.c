@@ -27,7 +27,7 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 
 	if (hash_name) {
 		hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo == GIT_HASH_UNKNOWN)
+		if (hash_algo == BUT_HASH_UNKNOWN)
 			die(_("Unknown hash algorithm"));
 		repo_set_hash_algo(the_repository, hash_algo);
 	}
@@ -56,7 +56,7 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 	}
 	if (version == 1) {
 		for (i = 0; i < nr; i++) {
-			unsigned int offset, entry[(GIT_MAX_RAWSZ + 4) / sizeof(unsigned int)];
+			unsigned int offset, entry[(BUT_MAX_RAWSZ + 4) / sizeof(unsigned int)];
 
 			if (fread(entry, 4 + hashsz, 1, stdin) != 1)
 				die("unable to read entry %u/%u", i, nr);

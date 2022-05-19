@@ -48,7 +48,7 @@ diff a/Documentation/but-rpull.txt b/Documentation/but-rpull.txt
 ---------------
 -Documentation by David Greaves, Junio C Hamano and the but-list <but@vger.kernel.org>.
 -
--GIT
+-BUT
 ----
 -Part of the link:but.html[but] suite
 -
@@ -82,7 +82,7 @@ diff a/Documentation/but-rpush.txt b/Documentation/but-rpush.txt
 ---------------
 -Documentation by David Greaves, Junio C Hamano and the but-list <but@vger.kernel.org>.
 -
--GIT
+-BUT
 ----
 -Part of the link:but.html[but] suite
 -
@@ -136,7 +136,7 @@ diff a/Documentation/but-ssh-pull.txt b/Documentation/but-ssh-pull.txt
 +--------------
 +Documentation by David Greaves, Junio C Hamano and the but-list <but@vger.kernel.org>.
 +
-+GIT
++BUT
 +---
 +Part of the link:but.html[but] suite
 +
@@ -170,7 +170,7 @@ diff a/Documentation/but-ssh-push.txt b/Documentation/but-ssh-push.txt
 +--------------
 +Documentation by David Greaves, Junio C Hamano and the but-list <but@vger.kernel.org>.
 +
-+GIT
++BUT
 +---
 +Part of the link:but.html[but] suite
 +

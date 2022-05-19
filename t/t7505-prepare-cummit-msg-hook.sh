@@ -2,8 +2,8 @@
 
 test_description='prepare-cummit-msg hook'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -60,8 +60,8 @@ test_expect_success 'setup fake editor for interactive editing' '
 
 test_expect_success 'setup prepare-cummit-msg hook' '
 	test_hook --setup prepare-cummit-msg <<\EOF
-GIT_DIR=$(but rev-parse --but-dir)
-if test -d "$GIT_DIR/rebase-merge"
+BUT_DIR=$(but rev-parse --but-dir)
+if test -d "$BUT_DIR/rebase-merge"
 then
 	rebasing=1
 else
@@ -69,7 +69,7 @@ else
 fi
 
 get_last_cmd () {
-	tail -n1 "$GIT_DIR/rebase-merge/done" | {
+	tail -n1 "$BUT_DIR/rebase-merge/done" | {
 		read cmd id _
 		but log --pretty="[$cmd %s]" -n1 $id
 	}
@@ -86,7 +86,7 @@ then
 else
 	source=${2-default}
 fi
-test "$GIT_EDITOR" = : && source="$source (no editor)"
+test "$BUT_EDITOR" = : && source="$source (no editor)"
 
 if test $rebasing = 1
 then
@@ -114,7 +114,7 @@ test_expect_success 'with hook (-m editor)' '
 
 	echo "more" >> file &&
 	but add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -m "more more" &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -m "more more" &&
 	test "$(but log -1 --pretty=format:%s)" = message
 
 '
@@ -141,7 +141,7 @@ test_expect_success 'with hook (-F editor)' '
 
 	echo "more" >> file &&
 	but add file &&
-	(echo more more | GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -F -) &&
+	(echo more more | BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -e -F -) &&
 	test "$(but log -1 --pretty=format:%s)" = message
 
 '
@@ -160,7 +160,7 @@ test_expect_success 'with hook (editor)' '
 
 	echo "more more" >> file &&
 	but add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
 	test "$(but log -1 --pretty=format:%s)" = default
 
 '
@@ -170,7 +170,7 @@ test_expect_success 'with hook (--amend)' '
 	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
 	but add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --amend &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --amend &&
 	test "$(but log -1 --pretty=format:%s)" = "$head"
 
 '
@@ -180,7 +180,7 @@ test_expect_success 'with hook (-c)' '
 	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
 	but add file &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head &&
 	test "$(but log -1 --pretty=format:%s)" = "$head"
 
 '
@@ -205,7 +205,7 @@ test_expect_success 'with hook and editor (merge)' '
 	but add file &&
 	but cummit -m other &&
 	but checkout - &&
-	env GIT_EDITOR="\"\$FAKE_EDITOR\"" but merge --no-ff -e other &&
+	env BUT_EDITOR="\"\$FAKE_EDITOR\"" but merge --no-ff -e other &&
 	test "$(but log -1 --pretty=format:%s)" = "merge"
 '
 
@@ -218,10 +218,10 @@ test_rebase () {
 			but checkout -f main
 			but branch -D tmp" &&
 		but checkout -b tmp rebase-me &&
-		GIT_SEQUENCE_EDITOR="cp rebase-todo" &&
-		GIT_EDITOR="\"$FAKE_EDITOR\"" &&
+		BUT_SEQUENCE_EDITOR="cp rebase-todo" &&
+		BUT_EDITOR="\"$FAKE_EDITOR\"" &&
 		(
-			export GIT_SEQUENCE_EDITOR GIT_EDITOR &&
+			export BUT_SEQUENCE_EDITOR BUT_EDITOR &&
 			test_must_fail but rebase -i $mode b &&
 			echo x >a &&
 			but add a &&
@@ -271,7 +271,7 @@ test_expect_success 'with failing hook' '
 	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
 	but add file &&
-	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head
+	test_must_fail env BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -c $head
 
 '
 
@@ -281,7 +281,7 @@ test_expect_success 'with failing hook (--no-verify)' '
 	head=$(but rev-parse HEAD) &&
 	echo "more" >> file &&
 	but add file &&
-	test_must_fail env GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify -c $head
+	test_must_fail env BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify -c $head
 
 '
 

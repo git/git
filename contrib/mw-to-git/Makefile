@@ -12,16 +12,16 @@
 #
 #   make install
 
-GIT_MEDIAWIKI_PM=Git/Mediawiki.pm
+BUT_MEDIAWIKI_PM=Git/Mediawiki.pm
 SCRIPT_PERL=but-remote-mediawiki.perl
 SCRIPT_PERL+=but-mw.perl
-GIT_ROOT_DIR=../..
+BUT_ROOT_DIR=../..
 HERE=contrib/mw-to-but/
 
 INSTALL = install
 
 SCRIPT_PERL_FULL=$(patsubst %,$(HERE)/%,$(SCRIPT_PERL))
-INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/ \
+INSTLIBDIR=$(shell $(MAKE) -C $(BUT_ROOT_DIR)/ \
                 -s --no-print-directory prefix=$(prefix) \
                 perllibdir=$(perllibdir) perllibdir)
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
@@ -36,19 +36,19 @@ check: perlcritic test
 
 install_pm:
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(INSTLIBDIR_SQ)/Git'
-	$(INSTALL) -m 644 $(GIT_MEDIAWIKI_PM) \
-		'$(DESTDIR_SQ)$(INSTLIBDIR_SQ)/$(GIT_MEDIAWIKI_PM)'
+	$(INSTALL) -m 644 $(BUT_MEDIAWIKI_PM) \
+		'$(DESTDIR_SQ)$(INSTLIBDIR_SQ)/$(BUT_MEDIAWIKI_PM)'
 
 build:
-	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
+	$(MAKE) -C $(BUT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
                 build-perl-script
 
 install: install_pm
-	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
+	$(MAKE) -C $(BUT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
                 install-perl-script
 
 clean:
-	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
+	$(MAKE) -C $(BUT_ROOT_DIR) SCRIPT_PERL="$(SCRIPT_PERL_FULL)" \
                 clean-perl-script
 
 perlcritic:

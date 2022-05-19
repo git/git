@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='but pack-object --include-tag'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -16,7 +16,7 @@ test_expect_success setup '
 	echo "object $cummit" >sig &&
 	echo "type cummit" >>sig &&
 	echo "tag mytag" >>sig &&
-	echo "tagger $(but var GIT_CUMMITTER_IDENT)" >>sig &&
+	echo "tagger $(but var BUT_CUMMITTER_IDENT)" >>sig &&
 	echo >>sig &&
 	echo "our test tag" >>sig &&
 	tag=$(but mktag <sig) &&

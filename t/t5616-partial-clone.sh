@@ -2,8 +2,8 @@
 
 test_description='but partial clone'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -211,22 +211,22 @@ test_expect_success 'fetch --refetch works with a shallow clone' '
 	but -C pc1s rev-list --objects --missing=print HEAD >observed &&
 	test_line_count = 6 observed &&
 
-	GIT_TRACE=1 but -C pc1s fetch --filter=blob:limit=999 --refetch origin &&
+	BUT_TRACE=1 but -C pc1s fetch --filter=blob:limit=999 --refetch origin &&
 	but -C pc1s rev-list --objects --missing=print HEAD >observed &&
 	test_line_count = 6 observed
 '
 
 test_expect_success 'fetch --refetch triggers repacking' '
-	GIT_TRACE2_CONFIG_PARAMS=gc.autoPackLimit,maintenance.incremental-repack.auto &&
-	export GIT_TRACE2_CONFIG_PARAMS &&
+	BUT_TRACE2_CONFIG_PARAMS=gc.autoPackLimit,maintenance.incremental-repack.auto &&
+	export BUT_TRACE2_CONFIG_PARAMS &&
 
-	GIT_TRACE2_EVENT="$PWD/trace1.event" \
+	BUT_TRACE2_EVENT="$PWD/trace1.event" \
 	but -C pc1 fetch --refetch origin &&
 	test_subcommand but maintenance run --auto --no-quiet <trace1.event &&
 	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
 	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
 
-	GIT_TRACE2_EVENT="$PWD/trace2.event" \
+	BUT_TRACE2_EVENT="$PWD/trace2.event" \
 	but -c protocol.version=0 \
 		-c gc.autoPackLimit=0 \
 		-c maintenance.incremental-repack.auto=1234 \
@@ -235,7 +235,7 @@ test_expect_success 'fetch --refetch triggers repacking' '
 	grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
 	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
 
-	GIT_TRACE2_EVENT="$PWD/trace3.event" \
+	BUT_TRACE2_EVENT="$PWD/trace3.event" \
 	but -c protocol.version=0 \
 		-c gc.autoPackLimit=1234 \
 		-c maintenance.incremental-repack.auto=0 \
@@ -267,7 +267,7 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 	test_config -C src uploadpack.allowfilter 1 &&
 	test_config -C src uploadpack.allowanysha1inwant 1 &&
 
-	GIT_TRACE="$(pwd)/trace" but -c transfer.fsckobjects=1 \
+	BUT_TRACE="$(pwd)/trace" but -c transfer.fsckobjects=1 \
 		clone --filter="blob:none" "file://$(pwd)/src" dst &&
 	grep "but index-pack.*--fsck-objects" trace
 '
@@ -315,7 +315,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 '
 
 test_expect_success 'implicitly construct combine: filter with repeated flags' '
-	GIT_TRACE=$(pwd)/trace but clone --bare \
+	BUT_TRACE=$(pwd)/trace but clone --bare \
 		--filter=blob:none --filter=tree:1 \
 		"file://$(pwd)/srv.bare" pc2 &&
 	grep "trace:.* but pack-objects .*--filter=combine:blob:none+tree:1" \
@@ -500,7 +500,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas' '
 	# Exercise to make sure it works. Git will not fetch anything from the
 	# promisor remote other than for the big tree (because it needs to
 	# resolve the delta).
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client \
 		fetch "file://$(pwd)/server" main &&
 
 	# Verify the assumption that the client needed to fetch the delta base
@@ -519,7 +519,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	# Exercise to make sure it works. Git will not fetch anything from the
 	# promisor remote other than for the big blob (because it needs to
 	# resolve the delta).
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client \
 		fetch "file://$(pwd)/server" main &&
 
 	# Verify that protocol version 2 was used.
@@ -544,7 +544,7 @@ test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
 	rm client/.but/objects/pack/* &&
 
 	test_cummit -C server bar &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
 		--no-tags --recurse-submodules=no \
 		origin refs/tags/bar &&
 	FOO_HASH=$(but -C server rev-parse foo) &&
@@ -604,7 +604,7 @@ test_expect_success 'fetch from a partial clone, protocol v0' '
 	but init client &&
 	test_config -C client protocol.version 0 &&
 	test_cummit -C client bar &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch "file://$(pwd)/server" &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch "file://$(pwd)/server" &&
 	! grep "version 2" trace
 '
 
@@ -623,7 +623,7 @@ test_expect_success 'fetch from a partial clone, protocol v2' '
 	but init client &&
 	test_config -C client protocol.version 2 &&
 	test_cummit -C client bar &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch "file://$(pwd)/server" &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch "file://$(pwd)/server" &&
 	grep "version 2" trace
 '
 
@@ -631,7 +631,7 @@ test_expect_success 'repack does not loosen promisor objects' '
 	rm -rf client trace &&
 	but clone --bare --filter=blob:none "file://$(pwd)/srv.bare" client &&
 	test_when_finished "rm -rf client trace" &&
-	GIT_TRACE2_PERF="$(pwd)/trace" but -C client repack -A -d &&
+	BUT_TRACE2_PERF="$(pwd)/trace" but -C client repack -A -d &&
 	grep "loosen_unused_packed_objects/loosened:0" trace
 '
 
@@ -804,7 +804,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 
 	# Fetch the thin pack and ensure that index-pack is able to handle the
 	# REF_DELTA object with a missing promisor delta base.
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C repo -c protocol.version=2 fetch &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C repo -c protocol.version=2 fetch &&
 
 	# Ensure that the missing delta base was directly fetched, but not the
 	# one that the client has.

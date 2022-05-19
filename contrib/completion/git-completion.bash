@@ -43,18 +43,18 @@
 # You can set the following environment variables to influence the behavior of
 # the completion routines:
 #
-#   GIT_COMPLETION_CHECKOUT_NO_GUESS
+#   BUT_COMPLETION_CHECKOUT_NO_GUESS
 #
 #     When set to "1", do not include "DWIM" suggestions in but-checkout
 #     and but-switch completion (e.g., completing "foo" when "origin/foo"
 #     exists).
 #
-#   GIT_COMPLETION_SHOW_ALL_COMMANDS
+#   BUT_COMPLETION_SHOW_ALL_COMMANDS
 #
 #     When set to "1" suggest all commands, including plumbing commands
 #     which are hidden by default (e.g. "cat-file" on "but ca<TAB>").
 #
-#   GIT_COMPLETION_SHOW_ALL
+#   BUT_COMPLETION_SHOW_ALL
 #
 #     When set to "1" suggest all options, including options which are
 #     typically hidden (e.g. '--allow-empty' for 'but cummit').
@@ -81,9 +81,9 @@ __but_find_repo_path ()
 	elif [ -n "${__but_dir-}" ]; then
 		test -d "$__but_dir" &&
 		__but_repo_path="$__but_dir"
-	elif [ -n "${GIT_DIR-}" ]; then
-		test -d "$GIT_DIR" &&
-		__but_repo_path="$GIT_DIR"
+	elif [ -n "${BUT_DIR-}" ]; then
+		test -d "$BUT_DIR" &&
+		__but_repo_path="$BUT_DIR"
 	elif [ -d .but ]; then
 		__but_repo_path=.but
 	else
@@ -432,7 +432,7 @@ __butcomp_builtin ()
 
 	if [ -z "$options" ]; then
 		local completion_helper
-		if [ "${GIT_COMPLETION_SHOW_ALL-}" = "1" ]; then
+		if [ "${BUT_COMPLETION_SHOW_ALL-}" = "1" ]; then
 			completion_helper="--but-completion-helper-all"
 		else
 			completion_helper="--but-completion-helper"
@@ -1511,7 +1511,7 @@ _but_bundle ()
 # - If checkout.guess is false, disable completion of DWIM logic.
 # - If the --no-track option is provided, take this as a hint to disable the
 #   DWIM completion logic
-# - If GIT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
+# - If BUT_COMPLETION_CHECKOUT_NO_GUESS is set, disable the DWIM completion
 #   logic, as requested by the user.
 # - Enable DWIM logic otherwise.
 #
@@ -1519,7 +1519,7 @@ __but_checkout_default_dwim_mode ()
 {
 	local last_option dwim_opt="--dwim"
 
-	if [ "${GIT_COMPLETION_CHECKOUT_NO_GUESS-}" = "1" ]; then
+	if [ "${BUT_COMPLETION_CHECKOUT_NO_GUESS-}" = "1" ]; then
 		dwim_opt=""
 	fi
 
@@ -1921,9 +1921,9 @@ _but_help ()
 		return
 		;;
 	esac
-	if test -n "${GIT_TESTING_ALL_COMMAND_LIST-}"
+	if test -n "${BUT_TESTING_ALL_COMMAND_LIST-}"
 	then
-		__butcomp "$GIT_TESTING_ALL_COMMAND_LIST $(__but --list-cmds=alias,list-guide) butk"
+		__butcomp "$BUT_TESTING_ALL_COMMAND_LIST $(__but --list-cmds=alias,list-guide) butk"
 	else
 		__butcomp "$(__but --list-cmds=main,nohelpers,alias,list-guide) butk"
 	fi
@@ -3488,13 +3488,13 @@ __but_main ()
 			"
 			;;
 		*)
-			if test -n "${GIT_TESTING_PORCELAIN_COMMAND_LIST-}"
+			if test -n "${BUT_TESTING_PORCELAIN_COMMAND_LIST-}"
 			then
-				__butcomp "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
+				__butcomp "$BUT_TESTING_PORCELAIN_COMMAND_LIST"
 			else
 				local list_cmds=list-mainporcelain,others,nohelpers,alias,list-complete,config
 
-				if test "${GIT_COMPLETION_SHOW_ALL_COMMANDS-}" = "1"
+				if test "${BUT_COMPLETION_SHOW_ALL_COMMANDS-}" = "1"
 				then
 					list_cmds=builtins,$list_cmds
 				fi
@@ -3538,7 +3538,7 @@ __butk_main ()
 	__but_complete_revlist
 }
 
-if [[ -n ${ZSH_VERSION-} && -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
+if [[ -n ${ZSH_VERSION-} && -z ${BUT_SOURCING_ZSH_COMPLETION-} ]]; then
 	echo "ERROR: this script is obsolete, please see but-completion.zsh" 1>&2
 	return
 fi

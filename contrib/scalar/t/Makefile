@@ -35,11 +35,11 @@ test: $(TEST_LINT)
 	$(MAKE) aggregate-results-and-cleanup
 
 prove: $(TEST_LINT)
-	@echo "*** prove ***"; GIT_CONFIG=.but/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
+	@echo "*** prove ***"; BUT_CONFIG=.but/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(BUT_PROVE_OPTS) $(T) :: $(BUT_TEST_OPTS)
 	$(MAKE) clean-except-prove-cache
 
 $(T):
-	@echo "*** $@ ***"; GIT_CONFIG=.but/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
+	@echo "*** $@ ***"; BUT_CONFIG=.but/config '$(SHELL_PATH_SQ)' $@ $(BUT_TEST_OPTS)
 
 clean-except-prove-cache:
 	$(RM) -r 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
@@ -73,7 +73,7 @@ aggregate-results:
 	done | '$(SHELL_PATH_SQ)' ../../../t/aggregate-results.sh
 
 valgrind:
-	$(MAKE) GIT_TEST_OPTS="$(GIT_TEST_OPTS) --valgrind"
+	$(MAKE) BUT_TEST_OPTS="$(BUT_TEST_OPTS) --valgrind"
 
 test-results:
 	mkdir -p test-results

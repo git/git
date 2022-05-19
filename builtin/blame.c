@@ -343,7 +343,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	int cnt;
 	const char *cp;
 	struct blame_origin *suspect = ent->suspect;
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 
 	oid_to_hex_r(hex, &suspect->cummit->object.oid);
 	printf("%s %d %d %d\n",
@@ -437,7 +437,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	const char *cp;
 	struct blame_origin *suspect = ent->suspect;
 	struct cummit_info ci = CUMMIT_INFO_INIT;
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 	const char *default_color = NULL, *color = NULL, *reset = NULL;
 
@@ -449,7 +449,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	if (opt & OUTPUT_SHOW_AGE_WITH_COLOR) {
 		determine_line_heat(&ci, &default_color);
 		color = default_color;
-		reset = GIT_COLOR_RESET;
+		reset = BUT_COLOR_RESET;
 	}
 
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
@@ -459,10 +459,10 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 		if (opt & OUTPUT_COLOR_LINE) {
 			if (cnt > 0) {
 				color = repeated_meta_color;
-				reset = GIT_COLOR_RESET;
+				reset = BUT_COLOR_RESET;
 			} else  {
 				color = default_color ? default_color : NULL;
-				reset = default_color ? GIT_COLOR_RESET : NULL;
+				reset = default_color ? BUT_COLOR_RESET : NULL;
 			}
 		}
 		if (color)
@@ -1186,7 +1186,7 @@ parse_done:
 		    (output_option & OUTPUT_COLOR_LINE))
 			xsnprintf(repeated_meta_color,
 				  sizeof(repeated_meta_color),
-				  "%s", GIT_COLOR_CYAN);
+				  "%s", BUT_COLOR_CYAN);
 	}
 	if (output_option & OUTPUT_ANNOTATE_COMPAT)
 		output_option &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);

@@ -11,7 +11,7 @@ BEGIN
       VALUE "InternalName", "but\0"
       VALUE "OriginalFilename", "but.exe\0"
       VALUE "ProductName", "Git\0"
-      VALUE "ProductVersion", GIT_VERSION "\0"
+      VALUE "ProductVersion", BUT_VERSION "\0"
     END
   END
 

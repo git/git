@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='test smart fetching over http via http-backend'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -46,7 +46,7 @@ test_expect_success 'clone http repository' '
 	< Cache-Control: no-cache, max-age=0, must-revalidate
 	< Content-Type: application/x-but-upload-pack-result
 	EOF
-	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION=0 \
+	BUT_TRACE_CURL=true BUT_TEST_PROTOCOL_VERSION=0 \
 		but clone --quiet $HTTPD_URL/smart/repo.but clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
@@ -87,7 +87,7 @@ test_expect_success 'clone http repository' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	if test "$BUT_TEST_PROTOCOL_VERSION" = 0
 	then
 		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
 				actual >actual.smudged &&
@@ -116,7 +116,7 @@ test_expect_success 'used upload-pack service' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	if test "$BUT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
@@ -177,7 +177,7 @@ test_expect_success 'no-op half-auth fetch does not require a password' '
 	# to teach the server and client to be able to inline ls-refs requests
 	# as an Extra Parameter (see pack-protocol.txt), so that "info/refs"
 	# can serve refs, just like it does in protocol v0.
-	GIT_TEST_PROTOCOL_VERSION=0 but --but-dir=half-auth fetch &&
+	BUT_TEST_PROTOCOL_VERSION=0 but --but-dir=half-auth fetch &&
 	expect_askpass none
 '
 
@@ -188,10 +188,10 @@ test_expect_success 'redirects send auth to new location' '
 	expect_askpass both user@host auth/smart/repo.but
 '
 
-test_expect_success 'GIT_TRACE_CURL redacts auth details' '
+test_expect_success 'BUT_TRACE_CURL redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
-	GIT_TRACE_CURL="$(pwd)/trace" but clone --bare "$HTTPD_URL/auth/smart/repo.but" redact-auth &&
+	BUT_TRACE_CURL="$(pwd)/trace" but clone --bare "$HTTPD_URL/auth/smart/repo.but" redact-auth &&
 	expect_askpass both user@host &&
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
@@ -200,10 +200,10 @@ test_expect_success 'GIT_TRACE_CURL redacts auth details' '
 	grep -i "Authorization: Basic <redacted>" trace
 '
 
-test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
+test_expect_success 'BUT_CURL_VERBOSE redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
-	GIT_CURL_VERBOSE=1 but clone --bare "$HTTPD_URL/auth/smart/repo.but" redact-auth 2>trace &&
+	BUT_CURL_VERBOSE=1 but clone --bare "$HTTPD_URL/auth/smart/repo.but" redact-auth 2>trace &&
 	expect_askpass both user@host &&
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
@@ -212,10 +212,10 @@ test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
 	grep -i "Authorization: Basic <redacted>" trace
 '
 
-test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_REDACT=0' '
+test_expect_success 'BUT_TRACE_CURL does not redact auth details if BUT_TRACE_REDACT=0' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
-	GIT_TRACE_REDACT=0 GIT_TRACE_CURL="$(pwd)/trace" \
+	BUT_TRACE_REDACT=0 BUT_TRACE_CURL="$(pwd)/trace" \
 		but clone --bare "$HTTPD_URL/auth/smart/repo.but" redact-auth &&
 	expect_askpass both user@host &&
 
@@ -227,9 +227,9 @@ test_expect_success 'disable dumb http on server' '
 		config http.getanyfile false
 '
 
-test_expect_success 'GIT_SMART_HTTP can disable smart http' '
-	(GIT_SMART_HTTP=0 &&
-	 export GIT_SMART_HTTP &&
+test_expect_success 'BUT_SMART_HTTP can disable smart http' '
+	(BUT_SMART_HTTP=0 &&
+	 export BUT_SMART_HTTP &&
 	 cd clone &&
 	 test_must_fail but fetch)
 '
@@ -256,7 +256,7 @@ test_expect_success 'smart clone respects namespace' '
 test_expect_success 'dumb clone via http-backend respects namespace' '
 	but --but-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.but" \
 		config http.getanyfile true &&
-	GIT_SMART_HTTP=0 but clone \
+	BUT_SMART_HTTP=0 but clone \
 		"$HTTPD_URL/smart_namespace/repo.but" ns-dumb &&
 	echo namespaced >expect &&
 	but --but-dir=ns-dumb/.but log -1 --format=%s >actual &&
@@ -278,7 +278,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	if test "$BUT_TEST_PROTOCOL_VERSION" = 0
 	then
 		tail -3 cookies.txt | sort >cookies_tail.txt &&
 		test_cmp expect_cookies.txt cookies_tail.txt
@@ -339,7 +339,7 @@ test_expect_success CMDLINE_LIMIT \
 '
 
 test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
-	GIT_TRACE_CURL=true but -c http.postbuffer=65536 \
+	BUT_TRACE_CURL=true but -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.but" split.but 2>err &&
 	grep "^=> Send header: Transfer-Encoding: chunked" err
 '
@@ -373,7 +373,7 @@ test_expect_success 'test allowreachablesha1inwant with unreachable' '
 	but -C test_reachable.but remote add origin "$HTTPD_URL/smart/repo.but" &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+	test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 		but -C test_reachable.but fetch origin "$(but rev-parse HEAD)"
 '
 
@@ -395,7 +395,7 @@ test_expect_success 'test allowanysha1inwant with unreachable' '
 	but -C test_reachable.but remote add origin "$HTTPD_URL/smart/repo.but" &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+	test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 		but -C test_reachable.but fetch origin "$(but rev-parse HEAD)" &&
 
 	but -C "$server" config uploadpack.allowanysha1inwant 1 &&
@@ -471,7 +471,7 @@ test_expect_success 'cookies are redacted by default' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
-	GIT_TRACE_CURL=true \
+	BUT_TRACE_CURL=true \
 		but -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.but clone 2>err &&
 	grep -i "Cookie:.*Foo=<redacted>" err &&
@@ -483,31 +483,31 @@ test_expect_success 'cookies are redacted by default' '
 test_expect_success 'empty values of cookies are also redacted' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=" >cookies &&
-	GIT_TRACE_CURL=true \
+	BUT_TRACE_CURL=true \
 		but -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.but clone 2>err &&
 	grep -i "Cookie:.*Foo=<redacted>" err
 '
 
-test_expect_success 'GIT_TRACE_REDACT=0 disables cookie redaction' '
+test_expect_success 'BUT_TRACE_REDACT=0 disables cookie redaction' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&
 	echo "Set-Cookie: Bar=2" >>cookies &&
-	GIT_TRACE_REDACT=0 GIT_TRACE_CURL=true \
+	BUT_TRACE_REDACT=0 BUT_TRACE_CURL=true \
 		but -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.but clone 2>err &&
 	grep -i "Cookie:.*Foo=1" err &&
 	grep -i "Cookie:.*Bar=2" err
 '
 
-test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
+test_expect_success 'BUT_TRACE_CURL_NO_DATA prevents data from being traced' '
 	rm -rf clone &&
-	GIT_TRACE_CURL=true \
+	BUT_TRACE_CURL=true \
 		but clone $HTTPD_URL/smart/repo.but clone 2>err &&
 	grep "=> Send data" err &&
 
 	rm -rf clone &&
-	GIT_TRACE_CURL=true GIT_TRACE_CURL_NO_DATA=1 \
+	BUT_TRACE_CURL=true BUT_TRACE_CURL_NO_DATA=1 \
 		but clone $HTTPD_URL/smart/repo.but clone 2>err &&
 	! grep "=> Send data" err
 '
@@ -559,8 +559,8 @@ test_expect_success 'http auth forgets bogus credentials' '
 '
 
 test_expect_success 'client falls back from v2 to v0 to match server' '
-	GIT_TRACE_PACKET=$PWD/trace \
-	GIT_TEST_PROTOCOL_VERSION=2 \
+	BUT_TRACE_PACKET=$PWD/trace \
+	BUT_TEST_PROTOCOL_VERSION=2 \
 	but clone $HTTPD_URL/smart_v0/repo.but repo-v0 &&
 	# check for v0; there the HEAD symref is communicated in the capability
 	# line; v2 uses a different syntax on each ref advertisement line

@@ -5,7 +5,7 @@ test_description='on-disk reverse index'
 
 # The below tests want control over the 'pack.writeReverseIndex' setting
 # themselves to assert various combinations of it with other options.
-sane_unset GIT_TEST_WRITE_REV_INDEX
+sane_unset BUT_TEST_WRITE_REV_INDEX
 
 packdir=.but/objects/pack
 
@@ -90,7 +90,7 @@ test_expect_success 'reverse index is not generated when available on disk' '
 	test_path_is_file $rev &&
 
 	but rev-parse HEAD >tip &&
-	GIT_TEST_REV_INDEX_DIE_IN_MEMORY=1 but cat-file \
+	BUT_TEST_REV_INDEX_DIE_IN_MEMORY=1 but cat-file \
 		--batch-check="%(objectsize:disk)" <tip
 '
 

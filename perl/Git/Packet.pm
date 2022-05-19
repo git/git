@@ -1,7 +1,7 @@
 package Git::Packet;
 use 5.008;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 BEGIN {
 	require Exporter;
 	if ($] < 5.008003) {

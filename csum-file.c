@@ -217,7 +217,7 @@ uint32_t crc32_end(struct hashfile *f)
 
 int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
 {
-	unsigned char got[GIT_MAX_RAWSZ];
+	unsigned char got[BUT_MAX_RAWSZ];
 	but_hash_ctx ctx;
 	size_t data_len = total_len - the_hash_algo->rawsz;
 

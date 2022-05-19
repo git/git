@@ -14,9 +14,9 @@ test_expect_success 'setup ' '
 	echo "bin: test" >one.bin &&
 	test_ln_s_add one.bin symlink.bin &&
 	but add . &&
-	GIT_AUTHOR_NAME=Number1 but cummit -a -m First --date="2010-01-01 18:00:00" &&
+	BUT_AUTHOR_NAME=Number1 but cummit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test version 2" >one.bin &&
-	GIT_AUTHOR_NAME=Number2 but cummit -a -m Second --date="2010-01-01 20:00:00"
+	BUT_AUTHOR_NAME=Number2 but cummit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 test_expect_success 'usage: <bad rev>' '

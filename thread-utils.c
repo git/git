@@ -27,7 +27,7 @@ int online_cpus(void)
 	long ncpus;
 #endif
 
-#ifdef GIT_WINDOWS_NATIVE
+#ifdef BUT_WINDOWS_NATIVE
 	SYSTEM_INFO info;
 	GetSystemInfo(&info);
 

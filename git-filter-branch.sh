@@ -70,11 +70,11 @@ eval "$functions"
 
 finish_ident() {
 	# Ensure non-empty id name.
-	echo "case \"\$GIT_$1_NAME\" in \"\") GIT_$1_NAME=\"\${GIT_$1_EMAIL%%@*}\" && export GIT_$1_NAME;; esac"
+	echo "case \"\$BUT_$1_NAME\" in \"\") BUT_$1_NAME=\"\${BUT_$1_EMAIL%%@*}\" && export BUT_$1_NAME;; esac"
 	# And make sure everything is exported.
-	echo "export GIT_$1_NAME"
-	echo "export GIT_$1_EMAIL"
-	echo "export GIT_$1_DATE"
+	echo "export BUT_$1_NAME"
+	echo "export BUT_$1_EMAIL"
+	echo "export BUT_$1_DATE"
 }
 
 set_ident () {
@@ -83,7 +83,7 @@ set_ident () {
 	finish_ident cummitTER
 }
 
-if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
+if test -z "$FILTER_BRANCH_SQUELCH_WARNING$BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
 then
 	cat <<EOF
 WARNING: but-filter-branch has a glut of gotchas generating mangled history
@@ -236,18 +236,18 @@ die ""
 # Remove tempdir on exit
 trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
 
-ORIG_GIT_DIR="$GIT_DIR"
-ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
-ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
-ORIG_GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME"
-ORIG_GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL"
-ORIG_GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE"
-ORIG_GIT_CUMMITTER_NAME="$GIT_CUMMITTER_NAME"
-ORIG_GIT_CUMMITTER_EMAIL="$GIT_CUMMITTER_EMAIL"
-ORIG_GIT_CUMMITTER_DATE="$GIT_CUMMITTER_DATE"
+ORIG_BUT_DIR="$BUT_DIR"
+ORIG_BUT_WORK_TREE="$BUT_WORK_TREE"
+ORIG_BUT_INDEX_FILE="$BUT_INDEX_FILE"
+ORIG_BUT_AUTHOR_NAME="$BUT_AUTHOR_NAME"
+ORIG_BUT_AUTHOR_EMAIL="$BUT_AUTHOR_EMAIL"
+ORIG_BUT_AUTHOR_DATE="$BUT_AUTHOR_DATE"
+ORIG_BUT_CUMMITTER_NAME="$BUT_CUMMITTER_NAME"
+ORIG_BUT_CUMMITTER_EMAIL="$BUT_CUMMITTER_EMAIL"
+ORIG_BUT_CUMMITTER_DATE="$BUT_CUMMITTER_DATE"
 
-GIT_WORK_TREE=.
-export GIT_DIR GIT_WORK_TREE
+BUT_WORK_TREE=.
+export BUT_DIR BUT_WORK_TREE
 
 # Make sure refs/original is empty
 but for-each-ref > "$tempdir"/backup-refs || exit
@@ -283,8 +283,8 @@ done >"$tempdir"/heads <"$tempdir"/raw-refs
 test -s "$tempdir"/heads ||
 	die "You must specify a ref to rewrite."
 
-GIT_INDEX_FILE="$(pwd)/../index"
-export GIT_INDEX_FILE
+BUT_INDEX_FILE="$(pwd)/../index"
+export BUT_INDEX_FILE
 
 # map old->new cummit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
@@ -392,16 +392,16 @@ while read cummit parents; do
 	"")
 		if test -n "$need_index"
 		then
-			GIT_ALLOW_NULL_SHA1=1 but read-tree -i -m $cummit
+			BUT_ALLOW_NULL_SHA1=1 but read-tree -i -m $cummit
 		fi
 		;;
 	*)
 		# The cummit may not have the subdirectory at all
-		err=$(GIT_ALLOW_NULL_SHA1=1 \
+		err=$(BUT_ALLOW_NULL_SHA1=1 \
 		      but read-tree -i -m $cummit:"$filter_subdir" 2>&1) || {
 			if ! but rev-parse -q --verify $cummit:"$filter_subdir"
 			then
-				rm -f "$GIT_INDEX_FILE"
+				rm -f "$BUT_INDEX_FILE"
 			else
 				echo >&2 "$err"
 				false
@@ -409,8 +409,8 @@ while read cummit parents; do
 		}
 	esac || die "Could not initialize the index"
 
-	GIT_CUMMIT=$cummit
-	export GIT_CUMMIT
+	BUT_CUMMIT=$cummit
+	export BUT_CUMMIT
 	but cat-file cummit "$cummit" >../cummit ||
 		die "Cannot read cummit $cummit"
 
@@ -557,8 +557,8 @@ if [ "$filter_tag_name" ]; then
 
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
-		GIT_CUMMIT="$sha1"
-		export GIT_CUMMIT
+		BUT_CUMMIT="$sha1"
+		export BUT_CUMMIT
 		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
 			die "tag name filter failed: $filter_tag_name"
 
@@ -590,43 +590,43 @@ if [ "$filter_tag_name" ]; then
 	done
 fi
 
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL GIT_CUMMITTER_DATE
-test -z "$ORIG_GIT_DIR" || {
-	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+unset BUT_DIR BUT_WORK_TREE BUT_INDEX_FILE
+unset BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL BUT_AUTHOR_DATE
+unset BUT_CUMMITTER_NAME BUT_CUMMITTER_EMAIL BUT_CUMMITTER_DATE
+test -z "$ORIG_BUT_DIR" || {
+	BUT_DIR="$ORIG_BUT_DIR" && export BUT_DIR
 }
-test -z "$ORIG_GIT_WORK_TREE" || {
-	GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
-	export GIT_WORK_TREE
+test -z "$ORIG_BUT_WORK_TREE" || {
+	BUT_WORK_TREE="$ORIG_BUT_WORK_TREE" &&
+	export BUT_WORK_TREE
 }
-test -z "$ORIG_GIT_INDEX_FILE" || {
-	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
-	export GIT_INDEX_FILE
+test -z "$ORIG_BUT_INDEX_FILE" || {
+	BUT_INDEX_FILE="$ORIG_BUT_INDEX_FILE" &&
+	export BUT_INDEX_FILE
 }
-test -z "$ORIG_GIT_AUTHOR_NAME" || {
-	GIT_AUTHOR_NAME="$ORIG_GIT_AUTHOR_NAME" &&
-	export GIT_AUTHOR_NAME
+test -z "$ORIG_BUT_AUTHOR_NAME" || {
+	BUT_AUTHOR_NAME="$ORIG_BUT_AUTHOR_NAME" &&
+	export BUT_AUTHOR_NAME
 }
-test -z "$ORIG_GIT_AUTHOR_EMAIL" || {
-	GIT_AUTHOR_EMAIL="$ORIG_GIT_AUTHOR_EMAIL" &&
-	export GIT_AUTHOR_EMAIL
+test -z "$ORIG_BUT_AUTHOR_EMAIL" || {
+	BUT_AUTHOR_EMAIL="$ORIG_BUT_AUTHOR_EMAIL" &&
+	export BUT_AUTHOR_EMAIL
 }
-test -z "$ORIG_GIT_AUTHOR_DATE" || {
-	GIT_AUTHOR_DATE="$ORIG_GIT_AUTHOR_DATE" &&
-	export GIT_AUTHOR_DATE
+test -z "$ORIG_BUT_AUTHOR_DATE" || {
+	BUT_AUTHOR_DATE="$ORIG_BUT_AUTHOR_DATE" &&
+	export BUT_AUTHOR_DATE
 }
-test -z "$ORIG_GIT_CUMMITTER_NAME" || {
-	GIT_CUMMITTER_NAME="$ORIG_GIT_CUMMITTER_NAME" &&
-	export GIT_CUMMITTER_NAME
+test -z "$ORIG_BUT_CUMMITTER_NAME" || {
+	BUT_CUMMITTER_NAME="$ORIG_BUT_CUMMITTER_NAME" &&
+	export BUT_CUMMITTER_NAME
 }
-test -z "$ORIG_GIT_CUMMITTER_EMAIL" || {
-	GIT_CUMMITTER_EMAIL="$ORIG_GIT_CUMMITTER_EMAIL" &&
-	export GIT_CUMMITTER_EMAIL
+test -z "$ORIG_BUT_CUMMITTER_EMAIL" || {
+	BUT_CUMMITTER_EMAIL="$ORIG_BUT_CUMMITTER_EMAIL" &&
+	export BUT_CUMMITTER_EMAIL
 }
-test -z "$ORIG_GIT_CUMMITTER_DATE" || {
-	GIT_CUMMITTER_DATE="$ORIG_GIT_CUMMITTER_DATE" &&
-	export GIT_CUMMITTER_DATE
+test -z "$ORIG_BUT_CUMMITTER_DATE" || {
+	BUT_CUMMITTER_DATE="$ORIG_BUT_CUMMITTER_DATE" &&
+	export BUT_CUMMITTER_DATE
 }
 
 if test -n "$state_branch"

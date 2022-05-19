@@ -18,7 +18,7 @@ enum protocol_version get_protocol_version_config(void);
 
 /*
  * Used by a server to determine which protocol version should be used based on
- * a client's request, communicated via the 'GIT_PROTOCOL' environment variable
+ * a client's request, communicated via the 'BUT_PROTOCOL' environment variable
  * by setting appropriate values for the key 'version'.  If a client doesn't
  * request a particular protocol version, a default of 'protocol_v0' will be
  * used.

@@ -66,7 +66,7 @@ EXAMPLES
 
 ---------
 $ but fetch origin master
-$ but fmt-merge-msg --log <$GIT_DIR/FETCH_HEAD
+$ but fmt-merge-msg --log <$BUT_DIR/FETCH_HEAD
 ---------
 
 Print a log message describing a merge of the "master" branch from
@@ -77,6 +77,6 @@ SEE ALSO
 --------
 linkbut:but-merge[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

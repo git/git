@@ -93,6 +93,6 @@ EXAMPLES
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

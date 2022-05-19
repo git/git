@@ -4,9 +4,9 @@ Git 1.8.1.2 Release Notes
 Fixes since v1.8.1.1
 --------------------
 
- * An element on GIT_CEILING_DIRECTORIES list that does not name the
+ * An element on BUT_CEILING_DIRECTORIES list that does not name the
    real path to a directory (i.e. a symbolic link) could have caused
-   the GIT_DIR discovery logic to escape the ceiling.
+   the BUT_DIR discovery logic to escape the ceiling.
 
  * Command line completion for "tcsh" emitted an unwanted space
    after completing a single directory name.

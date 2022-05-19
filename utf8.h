@@ -1,5 +1,5 @@
-#ifndef GIT_UTF8_H
-#define GIT_UTF8_H
+#ifndef BUT_UTF8_H
+#define BUT_UTF8_H
 
 struct strbuf;
 

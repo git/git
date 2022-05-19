@@ -2,17 +2,17 @@
 #include "version.h"
 #include "strbuf.h"
 
-const char but_version_string[] = GIT_VERSION;
-const char but_built_from_cummit_string[] = GIT_BUILT_FROM_CUMMIT;
+const char but_version_string[] = BUT_VERSION;
+const char but_built_from_cummit_string[] = BUT_BUILT_FROM_CUMMIT;
 
 const char *but_user_agent(void)
 {
 	static const char *agent = NULL;
 
 	if (!agent) {
-		agent = getenv("GIT_USER_AGENT");
+		agent = getenv("BUT_USER_AGENT");
 		if (!agent)
-			agent = GIT_USER_AGENT;
+			agent = BUT_USER_AGENT;
 	}
 
 	return agent;

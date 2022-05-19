@@ -10,11 +10,11 @@ test_expect_success 'set up "remote" push situation' '
 '
 
 test_expect_success 'set up fake ssh' '
-	GIT_SSH_COMMAND="f() {
+	BUT_SSH_COMMAND="f() {
 		cd \"\$TRASH_DIRECTORY\" &&
 		eval \"\$2\"
 	}; f" &&
-	export GIT_SSH_COMMAND &&
+	export BUT_SSH_COMMAND &&
 	export TRASH_DIRECTORY
 '
 

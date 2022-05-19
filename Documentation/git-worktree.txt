@@ -120,7 +120,7 @@ with linked worktrees if you move the main worktree manually.)
 
 prune::
 
-Prune worktree information in `$GIT_DIR/worktrees`.
+Prune worktree information in `$BUT_DIR/worktrees`.
 
 remove::
 
@@ -270,7 +270,7 @@ rules and how to access refs of one worktree from another.
 
 In general, all pseudo refs are per-worktree and all refs starting with
 `refs/` are shared. Pseudo refs are ones like `HEAD` which are directly
-under `$GIT_DIR` instead of inside `$GIT_DIR/refs`. There are exceptions,
+under `$BUT_DIR` instead of inside `$BUT_DIR/refs`. There are exceptions,
 however: refs inside `refs/bisect` and `refs/worktree` are not shared.
 
 Refs that are per-worktree can still be accessed from another worktree via
@@ -282,10 +282,10 @@ For example, `main-worktree/HEAD` or `main-worktree/refs/bisect/good`
 resolve to the same value as the main worktree's `HEAD` and
 `refs/bisect/good` respectively. Similarly, `worktrees/foo/HEAD` or
 `worktrees/bar/refs/bisect/bad` are the same as
-`$GIT_COMMON_DIR/worktrees/foo/HEAD` and
-`$GIT_COMMON_DIR/worktrees/bar/refs/bisect/bad`.
+`$BUT_COMMON_DIR/worktrees/foo/HEAD` and
+`$BUT_COMMON_DIR/worktrees/bar/refs/bisect/bad`.
 
-To access refs, it's best not to look inside `$GIT_DIR` directly. Instead
+To access refs, it's best not to look inside `$BUT_DIR` directly. Instead
 use commands such as linkbut:but-rev-parse[1] or linkbut:but-update-ref[1]
 which will handle refs correctly.
 
@@ -309,7 +309,7 @@ configuration in this file with `but config --worktree`. Older Git
 versions will refuse to access repositories with this extension.
 
 Note that in this file, the exception for `core.bare` and `core.worktree`
-is gone. If they exist in `$GIT_DIR/config`, you must move
+is gone. If they exist in `$BUT_DIR/config`, you must move
 them to the `config.worktree` of the main worktree. You may also take this
 opportunity to review and move other configuration that you do not want to
 share to all worktrees:
@@ -327,34 +327,34 @@ linkbut:but-config[1] for more details.
 DETAILS
 -------
 Each linked worktree has a private sub-directory in the repository's
-`$GIT_DIR/worktrees` directory.  The private sub-directory's name is usually
+`$BUT_DIR/worktrees` directory.  The private sub-directory's name is usually
 the base name of the linked worktree's path, possibly appended with a
-number to make it unique.  For example, when `$GIT_DIR=/path/main/.but` the
+number to make it unique.  For example, when `$BUT_DIR=/path/main/.but` the
 command `but worktree add /path/other/test-next next` creates the linked
 worktree in `/path/other/test-next` and also creates a
-`$GIT_DIR/worktrees/test-next` directory (or `$GIT_DIR/worktrees/test-next1`
+`$BUT_DIR/worktrees/test-next` directory (or `$BUT_DIR/worktrees/test-next1`
 if `test-next` is already taken).
 
-Within a linked worktree, `$GIT_DIR` is set to point to this private
+Within a linked worktree, `$BUT_DIR` is set to point to this private
 directory (e.g. `/path/main/.but/worktrees/test-next` in the example) and
-`$GIT_COMMON_DIR` is set to point back to the main worktree's `$GIT_DIR`
+`$BUT_COMMON_DIR` is set to point back to the main worktree's `$BUT_DIR`
 (e.g. `/path/main/.but`). These settings are made in a `.but` file located at
 the top directory of the linked worktree.
 
 Path resolution via `but rev-parse --but-path` uses either
-`$GIT_DIR` or `$GIT_COMMON_DIR` depending on the path. For example, in the
+`$BUT_DIR` or `$BUT_COMMON_DIR` depending on the path. For example, in the
 linked worktree `but rev-parse --but-path HEAD` returns
 `/path/main/.but/worktrees/test-next/HEAD` (not
 `/path/other/test-next/.but/HEAD` or `/path/main/.but/HEAD`) while `but
 rev-parse --but-path refs/heads/master` uses
-`$GIT_COMMON_DIR` and returns `/path/main/.but/refs/heads/master`,
+`$BUT_COMMON_DIR` and returns `/path/main/.but/refs/heads/master`,
 since refs are shared across all worktrees, except `refs/bisect` and
 `refs/worktree`.
 
 See linkbut:butrepository-layout[5] for more information. The rule of
 thumb is do not make any assumption about whether a path belongs to
-`$GIT_DIR` or `$GIT_COMMON_DIR` when you need to directly access something
-inside `$GIT_DIR`. Use `but rev-parse --but-path` to get the final path.
+`$BUT_DIR` or `$BUT_COMMON_DIR` when you need to directly access something
+inside `$BUT_DIR`. Use `but rev-parse --but-path` to get the final path.
 
 If you manually move a linked worktree, you need to update the `butdir` file
 in the entry's directory. For example, if a linked worktree is moved
@@ -364,7 +364,7 @@ to `/newpath/test-next` and its `.but` file points to
 instead. Better yet, run `but worktree repair` to reestablish the connection
 automatically.
 
-To prevent a `$GIT_DIR/worktrees` entry from being pruned (which
+To prevent a `$BUT_DIR/worktrees` entry from being pruned (which
 can be useful in some situations, such as when the
 entry's worktree is stored on a portable device), use the
 `but worktree lock` command, which adds a file named
@@ -500,6 +500,6 @@ Multiple checkout in general is still experimental, and the support
 for submodules is incomplete. It is NOT recommended to make multiple
 checkouts of a superproject.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

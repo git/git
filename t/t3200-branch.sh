@@ -5,8 +5,8 @@
 
 test_description='but branch assorted tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -72,10 +72,10 @@ test_expect_success 'but branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'but branch --create-reflog d/e/f should create a branch and a log' '
-	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:30" \
 	but -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_path_is_file .but/refs/heads/d/e/f &&
 	test_path_is_file .but/logs/refs/heads/d/e/f &&
@@ -1008,10 +1008,10 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'but checkout -b g/h/i -l should create a branch and a log' '
-	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:30" \
 	but checkout -b g/h/i -l main &&
 	test_path_is_file .but/refs/heads/g/h/i &&
 	test_path_is_file .but/logs/refs/heads/g/h/i &&

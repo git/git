@@ -73,24 +73,24 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	rescan ui_ready
 }
 
-set GIT_CUMMITTER_IDENT {}
+set BUT_CUMMITTER_IDENT {}
 
 proc cummitter_ident {} {
-	global GIT_CUMMITTER_IDENT
+	global BUT_CUMMITTER_IDENT
 
-	if {$GIT_CUMMITTER_IDENT eq {}} {
-		if {[catch {set me [but var GIT_CUMMITTER_IDENT]} err]} {
+	if {$BUT_CUMMITTER_IDENT eq {}} {
+		if {[catch {set me [but var BUT_CUMMITTER_IDENT]} err]} {
 			error_popup [strcat [mc "Unable to obtain your identity:"] "\n\n$err"]
 			return {}
 		}
 		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
-			$me me GIT_CUMMITTER_IDENT]} {
-			error_popup [strcat [mc "Invalid GIT_CUMMITTER_IDENT:"] "\n\n$me"]
+			$me me BUT_CUMMITTER_IDENT]} {
+			error_popup [strcat [mc "Invalid BUT_CUMMITTER_IDENT:"] "\n\n$me"]
 			return {}
 		}
 	}
 
-	return $GIT_CUMMITTER_IDENT
+	return $BUT_CUMMITTER_IDENT
 }
 
 proc do_signoff {} {
@@ -224,7 +224,7 @@ A good cummit message has the following format:
 
 	# -- Build the message file.
 	#
-	set msg_p [butdir GITGUI_EDITMSG]
+	set msg_p [butdir BUTGUI_EDITMSG]
 	set msg_wt [open $msg_p w]
 	fconfigure $msg_wt -translation lf
 	setup_cummit_encoding $msg_wt
@@ -430,7 +430,7 @@ A rescan will be automatically started now.
 	catch {file delete [butdir MERGE_HEAD]}
 	catch {file delete [butdir MERGE_MSG]}
 	catch {file delete [butdir SQUASH_MSG]}
-	catch {file delete [butdir GITGUI_MSG]}
+	catch {file delete [butdir BUTGUI_MSG]}
 	catch {file delete [butdir CHERRY_PICK_HEAD]}
 
 	# -- Let rerere do its thing.
@@ -459,9 +459,9 @@ A rescan will be automatically started now.
 	load_message [get_config cummit.template]
 	$ui_comm edit reset
 	$ui_comm edit modified false
-	if {$::GITGUI_BCK_exists} {
-		catch {file delete [butdir GITGUI_BCK]}
-		set ::GITGUI_BCK_exists 0
+	if {$::BUTGUI_BCK_exists} {
+		catch {file delete [butdir BUTGUI_BCK]}
+		set ::BUTGUI_BCK_exists 0
 	}
 
 	if {[is_enabled singlecummit]} { do_quit 0 }
@@ -533,15 +533,15 @@ proc cummit_postcummit_wait {fd_ph cmt_id} {
 proc cummit_author_ident {details} {
 	global env
 	array set author $details
-	set old [array get env GIT_AUTHOR_*]
-	set env(GIT_AUTHOR_NAME) $author(name)
-	set env(GIT_AUTHOR_EMAIL) $author(email)
-	set env(GIT_AUTHOR_DATE) $author(date)
+	set old [array get env BUT_AUTHOR_*]
+	set env(BUT_AUTHOR_NAME) $author(name)
+	set env(BUT_AUTHOR_EMAIL) $author(email)
+	set env(BUT_AUTHOR_DATE) $author(date)
 	return $old
 }
 proc cummit_author_reset {details} {
 	global env
-	unset env(GIT_AUTHOR_NAME) env(GIT_AUTHOR_EMAIL) env(GIT_AUTHOR_DATE)
+	unset env(BUT_AUTHOR_NAME) env(BUT_AUTHOR_EMAIL) env(BUT_AUTHOR_DATE)
 	if {$details ne {}} {
 		array set env $details
 	}

@@ -77,7 +77,7 @@ Fixes since v2.11
  * Code cleanup in shallow boundary computation.
 
  * A recent update to receive-pack to make it easier to drop garbage
-   objects made it clear that GIT_ALTERNATE_OBJECT_DIRECTORIES cannot
+   objects made it clear that BUT_ALTERNATE_OBJECT_DIRECTORIES cannot
    have a pathname with a colon in it (no surprise!), and this in turn
    made it impossible to push into a repository at such a path.  This
    has been fixed by introducing a quoting mechanism used when

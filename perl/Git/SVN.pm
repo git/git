@@ -1,6 +1,6 @@
 package Git::SVN;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Fcntl qw/:DEFAULT :seek/;
 use constant rev_map_fmt => 'NH*';
 use vars qw/$_no_metadata
@@ -35,7 +35,7 @@ my $memo_backend;
 our $_follow_parent  = 1;
 our $_minimize_url   = 'unset';
 our $default_repo_id = 'svn';
-our $default_ref_id  = $ENV{GIT_SVN_ID} || 'but-svn';
+our $default_ref_id  = $ENV{BUT_SVN_ID} || 'but-svn';
 
 my ($_gc_nr, $_gc_period);
 
@@ -266,7 +266,7 @@ sub init_vars {
 }
 
 sub verify_remotes_sanity {
-	return unless -d $ENV{GIT_DIR};
+	return unless -d $ENV{BUT_DIR};
 	my %seen;
 	foreach (command(qw/config -l/)) {
 		if (m!^svn-remote\.(?:.+)\.fetch=.*:refs/remotes/(\S+)\s*$!) {
@@ -820,8 +820,8 @@ sub tmp_config {
 		rename $old_def_config, $config or
 		       die "Failed rename $old_def_config => $config: $!\n";
 	}
-	my $old_config = $ENV{GIT_CONFIG};
-	$ENV{GIT_CONFIG} = $config;
+	my $old_config = $ENV{BUT_CONFIG};
+	$ENV{BUT_CONFIG} = $config;
 	$@ = undef;
 	my @ret = eval {
 		unless (-f $config) {
@@ -839,9 +839,9 @@ sub tmp_config {
 	};
 	my $err = $@;
 	if (defined $old_config) {
-		$ENV{GIT_CONFIG} = $old_config;
+		$ENV{BUT_CONFIG} = $old_config;
 	} else {
-		delete $ENV{GIT_CONFIG};
+		delete $ENV{BUT_CONFIG};
 	}
 	die $err if $err;
 	wantarray ? @ret : $ret[0];
@@ -849,8 +849,8 @@ sub tmp_config {
 
 sub tmp_index_do {
 	my ($self, $sub) = @_;
-	my $old_index = $ENV{GIT_INDEX_FILE};
-	$ENV{GIT_INDEX_FILE} = $self->{index};
+	my $old_index = $ENV{BUT_INDEX_FILE};
+	$ENV{BUT_INDEX_FILE} = $self->{index};
 	$@ = undef;
 	my @ret = eval {
 		my ($dir, $base) = ($self->{index} =~ m#^(.*?)/?([^/]+)$#);
@@ -859,9 +859,9 @@ sub tmp_index_do {
 	};
 	my $err = $@;
 	if (defined $old_index) {
-		$ENV{GIT_INDEX_FILE} = $old_index;
+		$ENV{BUT_INDEX_FILE} = $old_index;
 	} else {
-		delete $ENV{GIT_INDEX_FILE};
+		delete $ENV{BUT_INDEX_FILE};
 	}
 	die $err if $err;
 	wantarray ? @ret : $ret[0];
@@ -967,18 +967,18 @@ sub set_commit_header_env {
 	my %env;
 	foreach my $ned (qw/NAME EMAIL DATE/) {
 		foreach my $ac (qw/AUTHOR cummitTER/) {
-			$env{"GIT_${ac}_${ned}"} = $ENV{"GIT_${ac}_${ned}"};
+			$env{"BUT_${ac}_${ned}"} = $ENV{"BUT_${ac}_${ned}"};
 		}
 	}
 
-	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
-	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_CUMMITTER_DATE} = $log_entry->{date};
+	$ENV{BUT_AUTHOR_NAME} = $log_entry->{name};
+	$ENV{BUT_AUTHOR_EMAIL} = $log_entry->{email};
+	$ENV{BUT_AUTHOR_DATE} = $ENV{BUT_CUMMITTER_DATE} = $log_entry->{date};
 
-	$ENV{GIT_CUMMITTER_NAME} = (defined $log_entry->{cummit_name})
+	$ENV{BUT_CUMMITTER_NAME} = (defined $log_entry->{cummit_name})
 						? $log_entry->{cummit_name}
 						: $log_entry->{name};
-	$ENV{GIT_CUMMITTER_EMAIL} = (defined $log_entry->{cummit_email})
+	$ENV{BUT_CUMMITTER_EMAIL} = (defined $log_entry->{cummit_email})
 						? $log_entry->{cummit_email}
 						: $log_entry->{email};
 	\%env;
@@ -988,7 +988,7 @@ sub restore_commit_header_env {
 	my ($env) = @_;
 	foreach my $ned (qw/NAME EMAIL DATE/) {
 		foreach my $ac (qw/AUTHOR cummitTER/) {
-			my $k = "GIT_${ac}_${ned}";
+			my $k = "BUT_${ac}_${ned}";
 			if (defined $env->{$k}) {
 				$ENV{$k} = $env->{$k};
 			} else {
@@ -1680,7 +1680,7 @@ sub tie_for_persistent_memoization {
 	}
 }
 
-# The GIT_DIR environment variable is not always set until after the command
+# The BUT_DIR environment variable is not always set until after the command
 # line arguments are processed, so we can't memoize in a BEGIN block.
 {
 	my $memoized = 0;
@@ -2272,7 +2272,7 @@ sub mkfile {
 # TODO: move this to Git.pm?
 sub use_fsync {
 	if (!defined($_use_fsync)) {
-		my $x = $ENV{GIT_TEST_FSYNC};
+		my $x = $ENV{BUT_TEST_FSYNC};
 		if (defined $x) {
 			my $v = command_oneline('-c', "test.fsync=$x",
 					qw(config --type=bool test.fsync));

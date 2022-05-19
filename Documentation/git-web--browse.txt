@@ -119,6 +119,6 @@ $ but config --global web.browser firefox
 as they are probably more user specific than repository specific.
 See linkbut:but-config[1] for more information about this.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

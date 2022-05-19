@@ -5,8 +5,8 @@
 
 test_description='but rev-list --pretty=format test'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -165,15 +165,15 @@ EOF
 # we don't test relative here
 test_format author %an%n%ae%n%al%n%ad%n%aD%n%at <<EOF
 cummit $head2
-$GIT_AUTHOR_NAME
-$GIT_AUTHOR_EMAIL
+$BUT_AUTHOR_NAME
+$BUT_AUTHOR_EMAIL
 $TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 cummit $head1
-$GIT_AUTHOR_NAME
-$GIT_AUTHOR_EMAIL
+$BUT_AUTHOR_NAME
+$BUT_AUTHOR_EMAIL
 $TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
@@ -182,15 +182,15 @@ EOF
 
 test_format cummitter %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
 cummit $head2
-$GIT_CUMMITTER_NAME
-$GIT_CUMMITTER_EMAIL
+$BUT_CUMMITTER_NAME
+$BUT_CUMMITTER_EMAIL
 $TEST_CUMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 cummit $head1
-$GIT_CUMMITTER_NAME
-$GIT_CUMMITTER_EMAIL
+$BUT_CUMMITTER_NAME
+$BUT_CUMMITTER_EMAIL
 $TEST_CUMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
@@ -246,12 +246,12 @@ EOF
 
 test_pretty short short <<EOF
 cummit $head2
-Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 
     $changed
 
 cummit $head1
-Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 
     $added
 
@@ -491,9 +491,9 @@ test_expect_success '%ad respects --date=' '
 
 test_expect_success 'empty email' '
 	test_tick &&
-	C=$(GIT_AUTHOR_EMAIL= but cummit-tree HEAD^{tree} </dev/null) &&
+	C=$(BUT_AUTHOR_EMAIL= but cummit-tree HEAD^{tree} </dev/null) &&
 	A=$(but show --pretty=format:%an,%ae,%ad%n -s $C) &&
-	verbose test "$A" = "$GIT_AUTHOR_NAME,,Thu Apr 7 15:14:13 2005 -0700"
+	verbose test "$A" = "$BUT_AUTHOR_NAME,,Thu Apr 7 15:14:13 2005 -0700"
 '
 
 test_expect_success 'del LF before empty (1)' '
@@ -579,7 +579,7 @@ test_expect_success '%gd shortens ref name' '
 '
 
 test_expect_success 'reflog identity' '
-	echo "$GIT_CUMMITTER_NAME:$GIT_CUMMITTER_EMAIL" >expect &&
+	echo "$BUT_CUMMITTER_NAME:$BUT_CUMMITTER_EMAIL" >expect &&
 	but log -g -1 --format="%gn:%ge" >actual &&
 	test_cmp expect actual
 '

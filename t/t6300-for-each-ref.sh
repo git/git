@@ -12,11 +12,11 @@ test_description='for-each-ref test'
 # Mon Jul 3 23:18:43 2006 +0000
 datestamp=1151968723
 setdate_and_increment () {
-    GIT_CUMMITTER_DATE="$datestamp +0200"
+    BUT_CUMMITTER_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
-    GIT_AUTHOR_DATE="$datestamp +0200"
+    BUT_AUTHOR_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
-    export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
+    export BUT_CUMMITTER_DATE BUT_AUTHOR_DATE
 }
 
 test_expect_success setup '
@@ -971,8 +971,8 @@ test_expect_success 'set up multiple-sort tags' '
 		do
 			for ref in ref1 ref2
 			do
-				GIT_CUMMITTER_DATE="@$when +0000" \
-				GIT_CUMMITTER_EMAIL="$email@example.com" \
+				BUT_CUMMITTER_DATE="@$when +0000" \
+				BUT_CUMMITTER_EMAIL="$email@example.com" \
 				but tag -m "tag $ref-$when-$email" \
 				multi-$ref-$when-$email || return 1
 			done
@@ -1363,7 +1363,7 @@ test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
 	do
 		for subject in a A b B
 		do
-			GIT_CUMMITTER_EMAIL="$email@example.com" \
+			BUT_CUMMITTER_EMAIL="$email@example.com" \
 			but tag -m "tag $subject" icase-$(printf %02d $nr) &&
 			nr=$((nr+1))||
 			return 1

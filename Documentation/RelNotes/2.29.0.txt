@@ -425,7 +425,7 @@ Fixes since v2.28
    (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
 
  * "but clone" that clones from SHA-1 repository, while
-   GIT_DEFAULT_HASH set to use SHA-256 already, resulted in an
+   BUT_DEFAULT_HASH set to use SHA-256 already, resulted in an
    unusable repository that half-claims to be SHA-256 repository
    with SHA-1 objects and refs.  This has been corrected.
 

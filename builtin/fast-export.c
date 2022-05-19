@@ -394,7 +394,7 @@ static char *generate_fake_oid(void *data)
 	static uint32_t counter = 1; /* avoid null oid */
 	const unsigned hashsz = the_hash_algo->rawsz;
 	struct object_id oid;
-	char *hex = xmallocz(GIT_MAX_HEXSZ);
+	char *hex = xmallocz(BUT_MAX_HEXSZ);
 
 	oidclr(&oid);
 	put_be32(oid.hash + hashsz - 4, counter++);
@@ -462,7 +462,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			 * Links refer to objects in another repositories;
 			 * output the SHA-1 verbatim.
 			 */
-			if (no_data || S_ISGITLINK(spec->mode))
+			if (no_data || S_ISBUTLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
 				       anonymize ?
 				       anonymize_oid(oid_to_hex(&spec->oid)) :
@@ -650,7 +650,7 @@ static void handle_cummit(struct cummit *cummit, struct rev_info *rev,
 
 	/* Export the referenced blobs, and remember the marks. */
 	for (i = 0; i < diff_queued_diff.nr; i++)
-		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
+		if (!S_ISBUTLINK(diff_queued_diff.queue[i]->two->mode))
 			export_blob(&diff_queued_diff.queue[i]->two->oid);
 
 	refname = *revision_sources_at(&revision_sources, cummit);

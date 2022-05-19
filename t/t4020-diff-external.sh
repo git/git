@@ -23,24 +23,24 @@ test_expect_success setup '
 	echo third >file
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF environment' '
+test_expect_success 'BUT_EXTERNAL_DIFF environment' '
 	cat >expect <<-EOF &&
 	file $(but rev-parse --verify HEAD:file) 100644 file $(test_oid zero) 100644
 	EOF
-	GIT_EXTERNAL_DIFF=echo but diff >out &&
+	BUT_EXTERNAL_DIFF=echo but diff >out &&
 	cut -d" " -f1,3- <out >actual &&
 	test_cmp expect actual
 
 '
 
-test_expect_success !SANITIZE_LEAK 'GIT_EXTERNAL_DIFF environment should apply only to diff' '
-	GIT_EXTERNAL_DIFF=echo but log -p -1 HEAD >out &&
+test_expect_success !SANITIZE_LEAK 'BUT_EXTERNAL_DIFF environment should apply only to diff' '
+	BUT_EXTERNAL_DIFF=echo but log -p -1 HEAD >out &&
 	grep "^diff --but a/file b/file" out
 
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF environment and --no-ext-diff' '
-	GIT_EXTERNAL_DIFF=echo but diff --no-ext-diff >out &&
+test_expect_success 'BUT_EXTERNAL_DIFF environment and --no-ext-diff' '
+	BUT_EXTERNAL_DIFF=echo but diff --no-ext-diff >out &&
 	grep "^diff --but a/file b/file" out
 
 '
@@ -52,11 +52,11 @@ test_expect_success SYMLINKS 'typechange diff' '
 	cat >expect <<-EOF &&
 	file $(but rev-parse --verify HEAD:file) 100644 $(test_oid zero) 120000
 	EOF
-	GIT_EXTERNAL_DIFF=echo but diff >out &&
+	BUT_EXTERNAL_DIFF=echo but diff >out &&
 	cut -d" " -f1,3-4,6- <out >actual &&
 	test_cmp expect actual &&
 
-	GIT_EXTERNAL_DIFF=echo but diff --no-ext-diff >actual &&
+	BUT_EXTERNAL_DIFF=echo but diff --no-ext-diff >actual &&
 	but diff >expect &&
 	test_cmp expect actual
 '
@@ -141,19 +141,19 @@ test_expect_success 'diff attribute and --no-ext-diff' '
 
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF trumps diff.external' '
+test_expect_success 'BUT_EXTERNAL_DIFF trumps diff.external' '
 	>.butattributes &&
 	test_config diff.external "echo ext-global" &&
 
 	cat >expect <<-EOF &&
 	ext-env file $(but rev-parse --verify HEAD:file) 100644 file $(test_oid zero) 100644
 	EOF
-	GIT_EXTERNAL_DIFF="echo ext-env" but diff >out &&
+	BUT_EXTERNAL_DIFF="echo ext-env" but diff >out &&
 	cut -d" " -f1-2,4- <out >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'attributes trump GIT_EXTERNAL_DIFF and diff.external' '
+test_expect_success 'attributes trump BUT_EXTERNAL_DIFF and diff.external' '
 	test_config diff.foo.command "echo ext-attribute" &&
 	test_config diff.external "echo ext-global" &&
 	echo "file diff=foo" >.butattributes &&
@@ -161,7 +161,7 @@ test_expect_success 'attributes trump GIT_EXTERNAL_DIFF and diff.external' '
 	cat >expect <<-EOF &&
 	ext-attribute file $(but rev-parse --verify HEAD:file) 100644 file $(test_oid zero) 100644
 	EOF
-	GIT_EXTERNAL_DIFF="echo ext-env" but diff >out &&
+	BUT_EXTERNAL_DIFF="echo ext-env" but diff >out &&
 	cut -d" " -f1-2,4- <out >actual &&
 	test_cmp expect actual
 '
@@ -184,28 +184,28 @@ test_expect_success 'force diff with "diff"' '
 	test_cmp expected-diff actual
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
+test_expect_success 'BUT_EXTERNAL_DIFF with more than one changed files' '
 	echo anotherfile > file2 &&
 	but add file2 &&
 	but cummit -m "added 2nd file" &&
 	echo modified >file2 &&
-	GIT_EXTERNAL_DIFF=echo but diff
+	BUT_EXTERNAL_DIFF=echo but diff
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF path counter/total' '
+test_expect_success 'BUT_EXTERNAL_DIFF path counter/total' '
 	write_script external-diff.sh <<-\EOF &&
-	echo $GIT_DIFF_PATH_COUNTER of $GIT_DIFF_PATH_TOTAL >>counter.txt
+	echo $BUT_DIFF_PATH_COUNTER of $BUT_DIFF_PATH_TOTAL >>counter.txt
 	EOF
 	>counter.txt &&
 	cat >expect <<-\EOF &&
 	1 of 2
 	2 of 2
 	EOF
-	GIT_EXTERNAL_DIFF=./external-diff.sh but diff &&
+	BUT_EXTERNAL_DIFF=./external-diff.sh but diff &&
 	test_cmp expect counter.txt
 '
 
-test_expect_success 'GIT_EXTERNAL_DIFF generates pretty paths' '
+test_expect_success 'BUT_EXTERNAL_DIFF generates pretty paths' '
 	touch file.ext &&
 	but add file.ext &&
 	echo with extension > file.ext &&
@@ -213,7 +213,7 @@ test_expect_success 'GIT_EXTERNAL_DIFF generates pretty paths' '
 	cat >expect <<-EOF &&
 	file.ext file $(but rev-parse --verify HEAD:file) 100644 file.ext $(test_oid zero) 100644
 	EOF
-	GIT_EXTERNAL_DIFF=echo but diff file.ext >out &&
+	BUT_EXTERNAL_DIFF=echo but diff file.ext >out &&
 	cut -d" " -f1,3- <out >actual &&
 	but update-index --force-remove file.ext &&
 	rm file.ext
@@ -231,7 +231,7 @@ keep_only_cr () {
 
 test_expect_success 'external diff with autocrlf = true' '
 	test_config core.autocrlf true &&
-	GIT_EXTERNAL_DIFF=./fake-diff.sh but diff &&
+	BUT_EXTERNAL_DIFF=./fake-diff.sh but diff &&
 	test $(wc -l < crlfed.txt) = $(cat crlfed.txt | keep_only_cr | wc -c)
 '
 
@@ -262,7 +262,7 @@ test_expect_success 'submodule diff' '
 	cat "$2" # old file
 	cat "$5" # new file
 	EOF
-	GIT_EXTERNAL_DIFF=./gather_pre_post.sh but diff >actual &&
+	BUT_EXTERNAL_DIFF=./gather_pre_post.sh but diff >actual &&
 	cat >expected <<-EOF &&
 	sub 160000
 	Subproject cummit $(but rev-parse HEAD:sub)

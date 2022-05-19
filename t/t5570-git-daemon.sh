@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='test fetching over but protocol'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -23,17 +23,17 @@ test_expect_success 'setup repository' '
 '
 
 test_expect_success 'create but-accessible bare repository' '
-	mkdir "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
-	(cd "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
+	mkdir "$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
+	(cd "$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
 	 but --bare init &&
 	 : >but-daemon-export-ok
 	) &&
-	but remote add public "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
+	but remote add public "$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
 	but push public main:main
 '
 
 test_expect_success 'clone but repository' '
-	but clone -v "$GIT_DAEMON_URL/repo.but" clone 2>stderr &&
+	but clone -v "$BUT_DAEMON_URL/repo.but" clone 2>stderr &&
 	check_verbose_connect &&
 	test_cmp file clone/file
 '
@@ -69,15 +69,15 @@ test_expect_success 'remote detects correct HEAD' '
 '
 
 test_expect_success 'prepare pack objects' '
-	cp -R "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo.but "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but &&
-	(cd "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but &&
+	cp -R "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo.but "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but &&
+	(cd "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but &&
 	 but --bare repack -a -d
 	)
 '
 
 test_expect_success 'fetch notices corrupt pack' '
-	cp -R "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad1.but &&
-	(cd "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad1.but &&
+	cp -R "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad1.but &&
+	(cd "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad1.but &&
 	 p=$(ls objects/pack/pack-*.pack) &&
 	 chmod u+w $p &&
 	 printf %0256d 0 | dd of=$p bs=256 count=1 seek=1 conv=notrunc
@@ -85,14 +85,14 @@ test_expect_success 'fetch notices corrupt pack' '
 	mkdir repo_bad1.but &&
 	(cd repo_bad1.but &&
 	 but --bare init &&
-	 test_must_fail but --bare fetch "$GIT_DAEMON_URL/repo_bad1.but" &&
+	 test_must_fail but --bare fetch "$BUT_DAEMON_URL/repo_bad1.but" &&
 	 test 0 = $(ls objects/pack/pack-*.pack | wc -l)
 	)
 '
 
 test_expect_success 'fetch notices corrupt idx' '
-	cp -R "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.but &&
-	(cd "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.but &&
+	cp -R "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.but "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.but &&
+	(cd "$BUT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.but &&
 	 rm -f objects/pack/multi-pack-index &&
 	 p=$(ls objects/pack/pack-*.idx) &&
 	 chmod u+w $p &&
@@ -101,13 +101,13 @@ test_expect_success 'fetch notices corrupt idx' '
 	mkdir repo_bad2.but &&
 	(cd repo_bad2.but &&
 	 but --bare init &&
-	 test_must_fail but --bare fetch "$GIT_DAEMON_URL/repo_bad2.but" &&
+	 test_must_fail but --bare fetch "$BUT_DAEMON_URL/repo_bad2.but" &&
 	 test 0 = $(ls objects/pack | wc -l)
 	)
 '
 
 test_expect_success 'client refuses to ask for repo with newline' '
-	test_must_fail but clone "$GIT_DAEMON_URL/repo$LF.but" dst 2>stderr &&
+	test_must_fail but clone "$BUT_DAEMON_URL/repo$LF.but" dst 2>stderr &&
 	test_i18ngrep newline.is.forbidden stderr
 '
 
@@ -119,7 +119,7 @@ test_remote_error()
 		case $1 in
 		-x)
 			shift
-			chmod -x "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but"
+			chmod -x "$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but"
 			;;
 		-n)
 			shift
@@ -137,20 +137,20 @@ test_remote_error()
 	repo=$1
 	shift || error "invalid number of arguments"
 
-	if test -x "$GIT_DAEMON_DOCUMENT_ROOT_PATH/$repo"
+	if test -x "$BUT_DAEMON_DOCUMENT_ROOT_PATH/$repo"
 	then
 		if test -n "$do_export"
 		then
-			: >"$GIT_DAEMON_DOCUMENT_ROOT_PATH/$repo/but-daemon-export-ok"
+			: >"$BUT_DAEMON_DOCUMENT_ROOT_PATH/$repo/but-daemon-export-ok"
 		else
-			rm -f "$GIT_DAEMON_DOCUMENT_ROOT_PATH/$repo/but-daemon-export-ok"
+			rm -f "$BUT_DAEMON_DOCUMENT_ROOT_PATH/$repo/but-daemon-export-ok"
 		fi
 	fi
 
-	test_must_fail but "$cmd" "$GIT_DAEMON_URL/$repo" "$@" 2>output &&
+	test_must_fail but "$cmd" "$BUT_DAEMON_URL/$repo" "$@" 2>output &&
 	test_i18ngrep "fatal: remote error: $msg: /$repo" output &&
 	ret=$?
-	chmod +x "$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but"
+	chmod +x "$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but"
 	(exit $ret)
 }
 
@@ -169,27 +169,27 @@ test_expect_success 'read access denied' "test_remote_error -x 'no such reposito
 test_expect_success 'not exported'       "test_remote_error -n 'repository not exported' fetch repo.but"
 
 stop_but_daemon
-start_but_daemon --interpolated-path="$GIT_DAEMON_DOCUMENT_ROOT_PATH/%H%D"
+start_but_daemon --interpolated-path="$BUT_DAEMON_DOCUMENT_ROOT_PATH/%H%D"
 
 test_expect_success 'access repo via interpolated hostname' '
-	repo="$GIT_DAEMON_DOCUMENT_ROOT_PATH/localhost/interp.but" &&
+	repo="$BUT_DAEMON_DOCUMENT_ROOT_PATH/localhost/interp.but" &&
 	but init --bare "$repo" &&
 	but push "$repo" HEAD &&
 	>"$repo"/but-daemon-export-ok &&
-	GIT_OVERRIDE_VIRTUAL_HOST=localhost \
-		but ls-remote "$GIT_DAEMON_URL/interp.but" &&
-	GIT_OVERRIDE_VIRTUAL_HOST=LOCALHOST \
-		but ls-remote "$GIT_DAEMON_URL/interp.but"
+	BUT_OVERRIDE_VIRTUAL_HOST=localhost \
+		but ls-remote "$BUT_DAEMON_URL/interp.but" &&
+	BUT_OVERRIDE_VIRTUAL_HOST=LOCALHOST \
+		but ls-remote "$BUT_DAEMON_URL/interp.but"
 '
 
 test_expect_success 'hostname cannot break out of directory' '
-	repo="$GIT_DAEMON_DOCUMENT_ROOT_PATH/../escape.but" &&
+	repo="$BUT_DAEMON_DOCUMENT_ROOT_PATH/../escape.but" &&
 	but init --bare "$repo" &&
 	but push "$repo" HEAD &&
 	>"$repo"/but-daemon-export-ok &&
 	test_must_fail \
-		env GIT_OVERRIDE_VIRTUAL_HOST=.. \
-		but ls-remote "$GIT_DAEMON_URL/escape.but"
+		env BUT_OVERRIDE_VIRTUAL_HOST=.. \
+		but ls-remote "$BUT_DAEMON_URL/escape.but"
 '
 
 test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
@@ -197,7 +197,7 @@ test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 		printf "but-upload-pack /interp.but\n\0host=localhost" | packetize_raw &&
 		printf "0000"
 	} >input &&
-	fake_nc "$GIT_DAEMON_HOST_PORT" <input >output &&
+	fake_nc "$BUT_DAEMON_HOST_PORT" <input >output &&
 	depacketize <output >output.raw &&
 
 	# just pick out the value of main, which avoids any protocol

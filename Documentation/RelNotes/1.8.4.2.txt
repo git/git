@@ -47,7 +47,7 @@ Fixes since v1.8.4.1
    ActiveState Perl limitation but it by mistake also triggered on Git
    for Windows where MSYS perl is used.
 
- * We made sure that we notice the user-supplied GIT_DIR is actually a
+ * We made sure that we notice the user-supplied BUT_DIR is actually a
    butfile, but did not do the same when the default ".but" is a
    butfile.
 

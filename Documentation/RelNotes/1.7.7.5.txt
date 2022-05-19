@@ -8,7 +8,7 @@ Fixes since v1.7.7.4
    output could have corrupted by overrunning a static buffer.
 
  * "but checkout" and "but merge" treated in-tree .butignore and exclude
-   file in $GIT_DIR/info/ directory inconsistently when deciding which
+   file in $BUT_DIR/info/ directory inconsistently when deciding which
    untracked files are ignored and expendable.
 
 Also contains minor fixes and documentation updates.

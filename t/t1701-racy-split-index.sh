@@ -9,7 +9,7 @@ test_description='racy split index'
 
 test_expect_success 'setup' '
 	# Only split the index when the test explicitly says so.
-	sane_unset GIT_TEST_SPLIT_INDEX &&
+	sane_unset BUT_TEST_SPLIT_INDEX &&
 	but config splitIndex.maxPercentChange 100 &&
 
 	echo "cached content" >racy-file &&

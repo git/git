@@ -89,7 +89,7 @@ OPTIONS
 	existed in the original index file.
 
 --index-output=<file>::
-	Instead of writing the results out to `$GIT_INDEX_FILE`,
+	Instead of writing the results out to `$BUT_INDEX_FILE`,
 	write the resulting index in the named file.  While the
 	command is operating, the original index file is locked
 	with the same mechanism as usual.  The file must allow
@@ -386,7 +386,7 @@ tell Git whether a file in the working directory is worth looking at.
 
 'but read-tree' and other merge-based commands ('but merge', 'but
 checkout'...) can help maintaining the skip-worktree bitmap and working
-directory update. `$GIT_DIR/info/sparse-checkout` is used to
+directory update. `$BUT_DIR/info/sparse-checkout` is used to
 define the skip-worktree reference bitmap. When 'but read-tree' needs
 to update the working directory, it resets the skip-worktree bit in the index
 based on this file, which uses the same syntax as .butignore files.
@@ -398,7 +398,7 @@ Then it compares the new skip-worktree value with the previous one. If
 skip-worktree turns from set to unset, it will add the corresponding
 file back. If it turns from unset to set, that file will be removed.
 
-While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
+While `$BUT_DIR/info/sparse-checkout` is usually used to specify what
 files are in, you can also specify what files are _not_ in, using
 negate patterns. For example, to remove the file `unwanted`:
 
@@ -411,7 +411,7 @@ Another tricky thing is fully repopulating the working directory when you
 no longer want sparse checkout. You cannot just disable "sparse
 checkout" because skip-worktree bits are still in the index and your working
 directory is still sparsely populated. You should re-populate the working
-directory with the `$GIT_DIR/info/sparse-checkout` file content as
+directory with the `$BUT_DIR/info/sparse-checkout` file content as
 follows:
 
 ----------------
@@ -429,6 +429,6 @@ SEE ALSO
 linkbut:but-write-tree[1], linkbut:but-ls-files[1],
 linkbut:butignore[5], linkbut:but-sparse-checkout[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

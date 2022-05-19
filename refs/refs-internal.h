@@ -730,7 +730,7 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
 			 const char *path, const struct ref_storage_be *be);
 
 /*
- * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
+ * Support BUT_TRACE_REFS by optionally wrapping the given ref_store instance.
  */
 struct ref_store *maybe_debug_wrap_ref_store(const char *butdir, struct ref_store *store);
 

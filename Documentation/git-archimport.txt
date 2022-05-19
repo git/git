@@ -108,6 +108,6 @@ OPTIONS
 	<archive>/<branch> identifier in a format that `tla log` understands.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

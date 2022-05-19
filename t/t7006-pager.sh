@@ -7,7 +7,7 @@ test_description='Test automatic use of a pager.'
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'setup' '
-	sane_unset GIT_PAGER GIT_PAGER_IN_USE &&
+	sane_unset BUT_PAGER BUT_PAGER_IN_USE &&
 	test_unconfig core.pager &&
 
 	PAGER="cat >paginated.out" &&
@@ -329,8 +329,8 @@ test_expect_success 'color when writing to a file intended for a pager' '
 	test_config color.ui auto &&
 	(
 		TERM=vt100 &&
-		GIT_PAGER_IN_USE=true &&
-		export TERM GIT_PAGER_IN_USE &&
+		BUT_PAGER_IN_USE=true &&
+		export TERM BUT_PAGER_IN_USE &&
 		but log >colorful.log
 	) &&
 	colorful colorful.log
@@ -379,7 +379,7 @@ test_default_pager() {
 	parse_args "$@"
 
 	$test_expectation SIMPLEPAGER,TTY "$cmd - default pager is used by default" "
-		sane_unset PAGER GIT_PAGER &&
+		sane_unset PAGER BUT_PAGER &&
 		test_unconfig core.pager &&
 		rm -f default_pager_used &&
 		cat >\$less <<-\EOF &&
@@ -400,7 +400,7 @@ test_PAGER_overrides() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - PAGER overrides default pager" "
-		sane_unset GIT_PAGER &&
+		sane_unset BUT_PAGER &&
 		test_unconfig core.pager &&
 		rm -f PAGER_used &&
 		PAGER='wc >PAGER_used' &&
@@ -426,7 +426,7 @@ test_core_pager() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - repository-local core.pager setting $used_if_wanted" "
-		sane_unset GIT_PAGER &&
+		sane_unset BUT_PAGER &&
 		rm -f core.pager_used &&
 		PAGER=wc &&
 		export PAGER &&
@@ -452,7 +452,7 @@ test_pager_subdir_helper() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - core.pager $used_if_wanted from subdirectory" "
-		sane_unset GIT_PAGER &&
+		sane_unset BUT_PAGER &&
 		rm -f core.pager_used &&
 		rm -fr sub &&
 		PAGER=wc &&
@@ -468,16 +468,16 @@ test_pager_subdir_helper() {
 	"
 }
 
-test_GIT_PAGER_overrides() {
+test_BUT_PAGER_overrides() {
 	parse_args "$@"
 
-	$test_expectation TTY "$cmd - GIT_PAGER overrides core.pager" "
-		rm -f GIT_PAGER_used &&
+	$test_expectation TTY "$cmd - BUT_PAGER overrides core.pager" "
+		rm -f BUT_PAGER_used &&
 		test_config core.pager wc &&
-		GIT_PAGER='wc >GIT_PAGER_used' &&
-		export GIT_PAGER &&
+		BUT_PAGER='wc >BUT_PAGER_used' &&
+		export BUT_PAGER &&
 		$full_command &&
-		test_path_is_file GIT_PAGER_used
+		test_path_is_file BUT_PAGER_used
 	"
 }
 
@@ -485,11 +485,11 @@ test_doesnt_paginate() {
 	parse_args "$@"
 
 	$test_expectation TTY "no pager for '$cmd'" "
-		rm -f GIT_PAGER_used &&
-		GIT_PAGER='wc >GIT_PAGER_used' &&
-		export GIT_PAGER &&
+		rm -f BUT_PAGER_used &&
+		BUT_PAGER='wc >BUT_PAGER_used' &&
+		export BUT_PAGER &&
 		$full_command &&
-		test_path_is_missing GIT_PAGER_used
+		test_path_is_missing BUT_PAGER_used
 	"
 }
 
@@ -498,7 +498,7 @@ test_pager_choices() {
 	test_PAGER_overrides      expect_success "$@"
 	test_core_pager_overrides expect_success "$@"
 	test_core_pager_subdir    expect_success "$@"
-	test_GIT_PAGER_overrides  expect_success "$@"
+	test_BUT_PAGER_overrides  expect_success "$@"
 }
 
 test_expect_success 'setup: some aliases' '
@@ -514,27 +514,27 @@ test_default_pager        expect_success 'but -p aliasedlog'
 test_PAGER_overrides      expect_success 'but -p aliasedlog'
 test_core_pager_overrides expect_success 'but -p aliasedlog'
 test_core_pager_subdir    expect_success 'but -p aliasedlog'
-test_GIT_PAGER_overrides  expect_success 'but -p aliasedlog'
+test_BUT_PAGER_overrides  expect_success 'but -p aliasedlog'
 
 test_default_pager        expect_success 'but -p true'
 test_PAGER_overrides      expect_success 'but -p true'
 test_core_pager_overrides expect_success 'but -p true'
 test_core_pager_subdir    expect_success 'but -p true'
-test_GIT_PAGER_overrides  expect_success 'but -p true'
+test_BUT_PAGER_overrides  expect_success 'but -p true'
 
 test_default_pager        expect_success test_must_fail 'but -p request-pull'
 test_PAGER_overrides      expect_success test_must_fail 'but -p request-pull'
 test_core_pager_overrides expect_success test_must_fail 'but -p request-pull'
 test_core_pager_subdir    expect_success test_must_fail 'but -p request-pull'
-test_GIT_PAGER_overrides  expect_success test_must_fail 'but -p request-pull'
+test_BUT_PAGER_overrides  expect_success test_must_fail 'but -p request-pull'
 
 test_default_pager        expect_success test_must_fail 'but -p'
 test_PAGER_overrides      expect_success test_must_fail 'but -p'
 test_local_config_ignored expect_failure test_must_fail 'but -p'
-test_GIT_PAGER_overrides  expect_success test_must_fail 'but -p'
+test_BUT_PAGER_overrides  expect_success test_must_fail 'but -p'
 
 test_expect_success TTY 'core.pager in repo config works and retains cwd' '
-	sane_unset GIT_PAGER &&
+	sane_unset BUT_PAGER &&
 	test_config core.pager "cat >cwd-retained" &&
 	(
 		cd sub &&
@@ -545,7 +545,7 @@ test_expect_success TTY 'core.pager in repo config works and retains cwd' '
 '
 
 test_expect_success TTY 'core.pager is found via alias in subdirectory' '
-	sane_unset GIT_PAGER &&
+	sane_unset BUT_PAGER &&
 	test_config core.pager "cat >via-alias" &&
 	(
 		cd sub &&
@@ -570,7 +570,7 @@ test_core_pager_subdir    expect_success test_must_fail \
 					 'but -p apply </dev/null'
 
 test_expect_success TTY 'command-specific pager' '
-	sane_unset PAGER GIT_PAGER &&
+	sane_unset PAGER BUT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_unconfig core.pager &&
@@ -580,7 +580,7 @@ test_expect_success TTY 'command-specific pager' '
 '
 
 test_expect_success TTY 'command-specific pager overrides core.pager' '
-	sane_unset PAGER GIT_PAGER &&
+	sane_unset PAGER BUT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_config core.pager "exit 1" &&
@@ -590,7 +590,7 @@ test_expect_success TTY 'command-specific pager overrides core.pager' '
 '
 
 test_expect_success TTY 'command-specific pager overridden by environment' '
-	GIT_PAGER="sed s/^/foo:/ >actual" && export GIT_PAGER &&
+	BUT_PAGER="sed s/^/foo:/ >actual" && export BUT_PAGER &&
 	>actual &&
 	echo "foo:initial" >expect &&
 	test_config pager.log "exit 1" &&
@@ -607,7 +607,7 @@ test_expect_success 'setup external command' '
 '
 
 test_expect_success TTY 'command-specific pager works for external commands' '
-	sane_unset PAGER GIT_PAGER &&
+	sane_unset PAGER BUT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_config pager.external "sed s/^/foo:/ >actual" &&
@@ -616,7 +616,7 @@ test_expect_success TTY 'command-specific pager works for external commands' '
 '
 
 test_expect_success TTY 'sub-commands of externals use their own pager' '
-	sane_unset PAGER GIT_PAGER &&
+	sane_unset PAGER BUT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_config pager.log "sed s/^/foo:/ >actual" &&
@@ -625,7 +625,7 @@ test_expect_success TTY 'sub-commands of externals use their own pager' '
 '
 
 test_expect_success TTY 'external command pagers override sub-commands' '
-	sane_unset PAGER GIT_PAGER &&
+	sane_unset PAGER BUT_PAGER &&
 	>actual &&
 	test_config pager.external false &&
 	test_config pager.log "sed s/^/log:/ >actual" &&
@@ -657,8 +657,8 @@ test_expect_success TTY 'but tag with auto-columns ' '
 '
 
 test_expect_success 'setup trace2' '
-	GIT_TRACE2_BRIEF=1 &&
-	export GIT_TRACE2_BRIEF
+	BUT_TRACE2_BRIEF=1 &&
+	export BUT_TRACE2_BRIEF
 '
 
 test_expect_success 'setup large log output' '
@@ -671,9 +671,9 @@ test_expect_success 'setup large log output' '
 test_expect_success TTY 'but returns SIGPIPE on early pager exit' '
 	test_when_finished "rm pager-used trace.normal" &&
 	test_config core.pager ">pager-used; head -n 1; exit 0" &&
-	GIT_TRACE2="$(pwd)/trace.normal" &&
-	export GIT_TRACE2 &&
-	test_when_finished "unset GIT_TRACE2" &&
+	BUT_TRACE2="$(pwd)/trace.normal" &&
+	export BUT_TRACE2 &&
+	test_when_finished "unset BUT_TRACE2" &&
 
 	if test_have_prereq !MINGW
 	then
@@ -692,9 +692,9 @@ test_expect_success TTY 'but returns SIGPIPE on early pager exit' '
 test_expect_success TTY 'but returns SIGPIPE on early pager non-zero exit' '
 	test_when_finished "rm pager-used trace.normal" &&
 	test_config core.pager ">pager-used; head -n 1; exit 1" &&
-	GIT_TRACE2="$(pwd)/trace.normal" &&
-	export GIT_TRACE2 &&
-	test_when_finished "unset GIT_TRACE2" &&
+	BUT_TRACE2="$(pwd)/trace.normal" &&
+	export BUT_TRACE2 &&
+	test_when_finished "unset BUT_TRACE2" &&
 
 	if test_have_prereq !MINGW
 	then
@@ -713,9 +713,9 @@ test_expect_success TTY 'but returns SIGPIPE on early pager non-zero exit' '
 test_expect_success TTY 'but discards pager non-zero exit without SIGPIPE' '
 	test_when_finished "rm pager-used trace.normal" &&
 	test_config core.pager "wc >pager-used; exit 1" &&
-	GIT_TRACE2="$(pwd)/trace.normal" &&
-	export GIT_TRACE2 &&
-	test_when_finished "unset GIT_TRACE2" &&
+	BUT_TRACE2="$(pwd)/trace.normal" &&
+	export BUT_TRACE2 &&
+	test_when_finished "unset BUT_TRACE2" &&
 
 	test_terminal but log &&
 
@@ -728,9 +728,9 @@ test_expect_success TTY 'but discards pager non-zero exit without SIGPIPE' '
 test_expect_success TTY 'but skips paging nonexisting command' '
 	test_when_finished "rm trace.normal" &&
 	test_config core.pager "does-not-exist" &&
-	GIT_TRACE2="$(pwd)/trace.normal" &&
-	export GIT_TRACE2 &&
-	test_when_finished "unset GIT_TRACE2" &&
+	BUT_TRACE2="$(pwd)/trace.normal" &&
+	export BUT_TRACE2 &&
+	test_when_finished "unset BUT_TRACE2" &&
 
 	test_terminal but log &&
 
@@ -742,9 +742,9 @@ test_expect_success TTY 'but skips paging nonexisting command' '
 test_expect_success TTY 'but returns SIGPIPE on propagated signals from pager' '
 	test_when_finished "rm pager-used trace.normal" &&
 	test_config core.pager ">pager-used; exec test-tool sigchain" &&
-	GIT_TRACE2="$(pwd)/trace.normal" &&
-	export GIT_TRACE2 &&
-	test_when_finished "unset GIT_TRACE2" &&
+	BUT_TRACE2="$(pwd)/trace.normal" &&
+	export BUT_TRACE2 &&
+	test_when_finished "unset BUT_TRACE2" &&
 
 	if test_have_prereq !MINGW
 	then

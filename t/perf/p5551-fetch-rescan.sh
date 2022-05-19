@@ -28,7 +28,7 @@ test_expect_success 'create refs in the parent' '
 		head=$(but rev-parse HEAD) &&
 		test_seq 1000 |
 		sed "s,.*,update refs/heads/& $head," |
-		$MODERN_GIT update-ref --stdin
+		$MODERN_BUT update-ref --stdin
 	)
 '
 
@@ -41,11 +41,11 @@ test_expect_success 'create many packs in the child' '
 
 test_perf 'fetch' '
 	# start at the same state for each iteration
-	obj=$($MODERN_GIT -C parent rev-parse HEAD) &&
+	obj=$($MODERN_BUT -C parent rev-parse HEAD) &&
 	(
 		cd child &&
-		$MODERN_GIT for-each-ref --format="delete %(refname)" refs/remotes |
-		$MODERN_GIT update-ref --stdin &&
+		$MODERN_BUT for-each-ref --format="delete %(refname)" refs/remotes |
+		$MODERN_BUT update-ref --stdin &&
 		rm -vf .but/objects/$(echo $obj | sed "s|^..|&/|") &&
 
 		but fetch

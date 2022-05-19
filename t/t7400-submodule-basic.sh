@@ -9,8 +9,8 @@ This test tries to verify basic sanity of the init, update and status
 subcommands of but submodule.
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -1188,7 +1188,7 @@ test_expect_success 'submodule deinit absorbs .but directory if .but is a direct
 		cd init &&
 		rm .but &&
 		mv ../.but/modules/example .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	) &&
 	but submodule deinit init &&
 	test_path_is_missing init/.but &&

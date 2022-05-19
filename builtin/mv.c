@@ -73,13 +73,13 @@ static const char *add_slash(const char *path)
 	return path;
 }
 
-#define SUBMODULE_WITH_GITDIR ((const char *)1)
+#define SUBMODULE_WITH_BUTDIR ((const char *)1)
 
 static void prepare_move_submodule(const char *src, int first,
 				   const char **submodule_butfile)
 {
 	struct strbuf submodule_dotbut = STRBUF_INIT;
-	if (!S_ISGITLINK(active_cache[first]->ce_mode))
+	if (!S_ISBUTLINK(active_cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
 	if (!is_staging_butmodules_ok(&the_index))
 		die(_("Please stage your changes to .butmodules or stash them to proceed"));
@@ -88,7 +88,7 @@ static void prepare_move_submodule(const char *src, int first,
 	if (*submodule_butfile)
 		*submodule_butfile = xstrdup(*submodule_butfile);
 	else
-		*submodule_butfile = SUBMODULE_WITH_GITDIR;
+		*submodule_butfile = SUBMODULE_WITH_BUTDIR;
 	strbuf_release(&submodule_dotbut);
 }
 
@@ -316,7 +316,7 @@ remove_entry:
 		if (submodule_butfile[i]) {
 			if (!update_path_in_butmodules(src, dst))
 				butmodules_modified = 1;
-			if (submodule_butfile[i] != SUBMODULE_WITH_GITDIR)
+			if (submodule_butfile[i] != SUBMODULE_WITH_BUTDIR)
 				connect_work_tree_and_but_dir(dst,
 							      submodule_butfile[i],
 							      1);

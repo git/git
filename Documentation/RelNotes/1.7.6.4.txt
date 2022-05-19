@@ -11,7 +11,7 @@ Fixes since v1.7.6.3
 
  * "but check-ref-format --print" used to parrot a candidate string that
    began with a slash (e.g. /refs/heads/master) without stripping it, to make
-   the result a suitably normalized string the caller can append to "$GIT_DIR/".
+   the result a suitably normalized string the caller can append to "$BUT_DIR/".
 
  * "but clone" failed to clone locally from a ".but" file that itself
    is not a directory but is a pointer to one.

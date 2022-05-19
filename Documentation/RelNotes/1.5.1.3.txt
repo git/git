@@ -1,4 +1,4 @@
-GIT v1.5.1.3 Release Notes
+BUT v1.5.1.3 Release Notes
 ==========================
 
 Fixes since v1.5.1.2
@@ -11,7 +11,7 @@ Fixes since v1.5.1.2
     confused behaviour.
 
   - unofficial rpm.spec file shipped with but was letting
-    ETC_GITCONFIG set to /usr/etc/butconfig.  Tweak the official
+    ETC_BUTCONFIG set to /usr/etc/butconfig.  Tweak the official
     Makefile to make it harder for distro people to make the
     same mistake, by setting the variable to /etc/butconfig if
     prefix is set to /usr.

@@ -139,6 +139,6 @@ SEE ALSO
 --------
 linkbut:but-format-patch[1], linkbut:but-send-email[1], mbox(5)
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

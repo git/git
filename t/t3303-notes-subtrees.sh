@@ -2,8 +2,8 @@
 
 test_description='Test cummit notes organized in subtrees'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -13,7 +13,7 @@ start_note_cummit () {
 	test_tick &&
 	cat <<INPUT_END
 cummit refs/notes/cummits
-cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 data <<cummit
 notes
 cummit
@@ -44,7 +44,7 @@ test_expect_success "setup: create $number_of_cummits cummits" '
 			test_tick &&
 			cat <<INPUT_END || return 1
 cummit refs/heads/main
-cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 data <<cummit
 cummit #$nr
 cummit
@@ -60,7 +60,7 @@ INPUT_END
 		test_tick &&
 		cat <<INPUT_END
 cummit refs/notes/cummits
-cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 data <<cummit
 no notes
 cummit

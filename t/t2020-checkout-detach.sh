@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='checkout into detached HEAD state'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -189,7 +189,7 @@ test_expect_success 'no advice given for explicit detached head state' '
 	test_cmp expect.no-advice actual
 '
 
-# Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (new format)
+# Detached HEAD tests for BUT_PRINT_SHA1_ELLIPSIS (new format)
 test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not asked to' "
 
 	cummit=$(but rev-parse --short=12 main^) &&
@@ -234,20 +234,20 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	# Various ways of *not* asking for ellipses
 
-	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
+	sane_unset BUT_PRINT_SHA1_ELLIPSIS &&
 	but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 1st_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS="no" but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	BUT_PRINT_SHA1_ELLIPSIS="no" but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 2nd_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS= but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	BUT_PRINT_SHA1_ELLIPSIS= but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 3rd_detach actual &&
 
-	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
+	sane_unset BUT_PRINT_SHA1_ELLIPSIS &&
 
 	# We only have four cummits, but we can re-use them
 	reset &&
@@ -258,12 +258,12 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 	check_detached &&
 	test_cmp 1st_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS='nope' &&
+	BUT_PRINT_SHA1_ELLIPSIS='nope' &&
 	but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 2nd_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS=nein &&
+	BUT_PRINT_SHA1_ELLIPSIS=nein &&
 	but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 3rd_detach actual &&
@@ -271,7 +271,7 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 	true
 "
 
-# Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (old format)
+# Detached HEAD tests for BUT_PRINT_SHA1_ELLIPSIS (old format)
 test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked to' "
 
 	cummit=$(but rev-parse --short=12 main^) &&
@@ -317,15 +317,15 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 	# Various ways of asking for ellipses...
 	# The user can just use any kind of quoting (including none).
 
-	GIT_PRINT_SHA1_ELLIPSIS=yes but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	BUT_PRINT_SHA1_ELLIPSIS=yes but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 1st_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS=Yes but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	BUT_PRINT_SHA1_ELLIPSIS=Yes but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 2nd_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS=YES but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	BUT_PRINT_SHA1_ELLIPSIS=YES but -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_cmp 3rd_detach actual &&
 

@@ -104,7 +104,7 @@ test_expect_success 'no-glob option disables :(literal)' '
 
 test_expect_success 'no-glob environment variable works' '
 	echo star >expect &&
-	GIT_LITERAL_PATHSPECS=1 but log --format=%s -- "f*" >actual &&
+	BUT_LITERAL_PATHSPECS=1 but log --format=%s -- "f*" >actual &&
 	test_cmp expect actual
 '
 

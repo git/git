@@ -6,8 +6,8 @@
 test_description='See why rewinding head breaks send-pack
 
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -292,9 +292,9 @@ test_expect_success 'receive-pack de-dupes .have lines' '
 	$shared .have
 	EOF
 
-	GIT_TRACE_PACKET=$(pwd)/trace GIT_TEST_PROTOCOL_VERSION=0 \
+	BUT_TRACE_PACKET=$(pwd)/trace BUT_TEST_PROTOCOL_VERSION=0 \
 	but push \
-		--receive-pack="unset GIT_TRACE_PACKET; but-receive-pack" \
+		--receive-pack="unset BUT_TRACE_PACKET; but-receive-pack" \
 		fork HEAD:foo &&
 	extract_ref_advertisement <trace >refs &&
 	test_cmp expect refs

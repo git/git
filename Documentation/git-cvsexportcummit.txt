@@ -19,7 +19,7 @@ Exports a cummit from Git to a CVS checkout, making it easier
 to merge patches from a Git repository into a CVS repository.
 
 Specify the name of a CVS checkout using the -w switch or execute it
-from the root of the CVS working copy. In the latter case GIT_DIR must
+from the root of the CVS working copy. In the latter case BUT_DIR must
 be defined. See examples below.
 
 It does its best to do the safe thing, it will check that the files are
@@ -70,7 +70,7 @@ OPTIONS
 
 -w::
 	Specify the location of the CVS checkout to use for the export. This
-	option does not require GIT_DIR to be set before execution if the
+	option does not require BUT_DIR to be set before execution if the
 	current directory is within a Git repository.  The default is the
 	value of 'cvsexportcummit.cvsdir'.
 
@@ -93,7 +93,7 @@ EXAMPLES
 Merge one patch into CVS::
 +
 ------------
-$ export GIT_DIR=~/project/.but
+$ export BUT_DIR=~/project/.but
 $ cd ~/project_cvs_checkout
 $ but cvsexportcummit -v <cummit-sha1>
 $ cvs cummit -F .msg <files>
@@ -108,11 +108,11 @@ Merge one patch into CVS (-c and -w options). The working directory is within th
 Merge pending patches into CVS automatically -- only if you really know what you are doing::
 +
 ------------
-$ export GIT_DIR=~/project/.but
+$ export BUT_DIR=~/project/.but
 $ cd ~/project_cvs_checkout
 $ but cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 but cvsexportcummit -c -p -v
 ------------
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

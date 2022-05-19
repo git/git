@@ -252,7 +252,7 @@ static int write_tar_entry(struct archiver_args *args,
 
 	memset(&header, 0, sizeof(header));
 
-	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
+	if (S_ISDIR(mode) || S_ISBUTLINK(mode)) {
 		*header.typeflag = TYPEFLAG_DIR;
 		mode = (mode | 0777) & ~tar_umask;
 	} else if (S_ISLNK(mode)) {

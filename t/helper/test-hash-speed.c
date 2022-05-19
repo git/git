@@ -13,7 +13,7 @@ static inline void compute_hash(const struct but_hash_algo *algo, but_hash_ctx *
 int cmd__hash_speed(int ac, const char **av)
 {
 	but_hash_ctx ctx;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	clock_t initial, start, end;
 	unsigned bufsizes[] = { 64, 256, 1024, 8192, 16384 };
 	int i;
@@ -21,7 +21,7 @@ int cmd__hash_speed(int ac, const char **av)
 	const struct but_hash_algo *algo = NULL;
 
 	if (ac == 2) {
-		for (i = 1; i < GIT_HASH_NALGOS; i++) {
+		for (i = 1; i < BUT_HASH_NALGOS; i++) {
 			if (!strcmp(av[1], hash_algos[i].name)) {
 				algo = &hash_algos[i];
 				break;

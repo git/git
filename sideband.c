@@ -14,13 +14,13 @@ struct keyword_entry {
 };
 
 static struct keyword_entry keywords[] = {
-	{ "hint",	GIT_COLOR_YELLOW },
-	{ "warning",	GIT_COLOR_BOLD_YELLOW },
-	{ "success",	GIT_COLOR_BOLD_GREEN },
-	{ "error",	GIT_COLOR_BOLD_RED },
+	{ "hint",	BUT_COLOR_YELLOW },
+	{ "warning",	BUT_COLOR_BOLD_YELLOW },
+	{ "success",	BUT_COLOR_BOLD_GREEN },
+	{ "error",	BUT_COLOR_BOLD_RED },
 };
 
-/* Returns a color setting (GIT_COLOR_NEVER, etc). */
+/* Returns a color setting (BUT_COLOR_NEVER, etc). */
 static int use_sideband_colors(void)
 {
 	static int use_sideband_colors_cached = -1;
@@ -38,7 +38,7 @@ static int use_sideband_colors(void)
 	} else if (!but_config_get_string("color.ui", &value)) {
 		use_sideband_colors_cached = but_config_colorbool("color.ui", value);
 	} else {
-		use_sideband_colors_cached = GIT_COLOR_AUTO;
+		use_sideband_colors_cached = BUT_COLOR_AUTO;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
@@ -99,7 +99,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		    (len == n || !isalnum(src[len]))) {
 			strbuf_addstr(dest, p->color);
 			strbuf_add(dest, src, len);
-			strbuf_addstr(dest, GIT_COLOR_RESET);
+			strbuf_addstr(dest, BUT_COLOR_RESET);
 			n -= len;
 			src += len;
 			break;

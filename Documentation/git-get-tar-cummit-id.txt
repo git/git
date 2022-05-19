@@ -25,6 +25,6 @@ return code of 1.  This can happen if the archive had not been created
 using 'but archive' or if the first parameter of 'but archive' had been
 a tree ID instead of a cummit ID or tag.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

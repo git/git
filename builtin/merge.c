@@ -164,7 +164,7 @@ static struct strategy *get_strategy(const char *name)
 	struct strategy *ret;
 	static struct cmdnames main_cmds, other_cmds;
 	static int loaded;
-	char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+	char *default_strategy = getenv("BUT_TEST_MERGE_ALGORITHM");
 
 	if (!name)
 		return NULL;
@@ -351,7 +351,7 @@ static void read_empty(const struct object_id *oid, int verbose)
 	args[i++] = oid_to_hex(oid);
 	args[i] = NULL;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command_v_opt(args, RUN_BUT_CMD))
 		die(_("read-tree failed"));
 }
 
@@ -368,7 +368,7 @@ static void reset_hard(const struct object_id *oid, int verbose)
 	args[i++] = oid_to_hex(oid);
 	args[i] = NULL;
 
-	if (run_command_v_opt(args, RUN_GIT_CMD))
+	if (run_command_v_opt(args, RUN_BUT_CMD))
 		die(_("read-tree failed"));
 }
 
@@ -389,7 +389,7 @@ static void restore_state(const struct object_id *head,
 	 * It is OK to ignore error here, for example when there was
 	 * nothing to restore.
 	 */
-	run_command_v_opt(args, RUN_GIT_CMD);
+	run_command_v_opt(args, RUN_BUT_CMD);
 
 	strbuf_release(&sb);
 	refresh_cache(REFRESH_QUIET);
@@ -453,12 +453,12 @@ static void finish(struct cummit *head_cummit,
 	const struct object_id *head = &head_cummit->object.oid;
 
 	if (!msg)
-		strbuf_addstr(&reflog_message, getenv("GIT_REFLOG_ACTION"));
+		strbuf_addstr(&reflog_message, getenv("BUT_REFLOG_ACTION"));
 	else {
 		if (verbosity >= 0)
 			printf("%s\n", msg);
 		strbuf_addf(&reflog_message, "%s: %s",
-			getenv("GIT_REFLOG_ACTION"), msg);
+			getenv("BUT_REFLOG_ACTION"), msg);
 	}
 	if (squash) {
 		squash_message(head_cummit, remoteheads);
@@ -1067,7 +1067,7 @@ static void write_merge_state(struct cummit_list *remoteheads)
 
 static int default_edit_option(void)
 {
-	static const char name[] = "GIT_MERGE_AUTOEDIT";
+	static const char name[] = "BUT_MERGE_AUTOEDIT";
 	const char *e = getenv(name);
 	struct stat st_stdin, st_stdout;
 
@@ -1298,7 +1298,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		skip_prefix(branch, "refs/heads/", &branch);
 
 	if (!pull_twohead) {
-		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+		char *default_strategy = getenv("BUT_TEST_MERGE_ALGORITHM");
 		if (default_strategy && !strcmp(default_strategy, "ort"))
 			pull_twohead = "ort";
 	}
@@ -1485,12 +1485,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&buf, "merge");
 	for (p = remoteheads; p; p = p->next)
 		strbuf_addf(&buf, " %s", merge_remote_util(p->item)->name);
-	setenv("GIT_REFLOG_ACTION", buf.buf, 0);
+	setenv("BUT_REFLOG_ACTION", buf.buf, 0);
 	strbuf_reset(&buf);
 
 	for (p = remoteheads; p; p = p->next) {
 		struct cummit *cummit = p->item;
-		strbuf_addf(&buf, "GITHEAD_%s",
+		strbuf_addf(&buf, "BUTHEAD_%s",
 			    oid_to_hex(&cummit->object.oid));
 		setenv(buf.buf, merge_remote_util(cummit)->name, 1);
 		strbuf_reset(&buf);
@@ -1500,7 +1500,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!use_strategies && !pull_twohead &&
 	    remoteheads && !remoteheads->next) {
-		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+		char *default_strategy = getenv("BUT_TEST_MERGE_ALGORITHM");
 		if (default_strategy)
 			append_strategy(get_strategy(default_strategy));
 	}

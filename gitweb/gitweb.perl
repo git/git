@@ -35,7 +35,7 @@ BEGIN {
 	CGI->compile() if $ENV{'MOD_PERL'};
 }
 
-our $version = "++GIT_VERSION++";
+our $version = "++BUT_VERSION++";
 
 our ($my_url, $my_uri, $base_url, $path_info, $home_link);
 sub evaluate_uri {
@@ -80,55 +80,55 @@ sub evaluate_uri {
 
 # core but executable to use
 # this can just be "but" if your webserver has a sensible PATH
-our $GIT = "++GIT_BINDIR++/but";
+our $BUT = "++BUT_BINDIR++/but";
 
 # absolute fs-path which will be prepended to the project path
 #our $projectroot = "/pub/scm";
-our $projectroot = "++GITWEB_PROJECTROOT++";
+our $projectroot = "++BUTWEB_PROJECTROOT++";
 
 # fs traversing limit for getting project list
 # the number is relative to the projectroot
-our $project_maxdepth = "++GITWEB_PROJECT_MAXDEPTH++";
+our $project_maxdepth = "++BUTWEB_PROJECT_MAXDEPTH++";
 
 # string of the home link on top of all pages
-our $home_link_str = "++GITWEB_HOME_LINK_STR++";
+our $home_link_str = "++BUTWEB_HOME_LINK_STR++";
 
 # extra breadcrumbs preceding the home link
 our @extra_breadcrumbs = ();
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = "++GITWEB_SITENAME++"
+our $site_name = "++BUTWEB_SITENAME++"
                  || ($ENV{'SERVER_NAME'} || "Untitled") . " Git";
 
 # html snippet to include in the <head> section of each page
-our $site_html_head_string = "++GITWEB_SITE_HTML_HEAD_STRING++";
+our $site_html_head_string = "++BUTWEB_SITE_HTML_HEAD_STRING++";
 # filename of html text to include at top of each page
-our $site_header = "++GITWEB_SITE_HEADER++";
+our $site_header = "++BUTWEB_SITE_HEADER++";
 # html text to include at home page
-our $home_text = "++GITWEB_HOMETEXT++";
+our $home_text = "++BUTWEB_HOMETEXT++";
 # filename of html text to include at bottom of each page
-our $site_footer = "++GITWEB_SITE_FOOTER++";
+our $site_footer = "++BUTWEB_SITE_FOOTER++";
 
 # URI of stylesheets
-our @stylesheets = ("++GITWEB_CSS++");
-# URI of a single stylesheet, which can be overridden in GITWEB_CONFIG.
+our @stylesheets = ("++BUTWEB_CSS++");
+# URI of a single stylesheet, which can be overridden in BUTWEB_CONFIG.
 our $stylesheet = undef;
-# URI of GIT logo (72x27 size)
-our $logo = "++GITWEB_LOGO++";
-# URI of GIT favicon, assumed to be image/png type
-our $favicon = "++GITWEB_FAVICON++";
+# URI of BUT logo (72x27 size)
+our $logo = "++BUTWEB_LOGO++";
+# URI of BUT favicon, assumed to be image/png type
+our $favicon = "++BUTWEB_FAVICON++";
 # URI of butweb.js (JavaScript code for butweb)
-our $javascript = "++GITWEB_JS++";
+our $javascript = "++BUTWEB_JS++";
 
-# URI and label (title) of GIT logo link
+# URI and label (title) of BUT logo link
 #our $logo_url = "http://www.kernel.org/pub/software/scm/but/docs/";
 #our $logo_label = "but documentation";
 our $logo_url = "http://but-scm.com/";
 our $logo_label = "but homepage";
 
 # source of projects list
-our $projects_list = "++GITWEB_LIST++";
+our $projects_list = "++BUTWEB_LIST++";
 
 # the width (in characters) of the projects list "Description" column
 our $projects_list_description_width = 25;
@@ -147,7 +147,7 @@ our $default_projects_order = "project";
 
 # show repository only if this file exists
 # (only effective if this variable evaluates to true)
-our $export_ok = "++GITWEB_EXPORT_OK++";
+our $export_ok = "++BUTWEB_EXPORT_OK++";
 
 # don't generate age column on the projects list page
 our $omit_age_column = 0;
@@ -161,11 +161,11 @@ our $omit_owner=0;
 our $export_auth_hook = undef;
 
 # only allow viewing of repositories also shown on the overview page
-our $strict_export = "++GITWEB_STRICT_EXPORT++";
+our $strict_export = "++BUTWEB_STRICT_EXPORT++";
 
 # list of but base URLs used for URL to where fetch project from,
 # i.e. full URL is "$but_base_url/$project"
-our @but_base_url_list = grep { $_ ne '' } ("++GITWEB_BASE_URL++");
+our @but_base_url_list = grep { $_ ne '' } ("++BUTWEB_BASE_URL++");
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
@@ -257,7 +257,7 @@ our %known_snapshot_format_aliases = (
 
 # Pixel sizes for icons and avatars. If the default font sizes or lineheights
 # are changed, it may be appropriate to change these values too via
-# $GITWEB_CONFIG.
+# $BUTWEB_CONFIG.
 our %avatar_size = (
 	'default' => 16,
 	'double'  => 32
@@ -293,7 +293,7 @@ our %highlight_ext = (
 );
 
 # You define site-wide feature defaults here; override them with
-# $GITWEB_CONFIG as necessary.
+# $BUTWEB_CONFIG as necessary.
 our %feature = (
 	# feature => {
 	# 	'sub' => feature-sub (subroutine),
@@ -314,9 +314,9 @@ our %feature = (
 	# Enable the 'blame' blob view, showing the last cummit that modified
 	# each line in the file. This can be very CPU-intensive.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'blame'}{'default'} = [1];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'blame'}{'override'} = 1;
 	# and in project config butweb.blame = 0|1;
 	'blame' => {
@@ -330,9 +330,9 @@ our %feature = (
 
 	# Value is a list of formats defined in %known_snapshot_formats that
 	# you wish to offer.
-	# To disable system wide have in $GITWEB_CONFIG
+	# To disable system wide have in $BUTWEB_CONFIG
 	# $feature{'snapshot'}{'default'} = [];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'snapshot'}{'override'} = 1;
 	# and in project config, a comma-separated list of formats or "none"
 	# to disable.  Example: butweb.snapshot = tbz2,zip;
@@ -357,9 +357,9 @@ our %feature = (
 	# potentially CPU-intensive, of course.
 	# Note that you need to have 'search' feature enabled too.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'grep'}{'default'} = [1];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'grep'}{'override'} = 1;
 	# and in project config butweb.grep = 0|1;
 	'grep' => {
@@ -372,9 +372,9 @@ our %feature = (
 	# alternative to 'blame', but still potentially CPU-intensive.
 	# Note that you need to have 'search' feature enabled too.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'pickaxe'}{'default'} = [1];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'pickaxe'}{'override'} = 1;
 	# and in project config butweb.pickaxe = 0|1;
 	'pickaxe' => {
@@ -385,9 +385,9 @@ our %feature = (
 	# Enable showing size of blobs in a 'tree' view, in a separate
 	# column, similar to what 'ls -l' does.  This cost a bit of IO.
 
-	# To disable system wide have in $GITWEB_CONFIG
+	# To disable system wide have in $BUTWEB_CONFIG
 	# $feature{'show-sizes'}{'default'} = [0];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'show-sizes'}{'override'} = 1;
 	# and in project config butweb.showsizes = 0|1;
 	'show-sizes' => {
@@ -402,14 +402,14 @@ our %feature = (
 	# URL in either format; this configures in which formats butweb
 	# generates links.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'pathinfo'}{'default'} = [1];
 	# Project specific override is not supported.
 
 	# Note that you will need to change the default location of CSS,
 	# favicon, logo and possibly other files to an absolute URL. Also,
 	# if butweb.cgi serves as your indexfile, you will need to force
-	# $my_uri to contain the script name in your $GITWEB_CONFIG.
+	# $my_uri to contain the script name in your $BUTWEB_CONFIG.
 	'pathinfo' => {
 		'override' => 0,
 		'default' => [0]},
@@ -422,7 +422,7 @@ our %feature = (
 	# all the forks. If project list is taken from a file, forks have
 	# to be listed after the main project.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'forks'}{'default'} = [1];
 	# Project specific override is not supported.
 	'forks' => {
@@ -441,7 +441,7 @@ our %feature = (
 	# %h to the current hash (h butweb parameter) and %b to the current
 	# hash base (hb butweb parameter); %% expands to %.
 
-	# To enable system wide have in $GITWEB_CONFIG e.g.
+	# To enable system wide have in $BUTWEB_CONFIG e.g.
 	# $feature{'actions'}{'default'} = [('graphiclog',
 	# 	'/but-browser/by-cummit.html?r=%n', 'summary')];
 	# Project specific override is not supported.
@@ -460,7 +460,7 @@ our %feature = (
 	# You may want to install the HTML::TagCloud Perl module to get
 	# a pretty tag cloud instead of just a list of tags.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'ctags'}{'default'} = [1];
 	# Project specific override is not supported.
 
@@ -474,9 +474,9 @@ our %feature = (
 	# view. Set this to 0 or undef to disable patch view, or to a
 	# negative number to remove any limit.
 
-	# To disable system wide have in $GITWEB_CONFIG
+	# To disable system wide have in $BUTWEB_CONFIG
 	# $feature{'patches'}{'default'} = [0];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'patches'}{'override'} = 1;
 	# and in project config butweb.patches = 0|n;
 	# where n is the maximum number of patches allowed in a patchset.
@@ -494,10 +494,10 @@ our %feature = (
 
 	# Picon currently relies on the indiana.edu database.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'avatar'}{'default'} = ['<provider>'];
 	# where <provider> is either gravatar or picon.
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'avatar'}{'override'} = 1;
 	# and in project config butweb.avatar = <provider>;
 	'avatar' => {
@@ -536,7 +536,7 @@ our %feature = (
 	# It requires the 'highlight' program present in $PATH,
 	# and therefore is disabled by default.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'highlight'}{'default'} = [1];
 
 	'highlight' => {
@@ -546,9 +546,9 @@ our %feature = (
 
 	# Enable displaying of remote heads in the heads list
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'remote_heads'}{'default'} = [1];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'remote_heads'}{'override'} = 1;
 	# and in project config butweb.remoteheads = 0|1;
 	'remote_heads' => {
@@ -558,9 +558,9 @@ our %feature = (
 
 	# Enable showing branches under other refs in addition to heads
 
-	# To set system wide extra branch refs have in $GITWEB_CONFIG
+	# To set system wide extra branch refs have in $BUTWEB_CONFIG
 	# $feature{'extra-branch-refs'}{'default'} = ['dirs', 'of', 'choice'];
-	# To have project specific config enable override in $GITWEB_CONFIG
+	# To have project specific config enable override in $BUTWEB_CONFIG
 	# $feature{'extra-branch-refs'}{'override'} = 1;
 	# and in project config butweb.extrabranchrefs = dirs of choice
 	# Every directory is separated with whitespace.
@@ -572,7 +572,7 @@ our %feature = (
 
 	# Redact e-mail addresses.
 
-	# To enable system wide have in $GITWEB_CONFIG
+	# To enable system wide have in $BUTWEB_CONFIG
 	# $feature{'email-privacy'}{'default'} = [1];
 	'email-privacy' => {
 		'sub' => sub { feature_bool('email-privacy', @_) },
@@ -737,26 +737,26 @@ sub read_config_file {
 	return;
 }
 
-our ($GITWEB_CONFIG, $GITWEB_CONFIG_SYSTEM, $GITWEB_CONFIG_COMMON);
+our ($BUTWEB_CONFIG, $BUTWEB_CONFIG_SYSTEM, $BUTWEB_CONFIG_COMMON);
 sub evaluate_butweb_config {
-	our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
-	our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
-	our $GITWEB_CONFIG_COMMON = $ENV{'GITWEB_CONFIG_COMMON'} || "++GITWEB_CONFIG_COMMON++";
+	our $BUTWEB_CONFIG = $ENV{'BUTWEB_CONFIG'} || "++BUTWEB_CONFIG++";
+	our $BUTWEB_CONFIG_SYSTEM = $ENV{'BUTWEB_CONFIG_SYSTEM'} || "++BUTWEB_CONFIG_SYSTEM++";
+	our $BUTWEB_CONFIG_COMMON = $ENV{'BUTWEB_CONFIG_COMMON'} || "++BUTWEB_CONFIG_COMMON++";
 
 	# Protect against duplications of file names, to not read config twice.
-	# Only one of $GITWEB_CONFIG and $GITWEB_CONFIG_SYSTEM is used, so
+	# Only one of $BUTWEB_CONFIG and $BUTWEB_CONFIG_SYSTEM is used, so
 	# there possibility of duplication of filename there doesn't matter.
-	$GITWEB_CONFIG = ""        if ($GITWEB_CONFIG eq $GITWEB_CONFIG_COMMON);
-	$GITWEB_CONFIG_SYSTEM = "" if ($GITWEB_CONFIG_SYSTEM eq $GITWEB_CONFIG_COMMON);
+	$BUTWEB_CONFIG = ""        if ($BUTWEB_CONFIG eq $BUTWEB_CONFIG_COMMON);
+	$BUTWEB_CONFIG_SYSTEM = "" if ($BUTWEB_CONFIG_SYSTEM eq $BUTWEB_CONFIG_COMMON);
 
 	# Common system-wide settings for convenience.
-	# Those settings can be overridden by GITWEB_CONFIG or GITWEB_CONFIG_SYSTEM.
-	read_config_file($GITWEB_CONFIG_COMMON);
+	# Those settings can be overridden by BUTWEB_CONFIG or BUTWEB_CONFIG_SYSTEM.
+	read_config_file($BUTWEB_CONFIG_COMMON);
 
 	# Use first config file that exists.  This means use the per-instance
-	# GITWEB_CONFIG if exists, otherwise use GITWEB_SYSTEM_CONFIG.
-	read_config_file($GITWEB_CONFIG) and return;
-	read_config_file($GITWEB_CONFIG_SYSTEM);
+	# BUTWEB_CONFIG if exists, otherwise use BUTWEB_SYSTEM_CONFIG.
+	read_config_file($BUTWEB_CONFIG) and return;
+	read_config_file($BUTWEB_CONFIG_SYSTEM);
 }
 
 # Get loadavg of system, to compare against $maxload.
@@ -784,7 +784,7 @@ sub get_loadavg {
 # version of the core but binary
 our $but_version;
 sub evaluate_but_version {
-	our $but_version = qx("$GIT" --version) =~ m/but version (.*)$/ ? $1 : "unknown";
+	our $but_version = qx("$BUT" --version) =~ m/but version (.*)$/ ? $1 : "unknown";
 	$number_of_but_cmds++;
 }
 
@@ -1366,7 +1366,7 @@ sub run {
 		last REQUEST if ($is_last_request->());
 	}
 
- DONE_GITWEB:
+ DONE_BUTWEB:
 	1;
 }
 
@@ -1992,21 +1992,21 @@ sub age_string {
 
 use constant {
 	S_IFINVALID => 0030000,
-	S_IFGITLINK => 0160000,
+	S_IFBUTLINK => 0160000,
 };
 
 # submodule/subproject, a cummit object reference
-sub S_ISGITLINK {
+sub S_ISBUTLINK {
 	my $mode = shift;
 
-	return (($mode & S_IFMT) == S_IFGITLINK)
+	return (($mode & S_IFMT) == S_IFBUTLINK)
 }
 
 # convert file mode in octal to symbolic file mode string
 sub mode_str {
 	my $mode = oct shift;
 
-	if (S_ISGITLINK($mode)) {
+	if (S_ISBUTLINK($mode)) {
 		return 'm---------';
 	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return 'drwxr-xr-x';
@@ -2034,7 +2034,7 @@ sub file_type {
 		$mode = oct $mode;
 	}
 
-	if (S_ISGITLINK($mode)) {
+	if (S_ISBUTLINK($mode)) {
 		return "submodule";
 	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
@@ -2057,7 +2057,7 @@ sub file_type_long {
 		$mode = oct $mode;
 	}
 
-	if (S_ISGITLINK($mode)) {
+	if (S_ISBUTLINK($mode)) {
 		return "submodule";
 	} elsif (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
@@ -2689,7 +2689,7 @@ sub get_feed_info {
 # returns path to the core but executable and the --but-dir parameter as list
 sub but_cmd {
 	$number_of_but_cmds++;
-	return $GIT, '--but-dir='.$but_dir;
+	return $BUT, '--but-dir='.$but_dir;
 }
 
 # quote the given arguments for passing them to the shell
@@ -2930,7 +2930,7 @@ sub but_get_path_by_hash {
 ## but utility functions, directly accessing but repository
 
 # get the value of config variable either from file named as the variable
-# itself in the repository ($GIT_DIR/$name file), or from butweb.$name
+# itself in the repository ($BUT_DIR/$name file), or from butweb.$name
 # configuration variable in the repository config file.
 sub but_get_file_or_project_config {
 	my ($path, $name) = @_;
@@ -2958,10 +2958,10 @@ sub but_get_project_category {
 
 
 # supported formats:
-# * $GIT_DIR/ctags/<tagname> file (in 'ctags' subdirectory)
+# * $BUT_DIR/ctags/<tagname> file (in 'ctags' subdirectory)
 #   - if its contents is a number, use it as tag weight,
 #   - otherwise add a tag with weight 1
-# * $GIT_DIR/ctags file, each line is a tag (with weight 1)
+# * $BUT_DIR/ctags file, each line is a tag (with weight 1)
 #   the same value multiple times increases tag weight
 # * `butweb.ctag' multi-valued repo config variable
 sub but_get_project_ctags {
@@ -4383,7 +4383,7 @@ EOF
 	print "</div>\n";
 
 	but_footer_html();
-	goto DONE_GITWEB
+	goto DONE_BUTWEB
 		unless ($opts{'-error_handler'});
 }
 
@@ -7391,7 +7391,7 @@ sub exit_if_unmodified_since {
 			print $cgi->header(
 				-last_modified => $latest_date{'rfc2822'},
 				-status => '304 Not Modified');
-			goto DONE_GITWEB;
+			goto DONE_BUTWEB;
 		}
 	}
 }

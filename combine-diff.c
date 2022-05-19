@@ -317,7 +317,7 @@ static char *grab_blob(struct repository *r,
 	char *blob;
 	enum object_type type;
 
-	if (S_ISGITLINK(mode)) {
+	if (S_ISBUTLINK(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "Subproject cummit %s\n", oid_to_hex(oid));
 		*size = buf.len;

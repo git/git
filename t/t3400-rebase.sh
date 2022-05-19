@@ -8,14 +8,14 @@ test_description='but rebase assorted tests
 This test runs but rebase and checks that the author information is not lost
 among other things.
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-GIT_AUTHOR_NAME=author@name
-GIT_AUTHOR_EMAIL=bogus@email@address
-export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+BUT_AUTHOR_NAME=author@name
+BUT_AUTHOR_EMAIL=bogus@email@address
+export BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL
 
 test_expect_success 'prepare repository with topic branches' '
 	test_cummit "Add A." A First First &&
@@ -82,7 +82,7 @@ test_expect_success 'the rebase operation should not have destroyed author infor
 
 test_expect_success 'the rebase operation should not have destroyed author information (2)' "
 	but log -1 |
-	grep 'Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>'
+	grep 'Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>'
 "
 
 test_expect_success 'HEAD was detached during rebase' '
@@ -124,13 +124,13 @@ test_expect_success 'rebase a single mode change' '
 	test_chmod +x A &&
 	test_tick &&
 	but cummit -m modechange &&
-	GIT_TRACE=1 but rebase main
+	BUT_TRACE=1 but rebase main
 '
 
 test_expect_success 'rebase is not broken by diff.renames' '
 	test_config diff.renames copies &&
 	but checkout filemove &&
-	GIT_TRACE=1 but rebase force-3way
+	BUT_TRACE=1 but rebase force-3way
 '
 
 test_expect_success 'setup: recover' '
@@ -324,7 +324,7 @@ test_expect_success 'rebase --apply and --show-current-patch' '
 		but cummit -a -m two &&
 		but tag two &&
 		test_must_fail but rebase --apply -f --onto init HEAD^ &&
-		GIT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
+		BUT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
 		grep "show.*$(but rev-parse two)" stderr
 	)
 '
@@ -377,7 +377,7 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 		but tag two &&
 		test_must_fail but rebase --merge --onto init HEAD^ &&
 		but rebase --show-current-patch >actual.patch &&
-		GIT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
+		BUT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
 		grep "show.*REBASE_HEAD" stderr &&
 		test "$(but rev-parse REBASE_HEAD)" = "$(but rev-parse two)"
 	)

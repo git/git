@@ -44,7 +44,7 @@ test_perf 'important variables available in subshells' '
 	test -n "$HOME" &&
 	test -n "$TEST_DIRECTORY" &&
 	test -n "$TRASH_DIRECTORY" &&
-	test -n "$GIT_BUILD_DIR"
+	test -n "$BUT_BUILD_DIR"
 '
 
 test_perf 'test-lib-functions correctly loaded in subshells' '

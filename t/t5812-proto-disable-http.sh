@@ -17,8 +17,8 @@ test_expect_success 'create but-accessible repo' '
 test_proto "smart http" http "$HTTPD_URL/smart/repo.but"
 
 test_expect_success 'curl redirects respect whitelist' '
-	test_must_fail env GIT_ALLOW_PROTOCOL=http:https \
-			   GIT_SMART_HTTP=0 \
+	test_must_fail env BUT_ALLOW_PROTOCOL=http:https \
+			   BUT_SMART_HTTP=0 \
 		but clone "$HTTPD_URL/ftp-redir/repo.but" 2>stderr &&
 	test_i18ngrep -E "(ftp.*disabled|your curl version is too old)" stderr
 '

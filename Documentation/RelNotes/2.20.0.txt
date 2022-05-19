@@ -158,9 +158,9 @@ UI, Workflows & Features
 
  * A fourth class of configuration files (in addition to the
    traditional "system wide", "per user in the $HOME directory" and
-   "per repository in the $GIT_DIR/config") has been introduced so
+   "per repository in the $BUT_DIR/config") has been introduced so
    that different worktrees that share the same repository (hence the
-   same $GIT_DIR/config file) can use different customization.
+   same $BUT_DIR/config file) can use different customization.
 
  * A pattern with '**' that does not have a slash on either side used
    to be an invalid one, but the code now treats such double-asterisks

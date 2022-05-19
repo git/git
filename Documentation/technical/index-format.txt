@@ -243,7 +243,7 @@ Git index format
   The extension consists of:
 
   - Hash of the shared index file. The shared index file path
-    is $GIT_DIR/sharedindex.<hash>. If all bits are zero, the
+    is $BUT_DIR/sharedindex.<hash>. If all bits are zero, the
     index does not require a shared index file.
 
   - An ewah-encoded delete bitmap, each bit represents an entry in the
@@ -277,14 +277,14 @@ Git index format
     sequence in variable width encoding. Each string describes the
     environment where the cache can be used.
 
-  - Stat data of $GIT_DIR/info/exclude. See "Index entry" section from
+  - Stat data of $BUT_DIR/info/exclude. See "Index entry" section from
     ctime field until "file size".
 
   - Stat data of core.excludesFile
 
   - 32-bit dir_flags (see struct dir_struct)
 
-  - Hash of $GIT_DIR/info/exclude. A null hash means the file
+  - Hash of $BUT_DIR/info/exclude. A null hash means the file
     does not exist.
 
   - Hash of core.excludesFile. A null hash means the file does

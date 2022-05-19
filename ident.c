@@ -470,12 +470,12 @@ const char *fmt_name(enum want_ident whose_ident)
 	case WANT_BLANK_IDENT:
 		break;
 	case WANT_AUTHOR_IDENT:
-		name = getenv("GIT_AUTHOR_NAME");
-		email = getenv("GIT_AUTHOR_EMAIL");
+		name = getenv("BUT_AUTHOR_NAME");
+		email = getenv("BUT_AUTHOR_EMAIL");
 		break;
 	case WANT_CUMMITTER_IDENT:
-		name = getenv("GIT_CUMMITTER_NAME");
-		email = getenv("GIT_CUMMITTER_EMAIL");
+		name = getenv("BUT_CUMMITTER_NAME");
+		email = getenv("BUT_CUMMITTER_EMAIL");
 		break;
 	}
 	return fmt_ident(name, email, whose_ident, NULL,
@@ -484,27 +484,27 @@ const char *fmt_name(enum want_ident whose_ident)
 
 const char *but_author_info(int flag)
 {
-	if (getenv("GIT_AUTHOR_NAME"))
+	if (getenv("BUT_AUTHOR_NAME"))
 		author_ident_explicitly_given |= IDENT_NAME_GIVEN;
-	if (getenv("GIT_AUTHOR_EMAIL"))
+	if (getenv("BUT_AUTHOR_EMAIL"))
 		author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-	return fmt_ident(getenv("GIT_AUTHOR_NAME"),
-			 getenv("GIT_AUTHOR_EMAIL"),
+	return fmt_ident(getenv("BUT_AUTHOR_NAME"),
+			 getenv("BUT_AUTHOR_EMAIL"),
 			 WANT_AUTHOR_IDENT,
-			 getenv("GIT_AUTHOR_DATE"),
+			 getenv("BUT_AUTHOR_DATE"),
 			 flag);
 }
 
 const char *but_cummitter_info(int flag)
 {
-	if (getenv("GIT_CUMMITTER_NAME"))
+	if (getenv("BUT_CUMMITTER_NAME"))
 		cummitter_ident_explicitly_given |= IDENT_NAME_GIVEN;
-	if (getenv("GIT_CUMMITTER_EMAIL"))
+	if (getenv("BUT_CUMMITTER_EMAIL"))
 		cummitter_ident_explicitly_given |= IDENT_MAIL_GIVEN;
-	return fmt_ident(getenv("GIT_CUMMITTER_NAME"),
-			 getenv("GIT_CUMMITTER_EMAIL"),
+	return fmt_ident(getenv("BUT_CUMMITTER_NAME"),
+			 getenv("BUT_CUMMITTER_EMAIL"),
 			 WANT_CUMMITTER_IDENT,
-			 getenv("GIT_CUMMITTER_DATE"),
+			 getenv("BUT_CUMMITTER_DATE"),
 			 flag);
 }
 
@@ -614,13 +614,13 @@ static void set_env_if(const char *key, const char *value, int *given, int bit)
 
 void prepare_fallback_ident(const char *name, const char *email)
 {
-	set_env_if("GIT_AUTHOR_NAME", name,
+	set_env_if("BUT_AUTHOR_NAME", name,
 		   &author_ident_explicitly_given, IDENT_NAME_GIVEN);
-	set_env_if("GIT_AUTHOR_EMAIL", email,
+	set_env_if("BUT_AUTHOR_EMAIL", email,
 		   &author_ident_explicitly_given, IDENT_MAIL_GIVEN);
-	set_env_if("GIT_CUMMITTER_NAME", name,
+	set_env_if("BUT_CUMMITTER_NAME", name,
 		   &cummitter_ident_explicitly_given, IDENT_NAME_GIVEN);
-	set_env_if("GIT_CUMMITTER_EMAIL", email,
+	set_env_if("BUT_CUMMITTER_EMAIL", email,
 		   &cummitter_ident_explicitly_given, IDENT_MAIL_GIVEN);
 }
 

@@ -2,8 +2,8 @@
 
 test_description='but p4 options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-but-p4.sh
 
@@ -272,7 +272,7 @@ test_expect_success 'submit works with two branches' '
 	)
 '
 
-test_expect_success 'use --but-dir option and GIT_DIR' '
+test_expect_success 'use --but-dir option and BUT_DIR' '
 	test_when_finished cleanup_but &&
 	but p4 clone //depot --destination="$but" &&
 	(
@@ -298,7 +298,7 @@ test_expect_success 'use --but-dir option and GIT_DIR' '
 		p4 add cli_file2.t  &&
 		p4 submit -d "cli change2"
 	) &&
-	(GIT_DIR="$but" but p4 sync) &&
+	(BUT_DIR="$but" but p4 sync) &&
 	(cd "$but" && but checkout -q p4/master) &&
 	test_path_is_file "$but"/cli_file2.t
 '

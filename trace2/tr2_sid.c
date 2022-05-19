@@ -2,7 +2,7 @@
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_sid.h"
 
-#define TR2_ENVVAR_PARENT_SID "GIT_TRACE2_PARENT_SID"
+#define TR2_ENVVAR_PARENT_SID "BUT_TRACE2_PARENT_SID"
 
 static struct strbuf tr2sid_buf = STRBUF_INIT;
 static int tr2sid_nr_but_parents;
@@ -28,12 +28,12 @@ static int tr2sid_nr_but_parents;
  */
 static void tr2_sid_append_my_sid_component(void)
 {
-	const struct but_hash_algo *algo = &hash_algos[GIT_HASH_SHA1];
+	const struct but_hash_algo *algo = &hash_algos[BUT_HASH_SHA1];
 	struct tr2_tbuf tb_now;
 	but_hash_ctx ctx;
 	pid_t pid = getpid();
-	unsigned char hash[GIT_MAX_RAWSZ + 1];
-	char hex[GIT_MAX_HEXSZ + 1];
+	unsigned char hash[BUT_MAX_RAWSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	char hostname[HOST_NAME_MAX + 1];
 
 	tr2_tbuf_utc_datetime(&tb_now);

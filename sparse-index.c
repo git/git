@@ -47,7 +47,7 @@ static int convert_to_sparse_rec(struct index_state *istate,
 		struct cache_entry *ce = istate->cache[i];
 
 		if (ce_stage(ce) ||
-		    S_ISGITLINK(ce->ce_mode) ||
+		    S_ISBUTLINK(ce->ce_mode) ||
 		    !(ce->ce_flags & CE_SKIP_WORKTREE))
 			can_convert = 0;
 	}
@@ -132,13 +132,13 @@ static int is_sparse_index_allowed(struct index_state *istate, int flags)
 		/*
 		 * The sparse index is not (yet) integrated with a split index.
 		 */
-		if (istate->split_index || but_env_bool("GIT_TEST_SPLIT_INDEX", 0))
+		if (istate->split_index || but_env_bool("BUT_TEST_SPLIT_INDEX", 0))
 			return 0;
 		/*
-		 * The GIT_TEST_SPARSE_INDEX environment variable triggers the
+		 * The BUT_TEST_SPARSE_INDEX environment variable triggers the
 		 * index.sparse config variable to be on.
 		 */
-		test_env = but_env_bool("GIT_TEST_SPARSE_INDEX", -1);
+		test_env = but_env_bool("BUT_TEST_SPARSE_INDEX", -1);
 		if (test_env >= 0)
 			set_sparse_index_config(istate->repo, test_env);
 

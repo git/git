@@ -149,7 +149,7 @@ Performance, Internal Implementation, Development Support etc.
    cummitted, the command line prompt script failed to notice the
    current status, which has been improved.
 
- * Many GIT_TEST_* environment variables control various aspects of
+ * Many BUT_TEST_* environment variables control various aspects of
    how our tests are run, but a few followed "non-empty is true, empty
    or unset is false" while others followed the usual "there are a few
    ways to spell true, like yes, on, etc., and also ways to spell

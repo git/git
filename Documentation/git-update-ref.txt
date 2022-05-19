@@ -46,7 +46,7 @@ In general, using
 
 should be a _lot_ safer than doing
 
-	echo "$head" > "$GIT_DIR/HEAD"
+	echo "$head" > "$BUT_DIR/HEAD"
 
 both from a symlink following standpoint *and* an error checking
 standpoint.  The "refs/" rule for symlinks means that symlinks
@@ -151,9 +151,9 @@ LOGGING UPDATES
 ---------------
 If config parameter "core.logAllRefUpdates" is true and the ref is one
 under "refs/heads/", "refs/remotes/", "refs/notes/", or a pseudoref
-like HEAD or ORIG_HEAD; or the file "$GIT_DIR/logs/<ref>" exists then
+like HEAD or ORIG_HEAD; or the file "$BUT_DIR/logs/<ref>" exists then
 `but update-ref` will append a line to the log file
-"$GIT_DIR/logs/<ref>" (dereferencing all symbolic refs before creating
+"$BUT_DIR/logs/<ref>" (dereferencing all symbolic refs before creating
 the log name) describing the change in ref value.  Log lines are
 formatted as:
 
@@ -175,6 +175,6 @@ An update will fail (without changing <ref>) if the current user is
 unable to create a new log file, append to the existing log file
 or does not have cummitter information available.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

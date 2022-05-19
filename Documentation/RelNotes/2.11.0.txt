@@ -291,8 +291,8 @@ notes for details).
    prevented the test directory from getting removed at the end of the
    script on some platforms.
 
- * Update a few tests that used to use GIT_CURL_VERBOSE to use the
-   newer GIT_TRACE_CURL.
+ * Update a few tests that used to use BUT_CURL_VERBOSE to use the
+   newer BUT_TRACE_CURL.
 
  * "but pack-objects --include-tag" was taught that when we know that
    we are sending an object C, we want a tag B that directly points at
@@ -419,8 +419,8 @@ notes for details).
    default set of configuration variables to correct this.
 
  * "but init" tried to record core.worktree in the repository's
-   'config' file when the GIT_WORK_TREE environment variable was set and
-   it was different from where GIT_DIR appears as ".but" at its top,
+   'config' file when the BUT_WORK_TREE environment variable was set and
+   it was different from where BUT_DIR appears as ".but" at its top,
    but the logic was faulty when .but is a "butdir:" file that points
    at the real place, causing trouble in working trees that are
    managed by "but worktree".  This has been corrected.
@@ -493,7 +493,7 @@ notes for details).
    -p <paths>" adds to the current contents of the index to come up
    with what to cummit.
 
- * A stray symbolic link in the $GIT_DIR/refs/ directory could make name
+ * A stray symbolic link in the $BUT_DIR/refs/ directory could make name
    resolution loop forever, which has been corrected.
 
  * The "submodule.<name>.path" stored in .butmodules is never copied

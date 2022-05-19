@@ -12,15 +12,15 @@ TEST_PASSES_SANITIZE_LEAK=true
 # and "-u" is not portable.
 test_expect_success 'empty name and missing email' '
 	(
-		sane_unset GIT_AUTHOR_EMAIL &&
-		GIT_AUTHOR_NAME= &&
+		sane_unset BUT_AUTHOR_EMAIL &&
+		BUT_AUTHOR_NAME= &&
 		test_must_fail but cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep ! "(null)" err
 	)
 '
 
 test_expect_success 'cummit rejects all-crud name' '
-	test_must_fail env GIT_AUTHOR_NAME=" .;<>" \
+	test_must_fail env BUT_AUTHOR_NAME=" .;<>" \
 		but cummit --allow-empty -m foo
 '
 
@@ -28,7 +28,7 @@ test_expect_success 'cummit rejects all-crud name' '
 # auto-detection could fail for other reasons.
 test_expect_success 'empty configured name does not auto-detect' '
 	(
-		sane_unset GIT_AUTHOR_NAME &&
+		sane_unset BUT_AUTHOR_NAME &&
 		test_must_fail \
 			but -c user.name= cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep "empty ident name" err &&
@@ -38,7 +38,7 @@ test_expect_success 'empty configured name does not auto-detect' '
 
 test_expect_success 'empty configured name does not auto-detect for cummitter' '
 	(
-		sane_unset GIT_CUMMITTER_NAME &&
+		sane_unset BUT_CUMMITTER_NAME &&
 		test_must_fail \
 			but -c user.name= cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep "empty ident name" err &&

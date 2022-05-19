@@ -12,7 +12,7 @@
 # Doing this in a hook is a bad idea in general, but the prepare-cummit-msg
 # hook is more suited to it.
 #
-# SOB=$(but var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# SOB=$(but var BUT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 # grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
 
 # This example catches duplicate Signed-off-by lines.

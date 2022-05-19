@@ -30,9 +30,9 @@ test_expect_success 'but upload-pack --advertise-refs' '
 	0000
 	EOF
 
-	# We only care about GIT_PROTOCOL, not GIT_TEST_PROTOCOL_VERSION
-	sane_unset GIT_PROTOCOL &&
-	GIT_TEST_PROTOCOL_VERSION=2 \
+	# We only care about BUT_PROTOCOL, not BUT_TEST_PROTOCOL_VERSION
+	sane_unset BUT_PROTOCOL &&
+	BUT_TEST_PROTOCOL_VERSION=2 \
 	but upload-pack --advertise-refs . >out 2>err &&
 
 	test-tool pkt-line unpack <out >actual &&
@@ -61,7 +61,7 @@ test_expect_success 'but upload-pack --advertise-refs: v0' '
 	test_cmp actual expect &&
 
 	# With explicit v0
-	GIT_PROTOCOL=version=0 \
+	BUT_PROTOCOL=version=0 \
 	but upload-pack --advertise-refs . >out 2>err &&
 	test-tool pkt-line unpack <out >actual 2>err &&
 	test_must_be_empty err &&
@@ -82,7 +82,7 @@ test_expect_success 'but receive-pack --advertise-refs: v0' '
 	test_cmp actual expect &&
 
 	# With explicit v0
-	GIT_PROTOCOL=version=0 \
+	BUT_PROTOCOL=version=0 \
 	but receive-pack --advertise-refs . >out 2>err &&
 	test-tool pkt-line unpack <out >actual 2>err &&
 	test_must_be_empty err &&
@@ -99,7 +99,7 @@ test_expect_success 'but upload-pack --advertise-refs: v1' '
 	0000
 	EOF
 
-	GIT_PROTOCOL=version=1 \
+	BUT_PROTOCOL=version=1 \
 	but upload-pack --advertise-refs . >out &&
 
 	test-tool pkt-line unpack <out >actual 2>err &&
@@ -115,7 +115,7 @@ test_expect_success 'but receive-pack --advertise-refs: v1' '
 	0000
 	EOF
 
-	GIT_PROTOCOL=version=1 \
+	BUT_PROTOCOL=version=1 \
 	but receive-pack --advertise-refs . >out &&
 
 	test-tool pkt-line unpack <out >actual 2>err &&
@@ -135,8 +135,8 @@ test_expect_success 'but upload-pack --advertise-refs: v2' '
 	0000
 	EOF
 
-	GIT_PROTOCOL=version=2 \
-	GIT_USER_AGENT=FAKE \
+	BUT_PROTOCOL=version=2 \
+	BUT_USER_AGENT=FAKE \
 	but upload-pack --advertise-refs . >out 2>err &&
 
 	test-tool pkt-line unpack <out >actual &&
@@ -151,7 +151,7 @@ test_expect_success 'but receive-pack --advertise-refs: v2' '
 	0000
 	EOF
 
-	GIT_PROTOCOL=version=2 \
+	BUT_PROTOCOL=version=2 \
 	but receive-pack --advertise-refs . >out 2>err &&
 
 	test-tool pkt-line unpack <out >actual &&

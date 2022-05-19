@@ -38,9 +38,9 @@ sub usage(;$) {
 	my $msg = shift;
 	print(STDERR "Error: $msg\n") if $msg;
 	print STDERR <<END;
-usage: but cvsimport     # fetch/update GIT from CVS
+usage: but cvsimport     # fetch/update BUT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
-       [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
+       [-p opts-for-cvsps] [-P file] [-C BUT_repository] [-z fuzz] [-i] [-k]
        [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L cummitlimit]
        [-r remote] [-R] [CVS_module]
 END
@@ -672,17 +672,17 @@ my $orig_branch = "";
 my %branch_date;
 my $tip_at_start = undef;
 
-my $but_dir = $ENV{"GIT_DIR"} || ".but";
+my $but_dir = $ENV{"BUT_DIR"} || ".but";
 $but_dir = getwd()."/".$but_dir unless $but_dir =~ m#^/#;
-$ENV{"GIT_DIR"} = $but_dir;
+$ENV{"BUT_DIR"} = $but_dir;
 my $orig_but_index;
-$orig_but_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
+$orig_but_index = $ENV{BUT_INDEX_FILE} if exists $ENV{BUT_INDEX_FILE};
 
 my %index; # holds filenames of one index per branch
 
 unless (-d $but_dir) {
 	system(qw(but init));
-	die "Cannot init the GIT db at $but_tree: $?\n" if $?;
+	die "Cannot init the BUT db at $but_tree: $?\n" if $?;
 	system(qw(but read-tree --empty));
 	die "Cannot init an empty tree: $?\n" if $?;
 
@@ -829,14 +829,14 @@ sub cummit {
 		!get_headref("$remote/$branch")) {
 	    # looks like an initial cummit
 	    # use the index primed by but init
-	    $ENV{GIT_INDEX_FILE} = "$but_dir/index";
+	    $ENV{BUT_INDEX_FILE} = "$but_dir/index";
 	    $index{$branch} = "$but_dir/index";
 	} else {
 	    # use an index per branch to speed up
 	    # imports of projects with many branches
 	    unless ($index{$branch}) {
 		$index{$branch} = tmpnam();
-		$ENV{GIT_INDEX_FILE} = $index{$branch};
+		$ENV{BUT_INDEX_FILE} = $index{$branch};
 		if ($ancestor) {
 		    system("but", "read-tree", "$remote/$ancestor");
 		} else {
@@ -845,7 +845,7 @@ sub cummit {
 		die "read-tree failed: $?\n" if $?;
 	    }
 	}
-        $ENV{GIT_INDEX_FILE} = $index{$branch};
+        $ENV{BUT_INDEX_FILE} = $index{$branch};
 
 	update_index(@old, @new);
 	@old = @new = ();
@@ -872,12 +872,12 @@ sub cummit {
 	my $tz_offset = get_tz_offset($date);
 	my $cummit_date = "$date $tz_offset";
 	set_timezone('UTC');
-	$ENV{GIT_AUTHOR_NAME} = $author_name;
-	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
-	$ENV{GIT_AUTHOR_DATE} = $cummit_date;
-	$ENV{GIT_CUMMITTER_NAME} = $author_name;
-	$ENV{GIT_CUMMITTER_EMAIL} = $author_email;
-	$ENV{GIT_CUMMITTER_DATE} = $cummit_date;
+	$ENV{BUT_AUTHOR_NAME} = $author_name;
+	$ENV{BUT_AUTHOR_EMAIL} = $author_email;
+	$ENV{BUT_AUTHOR_DATE} = $cummit_date;
+	$ENV{BUT_CUMMITTER_NAME} = $author_name;
+	$ENV{BUT_CUMMITTER_EMAIL} = $author_email;
+	$ENV{BUT_CUMMITTER_DATE} = $cummit_date;
 	my $pid = open2(my $cummit_read, my $cummit_write,
 		'but', 'cummit-tree', $tree, @cummit_args);
 
@@ -1145,9 +1145,9 @@ foreach my $but_index (values %index) {
 }
 
 if (defined $orig_but_index) {
-	$ENV{GIT_INDEX_FILE} = $orig_but_index;
+	$ENV{BUT_INDEX_FILE} = $orig_but_index;
 } else {
-	delete $ENV{GIT_INDEX_FILE};
+	delete $ENV{BUT_INDEX_FILE};
 }
 
 # Now switch back to the branch we were in before all of this happened

@@ -122,11 +122,11 @@ your Perl's Getopt::Long is < v2.37).
 'fetch'::
 	Fetch unfetched revisions from the Subversion remote we are
 	tracking.  The name of the [svn-remote "..."] section in the
-	$GIT_DIR/config file may be specified as an optional
+	$BUT_DIR/config file may be specified as an optional
 	command-line argument.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$BUT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 
 --localtime;;
 	Store Git cummit times in the local time zone instead of UTC.  This
@@ -239,7 +239,7 @@ Like 'but rebase'; this requires that the working tree be clean
 and have no uncummitted changes.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$BUT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 
 -l;;
 --local;;
@@ -439,11 +439,11 @@ Any other arguments are passed directly to 'but log'
 'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
 	directories.  The output is suitable for appending to
-	the $GIT_DIR/info/exclude file.
+	the $BUT_DIR/info/exclude file.
 
 'mkdirs'::
 	Attempts to recreate empty directories that core Git cannot track
-	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
+	based on information in $BUT_DIR/svn/<refname>/unhandled.log files.
 	Empty directories are automatically recreated when using
 	"but svn clone" and "but svn rebase", so "mkdirs" is intended
 	for use after commands like "but checkout" or "but reset".
@@ -509,8 +509,8 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 	specific revision.
 
 'gc'::
-	Compress $GIT_DIR/svn/<refname>/unhandled.log files and remove
-	$GIT_DIR/svn/<refname>/index files.
+	Compress $BUT_DIR/svn/<refname>/unhandled.log files and remove
+	$BUT_DIR/svn/<refname>/index files.
 
 'reset'::
 	Undoes the effects of 'fetch' back to the specified revision.
@@ -524,7 +524,7 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 	way to repair the repo is to use 'reset'.
 +
 Only the rev_map and refs/remotes/but-svn are changed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$BUT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 Follow 'reset' with a 'fetch' and then 'but reset' or 'but rebase' to
 move local branches onto the new tree.
 
@@ -719,9 +719,9 @@ config key: svn.addAuthorFrom
 ADVANCED OPTIONS
 ----------------
 
--i<GIT_SVN_ID>::
---id <GIT_SVN_ID>::
-	This sets GIT_SVN_ID (instead of using the environment).  This
+-i<BUT_SVN_ID>::
+--id <BUT_SVN_ID>::
+	This sets BUT_SVN_ID (instead of using the environment).  This
 	allows the user to override the default refname to fetch from
 	when tracking a single URL.  The 'log' and 'dcummit' commands
 	no longer require this switch as an argument.
@@ -760,7 +760,7 @@ svn-remote.<name>.noMetadata::
 +
 This option can only be used for one-shot imports as 'but svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your '$GIT_DIR/svn/\**/.rev_map.*' files, 'but svn' will not
+if you lose your '$BUT_DIR/svn/\**/.rev_map.*' files, 'but svn' will not
 be able to rebuild them.
 +
 The 'but svn log' command will not work on repositories using
@@ -1054,7 +1054,7 @@ When using multiple --branches or --tags, 'but svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
 the same name, or if a branch and a tag have the same name).  In these cases,
 use 'init' to set up your Git repository then, before your first 'fetch', edit
-the $GIT_DIR/config file so that the branches and tags are associated
+the $BUT_DIR/config file so that the branches and tags are associated
 with different name spaces.  For example:
 
 	branches = stable/*:refs/remotes/svn/stable/*
@@ -1064,7 +1064,7 @@ CONFIGURATION
 -------------
 
 'but svn' stores [svn-remote] configuration information in the
-repository $GIT_DIR/config file.  It is similar the core Git
+repository $BUT_DIR/config file.  It is similar the core Git
 [remote] sections except 'fetch' keys do not accept glob
 arguments; but they are instead handled by the 'branches'
 and 'tags' keys.  Since some SVN repositories are oddly
@@ -1130,12 +1130,12 @@ $ but svn branch -d branches/server release-2-3-0
 
 Note that but-svn keeps track of the highest revision in which a branch
 or tag has appeared. If the subset of branches or tags is changed after
-fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
+fetching, then $BUT_DIR/svn/.metadata must be manually edited to remove
 (or reset) branches-maxRev and/or tags-maxRev as appropriate.
 
 FILES
 -----
-$GIT_DIR/svn/\**/.rev_map.*::
+$BUT_DIR/svn/\**/.rev_map.*::
 	Mapping between Subversion revision numbers and Git cummit
 	names.  In a repository where the noMetadata option is not set,
 	this can be rebuilt from the but-svn-id: lines that are at the
@@ -1150,7 +1150,7 @@ BUGS
 ----
 
 We ignore all SVN properties except svn:executable.  Any unhandled
-properties are logged to $GIT_DIR/svn/<refname>/unhandled.log
+properties are logged to $BUT_DIR/svn/<refname>/unhandled.log
 
 Renamed and copied directories are not detected by Git and hence not
 tracked when cummitting to SVN.  I do not plan on adding support for
@@ -1169,6 +1169,6 @@ SEE ALSO
 --------
 linkbut:but-rebase[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -20,9 +20,9 @@ test_description="Test core.fsmonitor"
 # There are 3 environment variables that can be used to alter the default
 # behavior of the performance test:
 #
-# GIT_PERF_7519_UNTRACKED_CACHE: used to configure core.untrackedCache
-# GIT_PERF_7519_SPLIT_INDEX: used to configure core.splitIndex
-# GIT_PERF_7519_FSMONITOR: used to configure core.fsMonitor. May be an
+# BUT_PERF_7519_UNTRACKED_CACHE: used to configure core.untrackedCache
+# BUT_PERF_7519_SPLIT_INDEX: used to configure core.splitIndex
+# BUT_PERF_7519_FSMONITOR: used to configure core.fsMonitor. May be an
 #   absolute path to an integration. May be a space delimited list of
 #   absolute paths to integrations.
 #
@@ -30,9 +30,9 @@ test_description="Test core.fsmonitor"
 # working directory looking for changed and untracked files. If the file
 # information is all cached in RAM, the benefits are reduced.
 #
-# GIT_PERF_7519_DROP_CACHE: if set, the OS caches are dropped between tests
+# BUT_PERF_7519_DROP_CACHE: if set, the OS caches are dropped between tests
 #
-# GIT_PERF_7519_TRACE: if set, enable trace logging during the test.
+# BUT_PERF_7519_TRACE: if set, enable trace logging during the test.
 #   Trace logs will be grouped by fsmonitor provider.
 
 test_perf_large_repo
@@ -52,28 +52,28 @@ then
 	# Convert unix style paths to escaped Windows style paths for Watchman
 	case "$(uname -s)" in
 	MSYS_NT*)
-	  GIT_WORK_TREE="$(cygpath -aw "$PWD" | sed 's,\\,/,g')"
+	  BUT_WORK_TREE="$(cygpath -aw "$PWD" | sed 's,\\,/,g')"
 	  ;;
 	*)
-	  GIT_WORK_TREE="$PWD"
+	  BUT_WORK_TREE="$PWD"
 	  ;;
 	esac
 fi
 
-if test -n "$GIT_PERF_7519_DROP_CACHE"
+if test -n "$BUT_PERF_7519_DROP_CACHE"
 then
-	# When using GIT_PERF_7519_DROP_CACHE, GIT_PERF_REPEAT_COUNT must be 1 to
+	# When using BUT_PERF_7519_DROP_CACHE, BUT_PERF_REPEAT_COUNT must be 1 to
 	# generate valid results. Otherwise the caching that happens for the nth
 	# run will negate the validity of the comparisons.
-	if test "$GIT_PERF_REPEAT_COUNT" -ne 1
+	if test "$BUT_PERF_REPEAT_COUNT" -ne 1
 	then
-		echo "warning: Setting GIT_PERF_REPEAT_COUNT=1" >&2
-		GIT_PERF_REPEAT_COUNT=1
+		echo "warning: Setting BUT_PERF_REPEAT_COUNT=1" >&2
+		BUT_PERF_REPEAT_COUNT=1
 	fi
 fi
 
 trace_start () {
-	if test -n "$GIT_PERF_7519_TRACE"
+	if test -n "$BUT_PERF_7519_TRACE"
 	then
 		name="$1"
 		TEST_TRACE_DIR="$TEST_OUTPUT_DIRECTORY/test-trace/p7519/"
@@ -81,20 +81,20 @@ trace_start () {
 
 		mkdir -p "$TEST_TRACE_DIR"
 
-		# Start Trace2 logging and any other GIT_TRACE_* logs that you
+		# Start Trace2 logging and any other BUT_TRACE_* logs that you
 		# want for this named test case.
 
-		GIT_TRACE2_PERF="$TEST_TRACE_DIR/$name.trace2perf"
-		export GIT_TRACE2_PERF
+		BUT_TRACE2_PERF="$TEST_TRACE_DIR/$name.trace2perf"
+		export BUT_TRACE2_PERF
 
-		>"$GIT_TRACE2_PERF"
+		>"$BUT_TRACE2_PERF"
 	fi
 }
 
 trace_stop () {
-	if test -n "$GIT_PERF_7519_TRACE"
+	if test -n "$BUT_PERF_7519_TRACE"
 	then
-		unset GIT_TRACE2_PERF
+		unset BUT_TRACE2_PERF
 	fi
 }
 
@@ -107,9 +107,9 @@ touch_files () {
 
 test_expect_success "one time repo setup" '
 	# set untrackedCache depending on the environment
-	if test -n "$GIT_PERF_7519_UNTRACKED_CACHE"
+	if test -n "$BUT_PERF_7519_UNTRACKED_CACHE"
 	then
-		but config core.untrackedCache "$GIT_PERF_7519_UNTRACKED_CACHE"
+		but config core.untrackedCache "$BUT_PERF_7519_UNTRACKED_CACHE"
 	else
 		if test_have_prereq UNTRACKED_CACHE
 		then
@@ -120,9 +120,9 @@ test_expect_success "one time repo setup" '
 	fi &&
 
 	# set core.splitindex depending on the environment
-	if test -n "$GIT_PERF_7519_SPLIT_INDEX"
+	if test -n "$BUT_PERF_7519_SPLIT_INDEX"
 	then
-		but config core.splitIndex "$GIT_PERF_7519_SPLIT_INDEX"
+		but config core.splitIndex "$BUT_PERF_7519_SPLIT_INDEX"
 	fi &&
 
 	mkdir 1_file 10_files 100_files 1000_files 10000_files &&
@@ -136,7 +136,7 @@ test_expect_success "one time repo setup" '
 
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then
-		watchman watch "$GIT_WORK_TREE" &&
+		watchman watch "$BUT_WORK_TREE" &&
 		watchman watch-list | grep -q -F "p7519-fsmonitor"
 	fi
 '
@@ -174,7 +174,7 @@ setup_for_fsmonitor_hook () {
 }
 
 test_perf_w_drop_caches () {
-	if test -n "$GIT_PERF_7519_DROP_CACHE"; then
+	if test -n "$BUT_PERF_7519_DROP_CACHE"; then
 		test-tool drop-caches
 	fi
 
@@ -263,8 +263,8 @@ test_fsmonitor_suite () {
 #
 
 trace_start fsmonitor-watchman
-if test -n "$GIT_PERF_7519_FSMONITOR"; then
-	for INTEGRATION_PATH in $GIT_PERF_7519_FSMONITOR; do
+if test -n "$BUT_PERF_7519_FSMONITOR"; then
+	for INTEGRATION_PATH in $BUT_PERF_7519_FSMONITOR; do
 		test_expect_success "setup for fsmonitor $INTEGRATION_PATH" 'setup_for_fsmonitor_hook'
 		test_fsmonitor_suite
 	done
@@ -275,7 +275,7 @@ fi
 
 if test_have_prereq WATCHMAN
 then
-	watchman watch-del "$GIT_WORK_TREE" >/dev/null 2>&1 &&
+	watchman watch-del "$BUT_WORK_TREE" >/dev/null 2>&1 &&
 
 	# Work around Watchman bug on Windows where it holds on to handles
 	# preventing the removal of the trash directory

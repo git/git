@@ -5,7 +5,7 @@ test_description='test show-branch'
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
-GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
+BUT_TEST_DATE_NOW=1251660000; export BUT_TEST_DATE_NOW
 
 test_expect_success 'setup' '
 	test_cummit initial &&

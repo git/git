@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='merging with large rename matrix'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -98,7 +98,7 @@ test_expect_success 'setup large simple rename' '
 '
 
 test_expect_success 'massive simple rename does not spam added files' '
-	sane_unset GIT_MERGE_VERBOSITY &&
+	sane_unset BUT_MERGE_VERBOSITY &&
 	but merge --no-stat simple-rename | grep -v Removing >output &&
 	test_line_count -lt 5 output
 '

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='racy GIT'
+test_description='racy BUT'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -17,7 +17,7 @@ do
 
 	files=$(but diff-files -p)
 	test_expect_success \
-	"Racy GIT trial #$trial part A" \
+	"Racy BUT trial #$trial part A" \
 	'test "" != "$files"'
 
 	sleep 1
@@ -26,7 +26,7 @@ do
 
 	files=$(but diff-files -p)
 	test_expect_success \
-	"Racy GIT trial #$trial part B" \
+	"Racy BUT trial #$trial part B" \
 	'test "" != "$files"'
 
 done

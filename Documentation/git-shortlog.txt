@@ -117,6 +117,6 @@ Note that if `but shortlog` is run outside of a repository (to process
 log contents on standard input), it will look for a `.mailmap` file in
 the current directory.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

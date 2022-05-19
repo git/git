@@ -14,8 +14,8 @@ This test checks the following functionality:
 * reflogs
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -187,7 +187,7 @@ test_expect_success 'push without negotiation' '
 	test_cummit -C testrepo unrelated_cummit &&
 	but -C testrepo config receive.hideRefs refs/remotes/origin/first_cummit &&
 	test_when_finished "rm event" &&
-	GIT_TRACE2_EVENT="$(pwd)/event" but -c protocol.version=2 push testrepo refs/heads/main:refs/remotes/origin/main &&
+	BUT_TRACE2_EVENT="$(pwd)/event" but -c protocol.version=2 push testrepo refs/heads/main:refs/remotes/origin/main &&
 	grep_wrote 5 event # 2 cummits, 2 trees, 1 blob
 '
 
@@ -197,7 +197,7 @@ test_expect_success 'push with negotiation' '
 	test_cummit -C testrepo unrelated_cummit &&
 	but -C testrepo config receive.hideRefs refs/remotes/origin/first_cummit &&
 	test_when_finished "rm event" &&
-	GIT_TRACE2_EVENT="$(pwd)/event" but -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main &&
+	BUT_TRACE2_EVENT="$(pwd)/event" but -c protocol.version=2 -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main &&
 	grep_wrote 2 event # 1 cummit, 1 tree
 '
 
@@ -207,7 +207,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	test_cummit -C testrepo unrelated_cummit &&
 	but -C testrepo config receive.hideRefs refs/remotes/origin/first_cummit &&
 	test_when_finished "rm event" &&
-	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" \
+	BUT_TEST_PROTOCOL_VERSION=0 BUT_TRACE2_EVENT="$(pwd)/event" \
 		but -c push.negotiate=1 push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
 	grep_wrote 5 event && # 2 cummits, 2 trees, 1 blob
 	test_i18ngrep "push negotiation failed" err
@@ -1202,7 +1202,7 @@ test_expect_success 'fetch exact SHA1' '
 		# unadvertised objects, so restrict this test to v0.
 
 		# fetching the hidden object should fail by default
-		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+		test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 			but fetch -v ../testrepo $the_cummit:refs/heads/copy 2>err &&
 		test_i18ngrep "Server does not allow request for unadvertised object" err &&
 		test_must_fail but rev-parse --verify refs/heads/copy &&
@@ -1261,7 +1261,7 @@ do
 			cd shallow &&
 			# Some protocol versions (e.g. 2) support fetching
 			# unadvertised objects, so restrict this test to v0.
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+			test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 				but fetch --depth=1 ../testrepo/.but $SHA1 &&
 			but --but-dir=../testrepo/.but config uploadpack.allowreachablesha1inwant true &&
 			but fetch --depth=1 ../testrepo/.but $SHA1 &&
@@ -1292,9 +1292,9 @@ do
 			cd shallow &&
 			# Some protocol versions (e.g. 2) support fetching
 			# unadvertised objects, so restrict this test to v0.
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+			test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 				but fetch ../testrepo/.but $SHA1_3 &&
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+			test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 				but fetch ../testrepo/.but $SHA1_1 &&
 			but --but-dir=../testrepo/.but config uploadpack.allowreachablesha1inwant true &&
 			but fetch ../testrepo/.but $SHA1_1 &&
@@ -1302,7 +1302,7 @@ do
 			test_must_fail but cat-file cummit $SHA1_2 &&
 			but fetch ../testrepo/.but $SHA1_2 &&
 			but cat-file cummit $SHA1_2 &&
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+			test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 				but fetch ../testrepo/.but $SHA1_3 2>err &&
 			# ideally we would insist this be on a "remote error:"
 			# line, but it is racy; see the cummit message
@@ -1342,7 +1342,7 @@ test_expect_success 'peeled advertisements are not considered ref tips' '
 	but -C testrepo cummit --allow-empty -m two &&
 	but -C testrepo tag -m foo mytag HEAD^ &&
 	oid=$(but -C testrepo rev-parse mytag^{cummit}) &&
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+	test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 		but fetch testrepo $oid 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '

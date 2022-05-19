@@ -1,5 +1,5 @@
 package Git::SVN::Memoize::YAML;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use strict;
 use YAML::Any ();
 

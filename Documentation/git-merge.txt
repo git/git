@@ -402,6 +402,6 @@ linkbut:but-diff[1], linkbut:but-ls-files[1],
 linkbut:but-add[1], linkbut:but-rm[1],
 linkbut:but-mergetool[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

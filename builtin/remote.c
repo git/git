@@ -98,7 +98,7 @@ static int fetch_remote(const char *name)
 		argv[2] = name;
 	}
 	printf_ln(_("Updating %s"), name);
-	if (run_command_v_opt(argv, RUN_GIT_CMD))
+	if (run_command_v_opt(argv, RUN_BUT_CMD))
 		return error(_("Could not fetch %s"), name);
 	return 0;
 }
@@ -1511,7 +1511,7 @@ static int update(int argc, const char **argv)
 		}
 	}
 
-	retval = run_command_v_opt(fetch_argv.v, RUN_GIT_CMD);
+	retval = run_command_v_opt(fetch_argv.v, RUN_BUT_CMD);
 	strvec_clear(&fetch_argv);
 	return retval;
 }

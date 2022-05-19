@@ -14,7 +14,7 @@ Fixes since v1.6.5.7
 * "but fast-import" choked when handling a tag that points at an object
   that is not a cummit.
 
-* "but reset --hard" did not work correctly when GIT_WORK_TREE environment
+* "but reset --hard" did not work correctly when BUT_WORK_TREE environment
   variable is used to point at the root of the true work tree.
 
 * "but grep" fed a buffer that is not NUL-terminated to underlying

@@ -41,7 +41,7 @@ test_expect_success 'rewrite diff is binary' '
 test_expect_success 'rewrite diff can show binary patch' '
 	but diff -B --binary >diff &&
 	grep "dissimilarity index" diff &&
-	grep "GIT binary patch" diff
+	grep "BUT binary patch" diff
 '
 
 test_expect_success 'rewrite diff --numstat shows binary changes' '

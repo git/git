@@ -23,7 +23,7 @@ restart        restart the web server
 SUBDIRECTORY_OK=Yes
 . but-sh-setup
 
-fqbutdir="$GIT_DIR"
+fqbutdir="$BUT_DIR"
 local="$(but config --bool --get instaweb.local)"
 httpd="$(but config --get instaweb.httpd)"
 root="$(but config --get instaweb.butwebdir)"
@@ -31,15 +31,15 @@ port=$(but config --get instaweb.port)
 module_path="$(but config --get instaweb.modulepath)"
 action="browse"
 
-conf="$GIT_DIR/butweb/httpd.conf"
+conf="$BUT_DIR/butweb/httpd.conf"
 
 # Defaults:
 
 # if installed, it doesn't need further configuration (module_path)
 test -z "$httpd" && httpd='lighttpd -f'
 
-# Default is @@GITWEBDIR@@
-test -z "$root" && root='@@GITWEBDIR@@'
+# Default is @@BUTWEBDIR@@
+test -z "$root" && root='@@BUTWEBDIR@@'
 
 # any untaken local port will do...
 test -z "$port" && port=1234
@@ -200,11 +200,11 @@ do
 	shift
 done
 
-mkdir -p "$GIT_DIR/butweb/tmp"
-GIT_EXEC_PATH="$(but --exec-path)"
-GIT_DIR="$fqbutdir"
-GITWEB_CONFIG="$fqbutdir/butweb/butweb_config.perl"
-export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
+mkdir -p "$BUT_DIR/butweb/tmp"
+BUT_EXEC_PATH="$(but --exec-path)"
+BUT_DIR="$fqbutdir"
+BUTWEB_CONFIG="$fqbutdir/butweb/butweb_config.perl"
+export BUT_EXEC_PATH BUT_DIR BUTWEB_CONFIG
 
 webrick_conf () {
 	# webrick seems to have no way of passing arbitrary environment
@@ -216,8 +216,8 @@ webrick_conf () {
 # we use this shell script wrapper around the real butweb.cgi since
 # there appears to be no other way to pass arbitrary environment variables
 # into the CGI process
-GIT_EXEC_PATH=$GIT_EXEC_PATH GIT_DIR=$GIT_DIR GITWEB_CONFIG=$GITWEB_CONFIG
-export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
+BUT_EXEC_PATH=$BUT_EXEC_PATH BUT_DIR=$BUT_DIR BUTWEB_CONFIG=$BUTWEB_CONFIG
+export BUT_EXEC_PATH BUT_DIR BUTWEB_CONFIG
 exec $root/butweb.cgi
 EOF
 	chmod +x "$wrapper"
@@ -269,7 +269,7 @@ server.errorlog = "$fqbutdir/butweb/$httpd_only/error.log"
 # variable above and uncomment this
 #accesslog.filename = "$fqbutdir/butweb/$httpd_only/access.log"
 
-setenv.add-environment = ( "PATH" => env.PATH, "GITWEB_CONFIG" => env.GITWEB_CONFIG )
+setenv.add-environment = ( "PATH" => env.PATH, "BUTWEB_CONFIG" => env.BUTWEB_CONFIG )
 
 cgi.assign = ( ".cgi" => "" )
 
@@ -385,9 +385,9 @@ EOF
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
 LoadModule perl_module $module_path/mod_perl.so
-PerlPassEnv GIT_DIR
-PerlPassEnv GIT_EXEC_PATH
-PerlPassEnv GITWEB_CONFIG
+PerlPassEnv BUT_DIR
+PerlPassEnv BUT_EXEC_PATH
+PerlPassEnv BUTWEB_CONFIG
 <Location /butweb.cgi>
 	SetHandler perl-script
 	PerlResponseHandler ModPerl::Registry
@@ -416,9 +416,9 @@ EOF
 			echo "ScriptSock logs/butweb.sock" >> "$conf"
 		fi
 		cat >> "$conf" <<EOF
-PassEnv GIT_DIR
-PassEnv GIT_EXEC_PATH
-PassEnv GITWEB_CONFIG
+PassEnv BUT_DIR
+PassEnv BUT_EXEC_PATH
+PassEnv BUTWEB_CONFIG
 AddHandler cgi-script .cgi
 <Location /butweb.cgi>
 	Options +ExecCGI
@@ -442,7 +442,7 @@ error_log	$fqbutdir/butweb/$httpd_only/error.log
 access_log	$fqbutdir/butweb/$httpd_only/access.log
 
 #cgi setup
-cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH,GITWEB_CONFIG=$GITWEB_CONFIG
+cgi_env		PATH=$PATH,BUT_DIR=$BUT_DIR,BUT_EXEC_PATH=$BUT_EXEC_PATH,BUTWEB_CONFIG=$BUTWEB_CONFIG
 cgi_interp	$PERL
 cgi_ext		cgi,pl
 
@@ -648,9 +648,9 @@ else:  # Python 3
 
 # Those environment variables will be passed to the cgi script
 os.environ.update({
-	"GIT_EXEC_PATH": "$GIT_EXEC_PATH",
-	"GIT_DIR": "$GIT_DIR",
-	"GITWEB_CONFIG": "$GITWEB_CONFIG"
+	"BUT_EXEC_PATH": "$BUT_EXEC_PATH",
+	"BUT_DIR": "$BUT_DIR",
+	"BUTWEB_CONFIG": "$BUTWEB_CONFIG"
 })
 
 

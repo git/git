@@ -30,7 +30,7 @@ test_expect_success UNZIP 'zip archive' '
 
 	but archive --format=zip HEAD >test.zip &&
 
-	( mkdir unzipped && cd unzipped && "$GIT_UNZIP" ../test.zip ) &&
+	( mkdir unzipped && cd unzipped && "$BUT_UNZIP" ../test.zip ) &&
 
 	test_cmp sample unzipped/sample
 

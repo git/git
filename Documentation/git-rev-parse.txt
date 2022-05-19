@@ -207,8 +207,8 @@ Options for Files
 ~~~~~~~~~~~~~~~~~
 
 --local-env-vars::
-	List the GIT_* environment variables that are local to the
-	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
+	List the BUT_* environment variables that are local to the
+	repository (e.g. BUT_DIR or BUT_WORK_TREE, but not BUT_EDITOR).
 	Only the names of the variables are listed, not their value,
 	even if they are set.
 
@@ -225,16 +225,16 @@ instance of this option.
 The following options are modified by `--path-format`:
 
 --but-dir::
-	Show `$GIT_DIR` if defined. Otherwise show the path to
+	Show `$BUT_DIR` if defined. Otherwise show the path to
 	the .but directory. The path shown, when relative, is
 	relative to the current working directory.
 +
-If `$GIT_DIR` is not defined and the current directory
+If `$BUT_DIR` is not defined and the current directory
 is not detected to lie in a Git repository or work tree
 print a message to stderr and exit with nonzero status.
 
 --but-common-dir::
-	Show `$GIT_COMMON_DIR` if defined, else `$GIT_DIR`.
+	Show `$BUT_COMMON_DIR` if defined, else `$BUT_DIR`.
 
 --resolve-but-dir <path>::
 	Check if <path> is a valid repository or a butfile that
@@ -243,10 +243,10 @@ print a message to stderr and exit with nonzero status.
 	to the real repository is printed.
 
 --but-path <path>::
-	Resolve "$GIT_DIR/<path>" and takes other path relocation
-	variables such as $GIT_OBJECT_DIRECTORY,
-	$GIT_INDEX_FILE... into account. For example, if
-	$GIT_OBJECT_DIRECTORY is set to /foo/bar then "but rev-parse
+	Resolve "$BUT_DIR/<path>" and takes other path relocation
+	variables such as $BUT_OBJECT_DIRECTORY,
+	$BUT_INDEX_FILE... into account. For example, if
+	$BUT_OBJECT_DIRECTORY is set to /foo/bar then "but rev-parse
 	--but-path objects/abc" returns /foo/bar/abc.
 
 --show-toplevel::
@@ -477,6 +477,6 @@ $ but rev-parse --default master --verify --end-of-options $REV
 +
 but if $REV is empty, the cummit object name from master will be printed.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

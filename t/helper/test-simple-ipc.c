@@ -591,7 +591,7 @@ int cmd__simple_ipc(int argc, const char **argv)
 	const char *bytevalue = NULL;
 
 	struct option options[] = {
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 		OPT_STRING(0, "name", &cl_args.path, N_("name"), N_("name or pathname of unix domain socket")),
 #else
 		OPT_STRING(0, "name", &cl_args.path, N_("name"), N_("named-pipe name")),

@@ -25,10 +25,10 @@ die "usage: import-tars [--metainfo=extension] *.tar.{gz,bz2,lzma,xz,Z}\n"
 
 my $branch_name = 'import-tars';
 my $branch_ref = "refs/heads/$branch_name";
-my $author_name = $ENV{'GIT_AUTHOR_NAME'} || 'T Ar Creator';
-my $author_email = $ENV{'GIT_AUTHOR_EMAIL'} || 'tar@example.com';
-my $cummitter_name = $ENV{'GIT_CUMMITTER_NAME'} || `but config --get user.name`;
-my $cummitter_email = $ENV{'GIT_CUMMITTER_EMAIL'} || `but config --get user.email`;
+my $author_name = $ENV{'BUT_AUTHOR_NAME'} || 'T Ar Creator';
+my $author_email = $ENV{'BUT_AUTHOR_EMAIL'} || 'tar@example.com';
+my $cummitter_name = $ENV{'BUT_CUMMITTER_NAME'} || `but config --get user.name`;
+my $cummitter_email = $ENV{'BUT_CUMMITTER_EMAIL'} || `but config --get user.email`;
 
 chomp($cummitter_name, $cummitter_email);
 

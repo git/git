@@ -291,44 +291,44 @@ relative_path "<null>"		"<null>"	./
 relative_path "<null>"		/foo/a/b	./
 
 test_but_path A=B                info/grafts .but/info/grafts
-test_but_path GIT_GRAFT_FILE=foo info/grafts foo
-test_but_path GIT_GRAFT_FILE=foo info/////grafts foo
-test_but_path GIT_INDEX_FILE=foo index foo
-test_but_path GIT_INDEX_FILE=foo index/foo .but/index/foo
-test_but_path GIT_INDEX_FILE=foo index2 .but/index2
+test_but_path BUT_GRAFT_FILE=foo info/grafts foo
+test_but_path BUT_GRAFT_FILE=foo info/////grafts foo
+test_but_path BUT_INDEX_FILE=foo index foo
+test_but_path BUT_INDEX_FILE=foo index/foo .but/index/foo
+test_but_path BUT_INDEX_FILE=foo index2 .but/index2
 test_expect_success 'setup fake objects directory foo' 'mkdir foo'
-test_but_path GIT_OBJECT_DIRECTORY=foo objects foo
-test_but_path GIT_OBJECT_DIRECTORY=foo objects/foo foo/foo
-test_but_path GIT_OBJECT_DIRECTORY=foo objects2 .but/objects2
+test_but_path BUT_OBJECT_DIRECTORY=foo objects foo
+test_but_path BUT_OBJECT_DIRECTORY=foo objects/foo foo/foo
+test_but_path BUT_OBJECT_DIRECTORY=foo objects2 .but/objects2
 test_expect_success 'setup common repository' 'but --but-dir=bar init'
-test_but_path GIT_COMMON_DIR=bar index                    .but/index
-test_but_path GIT_COMMON_DIR=bar index.lock               .but/index.lock
-test_but_path GIT_COMMON_DIR=bar HEAD                     .but/HEAD
-test_but_path GIT_COMMON_DIR=bar logs/HEAD                .but/logs/HEAD
-test_but_path GIT_COMMON_DIR=bar logs/HEAD.lock           .but/logs/HEAD.lock
-test_but_path GIT_COMMON_DIR=bar logs/refs/bisect/foo     .but/logs/refs/bisect/foo
-test_but_path GIT_COMMON_DIR=bar logs/refs                bar/logs/refs
-test_but_path GIT_COMMON_DIR=bar logs/refs/               bar/logs/refs/
-test_but_path GIT_COMMON_DIR=bar logs/refs/bisec/foo      bar/logs/refs/bisec/foo
-test_but_path GIT_COMMON_DIR=bar logs/refs/bisec          bar/logs/refs/bisec
-test_but_path GIT_COMMON_DIR=bar logs/refs/bisectfoo      bar/logs/refs/bisectfoo
-test_but_path GIT_COMMON_DIR=bar objects                  bar/objects
-test_but_path GIT_COMMON_DIR=bar objects/bar              bar/objects/bar
-test_but_path GIT_COMMON_DIR=bar info/exclude             bar/info/exclude
-test_but_path GIT_COMMON_DIR=bar info/grafts              bar/info/grafts
-test_but_path GIT_COMMON_DIR=bar info/sparse-checkout     .but/info/sparse-checkout
-test_but_path GIT_COMMON_DIR=bar info//sparse-checkout    .but/info//sparse-checkout
-test_but_path GIT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
-test_but_path GIT_COMMON_DIR=bar branches/bar             bar/branches/bar
-test_but_path GIT_COMMON_DIR=bar logs/refs/heads/main     bar/logs/refs/heads/main
-test_but_path GIT_COMMON_DIR=bar refs/heads/main          bar/refs/heads/main
-test_but_path GIT_COMMON_DIR=bar refs/bisect/foo          .but/refs/bisect/foo
-test_but_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
-test_but_path GIT_COMMON_DIR=bar config                   bar/config
-test_but_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
-test_but_path GIT_COMMON_DIR=bar shallow                  bar/shallow
-test_but_path GIT_COMMON_DIR=bar common                   bar/common
-test_but_path GIT_COMMON_DIR=bar common/file              bar/common/file
+test_but_path BUT_COMMON_DIR=bar index                    .but/index
+test_but_path BUT_COMMON_DIR=bar index.lock               .but/index.lock
+test_but_path BUT_COMMON_DIR=bar HEAD                     .but/HEAD
+test_but_path BUT_COMMON_DIR=bar logs/HEAD                .but/logs/HEAD
+test_but_path BUT_COMMON_DIR=bar logs/HEAD.lock           .but/logs/HEAD.lock
+test_but_path BUT_COMMON_DIR=bar logs/refs/bisect/foo     .but/logs/refs/bisect/foo
+test_but_path BUT_COMMON_DIR=bar logs/refs                bar/logs/refs
+test_but_path BUT_COMMON_DIR=bar logs/refs/               bar/logs/refs/
+test_but_path BUT_COMMON_DIR=bar logs/refs/bisec/foo      bar/logs/refs/bisec/foo
+test_but_path BUT_COMMON_DIR=bar logs/refs/bisec          bar/logs/refs/bisec
+test_but_path BUT_COMMON_DIR=bar logs/refs/bisectfoo      bar/logs/refs/bisectfoo
+test_but_path BUT_COMMON_DIR=bar objects                  bar/objects
+test_but_path BUT_COMMON_DIR=bar objects/bar              bar/objects/bar
+test_but_path BUT_COMMON_DIR=bar info/exclude             bar/info/exclude
+test_but_path BUT_COMMON_DIR=bar info/grafts              bar/info/grafts
+test_but_path BUT_COMMON_DIR=bar info/sparse-checkout     .but/info/sparse-checkout
+test_but_path BUT_COMMON_DIR=bar info//sparse-checkout    .but/info//sparse-checkout
+test_but_path BUT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
+test_but_path BUT_COMMON_DIR=bar branches/bar             bar/branches/bar
+test_but_path BUT_COMMON_DIR=bar logs/refs/heads/main     bar/logs/refs/heads/main
+test_but_path BUT_COMMON_DIR=bar refs/heads/main          bar/refs/heads/main
+test_but_path BUT_COMMON_DIR=bar refs/bisect/foo          .but/refs/bisect/foo
+test_but_path BUT_COMMON_DIR=bar hooks/me                 bar/hooks/me
+test_but_path BUT_COMMON_DIR=bar config                   bar/config
+test_but_path BUT_COMMON_DIR=bar packed-refs              bar/packed-refs
+test_but_path BUT_COMMON_DIR=bar shallow                  bar/shallow
+test_but_path BUT_COMMON_DIR=bar common                   bar/common
+test_but_path BUT_COMMON_DIR=bar common/file              bar/common/file
 
 # In the tests below, $(pwd) must be used because it is a native path on
 # Windows and avoids MSYS's path mangling (which simplifies "foo/../bar" and
@@ -416,19 +416,19 @@ test_expect_success 'match .butmodules' '
 		".Gitmodules . " \
 		".Gitmodules  ." \
 		\
-		GITMOD~1 \
+		BUTMOD~1 \
 		butmod~1 \
-		GITMOD~2 \
+		BUTMOD~2 \
 		butmod~3 \
-		GITMOD~4 \
+		BUTMOD~4 \
 		\
-		"GITMOD~1 " \
+		"BUTMOD~1 " \
 		"butmod~2." \
-		"GITMOD~3  " \
+		"BUTMOD~3  " \
 		"butmod~4. " \
-		"GITMOD~1 ." \
+		"BUTMOD~1 ." \
 		"butmod~2   " \
-		"GITMOD~3.  " \
+		"BUTMOD~3.  " \
 		"butmod~4 . " \
 		\
 		GI7EBA~1 \
@@ -482,7 +482,7 @@ test_expect_success 'match .butattributes' '
 		.but${u200c}attributes \
 		.Gitattributes \
 		.butattributeS \
-		GITATT~1 \
+		BUTATT~1 \
 		GI7D29~1
 '
 
@@ -492,7 +492,7 @@ test_expect_success 'match .butignore' '
 		.but${u200c}ignore \
 		.Gitignore \
 		.butignorE \
-		GITIGN~1 \
+		BUTIGN~1 \
 		GI250A~1
 '
 
@@ -538,23 +538,23 @@ test_lazy_prereq RUNTIME_PREFIX '
 '
 
 test_lazy_prereq CAN_EXEC_IN_PWD '
-	cp "$GIT_EXEC_PATH"/but$X ./ &&
+	cp "$BUT_EXEC_PATH"/but$X ./ &&
 	./but rev-parse
 '
 
 test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD 'RUNTIME_PREFIX works' '
 	mkdir -p pretend/bin pretend/libexec/but-core &&
 	echo "echo HERE" | write_script pretend/libexec/but-core/but-here &&
-	cp "$GIT_EXEC_PATH"/but$X pretend/bin/ &&
-	GIT_EXEC_PATH= ./pretend/bin/but here >actual &&
+	cp "$BUT_EXEC_PATH"/but$X pretend/bin/ &&
+	BUT_EXEC_PATH= ./pretend/bin/but here >actual &&
 	echo HERE >expect &&
 	test_cmp expect actual'
 
 test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' '
 	mkdir -p pretend/bin &&
-	cp "$GIT_EXEC_PATH"/but$X pretend/bin/ &&
+	cp "$BUT_EXEC_PATH"/but$X pretend/bin/ &&
 	but config yes.path "%(prefix)/yes" &&
-	GIT_EXEC_PATH= ./pretend/bin/but config --path yes.path >actual &&
+	BUT_EXEC_PATH= ./pretend/bin/but config --path yes.path >actual &&
 	echo "$(pwd)/pretend/yes" >expect &&
 	test_cmp expect actual
 '

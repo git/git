@@ -108,7 +108,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 		reftable_table_from_reader(&tabs[i], (*readers)[i]);
 	}
 
-	err = reftable_new_merged_table(&mt, tabs, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_new_merged_table(&mt, tabs, n, BUT_SHA1_FORMAT_ID);
 	EXPECT_ERR(err);
 	return mt;
 }
@@ -123,7 +123,7 @@ static void readers_destroy(struct reftable_reader **readers, size_t n)
 
 static void test_merged_between(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 0 };
+	uint8_t hash1[BUT_SHA1_RAWSZ] = { 1, 2, 3, 0 };
 
 	struct reftable_ref_record r1[] = { {
 		.refname = "b",
@@ -165,8 +165,8 @@ static void test_merged_between(void)
 
 static void test_merged(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
+	uint8_t hash1[BUT_SHA1_RAWSZ] = { 1 };
+	uint8_t hash2[BUT_SHA1_RAWSZ] = { 2 };
 	struct reftable_ref_record r1[] = {
 		{
 			.refname = "a",
@@ -230,7 +230,7 @@ static void test_merged(void)
 	int i = 0;
 
 	EXPECT_ERR(err);
-	EXPECT(reftable_merged_table_hash_id(mt) == GIT_SHA1_FORMAT_ID);
+	EXPECT(reftable_merged_table_hash_id(mt) == BUT_SHA1_FORMAT_ID);
 	EXPECT(reftable_merged_table_min_update_index(mt) == 1);
 
 	while (len < 100) { /* cap loops/recursion. */
@@ -251,7 +251,7 @@ static void test_merged(void)
 	EXPECT(ARRAY_SIZE(want) == len);
 	for (i = 0; i < len; i++) {
 		EXPECT(reftable_ref_record_equal(want[i], &out[i],
-						 GIT_SHA1_RAWSZ));
+						 BUT_SHA1_RAWSZ));
 	}
 	for (i = 0; i < len; i++) {
 		reftable_ref_record_release(&out[i]);
@@ -289,16 +289,16 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 		reftable_table_from_reader(&tabs[i], (*readers)[i]);
 	}
 
-	err = reftable_new_merged_table(&mt, tabs, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_new_merged_table(&mt, tabs, n, BUT_SHA1_FORMAT_ID);
 	EXPECT_ERR(err);
 	return mt;
 }
 
 static void test_merged_logs(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
-	uint8_t hash3[GIT_SHA1_RAWSZ] = { 3 };
+	uint8_t hash1[BUT_SHA1_RAWSZ] = { 1 };
+	uint8_t hash2[BUT_SHA1_RAWSZ] = { 2 };
+	uint8_t hash3[BUT_SHA1_RAWSZ] = { 3 };
 	struct reftable_log_record r1[] = {
 		{
 			.refname = "a",
@@ -367,7 +367,7 @@ static void test_merged_logs(void)
 	int i = 0;
 
 	EXPECT_ERR(err);
-	EXPECT(reftable_merged_table_hash_id(mt) == GIT_SHA1_FORMAT_ID);
+	EXPECT(reftable_merged_table_hash_id(mt) == BUT_SHA1_FORMAT_ID);
 	EXPECT(reftable_merged_table_min_update_index(mt) == 1);
 
 	while (len < 100) { /* cap loops/recursion. */
@@ -388,7 +388,7 @@ static void test_merged_logs(void)
 	EXPECT(ARRAY_SIZE(want) == len);
 	for (i = 0; i < len; i++) {
 		EXPECT(reftable_log_record_equal(want[i], &out[i],
-						 GIT_SHA1_RAWSZ));
+						 BUT_SHA1_RAWSZ));
 	}
 
 	err = reftable_merged_table_seek_log_at(mt, &it, "a", 2);
@@ -396,7 +396,7 @@ static void test_merged_logs(void)
 	reftable_log_record_release(&out[0]);
 	err = reftable_iterator_next_log(&it, &out[0]);
 	EXPECT_ERR(err);
-	EXPECT(reftable_log_record_equal(&out[0], &r3[0], GIT_SHA1_RAWSZ));
+	EXPECT(reftable_log_record_equal(&out[0], &r3[0], BUT_SHA1_RAWSZ));
 	reftable_iterator_destroy(&it);
 
 	for (i = 0; i < len; i++) {
@@ -445,10 +445,10 @@ static void test_default_write_opts(void)
 	EXPECT_ERR(err);
 
 	hash_id = reftable_reader_hash_id(rd);
-	EXPECT(hash_id == GIT_SHA1_FORMAT_ID);
+	EXPECT(hash_id == BUT_SHA1_FORMAT_ID);
 
 	reftable_table_from_reader(&tab[0], rd);
-	err = reftable_new_merged_table(&merged, tab, 1, GIT_SHA1_FORMAT_ID);
+	err = reftable_new_merged_table(&merged, tab, 1, BUT_SHA1_FORMAT_ID);
 	EXPECT_ERR(err);
 
 	reftable_reader_free(rd);

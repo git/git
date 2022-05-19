@@ -203,7 +203,7 @@ General options
 All commands except clone accept these options.
 
 --but-dir <dir>::
-	Set the `GIT_DIR` environment variable.  See linkbut:but[1].
+	Set the `BUT_DIR` environment variable.  See linkbut:but[1].
 
 -v::
 --verbose::
@@ -763,6 +763,6 @@ IMPLEMENTATION DETAILS
   line is used by later 'but p4 sync' operations to know which p4
   changes are new.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

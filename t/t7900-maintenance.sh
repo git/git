@@ -4,8 +4,8 @@ test_description='but maintenance builtin'
 
 . ./test-lib.sh
 
-GIT_TEST_CUMMIT_GRAPH=0
-GIT_TEST_MULTI_PACK_INDEX=0
+BUT_TEST_CUMMIT_GRAPH=0
+BUT_TEST_MULTI_PACK_INDEX=0
 
 test_lazy_prereq XMLLINT '
 	xmllint --version
@@ -41,11 +41,11 @@ test_expect_success 'help text' '
 '
 
 test_expect_success 'run [--auto|--quiet]' '
-	GIT_TRACE2_EVENT="$(pwd)/run-no-auto.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-no-auto.txt" \
 		but maintenance run 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-auto.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-auto.txt" \
 		but maintenance run --auto 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-no-quiet.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-no-quiet.txt" \
 		but maintenance run --no-quiet 2>/dev/null &&
 	test_subcommand but gc --quiet <run-no-auto.txt &&
 	test_subcommand ! but gc --auto --quiet <run-auto.txt &&
@@ -53,13 +53,13 @@ test_expect_success 'run [--auto|--quiet]' '
 '
 
 test_expect_success 'maintenance.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" but cummit --quiet --allow-empty -m 1 &&
+	BUT_TRACE2_EVENT="$(pwd)/default" but cummit --quiet --allow-empty -m 1 &&
 	test_subcommand but maintenance run --auto --quiet <default &&
-	GIT_TRACE2_EVENT="$(pwd)/true" \
+	BUT_TRACE2_EVENT="$(pwd)/true" \
 		but -c maintenance.auto=true \
 		cummit --quiet --allow-empty -m 2 &&
 	test_subcommand but maintenance run --auto --quiet  <true &&
-	GIT_TRACE2_EVENT="$(pwd)/false" \
+	BUT_TRACE2_EVENT="$(pwd)/false" \
 		but -c maintenance.auto=false \
 		cummit --quiet --allow-empty -m 3 &&
 	test_subcommand ! but maintenance run --auto --quiet  <false
@@ -68,19 +68,19 @@ test_expect_success 'maintenance.auto config option' '
 test_expect_success 'maintenance.<task>.enabled' '
 	but config maintenance.gc.enabled false &&
 	but config maintenance.cummit-graph.enabled true &&
-	GIT_TRACE2_EVENT="$(pwd)/run-config.txt" but maintenance run 2>err &&
+	BUT_TRACE2_EVENT="$(pwd)/run-config.txt" but maintenance run 2>err &&
 	test_subcommand ! but gc --quiet <run-config.txt &&
 	test_subcommand but cummit-graph write --split --reachable --no-progress <run-config.txt
 '
 
 test_expect_success 'run --task=<task>' '
-	GIT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
 		but maintenance run --task=cummit-graph 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-gc.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-gc.txt" \
 		but maintenance run --task=gc 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
 		but maintenance run --task=cummit-graph 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-both.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/run-both.txt" \
 		but maintenance run --task=cummit-graph --task=gc 2>/dev/null &&
 	test_subcommand ! but gc --quiet <run-cummit-graph.txt &&
 	test_subcommand but gc --quiet <run-gc.txt &&
@@ -91,7 +91,7 @@ test_expect_success 'run --task=<task>' '
 '
 
 test_expect_success 'core.cummitGraph=false prevents write process' '
-	GIT_TRACE2_EVENT="$(pwd)/no-cummit-graph.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/no-cummit-graph.txt" \
 		but -c core.cummitGraph=false maintenance run \
 		--task=cummit-graph 2>/dev/null &&
 	test_subcommand ! but cummit-graph write --split --reachable --no-progress \
@@ -101,22 +101,22 @@ test_expect_success 'core.cummitGraph=false prevents write process' '
 test_expect_success 'cummit-graph auto condition' '
 	COMMAND="maintenance run --task=cummit-graph --auto --quiet" &&
 
-	GIT_TRACE2_EVENT="$(pwd)/cg-no.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/cg-no.txt" \
 		but -c maintenance.cummit-graph.auto=1 $COMMAND &&
-	GIT_TRACE2_EVENT="$(pwd)/cg-negative-means-yes.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/cg-negative-means-yes.txt" \
 		but -c maintenance.cummit-graph.auto="-1" $COMMAND &&
 
 	test_cummit first &&
 
-	GIT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
 		but -c maintenance.cummit-graph.auto=0 $COMMAND &&
-	GIT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
 		but -c maintenance.cummit-graph.auto=1 $COMMAND &&
 
 	but cummit --allow-empty -m "second" &&
 	but cummit --allow-empty -m "third" &&
 
-	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
 		but -c maintenance.cummit-graph.auto=2 $COMMAND &&
 
 	CUMMIT_GRAPH_WRITE="but cummit-graph write --split --reachable --no-progress" &&
@@ -151,7 +151,7 @@ test_expect_success 'prefetch multiple remotes' '
 	but -C clone2 switch -c two &&
 	test_cummit -C clone1 one &&
 	test_cummit -C clone2 two &&
-	GIT_TRACE2_EVENT="$(pwd)/run-prefetch.txt" but maintenance run --task=prefetch 2>/dev/null &&
+	BUT_TRACE2_EVENT="$(pwd)/run-prefetch.txt" but maintenance run --task=prefetch 2>/dev/null &&
 	fetchargs="--prefetch --prune --no-tags --no-write-fetch-head --recurse-submodules=no --quiet" &&
 	test_subcommand but fetch remote1 $fetchargs <run-prefetch.txt &&
 	test_subcommand but fetch remote2 $fetchargs <run-prefetch.txt &&
@@ -168,7 +168,7 @@ test_expect_success 'prefetch multiple remotes' '
 
 	test_when_finished but config --unset remote.remote1.skipFetchAll &&
 	but config remote.remote1.skipFetchAll true &&
-	GIT_TRACE2_EVENT="$(pwd)/skip-remote1.txt" but maintenance run --task=prefetch 2>/dev/null &&
+	BUT_TRACE2_EVENT="$(pwd)/skip-remote1.txt" but maintenance run --task=prefetch 2>/dev/null &&
 	test_subcommand ! but fetch remote1 $fetchargs <skip-remote1.txt &&
 	test_subcommand but fetch remote2 $fetchargs <skip-remote1.txt
 '
@@ -234,21 +234,21 @@ test_expect_success 'loose-objects task' '
 
 test_expect_success 'maintenance.loose-objects.auto' '
 	but repack -adk &&
-	GIT_TRACE2_EVENT="$(pwd)/trace-lo1.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/trace-lo1.txt" \
 		but -c maintenance.loose-objects.auto=1 maintenance \
 		run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand ! but prune-packed --quiet <trace-lo1.txt &&
 	printf data-A | but hash-object -t blob --stdin -w &&
-	GIT_TRACE2_EVENT="$(pwd)/trace-loA" \
+	BUT_TRACE2_EVENT="$(pwd)/trace-loA" \
 		but -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand ! but prune-packed --quiet <trace-loA &&
 	printf data-B | but hash-object -t blob --stdin -w &&
-	GIT_TRACE2_EVENT="$(pwd)/trace-loB" \
+	BUT_TRACE2_EVENT="$(pwd)/trace-loB" \
 		but -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand but prune-packed --quiet <trace-loB &&
-	GIT_TRACE2_EVENT="$(pwd)/trace-loC" \
+	BUT_TRACE2_EVENT="$(pwd)/trace-loC" \
 		but -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand but prune-packed --quiet <trace-loC
@@ -330,7 +330,7 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 	but maintenance run --task=loose-objects &&
 
 	# Now run the incremental-repack task and check the batch-size
-	GIT_TRACE2_EVENT="$(pwd)/run-2g.txt" but maintenance run \
+	BUT_TRACE2_EVENT="$(pwd)/run-2g.txt" but maintenance run \
 		--task=incremental-repack 2>/dev/null &&
 	test_subcommand but multi-pack-index repack \
 		 --no-progress --batch-size=2147483647 <run-2g.txt
@@ -340,7 +340,7 @@ run_incremental_repack_and_verify () {
 	test_cummit A &&
 	but repack -adk &&
 	but multi-pack-index write &&
-	GIT_TRACE2_EVENT="$(pwd)/midx-init.txt" but \
+	BUT_TRACE2_EVENT="$(pwd)/midx-init.txt" but \
 		-c maintenance.incremental-repack.auto=1 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! but multi-pack-index write --no-progress <midx-init.txt &&
@@ -349,7 +349,7 @@ run_incremental_repack_and_verify () {
 	HEAD
 	^HEAD~1
 	EOF
-	GIT_TRACE2_EVENT=$(pwd)/trace-A but \
+	BUT_TRACE2_EVENT=$(pwd)/trace-A but \
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! but multi-pack-index write --no-progress <trace-A &&
@@ -358,7 +358,7 @@ run_incremental_repack_and_verify () {
 	HEAD
 	^HEAD~1
 	EOF
-	GIT_TRACE2_EVENT=$(pwd)/trace-B but \
+	BUT_TRACE2_EVENT=$(pwd)/trace-B but \
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand but multi-pack-index write --no-progress <trace-B
@@ -389,7 +389,7 @@ test_expect_success 'pack-refs task' '
 	do
 		but branch -f to-pack/$n HEAD || return 1
 	done &&
-	GIT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
 		but maintenance run --task=pack-refs &&
 	test_subcommand but pack-refs --all --prune <pack-refs.txt
 '
@@ -412,21 +412,21 @@ test_expect_success '--schedule inheritance weekly -> daily -> hourly' '
 	but config maintenance.incremental-repack.enabled true &&
 	but config maintenance.incremental-repack.schedule weekly &&
 
-	GIT_TRACE2_EVENT="$(pwd)/hourly.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/hourly.txt" \
 		but maintenance run --schedule=hourly 2>/dev/null &&
 	test_subcommand but prune-packed --quiet <hourly.txt &&
 	test_subcommand ! but cummit-graph write --split --reachable \
 		--no-progress <hourly.txt &&
 	test_subcommand ! but multi-pack-index write --no-progress <hourly.txt &&
 
-	GIT_TRACE2_EVENT="$(pwd)/daily.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/daily.txt" \
 		but maintenance run --schedule=daily 2>/dev/null &&
 	test_subcommand but prune-packed --quiet <daily.txt &&
 	test_subcommand but cummit-graph write --split --reachable \
 		--no-progress <daily.txt &&
 	test_subcommand ! but multi-pack-index write --no-progress <daily.txt &&
 
-	GIT_TRACE2_EVENT="$(pwd)/weekly.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/weekly.txt" \
 		but maintenance run --schedule=weekly 2>/dev/null &&
 	test_subcommand but prune-packed --quiet <weekly.txt &&
 	test_subcommand but cummit-graph write --split --reachable \
@@ -443,11 +443,11 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_when_finished but config --unset maintenance.strategy &&
 	but config maintenance.strategy incremental &&
 
-	GIT_TRACE2_EVENT="$(pwd)/incremental-hourly.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/incremental-hourly.txt" \
 		but maintenance run --schedule=hourly --quiet &&
-	GIT_TRACE2_EVENT="$(pwd)/incremental-daily.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/incremental-daily.txt" \
 		but maintenance run --schedule=daily --quiet &&
-	GIT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
 		but maintenance run --schedule=weekly --quiet &&
 
 	test_subcommand but cummit-graph write --split --reachable \
@@ -479,9 +479,9 @@ test_expect_success 'maintenance.strategy inheritance' '
 	but config maintenance.loose-objects.schedule hourly &&
 	but config maintenance.incremental-repack.enabled false &&
 
-	GIT_TRACE2_EVENT="$(pwd)/modified-hourly.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/modified-hourly.txt" \
 		but maintenance run --schedule=hourly --quiet &&
-	GIT_TRACE2_EVENT="$(pwd)/modified-daily.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/modified-daily.txt" \
 		but maintenance run --schedule=daily --quiet &&
 
 	test_subcommand ! but cummit-graph write --split --reachable \
@@ -535,13 +535,13 @@ test_expect_success 'start --scheduler=<scheduler>' '
 	test_i18ngrep "unknown option" err &&
 
 	test_expect_code 128 \
-		env GIT_TEST_MAINT_SCHEDULER="launchctl:true,schtasks:true" \
+		env BUT_TEST_MAINT_SCHEDULER="launchctl:true,schtasks:true" \
 		but maintenance start --scheduler=crontab 2>err &&
 	test_i18ngrep "fatal: crontab scheduler is not available" err
 '
 
 test_expect_success 'start from empty cron table' '
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance start --scheduler=crontab &&
+	BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance start --scheduler=crontab &&
 
 	# start registers the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -552,34 +552,34 @@ test_expect_success 'start from empty cron table' '
 '
 
 test_expect_success 'stop from existing schedule' '
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
 
 	# stop does not unregister the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
 	# Operation is idempotent
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
 	test_must_be_empty cron.txt
 '
 
 test_expect_success 'start preserves existing schedule' '
 	echo "Important information!" >cron.txt &&
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance start --scheduler=crontab &&
+	BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance start --scheduler=crontab &&
 	grep "Important information!" cron.txt
 '
 
 test_expect_success 'magic markers are correct' '
-	grep "GIT MAINTENANCE SCHEDULE" cron.txt >actual &&
+	grep "BUT MAINTENANCE SCHEDULE" cron.txt >actual &&
 	cat >expect <<-\EOF &&
-	# BEGIN GIT MAINTENANCE SCHEDULE
-	# END GIT MAINTENANCE SCHEDULE
+	# BEGIN BUT MAINTENANCE SCHEDULE
+	# END BUT MAINTENANCE SCHEDULE
 	EOF
 	test_cmp actual expect
 '
 
 test_expect_success 'stop preserves surrounding schedule' '
 	echo "Crucial information!" >>cron.txt &&
-	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" but maintenance stop &&
 	grep "Important information!" cron.txt &&
 	grep "Crucial information!" cron.txt
 '
@@ -593,7 +593,7 @@ test_expect_success 'start and stop macOS maintenance' '
 	EOF
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
+	BUT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
 
 	# start registers the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -618,7 +618,7 @@ test_expect_success 'start and stop macOS maintenance' '
 	test_cmp expect args &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance stop &&
 
 	# stop does not unregister the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -632,11 +632,11 @@ test_expect_success 'start and stop macOS maintenance' '
 
 test_expect_success 'use launchctl list to prevent extra work' '
 	# ensure we are registered
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
+	BUT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
 
 	# do it again on a fresh args file
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
+	BUT_TEST_MAINT_SCHEDULER=launchctl:./print-args but maintenance start --scheduler=launchctl &&
 
 	ls "$HOME/Library/LaunchAgents" >actual &&
 	cat >expect <<-\EOF &&
@@ -661,7 +661,7 @@ test_expect_success 'start and stop Windows maintenance' '
 	EOF
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="schtasks:./print-args" but maintenance start --scheduler=schtasks &&
+	BUT_TEST_MAINT_SCHEDULER="schtasks:./print-args" but maintenance start --scheduler=schtasks &&
 
 	# start registers the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -674,7 +674,7 @@ test_expect_success 'start and stop Windows maintenance' '
 	done &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="schtasks:./print-args" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="schtasks:./print-args" but maintenance stop &&
 
 	# stop does not unregister the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -692,7 +692,7 @@ test_expect_success 'start and stop Linux/systemd maintenance' '
 	XDG_CONFIG_HOME="$PWD" &&
 	export XDG_CONFIG_HOME &&
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args" but maintenance start --scheduler=systemd-timer &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args" but maintenance start --scheduler=systemd-timer &&
 
 	# start registers the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -703,7 +703,7 @@ test_expect_success 'start and stop Linux/systemd maintenance' '
 	test_cmp expect args &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args" but maintenance stop &&
 
 	# stop does not unregister the repo
 	but config --get --global --fixed-value maintenance.repo "$(pwd)" &&
@@ -721,7 +721,7 @@ test_expect_success 'start and stop when several schedulers are available' '
 	EOF
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=systemd-timer &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=systemd-timer &&
 	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.but-scm.but.%s.plist\n" \
 		hourly daily weekly >expect &&
 	printf "schtasks /delete /tn Git Maintenance (%s) /f\n" \
@@ -730,7 +730,7 @@ test_expect_success 'start and stop when several schedulers are available' '
 	test_cmp expect args &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=launchctl &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=launchctl &&
 	printf -- "systemctl --user disable --now but-maintenance@%s.timer\n" hourly daily weekly >expect &&
 	printf "schtasks /delete /tn Git Maintenance (%s) /f\n" \
 		hourly daily weekly >>expect &&
@@ -743,7 +743,7 @@ test_expect_success 'start and stop when several schedulers are available' '
 	test_cmp expect args &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=schtasks &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance start --scheduler=schtasks &&
 	printf -- "systemctl --user disable --now but-maintenance@%s.timer\n" hourly daily weekly >expect &&
 	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.but-scm.but.%s.plist\n" \
 		hourly daily weekly >>expect &&
@@ -752,7 +752,7 @@ test_expect_success 'start and stop when several schedulers are available' '
 	test_cmp expect args &&
 
 	rm -f args &&
-	GIT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance stop &&
+	BUT_TEST_MAINT_SCHEDULER="systemctl:./print-args systemctl,launchctl:./print-args launchctl,schtasks:./print-args schtasks" but maintenance stop &&
 	printf -- "systemctl --user disable --now but-maintenance@%s.timer\n" hourly daily weekly >expect &&
 	printf "launchctl bootout gui/[UID] $pfx/Library/LaunchAgents/org.but-scm.but.%s.plist\n" \
 		hourly daily weekly >>expect &&

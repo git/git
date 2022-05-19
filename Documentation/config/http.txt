@@ -13,7 +13,7 @@ http.proxyAuthMethod::
 	only takes effect if the configured proxy string contains a user name part
 	(i.e. is of the form 'user@host' or 'user@host:port'). This can be
 	overridden on a per-remote basis; see `remote.<name>.proxyAuthMethod`.
-	Both can be overridden by the `GIT_HTTP_PROXY_AUTHMETHOD` environment
+	Both can be overridden by the `BUT_HTTP_PROXY_AUTHMETHOD` environment
 	variable.  Possible values are:
 +
 --
@@ -31,24 +31,24 @@ http.proxyAuthMethod::
 
 http.proxySSLCert::
 	The pathname of a file that stores a client certificate to use to authenticate
-	with an HTTPS proxy. Can be overridden by the `GIT_PROXY_SSL_CERT` environment
+	with an HTTPS proxy. Can be overridden by the `BUT_PROXY_SSL_CERT` environment
 	variable.
 
 http.proxySSLKey::
 	The pathname of a file that stores a private key to use to authenticate with
-	an HTTPS proxy. Can be overridden by the `GIT_PROXY_SSL_KEY` environment
+	an HTTPS proxy. Can be overridden by the `BUT_PROXY_SSL_KEY` environment
 	variable.
 
 http.proxySSLCertPasswordProtected::
 	Enable Git's password prompt for the proxy SSL certificate.  Otherwise OpenSSL
 	will prompt the user, possibly many times, if the certificate or private key
-	is encrypted. Can be overridden by the `GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED`
+	is encrypted. Can be overridden by the `BUT_PROXY_SSL_CERT_PASSWORD_PROTECTED`
 	environment variable.
 
 http.proxySSLCAInfo::
 	Pathname to the file containing the certificate bundle that should be used to
 	verify the proxy with when using an HTTPS proxy. Can be overridden by the
-	`GIT_PROXY_SSL_CAINFO` environment variable.
+	`BUT_PROXY_SSL_CAINFO` environment variable.
 
 http.emptyAuth::
 	Attempt authentication without seeking a username or password.  This
@@ -117,9 +117,9 @@ http.sslVersion::
 	- tlsv1.3
 
 +
-Can be overridden by the `GIT_SSL_VERSION` environment variable.
+Can be overridden by the `BUT_SSL_VERSION` environment variable.
 To force but to use libcurl's default ssl version and ignore any
-explicit http.sslversion option, set `GIT_SSL_VERSION` to the
+explicit http.sslversion option, set `BUT_SSL_VERSION` to the
 empty string.
 
 http.sslCipherList::
@@ -130,41 +130,41 @@ http.sslCipherList::
   option; see the libcurl documentation for more details on the format
   of this list.
 +
-Can be overridden by the `GIT_SSL_CIPHER_LIST` environment variable.
+Can be overridden by the `BUT_SSL_CIPHER_LIST` environment variable.
 To force but to use libcurl's default cipher list and ignore any
-explicit http.sslCipherList option, set `GIT_SSL_CIPHER_LIST` to the
+explicit http.sslCipherList option, set `BUT_SSL_CIPHER_LIST` to the
 empty string.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
 	over HTTPS. Defaults to true. Can be overridden by the
-	`GIT_SSL_NO_VERIFY` environment variable.
+	`BUT_SSL_NO_VERIFY` environment variable.
 
 http.sslCert::
 	File containing the SSL certificate when fetching or pushing
-	over HTTPS. Can be overridden by the `GIT_SSL_CERT` environment
+	over HTTPS. Can be overridden by the `BUT_SSL_CERT` environment
 	variable.
 
 http.sslKey::
 	File containing the SSL private key when fetching or pushing
-	over HTTPS. Can be overridden by the `GIT_SSL_KEY` environment
+	over HTTPS. Can be overridden by the `BUT_SSL_KEY` environment
 	variable.
 
 http.sslCertPasswordProtected::
 	Enable Git's password prompt for the SSL certificate.  Otherwise
 	OpenSSL will prompt the user, possibly many times, if the
 	certificate or private key is encrypted.  Can be overridden by the
-	`GIT_SSL_CERT_PASSWORD_PROTECTED` environment variable.
+	`BUT_SSL_CERT_PASSWORD_PROTECTED` environment variable.
 
 http.sslCAInfo::
 	File containing the certificates to verify the peer with when
 	fetching or pushing over HTTPS. Can be overridden by the
-	`GIT_SSL_CAINFO` environment variable.
+	`BUT_SSL_CAINFO` environment variable.
 
 http.sslCAPath::
 	Path containing files with the CA certificates to verify the peer
 	with when fetching or pushing over HTTPS. Can be overridden
-	by the `GIT_SSL_CAPATH` environment variable.
+	by the `BUT_SSL_CAPATH` environment variable.
 
 http.sslBackend::
 	Name of the SSL backend to use (e.g. "openssl" or "schannel").
@@ -205,7 +205,7 @@ http.sslTry::
 
 http.maxRequests::
 	How many HTTP requests to launch in parallel. Can be overridden
-	by the `GIT_HTTP_MAX_REQUESTS` environment variable. Default is 5.
+	by the `BUT_HTTP_MAX_REQUESTS` environment variable. Default is 5.
 
 http.minSessions::
 	The number of curl sessions (counted across slots) to be kept across
@@ -232,13 +232,13 @@ pushes.
 http.lowSpeedLimit, http.lowSpeedTime::
 	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
 	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
-	Can be overridden by the `GIT_HTTP_LOW_SPEED_LIMIT` and
-	`GIT_HTTP_LOW_SPEED_TIME` environment variables.
+	Can be overridden by the `BUT_HTTP_LOW_SPEED_LIMIT` and
+	`BUT_HTTP_LOW_SPEED_TIME` environment variables.
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
 	This can helpful with some "poor" ftp servers which don't
-	support EPSV mode. Can be overridden by the `GIT_CURL_FTP_NO_EPSV`
+	support EPSV mode. Can be overridden by the `BUT_CURL_FTP_NO_EPSV`
 	environment variable. Default is false (curl will use EPSV).
 
 http.userAgent::
@@ -248,7 +248,7 @@ http.userAgent::
 	such as Mozilla/4.0.  This may be necessary, for instance, if
 	connecting through a firewall that restricts HTTP connections to a set
 	of common USER_AGENT strings (but not including those like but/1.7.1).
-	Can be overridden by the `GIT_HTTP_USER_AGENT` environment variable.
+	Can be overridden by the `BUT_HTTP_USER_AGENT` environment variable.
 
 http.followRedirects::
 	Whether but should follow HTTP redirects. If set to `true`, but

@@ -129,7 +129,7 @@ int is_executable(const char *name)
 	    !S_ISREG(st.st_mode))
 		return 0;
 
-#if defined(GIT_WINDOWS_NATIVE)
+#if defined(BUT_WINDOWS_NATIVE)
 	/*
 	 * On Windows there is no executable bit. The file extension
 	 * indicates whether it can be run as an executable, and Git
@@ -222,7 +222,7 @@ int exists_in_PATH(const char *command)
 
 int sane_execvp(const char *file, char * const argv[])
 {
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 	/*
 	 * execvp() doesn't return, so we all we can do is tell trace2
 	 * what we are about to do and let it leave a hint in the log
@@ -237,7 +237,7 @@ int sane_execvp(const char *file, char * const argv[])
 	if (!execvp(file, argv))
 		return 0; /* cannot happen ;-) */
 
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 	{
 		int ec = errno;
 		trace2_exec_result(exec_id, ec);
@@ -271,7 +271,7 @@ static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 		strvec_push(out, SHELL_PATH);
 #else
 		strvec_push(out, "sh");
@@ -292,7 +292,7 @@ static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 	return out->v;
 }
 
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 static int child_notifier = -1;
 
 enum child_errcode {
@@ -527,7 +527,7 @@ static void atfork_parent(struct atfork_state *as)
 		"restoring signal mask");
 #endif
 }
-#endif /* GIT_WINDOWS_NATIVE */
+#endif /* BUT_WINDOWS_NATIVE */
 
 static inline void set_cloexec(int fd)
 {
@@ -726,7 +726,7 @@ fail_pipe:
 	if (cmd->close_object_store)
 		close_object_store(the_repository->objects);
 
-#ifndef GIT_WINDOWS_NATIVE
+#ifndef BUT_WINDOWS_NATIVE
 {
 	int notify_pipe[2];
 	int null_fd = -1;
@@ -1022,7 +1022,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	strvec_pushv(&cmd.args, argv);
 	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
-	cmd.but_cmd = opt & RUN_GIT_CMD ? 1 : 0;
+	cmd.but_cmd = opt & RUN_BUT_CMD ? 1 : 0;
 	cmd.stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
 	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
@@ -1466,9 +1466,9 @@ int pipe_command(struct child_process *cmd,
 }
 
 enum child_state {
-	GIT_CP_FREE,
-	GIT_CP_WORKING,
-	GIT_CP_WAIT_CLEANUP,
+	BUT_CP_FREE,
+	BUT_CP_WORKING,
+	BUT_CP_WAIT_CLEANUP,
 };
 
 struct parallel_processes {
@@ -1519,7 +1519,7 @@ static void kill_children(struct parallel_processes *pp, int signo)
 	int i, n = pp->max_processes;
 
 	for (i = 0; i < n; i++)
-		if (pp->children[i].state == GIT_CP_WORKING)
+		if (pp->children[i].state == BUT_CP_WORKING)
 			kill(pp->children[i].process.pid, signo);
 }
 
@@ -1609,7 +1609,7 @@ static int pp_start_one(struct parallel_processes *pp)
 	int i, code;
 
 	for (i = 0; i < pp->max_processes; i++)
-		if (pp->children[i].state == GIT_CP_FREE)
+		if (pp->children[i].state == BUT_CP_FREE)
 			break;
 	if (i == pp->max_processes)
 		BUG("bookkeeping is hard");
@@ -1639,7 +1639,7 @@ static int pp_start_one(struct parallel_processes *pp)
 	}
 
 	pp->nr_processes++;
-	pp->children[i].state = GIT_CP_WORKING;
+	pp->children[i].state = BUT_CP_WORKING;
 	pp->pfd[i].fd = pp->children[i].process.err;
 	return 0;
 }
@@ -1657,13 +1657,13 @@ static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
 
 	/* Buffer output from all pipes. */
 	for (i = 0; i < pp->max_processes; i++) {
-		if (pp->children[i].state == GIT_CP_WORKING &&
+		if (pp->children[i].state == BUT_CP_WORKING &&
 		    pp->pfd[i].revents & (POLLIN | POLLHUP)) {
 			int n = strbuf_read_once(&pp->children[i].err,
 						 pp->children[i].process.err, 0);
 			if (n == 0) {
 				close(pp->children[i].process.err);
-				pp->children[i].state = GIT_CP_WAIT_CLEANUP;
+				pp->children[i].state = BUT_CP_WAIT_CLEANUP;
 			} else if (n < 0)
 				if (errno != EAGAIN)
 					die_errno("read");
@@ -1674,7 +1674,7 @@ static void pp_buffer_stderr(struct parallel_processes *pp, int output_timeout)
 static void pp_output(struct parallel_processes *pp)
 {
 	int i = pp->output_owner;
-	if (pp->children[i].state == GIT_CP_WORKING &&
+	if (pp->children[i].state == BUT_CP_WORKING &&
 	    pp->children[i].err.len) {
 		strbuf_write(&pp->children[i].err, stderr);
 		strbuf_reset(&pp->children[i].err);
@@ -1689,7 +1689,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 
 	while (pp->nr_processes > 0) {
 		for (i = 0; i < pp->max_processes; i++)
-			if (pp->children[i].state == GIT_CP_WAIT_CLEANUP)
+			if (pp->children[i].state == BUT_CP_WAIT_CLEANUP)
 				break;
 		if (i == pp->max_processes)
 			break;
@@ -1706,7 +1706,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 			break;
 
 		pp->nr_processes--;
-		pp->children[i].state = GIT_CP_FREE;
+		pp->children[i].state = BUT_CP_FREE;
 		pp->pfd[i].fd = -1;
 		child_process_init(&pp->children[i].process);
 
@@ -1730,7 +1730,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 			 * running process time.
 			 */
 			for (i = 0; i < n; i++)
-				if (pp->children[(pp->output_owner + i) % n].state == GIT_CP_WORKING)
+				if (pp->children[(pp->output_owner + i) % n].state == BUT_CP_WORKING)
 					break;
 			pp->output_owner = (pp->output_owner + i) % n;
 		}
@@ -1824,7 +1824,7 @@ void prepare_other_repo_env(struct strvec *env_array, const char *new_but_dir)
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(env_array, *var);
 	}
-	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_but_dir);
+	strvec_pushf(env_array, "%s=%s", BUT_DIR_ENVIRONMENT, new_but_dir);
 }
 
 enum start_bg_result start_bg_command(struct child_process *cmd,

@@ -2452,7 +2452,7 @@ msgstr "%s %s non è un cummit!"
 
 #: cummit.c:194
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2461,7 +2461,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"Il supporto per <GIT_DIR>/info/graft è deprecato\n"
+"Il supporto per <BUT_DIR>/info/graft è deprecato\n"
 "e sarà rimosso in una versione futura di Git.\n"
 "\n"
 "Usa \"but replace --convert-graft-file\"\n"
@@ -3974,8 +3974,8 @@ msgstr "percorso spazio dei nomi but \"%s\" non valido"
 
 #: environment.c:337
 #, c-format
-msgid "could not set GIT_DIR to '%s'"
-msgstr "impossibile impostare GIT_DIR a '%s'"
+msgid "could not set BUT_DIR to '%s'"
+msgstr "impossibile impostare BUT_DIR a '%s'"
 
 #: exec-cmd.c:363
 #, c-format
@@ -5686,10 +5686,10 @@ msgstr ""
 #: read-cache.c:1649
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION impostato, ma il valore non è valido.\n"
+"BUT_INDEX_VERSION impostato, ma il valore non è valido.\n"
 "Uso la versione %i"
 
 #: read-cache.c:1705
@@ -6933,16 +6933,16 @@ msgid "could not open '%s' for reading"
 msgstr "impossibile aprire '%s' in lettura"
 
 #: sequencer.c:809
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "'GIT_AUTHOR_NAME' già specificato"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "'BUT_AUTHOR_NAME' già specificato"
 
 #: sequencer.c:814
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "'GIT_AUTHOR_EMAIL' già specificato"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "'BUT_AUTHOR_EMAIL' già specificato"
 
 #: sequencer.c:819
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "'GIT_AUTHOR_DATE' già specificato"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "'BUT_AUTHOR_DATE' già specificato"
 
 #: sequencer.c:823
 #, c-format
@@ -6950,16 +6950,16 @@ msgid "unknown variable '%s'"
 msgstr "variabile '%s' sconosciuta"
 
 #: sequencer.c:828
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "'GIT_AUTHOR_NAME' mancante"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "'BUT_AUTHOR_NAME' mancante"
 
 #: sequencer.c:830
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "'GIT_AUTHOR_EMAIL' mancante"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "'BUT_AUTHOR_EMAIL' mancante"
 
 #: sequencer.c:832
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "'GIT_AUTHOR_DATE' mancante"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "'BUT_AUTHOR_DATE' mancante"
 
 #: sequencer.c:897
 #, c-format
@@ -7875,10 +7875,10 @@ msgstr "%s non è un repository Git (né lo è alcuna delle directory genitrici)
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "non è un repository Git (né lo è alcun genitore fino al punto di mount %s)\n"
-"Mi fermo al limite del filesystem (l'opzione GIT_DISCOVERY_ACROSS_FILESYSTEM "
+"Mi fermo al limite del filesystem (l'opzione BUT_DISCOVERY_ACROSS_FILESYSTEM "
 "non è impostata)."
 
 #: setup.c:1362
@@ -10106,8 +10106,8 @@ msgid "could not parse patch '%s'"
 msgstr "impossibile analizzare la patch '%s'"
 
 #: builtin/am.c:809
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Può essere applicata solo una serie di patch StGIT per volta"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Può essere applicata solo una serie di patch StBUT per volta"
 
 #: builtin/am.c:857
 msgid "invalid timestamp"
@@ -25679,13 +25679,13 @@ msgstr "Apertura di %s in scrittura non riuscita: %s"
 
 #: but-send-email.perl:747
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"Le righe che iniziano con \"GIT:\" saranno rimosse.\n"
+"Le righe che iniziano con \"BUT:\" saranno rimosse.\n"
 "Valuta di includere un diffstat globale o un sommario per\n"
 "la patch che stai scrivendo.\n"
 "\n"

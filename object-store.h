@@ -116,7 +116,7 @@ struct packed_but {
 		 do_not_close:1,
 		 pack_promisor:1,
 		 multi_pack_index:1;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
 	const uint32_t *revindex_data;
 	const uint32_t *revindex_map;

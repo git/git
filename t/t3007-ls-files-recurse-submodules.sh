@@ -35,13 +35,13 @@ test_expect_success 'ls-files correctly outputs files in submodule' '
 '
 
 test_expect_success '--stage' '
-	GITMODULES_HASH=$(but rev-parse HEAD:.butmodules) &&
+	BUTMODULES_HASH=$(but rev-parse HEAD:.butmodules) &&
 	A_HASH=$(but rev-parse HEAD:a) &&
 	B_HASH=$(but rev-parse HEAD:b/b) &&
 	C_HASH=$(but -C submodule rev-parse HEAD:c) &&
 
 	cat >expect <<-EOF &&
-	100644 $GITMODULES_HASH 0	.butmodules
+	100644 $BUTMODULES_HASH 0	.butmodules
 	100644 $A_HASH 0	a
 	100644 $B_HASH 0	b/b
 	100644 $C_HASH 0	submodule/c
@@ -99,7 +99,7 @@ test_expect_success 'ls-files recurses more than 1 level' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ls-files works with GIT_DIR' '
+test_expect_success 'ls-files works with BUT_DIR' '
 	cat >expect <<-\EOF &&
 	.butmodules
 	c

@@ -35,28 +35,28 @@
 #
 # The prompt status always includes the current branch name.
 #
-# In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty value,
+# In addition, if you set BUT_PS1_SHOWDIRTYSTATE to a nonempty value,
 # unstaged (*) and staged (+) changes will be shown next to the branch
 # name.  You can configure this per-repository with the
 # bash.showDirtyState variable, which defaults to true once
-# GIT_PS1_SHOWDIRTYSTATE is enabled.
+# BUT_PS1_SHOWDIRTYSTATE is enabled.
 #
 # You can also see if currently something is stashed, by setting
-# GIT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
+# BUT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
 # then a '$' will be shown next to the branch name.
 #
 # If you would like to see if there're untracked files, then you can set
-# GIT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're untracked
+# BUT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're untracked
 # files, then a '%' will be shown next to the branch name.  You can
 # configure this per-repository with the bash.showUntrackedFiles
-# variable, which defaults to true once GIT_PS1_SHOWUNTRACKEDFILES is
+# variable, which defaults to true once BUT_PS1_SHOWUNTRACKEDFILES is
 # enabled.
 #
 # If you would like to see the difference between HEAD and its upstream,
-# set GIT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
+# set BUT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
 # indicates you are ahead, "<>" indicates you have diverged and "="
 # indicates that there is no difference. You can further control
-# behaviour by setting GIT_PS1_SHOWUPSTREAM to a space-separated list
+# behaviour by setting BUT_PS1_SHOWUPSTREAM to a space-separated list
 # of values:
 #
 #     verbose       show number of cummits ahead/behind (+/-) upstream
@@ -68,11 +68,11 @@
 #
 # By default, __but_ps1 will compare HEAD to your SVN upstream if it can
 # find one, or @{upstream} otherwise.  Once you have set
-# GIT_PS1_SHOWUPSTREAM, you can override it on a per-repository basis by
+# BUT_PS1_SHOWUPSTREAM, you can override it on a per-repository basis by
 # setting the bash.showUpstream config variable.
 #
 # You can change the separator between the branch name and the above
-# state symbols by setting GIT_PS1_STATESEPARATOR. The default separator
+# state symbols by setting BUT_PS1_STATESEPARATOR. The default separator
 # is SP.
 #
 # When there is an in-progress operation such as a merge, rebase,
@@ -81,11 +81,11 @@
 #
 # When the repository has a sparse-checkout, a notification of the form
 # "|SPARSE" will be included in the prompt.  This can be shortened to a
-# single '?' character by setting GIT_PS1_COMPRESSSPARSESTATE, or omitted
-# by setting GIT_PS1_OMITSPARSESTATE.
+# single '?' character by setting BUT_PS1_COMPRESSSPARSESTATE, or omitted
+# by setting BUT_PS1_OMITSPARSESTATE.
 #
 # If you would like to see more information about the identity of
-# cummits checked out as a detached HEAD, set GIT_PS1_DESCRIBE_STYLE
+# cummits checked out as a detached HEAD, set BUT_PS1_DESCRIBE_STYLE
 # to one of these values:
 #
 #     contains      relative to newer annotated tag (v1.6.3.2~35)
@@ -95,14 +95,14 @@
 #     default       exactly matching tag
 #
 # If you would like a colored hint about the current dirty state, set
-# GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
+# BUT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
 # the colored output of "but status -sb" and are available only when
 # using __but_ps1 for PROMPT_COMMAND or precmd in Bash,
 # but always available in Zsh.
 #
 # If you would like __but_ps1 to do nothing in the case when the current
 # directory is set up to be ignored by but, then set
-# GIT_PS1_HIDE_IF_PWD_IGNORED to a nonempty value. Override this on the
+# BUT_PS1_HIDE_IF_PWD_IGNORED to a nonempty value. Override this on the
 # repository level by setting bash.hideIfPwdIgnored to "false".
 
 # check whether printf supports -v
@@ -110,7 +110,7 @@ __but_printf_supports_v=
 printf -v __but_printf_supports_v -- '%s' yes >/dev/null 2>&1
 
 # stores the divergence from upstream in $p
-# used by GIT_PS1_SHOWUPSTREAM
+# used by BUT_PS1_SHOWUPSTREAM
 __but_ps1_show_upstream ()
 {
 	local key value
@@ -123,8 +123,8 @@ __but_ps1_show_upstream ()
 	while read -r key value; do
 		case "$key" in
 		bash.showupstream)
-			GIT_PS1_SHOWUPSTREAM="$value"
-			if [[ -z "${GIT_PS1_SHOWUPSTREAM}" ]]; then
+			BUT_PS1_SHOWUPSTREAM="$value"
+			if [[ -z "${BUT_PS1_SHOWUPSTREAM}" ]]; then
 				p=""
 				return
 			fi
@@ -139,7 +139,7 @@ __but_ps1_show_upstream ()
 
 	# parse configuration values
 	local option
-	for option in ${GIT_PS1_SHOWUPSTREAM}; do
+	for option in ${BUT_PS1_SHOWUPSTREAM}; do
 		case "$option" in
 		but|svn) upstream_type="$option" ;;
 		verbose) verbose=1 ;;
@@ -167,7 +167,7 @@ __but_ps1_show_upstream ()
 
 			if [[ -z "$svn_upstream" ]]; then
 				# default branch name for checkouts with no layout:
-				upstream_type=${GIT_SVN_ID:-but-svn}
+				upstream_type=${BUT_SVN_ID:-but-svn}
 			else
 				upstream_type=${svn_upstream#/}
 			fi
@@ -338,7 +338,7 @@ __but_sequencer_status ()
 # to the state string when assigned to PS1.
 # The optional third parameter will be used as printf format string to further
 # customize the output of the but-status string.
-# In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
+# In this mode you can request colored hints using BUT_PS1_SHOWCOLORHINTS=true
 __but_ps1 ()
 {
 	# preserve exit status
@@ -425,7 +425,7 @@ __but_ps1 ()
 	local g="${repo_info%$'\n'*}"
 
 	if [ "true" = "$inside_worktree" ] &&
-	   [ -n "${GIT_PS1_HIDE_IF_PWD_IGNORED-}" ] &&
+	   [ -n "${BUT_PS1_HIDE_IF_PWD_IGNORED-}" ] &&
 	   [ "$(but config --bool bash.hideIfPwdIgnored)" != "false" ] &&
 	   but check-ignore -q .
 	then
@@ -433,8 +433,8 @@ __but_ps1 ()
 	fi
 
 	local sparse=""
-	if [ -z "${GIT_PS1_COMPRESSSPARSESTATE-}" ] &&
-	   [ -z "${GIT_PS1_OMITSPARSESTATE-}" ] &&
+	if [ -z "${BUT_PS1_COMPRESSSPARSESTATE-}" ] &&
+	   [ -z "${BUT_PS1_OMITSPARSESTATE-}" ] &&
 	   [ "$(but config --bool core.sparseCheckout)" = "true" ]; then
 		sparse="|SPARSE"
 	fi
@@ -483,7 +483,7 @@ __but_ps1 ()
 			if [ "$head" = "$b" ]; then
 				detached=yes
 				b="$(
-				case "${GIT_PS1_DESCRIBE_STYLE-}" in
+				case "${BUT_PS1_DESCRIBE_STYLE-}" in
 				(contains)
 					but describe --contains HEAD ;;
 				(branch)
@@ -519,10 +519,10 @@ __but_ps1 ()
 		if [ "true" = "$bare_repo" ]; then
 			c="BARE:"
 		else
-			b="GIT_DIR!"
+			b="BUT_DIR!"
 		fi
 	elif [ "true" = "$inside_worktree" ]; then
-		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
+		if [ -n "${BUT_PS1_SHOWDIRTYSTATE-}" ] &&
 		   [ "$(but config --bool bash.showDirtyState)" != "false" ]
 		then
 			but diff --no-ext-diff --quiet || w="*"
@@ -531,33 +531,33 @@ __but_ps1 ()
 				i="#"
 			fi
 		fi
-		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ] &&
+		if [ -n "${BUT_PS1_SHOWSTASHSTATE-}" ] &&
 		   but rev-parse --verify --quiet refs/stash >/dev/null
 		then
 			s="$"
 		fi
 
-		if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
+		if [ -n "${BUT_PS1_SHOWUNTRACKEDFILES-}" ] &&
 		   [ "$(but config --bool bash.showUntrackedFiles)" != "false" ] &&
 		   but ls-files --others --exclude-standard --directory --no-empty-directory --error-unmatch -- ':/*' >/dev/null 2>/dev/null
 		then
 			u="%${ZSH_VERSION+%}"
 		fi
 
-		if [ -n "${GIT_PS1_COMPRESSSPARSESTATE-}" ] &&
+		if [ -n "${BUT_PS1_COMPRESSSPARSESTATE-}" ] &&
 		   [ "$(but config --bool core.sparseCheckout)" = "true" ]; then
 			h="?"
 		fi
 
-		if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
+		if [ -n "${BUT_PS1_SHOWUPSTREAM-}" ]; then
 			__but_ps1_show_upstream
 		fi
 	fi
 
-	local z="${GIT_PS1_STATESEPARATOR-" "}"
+	local z="${BUT_PS1_STATESEPARATOR-" "}"
 
 	# NO color option unless in PROMPT_COMMAND mode or it's Zsh
-	if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
+	if [ -n "${BUT_PS1_SHOWCOLORHINTS-}" ]; then
 		if [ $pcmode = yes ] || [ -n "${ZSH_VERSION-}" ]; then
 			__but_ps1_colorize_butstring
 		fi

@@ -149,7 +149,7 @@ those files, which makes a sparse checkout helpful when working in a
 repository with many files, but only a few are important to the current
 user.
 
-The `$GIT_DIR/info/sparse-checkout` file is used to define the
+The `$BUT_DIR/info/sparse-checkout` file is used to define the
 skip-worktree reference bitmap. When Git updates the working
 directory, it updates the skip-worktree bits in the index based
 on this file. The files matching the patterns in the file will
@@ -168,7 +168,7 @@ FULL PATTERN SET
 By default, the sparse-checkout file uses the same syntax as `.butignore`
 files.
 
-While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
+While `$BUT_DIR/info/sparse-checkout` is usually used to specify what
 files are included, you can also specify what files are _not_ included,
 using negative patterns. For example, to remove the file `unwanted`:
 
@@ -294,6 +294,6 @@ SEE ALSO
 linkbut:but-read-tree[1]
 linkbut:butignore[5]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

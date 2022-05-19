@@ -51,27 +51,27 @@ test_expect_success 'but merge-index but-merge-one-file resolves' '
 test_expect_success 'setup bare merge' '
 	but clone --bare . bare.but &&
 	(cd bare.but &&
-	 GIT_INDEX_FILE=$PWD/merge.index &&
-	 export GIT_INDEX_FILE &&
+	 BUT_INDEX_FILE=$PWD/merge.index &&
+	 export BUT_INDEX_FILE &&
 	 but read-tree -i -m base ten two
 	)
 '
 
 test_expect_success 'merge-one-file fails without a work tree' '
 	(cd bare.but &&
-	 GIT_INDEX_FILE=$PWD/merge.index &&
-	 export GIT_INDEX_FILE &&
+	 BUT_INDEX_FILE=$PWD/merge.index &&
+	 export BUT_INDEX_FILE &&
 	 test_must_fail but merge-index but-merge-one-file -a
 	)
 '
 
-test_expect_success 'merge-one-file respects GIT_WORK_TREE' '
+test_expect_success 'merge-one-file respects BUT_WORK_TREE' '
 	(cd bare.but &&
 	 mkdir work &&
-	 GIT_WORK_TREE=$PWD/work &&
-	 export GIT_WORK_TREE &&
-	 GIT_INDEX_FILE=$PWD/merge.index &&
-	 export GIT_INDEX_FILE &&
+	 BUT_WORK_TREE=$PWD/work &&
+	 export BUT_WORK_TREE &&
+	 BUT_INDEX_FILE=$PWD/merge.index &&
+	 export BUT_INDEX_FILE &&
 	 but merge-index but-merge-one-file -a &&
 	 but cat-file blob :file >work/file-index
 	) &&
@@ -83,8 +83,8 @@ test_expect_success 'merge-one-file respects core.worktree' '
 	mkdir subdir &&
 	but clone . subdir/child &&
 	(cd subdir &&
-	 GIT_DIR=$PWD/child/.but &&
-	 export GIT_DIR &&
+	 BUT_DIR=$PWD/child/.but &&
+	 export BUT_DIR &&
 	 but config core.worktree "$PWD/child" &&
 	 but read-tree -i -m base ten two &&
 	 but merge-index but-merge-one-file -a &&

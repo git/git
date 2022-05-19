@@ -198,7 +198,7 @@ notes for details).
    directory that the repository is in.
 
  * The ssh transport, just like any other transport over the network,
-   did not clear GIT_* environment variables, but it is possible to
+   did not clear BUT_* environment variables, but it is possible to
    use SendEnv and AcceptEnv to leak them to the remote invocation of
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.
@@ -257,7 +257,7 @@ notes for details).
  * It was not possible to use a repository-lookalike created by "but
    worktree add" as a local source of "but clone".
 
- * On a case insensitive filesystems, setting GIT_WORK_TREE variable
+ * On a case insensitive filesystems, setting BUT_WORK_TREE variable
    using a random cases that does not agree with what the filesystem
    thinks confused Git that it wasn't inside the working tree.
 
@@ -273,7 +273,7 @@ notes for details).
    in UTF-16 without UTF-16 BOM.
 
  * When "but gc --auto" is backgrounded, its diagnosis message is
-   lost.  Save it to a file in $GIT_DIR and show it next time the "gc
+   lost.  Save it to a file in $BUT_DIR and show it next time the "gc
    --auto" is run.
 
  * The submodule code has been taught to work better with separate

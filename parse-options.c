@@ -871,7 +871,7 @@ int parse_options(int argc, const char **argv,
 	struct option *real_options;
 
 	disallow_abbreviated_options =
-		but_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
+		but_env_bool("BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
 
 	memset(&ctx, 0, sizeof(ctx));
 	real_options = preprocess_options(&ctx, options);

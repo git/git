@@ -36,9 +36,9 @@ test_expect_success '"soft" reset is ok' '
 	(cd .but && but reset --soft)
 '
 
-test_expect_success 'hard reset works with GIT_WORK_TREE' '
+test_expect_success 'hard reset works with BUT_WORK_TREE' '
 	mkdir worktree &&
-	GIT_WORK_TREE=$PWD/worktree GIT_DIR=$PWD/.but but reset --hard &&
+	BUT_WORK_TREE=$PWD/worktree BUT_DIR=$PWD/.but but reset --hard &&
 	test_cmp file worktree/file
 '
 

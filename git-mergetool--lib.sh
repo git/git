@@ -98,7 +98,7 @@ merge_mode () {
 }
 
 gui_mode () {
-	test "$GIT_MERGETOOL_GUI" = true
+	test "$BUT_MERGETOOL_GUI" = true
 }
 
 translate_merge_tool_path () {
@@ -269,10 +269,10 @@ initialize_merge_tool () {
 
 # Entry point for running tools
 run_merge_tool () {
-	# If GIT_PREFIX is empty then we cannot use it in tools
+	# If BUT_PREFIX is empty then we cannot use it in tools
 	# that expect to be able to chdir() to its value.
-	GIT_PREFIX=${GIT_PREFIX:-.}
-	export GIT_PREFIX
+	BUT_PREFIX=${BUT_PREFIX:-.}
+	export BUT_PREFIX
 
 	merge_tool_path=$(get_merge_tool_path "$1") || exit
 	base_present="$2"

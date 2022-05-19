@@ -63,7 +63,7 @@ int reftable_dump_main(int argc, char *const *argv)
 	int opt_dump_table = 0;
 	int opt_dump_stack = 0;
 	int opt_compact = 0;
-	uint32_t opt_hash_id = GIT_SHA1_FORMAT_ID;
+	uint32_t opt_hash_id = BUT_SHA1_FORMAT_ID;
 	const char *arg = NULL, *argv0 = argv[0];
 
 	for (; argc > 1; argv++, argc--)
@@ -72,7 +72,7 @@ int reftable_dump_main(int argc, char *const *argv)
 		else if (!strcmp("-t", argv[1]))
 			opt_dump_table = 1;
 		else if (!strcmp("-6", argv[1]))
-			opt_hash_id = GIT_SHA256_FORMAT_ID;
+			opt_hash_id = BUT_SHA256_FORMAT_ID;
 		else if (!strcmp("-s", argv[1]))
 			opt_dump_stack = 1;
 		else if (!strcmp("-c", argv[1]))

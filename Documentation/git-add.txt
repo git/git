@@ -440,6 +440,6 @@ linkbut:but-mv[1]
 linkbut:but-cummit[1]
 linkbut:but-update-index[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

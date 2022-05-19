@@ -64,7 +64,7 @@ test_expect_success 'create series of packs' '
 			echo $cur &&
 			echo "$(but rev-parse :file) file"
 		} | but pack-objects --stdout >tmp &&
-		GIT_TRACE2_EVENT=$PWD/trace \
+		BUT_TRACE2_EVENT=$PWD/trace \
 		but index-pack -v --stdin --fix-thin <tmp || return 1 &&
 		grep -c region_enter.*progress trace >enter &&
 		grep -c region_leave.*progress trace >leave &&

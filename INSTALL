@@ -82,10 +82,10 @@ Issues of note:
    the build directory is far simpler.  As a historical reference, the
    old way went like this:
 
-	GIT_EXEC_PATH=`pwd`
+	BUT_EXEC_PATH=`pwd`
 	PATH=`pwd`:$PATH
-	GITPERLLIB=`pwd`/perl/build/lib
-	export GIT_EXEC_PATH PATH GITPERLLIB
+	BUTPERLLIB=`pwd`/perl/build/lib
+	export BUT_EXEC_PATH PATH BUTPERLLIB
 
  - By default (unless NO_PERL is provided) Git will ship various perl
    scripts. However, for simplicity it doesn't use the

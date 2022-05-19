@@ -23,6 +23,6 @@ OPTIONS
 <blob>::
 	Must be a blob id
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -44,13 +44,13 @@ static int submodule_propagate_branches = 0;
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_NORMAL,       /* PLAIN */
-	GIT_COLOR_RED,          /* REMOTE */
-	GIT_COLOR_NORMAL,       /* LOCAL */
-	GIT_COLOR_GREEN,        /* CURRENT */
-	GIT_COLOR_BLUE,         /* UPSTREAM */
-	GIT_COLOR_CYAN,         /* WORKTREE */
+	BUT_COLOR_RESET,
+	BUT_COLOR_NORMAL,       /* PLAIN */
+	BUT_COLOR_RED,          /* REMOTE */
+	BUT_COLOR_NORMAL,       /* LOCAL */
+	BUT_COLOR_GREEN,        /* CURRENT */
+	BUT_COLOR_BLUE,         /* UPSTREAM */
+	BUT_COLOR_CYAN,         /* WORKTREE */
 };
 enum color_branch {
 	BRANCH_COLOR_RESET = 0,
@@ -600,7 +600,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&newsection);
 }
 
-static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
+static BUT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
 
 static int edit_branch_description(const char *branch_name)
 {

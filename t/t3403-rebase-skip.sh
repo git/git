@@ -5,8 +5,8 @@
 
 test_description='but rebase --merge --skip tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -35,8 +35,8 @@ test_expect_success setup '
 	but tag reverted-goodbye &&
 	but checkout goodbye &&
 	test_tick &&
-	GIT_AUTHOR_NAME="Another Author" \
-		GIT_AUTHOR_EMAIL="another.author@example.com" \
+	BUT_AUTHOR_NAME="Another Author" \
+		BUT_AUTHOR_EMAIL="another.author@example.com" \
 		but cummit --amend --no-edit -m amended-goodbye \
 			--reset-author &&
 	test_tick &&

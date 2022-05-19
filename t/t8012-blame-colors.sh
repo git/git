@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='colored but blame'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -35,7 +35,7 @@ test_expect_success 'blame color by age: new code is different' '
 		void qfunc();
 	EOF
 	but add hello.c &&
-	GIT_AUTHOR_DATE="" but cummit -m "new cummit" &&
+	BUT_AUTHOR_DATE="" but cummit -m "new cummit" &&
 
 	but -c color.blame.highlightRecent="yellow,1 month ago, cyan" blame --color-by-age hello.c >actual.raw &&
 	test_decode_color <actual.raw >actual &&

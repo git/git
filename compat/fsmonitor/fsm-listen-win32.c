@@ -46,7 +46,7 @@ struct fsmonitor_daemon_backend_data
 	HANDLE hListener[3]; /* we don't own these handles */
 #define LISTENER_SHUTDOWN 0
 #define LISTENER_HAVE_DATA_WORKTREE 1
-#define LISTENER_HAVE_DATA_GITDIR 2
+#define LISTENER_HAVE_DATA_BUTDIR 2
 	int nr_listener_handles;
 };
 
@@ -316,7 +316,7 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 		t = fsmonitor_classify_path_workdir_relative(path.buf);
 
 		switch (t) {
-		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
+		case IS_INSIDE_DOT_BUT_WITH_COOKIE_PREFIX:
 			/* special case cookie files within .but */
 
 			/* Use just the filename of the cookie file. */
@@ -325,11 +325,11 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 					   slash ? slash + 1 : path.buf);
 			break;
 
-		case IS_INSIDE_DOT_GIT:
+		case IS_INSIDE_DOT_BUT:
 			/* ignore everything inside of "<worktree>/.but/" */
 			break;
 
-		case IS_DOT_GIT:
+		case IS_DOT_BUT:
 			/* "<worktree>/.but" was deleted (or renamed away) */
 			if ((info->Action == FILE_ACTION_REMOVED) ||
 			    (info->Action == FILE_ACTION_RENAMED_OLD_NAME)) {
@@ -347,9 +347,9 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 			fsmonitor_batch__add_path(batch, path.buf);
 			break;
 
-		case IS_GITDIR:
-		case IS_INSIDE_GITDIR:
-		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
+		case IS_BUTDIR:
+		case IS_INSIDE_BUTDIR:
+		case IS_INSIDE_BUTDIR_WITH_COOKIE_PREFIX:
 		default:
 			BUG("unexpected path classification '%d' for '%s'",
 			    t, path.buf);
@@ -395,7 +395,7 @@ static int process_butdir_events(struct fsmonitor_daemon_state *state)
 		trace2_data_string("fsmonitor", NULL, "fsm-listen/kernel",
 				   "overflow");
 		fsmonitor_force_resync(state);
-		return LISTENER_HAVE_DATA_GITDIR;
+		return LISTENER_HAVE_DATA_BUTDIR;
 	}
 
 	for (;;) {
@@ -410,7 +410,7 @@ static int process_butdir_events(struct fsmonitor_daemon_state *state)
 		t = fsmonitor_classify_path_butdir_relative(path.buf);
 
 		switch (t) {
-		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
+		case IS_INSIDE_BUTDIR_WITH_COOKIE_PREFIX:
 			/* special case cookie files within butdir */
 
 			/* Use just the filename of the cookie file. */
@@ -419,7 +419,7 @@ static int process_butdir_events(struct fsmonitor_daemon_state *state)
 					   slash ? slash + 1 : path.buf);
 			break;
 
-		case IS_INSIDE_GITDIR:
+		case IS_INSIDE_BUTDIR:
 			goto skip_this_path;
 
 		default:
@@ -436,7 +436,7 @@ skip_this_path:
 	fsmonitor_publish(state, NULL, &cookie_list);
 	string_list_clear(&cookie_list, 0);
 	strbuf_release(&path);
-	return LISTENER_HAVE_DATA_GITDIR;
+	return LISTENER_HAVE_DATA_BUTDIR;
 }
 
 void fsm_listen__loop(struct fsmonitor_daemon_state *state)
@@ -480,7 +480,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 			continue;
 		}
 
-		if (dwWait == WAIT_OBJECT_0 + LISTENER_HAVE_DATA_GITDIR) {
+		if (dwWait == WAIT_OBJECT_0 + LISTENER_HAVE_DATA_BUTDIR) {
 			result = recv_rdcw_watch(data->watch_butdir);
 			if (result == -1) {
 				/* hard error */
@@ -553,7 +553,7 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 	data->nr_listener_handles++;
 
 	if (data->watch_butdir) {
-		data->hListener[LISTENER_HAVE_DATA_GITDIR] =
+		data->hListener[LISTENER_HAVE_DATA_BUTDIR] =
 			data->watch_butdir->hEvent;
 		data->nr_listener_handles++;
 	}

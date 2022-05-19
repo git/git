@@ -16,7 +16,7 @@ help:
 	@echo 'Run "$(MAKE) clean" to remove trash folders'
 
 $(T):
-	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
+	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(BUT_TEST_OPTS)
 
 clean:
 	$(RM) -r 'trash directory'.*

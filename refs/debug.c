@@ -58,8 +58,8 @@ static void print_update(int i, const char *refname,
 			 const struct object_id *new_oid, unsigned int flags,
 			 unsigned int type, const char *msg)
 {
-	char o[GIT_MAX_HEXSZ + 1] = "null";
-	char n[GIT_MAX_HEXSZ + 1] = "null";
+	char o[BUT_MAX_HEXSZ + 1] = "null";
+	char n[BUT_MAX_HEXSZ + 1] = "null";
 	if (old_oid)
 		oid_to_hex_r(o, old_oid);
 	if (new_oid)
@@ -303,8 +303,8 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 {
 	struct debug_reflog *dbg = (struct debug_reflog *)cb_data;
 	int ret;
-	char o[GIT_MAX_HEXSZ + 1] = "null";
-	char n[GIT_MAX_HEXSZ + 1] = "null";
+	char o[BUT_MAX_HEXSZ + 1] = "null";
+	char n[BUT_MAX_HEXSZ + 1] = "null";
 	char *msgend = strchrnul(msg, '\n');
 	if (old_oid)
 		oid_to_hex_r(o, old_oid);
@@ -446,7 +446,7 @@ struct ref_storage_be refs_be_debug = {
 	 * None of these should be NULL. If the "files" backend (in
 	 * "struct ref_storage_be refs_be_files" in files-backend.c)
 	 * has a function we should also have a wrapper for it here.
-	 * Test the output with "GIT_TRACE_REFS=1".
+	 * Test the output with "BUT_TRACE_REFS=1".
 	 */
 	.transaction_prepare = debug_transaction_prepare,
 	.transaction_finish = debug_transaction_finish,

@@ -3,8 +3,8 @@
 test_description='split cummit graph'
 . ./test-lib.sh
 
-GIT_TEST_CUMMIT_GRAPH=0
-GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
+BUT_TEST_CUMMIT_GRAPH=0
+BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'setup repo' '
 	but init &&

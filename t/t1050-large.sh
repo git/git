@@ -13,8 +13,8 @@ test_expect_success setup '
 	cp large1 large2 &&
 	cp large1 large3 &&
 	printf "%2500000s" Y >huge &&
-	GIT_ALLOC_LIMIT=1500k &&
-	export GIT_ALLOC_LIMIT
+	BUT_ALLOC_LIMIT=1500k &&
+	export BUT_ALLOC_LIMIT
 '
 
 test_expect_success 'enter "large" codepath, with small core.bigFileThreshold' '
@@ -169,7 +169,7 @@ test_expect_success 'but-show a large file' '
 
 test_expect_success 'index-pack' '
 	but clone file://"$(pwd)"/.but foo &&
-	GIT_DIR=non-existent but index-pack --object-format=$(test_oid algo) \
+	BUT_DIR=non-existent but index-pack --object-format=$(test_oid algo) \
 		--strict --verify foo/.but/objects/pack/*.pack
 '
 
@@ -181,11 +181,11 @@ test_expect_success 'pack-objects with large loose object' '
 	SHA1=$(but hash-object huge) &&
 	test_create_repo loose &&
 	echo $SHA1 | but pack-objects --stdout |
-		GIT_ALLOC_LIMIT=0 GIT_DIR=loose/.but but unpack-objects &&
-	echo $SHA1 | GIT_DIR=loose/.but but pack-objects pack &&
+		BUT_ALLOC_LIMIT=0 BUT_DIR=loose/.but but unpack-objects &&
+	echo $SHA1 | BUT_DIR=loose/.but but pack-objects pack &&
 	test_create_repo packed &&
 	mv pack-* packed/.but/objects/pack &&
-	GIT_DIR=packed/.but but cat-file blob $SHA1 >actual &&
+	BUT_DIR=packed/.but but cat-file blob $SHA1 >actual &&
 	test_cmp huge actual
 '
 

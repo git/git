@@ -26,13 +26,13 @@ static int decoration_loaded;
 static int decoration_flags;
 
 static char decoration_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_BOLD_GREEN,	/* REF_LOCAL */
-	GIT_COLOR_BOLD_RED,	/* REF_REMOTE */
-	GIT_COLOR_BOLD_YELLOW,	/* REF_TAG */
-	GIT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
-	GIT_COLOR_BOLD_CYAN,	/* REF_HEAD */
-	GIT_COLOR_BOLD_BLUE,	/* GRAFTED */
+	BUT_COLOR_RESET,
+	BUT_COLOR_BOLD_GREEN,	/* REF_LOCAL */
+	BUT_COLOR_BOLD_RED,	/* REF_REMOTE */
+	BUT_COLOR_BOLD_YELLOW,	/* REF_TAG */
+	BUT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
+	BUT_COLOR_BOLD_CYAN,	/* REF_HEAD */
+	BUT_COLOR_BOLD_BLUE,	/* GRAFTED */
 };
 
 static const char *color_decorate_slots[] = {

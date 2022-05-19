@@ -20,7 +20,7 @@ int oid_pos(const struct object_id *oid,
  *    first byte is less than or equal to i
  *  - table: a sorted list of hashes with optional extra information in between
  *  - stride: distance between two consecutive elements in table (should be
- *    GIT_MAX_RAWSZ or greater)
+ *    BUT_MAX_RAWSZ or greater)
  *  - result: if not NULL, this function stores the element index of the
  *    position found (if the search is successful) or the index of the least
  *    element that is greater than hash (if the search is not successful)

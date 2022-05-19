@@ -6,8 +6,8 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up non-repo directory' '
-	GIT_CEILING_DIRECTORIES=$(pwd) &&
-	export GIT_CEILING_DIRECTORIES &&
+	BUT_CEILING_DIRECTORIES=$(pwd) &&
+	export BUT_CEILING_DIRECTORIES &&
 	mkdir non-repo &&
 	cd non-repo &&
 	# confirm that but does not find a repo
@@ -33,7 +33,7 @@ test_expect_success 'rev-parse --local-env-vars' '
 	but rev-parse --local-env-vars >actual &&
 	# we do not want to depend on the complete list here,
 	# so just look for something plausible
-	grep ^GIT_DIR actual
+	grep ^BUT_DIR actual
 '
 
 test_expect_success 'rev-parse --resolve-but-dir' '

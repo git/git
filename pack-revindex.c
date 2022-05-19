@@ -38,8 +38,8 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	 * usage reasonable, and we can generally (for a 4G or smaller
 	 * packfile) quit after two rounds of radix-sorting.
 	 */
-#define DIGIT_SIZE (16)
-#define BUCKETS (1 << DIGIT_SIZE)
+#define DIBUT_SIZE (16)
+#define BUCKETS (1 << DIBUT_SIZE)
 	/*
 	 * We want to know the bucket that a[i] will go into when we are using
 	 * the dibut that is N bits from the (least significant) end.
@@ -67,7 +67,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	 * on (and any higher) will be zero for all entries, and our loop will
 	 * be a no-op, as everybody lands in the same zero-th bucket.
 	 */
-	for (bits = 0; max >> bits; bits += DIGIT_SIZE) {
+	for (bits = 0; max >> bits; bits += DIBUT_SIZE) {
 		unsigned i;
 
 		memset(pos, 0, BUCKETS * sizeof(*pos));
@@ -119,7 +119,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 
 #undef BUCKET_FOR
 #undef BUCKETS
-#undef DIGIT_SIZE
+#undef DIBUT_SIZE
 }
 
 /*
@@ -168,9 +168,9 @@ static void create_pack_revindex(struct packed_but *p)
 
 static int create_pack_revindex_in_memory(struct packed_but *p)
 {
-	if (but_env_bool(GIT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
+	if (but_env_bool(BUT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
 		die("dying as requested by '%s'",
-		    GIT_TEST_REV_INDEX_DIE_IN_MEMORY);
+		    BUT_TEST_REV_INDEX_DIE_IN_MEMORY);
 	if (open_pack_index(p))
 		return -1;
 	create_pack_revindex(p);

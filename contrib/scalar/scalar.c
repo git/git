@@ -105,7 +105,7 @@ static int run_but(const char *arg, ...)
 		strvec_push(&argv, p);
 	va_end(args);
 
-	res = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	res = run_command_v_opt(argv.v, RUN_BUT_CMD);
 
 	strvec_clear(&argv);
 	return res;

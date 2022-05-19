@@ -108,7 +108,7 @@ sensitive information can be part of the key.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
-	This can also be controlled by setting the GIT_EXEC_PATH
+	This can also be controlled by setting the BUT_EXEC_PATH
 	environment variable. If no path is given, 'but' will print
 	the current setting and then exit.
 
@@ -137,18 +137,18 @@ sensitive information can be part of the key.
 
 --but-dir=<path>::
 	Set the path to the repository (".but" directory). This can also be
-	controlled by setting the `GIT_DIR` environment variable. It can be
+	controlled by setting the `BUT_DIR` environment variable. It can be
 	an absolute path or relative path to current working directory.
 +
 Specifying the location of the ".but" directory using this
-option (or `GIT_DIR` environment variable) turns off the
+option (or `BUT_DIR` environment variable) turns off the
 repository discovery that tries to find a directory with
 ".but" subdirectory (which is how the repository and the
 top-level of the working tree are discovered), and tells Git
 that you are at the top level of the working tree.  If you
 are not at the top-level directory of the working tree, you
 should tell Git where the top-level of the working tree is,
-with the `--work-tree=<path>` option (or `GIT_WORK_TREE`
+with the `--work-tree=<path>` option (or `BUT_WORK_TREE`
 environment variable)
 +
 If you just want to run but as if it was started in `<path>` then use
@@ -157,14 +157,14 @@ If you just want to run but as if it was started in `<path>` then use
 --work-tree=<path>::
 	Set the path to the working tree. It can be an absolute path
 	or a path relative to the current working directory.
-	This can also be controlled by setting the GIT_WORK_TREE
+	This can also be controlled by setting the BUT_WORK_TREE
 	environment variable and the core.worktree configuration
 	variable (see core.worktree in linkbut:but-config[1] for a
 	more detailed discussion).
 
 --namespace=<path>::
 	Set the Git namespace.  See linkbut:butnamespaces[7] for more
-	details.  Equivalent to setting the `GIT_NAMESPACE` environment
+	details.  Equivalent to setting the `BUT_NAMESPACE` environment
 	variable.
 
 --super-prefix=<path>::
@@ -173,7 +173,7 @@ If you just want to run but as if it was started in `<path>` then use
 	context about the superproject that invoked it.
 
 --bare::
-	Treat the repository as a bare repository.  If GIT_DIR
+	Treat the repository as a bare repository.  If BUT_DIR
 	environment is not set, it is set to the current working
 	directory.
 
@@ -183,28 +183,28 @@ If you just want to run but as if it was started in `<path>` then use
 
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
-	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
+	This is equivalent to setting the `BUT_LITERAL_PATHSPECS` environment
 	variable to `1`.
 
 --glob-pathspecs::
 	Add "glob" magic to all pathspec. This is equivalent to setting
-	the `GIT_GLOB_PATHSPECS` environment variable to `1`. Disabling
+	the `BUT_GLOB_PATHSPECS` environment variable to `1`. Disabling
 	globbing on individual pathspecs can be done using pathspec
 	magic ":(literal)"
 
 --noglob-pathspecs::
 	Add "literal" magic to all pathspec. This is equivalent to setting
-	the `GIT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
+	the `BUT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
 	globbing on individual pathspecs can be done using pathspec
 	magic ":(glob)"
 
 --icase-pathspecs::
 	Add "icase" magic to all pathspec. This is equivalent to setting
-	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
+	the `BUT_ICASE_PATHSPECS` environment variable to `1`.
 
 --no-optional-locks::
 	Do not perform optional operations that require locks. This is
-	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+	equivalent to setting the `BUT_OPTIONAL_LOCKS` to `0`.
 
 --list-cmds=group[,group...]::
 	List commands by group. This is an internal/experimental
@@ -216,7 +216,7 @@ If you just want to run but as if it was started in `<path>` then use
 	nohelpers (exclude helper commands), alias and config
 	(retrieve command list from config variable completion.commands)
 
-GIT COMMANDS
+BUT COMMANDS
 ------------
 
 We divide Git into high level ("porcelain") commands and low level
@@ -399,7 +399,7 @@ Identifier Terminology
 
 <file>::
 	Indicates a filename - almost always relative to the
-	root of the tree structure `GIT_INDEX_FILE` describes.
+	root of the tree structure `BUT_INDEX_FILE` describes.
 
 Symbolic Identifiers
 --------------------
@@ -429,7 +429,7 @@ Please see the linkbut:butrepository-layout[5] document.
 Read linkbut:buthooks[5] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
-`$GIT_DIR`.
+`$BUT_DIR`.
 
 
 Terminology
@@ -447,24 +447,24 @@ These environment variables apply to 'all' core Git commands. Nb: it
 is worth noting that they may be used/overridden by SCMS sitting above
 Git so take care if using a foreign front-end.
 
-`GIT_INDEX_FILE`::
+`BUT_INDEX_FILE`::
 	This environment allows the specification of an alternate
-	index file. If not specified, the default of `$GIT_DIR/index`
+	index file. If not specified, the default of `$BUT_DIR/index`
 	is used.
 
-`GIT_INDEX_VERSION`::
+`BUT_INDEX_VERSION`::
 	This environment variable allows the specification of an index
 	version for new repositories.  It won't affect existing index
 	files.  By default index file version 2 or 3 is used. See
 	linkbut:but-update-index[1] for more information.
 
-`GIT_OBJECT_DIRECTORY`::
+`BUT_OBJECT_DIRECTORY`::
 	If the object storage directory is specified via this
 	environment variable then the sha1 directories are created
-	underneath - otherwise the default `$GIT_DIR/objects`
+	underneath - otherwise the default `$BUT_DIR/objects`
 	directory is used.
 
-`GIT_ALTERNATE_OBJECT_DIRECTORIES`::
+`BUT_ALTERNATE_OBJECT_DIRECTORIES`::
 	Due to the immutable nature of Git objects, old objects can be
 	archived into shared, read-only directories. This variable
 	specifies a ":" separated (on Windows ";" separated) list
@@ -477,27 +477,27 @@ double-quotes and respecting backslash escapes. E.g., the value
 `"path-with-\"-and-:-in-it":vanilla-path` has two paths:
 `path-with-"-and-:-in-it` and `vanilla-path`.
 
-`GIT_DIR`::
-	If the `GIT_DIR` environment variable is set then it
+`BUT_DIR`::
+	If the `BUT_DIR` environment variable is set then it
 	specifies a path to use instead of the default `.but`
 	for the base of the repository.
 	The `--but-dir` command-line option also sets this value.
 
-`GIT_WORK_TREE`::
+`BUT_WORK_TREE`::
 	Set the path to the root of the working tree.
 	This can also be controlled by the `--work-tree` command-line
 	option and the core.worktree configuration variable.
 
-`GIT_NAMESPACE`::
+`BUT_NAMESPACE`::
 	Set the Git namespace; see linkbut:butnamespaces[7] for details.
 	The `--namespace` command-line option also sets this value.
 
-`GIT_CEILING_DIRECTORIES`::
+`BUT_CEILING_DIRECTORIES`::
 	This should be a colon-separated list of absolute paths.  If
 	set, it is a list of directories that Git should not chdir up
 	into while looking for a repository directory (useful for
 	excluding slow-loading network directories).  It will not
-	exclude the current working directory or a GIT_DIR set on the
+	exclude the current working directory or a BUT_DIR set on the
 	command line or in the environment.  Normally, Git has to read
 	the entries in this list and resolve any symlink that
 	might be present in order to compare them with the current
@@ -505,28 +505,28 @@ double-quotes and respecting backslash escapes. E.g., the value
 	can add an empty entry to the list to tell Git that the
 	subsequent entries are not symlinks and needn't be resolved;
 	e.g.,
-	`GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink`.
+	`BUT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink`.
 
-`GIT_DISCOVERY_ACROSS_FILESYSTEM`::
+`BUT_DISCOVERY_ACROSS_FILESYSTEM`::
 	When run in a directory that does not have ".but" repository
 	directory, Git tries to find such a directory in the parent
 	directories to find the top of the working tree, but by default it
 	does not cross filesystem boundaries.  This environment variable
 	can be set to true to tell Git not to stop at filesystem
-	boundaries.  Like `GIT_CEILING_DIRECTORIES`, this will not affect
-	an explicit repository directory set via `GIT_DIR` or on the
+	boundaries.  Like `BUT_CEILING_DIRECTORIES`, this will not affect
+	an explicit repository directory set via `BUT_DIR` or on the
 	command line.
 
-`GIT_COMMON_DIR`::
+`BUT_COMMON_DIR`::
 	If this variable is set to a path, non-worktree files that are
-	normally in $GIT_DIR will be taken from this path
+	normally in $BUT_DIR will be taken from this path
 	instead. Worktree-specific files such as HEAD or index are
-	taken from $GIT_DIR. See linkbut:butrepository-layout[5] and
+	taken from $BUT_DIR. See linkbut:butrepository-layout[5] and
 	linkbut:but-worktree[1] for
 	details. This variable has lower precedence than other path
-	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
+	variables such as BUT_INDEX_FILE, BUT_OBJECT_DIRECTORY...
 
-`GIT_DEFAULT_HASH`::
+`BUT_DEFAULT_HASH`::
 	If this variable is set, the default hash algorithm for new
 	repositories will be set to this value. This value is currently
 	ignored when cloning; the setting of the remote repository
@@ -535,31 +535,31 @@ double-quotes and respecting backslash escapes. E.g., the value
 
 Git cummits
 ~~~~~~~~~~~
-`GIT_AUTHOR_NAME`::
+`BUT_AUTHOR_NAME`::
 	The human-readable name used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.name` and
 	`author.name` configuration settings.
 
-`GIT_AUTHOR_EMAIL`::
+`BUT_AUTHOR_EMAIL`::
 	The email address used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.email` and
 	`author.email` configuration settings.
 
-`GIT_AUTHOR_DATE`::
+`BUT_AUTHOR_DATE`::
 	The date used for the author identity when creating cummit or tag objects, or
 	when writing reflogs. See linkbut:but-cummit[1] for valid formats.
 
-`GIT_CUMMITTER_NAME`::
+`BUT_CUMMITTER_NAME`::
 	The human-readable name used in the cummitter identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.name` and
 	`cummitter.name` configuration settings.
 
-`GIT_CUMMITTER_EMAIL`::
+`BUT_CUMMITTER_EMAIL`::
 	The email address used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.email` and
 	`cummitter.email` configuration settings.
 
-`GIT_CUMMITTER_DATE`::
+`BUT_CUMMITTER_DATE`::
 	The date used for the cummitter identity when creating cummit or tag objects, or
 	when writing reflogs. See linkbut:but-cummit[1] for valid formats.
 
@@ -569,24 +569,24 @@ Git cummits
 
 Git Diffs
 ~~~~~~~~~
-`GIT_DIFF_OPTS`::
+`BUT_DIFF_OPTS`::
 	Only valid setting is "--unified=??" or "-u??" to set the
 	number of context lines shown when a unified diff is created.
 	This takes precedence over any "-U" or "--unified" option
 	value passed on the Git diff command line.
 
-`GIT_EXTERNAL_DIFF`::
-	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
+`BUT_EXTERNAL_DIFF`::
+	When the environment variable `BUT_EXTERNAL_DIFF` is set, the
 	program named by it is called to generate diffs, and Git
 	does not use its builtin diff machinery.
 	For a path that is added, removed, or modified,
-	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
+	`BUT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
 +
 where:
 
-	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
+	<old|new>-file:: are files BUT_EXTERNAL_DIFF can use to read the
                          contents of <old|new>,
 	<old|new>-hex:: are the 40-hexdibut SHA-1 hashes,
 	<old|new>-mode:: are the octal representation of the file modes.
@@ -594,52 +594,52 @@ where:
 The file parameters can point at the user's working file
 (e.g. `new-file` in "but-diff-files"), `/dev/null` (e.g. `old-file`
 when a new file is added), or a temporary file (e.g. `old-file` in the
-index).  `GIT_EXTERNAL_DIFF` should not worry about unlinking the
-temporary file --- it is removed when `GIT_EXTERNAL_DIFF` exits.
+index).  `BUT_EXTERNAL_DIFF` should not worry about unlinking the
+temporary file --- it is removed when `BUT_EXTERNAL_DIFF` exits.
 +
-For a path that is unmerged, `GIT_EXTERNAL_DIFF` is called with 1
+For a path that is unmerged, `BUT_EXTERNAL_DIFF` is called with 1
 parameter, <path>.
 +
-For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
-`GIT_DIFF_PATH_COUNTER` and `GIT_DIFF_PATH_TOTAL` are set.
+For each path `BUT_EXTERNAL_DIFF` is called, two environment variables,
+`BUT_DIFF_PATH_COUNTER` and `BUT_DIFF_PATH_TOTAL` are set.
 
-`GIT_DIFF_PATH_COUNTER`::
+`BUT_DIFF_PATH_COUNTER`::
 	A 1-based counter incremented by one for every path.
 
-`GIT_DIFF_PATH_TOTAL`::
+`BUT_DIFF_PATH_TOTAL`::
 	The total number of paths.
 
 other
 ~~~~~
-`GIT_MERGE_VERBOSITY`::
+`BUT_MERGE_VERBOSITY`::
 	A number controlling the amount of output shown by
 	the recursive merge strategy.  Overrides merge.verbosity.
 	See linkbut:but-merge[1]
 
-`GIT_PAGER`::
+`BUT_PAGER`::
 	This environment variable overrides `$PAGER`. If it is set
 	to an empty string or to the value "cat", Git will not launch
 	a pager.  See also the `core.pager` option in
 	linkbut:but-config[1].
 
-`GIT_PROGRESS_DELAY`::
+`BUT_PROGRESS_DELAY`::
 	A number controlling how many seconds to delay before showing
 	optional progress indicators. Defaults to 2.
 
-`GIT_EDITOR`::
+`BUT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
 	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkbut:but-var[1]
 	and the `core.editor` option in linkbut:but-config[1].
 
-`GIT_SEQUENCE_EDITOR`::
+`BUT_SEQUENCE_EDITOR`::
 	This environment variable overrides the configured Git editor
 	when editing the todo list of an interactive rebase. See also
 	linkbut:but-rebase[1] and the `sequence.editor` option in
 	linkbut:but-config[1].
 
-`GIT_SSH`::
-`GIT_SSH_COMMAND`::
+`BUT_SSH`::
+`BUT_SSH_COMMAND`::
 	If either of these environment variables is set then 'but fetch'
 	and 'but push' will use the specified command instead of 'ssh'
 	when they need to connect to a remote system.
@@ -647,9 +647,9 @@ other
 	determined by the ssh variant.  See `ssh.variant` option in
 	linkbut:but-config[1] for details.
 +
-`$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
+`$BUT_SSH_COMMAND` takes precedence over `$BUT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
-`$GIT_SSH` on the other hand must be just the path to a program
+`$BUT_SSH` on the other hand must be just the path to a program
 (which can be a wrapper shell script, if additional arguments are
 needed).
 +
@@ -657,34 +657,34 @@ Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
-`GIT_SSH_VARIANT`::
+`BUT_SSH_VARIANT`::
 	If this environment variable is set, it overrides Git's autodetection
-	whether `GIT_SSH`/`GIT_SSH_COMMAND`/`core.sshCommand` refer to OpenSSH,
+	whether `BUT_SSH`/`BUT_SSH_COMMAND`/`core.sshCommand` refer to OpenSSH,
 	plink or tortoiseplink. This variable overrides the config setting
 	`ssh.variant` that serves the same purpose.
 
-`GIT_ASKPASS`::
+`BUT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
 	will call this program with a suitable prompt as command-line argument
 	and read the password from its STDOUT. See also the `core.askPass`
 	option in linkbut:but-config[1].
 
-`GIT_TERMINAL_PROMPT`::
+`BUT_TERMINAL_PROMPT`::
 	If this environment variable is set to `0`, but will not prompt
 	on the terminal (e.g., when asking for HTTP authentication).
 
-`GIT_CONFIG_GLOBAL`::
-`GIT_CONFIG_SYSTEM`::
+`BUT_CONFIG_GLOBAL`::
+`BUT_CONFIG_SYSTEM`::
 	Take the configuration from the given files instead from global or
-	system-level configuration files. If `GIT_CONFIG_SYSTEM` is set, the
+	system-level configuration files. If `BUT_CONFIG_SYSTEM` is set, the
 	system config file defined at build time (usually `/etc/butconfig`)
-	will not be read. Likewise, if `GIT_CONFIG_GLOBAL` is set, neither
+	will not be read. Likewise, if `BUT_CONFIG_GLOBAL` is set, neither
 	`$HOME/.butconfig` nor `$XDG_CONFIG_HOME/but/config` will be read. Can
 	be set to `/dev/null` to skip reading configuration files of the
 	respective level.
 
-`GIT_CONFIG_NOSYSTEM`::
+`BUT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
 	`$(prefix)/etc/butconfig` file.  This environment variable can
 	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
@@ -692,7 +692,7 @@ for further details.
 	temporarily to avoid using a buggy `/etc/butconfig` file while
 	waiting for someone with sufficient permissions to fix it.
 
-`GIT_FLUSH`::
+`BUT_FLUSH`::
 	If this environment variable is set to "1", then commands such
 	as 'but blame' (in incremental mode), 'but rev-list', 'but log',
 	'but check-attr' and 'but check-ignore' will
@@ -703,7 +703,7 @@ for further details.
 	not set, Git will choose buffered or record-oriented flushing
 	based on whether stdout appears to be redirected to a file or not.
 
-`GIT_TRACE`::
+`BUT_TRACE`::
 	Enables general trace messages, e.g. alias expansion, built-in
 	command execution and external command execution.
 +
@@ -724,67 +724,67 @@ to it.
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
 
-`GIT_TRACE_FSMONITOR`::
+`BUT_TRACE_FSMONITOR`::
 	Enables trace messages for the filesystem monitor extension.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_PACK_ACCESS`::
+`BUT_TRACE_PACK_ACCESS`::
 	Enables trace messages for all accesses to any packs. For each
 	access, the pack file name and an offset in the pack is
 	recorded. This may be helpful for troubleshooting some
 	pack-related performance problems.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_PACKET`::
+`BUT_TRACE_PACKET`::
 	Enables trace messages for all packets coming in or out of a
 	given program. This can help with debugging object negotiation
 	or other protocol issues. Tracing is turned off at a packet
-	starting with "PACK" (but see `GIT_TRACE_PACKFILE` below).
-	See `GIT_TRACE` for available trace output options.
+	starting with "PACK" (but see `BUT_TRACE_PACKFILE` below).
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_PACKFILE`::
+`BUT_TRACE_PACKFILE`::
 	Enables tracing of packfiles sent or received by a
 	given program. Unlike other trace output, this trace is
 	verbatim: no headers, and no quoting of binary data. You almost
 	certainly want to direct into a file (e.g.,
-	`GIT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
+	`BUT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
 	the terminal or mixing it with other trace output.
 +
 Note that this is currently only implemented for the client side
 of clones and fetches.
 
-`GIT_TRACE_PERFORMANCE`::
+`BUT_TRACE_PERFORMANCE`::
 	Enables performance related trace messages, e.g. total execution
 	time of each Git command.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_REFS`::
+`BUT_TRACE_REFS`::
 	Enables trace messages for operations on the ref database.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_SETUP`::
+`BUT_TRACE_SETUP`::
 	Enables trace messages printing the .but, working tree and current
 	working directory after Git has completed its setup phase.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_SHALLOW`::
+`BUT_TRACE_SHALLOW`::
 	Enables trace messages that can help debugging fetching /
 	cloning of shallow repositories.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_CURL`::
+`BUT_TRACE_CURL`::
 	Enables a curl full trace dump of all incoming and outgoing data,
 	including descriptive information, of the but transport protocol.
 	This is similar to doing curl `--trace-ascii` on the command line.
-	See `GIT_TRACE` for available trace output options.
+	See `BUT_TRACE` for available trace output options.
 
-`GIT_TRACE_CURL_NO_DATA`::
-	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
+`BUT_TRACE_CURL_NO_DATA`::
+	When a curl trace is enabled (see `BUT_TRACE_CURL` above), do not dump
 	data (that is, only dump info lines and headers).
 
-`GIT_TRACE2`::
+`BUT_TRACE2`::
 	Enables more detailed trace messages from the "trace2" library.
-	Output from `GIT_TRACE2` is a simple text-based format for human
+	Output from `BUT_TRACE2` is a simple text-based format for human
 	readability.
 +
 If this variable is set to "1", "2" or "true" (comparison
@@ -817,47 +817,47 @@ See link:technical/api-trace2.html[Trace2 documentation]
 for full details.
 
 
-`GIT_TRACE2_EVENT`::
+`BUT_TRACE2_EVENT`::
 	This setting writes a JSON-based format that is suited for machine
 	interpretation.
-	See `GIT_TRACE2` for available trace output options and
+	See `BUT_TRACE2` for available trace output options and
 	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_TRACE2_PERF`::
-	In addition to the text-based messages available in `GIT_TRACE2`, this
+`BUT_TRACE2_PERF`::
+	In addition to the text-based messages available in `BUT_TRACE2`, this
 	setting writes a column-based format for understanding nesting
 	regions.
-	See `GIT_TRACE2` for available trace output options and
+	See `BUT_TRACE2` for available trace output options and
 	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_TRACE_REDACT`::
+`BUT_TRACE_REDACT`::
 	By default, when tracing is activated, Git redacts the values of
 	cookies, the "Authorization:" header, the "Proxy-Authorization:"
 	header and packfile URIs. Set this variable to `0` to prevent this
 	redaction.
 
-`GIT_LITERAL_PATHSPECS`::
+`BUT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
-	running `GIT_LITERAL_PATHSPECS=1 but log -- '*.c'` will search
+	running `BUT_LITERAL_PATHSPECS=1 but log -- '*.c'` will search
 	for cummits that touch the path `*.c`, not any paths that the
 	glob `*.c` matches. You might want this if you are feeding
 	literal paths to Git (e.g., paths previously given to you by
 	`but ls-tree`, `--raw` diff output, etc).
 
-`GIT_GLOB_PATHSPECS`::
+`BUT_GLOB_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as glob patterns (aka "glob" magic).
 
-`GIT_NOGLOB_PATHSPECS`::
+`BUT_NOGLOB_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as literal (aka "literal" magic).
 
-`GIT_ICASE_PATHSPECS`::
+`BUT_ICASE_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as case-insensitive.
 
-`GIT_REFLOG_ACTION`::
+`BUT_REFLOG_ACTION`::
 	When a ref is updated, reflog entries are created to keep
 	track of the reason why the ref was updated (which is
 	typically the name of the high-level command that updated
@@ -867,7 +867,7 @@ for full details.
 	variable when it is invoked as the top level command by the
 	end user, to be recorded in the body of the reflog.
 
-`GIT_REF_PARANOIA`::
+`BUT_REF_PARANOIA`::
 	If set to `0`, ignore broken or badly named refs when iterating
 	over lists of refs. Normally Git will try to include any such
 	refs, which may cause some operations to fail. This is usually
@@ -879,7 +879,7 @@ for full details.
 	should not normally need to set this to `0`, but it may be
 	useful when trying to salvage data from a corrupted repository.
 
-`GIT_ALLOW_PROTOCOL`::
+`BUT_ALLOW_PROTOCOL`::
 	If set to a colon-separated list of protocols, behave as if
 	`protocol.allow` is set to `never`, and each of the listed
 	protocols has `protocol.<name>.allow` set to `always`
@@ -888,14 +888,14 @@ for full details.
 	whitelist, not a blacklist). See the description of
 	`protocol.allow` in linkbut:but-config[1] for more details.
 
-`GIT_PROTOCOL_FROM_USER`::
+`BUT_PROTOCOL_FROM_USER`::
 	Set to 0 to prevent protocols used by fetch/push/clone which are
 	configured to the `user` state.  This is useful to restrict recursive
 	submodule initialization from an untrusted repository or for programs
 	which feed potentially-untrusted URLS to but commands.  See
 	linkbut:but-config[1] for more details.
 
-`GIT_PROTOCOL`::
+`BUT_PROTOCOL`::
 	For internal use only.  Used in handshaking the wire protocol.
 	Contains a colon ':' separated list of keys with optional values
 	'key[=value]'.  Presence of unknown keys and values must be
@@ -908,7 +908,7 @@ well as over the `but://` protocol. For but-over-http, it should work
 automatically in most configurations, but see the discussion in
 linkbut:but-http-backend[1]. For but-over-ssh, the ssh server may need
 to be configured to allow clients to pass this variable (e.g., by using
-`AcceptEnv GIT_PROTOCOL` with OpenSSH).
+`AcceptEnv BUT_PROTOCOL` with OpenSSH).
 +
 This configuration is optional. If the variable is not propagated, then
 clients will fall back to the original "v0" protocol (but may miss out
@@ -916,7 +916,7 @@ on some performance improvements or features). This variable currently
 only affects clones and fetches; it is not yet used for pushes (but may
 be in the future).
 
-`GIT_OPTIONAL_LOCKS`::
+`BUT_OPTIONAL_LOCKS`::
 	If set to `0`, Git will complete any requested operation without
 	performing any optional sub-operations that require taking a lock.
 	For example, this will prevent `but status` from refreshing the
@@ -924,9 +924,9 @@ be in the future).
 	the background which do not want to cause lock contention with
 	other operations on the repository.  Defaults to `1`.
 
-`GIT_REDIRECT_STDIN`::
-`GIT_REDIRECT_STDOUT`::
-`GIT_REDIRECT_STDERR`::
+`BUT_REDIRECT_STDIN`::
+`BUT_REDIRECT_STDOUT`::
+`BUT_REDIRECT_STDERR`::
 	Windows-only: allow redirecting the standard input/output/error
 	handles to paths specified by the environment variables. This is
 	particularly useful in multi-threaded applications where the
@@ -938,11 +938,11 @@ be in the future).
 	(e.g. `\\.\pipe\my-but-stdin-123`).
 +
 Two special values are supported: `off` will simply close the
-corresponding standard handle, and if `GIT_REDIRECT_STDERR` is
+corresponding standard handle, and if `BUT_REDIRECT_STDERR` is
 `2>&1`, standard error will be redirected to the same handle as
 standard output.
 
-`GIT_PRINT_SHA1_ELLIPSIS` (deprecated)::
+`BUT_PRINT_SHA1_ELLIPSIS` (deprecated)::
 	If set to `yes`, print an ellipsis following an
 	(abbreviated) SHA-1 value.  This affects indications of
 	detached HEADs (linkbut:but-checkout[1]) and the raw
@@ -1058,6 +1058,6 @@ linkbut:butglossary[7], linkbut:butcore-tutorial[7],
 linkbut:butcli[7], link:user-manual.html[The Git User's Manual],
 linkbut:butworkflows[7]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

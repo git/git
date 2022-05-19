@@ -295,7 +295,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	if (!opt->ignore_locale && is_utf8_locale() && !literal)
 		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
 
-#ifndef GIT_PCRE2_VERSION_10_36_OR_HIGHER
+#ifndef BUT_PCRE2_VERSION_10_36_OR_HIGHER
 	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
 	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS))
 		options |= PCRE2_NO_START_OPTIMIZE;
@@ -385,7 +385,7 @@ static void free_pcre2_pattern(struct grep_pat *p)
 	pcre2_compile_context_free(p->pcre2_compile_context);
 	pcre2_code_free(p->pcre2_pattern);
 	pcre2_match_data_free(p->pcre2_match_data);
-#ifdef GIT_PCRE2_VERSION_10_34_OR_HIGHER
+#ifdef BUT_PCRE2_VERSION_10_34_OR_HIGHER
 	pcre2_maketables_free(p->pcre2_general_context, p->pcre2_tables);
 #else
 	free((void *)p->pcre2_tables);
@@ -817,7 +817,7 @@ static void output_color(struct grep_opt *opt, const void *data, size_t size,
 	if (want_color(opt->color) && color && color[0]) {
 		opt->output(opt, color, strlen(color));
 		opt->output(opt, data, size);
-		opt->output(opt, GIT_COLOR_RESET, strlen(GIT_COLOR_RESET));
+		opt->output(opt, BUT_COLOR_RESET, strlen(BUT_COLOR_RESET));
 	} else
 		opt->output(opt, data, size);
 }

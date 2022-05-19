@@ -4,12 +4,12 @@
 
 . but-sh-setup
 
-if [ -d "$GIT_DIR"/remotes ]; then
-	echo "Rewriting $GIT_DIR/remotes" >&2
+if [ -d "$BUT_DIR"/remotes ]; then
+	echo "Rewriting $BUT_DIR/remotes" >&2
 	error=0
 	# rewrite into config
 	{
-		cd "$GIT_DIR"/remotes
+		cd "$BUT_DIR"/remotes
 		ls | while read f; do
 			name=$(printf "$f" | tr -c "A-Za-z0-9-" ".")
 			sed -n \
@@ -23,7 +23,7 @@ if [ -d "$GIT_DIR"/remotes ]; then
 		case $key in
 		done)
 			if [ $error = 0 ]; then
-				mv "$GIT_DIR"/remotes "$GIT_DIR"/remotes.old
+				mv "$BUT_DIR"/remotes "$BUT_DIR"/remotes.old
 			fi ;;
 		*)
 			echo "but config $key "$value" $regex"

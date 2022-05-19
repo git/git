@@ -6,7 +6,7 @@
 . ${0%/*}/lib.sh
 
 P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
-LFSWHENCE=https://buthub.com/buthub/but-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
+LFSWHENCE=https://buthub.com/buthub/but-lfs/releases/download/v$LINUX_BUT_LFS_VERSION
 UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
  tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
  libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
@@ -23,11 +23,11 @@ ubuntu-latest)
 		chmod u+x p4d
 		chmod u+x p4
 	popd
-	mkdir --parents "$GIT_LFS_PATH"
-	pushd "$GIT_LFS_PATH"
-		wget --quiet "$LFSWHENCE/but-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		tar --extract --gunzip --file "but-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		cp but-lfs-$LINUX_GIT_LFS_VERSION/but-lfs .
+	mkdir --parents "$BUT_LFS_PATH"
+	pushd "$BUT_LFS_PATH"
+		wget --quiet "$LFSWHENCE/but-lfs-linux-amd64-$LINUX_BUT_LFS_VERSION.tar.gz"
+		tar --extract --gunzip --file "but-lfs-linux-amd64-$LINUX_BUT_LFS_VERSION.tar.gz"
+		cp but-lfs-$LINUX_BUT_LFS_VERSION/but-lfs .
 	popd
 	;;
 macos-latest)

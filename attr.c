@@ -429,7 +429,7 @@ fail_return:
  * (1) .butattributes file of the same directory;
  * (2) .butattributes file of the parent directory if (1) does not have
  *      any match; this goes recursively upwards, just like .butignore.
- * (3) $GIT_DIR/info/attributes, which overrides both of the above.
+ * (3) $BUT_DIR/info/attributes, which overrides both of the above.
  *
  * In the same file, later entries override the earlier match, so in the
  * global list, we would have entries from info/attributes the earliest
@@ -694,7 +694,7 @@ static enum but_attr_direction direction;
 
 void but_attr_set_direction(enum but_attr_direction new_direction)
 {
-	if (is_bare_repository() && new_direction != GIT_ATTR_INDEX)
+	if (is_bare_repository() && new_direction != BUT_ATTR_INDEX)
 		BUG("non-INDEX attr direction in a bare repo");
 
 	if (new_direction != direction)
@@ -782,14 +782,14 @@ static struct attr_stack *read_attr(struct index_state *istate,
 {
 	struct attr_stack *res = NULL;
 
-	if (direction == GIT_ATTR_INDEX) {
+	if (direction == BUT_ATTR_INDEX) {
 		res = read_attr_from_index(istate, path, flags);
 	} else if (!is_bare_repository()) {
-		if (direction == GIT_ATTR_CHECKOUT) {
+		if (direction == BUT_ATTR_CHECKOUT) {
 			res = read_attr_from_index(istate, path, flags);
 			if (!res)
 				res = read_attr_from_file(path, flags);
-		} else if (direction == GIT_ATTR_CHECKIN) {
+		} else if (direction == BUT_ATTR_CHECKIN) {
 			res = read_attr_from_file(path, flags);
 			if (!res)
 				/*
@@ -838,7 +838,7 @@ static const char *but_etc_butattributes(void)
 {
 	static const char *system_wide;
 	if (!system_wide)
-		system_wide = system_path(ETC_GITATTRIBUTES);
+		system_wide = system_path(ETC_BUTATTRIBUTES);
 	return system_wide;
 }
 
@@ -852,10 +852,10 @@ static const char *get_home_butattributes(void)
 
 static int but_attr_system(void)
 {
-	return !but_env_bool("GIT_ATTR_NOSYSTEM", 0);
+	return !but_env_bool("BUT_ATTR_NOSYSTEM", 0);
 }
 
-static GIT_PATH_FUNC(but_path_info_attributes, INFOATTRIBUTES_FILE)
+static BUT_PATH_FUNC(but_path_info_attributes, INFOATTRIBUTES_FILE)
 
 static void push_stack(struct attr_stack **attr_stack_p,
 		       struct attr_stack *elem, char *origin, size_t originlen)
@@ -895,7 +895,7 @@ static void bootstrap_attr_stack(struct index_state *istate,
 	}
 
 	/* root directory */
-	e = read_attr(istate, GITATTRIBUTES_FILE, flags | READ_ATTR_NOFOLLOW);
+	e = read_attr(istate, BUTATTRIBUTES_FILE, flags | READ_ATTR_NOFOLLOW);
 	push_stack(stack, e, xstrdup(""), 0);
 
 	/* info frame */
@@ -923,10 +923,10 @@ static void prepare_attr_stack(struct index_state *istate,
 	 * .butattributes files from directories closer to the
 	 * root to the ones in deeper directories are pushed
 	 * to the stack.  Finally, at the very top of the stack
-	 * we always keep the contents of $GIT_DIR/info/attributes.
+	 * we always keep the contents of $BUT_DIR/info/attributes.
 	 *
 	 * When checking, we use entries from near the top of the
-	 * stack, preferring $GIT_DIR/info/attributes, then
+	 * stack, preferring $BUT_DIR/info/attributes, then
 	 * .butattributes in deeper directories to shallower ones,
 	 * and finally use the built-in set as the default.
 	 */
@@ -984,7 +984,7 @@ static void prepare_attr_stack(struct index_state *istate,
 		if (pathbuf.len > 0)
 			strbuf_addch(&pathbuf, '/');
 		strbuf_add(&pathbuf, path + pathbuf.len, (len - pathbuf.len));
-		strbuf_addf(&pathbuf, "/%s", GITATTRIBUTES_FILE);
+		strbuf_addf(&pathbuf, "/%s", BUTATTRIBUTES_FILE);
 
 		next = read_attr(istate, pathbuf.buf, READ_ATTR_NOFOLLOW);
 

@@ -1,4 +1,4 @@
-# Vietnamese translation for GIT-GUI
+# Vietnamese translation for BUT-GUI
 # Bản dịch Tiếng Việt dành cho gói Git-gui.
 # This file is distributed under the same license as the but-core package.
 # First translated by Trần Ngọc Quân <vnwildman@gmail.com>, 2014.
@@ -1392,8 +1392,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Không thể lấy được định danh của bạn:"
 
 #: lib/cummit.tcl:80
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "GIT_CUMMITTER_IDENT không hợp lệ:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "BUT_CUMMITTER_IDENT không hợp lệ:"
 
 #: lib/cummit.tcl:129
 #, tcl-format

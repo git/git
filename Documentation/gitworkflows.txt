@@ -474,6 +474,6 @@ linkbut:but-format-patch[1],
 linkbut:but-send-email[1],
 linkbut:but-am[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

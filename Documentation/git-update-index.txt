@@ -178,7 +178,7 @@ may not support it yet.
 --no-split-index::
 	Enable or disable split index mode. If split-index mode is
 	already enabled and `--split-index` is given again, all
-	changes in $GIT_DIR/index are pushed back to the shared index
+	changes in $BUT_DIR/index are pushed back to the shared index
 	file.
 +
 These options take effect whatever the value of the `core.splitIndex`
@@ -444,9 +444,9 @@ SPLIT INDEX
 This mode is designed for repositories with very large indexes, and
 aims at reducing the time it takes to repeatedly write these indexes.
 
-In this mode, the index is split into two files, $GIT_DIR/index and
-$GIT_DIR/sharedindex.<SHA-1>. Changes are accumulated in
-$GIT_DIR/index, the split index, while the shared index file contains
+In this mode, the index is split into two files, $BUT_DIR/index and
+$BUT_DIR/sharedindex.<SHA-1>. Changes are accumulated in
+$BUT_DIR/index, the split index, while the shared index file contains
 all index entries and stays unchanged.
 
 All changes in the split index are pushed back to the shared index
@@ -601,6 +601,6 @@ linkbut:but-config[1],
 linkbut:but-add[1],
 linkbut:but-ls-files[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -532,14 +532,14 @@ static void hmac_hash(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
 {
-	unsigned char key[GIT_MAX_BLKSZ];
-	unsigned char k_ipad[GIT_MAX_BLKSZ];
-	unsigned char k_opad[GIT_MAX_BLKSZ];
+	unsigned char key[BUT_MAX_BLKSZ];
+	unsigned char k_ipad[BUT_MAX_BLKSZ];
+	unsigned char k_opad[BUT_MAX_BLKSZ];
 	int i;
 	but_hash_ctx ctx;
 
 	/* RFC 2104 2. (1) */
-	memset(key, '\0', GIT_MAX_BLKSZ);
+	memset(key, '\0', BUT_MAX_BLKSZ);
 	if (the_hash_algo->blksz < key_len) {
 		the_hash_algo->init_fn(&ctx);
 		the_hash_algo->update_fn(&ctx, key_in, key_len);
@@ -570,7 +570,7 @@ static void hmac_hash(unsigned char *out,
 static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 {
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 
 	strbuf_addf(&buf, "%s:%"PRItime, path, stamp);
 	hmac_hash(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
@@ -764,24 +764,24 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
 	if (!is_null_oid(&push_cert_oid)) {
-		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
+		strvec_pushf(&proc->env_array, "BUT_PUSH_CERT=%s",
 			     oid_to_hex(&push_cert_oid));
-		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
+		strvec_pushf(&proc->env_array, "BUT_PUSH_CERT_SIGNER=%s",
 			     sigcheck.signer ? sigcheck.signer : "");
-		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",
+		strvec_pushf(&proc->env_array, "BUT_PUSH_CERT_KEY=%s",
 			     sigcheck.key ? sigcheck.key : "");
-		strvec_pushf(&proc->env_array, "GIT_PUSH_CERT_STATUS=%c",
+		strvec_pushf(&proc->env_array, "BUT_PUSH_CERT_STATUS=%c",
 			     sigcheck.result);
 		if (push_cert_nonce) {
 			strvec_pushf(&proc->env_array,
-				     "GIT_PUSH_CERT_NONCE=%s",
+				     "BUT_PUSH_CERT_NONCE=%s",
 				     push_cert_nonce);
 			strvec_pushf(&proc->env_array,
-				     "GIT_PUSH_CERT_NONCE_STATUS=%s",
+				     "BUT_PUSH_CERT_NONCE_STATUS=%s",
 				     nonce_status);
 			if (nonce_status == NONCE_SLOP)
 				strvec_pushf(&proc->env_array,
-					     "GIT_PUSH_CERT_NONCE_SLOP=%ld",
+					     "BUT_PUSH_CERT_NONCE_SLOP=%ld",
 					     nonce_stamp_slop);
 		}
 	}
@@ -816,13 +816,13 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 		size_t i;
 		for (i = 0; i < feed_state->push_options->nr; i++)
 			strvec_pushf(&proc.env_array,
-				     "GIT_PUSH_OPTION_%"PRIuMAX"=%s",
+				     "BUT_PUSH_OPTION_%"PRIuMAX"=%s",
 				     (uintmax_t)i,
 				     feed_state->push_options->items[i].string);
-		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT=%"PRIuMAX"",
+		strvec_pushf(&proc.env_array, "BUT_PUSH_OPTION_COUNT=%"PRIuMAX"",
 			     (uintmax_t)feed_state->push_options->nr);
 	} else
-		strvec_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
+		strvec_pushf(&proc.env_array, "BUT_PUSH_OPTION_COUNT");
 
 	if (tmp_objdir)
 		strvec_pushv(&proc.env_array, tmp_objdir_env(tmp_objdir));
@@ -1416,7 +1416,7 @@ static const char *push_to_checkout(unsigned char *hash,
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	opt.invoked_hook = invoked_hook;
 
-	strvec_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
+	strvec_pushf(env, "BUT_WORK_TREE=%s", absolute_path(work_tree));
 	strvec_pushv(&opt.env, env->v);
 	strvec_push(&opt.args, hash_to_hex(hash));
 	if (run_hooks_opt(push_to_checkout_hook, &opt))
@@ -1438,7 +1438,7 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 		return "denyCurrentBranch = updateInstead needs a worktree";
 	but_dir = get_worktree_but_dir(worktree);
 
-	strvec_pushf(&env, "GIT_DIR=%s", absolute_path(but_dir));
+	strvec_pushf(&env, "BUT_DIR=%s", absolute_path(but_dir));
 
 	retval = push_to_checkout(sha1, &invoked_hook, &env, worktree->path);
 	if (!invoked_hook)
@@ -2097,7 +2097,7 @@ static struct command *read_head_info(struct packet_reader *reader,
 				use_push_options = 1;
 			hash = parse_feature_value(feature_list, "object-format", &len, NULL);
 			if (!hash) {
-				hash = hash_algos[GIT_HASH_SHA1].name;
+				hash = hash_algos[BUT_HASH_SHA1].name;
 				len = strlen(hash);
 			}
 			if (xstrncmpz(the_hash_algo->name, hash, len))
@@ -2343,7 +2343,7 @@ static void prepare_shallow_update(struct shallow_info *si)
 	 * command. check_connected() will be done with
 	 * true .but/shallow though.
 	 */
-	setenv(GIT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
+	setenv(BUT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
 }
 
 static void update_shallow_info(struct command *commands,

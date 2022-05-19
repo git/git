@@ -81,7 +81,7 @@ linkbut:but-config[1].
 ifndef::but-pull[]
 --[no-]write-fetch-head::
 	Write the list of remote refs fetched in the `FETCH_HEAD`
-	file directly under `$GIT_DIR`.  This is the default.
+	file directly under `$BUT_DIR`.  This is the default.
 	Passing `--no-write-fetch-head` from the command line tells
 	Git not to write the file.  Under `--dry-run` option, the
 	file is never written.
@@ -201,7 +201,7 @@ ifndef::but-pull[]
 	submodule that has cummits that are referenced by a newly fetched
 	superproject cummit but are missing in the local submodule clone. A
 	changed submodule can be fetched as long as it is present locally e.g.
-	in `$GIT_DIR/modules/` (see linkbut:butsubmodules[7]); if the upstream
+	in `$BUT_DIR/modules/` (see linkbut:butsubmodules[7]); if the upstream
 	adds a new submodule, that submodule cannot be fetched until it is
 	cloned e.g. by `but submodule update`.
 +

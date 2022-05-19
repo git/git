@@ -33,8 +33,8 @@ Fixes since v1.7.7.1
    different from the default, potentially giving different results from
    "but diff | diffstat" and confusing the users.
 
- * "but pull" and "but rebase" did not work well even when GIT_WORK_TREE is
-   set correctly with GIT_DIR if the current directory is outside the working
+ * "but pull" and "but rebase" did not work well even when BUT_WORK_TREE is
+   set correctly with BUT_DIR if the current directory is outside the working
    tree.
 
  * "but send-email" did not honor the configured hostname when restarting

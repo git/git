@@ -5,8 +5,8 @@
 
 test_description='i18n settings and format-patch | am pipe'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -37,7 +37,7 @@ test_expect_success setup '
 	. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 
 	test_tick &&
-	echo "$GIT_AUTHOR_NAME" >mine &&
+	echo "$BUT_AUTHOR_NAME" >mine &&
 	but add mine &&
 	but cummit -s -m "Initial cummit" &&
 
@@ -101,7 +101,7 @@ test_expect_success 'rebase (U/U)' '
 
 	but config i18n.logoutputencoding UTF-8 &&
 
-	# The result will be cummitted by GIT_CUMMITTER_NAME --
+	# The result will be cummitted by BUT_CUMMITTER_NAME --
 	# we want UTF-8 encoded name.
 	. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 	but checkout -b test &&

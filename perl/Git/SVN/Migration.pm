@@ -33,7 +33,7 @@ package Git::SVN::Migration;
 #              possible if noMetadata or useSvmProps are set; but should
 #              be no problem for users that use the (sensible) defaults.
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Basename qw/dirname basename/;
@@ -49,7 +49,7 @@ use Git qw(
 use Git::SVN;
 
 sub migrate_from_v0 {
-	my $but_dir = $ENV{GIT_DIR};
+	my $but_dir = $ENV{BUT_DIR};
 	return undef unless -d $but_dir;
 	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
 	my $migrated = 0;
@@ -83,7 +83,7 @@ sub migrate_from_v0 {
 }
 
 sub migrate_from_v1 {
-	my $but_dir = $ENV{GIT_DIR};
+	my $but_dir = $ENV{BUT_DIR};
 	my $migrated = 0;
 	return $migrated unless -d $but_dir;
 	my $svn_dir = Git::SVN::svn_dir();
@@ -108,7 +108,7 @@ sub migrate_from_v1 {
 		next unless $u;
 		my $dn = dirname("$svn_dir/$x");
 		mkpath([$dn]) unless -d $dn;
-		if ($x eq 'svn') { # they used 'svn' as GIT_SVN_ID:
+		if ($x eq 'svn') { # they used 'svn' as BUT_SVN_ID:
 			mkpath(["$svn_dir/svn"]);
 			print STDERR " - $but_dir/$x/info => ",
 			                "$svn_dir/$x/info\n";
@@ -245,7 +245,7 @@ sub minimize_connections {
 		}
 	}
 	if (@emptied) {
-		my $file = $ENV{GIT_CONFIG} ||
+		my $file = $ENV{BUT_CONFIG} ||
 			command_oneline(qw(rev-parse --but-path config));
 		print STDERR <<EOF;
 The following [svn-remote] sections in your config file ($file) are empty

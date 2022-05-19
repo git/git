@@ -46,7 +46,7 @@ char *but_prompt(const char *prompt, int flags)
 	if (flags & PROMPT_ASKPASS) {
 		const char *askpass;
 
-		askpass = getenv("GIT_ASKPASS");
+		askpass = getenv("BUT_ASKPASS");
 		if (!askpass)
 			askpass = askpass_program;
 		if (!askpass)
@@ -58,7 +58,7 @@ char *but_prompt(const char *prompt, int flags)
 	if (!r) {
 		const char *err;
 
-		if (but_env_bool("GIT_TERMINAL_PROMPT", 1)) {
+		if (but_env_bool("BUT_TERMINAL_PROMPT", 1)) {
 			r = but_terminal_prompt(prompt, flags & PROMPT_ECHO);
 			err = strerror(errno);
 		} else {

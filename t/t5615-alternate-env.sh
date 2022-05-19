@@ -12,7 +12,7 @@ check_obj () {
 		echo "$obj" >&5 &&
 		echo "$obj $expect" >&6
 	done 5>input 6>expect &&
-	GIT_ALTERNATE_OBJECT_DIRECTORIES=$alt \
+	BUT_ALTERNATE_OBJECT_DIRECTORIES=$alt \
 		but "$@" cat-file --batch-check='%(objectname) %(objecttype)' \
 		<input >actual &&
 	test_cmp expect actual
@@ -46,7 +46,7 @@ test_expect_success 'access multiple alternates' '
 	EOF
 '
 
-# bare paths are relative from $GIT_DIR
+# bare paths are relative from $BUT_DIR
 test_expect_success 'access alternate via relative path (bare)' '
 	but init --bare bare.but &&
 	check_obj "../one.but/objects" -C bare.but <<-EOF

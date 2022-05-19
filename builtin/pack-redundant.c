@@ -564,7 +564,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 	struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
 	struct object_id *oid;
-	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
+	char buf[BUT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(pack_redundant_usage);

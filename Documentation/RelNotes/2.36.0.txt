@@ -51,7 +51,7 @@ UI, Workflows & Features
 
  * The command line completion script (in contrib/) learned to
    complete all Git subcommands, including the ones that are normally
-   hidden, when GIT_COMPLETION_SHOW_ALL_COMMANDS is used.
+   hidden, when BUT_COMPLETION_SHOW_ALL_COMMANDS is used.
 
  * "but branch" learned the "--recurse-submodules" option.
 
@@ -204,7 +204,7 @@ Fixes since v2.35
    racy timestamps (just like "but status" already does).
    (merge 2ede073fd2 ms/update-index-racy later to maint).
 
- * Avoid tests that are run under GIT_TRACE2 set from failing
+ * Avoid tests that are run under BUT_TRACE2 set from failing
    unnecessarily.
    (merge 944d808e42 js/test-unset-trace2-parents later to maint).
 
@@ -233,7 +233,7 @@ Fixes since v2.35
    work better on a system with CRLF line endings.
    (merge caeef01ea7 fs/ssh-signing-crlf later to maint).
 
- * "but sparse-checkout init" failed to write into $GIT_DIR/info
+ * "but sparse-checkout init" failed to write into $BUT_DIR/info
    directory when the repository was created without one, which has
    been corrected to auto-create it.
    (merge 7f44842ac1 jt/sparse-checkout-leading-dir-fix later to maint).

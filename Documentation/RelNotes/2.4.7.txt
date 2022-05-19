@@ -20,7 +20,7 @@ Fixes since v2.4.6
    yourself in the resulting shell, that may look as if you took
    control back to the original shell you spawned "but log" from but
    that isn't what is happening.  To that new shell, we leaked
-   GIT_PAGER_IN_USE environment variable that was meant as a local
+   BUT_PAGER_IN_USE environment variable that was meant as a local
    communication between the original "Git" and subprocesses that was
    spawned by it after we launched the pager, which caused many
    "interesting" things to happen, e.g. "but diff | cat" still paints

@@ -14,8 +14,8 @@ p    show patch text as well
 
 . but-sh-setup
 
-GIT_PAGER=
-export GIT_PAGER
+BUT_PAGER=
+export BUT_PAGER
 
 patch=
 while	case "$#" in 0) break ;; esac

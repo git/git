@@ -339,7 +339,7 @@ static int module_list_compute(int argc, const char **argv,
 
 		if (!match_pathspec(&the_index, pathspec, ce->name, ce_namelen(ce),
 				    0, ps_matched, 1) ||
-		    !S_ISGITLINK(ce->ce_mode))
+		    !S_ISBUTLINK(ce->ce_mode))
 			continue;
 
 		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
@@ -973,7 +973,7 @@ static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 				    struct module_cb *p)
 {
 	if (p->status == 'T') {
-		if (S_ISGITLINK(p->mod_dst))
+		if (S_ISBUTLINK(p->mod_dst))
 			printf(_("* %s %s(blob)->%s(submodule)"),
 				 displaypath, src_abbrev, dst_abbrev);
 		else
@@ -999,7 +999,7 @@ static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 		prepare_submodule_repo_env(&cp_log.env_array);
 		strvec_pushl(&cp_log.args, "log", NULL);
 
-		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst)) {
+		if (S_ISBUTLINK(p->mod_src) && S_ISBUTLINK(p->mod_dst)) {
 			if (info->summary_limit > 0)
 				strvec_pushf(&cp_log.args, "-%d",
 					     info->summary_limit);
@@ -1008,7 +1008,7 @@ static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 				     "--first-parent", NULL);
 			strvec_pushf(&cp_log.args, "%s...%s",
 				     src_abbrev, dst_abbrev);
-		} else if (S_ISGITLINK(p->mod_dst)) {
+		} else if (S_ISBUTLINK(p->mod_dst)) {
 			strvec_pushl(&cp_log.args, "--pretty=  > %s",
 				     "-1", dst_abbrev, NULL);
 		} else {
@@ -1029,7 +1029,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	int total_cummits = -1;
 
 	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
-		if (S_ISGITLINK(p->mod_dst)) {
+		if (S_ISBUTLINK(p->mod_dst)) {
 			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
 			if (refs)
 				refs_head_ref(refs, handle_submodule_head_ref, &p->oid_dst);
@@ -1048,7 +1048,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		}
 	}
 
-	if (S_ISGITLINK(p->mod_src)) {
+	if (S_ISBUTLINK(p->mod_src)) {
 		if (p->status != 'D')
 			src_abbrev = verify_submodule_cummittish(p->sm_path,
 								 oid_to_hex(&p->oid_src));
@@ -1072,7 +1072,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		src_abbrev = xstrndup(oid_to_hex(&p->oid_src), 7);
 	}
 
-	if (S_ISGITLINK(p->mod_dst)) {
+	if (S_ISBUTLINK(p->mod_dst)) {
 		dst_abbrev = verify_submodule_cummittish(p->sm_path,
 							 oid_to_hex(&p->oid_dst));
 		if (!dst_abbrev) {
@@ -1103,11 +1103,11 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 		strvec_pushl(&cp_rev_list.args, "rev-list",
 			     "--first-parent", "--count", NULL);
-		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
+		if (S_ISBUTLINK(p->mod_src) && S_ISBUTLINK(p->mod_dst))
 			strvec_pushf(&cp_rev_list.args, "%s...%s",
 				     src_abbrev, dst_abbrev);
 		else
-			strvec_push(&cp_rev_list.args, S_ISGITLINK(p->mod_src) ?
+			strvec_push(&cp_rev_list.args, S_ISBUTLINK(p->mod_src) ?
 				    src_abbrev : dst_abbrev);
 		strvec_push(&cp_rev_list.args, "--");
 
@@ -1124,7 +1124,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		 * Don't give error msg for modification whose dst is not
 		 * submodule, i.e., deleted or changed to blob
 		 */
-		if (S_ISGITLINK(p->mod_dst)) {
+		if (S_ISBUTLINK(p->mod_dst)) {
 			struct strbuf errmsg_str = STRBUF_INIT;
 			if (missing_src && missing_dst) {
 				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain cummits %s and %s\n",
@@ -1200,7 +1200,7 @@ static void submodule_summary_callback(struct diff_queue_struct *q,
 		struct diff_filepair *p = q->queue[i];
 		struct module_cb *temp;
 
-		if (!S_ISGITLINK(p->one->mode) && !S_ISGITLINK(p->two->mode))
+		if (!S_ISBUTLINK(p->one->mode) && !S_ISBUTLINK(p->two->mode))
 			continue;
 		temp = (struct module_cb*)malloc(sizeof(struct module_cb));
 		temp->mod_src = p->one->mode;
@@ -1516,7 +1516,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 					displaypath);
 
 			absorb_but_dir_into_superproject(path,
-							 ABSORB_GITDIR_RECURSE_SUBMODULES);
+							 ABSORB_BUTDIR_RECURSE_SUBMODULES);
 
 		}
 
@@ -2296,7 +2296,7 @@ static int is_tip_reachable(const char *path, struct object_id *oid)
 
 	prepare_submodule_repo_env(&cp.env_array);
 
-	if (capture_command(&cp, &rev, GIT_MAX_HEXSZ + 1) || rev.len)
+	if (capture_command(&cp, &rev, BUT_MAX_HEXSZ + 1) || rev.len)
 		return 0;
 
 	return 1;
@@ -2883,14 +2883,14 @@ static int absorb_but_dirs(int argc, const char **argv, const char *prefix)
 	int i;
 	struct pathspec pathspec;
 	struct module_list list = MODULE_LIST_INIT;
-	unsigned flags = ABSORB_GITDIR_RECURSE_SUBMODULES;
+	unsigned flags = ABSORB_BUTDIR_RECURSE_SUBMODULES;
 
 	struct option embed_butdir_options[] = {
 		OPT_STRING(0, "prefix", &prefix,
 			   N_("path"),
 			   N_("path into the working tree")),
 		OPT_BIT(0, "--recursive", &flags, N_("recurse into submodules"),
-			ABSORB_GITDIR_RECURSE_SUBMODULES),
+			ABSORB_BUTDIR_RECURSE_SUBMODULES),
 		OPT_END()
 	};
 
@@ -3123,8 +3123,8 @@ static void append_fetch_remotes(struct strbuf *msg, const char *but_dir_path)
 
 	cp_remote.but_cmd = 1;
 	strvec_pushf(&cp_remote.env_array,
-		     "GIT_DIR=%s", but_dir_path);
-	strvec_push(&cp_remote.env_array, "GIT_WORK_TREE=.");
+		     "BUT_DIR=%s", but_dir_path);
+	strvec_push(&cp_remote.env_array, "BUT_WORK_TREE=.");
 	strvec_pushl(&cp_remote.args, "remote", "-v", NULL);
 	if (!capture_command(&cp_remote, &sb_remote_out, 0)) {
 		char *next_line;
@@ -3337,7 +3337,7 @@ static void die_on_index_match(const char *path, int force)
 				if (!force)
 					die(_("'%s' already exists in the index"),
 					    path);
-				if (!S_ISGITLINK(active_cache[i]->ce_mode))
+				if (!S_ISBUTLINK(active_cache[i]->ce_mode))
 					die(_("'%s' already exists in the index "
 					      "and is not a submodule"), path);
 				break;

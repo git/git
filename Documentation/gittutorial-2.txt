@@ -431,6 +431,6 @@ linkbut:but-help[1],
 linkbut:buteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

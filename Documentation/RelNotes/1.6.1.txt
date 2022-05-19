@@ -1,4 +1,4 @@
-GIT v1.6.1 Release Notes
+BUT v1.6.1 Release Notes
 ========================
 
 Updates since v1.6.0
@@ -147,7 +147,7 @@ on.
 
 * "but grep" learned to accept -z similar to GNU grep.
 
-* "but help" learned to use GIT_MAN_VIEWER environment variable before
+* "but help" learned to use BUT_MAN_VIEWER environment variable before
   using "man" program.
 
 * "but imap-send" can optionally talk SSL.

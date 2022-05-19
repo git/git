@@ -25,7 +25,7 @@ struct but_max_alignment {
 		void *max_align_pointer;
 	} aligned;
 };
-#define GIT_MAX_ALIGNMENT offsetof(struct but_max_alignment, aligned)
+#define BUT_MAX_ALIGNMENT offsetof(struct but_max_alignment, aligned)
 
 /*
  * Allocate a new mp_block and insert it after the block specified in
@@ -89,9 +89,9 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 	struct mp_block *p = NULL;
 	void *r;
 
-	/* round up to a 'GIT_MAX_ALIGNMENT' alignment */
-	if (len & (GIT_MAX_ALIGNMENT - 1))
-		len += GIT_MAX_ALIGNMENT - (len & (GIT_MAX_ALIGNMENT - 1));
+	/* round up to a 'BUT_MAX_ALIGNMENT' alignment */
+	if (len & (BUT_MAX_ALIGNMENT - 1))
+		len += BUT_MAX_ALIGNMENT - (len & (BUT_MAX_ALIGNMENT - 1));
 
 	if (pool->mp_block &&
 	    pool->mp_block->end - pool->mp_block->next_free >= len)

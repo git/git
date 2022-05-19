@@ -41,7 +41,7 @@ static void lookup_fsmonitor_settings(struct repository *r)
 		return;
 
 	case 1: /* config value was unset */
-		const_str = getenv("GIT_TEST_FSMONITOR");
+		const_str = getenv("BUT_TEST_FSMONITOR");
 		break;
 
 	case -1: /* config value set to an arbitrary string */

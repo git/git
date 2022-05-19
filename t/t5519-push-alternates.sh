@@ -2,8 +2,8 @@
 
 test_description='push to a repository that borrows from elsewhere'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -11,7 +11,7 @@ test_expect_success setup '
 	mkdir alice-pub &&
 	(
 		cd alice-pub &&
-		GIT_DIR=. but init
+		BUT_DIR=. but init
 	) &&
 	mkdir alice-work &&
 	(
@@ -27,7 +27,7 @@ test_expect_success setup '
 	mkdir bob-pub &&
 	(
 		cd bob-pub &&
-		GIT_DIR=. but init &&
+		BUT_DIR=. but init &&
 		mkdir -p objects/info &&
 		echo ../../alice-pub/objects >objects/info/alternates
 	) &&

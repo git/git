@@ -1283,8 +1283,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Kunne ikke avgjøre din identitet:"
 
 #: lib/cummit.tcl:81
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "Ugyldig GIT_CUMMITTER_IDENT:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "Ugyldig BUT_CUMMITTER_IDENT:"
 
 #: lib/cummit.tcl:133
 msgid ""

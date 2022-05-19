@@ -3,9 +3,9 @@
 test_description='Test cloning a repository larger than 2 gigabyte'
 . ./test-lib.sh
 
-if ! test_bool_env GIT_TEST_CLONE_2GB false
+if ! test_bool_env BUT_TEST_CLONE_2GB false
 then
-	skip_all='expensive 2GB clone test; enable with GIT_TEST_CLONE_2GB=true'
+	skip_all='expensive 2GB clone test; enable with BUT_TEST_CLONE_2GB=true'
 	test_done
 fi
 

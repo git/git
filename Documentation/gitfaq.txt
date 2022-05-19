@@ -70,7 +70,7 @@ export VISUAL=nano
 ----
 +
 If you want to configure an editor specifically for Git, you can either set the
-`core.editor` configuration value or the `GIT_EDITOR` environment variable.  You
+`core.editor` configuration value or the `BUT_EDITOR` environment variable.  You
 can see linkbut:but-var[1] for details on the order in which these options are
 consulted.
 +
@@ -114,12 +114,12 @@ How do I read a password or token from an environment variable?::
 	This is useful when passing credentials into a container, for example.
 +
 Such a shell command can be specified by starting the option value with an
-exclamation point.  If your password or token were stored in the `GIT_TOKEN`,
+exclamation point.  If your password or token were stored in the `BUT_TOKEN`,
 you could run the following command to set your credential helper:
 +
 ----
 $ but config credential.helper \
-	'!f() { echo username=author; echo "password=$GIT_TOKEN"; };f'
+	'!f() { echo username=author; echo "password=$BUT_TOKEN"; };f'
 ----
 
 [[http-reset-credentials]]
@@ -342,7 +342,7 @@ C files to use UTF-16LE-BOM, which is a common encoding on Windows:
 You will need to run `but add --renormalize` to have this take effect.  Note
 that if you are making these changes on a project that is used across platforms,
 you'll probably want to make it in a per-user configuration file or in the one
-in `$GIT_DIR/info/attributes`, since making it in a `.butattributes` file in the
+in `$BUT_DIR/info/attributes`, since making it in a `.butattributes` file in the
 repository will apply to all users of the repository.
 +
 See the following entry for information about normalizing line endings as well,
@@ -436,6 +436,6 @@ These settings help tools pick the right format for output such as patches and
 result in files being checked out in the appropriate line ending for the
 platform.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

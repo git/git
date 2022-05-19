@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='but blame corner cases'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -17,7 +17,7 @@ test_expect_success setup '
 	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
 	but add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Initial but cummit -m Initial &&
+	BUT_AUTHOR_NAME=Initial but cummit -m Initial &&
 
 	cat one >uno &&
 	mv two dos &&
@@ -25,17 +25,17 @@ test_expect_success setup '
 	echo DEF >>mouse &&
 	but add uno dos tres mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Second but cummit -a -m Second &&
+	BUT_AUTHOR_NAME=Second but cummit -a -m Second &&
 
 	echo GHIJK >>mouse &&
 	but add mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Third but cummit -m Third &&
+	BUT_AUTHOR_NAME=Third but cummit -m Third &&
 
 	cat mouse >cow &&
 	but add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fourth but cummit -m Fourth &&
+	BUT_AUTHOR_NAME=Fourth but cummit -m Fourth &&
 
 	cat >cow <<-\EOF &&
 	ABC
@@ -45,7 +45,7 @@ test_expect_success setup '
 	EOF
 	but add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fifth but cummit -m Fifth
+	BUT_AUTHOR_NAME=Fifth but cummit -m Fifth
 '
 
 test_expect_success 'straight copy without -C' '
@@ -163,7 +163,7 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	echo MOUSE >> mouse &&
 	but mv mouse rodent &&
 	but add rodent &&
-	GIT_AUTHOR_NAME=Rodent but cummit -m "rodent" &&
+	BUT_AUTHOR_NAME=Rodent but cummit -m "rodent" &&
 	but checkout --detach main &&
 	(but cherry-pick HEAD@{1} || test $? -eq 1) &&
 	but show HEAD@{1}:rodent > rodent &&

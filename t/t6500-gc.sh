@@ -164,13 +164,13 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 '
 
 test_expect_success 'gc --no-quiet' '
-	GIT_PROGRESS_DELAY=0 but -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
+	BUT_PROGRESS_DELAY=0 but -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Computing cummit graph generation numbers" stderr
 '
 
 test_expect_success TTY 'with TTY: gc --no-quiet' '
-	test_terminal env GIT_PROGRESS_DELAY=0 \
+	test_terminal env BUT_PROGRESS_DELAY=0 \
 		but -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Enumerating objects" stderr &&
@@ -187,7 +187,7 @@ test_expect_success 'gc.reflogExpire{Unreachable,}=never skips "expire" via "gc"
 	test_config gc.reflogExpire never &&
 	test_config gc.reflogExpireUnreachable never &&
 
-	GIT_TRACE=$(pwd)/trace.out but gc &&
+	BUT_TRACE=$(pwd)/trace.out but gc &&
 
 	# Check that but-pack-refs is run as a sanity check (done via
 	# gc_before_repack()) but that but-expire is not.
@@ -198,7 +198,7 @@ test_expect_success 'gc.reflogExpire{Unreachable,}=never skips "expire" via "gc"
 test_expect_success 'one of gc.reflogExpire{Unreachable,}=never does not skip "expire" via "gc"' '
 	>trace.out &&
 	test_config gc.reflogExpire never &&
-	GIT_TRACE=$(pwd)/trace.out but gc &&
+	BUT_TRACE=$(pwd)/trace.out but gc &&
 	grep -E "^trace: (built-in|exec|run_command): but reflog expire --" trace.out
 '
 

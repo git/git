@@ -95,7 +95,7 @@ gc.worktreePruneExpire::
 	'but worktree prune --expire 3.months.ago'.
 	This config variable can be used to set a different grace
 	period. The value "now" may be used to disable the grace
-	period and prune `$GIT_DIR/worktrees` immediately, or "never"
+	period and prune `$BUT_DIR/worktrees` immediately, or "never"
 	may be used to suppress pruning.
 
 gc.reflogExpire::

@@ -844,9 +844,9 @@ So, if you run something like
 $ but show-branch e05db0fd v1.5.0-rc0 v1.5.0-rc1 v1.5.0-rc2
 ! [e05db0fd] Fix warnings in sha1_file.c - use C99 printf format if
 available
- ! [v1.5.0-rc0] GIT v1.5.0 preview
-  ! [v1.5.0-rc1] GIT v1.5.0-rc1
-   ! [v1.5.0-rc2] GIT v1.5.0-rc2
+ ! [v1.5.0-rc0] BUT v1.5.0 preview
+  ! [v1.5.0-rc1] BUT v1.5.0-rc1
+   ! [v1.5.0-rc2] BUT v1.5.0-rc2
 ...
 -------------------------------------------------
 
@@ -2999,7 +2999,7 @@ $ but ls-tree fb3a8bdd0ce
 100644 blob 5529b198e8d14decbe4ad99db3f7fb632de0439d    .mailmap
 100644 blob 6ff87c4664981e4397625791c8ea3bbb5f2279a3    COPYING
 040000 tree 2fb783e477100ce076f6bf57e4a6f026013dc745    Documentation
-100755 blob 3c0032cec592a765692234f1cba47dfdcc3a9200    GIT-VERSION-GEN
+100755 blob 3c0032cec592a765692234f1cba47dfdcc3a9200    BUT-VERSION-GEN
 100644 blob 289b046a443c0647624607d471289b2c7dcd470b    INSTALL
 100644 blob 4eb463797adc693dc168b926b6932ff53f17d0b1    Makefile
 100644 blob 548142c327a6790ff8821d67c2ee1eff7a656b52    README
@@ -3097,7 +3097,7 @@ type cummit
 tag v1.5.0
 tagger Junio C Hamano <junkio@cox.net> 1171411200 +0000
 
-GIT 1.5.0
+BUT 1.5.0
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.6 (GNU/Linux)
 

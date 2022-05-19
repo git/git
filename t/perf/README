@@ -56,18 +56,18 @@ anything beforehand.
 
 You can set the following variables (also in your config.mak):
 
-    GIT_PERF_REPEAT_COUNT
+    BUT_PERF_REPEAT_COUNT
 	Number of times a test should be repeated for best-of-N
 	measurements.  Defaults to 3.
 
-    GIT_PERF_MAKE_OPTS
+    BUT_PERF_MAKE_OPTS
 	Options to use when automatically building a but tree for
 	performance testing. E.g., -j6 would be useful. Passed
-	directly to make as "make $GIT_PERF_MAKE_OPTS".
+	directly to make as "make $BUT_PERF_MAKE_OPTS".
 
-    GIT_PERF_MAKE_COMMAND
+    BUT_PERF_MAKE_COMMAND
 	An arbitrary command that'll be run in place of the make
-	command, if set the GIT_PERF_MAKE_OPTS variable is
+	command, if set the BUT_PERF_MAKE_OPTS variable is
 	ignored. Useful in cases where source tree changes might
 	require issuing a different make command to different
 	revisions.
@@ -79,21 +79,21 @@ You can set the following variables (also in your config.mak):
 	any of that, that's an implementation detail that might change
 	in the future.
 
-    GIT_PERF_REPO
-    GIT_PERF_LARGE_REPO
+    BUT_PERF_REPO
+    BUT_PERF_LARGE_REPO
 	Repositories to copy for the performance tests.  The normal
 	repo should be at least but.but size.  The large repo should
 	probably be about linux.but size for optimal results.
 	Both default to the but.but you are running from.
 
-    GIT_PERF_EXTRA
+    BUT_PERF_EXTRA
 	Boolean to enable additional tests. Most test scripts are
 	written to detect regressions between two versions of Git, and
 	the output will compare timings for individual tests between
 	those versions. Some scripts have additional tests which are not
 	run by default, that show patterns within a single version of
 	Git (e.g., performance of index-pack as the number of threads
-	changes). These can be enabled with GIT_PERF_EXTRA.
+	changes). These can be enabled with BUT_PERF_EXTRA.
 
 You can also pass the options taken by ordinary but tests; the most
 useful one is:
@@ -144,7 +144,7 @@ At least one of the first two is required!
 
 You can use test_expect_success as usual. In both test_expect_success
 and in test_perf, running "but" points to the version that is being
-perf-tested. The $MODERN_GIT variable points to the but wrapper for the
+perf-tested. The $MODERN_BUT variable points to the but wrapper for the
 currently checked-out version (i.e., the one that matches the t/perf
 scripts you are running).  This is useful if your setup uses commands
 that only work with newer versions of but than what you might want to

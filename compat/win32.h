@@ -2,7 +2,7 @@
 #define WIN32_H
 
 /* common Win32 functions for MinGW and Cygwin */
-#ifndef GIT_WINDOWS_NATIVE	/* Not defined for Cygwin */
+#ifndef BUT_WINDOWS_NATIVE	/* Not defined for Cygwin */
 #include <windows.h>
 #endif
 

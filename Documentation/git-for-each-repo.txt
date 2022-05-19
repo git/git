@@ -54,6 +54,6 @@ Each `but -C <repo> <arguments>` subprocess inherits the standard file
 descriptors `stdin`, `stdout`, and `stderr`.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -126,7 +126,7 @@ test_expect_success 'HEAD link pointing at a funny object' '
 	mv .but/HEAD .but/SAVED_HEAD &&
 	echo $ZERO_OID >.but/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
-	test_must_fail env GIT_DIR=.but but fsck 2>out &&
+	test_must_fail env BUT_DIR=.but but fsck 2>out &&
 	test_i18ngrep "detached HEAD points" out
 '
 
@@ -135,7 +135,7 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	mv .but/HEAD .but/SAVED_HEAD &&
 	echo "ref: refs/funny/place" >.but/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
-	test_must_fail env GIT_DIR=.but but fsck 2>out &&
+	test_must_fail env BUT_DIR=.but but fsck 2>out &&
 	test_i18ngrep "HEAD points to something strange" out
 '
 
@@ -280,8 +280,8 @@ test_expect_success 'cummit with NUL in header' '
 test_expect_success 'tree object with duplicate entries' '
 	test_when_finished "for i in \$T; do remove_object \$i; done" &&
 	T=$(
-		GIT_INDEX_FILE=test-index &&
-		export GIT_INDEX_FILE &&
+		BUT_INDEX_FILE=test-index &&
+		export BUT_INDEX_FILE &&
 		rm -f test-index &&
 		>x &&
 		but add x &&
@@ -554,12 +554,12 @@ done <<-EOF
 dot .
 dotdot ..
 dotbut .but
-dotbut-case .GIT
+dotbut-case .BUT
 dotbut-unicode .gI${u200c}T .gI{u200c}T
 dotbut-case2 .Git
 but-tilde1 but~1
 dotbutdot .but.
-dot-backslash-case .\\\\.GIT\\\\foobar
+dot-backslash-case .\\\\.BUT\\\\foobar
 dotbut-case-backslash .but\\\\foobar
 EOF
 

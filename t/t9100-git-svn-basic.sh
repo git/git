@@ -5,8 +5,8 @@
 
 test_description='but svn basic tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-but-svn.sh
 
@@ -72,7 +72,7 @@ test_expect_success "$name" '
 
 name='detect node change from directory to file #1'
 test_expect_success "$name" '
-	rm -rf dir "$GIT_DIR"/index &&
+	rm -rf dir "$BUT_DIR"/index &&
 	but checkout -f -b mybranch2 remotes/but-svn &&
 	mv bar/zzz zzz &&
 	rm -rf bar &&
@@ -87,7 +87,7 @@ test_expect_success "$name" '
 
 name='detect node change from file to directory #2'
 test_expect_success "$name" '
-	rm -f "$GIT_DIR"/index &&
+	rm -f "$BUT_DIR"/index &&
 	but checkout -f -b mybranch3 remotes/but-svn &&
 	rm bar/zzz &&
 	but update-index --remove bar/zzz &&
@@ -104,7 +104,7 @@ test_expect_success "$name" '
 
 name='detect node change from directory to file #2'
 test_expect_success "$name" '
-	rm -f "$GIT_DIR"/index &&
+	rm -f "$BUT_DIR"/index &&
 	but checkout -f -b mybranch4 remotes/but-svn &&
 	rm -rf dir &&
 	but update-index --remove -- dir/file &&
@@ -119,7 +119,7 @@ test_expect_success "$name" '
 
 name='remove executable bit from a file'
 test_expect_success POSIXPERM "$name" '
-	rm -f "$GIT_DIR"/index &&
+	rm -f "$BUT_DIR"/index &&
 	but checkout -f -b mybranch5 remotes/but-svn &&
 	chmod -x exec.sh &&
 	but update-index exec.sh &&
@@ -179,8 +179,8 @@ test_expect_success POSIXPERM,SYMLINKS "$name" '
 	test ! -h "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
 
-name="cummit with UTF-8 message: locale: $GIT_TEST_UTF8_LOCALE"
-LC_ALL="$GIT_TEST_UTF8_LOCALE"
+name="cummit with UTF-8 message: locale: $BUT_TEST_UTF8_LOCALE"
+LC_ALL="$BUT_TEST_UTF8_LOCALE"
 export LC_ALL
 # This test relies on the previous test, hence requires POSIXPERM,SYMLINKS
 test_expect_success UTF8,POSIXPERM,SYMLINKS "$name" "
@@ -190,9 +190,9 @@ test_expect_success UTF8,POSIXPERM,SYMLINKS "$name" "
 	but svn set-tree HEAD"
 unset LC_ALL
 
-name='test fetch functionality (svn => but) with alternate GIT_SVN_ID'
-GIT_SVN_ID=alt
-export GIT_SVN_ID
+name='test fetch functionality (svn => but) with alternate BUT_SVN_ID'
+BUT_SVN_ID=alt
+export BUT_SVN_ID
 test_expect_success "$name" \
     'but svn init "$svnrepo" && but svn fetch &&
      but log --format="tree %T %s" remotes/but-svn |
@@ -318,7 +318,7 @@ test_expect_success 'but-svn works in a bare repository' '
 	mkdir bare-repo &&
 	( cd bare-repo &&
 	but init --bare &&
-	GIT_DIR=. but svn init "$svnrepo" &&
+	BUT_DIR=. but svn init "$svnrepo" &&
 	but svn fetch ) &&
 	rm -rf bare-repo
 	'

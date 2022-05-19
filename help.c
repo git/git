@@ -705,7 +705,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 	strbuf_addf(buf, "but version %s\n", but_version_string);
 
 	if (show_build_options) {
-		strbuf_addf(buf, "cpu: %s\n", GIT_HOST_CPU);
+		strbuf_addf(buf, "cpu: %s\n", BUT_HOST_CPU);
 		if (but_built_from_cummit_string[0])
 			strbuf_addf(buf, "built from cummit: %s\n",
 			       but_built_from_cummit_string);
@@ -714,7 +714,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "sizeof-long: %d\n", (int)sizeof(long));
 		strbuf_addf(buf, "sizeof-size_t: %d\n", (int)sizeof(size_t));
 		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);
-		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
+		/* NEEDSWORK: also save and output BUT-BUILD_OPTIONS? */
 
 		if (fsmonitor_ipc__is_supported())
 			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");

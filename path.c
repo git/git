@@ -751,7 +751,7 @@ char *interpolate_path(const char *path, int real_home)
 				strbuf_add_real_path(&user_path, home);
 			else
 				strbuf_addstr(&user_path, home);
-#ifdef GIT_WINDOWS_NATIVE
+#ifdef BUT_WINDOWS_NATIVE
 			convert_slashes(user_path.buf);
 #endif
 		} else {
@@ -1551,12 +1551,12 @@ char *xdg_cache_home(const char *filename)
 	return NULL;
 }
 
-REPO_GIT_PATH_FUNC(squash_msg, "SQUASH_MSG")
-REPO_GIT_PATH_FUNC(merge_msg, "MERGE_MSG")
-REPO_GIT_PATH_FUNC(merge_rr, "MERGE_RR")
-REPO_GIT_PATH_FUNC(merge_mode, "MERGE_MODE")
-REPO_GIT_PATH_FUNC(merge_head, "MERGE_HEAD")
-REPO_GIT_PATH_FUNC(merge_autostash, "MERGE_AUTOSTASH")
-REPO_GIT_PATH_FUNC(auto_merge, "AUTO_MERGE")
-REPO_GIT_PATH_FUNC(fetch_head, "FETCH_HEAD")
-REPO_GIT_PATH_FUNC(shallow, "shallow")
+REPO_BUT_PATH_FUNC(squash_msg, "SQUASH_MSG")
+REPO_BUT_PATH_FUNC(merge_msg, "MERGE_MSG")
+REPO_BUT_PATH_FUNC(merge_rr, "MERGE_RR")
+REPO_BUT_PATH_FUNC(merge_mode, "MERGE_MODE")
+REPO_BUT_PATH_FUNC(merge_head, "MERGE_HEAD")
+REPO_BUT_PATH_FUNC(merge_autostash, "MERGE_AUTOSTASH")
+REPO_BUT_PATH_FUNC(auto_merge, "AUTO_MERGE")
+REPO_BUT_PATH_FUNC(fetch_head, "FETCH_HEAD")
+REPO_BUT_PATH_FUNC(shallow, "shallow")

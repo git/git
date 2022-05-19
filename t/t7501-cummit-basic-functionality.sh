@@ -7,8 +7,8 @@
 # signoff
 
 test_description='but cummit'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-diff.sh"
@@ -361,12 +361,12 @@ test_expect_success 'partial cummit that involves removal (3)' '
 
 test_expect_success 'amend cummit to fix author' '
 
-	oldtick=$GIT_AUTHOR_DATE &&
+	oldtick=$BUT_AUTHOR_DATE &&
 	test_tick &&
 	but reset --hard &&
 	but cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$BUT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	but cummit --amend --author="$author" &&
 	but cat-file -p HEAD >current &&
@@ -377,11 +377,11 @@ test_expect_success 'amend cummit to fix author' '
 test_expect_success 'amend cummit to fix date' '
 
 	test_tick &&
-	newtick=$GIT_AUTHOR_DATE &&
+	newtick=$BUT_AUTHOR_DATE &&
 	but reset --hard &&
 	but cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $newtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$BUT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	but cummit --amend --date="$newtick" &&
 	but cat-file -p HEAD >current &&
@@ -416,7 +416,7 @@ test_expect_success 'sign off (1)' '
 	(
 		echo thank you &&
 		echo &&
-		but var GIT_CUMMITTER_IDENT >ident &&
+		but var BUT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -437,7 +437,7 @@ $existing" &&
 		echo thank you &&
 		echo &&
 		echo $existing &&
-		but var GIT_CUMMITTER_IDENT >ident &&
+		but var BUT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -458,7 +458,7 @@ $alt" &&
 		echo welcome &&
 		echo &&
 		echo $alt &&
-		but var GIT_CUMMITTER_IDENT >ident &&
+		but var BUT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -481,7 +481,7 @@ $alt" &&
 		echo We have now &&
 		echo $alt &&
 		echo &&
-		but var GIT_CUMMITTER_IDENT >ident &&
+		but var BUT_CUMMITTER_IDENT >ident &&
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" ident
 	) >expected &&
 	test_cmp expected actual
@@ -503,7 +503,7 @@ Myfooter: x" &&
 		echo non-trailer line &&
 		echo Myfooter: x &&
 		echo &&
-		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+		echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 	) >expected &&
 	test_cmp expected actual &&
 
@@ -520,7 +520,7 @@ Myfooter: x" &&
 		echo &&
 		echo non-trailer line &&
 		echo Myfooter: x &&
-		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+		echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 	) >expected &&
 	test_cmp expected actual
 '
@@ -533,7 +533,7 @@ test_expect_success 'signoff not confused by ---' '
 		---
 		these dashes confuse the parser!
 
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	# should be a noop, since we already signed
 	but cummit --allow-empty --signoff -F expected &&
@@ -561,12 +561,12 @@ test_expect_success 'multiple -m' '
 
 test_expect_success 'amend cummit to fix author' '
 
-	oldtick=$GIT_AUTHOR_DATE &&
+	oldtick=$BUT_AUTHOR_DATE &&
 	test_tick &&
 	but reset --hard &&
 	but cat-file -p HEAD >cummit &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(cummitter.*> \).*$/\1$GIT_CUMMITTER_DATE/" \
+		-e "s/^\(cummitter.*> \).*$/\1$BUT_CUMMITTER_DATE/" \
 		cummit >expected &&
 	but cummit --amend --author="$author" &&
 	but cat-file -p HEAD >current &&

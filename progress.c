@@ -1,5 +1,5 @@
 /*
- * Simple text-based progress display module for GIT
+ * Simple text-based progress display module for BUT
  *
  * Copyright (c) 2007 by Nicolas Pitre <nico@fluxnic.net>
  *
@@ -8,7 +8,7 @@
  * published by the Free Software Foundation.
  */
 
-#define GIT_TEST_PROGRESS_ONLY
+#define BUT_TEST_PROGRESS_ONLY
 #include "cache.h"
 #include "gettext.h"
 #include "progress.h"
@@ -274,7 +274,7 @@ static int get_default_delay(void)
 	static int delay_in_secs = -1;
 
 	if (delay_in_secs < 0)
-		delay_in_secs = but_env_ulong("GIT_PROGRESS_DELAY", 2);
+		delay_in_secs = but_env_ulong("BUT_PROGRESS_DELAY", 2);
 
 	return delay_in_secs;
 }

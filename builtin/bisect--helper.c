@@ -10,15 +10,15 @@
 #include "quote.h"
 #include "revision.h"
 
-static GIT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
-static GIT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
-static GIT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
-static GIT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
-static GIT_PATH_FUNC(but_path_head_name, "head-name")
-static GIT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
-static GIT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
-static GIT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
+static BUT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
+static BUT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static BUT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static BUT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
+static BUT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
+static BUT_PATH_FUNC(but_path_head_name, "head-name")
+static BUT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
+static BUT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
+static BUT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
 
 static const char * const but_bisect_helper_usage[] = {
 	N_("but bisect--helper --bisect-reset [<cummit>]"),
@@ -223,7 +223,7 @@ static int bisect_reset(const char *cummit)
 		struct strvec argv = STRVEC_INIT;
 
 		strvec_pushl(&argv, "checkout", branch.buf, "--", NULL);
-		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+		if (run_command_v_opt(argv.v, RUN_BUT_CMD)) {
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'but bisect"
 				" reset <cummit>'."), branch.buf);
@@ -724,7 +724,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 
 			strvec_pushl(&argv, "checkout", start_head.buf,
 				     "--", NULL);
-			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+			if (run_command_v_opt(argv.v, RUN_BUT_CMD)) {
 				res = error(_("checking out '%s' failed."
 						 " Try 'but bisect start "
 						 "<valid-branch>'."),
@@ -1066,14 +1066,14 @@ static int bisect_visualize(struct bisect_terms *terms, const char **argv, int a
 			strvec_push(&args, "butk");
 		} else {
 			strvec_push(&args, "log");
-			flags |= RUN_GIT_CMD;
+			flags |= RUN_BUT_CMD;
 		}
 	} else {
 		if (argv[0][0] == '-') {
 			strvec_push(&args, "log");
-			flags |= RUN_GIT_CMD;
+			flags |= RUN_BUT_CMD;
 		} else if (strcmp(argv[0], "tig") && !starts_with(argv[0], "but"))
-			flags |= RUN_GIT_CMD;
+			flags |= RUN_BUT_CMD;
 
 		strvec_pushv(&args, argv);
 	}

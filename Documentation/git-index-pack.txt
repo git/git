@@ -140,6 +140,6 @@ new .keep file was successfully created. This is useful to remove a
 .keep file used as a lock to prevent the race with 'but repack'
 mentioned above.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

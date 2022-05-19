@@ -34,7 +34,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'change file1 with copy-edit of file0 and remove file0' '
-	sed -e "s/but/GIT/" file0 >file1 &&
+	sed -e "s/but/BUT/" file0 >file1 &&
 	blob2_id=$(but hash-object file1) &&
 	rm -f file0 &&
 	but update-index --remove file0 file1
@@ -130,7 +130,7 @@ test_expect_success 'file1 edited to look like file0 and file0 rename-edited to 
 	rm -f file0 file1 &&
 	but read-tree -m reference &&
 	but checkout-index -f -u -a &&
-	sed -e "s/but/GIT/" file0 >file1 &&
+	sed -e "s/but/BUT/" file0 >file1 &&
 	sed -e "s/but/GET/" file0 >file2 &&
 	blob3_id=$(but hash-object file2) &&
 	rm -f file0 &&

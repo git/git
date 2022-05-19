@@ -34,7 +34,7 @@ SHA1=$3
 #  *) ;;
 # esac
 
-# SOB=$(but var GIT_CUMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# SOB=$(but var BUT_CUMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 # but interpret-trailers --in-place --trailer "$SOB" "$CUMMIT_MSG_FILE"
 # if test -z "$CUMMIT_SOURCE"
 # then

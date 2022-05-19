@@ -47,6 +47,6 @@ OPTIONS
 --max-input-size=<size>::
 	Die, if the pack is larger than <size>.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

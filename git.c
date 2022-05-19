@@ -112,7 +112,7 @@ static void cummit_pager_choice(void)
 {
 	switch (use_pager) {
 	case 0:
-		setenv("GIT_PAGER", "cat", 1);
+		setenv("BUT_PAGER", "cat", 1);
 		break;
 	case 1:
 		setup_pager();
@@ -161,15 +161,15 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				exit(0);
 			}
 		} else if (!strcmp(cmd, "--html-path")) {
-			puts(system_path(GIT_HTML_PATH));
+			puts(system_path(BUT_HTML_PATH));
 			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "--man-path")) {
-			puts(system_path(GIT_MAN_PATH));
+			puts(system_path(BUT_MAN_PATH));
 			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "--info-path")) {
-			puts(system_path(GIT_INFO_PATH));
+			puts(system_path(BUT_INFO_PATH));
 			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
@@ -188,13 +188,13 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "--but-dir");
 				usage(but_usage_string);
 			}
-			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
+			setenv(BUT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--but-dir=", &cmd)) {
-			setenv(GIT_DIR_ENVIRONMENT, cmd, 1);
+			setenv(BUT_DIR_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--namespace")) {
@@ -202,13 +202,13 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, _("no namespace given for --namespace\n" ));
 				usage(but_usage_string);
 			}
-			setenv(GIT_NAMESPACE_ENVIRONMENT, (*argv)[1], 1);
+			setenv(BUT_NAMESPACE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--namespace=", &cmd)) {
-			setenv(GIT_NAMESPACE_ENVIRONMENT, cmd, 1);
+			setenv(BUT_NAMESPACE_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--work-tree")) {
@@ -216,13 +216,13 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "--work-tree");
 				usage(but_usage_string);
 			}
-			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
+			setenv(BUT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--work-tree=", &cmd)) {
-			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd, 1);
+			setenv(BUT_WORK_TREE_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--super-prefix")) {
@@ -230,21 +230,21 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, _("no prefix given for --super-prefix\n" ));
 				usage(but_usage_string);
 			}
-			setenv(GIT_SUPER_PREFIX_ENVIRONMENT, (*argv)[1], 1);
+			setenv(BUT_SUPER_PREFIX_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--super-prefix=", &cmd)) {
-			setenv(GIT_SUPER_PREFIX_ENVIRONMENT, cmd, 1);
+			setenv(BUT_SUPER_PREFIX_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			char *cwd = xgetcwd();
 			is_bare_repository_cfg = 1;
-			setenv(GIT_DIR_ENVIRONMENT, cwd, 0);
+			setenv(BUT_DIR_ENVIRONMENT, cwd, 0);
 			free(cwd);
-			setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
+			setenv(BUT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "-c")) {
@@ -266,27 +266,27 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (skip_prefix(cmd, "--config-env=", &cmd)) {
 			but_config_push_env(cmd);
 		} else if (!strcmp(cmd, "--literal-pathspecs")) {
-			setenv(GIT_LITERAL_PATHSPECS_ENVIRONMENT, "1", 1);
+			setenv(BUT_LITERAL_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-literal-pathspecs")) {
-			setenv(GIT_LITERAL_PATHSPECS_ENVIRONMENT, "0", 1);
+			setenv(BUT_LITERAL_PATHSPECS_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--glob-pathspecs")) {
-			setenv(GIT_GLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+			setenv(BUT_GLOB_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--noglob-pathspecs")) {
-			setenv(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+			setenv(BUT_NOGLOB_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--icase-pathspecs")) {
-			setenv(GIT_ICASE_PATHSPECS_ENVIRONMENT, "1", 1);
+			setenv(BUT_ICASE_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-optional-locks")) {
-			setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "0", 1);
+			setenv(BUT_OPTIONAL_LOCKS_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
@@ -351,7 +351,7 @@ static int handle_alias(int *argcp, const char ***argv)
 			struct child_process child = CHILD_PROCESS_INIT;
 			int nonbut_ok;
 
-			/* Aliases expect GIT_PREFIX, GIT_DIR etc to be set */
+			/* Aliases expect BUT_PREFIX, BUT_DIR etc to be set */
 			setup_but_directory_gently(&nonbut_ok);
 
 			cummit_pager_choice();
@@ -907,7 +907,7 @@ int cmd_main(int argc, const char **argv)
 
 	/*
 	 * We use PATH to find but commands, but we prepend some higher
-	 * precedence paths: the "--exec-path" option, the GIT_EXEC_PATH
+	 * precedence paths: the "--exec-path" option, the BUT_EXEC_PATH
 	 * environment, and the $(butexecdir) from the Makefile at build
 	 * time.
 	 */

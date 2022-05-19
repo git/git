@@ -2,14 +2,14 @@
 # Copyright (C) 2006, Eric Wong <normalperson@yhbt.net>
 # License: GPL v2 or later
 use 5.008;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use strict;
 use vars qw/	$AUTHOR $VERSION
 		$oid $oid_short $oid_length
 		$_revision $_repository
 		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '@@GIT_VERSION@@';
+$VERSION = '@@BUT_VERSION@@';
 
 use Carp qw/croak/;
 use File::Basename qw/dirname basename/;
@@ -61,8 +61,8 @@ my $cmd_dir_prefix = eval {
 
 $Git::SVN::Ra::_log_window_size = 100;
 
-if (! exists $ENV{SVN_SSH} && exists $ENV{GIT_SSH}) {
-	$ENV{SVN_SSH} = $ENV{GIT_SSH};
+if (! exists $ENV{SVN_SSH} && exists $ENV{BUT_SSH}) {
+	$ENV{SVN_SSH} = $ENV{BUT_SSH};
 }
 
 if (exists $ENV{SVN_SSH} && $^O eq 'msys') {
@@ -312,7 +312,7 @@ my $term;
 sub term_init {
 	$term = eval {
 		require Term::ReadLine;
-		$ENV{"GIT_SVN_NOTTY"}
+		$ENV{"BUT_SVN_NOTTY"}
 			? new Term::ReadLine 'but-svn', \*STDIN, \*STDOUT
 			: new Term::ReadLine 'but-svn';
 	};
@@ -335,12 +335,12 @@ for (my $i = 0; $i < @ARGV; $i++) {
 
 # make sure we're always running at the top-level working directory
 if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
-	$ENV{GIT_DIR} ||= ".but";
+	$ENV{BUT_DIR} ||= ".but";
 	# catch the submodule case
-	if (-f $ENV{GIT_DIR}) {
-		open(my $fh, '<', $ENV{GIT_DIR}) or
-			die "failed to open $ENV{GIT_DIR}: $!\n";
-		$ENV{GIT_DIR} = $1 if <$fh> =~ /^butdir: (.+)$/;
+	if (-f $ENV{BUT_DIR}) {
+		open(my $fh, '<', $ENV{BUT_DIR}) or
+			die "failed to open $ENV{BUT_DIR}: $!\n";
+		$ENV{BUT_DIR} = $1 if <$fh> =~ /^butdir: (.+)$/;
 	}
 } elsif ($cmd) {
 	my ($but_dir, $cdup);
@@ -352,14 +352,14 @@ if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 		chomp $cdup if ($cdup);
 		$cdup = "." unless ($cdup && length $cdup);
 	} "Already at toplevel, but $but_dir not found\n";
-	$ENV{GIT_DIR} = $but_dir;
+	$ENV{BUT_DIR} = $but_dir;
 	chdir $cdup or die "Unable to chdir up to '$cdup'\n";
-	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
+	$_repository = Git->repository(Repository => $ENV{BUT_DIR});
 }
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-read_but_config(\%opts) if $ENV{GIT_DIR};
+read_but_config(\%opts) if $ENV{BUT_DIR};
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
@@ -417,7 +417,7 @@ usage: but svn <command> [options] [arguments]\n
 		}
 	}
 	print $fd <<"";
-\nGIT_SVN_ID may be set in the environment or via the --id/-i switch to an
+\nBUT_SVN_ID may be set in the environment or via the --id/-i switch to an
 arbitrary identifier if you're tracking multiple SVN branches/repositories in
 one but repository and want to keep them separate.  See but-svn(1) for more
 information.
@@ -463,7 +463,7 @@ sub ask {
 }
 
 sub do_but_init_db {
-	unless (-d $ENV{GIT_DIR}) {
+	unless (-d $ENV{BUT_DIR}) {
 		my @init_db = ('init');
 		push @init_db, "--template=$_template" if defined $_template;
 		if (defined $_shared) {
@@ -506,8 +506,8 @@ sub init_subdir {
 	my $repo_path = shift or return;
 	mkpath([$repo_path]) unless -d $repo_path;
 	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
-	$ENV{GIT_DIR} = '.but';
-	$_repository = Git->repository(Repository => $ENV{GIT_DIR});
+	$ENV{BUT_DIR} = '.but';
+	$_repository = Git->repository(Repository => $ENV{BUT_DIR});
 }
 
 sub cmd_clone {
@@ -1332,7 +1332,7 @@ sub cmd_create_ignore {
 		mkpath([$path]) unless -d $path;
 		my $ignore = $path . '.butignore';
 		my $s = $props->{'svn:ignore'} or return;
-		open(GITIGNORE, '>', $ignore)
+		open(BUTIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
 		$s =~ s/[\r\n]+/\n/g;
 		$s =~ s/^\n+//;
@@ -1340,8 +1340,8 @@ sub cmd_create_ignore {
 		# Prefix all patterns so that the ignore doesn't apply
 		# to sub-directories.
 		$s =~ s#^#/#gm;
-		print GITIGNORE "$s\n";
-		close(GITIGNORE)
+		print BUTIGNORE "$s\n";
+		close(BUTIGNORE)
 		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', '-f', $ignore);
 	});
@@ -1743,7 +1743,7 @@ sub post_fetch_checkout {
 	command_noisy(qw(update-ref HEAD), $gs->refname);
 	return unless verify_ref('HEAD^0');
 
-	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.but$#;
+	return if $ENV{BUT_DIR} !~ m#^(?:.*/)?\.but$#;
 	my $index = command_oneline(qw(rev-parse --but-path index));
 	return if -f $index;
 
@@ -1886,7 +1886,7 @@ sub get_cummit_entry {
 	close $log_fh or croak $!;
 
 	if ($_edit || ($type eq 'tree')) {
-		chomp(my $editor = command_oneline(qw(var GIT_EDITOR)));
+		chomp(my $editor = command_oneline(qw(var BUT_EDITOR)));
 		system('sh', '-c', $editor.' "$@"', $editor, $cummit_editmsg);
 	}
 	rename $cummit_editmsg, $cummit_msg or croak $!;
@@ -2238,7 +2238,7 @@ diff-index line ($m hash)
 $l_map = {
 	# repository root url
 	'https://svn.musicpd.org' => {
-		# repository path 		# GIT_SVN_ID
+		# repository path 		# BUT_SVN_ID
 		'mpd/trunk'		=>	'trunk',
 		'mpd/tags/0.11.5'	=>	'tags/0.11.5',
 	},

@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  *
@@ -58,27 +58,27 @@
 
 static const struct object_id empty_tree_oid = {
 	.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
-	.algo = GIT_HASH_SHA1,
+	.algo = BUT_HASH_SHA1,
 };
 static const struct object_id empty_blob_oid = {
 	.hash = EMPTY_BLOB_SHA1_BIN_LITERAL,
-	.algo = GIT_HASH_SHA1,
+	.algo = BUT_HASH_SHA1,
 };
 static const struct object_id null_oid_sha1 = {
 	.hash = {0},
-	.algo = GIT_HASH_SHA1,
+	.algo = BUT_HASH_SHA1,
 };
 static const struct object_id empty_tree_oid_sha256 = {
 	.hash = EMPTY_TREE_SHA256_BIN_LITERAL,
-	.algo = GIT_HASH_SHA256,
+	.algo = BUT_HASH_SHA256,
 };
 static const struct object_id empty_blob_oid_sha256 = {
 	.hash = EMPTY_BLOB_SHA256_BIN_LITERAL,
-	.algo = GIT_HASH_SHA256,
+	.algo = BUT_HASH_SHA256,
 };
 static const struct object_id null_oid_sha256 = {
 	.hash = {0},
-	.algo = GIT_HASH_SHA256,
+	.algo = BUT_HASH_SHA256,
 };
 
 static void but_hash_sha1_init(but_hash_ctx *ctx)
@@ -104,8 +104,8 @@ static void but_hash_sha1_final(unsigned char *hash, but_hash_ctx *ctx)
 static void but_hash_sha1_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 {
 	but_SHA1_Final(oid->hash, &ctx->sha1);
-	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
-	oid->algo = GIT_HASH_SHA1;
+	memset(oid->hash + BUT_SHA1_RAWSZ, 0, BUT_MAX_RAWSZ - BUT_SHA1_RAWSZ);
+	oid->algo = BUT_HASH_SHA1;
 }
 
 
@@ -136,8 +136,8 @@ static void but_hash_sha256_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 	 * This currently does nothing, so the compiler should optimize it out,
 	 * but keep it in case we extend the hash size again.
 	 */
-	memset(oid->hash + GIT_SHA256_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA256_RAWSZ);
-	oid->algo = GIT_HASH_SHA256;
+	memset(oid->hash + BUT_SHA256_RAWSZ, 0, BUT_MAX_RAWSZ - BUT_SHA256_RAWSZ);
+	oid->algo = BUT_HASH_SHA256;
 }
 
 static void but_hash_unknown_init(but_hash_ctx *ctx)
@@ -165,7 +165,7 @@ static void but_hash_unknown_final_oid(struct object_id *oid, but_hash_ctx *ctx)
 	BUG("trying to finalize unknown hash");
 }
 
-const struct but_hash_algo hash_algos[GIT_HASH_NALGOS] = {
+const struct but_hash_algo hash_algos[BUT_HASH_NALGOS] = {
 	{
 		.name = NULL,
 		.format_id = 0x00000000,
@@ -183,10 +183,10 @@ const struct but_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	},
 	{
 		.name = "sha1",
-		.format_id = GIT_SHA1_FORMAT_ID,
-		.rawsz = GIT_SHA1_RAWSZ,
-		.hexsz = GIT_SHA1_HEXSZ,
-		.blksz = GIT_SHA1_BLKSZ,
+		.format_id = BUT_SHA1_FORMAT_ID,
+		.rawsz = BUT_SHA1_RAWSZ,
+		.hexsz = BUT_SHA1_HEXSZ,
+		.blksz = BUT_SHA1_BLKSZ,
 		.init_fn = but_hash_sha1_init,
 		.clone_fn = but_hash_sha1_clone,
 		.update_fn = but_hash_sha1_update,
@@ -198,10 +198,10 @@ const struct but_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	},
 	{
 		.name = "sha256",
-		.format_id = GIT_SHA256_FORMAT_ID,
-		.rawsz = GIT_SHA256_RAWSZ,
-		.hexsz = GIT_SHA256_HEXSZ,
-		.blksz = GIT_SHA256_BLKSZ,
+		.format_id = BUT_SHA256_FORMAT_ID,
+		.rawsz = BUT_SHA256_RAWSZ,
+		.hexsz = BUT_SHA256_HEXSZ,
+		.blksz = BUT_SHA256_BLKSZ,
 		.init_fn = but_hash_sha256_init,
 		.clone_fn = but_hash_sha256_clone,
 		.update_fn = but_hash_sha256_update,
@@ -220,13 +220,13 @@ const struct object_id *null_oid(void)
 
 const char *empty_tree_oid_hex(void)
 {
-	static char buf[GIT_MAX_HEXSZ + 1];
+	static char buf[BUT_MAX_HEXSZ + 1];
 	return oid_to_hex_r(buf, the_hash_algo->empty_tree);
 }
 
 const char *empty_blob_oid_hex(void)
 {
-	static char buf[GIT_MAX_HEXSZ + 1];
+	static char buf[BUT_MAX_HEXSZ + 1];
 	return oid_to_hex_r(buf, the_hash_algo->empty_blob);
 }
 
@@ -234,29 +234,29 @@ int hash_algo_by_name(const char *name)
 {
 	int i;
 	if (!name)
-		return GIT_HASH_UNKNOWN;
-	for (i = 1; i < GIT_HASH_NALGOS; i++)
+		return BUT_HASH_UNKNOWN;
+	for (i = 1; i < BUT_HASH_NALGOS; i++)
 		if (!strcmp(name, hash_algos[i].name))
 			return i;
-	return GIT_HASH_UNKNOWN;
+	return BUT_HASH_UNKNOWN;
 }
 
 int hash_algo_by_id(uint32_t format_id)
 {
 	int i;
-	for (i = 1; i < GIT_HASH_NALGOS; i++)
+	for (i = 1; i < BUT_HASH_NALGOS; i++)
 		if (format_id == hash_algos[i].format_id)
 			return i;
-	return GIT_HASH_UNKNOWN;
+	return BUT_HASH_UNKNOWN;
 }
 
 int hash_algo_by_length(int len)
 {
 	int i;
-	for (i = 1; i < GIT_HASH_NALGOS; i++)
+	for (i = 1; i < BUT_HASH_NALGOS; i++)
 		if (len == hash_algos[i].rawsz)
 			return i;
-	return GIT_HASH_UNKNOWN;
+	return BUT_HASH_UNKNOWN;
 }
 
 /*
@@ -486,7 +486,7 @@ static int alt_odb_usable(struct raw_object_store *o,
  * The variable alt_odb_list points at the list of struct
  * object_directory.  The elements on this list come from
  * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
- * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
+ * environment variable, and $BUT_OBJECT_DIRECTORY/info/alternates,
  * whose contents is similar to that environment variable but can be
  * LF separated.  Its base points at a statically allocated buffer that
  * contains "/the/directory/corresponding/to/.but/objects/...", while
@@ -727,7 +727,7 @@ void restore_primary_odb(struct object_directory *restore_odb, const char *old_p
 /*
  * Compute the exact path an alternate is at and returns it. In case of
  * error NULL is returned and the human readable error is added to `err`
- * `path` may be relative and should point to $GIT_DIR.
+ * `path` may be relative and should point to $BUT_DIR.
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err)
@@ -1006,7 +1006,7 @@ static void mmap_limit_check(size_t length)
 {
 	static size_t limit = 0;
 	if (!limit) {
-		limit = but_env_ulong("GIT_MMAP_LIMIT", 0);
+		limit = but_env_ulong("BUT_MMAP_LIMIT", 0);
 		if (!limit)
 			limit = SIZE_MAX;
 	}

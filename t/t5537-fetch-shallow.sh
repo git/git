@@ -2,8 +2,8 @@
 
 test_description='fetch/clone from a shallow clone'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -266,7 +266,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	       "$(but -C "$REPO" rev-parse HEAD)" \
 	       "$(but -C "$REPO" rev-parse HEAD^)" \
 	       >"$HTTPD_ROOT_PATH/one-time-perl" &&
-	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 but -C client \
+	test_must_fail env BUT_TEST_SIDEBAND_ALL=0 but -C client \
 		fetch --depth=1 "$HTTPD_URL/one_time_perl/repo" \
 		main:a_branch &&
 

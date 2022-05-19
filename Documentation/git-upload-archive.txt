@@ -57,6 +57,6 @@ OPTIONS
 <directory>::
 	The repository to get a tar archive from.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

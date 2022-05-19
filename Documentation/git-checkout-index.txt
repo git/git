@@ -178,6 +178,6 @@ $ but checkout-index --prefix=.merged- Makefile
 This will check out the currently cached copy of `Makefile`
 into the file `.merged-Makefile`.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

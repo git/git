@@ -52,13 +52,13 @@ void prepare_repo_settings(struct repository *r)
 	repo_cfg_bool(r, "index.sparse", &r->settings.sparse_index, 0);
 
 	/*
-	 * The GIT_TEST_MULTI_PACK_INDEX variable is special in that
+	 * The BUT_TEST_MULTI_PACK_INDEX variable is special in that
 	 * either it *or* the config sets
 	 * r->settings.core_multi_pack_index if true. We don't take
 	 * the environment variable if it exists (even if false) over
 	 * any config, as in most other cases.
 	 */
-	if (but_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0))
+	if (but_env_bool(BUT_TEST_MULTI_PACK_INDEX, 0))
 		r->settings.core_multi_pack_index = 1;
 
 	/*

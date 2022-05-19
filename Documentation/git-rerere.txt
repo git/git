@@ -217,6 +217,6 @@ same as lines with conflict markers, 'but rerere' may fail to record a
 conflict resolution.  To work around this, the `conflict-marker-size`
 setting in linkbut:butattributes[5] can be used.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

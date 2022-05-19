@@ -18,12 +18,12 @@ The program supports clients fetching using both the smart HTTP protocol
 and the backwards-compatible dumb HTTP protocol, as well as clients
 pushing using the smart HTTP protocol. It also supports Git's
 more-efficient "v2" protocol if properly configured; see the
-discussion of `GIT_PROTOCOL` in the ENVIRONMENT section below.
+discussion of `BUT_PROTOCOL` in the ENVIRONMENT section below.
 
 It verifies that the directory has the magic file
 "but-daemon-export-ok", and it will refuse to export any Git directory
 that hasn't explicitly been marked for export this way (unless the
-`GIT_HTTP_EXPORT_ALL` environmental variable is set).
+`BUT_HTTP_EXPORT_ALL` environmental variable is set).
 
 By default, only the `upload-pack` service is enabled, which serves
 'but fetch-pack' and 'but ls-remote' clients, which are invoked from
@@ -60,8 +60,8 @@ URL TRANSLATION
 ---------------
 To determine the location of the repository on disk, 'but http-backend'
 concatenates the environment variables PATH_INFO, which is set
-automatically by the web server, and GIT_PROJECT_ROOT, which must be set
-manually in the web server configuration.  If GIT_PROJECT_ROOT is not
+automatically by the web server, and BUT_PROJECT_ROOT, which must be set
+manually in the web server configuration.  If BUT_PROJECT_ROOT is not
 set, 'but http-backend' reads PATH_TRANSLATED, which is also set
 automatically by the web server.
 
@@ -72,25 +72,25 @@ to `/var/www/but/foo/bar.but`.
 
 Apache 2.x::
 	Ensure mod_cgi, mod_alias, and mod_env are enabled, set
-	GIT_PROJECT_ROOT (or DocumentRoot) appropriately, and
+	BUT_PROJECT_ROOT (or DocumentRoot) appropriately, and
 	create a ScriptAlias to the CGI:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/but
-SetEnv GIT_HTTP_EXPORT_ALL
+SetEnv BUT_PROJECT_ROOT /var/www/but
+SetEnv BUT_HTTP_EXPORT_ALL
 ScriptAlias /but/ /usr/libexec/but-core/but-http-backend/
 
 # This is not strictly necessary using Apache and a modern version of
 # but-http-backend, as the webserver will pass along the header in the
-# environment as HTTP_GIT_PROTOCOL, and http-backend will copy that into
-# GIT_PROTOCOL. But you may need this line (or something similar if you
+# environment as HTTP_BUT_PROTOCOL, and http-backend will copy that into
+# BUT_PROTOCOL. But you may need this line (or something similar if you
 # are using a different webserver), or if you want to support older Git
 # versions that did not do that copying.
 #
-# Having the webserver set up GIT_PROTOCOL is perfectly fine even with
-# modern versions (and will take precedence over HTTP_GIT_PROTOCOL,
+# Having the webserver set up BUT_PROTOCOL is perfectly fine even with
+# modern versions (and will take precedence over HTTP_BUT_PROTOCOL,
 # which means it can be used to override the client's request).
-SetEnvIf Git-Protocol ".*" GIT_PROTOCOL=$0
+SetEnvIf Git-Protocol ".*" BUT_PROTOCOL=$0
 ----------------------------------------------------------------
 +
 To enable anonymous read access but authenticated write access,
@@ -170,7 +170,7 @@ To serve multiple repositories from different linkbut:butnamespaces[7] in a
 single repository:
 +
 ----------------------------------------------------------------
-SetEnvIf Request_URI "^/but/([^/]*)" GIT_NAMESPACE=$1
+SetEnvIf Request_URI "^/but/([^/]*)" BUT_NAMESPACE=$1
 ScriptAliasMatch ^/but/[^/]*(.*) /usr/libexec/but-core/but-http-backend/storage.but$1
 ----------------------------------------------------------------
 
@@ -181,7 +181,7 @@ Accelerated static Apache 2.x::
 	file contents from the file system directly to the network:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/but
+SetEnv BUT_PROJECT_ROOT /var/www/but
 
 AliasMatch ^/but/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/but/$1
 AliasMatch ^/but/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/but/$1
@@ -191,7 +191,7 @@ ScriptAlias /but/ /usr/libexec/but-core/but-http-backend/
 This can be combined with the butweb configuration:
 +
 ----------------------------------------------------------------
-SetEnv GIT_PROJECT_ROOT /var/www/but
+SetEnv BUT_PROJECT_ROOT /var/www/but
 
 AliasMatch ^/but/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/but/$1
 AliasMatch ^/but/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/but/$1
@@ -206,7 +206,7 @@ ScriptAlias /but/ /var/www/cgi-bin/butweb.cgi/
 
 Lighttpd::
 	Ensure that `mod_cgi`, `mod_alias`, `mod_auth`, `mod_setenv` are
-	loaded, then set `GIT_PROJECT_ROOT` appropriately and redirect
+	loaded, then set `BUT_PROJECT_ROOT` appropriately and redirect
 	all requests to the CGI:
 +
 ----------------------------------------------------------------
@@ -214,8 +214,8 @@ alias.url += ( "/but" => "/usr/lib/but-core/but-http-backend" )
 $HTTP["url"] =~ "^/but" {
 	cgi.assign = ("" => "")
 	setenv.add-environment = (
-		"GIT_PROJECT_ROOT" => "/var/www/but",
-		"GIT_HTTP_EXPORT_ALL" => ""
+		"BUT_PROJECT_ROOT" => "/var/www/but",
+		"BUT_HTTP_EXPORT_ALL" => ""
 	)
 }
 ----------------------------------------------------------------
@@ -258,18 +258,18 @@ ENVIRONMENT
 'but http-backend' relies upon the `CGI` environment variables set
 by the invoking web server, including:
 
-* PATH_INFO (if GIT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)
+* PATH_INFO (if BUT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)
 * REMOTE_USER
 * REMOTE_ADDR
 * CONTENT_TYPE
 * QUERY_STRING
 * REQUEST_METHOD
 
-The `GIT_HTTP_EXPORT_ALL` environmental variable may be passed to
+The `BUT_HTTP_EXPORT_ALL` environmental variable may be passed to
 'but-http-backend' to bypass the check for the "but-daemon-export-ok"
 file in each repository before allowing export of that repository.
 
-The `GIT_HTTP_MAX_REQUEST_BUFFER` environment variable (or the
+The `BUT_HTTP_MAX_REQUEST_BUFFER` environment variable (or the
 `http.maxRequestBuffer` config variable) may be set to change the
 largest ref negotiation request that but will handle during a fetch; any
 fetch requiring a larger buffer will not succeed.  This value should not
@@ -280,22 +280,22 @@ specified with a unit (e.g., `100M` for 100 megabytes). The default is
 
 Clients may probe for optional protocol capabilities (like the v2
 protocol) using the `Git-Protocol` HTTP header. In order to support
-these, the contents of that header must appear in the `GIT_PROTOCOL`
+these, the contents of that header must appear in the `BUT_PROTOCOL`
 environment variable. Most webservers will pass this header to the CGI
-via the `HTTP_GIT_PROTOCOL` variable, and `but-http-backend` will
-automatically copy that to `GIT_PROTOCOL`. However, some webservers may
+via the `HTTP_BUT_PROTOCOL` variable, and `but-http-backend` will
+automatically copy that to `BUT_PROTOCOL`. However, some webservers may
 be more selective about which headers they'll pass, in which case they
 need to be configured explicitly (see the mention of `Git-Protocol` in
 the Apache config from the earlier EXAMPLES section).
 
-The backend process sets GIT_CUMMITTER_NAME to '$REMOTE_USER' and
-GIT_CUMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
+The backend process sets BUT_CUMMITTER_NAME to '$REMOTE_USER' and
+BUT_CUMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
 ensuring that any reflogs created by 'but-receive-pack' contain some
 identifying information of the remote user who performed the push.
 
 All `CGI` environment variables are available to each of the hooks
 invoked by the 'but-receive-pack'.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -12,7 +12,7 @@ then
 	LC_ALL=C
 	export LC_ALL
 
-	"$GIT_EXEC_PATH/but-http-backend" >out
+	"$BUT_EXEC_PATH/but-http-backend" >out
 	perl -pe "$(cat one-time-perl)" out >out_modified
 
 	if cmp -s out out_modified
@@ -23,5 +23,5 @@ then
 		rm one-time-perl
 	fi
 else
-	"$GIT_EXEC_PATH/but-http-backend"
+	"$BUT_EXEC_PATH/but-http-backend"
 fi

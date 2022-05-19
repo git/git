@@ -4,8 +4,8 @@
 #
 
 test_description='test smart pushing over http via http-backend'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -52,7 +52,7 @@ test_expect_success 'no empty path components' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	if test "$BUT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
@@ -73,7 +73,7 @@ test_expect_success 'push to remote repository (standard)' '
 	test_tick &&
 	but cummit -m path2 &&
 	HEAD=$(but rev-parse --verify HEAD) &&
-	GIT_TRACE_CURL=true but push -v -v 2>err &&
+	BUT_TRACE_CURL=true but push -v -v 2>err &&
 	! grep "Expect: 100-continue" err &&
 	grep "POST but-receive-pack ([0-9]* bytes)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.but &&
@@ -138,7 +138,7 @@ EOF
 test_expect_success 'used receive-pack service' '
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	if test "$BUT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
@@ -345,7 +345,7 @@ test_expect_success 'http push gives sane defaults to reflog' '
 	test_cmp expect actual
 '
 
-test_expect_success 'http push respects GIT_CUMMITTER_* in reflog' '
+test_expect_success 'http push respects BUT_CUMMITTER_* in reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_cummit custom-reflog-test &&
 	but push "$HTTPD_URL"/smart_custom_env/test_repo.but &&
@@ -423,16 +423,16 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 		# discard the update list
 		cat >/dev/null
 		# record the push certificate
-		if test -n "${GIT_PUSH_CERT-}"
+		if test -n "${BUT_PUSH_CERT-}"
 		then
-			but cat-file blob $GIT_PUSH_CERT >../push-cert
+			but cat-file blob $BUT_PUSH_CERT >../push-cert
 		fi &&
 		cat >../push-cert-status <<E_O_F
-		SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-		KEY=${GIT_PUSH_CERT_KEY-nokey}
-		STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-		NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-		NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+		SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+		KEY=${BUT_PUSH_CERT_KEY-nokey}
+		STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+		NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+		NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 		E_O_F
 	EOF
 	(

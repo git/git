@@ -7,7 +7,7 @@ buthooks - Hooks used by Git
 
 SYNOPSIS
 --------
-$GIT_DIR/hooks/* (or \`but config core.hooksPath`/*)
+$BUT_DIR/hooks/* (or \`but config core.hooksPath`/*)
 
 
 DESCRIPTION
@@ -17,15 +17,15 @@ Hooks are programs you can place in a hooks directory to trigger
 actions at certain points in but's execution. Hooks that don't have
 the executable bit set are ignored.
 
-By default the hooks directory is `$GIT_DIR/hooks`, but that can be
+By default the hooks directory is `$BUT_DIR/hooks`, but that can be
 changed via the `core.hooksPath` configuration variable (see
 linkbut:but-config[1]).
 
 Before Git invokes a hook, it changes its working directory to either
-$GIT_DIR in a bare repository or the root of the working tree in a non-bare
+$BUT_DIR in a bare repository or the root of the working tree in a non-bare
 repository. An exception are hooks triggered during a push ('pre-receive',
 'update', 'post-receive', 'post-update', 'push-to-checkout') which are always
-executed in $GIT_DIR.
+executed in $BUT_DIR.
 
 Hooks can get their arguments via the environment, command-line
 arguments, and stdin. See the documentation for each hook below for
@@ -96,7 +96,7 @@ of lines with trailing whitespaces and aborts the cummit when
 such a line is found.
 
 All the `but cummit` hooks are invoked with the environment
-variable `GIT_EDITOR=:` if the command will not bring up an editor
+variable `BUT_EDITOR=:` if the command will not bring up an editor
 to modify the cummit message.
 
 The default 'pre-cummit' hook, when enabled--and with the
@@ -117,7 +117,7 @@ The default 'pre-merge-cummit' hook, when enabled, runs the
 'pre-cummit' hook, if the latter is enabled.
 
 This hook is invoked with the environment variable
-`GIT_EDITOR=:` if the command will not bring up an editor
+`BUT_EDITOR=:` if the command will not bring up an editor
 to modify the cummit message.
 
 If the merge cannot be carried out automatically, the conflicts
@@ -280,12 +280,12 @@ for the user.
 
 The number of push options given on the command line of
 `but push --push-option=...` can be read from the environment
-variable `GIT_PUSH_OPTION_COUNT`, and the options themselves are
-found in `GIT_PUSH_OPTION_0`, `GIT_PUSH_OPTION_1`,...
+variable `BUT_PUSH_OPTION_COUNT`, and the options themselves are
+found in `BUT_PUSH_OPTION_0`, `BUT_PUSH_OPTION_1`,...
 If it is negotiated to not use the push options phase, the
 environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
-will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
+will be set to zero, `BUT_PUSH_OPTION_COUNT=0`.
 
 See the section on "Quarantine Environment" in
 linkbut:but-receive-pack[1] for some caveats.
@@ -429,12 +429,12 @@ emails.
 
 The number of push options given on the command line of
 `but push --push-option=...` can be read from the environment
-variable `GIT_PUSH_OPTION_COUNT`, and the options themselves are
-found in `GIT_PUSH_OPTION_0`, `GIT_PUSH_OPTION_1`,...
+variable `BUT_PUSH_OPTION_COUNT`, and the options themselves are
+found in `BUT_PUSH_OPTION_0`, `BUT_PUSH_OPTION_1`,...
 If it is negotiated to not use the push options phase, the
 environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
-will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
+will be set to zero, `BUT_PUSH_OPTION_COUNT=0`.
 
 [[post-update]]
 post-update
@@ -702,6 +702,6 @@ SEE ALSO
 --------
 linkbut:but-hook[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -93,8 +93,8 @@ static struct ref_store *files_ref_store_create(struct repository *repo,
 	refs->packed_ref_store =
 		packed_ref_store_create(repo, refs->butcommondir, flags);
 
-	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.butdir);
-	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
+	chdir_notify_reparent("files-backend $BUT_DIR", &refs->base.butdir);
+	chdir_notify_reparent("files-backend $BUT_COMMONDIR",
 			      &refs->butcommondir);
 
 	return ref_store;
@@ -3183,7 +3183,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	log_file = strbuf_detach(&log_file_sb, NULL);
 	if (!cb.dry_run) {
 		/*
-		 * Even though holding $GIT_DIR/logs/$reflog.lock has
+		 * Even though holding $BUT_DIR/logs/$reflog.lock has
 		 * no locking implications, we use the lock_file
 		 * machinery here anyway because it does a lot of the
 		 * work we need, including cleaning up if the program

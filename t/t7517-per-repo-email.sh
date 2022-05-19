@@ -6,8 +6,8 @@
 
 test_description='per-repo forced setting of email address'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -16,8 +16,8 @@ test_expect_success 'setup a likely user.useConfigOnly use case' '
 	# a non-strict ident. So be sure we have an actual cummit.
 	test_cummit foo &&
 
-	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
+	sane_unset BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL &&
+	sane_unset BUT_CUMMITTER_NAME BUT_CUMMITTER_EMAIL &&
 	but config user.name "test" &&
 	but config --global user.useConfigOnly true
 '
@@ -134,17 +134,17 @@ test_expect_success 'author and cummitter environment variables override config 
 	test_config author.email author@example.com &&
 	test_config cummitter.name cummitter &&
 	test_config cummitter.email cummitter@example.com &&
-	GIT_AUTHOR_NAME=env_author && export GIT_AUTHOR_NAME &&
-	GIT_AUTHOR_EMAIL=env_author@example.com && export GIT_AUTHOR_EMAIL &&
-	GIT_CUMMITTER_NAME=env_cummit && export GIT_CUMMITTER_NAME &&
-	GIT_CUMMITTER_EMAIL=env_cummit@example.com && export GIT_CUMMITTER_EMAIL &&
+	BUT_AUTHOR_NAME=env_author && export BUT_AUTHOR_NAME &&
+	BUT_AUTHOR_EMAIL=env_author@example.com && export BUT_AUTHOR_EMAIL &&
+	BUT_CUMMITTER_NAME=env_cummit && export BUT_CUMMITTER_NAME &&
+	BUT_CUMMITTER_EMAIL=env_cummit@example.com && export BUT_CUMMITTER_EMAIL &&
 	test_cummit env-override-conf &&
 	echo env_author env_author@example.com > expected-author &&
 	echo env_cummit env_cummit@example.com > expected-cummitter &&
 	but log --format="%an %ae" -1 > actual-author &&
 	but log --format="%cn %ce" -1 > actual-cummitter &&
-	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL &&
+	sane_unset BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL &&
+	sane_unset BUT_CUMMITTER_NAME BUT_CUMMITTER_EMAIL &&
 	test_cmp expected-author actual-author &&
 	test_cmp expected-cummitter actual-cummitter
 '

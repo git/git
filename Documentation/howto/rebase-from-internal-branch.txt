@@ -23,12 +23,12 @@ Petr Baudis <pasky@suse.cz> writes:
 >> > Junio, maybe you want to talk about how you move patches from your
 >> > "seen" branch to the real branches.
 >>
-> Actually, wouldn't this be also precisely for what StGIT is intended to?
+> Actually, wouldn't this be also precisely for what StBUT is intended to?
 --------------------------------------
 
 Exactly my feeling.  I was sort of waiting for Catalin to speak
 up.  With its basing philosophical ancestry on quilt, this is
-the kind of task StGIT is designed to do.
+the kind of task StBUT is designed to do.
 
 I just have done a simpler one, this time using only the core
 Git tools.

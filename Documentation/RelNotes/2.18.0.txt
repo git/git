@@ -20,7 +20,7 @@ UI, Workflows & Features
    the callers to tell the case where there was no new cummits to
    rewrite from other error cases.
 
- * When built with more recent cURL, GIT_SSL_VERSION can now specify
+ * When built with more recent cURL, BUT_SSL_VERSION can now specify
    "tlsv1.3" as its value.
 
  * "but gui" learned that "~/.ssh/id_ecdsa.pub" and
@@ -84,7 +84,7 @@ UI, Workflows & Features
    "feature" to fetch only cummits and/or trees, which nobody used.
    This has been removed.
 
- * The functionality of "$GIT_DIR/info/grafts" has been superseded by
+ * The functionality of "$BUT_DIR/info/grafts" has been superseded by
    the "refs/replace/" mechanism for some time now, but the internal
    code had support for it in many places, which has been cleaned up
    in order to drop support of the "grafts" mechanism.

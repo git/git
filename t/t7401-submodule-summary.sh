@@ -149,7 +149,7 @@ test_expect_success 'modified submodule(backward)' "
 "
 
 head4=$(add_file sm1 foo4 foo5) &&
-head4_full=$(GIT_DIR=sm1/.but but rev-parse --verify HEAD)
+head4_full=$(BUT_DIR=sm1/.but but rev-parse --verify HEAD)
 test_expect_success 'modified submodule(backward and forward)' "
 	but submodule summary >actual &&
 	cat >expected <<-EOF &&

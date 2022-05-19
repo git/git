@@ -6,16 +6,16 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.
-sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
-sane_unset GIT_TRACE2_BARE
-sane_unset GIT_TRACE2_CONFIG_PARAMS
+sane_unset BUT_TRACE2 BUT_TRACE2_PERF BUT_TRACE2_EVENT
+sane_unset BUT_TRACE2_BARE
+sane_unset BUT_TRACE2_CONFIG_PARAMS
 
 perl -MJSON::PP -e 0 >/dev/null 2>&1 && test_set_prereq JSON_PP
 
 # Add t/helper directory to PATH so that we can use a relative
 # path to run nested instances of test-tool.exe (see 004child).
 # This helps with HEREDOC comparisons later.
-TTDIR="$GIT_BUILD_DIR/t/helper/" && export TTDIR
+TTDIR="$BUT_BUILD_DIR/t/helper/" && export TTDIR
 PATH="$TTDIR:$PATH" && export PATH
 
 # Warning: use of 'test_cmp' may run test-tool.exe and/or but.exe
@@ -31,7 +31,7 @@ V=$(but version | sed -e 's/^but version //') && export V
 # to whatever filtering that target decides to do).
 # Test each target independently.
 #
-# Defer setting GIT_TRACE2_PERF until the actual command we want to
+# Defer setting BUT_TRACE2_PERF until the actual command we want to
 # test because hidden but and test-tool commands in the test
 # harness can contaminate our output.
 
@@ -44,7 +44,7 @@ V=$(but version | sed -e 's/^but version //') && export V
 
 test_expect_success JSON_PP 'event stream, error event' '
 	test_when_finished "rm trace.event actual expect" &&
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 003error "hello world" "this is a test" &&
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 003error "hello world" "this is a test" &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
 	|VAR1 = {
@@ -81,7 +81,7 @@ test_expect_success JSON_PP 'event stream, error event' '
 
 test_expect_success JSON_PP 'event stream, return code 0' '
 	test_when_finished "rm trace.event actual expect" &&
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 004child test-tool trace2 004child test-tool trace2 001return 0 &&
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 004child test-tool trace2 004child test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
 	|VAR1 = {
@@ -170,7 +170,7 @@ test_expect_success JSON_PP 'event stream, list config' '
 	test_when_finished "rm trace.event actual expect" &&
 	but config --local t0212.abc 1 &&
 	but config --local t0212.def "hello world" &&
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" GIT_TRACE2_CONFIG_PARAMS="t0212.*" test-tool trace2 001return 0 &&
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" BUT_TRACE2_CONFIG_PARAMS="t0212.*" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
 	|VAR1 = {
@@ -205,8 +205,8 @@ test_expect_success JSON_PP 'event stream, list config' '
 
 test_expect_success JSON_PP 'event stream, list env vars' '
 	test_when_finished "rm trace.event actual expect" &&
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-		GIT_TRACE2_ENV_VARS="A_VAR,OTHER_VAR,MISSING" \
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" \
+		BUT_TRACE2_ENV_VARS="A_VAR,OTHER_VAR,MISSING" \
 		A_VAR=1 OTHER_VAR="hello world" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
@@ -240,7 +240,7 @@ test_expect_success JSON_PP 'event stream, list env vars' '
 
 test_expect_success JSON_PP 'basic trace2_data' '
 	test_when_finished "rm trace.event actual expect" &&
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 006data test_category k1 v1 test_category k2 v2 &&
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" test-tool trace2 006data test_category k1 v1 test_category k2 v2 &&
 	perl "$TEST_DIRECTORY/t0212/parse_events.perl" <trace.event >actual &&
 	sed -e "s/^|//" >expect <<-EOF &&
 	|VAR1 = {
@@ -308,13 +308,13 @@ test_expect_success 'discard traces when there are too many files' '
 	mkdir trace_target_dir &&
 	test_when_finished "rm -r trace_target_dir" &&
 	(
-		GIT_TRACE2_MAX_FILES=5 &&
-		export GIT_TRACE2_MAX_FILES &&
+		BUT_TRACE2_MAX_FILES=5 &&
+		export BUT_TRACE2_MAX_FILES &&
 		cd trace_target_dir &&
-		test_seq $GIT_TRACE2_MAX_FILES >../expected_filenames.txt &&
+		test_seq $BUT_TRACE2_MAX_FILES >../expected_filenames.txt &&
 		xargs touch <../expected_filenames.txt &&
 		cd .. &&
-		GIT_TRACE2_EVENT="$(pwd)/trace_target_dir" test-tool trace2 001return 0
+		BUT_TRACE2_EVENT="$(pwd)/trace_target_dir" test-tool trace2 001return 0
 	) &&
 	echo but-trace2-discard >>expected_filenames.txt &&
 	ls trace_target_dir >ls_output.txt &&

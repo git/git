@@ -13,8 +13,8 @@ test_expect_success 'setup repository with submodules' '
 	(cd remote/repo.but && test_cummit one) &&
 	# submodule-add should probably trust what we feed it on the cmdline,
 	# but its implementation is overly conservative.
-	GIT_ALLOW_PROTOCOL=ssh but submodule add remote:repo.but ssh-module &&
-	GIT_ALLOW_PROTOCOL=ext but submodule add "ext::fake-remote %S repo.but" ext-module &&
+	BUT_ALLOW_PROTOCOL=ssh but submodule add remote:repo.but ssh-module &&
+	BUT_ALLOW_PROTOCOL=ext but submodule add "ext::fake-remote %S repo.but" ext-module &&
 	but cummit -m "add submodules"
 '
 
@@ -37,7 +37,7 @@ test_expect_success 'update of ext not allowed' '
 '
 
 test_expect_success 'user can override whitelist' '
-	GIT_ALLOW_PROTOCOL=ext but -C dst submodule update ext-module
+	BUT_ALLOW_PROTOCOL=ext but -C dst submodule update ext-module
 '
 
 test_done

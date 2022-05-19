@@ -505,12 +505,12 @@ cummit INFORMATION
 Author and cummitter information is taken from the following environment
 variables, if set:
 
-	GIT_AUTHOR_NAME
-	GIT_AUTHOR_EMAIL
-	GIT_AUTHOR_DATE
-	GIT_CUMMITTER_NAME
-	GIT_CUMMITTER_EMAIL
-	GIT_CUMMITTER_DATE
+	BUT_AUTHOR_NAME
+	BUT_AUTHOR_EMAIL
+	BUT_AUTHOR_DATE
+	BUT_CUMMITTER_NAME
+	BUT_CUMMITTER_EMAIL
+	BUT_CUMMITTER_DATE
 
 (nb "<", ">" and "\n"s are stripped)
 
@@ -553,7 +553,7 @@ include::i18n.txt[]
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------
 The editor used to edit the cummit log message will be chosen from the
-`GIT_EDITOR` environment variable, the core.editor configuration variable, the
+`BUT_EDITOR` environment variable, the core.editor configuration variable, the
 `VISUAL` environment variable, or the `EDITOR` environment variable (in that
 order).  See linkbut:but-var[1] for details.
 
@@ -566,7 +566,7 @@ information.
 FILES
 -----
 
-`$GIT_DIR/CUMMIT_EDITMSG`::
+`$BUT_DIR/CUMMIT_EDITMSG`::
 	This file contains the cummit message of a cummit in progress.
 	If `but cummit` exits due to an error before creating a cummit,
 	any cummit message that has been provided by the user (e.g., in
@@ -581,6 +581,6 @@ linkbut:but-mv[1],
 linkbut:but-merge[1],
 linkbut:but-cummit-tree[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

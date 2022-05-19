@@ -156,12 +156,12 @@ replace_butfile_with_but_dir () {
 		but_dir="$(but rev-parse --but-dir)" &&
 		rm -f .but &&
 		cp -R "$but_dir" .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	)
 }
 
 # Test that the .but directory in the submodule is unchanged (except for the
-# core.worktree setting, which appears only in $GIT_DIR/modules/$1/config).
+# core.worktree setting, which appears only in $BUT_DIR/modules/$1/config).
 # Call this function before test_submodule_content as the latter might
 # write the index file leading to false positive index differences.
 #
@@ -230,7 +230,7 @@ reset_work_tree_to_interested () {
 	then
 		mkdir -p submodule_update/.but/modules &&
 		cp -r submodule_update_repo/.but/modules/sub1 submodule_update/.but/modules/sub1
-		GIT_WORK_TREE=. but -C submodule_update/.but/modules/sub1 config --unset core.worktree
+		BUT_WORK_TREE=. but -C submodule_update/.but/modules/sub1 config --unset core.worktree
 	fi &&
 	if ! test -d submodule_update/.but/modules/sub1/modules/sub2
 	then
@@ -861,7 +861,7 @@ test_submodule_recursing_with_args_common () {
 #    cummit, or fails atomically (depending on the test situation)
 #  - if succeeds, the contents of submodule directories are updated
 #
-# Specify the Git command so that "but $GIT_COMMAND --recurse-submodules"
+# Specify the Git command so that "but $BUT_COMMAND --recurse-submodules"
 # works.
 #
 # If the command under test is known to not work with submodules in certain
@@ -870,7 +870,7 @@ test_submodule_recursing_with_args_common () {
 #
 # Use as follows:
 #
-# test_submodule_switch_recursing_with_args "$GIT_COMMAND"
+# test_submodule_switch_recursing_with_args "$BUT_COMMAND"
 test_submodule_switch_recursing_with_args () {
 	cmd_args="$1"
 	command="but $cmd_args"

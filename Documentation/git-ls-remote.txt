@@ -82,7 +82,7 @@ OPTIONS
 
 <repository>::
 	The "remote" repository to query.  This parameter can be
-	either a URL or the name of a remote (see the GIT URLS and
+	either a URL or the name of a remote (see the BUT URLS and
 	REMOTES sections of linkbut:but-fetch[1]).
 
 <refs>...::
@@ -116,6 +116,6 @@ SEE ALSO
 --------
 linkbut:but-check-ref-format[1].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

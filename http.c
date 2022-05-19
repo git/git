@@ -48,19 +48,19 @@ static struct {
 	{ "sslv2", CURL_SSLVERSION_SSLv2 },
 	{ "sslv3", CURL_SSLVERSION_SSLv3 },
 	{ "tlsv1", CURL_SSLVERSION_TLSv1 },
-#ifdef GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
+#ifdef BUT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
 	{ "tlsv1.0", CURL_SSLVERSION_TLSv1_0 },
 	{ "tlsv1.1", CURL_SSLVERSION_TLSv1_1 },
 	{ "tlsv1.2", CURL_SSLVERSION_TLSv1_2 },
 #endif
-#ifdef GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3
+#ifdef BUT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3
 	{ "tlsv1.3", CURL_SSLVERSION_TLSv1_3 },
 #endif
 };
 static const char *ssl_key;
 static const char *ssl_capath;
 static const char *curl_no_proxy;
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
+#ifdef BUT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 static const char *ssl_pinnedkey;
 #endif
 static const char *ssl_cainfo;
@@ -374,7 +374,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("http.pinnedpubkey", var)) {
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
+#ifdef BUT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 		return but_config_pathname(&ssl_pinnedkey, var, value);
 #else
 		warning(_("Public key pinning not supported with cURL < 7.39.0"));
@@ -466,7 +466,7 @@ static void init_curl_proxy_auth(CURL *result)
 		set_proxyauth_name_password(result);
 	}
 
-	var_override(&http_proxy_authmethod, getenv("GIT_HTTP_PROXY_AUTHMETHOD"));
+	var_override(&http_proxy_authmethod, getenv("BUT_HTTP_PROXY_AUTHMETHOD"));
 
 	if (http_proxy_authmethod) {
 		int i;
@@ -501,7 +501,7 @@ static int has_cert_password(void)
 	return 1;
 }
 
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
+#ifdef BUT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
 static int has_proxy_cert_password(void)
 {
 	if (http_proxy_ssl_cert == NULL || proxy_ssl_cert_password_required != 1)
@@ -517,7 +517,7 @@ static int has_proxy_cert_password(void)
 }
 #endif
 
-#ifdef GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE
+#ifdef BUTCURL_HAVE_CURLOPT_TCP_KEEPALIVE
 static void set_curl_keepalive(CURL *c)
 {
 	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
@@ -733,7 +733,7 @@ static long get_curl_allowed_protocols(int from_user)
 	return allowed_protocols;
 }
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
+#ifdef BUT_CURL_HAVE_CURL_HTTP_VERSION_2
 static int get_curl_http_version_opt(const char *version_string, long *opt)
 {
 	int i;
@@ -775,7 +775,7 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2);
 	}
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
+#ifdef BUT_CURL_HAVE_CURL_HTTP_VERSION_2
     if (curl_http_version) {
 		long opt;
 		if (!get_curl_http_version_opt(curl_http_version, &opt)) {
@@ -806,7 +806,7 @@ static CURL *get_curl_handle(void)
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_check_revoke) {
-#ifdef GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE
+#ifdef BUT_CURL_HAVE_CURLSSLOPT_NO_REVOKE
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
 		warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
@@ -816,8 +816,8 @@ static CURL *get_curl_handle(void)
 	if (http_proactive_auth)
 		init_curl_http_auth(result);
 
-	if (getenv("GIT_SSL_VERSION"))
-		ssl_version = getenv("GIT_SSL_VERSION");
+	if (getenv("BUT_SSL_VERSION"))
+		ssl_version = getenv("BUT_SSL_VERSION");
 	if (ssl_version && *ssl_version) {
 		int i;
 		for (i = 0; i < ARRAY_SIZE(sslversions); i++) {
@@ -832,8 +832,8 @@ static CURL *get_curl_handle(void)
 				ssl_version);
 	}
 
-	if (getenv("GIT_SSL_CIPHER_LIST"))
-		ssl_cipherlist = getenv("GIT_SSL_CIPHER_LIST");
+	if (getenv("BUT_SSL_CIPHER_LIST"))
+		ssl_cipherlist = getenv("BUT_SSL_CIPHER_LIST");
 	if (ssl_cipherlist != NULL && *ssl_cipherlist)
 		curl_easy_setopt(result, CURLOPT_SSL_CIPHER_LIST,
 				ssl_cipherlist);
@@ -846,20 +846,20 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
 	if (ssl_capath != NULL)
 		curl_easy_setopt(result, CURLOPT_CAPATH, ssl_capath);
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
+#ifdef BUT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 	if (ssl_pinnedkey != NULL)
 		curl_easy_setopt(result, CURLOPT_PINNEDPUBLICKEY, ssl_pinnedkey);
 #endif
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_use_ssl_cainfo) {
 		curl_easy_setopt(result, CURLOPT_CAINFO, NULL);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO
+#ifdef BUT_CURL_HAVE_CURLOPT_PROXY_CAINFO
 		curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, NULL);
 #endif
 	} else if (ssl_cainfo != NULL || http_proxy_ssl_ca_info != NULL) {
 		if (ssl_cainfo != NULL)
 			curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO
+#ifdef BUT_CURL_HAVE_CURLOPT_PROXY_CAINFO
 		if (http_proxy_ssl_ca_info != NULL)
 			curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, http_proxy_ssl_ca_info);
 #endif
@@ -878,12 +878,12 @@ static CURL *get_curl_handle(void)
 			 get_curl_allowed_protocols(0));
 	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
 			 get_curl_allowed_protocols(-1));
-	if (getenv("GIT_CURL_VERBOSE"))
+	if (getenv("BUT_CURL_VERBOSE"))
 		http_trace_curl_no_data();
 	setup_curl_trace(result);
-	if (getenv("GIT_TRACE_CURL_NO_DATA"))
+	if (getenv("BUT_TRACE_CURL_NO_DATA"))
 		trace_curl_data = 0;
-	if (!but_env_bool("GIT_TRACE_REDACT", 1))
+	if (!but_env_bool("BUT_TRACE_REDACT", 1))
 		trace_curl_redact = 0;
 
 	curl_easy_setopt(result, CURLOPT_USERAGENT,
@@ -940,7 +940,7 @@ static CURL *get_curl_handle(void)
 		else if (starts_with(curl_http_proxy, "socks"))
 			curl_easy_setopt(result,
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
+#ifdef BUT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
 		else if (starts_with(curl_http_proxy, "https")) {
 			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
 
@@ -1005,7 +1005,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	free(normalized_url);
 	string_list_clear(&config.vars, 1);
 
-#ifdef GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
+#ifdef BUT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
 	if (http_ssl_backend) {
 		const curl_ssl_backend **backends;
 		struct strbuf buf = STRBUF_INIT;
@@ -1049,7 +1049,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 		"Pragma:");
 
 	{
-		char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
+		char *http_max_requests = getenv("BUT_HTTP_MAX_REQUESTS");
 		if (http_max_requests != NULL)
 			max_requests = atoi(http_max_requests);
 	}
@@ -1058,20 +1058,20 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (!curlm)
 		die("curl_multi_init failed");
 
-	if (getenv("GIT_SSL_NO_VERIFY"))
+	if (getenv("BUT_SSL_NO_VERIFY"))
 		curl_ssl_verify = 0;
 
-	set_from_env(&ssl_cert, "GIT_SSL_CERT");
-	set_from_env(&ssl_key, "GIT_SSL_KEY");
-	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
-	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
+	set_from_env(&ssl_cert, "BUT_SSL_CERT");
+	set_from_env(&ssl_key, "BUT_SSL_KEY");
+	set_from_env(&ssl_capath, "BUT_SSL_CAPATH");
+	set_from_env(&ssl_cainfo, "BUT_SSL_CAINFO");
 
-	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
+	set_from_env(&user_agent, "BUT_HTTP_USER_AGENT");
 
-	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
+	low_speed_limit = getenv("BUT_HTTP_LOW_SPEED_LIMIT");
 	if (low_speed_limit != NULL)
 		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
-	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
+	low_speed_time = getenv("BUT_HTTP_LOW_SPEED_TIME");
 	if (low_speed_time != NULL)
 		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
 
@@ -1082,20 +1082,20 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
 
-	set_from_env(&http_proxy_ssl_cert, "GIT_PROXY_SSL_CERT");
-	set_from_env(&http_proxy_ssl_key, "GIT_PROXY_SSL_KEY");
-	set_from_env(&http_proxy_ssl_ca_info, "GIT_PROXY_SSL_CAINFO");
+	set_from_env(&http_proxy_ssl_cert, "BUT_PROXY_SSL_CERT");
+	set_from_env(&http_proxy_ssl_key, "BUT_PROXY_SSL_KEY");
+	set_from_env(&http_proxy_ssl_ca_info, "BUT_PROXY_SSL_CAINFO");
 
-	if (getenv("GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED"))
+	if (getenv("BUT_PROXY_SSL_CERT_PASSWORD_PROTECTED"))
 		proxy_ssl_cert_password_required = 1;
 
-	if (getenv("GIT_CURL_FTP_NO_EPSV"))
+	if (getenv("BUT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
 
 	if (url) {
 		credential_from_url(&http_auth, url);
 		if (!ssl_cert_password_required &&
-		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
+		    getenv("BUT_SSL_CERT_PASSWORD_PROTECTED") &&
 		    starts_with(url, "https://"))
 			ssl_cert_password_required = 1;
 	}
@@ -1489,7 +1489,7 @@ static int handle_curl_result(struct slot_results *results)
 		 */
 		credential_reject(&cert_auth);
 		return HTTP_NOAUTH;
-#ifdef GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
+#ifdef BUT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
 	} else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
 		return HTTP_NOMATCHPUBLICKEY;
 #endif

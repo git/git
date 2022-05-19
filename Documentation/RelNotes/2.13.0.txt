@@ -62,9 +62,9 @@ UI, Workflows & Features
  * The command line options for ssh invocation needs to be tweaked for
    some implementations of SSH (e.g. PuTTY plink wants "-P <port>"
    while OpenSSH wants "-p <port>" to specify port to connect to), and
-   the variant was guessed when GIT_SSH environment variable is used
+   the variant was guessed when BUT_SSH environment variable is used
    to specify it.  The logic to guess now applies to the command
-   specified by the newer GIT_SSH_COMMAND and also core.sshcommand
+   specified by the newer BUT_SSH_COMMAND and also core.sshcommand
    configuration variable, and comes with an escape hatch for users to
    deal with misdetected cases.
 
@@ -121,7 +121,7 @@ UI, Workflows & Features
    The code has been restructured.
 
  * The command line prompt (in contrib/) learned a new 'tag' style
-   that can be specified with GIT_PS1_DESCRIBE_STYLE, to describe a
+   that can be specified with BUT_PS1_DESCRIBE_STYLE, to describe a
    detached HEAD with "but describe --tags".
 
  * The configuration file learned a new "includeIf.<condition>.path"
@@ -544,7 +544,7 @@ notes for details).
    proxy.  We broke this early last year.
    (merge ae51d91105 sr/http-proxy-configuration-fix later to maint).
 
- * $GIT_DIR may in some cases be normalized with all symlinks resolved
+ * $BUT_DIR may in some cases be normalized with all symlinks resolved
    while "butdir" path expansion in the pattern does not receive the
    same treatment, leading to incorrect mismatch.  This has been fixed.
 

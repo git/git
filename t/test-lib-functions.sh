@@ -129,9 +129,9 @@ test_tick () {
 	else
 		test_tick=$(($test_tick + 60))
 	fi
-	GIT_CUMMITTER_DATE="$test_tick -0700"
-	GIT_AUTHOR_DATE="$test_tick -0700"
-	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
+	BUT_CUMMITTER_DATE="$test_tick -0700"
+	BUT_AUTHOR_DATE="$test_tick -0700"
+	export BUT_CUMMITTER_DATE BUT_AUTHOR_DATE
 }
 
 # Stop execution and start a shell. This is useful for debugging tests.
@@ -205,7 +205,7 @@ test_pause () {
 #     debug --debugger=nemiver but $ARGS
 #     debug -d "valgrind --tool=memcheck --track-origins=yes" but $ARGS
 debug () {
-	GIT_DEBUGGER=1 &&
+	BUT_DEBUGGER=1 &&
 	DEBUG_TERM=$TERM &&
 	while test $# != 0
 	do
@@ -214,11 +214,11 @@ debug () {
 			DEBUG_TERM="$USER_TERM"
 			;;
 		-d)
-			GIT_DEBUGGER="$2" &&
+			BUT_DEBUGGER="$2" &&
 			shift
 			;;
 		--debugger=*)
-			GIT_DEBUGGER="${1#*=}"
+			BUT_DEBUGGER="${1#*=}"
 			;;
 		*)
 			break
@@ -235,7 +235,7 @@ debug () {
 		test -f "$dotfile" && cp "$dotfile" "$HOME" || :
 	done &&
 
-	TERM="$DEBUG_TERM" GIT_DEBUGGER="${GIT_DEBUGGER}" "$@" <&6 >&5 2>&7 &&
+	TERM="$DEBUG_TERM" BUT_DEBUGGER="${BUT_DEBUGGER}" "$@" <&6 >&5 2>&7 &&
 
 	for dotfile in $dotfiles
 	do
@@ -301,8 +301,8 @@ test_cummit () {
 			;;
 		--date)
 			notick=yes
-			GIT_CUMMITTER_DATE="$2"
-			GIT_AUTHOR_DATE="$2"
+			BUT_CUMMITTER_DATE="$2"
+			BUT_AUTHOR_DATE="$2"
 			shift
 			;;
 		-C)
@@ -447,13 +447,13 @@ test_cummit_bulk () {
 		test_tick &&
 		echo "cummit $ref"
 		printf 'author %s <%s> %s\n' \
-			"$GIT_AUTHOR_NAME" \
-			"$GIT_AUTHOR_EMAIL" \
-			"$GIT_AUTHOR_DATE"
+			"$BUT_AUTHOR_NAME" \
+			"$BUT_AUTHOR_EMAIL" \
+			"$BUT_AUTHOR_DATE"
 		printf 'cummitter %s <%s> %s\n' \
-			"$GIT_CUMMITTER_NAME" \
-			"$GIT_CUMMITTER_EMAIL" \
-			"$GIT_CUMMITTER_DATE"
+			"$BUT_CUMMITTER_NAME" \
+			"$BUT_CUMMITTER_EMAIL" \
+			"$BUT_CUMMITTER_DATE"
 		echo "data <<EOF"
 		printf "$message\n" $n
 		echo "EOF"
@@ -644,7 +644,7 @@ test_unset_prereq () {
 }
 
 test_set_prereq () {
-	if test -n "$GIT_TEST_FAIL_PREREQS_INTERNAL"
+	if test -n "$BUT_TEST_FAIL_PREREQS_INTERNAL"
 	then
 		case "$1" in
 		# The "!" case is handled below with
@@ -655,7 +655,7 @@ test_set_prereq () {
 		# pretend not to support
 		SYMLINKS)
 			;;
-		# Inspecting whether GIT_TEST_FAIL_PREREQS is on
+		# Inspecting whether BUT_TEST_FAIL_PREREQS is on
 		# should be unaffected.
 		FAIL_PREREQS)
 			;;
@@ -758,9 +758,9 @@ test_have_prereq () {
 			prerequisite=${negative_prereq:+!}$prerequisite
 
 			# Abort if this prereq was marked as required
-			if test -n "$GIT_TEST_REQUIRE_PREREQ"
+			if test -n "$BUT_TEST_REQUIRE_PREREQ"
 			then
-				case " $GIT_TEST_REQUIRE_PREREQ " in
+				case " $BUT_TEST_REQUIRE_PREREQ " in
 				*" $prerequisite "*)
 					BAIL_OUT "required prereq $prerequisite failed"
 					;;
@@ -855,9 +855,9 @@ test_external () {
 		# Announce the script to reduce confusion about the
 		# test output that follows.
 		say_color "" "# run $test_count: $descr ($*)"
-		# Export TEST_DIRECTORY, TRASH_DIRECTORY and GIT_TEST_LONG
+		# Export TEST_DIRECTORY, TRASH_DIRECTORY and BUT_TEST_LONG
 		# to be able to use them in script
-		export TEST_DIRECTORY TRASH_DIRECTORY GIT_TEST_LONG
+		export TEST_DIRECTORY TRASH_DIRECTORY BUT_TEST_LONG
 		# Run command; redirect its stderr to &4 as in
 		# test_run_, but keep its stdout on our stdout even in
 		# non-verbose mode.
@@ -1239,7 +1239,7 @@ test_expect_code () {
 
 test_cmp () {
 	test "$#" -ne 2 && BUG "2 param"
-	eval "$GIT_TEST_CMP" '"$@"'
+	eval "$BUT_TEST_CMP" '"$@"'
 }
 
 # Check that the given config key has the expected value.
@@ -1273,7 +1273,7 @@ test_cmp_bin () {
 }
 
 # Wrapper for grep which used to be used for
-# GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
+# BUT_TEST_GETTEXT_POISON=false. Only here as a shim for other
 # in-flight changes. Should not be used and will be removed soon.
 test_i18ngrep () {
 	eval "last_arg=\${$#}"
@@ -1499,7 +1499,7 @@ perl () {
 # Given the name of an environment variable with a bool value, normalize
 # its value to a 0 (true) or 1 (false or empty string) return code.
 #
-#   test_bool_env GIT_TEST_HTTPD <default-value>
+#   test_bool_env BUT_TEST_HTTPD <default-value>
 #
 # Return with code corresponding to the given default value if the variable
 # is unset.
@@ -1665,8 +1665,8 @@ nonbut () {
 	return 1
 
 	(
-		GIT_CEILING_DIRECTORIES=$(pwd) &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES=$(pwd) &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non-repo &&
 		"$@" 2>&7
 	)
@@ -1705,7 +1705,7 @@ test_set_hash () {
 
 # Detect the hash algorithm in use.
 test_detect_hash () {
-	test_hash_algo="${GIT_TEST_DEFAULT_HASH:-sha1}"
+	test_hash_algo="${BUT_TEST_DEFAULT_HASH:-sha1}"
 }
 
 # Load common hash metadata and common placeholder object IDs for use with
@@ -1817,7 +1817,7 @@ test_set_port () {
 
 	# Make sure that parallel '--stress' test jobs get different
 	# ports.
-	port=$(($port + ${GIT_TEST_STRESS_JOB_NR:-0}))
+	port=$(($port + ${BUT_TEST_STRESS_JOB_NR:-0}))
 	eval $var=$port
 }
 
@@ -1839,7 +1839,7 @@ test_path_is_hidden () {
 # For example, to look for an invocation of "but upload-pack
 # /path/to/repo"
 #
-#	GIT_TRACE2_EVENT=event.log but fetch ... &&
+#	BUT_TRACE2_EVENT=event.log but fetch ... &&
 #	test_subcommand but upload-pack "$PATH" <event.log
 #
 # If the first parameter passed is !, this instead checks that
@@ -1872,7 +1872,7 @@ test_subcommand () {
 # For example, to look for trace2_region_enter("index", "do_read_index", repo)
 # in an invocation of "but checkout HEAD~1", run
 #
-#	GIT_TRACE2_EVENT="$(pwd)/trace.txt" GIT_TRACE2_EVENT_NESTING=10 \
+#	BUT_TRACE2_EVENT="$(pwd)/trace.txt" BUT_TRACE2_EVENT_NESTING=10 \
 #		but checkout HEAD~1 &&
 #	test_region index do_read_index <trace.txt
 #

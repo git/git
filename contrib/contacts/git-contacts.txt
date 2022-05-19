@@ -89,6 +89,6 @@ years), and `-C` level for detecting moved and copied lines (a single `-C`). In
 the future, these conditions may become configurable.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

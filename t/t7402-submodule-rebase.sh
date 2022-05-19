@@ -40,7 +40,7 @@ test_expect_success 'rebase with a dirty submodule' '
 	but cummit -m update file &&
 	CURRENT=$(cd submodule && but rev-parse HEAD) &&
 	EXPECTED=$(but rev-parse HEAD~2:submodule) &&
-	GIT_TRACE=1 but rebase --onto HEAD~2 HEAD^ &&
+	BUT_TRACE=1 but rebase --onto HEAD~2 HEAD^ &&
 	STORED=$(but rev-parse HEAD:submodule) &&
 	test $EXPECTED = $STORED &&
 	test $CURRENT = $(cd submodule && but rev-parse HEAD)
@@ -57,7 +57,7 @@ test_expect_success 'interactive rebase with a dirty submodule' '
 
 	test submodule = $(but diff --name-only) &&
 	HEAD=$(but rev-parse HEAD) &&
-	GIT_EDITOR="\"$(pwd)/fake-editor.sh\"" EDITOR_TEXT="pick $HEAD" \
+	BUT_EDITOR="\"$(pwd)/fake-editor.sh\"" EDITOR_TEXT="pick $HEAD" \
 		but rebase -i HEAD^ &&
 	test submodule = $(but diff --name-only)
 

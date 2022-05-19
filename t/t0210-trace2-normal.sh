@@ -6,14 +6,14 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.
-sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
-sane_unset GIT_TRACE2_BRIEF
-sane_unset GIT_TRACE2_CONFIG_PARAMS
+sane_unset BUT_TRACE2 BUT_TRACE2_PERF BUT_TRACE2_EVENT
+sane_unset BUT_TRACE2_BRIEF
+sane_unset BUT_TRACE2_CONFIG_PARAMS
 
 # Add t/helper directory to PATH so that we can use a relative
 # path to run nested instances of test-tool.exe (see 004child).
 # This helps with HEREDOC comparisons later.
-TTDIR="$GIT_BUILD_DIR/t/helper/" && export TTDIR
+TTDIR="$BUT_BUILD_DIR/t/helper/" && export TTDIR
 PATH="$TTDIR:$PATH" && export PATH
 
 # Warning: use of 'test_cmp' may run test-tool.exe and/or but.exe
@@ -29,12 +29,12 @@ V=$(but version | sed -e 's/^but version //') && export V
 # to whatever filtering that target decides to do).
 # This script tests the normal target in isolation.
 #
-# Defer setting GIT_TRACE2 until the actual command line we want to test
+# Defer setting BUT_TRACE2 until the actual command line we want to test
 # because hidden but and test-tool commands run by the test harness
 # can contaminate our output.
 
 # Enable "brief" feature which turns off "<clock> <file>:<line> " prefix.
-GIT_TRACE2_BRIEF=1 && export GIT_TRACE2_BRIEF
+BUT_TRACE2_BRIEF=1 && export BUT_TRACE2_BRIEF
 
 # Basic tests of the trace2 normal stream.  Since this stream is used
 # primarily with printf-style debugging/tracing, we do limited testing
@@ -56,7 +56,7 @@ GIT_TRACE2_BRIEF=1 && export GIT_TRACE2_BRIEF
 
 test_expect_success 'normal stream, return code 0' '
 	test_when_finished "rm trace.normal actual expect" &&
-	GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 001return 0 &&
+	BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -70,7 +70,7 @@ test_expect_success 'normal stream, return code 0' '
 
 test_expect_success 'normal stream, return code 1' '
 	test_when_finished "rm trace.normal actual expect" &&
-	test_must_fail env GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 001return 1 &&
+	test_must_fail env BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 001return 1 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -85,7 +85,7 @@ test_expect_success 'normal stream, return code 1' '
 test_expect_success 'automatic filename' '
 	test_when_finished "rm -r traces actual expect" &&
 	mkdir traces &&
-	GIT_TRACE2="$(pwd)/traces" test-tool trace2 001return 0 &&
+	BUT_TRACE2="$(pwd)/traces" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <"$(ls traces/*)" >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -103,7 +103,7 @@ test_expect_success 'automatic filename' '
 
 test_expect_success 'normal stream, exit code 0' '
 	test_when_finished "rm trace.normal actual expect" &&
-	GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 002exit 0 &&
+	BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 002exit 0 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -117,7 +117,7 @@ test_expect_success 'normal stream, exit code 0' '
 
 test_expect_success 'normal stream, exit code 1' '
 	test_when_finished "rm trace.normal actual expect" &&
-	test_must_fail env GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 002exit 1 &&
+	test_must_fail env BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 002exit 1 &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -135,7 +135,7 @@ test_expect_success 'normal stream, exit code 1' '
 
 test_expect_success 'normal stream, error event' '
 	test_when_finished "rm trace.normal actual expect" &&
-	GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 003error "hello world" "this is a test" &&
+	BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 003error "hello world" "this is a test" &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -155,7 +155,7 @@ test_expect_success 'normal stream, error event' '
 
 test_expect_success 'BUG messages are written to trace2' '
 	test_when_finished "rm trace.normal actual expect" &&
-	test_must_fail env GIT_TRACE2="$(pwd)/trace.normal" test-tool trace2 007bug &&
+	test_must_fail env BUT_TRACE2="$(pwd)/trace.normal" test-tool trace2 007bug &&
 	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
 	cat >expect <<-EOF &&
 		version $V
@@ -168,7 +168,7 @@ test_expect_success 'BUG messages are written to trace2' '
 	test_cmp expect actual
 '
 
-sane_unset GIT_TRACE2_BRIEF
+sane_unset BUT_TRACE2_BRIEF
 
 # Now test without environment variables and get all Trace2 settings
 # from the global config.

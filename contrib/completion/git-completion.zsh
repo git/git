@@ -45,7 +45,7 @@ fi
 
 local old_complete="$functions[complete]"
 functions[complete]=:
-GIT_SOURCING_ZSH_COMPLETION=y . "$script"
+BUT_SOURCING_ZSH_COMPLETION=y . "$script"
 functions[complete]="$old_complete"
 
 __butcomp ()

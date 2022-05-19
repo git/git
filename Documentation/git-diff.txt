@@ -223,6 +223,6 @@ linkbut:but-format-patch[1],
 linkbut:but-apply[1],
 linkbut:but-show[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

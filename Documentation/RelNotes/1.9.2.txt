@@ -26,7 +26,7 @@ Fixes since v1.9.1
 
  * When it is not necessary to edit a cummit log message (e.g. "but
    cummit -m" is given a message without specifying "-e"), we used to
-   disable the spawning of the editor by overriding GIT_EDITOR, but
+   disable the spawning of the editor by overriding BUT_EDITOR, but
    this means all the uses of the editor, other than to edit the
    cummit log message, are also affected.
 

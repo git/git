@@ -1,4 +1,4 @@
-GIT v1.6.0.3 Release Notes
+BUT v1.6.0.3 Release Notes
 ==========================
 
 Fixes since v1.6.0.2
@@ -66,7 +66,7 @@ Fixes since v1.6.0.2
 * Cross-directory renames are no longer used when creating packs.  This
   allows more graceful behavior on filesystems like sshfs.
 
-* Stale temporary files under $GIT_DIR/objects/pack are now cleaned up
+* Stale temporary files under $BUT_DIR/objects/pack are now cleaned up
   automatically by "but prune".
 
 * "but merge" once again removes directories after the last file has

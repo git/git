@@ -241,6 +241,6 @@ in the index can take `--staged` and/or `--worktree`.
 * The two options can be specified together to ask a command to work
   on both the index and the working tree.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

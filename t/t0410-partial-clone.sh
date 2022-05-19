@@ -5,11 +5,11 @@ test_description='partial clone'
 . ./test-lib.sh
 
 # missing promisor objects cause repacks which write bitmaps to fail
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 # When enabled, some commands will write cummit-graphs. This causes fsck
 # to fail when delete_object() is called because fsck will attempt to
 # verify the out-of-sync cummit graph.
-GIT_TEST_CUMMIT_GRAPH=0
+BUT_TEST_CUMMIT_GRAPH=0
 
 delete_object () {
 	rm $1/.but/objects/$(echo $2 | sed -e 's|^..|&/|')
@@ -223,7 +223,7 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 
 	rm -rf repo/.but/objects/* &&
 	rm -f trace &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C repo cat-file -p "$HASH" &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C repo cat-file -p "$HASH" &&
 	grep "fetch< fetch=.*ref-in-want" trace
 '
 

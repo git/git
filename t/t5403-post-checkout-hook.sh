@@ -4,8 +4,8 @@
 #
 
 test_description='Test the post-checkout hook.'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -106,7 +106,7 @@ test_rebase --merge
 test_expect_success 'post-checkout hook is triggered by clone' '
 	mkdir -p templates/hooks &&
 	write_script templates/hooks/post-checkout <<-\EOF &&
-	echo "$@" >"$GIT_DIR/post-checkout.args"
+	echo "$@" >"$BUT_DIR/post-checkout.args"
 	EOF
 	but clone --template=templates . clone3 &&
 	test -f clone3/.but/post-checkout.args

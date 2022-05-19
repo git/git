@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use 5.008;
-use lib (split(/:/, $ENV{GITPERLLIB}));
+use lib (split(/:/, $ENV{BUTPERLLIB}));
 use strict;
 use warnings;
 use POSIX qw(:locale_h);

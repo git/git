@@ -117,7 +117,7 @@ are:
 	pattern. If the location of the .but directory matches the
 	pattern, the include condition is met.
 +
-The .but location may be auto-discovered, or come from `$GIT_DIR`
+The .but location may be auto-discovered, or come from `$BUT_DIR`
 environment variable. If the repository is auto discovered via a .but
 file (e.g. from submodules, or a linked worktree), the .but location
 would be the final location where the .but directory is, not where the
@@ -188,10 +188,10 @@ but currently Git only supports the exact keyword described above.
 
 A few more notes on matching via `butdir` and `butdir/i`:
 
- * Symlinks in `$GIT_DIR` are not resolved before matching.
+ * Symlinks in `$BUT_DIR` are not resolved before matching.
 
  * Both the symlink & realpath versions of paths will be matched
-   outside of `$GIT_DIR`. E.g. if ~/but is a symlink to
+   outside of `$BUT_DIR`. E.g. if ~/but is a symlink to
    /mnt/storage/but, both `butdir:~/but` and `butdir:/mnt/storage/but`
    will match.
 +
@@ -231,7 +231,7 @@ Example
 	path = foo.inc ; find "foo.inc" relative to the current file
 	path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
 
-; include if $GIT_DIR is /path/to/foo/.but
+; include if $BUT_DIR is /path/to/foo/.but
 [includeIf "butdir:/path/to/foo/.but"]
 	path = /path/to/foo.inc
 

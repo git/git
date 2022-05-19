@@ -924,7 +924,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			struct object *obj;
 
 			mode = active_cache[i]->ce_mode;
-			if (S_ISGITLINK(mode))
+			if (S_ISBUTLINK(mode))
 				continue;
 			blob = lookup_blob(the_repository,
 					   &active_cache[i]->oid);

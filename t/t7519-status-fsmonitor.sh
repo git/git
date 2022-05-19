@@ -247,9 +247,9 @@ do
 		but config core.preloadIndex $preload_val &&
 		if test $preload_val = true
 		then
-			GIT_TEST_PRELOAD_INDEX=$preload_val && export GIT_TEST_PRELOAD_INDEX
+			BUT_TEST_PRELOAD_INDEX=$preload_val && export BUT_TEST_PRELOAD_INDEX
 		else
-			sane_unset GIT_TEST_PRELOAD_INDEX
+			sane_unset BUT_TEST_PRELOAD_INDEX
 		fi
 	'
 
@@ -340,7 +340,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .but changes when invalidating UNTR'
 		but update-index --untracked-cache &&
 		but update-index --fsmonitor &&
 		but status &&
-		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
+		BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace-before" \
 		but status &&
 		test-tool dump-untracked-cache >../before
 	) &&
@@ -352,7 +352,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .but changes when invalidating UNTR'
 	EOF
 	(
 		cd dot-but &&
-		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-after" \
+		BUT_TRACE2_PERF="$TRASH_DIRECTORY/trace-after" \
 		but status &&
 		test-tool dump-untracked-cache >../after
 	) &&
@@ -395,7 +395,7 @@ test_expect_success 'status succeeds after staging/unstaging' '
 # during a call to 'but status'. Otherwise, we verify that we _do_ call it.
 check_sparse_index_behavior () {
 	but -C full status --porcelain=v2 >expect &&
-	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+	BUT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		but -C sparse status --porcelain=v2 >actual &&
 	test_region $1 index ensure_full_index trace2.txt &&
 	test_region fsm_hook query trace2.txt &&
@@ -405,7 +405,7 @@ check_sparse_index_behavior () {
 
 test_expect_success 'status succeeds with sparse index' '
 	(
-		sane_unset GIT_TEST_SPLIT_INDEX &&
+		sane_unset BUT_TEST_SPLIT_INDEX &&
 
 		but clone . full &&
 		but clone --sparse . sparse &&

@@ -12,10 +12,10 @@ test_expect_success 'setup ssh wrapper' '
 	write_script "$TRASH_DIRECTORY/ssh-wrapper" <<-\EOF &&
 	but upload-pack "$TRASH_DIRECTORY"
 	EOF
-	GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper" &&
-	GIT_SSH_VARIANT=ssh &&
-	export GIT_SSH &&
-	export GIT_SSH_VARIANT &&
+	BUT_SSH="$TRASH_DIRECTORY/ssh-wrapper" &&
+	BUT_SSH_VARIANT=ssh &&
+	export BUT_SSH &&
+	export BUT_SSH_VARIANT &&
 	export TRASH_DIRECTORY
 '
 

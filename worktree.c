@@ -605,7 +605,7 @@ static void repair_butfile(struct worktree *wt,
 	strbuf_addf(&dotbut, "%s/.but", wt->path);
 	backlink = xstrdup_or_null(read_butfile_gently(dotbut.buf, &err));
 
-	if (err == READ_GITFILE_ERR_NOT_A_FILE)
+	if (err == READ_BUTFILE_ERR_NOT_A_FILE)
 		fn(1, wt->path, _(".but is not a file"), cb_data);
 	else if (err)
 		repair = _(".but file broken");
@@ -721,10 +721,10 @@ void repair_worktree_at_path(const char *path,
 	}
 
 	backlink = xstrdup_or_null(read_butfile_gently(realdotbut.buf, &err));
-	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
+	if (err == READ_BUTFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotbut.buf, _("unable to locate repository; .but is not a file"), cb_data);
 		goto done;
-	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
+	} else if (err == READ_BUTFILE_ERR_NOT_A_REPO) {
 		if (!(backlink = infer_backlink(realdotbut.buf))) {
 			fn(1, realdotbut.buf, _("unable to locate repository; .but file does not reference a repository"), cb_data);
 			goto done;

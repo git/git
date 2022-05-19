@@ -466,15 +466,15 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
-static GIT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
-static GIT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
-static GIT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
-static GIT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
-static GIT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
-static GIT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
-static GIT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
-static GIT_PATH_FUNC(but_path_head_name, "head-name")
+static BUT_PATH_FUNC(but_path_bisect_names, "BISECT_NAMES")
+static BUT_PATH_FUNC(but_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static BUT_PATH_FUNC(but_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static BUT_PATH_FUNC(but_path_bisect_run, "BISECT_RUN")
+static BUT_PATH_FUNC(but_path_bisect_start, "BISECT_START")
+static BUT_PATH_FUNC(but_path_bisect_log, "BISECT_LOG")
+static BUT_PATH_FUNC(but_path_bisect_terms, "BISECT_TERMS")
+static BUT_PATH_FUNC(but_path_bisect_first_parent, "BISECT_FIRST_PARENT")
+static BUT_PATH_FUNC(but_path_head_name, "head-name")
 
 static void read_bisect_paths(struct strvec *array)
 {
@@ -727,7 +727,7 @@ static int is_expected_rev(const struct object_id *oid)
 enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 				  int no_checkout)
 {
-	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
+	char bisect_rev_hex[BUT_MAX_HEXSZ + 1];
 	struct cummit *cummit;
 	struct pretty_print_context pp = {0};
 	struct strbuf cummit_msg = STRBUF_INIT;
@@ -740,7 +740,7 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 		update_ref(NULL, "BISECT_HEAD", bisect_rev, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		if (run_command_v_opt(argv_checkout, RUN_GIT_CMD))
+		if (run_command_v_opt(argv_checkout, RUN_BUT_CMD))
 			/*
 			 * Errors in `run_command()` itself, signaled by res < 0,
 			 * and errors in the child process, signaled by res > 0

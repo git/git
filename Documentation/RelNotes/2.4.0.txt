@@ -195,7 +195,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * People often forget to chain the commands in their test together
    with &&, letting a failure from an earlier command in the test go
-   unnoticed. The new GIT_TEST_CHAIN_LINT mechanism allows you to
+   unnoticed. The new BUT_TEST_CHAIN_LINT mechanism allows you to
    catch such a mistake more easily.
 
 

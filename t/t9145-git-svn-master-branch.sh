@@ -3,8 +3,8 @@
 # Copyright (c) 2009 Eric Wong
 #
 test_description='but svn initial main branch is "trunk" if possible'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-but-svn.sh
 

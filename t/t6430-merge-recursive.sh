@@ -2,8 +2,8 @@
 
 test_description='merge-recursive backend test'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
@@ -552,11 +552,11 @@ test_expect_success 'reset and bind merge' '
 
 test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 	(
-		GIT_WORK_TREE="$PWD/ours-has-rename-work" &&
-		export GIT_WORK_TREE &&
-		GIT_INDEX_FILE="$PWD/ours-has-rename-index" &&
-		export GIT_INDEX_FILE &&
-		mkdir "$GIT_WORK_TREE" &&
+		BUT_WORK_TREE="$PWD/ours-has-rename-work" &&
+		export BUT_WORK_TREE &&
+		BUT_INDEX_FILE="$PWD/ours-has-rename-index" &&
+		export BUT_INDEX_FILE &&
+		mkdir "$BUT_WORK_TREE" &&
 		but read-tree -i -m $c7 2>actual-err &&
 		test_must_be_empty actual-err &&
 		but update-index --ignore-missing --refresh 2>actual-err &&
@@ -577,11 +577,11 @@ test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 
 test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
 	(
-		GIT_WORK_TREE="$PWD/theirs-has-rename-work" &&
-		export GIT_WORK_TREE &&
-		GIT_INDEX_FILE="$PWD/theirs-has-rename-index" &&
-		export GIT_INDEX_FILE &&
-		mkdir "$GIT_WORK_TREE" &&
+		BUT_WORK_TREE="$PWD/theirs-has-rename-work" &&
+		export BUT_WORK_TREE &&
+		BUT_INDEX_FILE="$PWD/theirs-has-rename-index" &&
+		export BUT_INDEX_FILE &&
+		mkdir "$BUT_WORK_TREE" &&
 		but read-tree -i -m $c3 2>actual-err &&
 		test_must_be_empty actual-err &&
 		but update-index --ignore-missing --refresh 2>actual-err &&

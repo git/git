@@ -50,7 +50,7 @@ OPTIONS[[OPTIONS]]
 <repository>::
 	The "remote" repository that is destination of a push
 	operation.  This parameter can be either a URL
-	(see the section <<URLS,GIT URLS>> below) or the name
+	(see the section <<URLS,BUT URLS>> below) or the name
 	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>...::
@@ -692,6 +692,6 @@ a `but gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

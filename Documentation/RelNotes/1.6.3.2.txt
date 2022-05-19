@@ -1,4 +1,4 @@
-GIT v1.6.3.2 Release Notes
+BUT v1.6.3.2 Release Notes
 ==========================
 
 Fixes since v1.6.3.1
@@ -18,7 +18,7 @@ Fixes since v1.6.3.1
    gracefully.  It should produce the file itself, but instead
    produced an empty result.
 
- * GIT_TRACE mechanism segfaulted when tracing a shell-quoted aliases.
+ * BUT_TRACE mechanism segfaulted when tracing a shell-quoted aliases.
 
  * OpenBSD also uses st_ctimspec in "struct stat", instead of "st_ctim".
 

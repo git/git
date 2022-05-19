@@ -229,7 +229,7 @@ static inline int get_literal_global(void)
 	static int literal = -1;
 
 	if (literal < 0)
-		literal = but_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
+		literal = but_env_bool(BUT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
 
 	return literal;
 }
@@ -239,7 +239,7 @@ static inline int get_glob_global(void)
 	static int glob = -1;
 
 	if (glob < 0)
-		glob = but_env_bool(GIT_GLOB_PATHSPECS_ENVIRONMENT, 0);
+		glob = but_env_bool(BUT_GLOB_PATHSPECS_ENVIRONMENT, 0);
 
 	return glob;
 }
@@ -249,7 +249,7 @@ static inline int get_noglob_global(void)
 	static int noglob = -1;
 
 	if (noglob < 0)
-		noglob = but_env_bool(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
+		noglob = but_env_bool(BUT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
 
 	return noglob;
 }
@@ -259,7 +259,7 @@ static inline int get_icase_global(void)
 	static int icase = -1;
 
 	if (icase < 0)
-		icase = but_env_bool(GIT_ICASE_PATHSPECS_ENVIRONMENT, 0);
+		icase = but_env_bool(BUT_ICASE_PATHSPECS_ENVIRONMENT, 0);
 
 	return icase;
 }

@@ -141,8 +141,8 @@ struct patch {
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
-	char old_oid_prefix[GIT_MAX_HEXSZ + 1];
-	char new_oid_prefix[GIT_MAX_HEXSZ + 1];
+	char old_oid_prefix[BUT_MAX_HEXSZ + 1];
+	char new_oid_prefix[BUT_MAX_HEXSZ + 1];
 	struct patch *next;
 
 	/* three-way fallback result */

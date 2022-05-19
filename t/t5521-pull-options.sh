@@ -2,8 +2,8 @@
 
 test_description='pull options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -207,7 +207,7 @@ test_expect_success 'but pull --no-signoff does not add sign-off line' '
 
 test_expect_success 'but pull --signoff add a sign-off line' '
 	test_when_finished "rm -fr src dst expected actual" &&
-	echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" >expected &&
+	echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>" >expected &&
 	but init src &&
 	test_cummit -C src one &&
 	but clone src dst &&

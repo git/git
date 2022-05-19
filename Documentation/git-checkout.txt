@@ -238,7 +238,7 @@ working tree, by copying them from elsewhere, extracting a tarball, etc.
 --ignore-skip-worktree-bits::
 	In sparse checkout mode, `but checkout -- <paths>` would
 	update only entries matched by `<paths>` and sparse patterns
-	in `$GIT_DIR/info/sparse-checkout`. This option ignores
+	in `$BUT_DIR/info/sparse-checkout`. This option ignores
 	the sparse patterns and adds back any files in `<paths>`.
 
 -m::
@@ -605,6 +605,6 @@ SEE ALSO
 linkbut:but-switch[1],
 linkbut:but-restore[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

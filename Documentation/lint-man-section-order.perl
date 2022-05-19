@@ -32,7 +32,7 @@ my %SECTIONS;
 		'SEE ALSO' => {
 			order => $order++,
 		},
-		'GIT' => {
+		'BUT' => {
 			required => 1,
 			order => $order++,
 		},

@@ -7,7 +7,7 @@ test_description='test disabling of but-over-tcp in clone/fetch'
 start_but_daemon
 
 test_expect_success 'create but-accessible repo' '
-	bare="$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
+	bare="$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo.but" &&
 	test_cummit one &&
 	but --bare init "$bare" &&
 	but push "$bare" HEAD &&
@@ -15,6 +15,6 @@ test_expect_success 'create but-accessible repo' '
 	but -C "$bare" config daemon.receivepack true
 '
 
-test_proto "but://" but "$GIT_DAEMON_URL/repo.but"
+test_proto "but://" but "$BUT_DAEMON_URL/repo.but"
 
 test_done

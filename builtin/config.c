@@ -519,7 +519,7 @@ static int get_colorbool(const char *var, int print)
 
 	if (get_colorbool_found < 0)
 		/* default value if none found in config */
-		get_colorbool_found = GIT_COLOR_AUTO;
+		get_colorbool_found = BUT_COLOR_AUTO;
 
 	get_colorbool_found = want_color(get_colorbool_found);
 

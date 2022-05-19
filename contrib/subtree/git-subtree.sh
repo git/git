@@ -5,9 +5,9 @@
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
 
-if test -z "$GIT_EXEC_PATH" || ! test -f "$GIT_EXEC_PATH/but-sh-setup" || {
-	test "${PATH#"${GIT_EXEC_PATH}:"}" = "$PATH" &&
-	test ! "$GIT_EXEC_PATH" -ef "${PATH%%:*}" 2>/dev/null
+if test -z "$BUT_EXEC_PATH" || ! test -f "$BUT_EXEC_PATH/but-sh-setup" || {
+	test "${PATH#"${BUT_EXEC_PATH}:"}" = "$PATH" &&
+	test ! "$BUT_EXEC_PATH" -ef "${PATH%%:*}" 2>/dev/null
 }
 then
 	basename=${0##*[/\\]}
@@ -16,7 +16,7 @@ then
 	echo >&2
 	echo >&2 "Tips:"
 	echo >&2 " - If \`but --exec-path\` does not print the correct path to"
-	echo >&2 "   your but install directory, then set the GIT_EXEC_PATH"
+	echo >&2 "   your but install directory, then set the BUT_EXEC_PATH"
 	echo >&2 "   environment variable to the correct directory."
 	echo >&2 " - Make sure that your \`$basename\` file is either in your"
 	echo >&2 "   PATH or in your but exec path (\`$(but --exec-path)\`)."
@@ -60,7 +60,7 @@ debug () {
 
 # Usage: progress [MSG...]
 progress () {
-	if test -z "$GIT_QUIET"
+	if test -z "$BUT_QUIET"
 	then
 		if test -z "$arg_debug"
 		then
@@ -161,7 +161,7 @@ main () {
 
 		case "$opt" in
 		-q)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		-d)
 			arg_debug=1
@@ -252,7 +252,7 @@ main () {
 	dir="$(dirname "$arg_prefix/.")"
 
 	debug "command: {$arg_command}"
-	debug "quiet: {$GIT_QUIET}"
+	debug "quiet: {$BUT_QUIET}"
 	debug "dir: {$dir}"
 	debug "opts: {$*}"
 	debug
@@ -263,7 +263,7 @@ main () {
 # Usage: cache_setup
 cache_setup () {
 	assert test $# = 0
-	cachedir="$GIT_DIR/subtree-cache/$$"
+	cachedir="$BUT_DIR/subtree-cache/$$"
 	rm -rf "$cachedir" ||
 		die "Can't delete old cachedir: $cachedir"
 	mkdir -p "$cachedir" ||
@@ -464,18 +464,18 @@ copy_cummit () {
 	debug copy_cummit "{$1}" "{$2}" "{$3}"
 	but log -1 --no-show-signature --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
 	(
-		read GIT_AUTHOR_NAME
-		read GIT_AUTHOR_EMAIL
-		read GIT_AUTHOR_DATE
-		read GIT_CUMMITTER_NAME
-		read GIT_CUMMITTER_EMAIL
-		read GIT_CUMMITTER_DATE
-		export  GIT_AUTHOR_NAME \
-			GIT_AUTHOR_EMAIL \
-			GIT_AUTHOR_DATE \
-			GIT_CUMMITTER_NAME \
-			GIT_CUMMITTER_EMAIL \
-			GIT_CUMMITTER_DATE
+		read BUT_AUTHOR_NAME
+		read BUT_AUTHOR_EMAIL
+		read BUT_AUTHOR_DATE
+		read BUT_CUMMITTER_NAME
+		read BUT_CUMMITTER_EMAIL
+		read BUT_CUMMITTER_DATE
+		export  BUT_AUTHOR_NAME \
+			BUT_AUTHOR_EMAIL \
+			BUT_AUTHOR_DATE \
+			BUT_CUMMITTER_NAME \
+			BUT_CUMMITTER_EMAIL \
+			BUT_CUMMITTER_DATE
 		(
 			printf "%s" "$arg_split_annotate"
 			cat

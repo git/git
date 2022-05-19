@@ -753,7 +753,7 @@ test_expect_success 'rename a remote' '
 	(
 		cd four &&
 		but config branch.main.pushRemote origin &&
-		GIT_TRACE2_EVENT=$(pwd)/trace \
+		BUT_TRACE2_EVENT=$(pwd)/trace \
 			but remote rename --progress origin upstream &&
 		test_region progress "Renaming remote references" trace &&
 		grep "pushRemote" .but/config &&
@@ -896,7 +896,7 @@ Pull: refs/heads/main:refs/heads/origin
 Pull: refs/heads/next:refs/heads/origin2
 EOF
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
+test_expect_success 'migrate a remote from named file in $BUT_DIR/remotes' '
 	but clone one five &&
 	origin_url=$(pwd)/one &&
 	(
@@ -922,7 +922,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 	)
 '
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
+test_expect_success 'migrate a remote from named file in $BUT_DIR/branches' '
 	but clone one six &&
 	origin_url=$(pwd)/one &&
 	(
@@ -937,7 +937,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 	)
 '
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/branches (2)' '
+test_expect_success 'migrate a remote from named file in $BUT_DIR/branches (2)' '
 	but clone one seven &&
 	(
 		cd seven &&

@@ -91,8 +91,8 @@ test_expect_success 'blame --line-porcelain output' '
 
 test_expect_success '--porcelain detects first non-blank line as subject' '
 	(
-		GIT_INDEX_FILE=.but/tmp-index &&
-		export GIT_INDEX_FILE &&
+		BUT_INDEX_FILE=.but/tmp-index &&
+		export BUT_INDEX_FILE &&
 		echo "This is it" >single-file &&
 		but add single-file &&
 		tree=$(but write-tree) &&

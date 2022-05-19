@@ -22,7 +22,7 @@ diff --but a/connect.c b/connect.c
  static int but_tcp_connect(int fd[2], const char *prog, char *host, char *path)
  {
 -	struct sockaddr addr;
--	int port = DEFAULT_GIT_PORT, sockfd;
+-	int port = DEFAULT_BUT_PORT, sockfd;
 -	char *colon;
 -
 -	colon = strchr(host, ':');
@@ -34,7 +34,7 @@ diff --but a/connect.c b/connect.c
 -			port = n;
 +	int sockfd = -1;
 +	char *colon, *end;
-+	char *port = STR(DEFAULT_GIT_PORT);
++	char *port = STR(DEFAULT_BUT_PORT);
 +	struct addrinfo hints, *ai0, *ai;
 +	int gai;
 +

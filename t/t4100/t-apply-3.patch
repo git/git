@@ -63,7 +63,7 @@ dissimilarity index 82%
 +++ ls-tree.c
 @@ -1,212 +1,247 @@
 -/*
-- * GIT - The information manager from hell
+- * BUT - The information manager from hell
 - *
 - * Copyright (C) Linus Torvalds, 2005
 - */
@@ -275,7 +275,7 @@ dissimilarity index 82%
 -	return 0;
 -}
 +/*
-+ * GIT - The information manager from hell
++ * BUT - The information manager from hell
 + *
 + * Copyright (C) Linus Torvalds, 2005
 + */

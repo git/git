@@ -20,33 +20,33 @@ URL syntax documented by RFC 1738, so they are of the form:
 
   http://<host>:<port>/<path>?<searchpart>
 
-Within this documentation the placeholder `$GIT_URL` will stand for
+Within this documentation the placeholder `$BUT_URL` will stand for
 the http:// repository URL entered by the end-user.
 
-Servers SHOULD handle all requests to locations matching `$GIT_URL`, as
+Servers SHOULD handle all requests to locations matching `$BUT_URL`, as
 both the "smart" and "dumb" HTTP protocols used by Git operate
 by appending additional path components onto the end of the user
-supplied `$GIT_URL` string.
+supplied `$BUT_URL` string.
 
 An example of a dumb client requesting for a loose object:
 
-  $GIT_URL:     http://example.com:8080/but/repo.but
+  $BUT_URL:     http://example.com:8080/but/repo.but
   URL request:  http://example.com:8080/but/repo.but/objects/d0/49f6c27a2244e12041955e262a404c7faba355
 
 An example of a smart request to a catch-all gateway:
 
-  $GIT_URL:     http://example.com/daemon.cgi?svc=but&q=
+  $BUT_URL:     http://example.com/daemon.cgi?svc=but&q=
   URL request:  http://example.com/daemon.cgi?svc=but&q=/info/refs&service=but-receive-pack
 
 An example of a request to a submodule:
 
-  $GIT_URL:     http://example.com/but/repo.but/path/submodule.but
+  $BUT_URL:     http://example.com/but/repo.but/path/submodule.but
   URL request:  http://example.com/but/repo.but/path/submodule.but/info/refs
 
 Clients MUST strip a trailing `/`, if present, from the user supplied
-`$GIT_URL` string to prevent empty path tokens (`//`) from appearing
+`$BUT_URL` string to prevent empty path tokens (`//`) from appearing
 in any URL sent to a server.  Compatible clients MUST expand
-`$GIT_URL/info/refs` as `foo/info/refs` and not `foo//info/refs`.
+`$BUT_URL/info/refs` as `foo/info/refs` and not `foo//info/refs`.
 
 
 Authentication
@@ -103,13 +103,13 @@ Except where noted, all standard HTTP behavior SHOULD be assumed
 by both client and server.  This includes (but is not necessarily
 limited to):
 
-If there is no repository at `$GIT_URL`, or the resource pointed to by a
-location matching `$GIT_URL` does not exist, the server MUST NOT respond
+If there is no repository at `$BUT_URL`, or the resource pointed to by a
+location matching `$BUT_URL` does not exist, the server MUST NOT respond
 with `200 OK` response.  A server SHOULD respond with
 `404 Not Found`, `410 Gone`, or any other suitable HTTP status code
 which does not imply the resource exists as requested.
 
-If there is a repository at `$GIT_URL`, but access is not currently
+If there is a repository at `$BUT_URL`, but access is not currently
 permitted, the server MUST respond with the `403 Forbidden` HTTP
 status code.
 
@@ -148,10 +148,10 @@ HTTP clients that only support the "dumb" protocol MUST discover
 references by making a request for the special info/refs file of
 the repository.
 
-Dumb HTTP clients MUST make a `GET` request to `$GIT_URL/info/refs`,
+Dumb HTTP clients MUST make a `GET` request to `$BUT_URL/info/refs`,
 without any search/query parameters.
 
-   C: GET $GIT_URL/info/refs HTTP/1.0
+   C: GET $BUT_URL/info/refs HTTP/1.0
 
    S: 200 OK
    S:
@@ -196,7 +196,7 @@ The request MUST contain exactly one query parameter,
 name the client wishes to contact to complete the operation.
 The request MUST NOT contain additional query parameters.
 
-   C: GET $GIT_URL/info/refs?service=but-upload-pack HTTP/1.0
+   C: GET $BUT_URL/info/refs?service=but-upload-pack HTTP/1.0
 
 dumb server reply:
 
@@ -250,7 +250,7 @@ returned entity.
 The Content-Type MUST be `application/x-$servicename-advertisement`.
 Clients SHOULD fall back to the dumb protocol if another content
 type is returned.  When falling back to the dumb protocol clients
-SHOULD NOT make an additional request to `$GIT_URL/info/refs`, but
+SHOULD NOT make an additional request to `$BUT_URL/info/refs`, but
 instead SHOULD use the response already in hand.  Clients MUST NOT
 continue if they do not support the dumb protocol.
 
@@ -294,7 +294,7 @@ Extra Parameter.
 		     *ref_record
 
   cap-list        =  capability *(SP capability)
-  capability      =  1*(LC_ALPHA / DIGIT / "-" / "_")
+  capability      =  1*(LC_ALPHA / DIBUT / "-" / "_")
   LC_ALPHA        =  %x61-7A
 
   ref_record      =  any_ref / peeled_ref
@@ -305,12 +305,12 @@ Extra Parameter.
 
 Smart Service but-upload-pack
 ------------------------------
-This service reads from the repository pointed to by `$GIT_URL`.
+This service reads from the repository pointed to by `$BUT_URL`.
 
 Clients MUST first perform ref discovery with
-`$GIT_URL/info/refs?service=but-upload-pack`.
+`$BUT_URL/info/refs?service=but-upload-pack`.
 
-   C: POST $GIT_URL/but-upload-pack HTTP/1.0
+   C: POST $BUT_URL/but-upload-pack HTTP/1.0
    C: Content-Type: application/x-but-upload-pack-request
    C:
    C: 0032want 0a53e9ddeaddad63ad106860237bbf53411d11a7\n
@@ -375,7 +375,7 @@ C: Start a queue, `c_pending`, ordered by cummit time (popping newest
 
 'one compute step:'
 
-C: Send one `$GIT_URL/but-upload-pack` request:
+C: Send one `$BUT_URL/but-upload-pack` request:
 
    C: 0032want <want #1>...............................
    C: 0032want <want #2>...............................
@@ -469,12 +469,12 @@ C: Parse the upload-pack response:
 
 Smart Service but-receive-pack
 ------------------------------
-This service reads from the repository pointed to by `$GIT_URL`.
+This service reads from the repository pointed to by `$BUT_URL`.
 
 Clients MUST first perform ref discovery with
-`$GIT_URL/info/refs?service=but-receive-pack`.
+`$BUT_URL/info/refs?service=but-receive-pack`.
 
-   C: POST $GIT_URL/but-receive-pack HTTP/1.0
+   C: POST $BUT_URL/but-receive-pack HTTP/1.0
    C: Content-Type: application/x-but-receive-pack-request
    C:
    C: ....0a53e9ddeaddad63ad106860237bbf53411d11a7 441b40d833fdfa93eb2908e52742248faf0ee993 refs/heads/maint\0 report-status

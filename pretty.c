@@ -437,7 +437,7 @@ static inline void strbuf_add_with_color(struct strbuf *sb, const char *color,
 	strbuf_addstr(sb, color);
 	strbuf_add(sb, buf, buflen);
 	if (*color)
-		strbuf_addstr(sb, GIT_COLOR_RESET);
+		strbuf_addstr(sb, BUT_COLOR_RESET);
 }
 
 static void append_line_with_color(struct strbuf *sb, struct grep_opt *opt,
@@ -1059,13 +1059,13 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 	 * they cannot support things like "auto" or "always" at all).
 	 */
 	if (skip_prefix(placeholder + 1, "red", &rest))
-		basic_color = GIT_COLOR_RED;
+		basic_color = BUT_COLOR_RED;
 	else if (skip_prefix(placeholder + 1, "green", &rest))
-		basic_color = GIT_COLOR_GREEN;
+		basic_color = BUT_COLOR_GREEN;
 	else if (skip_prefix(placeholder + 1, "blue", &rest))
-		basic_color = GIT_COLOR_BLUE;
+		basic_color = BUT_COLOR_BLUE;
 	else if (skip_prefix(placeholder + 1, "reset", &rest))
-		basic_color = GIT_COLOR_RESET;
+		basic_color = BUT_COLOR_RESET;
 
 	if (basic_color && want_color(c->pretty_ctx->color))
 		strbuf_addstr(sb, basic_color);
@@ -1361,7 +1361,7 @@ static size_t format_cummit_one(struct strbuf *sb, /* in UTF-8 */
 		if (starts_with(placeholder + 1, "(auto)")) {
 			c->auto_color = want_color(c->pretty_ctx->color);
 			if (c->auto_color && sb->len)
-				strbuf_addstr(sb, GIT_COLOR_RESET);
+				strbuf_addstr(sb, BUT_COLOR_RESET);
 			return 7; /* consumed 7 bytes, "C(auto)" */
 		} else {
 			int ret = parse_color(sb, placeholder, c);
@@ -1934,7 +1934,7 @@ static void pp_header(struct pretty_print_context *pp,
 		if (!parents_shown) {
 			unsigned num = cummit_list_count(cummit->parents);
 			/* with enough slop */
-			strbuf_grow(sb, num * (GIT_MAX_HEXSZ + 10) + 20);
+			strbuf_grow(sb, num * (BUT_MAX_HEXSZ + 10) + 20);
 			add_merge_info(pp, sb, cummit);
 			parents_shown = 1;
 		}

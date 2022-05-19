@@ -16,6 +16,6 @@ DESCRIPTION
 This is the standard helper program to use with 'but merge-index'
 to resolve a merge after the trivial merge done with 'but read-tree -m'.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

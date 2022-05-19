@@ -11,8 +11,8 @@ test_description='test describe'
 #
 # First parent of a merge cummit is on the same line, second parent below.
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -438,7 +438,7 @@ test_expect_success 'name-rev a rev shortly after epoch' '
 	but checkout --orphan no-timestamp-underflow &&
 	# Any date closer to epoch than the CUTOFF_DATE_SLOP constant
 	# in builtin/name-rev.c.
-	GIT_CUMMITTER_DATE="@1234 +0000" \
+	BUT_CUMMITTER_DATE="@1234 +0000" \
 	but cummit -m "cummitter date shortly after epoch" &&
 	old_cummit_oid=$(but rev-parse HEAD) &&
 
@@ -642,14 +642,14 @@ test_expect_success 'setup: describe cummits with disjoint bases 2' '
 	(
 		cd disjoint2 &&
 
-		echo A >> file && but add file && GIT_CUMMITTER_DATE="2020-01-01 18:00" but cummit -m A &&
+		echo A >> file && but add file && BUT_CUMMITTER_DATE="2020-01-01 18:00" but cummit -m A &&
 		but tag A -a -m A &&
-		echo o >> file && but add file && GIT_CUMMITTER_DATE="2020-01-01 18:01" but cummit -m o &&
+		echo o >> file && but add file && BUT_CUMMITTER_DATE="2020-01-01 18:01" but cummit -m o &&
 
 		but checkout --orphan branch &&
-		echo o >> file2 && but add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:00" but cummit -m o &&
-		echo o >> file2 && but add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:01" but cummit -m o &&
-		echo B >> file2 && but add file2 && GIT_CUMMITTER_DATE="2020-01-01 15:02" but cummit -m B &&
+		echo o >> file2 && but add file2 && BUT_CUMMITTER_DATE="2020-01-01 15:00" but cummit -m o &&
+		echo o >> file2 && but add file2 && BUT_CUMMITTER_DATE="2020-01-01 15:01" but cummit -m o &&
+		echo B >> file2 && but add file2 && BUT_CUMMITTER_DATE="2020-01-01 15:02" but cummit -m B &&
 		but tag B -a -m B &&
 		but merge --no-ff --allow-unrelated-histories main -m x
 	)

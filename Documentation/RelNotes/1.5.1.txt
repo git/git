@@ -1,4 +1,4 @@
-GIT v1.5.1 Release Notes
+BUT v1.5.1 Release Notes
 ========================
 
 Updates since v1.5.0
@@ -249,7 +249,7 @@ These are all in v1.5.0.x series.
     parameter was missing was fixed; usage() message is given
     instead.
 
-  - but-rev-list did not read $GIT_DIR/config file, which means
+  - but-rev-list did not read $BUT_DIR/config file, which means
     that did not honor i18n.logoutputencoding correctly.
 
   - Automated merge conflict handling when changes to symbolic

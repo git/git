@@ -51,20 +51,20 @@ start_daemon () {
 	(
 		if test -n "$tf"
 		then
-			GIT_TRACE_FSMONITOR="$tf"
-			export GIT_TRACE_FSMONITOR
+			BUT_TRACE_FSMONITOR="$tf"
+			export BUT_TRACE_FSMONITOR
 		fi &&
 
 		if test -n "$t2"
 		then
-			GIT_TRACE2_PERF="$t2"
-			export GIT_TRACE2_PERF
+			BUT_TRACE2_PERF="$t2"
+			export BUT_TRACE2_PERF
 		fi &&
 
 		if test -n "$tk"
 		then
-			GIT_TEST_FSMONITOR_TOKEN="$tk"
-			export GIT_TEST_FSMONITOR_TOKEN
+			BUT_TEST_FSMONITOR_TOKEN="$tk"
+			export BUT_TEST_FSMONITOR_TOKEN
 		fi &&
 
 		but $r fsmonitor--daemon start &&
@@ -106,7 +106,7 @@ test_expect_success 'implicit daemon start' '
 	# but this test case is only concerned with whether the daemon was
 	# implicitly started.)
 
-	GIT_TRACE2_EVENT="$PWD/.but/trace" \
+	BUT_TRACE2_EVENT="$PWD/.but/trace" \
 		test-tool -C test_implicit fsmonitor-client query --token 0 >actual &&
 	nul_to_q <actual >actual.filtered &&
 	grep "builtin:" actual.filtered &&
@@ -228,7 +228,7 @@ test_expect_success 'update-index implicitly starts daemon' '
 
 	test_must_fail but fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.but/trace_implicit_1" \
+	BUT_TRACE2_EVENT="$PWD/.but/trace_implicit_1" \
 		but update-index --fsmonitor &&
 
 	but fsmonitor--daemon status &&
@@ -244,7 +244,7 @@ test_expect_success 'status implicitly starts daemon' '
 
 	test_must_fail but fsmonitor--daemon status &&
 
-	GIT_TRACE2_EVENT="$PWD/.but/trace_implicit_2" \
+	BUT_TRACE2_EVENT="$PWD/.but/trace_implicit_2" \
 		but status >actual &&
 
 	but fsmonitor--daemon status &&
@@ -485,7 +485,7 @@ test_expect_success 'worktree with .but file' '
 # NEEDSWORK: Repeat one of the "edit" tests on wt-secondary and
 # confirm that we get the same events and behavior -- that is, that
 # fsmonitor--daemon correctly watches BOTH the working directory and
-# the external GITDIR directory and behaves the same as when ".but"
+# the external BUTDIR directory and behaves the same as when ".but"
 # is a directory inside the working directory.
 
 test_expect_success 'cleanup worktrees' '

@@ -187,7 +187,7 @@ for a more flexible and robust system to do the same thing.
 [[def_head]]head::
 	A <<def_ref,named reference>> to the <<def_cummit,cummit>> at the tip of a
 	<<def_branch,branch>>.  Heads are stored in a file in
-	`$GIT_DIR/refs/heads/` directory, except when using packed refs. (See
+	`$BUT_DIR/refs/heads/` directory, except when using packed refs. (See
 	linkbut:but-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
@@ -207,7 +207,7 @@ for a more flexible and robust system to do the same thing.
 	checking. Typically, the hooks allow for a command to be pre-verified
 	and potentially aborted, and allow for a post-notification after the
 	operation is done. The hook scripts are found in the
-	`$GIT_DIR/hooks/` directory, and are enabled by simply
+	`$BUT_DIR/hooks/` directory, and are enabled by simply
 	removing the `.sample` suffix from the filename. In earlier versions
 	of Git you had to make them executable.
 
@@ -260,7 +260,7 @@ This cummit is referred to as a "merge cummit", or sometimes just a
 [[def_object_database]]object database::
 	Stores a set of "objects", and an individual <<def_object,object>> is
 	identified by its <<def_object_name,object name>>. The objects usually
-	live in `$GIT_DIR/objects/`.
+	live in `$BUT_DIR/objects/`.
 
 [[def_object_identifier]]object identifier::
 	Synonym for <<def_object_name,object name>>.
@@ -452,7 +452,7 @@ exclude;;
 	unusual refs.
 
 [[def_pseudoref]]pseudoref::
-	Pseudorefs are a class of files under `$GIT_DIR` which behave
+	Pseudorefs are a class of files under `$BUT_DIR` which behave
 	like refs for the purposes of rev-parse, but which are treated
 	specially by but.  Pseudorefs both have names that are all-caps,
 	and always start with a line consisting of a

@@ -246,6 +246,6 @@ SEE ALSO
 --------
 linkbut:but-annotate[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='pack-objects object selection using sparse algorithm'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -110,7 +110,7 @@ test_expect_success 'non-sparse pack-objects' '
 
 # --sparse is enabled by default by pack.useSparse
 test_expect_success 'sparse pack-objects' '
-	GIT_TEST_PACK_SPARSE=-1 &&
+	BUT_TEST_PACK_SPARSE=-1 &&
 	but rev-parse			\
 		topic1			\
 		topic1^{tree}		\

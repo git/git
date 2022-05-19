@@ -7,7 +7,7 @@ test_description='exercise basic bitmap functionality'
 
 # t5310 deals only with single-pack bitmaps, so don't write MIDX bitmaps in
 # their place.
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 
 objpath () {
 	echo ".but/objects/$(echo "$1" | sed -e 's|\(..\)|\1/|')"
@@ -33,7 +33,7 @@ test_expect_success 'setup writing bitmaps during repack' '
 '
 
 test_expect_success 'full repack creates bitmaps' '
-	GIT_TRACE2_EVENT="$(pwd)/trace" \
+	BUT_TRACE2_EVENT="$(pwd)/trace" \
 		but repack -ad &&
 	ls .but/objects/pack/ | grep bitmap >output &&
 	test_line_count = 1 output &&
@@ -59,9 +59,9 @@ test_expect_success 'pack-objects respects --local (non-local loose)' '
 	echo $(pwd)/alt.but/objects >.but/objects/info/alternates &&
 	echo content1 >file1 &&
 	# non-local loose object which is not present in bitmapped pack
-	altblob=$(GIT_DIR=alt.but but hash-object -w file1) &&
+	altblob=$(BUT_DIR=alt.but but hash-object -w file1) &&
 	# non-local loose object which is also present in bitmapped pack
-	but cat-file blob $blob | GIT_DIR=alt.but but hash-object -w --stdin &&
+	but cat-file blob $blob | BUT_DIR=alt.but but hash-object -w --stdin &&
 	but add file1 &&
 	test_tick &&
 	but cummit -m cummit_file1 &&
@@ -186,7 +186,7 @@ test_expect_success 'pack with missing parent' '
 	but pack-objects --stdout --revs <revs >/dev/null
 '
 
-test_expect_success JGIT,SHA1 'we can read jbut bitmaps' '
+test_expect_success JBUT,SHA1 'we can read jbut bitmaps' '
 	but clone --bare . compat-jbut.but &&
 	(
 		cd compat-jbut.but &&
@@ -196,7 +196,7 @@ test_expect_success JGIT,SHA1 'we can read jbut bitmaps' '
 	)
 '
 
-test_expect_success JGIT,SHA1 'jbut can read our bitmaps' '
+test_expect_success JBUT,SHA1 'jbut can read our bitmaps' '
 	but clone --bare . compat-us.but &&
 	(
 		cd compat-us.but &&

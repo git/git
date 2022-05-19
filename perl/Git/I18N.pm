@@ -1,7 +1,7 @@
 package Git::I18N;
 use 5.008;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 BEGIN {
 	require Exporter;
 	if ($] < 5.008003) {
@@ -27,7 +27,7 @@ use constant NO_GETTEXT => (
 
 sub __bootstrap_locale_messages {
 	our $TEXTDOMAIN = 'but';
-	our $TEXTDOMAINDIR ||= $ENV{GIT_TEXTDOMAINDIR} || '@@LOCALEDIR@@';
+	our $TEXTDOMAINDIR ||= $ENV{BUT_TEXTDOMAINDIR} || '@@LOCALEDIR@@';
 	die "NO_GETTEXT=" . NO_GETTEXT_STR if NO_GETTEXT;
 
 	require POSIX;

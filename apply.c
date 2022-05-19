@@ -1998,7 +1998,7 @@ static int parse_binary(struct apply_state *state,
 			struct patch *patch)
 {
 	/*
-	 * We have read "GIT binary patch\n"; what follows is a line
+	 * We have read "BUT binary patch\n"; what follows is a line
 	 * that says the patch method (currently, either "literal" or
 	 * "delta") and the length of data before deflating; a
 	 * sequence of 'length-byte' followed by base-85 encoded data
@@ -2139,7 +2139,7 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 		return -128;
 
 	if (!patchsize) {
-		static const char but_binary[] = "GIT binary patch\n";
+		static const char but_binary[] = "BUT binary patch\n";
 		int hd = hdrsize + offset;
 		unsigned long llen = linelen(buffer + hd, size - hd);
 
@@ -3246,7 +3246,7 @@ static int apply_fragments(struct apply_state *state, struct image *img, struct 
 
 static int read_blob_object(struct strbuf *buf, const struct object_id *oid, unsigned mode)
 {
-	if (S_ISGITLINK(mode)) {
+	if (S_ISBUTLINK(mode)) {
 		strbuf_grow(buf, 100);
 		strbuf_addf(buf, "Subproject cummit %s\n", oid_to_hex(oid));
 	} else {
@@ -3388,7 +3388,7 @@ static int verify_index_match(struct apply_state *state,
 			      const struct cache_entry *ce,
 			      struct stat *st)
 {
-	if (S_ISGITLINK(ce->ce_mode)) {
+	if (S_ISBUTLINK(ce->ce_mode)) {
 		if (!S_ISDIR(st->st_mode))
 			return -1;
 		return 0;
@@ -3411,7 +3411,7 @@ static int load_patch_target(struct apply_state *state,
 		if (read_file_or_butlink(ce, buf))
 			return error(_("failed to read %s"), name);
 	} else if (name) {
-		if (S_ISGITLINK(expected_mode)) {
+		if (S_ISBUTLINK(expected_mode)) {
 			if (ce)
 				return read_file_or_butlink(ce, buf);
 			else
@@ -3592,7 +3592,7 @@ static int try_threeway(struct apply_state *state,
 
 	/* No point falling back to 3-way merge in these cases */
 	if (patch->is_delete ||
-	    S_ISGITLINK(patch->old_mode) || S_ISGITLINK(patch->new_mode) ||
+	    S_ISBUTLINK(patch->old_mode) || S_ISBUTLINK(patch->new_mode) ||
 	    (patch->is_new && !patch->direct_to_threeway) ||
 	    (patch->is_rename && !patch->lines_added && !patch->lines_deleted))
 		return -1;
@@ -4111,7 +4111,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 		if (0 < patch->is_new)
 			continue;
 
-		if (S_ISGITLINK(patch->old_mode)) {
+		if (S_ISBUTLINK(patch->old_mode)) {
 			if (!preimage_oid_in_butlink_patch(patch, &oid))
 				; /* ok, the textual part looks sane */
 			else
@@ -4310,7 +4310,7 @@ static int add_index_file(struct apply_state *state,
 	if (state->ita_only) {
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 		set_object_name_for_intent_to_add_entry(ce);
-	} else if (S_ISGITLINK(mode)) {
+	} else if (S_ISBUTLINK(mode)) {
 		const char *s;
 
 		if (!skip_prefix(buf, "Subproject cummit ", &s) ||
@@ -4355,7 +4355,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 	int fd, res;
 	struct strbuf nbuf = STRBUF_INIT;
 
-	if (S_ISGITLINK(mode)) {
+	if (S_ISBUTLINK(mode)) {
 		struct stat st;
 		if (!lstat(path, &st) && S_ISDIR(st.st_mode))
 			return 0;
@@ -4720,10 +4720,10 @@ static int apply_patch(struct apply_state *state,
 
 			if ((patch->new_name &&
 			     ends_with_path_components(patch->new_name,
-						       GITATTRIBUTES_FILE)) ||
+						       BUTATTRIBUTES_FILE)) ||
 			    (patch->old_name &&
 			     ends_with_path_components(patch->old_name,
-						       GITATTRIBUTES_FILE)))
+						       BUTATTRIBUTES_FILE)))
 				flush_attributes = 1;
 		}
 		else {

@@ -7,10 +7,10 @@ all::
 # TCL_PATH must be valid for this to work.
 #
 
-GIT-VERSION-FILE: FORCE
-	@$(SHELL_PATH) ./GIT-VERSION-GEN
+BUT-VERSION-FILE: FORCE
+	@$(SHELL_PATH) ./BUT-VERSION-GEN
 ifneq ($(MAKECMDGOALS),clean)
--include GIT-VERSION-FILE
+-include BUT-VERSION-FILE
 endif
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
@@ -18,8 +18,8 @@ uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 
 SCRIPT_SH = but-gui.sh
-GITGUI_MAIN := but-gui
-GITGUI_BUILT_INS = but-citool
+BUTGUI_MAIN := but-gui
+BUTGUI_BUILT_INS = but-citool
 ALL_LIBFILES = $(wildcard lib/*.tcl)
 PRELOAD_FILES = lib/class.tcl
 NONTCL_LIBFILES = \
@@ -134,12 +134,12 @@ libdir_SQ  = $(subst ','\'',$(gg_libdir))
 libdir_SED = $(subst ','\'',$(subst \,\\,$(gg_libdir_sed_in)))
 exedir     = $(dir $(butexecdir))share/but-gui/lib
 
-GITGUI_SCRIPT   := $$0
-GITGUI_RELATIVE :=
-GITGUI_MACOSXAPP :=
+BUTGUI_SCRIPT   := $$0
+BUTGUI_RELATIVE :=
+BUTGUI_MACOSXAPP :=
 
 ifeq ($(uname_O),Cygwin)
-	GITGUI_SCRIPT := `cygpath --windows --absolute "$(GITGUI_SCRIPT)"`
+	BUTGUI_SCRIPT := `cygpath --windows --absolute "$(BUTGUI_SCRIPT)"`
 
 	# Is this a Cygwin Tcl/Tk binary?  If so it knows how to do
 	# POSIX path translation just like cygpath does and we must
@@ -153,42 +153,42 @@ ifeq ($(uname_O),Cygwin)
 	endif
 else
 	ifeq ($(exedir),$(gg_libdir))
-		GITGUI_RELATIVE := 1
+		BUTGUI_RELATIVE := 1
 	endif
 	gg_libdir_sed_in := $(gg_libdir)
 endif
 ifeq ($(uname_S),Darwin)
 	ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
-		GITGUI_MACOSXAPP := YesPlease
+		BUTGUI_MACOSXAPP := YesPlease
 	endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
 	NO_MSGFMT=1
 endif
-	GITGUI_WINDOWS_WRAPPER := YesPlease
-	GITGUI_RELATIVE := 1
+	BUTGUI_WINDOWS_WRAPPER := YesPlease
+	BUTGUI_RELATIVE := 1
 endif
 
-ifdef GITGUI_MACOSXAPP
-GITGUI_MAIN := but-gui.tcl
+ifdef BUTGUI_MACOSXAPP
+BUTGUI_MAIN := but-gui.tcl
 
-but-gui: GIT-VERSION-FILE GIT-GUI-VARS
+but-gui: BUT-VERSION-FILE BUT-GUI-VARS
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	echo '#!$(SHELL_PATH_SQ)' >$@+ && \
 	echo 'if test "z$$*" = zversion ||' >>$@+ && \
 	echo '   test "z$$*" = z--version' >>$@+ && \
 	echo then >>$@+ && \
-	echo '	'echo \'but-gui version '$(GITGUI_VERSION)'\' >>$@+ && \
+	echo '	'echo \'but-gui version '$(BUTGUI_VERSION)'\' >>$@+ && \
 	echo else >>$@+ && \
-	echo '	libdir="$${GIT_GUI_LIB_DIR:-$(libdir_SQ)}"' >>$@+ && \
+	echo '	libdir="$${BUT_GUI_LIB_DIR:-$(libdir_SQ)}"' >>$@+ && \
 	echo '	'exec \"'$$libdir/Git Gui.app/Contents/MacOS/$(subst \,,$(TKEXECUTABLE))'\" \
 		'"$$0" "$$@"' >>$@+ && \
 	echo fi >>$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
+Git\ Gui.app: BUT-VERSION-FILE BUT-GUI-VARS \
 		macosx/Info.plist \
 		macosx/but-gui.icns \
 		macosx/AppMain.tcl \
@@ -199,33 +199,33 @@ Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
 	cp '$(subst ','\'',$(subst \,,$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)))' \
 		'$@'+/Contents/MacOS && \
 	cp macosx/but-gui.icns '$@'+/Contents/Resources && \
-	sed -e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's/@@GITGUI_TKEXECUTABLE@@/$(TKEXECUTABLE)/g' \
+	sed -e 's/@@BUTGUI_VERSION@@/$(BUTGUI_VERSION)/g' \
+		-e 's/@@BUTGUI_TKEXECUTABLE@@/$(TKEXECUTABLE)/g' \
 		macosx/Info.plist \
 		>'$@'+/Contents/Info.plist && \
 	sed -e 's|@@butexecdir@@|$(butexecdir_SQ)|' \
-		-e 's|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
+		-e 's|@@BUTGUI_LIBDIR@@|$(libdir_SED)|' \
 		macosx/AppMain.tcl \
 		>'$@'+/Contents/Resources/Scripts/AppMain.tcl && \
 	mv '$@'+ '$@'
 endif
 
-ifdef GITGUI_WINDOWS_WRAPPER
-GITGUI_MAIN := but-gui.tcl
+ifdef BUTGUI_WINDOWS_WRAPPER
+BUTGUI_MAIN := but-gui.tcl
 
 but-gui: windows/but-gui.sh
 	cp $< $@
 endif
 
-$(GITGUI_MAIN): but-gui.sh GIT-VERSION-FILE GIT-GUI-VARS
+$(BUTGUI_MAIN): but-gui.sh BUT-VERSION-FILE BUT-GUI-VARS
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's|@@SHELL_PATH@@|$(SHELL_PATH_SQ)|' \
-		-e '1,30s|^ argv0=$$0| argv0=$(GITGUI_SCRIPT)|' \
+		-e '1,30s|^ argv0=$$0| argv0=$(BUTGUI_SCRIPT)|' \
 		-e '1,30s|^ exec wish | exec '\''$(TCLTK_PATH_SED)'\'' |' \
-		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's|@@GITGUI_RELATIVE@@|$(GITGUI_RELATIVE)|' \
-		-e '$(GITGUI_RELATIVE)s|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
+		-e 's/@@BUTGUI_VERSION@@/$(BUTGUI_VERSION)/g' \
+		-e 's|@@BUTGUI_RELATIVE@@|$(BUTGUI_RELATIVE)|' \
+		-e '$(BUTGUI_RELATIVE)s|@@BUTGUI_LIBDIR@@|$(libdir_SED)|' \
 		but-gui.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
@@ -253,7 +253,7 @@ update-po:: $(PO_TEMPLATE)
 $(ALL_MSGFILES): %.msg : %.po
 	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl -l $(basename $(notdir $<)) -d $(dir $@) $< $(QUIET_MSGFMT1)
 
-lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
+lib/tclIndex: $(ALL_LIBFILES) BUT-GUI-VARS
 	$(QUIET_INDEX)if echo \
 	  $(foreach p,$(PRELOAD_FILES),source $p\;) \
 	  auto_mkindex lib $(patsubst lib/%,%,$(sort $(ALL_LIBFILES))) \
@@ -273,35 +273,35 @@ TRACK_VARS = \
 	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
 	$(subst ','\'',butexecdir='$(butexecdir_SQ)') \
 	$(subst ','\'',gg_libdir='$(libdir_SQ)') \
-	GITGUI_MACOSXAPP=$(GITGUI_MACOSXAPP) \
+	BUTGUI_MACOSXAPP=$(BUTGUI_MACOSXAPP) \
 #end TRACK_VARS
 
-GIT-GUI-VARS: FORCE
+BUT-GUI-VARS: FORCE
 	@VARS='$(TRACK_VARS)'; \
 	if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo >&2 "    * new locations or Tcl/Tk interpreter"; \
 		echo >$@ "$$VARS"; \
 	fi
 
-ifdef GITGUI_MACOSXAPP
+ifdef BUTGUI_MACOSXAPP
 all:: but-gui Git\ Gui.app
 endif
-ifdef GITGUI_WINDOWS_WRAPPER
+ifdef BUTGUI_WINDOWS_WRAPPER
 all:: but-gui
 endif
-all:: $(GITGUI_MAIN) lib/tclIndex $(ALL_MSGFILES)
+all:: $(BUTGUI_MAIN) lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(butexecdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_X0)but-gui $(INSTALL_X1) '$(DESTDIR_SQ)$(butexecdir_SQ)'
 	$(QUIET)$(INSTALL_X0)but-gui--askpass $(INSTALL_X1) '$(DESTDIR_SQ)$(butexecdir_SQ)'
-	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(INSTALL_L0)'$(DESTDIR_SQ)$(butexecdir_SQ)/$p' $(INSTALL_L1)'$(DESTDIR_SQ)$(butexecdir_SQ)/but-gui' $(INSTALL_L2)'$(DESTDIR_SQ)$(butexecdir_SQ)/$p' $(INSTALL_L3) &&) true
-ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(foreach p,$(BUTGUI_BUILT_INS), $(INSTALL_L0)'$(DESTDIR_SQ)$(butexecdir_SQ)/$p' $(INSTALL_L1)'$(DESTDIR_SQ)$(butexecdir_SQ)/but-gui' $(INSTALL_L2)'$(DESTDIR_SQ)$(butexecdir_SQ)/$p' $(INSTALL_L3) &&) true
+ifdef BUTGUI_WINDOWS_WRAPPER
 	$(QUIET)$(INSTALL_R0)but-gui.tcl $(INSTALL_R1) '$(DESTDIR_SQ)$(butexecdir_SQ)'
 endif
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
-ifdef GITGUI_MACOSXAPP
+ifdef BUTGUI_MACOSXAPP
 	$(QUIET)$(INSTALL_A0)'Git Gui.app' $(INSTALL_A1) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(INSTALL_X0)but-gui.tcl $(INSTALL_X1) '$(DESTDIR_SQ)$(libdir_SQ)'
 endif
@@ -313,13 +313,13 @@ uninstall:
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(butexecdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(butexecdir_SQ)'/but-gui $(REMOVE_F1)
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(butexecdir_SQ)'/but-gui--askpass $(REMOVE_F1)
-	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(REMOVE_F0)'$(DESTDIR_SQ)$(butexecdir_SQ)'/$p $(REMOVE_F1) &&) true
-ifdef GITGUI_WINDOWS_WRAPPER
+	$(QUIET)$(foreach p,$(BUTGUI_BUILT_INS), $(REMOVE_F0)'$(DESTDIR_SQ)$(butexecdir_SQ)'/$p $(REMOVE_F1) &&) true
+ifdef BUTGUI_WINDOWS_WRAPPER
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(butexecdir_SQ)'/but-gui.tcl $(REMOVE_F1)
 endif
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/tclIndex $(REMOVE_F1)
-ifdef GITGUI_MACOSXAPP
+ifdef BUTGUI_MACOSXAPP
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)/Git Gui.app' $(REMOVE_F1)
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/but-gui.tcl $(REMOVE_F1)
 endif
@@ -333,15 +333,15 @@ endif
 
 dist-version:
 	@mkdir -p $(TARDIR)
-	@echo $(GITGUI_VERSION) > $(TARDIR)/version
+	@echo $(BUTGUI_VERSION) > $(TARDIR)/version
 
 clean::
-	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg
-	$(RM_RF) GIT-VERSION-FILE GIT-GUI-VARS
-ifdef GITGUI_MACOSXAPP
+	$(RM_RF) $(BUTGUI_MAIN) lib/tclIndex po/*.msg
+	$(RM_RF) BUT-VERSION-FILE BUT-GUI-VARS
+ifdef BUTGUI_MACOSXAPP
 	$(RM_RF) 'Git Gui.app'* but-gui
 endif
-ifdef GITGUI_WINDOWS_WRAPPER
+ifdef BUTGUI_WINDOWS_WRAPPER
 	$(RM_RF) but-gui
 endif
 

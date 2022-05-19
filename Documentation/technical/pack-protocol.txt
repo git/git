@@ -143,7 +143,7 @@ we execute it without the leading '/'.
 
 Depending on the value of the `protocol.version` configuration variable,
 Git may attempt to send Extra Parameters as a colon-separated string in
-the GIT_PROTOCOL environment variable. This is done only if
+the BUT_PROTOCOL environment variable. This is done only if
 the `ssh.variant` configuration variable indicates that the ssh command
 supports passing environment variables as an argument.
 
@@ -216,7 +216,7 @@ MUST peel the ref if it's an annotated tag.
   shallow          =  PKT-LINE("shallow" SP obj-id)
 
   capability-list  =  capability *(SP capability)
-  capability       =  1*(LC_ALPHA / DIGIT / "-" / "_")
+  capability       =  1*(LC_ALPHA / DIBUT / "-" / "_")
   LC_ALPHA         =  %x61-7A
 ----
 
@@ -260,7 +260,7 @@ out of what the server said it could do with the first 'want' line.
   first-want        =  PKT-LINE("want" SP obj-id SP capability-list)
   additional-want   =  PKT-LINE("want" SP obj-id)
 
-  depth             =  1*DIGIT
+  depth             =  1*DIBUT
 
   filter-request    =  PKT-LINE("filter" SP filter-spec)
 ----

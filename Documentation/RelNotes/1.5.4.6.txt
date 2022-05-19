@@ -1,4 +1,4 @@
-GIT v1.5.4.6 Release Notes
+BUT v1.5.4.6 Release Notes
 ==========================
 
 I personally do not think there is any reason anybody should want to

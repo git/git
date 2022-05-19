@@ -1,4 +1,4 @@
-GIT v1.5.3.5 Release Notes
+BUT v1.5.3.5 Release Notes
 ==========================
 
 Fixes since v1.5.3.4
@@ -16,7 +16,7 @@ Fixes since v1.5.3.4
    cannot read the file specified on the command line.
 
  * "but-config", "but-diff", "but-apply" failed if run from a
-   subdirectory with relative GIT_DIR and GIT_WORK_TREE set.
+   subdirectory with relative BUT_DIR and BUT_WORK_TREE set.
 
  * "but-blame" crashed if run during a merge conflict.
 

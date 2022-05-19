@@ -66,13 +66,13 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 
 test_expect_success 'writing bitmaps via command-line can duplicate .keep objects' '
 	# build on $oid, $packid, and .keep state from previous
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 but repack -Adbl &&
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 but repack -Adbl &&
 	test_has_duplicate_object true
 '
 
 test_expect_success 'writing bitmaps via config can duplicate .keep objects' '
 	# build on $oid, $packid, and .keep state from previous
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -c repack.writebitmaps=true repack -Adl &&
 	test_has_duplicate_object true
 '
@@ -81,7 +81,7 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 	mkdir alt_objects &&
 	echo $(pwd)/alt_objects >.but/objects/info/alternates &&
 	echo content3 >file3 &&
-	oid=$(GIT_OBJECT_DIRECTORY=alt_objects but hash-object -w file3) &&
+	oid=$(BUT_OBJECT_DIRECTORY=alt_objects but hash-object -w file3) &&
 	but add file3 &&
 	test_tick &&
 	but cummit -m cummit_file3 &&
@@ -194,7 +194,7 @@ test_expect_success 'repack --keep-pack' '
 test_expect_success 'bitmaps are created by default in bare repos' '
 	but clone --bare .but bare.but &&
 	rm -f bare.but/objects/pack/*.bitmap &&
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -C bare.but repack -ad &&
 	bitmap=$(ls bare.but/objects/pack/*.bitmap) &&
 	test_path_is_file "$bitmap"
@@ -206,7 +206,7 @@ test_expect_success 'incremental repack does not complain' '
 '
 
 test_expect_success 'bitmaps can be disabled on bare repos' '
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -c repack.writeBitmaps=false -C bare.but repack -ad &&
 	bitmap=$(ls bare.but/objects/pack/*.bitmap || :) &&
 	test -z "$bitmap"
@@ -218,7 +218,7 @@ test_expect_success 'no bitmaps created if .keep files present' '
 	keep=${pack%.pack}.keep &&
 	test_when_finished "rm -f \"\$keep\"" &&
 	>"$keep" &&
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -C bare.but repack -ad 2>stderr &&
 	test_must_be_empty stderr &&
 	find bare.but/objects/pack/ -type f -name "*.bitmap" >actual &&
@@ -230,7 +230,7 @@ test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	blob=$(test-tool genrandom big $((1024*1024)) |
 	       but -C bare.but hash-object -w --stdin) &&
 	but -C bare.but update-ref refs/tags/big $blob &&
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -C bare.but repack -ad 2>stderr &&
 	test_must_be_empty stderr &&
 	find bare.but/objects/pack -type f -name "*.bitmap" >actual &&
@@ -253,11 +253,11 @@ test_expect_success 'setup for --write-midx tests' '
 test_expect_success '--write-midx unchanged' '
 	(
 		cd midx &&
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack &&
 		test_path_is_missing $midx &&
 		test_path_is_missing $midx-*.bitmap &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack --write-midx &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -270,7 +270,7 @@ test_expect_success '--write-midx with a new pack' '
 		cd midx &&
 		test_cummit loose &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack --write-midx &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -281,7 +281,7 @@ test_expect_success '--write-midx with a new pack' '
 test_expect_success '--write-midx with -b' '
 	(
 		cd midx &&
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack -mb &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack -mb &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-*.bitmap &&
@@ -294,7 +294,7 @@ test_expect_success '--write-midx with -d' '
 		cd midx &&
 		test_cummit repack &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack -Ad --write-midx &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack -Ad --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -307,21 +307,21 @@ test_expect_success 'cleans up MIDX when appropriate' '
 		cd midx &&
 
 		test_cummit repack-2 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack -Adb --write-midx &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack -Adb --write-midx &&
 
 		checksum=$(midx_checksum $objdir) &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$checksum.bitmap &&
 
 		test_cummit repack-3 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack -Adb --write-midx &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack -Adb --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-$checksum.bitmap &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
 		test_cummit repack-4 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 but repack -Adb &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but repack -Adb &&
 
 		find $objdir/pack -type f -name "multi-pack-index*" >files &&
 		test_must_be_empty files
@@ -427,7 +427,7 @@ test_expect_success '--write-midx -b packs non-kept objects' '
 '
 
 test_expect_success TTY '--quiet disables progress' '
-	test_terminal env GIT_PROGRESS_DELAY=0 \
+	test_terminal env BUT_PROGRESS_DELAY=0 \
 		but -C midx repack -ad --quiet --write-midx 2>stderr &&
 	test_must_be_empty stderr
 '

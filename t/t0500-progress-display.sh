@@ -316,7 +316,7 @@ test_expect_success 'progress generates traces' '
 	stop
 	EOF
 
-	GIT_TRACE2_EVENT="$(pwd)/trace.event" test-tool progress \
+	BUT_TRACE2_EVENT="$(pwd)/trace.event" test-tool progress \
 		<in 2>stderr &&
 
 	# t0212/parse_events.perl intentionally omits regions and data.
@@ -331,7 +331,7 @@ test_expect_success 'progress generates traces: stop / start' '
 	stop
 	EOF
 
-	GIT_TRACE2_EVENT="$PWD/trace-startstop.event" test-tool progress \
+	BUT_TRACE2_EVENT="$PWD/trace-startstop.event" test-tool progress \
 		<in 2>stderr &&
 	test_region progress "Working hard" trace-startstop.event
 '
@@ -341,7 +341,7 @@ test_expect_success 'progress generates traces: start without stop' '
 	start 0
 	EOF
 
-	GIT_TRACE2_EVENT="$PWD/trace-start.event" \
+	BUT_TRACE2_EVENT="$PWD/trace-start.event" \
 	LSAN_OPTIONS=detect_leaks=0 \
 	test-tool progress \
 		<in 2>stderr &&
@@ -354,7 +354,7 @@ test_expect_success 'progress generates traces: stop without start' '
 	stop
 	EOF
 
-	GIT_TRACE2_EVENT="$PWD/trace-stop.event" test-tool progress \
+	BUT_TRACE2_EVENT="$PWD/trace-stop.event" test-tool progress \
 		<in 2>stderr &&
 	! grep region_enter.*progress trace-stop.event &&
 	! grep region_leave.*progress trace-stop.event
@@ -366,7 +366,7 @@ test_expect_success 'progress generates traces: start with active progress bar (
 	start 0 Two
 	EOF
 
-	GIT_TRACE2_EVENT="$PWD/trace-2start.event" \
+	BUT_TRACE2_EVENT="$PWD/trace-2start.event" \
 	LSAN_OPTIONS=detect_leaks=0 \
 	test-tool progress \
 		<in 2>stderr &&

@@ -11,7 +11,7 @@
 #define FLAG_SPAWN 0x1
 #define FLAG_RELAY 0x2
 
-#ifdef GIT_WINDOWS_NATIVE
+#ifdef BUT_WINDOWS_NATIVE
 
 static int connection_closed(int error)
 {

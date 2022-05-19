@@ -19,7 +19,7 @@ EOF
 }
 
 open_editor() {
-	editor=`but var GIT_EDITOR`
+	editor=`but var BUT_EDITOR`
 	eval "$editor -q \$1"
 }
 

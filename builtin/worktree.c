@@ -419,8 +419,8 @@ static int add_worktree(const char *path, const char *refname,
 	if (repository_format_worktree_config)
 		copy_filtered_worktree_config(sb_repo.buf);
 
-	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_but.buf);
-	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
+	strvec_pushf(&child_env, "%s=%s", BUT_DIR_ENVIRONMENT, sb_but.buf);
+	strvec_pushf(&child_env, "%s=%s", BUT_WORK_TREE_ENVIRONMENT, path);
 	cp.but_cmd = 1;
 
 	if (!is_branch)
@@ -460,7 +460,7 @@ done:
 	if (!ret && opts->checkout) {
 		struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 
-		strvec_pushl(&opt.env, "GIT_DIR", "GIT_WORK_TREE", NULL);
+		strvec_pushl(&opt.env, "BUT_DIR", "BUT_WORK_TREE", NULL);
 		strvec_pushl(&opt.args,
 			     oid_to_hex(null_oid()),
 			     oid_to_hex(&cummit->object.oid),
@@ -880,7 +880,7 @@ static void validate_no_submodules(const struct worktree *wt)
 			struct cache_entry *ce = istate.cache[i];
 			int err;
 
-			if (!S_ISGITLINK(ce->ce_mode))
+			if (!S_ISBUTLINK(ce->ce_mode))
 				continue;
 
 			strbuf_reset(&path);
@@ -990,9 +990,9 @@ static void check_clean_worktree(struct worktree *wt,
 
 	child_process_init(&cp);
 	strvec_pushf(&cp.env_array, "%s=%s/.but",
-		     GIT_DIR_ENVIRONMENT, wt->path);
+		     BUT_DIR_ENVIRONMENT, wt->path);
 	strvec_pushf(&cp.env_array, "%s=%s",
-		     GIT_WORK_TREE_ENVIRONMENT, wt->path);
+		     BUT_WORK_TREE_ENVIRONMENT, wt->path);
 	strvec_pushl(&cp.args, "status",
 		     "--porcelain", "--ignore-submodules=none",
 		     NULL);

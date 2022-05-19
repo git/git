@@ -8,8 +8,8 @@ test_description='but-difftool
 Testing basic diff tool invocation
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -33,7 +33,7 @@ test_expect_success 'basic usage requires no repo' '
 	mkdir -p not/repo &&
 	test_when_finished rm -r not &&
 	test_expect_code 129 \
-	env GIT_CEILING_DIRECTORIES="$(pwd)/not" \
+	env BUT_CEILING_DIRECTORIES="$(pwd)/not" \
 	but -C not/repo difftool -h >output &&
 	test_i18ngrep ^usage: output
 '
@@ -176,49 +176,49 @@ test_expect_success 'difftool --gui works without configured diff.guitool' '
 	test_cmp expect actual
 '
 
-# Specify the diff tool using $GIT_DIFF_TOOL
-test_expect_success 'GIT_DIFF_TOOL variable' '
+# Specify the diff tool using $BUT_DIFF_TOOL
+test_expect_success 'BUT_DIFF_TOOL variable' '
 	difftool_test_setup &&
 	but config --unset diff.tool &&
 	echo branch >expect &&
-	GIT_DIFF_TOOL=test-tool but difftool --no-prompt branch >actual &&
+	BUT_DIFF_TOOL=test-tool but difftool --no-prompt branch >actual &&
 	test_cmp expect actual
 '
 
-# Test the $GIT_*_TOOL variables and ensure
-# that $GIT_DIFF_TOOL always wins unless --tool is specified
-test_expect_success 'GIT_DIFF_TOOL overrides' '
+# Test the $BUT_*_TOOL variables and ensure
+# that $BUT_DIFF_TOOL always wins unless --tool is specified
+test_expect_success 'BUT_DIFF_TOOL overrides' '
 	difftool_test_setup &&
 	test_config diff.tool bogus-tool &&
 	test_config merge.tool bogus-tool &&
 
 	echo branch >expect &&
-	GIT_DIFF_TOOL=test-tool but difftool --no-prompt branch >actual &&
+	BUT_DIFF_TOOL=test-tool but difftool --no-prompt branch >actual &&
 	test_cmp expect actual &&
 
 	test_config diff.tool bogus-tool &&
 	test_config merge.tool bogus-tool &&
-	GIT_DIFF_TOOL=bogus-tool \
+	BUT_DIFF_TOOL=bogus-tool \
 		but difftool --no-prompt --tool=test-tool branch >actual &&
 	test_cmp expect actual
 '
 
 # Test that we don't have to pass --no-prompt to difftool
-# when $GIT_DIFFTOOL_NO_PROMPT is true
-test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
+# when $BUT_DIFFTOOL_NO_PROMPT is true
+test_expect_success 'BUT_DIFFTOOL_NO_PROMPT variable' '
 	difftool_test_setup &&
 	echo branch >expect &&
-	GIT_DIFFTOOL_NO_PROMPT=true but difftool branch >actual &&
+	BUT_DIFFTOOL_NO_PROMPT=true but difftool branch >actual &&
 	test_cmp expect actual
 '
 
 # but-difftool supports the difftool.prompt variable.
-# Test that GIT_DIFFTOOL_PROMPT can override difftool.prompt = false
-test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
+# Test that BUT_DIFFTOOL_PROMPT can override difftool.prompt = false
+test_expect_success 'BUT_DIFFTOOL_PROMPT variable' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
 	echo >input &&
-	GIT_DIFFTOOL_PROMPT=true but difftool branch <input >output &&
+	BUT_DIFFTOOL_PROMPT=true but difftool branch <input >output &&
 	prompt=$(tail -1 <output) &&
 	prompt_given "$prompt"
 '
@@ -519,12 +519,12 @@ run_dir_diff_test 'difftool --dir-diff v1 from subdirectory w/ pathspec' '
 	)
 '
 
-run_dir_diff_test 'difftool --dir-diff from subdirectory with GIT_DIR set' '
+run_dir_diff_test 'difftool --dir-diff from subdirectory with BUT_DIR set' '
 	(
-		GIT_DIR=$(pwd)/.but &&
-		export GIT_DIR &&
-		GIT_WORK_TREE=$(pwd) &&
-		export GIT_WORK_TREE &&
+		BUT_DIR=$(pwd)/.but &&
+		export BUT_DIR &&
+		BUT_WORK_TREE=$(pwd) &&
+		export BUT_WORK_TREE &&
 		cd sub &&
 		but difftool --dir-diff $symlinks --extcmd ls \
 			branch -- sub >output &&

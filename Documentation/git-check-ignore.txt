@@ -98,7 +98,7 @@ not.  (Without this option, it would be impossible to tell whether the
 absence of output for a given file meant that it didn't match any
 pattern, or that the output hadn't been generated yet.)
 
-Buffering happens as documented under the `GIT_FLUSH` option in
+Buffering happens as documented under the `BUT_FLUSH` option in
 linkbut:but[1].  The caller is responsible for avoiding deadlocks
 caused by overfilling an input buffer or reading from an empty output
 buffer.
@@ -121,6 +121,6 @@ linkbut:butignore[5]
 linkbut:but-config[1]
 linkbut:but-ls-files[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

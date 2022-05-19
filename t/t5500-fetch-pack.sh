@@ -5,8 +5,8 @@
 
 test_description='Testing multi_ack pack fetching'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -125,7 +125,7 @@ test_expect_success 'single branch clone' '
 '
 
 test_expect_success 'single branch object count' '
-	GIT_DIR=singlebranch/.but but count-objects -v |
+	BUT_DIR=singlebranch/.but but count-objects -v |
 		grep "^in-pack:" > count.singlebranch &&
 	echo "in-pack: 198" >expected &&
 	test_cmp expected count.singlebranch
@@ -330,7 +330,7 @@ test_expect_success 'clone shallow with --branch' '
 
 test_expect_success 'clone shallow object count' '
 	echo "in-pack: 3" > count3.expected &&
-	GIT_DIR=shallow3/.but but count-objects -v |
+	BUT_DIR=shallow3/.but but count-objects -v |
 		grep "^in-pack" > count3.actual &&
 	test_cmp count3.expected count3.actual
 '
@@ -339,7 +339,7 @@ test_expect_success 'clone shallow with detached HEAD' '
 	but checkout HEAD^ &&
 	but clone --depth 1 "file://$(pwd)/." shallow5 &&
 	but checkout - &&
-	GIT_DIR=shallow5/.but but rev-parse HEAD >actual &&
+	BUT_DIR=shallow5/.but but rev-parse HEAD >actual &&
 	but rev-parse HEAD^ >expected &&
 	test_cmp expected actual
 '
@@ -355,11 +355,11 @@ test_expect_success 'shallow clone pulling tags' '
 TAGB1
 TAGB2
 EOF
-	GIT_DIR=shallow6/.but but tag -l >taglist.actual &&
+	BUT_DIR=shallow6/.but but tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count6.expected &&
-	GIT_DIR=shallow6/.but but count-objects -v |
+	BUT_DIR=shallow6/.but but count-objects -v |
 		grep "^in-pack" > count6.actual &&
 	test_cmp count6.expected count6.actual
 '
@@ -370,11 +370,11 @@ test_expect_success 'shallow cloning single tag' '
 TAGB1
 TAGB2
 EOF
-	GIT_DIR=shallow7/.but but tag -l >taglist.actual &&
+	BUT_DIR=shallow7/.but but tag -l >taglist.actual &&
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count7.expected &&
-	GIT_DIR=shallow7/.but but count-objects -v |
+	BUT_DIR=shallow7/.but but count-objects -v |
 		grep "^in-pack" > count7.actual &&
 	test_cmp count7.expected count7.actual
 '
@@ -383,7 +383,7 @@ test_expect_success 'clone shallow with packed refs' '
 	but pack-refs --all &&
 	but clone --depth 1 --branch A "file://$(pwd)/." shallow8 &&
 	echo "in-pack: 4" > count8.expected &&
-	GIT_DIR=shallow8/.but but count-objects -v |
+	BUT_DIR=shallow8/.but but count-objects -v |
 		grep "^in-pack" > count8.actual &&
 	test_cmp count8.expected count8.actual
 '
@@ -501,7 +501,7 @@ do
 	test_expect_success "protocol.version=$version fetch refs from cmdline" "
 		(
 			cd client$version &&
-			GIT_TEST_PROTOCOL_VERSION=$version but fetch-pack --no-progress .. \$(cat ../input)
+			BUT_TEST_PROTOCOL_VERSION=$version but fetch-pack --no-progress .. \$(cat ../input)
 		) >output &&
 		cut -d ' ' -f 2 <output | sort >actual &&
 		test_cmp expect actual
@@ -690,7 +690,7 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	but init client &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 but -C client fetch-pack ../server \
+	test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 but -C client fetch-pack ../server \
 		$(but -C server rev-parse refs/heads/main^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
@@ -813,9 +813,9 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	BUT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	BUT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	BUT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
 	but clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
 	but -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
@@ -837,9 +837,9 @@ test_expect_success 'clone shallow since selects no cummits' '
 	test_create_repo shallow-since-the-future &&
 	(
 	cd shallow-since-the-future &&
-	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	BUT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	BUT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	BUT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
 	test_must_fail but clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
 	)
 '
@@ -872,7 +872,7 @@ test_expect_success 'shallow since with cummit graph and already-seen cummit' '
 	but cummit-graph write --reachable &&
 	but config core.cummitGraph true &&
 
-	GIT_PROTOCOL=version=2 but upload-pack . <<-EOF >/dev/null
+	BUT_PROTOCOL=version=2 but upload-pack . <<-EOF >/dev/null
 	0012command=fetch
 	$(echo "object-format=$(test_oid algo)" | packetize)
 	00010013deepen-since 1
@@ -946,7 +946,7 @@ test_negotiation_algorithm_default () {
 
 	rm -f trace &&
 	cp -r client clientv0 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C clientv0 \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C clientv0 \
 		"$@" fetch origin server_has both_have_2 &&
 	grep "have $(but -C client rev-parse client_has)" trace &&
 	grep "have $(but -C client rev-parse both_have_2)" trace &&
@@ -954,7 +954,7 @@ test_negotiation_algorithm_default () {
 
 	rm -f trace &&
 	cp -r client clientv2 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C clientv2 -c protocol.version=2 \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C clientv2 -c protocol.version=2 \
 		"$@" fetch origin server_has both_have_2 &&
 	grep "have $(but -C client rev-parse client_has)" trace &&
 	grep "have $(but -C client rev-parse both_have_2)" trace &&

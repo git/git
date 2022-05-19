@@ -184,11 +184,11 @@ test_expect_success "follow-parent is atomic" '
 	but update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
 	but update-ref -d refs/remotes/stunk &&
 	but config --unset svn-remote.svn.fetch stunk &&
-	mkdir -p "$GIT_DIR"/svn/refs/remotes/flunk@18 &&
-	rev_map=$(cd "$GIT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
-	dd if="$GIT_DIR"/svn/refs/remotes/stunk/$rev_map \
-	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=$record_size count=1 &&
-	rm -rf "$GIT_DIR"/svn/refs/remotes/stunk &&
+	mkdir -p "$BUT_DIR"/svn/refs/remotes/flunk@18 &&
+	rev_map=$(cd "$BUT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
+	dd if="$BUT_DIR"/svn/refs/remotes/stunk/$rev_map \
+	   of="$BUT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=$record_size count=1 &&
+	rm -rf "$BUT_DIR"/svn/refs/remotes/stunk &&
 	but svn init --minimize-url -i flunk "$svnrepo"/flunk &&
 	but svn fetch -i flunk &&
 	but svn init --minimize-url -i stunk "$svnrepo"/stunk &&
@@ -216,11 +216,11 @@ test_expect_success "multi-fetch continues to work" "
 	"
 
 test_expect_success "multi-fetch works off a 'clean' repository" '
-	rm -rf "$GIT_DIR/svn" &&
+	rm -rf "$BUT_DIR/svn" &&
 	but for-each-ref --format="option no-deref%0adelete %(refname)" refs/remotes |
 	but update-ref --stdin &&
 	but reflog expire --all --expire=all &&
-	mkdir "$GIT_DIR/svn" &&
+	mkdir "$BUT_DIR/svn" &&
 	but svn multi-fetch
 	'
 

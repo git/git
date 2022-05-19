@@ -234,7 +234,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	int status, i;
 	struct strvec argv = STRVEC_INIT;
 	int use_builtin_add_i =
-		but_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
+		but_env_bool("BUT_TEST_ADD_I_USE_BUILTIN", -1);
 
 	if (use_builtin_add_i < 0) {
 		int experimental;
@@ -278,7 +278,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 		/* pass original pathspec, to be re-parsed */
 		strvec_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(argv.v, RUN_GIT_CMD);
+	status = run_command_v_opt(argv.v, RUN_BUT_CMD);
 	strvec_clear(&argv);
 	return status;
 }

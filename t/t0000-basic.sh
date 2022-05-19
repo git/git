@@ -256,13 +256,13 @@ test_expect_success 'subtest: --verbose-only option' '
 	EOF
 '
 
-test_expect_success 'subtest: skip one with GIT_SKIP_TESTS' '
+test_expect_success 'subtest: skip one with BUT_SKIP_TESTS' '
 	(
 		run_sub_test_lib_test full-pass \
 			--skip="full.2" &&
 		check_sub_test_lib_test full-pass <<-\EOF
 		> ok 1 - passing test #1
-		> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
+		> ok 2 # skip passing test #2 (BUT_SKIP_TESTS)
 		> ok 3 - passing test #3
 		> # passed all 3 test(s)
 		> 1..3
@@ -270,7 +270,7 @@ test_expect_success 'subtest: skip one with GIT_SKIP_TESTS' '
 	)
 '
 
-test_expect_success 'subtest: skip several with GIT_SKIP_TESTS' '
+test_expect_success 'subtest: skip several with BUT_SKIP_TESTS' '
 	(
 		write_and_run_sub_test_lib_test but-skip-tests-several \
 			--skip="but.2 but.5" <<-\EOF &&
@@ -282,10 +282,10 @@ test_expect_success 'subtest: skip several with GIT_SKIP_TESTS' '
 		EOF
 		check_sub_test_lib_test but-skip-tests-several <<-\EOF
 		> ok 1 - passing test #1
-		> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
+		> ok 2 # skip passing test #2 (BUT_SKIP_TESTS)
 		> ok 3 - passing test #3
 		> ok 4 - passing test #4
-		> ok 5 # skip passing test #5 (GIT_SKIP_TESTS)
+		> ok 5 # skip passing test #5 (BUT_SKIP_TESTS)
 		> ok 6 - passing test #6
 		> # passed all 6 test(s)
 		> 1..6
@@ -293,16 +293,16 @@ test_expect_success 'subtest: skip several with GIT_SKIP_TESTS' '
 	)
 '
 
-test_expect_success 'subtest: sh pattern skipping with GIT_SKIP_TESTS' '
+test_expect_success 'subtest: sh pattern skipping with BUT_SKIP_TESTS' '
 	(
 		run_sub_test_lib_test but-skip-tests-several \
 			--skip="but.[2-5]" &&
 		check_sub_test_lib_test but-skip-tests-several <<-\EOF
 		> ok 1 - passing test #1
-		> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
-		> ok 3 # skip passing test #3 (GIT_SKIP_TESTS)
-		> ok 4 # skip passing test #4 (GIT_SKIP_TESTS)
-		> ok 5 # skip passing test #5 (GIT_SKIP_TESTS)
+		> ok 2 # skip passing test #2 (BUT_SKIP_TESTS)
+		> ok 3 # skip passing test #3 (BUT_SKIP_TESTS)
+		> ok 4 # skip passing test #4 (BUT_SKIP_TESTS)
+		> ok 5 # skip passing test #5 (BUT_SKIP_TESTS)
 		> ok 6 - passing test #6
 		> # passed all 6 test(s)
 		> 1..6
@@ -310,9 +310,9 @@ test_expect_success 'subtest: sh pattern skipping with GIT_SKIP_TESTS' '
 	)
 '
 
-test_expect_success 'subtest: skip entire test suite with GIT_SKIP_TESTS' '
+test_expect_success 'subtest: skip entire test suite with BUT_SKIP_TESTS' '
 	(
-		GIT_SKIP_TESTS="but" && export GIT_SKIP_TESTS &&
+		BUT_SKIP_TESTS="but" && export BUT_SKIP_TESTS &&
 		run_sub_test_lib_test but-skip-tests-several \
 			--skip="but" &&
 		check_sub_test_lib_test but-skip-tests-several <<-\EOF
@@ -321,9 +321,9 @@ test_expect_success 'subtest: skip entire test suite with GIT_SKIP_TESTS' '
 	)
 '
 
-test_expect_success 'subtest: GIT_SKIP_TESTS does not skip unmatched suite' '
+test_expect_success 'subtest: BUT_SKIP_TESTS does not skip unmatched suite' '
 	(
-		GIT_SKIP_TESTS="notbut" && export GIT_SKIP_TESTS &&
+		BUT_SKIP_TESTS="notbut" && export BUT_SKIP_TESTS &&
 		run_sub_test_lib_test full-pass \
 			--skip="notfull" &&
 		check_sub_test_lib_test full-pass <<-\EOF

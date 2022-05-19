@@ -5,8 +5,8 @@
 
 test_description='Test but stash'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -895,7 +895,7 @@ test_expect_success 'apply: show same status as but status (relative to ./)' '
 		echo x >../file &&
 		but status >../expect &&
 		but stash &&
-		sane_unset GIT_MERGE_VERBOSITY &&
+		sane_unset BUT_MERGE_VERBOSITY &&
 		but stash apply
 	) |
 	sed -e 1d >actual && # drop "Saved..."
@@ -1353,7 +1353,7 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 	but reset &&
 	>1 &&
 	but add 1 &&
-	echo "$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" >expect &&
+	echo "$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>" >expect &&
 	but stash &&
 	but show -s --format="%an <%ae>" refs/stash >actual &&
 	test_cmp expect actual &&
@@ -1361,10 +1361,10 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 	but add 2 &&
 	test_config user.useconfigonly true &&
 	(
-		sane_unset GIT_AUTHOR_NAME &&
-		sane_unset GIT_AUTHOR_EMAIL &&
-		sane_unset GIT_CUMMITTER_NAME &&
-		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset BUT_AUTHOR_NAME &&
+		sane_unset BUT_AUTHOR_EMAIL &&
+		sane_unset BUT_CUMMITTER_NAME &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
 		test_unconfig user.email &&
 		test_unconfig user.name &&
 		test_must_fail but cummit -m "should fail" &&

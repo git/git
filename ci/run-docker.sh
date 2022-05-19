@@ -31,9 +31,9 @@ docker run \
 	--interactive \
 	--env DEVELOPER \
 	--env DEFAULT_TEST_TARGET \
-	--env GIT_PROVE_OPTS \
-	--env GIT_TEST_OPTS \
-	--env GIT_TEST_CLONE_2GB \
+	--env BUT_PROVE_OPTS \
+	--env BUT_TEST_OPTS \
+	--env BUT_TEST_CLONE_2GB \
 	--env MAKEFLAGS \
 	--env jobname \
 	--env cache_dir="$container_cache_dir" \

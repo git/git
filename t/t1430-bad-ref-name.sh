@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='Test handling of ref names that check-ref-format rejects'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -17,7 +17,7 @@ test_expect_success 'fast-import: fail on invalid branch name ".badbranchname"' 
 	test_when_finished "rm -f .but/objects/pack_* .but/objects/index_*" &&
 	cat >input <<-INPUT_END &&
 		cummit .badbranchname
-		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+		cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 		data <<cummit
 		corrupt
 		cummit
@@ -32,7 +32,7 @@ test_expect_success 'fast-import: fail on invalid branch name "bad[branch]name"'
 	test_when_finished "rm -f .but/objects/pack_* .but/objects/index_*" &&
 	cat >input <<-INPUT_END &&
 		cummit bad[branch]name
-		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+		cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 		data <<cummit
 		corrupt
 		cummit

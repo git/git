@@ -8,11 +8,11 @@ test_description='Merge logic in fetch'
 
 # NEEDSWORK: If the overspecification of the expected result is reduced, we
 # might be able to run this test in all protocol versions.
-GIT_TEST_PROTOCOL_VERSION=0
-export GIT_TEST_PROTOCOL_VERSION
+BUT_TEST_PROTOCOL_VERSION=0
+export BUT_TEST_PROTOCOL_VERSION
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -32,9 +32,9 @@ convert_expected () {
 }
 
 test_expect_success setup '
-	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	test_oid_cache <<-EOF &&
 	one sha1:8e32a6d901327a23ef831511badce7bf3bf46689

@@ -58,17 +58,17 @@ some tunnel.
 ENVIRONMENT VARIABLES
 ---------------------
 
-GIT_TRANSLOOP_DEBUG::
+BUT_TRANSLOOP_DEBUG::
 	If set, prints debugging information about various reads/writes.
 
 ENVIRONMENT VARIABLES PASSED TO COMMAND
 ---------------------------------------
 
-GIT_EXT_SERVICE::
+BUT_EXT_SERVICE::
 	Set to long name (but-upload-pack, etc...) of service helper needs
 	to invoke.
 
-GIT_EXT_SERVICE_NOPREFIX::
+BUT_EXT_SERVICE_NOPREFIX::
 	Set to long name (upload-pack, etc...) of service helper needs
 	to invoke.
 
@@ -120,6 +120,6 @@ SEE ALSO
 --------
 linkbut:butremote-helpers[7]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

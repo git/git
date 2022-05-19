@@ -210,7 +210,7 @@ static int set_option(const char *name, const char *value)
 		options.object_format = 1;
 		if (strcmp(value, "true")) {
 			algo = hash_algo_by_name(value);
-			if (algo == GIT_HASH_UNKNOWN)
+			if (algo == BUT_HASH_UNKNOWN)
 				die("unknown object format '%s'", value);
 			options.hash_algo = &hash_algos[algo];
 		}
@@ -273,7 +273,7 @@ static const struct but_hash_algo *detect_hash_algo(struct discovery *heads)
 		return the_hash_algo;
 
 	algo = hash_algo_by_length((p - heads->buf) / 2);
-	if (algo == GIT_HASH_UNKNOWN)
+	if (algo == BUT_HASH_UNKNOWN)
 		return NULL;
 	return &hash_algos[algo];
 }
@@ -377,7 +377,7 @@ static int get_protocol_http_header(enum protocol_version version,
 				    struct strbuf *header)
 {
 	if (version > 0) {
-		strbuf_addf(header, GIT_PROTOCOL_HEADER ": version=%d",
+		strbuf_addf(header, BUT_PROTOCOL_HEADER ": version=%d",
 			    version);
 
 		return 1;
@@ -461,7 +461,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 
 	strbuf_addf(&refs_url, "%sinfo/refs", url.buf);
 	if ((starts_with(url.buf, "http://") || starts_with(url.buf, "https://")) &&
-	     but_env_bool("GIT_SMART_HTTP", 1)) {
+	     but_env_bool("BUT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url.buf, '?'))
 			strbuf_addch(&refs_url, '?');

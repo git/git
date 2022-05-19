@@ -25,7 +25,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A really simple TCP Git daemon that normally listens on port "DEFAULT_GIT_PORT"
+A really simple TCP Git daemon that normally listens on port "DEFAULT_BUT_PORT"
 aka 9418.  It waits for a connection asking for a service, and will serve
 that service if it is enabled.
 
@@ -335,6 +335,6 @@ that connected to it, if the IP address is available. REMOTE_ADDR will
 be available in the environment of hooks called when
 services are performed.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

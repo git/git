@@ -2,8 +2,8 @@
 
 test_description='but rev-list using object filtering'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -346,7 +346,7 @@ test_expect_success 'verify tree:0 includes trees in "filtered" output' '
 # Make sure tree:0 does not iterate through any trees.
 
 test_expect_success 'verify skipping tree iteration when not collecting omits' '
-	GIT_TRACE=1 but -C r3 rev-list \
+	BUT_TRACE=1 but -C r3 rev-list \
 		--objects --filter=tree:0 HEAD 2>filter_trace &&
 	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
 	# One line for each cummit traversed.
@@ -359,7 +359,7 @@ test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	# trees, the composite filter should also skip trees. This is not
 	# important unless the user does combine:tree:X+tree:Y or another filter
 	# besides "tree:" is implemented in the future which can skip trees.
-	GIT_TRACE=1 but -C r3 rev-list \
+	BUT_TRACE=1 but -C r3 rev-list \
 		--objects --filter=combine:tree:1+tree:3 HEAD 2>filter_trace &&
 
 	# Only skip the dir1/ tree, which is shared between the two cummits.
@@ -537,7 +537,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	# requires encoding multiple characters, and use implicit filter
 	# combining.
 	test_when_finished "rm -f trace1" &&
-	GIT_TRACE=$(pwd)/trace1 but -C r3 rev-list --objects \
+	BUT_TRACE=$(pwd)/trace1 but -C r3 rev-list --objects \
 		--filter=tree:3 --filter=blob:limit=40 \
 		--filter=sparse:oid="main:p;at%ter+n" \
 		HEAD >actual &&
@@ -549,7 +549,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	# Repeat the above test, but this time, the characters to encode are in
 	# the LHS of the combined filter.
 	test_when_finished "rm -f trace2" &&
-	GIT_TRACE=$(pwd)/trace2 but -C r3 rev-list --objects \
+	BUT_TRACE=$(pwd)/trace2 but -C r3 rev-list --objects \
 		--filter=sparse:oid=main:^~pattern \
 		--filter=tree:3 --filter=blob:limit=40 \
 		HEAD >actual &&
@@ -594,7 +594,7 @@ test_expect_success 'test tree:# filter provisional omit for blob and tree' '
 '
 
 test_expect_success 'verify skipping tree iteration when collecting omits' '
-	GIT_TRACE=1 but -C r4 rev-list --filter-print-omitted \
+	BUT_TRACE=1 but -C r4 rev-list --filter-print-omitted \
 		--objects --filter=tree:0 HEAD 2>filter_trace &&
 	grep "^Skipping contents of tree " filter_trace >actual &&
 
@@ -695,7 +695,7 @@ test_expect_success 'rev-list W/ missing=allow-any' '
 
 test_expect_success 'expand blob limit in protocol' '
 	but -C r2 config --local uploadpack.allowfilter 1 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -c protocol.version=2 clone \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -c protocol.version=2 clone \
 		--filter=blob:limit=1k "file://$(pwd)/r2" limit &&
 	! grep "blob:limit=1k" trace &&
 	grep "blob:limit=1024" trace

@@ -5,8 +5,8 @@
 
 test_description='Test cummit notes index (expensive!)'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -25,7 +25,7 @@ create_repo () {
 			cat <<-INPUT_END &&
 			cummit refs/heads/main
 			mark :$mark
-			cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+			cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 			data <<cummit
 			cummit #$nr
 			cummit
@@ -47,7 +47,7 @@ create_repo () {
 		test_tick &&
 		cat <<-INPUT_END &&
 		cummit refs/notes/cummits
-		cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE
+		cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE
 		data <<cummit
 		notes
 		cummit
@@ -83,11 +83,11 @@ write_script time_notes <<\EOF
 	do
 		case $1 in
 		no-notes)
-			GIT_NOTES_REF=non-existing
-			export GIT_NOTES_REF
+			BUT_NOTES_REF=non-existing
+			export BUT_NOTES_REF
 			;;
 		notes)
-			unset GIT_NOTES_REF
+			unset BUT_NOTES_REF
 			;;
 		esac
 		but log || exit $?

@@ -183,7 +183,7 @@ test_expect_success 'rebase -i with exec of inexistent command' '
 
 test_expect_success 'implicit interactive rebase does not invoke sequence editor' '
 	test_when_finished "but rebase --abort ||:" &&
-	GIT_SEQUENCE_EDITOR="echo bad >" but rebase -x"echo one" @^
+	BUT_SEQUENCE_EDITOR="echo bad >" but rebase -x"echo one" @^
 '
 
 test_expect_success 'no changes are a nop' '
@@ -273,7 +273,7 @@ test_expect_success 'stop on conflicting pick' '
 '
 
 test_expect_success 'show conflicted patch' '
-	GIT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
+	BUT_TRACE=1 but rebase --show-current-patch >/dev/null 2>stderr &&
 	grep "show.*REBASE_HEAD" stderr &&
 	# the original stopped-sha1 is abbreviated
 	stopped_sha1="$(but rev-parse $(cat ".but/rebase-merge/stopped-sha"))" &&
@@ -303,24 +303,24 @@ test_expect_success 'retain authorship' '
 	echo A > file7 &&
 	but add file7 &&
 	test_tick &&
-	GIT_AUTHOR_NAME="Twerp Snog" but cummit -m "different author" &&
+	BUT_AUTHOR_NAME="Twerp Snog" but cummit -m "different author" &&
 	but tag twerp &&
 	but rebase -i --onto primary HEAD^ &&
 	but show HEAD | grep "^Author: Twerp Snog"
 '
 
 test_expect_success 'retain authorship w/ conflicts' '
-	oGIT_AUTHOR_NAME=$GIT_AUTHOR_NAME &&
-	test_when_finished "GIT_AUTHOR_NAME=\$oGIT_AUTHOR_NAME" &&
+	oBUT_AUTHOR_NAME=$BUT_AUTHOR_NAME &&
+	test_when_finished "BUT_AUTHOR_NAME=\$oBUT_AUTHOR_NAME" &&
 
 	but reset --hard twerp &&
 	test_cummit a conflict a conflict-a &&
 	but reset --hard twerp &&
 
-	GIT_AUTHOR_NAME=AttributeMe &&
-	export GIT_AUTHOR_NAME &&
+	BUT_AUTHOR_NAME=AttributeMe &&
+	export BUT_AUTHOR_NAME &&
 	test_cummit b conflict b conflict-b &&
-	GIT_AUTHOR_NAME=$oGIT_AUTHOR_NAME &&
+	BUT_AUTHOR_NAME=$oBUT_AUTHOR_NAME &&
 
 	test_must_fail but rebase -i conflict-a &&
 	echo resolved >conflict &&
@@ -335,7 +335,7 @@ test_expect_success 'squash' '
 	but reset --hard twerp &&
 	echo B > file7 &&
 	test_tick &&
-	GIT_AUTHOR_NAME="Nitfol" but cummit -m "nitfol" file7 &&
+	BUT_AUTHOR_NAME="Nitfol" but cummit -m "nitfol" file7 &&
 	echo "******************************" &&
 	(
 		set_fake_editor &&
@@ -638,8 +638,8 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 	but checkout -b branch3 A &&
 
 	(
-		GIT_AUTHOR_NAME="Squashed Away" &&
-		export GIT_AUTHOR_NAME &&
+		BUT_AUTHOR_NAME="Squashed Away" &&
+		export BUT_AUTHOR_NAME &&
 		>HEAD &&
 		but add HEAD &&
 		but cummit -m "Add head" &&
@@ -659,7 +659,7 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 
 	but checkout -b branch4 HEAD &&
-	GIT_EDITOR=: but cummit --amend \
+	BUT_EDITOR=: but cummit --amend \
 		--author="Somebody else <somebody@else.com>" &&
 	test $(but rev-parse branch3) != $(but rev-parse branch4) &&
 	but rebase -i branch3 &&
@@ -763,8 +763,8 @@ test_expect_success 'no uncummited changes when rewording the todo list is reloa
 	test_when_finished "but checkout @{-1}" &&
 	(
 		set_fake_editor &&
-		GIT_SEQUENCE_EDITOR="\"$PWD/fake-editor.sh\"" &&
-		export GIT_SEQUENCE_EDITOR &&
+		BUT_SEQUENCE_EDITOR="\"$PWD/fake-editor.sh\"" &&
+		export BUT_SEQUENCE_EDITOR &&
 		set_reword_editor &&
 		FAKE_LINES="reword 1 reword 2" but rebase -i C
 	) &&
@@ -792,7 +792,7 @@ test_expect_success 'rebase -i can copy notes over a fixup' '
 	but notes add -m"an earlier note" n2 &&
 	(
 		set_fake_editor &&
-		GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 f 2" \
+		BUT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 f 2" \
 			but rebase -i n1
 	) &&
 	but notes show > output &&
@@ -984,7 +984,7 @@ test_expect_success 'rebase -i --root retain root cummit author and message' '
 	but checkout A &&
 	echo B >file7 &&
 	but add file7 &&
-	GIT_AUTHOR_NAME="Twerp Snog" but cummit -m "different author" &&
+	BUT_AUTHOR_NAME="Twerp Snog" but cummit -m "different author" &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="2" but rebase -i --root
@@ -1199,10 +1199,10 @@ test_expect_success 'short cummit ID setup' '
 	)
 '
 
-if test -n "$GIT_TEST_FIND_COLLIDER"
+if test -n "$BUT_TEST_FIND_COLLIDER"
 then
-	author="$(unset test_tick; test_tick; but var GIT_AUTHOR_IDENT)"
-	cummitter="$(unset test_tick; test_tick; but var GIT_CUMMITTER_IDENT)"
+	author="$(unset test_tick; test_tick; but var BUT_AUTHOR_IDENT)"
+	cummitter="$(unset test_tick; test_tick; but var BUT_CUMMITTER_IDENT)"
 	blob="$(but rev-parse collide2:collide)"
 	from="$(but rev-parse collide1^0)"
 	repl="cummit refs/heads/collider-&\\n"
@@ -1548,7 +1548,7 @@ test_expect_success 'rebase.missingcummitsCheck = error when editing for a secon
 		FAKE_LINES="1 break 2 3" but rebase -i A D &&
 		cp .but/rebase-merge/but-rebase-todo todo &&
 		test_must_fail env FAKE_LINES=2 but rebase --edit-todo &&
-		GIT_SEQUENCE_EDITOR="cp todo" but rebase --edit-todo &&
+		BUT_SEQUENCE_EDITOR="cp todo" but rebase --edit-todo &&
 		but rebase --continue
 	)
 '
@@ -1727,7 +1727,7 @@ test_expect_success 'correct error message for cummit --amend after empty pick' 
 '
 
 test_expect_success 'todo has correct onto hash' '
-	GIT_SEQUENCE_EDITOR=cat but rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
+	BUT_SEQUENCE_EDITOR=cat but rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
 	onto=$(but rev-parse --short HEAD~4) &&
 	test_i18ngrep "^# Rebase ..* onto $onto" actual
 '

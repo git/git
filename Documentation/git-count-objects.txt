@@ -49,6 +49,6 @@ contain C-style backslashed escape sequences.
 
 Print sizes in human readable format
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

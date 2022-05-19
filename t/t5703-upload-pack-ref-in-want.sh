@@ -234,7 +234,7 @@ test_expect_success 'fetching with exact OID' '
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
 	oid=$(but -C "$REPO" rev-parse d) &&
-	GIT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin \
+	BUT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin \
 		"$oid":refs/heads/actual &&
 
 	but -C "$REPO" rev-parse "d" >expected &&
@@ -248,7 +248,7 @@ test_expect_success 'fetching multiple refs' '
 
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
-	GIT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin main baz &&
+	BUT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin main baz &&
 
 	but -C "$REPO" rev-parse "main" "baz" >expected &&
 	but -C local rev-parse refs/remotes/origin/main refs/remotes/origin/baz >actual &&
@@ -263,7 +263,7 @@ test_expect_success 'fetching ref and exact OID' '
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
 	oid=$(but -C "$REPO" rev-parse b) &&
-	GIT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin \
+	BUT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin \
 		main "$oid":refs/heads/actual &&
 
 	but -C "$REPO" rev-parse "main" "b" >expected &&
@@ -287,7 +287,7 @@ test_expect_success 'fetching with wildcard that matches multiple refs' '
 
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
-	GIT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin refs/heads/o*:refs/heads/o* &&
+	BUT_TRACE_PACKET="$(pwd)/log" but -C local fetch origin refs/heads/o*:refs/heads/o* &&
 
 	but -C "$REPO" rev-parse "o/foo" "o/bar" >expected &&
 	but -C local rev-parse "o/foo" "o/bar" >actual &&
@@ -332,7 +332,7 @@ test_expect_success 'with namespace: want-ref is considered relative to namespac
 	EOF
 	test-tool pkt-line pack <pkt >in &&
 
-	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	BUT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -344,7 +344,7 @@ test_expect_success 'with namespace: want-ref outside namespace is unknown' '
 	EOF
 	test-tool pkt-line pack <pkt >in &&
 
-	test_must_fail env GIT_NAMESPACE=ns \
+	test_must_fail env BUT_NAMESPACE=ns \
 		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
 	grep "unknown ref" out
 '
@@ -380,7 +380,7 @@ test_expect_success 'with namespace: hideRefs is matched, relative to namespace'
 	EOF
 	test-tool pkt-line pack <pkt >in &&
 
-	test_must_fail env GIT_NAMESPACE=ns \
+	test_must_fail env BUT_NAMESPACE=ns \
 		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
 	grep "unknown ref" out
 '
@@ -404,7 +404,7 @@ test_expect_success 'with namespace: want-ref succeeds if hideRefs is removed' '
 	EOF
 	test-tool pkt-line pack <pkt >in &&
 
-	GIT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
+	BUT_NAMESPACE=ns test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 

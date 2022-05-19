@@ -138,7 +138,7 @@ Fixes since v2.32
  * Avoid duplicated work while building reachability bitmaps.
    (merge aa9ad6fee5 jk/bitmap-tree-optim later to maint).
 
- * We broke "GIT_SKIP_TESTS=t?000" to skip certain tests in recent
+ * We broke "BUT_SKIP_TESTS=t?000" to skip certain tests in recent
    update, which got fixed.
 
  * The side-band demultiplexer that is used to display progress output

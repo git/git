@@ -71,4 +71,4 @@ DEVELOPER_CFLAGS += -Wno-error=stringop-overread
 DEVELOPER_CFLAGS += -Wno-error=dangling-pointer
 endif
 
-GIT_TEST_PERL_FATAL_WARNINGS = YesPlease
+BUT_TEST_PERL_FATAL_WARNINGS = YesPlease

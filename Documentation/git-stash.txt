@@ -391,6 +391,6 @@ linkbut:but-reflog[1],
 linkbut:but-reset[1],
 linkbut:but-switch[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

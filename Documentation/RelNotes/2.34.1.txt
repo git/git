@@ -14,7 +14,7 @@ Fixes since v2.34
    should succeed as it is a no-op, but doesn't.
 
  * An earlier change in 2.34.0 caused JGit application (that abused
-   GIT_EDITOR mechanism when invoking "but config") to get stuck with
+   BUT_EDITOR mechanism when invoking "but config") to get stuck with
    a SIGTTOU signal; it has been reverted.
 
  * An earlier change that broke .butignore matching has been reverted.

@@ -156,7 +156,7 @@ output is generated after the fact (e.g. you cummitted without adding an
 appropriate export-ignore in its `.butattributes`), adjust the checked out
 `.butattributes` file as necessary and use `--worktree-attributes`
 option.  Alternatively you can keep necessary attributes that should apply
-while archiving any tree in your `$GIT_DIR/info/attributes` file.
+while archiving any tree in your `$BUT_DIR/info/attributes` file.
 
 EXAMPLES
 --------
@@ -205,6 +205,6 @@ SEE ALSO
 --------
 linkbut:butattributes[5]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

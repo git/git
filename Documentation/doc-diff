@@ -152,7 +152,7 @@ render_tree () {
 		but -C "$tmp/worktree" checkout --detach "$oid" &&
 		make -j$parallel -C "$tmp/worktree" \
 			$makemanflags \
-			GIT_VERSION=omitted \
+			BUT_VERSION=omitted \
 			SOURCE_DATE_EPOCH=0 \
 			DESTDIR="$tmp/installed/$dname+" \
 			install-man &&

@@ -260,7 +260,7 @@ static int graph_write(int argc, const char **argv)
 	if (!opts.enable_changed_paths)
 		flags |= CUMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
 	if (opts.enable_changed_paths == 1 ||
-	    but_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+	    but_env_bool(BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	odb = find_odb(the_repository, opts.obj_dir);

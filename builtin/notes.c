@@ -1010,7 +1010,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addstr(&sb, override_notes_ref);
 		expand_notes_ref(&sb);
-		setenv("GIT_NOTES_REF", sb.buf, 1);
+		setenv("BUT_NOTES_REF", sb.buf, 1);
 		strbuf_release(&sb);
 	}
 

@@ -29,8 +29,8 @@ else
 	# different. Those tests still set "$TEST_DIRECTORY" to the
 	# same path.
 	#
-	# See use of "$GIT_BUILD_DIR" and "$TEST_DIRECTORY" below for
-	# hard assumptions about "$GIT_BUILD_DIR/t" existing and being
+	# See use of "$BUT_BUILD_DIR" and "$TEST_DIRECTORY" below for
+	# hard assumptions about "$BUT_BUILD_DIR/t" existing and being
 	# the "$TEST_DIRECTORY", and e.g. "$TEST_DIRECTORY/helper"
 	# needing to exist.
 	TEST_DIRECTORY=$(cd "$TEST_DIRECTORY" && pwd) || exit 1
@@ -41,8 +41,8 @@ then
 	# elsewhere
 	TEST_OUTPUT_DIRECTORY=$TEST_DIRECTORY
 fi
-GIT_BUILD_DIR="${TEST_DIRECTORY%/t}"
-if test "$TEST_DIRECTORY" = "$GIT_BUILD_DIR"
+BUT_BUILD_DIR="${TEST_DIRECTORY%/t}"
+if test "$TEST_DIRECTORY" = "$BUT_BUILD_DIR"
 then
 	echo "PANIC: Running in a $TEST_DIRECTORY that doesn't end in '/t'?" >&2
 	exit 1
@@ -61,30 +61,30 @@ prepend_var () {
 }
 
 # If [AL]SAN is in effect we want to abort so that we notice
-# problems. The GIT_SAN_OPTIONS variable can be used to set common
+# problems. The BUT_SAN_OPTIONS variable can be used to set common
 # defaults shared between [AL]SAN_OPTIONS.
-prepend_var GIT_SAN_OPTIONS : abort_on_error=1
-prepend_var GIT_SAN_OPTIONS : strip_path_prefix=\"$GIT_BUILD_DIR/\"
+prepend_var BUT_SAN_OPTIONS : abort_on_error=1
+prepend_var BUT_SAN_OPTIONS : strip_path_prefix=\"$BUT_BUILD_DIR/\"
 
 # If we were built with ASAN, it may complain about leaks
 # of program-lifetime variables. Disable it by default to lower
 # the noise level. This needs to happen at the start of the script,
 # before we even do our "did we build but yet" check (since we don't
 # want that one to complain to stderr).
-prepend_var ASAN_OPTIONS : $GIT_SAN_OPTIONS
+prepend_var ASAN_OPTIONS : $BUT_SAN_OPTIONS
 prepend_var ASAN_OPTIONS : detect_leaks=0
 export ASAN_OPTIONS
 
-prepend_var LSAN_OPTIONS : $GIT_SAN_OPTIONS
+prepend_var LSAN_OPTIONS : $BUT_SAN_OPTIONS
 prepend_var LSAN_OPTIONS : fast_unwind_on_malloc=0
 export LSAN_OPTIONS
 
-if test ! -f "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
+if test ! -f "$BUT_BUILD_DIR"/BUT-BUILD-OPTIONS
 then
-	echo >&2 'error: GIT-BUILD-OPTIONS missing (has Git been built?).'
+	echo >&2 'error: BUT-BUILD-OPTIONS missing (has Git been built?).'
 	exit 1
 fi
-. "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
+. "$BUT_BUILD_DIR"/BUT-BUILD-OPTIONS
 export PERL_PATH SHELL_PATH
 
 # In t0000, we need to override test directories of nested testcases. In case
@@ -97,25 +97,25 @@ then
 fi
 
 # Disallow the use of abbreviated options in the test suite by default
-if test -z "${GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS}"
+if test -z "${BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS}"
 then
-	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true
-	export GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS
+	BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true
+	export BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS
 fi
 
 # Explicitly set the default branch name for testing, to avoid the
 # transitory "but init" warning under --verbose.
-: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+: ${BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 ################################################################
 # It appears that people try to run tests without building...
-"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/but$X" >/dev/null
+"${BUT_TEST_INSTALLED:-$BUT_BUILD_DIR}/but$X" >/dev/null
 if test $? != 1
 then
-	if test -n "$GIT_TEST_INSTALLED"
+	if test -n "$BUT_TEST_INSTALLED"
 	then
-		echo >&2 "error: there is no working Git at '$GIT_TEST_INSTALLED'"
+		echo >&2 "error: there is no working Git at '$BUT_TEST_INSTALLED'"
 	else
 		echo >&2 'error: you do not seem to have built but yet.'
 	fi
@@ -146,7 +146,7 @@ parse_option () {
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
-		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
+		BUT_TEST_LONG=t; export BUT_TEST_LONG ;;
 	-r)
 		mark_option_requires_arg "$opt" run_list
 		;;
@@ -186,9 +186,9 @@ parse_option () {
 	--root=*)
 		root=${opt#--*=} ;;
 	--chain-lint)
-		GIT_TEST_CHAIN_LINT=1 ;;
+		BUT_TEST_CHAIN_LINT=1 ;;
 	--no-chain-lint)
-		GIT_TEST_CHAIN_LINT=0 ;;
+		BUT_TEST_CHAIN_LINT=0 ;;
 	-x)
 		trace=t ;;
 	-V|--verbose-log)
@@ -287,7 +287,7 @@ then
 	immediate=t
 fi
 
-TEST_STRESS_JOB_SFX="${GIT_TEST_STRESS_JOB_NR:+.stress-$GIT_TEST_STRESS_JOB_NR}"
+TEST_STRESS_JOB_SFX="${BUT_TEST_STRESS_JOB_NR:+.stress-$BUT_TEST_STRESS_JOB_NR}"
 TEST_NAME="$(basename "$0" .sh)"
 TEST_NUMBER="${TEST_NAME%%-*}"
 TEST_NUMBER="${TEST_NUMBER#t}"
@@ -301,7 +301,7 @@ case "$TRASH_DIRECTORY" in
 esac
 
 # If --stress was passed, run this test repeatedly in several parallel loops.
-if test "$GIT_TEST_STRESS_STARTED" = "done"
+if test "$BUT_TEST_STRESS_STARTED" = "done"
 then
 	: # Don't stress test again.
 elif test -n "$stress"
@@ -309,9 +309,9 @@ then
 	if test -n "$stress_jobs"
 	then
 		job_count=$stress_jobs
-	elif test -n "$GIT_TEST_STRESS_LOAD"
+	elif test -n "$BUT_TEST_STRESS_LOAD"
 	then
-		job_count="$GIT_TEST_STRESS_LOAD"
+		job_count="$BUT_TEST_STRESS_LOAD"
 	elif job_count=$(getconf _NPROCESSORS_ONLN 2>/dev/null) &&
 	     test -n "$job_count"
 	then
@@ -336,9 +336,9 @@ then
 	while test $job_nr -lt "$job_count"
 	do
 		(
-			GIT_TEST_STRESS_STARTED=done
-			GIT_TEST_STRESS_JOB_NR=$job_nr
-			export GIT_TEST_STRESS_STARTED GIT_TEST_STRESS_JOB_NR
+			BUT_TEST_STRESS_STARTED=done
+			BUT_TEST_STRESS_JOB_NR=$job_nr
+			export BUT_TEST_STRESS_STARTED BUT_TEST_STRESS_JOB_NR
 
 			trap '
 				kill $test_pid 2>/dev/null
@@ -356,10 +356,10 @@ then
 
 				if wait $test_pid
 				then
-					printf "OK   %2d.%d\n" $GIT_TEST_STRESS_JOB_NR $cnt
+					printf "OK   %2d.%d\n" $BUT_TEST_STRESS_JOB_NR $cnt
 				else
-					echo $GIT_TEST_STRESS_JOB_NR >>"$stressfail"
-					printf "FAIL %2d.%d\n" $GIT_TEST_STRESS_JOB_NR $cnt
+					echo $BUT_TEST_STRESS_JOB_NR >>"$stressfail"
+					printf "FAIL %2d.%d\n" $BUT_TEST_STRESS_JOB_NR $cnt
 				fi
 				cnt=$(($cnt + 1))
 			done
@@ -389,7 +389,7 @@ fi
 
 # if --tee was passed, write the output not only to the terminal, but
 # additionally to the file test-results/$BASENAME.out, too.
-if test "$GIT_TEST_TEE_STARTED" = "done"
+if test "$BUT_TEST_TEE_STARTED" = "done"
 then
 	: # do not redirect again
 elif test -n "$tee"
@@ -398,15 +398,15 @@ then
 
 	# Make this filename available to the sub-process in case it is using
 	# --verbose-log.
-	GIT_TEST_TEE_OUTPUT_FILE=$TEST_RESULTS_BASE.out
-	export GIT_TEST_TEE_OUTPUT_FILE
+	BUT_TEST_TEE_OUTPUT_FILE=$TEST_RESULTS_BASE.out
+	export BUT_TEST_TEE_OUTPUT_FILE
 
 	# Truncate before calling "tee -a" to get rid of the results
 	# from any previous runs.
-	>"$GIT_TEST_TEE_OUTPUT_FILE"
+	>"$BUT_TEST_TEE_OUTPUT_FILE"
 
-	(GIT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? >"$TEST_RESULTS_BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
+	(BUT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1;
+	 echo $? >"$TEST_RESULTS_BASE.exit") | tee -a "$BUT_TEST_TEE_OUTPUT_FILE"
 	test "$(cat "$TEST_RESULTS_BASE.exit")" = 0
 	exit
 fi
@@ -473,65 +473,65 @@ unset VISUAL EMAIL LANGUAGE $("$PERL_PATH" -e '
 		CURL_VERBOSE
 		TRACE_CURL
 	));
-	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
+	my @vars = grep(/^BUT_/ && !/^BUT_($ok)/o, @env);
 	print join("\n", @vars);
 ')
 unset XDG_CACHE_HOME
 unset XDG_CONFIG_HOME
-unset GITPERLLIB
-unset GIT_TRACE2_PARENT_NAME
-unset GIT_TRACE2_PARENT_SID
+unset BUTPERLLIB
+unset BUT_TRACE2_PARENT_NAME
+unset BUT_TRACE2_PARENT_SID
 TEST_AUTHOR_LOCALNAME=author
 TEST_AUTHOR_DOMAIN=example.com
-GIT_AUTHOR_EMAIL=${TEST_AUTHOR_LOCALNAME}@${TEST_AUTHOR_DOMAIN}
-GIT_AUTHOR_NAME='A U Thor'
-GIT_AUTHOR_DATE='1112354055 +0200'
+BUT_AUTHOR_EMAIL=${TEST_AUTHOR_LOCALNAME}@${TEST_AUTHOR_DOMAIN}
+BUT_AUTHOR_NAME='A U Thor'
+BUT_AUTHOR_DATE='1112354055 +0200'
 TEST_CUMMITTER_LOCALNAME=cummitter
 TEST_CUMMITTER_DOMAIN=example.com
-GIT_CUMMITTER_EMAIL=${TEST_CUMMITTER_LOCALNAME}@${TEST_CUMMITTER_DOMAIN}
-GIT_CUMMITTER_NAME='C O Mitter'
-GIT_CUMMITTER_DATE='1112354055 +0200'
-GIT_MERGE_VERBOSITY=5
-GIT_MERGE_AUTOEDIT=no
-export GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT
-export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
-export GIT_CUMMITTER_EMAIL GIT_CUMMITTER_NAME
-export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
+BUT_CUMMITTER_EMAIL=${TEST_CUMMITTER_LOCALNAME}@${TEST_CUMMITTER_DOMAIN}
+BUT_CUMMITTER_NAME='C O Mitter'
+BUT_CUMMITTER_DATE='1112354055 +0200'
+BUT_MERGE_VERBOSITY=5
+BUT_MERGE_AUTOEDIT=no
+export BUT_MERGE_VERBOSITY BUT_MERGE_AUTOEDIT
+export BUT_AUTHOR_EMAIL BUT_AUTHOR_NAME
+export BUT_CUMMITTER_EMAIL BUT_CUMMITTER_NAME
+export BUT_CUMMITTER_DATE BUT_AUTHOR_DATE
 export EDITOR
 
-GIT_DEFAULT_HASH="${GIT_TEST_DEFAULT_HASH:-sha1}"
-export GIT_DEFAULT_HASH
-GIT_TEST_MERGE_ALGORITHM="${GIT_TEST_MERGE_ALGORITHM:-ort}"
-export GIT_TEST_MERGE_ALGORITHM
+BUT_DEFAULT_HASH="${BUT_TEST_DEFAULT_HASH:-sha1}"
+export BUT_DEFAULT_HASH
+BUT_TEST_MERGE_ALGORITHM="${BUT_TEST_MERGE_ALGORITHM:-ort}"
+export BUT_TEST_MERGE_ALGORITHM
 
-# Tests using GIT_TRACE typically don't want <timestamp> <file>:<line> output
-GIT_TRACE_BARE=1
-export GIT_TRACE_BARE
+# Tests using BUT_TRACE typically don't want <timestamp> <file>:<line> output
+BUT_TRACE_BARE=1
+export BUT_TRACE_BARE
 
-# Some tests scan the GIT_TRACE2_EVENT feed for events, but the
+# Some tests scan the BUT_TRACE2_EVENT feed for events, but the
 # default depth is 2, which frequently causes issues when the
 # events are wrapped in new regions. Set it to a sufficiently
 # large depth to avoid custom changes in the test suite.
-GIT_TRACE2_EVENT_NESTING=100
-export GIT_TRACE2_EVENT_NESTING
+BUT_TRACE2_EVENT_NESTING=100
+export BUT_TRACE2_EVENT_NESTING
 
 # Use specific version of the index file format
-if test -n "${GIT_TEST_INDEX_VERSION:+isset}"
+if test -n "${BUT_TEST_INDEX_VERSION:+isset}"
 then
-	GIT_INDEX_VERSION="$GIT_TEST_INDEX_VERSION"
-	export GIT_INDEX_VERSION
+	BUT_INDEX_VERSION="$BUT_TEST_INDEX_VERSION"
+	export BUT_INDEX_VERSION
 fi
 
-if test -n "$GIT_TEST_PERL_FATAL_WARNINGS"
+if test -n "$BUT_TEST_PERL_FATAL_WARNINGS"
 then
-	GIT_PERL_FATAL_WARNINGS=1
-	export GIT_PERL_FATAL_WARNINGS
+	BUT_PERL_FATAL_WARNINGS=1
+	export BUT_PERL_FATAL_WARNINGS
 fi
 
-case $GIT_TEST_FSYNC in
+case $BUT_TEST_FSYNC in
 '')
-	GIT_TEST_FSYNC=0
-	export GIT_TEST_FSYNC
+	BUT_TEST_FSYNC=0
+	export BUT_TEST_FSYNC
 	;;
 esac
 
@@ -582,9 +582,9 @@ unset CDPATH
 unset GREP_OPTIONS
 unset UNZIP
 
-case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
+case $(echo $BUT_TRACE |tr "[A-Z]" "[a-z]") in
 1|2|true)
-	GIT_TRACE=4
+	BUT_TRACE=4
 	;;
 esac
 
@@ -665,7 +665,7 @@ exec 7>&2
 
 _error_exit () {
 	finalize_junit_xml
-	GIT_EXIT_OK=t
+	BUT_EXIT_OK=t
 	exit 1
 }
 
@@ -713,7 +713,7 @@ fi
 
 if test "$verbose_log" = "t"
 then
-	exec 3>>"$GIT_TEST_TEE_OUTPUT_FILE" 4>&3
+	exec 3>>"$BUT_TEST_TEE_OUTPUT_FILE" 4>&3
 elif test "$verbose" = "t"
 then
 	exec 4>&2 3>&1
@@ -750,7 +750,7 @@ die () {
 	# test script run with '--immediate' fails, or when the user hits
 	# ctrl-C, i.e. when 'test_done' is not invoked at all.
 	test_atexit_handler || code=$?
-	if test -n "$GIT_EXIT_OK"
+	if test -n "$BUT_EXIT_OK"
 	then
 		exit $code
 	else
@@ -759,7 +759,7 @@ die () {
 	fi
 }
 
-GIT_EXIT_OK=
+BUT_EXIT_OK=
 trap 'die' EXIT
 # Disable '-x' tracing, because with some shells, notably dash, it
 # prevents running the cleanup commands when a test script run with
@@ -788,18 +788,18 @@ test_failure_ () {
 		junit_insert="<failure message=\"not ok $test_count -"
 		junit_insert="$junit_insert $(xml_attr_encode "$1")\">"
 		junit_insert="$junit_insert $(xml_attr_encode \
-			"$(if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+			"$(if test -n "$BUT_TEST_TEE_OUTPUT_FILE"
 			   then
 				test-tool path-utils skip-n-bytes \
-					"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
+					"$BUT_TEST_TEE_OUTPUT_FILE" $BUT_TEST_TEE_OFFSET
 			   else
 				printf '%s\n' "$@" | sed 1d
 			   fi)")"
 		junit_insert="$junit_insert</failure>"
-		if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+		if test -n "$BUT_TEST_TEE_OUTPUT_FILE"
 		then
 			junit_insert="$junit_insert<system-err>$(xml_attr_encode \
-				"$(cat "$GIT_TEST_TEE_OUTPUT_FILE")")</system-err>"
+				"$(cat "$BUT_TEST_TEE_OUTPUT_FILE")")</system-err>"
 		fi
 		write_junit_xml_testcase "$1" "      $junit_insert"
 	fi
@@ -984,21 +984,21 @@ maybe_setup_verbose () {
 }
 
 maybe_teardown_valgrind () {
-	test -z "$GIT_VALGRIND" && return
-	GIT_VALGRIND_ENABLED=
+	test -z "$BUT_VALGRIND" && return
+	BUT_VALGRIND_ENABLED=
 }
 
 maybe_setup_valgrind () {
-	test -z "$GIT_VALGRIND" && return
+	test -z "$BUT_VALGRIND" && return
 	if test -z "$valgrind_only"
 	then
-		GIT_VALGRIND_ENABLED=t
+		BUT_VALGRIND_ENABLED=t
 		return
 	fi
-	GIT_VALGRIND_ENABLED=
+	BUT_VALGRIND_ENABLED=
 	if match_pattern_list $test_count "$valgrind_only"
 	then
-		GIT_VALGRIND_ENABLED=t
+		BUT_VALGRIND_ENABLED=t
 	fi
 }
 
@@ -1063,7 +1063,7 @@ test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
 
-	if test "${GIT_TEST_CHAIN_LINT:-1}" != 0; then
+	if test "${BUT_TEST_CHAIN_LINT:-1}" != 0; then
 		# turn off tracing for this test-eval, as it simply creates
 		# confusing noise in the "-x" output
 		trace_tmp=$trace
@@ -1072,8 +1072,8 @@ test_run_ () {
 		# code of other programs
 		if test "OK-117" != "$(test_eval_ "(exit 117) && $1${LF}${LF}echo OK-\$?" 3>&1)" ||
 		   {
-			test "${GIT_TEST_CHAIN_LINT_HARDER:-${GIT_TEST_CHAIN_LINT_HARDER_DEFAULT:-1}}" != 0 &&
-			$(printf '%s\n' "$1" | sed -f "$GIT_BUILD_DIR/t/chainlint.sed" | grep -q '?![A-Z][A-Z]*?!')
+			test "${BUT_TEST_CHAIN_LINT_HARDER:-${BUT_TEST_CHAIN_LINT_HARDER_DEFAULT:-1}}" != 0 &&
+			$(printf '%s\n' "$1" | sed -f "$BUT_BUILD_DIR/t/chainlint.sed" | grep -q '?![A-Z][A-Z]*?!')
 		   }
 		then
 			BUG "broken &&-chain or run-away HERE-DOC: $1"
@@ -1114,20 +1114,20 @@ test_finish_ () {
 	echo >&3 ""
 	maybe_teardown_valgrind
 	maybe_teardown_verbose
-	if test -n "$GIT_TEST_TEE_OFFSET"
+	if test -n "$BUT_TEST_TEE_OFFSET"
 	then
-		GIT_TEST_TEE_OFFSET=$(test-tool path-utils file-size \
-			"$GIT_TEST_TEE_OUTPUT_FILE")
+		BUT_TEST_TEE_OFFSET=$(test-tool path-utils file-size \
+			"$BUT_TEST_TEE_OUTPUT_FILE")
 	fi
 }
 
 test_skip () {
 	to_skip=
 	skipped_reason=
-	if match_pattern_list $this_test.$test_count "$GIT_SKIP_TESTS"
+	if match_pattern_list $this_test.$test_count "$BUT_SKIP_TESTS"
 	then
 		to_skip=t
-		skipped_reason="GIT_SKIP_TESTS"
+		skipped_reason="BUT_SKIP_TESTS"
 	fi
 	if test -z "$to_skip" && test -n "$run_list" &&
 	   ! match_test_selector_list '--run' "$1" $test_count "$run_list"
@@ -1242,7 +1242,7 @@ test_atexit_handler () {
 }
 
 test_done () {
-	GIT_EXIT_OK=t
+	BUT_EXIT_OK=t
 
 	# Run the atexit commands _before_ the trash directory is
 	# removed, so the commands can access pidfiles and socket files.
@@ -1364,10 +1364,10 @@ then
 		base=$(basename "$1")
 		case "$base" in
 		test-*)
-			symlink_target="$GIT_BUILD_DIR/t/helper/$base"
+			symlink_target="$BUT_BUILD_DIR/t/helper/$base"
 			;;
 		*)
-			symlink_target="$GIT_BUILD_DIR/$base"
+			symlink_target="$BUT_BUILD_DIR/$base"
 			;;
 		esac
 		# do not override scripts
@@ -1382,18 +1382,18 @@ then
 			symlink_target=../unprocessed-script
 		esac
 		# create the link, or replace it if it is out of date
-		make_symlink "$symlink_target" "$GIT_VALGRIND/bin/$base" || exit
+		make_symlink "$symlink_target" "$BUT_VALGRIND/bin/$base" || exit
 	}
 
 	# override all but executables in TEST_DIRECTORY/..
-	GIT_VALGRIND=$TEST_DIRECTORY/valgrind
-	mkdir -p "$GIT_VALGRIND"/bin
-	for file in $GIT_BUILD_DIR/but* $GIT_BUILD_DIR/t/helper/test-*
+	BUT_VALGRIND=$TEST_DIRECTORY/valgrind
+	mkdir -p "$BUT_VALGRIND"/bin
+	for file in $BUT_BUILD_DIR/but* $BUT_BUILD_DIR/t/helper/test-*
 	do
 		make_valgrind_symlink $file
 	done
 	# special-case the mergetools loadables
-	make_symlink "$GIT_BUILD_DIR"/mergetools "$GIT_VALGRIND/bin/mergetools"
+	make_symlink "$BUT_BUILD_DIR"/mergetools "$BUT_VALGRIND/bin/mergetools"
 	OLDIFS=$IFS
 	IFS=:
 	for path in $PATH
@@ -1405,65 +1405,65 @@ then
 		done
 	done
 	IFS=$OLDIFS
-	PATH=$GIT_VALGRIND/bin:$PATH
-	GIT_EXEC_PATH=$GIT_VALGRIND/bin
-	export GIT_VALGRIND
-	GIT_VALGRIND_MODE="$valgrind"
-	export GIT_VALGRIND_MODE
-	GIT_VALGRIND_ENABLED=t
-	test -n "$valgrind_only" && GIT_VALGRIND_ENABLED=
-	export GIT_VALGRIND_ENABLED
-elif test -n "$GIT_TEST_INSTALLED"
+	PATH=$BUT_VALGRIND/bin:$PATH
+	BUT_EXEC_PATH=$BUT_VALGRIND/bin
+	export BUT_VALGRIND
+	BUT_VALGRIND_MODE="$valgrind"
+	export BUT_VALGRIND_MODE
+	BUT_VALGRIND_ENABLED=t
+	test -n "$valgrind_only" && BUT_VALGRIND_ENABLED=
+	export BUT_VALGRIND_ENABLED
+elif test -n "$BUT_TEST_INSTALLED"
 then
-	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/but --exec-path)  ||
-	error "Cannot run but from $GIT_TEST_INSTALLED."
-	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR/t/helper:$PATH
-	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+	BUT_EXEC_PATH=$($BUT_TEST_INSTALLED/but --exec-path)  ||
+	error "Cannot run but from $BUT_TEST_INSTALLED."
+	PATH=$BUT_TEST_INSTALLED:$BUT_BUILD_DIR/t/helper:$PATH
+	BUT_EXEC_PATH=${BUT_TEST_EXEC_PATH:-$BUT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
 	if test -n "$no_bin_wrappers"
 	then
 		with_dashes=t
 	else
-		but_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
+		but_bin_dir="$BUT_BUILD_DIR/bin-wrappers"
 		if ! test -x "$but_bin_dir/but"
 		then
 			if test -z "$with_dashes"
 			then
-				say "$but_bin_dir/but is not executable; using GIT_EXEC_PATH"
+				say "$but_bin_dir/but is not executable; using BUT_EXEC_PATH"
 			fi
 			with_dashes=t
 		fi
 		PATH="$but_bin_dir:$PATH"
 	fi
-	GIT_EXEC_PATH=$GIT_BUILD_DIR
+	BUT_EXEC_PATH=$BUT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
-		PATH="$GIT_BUILD_DIR:$GIT_BUILD_DIR/t/helper:$PATH"
+		PATH="$BUT_BUILD_DIR:$BUT_BUILD_DIR/t/helper:$PATH"
 	fi
 fi
-GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
-GIT_CONFIG_NOSYSTEM=1
-GIT_ATTR_NOSYSTEM=1
-GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
-export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_CEILING_DIRECTORIES
+BUT_TEMPLATE_DIR="$BUT_BUILD_DIR"/templates/blt
+BUT_CONFIG_NOSYSTEM=1
+BUT_ATTR_NOSYSTEM=1
+BUT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
+export PATH BUT_EXEC_PATH BUT_TEMPLATE_DIR BUT_CONFIG_NOSYSTEM BUT_ATTR_NOSYSTEM BUT_CEILING_DIRECTORIES
 
-if test -z "$GIT_TEST_CMP"
+if test -z "$BUT_TEST_CMP"
 then
-	if test -n "$GIT_TEST_CMP_USE_COPIED_CONTEXT"
+	if test -n "$BUT_TEST_CMP_USE_COPIED_CONTEXT"
 	then
-		GIT_TEST_CMP="$DIFF -c"
+		BUT_TEST_CMP="$DIFF -c"
 	else
-		GIT_TEST_CMP="$DIFF -u"
+		BUT_TEST_CMP="$DIFF -u"
 	fi
 fi
 
-GITPERLLIB="$GIT_BUILD_DIR"/perl/build/lib
-export GITPERLLIB
-test -d "$GIT_BUILD_DIR"/templates/blt || {
+BUTPERLLIB="$BUT_BUILD_DIR"/perl/build/lib
+export BUTPERLLIB
+test -d "$BUT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
-if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool$X
+if ! test -x "$BUT_BUILD_DIR"/t/helper/test-tool$X
 then
 	echo >&2 'You need to build test-tool:'
 	echo >&2 'Run "make t/helper/test-tool" in the source (toplevel) directory'
@@ -1474,7 +1474,7 @@ fi
 remove_trash=
 this_test=${0##*/}
 this_test=${this_test%%-*}
-if match_pattern_list "$this_test" "$GIT_SKIP_TESTS"
+if match_pattern_list "$this_test" "$BUT_SKIP_TESTS"
 then
 	say_color info >&3 "skipping test $this_test altogether"
 	skip_all="skip all tests in $this_test"
@@ -1484,7 +1484,7 @@ fi
 # skip non-whitelisted tests when compiled with SANITIZE=leak
 if test -n "$SANITIZE_LEAK"
 then
-	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+	if test_bool_env BUT_TEST_PASSING_SANITIZE_LEAK false
 	then
 		# We need to see it in "but env--helper" (via
 		# test_bool_env)
@@ -1492,13 +1492,13 @@ then
 
 		if ! test_bool_env TEST_PASSES_SANITIZE_LEAK false
 		then
-			skip_all="skipping $this_test under GIT_TEST_PASSING_SANITIZE_LEAK=true"
+			skip_all="skipping $this_test under BUT_TEST_PASSING_SANITIZE_LEAK=true"
 			test_done
 		fi
 	fi
-elif test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+elif test_bool_env BUT_TEST_PASSING_SANITIZE_LEAK false
 then
-	BAIL_OUT "GIT_TEST_PASSING_SANITIZE_LEAK=true has no effect except when compiled with SANITIZE=leak"
+	BAIL_OUT "BUT_TEST_PASSING_SANITIZE_LEAK=true has no effect except when compiled with SANITIZE=leak"
 fi
 
 # Last-minute variable setup
@@ -1521,7 +1521,7 @@ remove_trash_directory () {
 
 # Test repository
 remove_trash_directory "$TRASH_DIRECTORY" || {
-	GIT_EXIT_OK=t
+	BUT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
@@ -1550,9 +1550,9 @@ then
 		date +%Y-%m-%dT%H:%M:%S)\""
 	write_junit_xml --truncate "<testsuites>" "  <testsuite $junit_attrs>"
 	junit_suite_start=$(test-tool date getnanos)
-	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+	if test -n "$BUT_TEST_TEE_OUTPUT_FILE"
 	then
-		GIT_TEST_TEE_OFFSET=0
+		BUT_TEST_TEE_OFFSET=0
 	fi
 fi
 
@@ -1590,22 +1590,22 @@ yes () {
 	done
 }
 
-# The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
+# The BUT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
 # thus needs to be set up really early, and set an internal variable
 # for convenience so the hot test_set_prereq() codepath doesn't need
 # to call "but env--helper" (via test_bool_env). Only do that work
-# if needed by seeing if GIT_TEST_FAIL_PREREQS is set at all.
-GIT_TEST_FAIL_PREREQS_INTERNAL=
-if test -n "$GIT_TEST_FAIL_PREREQS"
+# if needed by seeing if BUT_TEST_FAIL_PREREQS is set at all.
+BUT_TEST_FAIL_PREREQS_INTERNAL=
+if test -n "$BUT_TEST_FAIL_PREREQS"
 then
-	if test_bool_env GIT_TEST_FAIL_PREREQS false
+	if test_bool_env BUT_TEST_FAIL_PREREQS false
 	then
-		GIT_TEST_FAIL_PREREQS_INTERNAL=true
+		BUT_TEST_FAIL_PREREQS_INTERNAL=true
 		test_set_prereq FAIL_PREREQS
 	fi
 else
 	test_lazy_prereq FAIL_PREREQS '
-		test_bool_env GIT_TEST_FAIL_PREREQS false
+		test_bool_env BUT_TEST_FAIL_PREREQS false
 	'
 fi
 
@@ -1632,7 +1632,7 @@ case $uname_s in
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	test_set_prereq WINDOWS
-	GIT_TEST_CMP=mingw_test_cmp
+	BUT_TEST_CMP=mingw_test_cmp
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM
@@ -1668,10 +1668,10 @@ test -n "$USE_LIBPCRE2" && test_set_prereq LIBPCRE2
 test -z "$NO_GETTEXT" && test_set_prereq GETTEXT
 test -n "$SANITIZE_LEAK" && test_set_prereq SANITIZE_LEAK
 
-if test -z "$GIT_TEST_CHECK_CACHE_TREE"
+if test -z "$BUT_TEST_CHECK_CACHE_TREE"
 then
-	GIT_TEST_CHECK_CACHE_TREE=true
-	export GIT_TEST_CHECK_CACHE_TREE
+	BUT_TEST_CHECK_CACHE_TREE=true
+	export BUT_TEST_CHECK_CACHE_TREE
 fi
 
 test_lazy_prereq PIPE '
@@ -1724,13 +1724,13 @@ test_lazy_prereq UTF8_NFD_TO_NFC '
 '
 
 test_lazy_prereq AUTOIDENT '
-	sane_unset GIT_AUTHOR_NAME &&
-	sane_unset GIT_AUTHOR_EMAIL &&
-	but var GIT_AUTHOR_IDENT
+	sane_unset BUT_AUTHOR_NAME &&
+	sane_unset BUT_AUTHOR_EMAIL &&
+	but var BUT_AUTHOR_IDENT
 '
 
 test_lazy_prereq EXPENSIVE '
-	test -n "$GIT_TEST_LONG"
+	test -n "$BUT_TEST_LONG"
 '
 
 test_lazy_prereq EXPENSIVE_ON_WINDOWS '
@@ -1746,7 +1746,7 @@ test_lazy_prereq NOT_ROOT '
 	test "$uid" != 0
 '
 
-test_lazy_prereq JGIT '
+test_lazy_prereq JBUT '
 	jbut --version
 '
 
@@ -1781,10 +1781,10 @@ test_lazy_prereq SANITY '
 	return $status
 '
 
-test FreeBSD != $uname_s || GIT_UNZIP=${GIT_UNZIP:-/usr/local/bin/unzip}
-GIT_UNZIP=${GIT_UNZIP:-unzip}
+test FreeBSD != $uname_s || BUT_UNZIP=${BUT_UNZIP:-/usr/local/bin/unzip}
+BUT_UNZIP=${BUT_UNZIP:-unzip}
 test_lazy_prereq UNZIP '
-	"$GIT_UNZIP" -v
+	"$BUT_UNZIP" -v
 	test $? -ne 127
 '
 
@@ -1839,7 +1839,7 @@ test_lazy_prereq CURL '
 # which will not work with other hash algorithms and tests that work but don't
 # test anything meaningful (e.g. special values which cause short collisions).
 test_lazy_prereq SHA1 '
-	case "$GIT_DEFAULT_HASH" in
+	case "$BUT_DEFAULT_HASH" in
 	sha1) true ;;
 	"") test $(but hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 ;;
 	*) false ;;
@@ -1851,7 +1851,7 @@ test_lazy_prereq SHA1 '
 # system permanently.
 # Tests that verify the scheduler integration must set this locally
 # to avoid errors.
-GIT_TEST_MAINT_SCHEDULER="none:exit 1"
+BUT_TEST_MAINT_SCHEDULER="none:exit 1"
 
 # Does this platform support `but fsmonitor--daemon`
 #

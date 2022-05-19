@@ -149,8 +149,8 @@ release, unless otherwise noted.
  * "but rebase -i" showed a confusing error message when given a
    branch name that does not exist.
 
- * "but repack" places its temporary packs under $GIT_OBJECT_DIRECTORY/pack
-   instead of $GIT_OBJECT_DIRECTORY/ to avoid cross directory renames.
+ * "but repack" places its temporary packs under $BUT_OBJECT_DIRECTORY/pack
+   instead of $BUT_OBJECT_DIRECTORY/ to avoid cross directory renames.
 
  * "but submodule update --recursive --other-flags" passes flags down
    to its subinvocations.

@@ -132,6 +132,6 @@ Document] and link:technical/pack-format.html[The Multi-Pack-Index
 Format] for more information on the multi-pack-index feature.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

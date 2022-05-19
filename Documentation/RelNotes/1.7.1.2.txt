@@ -4,7 +4,7 @@ Git v1.7.1.2 Release Notes
 Fixes since v1.7.1.1
 --------------------
 
- * "but cummit" did not honor GIT_REFLOG_ACTION environment variable, resulting
+ * "but cummit" did not honor BUT_REFLOG_ACTION environment variable, resulting
    reflog messages for cherry-pick and revert actions to be recorded as "cummit".
 
  * "but clone/fetch/pull" issued an incorrect error message when a ref and

@@ -48,6 +48,6 @@ for objects that are not deltified in the pack, and
 
 for objects that are deltified.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

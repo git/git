@@ -2,8 +2,8 @@
 
 test_description='.mailmap configurations'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -18,18 +18,18 @@ test_expect_success 'check-mailmap no arguments' '
 
 test_expect_success 'check-mailmap arguments' '
 	cat >expect <<-EOF &&
-	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 	but check-mailmap \
-		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" \
+		"$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>" \
 		"nick1 <bugs@company.xx>" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'check-mailmap --stdin' '
 	cat >expect <<-EOF &&
-	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 	but check-mailmap --stdin <expect >actual &&
@@ -39,7 +39,7 @@ test_expect_success 'check-mailmap --stdin' '
 test_expect_success 'check-mailmap --stdin arguments: no mapping' '
 	test_when_finished "rm contacts" &&
 	cat >contacts <<-EOF &&
-	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 	cat >expect <<-\EOF &&
@@ -55,10 +55,10 @@ test_expect_success 'check-mailmap --stdin arguments: no mapping' '
 test_expect_success 'check-mailmap --stdin arguments: mapping' '
 	test_when_finished "rm .mailmap" &&
 	cat >.mailmap <<-EOF &&
-	New Name <$GIT_AUTHOR_EMAIL>
+	New Name <$BUT_AUTHOR_EMAIL>
 	EOF
 	cat >stdin <<-EOF &&
-	Old Name <$GIT_AUTHOR_EMAIL>
+	Old Name <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	cp .mailmap expect &&
@@ -66,7 +66,7 @@ test_expect_success 'check-mailmap --stdin arguments: mapping' '
 	test_cmp expect actual &&
 
 	cat .mailmap >>expect &&
-	but check-mailmap --stdin "Another Old Name <$GIT_AUTHOR_EMAIL>" \
+	but check-mailmap --stdin "Another Old Name <$BUT_AUTHOR_EMAIL>" \
 		<stdin >actual &&
 	test_cmp expect actual
 '
@@ -81,7 +81,7 @@ test_expect_success 'check-mailmap bogus contact --stdin' '
 
 test_expect_success 'No mailmap' '
 	cat >expect <<-EOF &&
-	$GIT_AUTHOR_NAME (1):
+	$BUT_AUTHOR_NAME (1):
 	      initial
 
 	nick1 (1):
@@ -94,7 +94,7 @@ test_expect_success 'No mailmap' '
 
 test_expect_success 'setup default .mailmap' '
 	cat >default.map <<-EOF
-	Repo Guy <$GIT_AUTHOR_EMAIL>
+	Repo Guy <$BUT_AUTHOR_EMAIL>
 	EOF
 '
 
@@ -151,7 +151,7 @@ test_expect_success 'mailmap.file override' '
 	test_config mailmap.file internal.map &&
 	cat >internal.map <<-EOF &&
 	Internal Guy <bugs@company.xx>
-	External Guy <$GIT_AUTHOR_EMAIL>
+	External Guy <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	cat >expect <<-\EOF &&
@@ -244,7 +244,7 @@ test_expect_success 'name entry after email entry, case-insensitive' '
 
 test_expect_success 'No mailmap files, but configured' '
 	cat >expect <<-EOF &&
-	$GIT_AUTHOR_NAME (1):
+	$BUT_AUTHOR_NAME (1):
 	      initial
 
 	nick1 (1):
@@ -262,15 +262,15 @@ test_expect_success 'setup mailmap blob tests' '
 	Blob Guy <bugs@company.xx>
 	EOF
 	cat >both <<-EOF &&
-	Blob Guy <$GIT_AUTHOR_EMAIL>
+	Blob Guy <$BUT_AUTHOR_EMAIL>
 	Blob Guy <bugs@company.xx>
 	EOF
-	printf "Tricky Guy <$GIT_AUTHOR_EMAIL>" >no-newline &&
+	printf "Tricky Guy <$BUT_AUTHOR_EMAIL>" >no-newline &&
 	but add just-bugs both no-newline &&
 	but cummit -m "my mailmaps" &&
 
 	cat >internal.map <<-EOF
-	Internal Guy <$GIT_AUTHOR_EMAIL>
+	Internal Guy <$BUT_AUTHOR_EMAIL>
 	EOF
 '
 
@@ -368,7 +368,7 @@ test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
 	but init non-bare &&
 	(
 		cd non-bare &&
-		test_cummit one .mailmap "Fake Name <$GIT_AUTHOR_EMAIL>" &&
+		test_cummit one .mailmap "Fake Name <$BUT_AUTHOR_EMAIL>" &&
 		cat >expect <<-\EOF &&
 		     1	Fake Name
 		EOF
@@ -376,7 +376,7 @@ test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
 		test_cmp expect actual &&
 		rm .mailmap &&
 		cat >expect <<-EOF &&
-		     1	$GIT_AUTHOR_NAME
+		     1	$BUT_AUTHOR_NAME
 		EOF
 		but shortlog -ns HEAD >actual &&
 		test_cmp expect actual
@@ -411,11 +411,11 @@ test_expect_success 'mailmap.blob can handle blobs without trailing newline' '
 test_expect_success 'single-character name' '
 	test_when_finished "rm .mailmap" &&
 	cat >.mailmap <<-EOF &&
-	A <$GIT_AUTHOR_EMAIL>
+	A <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	cat >expect <<-EOF &&
-	     1	A <$GIT_AUTHOR_EMAIL>
+	     1	A <$BUT_AUTHOR_EMAIL>
 	     1	nick1 <bugs@company.xx>
 	EOF
 	but shortlog -es HEAD >actual &&
@@ -425,11 +425,11 @@ test_expect_success 'single-character name' '
 test_expect_success 'preserve canonical email case' '
 	test_when_finished "rm .mailmap" &&
 	cat >.mailmap <<-EOF &&
-	<AUTHOR@example.com> <$GIT_AUTHOR_EMAIL>
+	<AUTHOR@example.com> <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	cat >expect <<-EOF &&
-	     1	$GIT_AUTHOR_NAME <AUTHOR@example.com>
+	     1	$BUT_AUTHOR_NAME <AUTHOR@example.com>
 	     1	nick1 <bugs@company.xx>
 	EOF
 	but shortlog -es HEAD >actual &&
@@ -527,7 +527,7 @@ test_expect_success 'butmailmap(5) example output: example #3' '
 test_expect_success 'Shortlog output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 	cat >complex.map <<-EOF &&
-	cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitted <$BUT_CUMMITTER_EMAIL>
 	<cto@company.xx> <cto@coompany.xx>
 	Some Dude <some@dude.xx>         nick1 <bugs@company.xx>
 	Other Author <other@author.xx>   nick2 <bugs@company.xx>
@@ -542,7 +542,7 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	test_cummit --author "CTO <cto@coompany.xx>" --append seventh one seven &&
 
 	cat >expect <<-EOF &&
-	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> (1):
+	$BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL> (1):
 	      initial
 
 	CTO <cto@company.xx> (1):
@@ -571,25 +571,25 @@ test_expect_success 'Log output (complex mapping)' '
 
 	cat >expect <<-EOF &&
 	Author CTO <cto@coompany.xx> maps to CTO <cto@company.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
 	Author claus <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
 	Author santa <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
 	Author nick2 <nick2@company.xx> maps to Other Author <other@author.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
 	Author nick2 <bugs@company.xx> maps to Other Author <other@author.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
 	Author nick1 <bugs@company.xx> maps to Some Dude <some@dude.xx>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 
-	Author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> maps to $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-	cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> maps to cummitted <$GIT_CUMMITTER_EMAIL>
+	Author $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL> maps to $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
+	cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> maps to cummitted <$BUT_CUMMITTER_EMAIL>
 	EOF
 
 	but log --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
@@ -599,25 +599,25 @@ test_expect_success 'Log output (complex mapping)' '
 test_expect_success 'Log output (local-part email address)' '
 	cat >expect <<-EOF &&
 	Author email cto@coompany.xx has local-part cto
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email nick2@company.xx has local-part nick2
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 
 	Author email author@example.com has local-part author
-	cummitter email $GIT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
+	cummitter email $BUT_CUMMITTER_EMAIL has local-part $TEST_CUMMITTER_LOCALNAME
 	EOF
 
 	but log --pretty=format:"Author email %ae has local-part %al%ncummitter email %ce has local-part %cl%n" >actual &&
@@ -634,7 +634,7 @@ test_expect_success 'Log output with --use-mailmap' '
 	Author: Other Author <other@author.xx>
 	Author: Other Author <other@author.xx>
 	Author: Some Dude <some@dude.xx>
-	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	but log --use-mailmap >log &&
@@ -652,7 +652,7 @@ test_expect_success 'Log output with log.mailmap' '
 	Author: Other Author <other@author.xx>
 	Author: Other Author <other@author.xx>
 	Author: Some Dude <some@dude.xx>
-	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	EOF
 
 	but -c log.mailmap=True log >log &&
@@ -668,7 +668,7 @@ test_expect_success 'log.mailmap=false disables mailmap' '
 	Author: nick2 <nick2@company.xx>
 	Author: nick2 <bugs@company.xx>
 	Author: nick1 <bugs@company.xx>
-	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	EOF
 	but -c log.mailmap=false log >log &&
 	grep Author log >actual &&
@@ -683,7 +683,7 @@ test_expect_success '--no-use-mailmap disables mailmap' '
 	Author: nick2 <nick2@company.xx>
 	Author: nick2 <bugs@company.xx>
 	Author: nick1 <bugs@company.xx>
-	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+	Author: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>
 	EOF
 	but log --no-use-mailmap >log &&
 	grep Author log >actual &&

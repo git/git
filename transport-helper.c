@@ -136,7 +136,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	if (have_but_dir())
 		strvec_pushf(&helper->env_array, "%s=%s",
-			     GIT_DIR_ENVIRONMENT, get_but_dir());
+			     BUT_DIR_ENVIRONMENT, get_but_dir());
 
 	helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
@@ -1227,7 +1227,7 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 			const char *value;
 			if (skip_prefix(buf.buf, ":object-format ", &value)) {
 				int algo = hash_algo_by_name(value);
-				if (algo == GIT_HASH_UNKNOWN)
+				if (algo == BUT_HASH_UNKNOWN)
 					die(_("unsupported object format '%s'"),
 					    value);
 				transport->hash_algo = &hash_algos[algo];
@@ -1283,7 +1283,7 @@ int transport_helper_init(struct transport *transport, const char *name)
 
 	transport_check_allowed(name);
 
-	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
+	if (getenv("BUT_TRANSPORT_HELPER_DEBUG"))
 		debug = 1;
 
 	transport->data = data;
@@ -1316,7 +1316,7 @@ static void transfer_debug(const char *fmt, ...)
 	static int debug_enabled = -1;
 
 	if (debug_enabled < 0)
-		debug_enabled = getenv("GIT_TRANSLOOP_DEBUG") ? 1 : 0;
+		debug_enabled = getenv("BUT_TRANSLOOP_DEBUG") ? 1 : 0;
 	if (!debug_enabled)
 		return;
 

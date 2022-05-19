@@ -41,7 +41,7 @@ static int server_supports_filtering;
 static int advertise_sid;
 static struct shallow_lock shallow_lock;
 static const char *alternate_shallow_file;
-static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
+static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_BUTMODULES;
 static struct strbuf fsck_msg_types = STRBUF_INIT;
 static struct string_list uri_protocols = STRING_LIST_INIT_DUP;
 
@@ -821,7 +821,7 @@ static void parse_butmodules_oids(int fd, struct oidset *butmodules_oids)
 	int len = the_hash_algo->hexsz + 1; /* hash + NL */
 
 	do {
-		char hex_hash[GIT_MAX_HEXSZ + 1];
+		char hex_hash[BUT_MAX_HEXSZ + 1];
 		int read_len = read_in_full(fd, hex_hash, len);
 		struct object_id oid;
 		const char *end;
@@ -1271,7 +1271,7 @@ static void write_fetch_command_and_capabilities(struct strbuf *req_buf,
 			die(_("mismatched algorithms: client %s; server %s"),
 			    the_hash_algo->name, hash_name);
 		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
-	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1) {
+	} else if (hash_algo_by_ptr(the_hash_algo) != BUT_HASH_SHA1) {
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
 	}
@@ -1604,7 +1604,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
-	if (but_env_bool("GIT_TEST_SIDEBAND_ALL", 1) &&
+	if (but_env_bool("BUT_TEST_SIDEBAND_ALL", 1) &&
 	    server_supports_feature("fetch", "sideband-all", 0)) {
 		reader.use_sideband = 1;
 		reader.me = "fetch-pack";
@@ -1682,7 +1682,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				receive_wanted_refs(&reader, sought, nr_sought);
 
 			/* get the pack(s) */
-			if (but_env_bool("GIT_TRACE_REDACT", 1))
+			if (but_env_bool("BUT_TRACE_REDACT", 1))
 				reader.options |= PACKET_READ_REDACT_URI_PATH;
 			if (process_section_header(&reader, "packfile-uris", 1))
 				receive_packfile_uris(&reader, &packfile_uris);
@@ -1715,7 +1715,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	for (i = 0; i < packfile_uris.nr; i++) {
 		int j;
 		struct child_process cmd = CHILD_PROCESS_INIT;
-		char packname[GIT_MAX_HEXSZ + 1];
+		char packname[BUT_MAX_HEXSZ + 1];
 		const char *uri = packfile_uris.items[i].string +
 			the_hash_algo->hexsz + 1;
 

@@ -31,6 +31,6 @@ No promises are made about the interface, or that this
 program won't disappear without warning in the next version
 of Git. Don't use it.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

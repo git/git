@@ -38,7 +38,7 @@ Fixes since v2.2.1
    option, which it does not.
 
  * Traditionally we tried to avoid interpreting date strings given by
-   the user as future dates, e.g. GIT_CUMMITTER_DATE=2014-12-10 when
+   the user as future dates, e.g. BUT_CUMMITTER_DATE=2014-12-10 when
    used early November 2014 was taken as "October 12, 2014" because it
    is likely that a date in the future, December 10, is a mistake.
    This heuristics has been loosened to allow people to express future

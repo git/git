@@ -10,7 +10,7 @@ linkbut:but-diff-tree[1], or
 linkbut:but-diff-files[1]
 with the `-p` option produces patch text.
 You can customize the creation of patch text via the
-`GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables
+`BUT_EXTERNAL_DIFF` and the `BUT_DIFF_OPTS` environment variables
 (see linkbut:but[1]), and the `diff` attribute (see linkbut:butattributes[5]).
 
 What the -p option produces is slightly different from the traditional

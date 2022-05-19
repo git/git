@@ -2,8 +2,8 @@
 
 test_description='blob conversion via butattributes'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -287,7 +287,7 @@ test_expect_success 'filtering large input to small output should use little mem
 	test_config filter.devnull.required true &&
 	for i in $(test_seq 1 30); do printf "%1048576d" 1 || return 1; done >30MB &&
 	echo "30MB filter=devnull" >.butattributes &&
-	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m but add 30MB
+	BUT_MMAP_LIMIT=1m BUT_ALLOC_LIMIT=1m but add 30MB
 '
 
 test_expect_success 'filter that does not read is fine' '
@@ -1092,8 +1092,8 @@ test_delayed_checkout_progress () {
 
 	(
 		cd progress &&
-		GIT_PROGRESS_DELAY=0 &&
-		export GIT_PROGRESS_DELAY &&
+		BUT_PROGRESS_DELAY=0 &&
+		export BUT_PROGRESS_DELAY &&
 		rm -f *.a delay-progress.log &&
 
 		"$@" 2>err &&

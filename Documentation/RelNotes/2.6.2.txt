@@ -12,7 +12,7 @@ Fixes since v2.6.1
 
  * Performance-measurement tests did not work without an installed Git.
 
- * On a case insensitive filesystems, setting GIT_WORK_TREE variable
+ * On a case insensitive filesystems, setting BUT_WORK_TREE variable
    using a random cases that does not agree with what the filesystem
    thinks confused Git that it wasn't inside the working tree.
 
@@ -48,7 +48,7 @@ Fixes since v2.6.1
    line options.
 
  * The ssh transport, just like any other transport over the network,
-   did not clear GIT_* environment variables, but it is possible to
+   did not clear BUT_* environment variables, but it is possible to
    use SendEnv and AcceptEnv to leak them to the remote invocation of
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.

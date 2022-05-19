@@ -74,7 +74,7 @@ test_expect_success '1a-L: Modify(A)/Modify(B), change on B subset of A' '
 
 		test-tool chmtime --get -3600 b >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -103,7 +103,7 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 		but checkout B^0 &&
 
 		test-tool chmtime --get -3600 b >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure b WAS updated
 		test-tool chmtime --get b >new-mtime &&
@@ -170,7 +170,7 @@ test_expect_success '2a-L: Modify/rename, merge into modify side' '
 		but checkout A^0 &&
 
 		test_path_is_missing c &&
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_path_is_file c &&
 
@@ -198,7 +198,7 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 		but checkout B^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure c WAS updated
 		test-tool chmtime --get c >new-mtime &&
@@ -265,7 +265,7 @@ test_expect_success '2b-L: Rename+Mod(A)/Mod(B), B mods subset of A' '
 		but checkout A^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -297,7 +297,7 @@ test_expect_success '2b-R: Rename+Mod(A)/Mod(B), B mods subset of A' '
 		but checkout B^0 &&
 
 		test_path_is_missing c &&
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive A^0 >out 2>err &&
 
 		# Make sure c now present (and thus was updated)
 		test_path_is_file c &&
@@ -371,8 +371,8 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 		but checkout A^0 &&
 
 		test-tool chmtime --get -3600 c >old-mtime &&
-		GIT_MERGE_VERBOSITY=3 &&
-		export GIT_MERGE_VERBOSITY &&
+		BUT_MERGE_VERBOSITY=3 &&
+		export BUT_MERGE_VERBOSITY &&
 		test_must_fail but merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep "CONFLICT (.*/add):" out &&
@@ -474,7 +474,7 @@ test_expect_success '3a-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		but checkout A^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -506,7 +506,7 @@ test_expect_success '3a-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		but checkout B^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -574,7 +574,7 @@ test_expect_success '3b-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		but checkout A^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -606,7 +606,7 @@ test_expect_success '3b-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 		but checkout B^0 &&
 
 		test_path_is_missing bar/bq &&
-		GIT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -685,7 +685,7 @@ test_expect_merge_algorithm failure success '4a: Change on A, change on B subset
 
 		test-tool chmtime --get -3600 b >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 
@@ -752,7 +752,7 @@ test_expect_success '4b: Rename+Mod(A)/Mod(B), change on B subset of A, dirty mo
 
 		test-tool chmtime --get -3600 c >old-mtime &&
 
-		GIT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
+		BUT_MERGE_VERBOSITY=3 but merge -s recursive B^0 >out 2>err &&
 
 		test_must_be_empty err &&
 

@@ -143,6 +143,6 @@ $ but rev-parse HEAD | but cummit-graph write --stdin-cummits --append
 ------------------------------------------------
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

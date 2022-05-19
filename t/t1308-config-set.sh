@@ -244,16 +244,16 @@ test_expect_success 'iteration shows correct origins' '
 	if test_have_prereq MINGW
 	then
 		# Use Windows path (i.e. *not* $HOME)
-		HOME_GITCONFIG=$(pwd)/.butconfig
+		HOME_BUTCONFIG=$(pwd)/.butconfig
 	else
 		# Do not get fooled by symbolic links, i.e. $HOME != $(pwd)
-		HOME_GITCONFIG=$HOME/.butconfig
+		HOME_BUTCONFIG=$HOME/.butconfig
 	fi &&
 	cat >expect <<-EOF &&
 	key=foo.bar
 	value=from-home
 	origin=file
-	name=$HOME_GITCONFIG
+	name=$HOME_BUTCONFIG
 	lno=2
 	scope=global
 
@@ -278,7 +278,7 @@ test_expect_success 'iteration shows correct origins' '
 	lno=-1
 	scope=command
 	EOF
-	GIT_CONFIG_PARAMETERS=$cmdline_config test-tool config iterate >actual &&
+	BUT_CONFIG_PARAMETERS=$cmdline_config test-tool config iterate >actual &&
 	test_cmp expect actual
 '
 

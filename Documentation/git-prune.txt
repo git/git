@@ -84,6 +84,6 @@ linkbut:but-fsck[1],
 linkbut:but-gc[1],
 linkbut:but-reflog[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

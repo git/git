@@ -101,8 +101,8 @@ test_expect_success 'but diff, one file outside repo' '
 
 test_expect_success 'but diff, both files outside repo' '
 	(
-		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd test-outside/non/but &&
 		test_expect_code 0 but diff --quiet a matching-file &&
 		test_expect_code 1 but diff --quiet a extra-space
@@ -119,8 +119,8 @@ test_expect_success 'but diff --ignore-space-at-eol, one file outside repo' '
 
 test_expect_success 'but diff --ignore-space-at-eol, both files outside repo' '
 	(
-		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd test-outside/non/but &&
 		test_expect_code 0 but diff --quiet --ignore-space-at-eol a trailing-space &&
 		test_expect_code 1 but diff --quiet --ignore-space-at-eol a extra-space
@@ -138,8 +138,8 @@ test_expect_success 'but diff --ignore-all-space, one file outside repo' '
 
 test_expect_success 'but diff --ignore-all-space, both files outside repo' '
 	(
-		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/test-outside" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd test-outside/non/but &&
 		test_expect_code 0 but diff --quiet --ignore-all-space a trailing-space &&
 		test_expect_code 0 but diff --quiet --ignore-all-space a extra-space &&

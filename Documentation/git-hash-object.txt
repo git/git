@@ -58,6 +58,6 @@ OPTIONS
 	stress-testing Git itself or reproducing characteristics of corrupt or
 	bogus objects encountered in the wild.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

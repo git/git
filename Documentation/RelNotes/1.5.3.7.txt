@@ -1,4 +1,4 @@
-GIT v1.5.3.7 Release Notes
+BUT v1.5.3.7 Release Notes
 ==========================
 
 Fixes since v1.5.3.6
@@ -26,7 +26,7 @@ Fixes since v1.5.3.6
    contents, and the previous staging made the index entry
    "racily clean".
 
- * but-cummit did not honor GIT_INDEX_FILE the user had in the
+ * but-cummit did not honor BUT_INDEX_FILE the user had in the
    environment.
 
  * When checking out a revision, but-checkout did not report where the

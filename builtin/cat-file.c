@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */
@@ -650,7 +650,7 @@ static void batch_objects_command(struct batch_options *opt,
 
 	if (opt->buffer_output &&
 	    nr &&
-	    !but_env_bool("GIT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT", 0)) {
+	    !but_env_bool("BUT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT", 0)) {
 		dispatch_calls(opt, output, data, queued_cmd, nr);
 		free_cmds(queued_cmd, &nr);
 	}

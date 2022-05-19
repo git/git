@@ -266,7 +266,7 @@ test_expect_success 'no phantom error when switching trees' '
 
 test_expect_success 'switching trees does not invalidate shared index' '
 	(
-		sane_unset GIT_TEST_SPLIT_INDEX &&
+		sane_unset BUT_TEST_SPLIT_INDEX &&
 		but update-index --split-index &&
 		>split &&
 		but add split &&

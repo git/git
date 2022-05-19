@@ -45,10 +45,10 @@ cat >.vscode/settings.json.new <<\EOF ||
         "HEXSZ",
         "HKEY",
         "HKLM",
-        "IFGITLINK",
+        "IFBUTLINK",
         "IFINVALID",
         "ISBROKEN",
-        "ISGITLINK",
+        "ISBUTLINK",
         "ISSYMREF",
         "Junio",
         "LPDWORD",
@@ -297,18 +297,18 @@ vscode-init:
 	@mkdir -p .vscode && \
 	incs= && defs= && \
 	for e in $(ALL_CFLAGS) \
-			'-DGIT_EXEC_PATH="$(butexecdir_SQ)"' \
-			'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+			'-DBUT_EXEC_PATH="$(butexecdir_SQ)"' \
+			'-DBUT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 			'-DBINDIR="$(bindir_relative_SQ)"' \
 			'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"' \
-			'-DDEFAULT_GIT_TEMPLATE_DIR="$(template_dir_SQ)"' \
-			'-DETC_GITCONFIG="$(ETC_GITCONFIG_SQ)"' \
-			'-DETC_GITATTRIBUTES="$(ETC_GITATTRIBUTES_SQ)"' \
-			'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+			'-DDEFAULT_BUT_TEMPLATE_DIR="$(template_dir_SQ)"' \
+			'-DETC_BUTCONFIG="$(ETC_BUTCONFIG_SQ)"' \
+			'-DETC_BUTATTRIBUTES="$(ETC_BUTATTRIBUTES_SQ)"' \
+			'-DBUT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 			'-DCURL_DISABLE_TYPECHECK', \
-			'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
-			'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
-			'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'; do \
+			'-DBUT_HTML_PATH="$(htmldir_relative_SQ)"' \
+			'-DBUT_MAN_PATH="$(mandir_relative_SQ)"' \
+			'-DBUT_INFO_PATH="$(infodir_relative_SQ)"'; do \
 		case "$$e" in \
 		-I.) \
 			incs="$$(printf '% 16s"$${workspaceRoot}",\n%s' \

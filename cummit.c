@@ -194,7 +194,7 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 		return -1;
 	if (!no_graft_file_deprecated_advice &&
 	    advice_enabled(ADVICE_GRAFT_FILE_DEPRECATED))
-		advise(_("Support for <GIT_DIR>/info/grafts is deprecated\n"
+		advise(_("Support for <BUT_DIR>/info/grafts is deprecated\n"
 			 "and will be removed in a future Git version.\n"
 			 "\n"
 			 "Please use \"but replace --convert-graft-file\"\n"
@@ -1143,7 +1143,7 @@ int remove_signature(struct strbuf *buf)
 			sigp->end = next;
 		else if (starts_with(line, "gpgsig")) {
 			int i;
-			for (i = 1; i < GIT_HASH_NALGOS; i++) {
+			for (i = 1; i < BUT_HASH_NALGOS; i++) {
 				const char *p;
 				if (skip_prefix(line, gpg_sig_headers[i], &p) &&
 				    *p == ' ') {
@@ -1238,7 +1238,7 @@ int check_cummit_signature(const struct cummit *cummit, struct signature_check *
 void verify_merge_signature(struct cummit *cummit, int verbosity,
 			    int check_trust)
 {
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	struct signature_check signature_check;
 	int ret;
 	memset(&signature_check, 0, sizeof(signature_check));
@@ -1729,13 +1729,13 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 	va_list args;
 	const char *arg;
 
-	strvec_pushf(&opt.env, "GIT_INDEX_FILE=%s", index_file);
+	strvec_pushf(&opt.env, "BUT_INDEX_FILE=%s", index_file);
 
 	/*
 	 * Let the hook know that no editor will be launched.
 	 */
 	if (!editor_is_used)
-		strvec_push(&opt.env, "GIT_EDITOR=:");
+		strvec_push(&opt.env, "BUT_EDITOR=:");
 
 	va_start(args, name);
 	while ((arg = va_arg(args, const char *)))

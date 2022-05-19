@@ -236,11 +236,11 @@ static void process_capabilities(struct packet_reader *reader, int *linelen)
 	if (feat_val) {
 		char *hash_name = xstrndup(feat_val, feat_len);
 		int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo != GIT_HASH_UNKNOWN)
+		if (hash_algo != BUT_HASH_UNKNOWN)
 			reader->hash_algo = &hash_algos[hash_algo];
 		free(hash_name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[BUT_HASH_SHA1];
 	}
 }
 
@@ -495,12 +495,12 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo == GIT_HASH_UNKNOWN)
+		if (hash_algo == BUT_HASH_UNKNOWN)
 			die(_("unknown object format '%s' specified by server"), hash_name);
 		reader->hash_algo = &hash_algos[hash_algo];
 		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[BUT_HASH_SHA1];
 	}
 
 	if (server_options && server_options->nr &&
@@ -593,7 +593,7 @@ int server_supports_hash(const char *desired, int *feature_supported)
 	if (feature_supported)
 		*feature_supported = !!hash;
 	if (!hash) {
-		hash = hash_algos[GIT_HASH_SHA1].name;
+		hash = hash_algos[BUT_HASH_SHA1].name;
 		len = strlen(hash);
 	}
 	while (hash) {
@@ -629,7 +629,7 @@ enum protocol {
 	PROTO_LOCAL = 1,
 	PROTO_FILE,
 	PROTO_SSH,
-	PROTO_GIT
+	PROTO_BUT
 };
 
 int url_is_local_not_ssh(const char *url)
@@ -648,7 +648,7 @@ static const char *prot_name(enum protocol protocol)
 			return "file";
 		case PROTO_SSH:
 			return "ssh";
-		case PROTO_GIT:
+		case PROTO_BUT:
 			return "but";
 		default:
 			return "unknown protocol";
@@ -660,7 +660,7 @@ static enum protocol get_protocol(const char *name)
 	if (!strcmp(name, "ssh"))
 		return PROTO_SSH;
 	if (!strcmp(name, "but"))
-		return PROTO_GIT;
+		return PROTO_BUT;
 	if (!strcmp(name, "but+ssh")) /* deprecated - do not use */
 		return PROTO_SSH;
 	if (!strcmp(name, "ssh+but")) /* deprecated - do not use */
@@ -740,7 +740,7 @@ static int but_tcp_connect_sock(char *host, int flags)
 {
 	struct strbuf error_message = STRBUF_INIT;
 	int sockfd = -1;
-	const char *port = STR(DEFAULT_GIT_PORT);
+	const char *port = STR(DEFAULT_BUT_PORT);
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
 	int cnt = 0;
@@ -810,7 +810,7 @@ static int but_tcp_connect_sock(char *host, int flags)
 {
 	struct strbuf error_message = STRBUF_INIT;
 	int sockfd = -1;
-	const char *port = STR(DEFAULT_GIT_PORT);
+	const char *port = STR(DEFAULT_BUT_PORT);
 	char *ep;
 	struct hostent *he;
 	struct sockaddr_in sa;
@@ -955,14 +955,14 @@ static int but_proxy_command_options(const char *var, const char *value,
 
 static int but_use_proxy(const char *host)
 {
-	but_proxy_command = getenv("GIT_PROXY_COMMAND");
+	but_proxy_command = getenv("BUT_PROXY_COMMAND");
 	but_config(but_proxy_command_options, (void*)host);
 	return (but_proxy_command && *but_proxy_command);
 }
 
 static struct child_process *but_proxy_connect(int fd[2], char *host)
 {
-	const char *port = STR(DEFAULT_GIT_PORT);
+	const char *port = STR(DEFAULT_BUT_PORT);
 	struct child_process *proxy;
 
 	get_host_and_port(&host, &port);
@@ -1061,7 +1061,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	end = path; /* Need to \0 terminate host here */
 	if (separator == ':')
 		path++; /* path starts after ':' */
-	if (protocol == PROTO_GIT || protocol == PROTO_SSH) {
+	if (protocol == PROTO_BUT || protocol == PROTO_SSH) {
 		if (path[1] == '~')
 			path++;
 	}
@@ -1079,7 +1079,7 @@ static const char *get_ssh_command(void)
 {
 	const char *ssh;
 
-	if ((ssh = getenv("GIT_SSH_COMMAND")))
+	if ((ssh = getenv("BUT_SSH_COMMAND")))
 		return ssh;
 
 	if (!but_config_get_string_tmp("core.sshcommand", &ssh))
@@ -1099,7 +1099,7 @@ enum ssh_variant {
 
 static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
-	const char *variant = getenv("GIT_SSH_VARIANT");
+	const char *variant = getenv("BUT_SSH_VARIANT");
 
 	if (!variant && but_config_get_string_tmp("ssh.variant", &variant))
 		return;
@@ -1183,7 +1183,7 @@ static struct child_process *but_connect_but(int fd[2], char *hostandport,
 	 * connect, unless the user has overridden us in
 	 * the environment.
 	 */
-	char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
+	char *target_host = getenv("BUT_OVERRIDE_VIRTUAL_HOST");
 	if (target_host)
 		target_host = xstrdup(target_host);
 	else
@@ -1238,8 +1238,8 @@ static void push_ssh_options(struct strvec *args, struct strvec *env,
 	if (variant == VARIANT_SSH &&
 	    version > 0) {
 		strvec_push(args, "-o");
-		strvec_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
-		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+		strvec_push(args, "SendEnv=" BUT_PROTOCOL_ENVIRONMENT);
+		strvec_pushf(env, BUT_PROTOCOL_ENVIRONMENT "=version=%d",
 			     version);
 	}
 
@@ -1307,13 +1307,13 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 		variant = determine_ssh_variant(ssh, 1);
 	} else {
 		/*
-		 * GIT_SSH is the no-shell version of
-		 * GIT_SSH_COMMAND (and must remain so for
+		 * BUT_SSH is the no-shell version of
+		 * BUT_SSH_COMMAND (and must remain so for
 		 * historical compatibility).
 		 */
 		conn->use_shell = 0;
 
-		ssh = getenv("GIT_SSH");
+		ssh = getenv("BUT_SSH");
 		if (!ssh)
 			ssh = "ssh";
 		variant = determine_ssh_variant(ssh, 0);
@@ -1378,7 +1378,7 @@ struct child_process *but_connect(int fd[2], const char *url,
 		printf("Diag: hostandport=%s\n", hostandport ? hostandport : "NULL");
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		conn = NULL;
-	} else if (protocol == PROTO_GIT) {
+	} else if (protocol == PROTO_BUT) {
 		conn = but_connect_but(fd, hostandport, path, prog, version, flags);
 		conn->trace2_child_class = "transport/but";
 	} else {
@@ -1430,7 +1430,7 @@ struct child_process *but_connect(int fd[2], const char *url,
 			conn->trace2_child_class = "transport/file";
 			if (version > 0) {
 				strvec_pushf(&conn->env_array,
-					     GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+					     BUT_PROTOCOL_ENVIRONMENT "=version=%d",
 					     version);
 			}
 		}

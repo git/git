@@ -271,7 +271,7 @@ proc _reset_wait {fd status_bar_operation} {
 		catch {file delete [butdir MERGE_RR]}
 		catch {file delete [butdir SQUASH_MSG]}
 		catch {file delete [butdir MERGE_MSG]}
-		catch {file delete [butdir GITGUI_MSG]}
+		catch {file delete [butdir BUTGUI_MSG]}
 
 		if {$fail} {
 			warn_popup "[mc "Abort failed."]\n\n$err"

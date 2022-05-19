@@ -225,7 +225,7 @@ int run_command(struct child_process *);
 int run_auto_maintenance(int quiet);
 
 #define RUN_COMMAND_NO_STDIN		(1<<0)
-#define RUN_GIT_CMD			(1<<1)
+#define RUN_BUT_CMD			(1<<1)
 #define RUN_COMMAND_STDOUT_TO_STDERR	(1<<2)
 #define RUN_SILENT_EXEC_FAILURE		(1<<3)
 #define RUN_USING_SHELL			(1<<4)
@@ -237,7 +237,7 @@ int run_auto_maintenance(int quiet);
  * Convenience functions that encapsulate a sequence of
  * start_command() followed by finish_command(). The argument argv
  * specifies the program and its arguments. The argument opt is zero
- * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
+ * or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_BUT_CMD`,
  * `RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
  * that correspond to the members .no_stdin, .but_cmd,
  * .stdout_to_stderr, .silent_exec_failure of `struct child_process`.
@@ -480,8 +480,8 @@ int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
 
 /**
  * Convenience function which prepares env_array for a command to be run in a
- * new repo. This adds all GIT_* environment variables to env_array with the
- * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
+ * new repo. This adds all BUT_* environment variables to env_array with the
+ * exception of BUT_CONFIG_PARAMETERS and BUT_CONFIG_COUNT (which cause the
  * corresponding environment variables to be unset in the subprocess) and adds
  * an environment variable pointing to new_but_dir. See local_repo_env in
  * cache.h for more information.

@@ -9,14 +9,14 @@
 # directory and enable a `pre-cummit` hook with the following lines:
 #      #!/bin/sh
 #     SUBDIRECTORY_OK=1 . but-sh-setup
-#     $GIT_DIR/hooks/setbutperms.perl -r
+#     $BUT_DIR/hooks/setbutperms.perl -r
 #
 # To restore permissions/ownership data, place this script in your .but/hooks
 # directory and enable a `post-merge` and `post-checkout` hook with the
 # following lines:
 #      #!/bin/sh
 #     SUBDIRECTORY_OK=1 . but-sh-setup
-#     $GIT_DIR/hooks/setbutperms.perl -w
+#     $BUT_DIR/hooks/setbutperms.perl -w
 #
 use strict;
 use Getopt::Long;

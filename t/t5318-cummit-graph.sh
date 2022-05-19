@@ -3,7 +3,7 @@
 test_description='cummit graph'
 . ./test-lib.sh
 
-GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
+BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'usage' '
 	test_expect_code 129 but cummit-graph write blah 2>err &&
@@ -134,7 +134,7 @@ test_expect_success 'cummit-graph write progress off for redirected stderr' '
 
 test_expect_success 'cummit-graph write force progress on for stderr' '
 	cd "$TRASH_DIRECTORY/full" &&
-	GIT_PROGRESS_DELAY=0 but cummit-graph write --progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but cummit-graph write --progress 2>err &&
 	test_file_not_empty err
 '
 
@@ -154,7 +154,7 @@ test_expect_success 'cummit-graph write --stdin-cummits progress off for redirec
 test_expect_success 'cummit-graph write --stdin-cummits force progress on for stderr' '
 	cd "$TRASH_DIRECTORY/full" &&
 	but rev-parse cummits/5 >in &&
-	GIT_PROGRESS_DELAY=0 but cummit-graph write --stdin-cummits --progress <in 2>err &&
+	BUT_PROGRESS_DELAY=0 but cummit-graph write --stdin-cummits --progress <in 2>err &&
 	test_i18ngrep "Collecting cummits from input" err
 '
 
@@ -173,7 +173,7 @@ test_expect_success 'cummit-graph verify progress off for redirected stderr' '
 
 test_expect_success 'cummit-graph verify force progress on for stderr' '
 	cd "$TRASH_DIRECTORY/full" &&
-	GIT_PROGRESS_DELAY=0 but cummit-graph verify --progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but cummit-graph verify --progress 2>err &&
 	test_file_not_empty err
 '
 
@@ -510,7 +510,7 @@ corrupt_graph_verify() {
 		cp $objdir/info/cummit-graph cummit-graph-pre-write-test
 	fi &&
 	but status --short &&
-	GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE=true but cummit-graph write &&
+	BUT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE=true but cummit-graph write &&
 	chmod u+w $objdir/info/cummit-graph &&
 	but cummit-graph verify
 }

@@ -198,7 +198,7 @@ Performance, Internal Implementation, etc.
    the output from "diff -c/--cc" has been updated, but with O(n^2)
    complexity, so this might turn out to be undesirable.
 
- * The code to enforce permission bits on files in $GIT_DIR/ for
+ * The code to enforce permission bits on files in $BUT_DIR/ for
    shared repositories has been simplified.
 
  * A few codepaths know how much data they need to put in the
@@ -269,7 +269,7 @@ details).
    error output.
 
  * Smart-capable HTTP servers were not restricted via the
-   GIT_NAMESPACE mechanism when talking with cummit-walking clients,
+   BUT_NAMESPACE mechanism when talking with cummit-walking clients,
    like they are when talking with smart HTTP clients.
    (merge 6130f86 jk/http-dumb-namespaces later to maint).
 

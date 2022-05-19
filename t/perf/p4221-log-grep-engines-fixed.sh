@@ -2,9 +2,9 @@
 
 test_description="Comparison of but-log's --grep regex engines with -F
 
-Set GIT_PERF_4221_LOG_OPTS in the environment to pass options to
+Set BUT_PERF_4221_LOG_OPTS in the environment to pass options to
 but-grep. Make sure to include a leading space,
-e.g. GIT_PERF_4221_LOG_OPTS=' -i'. Some options to try:
+e.g. BUT_PERF_4221_LOG_OPTS=' -i'. Some options to try:
 
 	-i
 	--invert-grep
@@ -26,12 +26,12 @@ do
 		else
 			prereq=""
 		fi
-		test_perf $prereq "$engine log$GIT_PERF_4221_LOG_OPTS --grep='$pattern'" "
-			but -c grep.patternType=$engine log --pretty=format:%h$GIT_PERF_4221_LOG_OPTS --grep='$pattern' >'out.$engine' || :
+		test_perf $prereq "$engine log$BUT_PERF_4221_LOG_OPTS --grep='$pattern'" "
+			but -c grep.patternType=$engine log --pretty=format:%h$BUT_PERF_4221_LOG_OPTS --grep='$pattern' >'out.$engine' || :
 		"
 	done
 
-	test_expect_success "assert that all engines found the same for$GIT_PERF_4221_LOG_OPTS '$pattern'" '
+	test_expect_success "assert that all engines found the same for$BUT_PERF_4221_LOG_OPTS '$pattern'" '
 		test_cmp out.fixed out.basic &&
 		test_cmp out.fixed out.extended &&
 		if test_have_prereq PCRE

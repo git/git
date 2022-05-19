@@ -4,7 +4,7 @@ Git v1.7.11.4 Release Notes
 Fixes since v1.7.11.3
 ---------------------
 
- * "$GIT_DIR/CUMMIT_EDITMSG" file that is used to hold the cummit log
+ * "$BUT_DIR/CUMMIT_EDITMSG" file that is used to hold the cummit log
    message user edits was not documented.
 
  * The advise() function did not use varargs correctly to format
@@ -17,7 +17,7 @@ Fixes since v1.7.11.3
    of arguments long time ago, but recently forgot it by mistake.
 
  * "but diff --no-ext-diff" did not output anything for a typechange
-   filepair when GIT_EXTERNAL_DIFF is in effect.
+   filepair when BUT_EXTERNAL_DIFF is in effect.
 
  * In 1.7.9 era, we taught "but rebase" about the raw timestamp format
    but we did not teach the same trick to "filter-branch", which rolled

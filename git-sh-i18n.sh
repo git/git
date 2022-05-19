@@ -7,37 +7,37 @@
 # Export the TEXTDOMAIN* data that we need for Git
 TEXTDOMAIN=but
 export TEXTDOMAIN
-if test -z "$GIT_TEXTDOMAINDIR"
+if test -z "$BUT_TEXTDOMAINDIR"
 then
 	TEXTDOMAINDIR="@@LOCALEDIR@@"
 else
-	TEXTDOMAINDIR="$GIT_TEXTDOMAINDIR"
+	TEXTDOMAINDIR="$BUT_TEXTDOMAINDIR"
 fi
 export TEXTDOMAINDIR
 
 # First decide what scheme to use...
-GIT_INTERNAL_GETTEXT_SH_SCHEME=fallthrough
+BUT_INTERNAL_GETTEXT_SH_SCHEME=fallthrough
 if test -n "@@USE_GETTEXT_SCHEME@@"
 then
-	GIT_INTERNAL_GETTEXT_SH_SCHEME="@@USE_GETTEXT_SCHEME@@"
-elif test -n "$GIT_INTERNAL_GETTEXT_TEST_FALLBACKS"
+	BUT_INTERNAL_GETTEXT_SH_SCHEME="@@USE_GETTEXT_SCHEME@@"
+elif test -n "$BUT_INTERNAL_GETTEXT_TEST_FALLBACKS"
 then
 	: no probing necessary
 elif type gettext.sh >/dev/null 2>&1
 then
 	# GNU libintl's gettext.sh
-	GIT_INTERNAL_GETTEXT_SH_SCHEME=gnu
+	BUT_INTERNAL_GETTEXT_SH_SCHEME=gnu
 elif test "$(gettext -h 2>&1)" = "-h"
 then
 	# gettext binary exists but no gettext.sh. likely to be a gettext
 	# binary on a Solaris or something that is not GNU libintl and
 	# lack eval_gettext.
-	GIT_INTERNAL_GETTEXT_SH_SCHEME=gettext_without_eval_gettext
+	BUT_INTERNAL_GETTEXT_SH_SCHEME=gettext_without_eval_gettext
 fi
-export GIT_INTERNAL_GETTEXT_SH_SCHEME
+export BUT_INTERNAL_GETTEXT_SH_SCHEME
 
 # ... and then follow that decision.
-case "$GIT_INTERNAL_GETTEXT_SH_SCHEME" in
+case "$BUT_INTERNAL_GETTEXT_SH_SCHEME" in
 gnu)
 	# Use libintl's gettext.sh, or fall back to English if we can't.
 	. gettext.sh

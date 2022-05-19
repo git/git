@@ -69,7 +69,7 @@ diff.interHunkContext::
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
-	given command.  Can be overridden with the `GIT_EXTERNAL_DIFF'
+	given command.  Can be overridden with the `BUT_EXTERNAL_DIFF'
 	environment variable.  The command is called with parameters
 	as described under "but Diffs" in linkbut:but[1].  Note: if
 	you want to use an external diff program only on a subset of

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='test dumb fetching over http via static file'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -341,7 +341,7 @@ check_language () {
 		echo "=> Send header: Accept-Language: $1" >expect
 		;;
 	esac &&
-	GIT_TRACE_CURL=true \
+	BUT_TRACE_CURL=true \
 	LANGUAGE=$2 \
 	but ls-remote "$HTTPD_URL/dumb/repo.but" >output 2>&1 &&
 	tr -d '\015' <output |
@@ -370,7 +370,7 @@ ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
 '
 
 test_expect_success 'but client does not send an empty Accept-Language' '
-	GIT_TRACE_CURL=true LANGUAGE= but ls-remote "$HTTPD_URL/dumb/repo.but" 2>stderr &&
+	BUT_TRACE_CURL=true LANGUAGE= but ls-remote "$HTTPD_URL/dumb/repo.but" 2>stderr &&
 	! grep "^=> Send header: Accept-Language:" stderr
 '
 

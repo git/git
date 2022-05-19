@@ -18,7 +18,7 @@ static int memory_limit_check(size_t size, int gentle)
 {
 	static size_t limit = 0;
 	if (!limit) {
-		limit = but_env_ulong("GIT_ALLOC_LIMIT", 0);
+		limit = but_env_ulong("BUT_ALLOC_LIMIT", 0);
 		if (!limit)
 			limit = SIZE_MAX;
 	}
@@ -659,7 +659,7 @@ int rmdir_or_warn(const char *file)
 
 int remove_or_warn(unsigned int mode, const char *file)
 {
-	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
+	return S_ISBUTLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }
 
 static int access_error_is_ok(int err, unsigned flag)

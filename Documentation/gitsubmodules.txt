@@ -7,7 +7,7 @@ butsubmodules - Mounting one repository inside another
 
 SYNOPSIS
 --------
- .butmodules, $GIT_DIR/config
+ .butmodules, $BUT_DIR/config
 ------------------
 but submodule
 but <command> --recurse-submodules
@@ -21,12 +21,12 @@ The submodule has its own history; the repository it is embedded
 in is called a superproject.
 
 On the filesystem, a submodule usually (but not always - see FORMS below)
-consists of (i) a Git directory located under the `$GIT_DIR/modules/`
+consists of (i) a Git directory located under the `$BUT_DIR/modules/`
 directory of its superproject, (ii) a working directory inside the
 superproject's working directory, and a `.but` file at the root of
 the submodule's working directory pointing to (i).
 
-Assuming the submodule has a Git directory at `$GIT_DIR/modules/foo/`
+Assuming the submodule has a Git directory at `$BUT_DIR/modules/foo/`
 and a working directory at `path/to/bar/`, the superproject tracks the
 submodule via a `butlink` entry in the tree at `path/to/bar` and an entry
 in its `.butmodules` file (see linkbut:butmodules[5]) of the form
@@ -83,7 +83,7 @@ Submodule operations can be configured using the following mechanisms
    Some commands take enums, such as `fetch` and `push`, where you can
    specify how submodules are affected.
 
- * The configuration inside the submodule. This includes `$GIT_DIR/config`
+ * The configuration inside the submodule. This includes `$BUT_DIR/config`
    in the submodule, but also settings in the tree such as a `.butattributes`
    or `.butignore` files that specify behavior of commands inside the
    submodule.
@@ -94,13 +94,13 @@ the superproject. This collects information from the submodule's working
 directory by running `status` in the submodule while paying attention
 to the `.butignore` file of the submodule.
 +
-The submodule's `$GIT_DIR/config` file would come into play when running
+The submodule's `$BUT_DIR/config` file would come into play when running
 `but push --recurse-submodules=check` in the superproject, as this would
 check if the submodule has any changes not published to any remote. The
-remotes are configured in the submodule as usual in the `$GIT_DIR/config`
+remotes are configured in the submodule as usual in the `$BUT_DIR/config`
 file.
 
- * The configuration file `$GIT_DIR/config` in the superproject.
+ * The configuration file `$BUT_DIR/config` in the superproject.
    Git only recurses into active submodules (see "ACTIVE SUBMODULES"
    section below).
 +
@@ -137,7 +137,7 @@ using older versions of Git.
 It is possible to construct these old form repositories manually.
 +
 When deinitialized or deleted (see below), the submodule's Git
-directory is automatically moved to `$GIT_DIR/modules/<name>/`
+directory is automatically moved to `$BUT_DIR/modules/<name>/`
 of the superproject.
 
  * Deinitialized submodule: A `butlink`, and a `.butmodules` entry,
@@ -147,7 +147,7 @@ The directory which is supposed to be the working directory is empty instead.
 +
 A submodule can be deinitialized by running `but submodule deinit`.
 Besides emptying the working directory, this command only modifies
-the superproject's `$GIT_DIR/config` file, so the superproject's history
+the superproject's `$BUT_DIR/config` file, so the superproject's history
 is not affected. This can be undone using `but submodule init`.
 
  * Deleted submodule: A submodule can be deleted by running
@@ -162,7 +162,7 @@ possible to checkout past cummits without requiring fetching
 from another repository.
 +
 To completely remove a submodule, manually delete
-`$GIT_DIR/modules/<name>/`.
+`$BUT_DIR/modules/<name>/`.
 
 ACTIVE SUBMODULES
 -----------------
@@ -282,6 +282,6 @@ SEE ALSO
 --------
 linkbut:but-submodule[1], linkbut:butmodules[5].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

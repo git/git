@@ -134,7 +134,7 @@ OUTPUT
 ------
 Given N <references>, the first N lines are the one-line
 description from their cummit message.  The branch head that is
-pointed at by $GIT_DIR/HEAD is prefixed with an asterisk `*`
+pointed at by $BUT_DIR/HEAD is prefixed with an asterisk `*`
 character while other heads are prefixed with a `!` character.
 
 Following these N lines, one-line log for each cummit is
@@ -162,7 +162,7 @@ $ but show-branch master fixes mhf
   + [mhf~5] Infamous 'octopus merge'
   + [mhf~6] Retire but-parse-remote.
   + [mhf~7] Multi-head fetch.
-  + [mhf~8] Start adding the $GIT_DIR/remotes/ support.
+  + [mhf~8] Start adding the $BUT_DIR/remotes/ support.
 *++ [master] Add 'but show-branch'.
 ------------------------------------------------
 
@@ -199,6 +199,6 @@ shows 10 reflog entries going back from the tip as of 1 hour ago.
 Without `--list`, the output also shows how these tips are
 topologically related with each other.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

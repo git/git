@@ -508,7 +508,7 @@ test_expect_success !PTHREADS,!FAIL_PREREQS \
 '
 
 test_expect_success 'pack-objects in too-many-packs mode' '
-	GIT_TEST_FULL_IN_PACK_ARRAY=1 but repack -ad &&
+	BUT_TEST_FULL_IN_PACK_ARRAY=1 but repack -ad &&
 	but fsck
 '
 
@@ -571,7 +571,7 @@ test_expect_success 'prefetch objects' '
 	test_config -C client protocol.version 2 &&
 	TWO=$(but -C server rev-parse three_branch^) &&
 	but -C client fetch --filter=blob:none origin "$TWO" &&
-	GIT_TRACE_PACKET=$(pwd)/trace but -C client push origin "$TWO":refs/heads/two_branch &&
+	BUT_TRACE_PACKET=$(pwd)/trace but -C client push origin "$TWO":refs/heads/two_branch &&
 	grep "fetch> done" trace >donelines &&
 	test_line_count = 1 donelines
 '

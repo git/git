@@ -2619,7 +2619,7 @@ int format_ref_array_item(struct ref_array_item *info,
 	}
 	if (format->need_color_reset_at_eol) {
 		struct atom_value resetv = ATOM_VALUE_INIT;
-		resetv.s = GIT_COLOR_RESET;
+		resetv.s = BUT_COLOR_RESET;
 		if (append_atom(&resetv, &state, error_buf)) {
 			pop_stack_element(&state.stack);
 			return -1;

@@ -25,8 +25,8 @@
 #      to refer to an existing tree).
 
 test_description='check pruning of dependent objects'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -90,8 +90,8 @@ do
 
 	test_expect_success "start writing new cummit with old blob ($title)" '
 		tree=$(
-			GIT_INDEX_FILE=index.tmp &&
-			export GIT_INDEX_FILE &&
+			BUT_INDEX_FILE=index.tmp &&
+			export BUT_INDEX_FILE &&
 			but read-tree HEAD &&
 			add unrelated &&
 			add abandon &&
@@ -120,8 +120,8 @@ do
 
 	test_expect_success "start writing new cummit with same tree ($title)" '
 		tree=$(
-			GIT_INDEX_FILE=index.tmp &&
-			export GIT_INDEX_FILE &&
+			BUT_INDEX_FILE=index.tmp &&
+			export BUT_INDEX_FILE &&
 			but read-tree HEAD &&
 			add abandon &&
 			add unrelated &&

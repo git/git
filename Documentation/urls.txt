@@ -1,4 +1,4 @@
-GIT URLS[[URLS]]
+BUT URLS[[URLS]]
 ----------------
 
 In general, URLs contain information about the transport protocol, the

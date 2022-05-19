@@ -153,7 +153,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	strbuf_add(&path, args->base, args->baselen);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
-	if (S_ISDIR(mode) || S_ISGITLINK(mode))
+	if (S_ISDIR(mode) || S_ISBUTLINK(mode))
 		strbuf_addch(&path, '/');
 	path_without_prefix = path.buf + args->baselen;
 
@@ -165,7 +165,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 		args->convert = check_attr_export_subst(check);
 	}
 
-	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
+	if (S_ISDIR(mode) || S_ISBUTLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 		err = write_entry(args, oid, path.buf, path.len, mode, NULL, 0);
@@ -309,7 +309,7 @@ int write_archive_entries(struct archiver_args *args,
 		init_tree_desc(&t, args->tree->buffer, args->tree->size);
 		if (unpack_trees(1, &t, &opts))
 			return -1;
-		but_attr_set_direction(GIT_ATTR_INDEX);
+		but_attr_set_direction(BUT_ATTR_INDEX);
 	}
 
 	err = read_tree(args->repo, args->tree,

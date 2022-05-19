@@ -1543,8 +1543,8 @@ test_expect_success 'but cummit will cummit a staged but ignored submodule' '
 	but config --add submodule.subname.ignore all &&
 	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep "^M. sm" output &&
-	GIT_EDITOR="echo hello >>\"\$1\"" &&
-	export GIT_EDITOR &&
+	BUT_EDITOR="echo hello >>\"\$1\"" &&
+	export BUT_EDITOR &&
 	but cummit -uno &&
 	but status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep ! "^M. sm" output

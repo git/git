@@ -22,14 +22,14 @@ receive.certNonceSlop::
 	When a `but push --signed` sent a push certificate with a
 	"nonce" that was issued by a receive-pack serving the same
 	repository within this many seconds, export the "nonce"
-	found in the certificate to `GIT_PUSH_CERT_NONCE` to the
+	found in the certificate to `BUT_PUSH_CERT_NONCE` to the
 	hooks (instead of what the receive-pack asked the sending
 	side to include).  This may allow writing checks in
 	`pre-receive` and `post-receive` a bit easier.  Instead of
-	checking `GIT_PUSH_CERT_NONCE_SLOP` environment variable
+	checking `BUT_PUSH_CERT_NONCE_SLOP` environment variable
 	that records by how many seconds the nonce is stale to
 	decide if they want to accept the certificate, they only
-	can check `GIT_PUSH_CERT_NONCE_STATUS` is `OK`.
+	can check `BUT_PUSH_CERT_NONCE_STATUS` is `OK`.
 
 receive.fsckObjects::
 	If it is set to true, but-receive-pack will check all received

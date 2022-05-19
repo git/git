@@ -3,8 +3,8 @@
 
 test_description='Recursive "but fetch" for submodules'
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 . ./test-lib.sh
 
@@ -180,7 +180,7 @@ test_expect_success "fetch --recurse-submodules -j2 has the same output behaviou
 	add_submodule_cummits &&
 	(
 		cd downstream &&
-		GIT_TRACE="$TRASH_DIRECTORY/trace.out" but fetch --recurse-submodules -j2 2>../actual.err
+		BUT_TRACE="$TRASH_DIRECTORY/trace.out" but fetch --recurse-submodules -j2 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err &&
@@ -706,14 +706,14 @@ test_expect_success 'fetching submodules respects parallel settings' '
 	but config fetch.recurseSubmodules true &&
 	(
 		cd downstream &&
-		GIT_TRACE=$(pwd)/trace.out but fetch &&
+		BUT_TRACE=$(pwd)/trace.out but fetch &&
 		grep "1 tasks" trace.out &&
-		GIT_TRACE=$(pwd)/trace.out but fetch --jobs 7 &&
+		BUT_TRACE=$(pwd)/trace.out but fetch --jobs 7 &&
 		grep "7 tasks" trace.out &&
 		but config submodule.fetchJobs 8 &&
-		GIT_TRACE=$(pwd)/trace.out but fetch &&
+		BUT_TRACE=$(pwd)/trace.out but fetch &&
 		grep "8 tasks" trace.out &&
-		GIT_TRACE=$(pwd)/trace.out but fetch --jobs 9 &&
+		BUT_TRACE=$(pwd)/trace.out but fetch --jobs 9 &&
 		grep "9 tasks" trace.out
 	)
 '

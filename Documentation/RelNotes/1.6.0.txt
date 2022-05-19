@@ -1,4 +1,4 @@
-GIT v1.6.0 Release Notes
+BUT v1.6.0 Release Notes
 ========================
 
 User visible changes
@@ -38,13 +38,13 @@ hooks/post-update.sample to hooks/post-update to enable the sample
 hook that runs update-server-info, in order to make repositories
 friendly to dumb protocols (i.e. HTTP).
 
-GIT_CONFIG, which was only documented as affecting "but config", but
+BUT_CONFIG, which was only documented as affecting "but config", but
 actually affected all but commands, now only affects "but config".
-GIT_LOCAL_CONFIG, also only documented as affecting "but config" and
-not different from GIT_CONFIG in a useful way, is removed.
+BUT_LOCAL_CONFIG, also only documented as affecting "but config" and
+not different from BUT_CONFIG in a useful way, is removed.
 
 The ".dotest" temporary area "but am" and "but rebase" use is now moved
-inside the $GIT_DIR, to avoid mistakes of adding it to the project by
+inside the $BUT_DIR, to avoid mistakes of adding it to the project by
 accident.
 
 An ancient merge strategy "stupid" has been removed.
@@ -112,7 +112,7 @@ Updates since v1.5.6
 
 * even more documentation pages are now accessible via "man" and "but help".
 
-* A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
+* A new environment variable BUT_CEILING_DIRECTORIES can be used to stop
   the discovery process of the toplevel of working tree; this may be useful
   when you are working in a slow network disk and are outside any working tree,
   as bash-completion and "but help" may still need to run in these places.

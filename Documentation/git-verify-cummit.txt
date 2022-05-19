@@ -27,6 +27,6 @@ OPTIONS
 <cummit>...::
 	SHA-1 identifiers of Git cummit objects.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

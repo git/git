@@ -152,6 +152,6 @@ linkbut:but-mergetool[1]::
 linkbut:but-config[1]::
 	 Get and set repository or global options
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -4,8 +4,8 @@
 #
 
 test_description='Test merge with directory/file conflicts'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -84,7 +84,7 @@ test_expect_success 'modify/delete + directory/file conflict' '
 
 	test_stdout_line_count = 5 but ls-files -s &&
 	test_stdout_line_count = 4 but ls-files -u &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 0 but ls-files -o
 	else
@@ -105,7 +105,7 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 
 	test_stdout_line_count = 5 but ls-files -s &&
 	test_stdout_line_count = 4 but ls-files -u &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 0 but ls-files -o
 	else

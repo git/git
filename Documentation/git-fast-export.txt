@@ -279,6 +279,6 @@ SEE ALSO
 --------
 linkbut:but-fast-import[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

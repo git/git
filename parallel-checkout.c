@@ -35,12 +35,12 @@ static const int DEFAULT_NUM_WORKERS = 1;
 
 void get_parallel_checkout_configs(int *num_workers, int *threshold)
 {
-	char *env_workers = getenv("GIT_TEST_CHECKOUT_WORKERS");
+	char *env_workers = getenv("BUT_TEST_CHECKOUT_WORKERS");
 
 	if (env_workers && *env_workers) {
 		if (strtol_i(env_workers, 10, num_workers)) {
 			die(_("invalid value for '%s': '%s'"),
-			    "GIT_TEST_CHECKOUT_WORKERS", env_workers);
+			    "BUT_TEST_CHECKOUT_WORKERS", env_workers);
 		}
 		if (*num_workers < 1)
 			*num_workers = online_cpus();

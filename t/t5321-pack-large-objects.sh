@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'repack large deltas' '
 	printf "%s\\n" $A $B |
-	GIT_TEST_OE_DELTA_SIZE=2 but pack-objects tmp-pack
+	BUT_TEST_OE_DELTA_SIZE=2 but pack-objects tmp-pack
 '
 
 test_done

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description='prune $GIT_DIR/worktrees'
+test_description='prune $BUT_DIR/worktrees'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -16,7 +16,7 @@ test_expect_success 'worktree prune on normal repo' '
 	test_must_fail but worktree prune abc
 '
 
-test_expect_success 'prune files inside $GIT_DIR/worktrees' '
+test_expect_success 'prune files inside $BUT_DIR/worktrees' '
 	mkdir .but/worktrees &&
 	: >.but/worktrees/abc &&
 	but worktree prune --verbose 2>actual &&

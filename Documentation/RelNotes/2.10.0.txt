@@ -81,7 +81,7 @@ UI, Workflows & Features
 
 
  * A new configuration variable core.sshCommand has been added to
-   specify what value for GIT_SSH_COMMAND to use per repository.
+   specify what value for BUT_SSH_COMMAND to use per repository.
 
  * "but worktree prune" protected worktrees that are marked as
    "locked" by creating a file in a known location.  "but worktree"
@@ -208,7 +208,7 @@ Performance, Internal Implementation, Development Support etc.
    feel untrustable as printf-style format given to write_file()
    helper function.
 
- * "but p4" used a location outside $GIT_DIR/refs/ to place its
+ * "but p4" used a location outside $BUT_DIR/refs/ to place its
    temporary branches, which has been moved to refs/but-p4-tmp/.
 
  * Existing autoconf generated test for the need to link with pthread

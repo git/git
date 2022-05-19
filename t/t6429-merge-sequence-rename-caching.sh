@@ -137,8 +137,8 @@ test_expect_success 'cherry-pick both a cummit and its immediate revert' '
 
 		but switch upstream &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream~1..topic &&
@@ -196,8 +196,8 @@ test_expect_success 'rename same file identically, then reintroduce it' '
 
 		but switch upstream &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream~1..topic &&
@@ -273,8 +273,8 @@ test_expect_success 'rename same file identically, then add file to old dir' '
 		but switch upstream &&
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream~1..topic &&
@@ -350,8 +350,8 @@ test_expect_success 'cached dir rename does not prevent noticing later conflict'
 		but switch upstream &&
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test_must_fail test-tool fast-rebase --onto HEAD upstream~1 topic >output &&
 		#but cherry-pick upstream..topic &&
@@ -452,8 +452,8 @@ test_expect_success 'dir rename unneeded, then add new file to old dir' '
 		but switch upstream &&
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream..topic &&
@@ -518,8 +518,8 @@ test_expect_success 'dir rename unneeded, then rename existing file into old dir
 		but switch upstream &&
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream..topic &&
@@ -620,8 +620,8 @@ test_expect_success 'caching renames only on upstream side, part 1' '
 
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream..topic &&
@@ -678,8 +678,8 @@ test_expect_success 'caching renames only on upstream side, part 2' '
 
 		but config merge.directoryRenames true &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" &&
-		export GIT_TRACE2_PERF &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" &&
+		export BUT_TRACE2_PERF &&
 
 		test-tool fast-rebase --onto HEAD upstream~1 topic &&
 		#but cherry-pick upstream..topic &&

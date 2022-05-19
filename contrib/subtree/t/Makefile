@@ -6,7 +6,7 @@
 -include ../../../config.mak.autogen
 -include ../../../config.mak
 
-#GIT_TEST_OPTS=--verbose --debug
+#BUT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
 PERL_PATH ?= /usr/bin/perl
 TAR ?= $(TAR)
@@ -28,7 +28,7 @@ TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 TSVN = $(sort $(wildcard t91[0-9][0-9]-*.sh))
-TGITWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
+TBUTWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
 
 all: $(DEFAULT_TEST_TARGET)
@@ -37,11 +37,11 @@ test: pre-clean $(TEST_LINT)
 	$(MAKE) aggregate-results-and-cleanup
 
 prove: pre-clean $(TEST_LINT)
-	@echo "*** prove ***"; GIT_CONFIG=.but/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
+	@echo "*** prove ***"; BUT_CONFIG=.but/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(BUT_PROVE_OPTS) $(T) :: $(BUT_TEST_OPTS)
 	$(MAKE) clean-except-prove-cache
 
 $(T):
-	@echo "*** $@ ***"; GIT_CONFIG=.but/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
+	@echo "*** $@ ***"; BUT_CONFIG=.but/config '$(SHELL_PATH_SQ)' $@ $(BUT_TEST_OPTS)
 
 pre-clean:
 	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
@@ -78,7 +78,7 @@ aggregate-results:
 	done | '$(SHELL_PATH_SQ)' ../../../t/aggregate-results.sh
 
 valgrind:
-	$(MAKE) GIT_TEST_OPTS="$(GIT_TEST_OPTS) --valgrind"
+	$(MAKE) BUT_TEST_OPTS="$(BUT_TEST_OPTS) --valgrind"
 
 test-results:
 	mkdir -p test-results

@@ -12,7 +12,7 @@ ARTICLES =
 SP_ARTICLES =
 OBSOLETE_HTML =
 
--include GIT-EXCLUDED-PROGRAMS
+-include BUT-EXCLUDED-PROGRAMS
 
 MAN1_TXT += $(filter-out \
 		$(patsubst %,%.txt,$(EXCLUDED_PROGRAMS)) \
@@ -61,7 +61,7 @@ endif
 
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
 MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
-GIT_MAN_REF = master
+BUT_MAN_REF = master
 
 OBSOLETE_HTML += everyday.html
 OBSOLETE_HTML += but-remote-helpers.html
@@ -141,9 +141,9 @@ ASCIIDOC_HTML = xhtml11
 ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_CONF = -f asciidoc.conf
 ASCIIDOC_COMMON = $(ASCIIDOC) $(ASCIIDOC_EXTRA) $(ASCIIDOC_CONF) \
-		-amanversion=$(GIT_VERSION) \
+		-amanversion=$(BUT_VERSION) \
 		-amanmanual='Git Manual' -amansource='Git'
-ASCIIDOC_DEPS = asciidoc.conf GIT-ASCIIDOCFLAGS
+ASCIIDOC_DEPS = asciidoc.conf BUT-ASCIIDOCFLAGS
 TXT_TO_HTML = $(ASCIIDOC_COMMON) -b $(ASCIIDOC_HTML)
 TXT_TO_XML = $(ASCIIDOC_COMMON) -b $(ASCIIDOC_DOCBOOK)
 MANPAGE_XSL = manpage-normal.xsl
@@ -198,7 +198,7 @@ ASCIIDOC_DOCBOOK = docbook5
 ASCIIDOC_EXTRA += -acompat-mode -atabsize=8
 ASCIIDOC_EXTRA += -I. -rasciidoctor-extensions
 ASCIIDOC_EXTRA += -alitdd='&\#x2d;&\#x2d;'
-ASCIIDOC_DEPS = asciidoctor-extensions.rb GIT-ASCIIDOCFLAGS
+ASCIIDOC_DEPS = asciidoctor-extensions.rb BUT-ASCIIDOCFLAGS
 DBLATEX_COMMON =
 XMLTO_EXTRA += --skip-validation
 XMLTO_EXTRA += -x manpage.xsl
@@ -258,11 +258,11 @@ install-pdf: pdf
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
-../GIT-VERSION-FILE: FORCE
-	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
+../BUT-VERSION-FILE: FORCE
+	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) BUT-VERSION-FILE
 
 ifneq ($(filter-out lint-docs clean,$(MAKECMDGOALS)),)
--include ../GIT-VERSION-FILE
+-include ../BUT-VERSION-FILE
 endif
 
 #
@@ -312,11 +312,11 @@ mergetools-list.made: ../but-mergetool--lib.sh $(wildcard ../mergetools/*)
 
 TRACK_ASCIIDOCFLAGS = $(subst ','\'',$(ASCIIDOC_COMMON):$(ASCIIDOC_HTML):$(ASCIIDOC_DOCBOOK))
 
-GIT-ASCIIDOCFLAGS: FORCE
+BUT-ASCIIDOCFLAGS: FORCE
 	@FLAGS='$(TRACK_ASCIIDOCFLAGS)'; \
-	    if test x"$$FLAGS" != x"`cat GIT-ASCIIDOCFLAGS 2>/dev/null`" ; then \
+	    if test x"$$FLAGS" != x"`cat BUT-ASCIIDOCFLAGS 2>/dev/null`" ; then \
 		echo >&2 "    * new asciidoc flags"; \
-		echo "$$FLAGS" >GIT-ASCIIDOCFLAGS; \
+		echo "$$FLAGS" >BUT-ASCIIDOCFLAGS; \
             fi
 
 clean:
@@ -329,7 +329,7 @@ clean:
 	$(RM) SubmittingPatches.txt
 	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) manpage-base-url.xsl
-	$(RM) GIT-ASCIIDOCFLAGS
+	$(RM) BUT-ASCIIDOCFLAGS
 
 $(MAN_HTML): %.html : %.txt $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@ $<
@@ -346,7 +346,7 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 %.xml : %.txt $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d manpage -o $@ $<
 
-user-manual.xml: user-manual.txt user-manual.conf asciidoctor-extensions.rb GIT-ASCIIDOCFLAGS
+user-manual.xml: user-manual.txt user-manual.conf asciidoctor-extensions.rb BUT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d book -o $@ $<
 
 technical/api-index.txt: technical/api-index-skel.txt \
@@ -355,7 +355,7 @@ technical/api-index.txt: technical/api-index-skel.txt \
 
 technical/%.html: ASCIIDOC_EXTRA += -a but-relative-html-prefix=../
 $(patsubst %,%.html,$(API_DOCS) technical/api-index $(TECH_DOCS)): %.html : %.txt \
-	asciidoc.conf GIT-ASCIIDOCFLAGS
+	asciidoc.conf BUT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
 
 SubmittingPatches.txt: SubmittingPatches
@@ -404,7 +404,7 @@ $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 WEBDOC_DEST = /pub/software/scm/but/docs
 
 howto/%.html: ASCIIDOC_EXTRA += -a but-relative-html-prefix=../
-$(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt GIT-ASCIIDOCFLAGS
+$(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt BUT-ASCIIDOCFLAGS
 	$(QUIET_ASCIIDOC) \
 	sed -e '1,/^$$/d' $< | \
 	$(TXT_TO_HTML) - >$@
@@ -422,31 +422,31 @@ require-manrepo::
 	then echo "but-manpages repository must exist at $(MAN_REPO)"; exit 1; fi
 
 quick-install-man: require-manrepo
-	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(MAN_REPO) $(DESTDIR)$(mandir) $(GIT_MAN_REF)
+	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(MAN_REPO) $(DESTDIR)$(mandir) $(BUT_MAN_REF)
 
 require-htmlrepo::
 	@if test ! -d $(HTML_REPO); \
 	then echo "but-htmldocs repository must exist at $(HTML_REPO)"; exit 1; fi
 
 quick-install-html: require-htmlrepo
-	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir) $(GIT_MAN_REF)
+	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir) $(BUT_MAN_REF)
 
 print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
 
 ## Lint: butlink
-LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/butlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
-$(LINT_DOCS_GITLINK): lint-butlink.perl
-$(LINT_DOCS_GITLINK): .build/lint-docs/butlink/%.ok: %.txt
+LINT_DOCS_BUTLINK = $(patsubst %.txt,.build/lint-docs/butlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
+$(LINT_DOCS_BUTLINK): lint-butlink.perl
+$(LINT_DOCS_BUTLINK): .build/lint-docs/butlink/%.ok: %.txt
 	$(call mkdir_p_parent_template)
-	$(QUIET_LINT_GITLINK)$(PERL_PATH) lint-butlink.perl \
+	$(QUIET_LINT_BUTLINK)$(PERL_PATH) lint-butlink.perl \
 		$< \
 		$(HOWTO_TXT) $(DOC_DEP_TXT) \
 		--section=1 $(MAN1_TXT) \
 		--section=5 $(MAN5_TXT) \
 		--section=7 $(MAN7_TXT) >$@
 .PHONY: lint-docs-butlink
-lint-docs-butlink: $(LINT_DOCS_GITLINK)
+lint-docs-butlink: $(LINT_DOCS_BUTLINK)
 
 ## Lint: man-end-blurb
 LINT_DOCS_MAN_END_BLURB = $(patsubst %.txt,.build/lint-docs/man-end-blurb/%.ok,$(MAN_TXT))

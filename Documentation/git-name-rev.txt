@@ -110,6 +110,6 @@ Another nice thing you can do is:
 % but log | but name-rev --stdin
 ------------
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

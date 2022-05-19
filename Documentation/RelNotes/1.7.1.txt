@@ -10,7 +10,7 @@ Updates since v1.7.0
 
  * Some commands (e.g. svn and http interfaces) that interactively ask
    for a password can be told to use an external program given via
-   GIT_ASKPASS.
+   BUT_ASKPASS.
 
  * Conflict markers that lead the common ancestor in diff3-style output
    now have a label, which hopefully would help third-party tools that

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='but send-email'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -19,7 +19,7 @@ test_expect_success $PREREQ 'prepare reference tree' '
 	echo "1A quick brown fox jumps over the" >file &&
 	echo "lazy dog" >>file &&
 	but add file &&
-	GIT_AUTHOR_NAME="A" but cummit -a -m "Initial."
+	BUT_AUTHOR_NAME="A" but cummit -a -m "Initial."
 '
 
 test_expect_success $PREREQ 'Setup helper tool' '
@@ -37,7 +37,7 @@ test_expect_success $PREREQ 'Setup helper tool' '
 	cat >"msgtxt$output"
 	EOF
 	but add fake.sendmail &&
-	GIT_AUTHOR_NAME="A" but cummit -a -m "Second."
+	BUT_AUTHOR_NAME="A" but cummit -a -m "Second."
 '
 
 clean_fake_sendmail () {
@@ -53,7 +53,7 @@ test_expect_success $PREREQ 'Extract patches' '
 test_no_confirm () {
 	rm -f no_confirm_okay
 	echo n | \
-		GIT_SEND_EMAIL_NOTTY=1 \
+		BUT_SEND_EMAIL_NOTTY=1 \
 		but send-email \
 		--from="Example <from@example.com>" \
 		--to=nobody@example.com \
@@ -337,7 +337,7 @@ test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
 	(echo "to@example.com" &&
 	 echo ""
-	) | GIT_SEND_EMAIL_NOTTY=1 but send-email \
+	) | BUT_SEND_EMAIL_NOTTY=1 but send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
 		2>errors &&
@@ -347,11 +347,11 @@ test_expect_success $PREREQ 'Prompting works' '
 
 test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
 	clean_fake_sendmail &&
-	(sane_unset GIT_AUTHOR_NAME &&
-	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_CUMMITTER_NAME &&
-	sane_unset GIT_CUMMITTER_EMAIL &&
-	GIT_SEND_EMAIL_NOTTY=1 but send-email \
+	(sane_unset BUT_AUTHOR_NAME &&
+	sane_unset BUT_AUTHOR_EMAIL &&
+	sane_unset BUT_CUMMITTER_NAME &&
+	sane_unset BUT_CUMMITTER_EMAIL &&
+	BUT_SEND_EMAIL_NOTTY=1 but send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--to=to@example.com \
 		$patches </dev/null 2>errors
@@ -360,11 +360,11 @@ test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
 
 test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email' '
 	clean_fake_sendmail &&
-	(sane_unset GIT_AUTHOR_NAME &&
-	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_CUMMITTER_NAME &&
-	sane_unset GIT_CUMMITTER_EMAIL &&
-	GIT_SEND_EMAIL_NOTTY=1 && export GIT_SEND_EMAIL_NOTTY &&
+	(sane_unset BUT_AUTHOR_NAME &&
+	sane_unset BUT_AUTHOR_EMAIL &&
+	sane_unset BUT_CUMMITTER_NAME &&
+	sane_unset BUT_CUMMITTER_EMAIL &&
+	BUT_SEND_EMAIL_NOTTY=1 && export BUT_SEND_EMAIL_NOTTY &&
 	test_must_fail but send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--to=to@example.com \
@@ -595,7 +595,7 @@ test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	(echo "From Example <from@example.com>" &&
 	 echo "To Example <to@example.com>" &&
 	 echo ""
-	) | GIT_SEND_EMAIL_NOTTY=1 but send-email \
+	) | BUT_SEND_EMAIL_NOTTY=1 but send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches 2>errors &&
 	! grep "^In-Reply-To: < *>" msgtxt1
@@ -1007,7 +1007,7 @@ test_expect_success $PREREQ '--suppress-cc=cc' '
 
 test_confirm () {
 	echo y | \
-		GIT_SEND_EMAIL_NOTTY=1 \
+		BUT_SEND_EMAIL_NOTTY=1 \
 		but send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -1049,7 +1049,7 @@ test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 	but config --unset sendemail.confirm &&
 	rm -fr outdir &&
 	but format-patch -2 -o outdir &&
-	GIT_SEND_EMAIL_NOTTY=1 \
+	BUT_SEND_EMAIL_NOTTY=1 \
 		but send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -1060,8 +1060,8 @@ test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 	test_when_finished but config sendemail.confirm never &&
 	but config sendemail.confirm auto &&
-	GIT_SEND_EMAIL_NOTTY=1 &&
-	export GIT_SEND_EMAIL_NOTTY &&
+	BUT_SEND_EMAIL_NOTTY=1 &&
+	export BUT_SEND_EMAIL_NOTTY &&
 		test_must_fail but send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -1072,8 +1072,8 @@ test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 test_expect_success $PREREQ 'confirm does not loop forever' '
 	test_when_finished but config sendemail.confirm never &&
 	but config sendemail.confirm auto &&
-	GIT_SEND_EMAIL_NOTTY=1 &&
-	export GIT_SEND_EMAIL_NOTTY &&
+	BUT_SEND_EMAIL_NOTTY=1 &&
+	export BUT_SEND_EMAIL_NOTTY &&
 		yes "bogus" | test_must_fail but send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -1099,7 +1099,7 @@ test_expect_success $PREREQ '--compose adds MIME for utf8 body' '
 	write_script fake-editor-utf8 <<-\EOF &&
 	echo "utf8 body: àéìöú" >>"$1"
 	EOF
-	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	but send-email \
 		--compose --subject foo \
 		--from="Example <nobody@example.com>" \
@@ -1122,7 +1122,7 @@ test_expect_success $PREREQ '--compose respects user mime type' '
 	utf8 body: àéìöú
 	EOM
 	EOF
-	GIT_EDITOR="\"$(pwd)/fake-editor-utf8-mime\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor-utf8-mime\"" \
 	but send-email \
 		--compose --subject foo \
 		--from="Example <nobody@example.com>" \
@@ -1136,7 +1136,7 @@ test_expect_success $PREREQ '--compose respects user mime type' '
 
 test_expect_success $PREREQ '--compose adds MIME for utf8 subject' '
 	clean_fake_sendmail &&
-	GIT_EDITOR="\"$(pwd)/fake-editor\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor\"" \
 	but send-email \
 		--compose --subject utf8-sübjëct \
 		--from="Example <nobody@example.com>" \
@@ -1180,7 +1180,7 @@ test_expect_success $PREREQ 'sendemail.composeencoding works' '
 	write_script fake-editor-utf8 <<-\EOF &&
 	echo "utf8 body: àéìöú" >>"$1"
 	EOF
-	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	but send-email \
 		--compose --subject foo \
 		--from="Example <nobody@example.com>" \
@@ -1196,7 +1196,7 @@ test_expect_success $PREREQ '--compose-encoding works' '
 	write_script fake-editor-utf8 <<-\EOF &&
 	echo "utf8 body: àéìöú" >>"$1"
 	EOF
-	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	but send-email \
 		--compose-encoding iso-8859-1 \
 		--compose --subject foo \
@@ -1214,7 +1214,7 @@ test_expect_success $PREREQ '--compose-encoding overrides sendemail.composeencod
 	write_script fake-editor-utf8 <<-\EOF &&
 	echo "utf8 body: àéìöú" >>"$1"
 	EOF
-	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	but send-email \
 		--compose-encoding iso-8859-2 \
 		--compose --subject foo \
@@ -1228,7 +1228,7 @@ test_expect_success $PREREQ '--compose-encoding overrides sendemail.composeencod
 
 test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
 	clean_fake_sendmail &&
-	GIT_EDITOR="\"$(pwd)/fake-editor\"" \
+	BUT_EDITOR="\"$(pwd)/fake-editor\"" \
 	but send-email \
 		--compose-encoding iso-8859-2 \
 		--compose --subject utf8-sübjëct \
@@ -2291,7 +2291,7 @@ test_expect_success $PREREQ 'invoke hook' '
 	test_hook sendemail-validate <<-\EOF &&
 	# test that we have the correct environment variable, pwd, and
 	# argument
-	case "$GIT_DIR" in
+	case "$BUT_DIR" in
 	*.but)
 		true
 		;;

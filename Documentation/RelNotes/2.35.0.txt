@@ -31,7 +31,7 @@ UI, Workflows & Features
  * "but stash" learned the "--staged" option to stash away what has
    been added to the index (and nothing else).
 
- * "but var GIT_DEFAULT_BRANCH" is a way to see what name is used for
+ * "but var BUT_DEFAULT_BRANCH" is a way to see what name is used for
    the newly created branch if "but init" is run.
 
  * Various operating modes of "but reset" have been made to work
@@ -142,7 +142,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Drop support for TravisCI and update test workflows at GitHub.
 
- * Many tests that used to need GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+ * Many tests that used to need BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
    mechanism to force "but" to use 'master' as the default name for
    the initial branch no longer need it; the use of the mechanism from
    them have been removed.
@@ -212,7 +212,7 @@ Fixes since v2.34
    should succeed as it is a no-op, but doesn't.
 
  * An earlier change in 2.34.0 caused JGit application (that abused
-   GIT_EDITOR mechanism when invoking "but config") to get stuck with
+   BUT_EDITOR mechanism when invoking "but config") to get stuck with
    a SIGTTOU signal; it has been reverted.
 
  * An earlier change that broke .butignore matching has been reverted.
@@ -307,8 +307,8 @@ Fixes since v2.34
    sparse checkout patterns.
    (merge 8c5de0d265 ds/sparse-deep-pattern-checkout-fix later to maint).
 
- * "but rebase -x" by mistake started exporting the GIT_DIR and
-   GIT_WORK_TREE environment variables when the command was rewritten
+ * "but rebase -x" by mistake started exporting the BUT_DIR and
+   BUT_WORK_TREE environment variables when the command was rewritten
    in C, which has been corrected.
    (merge 434e0636db en/rebase-x-wo-but-dir-env later to maint).
 

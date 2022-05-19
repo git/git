@@ -40,7 +40,7 @@ jobs:
         uses: actions/buthub-script@v3
         if: steps.check-ref.outputs.enabled == 'yes'
         with:
-          buthub-token: ${{secrets.GITHUB_TOKEN}}
+          buthub-token: ${{secrets.BUTHUB_TOKEN}}
           script: |
             try {
               // Figure out workflow ID, cummit and tree
@@ -135,7 +135,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       NO_PERL: 1
-      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@but'"
+      BUT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@but'"
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2

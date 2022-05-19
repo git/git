@@ -35,9 +35,9 @@ have_not_sent () {
 trace_fetch () {
 	client=$1; shift
 	server=$1; shift
-	GIT_TRACE_PACKET="$(pwd)/trace" \
+	BUT_TRACE_PACKET="$(pwd)/trace" \
 	but -C "$client" fetch \
-	  --upload-pack 'unset GIT_TRACE_PACKET; but-upload-pack' \
+	  --upload-pack 'unset BUT_TRACE_PACKET; but-upload-pack' \
 	  "$server" "$@"
 }
 
@@ -108,8 +108,8 @@ test_expect_success 'use ref advertisement to filter out cummits' '
 	# The ref advertisement itself is filtered when protocol v2 is used, so
 	# use v0.
 	(
-		GIT_TEST_PROTOCOL_VERSION=0 &&
-		export GIT_TEST_PROTOCOL_VERSION &&
+		BUT_TEST_PROTOCOL_VERSION=0 &&
+		export BUT_TEST_PROTOCOL_VERSION &&
 		trace_fetch client origin to_fetch
 	) &&
 	have_sent c5 c4^ c2side &&
@@ -180,8 +180,8 @@ test_expect_success 'do not send "have" with ancestors of cummits that server AC
 	(
 		# Force protocol v0, in which local transport is stateful (in
 		# protocol v2 it is stateless).
-		GIT_TEST_PROTOCOL_VERSION=0 &&
-		export GIT_TEST_PROTOCOL_VERSION &&
+		BUT_TEST_PROTOCOL_VERSION=0 &&
+		export BUT_TEST_PROTOCOL_VERSION &&
 		trace_fetch client "$(pwd)/server" to_fetch
 	) &&
 	grep "  fetch" trace &&

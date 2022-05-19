@@ -1,7 +1,7 @@
 #include "test-tool.h"
 #include "but-compat-util.h"
 
-#if defined(GIT_WINDOWS_NATIVE)
+#if defined(BUT_WINDOWS_NATIVE)
 #include "lazyload.h"
 #include <winnt.h>
 

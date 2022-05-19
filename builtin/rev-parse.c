@@ -930,7 +930,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--but-dir") ||
 			    !strcmp(arg, "--absolute-but-dir")) {
-				const char *butdir = getenv(GIT_DIR_ENVIRONMENT);
+				const char *butdir = getenv(BUT_DIR_ENVIRONMENT);
 				char *cwd;
 				int len;
 				enum format_type wanted = format;

@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */
@@ -11,8 +11,8 @@
 #include "parse-options.h"
 #include "worktree.h"
 
-#ifndef DEFAULT_GIT_TEMPLATE_DIR
-#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/but-core/templates"
+#ifndef DEFAULT_BUT_TEMPLATE_DIR
+#define DEFAULT_BUT_TEMPLATE_DIR "/usr/share/but-core/templates"
 #endif
 
 #ifdef NO_TRUSTABLE_FILEMODE
@@ -21,7 +21,7 @@
 #define TEST_FILEMODE 1
 #endif
 
-#define GIT_DEFAULT_HASH_ENVIRONMENT "GIT_DEFAULT_HASH"
+#define BUT_DEFAULT_HASH_ENVIRONMENT "BUT_DEFAULT_HASH"
 
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
@@ -108,7 +108,7 @@ static void copy_templates(const char *template_dir, const char *init_template_d
 	if (!template_dir)
 		template_dir = init_template_dir;
 	if (!template_dir)
-		template_dir = to_free = system_path(DEFAULT_GIT_TEMPLATE_DIR);
+		template_dir = to_free = system_path(DEFAULT_BUT_TEMPLATE_DIR);
 	if (!template_dir[0]) {
 		free(to_free);
 		return;
@@ -170,17 +170,17 @@ static int needs_work_tree_config(const char *but_dir, const char *work_tree)
 void initialize_repository_version(int hash_algo, int reinit)
 {
 	char repo_version_string[10];
-	int repo_version = GIT_REPO_VERSION;
+	int repo_version = BUT_REPO_VERSION;
 
-	if (hash_algo != GIT_HASH_SHA1)
-		repo_version = GIT_REPO_VERSION_READ;
+	if (hash_algo != BUT_HASH_SHA1)
+		repo_version = BUT_REPO_VERSION_READ;
 
 	/* This forces creation of new config file */
 	xsnprintf(repo_version_string, sizeof(repo_version_string),
 		  "%d", repo_version);
 	but_config_set("core.repositoryformatversion", repo_version_string);
 
-	if (hash_algo != GIT_HASH_SHA1)
+	if (hash_algo != BUT_HASH_SHA1)
 		but_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
 	else if (reinit)
@@ -363,19 +363,19 @@ static void separate_but_dir(const char *but_dir, const char *but_link)
 
 static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash)
 {
-	const char *env = getenv(GIT_DEFAULT_HASH_ENVIRONMENT);
+	const char *env = getenv(BUT_DEFAULT_HASH_ENVIRONMENT);
 	/*
 	 * If we already have an initialized repo, don't allow the user to
 	 * specify a different algorithm, as that could cause corruption.
 	 * Otherwise, if the user has specified one on the command line, use it.
 	 */
-	if (repo_fmt->version >= 0 && hash != GIT_HASH_UNKNOWN && hash != repo_fmt->hash_algo)
+	if (repo_fmt->version >= 0 && hash != BUT_HASH_UNKNOWN && hash != repo_fmt->hash_algo)
 		die(_("attempt to reinitialize repository with different hash"));
-	else if (hash != GIT_HASH_UNKNOWN)
+	else if (hash != BUT_HASH_UNKNOWN)
 		repo_fmt->hash_algo = hash;
 	else if (env) {
 		int env_algo = hash_algo_by_name(env);
-		if (env_algo == GIT_HASH_UNKNOWN)
+		if (env_algo == BUT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), env);
 		repo_fmt->hash_algo = env_algo;
 	}
@@ -481,8 +481,8 @@ static int guess_repository_type(const char *but_dir)
 	int cwd_is_but_dir;
 
 	/*
-	 * "GIT_DIR=. but init" is always bare.
-	 * "GIT_DIR=`pwd` but init" too.
+	 * "BUT_DIR=. but init" is always bare.
+	 * "BUT_DIR=`pwd` but init" too.
 	 */
 	if (!strcmp(".", but_dir))
 		return 1;
@@ -492,7 +492,7 @@ static int guess_repository_type(const char *but_dir)
 	if (cwd_is_but_dir)
 		return 1;
 	/*
-	 * "GIT_DIR=.but or GIT_DIR=something/.but is usually not.
+	 * "BUT_DIR=.but or BUT_DIR=something/.but is usually not.
 	 */
 	if (!strcmp(but_dir, ".but"))
 		return 0;
@@ -534,7 +534,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	const char *object_format = NULL;
 	const char *initial_branch = NULL;
-	int hash_algo = GIT_HASH_UNKNOWN;
+	int hash_algo = BUT_HASH_UNKNOWN;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
 				N_("directory from which templates will be used")),
@@ -604,13 +604,13 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	}
 	if (is_bare_repository_cfg == 1) {
 		char *cwd = xgetcwd();
-		setenv(GIT_DIR_ENVIRONMENT, cwd, argc > 0);
+		setenv(BUT_DIR_ENVIRONMENT, cwd, argc > 0);
 		free(cwd);
 	}
 
 	if (object_format) {
 		hash_algo = hash_algo_by_name(object_format);
-		if (hash_algo == GIT_HASH_UNKNOWN)
+		if (hash_algo == BUT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), object_format);
 	}
 
@@ -618,22 +618,22 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		set_shared_repository(init_shared_repository);
 
 	/*
-	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
+	 * BUT_WORK_TREE makes sense only in conjunction with BUT_DIR
 	 * without --bare.  Catch the error early.
 	 */
-	but_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
-	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
+	but_dir = xstrdup_or_null(getenv(BUT_DIR_ENVIRONMENT));
+	work_tree = xstrdup_or_null(getenv(BUT_WORK_TREE_ENVIRONMENT));
 	if ((!but_dir || is_bare_repository_cfg == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
 			  "specifying %s (or --but-dir=<directory>)"),
-		    GIT_WORK_TREE_ENVIRONMENT,
-		    GIT_DIR_ENVIRONMENT);
+		    BUT_WORK_TREE_ENVIRONMENT,
+		    BUT_DIR_ENVIRONMENT);
 
 	/*
 	 * Set up the default .but directory contents
 	 */
 	if (!but_dir)
-		but_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+		but_dir = DEFAULT_BUT_DIR_ENVIRONMENT;
 
 	/*
 	 * When --separate-but-dir is used inside a linked worktree, take

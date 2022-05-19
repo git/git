@@ -2,8 +2,8 @@
 
 test_description='recursive merge corner cases involving criss-cross merges'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
@@ -529,7 +529,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		but checkout B^0 &&
 		test_must_fail but merge C^0 &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but rm -rf a/ &&
 			but rm a~HEAD
@@ -556,7 +556,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		but checkout C^0 &&
 		test_must_fail but merge B^0 &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but rm a~B^0
 		else
@@ -570,7 +570,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 
 		but checkout C^0 &&
 		test_must_fail but merge B^0 &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but rm -rf a/ &&
 			but rm a~B^0
@@ -596,7 +596,7 @@ test_expect_success 'merge of D1 & E1 fails but has appropriate contents' '
 
 		test_must_fail but merge -s recursive E1^0 &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 3 out &&
@@ -637,7 +637,7 @@ test_expect_success 'merge of E1 & D1 fails but has appropriate contents' '
 
 		test_must_fail but merge -s recursive D1^0 &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 3 out &&
@@ -678,7 +678,7 @@ test_expect_success 'merge of D1 & E2 fails but has appropriate contents' '
 
 		test_must_fail but merge -s recursive E2^0 &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 5 out &&
@@ -720,7 +720,7 @@ test_expect_success 'merge of E2 & D1 fails but has appropriate contents' '
 
 		test_must_fail but merge -s recursive D1^0 &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 5 out &&

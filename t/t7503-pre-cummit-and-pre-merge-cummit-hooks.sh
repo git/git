@@ -2,8 +2,8 @@
 
 test_description='pre-cummit and pre-merge-commit hooks'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -216,11 +216,11 @@ setup_require_prefix_hook () {
 	echo require-prefix >expected_hooks &&
 	test_hook pre-cummit <<-\EOF
 	echo require-prefix >>actual_hooks
-	test $GIT_PREFIX = "success/"
+	test $BUT_PREFIX = "success/"
 	EOF
 }
 
-test_expect_success 'with hook requiring GIT_PREFIX' '
+test_expect_success 'with hook requiring BUT_PREFIX' '
 	test_when_finished "rm -rf actual_hooks success" &&
 	setup_require_prefix_hook &&
 	echo "more content" >>file &&
@@ -228,12 +228,12 @@ test_expect_success 'with hook requiring GIT_PREFIX' '
 	mkdir success &&
 	(
 		cd success &&
-		but cummit -m "hook requires GIT_PREFIX = success/"
+		but cummit -m "hook requires BUT_PREFIX = success/"
 	) &&
 	test_cmp expected_hooks actual_hooks
 '
 
-test_expect_success 'with failing hook requiring GIT_PREFIX' '
+test_expect_success 'with failing hook requiring BUT_PREFIX' '
 	test_when_finished "rm -rf actual_hooks fail" &&
 	setup_require_prefix_hook &&
 	echo "more content" >>file &&
@@ -252,8 +252,8 @@ setup_require_author_hook () {
 	echo check-author >expected_hooks &&
 	test_hook pre-cummit <<-\EOF
 	echo check-author >>actual_hooks
-	test "$GIT_AUTHOR_NAME" = "New Author" &&
-	test "$GIT_AUTHOR_EMAIL" = "newauthor@example.com"
+	test "$BUT_AUTHOR_NAME" = "New Author" &&
+	test "$BUT_AUTHOR_EMAIL" = "newauthor@example.com"
 	EOF
 }
 
@@ -267,9 +267,9 @@ test_expect_success 'check the author in hook' '
 	EOF
 	test_must_fail but cummit --allow-empty -m "by a.u.thor" &&
 	(
-		GIT_AUTHOR_NAME="New Author" &&
-		GIT_AUTHOR_EMAIL="newauthor@example.com" &&
-		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
+		BUT_AUTHOR_NAME="New Author" &&
+		BUT_AUTHOR_EMAIL="newauthor@example.com" &&
+		export BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL &&
 		but cummit --allow-empty -m "by new.author via env" &&
 		but show -s
 	) &&

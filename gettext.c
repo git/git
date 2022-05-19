@@ -12,7 +12,7 @@
 #ifndef NO_GETTEXT
 #	include <locale.h>
 #	include <libintl.h>
-#	ifdef GIT_WINDOWS_NATIVE
+#	ifdef BUT_WINDOWS_NATIVE
 
 static const char *locale_charset(void)
 {
@@ -104,11 +104,11 @@ static void init_gettext_charset(const char *domain)
 
 void but_setup_gettext(void)
 {
-	const char *podir = getenv(GIT_TEXT_DOMAIN_DIR_ENVIRONMENT);
+	const char *podir = getenv(BUT_TEXT_DOMAIN_DIR_ENVIRONMENT);
 	char *p = NULL;
 
 	if (!podir)
-		podir = p = system_path(GIT_LOCALE_PATH);
+		podir = p = system_path(BUT_LOCALE_PATH);
 
 	if (!is_directory(podir)) {
 		free(p);

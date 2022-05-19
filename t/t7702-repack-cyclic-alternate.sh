@@ -7,8 +7,8 @@ test_description='repack involving cyclic alternate'
 . ./test-lib.sh
 
 test_expect_success setup '
-	GIT_OBJECT_DIRECTORY=.but//../.but/objects &&
-	export GIT_OBJECT_DIRECTORY &&
+	BUT_OBJECT_DIRECTORY=.but//../.but/objects &&
+	export BUT_OBJECT_DIRECTORY &&
 	touch a &&
 	but add a &&
 	but cummit -m 1 &&

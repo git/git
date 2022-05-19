@@ -116,6 +116,6 @@ The official repository of the 'but gui' project can be found at:
 
   https://buthub.com/prati0100/but-gui.but/
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

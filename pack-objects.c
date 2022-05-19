@@ -135,7 +135,7 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 {
 	pdata->repo = r;
 
-	if (but_env_bool("GIT_TEST_FULL_IN_PACK_ARRAY", 0)) {
+	if (but_env_bool("BUT_TEST_FULL_IN_PACK_ARRAY", 0)) {
 		/*
 		 * do not initialize in_pack_by_idx[] to force the
 		 * slow path in oe_in_pack()
@@ -144,9 +144,9 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 		prepare_in_pack_by_idx(pdata);
 	}
 
-	pdata->oe_size_limit = but_env_ulong("GIT_TEST_OE_SIZE",
+	pdata->oe_size_limit = but_env_ulong("BUT_TEST_OE_SIZE",
 					     1U << OE_SIZE_BITS);
-	pdata->oe_delta_size_limit = but_env_ulong("GIT_TEST_OE_DELTA_SIZE",
+	pdata->oe_delta_size_limit = but_env_ulong("BUT_TEST_OE_DELTA_SIZE",
 						   1UL << OE_DELTA_SIZE_BITS);
 	init_recursive_mutex(&pdata->odb_lock);
 }

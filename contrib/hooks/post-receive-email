@@ -717,15 +717,15 @@ LOGBEGIN="- Log ----------------------------------------------------------------
 LOGEND="-----------------------------------------------------------------------"
 
 # --- Config
-# Set GIT_DIR either from the working directory, or from the environment
+# Set BUT_DIR either from the working directory, or from the environment
 # variable.
-GIT_DIR=$(but rev-parse --but-dir 2>/dev/null)
-if [ -z "$GIT_DIR" ]; then
-	echo >&2 "fatal: post-receive: GIT_DIR not set"
+BUT_DIR=$(but rev-parse --but-dir 2>/dev/null)
+if [ -z "$BUT_DIR" ]; then
+	echo >&2 "fatal: post-receive: BUT_DIR not set"
 	exit 1
 fi
 
-projectdesc=$(sed -ne '1p' "$GIT_DIR/description" 2>/dev/null)
+projectdesc=$(sed -ne '1p' "$BUT_DIR/description" 2>/dev/null)
 # Check if the description is unchanged from it's default, and shorten it to
 # a more manageable length if it is
 if expr "$projectdesc" : "Unnamed repository.*$" >/dev/null

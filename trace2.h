@@ -7,8 +7,8 @@
  * explicitly enabled by enabling one or more Trace2 Targets.
  *
  * The Trace2 API is intended to replace the existing (Trace1)
- * printf-style tracing provided by the existing `GIT_TRACE` and
- * `GIT_TRACE_PERFORMANCE` facilities.  During initial implementation,
+ * printf-style tracing provided by the existing `BUT_TRACE` and
+ * `BUT_TRACE_PERFORMANCE` facilities.  During initial implementation,
  * Trace2 and Trace1 may operate in parallel.
  *
  * The Trace2 API defines a set of high-level messages with known fields,
@@ -25,7 +25,7 @@
  * for example.
  *
  * Trace2 is controlled using `trace2.*` config values in the system and
- * global config files and `GIT_TRACE2*` environment variables.  Trace2 does
+ * global config files and `BUT_TRACE2*` environment variables.  Trace2 does
  * not read from repo local or worktree config files or respect `-c`
  * command line config settings.
  *
@@ -180,7 +180,7 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
  * list of patterns configured important.  For example:
  *     but config --system trace2.configParams 'core.*,remote.*.url'
  * or:
- *     GIT_TRACE2_CONFIG_PARAMS=core.*,remote.*.url"
+ *     BUT_TRACE2_CONFIG_PARAMS=core.*,remote.*.url"
  *
  * Note: this routine does a read-only iteration on the config data
  * (using read_early_config()), so it must not be called until enough
@@ -197,9 +197,9 @@ void trace2_cmd_list_config_fl(const char *file, int line);
  *
  * Use the TR2_SYSENV_ENV_VARS setting to register a comma-separated list of
  * environment variables considered important.  For example:
- *     but config --system trace2.envVars 'GIT_HTTP_USER_AGENT,GIT_CONFIG'
+ *     but config --system trace2.envVars 'BUT_HTTP_USER_AGENT,BUT_CONFIG'
  * or:
- *     GIT_TRACE2_ENV_VARS="GIT_HTTP_USER_AGENT,GIT_CONFIG"
+ *     BUT_TRACE2_ENV_VARS="BUT_HTTP_USER_AGENT,BUT_CONFIG"
  */
 void trace2_cmd_list_env_vars_fl(const char *file, int line);
 

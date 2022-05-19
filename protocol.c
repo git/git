@@ -17,7 +17,7 @@ static enum protocol_version parse_protocol_version(const char *value)
 enum protocol_version get_protocol_version_config(void)
 {
 	const char *value;
-	const char *but_test_k = "GIT_TEST_PROTOCOL_VERSION";
+	const char *but_test_k = "BUT_TEST_PROTOCOL_VERSION";
 	const char *but_test_v;
 
 	if (!but_config_get_string_tmp("protocol.version", &value)) {
@@ -44,7 +44,7 @@ enum protocol_version get_protocol_version_config(void)
 
 enum protocol_version determine_protocol_version_server(void)
 {
-	const char *but_protocol = getenv(GIT_PROTOCOL_ENVIRONMENT);
+	const char *but_protocol = getenv(BUT_PROTOCOL_ENVIRONMENT);
 	enum protocol_version version = protocol_v0;
 
 	/*

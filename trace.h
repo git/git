@@ -6,7 +6,7 @@
 
 /**
  * The trace API can be used to print debug messages to stderr or a file. Trace
- * code is inactive unless explicitly enabled by setting `GIT_TRACE*` environment
+ * code is inactive unless explicitly enabled by setting `BUT_TRACE*` environment
  * variables.
  *
  * The trace implementation automatically adds `timestamp file:line ... \n` to
@@ -20,53 +20,53 @@
  * Bugs & Caveats
  * --------------
  *
- * GIT_TRACE_* environment variables can be used to tell Git to show
+ * BUT_TRACE_* environment variables can be used to tell Git to show
  * trace output to its standard error stream. Git can often spawn a pager
  * internally to run its subcommand and send its standard output and
  * standard error to it.
  *
- * Because GIT_TRACE_PERFORMANCE trace is generated only at the very end
+ * Because BUT_TRACE_PERFORMANCE trace is generated only at the very end
  * of the program with atexit(), which happens after the pager exits, it
  * would not work well if you send its log to the standard error output
  * and let Git spawn the pager at the same time.
  *
  * As a work around, you can for example use '--no-pager', or set
- * GIT_TRACE_PERFORMANCE to another file descriptor which is redirected
- * to stderr, or set GIT_TRACE_PERFORMANCE to a file specified by its
+ * BUT_TRACE_PERFORMANCE to another file descriptor which is redirected
+ * to stderr, or set BUT_TRACE_PERFORMANCE to a file specified by its
  * absolute path.
  *
  * For example instead of the following command which by default may not
  * print any performance information:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=2 but log -1
+ * BUT_TRACE_PERFORMANCE=2 but log -1
  * ------------
  *
  * you may want to use:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=2 but --no-pager log -1
+ * BUT_TRACE_PERFORMANCE=2 but --no-pager log -1
  * ------------
  *
  * or:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=3 3>&2 but log -1
+ * BUT_TRACE_PERFORMANCE=3 3>&2 but log -1
  * ------------
  *
  * or:
  *
  * ------------
- * GIT_TRACE_PERFORMANCE=/path/to/log/file but log -1
+ * BUT_TRACE_PERFORMANCE=/path/to/log/file but log -1
  * ------------
  *
  */
 
 /**
  * Defines a trace key (or category). The default (for API functions that
- * don't take a key) is `GIT_TRACE`.
+ * don't take a key) is `BUT_TRACE`.
  *
- * E.g. to define a trace key controlled by environment variable `GIT_TRACE_FOO`:
+ * E.g. to define a trace key controlled by environment variable `BUT_TRACE_FOO`:
  *
  * ------------
  * static struct trace_key trace_foo = TRACE_KEY_INIT(FOO);
@@ -89,7 +89,7 @@ struct trace_key {
 
 extern struct trace_key trace_default_key;
 
-#define TRACE_KEY_INIT(name) { .key = "GIT_TRACE_" #name }
+#define TRACE_KEY_INIT(name) { .key = "BUT_TRACE_" #name }
 extern struct trace_key trace_perf_key;
 extern struct trace_key trace_setup_key;
 
@@ -202,7 +202,7 @@ uint64_t trace_performance_enter(void);
 /**
  * trace_performance(), accepts "uint64_t nanos, const char *format, ...".
  *
- * Prints elapsed time (in nanoseconds) if GIT_TRACE_PERFORMANCE is enabled.
+ * Prints elapsed time (in nanoseconds) if BUT_TRACE_PERFORMANCE is enabled.
  *
  * Example:
  * ------------
@@ -227,7 +227,7 @@ uint64_t trace_performance_enter(void);
 /**
  * trace_performance_since(), accepts "uint64_t start, const char *format, ...".
  *
- * Prints elapsed time since 'start' if GIT_TRACE_PERFORMANCE is enabled.
+ * Prints elapsed time since 'start' if BUT_TRACE_PERFORMANCE is enabled.
  *
  * Example:
  * ------------

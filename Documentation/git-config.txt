@@ -141,11 +141,11 @@ from all available files.
 See also <<FILES>>.
 
 --worktree::
-	Similar to `--local` except that `$GIT_DIR/config.worktree` is
+	Similar to `--local` except that `$BUT_DIR/config.worktree` is
 	read from or written to if `extensions.worktreeConfig` is
-	enabled. If not it's the same as `--local`. Note that `$GIT_DIR`
-	is equal to `$GIT_COMMON_DIR` for the main working tree, but is of
-	the form `$GIT_DIR/worktrees/<id>/` for other working trees. See
+	enabled. If not it's the same as `--local`. Note that `$BUT_DIR`
+	is equal to `$BUT_COMMON_DIR` for the main working tree, but is of
+	the form `$BUT_DIR/worktrees/<id>/` for other working trees. See
 	linkbut:but-worktree[1] to learn how to enable
 	`extensions.worktreeConfig`.
 
@@ -315,12 +315,12 @@ $XDG_CONFIG_HOME/but/config::
 	User-specific configuration file. Also called "global"
 	configuration file.
 
-$GIT_DIR/config::
+$BUT_DIR/config::
 	Repository specific configuration file.
 
-$GIT_DIR/config.worktree::
+$BUT_DIR/config.worktree::
 	This is optional and is only searched when
-	`extensions.worktreeConfig` is present in $GIT_DIR/config.
+	`extensions.worktreeConfig` is present in $BUT_DIR/config.
 
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
@@ -347,25 +347,25 @@ You can override these rules using the `--global`, `--system`,
 ENVIRONMENT
 -----------
 
-GIT_CONFIG_GLOBAL::
-GIT_CONFIG_SYSTEM::
+BUT_CONFIG_GLOBAL::
+BUT_CONFIG_SYSTEM::
 	Take the configuration from the given files instead from global or
 	system-level configuration. See linkbut:but[1] for details.
 
-GIT_CONFIG_NOSYSTEM::
+BUT_CONFIG_NOSYSTEM::
 	Whether to skip reading settings from the system-wide
 	$(prefix)/etc/butconfig file. See linkbut:but[1] for details.
 
 See also <<FILES>>.
 
-GIT_CONFIG_COUNT::
-GIT_CONFIG_KEY_<n>::
-GIT_CONFIG_VALUE_<n>::
-	If GIT_CONFIG_COUNT is set to a positive number, all environment pairs
-	GIT_CONFIG_KEY_<n> and GIT_CONFIG_VALUE_<n> up to that number will be
+BUT_CONFIG_COUNT::
+BUT_CONFIG_KEY_<n>::
+BUT_CONFIG_VALUE_<n>::
+	If BUT_CONFIG_COUNT is set to a positive number, all environment pairs
+	BUT_CONFIG_KEY_<n> and BUT_CONFIG_VALUE_<n> up to that number will be
 	added to the process's runtime configuration. The config pairs are
 	zero-indexed. Any missing key or value is treated as an error. An empty
-	GIT_CONFIG_COUNT is treated the same as GIT_CONFIG_COUNT=0, namely no
+	BUT_CONFIG_COUNT is treated the same as BUT_CONFIG_COUNT=0, namely no
 	pairs are processed. These environment variables will override values
 	in configuration files, but will be overridden by any explicit options
 	passed via `but -c`.
@@ -374,9 +374,9 @@ This is useful for cases where you want to spawn multiple but commands
 with a common configuration but cannot depend on a configuration file,
 for example when writing scripts.
 
-GIT_CONFIG::
+BUT_CONFIG::
 	If no `--file` option is provided to `but config`, use the file
-	given by `GIT_CONFIG` as if it were provided via `--file`. This
+	given by `BUT_CONFIG` as if it were provided via `--file`. This
 	variable has no effect on other Git commands, and is mostly for
 	historical compatibility; there is generally no reason to use it
 	instead of the `--file` option.
@@ -538,6 +538,6 @@ and running `but config section.Subsection.key value2` will result in
 --------
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

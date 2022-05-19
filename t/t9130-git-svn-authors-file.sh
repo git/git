@@ -95,10 +95,10 @@ test_expect_success 'fetch continues after authors-file is fixed' '
 
 test_expect_success !MINGW 'fresh clone with svn.authors-file in config' '
 	(
-		rm -r "$GIT_DIR" &&
+		rm -r "$BUT_DIR" &&
 		test x = x"$(but config svn.authorsfile)" &&
 		test_config="$HOME"/.butconfig &&
-		sane_unset GIT_DIR &&
+		sane_unset BUT_DIR &&
 		but config --global \
 		  svn.authorsfile "$HOME"/svn-authors &&
 		test x"$HOME"/svn-authors = x"$(but config svn.authorsfile)" &&
@@ -126,6 +126,6 @@ test_expect_success 'authors-file imported user without email' '
 	)
 	'
 
-test_debug 'GIT_DIR=butconfig.clone/.but but log'
+test_debug 'BUT_DIR=butconfig.clone/.but but log'
 
 test_done

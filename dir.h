@@ -148,12 +148,12 @@ struct oid_stat {
  *  directory are excluded:
  *
  *   - The list of files and directories of the directory in question
- *   - The $GIT_DIR/index
+ *   - The $BUT_DIR/index
  *   - dir_struct flags
- *   - The content of $GIT_DIR/info/exclude
+ *   - The content of $BUT_DIR/info/exclude
  *   - The content of core.excludesfile
  *   - The content (or the lack) of .butignore of all parent directories
- *     from $GIT_WORK_TREE
+ *     from $BUT_WORK_TREE
  *   - The check_only flag in read_directory_recursive (for
  *     DIR_HIDE_EMPTY_DIRECTORIES)
  *
@@ -241,7 +241,7 @@ struct dir_struct {
 		 * If set, recurse into a directory that looks like a Git directory.
 		 * Otherwise it is shown as a directory.
 		 */
-		DIR_NO_GITLINKS = 1<<3,
+		DIR_NO_BUTLINKS = 1<<3,
 
 		/**
 		 * Special mode for but-add. Return ignored files in `ignored[]` and
@@ -283,7 +283,7 @@ struct dir_struct {
 		 */
 		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1<<8,
 
-		DIR_SKIP_NESTED_GIT = 1<<9
+		DIR_SKIP_NESTED_BUT = 1<<9
 	} flags;
 
 	/* An array of `struct dir_entry`, each element of which describes a path. */
@@ -490,7 +490,7 @@ int get_sparse_checkout_patterns(struct pattern_list *pl);
  * If any Git work trees are found within path, skip them without
  * considering it an error.
  */
-#define REMOVE_DIR_KEEP_NESTED_GIT 02
+#define REMOVE_DIR_KEEP_NESTED_BUT 02
 
 /* Remove the contents of path, but leave path itself. */
 #define REMOVE_DIR_KEEP_TOPLEVEL 04
@@ -538,7 +538,7 @@ static inline int ce_path_match(struct index_state *istate,
 				char *seen)
 {
 	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
-			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
+			      S_ISDIR(ce->ce_mode) || S_ISBUTLINK(ce->ce_mode));
 }
 
 static inline int dir_path_match(struct index_state *istate,

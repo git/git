@@ -5,8 +5,8 @@
 
 test_description='various format-patch tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -790,7 +790,7 @@ test_expect_success 'format-patch --in-reply-to' '
 
 test_expect_success 'format-patch --signoff' '
 	but format-patch -1 --signoff --stdout >out &&
-	grep "^Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" out
+	grep "^Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>" out
 '
 
 test_expect_success 'format-patch --notes --signoff' '
@@ -1100,14 +1100,14 @@ test_expect_success '--signature overrides format.signaturefile' '
 
 test_expect_success TTY 'format-patch --stdout paginates' '
 	rm -f pager_used &&
-	test_terminal env GIT_PAGER="wc >pager_used" but format-patch --stdout --all &&
+	test_terminal env BUT_PAGER="wc >pager_used" but format-patch --stdout --all &&
 	test_path_is_file pager_used
 '
 
  test_expect_success TTY 'format-patch --stdout pagination can be disabled' '
 	rm -f pager_used &&
-	test_terminal env GIT_PAGER="wc >pager_used" but --no-pager format-patch --stdout --all &&
-	test_terminal env GIT_PAGER="wc >pager_used" but -c "pager.format-patch=false" format-patch --stdout --all &&
+	test_terminal env BUT_PAGER="wc >pager_used" but --no-pager format-patch --stdout --all &&
+	test_terminal env BUT_PAGER="wc >pager_used" but -c "pager.format-patch=false" format-patch --stdout --all &&
 	test_path_is_missing pager_used &&
 	test_path_is_missing .but/pager_used
 '
@@ -1199,7 +1199,7 @@ test_expect_success 'format-patch wraps extremely long subject (rfc2047)' '
 check_author() {
 	echo content >>file &&
 	but add file &&
-	GIT_AUTHOR_NAME=$1 but cummit -m author-check &&
+	BUT_AUTHOR_NAME=$1 but cummit -m author-check &&
 	but format-patch --stdout -1 >patch &&
 	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
 	test_cmp expect actual
@@ -1278,7 +1278,7 @@ EOF
 test_expect_success 'format-patch wraps extremely long from-header (non-ASCII without Q-encoding)' '
 	echo content >>file &&
 	but add file &&
-	GIT_AUTHOR_NAME="Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar" \
+	BUT_AUTHOR_NAME="Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar" \
 	but cummit -m author-check &&
 	but format-patch --no-encode-email-headers --stdout -1 >patch &&
 	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
@@ -1401,7 +1401,7 @@ test_expect_success '--from omits redundant in-body header' '
 '
 
 test_expect_success 'in-body headers trigger content encoding' '
-	test_env GIT_AUTHOR_NAME="éxötìc" test_cummit exotic &&
+	test_env BUT_AUTHOR_NAME="éxötìc" test_cummit exotic &&
 	test_when_finished "but reset --hard HEAD^" &&
 	but format-patch -1 --stdout --from >patch &&
 	cat >expect <<-\EOF &&

@@ -41,10 +41,10 @@ static char const * const builtin_rebase_usage[] = {
 	NULL
 };
 
-static GIT_PATH_FUNC(path_squash_onto, "rebase-merge/squash-onto")
-static GIT_PATH_FUNC(path_interactive, "rebase-merge/interactive")
-static GIT_PATH_FUNC(apply_dir, "rebase-apply")
-static GIT_PATH_FUNC(merge_dir, "rebase-merge")
+static BUT_PATH_FUNC(path_squash_onto, "rebase-merge/squash-onto")
+static BUT_PATH_FUNC(path_interactive, "rebase-merge/interactive")
+static BUT_PATH_FUNC(apply_dir, "rebase-apply")
+static BUT_PATH_FUNC(merge_dir, "rebase-merge")
 
 enum rebase_type {
 	REBASE_UNSPECIFIED = -1,
@@ -733,9 +733,9 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 
 	if (opts->type == REBASE_MERGE) {
 		/* Run sequencer-based rebase */
-		setenv("GIT_CHERRY_PICK_HELP", resolvemsg, 1);
+		setenv("BUT_CHERRY_PICK_HELP", resolvemsg, 1);
 		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-			setenv("GIT_SEQUENCE_EDITOR", ":", 1);
+			setenv("BUT_SEQUENCE_EDITOR", ":", 1);
 			opts->autosquash = 0;
 		}
 		if (opts->gpg_sign_opt) {
@@ -824,7 +824,7 @@ static int checkout_up_to_date(struct rebase_options *options)
 	int ret = 0;
 
 	strbuf_addf(&buf, "%s: checkout %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
+		    getenv(BUT_REFLOG_ACTION_ENVIRONMENT),
 		    options->switch_to);
 	ropts.oid = &options->orig_head;
 	ropts.branch = options->head_name;
@@ -1001,12 +1001,12 @@ static void set_reflog_action(struct rebase_options *options)
 	if (!is_merge(options))
 		return;
 
-	env = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
+	env = getenv(BUT_REFLOG_ACTION_ENVIRONMENT);
 	if (env && strcmp("rebase", env))
 		return; /* only override it if it is "rebase" */
 
 	strbuf_addf(&buf, "rebase (%s)", options->action);
-	setenv(GIT_REFLOG_ACTION_ENVIRONMENT, buf.buf, 1);
+	setenv(BUT_REFLOG_ACTION_ENVIRONMENT, buf.buf, 1);
 	strbuf_release(&buf);
 }
 
@@ -1226,7 +1226,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (action != ACTION_NONE && !in_progress)
 		die(_("No rebase in progress?"));
-	setenv(GIT_REFLOG_ACTION_ENVIRONMENT, "rebase", 0);
+	setenv(BUT_REFLOG_ACTION_ENVIRONMENT, "rebase", 0);
 
 	if (action == ACTION_EDIT_TODO && !is_merge(&options))
 		die(_("The --edit-todo action can only be used during "
@@ -1506,8 +1506,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.type == REBASE_MERGE &&
 	    !options.strategy &&
-	    getenv("GIT_TEST_MERGE_ALGORITHM"))
-		options.strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
+	    getenv("BUT_TEST_MERGE_ALGORITHM"))
+		options.strategy = xstrdup(getenv("BUT_TEST_MERGE_ALGORITHM"));
 
 	switch (options.type) {
 	case REBASE_MERGE:
@@ -1769,7 +1769,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "%s: checkout %s",
-		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
+		    getenv(BUT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
 	ropts.oid = &options.onto->object.oid;
 	ropts.orig_head = &options.orig_head,
 	ropts.flags = RESET_HEAD_DETACH | RESET_ORIG_HEAD |

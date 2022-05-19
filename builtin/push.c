@@ -22,8 +22,8 @@ static const char * const push_usage[] = {
 
 static int push_use_color = -1;
 static char push_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_RED,	/* ERROR */
+	BUT_COLOR_RESET,
+	BUT_COLOR_RED,	/* ERROR */
 };
 
 enum color_push {

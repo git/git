@@ -350,13 +350,13 @@ static int restore_untracked(struct object_id *u_tree)
 
 	/*
 	 * We need to run restore files from a given index, but without
-	 * affecting the current index, so we use GIT_INDEX_FILE with
+	 * affecting the current index, so we use BUT_INDEX_FILE with
 	 * run_command to fork processes that will not interfere.
 	 */
 	cp.but_cmd = 1;
 	strvec_push(&cp.args, "read-tree");
 	strvec_push(&cp.args, oid_to_hex(u_tree));
-	strvec_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&cp.env_array, "BUT_INDEX_FILE=%s",
 		     stash_index_path.buf);
 	if (run_command(&cp)) {
 		remove_path(stash_index_path.buf);
@@ -366,7 +366,7 @@ static int restore_untracked(struct object_id *u_tree)
 	child_process_init(&cp);
 	cp.but_cmd = 1;
 	strvec_pushl(&cp.args, "checkout-index", "--all", NULL);
-	strvec_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&cp.env_array, "BUT_INDEX_FILE=%s",
 		     stash_index_path.buf);
 
 	res = run_command(&cp);
@@ -585,9 +585,9 @@ restore_untracked:
 		 */
 		cp.but_cmd = 1;
 		cp.dir = prefix;
-		strvec_pushf(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT"=%s",
+		strvec_pushf(&cp.env_array, BUT_WORK_TREE_ENVIRONMENT"=%s",
 			     absolute_path(get_but_work_tree()));
-		strvec_pushf(&cp.env_array, GIT_DIR_ENVIRONMENT"=%s",
+		strvec_pushf(&cp.env_array, BUT_DIR_ENVIRONMENT"=%s",
 			     absolute_path(get_but_dir()));
 		strvec_push(&cp.args, "status");
 		run_command(&cp);
@@ -1088,7 +1088,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 	cp_upd_index.but_cmd = 1;
 	strvec_pushl(&cp_upd_index.args, "update-index", "-z", "--add",
 		     "--remove", "--stdin", NULL);
-	strvec_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&cp_upd_index.env_array, "BUT_INDEX_FILE=%s",
 			 stash_index_path.buf);
 
 	strbuf_addf(&untracked_msg, "untracked files on %s\n", msg->buf);
@@ -1162,7 +1162,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 
 	cp_read_tree.but_cmd = 1;
 	strvec_pushl(&cp_read_tree.args, "read-tree", "HEAD", NULL);
-	strvec_pushf(&cp_read_tree.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&cp_read_tree.env_array, "BUT_INDEX_FILE=%s",
 		     stash_index_path.buf);
 	if (run_command(&cp_read_tree)) {
 		ret = -1;
@@ -1249,7 +1249,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	strvec_pushl(&cp_upd_index.args, "update-index",
 		     "--ignore-skip-worktree-entries",
 		     "-z", "--add", "--remove", "--stdin", NULL);
-	strvec_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
+	strvec_pushf(&cp_upd_index.env_array, "BUT_INDEX_FILE=%s",
 		     stash_index_path.buf);
 
 	if (pipe_command(&cp_upd_index, diff_output.buf, diff_output.len,
@@ -1526,7 +1526,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			if (startup_info->original_cwd) {
 				cp.dir = startup_info->original_cwd;
 				strvec_pushf(&cp.env_array, "%s=%s",
-					     GIT_WORK_TREE_ENVIRONMENT,
+					     BUT_WORK_TREE_ENVIRONMENT,
 					     the_repository->worktree);
 			}
 			strvec_pushl(&cp.args, "clean", "--force",

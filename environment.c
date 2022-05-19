@@ -46,8 +46,8 @@ int fsync_object_files = -1;
 int use_fsync = -1;
 enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
 enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-size_t packed_but_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
-size_t packed_but_limit = DEFAULT_PACKED_GIT_LIMIT;
+size_t packed_but_window_size = DEFAULT_PACKED_BUT_WINDOW_SIZE;
+size_t packed_but_limit = DEFAULT_PACKED_BUT_LIMIT;
 size_t delta_base_cache_limit = 96 * 1024 * 1024;
 unsigned long big_file_threshold = 512 * 1024 * 1024;
 int pager_use_color = 1;
@@ -106,7 +106,7 @@ static char *but_namespace;
 static char *super_prefix;
 
 /*
- * Repository-local GIT_* environment variables; see cache.h for details.
+ * Repository-local BUT_* environment variables; see cache.h for details.
  */
 const char * const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,
@@ -114,17 +114,17 @@ const char * const local_repo_env[] = {
 	CONFIG_DATA_ENVIRONMENT,
 	CONFIG_COUNT_ENVIRONMENT,
 	DB_ENVIRONMENT,
-	GIT_DIR_ENVIRONMENT,
-	GIT_WORK_TREE_ENVIRONMENT,
-	GIT_IMPLICIT_WORK_TREE_ENVIRONMENT,
+	BUT_DIR_ENVIRONMENT,
+	BUT_WORK_TREE_ENVIRONMENT,
+	BUT_IMPLICIT_WORK_TREE_ENVIRONMENT,
 	GRAFT_ENVIRONMENT,
 	INDEX_ENVIRONMENT,
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
-	GIT_REPLACE_REF_BASE_ENVIRONMENT,
-	GIT_PREFIX_ENVIRONMENT,
-	GIT_SUPER_PREFIX_ENVIRONMENT,
-	GIT_SHALLOW_FILE_ENVIRONMENT,
-	GIT_COMMON_DIR_ENVIRONMENT,
+	BUT_REPLACE_REF_BASE_ENVIRONMENT,
+	BUT_PREFIX_ENVIRONMENT,
+	BUT_SUPER_PREFIX_ENVIRONMENT,
+	BUT_SHALLOW_FILE_ENVIRONMENT,
+	BUT_COMMON_DIR_ENVIRONMENT,
 	NULL
 };
 
@@ -167,12 +167,12 @@ void setup_but_env(const char *but_dir)
 	struct set_butdir_args args = { NULL };
 	struct strvec to_free = STRVEC_INIT;
 
-	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
+	args.commondir = getenv_safe(&to_free, BUT_COMMON_DIR_ENVIRONMENT);
 	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
 	args.graft_file = getenv_safe(&to_free, GRAFT_ENVIRONMENT);
 	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
 	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
-	if (getenv(GIT_QUARANTINE_ENVIRONMENT)) {
+	if (getenv(BUT_QUARANTINE_ENVIRONMENT)) {
 		args.disable_ref_updates = 1;
 	}
 
@@ -181,13 +181,13 @@ void setup_but_env(const char *but_dir)
 
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		read_replace_refs = 0;
-	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
+	replace_ref_base = getenv(BUT_REPLACE_REF_BASE_ENVIRONMENT);
 	free(but_replace_ref_base);
 	but_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
 							  : "refs/replace/");
 	free(but_namespace);
-	but_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
-	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
+	but_namespace = expand_namespace(getenv(BUT_NAMESPACE_ENVIRONMENT));
+	shallow_file = getenv(BUT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
 		set_alternate_shallow_file(the_repository, shallow_file, 0);
 }
@@ -237,7 +237,7 @@ const char *get_super_prefix(void)
 {
 	static int initialized;
 	if (!initialized) {
-		super_prefix = xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
+		super_prefix = xstrdup_or_null(getenv(BUT_SUPER_PREFIX_ENVIRONMENT));
 		initialized = 1;
 	}
 	return super_prefix;
@@ -329,7 +329,7 @@ char *get_graft_file(struct repository *r)
 
 static void set_but_dir_1(const char *path)
 {
-	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
+	xsetenv(BUT_DIR_ENVIRONMENT, path, 1);
 	setup_but_env(path);
 }
 
@@ -342,7 +342,7 @@ static void update_relative_butdir(const char *name,
 	struct tmp_objdir *tmp_objdir = tmp_objdir_unapply_primary_odb();
 
 	trace_printf_key(&trace_setup_key,
-			 "setup: move $GIT_DIR to '%s'",
+			 "setup: move $BUT_DIR to '%s'",
 			 path);
 	set_but_dir_1(path);
 	if (tmp_objdir)
@@ -405,19 +405,19 @@ void reset_shared_repository(void)
 
 int use_optional_locks(void)
 {
-	return but_env_bool(GIT_OPTIONAL_LOCKS_ENVIRONMENT, 1);
+	return but_env_bool(BUT_OPTIONAL_LOCKS_ENVIRONMENT, 1);
 }
 
 int print_sha1_ellipsis(void)
 {
 	/*
 	 * Determine if the calling environment contains the variable
-	 * GIT_PRINT_SHA1_ELLIPSIS set to "yes".
+	 * BUT_PRINT_SHA1_ELLIPSIS set to "yes".
 	 */
 	static int cached_result = -1; /* unknown */
 
 	if (cached_result < 0) {
-		const char *v = getenv("GIT_PRINT_SHA1_ELLIPSIS");
+		const char *v = getenv("BUT_PRINT_SHA1_ELLIPSIS");
 		cached_result = (v && !strcasecmp(v, "yes"));
 	}
 	return cached_result;

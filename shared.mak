@@ -79,7 +79,7 @@ ifndef V
 	QUIET_GEN	= @echo '   ' GEN $@;
 	QUIET_STDERR	= 2> /dev/null
 
-	QUIET_LINT_GITLINK	= @echo '   ' LINT GITLINK $<;
+	QUIET_LINT_BUTLINK	= @echo '   ' LINT BUTLINK $<;
 	QUIET_LINT_MANSEC	= @echo '   ' LINT MAN SEC $<;
 	QUIET_LINT_MANEND	= @echo '   ' LINT MAN END $<;
 

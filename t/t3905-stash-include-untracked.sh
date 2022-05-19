@@ -396,8 +396,8 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	i_cummit=$(but cummit-tree -p HEAD -m "index on any-branch" "$tree") &&
 	test_when_finished "rm -f untracked_index" &&
 	u_cummit=$(
-		GIT_INDEX_FILE="untracked_index" &&
-		export GIT_INDEX_FILE &&
+		BUT_INDEX_FILE="untracked_index" &&
+		export BUT_INDEX_FILE &&
 		but update-index --add tracked &&
 		u_tree=$(but write-tree) &&
 		but cummit-tree -m "untracked files on any-branch" "$u_tree"

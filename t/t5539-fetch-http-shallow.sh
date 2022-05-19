@@ -2,8 +2,8 @@
 
 test_description='fetch/clone from a shallow clone over http'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -74,7 +74,7 @@ test_expect_success 'no shallow lines after receiving ACK ready' '
 		test_cummit new-too &&
 		# NEEDSWORK: If the overspecification of the expected result is reduced, we
 		# might be able to run this test in all protocol versions.
-		GIT_TRACE_PACKET="$TRASH_DIRECTORY/trace" GIT_TEST_PROTOCOL_VERSION=0 \
+		BUT_TRACE_PACKET="$TRASH_DIRECTORY/trace" BUT_TEST_PROTOCOL_VERSION=0 \
 			but fetch --depth=2 &&
 		grep "fetch-pack< ACK .* ready" ../trace &&
 		! grep "fetch-pack> done" ../trace
@@ -85,9 +85,9 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
-	GIT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
-	GIT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
+	BUT_CUMMITTER_DATE="100000000 +0700" but cummit --allow-empty -m one &&
+	BUT_CUMMITTER_DATE="200000000 +0700" but cummit --allow-empty -m two &&
+	BUT_CUMMITTER_DATE="300000000 +0700" but cummit --allow-empty -m three &&
 	mv .but "$HTTPD_DOCUMENT_ROOT_PATH/shallow-since.but" &&
 	but clone --shallow-since "300000000 +0700" $HTTPD_URL/smart/shallow-since.but ../shallow11 &&
 	but -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&

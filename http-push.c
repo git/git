@@ -146,7 +146,7 @@ struct remote_lock {
 	char *url;
 	char *owner;
 	char *token;
-	char tmpfile_suffix[GIT_MAX_HEXSZ + 1];
+	char tmpfile_suffix[BUT_MAX_HEXSZ + 1];
 	time_t start_time;
 	long timeout;
 	int refreshing;
@@ -752,7 +752,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 {
 	struct remote_lock *lock = (struct remote_lock *)ctx->userData;
 	but_hash_ctx hash_ctx;
-	unsigned char lock_token_hash[GIT_MAX_RAWSZ];
+	unsigned char lock_token_hash[BUT_MAX_RAWSZ];
 
 	if (tag_closed && ctx->cdata) {
 		if (!strcmp(ctx->name, DAV_ACTIVELOCK_OWNER)) {

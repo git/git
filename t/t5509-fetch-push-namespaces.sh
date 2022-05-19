@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='fetch/push involving ref namespaces'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -39,11 +39,11 @@ test_expect_success 'pushing into a repository using a ref namespace' '
 		printf "$cummit0\trefs/tags/0\n" >>expected &&
 		printf "$cummit1\trefs/tags/1\n" >>expected &&
 		test_cmp expected actual &&
-		# Verify that the GIT_NAMESPACE environment variable works as well
-		GIT_NAMESPACE=namespace but ls-remote "ext::but %s ../pushee" >actual &&
+		# Verify that the BUT_NAMESPACE environment variable works as well
+		BUT_NAMESPACE=namespace but ls-remote "ext::but %s ../pushee" >actual &&
 		test_cmp expected actual &&
-		# Verify that --namespace overrides GIT_NAMESPACE
-		GIT_NAMESPACE=garbage but ls-remote pushee-namespaced >actual &&
+		# Verify that --namespace overrides BUT_NAMESPACE
+		BUT_NAMESPACE=garbage but ls-remote pushee-namespaced >actual &&
 		test_cmp expected actual &&
 		# Try a namespace with no content
 		but ls-remote "ext::but --namespace=garbage %s ../pushee" >actual &&
@@ -87,7 +87,7 @@ test_expect_success 'mirroring a repository using a ref namespace' '
 '
 
 test_expect_success 'hide namespaced refs with transfer.hideRefs' '
-	GIT_NAMESPACE=namespace \
+	BUT_NAMESPACE=namespace \
 		but -C pushee -c transfer.hideRefs=refs/tags \
 		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
@@ -95,7 +95,7 @@ test_expect_success 'hide namespaced refs with transfer.hideRefs' '
 '
 
 test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
-	GIT_NAMESPACE=namespace \
+	BUT_NAMESPACE=namespace \
 		but -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
 		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
@@ -105,7 +105,7 @@ test_expect_success 'check that transfer.hideRefs does not match unstripped refs
 '
 
 test_expect_success 'hide full refs with transfer.hideRefs' '
-	GIT_NAMESPACE=namespace \
+	BUT_NAMESPACE=namespace \
 		but -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
 		ls-remote "ext::but %s ." >actual &&
 	printf "$cummit1\trefs/heads/main\n" >expected &&
@@ -140,7 +140,7 @@ test_expect_success 'set up ambiguous HEAD' '
 '
 
 test_expect_success 'clone chooses correct HEAD (v0)' '
-	GIT_NAMESPACE=ns but -c protocol.version=0 \
+	BUT_NAMESPACE=ns but -c protocol.version=0 \
 		clone ambiguous ambiguous-v0 &&
 	echo refs/heads/two >expect &&
 	but -C ambiguous-v0 symbolic-ref HEAD >actual &&
@@ -148,7 +148,7 @@ test_expect_success 'clone chooses correct HEAD (v0)' '
 '
 
 test_expect_success 'clone chooses correct HEAD (v2)' '
-	GIT_NAMESPACE=ns but -c protocol.version=2 \
+	BUT_NAMESPACE=ns but -c protocol.version=2 \
 		clone ambiguous ambiguous-v2 &&
 	echo refs/heads/two >expect &&
 	but -C ambiguous-v2 symbolic-ref HEAD >actual &&

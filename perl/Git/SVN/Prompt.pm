@@ -1,6 +1,6 @@
 package Git::SVN::Prompt;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 require SVN::Core;
 use vars qw/$_no_auth_cache $_username/;
 

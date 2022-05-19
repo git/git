@@ -7,7 +7,7 @@ butmailmap - Map author/cummitter names and/or E-Mail addresses
 
 SYNOPSIS
 --------
-$GIT_WORK_TREE/.mailmap
+$BUT_WORK_TREE/.mailmap
 
 
 DESCRIPTION
@@ -125,6 +125,6 @@ SEE ALSO
 linkbut:but-check-mailmap[1]
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

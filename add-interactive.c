@@ -40,12 +40,12 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 			but_config_colorbool("color.interactive", value);
 	s->use_color = want_color(s->use_color);
 
-	init_color(r, s, "interactive.header", s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s, "interactive.help", s->help_color, GIT_COLOR_BOLD_RED);
+	init_color(r, s, "interactive.header", s->header_color, BUT_COLOR_BOLD);
+	init_color(r, s, "interactive.help", s->help_color, BUT_COLOR_BOLD_RED);
 	init_color(r, s, "interactive.prompt", s->prompt_color,
-		   GIT_COLOR_BOLD_BLUE);
+		   BUT_COLOR_BOLD_BLUE);
 	init_color(r, s, "interactive.error", s->error_color,
-		   GIT_COLOR_BOLD_RED);
+		   BUT_COLOR_BOLD_RED);
 
 	init_color(r, s, "diff.frag", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
@@ -59,7 +59,7 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
 
 	strlcpy(s->reset_color,
-		s->use_color ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
+		s->use_color ? BUT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
 	but_config_get_string("interactive.difffilter",

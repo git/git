@@ -36,7 +36,7 @@ Fixes since v2.33
  * Checking out all the paths from HEAD during the last conflicted
    step in "but rebase" and continuing would cause the step to be
    skipped (which is expected), but leaves MERGE_MSG file behind in
-   $GIT_DIR and confuses the next "but cummit", which has been
+   $BUT_DIR and confuses the next "but cummit", which has been
    corrected.
 
  * Various bugs in "but rebase -r" have been fixed.
@@ -67,7 +67,7 @@ Fixes since v2.33
    a stale and/or uninitialized data, which has been corrected.
 
  * Buggy tests could damage repositories outside the throw-away test
-   area we created.  We now by default export GIT_CEILING_DIRECTORIES
+   area we created.  We now by default export BUT_CEILING_DIRECTORIES
    to limit the damage from such a stray test.
 
  * Even when running "but send-email" without its own threaded

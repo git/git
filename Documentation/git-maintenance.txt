@@ -248,7 +248,7 @@ current list of user-scheduled tasks can be found by running `crontab -l`.
 The schedule written by `but maintenance start` is similar to this:
 
 -----------------------------------------------------------------------
-# BEGIN GIT MAINTENANCE SCHEDULE
+# BEGIN BUT MAINTENANCE SCHEDULE
 # The following schedule was created by Git
 # Any edits made in this region might be
 # replaced in the future by a Git command.
@@ -257,7 +257,7 @@ The schedule written by `but maintenance start` is similar to this:
 0 0 * * 1-6 "/<path>/but" --exec-path="/<path>" for-each-repo --config=maintenance.repo maintenance run --schedule=daily
 0 0 * * 0 "/<path>/but" --exec-path="/<path>" for-each-repo --config=maintenance.repo maintenance run --schedule=weekly
 
-# END GIT MAINTENANCE SCHEDULE
+# END BUT MAINTENANCE SCHEDULE
 -----------------------------------------------------------------------
 
 The comments are used as a region to mark the schedule as written by Git.
@@ -398,6 +398,6 @@ so future calls to `but maintenance (start|stop)` do not overwrite your
 custom tasks.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

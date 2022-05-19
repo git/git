@@ -1219,8 +1219,8 @@ msgid "Unable to obtain your identity:"
 msgstr "Αδυναμία ανάκτησης της ταυτότητάς σας:"
 
 #: lib/cummit.tcl:81
-msgid "Invalid GIT_CUMMITTER_IDENT:"
-msgstr "Μη έγκυρο GIT_CUMMITTER_IDENT:"
+msgid "Invalid BUT_CUMMITTER_IDENT:"
+msgstr "Μη έγκυρο BUT_CUMMITTER_IDENT:"
 
 #: lib/cummit.tcl:133
 msgid ""

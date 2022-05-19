@@ -1,6 +1,6 @@
 # Test routines for checking protocol disabling.
 
-# Test clone/fetch/push with GIT_ALLOW_PROTOCOL whitelist
+# Test clone/fetch/push with BUT_ALLOW_PROTOCOL whitelist
 test_whitelist () {
 	desc=$1
 	proto=$2
@@ -9,8 +9,8 @@ test_whitelist () {
 	test_expect_success "clone $desc (enabled)" '
 		rm -rf tmp.but &&
 		(
-			GIT_ALLOW_PROTOCOL=$proto &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=$proto &&
+			export BUT_ALLOW_PROTOCOL &&
 			but clone --bare "$url" tmp.but
 		)
 	'
@@ -18,8 +18,8 @@ test_whitelist () {
 	test_expect_success "fetch $desc (enabled)" '
 		(
 			cd tmp.but &&
-			GIT_ALLOW_PROTOCOL=$proto &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=$proto &&
+			export BUT_ALLOW_PROTOCOL &&
 			but fetch
 		)
 	'
@@ -27,8 +27,8 @@ test_whitelist () {
 	test_expect_success "push $desc (enabled)" '
 		(
 			cd tmp.but &&
-			GIT_ALLOW_PROTOCOL=$proto &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=$proto &&
+			export BUT_ALLOW_PROTOCOL &&
 			but push origin HEAD:pushed
 		)
 	'
@@ -36,8 +36,8 @@ test_whitelist () {
 	test_expect_success "push $desc (disabled)" '
 		(
 			cd tmp.but &&
-			GIT_ALLOW_PROTOCOL=none &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=none &&
+			export BUT_ALLOW_PROTOCOL &&
 			test_must_fail but push origin HEAD:pushed
 		)
 	'
@@ -45,8 +45,8 @@ test_whitelist () {
 	test_expect_success "fetch $desc (disabled)" '
 		(
 			cd tmp.but &&
-			GIT_ALLOW_PROTOCOL=none &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=none &&
+			export BUT_ALLOW_PROTOCOL &&
 			test_must_fail but fetch
 		)
 	'
@@ -54,8 +54,8 @@ test_whitelist () {
 	test_expect_success "clone $desc (disabled)" '
 		rm -rf tmp.but &&
 		(
-			GIT_ALLOW_PROTOCOL=none &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=none &&
+			export BUT_ALLOW_PROTOCOL &&
 			test_must_fail but clone --bare "$url" tmp.but
 		)
 	'
@@ -63,8 +63,8 @@ test_whitelist () {
 	test_expect_success "clone $desc (env var has precedence)" '
 		rm -rf tmp.but &&
 		(
-			GIT_ALLOW_PROTOCOL=none &&
-			export GIT_ALLOW_PROTOCOL &&
+			BUT_ALLOW_PROTOCOL=none &&
+			export BUT_ALLOW_PROTOCOL &&
 			test_must_fail but -c protocol.allow=always clone --bare "$url" tmp.but &&
 			test_must_fail but -c protocol.$proto.allow=always clone --bare "$url" tmp.but
 		)
@@ -120,8 +120,8 @@ test_config () {
 	test_expect_success "push $desc (disabled)" '
 		(
 			cd tmp.but &&
-			GIT_PROTOCOL_FROM_USER=0 &&
-			export GIT_PROTOCOL_FROM_USER &&
+			BUT_PROTOCOL_FROM_USER=0 &&
+			export BUT_PROTOCOL_FROM_USER &&
 			test_must_fail but -c protocol.$proto.allow=user push origin HEAD:pushed
 		)
 	'
@@ -129,8 +129,8 @@ test_config () {
 	test_expect_success "fetch $desc (disabled)" '
 		(
 			cd tmp.but &&
-			GIT_PROTOCOL_FROM_USER=0 &&
-			export GIT_PROTOCOL_FROM_USER &&
+			BUT_PROTOCOL_FROM_USER=0 &&
+			export BUT_PROTOCOL_FROM_USER &&
 			test_must_fail but -c protocol.$proto.allow=user fetch
 		)
 	'
@@ -138,8 +138,8 @@ test_config () {
 	test_expect_success "clone $desc (disabled)" '
 		rm -rf tmp.but &&
 		(
-			GIT_PROTOCOL_FROM_USER=0 &&
-			export GIT_PROTOCOL_FROM_USER &&
+			BUT_PROTOCOL_FROM_USER=0 &&
+			export BUT_PROTOCOL_FROM_USER &&
 			test_must_fail but -c protocol.$proto.allow=user clone --bare "$url" tmp.but
 		)
 	'
@@ -198,8 +198,8 @@ setup_ssh_wrapper () {
 		cd "$TRASH_DIRECTORY/$host" &&
 		eval "$*"
 		EOF
-		GIT_SSH="$PWD/ssh-wrapper" &&
-		export GIT_SSH &&
+		BUT_SSH="$PWD/ssh-wrapper" &&
+		export BUT_SSH &&
 		export TRASH_DIRECTORY
 	'
 }

@@ -256,7 +256,7 @@ run_tests 'blob' $hello_sha1 $hello_size "$hello_content" "$hello_content"
 test_expect_success '--batch-command --buffer with flush for blob info' '
 	echo "$hello_sha1 blob $hello_size" >expect &&
 	test_write_lines "info $hello_sha1" "flush" |
-	GIT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
+	BUT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
 	but cat-file --batch-command --buffer >actual &&
 	test_cmp expect actual
 '
@@ -264,7 +264,7 @@ test_expect_success '--batch-command --buffer with flush for blob info' '
 test_expect_success '--batch-command --buffer without flush for blob info' '
 	touch output &&
 	test_write_lines "info $hello_sha1" |
-	GIT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
+	BUT_TEST_CAT_FILE_NO_FLUSH_ON_EXIT=1 \
 	but cat-file --batch-command --buffer >>output &&
 	test_must_be_empty output
 '
@@ -287,8 +287,8 @@ cummit_message="Initial cummit"
 cummit_sha1=$(echo_without_newline "$cummit_message" | but cummit-tree $tree_sha1)
 cummit_size=$(($(test_oid hexsz) + 137))
 cummit_content="tree $tree_sha1
-author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0000000000 +0000
-cummitter $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 0000000000 +0000
+author $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL> 0000000000 +0000
+cummitter $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 0000000000 +0000
 
 $cummit_message"
 
@@ -297,7 +297,7 @@ run_tests 'cummit' $cummit_sha1 $cummit_size "$cummit_content" "$cummit_content"
 tag_header_without_timestamp="object $hello_sha1
 type blob
 tag hellotag
-tagger $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+tagger $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 tag_description="This is a tag"
 tag_content="$tag_header_without_timestamp 0000000000 +0000
 

@@ -141,9 +141,9 @@ if (not @tests) {
 }
 
 if (! $subsection and
-    exists $ENV{GIT_PERF_SUBSECTION} and
-    $ENV{GIT_PERF_SUBSECTION} ne "") {
-	$subsection = $ENV{GIT_PERF_SUBSECTION};
+    exists $ENV{BUT_PERF_SUBSECTION} and
+    $ENV{BUT_PERF_SUBSECTION} ne "") {
+	$subsection = $ENV{BUT_PERF_SUBSECTION};
 }
 
 if ($subsection) {
@@ -313,8 +313,8 @@ sub print_codespeed_results {
 	my $environment;
 	if ($reponame) {
 		$environment = $reponame;
-	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
-		$environment = $ENV{GIT_PERF_REPO_NAME};
+	} elsif (exists $ENV{BUT_PERF_REPO_NAME} and $ENV{BUT_PERF_REPO_NAME} ne "") {
+		$environment = $ENV{BUT_PERF_REPO_NAME};
 	} else {
 		$environment = `uname -r`;
 		chomp $environment;

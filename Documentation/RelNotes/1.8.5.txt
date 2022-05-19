@@ -219,7 +219,7 @@ Performance, Internal Implementation, etc.
 
  * If a build-time fallback is set to "cat" instead of "less", we
    should apply the same "no subprocess or pipe" optimization as we
-   apply to user-supplied GIT_PAGER=cat.
+   apply to user-supplied BUT_PAGER=cat.
 
  * Many commands use a --dashed-option as an operation mode selector
    (e.g. "but tag --delete") that excludes other operation modes
@@ -369,7 +369,7 @@ details).
    for Windows where MSYS perl is used.
    (merge df17e77 js/add-i-mingw later to maint).
 
- * We made sure that we notice when the user-supplied GIT_DIR is actually a
+ * We made sure that we notice when the user-supplied BUT_DIR is actually a
    butfile, but did not do the same when the default ".but" is a
    butfile.
    (merge 487a2b7 nd/but-dir-pointing-at-butfile later to maint).

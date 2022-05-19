@@ -66,12 +66,12 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 		if (results.curl_result != CURLE_OK) {
 			struct url_info url;
 			char *nurl = url_normalize(preq->url, &url);
-			if (!nurl || !but_env_bool("GIT_TRACE_REDACT", 1)) {
+			if (!nurl || !but_env_bool("BUT_TRACE_REDACT", 1)) {
 				die("unable to get pack file '%s'\n%s", preq->url,
 				    curl_errorstr);
 			} else {
 				die("failed to get '%.*s' url from '%.*s' "
-				    "(full URL redacted due to GIT_TRACE_REDACT setting)\n%s",
+				    "(full URL redacted due to BUT_TRACE_REDACT setting)\n%s",
 				    (int)url.scheme_len, url.url,
 				    (int)url.host_len, &url.url[url.host_off], curl_errorstr);
 			}

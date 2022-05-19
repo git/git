@@ -2,11 +2,11 @@
 
 test_description='merging with submodules'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
@@ -134,7 +134,7 @@ test_expect_success 'merging should conflict for non fast-forward' '
 	 but checkout -b test-nonforward b &&
 	 (cd sub &&
 	  but rev-parse sub-d > ../expect) &&
-	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	  if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	  then
 		test_must_fail but merge c >actual
 	  else
@@ -150,7 +150,7 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 	(cd sub &&
 	 but checkout -b ambiguous sub-b &&
 	 but merge sub-c &&
-	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	 if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	 then
 		but rev-parse --short sub-d >../expect1 &&
 		but rev-parse --short ambiguous >../expect2
@@ -159,7 +159,7 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 		but rev-parse ambiguous > ../expect2
 	 fi
 	 ) &&
-	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	 if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	 then
 		test_must_fail but merge c >actual
 	 else

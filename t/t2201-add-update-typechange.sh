@@ -51,7 +51,7 @@ test_expect_success modify '
 		but add yomin &&
 		but cummit -m "sub initial"
 	) &&
-	yomin=$(GIT_DIR=yomin/.but but rev-parse HEAD) &&
+	yomin=$(BUT_DIR=yomin/.but but rev-parse HEAD) &&
 	# yonk is added and then turned into a submodule
 	# this should appear as T in diff-files and as A in diff-index
 	>yonk &&
@@ -65,7 +65,7 @@ test_expect_success modify '
 		but add yonk &&
 		but cummit -m "sub initial"
 	) &&
-	yonk=$(GIT_DIR=yonk/.but but rev-parse HEAD) &&
+	yonk=$(BUT_DIR=yonk/.but but rev-parse HEAD) &&
 	# zifmia is added and then removed
 	# this should appear in diff-files but not in diff-index.
 	>zifmia &&

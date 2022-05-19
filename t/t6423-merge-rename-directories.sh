@@ -302,7 +302,7 @@ test_expect_success '1d: Directory renames cause a rename/rename(2to1) conflict'
 		but cat-file -p :2:x/wham >expect &&
 		but cat-file -p :3:x/wham >other &&
 		>empty &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_must_fail but merge-file \
 				-L "HEAD:y/wham" \
@@ -1186,7 +1186,7 @@ test_expect_success '5d: Directory/file/file conflict due to directory rename' '
 		but ls-files -u >out &&
 		test_line_count = 1 out &&
 		but ls-files -o >out &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_line_count = 1 out &&
 
@@ -1280,7 +1280,7 @@ test_expect_success '6a: Tricky rename/delete' '
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*z/c.*y/c" out &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 3 out &&
@@ -1832,7 +1832,7 @@ test_expect_success '7b: rename/rename(2to1), but only due to transitive rename'
 		but cat-file -p :2:y/d >expect &&
 		but cat-file -p :3:y/d >other &&
 		>empty &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_must_fail but merge-file \
 				-L "HEAD:y/d" \
@@ -1967,7 +1967,7 @@ test_expect_success '7d: transitive rename involved in rename/delete; how is it 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 4 out &&
@@ -2073,7 +2073,7 @@ test_expect_success '7e: transitive rename in rename/delete AND dirs in the way'
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		test_i18ngrep "CONFLICT (rename/delete).*x/d.*y/d" out &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			but ls-files -s >out &&
 			test_line_count = 6 out &&
@@ -3284,7 +3284,7 @@ test_expect_success '10b: Overwrite untracked with dir rename + delete' '
 		echo contents >y/e &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
@@ -3374,7 +3374,7 @@ test_expect_success '10c1: Overwrite untracked with dir rename/rename(1to2)' '
 		echo important >y/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
@@ -3425,7 +3425,7 @@ test_expect_success '10c2: Overwrite untracked with dir rename/rename(1to2), oth
 		echo important >y/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
@@ -3514,7 +3514,7 @@ test_expect_success '10d: Delete untracked with dir rename/rename(2to1)' '
 		echo important >y/wham &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: The following untracked working tree files would be overwritten by merge" err &&
@@ -3687,7 +3687,7 @@ test_expect_success '11a: Avoid losing dirty contents with simple rename' '
 		echo stuff >>z/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
@@ -3766,7 +3766,7 @@ test_expect_success '11b: Avoid losing dirty file involved in directory rename' 
 		but checkout A^0 &&
 		echo stuff >>z/c &&
 
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 			test_path_is_missing .but/MERGE_HEAD &&
@@ -3850,7 +3850,7 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 		echo stuff >>y/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
@@ -3924,7 +3924,7 @@ test_expect_success '11d: Avoid losing not-uptodate with rename + D/F conflict' 
 		echo stuff >>z/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
@@ -4010,7 +4010,7 @@ test_expect_success '11e: Avoid deleting not-uptodate with dir rename/rename(1to
 		echo mods >>y/c &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
@@ -4099,7 +4099,7 @@ test_expect_success '11f: Avoid deleting not-uptodate with dir rename/rename(2to
 		echo important >>y/wham &&
 
 		test_must_fail but -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+		if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 		then
 			test_path_is_missing .but/MERGE_HEAD &&
 			test_i18ngrep "error: Your local changes to the following files would be overwritten by merge" err
@@ -4805,7 +4805,7 @@ test_expect_merge_algorithm failure success '12f: Trivial directory resolve, cac
 		but checkout A^0 &&
 		but branch Bmod B &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" but -c merge.directoryRenames=true rebase A Bmod &&
+		BUT_TRACE2_PERF="$(pwd)/trace.output" but -c merge.directoryRenames=true rebase A Bmod &&
 
 		echo Checking the pick of B1... &&
 

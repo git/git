@@ -14,7 +14,7 @@ fi
 UNIX_EPOCH_ZERO="@0 +0000"
 FUTURE_DATE="@4147483646 +0000"
 
-GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
+BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=0
 
 test_expect_success 'lower layers have overflow chunk' '
 	rm -f .but/objects/info/cummit-graph &&

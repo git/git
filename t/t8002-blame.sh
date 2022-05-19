@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='but blame'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -34,8 +34,8 @@ test_expect_success 'blame --show-email' '
 test_expect_success 'setup showEmail tests' '
 	echo "bin: test number 1" >one &&
 	but add one &&
-	GIT_AUTHOR_NAME=name1 \
-	GIT_AUTHOR_EMAIL=email1@test.but \
+	BUT_AUTHOR_NAME=name1 \
+	BUT_AUTHOR_EMAIL=email1@test.but \
 	but cummit -m First --date="2010-01-01 01:00:00" &&
 	cat >expected_n <<-\EOF &&
 	(name1 2010-01-01 01:00:00 +0000 1) bin: test number 1

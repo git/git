@@ -24,12 +24,12 @@ directory with subdirectories for `objects`, `refs/heads`,
 cummits will be created (see the `--initial-branch` option below
 for its name).
 
-If the `$GIT_DIR` environment variable is set then it specifies a path
+If the `$BUT_DIR` environment variable is set then it specifies a path
 to use instead of `./.but` for the base of the repository.
 
 If the object storage directory is specified via the
-`$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
-are created underneath - otherwise the default `$GIT_DIR/objects`
+`$BUT_OBJECT_DIRECTORY` environment variable then the sha1 directories
+are created underneath - otherwise the default `$BUT_DIR/objects`
 directory is used.
 
 Running 'but init' in an existing repository is safe. It will not
@@ -47,7 +47,7 @@ Only print error and warning messages; all other output will be suppressed.
 
 --bare::
 
-Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
+Create a bare repository. If `BUT_DIR` environment is not set, it is set to the
 current working directory.
 
 --object-format=<format>::
@@ -64,7 +64,7 @@ DIRECTORY" section below.)
 
 --separate-but-dir=<but-dir>::
 
-Instead of initializing the repository as a directory to either `$GIT_DIR` or
+Instead of initializing the repository as a directory to either `$BUT_DIR` or
 `./.but/`, create a text file there containing the path to the actual
 repository.  This file acts as filesystem-agnostic Git symbolic link to the
 repository.
@@ -84,7 +84,7 @@ customized via the `init.defaultBranch` configuration variable).
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
 repository.  When specified, the config variable "core.sharedRepository" is
-set so that files and directories under `$GIT_DIR` are created with the
+set so that files and directories under `$BUT_DIR` are created with the
 requested permissions.  When not specified, Git will use permissions reported
 by umask(2).
 +
@@ -133,13 +133,13 @@ TEMPLATE DIRECTORY
 ------------------
 
 Files and directories in the template directory whose name do not start with a
-dot will be copied to the `$GIT_DIR` after it is created.
+dot will be copied to the `$BUT_DIR` after it is created.
 
 The template directory will be one of the following (in order):
 
  - the argument given with the `--template` option;
 
- - the contents of the `$GIT_TEMPLATE_DIR` environment variable;
+ - the contents of the `$BUT_TEMPLATE_DIR` environment variable;
 
  - the `init.templateDir` configuration variable; or
 
@@ -169,6 +169,6 @@ $ but cummit    <3>
 <2> Add all existing files to the index.
 <3> Record the pristine state as the first cummit in the history.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

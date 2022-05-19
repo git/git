@@ -67,15 +67,15 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-my $but_dir = $ENV{"GIT_DIR"} || ".but";
-$ENV{"GIT_DIR"} = $but_dir;
+my $but_dir = $ENV{"BUT_DIR"} || ".but";
+$ENV{"BUT_DIR"} = $but_dir;
 my $ptag_dir = "$but_dir/archimport/tags";
 
 our($opt_h,$opt_f,$opt_v,$opt_T,$opt_t,$opt_D,$opt_a,$opt_o);
 
 sub usage() {
     print STDERR <<END;
-usage: but archimport     # fetch/update GIT from Arch
+usage: but archimport     # fetch/update BUT from Arch
        [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ] [ -D depth ] [ -t tempdir ]
        repository/arch-branch [ repository/arch-branch] ...
 END
@@ -407,7 +407,7 @@ sub process_patchset_fast {
     # create the branch if needed
     #
     if ($ps->{type} eq 'i' && !$import) {
-        die "Should not have more than one 'Initial import' per GIT import: $ps->{id}";
+        die "Should not have more than one 'Initial import' per BUT import: $ps->{id}";
     }
 
     unless ($import) { # skip for import
@@ -586,12 +586,12 @@ foreach my $ps (@psets) {
     # cummit, tag and clean state
     #
     $ENV{TZ}                  = 'GMT';
-    $ENV{GIT_AUTHOR_NAME}     = $ps->{author};
-    $ENV{GIT_AUTHOR_EMAIL}    = $ps->{email};
-    $ENV{GIT_AUTHOR_DATE}     = $ps->{date};
-    $ENV{GIT_CUMMITTER_NAME}  = $ps->{author};
-    $ENV{GIT_CUMMITTER_EMAIL} = $ps->{email};
-    $ENV{GIT_CUMMITTER_DATE}  = $ps->{date};
+    $ENV{BUT_AUTHOR_NAME}     = $ps->{author};
+    $ENV{BUT_AUTHOR_EMAIL}    = $ps->{email};
+    $ENV{BUT_AUTHOR_DATE}     = $ps->{date};
+    $ENV{BUT_CUMMITTER_NAME}  = $ps->{author};
+    $ENV{BUT_CUMMITTER_EMAIL} = $ps->{email};
+    $ENV{BUT_CUMMITTER_DATE}  = $ps->{date};
 
     my $pid = open2(*READER, *WRITER,'but-cummit-tree',$tree,@par)
         or die $!;

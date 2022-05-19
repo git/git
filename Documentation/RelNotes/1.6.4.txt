@@ -1,4 +1,4 @@
-GIT v1.6.4 Release Notes
+BUT v1.6.4 Release Notes
 ========================
 
 With the next major release, "but push" into a branch that is
@@ -59,7 +59,7 @@ Updates since v1.6.3
  * "but add --edit" lets users edit the whole patch text to fine-tune what
    is added to the index.
 
- * "but am" accepts StGIT series file as its input.
+ * "but am" accepts StBUT series file as its input.
 
  * "but bisect skip" skips to a more randomly chosen place in the hope
    to avoid testing a cummit that is too close to a cummit that is

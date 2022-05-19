@@ -32,7 +32,7 @@ test_expect_success 'format with signoff without funny signer name' '
 
 test_expect_success 'format with non ASCII signer name' '
 
-	GIT_CUMMITTER_NAME="はまの ふにおう" \
+	BUT_CUMMITTER_NAME="はまの ふにおう" \
 	but format-patch -s --stdout -1 >output &&
 	grep Content-Type output
 
@@ -40,7 +40,7 @@ test_expect_success 'format with non ASCII signer name' '
 
 test_expect_success 'attach and signoff do not duplicate mime headers' '
 
-	GIT_CUMMITTER_NAME="はまの ふにおう" \
+	BUT_CUMMITTER_NAME="はまの ふにおう" \
 	but format-patch -s --stdout -1 --attach >output &&
 	test $(grep -ci ^MIME-Version: output) = 1
 

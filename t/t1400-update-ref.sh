@@ -268,19 +268,19 @@ test_expect_success "(not) changed .but/$m" '
 rm -f .but/logs/refs/heads/main
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:30" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:30" \
 	but update-ref --create-reflog HEAD $A -m "Initial Creation" &&
 	test $A = $(but show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:31" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:31" \
 	but update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(but show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:41" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:41" \
 	but update-ref HEAD $A &&
 	test $A = $(but show-ref -s --verify $m)
 '
@@ -313,9 +313,9 @@ test_expect_success 'symref empty directory removal' '
 '
 
 cat >expect <<EOF
-$Z $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	Initial Creation
-$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150260 +0000	Switch
-$B $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150860 +0000
+$Z $A $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150200 +0000	Initial Creation
+$A $B $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150260 +0000	Switch
+$B $A $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success "verifying $m's log (logged by touch)" '
 	test_when_finished "but update-ref -d $m && rm -rf .but/logs actual expect" &&
@@ -325,27 +325,27 @@ test_expect_success "verifying $m's log (logged by touch)" '
 
 test_expect_success "create $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:32" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:32" \
 	but update-ref HEAD $A -m "Initial Creation" &&
 	test $A = $(but show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:33" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:33" \
 	but update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(but show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_CUMMITTER_DATE="2005-05-26 23:43" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:43" \
 	but update-ref HEAD $A &&
 	test $A = $(but show-ref -s --verify $m)
 '
 
 cat >expect <<EOF
-$Z $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150320 +0000	Initial Creation
-$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150380 +0000	Switch
-$B $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150980 +0000
+$Z $A $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150320 +0000	Initial Creation
+$A $B $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150380 +0000	Switch
+$B $A $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success "verifying $m's log (logged by config)" '
 	test_when_finished "but update-ref -d $m && rm -rf .but/logs actual expect" &&
@@ -356,11 +356,11 @@ test_expect_success "verifying $m's log (logged by config)" '
 test_expect_success 'set up for querying the reflog' '
 	but update-ref $m $D &&
 	cat >.but/logs/$m <<-EOF
-	$Z $C $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150320 -0500
-	$C $A $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150350 -0500
-	$A $B $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150380 -0500
-	$F $Z $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150680 -0500
-	$Z $E $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150980 -0500
+	$Z $C $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150320 -0500
+	$C $A $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150350 -0500
+	$A $B $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150380 -0500
+	$F $Z $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150680 -0500
+	$Z $E $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150980 -0500
 	EOF
 '
 
@@ -440,30 +440,30 @@ test_expect_success 'creating initial files' '
 	test_when_finished rm -f M &&
 	echo TEST >F &&
 	but add F &&
-	GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	GIT_CUMMITTER_DATE="2005-05-26 23:30" but cummit -m add -a &&
+	BUT_AUTHOR_DATE="2005-05-26 23:30" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:30" but cummit -m add -a &&
 	h_TEST=$(but rev-parse --verify HEAD) &&
 	echo The other day this did not work. >M &&
 	echo And then Bob told me how to fix it. >>M &&
 	echo OTHER >F &&
-	GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	GIT_CUMMITTER_DATE="2005-05-26 23:41" but cummit -F M -a &&
+	BUT_AUTHOR_DATE="2005-05-26 23:41" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:41" but cummit -F M -a &&
 	h_OTHER=$(but rev-parse --verify HEAD) &&
-	GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	GIT_CUMMITTER_DATE="2005-05-26 23:44" but cummit --amend &&
+	BUT_AUTHOR_DATE="2005-05-26 23:44" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:44" but cummit --amend &&
 	h_FIXED=$(but rev-parse --verify HEAD) &&
 	echo Merged initial cummit and a later cummit. >M &&
 	echo $h_TEST >.but/MERGE_HEAD &&
-	GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	GIT_CUMMITTER_DATE="2005-05-26 23:45" but cummit -F M &&
+	BUT_AUTHOR_DATE="2005-05-26 23:45" \
+	BUT_CUMMITTER_DATE="2005-05-26 23:45" but cummit -F M &&
 	h_MERGED=$(but rev-parse --verify HEAD)
 '
 
 cat >expect <<EOF
-$Z $h_TEST $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150200 +0000	cummit (initial): add
-$h_TEST $h_OTHER $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117150860 +0000	cummit: The other day this did not work.
-$h_OTHER $h_FIXED $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117151040 +0000	cummit (amend): The other day this did not work.
-$h_FIXED $h_MERGED $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> 1117151100 +0000	cummit (merge): Merged initial cummit and a later cummit.
+$Z $h_TEST $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150200 +0000	cummit (initial): add
+$h_TEST $h_OTHER $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117150860 +0000	cummit: The other day this did not work.
+$h_OTHER $h_FIXED $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117151040 +0000	cummit (amend): The other day this did not work.
+$h_FIXED $h_MERGED $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> 1117151100 +0000	cummit (merge): Merged initial cummit and a later cummit.
 EOF
 test_expect_success 'but cummit logged updates' '
 	test-tool ref-store main for-each-reflog-ent $m >actual &&

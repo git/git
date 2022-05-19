@@ -30,7 +30,7 @@ Fixes since v1.7.10
  * "but cummit --author=$name" did not tell the name that was being
    recorded in the resulting cummit to hooks, even though it does do
    so when the end user overrode the authorship via the
-   "GIT_AUTHOR_NAME" environment variable.
+   "BUT_AUTHOR_NAME" environment variable.
 
  * When "but cummit --template F" errors out because the user did not
    touch the message, it claimed that it aborts due to "empty
@@ -62,8 +62,8 @@ Fixes since v1.7.10
  * "log -p --graph" used with "--stat" had a few formatting error.
 
  * Running "notes merge --cummit" failed to perform correctly when run
-   from any directory inside $GIT_DIR/.  When "notes merge" stops with
-   conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
+   from any directory inside $BUT_DIR/.  When "notes merge" stops with
+   conflicts, $BUT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
    to resolve it.
 
  * The 'push to upstream' implementation was broken in some corner

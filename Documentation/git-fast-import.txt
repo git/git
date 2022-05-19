@@ -233,7 +233,7 @@ data.  It also simplifies the frontend programs considerably.
 
 fast-import does not use or alter the current working directory, or any
 file within it.  (It does however update the current Git repository,
-as referenced by `GIT_DIR`.)  Therefore an import frontend may use
+as referenced by `BUT_DIR`.)  Therefore an import frontend may use
 the working directory for its own purposes, such as extracting file
 revisions from the foreign source.  This ignorance of the working
 directory also allows fast-import to run very quickly, as it does not
@@ -1568,6 +1568,6 @@ SEE ALSO
 --------
 linkbut:but-fast-export[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

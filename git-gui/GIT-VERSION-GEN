@@ -1,7 +1,7 @@
 #!/bin/sh
 
-GVF=GIT-VERSION-FILE
-DEF_VER=0.21.GITGUI
+GVF=BUT-VERSION-FILE
+DEF_VER=0.21.BUTGUI
 
 LF='
 '
@@ -70,11 +70,11 @@ esac
 
 if test -r $GVF
 then
-	VC=$(sed -e 's/^GITGUI_VERSION = //' <$GVF)
+	VC=$(sed -e 's/^BUTGUI_VERSION = //' <$GVF)
 else
 	VC=unset
 fi
 test "$VN" = "$VC" || {
-	echo >&2 "GITGUI_VERSION = $VN"
-	echo "GITGUI_VERSION = $VN" >$GVF
+	echo >&2 "BUTGUI_VERSION = $VN"
+	echo "BUTGUI_VERSION = $VN" >$GVF
 }

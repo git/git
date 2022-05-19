@@ -1,4 +1,4 @@
-GIT bitmap v1 format
+BUT bitmap v1 format
 ====================
 
 == Pack and multi-pack bitmaps

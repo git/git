@@ -116,12 +116,12 @@ proc do_macosx_app {} {
 				foreach name [lsort [array names env]] {
 					set value $env($name)
 					switch -- $name {
-					GIT_DIR { set value [file normalize [butdir]] }
+					BUT_DIR { set value [file normalize [butdir]] }
 					}
 
 					switch -glob -- $name {
 					SSH_* -
-					GIT_* {
+					BUT_* {
 						puts $fd "if test \"z\$$name\" = z; then"
 						puts $fd "  export $name=[sq $value]"
 						puts $fd "fi &&"

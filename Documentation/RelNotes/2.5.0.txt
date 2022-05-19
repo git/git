@@ -27,7 +27,7 @@ UI, Workflows & Features
 
  * More workaround for Perforce's row number limit in "but p4".
 
- * Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
+ * Unlike "$EDITOR" and "$BUT_EDITOR" that can hold the path to the
    command and initial options (e.g. "/path/to/emacs -nw"), 'but p4'
    did not let the shell interpolate the contents of the environment
    variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
@@ -321,7 +321,7 @@ notes for details).
    anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
    (merge baaf233 bc/connect-plink later to maint).
 
- * We have prepended $GIT_EXEC_PATH and the path "but" is installed in
+ * We have prepended $BUT_EXEC_PATH and the path "but" is installed in
    (typically "/usr/bin") to $PATH when invoking subprograms and hooks
    for almost eternity, but the original use case the latter tried to
    support was semi-bogus (i.e. install but to /opt/foo/but and run it
@@ -500,7 +500,7 @@ notes for details).
    yourself in the resulting shell, that may look as if you took
    control back to the original shell you spawned "but log" from but
    that isn't what is happening.  To that new shell, we leaked
-   GIT_PAGER_IN_USE environment variable that was meant as a local
+   BUT_PAGER_IN_USE environment variable that was meant as a local
    communication between the original "Git" and subprocesses that was
    spawned by it after we launched the pager, which caused many
    "interesting" things to happen, e.g. "but diff | cat" still paints

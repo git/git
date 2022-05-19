@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>@@GITGUI_TKEXECUTABLE@@</string>
+	<string>@@BUTGUI_TKEXECUTABLE@@</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Git Gui @@GITGUI_VERSION@@ © 2006-2007 Shawn Pearce, et. al.</string>
+	<string>Git Gui @@BUTGUI_VERSION@@ © 2006-2007 Shawn Pearce, et. al.</string>
 	<key>CFBundleIconFile</key>
 	<string>but-gui.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -19,11 +19,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>@@GITGUI_VERSION@@</string>
+	<string>@@BUTGUI_VERSION@@</string>
 	<key>CFBundleSignature</key>
-	<string>GITg</string>
+	<string>BUTg</string>
 	<key>CFBundleVersion</key>
-	<string>@@GITGUI_VERSION@@</string>
+	<string>@@BUTGUI_VERSION@@</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>

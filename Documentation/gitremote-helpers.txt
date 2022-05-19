@@ -43,7 +43,7 @@ arguments. The first argument specifies a remote repository as in Git;
 it is either the name of a configured remote or a URL. The second
 argument specifies a URL; it is usually of the form
 '<transport>://<address>', but any arbitrary string is possible.
-The `GIT_DIR` environment variable is set up for the remote helper
+The `BUT_DIR` environment variable is set up for the remote helper
 and can be used to determine where to store additional data or from
 which directory to invoke auxiliary Git commands.
 
@@ -303,7 +303,7 @@ Supported if the helper has the "option" capability.
 	in the output of 'list' with a sha1 may be fetched this way.
 +
 Optionally may output a 'lock <file>' line indicating the full path of
-a file under `$GIT_DIR/objects/pack` which is keeping a pack until
+a file under `$BUT_DIR/objects/pack` which is keeping a pack until
 refs can be suitably updated.  The path must end with `.keep`. This is
 a mechanism to name a <pack,idx,keep> tuple by giving only the keep
 component.  The kept pack will not be deleted by a concurrent repack,
@@ -551,6 +551,6 @@ linkbut:but-remote-fd[1]
 
 linkbut:but-fast-import[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

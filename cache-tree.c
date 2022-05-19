@@ -382,7 +382,7 @@ static int update_one(struct cache_tree *it,
 			i++;
 		}
 
-		ce_missing_ok = mode == S_IFGITLINK || missing_ok ||
+		ce_missing_ok = mode == S_IFBUTLINK || missing_ok ||
 			!must_check_existence(ce);
 		if (is_null_oid(oid) ||
 		    (!ce_missing_ok && !has_object_file(oid))) {

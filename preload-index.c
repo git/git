@@ -53,7 +53,7 @@ static void *preload_thread(void *_data)
 
 		if (ce_stage(ce))
 			continue;
-		if (S_ISGITLINK(ce->ce_mode))
+		if (S_ISBUTLINK(ce->ce_mode))
 			continue;
 		if (ce_uptodate(ce))
 			continue;
@@ -106,7 +106,7 @@ void preload_index(struct index_state *index,
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
-	if ((index->cache_nr > 1) && (threads < 2) && but_env_bool("GIT_TEST_PRELOAD_INDEX", 0))
+	if ((index->cache_nr > 1) && (threads < 2) && but_env_bool("BUT_TEST_PRELOAD_INDEX", 0))
 		threads = 2;
 	if (threads < 2)
 		return;

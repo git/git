@@ -56,16 +56,16 @@ func (c *Client) Run() error {
 	cmd := exec.Command("but", cargs...)
 
 	for _, v := range os.Environ() {
-		if !strings.HasPrefix(v, "GIT_PERSISTENT_HTTPS_SECURE=") {
+		if !strings.HasPrefix(v, "BUT_PERSISTENT_HTTPS_SECURE=") {
 			cmd.Env = append(cmd.Env, v)
 		}
 	}
-	// Set the GIT_PERSISTENT_HTTPS_SECURE environment variable when
+	// Set the BUT_PERSISTENT_HTTPS_SECURE environment variable when
 	// the proxy is using a SSL connection.  This allows credential helpers
 	// to identify secure proxy connections, despite being passed an HTTP
 	// scheme.
 	if !c.insecure {
-		cmd.Env = append(cmd.Env, "GIT_PERSISTENT_HTTPS_SECURE=1")
+		cmd.Env = append(cmd.Env, "BUT_PERSISTENT_HTTPS_SECURE=1")
 	}
 
 	cmd.Stdin = os.Stdin

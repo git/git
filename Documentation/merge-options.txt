@@ -32,7 +32,7 @@ endif::but-pull[]
 Older scripts may depend on the historical behaviour of not allowing the
 user to edit the merge log message. They will see an editor opened when
 they run `but merge`. To make it easier to adjust such scripts to the
-updated behaviour, the environment variable `GIT_MERGE_AUTOEDIT` can be
+updated behaviour, the environment variable `BUT_MERGE_AUTOEDIT` can be
 set to `no` at the beginning of them.
 
 --cleanup=<mode>::
@@ -117,7 +117,7 @@ merge.
 --no-squash::
 	Produce the working tree and index state as if a real merge
 	happened (except for the merge information), but do not actually
-	make a cummit, move the `HEAD`, or record `$GIT_DIR/MERGE_HEAD`
+	make a cummit, move the `HEAD`, or record `$BUT_DIR/MERGE_HEAD`
 	(to cause the next `but cummit` command to create a merge
 	cummit).  This allows you to create a single cummit on top of
 	the current branch whose effect is the same as merging another

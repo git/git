@@ -1,5 +1,5 @@
-#ifndef GIT_CURL_COMPAT_H
-#define GIT_CURL_COMPAT_H
+#ifndef BUT_CURL_COMPAT_H
+#define BUT_CURL_COMPAT_H
 #include <curl/curl.h>
 
 /**
@@ -17,7 +17,7 @@
  * https://buthub.com/curl/curl/).
  *
  * For each X symbol we need from curl we define our own
- * GIT_CURL_HAVE_X. If multiple similar symbols with the same prefix
+ * BUT_CURL_HAVE_X. If multiple similar symbols with the same prefix
  * were defined in the same version we pick one and check for that name.
  *
  * We may also define a missing CURL_* symbol to its known value, if
@@ -39,7 +39,7 @@
  * CURLOPT_TCP_KEEPALIVE was added in 7.25.0, released in March 2012.
  */
 #if LIBCURL_VERSION_NUM >= 0x071900
-#define GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
+#define BUTCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
 #endif
 
 
@@ -54,7 +54,7 @@
 
  */
 #if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS 1
+#define BUT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS 1
 #endif
 
 /**
@@ -62,7 +62,7 @@
  * December 2013.
  */
 #if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
+#define BUT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
 #endif
 
 /**
@@ -70,8 +70,8 @@
  * 2014. CURLE_SSL_PINNEDPUBKEYNOTMATCH was added in that same version.
  */
 #if LIBCURL_VERSION_NUM >= 0x072c00
-#define GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY 1
-#define GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH 1
+#define BUT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY 1
+#define BUT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH 1
 #endif
 
 /**
@@ -82,7 +82,7 @@
  * 7.78.0)
  */
 #if LIBCURL_VERSION_NUM >= 0x072b00
-#define GIT_CURL_HAVE_CURL_HTTP_VERSION_2 1
+#define BUT_CURL_HAVE_CURL_HTTP_VERSION_2 1
 #endif
 
 /**
@@ -92,14 +92,14 @@
  * field (checked on curl version 7.78.0)
  */
 #if LIBCURL_VERSION_NUM >= 0x072c00
-#define GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE 1
+#define BUT_CURL_HAVE_CURLSSLOPT_NO_REVOKE 1
 #endif
 
 /**
  * CURLOPT_PROXY_CAINFO was added in 7.52.0, released in August 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO 1
+#define BUT_CURL_HAVE_CURLOPT_PROXY_CAINFO 1
 #endif
 
 /**
@@ -107,7 +107,7 @@
  * released in August 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD 1
+#define BUT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD 1
 #endif
 
 /**
@@ -115,7 +115,7 @@
  * 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3 1
+#define BUT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3 1
 #endif
 
 /**
@@ -123,7 +123,7 @@
  * 7.56.0, released in September 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073800
-#define GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
+#define BUT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
 #endif
 
 #endif

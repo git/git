@@ -3,7 +3,7 @@
 test_description='multi-pack-indexes'
 . ./test-lib.sh
 
-GIT_TEST_MULTI_PACK_INDEX=0
+BUT_TEST_MULTI_PACK_INDEX=0
 objdir=.but/objects
 
 HASH_LEN=$(test_oid rawsz)
@@ -189,12 +189,12 @@ test_expect_success 'write progress off for redirected stderr' '
 '
 
 test_expect_success 'write force progress on for stderr' '
-	GIT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir write --progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir write --progress 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'write with the --no-progress option' '
-	GIT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir write --no-progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir write --no-progress 2>err &&
 	test_line_count = 0 err
 '
 
@@ -489,26 +489,26 @@ test_expect_success 'verify incorrect checksum' '
 '
 
 test_expect_success 'repack progress off for redirected stderr' '
-	GIT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack 2>err &&
+	BUT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack 2>err &&
 	test_line_count = 0 err
 '
 
 test_expect_success 'repack force progress on for stderr' '
-	GIT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack --progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack --progress 2>err &&
 	test_file_not_empty err
 '
 
 test_expect_success 'repack with the --no-progress option' '
-	GIT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack --no-progress 2>err &&
+	BUT_PROGRESS_DELAY=0 but multi-pack-index --object-dir=$objdir repack --no-progress 2>err &&
 	test_line_count = 0 err
 '
 
 test_expect_success 'repack removes multi-pack-index when deleting packs' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
-	# Set GIT_TEST_MULTI_PACK_INDEX to 0 to avoid writing a new
+	# Set BUT_TEST_MULTI_PACK_INDEX to 0 to avoid writing a new
 	# multi-pack-index after repacking, but set "core.multiPackIndex" to
 	# true so that "but repack" can read the existing MIDX.
-	GIT_TEST_MULTI_PACK_INDEX=0 but -c core.multiPackIndex repack -adf &&
+	BUT_TEST_MULTI_PACK_INDEX=0 but -c core.multiPackIndex repack -adf &&
 	test_path_is_missing $objdir/pack/multi-pack-index
 '
 
@@ -539,7 +539,7 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 		test_cummit 4 &&
 		pack4=$(but pack-objects --revs $packdir/pack <pack-input) &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 but -c core.multiPackIndex repack -ad &&
+		BUT_TEST_MULTI_PACK_INDEX=0 but -c core.multiPackIndex repack -ad &&
 		ls -la $packdir &&
 		test_path_is_file $packdir/pack-$pack1.pack &&
 		test_path_is_file $packdir/pack-$pack2.pack &&
@@ -552,7 +552,7 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 compare_results_with_midx "after repack"
 
 test_expect_success 'multi-pack-index and pack-bitmap' '
-	GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+	BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
 		but -c repack.writeBitmaps=true repack -ad &&
 	but multi-pack-index write &&
 	but rev-list --test-bitmap HEAD
@@ -562,7 +562,7 @@ test_expect_success 'multi-pack-index and alternates' '
 	but init --bare alt.but &&
 	echo $(pwd)/alt.but/objects >.but/objects/info/alternates &&
 	echo content1 >file1 &&
-	altblob=$(GIT_DIR=alt.but but hash-object -w file1) &&
+	altblob=$(BUT_DIR=alt.but but hash-object -w file1) &&
 	but cat-file blob $altblob &&
 	but rev-list --all
 '
@@ -692,7 +692,7 @@ test_expect_success 'expire progress off for redirected stderr' '
 test_expect_success 'expire force progress on for stderr' '
 	(
 		cd dup &&
-		GIT_PROGRESS_DELAY=0 but multi-pack-index expire --progress 2>err &&
+		BUT_PROGRESS_DELAY=0 but multi-pack-index expire --progress 2>err &&
 		test_file_not_empty err
 	)
 '
@@ -700,7 +700,7 @@ test_expect_success 'expire force progress on for stderr' '
 test_expect_success 'expire with the --no-progress option' '
 	(
 		cd dup &&
-		GIT_PROGRESS_DELAY=0 but multi-pack-index expire --no-progress 2>err &&
+		BUT_PROGRESS_DELAY=0 but multi-pack-index expire --no-progress 2>err &&
 		test_line_count = 0 err
 	)
 '

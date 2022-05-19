@@ -515,7 +515,7 @@ static int get_common_cummits(struct upload_pack_data *data,
 			      struct packet_reader *reader)
 {
 	struct object_id oid;
-	char last_hex[GIT_MAX_HEXSZ + 1];
+	char last_hex[BUT_MAX_HEXSZ + 1];
 	int got_common = 0;
 	int got_other = 0;
 	int sent_ready = 0;
@@ -672,7 +672,7 @@ static int get_reachable_list(struct upload_pack_data *data,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int i;
 	struct object *o;
-	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
+	char namebuf[BUT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (do_reachable_revlist(&cmd, &data->shallows, reachable,
@@ -1556,7 +1556,7 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if ((but_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
+		if ((but_env_bool("BUT_TEST_SIDEBAND_ALL", 0) ||
 		     data->allow_sideband_all) &&
 		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
@@ -1775,7 +1775,7 @@ int upload_pack_advertise(struct repository *r,
 		    allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
-		if (but_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
+		if (but_env_bool("BUT_TEST_SIDEBAND_ALL", 0) ||
 		    (!repo_config_get_bool(the_repository,
 					   "uploadpack.allowsidebandall",
 					   &allow_sideband_all_value) &&

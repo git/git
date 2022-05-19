@@ -18,25 +18,25 @@ RM ?= rm -f
 INSTALL ?= install
 
 # default configuration for butweb
-GITWEB_CONFIG = butweb_config.perl
-GITWEB_CONFIG_SYSTEM = /etc/butweb.conf
-GITWEB_CONFIG_COMMON = /etc/butweb-common.conf
-GITWEB_HOME_LINK_STR = projects
-GITWEB_SITENAME =
-GITWEB_PROJECTROOT = /pub/but
-GITWEB_PROJECT_MAXDEPTH = 2007
-GITWEB_EXPORT_OK =
-GITWEB_STRICT_EXPORT =
-GITWEB_BASE_URL =
-GITWEB_LIST =
-GITWEB_HOMETEXT = indextext.html
-GITWEB_CSS = static/butweb.css
-GITWEB_LOGO = static/but-logo.png
-GITWEB_FAVICON = static/but-favicon.png
-GITWEB_JS = static/butweb.js
-GITWEB_SITE_HTML_HEAD_STRING =
-GITWEB_SITE_HEADER =
-GITWEB_SITE_FOOTER =
+BUTWEB_CONFIG = butweb_config.perl
+BUTWEB_CONFIG_SYSTEM = /etc/butweb.conf
+BUTWEB_CONFIG_COMMON = /etc/butweb-common.conf
+BUTWEB_HOME_LINK_STR = projects
+BUTWEB_SITENAME =
+BUTWEB_PROJECTROOT = /pub/but
+BUTWEB_PROJECT_MAXDEPTH = 2007
+BUTWEB_EXPORT_OK =
+BUTWEB_STRICT_EXPORT =
+BUTWEB_BASE_URL =
+BUTWEB_LIST =
+BUTWEB_HOMETEXT = indextext.html
+BUTWEB_CSS = static/butweb.css
+BUTWEB_LOGO = static/but-logo.png
+BUTWEB_FAVICON = static/but-favicon.png
+BUTWEB_JS = static/butweb.js
+BUTWEB_SITE_HTML_HEAD_STRING =
+BUTWEB_SITE_HEADER =
+BUTWEB_SITE_FOOTER =
 HIGHLIGHT_BIN = highlight
 
 # include user config
@@ -45,11 +45,11 @@ HIGHLIGHT_BIN = highlight
 -include config.mak
 
 # determine version
-../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
-	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
+../BUT-VERSION-FILE: .FORCE-BUT-VERSION-FILE
+	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) BUT-VERSION-FILE
 
 ifneq ($(MAKECMDGOALS),clean)
--include ../GIT-VERSION-FILE
+-include ../BUT-VERSION-FILE
 endif
 
 ### Build rules
@@ -92,79 +92,79 @@ endif
 
 all:: butweb.cgi static/butweb.js
 
-GITWEB_PROGRAMS = butweb.cgi
+BUTWEB_PROGRAMS = butweb.cgi
 
 ifdef JSMIN
-GITWEB_FILES += static/butweb.min.js
-GITWEB_JS = static/butweb.min.js
+BUTWEB_FILES += static/butweb.min.js
+BUTWEB_JS = static/butweb.min.js
 all:: static/butweb.min.js
-static/butweb.min.js: static/butweb.js GITWEB-BUILD-OPTIONS
+static/butweb.min.js: static/butweb.js BUTWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(JSMIN) <$< >$@
 else
-GITWEB_FILES += static/butweb.js
+BUTWEB_FILES += static/butweb.js
 endif
 
 ifdef CSSMIN
-GITWEB_FILES += static/butweb.min.css
-GITWEB_CSS = static/butweb.min.css
+BUTWEB_FILES += static/butweb.min.css
+BUTWEB_CSS = static/butweb.min.css
 all:: static/butweb.min.css
-static/butweb.min.css: static/butweb.css GITWEB-BUILD-OPTIONS
+static/butweb.min.css: static/butweb.css BUTWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(CSSMIN) <$< >$@
 else
-GITWEB_FILES += static/butweb.css
+BUTWEB_FILES += static/butweb.css
 endif
 
-GITWEB_FILES += static/but-logo.png static/but-favicon.png
+BUTWEB_FILES += static/but-logo.png static/but-favicon.png
 
 # JavaScript files that are composed (concatenated) to form butweb.js
 #
 # js/lib/common-lib.js should be always first, then js/lib/*.js,
 # then the rest of files; js/butweb.js should be last (if it exists)
-GITWEB_JSLIB_FILES += static/js/lib/common-lib.js
-GITWEB_JSLIB_FILES += static/js/lib/datetime.js
-GITWEB_JSLIB_FILES += static/js/lib/cookies.js
-GITWEB_JSLIB_FILES += static/js/javascript-detection.js
-GITWEB_JSLIB_FILES += static/js/adjust-timezone.js
-GITWEB_JSLIB_FILES += static/js/blame_incremental.js
+BUTWEB_JSLIB_FILES += static/js/lib/common-lib.js
+BUTWEB_JSLIB_FILES += static/js/lib/datetime.js
+BUTWEB_JSLIB_FILES += static/js/lib/cookies.js
+BUTWEB_JSLIB_FILES += static/js/javascript-detection.js
+BUTWEB_JSLIB_FILES += static/js/adjust-timezone.js
+BUTWEB_JSLIB_FILES += static/js/blame_incremental.js
 
 
-GITWEB_REPLACE = \
-	-e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
-	-e 's|++GIT_BINDIR++|$(bindir)|g' \
-	-e 's|++GITWEB_CONFIG++|$(GITWEB_CONFIG)|g' \
-	-e 's|++GITWEB_CONFIG_SYSTEM++|$(GITWEB_CONFIG_SYSTEM)|g' \
-	-e 's|++GITWEB_CONFIG_COMMON++|$(GITWEB_CONFIG_COMMON)|g' \
-	-e 's|++GITWEB_HOME_LINK_STR++|$(GITWEB_HOME_LINK_STR)|g' \
-	-e 's|++GITWEB_SITENAME++|$(GITWEB_SITENAME)|g' \
-	-e 's|++GITWEB_PROJECTROOT++|$(GITWEB_PROJECTROOT)|g' \
-	-e 's|"++GITWEB_PROJECT_MAXDEPTH++"|$(GITWEB_PROJECT_MAXDEPTH)|g' \
-	-e 's|++GITWEB_EXPORT_OK++|$(GITWEB_EXPORT_OK)|g' \
-	-e 's|++GITWEB_STRICT_EXPORT++|$(GITWEB_STRICT_EXPORT)|g' \
-	-e 's|++GITWEB_BASE_URL++|$(GITWEB_BASE_URL)|g' \
-	-e 's|++GITWEB_LIST++|$(GITWEB_LIST)|g' \
-	-e 's|++GITWEB_HOMETEXT++|$(GITWEB_HOMETEXT)|g' \
-	-e 's|++GITWEB_CSS++|$(GITWEB_CSS)|g' \
-	-e 's|++GITWEB_LOGO++|$(GITWEB_LOGO)|g' \
-	-e 's|++GITWEB_FAVICON++|$(GITWEB_FAVICON)|g' \
-	-e 's|++GITWEB_JS++|$(GITWEB_JS)|g' \
-	-e 's|++GITWEB_SITE_HTML_HEAD_STRING++|$(GITWEB_SITE_HTML_HEAD_STRING)|g' \
-	-e 's|++GITWEB_SITE_HEADER++|$(GITWEB_SITE_HEADER)|g' \
-	-e 's|++GITWEB_SITE_FOOTER++|$(GITWEB_SITE_FOOTER)|g' \
+BUTWEB_REPLACE = \
+	-e 's|++BUT_VERSION++|$(BUT_VERSION)|g' \
+	-e 's|++BUT_BINDIR++|$(bindir)|g' \
+	-e 's|++BUTWEB_CONFIG++|$(BUTWEB_CONFIG)|g' \
+	-e 's|++BUTWEB_CONFIG_SYSTEM++|$(BUTWEB_CONFIG_SYSTEM)|g' \
+	-e 's|++BUTWEB_CONFIG_COMMON++|$(BUTWEB_CONFIG_COMMON)|g' \
+	-e 's|++BUTWEB_HOME_LINK_STR++|$(BUTWEB_HOME_LINK_STR)|g' \
+	-e 's|++BUTWEB_SITENAME++|$(BUTWEB_SITENAME)|g' \
+	-e 's|++BUTWEB_PROJECTROOT++|$(BUTWEB_PROJECTROOT)|g' \
+	-e 's|"++BUTWEB_PROJECT_MAXDEPTH++"|$(BUTWEB_PROJECT_MAXDEPTH)|g' \
+	-e 's|++BUTWEB_EXPORT_OK++|$(BUTWEB_EXPORT_OK)|g' \
+	-e 's|++BUTWEB_STRICT_EXPORT++|$(BUTWEB_STRICT_EXPORT)|g' \
+	-e 's|++BUTWEB_BASE_URL++|$(BUTWEB_BASE_URL)|g' \
+	-e 's|++BUTWEB_LIST++|$(BUTWEB_LIST)|g' \
+	-e 's|++BUTWEB_HOMETEXT++|$(BUTWEB_HOMETEXT)|g' \
+	-e 's|++BUTWEB_CSS++|$(BUTWEB_CSS)|g' \
+	-e 's|++BUTWEB_LOGO++|$(BUTWEB_LOGO)|g' \
+	-e 's|++BUTWEB_FAVICON++|$(BUTWEB_FAVICON)|g' \
+	-e 's|++BUTWEB_JS++|$(BUTWEB_JS)|g' \
+	-e 's|++BUTWEB_SITE_HTML_HEAD_STRING++|$(BUTWEB_SITE_HTML_HEAD_STRING)|g' \
+	-e 's|++BUTWEB_SITE_HEADER++|$(BUTWEB_SITE_HEADER)|g' \
+	-e 's|++BUTWEB_SITE_FOOTER++|$(BUTWEB_SITE_FOOTER)|g' \
 	-e 's|++HIGHLIGHT_BIN++|$(HIGHLIGHT_BIN)|g'
 
-GITWEB-BUILD-OPTIONS: FORCE
+BUTWEB-BUILD-OPTIONS: FORCE
 	@rm -f $@+
-	@echo "x" '$(PERL_PATH_SQ)' $(GITWEB_REPLACE) "$(JSMIN)|$(CSSMIN)" >$@+
+	@echo "x" '$(PERL_PATH_SQ)' $(BUTWEB_REPLACE) "$(JSMIN)|$(CSSMIN)" >$@+
 	@cmp -s $@+ $@ && rm -f $@+ || mv -f $@+ $@
 
-butweb.cgi: butweb.perl GITWEB-BUILD-OPTIONS
+butweb.cgi: butweb.perl BUTWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
-		$(GITWEB_REPLACE) $< >$@+ && \
+		$(BUTWEB_REPLACE) $< >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-static/butweb.js: $(GITWEB_JSLIB_FILES)
+static/butweb.js: $(BUTWEB_JSLIB_FILES)
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	cat $^ >$@+ && \
 	mv $@+ $@
@@ -175,23 +175,23 @@ test:
 	$(MAKE) -C ../t butweb-test
 
 test-installed:
-	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(butwebdir_SQ)' \
+	BUTWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(butwebdir_SQ)' \
 		$(MAKE) -C ../t butweb-test
 
 ### Installation rules
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(butwebdir_SQ)'
-	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(butwebdir_SQ)'
+	$(INSTALL) -m 755 $(BUTWEB_PROGRAMS) '$(DESTDIR_SQ)$(butwebdir_SQ)'
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(butwebstaticdir_SQ)'
-	$(INSTALL) -m 644 $(GITWEB_FILES) '$(DESTDIR_SQ)$(butwebstaticdir_SQ)'
+	$(INSTALL) -m 644 $(BUTWEB_FILES) '$(DESTDIR_SQ)$(butwebstaticdir_SQ)'
 
 ### Cleaning rules
 
 clean:
 	$(RM) butweb.cgi static/butweb.js \
 		static/butweb.min.js static/butweb.min.css \
-		GITWEB-BUILD-OPTIONS
+		BUTWEB-BUILD-OPTIONS
 
-.PHONY: all clean install test test-installed .FORCE-GIT-VERSION-FILE FORCE
+.PHONY: all clean install test test-installed .FORCE-BUT-VERSION-FILE FORCE
 

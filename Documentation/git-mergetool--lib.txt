@@ -29,7 +29,7 @@ FUNCTIONS
 ---------
 get_merge_tool::
 	returns a merge tool. the return code is 1 if we returned a guessed
-	merge tool, else 0. '$GIT_MERGETOOL_GUI' may be set to 'true' to
+	merge tool, else 0. '$BUT_MERGETOOL_GUI' may be set to 'true' to
 	search for the appropriate guitool.
 
 get_merge_tool_cmd::
@@ -48,6 +48,6 @@ run_merge_tool::
 	'$MERGED', '$LOCAL', '$REMOTE', and '$BASE' must be defined
 	for use by the merge tool.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

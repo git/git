@@ -9,8 +9,8 @@ This test verifies that "but submodule update" detaches the HEAD of the
 submodule and "but submodule update --rebase/--merge" does not detach the HEAD.
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -251,7 +251,7 @@ test_expect_success 'submodule update --remote should fetch upstream changes' '
 	(cd super &&
 	 but submodule update --remote --force submodule &&
 	 cd submodule &&
-	 test "$(but log -1 --oneline)" = "$(GIT_DIR=../../submodule/.but but log -1 --oneline)"
+	 test "$(but log -1 --oneline)" = "$(BUT_DIR=../../submodule/.but but log -1 --oneline)"
 	)
 '
 
@@ -301,7 +301,7 @@ test_expect_success 'local config should override .butmodules branch' '
 	 but config submodule.submodule.branch test-branch &&
 	 but submodule update --remote --force submodule &&
 	 cd submodule &&
-	 test "$(but log -1 --oneline)" = "$(GIT_DIR=../../submodule/.but but log -1 --oneline test-branch)"
+	 test "$(but log -1 --oneline)" = "$(BUT_DIR=../../submodule/.but but log -1 --oneline test-branch)"
 	)
 '
 
@@ -1022,7 +1022,7 @@ test_expect_success 'submodule update clone shallow submodule outside of depth' 
 		mv -f .butmodules.tmp .butmodules &&
 		# Some protocol versions (e.g. 2) support fetching
 		# unadvertised objects, so restrict this test to v0.
-		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
+		test_must_fail env BUT_TEST_PROTOCOL_VERSION=0 \
 			but submodule update --init --depth=1 2>actual &&
 		test_i18ngrep "Direct fetching of that cummit failed." actual &&
 		but -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
@@ -1044,26 +1044,26 @@ test_expect_success 'submodule update --recursive drops module name before recur
 
 test_expect_success 'submodule update can be run in parallel' '
 	(cd super2 &&
-	 GIT_TRACE=$(pwd)/trace.out but submodule update --jobs 7 &&
+	 BUT_TRACE=$(pwd)/trace.out but submodule update --jobs 7 &&
 	 grep "7 tasks" trace.out &&
 	 but config submodule.fetchJobs 8 &&
-	 GIT_TRACE=$(pwd)/trace.out but submodule update &&
+	 BUT_TRACE=$(pwd)/trace.out but submodule update &&
 	 grep "8 tasks" trace.out &&
-	 GIT_TRACE=$(pwd)/trace.out but submodule update --jobs 9 &&
+	 BUT_TRACE=$(pwd)/trace.out but submodule update --jobs 9 &&
 	 grep "9 tasks" trace.out
 	)
 '
 
 test_expect_success 'but clone passes the parallel jobs config on to submodules' '
 	test_when_finished "rm -rf super4" &&
-	GIT_TRACE=$(pwd)/trace.out but clone --recurse-submodules --jobs 7 . super4 &&
+	BUT_TRACE=$(pwd)/trace.out but clone --recurse-submodules --jobs 7 . super4 &&
 	grep "7 tasks" trace.out &&
 	rm -rf super4 &&
 	but config --global submodule.fetchJobs 8 &&
-	GIT_TRACE=$(pwd)/trace.out but clone --recurse-submodules . super4 &&
+	BUT_TRACE=$(pwd)/trace.out but clone --recurse-submodules . super4 &&
 	grep "8 tasks" trace.out &&
 	rm -rf super4 &&
-	GIT_TRACE=$(pwd)/trace.out but clone --recurse-submodules --jobs 9 . super4 &&
+	BUT_TRACE=$(pwd)/trace.out but clone --recurse-submodules --jobs 9 . super4 &&
 	grep "9 tasks" trace.out &&
 	rm -rf super4
 '

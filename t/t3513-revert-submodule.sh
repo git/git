@@ -30,7 +30,7 @@ but_revert () {
 	but revert HEAD
 }
 
-if test "$GIT_TEST_MERGE_ALGORITHM" != ort
+if test "$BUT_TEST_MERGE_ALGORITHM" != ort
 then
 	KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
 fi

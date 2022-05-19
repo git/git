@@ -29,10 +29,10 @@
 ################################################################################
 
 debug_print () {
-	# Send message to stderr if global variable GIT_MERGETOOL_VIMDIFF is set
+	# Send message to stderr if global variable BUT_MERGETOOL_VIMDIFF is set
 	# to "true"
 
-	if test -n "$GIT_MERGETOOL_VIMDIFF_DEBUG"
+	if test -n "$BUT_MERGETOOL_VIMDIFF_DEBUG"
 	then
 		>&2 echo "$@"
 	fi
@@ -361,7 +361,7 @@ gen_cmd () {
 
 diff_cmd () {
 	"$merge_tool_path" -R -f -d \
-		-c 'wincmd l' -c 'cd $GIT_PREFIX' "$LOCAL" "$REMOTE"
+		-c 'wincmd l' -c 'cd $BUT_PREFIX' "$LOCAL" "$REMOTE"
 }
 
 

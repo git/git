@@ -117,9 +117,9 @@ Performance, Internal Implementation, Development Support etc.
    fallback macro definitions for these <inttypes.h> macros that must
    appear in C99 systems have been removed.
 
- * Recently we have declared that GIT_TEST_* variables take the
+ * Recently we have declared that BUT_TEST_* variables take the
    usual boolean values (it used to be that some used "non-empty
-   means true" and taking GIT_TEST_VAR=YesPlease as true); make
+   means true" and taking BUT_TEST_VAR=YesPlease as true); make
    sure we notice and fail when non-bool strings are given to
    these variables.
 

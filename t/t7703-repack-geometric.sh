@@ -4,7 +4,7 @@ test_description='but repack --geometric works correctly'
 
 . ./test-lib.sh
 
-GIT_TEST_MULTI_PACK_INDEX=0
+BUT_TEST_MULTI_PACK_INDEX=0
 
 objdir=.but/objects
 midx=$objdir/pack/multi-pack-index

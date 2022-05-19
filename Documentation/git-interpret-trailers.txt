@@ -447,6 +447,6 @@ SEE ALSO
 --------
 linkbut:but-cummit[1], linkbut:but-format-patch[1], linkbut:but-config[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

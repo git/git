@@ -6,10 +6,10 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
-GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
+BUT_TEST_DATE_NOW=1251660000; export BUT_TEST_DATE_NOW
 
 check_relative() {
-	t=$(($GIT_TEST_DATE_NOW - $1))
+	t=$(($BUT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
 	test-tool date relative $t >actual &&
@@ -141,7 +141,7 @@ check_approxidate '2008-12-01' '2008-12-01 19:20:00'
 check_approxidate '2009-12-01' '2009-12-01 19:20:00'
 
 check_date_format_human() {
-	t=$(($GIT_TEST_DATE_NOW - $1))
+	t=$(($BUT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_success "human date $t" '
 		test-tool date human $t >actual &&

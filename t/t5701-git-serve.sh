@@ -2,8 +2,8 @@
 
 test_description='test protocol v2 server commands'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -24,7 +24,7 @@ test_expect_success 'test capability advertisement' '
 	0000
 	EOF
 
-	GIT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
+	BUT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
 		--advertise-capabilities >out &&
 	test-tool pkt-line unpack <out >actual &&
 	test_cmp expect actual

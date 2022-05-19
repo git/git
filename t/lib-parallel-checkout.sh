@@ -1,7 +1,7 @@
 # Helpers for tests invoking parallel-checkout
 
 # Parallel checkout tests need full control of the number of workers
-unset GIT_TEST_CHECKOUT_WORKERS
+unset BUT_TEST_CHECKOUT_WORKERS
 
 set_checkout_config () {
 	if test $# -ne 2
@@ -25,7 +25,7 @@ test_checkout_workers () {
 
 	local trace_file=trace-test-checkout-workers &&
 	rm -f "$trace_file" &&
-	GIT_TRACE2="$(pwd)/$trace_file" "$@" 2>&8 &&
+	BUT_TRACE2="$(pwd)/$trace_file" "$@" 2>&8 &&
 
 	local workers="$(grep "child_start\[..*\] but checkout--worker" "$trace_file" | wc -l)" &&
 	test $workers -eq $expected_workers &&

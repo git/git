@@ -134,8 +134,8 @@ test_editor_unchanged () {
 	FAKE_CUMMIT_AMEND=$FAKE_CUMMIT_AMEND
 	FAKE_CUMMIT_MESSAGE=$FAKE_CUMMIT_MESSAGE
 	FAKE_LINES=$FAKE_LINES
-	GIT_EDITOR=$GIT_EDITOR
-	GIT_SEQUENCE_EDITOR=$GIT_SEQUENCE_EDITOR
+	BUT_EDITOR=$BUT_EDITOR
+	BUT_SEQUENCE_EDITOR=$BUT_SEQUENCE_EDITOR
 	core.editor=$(but config core.editor)
 	sequence.editor=$(but config sequence.editor)
 	EOF'
@@ -144,8 +144,8 @@ test_editor_unchanged () {
 	FAKE_CUMMIT_AMEND=
 	FAKE_CUMMIT_MESSAGE=
 	FAKE_LINES=
-	GIT_EDITOR=
-	GIT_SEQUENCE_EDITOR=
+	BUT_EDITOR=
+	BUT_SEQUENCE_EDITOR=
 	core.editor=
 	sequence.editor=
 	EOF
@@ -160,9 +160,9 @@ set_reword_editor () {
 	>reword-oid &&
 
 	# Check rewording keeps the original authorship
-	GIT_AUTHOR_NAME="Reword Author"
-	GIT_AUTHOR_EMAIL="reword.author@example.com"
-	GIT_AUTHOR_DATE=@123456
+	BUT_AUTHOR_NAME="Reword Author"
+	BUT_AUTHOR_EMAIL="reword.author@example.com"
+	BUT_AUTHOR_DATE=@123456
 
 	write_script reword-sequence-editor.sh <<-\EOF &&
 	todo="$(cat "$1")" &&
@@ -187,7 +187,7 @@ set_reword_editor () {
 	# There should be no uncummited changes
 	but diff --exit-code HEAD &&
 	# The todo-list should be re-read after a reword
-	GIT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \
+	BUT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \
 		but rebase --edit-todo &&
 	echo edited >>"\$1"
 	EOF

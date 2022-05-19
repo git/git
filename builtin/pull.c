@@ -277,7 +277,7 @@ static void argv_push_force(struct strvec *arr)
 }
 
 /**
- * Sets the GIT_REFLOG_ACTION environment variable to the concatenation of argv
+ * Sets the BUT_REFLOG_ACTION environment variable to the concatenation of argv
  */
 static void set_reflog_message(int argc, const char **argv)
 {
@@ -290,7 +290,7 @@ static void set_reflog_message(int argc, const char **argv)
 		strbuf_addstr(&msg, argv[i]);
 	}
 
-	setenv("GIT_REFLOG_ACTION", msg.buf, 0);
+	setenv("BUT_REFLOG_ACTION", msg.buf, 0);
 
 	strbuf_release(&msg);
 }
@@ -581,7 +581,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		strvec_pushv(&args, refspecs);
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD | RUN_CLOSE_OBJECT_STORE);
+	ret = run_command_v_opt(args.v, RUN_BUT_CMD | RUN_CLOSE_OBJECT_STORE);
 	strvec_clear(&args);
 	return ret;
 }
@@ -695,7 +695,7 @@ static int run_merge(void)
 		strvec_push(&args, "--allow-unrelated-histories");
 
 	strvec_push(&args, "FETCH_HEAD");
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_BUT_CMD);
 	strvec_clear(&args);
 	return ret;
 }
@@ -799,7 +799,7 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 	cp.no_stderr = 1;
 	cp.but_cmd = 1;
 
-	ret = capture_command(&cp, &sb, GIT_MAX_HEXSZ);
+	ret = capture_command(&cp, &sb, BUT_MAX_HEXSZ);
 	if (ret)
 		goto cleanup;
 
@@ -912,7 +912,7 @@ static int run_rebase(const struct object_id *newbase,
 
 	strvec_push(&args, oid_to_hex(upstream));
 
-	ret = run_command_v_opt(args.v, RUN_GIT_CMD);
+	ret = run_command_v_opt(args.v, RUN_BUT_CMD);
 	strvec_clear(&args);
 	return ret;
 }
@@ -990,7 +990,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	int can_ff;
 	int divergent;
 
-	if (!getenv("GIT_REFLOG_ACTION"))
+	if (!getenv("BUT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
 	but_config(but_pull_config, NULL);

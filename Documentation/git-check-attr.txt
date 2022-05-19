@@ -62,7 +62,7 @@ being queried and <info> can be either:
 'set';;		when the attribute is defined as true.
 <value>;;	when a value has been assigned to the attribute.
 
-Buffering happens as documented under the `GIT_FLUSH` option in
+Buffering happens as documented under the `BUT_FLUSH` option in
 linkbut:but[1].  The caller is responsible for avoiding deadlocks
 caused by overfilling an input buffer or reading from an empty output
 buffer.
@@ -115,6 +115,6 @@ SEE ALSO
 --------
 linkbut:butattributes[5].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

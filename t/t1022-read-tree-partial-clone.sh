@@ -19,7 +19,7 @@ test_expect_success 'read-tree in partial clone prefetches in one batch' '
 	but -C server config uploadpack.allowfilter 1 &&
 	but -C server config uploadpack.allowanysha1inwant 1 &&
 	but clone --bare --filter=blob:none "file://$(pwd)/server" client &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client read-tree $TREE &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client read-tree $TREE &&
 
 	# "done" marks the end of negotiation (once per fetch). Expect that
 	# only one fetch occurs.

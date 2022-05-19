@@ -363,6 +363,6 @@ grep.fallbackToNoIndex::
 	is executed outside of a but repository.  Defaults to false.
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

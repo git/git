@@ -1,5 +1,5 @@
-#ifndef GIT_COMPAT_UTIL_H
-#define GIT_COMPAT_UTIL_H
+#ifndef BUT_COMPAT_UTIL_H
+#define BUT_COMPAT_UTIL_H
 
 #if __STDC_VERSION__ - 0 < 199901L
 /*
@@ -30,15 +30,15 @@
  * Convenience macros to test the versions of gcc (or
  * a compatible compiler).
  * Use them like this:
- *  #if GIT_GNUC_PREREQ (2,8)
+ *  #if BUT_GNUC_PREREQ (2,8)
  *   ... code requiring gcc 2.8 or later ...
  *  #endif
 */
 #if defined(__GNUC__) && defined(__GNUC_MINOR__)
-# define GIT_GNUC_PREREQ(maj, min) \
+# define BUT_GNUC_PREREQ(maj, min) \
 	((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
 #else
- #define GIT_GNUC_PREREQ(maj, min) 0
+ #define BUT_GNUC_PREREQ(maj, min) 0
 #endif
 
 
@@ -89,7 +89,7 @@
 #define BUILD_ASSERT_OR_ZERO(cond) \
 	(sizeof(char [1 - 2*!(cond)]) - 1)
 
-#if GIT_GNUC_PREREQ(3, 1)
+#if BUT_GNUC_PREREQ(3, 1)
  /* &arr[0] degrades to a pointer: a different type from an array */
 # define BARF_UNLESS_AN_ARRAY(arr)						\
 	BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
@@ -196,7 +196,7 @@
 #include <afunix.h>
 #endif
 #include <windows.h>
-#define GIT_WINDOWS_NATIVE
+#define BUT_WINDOWS_NATIVE
 #endif
 
 #include <unistd.h>
@@ -701,12 +701,12 @@ int but_munmap(void *start, size_t length);
 #ifdef NO_MMAP
 
 /* This value must be multiple of (pagesize * 2) */
-#define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
+#define DEFAULT_PACKED_BUT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
 
 /* This value must be multiple of (pagesize * 2) */
-#define DEFAULT_PACKED_GIT_WINDOW_SIZE \
+#define DEFAULT_PACKED_BUT_WINDOW_SIZE \
 	(sizeof(void*) >= 8 \
 		?  1 * 1024 * 1024 * 1024 \
 		: 32 * 1024 * 1024)
@@ -757,7 +757,7 @@ int but_fstat(int, struct stat *);
 int but_lstat(const char *, struct stat *);
 #endif
 
-#define DEFAULT_PACKED_GIT_LIMIT \
+#define DEFAULT_PACKED_BUT_LIMIT \
 	((1024L * 1024L) * (size_t)(sizeof(void*) >= 8 ? (32 * 1024L * 1024L) : 256))
 
 #ifdef NO_PREAD
@@ -1095,43 +1095,43 @@ extern const unsigned char tolower_trans_tbl[256];
 #undef isxdibut
 
 extern const unsigned char sane_ctype[256];
-#define GIT_SPACE 0x01
-#define GIT_DIGIT 0x02
-#define GIT_ALPHA 0x04
-#define GIT_GLOB_SPECIAL 0x08
-#define GIT_REGEX_SPECIAL 0x10
-#define GIT_PATHSPEC_MAGIC 0x20
-#define GIT_CNTRL 0x40
-#define GIT_PUNCT 0x80
+#define BUT_SPACE 0x01
+#define BUT_DIBUT 0x02
+#define BUT_ALPHA 0x04
+#define BUT_GLOB_SPECIAL 0x08
+#define BUT_REGEX_SPECIAL 0x10
+#define BUT_PATHSPEC_MAGIC 0x20
+#define BUT_CNTRL 0x40
+#define BUT_PUNCT 0x80
 #define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
 #define isascii(x) (((x) & ~0x7f) == 0)
-#define isspace(x) sane_istest(x,GIT_SPACE)
-#define isdibut(x) sane_istest(x,GIT_DIGIT)
-#define isalpha(x) sane_istest(x,GIT_ALPHA)
-#define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define isspace(x) sane_istest(x,BUT_SPACE)
+#define isdibut(x) sane_istest(x,BUT_DIBUT)
+#define isalpha(x) sane_istest(x,BUT_ALPHA)
+#define isalnum(x) sane_istest(x,BUT_ALPHA | BUT_DIBUT)
 #define isprint(x) ((x) >= 0x20 && (x) <= 0x7e)
 #define islower(x) sane_iscase(x, 1)
 #define isupper(x) sane_iscase(x, 0)
-#define is_glob_special(x) sane_istest(x,GIT_GLOB_SPECIAL)
-#define is_regex_special(x) sane_istest(x,GIT_GLOB_SPECIAL | GIT_REGEX_SPECIAL)
-#define iscntrl(x) (sane_istest(x,GIT_CNTRL))
-#define ispunct(x) sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | \
-		GIT_GLOB_SPECIAL | GIT_PATHSPEC_MAGIC)
+#define is_glob_special(x) sane_istest(x,BUT_GLOB_SPECIAL)
+#define is_regex_special(x) sane_istest(x,BUT_GLOB_SPECIAL | BUT_REGEX_SPECIAL)
+#define iscntrl(x) (sane_istest(x,BUT_CNTRL))
+#define ispunct(x) sane_istest(x, BUT_PUNCT | BUT_REGEX_SPECIAL | \
+		BUT_GLOB_SPECIAL | BUT_PATHSPEC_MAGIC)
 #define isxdibut(x) (hexval_table[(unsigned char)(x)] != -1)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
-#define is_pathspec_magic(x) sane_istest(x,GIT_PATHSPEC_MAGIC)
+#define is_pathspec_magic(x) sane_istest(x,BUT_PATHSPEC_MAGIC)
 
 static inline int sane_case(int x, int high)
 {
-	if (sane_istest(x, GIT_ALPHA))
+	if (sane_istest(x, BUT_ALPHA))
 		x = (x & ~0x20) | high;
 	return x;
 }
 
 static inline int sane_iscase(int x, int is_lower)
 {
-	if (!sane_istest(x, GIT_ALPHA))
+	if (!sane_istest(x, BUT_ALPHA))
 		return 0;
 
 	if (is_lower)

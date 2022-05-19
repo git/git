@@ -38,6 +38,6 @@ eval_gettext::
 	linkbut:but-sh-i18n{litdd}envsubst[1] helper. Will be replaced by a
 	real gettext implementation in a later version.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

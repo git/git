@@ -140,8 +140,8 @@ method _add {} {
 		if { [regexp {(?:but\+)?ssh://([^/]+)(/.+)} $location xx host path]
 		     || [regexp {([^:][^:]+):(.+)} $location xx host path]} {
 			set ssh ssh
-			if {[info exists env(GIT_SSH)]} {
-				set ssh $env(GIT_SSH)
+			if {[info exists env(BUT_SSH)]} {
+				set ssh $env(BUT_SSH)
 			}
 			lappend cmds [list exec $ssh $host mkdir -p $location && but --but-dir=$path init --bare]
 		} elseif { ! [regexp {://} $location xx] } {

@@ -23,8 +23,8 @@ then
 	test_done
 fi
 
-GIT_PAGER_IN_USE=1
-test_export GIT_PAGER_IN_USE rev_a rev_b
+BUT_PAGER_IN_USE=1
+test_export BUT_PAGER_IN_USE rev_a rev_b
 
 test_perf 'diff --no-color-moved --no-color-moved-ws large change' '
 	but diff --no-color-moved --no-color-moved-ws $rev_a $rev_b

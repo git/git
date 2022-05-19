@@ -1,4 +1,4 @@
-GIT v1.5.4 Release Notes
+BUT v1.5.4 Release Notes
 ========================
 
 Removal
@@ -106,7 +106,7 @@ Updates since v1.5.3
    This has been corrected to mean the same thing as "auto".
 
  * "but diff" Porcelain now respects diff.external configuration, which
-   is another way to specify GIT_EXTERNAL_DIFF.
+   is another way to specify BUT_EXTERNAL_DIFF.
 
  * "but diff" can be told to use different prefixes other than
    "a/" and "b/" e.g. "but diff --src-prefix=l/ --dst-prefix=k/".

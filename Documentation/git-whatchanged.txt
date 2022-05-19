@@ -38,6 +38,6 @@ Examples
 	The "--" is necessary to avoid confusion with the *branch* named
 	'butk'
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

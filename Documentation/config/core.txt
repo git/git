@@ -254,7 +254,7 @@ core.butProxy::
 	may be set multiple times and is matched in the given order;
 	the first match wins.
 +
-Can be overridden by the `GIT_PROXY_COMMAND` environment variable
+Can be overridden by the `BUT_PROXY_COMMAND` environment variable
 (which always applies universally, without the special "for"
 handling).
 +
@@ -267,7 +267,7 @@ core.sshCommand::
 	If this variable is set, `but fetch` and `but push` will
 	use the specified command instead of `ssh` when they need to
 	connect to a remote system. The command is in the same form as
-	the `GIT_SSH_COMMAND` environment variable and is overridden
+	the `BUT_SSH_COMMAND` environment variable and is overridden
 	when the environment variable is set.
 
 core.ignoreStat::
@@ -323,15 +323,15 @@ false), while all other repositories are assumed to be bare (bare
 
 core.worktree::
 	Set the path to the root of the working tree.
-	If `GIT_COMMON_DIR` environment variable is set, core.worktree
+	If `BUT_COMMON_DIR` environment variable is set, core.worktree
 	is ignored and not used for determining the root of working tree.
-	This can be overridden by the `GIT_WORK_TREE` environment
+	This can be overridden by the `BUT_WORK_TREE` environment
 	variable and the `--work-tree` command-line option.
 	The value can be an absolute path or relative to the path to
 	the .but directory, which is either specified by --but-dir
-	or GIT_DIR, or automatically discovered.
-	If --but-dir or GIT_DIR is specified but none of
-	--work-tree, GIT_WORK_TREE and core.worktree is specified,
+	or BUT_DIR, or automatically discovered.
+	If --but-dir or BUT_DIR is specified but none of
+	--work-tree, BUT_WORK_TREE and core.worktree is specified,
 	the current working directory is regarded as the top level
 	of your working tree.
 +
@@ -347,10 +347,10 @@ repository's usual working tree).
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
-	"`$GIT_DIR/logs/<ref>`", by appending the new and old
+	"`$BUT_DIR/logs/<ref>`", by appending the new and old
 	SHA-1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
-	variable is set to `true`, missing "`$GIT_DIR/logs/<ref>`"
+	variable is set to `true`, missing "`$BUT_DIR/logs/<ref>`"
 	file is automatically created for branch heads (i.e. under
 	`refs/heads/`), remote refs (i.e. under `refs/remotes/`),
 	note refs (i.e. under `refs/notes/`), and the symbolic ref `HEAD`.
@@ -467,7 +467,7 @@ core.excludesFile::
 core.askPass::
 	Some commands (e.g. svn and http interfaces) that interactively
 	ask for a password can be told to use an external program given
-	via the value of this variable. Can be overridden by the `GIT_ASKPASS`
+	via the value of this variable. Can be overridden by the `BUT_ASKPASS`
 	environment variable. If not set, fall back to the value of the
 	`SSH_ASKPASS` environment variable or, failing that, a simple password
 	prompt. The external program shall be given a suitable prompt as
@@ -483,10 +483,10 @@ core.attributesFile::
 
 core.hooksPath::
 	By default Git will look for your hooks in the
-	`$GIT_DIR/hooks` directory. Set this to different path,
+	`$BUT_DIR/hooks` directory. Set this to different path,
 	e.g. `/etc/but/hooks`, and Git will try to find your hooks in
 	that directory, e.g. `/etc/but/hooks/pre-receive` instead of
-	in `$GIT_DIR/hooks/pre-receive`.
+	in `$BUT_DIR/hooks/pre-receive`.
 +
 The path can be either absolute or relative. A relative path is
 taken as relative to the directory where the hooks are run (see
@@ -502,7 +502,7 @@ core.editor::
 	Commands such as `cummit` and `tag` that let you edit
 	messages by launching an editor use the value of this
 	variable when it is set, and the environment variable
-	`GIT_EDITOR` is not set.  See linkbut:but-var[1].
+	`BUT_EDITOR` is not set.  See linkbut:but-var[1].
 
 core.commentChar::
 	Commands such as `cummit` and `tag` that let you edit
@@ -528,7 +528,7 @@ core.packedRefsTimeout::
 core.pager::
 	Text viewer for use by Git commands (e.g., 'less').  The value
 	is meant to be interpreted by the shell.  The order of preference
-	is the `$GIT_PAGER` environment variable, then `core.pager`
+	is the `$BUT_PAGER` environment variable, then `core.pager`
 	configuration, then `$PAGER`, and then the default chosen at
 	compile time (usually 'less').
 +
@@ -675,7 +675,7 @@ core.notesRef::
 	notes should be printed.
 +
 This setting defaults to "refs/notes/cummits", and it can be overridden by
-the `GIT_NOTES_REF` environment variable.  See linkbut:but-notes[1].
+the `BUT_NOTES_REF` environment variable.  See linkbut:but-notes[1].
 
 core.cummitGraph::
 	If true, then but will read the cummit-graph file (if it exists)

@@ -2540,7 +2540,7 @@ msgstr "%s %s bir işleme değil!"
 
 #: cummit.c:197
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2549,7 +2549,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"<GIT_DIR>/info/grafts desteği artık kullanılmamalı\n"
+"<BUT_DIR>/info/grafts desteği artık kullanılmamalı\n"
 "ve ileriki bir Git sürümünde kaldırılacak.\n"
 "\n"
 "Aşıları değiştirme başvurularına dönüştürmek için\n"
@@ -6727,10 +6727,10 @@ msgstr ""
 #: read-cache.c:1761
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION ayarlanmış; ancak değer geçersiz.\n"
+"BUT_INDEX_VERSION ayarlanmış; ancak değer geçersiz.\n"
 "%i sürümü kullanılıyor"
 
 #: read-cache.c:1817
@@ -8006,16 +8006,16 @@ msgid "could not open '%s' for reading"
 msgstr "'%s' okuma için açılamadı"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "'GIT_AUTHOR_NAME' halihazırda verilmiş"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "'BUT_AUTHOR_NAME' halihazırda verilmiş"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "'GIT_AUTHOR_EMAIL' halihazırda verilmiş"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "'BUT_AUTHOR_EMAIL' halihazırda verilmiş"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "'GIT_AUTHOR_DATE' halihazırda verilmiş"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "'BUT_AUTHOR_DATE' halihazırda verilmiş"
 
 #: sequencer.c:865
 #, c-format
@@ -8023,16 +8023,16 @@ msgid "unknown variable '%s'"
 msgstr "bilinmeyen değişken '%s'"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "'GIT_AUTHOR_NAME' eksik"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "'BUT_AUTHOR_NAME' eksik"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "'GIT_AUTHOR_EMAIL' eksik"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "'BUT_AUTHOR_EMAIL' eksik"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "'GIT_AUTHOR_DATE' eksik"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "'BUT_AUTHOR_DATE' eksik"
 
 #: sequencer.c:939
 #, c-format
@@ -8941,10 +8941,10 @@ msgstr "bir but deposu (veya üst dizinlerinden birisi) değil: %s"
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "Bir but deposu veya (%s bağlama noktasına kadar olan üstü) değil\n"
-"Dosya sistemi sınırında duruluyor (GIT_DISCOVERY_ACROSS_FILESYSTEM "
+"Dosya sistemi sınırında duruluyor (BUT_DISCOVERY_ACROSS_FILESYSTEM "
 "ayarlanmamış)."
 
 #: setup.c:1374
@@ -10889,8 +10889,8 @@ msgid "could not parse patch '%s'"
 msgstr "'%s' yaması ayrıştırılamadı"
 
 #: builtin/am.c:842
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Bir kerede yalnızca bir StGIT yama serisi uygulanabilir"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Bir kerede yalnızca bir StBUT yama serisi uygulanabilir"
 
 #: builtin/am.c:890
 msgid "invalid timestamp"
@@ -26644,13 +26644,13 @@ msgstr "%s yazma için açılamadı: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"\"GIT:\" ile başlayan satırlar kaldırılacaktır.\n"
+"\"BUT:\" ile başlayan satırlar kaldırılacaktır.\n"
 "Yazdığınız yama için genel bir diffstat veya içerik tablosu\n"
 "eklemeyi düşünün.\n"
 "\n"

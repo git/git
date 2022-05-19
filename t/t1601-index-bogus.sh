@@ -11,8 +11,8 @@ test_expect_success 'read-tree refuses to read null sha1' '
 	test_must_fail but read-tree $tree
 '
 
-test_expect_success 'GIT_ALLOW_NULL_SHA1 overrides refusal' '
-	GIT_ALLOW_NULL_SHA1=1 but read-tree $tree
+test_expect_success 'BUT_ALLOW_NULL_SHA1 overrides refusal' '
+	BUT_ALLOW_NULL_SHA1=1 but read-tree $tree
 '
 
 test_expect_success 'but write-tree refuses to write null sha1' '

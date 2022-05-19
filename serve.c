@@ -10,7 +10,7 @@
 #include "upload-pack.h"
 
 static int advertise_sid = -1;
-static int client_hash_algo = GIT_HASH_SHA1;
+static int client_hash_algo = BUT_HASH_SHA1;
 
 static int always_advertise(struct repository *r,
 			    struct strbuf *value)
@@ -41,7 +41,7 @@ static void object_format_receive(struct repository *r,
 		die("object-format capability requires an argument");
 
 	client_hash_algo = hash_algo_by_name(algo_name);
-	if (client_hash_algo == GIT_HASH_UNKNOWN)
+	if (client_hash_algo == BUT_HASH_UNKNOWN)
 		die("unknown object format '%s'", algo_name);
 }
 

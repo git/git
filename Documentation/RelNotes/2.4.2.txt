@@ -28,7 +28,7 @@ Fixes since v2.4.1
    as a stash application can conflict and the index will be used for
    conflict resolution.
 
- * We have prepended $GIT_EXEC_PATH and the path "but" is installed in
+ * We have prepended $BUT_EXEC_PATH and the path "but" is installed in
    (typically "/usr/bin") to $PATH when invoking subprograms and hooks
    for almost eternity, but the original use case the latter tried to
    support was semi-bogus (i.e. install but to /opt/foo/but and run it

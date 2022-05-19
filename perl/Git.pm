@@ -9,7 +9,7 @@ package Git;
 
 use 5.008;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 
 BEGIN {
 
@@ -134,7 +134,7 @@ directories; if found, C<WorkingCopy> is set to the directory containing
 it and C<Repository> to the C<.but> directory itself. If no C<.but>
 directory was found, the C<Directory> is assumed to be a bare repository,
 C<Repository> is set to point at it and C<WorkingCopy> is left undefined.
-If the C<$GIT_DIR> environment variable is set, things behave as expected
+If the C<$BUT_DIR> environment variable is set, things behave as expected
 as well.
 
 You should not use both C<Directory> and either of C<Repository> and
@@ -561,7 +561,7 @@ sub get_record {
 
 Query user C<PROMPT> and return answer from user.
 
-Honours GIT_ASKPASS and SSH_ASKPASS environment variables for querying
+Honours BUT_ASKPASS and SSH_ASKPASS environment variables for querying
 the user. If no *_ASKPASS variable is set or an error occurred,
 the terminal is tried as a fallback.
 If C<ISPASSWORD> is set and true, the terminal disables echo.
@@ -571,8 +571,8 @@ If C<ISPASSWORD> is set and true, the terminal disables echo.
 sub prompt {
 	my ($prompt, $isPassword) = @_;
 	my $ret;
-	if (exists $ENV{'GIT_ASKPASS'}) {
-		$ret = _prompt($ENV{'GIT_ASKPASS'}, $prompt);
+	if (exists $ENV{'BUT_ASKPASS'}) {
+		$ret = _prompt($ENV{'BUT_ASKPASS'}, $prompt);
 	}
 	if (!defined $ret && exists $ENV{'SSH_ASKPASS'}) {
 		$ret = _prompt($ENV{'SSH_ASKPASS'}, $prompt);
@@ -866,7 +866,7 @@ sub remote_refs {
 =item ident_person ( TYPE | IDENTSTR | IDENTARRAY )
 
 This suite of functions retrieves and parses ident information, as stored
-in the cummit and tag objects or produced by C<var GIT_type_IDENT> (thus
+in the cummit and tag objects or produced by C<var BUT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<cummitter>; case is insignificant).
 
 The C<ident> method retrieves the ident information from C<but var>
@@ -890,7 +890,7 @@ sub ident {
 	my ($self, $type) = _maybe_self(@_);
 	my $identstr;
 	if (lc $type eq lc 'cummitter' or lc $type eq lc 'author') {
-		my @cmd = ('var', 'GIT_'.uc($type).'_IDENT');
+		my @cmd = ('var', 'BUT_'.uc($type).'_IDENT');
 		unshift @cmd, $self if $self;
 		$identstr = command_oneline(@cmd);
 	} else {
@@ -1674,9 +1674,9 @@ sub _cmd_exec {
 sub _setup_but_cmd_env {
 	my $self = shift;
 	if ($self) {
-		$self->repo_path() and $ENV{'GIT_DIR'} = $self->repo_path();
+		$self->repo_path() and $ENV{'BUT_DIR'} = $self->repo_path();
 		$self->repo_path() and $self->wc_path()
-			and $ENV{'GIT_WORK_TREE'} = $self->wc_path();
+			and $ENV{'BUT_WORK_TREE'} = $self->wc_path();
 		$self->wc_path() and chdir($self->wc_path());
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}

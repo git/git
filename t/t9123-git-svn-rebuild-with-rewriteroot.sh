@@ -21,7 +21,7 @@ test_expect_success 'init, fetch and checkout repository' '
 	'
 
 test_expect_success 'remove rev_map' '
-	rm "$GIT_SVN_DIR"/.rev_map.*
+	rm "$BUT_SVN_DIR"/.rev_map.*
 	'
 
 test_expect_success 'rebuild rev_map' '

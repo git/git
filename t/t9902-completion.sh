@@ -30,10 +30,10 @@ complete ()
 #     completion for "but <TAB>", and a plumbing is excluded.  "add",
 #     "rebase" and "ls-files" are listed for this.
 
-GIT_TESTING_ALL_COMMAND_LIST='add checkout check-attr rebase ls-files'
-GIT_TESTING_PORCELAIN_COMMAND_LIST='add checkout rebase'
+BUT_TESTING_ALL_COMMAND_LIST='add checkout check-attr rebase ls-files'
+BUT_TESTING_PORCELAIN_COMMAND_LIST='add checkout rebase'
 
-. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash"
+. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash"
 
 # We don't need this function to actually join words or do anything special.
 # Also, it's cleaner to avoid touching bash's internal completion variables.
@@ -188,22 +188,22 @@ test_expect_success '__but_find_repo_path - parent is a .but directory' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__but_find_repo_path - $GIT_DIR set while .but directory in cwd' '
+test_expect_success '__but_find_repo_path - $BUT_DIR set while .but directory in cwd' '
 	echo "$ROOT/otherrepo/.but" >expected &&
 	(
-		GIT_DIR="$ROOT/otherrepo/.but" &&
-		export GIT_DIR &&
+		BUT_DIR="$ROOT/otherrepo/.but" &&
+		export BUT_DIR &&
 		__but_find_repo_path &&
 		echo "$__but_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__but_find_repo_path - $GIT_DIR set while .but directory in parent' '
+test_expect_success '__but_find_repo_path - $BUT_DIR set while .but directory in parent' '
 	echo "$ROOT/otherrepo/.but" >expected &&
 	(
-		GIT_DIR="$ROOT/otherrepo/.but" &&
-		export GIT_DIR &&
+		BUT_DIR="$ROOT/otherrepo/.but" &&
+		export BUT_DIR &&
 		cd subdir &&
 		__but_find_repo_path &&
 		echo "$__but_repo_path" >"$actual"
@@ -234,11 +234,11 @@ test_expect_success '__but_find_repo_path - relative dir from command line and "
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__but_find_repo_path - $GIT_DIR set while "but -C"' '
+test_expect_success '__but_find_repo_path - $BUT_DIR set while "but -C"' '
 	echo "$ROOT/.but" >expected &&
 	(
-		GIT_DIR="$ROOT/.but" &&
-		export GIT_DIR &&
+		BUT_DIR="$ROOT/.but" &&
+		export BUT_DIR &&
 		__but_C_args=(-C otherrepo) &&
 		__but_find_repo_path &&
 		echo "$__but_repo_path" >"$actual"
@@ -246,12 +246,12 @@ test_expect_success '__but_find_repo_path - $GIT_DIR set while "but -C"' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__but_find_repo_path - relative dir in $GIT_DIR and "but -C"' '
+test_expect_success '__but_find_repo_path - relative dir in $BUT_DIR and "but -C"' '
 	echo "$ROOT/otherrepo/.but" >expected &&
 	(
 		cd subdir &&
-		GIT_DIR="otherrepo/.but" &&
-		export GIT_DIR &&
+		BUT_DIR="otherrepo/.but" &&
+		export BUT_DIR &&
 		__but_C_args=(-C ..) &&
 		__but_find_repo_path &&
 		echo "$__but_repo_path" >"$actual"
@@ -309,10 +309,10 @@ test_expect_success '__but_find_repo_path - non-existing path in $__but_dir' '
 	test_must_be_empty "$actual"
 '
 
-test_expect_success '__but_find_repo_path - non-existing $GIT_DIR' '
+test_expect_success '__but_find_repo_path - non-existing $BUT_DIR' '
 	(
-		GIT_DIR="$ROOT/non-existing" &&
-		export GIT_DIR &&
+		BUT_DIR="$ROOT/non-existing" &&
+		export BUT_DIR &&
 		test_must_fail __but_find_repo_path &&
 		printf "$__but_repo_path" >"$actual"
 	) &&
@@ -360,8 +360,8 @@ test_expect_success SYMLINKS '__but_find_repo_path - resulting path avoids symli
 test_expect_success '__but_find_repo_path - not a but repository' '
 	(
 		cd non-repo &&
-		GIT_CEILING_DIRECTORIES="$ROOT" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$ROOT" &&
+		export BUT_CEILING_DIRECTORIES &&
 		test_must_fail __but_find_repo_path &&
 		printf "$__but_repo_path" >"$actual"
 	) &&
@@ -589,7 +589,7 @@ test_expect_success '__butcomp_nl - doesnt fail because of invalid variable name
 	__butcomp_nl "$invalid_variable_name"
 '
 
-test_expect_success '__but_remotes - list remotes from $GIT_DIR/remotes and from config file' '
+test_expect_success '__but_remotes - list remotes from $BUT_DIR/remotes and from config file' '
 	cat >expect <<-EOF &&
 	remote_from_file_1
 	remote_from_file_2
@@ -847,8 +847,8 @@ test_expect_success '__but_refs - non-existing URL remote - full refs' '
 
 test_expect_success '__but_refs - not in a but repository' '
 	(
-		GIT_CEILING_DIRECTORIES="$ROOT" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$ROOT" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd subdir &&
 		cur= &&
 		__but_refs >"$actual"
@@ -1279,15 +1279,15 @@ test_expect_success 'but switch - with --no-guess, complete only local branches'
 	EOF
 '
 
-test_expect_success 'but switch - with GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete only local branches' '
-	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but switch " <<-\EOF
+test_expect_success 'but switch - with BUT_COMPLETION_CHECKOUT_NO_GUESS=1, complete only local branches' '
+	BUT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but switch " <<-\EOF
 	main Z
 	matching-branch Z
 	EOF
 '
 
-test_expect_success 'but switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
-	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but switch --guess " <<-\EOF
+test_expect_success 'but switch - --guess overrides BUT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
+	BUT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but switch --guess " <<-\EOF
 	branch-in-other Z
 	main Z
 	main-in-other Z
@@ -1311,8 +1311,8 @@ test_expect_success 'but switch - a later --no-guess overrides previous --guess,
 	EOF
 '
 
-test_expect_success 'but checkout - with GIT_COMPLETION_NO_GUESS=1 only completes refs' '
-	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but checkout " <<-\EOF
+test_expect_success 'but checkout - with BUT_COMPLETION_NO_GUESS=1 only completes refs' '
+	BUT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but checkout " <<-\EOF
 	HEAD Z
 	main Z
 	matching-branch Z
@@ -1322,8 +1322,8 @@ test_expect_success 'but checkout - with GIT_COMPLETION_NO_GUESS=1 only complete
 	EOF
 '
 
-test_expect_success 'but checkout - --guess overrides GIT_COMPLETION_NO_GUESS=1, complete refs and unique remote branches for DWIM' '
-	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but checkout --guess " <<-\EOF
+test_expect_success 'but checkout - --guess overrides BUT_COMPLETION_NO_GUESS=1, complete refs and unique remote branches for DWIM' '
+	BUT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "but checkout --guess " <<-\EOF
 	HEAD Z
 	branch-in-other Z
 	main Z
@@ -2554,7 +2554,7 @@ test_expect_success 'sourcing the completion script clears cached commands' '
 	(
 		__but_compute_all_commands &&
 		verbose test -n "$__but_all_commands" &&
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
 		verbose test -z "$__but_all_commands"
 	)
 '
@@ -2563,7 +2563,7 @@ test_expect_success 'sourcing the completion script clears cached merge strategi
 	(
 		__but_compute_merge_strategies &&
 		verbose test -n "$__but_merge_strategies" &&
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
 		verbose test -z "$__but_merge_strategies"
 	)
 '
@@ -2574,7 +2574,7 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 		verbose test -n "$__butcomp_builtin_checkout" &&
 		__butcomp_builtin notes_edit &&
 		verbose test -n "$__butcomp_builtin_notes_edit" &&
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
 		verbose test -z "$__butcomp_builtin_checkout" &&
 		verbose test -z "$__butcomp_builtin_notes_edit"
 	)
@@ -2584,10 +2584,10 @@ test_expect_success 'option aliases are not shown by default' '
 	test_completion "but clone --recurs" "--recurse-submodules "
 '
 
-test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
+test_expect_success 'option aliases are shown with BUT_COMPLETION_SHOW_ALL' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
-		GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		BUT_COMPLETION_SHOW_ALL=1 && export BUT_COMPLETION_SHOW_ALL &&
 		test_completion "but clone --recurs" <<-\EOF
 		--recurse-submodules Z
 		--recursive Z
@@ -2595,10 +2595,10 @@ test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
 	)
 '
 
-test_expect_success 'plumbing commands are excluded without GIT_COMPLETION_SHOW_ALL_COMMANDS' '
+test_expect_success 'plumbing commands are excluded without BUT_COMPLETION_SHOW_ALL_COMMANDS' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
-		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		sane_unset BUT_TESTING_PORCELAIN_COMMAND_LIST &&
 
 		# Just mainporcelain, not plumbing commands
 		run_completion "but c" &&
@@ -2607,12 +2607,12 @@ test_expect_success 'plumbing commands are excluded without GIT_COMPLETION_SHOW_
 	)
 '
 
-test_expect_success 'all commands are shown with GIT_COMPLETION_SHOW_ALL_COMMANDS (also main non-builtin)' '
+test_expect_success 'all commands are shown with BUT_COMPLETION_SHOW_ALL_COMMANDS (also main non-builtin)' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/but-completion.bash" &&
-		GIT_COMPLETION_SHOW_ALL_COMMANDS=1 &&
-		export GIT_COMPLETION_SHOW_ALL_COMMANDS &&
-		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&
+		. "$BUT_BUILD_DIR/contrib/completion/but-completion.bash" &&
+		BUT_COMPLETION_SHOW_ALL_COMMANDS=1 &&
+		export BUT_COMPLETION_SHOW_ALL_COMMANDS &&
+		sane_unset BUT_TESTING_PORCELAIN_COMMAND_LIST &&
 
 		# Both mainporcelain and plumbing commands
 		run_completion "but c" &&

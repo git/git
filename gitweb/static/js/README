@@ -1,7 +1,7 @@
-GIT web interface (butweb) - JavaScript
+BUT web interface (butweb) - JavaScript
 =======================================
 
-This directory holds JavaScript code used by butweb (GIT web interface).
+This directory holds JavaScript code used by butweb (BUT web interface).
 Scripts from there would be concatenated together in the order specified
 by butweb/Makefile into butweb/static/butweb.js, during building of
 butweb/butweb.cgi (during butweb building).  The resulting file (or its

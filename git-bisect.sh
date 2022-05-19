@@ -38,12 +38,12 @@ TERM_BAD=bad
 TERM_GOOD=good
 
 get_terms () {
-	if test -s "$GIT_DIR/BISECT_TERMS"
+	if test -s "$BUT_DIR/BISECT_TERMS"
 	then
 		{
 		read TERM_BAD
 		read TERM_GOOD
-		} <"$GIT_DIR/BISECT_TERMS"
+		} <"$BUT_DIR/BISECT_TERMS"
 	fi
 }
 

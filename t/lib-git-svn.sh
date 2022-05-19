@@ -10,9 +10,9 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
-GIT_DIR=$PWD/.but
-GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/but-svn
-SVN_TREE=$GIT_SVN_DIR/svn-tree
+BUT_DIR=$PWD/.but
+BUT_SVN_DIR=$BUT_DIR/svn/refs/remotes/but-svn
+SVN_TREE=$BUT_SVN_DIR/svn-tree
 test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
@@ -69,7 +69,7 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	if test_bool_env GIT_TEST_SVN_HTTPD false
+	if test_bool_env BUT_TEST_SVN_HTTPD false
 	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
@@ -107,9 +107,9 @@ EOF
 }
 
 require_svnserve () {
-	if ! test_bool_env GIT_TEST_SVNSERVE false
+	if ! test_bool_env BUT_TEST_SVNSERVE false
 	then
-		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
+		skip_all='skipping svnserve test. (set $BUT_TEST_SVNSERVE to enable)'
 		test_done
 	fi
 }
@@ -122,21 +122,21 @@ start_svnserve () {
 }
 
 prepare_utf8_locale () {
-	if test -z "$GIT_TEST_UTF8_LOCALE"
+	if test -z "$BUT_TEST_UTF8_LOCALE"
 	then
 		case "${LC_ALL:-$LANG}" in
 		*.[Uu][Tt][Ff]8 | *.[Uu][Tt][Ff]-8)
-			GIT_TEST_UTF8_LOCALE="${LC_ALL:-$LANG}"
+			BUT_TEST_UTF8_LOCALE="${LC_ALL:-$LANG}"
 			;;
 		*)
-			GIT_TEST_UTF8_LOCALE=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
+			BUT_TEST_UTF8_LOCALE=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
 				p
 				q
 			}')
 			;;
 		esac
 	fi
-	if test -n "$GIT_TEST_UTF8_LOCALE"
+	if test -n "$BUT_TEST_UTF8_LOCALE"
 	then
 		test_set_prereq UTF8
 	else

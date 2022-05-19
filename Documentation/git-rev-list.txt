@@ -124,6 +124,6 @@ sort -n
 but rev-list --disk-usage --objects --remotes=$suspect --not --remotes=origin
 ----------
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

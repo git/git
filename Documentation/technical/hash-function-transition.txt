@@ -283,7 +283,7 @@ network byte order):
 
 Loose object index
 ~~~~~~~~~~~~~~~~~~
-A new file $GIT_OBJECT_DIR/loose-object-idx contains information about
+A new file $BUT_OBJECT_DIR/loose-object-idx contains information about
 all loose objects. Its format is
 
   # loose-object-idx
@@ -293,7 +293,7 @@ where the object names are in hexadecimal format. The file is not
 sorted.
 
 The loose object index is protected against concurrent writes by a
-lock file $GIT_OBJECT_DIR/loose-object-idx.lock. To add a new loose
+lock file $BUT_OBJECT_DIR/loose-object-idx.lock. To add a new loose
 object:
 
 1. Write the loose object to a temporary file, like today.
@@ -541,7 +541,7 @@ Alternates
 ~~~~~~~~~~
 For the same reason, a SHA-256 repository cannot borrow objects from a
 SHA-1 repository using objects/info/alternates or
-$GIT_ALTERNATE_OBJECT_REPOSITORIES.
+$BUT_ALTERNATE_OBJECT_REPOSITORIES.
 
 but notes
 ~~~~~~~~~
@@ -635,7 +635,7 @@ Some initial steps can be implemented independently of one another:
 - excluding gpgsig-* from the fields copied by "but cummit --amend"
 - annotating tests that depend on SHA-1 values with a SHA1 test
   prerequisite
-- using "struct object_id", GIT_MAX_RAWSZ, and GIT_MAX_HEXSZ
+- using "struct object_id", BUT_MAX_RAWSZ, and BUT_MAX_HEXSZ
   consistently instead of "unsigned char *" and the hardcoded
   constants 20 and 40.
 - introducing index v3

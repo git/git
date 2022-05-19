@@ -369,7 +369,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 			return error("unable to write file %s", path);
 		break;
 
-	case S_IFGITLINK:
+	case S_IFBUTLINK:
 		if (to_tempfile)
 			return error("cannot create temporary submodule %s", ce->name);
 		if (mkdir(path, 0777) < 0)
@@ -418,7 +418,7 @@ static void mark_colliding_entries(const struct checkout *state,
 {
 	int i, trust_ino = check_stat;
 
-#if defined(GIT_WINDOWS_NATIVE) || defined(__CYGWIN__)
+#if defined(BUT_WINDOWS_NATIVE) || defined(__CYGWIN__)
 	trust_ino = 0;
 #endif
 
@@ -530,7 +530,7 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 		 */
 		if (S_ISDIR(st.st_mode)) {
 			/* If it is a butlink, leave it alone! */
-			if (S_ISGITLINK(ce->ce_mode))
+			if (S_ISBUTLINK(ce->ce_mode))
 				return 0;
 			remove_subtree(&path);
 		} else if (unlink(path.buf))

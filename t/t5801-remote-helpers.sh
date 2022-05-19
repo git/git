@@ -5,8 +5,8 @@
 
 test_description='Test remote-helper import and export commands'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
@@ -135,7 +135,7 @@ test_expect_success 'forced push' '
 '
 
 test_expect_success 'cloning without refspec' '
-	GIT_REMOTE_TESTGIT_NOREFSPEC=1 \
+	BUT_REMOTE_TESTBUT_NOREFSPEC=1 \
 	but clone "testbut::${PWD}/server" local2 2>error &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
@@ -144,7 +144,7 @@ test_expect_success 'cloning without refspec' '
 test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
 	but reset --hard &&
-	GIT_REMOTE_TESTGIT_NOREFSPEC=1 but pull 2>../error) &&
+	BUT_REMOTE_TESTBUT_NOREFSPEC=1 but pull 2>../error) &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
@@ -154,15 +154,15 @@ test_expect_success 'pushing without refspecs' '
 	(cd local2 &&
 	echo content >>file &&
 	but cummit -a -m ten &&
-	GIT_REMOTE_TESTGIT_NOREFSPEC=1 &&
-	export GIT_REMOTE_TESTGIT_NOREFSPEC &&
+	BUT_REMOTE_TESTBUT_NOREFSPEC=1 &&
+	export BUT_REMOTE_TESTBUT_NOREFSPEC &&
 	test_must_fail but push 2>../error) &&
 	test_i18ngrep "remote-helper doesn.t support push; refspec needed" error
 '
 
 test_expect_success 'pulling without marks' '
 	(cd local2 &&
-	GIT_REMOTE_TESTGIT_NO_MARKS=1 but pull) &&
+	BUT_REMOTE_TESTBUT_NO_MARKS=1 but pull) &&
 	compare_refs local2 HEAD server HEAD
 '
 
@@ -171,7 +171,7 @@ test_expect_failure 'pushing without marks' '
 	(cd local2 &&
 	echo content >>file &&
 	but cummit -a -m twelve &&
-	GIT_REMOTE_TESTGIT_NO_MARKS=1 but push) &&
+	BUT_REMOTE_TESTBUT_NO_MARKS=1 but push) &&
 	compare_refs local2 HEAD server HEAD
 '
 
@@ -205,7 +205,7 @@ test_expect_success GPG 'push signed tag with signed-tags capability' '
 	(cd local &&
 	but checkout main &&
 	but tag -s -m signed-tag signed-tag-2 &&
-	GIT_REMOTE_TESTGIT_SIGNED_TAGS=1 but push origin signed-tag-2
+	BUT_REMOTE_TESTBUT_SIGNED_TAGS=1 but push origin signed-tag-2
 	) &&
 	compare_refs local signed-tag-2 server signed-tag-2
 '
@@ -227,7 +227,7 @@ test_expect_success 'push update refs disabled by no-private-update' '
 	echo more-update >>file &&
 	but cummit -a -m more-update &&
 	but rev-parse --verify testbut/origin/heads/update >expect &&
-	GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE=t but push origin update &&
+	BUT_REMOTE_TESTBUT_NO_PRIVATE_UPDATE=t but push origin update &&
 	but rev-parse --verify testbut/origin/heads/update >actual &&
 	test_cmp expect actual
 	)
@@ -239,7 +239,7 @@ test_expect_success 'push update refs failure' '
 	echo "update fail" >>file &&
 	but cummit -a -m "update fail" &&
 	but rev-parse --verify testbut/origin/heads/update >expect &&
-	test_expect_code 1 env GIT_REMOTE_TESTGIT_FAILURE="non-fast forward" \
+	test_expect_code 1 env BUT_REMOTE_TESTBUT_FAILURE="non-fast forward" \
 		but push origin update &&
 	but rev-parse --verify testbut/origin/heads/update >actual &&
 	test_cmp expect actual
@@ -255,7 +255,7 @@ clean_mark () {
 
 test_expect_success 'proper failure checks for fetching' '
 	(cd local &&
-	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 but fetch 2>error &&
+	test_must_fail env BUT_REMOTE_TESTBUT_FAILURE=1 but fetch 2>error &&
 	test_i18ngrep -q "error while running fast-import" error
 	)
 '
@@ -266,7 +266,7 @@ test_expect_success 'proper failure checks for pushing' '
 	but checkout -b crash main &&
 	echo crash >>file &&
 	but cummit -a -m crash &&
-	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 but push --all &&
+	test_must_fail env BUT_REMOTE_TESTBUT_FAILURE=1 but push --all &&
 	clean_mark ".but/testbut/origin/but.marks" &&
 	clean_mark ".but/testbut/origin/testbut.marks" &&
 	test_cmp but.marks testbut.marks

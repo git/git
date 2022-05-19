@@ -6,7 +6,7 @@ test_description='but grep --open-files-in-pager
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pager.sh
-unset PAGER GIT_PAGER
+unset PAGER BUT_PAGER
 
 test_expect_success 'setup' '
 	test_cummit initial grep.h "
@@ -74,8 +74,8 @@ test_expect_success 'but grep -O --no-index' '
 	EOF
 
 	(
-		GIT_PAGER='\''printf "%s\n" >pager-args'\'' &&
-		export GIT_PAGER &&
+		BUT_PAGER='\''printf "%s\n" >pager-args'\'' &&
+		export BUT_PAGER &&
 		but grep --no-index -O GREP_PATTERN >out
 	) &&
 	test_cmp expect pager-args &&
@@ -96,7 +96,7 @@ test_expect_success 'but grep -O jumps to line in less' '
 	grep.h
 	EOF
 
-	GIT_PAGER=./less but grep -O GREP_PATTERN >out &&
+	BUT_PAGER=./less but grep -O GREP_PATTERN >out &&
 	test_cmp expect actual &&
 	test_must_be_empty out &&
 
@@ -117,7 +117,7 @@ test_expect_success 'modified file' '
 
 	test_when_finished "but reset --hard" &&
 	echo "enum grep_pat_token" >unrelated &&
-	GIT_PAGER=./less but grep -F -O "enum grep_pat_token" >out &&
+	BUT_PAGER=./less but grep -F -O "enum grep_pat_token" >out &&
 	test_cmp expect actual &&
 	test_must_be_empty out
 '
@@ -138,8 +138,8 @@ test_expect_success 'run from subdir' '
 
 	(
 		cd subdir &&
-		export GIT_PAGER &&
-		GIT_PAGER='\''printf "%s\n" >../args'\'' &&
+		export BUT_PAGER &&
+		BUT_PAGER='\''printf "%s\n" >../args'\'' &&
 		but grep -O "enum grep_pat_token" >../out &&
 		but grep -O"pwd >../dir; :" "enum grep_pat_token" >../out2
 	) &&

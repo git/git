@@ -514,7 +514,7 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 '
 
 # URL supplied to fetch does not match the url of the configured branch's remote
-test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [1]' '
+test_expect_success 'fetch from BUT URL with a non-applying branch.<name>.merge [1]' '
 	one_head=$(cd one && but rev-parse HEAD) &&
 	this_head=$(but rev-parse HEAD) &&
 	but update-ref -d FETCH_HEAD &&
@@ -525,7 +525,7 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 
 # URL supplied to fetch matches the url of the configured branch's remote and
 # the merge spec matches the branch the remote HEAD points to
-test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [2]' '
+test_expect_success 'fetch from BUT URL with a non-applying branch.<name>.merge [2]' '
 	one_ref=$(cd one && but symbolic-ref HEAD) &&
 	but config branch.main.remote blub &&
 	but config branch.main.merge "$one_ref" &&
@@ -537,7 +537,7 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 
 # URL supplied to fetch matches the url of the configured branch's remote, but
 # the merge spec does not match the branch the remote HEAD points to
-test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [3]' '
+test_expect_success 'fetch from BUT URL with a non-applying branch.<name>.merge [3]' '
 	but config branch.main.merge "${one_ref}_not" &&
 	but update-ref -d FETCH_HEAD &&
 	but fetch one &&
@@ -1099,7 +1099,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 		but config fetch.unpackLimit 1 &&
 		but config gc.autoPackLimit 1 &&
 		but config gc.autoDetach false &&
-		GIT_ASK_YESNO="$D/askyesno" but fetch --verbose >fetch.out 2>&1 &&
+		BUT_ASK_YESNO="$D/askyesno" but fetch --verbose >fetch.out 2>&1 &&
 		test_i18ngrep "Auto packing the repository" fetch.out &&
 		! grep "Should I try again" fetch.out
 	)
@@ -1199,7 +1199,7 @@ check_negotiation_tip () {
 
 test_expect_success '--negotiation-tip limits "have" lines sent' '
 	setup_negotiation_tip server server 0 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
 		--negotiation-tip=alpha_1 --negotiation-tip=beta_1 \
 		origin alpha_s beta_s &&
 	check_negotiation_tip
@@ -1207,7 +1207,7 @@ test_expect_success '--negotiation-tip limits "have" lines sent' '
 
 test_expect_success '--negotiation-tip understands globs' '
 	setup_negotiation_tip server server 0 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
 		--negotiation-tip=*_1 \
 		origin alpha_s beta_s &&
 	check_negotiation_tip
@@ -1215,7 +1215,7 @@ test_expect_success '--negotiation-tip understands globs' '
 
 test_expect_success '--negotiation-tip understands abbreviated SHA-1' '
 	setup_negotiation_tip server server 0 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
 		--negotiation-tip=$(but -C client rev-parse --short alpha_1) \
 		--negotiation-tip=$(but -C client rev-parse --short beta_1) \
 		origin alpha_s beta_s &&
@@ -1241,7 +1241,7 @@ start_httpd
 test_expect_success '--negotiation-tip limits "have" lines sent with HTTP protocol v2' '
 	setup_negotiation_tip "$HTTPD_DOCUMENT_ROOT_PATH/server" \
 		"$HTTPD_URL/smart/server" 1 &&
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client fetch \
 		--negotiation-tip=alpha_1 --negotiation-tip=beta_1 \
 		origin alpha_s beta_s &&
 	check_negotiation_tip

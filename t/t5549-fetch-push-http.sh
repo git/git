@@ -2,8 +2,8 @@
 
 test_description='fetch/push functionality using the HTTP protocol'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -35,7 +35,7 @@ setup_client_and_server () {
 test_expect_success 'push without negotiation (for comparing object counts with the next test)' '
 	setup_client_and_server &&
 
-	GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 \
+	BUT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 6 event # 2 cummits, 2 trees, 2 blobs
@@ -44,7 +44,7 @@ test_expect_success 'push without negotiation (for comparing object counts with 
 test_expect_success 'push with negotiation' '
 	setup_client_and_server &&
 
-	GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 -c push.negotiate=1 \
+	BUT_TRACE2_EVENT="$(pwd)/event" but -C client -c protocol.version=2 -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 3 event # 1 cummit, 1 tree, 1 blob
@@ -56,7 +56,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	# Use protocol v0 to make negotiation fail (because protocol v0 does
 	# not support the "wait-for-done" capability, which is required for
 	# push negotiation)
-	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" but -C client -c push.negotiate=1 \
+	BUT_TEST_PROTOCOL_VERSION=0 BUT_TRACE2_EVENT="$(pwd)/event" but -C client -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main 2>err &&
 	test_when_finished "rm -f event" &&
 	grep_wrote 6 event && # 2 cummits, 2 trees, 2 blobs

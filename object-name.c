@@ -23,7 +23,7 @@ typedef int (*disambiguate_hint_fn)(struct repository *, const struct object_id 
 
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
-	char hex_pfx[GIT_MAX_HEXSZ + 1];
+	char hex_pfx[BUT_MAX_HEXSZ + 1];
 	struct object_id bin_pfx;
 
 	struct repository *repo;
@@ -659,7 +659,7 @@ static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
 	while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
 		i++;
 
-	if (i < GIT_MAX_RAWSZ && i >= mad->cur_len)
+	if (i < BUT_MAX_RAWSZ && i >= mad->cur_len)
 		mad->cur_len = i + 1;
 
 	return 0;
@@ -819,7 +819,7 @@ const char *repo_find_unique_abbrev(struct repository *r,
 				    int len)
 {
 	static int bufno;
-	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
+	static char hexbuffer[4][BUT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
 	repo_find_unique_abbrev_r(r, hex, oid, len);

@@ -53,15 +53,15 @@ test_expect_success 'setup' '
 	test_cummit A A &&
 	test_cummit B B &&
 	get_author HEAD >expected-author &&
-	ORIG_AUTHOR_NAME="$GIT_AUTHOR_NAME" &&
-	ORIG_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" &&
-	GIT_AUTHOR_NAME="Amend Author" &&
-	GIT_AUTHOR_EMAIL="amend@example.com" &&
+	ORIG_AUTHOR_NAME="$BUT_AUTHOR_NAME" &&
+	ORIG_AUTHOR_EMAIL="$BUT_AUTHOR_EMAIL" &&
+	BUT_AUTHOR_NAME="Amend Author" &&
+	BUT_AUTHOR_EMAIL="amend@example.com" &&
 	test_cummit "$(cat message)" A A1 A1 &&
 	test_cummit A2 A &&
 	test_cummit A3 A &&
-	GIT_AUTHOR_NAME="$ORIG_AUTHOR_NAME" &&
-	GIT_AUTHOR_EMAIL="$ORIG_AUTHOR_EMAIL" &&
+	BUT_AUTHOR_NAME="$ORIG_AUTHOR_NAME" &&
+	BUT_AUTHOR_EMAIL="$ORIG_AUTHOR_EMAIL" &&
 	but checkout -b conflicts-branch A &&
 	test_cummit conflicts A &&
 
@@ -84,10 +84,10 @@ test_expect_success 'setup' '
 	FAKE_CUMMIT_AMEND="edited 3" but cummit -a --fixup=amend:HEAD^ &&
 	but tag B3 &&
 
-	GIT_AUTHOR_NAME="Rebase Author" &&
-	GIT_AUTHOR_EMAIL="rebase.author@example.com" &&
-	GIT_CUMMITTER_NAME="Rebase cummitter" &&
-	GIT_CUMMITTER_EMAIL="rebase.cummitter@example.com"
+	BUT_AUTHOR_NAME="Rebase Author" &&
+	BUT_AUTHOR_EMAIL="rebase.author@example.com" &&
+	BUT_CUMMITTER_NAME="Rebase cummitter" &&
+	BUT_CUMMITTER_EMAIL="rebase.cummitter@example.com"
 '
 
 test_expect_success 'simple fixup -C works' '

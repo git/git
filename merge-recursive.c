@@ -941,7 +941,7 @@ static int update_file_flags(struct merge_options *opt,
 		void *buf;
 		unsigned long size;
 
-		if (S_ISGITLINK(contents->mode)) {
+		if (S_ISBUTLINK(contents->mode)) {
 			/*
 			 * We may later decide to recursively descend into
 			 * the submodule directory and update its index
@@ -1007,7 +1007,7 @@ static int update_file_flags(struct merge_options *opt,
 update_index:
 	if (!ret && update_cache) {
 		int refresh = (!opt->priv->call_depth &&
-			       contents->mode != S_IFGITLINK);
+			       contents->mode != S_IFBUTLINK);
 		if (add_cacheinfo(opt, contents, path, 0, refresh,
 				  ADD_CACHE_OK_TO_ADD))
 			return -1;
@@ -1112,7 +1112,7 @@ static int find_first_merges(struct repository *repo,
 	struct cummit *cummit;
 	int contains_another;
 
-	char merged_revision[GIT_MAX_HEXSZ + 2];
+	char merged_revision[BUT_MAX_HEXSZ + 2];
 	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
 				   "--all", merged_revision, NULL };
 	struct rev_info revs;
@@ -1385,7 +1385,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 				return ret;
 			/* FIXME: bug, what if modes didn't match? */
 			result->clean = (merge_status == 0);
-		} else if (S_ISGITLINK(a->mode)) {
+		} else if (S_ISBUTLINK(a->mode)) {
 			result->clean = merge_submodule(opt, &result->blob.oid,
 							o->path,
 							&o->oid,
@@ -3109,7 +3109,7 @@ static int handle_content_merge(struct merge_file_info *mfi,
 
 	assert(o->path && a->path && b->path);
 	if (ci && dir_in_way(opt->repo->index, path, !opt->priv->call_depth,
-			     S_ISGITLINK(ci->ren1->pair->two->mode)))
+			     S_ISBUTLINK(ci->ren1->pair->two->mode)))
 		df_conflict_remains = 1;
 
 	if (merge_mode_and_contents(opt, o, a, b, path,
@@ -3149,7 +3149,7 @@ static int handle_content_merge(struct merge_file_info *mfi,
 	}
 
 	if (!mfi->clean) {
-		if (S_ISGITLINK(mfi->blob.mode))
+		if (S_ISBUTLINK(mfi->blob.mode))
 			reason = _("submodule");
 		output(opt, 1, _("CONFLICT (%s): Merge conflict in %s"),
 				reason, path);
@@ -3416,7 +3416,7 @@ static int process_entry(struct merge_options *opt,
 			conf = _("directory/file");
 		}
 		if (dir_in_way(opt->repo->index, path,
-			       !opt->priv->call_depth && !S_ISGITLINK(a->mode),
+			       !opt->priv->call_depth && !S_ISBUTLINK(a->mode),
 			       0)) {
 			char *new_path = unique_path(opt, path, add_branch);
 			clean_merge = 0;
@@ -3894,7 +3894,7 @@ void init_merge_options(struct merge_options *opt,
 	opt->renormalize = 0;
 
 	merge_recursive_config(opt);
-	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
+	merge_verbosity = getenv("BUT_MERGE_VERBOSITY");
 	if (merge_verbosity)
 		opt->verbosity = strtol(merge_verbosity, NULL, 10);
 	if (opt->verbosity >= 5)

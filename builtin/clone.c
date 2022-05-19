@@ -647,7 +647,7 @@ static int but_sparse_checkout_init(const char *repo)
 	 */
 	core_apply_sparse_checkout = 1;
 
-	if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+	if (run_command_v_opt(argv.v, RUN_BUT_CMD)) {
 		error(_("failed to initialize sparse-checkout"));
 		result = 1;
 	}
@@ -746,7 +746,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 					       "--single-branch" :
 					       "--no-single-branch");
 
-		err = run_command_v_opt(args.v, RUN_GIT_CMD);
+		err = run_command_v_opt(args.v, RUN_BUT_CMD);
 		strvec_clear(&args);
 	}
 
@@ -852,7 +852,7 @@ static void dissociate_from_references(void)
 	char *alternates = but_pathdup("objects/info/alternates");
 
 	if (!access(alternates, F_OK)) {
-		if (run_command_v_opt(argv, RUN_GIT_CMD|RUN_COMMAND_NO_STDIN))
+		if (run_command_v_opt(argv, RUN_BUT_CMD|RUN_COMMAND_NO_STDIN))
 			die(_("cannot repack to clean up"));
 		if (unlink(alternates) && errno != ENOENT)
 			die_errno(_("cannot unlink temporary alternates file"));
@@ -964,7 +964,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_bare)
 		work_tree = NULL;
 	else {
-		work_tree = getenv("GIT_WORK_TREE");
+		work_tree = getenv("BUT_WORK_TREE");
 		if (work_tree && path_exists(work_tree))
 			die(_("working tree '%s' already exists."), work_tree);
 	}
@@ -1052,7 +1052,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	init_db(but_dir, real_but_dir, option_template, GIT_HASH_UNKNOWN, NULL,
+	init_db(but_dir, real_but_dir, option_template, BUT_HASH_UNKNOWN, NULL,
 		INIT_DB_QUIET);
 
 	if (real_but_dir) {

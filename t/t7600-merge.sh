@@ -26,8 +26,8 @@ Testing basic merge operations/option parsing.
 +++++++* [c0] cummit 0
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
@@ -1021,8 +1021,8 @@ test_expect_success EXECKEEPSPID 'killed merge can be completed with --continue'
 	but reset --hard c0 &&
 	! "$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >>.but/FAKE_EDITOR
-	  GIT_EDITOR=.but/FAKE_EDITOR
-	  export GIT_EDITOR
+	  BUT_EDITOR=.but/FAKE_EDITOR
+	  export BUT_EDITOR
 	  exec but merge --no-ff --edit c1'\'' &&
 	but merge --continue &&
 	verify_parents $c0 $c1

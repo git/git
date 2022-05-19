@@ -83,17 +83,17 @@ if(NOT SH_EXE)
 			"On Windows, you can get it as part of 'Git for Windows' install at https://butforwindows.org/")
 endif()
 
-#Create GIT-VERSION-FILE using GIT-VERSION-GEN
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/GIT-VERSION-FILE)
-	message("Generating GIT-VERSION-FILE")
-	execute_process(COMMAND ${SH_EXE} ${CMAKE_SOURCE_DIR}/GIT-VERSION-GEN
+#Create BUT-VERSION-FILE using BUT-VERSION-GEN
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/BUT-VERSION-FILE)
+	message("Generating BUT-VERSION-FILE")
+	execute_process(COMMAND ${SH_EXE} ${CMAKE_SOURCE_DIR}/BUT-VERSION-GEN
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 
-#Parse GIT-VERSION-FILE to get the version
-file(STRINGS ${CMAKE_SOURCE_DIR}/GIT-VERSION-FILE but_version REGEX "GIT_VERSION = (.*)")
-string(REPLACE "GIT_VERSION = " "" but_version ${but_version})
-string(FIND ${but_version} "GIT" location)
+#Parse BUT-VERSION-FILE to get the version
+file(STRINGS ${CMAKE_SOURCE_DIR}/BUT-VERSION-FILE but_version REGEX "BUT_VERSION = (.*)")
+string(REPLACE "BUT_VERSION = " "" but_version ${but_version})
+string(FIND ${but_version} "BUT" location)
 if(location EQUAL -1)
 	string(REGEX MATCH "[0-9]*\\.[0-9]*\\.[0-9]*" but_version ${but_version})
 else()
@@ -213,7 +213,7 @@ endif()
 
 #default behaviour
 include_directories(${CMAKE_SOURCE_DIR})
-add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+add_compile_definitions(BUT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
 add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
@@ -223,29 +223,29 @@ list(APPEND compat_SOURCES sha1dc_but.c sha1dc/sha1.c sha1dc/ubc_check.c block-s
 
 
 add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
-			GIT_EXEC_PATH="libexec/but-core"
-			GIT_LOCALE_PATH="share/locale"
-			GIT_MAN_PATH="share/man"
-			GIT_INFO_PATH="share/info"
-			GIT_HTML_PATH="share/doc/but-doc"
+			BUT_EXEC_PATH="libexec/but-core"
+			BUT_LOCALE_PATH="share/locale"
+			BUT_MAN_PATH="share/man"
+			BUT_INFO_PATH="share/info"
+			BUT_HTML_PATH="share/doc/but-doc"
 			DEFAULT_HELP_FORMAT="html"
-			DEFAULT_GIT_TEMPLATE_DIR="share/but-core/templates"
-			GIT_VERSION="${PROJECT_VERSION}.GIT"
-			GIT_USER_AGENT="but/${PROJECT_VERSION}.GIT"
+			DEFAULT_BUT_TEMPLATE_DIR="share/but-core/templates"
+			BUT_VERSION="${PROJECT_VERSION}.BUT"
+			BUT_USER_AGENT="but/${PROJECT_VERSION}.BUT"
 			BINDIR="bin"
-			GIT_BUILT_FROM_CUMMIT="")
+			BUT_BUILT_FROM_CUMMIT="")
 
 if(WIN32)
 	set(FALLBACK_RUNTIME_PREFIX /mingw64)
 	# Move system config into top-level /etc/
 	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
-		ETC_GITATTRIBUTES="../etc/butattributes"
-		ETC_GITCONFIG="../etc/butconfig")
+		ETC_BUTATTRIBUTES="../etc/butattributes"
+		ETC_BUTCONFIG="../etc/butconfig")
 else()
 	set(FALLBACK_RUNTIME_PREFIX /home/$ENV{USER})
 	add_compile_definitions(FALLBACK_RUNTIME_PREFIX="${FALLBACK_RUNTIME_PREFIX}"
-		ETC_GITATTRIBUTES="etc/butattributes"
-		ETC_GITCONFIG="etc/butconfig")
+		ETC_BUTATTRIBUTES="etc/butattributes"
+		ETC_BUTCONFIG="etc/butconfig")
 endif()
 
 
@@ -675,14 +675,14 @@ if(WIN32)
 	if(NOT MSVC)#use windres when compiling with gcc and clang
 		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/but.res
 				COMMAND ${WINDRES_EXE} -O coff -DMAJOR=${PROJECT_VERSION_MAJOR} -DMINOR=${PROJECT_VERSION_MINOR}
-					-DMICRO=${PROJECT_VERSION_PATCH} -DPATCHLEVEL=0 -DGIT_VERSION="\\\"${PROJECT_VERSION}.GIT\\\""
+					-DMICRO=${PROJECT_VERSION_PATCH} -DPATCHLEVEL=0 -DBUT_VERSION="\\\"${PROJECT_VERSION}.BUT\\\""
 					-i ${CMAKE_SOURCE_DIR}/but.rc -o ${CMAKE_BINARY_DIR}/but.res
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 				VERBATIM)
 	else()#MSVC use rc
 		add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/but.res
 				COMMAND ${CMAKE_RC_COMPILER} /d MAJOR=${PROJECT_VERSION_MAJOR} /d MINOR=${PROJECT_VERSION_MINOR}
-					/d MICRO=${PROJECT_VERSION_PATCH} /d PATCHLEVEL=0 /d GIT_VERSION="${PROJECT_VERSION}.GIT"
+					/d MICRO=${PROJECT_VERSION_PATCH} /d PATCHLEVEL=0 /d BUT_VERSION="${PROJECT_VERSION}.BUT"
 					/fo ${CMAKE_BINARY_DIR}/but.res ${CMAKE_SOURCE_DIR}/but.rc
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 				VERBATIM)
@@ -786,7 +786,7 @@ add_custom_target(but-links ALL DEPENDS ${but_links} ${but_http_links})
 set(SHELL_PATH /bin/sh)
 set(PERL_PATH /usr/bin/perl)
 set(LOCALEDIR ${FALLBACK_RUNTIME_PREFIX}/share/locale)
-set(GITWEBDIR ${FALLBACK_RUNTIME_PREFIX}/share/locale)
+set(BUTWEBDIR ${FALLBACK_RUNTIME_PREFIX}/share/locale)
 set(INSTLIBDIR ${FALLBACK_RUNTIME_PREFIX}/share/perl5)
 
 #shell scripts
@@ -800,7 +800,7 @@ foreach(script ${but_shell_scripts})
 	string(REPLACE "@SHELL_PATH@" "${SHELL_PATH}" content "${content}")
 	string(REPLACE "@@DIFF@@" "diff" content "${content}")
 	string(REPLACE "@LOCALEDIR@" "${LOCALEDIR}" content "${content}")
-	string(REPLACE "@GITWEBDIR@" "${GITWEBDIR}" content "${content}")
+	string(REPLACE "@BUTWEBDIR@" "${BUTWEBDIR}" content "${content}")
 	string(REPLACE "@@NO_CURL@@" "" content "${content}")
 	string(REPLACE "@@USE_GETTEXT_SCHEME@@" "" content "${content}")
 	string(REPLACE "# @@BROKEN_PATH_FIX@@" "" content "${content}")
@@ -820,7 +820,7 @@ string(REPLACE "@@INSTLIBDIR@@" "${INSTLIBDIR}" perl_header "${perl_header}")
 foreach(script ${but_perl_scripts})
 	file(STRINGS ${CMAKE_SOURCE_DIR}/${script}.perl content NEWLINE_CONSUME)
 	string(REPLACE "#!/usr/bin/perl" "#!/usr/bin/perl\n${perl_header}\n" content "${content}")
-	string(REPLACE "@@GIT_VERSION@@" "${PROJECT_VERSION}" content "${content}")
+	string(REPLACE "@@BUT_VERSION@@" "${PROJECT_VERSION}" content "${content}")
 	file(WRITE ${CMAKE_BINARY_DIR}/${script} ${content})
 endforeach()
 
@@ -984,7 +984,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/bin-wrappers/but-cvsserver ${content})
 option(PERL_TESTS "Perform tests that use perl" ON)
 option(PYTHON_TESTS "Perform tests that use python" ON)
 
-#GIT-BUILD-OPTIONS
+#BUT-BUILD-OPTIONS
 set(TEST_SHELL_PATH ${SHELL_PATH})
 set(DIFF diff)
 set(PYTHON_PATH /usr/bin/python)
@@ -1020,26 +1020,26 @@ if(NOT PYTHON_TESTS)
 	set(NO_PYTHON 1)
 endif()
 
-file(WRITE ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "SHELL_PATH='${SHELL_PATH}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "TEST_SHELL_PATH='${TEST_SHELL_PATH}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PERL_PATH='${PERL_PATH}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "DIFF='${DIFF}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PYTHON_PATH='${PYTHON_PATH}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "TAR='${TAR}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_CURL='${NO_CURL}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_EXPAT='${NO_EXPAT}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PERL='${NO_PERL}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PTHREADS='${NO_PTHREADS}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_UNIX_SOCKETS='${NO_UNIX_SOCKETS}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PAGER_ENV='${PAGER_ENV}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "DC_SHA1='${DC_SHA1}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "X='${EXE_EXTENSION}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_GETTEXT='${NO_GETTEXT}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "RUNTIME_PREFIX='${RUNTIME_PREFIX}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PYTHON='${NO_PYTHON}'\n")
-file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "SUPPORTS_SIMPLE_IPC='${SUPPORTS_SIMPLE_IPC}'\n")
+file(WRITE ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "SHELL_PATH='${SHELL_PATH}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "TEST_SHELL_PATH='${TEST_SHELL_PATH}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "PERL_PATH='${PERL_PATH}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "DIFF='${DIFF}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "PYTHON_PATH='${PYTHON_PATH}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "TAR='${TAR}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_CURL='${NO_CURL}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_EXPAT='${NO_EXPAT}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_PERL='${NO_PERL}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_PTHREADS='${NO_PTHREADS}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_UNIX_SOCKETS='${NO_UNIX_SOCKETS}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "PAGER_ENV='${PAGER_ENV}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "DC_SHA1='${DC_SHA1}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "X='${EXE_EXTENSION}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_GETTEXT='${NO_GETTEXT}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "RUNTIME_PREFIX='${RUNTIME_PREFIX}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "NO_PYTHON='${NO_PYTHON}'\n")
+file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "SUPPORTS_SIMPLE_IPC='${SUPPORTS_SIMPLE_IPC}'\n")
 if(USE_VCPKG)
-	file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+	file(APPEND ${CMAKE_BINARY_DIR}/BUT-BUILD-OPTIONS "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
 endif()
 
 #Make the tests work when building out of the source tree
@@ -1049,9 +1049,9 @@ if(NOT ${CMAKE_BINARY_DIR}/CMakeCache.txt STREQUAL ${CACHE_PATH})
 	string(REPLACE "/CMakeCache.txt" "" BUILD_DIR_RELATIVE ${BUILD_DIR_RELATIVE})
 	#Setting the build directory in test-lib.sh before running tests
 	file(WRITE ${CMAKE_BINARY_DIR}/CTestCustom.cmake
-		"file(STRINGS ${CMAKE_SOURCE_DIR}/t/test-lib.sh GIT_BUILD_DIR_REPL REGEX \"GIT_BUILD_DIR=(.*)\")\n"
+		"file(STRINGS ${CMAKE_SOURCE_DIR}/t/test-lib.sh BUT_BUILD_DIR_REPL REGEX \"BUT_BUILD_DIR=(.*)\")\n"
 		"file(STRINGS ${CMAKE_SOURCE_DIR}/t/test-lib.sh content NEWLINE_CONSUME)\n"
-		"string(REPLACE \"\${GIT_BUILD_DIR_REPL}\" \"GIT_BUILD_DIR=\\\"$TEST_DIRECTORY/../${BUILD_DIR_RELATIVE}\\\"\" content \"\${content}\")\n"
+		"string(REPLACE \"\${BUT_BUILD_DIR_REPL}\" \"BUT_BUILD_DIR=\\\"$TEST_DIRECTORY/../${BUILD_DIR_RELATIVE}\\\"\" content \"\${content}\")\n"
 		"file(WRITE ${CMAKE_SOURCE_DIR}/t/test-lib.sh \${content})")
 	#misc copies
 	file(COPY ${CMAKE_SOURCE_DIR}/t/chainlint.sed DESTINATION ${CMAKE_BINARY_DIR}/t/)

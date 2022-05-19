@@ -12,7 +12,7 @@ protocol.allow::
 
 * `never` - protocol is never able to be used.
 
-* `user` - protocol is only able to be used when `GIT_PROTOCOL_FROM_USER` is
+* `user` - protocol is only able to be used when `BUT_PROTOCOL_FROM_USER` is
   either unset or has a value of 1.  This policy should be used when you want a
   protocol to be directly usable by the user but don't want it used by commands which
   execute clone/fetch/push commands without user input, e.g. recursive

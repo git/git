@@ -362,7 +362,7 @@ static struct fsmonitor_token_data *fsmonitor_new_token_data(void)
 	token->client_ref_count = 0;
 
 	if (test_env_value < 0)
-		test_env_value = but_env_bool("GIT_TEST_FSMONITOR_TOKEN", 0);
+		test_env_value = but_env_bool("BUT_TEST_FSMONITOR_TOKEN", 0);
 
 	if (!test_env_value) {
 		struct timeval tv;
@@ -987,16 +987,16 @@ enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	rel += 4;
 
 	if (!*rel)
-		return IS_DOT_GIT;
+		return IS_DOT_BUT;
 	if (*rel != '/')
 		return IS_WORKDIR_PATH; /* e.g. .butignore */
 	rel++;
 
 	if (!fspathncmp(rel, FSMONITOR_COOKIE_PREFIX,
 			strlen(FSMONITOR_COOKIE_PREFIX)))
-		return IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX;
+		return IS_INSIDE_DOT_BUT_WITH_COOKIE_PREFIX;
 
-	return IS_INSIDE_DOT_GIT;
+	return IS_INSIDE_DOT_BUT;
 }
 
 enum fsmonitor_path_type fsmonitor_classify_path_butdir_relative(
@@ -1004,9 +1004,9 @@ enum fsmonitor_path_type fsmonitor_classify_path_butdir_relative(
 {
 	if (!fspathncmp(rel, FSMONITOR_COOKIE_PREFIX,
 			strlen(FSMONITOR_COOKIE_PREFIX)))
-		return IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX;
+		return IS_INSIDE_BUTDIR_WITH_COOKIE_PREFIX;
 
-	return IS_INSIDE_GITDIR;
+	return IS_INSIDE_BUTDIR;
 }
 
 static enum fsmonitor_path_type try_classify_workdir_abs_path(
@@ -1050,7 +1050,7 @@ enum fsmonitor_path_type fsmonitor_classify_path_absolute(
 	rel = path + state->path_butdir_watch.len;
 
 	if (!*rel)
-		return IS_GITDIR; /* it is the <butdir> exactly */
+		return IS_BUTDIR; /* it is the <butdir> exactly */
 	if (*rel != '/')
 		return IS_OUTSIDE_CONE;
 	rel++;
@@ -1334,7 +1334,7 @@ static int try_to_run_foreground_daemon(int detach_console)
 		fflush(stderr);
 	}
 
-#ifdef GIT_WINDOWS_NATIVE
+#ifdef BUT_WINDOWS_NATIVE
 	if (detach_console)
 		FreeConsole();
 #endif

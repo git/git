@@ -2,8 +2,8 @@
 
 test_description='but am running'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -125,8 +125,8 @@ test_expect_success setup '
 	{
 		sed -ne "1p" msg &&
 		echo &&
-		echo "From: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
-		echo "Date: $GIT_AUTHOR_DATE" &&
+		echo "From: $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>" &&
+		echo "Date: $BUT_AUTHOR_DATE" &&
 		echo &&
 		sed -e "1,2d" msg &&
 		echo "---" &&
@@ -135,12 +135,12 @@ test_expect_success setup '
 	mkdir stbut-series &&
 	cp patch1-stbut.eml stbut-series/patch &&
 	{
-		echo "# This series applies on GIT cummit $(but rev-parse first)" &&
+		echo "# This series applies on BUT cummit $(but rev-parse first)" &&
 		echo "patch"
 	} >stbut-series/series &&
 	{
 		echo "# HG changeset patch" &&
-		echo "# User $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
+		echo "# User $BUT_AUTHOR_NAME <$BUT_AUTHOR_EMAIL>" &&
 		echo "# Date $test_tick 25200" &&
 		echo "#      $(but show --pretty="%aD" -s second)" &&
 		echo "# Node ID $ZERO_OID" &&
@@ -430,11 +430,11 @@ test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
 '
 
 test_expect_success 'setup: new author and cummitter' '
-	GIT_AUTHOR_NAME="Another Thor" &&
-	GIT_AUTHOR_EMAIL="a.thor@example.com" &&
-	GIT_CUMMITTER_NAME="Co M Miter" &&
-	GIT_CUMMITTER_EMAIL="c.miter@example.com" &&
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_CUMMITTER_NAME GIT_CUMMITTER_EMAIL
+	BUT_AUTHOR_NAME="Another Thor" &&
+	BUT_AUTHOR_EMAIL="a.thor@example.com" &&
+	BUT_CUMMITTER_NAME="Co M Miter" &&
+	BUT_CUMMITTER_EMAIL="c.miter@example.com" &&
+	export BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL BUT_CUMMITTER_NAME BUT_CUMMITTER_EMAIL
 '
 
 compare () {
@@ -455,7 +455,7 @@ test_expect_success 'am changes cummitter and keeps author' '
 	but diff --exit-code main^..HEAD^ &&
 	compare author main HEAD &&
 	compare author main^ HEAD^ &&
-	test "$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" = \
+	test "$BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>" = \
 	     "$(but log -1 --pretty=format:"%cn <%ce>" HEAD)"
 '
 
@@ -466,10 +466,10 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 	but am --signoff <patch2 &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" &&
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL"
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL"
 	} >expected-log &&
 	but log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -494,15 +494,15 @@ test_expect_success 'am --signoff adds Signed-off-by: if another author is prese
 	EMAIL="a.n.other@example.com" &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL"
 	} >expected-log &&
 	but reset --hard first &&
-	GIT_CUMMITTER_NAME="$NAME" GIT_CUMMITTER_EMAIL="$EMAIL" \
+	BUT_CUMMITTER_NAME="$NAME" BUT_CUMMITTER_EMAIL="$EMAIL" \
 		but am --signoff <patch3 &&
 	but log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -514,15 +514,15 @@ test_expect_success 'am --signoff duplicates Signed-off-by: if it is not the las
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" &&
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\n\n" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL" \
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_CUMMITTER_NAME" "$GIT_CUMMITTER_EMAIL"
+			"$BUT_CUMMITTER_NAME" "$BUT_CUMMITTER_EMAIL"
 	} >expected-log &&
 	but format-patch --stdout first >patch3 &&
 	but reset --hard first &&
@@ -981,7 +981,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	cat >msg <<-EOF &&
 	subject here
 
-	Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+	Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	[jc: tweaked log message]
 	Signed-off-by: J C H <j@c.h>
 	EOF
@@ -993,7 +993,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	but am -s patch &&
 	(
 		cat original &&
-		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+		echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 	) >expect &&
 	but cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual &&
@@ -1015,7 +1015,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	(
 		cat original &&
 		echo &&
-		echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+		echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 	) >expect &&
 	but cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual

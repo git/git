@@ -682,7 +682,7 @@ static int s_update_ref(const char *action,
 			int check_old)
 {
 	char *msg;
-	char *rla = getenv("GIT_REFLOG_ACTION");
+	char *rla = getenv("BUT_REFLOG_ACTION");
 	struct ref_transaction *our_transaction = NULL;
 	struct strbuf err = STRBUF_INIT;
 	int ret;
@@ -1042,7 +1042,7 @@ static void append_fetch_head(struct fetch_head *fetch_head,
 			      const char *note,
 			      const char *url, size_t url_len)
 {
-	char old_oid_hex[GIT_MAX_HEXSZ + 1];
+	char old_oid_hex[BUT_MAX_HEXSZ + 1];
 	const char *merge_status_marker;
 	size_t i;
 
@@ -1965,7 +1965,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			strvec_push(&argv, name);
 			if (verbosity >= 0)
 				printf(_("Fetching %s\n"), name);
-			if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
+			if (run_command_v_opt(argv.v, RUN_BUT_CMD)) {
 				error(_("could not fetch %s"), name);
 				result = 1;
 			}

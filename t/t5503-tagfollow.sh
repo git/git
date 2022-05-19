@@ -2,8 +2,8 @@
 
 test_description='test automatic tag following'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -59,7 +59,7 @@ test_expect_success 'fetch A (new cummit : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH but fetch &&
+		BUT_TRACE_PACKET=$UPATH but fetch &&
 		test $A = $(but rev-parse --verify origin/main)
 	) &&
 	get_needs $U >actual &&
@@ -89,7 +89,7 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH but fetch &&
+		BUT_TRACE_PACKET=$UPATH but fetch &&
 		test $C = $(but rev-parse --verify origin/cat) &&
 		test $T = $(but rev-parse --verify tag1) &&
 		test $A = $(but rev-parse --verify tag1^0)
@@ -125,7 +125,7 @@ test_expect_success 'fetch B, S (cummit and tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
-		GIT_TRACE_PACKET=$UPATH but fetch &&
+		BUT_TRACE_PACKET=$UPATH but fetch &&
 		test $B = $(but rev-parse --verify origin/main) &&
 		test $B = $(but rev-parse --verify tag2^0) &&
 		test $S = $(but rev-parse --verify tag2)
@@ -149,7 +149,7 @@ test_expect_success 'new clone fetch main and tags' '
 		cd clone2 &&
 		but init &&
 		but remote add origin .. &&
-		GIT_TRACE_PACKET=$UPATH but fetch &&
+		BUT_TRACE_PACKET=$UPATH but fetch &&
 		test $B = $(but rev-parse --verify origin/main) &&
 		test $S = $(but rev-parse --verify tag2) &&
 		test $B = $(but rev-parse --verify tag2^0) &&

@@ -9,7 +9,7 @@ include ../shared.mak
 -include ../config.mak.autogen
 -include ../config.mak
 
-#GIT_TEST_OPTS = --verbose --debug
+#BUT_TEST_OPTS = --verbose --debug
 SHELL_PATH ?= $(SHELL)
 TEST_SHELL_PATH ?= $(SHELL_PATH)
 PERL_PATH ?= /usr/bin/perl
@@ -35,7 +35,7 @@ TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
 CHAINLINTTMP_SQ = $(subst ','\'',$(CHAINLINTTMP))
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
-TGITWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
+TBUTWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
 TPERF = $(sort $(wildcard perf/p[0-9][0-9][0-9][0-9]-*.sh))
 CHAINLINTTESTS = $(sort $(patsubst chainlint/%.test,%,$(wildcard chainlint/*.test)))
@@ -53,11 +53,11 @@ failed:
 	test -z "$$failed" || $(MAKE) $$failed
 
 prove: pre-clean check-chainlint $(TEST_LINT)
-	@echo "*** prove ***"; $(PROVE) --exec '$(TEST_SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
+	@echo "*** prove ***"; $(PROVE) --exec '$(TEST_SHELL_PATH_SQ)' $(BUT_PROVE_OPTS) $(T) :: $(BUT_TEST_OPTS)
 	$(MAKE) clean-except-prove-cache
 
 $(T):
-	@echo "*** $@ ***"; '$(TEST_SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
+	@echo "*** $@ ***"; '$(TEST_SHELL_PATH_SQ)' $@ $(BUT_TEST_OPTS)
 
 pre-clean:
 	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
@@ -113,10 +113,10 @@ aggregate-results:
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
 butweb-test:
-	$(MAKE) $(TGITWEB)
+	$(MAKE) $(TBUTWEB)
 
 valgrind:
-	$(MAKE) GIT_TEST_OPTS="$(GIT_TEST_OPTS) --valgrind"
+	$(MAKE) BUT_TEST_OPTS="$(BUT_TEST_OPTS) --valgrind"
 
 perf:
 	$(MAKE) -C perf/ all

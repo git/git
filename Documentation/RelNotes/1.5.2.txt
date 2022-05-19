@@ -1,4 +1,4 @@
-GIT v1.5.2 Release Notes
+BUT v1.5.2 Release Notes
 ========================
 
 Updates since v1.5.1
@@ -80,7 +80,7 @@ Updates since v1.5.1
 
 * Updated behavior of existing commands.
 
-  - When $GIT_CUMMITTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
+  - When $BUT_CUMMITTER_EMAIL or $BUT_AUTHOR_EMAIL is not set
     but $EMAIL is set, the latter is used as a substitute.
 
   - "but diff --stat" shows size of preimage and postimage blobs
@@ -126,7 +126,7 @@ Updates since v1.5.1
 
   - "but cherry-pick" and "but revert" does not use .msg file in
     the working tree to prepare cummit message; instead it uses
-    $GIT_DIR/MERGE_MSG as other commands do.
+    $BUT_DIR/MERGE_MSG as other commands do.
 
 * Builds
 
@@ -136,7 +136,7 @@ Updates since v1.5.1
   - butk and but-gui can be configured out.
 
   - Generated documentation pages automatically get version
-    information from GIT_VERSION.
+    information from BUT_VERSION.
 
   - Parallel build with "make -j" descending into subdirectory
     was fixed.

@@ -1307,7 +1307,7 @@ Then, make that directory into a Git repository by running
 `.but`, we do things slightly differently:
 
 ------------
-$ GIT_DIR=my-but.but but init
+$ BUT_DIR=my-but.but but init
 ------------
 
 Make sure this directory is available for others you want your
@@ -1445,7 +1445,7 @@ A recommended workflow for a "project lead" goes like this:
 If other people are pulling from your repository over dumb
 transport protocols (HTTP), you need to keep this repository
 'dumb transport friendly'.  After `but init`,
-`$GIT_DIR/hooks/post-update.sample` copied from the standard templates
+`$BUT_DIR/hooks/post-update.sample` copied from the standard templates
 would contain a call to 'but update-server-info'
 but you need to manually enable the hook with
 `mv post-update.sample post-update`.  This makes sure
@@ -1655,6 +1655,6 @@ linkbut:but-help[1],
 linkbut:buteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -416,10 +416,10 @@ Fixes since v2.18
    which has been corrected.
    (merge 55f39cf755 en/dirty-merge-fixes later to maint).
 
- * "but rebase" started exporting GIT_DIR environment variable and
+ * "but rebase" started exporting BUT_DIR environment variable and
    exposing it to hook scripts when part of it got rewritten in C.
    Instead of matching the old scripted Porcelains' behaviour,
-   compensate by also exporting GIT_WORK_TREE environment as well to
+   compensate by also exporting BUT_WORK_TREE environment as well to
    lessen the damage.  This can harm existing hooks that want to
    operate on different repository, but the current behaviour is
    already broken for them anyway.
@@ -514,7 +514,7 @@ Fixes since v2.18
    (merge d651a54b8a ng/mergetool-lose-final-prompt later to maint).
 
  * Among the three codepaths we use O_APPEND to open a file for
-   appending, one used for writing GIT_TRACE output requires O_APPEND
+   appending, one used for writing BUT_TRACE output requires O_APPEND
    implementation that behaves sensibly when multiple processes are
    writing to the same file.  POSIX emulation used in the Windows port
    has been updated to improve in this area.

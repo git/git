@@ -19,7 +19,7 @@ OneWordBodyThatsNotA-S-o-B"
 
 mesg_with_footer="$mesg_no_footer
 
-Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 Signed-off-by: A.U. Thor <author@example.com>
 Signed-off-by: B.U. Thor <buthor@example.com>"
 
@@ -29,7 +29,7 @@ This is not recognized as a footer because Myfooter is not a recognized token.
 Myfooter: A.U. Thor <author@example.com>"
 
 mesg_with_footer_sob="$mesg_with_footer
-Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>"
+Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>"
 
 mesg_with_cherry_footer="$mesg_with_footer_sob
 (cherry picked from cummit da39a3ee5e6b4b0d3255bfef95601890afd80709)
@@ -93,7 +93,7 @@ test_expect_success 'cherry-pick -s inserts blank line after one line subject' '
 	cat <<-EOF >expect &&
 		$mesg_one_line
 
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -105,7 +105,7 @@ test_expect_success 'cherry-pick -s inserts blank line after non-conforming foot
 	cat <<-EOF >expect &&
 		$mesg_broken_footer
 
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -116,7 +116,7 @@ test_expect_success 'cherry-pick -s recognizes trailer config' '
 	but -c "trailer.Myfooter.ifexists=add" cherry-pick -s mesg-broken-footer &&
 	cat <<-EOF >expect &&
 		$mesg_broken_footer
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -141,7 +141,7 @@ test_expect_success 'cherry-pick -s inserts blank line when conforming footer no
 	cat <<-EOF >expect &&
 		$mesg_no_footer
 
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -155,7 +155,7 @@ test_expect_success 'cherry-pick -x -s inserts blank line when conforming footer
 		$mesg_no_footer
 
 		(cherry picked from cummit $sha1)
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -166,7 +166,7 @@ test_expect_success 'cherry-pick -s adds sob when last sob doesnt match cummitte
 	but cherry-pick -s mesg-with-footer &&
 	cat <<-EOF >expect &&
 		$mesg_with_footer
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -179,7 +179,7 @@ test_expect_success 'cherry-pick -x -s adds sob when last sob doesnt match cummi
 	cat <<-EOF >expect &&
 		$mesg_with_footer
 		(cherry picked from cummit $sha1)
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -202,7 +202,7 @@ test_expect_success 'cherry-pick -x -s adds sob even when trailing sob exists fo
 	cat <<-EOF >expect &&
 		$mesg_with_footer_sob
 		(cherry picked from cummit $sha1)
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -237,7 +237,7 @@ test_expect_success 'cherry-pick -s handles cummits with no NL at end of message
 	but cherry-pick -s $sha1 &&
 	but log -1 --pretty=format:%B >actual &&
 
-	printf "\nSigned-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>\n" >>msg &&
+	printf "\nSigned-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>\n" >>msg &&
 	test_cmp msg actual
 '
 
@@ -248,7 +248,7 @@ test_expect_success 'cherry-pick -s handles cummits with no footer and no NL at 
 	but cherry-pick -s $sha1 &&
 	but log -1 --pretty=format:%B >actual &&
 
-	printf "\n\nSigned-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>\n" >>msg &&
+	printf "\n\nSigned-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>\n" >>msg &&
 	test_cmp msg actual
 '
 
@@ -269,7 +269,7 @@ test_expect_success 'cherry-pick -s treats "(cherry picked from..." line as part
 	but cherry-pick -s mesg-with-cherry-footer &&
 	cat <<-EOF >expect &&
 		$mesg_with_cherry_footer
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
@@ -282,7 +282,7 @@ test_expect_success 'cherry-pick -x -s treats "(cherry picked from..." line as p
 	cat <<-EOF >expect &&
 		$mesg_with_cherry_footer
 		(cherry picked from cummit $sha1)
-		Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+		Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 	EOF
 	but log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual

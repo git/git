@@ -1,4 +1,4 @@
-GIT v1.6.0.2 Release Notes
+BUT v1.6.0.2 Release Notes
 ==========================
 
 Fixes since v1.6.0.1
@@ -15,7 +15,7 @@ Fixes since v1.6.0.1
   form if you have "PATH=$(but --exec-path):$PATH" in your script)
 
 * Many commands did not use the correct working tree location when used
-  with GIT_WORK_TREE environment settings.
+  with BUT_WORK_TREE environment settings.
 
 * Some systems need to use compatibility fnmatch and regex libraries
   independent from each other; the compat/ area has been reorganized to

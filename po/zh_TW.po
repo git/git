@@ -2414,7 +2414,7 @@ msgstr "%s %s 不是一個提交！"
 
 #: cummit.c:197
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2423,7 +2423,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"對 <GIT_DIR>/info/grafts 的支援已被棄用，並將在\n"
+"對 <BUT_DIR>/info/grafts 的支援已被棄用，並將在\n"
 "未來的Git版本中被移除。\n"
 "\n"
 "請使用 \"but replace --convert-graft-file\" 將\n"
@@ -6498,10 +6498,10 @@ msgstr ""
 #: read-cache.c:1761
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"設定了 GIT_INDEX_VERSION，但是取值無效。\n"
+"設定了 BUT_INDEX_VERSION，但是取值無效。\n"
 "使用版本 %i"
 
 #: read-cache.c:1817
@@ -7759,16 +7759,16 @@ msgid "could not open '%s' for reading"
 msgstr "無法開啟 '%s' 進行讀取"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "已經給出 'GIT_AUTHOR_NAME'"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "已經給出 'BUT_AUTHOR_NAME'"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "已經給出 'GIT_AUTHOR_EMAIL'"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "已經給出 'BUT_AUTHOR_EMAIL'"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "已經給出 'GIT_AUTHOR_DATE'"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "已經給出 'BUT_AUTHOR_DATE'"
 
 #: sequencer.c:865
 #, c-format
@@ -7776,16 +7776,16 @@ msgid "unknown variable '%s'"
 msgstr "未知變數 '%s'"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "缺少 'GIT_AUTHOR_NAME'"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "缺少 'BUT_AUTHOR_NAME'"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "缺少 'GIT_AUTHOR_EMAIL'"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "缺少 'BUT_AUTHOR_EMAIL'"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "缺少 'GIT_AUTHOR_DATE'"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "缺少 'BUT_AUTHOR_DATE'"
 
 #: sequencer.c:939
 #, c-format
@@ -8687,10 +8687,10 @@ msgstr "不是一個 but 版本庫（或者任何父目錄）：%s"
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "不是一個 but 版本庫（或者直至掛載點 %s 的任何父目錄）\n"
-"停止在檔案系統邊界（未設定 GIT_DISCOVERY_ACROSS_FILESYSTEM）。"
+"停止在檔案系統邊界（未設定 BUT_DISCOVERY_ACROSS_FILESYSTEM）。"
 
 #: setup.c:1374
 #, c-format
@@ -10622,8 +10622,8 @@ msgid "could not parse patch '%s'"
 msgstr "無法解析修補檔 '%s'"
 
 #: builtin/am.c:842
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "一次只能有一個 StGIT 修補檔佇列被套用"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "一次只能有一個 StBUT 修補檔佇列被套用"
 
 #: builtin/am.c:890
 msgid "invalid timestamp"
@@ -26082,13 +26082,13 @@ msgstr "為寫入開啟 %s 失敗: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"以 \"GIT:\" 開頭的行將被刪除。\n"
+"以 \"BUT:\" 開頭的行將被刪除。\n"
 "考慮包含一個整體的差異統計或者您正在寫的修補檔的目錄。\n"
 "\n"
 "如果您不想傳送摘要，清除內容。\n"
@@ -26950,8 +26950,8 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ "Disable or modify the sparsity rules if you intend to update such entries."
 #~ msgstr "若有意更新這些項目，請停用或修改稀疏規則。"
 
-#~ msgid "could not set GIT_DIR to '%s'"
-#~ msgstr "不能設定 GIT_DIR 為 '%s'"
+#~ msgid "could not set BUT_DIR to '%s'"
+#~ msgstr "不能設定 BUT_DIR 為 '%s'"
 
 #~ msgid "unable to unpack %s header with --allow-unknown-type"
 #~ msgstr "無法用 --allow-unknown-type 參數解開 %s 標頭訊息"

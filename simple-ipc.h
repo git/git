@@ -1,5 +1,5 @@
-#ifndef GIT_SIMPLE_IPC_H
-#define GIT_SIMPLE_IPC_H
+#ifndef BUT_SIMPLE_IPC_H
+#define BUT_SIMPLE_IPC_H
 
 /*
  * See Documentation/technical/api-simple-ipc.txt
@@ -231,4 +231,4 @@ int ipc_server_run(const char *path, const struct ipc_server_opts *opts,
 		   void *application_data);
 
 #endif /* SUPPORTS_SIMPLE_IPC */
-#endif /* GIT_SIMPLE_IPC_H */
+#endif /* BUT_SIMPLE_IPC_H */

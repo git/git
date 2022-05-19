@@ -5,4 +5,4 @@ pager.<cmd>::
 	pager specified by the value of `pager.<cmd>`.  If `--paginate`
 	or `--no-pager` is specified on the command line, it takes
 	precedence over this option.  To disable pagination for all
-	commands, set `core.pager` or `GIT_PAGER` to `cat`.
+	commands, set `core.pager` or `BUT_PAGER` to `cat`.

@@ -6,14 +6,14 @@ test_description='exercise basic multi-pack bitmap functionality'
 
 # We'll be writing our own midx and bitmaps, so avoid getting confused by the
 # automatic ones.
-GIT_TEST_MULTI_PACK_INDEX=0
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+BUT_TEST_MULTI_PACK_INDEX=0
+BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 
 # This test exercise multi-pack bitmap functionality where the object order is
 # stored and read from a special chunk within the MIDX, so use the default
 # behavior here.
-sane_unset GIT_TEST_MIDX_WRITE_REV
-sane_unset GIT_TEST_MIDX_READ_RIDX
+sane_unset BUT_TEST_MIDX_WRITE_REV
+sane_unset BUT_TEST_MIDX_READ_RIDX
 
 midx_bitmap_core
 
@@ -301,7 +301,7 @@ test_expect_success 'graceful fallback when missing reverse index' '
 		but repack -adb &&
 		but multi-pack-index write --bitmap &&
 
-		GIT_TEST_MIDX_READ_RIDX=0 \
+		BUT_TEST_MIDX_READ_RIDX=0 \
 			but rev-list --use-bitmap-index HEAD 2>err &&
 		! grep "ignoring extra bitmap file" err
 	)

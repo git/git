@@ -615,7 +615,7 @@ static struct branch *new_branch(const char *name)
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
 	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL))
-		die("Branch name doesn't conform to GIT standards: %s", name);
+		die("Branch name doesn't conform to BUT standards: %s", name);
 
 	b = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct branch));
 	b->name = mem_pool_strdup(&fi_mem_pool, name);
@@ -1768,7 +1768,7 @@ static void read_mark_file(struct mark_set **s, FILE *f, mark_set_inserter_t ins
 		mark = strtoumax(line + 1, &end, 10);
 		if (!mark || end == line + 1
 			|| *end != ' '
-			|| get_oid_hex_any(end + 1, &oid) == GIT_HASH_UNKNOWN)
+			|| get_oid_hex_any(end + 1, &oid) == BUT_HASH_UNKNOWN)
 			die("corrupt mark line: %s", line);
 		inserter(s, &oid, mark);
 	}
@@ -2101,7 +2101,7 @@ static uintmax_t do_change_note_fanout(
 	uintmax_t num_notes = 0;
 	struct object_id oid;
 	/* hex oid + '/' between each pair of hex dibuts + NUL */
-	char realpath[GIT_MAX_HEXSZ + ((GIT_MAX_HEXSZ / 2) - 1) + 1];
+	char realpath[BUT_MAX_HEXSZ + ((BUT_MAX_HEXSZ / 2) - 1) + 1];
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!root->tree)
@@ -2179,7 +2179,7 @@ static uintmax_t change_note_fanout(struct tree_entry *root,
 	 * the number of slashes is one less than half the number of hex
 	 * characters.
 	 */
-	char hex_oid[GIT_MAX_HEXSZ], path[GIT_MAX_HEXSZ + (GIT_MAX_HEXSZ / 2) - 1 + 1];
+	char hex_oid[BUT_MAX_HEXSZ], path[BUT_MAX_HEXSZ + (BUT_MAX_HEXSZ / 2) - 1 + 1];
 	return do_change_note_fanout(root, root, hex_oid, 0, path, 0, fanout);
 }
 
@@ -2192,7 +2192,7 @@ static int parse_mapped_oid_hex(const char *hex, struct object_id *oid, const ch
 	memset(oid->hash, 0, sizeof(oid->hash));
 
 	algo = parse_oid_hex_any(hex, oid, end);
-	if (algo == GIT_HASH_UNKNOWN)
+	if (algo == BUT_HASH_UNKNOWN)
 		return -1;
 
 	it = kh_get_oid_map(sub_oid_map, *oid);
@@ -2279,7 +2279,7 @@ static void file_change_m(const char *p, struct branch *b)
 	case S_IFREG | 0755:
 	case S_IFLNK:
 	case S_IFDIR:
-	case S_IFGITLINK:
+	case S_IFBUTLINK:
 		/* ok */
 		break;
 	default:
@@ -2313,7 +2313,7 @@ static void file_change_m(const char *p, struct branch *b)
 		return;
 	}
 
-	if (S_ISGITLINK(mode)) {
+	if (S_ISBUTLINK(mode)) {
 		if (inline_data)
 			die("Git links cannot be specified 'inline': %s",
 				command_buf.buf);
@@ -2438,7 +2438,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	struct object_entry *oe;
 	struct branch *s;
 	struct object_id oid, cummit_oid;
-	char path[GIT_MAX_RAWSZ * 3];
+	char path[BUT_MAX_RAWSZ * 3];
 	uint16_t inline_data = 0;
 	unsigned char new_fanout;
 
@@ -2976,7 +2976,7 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 static void parse_get_mark(const char *p)
 {
 	struct object_entry *oe;
-	char output[GIT_MAX_HEXSZ + 2];
+	char output[BUT_MAX_HEXSZ + 2];
 
 	/* get-mark SP <object> LF */
 	if (*p != ':')
@@ -3131,7 +3131,7 @@ static void print_ls(int mode, const unsigned char *hash, const char *path)
 
 	/* See show_tree(). */
 	const char *type =
-		S_ISGITLINK(mode) ? cummit_type :
+		S_ISBUTLINK(mode) ? cummit_type :
 		S_ISDIR(mode) ? tree_type :
 		blob_type;
 

@@ -45,6 +45,6 @@ linkbut:but-pack-objects[1]
 linkbut:but-repack[1]
 linkbut:but-prune-packed[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

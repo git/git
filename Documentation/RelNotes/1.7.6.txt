@@ -27,7 +27,7 @@ Updates since v1.7.5
    time in memory.
 
  * Processes spawned by "[alias] <name> = !process" in the configuration
-   can inspect GIT_PREFIX environment variable to learn where in the
+   can inspect BUT_PREFIX environment variable to learn where in the
    working tree the original command was invoked.
 
  * A magic pathspec ":/" tells a command that limits its operation to

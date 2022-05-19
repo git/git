@@ -534,7 +534,7 @@ static int grep_cache(struct grep_opt *opt,
 		if (S_ISREG(ce->ce_mode) &&
 		    match_pathspec(repo->index, pathspec, name.buf, name.len, 0, NULL,
 				   S_ISDIR(ce->ce_mode) ||
-				   S_ISGITLINK(ce->ce_mode))) {
+				   S_ISBUTLINK(ce->ce_mode))) {
 			/*
 			 * If CE_VALID is on, we assume worktree file and its
 			 * cache entry are identical, even if worktree file has
@@ -548,7 +548,7 @@ static int grep_cache(struct grep_opt *opt,
 			} else {
 				hit |= grep_file(opt, name.buf);
 			}
-		} else if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
+		} else if (recurse_submodules && S_ISBUTLINK(ce->ce_mode) &&
 			   submodule_path_match(repo->index, pathspec, name.buf, NULL)) {
 			hit |= grep_submodule(opt, pathspec, NULL, ce->name,
 					      ce->name, cached);
@@ -624,7 +624,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			hit |= grep_tree(opt, pathspec, &sub, base, tn_len,
 					 check_attr);
 			free(data);
-		} else if (recurse_submodules && S_ISGITLINK(entry.mode)) {
+		} else if (recurse_submodules && S_ISBUTLINK(entry.mode)) {
 			hit |= grep_submodule(opt, pathspec, &entry.oid,
 					      base->buf, base->buf + tn_len,
 					      1); /* ignored */
@@ -690,7 +690,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		obj_read_unlock();
 
 		if (!real_obj) {
-			char hex[GIT_MAX_HEXSZ + 1];
+			char hex[BUT_MAX_HEXSZ + 1];
 			const char *name = list->objects[i].name;
 
 			if (!name) {
@@ -724,7 +724,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	int i, hit = 0;
 
 	if (!use_index)
-		dir.flags |= DIR_NO_GITLINKS;
+		dir.flags |= DIR_NO_BUTLINKS;
 	if (exc_std)
 		setup_standard_excludes(&dir);
 

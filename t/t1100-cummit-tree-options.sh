@@ -30,12 +30,12 @@ test_expect_success \
 test_expect_success \
     'construct cummit' \
     'echo comment text |
-     GIT_AUTHOR_NAME="Author Name" \
-     GIT_AUTHOR_EMAIL="author@email" \
-     GIT_AUTHOR_DATE="2005-05-26 23:00" \
-     GIT_CUMMITTER_NAME="cummitter Name" \
-     GIT_CUMMITTER_EMAIL="cummitter@email" \
-     GIT_CUMMITTER_DATE="2005-05-26 23:30" \
+     BUT_AUTHOR_NAME="Author Name" \
+     BUT_AUTHOR_EMAIL="author@email" \
+     BUT_AUTHOR_DATE="2005-05-26 23:00" \
+     BUT_CUMMITTER_NAME="cummitter Name" \
+     BUT_CUMMITTER_EMAIL="cummitter@email" \
+     BUT_CUMMITTER_DATE="2005-05-26 23:30" \
      TZ=GMT but cummit-tree $(cat treeid) >cummitid 2>/dev/null'
 
 test_expect_success \

@@ -76,7 +76,7 @@ test_expect_success '--signoff overrides --no-signoff' '
 	but am --signoff --continue &&
 
 	# Applied side1 will be signed off
-	echo "Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>" >expected &&
+	echo "Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>" >expected &&
 	but cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
 	test_cmp expected actual &&
 

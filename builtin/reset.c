@@ -287,7 +287,7 @@ static int read_from_tree(const struct pathspec *pathspec,
 static void set_reflog_message(struct strbuf *sb, const char *action,
 			       const char *rev)
 {
-	const char *rla = getenv("GIT_REFLOG_ACTION");
+	const char *rla = getenv("BUT_REFLOG_ACTION");
 
 	strbuf_reset(sb);
 	if (rla)

@@ -205,7 +205,7 @@ notes for details).
  * "but add x" where x used to be a directory and is now a
    symbolic link to a directory misbehaved.
 
- * The prompt script checked the $GIT_DIR/ref/stash file to see if there
+ * The prompt script checked the $BUT_DIR/ref/stash file to see if there
    is a stash, which was a no-no.
 
  * Pack-protocol documentation had a minor typo.

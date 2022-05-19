@@ -126,7 +126,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Two new ways to feed configuration variable-value pairs via
    environment variables have been introduced, and the way
-   GIT_CONFIG_PARAMETERS encodes variable/value pairs has been tweaked
+   BUT_CONFIG_PARAMETERS encodes variable/value pairs has been tweaked
    to make it more robust.
 
  * Tests have been updated so that they do not to get affected by the
@@ -194,7 +194,7 @@ Performance, Internal Implementation, Development Support etc.
  * When a pager spawned by us exited, the trace log did not record its
    exit status correctly, which has been corrected.
 
- * Removal of GIT_TEST_GETTEXT_POISON continues.
+ * Removal of BUT_TEST_GETTEXT_POISON continues.
 
  * The code to implement "but merge-base --independent" was poorly
    done and was kept from the very beginning of the feature.

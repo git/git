@@ -2,18 +2,18 @@
 
 test_description='test push with submodules'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 . ./test-lib.sh
 
 test_expect_success setup '
 	mkdir pub.but &&
-	GIT_DIR=pub.but but init --bare &&
-	GIT_DIR=pub.but but config receive.fsckobjects true &&
+	BUT_DIR=pub.but but init --bare &&
+	BUT_DIR=pub.but but config receive.fsckobjects true &&
 	mkdir work &&
 	(
 		cd work &&

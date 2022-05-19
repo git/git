@@ -20,8 +20,8 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -154,8 +154,8 @@ test_expect_success 'disambiguate blob' '
 	+irwry
 	EOF
 	(
-		GIT_INDEX_FILE=frotz &&
-		export GIT_INDEX_FILE &&
+		BUT_INDEX_FILE=frotz &&
+		export BUT_INDEX_FILE &&
 		but apply --build-fake-ancestor frotz patch &&
 		but cat-file blob :frotz >actual
 	) &&

@@ -237,7 +237,7 @@ basic_bitmap_tests () {
 		# pack-reuse as expected.  Check only the final "done"
 		# line of the meter (there may be an arbitrary number of
 		# intermediate lines ending with CR).
-		GIT_PROGRESS_DELAY=0 \
+		BUT_PROGRESS_DELAY=0 \
 			but pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
 		grep "Enumerating objects: $count, done" stderr &&
@@ -245,7 +245,7 @@ basic_bitmap_tests () {
 
 		# now the same but with one non-reused object
 		but cummit --allow-empty -m "an extra cummit object" &&
-		GIT_PROGRESS_DELAY=0 \
+		BUT_PROGRESS_DELAY=0 \
 			but pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
 		grep "Enumerating objects: $((count+1)), done" stderr &&
@@ -278,7 +278,7 @@ test_rev_exists () {
 	kind="$2"
 
 	test_expect_success "reverse index exists ($kind)" '
-		GIT_TRACE2_EVENT=$(pwd)/event.trace \
+		BUT_TRACE2_EVENT=$(pwd)/event.trace \
 			but rev-list --test-bitmap "$cummit" &&
 
 		if test "rev" = "$kind"

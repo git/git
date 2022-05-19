@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) 2000-2002 Michael R. Elkins <me@mutt.org>
  * Copyright (C) 2002-2004 Oswald Buddenhagen <ossi@users.sf.net>
@@ -24,7 +24,7 @@
 #include "cache.h"
 #include "quote.h"
 
-struct trace_key trace_default_key = { "GIT_TRACE", 0, 0, 0 };
+struct trace_key trace_default_key = { "BUT_TRACE", 0, 0, 0 };
 struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);
 struct trace_key trace_setup_key = TRACE_KEY_INIT(SETUP);
 
@@ -332,7 +332,7 @@ static inline uint64_t highres_nanos(void)
 	return (uint64_t) ts.tv_sec * 1000000000 + ts.tv_nsec;
 }
 
-#elif defined (GIT_WINDOWS_NATIVE)
+#elif defined (BUT_WINDOWS_NATIVE)
 
 static inline uint64_t highres_nanos(void)
 {

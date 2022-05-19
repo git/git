@@ -5,46 +5,46 @@ test_description='index file specific tests'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-sane_unset GIT_TEST_SPLIT_INDEX
+sane_unset BUT_TEST_SPLIT_INDEX
 
 test_expect_success 'setup' '
 	echo 1 >a
 '
 
-test_expect_success 'bogus GIT_INDEX_VERSION issues warning' '
+test_expect_success 'bogus BUT_INDEX_VERSION issues warning' '
 	(
 		rm -f .but/index &&
-		GIT_INDEX_VERSION=2bogus &&
-		export GIT_INDEX_VERSION &&
+		BUT_INDEX_VERSION=2bogus &&
+		export BUT_INDEX_VERSION &&
 		but add a 2>err &&
 		sed "s/[0-9]//" err >actual.err &&
 		sed -e "s/ Z$/ /" <<-\EOF >expect.err &&
-			warning: GIT_INDEX_VERSION set, but the value is invalid.
+			warning: BUT_INDEX_VERSION set, but the value is invalid.
 			Using version Z
 		EOF
 		test_cmp expect.err actual.err
 	)
 '
 
-test_expect_success 'out of bounds GIT_INDEX_VERSION issues warning' '
+test_expect_success 'out of bounds BUT_INDEX_VERSION issues warning' '
 	(
 		rm -f .but/index &&
-		GIT_INDEX_VERSION=1 &&
-		export GIT_INDEX_VERSION &&
+		BUT_INDEX_VERSION=1 &&
+		export BUT_INDEX_VERSION &&
 		but add a 2>err &&
 		sed "s/[0-9]//" err >actual.err &&
 		sed -e "s/ Z$/ /" <<-\EOF >expect.err &&
-			warning: GIT_INDEX_VERSION set, but the value is invalid.
+			warning: BUT_INDEX_VERSION set, but the value is invalid.
 			Using version Z
 		EOF
 		test_cmp expect.err actual.err
 	)
 '
 
-test_expect_success 'no warning with bogus GIT_INDEX_VERSION and existing index' '
+test_expect_success 'no warning with bogus BUT_INDEX_VERSION and existing index' '
 	(
-		GIT_INDEX_VERSION=1 &&
-		export GIT_INDEX_VERSION &&
+		BUT_INDEX_VERSION=1 &&
+		export BUT_INDEX_VERSION &&
 		but add a 2>actual.err &&
 		test_must_be_empty actual.err
 	)
@@ -52,7 +52,7 @@ test_expect_success 'no warning with bogus GIT_INDEX_VERSION and existing index'
 
 test_expect_success 'out of bounds index.version issues warning' '
 	(
-		sane_unset GIT_INDEX_VERSION &&
+		sane_unset BUT_INDEX_VERSION &&
 		rm -f .but/index &&
 		but config --add index.version 1 &&
 		but add a 2>err &&
@@ -80,10 +80,10 @@ test_index_version () {
 		but config --add feature.manyFiles $FEATURE_MANY_FILES
 		if test "$ENV_VAR_VERSION" -ne 0
 		then
-			GIT_INDEX_VERSION=$ENV_VAR_VERSION &&
-			export GIT_INDEX_VERSION
+			BUT_INDEX_VERSION=$ENV_VAR_VERSION &&
+			export BUT_INDEX_VERSION
 		else
-			unset GIT_INDEX_VERSION
+			unset BUT_INDEX_VERSION
 		fi &&
 		but add a &&
 		echo $EXPECTED_OUTPUT_VERSION >expect &&

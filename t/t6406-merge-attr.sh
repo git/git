@@ -5,8 +5,8 @@
 
 test_description='per path merge controlled by merge attribute'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -221,7 +221,7 @@ test_expect_success 'binary files with union attribute' '
 	printf "two\0" >bin.txt &&
 	but cummit -am two &&
 
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_must_fail but merge bin-main >output
 	else

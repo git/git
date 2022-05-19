@@ -1,4 +1,4 @@
-# Core GIT Translations
+# Core BUT Translations
 
 This directory holds the translations for the core of Git. This document
 describes how you can contribute to the effort of enhancing the language

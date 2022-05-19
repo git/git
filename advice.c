@@ -6,8 +6,8 @@
 
 static int advice_use_color = -1;
 static char advice_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_YELLOW,	/* HINT */
+	BUT_COLOR_RESET,
+	BUT_COLOR_YELLOW,	/* HINT */
 };
 
 enum color_advice {

@@ -4,8 +4,8 @@ test_description='but-merge
 
 Do not overwrite changes.'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -101,7 +101,7 @@ test_expect_success 'will not overwrite unstaged changes in renamed file' '
 	but mv c1.c other.c &&
 	but cummit -m rename &&
 	cp important other.c &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_must_fail but merge c1a >out 2>err &&
 		test_i18ngrep "would be overwritten by merge" err &&

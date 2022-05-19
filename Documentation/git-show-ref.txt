@@ -181,6 +181,6 @@ linkbut:but-ls-remote[1],
 linkbut:but-update-ref[1],
 linkbut:butrepository-layout[5]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

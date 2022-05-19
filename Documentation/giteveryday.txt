@@ -283,7 +283,7 @@ $ but merge topic/one topic/two && but merge hold/linus <8>
 $ but switch maint
 $ but cherry-pick master~4 <9>
 $ compile/test
-$ but tag -s -m "GIT 0.99.9x" v0.99.9x <10>
+$ but tag -s -m "BUT 0.99.9x" v0.99.9x <10>
 $ but fetch ko && for branch in master maint next seen <11>
     do
 	but show-branch ko/$branch $branch <12>
@@ -450,6 +450,6 @@ for branch policy control.
 david is the release manager and is the only person who can
 create and push version tags.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

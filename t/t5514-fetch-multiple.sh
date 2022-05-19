@@ -2,8 +2,8 @@
 
 test_description='fetch --all works correctly'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -108,7 +108,7 @@ test_expect_success 'but fetch --multiple (two remotes)' '
 	 but remote rm origin &&
 	 but remote add one ../one &&
 	 but remote add two ../two &&
-	 GIT_TRACE=1 but fetch --multiple one two 2>trace &&
+	 BUT_TRACE=1 but fetch --multiple one two 2>trace &&
 	 but branch -r > output &&
 	 test_cmp ../expect output &&
 	 grep "built-in: but maintenance" trace >gc &&
@@ -190,7 +190,7 @@ test_expect_success 'parallel' '
 	but remote add one ./bogus1 &&
 	but remote add two ./bogus2 &&
 
-	test_must_fail env GIT_TRACE="$PWD/trace" \
+	test_must_fail env BUT_TRACE="$PWD/trace" \
 		but fetch --jobs=2 --multiple one two 2>err &&
 	grep "preparing to run up to 2 tasks" trace &&
 	test_i18ngrep "could not fetch .one.*128" err &&

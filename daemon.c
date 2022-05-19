@@ -650,7 +650,7 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 
 		/*
 		 * Parse the extra arguments, adding most to 'but_protocol'
-		 * which will be used to set the 'GIT_PROTOCOL' envvar in the
+		 * which will be used to set the 'BUT_PROTOCOL' envvar in the
 		 * service that will be run.
 		 *
 		 * If there ends up being a particular arg in the future that
@@ -666,7 +666,7 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
 
 	if (but_protocol.len > 0) {
 		loginfo("Extended attribute \"protocol\": %s", but_protocol.buf);
-		strvec_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
+		strvec_pushf(env, BUT_PROTOCOL_ENVIRONMENT "=%s",
 			     but_protocol.buf);
 	}
 	strbuf_release(&but_protocol);
@@ -1435,7 +1435,7 @@ int cmd_main(int argc, const char **argv)
 	if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
 		die("--listen= and --port= are incompatible with --inetd");
 	else if (listen_port == 0)
-		listen_port = DEFAULT_GIT_PORT;
+		listen_port = DEFAULT_BUT_PORT;
 
 	if (group_name && !user_name)
 		die("--group supplied without --user");

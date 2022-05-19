@@ -1,4 +1,4 @@
-GIT v1.6.3 Release Notes
+BUT v1.6.3 Release Notes
 ========================
 
 With the next major release, "but push" into a branch that is

@@ -64,6 +64,6 @@ butfile, as otherwise the history of the submodule will be deleted
 too. Both steps will be obsolete when recursive submodule update has
 been implemented.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

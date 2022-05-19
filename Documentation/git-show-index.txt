@@ -47,6 +47,6 @@ OPTIONS
 +
 include::object-format-disclaimer.txt[]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

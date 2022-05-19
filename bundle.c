@@ -41,7 +41,7 @@ static int parse_capability(struct bundle_header *header, const char *capability
 	const char *arg;
 	if (skip_prefix(capability, "object-format=", &arg)) {
 		int algo = hash_algo_by_name(arg);
-		if (algo == GIT_HASH_UNKNOWN)
+		if (algo == BUT_HASH_UNKNOWN)
 			return error(_("unrecognized bundle hash algorithm: %s"), arg);
 		header->hash_algo = &hash_algos[algo];
 		return 0;
@@ -526,7 +526,7 @@ int create_bundle(struct repository *r, const char *path,
 	 *    SHA1.
 	 * 2. @filter is required because we parsed an object filter.
 	 */
-	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice)
+	if (the_hash_algo != &hash_algos[BUT_HASH_SHA1] || revs.filter.choice)
 		min_version = 3;
 
 	if (argc > 1) {

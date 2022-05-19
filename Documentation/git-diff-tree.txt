@@ -126,6 +126,6 @@ include::pretty-formats.txt[]
 
 include::diff-format.txt[]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

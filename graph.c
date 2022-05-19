@@ -99,7 +99,7 @@ static void parse_graph_colors_config(struct strvec *colors, const char *string)
 				(int)(comma - start), start);
 		start = comma + 1;
 	}
-	strvec_push(colors, GIT_COLOR_RESET);
+	strvec_push(colors, BUT_COLOR_RESET);
 }
 
 void graph_set_column_colors(const char **colors, unsigned short colors_max)

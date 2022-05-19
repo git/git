@@ -2,8 +2,8 @@
 
 test_description=clone
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -63,9 +63,9 @@ test_expect_success 'clone checks out files' '
 
 '
 
-test_expect_success 'clone respects GIT_WORK_TREE' '
+test_expect_success 'clone respects BUT_WORK_TREE' '
 
-	GIT_WORK_TREE=worktree but clone src bare &&
+	BUT_WORK_TREE=worktree but clone src bare &&
 	test -f bare/config &&
 	test -f worktree/file
 
@@ -123,7 +123,7 @@ test_expect_success 'clone --mirror with detached HEAD' '
 	( cd src && but checkout HEAD^ && but rev-parse HEAD >../expected ) &&
 	but clone --mirror src mirror.detached &&
 	( cd src && but checkout - ) &&
-	GIT_DIR=mirror.detached but rev-parse HEAD >actual &&
+	BUT_DIR=mirror.detached but rev-parse HEAD >actual &&
 	test_cmp expected actual
 
 '
@@ -133,7 +133,7 @@ test_expect_success 'clone --bare with detached HEAD' '
 	( cd src && but checkout HEAD^ && but rev-parse HEAD >../expected ) &&
 	but clone --bare src bare.detached &&
 	( cd src && but checkout - ) &&
-	GIT_DIR=bare.detached but rev-parse HEAD >actual &&
+	BUT_DIR=bare.detached but rev-parse HEAD >actual &&
 	test_cmp expected actual
 
 '
@@ -302,19 +302,19 @@ test_expect_success 'clone from original with relative alternate' '
 
 test_expect_success 'clone checking out a tag' '
 	but clone --branch=some-tag src dst.tag &&
-	GIT_DIR=src/.but but rev-parse some-tag >expected &&
-	GIT_DIR=dst.tag/.but but rev-parse HEAD >actual &&
+	BUT_DIR=src/.but but rev-parse some-tag >expected &&
+	BUT_DIR=dst.tag/.but but rev-parse HEAD >actual &&
 	test_cmp expected actual &&
-	GIT_DIR=dst.tag/.but but config remote.origin.fetch >fetch.actual &&
+	BUT_DIR=dst.tag/.but but config remote.origin.fetch >fetch.actual &&
 	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
 	test_cmp fetch.expected fetch.actual
 '
 
 test_expect_success 'set up ssh wrapper' '
-	cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
+	cp "$BUT_BUILD_DIR/t/helper/test-fake-ssh$X" \
 		"$TRASH_DIRECTORY/ssh$X" &&
-	GIT_SSH="$TRASH_DIRECTORY/ssh$X" &&
-	export GIT_SSH &&
+	BUT_SSH="$TRASH_DIRECTORY/ssh$X" &&
+	export BUT_SSH &&
 	export TRASH_DIRECTORY &&
 	>"$TRASH_DIRECTORY"/ssh-output
 '
@@ -323,8 +323,8 @@ copy_ssh_wrapper_as () {
 	rm -f "${1%$X}$X" &&
 	cp "$TRASH_DIRECTORY/ssh$X" "${1%$X}$X" &&
 	test_when_finished "rm $(but rev-parse --sq-quote "${1%$X}$X")" &&
-	GIT_SSH="${1%$X}$X" &&
-	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\""
+	BUT_SSH="${1%$X}$X" &&
+	test_when_finished "BUT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\""
 }
 
 expect_ssh () {
@@ -349,7 +349,7 @@ expect_ssh () {
 }
 
 test_expect_success 'clone myhost:src uses ssh' '
-	GIT_TEST_PROTOCOL_VERSION=0 but clone myhost:src ssh-clone &&
+	BUT_TEST_PROTOCOL_VERSION=0 but clone myhost:src ssh-clone &&
 	expect_ssh myhost src
 '
 
@@ -360,12 +360,12 @@ test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 '
 
 test_expect_success 'bracketed hostnames are still ssh' '
-	GIT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone &&
+	BUT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'OpenSSH variant passes -4' '
-	GIT_TEST_PROTOCOL_VERSION=0 but clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
+	BUT_TEST_PROTOCOL_VERSION=0 but clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
 	expect_ssh "-4 -p 123" myhost src
 '
 
@@ -407,9 +407,9 @@ test_expect_success 'OpenSSH-like uplink is treated as ssh' '
 	exec "\$TRASH_DIRECTORY/ssh$X" "\$@"
 	EOF
 	test_when_finished "rm -f \"\$TRASH_DIRECTORY/uplink\"" &&
-	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
-	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
-	GIT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
+	BUT_SSH="$TRASH_DIRECTORY/uplink" &&
+	test_when_finished "BUT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
+	BUT_TEST_PROTOCOL_VERSION=0 but clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
 	expect_ssh "-p 123" myhost src
 '
 
@@ -431,51 +431,51 @@ test_expect_success 'tortoiseplink is like putty, with extra arguments' '
 	expect_ssh "-batch -P 123" myhost src
 '
 
-test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
+test_expect_success 'double quoted plink.exe in BUT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
-	GIT_SSH_COMMAND="\"$TRASH_DIRECTORY/plink.exe\" -v" \
+	BUT_SSH_COMMAND="\"$TRASH_DIRECTORY/plink.exe\" -v" \
 		but clone "[myhost:123]:src" ssh-bracket-clone-plink-3 &&
 	expect_ssh "-v -P 123" myhost src
 '
 
-test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
+test_expect_success 'single quoted plink.exe in BUT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
-	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
+	BUT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
 		but clone "[myhost:123]:src" ssh-bracket-clone-plink-4 &&
 	expect_ssh "-v -P 123" myhost src
 '
 
-test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
+test_expect_success 'BUT_SSH_VARIANT overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_TEST_PROTOCOL_VERSION=0 GIT_SSH_VARIANT=ssh \
+	BUT_TEST_PROTOCOL_VERSION=0 BUT_SSH_VARIANT=ssh \
 		but clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'ssh.variant overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_TEST_PROTOCOL_VERSION=0 but -c ssh.variant=ssh \
+	BUT_TEST_PROTOCOL_VERSION=0 but -c ssh.variant=ssh \
 		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
 	expect_ssh "-p 123" myhost src
 '
 
-test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
+test_expect_success 'BUT_SSH_VARIANT overrides plink detection to plink' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_SSH_VARIANT=plink \
+	BUT_SSH_VARIANT=plink \
 	but clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
 	expect_ssh "-P 123" myhost src
 '
 
-test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
+test_expect_success 'BUT_SSH_VARIANT overrides plink to tortoiseplink' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_SSH_VARIANT=tortoiseplink \
+	BUT_SSH_VARIANT=tortoiseplink \
 	but clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
 	expect_ssh "-batch -P 123" myhost src
 '
 
 test_expect_success 'clean failure on broken quoting' '
 	test_must_fail \
-		env GIT_SSH_COMMAND="${SQ}plink.exe -v" \
+		env BUT_SSH_COMMAND="${SQ}plink.exe -v" \
 		but clone "[myhost:123]:src" sq-failure
 '
 
@@ -485,7 +485,7 @@ counter=0
 # $3 path
 test_clone_url () {
 	counter=$(($counter + 1))
-	test_might_fail env GIT_TEST_PROTOCOL_VERSION=0 but clone "$1" tmp$counter &&
+	test_might_fail env BUT_TEST_PROTOCOL_VERSION=0 but clone "$1" tmp$counter &&
 	shift &&
 	expect_ssh "$@"
 }
@@ -607,9 +607,9 @@ test_expect_success 'shallow clone locally' '
 	( cd ddsstt && but fsck )
 '
 
-test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
+test_expect_success 'BUT_TRACE_PACKFILE produces a usable pack' '
 	rm -rf dst.but &&
-	GIT_TRACE_PACKFILE=$PWD/tmp.pack but clone --no-local --bare src dst.but &&
+	BUT_TRACE_PACKFILE=$PWD/tmp.pack but clone --no-local --bare src dst.but &&
 	but init --bare replay.but &&
 	but -C replay.but index-pack -v --stdin <tmp.pack
 '
@@ -633,16 +633,16 @@ test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	test_i18ngrep "the following paths have collided" icasefs/warning
 '
 
-test_expect_success 'clone with GIT_DEFAULT_HASH' '
+test_expect_success 'clone with BUT_DEFAULT_HASH' '
 	(
-		sane_unset GIT_DEFAULT_HASH &&
+		sane_unset BUT_DEFAULT_HASH &&
 		but init --object-format=sha1 test-sha1 &&
 		but init --object-format=sha256 test-sha256
 	) &&
 	test_cummit -C test-sha1 foo &&
 	test_cummit -C test-sha256 foo &&
-	GIT_DEFAULT_HASH=sha1 but clone test-sha256 test-clone-sha256 &&
-	GIT_DEFAULT_HASH=sha256 but clone test-sha1 test-clone-sha1 &&
+	BUT_DEFAULT_HASH=sha1 but clone test-sha256 test-clone-sha256 &&
+	BUT_DEFAULT_HASH=sha256 but clone test-sha1 test-clone-sha1 &&
 	but -C test-clone-sha1 status &&
 	but -C test-clone-sha256 status
 '
@@ -720,7 +720,7 @@ test_expect_success 'batch missing blob request during checkout' '
 
 	# Ensure that there is only one negotiation by checking that there is
 	# only "done" line sent. ("done" marks the end of negotiation.)
-	GIT_TRACE_PACKET="$(pwd)/trace" but -C client checkout HEAD^ &&
+	BUT_TRACE_PACKET="$(pwd)/trace" but -C client checkout HEAD^ &&
 	grep "fetch> done" trace >done_lines &&
 	test_line_count = 1 done_lines
 '

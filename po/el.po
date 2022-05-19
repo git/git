@@ -1409,7 +1409,7 @@ msgstr ""
 
 #: cummit.c:193
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2416,7 +2416,7 @@ msgstr ""
 
 #: environment.c:332
 #, c-format
-msgid "could not set GIT_DIR to '%s'"
+msgid "could not set BUT_DIR to '%s'"
 msgstr ""
 
 #: exec-cmd.c:361
@@ -3877,7 +3877,7 @@ msgstr ""
 #: read-cache.c:1613
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
 
@@ -5038,16 +5038,16 @@ msgid "could not open '%s' for reading"
 msgstr "δεν ήταν δυνατό το άνοιγμα του '%s' για ανάγνωση"
 
 #: sequencer.c:750
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "'GIT_AUTHOR_NAME' δόθηκε ήδη"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "'BUT_AUTHOR_NAME' δόθηκε ήδη"
 
 #: sequencer.c:755
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "'GIT_AUTHOR_EMAIL' δόθηκε ήδη"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "'BUT_AUTHOR_EMAIL' δόθηκε ήδη"
 
 #: sequencer.c:760
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "'GIT_AUTHOR_DATE' δόθηκε ήδη"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "'BUT_AUTHOR_DATE' δόθηκε ήδη"
 
 #: sequencer.c:764
 #, c-format
@@ -5055,15 +5055,15 @@ msgid "unknown variable '%s'"
 msgstr ""
 
 #: sequencer.c:769
-msgid "missing 'GIT_AUTHOR_NAME'"
+msgid "missing 'BUT_AUTHOR_NAME'"
 msgstr ""
 
 #: sequencer.c:771
-msgid "missing 'GIT_AUTHOR_EMAIL'"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
 msgstr ""
 
 #: sequencer.c:773
-msgid "missing 'GIT_AUTHOR_DATE'"
+msgid "missing 'BUT_AUTHOR_DATE'"
 msgstr ""
 
 #: sequencer.c:833
@@ -5911,11 +5911,11 @@ msgstr "δεν είναι αποθετήριο but (ή κανένας από τ�
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "δεν είναι αποθετήριο but (ή κανένας πιο πάνω φάκελος μέχρι το σημείο "
 "προσάρτησης %s)\n"
-"Σταμάτημα στα όρια του συστήματος αρχείων (GIT_DISCOVERY_ACROSS_FILESYSTEM "
+"Σταμάτημα στα όρια του συστήματος αρχείων (BUT_DISCOVERY_ACROSS_FILESYSTEM "
 "μη ορισμένο)."
 
 #: setup.c:1204
@@ -7680,7 +7680,7 @@ msgid "could not parse patch '%s'"
 msgstr ""
 
 #: builtin/am.c:789
-msgid "Only one StGIT patch series can be applied at once"
+msgid "Only one StBUT patch series can be applied at once"
 msgstr ""
 
 #: builtin/am.c:837
@@ -21248,7 +21248,7 @@ msgstr ""
 
 #: but-send-email.perl:706
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"

@@ -35,6 +35,6 @@ OPTIONS
 	optional.  Note - if the `-z` option is used, lines are terminated
 	with NUL.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

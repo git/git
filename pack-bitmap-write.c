@@ -37,7 +37,7 @@ struct bitmap_writer {
 
 	struct progress *progress;
 	int show_progress;
-	unsigned char pack_checksum[GIT_MAX_RAWSZ];
+	unsigned char pack_checksum[BUT_MAX_RAWSZ];
 };
 
 static struct bitmap_writer writer;
@@ -709,7 +709,7 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	header.entry_count = htonl(writer.selected_nr);
 	hashcpy(header.checksum, writer.pack_checksum);
 
-	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
+	hashwrite(f, &header, sizeof(header) - BUT_MAX_RAWSZ + the_hash_algo->rawsz);
 	dump_bitmap(f, writer.cummits);
 	dump_bitmap(f, writer.trees);
 	dump_bitmap(f, writer.blobs);

@@ -258,6 +258,6 @@ SEE ALSO
 --------
 linkbut:but-read-tree[1], linkbut:butignore[5]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

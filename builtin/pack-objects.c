@@ -1173,7 +1173,7 @@ static void write_pack_file(void)
 	write_order = compute_write_order();
 
 	do {
-		unsigned char hash[GIT_MAX_RAWSZ];
+		unsigned char hash[BUT_MAX_RAWSZ];
 		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout)
@@ -1710,7 +1710,7 @@ static void add_pbase_object(struct tree_desc *tree,
 	int cmp;
 
 	while (tree_entry(tree,&entry)) {
-		if (S_ISGITLINK(entry.mode))
+		if (S_ISBUTLINK(entry.mode))
 			continue;
 		cmp = tree_entry_len(&entry) != cmplen ? 1 :
 		      memcmp(name, entry.path, cmplen);
@@ -3396,7 +3396,7 @@ static void read_packs_list_from_stdin(void)
 
 static void read_object_list_from_stdin(void)
 {
-	char line[GIT_MAX_HEXSZ + 1 + PATH_MAX + 2];
+	char line[BUT_MAX_HEXSZ + 1 + PATH_MAX + 2];
 	struct object_id oid;
 	const char *p;
 
@@ -3998,7 +3998,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
-	sparse = but_env_bool("GIT_TEST_PACK_SPARSE", -1);
+	sparse = but_env_bool("BUT_TEST_PACK_SPARSE", -1);
 	if (the_repository->butdir) {
 		prepare_repo_settings(the_repository);
 		if (sparse < 0)
@@ -4007,7 +4007,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	reset_pack_idx_option(&pack_idx_opts);
 	but_config(but_pack_config, NULL);
-	if (but_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
+	if (but_env_bool(BUT_TEST_WRITE_REV_INDEX, 0))
 		pack_idx_opts.flags |= WRITE_REV;
 
 	progress = isatty(2);

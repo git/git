@@ -338,6 +338,6 @@ AUTHOR
 Written by Avery Pennarun <apenwarr@gmail.com>
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

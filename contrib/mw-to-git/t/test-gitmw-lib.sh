@@ -63,8 +63,8 @@ test_check_precond () {
 		test_done
 	fi
 
-	GIT_EXEC_PATH=$(cd "$(dirname "$0")" && cd "../.." && pwd)
-	PATH="$GIT_EXEC_PATH"'/bin-wrapper:'"$PATH"
+	BUT_EXEC_PATH=$(cd "$(dirname "$0")" && cd "../.." && pwd)
+	PATH="$BUT_EXEC_PATH"'/bin-wrapper:'"$PATH"
 
 	if ! test -d "$WIKI_DIR_INST/$WIKI_DIR_NAME"
 	then

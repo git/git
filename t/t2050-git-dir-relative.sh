@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='check problems with relative GIT_DIR
+test_description='check problems with relative BUT_DIR
 
 This test creates a working tree state with a file and subdir:
 

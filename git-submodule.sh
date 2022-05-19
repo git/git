@@ -26,8 +26,8 @@ cd_to_toplevel
 
 # Tell the rest of but that any URLs we get don't come
 # directly from the user, so it can apply policy as appropriate.
-GIT_PROTOCOL_FROM_USER=0
-export GIT_PROTOCOL_FROM_USER
+BUT_PROTOCOL_FROM_USER=0
+export BUT_PROTOCOL_FROM_USER
 
 command=
 branch=
@@ -58,13 +58,13 @@ isnumber()
 
 # Sanitize the local but environment for use within a submodule. We
 # can't simply use clear_local_but_env since we want to preserve some
-# of the settings from GIT_CONFIG_PARAMETERS.
+# of the settings from BUT_CONFIG_PARAMETERS.
 sanitize_submodule_env()
 {
-	save_config=$GIT_CONFIG_PARAMETERS
+	save_config=$BUT_CONFIG_PARAMETERS
 	clear_local_but_env
-	GIT_CONFIG_PARAMETERS=$save_config
-	export GIT_CONFIG_PARAMETERS
+	BUT_CONFIG_PARAMETERS=$save_config
+	export BUT_CONFIG_PARAMETERS
 }
 
 #
@@ -90,7 +90,7 @@ cmd_add()
 			force=$1
 			;;
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--progress)
 			progress=1
@@ -138,7 +138,7 @@ cmd_add()
 		usage
 	fi
 
-	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper add ${GIT_QUIET:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper add ${BUT_QUIET:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
 }
 
 #
@@ -154,7 +154,7 @@ cmd_foreach()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--recursive)
 			recursive=1
@@ -169,7 +169,7 @@ cmd_foreach()
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach ${BUT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
 #
@@ -184,7 +184,7 @@ cmd_init()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--)
 			shift
@@ -200,7 +200,7 @@ cmd_init()
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${GIT_QUIET:+--quiet} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${BUT_QUIET:+--quiet} -- "$@"
 }
 
 #
@@ -217,7 +217,7 @@ cmd_deinit()
 			force=$1
 			;;
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--all)
 			deinit_all=t
@@ -236,7 +236,7 @@ cmd_deinit()
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${GIT_QUIET:+--quiet} ${force:+--force} ${deinit_all:+--all} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${BUT_QUIET:+--quiet} ${force:+--force} ${deinit_all:+--all} -- "$@"
 }
 
 #
@@ -251,10 +251,10 @@ cmd_update()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		-v)
-			unset GIT_QUIET
+			unset BUT_QUIET
 			;;
 		--progress)
 			progress=1
@@ -349,7 +349,7 @@ cmd_update()
 	done
 
 	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
-		${GIT_QUIET:+--quiet} \
+		${BUT_QUIET:+--quiet} \
 		${force:+--force} \
 		${progress:+"--progress"} \
 		${remote:+--remote} \
@@ -409,7 +409,7 @@ cmd_set_branch() {
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${GIT_QUIET:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${BUT_QUIET:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
 }
 
 #
@@ -422,7 +422,7 @@ cmd_set_url() {
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--)
 			shift
@@ -438,7 +438,7 @@ cmd_set_url() {
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url ${GIT_QUIET:+--quiet} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url ${BUT_QUIET:+--quiet} -- "$@"
 }
 
 #
@@ -509,7 +509,7 @@ cmd_status()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			;;
 		--cached)
 			cached=1
@@ -531,7 +531,7 @@ cmd_status()
 		shift
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper status ${GIT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper status ${BUT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
 }
 #
 # Sync remote urls for submodules
@@ -544,7 +544,7 @@ cmd_sync()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
+			BUT_QUIET=1
 			shift
 			;;
 		--recursive)
@@ -564,7 +564,7 @@ cmd_sync()
 		esac
 	done
 
-	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
+	but ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync ${BUT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
 cmd_absorbbutdirs()
@@ -585,7 +585,7 @@ do
 		command=$1
 		;;
 	-q|--quiet)
-		GIT_QUIET=1
+		BUT_QUIET=1
 		;;
 	-b|--branch)
 		case "$2" in

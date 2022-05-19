@@ -218,7 +218,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 
 		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
+		BUT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-single &&
 
@@ -307,7 +307,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 
 		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
+		BUT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-dir &&
 
@@ -408,7 +408,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded with lots of ren
 
 		but checkout -q origin/A &&
 
-		GIT_TRACE2_PERF="$(pwd)/trace.output" but \
+		BUT_TRACE2_PERF="$(pwd)/trace.output" but \
 			-c merge.directoryRenames=true merge --no-stat \
 			--no-progress origin/B-many &&
 

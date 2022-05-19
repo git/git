@@ -61,6 +61,6 @@ exists, is separated by a blank line from the header.  The
 message part may contain a signature that Git itself doesn't
 care about, but that can be verified with gpg.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

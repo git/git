@@ -40,8 +40,8 @@ static char *strip_escapes(const char *str, const char *service,
 	skip_prefix(service_noprefix, "but-", &service_noprefix);
 
 	/* Pass the service to command. */
-	setenv("GIT_EXT_SERVICE", service, 1);
-	setenv("GIT_EXT_SERVICE_NOPREFIX", service_noprefix, 1);
+	setenv("BUT_EXT_SERVICE", service, 1);
+	setenv("BUT_EXT_SERVICE_NOPREFIX", service_noprefix, 1);
 
 	/* Scan the length of argument. */
 	while (str[rpos] && (escape || str[rpos] != ' ')) {

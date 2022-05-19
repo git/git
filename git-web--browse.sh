@@ -20,7 +20,7 @@ USAGE='[--browser=browser|--tool=browser] [--config=conf.var] url/file ...'
 
 # This must be capable of running outside of but directory, so
 # the vanilla but-sh-setup should not be used.
-NONGIT_OK=Yes
+NONBUT_OK=Yes
 . but-sh-setup
 
 valid_custom_tool()

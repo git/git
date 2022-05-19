@@ -206,6 +206,6 @@ When describing blobs, the lightweight tags pointing at blobs are ignored,
 but the blob is still described as <cummitt-ish>:<path> despite the lightweight
 tag being favorable.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

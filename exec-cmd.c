@@ -45,7 +45,7 @@ static const char *system_prefix(void)
 	assert(is_absolute_path(executable_dirname));
 
 	if (!prefix &&
-	    !(prefix = strip_path_suffix(executable_dirname, GIT_EXEC_PATH)) &&
+	    !(prefix = strip_path_suffix(executable_dirname, BUT_EXEC_PATH)) &&
 	    !(prefix = strip_path_suffix(executable_dirname, BINDIR)) &&
 	    !(prefix = strip_path_suffix(executable_dirname, "but"))) {
 		prefix = FALLBACK_RUNTIME_PREFIX;
@@ -288,7 +288,7 @@ const char *but_exec_path(void)
 		if (env && *env)
 			exec_path_value = xstrdup(env);
 		else
-			exec_path_value = system_path(GIT_EXEC_PATH);
+			exec_path_value = system_path(BUT_EXEC_PATH);
 	}
 	return exec_path_value;
 }

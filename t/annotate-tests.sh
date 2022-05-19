@@ -64,7 +64,7 @@ test_expect_success 'setup A lines' '
 	echo "1A quick brown fox jumps over the" >file &&
 	echo "lazy dog" >>file &&
 	but add file &&
-	GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.but" \
+	BUT_AUTHOR_NAME="A" BUT_AUTHOR_EMAIL="A@test.but" \
 	but cummit -a -m "Initial."
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'blame by tag objects' '
 test_expect_success 'setup B lines' '
 	echo "2A quick brown fox jumps over the" >>file &&
 	echo "lazy dog" >>file &&
-	GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.but" \
+	BUT_AUTHOR_NAME="B" BUT_AUTHOR_EMAIL="B@test.but" \
 	but cummit -a -m "Second."
 '
 
@@ -102,7 +102,7 @@ test_expect_success 'setup B1 lines (branch1)' '
 	but checkout -b branch1 main &&
 	echo "3A slow green fox jumps into the" >>file &&
 	echo "well." >>file &&
-	GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.but" \
+	BUT_AUTHOR_NAME="B1" BUT_AUTHOR_EMAIL="B1@test.but" \
 	but cummit -a -m "Branch1-1"
 '
 
@@ -114,7 +114,7 @@ test_expect_success 'setup B2 lines (branch2)' '
 	but checkout -b branch2 main &&
 	sed -e "s/2A quick brown/4A quick brown lazy dog/" <file >file.new &&
 	mv file.new file &&
-	GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.but" \
+	BUT_AUTHOR_NAME="B2" BUT_AUTHOR_EMAIL="B2@test.but" \
 	but cummit -a -m "Branch2-1"
 '
 
@@ -162,7 +162,7 @@ test_expect_success 'blame huge graft' '
 			but checkout --orphan "$i$j" &&
 			printf "%s\n" "$i" "$j" >file &&
 			test_tick &&
-			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.but \
+			BUT_AUTHOR_NAME=$i$j BUT_AUTHOR_EMAIL=$i$j@test.but \
 			but cummit -a -m "$i$j" &&
 			cummit=$(but rev-parse --verify HEAD) &&
 			graft="$graft$cummit " || return 1
@@ -174,7 +174,7 @@ test_expect_success 'blame huge graft' '
 
 test_expect_success 'setup incomplete line' '
 	echo "incomplete" | tr -d "\\012" >>file &&
-	GIT_AUTHOR_NAME="C" GIT_AUTHOR_EMAIL="C@test.but" \
+	BUT_AUTHOR_NAME="C" BUT_AUTHOR_EMAIL="C@test.but" \
 	but cummit -a -m "Incomplete"
 '
 
@@ -189,7 +189,7 @@ test_expect_success 'setup edits' '
 		echo
 	} | sed -e "s/^3A/99/" -e "/^1A/d" -e "/^incomplete/d" >file &&
 	echo "incomplete" | tr -d "\\012" >>file &&
-	GIT_AUTHOR_NAME="D" GIT_AUTHOR_EMAIL="D@test.but" \
+	BUT_AUTHOR_NAME="D" BUT_AUTHOR_EMAIL="D@test.but" \
 	but cummit -a -m "edit"
 '
 
@@ -201,7 +201,7 @@ test_expect_success 'setup obfuscated email' '
 	echo "No robots allowed" >file.new &&
 	cat file >>file.new &&
 	mv file.new file &&
-	GIT_AUTHOR_NAME="E" GIT_AUTHOR_EMAIL="E at test dot but" \
+	BUT_AUTHOR_NAME="E" BUT_AUTHOR_EMAIL="E at test dot but" \
 	but cummit -a -m "norobots"
 '
 
@@ -416,13 +416,13 @@ test_expect_success 'setup -L :regex' '
 	}
 	EOF
 	but add hello.c &&
-	GIT_AUTHOR_NAME="F" GIT_AUTHOR_EMAIL="F@test.but" \
+	BUT_AUTHOR_NAME="F" BUT_AUTHOR_EMAIL="F@test.but" \
 	but cummit -m "hello" &&
 
 	mv hello.c hello.orig &&
 	sed -e "/}/ {x; s/$/Qputs(\"goodbye\");/; G;}" <hello.orig |
 	tr Q "\\t" >hello.c &&
-	GIT_AUTHOR_NAME="G" GIT_AUTHOR_EMAIL="G@test.but" \
+	BUT_AUTHOR_NAME="G" BUT_AUTHOR_EMAIL="G@test.but" \
 	but cummit -a -m "goodbye" &&
 
 	mv hello.c hello.orig &&
@@ -434,7 +434,7 @@ test_expect_success 'setup -L :regex' '
 	Qputs("mail");
 	}
 	EOF
-	GIT_AUTHOR_NAME="H" GIT_AUTHOR_EMAIL="H@test.but" \
+	BUT_AUTHOR_NAME="H" BUT_AUTHOR_EMAIL="H@test.but" \
 	but cummit -a -m "mail"
 '
 
@@ -507,10 +507,10 @@ test_expect_success 'blame -L :funcname with userdiff driver' '
 
 test_expect_success 'setup incremental' '
 	(
-	GIT_AUTHOR_NAME=I &&
-	export GIT_AUTHOR_NAME &&
-	GIT_AUTHOR_EMAIL=I@test.but &&
-	export GIT_AUTHOR_EMAIL &&
+	BUT_AUTHOR_NAME=I &&
+	export BUT_AUTHOR_NAME &&
+	BUT_AUTHOR_EMAIL=I@test.but &&
+	export BUT_AUTHOR_EMAIL &&
 	>incremental &&
 	but add incremental &&
 	but cummit -m "step 0" &&
@@ -614,7 +614,7 @@ test_expect_success 'blame progress on a full file' '
 	Blaming lines: 100% (10/10), done.
 	EOF
 
-	GIT_PROGRESS_DELAY=0 \
+	BUT_PROGRESS_DELAY=0 \
 	but blame --progress hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
@@ -626,7 +626,7 @@ test_expect_success 'blame progress on a single range' '
 	Blaming lines: 100% (4/4), done.
 	EOF
 
-	GIT_PROGRESS_DELAY=0 \
+	BUT_PROGRESS_DELAY=0 \
 	but blame --progress -L 3,6 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
@@ -638,7 +638,7 @@ test_expect_success 'blame progress on multiple ranges' '
 	Blaming lines: 100% (7/7), done.
 	EOF
 
-	GIT_PROGRESS_DELAY=0 \
+	BUT_PROGRESS_DELAY=0 \
 	but blame --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&

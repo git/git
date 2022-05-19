@@ -137,13 +137,13 @@ include shared.mak
 # but are not needed unless you plan to talk to SVN repos.
 #
 # Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
-# installed in /sw, but don't want GIT to link against any libraries
+# installed in /sw, but don't want BUT to link against any libraries
 # installed there.  If defined you may specify your own (or Fink's)
 # include directories and library directories by defining CFLAGS
 # and LDFLAGS appropriately.
 #
 # Define NO_DARWIN_PORTS if you are building on Darwin/Mac OS X,
-# have DarwinPorts installed in /opt/local, but don't want GIT to
+# have DarwinPorts installed in /opt/local, but don't want BUT to
 # link against any libraries installed there.  If defined you may
 # specify your own (or DarwinPort's) include directories and
 # library directories by defining CFLAGS and LDFLAGS appropriately.
@@ -384,7 +384,7 @@ include shared.mak
 # if necessary when it is used.  Examples:
 #
 #   DEFAULT_EDITOR='~/bin/vi',
-#   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
+#   DEFAULT_EDITOR='$BUT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
 #
 # Define COMPUTE_HEADER_DEPENDENCIES to "yes" if you want dependencies on
@@ -395,18 +395,18 @@ include shared.mak
 #
 # Define NATIVE_CRLF if your platform uses CRLF for line endings.
 #
-# Define GIT_USER_AGENT if you want to change how but identifies itself during
-# network interactions.  The default is "but/$(GIT_VERSION)".
+# Define BUT_USER_AGENT if you want to change how but identifies itself during
+# network interactions.  The default is "but/$(BUT_VERSION)".
 #
 # Define DEFAULT_HELP_FORMAT to "man", "info" or "html"
 # (defaults to "man") if you want to have a different default when
 # "but help" is called without a parameter specifying the format.
 #
-# Define GIT_TEST_INDEX_VERSION to 2, 3 or 4 to run the test suite
+# Define BUT_TEST_INDEX_VERSION to 2, 3 or 4 to run the test suite
 # with a different indexfile format version.  If it isn't set the index
 # file format used is index-v[23].
 #
-# Define GIT_TEST_UTF8_LOCALE to preferred utf-8 locale for testing.
+# Define BUT_TEST_UTF8_LOCALE to preferred utf-8 locale for testing.
 # If it isn't set, fallback to $LC_ALL, $LANG or use the first utf-8
 # locale returned by "locale -a".
 #
@@ -508,9 +508,9 @@ include shared.mak
 #
 #        Disable -pedantic compilation.
 
-GIT-VERSION-FILE: FORCE
-	@$(SHELL_PATH) ./GIT-VERSION-GEN
--include GIT-VERSION-FILE
+BUT-VERSION-FILE: FORCE
+	@$(SHELL_PATH) ./BUT-VERSION-GEN
+-include BUT-VERSION-FILE
 
 # Set our default configuration.
 #
@@ -542,8 +542,8 @@ perllibdir = $(sharedir)/perl5
 localedir = $(sharedir)/locale
 template_dir = share/but-core/templates
 htmldir = $(prefix)/share/doc/but-doc
-ETC_GITCONFIG = $(sysconfdir)/butconfig
-ETC_GITATTRIBUTES = $(sysconfdir)/butattributes
+ETC_BUTCONFIG = $(sysconfdir)/butconfig
+ETC_BUTATTRIBUTES = $(sysconfdir)/butattributes
 lib = lib
 # DESTDIR =
 pathsep = :
@@ -590,7 +590,7 @@ GENERATED_H =
 EXTRA_CPPFLAGS =
 FUZZ_OBJS =
 FUZZ_PROGRAMS =
-GIT_OBJS =
+BUT_OBJS =
 LIB_OBJS =
 OBJECTS =
 PROGRAM_OBJS =
@@ -1240,10 +1240,10 @@ THIRD_PARTY_SOURCES += sha1collisiondetection/%
 THIRD_PARTY_SOURCES += sha1dc/%
 
 # xdiff and reftable libs may in turn depend on what is in libbut.a
-GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
+BUTLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
 EXTLIBS =
 
-GIT_USER_AGENT = but/$(GIT_VERSION)
+BUT_USER_AGENT = but/$(BUT_VERSION)
 
 ifeq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/sha1.h)
 DC_SHA1_SUBMODULE = auto
@@ -1267,7 +1267,7 @@ PTHREAD_CFLAGS =
 SPARSE_FLAGS ?= -std=gnu99
 SP_EXTRA_FLAGS = -Wno-universal-initializer
 
-# For informing GIT-BUILD-OPTIONS of the SANITIZE=leak,address targets
+# For informing BUT-BUILD-OPTIONS of the SANITIZE=leak,address targets
 SANITIZE_LEAK =
 SANITIZE_ADDRESS =
 
@@ -1384,9 +1384,9 @@ BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
 endif
 
 ifeq (,$(HOST_CPU))
-	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(firstword $(subst -, ,$(uname_M)))\""
+	BASIC_CFLAGS += -DBUT_HOST_CPU="\"$(firstword $(subst -, ,$(uname_M)))\""
 else
-	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(HOST_CPU)\""
+	BASIC_CFLAGS += -DBUT_HOST_CPU="\"$(HOST_CPU)\""
 endif
 
 ifneq (,$(INLINE))
@@ -1915,8 +1915,8 @@ ifdef OVERRIDE_STRDUP
 	COMPAT_OBJS += compat/strdup.o
 endif
 
-ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
-	export GIT_TEST_CMP_USE_COPIED_CONTEXT
+ifdef BUT_TEST_CMP_USE_COPIED_CONTEXT
+	export BUT_TEST_CMP_USE_COPIED_CONTEXT
 endif
 
 ifndef NO_MSGFMT_EXTENDED_OPTIONS
@@ -2051,8 +2051,8 @@ endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
-ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
-ETC_GITATTRIBUTES_SQ = $(subst ','\'',$(ETC_GITATTRIBUTES))
+ETC_BUTCONFIG_SQ = $(subst ','\'',$(ETC_BUTCONFIG))
+ETC_BUTATTRIBUTES_SQ = $(subst ','\'',$(ETC_BUTATTRIBUTES))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 NO_GETTEXT_SQ = $(subst ','\'',$(NO_GETTEXT))
@@ -2105,15 +2105,15 @@ endif
 
 endif
 
-# We must filter out any object files from $(GITLIBS),
+# We must filter out any object files from $(BUTLIBS),
 # as it is typically used like:
 #
-#   foo: foo.o $(GITLIBS)
+#   foo: foo.o $(BUTLIBS)
 #	$(CC) $(filter %.o,$^) $(LIBS)
 #
 # where we use it as a dependency. Since we also pull object files
 # from the dependency list, that would make each entry appear twice.
-LIBS = $(filter-out %.o, $(GITLIBS)) $(EXTLIBS)
+LIBS = $(filter-out %.o, $(BUTLIBS)) $(EXTLIBS)
 
 BASIC_CFLAGS += $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
@@ -2141,12 +2141,12 @@ SHELL_PATH_CQ_SQ = $(subst ','\'',$(SHELL_PATH_CQ))
 BASIC_CFLAGS += -DSHELL_PATH='$(SHELL_PATH_CQ_SQ)'
 endif
 
-GIT_USER_AGENT_SQ = $(subst ','\'',$(GIT_USER_AGENT))
-GIT_USER_AGENT_CQ = "$(subst ",\",$(subst \,\\,$(GIT_USER_AGENT)))"
-GIT_USER_AGENT_CQ_SQ = $(subst ','\'',$(GIT_USER_AGENT_CQ))
-GIT-USER-AGENT: FORCE
-	@if test x'$(GIT_USER_AGENT_SQ)' != x"`cat GIT-USER-AGENT 2>/dev/null`"; then \
-		echo '$(GIT_USER_AGENT_SQ)' >GIT-USER-AGENT; \
+BUT_USER_AGENT_SQ = $(subst ','\'',$(BUT_USER_AGENT))
+BUT_USER_AGENT_CQ = "$(subst ",\",$(subst \,\\,$(BUT_USER_AGENT)))"
+BUT_USER_AGENT_CQ_SQ = $(subst ','\'',$(BUT_USER_AGENT_CQ))
+BUT-USER-AGENT: FORCE
+	@if test x'$(BUT_USER_AGENT_SQ)' != x"`cat BUT-USER-AGENT 2>/dev/null`"; then \
+		echo '$(BUT_USER_AGENT_SQ)' >BUT-USER-AGENT; \
 	fi
 
 ifdef DEFAULT_HELP_FORMAT
@@ -2172,7 +2172,7 @@ endif
 profile:: profile-clean
 	$(MAKE) PROFILE=GEN all
 	$(MAKE) PROFILE=GEN -j1 test
-	@if test -n "$$GIT_PERF_REPO" || test -d .but; then \
+	@if test -n "$$BUT_PERF_REPO" || test -d .but; then \
 		$(MAKE) PROFILE=GEN -j1 perf; \
 	else \
 		echo "Skipping profile of perf tests..."; \
@@ -2185,7 +2185,7 @@ profile-fast: profile-clean
 	$(MAKE) PROFILE=USE all
 
 
-all:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
+all:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) BUT-BUILD-OPTIONS
 ifneq (,$X)
 	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) but$X)), test -d '$p' -o '$p' -ef '$p$X' || $(RM) '$p';)
 endif
@@ -2229,7 +2229,7 @@ strip: $(PROGRAMS) but$X
 #   The "foo.o" target should have a corresponding dependency on
 #   a file that changes when the value of the makefile variable
 #   changes.  For example, targets making use of the
-#   $(GIT_VERSION) variable depend on GIT-VERSION-FILE.
+#   $(BUT_VERSION) variable depend on BUT-VERSION-FILE.
 #
 #   Technically the ".sp" and ".s" targets do not need this
 #   dependency because they are force-built, but they get the
@@ -2238,24 +2238,24 @@ strip: $(PROGRAMS) but$X
 #   dependencies here will not need to change if the force-build
 #   details change some day.
 
-but.sp but.s but.o: GIT-PREFIX
+but.sp but.s but.o: BUT-PREFIX
 but.sp but.s but.o: EXTRA_CPPFLAGS = \
-	'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
-	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
-	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
+	'-DBUT_HTML_PATH="$(htmldir_relative_SQ)"' \
+	'-DBUT_MAN_PATH="$(mandir_relative_SQ)"' \
+	'-DBUT_INFO_PATH="$(infodir_relative_SQ)"'
 
-but$X: but.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
+but$X: but.o BUT-LDFLAGS $(BUILTIN_OBJS) $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
 help.sp help.s help.o: command-list.h
 builtin/bugreport.sp builtin/bugreport.s builtin/bugreport.o: hook-list.h
 
-builtin/help.sp builtin/help.s builtin/help.o: config-list.h GIT-PREFIX
+builtin/help.sp builtin/help.s builtin/help.o: config-list.h BUT-PREFIX
 builtin/help.sp builtin/help.s builtin/help.o: EXTRA_CPPFLAGS = \
-	'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
-	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
-	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
+	'-DBUT_HTML_PATH="$(htmldir_relative_SQ)"' \
+	'-DBUT_MAN_PATH="$(mandir_relative_SQ)"' \
+	'-DBUT_INFO_PATH="$(infodir_relative_SQ)"'
 
 PAGER_ENV_SQ = $(subst ','\'',$(PAGER_ENV))
 PAGER_ENV_CQ = "$(subst ",\",$(subst \,\\,$(PAGER_ENV)))"
@@ -2263,12 +2263,12 @@ PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
 pager.sp pager.s pager.o: EXTRA_CPPFLAGS = \
 	-DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
 
-version.sp version.s version.o: GIT-VERSION-FILE GIT-USER-AGENT
+version.sp version.s version.o: BUT-VERSION-FILE BUT-USER-AGENT
 version.sp version.s version.o: EXTRA_CPPFLAGS = \
-	'-DGIT_VERSION="$(GIT_VERSION)"' \
-	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)' \
-	'-DGIT_BUILT_FROM_CUMMIT="$(shell \
-		GIT_CEILING_DIRECTORIES="$(CURDIR)/.." \
+	'-DBUT_VERSION="$(BUT_VERSION)"' \
+	'-DBUT_USER_AGENT=$(BUT_USER_AGENT_CQ_SQ)' \
+	'-DBUT_BUILT_FROM_CUMMIT="$(shell \
+		BUT_CEILING_DIRECTORIES="$(CURDIR)/.." \
 		but rev-parse -q --verify HEAD 2>/dev/null)"'
 
 $(BUILT_INS): but$X
@@ -2296,7 +2296,7 @@ SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):\
 	$(localedir_SQ):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
 	$(butwebdir_SQ):$(PERL_PATH_SQ):$(PAGER_ENV):\
 	$(perllibdir_SQ)
-GIT-SCRIPT-DEFINES: FORCE
+BUT-SCRIPT-DEFINES: FORCE
 	@FLAGS='$(SCRIPT_DEFINES)'; \
 	    if test x"$$FLAGS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo >&2 "    * new script parameters"; \
@@ -2310,29 +2310,29 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's|@@LOCALEDIR@@|$(localedir_SQ)|g' \
     -e 's/@@USE_GETTEXT_SCHEME@@/$(USE_GETTEXT_SCHEME)/g' \
     -e $(BROKEN_PATH_FIX) \
-    -e 's|@@GITWEBDIR@@|$(butwebdir_SQ)|g' \
+    -e 's|@@BUTWEBDIR@@|$(butwebdir_SQ)|g' \
     -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
     -e 's|@@PAGER_ENV@@|$(PAGER_ENV_SQ)|g' \
     $@.sh >$@+
 endef
 
-$(SCRIPT_SH_GEN) : % : %.sh GIT-SCRIPT-DEFINES
+$(SCRIPT_SH_GEN) : % : %.sh BUT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-$(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
+$(SCRIPT_LIB) : % : %.sh BUT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	mv $@+ $@
 
-but.res: but.rc GIT-VERSION-FILE GIT-PREFIX
+but.res: but.rc BUT-VERSION-FILE BUT-PREFIX
 	$(QUIET_RC)$(RC) \
 	  $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1, 4, \
-	    $(shell echo $(GIT_VERSION) 0 0 0 0 | tr '.a-zA-Z-' ' '))) \
-	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" -i $< -o $@
+	    $(shell echo $(BUT_VERSION) 0 0 0 0 | tr '.a-zA-Z-' ' '))) \
+	  -DBUT_VERSION="\\\"$(BUT_VERSION)\\\"" -i $< -o $@
 
 # This makes sure we depend on the NO_PERL setting itself.
-$(SCRIPT_PERL_GEN): GIT-BUILD-OPTIONS
+$(SCRIPT_PERL_GEN): BUT-BUILD-OPTIONS
 
 # Used for substitution in Perl modules. Disabled when using RUNTIME_PREFIX
 # since the locale directory is injected.
@@ -2362,27 +2362,27 @@ endif
 
 PERL_DEFINES += $(butexecdir) $(perllibdir) $(localedir)
 
-$(SCRIPT_PERL_GEN): % : %.perl GIT-PERL-DEFINES GIT-PERL-HEADER GIT-VERSION-FILE
+$(SCRIPT_PERL_GEN): % : %.perl BUT-PERL-DEFINES BUT-PERL-HEADER BUT-VERSION-FILE
 	$(QUIET_GEN) \
 	sed -e '1{' \
 	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
-	    -e '	r GIT-PERL-HEADER' \
+	    -e '	r BUT-PERL-HEADER' \
 	    -e '	G' \
 	    -e '}' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    -e 's/@@BUT_VERSION@@/$(BUT_VERSION)/g' \
 	    $< >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
 PERL_DEFINES := $(subst $(space),:,$(PERL_DEFINES))
-GIT-PERL-DEFINES: FORCE
+BUT-PERL-DEFINES: FORCE
 	@FLAGS='$(PERL_DEFINES)'; \
 	    if test x"$$FLAGS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo >&2 "    * new perl-specific parameters"; \
 		echo "$$FLAGS" >$@; \
 	    fi
 
-GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
+BUT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) BUT-PERL-DEFINES Makefile
 	$(QUIET_GEN) \
 	INSTLIBDIR='$(perllibdir_SQ)' && \
 	INSTLIBDIR_EXTRA='$(PERLLIB_EXTRA_SQ)' && \
@@ -2390,7 +2390,7 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 	sed -e 's=@@PATHSEP@@=$(pathsep)=g' \
 	    -e "s=@@INSTLIBDIR@@=$$INSTLIBDIR=g" \
 	    -e 's=@@PERLLIBDIR_REL@@=$(perllibdir_relative_SQ)=g' \
-	    -e 's=@@GITEXECDIR_REL@@=$(butexecdir_relative_SQ)=g' \
+	    -e 's=@@BUTEXECDIR_REL@@=$(butexecdir_relative_SQ)=g' \
 	    -e 's=@@LOCALEDIR_REL@@=$(localedir_relative_SQ)=g' \
 	    $< >$@+ && \
 	mv $@+ $@
@@ -2403,7 +2403,7 @@ perllibdir:
 butweb:
 	$(QUIET_SUBDIR0)butweb $(QUIET_SUBDIR1) all
 
-but-instaweb: but-instaweb.sh GIT-SCRIPT-DEFINES
+but-instaweb: but-instaweb.sh BUT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	chmod +x $@+ && \
 	mv $@+ $@
@@ -2418,10 +2418,10 @@ $(SCRIPT_PERL_GEN) but-instaweb: % : unimplemented.sh
 endif # NO_PERL
 
 # This makes sure we depend on the NO_PYTHON setting itself.
-$(SCRIPT_PYTHON_GEN): GIT-BUILD-OPTIONS
+$(SCRIPT_PYTHON_GEN): BUT-BUILD-OPTIONS
 
 ifndef NO_PYTHON
-$(SCRIPT_PYTHON_GEN): GIT-CFLAGS GIT-PREFIX GIT-PYTHON-VARS
+$(SCRIPT_PYTHON_GEN): BUT-CFLAGS BUT-PREFIX BUT-PYTHON-VARS
 $(SCRIPT_PYTHON_GEN): % : %.py
 	$(QUIET_GEN) \
 	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
@@ -2438,17 +2438,17 @@ $(SCRIPT_PYTHON_GEN): % : unimplemented.sh
 	mv $@+ $@
 endif # NO_PYTHON
 
-CONFIGURE_RECIPE = sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+CONFIGURE_RECIPE = sed -e 's/@@BUT_VERSION@@/$(BUT_VERSION)/g' \
 			configure.ac >configure.ac+ && \
 		   autoconf -o configure configure.ac+ && \
 		   $(RM) configure.ac+
 
-configure: configure.ac GIT-VERSION-FILE
+configure: configure.ac BUT-VERSION-FILE
 	$(QUIET_GEN)$(CONFIGURE_RECIPE)
 
 ifdef AUTOCONFIGURED
 # We avoid depending on 'configure' here, because it gets rebuilt
-# every time GIT-VERSION-FILE is modified, only to update the embedded
+# every time BUT-VERSION-FILE is modified, only to update the embedded
 # version number string, which config.status does not care about.  We
 # do want to recheck when the platform/environment detection logic
 # changes, hence this depends on configure.ac.
@@ -2507,14 +2507,14 @@ TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS)) $(patsubst %,t/helper/%,$(TEST
 .PHONY: test-objs
 test-objs: $(TEST_OBJS)
 
-GIT_OBJS += $(LIB_OBJS)
-GIT_OBJS += $(BUILTIN_OBJS)
-GIT_OBJS += common-main.o
-GIT_OBJS += but.o
+BUT_OBJS += $(LIB_OBJS)
+BUT_OBJS += $(BUILTIN_OBJS)
+BUT_OBJS += common-main.o
+BUT_OBJS += but.o
 .PHONY: but-objs
-but-objs: $(GIT_OBJS)
+but-objs: $(BUT_OBJS)
 
-OBJECTS += $(GIT_OBJS)
+OBJECTS += $(BUT_OBJS)
 OBJECTS += $(PROGRAM_OBJS)
 OBJECTS += $(TEST_OBJS)
 OBJECTS += $(XDIFF_OBJS)
@@ -2567,12 +2567,12 @@ ASM_SRC := $(wildcard $(OBJECTS:o=S))
 ASM_OBJ := $(ASM_SRC:S=o)
 C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
-$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+$(C_OBJ): %.o: %.c BUT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
-$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+$(ASM_OBJ): %.o: %.S BUT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 
-%.s: %.c GIT-CFLAGS FORCE
+%.s: %.c BUT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -o $@ -S $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 
 ifdef USE_COMPUTED_HEADER_DEPENDENCIES
@@ -2593,28 +2593,28 @@ compile_commands.json:
 	@if test -s $@+; then mv $@+ $@; else $(RM) $@+; fi
 endif
 
-exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
+exec-cmd.sp exec-cmd.s exec-cmd.o: BUT-PREFIX
 exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
-	'-DGIT_EXEC_PATH="$(butexecdir_SQ)"' \
-	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+	'-DBUT_EXEC_PATH="$(butexecdir_SQ)"' \
+	'-DBUT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
 	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
 
-builtin/init-db.sp builtin/init-db.s builtin/init-db.o: GIT-PREFIX
+builtin/init-db.sp builtin/init-db.s builtin/init-db.o: BUT-PREFIX
 builtin/init-db.sp builtin/init-db.s builtin/init-db.o: EXTRA_CPPFLAGS = \
-	-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
+	-DDEFAULT_BUT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 
-config.sp config.s config.o: GIT-PREFIX
+config.sp config.s config.o: BUT-PREFIX
 config.sp config.s config.o: EXTRA_CPPFLAGS = \
-	-DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
+	-DETC_BUTCONFIG='"$(ETC_BUTCONFIG_SQ)"'
 
-attr.sp attr.s attr.o: GIT-PREFIX
+attr.sp attr.s attr.o: BUT-PREFIX
 attr.sp attr.s attr.o: EXTRA_CPPFLAGS = \
-	-DETC_GITATTRIBUTES='"$(ETC_GITATTRIBUTES_SQ)"'
+	-DETC_BUTATTRIBUTES='"$(ETC_BUTATTRIBUTES_SQ)"'
 
-gettext.sp gettext.s gettext.o: GIT-PREFIX
+gettext.sp gettext.s gettext.o: BUT-PREFIX
 gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
-	-DGIT_LOCALE_PATH='"$(localedir_relative_SQ)"'
+	-DBUT_LOCALE_PATH='"$(localedir_relative_SQ)"'
 
 http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SP_EXTRA_FLAGS += \
 	-DCURL_DISABLE_TYPECHECK
@@ -2636,17 +2636,17 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
-but-%$X: %.o GIT-LDFLAGS $(GITLIBS)
+but-%$X: %.o BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-but-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
+but-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-but-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+but-http-fetch$X: http.o http-walker.o http-fetch.o BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-but-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+but-http-push$X: http.o http-push.o BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -2656,11 +2656,11 @@ $(REMOTE_CURL_ALIASES): $(REMOTE_CURL_PRIMARY)
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS)
+$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
-contrib/scalar/scalar$X: $(SCALAR_OBJECTS) GIT-LDFLAGS $(GITLIBS)
+contrib/scalar/scalar$X: $(SCALAR_OBJECTS) BUT-LDFLAGS $(BUTLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
@@ -2678,12 +2678,12 @@ $(REFTABLE_TEST_LIB): $(REFTABLE_TEST_OBJS)
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
-Documentation/GIT-EXCLUDED-PROGRAMS: FORCE
+Documentation/BUT-EXCLUDED-PROGRAMS: FORCE
 	@EXCLUDED='EXCLUDED_PROGRAMS := $(EXCLUDED_PROGRAMS)'; \
 	    if test x"$$EXCLUDED" != \
-		x"`cat Documentation/GIT-EXCLUDED-PROGRAMS 2>/dev/null`" ; then \
+		x"`cat Documentation/BUT-EXCLUDED-PROGRAMS 2>/dev/null`" ; then \
 		echo >&2 "    * new documentation flags"; \
-		echo "$$EXCLUDED" >Documentation/GIT-EXCLUDED-PROGRAMS; \
+		echo "$$EXCLUDED" >Documentation/BUT-EXCLUDED-PROGRAMS; \
             fi
 
 .PHONY: doc man man-perl html info pdf
@@ -2785,7 +2785,7 @@ endif
 NO_PERL_CPAN_FALLBACKS_SQ = $(subst ','\'',$(NO_PERL_CPAN_FALLBACKS))
 endif
 
-perl/build/lib/%.pm: perl/%.pm GIT-PERL-DEFINES
+perl/build/lib/%.pm: perl/%.pm BUT-PERL-DEFINES
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN) \
 	sed -e 's|@@LOCALEDIR@@|$(perl_localedir_SQ)|g' \
@@ -2819,35 +2819,35 @@ cscope: cscope.out
 TRACK_PREFIX = $(bindir_SQ):$(butexecdir_SQ):$(template_dir_SQ):$(prefix_SQ):\
 		$(localedir_SQ)
 
-GIT-PREFIX: FORCE
+BUT-PREFIX: FORCE
 	@FLAGS='$(TRACK_PREFIX)'; \
-	if test x"$$FLAGS" != x"`cat GIT-PREFIX 2>/dev/null`" ; then \
+	if test x"$$FLAGS" != x"`cat BUT-PREFIX 2>/dev/null`" ; then \
 		echo >&2 "    * new prefix flags"; \
-		echo "$$FLAGS" >GIT-PREFIX; \
+		echo "$$FLAGS" >BUT-PREFIX; \
 	fi
 
 TRACK_CFLAGS = $(CC):$(subst ','\'',$(ALL_CFLAGS)):$(USE_GETTEXT_SCHEME)
 
-GIT-CFLAGS: FORCE
+BUT-CFLAGS: FORCE
 	@FLAGS='$(TRACK_CFLAGS)'; \
-	    if test x"$$FLAGS" != x"`cat GIT-CFLAGS 2>/dev/null`" ; then \
+	    if test x"$$FLAGS" != x"`cat BUT-CFLAGS 2>/dev/null`" ; then \
 		echo >&2 "    * new build flags"; \
-		echo "$$FLAGS" >GIT-CFLAGS; \
+		echo "$$FLAGS" >BUT-CFLAGS; \
             fi
 
 TRACK_LDFLAGS = $(subst ','\'',$(ALL_LDFLAGS))
 
-GIT-LDFLAGS: FORCE
+BUT-LDFLAGS: FORCE
 	@FLAGS='$(TRACK_LDFLAGS)'; \
-	    if test x"$$FLAGS" != x"`cat GIT-LDFLAGS 2>/dev/null`" ; then \
+	    if test x"$$FLAGS" != x"`cat BUT-LDFLAGS 2>/dev/null`" ; then \
 		echo >&2 "    * new link flags"; \
-		echo "$$FLAGS" >GIT-LDFLAGS; \
+		echo "$$FLAGS" >BUT-LDFLAGS; \
             fi
 
 # We need to apply sq twice, once to protect from the shell
-# that runs GIT-BUILD-OPTIONS, and then again to protect it
+# that runs BUT-BUILD-OPTIONS, and then again to protect it
 # and the first level quoting from the shell that runs "echo".
-GIT-BUILD-OPTIONS: FORCE
+BUT-BUILD-OPTIONS: FORCE
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@+
 	@echo TEST_SHELL_PATH=\''$(subst ','\'',$(TEST_SHELL_PATH_SQ))'\' >>$@+
 	@echo PERL_PATH=\''$(subst ','\'',$(PERL_PATH_SQ))'\' >>$@+
@@ -2872,42 +2872,42 @@ endif
 ifdef TEST_OUTPUT_DIRECTORY
 	@echo TEST_OUTPUT_DIRECTORY=\''$(subst ','\'',$(subst ','\'',$(TEST_OUTPUT_DIRECTORY)))'\' >>$@+
 endif
-ifdef GIT_TEST_OPTS
-	@echo GIT_TEST_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_OPTS)))'\' >>$@+
+ifdef BUT_TEST_OPTS
+	@echo BUT_TEST_OPTS=\''$(subst ','\'',$(subst ','\'',$(BUT_TEST_OPTS)))'\' >>$@+
 endif
-ifdef GIT_TEST_CMP
-	@echo GIT_TEST_CMP=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_CMP)))'\' >>$@+
+ifdef BUT_TEST_CMP
+	@echo BUT_TEST_CMP=\''$(subst ','\'',$(subst ','\'',$(BUT_TEST_CMP)))'\' >>$@+
 endif
-ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
-	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@+
+ifdef BUT_TEST_CMP_USE_COPIED_CONTEXT
+	@echo BUT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@+
 endif
-ifdef GIT_TEST_UTF8_LOCALE
-	@echo GIT_TEST_UTF8_LOCALE=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_UTF8_LOCALE)))'\' >>$@+
+ifdef BUT_TEST_UTF8_LOCALE
+	@echo BUT_TEST_UTF8_LOCALE=\''$(subst ','\'',$(subst ','\'',$(BUT_TEST_UTF8_LOCALE)))'\' >>$@+
 endif
 	@echo NO_GETTEXT=\''$(subst ','\'',$(subst ','\'',$(NO_GETTEXT)))'\' >>$@+
-ifdef GIT_PERF_REPEAT_COUNT
-	@echo GIT_PERF_REPEAT_COUNT=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_REPEAT_COUNT)))'\' >>$@+
+ifdef BUT_PERF_REPEAT_COUNT
+	@echo BUT_PERF_REPEAT_COUNT=\''$(subst ','\'',$(subst ','\'',$(BUT_PERF_REPEAT_COUNT)))'\' >>$@+
 endif
-ifdef GIT_PERF_REPO
-	@echo GIT_PERF_REPO=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_REPO)))'\' >>$@+
+ifdef BUT_PERF_REPO
+	@echo BUT_PERF_REPO=\''$(subst ','\'',$(subst ','\'',$(BUT_PERF_REPO)))'\' >>$@+
 endif
-ifdef GIT_PERF_LARGE_REPO
-	@echo GIT_PERF_LARGE_REPO=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_LARGE_REPO)))'\' >>$@+
+ifdef BUT_PERF_LARGE_REPO
+	@echo BUT_PERF_LARGE_REPO=\''$(subst ','\'',$(subst ','\'',$(BUT_PERF_LARGE_REPO)))'\' >>$@+
 endif
-ifdef GIT_PERF_MAKE_OPTS
-	@echo GIT_PERF_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_MAKE_OPTS)))'\' >>$@+
+ifdef BUT_PERF_MAKE_OPTS
+	@echo BUT_PERF_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(BUT_PERF_MAKE_OPTS)))'\' >>$@+
 endif
-ifdef GIT_PERF_MAKE_COMMAND
-	@echo GIT_PERF_MAKE_COMMAND=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_MAKE_COMMAND)))'\' >>$@+
+ifdef BUT_PERF_MAKE_COMMAND
+	@echo BUT_PERF_MAKE_COMMAND=\''$(subst ','\'',$(subst ','\'',$(BUT_PERF_MAKE_COMMAND)))'\' >>$@+
 endif
-ifdef GIT_INTEROP_MAKE_OPTS
-	@echo GIT_INTEROP_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_INTEROP_MAKE_OPTS)))'\' >>$@+
+ifdef BUT_INTEROP_MAKE_OPTS
+	@echo BUT_INTEROP_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(BUT_INTEROP_MAKE_OPTS)))'\' >>$@+
 endif
-ifdef GIT_TEST_INDEX_VERSION
-	@echo GIT_TEST_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_INDEX_VERSION)))'\' >>$@+
+ifdef BUT_TEST_INDEX_VERSION
+	@echo BUT_TEST_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(BUT_TEST_INDEX_VERSION)))'\' >>$@+
 endif
-ifdef GIT_TEST_PERL_FATAL_WARNINGS
-	@echo GIT_TEST_PERL_FATAL_WARNINGS=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_PERL_FATAL_WARNINGS)))'\' >>$@+
+ifdef BUT_TEST_PERL_FATAL_WARNINGS
+	@echo BUT_TEST_PERL_FATAL_WARNINGS=\''$(subst ','\'',$(subst ','\'',$(BUT_TEST_PERL_FATAL_WARNINGS)))'\' >>$@+
 endif
 ifdef RUNTIME_PREFIX
 	@echo RUNTIME_PREFIX=\'true\' >>$@+
@@ -2920,7 +2920,7 @@ endif
 ifndef NO_PYTHON
 TRACK_PYTHON = $(subst ','\'',-DPYTHON_PATH='$(PYTHON_PATH_SQ)')
 
-GIT-PYTHON-VARS: FORCE
+BUT-PYTHON-VARS: FORCE
 	@VARS='$(TRACK_PYTHON)'; \
 	    if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo >&2 "    * new Python interpreter location"; \
@@ -2960,7 +2960,7 @@ perf: all
 
 t/helper/test-tool$X: $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS))
 
-t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS) $(REFTABLE_TEST_LIB)
+t/helper/test-%$X: t/helper/test-%.o BUT-LDFLAGS $(BUTLIBS) $(REFTABLE_TEST_LIB)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
 check-sha1:: t/helper/test-tool$X
@@ -3201,18 +3201,18 @@ quick-install-html:
 
 ### Maintainer's dist rules
 
-GIT_TARNAME = but-$(GIT_VERSION)
-GIT_ARCHIVE_EXTRA_FILES = \
-	--prefix=$(GIT_TARNAME)/ \
+BUT_TARNAME = but-$(BUT_VERSION)
+BUT_ARCHIVE_EXTRA_FILES = \
+	--prefix=$(BUT_TARNAME)/ \
 	--add-file=configure \
 	--add-file=.dist-tmp-dir/version \
-	--prefix=$(GIT_TARNAME)/but-gui/ \
+	--prefix=$(BUT_TARNAME)/but-gui/ \
 	--add-file=.dist-tmp-dir/but-gui/version
 ifdef DC_SHA1_SUBMODULE
-GIT_ARCHIVE_EXTRA_FILES += \
-	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
+BUT_ARCHIVE_EXTRA_FILES += \
+	--prefix=$(BUT_TARNAME)/sha1collisiondetection/ \
 	--add-file=sha1collisiondetection/LICENSE.txt \
-	--prefix=$(GIT_TARNAME)/sha1collisiondetection/lib/ \
+	--prefix=$(BUT_TARNAME)/sha1collisiondetection/lib/ \
 	--add-file=sha1collisiondetection/lib/sha1.c \
 	--add-file=sha1collisiondetection/lib/sha1.h \
 	--add-file=sha1collisiondetection/lib/ubc_check.c \
@@ -3221,13 +3221,13 @@ endif
 dist: but-archive$(X) configure
 	@$(RM) -r .dist-tmp-dir
 	@mkdir .dist-tmp-dir
-	@echo $(GIT_VERSION) > .dist-tmp-dir/version
+	@echo $(BUT_VERSION) > .dist-tmp-dir/version
 	@$(MAKE) -C but-gui TARDIR=../.dist-tmp-dir/but-gui dist-version
 	./but-archive --format=tar \
-		$(GIT_ARCHIVE_EXTRA_FILES) \
-		--prefix=$(GIT_TARNAME)/ HEAD^{tree} > $(GIT_TARNAME).tar
+		$(BUT_ARCHIVE_EXTRA_FILES) \
+		--prefix=$(BUT_TARNAME)/ HEAD^{tree} > $(BUT_TARNAME).tar
 	@$(RM) -r .dist-tmp-dir
-	gzip -f -9 $(GIT_TARNAME).tar
+	gzip -f -9 $(BUT_TARNAME).tar
 
 rpm::
 	@echo >&2 "Use distro packaged sources to run rpmbuild"
@@ -3239,7 +3239,7 @@ OTHER_PROGRAMS += $(shell echo *.dll t/helper/*.dll)
 endif
 
 artifacts-tar:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) \
-		GIT-BUILD-OPTIONS $(TEST_PROGRAMS) $(test_bindir_programs) \
+		BUT-BUILD-OPTIONS $(TEST_PROGRAMS) $(test_bindir_programs) \
 		$(MOFILES)
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) \
 		SHELL_PATH='$(SHELL_PATH_SQ)' PERL_PATH='$(PERL_PATH_SQ)'
@@ -3248,8 +3248,8 @@ artifacts-tar:: $(ALL_COMMANDS_TO_INSTALL) $(SCRIPT_LIB) $(OTHER_PROGRAMS) \
 	$(TAR) czf "$(ARTIFACTS_DIRECTORY)/artifacts.tar.gz" $^ templates/blt/
 .PHONY: artifacts-tar
 
-htmldocs = but-htmldocs-$(GIT_VERSION)
-manpages = but-manpages-$(GIT_VERSION)
+htmldocs = but-htmldocs-$(BUT_VERSION)
+manpages = but-manpages-$(BUT_VERSION)
 .PHONY: dist-doc distclean
 dist-doc: but$X
 	$(RM) -r .doc-tmp-dir
@@ -3305,10 +3305,10 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) -r po/build/
 	$(RM) *.pyc *.pyo */*.pyc */*.pyo $(GENERATED_H) $(ETAGS_TARGET) tags cscope*
 	$(RM) -r .dist-tmp-dir .doc-tmp-dir
-	$(RM) $(GIT_TARNAME).tar.gz
+	$(RM) $(BUT_TARNAME).tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
-	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
+	$(RM) Documentation/BUT-EXCLUDED-PROGRAMS
 ifndef NO_PERL
 	$(MAKE) -C butweb clean
 	$(RM) -r perl/build/
@@ -3319,9 +3319,9 @@ ifndef NO_TCLTK
 	$(MAKE) -C butk-but clean
 	$(MAKE) -C but-gui clean
 endif
-	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-LDFLAGS GIT-BUILD-OPTIONS
-	$(RM) GIT-USER-AGENT GIT-PREFIX
-	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
+	$(RM) BUT-VERSION-FILE BUT-CFLAGS BUT-LDFLAGS BUT-BUILD-OPTIONS
+	$(RM) BUT-USER-AGENT BUT-PREFIX
+	$(RM) BUT-SCRIPT-DEFINES BUT-PERL-DEFINES BUT-PERL-HEADER BUT-PYTHON-VARS
 ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
@@ -3427,7 +3427,7 @@ coverage-test: coverage-clean-results coverage-compile
 
 coverage-prove: coverage-clean-results coverage-compile
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
-		DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$(GIT_PROVE_OPTS) -j1" \
+		DEFAULT_TEST_TARGET=prove BUT_PROVE_OPTS="$(BUT_PROVE_OPTS) -j1" \
 		-j1 test
 
 coverage-report:

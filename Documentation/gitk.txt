@@ -183,6 +183,6 @@ SEE ALSO
 	A minimal repository browser and Git tool output highlighter written
 	in C using Ncurses.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

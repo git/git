@@ -122,7 +122,7 @@ test_expect_success 'add -e' '
 test_expect_success 'add -e notices editor failure' '
 	but reset --hard &&
 	echo change >>file &&
-	test_must_fail env GIT_EDITOR=false but add -e &&
+	test_must_fail env BUT_EDITOR=false but add -e &&
 	test_expect_code 1 but diff --exit-code
 '
 

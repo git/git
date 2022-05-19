@@ -456,10 +456,10 @@ For C programs:
    must be declared with "extern" in header files. However, function
    declarations should not use "extern", as that is already the default.
 
- - You can launch gdb around your program using the shorthand GIT_DEBUGGER.
-   Run `GIT_DEBUGGER=1 ./bin-wrappers/but foo` to simply use gdb as is, or
-   run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/but foo` to
-   use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
+ - You can launch gdb around your program using the shorthand BUT_DEBUGGER.
+   Run `BUT_DEBUGGER=1 ./bin-wrappers/but foo` to simply use gdb as is, or
+   run `BUT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/but foo` to
+   use your own debugger and arguments. Example: `BUT_DEBUGGER="ddd --gdb"
    ./bin-wrappers/but log` (See `wrap-for-bin.sh`.)
 
 For Perl programs:
@@ -493,7 +493,7 @@ For Perl programs:
  - Learn and use Git.pm if you need that functionality.
 
  - For Emacs, it's useful to put the following in
-   GIT_CHECKOUT/.dir-locals.el, assuming you use cperl-mode:
+   BUT_CHECKOUT/.dir-locals.el, assuming you use cperl-mode:
 
     ;; note the first part is useful for C editing, too
     ((nil . ((indent-tabs-mode . t)
@@ -710,14 +710,14 @@ Writing Documentation:
    `remote.pushDefault`
    `http://but.example.com`
    `.but/config`
-   `GIT_DIR`
+   `BUT_DIR`
    `HEAD`
 
  An environment variable must be prefixed with "$" only when referring to its
  value and not when referring to the variable itself, in this case there is
  nothing to add except the backticks:
-   `GIT_DIR` is specified
-   `$GIT_DIR/hooks/pre-receive`
+   `BUT_DIR` is specified
+   `$BUT_DIR/hooks/pre-receive`
 
  Word phrases enclosed in `backtick characters` are rendered literally
  and will not be further expanded. The use of `backticks` to achieve the

@@ -25,16 +25,16 @@ static int is_in(const char *s, int ch)
 	}					\
 }
 
-#define DIGIT "0123456789"
+#define DIBUT "0123456789"
 #define LOWER "abcdefghijklmnopqrstuvwxyz"
 #define UPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int cmd__ctype(int argc, const char **argv)
 {
-	TEST_CLASS(isdibut, DIGIT);
+	TEST_CLASS(isdibut, DIBUT);
 	TEST_CLASS(isspace, " \n\r\t");
 	TEST_CLASS(isalpha, LOWER UPPER);
-	TEST_CLASS(isalnum, LOWER UPPER DIGIT);
+	TEST_CLASS(isalnum, LOWER UPPER DIBUT);
 	TEST_CLASS(is_glob_special, "*?[\\");
 	TEST_CLASS(is_regex_special, "$()*+.?[\\^{|");
 	TEST_CLASS(is_pathspec_magic, "!\"#%&',-/:;<=>@_`~");

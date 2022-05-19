@@ -70,6 +70,6 @@ the change (as happening against the super repo).  However, the client
 will properly ignore these extra events, so performance may be affected
 but it will not cause an incorrect result.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

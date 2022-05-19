@@ -2569,7 +2569,7 @@ msgstr "%s %s no és una comissió!"
 
 #: cummit.c:197
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2578,7 +2578,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"La compatibilitat amb <GIT_DIR>/info/grafts és obsoleta\n"
+"La compatibilitat amb <BUT_DIR>/info/grafts és obsoleta\n"
 "i s'eliminarà en una futura versió del Git.\n"
 "\n"
 "Useu «but replace --convert-graft-file»\n"
@@ -6819,10 +6819,10 @@ msgstr ""
 #: read-cache.c:1761
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION està establerta, però el valor no és vàlid.\n"
+"BUT_INDEX_VERSION està establerta, però el valor no és vàlid.\n"
 "S'està usant la versió %i"
 
 #: read-cache.c:1817
@@ -8099,16 +8099,16 @@ msgid "could not open '%s' for reading"
 msgstr "no s'ha pogut obrir «%s» per a lectura"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "Ja s'ha donat «GIT_AUTHOR_NAME»"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "Ja s'ha donat «BUT_AUTHOR_NAME»"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "Ja s'ha donat «GIT_AUTHOR_EMAIL»"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "Ja s'ha donat «BUT_AUTHOR_EMAIL»"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "Ja s'ha donat «GIT_AUTHOR_DATE»"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "Ja s'ha donat «BUT_AUTHOR_DATE»"
 
 #: sequencer.c:865
 #, c-format
@@ -8116,16 +8116,16 @@ msgid "unknown variable '%s'"
 msgstr "variable «%s» desconeguda"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "falta «GIT_AUTHOR_NAME»"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "falta «BUT_AUTHOR_NAME»"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "falta «GIT_AUTHOR_EMAIL»"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "falta «BUT_AUTHOR_EMAIL»"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "falta «GIT_AUTHOR_DATE»"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "falta «BUT_AUTHOR_DATE»"
 
 #: sequencer.c:939
 #, c-format
@@ -9039,10 +9039,10 @@ msgstr "no és un repositori de but (ni cap dels directoris pares): %s"
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "no és un repositori de but (ni cap pare fins al punt de muntatge %s)\n"
-"S'atura a la frontera de sistema de fitxers (GIT_DISCOVERY_ACROSS_FILESYSTEM no està establert)."
+"S'atura a la frontera de sistema de fitxers (BUT_DISCOVERY_ACROSS_FILESYSTEM no està establert)."
 
 #: setup.c:1447
 #, c-format
@@ -10978,8 +10978,8 @@ msgid "could not parse patch '%s'"
 msgstr "no s'ha pogut analitzar el pedaç «%s»"
 
 #: builtin/am.c:842
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Només una sèrie de pedaços StGIT es pot aplicar a la vegada"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Només una sèrie de pedaços StBUT es pot aplicar a la vegada"
 
 #: builtin/am.c:890
 msgid "invalid timestamp"
@@ -26948,13 +26948,13 @@ msgstr "S'ha produït un error en obrir per escriptura %s: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"S'eliminaran les línies que comencen amb «GIT:».\n"
+"S'eliminaran les línies que comencen amb «BUT:».\n"
 "Considereu incloure un diffstat global o una taula de continguts\n"
 "per al pedaç que esteu escrivint.\n"
 "\n"

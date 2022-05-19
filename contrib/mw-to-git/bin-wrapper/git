@@ -3,12 +3,12 @@
 # but executable wrapper script for Git-Mediawiki to run tests without
 # installing all the scripts and perl packages.
 
-GIT_ROOT_DIR=../../..
-GIT_EXEC_PATH=$(cd "$(dirname "$0")" && cd ${GIT_ROOT_DIR} && pwd)
+BUT_ROOT_DIR=../../..
+BUT_EXEC_PATH=$(cd "$(dirname "$0")" && cd ${BUT_ROOT_DIR} && pwd)
 
-GITPERLLIB="$GIT_EXEC_PATH"'/contrib/mw-to-but'"${GITPERLLIB:+:$GITPERLLIB}"
-PATH="$GIT_EXEC_PATH"'/contrib/mw-to-but:'"$PATH"
+BUTPERLLIB="$BUT_EXEC_PATH"'/contrib/mw-to-but'"${BUTPERLLIB:+:$BUTPERLLIB}"
+PATH="$BUT_EXEC_PATH"'/contrib/mw-to-but:'"$PATH"
 
-export GITPERLLIB PATH
+export BUTPERLLIB PATH
 
-exec "${GIT_EXEC_PATH}/bin-wrappers/but" "$@"
+exec "${BUT_EXEC_PATH}/bin-wrappers/but" "$@"

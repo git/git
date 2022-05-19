@@ -2,11 +2,11 @@
 
 test_description='pushing to a repository using push options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
 . ./test-lib.sh
 
@@ -20,11 +20,11 @@ mk_repo_pair () {
 		mkdir -p .but/hooks &&
 		cat >.but/hooks/pre-receive <<-'EOF' &&
 		#!/bin/sh
-		if test -n "$GIT_PUSH_OPTION_COUNT"; then
+		if test -n "$BUT_PUSH_OPTION_COUNT"; then
 			i=0
 			>hooks/pre-receive.push_options
-			while test "$i" -lt "$GIT_PUSH_OPTION_COUNT"; do
-				eval "value=\$GIT_PUSH_OPTION_$i"
+			while test "$i" -lt "$BUT_PUSH_OPTION_COUNT"; do
+				eval "value=\$BUT_PUSH_OPTION_$i"
 				echo $value >>hooks/pre-receive.push_options
 				i=$((i + 1))
 			done
@@ -34,11 +34,11 @@ mk_repo_pair () {
 
 		cat >.but/hooks/post-receive <<-'EOF' &&
 		#!/bin/sh
-		if test -n "$GIT_PUSH_OPTION_COUNT"; then
+		if test -n "$BUT_PUSH_OPTION_COUNT"; then
 			i=0
 			>hooks/post-receive.push_options
-			while test "$i" -lt "$GIT_PUSH_OPTION_COUNT"; do
-				eval "value=\$GIT_PUSH_OPTION_$i"
+			while test "$i" -lt "$BUT_PUSH_OPTION_COUNT"; do
+				eval "value=\$BUT_PUSH_OPTION_$i"
 				echo $value >>hooks/post-receive.push_options
 				i=$((i + 1))
 			done

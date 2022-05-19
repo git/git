@@ -6,7 +6,7 @@ transfer.fsckObjects::
 When set, the fetch or receive will abort in the case of a malformed
 object or a link to a nonexistent object. In addition, various other
 issues are checked for, including legacy issues (see `fsck.<msg-id>`),
-and potential security issues like the existence of a `.GIT` directory
+and potential security issues like the existence of a `.BUT` directory
 or a malicious `.butmodules` file (see the release notes for v2.2.1
 and v2.17.1 for details). Other sanity and security checks may be
 added in future releases.

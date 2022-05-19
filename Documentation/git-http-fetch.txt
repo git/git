@@ -31,7 +31,7 @@ cummit-id::
 	Report what is downloaded.
 
 -w <filename>::
-        Writes the cummit-id into the filename under $GIT_DIR/refs/<filename> on
+        Writes the cummit-id into the filename under $BUT_DIR/refs/<filename> on
         the local end after the transfer is complete.
 
 --stdin::
@@ -57,6 +57,6 @@ cummit-id::
 	Verify that everything reachable from target is fetched.  Used after
 	an earlier fetch is interrupted.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

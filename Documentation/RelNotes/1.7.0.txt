@@ -42,7 +42,7 @@ Notes on behaviour change
    This makes them consistent with other programs executed by but, and
    allows you to pass command-line parameters to the helpers. Any helper
    paths containing spaces or other metacharacters now need to be
-   shell-quoted.  The affected helpers are GIT_EXTERNAL_DIFF in the
+   shell-quoted.  The affected helpers are BUT_EXTERNAL_DIFF in the
    environment, and diff.*.command and diff.*.textconv in the config
    file.
 
@@ -82,7 +82,7 @@ Updates since v1.6.6
  * More commands learned "--quiet" and "--[no-]progress" options.
 
  * Various commands given by the end user (e.g. diff.type.textconv,
-   and GIT_EDITOR) can be specified with command line arguments.  E.g. it
+   and BUT_EDITOR) can be specified with command line arguments.  E.g. it
    is now possible to say "[diff "utf8doc"] textconv = nkf -w".
 
  * "sparse checkout" feature allows only part of the work tree to be

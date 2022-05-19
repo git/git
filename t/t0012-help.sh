@@ -241,8 +241,8 @@ while read builtin
 do
 	test_expect_success "$builtin can handle -h" '
 		(
-			GIT_CEILING_DIRECTORIES=$(pwd) &&
-			export GIT_CEILING_DIRECTORIES &&
+			BUT_CEILING_DIRECTORIES=$(pwd) &&
+			export BUT_CEILING_DIRECTORIES &&
 			test_expect_code 129 but -C sub $builtin -h >output 2>&1
 		) &&
 		test_i18ngrep usage output

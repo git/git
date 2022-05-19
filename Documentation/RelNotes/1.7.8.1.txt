@@ -5,7 +5,7 @@ Fixes since v1.7.8
 ------------------
 
  * In some codepaths (notably, checkout and merge), the ignore patterns
-   recorded in $GIT_DIR/info/exclude were not honored. They now are.
+   recorded in $BUT_DIR/info/exclude were not honored. They now are.
 
  * "but apply --check" did not error out when given an empty input
    without any patch.
@@ -14,7 +14,7 @@ Fixes since v1.7.8
    that are not at the tip of any ref.
 
  * "but checkout" and "but merge" treated in-tree .butignore and exclude
-   file in $GIT_DIR/info/ directory inconsistently when deciding which
+   file in $BUT_DIR/info/ directory inconsistently when deciding which
    untracked files are ignored and expendable.
 
  * LF-to-CRLF streaming filter used when checking out a large-ish blob

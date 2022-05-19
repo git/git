@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */
@@ -327,7 +327,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	/* Exact match: file or existing butlink */
 	if (pos >= 0) {
 		const struct cache_entry *ce = active_cache[pos];
-		if (S_ISGITLINK(ce->ce_mode)) {
+		if (S_ISBUTLINK(ce->ce_mode)) {
 
 			/* Do nothing to the index if there is no HEAD! */
 			if (resolve_butlink_ref(path, "HEAD", &oid) < 0)

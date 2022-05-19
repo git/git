@@ -11,8 +11,8 @@ write_script fake_editor <<\EOF
 echo "$MSG" >"$1"
 echo "$MSG" >&2
 EOF
-GIT_EDITOR=./fake_editor
-export GIT_EDITOR
+BUT_EDITOR=./fake_editor
+export BUT_EDITOR
 
 indent="    "
 
@@ -26,16 +26,16 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'need valid notes ref' '
-	test_must_fail env MSG=1 GIT_NOTES_REF=/ but notes show &&
-	test_must_fail env MSG=2 GIT_NOTES_REF=/ but notes show
+	test_must_fail env MSG=1 BUT_NOTES_REF=/ but notes show &&
+	test_must_fail env MSG=2 BUT_NOTES_REF=/ but notes show
 '
 
 test_expect_success 'refusing to add notes in refs/heads/' '
-	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus but notes add
+	test_must_fail env MSG=1 BUT_NOTES_REF=refs/heads/bogus but notes add
 '
 
 test_expect_success 'refusing to edit notes in refs/remotes/' '
-	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus but notes edit
+	test_must_fail env MSG=1 BUT_NOTES_REF=refs/heads/bogus but notes edit
 '
 
 # 1 indicates caught gracefully by die, 128 means but-show barked
@@ -563,7 +563,7 @@ test_expect_success 'appending empty string to non-existing note does not create
 
 test_expect_success 'create other note on a different notes ref (setup)' '
 	test_cummit 6th &&
-	GIT_NOTES_REF="refs/notes/other" but notes add -m "other note" &&
+	BUT_NOTES_REF="refs/notes/other" but notes add -m "other note" &&
 	cummit=$(but rev-parse HEAD) &&
 	cat >expect-not-other <<-EOF &&
 		cummit $cummit
@@ -585,8 +585,8 @@ test_expect_success 'Do not show note on other ref by default' '
 	test_cmp expect-not-other actual
 '
 
-test_expect_success 'Do show note when ref is given in GIT_NOTES_REF' '
-	GIT_NOTES_REF="refs/notes/other" but log -1 >actual &&
+test_expect_success 'Do show note when ref is given in BUT_NOTES_REF' '
+	BUT_NOTES_REF="refs/notes/other" but log -1 >actual &&
 	test_cmp expect-other actual
 '
 
@@ -598,7 +598,7 @@ test_expect_success 'Do show note when ref is given in core.notesRef config' '
 
 test_expect_success 'Do not show note when core.notesRef is overridden' '
 	test_config core.notesRef "refs/notes/other" &&
-	GIT_NOTES_REF="refs/notes/wrong" but log -1 >actual &&
+	BUT_NOTES_REF="refs/notes/wrong" but log -1 >actual &&
 	test_cmp expect-not-other actual
 '
 
@@ -627,9 +627,9 @@ test_expect_success 'Show all notes when notes.displayRef=refs/notes/*' '
 		Notes:
 		${indent}replacement for deleted note
 	EOF
-	GIT_NOTES_REF=refs/notes/cummits but notes add \
+	BUT_NOTES_REF=refs/notes/cummits but notes add \
 		-m"replacement for deleted note" HEAD^ &&
-	GIT_NOTES_REF=refs/notes/cummits but notes add -m"order test" &&
+	BUT_NOTES_REF=refs/notes/cummits but notes add -m"order test" &&
 	test_unconfig core.notesRef &&
 	test_config notes.displayRef "refs/notes/*" &&
 	but log -2 >actual &&
@@ -677,13 +677,13 @@ test_expect_success 'notes.displayRef with no value handled gracefully' '
 	test_must_fail but -c notes.displayRef diff-tree --notes HEAD
 '
 
-test_expect_success 'GIT_NOTES_DISPLAY_REF works' '
-	GIT_NOTES_DISPLAY_REF=refs/notes/cummits:refs/notes/other \
+test_expect_success 'BUT_NOTES_DISPLAY_REF works' '
+	BUT_NOTES_DISPLAY_REF=refs/notes/cummits:refs/notes/other \
 		but log -2 >actual &&
 	test_cmp expect-both actual
 '
 
-test_expect_success 'GIT_NOTES_DISPLAY_REF overrides config' '
+test_expect_success 'BUT_NOTES_DISPLAY_REF overrides config' '
 	cummit=$(but rev-parse HEAD) &&
 	parent=$(but rev-parse HEAD^) &&
 	cat >expect-none <<-EOF &&
@@ -700,12 +700,12 @@ test_expect_success 'GIT_NOTES_DISPLAY_REF overrides config' '
 		${indent}5th
 	EOF
 	test_config notes.displayRef "refs/notes/*" &&
-	GIT_NOTES_REF= GIT_NOTES_DISPLAY_REF= but log -2 >actual &&
+	BUT_NOTES_REF= BUT_NOTES_DISPLAY_REF= but log -2 >actual &&
 	test_cmp expect-none actual
 '
 
-test_expect_success '--show-notes=* adds to GIT_NOTES_DISPLAY_REF' '
-	GIT_NOTES_REF= GIT_NOTES_DISPLAY_REF= but log --show-notes=* -2 >actual &&
+test_expect_success '--show-notes=* adds to BUT_NOTES_DISPLAY_REF' '
+	BUT_NOTES_REF= BUT_NOTES_DISPLAY_REF= but log --show-notes=* -2 >actual &&
 	test_cmp expect-both actual
 '
 
@@ -1233,7 +1233,7 @@ test_expect_success 'but notes copy --for-rewrite (append empty)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_NOTES_REWRITE_MODE works' '
+test_expect_success 'BUT_NOTES_REWRITE_MODE works' '
 	cummit=$(but rev-parse HEAD) &&
 	cat >expect <<-EOF &&
 		cummit $cummit
@@ -1251,12 +1251,12 @@ test_expect_success 'GIT_NOTES_REWRITE_MODE works' '
 	from=$(but rev-parse HEAD^) &&
 	to=$(but rev-parse HEAD) &&
 	echo "$from" "$to" >copy &&
-	GIT_NOTES_REWRITE_MODE=overwrite but notes copy --for-rewrite=foo <copy &&
+	BUT_NOTES_REWRITE_MODE=overwrite but notes copy --for-rewrite=foo <copy &&
 	but log -1 >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_NOTES_REWRITE_REF works' '
+test_expect_success 'BUT_NOTES_REWRITE_REF works' '
 	cummit=$(but rev-parse HEAD) &&
 	cat >expect <<-EOF &&
 		cummit $cummit
@@ -1274,20 +1274,20 @@ test_expect_success 'GIT_NOTES_REWRITE_REF works' '
 	from=$(but rev-parse HEAD^) &&
 	to=$(but rev-parse HEAD) &&
 	echo "$from" "$to" >copy &&
-	GIT_NOTES_REWRITE_REF=refs/notes/cummits:refs/notes/other \
+	BUT_NOTES_REWRITE_REF=refs/notes/cummits:refs/notes/other \
 		but notes copy --for-rewrite=foo <copy &&
 	but log -1 >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
+test_expect_success 'BUT_NOTES_REWRITE_REF overrides config' '
 	but notes add -f -m"replacement note 3" HEAD^ &&
 	test_config notes.rewriteMode overwrite &&
 	test_config notes.rewriteRef refs/notes/other &&
 	from=$(but rev-parse HEAD^) &&
 	to=$(but rev-parse HEAD) &&
 	echo "$from" "$to" >copy &&
-	GIT_NOTES_REWRITE_REF=refs/notes/cummits \
+	BUT_NOTES_REWRITE_REF=refs/notes/cummits \
 		but notes copy --for-rewrite=foo <copy &&
 	but log -1 >actual &&
 	grep "replacement note 3" actual
@@ -1302,7 +1302,7 @@ test_expect_success 'but notes copy diagnoses too many or too few arguments' '
 
 test_expect_success 'but notes get-ref expands refs/heads/main to refs/notes/refs/heads/main' '
 	test_unconfig core.notesRef &&
-	sane_unset GIT_NOTES_REF &&
+	sane_unset BUT_NOTES_REF &&
 	echo refs/notes/refs/heads/main >expect &&
 	but notes --ref=refs/heads/main get-ref >actual &&
 	test_cmp expect actual
@@ -1310,7 +1310,7 @@ test_expect_success 'but notes get-ref expands refs/heads/main to refs/notes/ref
 
 test_expect_success 'but notes get-ref (no overrides)' '
 	test_unconfig core.notesRef &&
-	sane_unset GIT_NOTES_REF &&
+	sane_unset BUT_NOTES_REF &&
 	echo refs/notes/cummits >expect &&
 	but notes get-ref >actual &&
 	test_cmp expect actual
@@ -1323,15 +1323,15 @@ test_expect_success 'but notes get-ref (core.notesRef)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'but notes get-ref (GIT_NOTES_REF)' '
+test_expect_success 'but notes get-ref (BUT_NOTES_REF)' '
 	echo refs/notes/bar >expect &&
-	GIT_NOTES_REF=refs/notes/bar but notes get-ref >actual &&
+	BUT_NOTES_REF=refs/notes/bar but notes get-ref >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'but notes get-ref (--ref)' '
 	echo refs/notes/baz >expect &&
-	GIT_NOTES_REF=refs/notes/bar but notes --ref=baz get-ref >actual &&
+	BUT_NOTES_REF=refs/notes/bar but notes --ref=baz get-ref >actual &&
 	test_cmp expect actual
 '
 

@@ -2476,7 +2476,7 @@ msgstr "%s %s är inte en incheckning!"
 
 #: cummit.c:197
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2485,7 +2485,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"Stöd för <GIT_DIR>/info/grafts avråds från och\n"
+"Stöd för <BUT_DIR>/info/grafts avråds från och\n"
 "kommer tas bort i en framtida version av Git.\n"
 "\n"
 "Använd \"but replace --convert-graft-file\"\n"
@@ -6654,10 +6654,10 @@ msgstr ""
 #: read-cache.c:1761
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION satt, men värdet är ogiltigt.\n"
+"BUT_INDEX_VERSION satt, men värdet är ogiltigt.\n"
 "Använder version %i"
 
 #: read-cache.c:1817
@@ -7940,16 +7940,16 @@ msgid "could not open '%s' for reading"
 msgstr "kunde inte öppna \"%s\" för läsning"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "\"GIT_AUTHOR_NAME\" har redan angivits"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "\"BUT_AUTHOR_NAME\" har redan angivits"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "\"GIT_AUTHOR_EMAIL\" har redan angivits"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "\"BUT_AUTHOR_EMAIL\" har redan angivits"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "\"GIT_AUTHOR_DATE\" har redan angivits"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "\"BUT_AUTHOR_DATE\" har redan angivits"
 
 #: sequencer.c:865
 #, c-format
@@ -7957,16 +7957,16 @@ msgid "unknown variable '%s'"
 msgstr "okänd variabel \"%s\""
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "\"GIT_AUTHOR_NAME\" saknas"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "\"BUT_AUTHOR_NAME\" saknas"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "\"GIT_AUTHOR_EMAIL\" saknas"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "\"BUT_AUTHOR_EMAIL\" saknas"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "\"GIT_AUTHOR_DATE\" saknas"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "\"BUT_AUTHOR_DATE\" saknas"
 
 #: sequencer.c:939
 #, c-format
@@ -8879,11 +8879,11 @@ msgstr "inte ett but-arkiv (eller någon av föräldrakatalogerna): %s"
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "inte ett but-arkiv (eller någon av föräldrakatalogerna upp till "
 "monteringspunkten %s)\n"
-"Stoppar vid filsystemsgräns (GIT_DISCOVERY_ACROSS_FILESYSTEM är inte satt)."
+"Stoppar vid filsystemsgräns (BUT_DISCOVERY_ACROSS_FILESYSTEM är inte satt)."
 
 #: setup.c:1374
 #, c-format
@@ -10828,8 +10828,8 @@ msgid "could not parse patch '%s'"
 msgstr "kunde inte tolka patchen \"%s\""
 
 #: builtin/am.c:842
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Endast en StGIT-patchserie kan tillämpas åt gången"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Endast en StBUT-patchserie kan tillämpas åt gången"
 
 #: builtin/am.c:890
 msgid "invalid timestamp"
@@ -26553,13 +26553,13 @@ msgstr "Kunde inte öppna för skrivning %s: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"Rader som börjar med \"GIT:\" kommer tas bort.\n"
+"Rader som börjar med \"BUT:\" kommer tas bort.\n"
 "Överväg att ta med en övergripande diffstatus eller\n"
 "innehållsförteckning för patchen du skriver.\n"
 "\n"
@@ -27466,8 +27466,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "Du måste ta bort eller ändra glesningsreglerna för att uppdatera sådana "
 #~ "poster."
 
-#~ msgid "could not set GIT_DIR to '%s'"
-#~ msgstr "kunde inte ställa in GIT_DIR till \"%s\""
+#~ msgid "could not set BUT_DIR to '%s'"
+#~ msgstr "kunde inte ställa in BUT_DIR till \"%s\""
 
 #~ msgid "unable to unpack %s header with --allow-unknown-type"
 #~ msgstr "kan inte packa upp %s-huvud med --allow-unknown-type"

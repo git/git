@@ -81,27 +81,27 @@ struct fsmonitor_daemon_state {
  * so we will also get FS events for disk activity on and within ".but/"
  * that we need to respond to or filter from the client.
  *
- * But Git also allows ".but" to be a *file* that points to a GITDIR
+ * But Git also allows ".but" to be a *file* that points to a BUTDIR
  * outside of the working directory.  When this happens, we need to
  * create FS watches on both the working directory root *and* on the
- * (external) GITDIR root.  (The latter is required because we put
+ * (external) BUTDIR root.  (The latter is required because we put
  * cookie files inside it and use them to sync with the FS event
  * stream.)
  *
- * Note that in the context of this discussion, I'm using "GITDIR"
- * to only mean an external GITDIR referenced by a ".but" file.
+ * Note that in the context of this discussion, I'm using "BUTDIR"
+ * to only mean an external BUTDIR referenced by a ".but" file.
  *
  * The platform FS event backends will receive watch-specific
  * relative paths (except for those OS's that always emit absolute
  * paths).  We use the following enum and routines to classify each
  * path so that we know how to handle it.  There is a slight asymmetry
  * here because ".but/" is inside the working directory and the
- * (external) GITDIR is not, and therefore how we handle events may
- * vary slightly, so I have different enums for "IS...DOT_GIT..." and
- * "IS...GITDIR...".
+ * (external) BUTDIR is not, and therefore how we handle events may
+ * vary slightly, so I have different enums for "IS...DOT_BUT..." and
+ * "IS...BUTDIR...".
  *
- * The daemon uses the IS_DOT_GIT and IS_GITDIR internally to mean the
- * exact ".but" file/directory or GITDIR directory.  If the daemon
+ * The daemon uses the IS_DOT_BUT and IS_BUTDIR internally to mean the
+ * exact ".but" file/directory or BUTDIR directory.  If the daemon
  * receives a delete event for either of these paths, it will
  * automatically shutdown, for example.
  *
@@ -112,13 +112,13 @@ struct fsmonitor_daemon_state {
 enum fsmonitor_path_type {
 	IS_WORKDIR_PATH = 0,
 
-	IS_DOT_GIT,
-	IS_INSIDE_DOT_GIT,
-	IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX,
+	IS_DOT_BUT,
+	IS_INSIDE_DOT_BUT,
+	IS_INSIDE_DOT_BUT_WITH_COOKIE_PREFIX,
 
-	IS_GITDIR,
-	IS_INSIDE_GITDIR,
-	IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX,
+	IS_BUTDIR,
+	IS_INSIDE_BUTDIR,
+	IS_INSIDE_BUTDIR_WITH_COOKIE_PREFIX,
 
 	IS_OUTSIDE_CONE,
 };

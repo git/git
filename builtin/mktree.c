@@ -1,5 +1,5 @@
 /*
- * GIT - the stupid content tracker
+ * BUT - the stupid content tracker
  *
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
@@ -92,7 +92,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 		die("input format error: %s", buf);
 
 	/* It is perfectly normal if we do not have a cummit from a submodule */
-	if (S_ISGITLINK(mode))
+	if (S_ISBUTLINK(mode))
 		allow_missing = 1;
 
 

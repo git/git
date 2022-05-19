@@ -7,7 +7,7 @@ test_description='but checkout-index --prefix test.
 
 This test makes sure that --prefix option works as advertised, and
 also verifies that such leading path may contain symlinks, unlike
-the GIT controlled paths.
+the BUT controlled paths.
 '
 
 TEST_PASSES_SANITIZE_LEAK=true

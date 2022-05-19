@@ -34,7 +34,7 @@ save_good_tree () {
 # successfully before (e.g. because the branch got rebased, changing only
 # the cummit messages).
 skip_good_tree () {
-	if test true = "$GITHUB_ACTIONS"
+	if test true = "$BUTHUB_ACTIONS"
 	then
 		return
 	fi
@@ -108,30 +108,30 @@ then
 	# among *all* phases)
 	cache_dir="$HOME/test-cache/$SYSTEM_PHASENAME"
 
-	export GIT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
-	export GIT_TEST_OPTS="--verbose-log -x --write-junit-xml"
+	export BUT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
+	export BUT_TEST_OPTS="--verbose-log -x --write-junit-xml"
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows_nt != "$CI_OS_NAME" ||
-	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
-elif test true = "$GITHUB_ACTIONS"
+	BUT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $BUT_TEST_OPTS"
+elif test true = "$BUTHUB_ACTIONS"
 then
 	CI_TYPE=buthub-actions
-	CI_BRANCH="$GITHUB_REF"
-	CI_CUMMIT="$GITHUB_SHA"
+	CI_BRANCH="$BUTHUB_REF"
+	CI_CUMMIT="$BUTHUB_SHA"
 	CI_OS_NAME="$(echo "$RUNNER_OS" | tr A-Z a-z)"
 	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
-	CI_REPO_SLUG="$GITHUB_REPOSITORY"
-	CI_JOB_ID="$GITHUB_RUN_ID"
+	CI_REPO_SLUG="$BUTHUB_REPOSITORY"
+	CI_JOB_ID="$BUTHUB_RUN_ID"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
 
 	cache_dir="$HOME/none"
 
-	export GIT_PROVE_OPTS="--timer --jobs 10"
-	export GIT_TEST_OPTS="--verbose-log -x"
+	export BUT_PROVE_OPTS="--timer --jobs 10"
+	export BUT_TEST_OPTS="--verbose-log -x"
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows != "$CI_OS_NAME" ||
-	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+	BUT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $BUT_TEST_OPTS"
 else
 	echo "Could not identify CI type" >&2
 	env >&2
@@ -153,7 +153,7 @@ fi
 
 export DEVELOPER=1
 export DEFAULT_TEST_TARGET=prove
-export GIT_TEST_CLONE_2GB=true
+export BUT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
 case "$runs_on_pool" in
@@ -170,7 +170,7 @@ ubuntu-latest)
 		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python2"
 	fi
 
-	export GIT_TEST_HTTPD=true
+	export BUT_TEST_HTTPD=true
 
 	# The Linux build installs the defined dependency versions below.
 	# The OS X build installs much more recent versions, whichever
@@ -178,11 +178,11 @@ ubuntu-latest)
 	# image.
 	# Keep that in mind when you encounter a broken OS X build!
 	export LINUX_P4_VERSION="16.2"
-	export LINUX_GIT_LFS_VERSION="1.5.2"
+	export LINUX_BUT_LFS_VERSION="1.5.2"
 
 	P4_PATH="$HOME/custom/p4"
-	GIT_LFS_PATH="$HOME/custom/but-lfs"
-	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
+	BUT_LFS_PATH="$HOME/custom/but-lfs"
+	export PATH="$BUT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 macos-latest)
 	if [ "$jobname" = osx-gcc ]
@@ -202,11 +202,11 @@ linux-musl)
 	CC=gcc
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3 USE_LIBPCRE2=Yes"
 	MAKEFLAGS="$MAKEFLAGS NO_REGEX=Yes ICONV_OMITS_BOM=Yes"
-	MAKEFLAGS="$MAKEFLAGS GIT_TEST_UTF8_LOCALE=C.UTF-8"
+	MAKEFLAGS="$MAKEFLAGS BUT_TEST_UTF8_LOCALE=C.UTF-8"
 	;;
 linux-leaks)
 	export SANITIZE=leak
-	export GIT_TEST_PASSING_SANITIZE_LEAK=true
+	export BUT_TEST_PASSING_SANITIZE_LEAK=true
 	;;
 esac
 

@@ -1,15 +1,15 @@
 #!/bin/sh
 
 test_description='but filter-branch'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success 'setup' '
 	test_cummit A &&
-	GIT_CUMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	BUT_CUMMITTER_DATE="@0 +0000" BUT_AUTHOR_DATE="@0 +0000" &&
 	test_cummit --notick B &&
 	but checkout -b branch B &&
 	test_cummit D &&
@@ -57,7 +57,7 @@ test_expect_success 'result is really identical' '
 '
 
 TRASHDIR=$(pwd)
-test_expect_success 'correct GIT_DIR while using -d' '
+test_expect_success 'correct BUT_DIR while using -d' '
 	mkdir drepo &&
 	( cd drepo &&
 	but init &&
@@ -181,9 +181,9 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 	but branch directorymoved &&
 	but filter-branch -f --index-filter \
 		 "but ls-files -s | sed \"s-	-&newsubdir/-\" |
-	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
+	          BUT_INDEX_FILE=\$BUT_INDEX_FILE.new \
 			but update-index --index-info &&
-		  mv \"\$GIT_INDEX_FILE.new\" \"\$GIT_INDEX_FILE\"" directorymoved &&
+		  mv \"\$BUT_INDEX_FILE.new\" \"\$BUT_INDEX_FILE\"" directorymoved &&
 	but diff --exit-code HEAD directorymoved:newsubdir
 '
 
@@ -198,11 +198,11 @@ test_expect_success 'author information is preserved' '
 	: > i &&
 	but add i &&
 	test_tick &&
-	GIT_AUTHOR_NAME="B V Uips" but cummit -m bvuips &&
+	BUT_AUTHOR_NAME="B V Uips" but cummit -m bvuips &&
 	but branch preserved-author &&
-	(sane_unset GIT_AUTHOR_NAME &&
+	(sane_unset BUT_AUTHOR_NAME &&
 	 but filter-branch -f --msg-filter "cat; \
-			test \$GIT_CUMMIT != $(but rev-parse main) || \
+			test \$BUT_CUMMIT != $(but rev-parse main) || \
 			echo Hallo" \
 		preserved-author) &&
 	but rev-list --author="B V Uips" preserved-author >actual &&
@@ -215,7 +215,7 @@ test_expect_success "remove a certain author's cummits" '
 	but cummit -m i i &&
 	but branch removed-author &&
 	but filter-branch -f --cummit-filter "\
-		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
+		if [ \"\$BUT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
 			skip_cummit \"\$@\";
 		else\
@@ -235,7 +235,7 @@ test_expect_success 'barf on invalid name' '
 
 test_expect_success '"map" works in cummit filter' '
 	but filter-branch -f --cummit-filter "\
-		parent=\$(but rev-parse \$GIT_CUMMIT^) &&
+		parent=\$(but rev-parse \$BUT_CUMMIT^) &&
 		mapped=\$(map \$parent) &&
 		actual=\$(echo \"\$@\" | sed \"s/^.*-p //\") &&
 		test \$mapped = \$actual &&
@@ -339,7 +339,7 @@ test_expect_success 'setup --prune-empty comparisons' '
 	but rm -rf . &&
 	unset test_tick &&
 	test_tick &&
-	GIT_CUMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	BUT_CUMMITTER_DATE="@0 +0000" BUT_AUTHOR_DATE="@0 +0000" &&
 	test_cummit --notick B B.t B Bx &&
 	but checkout -b branch-no-a Bx &&
 	test_cummit D D.t D Dx &&

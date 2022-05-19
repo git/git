@@ -183,10 +183,10 @@ static void write_rev_header(struct hashfile *f)
 {
 	uint32_t oid_version;
 	switch (hash_algo_by_ptr(the_hash_algo)) {
-	case GIT_HASH_SHA1:
+	case BUT_HASH_SHA1:
 		oid_version = 1;
 		break;
-	case GIT_HASH_SHA256:
+	case BUT_HASH_SHA256:
 		oid_version = 2;
 		break;
 	default:
@@ -370,7 +370,7 @@ void fixup_pack_header_footer(int pack_fd,
 		the_hash_algo->update_fn(&old_hash_ctx, buf, n);
 		partial_pack_offset -= n;
 		if (partial_pack_offset == 0) {
-			unsigned char hash[GIT_MAX_RAWSZ];
+			unsigned char hash[BUT_MAX_RAWSZ];
 			the_hash_algo->final_fn(hash, &old_hash_ctx);
 			if (!hasheq(hash, partial_pack_hash))
 				die("Unexpected checksum for %s "
@@ -396,7 +396,7 @@ void fixup_pack_header_footer(int pack_fd,
 
 char *index_pack_lockfile(int ip_out, int *is_well_formed)
 {
-	char packname[GIT_MAX_HEXSZ + 6];
+	char packname[BUT_MAX_HEXSZ + 6];
 	const int len = the_hash_algo->hexsz + 6;
 
 	/*

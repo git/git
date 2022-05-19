@@ -6,15 +6,15 @@
 
 . ./test-lib.sh
 
-GIT_TEXTDOMAINDIR="$GIT_BUILD_DIR/po/build/locale"
-GIT_PO_PATH="$GIT_BUILD_DIR/po"
-export GIT_TEXTDOMAINDIR GIT_PO_PATH
+BUT_TEXTDOMAINDIR="$BUT_BUILD_DIR/po/build/locale"
+BUT_PO_PATH="$BUT_BUILD_DIR/po"
+export BUT_TEXTDOMAINDIR BUT_PO_PATH
 
-if test -n "$GIT_TEST_INSTALLED"
+if test -n "$BUT_TEST_INSTALLED"
 then
 	. "$(but --exec-path)"/but-sh-i18n
 else
-	. "$GIT_BUILD_DIR"/but-sh-i18n
+	. "$BUT_BUILD_DIR"/but-sh-i18n
 fi
 
 if test_have_prereq GETTEXT
@@ -37,7 +37,7 @@ then
 	export is_IS_locale is_IS_iso_locale
 
 	if test -n "$is_IS_locale" &&
-		test $GIT_INTERNAL_GETTEXT_SH_SCHEME != "fallthrough"
+		test $BUT_INTERNAL_GETTEXT_SH_SCHEME != "fallthrough"
 	then
 		# Some of the tests need the reference Icelandic locale
 		test_set_prereq GETTEXT_LOCALE
@@ -51,7 +51,7 @@ then
 	fi
 
 	if test -n "$is_IS_iso_locale" &&
-		test $GIT_INTERNAL_GETTEXT_SH_SCHEME != "fallthrough"
+		test $BUT_INTERNAL_GETTEXT_SH_SCHEME != "fallthrough"
 	then
 		# Some of the tests need the reference Icelandic locale
 		test_set_prereq GETTEXT_ISO_LOCALE

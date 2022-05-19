@@ -2,8 +2,8 @@
 
 test_description='but p4 label tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-but-p4.sh
 
@@ -117,13 +117,13 @@ test_expect_success 'export but tags to p4' '
 	but p4 clone --dest="$but" //depot@all &&
 	(
 		cd "$but" &&
-		but tag -m "A tag created in but:xyzzy" GIT_TAG_1 &&
+		but tag -m "A tag created in but:xyzzy" BUT_TAG_1 &&
 		echo "hello world" >main/f10 &&
 		but add main/f10 &&
 		but cummit -m "Adding file for export test" &&
 		but config but-p4.skipSubmitEdit true &&
 		but p4 submit &&
-		but tag -m "Another but tag" GIT_TAG_2 &&
+		but tag -m "Another but tag" BUT_TAG_2 &&
 		but tag LIGHTWEIGHT_TAG &&
 		but p4 rebase --import-labels --verbose &&
 		but p4 submit --export-labels --verbose
@@ -131,13 +131,13 @@ test_expect_success 'export but tags to p4' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		p4 labels ... | grep GIT_TAG_1 &&
-		p4 labels ... | grep GIT_TAG_2 &&
+		p4 labels ... | grep BUT_TAG_1 &&
+		p4 labels ... | grep BUT_TAG_2 &&
 		p4 labels ... | grep LIGHTWEIGHT_TAG &&
-		p4 label -o GIT_TAG_1 | grep "tag created in but:xyzzy" &&
-		p4 sync ...@GIT_TAG_1 &&
+		p4 label -o BUT_TAG_1 | grep "tag created in but:xyzzy" &&
+		p4 sync ...@BUT_TAG_1 &&
 		! test -f main/f10 &&
-		p4 sync ...@GIT_TAG_2 &&
+		p4 sync ...@BUT_TAG_2 &&
 		test -f main/f10
 	)
 '
@@ -161,19 +161,19 @@ test_expect_success 'export but tags to p4 with deletion' '
 		but config but-p4.skipSubmitEdit true &&
 		but p4 submit &&
 		but p4 rebase --import-labels --verbose &&
-		but tag -m "tag on deleted file" GIT_TAG_ON_DELETED HEAD~1 &&
-		but tag -m "tag after deletion" GIT_TAG_AFTER_DELETION HEAD &&
+		but tag -m "tag on deleted file" BUT_TAG_ON_DELETED HEAD~1 &&
+		but tag -m "tag after deletion" BUT_TAG_AFTER_DELETION HEAD &&
 		but p4 submit --export-labels --verbose
 	) &&
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		p4 sync ...@GIT_TAG_ON_DELETED &&
+		p4 sync ...@BUT_TAG_ON_DELETED &&
 		test -f main/deleted_file &&
-		p4 sync ...@GIT_TAG_AFTER_DELETION &&
+		p4 sync ...@BUT_TAG_AFTER_DELETION &&
 		! test -f main/deleted_file &&
 		echo "checking label contents" &&
-		p4 label -o GIT_TAG_ON_DELETED | grep "tag on deleted file"
+		p4 label -o BUT_TAG_ON_DELETED | grep "tag on deleted file"
 	)
 '
 
@@ -187,14 +187,14 @@ test_expect_success 'tag that cannot be exported' '
 		echo "hello" >main/f12 &&
 		but add main/f12 &&
 		but cummit -m "adding f12" &&
-		but tag -m "tag on a_branch" GIT_TAG_ON_A_BRANCH &&
+		but tag -m "tag on a_branch" BUT_TAG_ON_A_BRANCH &&
 		but checkout main &&
 		but p4 submit --export-labels
 	) &&
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		! p4 labels | grep GIT_TAG_ON_A_BRANCH
+		! p4 labels | grep BUT_TAG_ON_A_BRANCH
 	)
 '
 
@@ -204,7 +204,7 @@ test_expect_success 'use but config to enable import/export of tags' '
 		cd "$but" &&
 		but config but-p4.exportLabels true &&
 		but config but-p4.importLabels true &&
-		but tag CFG_A_GIT_TAG &&
+		but tag CFG_A_BUT_TAG &&
 		but p4 rebase --verbose &&
 		but p4 submit --verbose &&
 		but tag &&
@@ -213,7 +213,7 @@ test_expect_success 'use but config to enable import/export of tags' '
 	(
 		cd "$cli" &&
 		p4 labels &&
-		p4 labels | grep CFG_A_GIT_TAG
+		p4 labels | grep CFG_A_BUT_TAG
 	)
 '
 

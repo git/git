@@ -21,38 +21,38 @@ struct tr2_sysenv_entry {
  * The strings in this table are constant and must match the published
  * config and environment variable names as described in the documentation.
  *
- * We do not define entries for the GIT_TRACE2_PARENT_* environment
+ * We do not define entries for the BUT_TRACE2_PARENT_* environment
  * variables because they are transient and used to pass information
  * from parent to child but processes, rather than settings.
  */
 /* clang-format off */
 static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
-	[TR2_SYSENV_CFG_PARAM]     = { "GIT_TRACE2_CONFIG_PARAMS",
+	[TR2_SYSENV_CFG_PARAM]     = { "BUT_TRACE2_CONFIG_PARAMS",
 				       "trace2.configparams" },
-	[TR2_SYSENV_ENV_VARS]      = { "GIT_TRACE2_ENV_VARS",
+	[TR2_SYSENV_ENV_VARS]      = { "BUT_TRACE2_ENV_VARS",
 				       "trace2.envvars" },
 
-	[TR2_SYSENV_DST_DEBUG]     = { "GIT_TRACE2_DST_DEBUG",
+	[TR2_SYSENV_DST_DEBUG]     = { "BUT_TRACE2_DST_DEBUG",
 				       "trace2.destinationdebug" },
 
-	[TR2_SYSENV_NORMAL]        = { "GIT_TRACE2",
+	[TR2_SYSENV_NORMAL]        = { "BUT_TRACE2",
 				       "trace2.normaltarget" },
-	[TR2_SYSENV_NORMAL_BRIEF]  = { "GIT_TRACE2_BRIEF",
+	[TR2_SYSENV_NORMAL_BRIEF]  = { "BUT_TRACE2_BRIEF",
 				       "trace2.normalbrief" },
 
-	[TR2_SYSENV_EVENT]         = { "GIT_TRACE2_EVENT",
+	[TR2_SYSENV_EVENT]         = { "BUT_TRACE2_EVENT",
 				       "trace2.eventtarget" },
-	[TR2_SYSENV_EVENT_BRIEF]   = { "GIT_TRACE2_EVENT_BRIEF",
+	[TR2_SYSENV_EVENT_BRIEF]   = { "BUT_TRACE2_EVENT_BRIEF",
 				       "trace2.eventbrief" },
-	[TR2_SYSENV_EVENT_NESTING] = { "GIT_TRACE2_EVENT_NESTING",
+	[TR2_SYSENV_EVENT_NESTING] = { "BUT_TRACE2_EVENT_NESTING",
 				       "trace2.eventnesting" },
 
-	[TR2_SYSENV_PERF]          = { "GIT_TRACE2_PERF",
+	[TR2_SYSENV_PERF]          = { "BUT_TRACE2_PERF",
 				       "trace2.perftarget" },
-	[TR2_SYSENV_PERF_BRIEF]    = { "GIT_TRACE2_PERF_BRIEF",
+	[TR2_SYSENV_PERF_BRIEF]    = { "BUT_TRACE2_PERF_BRIEF",
 				       "trace2.perfbrief" },
 
-	[TR2_SYSENV_MAX_FILES]     = { "GIT_TRACE2_MAX_FILES",
+	[TR2_SYSENV_MAX_FILES]     = { "BUT_TRACE2_MAX_FILES",
 				       "trace2.maxfiles" },
 };
 /* clang-format on */

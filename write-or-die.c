@@ -23,7 +23,7 @@ void maybe_flush_or_die(FILE *f, const char *desc)
 
 	if (f == stdout) {
 		if (skip_stdout_flush < 0) {
-			cp = getenv("GIT_FLUSH");
+			cp = getenv("BUT_FLUSH");
 			if (cp)
 				skip_stdout_flush = (atoi(cp) == 0);
 			else if ((fstat(fileno(stdout), &st) == 0) &&
@@ -59,7 +59,7 @@ void fprintf_or_die(FILE *f, const char *fmt, ...)
 static int maybe_fsync(int fd)
 {
 	if (use_fsync < 0)
-		use_fsync = but_env_bool("GIT_TEST_FSYNC", 1);
+		use_fsync = but_env_bool("BUT_TEST_FSYNC", 1);
 	if (!use_fsync)
 		return 0;
 

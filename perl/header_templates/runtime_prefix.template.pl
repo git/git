@@ -3,12 +3,12 @@
 # This finds our Git::* libraries relative to the script's runtime path.
 sub __but_system_path {
 	my ($relpath) = @_;
-	my $butexecdir_relative = '@@GITEXECDIR_REL@@';
+	my $butexecdir_relative = '@@BUTEXECDIR_REL@@';
 
-	# GIT_EXEC_PATH is supplied by `but` or the test suite.
+	# BUT_EXEC_PATH is supplied by `but` or the test suite.
 	my $exec_path;
-	if (exists $ENV{GIT_EXEC_PATH}) {
-		$exec_path = $ENV{GIT_EXEC_PATH};
+	if (exists $ENV{BUT_EXEC_PATH}) {
+		$exec_path = $ENV{BUT_EXEC_PATH};
 	} else {
 		# This can happen if this script is being directly invoked instead of run
 		# by "but".
@@ -26,7 +26,7 @@ sub __but_system_path {
 BEGIN {
 	use lib split /@@PATHSEP@@/,
 	(
-		$ENV{GITPERLLIB} ||
+		$ENV{BUTPERLLIB} ||
 		do {
 			my $perllibdir = __but_system_path('@@PERLLIBDIR_REL@@');
 			(-e $perllibdir) || die("Invalid system path ($relpath): $path");

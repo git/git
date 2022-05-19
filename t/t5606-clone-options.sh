@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='basic clone options'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -150,10 +150,10 @@ test_expect_success 'clone does not segfault with --bare and core.bare=false' '
 '
 
 test_expect_success 'chooses correct default initial branch name' '
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	but -c init.defaultBranch=foo init --bare empty &&
 	test_config -C empty lsrefs.unborn advertise &&
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	but -c init.defaultBranch=up -c protocol.version=2 clone empty whats-up &&
 	test refs/heads/foo = $(but -C whats-up symbolic-ref HEAD) &&
 	test refs/heads/foo = $(but -C whats-up config branch.foo.merge)
@@ -168,11 +168,11 @@ test_expect_success 'guesses initial branch name correctly' '
 
 	but -c init.defaultBranch=none init --bare no-head &&
 	but -C initial-branch push ../no-head guess abc &&
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	but clone no-head is-it2 &&
 	test_must_fail but -C is-it2 symbolic-ref refs/remotes/origin/HEAD &&
 	but -C no-head update-ref --no-deref HEAD refs/heads/guess &&
-	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	but -c init.defaultBranch=guess clone no-head is-it3 &&
 	test refs/remotes/origin/guess = \
 		$(but -C is-it3 symbolic-ref refs/remotes/origin/HEAD)

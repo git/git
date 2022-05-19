@@ -22,7 +22,7 @@ Fixes since v1.7.9.1
    not phrased correctly.
 
  * The code to ask for password did not fall back to the terminal
-   input when GIT_ASKPASS is set but does not work (e.g. lack of X
+   input when BUT_ASKPASS is set but does not work (e.g. lack of X
    with GUI askpass helper).
 
  * We failed to give the true terminal width to any subcommand when

@@ -74,6 +74,6 @@ then you can ask that to be pulled with
 	but request-pull v1.0 https://but.ko.xz/project master:for-linus
 
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

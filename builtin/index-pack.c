@@ -120,7 +120,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int do_fsck_object;
-static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
+static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_BUTMODULES;
 static int verbose;
 static const char *progress_title;
 static int show_resolving_progress;
@@ -1240,7 +1240,7 @@ static void resolve_deltas(void)
 
 	nr_dispatched = 0;
 	base_cache_limit = delta_base_cache_limit * nr_threads;
-	if (nr_threads > 1 || getenv("GIT_FORCE_THREADS")) {
+	if (nr_threads > 1 || getenv("BUT_FORCE_THREADS")) {
 		init_thread();
 		for (i = 0; i < nr_threads; i++) {
 			int ret = pthread_create(&thread_data[i].thread, NULL,
@@ -1274,7 +1274,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 
 	if (fix_thin_pack) {
 		struct hashfile *f;
-		unsigned char read_hash[GIT_MAX_RAWSZ], tail_hash[GIT_MAX_RAWSZ];
+		unsigned char read_hash[BUT_MAX_RAWSZ], tail_hash[BUT_MAX_RAWSZ];
 		struct strbuf msg = STRBUF_INIT;
 		int nr_unresolved = nr_ofs_deltas + nr_ref_deltas - nr_resolved_deltas;
 		int nr_objects_initial = nr_objects;
@@ -1723,7 +1723,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	struct strbuf rev_index_name_buf = STRBUF_INIT;
 	struct pack_idx_entry **idx_objects;
 	struct pack_idx_option opts;
-	unsigned char pack_hash[GIT_MAX_RAWSZ];
+	unsigned char pack_hash[BUT_MAX_RAWSZ];
 	unsigned foreign_nr = 1;	/* zero is a "good" value, assume bad */
 	int report_end_of_input = 0;
 	int hash_algo = 0;
@@ -1747,7 +1747,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (prefix && chdir(prefix))
 		die(_("Cannot come back to cwd"));
 
-	if (but_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
+	if (but_env_bool(BUT_TEST_WRITE_REV_INDEX, 0))
 		rev_index = 1;
 	else
 		rev_index = !!(opts.flags & (WRITE_REV_VERIFY | WRITE_REV));
@@ -1831,7 +1831,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				max_input_size = strtoumax(arg, NULL, 10);
 			} else if (skip_prefix(arg, "--object-format=", &arg)) {
 				hash_algo = hash_algo_by_name(arg);
-				if (hash_algo == GIT_HASH_UNKNOWN)
+				if (hash_algo == BUT_HASH_UNKNOWN)
 					die(_("unknown hash algorithm '%s'"), arg);
 				repo_set_hash_algo(the_repository, hash_algo);
 			} else if (!strcmp(arg, "--rev-index")) {

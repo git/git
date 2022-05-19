@@ -52,6 +52,6 @@ OPTIONS
 	Input is of the "mboxrd" format and "^>+From " line escaping is
 	reversed.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

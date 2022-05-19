@@ -10,8 +10,8 @@ commandline, and checks that it would not write any errors
 or warnings to log.'
 
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./lib-butweb.sh
 
@@ -523,8 +523,8 @@ test_expect_success \
 test_expect_success \
 	'encode(cummit): utf8' \
 	'. "$TEST_DIRECTORY"/t3901/utf8.txt &&
-	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "BUT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "BUT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >>file &&
 	 but add file &&
 	 but cummit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
@@ -533,8 +533,8 @@ test_expect_success \
 test_expect_success \
 	'encode(cummit): iso-8859-1' \
 	'. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
-	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_CUMMITTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "BUT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "BUT_CUMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >>file &&
 	 but add file &&
 	 test_config i18n.cummitencoding ISO-8859-1 &&

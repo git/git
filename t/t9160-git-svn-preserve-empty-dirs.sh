@@ -11,7 +11,7 @@ local Git repository with placeholder files.'
 
 . ./lib-but-svn.sh
 
-GIT_REPO=but-svn-repo
+BUT_REPO=but-svn-repo
 
 test_expect_success 'initialize source svn repo containing empty dirs' '
 	svn_cmd mkdir -m x "$svnrepo"/trunk &&
@@ -56,61 +56,61 @@ test_expect_success 'initialize source svn repo containing empty dirs' '
 '
 
 test_expect_success 'clone svn repo with --preserve-empty-dirs' '
-	but svn clone "$svnrepo"/trunk --preserve-empty-dirs "$GIT_REPO"
+	but svn clone "$svnrepo"/trunk --preserve-empty-dirs "$BUT_REPO"
 '
 
-# "$GIT_REPO"/1 should only contain the placeholder file.
+# "$BUT_REPO"/1 should only contain the placeholder file.
 test_expect_success 'directory empty from inception' '
-	test -f "$GIT_REPO"/1/.butignore &&
-	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1"
+	test -f "$BUT_REPO"/1/.butignore &&
+	test $(find "$BUT_REPO"/1 -type f | wc -l) = "1"
 '
 
-# "$GIT_REPO"/2 and "$GIT_REPO"/3 should only contain the placeholder file.
+# "$BUT_REPO"/2 and "$BUT_REPO"/3 should only contain the placeholder file.
 test_expect_success 'directory empty from subsequent svn cummit' '
-	test -f "$GIT_REPO"/2/.butignore &&
-	test $(find "$GIT_REPO"/2 -type f | wc -l) = "1" &&
-	test -f "$GIT_REPO"/3/.butignore &&
-	test $(find "$GIT_REPO"/3 -type f | wc -l) = "1"
+	test -f "$BUT_REPO"/2/.butignore &&
+	test $(find "$BUT_REPO"/2 -type f | wc -l) = "1" &&
+	test -f "$BUT_REPO"/3/.butignore &&
+	test $(find "$BUT_REPO"/3 -type f | wc -l) = "1"
 '
 
-# No placeholder files should exist in "$GIT_REPO"/4, even though one was
+# No placeholder files should exist in "$BUT_REPO"/4, even though one was
 # generated for every sub-directory at some point in the repo's history.
 test_expect_success 'add entry to previously empty directory' '
-	test $(find "$GIT_REPO"/4 -type f | wc -l) = "1" &&
-	test -f "$GIT_REPO"/4/a/b/c/foo
+	test $(find "$BUT_REPO"/4 -type f | wc -l) = "1" &&
+	test -f "$BUT_REPO"/4/a/b/c/foo
 '
 
 # The HEAD~2 cummit should not have introduced .butignore placeholder files.
 test_expect_success 'remove non-last entry from directory' '
 	(
-		cd "$GIT_REPO" &&
+		cd "$BUT_REPO" &&
 		but checkout HEAD~2
 	) &&
-	test_path_is_missing "$GIT_REPO"/2/.butignore &&
-	test_path_is_missing "$GIT_REPO"/3/.butignore
+	test_path_is_missing "$BUT_REPO"/2/.butignore &&
+	test_path_is_missing "$BUT_REPO"/3/.butignore
 '
 
 # After re-cloning the repository with --placeholder-file specified, there
 # should be 5 files named ".placeholder" in the local Git repo.
 test_expect_success 'clone svn repo with --placeholder-file specified' '
-	rm -rf "$GIT_REPO" &&
+	rm -rf "$BUT_REPO" &&
 	but svn clone "$svnrepo"/trunk --preserve-empty-dirs \
-		--placeholder-file=.placeholder "$GIT_REPO" &&
-	find "$GIT_REPO" -type f -name ".placeholder" &&
-	test $(find "$GIT_REPO" -type f -name ".placeholder" | wc -l) = "5"
+		--placeholder-file=.placeholder "$BUT_REPO" &&
+	find "$BUT_REPO" -type f -name ".placeholder" &&
+	test $(find "$BUT_REPO" -type f -name ".placeholder" | wc -l) = "5"
 '
 
-# "$GIT_REPO"/5/.placeholder should be a file, and non-empty.
+# "$BUT_REPO"/5/.placeholder should be a file, and non-empty.
 test_expect_success 'placeholder namespace conflict with file' '
-	test -s "$GIT_REPO"/5/.placeholder
+	test -s "$BUT_REPO"/5/.placeholder
 '
 
-# "$GIT_REPO"/6/.placeholder should be a directory, and the "$GIT_REPO"/6 tree
+# "$BUT_REPO"/6/.placeholder should be a directory, and the "$BUT_REPO"/6 tree
 # should only contain one file: the placeholder.
 test_expect_success 'placeholder namespace conflict with directory' '
-	test -d "$GIT_REPO"/6/.placeholder &&
-	test -f "$GIT_REPO"/6/.placeholder/.placeholder &&
-	test $(find "$GIT_REPO"/6 -type f | wc -l) = "1"
+	test -d "$BUT_REPO"/6/.placeholder &&
+	test -f "$BUT_REPO"/6/.placeholder/.placeholder &&
+	test $(find "$BUT_REPO"/6 -type f | wc -l) = "1"
 '
 
 # Prepare a second set of svn cummits to test persistence during rebase.
@@ -126,7 +126,7 @@ test_expect_success 'second set of svn cummits and rebase' '
 	) &&
 	rm -rf "$SVN_TREE" &&
 	(
-		cd "$GIT_REPO" &&
+		cd "$BUT_REPO" &&
 		but svn rebase
 	)
 '
@@ -134,19 +134,19 @@ test_expect_success 'second set of svn cummits and rebase' '
 # Check that --preserve-empty-dirs and --placeholder-file flag state
 # stays persistent over multiple invocations.
 test_expect_success 'flag persistence during subsqeuent rebase' '
-	test -f "$GIT_REPO"/7/.placeholder &&
-	test $(find "$GIT_REPO"/7 -type f | wc -l) = "1"
+	test -f "$BUT_REPO"/7/.placeholder &&
+	test $(find "$BUT_REPO"/7 -type f | wc -l) = "1"
 '
 
 # Check that placeholder files are properly removed when unnecessary,
 # even across multiple invocations.
 test_expect_success 'placeholder list persistence during subsqeuent rebase' '
-	test -f "$GIT_REPO"/1/file1.txt &&
-	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1" &&
+	test -f "$BUT_REPO"/1/file1.txt &&
+	test $(find "$BUT_REPO"/1 -type f | wc -l) = "1" &&
 
-	test -f "$GIT_REPO"/5/file1.txt &&
-	test -f "$GIT_REPO"/5/.placeholder &&
-	test $(find "$GIT_REPO"/5 -type f | wc -l) = "2"
+	test -f "$BUT_REPO"/5/file1.txt &&
+	test -f "$BUT_REPO"/5/.placeholder &&
+	test $(find "$BUT_REPO"/5 -type f | wc -l) = "2"
 '
 
 test_done

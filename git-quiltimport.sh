@@ -70,7 +70,7 @@ if ! [ -e "$QUILT_SERIES" ] ; then
 fi
 
 # Temporary directories
-tmp_dir="$GIT_DIR"/rebase-apply
+tmp_dir="$BUT_DIR"/rebase-apply
 tmp_msg="$tmp_dir/msg"
 tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"
@@ -110,17 +110,17 @@ do
 	}
 
 	# Parse the author information
-	GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
-	GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
-	while test -z "$GIT_AUTHOR_EMAIL" && test -z "$GIT_AUTHOR_NAME" ; do
+	BUT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
+	BUT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	export BUT_AUTHOR_NAME BUT_AUTHOR_EMAIL
+	while test -z "$BUT_AUTHOR_EMAIL" && test -z "$BUT_AUTHOR_NAME" ; do
 		if [ -n "$quilt_author" ] ; then
-			GIT_AUTHOR_NAME="$quilt_author_name";
-			GIT_AUTHOR_EMAIL="$quilt_author_email";
+			BUT_AUTHOR_NAME="$quilt_author_name";
+			BUT_AUTHOR_EMAIL="$quilt_author_email";
 		elif [ -n "$dry_run" ]; then
 			echo "No author found in $patch_name" >&2;
-			GIT_AUTHOR_NAME="dry-run-not-found";
-			GIT_AUTHOR_EMAIL="dry-run-not-found";
+			BUT_AUTHOR_NAME="dry-run-not-found";
+			BUT_AUTHOR_EMAIL="dry-run-not-found";
 		else
 			echo "No author found in $patch_name" >&2;
 			echo "---"
@@ -134,13 +134,13 @@ do
 			patch_author_email=$(expr "z$patch_author" : '.*<\([^>]*\)') &&
 			test '' != "$patch_author_name" &&
 			test '' != "$patch_author_email" &&
-			GIT_AUTHOR_NAME="$patch_author_name" &&
-			GIT_AUTHOR_EMAIL="$patch_author_email"
+			BUT_AUTHOR_NAME="$patch_author_name" &&
+			BUT_AUTHOR_EMAIL="$patch_author_email"
 		fi
 	done
-	GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
+	BUT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
 	SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
-	export GIT_AUTHOR_DATE SUBJECT
+	export BUT_AUTHOR_DATE SUBJECT
 	if [ -z "$SUBJECT" ] ; then
 		SUBJECT=$(echo $patch_name | sed -e 's/.patch$//')
 	fi

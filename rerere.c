@@ -176,7 +176,7 @@ static struct rerere_id *new_rerere_id(unsigned char *hash)
 }
 
 /*
- * $GIT_DIR/MERGE_RR file is a collection of records, each of which is
+ * $BUT_DIR/MERGE_RR file is a collection of records, each of which is
  * "conflict ID", a HT and pathname, terminated with a NUL, and is
  * used to keep track of the set of paths that "rerere" may need to
  * work on (i.e. what is left by the previous invocation of "but
@@ -191,7 +191,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		return;
 	while (!strbuf_getwholeline(&buf, in, '\0')) {
 		char *path;
-		unsigned char hash[GIT_MAX_RAWSZ];
+		unsigned char hash[BUT_MAX_RAWSZ];
 		struct rerere_id *id;
 		int variant;
 		const unsigned hexsz = the_hash_algo->hexsz;
@@ -809,7 +809,7 @@ static int do_plain_rerere(struct repository *r,
 	 */
 	for (i = 0; i < conflict.nr; i++) {
 		struct rerere_id *id;
-		unsigned char hash[GIT_MAX_RAWSZ];
+		unsigned char hash[BUT_MAX_RAWSZ];
 		const char *path = conflict.items[i].string;
 		int ret;
 
@@ -849,7 +849,7 @@ static void but_rerere_config(void)
 	but_config(but_default_config, NULL);
 }
 
-static GIT_PATH_FUNC(but_path_rr_cache, "rr-cache")
+static BUT_PATH_FUNC(but_path_rr_cache, "rr-cache")
 
 static int is_rerere_enabled(void)
 {
@@ -1011,7 +1011,7 @@ static int rerere_forget_one_path(struct index_state *istate,
 {
 	const char *filename;
 	struct rerere_id *id;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	int ret;
 	struct string_list_item *item;
 
@@ -1224,7 +1224,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 /*
  * During a conflict resolution, after "rerere" recorded the
  * preimages, abandon them if the user did not resolve them or
- * record their resolutions.  And drop $GIT_DIR/MERGE_RR.
+ * record their resolutions.  And drop $BUT_DIR/MERGE_RR.
  *
  * NEEDSWORK: shouldn't we be calling this from "reset --hard"?
  */

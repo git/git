@@ -227,7 +227,7 @@ void release_http_object_request(struct http_object_request *freq);
 
 /*
  * Instead of using environment variables to determine if curl tracing happens,
- * behave as if GIT_TRACE_CURL=1 and GIT_TRACE_CURL_NO_DATA=1 is set. Call this
+ * behave as if BUT_TRACE_CURL=1 and BUT_TRACE_CURL_NO_DATA=1 is set. Call this
  * before calling setup_curl_trace().
  */
 void http_trace_curl_no_data(void);

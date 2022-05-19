@@ -1488,7 +1488,7 @@ void diffcore_rename_extended(struct diff_options *options,
 	} else {
 		/* Determine minimum score to match basenames */
 		double factor = 0.5;
-		char *basename_factor = getenv("GIT_BASENAME_FACTOR");
+		char *basename_factor = getenv("BUT_BASENAME_FACTOR");
 		int min_basename_score;
 
 		if (basename_factor)

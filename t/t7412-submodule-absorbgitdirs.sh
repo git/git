@@ -69,10 +69,10 @@ test_expect_success 're-setup nested submodule' '
 	# is still correct (needs a rewrite of the butfile only)
 	rm -rf sub1/.but &&
 	mv .but/modules/sub1 sub1/.but &&
-	GIT_WORK_TREE=. but -C sub1 config --unset core.worktree &&
+	BUT_WORK_TREE=. but -C sub1 config --unset core.worktree &&
 	# fixup the nested submodule
 	echo "butdir: ../.but/modules/nested" >sub1/nested/.but &&
-	GIT_WORK_TREE=../../../nested but -C sub1/.but/modules/nested config \
+	BUT_WORK_TREE=../../../nested but -C sub1/.but/modules/nested config \
 		core.worktree "../../../nested" &&
 	# make sure this re-setup is correct
 	but status --ignore-submodules=none &&

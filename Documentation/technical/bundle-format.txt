@@ -30,7 +30,7 @@ capability   = "@" key ["=" value] LF
 prerequisite = "-" obj-id SP comment LF
 comment      = *CHAR
 reference    = obj-id SP refname LF
-key          = 1*(ALPHA / DIGIT / "-")
+key          = 1*(ALPHA / DIBUT / "-")
 value        = *(%01-09 / %0b-FF)
 
 pack         = ... ; packfile

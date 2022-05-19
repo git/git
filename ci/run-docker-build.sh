@@ -54,9 +54,9 @@ command $switch_cmd su -m -l $CI_USER -c "
 	set -ex
 	export DEVELOPER='$DEVELOPER'
 	export DEFAULT_TEST_TARGET='$DEFAULT_TEST_TARGET'
-	export GIT_PROVE_OPTS='$GIT_PROVE_OPTS'
-	export GIT_TEST_OPTS='$GIT_TEST_OPTS'
-	export GIT_TEST_CLONE_2GB='$GIT_TEST_CLONE_2GB'
+	export BUT_PROVE_OPTS='$BUT_PROVE_OPTS'
+	export BUT_TEST_OPTS='$BUT_TEST_OPTS'
+	export BUT_TEST_CLONE_2GB='$BUT_TEST_CLONE_2GB'
 	export MAKEFLAGS='$MAKEFLAGS'
 	export cache_dir='$cache_dir'
 	cd /usr/src/but

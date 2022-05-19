@@ -1,4 +1,4 @@
-GIT v1.5.6.4 Release Notes
+BUT v1.5.6.4 Release Notes
 ==========================
 
 Fixes since v1.5.6.3
@@ -39,7 +39,7 @@ Fixes since v1.5.6.3
 * "but-rebase -i -p" lost parents that are not involved in the history
   being rewritten.
 
-* "but-rm" lost track of where the index file was when GIT_DIR was
+* "but-rm" lost track of where the index file was when BUT_DIR was
   specified as a relative path.
 
 * "but-rev-list --quiet" was not quiet as advertised.

@@ -13,7 +13,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 void set_test_hash(uint8_t *p, int i)
 {
-	memset(p, (uint8_t)i, hash_size(GIT_SHA1_FORMAT_ID));
+	memset(p, (uint8_t)i, hash_size(BUT_SHA1_FORMAT_ID));
 }
 
 ssize_t strbuf_add_void(void *b, const void *data, size_t sz)

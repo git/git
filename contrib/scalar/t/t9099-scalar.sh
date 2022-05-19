@@ -10,8 +10,8 @@ PATH=$PWD/..:$PATH
 
 . ../../../t/test-lib.sh
 
-GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab ../cron.txt,launchctl:true,schtasks:true"
-export GIT_TEST_MAINT_SCHEDULER
+BUT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab ../cron.txt,launchctl:true,schtasks:true"
+export BUT_TEST_MAINT_SCHEDULER
 
 test_expect_success 'scalar shows a usage' '
 	test_expect_code 129 scalar -h

@@ -270,6 +270,6 @@ SEE ALSO
 linkbut:but-checkout[1],
 linkbut:but-branch[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

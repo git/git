@@ -4,7 +4,7 @@
 
 struct progress;
 
-#ifdef GIT_TEST_PROGRESS_ONLY
+#ifdef BUT_TEST_PROGRESS_ONLY
 
 extern int progress_testing;
 extern uint64_t progress_test_ns;

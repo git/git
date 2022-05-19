@@ -25,8 +25,8 @@ test_expect_success 'ceiling' '
 	test_config early.config ceiling &&
 	mkdir -p sub &&
 	(
-		GIT_CEILING_DIRECTORIES="$PWD" &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES="$PWD" &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd sub &&
 		test-tool config read_early_config early.config
 	) >output &&
@@ -40,8 +40,8 @@ test_expect_success 'ceiling #2' '
 	mkdir -p sub &&
 	(
 		XDG_CONFIG_HOME="$PWD"/xdg &&
-		GIT_CEILING_DIRECTORIES="$PWD" &&
-		export GIT_CEILING_DIRECTORIES XDG_CONFIG_HOME &&
+		BUT_CEILING_DIRECTORIES="$PWD" &&
+		export BUT_CEILING_DIRECTORIES XDG_CONFIG_HOME &&
 		cd sub &&
 		test-tool config read_early_config early.config
 	) >output &&
@@ -55,7 +55,7 @@ test_expect_success 'read config file in right order' '
 	(
 		cd foo &&
 		echo "[test]source = repo" >>.but/config &&
-		GIT_CONFIG_PARAMETERS=$cmdline_config test-tool config \
+		BUT_CONFIG_PARAMETERS=$cmdline_config test-tool config \
 			read_early_config test.source >actual &&
 		cat >expected <<-\EOF &&
 		home

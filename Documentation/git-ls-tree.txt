@@ -160,6 +160,6 @@ objectsize[:padded]::
 path::
 	The pathname of the object.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

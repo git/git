@@ -57,10 +57,10 @@ die_with_status () {
 	exit "$status"
 }
 
-GIT_QUIET=
+BUT_QUIET=
 
 say () {
-	if test -z "$GIT_QUIET"
+	if test -z "$BUT_QUIET"
 	then
 		printf '%s\n' "$*"
 	fi
@@ -106,18 +106,18 @@ $LONG_USAGE")"
 fi
 
 # Set the name of the end-user facing command in the reflog when the
-# script may update refs.  When GIT_REFLOG_ACTION is already set, this
+# script may update refs.  When BUT_REFLOG_ACTION is already set, this
 # will not overwrite it, so that a scripted Porcelain (e.g. "but
 # rebase") can set it to its own name (e.g. "rebase") and then call
 # another scripted Porcelain (e.g. "but am") and a call to this
 # function in the latter will keep the name of the end-user facing
-# program (e.g. "rebase") in GIT_REFLOG_ACTION, ensuring whatever it
+# program (e.g. "rebase") in BUT_REFLOG_ACTION, ensuring whatever it
 # does will be record as actions done as part of the end-user facing
 # operation (e.g. "rebase").
 #
 # NOTE NOTE NOTE: consequently, after assigning a specific message to
-# GIT_REFLOG_ACTION when calling a "but" command to record a custom
-# reflog message, do not leave that custom value in GIT_REFLOG_ACTION,
+# BUT_REFLOG_ACTION when calling a "but" command to record a custom
+# reflog message, do not leave that custom value in BUT_REFLOG_ACTION,
 # after you are done.  Other callers of "but" commands that rely on
 # writing the default "program name" in reflog expect the variable to
 # contain the value set by this function.
@@ -125,43 +125,43 @@ fi
 # To use a custom reflog message, do either one of these three:
 #
 # (a) use a single-shot export form:
-#     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz" \
+#     BUT_REFLOG_ACTION="$BUT_REFLOG_ACTION: preparing frotz" \
 #         but command-that-updates-a-ref
 #
 # (b) save the original away and restore:
-#     SAVED_ACTION=$GIT_REFLOG_ACTION
-#     GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
+#     SAVED_ACTION=$BUT_REFLOG_ACTION
+#     BUT_REFLOG_ACTION="$BUT_REFLOG_ACTION: preparing frotz"
 #     but command-that-updates-a-ref
-#     GIT_REFLOG_ACITON=$SAVED_ACTION
+#     BUT_REFLOG_ACITON=$SAVED_ACTION
 #
 # (c) assign the variable in a subshell:
 #     (
-#         GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: preparing frotz"
+#         BUT_REFLOG_ACTION="$BUT_REFLOG_ACTION: preparing frotz"
 #         but command-that-updates-a-ref
 #     )
 set_reflog_action() {
-	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
+	if [ -z "${BUT_REFLOG_ACTION:+set}" ]
 	then
-		GIT_REFLOG_ACTION="$*"
-		export GIT_REFLOG_ACTION
+		BUT_REFLOG_ACTION="$*"
+		export BUT_REFLOG_ACTION
 	fi
 }
 
 but_editor() {
-	if test -z "${GIT_EDITOR:+set}"
+	if test -z "${BUT_EDITOR:+set}"
 	then
-		GIT_EDITOR="$(but var GIT_EDITOR)" || return $?
+		BUT_EDITOR="$(but var BUT_EDITOR)" || return $?
 	fi
 
-	eval "$GIT_EDITOR" '"$@"'
+	eval "$BUT_EDITOR" '"$@"'
 }
 
 but_pager() {
 	if test -t 1
 	then
-		GIT_PAGER=$(but var GIT_PAGER)
+		BUT_PAGER=$(but var BUT_PAGER)
 	else
-		GIT_PAGER=cat
+		BUT_PAGER=cat
 	fi
 	for vardef in @@PAGER_ENV@@
 	do
@@ -169,7 +169,7 @@ but_pager() {
 		eval ": \"\${$vardef}\" && export $var"
 	done
 
-	eval "$GIT_PAGER" '"$@"'
+	eval "$BUT_PAGER" '"$@"'
 }
 
 is_bare_repository () {
@@ -244,7 +244,7 @@ require_clean_work_tree () {
 #
 # The first argument specifies the ident line to parse (e.g., "author"), and
 # the second specifies the environment variable to put it in (e.g., "AUTHOR"
-# for "GIT_AUTHOR_*"). Multiple pairs can be given to parse author and
+# for "BUT_AUTHOR_*"). Multiple pairs can be given to parse author and
 # cummitter.
 pick_ident_script () {
 	while test $# -gt 0
@@ -256,15 +256,15 @@ pick_ident_script () {
 			s/'/'\\\\''/g
 			h
 			s/^$lid "'\([^<]*\) <[^>]*> .*$/\1/'"
-			s/.*/GIT_${uid}_NAME='&'/p
+			s/.*/BUT_${uid}_NAME='&'/p
 
 			g
 			s/^$lid "'[^<]* <\([^>]*\)> .*$/\1/'"
-			s/.*/GIT_${uid}_EMAIL='&'/p
+			s/.*/BUT_${uid}_EMAIL='&'/p
 
 			g
 			s/^$lid "'[^<]* <[^>]*> \(.*\)$/@\1/'"
-			s/.*/GIT_${uid}_DATE='&'/p
+			s/.*/BUT_${uid}_DATE='&'/p
 		}
 		"
 	done
@@ -278,14 +278,14 @@ parse_ident_from_cummit () {
 }
 
 # Parse the author from a cummit given as an argument. Stdout is suitable for
-# feeding to eval to set the usual GIT_* ident variables.
+# feeding to eval to set the usual BUT_* ident variables.
 get_author_ident_from_cummit () {
 	encoding=$(but config i18n.cummitencoding || echo UTF-8)
 	but show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	parse_ident_from_cummit author AUTHOR
 }
 
-# Clear repo-local GIT_* environment variables. Useful when switching to
+# Clear repo-local BUT_* environment variables. Useful when switching to
 # another repository (e.g. when entering a submodule). See also the env
 # list in but_connect()
 clear_local_but_env() {
@@ -340,7 +340,7 @@ esac
 # Make sure we are in a valid repository of a vintage we understand,
 # if we require to be in a but repository.
 but_dir_init () {
-	GIT_DIR=$(but rev-parse --but-dir) || exit
+	BUT_DIR=$(but rev-parse --but-dir) || exit
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
 		test -z "$(but rev-parse --show-cdup)" || {
@@ -349,14 +349,14 @@ but_dir_init () {
 			exit $exit
 		}
 	fi
-	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
+	test -n "$BUT_DIR" && BUT_DIR=$(cd "$BUT_DIR" && pwd) || {
 		gettextln "Unable to determine absolute path of but directory" >&2
 		exit 1
 	}
-	: "${GIT_OBJECT_DIRECTORY="$(but rev-parse --but-path objects)"}"
+	: "${BUT_OBJECT_DIRECTORY="$(but rev-parse --but-path objects)"}"
 }
 
-if test -z "$NONGIT_OK"
+if test -z "$NONBUT_OK"
 then
 	but_dir_init
 fi

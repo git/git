@@ -9,8 +9,8 @@ test_description='tests to ensure compatibility between am and interactive backe
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
-GIT_AUTHOR_DATE="1999-04-02T08:03:20+05:30"
-export GIT_AUTHOR_DATE
+BUT_AUTHOR_DATE="1999-04-02T08:03:20+05:30"
+export BUT_AUTHOR_DATE
 
 # This is a special case in which both am and interactive backends
 # provide the same output. It was done intentionally because
@@ -65,25 +65,25 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	but log $1 --format="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> %ai" >authortime &&
+	but log $1 --format="$BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> %ai" >authortime &&
 	but log $1 --format="%cn <%ce> %ci" >cummittertime &&
 	test_cmp authortime cummittertime
 }
 
 test_expect_success '--cummitter-date-is-author-date works with apply backend' '
-	GIT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
+	BUT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
 	but rebase --apply --cummitter-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1
 '
 
 test_expect_success '--cummitter-date-is-author-date works with merge backend' '
-	GIT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
+	BUT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
 	but rebase -m --cummitter-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1
 '
 
 test_expect_success '--cummitter-date-is-author-date works when rewording' '
-	GIT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
+	BUT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
 		FAKE_CUMMIT_MESSAGE=edited \
@@ -98,14 +98,14 @@ test_expect_success '--cummitter-date-is-author-date works when rewording' '
 
 test_expect_success '--cummitter-date-is-author-date works with rebase -r' '
 	but checkout side &&
-	GIT_AUTHOR_DATE="@1234 +0300" but merge --no-ff cummit3 &&
+	BUT_AUTHOR_DATE="@1234 +0300" but merge --no-ff cummit3 &&
 	but rebase -r --root --cummitter-date-is-author-date &&
 	test_ctime_is_atime
 '
 
 test_expect_success '--cummitter-date-is-author-date works when forking merge' '
 	but checkout side &&
-	GIT_AUTHOR_DATE="@1234 +0300" but merge --no-ff cummit3 &&
+	BUT_AUTHOR_DATE="@1234 +0300" but merge --no-ff cummit3 &&
 	PATH="./test-bin:$PATH" but rebase -r --root --strategy=test \
 					--cummitter-date-is-author-date &&
 	test_ctime_is_atime
@@ -113,7 +113,7 @@ test_expect_success '--cummitter-date-is-author-date works when forking merge' '
 
 test_expect_success '--cummitter-date-is-author-date works when cummitting conflict resolution' '
 	but checkout cummit2 &&
-	GIT_AUTHOR_DATE="@1980 +0000" but cummit --amend --only --reset-author &&
+	BUT_AUTHOR_DATE="@1980 +0000" but cummit --amend --only --reset-author &&
 	test_must_fail but rebase -m --cummitter-date-is-author-date \
 		--onto HEAD^^ HEAD^ &&
 	echo resolved > foo &&
@@ -132,13 +132,13 @@ test_atime_is_ignored () {
 }
 
 test_expect_success '--reset-author-date works with apply backend' '
-	but cummit --amend --date="$GIT_AUTHOR_DATE" &&
+	but cummit --amend --date="$BUT_AUTHOR_DATE" &&
 	but rebase --apply --reset-author-date HEAD^ &&
 	test_atime_is_ignored -1
 '
 
 test_expect_success '--reset-author-date works with merge backend' '
-	but cummit --amend --date="$GIT_AUTHOR_DATE" &&
+	but cummit --amend --date="$BUT_AUTHOR_DATE" &&
 	but rebase --reset-author-date -m HEAD^ &&
 	test_atime_is_ignored -1
 '
@@ -170,7 +170,7 @@ test_expect_success '--reset-author-date with --cummitter-date-is-author-date wo
 '
 
 test_expect_success 'reset-author-date with --cummitter-date-is-author-date works when rewording' '
-	GIT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
+	BUT_AUTHOR_DATE="@1234 +0300" but cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
 		FAKE_CUMMIT_MESSAGE=edited \
@@ -185,7 +185,7 @@ test_expect_success 'reset-author-date with --cummitter-date-is-author-date work
 '
 
 test_expect_success '--reset-author-date --cummitter-date-is-author-date works when forking merge' '
-	GIT_SEQUENCE_EDITOR="echo \"merge -C $(but rev-parse HEAD) cummit3\">" \
+	BUT_SEQUENCE_EDITOR="echo \"merge -C $(but rev-parse HEAD) cummit3\">" \
 		PATH="./test-bin:$PATH" but rebase -i --strategy=test \
 				--reset-author-date \
 				--cummitter-date-is-author-date side side &&
@@ -194,9 +194,9 @@ test_expect_success '--reset-author-date --cummitter-date-is-author-date works w
  '
 
 test_expect_success '--ignore-date is an alias for --reset-author-date' '
-	but cummit --amend --date="$GIT_AUTHOR_DATE" &&
+	but cummit --amend --date="$BUT_AUTHOR_DATE" &&
 	but rebase --apply --ignore-date HEAD^ &&
-	but cummit --allow-empty -m empty --date="$GIT_AUTHOR_DATE" &&
+	but cummit --allow-empty -m empty --date="$BUT_AUTHOR_DATE" &&
 	but rebase -m --ignore-date HEAD^ &&
 	test_atime_is_ignored -2
 '

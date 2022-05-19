@@ -2,10 +2,10 @@
 #include "urlmatch.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-#define URL_DIGIT "0123456789"
-#define URL_ALPHADIGIT URL_ALPHA URL_DIGIT
-#define URL_SCHEME_CHARS URL_ALPHADIGIT "+.-"
-#define URL_HOST_CHARS URL_ALPHADIGIT ".-_[:]" /* IPv6 literals need [:] */
+#define URL_DIBUT "0123456789"
+#define URL_ALPHADIBUT URL_ALPHA URL_DIBUT
+#define URL_SCHEME_CHARS URL_ALPHADIBUT "+.-"
+#define URL_HOST_CHARS URL_ALPHADIBUT ".-_[:]" /* IPv6 literals need [:] */
 #define URL_UNSAFE_CHARS " <>\"%{}|\\^`" /* plus 0x00-0x1F,0x7F-0xFF */
 #define URL_GEN_RESERVED ":/?#[]@"
 #define URL_SUB_RESERVED "!$&'()*+,;="
@@ -284,7 +284,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 			 * on just about every system and therefore cannot be used
 			 */
 			unsigned long pnum = 0;
-			spanned = strspn(url, URL_DIGIT);
+			spanned = strspn(url, URL_DIBUT);
 			if (spanned < slash_ptr - url) {
 				/* port number has invalid characters */
 				if (out_info) {

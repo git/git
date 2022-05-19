@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='Merge-recursive merging renames'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -237,7 +237,7 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	but checkout change+rename &&
 
 	test-tool chmtime --get -3600 B >old-mtime &&
-	GIT_MERGE_VERBOSITY=3 but merge change >out &&
+	BUT_MERGE_VERBOSITY=3 but merge change >out &&
 
 	test-tool chmtime --get B >new-mtime &&
 	test_cmp old-mtime new-mtime &&
@@ -248,7 +248,7 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	# A will be renamed to B; we check mtimes and file presence
 	test_path_is_missing B &&
 	test-tool chmtime --get -3600 A >old-mtime &&
-	GIT_MERGE_VERBOSITY=3 but merge change+rename >out &&
+	BUT_MERGE_VERBOSITY=3 but merge change+rename >out &&
 
 	test_path_is_missing A &&
 	test-tool chmtime --get B >new-mtime &&
@@ -313,7 +313,7 @@ test_expect_success 'Rename+D/F conflict; renamed file merges but dir in way' '
 
 	test_i18ngrep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
 	test_i18ngrep "Auto-merging dir" output &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_i18ngrep "moving it to dir~HEAD instead" output
 	else
@@ -340,7 +340,7 @@ test_expect_success 'Same as previous, but merged other way' '
 	! grep "error: refusing to lose untracked file at" errors &&
 	test_i18ngrep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
 	test_i18ngrep "Auto-merging dir" output &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_i18ngrep "moving it to dir~renamed-file-has-no-conflicts instead" output
 	else
@@ -400,7 +400,7 @@ test_expect_success 'Rename+D/F conflict; renamed file cannot merge and dir in t
 	test_must_fail but merge --strategy=recursive dir-in-way &&
 
 	test_stdout_line_count = 5 but ls-files -u &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 3 but ls-files -u dir~HEAD
 	else
@@ -425,7 +425,7 @@ test_expect_success 'Same as previous, but merged other way' '
 	test_must_fail but merge --strategy=recursive renamed-file-has-conflicts &&
 
 	test_stdout_line_count = 5 but ls-files -u &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 3 but ls-files -u dir~renamed-file-has-conflicts
 	else
@@ -488,7 +488,7 @@ test_expect_success 'both rename source and destination involved in D/F conflict
 	but checkout -q rename-dest^0 &&
 	test_must_fail but merge --strategy=recursive source-conflict &&
 
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 2 but ls-files -u
 	else
@@ -527,7 +527,7 @@ test_expect_success 'setup pair rename to parent of other (D/F conflicts)' '
 	but cummit -m "Rename one/file -> two"
 '
 
-if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 then
 	test_expect_success 'pair rename to parent of other (D/F conflicts) w/ untracked dir' '
 		but checkout -q rename-one^0 &&
@@ -574,7 +574,7 @@ test_expect_success 'pair rename to parent of other (D/F conflicts) w/ clean sta
 	but clean -fdqx &&
 	test_must_fail but merge --strategy=recursive rename-two &&
 
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 4 but ls-files -u &&
 		test_stdout_line_count = 2 but ls-files -u one &&
@@ -623,7 +623,7 @@ test_expect_success 'check handling of differently renamed file with D/F conflic
 	but checkout -q first-rename^0 &&
 	test_must_fail but merge --strategy=recursive second-rename &&
 
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	if test "$BUT_TEST_MERGE_ALGORITHM" = ort
 	then
 		test_stdout_line_count = 5 but ls-files -s &&
 		test_stdout_line_count = 3 but ls-files -u &&

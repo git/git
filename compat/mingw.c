@@ -202,7 +202,7 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	vsnprintf(question, sizeof(question), format, args);
 	va_end(args);
 
-	if ((retry_hook[0] = mingw_getenv("GIT_ASK_YESNO"))) {
+	if ((retry_hook[0] = mingw_getenv("BUT_ASK_YESNO"))) {
 		retry_hook[1] = question;
 		return !run_command_v_opt(retry_hook, 0);
 	}
@@ -226,18 +226,18 @@ static int ask_yes_no_if_possible(const char *format, ...)
 enum hide_dotfiles_type {
 	HIDE_DOTFILES_FALSE = 0,
 	HIDE_DOTFILES_TRUE,
-	HIDE_DOTFILES_DOTGITONLY
+	HIDE_DOTFILES_DOTBUTONLY
 };
 
 static int core_restrict_inherited_handles = -1;
-static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTBUTONLY;
 static char *unset_environment_variables;
 
 int mingw_core_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "core.hidedotfiles")) {
 		if (value && !strcasecmp(value, "dotbutonly"))
-			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+			hide_dotfiles = HIDE_DOTFILES_DOTBUTONLY;
 		else
 			hide_dotfiles = but_config_bool(var, value);
 		return 0;
@@ -423,7 +423,7 @@ static inline int needs_hiding(const char *path)
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE)
 		return *basename == '.';
 
-	assert(hide_dotfiles == HIDE_DOTFILES_DOTGITONLY);
+	assert(hide_dotfiles == HIDE_DOTFILES_DOTBUTONLY);
 	return !strncasecmp(".but", basename, 4) &&
 		(!basename[4] || is_dir_sep(basename[4]));
 }
@@ -1637,7 +1637,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
-	strace_env = getenv("GIT_STRACE_COMMANDS");
+	strace_env = getenv("BUT_STRACE_COMMANDS");
 	if (strace_env) {
 		char *p = path_lookup("strace.exe", 1);
 		if (!p)
@@ -2932,11 +2932,11 @@ static void maybe_redirect_std_handle(const wchar_t *key, DWORD std_id, int fd,
 
 static void maybe_redirect_std_handles(void)
 {
-	maybe_redirect_std_handle(L"GIT_REDIRECT_STDIN", STD_INPUT_HANDLE, 0,
+	maybe_redirect_std_handle(L"BUT_REDIRECT_STDIN", STD_INPUT_HANDLE, 0,
 				  GENERIC_READ, FILE_ATTRIBUTE_NORMAL);
-	maybe_redirect_std_handle(L"GIT_REDIRECT_STDOUT", STD_OUTPUT_HANDLE, 1,
+	maybe_redirect_std_handle(L"BUT_REDIRECT_STDOUT", STD_OUTPUT_HANDLE, 1,
 				  GENERIC_WRITE, FILE_ATTRIBUTE_NORMAL);
-	maybe_redirect_std_handle(L"GIT_REDIRECT_STDERR", STD_ERROR_HANDLE, 2,
+	maybe_redirect_std_handle(L"BUT_REDIRECT_STDERR", STD_ERROR_HANDLE, 2,
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
 

@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 # Disable expensive chain-lint tests; all of the tests in this script
 # are variants of a few trivial test-tool invocations, and there are a lot of
 # them.
-GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
+BUT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
 
 should_create_test_file() {
 	file=$1

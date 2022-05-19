@@ -44,9 +44,9 @@
 static uint8_t oid_version(void)
 {
 	switch (hash_algo_by_ptr(the_hash_algo)) {
-	case GIT_HASH_SHA1:
+	case BUT_HASH_SHA1:
 		return 1;
-	case GIT_HASH_SHA256:
+	case BUT_HASH_SHA256:
 		return 2;
 	default:
 		die(_("invalid hash version"));
@@ -162,7 +162,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets);
 
-	if (but_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
+	if (but_env_bool("BUT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex);
 
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
@@ -1162,7 +1162,7 @@ static int write_midx_internal(const char *object_dir,
 			       unsigned flags)
 {
 	struct strbuf midx_name = STRBUF_INIT;
-	unsigned char midx_hash[GIT_MAX_RAWSZ];
+	unsigned char midx_hash[BUT_MAX_RAWSZ];
 	uint32_t i;
 	struct hashfile *f = NULL;
 	struct lock_file lk;
@@ -1452,7 +1452,7 @@ static int write_midx_internal(const char *object_dir,
 	free_chunkfile(cf);
 
 	if (flags & MIDX_WRITE_REV_INDEX &&
-	    but_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
+	    but_env_bool("BUT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
 	if (flags & MIDX_WRITE_BITMAP) {
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,

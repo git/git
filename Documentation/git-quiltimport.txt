@@ -59,6 +59,6 @@ variable.
 --keep-non-patch::
 	Pass `-b` flag to 'but mailinfo' (see linkbut:but-mailinfo[1]).
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

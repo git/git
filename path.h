@@ -148,11 +148,11 @@ void report_linked_checkout_garbage(void);
 /*
  * You can define a static memoized but path like:
  *
- *    static GIT_PATH_FUNC(but_path_foo, "FOO")
+ *    static BUT_PATH_FUNC(but_path_foo, "FOO")
  *
  * or use one of the global ones below.
  */
-#define GIT_PATH_FUNC(func, filename) \
+#define BUT_PATH_FUNC(func, filename) \
 	const char *func(void) \
 	{ \
 		static char *ret; \
@@ -161,7 +161,7 @@ void report_linked_checkout_garbage(void);
 		return ret; \
 	}
 
-#define REPO_GIT_PATH_FUNC(var, filename) \
+#define REPO_BUT_PATH_FUNC(var, filename) \
 	const char *but_path_##var(struct repository *r) \
 	{ \
 		if (!r->cached_paths.var) \

@@ -6,15 +6,15 @@
 #include "but-compat-util.h"
 
 enum {
-	S = GIT_SPACE,
-	A = GIT_ALPHA,
-	D = GIT_DIGIT,
-	G = GIT_GLOB_SPECIAL,	/* *, ?, [, \\ */
-	R = GIT_REGEX_SPECIAL,	/* $, (, ), +, ., ^, {, | */
-	P = GIT_PATHSPEC_MAGIC, /* other non-alnum, except for ] and } */
-	X = GIT_CNTRL,
-	U = GIT_PUNCT,
-	Z = GIT_CNTRL | GIT_SPACE
+	S = BUT_SPACE,
+	A = BUT_ALPHA,
+	D = BUT_DIBUT,
+	G = BUT_GLOB_SPECIAL,	/* *, ?, [, \\ */
+	R = BUT_REGEX_SPECIAL,	/* $, (, ), +, ., ^, {, | */
+	P = BUT_PATHSPEC_MAGIC, /* other non-alnum, except for ] and } */
+	X = BUT_CNTRL,
+	U = BUT_PUNCT,
+	Z = BUT_CNTRL | BUT_SPACE
 };
 
 const unsigned char sane_ctype[256] = {

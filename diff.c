@@ -59,29 +59,29 @@ static long diff_algorithm;
 static unsigned ws_error_highlight_default = WSEH_NEW;
 
 static char diff_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_NORMAL,	/* CONTEXT */
-	GIT_COLOR_BOLD,		/* METAINFO */
-	GIT_COLOR_CYAN,		/* FRAGINFO */
-	GIT_COLOR_RED,		/* OLD */
-	GIT_COLOR_GREEN,	/* NEW */
-	GIT_COLOR_YELLOW,	/* cummit */
-	GIT_COLOR_BG_RED,	/* WHITESPACE */
-	GIT_COLOR_NORMAL,	/* FUNCINFO */
-	GIT_COLOR_BOLD_MAGENTA,	/* OLD_MOVED */
-	GIT_COLOR_BOLD_BLUE,	/* OLD_MOVED ALTERNATIVE */
-	GIT_COLOR_FAINT,	/* OLD_MOVED_DIM */
-	GIT_COLOR_FAINT_ITALIC,	/* OLD_MOVED_ALTERNATIVE_DIM */
-	GIT_COLOR_BOLD_CYAN,	/* NEW_MOVED */
-	GIT_COLOR_BOLD_YELLOW,	/* NEW_MOVED ALTERNATIVE */
-	GIT_COLOR_FAINT,	/* NEW_MOVED_DIM */
-	GIT_COLOR_FAINT_ITALIC,	/* NEW_MOVED_ALTERNATIVE_DIM */
-	GIT_COLOR_FAINT,	/* CONTEXT_DIM */
-	GIT_COLOR_FAINT_RED,	/* OLD_DIM */
-	GIT_COLOR_FAINT_GREEN,	/* NEW_DIM */
-	GIT_COLOR_BOLD,		/* CONTEXT_BOLD */
-	GIT_COLOR_BOLD_RED,	/* OLD_BOLD */
-	GIT_COLOR_BOLD_GREEN,	/* NEW_BOLD */
+	BUT_COLOR_RESET,
+	BUT_COLOR_NORMAL,	/* CONTEXT */
+	BUT_COLOR_BOLD,		/* METAINFO */
+	BUT_COLOR_CYAN,		/* FRAGINFO */
+	BUT_COLOR_RED,		/* OLD */
+	BUT_COLOR_GREEN,	/* NEW */
+	BUT_COLOR_YELLOW,	/* cummit */
+	BUT_COLOR_BG_RED,	/* WHITESPACE */
+	BUT_COLOR_NORMAL,	/* FUNCINFO */
+	BUT_COLOR_BOLD_MAGENTA,	/* OLD_MOVED */
+	BUT_COLOR_BOLD_BLUE,	/* OLD_MOVED ALTERNATIVE */
+	BUT_COLOR_FAINT,	/* OLD_MOVED_DIM */
+	BUT_COLOR_FAINT_ITALIC,	/* OLD_MOVED_ALTERNATIVE_DIM */
+	BUT_COLOR_BOLD_CYAN,	/* NEW_MOVED */
+	BUT_COLOR_BOLD_YELLOW,	/* NEW_MOVED ALTERNATIVE */
+	BUT_COLOR_FAINT,	/* NEW_MOVED_DIM */
+	BUT_COLOR_FAINT_ITALIC,	/* NEW_MOVED_ALTERNATIVE_DIM */
+	BUT_COLOR_FAINT,	/* CONTEXT_DIM */
+	BUT_COLOR_FAINT_RED,	/* OLD_DIM */
+	BUT_COLOR_FAINT_GREEN,	/* NEW_DIM */
+	BUT_COLOR_BOLD,		/* CONTEXT_BOLD */
+	BUT_COLOR_BOLD_RED,	/* OLD_BOLD */
+	BUT_COLOR_BOLD_GREEN,	/* NEW_BOLD */
 };
 
 static const char *color_diff_slots[] = {
@@ -508,7 +508,7 @@ static const char *external_diff(void)
 
 	if (done_preparing)
 		return external_diff_cmd;
-	external_diff_cmd = xstrdup_or_null(getenv("GIT_EXTERNAL_DIFF"));
+	external_diff_cmd = xstrdup_or_null(getenv("BUT_EXTERNAL_DIFF"));
 	if (!external_diff_cmd)
 		external_diff_cmd = external_diff_cmd_cfg;
 	done_preparing = 1;
@@ -527,7 +527,7 @@ static struct diff_tempfile {
 	 */
 	const char *name;
 
-	char hex[GIT_MAX_HEXSZ + 1];
+	char hex[BUT_MAX_HEXSZ + 1];
 	char mode[10];
 
 	/*
@@ -670,7 +670,7 @@ static void emit_line_0(struct diff_options *o,
 		goto end_of_line;
 
 	if (reverse && want_color(o->use_color)) {
-		fputs(GIT_COLOR_REVERSE, file);
+		fputs(BUT_COLOR_REVERSE, file);
 		needs_reset = 1;
 	}
 
@@ -1470,7 +1470,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 		fprintf(o->file, "%s", line);
 		break;
 	case DIFF_SYMBOL_BINARY_DIFF_HEADER:
-		fprintf(o->file, "%sGIT binary patch\n", diff_line_prefix(o));
+		fprintf(o->file, "%sBUT binary patch\n", diff_line_prefix(o));
 		break;
 	case DIFF_SYMBOL_BINARY_DIFF_HEADER_DELTA:
 		fprintf(o->file, "%sdelta %s\n", diff_line_prefix(o), line);
@@ -1618,7 +1618,7 @@ static void emit_hunk_header(struct emit_callback *ecbdata,
 	const char *frag = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
 	const char *func = diff_get_color(ecbdata->color_diff, DIFF_FUNCINFO);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
-	const char *reverse = ecbdata->color_diff ? GIT_COLOR_REVERSE : "";
+	const char *reverse = ecbdata->color_diff ? BUT_COLOR_REVERSE : "";
 	static const char atat[2] = { '@', '@' };
 	const char *cp, *ep;
 	struct strbuf msgbuf = STRBUF_INIT;
@@ -1879,7 +1879,7 @@ static int fn_out_diff_words_write_helper(struct diff_options *o,
 
 		if (p != buf) {
 			const char *reset = st_el->color && *st_el->color ?
-					    GIT_COLOR_RESET : NULL;
+					    BUT_COLOR_RESET : NULL;
 			if (st_el->color && *st_el->color)
 				strbuf_addstr(&sb, st_el->color);
 			strbuf_addstr(&sb, st_el->prefix);
@@ -3417,15 +3417,15 @@ static void builtin_diff(const char *name_a,
 	}
 
 	if (o->submodule_format == DIFF_SUBMODULE_LOG &&
-	    (!one->mode || S_ISGITLINK(one->mode)) &&
-	    (!two->mode || S_ISGITLINK(two->mode))) {
+	    (!one->mode || S_ISBUTLINK(one->mode)) &&
+	    (!two->mode || S_ISBUTLINK(two->mode))) {
 		show_submodule_diff_summary(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
 				two->dirty_submodule);
 		return;
 	} else if (o->submodule_format == DIFF_SUBMODULE_INLINE_DIFF &&
-		   (!one->mode || S_ISGITLINK(one->mode)) &&
-		   (!two->mode || S_ISGITLINK(two->mode))) {
+		   (!one->mode || S_ISBUTLINK(one->mode)) &&
+		   (!two->mode || S_ISBUTLINK(two->mode))) {
 		show_submodule_inline_diff(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
 				two->dirty_submodule);
@@ -3597,7 +3597,7 @@ static void builtin_diff(const char *name_a,
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
 
-		diffopts = getenv("GIT_DIFF_OPTS");
+		diffopts = getenv("BUT_DIFF_OPTS");
 		if (!diffopts)
 			;
 		else if (skip_prefix(diffopts, "--unified=", &v))
@@ -3990,7 +3990,7 @@ int diff_populate_filespec(struct repository *r,
 	if (size_only && 0 < s->size)
 		return 0;
 
-	if (S_ISGITLINK(s->mode))
+	if (S_ISBUTLINK(s->mode))
 		return diff_populate_butlink(s, size_only);
 
 	if (!s->oid_valid ||
@@ -4183,7 +4183,7 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 		return temp;
 	}
 
-	if (!S_ISGITLINK(one->mode) &&
+	if (!S_ISBUTLINK(one->mode) &&
 	    (!one->oid_valid ||
 	     reuse_worktree_file(r->index, name, &one->oid, 1))) {
 		struct stat st;
@@ -4273,8 +4273,8 @@ static void run_external_diff(const char *pgm,
 		}
 	}
 
-	strvec_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
-	strvec_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+	strvec_pushf(&env, "BUT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
+	strvec_pushf(&env, "BUT_DIFF_PATH_TOTAL=%d", q->nr);
 
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
@@ -5201,8 +5201,8 @@ static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
 	path = prefix_filename(ctx->prefix, arg);
 	options->file = xfopen(path, "w");
 	options->close_file = 1;
-	if (options->use_color != GIT_COLOR_ALWAYS)
-		options->use_color = GIT_COLOR_NEVER;
+	if (options->use_color != BUT_COLOR_ALWAYS)
+		options->use_color = BUT_COLOR_NEVER;
 	free(path);
 	return 0;
 }
@@ -5764,7 +5764,7 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	 * uniqueness across all objects (statistically speaking).
 	 */
 	if (abblen < the_hash_algo->hexsz - 3) {
-		static char hex[GIT_MAX_HEXSZ + 1];
+		static char hex[BUT_MAX_HEXSZ + 1];
 		if (len < abblen && abblen <= len + 2)
 			xsnprintf(hex, sizeof(hex), "%s%.*s", abbrev, len+3-abblen, "..");
 		else
@@ -6138,7 +6138,7 @@ static int remove_space(char *line, int len)
 
 void flush_one_hunk(struct object_id *result, but_hash_ctx *ctx)
 {
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
@@ -6633,7 +6633,7 @@ static int diff_filespec_is_identical(struct repository *r,
 				      struct diff_filespec *one,
 				      struct diff_filespec *two)
 {
-	if (S_ISGITLINK(one->mode))
+	if (S_ISBUTLINK(one->mode))
 		return 0;
 	if (diff_populate_filespec(r, one, NULL))
 		return 0;
@@ -6730,7 +6730,7 @@ void diff_add_if_missing(struct repository *r,
 			 const struct diff_filespec *filespec)
 {
 	if (filespec && filespec->oid_valid &&
-	    !S_ISGITLINK(filespec->mode) &&
+	    !S_ISBUTLINK(filespec->mode) &&
 	    oid_object_info_extended(r, &filespec->oid, NULL,
 				     OBJECT_INFO_FOR_PREFETCH))
 		oid_array_append(to_fetch, &filespec->oid);
@@ -6876,7 +6876,7 @@ void diff_addremove(struct diff_options *options,
 {
 	struct diff_filespec *one, *two;
 
-	if (S_ISGITLINK(mode) && is_submodule_ignored(concatpath, options))
+	if (S_ISBUTLINK(mode) && is_submodule_ignored(concatpath, options))
 		return;
 
 	/* This may look odd, but it is a preparation for
@@ -6925,7 +6925,7 @@ void diff_change(struct diff_options *options,
 	struct diff_filespec *one, *two;
 	struct diff_filepair *p;
 
-	if (S_ISGITLINK(old_mode) && S_ISGITLINK(new_mode) &&
+	if (S_ISBUTLINK(old_mode) && S_ISBUTLINK(new_mode) &&
 	    is_submodule_ignored(concatpath, options))
 		return;
 

@@ -46,9 +46,9 @@ int cmd__dump_untracked_cache(int ac, const char **av)
 	struct strbuf base = STRBUF_INIT;
 
 	/* Set core.untrackedCache=keep before setup_but_directory() */
-	xsetenv("GIT_CONFIG_COUNT", "1", 1);
-	xsetenv("GIT_CONFIG_KEY_0", "core.untrackedCache", 1);
-	xsetenv("GIT_CONFIG_VALUE_0", "keep", 1);
+	xsetenv("BUT_CONFIG_COUNT", "1", 1);
+	xsetenv("BUT_CONFIG_KEY_0", "core.untrackedCache", 1);
+	xsetenv("BUT_CONFIG_VALUE_0", "keep", 1);
 
 	setup_but_directory();
 	if (read_cache() < 0)

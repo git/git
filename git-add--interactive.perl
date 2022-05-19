@@ -183,12 +183,12 @@ sub run_cmd_pipe {
 	}
 }
 
-my ($GIT_DIR) = run_cmd_pipe(qw(but rev-parse --but-dir));
+my ($BUT_DIR) = run_cmd_pipe(qw(but rev-parse --but-dir));
 
-if (!defined $GIT_DIR) {
+if (!defined $BUT_DIR) {
 	exit(1); # rev-parse would have already said "not a but repo"
 }
-chomp($GIT_DIR);
+chomp($BUT_DIR);
 
 sub refresh {
 	my $fh;
@@ -1132,7 +1132,7 @@ aborted and the hunk is left unchanged.
 EOF2
 	close $fh;
 
-	chomp(my ($editor) = run_cmd_pipe(qw(but var GIT_EDITOR)));
+	chomp(my ($editor) = run_cmd_pipe(qw(but var BUT_EDITOR)));
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
 	if ($? != 0) {

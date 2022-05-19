@@ -78,9 +78,9 @@ jobs:
           then
             # Remove ANSI colors which are proper for console logs but not
             # proper for PR comment.
-            echo "COMMENT_BODY<<EOF" >>$GITHUB_ENV
-            perl -pe 's/\e\[[0-9;]*m//g; s/\bEOF$//g' but-po-helper.out >>$GITHUB_ENV
-            echo "EOF" >>$GITHUB_ENV
+            echo "COMMENT_BODY<<EOF" >>$BUTHUB_ENV
+            perl -pe 's/\e\[[0-9;]*m//g; s/\bEOF$//g' but-po-helper.out >>$BUTHUB_ENV
+            echo "EOF" >>$BUTHUB_ENV
           fi
           cat but-po-helper.out
           exit $exit_code
@@ -91,12 +91,12 @@ jobs:
           buthub.event_name == 'pull_request_target' &&
           env.COMMENT_BODY != ''
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.BUTHUB_TOKEN }}
           repo-token-user-login: 'buthub-actions[bot]'
           message: >
             ${{ steps.check-cummits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
             found by [but-po-helper](https://buthub.com/but-l10n/but-po-helper#readme) in workflow
-            [#${{ buthub.run_number }}](${{ env.GITHUB_SERVER_URL }}/${{ buthub.repository }}/actions/runs/${{ buthub.run_id }}):
+            [#${{ buthub.run_number }}](${{ env.BUTHUB_SERVER_URL }}/${{ buthub.repository }}/actions/runs/${{ buthub.run_id }}):
 
             ```
 

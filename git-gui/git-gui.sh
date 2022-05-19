@@ -3,13 +3,13 @@
  if test "z$*" = zversion \
  || test "z$*" = z--version; \
  then \
-	echo 'but-gui version @@GITGUI_VERSION@@'; \
+	echo 'but-gui version @@BUTGUI_VERSION@@'; \
 	exit; \
  fi; \
  argv0=$0; \
  exec wish "$argv0" -- "$@"
 
-set appvers {@@GITGUI_VERSION@@}
+set appvers {@@BUTGUI_VERSION@@}
 set copyright [string map [list (c) \u00a9] {
 Copyright (c) 2006-2010 Shawn Pearce, et. al.
 
@@ -48,12 +48,12 @@ catch {rename send {}} ; # What an evil concept...
 ##
 ## locate our library
 
-if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
-	set oguilib $::env(GIT_GUI_LIB_DIR)
+if { [info exists ::env(BUT_GUI_LIB_DIR) ] } {
+	set oguilib $::env(BUT_GUI_LIB_DIR)
 } else {
-	set oguilib {@@GITGUI_LIBDIR@@}
+	set oguilib {@@BUTGUI_LIBDIR@@}
 }
-set oguirel {@@GITGUI_RELATIVE@@}
+set oguirel {@@BUTGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
 	set oguilib [file dirname [file normalize $argv0]]
 	if {[file tail $oguilib] eq {but-core}} {
@@ -74,7 +74,7 @@ unset oguirel
 ##
 ## enable verbose loading?
 
-if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
+if {![catch {set _verbose $env(BUTGUI_VERBOSE)}]} {
 	unset _verbose
 	rename auto_load real__auto_load
 	proc auto_load {name args} {
@@ -1237,7 +1237,7 @@ if {![info exists env(SSH_ASKPASS)]} {
 
 set picked 0
 if {[catch {
-		set _butdir $env(GIT_DIR)
+		set _butdir $env(BUT_DIR)
 		set _prefix {}
 		}]
 	&& [catch {
@@ -1282,7 +1282,7 @@ if {[package vcompare $_but_version 1.7.0] >= 0} {
 	# try to set work tree from environment, core.worktree or use
 	# cdup to obtain a relative path to the top of the worktree. If
 	# run from the top, the ./ prefix ensures normalize expands pwd.
-	if {[catch { set _butworktree $env(GIT_WORK_TREE) }]} {
+	if {[catch { set _butworktree $env(BUT_WORK_TREE) }]} {
 		set _butworktree [get_config core.worktree]
 		if {$_butworktree eq ""} {
 			set _butworktree [file normalize ./[but rev-parse --show-cdup]]
@@ -1326,8 +1326,8 @@ if {[lindex $_reponame end] eq {.but}} {
 	set _reponame [lindex $_reponame end]
 }
 
-set env(GIT_DIR) $_butdir
-set env(GIT_WORK_TREE) $_butworktree
+set env(BUT_DIR) $_butdir
+set env(BUT_WORK_TREE) $_butworktree
 
 ######################################################################
 ##
@@ -1471,11 +1471,11 @@ proc rescan {after {honor_trustmtime 1}} {
 
 	array unset file_states
 
-	if {!$::GITGUI_BCK_exists &&
+	if {!$::BUTGUI_BCK_exists &&
 		(![$ui_comm edit modified]
 		|| [string trim [$ui_comm get 0.0 end]] eq {})} {
 		if {[string match amend* $cummit_type]} {
-		} elseif {[load_message GITGUI_MSG utf-8]} {
+		} elseif {[load_message BUTGUI_MSG utf-8]} {
 		} elseif {[run_prepare_cummit_msg_hook]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
@@ -2198,18 +2198,18 @@ proc do_butk {revs {is_submodule false}} {
 				}
 				set revs $old_sha1...$new_sha1
 			}
-			# GIT_DIR and GIT_WORK_TREE for the submodule are not the ones
+			# BUT_DIR and BUT_WORK_TREE for the submodule are not the ones
 			# we've been using for the main repository, so unset them.
 			# TODO we could make life easier (start up faster?) for butk
 			# by setting these to the appropriate values to allow butk
 			# to skip the heuristics to find their proper value
-			unset env(GIT_DIR)
-			unset env(GIT_WORK_TREE)
+			unset env(BUT_DIR)
+			unset env(BUT_WORK_TREE)
 		}
 		eval exec $cmd $revs "--" "--" &
 
-		set env(GIT_DIR) $_butdir
-		set env(GIT_WORK_TREE) $_butworktree
+		set env(BUT_DIR) $_butdir
+		set env(BUT_WORK_TREE) $_butworktree
 		cd $pwd
 
 		if {[info exists main_status]} {
@@ -2237,16 +2237,16 @@ proc do_but_gui {} {
 
 		# see note in do_butk about unsetting these vars when
 		# running tools in a submodule
-		unset env(GIT_DIR)
-		unset env(GIT_WORK_TREE)
+		unset env(BUT_DIR)
+		unset env(BUT_WORK_TREE)
 
 		set pwd [pwd]
 		cd $current_diff_path
 
 		eval exec $exe gui &
 
-		set env(GIT_DIR) $_butdir
-		set env(GIT_WORK_TREE) $_butworktree
+		set env(BUT_DIR) $_butdir
+		set env(BUT_WORK_TREE) $_butworktree
 		cd $pwd
 
 		set status_operation [$::main_status \
@@ -2295,7 +2295,7 @@ proc terminate_me {win} {
 
 proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config cummit_type
-	global GITGUI_BCK_exists GITGUI_BCK_i
+	global BUTGUI_BCK_exists BUTGUI_BCK_i
 	global ui_comm_spell
 	global ret_code use_ttk
 
@@ -2305,10 +2305,10 @@ proc do_quit {{rc {1}}} {
 	if {[winfo exists $ui_comm]} {
 		# -- Stash our current cummit buffer.
 		#
-		set save [butdir GITGUI_MSG]
-		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
-			file rename -force [butdir GITGUI_BCK] $save
-			set GITGUI_BCK_exists 0
+		set save [butdir BUTGUI_MSG]
+		if {$BUTGUI_BCK_exists && ![$ui_comm edit modified]} {
+			file rename -force [butdir BUTGUI_BCK] $save
+			set BUTGUI_BCK_exists 0
 		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]
 			regsub -all -line {[ \r\t]+$} $msg {} msg
@@ -2333,9 +2333,9 @@ proc do_quit {{rc {1}}} {
 
 		# -- Remove our editor backup, its not needed.
 		#
-		after cancel $GITGUI_BCK_i
-		if {$GITGUI_BCK_exists} {
-			catch {file delete [butdir GITGUI_BCK]}
+		after cancel $BUTGUI_BCK_i
+		if {$BUTGUI_BCK_exists} {
+			catch {file delete [butdir BUTGUI_BCK]}
 		}
 
 		# -- Stash our current window geometry into this repository.
@@ -4044,19 +4044,19 @@ by %s:
 " [appname]]
 	foreach name [array names env] {
 		switch -regexp -- $name {
-		{^GIT_INDEX_FILE$} -
-		{^GIT_OBJECT_DIRECTORY$} -
-		{^GIT_ALTERNATE_OBJECT_DIRECTORIES$} -
-		{^GIT_DIFF_OPTS$} -
-		{^GIT_EXTERNAL_DIFF$} -
-		{^GIT_PAGER$} -
-		{^GIT_TRACE$} -
-		{^GIT_CONFIG$} -
-		{^GIT_(AUTHOR|cummitTER)_DATE$} {
+		{^BUT_INDEX_FILE$} -
+		{^BUT_OBJECT_DIRECTORY$} -
+		{^BUT_ALTERNATE_OBJECT_DIRECTORIES$} -
+		{^BUT_DIFF_OPTS$} -
+		{^BUT_EXTERNAL_DIFF$} -
+		{^BUT_PAGER$} -
+		{^BUT_TRACE$} -
+		{^BUT_CONFIG$} -
+		{^BUT_(AUTHOR|cummitTER)_DATE$} {
 			append msg " - $name\n"
 			incr ignored_env
 		}
-		{^GIT_(AUTHOR|cummitTER)_(NAME|EMAIL)$} {
+		{^BUT_(AUTHOR|cummitTER)_(NAME|EMAIL)$} {
 			append msg " - $name\n"
 			incr ignored_env
 			set suggest_user $name
@@ -4098,54 +4098,54 @@ if {[is_enabled transport]} {
 }
 
 if {[winfo exists $ui_comm]} {
-	set GITGUI_BCK_exists [load_message GITGUI_BCK utf-8]
+	set BUTGUI_BCK_exists [load_message BUTGUI_BCK utf-8]
 
 	# -- If both our backup and message files exist use the
 	#    newer of the two files to initialize the buffer.
 	#
-	if {$GITGUI_BCK_exists} {
-		set m [butdir GITGUI_MSG]
+	if {$BUTGUI_BCK_exists} {
+		set m [butdir BUTGUI_MSG]
 		if {[file isfile $m]} {
-			if {[file mtime [butdir GITGUI_BCK]] > [file mtime $m]} {
-				catch {file delete [butdir GITGUI_MSG]}
+			if {[file mtime [butdir BUTGUI_BCK]] > [file mtime $m]} {
+				catch {file delete [butdir BUTGUI_MSG]}
 			} else {
 				$ui_comm delete 0.0 end
 				$ui_comm edit reset
 				$ui_comm edit modified false
-				catch {file delete [butdir GITGUI_BCK]}
-				set GITGUI_BCK_exists 0
+				catch {file delete [butdir BUTGUI_BCK]}
+				set BUTGUI_BCK_exists 0
 			}
 		}
 		unset m
 	}
 
 	proc backup_cummit_buffer {} {
-		global ui_comm GITGUI_BCK_exists
+		global ui_comm BUTGUI_BCK_exists
 
 		set m [$ui_comm edit modified]
-		if {$m || $GITGUI_BCK_exists} {
+		if {$m || $BUTGUI_BCK_exists} {
 			set msg [string trim [$ui_comm get 0.0 end]]
 			regsub -all -line {[ \r\t]+$} $msg {} msg
 
 			if {$msg eq {}} {
-				if {$GITGUI_BCK_exists} {
-					catch {file delete [butdir GITGUI_BCK]}
-					set GITGUI_BCK_exists 0
+				if {$BUTGUI_BCK_exists} {
+					catch {file delete [butdir BUTGUI_BCK]}
+					set BUTGUI_BCK_exists 0
 				}
 			} elseif {$m} {
 				catch {
-					set fd [open [butdir GITGUI_BCK] w]
+					set fd [open [butdir BUTGUI_BCK] w]
 					fconfigure $fd -encoding utf-8
 					puts -nonewline $fd $msg
 					close $fd
-					set GITGUI_BCK_exists 1
+					set BUTGUI_BCK_exists 1
 				}
 			}
 
 			$ui_comm edit modified false
 		}
 
-		set ::GITGUI_BCK_i [after 2000 backup_cummit_buffer]
+		set ::BUTGUI_BCK_i [after 2000 backup_cummit_buffer]
 	}
 
 	backup_cummit_buffer

@@ -24,15 +24,15 @@
 void but_test_write_cummit_graph_or_die(void)
 {
 	int flags = 0;
-	if (!but_env_bool(GIT_TEST_CUMMIT_GRAPH, 0))
+	if (!but_env_bool(BUT_TEST_CUMMIT_GRAPH, 0))
 		return;
 
-	if (but_env_bool(GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
+	if (but_env_bool(BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags = CUMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	if (write_cummit_graph_reachable(the_repository->objects->odb,
 					 flags, NULL))
-		die("failed to write cummit-graph under GIT_TEST_CUMMIT_GRAPH");
+		die("failed to write cummit-graph under BUT_TEST_CUMMIT_GRAPH");
 }
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
@@ -196,9 +196,9 @@ char *get_cummit_graph_chain_filename(struct object_directory *odb)
 static uint8_t oid_version(void)
 {
 	switch (hash_algo_by_ptr(the_hash_algo)) {
-	case GIT_HASH_SHA1:
+	case BUT_HASH_SHA1:
 		return 1;
-	case GIT_HASH_SHA256:
+	case BUT_HASH_SHA256:
 		return 2;
 	default:
 		die(_("invalid hash version"));
@@ -653,7 +653,7 @@ static int prepare_cummit_graph(struct repository *r)
 
 	prepare_repo_settings(r);
 
-	if (!but_env_bool(GIT_TEST_CUMMIT_GRAPH, 0) &&
+	if (!but_env_bool(BUT_TEST_CUMMIT_GRAPH, 0) &&
 	    r->settings.core_cummit_graph != 1)
 		/*
 		 * This repository is not configured to use cummit graphs, so
@@ -945,9 +945,9 @@ int parse_cummit_in_graph(struct repository *r, struct cummit *item)
 	static int checked_env = 0;
 
 	if (!checked_env &&
-	    but_env_bool(GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE, 0))
+	    but_env_bool(BUT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE, 0))
 		die("dying as requested by the '%s' variable on cummit-graph parse!",
-		    GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE);
+		    BUT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE);
 	checked_env = 1;
 
 	if (!prepare_cummit_graph(r))
@@ -1839,7 +1839,7 @@ static int write_cummit_graph_file(struct write_cummit_graph_context *ctx)
 	const unsigned hashsz = the_hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
 	struct chunkfile *cf;
-	unsigned char file_hash[GIT_MAX_RAWSZ];
+	unsigned char file_hash[BUT_MAX_RAWSZ];
 
 	if (ctx->split) {
 		struct strbuf tmp_file = STRBUF_INIT;
@@ -2306,11 +2306,11 @@ int write_cummit_graph(struct object_directory *odb,
 	ctx->write_generation_data = (get_configured_generation_version(r) == 2);
 	ctx->num_generation_data_overflows = 0;
 
-	bloom_settings.bits_per_entry = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
+	bloom_settings.bits_per_entry = but_env_ulong("BUT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY",
 						      bloom_settings.bits_per_entry);
-	bloom_settings.num_hashes = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_NUM_HASHES",
+	bloom_settings.num_hashes = but_env_ulong("BUT_TEST_BLOOM_SETTINGS_NUM_HASHES",
 						  bloom_settings.num_hashes);
-	bloom_settings.max_changed_paths = but_env_ulong("GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS",
+	bloom_settings.max_changed_paths = but_env_ulong("BUT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS",
 							 bloom_settings.max_changed_paths);
 	ctx->bloom_settings = &bloom_settings;
 

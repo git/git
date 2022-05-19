@@ -107,8 +107,8 @@ Updates since v1.7.7
    not be checked out by default.
 
  * When populating a new submodule directory with "but submodule init",
-   the $GIT_DIR metainformation directory for submodules is created inside
-   $GIT_DIR/modules/<name>/ directory of the superproject and referenced
+   the $BUT_DIR metainformation directory for submodules is created inside
+   $BUT_DIR/modules/<name>/ directory of the superproject and referenced
    via the butfile mechanism. This is to make it possible to switch
    between cummits in the superproject that has and does not have the
    submodule in the tree without re-cloning.

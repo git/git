@@ -6,8 +6,8 @@
 test_description='but shortlog
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -120,18 +120,18 @@ EOF
 
 test_expect_success !MINGW 'shortlog from non-but directory' '
 	but log --no-expand-tabs HEAD >log &&
-	GIT_DIR=non-existing but shortlog -w <log >out &&
+	BUT_DIR=non-existing but shortlog -w <log >out &&
 	test_cmp expect out
 '
 
 test_expect_success !MINGW 'shortlog can read --format=raw output' '
 	but log --format=raw HEAD >log &&
-	GIT_DIR=non-existing but shortlog -w <log >out &&
+	BUT_DIR=non-existing but shortlog -w <log >out &&
 	test_cmp expect out
 '
 
 test_expect_success 'shortlog from non-but directory refuses extra arguments' '
-	test_must_fail env GIT_DIR=non-existing but shortlog foo 2>out &&
+	test_must_fail env BUT_DIR=non-existing but shortlog foo 2>out &&
 	test_i18ngrep "too many arguments" out
 '
 
@@ -203,7 +203,7 @@ test_expect_success 'shortlog --cummitter (internal)' '
 	but checkout --orphan side &&
 	but cummit --allow-empty -m one &&
 	but cummit --allow-empty -m two &&
-	GIT_CUMMITTER_NAME="Sin Nombre" but cummit --allow-empty -m three &&
+	BUT_CUMMITTER_NAME="Sin Nombre" but cummit --allow-empty -m three &&
 
 	cat >expect <<-\EOF &&
 	     2	C O Mitter
@@ -225,8 +225,8 @@ test_expect_success '--group=cummitter is the same as --cummitter' '
 
 test_expect_success 'shortlog --group=trailer:signed-off-by' '
 	but cummit --allow-empty -m foo -s &&
-	GIT_CUMMITTER_NAME="SOB One" \
-	GIT_CUMMITTER_EMAIL=sob@example.com \
+	BUT_CUMMITTER_NAME="SOB One" \
+	BUT_CUMMITTER_EMAIL=sob@example.com \
 		but cummit --allow-empty -m foo -s &&
 	but cummit --allow-empty --amend --no-edit -s &&
 	cat >expect <<-\EOF &&

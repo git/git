@@ -9,14 +9,14 @@ include ../../config.mak.uname
 -include ../../config.mak
 
 TARGETS = scalar$(X) scalar.o
-GITLIBS = ../../common-main.o ../../libbut.a ../../xdiff/lib.a
+BUTLIBS = ../../common-main.o ../../libbut.a ../../xdiff/lib.a
 
 all:: scalar$(X) ../../bin-wrappers/scalar
 
-$(GITLIBS):
+$(BUTLIBS):
 	$(QUIET_SUBDIR0)../.. $(QUIET_SUBDIR1) $(subst ../../,,$@)
 
-$(TARGETS): $(GITLIBS) scalar.c
+$(TARGETS): $(BUTLIBS) scalar.c
 	$(QUIET_SUBDIR0)../.. $(QUIET_SUBDIR1) $(patsubst %,contrib/scalar/%,$@)
 
 clean:
@@ -32,4 +32,4 @@ clean:
 test: all
 	$(MAKE) -C t
 
-.PHONY: $(GITLIBS) all clean test FORCE
+.PHONY: $(BUTLIBS) all clean test FORCE

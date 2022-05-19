@@ -124,8 +124,8 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 {
 	struct notes_rewrite_cfg *c = xmalloc(sizeof(struct notes_rewrite_cfg));
-	const char *rewrite_mode_env = getenv(GIT_NOTES_REWRITE_MODE_ENVIRONMENT);
-	const char *rewrite_refs_env = getenv(GIT_NOTES_REWRITE_REF_ENVIRONMENT);
+	const char *rewrite_mode_env = getenv(BUT_NOTES_REWRITE_MODE_ENVIRONMENT);
+	const char *rewrite_refs_env = getenv(BUT_NOTES_REWRITE_REF_ENVIRONMENT);
 	c->cmd = cmd;
 	c->enabled = 1;
 	c->combine = combine_notes_concatenate;
@@ -142,7 +142,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 			 * the environment variable, the second %s is
 			 * its value.
 			 */
-			error(_("Bad %s value: '%s'"), GIT_NOTES_REWRITE_MODE_ENVIRONMENT,
+			error(_("Bad %s value: '%s'"), BUT_NOTES_REWRITE_MODE_ENVIRONMENT,
 					rewrite_mode_env);
 	}
 	if (rewrite_refs_env) {

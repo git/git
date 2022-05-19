@@ -41,7 +41,7 @@ static void finish_tmp_packfile(struct strbuf *basename,
 
 static void finish_bulk_checkin(struct bulk_checkin_state *state)
 {
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
 	int i;
 

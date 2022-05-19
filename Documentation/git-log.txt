@@ -229,7 +229,7 @@ mailmap.*::
 
 notes.displayRef::
 	Which refs, in addition to the default set by `core.notesRef`
-	or `GIT_NOTES_REF`, to read notes from when showing cummit
+	or `BUT_NOTES_REF`, to read notes from when showing cummit
 	messages with the `log` family of commands.  See
 	linkbut:but-notes[1].
 +
@@ -238,9 +238,9 @@ multiple times.  A warning will be issued for refs that do not exist,
 but a glob that does not match any refs is silently ignored.
 +
 This setting can be disabled by the `--no-notes` option,
-overridden by the `GIT_NOTES_DISPLAY_REF` environment variable,
+overridden by the `BUT_NOTES_DISPLAY_REF` environment variable,
 and overridden by the `--notes=<ref>` option.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

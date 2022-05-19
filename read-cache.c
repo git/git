@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */
@@ -53,7 +53,7 @@
 #define CACHE_EXT_INDEXENTRYOFFSETTABLE 0x49454F54 /* "IEOT" */
 #define CACHE_EXT_SPARSE_DIRECTORIES 0x73646972 /* "sdir" */
 
-/* changes that can be kept in $GIT_DIR/index (basically all extensions) */
+/* changes that can be kept in $BUT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
 		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED | \
 		 SPLIT_INDEX_ORDERED | UNTRACKED_CHANGED | FSMONITOR_CHANGED)
@@ -220,7 +220,7 @@ int match_stat_data(const struct stat_data *sd, struct stat *st)
 
 /*
  * This only updates the "non-critical" parts of the directory
- * cache, ie the parts that aren't tracked by GIT, and only used
+ * cache, ie the parts that aren't tracked by BUT, and only used
  * to validate the cache.
  */
 void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, struct stat *st)
@@ -279,7 +279,7 @@ static int ce_compare_butlink(const struct cache_entry *ce)
 
 	/*
 	 * We don't actually require that the .but directory
-	 * under GITLINK directory be a valid but directory. It
+	 * under BUTLINK directory be a valid but directory. It
 	 * might even be missing (in case nobody populated that
 	 * sub-project).
 	 *
@@ -304,7 +304,7 @@ static int ce_modified_check_fs(struct index_state *istate,
 			return DATA_CHANGED;
 		break;
 	case S_IFDIR:
-		if (S_ISGITLINK(ce->ce_mode))
+		if (S_ISBUTLINK(ce->ce_mode))
 			return ce_compare_butlink(ce) ? DATA_CHANGED : 0;
 		/* else fallthrough */
 	default:
@@ -335,7 +335,7 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 		    (has_symlinks || !S_ISREG(st->st_mode)))
 			changed |= TYPE_CHANGED;
 		break;
-	case S_IFGITLINK:
+	case S_IFBUTLINK:
 		/* We ignore most of the st_xxx fields for butlinks */
 		if (!S_ISDIR(st->st_mode))
 			changed |= TYPE_CHANGED;
@@ -375,7 +375,7 @@ static int is_racy_stat(const struct index_state *istate,
 int is_racy_timestamp(const struct index_state *istate,
 			     const struct cache_entry *ce)
 {
-	return (!S_ISGITLINK(ce->ce_mode) &&
+	return (!S_ISBUTLINK(ce->ce_mode) &&
 		is_racy_stat(istate, &ce->ce_stat_data));
 }
 
@@ -479,7 +479,7 @@ int ie_modified(struct index_state *istate,
 	 * then we know it is.
 	 */
 	if ((changed & DATA_CHANGED) &&
-	    (S_ISGITLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0))
+	    (S_ISBUTLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0))
 		return changed;
 
 	changed_fs = ce_modified_check_fs(istate, ce, st);
@@ -818,7 +818,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		    !ce_stage(alias) &&
 		    !ie_match_stat(istate, alias, st, ce_option)) {
 			/* Nothing changed, really */
-			if (!S_ISGITLINK(alias->ce_mode))
+			if (!S_ISBUTLINK(alias->ce_mode))
 				ce_mark_uptodate(alias);
 			alias->ce_flags |= CE_ADDED;
 
@@ -1005,7 +1005,7 @@ static int verify_dotfile(const char *rest, unsigned mode)
 	/*
 	 * ".but" followed by NUL or slash is bad. Note that we match
 	 * case-insensitively here, even if ignore_case is not set.
-	 * This outlaws ".GIT" everywhere out of an abundance of caution,
+	 * This outlaws ".BUT" everywhere out of an abundance of caution,
 	 * since there's really no good reason to allow it.
 	 *
 	 * Once we've seen ".but", we can also find ".butmodules", etc (also
@@ -1060,7 +1060,7 @@ inside:
 				}
 			}
 			if (protect_ntfs) {
-#if defined GIT_WINDOWS_NATIVE || defined __CYGWIN__
+#if defined BUT_WINDOWS_NATIVE || defined __CYGWIN__
 				if (c == '\\')
 					return PATH_INVALID;
 #endif
@@ -1524,7 +1524,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 			 * because CE_UPTODATE flag is in-core only;
 			 * we are not going to write this change out.
 			 */
-			if (!S_ISGITLINK(ce->ce_mode)) {
+			if (!S_ISBUTLINK(ce->ce_mode)) {
 				ce_mark_uptodate(ce);
 				mark_fsmonitor_valid(istate, ce);
 			}
@@ -1642,7 +1642,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		int t2_did_scan = 0;
 
 		ce = istate->cache[i];
-		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
+		if (ignore_submodules && S_ISBUTLINK(ce->ce_mode))
 			continue;
 		if (ignore_skip_worktree && ce_skip_worktree(ce))
 			continue;
@@ -1738,7 +1738,7 @@ struct cache_entry *refresh_cache_entry(struct index_state *istate,
 
 static unsigned int get_index_format_default(struct repository *r)
 {
-	char *envversion = getenv("GIT_INDEX_VERSION");
+	char *envversion = getenv("BUT_INDEX_VERSION");
 	char *endp;
 	unsigned int version = INDEX_FORMAT_DEFAULT;
 
@@ -1758,7 +1758,7 @@ static unsigned int get_index_format_default(struct repository *r)
 	version = strtoul(envversion, &endp, 10);
 	if (*endp ||
 	    version < INDEX_FORMAT_LB || INDEX_FORMAT_UB < version) {
-		warning(_("GIT_INDEX_VERSION set, but the value is invalid.\n"
+		warning(_("BUT_INDEX_VERSION set, but the value is invalid.\n"
 			  "Using version %i"), INDEX_FORMAT_DEFAULT);
 		version = INDEX_FORMAT_DEFAULT;
 	}
@@ -1788,7 +1788,7 @@ struct ondisk_cache_entry {
 	 * if (flags & CE_EXTENDED)
 	 *	uint16_t flags2;
 	 */
-	unsigned char data[GIT_MAX_RAWSZ + 2 * sizeof(uint16_t)];
+	unsigned char data[BUT_MAX_RAWSZ + 2 * sizeof(uint16_t)];
 	char name[FLEX_ARRAY];
 };
 
@@ -1810,7 +1810,7 @@ int verify_ce_order;
 static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 {
 	but_hash_ctx c;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	int hdr_version;
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
@@ -2758,7 +2758,7 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	int fd;
 	ssize_t n;
 	struct stat st;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 
 	if (!istate->initialized)
 		return 0;
@@ -2952,7 +2952,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			static int allow = -1;
 
 			if (allow < 0)
-				allow = but_env_bool("GIT_ALLOW_NULL_SHA1", 0);
+				allow = but_env_bool("BUT_ALLOW_NULL_SHA1", 0);
 			if (allow)
 				warning(msg, ce->name);
 			else
@@ -3328,7 +3328,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	int new_shared_index, ret, test_split_index_env;
 	struct split_index *si = istate->split_index;
 
-	if (but_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
+	if (but_env_bool("BUT_TEST_CHECK_CACHE_TREE", 0))
 		cache_tree_verify(the_repository, istate);
 
 	if ((flags & SKIP_IF_UNCHANGED) && !istate->cache_changed) {
@@ -3340,7 +3340,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if (istate->fsmonitor_last_update)
 		fill_fsmonitor_bitmap(istate);
 
-	test_split_index_env = but_env_bool("GIT_TEST_SPLIT_INDEX", 0);
+	test_split_index_env = but_env_bool("BUT_TEST_SPLIT_INDEX", 0);
 
 	if ((!si && !test_split_index_env) ||
 	    alternate_index_output ||
@@ -3571,7 +3571,7 @@ int should_validate_cache_entries(void)
 	static int validate_index_cache_entries = -1;
 
 	if (validate_index_cache_entries < 0) {
-		if (getenv("GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES"))
+		if (getenv("BUT_TEST_VALIDATE_INDEX_CACHE_ENTRIES"))
 			validate_index_cache_entries = 1;
 		else
 			validate_index_cache_entries = 0;
@@ -3580,7 +3580,7 @@ int should_validate_cache_entries(void)
 	return validate_index_cache_entries;
 }
 
-#define EOIE_SIZE (4 + GIT_SHA1_RAWSZ) /* <4-byte offset> + <20-byte hash> */
+#define EOIE_SIZE (4 + BUT_SHA1_RAWSZ) /* <4-byte offset> + <20-byte hash> */
 #define EOIE_SIZE_WITH_HEADER (4 + 4 + EOIE_SIZE) /* <4-byte signature> + <4-byte length> + EOIE_SIZE */
 
 static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
@@ -3597,7 +3597,7 @@ static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
 	const char *index, *eoie;
 	uint32_t extsize;
 	size_t offset, src_offset;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 	but_hash_ctx c;
 
 	/* ensure we have an index big enough to contain an EOIE extension */
@@ -3672,7 +3672,7 @@ static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
 static void write_eoie_extension(struct strbuf *sb, but_hash_ctx *eoie_context, size_t offset)
 {
 	uint32_t buffer;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[BUT_MAX_RAWSZ];
 
 	/* offset */
 	put_be32(&buffer, offset);
@@ -3765,7 +3765,7 @@ void prefetch_cache_entries(const struct index_state *istate,
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 
-		if (S_ISGITLINK(ce->ce_mode) || !must_prefetch(ce))
+		if (S_ISBUTLINK(ce->ce_mode) || !must_prefetch(ce))
 			continue;
 		if (!oid_object_info_extended(the_repository, &ce->oid,
 					      NULL,

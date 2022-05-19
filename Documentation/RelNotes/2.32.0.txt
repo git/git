@@ -85,11 +85,11 @@ UI, Workflows & Features
  * "but log --format=..." placeholders learned %ah/%ch placeholders to
    request the --date=human output.
 
- * Replace GIT_CONFIG_NOSYSTEM mechanism to decline from reading the
-   system-wide configuration file with GIT_CONFIG_SYSTEM that lets
+ * Replace BUT_CONFIG_NOSYSTEM mechanism to decline from reading the
+   system-wide configuration file with BUT_CONFIG_SYSTEM that lets
    users specify from which file to read the system-wide configuration
    (setting it to an empty file would essentially be the same as
-   setting NOSYSTEM), and introduce GIT_CONFIG_GLOBAL to override the
+   setting NOSYSTEM), and introduce BUT_CONFIG_GLOBAL to override the
    per-user configuration in $HOME/.butconfig.
 
  * "but add" and "but rm" learned not to touch those paths that are
@@ -133,7 +133,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Rename detection rework continues.
 
- * GIT_TEST_FAIL_PREREQS is a mechanism to skip test pieces with
+ * BUT_TEST_FAIL_PREREQS is a mechanism to skip test pieces with
    prerequisites to catch broken tests that depend on the side effects
    of optional pieces, but did not work at all when negative
    prerequisites were involved.
@@ -363,7 +363,7 @@ Fixes since v2.31
    (merge 6b79818bfb jk/p4-locate-branch-point-optim later to maint).
 
  * When "but update-ref -d" removes a ref that is packed, it left
-   empty directories under $GIT_DIR/refs/ for
+   empty directories under $BUT_DIR/refs/ for
    (merge 5f03e5126d wc/packed-ref-removal-cleanup later to maint).
 
  * "but clean" and "but ls-files -i" had confusion around working on

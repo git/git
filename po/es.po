@@ -2451,7 +2451,7 @@ msgstr "¡%s %s no es un cummit!"
 
 #: cummit.c:196
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2460,7 +2460,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"El soporte para <GIT_DIR>/info/grafts ha sido deprecado\n"
+"El soporte para <BUT_DIR>/info/grafts ha sido deprecado\n"
 "y será eliminado en una versión futura de Git.\n"
 "\n"
 "Por favor usa \"but replace --convert-graft-file\"\n"
@@ -6518,10 +6518,10 @@ msgstr ""
 #: read-cache.c:1730
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION configurado, pero el valor no es válido.\n"
+"BUT_INDEX_VERSION configurado, pero el valor no es válido.\n"
 "Usando versión %i"
 
 #: read-cache.c:1786
@@ -7836,16 +7836,16 @@ msgid "could not open '%s' for reading"
 msgstr "no se pudo abrir '%s' para lectura"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "'GIT_AUTHOR_NAME' ya proporcionado"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "'BUT_AUTHOR_NAME' ya proporcionado"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "'GIT_AUTHOR_EMAIL' ya proporcionado"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "'BUT_AUTHOR_EMAIL' ya proporcionado"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "'GIT_AUTHOR_DATE' ya proporcionado"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "'BUT_AUTHOR_DATE' ya proporcionado"
 
 #: sequencer.c:865
 #, c-format
@@ -7853,16 +7853,16 @@ msgid "unknown variable '%s'"
 msgstr "variable desconocida '%s'"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "falta 'GIT_AUTHOR_NAME'"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "falta 'BUT_AUTHOR_NAME'"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "falta 'GIT_AUTHOR_EMAIL'"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "falta 'BUT_AUTHOR_EMAIL'"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "falta 'GIT_AUTHOR_DATE'"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "falta 'BUT_AUTHOR_DATE'"
 
 #: sequencer.c:939
 #, c-format
@@ -8782,11 +8782,11 @@ msgstr ""
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "no es un repositorio but (ni ningún padre en el punto de montaje %s)\n"
 "Parando a la frontera del sistema de archivos "
-"(GIT_DISCOVERY_ACROSS_FILESYSTEM no establecido)."
+"(BUT_DISCOVERY_ACROSS_FILESYSTEM no establecido)."
 
 #: setup.c:1381
 #, c-format
@@ -10719,8 +10719,8 @@ msgid "could not parse patch '%s'"
 msgstr "no se pudo analizar el parche '%s'"
 
 #: builtin/am.c:815
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Solo un parche StGIT puede ser aplicado a la vez"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Solo un parche StBUT puede ser aplicado a la vez"
 
 #: builtin/am.c:863
 msgid "invalid timestamp"
@@ -26249,13 +26249,13 @@ msgstr "Falló al abrir para escritura %s: %s"
 
 #: but-send-email.perl:802
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"Líneas que comienzan en \"GIT:\" serán eliminadas.\n"
+"Líneas que comienzan en \"BUT:\" serán eliminadas.\n"
 "Considera incluir un diffstat global o una tabla de contenidos\n"
 "para el parche que estás escribiendo.\n"
 "\n"
@@ -26525,8 +26525,8 @@ msgstr "¿Realmente deseas mandar %s? [y|N]: "
 #~ "actualizar dichas entradas."
 
 #, c-format
-#~ msgid "could not set GIT_DIR to '%s'"
-#~ msgstr "no se pudo configurar GIT_DIR a '%s'"
+#~ msgid "could not set BUT_DIR to '%s'"
+#~ msgstr "no se pudo configurar BUT_DIR a '%s'"
 
 #, c-format
 #~ msgid "unable to unpack %s header with --allow-unknown-type"

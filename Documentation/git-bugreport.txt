@@ -49,6 +49,6 @@ OPTIONS
 	named 'but-bugreport-<formatted suffix>'. This should take the form of a
 	strftime(3) format string; the current local time will be used.
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

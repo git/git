@@ -20,12 +20,12 @@ test_expect_success 'setup ' '
 	echo "bin: test number 2" >two.bin &&
 	test_ln_s_add one.bin symlink.bin &&
 	but add . &&
-	GIT_AUTHOR_NAME=Number1 but cummit -a -m First --date="2010-01-01 18:00:00" &&
+	BUT_AUTHOR_NAME=Number1 but cummit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test 1 version 2" >one.bin &&
 	echo "bin: test number 2 version 2" >>two.bin &&
 	rm -f symlink.bin &&
 	test_ln_s_add two.bin symlink.bin &&
-	GIT_AUTHOR_NAME=Number2 but cummit -a -m Second --date="2010-01-01 20:00:00"
+	BUT_AUTHOR_NAME=Number2 but cummit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 cat >expected <<EOF
@@ -104,7 +104,7 @@ test_expect_success 'setup -cachetextconv' '
 
 test_expect_success 'make a new cummit' '
 	echo "bin: test number 2 version 3" >>two.bin &&
-	GIT_AUTHOR_NAME=Number3 but cummit -a -m Third --date="2010-01-01 22:00:00"
+	BUT_AUTHOR_NAME=Number3 but cummit -a -m Third --date="2010-01-01 22:00:00"
 '
 
 test_expect_success 'blame from previous revision' '
@@ -139,7 +139,7 @@ bin: test number 2 version 3
 bin: test number 3
 EOF
 	but add three.bin &&
-	GIT_AUTHOR_NAME=Number4 but cummit -a -m Fourth --date="2010-01-01 23:00:00"
+	BUT_AUTHOR_NAME=Number4 but cummit -a -m Fourth --date="2010-01-01 23:00:00"
 '
 
 test_expect_success 'blame on last cummit (-C -C, symlink)' '

@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * BUT - The information manager from hell
  *
  * Copyright (C) Linus Torvalds, 2005
  */
@@ -120,7 +120,7 @@ static void get_time(struct timeval *now)
 {
 	const char *x;
 
-	x = getenv("GIT_TEST_DATE_NOW");
+	x = getenv("BUT_TEST_DATE_NOW");
 	if (x) {
 		now->tv_sec = atoi(x);
 		now->tv_usec = 0;

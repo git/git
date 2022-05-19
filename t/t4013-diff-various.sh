@@ -5,17 +5,17 @@
 
 test_description='Various diff formatting options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
 test_expect_success setup '
 
-	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	mkdir dir &&
 	mkdir dir2 &&
@@ -28,9 +28,9 @@ test_expect_success setup '
 	but branch initial &&
 	but branch side &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:01:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:01:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	test_write_lines 4 5 6 >>file0 &&
 	test_write_lines C D >>dir/sub &&
@@ -38,9 +38,9 @@ test_expect_success setup '
 	but update-index --remove file0 file2 dir/sub &&
 	but cummit -m "Second${LF}${LF}This is the second cummit." &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	test_write_lines A B C >file1 &&
 	but add file1 &&
@@ -48,9 +48,9 @@ test_expect_success setup '
 	but update-index dir/sub &&
 	but cummit -m Third &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:03:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:03:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:03:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:03:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	but checkout side &&
 	test_write_lines A B C >>file0 &&
@@ -60,16 +60,16 @@ test_expect_success setup '
 	but update-index file0 dir/sub &&
 	but cummit -m Side &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:04:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:04:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	but checkout master &&
 	but pull -s ours --no-rebase . side &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 
 	test_write_lines A B C >>file0 &&
 	test_write_lines 1 2 >>dir/sub &&
@@ -82,26 +82,26 @@ test_expect_success setup '
 	but config log.showroot false &&
 	but cummit --amend &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 	but checkout -b rearrange initial &&
 	test_write_lines B A >dir/sub &&
 	but add dir/sub &&
 	but cummit -m "Rearranged lines in dir/sub" &&
 	but checkout master &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 	but checkout -b mode initial &&
 	but update-index --chmod=+x file0 &&
 	but cummit -m "update mode" &&
 	but checkout -f master &&
 
-	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_CUMMITTER_DATE &&
+	BUT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
+	BUT_CUMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export BUT_AUTHOR_DATE BUT_CUMMITTER_DATE &&
 	but checkout -b note initial &&
 	but update-index --chmod=+x file2 &&
 	but cummit -m "update mode (file2)" &&
@@ -208,7 +208,7 @@ do
 			echo "$ but $cmd"
 			case "$magic" in
 			"")
-				GIT_PRINT_SHA1_ELLIPSIS=yes but $cmd ;;
+				BUT_PRINT_SHA1_ELLIPSIS=yes but $cmd ;;
 			noellipses)
 				but $cmd ;;
 			esac |

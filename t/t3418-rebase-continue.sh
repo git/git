@@ -2,8 +2,8 @@
 
 test_description='but rebase --continue tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -252,9 +252,9 @@ test_rerere_autoupdate () {
 
 test_rerere_autoupdate --apply
 test_rerere_autoupdate -m
-GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
+BUT_SEQUENCE_EDITOR=: && export BUT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
-unset GIT_SEQUENCE_EDITOR
+unset BUT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '
 	rm -f execed &&

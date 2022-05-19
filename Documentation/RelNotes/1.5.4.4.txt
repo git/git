@@ -1,4 +1,4 @@
-GIT v1.5.4.4 Release Notes
+BUT v1.5.4.4 Release Notes
 ==========================
 
 Fixes since v1.5.4.3
@@ -8,7 +8,7 @@ Fixes since v1.5.4.3
    installed templates unreadable by others, while the rest of the install
    are done in a way that is friendly to umask 022.
 
- * "but cvsexportcummit -w $cvsdir" misbehaved when GIT_DIR is set to a
+ * "but cvsexportcummit -w $cvsdir" misbehaved when BUT_DIR is set to a
    relative directory.
 
  * "but http-push" had an invalid memory access that could lead it to

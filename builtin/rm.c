@@ -78,14 +78,14 @@ static void submodules_absorb_butdir_if_needed(void)
 		}
 		ce = active_cache[pos];
 
-		if (!S_ISGITLINK(ce->ce_mode) ||
+		if (!S_ISBUTLINK(ce->ce_mode) ||
 		    !file_exists(ce->name) ||
 		    is_empty_dir(name))
 			continue;
 
 		if (!submodule_uses_butfile(name))
 			absorb_but_dir_into_superproject(name,
-				ABSORB_GITDIR_RECURSE_SUBMODULES);
+				ABSORB_BUTDIR_RECURSE_SUBMODULES);
 	}
 }
 
@@ -125,7 +125,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 			if (pos < 0)
 				continue;
 
-			if (!S_ISGITLINK(active_cache[pos]->ce_mode) ||
+			if (!S_ISBUTLINK(active_cache[pos]->ce_mode) ||
 			    is_empty_dir(name))
 				continue;
 		}
@@ -143,7 +143,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 			 * far as but is concerned; we do not track
 			 * directories unless they are submodules.
 			 */
-			if (!S_ISGITLINK(ce->ce_mode))
+			if (!S_ISBUTLINK(ce->ce_mode))
 				continue;
 		}
 
@@ -167,7 +167,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * If it's a submodule, is its work tree modified?
 		 */
 		if (ce_match_stat(ce, &st, 0) ||
-		    (S_ISGITLINK(ce->ce_mode) &&
+		    (S_ISBUTLINK(ce->ce_mode) &&
 		     bad_to_remove_submodule(ce->name,
 				SUBMODULE_REMOVAL_DIE_ON_ERROR |
 				SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED)))
@@ -309,7 +309,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			continue;
 		ALLOC_GROW(list.entry, list.nr + 1, list.alloc);
 		list.entry[list.nr].name = xstrdup(ce->name);
-		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
+		list.entry[list.nr].is_submodule = S_ISBUTLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
 		    !is_staging_butmodules_ok(&the_index))
 			die(_("please stage your changes to .butmodules or stash them to proceed"));

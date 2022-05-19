@@ -7,12 +7,12 @@ test_description='but archive --format=zip test'
 SUBSTFORMAT=%H%n
 
 test_lazy_prereq UNZIP_SYMLINKS '
-	"$GIT_UNZIP" "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip &&
+	"$BUT_UNZIP" "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip &&
 	test -h symlink
 '
 
 test_lazy_prereq UNZIP_CONVERT '
-	"$GIT_UNZIP" -a "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip
+	"$BUT_UNZIP" -a "$TEST_DIRECTORY"/t5003/infozip-symlinks.zip
 '
 
 check_zip() {
@@ -22,7 +22,7 @@ check_zip() {
 	dir_with_prefix=$dir/$2
 
 	test_expect_success UNZIP " extract ZIP archive" '
-		(mkdir $dir && cd $dir && "$GIT_UNZIP" ../$zipfile)
+		(mkdir $dir && cd $dir && "$BUT_UNZIP" ../$zipfile)
 	'
 
 	test_expect_success UNZIP " validate filenames" "
@@ -40,7 +40,7 @@ check_zip() {
 	original=a
 
 	test_expect_success UNZIP_CONVERT " extract ZIP archive with EOL conversion" '
-		(mkdir $dir && cd $dir && "$GIT_UNZIP" -a ../$zipfile)
+		(mkdir $dir && cd $dir && "$BUT_UNZIP" -a ../$zipfile)
 	'
 
 	test_expect_success UNZIP_CONVERT " validate that text files are converted" "
@@ -125,7 +125,7 @@ test_expect_success \
 
 test_expect_success 'add files to repository' '
 	but add a &&
-	GIT_CUMMITTER_DATE="2005-05-27 22:00" but cummit -m initial
+	BUT_CUMMITTER_DATE="2005-05-27 22:00" but cummit -m initial
 '
 
 test_expect_success 'setup export-subst and diff attributes' '

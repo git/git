@@ -32,7 +32,7 @@ check_dir() {
 }
 
 test_lazy_prereq UNZIP_ZIP64_SUPPORT '
-	"$GIT_UNZIP" -v | grep ZIP64_SUPPORT
+	"$BUT_UNZIP" -v | grep ZIP64_SUPPORT
 '
 
 # bsdtar/libarchive versions before 3.1.3 consider a tar file with a
@@ -73,7 +73,7 @@ test_expect_success UNZIP 'zip archive of empty tree is empty' '
 	# a no-op). But we cannot do anything reasonable except skip the test
 	# on such platforms anyway, and this is the moral equivalent.
 	{
-		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/empty.zip
+		"$BUT_UNZIP" "$TEST_DIRECTORY"/t5004/empty.zip
 		expect_code=$?
 	} &&
 
@@ -81,7 +81,7 @@ test_expect_success UNZIP 'zip archive of empty tree is empty' '
 	make_dir extract &&
 	(
 		cd extract &&
-		test_expect_code $expect_code "$GIT_UNZIP" ../empty.zip
+		test_expect_code $expect_code "$BUT_UNZIP" ../empty.zip
 	) &&
 	check_dir extract
 '
@@ -93,7 +93,7 @@ test_expect_success UNZIP 'zip archive of empty tree with prefix' '
 	make_dir extract &&
 	(
 		cd extract &&
-		"$GIT_UNZIP" ../prefix.zip
+		"$BUT_UNZIP" ../prefix.zip
 	) &&
 	check_dir extract foo
 '
@@ -178,8 +178,8 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 	# zip it, creating an archive a bit bigger than 4GB
 	but archive -0 -o many-big.zip $tree &&
 
-	"$GIT_UNZIP" -t many-big.zip 9999 65500 &&
-	"$GIT_UNZIP" -t many-big.zip
+	"$BUT_UNZIP" -t many-big.zip 9999 65500 &&
+	"$BUT_UNZIP" -t many-big.zip
 '
 
 test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
@@ -189,7 +189,7 @@ test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	mkdir -p .but/objects/pack &&
 	(
 		cd .but/objects/pack &&
-		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
+		"$BUT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
 	) &&
 	blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
 	size=$(expr 4100 "*" 1024 "*" 1024) &&
@@ -200,7 +200,7 @@ test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	# zip it, creating an archive with a file bigger than 4GB
 	but archive -o big.zip $tree &&
 
-	"$GIT_UNZIP" -t big.zip &&
+	"$BUT_UNZIP" -t big.zip &&
 	"$ZIPINFO" big.zip >big.lst &&
 	grep $size big.lst
 '

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='add -i basic tests'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
@@ -29,7 +29,7 @@ diff_cmp () {
 # This function uses a trick to manipulate the interactive add to use color:
 # the `want_color()` function special-cases the situation where a pager was
 # spawned and Git now wants to output colored text: to detect that situation,
-# the environment variable `GIT_PAGER_IN_USE` is set. However, color is
+# the environment variable `BUT_PAGER_IN_USE` is set. However, color is
 # suppressed despite that environment variable if the `TERM` variable
 # indicates a dumb terminal, so we set that variable, too.
 
@@ -39,9 +39,9 @@ force_color () {
 	# the function call. Thus, we prevent these variables from escaping
 	# this function's context with this subshell.
 	(
-		GIT_PAGER_IN_USE=true &&
+		BUT_PAGER_IN_USE=true &&
 		TERM=vt100 &&
-		export GIT_PAGER_IN_USE TERM &&
+		export BUT_PAGER_IN_USE TERM &&
 		"$@"
 	)
 }
@@ -831,7 +831,7 @@ test_expect_success 'add -p does not expand argument lists' '
 	but cummit -m "add not-changed file" &&
 
 	echo change >file &&
-	GIT_TRACE=$(pwd)/trace.out but add -p . <<-\EOF &&
+	BUT_TRACE=$(pwd)/trace.out but add -p . <<-\EOF &&
 	y
 	EOF
 
@@ -846,7 +846,7 @@ test_expect_success 'hunk-editing handles custom comment char' '
 	but reset --hard &&
 	echo change >>file &&
 	test_config core.commentChar "\$" &&
-	echo e | GIT_EDITOR=true but add -p &&
+	echo e | BUT_EDITOR=true but add -p &&
 	but diff --exit-code
 '
 

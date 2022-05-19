@@ -5,8 +5,8 @@ test_description='but-cvsserver and but refspecs
 tests ability for but-cvsserver to switch between and compare
 tags, branches and other but refspecs'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -21,7 +21,7 @@ check_file() {
 	sandbox="$1"
 	file="$2"
 	ver="$3"
-	GIT_DIR=$SERVERDIR but show "${ver}:${file}" \
+	BUT_DIR=$SERVERDIR but show "${ver}:${file}" \
 		>"$WORKDIR/check.got" 2>"$WORKDIR/check.stderr"
 	test_cmp "$WORKDIR/check.got" "$sandbox/$file"
 	stat=$?
@@ -84,7 +84,7 @@ perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
 	test_done
 }
 
-unset GIT_DIR GIT_CONFIG
+unset BUT_DIR BUT_CONFIG
 WORKDIR=$PWD
 SERVERDIR=$PWD/butcvs.but
 but_config="$SERVERDIR/config"
@@ -112,8 +112,8 @@ test_expect_success 'setup v1, b1' '
 	but tag v1 &&
 	but branch b1 &&
 	but clone -q --bare "$WORKDIR/.but" "$SERVERDIR" >/dev/null 2>&1 &&
-	GIT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
-	GIT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log"
+	BUT_DIR="$SERVERDIR" but config --bool butcvs.enabled true &&
+	BUT_DIR="$SERVERDIR" but config butcvs.logfile "$SERVERDIR/butcvs.log"
 '
 
 rm -rf cvswork

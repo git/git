@@ -24,13 +24,13 @@ while [ $# -gt 0 ]; do
 		;;
 	--config)
 		shift
-		GIT_PERF_CONFIG_FILE=$(cd "$(dirname "$1")"; pwd)/$(basename "$1")
-		export GIT_PERF_CONFIG_FILE
+		BUT_PERF_CONFIG_FILE=$(cd "$(dirname "$1")"; pwd)/$(basename "$1")
+		export BUT_PERF_CONFIG_FILE
 		shift ;;
 	--subsection)
 		shift
-		GIT_PERF_SUBSECTION="$1"
-		export GIT_PERF_SUBSECTION
+		BUT_PERF_SUBSECTION="$1"
+		export BUT_PERF_SUBSECTION
 		shift ;;
 	--*)
 		die "unrecognised option: '$arg'" ;;

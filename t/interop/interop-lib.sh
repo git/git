@@ -1,7 +1,7 @@
 # Interoperability testing framework. Each script should source
 # this after setting default $VERSION_A and $VERSION_B variables.
 
-. ../../GIT-BUILD-OPTIONS
+. ../../BUT-BUILD-OPTIONS
 INTEROP_ROOT=$(pwd)
 BUILD_ROOT=$INTEROP_ROOT/build
 
@@ -45,7 +45,7 @@ build_version () {
 
 	(
 		cd "$dir" &&
-		make $GIT_INTEROP_MAKE_OPTS >&2 &&
+		make $BUT_INTEROP_MAKE_OPTS >&2 &&
 		touch .built
 	) || return 1
 
@@ -55,10 +55,10 @@ build_version () {
 # Old versions of but don't have bin-wrappers, so let's give a rough emulation.
 wrap_but () {
 	write_script "$1" <<-EOF
-	GIT_EXEC_PATH="$2"
-	export GIT_EXEC_PATH
+	BUT_EXEC_PATH="$2"
+	export BUT_EXEC_PATH
 	PATH="$2:\$PATH"
-	export GIT_EXEC_PATH
+	export BUT_EXEC_PATH
 	exec but "\$@"
 	EOF
 }
@@ -74,8 +74,8 @@ generate_wrappers () {
 	PATH=$(pwd)/.bin:$PATH
 }
 
-VERSION_A=${GIT_TEST_VERSION_A:-$VERSION_A}
-VERSION_B=${GIT_TEST_VERSION_B:-$VERSION_B}
+VERSION_A=${BUT_TEST_VERSION_A:-$VERSION_A}
+VERSION_B=${BUT_TEST_VERSION_B:-$VERSION_B}
 
 if ! DIR_A=$(build_version "$VERSION_A") ||
    ! DIR_B=$(build_version "$VERSION_B")

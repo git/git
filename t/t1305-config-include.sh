@@ -5,13 +5,13 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Force setup_explicit_but_dir() to run until the end. This is needed
-# by some tests to make sure real_path() is called on $GIT_DIR. The
+# by some tests to make sure real_path() is called on $BUT_DIR. The
 # caller needs to make sure but commands are run from a subdirectory
 # though or real_path() will not be called.
 force_setup_explicit_but_dir() {
-    GIT_DIR="$(pwd)/.but"
-    GIT_WORK_TREE="$(pwd)"
-    export GIT_DIR GIT_WORK_TREE
+    BUT_DIR="$(pwd)/.but"
+    BUT_WORK_TREE="$(pwd)"
+    export BUT_DIR BUT_WORK_TREE
 }
 
 test_expect_success 'include file by absolute path' '

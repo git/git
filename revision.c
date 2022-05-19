@@ -1702,7 +1702,7 @@ static void do_add_index_objects_to_pending(struct rev_info *revs,
 		struct cache_entry *ce = istate->cache[i];
 		struct blob *blob;
 
-		if (S_ISGITLINK(ce->ce_mode))
+		if (S_ISBUTLINK(ce->ce_mode))
 			continue;
 
 		blob = lookup_blob(revs->repo, &ce->oid);

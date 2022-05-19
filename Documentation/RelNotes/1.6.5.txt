@@ -1,4 +1,4 @@
-GIT v1.6.5 Release Notes
+BUT v1.6.5 Release Notes
 ========================
 
 In but 1.7.0, which was planned to be the release after 1.6.5, "but
@@ -155,7 +155,7 @@ Updates since v1.6.4
 
 (developers)
 
- * With GIT_TEST_OPTS="--root=/p/a/t/h", tests can be run outside the
+ * With BUT_TEST_OPTS="--root=/p/a/t/h", tests can be run outside the
    source directory; using tmpfs may give faster turnaround.
 
  * With NO_PERL_MAKEMAKER set, DESTDIR= is now honoured, so you can

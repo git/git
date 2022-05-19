@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Get TEST_OUTPUT_DIRECTORY from GIT-BUILD-OPTIONS if it's there...
-. "$(dirname "$0")/../../GIT-BUILD-OPTIONS"
+# Get TEST_OUTPUT_DIRECTORY from BUT-BUILD-OPTIONS if it's there...
+. "$(dirname "$0")/../../BUT-BUILD-OPTIONS"
 # ... otherwise set it to the default value.
 : ${TEST_OUTPUT_DIRECTORY=$(dirname "$0")/..}
 

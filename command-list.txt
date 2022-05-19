@@ -19,7 +19,7 @@
 #
 # The type names are self explanatory. But if you want to see what
 # command belongs to what group to get a better picture, have a look
-# at "but" man page, "GIT COMMANDS" section.
+# at "but" man page, "BUT COMMANDS" section.
 #
 # Commands of type mainporcelain can also optionally have one of these
 # attributes:

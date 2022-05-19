@@ -153,7 +153,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 		path_k = paths[k];
 
 		/*
-		 * If you want to debug FSEvents, log them to GIT_TRACE_FSMONITOR.
+		 * If you want to debug FSEvents, log them to BUT_TRACE_FSMONITOR.
 		 * Please don't log them to Trace2.
 		 *
 		 * trace_printf_key(&trace_fsmonitor, "Path: '%s'", path_k);
@@ -192,8 +192,8 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 
 		switch (fsmonitor_classify_path_absolute(state, path_k)) {
 
-		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
-		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
+		case IS_INSIDE_DOT_BUT_WITH_COOKIE_PREFIX:
+		case IS_INSIDE_BUTDIR_WITH_COOKIE_PREFIX:
 			/* special case cookie files within .but or butdir */
 
 			/* Use just the filename of the cookie file. */
@@ -202,13 +202,13 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef,
 					   slash ? slash + 1 : path_k);
 			break;
 
-		case IS_INSIDE_DOT_GIT:
-		case IS_INSIDE_GITDIR:
+		case IS_INSIDE_DOT_BUT:
+		case IS_INSIDE_BUTDIR:
 			/* ignore all other paths inside of .but or butdir */
 			break;
 
-		case IS_DOT_GIT:
-		case IS_GITDIR:
+		case IS_DOT_BUT:
+		case IS_BUTDIR:
 			/*
 			 * If .but directory is deleted or renamed away,
 			 * we have to quit.

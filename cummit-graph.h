@@ -5,14 +5,14 @@
 #include "object-store.h"
 #include "oidset.h"
 
-#define GIT_TEST_CUMMIT_GRAPH "GIT_TEST_CUMMIT_GRAPH"
-#define GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE"
-#define GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS"
+#define BUT_TEST_CUMMIT_GRAPH "BUT_TEST_CUMMIT_GRAPH"
+#define BUT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE "BUT_TEST_CUMMIT_GRAPH_DIE_ON_PARSE"
+#define BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS "BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS"
 
 /*
  * This method is only used to enhance coverage of the cummit-graph
- * feature in the test suite with the GIT_TEST_CUMMIT_GRAPH and
- * GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS environment variables. Do not
+ * feature in the test suite with the BUT_TEST_CUMMIT_GRAPH and
+ * BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS environment variables. Do not
  * call this method oustide of a builtin, and only if you know what
  * you are doing!
  */

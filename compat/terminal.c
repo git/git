@@ -6,7 +6,7 @@
 #include "string-list.h"
 #include "hashmap.h"
 
-#if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
+#if defined(HAVE_DEV_TTY) || defined(BUT_WINDOWS_NATIVE)
 
 static void restore_term_on_signal(int sig)
 {
@@ -243,7 +243,7 @@ static int getchar_with_timeout(int timeout)
 	return getchar();
 }
 
-#elif defined(GIT_WINDOWS_NATIVE)
+#elif defined(BUT_WINDOWS_NATIVE)
 
 #define INPUT_PATH "CONIN$"
 #define OUTPUT_PATH "CONOUT$"

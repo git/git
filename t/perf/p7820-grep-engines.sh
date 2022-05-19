@@ -2,9 +2,9 @@
 
 test_description="Comparison of but-grep's regex engines
 
-Set GIT_PERF_7820_GREP_OPTS in the environment to pass options to
+Set BUT_PERF_7820_GREP_OPTS in the environment to pass options to
 but-grep. Make sure to include a leading space,
-e.g. GIT_PERF_7820_GREP_OPTS=' -i'. Some options to try:
+e.g. BUT_PERF_7820_GREP_OPTS=' -i'. Some options to try:
 
 	-i
 	-w
@@ -13,7 +13,7 @@ e.g. GIT_PERF_7820_GREP_OPTS=' -i'. Some options to try:
 	-vw
 	-viw
 
-If GIT_PERF_GREP_THREADS is set to a list of threads (e.g. '1 4 8'
+If BUT_PERF_GREP_THREADS is set to a list of threads (e.g. '1 4 8'
 etc.) we will test the patterns under those numbers of threads.
 "
 
@@ -22,7 +22,7 @@ etc.) we will test the patterns under those numbers of threads.
 test_perf_large_repo
 test_checkout_worktree
 
-if test -n "$GIT_PERF_GREP_THREADS"
+if test -n "$BUT_PERF_GREP_THREADS"
 then
 	test_set_prereq PERF_GREP_ENGINES_THREADS
 fi
@@ -49,14 +49,14 @@ do
 		fi
 		if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 		then
-			test_perf $prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern'" "
-				but -c grep.patternType=$engine grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine' || :
+			test_perf $prereq "$engine grep$BUT_PERF_7820_GREP_OPTS '$pattern'" "
+				but -c grep.patternType=$engine grep$BUT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine' || :
 			"
 		else
-			for threads in $GIT_PERF_GREP_THREADS
+			for threads in $BUT_PERF_GREP_THREADS
 			do
-				test_perf PTHREADS,$prereq "$engine grep$GIT_PERF_7820_GREP_OPTS '$pattern' with $threads threads" "
-					but -c grep.patternType=$engine -c grep.threads=$threads grep$GIT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine.$threads' || :
+				test_perf PTHREADS,$prereq "$engine grep$BUT_PERF_7820_GREP_OPTS '$pattern' with $threads threads" "
+					but -c grep.patternType=$engine -c grep.threads=$threads grep$BUT_PERF_7820_GREP_OPTS -- '$pattern' >'out.$engine.$threads' || :
 				"
 			done
 		fi
@@ -64,7 +64,7 @@ do
 
 	if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 	then
-		test_expect_success "assert that all engines found the same for$GIT_PERF_7820_GREP_OPTS '$pattern'" '
+		test_expect_success "assert that all engines found the same for$BUT_PERF_7820_GREP_OPTS '$pattern'" '
 			test_cmp out.basic out.extended &&
 			if test_have_prereq PCRE
 			then
@@ -72,9 +72,9 @@ do
 			fi
 		'
 	else
-		for threads in $GIT_PERF_GREP_THREADS
+		for threads in $BUT_PERF_GREP_THREADS
 		do
-			test_expect_success PTHREADS "assert that all engines found the same for$GIT_PERF_7820_GREP_OPTS '$pattern' under threading" "
+			test_expect_success PTHREADS "assert that all engines found the same for$BUT_PERF_7820_GREP_OPTS '$pattern' under threading" "
 				test_cmp out.basic.$threads out.extended.$threads &&
 				if test_have_prereq PCRE
 				then

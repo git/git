@@ -51,8 +51,8 @@ test_expect_success 'but diff outside repo with broken index' '
 
 test_expect_success 'but diff --no-index executed outside repo gives correct error message' '
 	(
-		GIT_CEILING_DIRECTORIES=$TRASH_DIRECTORY/non &&
-		export GIT_CEILING_DIRECTORIES &&
+		BUT_CEILING_DIRECTORIES=$TRASH_DIRECTORY/non &&
+		export BUT_CEILING_DIRECTORIES &&
 		cd non/but &&
 		test_must_fail but diff --no-index a 2>actual.err &&
 		test_i18ngrep "usage: but diff --no-index" actual.err
@@ -143,7 +143,7 @@ test_expect_success 'diff --no-index from repo subdir with absolute paths' '
 
 test_expect_success 'diff --no-index allows external diff' '
 	test_expect_code 1 \
-		env GIT_EXTERNAL_DIFF="echo external ;:" \
+		env BUT_EXTERNAL_DIFF="echo external ;:" \
 		but diff --no-index non/but/a non/but/b >actual &&
 	echo external >expect &&
 	test_cmp expect actual

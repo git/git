@@ -13,6 +13,6 @@ mergetools-*.txt
 manpage-base-url.xsl
 SubmittingPatches.txt
 tmp-doc-diff/
-GIT-ASCIIDOCFLAGS
+BUT-ASCIIDOCFLAGS
 /.build/
-/GIT-EXCLUDED-PROGRAMS
+/BUT-EXCLUDED-PROGRAMS

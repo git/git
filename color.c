@@ -2,26 +2,26 @@
 #include "config.h"
 #include "color.h"
 
-static int but_use_color_default = GIT_COLOR_AUTO;
+static int but_use_color_default = BUT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
 
 /*
  * The list of available column colors.
  */
 const char *column_colors_ansi[] = {
-	GIT_COLOR_RED,
-	GIT_COLOR_GREEN,
-	GIT_COLOR_YELLOW,
-	GIT_COLOR_BLUE,
-	GIT_COLOR_MAGENTA,
-	GIT_COLOR_CYAN,
-	GIT_COLOR_BOLD_RED,
-	GIT_COLOR_BOLD_GREEN,
-	GIT_COLOR_BOLD_YELLOW,
-	GIT_COLOR_BOLD_BLUE,
-	GIT_COLOR_BOLD_MAGENTA,
-	GIT_COLOR_BOLD_CYAN,
-	GIT_COLOR_RESET,
+	BUT_COLOR_RED,
+	BUT_COLOR_GREEN,
+	BUT_COLOR_YELLOW,
+	BUT_COLOR_BLUE,
+	BUT_COLOR_MAGENTA,
+	BUT_COLOR_CYAN,
+	BUT_COLOR_BOLD_RED,
+	BUT_COLOR_BOLD_GREEN,
+	BUT_COLOR_BOLD_YELLOW,
+	BUT_COLOR_BOLD_BLUE,
+	BUT_COLOR_BOLD_MAGENTA,
+	BUT_COLOR_BOLD_CYAN,
+	BUT_COLOR_RESET,
 };
 
 enum {
@@ -363,7 +363,7 @@ int but_config_colorbool(const char *var, const char *value)
 		if (!strcasecmp(value, "always"))
 			return 1;
 		if (!strcasecmp(value, "auto"))
-			return GIT_COLOR_AUTO;
+			return BUT_COLOR_AUTO;
 	}
 
 	if (!var)
@@ -374,7 +374,7 @@ int but_config_colorbool(const char *var, const char *value)
 		return 0;
 
 	/* any normal truth value defaults to 'auto' */
-	return GIT_COLOR_AUTO;
+	return BUT_COLOR_AUTO;
 }
 
 static int check_auto_color(int fd)
@@ -407,7 +407,7 @@ int want_color_fd(int fd, int var)
 	if (var < 0)
 		var = but_use_color_default;
 
-	if (var == GIT_COLOR_AUTO) {
+	if (var == BUT_COLOR_AUTO) {
 		if (want_auto[fd] < 0)
 			want_auto[fd] = check_auto_color(fd);
 		return want_auto[fd];
@@ -439,7 +439,7 @@ void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)
 		fprintf(fp, "%s", color);
 	fprintf(fp, "%s", sb->buf);
 	if (*color)
-		fprintf(fp, "%s", GIT_COLOR_RESET);
+		fprintf(fp, "%s", BUT_COLOR_RESET);
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
@@ -451,7 +451,7 @@ static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
 		r += fprintf(fp, "%s", color);
 	r += vfprintf(fp, fmt, args);
 	if (*color)
-		r += fprintf(fp, "%s", GIT_COLOR_RESET);
+		r += fprintf(fp, "%s", BUT_COLOR_RESET);
 	if (trail)
 		r += fprintf(fp, "%s", trail);
 	return r;

@@ -891,7 +891,7 @@ static int match_entry(const struct pathspec_item *item,
 		 * uniformly).
 		 */
 		if (!S_ISDIR(entry->mode) &&
-		    (!S_ISGITLINK(entry->mode) || matchlen > pathlen + 1))
+		    (!S_ISBUTLINK(entry->mode) || matchlen > pathlen + 1))
 			return 0;
 	}
 
@@ -1103,7 +1103,7 @@ static enum interesting do_match(struct index_state *istate,
 				 * be performed in the submodule itself.
 				 */
 				if (ps->recurse_submodules &&
-				    S_ISGITLINK(entry->mode) &&
+				    S_ISBUTLINK(entry->mode) &&
 				    !ps_strncmp(item, match + baselen,
 						entry->path,
 						item->nowildcard_len - baselen))
@@ -1152,7 +1152,7 @@ match_wildcards:
 		 * character.  More accurate matching can then
 		 * be performed in the submodule itself.
 		 */
-		if (ps->recurse_submodules && S_ISGITLINK(entry->mode) &&
+		if (ps->recurse_submodules && S_ISBUTLINK(entry->mode) &&
 		    !ps_strncmp(item, match, base->buf + base_offset,
 				item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);

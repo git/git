@@ -2,8 +2,8 @@
 
 test_description='signed push'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
@@ -39,9 +39,9 @@ test_expect_success 'unsigned push does not send push certificate' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi
 	EOF
 
@@ -55,9 +55,9 @@ test_expect_success 'talking with a receiver without push certificate support' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi
 	EOF
 
@@ -80,9 +80,9 @@ test_expect_success 'push --signed=1 is accepted' '
 test_expect_success GPG 'no certificate for a signed push with no update' '
 	prepare_dst &&
 	test_hook -C dst post-receive <<-\EOF &&
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi
 	EOF
 	but push dst noop &&
@@ -96,17 +96,17 @@ test_expect_success GPG 'signed push sends push certificate' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi &&
 
 	cat >../push-cert-status <<E_O_F
-	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-	KEY=${GIT_PUSH_CERT_KEY-nokey}
-	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+	KEY=${BUT_PUSH_CERT_KEY-nokey}
+	STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
@@ -139,17 +139,17 @@ test_expect_success GPGSSH 'ssh signed push sends push certificate' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi &&
 
 	cat >../push-cert-status <<E_O_F
-	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-	KEY=${GIT_PUSH_CERT_KEY-nokey}
-	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+	KEY=${BUT_PUSH_CERT_KEY-nokey}
+	STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
@@ -221,27 +221,27 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi &&
 
 	cat >../push-cert-status <<E_O_F
-	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-	KEY=${GIT_PUSH_CERT_KEY-nokey}
-	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+	KEY=${BUT_PUSH_CERT_KEY-nokey}
+	STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
 
 	test_config user.email hasnokey@nowhere.com &&
 	(
-		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
 		test_must_fail but push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but push --signed dst noop ff +noff &&
 
 	(
@@ -270,17 +270,17 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi &&
 
 	cat >../push-cert-status <<E_O_F
-	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-	KEY=${GIT_PUSH_CERT_KEY-nokey}
-	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+	KEY=${BUT_PUSH_CERT_KEY-nokey}
+	STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
@@ -288,10 +288,10 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	test_config user.email hasnokey@nowhere.com &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
 		test_must_fail but push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	but push --signed dst noop ff +noff &&
 
 	(
@@ -323,17 +323,17 @@ test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	# discard the update list
 	cat >/dev/null
 	# record the push certificate
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${BUT_PUSH_CERT-}"
 	then
-		but cat-file blob $GIT_PUSH_CERT >../push-cert
+		but cat-file blob $BUT_PUSH_CERT >../push-cert
 	fi &&
 
 	cat >../push-cert-status <<E_O_F
-	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
-	KEY=${GIT_PUSH_CERT_KEY-nokey}
-	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
-	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
-	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	SIGNER=${BUT_PUSH_CERT_SIGNER-nobody}
+	KEY=${BUT_PUSH_CERT_KEY-nokey}
+	STATUS=${BUT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${BUT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${BUT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
@@ -342,7 +342,7 @@ test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	test_config gpg.format ssh &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_CUMMITTER_EMAIL &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
 		test_must_fail but push --signed dst noop ff +noff
 	) &&
 	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&

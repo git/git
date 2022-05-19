@@ -29,7 +29,7 @@ the tests.
     1..43
     *** t0001-init.sh ***
     ok 1 - plain
-    ok 2 - plain with GIT_WORK_TREE
+    ok 2 - plain with BUT_WORK_TREE
     ok 3 - plain bare
 
 Since the tests all output TAP (see http://testanything.org) they can
@@ -52,9 +52,9 @@ prove and other harnesses come with a lot of useful options. The
 
 You can give DEFAULT_TEST_TARGET=prove on the make command (or define it
 in config.mak) to cause "make test" to run tests under prove.
-GIT_PROVE_OPTS can be used to pass additional options, e.g.
+BUT_PROVE_OPTS can be used to pass additional options, e.g.
 
-    $ make DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS='--timer --jobs 16' test
+    $ make DEFAULT_TEST_TARGET=prove BUT_PROVE_OPTS='--timer --jobs 16' test
 
 You can also run each test individually from command line, like this:
 
@@ -68,7 +68,7 @@ You can also run each test individually from command line, like this:
     1..5
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
-(or -i) command line argument to the test, or by setting GIT_TEST_OPTS
+(or -i) command line argument to the test, or by setting BUT_TEST_OPTS
 appropriately before running "make". Short options can be bundled, i.e.
 '-d -v' is the same as '-dv'.
 
@@ -140,7 +140,7 @@ appropriately before running "make". Short options can be bundled, i.e.
 	Note that memcheck is run with the option --leak-check=no,
 	as the but process is short-lived and some errors are not
 	interesting. In order to run a single command under the same
-	conditions manually, you should set GIT_VALGRIND to point to
+	conditions manually, you should set BUT_VALGRIND to point to
 	the 't/valgrind/' directory and use the commands under
 	't/valgrind/bin/'.
 
@@ -169,7 +169,7 @@ appropriately before running "make". Short options can be bundled, i.e.
 	the build directory (..) in the PATH, which contains all
 	the dashed forms of commands.  This option is currently
 	implied by other options like --valgrind and
-	GIT_TEST_INSTALLED.
+	BUT_TEST_INSTALLED.
 
 --no-bin-wrappers::
 	By default, the test suite uses the wrappers in
@@ -193,19 +193,19 @@ appropriately before running "make". Short options can be bundled, i.e.
 	that a failure in the middle does not go unnoticed by the final
 	exit code of the test). This check is performed in addition to
 	running the tests themselves. You may also enable or disable
-	this feature by setting the GIT_TEST_CHAIN_LINT environment
+	this feature by setting the BUT_TEST_CHAIN_LINT environment
 	variable to "1" or "0", respectively.
 
 	A few test scripts disable some of the more advanced
 	chain-linting detection in the name of efficiency. You can
-	override this by setting the GIT_TEST_CHAIN_LINT_HARDER
+	override this by setting the BUT_TEST_CHAIN_LINT_HARDER
 	environment variable to "1".
 
 --stress::
 	Run the test script repeatedly in multiple parallel jobs until
 	one of them fails.  Useful for reproducing rare failures in
 	flaky tests.  The number of parallel jobs is, in order of
-	precedence: the value of the GIT_TEST_STRESS_LOAD
+	precedence: the value of the BUT_TEST_STRESS_LOAD
 	environment variable, or twice the number of available
 	processors (as shown by the 'getconf' utility),	or 8.
 	Implies `--verbose -x --immediate` to get the most information
@@ -224,17 +224,17 @@ appropriately before running "make". Short options can be bundled, i.e.
 	this many times in each of the parallel jobs or until one of
 	them fails, whichever comes first. Implies `--stress`.
 
-You can also set the GIT_TEST_INSTALLED environment variable to
+You can also set the BUT_TEST_INSTALLED environment variable to
 the bindir of an existing but installation to test that installation.
 You still need to have built this but sandbox, from which various
 test-* support programs, templates, and perl libraries are used.
 If your installed but is incomplete, it will silently test parts of
 your built version instead.
 
-When using GIT_TEST_INSTALLED, you can also set GIT_TEST_EXEC_PATH to
+When using BUT_TEST_INSTALLED, you can also set BUT_TEST_EXEC_PATH to
 override the location of the dashed-form subcommands (what
-GIT_EXEC_PATH would be used for during normal operation).
-GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/but --exec-path`.
+BUT_EXEC_PATH would be used for during normal operation).
+BUT_TEST_EXEC_PATH defaults to `$BUT_TEST_INSTALLED/but --exec-path`.
 
 
 Skipping Tests
@@ -247,11 +247,11 @@ as pathnames.
 
 You should be able to say something like
 
-    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-but-cvsexport-cummit.sh
+    $ BUT_SKIP_TESTS=t9200.8 sh ./t9200-but-cvsexport-cummit.sh
 
 and even:
 
-    $ GIT_SKIP_TESTS='t[0-4]??? t91?? t9200.8' make
+    $ BUT_SKIP_TESTS='t[0-4]??? t91?? t9200.8' make
 
 to omit such tests.  The value of the environment variable is a
 SP separated list of patterns that tells which tests to skip,
@@ -351,10 +351,10 @@ Running tests with special setups
 
 The whole test suite could be run to test some special features
 that cannot be easily covered by a few specific test cases. These
-could be enabled by running the test suite with correct GIT_TEST_
+could be enabled by running the test suite with correct BUT_TEST_
 environment set.
 
-GIT_TEST_FAIL_PREREQS=<boolean> fails all prerequisites. This is
+BUT_TEST_FAIL_PREREQS=<boolean> fails all prerequisites. This is
 useful for discovering issues with the tests where say a later test
 implicitly depends on an optional earlier test.
 
@@ -363,110 +363,110 @@ whether this mode is active, and e.g. skip some tests that are hard to
 refactor to deal with it. The "SYMLINKS" prerequisite is currently
 excluded as so much relies on it, but this might change in the future.
 
-GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
+BUT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by but-config.
 
-GIT_TEST_PASSING_SANITIZE_LEAK=<boolean> when compiled with
+BUT_TEST_PASSING_SANITIZE_LEAK=<boolean> when compiled with
 SANITIZE=leak will run only those tests that have whitelisted
 themselves as passing with no memory leaks. Tests can be whitelisted
 by setting "TEST_PASSES_SANITIZE_LEAK=true" before sourcing
 "test-lib.sh" itself at the top of the test script. This test mode is
 used by the "linux-leaks" CI target.
 
-GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
+BUT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
 
-GIT_TEST_FULL_IN_PACK_ARRAY=<boolean> exercises the uncommon
+BUT_TEST_FULL_IN_PACK_ARRAY=<boolean> exercises the uncommon
 pack-objects code path where there are more than 1024 packs even if
 the actual number of packs in repository is below this limit. Accept
 any boolean values that are accepted by but-config.
 
-GIT_TEST_OE_SIZE=<n> exercises the uncommon pack-objects code path
+BUT_TEST_OE_SIZE=<n> exercises the uncommon pack-objects code path
 where we do not cache object size in memory and read it from existing
 packs on demand. This normally only happens when the object size is
 over 2GB. This variable forces the code path on any object larger than
 <n> bytes.
 
-GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncommon pack-objects code
+BUT_TEST_OE_DELTA_SIZE=<n> exercises the uncommon pack-objects code
 path where deltas larger than this limit require extra memory
 allocation for bookkeeping.
 
-GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
+BUT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
 records are valid when the index is written out or after a merge. This
 is mostly to catch missing invalidation. Default is true.
 
-GIT_TEST_CUMMIT_GRAPH=<boolean>, when true, forces the cummit-graph to
+BUT_TEST_CUMMIT_GRAPH=<boolean>, when true, forces the cummit-graph to
 be written after every 'but cummit' command, and overrides the
 'core.cummitGraph' setting to true.
 
-GIT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=<boolean>, when true, forces
+BUT_TEST_CUMMIT_GRAPH_CHANGED_PATHS=<boolean>, when true, forces
 cummit-graph write to compute and write changed path Bloom filters for
 every 'but cummit-graph write', as if the `--changed-paths` option was
 passed in.
 
-GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
+BUT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
 code paths for utilizing a (hook based) file system monitor to speed up
 detecting new or changed files.
 
-GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
+BUT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
 for the index version specified.  Can be set to any valid version
 (currently 2, 3, or 4).
 
-GIT_TEST_PACK_SPARSE=<boolean> if disabled will default the pack-objects
+BUT_TEST_PACK_SPARSE=<boolean> if disabled will default the pack-objects
 builtin to use the non-sparse object walk. This can still be overridden by
 the --sparse command-line argument.
 
-GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
+BUT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
 by overriding the minimum number of cache entries required per thread.
 
-GIT_TEST_ADD_I_USE_BUILTIN=<boolean>, when true, enables the
+BUT_TEST_ADD_I_USE_BUILTIN=<boolean>, when true, enables the
 built-in version of but add -i. See 'add.interactive.useBuiltin' in
 but-config(1).
 
-GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
+BUT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
 of the index for the whole test suite by bypassing the default number of
 cache entries and thread minimums. Setting this to 1 will make the
 index loading single threaded.
 
-GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
+BUT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
 index to be written after every 'but repack' command, and overrides the
 'core.multiPackIndex' setting to true.
 
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=<boolean>, when true, sets the
+BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=<boolean>, when true, sets the
 '--bitmap' option on all invocations of 'but multi-pack-index write',
 and ignores pack-objects' '--write-bitmap-index'.
 
-GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
+BUT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
 'uploadpack.allowSidebandAll' setting to true, and when false, forces
 fetch-pack to not request sideband-all (even if the server advertises
 sideband-all).
 
-GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=<boolean>, when true (which is
+BUT_TEST_DISALLOW_ABBREVIATED_OPTIONS=<boolean>, when true (which is
 the default when running tests), errors out when an abbreviated option
 is used.
 
-GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
+BUT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
 
-GIT_TEST_WRITE_REV_INDEX=<boolean>, when true enables the
+BUT_TEST_WRITE_REV_INDEX=<boolean>, when true enables the
 'pack.writeReverseIndex' setting.
 
-GIT_TEST_SPARSE_INDEX=<boolean>, when true enables index writes to use the
+BUT_TEST_SPARSE_INDEX=<boolean>, when true enables index writes to use the
 sparse-index format by default.
 
-GIT_TEST_CHECKOUT_WORKERS=<n> overrides the 'checkout.workers' setting
+BUT_TEST_CHECKOUT_WORKERS=<n> overrides the 'checkout.workers' setting
 to <n> and 'checkout.thresholdForParallelism' to 0, forcing the
 execution of the parallel-checkout code.
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=<boolean>, when true, makes
+BUT_TEST_FATAL_REGISTER_SUBMODULE_ODB=<boolean>, when true, makes
 registering submodule ODBs as alternates a fatal action. Support for
 this environment variable can be removed once the migration to
 explicitly providing repositories when accessing submodule objects is
 complete or needs to be abandoned for whatever reason (in which case the
 migrated codepaths still retain their performance benefits).
 
-GIT_TEST_REQUIRE_PREREQ=<list> allows specifying a space separated list of
+BUT_TEST_REQUIRE_PREREQ=<list> allows specifying a space separated list of
 prereqs that are required to succeed. If a prereq in this list is triggered by
 a test and then fails then the whole test run will abort. This can help to make
 sure the expected tests are executed and not silently skipped when their

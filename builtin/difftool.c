@@ -1,11 +1,11 @@
 /*
  * "but difftool" builtin command
  *
- * This is a wrapper around the GIT_EXTERNAL_DIFF-compatible
+ * This is a wrapper around the BUT_EXTERNAL_DIFF-compatible
  * but-difftool--helper script.
  *
- * This script exports GIT_EXTERNAL_DIFF and GIT_PAGER for use by but.
- * The GIT_DIFF* variables are exported for use by but-difftool--helper.
+ * This script exports BUT_EXTERNAL_DIFF and BUT_PAGER for use by but.
+ * The BUT_DIFF* variables are exported for use by but-difftool--helper.
  *
  * Any arguments that are unknown to this script are forwarded to 'but diff'.
  *
@@ -45,7 +45,7 @@ static int difftool_config(const char *var, const char *value, void *cb)
 static int print_tool_help(void)
 {
 	const char *argv[] = { "mergetool", "--tool-help=diff", NULL };
-	return run_command_v_opt(argv, RUN_GIT_CMD);
+	return run_command_v_opt(argv, RUN_BUT_CMD);
 }
 
 static int parse_index_info(char *p, int *mode1, int *mode2,
@@ -217,7 +217,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	update_index.use_shell = 0;
 	update_index.clean_on_exit = 1;
 	update_index.dir = workdir;
-	strvec_pushf(&update_index.env_array, "GIT_INDEX_FILE=%s", index_path);
+	strvec_pushf(&update_index.env_array, "BUT_INDEX_FILE=%s", index_path);
 	/* Ignore any errors of update-index */
 	run_command(&update_index);
 
@@ -230,7 +230,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	diff_files.clean_on_exit = 1;
 	diff_files.out = -1;
 	diff_files.dir = workdir;
-	strvec_pushf(&diff_files.env_array, "GIT_INDEX_FILE=%s", index_path);
+	strvec_pushf(&diff_files.env_array, "BUT_INDEX_FILE=%s", index_path);
 	if (start_command(&diff_files))
 		die("could not obtain raw diff");
 	fp = xfdopen(diff_files.out, "r");
@@ -360,7 +360,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct pair_entry *entry;
 	struct index_state wtindex;
 	struct checkout lstate, rstate;
-	int flags = RUN_GIT_CMD, err = 0;
+	int flags = RUN_BUT_CMD, err = 0;
 	const char *helper_argv[] = { "difftool--helper", NULL, NULL, NULL };
 	struct hashmap wt_modified, tmp_modified;
 	int indices_loaded = 0;
@@ -438,7 +438,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			dst_path = rpath.buf;
 		}
 
-		if (S_ISGITLINK(lmode) || S_ISGITLINK(rmode)) {
+		if (S_ISBUTLINK(lmode) || S_ISBUTLINK(rmode)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "Subproject cummit %s",
 				    oid_to_hex(&loid));
@@ -571,7 +571,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		helper_argv[0] = extcmd;
 		flags = 0;
 	} else
-		setenv("GIT_DIFFTOOL_DIRDIFF", "true", 1);
+		setenv("BUT_DIFFTOOL_DIRDIFF", "true", 1);
 	ret = run_command_v_opt(helper_argv, flags);
 
 	/* TODO: audit for interaction with sparse-index. */
@@ -664,14 +664,14 @@ static int run_file_diff(int prompt, const char *prefix,
 			 struct child_process *child)
 {
 	const char *env[] = {
-		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=but-difftool--helper", NULL,
+		"BUT_PAGER=", "BUT_EXTERNAL_DIFF=but-difftool--helper", NULL,
 		NULL
 	};
 
 	if (prompt > 0)
-		env[2] = "GIT_DIFFTOOL_PROMPT=true";
+		env[2] = "BUT_DIFFTOOL_PROMPT=true";
 	else if (!prompt)
-		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
+		env[2] = "BUT_DIFFTOOL_NO_PROMPT=true";
 
 	child->but_cmd = 1;
 	child->dir = prefix;
@@ -727,8 +727,8 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 
 	if (!no_index){
 		setup_work_tree();
-		setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_but_dir()), 1);
-		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_but_work_tree()), 1);
+		setenv(BUT_DIR_ENVIRONMENT, absolute_path(get_but_dir()), 1);
+		setenv(BUT_WORK_TREE_ENVIRONMENT, absolute_path(get_but_work_tree()), 1);
 	} else if (dir_diff)
 		die(_("options '%s' and '%s' cannot be used together"), "--dir-diff", "--no-index");
 
@@ -737,22 +737,22 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 				  !!extcmd, "--extcmd");
 
 	if (use_gui_tool)
-		setenv("GIT_MERGETOOL_GUI", "true", 1);
+		setenv("BUT_MERGETOOL_GUI", "true", 1);
 	else if (difftool_cmd) {
 		if (*difftool_cmd)
-			setenv("GIT_DIFF_TOOL", difftool_cmd, 1);
+			setenv("BUT_DIFF_TOOL", difftool_cmd, 1);
 		else
 			die(_("no <tool> given for --tool=<tool>"));
 	}
 
 	if (extcmd) {
 		if (*extcmd)
-			setenv("GIT_DIFFTOOL_EXTCMD", extcmd, 1);
+			setenv("BUT_DIFFTOOL_EXTCMD", extcmd, 1);
 		else
 			die(_("no <cmd> given for --extcmd=<cmd>"));
 	}
 
-	setenv("GIT_DIFFTOOL_TRUST_EXIT_CODE",
+	setenv("BUT_DIFFTOOL_TRUST_EXIT_CODE",
 	       trust_exit_code ? "true" : "false", 1);
 
 	/*

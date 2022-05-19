@@ -2,8 +2,8 @@
 
 test_description='Combination of submodules and multiple worktrees'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -58,7 +58,7 @@ test_expect_success 'submodule is checked out after manually adding submodule wo
 	grep "file1 updated" out
 '
 
-test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules in a linked worktree' '
+test_expect_success 'checkout --recurse-submodules uses $BUT_DIR for submodules in a linked worktree' '
 	but -C main worktree add "$base_path/checkout-recurse" --detach  &&
 	but -C checkout-recurse submodule update --init &&
 	echo "butdir: ../../main/.but/worktrees/checkout-recurse/modules/sub" >expect-butfile &&
@@ -72,7 +72,7 @@ test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules 
 	test_cmp expect-head-main actual-head-main
 '
 
-test_expect_success 'core.worktree is removed in $GIT_DIR/modules/<name>/config, not in $GIT_COMMON_DIR/modules/<name>/config' '
+test_expect_success 'core.worktree is removed in $BUT_DIR/modules/<name>/config, not in $BUT_COMMON_DIR/modules/<name>/config' '
 	echo "../../../sub" >expect-main &&
 	but -C main/sub config --get core.worktree >actual-main &&
 	test_cmp expect-main actual-main &&

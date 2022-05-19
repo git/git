@@ -1,5 +1,5 @@
-# Vietnamese translation for GIT-CORE.
-# Bản dịch tiếng Việt dành cho GIT-CORE.
+# Vietnamese translation for BUT-CORE.
+# Bản dịch tiếng Việt dành cho BUT-CORE.
 # This file is distributed under the same license as the but-core package.
 # Nguyễn Thái Ngọc Duy <pclouds@gmail.com>, 2012.
 # Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2022.
@@ -2497,7 +2497,7 @@ msgstr "%s %s không phải là một lần chuyển giao!"
 
 #: cummit.c:197
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2506,7 +2506,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"Việc hỗ trợ cho <GIT_DIR>/info/grafts đã lạc hậu\n"
+"Việc hỗ trợ cho <BUT_DIR>/info/grafts đã lạc hậu\n"
 "và sẽ bị xóa bỏ ở phiên bản Git tương lai.\n"
 "\n"
 "Vui lòng dùng \"but replace --convert-graft-file\"\n"
@@ -6668,10 +6668,10 @@ msgstr ""
 #: read-cache.c:1761
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
-"GIT_INDEX_VERSION được đặt, nhưng giá trị của nó lại không hợp lệ.\n"
+"BUT_INDEX_VERSION được đặt, nhưng giá trị của nó lại không hợp lệ.\n"
 "Dùng phiên bản %i"
 
 #: read-cache.c:1817
@@ -7955,16 +7955,16 @@ msgid "could not open '%s' for reading"
 msgstr "không thể mở “%s” để đọc"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "“GIT_AUTHOR_NAME” đã sẵn đưa ra rồi"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "“BUT_AUTHOR_NAME” đã sẵn đưa ra rồi"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "“GIT_AUTHOR_EMAIL” đã sẵn đưa ra rồi"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "“BUT_AUTHOR_EMAIL” đã sẵn đưa ra rồi"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "“GIT_AUTHOR_DATE” đã sẵn đưa ra rồi"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "“BUT_AUTHOR_DATE” đã sẵn đưa ra rồi"
 
 #: sequencer.c:865
 #, c-format
@@ -7972,16 +7972,16 @@ msgid "unknown variable '%s'"
 msgstr "không hiểu biến “%s”"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "thiếu “GIT_AUTHOR_NAME”"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "thiếu “BUT_AUTHOR_NAME”"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "thiếu “GIT_AUTHOR_EMAIL”"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "thiếu “BUT_AUTHOR_EMAIL”"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "thiếu “GIT_AUTHOR_DATE”"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "thiếu “BUT_AUTHOR_DATE”"
 
 #: sequencer.c:939
 #, c-format
@@ -8902,10 +8902,10 @@ msgstr "không phải là kho but (hoặc bất kỳ thư mục cha mẹ nào): 
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "không phải là kho but (hay bất kỳ cha mẹ nào đến tận điểm gắn kết %s)\n"
-"Dừng tại biên của hệ thống tập tin (GIT_DISCOVERY_ACROSS_FILESYSTEM chưa "
+"Dừng tại biên của hệ thống tập tin (BUT_DISCOVERY_ACROSS_FILESYSTEM chưa "
 "đặt)."
 
 #: setup.c:1374
@@ -10892,8 +10892,8 @@ msgid "could not parse patch '%s'"
 msgstr "không thể phân tích cú pháp “%s”"
 
 #: builtin/am.c:842
-msgid "Only one StGIT patch series can be applied at once"
-msgstr "Chỉ có một sê-ri miếng vá StGIT được áp dụng một lúc"
+msgid "Only one StBUT patch series can be applied at once"
+msgstr "Chỉ có một sê-ri miếng vá StBUT được áp dụng một lúc"
 
 #: builtin/am.c:890
 msgid "invalid timestamp"
@@ -26753,13 +26753,13 @@ msgstr "Gặp lỗi khi mở “%s” để ghi: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"Các dòng bắt đầu bằng \"GIT:\" sẽ bị xóa bỏ.\n"
+"Các dòng bắt đầu bằng \"BUT:\" sẽ bị xóa bỏ.\n"
 "Cân nhắc bao gồm một thống kê diff toàn thể hay bảng nội dung\n"
 "cho miếng vá mà bạn đang viết.\n"
 "\n"

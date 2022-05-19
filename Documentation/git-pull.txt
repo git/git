@@ -156,13 +156,13 @@ present while on branch `<name>`, that value is used instead of
 In order to determine what URL to use to fetch from, the value
 of the configuration `remote.<origin>.url` is consulted
 and if there is not any such variable, the value on the `URL:` line
-in `$GIT_DIR/remotes/<origin>` is used.
+in `$BUT_DIR/remotes/<origin>` is used.
 
 In order to determine what remote branches to fetch (and
 optionally store in the remote-tracking branches) when the command is
 run without any refspec parameters on the command line, values
 of the configuration variable `remote.<origin>.fetch` are
-consulted, and if there aren't any, `$GIT_DIR/remotes/<origin>`
+consulted, and if there aren't any, `$BUT_DIR/remotes/<origin>`
 is consulted and its `Pull:` lines are used.
 In addition to the refspec formats described in the OPTIONS
 section, you can have a globbing refspec that looks like this:
@@ -186,7 +186,7 @@ line of `but pull`, they are all merged.
 
 When no refspec was given on the command line, then `but pull`
 uses the refspec from the configuration or
-`$GIT_DIR/remotes/<origin>`.  In such cases, the following
+`$BUT_DIR/remotes/<origin>`.  In such cases, the following
 rules apply:
 
 . If `branch.<name>.merge` configuration for the current
@@ -249,6 +249,6 @@ SEE ALSO
 --------
 linkbut:but-fetch[1], linkbut:but-merge[1], linkbut:but-config[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

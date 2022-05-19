@@ -33,7 +33,7 @@ UI, Workflows & Features
    tweaked so that backslash-escaped glob special characters do not
    count in the "wildcards are pathspec" rule.
 
- * One effect of specifying where the GIT_DIR is (either with the
+ * One effect of specifying where the BUT_DIR is (either with the
    environment variable, or with the "but --but-dir=<where> cmd"
    option) is to disable the repository discovery.  This has been
    placed a bit more stress in the documentation, as new users often

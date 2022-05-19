@@ -69,7 +69,7 @@ Fixes since v2.10.1
    -p <paths>" adds to the current contents of the index to come up
    with what to cummit.
 
- * A stray symbolic link in $GIT_DIR/refs/ directory could make name
+ * A stray symbolic link in $BUT_DIR/refs/ directory could make name
    resolution loop forever, which has been corrected.
 
  * The "submodule.<name>.path" stored in .butmodules is never copied

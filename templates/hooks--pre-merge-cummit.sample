@@ -8,6 +8,6 @@
 # To enable this hook, rename this file to "pre-merge-cummit".
 
 . but-sh-setup
-test -x "$GIT_DIR/hooks/pre-cummit" &&
-        exec "$GIT_DIR/hooks/pre-cummit"
+test -x "$BUT_DIR/hooks/pre-cummit" &&
+        exec "$BUT_DIR/hooks/pre-cummit"
 :

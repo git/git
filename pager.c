@@ -52,7 +52,7 @@ const char *but_pager(int stdout_is_tty)
 	if (!stdout_is_tty)
 		return NULL;
 
-	pager = getenv("GIT_PAGER");
+	pager = getenv("BUT_PAGER");
 	if (!pager) {
 		if (!pager_program)
 			read_early_config(core_pager_config, NULL);
@@ -122,14 +122,14 @@ void setup_pager(void)
 			setenv("COLUMNS", buf, 0);
 	}
 
-	setenv("GIT_PAGER_IN_USE", "true", 1);
+	setenv("BUT_PAGER_IN_USE", "true", 1);
 
 	child_process_init(&pager_process);
 
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	strvec_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env_array, "BUT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 
@@ -146,7 +146,7 @@ void setup_pager(void)
 
 int pager_in_use(void)
 {
-	return but_env_bool("GIT_PAGER_IN_USE", 0);
+	return but_env_bool("BUT_PAGER_IN_USE", 0);
 }
 
 /*

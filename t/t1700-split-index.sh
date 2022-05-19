@@ -2,19 +2,19 @@
 
 test_description='split index mode tests'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
 # We need total control of index splitting here
-sane_unset GIT_TEST_SPLIT_INDEX
+sane_unset BUT_TEST_SPLIT_INDEX
 
 # Testing a hard coded SHA against an index with an extension
 # that can vary from run to run is problematic so we disable
 # those extensions.
-sane_unset GIT_TEST_FSMONITOR
-sane_unset GIT_TEST_INDEX_THREADS
+sane_unset BUT_TEST_FSMONITOR
+sane_unset BUT_TEST_INDEX_THREADS
 
 # Create a file named as $1 with content read from stdin.
 # Set the file's mtime to a few seconds in the past to avoid racy situations.
@@ -465,10 +465,10 @@ test_expect_success POSIXPERM,SANITY 'graceful handling when splitting index is 
 	cp ro/.but/index new-index &&
 	test_when_finished "chmod u+w ro/.but" &&
 	chmod u-w ro/.but &&
-	GIT_INDEX_FILE="$(pwd)/new-index" but -C ro update-index --split-index &&
+	BUT_INDEX_FILE="$(pwd)/new-index" but -C ro update-index --split-index &&
 	chmod u+w ro/.but &&
 	rm ro/.but/sharedindex.* &&
-	GIT_INDEX_FILE=new-index but ls-files >actual &&
+	BUT_INDEX_FILE=new-index but ls-files >actual &&
 	echo initial.t >expected &&
 	test_cmp expected actual
 '
@@ -487,7 +487,7 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	test_tick &&
 	cummit=$(but cummit-tree $tree -p HEAD <msg) &&
 	but update-ref HEAD "$cummit" &&
-	GIT_ALLOW_NULL_SHA1=1 but reset --hard &&
+	BUT_ALLOW_NULL_SHA1=1 but reset --hard &&
 	test_might_fail test-tool dump-cache-tree >cache-tree.out &&
 	test_line_count = 0 cache-tree.out
 '
@@ -521,24 +521,24 @@ test_expect_success 'reading split index at alternate location' '
 
 	# Should be able to find the shared index both right next to
 	# the specified split index file ...
-	GIT_INDEX_FILE=./reading-alternate-location/.but/index \
+	BUT_INDEX_FILE=./reading-alternate-location/.but/index \
 	but ls-files --cached >actual &&
 	test_cmp expect actual &&
 
-	# ... and, for backwards compatibility, in the current GIT_DIR
+	# ... and, for backwards compatibility, in the current BUT_DIR
 	# as well.
 	mv -v ./reading-alternate-location/.but/sharedindex.* .but &&
-	GIT_INDEX_FILE=./reading-alternate-location/.but/index \
+	BUT_INDEX_FILE=./reading-alternate-location/.but/index \
 	but ls-files --cached >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'GIT_TEST_SPLIT_INDEX works' '
+test_expect_success 'BUT_TEST_SPLIT_INDEX works' '
 	but init but-test-split-index &&
 	(
 		cd but-test-split-index &&
 		>file &&
-		GIT_TEST_SPLIT_INDEX=1 but update-index --add file &&
+		BUT_TEST_SPLIT_INDEX=1 but update-index --add file &&
 		ls -l .but/sharedindex.* >actual &&
 		test_line_count = 1 actual
 	)

@@ -29,7 +29,7 @@ test_expect_success 'set up thread-counting tests' '
 test_perf PERF_EXTRA 'index-pack 0 threads' '
 	rm -rf repo.but &&
 	but init --bare repo.but &&
-	GIT_DIR=repo.but but index-pack --threads=1 --stdin < $PACK
+	BUT_DIR=repo.but but index-pack --threads=1 --stdin < $PACK
 '
 
 for t in $threads
@@ -39,7 +39,7 @@ do
 	test_perf PERF_EXTRA "index-pack $t threads" '
 		rm -rf repo.but &&
 		but init --bare repo.but &&
-		GIT_DIR=repo.but GIT_FORCE_THREADS=1 \
+		BUT_DIR=repo.but BUT_FORCE_THREADS=1 \
 		but index-pack --threads=$THREADS --stdin <$PACK
 	'
 done
@@ -47,7 +47,7 @@ done
 test_perf 'index-pack default number of threads' '
 	rm -rf repo.but &&
 	but init --bare repo.but &&
-	GIT_DIR=repo.but but index-pack --stdin < $PACK
+	BUT_DIR=repo.but but index-pack --stdin < $PACK
 '
 
 test_done

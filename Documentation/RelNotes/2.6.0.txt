@@ -41,7 +41,7 @@ UI, Workflows & Features
  * "but send-email" now performs alias-expansion on names that are
    given via --cccmd, etc.
 
- * An environment variable GIT_REPLACE_REF_BASE tells Git to look into
+ * An environment variable BUT_REPLACE_REF_BASE tells Git to look into
    refs hierarchy other than refs/replace/ for the object replacement
    data.
 
@@ -95,7 +95,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * In preparation for allowing different "backends" to store the refs
    in a way different from the traditional "one ref per file in
-   $GIT_DIR or in a $GIT_DIR/packed-refs file" filesystem storage,
+   $BUT_DIR or in a $BUT_DIR/packed-refs file" filesystem storage,
    direct filesystem access to ref-like things like CHERRY_PICK_HEAD
    from scripts and programs has been reduced.
 
@@ -149,7 +149,7 @@ Performance, Internal Implementation, Development Support etc.
  * To prepare for allowing a different "ref" backend to be plugged in
    to the system, update_ref()/delete_ref() have been taught about
    ref-like things like MERGE_HEAD that are per-worktree (they will
-   always be written to the filesystem inside $GIT_DIR).
+   always be written to the filesystem inside $BUT_DIR).
 
  * The butmodules API that is accessed from the C code learned to
    cache stuff lazily.

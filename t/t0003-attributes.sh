@@ -305,7 +305,7 @@ test_expect_success 'bare repository: check that .butattribute is ignored' '
 test_expect_success 'bare repository: check that --cached honors index' '
 	(
 		cd bare.but &&
-		GIT_INDEX_FILE=../.but/index \
+		BUT_INDEX_FILE=../.but/index \
 		but check-attr --cached --stdin --all <../stdin-all |
 		sort >actual &&
 		test_cmp ../specified-all actual

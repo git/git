@@ -10,12 +10,12 @@ static const char builtin_merge_recursive_usage[] =
 
 static char *better_branch_name(const char *branch)
 {
-	static char buthead_env[8 + GIT_MAX_HEXSZ + 1];
+	static char buthead_env[8 + BUT_MAX_HEXSZ + 1];
 	char *name;
 
 	if (strlen(branch) != the_hash_algo->hexsz)
 		return xstrdup(branch);
-	xsnprintf(buthead_env, sizeof(buthead_env), "GITHEAD_%s", branch);
+	xsnprintf(buthead_env, sizeof(buthead_env), "BUTHEAD_%s", branch);
 	name = getenv(buthead_env);
 	return xstrdup(name ? name : branch);
 }

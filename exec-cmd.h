@@ -1,5 +1,5 @@
-#ifndef GIT_EXEC_CMD_H
-#define GIT_EXEC_CMD_H
+#ifndef BUT_EXEC_CMD_H
+#define BUT_EXEC_CMD_H
 
 struct strvec;
 
@@ -13,4 +13,4 @@ LAST_ARG_MUST_BE_NULL
 int execl_but_cmd(const char *cmd, ...);
 char *system_path(const char *path);
 
-#endif /* GIT_EXEC_CMD_H */
+#endif /* BUT_EXEC_CMD_H */

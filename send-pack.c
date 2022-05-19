@@ -435,7 +435,7 @@ static void get_commons_through_negotiation(const char *url,
 		die(_("send-pack: unable to fork off fetch subprocess"));
 
 	do {
-		char hex_hash[GIT_MAX_HEXSZ + 1];
+		char hex_hash[BUT_MAX_HEXSZ + 1];
 		int read_len = read_in_full(child.out, hex_hash, len);
 		struct object_id oid;
 		const char *end;

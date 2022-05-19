@@ -575,7 +575,7 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 	const char *config_key = "init.defaultbranch";
 	const char *config_display_key = "init.defaultBranch";
 	char *ret = NULL, *full_ref;
-	const char *env = getenv("GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME");
+	const char *env = getenv("BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME");
 
 	if (env && *env)
 		ret = xstrdup(env);
@@ -1408,7 +1408,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 		static int ref_paranoia = -1;
 
 		if (ref_paranoia < 0)
-			ref_paranoia = but_env_bool("GIT_REF_PARANOIA", 1);
+			ref_paranoia = but_env_bool("BUT_REF_PARANOIA", 1);
 		if (ref_paranoia) {
 			flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 			flags |= DO_FOR_EACH_OMIT_DANGLING_SYMREFS;

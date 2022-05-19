@@ -347,7 +347,7 @@ test_expect_success 'but mv moves a submodule with a .but directory and no .butm
 		cd sub &&
 		rm -f .but &&
 		cp -R -P -p ../.but/modules/sub .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	) &&
 	mkdir mod &&
 	but mv sub mod/sub &&
@@ -367,7 +367,7 @@ test_expect_success 'but mv moves a submodule with a .but directory and .butmodu
 		cd sub &&
 		rm -f .but &&
 		cp -R -P -p ../.but/modules/sub .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	) &&
 	mkdir mod &&
 	but mv sub mod/sub &&

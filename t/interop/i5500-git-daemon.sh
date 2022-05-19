@@ -3,8 +3,8 @@
 VERSION_A=.
 VERSION_B=v1.0.0
 
-: ${LIB_GIT_DAEMON_PORT:=5500}
-LIB_GIT_DAEMON_COMMAND='but.a daemon'
+: ${LIB_BUT_DAEMON_PORT:=5500}
+LIB_BUT_DAEMON_COMMAND='but.a daemon'
 
 test_description='clone and fetch by older client'
 . ./interop-lib.sh
@@ -12,7 +12,7 @@ test_description='clone and fetch by older client'
 
 start_but_daemon --export-all
 
-repo=$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo
+repo=$BUT_DAEMON_DOCUMENT_ROOT_PATH/repo
 
 test_expect_success "create repo served by $VERSION_A" '
 	but.a init "$repo" &&
@@ -20,7 +20,7 @@ test_expect_success "create repo served by $VERSION_A" '
 '
 
 test_expect_success "clone with $VERSION_B" '
-	but.b clone "$GIT_DAEMON_URL/repo" child &&
+	but.b clone "$BUT_DAEMON_URL/repo" child &&
 	echo one >expect &&
 	but.a -C child log -1 --format=%s >actual &&
 	test_cmp expect actual

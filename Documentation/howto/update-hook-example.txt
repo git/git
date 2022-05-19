@@ -15,12 +15,12 @@ but-receive-pack is run (either locally or over ssh) as that
 developer, so is hooks/update script.  Quoting from the relevant
 section of the documentation:
 
-    Before each ref is updated, if $GIT_DIR/hooks/update file exists
+    Before each ref is updated, if $BUT_DIR/hooks/update file exists
     and executable, it is called with three parameters:
 
-           $GIT_DIR/hooks/update refname sha1-old sha1-new
+           $BUT_DIR/hooks/update refname sha1-old sha1-new
 
-    The refname parameter is relative to $GIT_DIR; e.g. for the
+    The refname parameter is relative to $BUT_DIR; e.g. for the
     master head this is "refs/heads/master".  Two sha1 are the
     object names for the refname before and after the update.  Note
     that the hook is called before the refname is updated, so either
@@ -94,7 +94,7 @@ case "$1" in
 esac
 
 # Implement per-branch controls based on username
-allowed_users_file=$GIT_DIR/info/allowed-users
+allowed_users_file=$BUT_DIR/info/allowed-users
 username=$(id -u -n)
 info "The user is: '$username'"
 
@@ -131,7 +131,7 @@ then
   esac
 fi
 
-allowed_groups_file=$GIT_DIR/info/allowed-groups
+allowed_groups_file=$BUT_DIR/info/allowed-groups
 groups=$(id -G -n)
 info "The user belongs to the following groups:"
 info "'$groups'"
@@ -174,7 +174,7 @@ fi
 deny >/dev/null "There are no more rules to check.  Denying access"
 ----------------------------------------------------
 
-This uses two files, $GIT_DIR/info/allowed-users and
+This uses two files, $BUT_DIR/info/allowed-users and
 allowed-groups, to describe which heads can be pushed into by
 whom.  The format of each file would look like this:
 

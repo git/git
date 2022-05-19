@@ -10,9 +10,9 @@ cummitter.email::
 	If you need the `author` or `cummitter` to be different, the
 	`author.name`, `author.email`, `cummitter.name` or
 	`cummitter.email` variables can be set.
-	Also, all of these can be overridden by the `GIT_AUTHOR_NAME`,
-	`GIT_AUTHOR_EMAIL`, `GIT_CUMMITTER_NAME`,
-	`GIT_CUMMITTER_EMAIL` and `EMAIL` environment variables.
+	Also, all of these can be overridden by the `BUT_AUTHOR_NAME`,
+	`BUT_AUTHOR_EMAIL`, `BUT_CUMMITTER_NAME`,
+	`BUT_CUMMITTER_EMAIL` and `EMAIL` environment variables.
 +
 Note that the `name` forms of these variables conventionally refer to
 some form of a personal name.  See linkbut:but-cummit[1] and the

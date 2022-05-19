@@ -18,7 +18,7 @@
 
 use 5.008;
 use strict;
-use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
+use warnings $ENV{BUT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Getopt::Long;
 use Git::LoadCPAN::Error qw(:try);
 use Git;
@@ -252,7 +252,7 @@ sub system_or_die {
 
 sub do_edit {
 	if (!defined($editor)) {
-		$editor = Git::command_oneline('var', 'GIT_EDITOR');
+		$editor = Git::command_oneline('var', 'BUT_EDITOR');
 	}
 	my $die_msg = __("the editor exited uncleanly, aborting everything");
 	if (defined($multiedit) && !$multiedit) {
@@ -810,7 +810,7 @@ sub get_patch_subject {
 	while (my $line = <$fh>) {
 		next unless ($line =~ /^Subject: (.*)$/);
 		close $fh;
-		return "GIT: $1\n";
+		return "BUT: $1\n";
 	}
 	close $fh;
 	die sprintf(__("No subject line in %s?"), $fn);
@@ -832,10 +832,10 @@ if ($compose) {
 	my $tpl_in_reply_to = $initial_in_reply_to || '';
 	my $tpl_reply_to = $reply_to || '';
 
-	print $c <<EOT1, Git::prefix_lines("GIT: ", __(<<EOT2)), <<EOT3;
+	print $c <<EOT1, Git::prefix_lines("BUT: ", __(<<EOT2)), <<EOT3;
 From $tpl_sender # This line is ignored.
 EOT1
-Lines beginning in "GIT:" will be removed.
+Lines beginning in "BUT:" will be removed.
 Consider including an overall diffstat or table of contents
 for the patch you are writing.
 
@@ -867,7 +867,7 @@ EOT3
 
 	my %parsed_email;
 	while (my $line = <$c>) {
-		next if $line =~ m/^GIT:/;
+		next if $line =~ m/^BUT:/;
 		parse_header_line($line, \%parsed_email);
 		if ($line =~ /^$/) {
 			$parsed_email{'body'} = filter_body($c);
@@ -932,7 +932,7 @@ EOT3
 sub term {
 	my $term = eval {
 		require Term::ReadLine;
-		$ENV{"GIT_SEND_EMAIL_NOTTY"}
+		$ENV{"BUT_SEND_EMAIL_NOTTY"}
 			? Term::ReadLine->new('but-send-email', \*STDIN, \*STDOUT)
 			: Term::ReadLine->new('but-send-email');
 	};
@@ -995,7 +995,7 @@ sub filter_body {
 	my $c = shift;
 	my $body = "";
 	while (my $body_line = <$c>) {
-		if ($body_line !~ m/^GIT:/) {
+		if ($body_line !~ m/^BUT:/) {
 			$body .= $body_line;
 		}
 	}
@@ -1514,8 +1514,8 @@ sub send_message {
 	@recipients = unique_email_list(@recipients,@cc,@initial_bcc);
 	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
 	my $date = format_2822_time($time++);
-	my $butversion = '@@GIT_VERSION@@';
-	if ($butversion =~ m/..GIT_VERSION../) {
+	my $butversion = '@@BUT_VERSION@@';
+	if ($butversion =~ m/..BUT_VERSION../) {
 	    $butversion = Git::version();
 	}
 
@@ -2083,11 +2083,11 @@ sub validate_patch {
 		if (-x $validate_hook) {
 			require Cwd;
 			my $target = Cwd::abs_path($fn);
-			# The hook needs a correct cwd and GIT_DIR.
+			# The hook needs a correct cwd and BUT_DIR.
 			my $cwd_save = Cwd::getcwd();
 			chdir($repo->wc_path() or $repo->repo_path())
 				or die("chdir: $!");
-			local $ENV{"GIT_DIR"} = $repo->repo_path();
+			local $ENV{"BUT_DIR"} = $repo->repo_path();
 			my @cmd = ("but", "hook", "run", "--ignore-missing",
 				    $hook_name, "--");
 			my @cmd_msg = (@cmd, "<patch>");

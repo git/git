@@ -22,7 +22,7 @@ storing 41 bytes (and another file for the corresponding reflog). This
 negatively affects the number of inodes available when a large number of
 repositories are stored on the same filesystem. Readers can be penalized
 due to the larger number of syscalls required to traverse and read the
-`$GIT_DIR/refs` directory.
+`$BUT_DIR/refs` directory.
 
 
 Objectives
@@ -79,7 +79,7 @@ Space used for 149,932 log entries for 43,061 refs, reflog vs. reftable:
 [cols=",>,>",options="header",]
 |================================
 |format |size |avg entry
-|$GIT_DIR/logs |173 M |1209 bytes
+|$BUT_DIR/logs |173 M |1209 bytes
 |reftable |5 M |37 bytes
 |================================
 
@@ -137,7 +137,7 @@ The reftable format accepts both `refs/heads/foo` and
 `refs/heads/foo/bar` as distinct references.
 
 This property is useful for retaining log records in reftable, but may
-confuse versions of Git using `$GIT_DIR/refs` directory tree to maintain
+confuse versions of Git using `$BUT_DIR/refs` directory tree to maintain
 references. Users of reftable may choose to continue to reject `foo` and
 `foo/bar` type conflicts to prevent problems for peers.
 
@@ -673,7 +673,7 @@ not block aligned.
 Importing logs
 ++++++++++++++
 
-When importing from `$GIT_DIR/logs` writers should globally order all
+When importing from `$BUT_DIR/logs` writers should globally order all
 log records roughly by timestamp while preserving file order, and assign
 unique, increasing `update_index` values for each log line. Newer log
 records get higher `update_index` values.
@@ -860,7 +860,7 @@ Repository format
 Version 1
 ^^^^^^^^^
 
-A repository must set its `$GIT_DIR/config` to configure reftable:
+A repository must set its `$BUT_DIR/config` to configure reftable:
 
 ....
 [core]
@@ -872,7 +872,7 @@ A repository must set its `$GIT_DIR/config` to configure reftable:
 Layout
 ^^^^^^
 
-A collection of reftable files are stored in the `$GIT_DIR/reftable/` directory.
+A collection of reftable files are stored in the `$BUT_DIR/reftable/` directory.
 Their names should have a random element, such that each filename is globally
 unique; this helps avoid spurious failures on Windows, where open files cannot
 be removed or overwritten. It suggested to use
@@ -881,7 +881,7 @@ be removed or overwritten. It suggested to use
 Log-only files use the `.log` extension, while ref-only and mixed ref
 and log files use `.ref`. extension.
 
-The stack ordering file is `$GIT_DIR/reftable/tables.list` and lists the
+The stack ordering file is `$BUT_DIR/reftable/tables.list` and lists the
 current files, one per line, in order, from oldest (base) to newest
 (most recent):
 
@@ -892,7 +892,7 @@ $ cat .but/reftable/tables.list
 00000003-00000003-RANDOM3.ref
 ....
 
-Readers must read `$GIT_DIR/reftable/tables.list` to determine which
+Readers must read `$BUT_DIR/reftable/tables.list` to determine which
 files are relevant right now, and search through the stack in reverse
 order (last reftable is examined first).
 

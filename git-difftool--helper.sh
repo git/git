@@ -1,5 +1,5 @@
 #!/bin/sh
-# but-difftool--helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
+# but-difftool--helper is a BUT_EXTERNAL_DIFF-compatible diff tool launcher.
 # This script is typically launched by using the 'but difftool'
 # convenience command.
 #
@@ -9,21 +9,21 @@ TOOL_MODE=diff
 . but-mergetool--lib
 
 # difftool.prompt controls the default prompt/no-prompt behavior
-# and is overridden with $GIT_DIFFTOOL*_PROMPT.
+# and is overridden with $BUT_DIFFTOOL*_PROMPT.
 should_prompt () {
 	prompt_merge=$(but config --bool mergetool.prompt || echo true)
 	prompt=$(but config --bool difftool.prompt || echo $prompt_merge)
 	if test "$prompt" = true
 	then
-		test -z "$GIT_DIFFTOOL_NO_PROMPT"
+		test -z "$BUT_DIFFTOOL_NO_PROMPT"
 	else
-		test -n "$GIT_DIFFTOOL_PROMPT"
+		test -n "$BUT_DIFFTOOL_PROMPT"
 	fi
 }
 
 # Indicates that --extcmd=... was specified
 use_ext_cmd () {
-	test -n "$GIT_DIFFTOOL_EXTCMD"
+	test -n "$BUT_DIFFTOOL_EXTCMD"
 }
 
 launch_merge_tool () {
@@ -40,12 +40,12 @@ launch_merge_tool () {
 	# the user with the real $MERGED name before launching $merge_tool.
 	if should_prompt
 	then
-		printf "\nViewing (%s/%s): '%s'\n" "$GIT_DIFF_PATH_COUNTER" \
-			"$GIT_DIFF_PATH_TOTAL" "$MERGED"
+		printf "\nViewing (%s/%s): '%s'\n" "$BUT_DIFF_PATH_COUNTER" \
+			"$BUT_DIFF_PATH_TOTAL" "$MERGED"
 		if use_ext_cmd
 		then
 			printf "Launch '%s' [Y/n]? " \
-				"$GIT_DIFFTOOL_EXTCMD"
+				"$BUT_DIFFTOOL_EXTCMD"
 		else
 			printf "Launch '%s' [Y/n]? " "$merge_tool"
 		fi
@@ -59,7 +59,7 @@ launch_merge_tool () {
 	if use_ext_cmd
 	then
 		export BASE
-		eval $GIT_DIFFTOOL_EXTCMD '"$LOCAL"' '"$REMOTE"'
+		eval $BUT_DIFFTOOL_EXTCMD '"$LOCAL"' '"$REMOTE"'
 	else
 		initialize_merge_tool "$merge_tool"
 		# ignore the error from the above --- run_merge_tool
@@ -70,15 +70,15 @@ launch_merge_tool () {
 
 if ! use_ext_cmd
 then
-	if test -n "$GIT_DIFF_TOOL"
+	if test -n "$BUT_DIFF_TOOL"
 	then
-		merge_tool="$GIT_DIFF_TOOL"
+		merge_tool="$BUT_DIFF_TOOL"
 	else
 		merge_tool="$(get_merge_tool)"
 	fi
 fi
 
-if test -n "$GIT_DIFFTOOL_DIRDIFF"
+if test -n "$BUT_DIFFTOOL_DIRDIFF"
 then
 	LOCAL="$1"
 	REMOTE="$2"
@@ -100,7 +100,7 @@ else
 		fi
 
 		if test "$status" != 0 &&
-			test "$GIT_DIFFTOOL_TRUST_EXIT_CODE" = true
+			test "$BUT_DIFFTOOL_TRUST_EXIT_CODE" = true
 		then
 			exit $status
 		fi

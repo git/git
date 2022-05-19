@@ -242,6 +242,6 @@ linkbut:but-rev-list[1],
 linkbut:but-show-branch[1],
 linkbut:but-merge[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

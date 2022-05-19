@@ -8,9 +8,9 @@ struct object_id;
 struct pack_entry;
 struct repository;
 
-#define GIT_TEST_MULTI_PACK_INDEX "GIT_TEST_MULTI_PACK_INDEX"
-#define GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP \
-	"GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP"
+#define BUT_TEST_MULTI_PACK_INDEX "BUT_TEST_MULTI_PACK_INDEX"
+#define BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP \
+	"BUT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP"
 
 struct multi_pack_index {
 	struct multi_pack_index *next;

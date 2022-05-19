@@ -69,7 +69,7 @@ struct non_note {
 
 #define KEY_INDEX (the_hash_algo->rawsz - 1)
 #define FANOUT_PATH_SEPARATORS (the_hash_algo->rawsz - 1)
-#define FANOUT_PATH_SEPARATORS_MAX ((GIT_MAX_HEXSZ / 2) - 1)
+#define FANOUT_PATH_SEPARATORS_MAX ((BUT_MAX_HEXSZ / 2) - 1)
 #define SUBTREE_SHA1_PREFIXCMP(key_sha1, subtree_sha1) \
 	(memcmp(key_sha1, subtree_sha1, subtree_sha1[KEY_INDEX]))
 
@@ -199,7 +199,7 @@ static void note_tree_remove(struct notes_tree *t,
 		struct leaf_node *entry)
 {
 	struct leaf_node *l;
-	struct int_node *parent_stack[GIT_MAX_RAWSZ];
+	struct int_node *parent_stack[BUT_MAX_RAWSZ];
 	unsigned char i, j;
 	void **p = note_tree_search(t, &tree, &n, entry->key_oid.hash);
 
@@ -535,7 +535,7 @@ static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
 }
 
 /* hex oid + '/' between each pair of hex dibuts + NUL */
-#define FANOUT_PATH_MAX GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS_MAX + 1
+#define FANOUT_PATH_MAX BUT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS_MAX + 1
 
 static void construct_path_with_fanout(const unsigned char *hash,
 		unsigned char fanout, char *path)
@@ -767,7 +767,7 @@ static int write_each_note(const struct object_id *object_oid,
 		note_path[note_path_len] = '\0';
 		mode = 040000;
 	}
-	assert(note_path_len <= GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS);
+	assert(note_path_len <= BUT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS);
 
 	/* Weave non-note entries into note entries */
 	return  write_each_non_note_until(note_path, d) ||
@@ -984,11 +984,11 @@ const char *default_notes_ref(void)
 {
 	const char *notes_ref = NULL;
 	if (!notes_ref)
-		notes_ref = getenv(GIT_NOTES_REF_ENVIRONMENT);
+		notes_ref = getenv(BUT_NOTES_REF_ENVIRONMENT);
 	if (!notes_ref)
 		notes_ref = notes_ref_name; /* value of core.notesRef config */
 	if (!notes_ref)
-		notes_ref = GIT_NOTES_DEFAULT_REF;
+		notes_ref = BUT_NOTES_DEFAULT_REF;
 	return notes_ref;
 }
 
@@ -1091,7 +1091,7 @@ void load_display_notes(struct display_notes_opt *opt)
 	if (!opt || opt->use_default_notes > 0 ||
 	    (opt->use_default_notes == -1 && !opt->extra_notes_refs.nr)) {
 		string_list_append(&display_notes_refs, default_notes_ref());
-		display_ref_env = getenv(GIT_NOTES_DISPLAY_REF_ENVIRONMENT);
+		display_ref_env = getenv(BUT_NOTES_DISPLAY_REF_ENVIRONMENT);
 		if (display_ref_env) {
 			string_list_add_refs_from_colon_sep(&display_notes_refs,
 							    display_ref_env);
@@ -1283,7 +1283,7 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 
 	if (!raw) {
 		const char *ref = t->ref;
-		if (!ref || !strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
+		if (!ref || !strcmp(ref, BUT_NOTES_DEFAULT_REF)) {
 			strbuf_addstr(sb, "\nNotes:\n");
 		} else {
 			skip_prefix(ref, "refs/", &ref);

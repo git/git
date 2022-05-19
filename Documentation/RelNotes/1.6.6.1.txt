@@ -25,7 +25,7 @@ Fixes since v1.6.6
 
  * "but rebase -i" did not abort cleanly if it failed to launch the editor.
 
- * "but reset --hard" did not work correctly when GIT_WORK_TREE environment
+ * "but reset --hard" did not work correctly when BUT_WORK_TREE environment
    variable is used to point at the root of the true work tree.
 
  * http-backend was not listed in the command list in the documentation.

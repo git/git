@@ -2,7 +2,7 @@
 include ../../shared.mak
 
 -include ../../config.mak
-export GIT_TEST_OPTIONS
+export BUT_TEST_OPTIONS
 
 all: test-lint perf
 

@@ -17,7 +17,7 @@
  *
  * See 't0500-progress-display.sh' for examples.
  */
-#define GIT_TEST_PROGRESS_ONLY
+#define BUT_TEST_PROGRESS_ONLY
 #include "test-tool.h"
 #include "gettext.h"
 #include "parse-options.h"

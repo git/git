@@ -33,7 +33,7 @@ proc butworktree {} {
         # try to set work tree from environment, core.worktree or use
         # cdup to obtain a relative path to the top of the worktree. If
         # run from the top, the ./ prefix ensures normalize expands pwd.
-        if {[catch { set _butworktree $env(GIT_WORK_TREE) }]} {
+        if {[catch { set _butworktree $env(BUT_WORK_TREE) }]} {
             if {[catch {set _butworktree [exec but config --get core.worktree]}]} {
                 set _butworktree [file normalize ./[exec but rev-parse --show-cdup]]
             }
@@ -258,7 +258,7 @@ proc parseviewargs {n arglist} {
                 lappend revargs --butk-symmetric-diff-marker MERGE_HEAD...HEAD
             }
             "--no-replace-objects" {
-                set env(GIT_NO_REPLACE_OBJECTS) "1"
+                set env(BUT_NO_REPLACE_OBJECTS) "1"
             }
             "-*" {
                 # Other flag arguments including -<n>
@@ -3582,8 +3582,8 @@ proc butknewtmpdir {} {
     global diffnum butktmpdir butdir env
 
     if {![info exists butktmpdir]} {
-        if {[info exists env(GITK_TMPDIR)]} {
-            set tmpdir $env(GITK_TMPDIR)
+        if {[info exists env(BUTK_TMPDIR)]} {
+            set tmpdir $env(BUTK_TMPDIR)
         } elseif {[info exists env(TMPDIR)]} {
             set tmpdir $env(TMPDIR)
         } else {
@@ -9674,7 +9674,7 @@ proc mvbrgo {top prevname} {
 proc exec_citool {tool_args {baseid {}}} {
     global cummitinfo env
 
-    set save_env [array get env GIT_AUTHOR_*]
+    set save_env [array get env BUT_AUTHOR_*]
 
     if {$baseid ne {}} {
         if {![info exists cummitinfo($baseid)]} {
@@ -9685,15 +9685,15 @@ proc exec_citool {tool_args {baseid {}}} {
         if {[regexp {^\s*(\S.*\S|\S)\s*<(.*)>\s*$} \
                     $author author name email]
             && $date ne {}} {
-            set env(GIT_AUTHOR_NAME) $name
-            set env(GIT_AUTHOR_EMAIL) $email
-            set env(GIT_AUTHOR_DATE) $date
+            set env(BUT_AUTHOR_NAME) $name
+            set env(BUT_AUTHOR_EMAIL) $email
+            set env(BUT_AUTHOR_DATE) $date
         }
     }
 
     eval exec but citool $tool_args &
 
-    array unset env GIT_AUTHOR_*
+    array unset env BUT_AUTHOR_*
     array set env $save_env
 }
 
@@ -9729,7 +9729,7 @@ proc cherrypick {} {
                         conflict.\nDo you wish to run but citool to\
                         resolve it?"]]} {
                 # Force citool to read MERGE_MSG
-                file delete [file join $butdir "GITGUI_MSG"]
+                file delete [file join $butdir "BUTGUI_MSG"]
                 exec_citool {} $rowmenuid
             }
         } else {
@@ -9788,7 +9788,7 @@ proc revert {} {
             if [confirm_popup [mc "Revert failed because of merge conflict.\n\
                 Do you wish to run but citool to resolve it?"]] {
                 # Force citool to read MERGE_MSG
-                file delete [file join $butdir "GITGUI_MSG"]
+                file delete [file join $butdir "BUTGUI_MSG"]
                 exec_citool {} $rowmenuid
             }
         } else { error_popup $err }
@@ -12266,9 +12266,9 @@ proc get_path_encoding {path} {
 }
 
 ## For msgcat loading, first locate the installation location.
-if { [info exists ::env(GITK_MSGSDIR)] } {
+if { [info exists ::env(BUTK_MSGSDIR)] } {
     ## Msgsdir was manually set in the environment.
-    set butk_msgsdir $::env(GITK_MSGSDIR)
+    set butk_msgsdir $::env(BUTK_MSGSDIR)
 } else {
     ## Let's guess the prefix from argv0.
     set butk_prefix [file dirname [file dirname [file normalize $argv0]]]
@@ -12300,9 +12300,9 @@ if {[tk windowingsystem] eq "aqua"} {
     } [pid] ]
 }
 
-# Unset GIT_TRACE var if set
-if { [info exists ::env(GIT_TRACE)] } {
-    unset ::env(GIT_TRACE)
+# Unset BUT_TRACE var if set
+if { [info exists ::env(BUT_TRACE)] } {
+    unset ::env(BUT_TRACE)
 }
 
 # defaults...

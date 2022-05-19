@@ -40,7 +40,7 @@ test_workers_in_event_trace ()
 }
 
 test_expect_success CASE_INSENSITIVE_FS 'worker detects basename collision' '
-	GIT_TRACE2_EVENT="$(pwd)/trace" but \
+	BUT_TRACE2_EVENT="$(pwd)/trace" but \
 		-c checkout.workers=2 -c checkout.thresholdForParallelism=0 \
 		checkout . &&
 
@@ -69,7 +69,7 @@ test_expect_success CASE_INSENSITIVE_FS 'worker detects dirname collision' '
 	but update-index --index-info <objs &&
 
 	rm -f trace filter.log &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" but \
+	BUT_TRACE2_EVENT="$(pwd)/trace" but \
 		-c checkout.workers=2 -c checkout.thresholdForParallelism=0 \
 		checkout . &&
 

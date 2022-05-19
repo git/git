@@ -7,7 +7,7 @@ butattributes - Defining attributes per path
 
 SYNOPSIS
 --------
-$GIT_DIR/info/attributes, .butattributes
+$BUT_DIR/info/attributes, .butattributes
 
 
 DESCRIPTION
@@ -68,7 +68,7 @@ The rules by which the pattern matches paths are the same as in
     pointless in an attributes file; use `path/**` instead)
 
 When deciding what attributes are assigned to a path, Git
-consults `$GIT_DIR/info/attributes` file (which has the highest
+consults `$BUT_DIR/info/attributes` file (which has the highest
 precedence), `.butattributes` file in the same directory as the
 path in question, and its parent directories up to the toplevel of the
 work tree (the further the directory that contains `.butattributes`
@@ -84,7 +84,7 @@ working tree is used as a fall-back.
 If you wish to affect only a single repository (i.e., to assign
 attributes to files that are particular to
 one user's workflow for that repository), then
-attributes should be placed in the `$GIT_DIR/info/attributes` file.
+attributes should be placed in the `$BUT_DIR/info/attributes` file.
 Attributes which should be version-controlled and distributed to other
 repositories (i.e., attributes of interest to all users) should go into
 `.butattributes` files. Attributes that should affect all repositories
@@ -651,7 +651,7 @@ Example
 A long running filter demo implementation can be found in
 `contrib/long-running-filter/example.pl` located in the Git
 core repository. If you develop your own long running filter
-process then the `GIT_TRACE_PACKET` environment variables can be
+process then the `BUT_TRACE_PACKET` environment variables can be
 very helpful for debugging (see linkbut:but[1]).
 
 Please note that you cannot use an existing `filter.<driver>.clean`
@@ -745,7 +745,7 @@ The definition of a diff driver is done in `butconfig`, not
 wrong place to talk about it.  However...
 
 To define an external diff driver `jcdiff`, add a section to your
-`$GIT_DIR/config` file (or `$HOME/.butconfig` file) like this:
+`$BUT_DIR/config` file (or `$HOME/.butconfig` file) like this:
 
 ----------------------------------------------------------------
 [diff "jcdiff"]
@@ -755,7 +755,7 @@ To define an external diff driver `jcdiff`, add a section to your
 When Git needs to show you a diff for the path with `diff`
 attribute set to `jcdiff`, it calls the command you specified
 with the above configuration, i.e. `j-c-diff`, with 7
-parameters, just like `GIT_EXTERNAL_DIFF` program is called.
+parameters, just like `BUT_EXTERNAL_DIFF` program is called.
 See linkbut:but[1] for details.
 
 
@@ -783,7 +783,7 @@ for paths.
 Then, you would define a "diff.tex.xfuncname" configuration to
 specify a regular expression that matches a line that you would
 want to appear as the hunk header "TEXT". Add a section to your
-`$GIT_DIR/config` file (or `$HOME/.butconfig` file) like this:
+`$BUT_DIR/config` file (or `$HOME/.butconfig` file) like this:
 
 ------------------------
 [diff "tex"]
@@ -863,7 +863,7 @@ in the "diff.*.wordRegex" configuration variable.  For example, in TeX
 a backslash followed by a sequence of letters forms a command, but
 several such commands can be run together without intervening
 whitespace.  To separate them, use a regular expression in your
-`$GIT_DIR/config` file (or `$HOME/.butconfig` file) like this:
+`$BUT_DIR/config` file (or `$HOME/.butconfig` file) like this:
 
 ------------------------
 [diff "tex"]
@@ -892,7 +892,7 @@ resulting text on stdout.
 For example, to show the diff of the exif information of a
 file instead of the binary information (assuming you have the
 exif tool installed), add the following section to your
-`$GIT_DIR/config` file (or `$HOME/.butconfig` file):
+`$BUT_DIR/config` file (or `$HOME/.butconfig` file):
 
 ------------------------
 [diff "jpg"]
@@ -1075,7 +1075,7 @@ file, not in the `butattributes` file, so strictly speaking this
 manual page is a wrong place to talk about it.  However...
 
 To define a custom merge driver `filfre`, add a section to your
-`$GIT_DIR/config` file (or `$HOME/.butconfig` file) like this:
+`$BUT_DIR/config` file (or `$HOME/.butconfig` file) like this:
 
 ----------------------------------------------------------------
 [merge "filfre"]
@@ -1241,7 +1241,7 @@ DEFINING MACRO ATTRIBUTES
 -------------------------
 
 Custom macro attributes can be defined only in top-level butattributes
-files (`$GIT_DIR/info/attributes`, the `.butattributes` file at the
+files (`$BUT_DIR/info/attributes`, the `.butattributes` file at the
 top level of the working tree, or the global or system-wide
 butattributes files), not in `.butattributes` files in working tree
 subdirectories.  The built-in macro attribute "binary" is equivalent
@@ -1264,7 +1264,7 @@ EXAMPLES
 If you have these three `butattributes` file:
 
 ----------------------------------------------------------------
-(in $GIT_DIR/info/attributes)
+(in $BUT_DIR/info/attributes)
 
 a*	foo !bar -baz
 
@@ -1291,7 +1291,7 @@ the attributes given to path `t/abc` are computed as follows:
    and `bar` attributes should be given to this path, so it
    leaves `foo` and `bar` unset.  Attribute `baz` is set.
 
-3. Finally it examines `$GIT_DIR/info/attributes`.  This file
+3. Finally it examines `$BUT_DIR/info/attributes`.  This file
    is used to override the in-tree settings.  The first line is
    a match, and `foo` is set, `bar` is reverted to unspecified
    state, and `baz` is unset.
@@ -1311,6 +1311,6 @@ SEE ALSO
 --------
 linkbut:but-check-attr[1].
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

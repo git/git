@@ -47,7 +47,7 @@ int fsmonitor_ipc__is_supported(void)
 	return 1;
 }
 
-GIT_PATH_FUNC(fsmonitor_ipc__get_path, "fsmonitor--daemon.ipc")
+BUT_PATH_FUNC(fsmonitor_ipc__get_path, "fsmonitor--daemon.ipc")
 
 enum ipc_active_state fsmonitor_ipc__get_state(void)
 {
@@ -58,7 +58,7 @@ static int spawn_daemon(void)
 {
 	const char *args[] = { "fsmonitor--daemon", "start", NULL };
 
-	return run_command_v_opt_tr2(args, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD,
+	return run_command_v_opt_tr2(args, RUN_COMMAND_NO_STDIN | RUN_BUT_CMD,
 				    "fsmonitor");
 }
 

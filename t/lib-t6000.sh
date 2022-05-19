@@ -38,22 +38,22 @@ entag () {
 	sed -f sed.script
 }
 
-# Execute a command after first saving, then setting the GIT_AUTHOR_EMAIL
+# Execute a command after first saving, then setting the BUT_AUTHOR_EMAIL
 # tag to a specified value. Restore the original value on return.
 as_author () {
 	_author=$1
 	shift 1
-	_save=$GIT_AUTHOR_EMAIL
+	_save=$BUT_AUTHOR_EMAIL
 
-	GIT_AUTHOR_EMAIL="$_author"
-	export GIT_AUTHOR_EMAIL
+	BUT_AUTHOR_EMAIL="$_author"
+	export BUT_AUTHOR_EMAIL
 	"$@"
 	if test -z "$_save"
 	then
-		unset GIT_AUTHOR_EMAIL
+		unset BUT_AUTHOR_EMAIL
 	else
-		GIT_AUTHOR_EMAIL="$_save"
-		export GIT_AUTHOR_EMAIL
+		BUT_AUTHOR_EMAIL="$_save"
+		export BUT_AUTHOR_EMAIL
 	fi
 }
 
@@ -75,16 +75,16 @@ assign_fake_date () {
 }
 
 on_cummitter_date () {
-	assign_fake_date GIT_CUMMITTER_DATE "$1"
-	export GIT_CUMMITTER_DATE
+	assign_fake_date BUT_CUMMITTER_DATE "$1"
+	export BUT_CUMMITTER_DATE
 	shift 1
 	"$@"
 }
 
 on_dates () {
-	assign_fake_date GIT_CUMMITTER_DATE "$1"
-	assign_fake_date GIT_AUTHOR_DATE "$2"
-	export GIT_CUMMITTER_DATE GIT_AUTHOR_DATE
+	assign_fake_date BUT_CUMMITTER_DATE "$1"
+	assign_fake_date BUT_AUTHOR_DATE "$2"
+	export BUT_CUMMITTER_DATE BUT_AUTHOR_DATE
 	shift 2
 	"$@"
 }

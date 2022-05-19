@@ -35,8 +35,8 @@ each object that a delta depends upon must be present within the pack.
 
 A pack index file (.idx) is generated for fast, random access to the
 objects in the pack. Placing both the index file (.idx) and the packed
-archive (.pack) in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
-any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
+archive (.pack) in the pack/ subdirectory of $BUT_OBJECT_DIRECTORY (or
+any of the directories on $BUT_ALTERNATE_OBJECT_DIRECTORIES)
 enables Git to read from the pack archive.
 
 The 'but unpack-objects' command can read the packed archive and
@@ -341,7 +341,7 @@ But in some repository setups, you may have several related but separate
 groups of ref tips, with clients tending to fetch those groups
 independently. For example, imagine that you are hosting several "forks"
 of a repository in a single shared object store, and letting clients
-view them as separate repositories through `GIT_NAMESPACE` or separate
+view them as separate repositories through `BUT_NAMESPACE` or separate
 repos using the alternates mechanism. A naive repack may find that the
 optimal delta for an object is against a base that is only found in
 another fork. But when a client fetches, they will not have the base
@@ -427,6 +427,6 @@ linkbut:but-rev-list[1]
 linkbut:but-repack[1]
 linkbut:but-prune-packed[1]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

@@ -4,7 +4,7 @@
 # Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022.
 #
 # ========================
-# DICTIONARY TO MERGE IN GIT GUI
+# DICTIONARY TO MERGE IN BUT GUI
 # ------------------------
 # range диапазон
 # base база
@@ -2645,7 +2645,7 @@ msgstr "%s %s не е подаване!"
 
 #: cummit.c:196
 msgid ""
-"Support for <GIT_DIR>/info/grafts is deprecated\n"
+"Support for <BUT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
 "\n"
 "Please use \"but replace --convert-graft-file\"\n"
@@ -2654,7 +2654,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"but config advice.graftFileDeprecated false\""
 msgstr ""
-"Поддръжката на „<GIT_DIR>/info/grafts“ е остаряла.\n"
+"Поддръжката на „<BUT_DIR>/info/grafts“ е остаряла.\n"
 "В бъдеща версия на Git ще бъде премахната.\n"
 "\n"
 "Може да преобразувате присадките в заместващи\n"
@@ -6796,11 +6796,11 @@ msgstr ""
 #: read-cache.c:1743
 #, c-format
 msgid ""
-"GIT_INDEX_VERSION set, but the value is invalid.\n"
+"BUT_INDEX_VERSION set, but the value is invalid.\n"
 "Using version %i"
 msgstr ""
 "Зададена е неправилна стойност на променливата на средата "
-"„GIT_INDEX_VERSION“.\n"
+"„BUT_INDEX_VERSION“.\n"
 "Ще се ползва версия %i"
 
 #: read-cache.c:1799
@@ -8106,16 +8106,16 @@ msgid "could not open '%s' for reading"
 msgstr "файлът не може да бъде прочетен: „%s“"
 
 #: sequencer.c:851
-msgid "'GIT_AUTHOR_NAME' already given"
-msgstr "настройката за автор „GIT_AUTHOR_NAME“ вече е зададена"
+msgid "'BUT_AUTHOR_NAME' already given"
+msgstr "настройката за автор „BUT_AUTHOR_NAME“ вече е зададена"
 
 #: sequencer.c:856
-msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr "настройката за е-поща „GIT_AUTHOR_EMAIL“ вече е зададена"
+msgid "'BUT_AUTHOR_EMAIL' already given"
+msgstr "настройката за е-поща „BUT_AUTHOR_EMAIL“ вече е зададена"
 
 #: sequencer.c:861
-msgid "'GIT_AUTHOR_DATE' already given"
-msgstr "настройката за дата „GIT_AUTHOR_DATE“ вече е зададена"
+msgid "'BUT_AUTHOR_DATE' already given"
+msgstr "настройката за дата „BUT_AUTHOR_DATE“ вече е зададена"
 
 #: sequencer.c:865
 #, c-format
@@ -8123,16 +8123,16 @@ msgid "unknown variable '%s'"
 msgstr "непозната променлива „%s“"
 
 #: sequencer.c:870
-msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr "настройката за автор „GIT_AUTHOR_NAME“ липсва"
+msgid "missing 'BUT_AUTHOR_NAME'"
+msgstr "настройката за автор „BUT_AUTHOR_NAME“ липсва"
 
 #: sequencer.c:872
-msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr "настройката за е-поща „GIT_AUTHOR_EMAIL“ липсва"
+msgid "missing 'BUT_AUTHOR_EMAIL'"
+msgstr "настройката за е-поща „BUT_AUTHOR_EMAIL“ липсва"
 
 #: sequencer.c:874
-msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr "настройката за дата „GIT_AUTHOR_DATE“ липсва"
+msgid "missing 'BUT_AUTHOR_DATE'"
+msgstr "настройката за дата „BUT_AUTHOR_DATE“ липсва"
 
 #: sequencer.c:939
 #, c-format
@@ -9075,12 +9075,12 @@ msgstr ""
 #, c-format
 msgid ""
 "not a but repository (or any parent up to mount point %s)\n"
-"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
+"Stopping at filesystem boundary (BUT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "нито тази, нито която и да е от по-горните директории (до точката на "
 "монтиране „%s“), не е хранилище на but.\n"
 "Git работи в рамките на една файлова система, защото променливата на средата "
-"„GIT_DISCOVERY_ACROSS_FILESYSTEM“ не е зададена."
+"„BUT_DISCOVERY_ACROSS_FILESYSTEM“ не е зададена."
 
 #: setup.c:1446
 #, c-format
@@ -11021,9 +11021,9 @@ msgid "could not parse patch '%s'"
 msgstr "кръпката „%s“ не може да се анализира"
 
 #: builtin/am.c:841
-msgid "Only one StGIT patch series can be applied at once"
+msgid "Only one StBUT patch series can be applied at once"
 msgstr ""
-"Само една поредица от кръпки от „StGIT“ може да бъде прилагана в даден момент"
+"Само една поредица от кръпки от „StBUT“ може да бъде прилагана в даден момент"
 
 #: builtin/am.c:889
 msgid "invalid timestamp"
@@ -21140,7 +21140,7 @@ msgstr "Превъртане на „%s“ към „%s“.\n"
 
 #: builtin/receive-pack.c:35
 msgid "but receive-pack <but-dir>"
-msgstr "but receive-pack ДИРЕКТОРИЯ_НА_GIT"
+msgstr "but receive-pack ДИРЕКТОРИЯ_НА_BUT"
 
 #: builtin/receive-pack.c:1275
 msgid ""
@@ -26929,13 +26929,13 @@ msgstr "„%s“ не може да се отвори за запис: %s"
 
 #: but-send-email.perl:838
 msgid ""
-"Lines beginning in \"GIT:\" will be removed.\n"
+"Lines beginning in \"BUT:\" will be removed.\n"
 "Consider including an overall diffstat or table of contents\n"
 "for the patch you are writing.\n"
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
-"Редовете започващи с „GIT:“ ще бъдат прескачани.\n"
+"Редовете започващи с „BUT:“ ще бъдат прескачани.\n"
 "Добре е да включите статистика на разликите или някаква таблица на "
 "съдържанието\n"
 "на подготвяната кръпка.\n"

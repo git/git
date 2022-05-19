@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='test but rev-parse'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -50,9 +50,9 @@ test_rev_parse () {
 		test_expect_success "$name: $o" '
 			if test -n "$butdir"
 			then
-				test_when_finished "unset GIT_DIR" &&
-				GIT_DIR="$butdir" &&
-				export GIT_DIR
+				test_when_finished "unset BUT_DIR" &&
+				BUT_DIR="$butdir" &&
+				export BUT_DIR
 			fi &&
 
 			case "$bare" in
@@ -94,18 +94,18 @@ test_rev_parse -b t 'core.bare = true' true false false
 test_rev_parse -b u 'core.bare undefined' false false true
 
 
-test_rev_parse -C work -g ../.but -b f 'GIT_DIR=../.but, core.bare = false' false false true '' "../.but" "$ROOT/.but"
+test_rev_parse -C work -g ../.but -b f 'BUT_DIR=../.but, core.bare = false' false false true '' "../.but" "$ROOT/.but"
 
-test_rev_parse -C work -g ../.but -b t 'GIT_DIR=../.but, core.bare = true' true false false ''
+test_rev_parse -C work -g ../.but -b t 'BUT_DIR=../.but, core.bare = true' true false false ''
 
-test_rev_parse -C work -g ../.but -b u 'GIT_DIR=../.but, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../.but -b u 'BUT_DIR=../.but, core.bare undefined' false false true ''
 
 
-test_rev_parse -C work -g ../repo.but -b f 'GIT_DIR=../repo.but, core.bare = false' false false true '' "../repo.but" "$ROOT/repo.but"
+test_rev_parse -C work -g ../repo.but -b f 'BUT_DIR=../repo.but, core.bare = false' false false true '' "../repo.but" "$ROOT/repo.but"
 
-test_rev_parse -C work -g ../repo.but -b t 'GIT_DIR=../repo.but, core.bare = true' true false false ''
+test_rev_parse -C work -g ../repo.but -b t 'BUT_DIR=../repo.but, core.bare = true' true false false ''
 
-test_rev_parse -C work -g ../repo.but -b u 'GIT_DIR=../repo.but, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../repo.but -b u 'BUT_DIR=../repo.but, core.bare undefined' false false true ''
 
 test_expect_success 'rev-parse --path-format=absolute' '
 	test_one "." "$ROOT/.but" --path-format=absolute --but-dir &&

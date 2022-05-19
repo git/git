@@ -314,7 +314,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		struct object *obj;
 		int result;
 
-		if (S_ISGITLINK(entry.mode))
+		if (S_ISBUTLINK(entry.mode))
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
@@ -610,7 +610,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 			else
 				retval += report(options,
 						 tree_oid, OBJ_TREE,
-						 FSCK_MSG_GITMODULES_SYMLINK,
+						 FSCK_MSG_BUTMODULES_SYMLINK,
 						 ".butmodules is a symbolic link");
 		}
 
@@ -618,12 +618,12 @@ static int fsck_tree(const struct object_id *tree_oid,
 			if (is_hfs_dotbutignore(name) ||
 			    is_ntfs_dotbutignore(name))
 				retval += report(options, tree_oid, OBJ_TREE,
-						 FSCK_MSG_GITIGNORE_SYMLINK,
+						 FSCK_MSG_BUTIGNORE_SYMLINK,
 						 ".butignore is a symlink");
 			if (is_hfs_dotbutattributes(name) ||
 			    is_ntfs_dotbutattributes(name))
 				retval += report(options, tree_oid, OBJ_TREE,
-						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
+						 FSCK_MSG_BUTATTRIBUTES_SYMLINK,
 						 ".butattributes is a symlink");
 			if (is_hfs_dotmailmap(name) ||
 			    is_ntfs_dotmailmap(name))
@@ -642,7 +642,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 							      entry_oid);
 					else
 						retval += report(options, tree_oid, OBJ_TREE,
-								 FSCK_MSG_GITMODULES_SYMLINK,
+								 FSCK_MSG_BUTMODULES_SYMLINK,
 								 ".butmodules is a symbolic link");
 				}
 				backslash = strchr(backslash, '\\');
@@ -664,7 +664,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 		case S_IFREG | 0644:
 		case S_IFLNK:
 		case S_IFDIR:
-		case S_IFGITLINK:
+		case S_IFBUTLINK:
 			break;
 		/*
 		 * This is nonstandard, but we had a few of these
@@ -721,7 +721,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 				 "contains '..'");
 	if (has_dotbut)
 		retval += report(options, tree_oid, OBJ_TREE,
-				 FSCK_MSG_HAS_DOTGIT,
+				 FSCK_MSG_HAS_DOTBUT,
 				 "contains '.but'");
 	if (has_zero_pad)
 		retval += report(options, tree_oid, OBJ_TREE,
@@ -1139,27 +1139,27 @@ static int fsck_butmodules_fn(const char *var, const char *value, void *vdata)
 	if (check_submodule_name(name) < 0)
 		data->ret |= report(data->options,
 				    data->oid, OBJ_BLOB,
-				    FSCK_MSG_GITMODULES_NAME,
+				    FSCK_MSG_BUTMODULES_NAME,
 				    "disallowed submodule name: %s",
 				    name);
 	if (!strcmp(key, "url") && value &&
 	    check_submodule_url(value) < 0)
 		data->ret |= report(data->options,
 				    data->oid, OBJ_BLOB,
-				    FSCK_MSG_GITMODULES_URL,
+				    FSCK_MSG_BUTMODULES_URL,
 				    "disallowed submodule url: %s",
 				    value);
 	if (!strcmp(key, "path") && value &&
 	    looks_like_command_line_option(value))
 		data->ret |= report(data->options,
 				    data->oid, OBJ_BLOB,
-				    FSCK_MSG_GITMODULES_PATH,
+				    FSCK_MSG_BUTMODULES_PATH,
 				    "disallowed submodule path: %s",
 				    value);
 	if (!strcmp(key, "update") && value &&
 	    parse_submodule_update_type(value) == SM_UPDATE_COMMAND)
 		data->ret |= report(data->options, data->oid, OBJ_BLOB,
-				    FSCK_MSG_GITMODULES_UPDATE,
+				    FSCK_MSG_BUTMODULES_UPDATE,
 				    "disallowed submodule update setting: %s",
 				    value);
 	free(name);
@@ -1187,7 +1187,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		 * that an error.
 		 */
 		return report(options, oid, OBJ_BLOB,
-			      FSCK_MSG_GITMODULES_LARGE,
+			      FSCK_MSG_BUTMODULES_LARGE,
 			      ".butmodules too large to parse");
 	}
 
@@ -1198,7 +1198,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 	if (but_config_from_mem(fsck_butmodules_fn, CONFIG_ORIGIN_BLOB,
 				".butmodules", buf, size, &data, &config_opts))
 		data.ret |= report(options, oid, OBJ_BLOB,
-				   FSCK_MSG_GITMODULES_PARSE,
+				   FSCK_MSG_BUTMODULES_PARSE,
 				   "could not parse butmodules blob");
 
 	return data.ret;
@@ -1261,7 +1261,7 @@ int fsck_finish(struct fsck_options *options)
 				continue;
 			ret |= report(options,
 				      oid, OBJ_BLOB,
-				      FSCK_MSG_GITMODULES_MISSING,
+				      FSCK_MSG_BUTMODULES_MISSING,
 				      "unable to read .butmodules blob");
 			continue;
 		}
@@ -1271,7 +1271,7 @@ int fsck_finish(struct fsck_options *options)
 		else
 			ret |= report(options,
 				      oid, type,
-				      FSCK_MSG_GITMODULES_BLOB,
+				      FSCK_MSG_BUTMODULES_BLOB,
 				      "non-blob found at .butmodules");
 		free(buf);
 	}
@@ -1317,7 +1317,7 @@ int fsck_error_cb_print_missing_butmodules(struct fsck_options *o,
 					   enum fsck_msg_id msg_id,
 					   const char *message)
 {
-	if (msg_id == FSCK_MSG_GITMODULES_MISSING) {
+	if (msg_id == FSCK_MSG_BUTMODULES_MISSING) {
 		puts(oid_to_hex(oid));
 		return 0;
 	}

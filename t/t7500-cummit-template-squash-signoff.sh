@@ -31,8 +31,8 @@ test_expect_success 'nonexistent template file should return error' '
 	echo changes >> foo &&
 	but add foo &&
 	(
-		GIT_EDITOR="echo hello >\"\$1\"" &&
-		export GIT_EDITOR &&
+		BUT_EDITOR="echo hello >\"\$1\"" &&
+		export BUT_EDITOR &&
 		test_must_fail but cummit --template "$PWD"/notexist
 	)
 '
@@ -40,8 +40,8 @@ test_expect_success 'nonexistent template file should return error' '
 test_expect_success 'nonexistent template file in config should return error' '
 	test_config cummit.template "$PWD"/notexist &&
 	(
-		GIT_EDITOR="echo hello >\"\$1\"" &&
-		export GIT_EDITOR &&
+		BUT_EDITOR="echo hello >\"\$1\"" &&
+		export BUT_EDITOR &&
 		test_must_fail but cummit
 	)
 '
@@ -107,7 +107,7 @@ test_expect_success 'config-specified template should cummit' '
 test_expect_success 'explicit cummit message should override template' '
 	echo "still more content" >> foo &&
 	but add foo &&
-	GIT_EDITOR="$TEST_DIRECTORY"/t7500/add-content but cummit --template "$TEMPLATE" \
+	BUT_EDITOR="$TEST_DIRECTORY"/t7500/add-content but cummit --template "$TEMPLATE" \
 		-m "command line msg" &&
 	cummit_msg_is "command line msg"
 '
@@ -132,18 +132,18 @@ EOF
 test_expect_success 'cummit message from template with whitespace issue' '
 	echo "content galore" >>foo &&
 	but add foo &&
-	GIT_EDITOR=\""$TEST_DIRECTORY"\"/t7500/add-whitespaced-content \
+	BUT_EDITOR=\""$TEST_DIRECTORY"\"/t7500/add-whitespaced-content \
 	but cummit --template "$TEMPLATE" &&
 	cummit_msg_is "cummit message"
 '
 
-test_expect_success 'using alternate GIT_INDEX_FILE (1)' '
+test_expect_success 'using alternate BUT_INDEX_FILE (1)' '
 
 	cp .but/index saved-index &&
 	(
 		echo some new content >file &&
-	        GIT_INDEX_FILE=.but/another_index &&
-		export GIT_INDEX_FILE &&
+	        BUT_INDEX_FILE=.but/another_index &&
+		export BUT_INDEX_FILE &&
 		but add file &&
 		but cummit -m "cummit using another index" &&
 		but diff-index --exit-code HEAD &&
@@ -153,13 +153,13 @@ test_expect_success 'using alternate GIT_INDEX_FILE (1)' '
 
 '
 
-test_expect_success 'using alternate GIT_INDEX_FILE (2)' '
+test_expect_success 'using alternate BUT_INDEX_FILE (2)' '
 
 	cp .but/index saved-index &&
 	(
 		rm -f .but/no-such-index &&
-		GIT_INDEX_FILE=.but/no-such-index &&
-		export GIT_INDEX_FILE &&
+		BUT_INDEX_FILE=.but/no-such-index &&
+		export BUT_INDEX_FILE &&
 		but cummit -m "cummit using nonexistent index" &&
 		test -z "$(but ls-files)" &&
 		test -z "$(but ls-tree HEAD)"
@@ -522,7 +522,7 @@ test_expect_success 'new line found before status message in cummit template' '
 	but reset --hard HEAD &&
 	touch cummit-template-check &&
 	but add cummit-template-check &&
-	GIT_EDITOR="cat >editor-input" but cummit --untracked-files=no --allow-empty-message &&
+	BUT_EDITOR="cat >editor-input" but cummit --untracked-files=no --allow-empty-message &&
 	test_cmp expected-template editor-input
 '
 

@@ -67,8 +67,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * "but bugreport" learns to report what shell is in use.
 
- * Support for GIT_CURL_VERBOSE has been rewritten in terms of
-   GIT_TRACE_CURL.
+ * Support for BUT_CURL_VERBOSE has been rewritten in terms of
+   BUT_TRACE_CURL.
 
  * Preliminary clean-ups around refs API, plus file format
    specification documentation for the reftable backend.

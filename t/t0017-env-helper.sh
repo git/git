@@ -92,8 +92,8 @@ test_expect_success 'env--helper reads config thanks to trace2' '
 	grep "exceeded maximum include depth" err &&
 
 	test_must_fail \
-		env HOME="$(pwd)/home" GIT_TEST_ENV_HELPER=true \
-		but -C cycle env--helper --type=bool --default=0 --exit-code GIT_TEST_ENV_HELPER 2>err &&
+		env HOME="$(pwd)/home" BUT_TEST_ENV_HELPER=true \
+		but -C cycle env--helper --type=bool --default=0 --exit-code BUT_TEST_ENV_HELPER 2>err &&
 	grep "exceeded maximum include depth" err
 '
 

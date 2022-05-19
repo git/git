@@ -19,12 +19,12 @@ notes.displayRef::
 	exist, but a glob that does not match any refs is silently
 	ignored.
 +
-This setting can be overridden with the `GIT_NOTES_DISPLAY_REF`
+This setting can be overridden with the `BUT_NOTES_DISPLAY_REF`
 environment variable, which must be a colon separated list of refs or
 globs.
 +
 The effective value of "core.notesRef" (possibly overridden by
-GIT_NOTES_REF) is also implicitly added to the list of refs to be
+BUT_NOTES_REF) is also implicitly added to the list of refs to be
 displayed.
 
 notes.rewrite.<command>::
@@ -41,7 +41,7 @@ notes.rewriteMode::
 	`overwrite`, `concatenate`, `cat_sort_uniq`, or `ignore`.
 	Defaults to `concatenate`.
 +
-This setting can be overridden with the `GIT_NOTES_REWRITE_MODE`
+This setting can be overridden with the `BUT_NOTES_REWRITE_MODE`
 environment variable.
 
 notes.rewriteRef::
@@ -54,6 +54,6 @@ Does not have a default value; you must configure this variable to
 enable note rewriting.  Set it to `refs/notes/cummits` to enable
 rewriting for the default cummit notes.
 +
-This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
+This setting can be overridden with the `BUT_NOTES_REWRITE_REF`
 environment variable, which must be a colon separated list of refs or
 globs.

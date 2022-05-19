@@ -8,13 +8,13 @@ test_description='but cherry should detect patches integrated upstream
 This test cherry-picks one local change of two into main branch, and
 checks that but cherry only returns the second patch in the local branch
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-GIT_AUTHOR_EMAIL=bogus_email_address
-export GIT_AUTHOR_EMAIL
+BUT_AUTHOR_EMAIL=bogus_email_address
+export BUT_AUTHOR_EMAIL
 
 test_expect_success \
     'prepare repository with topic branch, and check cherry finds the 2 patches from there' \

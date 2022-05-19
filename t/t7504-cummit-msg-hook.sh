@@ -2,8 +2,8 @@
 
 test_description='cummit-msg hook'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -33,7 +33,7 @@ test_expect_success 'with no hook (editor)' '
 	echo "more foo" >> file &&
 	but add file &&
 	echo "more foo" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
 
 '
 
@@ -50,7 +50,7 @@ test_expect_success '--no-verify with no hook (editor)' '
 	echo "more bar" > file &&
 	but add file &&
 	echo "more bar" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -73,7 +73,7 @@ test_expect_success 'with succeeding hook (editor)' '
 	echo "more more" >> file &&
 	but add file &&
 	echo "more more" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit
 
 '
 
@@ -90,7 +90,7 @@ test_expect_success '--no-verify with succeeding hook (editor)' '
 	echo "even more more" >> file &&
 	but add file &&
 	echo "even more more" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -117,7 +117,7 @@ test_expect_success 'with failing hook (editor)' '
 	echo "more another" >> file &&
 	but add file &&
 	echo "more another" > FAKE_MSG &&
-	! (GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit)
+	! (BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit)
 
 '
 
@@ -142,7 +142,7 @@ test_expect_success '--no-verify with failing hook (editor)' '
 	echo "more stuff" >> file &&
 	but add file &&
 	echo "more stuff" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -191,7 +191,7 @@ test_expect_success POSIXPERM 'with non-executable hook (editor)' '
 	echo "content again" >> file &&
 	but add file &&
 	echo "content again" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -m "content again"
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit -m "content again"
 
 '
 
@@ -208,7 +208,7 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook (editor)' '
 	echo "even more content" >> file &&
 	but add file &&
 	echo "even more content" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify
 
 '
 
@@ -233,7 +233,7 @@ test_expect_success 'hook edits cummit message (editor)' '
 	echo "additional content" >> file &&
 	but add file &&
 	echo "additional content" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit &&
 	cummit_msg_is "new message"
 
 '
@@ -252,7 +252,7 @@ test_expect_success "hook doesn't edit cummit message (editor)" '
 	echo "more plus" >> file &&
 	but add file &&
 	echo "more plus" > FAKE_MSG &&
-	GIT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify &&
+	BUT_EDITOR="\"\$FAKE_EDITOR\"" but cummit --no-verify &&
 	cummit_msg_is "more plus"
 '
 
@@ -299,7 +299,7 @@ export REWORD_EDITOR
 
 test_expect_success 'hook is called for reword during `rebase -i`' '
 
-	GIT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" but rebase -i HEAD^ &&
+	BUT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" but rebase -i HEAD^ &&
 	cummit_msg_is "new message"
 
 '

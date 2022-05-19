@@ -4,7 +4,7 @@ Git v1.7.0.2 Release Notes
 Fixes since v1.7.0.1
 --------------------
 
- * GIT_PAGER was not honored consistently by some scripted Porcelains, most
+ * BUT_PAGER was not honored consistently by some scripted Porcelains, most
    notably "but am".
 
  * updating working tree files after telling but to add them to the

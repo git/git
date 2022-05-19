@@ -41,9 +41,9 @@ Initial Client Request
 
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
-used which inevitably sets `GIT_PROTOCOL`.  More information can be
+used which inevitably sets `BUT_PROTOCOL`.  More information can be
 found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
-`GIT_PROTOCOL` definition in `but.txt`. In all cases the
+`BUT_PROTOCOL` definition in `but.txt`. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
@@ -57,7 +57,7 @@ sending "version=2" as an extra parameter:
 SSH and File Transport
 ~~~~~~~~~~~~~~~~~~~~~~
 
-When using either the ssh:// or file:// transport, the GIT_PROTOCOL
+When using either the ssh:// or file:// transport, the BUT_PROTOCOL
 environment variable must be set explicitly to include "version=2".
 The server may need to be configured to allow this environment variable
 to pass.
@@ -69,7 +69,7 @@ When using the http:// or https:// transport a client makes a "smart"
 info/refs request as described in `http-protocol.txt` and requests that
 v2 be used by supplying "version=2" in the `Git-Protocol` header.
 
-   C: GET $GIT_URL/info/refs?service=but-upload-pack HTTP/1.0
+   C: GET $BUT_URL/info/refs?service=but-upload-pack HTTP/1.0
    C: Git-Protocol: version=2
 
 A v2 server would reply:
@@ -82,13 +82,13 @@ A v2 server would reply:
    S: <capability-advertisement>
 
 Subsequent requests are then made directly to the service
-`$GIT_URL/but-upload-pack`. (This works the same for but-receive-pack).
+`$BUT_URL/but-upload-pack`. (This works the same for but-receive-pack).
 
 Uses the `--http-backend-info-refs` option to
 linkbut:but-upload-pack[1].
 
 The server may need to be configured to pass this header's contents via
-the `GIT_PROTOCOL` variable. See the discussion in `but-http-backend.txt`.
+the `BUT_PROTOCOL` variable. See the discussion in `but-http-backend.txt`.
 
 Capability Advertisement
 ------------------------
@@ -109,8 +109,8 @@ to be executed by the client.
     capability-list = *capability
     capability = PKT-LINE(key[=value] LF)
 
-    key = 1*(ALPHA | DIGIT | "-_")
-    value = 1*(ALPHA | DIGIT | " -_.,?\/{}[]()<>!@#$%^&*+=:;")
+    key = 1*(ALPHA | DIBUT | "-_")
+    value = 1*(ALPHA | DIBUT | " -_.,?\/{}[]()<>!@#$%^&*+=:;")
 
 Command Request
 ---------------
@@ -393,7 +393,7 @@ header. Most sections are sent only when the packfile is sent.
     wanted-ref = obj-id SP refname
 
     packfile-uris = PKT-LINE("packfile-uris" LF) *packfile-uri
-    packfile-uri = PKT-LINE(40*(HEXDIGIT) SP *%x20-ff LF)
+    packfile-uri = PKT-LINE(40*(HEXDIBUT) SP *%x20-ff LF)
 
     packfile = PKT-LINE("packfile" LF)
 	       *PKT-LINE(%x01-03 *%x00-ff)

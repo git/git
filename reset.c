@@ -31,7 +31,7 @@ static int update_refs(const struct reset_head_opts *opts,
 	if ((update_orig_head && !reflog_orig_head) || !reflog_head) {
 		if (!default_reflog_action)
 			BUG("default_reflog_action must be given when reflog messages are omitted");
-		reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
+		reflog_action = getenv(BUT_REFLOG_ACTION_ENVIRONMENT);
 		strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action :
 							  default_reflog_action);
 	}

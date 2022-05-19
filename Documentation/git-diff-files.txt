@@ -47,6 +47,6 @@ omit diff output for unmerged entries and just show "Unmerged".
 
 include::diff-format.txt[]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

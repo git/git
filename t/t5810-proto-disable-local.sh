@@ -18,7 +18,7 @@ test_expect_success 'setup repo with dash' '
 '
 
 # This will fail even without our rejection because upload-pack will
-# complain about the bogus option. So let's make sure that GIT_TRACE
+# complain about the bogus option. So let's make sure that BUT_TRACE
 # doesn't show us even running upload-pack.
 #
 # We must also be sure to use "fetch" and not "clone" here, as the latter
@@ -26,7 +26,7 @@ test_expect_success 'setup repo with dash' '
 # to allow).
 test_expect_success 'repo names starting with dash are rejected' '
 	rm -f trace.out &&
-	test_must_fail env GIT_TRACE="$PWD/trace.out" but fetch -- -repo.but &&
+	test_must_fail env BUT_TRACE="$PWD/trace.out" but fetch -- -repo.but &&
 	! grep upload-pack trace.out
 '
 

@@ -1,5 +1,5 @@
 # Shell library to run but-daemon in tests.  Ends the test early if
-# GIT_TEST_GIT_DAEMON is not set.
+# BUT_TEST_BUT_DAEMON is not set.
 #
 # Usage:
 #
@@ -15,33 +15,33 @@
 #
 #	test_done
 
-if ! test_bool_env GIT_TEST_GIT_DAEMON true
+if ! test_bool_env BUT_TEST_BUT_DAEMON true
 then
-	skip_all="but-daemon testing disabled (unset GIT_TEST_GIT_DAEMON to enable)"
+	skip_all="but-daemon testing disabled (unset BUT_TEST_BUT_DAEMON to enable)"
 	test_done
 fi
 
 if test_have_prereq !PIPE
 then
-	test_skip_or_die GIT_TEST_GIT_DAEMON "file system does not support FIFOs"
+	test_skip_or_die BUT_TEST_BUT_DAEMON "file system does not support FIFOs"
 fi
 
-test_set_port LIB_GIT_DAEMON_PORT
+test_set_port LIB_BUT_DAEMON_PORT
 
-GIT_DAEMON_PID=
-GIT_DAEMON_PIDFILE="$PWD"/daemon.pid
-GIT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
-GIT_DAEMON_HOST_PORT=127.0.0.1:$LIB_GIT_DAEMON_PORT
-GIT_DAEMON_URL=but://$GIT_DAEMON_HOST_PORT
+BUT_DAEMON_PID=
+BUT_DAEMON_PIDFILE="$PWD"/daemon.pid
+BUT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
+BUT_DAEMON_HOST_PORT=127.0.0.1:$LIB_BUT_DAEMON_PORT
+BUT_DAEMON_URL=but://$BUT_DAEMON_HOST_PORT
 
 registered_stop_but_daemon_atexit_handler=
 start_but_daemon() {
-	if test -n "$GIT_DAEMON_PID"
+	if test -n "$BUT_DAEMON_PID"
 	then
 		error "start_but_daemon already called"
 	fi
 
-	mkdir -p "$GIT_DAEMON_DOCUMENT_ROOT_PATH"
+	mkdir -p "$BUT_DAEMON_DOCUMENT_ROOT_PATH"
 
 	# One of the test scripts stops and then re-starts 'but daemon'.
 	# Don't register and then run the same atexit handlers several times.
@@ -53,13 +53,13 @@ start_but_daemon() {
 
 	say >&3 "Starting but daemon ..."
 	mkfifo but_daemon_output
-	${LIB_GIT_DAEMON_COMMAND:-but daemon} \
-		--listen=127.0.0.1 --port="$LIB_GIT_DAEMON_PORT" \
-		--reuseaddr --verbose --pid-file="$GIT_DAEMON_PIDFILE" \
-		--base-path="$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
-		"$@" "$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
+	${LIB_BUT_DAEMON_COMMAND:-but daemon} \
+		--listen=127.0.0.1 --port="$LIB_BUT_DAEMON_PORT" \
+		--reuseaddr --verbose --pid-file="$BUT_DAEMON_PIDFILE" \
+		--base-path="$BUT_DAEMON_DOCUMENT_ROOT_PATH" \
+		"$@" "$BUT_DAEMON_DOCUMENT_ROOT_PATH" \
 		>&3 2>but_daemon_output &
-	GIT_DAEMON_PID=$!
+	BUT_DAEMON_PID=$!
 	{
 		read -r line <&7
 		printf "%s\n" "$line" >&4
@@ -69,32 +69,32 @@ start_but_daemon() {
 	# Check expected output
 	if test x"$(expr "$line" : "\[[0-9]*\] \(.*\)")" != x"Ready to rumble"
 	then
-		kill "$GIT_DAEMON_PID"
-		wait "$GIT_DAEMON_PID"
-		unset GIT_DAEMON_PID
-		test_skip_or_die GIT_TEST_GIT_DAEMON \
+		kill "$BUT_DAEMON_PID"
+		wait "$BUT_DAEMON_PID"
+		unset BUT_DAEMON_PID
+		test_skip_or_die BUT_TEST_BUT_DAEMON \
 			"but daemon failed to start"
 	fi
 }
 
 stop_but_daemon() {
-	if test -z "$GIT_DAEMON_PID"
+	if test -z "$BUT_DAEMON_PID"
 	then
 		return
 	fi
 
 	# kill but-daemon child of but
 	say >&3 "Stopping but daemon ..."
-	kill "$GIT_DAEMON_PID"
-	wait "$GIT_DAEMON_PID" >&3 2>&4
+	kill "$BUT_DAEMON_PID"
+	wait "$BUT_DAEMON_PID" >&3 2>&4
 	ret=$?
 	if ! test_match_signal 15 $ret
 	then
 		error "but daemon exited with status: $ret"
 	fi
-	kill "$(cat "$GIT_DAEMON_PIDFILE")" 2>/dev/null
-	GIT_DAEMON_PID=
-	rm -f but_daemon_output "$GIT_DAEMON_PIDFILE"
+	kill "$(cat "$BUT_DAEMON_PIDFILE")" 2>/dev/null
+	BUT_DAEMON_PID=
+	rm -f but_daemon_output "$BUT_DAEMON_PIDFILE"
 }
 
 # A stripped-down version of a netcat client, that connects to a "host:port"

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='signed tag tests'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
@@ -46,7 +46,7 @@ test_expect_success GPG 'create signed tags' '
 
 test_expect_success GPGSM 'create signed tags x509 ' '
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_CUMMITTER_EMAIL &&
+	test_config user.signingkey $BUT_CUMMITTER_EMAIL &&
 	echo 9 >file && test_tick && but cummit -a -m "ninth gpgsm-signed" &&
 	but tag -s -m ninth ninth-signed-x509
 '

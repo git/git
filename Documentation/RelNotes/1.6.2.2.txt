@@ -1,4 +1,4 @@
-GIT v1.6.2.2 Release Notes
+BUT v1.6.2.2 Release Notes
 ==========================
 
 Fixes since v1.6.2.1
@@ -23,7 +23,7 @@ Fixes since v1.6.2.1
   incompatible options; it now simply ignores --numbered-files as no files
   are produced anyway.
 
-* "but-ls-files --deleted" did not work well with GIT_DIR&GIT_WORK_TREE.
+* "but-ls-files --deleted" did not work well with BUT_DIR&BUT_WORK_TREE.
 
 * "but-read-tree A B C..." without -m option has been broken for a long
   time.

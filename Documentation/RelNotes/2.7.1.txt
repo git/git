@@ -5,9 +5,9 @@ Fixes since v2.7
 ----------------
 
  * An earlier change in 2.5.x-era broke users' hooks and aliases by
-   exporting GIT_WORK_TREE to point at the root of the working tree,
+   exporting BUT_WORK_TREE to point at the root of the working tree,
    interfering when they tried to use a different working tree without
-   setting GIT_WORK_TREE environment themselves.
+   setting BUT_WORK_TREE environment themselves.
 
  * The "exclude_list" structure has the usual "alloc, nr" pair of
    fields to be used by ALLOC_GROW(), but clear_pattern_list() forgot
@@ -30,7 +30,7 @@ Fixes since v2.7
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
 
- * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+ * Some codepaths used fopen(3) when opening a fixed path in $BUT_DIR
    (e.g. CUMMIT_EDITMSG) that is meant to be left after the command is
    done.  This however did not work well if the repository is set to
    be shared with core.sharedRepository and the umask of the previous

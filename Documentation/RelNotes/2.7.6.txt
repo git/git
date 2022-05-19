@@ -10,9 +10,9 @@ Fixes since v2.7.5
    prevented by forbidding such a hostname (which will not be
    necessary in the real world).
 
- * Similarly, when GIT_PROXY_COMMAND is configured, the command is
+ * Similarly, when BUT_PROXY_COMMAND is configured, the command is
    run with host and port that are parsed out from "ssh://..." URL;
-   a poorly written GIT_PROXY_COMMAND could be tricked into treating
+   a poorly written BUT_PROXY_COMMAND could be tricked into treating
    a string that begins with a dash "-".  This is now prevented by
    forbidding such a hostname and port number (again, which will not
    be necessary in the real world).

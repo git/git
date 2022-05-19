@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='various tests of reflog walk (log -g) behavior'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -124,7 +124,7 @@ test_expect_success 'min/max age uses entry date to limit' '
 test_expect_success REFFILES 'walk prefers reflog to ref tip' '
 	head=$(but rev-parse HEAD) &&
 	one=$(but rev-parse one) &&
-	ident="$GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL> $GIT_CUMMITTER_DATE" &&
+	ident="$BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL> $BUT_CUMMITTER_DATE" &&
 	echo "$head $one $ident	broken reflog entry" >>.but/logs/HEAD &&
 
 	echo $one >expect &&

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_description='basic tests for fast-export --anonymize'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -61,10 +61,10 @@ test_expect_success 'stream omits other refnames' '
 '
 
 test_expect_success 'stream omits identities' '
-	! grep "$GIT_CUMMITTER_NAME" stream &&
-	! grep "$GIT_CUMMITTER_EMAIL" stream &&
-	! grep "$GIT_AUTHOR_NAME" stream &&
-	! grep "$GIT_AUTHOR_EMAIL" stream
+	! grep "$BUT_CUMMITTER_NAME" stream &&
+	! grep "$BUT_CUMMITTER_EMAIL" stream &&
+	! grep "$BUT_AUTHOR_NAME" stream &&
+	! grep "$BUT_AUTHOR_EMAIL" stream
 '
 
 test_expect_success 'stream omits tag message' '

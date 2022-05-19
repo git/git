@@ -99,7 +99,7 @@ proc tools_exec {fullname} {
 		}
 	}
 
-	set env(GIT_GUITOOL) $fullname
+	set env(BUT_GUITOOL) $fullname
 	set env(FILENAME) $current_diff_path
 	set env(FILENAMES) [join [array names selected_paths] \n]
 	if {$is_detached} {
@@ -121,7 +121,7 @@ proc tools_exec {fullname} {
 				 [list tools_complete $fullname $w]
 	}
 
-	unset env(GIT_GUITOOL)
+	unset env(BUT_GUITOOL)
 	unset env(FILENAME)
 	unset env(FILENAMES)
 	unset env(CUR_BRANCH)

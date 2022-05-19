@@ -1546,7 +1546,7 @@ static int find_first_merges(struct repository *repo,
 	struct cummit *cummit;
 	int contains_another;
 
-	char merged_revision[GIT_MAX_HEXSZ + 2];
+	char merged_revision[BUT_MAX_HEXSZ + 2];
 	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
 				   "--all", merged_revision, NULL };
 	struct rev_info revs;
@@ -1737,21 +1737,21 @@ static void initialize_attr_index(struct merge_options *opt)
 	if (!opt->renormalize)
 		return;
 
-	mi = strmap_get(&opt->priv->paths, GITATTRIBUTES_FILE);
+	mi = strmap_get(&opt->priv->paths, BUTATTRIBUTES_FILE);
 	if (!mi)
 		return;
 
 	if (mi->clean) {
-		int len = strlen(GITATTRIBUTES_FILE);
+		int len = strlen(BUTATTRIBUTES_FILE);
 		ce = make_empty_cache_entry(attr_index, len);
 		ce->ce_mode = create_ce_mode(mi->result.mode);
 		ce->ce_flags = create_ce_flags(0);
 		ce->ce_namelen = len;
 		oidcpy(&ce->oid, &mi->result.oid);
-		memcpy(ce->name, GITATTRIBUTES_FILE, len);
+		memcpy(ce->name, BUTATTRIBUTES_FILE, len);
 		add_index_entry(attr_index, ce,
 				ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
-		get_stream_filter(attr_index, GITATTRIBUTES_FILE, &ce->oid);
+		get_stream_filter(attr_index, BUTATTRIBUTES_FILE, &ce->oid);
 	} else {
 		int stage, len;
 		struct conflict_info *ci;
@@ -1762,16 +1762,16 @@ static void initialize_attr_index(struct merge_options *opt)
 
 			if (!(ci->filemask & stage_mask))
 				continue;
-			len = strlen(GITATTRIBUTES_FILE);
+			len = strlen(BUTATTRIBUTES_FILE);
 			ce = make_empty_cache_entry(attr_index, len);
 			ce->ce_mode = create_ce_mode(ci->stages[stage].mode);
 			ce->ce_flags = create_ce_flags(stage);
 			ce->ce_namelen = len;
 			oidcpy(&ce->oid, &ci->stages[stage].oid);
-			memcpy(ce->name, GITATTRIBUTES_FILE, len);
+			memcpy(ce->name, BUTATTRIBUTES_FILE, len);
 			add_index_entry(attr_index, ce,
 					ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
-			get_stream_filter(attr_index, GITATTRIBUTES_FILE,
+			get_stream_filter(attr_index, BUTATTRIBUTES_FILE,
 					  &ce->oid);
 		}
 	}
@@ -1947,7 +1947,7 @@ static int handle_content_merge(struct merge_options *opt,
 			return -1;
 		clean &= (merge_status == 0);
 		path_msg(opt, path, 1, _("Auto-merging %s"), path);
-	} else if (S_ISGITLINK(a->mode)) {
+	} else if (S_ISBUTLINK(a->mode)) {
 		int two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
 		clean = merge_submodule(opt, pathnames[0],
 					two_way ? null_oid() : &o->oid,
@@ -3866,7 +3866,7 @@ static void process_entry(struct merge_options *opt,
 			const char *reason = _("content");
 			if (ci->filemask == 6)
 				reason = _("add/add");
-			if (S_ISGITLINK(merged_file.mode))
+			if (S_ISBUTLINK(merged_file.mode))
 				reason = _("submodule");
 			path_msg(opt, path, 0,
 				 _("CONFLICT (%s): Merge conflict in %s"),
@@ -4340,7 +4340,7 @@ void merge_finalize(struct merge_options *opt,
 	struct merge_options_internal *opti = result->priv;
 
 	if (opt->renormalize)
-		but_attr_set_direction(GIT_ATTR_CHECKIN);
+		but_attr_set_direction(BUT_ATTR_CHECKIN);
 	assert(opt->priv == NULL);
 
 	clear_or_reinit_internal_opts(opti, 0);
@@ -4443,7 +4443,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 
 	/* Handle attr direction stuff for renormalization */
 	if (opt->renormalize)
-		but_attr_set_direction(GIT_ATTR_CHECKOUT);
+		but_attr_set_direction(BUT_ATTR_CHECKOUT);
 
 	/* Initialization of opt->priv, our internal merge data */
 	trace2_region_enter("merge", "allocate/init", opt->repo);

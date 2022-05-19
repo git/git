@@ -5,8 +5,8 @@
 
 test_description='Test of the various options to but rm.'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -588,7 +588,7 @@ test_expect_success 'rm of a conflicted populated submodule with a .but director
 		cd submod &&
 		rm .but &&
 		cp -R ../.but/modules/sub .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	) &&
 	test_must_fail but merge conflict2 &&
 	test_must_fail but rm submod &&
@@ -623,7 +623,7 @@ test_expect_success 'rm of a populated submodule with a .but directory migrates 
 		cd submod &&
 		rm .but &&
 		cp -R ../.but/modules/sub .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree &&
+		BUT_WORK_TREE=. but config --unset core.worktree &&
 		rm -r ../.but/modules/sub
 	) &&
 	but rm submod 2>output.err &&
@@ -714,7 +714,7 @@ test_expect_success "rm absorbs submodule's nested .but directory" '
 		cd submod/subsubmod &&
 		rm .but &&
 		mv ../../.but/modules/sub/modules/sub .but &&
-		GIT_WORK_TREE=. but config --unset core.worktree
+		BUT_WORK_TREE=. but config --unset core.worktree
 	) &&
 	but rm submod 2>output.err &&
 	test_path_is_missing submod &&

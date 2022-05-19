@@ -645,11 +645,11 @@ static void config_from_butmodules(config_fn_t fn, struct repository *repo, void
 		char *file;
 		char *oidstr = NULL;
 
-		file = repo_worktree_path(repo, GITMODULES_FILE);
+		file = repo_worktree_path(repo, BUTMODULES_FILE);
 		if (file_exists(file)) {
 			config_source.file = file;
-		} else if (repo_get_oid(repo, GITMODULES_INDEX, &oid) >= 0 ||
-			   repo_get_oid(repo, GITMODULES_HEAD, &oid) >= 0) {
+		} else if (repo_get_oid(repo, BUTMODULES_INDEX, &oid) >= 0 ||
+			   repo_get_oid(repo, BUTMODULES_HEAD, &oid) >= 0) {
 			config_source.repo = repo;
 			config_source.blob = oidstr = xstrdup(oid_to_hex(&oid));
 			if (repo != the_repository)
@@ -754,7 +754,7 @@ static void traverse_tree_submodules(struct repository *r,
 		else
 			tree_path = xstrdup(name_entry->path);
 
-		if (S_ISGITLINK(name_entry->mode) &&
+		if (S_ISBUTLINK(name_entry->mode) &&
 		    is_tree_submodule_active(r, root_tree, tree_path)) {
 			st_entry = xmalloc(sizeof(*st_entry));
 			st_entry->name_entry = xmalloc(sizeof(*st_entry->name_entry));
@@ -822,7 +822,7 @@ int config_set_in_butmodules_file_gently(const char *key, const char *value)
 {
 	int ret;
 
-	ret = but_config_set_in_file_gently(GITMODULES_FILE, key, value);
+	ret = but_config_set_in_file_gently(BUTMODULES_FILE, key, value);
 	if (ret < 0)
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .butmodules entry %s"), key);

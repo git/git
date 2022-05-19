@@ -5,8 +5,8 @@
 
 test_description='fmt-merge-msg test'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
@@ -39,18 +39,18 @@ test_expect_success setup '
 
 	echo "l3" >two &&
 	test_tick &&
-	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #3" &&
+	BUT_CUMMITTER_NAME="Another cummitter" \
+	BUT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #3" &&
 
 	echo "l4" >two &&
 	test_tick &&
-	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #4" &&
+	BUT_CUMMITTER_NAME="Another cummitter" \
+	BUT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #4" &&
 
 	echo "l5" >two &&
 	test_tick &&
-	GIT_CUMMITTER_NAME="Another cummitter" \
-	GIT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #5" &&
+	BUT_CUMMITTER_NAME="Another cummitter" \
+	BUT_AUTHOR_NAME="Another Author" but cummit -a -m "Left #5" &&
 	but tag tag-l5 &&
 
 	but checkout right &&

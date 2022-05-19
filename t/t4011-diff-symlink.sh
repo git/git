@@ -50,7 +50,7 @@ test_expect_success 'diff new symlink and file' '
 	test_ln_s_add xyzzy frotz &&
 	echo xyzzy >nitfol &&
 	but update-index --add nitfol &&
-	GIT_DIFF_OPTS=--unified=0 but diff-index -M -p $tree >current &&
+	BUT_DIFF_OPTS=--unified=0 but diff-index -M -p $tree >current &&
 	compare_diff_patch expected current
 '
 

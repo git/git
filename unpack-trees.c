@@ -327,7 +327,7 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 static void load_butmodules_file(struct index_state *index,
 				 struct checkout *state)
 {
-	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	int pos = index_name_pos(index, BUTMODULES_FILE, strlen(BUTMODULES_FILE));
 
 	if (pos >= 0) {
 		struct cache_entry *ce = index->cache[pos];
@@ -433,7 +433,7 @@ static int check_updates(struct unpack_trees_options *o,
 	/* Start with clean cache to avoid using any possibly outdated info. */
 	invalidate_lstat_cache();
 
-	but_attr_set_direction(GIT_ATTR_CHECKOUT);
+	but_attr_set_direction(BUT_ATTR_CHECKOUT);
 
 	if (should_update_submodules())
 		load_butmodules_file(index, NULL);
@@ -486,7 +486,7 @@ static int check_updates(struct unpack_trees_options *o,
 					      progress, &cnt);
 	stop_progress(&progress);
 	errs |= finish_delayed_checkout(&state, NULL, o->verbose_update);
-	but_attr_set_direction(GIT_ATTR_CHECKIN);
+	but_attr_set_direction(BUT_ATTR_CHECKIN);
 
 	if (o->clone)
 		report_collided_checkout(index);
@@ -1680,7 +1680,7 @@ static int clear_ce_flags(struct index_state *istate,
 }
 
 /*
- * Set/Clear CE_NEW_SKIP_WORKTREE according to $GIT_DIR/info/sparse-checkout
+ * Set/Clear CE_NEW_SKIP_WORKTREE according to $BUT_DIR/info/sparse-checkout
  */
 static void mark_new_skip_worktree(struct pattern_list *pl,
 				   struct index_state *istate,
@@ -1947,7 +1947,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->dst_index) {
 		move_index_extensions(&o->result, o->src_index);
 		if (!ret) {
-			if (but_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
+			if (but_env_bool("BUT_TEST_CHECK_CACHE_TREE", 0))
 				cache_tree_verify(the_repository, &o->result);
 			if (!cache_tree_fully_valid(o->result.cache_tree))
 				cache_tree_update(&o->result,
@@ -2115,7 +2115,7 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 		 * of sync wrt the superproject index. If the submodule was
 		 * not considered interesting above, we don't care here.
 		 */
-		if (S_ISGITLINK(ce->ce_mode))
+		if (S_ISBUTLINK(ce->ce_mode))
 			return 0;
 
 		errno = 0;
@@ -2189,7 +2189,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	char *pathbuf;
 	int cnt = 0;
 
-	if (S_ISGITLINK(ce->ce_mode)) {
+	if (S_ISBUTLINK(ce->ce_mode)) {
 		struct object_id oid;
 		int sub_head = resolve_butlink_ref(ce->name, "HEAD", &oid);
 		/*
@@ -2897,7 +2897,7 @@ int oneway_merge(const struct cache_entry * const *src,
 			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE))
 				update |= CE_UPDATE;
 		}
-		if (o->update && S_ISGITLINK(old->ce_mode) &&
+		if (o->update && S_ISBUTLINK(old->ce_mode) &&
 		    should_update_submodules() && !verify_uptodate(old, o))
 			update |= CE_UPDATE;
 		add_entry(o, old, update, CE_STAGEMASK);

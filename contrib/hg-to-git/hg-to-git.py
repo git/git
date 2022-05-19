@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" hg-to-but.py - A Mercurial to GIT converter
+""" hg-to-but.py - A Mercurial to BUT converter
 
     Copyright (C)2007 Stelian Pop <stelian@popies.net>
 
@@ -62,18 +62,18 @@ def getbutenv(user, date):
     env = ''
     elems = re.compile('(.*?)\s+<(.*)>').match(user)
     if elems:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_CUMMITTER_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
-        env += 'export GIT_CUMMITTER_EMAIL="%s" ;' % elems.group(2)
+        env += 'export BUT_AUTHOR_NAME="%s" ;' % elems.group(1)
+        env += 'export BUT_CUMMITTER_NAME="%s" ;' % elems.group(1)
+        env += 'export BUT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
+        env += 'export BUT_CUMMITTER_EMAIL="%s" ;' % elems.group(2)
     else:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % user
-        env += 'export GIT_CUMMITTER_NAME="%s" ;' % user
-        env += 'export GIT_AUTHOR_EMAIL= ;'
-        env += 'export GIT_CUMMITTER_EMAIL= ;'
+        env += 'export BUT_AUTHOR_NAME="%s" ;' % user
+        env += 'export BUT_CUMMITTER_NAME="%s" ;' % user
+        env += 'export BUT_AUTHOR_EMAIL= ;'
+        env += 'export BUT_CUMMITTER_EMAIL= ;'
 
-    env += 'export GIT_AUTHOR_DATE="%s" ;' % date
-    env += 'export GIT_CUMMITTER_DATE="%s" ;' % date
+    env += 'export BUT_AUTHOR_DATE="%s" ;' % date
+    env += 'export BUT_CUMMITTER_DATE="%s" ;' % date
     return env
 
 #------------------------------------------------------------------------------

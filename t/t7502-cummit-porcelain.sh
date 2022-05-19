@@ -2,8 +2,8 @@
 
 test_description='but cummit porcelain-ish'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export BUT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -158,7 +158,7 @@ test_expect_success 'sign off' '
 	but cummit -s -m "thank you" &&
 	but cat-file commit HEAD >cummit.msg &&
 	sed -ne "s/Signed-off-by: //p" cummit.msg >actual &&
-	but var GIT_CUMMITTER_IDENT >ident &&
+	but var BUT_CUMMITTER_IDENT >ident &&
 	sed -e "s/>.*/>/" ident >expected &&
 	test_cmp expected actual
 
@@ -703,8 +703,8 @@ test_expect_success AUTOIDENT 'message shows cummitter when it is automatic' '
 
 	echo >>negative &&
 	(
-		sane_unset GIT_CUMMITTER_EMAIL &&
-		sane_unset GIT_CUMMITTER_NAME &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
+		sane_unset BUT_CUMMITTER_NAME &&
 		but cummit -e -m "sample" -a
 	) &&
 	# the ident is calculated from the system, so we cannot
@@ -722,10 +722,10 @@ test_expect_success !FAIL_PREREQS,!AUTOIDENT 'do not fire editor when cummitter 
 
 	echo >>negative &&
 	(
-		sane_unset GIT_CUMMITTER_EMAIL &&
-		sane_unset GIT_CUMMITTER_NAME &&
-		GIT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" &&
-		export GIT_EDITOR &&
+		sane_unset BUT_CUMMITTER_EMAIL &&
+		sane_unset BUT_CUMMITTER_NAME &&
+		BUT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" &&
+		export BUT_EDITOR &&
 		test_must_fail but cummit -e -m sample -a
 	) &&
 	test_must_be_empty .but/result
@@ -735,7 +735,7 @@ test_expect_success 'do not fire editor if -m <msg> was given' '
 	echo tick >file &&
 	but add file &&
 	echo "editor not started" >.but/result &&
-	(GIT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" but cummit -m tick) &&
+	(BUT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" but cummit -m tick) &&
 	test "$(cat .but/result)" = "editor not started"
 '
 
@@ -743,7 +743,7 @@ test_expect_success 'do not fire editor if -m "" was given' '
 	echo tock >file &&
 	but add file &&
 	echo "editor not started" >.but/result &&
-	(GIT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" \
+	(BUT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" \
 	 but cummit -m "" --allow-empty-message) &&
 	test "$(cat .but/result)" = "editor not started"
 '
@@ -767,8 +767,8 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	test_must_fail but cherry-pick -n main &&
 	echo "editor not started" >.but/result &&
 	(
-		GIT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" &&
-		export GIT_EDITOR &&
+		BUT_EDITOR="\"$(pwd)/.but/FAKE_EDITOR\"" &&
+		export BUT_EDITOR &&
 		test_must_fail but cummit
 	) &&
 	test "$(cat .but/result)" = "editor not started"
@@ -782,8 +782,8 @@ test_expect_success EXECKEEPSPID 'a SIGTERM should break locks' '
 	echo >>negative &&
 	! "$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >>.but/FAKE_EDITOR
-	  GIT_EDITOR=.but/FAKE_EDITOR
-	  export GIT_EDITOR
+	  BUT_EDITOR=.but/FAKE_EDITOR
+	  export BUT_EDITOR
 	  exec but cummit -a'\'' &&
 	test ! -f .but/index.lock
 '
@@ -818,7 +818,7 @@ test_expect_success 'cummit -s places sob on third line after two empty lines' '
 	cat <<-EOF >expect &&
 
 
-	Signed-off-by: $GIT_CUMMITTER_NAME <$GIT_CUMMITTER_EMAIL>
+	Signed-off-by: $BUT_CUMMITTER_NAME <$BUT_CUMMITTER_EMAIL>
 
 	EOF
 	sed -e "/^#/d" -e "s/^:.*//" .but/CUMMIT_EDITMSG >actual &&
@@ -838,7 +838,7 @@ echo '## Custom template' >template
 try_cummit () {
 	but reset --hard &&
 	echo >>negative &&
-	GIT_EDITOR=.but/FAKE_EDITOR but cummit -a $* $use_template &&
+	BUT_EDITOR=.but/FAKE_EDITOR but cummit -a $* $use_template &&
 	case "$use_template" in
 	'')
 		test_i18ngrep ! "^## Custom template" .but/CUMMIT_EDITMSG ;;
@@ -916,7 +916,7 @@ test_expect_success 'cummit --status with custom comment character' '
 
 test_expect_success 'switch core.commentchar' '
 	test_cummit "#foo" foo &&
-	GIT_EDITOR=.but/FAKE_EDITOR but -c core.commentChar=auto cummit --amend &&
+	BUT_EDITOR=.but/FAKE_EDITOR but -c core.commentChar=auto cummit --amend &&
 	test_i18ngrep "^; Changes to be cummitted:" .but/CUMMIT_EDITMSG
 '
 

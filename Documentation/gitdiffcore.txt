@@ -328,6 +328,6 @@ linkbut:but-log[1],
 linkbut:butglossary[7],
 link:user-manual.html[The Git User's Manual]
 
-GIT
+BUT
 ---
 Part of the linkbut:but[1] suite

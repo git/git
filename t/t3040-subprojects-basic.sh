@@ -21,7 +21,7 @@ test_expect_success 'setup: create subprojects' '
 	but update-index --add sub1 &&
 	but add sub2 &&
 	but cummit -q -m "subprojects added" &&
-	GIT_PRINT_SHA1_ELLIPSIS="yes" but diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
+	BUT_PRINT_SHA1_ELLIPSIS="yes" but diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
 	but branch save HEAD &&
 	cat >expected <<-\EOF &&
 	:000000 160000 00000... A	sub1

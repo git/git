@@ -1431,7 +1431,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	curl_easy_setopt(curl, CURLOPT_PORT, server.port);
 
 	if (server.auth_method) {
-#ifndef GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS
+#ifndef BUT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS
 		warning("No LOGIN_OPTIONS support in this cURL version");
 #else
 		struct strbuf auth = STRBUF_INIT;
@@ -1452,7 +1452,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-	if (0 < verbosity || getenv("GIT_CURL_VERBOSE"))
+	if (0 < verbosity || getenv("BUT_CURL_VERBOSE"))
 		http_trace_curl_no_data();
 	setup_curl_trace(curl);
 
