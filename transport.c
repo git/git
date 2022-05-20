@@ -1419,6 +1419,8 @@ int transport_push(struct repository *r,
 		fprintf(stderr, "Everything up-to-date\n");
 
 done:
+	free_refs(local_refs);
+	free_refs(remote_refs);
 	return ret;
 }
 
