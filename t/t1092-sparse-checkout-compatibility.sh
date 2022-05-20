@@ -1034,6 +1034,55 @@ test_expect_success 'cherry-pick with conflicts' '
 	test_all_match test_must_fail git cherry-pick to-cherry-pick
 '
 
+test_expect_success 'stash' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	# Stash a sparse directory (folder1)
+	test_all_match git checkout -b test-branch rename-base &&
+	test_all_match git reset --soft rename-out-to-out &&
+	test_all_match git stash &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Apply the sparse directory stash without reinstating the index
+	test_all_match git stash apply -q &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Reset to state where stash can be applied
+	test_sparse_match git sparse-checkout reapply &&
+	test_all_match git reset --hard rename-out-to-out &&
+
+	# Apply the sparse directory stash *with* reinstating the index
+	test_all_match git stash apply --index -q &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Reset to state where we will get a conflict applying the stash
+	test_sparse_match git sparse-checkout reapply &&
+	test_all_match git reset --hard update-folder1 &&
+
+	# Apply the sparse directory stash with conflicts
+	test_all_match test_must_fail git stash apply --index -q &&
+	test_all_match test_must_fail git stash apply -q &&
+	test_all_match git status --porcelain=v2 &&
+
+	# Reset to base branch
+	test_sparse_match git sparse-checkout reapply &&
+	test_all_match git reset --hard base &&
+
+	# Stash & unstash an untracked file outside of the sparse checkout
+	# definition.
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/new &&
+	test_all_match git stash -u &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git stash pop -q &&
+	test_all_match git status --porcelain=v2
+'
+
 test_expect_success 'checkout-index inside sparse definition' '
 	init_repos &&
 
@@ -1222,7 +1271,10 @@ test_expect_success 'index.sparse disabled inline uses full index' '
 
 ensure_not_expanded () {
 	rm -f trace2.txt &&
-	echo >>sparse-index/untracked.txt &&
+	if test -z "$WITHOUT_UNTRACKED_TXT"
+	then
+		echo >>sparse-index/untracked.txt
+	fi &&
 
 	if test "$1" = "!"
 	then
@@ -1324,6 +1376,30 @@ test_expect_success 'sparse-index is not expanded: merge conflict in cone' '
 		git -C sparse-index config pull.twohead ort &&
 		ensure_not_expanded ! merge -m merged expand-right
 	)
+'
+
+test_expect_success 'sparse-index is not expanded: stash' '
+	init_repos &&
+
+	echo >>sparse-index/a &&
+	ensure_not_expanded stash &&
+	ensure_not_expanded stash list &&
+	ensure_not_expanded stash show stash@{0} &&
+	ensure_not_expanded stash apply stash@{0} &&
+	ensure_not_expanded stash drop stash@{0} &&
+
+	echo >>sparse-index/deep/new &&
+	ensure_not_expanded stash -u &&
+	(
+		WITHOUT_UNTRACKED_TXT=1 &&
+		ensure_not_expanded stash pop
+	) &&
+
+	ensure_not_expanded stash create &&
+	oid=$(git -C sparse-index stash create) &&
+	ensure_not_expanded stash store -m "test" $oid &&
+	ensure_not_expanded reset --hard &&
+	ensure_not_expanded stash pop
 '
 
 test_expect_success 'sparse index is not expanded: diff' '

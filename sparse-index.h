@@ -3,6 +3,7 @@
 
 struct index_state;
 #define SPARSE_INDEX_MEMORY_ONLY (1 << 0)
+int is_sparse_index_allowed(struct index_state *istate, int flags);
 int convert_to_sparse(struct index_state *istate, int flags);
 void ensure_correct_sparsity(struct index_state *istate);
 void clear_skip_worktree_from_present_files(struct index_state *istate);

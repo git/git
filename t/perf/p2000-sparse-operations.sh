@@ -106,6 +106,8 @@ test_perf_on_all () {
 }
 
 test_perf_on_all git status
+test_perf_on_all 'git stash && git stash pop'
+test_perf_on_all 'echo >>new && git stash -u && git stash pop'
 test_perf_on_all git add -A
 test_perf_on_all git add .
 test_perf_on_all git commit -a -m A
