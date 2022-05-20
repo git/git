@@ -1276,29 +1276,30 @@ int transport_push(struct repository *r,
 		   struct refspec *rs, int flags,
 		   unsigned int *reject_reasons)
 {
-	struct ref *remote_refs;
-	struct ref *local_refs;
+	struct ref *remote_refs = NULL;
+	struct ref *local_refs = NULL;
 	int match_flags = MATCH_REFS_NONE;
 	int verbose = (transport->verbose > 0);
 	int quiet = (transport->verbose < 0);
 	int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 	int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
-	int push_ret, ret, err;
+	int push_ret, err;
+	int ret = -1;
 	struct transport_ls_refs_options transport_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 
 	*reject_reasons = 0;
 
 	if (transport_color_config() < 0)
-		return -1;
+		goto done;
 
 	if (!transport->vtable->push_refs)
-		return 1;
+		goto done;
 
 	local_refs = get_local_heads();
 
 	if (check_push_refs(local_refs, rs) < 0)
-		return -1;
+		goto done;
 
 	refspec_ref_prefixes(rs, &transport_options.ref_prefixes);
 
@@ -1319,7 +1320,7 @@ int transport_push(struct repository *r,
 		match_flags |= MATCH_REFS_FOLLOW_TAGS;
 
 	if (match_push_refs(local_refs, &remote_refs, rs, match_flags))
-		return -1;
+		goto done;
 
 	if (transport->smart_options &&
 	    transport->smart_options->cas &&
@@ -1333,7 +1334,7 @@ int transport_push(struct repository *r,
 
 	if (!(flags & TRANSPORT_PUSH_NO_HOOK))
 		if (run_pre_push_hook(transport, remote_refs))
-			return -1;
+			goto done;
 
 	if ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
 		      TRANSPORT_RECURSE_SUBMODULES_ONLY)) &&
@@ -1417,6 +1418,7 @@ int transport_push(struct repository *r,
 	else if (!quiet && !ret && !transport_refs_pushed(remote_refs))
 		fprintf(stderr, "Everything up-to-date\n");
 
+done:
 	return ret;
 }
 
