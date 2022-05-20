@@ -1,10 +1,10 @@
 #ifndef REACHEABLE_H
 #define REACHEABLE_H
 
-#include "object.h"
-
 struct progress;
 struct rev_info;
+struct object;
+struct packed_git;
 
 typedef void report_recent_object_fn(const struct object *, struct packed_git *,
 				     off_t, time_t);
