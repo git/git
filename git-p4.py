@@ -994,6 +994,35 @@ def gitConfigList(key):
             _gitConfig[key] = []
     return _gitConfig[key]
 
+def fullP4Ref(incomingRef, importIntoRemotes=True):
+    """Standardize a given provided p4 ref value to a full git ref:
+         refs/foo/bar/branch -> use it exactly
+         p4/branch -> prepend refs/remotes/ or refs/heads/
+         branch -> prepend refs/remotes/p4/ or refs/heads/p4/"""
+    if incomingRef.startswith("refs/"):
+        return incomingRef
+    if importIntoRemotes:
+        prepend = "refs/remotes/"
+    else:
+        prepend = "refs/heads/"
+    if not incomingRef.startswith("p4/"):
+        prepend += "p4/"
+    return prepend + incomingRef
+
+def shortP4Ref(incomingRef, importIntoRemotes=True):
+    """Standardize to a "short ref" if possible:
+         refs/foo/bar/branch -> ignore
+         refs/remotes/p4/branch or refs/heads/p4/branch -> shorten
+         p4/branch -> shorten"""
+    if importIntoRemotes:
+        longprefix = "refs/remotes/p4/"
+    else:
+        longprefix = "refs/heads/p4/"
+    if incomingRef.startswith(longprefix):
+        return incomingRef[len(longprefix):]
+    if incomingRef.startswith("p4/"):
+        return incomingRef[3:]
+    return incomingRef
 
 def p4BranchesInGit(branchesAreInRemotes=True):
     """Find all the branches whose names start with "p4/", looking
@@ -3920,9 +3949,13 @@ class P4Sync(Command, P4UserMap):
 
             # restrict to just this one, disabling detect-branches
             if branch_arg_given:
-                short = self.branch.split("/")[-1]
+                short = shortP4Ref(self.branch, self.importIntoRemotes)
                 if short in branches:
                     self.p4BranchesInGit = [short]
+                elif self.branch.startswith('refs/') and \
+                        branchExists(self.branch) and \
+                        '[git-p4:' in extractLogMessageFromGitCommit(self.branch):
+                    self.p4BranchesInGit = [self.branch]
             else:
                 self.p4BranchesInGit = branches.keys()
 
@@ -3939,7 +3972,8 @@ class P4Sync(Command, P4UserMap):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                logMsg = extractLogMessageFromGitCommit(self.refPrefix + branch)
+                logMsg = extractLogMessageFromGitCommit(fullP4Ref(branch,
+                                                        self.importIntoRemotes))
 
                 settings = extractSettingsGitLog(logMsg)
 
@@ -3971,18 +4005,7 @@ class P4Sync(Command, P4UserMap):
                 if not self.silent and not self.detectBranches:
                     print("Performing incremental import into %s git branch" % self.branch)
 
-        # accept multiple ref name abbreviations:
-        #    refs/foo/bar/branch -> use it exactly
-        #    p4/branch -> prepend refs/remotes/ or refs/heads/
-        #    branch -> prepend refs/remotes/p4/ or refs/heads/p4/
-        if not self.branch.startswith("refs/"):
-            if self.importIntoRemotes:
-                prepend = "refs/remotes/"
-            else:
-                prepend = "refs/heads/"
-            if not self.branch.startswith("p4/"):
-                prepend += "p4/"
-            self.branch = prepend + self.branch
+        self.branch = fullP4Ref(self.branch, self.importIntoRemotes)
 
         if len(args) == 0 and self.depotPaths:
             if not self.silent:
