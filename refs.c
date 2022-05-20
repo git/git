@@ -1109,8 +1109,10 @@ int ref_transaction_create(struct ref_transaction *transaction,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
-	if (!new_oid || is_null_oid(new_oid))
-		BUG("create called without valid new_oid");
+	if (!new_oid || is_null_oid(new_oid)) {
+		strbuf_addf(err, "'%s' has a null OID", refname);
+		return 1;
+	}
 	return ref_transaction_update(transaction, refname, new_oid,
 				      null_oid(), flags, msg, err);
 }
