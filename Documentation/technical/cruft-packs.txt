@@ -17,7 +17,7 @@ pruned according to normal expiry rules with the next 'git gc' invocation.
 
 Unreachable objects aren't removed immediately, since doing so could race with
 an incoming push which may reference an object which is about to be deleted.
-Instead, those unreachable objects are stored as loose object and stay that way
+Instead, those unreachable objects are stored as loose objects and stay that way
 until they are older than the expiration window, at which point they are removed
 by linkgit:git-prune[1].
 

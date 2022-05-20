@@ -18,12 +18,18 @@
 #include "pack-bitmap.h"
 #include "refs.h"
 
+#define ALL_INTO_ONE 1
+#define LOOSEN_UNREACHABLE 2
+#define PACK_CRUFT 4
+
+static int pack_everything;
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
 static int write_bitmaps = -1;
 static int use_delta_islands;
 static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
+static char *cruft_expiration;
 
 static const char *const git_repack_usage[] = {
 	N_("git repack [<options>]"),
@@ -305,9 +311,6 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 		die(_("could not finish pack-objects to repack promisor objects"));
 }
 
-#define ALL_INTO_ONE 1
-#define LOOSEN_UNREACHABLE 2
-
 struct pack_geometry {
 	struct packed_git **pack;
 	uint32_t pack_nr, pack_alloc;
@@ -343,6 +346,8 @@ static void init_pack_geometry(struct pack_geometry **geometry_p)
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (!pack_kept_objects && p->pack_keep)
+			continue;
+		if (p->is_cruft)
 			continue;
 
 		ALLOC_GROW(geometry->pack,
@@ -605,6 +610,67 @@ static int write_midx_included_packs(struct string_list *include,
 	return finish_command(&cmd);
 }
 
+static int write_cruft_pack(const struct pack_objects_args *args,
+			    const char *pack_prefix,
+			    struct string_list *names,
+			    struct string_list *existing_packs,
+			    struct string_list *existing_kept_packs)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	struct strbuf line = STRBUF_INIT;
+	struct string_list_item *item;
+	FILE *in, *out;
+	int ret;
+
+	prepare_pack_objects(&cmd, args);
+
+	strvec_push(&cmd.args, "--cruft");
+	if (cruft_expiration)
+		strvec_pushf(&cmd.args, "--cruft-expiration=%s",
+			     cruft_expiration);
+
+	strvec_push(&cmd.args, "--honor-pack-keep");
+	strvec_push(&cmd.args, "--non-empty");
+	strvec_push(&cmd.args, "--max-pack-size=0");
+
+	cmd.in = -1;
+
+	ret = start_command(&cmd);
+	if (ret)
+		return ret;
+
+	/*
+	 * names has a confusing double use: it both provides the list
+	 * of just-written new packs, and accepts the name of the cruft
+	 * pack we are writing.
+	 *
+	 * By the time it is read here, it contains only the pack(s)
+	 * that were just written, which is exactly the set of packs we
+	 * want to consider kept.
+	 */
+	in = xfdopen(cmd.in, "w");
+	for_each_string_list_item(item, names)
+		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
+	for_each_string_list_item(item, existing_packs)
+		fprintf(in, "-%s.pack\n", item->string);
+	for_each_string_list_item(item, existing_kept_packs)
+		fprintf(in, "%s.pack\n", item->string);
+	fclose(in);
+
+	out = xfdopen(cmd.out, "r");
+	while (strbuf_getline_lf(&line, out) != EOF) {
+		if (line.len != the_hash_algo->hexsz)
+			die(_("repack: Expecting full hex object ID lines only "
+			      "from pack-objects."));
+		string_list_append(names, line.buf);
+	}
+	fclose(out);
+
+	strbuf_release(&line);
+
+	return finish_command(&cmd);
+}
+
 int cmd_repack(int argc, const char **argv, const char *prefix)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -621,7 +687,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int show_progress;
 
 	/* variables to be filled by option parsing */
-	int pack_everything = 0;
 	int delete_redundant = 0;
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
@@ -636,6 +701,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		OPT_BIT('A', NULL, &pack_everything,
 				N_("same as -a, and turn unreachable objects loose"),
 				   LOOSEN_UNREACHABLE | ALL_INTO_ONE),
+		OPT_BIT(0, "cruft", &pack_everything,
+				N_("same as -a, pack unreachable cruft objects separately"),
+				   PACK_CRUFT),
+		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
+				N_("with -C, expire objects older than this")),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
@@ -687,6 +757,15 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (keep_unreachable &&
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
 		die(_("options '%s' and '%s' cannot be used together"), "--keep-unreachable", "-A");
+
+	if (pack_everything & PACK_CRUFT) {
+		pack_everything |= ALL_INTO_ONE;
+
+		if (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE))
+			die(_("options '%s' and '%s' cannot be used together"), "--cruft", "-A");
+		if (keep_unreachable)
+			die(_("options '%s' and '%s' cannot be used together"), "--cruft", "-k");
+	}
 
 	if (write_bitmaps < 0) {
 		if (!write_midx &&
@@ -771,7 +850,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(&po_args, &names);
 
-		if (existing_nonkept_packs.nr && delete_redundant) {
+		if (existing_nonkept_packs.nr && delete_redundant &&
+		    !(pack_everything & PACK_CRUFT)) {
 			for_each_string_list_item(item, &names) {
 				strvec_pushf(&cmd.args, "--keep-pack=%s-%s.pack",
 					     packtmp_name, item->string);
@@ -832,6 +912,21 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (!names.nr && !po_args.quiet)
 		printf_ln(_("Nothing new to pack."));
+
+	if (pack_everything & PACK_CRUFT) {
+		const char *pack_prefix;
+		if (!skip_prefix(packtmp, packdir, &pack_prefix))
+			die(_("pack prefix %s does not begin with objdir %s"),
+			    packtmp, packdir);
+		if (*pack_prefix == '/')
+			pack_prefix++;
+
+		ret = write_cruft_pack(&po_args, pack_prefix, &names,
+				       &existing_nonkept_packs,
+				       &existing_kept_packs);
+		if (ret)
+			return ret;
+	}
 
 	for_each_string_list_item(item, &names) {
 		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
