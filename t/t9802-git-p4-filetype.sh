@@ -333,4 +333,38 @@ test_expect_success SYMLINKS 'empty symlink target' '
 	)
 '
 
+test_expect_success SYMLINKS 'utf-8 with and without BOM in text file' '
+	(
+		cd "$cli" &&
+
+		# some utf8 content
+		echo some tǣxt >utf8-nobom-test &&
+
+		# same utf8 content as before but with bom
+		echo some tǣxt | sed '\''s/^/\xef\xbb\xbf/'\'' >utf8-bom-test &&
+
+		# bom only
+		dd bs=1 count=3 if=utf8-bom-test of=utf8-bom-empty-test &&
+
+		p4 add utf8-nobom-test utf8-bom-test utf8-bom-empty-test &&
+		p4 submit -d "add utf8 test files"
+	) &&
+	test_when_finished cleanup_git &&
+
+	git p4 clone --dest="$git" //depot@all &&
+	(
+		cd "$git" &&
+		git checkout refs/remotes/p4/master &&
+
+		echo some tǣxt >utf8-nobom-check &&
+		test_cmp utf8-nobom-check utf8-nobom-test &&
+
+		echo some tǣxt | sed '\''s/^/\xef\xbb\xbf/'\'' >utf8-bom-check &&
+		test_cmp utf8-bom-check utf8-bom-test &&
+
+		dd bs=1 count=3 if=utf8-bom-check of=utf8-bom-empty-check &&
+		test_cmp utf8-bom-empty-check utf8-bom-empty-test
+	)
+'
+
 test_done
