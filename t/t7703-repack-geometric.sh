@@ -231,7 +231,7 @@ test_expect_success '--geometric chooses largest MIDX preferred pack' '
 	)
 '
 
-test_expect_failure '--geometric with pack.packSizeLimit' '
+test_expect_success '--geometric with pack.packSizeLimit' '
 	git init pack-rewrite &&
 	test_when_finished "rm -fr pack-rewrite" &&
 	(
