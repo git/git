@@ -218,7 +218,7 @@ int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
 
 void bitmap_free(struct bitmap *bitmap)
 {
-	if (bitmap == NULL)
+	if (!bitmap)
 		return;
 
 	free(bitmap->words);

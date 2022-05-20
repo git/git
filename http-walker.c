@@ -59,7 +59,7 @@ static void start_object_request(struct walker *walker,
 	struct http_object_request *req;
 
 	req = new_http_object_request(obj_req->repo->base, &obj_req->oid);
-	if (req == NULL) {
+	if (!req) {
 		obj_req->state = ABORTED;
 		return;
 	}
@@ -106,7 +106,7 @@ static void process_object_response(void *callback_data)
 	/* Use alternates if necessary */
 	if (missing_target(obj_req->req)) {
 		fetch_alternates(walker, alt->base);
-		if (obj_req->repo->next != NULL) {
+		if (obj_req->repo->next) {
 			obj_req->repo =
 				obj_req->repo->next;
 			release_http_object_request(obj_req->req);
@@ -225,12 +225,12 @@ static void process_alternates_response(void *callback_data)
 					 alt_req->url->buf);
 			active_requests++;
 			slot->in_use = 1;
-			if (slot->finished != NULL)
+			if (slot->finished)
 				(*slot->finished) = 0;
 			if (!start_active_slot(slot)) {
 				cdata->got_alternates = -1;
 				slot->in_use = 0;
-				if (slot->finished != NULL)
+				if (slot->finished)
 					(*slot->finished) = 1;
 			}
 			return;
@@ -443,7 +443,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 	}
 
 	preq = new_http_pack_request(target->hash, repo->base);
-	if (preq == NULL)
+	if (!preq)
 		goto abort;
 	preq->slot->results = &results;
 
@@ -489,11 +489,11 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 		if (hasheq(obj_req->oid.hash, hash))
 			break;
 	}
-	if (obj_req == NULL)
+	if (!obj_req)
 		return error("Couldn't find request for %s in the queue", hex);
 
 	if (has_object_file(&obj_req->oid)) {
-		if (obj_req->req != NULL)
+		if (obj_req->req)
 			abort_http_object_request(obj_req->req);
 		abort_object_request(obj_req);
 		return 0;

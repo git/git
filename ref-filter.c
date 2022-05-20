@@ -1261,7 +1261,7 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	 * ":" means no format is specified, and use the default.
 	 */
 	formatp = strchr(atomname, ':');
-	if (formatp != NULL) {
+	if (formatp) {
 		formatp++;
 		parse_date_format(formatp, &date_mode);
 	}
@@ -1509,7 +1509,7 @@ static void fill_missing_values(struct atom_value *val)
 	int i;
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &val[i];
-		if (v->s == NULL)
+		if (!v->s)
 			v->s = xstrdup("");
 	}
 }
@@ -1619,7 +1619,7 @@ static const char *rstrip_ref_components(const char *refname, int len)
 
 	while (remaining-- > 0) {
 		char *p = strrchr(start, '/');
-		if (p == NULL) {
+		if (!p) {
 			free((char *)to_free);
 			return xstrdup("");
 		} else

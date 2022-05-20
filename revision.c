@@ -2840,7 +2840,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 	strvec_clear(&prune_data);
 
-	if (revs->def == NULL)
+	if (!revs->def)
 		revs->def = opt ? opt->def : NULL;
 	if (opt && opt->tweak)
 		opt->tweak(revs, opt);
@@ -3659,7 +3659,7 @@ static enum rewrite_result rewrite_one_1(struct rev_info *revs,
 			return rewrite_one_ok;
 		if (!p->parents)
 			return rewrite_one_noparents;
-		if ((p = one_relevant_parent(revs, p->parents)) == NULL)
+		if (!(p = one_relevant_parent(revs, p->parents)))
 			return rewrite_one_ok;
 		*pp = p;
 	}

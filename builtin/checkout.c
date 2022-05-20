@@ -834,7 +834,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			if (ret)
 				return ret;
 			o.ancestor = old_branch_info->name;
-			if (old_branch_info->name == NULL) {
+			if (!old_branch_info->name) {
 				strbuf_add_unique_abbrev(&old_commit_shortname,
 							 &old_branch_info->commit->object.oid,
 							 DEFAULT_ABBREV);

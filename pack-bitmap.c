@@ -111,7 +111,7 @@ static struct ewah_bitmap *lookup_stored_bitmap(struct stored_bitmap *st)
 	struct ewah_bitmap *parent;
 	struct ewah_bitmap *composed;
 
-	if (st->xor == NULL)
+	if (!st->xor)
 		return st->root;
 
 	composed = ewah_pool_new();
@@ -279,7 +279,7 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		if (xor_offset > 0) {
 			xor_bitmap = recent_bitmaps[(i - xor_offset) % MAX_XOR_OFFSET];
 
-			if (xor_bitmap == NULL)
+			if (!xor_bitmap)
 				return error("Invalid XOR offset in bitmap pack index");
 		}
 
@@ -728,7 +728,7 @@ static int add_commit_to_bitmap(struct bitmap_index *bitmap_git,
 	if (!or_with)
 		return 0;
 
-	if (*base == NULL)
+	if (!*base)
 		*base = ewah_to_bitmap(or_with);
 	else
 		bitmap_or_ewah(*base, or_with);
@@ -771,7 +771,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 	 * Best case scenario: We found bitmaps for all the roots,
 	 * so the resulting `or` bitmap has the full reachability analysis
 	 */
-	if (not_mapped == NULL)
+	if (!not_mapped)
 		return base;
 
 	roots = not_mapped;
@@ -805,7 +805,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		struct include_data incdata;
 		struct bitmap_show_data show_data;
 
-		if (base == NULL)
+		if (!base)
 			base = bitmap_new();
 
 		incdata.bitmap_git = bitmap_git;
@@ -1299,7 +1299,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 		reset_revision_walk();
 		revs->ignore_missing_links = 0;
 
-		if (haves_bitmap == NULL)
+		if (!haves_bitmap)
 			BUG("failed to perform bitmap walk");
 	}
 
@@ -1698,7 +1698,7 @@ void test_bitmap_walk(struct rev_info *revs)
 		result = ewah_to_bitmap(bm);
 	}
 
-	if (result == NULL)
+	if (!result)
 		die("Commit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
 
 	revs->tag_objects = 1;

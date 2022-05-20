@@ -1029,7 +1029,7 @@ static FILE *create_in_place_tempfile(const char *file)
 
 	/* Create temporary file in the same directory as the original */
 	tail = strrchr(file, '/');
-	if (tail != NULL)
+	if (tail)
 		strbuf_add(&filename_template, file, tail - file + 1);
 	strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
 

@@ -116,7 +116,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 
 	if (idx_size < 4 * 256 + hashsz + hashsz)
 		return error("index file %s is too small", path);
-	if (idx_map == NULL)
+	if (!idx_map)
 		return error("empty data");
 
 	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {

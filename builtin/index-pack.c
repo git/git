@@ -1942,11 +1942,11 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	free(objects);
 	strbuf_release(&index_name_buf);
 	strbuf_release(&rev_index_name_buf);
-	if (pack_name == NULL)
+	if (!pack_name)
 		free((void *) curr_pack);
-	if (index_name == NULL)
+	if (!index_name)
 		free((void *) curr_index);
-	if (rev_index_name == NULL)
+	if (!rev_index_name)
 		free((void *) curr_rev_index);
 
 	/*

@@ -1664,7 +1664,7 @@ static void check_aliased_update_internal(struct command *cmd,
 	}
 	dst_name = strip_namespace(dst_name);
 
-	if ((item = string_list_lookup(list, dst_name)) == NULL)
+	if (!(item = string_list_lookup(list, dst_name)))
 		return;
 
 	cmd->skip_update = 1;
@@ -2538,7 +2538,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	if ((commands = read_head_info(&reader, &shallow)) != NULL) {
+	if ((commands = read_head_info(&reader, &shallow))) {
 		const char *unpack_status = NULL;
 		struct string_list push_options = STRING_LIST_INIT_DUP;
 
