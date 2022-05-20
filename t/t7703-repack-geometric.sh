@@ -180,6 +180,34 @@ test_expect_success '--geometric ignores kept packs' '
 	)
 '
 
+test_expect_success '--geometric ignores --keep-pack packs' '
+	git init geometric &&
+	test_when_finished "rm -fr geometric" &&
+	(
+		cd geometric &&
+
+		# Create two equal-sized packs
+		test_commit kept && # 3 objects
+		git repack -d &&
+		test_commit pack && # 3 objects
+		git repack -d &&
+
+		find $objdir/pack -type f -name "*.pack" | sort >packs.before &&
+		git repack --geometric 2 -dm \
+			--keep-pack="$(basename "$(head -n 1 packs.before)")" >out &&
+		find $objdir/pack -type f -name "*.pack" | sort >packs.after &&
+
+		# Packs should not have changed (only one non-kept pack, no
+		# loose objects), but $midx should now exist.
+		grep "Nothing new to pack" out &&
+		test_path_is_file $midx &&
+
+		test_cmp packs.before packs.after &&
+
+		git fsck
+	)
+'
+
 test_expect_success '--geometric chooses largest MIDX preferred pack' '
 	git init geometric &&
 	test_when_finished "rm -fr geometric" &&
