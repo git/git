@@ -653,7 +653,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 * be created in every submodule.
 	 */
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
-		if (submodule_entry_list.entries[i].repo == NULL) {
+		if (!submodule_entry_list.entries[i].repo) {
 			int code = die_message(
 				_("submodule '%s': unable to find submodule"),
 				submodule_entry_list.entries[i].submodule->name);
