@@ -6,6 +6,18 @@ UI, Workflows & Features
  * "vimdiff[123]" mergetool drivers have been reimplemented with a
    more generic layout mechanism.
 
+ * "git -v" and "git -h" are now understood as "git --version" and
+   "git --help".
+
+ * The temporary files fed to external diff command are now generated
+   inside a new temporary directory under the same basename.
+
+ * "git log --since=X" will stop traversal upon seeing a commit that
+   is older than X, but there may be commits behind it that is younger
+   than X when the commit was created with a faulty clock.  A new
+   option is added to keep digging without stopping, and instead
+   filter out commits with timestamp older than X.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -13,6 +25,14 @@ Performance, Internal Implementation, Development Support etc.
    when "--untracked-files=<mode>" and "status.showUntrackedFiles"
    are combined.
 
+ * "git stash" works better with sparse index entries.
+
+ * "git show :<path>" learned to work better with the sparse-index
+   feature.
+
+ * Introduce and apply coccinelle rule to discourage an explicit
+   comparison between a pointer and NULL, and applies the clean-up to
+   the maintenance track.
 
 Fixes since v2.36
 -----------------
@@ -84,7 +104,43 @@ Fixes since v2.36
    is given in "git status" not to use the break-rewrite heuristics.
    (merge 84792322ed rs/commit-summary-wo-break-rewrite later to maint).
 
+ * Update a few end-user facing messages around eol conversion.
+   (merge c970d30c2c ah/convert-warning-message later to maint).
+
+ * Trace2 documentation updates.
+   (merge a6c80c313c js/trace2-doc-fixes later to maint).
+
+ * Build procedure fixup.
+   (merge 1fbfd96f50 mg/detect-compiler-in-c-locale later to maint).
+
+ * "git pull" without "--recurse-submodules=<arg>" made
+   submodule.recurse take precedence over fetch.recurseSubmodules by
+   mistake, which has been corrected.
+   (merge 5819417365 gc/pull-recurse-submodules later to maint).
+
+ * "git bisect" was too silent before it is ready to start computing
+   the actual bisection, which has been corrected.
+   (merge f11046e6de cd/bisect-messages-from-pre-flight-states later to maint).
+
+ * macOS CI jobs have been occasionally flaky due to tentative version
+   skew between perforce and the homebrew packager.  Instead of
+   failing the whole CI job, just let it skip the p4 tests when this
+   happens.
+   (merge f15e00b463 cb/ci-make-p4-optional later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
    (merge 52e1ab8a76 ea/rebase-code-simplify later to maint).
+   (merge 756d15923b sg/safe-directory-tests-and-docs later to maint).
+   (merge d097a23bfa ds/do-not-call-bug-on-bad-refs later to maint).
+   (merge c36c27e75c rs/t7812-pcre2-ws-bug-test later to maint).
+   (merge 1da312742d gf/unused-includes later to maint).
+   (merge 465b30a92d pb/submodule-recurse-mode-enum later to maint).
+   (merge 82b28c4ed8 km/t3501-use-test-helpers later to maint).
+   (merge 72315e431b sa/t1011-use-helpers later to maint).
+   (merge 95b3002201 cg/vscode-with-gdb later to maint).
+   (merge fbe5f6b804 tk/p4-utf8-bom later to maint).
+   (merge 17f273ffba tk/p4-with-explicity-sync later to maint).
+   (merge 944db25c60 kf/p4-multiple-remotes later to maint).
+   (merge b014cee8de jc/update-ozlabs-url later to maint).
