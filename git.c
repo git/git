@@ -25,7 +25,7 @@ struct cmd_struct {
 };
 
 const char git_usage_string[] =
-	N_("git [--version] [--help] [-C <path>] [-c <name>=<value>]\n"
+	N_("git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
 	   "           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
 	   "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n"
 	   "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
@@ -146,7 +146,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		 * commands can be written with "--" prepended
 		 * to make them look like flags.
 		 */
-		if (!strcmp(cmd, "--help") || !strcmp(cmd, "--version"))
+		if (!strcmp(cmd, "--help") || !strcmp(cmd, "-h") ||
+		    !strcmp(cmd, "--version") || !strcmp(cmd, "-v"))
 			break;
 
 		/*
@@ -893,8 +894,10 @@ int cmd_main(int argc, const char **argv)
 	argc--;
 	handle_options(&argv, &argc, NULL);
 	if (argc > 0) {
-		/* translate --help and --version into commands */
-		skip_prefix(argv[0], "--", &argv[0]);
+		if (!strcmp("--version", argv[0]) || !strcmp("-v", argv[0]))
+			argv[0] = "version";
+		else if (!strcmp("--help", argv[0]) || !strcmp("-h", argv[0]))
+			argv[0] = "help";
 	} else {
 		/* The user didn't specify a command; give them help */
 		commit_pager_choice();
