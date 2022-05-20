@@ -636,7 +636,42 @@ git-p4.pathEncoding::
 	Git expects paths encoded as UTF-8. Use this config to tell git-p4
 	what encoding Perforce had used for the paths. This encoding is used
 	to transcode the paths to UTF-8. As an example, Perforce on Windows
-	often uses "cp1252" to encode path names.
+	often uses "cp1252" to encode path names. If this option is passed
+	into a p4 clone request, it is persisted in the resulting new git
+	repo.
+
+git-p4.metadataDecodingStrategy::
+	Perforce keeps the encoding of a changelist descriptions and user
+	full names as stored by the client on a given OS. The p4v client
+	uses the OS-local encoding, and so different users can end up storing
+	different changelist descriptions or user full names in different
+	encodings, in the same depot.
+	Git tolerates inconsistent/incorrect encodings in commit messages
+	and author names, but expects them to be specified in utf-8.
+	git-p4 can use three different decoding strategies in handling the
+	encoding uncertainty in Perforce: 'passthrough' simply passes the
+	original bytes through from Perforce to git, creating usable but
+	incorrectly-encoded data when the Perforce data is encoded as
+	anything other than utf-8. 'strict' expects the Perforce data to be
+	encoded as utf-8, and fails to import when this is not true.
+	'fallback' attempts to interpret the data as utf-8, and otherwise
+	falls back to using a secondary encoding - by default the common
+	windows encoding 'cp-1252' - with upper-range bytes escaped if
+	decoding with the fallback encoding also fails.
+	Under python2 the default strategy is 'passthrough' for historical
+	reasons, and under python3 the default is 'fallback'.
+	When 'strict' is selected and decoding fails, the error message will
+	propose changing this config parameter as a workaround. If this
+	option is passed into a p4 clone request, it is persisted into the
+	resulting new git repo.
+
+git-p4.metadataFallbackEncoding::
+	Specify the fallback encoding to use when decoding Perforce author
+	names and changelists descriptions using the 'fallback' strategy
+	(see git-p4.metadataDecodingStrategy). The fallback encoding will
+	only be used when decoding as utf-8 fails. This option defaults to
+	cp1252, a common windows encoding. If this option is passed into a
+	p4 clone request, it is persisted into the resulting new git repo.
 
 git-p4.largeFileSystem::
 	Specify the system that is used for large (binary) files. Please note
