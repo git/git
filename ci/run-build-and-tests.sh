@@ -48,7 +48,8 @@ esac
 make
 if test -n "$run_tests"
 then
-	make test
+	make test ||
+	handle_failed_tests
 fi
 check_unignored_build_artifacts
 
