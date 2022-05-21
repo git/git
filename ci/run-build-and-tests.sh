@@ -45,10 +45,10 @@ pedantic)
 	;;
 esac
 
-make
+group Build make
 if test -n "$run_tests"
 then
-	make test ||
+	group "Run tests" make test ||
 	handle_failed_tests
 fi
 check_unignored_build_artifacts

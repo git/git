@@ -1,5 +1,50 @@
 # Library of functions shared by all CI scripts
 
+if test true != "$GITHUB_ACTIONS"
+then
+	begin_group () { :; }
+	end_group () { :; }
+
+	group () {
+		shift
+		"$@"
+	}
+	set -x
+else
+	begin_group () {
+		need_to_end_group=t
+		echo "::group::$1" >&2
+		set -x
+	}
+
+	end_group () {
+		test -n "$need_to_end_group" || return 0
+		set +x
+		need_to_end_group=
+		echo '::endgroup::' >&2
+	}
+	trap end_group EXIT
+
+	group () {
+		set +x
+		begin_group "$1"
+		shift
+		"$@"
+		res=$?
+		end_group
+		return $res
+	}
+
+	begin_group "CI setup"
+fi
+
+# Set 'exit on error' for all CI scripts to let the caller know that
+# something went wrong.
+#
+# We already enabled tracing executed commands earlier. This helps by showing
+# how # environment variables are set and and dependencies are installed.
+set -e
+
 skip_branch_tip_with_tag () {
 	# Sometimes, a branch is pushed at the same time the tag that points
 	# at the same commit as the tip of the branch is pushed, and building
@@ -88,12 +133,6 @@ export TERM=${TERM:-dumb}
 # Clear MAKEFLAGS that may come from the outside world.
 export MAKEFLAGS=
 
-# Set 'exit on error' for all CI scripts to let the caller know that
-# something went wrong.
-# Set tracing executed commands, primarily setting environment variables
-# and installing dependencies.
-set -ex
-
 if test -n "$SYSTEM_COLLECTIONURI" || test -n "$SYSTEM_TASKDEFINITIONSURI"
 then
 	CI_TYPE=azure-pipelines
@@ -138,7 +177,7 @@ then
 			test_name="${test_exit%.exit}"
 			test_name="${test_name##*/}"
 			printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
-			cat "t/test-results/$test_name.out"
+			group "Failed test: $test_name" cat "t/test-results/$test_name.out"
 
 			trash_dir="t/trash directory.$test_name"
 			cp "t/test-results/$test_name.out" t/failed-test-artifacts/
@@ -233,3 +272,6 @@ linux-leaks)
 esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
+
+end_group
+set -x
