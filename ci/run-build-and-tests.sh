@@ -10,7 +10,7 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 *) ln -s "$cache_dir/.prove" t/.prove;;
 esac
 
-export MAKE_TARGETS="all test"
+run_tests=t
 
 case "$jobname" in
 linux-gcc)
@@ -41,14 +41,15 @@ pedantic)
 	# Don't run the tests; we only care about whether Git can be
 	# built.
 	export DEVOPTS=pedantic
-	export MAKE_TARGETS=all
+	run_tests=
 	;;
 esac
 
-# Any new "test" targets should not go after this "make", but should
-# adjust $MAKE_TARGETS. Otherwise compilation-only targets above will
-# start running tests.
-make $MAKE_TARGETS
+make
+if test -n "$run_tests"
+then
+	make test
+fi
 check_unignored_build_artifacts
 
 save_good_tree
