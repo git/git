@@ -69,8 +69,7 @@ skip_good_tree () {
 	exit 0
 }
 
-check_unignored_build_artifacts ()
-{
+check_unignored_build_artifacts () {
 	! git ls-files --other --exclude-standard --error-unmatch \
 		-- ':/*' 2>/dev/null ||
 	{
