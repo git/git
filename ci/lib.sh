@@ -177,6 +177,7 @@ then
 			test_name="${test_exit%.exit}"
 			test_name="${test_name##*/}"
 			printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
+			echo "The full logs are in the artifacts attached to this run."
 			cat "t/test-results/$test_name.markup"
 
 			trash_dir="t/trash directory.$test_name"
