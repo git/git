@@ -20,6 +20,8 @@
 # workflows; these functions will then override (empty) functions
 # that are are called at the appropriate times during the test runs.
 
+test_skip_test_preamble=t
+
 start_test_output () {
 	test -n "$GIT_TEST_TEE_OUTPUT_FILE" ||
 	die "--github-workflow-markup requires --verbose-log"
