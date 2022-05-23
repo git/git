@@ -212,7 +212,7 @@ test_sparse_unstaged () {
 test_sparse_checkout_set () {
 	CONE_DIRS=$1 &&
 	SPARSE_DIRS=$2 &&
-	git -C sparse-index sparse-checkout set $CONE_DIRS &&
+	git -C sparse-index sparse-checkout set --skip-checks $CONE_DIRS &&
 	git -C sparse-index ls-files --sparse --stage >cache &&
 
 	# Check that the directories outside of the sparse-checkout cone
@@ -228,7 +228,9 @@ test_sparse_checkout_set () {
 	# are not sparse directory entries.
 	for dir in $CONE_DIRS
 	do
-		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		# Allow TREE to not exist because
+		# $dir does not exist at HEAD.
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) ||
 		! grep "040000 $TREE 0	$dir/" cache \
 			|| return 1
 	done
@@ -252,6 +254,19 @@ test_expect_success 'sparse-index contents' '
 	test_sparse_checkout_set \
 		"deep/deeper2 folder1 folder2 x" \
 		"before deep/deeper1" &&
+
+	# Replace deep/deeper2 with deep/deeper1
+	# Replace folder1 with folder1/0/0
+	# Replace folder2 with non-existent folder2/2/3
+	# Add non-existent "bogus"
+	test_sparse_checkout_set \
+		"bogus deep/deeper1 folder1/0/0 folder2/2/3 x" \
+		"before deep/deeper2 folder2/0" &&
+
+	# Drop down to only files at root
+	test_sparse_checkout_set \
+		"" \
+		"before deep folder1 folder2 x" &&
 
 	# Disabling the sparse-index replaces tree entries with full ones
 	git -C sparse-index sparse-checkout init --no-sparse-index &&
