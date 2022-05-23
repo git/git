@@ -245,17 +245,12 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
-	if (use_builtin_add_i < 0) {
-		int experimental;
-		if (!git_config_get_bool("add.interactive.usebuiltin",
-					 &use_builtin_add_i))
-			; /* ok */
-		else if (!git_config_get_bool("feature.experimental", &experimental) &&
-			 experimental)
-			use_builtin_add_i = 1;
-	}
+	if (use_builtin_add_i < 0 &&
+	    git_config_get_bool("add.interactive.usebuiltin",
+				&use_builtin_add_i))
+		use_builtin_add_i = 1;
 
-	if (use_builtin_add_i == 1) {
+	if (use_builtin_add_i != 0) {
 		enum add_p_mode mode;
 
 		if (!patch_mode)
