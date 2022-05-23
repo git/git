@@ -128,6 +128,16 @@ Fixes since v2.36
    happens.
    (merge f15e00b463 cb/ci-make-p4-optional later to maint).
 
+ * A bit of test framework fixes with a few fixes to issues found by
+   valgrind.
+   (merge 7c898554d7 ab/valgrind-fixes later to maint).
+
+ * "git archive --add-file=<path>" picked up the raw permission bits
+   from the path and propagated to zip output in some cases, without
+   normalization, which has been corrected (tar output did not have
+   this issue).
+   (merge 6a61661967 jc/archive-add-file-normalize-mode later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
