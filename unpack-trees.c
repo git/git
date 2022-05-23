@@ -18,6 +18,7 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "sparse-index.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -2017,6 +2018,9 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 		if (o->skip_sparse_checkout)
 			goto skip_sparse_checkout;
 	}
+
+	/* Expand sparse directories as needed */
+	expand_index(o->src_index, o->pl);
 
 	/* Set NEW_SKIP_WORKTREE on existing entries. */
 	mark_all_ce_unused(o->src_index);

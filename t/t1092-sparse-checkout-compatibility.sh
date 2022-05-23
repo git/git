@@ -1548,6 +1548,31 @@ test_expect_success 'ls-files' '
 	ensure_not_expanded ls-files --sparse
 '
 
+test_expect_success 'sparse index is not expanded: sparse-checkout' '
+	init_repos &&
+
+	ensure_not_expanded sparse-checkout set deep/deeper2 &&
+	ensure_not_expanded sparse-checkout set deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set deep &&
+	ensure_not_expanded sparse-checkout add folder1 &&
+	ensure_not_expanded sparse-checkout set deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set folder2 &&
+
+	# Demonstrate that the checks that "folder1/a" is a file
+	# do not cause a sparse-index expansion (since it is in the
+	# sparse-checkout cone).
+	echo >>sparse-index/folder2/a &&
+	git -C sparse-index add folder2/a &&
+
+	ensure_not_expanded sparse-checkout add folder1 &&
+
+	# Skip checks here, since deep/deeper1 is inside a sparse directory
+	# that must be expanded to check whether `deep/deeper1` is a file
+	# or not.
+	ensure_not_expanded sparse-checkout set --skip-checks deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set
+'
+
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
 # in this scenario, but it shouldn't.
 test_expect_success 'reset mixed and checkout orphan' '
