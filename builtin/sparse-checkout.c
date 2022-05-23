@@ -413,6 +413,9 @@ static int update_modes(int *cone_mode, int *sparse_index)
 		/* force an index rewrite */
 		repo_read_index(the_repository);
 		the_repository->index->updated_workdir = 1;
+
+		if (!*sparse_index)
+			ensure_full_index(the_repository->index);
 	}
 
 	return 0;
