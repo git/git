@@ -128,7 +128,7 @@ static void clean_tracked_sparse_directories(struct repository *r)
 	 * sparse index will not delete directories that contain
 	 * conflicted entries or submodules.
 	 */
-	if (!r->index->sparse_index) {
+	if (r->index->sparse_index == INDEX_EXPANDED) {
 		/*
 		 * If something, such as a merge conflict or other concern,
 		 * prevents us from converting to a sparse index, then do

@@ -173,7 +173,7 @@ int convert_to_sparse(struct index_state *istate, int flags)
 	 * If the index is already sparse, empty, or otherwise
 	 * cannot be converted to sparse, do not convert.
 	 */
-	if (istate->sparse_index || !istate->cache_nr ||
+	if (istate->sparse_index == INDEX_COLLAPSED || !istate->cache_nr ||
 	    !is_sparse_index_allowed(istate, flags))
 		return 0;
 
@@ -214,7 +214,7 @@ int convert_to_sparse(struct index_state *istate, int flags)
 	FREE_AND_NULL(istate->fsmonitor_dirty);
 	FREE_AND_NULL(istate->fsmonitor_last_update);
 
-	istate->sparse_index = 1;
+	istate->sparse_index = INDEX_COLLAPSED;
 	trace2_region_leave("index", "convert_to_sparse", istate->repo);
 	return 0;
 }
@@ -259,7 +259,7 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
 	 * If the index is already full, then keep it full. We will convert
 	 * it to a sparse index on write, if possible.
 	 */
-	if (!istate || !istate->sparse_index)
+	if (!istate || istate->sparse_index == INDEX_EXPANDED)
 		return;
 
 	/*
