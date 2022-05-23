@@ -248,19 +248,40 @@ static int add_path_to_index(const struct object_id *oid,
 	return 0;
 }
 
-void ensure_full_index(struct index_state *istate)
+void expand_index(struct index_state *istate, struct pattern_list *pl)
 {
 	int i;
 	struct index_state *full;
 	struct strbuf base = STRBUF_INIT;
+	const char *tr_region;
 
+	/*
+	 * If the index is already full, then keep it full. We will convert
+	 * it to a sparse index on write, if possible.
+	 */
 	if (!istate || !istate->sparse_index)
 		return;
+
+	/*
+	 * If our index is sparse, but our new pattern set does not use
+	 * cone mode patterns, then we need to expand the index before we
+	 * continue. A NULL pattern set indicates a full expansion to a
+	 * full index.
+	 */
+	if (pl && !pl->use_cone_patterns)
+		pl = NULL;
 
 	if (!istate->repo)
 		istate->repo = the_repository;
 
-	trace2_region_enter("index", "ensure_full_index", istate->repo);
+	/*
+	 * A NULL pattern set indicates we are expanding a full index, so
+	 * we use a special region name that indicates the full expansion.
+	 * This is used by test cases, but also helps to differentiate the
+	 * two cases.
+	 */
+	tr_region = pl ? "expand_index" : "ensure_full_index";
+	trace2_region_enter("index", tr_region, istate->repo);
 
 	/* initialize basics of new index */
 	full = xcalloc(1, sizeof(struct index_state));
@@ -322,7 +343,12 @@ void ensure_full_index(struct index_state *istate)
 	cache_tree_free(&istate->cache_tree);
 	cache_tree_update(istate, 0);
 
-	trace2_region_leave("index", "ensure_full_index", istate->repo);
+	trace2_region_leave("index", tr_region, istate->repo);
+}
+
+void ensure_full_index(struct index_state *istate)
+{
+	expand_index(istate, NULL);
 }
 
 void ensure_correct_sparsity(struct index_state *istate)
