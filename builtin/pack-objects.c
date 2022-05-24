@@ -3361,8 +3361,6 @@ static void read_packs_list_from_stdin(void)
 
 	for_each_string_list_item(item, &include_packs) {
 		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
 		for_each_object_in_pack(p,
 					add_object_entry_from_pack,
 					&revs,
