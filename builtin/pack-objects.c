@@ -1349,6 +1349,9 @@ static int want_found_object(const struct object_id *oid, int exclude,
 	if (incremental)
 		return 0;
 
+	if (!is_pack_valid(p))
+		return -1;
+
 	/*
 	 * When asked to do --local (do not include an object that appears in a
 	 * pack we borrow from elsewhere) or --honor-pack-keep (do not include
@@ -1464,6 +1467,9 @@ static int want_object_in_pack(const struct object_id *oid,
 		want = want_found_object(oid, exclude, *found_pack);
 		if (want != -1)
 			return want;
+
+		*found_pack = NULL;
+		*found_offset = 0;
 	}
 
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
