@@ -3193,10 +3193,8 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 				      uint32_t pos,
 				      void *_data)
 {
-	struct rev_info *revs = _data;
-	struct object_info oi = OBJECT_INFO_INIT;
 	off_t ofs;
-	enum object_type type;
+	enum object_type type = OBJ_NONE;
 
 	display_progress(progress_state, ++nr_seen);
 
@@ -3207,19 +3205,24 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	if (!want_object_in_pack(oid, 0, &p, &ofs))
 		return 0;
 
-	oi.typep = &type;
-	if (packed_object_info(the_repository, p, ofs, &oi) < 0)
-		die(_("could not get type of object %s in pack %s"),
-		    oid_to_hex(oid), p->pack_name);
-	else if (type == OBJ_COMMIT) {
-		/*
-		 * commits in included packs are used as starting points for the
-		 * subsequent revision walk
-		 */
-		add_pending_oid(revs, NULL, oid, 0);
-	}
+	if (p) {
+		struct rev_info *revs = _data;
+		struct object_info oi = OBJECT_INFO_INIT;
 
-	stdin_packs_found_nr++;
+		oi.typep = &type;
+		if (packed_object_info(the_repository, p, ofs, &oi) < 0) {
+			die(_("could not get type of object %s in pack %s"),
+			    oid_to_hex(oid), p->pack_name);
+		} else if (type == OBJ_COMMIT) {
+			/*
+			 * commits in included packs are used as starting points for the
+			 * subsequent revision walk
+			 */
+			add_pending_oid(revs, NULL, oid, 0);
+		}
+
+		stdin_packs_found_nr++;
+	}
 
 	create_object_entry(oid, type, 0, 0, 0, p, ofs);
 
@@ -3338,6 +3341,8 @@ static void read_packs_list_from_stdin(void)
 		struct packed_git *p = item->util;
 		if (!p)
 			die(_("could not find pack '%s'"), item->string);
+		if (!is_pack_valid(p))
+			die(_("packfile %s cannot be accessed"), p->pack_name);
 	}
 
 	/*
