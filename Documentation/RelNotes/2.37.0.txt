@@ -138,6 +138,29 @@ Fixes since v2.36
    this issue).
    (merge 6a61661967 jc/archive-add-file-normalize-mode later to maint).
 
+ * "make coverage-report" without first running "make coverage" did
+   not produce any meaningful result, which has been corrected.
+   (merge 96ddfecc5b ep/coverage-report-wants-test-to-have-run later to maint).
+
+ * The "--current" option of "git show-branch" should have been made
+   incompatible with the "--reflog" mode, but this was not enforced,
+   which has been corrected.
+   (merge 41c64ae0e7 jc/show-branch-g-current later to maint).
+
+ * "git fetch" unnecessarily failed when an unexpected optional
+   section appeared in the output, which has been corrected.
+   (merge 7709acf7be jt/fetch-peek-optional-section later to maint).
+
+ * The way "git fetch" without "--update-head-ok" ensures that HEAD in
+   no worktree points at any ref being updated was too wasteful, which
+   has been optimized a bit.
+   (merge f7400da800 os/fetch-check-not-current-branch later to maint).
+
+ * "git fetch --recurse-submodules" from multiple remotes (either from
+   a remote group, or "--all") used to make one extra "git fetch" in
+   the submodules, which has been corrected.
+   (merge 0353c68818 jc/avoid-redundant-submodule-fetch later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
@@ -154,3 +177,5 @@ Fixes since v2.36
    (merge 17f273ffba tk/p4-with-explicity-sync later to maint).
    (merge 944db25c60 kf/p4-multiple-remotes later to maint).
    (merge b014cee8de jc/update-ozlabs-url later to maint).
+   (merge 4ec5008062 pb/ggg-in-mfc-doc later to maint).
+   (merge af845a604d tb/receive-pack-code-cleanup later to maint).
