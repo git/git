@@ -975,27 +975,16 @@ done:
 	return ret;
 }
 
-/*
- * Like builtin/submodule--helper.c's starts_with_dot_slash, but without
- * relying on the platform-dependent is_dir_sep helper.
- *
- * This is for use in checking whether a submodule URL is interpreted as
- * relative to the current directory on any platform, since \ is a
- * directory separator on Windows but not on other platforms.
- */
-static int starts_with_dot_slash(const char *str)
+static int starts_with_dot_slash(const char *const path)
 {
-	return str[0] == '.' && (str[1] == '/' || str[1] == '\\');
+	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_SLASH |
+				PATH_MATCH_XPLATFORM);
 }
 
-/*
- * Like starts_with_dot_slash, this is a variant of submodule--helper's
- * helper of the same name with the twist that it accepts backslash as a
- * directory separator even on non-Windows platforms.
- */
-static int starts_with_dot_dot_slash(const char *str)
+static int starts_with_dot_dot_slash(const char *const path)
 {
-	return str[0] == '.' && starts_with_dot_slash(str + 1);
+	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH |
+				PATH_MATCH_XPLATFORM);
 }
 
 static int submodule_url_is_relative(const char *url)
