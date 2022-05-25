@@ -2214,8 +2214,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			close(err_fd);
 		return "unable to create temporary object directory";
 	}
-	if (tmp_objdir)
-		strvec_pushv(&child.env_array, tmp_objdir_env(tmp_objdir));
+	strvec_pushv(&child.env_array, tmp_objdir_env(tmp_objdir));
 
 	/*
 	 * Normally we just pass the tmp_objdir environment to the child
