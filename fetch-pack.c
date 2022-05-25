@@ -1370,17 +1370,20 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 static int process_section_header(struct packet_reader *reader,
 				  const char *section, int peek)
 {
-	int ret;
+	int ret = 0;
 
-	if (packet_reader_peek(reader) != PACKET_READ_NORMAL)
-		die(_("error reading section header '%s'"), section);
-
-	ret = !strcmp(reader->line, section);
+	if (packet_reader_peek(reader) == PACKET_READ_NORMAL &&
+	    !strcmp(reader->line, section))
+		ret = 1;
 
 	if (!peek) {
-		if (!ret)
-			die(_("expected '%s', received '%s'"),
-			    section, reader->line);
+		if (!ret) {
+			if (reader->line)
+				die(_("expected '%s', received '%s'"),
+				    section, reader->line);
+			else
+				die(_("expected '%s'"), section);
+		}
 		packet_reader_read(reader);
 	}
 
