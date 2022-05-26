@@ -315,6 +315,8 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	struct stat st;
 	char *idx_name = midx_bitmap_filename(midx);
 	int fd = git_open(idx_name);
+	uint32_t i;
+	struct packed_git *preferred;
 
 	free(idx_name);
 
@@ -353,6 +355,20 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		warning(_("multi-pack bitmap is missing required reverse index"));
 		goto cleanup;
 	}
+
+	for (i = 0; i < bitmap_git->midx->num_packs; i++) {
+		if (prepare_midx_pack(the_repository, bitmap_git->midx, i))
+			die(_("could not open pack %s"),
+			    bitmap_git->midx->pack_names[i]);
+	}
+
+	preferred = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
+	if (!is_pack_valid(preferred)) {
+		warning(_("preferred pack (%s) is invalid"),
+			preferred->pack_name);
+		goto cleanup;
+	}
+
 	return 0;
 
 cleanup:
@@ -429,8 +445,6 @@ static int load_reverse_index(struct bitmap_index *bitmap_git)
 		 * since we will need to make use of them in pack-objects.
 		 */
 		for (i = 0; i < bitmap_git->midx->num_packs; i++) {
-			if (prepare_midx_pack(the_repository, bitmap_git->midx, i))
-				die(_("load_reverse_index: could not open pack"));
 			ret = load_pack_revindex(bitmap_git->midx->packs[i]);
 			if (ret)
 				return ret;

@@ -1357,6 +1357,9 @@ static int want_found_object(const struct object_id *oid, int exclude,
 	if (incremental)
 		return 0;
 
+	if (!is_pack_valid(p))
+		return -1;
+
 	/*
 	 * When asked to do --local (do not include an object that appears in a
 	 * pack we borrow from elsewhere) or --honor-pack-keep (do not include
@@ -1472,6 +1475,9 @@ static int want_object_in_pack(const struct object_id *oid,
 		want = want_found_object(oid, exclude, *found_pack);
 		if (want != -1)
 			return want;
+
+		*found_pack = NULL;
+		*found_offset = 0;
 	}
 
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
@@ -3201,10 +3207,8 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 				      uint32_t pos,
 				      void *_data)
 {
-	struct rev_info *revs = _data;
-	struct object_info oi = OBJECT_INFO_INIT;
 	off_t ofs;
-	enum object_type type;
+	enum object_type type = OBJ_NONE;
 
 	display_progress(progress_state, ++nr_seen);
 
@@ -3215,19 +3219,24 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	if (!want_object_in_pack(oid, 0, &p, &ofs))
 		return 0;
 
-	oi.typep = &type;
-	if (packed_object_info(the_repository, p, ofs, &oi) < 0)
-		die(_("could not get type of object %s in pack %s"),
-		    oid_to_hex(oid), p->pack_name);
-	else if (type == OBJ_COMMIT) {
-		/*
-		 * commits in included packs are used as starting points for the
-		 * subsequent revision walk
-		 */
-		add_pending_oid(revs, NULL, oid, 0);
-	}
+	if (p) {
+		struct rev_info *revs = _data;
+		struct object_info oi = OBJECT_INFO_INIT;
 
-	stdin_packs_found_nr++;
+		oi.typep = &type;
+		if (packed_object_info(the_repository, p, ofs, &oi) < 0) {
+			die(_("could not get type of object %s in pack %s"),
+			    oid_to_hex(oid), p->pack_name);
+		} else if (type == OBJ_COMMIT) {
+			/*
+			 * commits in included packs are used as starting points for the
+			 * subsequent revision walk
+			 */
+			add_pending_oid(revs, NULL, oid, 0);
+		}
+
+		stdin_packs_found_nr++;
+	}
 
 	create_object_entry(oid, type, 0, 0, 0, p, ofs);
 
@@ -3346,6 +3355,8 @@ static void read_packs_list_from_stdin(void)
 		struct packed_git *p = item->util;
 		if (!p)
 			die(_("could not find pack '%s'"), item->string);
+		if (!is_pack_valid(p))
+			die(_("packfile %s cannot be accessed"), p->pack_name);
 	}
 
 	/*
@@ -3369,8 +3380,6 @@ static void read_packs_list_from_stdin(void)
 
 	for_each_string_list_item(item, &include_packs) {
 		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
 		for_each_object_in_pack(p,
 					add_object_entry_from_pack,
 					&revs,
