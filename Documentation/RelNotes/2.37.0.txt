@@ -18,6 +18,18 @@ UI, Workflows & Features
    option is added to keep digging without stopping, and instead
    filter out commits with timestamp older than X.
 
+ * "git -c branch.autosetupmerge=simple branch $A $B" will set the $B
+   as $A's upstream only when $A and $B shares the same name, and "git
+   -c push.default=simple" on branch $A would push to update the
+   branch $A at the remote $B came from.  Also more places use the
+   sole remote, if exists, before defaulting to 'origin'.
+
+ * A new doc has been added that lists tips for tools to work with
+   Git's codebase.
+
+ * "git remote -v" now shows the list-objects-filter used during
+   fetching from the remote, if available.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -33,6 +45,7 @@ Performance, Internal Implementation, Development Support etc.
  * Introduce and apply coccinelle rule to discourage an explicit
    comparison between a pointer and NULL, and applies the clean-up to
    the maintenance track.
+
 
 Fixes since v2.36
 -----------------
@@ -160,6 +173,12 @@ Fixes since v2.36
    a remote group, or "--all") used to make one extra "git fetch" in
    the submodules, which has been corrected.
    (merge 0353c68818 jc/avoid-redundant-submodule-fetch later to maint).
+
+ * With a recent update to refuse access to repositories of other
+   people by default, "sudo make install" and "sudo git describe"
+   stopped working.  This series intends to loosen it while keeping
+   the safety.
+   (merge b9063afda1 cb/path-owner-check-with-sudo later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
