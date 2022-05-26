@@ -205,36 +205,68 @@ test_sparse_unstaged () {
 	done
 }
 
+# Usage: test_sprase_checkout_set "<c1> ... <cN>" "<s1> ... <sM>"
+# Verifies that "git sparse-checkout set <c1> ... <cN>" succeeds and
+# leaves the sparse index in a state where <s1> ... <sM> are sparse
+# directories (and <c1> ... <cN> are not).
+test_sparse_checkout_set () {
+	CONE_DIRS=$1 &&
+	SPARSE_DIRS=$2 &&
+	git -C sparse-index sparse-checkout set --skip-checks $CONE_DIRS &&
+	git -C sparse-index ls-files --sparse --stage >cache &&
+
+	# Check that the directories outside of the sparse-checkout cone
+	# have sparse directory entries.
+	for dir in $SPARSE_DIRS
+	do
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
+		grep "040000 $TREE 0	$dir/" cache \
+			|| return 1
+	done &&
+
+	# Check that the directories in the sparse-checkout cone
+	# are not sparse directory entries.
+	for dir in $CONE_DIRS
+	do
+		# Allow TREE to not exist because
+		# $dir does not exist at HEAD.
+		TREE=$(git -C sparse-index rev-parse HEAD:$dir) ||
+		! grep "040000 $TREE 0	$dir/" cache \
+			|| return 1
+	done
+}
+
 test_expect_success 'sparse-index contents' '
 	init_repos &&
 
-	git -C sparse-index ls-files --sparse --stage >cache &&
-	for dir in folder1 folder2 x
-	do
-		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 $TREE 0	$dir/" cache \
-			|| return 1
-	done &&
+	# Remove deep, add three other directories.
+	test_sparse_checkout_set \
+		"folder1 folder2 x" \
+		"before deep" &&
 
-	git -C sparse-index sparse-checkout set folder1 &&
+	# Remove folder1, add deep
+	test_sparse_checkout_set \
+		"deep folder2 x" \
+		"before folder1" &&
 
-	git -C sparse-index ls-files --sparse --stage >cache &&
-	for dir in deep folder2 x
-	do
-		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 $TREE 0	$dir/" cache \
-			|| return 1
-	done &&
+	# Replace deep with deep/deeper2 (dropping deep/deeper1)
+	# Add folder1
+	test_sparse_checkout_set \
+		"deep/deeper2 folder1 folder2 x" \
+		"before deep/deeper1" &&
 
-	git -C sparse-index sparse-checkout set deep/deeper1 &&
+	# Replace deep/deeper2 with deep/deeper1
+	# Replace folder1 with folder1/0/0
+	# Replace folder2 with non-existent folder2/2/3
+	# Add non-existent "bogus"
+	test_sparse_checkout_set \
+		"bogus deep/deeper1 folder1/0/0 folder2/2/3 x" \
+		"before deep/deeper2 folder2/0" &&
 
-	git -C sparse-index ls-files --sparse --stage >cache &&
-	for dir in deep/deeper2 folder1 folder2 x
-	do
-		TREE=$(git -C sparse-index rev-parse HEAD:$dir) &&
-		grep "040000 $TREE 0	$dir/" cache \
-			|| return 1
-	done &&
+	# Drop down to only files at root
+	test_sparse_checkout_set \
+		"" \
+		"before deep folder1 folder2 x" &&
 
 	# Disabling the sparse-index replaces tree entries with full ones
 	git -C sparse-index sparse-checkout init --no-sparse-index &&
@@ -1626,6 +1658,31 @@ test_expect_success 'ls-files' '
 
 	# Double-check index expansion is avoided
 	ensure_not_expanded ls-files --sparse
+'
+
+test_expect_success 'sparse index is not expanded: sparse-checkout' '
+	init_repos &&
+
+	ensure_not_expanded sparse-checkout set deep/deeper2 &&
+	ensure_not_expanded sparse-checkout set deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set deep &&
+	ensure_not_expanded sparse-checkout add folder1 &&
+	ensure_not_expanded sparse-checkout set deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set folder2 &&
+
+	# Demonstrate that the checks that "folder1/a" is a file
+	# do not cause a sparse-index expansion (since it is in the
+	# sparse-checkout cone).
+	echo >>sparse-index/folder2/a &&
+	git -C sparse-index add folder2/a &&
+
+	ensure_not_expanded sparse-checkout add folder1 &&
+
+	# Skip checks here, since deep/deeper1 is inside a sparse directory
+	# that must be expanded to check whether `deep/deeper1` is a file
+	# or not.
+	ensure_not_expanded sparse-checkout set --skip-checks deep/deeper1 &&
+	ensure_not_expanded sparse-checkout set
 '
 
 # NEEDSWORK: a sparse-checkout behaves differently from a full checkout
