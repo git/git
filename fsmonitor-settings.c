@@ -208,6 +208,18 @@ char *fsm_settings__get_incompatible_msg(const struct repository *r,
 			    xgetcwd());
 		goto done;
 
+	case FSMONITOR_REASON_ERROR:
+		strbuf_addf(&msg,
+			    _("repository '%s' is incompatible with fsmonitor due to errors"),
+			    r->worktree);
+		goto done;
+
+	case FSMONITOR_REASON_REMOTE:
+		strbuf_addf(&msg,
+			    _("remote repository '%s' is incompatible with fsmonitor"),
+			    r->worktree);
+		goto done;
+
 	case FSMONITOR_REASON_VFS4GIT:
 		strbuf_addf(&msg,
 			    _("virtual repository '%s' is incompatible with fsmonitor"),
