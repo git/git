@@ -225,6 +225,12 @@ char *fsm_settings__get_incompatible_msg(const struct repository *r,
 			    _("virtual repository '%s' is incompatible with fsmonitor"),
 			    r->worktree);
 		goto done;
+
+	case FSMONITOR_REASON_NOSOCKETS:
+		strbuf_addf(&msg,
+			    _("repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"),
+			    r->worktree);
+		goto done;
 	}
 
 	BUG("Unhandled case in fsm_settings__get_incompatible_msg: '%d'",
