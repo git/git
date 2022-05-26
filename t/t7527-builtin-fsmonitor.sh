@@ -124,6 +124,36 @@ test_expect_success 'implicit daemon start' '
 	test_must_fail git -C test_implicit fsmonitor--daemon status
 '
 
+# Verify that the daemon has shutdown.  Spin a few seconds to
+# make the test a little more robust during CI testing.
+#
+# We're looking for an implicit shutdown, such as when we delete or
+# rename the ".git" directory.  Our delete/rename will cause a file
+# system event that the daemon will see and the daemon will
+# auto-shutdown as soon as it sees it.  But this is racy with our `git
+# fsmonitor--daemon status` commands (and we cannot use a cookie file
+# here to help us).  So spin a little and give the daemon a chance to
+# see the event.  (This is primarily for underpowered CI build/test
+# machines (where it might take a moment to wake and reschedule the
+# daemon process) to avoid false alarms during test runs.)
+#
+IMPLICIT_TIMEOUT=5
+
+verify_implicit_shutdown () {
+	r=$1 &&
+
+	k=0 &&
+	while test "$k" -lt $IMPLICIT_TIMEOUT
+	do
+		git -C $r fsmonitor--daemon status || return 0
+
+		sleep 1
+		k=$(( $k + 1 ))
+	done &&
+
+	return 1
+}
+
 test_expect_success 'implicit daemon stop (delete .git)' '
 	test_when_finished "stop_daemon_delete_repo test_implicit_1" &&
 
@@ -142,10 +172,9 @@ test_expect_success 'implicit daemon stop (delete .git)' '
 	#     This would make the test result dependent upon whether we
 	#     were using fsmonitor on our development worktree.
 	#
-	sleep 1 &&
 	mkdir test_implicit_1/.git &&
 
-	test_must_fail git -C test_implicit_1 fsmonitor--daemon status
+	verify_implicit_shutdown test_implicit_1
 '
 
 test_expect_success 'implicit daemon stop (rename .git)' '
@@ -160,10 +189,9 @@ test_expect_success 'implicit daemon stop (rename .git)' '
 
 	# See [1] above.
 	#
-	sleep 1 &&
 	mkdir test_implicit_2/.git &&
 
-	test_must_fail git -C test_implicit_2 fsmonitor--daemon status
+	verify_implicit_shutdown test_implicit_2
 '
 
 # File systems on Windows may or may not have shortnames.
@@ -194,13 +222,11 @@ test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~1)' '
 	#
 	mv test_implicit_1s/GIT~1 test_implicit_1s/.gitxyz &&
 
-	sleep 1 &&
-	# put it back so that our status will not crawl out to our
-	# parent directory.
+	# See [1] above.
 	# this moves {.gitxyz, GITXYZ~1} to {.git, GIT~1}.
 	mv test_implicit_1s/.gitxyz test_implicit_1s/.git &&
 
-	test_must_fail git -C test_implicit_1s fsmonitor--daemon status
+	verify_implicit_shutdown test_implicit_1s
 '
 
 # Here we first create a file with LONGNAME of "GIT~1" before
@@ -223,12 +249,10 @@ test_expect_success MINGW,SHORTNAMES 'implicit daemon stop (rename GIT~2)' '
 	#
 	mv test_implicit_1s2/GIT~2 test_implicit_1s2/.gitxyz &&
 
-	sleep 1 &&
-	# put it back so that our status will not crawl out to our
-	# parent directory.
+	# See [1] above.
 	mv test_implicit_1s2/.gitxyz test_implicit_1s2/.git &&
 
-	test_must_fail git -C test_implicit_1s2 fsmonitor--daemon status
+	verify_implicit_shutdown test_implicit_1s2
 '
 
 test_expect_success 'cannot start multiple daemons' '
@@ -905,9 +929,11 @@ test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
 	# Rename .git using an alternate spelling to verify that that
 	# daemon detects it and automatically shuts down.
 	mv test_insensitive/.GIT test_insensitive/.FOO &&
-	sleep 1 &&
+
+	# See [1] above.
 	mv test_insensitive/.FOO test_insensitive/.git &&
-	test_must_fail git -C test_insensitive fsmonitor--daemon status &&
+
+	verify_implicit_shutdown test_insensitive &&
 
 	# Verify that events were reported using on-disk spellings of the
 	# directories and files that we touched.  We may or may not get a
