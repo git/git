@@ -23,6 +23,16 @@ static enum fsmonitor_reason check_for_incompatible(struct repository *r)
 		return FSMONITOR_REASON_BARE;
 	}
 
+#ifdef HAVE_FSMONITOR_OS_SETTINGS
+	{
+		enum fsmonitor_reason reason;
+
+		reason = fsm_os__incompatible(r);
+		if (reason != FSMONITOR_REASON_OK)
+			return reason;
+	}
+#endif
+
 	return FSMONITOR_REASON_OK;
 }
 
