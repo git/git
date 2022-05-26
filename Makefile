@@ -2708,8 +2708,7 @@ XGETTEXT_FLAGS = \
 	--force-po \
 	--add-comments=TRANSLATORS: \
 	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
-	--package-name=Git \
-	--from-code=UTF-8
+	--package-name=Git
 XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
 XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell \
@@ -2792,6 +2791,9 @@ po/git.pot: .build/pot/git.header $(LOCALIZED_ALL_GEN_PO) FORCE
 
 .PHONY: pot
 pot: po/git.pot
+
+.PHONY: check-pot
+check-pot: $(LOCALIZED_ALL_GEN_PO)
 
 ifdef NO_GETTEXT
 POFILES :=
