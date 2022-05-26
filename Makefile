@@ -2786,8 +2786,8 @@ endef
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(gen_pot_header)
 
-po/git.pot: .build/pot/git.header $(LOCALIZED_ALL_GEN_PO) FORCE
-	$(QUIET_GEN)$(MSGCAT) $(filter-out FORCE,$^) >$@
+po/git.pot: .build/pot/git.header $(LOCALIZED_ALL_GEN_PO)
+	$(QUIET_GEN)$(MSGCAT) $^ >$@
 
 .PHONY: pot
 pot: po/git.pot
@@ -3330,6 +3330,7 @@ cocciclean:
 
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r .build
+	$(RM) po/git.pot
 	$(RM) *.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
