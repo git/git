@@ -1423,6 +1423,7 @@ static int try_to_start_background_daemon(void)
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 {
 	const char *subcmd;
+	enum fsmonitor_reason reason;
 	int detach_console = 0;
 
 	struct option options[] = {
@@ -1448,6 +1449,23 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 	if (fsmonitor__ipc_threads < 1)
 		die(_("invalid 'ipc-threads' value (%d)"),
 		    fsmonitor__ipc_threads);
+
+	prepare_repo_settings(the_repository);
+	/*
+	 * If the repo is fsmonitor-compatible, explicitly set IPC-mode
+	 * (without bothering to load the `core.fsmonitor` config settings).
+	 *
+	 * If the repo is not compatible, the repo-settings will be set to
+	 * incompatible rather than IPC, so we can use one of the __get
+	 * routines to detect the discrepancy.
+	 */
+	fsm_settings__set_ipc(the_repository);
+
+	reason = fsm_settings__get_reason(the_repository);
+	if (reason > FSMONITOR_REASON_OK)
+		die("%s",
+		    fsm_settings__get_incompatible_msg(the_repository,
+						       reason));
 
 	if (!strcmp(subcmd, "start"))
 		return !!try_to_start_background_daemon();
