@@ -1185,14 +1185,22 @@ static int show_push_info_item(struct string_list_item *item, void *cb_data)
 static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
-	struct strbuf url_buf = STRBUF_INIT;
+	struct strbuf remote_info_buf = STRBUF_INIT;
 	const char **url;
 	int i, url_nr;
 
 	if (remote->url_nr > 0) {
-		strbuf_addf(&url_buf, "%s (fetch)", remote->url[0]);
+		struct strbuf promisor_config = STRBUF_INIT;
+		const char *partial_clone_filter = NULL;
+
+		strbuf_addf(&promisor_config, "remote.%s.partialclonefilter", remote->name);
+		strbuf_addf(&remote_info_buf, "%s (fetch)", remote->url[0]);
+		if (!git_config_get_string_tmp(promisor_config.buf, &partial_clone_filter))
+			strbuf_addf(&remote_info_buf, " [%s]", partial_clone_filter);
+
+		strbuf_release(&promisor_config);
 		string_list_append(list, remote->name)->util =
-				strbuf_detach(&url_buf, NULL);
+				strbuf_detach(&remote_info_buf, NULL);
 	} else
 		string_list_append(list, remote->name)->util = NULL;
 	if (remote->pushurl_nr) {
@@ -1204,9 +1212,9 @@ static int get_one_entry(struct remote *remote, void *priv)
 	}
 	for (i = 0; i < url_nr; i++)
 	{
-		strbuf_addf(&url_buf, "%s (push)", url[i]);
+		strbuf_addf(&remote_info_buf, "%s (push)", url[i]);
 		string_list_append(list, remote->name)->util =
-				strbuf_detach(&url_buf, NULL);
+				strbuf_detach(&remote_info_buf, NULL);
 	}
 
 	return 0;
