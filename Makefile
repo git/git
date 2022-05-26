@@ -2713,10 +2713,9 @@ XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell \
 	--keyword=gettextln --keyword=eval_gettextln
 XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --language=Perl \
 	--keyword=__ --keyword=N__ --keyword="__n:1,2"
-LOCALIZED_C = $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
-LOCALIZED_SH = $(SCRIPT_SH)
-LOCALIZED_SH += git-sh-setup.sh
-LOCALIZED_PERL = $(SCRIPT_PERL)
+LOCALIZED_C = $(sort $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H))
+LOCALIZED_SH = $(sort $(SCRIPT_SH) git-sh-setup.sh)
+LOCALIZED_PERL = $(sort $(SCRIPT_PERL))
 
 ifdef XGETTEXT_INCLUDE_TESTS
 LOCALIZED_C += t/t0200/test.c
