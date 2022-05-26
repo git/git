@@ -845,7 +845,7 @@ generated-hdrs: $(GENERATED_H)
 ## Exhaustive lists of our source files, either dynamically generated,
 ## or hardcoded.
 SOURCES_CMD = ( \
-	git ls-files \
+	git ls-files --deduplicate \
 		'*.[hcS]' \
 		'*.sh' \
 		':!*[tp][0-9][0-9][0-9][0-9]*' \
@@ -862,7 +862,7 @@ SOURCES_CMD = ( \
 		-o \( -name '*.sh' -type f -print \) \
 		| sed -e 's|^\./||' \
 	)
-FOUND_SOURCE_FILES := $(shell $(SOURCES_CMD))
+FOUND_SOURCE_FILES := $(filter-out $(GENERATED_H),$(shell $(SOURCES_CMD)))
 
 FOUND_C_SOURCES = $(filter %.c,$(FOUND_SOURCE_FILES))
 FOUND_H_SOURCES = $(filter %.h,$(FOUND_SOURCE_FILES))
