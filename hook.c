@@ -144,6 +144,8 @@ int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options)
 		cb_data.hook_path = abs_path.buf;
 	}
 
+	strvec_pushf(&cb_data.options->env,"GIT_HOOK_NAME=%s", hook_name);
+
 	run_processes_parallel_tr2(jobs,
 				   pick_next_hook,
 				   notify_start_failure,

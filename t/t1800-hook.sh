@@ -38,6 +38,16 @@ test_expect_success 'git hook run: basic' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git hook run: $GIT_HOOK_NAME' '
+	test_hook test-hook <<-EOF &&
+	echo \$GIT_HOOK_NAME
+	EOF
+
+	echo test-hook >expect &&
+	git hook run test-hook 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git hook run: stdout and stderr both write to our stderr' '
 	test_hook test-hook <<-EOF &&
 	echo >&1 Will end up on stderr
