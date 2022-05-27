@@ -998,6 +998,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 	char *ssh_signing_key_file = NULL;
 	struct strbuf ssh_signature_filename = STRBUF_INIT;
 	const char *literal_key = NULL;
+	int literal_ssh_key = 0;
 
 	if (!signing_key || signing_key[0] == '\0')
 		return error(
@@ -1005,6 +1006,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 
 	if (is_literal_ssh_key(signing_key, &literal_key)) {
 		/* A literal ssh key */
+		literal_ssh_key = 1;
 		key_file = mks_tempfile_t(".git_signing_key_tmpXXXXXX");
 		if (!key_file)
 			return error_errno(
@@ -1039,8 +1041,10 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 		     "-Y", "sign",
 		     "-n", "git",
 		     "-f", ssh_signing_key_file,
-		     buffer_file->filename.buf,
 		     NULL);
+	if (literal_ssh_key)
+		strvec_push(&signer.args, "-U");
+	strvec_push(&signer.args, buffer_file->filename.buf);
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 	ret = pipe_command(&signer, NULL, 0, NULL, 0, &signer_stderr, 0);
