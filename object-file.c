@@ -997,7 +997,7 @@ int has_loose_object_nonlocal(const struct object_id *oid)
 	return check_and_freshen_nonlocal(oid, 0);
 }
 
-static int has_loose_object(const struct object_id *oid)
+int has_loose_object(const struct object_id *oid)
 {
 	return check_and_freshen(oid, 0);
 }
@@ -2039,6 +2039,8 @@ static int freshen_packed_object(const struct object_id *oid)
 {
 	struct pack_entry e;
 	if (!find_pack_entry(the_repository, oid, &e))
+		return 0;
+	if (e.p->is_cruft)
 		return 0;
 	if (e.p->freshened)
 		return 1;
