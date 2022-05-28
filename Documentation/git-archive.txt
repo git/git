@@ -49,7 +49,9 @@ OPTIONS
 	Report progress to stderr.
 
 --prefix=<prefix>/::
-	Prepend <prefix>/ to each filename in the archive.
+	Prepend <prefix>/ to paths in the archive.  Can be repeated; its
+	rightmost value is used for all tracked files.  See below which
+	value gets used by `--add-file`.
 
 -o <file>::
 --output=<file>::
@@ -57,9 +59,9 @@ OPTIONS
 
 --add-file=<file>::
 	Add a non-tracked file to the archive.  Can be repeated to add
-	multiple files.  The path of the file in the archive is built
-	by concatenating the value for `--prefix` (if any) and the
-	basename of <file>.
+	multiple files.  The path of the file in the archive is built by
+	concatenating the value of the last `--prefix` option (if any)
+	before this `--add-file` and the basename of <file>.
 
 --worktree-attributes::
 	Look for attributes in .gitattributes files in the working tree
@@ -193,6 +195,12 @@ EXAMPLES
 	Create a Zip archive that contains the contents of the latest
 	commit on the current branch. Note that the output format is
 	inferred by the extension of the output file.
+
+`git archive -o latest.tar --prefix=build/ --add-file=configure --prefix= HEAD`::
+
+	Creates a tar archive that contains the contents of the latest
+	commit on the current branch with no prefix and the untracked
+	file 'configure' with the prefix 'build/'.
 
 `git config tar.tar.xz.command "xz -c"`::
 
