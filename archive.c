@@ -9,6 +9,7 @@
 #include "parse-options.h"
 #include "unpack-trees.h"
 #include "dir.h"
+#include "quote.h"
 
 static char const * const archive_usage[] = {
 	N_("git archive [<options>] <tree-ish> [<path>...]"),
@@ -535,22 +536,31 @@ static int add_file_cb(const struct option *opt, const char *arg, int unset)
 			die(_("Not a regular file: %s"), path);
 		info->content = NULL; /* read the file later */
 	} else if (!strcmp(opt->long_name, "add-virtual-file")) {
-		const char *colon = strchr(arg, ':');
-		char *p;
+		struct strbuf buf = STRBUF_INIT;
+		const char *p = arg;
 
-		if (!colon)
+		if (*p != '"')
+			p = strchr(p, ':');
+		else if (unquote_c_style(&buf, p, &p) < 0)
+			die(_("unclosed quote: '%s'"), arg);
+
+		if (!p || *p != ':')
 			die(_("missing colon: '%s'"), arg);
 
-		p = xstrndup(arg, colon - arg);
-		if (!args->prefix)
-			path = p;
-		else {
-			path = prefix_filename(args->prefix, p);
-			free(p);
+		if (p == arg)
+			die(_("empty file name: '%s'"), arg);
+
+		path = buf.len ?
+			strbuf_detach(&buf, NULL) : xstrndup(arg, p - arg);
+
+		if (args->prefix) {
+			char *save = path;
+			path = prefix_filename(args->prefix, path);
+			free(save);
 		}
 		memset(&info->stat, 0, sizeof(info->stat));
 		info->stat.st_mode = S_IFREG | 0644;
-		info->content = xstrdup(colon + 1);
+		info->content = xstrdup(p + 1);
 		info->stat.st_size = strlen(info->content);
 	} else {
 		BUG("add_file_cb() called for %s", opt->long_name);

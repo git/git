@@ -69,10 +69,16 @@ OPTIONS
 	by concatenating the value of the last `--prefix` option (if any)
 	before this `--add-virtual-file` and `<path>`.
 +
-The `<path>` cannot contain any colon, the file mode is limited to
-a regular file, and the option may be subject to platform-dependent
-command-line limits. For non-trivial cases, write an untracked file
-and use `--add-file` instead.
+The `<path>` argument can start and end with a literal double-quote
+character; the contained file name is interpreted as a C-style string,
+i.e. the backslash is interpreted as escape character. The path must
+be quoted if it contains a colon, to avoid the colon from being
+misinterpreted as the separator between the path and the contents, or
+if the path begins or ends with a double-quote character.
++
+The file mode is limited to a regular file, and the option may be
+subject to platform-dependent command-line limits. For non-trivial
+cases, write an untracked file and use `--add-file` instead.
 
 --worktree-attributes::
 	Look for attributes in .gitattributes files in the working tree
