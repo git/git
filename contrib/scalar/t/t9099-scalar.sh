@@ -93,4 +93,9 @@ test_expect_success 'scalar supports -c/-C' '
 	test true = "$(git -C sub config core.preloadIndex)"
 '
 
+test_expect_success '`scalar [...] <dir>` errors out when dir is missing' '
+	! scalar run config cloned 2>err &&
+	grep "cloned. does not exist" err
+'
+
 test_done
