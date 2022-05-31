@@ -98,6 +98,22 @@ http.version::
 	- HTTP/2
 	- HTTP/1.1
 
+http.curloptResolve::
+	Hostname resolution information that will be used first by
+	libcurl when sending HTTP requests.  This information should
+	be in one of the following formats:
+
+	- [+]HOST:PORT:ADDRESS[,ADDRESS]
+	- -HOST:PORT
+
++
+The first format redirects all requests to the given `HOST:PORT`
+to the provided `ADDRESS`(s). The second format clears all
+previous config values for that `HOST:PORT` combination.  To
+allow easy overriding of all the settings inherited from the
+system config, an empty value will reset all resolution
+information to the empty list.
+
 http.sslVersion::
 	The SSL version to use when negotiating an SSL connection, if you
 	want to force the default.  The available and default version
