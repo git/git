@@ -151,7 +151,7 @@ int add_files_to_cache(const char *prefix,
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	end_odb_transaction();
 
-	clear_pathspec(&rev.prune_data);
+	release_revisions(&rev);
 	return !!data.add_errors;
 }
 
@@ -344,6 +344,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 
 	unlink(file);
 	free(file);
+	release_revisions(&rev);
 	return 0;
 }
 

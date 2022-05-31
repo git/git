@@ -4,6 +4,7 @@
 #
 
 test_description='git svn log tests'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'setup repository and import' '

@@ -699,6 +699,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 			shortlog(origins.items[i].string,
 				 origins.items[i].util,
 				 head, &rev, opts, out);
+		release_revisions(&rev);
 	}
 
 	strbuf_complete_line(out);
