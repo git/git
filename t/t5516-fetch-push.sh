@@ -602,6 +602,16 @@ test_expect_success 'branch.*.pushremote config order is irrelevant' '
 	check_push_result two_repo $the_commit heads/main
 '
 
+test_expect_success 'push ignores empty branch name entries' '
+	mk_test one_repo heads/main &&
+	test_config remote.one.url one_repo &&
+	test_config branch..remote one &&
+	test_config branch..merge refs/heads/ &&
+	test_config branch.main.remote one &&
+	test_config branch.main.merge refs/heads/main &&
+	git push
+'
+
 test_expect_success 'push with dry-run' '
 
 	mk_test testrepo heads/main &&

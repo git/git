@@ -195,9 +195,6 @@ static struct branch *find_branch(struct remote_state *remote_state,
 	struct branches_hash_key lookup;
 	struct hashmap_entry lookup_entry, *e;
 
-	if (!len)
-		len = strlen(name);
-
 	lookup.str = name;
 	lookup.len = len;
 	hashmap_entry_init(&lookup_entry, memhash(name, len));
@@ -214,7 +211,8 @@ static void die_on_missing_branch(struct repository *repo,
 {
 	/* branch == NULL is always valid because it represents detached HEAD. */
 	if (branch &&
-	    branch != find_branch(repo->remote_state, branch->name, 0))
+	    branch != find_branch(repo->remote_state, branch->name,
+				  strlen(branch->name)))
 		die("branch %s was not found in the repository", branch->name);
 }
 
