@@ -205,4 +205,10 @@ test_expect_success 'identification of reverted commit (revert.reference)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-pick is unaware of --reference (for now)' '
+	test_when_finished "git reset --hard" &&
+	test_must_fail git cherry-pick --reference HEAD 2>actual &&
+	grep "^usage: git cherry-pick" actual
+'
+
 test_done

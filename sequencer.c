@@ -221,7 +221,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 		return ret;
 	}
 
-	if (!strcmp(k, "revert.reference"))
+	if (opts->action == REPLAY_REVERT && !strcmp(k, "revert.reference"))
 		opts->commit_use_reference = git_config_bool(k, v);
 
 	status = git_gpg_config(k, v, NULL);
