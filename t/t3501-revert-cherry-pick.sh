@@ -158,6 +158,7 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 '
 
 test_expect_success 'advice from failed revert' '
+	test_when_finished "git reset --hard" &&
 	test_commit --no-tag "add dream" dream dream &&
 	dream_oid=$(git rev-parse --short HEAD) &&
 	cat <<-EOF >expected &&
@@ -173,4 +174,34 @@ test_expect_success 'advice from failed revert' '
 	test_must_fail git revert HEAD^ 2>actual &&
 	test_cmp expected actual
 '
+
+test_expect_success 'identification of reverted commit (default)' '
+	test_commit to-ident &&
+	test_when_finished "git reset --hard to-ident" &&
+	git checkout --detach to-ident &&
+	git revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git rev-parse HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (--reference)' '
+	git checkout --detach to-ident &&
+	git revert --reference --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (revert.reference)' '
+	git checkout --detach to-ident &&
+	git -c revert.reference=true revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
 test_done
