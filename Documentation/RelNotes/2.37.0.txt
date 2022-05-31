@@ -30,6 +30,14 @@ UI, Workflows & Features
  * "git remote -v" now shows the list-objects-filter used during
    fetching from the remote, if available.
 
+ * With the new http.curloptResolve configuration, the CURLOPT_RESOLVE
+   mechanism that allows cURL based applications to use pre-resolved
+   IP addresses for the requests is exposed to the scripts.
+
+ * "git add -i" was rewritten in C some time ago and has been in
+   testing; the reimplementation is now exposed to general public by
+   default.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -179,6 +187,11 @@ Fixes since v2.36
    stopped working.  This series intends to loosen it while keeping
    the safety.
    (merge b9063afda1 cb/path-owner-check-with-sudo later to maint).
+
+ * The tests that ensured merges stop when interfering local changes
+   are present did not make sure that local changes are preserved; now
+   they do.
+   (merge 4b317450ce jc/t6424-failing-merge-preserve-local-changes later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
