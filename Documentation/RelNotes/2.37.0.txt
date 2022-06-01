@@ -193,6 +193,9 @@ Fixes since v2.36
    they do.
    (merge 4b317450ce jc/t6424-failing-merge-preserve-local-changes later to maint).
 
+ * Some real problems noticed by gcc 12 have been fixed, while false
+   positives have been worked around.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
@@ -211,3 +214,5 @@ Fixes since v2.36
    (merge b014cee8de jc/update-ozlabs-url later to maint).
    (merge 4ec5008062 pb/ggg-in-mfc-doc later to maint).
    (merge af845a604d tb/receive-pack-code-cleanup later to maint).
+   (merge 2acf4cf001 js/ci-gcc-12-fixes later to maint).
+   (merge 05e280c0a6 jc/http-clear-finished-pointer later to maint).
