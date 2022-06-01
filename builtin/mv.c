@@ -187,53 +187,68 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		length = strlen(src);
 		if (lstat(src, &st) < 0) {
 			/* only error if existence is expected. */
-			if (modes[i] != SPARSE)
+			if (modes[i] != SPARSE) {
 				bad = _("bad source");
-		} else if (!strncmp(src, dst, length) &&
-				(dst[length] == 0 || dst[length] == '/')) {
+				goto act_on_entry;
+			}
+		}
+		if (!strncmp(src, dst, length) &&
+		    (dst[length] == 0 || dst[length] == '/')) {
 			bad = _("can not move directory into itself");
-		} else if ((src_is_dir = S_ISDIR(st.st_mode))
-				&& lstat(dst, &st) == 0)
+			goto act_on_entry;
+		}
+		if ((src_is_dir = S_ISDIR(st.st_mode))
+		    && lstat(dst, &st) == 0) {
 			bad = _("cannot move directory over file");
-		else if (src_is_dir) {
+			goto act_on_entry;
+		}
+		if (src_is_dir) {
+			int j, dst_len, n;
 			int first = cache_name_pos(src, length), last;
 
-			if (first >= 0)
+			if (first >= 0) {
 				prepare_move_submodule(src, first,
 						       submodule_gitfile + i);
-			else if (index_range_of_same_dir(src, length,
-							 &first, &last) < 1)
+				goto act_on_entry;
+			} else if (index_range_of_same_dir(src, length,
+							   &first, &last) < 1) {
 				bad = _("source directory is empty");
-			else { /* last - first >= 1 */
-				int j, dst_len, n;
-
-				modes[i] = WORKING_DIRECTORY;
-				n = argc + last - first;
-				REALLOC_ARRAY(source, n);
-				REALLOC_ARRAY(destination, n);
-				REALLOC_ARRAY(modes, n);
-				REALLOC_ARRAY(submodule_gitfile, n);
-
-				dst = add_slash(dst);
-				dst_len = strlen(dst);
-
-				for (j = 0; j < last - first; j++) {
-					const struct cache_entry *ce = active_cache[first + j];
-					const char *path = ce->name;
-					source[argc + j] = path;
-					destination[argc + j] =
-						prefix_path(dst, dst_len, path + length + 1);
-					modes[argc + j] = ce_skip_worktree(ce) ? SPARSE : INDEX;
-					submodule_gitfile[argc + j] = NULL;
-				}
-				argc += last - first;
+				goto act_on_entry;
 			}
-		} else if (!(ce = cache_file_exists(src, length, 0))) {
+
+			/* last - first >= 1 */
+			modes[i] = WORKING_DIRECTORY;
+			n = argc + last - first;
+			REALLOC_ARRAY(source, n);
+			REALLOC_ARRAY(destination, n);
+			REALLOC_ARRAY(modes, n);
+			REALLOC_ARRAY(submodule_gitfile, n);
+
+			dst = add_slash(dst);
+			dst_len = strlen(dst);
+
+			for (j = 0; j < last - first; j++) {
+				const struct cache_entry *ce = active_cache[first + j];
+				const char *path = ce->name;
+				source[argc + j] = path;
+				destination[argc + j] =
+					prefix_path(dst, dst_len, path + length + 1);
+				modes[argc + j] = ce_skip_worktree(ce) ? SPARSE : INDEX;
+				submodule_gitfile[argc + j] = NULL;
+			}
+			argc += last - first;
+			goto act_on_entry;
+		}
+		if (!(ce = cache_file_exists(src, length, 0))) {
 			bad = _("not under version control");
-		} else if (ce_stage(ce)) {
+			goto act_on_entry;
+		}
+		if (ce_stage(ce)) {
 			bad = _("conflicted");
-		} else if (lstat(dst, &st) == 0 &&
-			 (!ignore_case || strcasecmp(src, dst))) {
+			goto act_on_entry;
+		}
+		if (lstat(dst, &st) == 0 &&
+		    (!ignore_case || strcasecmp(src, dst))) {
 			bad = _("destination exists");
 			if (force) {
 				/*
@@ -247,34 +262,40 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				} else
 					bad = _("Cannot overwrite");
 			}
-		} else if (string_list_has_string(&src_for_dst, dst))
+			goto act_on_entry;
+		}
+		if (string_list_has_string(&src_for_dst, dst)) {
 			bad = _("multiple sources for the same target");
-		else if (is_dir_sep(dst[strlen(dst) - 1]))
+			goto act_on_entry;
+		}
+		if (is_dir_sep(dst[strlen(dst) - 1])) {
 			bad = _("destination directory does not exist");
-		else {
-			/*
-			 * We check if the paths are in the sparse-checkout
-			 * definition as a very final check, since that
-			 * allows us to point the user to the --sparse
-			 * option as a way to have a successful run.
-			 */
-			if (!ignore_sparse &&
-			    !path_in_sparse_checkout(src, &the_index)) {
-				string_list_append(&only_match_skip_worktree, src);
-				skip_sparse = 1;
-			}
-			if (!ignore_sparse &&
-			    !path_in_sparse_checkout(dst, &the_index)) {
-				string_list_append(&only_match_skip_worktree, dst);
-				skip_sparse = 1;
-			}
-
-			if (skip_sparse)
-				goto remove_entry;
-
-			string_list_insert(&src_for_dst, dst);
+			goto act_on_entry;
 		}
 
+		/*
+		 * We check if the paths are in the sparse-checkout
+		 * definition as a very final check, since that
+		 * allows us to point the user to the --sparse
+		 * option as a way to have a successful run.
+		 */
+		if (!ignore_sparse &&
+		    !path_in_sparse_checkout(src, &the_index)) {
+			string_list_append(&only_match_skip_worktree, src);
+			skip_sparse = 1;
+		}
+		if (!ignore_sparse &&
+		    !path_in_sparse_checkout(dst, &the_index)) {
+			string_list_append(&only_match_skip_worktree, dst);
+			skip_sparse = 1;
+		}
+
+		if (skip_sparse)
+			goto remove_entry;
+
+		string_list_insert(&src_for_dst, dst);
+
+act_on_entry:
 		if (!bad)
 			continue;
 		if (!ignore_errors)
