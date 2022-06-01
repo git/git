@@ -3138,6 +3138,15 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	}
 
 	/*
+	 * It should not be possible to overflow `ptrdiff_t` by passing in an
+	 * insanely long URL, but GCC does not know that and will complain
+	 * without this check.
+	 */
+	if (end - start < 0)
+		die(_("No directory name could be guessed.\n"
+		      "Please specify a directory on the command line"));
+
+	/*
 	 * Strip trailing port number if we've got only a
 	 * hostname (that is, there is no dir separator but a
 	 * colon). This check is required such that we do not
