@@ -68,7 +68,6 @@ endif
 # https://bugzilla.redhat.com/show_bug.cgi?id=2075786
 ifneq ($(filter gcc12,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-error=stringop-overread
-DEVELOPER_CFLAGS += -Wno-error=dangling-pointer
 endif
 
 GIT_TEST_PERL_FATAL_WARNINGS = YesPlease
