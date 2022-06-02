@@ -20,7 +20,7 @@ void child_process_init(struct child_process *child)
 void child_process_clear(struct child_process *child)
 {
 	strvec_clear(&child->args);
-	strvec_clear(&child->env_array);
+	strvec_clear(&child->env);
 }
 
 struct child_to_clean {
@@ -646,7 +646,7 @@ static void trace_run_command(const struct child_process *cp)
 		sq_quote_buf_pretty(&buf, cp->dir);
 		strbuf_addch(&buf, ';');
 	}
-	trace_add_env(&buf, cp->env_array.v);
+	trace_add_env(&buf, cp->env.v);
 	if (cp->git_cmd)
 		strbuf_addstr(&buf, " git");
 	sq_quote_argv_pretty(&buf, cp->args.v);
@@ -751,7 +751,7 @@ fail_pipe:
 		set_cloexec(null_fd);
 	}
 
-	childenv = prep_childenv(cmd->env_array.v);
+	childenv = prep_childenv(cmd->env.v);
 	atfork_prepare(&as);
 
 	/*
@@ -914,8 +914,9 @@ end_of_spawn:
 	else if (cmd->use_shell)
 		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
 
-	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v, (char**) cmd->env_array.v,
-			cmd->dir, fhin, fhout, fherr);
+	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v,
+				  (char**) cmd->env.v,
+				  cmd->dir, fhin, fhout, fherr);
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error_errno("cannot spawn %s", cmd->args.v[0]);
@@ -1031,7 +1032,7 @@ int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
 	cmd.close_object_store = opt & RUN_CLOSE_OBJECT_STORE ? 1 : 0;
 	cmd.dir = dir;
 	if (env)
-		strvec_pushv(&cmd.env_array, (const char **)env);
+		strvec_pushv(&cmd.env, (const char **)env);
 	cmd.trace2_child_class = tr2_class;
 	return run_command(&cmd);
 }

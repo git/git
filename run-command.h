@@ -73,7 +73,7 @@ struct child_process {
 	 * The memory in .env_array will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 */
-	struct strvec env_array;
+	struct strvec env;
 	pid_t pid;
 
 	int trace2_child_id;
@@ -147,7 +147,7 @@ struct child_process {
 
 #define CHILD_PROCESS_INIT { \
 	.args = STRVEC_INIT, \
-	.env_array = STRVEC_INIT, \
+	.env = STRVEC_INIT, \
 }
 
 /**

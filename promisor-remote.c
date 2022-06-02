@@ -22,7 +22,7 @@ static int fetch_objects(struct repository *repo,
 	child.git_cmd = 1;
 	child.in = -1;
 	if (repo != the_repository)
-		prepare_other_repo_env(&child.env_array, repo->gitdir);
+		prepare_other_repo_env(&child.env, repo->gitdir);
 	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",

@@ -564,7 +564,7 @@ static int submodule_create_branch(struct repository *r,
 	child.err = -1;
 	child.stdout_to_stderr = 1;
 
-	prepare_other_repo_env(&child.env_array, r->gitdir);
+	prepare_other_repo_env(&child.env, r->gitdir);
 	/*
 	 * submodule_create_branch() is indirectly invoked by "git
 	 * branch", but we cannot invoke "git branch" in the child

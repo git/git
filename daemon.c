@@ -484,7 +484,7 @@ static int upload_pack(const struct strvec *env)
 	strvec_pushl(&cld.args, "upload-pack", "--strict", NULL);
 	strvec_pushf(&cld.args, "--timeout=%u", timeout);
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -494,7 +494,7 @@ static int upload_archive(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "upload-archive");
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -504,7 +504,7 @@ static int receive_pack(const struct strvec *env)
 	struct child_process cld = CHILD_PROCESS_INIT;
 	strvec_push(&cld.args, "receive-pack");
 
-	strvec_pushv(&cld.env_array, env->v);
+	strvec_pushv(&cld.env, env->v);
 
 	return run_service_command(&cld);
 }
@@ -904,16 +904,16 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		char buf[128] = "";
 		struct sockaddr_in *sin_addr = (void *) addr;
 		inet_ntop(addr->sa_family, &sin_addr->sin_addr, buf, sizeof(buf));
-		strvec_pushf(&cld.env_array, "REMOTE_ADDR=%s", buf);
-		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+		strvec_pushf(&cld.env, "REMOTE_ADDR=%s", buf);
+		strvec_pushf(&cld.env, "REMOTE_PORT=%d",
 			     ntohs(sin_addr->sin_port));
 #ifndef NO_IPV6
 	} else if (addr->sa_family == AF_INET6) {
 		char buf[128] = "";
 		struct sockaddr_in6 *sin6_addr = (void *) addr;
 		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(buf));
-		strvec_pushf(&cld.env_array, "REMOTE_ADDR=[%s]", buf);
-		strvec_pushf(&cld.env_array, "REMOTE_PORT=%d",
+		strvec_pushf(&cld.env, "REMOTE_ADDR=[%s]", buf);
+		strvec_pushf(&cld.env, "REMOTE_PORT=%d",
 			     ntohs(sin6_addr->sin6_port));
 #endif
 	}

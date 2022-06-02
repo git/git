@@ -236,7 +236,7 @@ static char *apply_command(struct conf_info *conf, const char *arg)
 			strbuf_replace(&cmd, TRAILER_ARG_STRING, arg);
 		strvec_push(&cp.args, cmd.buf);
 	}
-	strvec_pushv(&cp.env_array, (const char **)local_repo_env);
+	strvec_pushv(&cp.env, (const char **)local_repo_env);
 	cp.no_stdin = 1;
 	cp.use_shell = 1;
 
