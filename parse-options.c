@@ -474,20 +474,21 @@ static void parse_options_check(const struct option *opts)
 			break;
 		case OPTION_CALLBACK:
 			if (!opts->callback && !opts->ll_callback)
-				BUG("OPTION_CALLBACK needs one callback");
-			if (opts->callback && opts->ll_callback)
-				BUG("OPTION_CALLBACK can't have two callbacks");
+				optbug(opts, "OPTION_CALLBACK needs one callback");
+			else if (opts->callback && opts->ll_callback)
+				optbug(opts, "OPTION_CALLBACK can't have two callbacks");
 			break;
 		case OPTION_LOWLEVEL_CALLBACK:
 			if (!opts->ll_callback)
-				BUG("OPTION_LOWLEVEL_CALLBACK needs a callback");
+				optbug(opts, "OPTION_LOWLEVEL_CALLBACK needs a callback");
 			if (opts->callback)
-				BUG("OPTION_LOWLEVEL_CALLBACK needs no high level callback");
+				optbug(opts, "OPTION_LOWLEVEL_CALLBACK needs no high level callback");
 			break;
 		case OPTION_ALIAS:
-			BUG("OPT_ALIAS() should not remain at this point. "
-			    "Are you using parse_options_step() directly?\n"
-			    "That case is not supported yet.");
+			optbug(opts, "OPT_ALIAS() should not remain at this point. "
+			       "Are you using parse_options_step() directly?\n"
+			       "That case is not supported yet.");
+			break;
 		default:
 			; /* ok. (usually accepts an argument) */
 		}
