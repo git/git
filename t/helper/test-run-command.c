@@ -390,7 +390,7 @@ int cmd__run_command(int argc, const char **argv)
 	while (!strcmp(argv[1], "env")) {
 		if (!argv[2])
 			die("env specifier without a value");
-		strvec_push(&proc.env_array, argv[2]);
+		strvec_push(&proc.env, argv[2]);
 		argv += 2;
 		argc -= 2;
 	}

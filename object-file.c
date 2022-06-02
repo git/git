@@ -838,7 +838,7 @@ static void fill_alternate_refs_command(struct child_process *cmd,
 		}
 	}
 
-	strvec_pushv(&cmd->env_array, (const char **)local_repo_env);
+	strvec_pushv(&cmd->env, (const char **)local_repo_env);
 	cmd->out = -1;
 }
 
