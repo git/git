@@ -59,6 +59,13 @@ int main(int argc, const char **argv)
 	exit(result);
 }
 
+static void check_bug_if_BUG(void)
+{
+	if (!bug_called_must_BUG)
+		return;
+	BUG("on exit(): had bug() call(s) in this process without explicit BUG_if_bug()");
+}
+
 /* We wrap exit() to call common_exit() in git-compat-util.h */
 int common_exit(const char *file, int line, int code)
 {
@@ -70,6 +77,7 @@ int common_exit(const char *file, int line, int code)
 	 */
 	code &= 0xff;
 
+	check_bug_if_BUG();
 	trace2_cmd_exit_fl(file, line, code);
 
 	return code;
