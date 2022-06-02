@@ -1816,16 +1816,16 @@ int run_auto_maintenance(int quiet)
 	return run_command(&maint);
 }
 
-void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir)
+void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
 {
 	const char * const *var;
 
 	for (var = local_repo_env; *var; var++) {
 		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) &&
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
-			strvec_push(env_array, *var);
+			strvec_push(env, *var);
 	}
-	strvec_pushf(env_array, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
+	strvec_pushf(env, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
 }
 
 enum start_bg_result start_bg_command(struct child_process *cmd,

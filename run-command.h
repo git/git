@@ -58,7 +58,7 @@ struct child_process {
 	struct strvec args;
 
 	/**
-	 * Like .args the .env_array is a `struct strvec'.
+	 * Like .args the .env is a `struct strvec'.
 	 *
 	 * To modify the environment of the sub-process, specify an array of
 	 * environment settings. Each string in the array manipulates the
@@ -70,7 +70,7 @@ struct child_process {
 	 * - If the string does not contain '=', it names an environment
 	 *   variable that will be removed from the child process's environment.
 	 *
-	 * The memory in .env_array will be cleaned up automatically during
+	 * The memory in .env will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 */
 	struct strvec env;
@@ -480,14 +480,14 @@ int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
 			       const char *tr2_category, const char *tr2_label);
 
 /**
- * Convenience function which prepares env_array for a command to be run in a
- * new repo. This adds all GIT_* environment variables to env_array with the
+ * Convenience function which prepares env for a command to be run in a
+ * new repo. This adds all GIT_* environment variables to env with the
  * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
  * corresponding environment variables to be unset in the subprocess) and adds
  * an environment variable pointing to new_git_dir. See local_repo_env in
  * cache.h for more information.
  */
-void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir);
+void prepare_other_repo_env(struct strvec *env, const char *new_git_dir);
 
 /**
  * Possible return values for start_bg_command().

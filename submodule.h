@@ -158,11 +158,11 @@ int submodule_move_head(const char *path,
 void submodule_unset_core_worktree(const struct submodule *sub);
 
 /*
- * Prepare the "env_array" parameter of a "struct child_process" for executing
+ * Prepare the "env" parameter of a "struct child_process" for executing
  * a submodule by clearing any repo-specific environment variables, but
  * retaining any config in the environment.
  */
-void prepare_submodule_repo_env(struct strvec *out);
+void prepare_submodule_repo_env(struct strvec *env);
 
 #define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
 void absorb_git_dir_into_superproject(const char *path,
