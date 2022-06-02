@@ -55,10 +55,22 @@ int main(int argc, const char **argv)
 
 	result = cmd_main(argc, argv);
 
-	/*
-	 * We define exit() to call trace2_cmd_exit_fl() in
-	 * git-compat-util.h. Whether we reach this or exit()
-	 * elsewhere we'll always run our trace2 exit handler.
-	 */
+	/* Not exit(3), but a wrapper calling our common_exit() */
 	exit(result);
+}
+
+/* We wrap exit() to call common_exit() in git-compat-util.h */
+int common_exit(const char *file, int line, int code)
+{
+	/*
+	 * For non-POSIX systems: Take the lowest 8 bits of the "code"
+	 * to e.g. turn -1 into 255. On a POSIX system this is
+	 * redundant, see exit(3) and wait(2), but as it doesn't harm
+	 * anything there we don't need to guard this with an "ifdef".
+	 */
+	code &= 0xff;
+
+	trace2_cmd_exit_fl(file, line, code);
+
+	return code;
 }

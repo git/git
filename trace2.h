@@ -101,14 +101,8 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv);
 
 /*
  * Emit an 'exit' event.
- *
- * Write the exit-code that will be passed to exit() or returned
- * from main().
- *
- * Use this prior to actually calling exit().
- * See "#define exit()" in git-compat-util.h
  */
-int trace2_cmd_exit_fl(const char *file, int line, int code);
+void trace2_cmd_exit_fl(const char *file, int line, int code);
 
 #define trace2_cmd_exit(code) (trace2_cmd_exit_fl(__FILE__, __LINE__, (code)))
 
