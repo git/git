@@ -38,6 +38,20 @@ UI, Workflows & Features
    testing; the reimplementation is now exposed to general public by
    default.
 
+ * Deprecate non-cone mode of the sparse-checkout feature.
+
+ * Introduce a filesystem-dependent mechanism to optimize the way the
+   bits for many loose object files are ensured to hit the disk
+   platter.
+
+ * The "do not remove the directory the user started Git in" logic,
+   when Git cannot tell where that directory is, is disabled.  Earlier
+   we refused to run in such a case.
+
+ * A mechanism to pack unreachable objects into a "cruft pack",
+   instead of ejecting them into loose form to be reclaimed later, has
+   been introduced.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -53,6 +67,16 @@ Performance, Internal Implementation, Development Support etc.
  * Introduce and apply coccinelle rule to discourage an explicit
    comparison between a pointer and NULL, and applies the clean-up to
    the maintenance track.
+
+ * Preliminary code refactoring around transport and bundle code.
+
+ * "sparse-checkout" learns to work better with the sparse-index
+   feature.
+
+ * A workflow change for translators are being proposed.  git.pot is
+   no longer version controlled and it is local responsibility of
+   translaters to generate it.
+
 
 
 Fixes since v2.36
@@ -195,6 +219,18 @@ Fixes since v2.36
 
  * Some real problems noticed by gcc 12 have been fixed, while false
    positives have been worked around.
+
+ * Update the version of FreeBSD image used in Cirrus CI.
+   (merge c58bebd4c6 pb/use-freebsd-12.3-in-cirrus-ci later to maint).
+
+ * The multi-pack-index code did not protect the packfile it is going
+   to depend on from getting removed while in use, which has been
+   corrected.
+   (merge 4090511e40 tb/midx-race-in-pack-objects later to maint).
+
+ * Teach "git repack --geometric" work better with "--keep-pack" and
+   avoid corrupting the repository when packsize limit is used.
+   (merge 66731ff921 tb/geom-repack-with-keep-and-max later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
