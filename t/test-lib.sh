@@ -1528,7 +1528,9 @@ remove_trash_directory "$TRASH_DIRECTORY" || {
 remove_trash=t
 if test -z "$TEST_NO_CREATE_REPO"
 then
-	git init "$TRASH_DIRECTORY" >&3 2>&4 ||
+	git init \
+	    ${TEST_CREATE_REPO_NO_TEMPLATE:+--template=} \
+	    "$TRASH_DIRECTORY" >&3 2>&4 ||
 	error "cannot run git init"
 else
 	mkdir -p "$TRASH_DIRECTORY"

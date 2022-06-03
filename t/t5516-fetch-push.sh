@@ -17,6 +17,7 @@ This test checks the following functionality:
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 D=$(pwd)
@@ -25,7 +26,8 @@ mk_empty () {
 	repo_name="$1"
 	test_when_finished "rm -rf \"$repo_name\"" &&
 	test_path_is_missing "$repo_name" &&
-	git init "$repo_name" &&
+	git init --template= "$repo_name" &&
+	mkdir "$repo_name"/.git/hooks &&
 	git -C "$repo_name" config receive.denyCurrentBranch warn
 }
 
@@ -77,7 +79,7 @@ mk_test_with_hooks() {
 
 mk_child() {
 	test_when_finished "rm -rf \"$2\"" &&
-	git clone "$1" "$2"
+	git clone --template= "$1" "$2"
 }
 
 check_push_result () {
@@ -916,6 +918,7 @@ test_expect_success 'fetch with branches' '
 	mk_empty testrepo &&
 	git branch second $the_first_commit &&
 	git checkout second &&
+	mkdir testrepo/.git/branches &&
 	echo ".." > testrepo/.git/branches/branch1 &&
 	(
 		cd testrepo &&
@@ -929,6 +932,7 @@ test_expect_success 'fetch with branches' '
 
 test_expect_success 'fetch with branches containing #' '
 	mk_empty testrepo &&
+	mkdir testrepo/.git/branches &&
 	echo "..#second" > testrepo/.git/branches/branch2 &&
 	(
 		cd testrepo &&
@@ -943,7 +947,11 @@ test_expect_success 'fetch with branches containing #' '
 test_expect_success 'push with branches' '
 	mk_empty testrepo &&
 	git checkout second &&
+
+	test_when_finished "rm -rf .git/branches" &&
+	mkdir .git/branches &&
 	echo "testrepo" > .git/branches/branch1 &&
+
 	git push branch1 &&
 	(
 		cd testrepo &&
@@ -955,7 +963,11 @@ test_expect_success 'push with branches' '
 
 test_expect_success 'push with branches containing #' '
 	mk_empty testrepo &&
+
+	test_when_finished "rm -rf .git/branches" &&
+	mkdir .git/branches &&
 	echo "testrepo#branch3" > .git/branches/branch2 &&
+
 	git push branch2 &&
 	(
 		cd testrepo &&
