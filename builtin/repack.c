@@ -137,6 +137,8 @@ static void collect_pack_filenames(struct string_list *fname_nonkept_list,
 			string_list_append_nodup(fname_nonkept_list, fname);
 	}
 	closedir(dir);
+
+	string_list_sort(fname_kept_list);
 }
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
@@ -332,17 +334,38 @@ static int geometry_cmp(const void *va, const void *vb)
 	return 0;
 }
 
-static void init_pack_geometry(struct pack_geometry **geometry_p)
+static void init_pack_geometry(struct pack_geometry **geometry_p,
+			       struct string_list *existing_kept_packs)
 {
 	struct packed_git *p;
 	struct pack_geometry *geometry;
+	struct strbuf buf = STRBUF_INIT;
 
 	*geometry_p = xcalloc(1, sizeof(struct pack_geometry));
 	geometry = *geometry_p;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
-		if (!pack_kept_objects && p->pack_keep)
-			continue;
+		if (!pack_kept_objects) {
+			/*
+			 * Any pack that has its pack_keep bit set will appear
+			 * in existing_kept_packs below, but this saves us from
+			 * doing a more expensive check.
+			 */
+			if (p->pack_keep)
+				continue;
+
+			/*
+			 * The pack may be kept via the --keep-pack option;
+			 * check 'existing_kept_packs' to determine whether to
+			 * ignore it.
+			 */
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, pack_basename(p));
+			strbuf_strip_suffix(&buf, ".pack");
+
+			if (string_list_has_string(existing_kept_packs, buf.buf))
+				continue;
+		}
 
 		ALLOC_GROW(geometry->pack,
 			   geometry->pack_nr + 1,
@@ -353,6 +376,7 @@ static void init_pack_geometry(struct pack_geometry **geometry_p)
 	}
 
 	QSORT(geometry->pack, geometry->pack_nr, geometry_cmp);
+	strbuf_release(&buf);
 }
 
 static void split_pack_geometry(struct pack_geometry *geometry, int factor)
@@ -714,16 +738,19 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		strbuf_release(&path);
 	}
 
-	if (geometric_factor) {
-		if (pack_everything)
-			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
-		init_pack_geometry(&geometry);
-		split_pack_geometry(geometry, geometric_factor);
-	}
-
 	packdir = mkpathdup("%s/pack", get_object_directory());
 	packtmp_name = xstrfmt(".tmp-%d-pack", (int)getpid());
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
+
+	collect_pack_filenames(&existing_nonkept_packs, &existing_kept_packs,
+			       &keep_pack_list);
+
+	if (geometric_factor) {
+		if (pack_everything)
+			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
+		init_pack_geometry(&geometry, &existing_kept_packs);
+		split_pack_geometry(geometry, geometric_factor);
+	}
 
 	sigchain_push_common(remove_pack_on_signal);
 
@@ -763,9 +790,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 	if (use_delta_islands)
 		strvec_push(&cmd.args, "--delta-islands");
-
-	collect_pack_filenames(&existing_nonkept_packs, &existing_kept_packs,
-			       &keep_pack_list);
 
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(&po_args, &names);
@@ -832,6 +856,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (!names.nr && !po_args.quiet)
 		printf_ln(_("Nothing new to pack."));
 
+	string_list_sort(&names);
+
 	for_each_string_list_item(item, &names) {
 		item->util = (void *)(uintptr_t)populate_pack_exts(item->string);
 	}
@@ -872,7 +898,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (delete_redundant && pack_everything & ALL_INTO_ONE) {
 		const int hexsz = the_hash_algo->hexsz;
-		string_list_sort(&names);
 		for_each_string_list_item(item, &existing_nonkept_packs) {
 			char *sha1;
 			size_t len = strlen(item->string);
