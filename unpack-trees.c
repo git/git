@@ -1840,6 +1840,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	o->result.fsmonitor_last_update =
 		xstrdup_or_null(o->src_index->fsmonitor_last_update);
+	o->result.fsmonitor_has_run_once = o->src_index->fsmonitor_has_run_once;
 
 	if (!o->src_index->initialized &&
 	    !repo->settings.command_requires_full_index &&
