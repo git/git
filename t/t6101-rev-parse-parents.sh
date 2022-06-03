@@ -8,6 +8,7 @@ test_description='Test git rev-parse with different parent options'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 test_cmp_rev_output () {
@@ -25,6 +26,7 @@ test_expect_success 'setup' '
 	git merge -m next --allow-unrelated-histories start2 &&
 	test_commit final &&
 
+	mkdir .git/info &&
 	test_seq 40 |
 	while read i
 	do

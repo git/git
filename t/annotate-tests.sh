@@ -149,7 +149,7 @@ test_expect_success 'blame evil merge' '
 
 test_expect_success 'blame huge graft' '
 	test_when_finished "git checkout branch2" &&
-	test_when_finished "rm -f .git/info/grafts" &&
+	test_when_finished "rm -rf .git/info" &&
 	graft= &&
 	for i in 0 1 2
 	do
@@ -164,6 +164,7 @@ test_expect_success 'blame huge graft' '
 			graft="$graft$commit " || return 1
 		done
 	done &&
+	mkdir .git/info &&
 	printf "%s " $graft >.git/info/grafts &&
 	check_count -h 00 01 1 10 1
 '
