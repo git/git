@@ -1810,21 +1810,17 @@ static int should_process_cmd(struct command *cmd)
 	return !cmd->error_string && !cmd->skip_update;
 }
 
-static void warn_if_skipped_connectivity_check(struct command *commands,
+static void BUG_if_skipped_connectivity_check(struct command *commands,
 					       struct shallow_info *si)
 {
 	struct command *cmd;
-	int checked_connectivity = 1;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (should_process_cmd(cmd) && si->shallow_ref[cmd->index]) {
-			error("BUG: connectivity check has not been run on ref %s",
-			      cmd->ref_name);
-			checked_connectivity = 0;
-		}
+		if (should_process_cmd(cmd) && si->shallow_ref[cmd->index])
+			bug("connectivity check has not been run on ref %s",
+			    cmd->ref_name);
 	}
-	if (!checked_connectivity)
-		BUG("connectivity check skipped???");
+	BUG_if_bug("connectivity check skipped???");
 }
 
 static void execute_commands_non_atomic(struct command *commands,
@@ -2005,7 +2001,7 @@ static void execute_commands(struct command *commands,
 		execute_commands_non_atomic(commands, si);
 
 	if (shallow_update)
-		warn_if_skipped_connectivity_check(commands, si);
+		BUG_if_skipped_connectivity_check(commands, si);
 }
 
 static struct command **queue_command(struct command **tail,
