@@ -87,7 +87,7 @@ test_expect_success 'conflicting entries written to worktree even if sparse' '
 		test_path_is_file numerals &&
 
 		git sparse-checkout init &&
-		git sparse-checkout set README &&
+		git sparse-checkout set --no-cone README &&
 
 		test_path_is_file README &&
 		test_path_is_missing numerals &&
@@ -123,7 +123,7 @@ test_expect_success 'present-despite-SKIP_WORKTREE handled reasonably' '
 		test_path_is_file numerals &&
 
 		git sparse-checkout init &&
-		git sparse-checkout set README &&
+		git sparse-checkout set --no-cone README &&
 
 		test_path_is_file README &&
 		test_path_is_missing numerals &&

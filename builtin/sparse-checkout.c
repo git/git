@@ -395,7 +395,7 @@ static int update_modes(int *cone_mode, int *sparse_index)
 
 	/* Set cone/non-cone mode appropriately */
 	core_apply_sparse_checkout = 1;
-	if (*cone_mode == 1) {
+	if (*cone_mode == 1 || *cone_mode == -1) {
 		mode = MODE_CONE_PATTERNS;
 		core_sparse_checkout_cone = 1;
 	} else {
