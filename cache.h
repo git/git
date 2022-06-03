@@ -310,6 +310,29 @@ struct untracked_cache;
 struct progress;
 struct pattern_list;
 
+enum sparse_index_mode {
+	/*
+	 * There are no sparse directories in the index at all.
+	 *
+	 * Repositories that don't use cone-mode sparse-checkout will
+	 * always have their indexes in this mode.
+	 */
+	INDEX_EXPANDED = 0,
+
+	/*
+	 * The index has already been collapsed to sparse directories
+	 * whereever possible.
+	 */
+	INDEX_COLLAPSED,
+
+	/*
+	 * The sparse directories that exist are outside the
+	 * sparse-checkout boundary, but it is possible that some file
+	 * entries could collapse to sparse directory entries.
+	 */
+	INDEX_PARTIALLY_SPARSE,
+};
+
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int version;
@@ -323,14 +346,8 @@ struct index_state {
 		 drop_cache_tree : 1,
 		 updated_workdir : 1,
 		 updated_skipworktree : 1,
-		 fsmonitor_has_run_once : 1,
-
-		 /*
-		  * sparse_index == 1 when sparse-directory
-		  * entries exist. Requires sparse-checkout
-		  * in cone mode.
-		  */
-		 sparse_index : 1;
+		 fsmonitor_has_run_once : 1;
+	enum sparse_index_mode sparse_index;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
 	struct object_id oid;
