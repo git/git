@@ -3,6 +3,7 @@
 test_description=check-ignore
 
 TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 init_vars () {
@@ -225,6 +226,7 @@ test_expect_success 'setup' '
 		!globaltwo
 		globalthree
 	EOF
+	mkdir .git/info &&
 	cat <<-\EOF >.git/info/exclude
 		per-repo
 	EOF

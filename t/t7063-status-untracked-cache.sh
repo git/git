@@ -86,7 +86,7 @@ test_expect_success 'core.untrackedCache is unset' '
 '
 
 test_expect_success 'setup' '
-	git init worktree &&
+	git init --template= worktree &&
 	cd worktree &&
 	mkdir done dtwo dthree &&
 	touch one two three done/one dtwo/two dthree/three &&
@@ -94,6 +94,7 @@ test_expect_success 'setup' '
 	test-tool chmtime =-300 done dtwo dthree &&
 	test-tool chmtime =-300 . &&
 	git add one two done/one &&
+	mkdir .git/info &&
 	: >.git/info/exclude &&
 	git update-index --untracked-cache &&
 	test_oid_cache <<-EOF

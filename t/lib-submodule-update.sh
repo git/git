@@ -207,7 +207,7 @@ prolog () {
 # should be updated to an existing commit.
 reset_work_tree_to () {
 	rm -rf submodule_update &&
-	git clone submodule_update_repo submodule_update &&
+	git clone --template= submodule_update_repo submodule_update &&
 	(
 		cd submodule_update &&
 		rm -rf sub1 &&
@@ -902,13 +902,14 @@ test_submodule_switch_recursing_with_args () {
 	'
 	# ... but an ignored file is fine.
 	test_expect_$RESULTOI "$command: added submodule removes an untracked ignored file" '
-		test_when_finished "rm submodule_update/.git/info/exclude" &&
+		test_when_finished "rm -rf submodule_update/.git/info" &&
 		prolog &&
 		reset_work_tree_to_interested no_submodule &&
 		(
 			cd submodule_update &&
 			git branch -t add_sub1 origin/add_sub1 &&
 			: >sub1 &&
+			mkdir .git/info &&
 			echo sub1 >.git/info/exclude &&
 			$command add_sub1 &&
 			test_superproject_content origin/add_sub1 &&
@@ -951,7 +952,9 @@ test_submodule_switch_recursing_with_args () {
 		reset_work_tree_to_interested add_sub1 &&
 		(
 			cd submodule_update &&
+			rm -rf .git/modules/sub1/info &&
 			git branch -t replace_sub1_with_file origin/replace_sub1_with_file &&
+			mkdir .git/modules/sub1/info &&
 			echo ignored >.git/modules/sub1/info/exclude &&
 			: >sub1/ignored &&
 			$command replace_sub1_with_file &&
