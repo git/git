@@ -6,6 +6,7 @@ This test verifies the recurse-submodules feature correctly greps across
 submodules.
 '
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
@@ -471,8 +472,10 @@ test_expect_failure 'grep --textconv: superproject .gitattributes (from index) d
 test_expect_failure 'grep --textconv: superproject .git/info/attributes does not affect submodules' '
 	reset_and_clean &&
 	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
-	super_attr="$(git rev-parse --git-path info/attributes)" &&
+	super_info="$(git rev-parse --git-path info)" &&
+	super_attr="$super_info/attributes" &&
 	test_when_finished "rm -f \"$super_attr\"" &&
+	mkdir "$super_info" &&
 	echo "a diff=d2x" >"$super_attr" &&
 
 	cat >expect <<-\EOF &&
@@ -516,7 +519,8 @@ test_expect_failure 'grep --textconv correctly reads submodule .git/info/attribu
 	reset_and_clean &&
 	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
 
-	submodule_attr="$(git -C submodule rev-parse --path-format=absolute --git-path info/attributes)" &&
+	submodule_info="$(git -C submodule rev-parse --path-format=absolute --git-path info)" &&
+	submodule_attr="$submodule_info/attributes" &&
 	test_when_finished "rm -f \"$submodule_attr\"" &&
 	echo "a diff=d2x" >"$submodule_attr" &&
 
