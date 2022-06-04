@@ -1183,9 +1183,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
 		if (!(action == ACTION_ABORT) && is_directory(buf.buf)) {
-			die("`rebase --preserve-merges` (-p) is no longer supported.\n"
+			die(_("`rebase --preserve-merges` (-p) is no longer supported.\n"
 			"Use `git rebase --abort` to terminate current rebase.\n"
-			"Or downgrade to v2.33, or earlier, to complete the rebase.");
+			"Or downgrade to v2.33, or earlier, to complete the rebase."));
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
