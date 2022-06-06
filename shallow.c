@@ -97,6 +97,13 @@ int commit_shallow_file(struct repository *r, struct shallow_lock *lk)
 {
 	int res = commit_lock_file(&lk->lock);
 	reset_repository_shallow(r);
+
+	/*
+	 * Update in-memory data structures with the new shallow information,
+	 * including unparsing all commits that now have grafts.
+	 */
+	is_repository_shallow(r);
+
 	return res;
 }
 
