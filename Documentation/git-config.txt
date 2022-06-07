@@ -341,6 +341,7 @@ specifying the path of a file with the `--file` option, or by specifying a
 configuration scope with `--system`, `--global`, `--local`, or `--worktree`.
 For more, see <<OPTIONS>> above.
 
+[[SCOPES]]
 SCOPES
 ------
 
@@ -378,6 +379,18 @@ configuration file). See <<OPTIONS>> above for a complete description.
 Most configuration options are respected regardless of the scope it is
 defined in, but some options are only respected in certain scopes. See the
 respective option's documentation for the full details.
+
+Protected configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Protected configuration refers to the 'system', 'global', and 'command' scopes.
+For security reasons, certain options are only respected when they are
+specified in protected configuration, and ignored otherwise.
+
+Git treats these scopes as if they are controlled by the user or a trusted
+administrator. This is because an attacker who controls these scopes can do
+substantial harm without using Git, so it is assumed that the user's environment
+protects these scopes against attackers.
 
 [[ENVIRONMENT]]
 ENVIRONMENT
