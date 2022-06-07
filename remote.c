@@ -146,7 +146,7 @@ static void remote_clear(struct remote *remote)
 
 	for (i = 0; i < remote->url_nr; i++)
 		free((char *)remote->url[i]);
-	FREE_AND_NULL(remote->pushurl);
+	FREE_AND_NULL(remote->url);
 
 	for (i = 0; i < remote->pushurl_nr; i++)
 		free((char *)remote->pushurl[i]);
