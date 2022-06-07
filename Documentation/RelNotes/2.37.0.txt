@@ -77,6 +77,8 @@ Performance, Internal Implementation, Development Support etc.
    no longer version controlled and it is local responsibility of
    translaters to generate it.
 
+ * Plug the memory leaks from the trickiest API of all, the revision
+   walker.
 
 
 Fixes since v2.36
@@ -232,6 +234,16 @@ Fixes since v2.36
    avoid corrupting the repository when packsize limit is used.
    (merge 66731ff921 tb/geom-repack-with-keep-and-max later to maint).
 
+ * The documentation on the interaction between "--add-file" and
+   "--prefix" options of "git archive" has been improved.
+   (merge a75910602a rs/document-archive-prefix later to maint).
+
+ * A git subcommand like "git add -p" spawns a separate git process
+   while relaying its command line arguments.  A pathspec with only
+   negative elements was mistakenly passed with an empty string, which
+   has been corrected.
+   (merge b02fdbc80a jc/all-negative-pathspec later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
@@ -252,3 +264,4 @@ Fixes since v2.36
    (merge af845a604d tb/receive-pack-code-cleanup later to maint).
    (merge 2acf4cf001 js/ci-gcc-12-fixes later to maint).
    (merge 05e280c0a6 jc/http-clear-finished-pointer later to maint).
+   (merge 8c49d704ef fh/transport-push-leakfix later to maint).
