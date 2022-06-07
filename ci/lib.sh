@@ -1,5 +1,50 @@
 # Library of functions shared by all CI scripts
 
+if test true != "$GITHUB_ACTIONS"
+then
+	begin_group () { :; }
+	end_group () { :; }
+
+	group () {
+		shift
+		"$@"
+	}
+	set -x
+else
+	begin_group () {
+		need_to_end_group=t
+		echo "::group::$1" >&2
+		set -x
+	}
+
+	end_group () {
+		test -n "$need_to_end_group" || return 0
+		set +x
+		need_to_end_group=
+		echo '::endgroup::' >&2
+	}
+	trap end_group EXIT
+
+	group () {
+		set +x
+		begin_group "$1"
+		shift
+		"$@"
+		res=$?
+		end_group
+		return $res
+	}
+
+	begin_group "CI setup"
+fi
+
+# Set 'exit on error' for all CI scripts to let the caller know that
+# something went wrong.
+#
+# We already enabled tracing executed commands earlier. This helps by showing
+# how # environment variables are set and and dependencies are installed.
+set -e
+
 skip_branch_tip_with_tag () {
 	# Sometimes, a branch is pushed at the same time the tag that points
 	# at the same commit as the tip of the branch is pushed, and building
@@ -69,8 +114,7 @@ skip_good_tree () {
 	exit 0
 }
 
-check_unignored_build_artifacts ()
-{
+check_unignored_build_artifacts () {
 	! git ls-files --other --exclude-standard --error-unmatch \
 		-- ':/*' 2>/dev/null ||
 	{
@@ -79,17 +123,15 @@ check_unignored_build_artifacts ()
 	}
 }
 
+handle_failed_tests () {
+	return 1
+}
+
 # GitHub Action doesn't set TERM, which is required by tput
 export TERM=${TERM:-dumb}
 
 # Clear MAKEFLAGS that may come from the outside world.
 export MAKEFLAGS=
-
-# Set 'exit on error' for all CI scripts to let the caller know that
-# something went wrong.
-# Set tracing executed commands, primarily setting environment variables
-# and installing dependencies.
-set -ex
 
 if test -n "$SYSTEM_COLLECTIONURI" || test -n "$SYSTEM_TASKDEFINITIONSURI"
 then
@@ -124,11 +166,31 @@ then
 	CI_JOB_ID="$GITHUB_RUN_ID"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
+	handle_failed_tests () {
+		mkdir -p t/failed-test-artifacts
+		echo "FAILED_TEST_ARTIFACTS=t/failed-test-artifacts" >>$GITHUB_ENV
+
+		for test_exit in t/test-results/*.exit
+		do
+			test 0 != "$(cat "$test_exit")" || continue
+
+			test_name="${test_exit%.exit}"
+			test_name="${test_name##*/}"
+			printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
+			echo "The full logs are in the artifacts attached to this run."
+			cat "t/test-results/$test_name.markup"
+
+			trash_dir="t/trash directory.$test_name"
+			cp "t/test-results/$test_name.out" t/failed-test-artifacts/
+			tar czf t/failed-test-artifacts/"$test_name".trash.tar.gz "$trash_dir"
+		done
+		return 1
+	}
 
 	cache_dir="$HOME/none"
 
 	export GIT_PROVE_OPTS="--timer --jobs 10"
-	export GIT_TEST_OPTS="--verbose-log -x"
+	export GIT_TEST_OPTS="--verbose-log -x --github-workflow-markup"
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows != "$CI_OS_NAME" ||
 	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
@@ -211,3 +273,6 @@ linux-leaks)
 esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
+
+end_group
+set -x
