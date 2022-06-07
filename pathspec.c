@@ -629,7 +629,7 @@ void parse_pathspec(struct pathspec *pathspec,
 	 */
 	if (nr_exclude == n) {
 		int plen = (!(flags & PATHSPEC_PREFER_CWD)) ? 0 : prefixlen;
-		init_pathspec_item(item + n, 0, prefix, plen, "");
+		init_pathspec_item(item + n, 0, prefix, plen, ".");
 		pathspec->nr++;
 	}
 
