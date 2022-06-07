@@ -116,8 +116,6 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 			N_("option for merge strategy"), option_parse_x),
 		{ OPTION_STRING, 'S', "gpg-sign", &opts->gpg_sign, N_("key-id"),
 		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_BOOL(0, "reference", &opts->commit_use_reference,
-			 N_("use the 'reference' format to refer to commits")),
 		OPT_END()
 	};
 	struct option *options = base_options;
@@ -129,6 +127,13 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 			OPT_BOOL(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty commits")),
 			OPT_BOOL(0, "allow-empty-message", &opts->allow_empty_message, N_("allow commits with empty messages")),
 			OPT_BOOL(0, "keep-redundant-commits", &opts->keep_redundant_commits, N_("keep redundant, empty commits")),
+			OPT_END(),
+		};
+		options = parse_options_concat(options, cp_extra);
+	} else if (opts->action == REPLAY_REVERT) {
+		struct option cp_extra[] = {
+			OPT_BOOL(0, "reference", &opts->commit_use_reference,
+				 N_("use the 'reference' format to refer to commits")),
 			OPT_END(),
 		};
 		options = parse_options_concat(options, cp_extra);
