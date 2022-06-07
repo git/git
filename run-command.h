@@ -406,6 +406,9 @@ void check_pipe(int err);
  * pp_cb is the callback cookie as passed to run_processes_parallel.
  * You can store a child process specific callback cookie in pp_task_cb.
  *
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
+ *
  * Even after returning 0 to indicate that there are no more processes,
  * this function will be called again until there are no more running
  * child processes.
@@ -424,9 +427,8 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * This callback is called whenever there are problems starting
  * a new process.
  *
- * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf out instead, which will be printed without
- * messing up the output of the other parallel processes.
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
  * pp_task_cb is the callback cookie as passed into get_next_task_fn.
@@ -442,9 +444,8 @@ typedef int (*start_failure_fn)(struct strbuf *out,
 /**
  * This callback is called on every child process that finished processing.
  *
- * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf out instead, which will be printed without
- * messing up the output of the other parallel processes.
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
  * pp_task_cb is the callback cookie as passed into get_next_task_fn.
@@ -465,11 +466,26 @@ typedef int (*task_finished_fn)(int result,
  *
  * The children started via this function run in parallel. Their output
  * (both stdout and stderr) is routed to stderr in a manner that output
- * from different tasks does not interleave.
+ * from different tasks does not interleave (but see "ungroup" below).
  *
  * start_failure_fn and task_finished_fn can be NULL to omit any
  * special handling.
+ *
+ * If the "ungroup" option isn't specified, the API will set the
+ * "stdout_to_stderr" parameter in "struct child_process" and provide
+ * the callbacks with a "struct strbuf *out" parameter to write output
+ * to. In this case the callbacks must not write to stdout or
+ * stderr as such output will mess up the output of the other parallel
+ * processes. If "ungroup" option is specified callbacks will get a
+ * NULL "struct strbuf *out" parameter, and are responsible for
+ * emitting their own output, including dealing with any race
+ * conditions due to writing in parallel to stdout and stderr.
+ * The "ungroup" option can be enabled by setting the global
+ * "run_processes_parallel_ungroup" to "1" before invoking
+ * run_processes_parallel(), it will be set back to "0" as soon as the
+ * API reads that setting.
  */
+extern int run_processes_parallel_ungroup;
 int run_processes_parallel(int n,
 			   get_next_task_fn,
 			   start_failure_fn,
