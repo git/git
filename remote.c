@@ -144,14 +144,12 @@ static void remote_clear(struct remote *remote)
 	free((char *)remote->name);
 	free((char *)remote->foreign_vcs);
 
-	for (i = 0; i < remote->url_nr; i++) {
+	for (i = 0; i < remote->url_nr; i++)
 		free((char *)remote->url[i]);
-	}
 	FREE_AND_NULL(remote->pushurl);
 
-	for (i = 0; i < remote->pushurl_nr; i++) {
+	for (i = 0; i < remote->pushurl_nr; i++)
 		free((char *)remote->pushurl[i]);
-	}
 	FREE_AND_NULL(remote->pushurl);
 	free((char *)remote->receivepack);
 	free((char *)remote->uploadpack);
@@ -2717,9 +2715,8 @@ void remote_state_clear(struct remote_state *remote_state)
 {
 	int i;
 
-	for (i = 0; i < remote_state->remotes_nr; i++) {
+	for (i = 0; i < remote_state->remotes_nr; i++)
 		remote_clear(remote_state->remotes[i]);
-	}
 	FREE_AND_NULL(remote_state->remotes);
 	remote_state->remotes_alloc = 0;
 	remote_state->remotes_nr = 0;
