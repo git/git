@@ -517,6 +517,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 
 	traverse_commit_list(&revs, process_commit, process_object, &pcd);
 	reset_revision_walk();
+	release_revisions(&revs);
 }
 
 static void describe(const char *arg, int last_one)
@@ -667,6 +668,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				suffix = NULL;
 			else
 				suffix = dirty;
+			release_revisions(&revs);
 		}
 		describe("HEAD", 1);
 	} else if (dirty) {
