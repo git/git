@@ -248,7 +248,7 @@ Valid `<type>`'s include:
 --show-scope::
 	Similar to `--show-origin` in that it augments the output of
 	all queried config options with the scope of that value
-	(local, global, system, command).
+	(worktree, local, global, system, command).
 
 --get-colorbool <name> [<stdout-is-tty>]::
 
