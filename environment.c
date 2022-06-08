@@ -273,7 +273,7 @@ const char *get_git_work_tree(void)
 	return the_repository->worktree;
 }
 
-char *get_object_directory(void)
+const char *get_object_directory(void)
 {
 	if (!the_repository->objects->odb)
 		BUG("git environment hasn't been setup");
