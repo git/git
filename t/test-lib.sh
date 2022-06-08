@@ -535,9 +535,10 @@ case $GIT_TEST_FSYNC in
 	;;
 esac
 
-# Add libc MALLOC and MALLOC_PERTURB test
-# only if we are not executing the test with valgrind
+# Add libc MALLOC and MALLOC_PERTURB test only if we are not executing
+# the test with valgrind and have not compiled with SANITIZE=address.
 if test -n "$valgrind" ||
+   test -n "$SANITIZE_ADDRESS" ||
    test -n "$TEST_NO_MALLOC_CHECK"
 then
 	setup_malloc_check () {
