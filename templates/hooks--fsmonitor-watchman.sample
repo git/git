@@ -86,12 +86,13 @@ sub watchman_query {
 	# recency index to select candidate nodes and "fields" to limit the
 	# output to file names only. Then we're using the "expression" term to
 	# further constrain the results.
+	my $last_update_line = "";
 	if (substr($last_update_token, 0, 1) eq "c") {
 		$last_update_token = "\"$last_update_token\"";
+		$last_update_line = qq[\n"since": $last_update_token,];
 	}
 	my $query = <<"	END";
-		["query", "$git_work_tree", {
-			"since": $last_update_token,
+		["query", "$git_work_tree", {$last_update_line
 			"fields": ["name"],
 			"expression": ["not", ["dirname", ".git"]]
 		}]
