@@ -1327,7 +1327,6 @@ void print_commit_summary(struct repository *r,
 	get_commit_format(format.buf, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = DIFF_DETECT_RENAME;
-	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
 	refs = get_main_ref_store(the_repository);
