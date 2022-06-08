@@ -2671,6 +2671,22 @@ static PSID get_current_user_sid(void)
 	return result;
 }
 
+static int acls_supported(const char *path)
+{
+	size_t offset = offset_1st_component(path);
+	WCHAR wroot[MAX_PATH];
+	DWORD file_system_flags;
+
+	if (offset &&
+	    xutftowcs_path_ex(wroot, path, MAX_PATH, offset,
+			      MAX_PATH, 0) > 0 &&
+	    GetVolumeInformationW(wroot, NULL, 0, NULL, NULL,
+				  &file_system_flags, NULL, 0))
+		return !!(file_system_flags & FILE_PERSISTENT_ACLS);
+
+	return 0;
+}
+
 int is_path_owned_by_current_sid(const char *path)
 {
 	WCHAR wpath[MAX_PATH];
@@ -2728,7 +2744,14 @@ int is_path_owned_by_current_sid(const char *path)
 			 * okay, too.
 			 */
 			result = 1;
-		else if (git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0)) {
+		else if (IsWellKnownSid(sid, WinWorldSid) &&
+			 git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0) &&
+			 !acls_supported(path)) {
+			/*
+			 * On FAT32 volumes, ownership is not actually recorded.
+			 */
+			warning("'%s' is on a file system that does not record ownership", path);
+		} else if (git_env_bool("GIT_TEST_DEBUG_UNSAFE_DIRECTORIES", 0)) {
 			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
 
 			if (ConvertSidToStringSidA(sid, &str1))
