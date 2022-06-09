@@ -242,10 +242,7 @@ cmd_update()
 	do
 		case "$1" in
 		-q|--quiet)
-			GIT_QUIET=1
-			;;
-		-v)
-			unset GIT_QUIET
+			opts="$opts $1"
 			;;
 		--progress)
 			opts="$opts $1"
@@ -339,7 +336,6 @@ cmd_update()
 	done
 
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
-		${GIT_QUIET:+--quiet} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		$opts \
