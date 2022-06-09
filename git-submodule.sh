@@ -238,7 +238,6 @@ cmd_update()
 {
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
 		${wt_prefix:+--prefix "$wt_prefix"} \
-		${prefix:+--recursive-prefix "$prefix"} \
 		"$@"
 }
 
