@@ -296,10 +296,10 @@ cmd_update()
 			update="checkout"
 			;;
 		--recommend-shallow)
-			recommend_shallow="--recommend-shallow"
+			opts="$opts $1"
 			;;
 		--no-recommend-shallow)
-			recommend_shallow="--no-recommend-shallow"
+			opts="$opts $1"
 			;;
 		--depth)
 			case "$2" in '') usage ;; esac
@@ -318,10 +318,10 @@ cmd_update()
 			jobs=$1
 			;;
 		--single-branch)
-			single_branch="--single-branch"
+			opts="$opts $1"
 			;;
 		--no-single-branch)
-			single_branch="--no-single-branch"
+			opts="$opts $1"
 			;;
 		--filter)
 			case "$2" in '') usage ;; esac
@@ -354,8 +354,6 @@ cmd_update()
 		${reference:+"$reference"} \
 		${depth:+"$depth"} \
 		${require_init:+--require-init} \
-		$single_branch \
-		$recommend_shallow \
 		$jobs \
 		$filter \
 		$opts \
