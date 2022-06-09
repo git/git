@@ -32,7 +32,6 @@ export GIT_PROTOCOL_FROM_USER
 command=
 branch=
 force=
-reference=
 cached=
 recursive=
 init=
@@ -44,8 +43,6 @@ custom_name=
 depth=
 progress=
 dissociate=
-jobs=
-filter=
 
 isnumber()
 {
@@ -277,11 +274,11 @@ cmd_update()
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
-			reference="--reference=$2"
+			opts="$opts $1 $2"
 			shift
 			;;
 		--reference=*)
-			reference="$1"
+			opts="$opts $1"
 			;;
 		--dissociate)
 			opts="$opts $1"
@@ -303,19 +300,19 @@ cmd_update()
 			;;
 		--depth)
 			case "$2" in '') usage ;; esac
-			depth="--depth=$2"
+			opts="$opts $1 $2"
 			shift
 			;;
 		--depth=*)
-			depth=$1
+			opts="$opts $1"
 			;;
 		-j|--jobs)
 			case "$2" in '') usage ;; esac
-			jobs="--jobs=$2"
+			opts="$opts $1 $2"
 			shift
 			;;
 		--jobs=*)
-			jobs=$1
+			opts="$opts $1"
 			;;
 		--single-branch)
 			opts="$opts $1"
@@ -325,11 +322,11 @@ cmd_update()
 			;;
 		--filter)
 			case "$2" in '') usage ;; esac
-			filter="--filter=$2"
+			opts="$opts $1 $2"
 			shift
 			;;
 		--filter=*)
-			filter="$1"
+			opts="$opts $1"
 			;;
 		--)
 			shift
@@ -351,11 +348,7 @@ cmd_update()
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		${update:+--update "$update"} \
-		${reference:+"$reference"} \
-		${depth:+"$depth"} \
 		${require_init:+--require-init} \
-		$jobs \
-		$filter \
 		$opts \
 		-- \
 		"$@"
