@@ -38,17 +38,13 @@ recursive=
 init=
 require_init=
 files=
-remote=
-nofetch=
 update=
 prefix=
 custom_name=
 depth=
 progress=
 dissociate=
-single_branch=
 jobs=
-recommend_shallow=
 filter=
 
 isnumber()
@@ -246,6 +242,7 @@ cmd_deinit()
 #
 cmd_update()
 {
+	opts=
 	# parse $args after "submodule ... update".
 	while test $# -ne 0
 	do
@@ -257,7 +254,7 @@ cmd_update()
 			unset GIT_QUIET
 			;;
 		--progress)
-			progress=1
+			opts="$opts $1"
 			;;
 		-i|--init)
 			init=1
@@ -267,13 +264,13 @@ cmd_update()
 			require_init=1
 			;;
 		--remote)
-			remote=1
+			opts="$opts $1"
 			;;
 		-N|--no-fetch)
-			nofetch=1
+			opts="$opts $1"
 			;;
 		-f|--force)
-			force=$1
+			opts="$opts $1"
 			;;
 		-r|--rebase)
 			update="rebase"
@@ -287,13 +284,13 @@ cmd_update()
 			reference="$1"
 			;;
 		--dissociate)
-			dissociate=1
+			opts="$opts $1"
 			;;
 		-m|--merge)
 			update="merge"
 			;;
 		--recursive)
-			recursive=1
+			opts="$opts $1"
 			;;
 		--checkout)
 			update="checkout"
@@ -350,24 +347,18 @@ cmd_update()
 
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
 		${GIT_QUIET:+--quiet} \
-		${force:+--force} \
-		${progress:+"--progress"} \
-		${remote:+--remote} \
-		${recursive:+--recursive} \
 		${init:+--init} \
-		${nofetch:+--no-fetch} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		${update:+--update "$update"} \
 		${reference:+"$reference"} \
-		${dissociate:+"--dissociate"} \
 		${depth:+"$depth"} \
 		${require_init:+--require-init} \
-		${dissociate:+"--dissociate"} \
 		$single_branch \
 		$recommend_shallow \
 		$jobs \
 		$filter \
+		$opts \
 		-- \
 		"$@"
 }
