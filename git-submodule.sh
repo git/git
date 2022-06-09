@@ -34,8 +34,6 @@ branch=
 force=
 cached=
 recursive=
-init=
-require_init=
 files=
 update=
 prefix=
@@ -254,11 +252,10 @@ cmd_update()
 			opts="$opts $1"
 			;;
 		-i|--init)
-			init=1
+			opts="$opts $1"
 			;;
 		--require-init)
-			init=1
-			require_init=1
+			opts="$opts $1"
 			;;
 		--remote)
 			opts="$opts $1"
@@ -344,11 +341,9 @@ cmd_update()
 
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper update \
 		${GIT_QUIET:+--quiet} \
-		${init:+--init} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		${update:+--update "$update"} \
-		${require_init:+--require-init} \
 		$opts \
 		-- \
 		"$@"
