@@ -35,7 +35,6 @@ force=
 cached=
 recursive=
 files=
-update=
 prefix=
 custom_name=
 depth=
@@ -267,7 +266,7 @@ cmd_update()
 			opts="$opts $1"
 			;;
 		-r|--rebase)
-			update="rebase"
+			opts="$opts $1"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -281,13 +280,13 @@ cmd_update()
 			opts="$opts $1"
 			;;
 		-m|--merge)
-			update="merge"
+			opts="$opts $1"
 			;;
 		--recursive)
 			opts="$opts $1"
 			;;
 		--checkout)
-			update="checkout"
+			opts="$opts $1"
 			;;
 		--recommend-shallow)
 			opts="$opts $1"
@@ -343,7 +342,6 @@ cmd_update()
 		${GIT_QUIET:+--quiet} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
-		${update:+--update "$update"} \
 		$opts \
 		-- \
 		"$@"

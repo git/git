@@ -1818,7 +1818,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 static void determine_submodule_update_strategy(struct repository *r,
 						int just_cloned,
 						const char *path,
-						const char *update,
+						enum submodule_update_type update,
 						struct submodule_update_strategy *out)
 {
 	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
@@ -1828,9 +1828,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 	key = xstrfmt("submodule.%s.update", sub->name);
 
 	if (update) {
-		if (parse_submodule_update_strategy(update, out) < 0)
-			die(_("Invalid update mode '%s' for submodule path '%s'"),
-				update, path);
+		out->type = update;
 	} else if (!repo_config_get_string_tmp(r, key, &val)) {
 		if (parse_submodule_update_strategy(val, out) < 0)
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
@@ -1882,7 +1880,6 @@ struct update_data {
 	const char *prefix;
 	const char *recursive_prefix;
 	const char *displaypath;
-	const char *update_default;
 	struct object_id suboid;
 	struct string_list references;
 	struct submodule_update_strategy update_strategy;
@@ -1892,6 +1889,7 @@ struct update_data {
 	int max_jobs;
 	int single_branch;
 	int recommend_shallow;
+	enum submodule_update_type update_default;
 	unsigned int require_init;
 	unsigned int force;
 	unsigned int quiet;
@@ -2429,8 +2427,20 @@ static void update_data_to_args(struct update_data *update_data, struct strvec *
 		strvec_push(args, "--require-init");
 	if (update_data->depth)
 		strvec_pushf(args, "--depth=%d", update_data->depth);
-	if (update_data->update_default)
-		strvec_pushl(args, "--update", update_data->update_default, NULL);
+	switch (update_data->update_default) {
+	case SM_UPDATE_MERGE:
+		strvec_push(args, "--merge");
+		break;
+	case SM_UPDATE_CHECKOUT:
+		strvec_push(args, "--checkout");
+		break;
+	case SM_UPDATE_REBASE:
+		strvec_push(args, "--rebase");
+		break;
+	default:
+		break;
+	}
+
 	if (update_data->references.nr) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, &update_data->references)
@@ -2600,9 +2610,12 @@ static int module_update(int argc, const char **argv, const char *prefix)
 			   N_("path"),
 			   N_("path into the working tree, across nested "
 			      "submodule boundaries")),
-		OPT_STRING(0, "update", &opt.update_default,
-			   N_("string"),
-			   N_("rebase, merge, checkout or none")),
+		OPT_SET_INT(0, "checkout", &opt.update_default,
+			    N_("update using checkout"), SM_UPDATE_CHECKOUT),
+		OPT_SET_INT('r', "rebase", &opt.update_default,
+			    N_("update using rebase"), SM_UPDATE_REBASE),
+		OPT_SET_INT('m', "merge", &opt.update_default,
+			    N_("update using merge"), SM_UPDATE_MERGE),
 		OPT_STRING_LIST(0, "reference", &opt.references, N_("repo"),
 			   N_("reference repository")),
 		OPT_BOOL(0, "dissociate", &opt.dissociate,
@@ -2654,9 +2667,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	opt.filter_options = &filter_options;
 
 	if (opt.update_default)
-		if (parse_submodule_update_strategy(opt.update_default,
-						    &opt.update_strategy) < 0)
-			die(_("bad value for update parameter"));
+		opt.update_strategy.type = opt.update_default;
 
 	if (module_list_compute(argc, argv, prefix, &pathspec, &opt.list) < 0) {
 		list_objects_filter_release(&filter_options);
