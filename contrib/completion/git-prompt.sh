@@ -556,19 +556,19 @@ __git_ps1 ()
 		fi
 	fi
 
-	b=${b##refs/heads/}
 	local z="${GIT_PS1_STATESEPARATOR-" "}"
+
+	b=${b##refs/heads/}
+	if [ $pcmode = yes ] && [ $ps1_expanded = yes ]; then
+		__git_ps1_branch_name=$b
+		b="\${__git_ps1_branch_name}"
+	fi
 
 	# NO color option unless in PROMPT_COMMAND mode or it's Zsh
 	if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
 		if [ $pcmode = yes ] || [ -n "${ZSH_VERSION-}" ]; then
 			__git_ps1_colorize_gitstring
 		fi
-	fi
-
-	if [ $pcmode = yes ] && [ $ps1_expanded = yes ]; then
-		__git_ps1_branch_name=$b
-		b="\${__git_ps1_branch_name}"
 	fi
 
 	local f="$h$w$i$s$u$p"
