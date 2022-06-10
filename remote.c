@@ -196,9 +196,6 @@ static struct branch *find_branch(struct remote_state *remote_state,
 	struct branches_hash_key lookup;
 	struct hashmap_entry lookup_entry, *e;
 
-	if (!len)
-		len = strlen(name);
-
 	lookup.str = name;
 	lookup.len = len;
 	hashmap_entry_init(&lookup_entry, memhash(name, len));
@@ -215,7 +212,8 @@ static void die_on_missing_branch(struct repository *repo,
 {
 	/* branch == NULL is always valid because it represents detached HEAD. */
 	if (branch &&
-	    branch != find_branch(repo->remote_state, branch->name, 0))
+	    branch != find_branch(repo->remote_state, branch->name,
+				  strlen(branch->name)))
 		die("branch %s was not found in the repository", branch->name);
 }
 
@@ -355,8 +353,12 @@ static int handle_config(const char *key, const char *value, void *cb)
 	struct remote_state *remote_state = cb;
 
 	if (parse_config_key(key, "branch", &name, &namelen, &subkey) >= 0) {
+		/* There is no subsection. */
 		if (!name)
 			return 0;
+		/* There is a subsection, but it is empty. */
+		if (!namelen)
+			return -1;
 		branch = make_branch(remote_state, name, namelen);
 		if (!strcmp(subkey, "remote")) {
 			return git_config_string(&branch->remote_name, key, value);
