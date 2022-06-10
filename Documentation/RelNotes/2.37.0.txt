@@ -52,6 +52,8 @@ UI, Workflows & Features
    instead of ejecting them into loose form to be reclaimed later, has
    been introduced.
 
+ * Update the doctype written in gitweb output to xhtml5.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -79,6 +81,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Plug the memory leaks from the trickiest API of all, the revision
    walker.
+
+ * Rename .env_array member to .env in the child_process structure.
+
+ * More fsmonitor--daemon.
+
+ * A new bug() and BUG_if_bug() API is introduced to make it easier to
+   uniformly log "detect multiple bugs and abort in the end" pattern.
 
 
 Fixes since v2.36
@@ -243,6 +252,15 @@ Fixes since v2.36
    negative elements was mistakenly passed with an empty string, which
    has been corrected.
    (merge b02fdbc80a jc/all-negative-pathspec later to maint).
+
+ * With a more targetted workaround in http.c in another topic, we may
+   be able to lift this blanket "GCC12 dangling-pointer warning is
+   broken and unsalvageable" workaround.
+   (merge 419141e495 cb/buggy-gcc-12-workaround later to maint).
+
+ * A misconfigured 'branch..remote' led to a bug in configuration
+   parsing.
+   (merge f1dfbd9ee0 gc/zero-length-branch-config-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
