@@ -37,7 +37,7 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
-      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
         with:
           flavor: build-installers
       - name: Clone build-extra
@@ -131,7 +131,7 @@ jobs:
           git config --global user.name "$USER_NAME" &&
           git config --global user.email "$USER_EMAIL" &&
           echo "PACKAGER=$USER_NAME <$USER_EMAIL>" >>$GITHUB_ENV
-      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
         if: env.SKIP != 'true'
         with:
           flavor: build-installers
@@ -364,11 +364,11 @@ jobs:
         with:
           name: bundle-artifacts
           path: bundle-artifacts
-      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
         if: env.SKIP != 'true' && matrix.arch.bitness == '64'
         with:
           flavor: build-installers
-      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
         if: env.SKIP != 'true' && matrix.arch.bitness == '32'
         with:
           flavor: build-installers
@@ -480,7 +480,7 @@ jobs:
         with:
           name: bundle-artifacts
           path: bundle-artifacts
-      - uses: git-for-windows/setup-git-for-windows-sdk@v0
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
         if: env.SKIP != 'true'
         with:
           flavor: build-installers
