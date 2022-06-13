@@ -984,7 +984,8 @@ int finish_command(struct child_process *cmd)
 int finish_command_in_signal(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->args.v[0], 1);
-	trace2_child_exit(cmd, ret);
+	if (ret != -1)
+		trace2_child_exit(cmd, ret);
 	return ret;
 }
 
