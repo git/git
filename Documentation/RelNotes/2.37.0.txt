@@ -54,6 +54,9 @@ UI, Workflows & Features
 
  * Update the doctype written in gitweb output to xhtml5.
 
+ * The "fetch.credentialsInUrl" configuration variable controls what
+   happens when a URL with embedded login credential is used.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -262,6 +265,38 @@ Fixes since v2.36
    parsing.
    (merge f1dfbd9ee0 gc/zero-length-branch-config-fix later to maint).
 
+ * "git -c diff.submodule=log range-diff" did not show anything for
+   submodules that changed in the ranges being compared, and
+   "git -c diff.submodule=diff range-diff" did not work correctly.
+   Fix this by including the "--submodule=short" output
+   unconditionally to be compared.
+
+ * In Git 2.36 we revamped the way how hooks are invoked.  One change
+   that is end-user visible is that the output of a hook is no longer
+   directly connected to the standard output of "git" that spawns the
+   hook, which was noticed post release.  This is getting corrected.
+   (merge a082345372 ab/hooks-regression-fix later to maint).
+
+ * Updating the graft information invalidates the list of parents of
+   in-core commit objects that used to be in the graft file.
+
+ * "git show-ref --heads" (and "--tags") still iterated over all the
+   refs only to discard refs outside the specified area, which has
+   been corrected.
+   (merge c0c9d35e27 tb/show-ref-optim later to maint).
+
+ * Remove redundant copying (with index v3 and older) or possible
+   over-reading beyond end of mmapped memory (with index v4) has been
+   corrected.
+   (merge 6d858341d2 zh/read-cache-copy-name-entry-fix later to maint).
+
+ * Sample watchman interface hook sometimes failed to produce
+   correctly formatted JSON message, which has been corrected.
+   (merge 134047b500 sn/fsmonitor-missing-clock later to maint).
+
+ * Use-after-free (with another forget-to-free) fix.
+   (merge 323822c72b ab/remote-free-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).
    (merge 0b75e5bf22 ab/misc-cleanup later to maint).
@@ -283,3 +318,5 @@ Fixes since v2.36
    (merge 2acf4cf001 js/ci-gcc-12-fixes later to maint).
    (merge 05e280c0a6 jc/http-clear-finished-pointer later to maint).
    (merge 8c49d704ef fh/transport-push-leakfix later to maint).
+   (merge 1d232d38bd tl/ls-tree-oid-only later to maint).
+   (merge db7961e6a6 gc/document-config-worktree-scope later to maint).
