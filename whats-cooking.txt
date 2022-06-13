@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2022, #03; Fri, 10)
-X-master-at: 5699ec1b0aec51b9e9ba5a2785f65970c5a95d84
-X-next-at: 398c3b25f6b9f91c426747cd7d43f16731766a3a
+Subject: What's cooking in git.git (Jun 2022, #04; Mon, 13)
+X-master-at: 8168d5e9c23ed44ae3d604f392320d66556453c9
+X-next-at: 0611611a94d360ce329fe0f1863f779d7fab5cab
 
-What's cooking in git.git (Jun 2022, #03; Fri, 10)
+What's cooking in git.git (Jun 2022, #04; Mon, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,9 +13,15 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-This cycle will complete at around the end of June
-(https://tinyurl.com/gitCal); -rc0 and -rc1 are scheduled to happen
-next week.
+I just tagged Git 2.37-rc0, after merging some topics to the
+'master' branch.  For some topics, it is a day early (I usually try
+to have topics cook at least 7 calendar days in 'next'), but since
+tomorrow is my "offline every other Tuesday" day, I am merging them
+early, among them is a fix for another (and hopefully the last
+known) 2.36 regression.  I plan to tag -rc1 around the end of the
+week, at which time we will stop merging any new topic from the
+'next' branch down to 'master' until the final release that will
+happen around the end of the month (https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,180 +54,152 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/bug-if-bug (2022-06-02) 6 commits
-  (merged to 'next' on 2022-06-03 at 25290bb7ec)
- + cache-tree.c: use bug() and BUG_if_bug()
- + receive-pack: use bug() and BUG_if_bug()
- + parse-options.c: use optbug() instead of BUG() "opts" check
- + parse-options.c: use new bug() API for optbug()
- + usage.c: add a non-fatal bug() function to go with BUG()
- + common-main.c: move non-trace2 exit() behavior out of trace2.c
+* ab/hooks-regression-fix (2022-06-07) 2 commits
+  (merged to 'next' on 2022-06-08 at c1109feb67)
+ + hook API: fix v2.36.0 regression: hooks should be connected to a TTY
+ + run-command: add an "ungroup" option to run_process_parallel()
 
- A new bug() and BUG_if_bug() API is introduced to make it easier to
- uniformly log "detect multiple bugs and abort in the end" pattern.
- source: <cover-v3-0.6-00000000000-20220602T122106Z-avarab@gmail.com>
+ In Git 2.36 we revamped the way how hooks are invoked.  One change
+ that is end-user visible is that the output of a hook is no longer
+ directly connected to the standard output of "git" that spawns the
+ hook, which was noticed post release.  This is getting corrected.
+ source: <cover-v6-0.2-00000000000-20220606T170356Z-avarab@gmail.com>
 
 
-* ab/env-array (2022-06-02) 2 commits
-  (merged to 'next' on 2022-06-02 at e1e05318d3)
- + run-command API users: use "env" not "env_array" in comments & names
- + run-command API: rename "env_array" to "env"
+* ab/remote-free-fix (2022-06-07) 2 commits
+  (merged to 'next' on 2022-06-08 at 03c3aeaeee)
+ + remote.c: don't dereference NULL in freeing loop
+ + remote.c: remove braces from one-statement "for"-loops
 
- Rename .env_array member to .env in the child_process structure.
- source: <cover-v3-0.2-00000000000-20220602T090745Z-avarab@gmail.com>
-
-
-* cb/buggy-gcc-12-workaround (2022-06-01) 1 commit
-  (merged to 'next' on 2022-06-01 at 01e199fd58)
- + Revert -Wno-error=dangling-pointer
-
- With a more targetted workaround in http.c in another topic, we may
- be able to lift this blanket "GCC12 dangling-pointer warning is
- broken and unsalvageable" workaround.
+ Use-after-free (with another forget-to-free) fix.
+ source: <cover-0.3-00000000000-20220607T154520Z-avarab@gmail.com>
 
 
-* gc/zero-length-branch-config-fix (2022-06-01) 2 commits
-  (merged to 'next' on 2022-06-02 at 438605f627)
- + remote.c: reject 0-length branch names
- + remote.c: don't BUG() on 0-length branch names
+* ds/credentials-in-url (2022-06-06) 1 commit
+  (merged to 'next' on 2022-06-08 at 3db83a2012)
+ + remote: create fetch.credentialsInUrl config
 
- A misconfigured 'branch..remote' led to a bug in configuration
- parsing.
- source: <pull.1273.git.git.1654038754.gitgitgadget@gmail.com>
+ The "fetch.credentialsInUrl" configuration variable controls what
+ happens when a URL with embedded login credential is used.
+ source: <pull.1237.v5.git.1654526176695.gitgitgadget@gmail.com>
 
-
-* jh/builtin-fsmonitor-part3 (2022-05-26) 31 commits
-  (merged to 'next' on 2022-06-02 at 3599e359b3)
- + t7527: improve implicit shutdown testing in fsmonitor--daemon
- + fsmonitor--daemon: allow --super-prefix argument
- + t7527: test Unicode NFC/NFD handling on MacOS
- + t/lib-unicode-nfc-nfd: helper prereqs for testing unicode nfc/nfd
- + t/helper/hexdump: add helper to print hexdump of stdin
- + fsmonitor: on macOS also emit NFC spelling for NFD pathname
- + t7527: test FSMonitor on case insensitive+preserving file system
- + fsmonitor: never set CE_FSMONITOR_VALID on submodules
- + t/perf/p7527: add perf test for builtin FSMonitor
- + t7527: FSMonitor tests for directory moves
- + fsmonitor: optimize processing of directory events
- + fsm-listen-darwin: shutdown daemon if worktree root is moved/renamed
- + fsm-health-win32: force shutdown daemon if worktree root moves
- + fsm-health-win32: add polling framework to monitor daemon health
- + fsmonitor--daemon: stub in health thread
- + fsmonitor--daemon: rename listener thread related variables
- + fsmonitor--daemon: prepare for adding health thread
- + fsmonitor--daemon: cd out of worktree root
- + fsm-listen-darwin: ignore FSEvents caused by xattr changes on macOS
- + unpack-trees: initialize fsmonitor_has_run_once in o->result
- + fsmonitor-settings: NTFS and FAT32 on MacOS are incompatible
- + fsmonitor-settings: remote repos on Windows are incompatible
- + fsmonitor-settings: remote repos on macOS are incompatible
- + fsmonitor-settings: stub in macOS-specific incompatibility checking
- + fsmonitor-settings: VFS for Git virtual repos are incompatible
- + fsmonitor-settings: stub in Win32-specific incompatibility checking
- + fsmonitor-settings: bare repos are incompatible with FSMonitor
- + t/helper/fsmonitor-client: create stress test
- + t7527: test FSMonitor on repos with Unicode root paths
- + fsm-listen-win32: handle shortnames
- + Merge branch 'jh/builtin-fsmonitor-part2' into jh/builtin-fsmonitor-part3
-
- More fsmonitor--daemon.
- source: <pull.1143.v9.git.1653601644.gitgitgadget@gmail.com>
-
-
-* jy/gitweb-xhtml5 (2022-06-02) 1 commit
-  (merged to 'next' on 2022-06-02 at cc6a77b48b)
- + gitweb: switch to an XHTML5 DOCTYPE
-
- Update the doctype written in gitweb output to xhtml5.
- source: <20220602114305.5915-1-jason@jasonyundt.email>
-
---------------------------------------------------
-[New Topics]
 
 * gc/document-config-worktree-scope (2022-06-07) 1 commit
   (merged to 'next' on 2022-06-08 at 85f62a864a)
  + config: document and test the 'worktree' scope
 
  Doc update.
-
- Will merge to 'master'.
  source: <pull.1274.git.git.1654637044966.gitgitgadget@gmail.com>
 
 
-* ds/branch-checked-out (2022-06-08) 4 commits
- - branch: use branch_checked_out() when deleting refs
- - fetch: use new branch_checked_out() and add tests
- - branch: check for bisects and rebases
- - branch: add branch_checked_out() helper
+* js/wait-or-whine-can-fail (2022-06-07) 1 commit
+  (merged to 'next' on 2022-06-08 at 54fe70c95d)
+ + run-command: don't spam trace2_child_exit()
 
- Introduce a helper to see if a branch is already being worked on
- (hence should not be newly checked out in a working tree), which
- performs much better than the existing find_shared_symref() to
- replace many uses of the latter.
-
- Will merge to 'next'?
- source: <pull.1254.git.1654718942.gitgitgadget@gmail.com>
+ We used to log an error return from wait_or_whine() as process
+ termination of the waited child, which was incorrect.
+ source: <50d872a057a558fa5519856b95abd048ddb514dc.1654625626.git.steadmon@google.com>
 
 
-* fs/ssh-default-key-command-doc (2022-06-08) 1 commit
-  (merged to 'next' on 2022-06-10 at b5cc5b6619)
- + gpg docs: explain better use of ssh.defaultKeyCommand
+* jt/unparse-commit-upon-graft-change (2022-06-06) 1 commit
+  (merged to 'next' on 2022-06-08 at 3d8de84325)
+ + commit,shallow: unparse commits if grafts changed
 
- Doc update.
+ Updating the graft information invalidates the list of parents of
+ in-core commit objects that used to be in the graft file.
+ source: <20220606175437.1740447-1-jonathantanmy@google.com>
 
- Will merge to 'master'.
- source: <20220608152437.126276-1-fs@gigacodes.de>
+
+* pb/range-diff-with-submodule (2022-06-06) 1 commit
+  (merged to 'next' on 2022-06-07 at e5e31590c4)
+ + range-diff: show submodule changes irrespective of diff.submodule
+
+ "git -c diff.submodule=log range-diff" did not show anything for
+ submodules that changed in the ranges being compared, and
+ "git -c diff.submodule=diff range-diff" did not work correctly.
+ Fix this by including the "--submodule=short" output
+ unconditionally to be compared.
+ source: <pull.1244.v2.git.1654549153769.gitgitgadget@gmail.com>
 
 
-* js/ci-github-workflow-markup (2022-06-10) 3 commits
- - ci(github): also mark up compile errors
- - ci(github): use grouping also in the `win-build` job
- - ci(github): bring back the 'print test failures' step
+* sn/fsmonitor-missing-clock (2022-06-07) 1 commit
+  (merged to 'next' on 2022-06-08 at 812b99338c)
+ + fsmonitor: query watchman with right valid json
 
- Recent CI update hides certain failures in test jobs, which has
+ Sample watchman interface hook sometimes failed to produce
+ correctly formatted JSON message, which has been corrected.
+ source: <20220607111419.15753-1-sluongng@gmail.com>
+
+
+* tb/show-ref-optim (2022-06-06) 1 commit
+  (merged to 'next' on 2022-06-08 at 683a3cc261)
+ + builtin/show-ref.c: avoid over-iterating with --heads, --tags
+
+ "git show-ref --heads" (and "--tags") still iterated over all the
+ refs only to discard refs outside the specified area, which has
  been corrected.
-
- Will merge to 'next'?
- source: <pull.1253.git.1654774347.gitgitgadget@gmail.com>
+ source: <3fa6932641f18d78156bbf60b1571383f2cb5046.1654293264.git.me@ttaylorr.com>
 
 
-* jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
- - fetch,fetch-pack: clarify connectivity check error
+* tl/ls-tree-oid-only (2022-06-03) 1 commit
+  (merged to 'next' on 2022-06-07 at e1c1e0b25a)
+ + ls-tree: test for the regression in 9c4d58ff2c3
 
- We may find an object missing after a "git fetch" stores the
- objects it obtained from the other side, but it is not necessarily
- because the remote failed to send necessary objects.  Reword the
- messages in an attempt to help users explore other possibilities
- when they hit this error.
-
- Expecting a reroll.
- source: <20220610195247.1177549-1-jonathantanmy@google.com>
+ Add tests for a regression fixed earlier.
+ source: <patch-v2-1.1-f2beb02dd29-20220603T102148Z-avarab@gmail.com>
 
 
-* gc/submodule-update (2022-06-10) 8 commits
- - submodule update: remove never-used expansion
- - submodule update: stop parsing options in .sh
- - submodule update: remove -v, pass --quiet
- - submodule--helper update: use one param per type
- - submodule update: pass --require-init and --init
- - submodule update: pass options with stuck forms
- - submodule update: pass options containing "[no-]"
- - submodule update: remove intermediate parsing
+* zh/read-cache-copy-name-entry-fix (2022-06-06) 1 commit
+  (merged to 'next' on 2022-06-08 at 760f43dd19)
+ + read-cache.c: reduce unnecessary cache entry name copying
 
- More work on "git submodule update".
+ Remove redundant copying (with index v3 and older) or possible
+ over-reading beyond end of mmapped memory (with index v4) has been
+ corrected.
+ source: <pull.1249.git.1654436248249.gitgitgadget@gmail.com>
 
- Needs review.
- source: <pull.1275.git.git.1654820781.gitgitgadget@gmail.com>
+--------------------------------------------------
+[New Topics]
+
+* jc/apply-icase-tests (2022-06-13) 1 commit
+ - t4141: test "git apply" with core.ignorecase
+
+ source: <xmqqo7yw77qo.fsf@gitster.g>
 
 
-* jc/resolve-undo (2022-06-09) 1 commit
- - revision: mark blobs needed for resolve-undo as reachable
+* ll/curl-accept-language (2022-06-13) 2 commits
+ - PREP??? give initializer to rpc_state
+ - remote-curl: send Accept-Language header to server
 
- The resolve-undo information in the index was not protected against
- GC, which has been corrected.
+ source: <pull.1251.v3.git.1655054421697.gitgitgadget@gmail.com>
 
- Will merge to 'next'?
- source: <xmqqfskdieqz.fsf@gitster.g>
+
+* pb/diff-doc-raw-format (2022-06-13) 3 commits
+ - diff-index.txt: update raw output format in examples
+ - diff-format.txt: correct misleading wording
+ - diff-format.txt: dst can be 0* SHA-1 when path is deleted, too
+
+ source: <pull.1259.git.1655123383.gitgitgadget@gmail.com>
+
+
+* rs/archive-with-internal-gzip (2022-06-13) 5 commits
+ - archive-tar: use internal gzip by default
+ - archive-tar: use OS_CODE 3 (Unix) for internal gzip
+ - archive-tar: add internal gzip implementation
+ - archive-tar: factor out write_block()
+ - archive: rename archiver data field to filter_command
+
+ source: <217a2f4d-4fc2-aaed-f5c2-1b7e134b046d@web.de>
+
+
+* tl/pack-bitmap-trace (2022-06-13) 5 commits
+ - bitmap: add trace2 outputs during open "bitmap" file
+ - pack-bitmap.c: using error() instead of silently returning -1
+ - pack-bitmap.c: make warnings support i18N when opening bitmap
+ - pack-bitmap.c: rename "idx_name" to "bitmap_name"
+ - pack-bitmap.c: continue looping when first MIDX bitmap is found
+
+ source: <cover.1655018322.git.dyroneteng@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -286,16 +264,81 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* pb/range-diff-with-submodule (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-07 at e5e31590c4)
- + range-diff: show submodule changes irrespective of diff.submodule
+* ds/branch-checked-out (2022-06-13) 5 commits
+ - branch: fix branch_checked_out() leaks
+ - branch: use branch_checked_out() when deleting refs
+ - fetch: use new branch_checked_out() and add tests
+ - branch: check for bisects and rebases
+ - branch: add branch_checked_out() helper
 
- "git range-diff" did not show anything for submodules that changed
- in the ranges being compared.  Change the behaviour to include the
- "--submodule=short" output unconditionally to be compared.
+ Introduce a helper to see if a branch is already being worked on
+ (hence should not be newly checked out in a working tree), which
+ performs much better than the existing find_shared_symref() to
+ replace many uses of the latter.
+
+ Will merge to 'next'?
+ source: <pull.1254.git.1654718942.gitgitgadget@gmail.com>
+
+
+* fs/ssh-default-key-command-doc (2022-06-08) 1 commit
+  (merged to 'next' on 2022-06-10 at b5cc5b6619)
+ + gpg docs: explain better use of ssh.defaultKeyCommand
+
+ Doc update.
 
  Will merge to 'master'.
- source: <pull.1244.v2.git.1654549153769.gitgitgadget@gmail.com>
+ source: <20220608152437.126276-1-fs@gigacodes.de>
+
+
+* js/ci-github-workflow-markup (2022-06-13) 3 commits
+ - ci(github): also mark up compile errors
+ - ci(github): use grouping also in the `win-build` job
+ - ci(github): bring back the 'print test failures' step
+
+ Recent CI update hides certain failures in test jobs, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1253.v2.git.1655125988.gitgitgadget@gmail.com>
+
+
+* jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
+ - fetch,fetch-pack: clarify connectivity check error
+
+ We may find an object missing after a "git fetch" stores the
+ objects it obtained from the other side, but it is not necessarily
+ because the remote failed to send necessary objects.  Reword the
+ messages in an attempt to help users explore other possibilities
+ when they hit this error.
+
+ Expecting a reroll.
+ source: <20220610195247.1177549-1-jonathantanmy@google.com>
+
+
+* gc/submodule-update (2022-06-10) 8 commits
+ - submodule update: remove never-used expansion
+ - submodule update: stop parsing options in .sh
+ - submodule update: remove -v, pass --quiet
+ - submodule--helper update: use one param per type
+ - submodule update: pass --require-init and --init
+ - submodule update: pass options with stuck forms
+ - submodule update: pass options containing "[no-]"
+ - submodule update: remove intermediate parsing
+
+ More work on "git submodule update".
+
+ Needs review.
+ source: <pull.1275.git.git.1654820781.gitgitgadget@gmail.com>
+
+
+* jc/resolve-undo (2022-06-09) 1 commit
+ - revision: mark blobs needed for resolve-undo as reachable
+
+ The resolve-undo information in the index was not protected against
+ GC, which has been corrected.
+
+ Will merge to 'next'?
+ source: <xmqqfskdieqz.fsf@gitster.g>
 
 
 * jp/prompt-clear-before-upstream-mark (2022-06-10) 2 commits
@@ -308,17 +351,6 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <20220609204447.32841-1-joak-pet@online.no>
  source: <20220606175022.8410-1-joak-pet@online.no>
-
-
-* jt/unparse-commit-upon-graft-change (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 3d8de84325)
- + commit,shallow: unparse commits if grafts changed
-
- Updating the graft information invalidates the list of parents of
- in-core commit objects that used to be in the graft file.
-
- Will merge to 'master'.
- source: <20220606175437.1740447-1-jonathantanmy@google.com>
 
 
 * ab/build-gitweb (2022-06-02) 7 commits
@@ -364,13 +396,12 @@ Release tarballs are available at:
  source: <pull.1246.v3.git.1654858481.gitgitgadget@gmail.com>
 
 
-* hx/unpack-streaming (2022-06-10) 7 commits
+* hx/unpack-streaming (2022-06-13) 6 commits
  - unpack-objects: use stream_loose_object() to unpack large objects
  - core doc: modernize core.bigFileThreshold documentation
  - object-file.c: add "stream_loose_object()" to handle large object
  - object-file.c: factor out deflate part of write_loose_object()
  - object-file.c: refactor write_loose_object() to several steps
- - object-file.c: do fsync() and close() before post-write die()
  - unpack-objects: low memory footprint for get_data() in dry_run mode
 
  Allow large objects read from a packstream to be streamed into a
@@ -378,7 +409,7 @@ Release tarballs are available at:
  whole.
 
  Will merge to 'next'?
- source: <cover.1654871915.git.chiyutianyi@gmail.com>
+ source: <cover.1654914555.git.chiyutianyi@gmail.com>
 
 
 * po/rebase-preserve-merges (2022-06-06) 4 commits
@@ -395,51 +426,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1242.v2.git.1654341469.gitgitgadget@gmail.com>
-
-
-* tb/show-ref-optim (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 683a3cc261)
- + builtin/show-ref.c: avoid over-iterating with --heads, --tags
-
- "git show-ref --heads" (and "--tags") still iterated over all the
- refs, which has been corrected.
-
- Will merge to 'master'.
- source: <3fa6932641f18d78156bbf60b1571383f2cb5046.1654293264.git.me@ttaylorr.com>
-
-
-* zh/read-cache-copy-name-entry-fix (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 760f43dd19)
- + read-cache.c: reduce unnecessary cache entry name copying
-
- Remove redundant copying (with index v3 and older) or possible
- over-reading beyond end of mmapped memory (with index v4) has been
- corrected.
-
- Will merge to 'master'.
- source: <pull.1249.git.1654436248249.gitgitgadget@gmail.com>
-
-
-* ab/remote-free-fix (2022-06-07) 2 commits
-  (merged to 'next' on 2022-06-08 at 03c3aeaeee)
- + remote.c: don't dereference NULL in freeing loop
- + remote.c: remove braces from one-statement "for"-loops
-
- Use-after-free (with another forget-to-free) fix.
-
- Will merge to 'master'.
- source: <cover-0.3-00000000000-20220607T154520Z-avarab@gmail.com>
-
-
-* sn/fsmonitor-missing-clock (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-08 at 812b99338c)
- + fsmonitor: query watchman with right valid json
-
- Sample watchman interface hook sometimes failed to produce
- correctly formatted JSON message, which has been corrected.
-
- Will merge to 'master'.
- source: <20220607111419.15753-1-sluongng@gmail.com>
 
 
 * tb/show-ref-count (2022-06-06) 2 commits
@@ -461,38 +447,6 @@ Release tarballs are available at:
 
  Will merge to 'next'.
  source: <xmqq7d5suoqt.fsf@gitster.g>
-
-
-* js/wait-or-whine-can-fail (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-08 at 54fe70c95d)
- + run-command: don't spam trace2_child_exit()
-
- We used to log an error return from wait_or_whine() as process
- termination of the waited child, which was incorrect.
-
- Will merge to 'master'.
- source: <50d872a057a558fa5519856b95abd048ddb514dc.1654625626.git.steadmon@google.com>
-
-
-* ds/credentials-in-url (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 3db83a2012)
- + remote: create fetch.credentialsInUrl config
-
- The "fetch.credentialsInUrl" configuration variable controls what
- happens when a URL with embedded login credential is used.
-
- Will merge to 'master'.
- source: <pull.1237.v5.git.1654526176695.gitgitgadget@gmail.com>
-
-
-* tl/ls-tree-oid-only (2022-06-03) 1 commit
-  (merged to 'next' on 2022-06-07 at e1c1e0b25a)
- + ls-tree: test for the regression in 9c4d58ff2c3
-
- Add tests for a regression fixed earlier.
-
- Will merge to 'master'.
- source: <patch-v2-1.1-f2beb02dd29-20220603T102148Z-avarab@gmail.com>
 
 
 * ds/bundle-uri-more (2022-06-06) 6 commits
@@ -560,20 +514,6 @@ Release tarballs are available at:
  source: <20220513010020.55361-5-carenas@gmail.com>
 
 
-* ab/hooks-regression-fix (2022-06-07) 2 commits
-  (merged to 'next' on 2022-06-08 at c1109feb67)
- + hook API: fix v2.36.0 regression: hooks should be connected to a TTY
- + run-command: add an "ungroup" option to run_process_parallel()
-
- In Git 2.36 we revamped the way how hooks are invoked.  One change
- that is end-user visible is that the output of a hook is no longer
- directly connected to the standard output of "git" that spawns the
- hook, which was noticed post release.  This is getting corrected.
-
- Will merge to 'master'.
- source: <cover-v6-0.2-00000000000-20220606T170356Z-avarab@gmail.com>
-
-
 * gc/bare-repo-discovery (2022-06-07) 5 commits
  - setup.c: create `discovery.bare`
  - safe.directory: use git_protected_config()
@@ -615,80 +555,3 @@ Release tarballs are available at:
 
  Thoughts?
  source: <20220422083629.1404989-1-hi@alyssa.is>
-
---------------------------------------------------
-[Discarded]
-
-* ds/rebase-update-refs (2022-06-07) 7 commits
- . rebase: add rebase.updateRefs config option
- . sequencer: implement 'update-refs' command
- . rebase: add --update-refs option
- . sequencer: add update-refs command
- . sequencer: define array with enum values
- . branch: add branch_checked_out() helper
- . log-tree: create for_each_decoration()
-
- "git rebase" learns "--update-refs" to update the refs that point
- at commits being rewritten so that they point at the corresponding
- commits in the rewritten history.
-
- Retracted for possible future redesign.
- cf. <pull.1254.git.1654718942.gitgitgadget@gmail.com>
- source: <pull.1247.v2.git.1654634569.gitgitgadget@gmail.com>
-
-
-* ab/ci-github-workflow-markup (2022-05-26) 14 commits
- . CI: make the --github-workflow-markup "github" output the default
- . CI: make --github-workflow-markup ci-config, off by default
- . ci: call `finalize_test_case_output` a little later
- . ci(github): mention where the full logs can be found
- . ci(github): avoid printing test case preamble twice
- . ci(github): skip "skip" tests in --github-workflow-markup
- . ci(github): skip the logs of the successful test cases
- . ci: make it easier to find failed tests' logs in the GitHub workflow
- . ci: optionally mark up output in the GitHub workflow
- . test(junit): avoid line feeds in XML attributes
- . tests: refactor --write-junit-xml code
- . CI: stop setting FAILED_TEST_ARTIFACTS N times
- . CI: don't include "test-results/" in ci/print-test-failures.sh output
- . CI: don't "cd" in ci/print-test-failures.sh
- (this branch uses ab/ci-setup-simplify.)
-
- Discarded to stop "competing" with js/ci-github-workflow-markup.
-
-
-* ab/ci-setup-simplify (2022-05-26) 29 commits
- . CI: make it easy to use ci/*.sh outside of CI
- . CI: don't use "set -x" in "ci/lib.sh" output
- . CI: set PYTHON_PATH setting for osx-{clang,gcc} into "$jobname" case
- . CI: set SANITIZE=leak in MAKEFLAGS directly
- . CI: set CC in MAKEFLAGS directly, don't add it to the environment
- . CI: add more variables to MAKEFLAGS, except under vs-build
- . CI: narrow down variable definitions in --build and --test
- . CI: only invoke ci/lib.sh as "steps" in main.yml
- . CI: pre-select test slice in Windows & VS tests
- . ci/run-test-slice.sh: replace shelling out with "echo"
- . CI: move "env" definitions into ci/lib.sh
- . CI: combine ci/install{,-docker}-dependencies.sh
- . CI: split up and reduce "ci/test-documentation.sh"
- . CI: invoke "make artifacts-tar" directly in windows-build
- . CI: check ignored unignored build artifacts in "win[+VS] build" too
- . CI: make ci/{lib,install-dependencies}.sh POSIX-compatible
- . CI: remove "run-build-and-tests.sh", run "make [test]" directly
- . CI: export variables via a wrapper
- . CI: consistently use "export" in ci/lib.sh
- . CI: move p4 and git-lfs variables to ci/install-dependencies.sh
- . CI: have "static-analysis" run "check-builtins", not "documentation"
- . CI: have "static-analysis" run a "make ci-static-analysis" target
- . CI: don't have "git grep" invoke a pager in tree content check
- . CI/lib.sh: stop adding leading whitespace to $MAKEFLAGS
- . CI: remove unused Azure ci/* code
- . CI: remove dead "tree skipping" code
- . CI: remove more dead Travis CI support
- . CI: make "$jobname" explicit, remove fallback
- . CI: run "set -ex" early in ci/lib.sh
- (this branch is used by ab/ci-github-workflow-markup.)
-
- Discarded to stop "conflicing" with js/ci-github-workflow-markup;
- good bits from the series may want to be resurrected and rebuilt on
- top of the other topics.
