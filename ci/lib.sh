@@ -29,8 +29,14 @@ else
 		set +x
 		begin_group "$1"
 		shift
-		"$@"
-		res=$?
+		# work around `dash` not supporting `set -o pipefail`
+		(
+			"$@" 2>&1
+			echo $? >exit.status
+		) |
+		sed 's/^\(\([^ ]*\):\([0-9]*\):\([0-9]*:\) \)\(error\|warning\): /::\5 file=\2,line=\3::\1/'
+		res=$(cat exit.status)
+		rm exit.status
 		end_group
 		return $res
 	}
