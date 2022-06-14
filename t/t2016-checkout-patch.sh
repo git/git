@@ -4,7 +4,7 @@ test_description='git checkout --patch'
 
 . ./lib-patch-mode.sh
 
-if ! test_bool_env GIT_TEST_ADD_I_USE_BUILTIN true && ! test_have_prereq PERL
+if ! test_have_prereq ADD_I_USE_BUILTIN && ! test_have_prereq PERL
 then
 	skip_all='skipping interactive add tests, PERL not set'
 	test_done
