@@ -362,6 +362,7 @@ static void prepare_checked_out_branches(void)
 	worktrees = get_worktrees();
 
 	while (worktrees[i]) {
+		struct wt_status_state state = { 0 };
 		struct worktree *wt = worktrees[i++];
 
 		if (wt->is_bare)
@@ -371,6 +372,29 @@ static void prepare_checked_out_branches(void)
 			strmap_put(&current_checked_out_branches,
 				   wt->head_ref,
 				   xstrdup(wt->path));
+
+		if (wt_status_check_rebase(wt, &state) &&
+		    (state.rebase_in_progress || state.rebase_interactive_in_progress) &&
+		    state.branch) {
+			struct strbuf ref = STRBUF_INIT;
+			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			strmap_put(&current_checked_out_branches,
+				   ref.buf,
+				   xstrdup(wt->path));
+			strbuf_release(&ref);
+		}
+		wt_status_state_free_buffers(&state);
+
+		if (wt_status_check_bisect(wt, &state) &&
+		    state.branch) {
+			struct strbuf ref = STRBUF_INIT;
+			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			strmap_put(&current_checked_out_branches,
+				   ref.buf,
+				   xstrdup(wt->path));
+			strbuf_release(&ref);
+		}
+		wt_status_state_free_buffers(&state);
 	}
 
 	free_worktrees(worktrees);
@@ -390,9 +414,7 @@ const char *branch_checked_out(const char *refname)
  */
 int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 {
-	struct worktree **worktrees;
-	const struct worktree *wt;
-
+	const char *path;
 	if (!validate_branchname(name, ref))
 		return 0;
 
@@ -400,13 +422,10 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 		die(_("a branch named '%s' already exists"),
 		    ref->buf + strlen("refs/heads/"));
 
-	worktrees = get_worktrees();
-	wt = find_shared_symref(worktrees, "HEAD", ref->buf);
-	if (wt && !wt->is_bare)
+	if ((path = branch_checked_out(ref->buf)))
 		die(_("cannot force update the branch '%s' "
 		      "checked out at '%s'"),
-		    ref->buf + strlen("refs/heads/"), wt->path);
-	free_worktrees(worktrees);
+		    ref->buf + strlen("refs/heads/"), path);
 
 	return 1;
 }
