@@ -10,6 +10,7 @@
 #include "worktree.h"
 #include "submodule-config.h"
 #include "run-command.h"
+#include "strmap.h"
 
 struct tracking {
 	struct refspec_item spec;
@@ -344,6 +345,41 @@ int validate_branchname(const char *name, struct strbuf *ref)
 		die(_("'%s' is not a valid branch name"), name);
 
 	return ref_exists(ref->buf);
+}
+
+static int initialized_checked_out_branches;
+static struct strmap current_checked_out_branches = STRMAP_INIT;
+
+static void prepare_checked_out_branches(void)
+{
+	int i = 0;
+	struct worktree **worktrees;
+
+	if (initialized_checked_out_branches)
+		return;
+	initialized_checked_out_branches = 1;
+
+	worktrees = get_worktrees();
+
+	while (worktrees[i]) {
+		struct worktree *wt = worktrees[i++];
+
+		if (wt->is_bare)
+			continue;
+
+		if (wt->head_ref)
+			strmap_put(&current_checked_out_branches,
+				   wt->head_ref,
+				   xstrdup(wt->path));
+	}
+
+	free_worktrees(worktrees);
+}
+
+const char *branch_checked_out(const char *refname)
+{
+	prepare_checked_out_branches();
+	return strmap_get(&current_checked_out_branches, refname);
 }
 
 /*
