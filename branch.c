@@ -362,25 +362,29 @@ static void prepare_checked_out_branches(void)
 	worktrees = get_worktrees();
 
 	while (worktrees[i]) {
+		char *old;
 		struct wt_status_state state = { 0 };
 		struct worktree *wt = worktrees[i++];
 
 		if (wt->is_bare)
 			continue;
 
-		if (wt->head_ref)
-			strmap_put(&current_checked_out_branches,
-				   wt->head_ref,
-				   xstrdup(wt->path));
+		if (wt->head_ref) {
+			old = strmap_put(&current_checked_out_branches,
+					 wt->head_ref,
+					 xstrdup(wt->path));
+			free(old);
+		}
 
 		if (wt_status_check_rebase(wt, &state) &&
 		    (state.rebase_in_progress || state.rebase_interactive_in_progress) &&
 		    state.branch) {
 			struct strbuf ref = STRBUF_INIT;
 			strbuf_addf(&ref, "refs/heads/%s", state.branch);
-			strmap_put(&current_checked_out_branches,
-				   ref.buf,
-				   xstrdup(wt->path));
+			old = strmap_put(&current_checked_out_branches,
+					 ref.buf,
+					 xstrdup(wt->path));
+			free(old);
 			strbuf_release(&ref);
 		}
 		wt_status_state_free_buffers(&state);
@@ -389,9 +393,10 @@ static void prepare_checked_out_branches(void)
 		    state.branch) {
 			struct strbuf ref = STRBUF_INIT;
 			strbuf_addf(&ref, "refs/heads/%s", state.branch);
-			strmap_put(&current_checked_out_branches,
-				   ref.buf,
-				   xstrdup(wt->path));
+			old = strmap_put(&current_checked_out_branches,
+					 ref.buf,
+					 xstrdup(wt->path));
+			free(old);
 			strbuf_release(&ref);
 		}
 		wt_status_state_free_buffers(&state);

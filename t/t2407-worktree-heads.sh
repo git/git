@@ -98,4 +98,32 @@ test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: worktree in rebase
 	grep "refusing to fetch into branch" err
 '
 
+test_expect_success 'refuse to overwrite when in error states' '
+	test_when_finished rm -rf .git/worktrees/wt-*/rebase-merge &&
+	test_when_finished rm -rf .git/worktrees/wt-*/BISECT_* &&
+
+	# Both branches are currently under rebase.
+	mkdir -p .git/worktrees/wt-3/rebase-merge &&
+	touch .git/worktrees/wt-3/rebase-merge/interactive &&
+	echo refs/heads/fake-1 >.git/worktrees/wt-3/rebase-merge/head-name &&
+	echo refs/heads/fake-2 >.git/worktrees/wt-3/rebase-merge/onto &&
+	mkdir -p .git/worktrees/wt-4/rebase-merge &&
+	touch .git/worktrees/wt-4/rebase-merge/interactive &&
+	echo refs/heads/fake-2 >.git/worktrees/wt-4/rebase-merge/head-name &&
+	echo refs/heads/fake-1 >.git/worktrees/wt-4/rebase-merge/onto &&
+
+	# Both branches are currently under bisect.
+	touch .git/worktrees/wt-4/BISECT_LOG &&
+	echo refs/heads/fake-2 >.git/worktrees/wt-4/BISECT_START &&
+	touch .git/worktrees/wt-1/BISECT_LOG &&
+	echo refs/heads/fake-1 >.git/worktrees/wt-1/BISECT_START &&
+
+	for i in 1 2
+	do
+		test_must_fail git branch -f fake-$i HEAD 2>err &&
+		grep "cannot force update the branch '\''fake-$i'\'' checked out at" err ||
+			return 1
+	done
+'
+
 test_done
