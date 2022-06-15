@@ -383,8 +383,8 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 	if (!strcmp(type, "command")) {
 		if (!value)
 			return config_error_nonbool(var);
-		free(ar->data);
-		ar->data = xstrdup(value);
+		free(ar->filter_command);
+		ar->filter_command = xstrdup(value);
 		return 0;
 	}
 	if (!strcmp(type, "remote")) {
@@ -432,10 +432,10 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	struct child_process filter = CHILD_PROCESS_INIT;
 	int r;
 
-	if (!ar->data)
+	if (!ar->filter_command)
 		BUG("tar-filter archiver called with no filter defined");
 
-	strbuf_addstr(&cmd, ar->data);
+	strbuf_addstr(&cmd, ar->filter_command);
 	if (args->compression_level >= 0)
 		strbuf_addf(&cmd, " -%d", args->compression_level);
 
@@ -478,7 +478,7 @@ void init_tar_archiver(void)
 	git_config(git_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
-		if (tar_filters[i]->data)
+		if (tar_filters[i]->filter_command)
 			register_archiver(tar_filters[i]);
 	}
 }
