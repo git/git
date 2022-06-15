@@ -2473,15 +2473,15 @@ int read_index_from(struct index_state *istate, const char *path,
 				   the_repository, "%s", base_path);
 	if (!ret) {
 		char *path_copy = xstrdup(path);
-		const char *base_path2 = xstrfmt("%s/sharedindex.%s",
-						 dirname(path_copy),
-						 base_oid_hex);
+		char *base_path2 = xstrfmt("%s/sharedindex.%s",
+					   dirname(path_copy), base_oid_hex);
 		free(path_copy);
 		trace2_region_enter_printf("index", "shared/do_read_index",
 					   the_repository, "%s", base_path2);
 		ret = do_read_index(split_index->base, base_path2, 1);
 		trace2_region_leave_printf("index", "shared/do_read_index",
 					   the_repository, "%s", base_path2);
+		free(base_path2);
 	}
 	if (!oideq(&split_index->base_oid, &split_index->base->oid))
 		die(_("broken index, expect %s in %s, got %s"),
