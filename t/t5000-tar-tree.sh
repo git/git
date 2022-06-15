@@ -374,6 +374,22 @@ test_expect_success GZIP 'remote tar.gz can be disabled' '
 		>remote.tar.gz
 '
 
+test_expect_success 'git archive --format=tgz (internal gzip)' '
+	test_config tar.tgz.command "git archive gzip" &&
+	git archive --format=tgz HEAD >internal_gzip.tgz
+'
+
+test_expect_success 'git archive --format=tar.gz (internal gzip)' '
+	test_config tar.tar.gz.command "git archive gzip" &&
+	git archive --format=tar.gz HEAD >internal_gzip.tar.gz &&
+	test_cmp_bin internal_gzip.tgz internal_gzip.tar.gz
+'
+
+test_expect_success GZIP 'extract tgz file (internal gzip)' '
+	gzip -d -c <internal_gzip.tgz >internal_gzip.tar &&
+	test_cmp_bin b.tar internal_gzip.tar
+'
+
 test_expect_success 'archive and :(glob)' '
 	git archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
 	cat >expect <<EOF &&

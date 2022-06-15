@@ -38,10 +38,12 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
-static void write_block(const void *buf)
+static void tar_write_block(const void *buf)
 {
 	write_or_die(1, buf, BLOCKSIZE);
 }
+
+static void (*write_block)(const void *) = tar_write_block;
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -430,6 +432,34 @@ static int write_tar_archive(const struct archiver *ar,
 	return err;
 }
 
+static git_zstream gzstream;
+static unsigned char outbuf[16384];
+
+static void tgz_deflate(int flush)
+{
+	while (gzstream.avail_in || flush == Z_FINISH) {
+		int status = git_deflate(&gzstream, flush);
+		if (!gzstream.avail_out || status == Z_STREAM_END) {
+			write_or_die(1, outbuf, gzstream.next_out - outbuf);
+			gzstream.next_out = outbuf;
+			gzstream.avail_out = sizeof(outbuf);
+			if (status == Z_STREAM_END)
+				break;
+		}
+		if (status != Z_OK && status != Z_BUF_ERROR)
+			die(_("deflate error (%d)"), status);
+	}
+}
+
+static void tgz_write_block(const void *data)
+{
+	gzstream.next_in = (void *)data;
+	gzstream.avail_in = BLOCKSIZE;
+	tgz_deflate(Z_NO_FLUSH);
+}
+
+static const char internal_gzip_command[] = "git archive gzip";
+
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args)
 {
@@ -439,6 +469,19 @@ static int write_tar_filter_archive(const struct archiver *ar,
 
 	if (!ar->filter_command)
 		BUG("tar-filter archiver called with no filter defined");
+
+	if (!strcmp(ar->filter_command, internal_gzip_command)) {
+		write_block = tgz_write_block;
+		git_deflate_init_gzip(&gzstream, args->compression_level);
+		gzstream.next_out = outbuf;
+		gzstream.avail_out = sizeof(outbuf);
+
+		r = write_tar_archive(ar, args);
+
+		tgz_deflate(Z_FINISH);
+		git_deflate_end(&gzstream);
+		return r;
+	}
 
 	strbuf_addstr(&cmd, ar->filter_command);
 	if (args->compression_level >= 0)
