@@ -148,8 +148,8 @@ tar.<format>.command::
 	to the command (e.g., `-9`).
 +
 The `tar.gz` and `tgz` formats are defined automatically and use the
-command `gzip -cn` by default. An internal gzip implementation can be
-used by specifying the value `git archive gzip`.
+magic command `git archive gzip` by default, which invokes an internal
+implementation of gzip.
 
 tar.<format>.remote::
 	If true, enable the format for use by remote clients via
