@@ -38,11 +38,16 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
+static void write_block(const void *buf)
+{
+	write_or_die(1, buf, BLOCKSIZE);
+}
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 		offset = 0;
 	}
 }
@@ -66,7 +71,7 @@ static void do_write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		write_or_die(1, buf, BLOCKSIZE);
+		write_block(buf);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -101,10 +106,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	write_or_die(1, block, BLOCKSIZE);
+	write_block(block);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 	}
 }
 
