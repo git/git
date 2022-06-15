@@ -1834,7 +1834,7 @@ test_expect_success 'refuse to push a hidden ref, and make sure do not pollute t
 	test_dir_is_empty testrepo/.git/objects/pack
 '
 
-test_expect_success 'fetch warns or fails when using username:password' '
+test_expect_success LIBCURL 'fetch warns or fails when using username:password' '
 	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
 	test_must_fail git -c fetch.credentialsInUrl=allow fetch https://username:password@localhost 2>err &&
 	! grep "$message" err &&
@@ -1853,7 +1853,7 @@ test_expect_success 'fetch warns or fails when using username:password' '
 '
 
 
-test_expect_success 'push warns or fails when using username:password' '
+test_expect_success LIBCURL 'push warns or fails when using username:password' '
 	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
 	test_must_fail git -c fetch.credentialsInUrl=allow push https://username:password@localhost 2>err &&
 	! grep "$message" err &&

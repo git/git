@@ -57,6 +57,15 @@ UI, Workflows & Features
  * The "fetch.credentialsInUrl" configuration variable controls what
    happens when a URL with embedded login credential is used.
 
+ * "git revert" learns "--reference" option to use more human-readable
+   reference to the commit it reverts in the message template it
+   prepares for the user.
+
+ * Various error messages that talk about the removal of
+   "--preserve-merges" in "rebase" have been strengthened, and "rebase
+   --abort" learned to get out of a state that was left by an earlier
+   use of the option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -80,14 +89,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * A workflow change for translators are being proposed.  git.pot is
    no longer version controlled and it is local responsibility of
-   translaters to generate it.
+   translators to generate it.
 
  * Plug the memory leaks from the trickiest API of all, the revision
    walker.
 
  * Rename .env_array member to .env in the child_process structure.
 
- * More fsmonitor--daemon.
+  * The fsmonitor--daemon handles even more corner cases when
+    watching filesystem events.
 
  * A new bug() and BUG_if_bug() API is introduced to make it easier to
    uniformly log "detect multiple bugs and abort in the end" pattern.
@@ -133,7 +143,7 @@ Fixes since v2.36
    (merge 08bdd3a185 jc/cocci-xstrdup-or-null-fix later to maint).
 
  * The path taken by "git multi-pack-index" command from the end user
-   was compared with path internally prepared by the tool withut first
+   was compared with path internally prepared by the tool without first
    normalizing, which lead to duplicated paths not being noticed,
    which has been corrected.
    (merge 11f9e8de3d ds/midx-normalize-pathname-before-comparison later to maint).
@@ -163,7 +173,7 @@ Fixes since v2.36
    is given in "git status" not to use the break-rewrite heuristics.
    (merge 84792322ed rs/commit-summary-wo-break-rewrite later to maint).
 
- * Update a few end-user facing messages around eol conversion.
+ * Update a few end-user facing messages around EOL conversion.
    (merge c970d30c2c ah/convert-warning-message later to maint).
 
  * Trace2 documentation updates.
@@ -256,7 +266,7 @@ Fixes since v2.36
    has been corrected.
    (merge b02fdbc80a jc/all-negative-pathspec later to maint).
 
- * With a more targetted workaround in http.c in another topic, we may
+ * With a more targeted workaround in http.c in another topic, we may
    be able to lift this blanket "GCC12 dangling-pointer warning is
    broken and unsalvageable" workaround.
    (merge 419141e495 cb/buggy-gcc-12-workaround later to maint).
@@ -320,3 +330,4 @@ Fixes since v2.36
    (merge 8c49d704ef fh/transport-push-leakfix later to maint).
    (merge 1d232d38bd tl/ls-tree-oid-only later to maint).
    (merge db7961e6a6 gc/document-config-worktree-scope later to maint).
+   (merge ce18a30bb7 fs/ssh-default-key-command-doc later to maint).

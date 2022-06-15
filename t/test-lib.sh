@@ -1572,6 +1572,7 @@ esac
 test_set_prereq REFFILES
 
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
+test -z "$NO_CURL" && test_set_prereq LIBCURL
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PTHREADS" && test_set_prereq PTHREADS
 test -z "$NO_PYTHON" && test_set_prereq PYTHON
@@ -1757,6 +1758,10 @@ test_lazy_prereq SHA1 '
 	"") test $(git hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 ;;
 	*) false ;;
 	esac
+'
+
+test_lazy_prereq ADD_I_USE_BUILTIN '
+	test_bool_env GIT_TEST_ADD_I_USE_BUILTIN true
 '
 
 # Ensure that no test accidentally triggers a Git command
