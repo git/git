@@ -54,7 +54,7 @@ UI, Workflows & Features
 
  * Update the doctype written in gitweb output to xhtml5.
 
- * The "fetch.credentialsInUrl" configuration variable controls what
+ * The "transfer.credentialsInUrl" configuration variable controls what
    happens when a URL with embedded login credential is used on either
    "fetch" or "push". Credentials are currently only detected in
    `remote.<name>.url` config, not `remote.<name>.pushurl`.
