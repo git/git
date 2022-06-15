@@ -71,7 +71,7 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 
 '
 
-test_expect_success 'clone warns or fails when using username:password' '
+test_expect_success LIBCURL 'clone warns or fails when using username:password' '
 	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
 	test_must_fail git -c fetch.credentialsInUrl=allow clone https://username:password@localhost attempt1 2>err &&
 	! grep "$message" err &&
@@ -89,7 +89,7 @@ test_expect_success 'clone warns or fails when using username:password' '
 	test_line_count = 1 warnings
 '
 
-test_expect_success 'clone does not detect username:password when it is https://username@domain:port/' '
+test_expect_success LIBCURL 'clone does not detect username:password when it is https://username@domain:port/' '
 	test_must_fail git -c fetch.credentialsInUrl=warn clone https://username@localhost:8080 attempt3 2>err &&
 	! grep "uses plaintext credentials" err
 '
