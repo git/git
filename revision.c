@@ -33,6 +33,7 @@
 #include "bloom.h"
 #include "json-writer.h"
 #include "list-objects-filter-options.h"
+#include "resolve-undo.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -1696,6 +1697,39 @@ static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
 
 }
 
+static void add_resolve_undo_to_pending(struct index_state *istate, struct rev_info *revs)
+{
+	struct string_list_item *item;
+	struct string_list *resolve_undo = istate->resolve_undo;
+
+	if (!resolve_undo)
+		return;
+
+	for_each_string_list_item(item, resolve_undo) {
+		const char *path = item->string;
+		struct resolve_undo_info *ru = item->util;
+		int i;
+
+		if (!ru)
+			continue;
+		for (i = 0; i < 3; i++) {
+			struct blob *blob;
+
+			if (!ru->mode[i] || !S_ISREG(ru->mode[i]))
+				continue;
+
+			blob = lookup_blob(revs->repo, &ru->oid[i]);
+			if (!blob) {
+				warning(_("resolve-undo records `%s` which is missing"),
+					oid_to_hex(&ru->oid[i]));
+				continue;
+			}
+			add_pending_object_with_path(revs, &blob->object, "",
+						     ru->mode[i], path);
+		}
+	}
+}
+
 static void do_add_index_objects_to_pending(struct rev_info *revs,
 					    struct index_state *istate,
 					    unsigned int flags)
@@ -1724,6 +1758,8 @@ static void do_add_index_objects_to_pending(struct rev_info *revs,
 		add_cache_tree(istate->cache_tree, revs, &path, flags);
 		strbuf_release(&path);
 	}
+
+	add_resolve_undo_to_pending(istate, revs);
 }
 
 void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
