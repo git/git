@@ -89,7 +89,8 @@ cleanup:
 		*data_p = data;
 	}
 
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 

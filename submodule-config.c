@@ -756,7 +756,10 @@ static void traverse_tree_submodules(struct repository *r,
 
 		if (S_ISGITLINK(name_entry->mode) &&
 		    is_tree_submodule_active(r, root_tree, tree_path)) {
-			st_entry = xmalloc(sizeof(*st_entry));
+			ALLOC_GROW(out->entries, out->entry_nr + 1,
+				   out->entry_alloc);
+			st_entry = &out->entries[out->entry_nr++];
+
 			st_entry->name_entry = xmalloc(sizeof(*st_entry->name_entry));
 			*st_entry->name_entry = *name_entry;
 			st_entry->submodule =
@@ -766,9 +769,6 @@ static void traverse_tree_submodules(struct repository *r,
 						root_tree))
 				FREE_AND_NULL(st_entry->repo);
 
-			ALLOC_GROW(out->entries, out->entry_nr + 1,
-				   out->entry_alloc);
-			out->entries[out->entry_nr++] = *st_entry;
 		} else if (S_ISDIR(name_entry->mode))
 			traverse_tree_submodules(r, root_tree, tree_path,
 						 &name_entry->oid, out);

@@ -202,11 +202,15 @@ char *fsm_settings__get_incompatible_msg(const struct repository *r,
 	case FSMONITOR_REASON_OK:
 		goto done;
 
-	case FSMONITOR_REASON_BARE:
+	case FSMONITOR_REASON_BARE: {
+		char *cwd = xgetcwd();
+
 		strbuf_addf(&msg,
 			    _("bare repository '%s' is incompatible with fsmonitor"),
-			    xgetcwd());
+			    cwd);
+		free(cwd);
 		goto done;
+	}
 
 	case FSMONITOR_REASON_ERROR:
 		strbuf_addf(&msg,
