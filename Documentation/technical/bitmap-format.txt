@@ -138,6 +138,10 @@ in the index.
 
 	** The compressed bitmap itself, see Appendix A.
 
+	* {empty}
+	TRAILER: ::
+		Trailing checksum of the preceding contents.
+
 == Appendix A: Serialization format for an EWAH bitmap
 
 Ewah bitmaps are serialized in the same protocol as the JAVAEWAH
