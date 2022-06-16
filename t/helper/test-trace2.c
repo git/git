@@ -224,8 +224,8 @@ static int ut_009bug_BUG(int argc, const char **argv)
 
 static int ut_010bug_BUG(int argc, const char **argv)
 {
-	bug("a bug message");
-	BUG("a BUG message");
+	bug("a %s message", "bug");
+	BUG("a %s message", "BUG");
 }
 
 /*
