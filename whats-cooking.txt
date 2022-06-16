@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2022, #04; Mon, 13)
-X-master-at: 8168d5e9c23ed44ae3d604f392320d66556453c9
-X-next-at: 0611611a94d360ce329fe0f1863f779d7fab5cab
+Subject: What's cooking in git.git (Jun 2022, #05; Thu, 16)
+X-master-at: 3b9a5a33c2986522736d484da497ccd99d715220
+X-next-at: 10f37bed90c8150629a8f2f8f37966f953baf262
 
-What's cooking in git.git (Jun 2022, #04; Mon, 13)
+What's cooking in git.git (Jun 2022, #05; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,15 +13,7 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-I just tagged Git 2.37-rc0, after merging some topics to the
-'master' branch.  For some topics, it is a day early (I usually try
-to have topics cook at least 7 calendar days in 'next'), but since
-tomorrow is my "offline every other Tuesday" day, I am merging them
-early, among them is a fix for another (and hopefully the last
-known) 2.36 regression.  I plan to tag -rc1 around the end of the
-week, at which time we will stop merging any new topic from the
-'next' branch down to 'master' until the final release that will
-happen around the end of the month (https://tinyurl.com/gitCal).
+The first -rc for this cycle is expected to be tagged tomorrow.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,152 +46,136 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/hooks-regression-fix (2022-06-07) 2 commits
-  (merged to 'next' on 2022-06-08 at c1109feb67)
- + hook API: fix v2.36.0 regression: hooks should be connected to a TTY
- + run-command: add an "ungroup" option to run_process_parallel()
-
- In Git 2.36 we revamped the way how hooks are invoked.  One change
- that is end-user visible is that the output of a hook is no longer
- directly connected to the standard output of "git" that spawns the
- hook, which was noticed post release.  This is getting corrected.
- source: <cover-v6-0.2-00000000000-20220606T170356Z-avarab@gmail.com>
-
-
-* ab/remote-free-fix (2022-06-07) 2 commits
-  (merged to 'next' on 2022-06-08 at 03c3aeaeee)
- + remote.c: don't dereference NULL in freeing loop
- + remote.c: remove braces from one-statement "for"-loops
-
- Use-after-free (with another forget-to-free) fix.
- source: <cover-0.3-00000000000-20220607T154520Z-avarab@gmail.com>
-
-
-* ds/credentials-in-url (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 3db83a2012)
- + remote: create fetch.credentialsInUrl config
-
- The "fetch.credentialsInUrl" configuration variable controls what
- happens when a URL with embedded login credential is used.
- source: <pull.1237.v5.git.1654526176695.gitgitgadget@gmail.com>
-
-
-* gc/document-config-worktree-scope (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-08 at 85f62a864a)
- + config: document and test the 'worktree' scope
+* fs/ssh-default-key-command-doc (2022-06-08) 1 commit
+  (merged to 'next' on 2022-06-10 at b5cc5b6619)
+ + gpg docs: explain better use of ssh.defaultKeyCommand
 
  Doc update.
- source: <pull.1274.git.git.1654637044966.gitgitgadget@gmail.com>
+ source: <20220608152437.126276-1-fs@gigacodes.de>
 
 
-* js/wait-or-whine-can-fail (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-08 at 54fe70c95d)
- + run-command: don't spam trace2_child_exit()
+* jc/revert-show-parent-info (2022-05-31) 2 commits
+  (merged to 'next' on 2022-06-07 at e405211ff4)
+ + revert: --reference should apply only to 'revert', not 'cherry-pick'
+  (merged to 'next' on 2022-05-30 at b5da52dc14)
+ + revert: optionally refer to commit in the "reference" format
 
- We used to log an error return from wait_or_whine() as process
- termination of the waited child, which was incorrect.
- source: <50d872a057a558fa5519856b95abd048ddb514dc.1654625626.git.steadmon@google.com>
-
-
-* jt/unparse-commit-upon-graft-change (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 3d8de84325)
- + commit,shallow: unparse commits if grafts changed
-
- Updating the graft information invalidates the list of parents of
- in-core commit objects that used to be in the graft file.
- source: <20220606175437.1740447-1-jonathantanmy@google.com>
+ "git revert" learns "--reference" option to use more human-readable
+ reference to the commit it reverts in the message template it
+ prepares for the user.
+ source: <xmqq8rqn7buk.fsf_-_@gitster.g>
 
 
-* pb/range-diff-with-submodule (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-07 at e5e31590c4)
- + range-diff: show submodule changes irrespective of diff.submodule
+* po/rebase-preserve-merges (2022-06-06) 4 commits
+  (merged to 'next' on 2022-06-10 at 471f67aebc)
+ + rebase: translate a die(preserve-merges) message
+ + rebase: note `preserve` merges may be a pull config option
+ + rebase: help users when dying with `preserve-merges`
+ + rebase.c: state preserve-merges has been removed
 
- "git -c diff.submodule=log range-diff" did not show anything for
- submodules that changed in the ranges being compared, and
- "git -c diff.submodule=diff range-diff" did not work correctly.
- Fix this by including the "--submodule=short" output
- unconditionally to be compared.
- source: <pull.1244.v2.git.1654549153769.gitgitgadget@gmail.com>
-
-
-* sn/fsmonitor-missing-clock (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-08 at 812b99338c)
- + fsmonitor: query watchman with right valid json
-
- Sample watchman interface hook sometimes failed to produce
- correctly formatted JSON message, which has been corrected.
- source: <20220607111419.15753-1-sluongng@gmail.com>
-
-
-* tb/show-ref-optim (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 683a3cc261)
- + builtin/show-ref.c: avoid over-iterating with --heads, --tags
-
- "git show-ref --heads" (and "--tags") still iterated over all the
- refs only to discard refs outside the specified area, which has
- been corrected.
- source: <3fa6932641f18d78156bbf60b1571383f2cb5046.1654293264.git.me@ttaylorr.com>
-
-
-* tl/ls-tree-oid-only (2022-06-03) 1 commit
-  (merged to 'next' on 2022-06-07 at e1c1e0b25a)
- + ls-tree: test for the regression in 9c4d58ff2c3
-
- Add tests for a regression fixed earlier.
- source: <patch-v2-1.1-f2beb02dd29-20220603T102148Z-avarab@gmail.com>
-
-
-* zh/read-cache-copy-name-entry-fix (2022-06-06) 1 commit
-  (merged to 'next' on 2022-06-08 at 760f43dd19)
- + read-cache.c: reduce unnecessary cache entry name copying
-
- Remove redundant copying (with index v3 and older) or possible
- over-reading beyond end of mmapped memory (with index v4) has been
- corrected.
- source: <pull.1249.git.1654436248249.gitgitgadget@gmail.com>
+ Various error messages that talk about the removal of
+ "--preserve-merges" in "rebase" have been strengthened, and "rebase
+ --abort" learned to get out of a state that was left by an earlier
+ use of the option.
+ source: <pull.1242.v2.git.1654341469.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* jc/apply-icase-tests (2022-06-13) 1 commit
- - t4141: test "git apply" with core.ignorecase
+* ab/credentials-in-url-more (2022-06-15) 2 commits
+  (merged to 'next' on 2022-06-16 at de19b3b40c)
+ + transfer doc: move fetch.credentialsInUrl to "transfer" config namespace
+ + fetch doc: note "pushurl" caveat about "credentialsInUrl", elaborate
 
- source: <xmqqo7yw77qo.fsf@gitster.g>
+ Rename fetch.credentialsInUrl to transfer.credentialsInUrl as the
+ single configuration variable should work both in pushing and
+ fetching.
 
-
-* ll/curl-accept-language (2022-06-13) 2 commits
- - PREP??? give initializer to rpc_state
- - remote-curl: send Accept-Language header to server
-
- source: <pull.1251.v3.git.1655054421697.gitgitgadget@gmail.com>
-
-
-* pb/diff-doc-raw-format (2022-06-13) 3 commits
- - diff-index.txt: update raw output format in examples
- - diff-format.txt: correct misleading wording
- - diff-format.txt: dst can be 0* SHA-1 when path is deleted, too
-
- source: <pull.1259.git.1655123383.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <cover-0.2-00000000000-20220615T103852Z-avarab@gmail.com>
 
 
-* rs/archive-with-internal-gzip (2022-06-13) 5 commits
- - archive-tar: use internal gzip by default
- - archive-tar: use OS_CODE 3 (Unix) for internal gzip
- - archive-tar: add internal gzip implementation
- - archive-tar: factor out write_block()
- - archive: rename archiver data field to filter_command
+* ds/more-test-coverage (2022-06-16) 4 commits
+  (merged to 'next' on 2022-06-16 at 3f0452418c)
+ + cache-tree: remove cache_tree_find_path()
+ + pack-write: drop always-NULL parameter
+ + t5329: test 'git gc --cruft' without '--prune=now'
+ + t2107: test 'git update-index --verbose'
 
- source: <217a2f4d-4fc2-aaed-f5c2-1b7e134b046d@web.de>
+ Improve test coverage with a handful of tests.
+
+ Will merge to 'master'.
+ source: <pull.1261.v2.git.1655385230.gitgitgadget@gmail.com>
 
 
-* tl/pack-bitmap-trace (2022-06-13) 5 commits
- - bitmap: add trace2 outputs during open "bitmap" file
- - pack-bitmap.c: using error() instead of silently returning -1
- - pack-bitmap.c: make warnings support i18N when opening bitmap
- - pack-bitmap.c: rename "idx_name" to "bitmap_name"
- - pack-bitmap.c: continue looping when first MIDX bitmap is found
+* jk/remote-show-with-negative-refspecs (2022-06-15) 1 commit
+ - remote: handle negative refspecs in git remote show
 
- source: <cover.1655018322.git.dyroneteng@gmail.com>
+ "git remote show [-n] frotz" now pays attention to negative
+ pathspecs.
+ source: <20220614003251.16765-1-jacob.e.keller@intel.com>
+
+
+* js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
+ - commit-graph: refactor to avoid prepare_repo_settings
+
+ source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
+
+
+* jk/optim-promisor-object-enumeration (2022-06-16) 1 commit
+  (merged to 'next' on 2022-06-16 at ce0712a74c)
+ + is_promisor_object(): walk promisor packs in pack-order
+
+ Collection of what is referenced by objects in promisor packs have
+ been optimized to inspect these objects in the in-pack order.
+
+ Will cook in 'next'.
+ source: <YqrTsbXbEjx0Pabn@coredump.intra.peff.net>
+
+
+* jk/perf-lib-test-titles (2022-06-16) 1 commit
+  (merged to 'next' on 2022-06-16 at 064d7efa99)
+ + perf-lib: fix missing test titles in output
+
+ Show test titles to the performance test output again.
+
+ Will merge to 'master'.
+ source: <YqrXLO5oMYeOr2PB@coredump.intra.peff.net>
+
+
+* js/misc-fixes (2022-06-16) 6 commits
+  (merged to 'next' on 2022-06-16 at 2f1f98e403)
+ + relative_url(): fix incorrect condition
+ + pack-mtimes: avoid closing a bogus file descriptor
+ + read_index_from(): avoid memory leak
+ + submodule--helper: avoid memory leak when fetching submodules
+ + submodule-config: avoid memory leak
+ + fsmonitor: avoid memory leak in `fsm_settings__get_incompatible_msg()`
+
+ Assorted fixes to problems found by Coverity.
+
+ Will merge to 'master'.
+ source: <pull.1264.git.1655336146.gitgitgadget@gmail.com>
+
+
+* ro/mktree-allow-missing-fix (2022-06-16) 1 commit
+ - mktree: do not load objects under '--missing'
+
+ "git mktree --missing" lazily fetched objects that are missing from
+ the local object store, which was totally unnecessary.
+
+ Waiting for review response.
+ source: <1566aed1-a38f-a9ca-241c-21b56d732328@roku.com>
+
+
+* jk/bug-fl-va-list-fix (2022-06-16) 1 commit
+  (merged to 'next' on 2022-06-16 at 8150aebb0f)
+ + bug_fl(): correctly initialize trace2 va_list
+
+ Fix buggy va_list usage in recent code.
+
+ Will merge to 'master'.
+ source: <YquMyakxYnU6mI5a@coredump.intra.peff.net>
 
 --------------------------------------------------
 [Stalled]
@@ -264,7 +240,57 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* ds/branch-checked-out (2022-06-13) 5 commits
+* jc/apply-icase-tests (2022-06-13) 1 commit
+ - t4141: test "git apply" with core.ignorecase
+
+ source: <xmqqo7yw77qo.fsf@gitster.g>
+
+
+* ll/curl-accept-language (2022-06-13) 2 commits
+ - PREP??? give initializer to rpc_state
+ - remote-curl: send Accept-Language header to server
+
+ source: <pull.1251.v3.git.1655054421697.gitgitgadget@gmail.com>
+
+
+* pb/diff-doc-raw-format (2022-06-13) 3 commits
+ - diff-index.txt: update raw output format in examples
+ - diff-format.txt: correct misleading wording
+ - diff-format.txt: dst can be 0* SHA-1 when path is deleted, too
+
+ source: <pull.1259.git.1655123383.gitgitgadget@gmail.com>
+
+
+* rs/archive-with-internal-gzip (2022-06-15) 6 commits
+ - archive-tar: use internal gzip by default
+ - archive-tar: use OS_CODE 3 (Unix) for internal gzip
+ - archive-tar: add internal gzip implementation
+ - archive-tar: factor out write_block()
+ - archive: rename archiver data field to filter_command
+ - archive: update format documentation
+
+ Teach "git archive" to (optionally and then by default) avoid
+ spawning an external "gzip" process when creating ".tar.gz" (and
+ ".tgz") archives.
+
+ Will merge to 'next'.
+ source: <9df761c3-355a-ede9-7971-b32687fe9abb@web.de>
+
+
+* tl/pack-bitmap-trace (2022-06-13) 5 commits
+ - bitmap: add trace2 outputs during open "bitmap" file
+ - pack-bitmap.c: using error() instead of silently returning -1
+ - pack-bitmap.c: make warnings support i18N when opening bitmap
+ - pack-bitmap.c: rename "idx_name" to "bitmap_name"
+ - pack-bitmap.c: continue looping when first MIDX bitmap is found
+
+ Add trace2 traces in code paths involving the pack bitmaps.
+
+ Needs review.
+ source: <cover.1655018322.git.dyroneteng@gmail.com>
+
+
+* ds/branch-checked-out (2022-06-15) 5 commits
  - branch: fix branch_checked_out() leaks
  - branch: use branch_checked_out() when deleting refs
  - fetch: use new branch_checked_out() and add tests
@@ -276,29 +302,20 @@ Release tarballs are available at:
  performs much better than the existing find_shared_symref() to
  replace many uses of the latter.
 
- Will merge to 'next'?
- source: <pull.1254.git.1654718942.gitgitgadget@gmail.com>
-
-
-* fs/ssh-default-key-command-doc (2022-06-08) 1 commit
-  (merged to 'next' on 2022-06-10 at b5cc5b6619)
- + gpg docs: explain better use of ssh.defaultKeyCommand
-
- Doc update.
-
- Will merge to 'master'.
- source: <20220608152437.126276-1-fs@gigacodes.de>
+ Will merge to 'next'.
+ source: <pull.1254.v2.git.1655234853.gitgitgadget@gmail.com>
 
 
 * js/ci-github-workflow-markup (2022-06-13) 3 commits
- - ci(github): also mark up compile errors
- - ci(github): use grouping also in the `win-build` job
- - ci(github): bring back the 'print test failures' step
+  (merged to 'next' on 2022-06-15 at 03eb5e68ed)
+ + ci(github): also mark up compile errors
+ + ci(github): use grouping also in the `win-build` job
+ + ci(github): bring back the 'print test failures' step
 
  Recent CI update hides certain failures in test jobs, which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'?
  source: <pull.1253.v2.git.1655125988.gitgitgadget@gmail.com>
 
 
@@ -315,42 +332,47 @@ Release tarballs are available at:
  source: <20220610195247.1177549-1-jonathantanmy@google.com>
 
 
-* gc/submodule-update (2022-06-10) 8 commits
- - submodule update: remove never-used expansion
- - submodule update: stop parsing options in .sh
- - submodule update: remove -v, pass --quiet
- - submodule--helper update: use one param per type
- - submodule update: pass --require-init and --init
- - submodule update: pass options with stuck forms
- - submodule update: pass options containing "[no-]"
- - submodule update: remove intermediate parsing
+* gc/submodule-update (2022-06-15) 12 commits
+ - git-sh-setup.sh: remove "say" function, change last users
+ - git-submodule.sh: use "$quiet", not "$GIT_QUIET"
+ - submodule--helper: eliminate internal "--update" option
+ - submodule--helper: understand --checkout, --merge and --rebase synonyms
+ - submodule--helper: report "submodule" as our name in "-h" output
+ - submodule--helper: rename "absorb-git-dirs" to "absorbgitdirs"
+ - submodule update: remove "-v" option
+ - submodule--helper: have --require-init imply --init
+ - git-submodule.sh: remove unused top-level "--branch" argument
+ - git-submodule.sh: make "$cached" variable a boolean
+ - git-submodule.sh: remove unused $prefix var and --super-prefix
+ - git-submodule.sh: remove unused sanitize_submodule_env()
 
  More work on "git submodule update".
 
  Needs review.
- source: <pull.1275.git.git.1654820781.gitgitgadget@gmail.com>
+ source: <cover-v2-00.12-00000000000-20220613T220150Z-avarab@gmail.com>
 
 
 * jc/resolve-undo (2022-06-09) 1 commit
- - revision: mark blobs needed for resolve-undo as reachable
+  (merged to 'next' on 2022-06-15 at c195e5a2d9)
+ + revision: mark blobs needed for resolve-undo as reachable
 
  The resolve-undo information in the index was not protected against
  GC, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <xmqqfskdieqz.fsf@gitster.g>
 
 
 * jp/prompt-clear-before-upstream-mark (2022-06-10) 2 commits
- - git-prompt: fix expansion of branch colour codes
+  (merged to 'next' on 2022-06-15 at e580db03e9)
+ + git-prompt: fix expansion of branch colour codes
   (merged to 'next' on 2022-06-08 at 201a84ad63)
  + git-prompt: make colourization consistent
 
  Bash command line prompt (in contrib/) update.
 
- Will merge to 'next'.
- source: <20220609204447.32841-1-joak-pet@online.no>
- source: <20220606175022.8410-1-joak-pet@online.no>
+ Will merge to 'master'?
+ source: <20220607115024.64724-1-joak-pet@online.no>
 
 
 * ab/build-gitweb (2022-06-02) 7 commits
@@ -384,16 +406,17 @@ Release tarballs are available at:
  source: <cover-v2-0.7-00000000000-20220603T110506Z-avarab@gmail.com>
 
 
-* ac/bitmap-format-doc (2022-06-10) 3 commits
- - bitmap-format.txt: add information for trailing checksum
- - bitmap-format.txt: fix some formatting issues
- - bitmap-format.txt: feed the file to asciidoc to generate html
+* ac/bitmap-format-doc (2022-06-16) 3 commits
+  (merged to 'next' on 2022-06-16 at 5591d11601)
+ + bitmap-format.txt: add information for trailing checksum
+ + bitmap-format.txt: fix some formatting issues
+ + bitmap-format.txt: feed the file to asciidoc to generate html
 
  Adjust technical/bitmap-format to be formatted by AsciiDoc, and
  add some missing information to the documentation.
 
- Will merge to 'next'?
- source: <pull.1246.v3.git.1654858481.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1246.v4.git.1655355834.gitgitgadget@gmail.com>
 
 
 * hx/unpack-streaming (2022-06-13) 6 commits
@@ -412,22 +435,6 @@ Release tarballs are available at:
  source: <cover.1654914555.git.chiyutianyi@gmail.com>
 
 
-* po/rebase-preserve-merges (2022-06-06) 4 commits
-  (merged to 'next' on 2022-06-10 at 471f67aebc)
- + rebase: translate a die(preserve-merges) message
- + rebase: note `preserve` merges may be a pull config option
- + rebase: help users when dying with `preserve-merges`
- + rebase.c: state preserve-merges has been removed
-
- Various error messages that talk about the removal of
- "--preserve-merges" in "rebase" have been strengthened, and "rebase
- --abort" learned to get out of a state that was left by an earlier
- use of the option.
-
- Will merge to 'master'.
- source: <pull.1242.v2.git.1654341469.gitgitgadget@gmail.com>
-
-
 * tb/show-ref-count (2022-06-06) 2 commits
  - builtin/show-ref.c: limit output with `--count`
  - builtin/show-ref.c: rename `found_match` to `matches_nr`
@@ -441,11 +448,12 @@ Release tarballs are available at:
 
 
 * jc/cocci-cleanup (2022-06-07) 1 commit
- - cocci: retire is_null_sha1() rule
+  (merged to 'next' on 2022-06-16 at 990576f5c5)
+ + cocci: retire is_null_sha1() rule
 
  Remove a coccinelle rule that is no longer relevant.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq7d5suoqt.fsf@gitster.g>
 
 
@@ -461,20 +469,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1248.git.1654545325.gitgitgadget@gmail.com>
-
-
-* jc/revert-show-parent-info (2022-05-31) 2 commits
-  (merged to 'next' on 2022-06-07 at e405211ff4)
- + revert: --reference should apply only to 'revert', not 'cherry-pick'
-  (merged to 'next' on 2022-05-30 at b5da52dc14)
- + revert: optionally refer to commit in the "reference" format
-
- "git revert" learns "--reference" option to use more human-readable
- reference to the commit it reverts in the message template it
- prepares for the user.
-
- Will merge to 'master'.
- source: <xmqq8rqn7buk.fsf_-_@gitster.g>
 
 
 * js/bisect-in-c (2022-05-21) 15 commits
@@ -525,6 +519,7 @@ Release tarballs are available at:
  allows users to forbid discovery of bare repositories.
 
  Expecting a reroll.
+ cf. <xmqqbkv4t7gp.fsf@gitster.g>
  source: <29053d029f8ec61095a2ad557be38b1d485a158f.1654635432.git.gitgitgadget@gmail.com>
 
 
