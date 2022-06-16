@@ -1206,7 +1206,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (preserve_merges_selected)
 		die(_("--preserve-merges was replaced by --rebase-merges\n"
-			"Note: Your `pull.rebase` configuration may also be  set to 'preserve',\n"
+			"Note: Your `pull.rebase` configuration may also be set to 'preserve',\n"
 			"which is no longer supported; use 'merges' instead"));
 
 	if (action != ACTION_NONE && total_argc != 2) {
