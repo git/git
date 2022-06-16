@@ -25,9 +25,9 @@ An object is uniquely described by its bit position within a bitmap:
 	is defined as follows:
 
 		o1 <= o2 <==> pack(o1) <= pack(o2) /\ offset(o1) <= offset(o2)
-
-	The ordering between packs is done according to the MIDX's .rev file.
-	Notably, the preferred pack sorts ahead of all other packs.
++
+The ordering between packs is done according to the MIDX's .rev file.
+Notably, the preferred pack sorts ahead of all other packs.
 
 The on-disk representation (described below) of a bitmap is the same regardless
 of whether or not that bitmap belongs to a packfile or a MIDX. The only
@@ -39,97 +39,108 @@ MIDXs, both the bit-cache and rev-cache extensions are required.
 
 == On-disk format
 
-	- A header appears at the beginning:
+    * A header appears at the beginning:
 
-		4-byte signature: {'B', 'I', 'T', 'M'}
+	4-byte signature: :: {'B', 'I', 'T', 'M'}
 
-		2-byte version number (network byte order)
-			The current implementation only supports version 1
-			of the bitmap index (the same one as JGit).
+	2-byte version number (network byte order): ::
 
-		2-byte flags (network byte order)
+	    The current implementation only supports version 1
+	    of the bitmap index (the same one as JGit).
 
-			The following flags are supported:
+	2-byte flags (network byte order): ::
 
-			- BITMAP_OPT_FULL_DAG (0x1) REQUIRED
-			This flag must always be present. It implies that the
-			bitmap index has been generated for a packfile or
-			multi-pack index (MIDX) with full closure (i.e. where
-			every single object in the packfile/MIDX can find its
-			parent links inside the same packfile/MIDX). This is a
-			requirement for the bitmap index format, also present in
-			JGit, that greatly reduces the complexity of the
-			implementation.
+	    The following flags are supported:
 
-			- BITMAP_OPT_HASH_CACHE (0x4)
-			If present, the end of the bitmap file contains
-			`N` 32-bit name-hash values, one per object in the
-			pack/MIDX. The format and meaning of the name-hash is
-			described below.
+	    ** {empty}
+	    BITMAP_OPT_FULL_DAG (0x1) REQUIRED: :::
 
-		4-byte entry count (network byte order)
+	    This flag must always be present. It implies that the
+	    bitmap index has been generated for a packfile or
+	    multi-pack index (MIDX) with full closure (i.e. where
+	    every single object in the packfile/MIDX can find its
+	    parent links inside the same packfile/MIDX). This is a
+	    requirement for the bitmap index format, also present in
+	    JGit, that greatly reduces the complexity of the
+	    implementation.
 
-			The total count of entries (bitmapped commits) in this bitmap index.
+	    ** {empty}
+	    BITMAP_OPT_HASH_CACHE (0x4): :::
 
-		20-byte checksum
+	    If present, the end of the bitmap file contains
+	    `N` 32-bit name-hash values, one per object in the
+	    pack/MIDX. The format and meaning of the name-hash is
+	    described below.
 
-			The SHA1 checksum of the pack/MIDX this bitmap index
-			belongs to.
+	4-byte entry count (network byte order): ::
+	    The total count of entries (bitmapped commits) in this bitmap index.
 
-	- 4 EWAH bitmaps that act as type indexes
+	20-byte checksum: ::
+	    The SHA1 checksum of the pack/MIDX this bitmap index
+	    belongs to.
 
-		Type indexes are serialized after the hash cache in the shape
-		of four EWAH bitmaps stored consecutively (see Appendix A for
-		the serialization format of an EWAH bitmap).
+    * 4 EWAH bitmaps that act as type indexes
++
+Type indexes are serialized after the hash cache in the shape
+of four EWAH bitmaps stored consecutively (see Appendix A for
+the serialization format of an EWAH bitmap).
++
+There is a bitmap for each Git object type, stored in the following
+order:
++
+    - Commits
+    - Trees
+    - Blobs
+    - Tags
 
-		There is a bitmap for each Git object type, stored in the following
-		order:
++
+In each bitmap, the `n`th bit is set to true if the `n`th object
+in the packfile or multi-pack index is of that type.
++
+The obvious consequence is that the OR of all 4 bitmaps will result
+in a full set (all bits set), and the AND of all 4 bitmaps will
+result in an empty bitmap (no bits set).
 
-			- Commits
-			- Trees
-			- Blobs
-			- Tags
+    * N entries with compressed bitmaps, one for each indexed commit
++
+Where `N` is the total amount of entries in this bitmap index.
+Each entry contains the following:
 
-		In each bitmap, the `n`th bit is set to true if the `n`th object
-		in the packfile or multi-pack index is of that type.
+	** {empty}
+	4-byte object position (network byte order): ::
+	    The position **in the index for the packfile or
+	    multi-pack index** where the bitmap for this commit is
+	    found.
 
-		The obvious consequence is that the OR of all 4 bitmaps will result
-		in a full set (all bits set), and the AND of all 4 bitmaps will
-		result in an empty bitmap (no bits set).
+	** {empty}
+	1-byte XOR-offset: ::
+	    The xor offset used to compress this bitmap. For an entry
+	    in position `x`, a XOR offset of `y` means that the actual
+	    bitmap representing this commit is composed by XORing the
+	    bitmap for this entry with the bitmap in entry `x-y` (i.e.
+	    the bitmap `y` entries before this one).
++
+NOTE: This compression can be recursive. In order to
+XOR this entry with a previous one, the previous entry needs
+to be decompressed first, and so on.
++
+The hard-limit for this offset is 160 (an entry can only be
+xor'ed against one of the 160 entries preceding it). This
+number is always positive, and hence entries are always xor'ed
+with **previous** bitmaps, not bitmaps that will come afterwards
+in the index.
 
-	- N entries with compressed bitmaps, one for each indexed commit
+	** {empty}
+	1-byte flags for this bitmap: ::
+	    At the moment the only available flag is `0x1`, which hints
+	    that this bitmap can be re-used when rebuilding bitmap indexes
+	    for the repository.
 
-		Where `N` is the total amount of entries in this bitmap index.
-		Each entry contains the following:
+	** The compressed bitmap itself, see Appendix A.
 
-		- 4-byte object position (network byte order)
-			The position **in the index for the packfile or
-			multi-pack index** where the bitmap for this commit is
-			found.
-
-		- 1-byte XOR-offset
-			The xor offset used to compress this bitmap. For an entry
-			in position `x`, a XOR offset of `y` means that the actual
-			bitmap representing this commit is composed by XORing the
-			bitmap for this entry with the bitmap in entry `x-y` (i.e.
-			the bitmap `y` entries before this one).
-
-			Note that this compression can be recursive. In order to
-			XOR this entry with a previous one, the previous entry needs
-			to be decompressed first, and so on.
-
-			The hard-limit for this offset is 160 (an entry can only be
-			xor'ed against one of the 160 entries preceding it). This
-			number is always positive, and hence entries are always xor'ed
-			with **previous** bitmaps, not bitmaps that will come afterwards
-			in the index.
-
-		- 1-byte flags for this bitmap
-			At the moment the only available flag is `0x1`, which hints
-			that this bitmap can be re-used when rebuilding bitmap indexes
-			for the repository.
-
-		- The compressed bitmap itself, see Appendix A.
+	* {empty}
+	TRAILER: ::
+		Trailing checksum of the preceding contents.
 
 == Appendix A: Serialization format for an EWAH bitmap
 
@@ -142,8 +153,8 @@ implementation:
 	- 4-byte number of words of the COMPRESSED bitmap, when stored
 
 	- N x 8-byte words, as specified by the previous field
-
-		This is the actual content of the compressed bitmap.
++
+This is the actual content of the compressed bitmap.
 
 	- 4-byte position of the current RLW for the compressed
 		bitmap
