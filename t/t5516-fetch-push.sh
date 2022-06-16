@@ -1836,18 +1836,18 @@ test_expect_success 'refuse to push a hidden ref, and make sure do not pollute t
 
 test_expect_success LIBCURL 'fetch warns or fails when using username:password' '
 	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
-	test_must_fail git -c fetch.credentialsInUrl=allow fetch https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=allow fetch https://username:password@localhost 2>err &&
 	! grep "$message" err &&
 
-	test_must_fail git -c fetch.credentialsInUrl=warn fetch https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=warn fetch https://username:password@localhost 2>err &&
 	grep "warning: $message" err >warnings &&
 	test_line_count = 3 warnings &&
 
-	test_must_fail git -c fetch.credentialsInUrl=die fetch https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=die fetch https://username:password@localhost 2>err &&
 	grep "fatal: $message" err >warnings &&
 	test_line_count = 1 warnings &&
 
-	test_must_fail git -c fetch.credentialsInUrl=die fetch https://username:@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=die fetch https://username:@localhost 2>err &&
 	grep "fatal: $message" err >warnings &&
 	test_line_count = 1 warnings
 '
@@ -1855,12 +1855,12 @@ test_expect_success LIBCURL 'fetch warns or fails when using username:password' 
 
 test_expect_success LIBCURL 'push warns or fails when using username:password' '
 	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
-	test_must_fail git -c fetch.credentialsInUrl=allow push https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=allow push https://username:password@localhost 2>err &&
 	! grep "$message" err &&
 
-	test_must_fail git -c fetch.credentialsInUrl=warn push https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=warn push https://username:password@localhost 2>err &&
 	grep "warning: $message" err >warnings &&
-	test_must_fail git -c fetch.credentialsInUrl=die push https://username:password@localhost 2>err &&
+	test_must_fail git -c transfer.credentialsInUrl=die push https://username:password@localhost 2>err &&
 	grep "fatal: $message" err >warnings &&
 	test_line_count = 1 warnings
 '
