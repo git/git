@@ -334,15 +334,17 @@ NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
 int bug_called_must_BUG;
 void bug_fl(const char *file, int line, const char *fmt, ...)
 {
-	va_list ap, cp;
+	va_list ap;
 
 	bug_called_must_BUG = 1;
 
-	va_copy(cp, ap);
 	va_start(ap, fmt);
 	BUG_vfl_common(file, line, fmt, ap);
 	va_end(ap);
-	trace2_cmd_error_va(fmt, cp);
+
+	va_start(ap, fmt);
+	trace2_cmd_error_va(fmt, ap);
+	va_end(ap);
 }
 
 #ifdef SUPPRESS_ANNOTATED_LEAKS
