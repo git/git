@@ -2208,6 +2208,7 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet, str
 		char *hex = oid_to_hex(oid);
 		char *remote = get_default_remote();
 		strvec_pushl(&cp.args, remote, hex, NULL);
+		free(remote);
 	}
 
 	return run_command(&cp);

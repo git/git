@@ -2846,7 +2846,7 @@ char *relative_url(const char *remote_url, const char *url,
 	 * When the url starts with '../', remove that and the
 	 * last directory in remoteurl.
 	 */
-	while (url) {
+	while (*url) {
 		if (starts_with_dot_dot_slash_native(url)) {
 			url += 3;
 			colonsep |= chop_last_dir(&remoteurl, is_relative);
