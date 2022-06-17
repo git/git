@@ -219,7 +219,7 @@ test_wrapper_ () {
 	then
 		base=$(basename "$0" .sh)
 		echo "$test_count" >>"$perf_results_dir"/$base.subtests
-		echo "$1" >"$perf_results_dir"/$base.$test_count.descr
+		echo "$test_title_" >"$perf_results_dir"/$base.$test_count.descr
 		base="$perf_results_dir"/"$PERF_RESULTS_PREFIX$(basename "$0" .sh)"."$test_count"
 		"$test_wrapper_func_" "$test_title_" "$@"
 	fi
