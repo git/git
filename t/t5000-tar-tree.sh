@@ -339,21 +339,21 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_cmp_bin remote.bar config.bar
 '
 
-test_expect_success GZIP 'git archive --format=tgz' '
+test_expect_success 'git archive --format=tgz' '
 	git archive --format=tgz HEAD >j.tgz
 '
 
-test_expect_success GZIP 'git archive --format=tar.gz' '
+test_expect_success 'git archive --format=tar.gz' '
 	git archive --format=tar.gz HEAD >j1.tar.gz &&
 	test_cmp_bin j.tgz j1.tar.gz
 '
 
-test_expect_success GZIP 'infer tgz from .tgz filename' '
+test_expect_success 'infer tgz from .tgz filename' '
 	git archive --output=j2.tgz HEAD &&
 	test_cmp_bin j.tgz j2.tgz
 '
 
-test_expect_success GZIP 'infer tgz from .tar.gz filename' '
+test_expect_success 'infer tgz from .tar.gz filename' '
 	git archive --output=j3.tar.gz HEAD &&
 	test_cmp_bin j.tgz j3.tar.gz
 '
@@ -363,15 +363,31 @@ test_expect_success GZIP 'extract tgz file' '
 	test_cmp_bin b.tar j.tar
 '
 
-test_expect_success GZIP 'remote tar.gz is allowed by default' '
+test_expect_success 'remote tar.gz is allowed by default' '
 	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
 	test_cmp_bin j.tgz remote.tar.gz
 '
 
-test_expect_success GZIP 'remote tar.gz can be disabled' '
+test_expect_success 'remote tar.gz can be disabled' '
 	git config tar.tar.gz.remote false &&
 	test_must_fail git archive --remote=. --format=tar.gz HEAD \
 		>remote.tar.gz
+'
+
+test_expect_success GZIP 'git archive --format=tgz (external gzip)' '
+	test_config tar.tgz.command "gzip -cn" &&
+	git archive --format=tgz HEAD >external_gzip.tgz
+'
+
+test_expect_success GZIP 'git archive --format=tar.gz (external gzip)' '
+	test_config tar.tar.gz.command "gzip -cn" &&
+	git archive --format=tar.gz HEAD >external_gzip.tar.gz &&
+	test_cmp_bin external_gzip.tgz external_gzip.tar.gz
+'
+
+test_expect_success GZIP 'extract tgz file (external gzip)' '
+	gzip -d -c <external_gzip.tgz >external_gzip.tar &&
+	test_cmp_bin b.tar external_gzip.tar
 '
 
 test_expect_success 'archive and :(glob)' '

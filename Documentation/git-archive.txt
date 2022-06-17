@@ -34,10 +34,12 @@ OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar' or 'zip'. If this option
+	Format of the resulting archive. Possible values are `tar`,
+	`zip`, `tar.gz`, `tgz`, and any format defined using the
+	configuration option `tar.<format>.command`. If `--format`
 	is not given, and the output file is specified, the format is
-	inferred from the filename if possible (e.g. writing to "foo.zip"
-	makes the output to be in the zip format). Otherwise the output
+	inferred from the filename if possible (e.g. writing to `foo.zip`
+	makes the output to be in the `zip` format). Otherwise the output
 	format is `tar`.
 
 -l::
@@ -143,17 +145,16 @@ tar.<format>.command::
 	is executed using the shell with the generated tar file on its
 	standard input, and should produce the final output on its
 	standard output. Any compression-level options will be passed
-	to the command (e.g., "-9"). An output file with the same
-	extension as `<format>` will be use this format if no other
-	format is given.
+	to the command (e.g., `-9`).
 +
-The "tar.gz" and "tgz" formats are defined automatically and default to
-`gzip -cn`. You may override them with custom commands.
+The `tar.gz` and `tgz` formats are defined automatically and use the
+magic command `git archive gzip` by default, which invokes an internal
+implementation of gzip.
 
 tar.<format>.remote::
-	If true, enable `<format>` for use by remote clients via
+	If true, enable the format for use by remote clients via
 	linkgit:git-upload-archive[1]. Defaults to false for
-	user-defined formats, but true for the "tar.gz" and "tgz"
+	user-defined formats, but true for the `tar.gz` and `tgz`
 	formats.
 
 [[ATTRIBUTES]]

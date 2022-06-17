@@ -43,7 +43,7 @@ struct archiver {
 	const char *name;
 	int (*write_archive)(const struct archiver *, struct archiver_args *);
 	unsigned flags;
-	void *data;
+	char *filter_command;
 };
 void register_archiver(struct archiver *);
 
