@@ -344,12 +344,13 @@ static void read_branches(void)
 
 struct ref_states {
 	struct remote *remote;
-	struct string_list new_refs, stale, tracked, heads, push;
+	struct string_list new_refs, skipped, stale, tracked, heads, push;
 	int queried;
 };
 
 #define REF_STATES_INIT { \
 	.new_refs = STRING_LIST_INIT_DUP, \
+	.skipped = STRING_LIST_INIT_DUP, \
 	.stale = STRING_LIST_INIT_DUP, \
 	.tracked = STRING_LIST_INIT_DUP, \
 	.heads = STRING_LIST_INIT_DUP, \
@@ -368,7 +369,9 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 				states->remote->fetch.raw[i]);
 
 	for (ref = fetch_map; ref; ref = ref->next) {
-		if (!ref->peer_ref || !ref_exists(ref->peer_ref->name))
+		if (omit_name_by_refspec(ref->name, &states->remote->fetch))
+			string_list_append(&states->skipped, abbrev_branch(ref->name));
+		else if (!ref->peer_ref || !ref_exists(ref->peer_ref->name))
 			string_list_append(&states->new_refs, abbrev_branch(ref->name));
 		else
 			string_list_append(&states->tracked, abbrev_branch(ref->name));
@@ -383,6 +386,7 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	free_refs(fetch_map);
 
 	string_list_sort(&states->new_refs);
+	string_list_sort(&states->skipped);
 	string_list_sort(&states->tracked);
 	string_list_sort(&states->stale);
 
@@ -941,6 +945,7 @@ static void clear_push_info(void *util, const char *string)
 static void free_remote_ref_states(struct ref_states *states)
 {
 	string_list_clear(&states->new_refs, 0);
+	string_list_clear(&states->skipped, 0);
 	string_list_clear(&states->stale, 1);
 	string_list_clear(&states->tracked, 0);
 	string_list_clear(&states->heads, 0);
@@ -1035,6 +1040,8 @@ static int show_remote_info_item(struct string_list_item *item, void *cb_data)
 			arg = states->remote->name;
 		} else if (string_list_has_string(&states->tracked, name))
 			arg = _(" tracked");
+		else if (string_list_has_string(&states->skipped, name))
+			arg = _(" skipped");
 		else if (string_list_has_string(&states->stale, name))
 			arg = _(" stale (use 'git remote prune' to remove)");
 		else
@@ -1308,6 +1315,7 @@ static int show(int argc, const char **argv)
 		/* remote branch info */
 		info.width = 0;
 		for_each_string_list(&info.states.new_refs, add_remote_to_show_info, &info);
+		for_each_string_list(&info.states.skipped, add_remote_to_show_info, &info);
 		for_each_string_list(&info.states.tracked, add_remote_to_show_info, &info);
 		for_each_string_list(&info.states.stale, add_remote_to_show_info, &info);
 		if (info.list.nr)
