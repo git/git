@@ -29,8 +29,14 @@ else
 		set +x
 		begin_group "$1"
 		shift
-		"$@"
-		res=$?
+		# work around `dash` not supporting `set -o pipefail`
+		(
+			"$@" 2>&1
+			echo $? >exit.status
+		) |
+		sed 's/^\(\([^ ]*\):\([0-9]*\):\([0-9]*:\) \)\(error\|warning\): /::\5 file=\2,line=\3::\1/'
+		res=$(cat exit.status)
+		rm exit.status
 		end_group
 		return $res
 	}
@@ -177,7 +183,8 @@ then
 			test_name="${test_exit%.exit}"
 			test_name="${test_name##*/}"
 			printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
-			echo "The full logs are in the artifacts attached to this run."
+			echo "The full logs are in the 'print test failures' step below."
+			echo "See also the 'failed-tests-*' artifacts attached to this run."
 			cat "t/test-results/$test_name.markup"
 
 			trash_dir="t/trash directory.$test_name"
