@@ -1526,7 +1526,7 @@ static int verify_utf8(struct strbuf *buf)
 static const char commit_utf8_warn[] =
 N_("Warning: commit message did not conform to UTF-8.\n"
    "You may want to amend it after fixing the message, or set the config\n"
-   "variable i18n.commitencoding to the encoding your project uses.\n");
+   "variable i18n.commitEncoding to the encoding your project uses.\n");
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,

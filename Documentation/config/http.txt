@@ -203,7 +203,7 @@ http.schannelUseSSLCAInfo::
 	when the `schannel` backend was configured via `http.sslBackend`,
 	unless `http.schannelUseSSLCAInfo` overrides this behavior.
 
-http.pinnedpubkey::
+http.pinnedPubkey::
 	Public key of the https service. It may either be the filename of
 	a PEM or DER encoded public key file or a string starting with
 	'sha256//' followed by the base64 encoded sha256 hash of the

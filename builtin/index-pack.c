@@ -1575,7 +1575,7 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		opts->version = git_config_int(k, v);
 		if (opts->version > 2)
-			die(_("bad pack.indexversion=%"PRIu32), opts->version);
+			die(_("bad pack.indexVersion=%"PRIu32), opts->version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {

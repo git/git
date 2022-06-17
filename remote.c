@@ -633,7 +633,7 @@ static void validate_remote_url(struct remote *remote)
 	else if (!strcmp("allow", value))
 		return;
 	else
-		die(_("unrecognized value transfer.credentialsInURL: '%s'"), value);
+		die(_("unrecognized value transfer.credentialsInUrl: '%s'"), value);
 
 	for (i = 0; i < remote->url_nr; i++) {
 		struct url_info url_info = { 0 };
