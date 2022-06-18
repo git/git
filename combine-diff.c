@@ -1501,6 +1501,9 @@ void diff_tree_combined(const struct object_id *oid,
 	if (opt->ignore_regex_nr)
 		die("combined diff and '%s' cannot be used together",
 		    "--ignore-matching-lines");
+	if (opt->close_file)
+		die("combined diff and '%s' cannot be used together",
+		    "--output");
 
 	/* nothing to do, if no parents */
 	if (!num_parent)
