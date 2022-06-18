@@ -40,6 +40,12 @@ After the merge completes, a new toplevel tree object is created.  See
 OPTIONS
 -------
 
+-z::
+	Do not quote filenames in the <Conflicted file info> section,
+	and end each filename with a NUL character rather than
+	newline.  Also begin the messages section with a NUL character
+	instead of a newline.  See <<OUTPUT>> below for more information.
+
 --name-only::
 	In the Conflicted file info section, instead of writing a list
 	of (mode, oid, stage, path) tuples to output for conflicted
@@ -76,7 +82,8 @@ OID of toplevel tree
 
 This is a tree object that represents what would be checked out in the
 working tree at the end of `git merge`.  If there were conflicts, then
-files within this tree may have embedded conflict markers.
+files within this tree may have embedded conflict markers.  This section
+is always followed by a newline (or NUL if `-z` is passed).
 
 [[CFI]]
 Conflicted file info
@@ -89,19 +96,25 @@ This is a sequence of lines with the format
 The filename will be quoted as explained for the configuration
 variable `core.quotePath` (see linkgit:git-config[1]).  However, if
 the `--name-only` option is passed, the mode, object, and stage will
-be omitted.
+be omitted.  If `-z` is passed, the "lines" are terminated by a NUL
+character instead of a newline character.
 
 [[IM]]
 Informational messages
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This always starts with a blank line to separate it from the previous
-sections, and then has free-form messages about the merge, such as:
+This always starts with a blank line (or NUL if `-z` is passed) to
+separate it from the previous sections, and then has free-form
+messages about the merge, such as:
 
   * "Auto-merging <file>"
   * "CONFLICT (rename/delete): <oldfile> renamed...but deleted in..."
   * "Failed to merge submodule <submodule> (<reason>)"
   * "Warning: cannot merge binary files: <filename>"
+
+Note that these free-form messages will never have a NUL character
+in or between them, even if -z is passed.  It is simply a large block
+of text taking up the remainder of the output.
 
 EXIT STATUS
 -----------
