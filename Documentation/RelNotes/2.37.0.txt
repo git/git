@@ -234,9 +234,8 @@ Fixes since v2.36
 
  * With a recent update to refuse access to repositories of other
    people by default, "sudo make install" and "sudo git describe"
-   stopped working.  This series intends to loosen it while keeping
-   the safety.
-   (merge b9063afda1 cb/path-owner-check-with-sudo later to maint).
+   stopped working, which has been corrected.
+   (merge 6b11e3d52e cb/path-owner-check-with-sudo-plus later to maint).
 
  * The tests that ensured merges stop when interfering local changes
    are present did not make sure that local changes are preserved; now
