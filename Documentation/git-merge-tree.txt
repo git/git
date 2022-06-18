@@ -3,26 +3,100 @@ git-merge-tree(1)
 
 NAME
 ----
-git-merge-tree - Show three-way merge without touching index
+git-merge-tree - Perform merge without touching index or working tree
 
 
 SYNOPSIS
 --------
 [verse]
-'git merge-tree' <base-tree> <branch1> <branch2>
+'git merge-tree' [--write-tree] <branch1> <branch2>
+'git merge-tree' [--trivial-merge] <base-tree> <branch1> <branch2> (deprecated)
 
+[[NEWMERGE]]
 DESCRIPTION
 -----------
-Reads three tree-ish, and output trivial merge results and
-conflicting stages to the standard output.  This is similar to
-what three-way 'git read-tree -m' does, but instead of storing the
-results in the index, the command outputs the entries to the
-standard output.
 
-This is meant to be used by higher level scripts to compute
-merge results outside of the index, and stuff the results back into the
-index.  For this reason, the output from the command omits
-entries that match the <branch1> tree.
+This command has a modern `--write-tree` mode and a deprecated
+`--trivial-merge` mode.  With the exception of the
+<<DEPMERGE,DEPRECATED DESCRIPTION>> section at the end, the rest of
+this documentation describes modern `--write-tree` mode.
+
+Performs a merge, but does not make any new commits and does not read
+from or write to either the working tree or index.
+
+The performed merge will use the same feature as the "real"
+linkgit:git-merge[1], including:
+
+  * three way content merges of individual files
+  * rename detection
+  * proper directory/file conflict handling
+  * recursive ancestor consolidation (i.e. when there is more than one
+    merge base, creating a virtual merge base by merging the merge bases)
+  * etc.
+
+After the merge completes, a new toplevel tree object is created.  See
+`OUTPUT` below for details.
+
+[[OUTPUT]]
+OUTPUT
+------
+
+For either a successful or conflicted merge, the output from
+git-merge-tree is simply one line:
+
+	<OID of toplevel tree>
+
+The printed tree object corresponds to what would be checked out in
+the working tree at the end of `git merge`, and thus may have files
+with conflict markers in them.
+
+EXIT STATUS
+-----------
+
+For a successful, non-conflicted merge, the exit status is 0.  When the
+merge has conflicts, the exit status is 1.  If the merge is not able to
+complete (or start) due to some kind of error, the exit status is
+something other than 0 or 1 (and the output is unspecified).
+
+USAGE NOTES
+-----------
+
+This command is intended as low-level plumbing, similar to
+linkgit:git-hash-object[1], linkgit:git-mktree[1],
+linkgit:git-commit-tree[1], linkgit:git-write-tree[1],
+linkgit:git-update-ref[1], and linkgit:git-mktag[1].  Thus, it can be
+used as a part of a series of steps such as:
+
+       NEWTREE=$(git merge-tree --write-tree $BRANCH1 $BRANCH2)
+       test $? -eq 0 || die "There were conflicts..."
+       NEWCOMMIT=$(git commit-tree $NEWTREE -p $BRANCH1 -p $BRANCH2)
+       git update-ref $BRANCH1 $NEWCOMMIT
+
+[[DEPMERGE]]
+DEPRECATED DESCRIPTION
+----------------------
+
+Per the <<NEWMERGE,DESCRIPTION>> and unlike the rest of this
+documentation, this section describes the deprecated `--trivial-merge`
+mode.
+
+Other than the optional `--trivial-merge`, this mode accepts no
+options.
+
+This mode reads three tree-ish, and outputs trivial merge results and
+conflicting stages to the standard output in a semi-diff format.
+Since this was designed for higher level scripts to consume and merge
+the results back into the index, it omits entries that match
+<branch1>.  The result of this second form is similar to what
+three-way 'git read-tree -m' does, but instead of storing the results
+in the index, the command outputs the entries to the standard output.
+
+This form not only has limited applicability (a trivial merge cannot
+handle content merges of individual files, rename detection, proper
+directory/file conflict handling, etc.), the output format is also
+difficult to work with, and it will generally be less performant than
+the first form even on successful merges (especially if working in
+large repositories).
 
 GIT
 ---
