@@ -68,7 +68,7 @@ test_expect_success 'can access if addressed explicitly' '
 	)
 '
 
-test_expect_failure SUDO 'can access with sudo if root' '
+test_expect_success SUDO 'can access with sudo if root' '
 	(
 		cd root/p &&
 		sudo git status
@@ -82,19 +82,6 @@ test_expect_success SUDO 'can access with sudo if root by removing SUDO_UID' '
 			unset SUDO_UID &&
 			git status
 		END
-	)
-'
-
-test_lazy_prereq SUDO_SUDO '
-	sudo sudo id -u >u &&
-	id -u root >r &&
-	test_cmp u r
-'
-
-test_expect_success SUDO_SUDO 'can access with sudo abusing SUDO_UID' '
-	(
-		cd root/p &&
-		sudo sudo git status
 	)
 '
 
