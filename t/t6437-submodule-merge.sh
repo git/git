@@ -133,7 +133,7 @@ test_expect_success 'merging should conflict for non fast-forward' '
 	(cd merge-search &&
 	 git checkout -b test-nonforward b &&
 	 (cd sub &&
-	  git rev-parse sub-d > ../expect) &&
+	  git rev-parse --short sub-d > ../expect) &&
 	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	  then
 		test_must_fail git merge c >actual

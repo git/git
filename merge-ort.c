@@ -1694,15 +1694,8 @@ static int merge_submodule(struct merge_options *opt,
 			      (struct commit *)merges.objects[0].item);
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s, but a possible merge "
-			   "resolution exists:\n%s\n"),
+			   "resolution exists: %s"),
 			 path, sb.buf);
-		path_msg(opt, path, 1,
-			 _("If this is correct simply add it to the index "
-			   "for example\n"
-			   "by using:\n\n"
-			   "  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
-			   "which will accept this suggestion.\n"),
-			 oid_to_hex(&merges.objects[0].item->oid), path);
 		strbuf_release(&sb);
 		break;
 	default:
