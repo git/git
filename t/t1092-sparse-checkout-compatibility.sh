@@ -1828,7 +1828,7 @@ test_expect_success 'checkout behaves oddly with df-conflict-2' '
 	test_cmp full-checkout-err sparse-index-err
 '
 
-test_expect_failure 'mv directory from out-of-cone to in-cone' '
+test_expect_success 'mv directory from out-of-cone to in-cone' '
 	init_repos &&
 
 	# <source> as a sparse directory (or SKIP_WORKTREE_DIR without enabling

@@ -25,6 +25,7 @@ enum update_mode {
 	WORKING_DIRECTORY = (1 << 1),
 	INDEX = (1 << 2),
 	SPARSE = (1 << 3),
+	SKIP_WORKTREE_DIR = (1 << 4),
 };
 
 #define DUP_BASENAME 1
@@ -123,6 +124,36 @@ static int index_range_of_same_dir(const char *src, int length,
 	return last - first;
 }
 
+/*
+ * Check if an out-of-cone directory should be in the index. Imagine this case
+ * that all the files under a directory are marked with 'CE_SKIP_WORKTREE' bit
+ * and thus the directory is sparsified.
+ *
+ * Return 0 if such directory exist (i.e. with any of its contained files not
+ * marked with CE_SKIP_WORKTREE, the directory would be present in working tree).
+ * Return 1 otherwise.
+ */
+static int check_dir_in_index(const char *name)
+{
+	const char *with_slash = add_slash(name);
+	int length = strlen(with_slash);
+
+	int pos = cache_name_pos(with_slash, length);
+	const struct cache_entry *ce;
+
+	if (pos < 0) {
+		pos = -pos - 1;
+		if (pos >= the_index.cache_nr)
+			return 1;
+		ce = active_cache[pos];
+		if (strncmp(with_slash, ce->name, length))
+			return 1;
+		if (ce_skip_worktree(ce))
+			return 0;
+	}
+	return 1;
+}
+
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
 	int i, flags, gitmodules_modified = 0;
@@ -184,7 +215,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	/* Checking */
 	for (i = 0; i < argc; i++) {
 		const char *src = source[i], *dst = destination[i];
-		int length, src_is_dir;
+		int length;
 		const char *bad = NULL;
 		int skip_sparse = 0;
 
@@ -198,12 +229,17 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 			pos = cache_name_pos(src, length);
 			if (pos < 0) {
+				const char *src_w_slash = add_slash(src);
+				if (!path_in_sparse_checkout(src_w_slash, &the_index) &&
+				    !check_dir_in_index(src)) {
+					modes[i] |= SKIP_WORKTREE_DIR;
+					goto dir_check;
+				}
 				/* only error if existence is expected. */
 				if (!(modes[i] & SPARSE))
 					bad = _("bad source");
 				goto act_on_entry;
 			}
-
 			ce = active_cache[pos];
 			if (!ce_skip_worktree(ce)) {
 				bad = _("bad source");
@@ -230,12 +266,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			bad = _("can not move directory into itself");
 			goto act_on_entry;
 		}
-		if ((src_is_dir = S_ISDIR(st.st_mode))
+		if (S_ISDIR(st.st_mode)
 		    && lstat(dst, &st) == 0) {
 			bad = _("cannot move directory over file");
 			goto act_on_entry;
 		}
-		if (src_is_dir) {
+
+dir_check:
+		if (S_ISDIR(st.st_mode)) {
 			int j, dst_len, n;
 			int first = cache_name_pos(src, length), last;
 
@@ -369,7 +407,7 @@ remove_entry:
 			printf(_("Renaming %s to %s\n"), src, dst);
 		if (show_only)
 			continue;
-		if (!(mode & (INDEX | SPARSE)) &&
+		if (!(mode & (INDEX | SPARSE | SKIP_WORKTREE_DIR)) &&
 		    rename(src, dst) < 0) {
 			if (ignore_errors)
 				continue;
@@ -384,7 +422,7 @@ remove_entry:
 							      1);
 		}
 
-		if (mode & (WORKING_DIRECTORY))
+		if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))
 			continue;
 
 		pos = cache_name_pos(src, strlen(src));
