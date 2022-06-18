@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2022, #05; Thu, 16)
-X-master-at: 3b9a5a33c2986522736d484da497ccd99d715220
-X-next-at: 10f37bed90c8150629a8f2f8f37966f953baf262
+Subject: What's cooking in git.git (Jun 2022, #06; Fri, 17)
+X-master-at: 5b71c59bc3b9365075e2a175aa7b6f2b0c84ce44
+X-next-at: 763f9739486ebf52dadb6c56742daf07e738829f
 
-What's cooking in git.git (Jun 2022, #05; Thu, 16)
+What's cooking in git.git (Jun 2022, #06; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-The first -rc for this cycle is expected to be tagged tomorrow.
+Git 2.37-rc1 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -44,43 +44,31 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* fs/ssh-default-key-command-doc (2022-06-08) 1 commit
-  (merged to 'next' on 2022-06-10 at b5cc5b6619)
- + gpg docs: explain better use of ssh.defaultKeyCommand
+* cr/setup-bug-typo (2022-06-17) 1 commit
+  (merged to 'next' on 2022-06-17 at 8834ffe0ab)
+ + setup: fix function name in a BUG() message
 
- Doc update.
- source: <20220608152437.126276-1-fs@gigacodes.de>
+ Typofix in a BUG() message.
 
-
-* jc/revert-show-parent-info (2022-05-31) 2 commits
-  (merged to 'next' on 2022-06-07 at e405211ff4)
- + revert: --reference should apply only to 'revert', not 'cherry-pick'
-  (merged to 'next' on 2022-05-30 at b5da52dc14)
- + revert: optionally refer to commit in the "reference" format
-
- "git revert" learns "--reference" option to use more human-readable
- reference to the commit it reverts in the message template it
- prepares for the user.
- source: <xmqq8rqn7buk.fsf_-_@gitster.g>
+ Will cook in 'next'.
+ source: <pull.1255.git.1654782920256.gitgitgadget@gmail.com>
 
 
-* po/rebase-preserve-merges (2022-06-06) 4 commits
-  (merged to 'next' on 2022-06-10 at 471f67aebc)
- + rebase: translate a die(preserve-merges) message
- + rebase: note `preserve` merges may be a pull config option
- + rebase: help users when dying with `preserve-merges`
- + rebase.c: state preserve-merges has been removed
+* zk/push-use-bitmaps (2022-06-17) 1 commit
+ - send-pack.c: add config push.useBitmaps
 
- Various error messages that talk about the removal of
- "--preserve-merges" in "rebase" have been strengthened, and "rebase
- --abort" learned to get out of a state that was left by an earlier
- use of the option.
- source: <pull.1242.v2.git.1654341469.gitgitgadget@gmail.com>
+ "git push" sometimes perform poorly when reachability bitmaps are
+ used, even in a repository where other operations are helped by
+ bitmaps.  The push.useBitmaps configuration variable is introduced
+ to allow disabling use of reachability bitmaps only for "git push".
+
+ Will merge to 'next'?
+ source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
 * ab/credentials-in-url-more (2022-06-15) 2 commits
   (merged to 'next' on 2022-06-16 at de19b3b40c)
@@ -90,9 +78,18 @@ Release tarballs are available at:
  Rename fetch.credentialsInUrl to transfer.credentialsInUrl as the
  single configuration variable should work both in pushing and
  fetching.
-
- Will merge to 'master'.
  source: <cover-0.2-00000000000-20220615T103852Z-avarab@gmail.com>
+
+
+* cb/path-owner-check-with-sudo-plus (2022-06-17) 1 commit
+  (merged to 'next' on 2022-06-17 at 518afcbc48)
+ + git-compat-util: allow root to access both SUDO_UID and root owned
+
+ "sudo git foo" used to consider a repository owned by the original
+ user a safe one to access; it now also considers a repository owned
+ by root a safe one, too (after all, if an attacker can craft a
+ malicious repository owned by root, the box is 0wned already).
+ source: <20220617202338.27984-1-carenas@gmail.com>
 
 
 * ds/more-test-coverage (2022-06-16) 4 commits
@@ -103,34 +100,23 @@ Release tarballs are available at:
  + t2107: test 'git update-index --verbose'
 
  Improve test coverage with a handful of tests.
-
- Will merge to 'master'.
  source: <pull.1261.v2.git.1655385230.gitgitgadget@gmail.com>
 
 
-* jk/remote-show-with-negative-refspecs (2022-06-15) 1 commit
- - remote: handle negative refspecs in git remote show
+* jc/cocci-cleanup (2022-06-07) 1 commit
+  (merged to 'next' on 2022-06-16 at 990576f5c5)
+ + cocci: retire is_null_sha1() rule
 
- "git remote show [-n] frotz" now pays attention to negative
- pathspecs.
- source: <20220614003251.16765-1-jacob.e.keller@intel.com>
-
-
-* js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
- - commit-graph: refactor to avoid prepare_repo_settings
-
- source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
+ Remove a coccinelle rule that is no longer relevant.
+ source: <xmqq7d5suoqt.fsf@gitster.g>
 
 
-* jk/optim-promisor-object-enumeration (2022-06-16) 1 commit
-  (merged to 'next' on 2022-06-16 at ce0712a74c)
- + is_promisor_object(): walk promisor packs in pack-order
+* jk/bug-fl-va-list-fix (2022-06-16) 1 commit
+  (merged to 'next' on 2022-06-16 at 8150aebb0f)
+ + bug_fl(): correctly initialize trace2 va_list
 
- Collection of what is referenced by objects in promisor packs have
- been optimized to inspect these objects in the in-pack order.
-
- Will cook in 'next'.
- source: <YqrTsbXbEjx0Pabn@coredump.intra.peff.net>
+ Fix buggy va_list usage in recent code.
+ source: <YquMyakxYnU6mI5a@coredump.intra.peff.net>
 
 
 * jk/perf-lib-test-titles (2022-06-16) 1 commit
@@ -138,9 +124,19 @@ Release tarballs are available at:
  + perf-lib: fix missing test titles in output
 
  Show test titles to the performance test output again.
-
- Will merge to 'master'.
  source: <YqrXLO5oMYeOr2PB@coredump.intra.peff.net>
+
+
+* js/ci-github-workflow-markup (2022-06-13) 3 commits
+  (merged to 'next' on 2022-06-15 at 03eb5e68ed)
+ + ci(github): also mark up compile errors
+ + ci(github): use grouping also in the `win-build` job
+ + ci(github): bring back the 'print test failures' step
+
+ Recent CI update hides certain failures in test jobs, which has
+ been corrected.
+
+ source: <pull.1253.v2.git.1655125988.gitgitgadget@gmail.com>
 
 
 * js/misc-fixes (2022-06-16) 6 commits
@@ -153,29 +149,7 @@ Release tarballs are available at:
  + fsmonitor: avoid memory leak in `fsm_settings__get_incompatible_msg()`
 
  Assorted fixes to problems found by Coverity.
-
- Will merge to 'master'.
  source: <pull.1264.git.1655336146.gitgitgadget@gmail.com>
-
-
-* ro/mktree-allow-missing-fix (2022-06-16) 1 commit
- - mktree: do not load objects under '--missing'
-
- "git mktree --missing" lazily fetched objects that are missing from
- the local object store, which was totally unnecessary.
-
- Waiting for review response.
- source: <1566aed1-a38f-a9ca-241c-21b56d732328@roku.com>
-
-
-* jk/bug-fl-va-list-fix (2022-06-16) 1 commit
-  (merged to 'next' on 2022-06-16 at 8150aebb0f)
- + bug_fl(): correctly initialize trace2 va_list
-
- Fix buggy va_list usage in recent code.
-
- Will merge to 'master'.
- source: <YquMyakxYnU6mI5a@coredump.intra.peff.net>
 
 --------------------------------------------------
 [Stalled]
@@ -240,6 +214,44 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jk/remote-show-with-negative-refspecs (2022-06-17) 1 commit
+ - remote: handle negative refspecs in git remote show
+ (this branch is used by jk/t5505-restructure.)
+
+ "git remote show [-n] frotz" now pays attention to negative
+ pathspecs.
+
+ Will merge to 'next'?
+ source: <20220617002036.1577-2-jacob.keller@gmail.com>
+
+
+* js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
+ - commit-graph: refactor to avoid prepare_repo_settings
+
+ source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
+
+
+* jk/optim-promisor-object-enumeration (2022-06-16) 1 commit
+  (merged to 'next' on 2022-06-16 at ce0712a74c)
+ + is_promisor_object(): walk promisor packs in pack-order
+
+ Collection of what is referenced by objects in promisor packs have
+ been optimized to inspect these objects in the in-pack order.
+
+ Will cook in 'next'.
+ source: <YqrTsbXbEjx0Pabn@coredump.intra.peff.net>
+
+
+* ro/mktree-allow-missing-fix (2022-06-16) 1 commit
+ - mktree: do not load objects under '--missing'
+
+ "git mktree --missing" lazily fetched objects that are missing from
+ the local object store, which was totally unnecessary.
+
+ Waiting for review response.
+ source: <1566aed1-a38f-a9ca-241c-21b56d732328@roku.com>
+
+
 * jc/apply-icase-tests (2022-06-13) 1 commit
  - t4141: test "git apply" with core.ignorecase
 
@@ -262,18 +274,19 @@ Release tarballs are available at:
 
 
 * rs/archive-with-internal-gzip (2022-06-15) 6 commits
- - archive-tar: use internal gzip by default
- - archive-tar: use OS_CODE 3 (Unix) for internal gzip
- - archive-tar: add internal gzip implementation
- - archive-tar: factor out write_block()
- - archive: rename archiver data field to filter_command
- - archive: update format documentation
+  (merged to 'next' on 2022-06-17 at ab5af6acd1)
+ + archive-tar: use internal gzip by default
+ + archive-tar: use OS_CODE 3 (Unix) for internal gzip
+ + archive-tar: add internal gzip implementation
+ + archive-tar: factor out write_block()
+ + archive: rename archiver data field to filter_command
+ + archive: update format documentation
 
  Teach "git archive" to (optionally and then by default) avoid
  spawning an external "gzip" process when creating ".tar.gz" (and
  ".tgz") archives.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <9df761c3-355a-ede9-7971-b32687fe9abb@web.de>
 
 
@@ -291,32 +304,20 @@ Release tarballs are available at:
 
 
 * ds/branch-checked-out (2022-06-15) 5 commits
- - branch: fix branch_checked_out() leaks
- - branch: use branch_checked_out() when deleting refs
- - fetch: use new branch_checked_out() and add tests
- - branch: check for bisects and rebases
- - branch: add branch_checked_out() helper
+  (merged to 'next' on 2022-06-17 at c881874257)
+ + branch: fix branch_checked_out() leaks
+ + branch: use branch_checked_out() when deleting refs
+ + fetch: use new branch_checked_out() and add tests
+ + branch: check for bisects and rebases
+ + branch: add branch_checked_out() helper
 
  Introduce a helper to see if a branch is already being worked on
  (hence should not be newly checked out in a working tree), which
  performs much better than the existing find_shared_symref() to
  replace many uses of the latter.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1254.v2.git.1655234853.gitgitgadget@gmail.com>
-
-
-* js/ci-github-workflow-markup (2022-06-13) 3 commits
-  (merged to 'next' on 2022-06-15 at 03eb5e68ed)
- + ci(github): also mark up compile errors
- + ci(github): use grouping also in the `win-build` job
- + ci(github): bring back the 'print test failures' step
-
- Recent CI update hides certain failures in test jobs, which has
- been corrected.
-
- Will merge to 'master'?
- source: <pull.1253.v2.git.1655125988.gitgitgadget@gmail.com>
 
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
@@ -359,7 +360,7 @@ Release tarballs are available at:
  The resolve-undo information in the index was not protected against
  GC, which has been corrected.
 
- Will merge to 'master'?
+ Will cook in 'next'.
  source: <xmqqfskdieqz.fsf@gitster.g>
 
 
@@ -371,7 +372,7 @@ Release tarballs are available at:
 
  Bash command line prompt (in contrib/) update.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <20220607115024.64724-1-joak-pet@online.no>
 
 
@@ -447,16 +448,6 @@ Release tarballs are available at:
  source: <cover.1654552560.git.me@ttaylorr.com>
 
 
-* jc/cocci-cleanup (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-16 at 990576f5c5)
- + cocci: retire is_null_sha1() rule
-
- Remove a coccinelle rule that is no longer relevant.
-
- Will merge to 'master'.
- source: <xmqq7d5suoqt.fsf@gitster.g>
-
-
 * ds/bundle-uri-more (2022-06-06) 6 commits
  - fetch: add 'refs/bundle/' to log.excludeDecoration
  - bundle-uri: add support for http(s):// and file://
@@ -493,19 +484,6 @@ Release tarballs are available at:
  The command line parsing is reported to be still broken.
  cf. <220521.86zgjazuy4.gmgdl@evledraar.gmail.com>
  source: <pull.1132.v3.git.1653144546.gitgitgadget@gmail.com>
-
-
-* cb/path-owner-check-with-sudo-plus (2022-05-12) 1 commit
- - git-compat-util: allow root to access both SUDO_UID and root owned
-
- "sudo git foo" used to consider a repository owned by the original
- user a safe one to access; it now also considers a repository owned
- by root a safe one, too (after all, if an attacker can craft a
- malicious repository owned by root, the box is 0wned already).
-
- Will merge to 'next'?
- cf. <20220519152344.ktrifm3pc42bjruh@Carlos-MacBook-Pro-2.local>
- source: <20220513010020.55361-5-carenas@gmail.com>
 
 
 * gc/bare-repo-discovery (2022-06-07) 5 commits
