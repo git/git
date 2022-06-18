@@ -13,10 +13,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$GIT_BUILD_DIR/contrib/completion/git-prompt.sh"
 
 actual="$TRASH_DIRECTORY/actual"
-c_red='\\[\\e[31m\\]'
-c_green='\\[\\e[32m\\]'
-c_lblue='\\[\\e[1;34m\\]'
-c_clear='\\[\\e[0m\\]'
+c_red='\\01\\e[31m\\02'
+c_green='\\01\\e[32m\\02'
+c_lblue='\\01\\e[1;34m\\02'
+c_clear='\\01\\e[0m\\02'
 
 test_expect_success 'setup for prompt tests' '
 	git init otherrepo &&

@@ -96,9 +96,8 @@
 #
 # If you would like a colored hint about the current dirty state, set
 # GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
-# the colored output of "git status -sb" and are available only when
-# using __git_ps1 for PROMPT_COMMAND or precmd in Bash,
-# but always available in Zsh.
+# the colored output of "git status -sb" and is always available in
+# Bash and Zsh.
 #
 # If you would like __git_ps1 to do nothing in the case when the current
 # directory is set up to be ignored by git, then set
@@ -254,12 +253,13 @@ __git_ps1_colorize_gitstring ()
 		local c_lblue='%F{blue}'
 		local c_clear='%f'
 	else
-		# Using \[ and \] around colors is necessary to prevent
+		# Using \01 and \02 around colors is necessary to prevent
 		# issues with command line editing/browsing/completion!
-		local c_red='\[\e[31m\]'
-		local c_green='\[\e[32m\]'
-		local c_lblue='\[\e[1;34m\]'
-		local c_clear='\[\e[0m\]'
+		# (These are equivalent to \[ and \] when in pc mode.)
+		local c_red='\01\e[31m\02'
+		local c_green='\01\e[32m\02'
+		local c_lblue='\01\e[1;34m\02'
+		local c_clear='\01\e[0m\02'
 	fi
 	local bad_color=$c_red
 	local ok_color=$c_green
@@ -338,7 +338,6 @@ __git_sequencer_status ()
 # to the state string when assigned to PS1.
 # The optional third parameter will be used as printf format string to further
 # customize the output of the git-status string.
-# In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
 	# preserve exit status
@@ -556,9 +555,9 @@ __git_ps1 ()
 
 	local z="${GIT_PS1_STATESEPARATOR-" "}"
 
-	# NO color option unless in PROMPT_COMMAND mode or it's Zsh
+	# Colorize in Bash and Zsh, but \01..\02 remains undefined in POSIX shell
 	if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
-		if [ $pcmode = yes ] || [ -n "${ZSH_VERSION-}" ]; then
+		if [ $pcmode = yes ] || [ -n "${ZSH_VERSION-}" ] || [ -z "${BASH_VERSION-}" ]; then
 			__git_ps1_colorize_gitstring
 		fi
 	fi
