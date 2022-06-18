@@ -40,6 +40,13 @@ After the merge completes, a new toplevel tree object is created.  See
 OPTIONS
 -------
 
+--name-only::
+	In the Conflicted file info section, instead of writing a list
+	of (mode, oid, stage, path) tuples to output for conflicted
+	files, just provide a list of filenames with conflicts (and
+	do not list filenames multiple times if they have multiple
+	conflicting stages).
+
 --[no-]messages::
 	Write any informational messages such as "Auto-merging <path>"
 	or CONFLICT notices to the end of stdout.  If unspecified, the
@@ -58,7 +65,7 @@ line:
 Whereas for a conflicted merge, the output is by default of the form:
 
 	<OID of toplevel tree>
-	<Conflicted file list>
+	<Conflicted file info>
 	<Informational messages>
 
 These are discussed individually below.
@@ -72,19 +79,24 @@ working tree at the end of `git merge`.  If there were conflicts, then
 files within this tree may have embedded conflict markers.
 
 [[CFI]]
-Conflicted file list
+Conflicted file info
 ~~~~~~~~~~~~~~~~~~~~
 
-This is a sequence of lines containing a filename on each line, quoted
-as explained for the configuration variable `core.quotePath` (see
-linkgit:git-config[1]).
+This is a sequence of lines with the format
+
+	<mode> <object> <stage> <filename>
+
+The filename will be quoted as explained for the configuration
+variable `core.quotePath` (see linkgit:git-config[1]).  However, if
+the `--name-only` option is passed, the mode, object, and stage will
+be omitted.
 
 [[IM]]
 Informational messages
 ~~~~~~~~~~~~~~~~~~~~~~
 
 This always starts with a blank line to separate it from the previous
-section, and then has free-form messages about the merge, such as:
+sections, and then has free-form messages about the merge, such as:
 
   * "Auto-merging <file>"
   * "CONFLICT (rename/delete): <oldfile> renamed...but deleted in..."
@@ -115,6 +127,16 @@ used as a part of a series of steps such as:
 
 Note that when the exit status is non-zero, `NEWTREE` in this sequence
 will contain a lot more output than just a tree.
+
+For conflicts, the output includes the same information that you'd get
+with linkgit:git-merge[1]:
+
+  * what would be written to the working tree (the
+    <<OIDTLT,OID of toplevel tree>>)
+  * the higher order stages that would be written to the index (the
+    <<CFI,Conflicted file info>>)
+  * any messages that would have been printed to stdout (the
+    <<IM,Informational messages>>)
 
 [[DEPMERGE]]
 DEPRECATED DESCRIPTION
