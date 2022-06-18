@@ -4413,6 +4413,7 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 }
 
 void merge_display_update_messages(struct merge_options *opt,
+				   int detailed,
 				   struct merge_result *result)
 {
 	struct merge_options_internal *opti = result->priv;
@@ -4438,8 +4439,25 @@ void merge_display_update_messages(struct merge_options *opt,
 	/* Iterate over the items, printing them */
 	for (int path_nr = 0; path_nr < olist.nr; ++path_nr) {
 		struct string_list *conflicts = olist.items[path_nr].util;
-		for (int i = 0; i < conflicts->nr; i++)
+		for (int i = 0; i < conflicts->nr; i++) {
+			struct logical_conflict_info *info =
+				conflicts->items[i].util;
+
+			if (detailed) {
+				printf("%lu", (unsigned long)info->paths.nr);
+				putchar('\0');
+				for (int n = 0; n < info->paths.nr; n++) {
+					fputs(info->paths.v[n], stdout);
+					putchar('\0');
+				}
+				fputs(type_short_descriptions[info->type],
+				      stdout);
+				putchar('\0');
+			}
 			puts(conflicts->items[i].string);
+			if (detailed)
+				putchar('\0');
+		}
 	}
 	string_list_clear(&olist, 0);
 
@@ -4519,7 +4537,7 @@ void merge_switch_to_result(struct merge_options *opt,
 		trace2_region_leave("merge", "write_auto_merge", opt->repo);
 	}
 	if (display_update_msgs)
-		merge_display_update_messages(opt, result);
+		merge_display_update_messages(opt, /* detailed */ 0, result);
 
 	merge_finalize(opt, result);
 }

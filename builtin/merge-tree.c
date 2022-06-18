@@ -468,7 +468,8 @@ static int real_merge(struct merge_tree_options *o,
 	}
 	if (o->show_messages) {
 		putchar(line_termination);
-		merge_display_update_messages(&opt, &result);
+		merge_display_update_messages(&opt, line_termination == '\0',
+					      &result);
 	}
 	merge_finalize(&opt, &result);
 	return !result.clean; /* result.clean < 0 handled above */
