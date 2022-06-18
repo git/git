@@ -28,7 +28,7 @@ struct merge_result {
 	/*
 	 * Special messages and conflict notices for various paths
 	 *
-	 * This is a map of pathnames to strbufs. It contains various
+	 * This is a map of pathnames to a string_list. It contains various
 	 * warning/conflict/notice messages (possibly multiple per path)
 	 * that callers may want to use.
 	 */

@@ -3362,29 +3362,42 @@ struct userdiff_driver *get_textconv(struct repository *r,
 	return userdiff_get_textconv(r, one->driver);
 }
 
-static struct strbuf *additional_headers(struct diff_options *o,
-					 const char *path)
+static struct string_list *additional_headers(struct diff_options *o,
+					      const char *path)
 {
 	if (!o->additional_path_headers)
 		return NULL;
 	return strmap_get(o->additional_path_headers, path);
 }
 
-static void add_formatted_headers(struct strbuf *msg,
-				  struct strbuf *more_headers,
+static void add_formatted_header(struct strbuf *msg,
+				  const char *header,
 				  const char *line_prefix,
 				  const char *meta,
 				  const char *reset)
 {
-	char *next, *newline;
+	const char *next, *newline;
 
-	for (next = more_headers->buf; *next; next = newline) {
+	for (next = header; *next; next = newline) {
 		newline = strchrnul(next, '\n');
 		strbuf_addf(msg, "%s%s%.*s%s\n", line_prefix, meta,
 			    (int)(newline - next), next, reset);
 		if (*newline)
 			newline++;
 	}
+}
+
+static void add_formatted_headers(struct strbuf *msg,
+				  struct string_list *more_headers,
+				  const char *line_prefix,
+				  const char *meta,
+				  const char *reset)
+{
+	int i;
+
+	for (i = 0; i < more_headers->nr; i++)
+		add_formatted_header(msg, more_headers->items[i].string,
+				     line_prefix, meta, reset);
 }
 
 static void builtin_diff(const char *name_a,
@@ -4314,7 +4327,7 @@ static void fill_metainfo(struct strbuf *msg,
 	const char *set = diff_get_color(use_color, DIFF_METAINFO);
 	const char *reset = diff_get_color(use_color, DIFF_RESET);
 	const char *line_prefix = diff_line_prefix(o);
-	struct strbuf *more_headers = NULL;
+	struct string_list *more_headers = NULL;
 
 	*must_show_header = 1;
 	strbuf_init(msg, PATH_MAX * 2 + 300);
