@@ -41,7 +41,7 @@ static const char *const git_repack_usage[] = {
 
 static const char incremental_bitmap_conflict_error[] = N_(
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
-"--no-write-bitmap-index or disable the pack.writebitmaps configuration."
+"--no-write-bitmap-index or disable the pack.writeBitmaps configuration."
 );
 
 struct pack_objects_args {

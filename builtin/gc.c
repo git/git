@@ -581,7 +581,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	/* default expiry time, overwritten in gc_config */
 	gc_config();
 	if (parse_expiry_date(gc_log_expire, &gc_log_expire_time))
-		die(_("failed to parse gc.logexpiry value %s"), gc_log_expire);
+		die(_("failed to parse gc.logExpiry value %s"), gc_log_expire);
 
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();

@@ -623,7 +623,7 @@ static void validate_remote_url(struct remote *remote)
 	struct strbuf redacted = STRBUF_INIT;
 	int warn_not_die;
 
-	if (git_config_get_string_tmp("fetch.credentialsinurl", &value))
+	if (git_config_get_string_tmp("transfer.credentialsinurl", &value))
 		return;
 
 	if (!strcmp("warn", value))
@@ -633,7 +633,7 @@ static void validate_remote_url(struct remote *remote)
 	else if (!strcmp("allow", value))
 		return;
 	else
-		die(_("unrecognized value fetch.credentialsInURL: '%s'"), value);
+		die(_("unrecognized value transfer.credentialsInUrl: '%s'"), value);
 
 	for (i = 0; i < remote->url_nr; i++) {
 		struct url_info url_info = { 0 };
@@ -2846,7 +2846,7 @@ char *relative_url(const char *remote_url, const char *url,
 	 * When the url starts with '../', remove that and the
 	 * last directory in remoteurl.
 	 */
-	while (url) {
+	while (*url) {
 		if (starts_with_dot_dot_slash_native(url)) {
 			url += 3;
 			colonsep |= chop_last_dir(&remoteurl, is_relative);

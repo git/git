@@ -310,26 +310,21 @@ static void write_mtimes_trailer(struct hashfile *f, const unsigned char *hash)
 	hashwrite(f, hash, the_hash_algo->rawsz);
 }
 
-static const char *write_mtimes_file(const char *mtimes_name,
-				     struct packing_data *to_pack,
+static const char *write_mtimes_file(struct packing_data *to_pack,
 				     struct pack_idx_entry **objects,
 				     uint32_t nr_objects,
 				     const unsigned char *hash)
 {
+	struct strbuf tmp_file = STRBUF_INIT;
+	const char *mtimes_name;
 	struct hashfile *f;
 	int fd;
 
 	if (!to_pack)
 		BUG("cannot call write_mtimes_file with NULL packing_data");
 
-	if (!mtimes_name) {
-		struct strbuf tmp_file = STRBUF_INIT;
-		fd = odb_mkstemp(&tmp_file, "pack/tmp_mtimes_XXXXXX");
-		mtimes_name = strbuf_detach(&tmp_file, NULL);
-	} else {
-		unlink(mtimes_name);
-		fd = xopen(mtimes_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
-	}
+	fd = odb_mkstemp(&tmp_file, "pack/tmp_mtimes_XXXXXX");
+	mtimes_name = strbuf_detach(&tmp_file, NULL);
 	f = hashfd(fd, mtimes_name);
 
 	write_mtimes_header(f);
@@ -561,7 +556,7 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 				      pack_idx_opts->flags);
 
 	if (pack_idx_opts->flags & WRITE_MTIMES) {
-		mtimes_tmp_name = write_mtimes_file(NULL, to_pack, written_list,
+		mtimes_tmp_name = write_mtimes_file(to_pack, written_list,
 						    nr_written,
 						    hash);
 	}
