@@ -20,6 +20,13 @@ static const char * const builtin_mv_usage[] = {
 	NULL
 };
 
+enum update_mode {
+	BOTH = 0,
+	WORKING_DIRECTORY = (1 << 1),
+	INDEX = (1 << 2),
+	SPARSE = (1 << 3),
+};
+
 #define DUP_BASENAME 1
 #define KEEP_TRAILING_SLASH 2
 
@@ -130,7 +137,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 	const char **source, **destination, **dest_path, **submodule_gitfile;
-	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX, SPARSE } *modes;
+	enum update_mode *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 	struct lock_file lock_file = LOCK_INIT;
@@ -192,7 +199,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			pos = cache_name_pos(src, length);
 			if (pos < 0) {
 				/* only error if existence is expected. */
-				if (modes[i] != SPARSE)
+				if (!(modes[i] & SPARSE))
 					bad = _("bad source");
 				goto act_on_entry;
 			}
@@ -208,14 +215,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			}
 			/* Check if dst exists in index */
 			if (cache_name_pos(dst, strlen(dst)) < 0) {
-				modes[i] = SPARSE;
+				modes[i] |= SPARSE;
 				goto act_on_entry;
 			}
 			if (!force) {
 				bad = _("destination exists");
 				goto act_on_entry;
 			}
-			modes[i] = SPARSE;
+			modes[i] |= SPARSE;
 			goto act_on_entry;
 		}
 		if (!strncmp(src, dst, length) &&
@@ -243,7 +250,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			}
 
 			/* last - first >= 1 */
-			modes[i] = WORKING_DIRECTORY;
+			modes[i] |= WORKING_DIRECTORY;
 			n = argc + last - first;
 			REALLOC_ARRAY(source, n);
 			REALLOC_ARRAY(destination, n);
@@ -259,7 +266,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				source[argc + j] = path;
 				destination[argc + j] =
 					prefix_path(dst, dst_len, path + length + 1);
-				modes[argc + j] = ce_skip_worktree(ce) ? SPARSE : INDEX;
+				memset(modes + argc + j, 0, sizeof(enum update_mode));
+				modes[argc + j] |= ce_skip_worktree(ce) ? SPARSE : INDEX;
 				submodule_gitfile[argc + j] = NULL;
 			}
 			argc += last - first;
@@ -361,7 +369,8 @@ remove_entry:
 			printf(_("Renaming %s to %s\n"), src, dst);
 		if (show_only)
 			continue;
-		if (mode != INDEX && mode != SPARSE && rename(src, dst) < 0) {
+		if (!(mode & (INDEX | SPARSE)) &&
+		    rename(src, dst) < 0) {
 			if (ignore_errors)
 				continue;
 			die_errno(_("renaming '%s' failed"), src);
@@ -375,7 +384,7 @@ remove_entry:
 							      1);
 		}
 
-		if (mode == WORKING_DIRECTORY)
+		if (mode & (WORKING_DIRECTORY))
 			continue;
 
 		pos = cache_name_pos(src, strlen(src));
