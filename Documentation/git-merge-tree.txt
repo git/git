@@ -156,6 +156,59 @@ with linkgit:git-merge[1]:
   * any messages that would have been printed to stdout (the
     <<IM,Informational messages>>)
 
+MISTAKES TO AVOID
+-----------------
+
+Do NOT look through the resulting toplevel tree to try to find which
+files conflict; parse the <<CFI,Conflicted file info>> section instead.
+Not only would parsing an entire tree be horrendously slow in large
+repositories, there are numerous types of conflicts not representable by
+conflict markers (modify/delete, mode conflict, binary file changed on
+both sides, file/directory conflicts, various rename conflict
+permutations, etc.)
+
+Do NOT interpret an empty <<CFI,Conflicted file info>> list as a clean
+merge; check the exit status.  A merge can have conflicts without having
+individual files conflict (there are a few types of directory rename
+conflicts that fall into this category, and others might also be added
+in the future).
+
+Do NOT attempt to guess or make the user guess the conflict types from
+the <<CFI,Conflicted file info>> list.  The information there is
+insufficient to do so.  For example: Rename/rename(1to2) conflicts (both
+sides renamed the same file differently) will result in three different
+file having higher order stages (but each only has one higher order
+stage), with no way (short of the <<IM,Informational messages>> section)
+to determine which three files are related.  File/directory conflicts
+also result in a file with exactly one higher order stage.
+Possibly-involved-in-directory-rename conflicts (when
+"merge.directoryRenames" is unset or set to "conflicts") also result in
+a file with exactly one higher order stage.  In all cases, the
+<<IM,Informational messages>> section has the necessary info, though it
+is not designed to be machine parseable.
+
+Do NOT assume that each paths from <<CFI,Conflicted file info>>, and
+the logical conflicts in the <<IM,Informational messages>> have a
+one-to-one mapping, nor that there is a one-to-many mapping, nor a
+many-to-one mapping.  Many-to-many mappings exist, meaning that each
+path can have many logical conflict types in a single merge, and each
+logical conflict type can affect many paths.
+
+Do NOT assume all filenames listed in the <<IM,Informational messages>>
+section had conflicts.  Messages can be included for files that have no
+conflicts, such as "Auto-merging <file>".
+
+AVOID taking the OIDS from the <<CFI,Conflicted file info>> and
+re-merging them to present the conflicts to the user.  This will lose
+information.  Instead, look up the version of the file found within the
+<<OIDTLT,OID of toplevel tree>> and show that instead.  In particular,
+the latter will have conflict markers annotated with the original
+branch/commit being merged and, if renames were involved, the original
+filename.  While you could include the original branch/commit in the
+conflict marker annotations when re-merging, the original filename is
+not available from the <<CFI,Conflicted file info>> and thus you would
+be losing information that might help the user resolve the conflict.
+
 [[DEPMERGE]]
 DEPRECATED DESCRIPTION
 ----------------------
