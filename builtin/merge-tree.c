@@ -399,6 +399,7 @@ enum mode {
 
 struct merge_tree_options {
 	int mode;
+	int allow_unrelated_histories;
 	int show_messages;
 	int name_only;
 };
@@ -434,7 +435,7 @@ static int real_merge(struct merge_tree_options *o,
 	 * merge_incore_recursive in merge-ort.h
 	 */
 	merge_bases = get_merge_bases(parent1, parent2);
-	if (!merge_bases)
+	if (!merge_bases && !o->allow_unrelated_histories)
 		die(_("refusing to merge unrelated histories"));
 	merge_bases = reverse_commit_list(merge_bases);
 
@@ -499,6 +500,10 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 		OPT_BOOL_F(0, "name-only",
 			   &o.name_only,
 			   N_("list filenames without modes/oids/stages"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "allow-unrelated-histories",
+			   &o.allow_unrelated_histories,
+			   N_("allow merging unrelated histories"),
 			   PARSE_OPT_NONEG),
 		OPT_END()
 	};

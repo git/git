@@ -44,7 +44,13 @@ test_expect_success setup '
 	git checkout side3 &&
 	git mv numbers sequence &&
 	test_tick &&
-	git commit -m rename-numbers
+	git commit -m rename-numbers &&
+
+	git switch --orphan unrelated &&
+	>something-else &&
+	git add something-else &&
+	test_tick &&
+	git commit -m first-commit
 '
 
 test_expect_success 'Clean merge' '
@@ -211,6 +217,22 @@ test_expect_success 'NUL terminated conflicted file "lines"' '
 	Q1QΑυτά μου φαίνονται κινέζικαQCONFLICT (contents)QCONFLICT (content): Merge conflict in Αυτά μου φαίνονται κινέζικα
 	Q
 	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'error out by default for unrelated histories' '
+	test_expect_code 128 git merge-tree --write-tree side1 unrelated 2>error &&
+
+	grep "refusing to merge unrelated histories" error
+'
+
+test_expect_success 'can override merge of unrelated histories' '
+	git merge-tree --write-tree --allow-unrelated-histories side1 unrelated >tree &&
+	TREE=$(cat tree) &&
+
+	git rev-parse side1:numbers side1:greeting side1:whatever unrelated:something-else >expect &&
+	git rev-parse $TREE:numbers $TREE:greeting $TREE:whatever $TREE:something-else >actual &&
 
 	test_cmp expect actual
 '
