@@ -9,7 +9,7 @@ git-merge-tree - Perform merge without touching index or working tree
 SYNOPSIS
 --------
 [verse]
-'git merge-tree' [--write-tree] <branch1> <branch2>
+'git merge-tree' [--write-tree] [<options>] <branch1> <branch2>
 'git merge-tree' [--trivial-merge] <base-tree> <branch1> <branch2> (deprecated)
 
 [[NEWMERGE]]
@@ -37,18 +37,50 @@ linkgit:git-merge[1], including:
 After the merge completes, a new toplevel tree object is created.  See
 `OUTPUT` below for details.
 
+OPTIONS
+-------
+
+--[no-]messages::
+	Write any informational messages such as "Auto-merging <path>"
+	or CONFLICT notices to the end of stdout.  If unspecified, the
+	default is to include these messages if there are merge
+	conflicts, and to omit them otherwise.
+
 [[OUTPUT]]
 OUTPUT
 ------
 
-For either a successful or conflicted merge, the output from
-git-merge-tree is simply one line:
+For a successful merge, the output from git-merge-tree is simply one
+line:
 
 	<OID of toplevel tree>
 
-The printed tree object corresponds to what would be checked out in
-the working tree at the end of `git merge`, and thus may have files
-with conflict markers in them.
+Whereas for a conflicted merge, the output is by default of the form:
+
+	<OID of toplevel tree>
+	<Informational messages>
+
+These are discussed individually below.
+
+[[OIDTLT]]
+OID of toplevel tree
+~~~~~~~~~~~~~~~~~~~~
+
+This is a tree object that represents what would be checked out in the
+working tree at the end of `git merge`.  If there were conflicts, then
+files within this tree may have embedded conflict markers.
+
+[[IM]]
+Informational messages
+~~~~~~~~~~~~~~~~~~~~~~
+
+This always starts with a blank line to separate it from the previous
+section, and then has free-form messages about the merge, such as:
+
+  * "Auto-merging <file>"
+  * "CONFLICT (rename/delete): <oldfile> renamed...but deleted in..."
+  * "Failed to merge submodule <submodule> (<reason>)"
+  * "Warning: cannot merge binary files: <filename>"
 
 EXIT STATUS
 -----------
@@ -71,6 +103,9 @@ used as a part of a series of steps such as:
        test $? -eq 0 || die "There were conflicts..."
        NEWCOMMIT=$(git commit-tree $NEWTREE -p $BRANCH1 -p $BRANCH2)
        git update-ref $BRANCH1 $NEWCOMMIT
+
+Note that when the exit status is non-zero, `NEWTREE` in this sequence
+will contain a lot more output than just a tree.
 
 [[DEPMERGE]]
 DEPRECATED DESCRIPTION
