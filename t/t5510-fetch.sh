@@ -853,7 +853,11 @@ test_configured_prune_type () {
 		then
 			new_cmdline=$cmdline_setup
 		else
-			new_cmdline=$(printf "%s" "$cmdline" | perl -pe 's[origin(?!/)]["'"$remote_url"'"]g')
+			new_cmdline=$(perl -e '
+				my ($cmdline, $url) = @ARGV;
+				$cmdline =~ s[origin(?!/)][quotemeta($url)]ge;
+				print $cmdline;
+			' -- "$cmdline" "$remote_url")
 		fi
 
 		if test "$fetch_prune_tags" = 'true' ||
