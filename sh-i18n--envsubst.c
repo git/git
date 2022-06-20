@@ -397,7 +397,7 @@ subst_from_stdin (void)
 		  /* Substitute the variable's value from the environment.  */
 		  const char *env_value = getenv (buffer);
 
-		  if (env_value != NULL)
+		  if (env_value)
 		    fputs (env_value, stdout);
 		}
 	      else

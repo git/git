@@ -3110,7 +3110,7 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 	 * Skip scheme.
 	 */
 	start = strstr(repo, "://");
-	if (start == NULL)
+	if (!start)
 		start = repo;
 	else
 		start += 3;
@@ -3136,6 +3136,15 @@ char *git_url_basename(const char *repo, int is_bundle, int is_bare)
 		while (start < end && is_dir_sep(end[-1]))
 			end--;
 	}
+
+	/*
+	 * It should not be possible to overflow `ptrdiff_t` by passing in an
+	 * insanely long URL, but GCC does not know that and will complain
+	 * without this check.
+	 */
+	if (end - start < 0)
+		die(_("No directory name could be guessed.\n"
+		      "Please specify a directory on the command line"));
 
 	/*
 	 * Strip trailing port number if we've got only a
@@ -3945,4 +3954,33 @@ void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_
 			old_git_dir, new_git_dir);
 
 	connect_work_tree_and_git_dir(path, new_git_dir, 0);
+}
+
+int path_match_flags(const char *const str, const enum path_match_flags flags)
+{
+	const char *p = str;
+
+	if (flags & PATH_MATCH_NATIVE &&
+	    flags & PATH_MATCH_XPLATFORM)
+		BUG("path_match_flags() must get one match kind, not multiple!");
+	else if (!(flags & PATH_MATCH_KINDS_MASK))
+		BUG("path_match_flags() must get at least one match kind!");
+
+	if (flags & PATH_MATCH_STARTS_WITH_DOT_SLASH &&
+	    flags & PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH)
+		BUG("path_match_flags() must get one platform kind, not multiple!");
+	else if (!(flags & PATH_MATCH_PLATFORM_MASK))
+		BUG("path_match_flags() must get at least one platform kind!");
+
+	if (*p++ != '.')
+		return 0;
+	if (flags & PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH &&
+	    *p++ != '.')
+		return 0;
+
+	if (flags & PATH_MATCH_NATIVE)
+		return is_dir_sep(*p);
+	else if (flags & PATH_MATCH_XPLATFORM)
+		return is_xplatform_dir_sep(*p);
+	BUG("unreachable");
 }

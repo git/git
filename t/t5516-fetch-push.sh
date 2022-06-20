@@ -12,6 +12,7 @@ This test checks the following functionality:
 * --porcelain output format
 * hiderefs
 * reflogs
+* URL validation
 '
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -596,6 +597,26 @@ test_expect_success 'branch.*.pushremote config order is irrelevant' '
 	git push &&
 	check_push_result one_repo $the_first_commit heads/main &&
 	check_push_result two_repo $the_commit heads/main
+'
+
+test_expect_success 'push rejects empty branch name entries' '
+	mk_test one_repo heads/main &&
+	test_config remote.one.url one_repo &&
+	test_config branch..remote one &&
+	test_config branch..merge refs/heads/ &&
+	test_config branch.main.remote one &&
+	test_config branch.main.merge refs/heads/main &&
+	test_must_fail git push 2>err &&
+	grep "bad config variable .branch\.\." err
+'
+
+test_expect_success 'push ignores "branch." config without subsection' '
+	mk_test one_repo heads/main &&
+	test_config remote.one.url one_repo &&
+	test_config branch.autoSetupMerge true &&
+	test_config branch.main.remote one &&
+	test_config branch.main.merge refs/heads/main &&
+	git push
 '
 
 test_expect_success 'push with dry-run' '
@@ -1811,6 +1832,37 @@ test_expect_success 'refuse to push a hidden ref, and make sure do not pollute t
 	git -C testrepo config receive.unpackLimit 1 &&
 	test_must_fail git push testrepo HEAD:refs/hidden/foo &&
 	test_dir_is_empty testrepo/.git/objects/pack
+'
+
+test_expect_success LIBCURL 'fetch warns or fails when using username:password' '
+	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
+	test_must_fail git -c transfer.credentialsInUrl=allow fetch https://username:password@localhost 2>err &&
+	! grep "$message" err &&
+
+	test_must_fail git -c transfer.credentialsInUrl=warn fetch https://username:password@localhost 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_line_count = 3 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die fetch https://username:password@localhost 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count = 1 warnings &&
+
+	test_must_fail git -c transfer.credentialsInUrl=die fetch https://username:@localhost 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count = 1 warnings
+'
+
+
+test_expect_success LIBCURL 'push warns or fails when using username:password' '
+	message="URL '\''https://username:<redacted>@localhost/'\'' uses plaintext credentials" &&
+	test_must_fail git -c transfer.credentialsInUrl=allow push https://username:password@localhost 2>err &&
+	! grep "$message" err &&
+
+	test_must_fail git -c transfer.credentialsInUrl=warn push https://username:password@localhost 2>err &&
+	grep "warning: $message" err >warnings &&
+	test_must_fail git -c transfer.credentialsInUrl=die push https://username:password@localhost 2>err &&
+	grep "fatal: $message" err >warnings &&
+	test_line_count = 1 warnings
 '
 
 test_done

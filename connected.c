@@ -110,7 +110,7 @@ no_promisor_pack_found:
 
 	rev_list.git_cmd = 1;
 	if (opt->env)
-		strvec_pushv(&rev_list.env_array, opt->env);
+		strvec_pushv(&rev_list.env, opt->env);
 	rev_list.in = -1;
 	rev_list.no_stdout = 1;
 	if (opt->err_fd)

@@ -619,7 +619,7 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule)
 {
-	struct rev_info rev;
+	struct rev_info rev = REV_INFO_INIT;
 	struct commit *left = NULL, *right = NULL;
 	struct commit_list *merge_bases = NULL;
 	struct repository *sub;
@@ -645,8 +645,8 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 	print_submodule_diff_summary(sub, &rev, o);
 
 out:
-	if (merge_bases)
-		free_commit_list(merge_bases);
+	free_commit_list(merge_bases);
+	release_revisions(&rev);
 	clear_commit_marks(left, ~0);
 	clear_commit_marks(right, ~0);
 	if (sub) {
@@ -711,15 +711,15 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	if (!(dirty_submodule & DIRTY_SUBMODULE_MODIFIED))
 		strvec_push(&cp.args, oid_to_hex(new_oid));
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 
 	if (!is_directory(path)) {
 		/* fall back to absorbed git dir, if any */
 		if (!sub)
 			goto done;
 		cp.dir = sub->gitdir;
-		strvec_push(&cp.env_array, GIT_DIR_ENVIRONMENT "=.");
-		strvec_push(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT "=.");
+		strvec_push(&cp.env, GIT_DIR_ENVIRONMENT "=.");
+		strvec_push(&cp.env, GIT_WORK_TREE_ENVIRONMENT "=.");
 	}
 
 	if (start_command(&cp)) {
@@ -735,8 +735,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 
 done:
 	strbuf_release(&sb);
-	if (merge_bases)
-		free_commit_list(merge_bases);
+	free_commit_list(merge_bases);
 	if (left)
 		clear_commit_marks(left, ~0);
 	if (right)
@@ -925,9 +924,11 @@ static void collect_changed_submodules(struct repository *r,
 		diff_rev.diffopt.format_callback_data = &data;
 		diff_rev.dense_combined_merges = 1;
 		diff_tree_combined_merge(commit, &diff_rev);
+		release_revisions(&diff_rev);
 	}
 
 	reset_revision_walk();
+	release_revisions(&rev);
 }
 
 static void free_submodules_data(struct string_list *submodules)
@@ -1019,7 +1020,7 @@ static int submodule_has_commits(struct repository *r,
 		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
 		strvec_pushl(&cp.args, "--not", "--all", NULL);
 
-		prepare_submodule_repo_env(&cp.env_array);
+		prepare_submodule_repo_env(&cp.env);
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
 		cp.dir = path;
@@ -1060,7 +1061,7 @@ static int submodule_needs_pushing(struct repository *r,
 		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
 		strvec_pushl(&cp.args, "--not", "--remotes", "-n", "1" , NULL);
 
-		prepare_submodule_repo_env(&cp.env_array);
+		prepare_submodule_repo_env(&cp.env);
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
 		cp.out = -1;
@@ -1146,7 +1147,7 @@ static int push_submodule(const char *path,
 				strvec_push(&cp.args, rs->raw[i]);
 		}
 
-		prepare_submodule_repo_env(&cp.env_array);
+		prepare_submodule_repo_env(&cp.env);
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
 		cp.dir = path;
@@ -1177,7 +1178,7 @@ static void submodule_push_check(const char *path, const char *head,
 	for (i = 0; i < rs->raw_nr; i++)
 		strvec_push(&cp.args, rs->raw[i]);
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.no_stdout = 1;
@@ -1678,7 +1679,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 
 		child_process_init(cp);
 		cp->dir = task->repo->gitdir;
-		prepare_submodule_repo_env_in_gitdir(&cp->env_array);
+		prepare_submodule_repo_env_in_gitdir(&cp->env);
 		cp->git_cmd = 1;
 		strvec_init(&cp->args);
 		if (task->git_args.nr)
@@ -1708,7 +1709,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 			    spf->prefix, task->sub->path);
 
 		child_process_init(cp);
-		prepare_submodule_repo_env_in_gitdir(&cp->env_array);
+		prepare_submodule_repo_env_in_gitdir(&cp->env);
 		cp->git_cmd = 1;
 		cp->dir = task->repo->gitdir;
 
@@ -1882,7 +1883,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	if (ignore_untracked)
 		strvec_push(&cp.args, "-uno");
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.out = -1;
@@ -1954,7 +1955,7 @@ int submodule_uses_gitfile(const char *path)
 		     "submodule", "foreach", "--quiet",	"--recursive",
 		     "test -f .git", NULL);
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.no_stderr = 1;
@@ -1997,7 +1998,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags)
 	if (!(flags & SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED))
 		strvec_push(&cp.args, "--ignored");
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.out = -1;
@@ -2052,7 +2053,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 
 	cp.git_cmd = 1;
 	strvec_pushl(&cp.args, "diff-index", "--quiet",
@@ -2069,7 +2070,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 static void submodule_reset_index(const char *path)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
@@ -2153,7 +2154,7 @@ int submodule_move_head(const char *path,
 		}
 	}
 
-	prepare_submodule_repo_env(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
@@ -2191,7 +2192,7 @@ int submodule_move_head(const char *path,
 			cp.no_stdin = 1;
 			cp.dir = path;
 
-			prepare_submodule_repo_env(&cp.env_array);
+			prepare_submodule_repo_env(&cp.env);
 			strvec_pushl(&cp.args, "update-ref", "HEAD",
 				     "--no-deref", new_head, NULL);
 
@@ -2374,7 +2375,7 @@ void absorb_git_dir_into_superproject(const char *path,
 		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
 			     "submodule--helper",
 			     "absorb-git-dirs", NULL);
-		prepare_submodule_repo_env(&cp.env_array);
+		prepare_submodule_repo_env(&cp.env);
 		if (run_command(&cp))
 			die(_("could not recurse into submodule '%s'"), path);
 
@@ -2407,8 +2408,8 @@ int get_superproject_working_tree(struct strbuf *buf)
 	subpath = relative_path(cwd, one_up.buf, &sb);
 	strbuf_release(&one_up);
 
-	prepare_submodule_repo_env(&cp.env_array);
-	strvec_pop(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env);
+	strvec_pop(&cp.env);
 
 	strvec_pushl(&cp.args, "--literal-pathspecs", "-C", "..",
 		     "ls-files", "-z", "--stage", "--full-name", "--",

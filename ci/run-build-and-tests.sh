@@ -10,7 +10,7 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 *) ln -s "$cache_dir/.prove" t/.prove;;
 esac
 
-export MAKE_TARGETS="all test"
+run_tests=t
 
 case "$jobname" in
 linux-gcc)
@@ -26,7 +26,7 @@ linux-TEST-vars)
 	export GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=1
 	export GIT_TEST_MULTI_PACK_INDEX=1
 	export GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=1
-	export GIT_TEST_ADD_I_USE_BUILTIN=1
+	export GIT_TEST_ADD_I_USE_BUILTIN=0
 	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 	export GIT_TEST_WRITE_REV_INDEX=1
 	export GIT_TEST_CHECKOUT_WORKERS=2
@@ -41,14 +41,16 @@ pedantic)
 	# Don't run the tests; we only care about whether Git can be
 	# built.
 	export DEVOPTS=pedantic
-	export MAKE_TARGETS=all
+	run_tests=
 	;;
 esac
 
-# Any new "test" targets should not go after this "make", but should
-# adjust $MAKE_TARGETS. Otherwise compilation-only targets above will
-# start running tests.
-make $MAKE_TARGETS
+group Build make
+if test -n "$run_tests"
+then
+	group "Run tests" make test ||
+	handle_failed_tests
+fi
 check_unignored_build_artifacts
 
 save_good_tree

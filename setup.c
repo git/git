@@ -459,7 +459,16 @@ static void setup_original_cwd(void)
 	 */
 
 	/* Normalize the directory */
-	strbuf_realpath(&tmp, tmp_original_cwd, 1);
+	if (!strbuf_realpath(&tmp, tmp_original_cwd, 0)) {
+		trace2_data_string("setup", the_repository,
+				   "realpath-path", tmp_original_cwd);
+		trace2_data_string("setup", the_repository,
+				   "realpath-failure", strerror(errno));
+		free((char*)tmp_original_cwd);
+		tmp_original_cwd = NULL;
+		return;
+	}
+
 	free((char*)tmp_original_cwd);
 	tmp_original_cwd = NULL;
 	startup_info->original_cwd = strbuf_detach(&tmp, NULL);
@@ -1470,7 +1479,7 @@ int git_config_perm(const char *var, const char *value)
 	int i;
 	char *endptr;
 
-	if (value == NULL)
+	if (!value)
 		return PERM_GROUP;
 
 	if (!strcmp(value, "umask"))

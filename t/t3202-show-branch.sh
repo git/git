@@ -161,4 +161,18 @@ test_expect_success 'show branch --reflog=2' '
 	test_cmp actual expect
 '
 
+# incompatible options
+while read combo
+do
+	test_expect_success "show-branch $combo (should fail)" '
+		test_must_fail git show-branch $combo 2>error &&
+		grep -e "cannot be used together" -e "usage:" error
+	'
+done <<\EOF
+--all --reflog
+--merge-base --reflog
+--list --merge-base
+--reflog --current
+EOF
+
 test_done

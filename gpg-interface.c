@@ -985,7 +985,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 
 	if (!signing_key || signing_key[0] == '\0')
 		return error(
-			_("user.signingkey needs to be set for ssh signing"));
+			_("user.signingKey needs to be set for ssh signing"));
 
 	if (is_literal_ssh_key(signing_key, &literal_key)) {
 		/* A literal ssh key */

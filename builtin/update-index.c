@@ -5,6 +5,7 @@
  */
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "bulk-checkin.h"
 #include "config.h"
 #include "lockfile.h"
 #include "quote.h"
@@ -57,6 +58,14 @@ static void report(const char *fmt, ...)
 	if (!verbose)
 		return;
 
+	/*
+	 * It is possible, though unlikely, that a caller could use the verbose
+	 * output to synchronize with addition of objects to the object
+	 * database. The current implementation of ODB transactions leaves
+	 * objects invisible while a transaction is active, so flush the
+	 * transaction here before reporting a change made by update-index.
+	 */
+	flush_odb_transaction();
 	va_start(vp, fmt);
 	vprintf(fmt, vp);
 	putchar('\n');
@@ -1116,6 +1125,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	 */
 	parse_options_start(&ctx, argc, argv, prefix,
 			    options, PARSE_OPT_STOP_AT_NON_OPTION);
+
+	/*
+	 * Allow the object layer to optimize adding multiple objects in
+	 * a batch.
+	 */
+	begin_odb_transaction();
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1190,6 +1205,11 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		strbuf_release(&buf);
 	}
 
+	/*
+	 * By now we have added all of the new objects
+	 */
+	end_odb_transaction();
+
 	if (split_index > 0) {
 		if (git_config_get_split_index() == 0)
 			warning(_("core.splitIndex is set to false; "
@@ -1237,6 +1257,22 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 	if (fsmonitor > 0) {
 		enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(r);
+		enum fsmonitor_reason reason = fsm_settings__get_reason(r);
+
+		/*
+		 * The user wants to turn on FSMonitor using the command
+		 * line argument.  (We don't know (or care) whether that
+		 * is the IPC or HOOK version.)
+		 *
+		 * Use one of the __get routines to force load the FSMonitor
+		 * config settings into the repo-settings.  That will detect
+		 * whether the file system is compatible so that we can stop
+		 * here with a nice error message.
+		 */
+		if (reason > FSMONITOR_REASON_OK)
+			die("%s",
+			    fsm_settings__get_incompatible_msg(r, reason));
+
 		if (fsm_mode == FSMONITOR_MODE_DISABLED) {
 			warning(_("core.fsmonitor is unset; "
 				"set it if you really want to "

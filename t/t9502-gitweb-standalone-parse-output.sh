@@ -220,4 +220,18 @@ test_expect_success 'no http-equiv="content-type" in XHTML' '
 	no_http_equiv_content_type "p=.git;a=tree"
 '
 
+proper_doctype() {
+	gitweb_run "$@" &&
+	grep -F "<!DOCTYPE html [" gitweb.body &&
+	grep "<!ENTITY nbsp" gitweb.body &&
+	grep "<!ENTITY sdot" gitweb.body
+}
+
+test_expect_success 'Proper DOCTYPE with entity declarations' '
+	proper_doctype &&
+	proper_doctype "p=.git" &&
+	proper_doctype "p=.git;a=log" &&
+	proper_doctype "p=.git;a=tree"
+'
+
 test_done

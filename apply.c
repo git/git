@@ -3274,11 +3274,11 @@ static struct patch *in_fn_table(struct apply_state *state, const char *name)
 {
 	struct string_list_item *item;
 
-	if (name == NULL)
+	if (!name)
 		return NULL;
 
 	item = string_list_lookup(&state->fn_table, name);
-	if (item != NULL)
+	if (item)
 		return (struct patch *)item->util;
 
 	return NULL;
@@ -3318,7 +3318,7 @@ static void add_to_fn_table(struct apply_state *state, struct patch *patch)
 	 * This should cover the cases for normal diffs,
 	 * file creations and copies
 	 */
-	if (patch->new_name != NULL) {
+	if (patch->new_name) {
 		item = string_list_insert(&state->fn_table, patch->new_name);
 		item->util = patch;
 	}

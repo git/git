@@ -4,6 +4,8 @@
 #
 
 test_description='concurrent git svn dcommit'
+
+TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 

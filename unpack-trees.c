@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "attr.h"
 #include "split-index.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "fsmonitor.h"
@@ -18,6 +19,7 @@
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "sparse-index.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -1838,6 +1840,12 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	o->result.fsmonitor_last_update =
 		xstrdup_or_null(o->src_index->fsmonitor_last_update);
+	o->result.fsmonitor_has_run_once = o->src_index->fsmonitor_has_run_once;
+
+	if (!o->src_index->initialized &&
+	    !repo->settings.command_requires_full_index &&
+	    is_sparse_index_allowed(&o->result, 0))
+		o->result.sparse_index = 1;
 
 	/*
 	 * Sparse checkout loop #1: set NEW_SKIP_WORKTREE on existing entries
@@ -2017,6 +2025,9 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o)
 		if (o->skip_sparse_checkout)
 			goto skip_sparse_checkout;
 	}
+
+	/* Expand sparse directories as needed */
+	expand_index(o->src_index, o->pl);
 
 	/* Set NEW_SKIP_WORKTREE on existing entries. */
 	mark_all_ce_unused(o->src_index);

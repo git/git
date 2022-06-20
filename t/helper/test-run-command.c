@@ -31,7 +31,11 @@ static int parallel_next(struct child_process *cp,
 		return 0;
 
 	strvec_pushv(&cp->args, d->args.v);
-	strbuf_addstr(err, "preloaded output of a child\n");
+	if (err)
+		strbuf_addstr(err, "preloaded output of a child\n");
+	else
+		fprintf(stderr, "preloaded output of a child\n");
+
 	number_callbacks++;
 	return 1;
 }
@@ -41,7 +45,10 @@ static int no_job(struct child_process *cp,
 		  void *cb,
 		  void **task_cb)
 {
-	strbuf_addstr(err, "no further jobs available\n");
+	if (err)
+		strbuf_addstr(err, "no further jobs available\n");
+	else
+		fprintf(stderr, "no further jobs available\n");
 	return 0;
 }
 
@@ -50,7 +57,10 @@ static int task_finished(int result,
 			 void *pp_cb,
 			 void *pp_task_cb)
 {
-	strbuf_addstr(err, "asking for a quick stop\n");
+	if (err)
+		strbuf_addstr(err, "asking for a quick stop\n");
+	else
+		fprintf(stderr, "asking for a quick stop\n");
 	return 1;
 }
 
@@ -390,7 +400,7 @@ int cmd__run_command(int argc, const char **argv)
 	while (!strcmp(argv[1], "env")) {
 		if (!argv[2])
 			die("env specifier without a value");
-		strvec_push(&proc.env_array, argv[2]);
+		strvec_push(&proc.env, argv[2]);
 		argv += 2;
 		argc -= 2;
 	}
@@ -406,6 +416,12 @@ int cmd__run_command(int argc, const char **argv)
 	}
 	if (!strcmp(argv[1], "run-command"))
 		exit(run_command(&proc));
+
+	if (!strcmp(argv[1], "--ungroup")) {
+		argv += 1;
+		argc -= 1;
+		run_processes_parallel_ungroup = 1;
+	}
 
 	jobs = atoi(argv[2]);
 	strvec_clear(&proc.args);

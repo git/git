@@ -78,6 +78,40 @@ test_expect_success 'add another remote' '
 	)
 '
 
+test_expect_success 'setup bare clone for server' '
+	git clone --bare "file://$(pwd)/one" srv.bare &&
+	git -C srv.bare config --local uploadpack.allowfilter 1 &&
+	git -C srv.bare config --local uploadpack.allowanysha1inwant 1
+'
+
+test_expect_success 'filters for promisor remotes are listed by git remote -v' '
+	test_when_finished "rm -rf pc" &&
+	git clone --filter=blob:none "file://$(pwd)/srv.bare" pc &&
+	git -C pc remote -v >out &&
+	grep "srv.bare (fetch) \[blob:none\]" out &&
+
+	git -C pc config remote.origin.partialCloneFilter object:type=commit &&
+	git -C pc remote -v >out &&
+	grep "srv.bare (fetch) \[object:type=commit\]" out
+'
+
+test_expect_success 'filters should not be listed for non promisor remotes (remote -v)' '
+	test_when_finished "rm -rf pc" &&
+	git clone one pc &&
+	git -C pc remote -v >out &&
+	! grep "(fetch) \[.*\]" out
+'
+
+test_expect_success 'filters are listed by git remote -v only' '
+	test_when_finished "rm -rf pc" &&
+	git clone --filter=blob:none "file://$(pwd)/srv.bare" pc &&
+	git -C pc remote >out &&
+	! grep "\[blob:none\]" out &&
+
+	git -C pc remote show >out &&
+	! grep "\[blob:none\]" out
+'
+
 test_expect_success 'check remote-tracking' '
 	(
 		cd test &&

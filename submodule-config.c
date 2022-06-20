@@ -204,17 +204,17 @@ int check_submodule_name(const char *name)
 		return -1;
 
 	/*
-	 * Look for '..' as a path component. Check both '/' and '\\' as
+	 * Look for '..' as a path component. Check is_xplatform_dir_sep() as
 	 * separators rather than is_dir_sep(), because we want the name rules
 	 * to be consistent across platforms.
 	 */
 	goto in_component; /* always start inside component */
 	while (*name) {
 		char c = *name++;
-		if (c == '/' || c == '\\') {
+		if (is_xplatform_dir_sep(c)) {
 in_component:
 			if (name[0] == '.' && name[1] == '.' &&
-			    (!name[2] || name[2] == '/' || name[2] == '\\'))
+			    (!name[2] || is_xplatform_dir_sep(name[2])))
 				return -1;
 		}
 	}
@@ -302,7 +302,7 @@ int parse_submodule_fetchjobs(const char *var, const char *value)
 {
 	int fetchjobs = git_config_int(var, value);
 	if (fetchjobs < 0)
-		die(_("negative values not allowed for submodule.fetchjobs"));
+		die(_("negative values not allowed for submodule.fetchJobs"));
 	return fetchjobs;
 }
 
@@ -756,7 +756,10 @@ static void traverse_tree_submodules(struct repository *r,
 
 		if (S_ISGITLINK(name_entry->mode) &&
 		    is_tree_submodule_active(r, root_tree, tree_path)) {
-			st_entry = xmalloc(sizeof(*st_entry));
+			ALLOC_GROW(out->entries, out->entry_nr + 1,
+				   out->entry_alloc);
+			st_entry = &out->entries[out->entry_nr++];
+
 			st_entry->name_entry = xmalloc(sizeof(*st_entry->name_entry));
 			*st_entry->name_entry = *name_entry;
 			st_entry->submodule =
@@ -766,9 +769,6 @@ static void traverse_tree_submodules(struct repository *r,
 						root_tree))
 				FREE_AND_NULL(st_entry->repo);
 
-			ALLOC_GROW(out->entries, out->entry_nr + 1,
-				   out->entry_alloc);
-			out->entries[out->entry_nr++] = *st_entry;
 		} else if (S_ISDIR(name_entry->mode))
 			traverse_tree_submodules(r, root_tree, tree_path,
 						 &name_entry->oid, out);

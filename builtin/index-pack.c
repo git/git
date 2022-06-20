@@ -1575,7 +1575,7 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.indexversion")) {
 		opts->version = git_config_int(k, v);
 		if (opts->version > 2)
-			die(_("bad pack.indexversion=%"PRIu32), opts->version);
+			die(_("bad pack.indexVersion=%"PRIu32), opts->version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
@@ -1942,11 +1942,11 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	free(objects);
 	strbuf_release(&index_name_buf);
 	strbuf_release(&rev_index_name_buf);
-	if (pack_name == NULL)
+	if (!pack_name)
 		free((void *) curr_pack);
-	if (index_name == NULL)
+	if (!index_name)
 		free((void *) curr_index);
-	if (rev_index_name == NULL)
+	if (!rev_index_name)
 		free((void *) curr_rev_index);
 
 	/*

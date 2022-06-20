@@ -9,7 +9,7 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--help] [-C <path>] [-c <name>=<value>]
+'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
@@ -39,6 +39,7 @@ or https://git-scm.com/docs.
 
 OPTIONS
 -------
+-v::
 --version::
 	Prints the Git suite version that the 'git' program came from.
 +
@@ -46,6 +47,7 @@ This option is internally converted to `git version ...` and accepts
 the same options as the linkgit:git-version[1] command. If `--help` is
 also given, it takes precedence over `--version`.
 
+-h::
 --help::
 	Prints the synopsis and a list of the most commonly used
 	commands. If the option `--all` or `-a` is given then all

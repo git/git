@@ -352,7 +352,7 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 			othercount++;
 			continue;
 		}
-		if (map == NULL)
+		if (!map)
 			map = bitmap_new();
 		bitmap_set(map, i);
 	}
@@ -594,7 +594,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	result = diff_result_code(&rev.diffopt, result);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
-	UNLEAK(rev);
+	release_revisions(&rev);
 	UNLEAK(ent);
 	UNLEAK(blob);
 	return result;

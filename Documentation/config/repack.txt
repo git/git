@@ -30,3 +30,12 @@ repack.updateServerInfo::
 	If set to false, linkgit:git-repack[1] will not run
 	linkgit:git-update-server-info[1]. Defaults to true. Can be overridden
 	when true by the `-n` option of linkgit:git-repack[1].
+
+repack.cruftWindow::
+repack.cruftWindowMemory::
+repack.cruftDepth::
+repack.cruftThreads::
+	Parameters used by linkgit:git-pack-objects[1] when generating
+	a cruft pack and the respective parameters are not given over
+	the command line. See similarly named `pack.*` configuration
+	variables for defaults and meaning.

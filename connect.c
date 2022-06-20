@@ -473,22 +473,9 @@ void check_stateless_delimiter(int stateless_rpc,
 		die("%s", error);
 }
 
-struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
-			     struct ref **list, int for_push,
-			     struct transport_ls_refs_options *transport_options,
-			     const struct string_list *server_options,
-			     int stateless_rpc)
+static void send_capabilities(int fd_out, struct packet_reader *reader)
 {
-	int i;
 	const char *hash_name;
-	struct strvec *ref_prefixes = transport_options ?
-		&transport_options->ref_prefixes : NULL;
-	const char **unborn_head_target = transport_options ?
-		&transport_options->unborn_head_target : NULL;
-	*list = NULL;
-
-	if (server_supports_v2("ls-refs", 1))
-		packet_write_fmt(fd_out, "command=ls-refs\n");
 
 	if (server_supports_v2("agent", 0))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
@@ -502,6 +489,26 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	} else {
 		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
 	}
+}
+
+struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
+			     struct ref **list, int for_push,
+			     struct transport_ls_refs_options *transport_options,
+			     const struct string_list *server_options,
+			     int stateless_rpc)
+{
+	int i;
+	struct strvec *ref_prefixes = transport_options ?
+		&transport_options->ref_prefixes : NULL;
+	const char **unborn_head_target = transport_options ?
+		&transport_options->unborn_head_target : NULL;
+	*list = NULL;
+
+	if (server_supports_v2("ls-refs", 1))
+		packet_write_fmt(fd_out, "command=ls-refs\n");
+
+	/* Send capabilities */
+	send_capabilities(fd_out, reader);
 
 	if (server_options && server_options->nr &&
 	    server_supports_v2("server-option", 1))
@@ -1327,7 +1334,7 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 
 		strvec_push(&detect.args, ssh);
 		strvec_push(&detect.args, "-G");
-		push_ssh_options(&detect.args, &detect.env_array,
+		push_ssh_options(&detect.args, &detect.env,
 				 VARIANT_SSH, port, version, flags);
 		strvec_push(&detect.args, ssh_host);
 
@@ -1335,7 +1342,8 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 	}
 
 	strvec_push(&conn->args, ssh);
-	push_ssh_options(&conn->args, &conn->env_array, variant, port, version, flags);
+	push_ssh_options(&conn->args, &conn->env, variant, port, version,
+			 flags);
 	strvec_push(&conn->args, ssh_host);
 }
 
@@ -1397,7 +1405,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 		/* remove repo-local variables from the environment */
 		for (var = local_repo_env; *var; var++)
-			strvec_push(&conn->env_array, *var);
+			strvec_push(&conn->env, *var);
 
 		conn->use_shell = 1;
 		conn->in = conn->out = -1;
@@ -1429,7 +1437,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 			transport_check_allowed("file");
 			conn->trace2_child_class = "transport/file";
 			if (version > 0) {
-				strvec_pushf(&conn->env_array,
+				strvec_pushf(&conn->env,
 					     GIT_PROTOCOL_ENVIRONMENT "=version=%d",
 					     version);
 			}

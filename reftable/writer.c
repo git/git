@@ -183,7 +183,7 @@ static void writer_index_hash(struct reftable_writer *w, struct strbuf *hash)
 	struct tree_node *node = tree_search(&want, &w->obj_index_tree,
 					     &obj_index_tree_node_compare, 0);
 	struct obj_index_tree_node *key = NULL;
-	if (node == NULL) {
+	if (!node) {
 		struct obj_index_tree_node empty = OBJ_INDEX_TREE_NODE_INIT;
 		key = reftable_malloc(sizeof(struct obj_index_tree_node));
 		*key = empty;
@@ -222,7 +222,7 @@ static int writer_add_record(struct reftable_writer *w,
 
 	strbuf_reset(&w->last_key);
 	strbuf_addbuf(&w->last_key, &key);
-	if (w->block_writer == NULL) {
+	if (!w->block_writer) {
 		writer_reinit_block_writer(w, reftable_record_type(rec));
 	}
 
@@ -263,7 +263,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 	};
 	int err = 0;
 
-	if (ref->refname == NULL)
+	if (!ref->refname)
 		return REFTABLE_API_ERROR;
 	if (ref->update_index < w->min_update_index ||
 	    ref->update_index > w->max_update_index)
@@ -336,7 +336,7 @@ int reftable_writer_add_log(struct reftable_writer *w,
 	if (log->value_type == REFTABLE_LOG_DELETION)
 		return reftable_writer_add_log_verbatim(w, log);
 
-	if (log->refname == NULL)
+	if (!log->refname)
 		return REFTABLE_API_ERROR;
 
 	input_log_message = log->value.update.message;
@@ -545,7 +545,7 @@ static int writer_finish_public_section(struct reftable_writer *w)
 	uint8_t typ = 0;
 	int err = 0;
 
-	if (w->block_writer == NULL)
+	if (!w->block_writer)
 		return 0;
 
 	typ = block_writer_type(w->block_writer);
@@ -694,7 +694,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 
 static int writer_flush_block(struct reftable_writer *w)
 {
-	if (w->block_writer == NULL)
+	if (!w->block_writer)
 		return 0;
 	if (w->block_writer->entries == 0)
 		return 0;

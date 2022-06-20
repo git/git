@@ -142,10 +142,11 @@ start_p4d () {
 
 p4_add_user () {
 	name=$1 &&
+	fullname="${2:-Dr. $1}"
 	p4 user -f -i <<-EOF
 	User: $name
 	Email: $name@example.com
-	FullName: Dr. $name
+	FullName: $fullname
 	EOF
 }
 

@@ -4,6 +4,7 @@ test_description='ls-tree --format'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-t3100.sh
 
 test_expect_success 'ls-tree --format usage' '
 	test_expect_code 129 git ls-tree --format=fmt -l HEAD &&
@@ -12,9 +13,7 @@ test_expect_success 'ls-tree --format usage' '
 '
 
 test_expect_success 'setup' '
-	mkdir dir &&
-	test_commit dir/sub-file &&
-	test_commit top-file
+	setup_basic_ls_tree_data
 '
 
 test_ls_tree_format () {

@@ -81,8 +81,10 @@ static void insert_one_record(struct shortlog *log,
 		format_subject(&subject, oneline, " ");
 		buffer = strbuf_detach(&subject, NULL);
 
-		if (item->util == NULL)
-			item->util = xcalloc(1, sizeof(struct string_list));
+		if (!item->util) {
+			item->util = xmalloc(sizeof(struct string_list));
+			string_list_init_nodup(item->util);
+		}
 		string_list_append(item->util, buffer);
 	}
 }
@@ -419,6 +421,8 @@ parse_done:
 	}
 	else
 		get_from_rev(&rev, &log);
+
+	release_revisions(&rev);
 
 	shortlog_output(&log);
 	if (log.file != stdout)

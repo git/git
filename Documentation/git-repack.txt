@@ -63,6 +63,17 @@ to the new separate pack will be written.
 	Also run  'git prune-packed' to remove redundant
 	loose object files.
 
+--cruft::
+	Same as `-a`, unless `-d` is used. Then any unreachable objects
+	are packed into a separate cruft pack. Unreachable objects can
+	be pruned using the normal expiry rules with the next `git gc`
+	invocation (see linkgit:git-gc[1]). Incompatible with `-k`.
+
+--cruft-expiration=<approxidate>::
+	Expire unreachable objects older than `<approxidate>`
+	immediately instead of waiting for the next `git gc` invocation.
+	Only useful with `--cruft -d`.
+
 -l::
 	Pass the `--local` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].

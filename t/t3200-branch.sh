@@ -886,6 +886,41 @@ test_expect_success 'branch from tag w/--track causes failure' '
 	test_must_fail git branch --track my11 foobar
 '
 
+test_expect_success 'simple tracking works when remote branch name matches' '
+	test_when_finished "rm -rf otherserver" &&
+	git init otherserver &&
+	test_commit -C otherserver my_commit 1 &&
+	git -C otherserver branch feature &&
+	test_config branch.autosetupmerge simple &&
+	test_config remote.otherserver.url otherserver &&
+	test_config remote.otherserver.fetch refs/heads/*:refs/remotes/otherserver/* &&
+	git fetch otherserver &&
+	git branch feature otherserver/feature &&
+	test_cmp_config otherserver branch.feature.remote &&
+	test_cmp_config refs/heads/feature branch.feature.merge
+'
+
+test_expect_success 'simple tracking skips when remote branch name does not match' '
+	test_config branch.autosetupmerge simple &&
+	test_config remote.local.url . &&
+	test_config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+	git fetch local &&
+	git branch my-other local/main &&
+	test_cmp_config "" --default "" branch.my-other.remote &&
+	test_cmp_config "" --default "" branch.my-other.merge
+'
+
+test_expect_success 'simple tracking skips when remote ref is not a branch' '
+	test_config branch.autosetupmerge simple &&
+	test_config remote.localtags.url . &&
+	test_config remote.localtags.fetch refs/tags/*:refs/remotes/localtags/* &&
+	git tag mytag12 main &&
+	git fetch localtags &&
+	git branch mytag12 localtags/mytag12 &&
+	test_cmp_config "" --default "" branch.mytag12.remote &&
+	test_cmp_config "" --default "" branch.mytag12.merge
+'
+
 test_expect_success '--set-upstream-to fails on multiple branches' '
 	echo "fatal: too many arguments to set new upstream" >expect &&
 	test_must_fail git branch --set-upstream-to main a b c 2>err &&

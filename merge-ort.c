@@ -1594,6 +1594,7 @@ static int find_first_merges(struct repository *repo,
 	}
 
 	object_array_clear(&merges);
+	release_revisions(&revs);
 	return result->nr;
 }
 
@@ -2068,7 +2069,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 * to ensure that's the case.
 	 */
 	c_info = strmap_get(collisions, new_path);
-	if (c_info == NULL)
+	if (!c_info)
 		BUG("c_info is NULL");
 
 	/*
@@ -4640,7 +4641,7 @@ static void merge_ort_internal(struct merge_options *opt,
 	}
 
 	merged_merge_bases = pop_commit(&merge_bases);
-	if (merged_merge_bases == NULL) {
+	if (!merged_merge_bases) {
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 

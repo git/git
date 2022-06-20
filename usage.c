@@ -290,18 +290,24 @@ void warning(const char *warn, ...)
 /* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
 int BUG_exit_code;
 
-static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+static void BUG_vfl_common(const char *file, int line, const char *fmt,
+			   va_list params)
 {
 	char prefix[256];
-	va_list params_copy;
-	static int in_bug;
-
-	va_copy(params_copy, params);
 
 	/* truncation via snprintf is OK here */
 	snprintf(prefix, sizeof(prefix), "BUG: %s:%d: ", file, line);
 
 	vreportf(prefix, fmt, params);
+}
+
+static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+{
+	va_list params_copy;
+	static int in_bug;
+
+	va_copy(params_copy, params);
+	BUG_vfl_common(file, line, fmt, params);
 
 	if (in_bug)
 		abort();
@@ -317,8 +323,27 @@ static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_lis
 NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
+
+	bug_called_must_BUG = 0;
+
 	va_start(ap, fmt);
 	BUG_vfl(file, line, fmt, ap);
+	va_end(ap);
+}
+
+int bug_called_must_BUG;
+void bug_fl(const char *file, int line, const char *fmt, ...)
+{
+	va_list ap;
+
+	bug_called_must_BUG = 1;
+
+	va_start(ap, fmt);
+	BUG_vfl_common(file, line, fmt, ap);
+	va_end(ap);
+
+	va_start(ap, fmt);
+	trace2_cmd_error_va(fmt, ap);
 	va_end(ap);
 }
 

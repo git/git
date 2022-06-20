@@ -217,7 +217,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	update_index.use_shell = 0;
 	update_index.clean_on_exit = 1;
 	update_index.dir = workdir;
-	strvec_pushf(&update_index.env_array, "GIT_INDEX_FILE=%s", index_path);
+	strvec_pushf(&update_index.env, "GIT_INDEX_FILE=%s", index_path);
 	/* Ignore any errors of update-index */
 	run_command(&update_index);
 
@@ -230,7 +230,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	diff_files.clean_on_exit = 1;
 	diff_files.out = -1;
 	diff_files.dir = workdir;
-	strvec_pushf(&diff_files.env_array, "GIT_INDEX_FILE=%s", index_path);
+	strvec_pushf(&diff_files.env, "GIT_INDEX_FILE=%s", index_path);
 	if (start_command(&diff_files))
 		die("could not obtain raw diff");
 	fp = xfdopen(diff_files.out, "r");
@@ -675,7 +675,7 @@ static int run_file_diff(int prompt, const char *prefix,
 
 	child->git_cmd = 1;
 	child->dir = prefix;
-	strvec_pushv(&child->env_array, env);
+	strvec_pushv(&child->env, env);
 
 	return run_command(child);
 }

@@ -861,7 +861,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	}
 
 	s->fp = fopen_for_writing(git_path_commit_editmsg());
-	if (s->fp == NULL)
+	if (!s->fp)
 		die_errno(_("could not open '%s'"), git_path_commit_editmsg());
 
 	/* Ignore status.displayCommentPrefix: we do need comments in COMMIT_EDITMSG. */
@@ -1100,7 +1100,6 @@ static const char *find_author_by_nickname(const char *name)
 	struct rev_info revs;
 	struct commit *commit;
 	struct strbuf buf = STRBUF_INIT;
-	struct string_list mailmap = STRING_LIST_INIT_NODUP;
 	const char *av[20];
 	int ac = 0;
 
@@ -1111,7 +1110,8 @@ static const char *find_author_by_nickname(const char *name)
 	av[++ac] = buf.buf;
 	av[++ac] = NULL;
 	setup_revisions(ac, av, &revs, NULL);
-	revs.mailmap = &mailmap;
+	revs.mailmap = xmalloc(sizeof(struct string_list));
+	string_list_init_nodup(revs.mailmap);
 	read_mailmap(revs.mailmap);
 
 	if (prepare_revision_walk(&revs))
@@ -1122,7 +1122,7 @@ static const char *find_author_by_nickname(const char *name)
 		ctx.date_mode.type = DATE_NORMAL;
 		strbuf_release(&buf);
 		format_commit_message(commit, "%aN <%aE>", &buf, &ctx);
-		clear_mailmap(&mailmap);
+		release_revisions(&revs);
 		return strbuf_detach(&buf, NULL);
 	}
 	die(_("--author '%s' is not 'Name <email>' and matches no existing author"), name);
@@ -1687,6 +1687,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	struct commit *current_head = NULL;
 	struct commit_extra_header *extra = NULL;
 	struct strbuf err = STRBUF_INIT;
+	int ret = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
@@ -1721,8 +1722,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	   running hooks, writing the trees, and interacting with the user.  */
 	if (!prepare_to_commit(index_file, prefix,
 			       current_head, &s, &author_ident)) {
+		ret = 1;
 		rollback_index_files();
-		return 1;
+		goto cleanup;
 	}
 
 	/* Determine parents */
@@ -1820,7 +1822,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
-	strbuf_release(&author_ident);
 	free_commit_extra_headers(extra);
 
 	if (update_head_with_reflog(current_head, &oid, reflog_msg, &sb,
@@ -1862,7 +1863,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	apply_autostash(git_path_merge_autostash(the_repository));
 
+cleanup:
+	UNLEAK(author_ident);
 	UNLEAK(err);
 	UNLEAK(sb);
-	return 0;
+	return ret;
 }

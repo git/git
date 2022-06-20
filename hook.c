@@ -54,7 +54,7 @@ static int pick_next_hook(struct child_process *cp,
 		return 0;
 
 	cp->no_stdin = 1;
-	strvec_pushv(&cp->env_array, hook_cb->options->env.v);
+	strvec_pushv(&cp->env, hook_cb->options->env.v);
 	cp->stdout_to_stderr = 1;
 	cp->trace2_hook_name = hook_cb->hook_name;
 	cp->dir = hook_cb->options->dir;
@@ -144,6 +144,7 @@ int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options)
 		cb_data.hook_path = abs_path.buf;
 	}
 
+	run_processes_parallel_ungroup = 1;
 	run_processes_parallel_tr2(jobs,
 				   pick_next_hook,
 				   notify_start_failure,

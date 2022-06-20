@@ -206,6 +206,26 @@ test_expect_success 'git archive --format=zip --add-file' '
 check_zip with_untracked
 check_added with_untracked untracked untracked
 
+test_expect_success UNZIP 'git archive --format=zip --add-virtual-file' '
+	if test_have_prereq FUNNYNAMES
+	then
+		PATHNAME="pathname with : colon"
+	else
+		PATHNAME="pathname without colon"
+	fi &&
+	git archive --format=zip >with_file_with_content.zip \
+		--add-virtual-file=\""$PATHNAME"\": \
+		--add-virtual-file=hello:world $EMPTY_TREE &&
+	test_when_finished "rm -rf tmp-unpack" &&
+	mkdir tmp-unpack && (
+		cd tmp-unpack &&
+		"$GIT_UNZIP" ../with_file_with_content.zip &&
+		test_path_is_file hello &&
+		test_path_is_file "$PATHNAME" &&
+		test world = $(cat hello)
+	)
+'
+
 test_expect_success 'git archive --format=zip --add-file twice' '
 	echo untracked >untracked &&
 	git archive --format=zip --prefix=one/ --add-file=untracked \

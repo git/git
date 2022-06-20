@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "remote.h"
+#include "urlmatch.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
@@ -14,6 +15,7 @@
 #include "strvec.h"
 #include "commit-reach.h"
 #include "advice.h"
+#include "connect.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
@@ -144,14 +146,12 @@ static void remote_clear(struct remote *remote)
 	free((char *)remote->name);
 	free((char *)remote->foreign_vcs);
 
-	for (i = 0; i < remote->url_nr; i++) {
+	for (i = 0; i < remote->url_nr; i++)
 		free((char *)remote->url[i]);
-	}
-	FREE_AND_NULL(remote->pushurl);
+	FREE_AND_NULL(remote->url);
 
-	for (i = 0; i < remote->pushurl_nr; i++) {
+	for (i = 0; i < remote->pushurl_nr; i++)
 		free((char *)remote->pushurl[i]);
-	}
 	FREE_AND_NULL(remote->pushurl);
 	free((char *)remote->receivepack);
 	free((char *)remote->uploadpack);
@@ -195,9 +195,6 @@ static struct branch *find_branch(struct remote_state *remote_state,
 	struct branches_hash_key lookup;
 	struct hashmap_entry lookup_entry, *e;
 
-	if (!len)
-		len = strlen(name);
-
 	lookup.str = name;
 	lookup.len = len;
 	hashmap_entry_init(&lookup_entry, memhash(name, len));
@@ -214,7 +211,8 @@ static void die_on_missing_branch(struct repository *repo,
 {
 	/* branch == NULL is always valid because it represents detached HEAD. */
 	if (branch &&
-	    branch != find_branch(repo->remote_state, branch->name, 0))
+	    branch != find_branch(repo->remote_state, branch->name,
+				  strlen(branch->name)))
 		die("branch %s was not found in the repository", branch->name);
 }
 
@@ -354,8 +352,12 @@ static int handle_config(const char *key, const char *value, void *cb)
 	struct remote_state *remote_state = cb;
 
 	if (parse_config_key(key, "branch", &name, &namelen, &subkey) >= 0) {
+		/* There is no subsection. */
 		if (!name)
 			return 0;
+		/* There is a subsection, but it is empty. */
+		if (!namelen)
+			return -1;
 		branch = make_branch(remote_state, name, namelen);
 		if (!strcmp(subkey, "remote")) {
 			return git_config_string(&branch->remote_name, key, value);
@@ -543,6 +545,8 @@ static const char *remotes_remote_for_branch(struct remote_state *remote_state,
 	}
 	if (explicit)
 		*explicit = 0;
+	if (remote_state->remotes_nr == 1)
+		return remote_state->remotes[0]->name;
 	return "origin";
 }
 
@@ -612,6 +616,50 @@ const char *remote_ref_for_branch(struct branch *branch, int for_push)
 	return NULL;
 }
 
+static void validate_remote_url(struct remote *remote)
+{
+	int i;
+	const char *value;
+	struct strbuf redacted = STRBUF_INIT;
+	int warn_not_die;
+
+	if (git_config_get_string_tmp("transfer.credentialsinurl", &value))
+		return;
+
+	if (!strcmp("warn", value))
+		warn_not_die = 1;
+	else if (!strcmp("die", value))
+		warn_not_die = 0;
+	else if (!strcmp("allow", value))
+		return;
+	else
+		die(_("unrecognized value transfer.credentialsInUrl: '%s'"), value);
+
+	for (i = 0; i < remote->url_nr; i++) {
+		struct url_info url_info = { 0 };
+
+		if (!url_normalize(remote->url[i], &url_info) ||
+		    !url_info.passwd_off)
+			goto loop_cleanup;
+
+		strbuf_reset(&redacted);
+		strbuf_add(&redacted, url_info.url, url_info.passwd_off);
+		strbuf_addstr(&redacted, "<redacted>");
+		strbuf_addstr(&redacted,
+			      url_info.url + url_info.passwd_off + url_info.passwd_len);
+
+		if (warn_not_die)
+			warning(_("URL '%s' uses plaintext credentials"), redacted.buf);
+		else
+			die(_("URL '%s' uses plaintext credentials"), redacted.buf);
+
+loop_cleanup:
+		free(url_info.url);
+	}
+
+	strbuf_release(&redacted);
+}
+
 static struct remote *
 remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 		     const char *(*get_default)(struct remote_state *,
@@ -637,6 +685,9 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 		add_url_alias(remote_state, ret, name);
 	if (!valid_remote(ret))
 		return NULL;
+
+	validate_remote_url(ret);
+
 	return ret;
 }
 
@@ -2172,6 +2223,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
 
 	strvec_clear(&argv);
+	release_revisions(&revs);
 	return 1;
 }
 
@@ -2717,13 +2769,110 @@ void remote_state_clear(struct remote_state *remote_state)
 {
 	int i;
 
-	for (i = 0; i < remote_state->remotes_nr; i++) {
+	for (i = 0; i < remote_state->remotes_nr; i++)
 		remote_clear(remote_state->remotes[i]);
-	}
 	FREE_AND_NULL(remote_state->remotes);
 	remote_state->remotes_alloc = 0;
 	remote_state->remotes_nr = 0;
 
 	hashmap_clear_and_free(&remote_state->remotes_hash, struct remote, ent);
 	hashmap_clear_and_free(&remote_state->branches_hash, struct remote, ent);
+}
+
+/*
+ * Returns 1 if it was the last chop before ':'.
+ */
+static int chop_last_dir(char **remoteurl, int is_relative)
+{
+	char *rfind = find_last_dir_sep(*remoteurl);
+	if (rfind) {
+		*rfind = '\0';
+		return 0;
+	}
+
+	rfind = strrchr(*remoteurl, ':');
+	if (rfind) {
+		*rfind = '\0';
+		return 1;
+	}
+
+	if (is_relative || !strcmp(".", *remoteurl))
+		die(_("cannot strip one component off url '%s'"),
+			*remoteurl);
+
+	free(*remoteurl);
+	*remoteurl = xstrdup(".");
+	return 0;
+}
+
+char *relative_url(const char *remote_url, const char *url,
+		   const char *up_path)
+{
+	int is_relative = 0;
+	int colonsep = 0;
+	char *out;
+	char *remoteurl;
+	struct strbuf sb = STRBUF_INIT;
+	size_t len;
+
+	if (!url_is_local_not_ssh(url) || is_absolute_path(url))
+		return xstrdup(url);
+
+	len = strlen(remote_url);
+	if (!len)
+		BUG("invalid empty remote_url");
+
+	remoteurl = xstrdup(remote_url);
+	if (is_dir_sep(remoteurl[len-1]))
+		remoteurl[len-1] = '\0';
+
+	if (!url_is_local_not_ssh(remoteurl) || is_absolute_path(remoteurl))
+		is_relative = 0;
+	else {
+		is_relative = 1;
+		/*
+		 * Prepend a './' to ensure all relative
+		 * remoteurls start with './' or '../'
+		 */
+		if (!starts_with_dot_slash_native(remoteurl) &&
+		    !starts_with_dot_dot_slash_native(remoteurl)) {
+			strbuf_reset(&sb);
+			strbuf_addf(&sb, "./%s", remoteurl);
+			free(remoteurl);
+			remoteurl = strbuf_detach(&sb, NULL);
+		}
+	}
+	/*
+	 * When the url starts with '../', remove that and the
+	 * last directory in remoteurl.
+	 */
+	while (*url) {
+		if (starts_with_dot_dot_slash_native(url)) {
+			url += 3;
+			colonsep |= chop_last_dir(&remoteurl, is_relative);
+		} else if (starts_with_dot_slash_native(url))
+			url += 2;
+		else
+			break;
+	}
+	strbuf_reset(&sb);
+	strbuf_addf(&sb, "%s%s%s", remoteurl, colonsep ? ":" : "/", url);
+	if (ends_with(url, "/"))
+		strbuf_setlen(&sb, sb.len - 1);
+	free(remoteurl);
+
+	if (starts_with_dot_slash_native(sb.buf))
+		out = xstrdup(sb.buf + 2);
+	else
+		out = xstrdup(sb.buf);
+
+	if (!up_path || !is_relative) {
+		strbuf_release(&sb);
+		return out;
+	}
+
+	strbuf_reset(&sb);
+	strbuf_addf(&sb, "%s%s", up_path, out);
+	free(out);
+	return strbuf_detach(&sb, NULL);
 }

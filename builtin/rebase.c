@@ -1110,8 +1110,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_interactive),
 		OPT_SET_INT_F('p', "preserve-merges", &preserve_merges_selected,
-			      N_("(DEPRECATED) try to recreate merges instead of "
-				 "ignoring them"),
+			      N_("(REMOVED) was: try to recreate merges "
+				 "instead of ignoring them"),
 			      1, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
 		OPT_CALLBACK_F(0, "empty", &options, "{drop,keep,ask}",
@@ -1182,8 +1182,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else if (is_directory(merge_dir())) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s/rewritten", merge_dir());
-		if (is_directory(buf.buf)) {
-			die("`rebase -p` is no longer supported");
+		if (!(action == ACTION_ABORT) && is_directory(buf.buf)) {
+			die(_("`rebase --preserve-merges` (-p) is no longer supported.\n"
+			"Use `git rebase --abort` to terminate current rebase.\n"
+			"Or downgrade to v2.33, or earlier, to complete the rebase."));
 		} else {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/interactive", merge_dir());
@@ -1203,7 +1205,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			     builtin_rebase_usage, 0);
 
 	if (preserve_merges_selected)
-		die(_("--preserve-merges was replaced by --rebase-merges"));
+		die(_("--preserve-merges was replaced by --rebase-merges\n"
+			"Note: Your `pull.rebase` configuration may also be set to 'preserve',\n"
+			"which is no longer supported; use 'merges' instead"));
 
 	if (action != ACTION_NONE && total_argc != 2) {
 		usage_with_options(builtin_rebase_usage,

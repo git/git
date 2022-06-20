@@ -206,17 +206,17 @@ test_expect_success 'GIT_EXTERNAL_DIFF path counter/total' '
 '
 
 test_expect_success 'GIT_EXTERNAL_DIFF generates pretty paths' '
+	test_when_finished "git rm -f file.ext" &&
 	touch file.ext &&
 	git add file.ext &&
 	echo with extension > file.ext &&
 
 	cat >expect <<-EOF &&
-	file.ext file $(git rev-parse --verify HEAD:file) 100644 file.ext $(test_oid zero) 100644
+	file.ext
 	EOF
 	GIT_EXTERNAL_DIFF=echo git diff file.ext >out &&
-	cut -d" " -f1,3- <out >actual &&
-	git update-index --force-remove file.ext &&
-	rm file.ext
+	basename $(cut -d" " -f2 <out) >actual &&
+	test_cmp expect actual
 '
 
 echo "#!$SHELL_PATH" >fake-diff.sh
