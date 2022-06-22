@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2022, #06; Fri, 17)
-X-master-at: 5b71c59bc3b9365075e2a175aa7b6f2b0c84ce44
-X-next-at: 763f9739486ebf52dadb6c56742daf07e738829f
+Subject: What's cooking in git.git (Jun 2022, #07; Wed, 22)
+X-master-at: f770e9f396d48b567ef7b37d273e91ad570a3522
+X-next-at: 5c70b8d9af74545ad2b62bd035c293f139c02a5c
 
-What's cooking in git.git (Jun 2022, #06; Fri, 17)
+What's cooking in git.git (Jun 2022, #07; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-Git 2.37-rc1 has been tagged.
+Git 2.37-rc2 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,110 +46,113 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* cr/setup-bug-typo (2022-06-17) 1 commit
-  (merged to 'next' on 2022-06-17 at 8834ffe0ab)
- + setup: fix function name in a BUG() message
+* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
+ - i18n: mark message helpers prefix for translation
 
- Typofix in a BUG() message.
-
- Will cook in 'next'.
- source: <pull.1255.git.1654782920256.gitgitgadget@gmail.com>
-
-
-* zk/push-use-bitmaps (2022-06-17) 1 commit
- - send-pack.c: add config push.useBitmaps
-
- "git push" sometimes perform poorly when reachability bitmaps are
- used, even in a repository where other operations are helped by
- bitmaps.  The push.useBitmaps configuration variable is introduced
- to allow disabling use of reachability bitmaps only for "git push".
+ Give _() markings to fatal/warning/usage: that is shown in front of
+ these messages.
 
  Will merge to 'next'?
- source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
+ source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
+
+
+* ds/t5510-brokequote (2022-06-21) 1 commit
+ - t5510: replace 'origin' with URL more carefully
+
+ Test fix.
+ source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
+
+
+* en/merge-restore-to-pristine (2022-06-21) 6 commits
+ - merge: do not exit restore_state() prematurely
+ - merge: ensure we can actually restore pre-merge state
+ - merge: make restore_state() restore staged state too
+ - merge: fix save_state() to work when there are racy-dirty files
+ - merge: remove unused variable
+ - t6424: make sure a failed merge preserves local changes
+
+ When "git merge" finds that it cannot perform a merge, it should
+ restore the working tree to the state before the command was
+ initiated, but in some corner cases it didn't.
+
+ Needs review.
+ source: <pull.1231.v2.git.1655621424.gitgitgadget@gmail.com>
+
+
+* rs/combine-diff-with-incompatible-options (2022-06-21) 2 commits
+ - combine-diff: abort if --output is given
+ - combine-diff: abort if --ignore-matching-lines is given
+
+ Certain diff options are currently ignored when combined-diff is
+ shown; mark them as incompatible with the feature.
+
+ Will merge to 'next'?
+ source: <220524.86v8tuvfl1.gmgdl@evledraar.gmail.com>
+
+
+* tk/apply-case-insensitive (2022-06-21) 3 commits
+ - apply: support case-only renames in case-insensitive filesystems
+ - reset: new failing test for reset of case-insensitive duplicate in index
+ - t4141: test "git apply" with core.ignorecase
+
+ "git apply" barfed on a patch that makes a case-only rename on a
+ case-insensitive filesystem.
+
+ Needs review.
+ source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
+
+
+* zh/ls-files-format (2022-06-21) 1 commit
+ - ls-files: introduce "--format" option
+
+ "git ls-files" learns the "--format" option to tweak its output.
+
+ Needs review.
+ source: <pull.1262.v3.git.1655777140231.gitgitgadget@gmail.com>
+
+
+* ab/test-quoting-fix (2022-06-21) 3 commits
+ - config tests: fix harmless but broken "rm -r" cleanup
+ - test-lib.sh: fix prepend_var() quoting issue
+ - tests: add missing double quotes to included library paths
+
+ Fixes for tests when the source directory has unusual characters in
+ its path, e.g. whitespaces, double-quotes, etc.
+
+ Expecting a reroll.
+ source: <cover-0.3-00000000000-20220621T221928Z-avarab@gmail.com>
+
+
+* en/merge-dual-dir-renames-fix (2022-06-21) 3 commits
+ - merge-ort: fix issue with dual rename and add/add conflict
+ - merge-ort: shuffle the computation and cleanup of potential collisions
+ - t6423: add tests of dual directory rename plus add/add conflict
+
+ Fixes a long-standing corner case bug around directory renames in
+ the merge-ort strategy.
+
+ Needs review.
+ source: <pull.1268.git.1655871651.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/credentials-in-url-more (2022-06-15) 2 commits
-  (merged to 'next' on 2022-06-16 at de19b3b40c)
- + transfer doc: move fetch.credentialsInUrl to "transfer" config namespace
- + fetch doc: note "pushurl" caveat about "credentialsInUrl", elaborate
+* jp/prompt-clear-before-upstream-mark (2022-06-10) 2 commits
+  (merged to 'next' on 2022-06-15 at e580db03e9)
+ + git-prompt: fix expansion of branch colour codes
+  (merged to 'next' on 2022-06-08 at 201a84ad63)
+ + git-prompt: make colourization consistent
 
- Rename fetch.credentialsInUrl to transfer.credentialsInUrl as the
- single configuration variable should work both in pushing and
- fetching.
- source: <cover-0.2-00000000000-20220615T103852Z-avarab@gmail.com>
-
-
-* cb/path-owner-check-with-sudo-plus (2022-06-17) 1 commit
-  (merged to 'next' on 2022-06-17 at 518afcbc48)
- + git-compat-util: allow root to access both SUDO_UID and root owned
-
- "sudo git foo" used to consider a repository owned by the original
- user a safe one to access; it now also considers a repository owned
- by root a safe one, too (after all, if an attacker can craft a
- malicious repository owned by root, the box is 0wned already).
- source: <20220617202338.27984-1-carenas@gmail.com>
+ Bash command line prompt (in contrib/) update.
+ source: <20220607115024.64724-1-joak-pet@online.no>
 
 
-* ds/more-test-coverage (2022-06-16) 4 commits
-  (merged to 'next' on 2022-06-16 at 3f0452418c)
- + cache-tree: remove cache_tree_find_path()
- + pack-write: drop always-NULL parameter
- + t5329: test 'git gc --cruft' without '--prune=now'
- + t2107: test 'git update-index --verbose'
+* tb/cruft-packs (2022-06-21) 1 commit
+  (merged to 'next' on 2022-06-21 at 0703251124)
+ + gc: simplify --cruft description
 
- Improve test coverage with a handful of tests.
- source: <pull.1261.v2.git.1655385230.gitgitgadget@gmail.com>
-
-
-* jc/cocci-cleanup (2022-06-07) 1 commit
-  (merged to 'next' on 2022-06-16 at 990576f5c5)
- + cocci: retire is_null_sha1() rule
-
- Remove a coccinelle rule that is no longer relevant.
- source: <xmqq7d5suoqt.fsf@gitster.g>
-
-
-* jk/bug-fl-va-list-fix (2022-06-16) 1 commit
-  (merged to 'next' on 2022-06-16 at 8150aebb0f)
- + bug_fl(): correctly initialize trace2 va_list
-
- Fix buggy va_list usage in recent code.
- source: <YquMyakxYnU6mI5a@coredump.intra.peff.net>
-
-
-* jk/perf-lib-test-titles (2022-06-16) 1 commit
-  (merged to 'next' on 2022-06-16 at 064d7efa99)
- + perf-lib: fix missing test titles in output
-
- Show test titles to the performance test output again.
- source: <YqrXLO5oMYeOr2PB@coredump.intra.peff.net>
-
-
-* js/ci-github-workflow-markup (2022-06-13) 3 commits
-  (merged to 'next' on 2022-06-15 at 03eb5e68ed)
- + ci(github): also mark up compile errors
- + ci(github): use grouping also in the `win-build` job
- + ci(github): bring back the 'print test failures' step
-
- Recent CI update hides certain failures in test jobs, which has
- been corrected.
-
- source: <pull.1253.v2.git.1655125988.gitgitgadget@gmail.com>
-
-
-* js/misc-fixes (2022-06-16) 6 commits
-  (merged to 'next' on 2022-06-16 at 2f1f98e403)
- + relative_url(): fix incorrect condition
- + pack-mtimes: avoid closing a bogus file descriptor
- + read_index_from(): avoid memory leak
- + submodule--helper: avoid memory leak when fetching submodules
- + submodule-config: avoid memory leak
- + fsmonitor: avoid memory leak in `fsm_settings__get_incompatible_msg()`
-
- Assorted fixes to problems found by Coverity.
- source: <pull.1264.git.1655336146.gitgitgadget@gmail.com>
+ Docfix.
+ source: <157741e2-cd06-9304-bb21-c67c2cbd923e@web.de>
 
 --------------------------------------------------
 [Stalled]
@@ -214,6 +217,28 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* cr/setup-bug-typo (2022-06-17) 1 commit
+  (merged to 'next' on 2022-06-17 at 8834ffe0ab)
+ + setup: fix function name in a BUG() message
+
+ Typofix in a BUG() message.
+
+ Will cook in 'next'.
+ source: <pull.1255.git.1654782920256.gitgitgadget@gmail.com>
+
+
+* zk/push-use-bitmaps (2022-06-17) 1 commit
+ - send-pack.c: add config push.useBitmaps
+
+ "git push" sometimes perform poorly when reachability bitmaps are
+ used, even in a repository where other operations are helped by
+ bitmaps.  The push.useBitmaps configuration variable is introduced
+ to allow disabling use of reachability bitmaps only for "git push".
+
+ Will merge to 'next'?
+ source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
+
+
 * jk/remote-show-with-negative-refspecs (2022-06-17) 1 commit
  - remote: handle negative refspecs in git remote show
  (this branch is used by jk/t5505-restructure.)
@@ -242,20 +267,14 @@ Release tarballs are available at:
  source: <YqrTsbXbEjx0Pabn@coredump.intra.peff.net>
 
 
-* ro/mktree-allow-missing-fix (2022-06-16) 1 commit
- - mktree: do not load objects under '--missing'
+* ro/mktree-allow-missing-fix (2022-06-21) 1 commit
+ - mktree: do not check type of remote objects
 
  "git mktree --missing" lazily fetched objects that are missing from
  the local object store, which was totally unnecessary.
 
- Waiting for review response.
- source: <1566aed1-a38f-a9ca-241c-21b56d732328@roku.com>
-
-
-* jc/apply-icase-tests (2022-06-13) 1 commit
- - t4141: test "git apply" with core.ignorecase
-
- source: <xmqqo7yw77qo.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <748f39a9-65aa-2110-cf92-7ddf81b5f507@roku.com>
 
 
 * ll/curl-accept-language (2022-06-13) 2 commits
@@ -290,20 +309,10 @@ Release tarballs are available at:
  source: <9df761c3-355a-ede9-7971-b32687fe9abb@web.de>
 
 
-* tl/pack-bitmap-trace (2022-06-13) 5 commits
- - bitmap: add trace2 outputs during open "bitmap" file
- - pack-bitmap.c: using error() instead of silently returning -1
- - pack-bitmap.c: make warnings support i18N when opening bitmap
- - pack-bitmap.c: rename "idx_name" to "bitmap_name"
- - pack-bitmap.c: continue looping when first MIDX bitmap is found
-
- Add trace2 traces in code paths involving the pack bitmaps.
-
- Needs review.
- source: <cover.1655018322.git.dyroneteng@gmail.com>
-
-
-* ds/branch-checked-out (2022-06-15) 5 commits
+* ds/branch-checked-out (2022-06-21) 7 commits
+  (merged to 'next' on 2022-06-21 at e42bc4566f)
+ + branch: drop unused worktrees variable
+ + fetch: stop passing around unused worktrees variable
   (merged to 'next' on 2022-06-17 at c881874257)
  + branch: fix branch_checked_out() leaks
  + branch: use branch_checked_out() when deleting refs
@@ -362,18 +371,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <xmqqfskdieqz.fsf@gitster.g>
-
-
-* jp/prompt-clear-before-upstream-mark (2022-06-10) 2 commits
-  (merged to 'next' on 2022-06-15 at e580db03e9)
- + git-prompt: fix expansion of branch colour codes
-  (merged to 'next' on 2022-06-08 at 201a84ad63)
- + git-prompt: make colourization consistent
-
- Bash command line prompt (in contrib/) update.
-
- Will merge to 'master'.
- source: <20220607115024.64724-1-joak-pet@online.no>
 
 
 * ab/build-gitweb (2022-06-02) 7 commits
@@ -501,17 +498,17 @@ Release tarballs are available at:
  source: <29053d029f8ec61095a2ad557be38b1d485a158f.1654635432.git.gitgitgadget@gmail.com>
 
 
-* gg/worktree-from-the-above (2022-05-20) 3 commits
+* gg/worktree-from-the-above (2022-06-21) 2 commits
  - dir: minor refactoring / clean-up
- - dir: cache git_dir's realpath
  - dir: traverse into repository
 
  With a non-bare repository, with core.worktree pointing at a
  directory that has the repository as its subdirectory, regressed in
  Git 2.27 days.
 
- Needs review.
- source: <20220520192840.8942-1-ggossdev@gmail.com>
+ Will merge to 'next'.
+ source: <20220616234433.225-1-gg.oss@outlook.com>
+ source: <20220616231956.154-1-gg.oss@outlook.com>
 
 
 * ar/send-email-confirm-by-default (2022-04-22) 1 commit
@@ -528,3 +525,26 @@ Release tarballs are available at:
 
  Thoughts?
  source: <20220422083629.1404989-1-hi@alyssa.is>
+
+--------------------------------------------------
+[Discarded]
+
+* jc/apply-icase-tests (2022-06-13) 1 commit
+ . t4141: test "git apply" with core.ignorecase
+
+ Now a part of tk/apply-case-insensitive topic.
+ source: <xmqqo7yw77qo.fsf@gitster.g>
+
+
+* tl/pack-bitmap-trace (2022-06-21) 5 commits
+ . bitmap: add trace2 outputs during open "bitmap" file
+ . pack-bitmap.c: using error() instead of silently returning -1
+ . pack-bitmap.c: make warnings support i18N when opening bitmap
+ . pack-bitmap.c: rename "idx_name" to "bitmap_name"
+ . pack-bitmap.c: continue looping when first MIDX bitmap is found
+
+ Add trace2 traces in code paths involving the pack bitmaps.
+
+ source: <cover.1655817253.git.dyroneteng@gmail.com>
+
+
