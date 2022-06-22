@@ -1615,7 +1615,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 				return 0;
 			goto next_line;
 		}
-		if (hit) {
+		if (hit && (opt->max_count < 0 || count < opt->max_count)) {
 			count++;
 			if (opt->status_only)
 				return 1;
