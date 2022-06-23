@@ -1,10 +1,16 @@
 Git v2.36.2 Release Notes
 =========================
 
-This maintenance release is primarily to merge down updates to the
-build and CI procedures from the 'master' front, in order to ensure
-that we can cut healthy maintenance releases in the future.  It also
-contains a handful of small and trivially-correct bugfixes.
+This release merges up the fixes that appear in v2.30.5, v2.31.4,
+v2.32.3, v2.33.4, v2.34.4 and v2.35.4 to address the security
+issue CVE-2022-29187; see the release notes for these versions
+for details.
+
+Apart from that, this maintenance release is primarily to merge down
+updates to the build and CI procedures from the 'master' front, in
+order to ensure that we can cut healthy maintenance releases in the
+future.  It also contains a handful of small and trivially-correct
+bugfixes.
 
 Fixes since v2.36.1
 -------------------
