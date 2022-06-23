@@ -545,4 +545,6 @@ include::config/versionsort.txt[]
 
 include::config/web.txt[]
 
+include::config/windows.txt[]
+
 include::config/worktree.txt[]
