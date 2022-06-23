@@ -20,7 +20,7 @@ exposure, e.g. because:
   in other ways, e.g. a backup process might copy the data to another
   system.
 * The git programs will pass the full URL to one another as arguments
-  on the command-line, meaning the credentials will be exposed to oher
+  on the command-line, meaning the credentials will be exposed to other
   users on OS's or systems that allow other users to see the full
   process list of other users. On linux the "hidepid" setting
   documented in procfs(5) allows for configuring this behavior.
