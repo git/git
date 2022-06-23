@@ -1,0 +1,4 @@
+windows.appendAtomically::
+	By default, append atomic API is used on windows. But it works only with
+	local disk files, if you're working on a network file system, you should
+	set it false to turn it off.
