@@ -9,7 +9,7 @@ export GIT_TEST_ASSUME_DIFFERENT_OWNER
 
 expect_rejected_dir () {
 	test_must_fail git status 2>err &&
-	grep "unsafe repository" err
+	grep "dubious ownership" err
 }
 
 test_expect_success 'safe.directory is not set' '
@@ -18,7 +18,7 @@ test_expect_success 'safe.directory is not set' '
 
 test_expect_success 'ignoring safe.directory on the command line' '
 	test_must_fail git -c safe.directory="$(pwd)" status 2>err &&
-	grep "unsafe repository" err
+	grep "dubious ownership" err
 '
 
 test_expect_success 'ignoring safe.directory in the environment' '
@@ -26,14 +26,14 @@ test_expect_success 'ignoring safe.directory in the environment' '
 		GIT_CONFIG_KEY_0="safe.directory" \
 		GIT_CONFIG_VALUE_0="$(pwd)" \
 		git status 2>err &&
-	grep "unsafe repository" err
+	grep "dubious ownership" err
 '
 
 test_expect_success 'ignoring safe.directory in GIT_CONFIG_PARAMETERS' '
 	test_must_fail env \
 		GIT_CONFIG_PARAMETERS="${SQ}safe.directory${SQ}=${SQ}$(pwd)${SQ}" \
 		git status 2>err &&
-	grep "unsafe repository" err
+	grep "dubious ownership" err
 '
 
 test_expect_success 'ignoring safe.directory in repo config' '
