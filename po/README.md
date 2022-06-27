@@ -5,7 +5,7 @@ describes how you can contribute to the effort of enhancing the language
 coverage and maintaining the translation.
 
 The localization (l10n) coordinator, Jiang Xin <worldhello.net@gmail.com>,
-coordinates our localization effort in the l10 coordinator repository:
+coordinates our localization effort in the l10n coordinator repository:
 
     https://github.com/git-l10n/git-po/
 
