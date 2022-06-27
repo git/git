@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2022, #07; Wed, 22)
-X-master-at: f770e9f396d48b567ef7b37d273e91ad570a3522
-X-next-at: 5c70b8d9af74545ad2b62bd035c293f139c02a5c
+Subject: What's cooking in git.git (Jun 2022, #08; Mon, 27)
+X-master-at: e4a4b31577c7419497ac30cebe30d755b97752c5
+X-next-at: 69fb8171204c8e773da4dd0a0988641096be0b42
 
-What's cooking in git.git (Jun 2022, #07; Wed, 22)
+What's cooking in git.git (Jun 2022, #08; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
-Git 2.37-rc2 has been tagged.
+Git 2.37 (final) has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -44,143 +44,64 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
- - i18n: mark message helpers prefix for translation
-
- Give _() markings to fatal/warning/usage: that is shown in front of
- these messages.
-
- Will merge to 'next'?
- source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
-
-
-* ds/t5510-brokequote (2022-06-21) 1 commit
- - t5510: replace 'origin' with URL more carefully
-
- Test fix.
- source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
-
-
-* en/merge-restore-to-pristine (2022-06-21) 6 commits
- - merge: do not exit restore_state() prematurely
- - merge: ensure we can actually restore pre-merge state
- - merge: make restore_state() restore staged state too
- - merge: fix save_state() to work when there are racy-dirty files
- - merge: remove unused variable
- - t6424: make sure a failed merge preserves local changes
-
- When "git merge" finds that it cannot perform a merge, it should
- restore the working tree to the state before the command was
- initiated, but in some corner cases it didn't.
-
- Needs review.
- source: <pull.1231.v2.git.1655621424.gitgitgadget@gmail.com>
-
-
-* rs/combine-diff-with-incompatible-options (2022-06-21) 2 commits
- - combine-diff: abort if --output is given
- - combine-diff: abort if --ignore-matching-lines is given
-
- Certain diff options are currently ignored when combined-diff is
- shown; mark them as incompatible with the feature.
-
- Will merge to 'next'?
- source: <220524.86v8tuvfl1.gmgdl@evledraar.gmail.com>
-
-
-* tk/apply-case-insensitive (2022-06-21) 3 commits
- - apply: support case-only renames in case-insensitive filesystems
- - reset: new failing test for reset of case-insensitive duplicate in index
- - t4141: test "git apply" with core.ignorecase
-
- "git apply" barfed on a patch that makes a case-only rename on a
- case-insensitive filesystem.
-
- Needs review.
- source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
-
-
-* zh/ls-files-format (2022-06-21) 1 commit
- - ls-files: introduce "--format" option
-
- "git ls-files" learns the "--format" option to tweak its output.
-
- Needs review.
- source: <pull.1262.v3.git.1655777140231.gitgitgadget@gmail.com>
-
-
-* ab/test-quoting-fix (2022-06-21) 3 commits
- - config tests: fix harmless but broken "rm -r" cleanup
- - test-lib.sh: fix prepend_var() quoting issue
- - tests: add missing double quotes to included library paths
-
- Fixes for tests when the source directory has unusual characters in
- its path, e.g. whitespaces, double-quotes, etc.
-
- Expecting a reroll.
- source: <cover-0.3-00000000000-20220621T221928Z-avarab@gmail.com>
-
-
-* en/merge-dual-dir-renames-fix (2022-06-21) 3 commits
- - merge-ort: fix issue with dual rename and add/add conflict
- - merge-ort: shuffle the computation and cleanup of potential collisions
- - t6423: add tests of dual directory rename plus add/add conflict
-
- Fixes a long-standing corner case bug around directory renames in
- the merge-ort strategy.
-
- Needs review.
- source: <pull.1268.git.1655871651.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [Graduated to 'master']
 
-* jp/prompt-clear-before-upstream-mark (2022-06-10) 2 commits
-  (merged to 'next' on 2022-06-15 at e580db03e9)
- + git-prompt: fix expansion of branch colour codes
-  (merged to 'next' on 2022-06-08 at 201a84ad63)
- + git-prompt: make colourization consistent
+* ab/credentials-in-url-more (2022-06-23) 1 commit
+  (merged to 'next' on 2022-06-23 at 11d700111c)
+ + Documentation/config/transfer.txt: fix typo
 
- Bash command line prompt (in contrib/) update.
- source: <20220607115024.64724-1-joak-pet@online.no>
+ Typofix.
+ source: <68c1c3648c51f6298eea4d58286b20e0c770a270.1656010900.git.me@ttaylorr.com>
 
 
-* tb/cruft-packs (2022-06-21) 1 commit
-  (merged to 'next' on 2022-06-21 at 0703251124)
- + gc: simplify --cruft description
+* jc/revert-show-parent-info (2022-06-27) 1 commit
+  (merged to 'next' on 2022-06-27 at 9a7cc59c69)
+ + revert: config documentation fixes
 
- Docfix.
- source: <157741e2-cd06-9304-bb21-c67c2cbd923e@web.de>
+ Typofix.
+ source: <6727daf1-f077-7319-187e-ab4e55de3b2d@web.de>
+
+--------------------------------------------------
+[New Topics]
+
+* ab/squelch-empty-fsync-traces (2022-06-23) 1 commit
+ - trace2: don't include "fsync" events in all trace2 logs
+
+ Omit fsync-related trace2 entries when their values are all zero.
+
+ Expecting a reroll.
+ cf. <xmqqh74byy19.fsf@gitster.g>
+ source: <patch-1.1-df87e515efd-20220623T154943Z-avarab@gmail.com>
+
+
+* cl/grep-max-count (2022-06-22) 1 commit
+ - grep: add --max-count command line option
+
+ "git grep -m<max-hits>" is a way to limit the hits shown per file.
+
+ Will merge to 'next'.
+ source: <pull.1278.v4.git.git.1655927252899.gitgitgadget@gmail.com>
+
+
+* jk/revisions-doc-markup-fix (2022-06-22) 1 commit
+ - revisions.txt: escape "..." to avoid asciidoc horizontal ellipsis
+
+ Documentation mark-up fix.
+
+ Will merge to 'next'.
+ source: <YrOmsA04FZae89be@coredump.intra.peff.net>
+
+
+* tk/rev-parse-doc-clarify-at-u (2022-06-23) 1 commit
+ - rev-parse: documentation adjustment - mention remote tracking with @{u}
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <pull.1265.v2.git.1655960512385.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
-
-* en/merge-tree (2022-02-23) 13 commits
- - git-merge-tree.txt: add a section on potentional usage mistakes
- - merge-tree: add a --allow-unrelated-histories flag
- - merge-tree: allow `ls-files -u` style info to be NUL terminated
- - merge-tree: provide easy access to `ls-files -u` style info
- - merge-tree: provide a list of which files have conflicts
- - merge-ort: provide a merge_get_conflicted_files() helper function
- - merge-tree: support including merge messages in output
- - merge-ort: split out a separate display_update_messages() function
- - merge-tree: implement real merges
- - merge-tree: add option parsing and initial shell for real merge function
- - merge-tree: move logic for existing merge into new function
- - merge-tree: rename merge_trees() to trivial_merge_trees()
- - Merge branch 'en/remerge-diff' into en/merge-trees
-
- A new command is introduced that takes two commits and computes a
- tree that would be contained in the resulting merge commit, if the
- histories leading to these two commits were to be merged, and is
- added as a new mode of "git merge-tree" subcommand.
-
- On hold.
- cf. <CABPp-BGZ7OAYRR5YKRsxJSo-C=ho+qcNAkqwkim8CkhCfCeHsA@mail.gmail.com>
- source: <pull.1122.v6.git.1645602413.gitgitgadget@gmail.com>
-
 
 * bc/stash-export (2022-04-08) 4 commits
  - builtin/stash: provide a way to import stashes from a ref
@@ -217,6 +138,124 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* en/merge-tree (2022-06-22) 17 commits
+ - git-merge-tree.txt: add a section on potentional usage mistakes
+ - merge-tree: add a --allow-unrelated-histories flag
+ - merge-tree: allow `ls-files -u` style info to be NUL terminated
+ - merge-ort: optionally produce machine-readable output
+ - merge-ort: store more specific conflict information
+ - merge-ort: make `path_messages` a strmap to a string_list
+ - merge-ort: store messages in a list, not in a single strbuf
+ - merge-tree: provide easy access to `ls-files -u` style info
+ - merge-tree: provide a list of which files have conflicts
+ - merge-ort: remove command-line-centric submodule message from merge-ort
+ - merge-ort: provide a merge_get_conflicted_files() helper function
+ - merge-tree: support including merge messages in output
+ - merge-ort: split out a separate display_update_messages() function
+ - merge-tree: implement real merges
+ - merge-tree: add option parsing and initial shell for real merge function
+ - merge-tree: move logic for existing merge into new function
+ - merge-tree: rename merge_trees() to trivial_merge_trees()
+
+ A new command is introduced that takes two commits and computes a
+ tree that would be contained in the resulting merge commit, if the
+ histories leading to these two commits were to be merged, and is
+ added as a new mode of "git merge-tree" subcommand.
+
+ Will merge to 'next'.
+ source: <pull.1122.v7.git.1655511660.gitgitgadget@gmail.com>
+
+
+* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
+ - i18n: mark message helpers prefix for translation
+
+ Give _() markings to fatal/warning/usage: that is shown in front of
+ these messages.
+
+ Will merge to 'next'.
+ source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
+
+
+* ds/t5510-brokequote (2022-06-21) 1 commit
+ - t5510: replace 'origin' with URL more carefully
+
+ Test fix.
+ source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
+
+
+* en/merge-restore-to-pristine (2022-06-21) 6 commits
+ - merge: do not exit restore_state() prematurely
+ - merge: ensure we can actually restore pre-merge state
+ - merge: make restore_state() restore staged state too
+ - merge: fix save_state() to work when there are racy-dirty files
+ - merge: remove unused variable
+ - t6424: make sure a failed merge preserves local changes
+
+ When "git merge" finds that it cannot perform a merge, it should
+ restore the working tree to the state before the command was
+ initiated, but in some corner cases it didn't.
+
+ Needs review.
+ source: <pull.1231.v2.git.1655621424.gitgitgadget@gmail.com>
+
+
+* rs/combine-diff-with-incompatible-options (2022-06-21) 2 commits
+ - combine-diff: abort if --output is given
+ - combine-diff: abort if --ignore-matching-lines is given
+
+ Certain diff options are currently ignored when combined-diff is
+ shown; mark them as incompatible with the feature.
+
+ Will merge to 'next'.
+ source: <220524.86v8tuvfl1.gmgdl@evledraar.gmail.com>
+
+
+* tk/apply-case-insensitive (2022-06-21) 3 commits
+ - apply: support case-only renames in case-insensitive filesystems
+ - reset: new failing test for reset of case-insensitive duplicate in index
+ - t4141: test "git apply" with core.ignorecase
+
+ "git apply" barfed on a patch that makes a case-only rename on a
+ case-insensitive filesystem.
+
+ Needs review.
+ source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
+
+
+* zh/ls-files-format (2022-06-27) 1 commit
+ - ls-files: introduce "--format" option
+
+ "git ls-files" learns the "--format" option to tweak its output.
+
+ Expecting a reroll.
+ cf. <CAOLTT8Tc95-aUE+uN2d8QjTJpGpGw6cBJfG+bpmyE55OcXTSRA@mail.gmail.com>
+ source: <pull.1262.v4.git.1656257376109.gitgitgadget@gmail.com>
+
+
+* ab/test-quoting-fix (2022-06-21) 3 commits
+ - config tests: fix harmless but broken "rm -r" cleanup
+ - test-lib.sh: fix prepend_var() quoting issue
+ - tests: add missing double quotes to included library paths
+
+ Fixes for tests when the source directory has unusual characters in
+ its path, e.g. whitespaces, double-quotes, etc.
+
+ Expecting a reroll.
+ source: <cover-0.3-00000000000-20220621T221928Z-avarab@gmail.com>
+
+
+* en/merge-dual-dir-renames-fix (2022-06-21) 3 commits
+ - merge-ort: fix issue with dual rename and add/add conflict
+ - merge-ort: shuffle the computation and cleanup of potential collisions
+ - t6423: add tests of dual directory rename plus add/add conflict
+
+ Fixes a long-standing corner case bug around directory renames in
+ the merge-ort strategy.
+
+ Needs review.
+ source: <pull.1268.git.1655871651.gitgitgadget@gmail.com>
+
+
 * cr/setup-bug-typo (2022-06-17) 1 commit
   (merged to 'next' on 2022-06-17 at 8834ffe0ab)
  + setup: fix function name in a BUG() message
@@ -235,7 +274,7 @@ Release tarballs are available at:
  bitmaps.  The push.useBitmaps configuration variable is introduced
  to allow disabling use of reachability bitmaps only for "git push".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
 
 
@@ -246,13 +285,14 @@ Release tarballs are available at:
  "git remote show [-n] frotz" now pays attention to negative
  pathspecs.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20220617002036.1577-2-jacob.keller@gmail.com>
 
 
 * js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
  - commit-graph: refactor to avoid prepare_repo_settings
 
+ Expecting a reroll.
  source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
 
 
@@ -273,7 +313,7 @@ Release tarballs are available at:
  "git mktree --missing" lazily fetched objects that are missing from
  the local object store, which was totally unnecessary.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <748f39a9-65aa-2110-cf92-7ddf81b5f507@roku.com>
 
 
@@ -342,7 +382,7 @@ Release tarballs are available at:
  source: <20220610195247.1177549-1-jonathantanmy@google.com>
 
 
-* gc/submodule-update (2022-06-15) 12 commits
+* ab/submodule-cleanup (2022-06-15) 12 commits
  - git-sh-setup.sh: remove "say" function, change last users
  - git-submodule.sh: use "$quiet", not "$GIT_QUIET"
  - submodule--helper: eliminate internal "--update" option
@@ -356,9 +396,9 @@ Release tarballs are available at:
  - git-submodule.sh: remove unused $prefix var and --super-prefix
  - git-submodule.sh: remove unused sanitize_submodule_env()
 
- More work on "git submodule update".
+ Further preparation to turn git-submodule.sh into a builtin.
 
- Needs review.
+ Will merge to 'next'?
  source: <cover-v2-00.12-00000000000-20220613T220150Z-avarab@gmail.com>
 
 
@@ -429,7 +469,7 @@ Release tarballs are available at:
  loose object file straight, without having to keep it in-core as a
  whole.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1654914555.git.chiyutianyi@gmail.com>
 
 
@@ -525,26 +565,3 @@ Release tarballs are available at:
 
  Thoughts?
  source: <20220422083629.1404989-1-hi@alyssa.is>
-
---------------------------------------------------
-[Discarded]
-
-* jc/apply-icase-tests (2022-06-13) 1 commit
- . t4141: test "git apply" with core.ignorecase
-
- Now a part of tk/apply-case-insensitive topic.
- source: <xmqqo7yw77qo.fsf@gitster.g>
-
-
-* tl/pack-bitmap-trace (2022-06-21) 5 commits
- . bitmap: add trace2 outputs during open "bitmap" file
- . pack-bitmap.c: using error() instead of silently returning -1
- . pack-bitmap.c: make warnings support i18N when opening bitmap
- . pack-bitmap.c: rename "idx_name" to "bitmap_name"
- . pack-bitmap.c: continue looping when first MIDX bitmap is found
-
- Add trace2 traces in code paths involving the pack bitmaps.
-
- source: <cover.1655817253.git.dyroneteng@gmail.com>
-
-
