@@ -768,7 +768,7 @@ vcxproj:
 
 	# Make .vcxproj files and add them
 	perl contrib/buildsystems/generate -g Vcxproj
-	git add -f git.sln {*,*/lib.proj,t/helper/*}/*.vcxproj
+	git add -f git.sln {*,*/lib.proj,t/helper/*,reftable/libreftable{,_test}.proj}/*.vcxproj
 
 	# Generate the LinkOrCopyBuiltins.targets and LinkOrCopyRemoteHttp.targets file
 	(echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' && \
