@@ -241,9 +241,6 @@ cmd_update()
 		-q|--quiet)
 			GIT_QUIET=1
 			;;
-		-v)
-			unset GIT_QUIET
-			;;
 		--progress)
 			progress=1
 			;;
