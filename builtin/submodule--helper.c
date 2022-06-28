@@ -2404,6 +2404,23 @@ static void ensure_core_worktree(const char *path)
 	}
 }
 
+static const char *submodule_update_type_to_label(enum submodule_update_type type)
+{
+	switch (type) {
+	case SM_UPDATE_CHECKOUT:
+		return "checkout";
+	case SM_UPDATE_MERGE:
+		return "merge";
+	case SM_UPDATE_REBASE:
+		return "rebase";
+	case SM_UPDATE_UNSPECIFIED:
+	case SM_UPDATE_NONE:
+	case SM_UPDATE_COMMAND:
+		break;
+	}
+	BUG("unreachable with type %d", type);
+}
+
 static void update_data_to_args(struct update_data *update_data, struct strvec *args)
 {
 	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
@@ -2582,6 +2599,7 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	struct update_data opt = UPDATE_DATA_INIT;
 	struct list_objects_filter_options filter_options;
 	int ret;
+	enum submodule_update_type update_type = SM_UPDATE_UNSPECIFIED;
 
 	struct option module_update_options[] = {
 		OPT__FORCE(&opt.force, N_("force checkout updates"), 0),
@@ -2603,6 +2621,15 @@ static int module_update(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "update", &opt.update_default,
 			   N_("string"),
 			   N_("rebase, merge, checkout or none")),
+		OPT_SET_INT(0, "checkout", &update_type,
+			N_("use the 'checkout' update strategy (default)"),
+			SM_UPDATE_CHECKOUT),
+		OPT_SET_INT('m', "merge", &update_type,
+			N_("use the 'merge' update strategy"),
+			SM_UPDATE_MERGE),
+		OPT_SET_INT('r', "rebase", &update_type,
+			N_("use the 'rebase' update strategy"),
+			SM_UPDATE_REBASE),
 		OPT_STRING_LIST(0, "reference", &opt.references, N_("repo"),
 			   N_("reference repository")),
 		OPT_BOOL(0, "dissociate", &opt.dissociate,
@@ -2651,6 +2678,9 @@ static int module_update(int argc, const char **argv, const char *prefix)
 	}
 
 	opt.filter_options = &filter_options;
+
+	if (update_type != SM_UPDATE_UNSPECIFIED)
+		opt.update_default = submodule_update_type_to_label(update_type);
 
 	if (opt.update_default)
 		if (parse_submodule_update_strategy(opt.update_default,
