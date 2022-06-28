@@ -50,6 +50,14 @@ m,message=    use the given message as the commit message for the merge commit
 
 indent=0
 
+# Usage: say [MSG...]
+say () {
+	if test -z "$arg_quiet"
+	then
+		printf '%s\n' "$*"
+	fi
+}
+
 # Usage: debug [MSG...]
 debug () {
 	if test -n "$arg_debug"
@@ -60,7 +68,7 @@ debug () {
 
 # Usage: progress [MSG...]
 progress () {
-	if test -z "$GIT_QUIET"
+	if test -z "$arg_quiet"
 	then
 		if test -z "$arg_debug"
 		then
@@ -146,6 +154,7 @@ main () {
 	eval "$set_args"
 
 	# Begin "real" flag parsing.
+	arg_quiet=
 	arg_debug=
 	arg_prefix=
 	arg_split_branch=
@@ -161,7 +170,7 @@ main () {
 
 		case "$opt" in
 		-q)
-			GIT_QUIET=1
+			arg_quiet=1
 			;;
 		-d)
 			arg_debug=1
@@ -252,7 +261,7 @@ main () {
 	dir="$(dirname "$arg_prefix/.")"
 
 	debug "command: {$arg_command}"
-	debug "quiet: {$GIT_QUIET}"
+	debug "quiet: {$arg_quiet}"
 	debug "dir: {$dir}"
 	debug "opts: {$*}"
 	debug
