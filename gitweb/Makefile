@@ -54,6 +54,11 @@ ifneq ($(MAKECMDGOALS),clean)
 -include ../GIT-VERSION-FILE
 endif
 
+# What targets we'll add to 'all' for "make gitweb"
+GITWEB_ALL =
+GITWEB_ALL += gitweb.cgi
+GITWEB_ALL += static/gitweb.js
+
 ### Build rules
 
 SHELL_PATH ?= $(SHELL)
@@ -92,7 +97,7 @@ ifndef V
 endif
 endif
 
-all:: gitweb.cgi static/gitweb.js
+all:: $(GITWEB_ALL)
 
 GITWEB_PROGRAMS = gitweb.cgi
 
