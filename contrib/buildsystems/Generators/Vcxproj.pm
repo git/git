@@ -77,7 +77,7 @@ sub createProject {
     my $libs_release = "\n    ";
     my $libs_debug = "\n    ";
     if (!$static_library && $name ne 'headless-git') {
-      $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib|reftable\/libreftable\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
+      $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib|reftable\/libreftable(_test)?\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
       $libs_debug = $libs_release;
       $libs_debug =~ s/zlib\.lib/zlibd\.lib/g;
       $libs_debug =~ s/libexpat\.lib/libexpatd\.lib/g;
@@ -258,6 +258,7 @@ EOM
     if ((!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') && !($name =~ /headless-git/)) {
       my $uuid_libgit = $$build_structure{"LIBS_libgit_GUID"};
       my $uuid_libreftable = $$build_structure{"LIBS_reftable/libreftable_GUID"};
+      my $uuid_libreftable_test = $$build_structure{"LIBS_reftable/libreftable_test_GUID"};
       my $uuid_xdiff_lib = $$build_structure{"LIBS_xdiff/lib_GUID"};
 
       print F << "EOM";
@@ -269,8 +270,12 @@ EOM
 EOM
       if (!($name =~ /xdiff|libreftable/)) {
         print F << "EOM";
-    <ProjectReference Include="$cdup\\reftable\\libreftable\\libreftable.vcxproj">
+    <ProjectReference Include="$cdup\\reftable\\libreftable.proj\\libreftable.vcxproj">
       <Project>$uuid_libreftable</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$cdup\\reftable\\libreftable_test.proj\\libreftable_test.vcxproj">
+      <Project>$uuid_libreftable_test</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
 EOM
