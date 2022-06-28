@@ -88,6 +88,7 @@ sub createProject {
     $defines =~ s/</&lt;/g;
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
+    $defines =~ s/\\"/"/g;
 
     my $rcdefines = $defines;
     $rcdefines =~ s/(?<!\\)"/\\$&/g;
