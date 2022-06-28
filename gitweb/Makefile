@@ -2,6 +2,8 @@
 all::
 .PHONY: all
 
+MAK_DIR_GITWEB =
+
 # Define V=1 to have a more verbose compile.
 #
 # Define JSMIN to point to JavaScript minifier that functions as
@@ -106,8 +108,9 @@ GITWEB_PROGRAMS = gitweb.cgi
 GITWEB_JS_MIN = static/gitweb.min.js
 ifdef JSMIN
 GITWEB_JS = $(GITWEB_JS_MIN)
-all:: $(GITWEB_JS_MIN)
-$(GITWEB_JS_MIN): $(GITWEB_JS_IN) GITWEB-BUILD-OPTIONS
+all:: $(MAK_DIR_GITWEB)$(GITWEB_JS_MIN)
+$(MAK_DIR_GITWEB)$(GITWEB_JS_MIN): $(MAK_DIR_GITWEB)GITWEB-BUILD-OPTIONS
+$(MAK_DIR_GITWEB)$(GITWEB_JS_MIN): $(MAK_DIR_GITWEB)$(GITWEB_JS_IN)
 	$(QUIET_GEN)$(JSMIN) <$< >$@
 endif
 GITWEB_FILES += $(GITWEB_JS)
@@ -115,8 +118,9 @@ GITWEB_FILES += $(GITWEB_JS)
 GITWEB_CSS_MIN = static/gitweb.min.css
 ifdef CSSMIN
 GITWEB_CSS = $(GITWEB_CSS_MIN)
-all:: $(GITWEB_CSS_MIN)
-$(GITWEB_CSS_MIN): $(GITWEB_CSS_IN) GITWEB-BUILD-OPTIONS
+all:: $(MAK_DIR_GITWEB)$(GITWEB_CSS_MIN)
+$(MAK_DIR_GITWEB)$(GITWEB_CSS_MIN): $(MAK_DIR_GITWEB)GITWEB-BUILD-OPTIONS
+$(MAK_DIR_GITWEB)$(GITWEB_CSS_MIN): $(MAK_DIR_GITWEB)$(GITWEB_CSS_IN)
 	$(QUIET_GEN)$(CSSMIN) <$< >$@
 endif
 GITWEB_FILES += $(GITWEB_CSS)
@@ -161,19 +165,20 @@ GITWEB_REPLACE = \
 	-e 's|++HIGHLIGHT_BIN++|$(HIGHLIGHT_BIN)|g'
 
 .PHONY: FORCE
-GITWEB-BUILD-OPTIONS: FORCE
+$(MAK_DIR_GITWEB)GITWEB-BUILD-OPTIONS: FORCE
 	@rm -f $@+
 	@echo "x" '$(PERL_PATH_SQ)' $(GITWEB_REPLACE) "$(JSMIN)|$(CSSMIN)" >$@+
 	@cmp -s $@+ $@ && rm -f $@+ || mv -f $@+ $@
 
-gitweb.cgi: gitweb.perl GITWEB-BUILD-OPTIONS
+$(MAK_DIR_GITWEB)gitweb.cgi: $(MAK_DIR_GITWEB)GITWEB-BUILD-OPTIONS
+$(MAK_DIR_GITWEB)gitweb.cgi: $(MAK_DIR_GITWEB)gitweb.perl
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 		$(GITWEB_REPLACE) $< >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
-static/gitweb.js: $(GITWEB_JSLIB_FILES)
+$(MAK_DIR_GITWEB)static/gitweb.js: $(addprefix $(MAK_DIR_GITWEB),$(GITWEB_JSLIB_FILES))
 	$(QUIET_GEN)$(RM) $@ $@+ && \
 	cat $^ >$@+ && \
 	mv $@+ $@
@@ -194,14 +199,16 @@ test-installed:
 .PHONY: install
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebdir_SQ)'
-	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(gitwebdir_SQ)'
+	$(INSTALL) -m 755 $(addprefix $(MAK_DIR_GITWEB),$(GITWEB_PROGRAMS)) \
+		'$(DESTDIR_SQ)$(gitwebdir_SQ)'
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
-	$(INSTALL) -m 644 $(GITWEB_FILES) '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
+	$(INSTALL) -m 644 $(addprefix $(MAK_DIR_GITWEB),$(GITWEB_FILES)) \
+		'$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
 
 ### Cleaning rules
 
 .PHONY: clean
 clean:
-	$(RM) gitweb.cgi $(GITWEB_JS_IN) \
+	$(RM) $(addprefix $(MAK_DIR_GITWEB),gitweb.cgi $(GITWEB_JS_IN) \
 		$(GITWEB_JS_MIN) $(GITWEB_CSS_MIN) \
-		GITWEB-BUILD-OPTIONS
+		GITWEB-BUILD-OPTIONS)
