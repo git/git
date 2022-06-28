@@ -31,10 +31,12 @@ GITWEB_STRICT_EXPORT =
 GITWEB_BASE_URL =
 GITWEB_LIST =
 GITWEB_HOMETEXT = indextext.html
-GITWEB_CSS = static/gitweb.css
+GITWEB_CSS_IN = static/gitweb.css
+GITWEB_CSS = $(GITWEB_CSS_IN)
 GITWEB_LOGO = static/git-logo.png
 GITWEB_FAVICON = static/git-favicon.png
-GITWEB_JS = static/gitweb.js
+GITWEB_JS_IN = static/gitweb.js
+GITWEB_JS = $(GITWEB_JS_IN)
 GITWEB_SITE_HTML_HEAD_STRING =
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
@@ -57,7 +59,7 @@ endif
 # What targets we'll add to 'all' for "make gitweb"
 GITWEB_ALL =
 GITWEB_ALL += gitweb.cgi
-GITWEB_ALL += static/gitweb.js
+GITWEB_ALL += $(GITWEB_JS)
 
 ### Build rules
 
@@ -101,25 +103,23 @@ all:: $(GITWEB_ALL)
 
 GITWEB_PROGRAMS = gitweb.cgi
 
+GITWEB_JS_MIN = static/gitweb.min.js
 ifdef JSMIN
-GITWEB_FILES += static/gitweb.min.js
-GITWEB_JS = static/gitweb.min.js
-all:: static/gitweb.min.js
-static/gitweb.min.js: static/gitweb.js GITWEB-BUILD-OPTIONS
+GITWEB_JS = $(GITWEB_JS_MIN)
+all:: $(GITWEB_JS_MIN)
+$(GITWEB_JS_MIN): $(GITWEB_JS_IN) GITWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(JSMIN) <$< >$@
-else
-GITWEB_FILES += static/gitweb.js
 endif
+GITWEB_FILES += $(GITWEB_JS)
 
+GITWEB_CSS_MIN = static/gitweb.min.css
 ifdef CSSMIN
-GITWEB_FILES += static/gitweb.min.css
-GITWEB_CSS = static/gitweb.min.css
-all:: static/gitweb.min.css
-static/gitweb.min.css: static/gitweb.css GITWEB-BUILD-OPTIONS
+GITWEB_CSS = $(GITWEB_CSS_MIN)
+all:: $(GITWEB_CSS_MIN)
+$(GITWEB_CSS_MIN): $(GITWEB_CSS_IN) GITWEB-BUILD-OPTIONS
 	$(QUIET_GEN)$(CSSMIN) <$< >$@
-else
-GITWEB_FILES += static/gitweb.css
 endif
+GITWEB_FILES += $(GITWEB_CSS)
 
 GITWEB_FILES += static/git-logo.png static/git-favicon.png
 
@@ -127,6 +127,7 @@ GITWEB_FILES += static/git-logo.png static/git-favicon.png
 #
 # js/lib/common-lib.js should be always first, then js/lib/*.js,
 # then the rest of files; js/gitweb.js should be last (if it exists)
+GITWEB_JSLIB_FILES =
 GITWEB_JSLIB_FILES += static/js/lib/common-lib.js
 GITWEB_JSLIB_FILES += static/js/lib/datetime.js
 GITWEB_JSLIB_FILES += static/js/lib/cookies.js
@@ -201,6 +202,6 @@ install: all
 
 .PHONY: clean
 clean:
-	$(RM) gitweb.cgi static/gitweb.js \
-		static/gitweb.min.js static/gitweb.min.css \
+	$(RM) gitweb.cgi $(GITWEB_JS_IN) \
+		$(GITWEB_JS_MIN) $(GITWEB_CSS_MIN) \
 		GITWEB-BUILD-OPTIONS
