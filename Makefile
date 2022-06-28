@@ -3042,6 +3042,7 @@ include gitweb/Makefile
 
 .PHONY: gitweb
 gitweb: $(MAK_DIR_GITWEB_ALL)
+all:: gitweb
 
 ### Installation rules
 
