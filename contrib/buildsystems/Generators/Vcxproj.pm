@@ -178,6 +178,7 @@ sub createProject {
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PrecompiledHeader />
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
     </ClCompile>
     <Lib>
       <SuppressStartupBanner>true</SuppressStartupBanner>
