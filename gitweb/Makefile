@@ -183,17 +183,6 @@ $(MAK_DIR_GITWEB)static/gitweb.js: $(addprefix $(MAK_DIR_GITWEB),$(GITWEB_JSLIB_
 	cat $^ >$@+ && \
 	mv $@+ $@
 
-### Testing rules
-
-.PHONY: test
-test:
-	$(MAKE) -C ../t gitweb-test
-
-.PHONY: test-installed
-test-installed:
-	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(gitwebdir_SQ)' \
-		$(MAKE) -C ../t gitweb-test
-
 ### Installation rules
 
 .PHONY: install
