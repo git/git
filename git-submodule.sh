@@ -446,7 +446,7 @@ cmd_summary() {
 	do
 		case "$1" in
 		--cached)
-			cached="$1"
+			cached=1
 			;;
 		--files)
 			files="$1"
@@ -583,7 +583,7 @@ do
 		branch="$2"; shift
 		;;
 	--cached)
-		cached="$1"
+		cached=1
 		;;
 	--)
 		break
