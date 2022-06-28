@@ -130,8 +130,10 @@ install-gitweb: $(MAK_DIR_GITWEB_ALL)
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
 	$(INSTALL) -m 644 $(addprefix $(MAK_DIR_GITWEB),$(GITWEB_FILES)) \
 		'$(DESTDIR_SQ)$(gitwebstaticdir_SQ)'
+ifndef NO_GITWEB
 ifndef NO_PERL
 install: install-gitweb
+endif
 endif
 
 ### Cleaning rules

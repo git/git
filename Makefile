@@ -309,6 +309,11 @@ include shared.mak
 # distributions that want to use their packaged versions of Perl
 # modules, instead of the fallbacks shipped with Git.
 #
+# Define NO_GITWEB if you do not want to build or install
+# 'gitweb'. Note that defining NO_PERL currently has the same effect
+# on not installing gitweb, but not on whether it's built in the
+# gitweb/ directory.
+#
 # Define PYTHON_PATH to the path of your Python binary (often /usr/bin/python
 # but /usr/bin/python2.7 or /usr/bin/python3 on some platforms).
 #
@@ -3042,7 +3047,9 @@ include gitweb/Makefile
 
 .PHONY: gitweb
 gitweb: $(MAK_DIR_GITWEB_ALL)
+ifndef NO_GITWEB
 all:: gitweb
+endif
 
 ### Installation rules
 
