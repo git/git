@@ -1,5 +1,6 @@
 # The default target of this Makefile is...
 all::
+.PHONY: all
 
 # Define V=1 to have a more verbose compile.
 #
@@ -45,6 +46,7 @@ HIGHLIGHT_BIN = highlight
 -include config.mak
 
 # determine version
+.PHONY: .FORCE-GIT-VERSION-FILE
 ../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
 
@@ -152,6 +154,7 @@ GITWEB_REPLACE = \
 	-e 's|++GITWEB_SITE_FOOTER++|$(GITWEB_SITE_FOOTER)|g' \
 	-e 's|++HIGHLIGHT_BIN++|$(HIGHLIGHT_BIN)|g'
 
+.PHONY: FORCE
 GITWEB-BUILD-OPTIONS: FORCE
 	@rm -f $@+
 	@echo "x" '$(PERL_PATH_SQ)' $(GITWEB_REPLACE) "$(JSMIN)|$(CSSMIN)" >$@+
@@ -171,15 +174,18 @@ static/gitweb.js: $(GITWEB_JSLIB_FILES)
 
 ### Testing rules
 
+.PHONY: test
 test:
 	$(MAKE) -C ../t gitweb-test
 
+.PHONY: test-installed
 test-installed:
 	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(gitwebdir_SQ)' \
 		$(MAKE) -C ../t gitweb-test
 
 ### Installation rules
 
+.PHONY: install
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitwebdir_SQ)'
 	$(INSTALL) -m 755 $(GITWEB_PROGRAMS) '$(DESTDIR_SQ)$(gitwebdir_SQ)'
@@ -188,10 +194,8 @@ install: all
 
 ### Cleaning rules
 
+.PHONY: clean
 clean:
 	$(RM) gitweb.cgi static/gitweb.js \
 		static/gitweb.min.js static/gitweb.min.css \
 		GITWEB-BUILD-OPTIONS
-
-.PHONY: all clean install test test-installed .FORCE-GIT-VERSION-FILE FORCE
-
