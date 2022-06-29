@@ -1828,4 +1828,29 @@ test_expect_success 'checkout behaves oddly with df-conflict-2' '
 	test_cmp full-checkout-err sparse-index-err
 '
 
+test_expect_failure 'mv directory from out-of-cone to in-cone' '
+	init_repos &&
+
+	# <source> as a sparse directory (or SKIP_WORKTREE_DIR without enabling
+	# sparse index).
+	test_all_match git mv --sparse folder1 deep &&
+	test_all_match git status --porcelain=v2 &&
+	test_sparse_match git ls-files -t &&
+	git -C sparse-checkout ls-files -t >actual &&
+	grep -e "H deep/folder1/0/0/0" actual &&
+	grep -e "H deep/folder1/0/1" actual &&
+	grep -e "H deep/folder1/a" actual &&
+
+	test_all_match git reset --hard &&
+
+	# <source> as a directory deeper than sparse index boundary (where
+	# sparse index will expand).
+	test_sparse_match git mv --sparse folder1/0 deep &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_sparse_match git ls-files -t &&
+	git -C sparse-checkout ls-files -t >actual &&
+	grep -e "H deep/0/0/0" actual &&
+	grep -e "H deep/0/1" actual
+'
+
 test_done
