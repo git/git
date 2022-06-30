@@ -219,7 +219,7 @@ test_expect_success 'refuse to move file to non-skip-worktree sparse path' '
 	test_cmp expect stderr
 '
 
-test_expect_failure 'refuse to move out-of-cone directory without --sparse' '
+test_expect_success 'refuse to move out-of-cone directory without --sparse' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
 
@@ -230,7 +230,7 @@ test_expect_failure 'refuse to move out-of-cone directory without --sparse' '
 	test_cmp expect stderr
 '
 
-test_expect_failure 'can move out-of-cone directory with --sparse' '
+test_expect_success 'can move out-of-cone directory with --sparse' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
 
