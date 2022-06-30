@@ -4,6 +4,18 @@ test_description='git mv in sparse working trees'
 
 . ./test-lib.sh
 
+setup_sparse_checkout () {
+	mkdir folder1 &&
+	touch folder1/file1 &&
+	git add folder1 &&
+	git sparse-checkout set --cone sub
+}
+
+cleanup_sparse_checkout () {
+	git sparse-checkout disable &&
+	git reset --hard
+}
+
 test_expect_success 'setup' "
 	mkdir -p sub/dir sub/dir2 &&
 	touch a b c sub/d sub/dir/e sub/dir2/e &&
@@ -196,6 +208,7 @@ test_expect_success 'can move files to non-sparse dir' '
 '
 
 test_expect_success 'refuse to move file to non-skip-worktree sparse path' '
+	test_when_finished "cleanup_sparse_checkout" &&
 	git reset --hard &&
 	git sparse-checkout init --no-cone &&
 	git sparse-checkout set a !/x y/ !x/y/z &&
@@ -204,6 +217,77 @@ test_expect_success 'refuse to move file to non-skip-worktree sparse path' '
 	test_must_fail git mv a x/y/z/new-a 2>stderr &&
 	echo x/y/z/new-a | cat sparse_error_header - sparse_hint >expect &&
 	test_cmp expect stderr
+'
+
+test_expect_failure 'refuse to move out-of-cone directory without --sparse' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	test_must_fail git mv folder1 sub 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo folder1/file1 >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr
+'
+
+test_expect_failure 'can move out-of-cone directory with --sparse' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	git mv --sparse folder1 sub 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_dir sub/folder1 &&
+	test_path_is_file sub/folder1/file1
+'
+
+test_expect_failure 'refuse to move out-of-cone file without --sparse' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	test_must_fail git mv folder1/file1 sub 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo folder1/file1 >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr
+'
+
+test_expect_failure 'can move out-of-cone file with --sparse' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	git mv --sparse folder1/file1 sub 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_file sub/file1
+'
+
+test_expect_failure 'refuse to move sparse file to existing destination' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	mkdir folder1 &&
+	touch folder1/file1 &&
+	touch sub/file1 &&
+	git add folder1 sub/file1 &&
+	git sparse-checkout set --cone sub &&
+
+	test_must_fail git mv --sparse folder1/file1 sub 2>stderr &&
+	echo "fatal: destination exists, source=folder1/file1, destination=sub/file1" >expect &&
+	test_cmp expect stderr
+'
+
+test_expect_failure 'move sparse file to existing destination with --force and --sparse' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	mkdir folder1 &&
+	touch folder1/file1 &&
+	touch sub/file1 &&
+	echo "overwrite" >folder1/file1 &&
+	git add folder1 sub/file1 &&
+	git sparse-checkout set --cone sub &&
+
+	git mv --sparse --force folder1/file1 sub 2>stderr &&
+	test_must_be_empty stderr &&
+	echo "overwrite" >expect &&
+	test_cmp expect sub/file1
 '
 
 test_done
