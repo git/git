@@ -186,11 +186,28 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 		length = strlen(src);
 		if (lstat(src, &st) < 0) {
-			/* only error if existence is expected. */
-			if (modes[i] != SPARSE) {
+			int pos;
+			const struct cache_entry *ce;
+
+			pos = cache_name_pos(src, length);
+			if (pos < 0) {
+				/* only error if existence is expected. */
+				if (modes[i] != SPARSE)
+					bad = _("bad source");
+				goto act_on_entry;
+			}
+
+			ce = active_cache[pos];
+			if (!ce_skip_worktree(ce)) {
 				bad = _("bad source");
 				goto act_on_entry;
 			}
+
+			if (!ignore_sparse)
+				string_list_append(&only_match_skip_worktree, src);
+			else
+				modes[i] = SPARSE;
+			goto act_on_entry;
 		}
 		if (!strncmp(src, dst, length) &&
 		    (dst[length] == 0 || dst[length] == '/')) {
