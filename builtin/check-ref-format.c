@@ -57,6 +57,8 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 	int normalize = 0;
 	int flags = 0;
 	const char *refname;
+	char *to_free = NULL;
+	int ret = 1;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(builtin_check_ref_format_usage);
@@ -81,11 +83,14 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 
 	refname = argv[i];
 	if (normalize)
-		refname = collapse_slashes(refname);
+		refname = to_free = collapse_slashes(refname);
 	if (check_refname_format(refname, flags))
-		return 1;
+		goto cleanup;
 	if (normalize)
 		printf("%s\n", refname);
 
-	return 0;
+	ret = 0;
+cleanup:
+	free(to_free);
+	return ret;
 }
