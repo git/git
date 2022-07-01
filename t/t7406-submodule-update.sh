@@ -1160,7 +1160,7 @@ test_expect_success 'submodule update should skip unmerged submodules' '
 	test_config -C top-cloned submodule.middle.update !true &&
 	git -C top-cloned submodule update --recursive 2>actual.err &&
 	cat >expect.err <<-\EOF &&
-	Skipping unmerged submodule middle//bottom
+	Skipping unmerged submodule middle/bottom
 	EOF
 	test_cmp expect.err actual.err
 '
@@ -1173,7 +1173,7 @@ test_expect_success 'submodule update --recursive skip submodules with strategy=
 	git -C top-cloned/middle config submodule.bottom.update none &&
 	git -C top-cloned submodule update --recursive 2>actual.err &&
 	cat >expect.err <<-\EOF &&
-	Skipping submodule '\''../middle/'\''
+	Skipping submodule '\''middle/bottom'\''
 	EOF
 	test_cmp expect.err actual.err
 '
