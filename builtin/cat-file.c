@@ -655,6 +655,7 @@ static void batch_objects_command(struct batch_options *opt,
 		free_cmds(queued_cmd, &nr);
 	}
 
+	free_cmds(queued_cmd, &nr);
 	free(queued_cmd);
 	strbuf_release(&input);
 }
