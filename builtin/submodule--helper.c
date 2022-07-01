@@ -118,10 +118,11 @@ static int resolve_relative_url_test(int argc, const char **argv, const char *pr
 	return 0;
 }
 
-static char *do_get_submodule_displaypath(const char *path,
-					  const char *prefix,
-					  const char *super_prefix)
+/* the result should be freed by the caller. */
+static char *get_submodule_displaypath(const char *path, const char *prefix)
 {
+	const char *super_prefix = get_super_prefix();
+
 	if (prefix && super_prefix) {
 		BUG("cannot have prefix '%s' and superprefix '%s'",
 		    prefix, super_prefix);
@@ -135,13 +136,6 @@ static char *do_get_submodule_displaypath(const char *path,
 	} else {
 		return xstrdup(path);
 	}
-}
-
-/* the result should be freed by the caller. */
-static char *get_submodule_displaypath(const char *path, const char *prefix)
-{
-	const char *super_prefix = get_super_prefix();
-	return do_get_submodule_displaypath(path, prefix, super_prefix);
 }
 
 static char *compute_rev_name(const char *sub_path, const char* object_id)
@@ -488,7 +482,7 @@ static void init_submodule(const char *path, const char *prefix,
 	struct strbuf sb = STRBUF_INIT;
 	char *upd = NULL, *url = NULL, *displaypath;
 
-	displaypath = do_get_submodule_displaypath(path, prefix, get_super_prefix());
+	displaypath = get_submodule_displaypath(path, prefix);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
@@ -1943,8 +1937,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	enum submodule_update_type update_type;
 	char *key;
 	struct update_data *ud = suc->update_data;
-	char *displaypath = do_get_submodule_displaypath(ce->name, ud->prefix,
-							 get_super_prefix());
+	char *displaypath = get_submodule_displaypath(ce->name, ud->prefix);
 	struct strbuf sb = STRBUF_INIT;
 	int needs_cloning = 0;
 	int need_free_url = 0;
@@ -2461,9 +2454,8 @@ static int update_submodule(struct update_data *update_data)
 {
 	ensure_core_worktree(update_data->sm_path);
 
-	update_data->displaypath = do_get_submodule_displaypath(update_data->sm_path,
-								update_data->prefix,
-								get_super_prefix());
+	update_data->displaypath = get_submodule_displaypath(
+		update_data->sm_path, update_data->prefix);
 
 	determine_submodule_update_strategy(the_repository, update_data->just_cloned,
 					    update_data->sm_path, update_data->update_default,
