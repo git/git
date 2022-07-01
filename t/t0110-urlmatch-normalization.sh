@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='urlmatch URL normalization'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # The base name of the test url files
