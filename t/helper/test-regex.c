@@ -34,6 +34,7 @@ static int test_regex_bug(void)
 	if (m[0].rm_so == 3) /* matches '\n' when it should not */
 		die("regex bug confirmed: re-build git with NO_REGEX=1");
 
+	regfree(&r);
 	return 0;
 }
 
@@ -94,18 +95,20 @@ int cmd__regex(int argc, const char **argv)
 		die("failed regcomp() for pattern '%s' (%s)", pat, errbuf);
 	}
 	if (!str)
-		return 0;
+		goto cleanup;
 
 	ret = regexec(&r, str, 1, m, 0);
 	if (ret) {
 		if (silent || ret == REG_NOMATCH)
-			return ret;
+			goto cleanup;
 
 		regerror(ret, &r, errbuf, sizeof(errbuf));
 		die("failed regexec() for subject '%s' (%s)", str, errbuf);
 	}
 
-	return 0;
+cleanup:
+	regfree(&r);
+	return ret;
 usage:
 	usage("\ttest-tool regex --bug\n"
 	      "\ttest-tool regex [--silent] <pattern>\n"
