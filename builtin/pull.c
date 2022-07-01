@@ -990,6 +990,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	int rebase_unspecified = 0;
 	int can_ff;
 	int divergent;
+	int ret;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -1100,7 +1101,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (is_null_oid(&orig_head)) {
 		if (merge_heads.nr > 1)
 			die(_("Cannot merge multiple branches into empty head."));
-		return pull_into_void(merge_heads.oid, &curr_head);
+		ret = pull_into_void(merge_heads.oid, &curr_head);
+		goto cleanup;
 	}
 	if (merge_heads.nr > 1) {
 		if (opt_rebase)
@@ -1125,8 +1127,6 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	}
 
 	if (opt_rebase) {
-		int ret = 0;
-
 		struct object_id newbase;
 		struct object_id upstream;
 		get_rebase_newbase_and_upstream(&newbase, &upstream, &curr_head,
@@ -1149,12 +1149,16 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
 			ret = rebase_submodules();
 
-		return ret;
+		goto cleanup;
 	} else {
-		int ret = run_merge();
+		ret = run_merge();
 		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
 			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
 			ret = update_submodules();
-		return ret;
+		goto cleanup;
 	}
+
+cleanup:
+	oid_array_clear(&merge_heads);
+	return ret;
 }
