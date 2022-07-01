@@ -96,6 +96,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 			die("no such worktree: %s", gitdir);
 
 		*refs = get_worktree_ref_store(*p);
+		free_worktrees(worktrees);
 	} else
 		die("unknown backend %s", argv[0]);
 
