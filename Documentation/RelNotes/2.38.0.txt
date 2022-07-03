@@ -1,0 +1,9 @@
+Git v2.38 Release Notes
+=======================
+
+Fixes since v2.37
+-----------------
+
+ * Rewrite of "git add -i" in C that appeared in Git 2.25 didn't
+   correctly record a removed file to the index, which was fixed.
+   (merge 4788e8b256 js/add-i-delete later to maint).
