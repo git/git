@@ -103,6 +103,15 @@ test_expect_success 'status works (commit)' '
 	grep "+1/-0 *+2/-0 file" output
 '
 
+test_expect_success 'update can stage deletions' '
+	>to-delete &&
+	git add to-delete &&
+	rm to-delete &&
+	test_write_lines u t "" | git add -i &&
+	git ls-files to-delete >output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'setup expected' '
 	cat >expected <<-\EOF
 	index 180b47c..b6f2c08 100644
