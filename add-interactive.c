@@ -697,8 +697,16 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 
 	for (i = 0; i < files->items.nr; i++) {
 		const char *name = files->items.items[i].string;
-		if (files->selected[i] &&
-		    add_file_to_index(s->r->index, name, 0) < 0) {
+		struct stat st;
+
+		if (!files->selected[i])
+			continue;
+		if (lstat(name, &st) && is_missing_file_error(errno)) {
+			if (remove_file_from_index(s->r->index, name) < 0) {
+				res = error(_("could not stage '%s'"), name);
+				break;
+			}
+		} else if (add_file_to_index(s->r->index, name, 0) < 0) {
 			res = error(_("could not stage '%s'"), name);
 			break;
 		}
