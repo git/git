@@ -2267,18 +2267,17 @@ static char *check_for_directory_rename(struct merge_options *opt,
 					struct strmap *collisions,
 					int *clean_merge)
 {
-	char *new_path = NULL;
+	char *new_path;
 	struct strmap_entry *rename_info;
-	struct strmap_entry *otherinfo = NULL;
+	struct strmap_entry *otherinfo;
 	const char *new_dir;
 
+	/* Cases where we don't have a directory rename for this path */
 	if (strmap_empty(dir_renames))
-		return new_path;
+		return NULL;
 	rename_info = check_dir_renamed(path, dir_renames);
 	if (!rename_info)
-		return new_path;
-	/* old_dir = rename_info->key; */
-	new_dir = rename_info->value;
+		return NULL;
 
 	/*
 	 * This next part is a little weird.  We do not want to do an
@@ -2304,6 +2303,7 @@ static char *check_for_directory_rename(struct merge_options *opt,
 	 * As it turns out, this also prevents N-way transient rename
 	 * confusion; See testcases 9c and 9d of t6043.
 	 */
+	new_dir = rename_info->value; /* old_dir = rename_info->key; */
 	otherinfo = strmap_get_entry(dir_rename_exclusions, new_dir);
 	if (otherinfo) {
 		path_msg(opt, rename_info->key, 1,
