@@ -28,3 +28,18 @@ void test_strbuf(void)
 	if (when_strict())
 		return;
 }
+
+void test_other(void)
+{
+}
+
+void test_worktrees(void)
+{
+	struct worktree **w4;
+
+	w4 = get_worktrees();
+
+	use_it(w4);
+
+	free_worktrees(w4);
+}

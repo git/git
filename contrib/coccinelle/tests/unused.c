@@ -53,3 +53,30 @@ void test_strbuf(void)
 		return;
 	strbuf_release(&sb8);
 }
+
+void test_other(void)
+{
+	struct string_list l = STRING_LIST_INIT_DUP;
+	struct strbuf sb = STRBUF_INIT;
+
+	string_list_clear(&l, 0);
+	string_list_clear(&sb, 0);
+}
+
+void test_worktrees(void)
+{
+	struct worktree **w1 = get_worktrees();
+	struct worktree **w2 = get_worktrees();
+	struct worktree **w3;
+	struct worktree **w4;
+
+	w3 = get_worktrees();
+	w4 = get_worktrees();
+
+	use_it(w4);
+
+	free_worktrees(w1);
+	free_worktrees(w2);
+	free_worktrees(w3);
+	free_worktrees(w4);
+}
