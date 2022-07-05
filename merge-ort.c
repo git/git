@@ -2259,6 +2259,27 @@ static void compute_collisions(struct strmap *collisions,
 	}
 }
 
+static void free_collisions(struct strmap *collisions)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	/* Free each value in the collisions map */
+	strmap_for_each_entry(collisions, &iter, entry) {
+		struct collision_info *info = entry->value;
+		string_list_clear(&info->source_files, 0);
+	}
+	/*
+	 * In compute_collisions(), we set collisions.strdup_strings to 0
+	 * so that we wouldn't have to make another copy of the new_path
+	 * allocated by apply_dir_rename().  But now that we've used them
+	 * and have no other references to these strings, it is time to
+	 * deallocate them.
+	 */
+	free_strmap_strings(collisions);
+	strmap_clear(collisions, 1);
+}
+
 static char *check_for_directory_rename(struct merge_options *opt,
 					const char *path,
 					unsigned side_index,
@@ -3029,8 +3050,6 @@ static int collect_renames(struct merge_options *opt,
 	int i, clean = 1;
 	struct strmap collisions;
 	struct diff_queue_struct *side_pairs;
-	struct hashmap_iter iter;
-	struct strmap_entry *entry;
 	struct rename_info *renames = &opt->priv->renames;
 
 	side_pairs = &renames->pairs[side_index];
@@ -3076,20 +3095,7 @@ static int collect_renames(struct merge_options *opt,
 		result->queue[result->nr++] = p;
 	}
 
-	/* Free each value in the collisions map */
-	strmap_for_each_entry(&collisions, &iter, entry) {
-		struct collision_info *info = entry->value;
-		string_list_clear(&info->source_files, 0);
-	}
-	/*
-	 * In compute_collisions(), we set collisions.strdup_strings to 0
-	 * so that we wouldn't have to make another copy of the new_path
-	 * allocated by apply_dir_rename().  But now that we've used them
-	 * and have no other references to these strings, it is time to
-	 * deallocate them.
-	 */
-	free_strmap_strings(&collisions);
-	strmap_clear(&collisions, 1);
+	free_collisions(&collisions);
 	return clean;
 }
 
