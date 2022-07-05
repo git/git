@@ -2335,7 +2335,8 @@ static char *check_for_directory_rename(struct merge_options *opt,
 	}
 
 	new_path = handle_path_level_conflicts(opt, path, side_index,
-					       rename_info, collisions);
+					       rename_info,
+					       &collisions[side_index]);
 	*clean_merge &= (new_path != NULL);
 
 	return new_path;
@@ -3044,16 +3045,15 @@ static int detect_regular_renames(struct merge_options *opt,
 static int collect_renames(struct merge_options *opt,
 			   struct diff_queue_struct *result,
 			   unsigned side_index,
+			   struct strmap *collisions,
 			   struct strmap *dir_renames_for_side,
 			   struct strmap *rename_exclusions)
 {
 	int i, clean = 1;
-	struct strmap collisions;
 	struct diff_queue_struct *side_pairs;
 	struct rename_info *renames = &opt->priv->renames;
 
 	side_pairs = &renames->pairs[side_index];
-	compute_collisions(&collisions, dir_renames_for_side, side_pairs);
 
 	for (i = 0; i < side_pairs->nr; ++i) {
 		struct diff_filepair *p = side_pairs->queue[i];
@@ -3069,7 +3069,7 @@ static int collect_renames(struct merge_options *opt,
 						      side_index,
 						      dir_renames_for_side,
 						      rename_exclusions,
-						      &collisions,
+						      collisions,
 						      &clean);
 
 		possibly_cache_new_pair(renames, p, side_index, new_path);
@@ -3095,7 +3095,6 @@ static int collect_renames(struct merge_options *opt,
 		result->queue[result->nr++] = p;
 	}
 
-	free_collisions(&collisions);
 	return clean;
 }
 
@@ -3106,6 +3105,7 @@ static int detect_and_process_renames(struct merge_options *opt,
 {
 	struct diff_queue_struct combined = { 0 };
 	struct rename_info *renames = &opt->priv->renames;
+	struct strmap collisions[3];
 	int need_dir_renames, s, i, clean = 1;
 	unsigned detection_run = 0;
 
@@ -3155,12 +3155,22 @@ static int detect_and_process_renames(struct merge_options *opt,
 	ALLOC_GROW(combined.queue,
 		   renames->pairs[1].nr + renames->pairs[2].nr,
 		   combined.alloc);
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++) {
+		int other_side = 3 - i;
+		compute_collisions(&collisions[i],
+				   &renames->dir_renames[other_side],
+				   &renames->pairs[i]);
+	}
 	clean &= collect_renames(opt, &combined, MERGE_SIDE1,
+				 collisions,
 				 &renames->dir_renames[2],
 				 &renames->dir_renames[1]);
 	clean &= collect_renames(opt, &combined, MERGE_SIDE2,
+				 collisions,
 				 &renames->dir_renames[1],
 				 &renames->dir_renames[2]);
+	for (i = MERGE_SIDE1; i <= MERGE_SIDE2; i++)
+		free_collisions(&collisions[i]);
 	STABLE_QSORT(combined.queue, combined.nr, compare_pairs);
 	trace2_region_leave("merge", "directory renames", opt->repo);
 
