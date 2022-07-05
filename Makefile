@@ -3161,9 +3161,11 @@ $(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinell
 .PHONY: coccicheck-test
 coccicheck-test: $(COCCI_TEST_RES_GEN)
 
+coccicheck: coccicheck-test
 coccicheck: $(addsuffix .patch,$(filter-out %.pending.cocci,$(wildcard contrib/coccinelle/*.cocci)))
 
 # See contrib/coccinelle/README
+coccicheck-pending: coccicheck-test
 coccicheck-pending: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.pending.cocci))
 
 .PHONY: coccicheck coccicheck-pending
