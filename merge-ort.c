@@ -2292,9 +2292,15 @@ static char *check_for_directory_rename(struct merge_options *opt,
 	struct strmap_entry *rename_info;
 	struct strmap_entry *otherinfo;
 	const char *new_dir;
+	int other_side = 3 - side_index;
 
-	/* Cases where we don't have a directory rename for this path */
+	/*
+	 * Cases where we don't have or don't want a directory rename for
+	 * this path.
+	 */
 	if (strmap_empty(dir_renames))
+		return NULL;
+	if (strmap_get(&collisions[other_side], path))
 		return NULL;
 	rename_info = check_dir_renamed(path, dir_renames);
 	if (!rename_info)

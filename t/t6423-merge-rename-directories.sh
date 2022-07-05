@@ -5250,7 +5250,7 @@ test_setup_12l () {
 	)
 }
 
-test_expect_merge_algorithm failure failure '12l (B into A): Rename into each other + add/add conflict' '
+test_expect_merge_algorithm failure success '12l (B into A): Rename into each other + add/add conflict' '
 	test_setup_12l BintoA &&
 	(
 		cd 12l_BintoA &&
@@ -5277,7 +5277,7 @@ test_expect_merge_algorithm failure failure '12l (B into A): Rename into each ot
 	)
 '
 
-test_expect_merge_algorithm failure failure '12l (A into B): Rename into each other + add/add conflict' '
+test_expect_merge_algorithm failure success '12l (A into B): Rename into each other + add/add conflict' '
 	test_setup_12l AintoB &&
 	(
 		cd 12l_AintoB &&
