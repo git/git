@@ -3409,7 +3409,7 @@ cocciclean:
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
-	$(RM) *.res
+	$(RM) git.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
