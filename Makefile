@@ -3123,6 +3123,8 @@ check: $(GENERATED_H)
 		exit 1; \
 	fi
 
+COCCI_TEST_RES = $(wildcard contrib/coccinelle/tests/*.res)
+
 %.cocci.patch: %.cocci $(COCCI_SOURCES)
 	$(QUIET_SPATCH) \
 	if test $(SPATCH_BATCH_SIZE) = 0; then \
@@ -3143,6 +3145,22 @@ check: $(GENERATED_H)
 	then \
 		echo '    ' SPATCH result: $@; \
 	fi
+
+COCCI_TEST_RES_GEN = $(addprefix .build/,$(COCCI_TEST_RES))
+$(COCCI_TEST_RES_GEN): .build/%.res : %.c
+$(COCCI_TEST_RES_GEN): .build/%.res : %.res
+$(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinelle/%.cocci
+	$(call mkdir_p_parent_template)
+	$(QUIET_SPATCH_T)$(SPATCH) $(SPATCH_FLAGS) \
+		--very-quiet --no-show-diff \
+		--sp-file $< -o $@ \
+		$(@:.build/%.res=%.c) && \
+	cmp $(@:.build/%=%) $@ || \
+	git -P diff --no-index $(@:.build/%=%) $@ 2>/dev/null; \
+
+.PHONY: coccicheck-test
+coccicheck-test: $(COCCI_TEST_RES_GEN)
+
 coccicheck: $(addsuffix .patch,$(filter-out %.pending.cocci,$(wildcard contrib/coccinelle/*.cocci)))
 
 # See contrib/coccinelle/README
@@ -3404,6 +3422,7 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 cocciclean:
+	$(RM) -r .build/contrib/coccinelle
 	$(RM) contrib/coccinelle/*.cocci.patch*
 
 clean: profile-clean coverage-clean cocciclean
