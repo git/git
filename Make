@@ -247,6 +247,11 @@ else
 	SHA1IMPLEMENTATION=
 fi
 
+if test -f sha256/nettle.h && test -f /usr/include/nettle/sha2.h
+then
+	SHA1IMPLEMENTATION="$SHA1IMPLEMENTATION NETTLE_SHA256=YesPlease"
+fi
+
 set	MAN_BASE_URL='"http://www.kernel.org/pub/software/scm/git/docs/"' \
 	MAN_BOLD_LITERAL=YesPlease \
 	$SHA1IMPLEMENTATION \
