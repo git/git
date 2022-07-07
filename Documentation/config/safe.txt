@@ -1,3 +1,22 @@
+safe.bareRepository::
+	Specifies which bare repositories Git will work with. The currently
+	supported values are:
++
+* `all`: Git works with all bare repositories. This is the default.
+* `explicit`: Git only works with bare repositories specified via
+  the top-level `--git-dir` command-line option, or the `GIT_DIR`
+  environment variable (see linkgit:git[1]).
++
+If you do not use bare repositories in your workflow, then it may be
+beneficial to set `safe.bareRepository` to `explicit` in your global
+config. This will protect you from attacks that involve cloning a
+repository that contains a bare repository and running a Git command
+within that directory.
++
+This config setting is only respected in protected configuration (see
+<<SCOPES>>). This prevents the untrusted repository from tampering with
+this value.
+
 safe.directory::
 	These config entries specify Git-tracked directories that are
 	considered safe even if they are owned by someone other than the
