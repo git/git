@@ -42,6 +42,12 @@
 #define GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
 #endif
 
+/**
+ * CURLOPT_RESOLVE was added in 7.21.3, released in December 15 2010
+ */
+#if LIBCURL_VERSION_NUM >= 0x072103
+#define GIT_CURL_HAVE_CURLOPT_RESOLVE 1
+#endif
 
 /**
  * CURLOPT_LOGIN_OPTIONS was added in 7.34.0, released in December
