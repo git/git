@@ -21,7 +21,9 @@ test_expect_success 'preparing origin repository' '
 	git bundle create b2.bundle main &&
 	mkdir dir &&
 	cp b1.bundle dir/b3 &&
-	cp b1.bundle b4
+	cp b1.bundle b4 &&
+	git branch not-main main &&
+	git bundle create b5.bundle not-main
 '
 
 test_expect_success 'local clone without .git suffix' '
@@ -83,11 +85,19 @@ test_expect_success 'bundle clone from b4.bundle that does not exist' '
 	test_must_fail git clone b4.bundle bb
 '
 
-test_expect_success 'bundle clone with nonexistent HEAD' '
+test_expect_success 'bundle clone with nonexistent HEAD (match default)' '
 	git clone b2.bundle b2 &&
 	(cd b2 &&
 	git fetch &&
-	test_must_fail git rev-parse --verify refs/heads/main)
+	git rev-parse --verify refs/heads/main)
+'
+
+test_expect_success 'bundle clone with nonexistent HEAD (no match default)' '
+	git clone b5.bundle b5 &&
+	(cd b5 &&
+	git fetch &&
+	test_must_fail git rev-parse --verify refs/heads/main &&
+	test_must_fail git rev-parse --verify refs/heads/not-main)
 '
 
 test_expect_success 'clone empty repository' '

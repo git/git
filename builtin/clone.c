@@ -1290,8 +1290,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			option_no_checkout = 1;
 		}
 
-		our_head_points_at = NULL;
-
 		if (transport_ls_refs_options.unborn_head_target &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
@@ -1303,7 +1301,20 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			ref = ref_free;
 		}
 
-		if (!option_bare)
+		/*
+		 * We may have selected a local default branch name "foo",
+		 * and even though the remote's HEAD does not point there,
+		 * it may still have a "foo" branch. If so, set it up so
+		 * that we can follow the usual checkout code later.
+		 *
+		 * Note that for an empty repo we'll already have set
+		 * option_no_checkout above, which would work against us here.
+		 * But for an empty repo, find_remote_branch() can never find
+		 * a match.
+		 */
+		our_head_points_at = find_remote_branch(mapped_refs, branch);
+
+		if (!option_bare && !our_head_points_at)
 			install_branch_config(0, branch, remote_name, ref);
 		free(ref_free);
 	}
