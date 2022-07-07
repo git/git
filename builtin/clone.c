@@ -1266,36 +1266,31 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			if (transport_fetch_refs(transport, mapped_refs))
 				die(_("remote transport reported error"));
 		}
-
-		remote_head = find_ref_by_name(refs, "HEAD");
-		remote_head_points_at =
-			guess_remote_head(remote_head, mapped_refs, 0);
-
-		if (option_branch) {
-			our_head_points_at =
-				find_remote_branch(mapped_refs, option_branch);
-
-			if (!our_head_points_at)
-				die(_("Remote branch %s not found in upstream %s"),
-				    option_branch, remote_name);
-		}
-		else
-			our_head_points_at = remote_head_points_at;
 	}
-	else {
+
+	remote_head = find_ref_by_name(refs, "HEAD");
+	remote_head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
+
+	if (option_branch) {
+		our_head_points_at = find_remote_branch(mapped_refs, option_branch);
+		if (!our_head_points_at)
+			die(_("Remote branch %s not found in upstream %s"),
+			    option_branch, remote_name);
+	} else if (remote_head_points_at) {
+		our_head_points_at = remote_head_points_at;
+	} else if (remote_head) {
+		our_head_points_at = NULL;
+	} else {
 		const char *branch;
 		const char *ref;
 		char *ref_free = NULL;
 
-		if (option_branch)
-			die(_("Remote branch %s not found in upstream %s"),
-					option_branch, remote_name);
+		if (!mapped_refs) {
+			warning(_("You appear to have cloned an empty repository."));
+			option_no_checkout = 1;
+		}
 
-		warning(_("You appear to have cloned an empty repository."));
 		our_head_points_at = NULL;
-		remote_head_points_at = NULL;
-		remote_head = NULL;
-		option_no_checkout = 1;
 
 		if (transport_ls_refs_options.unborn_head_target &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
