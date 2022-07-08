@@ -49,5 +49,10 @@ do { \
 		((unsigned long) __p[2]) << 16 | ((unsigned long) __p[3]) << 24; \
 } while (0)
 
+/* Allocate an array of nr elements, returns NULL on failure */
+#define XDL_ALLOC_ARRAY(p, nr)				\
+	((p) = SIZE_MAX / sizeof(*(p)) >= (size_t)(nr)	\
+		? xdl_malloc((nr) * sizeof(*(p)))	\
+		: NULL)
 
 #endif /* #if !defined(XMACROS_H) */
