@@ -111,7 +111,6 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 	long hi;
 	char const *line;
 	xdlclass_t *rcrec;
-	xdlclass_t **rcrecs;
 
 	line = rec->ptr;
 	hi = (long) XDL_HASHLONG(rec->ha, cf->hbits);
@@ -127,14 +126,8 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 			return -1;
 		}
 		rcrec->idx = cf->count++;
-		if (cf->count > cf->alloc) {
-			cf->alloc *= 2;
-			if (!(rcrecs = (xdlclass_t **) xdl_realloc(cf->rcrecs, cf->alloc * sizeof(xdlclass_t *)))) {
-
+		if (XDL_ALLOC_GROW(cf->rcrecs, cf->count, cf->alloc))
 				return -1;
-			}
-			cf->rcrecs = rcrecs;
-		}
 		cf->rcrecs[rcrec->idx] = rcrec;
 		rcrec->line = line;
 		rcrec->size = rec->size;
@@ -163,7 +156,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	unsigned long hav;
 	char const *blk, *cur, *top, *prev;
 	xrecord_t *crec;
-	xrecord_t **recs, **rrecs;
+	xrecord_t **recs;
 	xrecord_t **rhash;
 	unsigned long *ha;
 	char *rchg;
@@ -190,12 +183,8 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		for (top = blk + bsize; cur < top; ) {
 			prev = cur;
 			hav = xdl_hash_record(&cur, top, xpp->flags);
-			if (nrec >= narec) {
-				narec *= 2;
-				if (!(rrecs = (xrecord_t **) xdl_realloc(recs, narec * sizeof(xrecord_t *))))
-					goto abort;
-				recs = rrecs;
-			}
+			if (XDL_ALLOC_GROW(recs, nrec + 1, narec))
+				goto abort;
 			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
 				goto abort;
 			crec->ptr = prev;

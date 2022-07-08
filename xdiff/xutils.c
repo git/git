@@ -432,3 +432,20 @@ int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 
 	return 0;
 }
+
+void* xdl_alloc_grow_helper(void *p, long nr, long *alloc, size_t size)
+{
+	void *tmp = NULL;
+	size_t n = ((LONG_MAX - 16) / 2 >= *alloc) ? 2 * *alloc + 16 : LONG_MAX;
+	if (nr > n)
+		n = nr;
+	if (SIZE_MAX / size >= n)
+		tmp = xdl_realloc(p, n * size);
+	if (tmp) {
+		*alloc = n;
+	} else {
+		xdl_free(p);
+		*alloc = 0;
+	}
+	return tmp;
+}

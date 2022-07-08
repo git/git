@@ -58,4 +58,14 @@ do { \
 /* Allocate an array of nr zeroed out elements, returns NULL on failure */
 #define XDL_CALLOC_ARRAY(p, nr)	((p) = xdl_calloc(nr, sizeof(*(p))))
 
+/*
+ * Ensure array p can accommodate at least nr elements, growing the
+ * array and updating alloc (which is the number of allocated
+ * elements) as necessary. Frees p and returns -1 on failure, returns
+ * 0 on success
+ */
+#define XDL_ALLOC_GROW(p, nr, alloc)	\
+	(-!((nr) <= (alloc) ||		\
+	    ((p) = xdl_alloc_grow_helper((p), (nr), &(alloc), sizeof(*(p))))))
+
 #endif /* #if !defined(XMACROS_H) */
