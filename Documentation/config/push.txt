@@ -137,3 +137,8 @@ push.negotiate::
 	server attempt to find commits in common. If "false", Git will
 	rely solely on the server's ref advertisement to find commits
 	in common.
+
+push.useBitmaps::
+	If set to "false", disable use of bitmaps for "git push" even if
+	`pack.useBitmaps` is "true", without preventing other git operations
+	from using bitmaps. Default is true.
