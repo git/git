@@ -74,6 +74,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 	unsigned mode;
 	enum object_type mode_type; /* object type derived from mode */
 	enum object_type obj_type; /* object type derived from sha */
+	struct object_info oi = OBJECT_INFO_INIT;
 	char *path, *to_free = NULL;
 	struct object_id oid;
 
@@ -116,8 +117,14 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 			path, ptr, type_name(mode_type));
 	}
 
-	/* Check the type of object identified by sha1 */
-	obj_type = oid_object_info(the_repository, &oid, NULL);
+	/* Check the type of object identified by oid without fetching objects */
+	oi.typep = &obj_type;
+	if (oid_object_info_extended(the_repository, &oid, &oi,
+				     OBJECT_INFO_LOOKUP_REPLACE |
+				     OBJECT_INFO_QUICK |
+				     OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+		obj_type = -1;
+
 	if (obj_type < 0) {
 		if (allow_missing) {
 			; /* no problem - missing objects are presumed to be of the right type */
