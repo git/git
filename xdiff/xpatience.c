@@ -151,11 +151,9 @@ static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
 
 	/* We know exactly how large we want the hash map */
 	result->alloc = count1 * 2;
-	result->entries = (struct entry *)
-		xdl_malloc(result->alloc * sizeof(struct entry));
+	result->entries = xdl_calloc(result->alloc, sizeof(*result->entries));
 	if (!result->entries)
 		return -1;
-	memset(result->entries, 0, result->alloc * sizeof(struct entry));
 
 	/* First, fill with entries from the first file */
 	while (count1--)

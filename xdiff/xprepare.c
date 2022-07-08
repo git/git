@@ -78,12 +78,11 @@ static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 
 		return -1;
 	}
-	if (!(cf->rchash = (xdlclass_t **) xdl_malloc(cf->hsize * sizeof(xdlclass_t *)))) {
+	if (!(cf->rchash = xdl_calloc(cf->hsize, sizeof(*cf->rchash)))) {
 
 		xdl_cha_free(&cf->ncha);
 		return -1;
 	}
-	memset(cf->rchash, 0, cf->hsize * sizeof(xdlclass_t *));
 
 	cf->alloc = size;
 	if (!XDL_ALLOC_ARRAY(cf->rcrecs, cf->alloc)) {
@@ -183,9 +182,8 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 
 	hbits = xdl_hashbits((unsigned int) narec);
 	hsize = 1 << hbits;
-	if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *))))
+	if (!(rhash = xdl_calloc(hsize, sizeof(*rhash))))
 		goto abort;
-	memset(rhash, 0, hsize * sizeof(xrecord_t *));
 
 	nrec = 0;
 	if ((cur = blk = xdl_mmfile_first(mf, &bsize))) {
@@ -209,9 +207,8 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		}
 	}
 
-	if (!(rchg = (char *) xdl_malloc((nrec + 2) * sizeof(char))))
+	if (!(rchg = xdl_calloc((nrec + 2), sizeof(*rchg))))
 		goto abort;
-	memset(rchg, 0, (nrec + 2) * sizeof(char));
 
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
 	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
@@ -383,11 +380,10 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xdlclass_t *rcrec;
 	char *dis, *dis1, *dis2;
 
-	if (!(dis = (char *) xdl_malloc(xdf1->nrec + xdf2->nrec + 2))) {
+	if (!(dis = xdl_calloc(xdf1->nrec + xdf2->nrec + 2, sizeof(*dis)))) {
 
 		return -1;
 	}
-	memset(dis, 0, xdf1->nrec + xdf2->nrec + 2);
 	dis1 = dis;
 	dis2 = dis1 + xdf1->nrec + 1;
 

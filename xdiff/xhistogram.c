@@ -251,7 +251,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 		    int line1, int count1, int line2, int count2)
 {
 	int b_ptr;
-	int sz, ret = -1;
+	int ret = -1;
 	struct histindex index;
 
 	memset(&index, 0, sizeof(index));
@@ -265,23 +265,19 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 	index.rcha.head = NULL;
 
 	index.table_bits = xdl_hashbits(count1);
-	sz = index.records_size = 1 << index.table_bits;
-	sz *= sizeof(struct record *);
-	if (!(index.records = (struct record **) xdl_malloc(sz)))
+	index.records_size = 1 << index.table_bits;
+	if (!(index.records = xdl_calloc(index.records_size,
+					 sizeof(*index.records))))
 		goto cleanup;
-	memset(index.records, 0, sz);
 
-	sz = index.line_map_size = count1;
-	sz *= sizeof(struct record *);
-	if (!(index.line_map = (struct record **) xdl_malloc(sz)))
+	index.line_map_size = count1;
+	if (!(index.line_map = xdl_calloc(index.line_map_size,
+					  sizeof(*index.line_map))))
 		goto cleanup;
-	memset(index.line_map, 0, sz);
 
-	sz = index.line_map_size;
-	sz *= sizeof(unsigned int);
-	if (!(index.next_ptrs = (unsigned int *) xdl_malloc(sz)))
+	if (!(index.next_ptrs = xdl_calloc(index.line_map_size,
+					   sizeof(*index.next_ptrs))))
 		goto cleanup;
-	memset(index.next_ptrs, 0, sz);
 
 	/* lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx() */
 	if (xdl_cha_init(&index.rcha, sizeof(struct record), count1 / 4 + 1) < 0)
