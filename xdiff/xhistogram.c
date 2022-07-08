@@ -266,17 +266,14 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 
 	index.table_bits = xdl_hashbits(count1);
 	index.records_size = 1 << index.table_bits;
-	if (!(index.records = xdl_calloc(index.records_size,
-					 sizeof(*index.records))))
+	if (!XDL_CALLOC_ARRAY(index.records, index.records_size))
 		goto cleanup;
 
 	index.line_map_size = count1;
-	if (!(index.line_map = xdl_calloc(index.line_map_size,
-					  sizeof(*index.line_map))))
+	if (!XDL_CALLOC_ARRAY(index.line_map, index.line_map_size))
 		goto cleanup;
 
-	if (!(index.next_ptrs = xdl_calloc(index.line_map_size,
-					   sizeof(*index.next_ptrs))))
+	if (!XDL_CALLOC_ARRAY(index.next_ptrs, index.line_map_size))
 		goto cleanup;
 
 	/* lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx() */

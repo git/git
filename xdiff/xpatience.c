@@ -151,8 +151,7 @@ static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
 
 	/* We know exactly how large we want the hash map */
 	result->alloc = count1 * 2;
-	result->entries = xdl_calloc(result->alloc, sizeof(*result->entries));
-	if (!result->entries)
+	if (!XDL_CALLOC_ARRAY(result->entries, result->alloc))
 		return -1;
 
 	/* First, fill with entries from the first file */

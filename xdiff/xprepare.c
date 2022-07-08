@@ -78,7 +78,7 @@ static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 
 		return -1;
 	}
-	if (!(cf->rchash = xdl_calloc(cf->hsize, sizeof(*cf->rchash)))) {
+	if (!XDL_CALLOC_ARRAY(cf->rchash, cf->hsize)) {
 
 		xdl_cha_free(&cf->ncha);
 		return -1;
@@ -182,7 +182,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 
 	hbits = xdl_hashbits((unsigned int) narec);
 	hsize = 1 << hbits;
-	if (!(rhash = xdl_calloc(hsize, sizeof(*rhash))))
+	if (!XDL_CALLOC_ARRAY(rhash, hsize))
 		goto abort;
 
 	nrec = 0;
@@ -207,7 +207,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		}
 	}
 
-	if (!(rchg = xdl_calloc((nrec + 2), sizeof(*rchg))))
+	if (!XDL_CALLOC_ARRAY(rchg, nrec + 2))
 		goto abort;
 
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
@@ -380,10 +380,8 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xdlclass_t *rcrec;
 	char *dis, *dis1, *dis2;
 
-	if (!(dis = xdl_calloc(xdf1->nrec + xdf2->nrec + 2, sizeof(*dis)))) {
-
+	if (!XDL_CALLOC_ARRAY(dis, xdf1->nrec + xdf2->nrec + 2))
 		return -1;
-	}
 	dis1 = dis;
 	dis2 = dis1 + xdf1->nrec + 1;
 
