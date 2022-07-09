@@ -224,6 +224,12 @@ then
 
 	GIT_TEST_OPTS="--write-junit-xml"
 	JOBS=10
+	case "$CI_OS_NAME" in
+	linux) runs_on_pool=ubuntu-latest;;
+	macos|osx) runs_on_pool=macos-latest;;
+	windows_nt) runs_on_pool=windows-latest;;
+	*) echo "Unhandled OS: $CI_OS_NAME" >&2; exit 1;;
+	esac
 elif test true = "$GITHUB_ACTIONS"
 then
 	CI_TYPE=github-actions
