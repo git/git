@@ -10,14 +10,6 @@ jobs:
   timeoutInMinutes: 240
   steps:
   - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
-        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
-      }
-    displayName: 'Mount test-cache'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
-  - powershell: |
       $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
       $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
       $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[1].resource.downloadUrl
@@ -49,14 +41,6 @@ jobs:
     inputs:
       artifactName: 'git-sdk-64-minimal'
       targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
-      }
-    displayName: 'Unmount test-cache'
-    condition: true
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
 
 - job: windows_test
   displayName: Windows Test
@@ -68,14 +52,6 @@ jobs:
   strategy:
     parallel: 10
   steps:
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
-        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
-      }
-    displayName: 'Mount test-cache'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: DownloadPipelineArtifact@0
     displayName: 'Download Pipeline Artifact: test artifacts'
     inputs:
@@ -109,14 +85,6 @@ jobs:
       MSYSTEM: MINGW64
       NO_SVN_TESTS: 1
       GIT_TEST_SKIP_REBASE_P: 1
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
-      }
-    displayName: 'Unmount test-cache'
-    condition: true
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -139,14 +107,6 @@ jobs:
     vmImage: windows-latest
   timeoutInMinutes: 240
   steps:
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
-        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
-      }
-    displayName: 'Mount test-cache'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - powershell: |
       $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
       $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
@@ -215,14 +175,6 @@ jobs:
     inputs:
       artifactName: 'vs-artifacts'
       targetPath: '$(Build.SourcesDirectory)\artifacts'
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
-      }
-    displayName: 'Unmount test-cache'
-    condition: true
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
 
 - job: vs_test
   displayName: Visual Studio Test
@@ -234,14 +186,6 @@ jobs:
   strategy:
     parallel: 10
   steps:
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
-        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
-      }
-    displayName: 'Mount test-cache'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: DownloadPipelineArtifact@0
     displayName: 'Download Pipeline Artifact: VS test artifacts'
     inputs:
@@ -271,14 +215,6 @@ jobs:
       MSYSTEM: MINGW64
       NO_SVN_TESTS: 1
       GIT_TEST_SKIP_REBASE_P: 1
-  - powershell: |
-      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
-      }
-    displayName: 'Unmount test-cache'
-    condition: true
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -301,8 +237,6 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        export CC=clang || exit 1
 
        ci/install-dependencies.sh || exit 1
@@ -310,11 +244,7 @@ jobs:
            ci/print-test-failures.sh
            exit 1
        }
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -337,18 +267,12 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
        }
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -371,8 +295,6 @@ jobs:
     vmImage: macOS-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        export CC=clang
 
        ci/install-dependencies.sh || exit 1
@@ -380,11 +302,7 @@ jobs:
            ci/print-test-failures.sh
            exit 1
        }
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -407,18 +325,12 @@ jobs:
     vmImage: macOS-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
        }
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -441,19 +353,14 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        res=0
        sudo AGENT_OS="$AGENT_OS" BUILD_BUILDNUMBER="$BUILD_BUILDNUMBER" BUILD_REPOSITORY_URI="$BUILD_REPOSITORY_URI" BUILD_SOURCEBRANCH="$BUILD_SOURCEBRANCH" BUILD_SOURCEVERSION="$BUILD_SOURCEVERSION" SYSTEM_PHASENAME="$SYSTEM_PHASENAME" SYSTEM_TASKDEFINITIONSURI="$SYSTEM_TASKDEFINITIONSURI" SYSTEM_TEAMPROJECT="$SYSTEM_TEAMPROJECT" CC=$CC MAKEFLAGS="$MAKEFLAGS" jobname=Linux32 bash -lxc ci/run-docker.sh || res=1
 
        sudo chmod a+r t/out/TEST-*.xml
        test ! -d t/failed-test-artifacts || sudo chmod a+r t/failed-test-artifacts
 
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || res=1
        exit $res
     displayName: 'jobname=Linux32 ci/run-docker.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -476,19 +383,13 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        sudo apt-get update &&
        sudo apt-get install -y coccinelle libcurl4-openssl-dev libssl-dev libexpat-dev gettext &&
 
        export jobname=StaticAnalysis &&
 
        ci/run-static-analysis.sh || exit 1
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-static-analysis.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
 
 - job: documentation
   displayName: Documentation
@@ -497,8 +398,6 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - bash: |
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
        sudo apt-get update &&
        sudo apt-get install -y asciidoc xmlto asciidoctor docbook-xsl-ns &&
 
@@ -506,8 +405,4 @@ jobs:
        export jobname=Documentation &&
 
        ci/test-documentation.sh || exit 1
-
-       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/test-documentation.sh'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
