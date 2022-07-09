@@ -1,5 +1,6 @@
 variables:
   Agent.Source.Git.ShallowFetchDepth: 1
+  GIT_CONFIG_PARAMETERS: "'checkout.workers=56' 'user.name=CI' 'user.email=ci@git'"
 
 jobs:
 - job: windows_build
@@ -9,28 +10,24 @@ jobs:
     vmImage: windows-latest
   timeoutInMinutes: 240
   steps:
-  - powershell: |
-      $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
-      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[1].resource.downloadUrl
-      (New-Object Net.WebClient).DownloadFile($downloadUrl,"git-sdk-64-minimal.zip")
-      Expand-Archive git-sdk-64-minimal.zip -DestinationPath . -Force
-      Remove-Item git-sdk-64-minimal.zip
-
+  - bash: git clone --bare --depth=1 --filter=blob:none --single-branch -b main https://github.com/git-for-windows/git-sdk-64
+    displayName: 'clone git-sdk-64'
+  - bash: git clone --depth=1 --single-branch -b main https://github.com/git-for-windows/build-extra
+    displayName: 'clone build-extra'
+  - bash: sh -x ./build-extra/please.sh create-sdk-artifact --sdk=git-sdk-64.git --out=git-sdk-64-minimal minimal-sdk
+    displayName: 'build git-sdk-64-minimal-sdk'
+  - bash: |
       # Let Git ignore the SDK and the test-cache
-      "/git-sdk-64-minimal/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
-    displayName: 'Download git-sdk-64-minimal'
-  - powershell: |
-      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        ci/make-test-artifacts.sh artifacts
-      "@
-      if (!$?) { exit(1) }
+      printf "%s\n" /git-sdk-64.git/ /build-extra/ /git-sdk-64-minimal/ /test-cache/ >>'.git/info/exclude'
+    displayName: 'Ignore untracked directories'
+  - bash: ci/make-test-artifacts.sh artifacts
     displayName: Build
     env:
       HOME: $(Build.SourcesDirectory)
       MSYSTEM: MINGW64
       DEVELOPER: 1
       NO_PERL: 1
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
   - task: PublishPipelineArtifact@0
     displayName: 'Publish Pipeline Artifact: test artifacts'
     inputs:
@@ -62,29 +59,27 @@ jobs:
     inputs:
       artifactName: 'git-sdk-64-minimal'
       targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
-  - powershell: |
-      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        test -f artifacts.tar.gz || {
-          echo No test artifacts found\; skipping >&2
-          exit 0
-        }
-        tar xf artifacts.tar.gz || exit 1
+  - bash: |
+      test -f artifacts.tar.gz || {
+        echo No test artifacts found\; skipping >&2
+        exit 0
+      }
+      tar xf artifacts.tar.gz || exit 1
 
-        # Let Git ignore the SDK and the test-cache
-        printf '%s\n' /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
+      # Let Git ignore the SDK and the test-cache
+      printf '%s\n' /git-sdk-64.git/ /build-extra/ /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
 
-        ci/run-test-slice.sh `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE || {
-          ci/print-test-failures.sh
-          exit 1
-        }
-      "@
-      if (!$?) { exit(1) }
+      ci/run-test-slice.sh $SYSTEM_JOBPOSITIONINPHASE $SYSTEM_TOTALJOBSINPHASE || {
+        ci/print-test-failures.sh
+        exit 1
+      }
     displayName: 'Test (parallel)'
     env:
       HOME: $(Build.SourcesDirectory)
       MSYSTEM: MINGW64
       NO_SVN_TESTS: 1
       GIT_TEST_SKIP_REBASE_P: 1
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin\\core_perl;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
@@ -107,29 +102,24 @@ jobs:
     vmImage: windows-latest
   timeoutInMinutes: 240
   steps:
-  - powershell: |
-      $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
-      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[1].resource.downloadUrl
-      (New-Object Net.WebClient).DownloadFile($downloadUrl,"git-sdk-64-minimal.zip")
-      Expand-Archive git-sdk-64-minimal.zip -DestinationPath . -Force
-      Remove-Item git-sdk-64-minimal.zip
-
+  - bash: git clone --bare --depth=1 --filter=blob:none --single-branch -b main https://github.com/git-for-windows/git-sdk-64
+    displayName: 'clone git-sdk-64'
+  - bash: git clone --depth=1 --single-branch -b main https://github.com/git-for-windows/build-extra
+    displayName: 'clone build-extra'
+  - bash: sh -x ./build-extra/please.sh create-sdk-artifact --sdk=git-sdk-64.git --out=git-sdk-64-minimal minimal-sdk
+    displayName: 'build git-sdk-64-minimal-sdk'
+  - bash: |
       # Let Git ignore the SDK and the test-cache
-      "/git-sdk-64-minimal/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
-    displayName: 'Download git-sdk-64-minimal'
-  - powershell: |
-      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        make NDEBUG=1 DEVELOPER=1 vcxproj
-      "@
-      if (!$?) { exit(1) }
+      printf "%s\n" /git-sdk-64-minimal/ /test-cache/ >>'.git/info/exclude'
+    displayName: 'Ignore untracked directories'
+  - bash: make NDEBUG=1 DEVELOPER=1 vcxproj
     displayName: Generate Visual Studio Solution
     env:
       HOME: $(Build.SourcesDirectory)
       MSYSTEM: MINGW64
       DEVELOPER: 1
       NO_PERL: 1
-      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
   - powershell: |
       $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
       $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
@@ -145,14 +135,10 @@ jobs:
       configuration: Release
       maximumCpuCount: 4
       msbuildArguments: /p:PlatformToolset=v142
-  - powershell: |
-      & compat\vcbuild\vcpkg_copy_dlls.bat release
-      if (!$?) { exit(1) }
-      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        mkdir -p artifacts &&
-        eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts | grep ^tar)\"
-      "@
-      if (!$?) { exit(1) }
+  - bash: |
+      ./compat/vcbuild/vcpkg_copy_dlls.bat release &&
+      mkdir -p artifacts &&
+      eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts | grep ^tar)"
     displayName: Bundle artifact tar
     env:
       HOME: $(Build.SourcesDirectory)
@@ -161,6 +147,7 @@ jobs:
       NO_PERL: 1
       MSVC: 1
       VCPKG_ROOT: $(Build.SourcesDirectory)\compat\vcbuild\vcpkg
+      PATH: "$(Build.SourcesDirectory)\\git-sdk-64-minimal\\mingw64\\bin;$(Build.SourcesDirectory)\\git-sdk-64-minimal\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
   - powershell: |
       $tag = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-tag.txt").content
       $version = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-version.txt").content
@@ -191,30 +178,28 @@ jobs:
     inputs:
       artifactName: 'vs-artifacts'
       targetPath: '$(Build.SourcesDirectory)'
-  - powershell: |
-      & PortableGit\git-cmd.exe --command=usr\bin\bash.exe -lc @"
-        test -f artifacts.tar.gz || {
-          echo No test artifacts found\; skipping >&2
-          exit 0
-        }
-        tar xf artifacts.tar.gz || exit 1
+  - bash: |
+      test -f artifacts.tar.gz || {
+        echo No test artifacts found\; skipping >&2
+        exit 0
+      }
+      tar xf artifacts.tar.gz || exit 1
 
-        # Let Git ignore the SDK and the test-cache
-        printf '%s\n' /PortableGit/ /test-cache/ >>.git/info/exclude
+      # Let Git ignore the SDK and the test-cache
+      printf '%s\n' /PortableGit/ /test-cache/ >>.git/info/exclude
 
-        cd t &&
-        PATH=\"`$PWD/helper:`$PATH\" &&
-        test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
-                `$(test-tool.exe path-utils slice-tests \
-                        `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
-      "@
-      if (!$?) { exit(1) }
+      cd t &&
+      PATH="$PWD/helper:$PATH" &&
+      test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
+              $(test-tool.exe path-utils slice-tests \
+                      $SYSTEM_JOBPOSITIONINPHASE $SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
     displayName: 'Test (parallel)'
     env:
       HOME: $(Build.SourcesDirectory)
       MSYSTEM: MINGW64
       NO_SVN_TESTS: 1
       GIT_TEST_SKIP_REBASE_P: 1
+      PATH: "$(Build.SourcesDirectory)\\PortableGit\\mingw64\\bin;$(Build.SourcesDirectory)\\PortableGit\\usr\\bin;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\system32\\wbem"
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/TEST-*.xml'
     inputs:
