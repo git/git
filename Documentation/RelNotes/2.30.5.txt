@@ -1,0 +1,12 @@
+Git v2.30.5 Release Notes
+=========================
+
+This release contains minor fix-ups for the changes that went into
+Git 2.30.3 and 2.30.4, addressing CVE-2022-29187.
+
+ * The safety check that verifies a safe ownership of the Git
+   worktree is now extended to also cover the ownership of the Git
+   directory (and the `.git` file, if there is any).
+
+Carlo Marcelo Arenas Belón (1):
+      setup: tighten ownership checks post CVE-2022-24765
