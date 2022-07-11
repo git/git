@@ -606,7 +606,7 @@ static void update_remote_refs(const struct ref *refs,
 }
 
 static void update_head(const struct ref *our, const struct ref *remote,
-			const char *msg)
+			const char *unborn, const char *msg)
 {
 	const char *head;
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
@@ -632,6 +632,15 @@ static void update_head(const struct ref *our, const struct ref *remote,
 		 */
 		update_ref(msg, "HEAD", &remote->old_oid, NULL, REF_NO_DEREF,
 			   UPDATE_REFS_DIE_ON_ERR);
+	} else if (unborn && skip_prefix(unborn, "refs/heads/", &head)) {
+		/*
+		 * Unborn head from remote; same as "our" case above except
+		 * that we have no ref to update.
+		 */
+		if (create_symref("HEAD", unborn, NULL) < 0)
+			die(_("unable to update HEAD"));
+		if (!option_bare)
+			install_branch_config(0, head, remote_name, unborn);
 	}
 }
 
@@ -876,6 +885,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const struct ref *refs, *remote_head;
 	struct ref *remote_head_points_at = NULL;
 	const struct ref *our_head_points_at;
+	char *unborn_head = NULL;
 	struct ref *mapped_refs = NULL;
 	const struct ref *ref;
 	struct strbuf key = STRBUF_INIT;
@@ -1282,8 +1292,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		our_head_points_at = NULL;
 	} else {
 		const char *branch;
-		const char *ref;
-		char *ref_free = NULL;
 
 		if (!mapped_refs) {
 			warning(_("You appear to have cloned an empty repository."));
@@ -1293,12 +1301,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (transport_ls_refs_options.unborn_head_target &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
-			ref = transport_ls_refs_options.unborn_head_target;
-			create_symref("HEAD", ref, reflog_msg.buf);
+			unborn_head  = xstrdup(transport_ls_refs_options.unborn_head_target);
 		} else {
 			branch = git_default_branch_name(0);
-			ref_free = xstrfmt("refs/heads/%s", branch);
-			ref = ref_free;
+			unborn_head = xstrfmt("refs/heads/%s", branch);
 		}
 
 		/*
@@ -1313,10 +1319,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		 * a match.
 		 */
 		our_head_points_at = find_remote_branch(mapped_refs, branch);
-
-		if (!option_bare && !our_head_points_at)
-			install_branch_config(0, branch, remote_name, ref);
-		free(ref_free);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,
@@ -1336,7 +1338,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			   branch_top.buf, reflog_msg.buf, transport,
 			   !is_local);
 
-	update_head(our_head_points_at, remote_head, reflog_msg.buf);
+	update_head(our_head_points_at, remote_head, unborn_head, reflog_msg.buf);
 
 	/*
 	 * We want to show progress for recursive submodule clones iff
@@ -1363,6 +1365,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&key);
 	free_refs(mapped_refs);
 	free_refs(remote_head_points_at);
+	free(unborn_head);
 	free(dir);
 	free(path);
 	UNLEAK(repo);
