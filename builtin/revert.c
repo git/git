@@ -246,6 +246,9 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	res = run_sequencer(argc, argv, &opts);
 	if (res < 0)
 		die(_("revert failed"));
+	if (opts.revs)
+		release_revisions(opts.revs);
+	free(opts.revs);
 	return res;
 }
 
