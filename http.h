@@ -178,6 +178,9 @@ int http_fetch_ref(const char *base, struct ref *ref);
 int http_get_info_packs(const char *base_url,
 			struct packed_git **packs_head);
 
+/* Helper for getting Accept-Language header */
+const char *http_get_accept_language_header(void);
+
 struct http_pack_request {
 	char *url;
 
