@@ -1402,7 +1402,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		 * find a repository.
 		 */
 	default:
-		BUG("unhandled setup_git_directory_1() result");
+		BUG("unhandled setup_git_directory_gently_1() result");
 	}
 
 	/*
