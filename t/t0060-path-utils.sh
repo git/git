@@ -5,6 +5,7 @@
 
 test_description='Test various path utilities'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 norm_path() {

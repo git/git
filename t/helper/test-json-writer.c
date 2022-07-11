@@ -181,12 +181,18 @@ static struct json_writer nest1 = JSON_WRITER_INIT;
 
 static void make_nest1(int pretty)
 {
+	make_obj1(0);
+	make_arr1(0);
+
 	jw_object_begin(&nest1, pretty);
 	{
 		jw_object_sub_jw(&nest1, "obj1", &obj1);
 		jw_object_sub_jw(&nest1, "arr1", &arr1);
 	}
 	jw_end(&nest1);
+
+	jw_release(&obj1);
+	jw_release(&arr1);
 }
 
 static char *expect_inline1 =
@@ -313,6 +319,9 @@ static void make_mixed1(int pretty)
 		jw_object_sub_jw(&mixed1, "arr1", &arr1);
 	}
 	jw_end(&mixed1);
+
+	jw_release(&obj1);
+	jw_release(&arr1);
 }
 
 static void cmp(const char *test, const struct json_writer *jw, const char *exp)
@@ -325,8 +334,8 @@ static void cmp(const char *test, const struct json_writer *jw, const char *exp)
 	exit(1);
 }
 
-#define t(v) do { make_##v(0); cmp(#v, &v, expect_##v); } while (0)
-#define p(v) do { make_##v(1); cmp(#v, &v, pretty_##v); } while (0)
+#define t(v) do { make_##v(0); cmp(#v, &v, expect_##v); jw_release(&v); } while (0)
+#define p(v) do { make_##v(1); cmp(#v, &v, pretty_##v); jw_release(&v); } while (0)
 
 /*
  * Run some basic regression tests with some known patterns.
@@ -381,7 +390,6 @@ static int unit_tests(void)
 
 	/* mixed forms */
 	t(mixed1);
-	jw_init(&mixed1);
 	p(mixed1);
 
 	return 0;
@@ -544,7 +552,7 @@ static int scripted(void)
 
 	printf("%s\n", jw.json.buf);
 
-	strbuf_release(&jw.json);
+	jw_release(&jw);
 	return 0;
 }
 
