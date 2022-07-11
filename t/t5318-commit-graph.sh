@@ -361,13 +361,14 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 test_expect_success 'commit grafts invalidate commit-graph' '
 	cd "$TRASH_DIRECTORY" &&
 	test_when_finished rm -rf graft &&
-	git clone full graft &&
+	git clone --template= full graft &&
 	(
 		cd graft &&
 		git commit-graph write --reachable &&
 		test_path_is_file .git/objects/info/commit-graph &&
 		H1=$(git rev-parse --verify HEAD~1) &&
 		H3=$(git rev-parse --verify HEAD~3) &&
+		mkdir .git/info &&
 		echo "$H1 $H3" >.git/info/grafts &&
 		git -c core.commitGraph=false log >expect &&
 		git -c core.commitGraph=true log >actual &&

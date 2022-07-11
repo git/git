@@ -3,6 +3,7 @@
 test_description=check-ignore
 
 TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 init_vars () {
@@ -225,7 +226,8 @@ test_expect_success 'setup' '
 		!globaltwo
 		globalthree
 	EOF
-	cat <<-\EOF >>.git/info/exclude
+	mkdir .git/info &&
+	cat <<-\EOF >.git/info/exclude
 		per-repo
 	EOF
 '
@@ -543,9 +545,9 @@ test_expect_success_multi 'submodule from subdirectory' '' '
 
 test_expect_success 'global ignore not yet enabled' '
 	expect_from_stdin <<-\EOF &&
-		.git/info/exclude:7:per-repo	per-repo
+		.git/info/exclude:1:per-repo	per-repo
 		a/.gitignore:2:*three	a/globalthree
-		.git/info/exclude:7:per-repo	a/per-repo
+		.git/info/exclude:1:per-repo	a/per-repo
 	EOF
 	test_check_ignore "-v globalone per-repo a/globalthree a/per-repo not-ignored a/globaltwo"
 '
@@ -566,10 +568,10 @@ test_expect_success 'global ignore with -v' '
 	enable_global_excludes &&
 	expect_from_stdin <<-EOF &&
 		$global_excludes:1:globalone	globalone
-		.git/info/exclude:7:per-repo	per-repo
+		.git/info/exclude:1:per-repo	per-repo
 		$global_excludes:3:globalthree	globalthree
 		a/.gitignore:2:*three	a/globalthree
-		.git/info/exclude:7:per-repo	a/per-repo
+		.git/info/exclude:1:per-repo	a/per-repo
 		$global_excludes:2:!globaltwo	globaltwo
 	EOF
 	test_check_ignore "-v globalone per-repo globalthree a/globalthree a/per-repo not-ignored globaltwo"
