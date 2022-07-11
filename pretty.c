@@ -1575,23 +1575,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				strbuf_addstr(sb, c->signature_check.primary_key_fingerprint);
 			break;
 		case 'T':
-			switch (c->signature_check.trust_level) {
-			case TRUST_UNDEFINED:
-				strbuf_addstr(sb, "undefined");
-				break;
-			case TRUST_NEVER:
-				strbuf_addstr(sb, "never");
-				break;
-			case TRUST_MARGINAL:
-				strbuf_addstr(sb, "marginal");
-				break;
-			case TRUST_FULLY:
-				strbuf_addstr(sb, "fully");
-				break;
-			case TRUST_ULTIMATE:
-				strbuf_addstr(sb, "ultimate");
-				break;
-			}
+			strbuf_addstr(sb, gpg_trust_level_to_str(c->signature_check.trust_level));
 			break;
 		default:
 			return 0;
