@@ -1,9 +1,40 @@
 Git v2.38 Release Notes
 =======================
 
+Performance, Internal Implementation, Development Support etc.
+
+ * Collection of what is referenced by objects in promisor packs have
+   been optimized to inspect these objects in the in-pack order.
+   (merge 18c08abc82 jk/optim-promisor-object-enumeration later to maint).
+
+ * Introduce a helper to see if a branch is already being worked on
+   (hence should not be newly checked out in a working tree), which
+   performs much better than the existing find_shared_symref() to
+   replace many uses of the latter.
+
+ * Teach "git archive" to (optionally and then by default) avoid
+   spawning an external "gzip" process when creating ".tar.gz" (and
+   ".tgz") archives.
+   (merge 4f4be00d30 rs/archive-with-internal-gzip later to maint).
+
+
 Fixes since v2.37
 -----------------
 
  * Rewrite of "git add -i" in C that appeared in Git 2.25 didn't
    correctly record a removed file to the index, which was fixed.
    (merge 4788e8b256 js/add-i-delete later to maint).
+
+ * Certain diff options are currently ignored when combined-diff is
+   shown; mark them as incompatible with the feature.
+   (merge cfb19ae05f rs/combine-diff-with-incompatible-options later to maint).
+
+ * Adjust technical/bitmap-format to be formatted by AsciiDoc, and
+   add some missing information to the documentation.
+   (merge ac7667bd44 ac/bitmap-format-doc later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
+   (merge 1971510c35 pb/diff-doc-raw-format later to maint).
+   (merge a3ba4fa715 cr/setup-bug-typo later to maint).
+   (merge 85845580d9 ds/vscode-settings later to maint).
