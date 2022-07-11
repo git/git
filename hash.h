@@ -16,7 +16,9 @@
 #include "block-sha1/sha1.h"
 #endif
 
-#if defined(SHA256_GCRYPT)
+#if defined(SHA256_NETTLE)
+#include "sha256/nettle.h"
+#elif defined(SHA256_GCRYPT)
 #define SHA256_NEEDS_CLONE_HELPER
 #include "sha256/gcrypt.h"
 #elif defined(SHA256_OPENSSL)
