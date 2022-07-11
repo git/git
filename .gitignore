@@ -185,6 +185,7 @@
 /git-worktree
 /git-write-tree
 /git-core-*/?*
+/git.res
 /gitweb/GITWEB-BUILD-OPTIONS
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
@@ -225,7 +226,6 @@
 *.hcc
 *.obj
 *.lib
-*.res
 *.sln
 *.sp
 *.suo

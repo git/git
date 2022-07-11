@@ -1292,7 +1292,7 @@ SANITIZE_ADDRESS =
 # For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
 # usually result in less CPU usage at the cost of higher peak memory.
 # Setting it to 0 will feed all files in a single spatch invocation.
-SPATCH_FLAGS = --all-includes --patch .
+SPATCH_FLAGS = --all-includes
 SPATCH_BATCH_SIZE = 1
 
 include config.mak.uname
@@ -3126,6 +3126,8 @@ check: $(GENERATED_H)
 		exit 1; \
 	fi
 
+COCCI_TEST_RES = $(wildcard contrib/coccinelle/tests/*.res)
+
 %.cocci.patch: %.cocci $(COCCI_SOURCES)
 	$(QUIET_SPATCH) \
 	if test $(SPATCH_BATCH_SIZE) = 0; then \
@@ -3134,7 +3136,8 @@ check: $(GENERATED_H)
 		limit='-n $(SPATCH_BATCH_SIZE)'; \
 	fi; \
 	if ! echo $(COCCI_SOURCES) | xargs $$limit \
-		$(SPATCH) --sp-file $< $(SPATCH_FLAGS) \
+		$(SPATCH) $(SPATCH_FLAGS) \
+		--sp-file $< --patch . \
 		>$@+ 2>$@.log; \
 	then \
 		cat $@.log; \
@@ -3145,9 +3148,27 @@ check: $(GENERATED_H)
 	then \
 		echo '    ' SPATCH result: $@; \
 	fi
+
+COCCI_TEST_RES_GEN = $(addprefix .build/,$(COCCI_TEST_RES))
+$(COCCI_TEST_RES_GEN): .build/%.res : %.c
+$(COCCI_TEST_RES_GEN): .build/%.res : %.res
+$(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinelle/%.cocci
+	$(call mkdir_p_parent_template)
+	$(QUIET_SPATCH_T)$(SPATCH) $(SPATCH_FLAGS) \
+		--very-quiet --no-show-diff \
+		--sp-file $< -o $@ \
+		$(@:.build/%.res=%.c) && \
+	cmp $(@:.build/%=%) $@ || \
+	git -P diff --no-index $(@:.build/%=%) $@ 2>/dev/null; \
+
+.PHONY: coccicheck-test
+coccicheck-test: $(COCCI_TEST_RES_GEN)
+
+coccicheck: coccicheck-test
 coccicheck: $(addsuffix .patch,$(filter-out %.pending.cocci,$(wildcard contrib/coccinelle/*.cocci)))
 
 # See contrib/coccinelle/README
+coccicheck-pending: coccicheck-test
 coccicheck-pending: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.pending.cocci))
 
 .PHONY: coccicheck coccicheck-pending
@@ -3415,12 +3436,13 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 cocciclean:
+	$(RM) -r .build/contrib/coccinelle
 	$(RM) contrib/coccinelle/*.cocci.patch*
 
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r .build
 	$(RM) po/git.pot po/git-core.pot
-	$(RM) *.res
+	$(RM) git.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
