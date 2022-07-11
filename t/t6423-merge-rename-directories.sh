@@ -5199,6 +5199,111 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 	)
 '
 
+# Testcase 12l, Both sides rename a directory into the other side, both add
+#   a file which after directory renames are the same filename
+#   Commit O: sub1/file,                 sub2/other
+#   Commit A: sub3/file,                 sub2/{other, new_add_add_file_1}
+#   Commit B: sub1/{file, newfile}, sub1/sub2/{other, new_add_add_file_2}
+#
+#   In words:
+#     A: sub1/ -> sub3/, add sub2/new_add_add_file_1
+#     B: sub2/ -> sub1/sub2, add sub1/newfile, add sub1/sub2/new_add_add_file_2
+#
+#   Expected: sub3/{file, newfile, sub2/other}
+#             CONFLICT (add/add): sub1/sub2/new_add_add_file
+#
+#   Note that sub1/newfile is not extraneous.  Directory renames are only
+#   detected if they are needed, and they are only needed if the old directory
+#   had a new file added on the opposite side of history.  So sub1/newfile
+#   is needed for there to be a sub1/ -> sub3/ rename.
+
+test_setup_12l () {
+	test_create_repo 12l_$1 &&
+	(
+		cd 12l_$1 &&
+
+		mkdir sub1 sub2
+		echo file >sub1/file &&
+		echo other >sub2/other &&
+		git add sub1 sub2 &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv sub1 sub3 &&
+		echo conflicting >sub2/new_add_add_file &&
+		git add sub2 &&
+		test_tick &&
+		git add -u &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		echo dissimilar >sub2/new_add_add_file &&
+		echo brand >sub1/newfile &&
+		git add sub1 sub2 &&
+		git mv sub2 sub1 &&
+		test_tick &&
+		git commit -m "B"
+	)
+}
+
+test_expect_merge_algorithm failure success '12l (B into A): Rename into each other + add/add conflict' '
+	test_setup_12l BintoA &&
+	(
+		cd 12l_BintoA &&
+
+		git checkout -q A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		test_stdout_line_count = 5 git ls-files -s &&
+
+		git rev-parse >actual \
+			:0:sub3/file :0:sub3/newfile :0:sub3/sub2/other \
+			:2:sub1/sub2/new_add_add_file \
+			:3:sub1/sub2/new_add_add_file &&
+		git rev-parse >expect \
+			O:sub1/file  B:sub1/newfile O:sub2/other \
+			A:sub2/new_add_add_file \
+			B:sub1/sub2/new_add_add_file &&
+		test_cmp expect actual &&
+
+		git ls-files -o >actual &&
+		test_write_lines actual expect >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_merge_algorithm failure success '12l (A into B): Rename into each other + add/add conflict' '
+	test_setup_12l AintoB &&
+	(
+		cd 12l_AintoB &&
+
+		git checkout -q B^0 &&
+
+		test_must_fail git -c merge.directoryRenames=true merge -s recursive A^0 &&
+
+		test_stdout_line_count = 5 git ls-files -s &&
+
+		git rev-parse >actual \
+			:0:sub3/file :0:sub3/newfile :0:sub3/sub2/other \
+			:2:sub1/sub2/new_add_add_file \
+			:3:sub1/sub2/new_add_add_file &&
+		git rev-parse >expect \
+			O:sub1/file  B:sub1/newfile O:sub2/other \
+			B:sub1/sub2/new_add_add_file \
+			A:sub2/new_add_add_file &&
+		test_cmp expect actual &&
+
+		git ls-files -o >actual &&
+		test_write_lines actual expect >expect &&
+		test_cmp expect actual
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
