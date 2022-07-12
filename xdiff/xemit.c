@@ -65,7 +65,7 @@ xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 			*xscr = xch;
 	}
 
-	if (*xscr == NULL)
+	if (!*xscr)
 		return NULL;
 
 	lxch = *xscr;

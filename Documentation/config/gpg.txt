@@ -36,9 +36,12 @@ gpg.minTrustLevel::
 
 gpg.ssh.defaultKeyCommand::
 	This command that will be run when user.signingkey is not set and a ssh
-	signature is requested. On successful exit a valid ssh public key is
-	expected in the first line of its output. To automatically use the first
-	available key from your ssh-agent set this to "ssh-add -L".
+	signature is requested. On successful exit a valid ssh public key
+	prefixed with `key::` is expected in the first line of its output.
+	This allows for a script doing a dynamic lookup of the correct public
+	key when it is impractical to statically configure `user.signingKey`.
+	For example when keys or SSH Certificates are rotated frequently or
+	selection of the right key depends on external factors unknown to git.
 
 gpg.ssh.allowedSignersFile::
 	A file containing ssh public keys which you are willing to trust.

@@ -151,7 +151,7 @@ test_expect_success 'stash restore in sparse checkout' '
 
 		git stash push &&
 
-		git sparse-checkout set subdir &&
+		git sparse-checkout set --no-cone subdir &&
 
 		# Ensure after sparse-checkout we only have expected files
 		cat >expect <<-EOF &&

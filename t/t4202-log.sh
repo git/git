@@ -1992,10 +1992,13 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 	git tag -s -m signed_tag_msg signed_tag_fail &&
 	git checkout plain-fail &&
 	git merge --no-ff -m msg signed_tag_fail &&
-	TMPDIR="$(pwd)/bogus" git log --show-signature -n1 plain-fail >actual &&
-	grep "^merged tag" actual &&
-	grep "^No signature" actual &&
-	! grep "^gpg: Signature made" actual
+	if ! test_have_prereq VALGRIND
+	then
+		TMPDIR="$(pwd)/bogus" git log --show-signature -n1 plain-fail >actual &&
+		grep "^merged tag" actual &&
+		grep "^No signature" actual &&
+		! grep "^gpg: Signature made" actual
+	fi
 '
 
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '

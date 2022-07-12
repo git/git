@@ -476,7 +476,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 		/* name(s) */
 		s = strpbrk(sb.buf, flag_chars);
-		if (s == NULL)
+		if (!s)
 			s = help;
 
 		if (s - sb.buf == 1) /* short option only */
@@ -723,6 +723,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			prefix = setup_git_directory();
 			git_config(git_default_config, NULL);
 			did_repo_setup = 1;
+
+			prepare_repo_settings(the_repository);
+			the_repository->settings.command_requires_full_index = 0;
 		}
 
 		if (!strcmp(arg, "--")) {

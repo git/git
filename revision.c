@@ -606,6 +606,10 @@ static struct commit *one_relevant_parent(const struct rev_info *revs,
  *
  *   2. We saw anything except REV_TREE_NEW.
  */
+#define REV_TREE_SAME		0
+#define REV_TREE_NEW		1	/* Only new files */
+#define REV_TREE_OLD		2	/* Only files removed */
+#define REV_TREE_DIFFERENT	3	/* Mixed changes */
 static int tree_difference = REV_TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,
@@ -1440,6 +1444,9 @@ static int limit_list(struct rev_info *revs)
 		if (revs->min_age != -1 && (commit->date > revs->min_age) &&
 		    !revs->line_level_traverse)
 			continue;
+		if (revs->max_age_as_filter != -1 &&
+			(commit->date < revs->max_age_as_filter) && !revs->line_level_traverse)
+			continue;
 		date = commit->date;
 		p = &commit_list_insert(commit, p)->next;
 
@@ -1456,10 +1463,9 @@ static int limit_list(struct rev_info *revs)
 	if (revs->left_only || revs->right_only)
 		limit_left_right(newlist, revs);
 
-	if (bottom) {
+	if (bottom)
 		limit_to_ancestry(bottom, newlist);
-		free_commit_list(bottom);
-	}
+	free_commit_list(bottom);
 
 	/*
 	 * Check if any commits have become TREESAME by some of their parents
@@ -1838,6 +1844,7 @@ void repo_init_revisions(struct repository *r,
 	revs->dense = 1;
 	revs->prefix = prefix;
 	revs->max_age = -1;
+	revs->max_age_as_filter = -1;
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
@@ -2217,6 +2224,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		return argcount;
 	} else if ((argcount = parse_long_opt("since", argv, &optarg))) {
 		revs->max_age = approxidate(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("since-as-filter", argv, &optarg))) {
+		revs->max_age_as_filter = approxidate(optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("after", argv, &optarg))) {
 		revs->max_age = approxidate(optarg);
@@ -2833,7 +2843,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 	strvec_clear(&prune_data);
 
-	if (revs->def == NULL)
+	if (!revs->def)
 		revs->def = opt ? opt->def : NULL;
 	if (opt && opt->tweak)
 		opt->tweak(revs, opt);
@@ -2921,6 +2931,42 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->expand_tabs_in_log = revs->expand_tabs_in_log_default;
 
 	return left;
+}
+
+static void release_revisions_cmdline(struct rev_cmdline_info *cmdline)
+{
+	unsigned int i;
+
+	for (i = 0; i < cmdline->nr; i++)
+		free((char *)cmdline->rev[i].name);
+	free(cmdline->rev);
+}
+
+static void release_revisions_mailmap(struct string_list *mailmap)
+{
+	if (!mailmap)
+		return;
+	clear_mailmap(mailmap);
+	free(mailmap);
+}
+
+static void release_revisions_topo_walk_info(struct topo_walk_info *info);
+
+void release_revisions(struct rev_info *revs)
+{
+	free_commit_list(revs->commits);
+	object_array_clear(&revs->pending);
+	object_array_clear(&revs->boundary_commits);
+	release_revisions_cmdline(&revs->cmdline);
+	list_objects_filter_release(&revs->filter);
+	clear_pathspec(&revs->prune_data);
+	date_mode_release(&revs->date_mode);
+	release_revisions_mailmap(revs->mailmap);
+	free_grep_patterns(&revs->grep_filter);
+	/* TODO (need to handle "no_free"): diff_free(&revs->diffopt) */
+	diff_free(&revs->pruning);
+	reflog_walk_info_release(revs->reflog_info);
+	release_revisions_topo_walk_info(revs->topo_walk_info);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
@@ -3433,17 +3479,22 @@ static void compute_indegrees_to_depth(struct rev_info *revs,
 		indegree_walk_step(revs);
 }
 
-static void reset_topo_walk(struct rev_info *revs)
+static void release_revisions_topo_walk_info(struct topo_walk_info *info)
 {
-	struct topo_walk_info *info = revs->topo_walk_info;
-
+	if (!info)
+		return;
 	clear_prio_queue(&info->explore_queue);
 	clear_prio_queue(&info->indegree_queue);
 	clear_prio_queue(&info->topo_queue);
 	clear_indegree_slab(&info->indegree);
 	clear_author_date_slab(&info->author_date);
+	free(info);
+}
 
-	FREE_AND_NULL(revs->topo_walk_info);
+static void reset_topo_walk(struct rev_info *revs)
+{
+	release_revisions_topo_walk_info(revs->topo_walk_info);
+	revs->topo_walk_info = NULL;
 }
 
 static void init_topo_walk(struct rev_info *revs)
@@ -3652,7 +3703,7 @@ static enum rewrite_result rewrite_one_1(struct rev_info *revs,
 			return rewrite_one_ok;
 		if (!p->parents)
 			return rewrite_one_noparents;
-		if ((p = one_relevant_parent(revs, p->parents)) == NULL)
+		if (!(p = one_relevant_parent(revs, p->parents)))
 			return rewrite_one_ok;
 		*pp = p;
 	}
@@ -3861,6 +3912,9 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 	}
 	if (revs->min_age != -1 &&
 	    comparison_date(revs, commit) > revs->min_age)
+			return commit_ignore;
+	if (revs->max_age_as_filter != -1 &&
+	    comparison_date(revs, commit) < revs->max_age_as_filter)
 			return commit_ignore;
 	if (revs->min_parents || (revs->max_parents >= 0)) {
 		int n = commit_list_count(commit->parents);
@@ -4080,10 +4134,8 @@ static void create_boundary_commit_list(struct rev_info *revs)
 	 * boundary commits anyway.  (This is what the code has always
 	 * done.)
 	 */
-	if (revs->commits) {
-		free_commit_list(revs->commits);
-		revs->commits = NULL;
-	}
+	free_commit_list(revs->commits);
+	revs->commits = NULL;
 
 	/*
 	 * Put all of the actual boundary commits from revs->boundary_commits
@@ -4220,10 +4272,8 @@ struct commit *get_revision(struct rev_info *revs)
 		graph_update(revs->graph, c);
 	if (!c) {
 		free_saved_parents(revs);
-		if (revs->previous_parents) {
-			free_commit_list(revs->previous_parents);
-			revs->previous_parents = NULL;
-		}
+		free_commit_list(revs->previous_parents);
+		revs->previous_parents = NULL;
 	}
 	return c;
 }

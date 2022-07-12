@@ -733,7 +733,7 @@ char *interpolate_path(const char *path, int real_home)
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
 
-	if (path == NULL)
+	if (!path)
 		goto return_null;
 
 	if (skip_prefix(path, "%(prefix)/", &path))
@@ -1413,7 +1413,7 @@ int is_ntfs_dotgit(const char *name)
 
 	for (;;) {
 		c = *(name++);
-		if (!c || c == '\\' || c == '/' || c == ':')
+		if (!c || is_xplatform_dir_sep(c) || c == ':')
 			return 1;
 		if (c != '.' && c != ' ')
 			return 0;

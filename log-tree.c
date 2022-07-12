@@ -88,7 +88,7 @@ static int match_ref_pattern(const char *refname,
 			     const struct string_list_item *item)
 {
 	int matched = 0;
-	if (item->util == NULL) {
+	if (!item->util) {
 		if (!wildmatch(item->string, refname, 0))
 			matched = 1;
 	} else {

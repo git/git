@@ -181,7 +181,7 @@ for cmd in git "git help"
 do
 	test_expect_success "'$cmd' section spacing" '
 		test_section_spacing_trailer git help <<-\EOF &&
-		usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]
+		usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
 
 		These are common Git commands used in various situations:
 

@@ -253,7 +253,7 @@ static void start_fetch_loose(struct transfer_request *request)
 	struct http_object_request *obj_req;
 
 	obj_req = new_http_object_request(repo->url, &request->obj->oid);
-	if (obj_req == NULL) {
+	if (!obj_req) {
 		request->state = ABORTED;
 		return;
 	}
@@ -318,7 +318,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	fprintf(stderr, " which contains %s\n", oid_to_hex(&request->obj->oid));
 
 	preq = new_http_pack_request(target->hash, repo->url);
-	if (preq == NULL) {
+	if (!preq) {
 		repo->can_update_info_refs = 0;
 		return;
 	}
@@ -520,7 +520,7 @@ static void finish_request(struct transfer_request *request)
 	/* Keep locks active */
 	check_locks();
 
-	if (request->headers != NULL)
+	if (request->headers)
 		curl_slist_free_all(request->headers);
 
 	/* URL is reused for MOVE after PUT and used during FETCH */
@@ -783,7 +783,7 @@ xml_start_tag(void *userData, const char *name, const char **atts)
 	const char *c = strchr(name, ':');
 	int old_namelen, new_len;
 
-	if (c == NULL)
+	if (!c)
 		c = name;
 	else
 		c++;
@@ -811,7 +811,7 @@ xml_end_tag(void *userData, const char *name)
 
 	ctx->userFunc(ctx, 1);
 
-	if (c == NULL)
+	if (!c)
 		c = name;
 	else
 		c++;
@@ -1689,7 +1689,6 @@ int cmd_main(int argc, const char **argv)
 	struct refspec rs = REFSPEC_INIT_PUSH;
 	struct remote_lock *ref_lock = NULL;
 	struct remote_lock *info_ref_lock = NULL;
-	struct rev_info revs;
 	int delete_branch = 0;
 	int force_delete = 0;
 	int objects_to_send;
@@ -1825,6 +1824,7 @@ int cmd_main(int argc, const char **argv)
 
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
+		struct rev_info revs;
 		struct strvec commit_argv = STRVEC_INIT;
 
 		if (!ref->peer_ref)
@@ -1893,7 +1893,7 @@ int cmd_main(int argc, const char **argv)
 
 		/* Lock remote branch ref */
 		ref_lock = lock_remote(ref->name, LOCK_TIME);
-		if (ref_lock == NULL) {
+		if (!ref_lock) {
 			fprintf(stderr, "Unable to lock remote branch %s\n",
 				ref->name);
 			if (helper_status)
@@ -1941,6 +1941,7 @@ int cmd_main(int argc, const char **argv)
 		unlock_remote(ref_lock);
 		check_locks();
 		strvec_clear(&commit_argv);
+		release_revisions(&revs);
 	}
 
 	/* Update remote server info if appropriate */

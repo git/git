@@ -103,6 +103,15 @@ test_expect_success 'status works (commit)' '
 	grep "+1/-0 *+2/-0 file" output
 '
 
+test_expect_success 'update can stage deletions' '
+	>to-delete &&
+	git add to-delete &&
+	rm to-delete &&
+	test_write_lines u t "" | git add -i &&
+	git ls-files to-delete >output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'setup expected' '
 	cat >expected <<-\EOF
 	index 180b47c..b6f2c08 100644
@@ -538,7 +547,15 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	! grep "^+15" actual
 '
 
-test_expect_failure 'split hunk "add -p (no, yes, edit)"' '
+test_expect_success 'setup ADD_I_USE_BUILTIN check' '
+	result=success &&
+	if ! test_have_prereq ADD_I_USE_BUILTIN
+	then
+		result=failure
+	fi
+'
+
+test_expect_$result 'split hunk "add -p (no, yes, edit)"' '
 	test_write_lines 5 10 20 21 30 31 40 50 60 >test &&
 	git reset &&
 	# test sequence is s(plit), n(o), y(es), e(dit)
@@ -562,7 +579,7 @@ test_expect_success 'split hunk with incomplete line at end' '
 	test_must_fail git grep --cached before
 '
 
-test_expect_failure 'edit, adding lines to the first hunk' '
+test_expect_$result 'edit, adding lines to the first hunk' '
 	test_write_lines 10 11 20 30 40 50 51 60 >test &&
 	git reset &&
 	tr _ " " >patch <<-EOF &&

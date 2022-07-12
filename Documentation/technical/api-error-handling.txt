@@ -1,11 +1,33 @@
 Error reporting in git
 ======================
 
-`BUG`, `die`, `usage`, `error`, and `warning` report errors of
+`BUG`, `bug`, `die`, `usage`, `error`, and `warning` report errors of
 various kinds.
 
 - `BUG` is for failed internal assertions that should never happen,
   i.e. a bug in git itself.
+
+- `bug` (lower-case, not `BUG`) is supposed to be used like `BUG` but
+  prints a "BUG" message instead of calling `abort()`.
++
+A call to `bug()` will then result in a "real" call to the `BUG()`
+function, either explicitly by invoking `BUG_if_bug()` after call(s)
+to `bug()`, or implicitly at `exit()` time where we'll check if we
+encountered any outstanding `bug()` invocations.
++
+If there were no prior calls to `bug()` before invoking `BUG_if_bug()`
+the latter is a NOOP. The `BUG_if_bug()` function takes the same
+arguments as `BUG()` itself. Calling `BUG_if_bug()` explicitly isn't
+necessary, but ensures that we die as soon as possible.
++
+If you know you had prior calls to `bug()` then calling `BUG()` itself
+is equivalent to calling `BUG_if_bug()`, the latter being a wrapper
+calling `BUG()` if we've set a flag indicating that we've called
+`bug()`.
++
+This is for the convenience of APIs who'd like to potentially report
+more than one "bug", such as the optbug() validation in
+parse-options.c.
 
 - `die` is for fatal application errors.  It prints a message to
   the user and exits with status 128.

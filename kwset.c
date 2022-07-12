@@ -477,7 +477,7 @@ kwsprep (kwset_t kws)
 	next[i] = NULL;
       treenext(kwset->trie->links, next);
 
-      if ((trans = kwset->trans) != NULL)
+      if ((trans = kwset->trans))
 	for (i = 0; i < NCHAR; ++i)
 	  kwset->next[i] = next[U(trans[i])];
       else
@@ -485,7 +485,7 @@ kwsprep (kwset_t kws)
     }
 
   /* Fix things up for any translation table. */
-  if ((trans = kwset->trans) != NULL)
+  if ((trans = kwset->trans))
     for (i = 0; i < NCHAR; ++i)
       kwset->delta[i] = delta[U(trans[i])];
   else

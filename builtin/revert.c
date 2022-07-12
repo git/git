@@ -130,6 +130,13 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 			OPT_END(),
 		};
 		options = parse_options_concat(options, cp_extra);
+	} else if (opts->action == REPLAY_REVERT) {
+		struct option cp_extra[] = {
+			OPT_BOOL(0, "reference", &opts->commit_use_reference,
+				 N_("use the 'reference' format to refer to commits")),
+			OPT_END(),
+		};
+		options = parse_options_concat(options, cp_extra);
 	}
 
 	argc = parse_options(argc, argv, NULL, options, usage_str,

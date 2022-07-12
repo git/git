@@ -134,7 +134,7 @@ int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
 	r = bsearch(&key, dir->entries, dir->nr, sizeof(*dir->entries),
 		    ref_entry_cmp_sslice);
 
-	if (r == NULL)
+	if (!r)
 		return -1;
 
 	return r - dir->entries;

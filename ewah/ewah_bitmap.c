@@ -451,7 +451,7 @@ struct ewah_bitmap *ewah_pool_new(void)
 
 void ewah_pool_free(struct ewah_bitmap *self)
 {
-	if (self == NULL)
+	if (!self)
 		return;
 
 	if (bitmap_pool_size == BITMAP_POOL_MAX ||

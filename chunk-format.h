@@ -2,6 +2,7 @@
 #define CHUNK_FORMAT_H
 
 #include "git-compat-util.h"
+#include "hash.h"
 
 struct hashfile;
 struct chunkfile;
@@ -64,5 +65,7 @@ int read_chunk(struct chunkfile *cf,
 	       uint32_t chunk_id,
 	       chunk_read_fn fn,
 	       void *data);
+
+uint8_t oid_version(const struct git_hash_algo *algop);
 
 #endif

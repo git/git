@@ -113,7 +113,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				/* Trailing "**" matches everything.  Trailing "*" matches
 				 * only if there are no more slash characters. */
 				if (!match_slash) {
-					if (strchr((char*)text, '/') != NULL)
+					if (strchr((char *)text, '/'))
 						return WM_NOMATCH;
 				}
 				return WM_MATCH;

@@ -195,10 +195,10 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	struct lline *baseend, *newend = NULL;
 	int i, j, origbaselen = *lenbase;
 
-	if (newline == NULL)
+	if (!newline)
 		return base;
 
-	if (base == NULL) {
+	if (!base) {
 		*lenbase = lennew;
 		return newline;
 	}
@@ -1497,6 +1497,13 @@ void diff_tree_combined(const struct object_id *oid,
 	struct combine_diff_path *p, *paths;
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 	int need_generic_pathscan;
+
+	if (opt->ignore_regex_nr)
+		die("combined diff and '%s' cannot be used together",
+		    "--ignore-matching-lines");
+	if (opt->close_file)
+		die("combined diff and '%s' cannot be used together",
+		    "--output");
 
 	/* nothing to do, if no parents */
 	if (!num_parent)

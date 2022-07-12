@@ -99,7 +99,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 {
 	strvec_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
-	setup_pager_env(&pager_process->env_array);
+	setup_pager_env(&pager_process->env);
 	pager_process->trace2_child_class = "pager";
 }
 
@@ -129,7 +129,7 @@ void setup_pager(void)
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	strvec_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 

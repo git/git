@@ -34,10 +34,12 @@ OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar' or 'zip'. If this option
+	Format of the resulting archive. Possible values are `tar`,
+	`zip`, `tar.gz`, `tgz`, and any format defined using the
+	configuration option `tar.<format>.command`. If `--format`
 	is not given, and the output file is specified, the format is
-	inferred from the filename if possible (e.g. writing to "foo.zip"
-	makes the output to be in the zip format). Otherwise the output
+	inferred from the filename if possible (e.g. writing to `foo.zip`
+	makes the output to be in the `zip` format). Otherwise the output
 	format is `tar`.
 
 -l::
@@ -49,7 +51,9 @@ OPTIONS
 	Report progress to stderr.
 
 --prefix=<prefix>/::
-	Prepend <prefix>/ to each filename in the archive.
+	Prepend <prefix>/ to paths in the archive.  Can be repeated; its
+	rightmost value is used for all tracked files.  See below which
+	value gets used by `--add-file` and `--add-virtual-file`.
 
 -o <file>::
 --output=<file>::
@@ -57,9 +61,26 @@ OPTIONS
 
 --add-file=<file>::
 	Add a non-tracked file to the archive.  Can be repeated to add
+	multiple files.  The path of the file in the archive is built by
+	concatenating the value of the last `--prefix` option (if any)
+	before this `--add-file` and the basename of <file>.
+
+--add-virtual-file=<path>:<content>::
+	Add the specified contents to the archive.  Can be repeated to add
 	multiple files.  The path of the file in the archive is built
-	by concatenating the value for `--prefix` (if any) and the
-	basename of <file>.
+	by concatenating the value of the last `--prefix` option (if any)
+	before this `--add-virtual-file` and `<path>`.
++
+The `<path>` argument can start and end with a literal double-quote
+character; the contained file name is interpreted as a C-style string,
+i.e. the backslash is interpreted as escape character. The path must
+be quoted if it contains a colon, to avoid the colon from being
+misinterpreted as the separator between the path and the contents, or
+if the path begins or ends with a double-quote character.
++
+The file mode is limited to a regular file, and the option may be
+subject to platform-dependent command-line limits. For non-trivial
+cases, write an untracked file and use `--add-file` instead.
 
 --worktree-attributes::
 	Look for attributes in .gitattributes files in the working tree
@@ -124,17 +145,16 @@ tar.<format>.command::
 	is executed using the shell with the generated tar file on its
 	standard input, and should produce the final output on its
 	standard output. Any compression-level options will be passed
-	to the command (e.g., "-9"). An output file with the same
-	extension as `<format>` will be use this format if no other
-	format is given.
+	to the command (e.g., `-9`).
 +
-The "tar.gz" and "tgz" formats are defined automatically and default to
-`gzip -cn`. You may override them with custom commands.
+The `tar.gz` and `tgz` formats are defined automatically and use the
+magic command `git archive gzip` by default, which invokes an internal
+implementation of gzip.
 
 tar.<format>.remote::
-	If true, enable `<format>` for use by remote clients via
+	If true, enable the format for use by remote clients via
 	linkgit:git-upload-archive[1]. Defaults to false for
-	user-defined formats, but true for the "tar.gz" and "tgz"
+	user-defined formats, but true for the `tar.gz` and `tgz`
 	formats.
 
 [[ATTRIBUTES]]
@@ -193,6 +213,12 @@ EXAMPLES
 	Create a Zip archive that contains the contents of the latest
 	commit on the current branch. Note that the output format is
 	inferred by the extension of the output file.
+
+`git archive -o latest.tar --prefix=build/ --add-file=configure --prefix= HEAD`::
+
+	Creates a tar archive that contains the contents of the latest
+	commit on the current branch with no prefix and the untracked
+	file 'configure' with the prefix 'build/'.
 
 `git config tar.tar.xz.command "xz -c"`::
 

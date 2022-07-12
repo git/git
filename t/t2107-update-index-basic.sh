@@ -36,9 +36,14 @@ test_expect_success '--cacheinfo does not accept blob null sha1' '
 	echo content >file &&
 	git add file &&
 	git rev-parse :file >expect &&
-	test_must_fail git update-index --cacheinfo 100644 $ZERO_OID file &&
+	test_must_fail git update-index --verbose --cacheinfo 100644 $ZERO_OID file >out &&
 	git rev-parse :file >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	add '\''file'\''
+	EOF
+	test_cmp expect out
 '
 
 test_expect_success '--cacheinfo does not accept gitlink null sha1' '
@@ -59,9 +64,14 @@ test_expect_success '--cacheinfo mode,sha1,path (new syntax)' '
 	git rev-parse :file >actual &&
 	test_cmp expect actual &&
 
-	git update-index --add --cacheinfo "100644,$(cat expect),elif" &&
+	git update-index --add --verbose --cacheinfo "100644,$(cat expect),elif" >out &&
 	git rev-parse :elif >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	add '\''elif'\''
+	EOF
+	test_cmp expect out
 '
 
 test_expect_success '.lock files cleaned up' '
@@ -74,7 +84,8 @@ test_expect_success '.lock files cleaned up' '
 	git config core.worktree ../../worktree &&
 	# --refresh triggers late setup_work_tree,
 	# active_cache_changed is zero, rollback_lock_file fails
-	git update-index --refresh &&
+	git update-index --refresh --verbose >out &&
+	test_must_be_empty out &&
 	! test -f .git/index.lock
 	)
 '
@@ -83,7 +94,15 @@ test_expect_success '--chmod=+x and chmod=-x in the same argument list' '
 	>A &&
 	>B &&
 	git add A B &&
-	git update-index --chmod=+x A --chmod=-x B &&
+	git update-index --verbose --chmod=+x A --chmod=-x B >out &&
+	cat >expect <<-\EOF &&
+	add '\''A'\''
+	chmod +x '\''A'\''
+	add '\''B'\''
+	chmod -x '\''B'\''
+	EOF
+	test_cmp expect out &&
+
 	cat >expect <<-EOF &&
 	100755 $EMPTY_BLOB 0	A
 	100644 $EMPTY_BLOB 0	B

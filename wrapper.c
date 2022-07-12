@@ -393,7 +393,7 @@ FILE *xfopen(const char *path, const char *mode)
 FILE *xfdopen(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
-	if (stream == NULL)
+	if (!stream)
 		die_errno("Out of memory? fdopen failed");
 	return stream;
 }

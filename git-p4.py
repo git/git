@@ -31,6 +31,7 @@
 # pylint: disable=wrong-import-position
 #
 
+import struct
 import sys
 if sys.version_info.major < 3 and sys.version_info.minor < 7:
     sys.stderr.write("git-p4: requires Python 2.7 or later.\n")
@@ -70,6 +71,9 @@ defaultLabelRegexp = r'[a-zA-Z0-9_\-.]+$'
 
 # The block size is reduced automatically if required
 defaultBlockSize = 1 << 20
+
+defaultMetadataDecodingStrategy = 'passthrough' if sys.version_info.major == 2 else 'fallback'
+defaultFallbackMetadataEncoding = 'cp1252'
 
 p4_access_checked = False
 
@@ -227,6 +231,70 @@ else:
 
     def encode_text_stream(s):
         return s.encode('utf_8') if isinstance(s, unicode) else s
+
+
+class MetadataDecodingException(Exception):
+    def __init__(self, input_string):
+        self.input_string = input_string
+
+    def __str__(self):
+        return """Decoding perforce metadata failed!
+The failing string was:
+---
+{}
+---
+Consider setting the git-p4.metadataDecodingStrategy config option to
+'fallback', to allow metadata to be decoded using a fallback encoding,
+defaulting to cp1252.""".format(self.input_string)
+
+
+encoding_fallback_warning_issued = False
+encoding_escape_warning_issued = False
+def metadata_stream_to_writable_bytes(s):
+    encodingStrategy = gitConfig('git-p4.metadataDecodingStrategy') or defaultMetadataDecodingStrategy
+    fallbackEncoding = gitConfig('git-p4.metadataFallbackEncoding') or defaultFallbackMetadataEncoding
+    if not isinstance(s, bytes):
+        return s.encode('utf_8')
+    if encodingStrategy == 'passthrough':
+        return s
+    try:
+        s.decode('utf_8')
+        return s
+    except UnicodeDecodeError:
+        if encodingStrategy == 'fallback' and fallbackEncoding:
+            global encoding_fallback_warning_issued
+            global encoding_escape_warning_issued
+            try:
+                if not encoding_fallback_warning_issued:
+                    print("\nCould not decode value as utf-8; using configured fallback encoding %s: %s" % (fallbackEncoding, s))
+                    print("\n(this warning is only displayed once during an import)")
+                    encoding_fallback_warning_issued = True
+                return s.decode(fallbackEncoding).encode('utf_8')
+            except Exception as exc:
+                if not encoding_escape_warning_issued:
+                    print("\nCould not decode value with configured fallback encoding %s; escaping bytes over 127: %s" % (fallbackEncoding, s))
+                    print("\n(this warning is only displayed once during an import)")
+                    encoding_escape_warning_issued = True
+                escaped_bytes = b''
+                # bytes and strings work very differently in python2 vs python3...
+                if str is bytes:
+                    for byte in s:
+                        byte_number = struct.unpack('>B', byte)[0]
+                        if byte_number > 127:
+                            escaped_bytes += b'%'
+                            escaped_bytes += hex(byte_number)[2:].upper()
+                        else:
+                            escaped_bytes += byte
+                else:
+                    for byte_number in s:
+                        if byte_number > 127:
+                            escaped_bytes += b'%'
+                            escaped_bytes += hex(byte_number).upper().encode()[2:]
+                        else:
+                            escaped_bytes += bytes([byte_number])
+                return escaped_bytes
+
+        raise MetadataDecodingException(s)
 
 
 def decode_path(path):
@@ -786,11 +854,12 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             if bytes is not str:
                 # Decode unmarshalled dict to use str keys and values, except for:
                 #   - `data` which may contain arbitrary binary data
-                #   - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text
+                #   - `desc` or `FullName` which may contain non-UTF8 encoded text handled below, eagerly converted to bytes
+                #   - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text, handled by decode_path()
                 decoded_entry = {}
                 for key, value in entry.items():
                     key = key.decode()
-                    if isinstance(value, bytes) and not (key in ('data', 'path', 'clientFile') or key.startswith('depotFile')):
+                    if isinstance(value, bytes) and not (key in ('data', 'desc', 'FullName', 'path', 'clientFile') or key.startswith('depotFile')):
                         value = value.decode()
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
@@ -800,6 +869,10 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             if skip_info:
                 if 'code' in entry and entry['code'] == 'info':
                     continue
+            if 'desc' in entry:
+                entry['desc'] = metadata_stream_to_writable_bytes(entry['desc'])
+            if 'FullName' in entry:
+                entry['FullName'] = metadata_stream_to_writable_bytes(entry['FullName'])
             if cb is not None:
                 cb(entry)
             else:
@@ -994,6 +1067,35 @@ def gitConfigList(key):
             _gitConfig[key] = []
     return _gitConfig[key]
 
+def fullP4Ref(incomingRef, importIntoRemotes=True):
+    """Standardize a given provided p4 ref value to a full git ref:
+         refs/foo/bar/branch -> use it exactly
+         p4/branch -> prepend refs/remotes/ or refs/heads/
+         branch -> prepend refs/remotes/p4/ or refs/heads/p4/"""
+    if incomingRef.startswith("refs/"):
+        return incomingRef
+    if importIntoRemotes:
+        prepend = "refs/remotes/"
+    else:
+        prepend = "refs/heads/"
+    if not incomingRef.startswith("p4/"):
+        prepend += "p4/"
+    return prepend + incomingRef
+
+def shortP4Ref(incomingRef, importIntoRemotes=True):
+    """Standardize to a "short ref" if possible:
+         refs/foo/bar/branch -> ignore
+         refs/remotes/p4/branch or refs/heads/p4/branch -> shorten
+         p4/branch -> shorten"""
+    if importIntoRemotes:
+        longprefix = "refs/remotes/p4/"
+    else:
+        longprefix = "refs/heads/p4/"
+    if incomingRef.startswith(longprefix):
+        return incomingRef[len(longprefix):]
+    if incomingRef.startswith("p4/"):
+        return incomingRef[3:]
+    return incomingRef
 
 def p4BranchesInGit(branchesAreInRemotes=True):
     """Find all the branches whose names start with "p4/", looking
@@ -1051,8 +1153,12 @@ def findUpstreamBranchPoint(head="HEAD"):
         log = extractLogMessageFromGitCommit(tip)
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
+            git_branch = "remotes/p4/" + branch
             paths = ",".join(settings["depot-paths"])
-            branchByDepotPath[paths] = "remotes/p4/" + branch
+            branchByDepotPath[paths] = git_branch
+            if "change" in settings:
+                paths = paths + ";" + settings["change"]
+                branchByDepotPath[paths] = git_branch
 
     settings = None
     parent = 0
@@ -1062,6 +1168,10 @@ def findUpstreamBranchPoint(head="HEAD"):
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
             paths = ",".join(settings["depot-paths"])
+            if "change" in settings:
+                expaths = paths + ";" + settings["change"]
+                if expaths in branchByDepotPath:
+                    return [branchByDepotPath[expaths], settings]
             if paths in branchByDepotPath:
                 return [branchByDepotPath[paths], settings]
 
@@ -1566,7 +1676,13 @@ class P4UserMap:
         for output in p4CmdList(["users"]):
             if "User" not in output:
                 continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
+            # "FullName" is bytes. "Email" on the other hand might be bytes
+            # or unicode string depending on whether we are running under
+            # python2 or python3. To support
+            # git-p4.metadataDecodingStrategy=fallback, self.users dict values
+            # are always bytes, ready to be written to git.
+            emailbytes = metadata_stream_to_writable_bytes(output["Email"])
+            self.users[output["User"]] = output["FullName"] + b" <" + emailbytes + b">"
             self.emails[output["Email"]] = output["User"]
 
         mapUserConfigRegex = re.compile(r"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
@@ -1576,26 +1692,28 @@ class P4UserMap:
                 user = mapUser[0][0]
                 fullname = mapUser[0][1]
                 email = mapUser[0][2]
-                self.users[user] = fullname + " <" + email + ">"
+                fulluser = fullname + " <" + email + ">"
+                self.users[user] = metadata_stream_to_writable_bytes(fulluser)
                 self.emails[email] = user
 
-        s = ''
+        s = b''
         for (key, val) in self.users.items():
-            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
+            keybytes = metadata_stream_to_writable_bytes(key)
+            s += b"%s\t%s\n" % (keybytes.expandtabs(1), val.expandtabs(1))
 
-        open(self.getUserCacheFilename(), 'w').write(s)
+        open(self.getUserCacheFilename(), 'wb').write(s)
         self.userMapFromPerforceServer = True
 
     def loadUserMapFromCache(self):
         self.users = {}
         self.userMapFromPerforceServer = False
         try:
-            cache = open(self.getUserCacheFilename(), 'r')
+            cache = open(self.getUserCacheFilename(), 'rb')
             lines = cache.readlines()
             cache.close()
             for line in lines:
-                entry = line.strip().split("\t")
-                self.users[entry[0]] = entry[1]
+                entry = line.strip().split(b"\t")
+                self.users[entry[0].decode('utf_8')] = entry[1]
         except IOError:
             self.getUserMapFromPerforceServer()
 
@@ -3046,6 +3164,16 @@ class P4Sync(Command, P4UserMap):
             print("\nIgnoring apple filetype file %s" % file['depotFile'])
             return
 
+        if type_base == "utf8":
+            # The type utf8 explicitly means utf8 *with BOM*. These are
+            # streamed just like regular text files, however, without
+            # the BOM in the stream.
+            # Therefore, to accurately import these files into git, we
+            # need to explicitly re-add the BOM before writing.
+            # 'contents' is a set of bytes in this case, so create the
+            # BOM prefix as a b'' literal.
+            contents = [b'\xef\xbb\xbf' + contents[0]] + contents[1:]
+
         # Note that we do not try to de-mangle keywords on utf16 files,
         # even though in theory somebody may want that.
         regexp = p4_keywords_regexp_for_type(type_base, type_mods)
@@ -3182,7 +3310,8 @@ class P4Sync(Command, P4UserMap):
         if userid in self.users:
             return self.users[userid]
         else:
-            return "%s <a@b>" % userid
+            userid_bytes = metadata_stream_to_writable_bytes(userid)
+            return b"%s <a@b>" % userid_bytes
 
     def streamTag(self, gitStream, labelName, labelDetails, commit, epoch):
         """Stream a p4 tag.
@@ -3206,9 +3335,10 @@ class P4Sync(Command, P4UserMap):
             email = self.make_email(owner)
         else:
             email = self.make_email(self.p4UserId())
-        tagger = "%s %s %s" % (email, epoch, self.tz)
 
-        gitStream.write("tagger %s\n" % tagger)
+        gitStream.write("tagger ")
+        gitStream.write(email)
+        gitStream.write(" %s %s\n" % (epoch, self.tz))
 
         print("labelDetails=", labelDetails)
         if 'Description' in labelDetails:
@@ -3304,12 +3434,12 @@ class P4Sync(Command, P4UserMap):
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
         self.committedChanges.add(int(details["change"]))
-        committer = ""
         if author not in self.users:
             self.getUserMapFromPerforceServer()
-        committer = "%s %s %s" % (self.make_email(author), epoch, self.tz)
 
-        self.gitStream.write("committer %s\n" % committer)
+        self.gitStream.write("committer ")
+        self.gitStream.write(self.make_email(author))
+        self.gitStream.write(" %s %s\n" % (epoch, self.tz))
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
@@ -3910,9 +4040,13 @@ class P4Sync(Command, P4UserMap):
 
             # restrict to just this one, disabling detect-branches
             if branch_arg_given:
-                short = self.branch.split("/")[-1]
+                short = shortP4Ref(self.branch, self.importIntoRemotes)
                 if short in branches:
                     self.p4BranchesInGit = [short]
+                elif self.branch.startswith('refs/') and \
+                        branchExists(self.branch) and \
+                        '[git-p4:' in extractLogMessageFromGitCommit(self.branch):
+                    self.p4BranchesInGit = [self.branch]
             else:
                 self.p4BranchesInGit = branches.keys()
 
@@ -3929,7 +4063,8 @@ class P4Sync(Command, P4UserMap):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                logMsg = extractLogMessageFromGitCommit(self.refPrefix + branch)
+                logMsg = extractLogMessageFromGitCommit(fullP4Ref(branch,
+                                                        self.importIntoRemotes))
 
                 settings = extractSettingsGitLog(logMsg)
 
@@ -3961,18 +4096,7 @@ class P4Sync(Command, P4UserMap):
                 if not self.silent and not self.detectBranches:
                     print("Performing incremental import into %s git branch" % self.branch)
 
-        # accept multiple ref name abbreviations:
-        #    refs/foo/bar/branch -> use it exactly
-        #    p4/branch -> prepend refs/remotes/ or refs/heads/
-        #    branch -> prepend refs/remotes/p4/ or refs/heads/p4/
-        if not self.branch.startswith("refs/"):
-            if self.importIntoRemotes:
-                prepend = "refs/remotes/"
-            else:
-                prepend = "refs/heads/"
-            if not self.branch.startswith("p4/"):
-                prepend += "p4/"
-            self.branch = prepend + self.branch
+        self.branch = fullP4Ref(self.branch, self.importIntoRemotes)
 
         if len(args) == 0 and self.depotPaths:
             if not self.silent:
@@ -4215,6 +4339,14 @@ class P4Clone(P4Sync):
         # auto-set this variable if invoked with --use-client-spec
         if self.useClientSpec_from_options:
             system(["git", "config", "--bool", "git-p4.useclientspec", "true"])
+
+        # persist any git-p4 encoding-handling config options passed in for clone:
+        if gitConfig('git-p4.metadataDecodingStrategy'):
+            system(["git", "config", "git-p4.metadataDecodingStrategy", gitConfig('git-p4.metadataDecodingStrategy')])
+        if gitConfig('git-p4.metadataFallbackEncoding'):
+            system(["git", "config", "git-p4.metadataFallbackEncoding", gitConfig('git-p4.metadataFallbackEncoding')])
+        if gitConfig('git-p4.pathEncoding'):
+            system(["git", "config", "git-p4.pathEncoding", gitConfig('git-p4.pathEncoding')])
 
         return True
 

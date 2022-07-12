@@ -628,6 +628,14 @@ core.fsyncMethod::
 * `writeout-only` issues pagecache writeback requests, but depending on the
   filesystem and storage hardware, data added to the repository may not be
   durable in the event of a system crash. This is the default mode on macOS.
+* `batch` enables a mode that uses writeout-only flushes to stage multiple
+  updates in the disk writeback cache and then does a single full fsync of
+  a dummy file to trigger the disk cache flush at the end of the operation.
++
+Currently `batch` mode only applies to loose-object files. Other repository
+data is made durable as if `fsync` was specified. This mode is expected to
+be as safe as `fsync` on macOS for repos stored on HFS+ or APFS filesystems
+and on Windows for repos stored on NTFS or ReFS filesystems.
 
 core.fsyncObjectFiles::
 	This boolean will enable 'fsync()' when writing object files.
@@ -698,8 +706,10 @@ core.sparseCheckout::
 
 core.sparseCheckoutCone::
 	Enables the "cone mode" of the sparse checkout feature. When the
-	sparse-checkout file contains a limited set of patterns, then this
-	mode provides significant performance advantages. See
+	sparse-checkout file contains a limited set of patterns, this
+	mode provides significant performance advantages. The "non
+	cone mode" can be requested to allow specifying a more flexible
+	patterns by setting this variable to 'false'. See
 	linkgit:git-sparse-checkout[1] for more information.
 
 core.abbrev::

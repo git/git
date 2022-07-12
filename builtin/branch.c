@@ -204,7 +204,6 @@ static void delete_branch_config(const char *branchname)
 static int delete_branches(int argc, const char **argv, int force, int kinds,
 			   int quiet)
 {
-	struct worktree **worktrees;
 	struct commit *head_rev = NULL;
 	struct object_id oid;
 	char *name = NULL;
@@ -242,8 +241,6 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			die(_("Couldn't look up commit object for HEAD"));
 	}
 
-	worktrees = get_worktrees();
-
 	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
 		int flags = 0;
@@ -253,12 +250,11 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		name = mkpathdup(fmt, bname.buf);
 
 		if (kinds == FILTER_REFS_BRANCHES) {
-			const struct worktree *wt =
-				find_shared_symref(worktrees, "HEAD", name);
-			if (wt) {
+			const char *path;
+			if ((path = branch_checked_out(name))) {
 				error(_("Cannot delete branch '%s' "
 					"checked out at '%s'"),
-				      bname.buf, wt->path);
+				      bname.buf, path);
 				ret = 1;
 				continue;
 			}
@@ -315,7 +311,6 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 	free(name);
 	strbuf_release(&bname);
-	free_worktrees(worktrees);
 
 	return ret;
 }

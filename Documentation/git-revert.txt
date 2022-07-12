@@ -117,6 +117,15 @@ effect to your index in a row.
 	Allow the rerere mechanism to update the index with the
 	result of auto-conflict resolution if possible.
 
+--reference::
+	Instead of starting the body of the log message with "This
+	reverts <full object name of the commit being reverted>.",
+	refer to the commit using "--pretty=reference" format
+	(cf. linkgit:git-log[1]).  The `revert.reference`
+	configuration variable can be used to enable this option by
+	default.
+
+
 SEQUENCER SUBCOMMANDS
 ---------------------
 include::sequencer.txt[]

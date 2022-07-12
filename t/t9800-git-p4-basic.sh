@@ -74,6 +74,91 @@ test_expect_success 'git p4 sync new branch' '
 	)
 '
 
+#
+# Setup as before, and then explicitly sync imported branch, using a
+# different ref format.
+#
+test_expect_success 'git p4 sync existing branch without changes' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		git p4 sync --branch=refs/remotes/p4/depot >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, relative branch name.
+#
+test_expect_success 'git p4 sync existing branch with relative name' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=branch1 //depot@all &&
+		git p4 sync --branch=p4/branch1 >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a nested branch path, referenced different ways.
+#
+test_expect_success 'git p4 sync existing branch with nested path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=p4/some/path //depot@all &&
+		git p4 sync --branch=some/path >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a full ref path outside the p4/* namespace.
+#
+test_expect_success 'git p4 sync branch explicit ref without p4 in path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=refs/remotes/someremote/depot //depot@all &&
+		git p4 sync --branch=refs/remotes/someremote/depot >out &&
+		test_i18ngrep "No changes to import!" out
+	)
+'
+
+test_expect_success 'git p4 sync nonexistent ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=depot2 2>errs &&
+		test_i18ngrep "Perhaps you never did" errs
+	)
+'
+
+test_expect_success 'git p4 sync existing non-p4-imported ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=refs/heads/master 2>errs &&
+		test_i18ngrep "Perhaps you never did" errs
+	)
+'
+
 test_expect_success 'clone two dirs' '
 	(
 		cd "$cli" &&

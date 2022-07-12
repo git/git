@@ -13,7 +13,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	}
 
 	start = malloc(length);
-	if (start == NULL) {
+	if (!start) {
 		errno = ENOMEM;
 		return MAP_FAILED;
 	}

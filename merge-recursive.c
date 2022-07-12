@@ -82,7 +82,7 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 {
 	struct dir_rename_entry key;
 
-	if (dir == NULL)
+	if (!dir)
 		return NULL;
 	hashmap_entry_init(&key.ent, strhash(dir));
 	key.dir = dir;
@@ -522,10 +522,10 @@ static struct stage_data *insert_stage_data(struct repository *r,
  */
 static struct string_list *get_unmerged(struct index_state *istate)
 {
-	struct string_list *unmerged = xcalloc(1, sizeof(struct string_list));
+	struct string_list *unmerged = xmalloc(sizeof(struct string_list));
 	int i;
 
-	unmerged->strdup_strings = 1;
+	string_list_init_dup(unmerged);
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(istate);
@@ -1160,6 +1160,7 @@ static int find_first_merges(struct repository *repo,
 	}
 
 	object_array_clear(&merges);
+	release_revisions(&revs);
 	return result->nr;
 }
 
@@ -1990,14 +1991,14 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	 * renamed means the root directory can never be renamed -- because
 	 * the root directory always exists).
 	 */
-	if (end_of_old == NULL)
+	if (!end_of_old)
 		return; /* Note: *old_dir and *new_dir are still NULL */
 
 	/*
 	 * If new_path contains no directory (end_of_new is NULL), then we
 	 * have a rename of old_path's directory to the root directory.
 	 */
-	if (end_of_new == NULL) {
+	if (!end_of_new) {
 		*old_dir = xstrndup(old_path, end_of_old - old_path);
 		*new_dir = xstrdup("");
 		return;
@@ -2116,7 +2117,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 * to ensure that's the case.
 	 */
 	collision_ent = collision_find_entry(collisions, new_path);
-	if (collision_ent == NULL)
+	if (!collision_ent)
 		BUG("collision_ent is NULL");
 
 	/*
@@ -2996,7 +2997,7 @@ static void final_cleanup_rename(struct string_list *rename)
 	const struct rename *re;
 	int i;
 
-	if (rename == NULL)
+	if (!rename)
 		return;
 
 	for (i = 0; i < rename->nr; i++) {
@@ -3605,7 +3606,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	merged_merge_bases = pop_commit(&merge_bases);
-	if (merged_merge_bases == NULL) {
+	if (!merged_merge_bases) {
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 

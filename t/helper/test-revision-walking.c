@@ -43,6 +43,7 @@ static int run_revision_walk(void)
 	}
 
 	reset_revision_walk();
+	release_revisions(&rev);
 	return got_revision;
 }
 

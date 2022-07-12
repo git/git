@@ -1,18 +1,6 @@
 @@
 struct object_id OID;
 @@
-- is_null_sha1(OID.hash)
-+ is_null_oid(&OID)
-
-@@
-struct object_id *OIDPTR;
-@@
-- is_null_sha1(OIDPTR->hash)
-+ is_null_oid(OIDPTR)
-
-@@
-struct object_id OID;
-@@
 - hashclr(OID.hash)
 + oidclr(&OID)
 

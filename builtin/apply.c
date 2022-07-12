@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "builtin.h"
 #include "parse-options.h"
-#include "lockfile.h"
 #include "apply.h"
 
 static const char * const apply_usage[] = {

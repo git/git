@@ -196,5 +196,6 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		prune_shallow(show_only ? PRUNE_SHOW_ONLY : 0);
 	}
 
+	release_revisions(&revs);
 	return 0;
 }

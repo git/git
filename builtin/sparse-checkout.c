@@ -128,7 +128,7 @@ static void clean_tracked_sparse_directories(struct repository *r)
 	 * sparse index will not delete directories that contain
 	 * conflicted entries or submodules.
 	 */
-	if (!r->index->sparse_index) {
+	if (r->index->sparse_index == INDEX_EXPANDED) {
 		/*
 		 * If something, such as a merge conflict or other concern,
 		 * prevents us from converting to a sparse index, then do
@@ -395,7 +395,7 @@ static int update_modes(int *cone_mode, int *sparse_index)
 
 	/* Set cone/non-cone mode appropriately */
 	core_apply_sparse_checkout = 1;
-	if (*cone_mode == 1) {
+	if (*cone_mode == 1 || *cone_mode == -1) {
 		mode = MODE_CONE_PATTERNS;
 		core_sparse_checkout_cone = 1;
 	} else {
@@ -413,6 +413,9 @@ static int update_modes(int *cone_mode, int *sparse_index)
 		/* force an index rewrite */
 		repo_read_index(the_repository);
 		the_repository->index->updated_workdir = 1;
+
+		if (!*sparse_index)
+			ensure_full_index(the_repository->index);
 	}
 
 	return 0;
@@ -933,6 +936,9 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	git_config(git_default_config, NULL);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	if (argc > 0) {
 		if (!strcmp(argv[0], "list"))

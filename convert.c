@@ -195,9 +195,9 @@ static void check_global_conv_flags_eol(const char *path,
 		if (conv_flags & CONV_EOL_RNDTRP_DIE)
 			die(_("CRLF would be replaced by LF in %s"), path);
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
-			warning(_("CRLF will be replaced by LF in %s.\n"
-				  "The file will have its original line"
-				  " endings in your working directory"), path);
+			warning(_("in the working copy of '%s', CRLF will be"
+				  " replaced by LF the next time Git touches"
+				  " it"), path);
 	} else if (old_stats->lonelf && !new_stats->lonelf ) {
 		/*
 		 * CRLFs would be added by checkout
@@ -205,9 +205,9 @@ static void check_global_conv_flags_eol(const char *path,
 		if (conv_flags & CONV_EOL_RNDTRP_DIE)
 			die(_("LF would be replaced by CRLF in %s"), path);
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
-			warning(_("LF will be replaced by CRLF in %s.\n"
-				  "The file will have its original line"
-				  " endings in your working directory"), path);
+			warning(_("in the working copy of '%s', LF will be"
+				  " replaced by CRLF the next time Git touches"
+				  " it"), path);
 	}
 }
 

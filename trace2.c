@@ -202,17 +202,15 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 					    argv);
 }
 
-int trace2_cmd_exit_fl(const char *file, int line, int code)
+void trace2_cmd_exit_fl(const char *file, int line, int code)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
 
-	code &= 0xff;
-
 	if (!trace2_enabled)
-		return code;
+		return;
 
 	trace_git_fsync_stats();
 	trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
@@ -226,8 +224,6 @@ int trace2_cmd_exit_fl(const char *file, int line, int code)
 		if (tgt_j->pfn_exit_fl)
 			tgt_j->pfn_exit_fl(file, line, us_elapsed_absolute,
 					   code);
-
-	return code;
 }
 
 void trace2_cmd_error_va_fl(const char *file, int line, const char *fmt,

@@ -3,7 +3,6 @@
 #include "config.h"
 #include "pkt-line.h"
 #include "version.h"
-#include "strvec.h"
 #include "ls-refs.h"
 #include "protocol-caps.h"
 #include "serve.h"

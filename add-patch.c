@@ -305,7 +305,7 @@ static void setup_child_process(struct add_p_state *s,
 	va_end(ap);
 
 	cp->git_cmd = 1;
-	strvec_pushf(&cp->env_array,
+	strvec_pushf(&cp->env,
 		     INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
 }
 

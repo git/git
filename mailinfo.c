@@ -698,7 +698,7 @@ static int is_scissors_line(const char *line)
 			continue;
 		}
 		last_nonblank = c;
-		if (first_nonblank == NULL)
+		if (!first_nonblank)
 			first_nonblank = c;
 		if (*c == '-') {
 			in_perforation = 1;
@@ -1094,7 +1094,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			 */
 			lines = strbuf_split(line, '\n');
 			for (it = lines; (sb = *it); it++) {
-				if (*(it + 1) == NULL) /* The last line */
+				if (!*(it + 1)) /* The last line */
 					if (sb->buf[sb->len - 1] != '\n') {
 						/* Partial line, save it for later. */
 						strbuf_addbuf(&prev, sb);

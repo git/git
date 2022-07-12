@@ -38,7 +38,7 @@ struct submodule {
 	const char *path;
 	const char *name;
 	const char *url;
-	int fetch_recurse;
+	enum submodule_recurse_mode fetch_recurse;
 	const char *ignore;
 	const char *branch;
 	struct submodule_update_strategy update_strategy;

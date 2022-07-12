@@ -159,7 +159,7 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 
 	if (stat(filename, &st))
 		return error_errno("Could not stat %s", filename);
-	if ((f = fopen(filename, "rb")) == NULL)
+	if (!(f = fopen(filename, "rb")))
 		return error_errno("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
 	ptr->ptr = xmalloc(sz ? sz : 1);

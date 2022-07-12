@@ -452,7 +452,10 @@ repositories.
 
 - `gitk-git/` comes from Paul Mackerras's gitk project:
 
-	git://ozlabs.org/~paulus/gitk
+	git://git.ozlabs.org/~paulus/gitk
+
+   Those who are interested in improve gitk can volunteer to help Paul
+   in maintaining it cf. <YntxL/fTplFm8lr6@cleo>.
 
 - `po/` comes from the localization coordinator, Jiang Xin:
 

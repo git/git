@@ -5,7 +5,7 @@ information to stderr or a file.  The Trace2 feature is inactive unless
 explicitly enabled by enabling one or more Trace2 Targets.
 
 The Trace2 API is intended to replace the existing (Trace1)
-printf-style tracing provided by the existing `GIT_TRACE` and
+`printf()`-style tracing provided by the existing `GIT_TRACE` and
 `GIT_TRACE_PERFORMANCE` facilities.  During initial implementation,
 Trace2 and Trace1 may operate in parallel.
 
@@ -24,8 +24,8 @@ for example.
 
 Trace2 is controlled using `trace2.*` config values in the system and
 global config files and `GIT_TRACE2*` environment variables.  Trace2 does
-not read from repo local or worktree config files or respect `-c`
-command line config settings.
+not read from repo local or worktree config files, nor does it respect
+`-c` command line config settings.
 
 == Trace2 Targets
 
@@ -34,8 +34,8 @@ Format details are given in a later section.
 
 === The Normal Format Target
 
-The normal format target is a tradition printf format and similar
-to GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
+The normal format target is a traditional `printf()` format and similar
+to the `GIT_TRACE` format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
 
@@ -69,8 +69,8 @@ $ cat ~/log.normal
 === The Performance Format Target
 
 The performance format target (PERF) is a column-based format to
-replace GIT_TRACE_PERFORMANCE and is suitable for development and
-testing, possibly to complement tools like gprof.  This format is
+replace `GIT_TRACE_PERFORMANCE` and is suitable for development and
+testing, possibly to complement tools like `gprof`.  This format is
 enabled with the `GIT_TRACE2_PERF` environment variable or the
 `trace2.perfTarget` system or global config setting.
 
@@ -128,7 +128,7 @@ yields
 
 ------------
 $ cat ~/log.event
-{"event":"version","sid":"sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"3","exe":"2.20.1.155.g426c96fcdb"}
+{"event":"version","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"3","exe":"2.20.1.155.g426c96fcdb"}
 {"event":"start","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621027Z","file":"common-main.c","line":39,"t_abs":0.001173,"argv":["git","version"]}
 {"event":"cmd_name","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621122Z","file":"git.c","line":432,"name":"version","hierarchy":"version"}
 {"event":"exit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621236Z","file":"git.c","line":662,"t_abs":0.001227,"code":0}
@@ -170,9 +170,9 @@ Some functions have a `_va_fl()` suffix to indicate that they also
 take a `va_list` argument.
 
 Some functions have a `_printf_fl()` suffix to indicate that they also
-take a varargs argument.
+take a `printf()` style format with a variable number of arguments.
 
-There are CPP wrapper macros and ifdefs to hide most of these details.
+There are CPP wrapper macros and `#ifdef`s to hide most of these details.
 See `trace2.h` for more details.  The following discussion will only
 describe the simplified forms.
 
@@ -234,7 +234,7 @@ Events are written as lines of the form:
 	is the event name.
 
 `<event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 +
 Note that this may contain embedded LF or CRLF characters that are
 not escaped, so the event may spill across multiple lines.
@@ -300,7 +300,7 @@ This field is in anticipation of in-proc submodules in the future.
 	indicate a broad category, such as "index" or "status".
 
 `<perf-event-message>`::
-	is a free-form printf message intended for human consumption.
+	is a free-form `printf()` message intended for human consumption.
 
 ------------
 15:33:33.532712 wt-status.c:2310                  | d0 | main                     | region_enter | r1  |  0.126064 |           | status     | label:print
@@ -465,8 +465,8 @@ completed.)
 ------------
 
 `"error"`::
-	This event is emitted when one of the `BUG()`, `error()`, `die()`,
-	`warning()`, or `usage()` functions are called.
+	This event is emitted when one of the `BUG()`, `bug()`, `error()`,
+	`die()`, `warning()`, or `usage()` functions are called.
 +
 ------------
 {
@@ -533,7 +533,7 @@ these special values are used:
 ------------
 
 `"cmd_mode"`::
-	This event, when present, describes the command variant This
+	This event, when present, describes the command variant. This
 	event may be emitted more than once.
 +
 ------------
@@ -588,7 +588,7 @@ with "?".
 
 `"child_exit"`::
 	This event is generated after the current process has returned
-	from the waitpid() and collected the exit information from the
+	from the `waitpid()` and collected the exit information from the
 	child.
 +
 ------------
@@ -609,7 +609,7 @@ process may be a shell script which doesn't have a session-id.)
 +
 Note that the `t_rel` field contains the observed run time in seconds
 for the child process (starting before the fork/exec/spawn and
-stopping after the waitpid() and includes OS process creation overhead).
+stopping after the `waitpid()` and includes OS process creation overhead).
 So this time will be slightly larger than the atexit time reported by
 the child process itself.
 
@@ -635,7 +635,7 @@ process may be a shell script which doesn't have a session-id.)
 +
 This event is generated after the child is started in the background
 and given a little time to boot up and start working.  If the child
-startups normally and while the parent is still waiting, the "ready"
+starts up normally while the parent is still waiting, the "ready"
 field will have the value "ready".
 If the child is too slow to start and the parent times out, the field
 will have the value "timeout".
@@ -949,7 +949,7 @@ atexit elapsed:3.868970 code:0
 
 Regions::
 
-	Regions can be use to time an interesting section of code.
+	Regions can be used to time an interesting section of code.
 +
 ----------------
 void wt_status_collect(struct wt_status *s)
@@ -1103,9 +1103,9 @@ Thread Events::
 
 	Thread messages added to a thread-proc.
 +
-For example, the multithreaded preload-index code can be
+For example, the multi-threaded preload-index code can be
 instrumented with a region around the thread pool and then
-per-thread start and exit events within the threadproc.
+per-thread start and exit events within the thread-proc.
 +
 ----------------
 static void *preload_thread(void *_data)
@@ -1214,11 +1214,11 @@ as each thread starts and allocates TLS storage.
 There are a few issues to resolve before we can completely
 switch to Trace2.
 
-* Updating existing tests that assume GIT_TRACE format messages.
+* Updating existing tests that assume `GIT_TRACE` format messages.
 
-* How to best handle custom GIT_TRACE_<key> messages?
+* How to best handle custom `GIT_TRACE_<key>` messages?
 
-** The GIT_TRACE_<key> mechanism allows each <key> to write to a
+** The `GIT_TRACE_<key>` mechanism allows each <key> to write to a
 different file (in addition to just stderr).
 
 ** Do we want to maintain that ability or simply write to the existing

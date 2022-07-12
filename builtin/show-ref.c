@@ -52,14 +52,6 @@ static int show_ref(const char *refname, const struct object_id *oid,
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
 
-	if (tags_only || heads_only) {
-		int match;
-
-		match = heads_only && starts_with(refname, "refs/heads/");
-		match |= tags_only && starts_with(refname, "refs/tags/");
-		if (!match)
-			return 0;
-	}
 	if (pattern) {
 		int reflen = strlen(refname);
 		const char **p = pattern, *m;
@@ -216,7 +208,14 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 
 	if (show_head)
 		head_ref(show_ref, NULL);
-	for_each_ref(show_ref, NULL);
+	if (heads_only || tags_only) {
+		if (heads_only)
+			for_each_fullref_in("refs/heads/", show_ref, NULL);
+		if (tags_only)
+			for_each_fullref_in("refs/tags/", show_ref, NULL);
+	} else {
+		for_each_ref(show_ref, NULL);
+	}
 	if (!found_match) {
 		if (verify && !quiet)
 			die("No match");

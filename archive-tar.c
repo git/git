@@ -38,11 +38,18 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
+static void tar_write_block(const void *buf)
+{
+	write_or_die(1, buf, BLOCKSIZE);
+}
+
+static void (*write_block)(const void *) = tar_write_block;
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 		offset = 0;
 	}
 }
@@ -66,7 +73,7 @@ static void do_write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		write_or_die(1, buf, BLOCKSIZE);
+		write_block(buf);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -101,10 +108,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	write_or_die(1, block, BLOCKSIZE);
+	write_block(block);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		write_or_die(1, block, BLOCKSIZE);
+		write_block(block);
 	}
 }
 
@@ -383,8 +390,8 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 	if (!strcmp(type, "command")) {
 		if (!value)
 			return config_error_nonbool(var);
-		free(ar->data);
-		ar->data = xstrdup(value);
+		free(ar->filter_command);
+		ar->filter_command = xstrdup(value);
 		return 0;
 	}
 	if (!strcmp(type, "remote")) {
@@ -425,17 +432,65 @@ static int write_tar_archive(const struct archiver *ar,
 	return err;
 }
 
+static git_zstream gzstream;
+static unsigned char outbuf[16384];
+
+static void tgz_deflate(int flush)
+{
+	while (gzstream.avail_in || flush == Z_FINISH) {
+		int status = git_deflate(&gzstream, flush);
+		if (!gzstream.avail_out || status == Z_STREAM_END) {
+			write_or_die(1, outbuf, gzstream.next_out - outbuf);
+			gzstream.next_out = outbuf;
+			gzstream.avail_out = sizeof(outbuf);
+			if (status == Z_STREAM_END)
+				break;
+		}
+		if (status != Z_OK && status != Z_BUF_ERROR)
+			die(_("deflate error (%d)"), status);
+	}
+}
+
+static void tgz_write_block(const void *data)
+{
+	gzstream.next_in = (void *)data;
+	gzstream.avail_in = BLOCKSIZE;
+	tgz_deflate(Z_NO_FLUSH);
+}
+
+static const char internal_gzip_command[] = "git archive gzip";
+
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args)
 {
+#if ZLIB_VERNUM >= 0x1221
+	struct gz_header_s gzhead = { .os = 3 }; /* Unix, for reproducibility */
+#endif
 	struct strbuf cmd = STRBUF_INIT;
 	struct child_process filter = CHILD_PROCESS_INIT;
 	int r;
 
-	if (!ar->data)
+	if (!ar->filter_command)
 		BUG("tar-filter archiver called with no filter defined");
 
-	strbuf_addstr(&cmd, ar->data);
+	if (!strcmp(ar->filter_command, internal_gzip_command)) {
+		write_block = tgz_write_block;
+		git_deflate_init_gzip(&gzstream, args->compression_level);
+#if ZLIB_VERNUM >= 0x1221
+		if (deflateSetHeader(&gzstream.z, &gzhead) != Z_OK)
+			BUG("deflateSetHeader() called too late");
+#endif
+		gzstream.next_out = outbuf;
+		gzstream.avail_out = sizeof(outbuf);
+
+		r = write_tar_archive(ar, args);
+
+		tgz_deflate(Z_FINISH);
+		git_deflate_end(&gzstream);
+		return r;
+	}
+
+	strbuf_addstr(&cmd, ar->filter_command);
 	if (args->compression_level >= 0)
 		strbuf_addf(&cmd, " -%d", args->compression_level);
 
@@ -471,14 +526,14 @@ void init_tar_archiver(void)
 	int i;
 	register_archiver(&tar_archiver);
 
-	tar_filter_config("tar.tgz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tgz.command", internal_gzip_command, NULL);
 	tar_filter_config("tar.tgz.remote", "true", NULL);
-	tar_filter_config("tar.tar.gz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tar.gz.command", internal_gzip_command, NULL);
 	tar_filter_config("tar.tar.gz.remote", "true", NULL);
 	git_config(git_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
-		if (tar_filters[i]->data)
+		if (tar_filters[i]->filter_command)
 			register_archiver(tar_filters[i]);
 	}
 }

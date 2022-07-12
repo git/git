@@ -58,7 +58,7 @@ struct child_process {
 	struct strvec args;
 
 	/**
-	 * Like .args the .env_array is a `struct strvec'.
+	 * Like .args the .env is a `struct strvec'.
 	 *
 	 * To modify the environment of the sub-process, specify an array of
 	 * environment settings. Each string in the array manipulates the
@@ -70,10 +70,10 @@ struct child_process {
 	 * - If the string does not contain '=', it names an environment
 	 *   variable that will be removed from the child process's environment.
 	 *
-	 * The memory in .env_array will be cleaned up automatically during
+	 * The memory in .env will be cleaned up automatically during
 	 * `finish_command` (or during `start_command` when it is unsuccessful).
 	 */
-	struct strvec env_array;
+	struct strvec env;
 	pid_t pid;
 
 	int trace2_child_id;
@@ -146,7 +146,7 @@ struct child_process {
 
 #define CHILD_PROCESS_INIT { \
 	.args = STRVEC_INIT, \
-	.env_array = STRVEC_INIT, \
+	.env = STRVEC_INIT, \
 }
 
 /**
@@ -405,6 +405,9 @@ void check_pipe(int err);
  * pp_cb is the callback cookie as passed to run_processes_parallel.
  * You can store a child process specific callback cookie in pp_task_cb.
  *
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
+ *
  * Even after returning 0 to indicate that there are no more processes,
  * this function will be called again until there are no more running
  * child processes.
@@ -423,9 +426,8 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * This callback is called whenever there are problems starting
  * a new process.
  *
- * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf out instead, which will be printed without
- * messing up the output of the other parallel processes.
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
  * pp_task_cb is the callback cookie as passed into get_next_task_fn.
@@ -441,9 +443,8 @@ typedef int (*start_failure_fn)(struct strbuf *out,
 /**
  * This callback is called on every child process that finished processing.
  *
- * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf out instead, which will be printed without
- * messing up the output of the other parallel processes.
+ * See run_processes_parallel() below for a discussion of the "struct
+ * strbuf *out" parameter.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
  * pp_task_cb is the callback cookie as passed into get_next_task_fn.
@@ -464,11 +465,26 @@ typedef int (*task_finished_fn)(int result,
  *
  * The children started via this function run in parallel. Their output
  * (both stdout and stderr) is routed to stderr in a manner that output
- * from different tasks does not interleave.
+ * from different tasks does not interleave (but see "ungroup" below).
  *
  * start_failure_fn and task_finished_fn can be NULL to omit any
  * special handling.
+ *
+ * If the "ungroup" option isn't specified, the API will set the
+ * "stdout_to_stderr" parameter in "struct child_process" and provide
+ * the callbacks with a "struct strbuf *out" parameter to write output
+ * to. In this case the callbacks must not write to stdout or
+ * stderr as such output will mess up the output of the other parallel
+ * processes. If "ungroup" option is specified callbacks will get a
+ * NULL "struct strbuf *out" parameter, and are responsible for
+ * emitting their own output, including dealing with any race
+ * conditions due to writing in parallel to stdout and stderr.
+ * The "ungroup" option can be enabled by setting the global
+ * "run_processes_parallel_ungroup" to "1" before invoking
+ * run_processes_parallel(), it will be set back to "0" as soon as the
+ * API reads that setting.
  */
+extern int run_processes_parallel_ungroup;
 int run_processes_parallel(int n,
 			   get_next_task_fn,
 			   start_failure_fn,
@@ -479,14 +495,14 @@ int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
 			       const char *tr2_category, const char *tr2_label);
 
 /**
- * Convenience function which prepares env_array for a command to be run in a
- * new repo. This adds all GIT_* environment variables to env_array with the
+ * Convenience function which prepares env for a command to be run in a
+ * new repo. This adds all GIT_* environment variables to env with the
  * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
  * corresponding environment variables to be unset in the subprocess) and adds
  * an environment variable pointing to new_git_dir. See local_repo_env in
  * cache.h for more information.
  */
-void prepare_other_repo_env(struct strvec *env_array, const char *new_git_dir);
+void prepare_other_repo_env(struct strvec *env, const char *new_git_dir);
 
 /**
  * Possible return values for start_bg_command().
