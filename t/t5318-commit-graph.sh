@@ -811,7 +811,7 @@ test_expect_success 'set up and verify repo with generation data overflow chunk'
 
 graph_git_behavior 'generation data overflow chunk repo' repo left right
 
-test_expect_failure 'overflow during generation version upgrade' '
+test_expect_success 'overflow during generation version upgrade' '
 	git init overflow-v2-upgrade &&
 	(
 		cd overflow-v2-upgrade &&
