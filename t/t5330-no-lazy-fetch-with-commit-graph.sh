@@ -4,28 +4,6 @@ test_description='test for no lazy fetch with the commit-graph'
 
 . ./test-lib.sh
 
-run_with_limited_processses () {
-	# bash and ksh use "ulimit -u", dash uses "ulimit -p"
-	if test -n "$BASH_VERSION"
-	then
-		ulimit_max_process="-u"
-	elif test -n "$KSH_VERSION"
-	then
-		ulimit_max_process="-u"
-	fi
-	(ulimit ${ulimit_max_process-"-p"} 512 && "$@")
-}
-
-test_lazy_prereq ULIMIT_PROCESSES '
-	run_with_limited_processses true
-'
-
-if ! test_have_prereq ULIMIT_PROCESSES
-then
-	skip_all='skipping tests for no lazy fetch with the commit-graph, ulimit processes not available'
-	test_done
-fi
-
 test_expect_success 'setup: prepare a repository with a commit' '
 	git init with-commit &&
 	test_commit -C with-commit the-commit &&
@@ -59,8 +37,7 @@ test_expect_success 'fetch any commit from promisor with the usage of the commit
 	git -C with-commit-graph config remote.origin.partialclonefilter blob:none &&
 	test_commit -C with-commit any-commit &&
 	anycommit=$(git -C with-commit rev-parse HEAD) &&
-
-	run_with_limited_processses env GIT_TRACE="$(pwd)/trace.txt" \
+	GIT_TRACE="$(pwd)/trace.txt" \
 		git -C with-commit-graph fetch origin $anycommit 2>err &&
 	! grep "fatal: promisor-remote: unable to fork off fetch subprocess" err &&
 	grep "git fetch origin" trace.txt >actual &&
