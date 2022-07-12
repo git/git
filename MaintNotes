@@ -188,7 +188,9 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are merged to this branch and maintenance releases are cut
 from it.  Usually these fixes are merged to the "master" branch first,
 several days before merged to the "maint" branch, to reduce the chance
-of last-minute issues.  The maintenance releases used to be named with
+of last-minute issues, but things like embargoed security fixes may
+first appear in the maintenance tracks and merged up to "master" at
+the same time.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
