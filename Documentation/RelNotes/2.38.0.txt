@@ -1,6 +1,19 @@
 Git v2.38 Release Notes
 =======================
 
+UI, Workflows & Features
+
+ * "git remote show [-n] frotz" now pays attention to negative
+   pathspec.
+
+ * "git push" sometimes perform poorly when reachability bitmaps are
+   used, even in a repository where other operations are helped by
+   bitmaps.  The push.useBitmaps configuration variable is introduced
+   to allow disabling use of reachability bitmaps only for "git push".
+
+ * "git grep -m<max-hits>" is a way to limit the hits shown per file.
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * Collection of what is referenced by objects in promisor packs have
@@ -33,8 +46,30 @@ Fixes since v2.37
    add some missing information to the documentation.
    (merge ac7667bd44 ac/bitmap-format-doc later to maint).
 
+ * Fixes for tests when the source directory has unusual characters in
+   its path, e.g. whitespaces, double-quotes, etc.
+   (merge eb1cd60290 ab/test-quoting-fix later to maint).
+
+ * "git mktree --missing" lazily fetched objects that are missing from
+   the local object store, which was totally unnecessary for the purpose
+   of creating the tree object(s) from its input.
+   (merge 817b0f6027 ro/mktree-allow-missing-fix later to maint).
+
+ * Give _() markings to fatal/warning/usage: labels that are shown in
+   front of these messages.
+   (merge a1fd2cf8cd dr/i18n-die-warn-error-usage later to maint).
+
+ * References to commands-to-be-typed-literally in "git rebase"
+   documentation mark-up have been corrected.
+   (merge 54e51e559e ds/git-rebase-doc-markup later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
    (merge 1971510c35 pb/diff-doc-raw-format later to maint).
    (merge a3ba4fa715 cr/setup-bug-typo later to maint).
    (merge 85845580d9 ds/vscode-settings later to maint).
+   (merge ec2f6c0cca en/t6429-test-must-be-empty-fix later to maint).
+   (merge 14deb585fb tb/pack-objects-remove-pahole-comment later to maint).
+   (merge 2ffb7d13ee ds/t5510-brokequote later to maint).
+   (merge 18337d406f ll/ls-files-tests-update later to maint).
+   (merge 8cdab69d96 tk/rev-parse-doc-clarify-at-u later to maint).
