@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2022, #03; Mon, 11)
-X-master-at: f2e5255fc2d3a043f37e259012e1ccd013d6e4b8
-X-next-at: 0f90570f4190085940668d388fe346adefe9cb5d
+Subject: What's cooking in git.git (Jul 2022, #04; Wed, 13)
+X-master-at: 4e2a4d1dd44367d7783f33b169698f2930ff13c0
+X-next-at: 683cc31c60e2f21e9eb1dfeb04c5b8ef1ab1459d
 
-What's cooking in git.git (Jul 2022, #03; Mon, 11)
+What's cooking in git.git (Jul 2022, #04; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -45,163 +45,203 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/bitmap-format-doc (2022-06-16) 3 commits
-  (merged to 'next' on 2022-06-16 at 5591d11601)
- + bitmap-format.txt: add information for trailing checksum
- + bitmap-format.txt: fix some formatting issues
- + bitmap-format.txt: feed the file to asciidoc to generate html
+* ab/test-quoting-fix (2022-06-30) 3 commits
+  (merged to 'next' on 2022-07-06 at 0aa78fd9db)
+ + config tests: fix harmless but broken "rm -r" cleanup
+ + test-lib.sh: fix prepend_var() quoting issue
+ + tests: add missing double quotes to included library paths
 
- Adjust technical/bitmap-format to be formatted by AsciiDoc, and
- add some missing information to the documentation.
- source: <pull.1246.v4.git.1655355834.gitgitgadget@gmail.com>
-
-
-* cr/setup-bug-typo (2022-06-17) 1 commit
-  (merged to 'next' on 2022-06-17 at 8834ffe0ab)
- + setup: fix function name in a BUG() message
-
- Typofix in a BUG() message.
- source: <pull.1255.git.1654782920256.gitgitgadget@gmail.com>
+ Fixes for tests when the source directory has unusual characters in
+ its path, e.g. whitespaces, double-quotes, etc.
+ source: <cover-v2-0.3-00000000000-20220630T101646Z-avarab@gmail.com>
 
 
-* ds/branch-checked-out (2022-06-21) 7 commits
-  (merged to 'next' on 2022-06-21 at e42bc4566f)
- + branch: drop unused worktrees variable
- + fetch: stop passing around unused worktrees variable
-  (merged to 'next' on 2022-06-17 at c881874257)
- + branch: fix branch_checked_out() leaks
- + branch: use branch_checked_out() when deleting refs
- + fetch: use new branch_checked_out() and add tests
- + branch: check for bisects and rebases
- + branch: add branch_checked_out() helper
- (this branch is used by ds/rebase-update-ref.)
+* cl/grep-max-count (2022-06-22) 1 commit
+  (merged to 'next' on 2022-07-08 at 646199ab4c)
+ + grep: add --max-count command line option
 
- Introduce a helper to see if a branch is already being worked on
- (hence should not be newly checked out in a working tree), which
- performs much better than the existing find_shared_symref() to
- replace many uses of the latter.
- source: <pull.1254.v2.git.1655234853.gitgitgadget@gmail.com>
+ "git grep -m<max-hits>" is a way to limit the hits shown per file.
+ source: <pull.1278.v4.git.git.1655927252899.gitgitgadget@gmail.com>
 
 
-* ds/vscode-settings (2022-06-27) 1 commit
-  (merged to 'next' on 2022-07-02 at fcbd2e7aca)
- + vscode: improve tab size and wrapping
+* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
+  (merged to 'next' on 2022-07-08 at 6f639750a1)
+ + i18n: mark message helpers prefix for translation
 
- Will merge to 'master'.
- source: <pull.1271.git.1656354587496.gitgitgadget@gmail.com>
-
-
-* jk/optim-promisor-object-enumeration (2022-06-16) 1 commit
-  (merged to 'next' on 2022-06-16 at ce0712a74c)
- + is_promisor_object(): walk promisor packs in pack-order
-
- Collection of what is referenced by objects in promisor packs have
- been optimized to inspect these objects in the in-pack order.
- source: <YqrTsbXbEjx0Pabn@coredump.intra.peff.net>
+ Give _() markings to fatal/warning/usage: labels that are shown in
+ front of these messages.
+ source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
 
 
-* jk/revisions-doc-markup-fix (2022-06-22) 1 commit
-  (merged to 'next' on 2022-07-02 at e25dbe8cfb)
- + revisions.txt: escape "..." to avoid asciidoc horizontal ellipsis
+* ds/git-rebase-doc-markup (2022-06-30) 1 commit
+  (merged to 'next' on 2022-07-08 at 24a0b80b71)
+ + git-rebase.txt: use back-ticks consistently
 
- Documentation mark-up fix.
- source: <YrOmsA04FZae89be@coredump.intra.peff.net>
-
-
-* pb/diff-doc-raw-format (2022-06-13) 3 commits
-  (merged to 'next' on 2022-07-02 at 198480cbc6)
- + diff-index.txt: update raw output format in examples
- + diff-format.txt: correct misleading wording
- + diff-format.txt: dst can be 0* SHA-1 when path is deleted, too
-
- Update "git diff/log --raw" format documentation.
- source: <pull.1259.git.1655123383.gitgitgadget@gmail.com>
+ References to commands-to-be-typed-literally in "git rebase"
+ documentation mark-up have been corrected.
+ source: <pull.1270.v3.git.1656508868146.gitgitgadget@gmail.com>
 
 
-* rs/archive-with-internal-gzip (2022-06-15) 6 commits
-  (merged to 'next' on 2022-06-17 at ab5af6acd1)
- + archive-tar: use internal gzip by default
- + archive-tar: use OS_CODE 3 (Unix) for internal gzip
- + archive-tar: add internal gzip implementation
- + archive-tar: factor out write_block()
- + archive: rename archiver data field to filter_command
- + archive: update format documentation
+* ds/t5510-brokequote (2022-06-21) 1 commit
+  (merged to 'next' on 2022-07-06 at 2776bed385)
+ + t5510: replace 'origin' with URL more carefully
 
- Teach "git archive" to (optionally and then by default) avoid
- spawning an external "gzip" process when creating ".tar.gz" (and
- ".tgz") archives.
- source: <9df761c3-355a-ede9-7971-b32687fe9abb@web.de>
+ Test fix.
+ source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
 
 
-* rs/combine-diff-with-incompatible-options (2022-06-21) 2 commits
-  (merged to 'next' on 2022-07-02 at 0fe8b80a3e)
- + combine-diff: abort if --output is given
- + combine-diff: abort if --ignore-matching-lines is given
+* en/t6429-test-must-be-empty-fix (2022-06-30) 1 commit
+  (merged to 'next' on 2022-07-06 at 627c51773c)
+ + t6429: fix use of non-existent function
 
- Certain diff options are currently ignored when combined-diff is
- shown; mark them as incompatible with the feature.
- source: <220524.86v8tuvfl1.gmgdl@evledraar.gmail.com>
+ A test fix.
+ source: <pull.1276.git.1656652799863.gitgitgadget@gmail.com>
+
+
+* jk/remote-show-with-negative-refspecs (2022-06-17) 1 commit
+  (merged to 'next' on 2022-07-08 at d4e49ad22a)
+ + remote: handle negative refspecs in git remote show
+ (this branch is used by jk/t5505-restructure.)
+
+ "git remote show [-n] frotz" now pays attention to negative
+ pathspec.
+ source: <20220617002036.1577-2-jacob.keller@gmail.com>
+
+
+* ll/ls-files-tests-update (2022-07-06) 1 commit
+  (merged to 'next' on 2022-07-06 at 444d1eabd0)
+ + ls-files: update test style
+
+ Test update.
+ source: <pull.1269.v6.git.1656863349926.gitgitgadget@gmail.com>
+
+
+* ro/mktree-allow-missing-fix (2022-06-21) 1 commit
+  (merged to 'next' on 2022-07-08 at 599ed6fb84)
+ + mktree: do not check type of remote objects
+
+ "git mktree --missing" lazily fetched objects that are missing from
+ the local object store, which was totally unnecessary for the purpose
+ of creating the tree object(s) from its input.
+ source: <748f39a9-65aa-2110-cf92-7ddf81b5f507@roku.com>
+
+
+* tb/pack-objects-remove-pahole-comment (2022-06-28) 1 commit
+  (merged to 'next' on 2022-07-06 at d7494fbdef)
+ + pack-objects.h: remove outdated pahole results
+
+ Comment fix.
+ source: <1379af2e9d271b501ef3942398e7f159a9c77973.1656440978.git.me@ttaylorr.com>
+
+
+* tk/rev-parse-doc-clarify-at-u (2022-06-23) 1 commit
+  (merged to 'next' on 2022-07-08 at 1075452f32)
+ + rev-parse: documentation adjustment - mention remote tracking with @{u}
+
+ Doc update.
+ source: <pull.1265.v2.git.1655960512385.gitgitgadget@gmail.com>
+
+
+* zk/push-use-bitmaps (2022-06-17) 1 commit
+  (merged to 'next' on 2022-07-08 at 8aa1f94fad)
+ + send-pack.c: add config push.useBitmaps
+
+ "git push" sometimes perform poorly when reachability bitmaps are
+ used, even in a repository where other operations are helped by
+ bitmaps.  The push.useBitmaps configuration variable is introduced
+ to allow disabling use of reachability bitmaps only for "git push".
+ source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* po/doc-add-renormalize (2022-07-09) 1 commit
- - doc add: renormalize is not idempotent for CRCRLF
+* jk/diff-files-cleanup-fix (2022-07-12) 1 commit
+  (merged to 'next' on 2022-07-13 at 9db5235d01)
+ + diff-files: move misplaced cleanup label
 
- Documentation for "git add --renormalize" has been improved.
-
- Will merge to 'next'?
- source: <d3b8ed97a105ea1d7e656c964b7eee378e11ede6.1657385781.git.gitgitgadget@gmail.com>
-
-
-* po/glossary-around-traversal (2022-07-09) 3 commits
- - glossary: add reachability bitmap description
- - glossary: add commit graph description
- - glossary: add Object DataBase (ODB) abbreviation
-
- The glossary entries for "commit-graph file" and "reachability
- bitmap" have been added.
-
- Will merge to 'next'?
- source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
-
-
-* rs/cocci-array-copy (2022-07-10) 1 commit
- - cocci: avoid normalization rules for memcpy
-
- A coccinelle rule (in contrib/) to encourage use of COPY_ARRAY
- macro has been improved.
-
- Will merge to 'next'.
- source: <ded153d4-4aea-d4da-11cb-ec66d181e4c9@web.de>
-
-
-* sg/multi-pack-index-parse-options-fix (2022-07-10) 1 commit
-  (merged to 'next' on 2022-07-11 at 1e14685680)
- + multi-pack-index: simplify handling of unknown --options
-
- The way "git multi-pack" uses parse-options API has been improved.
+ An earlier attempt to plug leaks placed a clean-up label to jump to
+ at a bogus place, which as been corrected.
 
  Will merge to 'master'.
- source: <20220710151645.GA2038@szeder.dev>
+ source: <Ys0c0ePxPOqZ/5ck@coredump.intra.peff.net>
 
 
-* jk/ref-filter-discard-commit-buffer (2022-07-11) 1 commit
- - ref-filter: disable save_commit_buffer while traversing
+* cw/submodule-merge-messages (2022-07-13) 1 commit
+ - submodule merge: update conflict error message
 
- source: <Ysw4JtoHW1vWmqhz@coredump.intra.peff.net>
+ Update the message given when "git merge" sees conflicts at a path
+ with a submodule while merging a superproject.
+
+ Needs review.
+ source: <20220712231935.2979727-1-calvinwan@google.com>
+
+
+* ds/doc-allowlist (2022-07-13) 3 commits
+ - *: use allowlist and denylist
+ - t/*: use allowlist
+ - Documentation: use allowlist and denylist
+
+ Mechanical replacement of s/whitelist/allowlist/.
+
+ Expecting a reroll.
+ source: <pull.1274.git.1657718450.gitgitgadget@gmail.com>
+
+
+* js/vimdiff-quotepath-fix (2022-07-13) 2 commits
+ - SQUASH???
+ - mergetool(vimdiff): allow paths to contain spaces again
+
+ Variable quoting fix in the vimdiff driver of "git mergetool"
+
+ Expecting a reroll.
+ cf. <xmqqa69cabhq.fsf@gitster.g>
+ source: <pull.1287.git.1657726969774.gitgitgadget@gmail.com>
+
+
+* mt/checkout-count-fix (2022-07-13) 3 commits
+ - checkout: fix two bugs on the final count of updated entries
+ - checkout: show bug about failed entries being included in final report
+ - checkout: document bug where delayed checkout counts entries twice
+
+ "git checkout" miscounted the paths it updated, which has been
+ corrected.
+
+ Will merge to 'next'?
+ source: <cover.1657685948.git.matheus.bernardino@usp.br>
+
+
+* tb/commit-graph-genv2-upgrade-fix (2022-07-13) 3 commits
+ - commit-graph: fix corrupt upgrade from generation v1 to v2
+ - commit-graph: introduce `repo_find_commit_pos_in_graph()`
+ - t5318: demonstrate commit-graph generation v2 corruption
+
+ There was a bug in the codepath to upgrade generation information
+ in commit-graph from v1 to v2 format, which has been corrected.
+
+ Needs review.
+ source: <cover.1657667404.git.me@ttaylorr.com>
+
+
+* js/safe-directory-plus (2022-07-13) 3 commits
+ - mingw: be more informative when ownership check fails on FAT32
+ - mingw: handle a file owned by the Administrators group correctly
+ - Allow debugging unsafe directories' ownership
+
+ Needs review.
+ source: <pull.1286.git.1657700238.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
 
 * ll/curl-accept-language (2022-07-11) 1 commit
- - remote-curl: send Accept-Language header to server
+  (merged to 'next' on 2022-07-13 at 076aba7421)
+ + remote-curl: send Accept-Language header to server
 
  Earlier, HTTP transport clients learned to tell the server side
  what locale they are in by sending Accept-Language HTTP header, but
  this was done only for some requests but not others.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1251.v4.git.1657519134336.gitgitgadget@gmail.com>
 
 
@@ -240,6 +280,58 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* po/doc-add-renormalize (2022-07-09) 1 commit
+ - doc add: renormalize is not idempotent for CRCRLF
+
+ Documentation for "git add --renormalize" has been improved.
+
+ Expecting a reroll.
+ cf. <dfe0c1ab-33f8-f13e-71ce-1829bb0d2d7f@iee.email>
+ source: <d3b8ed97a105ea1d7e656c964b7eee378e11ede6.1657385781.git.gitgitgadget@gmail.com>
+
+
+* po/glossary-around-traversal (2022-07-09) 3 commits
+ - glossary: add reachability bitmap description
+ - glossary: add commit graph description
+ - glossary: add Object DataBase (ODB) abbreviation
+
+ The glossary entries for "commit-graph file" and "reachability
+ bitmap" have been added.
+
+ Expecting a reroll.
+ cf. <dfe0c1ab-33f8-f13e-71ce-1829bb0d2d7f@iee.email>
+ source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
+
+
+* rs/cocci-array-copy (2022-07-10) 1 commit
+  (merged to 'next' on 2022-07-13 at f21dec0f71)
+ + cocci: avoid normalization rules for memcpy
+
+ A coccinelle rule (in contrib/) to encourage use of COPY_ARRAY
+ macro has been improved.
+
+ Will merge to 'master'.
+ source: <ded153d4-4aea-d4da-11cb-ec66d181e4c9@web.de>
+
+
+* sg/multi-pack-index-parse-options-fix (2022-07-10) 1 commit
+  (merged to 'next' on 2022-07-11 at 1e14685680)
+ + multi-pack-index: simplify handling of unknown --options
+
+ The way "git multi-pack" uses parse-options API has been improved.
+
+ Will merge to 'master'.
+ source: <20220710151645.GA2038@szeder.dev>
+
+
+* jk/ref-filter-discard-commit-buffer (2022-07-11) 1 commit
+  (merged to 'next' on 2022-07-13 at d1521724db)
+ + ref-filter: disable save_commit_buffer while traversing
+
+ Will merge to 'master'.
+ source: <Ysw4JtoHW1vWmqhz@coredump.intra.peff.net>
+
+
 * ab/cocci-unused (2022-07-06) 6 commits
   (merged to 'next' on 2022-07-11 at 7fa60d2a5b)
  + cocci: generalize "unused" rule to cover more than "strbuf"
@@ -259,18 +351,18 @@ Release tarballs are available at:
 
 
 * jk/clone-unborn-confusion (2022-07-11) 4 commits
- - clone: move unborn head creation to update_head()
- - clone: use remote branch if it matches default HEAD
- - clone: propagate empty remote HEAD even with other branches
- - clone: drop extra newline from warning message
+  (merged to 'next' on 2022-07-13 at a7ae8cb4b5)
+ + clone: move unborn head creation to update_head()
+ + clone: use remote branch if it matches default HEAD
+ + clone: propagate empty remote HEAD even with other branches
+ + clone: drop extra newline from warning message
 
  "git clone" from a repository with some ref whose HEAD is unborn
  did not set the HEAD in the resulting repository correctly, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <YsdyLS4UFzj0j/wB@coredump.intra.peff.net>
- source: <YsvrsOH1jg559yVt@coredump.intra.peff.net>
 
 
 * ac/bitmap-lookup-table (2022-07-06) 6 commits
@@ -284,7 +376,8 @@ Release tarballs are available at:
  The pack bitmap file gained a bitmap-lookup table to speed up
  locating the necessary bitmap for a given commit.
 
- Will merge to 'next'?
+ Waiting for a more thorough review.
+ cf. <Ys4DjW9JjQFx5Bhb@nand.local>
  source: <pull.1266.v3.git.1656924376.gitgitgadget@gmail.com>
 
 
@@ -331,7 +424,7 @@ Release tarballs are available at:
  source: <pull.1285.git.git.1657267260405.gitgitgadget@gmail.com>
 
 
-* sa/cat-file-mailmap (2022-07-09) 4 commits
+* sa/cat-file-mailmap (2022-07-13) 4 commits
  - cat-file: add mailmap support
  - ident: rename commit_rewrite_person() to apply_mailmap_to_header()
  - ident: move commit_rewrite_person() to ident.c
@@ -339,7 +432,9 @@ Release tarballs are available at:
 
  "git cat-file" learned an option to use the mailmap when showing
  commit and tag objects.
- source: <20220709154149.165524-1-siddharthasthana31@gmail.com>
+
+ Will merge to 'next'?
+ source: <20220712160634.213956-1-siddharthasthana31@gmail.com>
 
 
 * fr/vimdiff-layout-fix (2022-07-08) 1 commit
@@ -353,19 +448,11 @@ Release tarballs are available at:
  source: <20220708181024.45839-1-greenfoo@u92.eu>
 
 
-* ds/git-rebase-doc-markup (2022-06-30) 1 commit
-  (merged to 'next' on 2022-07-08 at 24a0b80b71)
- + git-rebase.txt: use back-ticks consistently
-
- References to commands-to-be-typed-literally in "git rebase"
- documentation mark-up have been corrected.
-
- Will merge to 'master'.
- source: <pull.1270.v3.git.1656508868146.gitgitgadget@gmail.com>
-
-
-* ds/rebase-update-ref (2022-06-28) 8 commits
+* ds/rebase-update-ref (2022-07-12) 13 commits
+ - sequencer: notify user of --update-refs activity
+ - sequencer: ignore HEAD ref under --update-refs
  - rebase: add rebase.updateRefs config option
+ - sequencer: rewrite update-refs as user edits todo list
  - rebase: update refs from 'update-ref' commands
  - rebase: add --update-refs option
  - sequencer: add update-ref command
@@ -373,23 +460,15 @@ Release tarballs are available at:
  - rebase-interactive: update 'merge' description
  - branch: consider refs under 'update-refs'
  - t2407: test branches currently using apply backend
+ - t2407: test bisect and rebase as black-boxes
+ - Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
 
  "git rebase -i" learns to update branches whose tip appear in the
  rebased range.
 
  Expecting a reroll.
  cf. <15631ea2-6722-fd24-c8a6-0cee638b0602@github.com>
- source: <pull.1247.v3.git.1656422759.gitgitgadget@gmail.com>
-
-
-* tb/pack-objects-remove-pahole-comment (2022-06-28) 1 commit
-  (merged to 'next' on 2022-07-06 at d7494fbdef)
- + pack-objects.h: remove outdated pahole results
-
- Comment fix.
-
- Will merge to 'master'.
- source: <1379af2e9d271b501ef3942398e7f159a9c77973.1656440978.git.me@ttaylorr.com>
+ source: <pull.1247.v4.git.1657631225.gitgitgadget@gmail.com>
 
 
 * ab/leakfix (2022-07-01) 11 commits
@@ -430,16 +509,6 @@ Release tarballs are available at:
  source: <cover-v2-0.9-00000000000-20220701T103503Z-avarab@gmail.com>
 
 
-* en/t6429-test-must-be-empty-fix (2022-06-30) 1 commit
-  (merged to 'next' on 2022-07-06 at 627c51773c)
- + t6429: fix use of non-existent function
-
- A test fix.
-
- Will merge to 'master'.
- source: <pull.1276.git.1656652799863.gitgitgadget@gmail.com>
-
-
 * gc/submodule-use-super-prefix (2022-06-30) 8 commits
   (merged to 'next' on 2022-07-11 at 0d9cf172f9)
  + submodule--helper: remove display path helper
@@ -458,7 +527,9 @@ Release tarballs are available at:
  source: <20220701021157.88858-1-chooglen@google.com>
 
 
-* hx/lookup-commit-in-graph-fix (2022-06-30) 1 commit
+* hx/lookup-commit-in-graph-fix (2022-07-12) 2 commits
+  (merged to 'next' on 2022-07-13 at 4489696814)
+ + t5330: remove run_with_limited_processses()
   (merged to 'next' on 2022-07-08 at cef32db0b6)
  + commit-graph.c: no lazy fetch in lookup_commit_in_graph()
 
@@ -466,17 +537,7 @@ Release tarballs are available at:
  remote resulted in infinite recursion has been corrected.
 
  Will merge to 'master'.
- source: <96d4bb71505d87ed501c058bbd89bfc13d08b24a.1656593279.git.hanxin.hx@bytedance.com>
-
-
-* ll/ls-files-tests-update (2022-07-06) 1 commit
-  (merged to 'next' on 2022-07-06 at 444d1eabd0)
- + ls-files: update test style
-
- Test update.
-
- Will merge to 'master'.
- source: <pull.1269.v6.git.1656863349926.gitgitgadget@gmail.com>
+ source: <cover.1656593279.git.hanxin.hx@bytedance.com>
 
 
 * pw/xdiff-alloc (2022-07-08) 4 commits
@@ -522,26 +583,6 @@ Release tarballs are available at:
  source: <patch-v2-1.1-a1fc37de947-20220630T084607Z-avarab@gmail.com>
 
 
-* cl/grep-max-count (2022-06-22) 1 commit
-  (merged to 'next' on 2022-07-08 at 646199ab4c)
- + grep: add --max-count command line option
-
- "git grep -m<max-hits>" is a way to limit the hits shown per file.
-
- Will merge to 'master'.
- source: <pull.1278.v4.git.git.1655927252899.gitgitgadget@gmail.com>
-
-
-* tk/rev-parse-doc-clarify-at-u (2022-06-23) 1 commit
-  (merged to 'next' on 2022-07-08 at 1075452f32)
- + rev-parse: documentation adjustment - mention remote tracking with @{u}
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1265.v2.git.1655960512385.gitgitgadget@gmail.com>
-
-
 * en/merge-tree (2022-06-22) 17 commits
   (merged to 'next' on 2022-07-08 at a29b4896ab)
  + git-merge-tree.txt: add a section on potentional usage mistakes
@@ -569,27 +610,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1122.v7.git.1655511660.gitgitgadget@gmail.com>
-
-
-* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-08 at 6f639750a1)
- + i18n: mark message helpers prefix for translation
-
- Give _() markings to fatal/warning/usage: labels that are shown in
- front of these messages.
-
- Will merge to 'master'.
- source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
-
-
-* ds/t5510-brokequote (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-06 at 2776bed385)
- + t5510: replace 'origin' with URL more carefully
-
- Test fix.
-
- Will merge to 'master'.
- source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
 
 
 * en/merge-restore-to-pristine (2022-06-21) 6 commits
@@ -620,27 +640,13 @@ Release tarballs are available at:
  source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
 
 
-* zh/ls-files-format (2022-07-11) 1 commit
+* zh/ls-files-format (2022-07-13) 1 commit
  - ls-files: introduce "--format" option
 
  "git ls-files" learns the "--format" option to tweak its output.
 
- Getting closer to finish?
- cf. <xmqqleszl2p0.fsf@gitster.g>
- source: <pull.1262.v6.git.1657558435532.gitgitgadget@gmail.com>
-
-
-* ab/test-quoting-fix (2022-06-30) 3 commits
-  (merged to 'next' on 2022-07-06 at 0aa78fd9db)
- + config tests: fix harmless but broken "rm -r" cleanup
- + test-lib.sh: fix prepend_var() quoting issue
- + tests: add missing double quotes to included library paths
-
- Fixes for tests when the source directory has unusual characters in
- its path, e.g. whitespaces, double-quotes, etc.
-
- Will merge to 'master'.
- source: <cover-v2-0.3-00000000000-20220630T101646Z-avarab@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1262.v7.git.1657692472994.gitgitgadget@gmail.com>
 
 
 * en/merge-dual-dir-renames-fix (2022-07-06) 5 commits
@@ -658,48 +664,11 @@ Release tarballs are available at:
  source: <pull.1268.v4.git.1656984823.gitgitgadget@gmail.com>
 
 
-* zk/push-use-bitmaps (2022-06-17) 1 commit
-  (merged to 'next' on 2022-07-08 at 8aa1f94fad)
- + send-pack.c: add config push.useBitmaps
-
- "git push" sometimes perform poorly when reachability bitmaps are
- used, even in a repository where other operations are helped by
- bitmaps.  The push.useBitmaps configuration variable is introduced
- to allow disabling use of reachability bitmaps only for "git push".
-
- Will merge to 'master'.
- source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
-
-
-* jk/remote-show-with-negative-refspecs (2022-06-17) 1 commit
-  (merged to 'next' on 2022-07-08 at d4e49ad22a)
- + remote: handle negative refspecs in git remote show
- (this branch is used by jk/t5505-restructure.)
-
- "git remote show [-n] frotz" now pays attention to negative
- pathspecs.
-
- Will merge to 'master'.
- source: <20220617002036.1577-2-jacob.keller@gmail.com>
-
-
 * js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
  - commit-graph: refactor to avoid prepare_repo_settings
 
  Expecting a reroll.
  source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
-
-
-* ro/mktree-allow-missing-fix (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-08 at 599ed6fb84)
- + mktree: do not check type of remote objects
-
- "git mktree --missing" lazily fetched objects that are missing from
- the local object store, which was totally unnecessary for the purpose
- of creating the tree object(s) from its input.
-
- Will merge to 'master'.
- source: <748f39a9-65aa-2110-cf92-7ddf81b5f507@roku.com>
 
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
@@ -738,15 +707,16 @@ Release tarballs are available at:
 
 
 * jc/resolve-undo (2022-07-11) 2 commits
- - fsck: do not dereference NULL while checking resolve-undo data
+  (merged to 'next' on 2022-07-13 at b9ef9482e8)
+ + fsck: do not dereference NULL while checking resolve-undo data
   (merged to 'next' on 2022-06-15 at c195e5a2d9)
  + revision: mark blobs needed for resolve-undo as reachable
 
  The resolve-undo information in the index was not protected against
  GC, which has been corrected.
 
- Will merge to 'next'.
- source: <xmqqfskdieqz.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <xmqq35f7kzad.fsf@gitster.g>
 
 
 * ab/build-gitweb (2022-06-28) 8 commits
@@ -861,7 +831,8 @@ Release tarballs are available at:
  Introduce a discovery.barerepository configuration variable that
  allows users to forbid discovery of bare repositories.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <kl6lpmia55ys.fsf@chooglen-macbookpro.roam.corp.google.com>
  source: <pull.1261.v7.git.git.1657234914.gitgitgadget@gmail.com>
 
 
