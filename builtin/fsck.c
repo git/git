@@ -784,6 +784,7 @@ static int fsck_resolve_undo(struct index_state *istate)
 				error(_("%s: invalid sha1 pointer in resolve-undo"),
 				      oid_to_hex(&ru->oid[i]));
 				errors_found |= ERROR_REFS;
+				continue;
 			}
 			obj->flags |= USED;
 			fsck_put_object_name(&fsck_walk_options, &ru->oid[i],
