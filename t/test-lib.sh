@@ -57,14 +57,14 @@ fi
 #
 #	prepend_var VAR : VALUE
 prepend_var () {
-	eval "$1=$3\${$1:+${3:+$2}\$$1}"
+	eval "$1=\"$3\${$1:+${3:+$2}\$$1}\""
 }
 
 # If [AL]SAN is in effect we want to abort so that we notice
 # problems. The GIT_SAN_OPTIONS variable can be used to set common
 # defaults shared between [AL]SAN_OPTIONS.
 prepend_var GIT_SAN_OPTIONS : abort_on_error=1
-prepend_var GIT_SAN_OPTIONS : strip_path_prefix=\"$GIT_BUILD_DIR/\"
+prepend_var GIT_SAN_OPTIONS : strip_path_prefix="$GIT_BUILD_DIR/"
 
 # If we were built with ASAN, it may complain about leaks
 # of program-lifetime variables. Disable it by default to lower
