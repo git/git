@@ -96,19 +96,16 @@ some output processing may assume ref names in UTF-8.
   before the current one.
 
 '[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
-  The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
-  refers to the branch that the branch specified by branchname is set to build on
-  top of (configured with `branch.<name>.remote` and
-  `branch.<name>.merge`).  A missing branchname defaults to the
-  current one. These suffixes are also accepted when spelled in uppercase, and
-  they mean the same thing no matter the case.
+  A branch B may be set up to build on top of a branch X (configured with
+  `branch.<name>.merge`) at a remote R (configured with
+  `branch.<name>.remote`). B@{u} refers to the remote-tracking branch for
+  the branch X taken from remote R, typically found at `refs/remotes/R/X`.
 
 '[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
-  `HEAD` if no branchname is specified). Since our push destination is
-  in a remote repository, of course, we report the local tracking branch
-  that corresponds to that branch (i.e., something in `refs/remotes/`).
+  `HEAD` if no branchname is specified). Like for '@\{upstream\}', we report
+  the remote-tracking branch that corresponds to that branch at the remote.
 +
 Here's an example to make it more clear:
 +
