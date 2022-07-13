@@ -607,7 +607,7 @@ static void update_remote_refs(const struct ref *refs,
 }
 
 static void update_head(const struct ref *our, const struct ref *remote,
-			const char *msg)
+			const char *unborn, const char *msg)
 {
 	const char *head;
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
@@ -633,6 +633,15 @@ static void update_head(const struct ref *our, const struct ref *remote,
 		 */
 		update_ref(msg, "HEAD", &remote->old_oid, NULL, REF_NO_DEREF,
 			   UPDATE_REFS_DIE_ON_ERR);
+	} else if (unborn && skip_prefix(unborn, "refs/heads/", &head)) {
+		/*
+		 * Unborn head from remote; same as "our" case above except
+		 * that we have no ref to update.
+		 */
+		if (create_symref("HEAD", unborn, NULL) < 0)
+			die(_("unable to update HEAD"));
+		if (!option_bare)
+			install_branch_config(0, head, remote_name, unborn);
 	}
 }
 
@@ -673,7 +682,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 	head = resolve_refdup("HEAD", RESOLVE_REF_READING, &oid, NULL);
 	if (!head) {
 		warning(_("remote HEAD refers to nonexistent ref, "
-			  "unable to checkout.\n"));
+			  "unable to checkout"));
 		return 0;
 	}
 	if (!strcmp(head, "HEAD")) {
@@ -877,6 +886,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const struct ref *refs, *remote_head;
 	struct ref *remote_head_points_at = NULL;
 	const struct ref *our_head_points_at;
+	char *unborn_head = NULL;
 	struct ref *mapped_refs = NULL;
 	const struct ref *ref;
 	struct strbuf key = STRBUF_INIT;
@@ -1267,51 +1277,49 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			if (transport_fetch_refs(transport, mapped_refs))
 				die(_("remote transport reported error"));
 		}
-
-		remote_head = find_ref_by_name(refs, "HEAD");
-		remote_head_points_at =
-			guess_remote_head(remote_head, mapped_refs, 0);
-
-		if (option_branch) {
-			our_head_points_at =
-				find_remote_branch(mapped_refs, option_branch);
-
-			if (!our_head_points_at)
-				die(_("Remote branch %s not found in upstream %s"),
-				    option_branch, remote_name);
-		}
-		else
-			our_head_points_at = remote_head_points_at;
 	}
-	else {
-		const char *branch;
-		const char *ref;
-		char *ref_free = NULL;
 
-		if (option_branch)
+	remote_head = find_ref_by_name(refs, "HEAD");
+	remote_head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
+
+	if (option_branch) {
+		our_head_points_at = find_remote_branch(mapped_refs, option_branch);
+		if (!our_head_points_at)
 			die(_("Remote branch %s not found in upstream %s"),
-					option_branch, remote_name);
-
-		warning(_("You appear to have cloned an empty repository."));
+			    option_branch, remote_name);
+	} else if (remote_head_points_at) {
+		our_head_points_at = remote_head_points_at;
+	} else if (remote_head) {
 		our_head_points_at = NULL;
-		remote_head_points_at = NULL;
-		remote_head = NULL;
-		option_no_checkout = 1;
+	} else {
+		const char *branch;
+
+		if (!mapped_refs) {
+			warning(_("You appear to have cloned an empty repository."));
+			option_no_checkout = 1;
+		}
 
 		if (transport_ls_refs_options.unborn_head_target &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
-			ref = transport_ls_refs_options.unborn_head_target;
-			create_symref("HEAD", ref, reflog_msg.buf);
+			unborn_head  = xstrdup(transport_ls_refs_options.unborn_head_target);
 		} else {
 			branch = git_default_branch_name(0);
-			ref_free = xstrfmt("refs/heads/%s", branch);
-			ref = ref_free;
+			unborn_head = xstrfmt("refs/heads/%s", branch);
 		}
 
-		if (!option_bare)
-			install_branch_config(0, branch, remote_name, ref);
-		free(ref_free);
+		/*
+		 * We may have selected a local default branch name "foo",
+		 * and even though the remote's HEAD does not point there,
+		 * it may still have a "foo" branch. If so, set it up so
+		 * that we can follow the usual checkout code later.
+		 *
+		 * Note that for an empty repo we'll already have set
+		 * option_no_checkout above, which would work against us here.
+		 * But for an empty repo, find_remote_branch() can never find
+		 * a match.
+		 */
+		our_head_points_at = find_remote_branch(mapped_refs, branch);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,
@@ -1331,7 +1339,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			   branch_top.buf, reflog_msg.buf, transport,
 			   !is_local);
 
-	update_head(our_head_points_at, remote_head, reflog_msg.buf);
+	update_head(our_head_points_at, remote_head, unborn_head, reflog_msg.buf);
 
 	/*
 	 * We want to show progress for recursive submodule clones iff
@@ -1358,6 +1366,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&key);
 	free_refs(mapped_refs);
 	free_refs(remote_head_points_at);
+	free(unborn_head);
 	free(dir);
 	free(path);
 	UNLEAK(repo);
