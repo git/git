@@ -57,15 +57,6 @@ die_with_status () {
 	exit "$status"
 }
 
-GIT_QUIET=
-
-say () {
-	if test -z "$GIT_QUIET"
-	then
-		printf '%s\n' "$*"
-	fi
-}
-
 if test -n "$OPTIONS_SPEC"; then
 	usage() {
 		"$0" -h
@@ -283,13 +274,6 @@ get_author_ident_from_commit () {
 	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	parse_ident_from_commit author AUTHOR
-}
-
-# Clear repo-local GIT_* environment variables. Useful when switching to
-# another repository (e.g. when entering a submodule). See also the env
-# list in git_connect()
-clear_local_git_env() {
-	unset $(git rev-parse --local-env-vars)
 }
 
 # Generate a virtual base file for a two-file merge. Uses git apply to
