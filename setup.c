@@ -10,6 +10,10 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 static int work_tree_config_is_bogus;
+enum allowed_bare_repo {
+	ALLOWED_BARE_REPO_EXPLICIT = 0,
+	ALLOWED_BARE_REPO_ALL,
+};
 
 static struct startup_info the_startup_info;
 struct startup_info *startup_info = &the_startup_info;
@@ -1160,6 +1164,46 @@ static int ensure_valid_ownership(const char *gitfile,
 	return data.is_safe;
 }
 
+static int allowed_bare_repo_cb(const char *key, const char *value, void *d)
+{
+	enum allowed_bare_repo *allowed_bare_repo = d;
+
+	if (strcasecmp(key, "safe.bareRepository"))
+		return 0;
+
+	if (!strcmp(value, "explicit")) {
+		*allowed_bare_repo = ALLOWED_BARE_REPO_EXPLICIT;
+		return 0;
+	}
+	if (!strcmp(value, "all")) {
+		*allowed_bare_repo = ALLOWED_BARE_REPO_ALL;
+		return 0;
+	}
+	return -1;
+}
+
+static enum allowed_bare_repo get_allowed_bare_repo(void)
+{
+	enum allowed_bare_repo result = ALLOWED_BARE_REPO_ALL;
+	git_protected_config(allowed_bare_repo_cb, &result);
+	return result;
+}
+
+static const char *allowed_bare_repo_to_string(
+	enum allowed_bare_repo allowed_bare_repo)
+{
+	switch (allowed_bare_repo) {
+	case ALLOWED_BARE_REPO_EXPLICIT:
+		return "explicit";
+	case ALLOWED_BARE_REPO_ALL:
+		return "all";
+	default:
+		BUG("invalid allowed_bare_repo %d",
+		    allowed_bare_repo);
+	}
+	return NULL;
+}
+
 enum discovery_result {
 	GIT_DIR_NONE = 0,
 	GIT_DIR_EXPLICIT,
@@ -1169,7 +1213,8 @@ enum discovery_result {
 	GIT_DIR_HIT_CEILING = -1,
 	GIT_DIR_HIT_MOUNT_POINT = -2,
 	GIT_DIR_INVALID_GITFILE = -3,
-	GIT_DIR_INVALID_OWNERSHIP = -4
+	GIT_DIR_INVALID_OWNERSHIP = -4,
+	GIT_DIR_DISALLOWED_BARE = -5,
 };
 
 /*
@@ -1297,6 +1342,8 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		}
 
 		if (is_git_directory(dir->buf)) {
+			if (get_allowed_bare_repo() == ALLOWED_BARE_REPO_EXPLICIT)
+				return GIT_DIR_DISALLOWED_BARE;
 			if (!ensure_valid_ownership(NULL, NULL, dir->buf))
 				return GIT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(gitdir, ".");
@@ -1440,6 +1487,14 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			      "\n"
 			      "\tgit config --global --add safe.directory %s"),
 			    dir.buf, quoted.buf);
+		}
+		*nongit_ok = 1;
+		break;
+	case GIT_DIR_DISALLOWED_BARE:
+		if (!nongit_ok) {
+			die(_("cannot use bare repository '%s' (safe.bareRepository is '%s')"),
+			    dir.buf,
+			    allowed_bare_repo_to_string(get_allowed_bare_repo()));
 		}
 		*nongit_ok = 1;
 		break;
