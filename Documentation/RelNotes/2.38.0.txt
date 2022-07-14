@@ -13,12 +13,21 @@ UI, Workflows & Features
 
  * "git grep -m<max-hits>" is a way to limit the hits shown per file.
 
+ * "git merge-tree" learned a new mode where it takes two commits and
+   computes a tree that would result in the merge commit, if the
+   histories leading to these two commits were to be merged.
+
+ * "git mv A B" in a sparsely populated working tree can be asked to
+   move a path between directories that are "in cone" (i.e. expected
+   to be materialized in the working tree) and "out of cone"
+   (i.e. expected to be hidden).  The handling of such cases has been
+   improved.
+
 
 Performance, Internal Implementation, Development Support etc.
 
  * Collection of what is referenced by objects in promisor packs have
    been optimized to inspect these objects in the in-pack order.
-   (merge 18c08abc82 jk/optim-promisor-object-enumeration later to maint).
 
  * Introduce a helper to see if a branch is already being worked on
    (hence should not be newly checked out in a working tree), which
@@ -28,7 +37,13 @@ Performance, Internal Implementation, Development Support etc.
  * Teach "git archive" to (optionally and then by default) avoid
    spawning an external "gzip" process when creating ".tar.gz" (and
    ".tgz") archives.
-   (merge 4f4be00d30 rs/archive-with-internal-gzip later to maint).
+
+ * Allow large objects read from a packstream to be streamed into a
+   loose object file straight, without having to keep it in-core as a
+   whole.
+
+ * Further preparation to turn git-submodule.sh into a builtin
+   continues.
 
 
 Fixes since v2.37
@@ -62,6 +77,11 @@ Fixes since v2.37
  * References to commands-to-be-typed-literally in "git rebase"
    documentation mark-up have been corrected.
    (merge 54e51e559e ds/git-rebase-doc-markup later to maint).
+
+ * In a non-bare repository, the behavior of Git when the
+   core.worktree configuration variable points at a directory that has
+   a repository as its subdirectory, regressed in Git 2.27 days.
+   (merge d6c9a71755 gg/worktree-from-the-above later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
