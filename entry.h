@@ -43,8 +43,7 @@ static inline int checkout_entry(struct cache_entry *ce,
 }
 
 void enable_delayed_checkout(struct checkout *state);
-int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
-			    int show_progress);
+int finish_delayed_checkout(struct checkout *state, int show_progress);
 
 /*
  * Unlink the last component and schedule the leading directories for

@@ -1132,7 +1132,7 @@ do
 	'
 done
 
-test_expect_failure PERL 'delayed checkout correctly reports the number of updated entries' '
+test_expect_success PERL 'delayed checkout correctly reports the number of updated entries' '
 	rm -rf repo &&
 	git init repo &&
 	(

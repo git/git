@@ -230,7 +230,7 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 # check the final report including sequential, parallel, and delayed entries
 # all at the same time. So we must have finer control of the parallel checkout
 # variables.
-test_expect_failure PERL '"git checkout ." report should not include failed entries' '
+test_expect_success PERL '"git checkout ." report should not include failed entries' '
 	write_script rot13-filter.pl "$PERL_PATH" \
 		<"$TEST_DIRECTORY"/t0021/rot13-filter.pl &&
 
