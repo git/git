@@ -90,10 +90,7 @@ invocations. The automated message can include the branch description.
 If `--log` is specified, a shortlog of the commits being merged
 will be appended to the specified message.
 
---rerere-autoupdate::
---no-rerere-autoupdate::
-	Allow the rerere mechanism to update the index with the
-	result of auto-conflict resolution if possible.
+include::rerere-options.txt[]
 
 --overwrite-ignore::
 --no-overwrite-ignore::
