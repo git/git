@@ -1044,10 +1044,7 @@ char *mingw_mktemp(char *template)
 
 int mkstemp(char *template)
 {
-	char *filename = mktemp(template);
-	if (filename == NULL)
-		return -1;
-	return open(filename, O_RDWR | O_CREAT, 0600);
+	return git_mkstemp_mode(template, 0600);
 }
 
 int gettimeofday(struct timeval *tv, void *tz)
