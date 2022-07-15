@@ -25,3 +25,28 @@ Regardless of this setting, Git does not check for
 present-despite-skipped files unless sparse checkout is enabled, so
 this config option has no effect unless `core.sparseCheckout` is
 `true`.
+
+sparse.onlyCheckFilesMatchPatterns::
+    By Default with sparse checkouts, all files with SKIP_WORKTREE bit
+    in the index must check whether exists in the worktree. And Git will
+    expand all of that files in the index and must traverse recursively
+    in the worktree. This option can be used to tell Git that just check
+    files which can match the sparse-checkout patterns.
++
+The default is `false`, which allows Git to automatically recover
+from the list of files in the index and working tree falling out of
+sync.
++
+Set this to `true` if you just hope Git maintain the consistency
+between the presence of working tree files and sparsity patterns
+confining to which match the sparse-checkout patterns.For example,
+if you are using a visual file system in order to on-demand loading
+working tree lazily. It can control which directory should load by
+using sparse-checkout patterns. But it doesn't want to visit other
+directory which haven't been load but just have an empty directory
+for the entry of the file loading switch.
++
+Regardless of this setting, Git does not check for
+present-despite-skipped files unless sparse checkout is enabled, so
+this config option has no effect unless `core.sparseCheckout` is
+`true`.

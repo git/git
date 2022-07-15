@@ -1758,6 +1758,11 @@ static int git_default_sparse_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "sparse.onlycheckfilesmatchpatterns")) {
+		sparse_only_check_files_match_patterns = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config/sparse.txt. */
 	return 0;
 }

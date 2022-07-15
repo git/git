@@ -71,6 +71,56 @@ test_expect_success 'skip-worktree on files outside sparse patterns' '
 	test_cmp expect actual
 '
 
+test_expect_success 'skip-worktree on files only matched patterns. default' '
+	git clean -f . &&
+	git update-index  --refresh &&
+	git sparse-checkout disable &&
+	git sparse-checkout set --no-cone "a*" &&
+	test_config sparse.expectFilesOutsideOfPatterns false &&
+	git checkout-index --all --ignore-skip-worktree-bits &&
+
+	git ls-files -t >output &&
+	! grep ^S output >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'skip-worktree on files only matched patterns. b,c not in patterns' '
+	git clean -f . &&
+	git update-index  --refresh &&
+	git sparse-checkout disable &&
+	git sparse-checkout set --no-cone "a*" &&
+	test_config sparse.onlyCheckFilesMatchPatterns true &&
+	git checkout-index --all --ignore-skip-worktree-bits &&
+
+	git ls-files -t >output &&
+	cat <<-\EOF >expect &&
+	H a
+	S b
+	S c
+	EOF
+	test_cmp expect output >>actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'skip-worktree on files only matched patterns. file b in patterns c is not' '
+	git clean -f . &&
+	git update-index  --refresh &&
+	git sparse-checkout disable &&
+	git sparse-checkout set --no-cone "a*" &&
+	test_config sparse.onlyCheckFilesMatchPatterns true &&
+	echo "b*" >>.git/info/sparse-checkout &&
+	git checkout-index --all --ignore-skip-worktree-bits &&
+
+	git ls-files -t >output &&
+	cat <<-\EOF >expect &&
+	H a
+	H b
+	S c
+	EOF
+	test_cmp expect output >>actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'in partial clone, sparse checkout only fetches needed blobs' '
 	test_create_repo server &&
 	git clone "file://$(pwd)/server" client &&

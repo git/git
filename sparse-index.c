@@ -502,14 +502,21 @@ restart:
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 
-		if (ce_skip_worktree(ce) &&
-		    path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
-			if (S_ISSPARSEDIR(ce->ce_mode)) {
-				ensure_full_index(istate);
-				goto restart;
+		if (ce_skip_worktree(ce)) {
+			if (sparse_only_check_files_match_patterns &&
+			    !path_in_sparse_checkout(ce->name, istate)){
+				continue;
 			}
-			ce->ce_flags &= ~CE_SKIP_WORKTREE;
+
+			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
+				if (S_ISSPARSEDIR(ce->ce_mode)) {
+					ensure_full_index(istate);
+					goto restart;
+				}
+				ce->ce_flags &= ~CE_SKIP_WORKTREE;
+			}
 		}
+
 	}
 }
 
