@@ -8,10 +8,11 @@ static void *llist_merge(void *list, void *other,
 			 int (*compare_fn)(const void *, const void *))
 {
 	void *result = list, *tail;
+	int prefer_list = compare_fn(list, other) <= 0;
 
-	if (compare_fn(list, other) > 0) {
+	if (!prefer_list) {
 		result = other;
-		goto other;
+		SWAP(list, other);
 	}
 	for (;;) {
 		do {
@@ -21,18 +22,10 @@ static void *llist_merge(void *list, void *other,
 				set_next_fn(tail, other);
 				return result;
 			}
-		} while (compare_fn(list, other) <= 0);
+		} while (compare_fn(list, other) < prefer_list);
 		set_next_fn(tail, other);
-	other:
-		do {
-			tail = other;
-			other = get_next_fn(other);
-			if (!other) {
-				set_next_fn(tail, list);
-				return result;
-			}
-		} while (compare_fn(list, other) > 0);
-		set_next_fn(tail, list);
+		prefer_list ^= 1;
+		SWAP(list, other);
 	}
 }
 
