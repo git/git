@@ -207,9 +207,7 @@ struct ref *find_ref_by_name(const struct ref *list, const char *name);
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
-void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
 int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
-int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
 
