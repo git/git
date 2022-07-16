@@ -57,28 +57,27 @@ void *llist_mergesort(void *list,
 {
 	void *ranks[bitsizeof(void *)];
 	size_t n = 0;
-	int i;
 
-	while (list) {
+	if (!list)
+		return NULL;
+
+	for (;;) {
+		int i;
+		size_t m;
 		void *next = get_next_fn(list);
 		if (next)
 			set_next_fn(list, NULL);
-		for (i = 0; n & ((size_t)1 << i); i++)
-			list = llist_merge(ranks[i], list, get_next_fn,
-					   set_next_fn, compare_fn);
+		for (i = 0, m = n;; i++, m >>= 1) {
+			if (m & 1)
+				list = llist_merge(ranks[i], list, get_next_fn,
+						   set_next_fn, compare_fn);
+			else if (next)
+				break;
+			else if (!m)
+				return list;
+		}
 		n++;
 		ranks[i] = list;
 		list = next;
 	}
-
-	for (i = 0; n; i++, n >>= 1) {
-		if (!(n & 1))
-			continue;
-		if (list)
-			list = llist_merge(ranks[i], list, get_next_fn,
-					   set_next_fn, compare_fn);
-		else
-			list = ranks[i];
-	}
-	return list;
 }
