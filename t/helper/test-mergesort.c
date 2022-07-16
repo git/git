@@ -13,19 +13,10 @@ struct line {
 	struct line *next;
 };
 
-static void *get_next(const void *a)
-{
-	return ((const struct line *)a)->next;
-}
+DEFINE_LIST_SORT(static, sort_lines, struct line, next);
 
-static void set_next(void *a, void *b)
+static int compare_strings(const struct line *x, const struct line *y)
 {
-	((struct line *)a)->next = b;
-}
-
-static int compare_strings(const void *a, const void *b)
-{
-	const struct line *x = a, *y = b;
 	return strcmp(x->text, y->text);
 }
 
@@ -47,7 +38,7 @@ static int sort_stdin(void)
 		p = line;
 	}
 
-	lines = llist_mergesort(lines, get_next, set_next, compare_strings);
+	sort_lines(&lines, compare_strings);
 
 	while (lines) {
 		puts(lines->text);
