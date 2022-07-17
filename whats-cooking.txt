@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2022, #04; Wed, 13)
-X-master-at: 4e2a4d1dd44367d7783f33b169698f2930ff13c0
-X-next-at: 683cc31c60e2f21e9eb1dfeb04c5b8ef1ab1459d
+Subject: What's cooking in git.git (Jul 2022, #05; Sun, 17)
+X-master-at: 9dd64cb4d310986dd7b8ca7fff92f9b61e0bd21a
+X-next-at: 4dd4a117ecf0e90cdeac8c0e51a870de51791f4a
 
-What's cooking in git.git (Jul 2022, #04; Wed, 13)
+What's cooking in git.git (Jul 2022, #05; Sun, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -11,8 +11,6 @@ prefixed with '+' are in 'next' (being in 'next' is a sign that a
 topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
-
-Maintenance releases v2.37.1 and others have been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -45,190 +43,178 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/test-quoting-fix (2022-06-30) 3 commits
-  (merged to 'next' on 2022-07-06 at 0aa78fd9db)
- + config tests: fix harmless but broken "rm -r" cleanup
- + test-lib.sh: fix prepend_var() quoting issue
- + tests: add missing double quotes to included library paths
+* ab/submodule-cleanup (2022-06-28) 12 commits
+  (merged to 'next' on 2022-07-08 at 6f3886aa03)
+ + git-sh-setup.sh: remove "say" function, change last users
+ + git-submodule.sh: use "$quiet", not "$GIT_QUIET"
+ + submodule--helper: eliminate internal "--update" option
+ + submodule--helper: understand --checkout, --merge and --rebase synonyms
+ + submodule--helper: report "submodule" as our name in some "-h" output
+ + submodule--helper: rename "absorb-git-dirs" to "absorbgitdirs"
+ + submodule update: remove "-v" option
+ + submodule--helper: have --require-init imply --init
+ + git-submodule.sh: remove unused top-level "--branch" argument
+ + git-submodule.sh: make the "$cached" variable a boolean
+ + git-submodule.sh: remove unused $prefix variable
+ + git-submodule.sh: remove unused sanitize_submodule_env()
+ (this branch is used by gc/submodule-use-super-prefix.)
 
- Fixes for tests when the source directory has unusual characters in
- its path, e.g. whitespaces, double-quotes, etc.
- source: <cover-v2-0.3-00000000000-20220630T101646Z-avarab@gmail.com>
-
-
-* cl/grep-max-count (2022-06-22) 1 commit
-  (merged to 'next' on 2022-07-08 at 646199ab4c)
- + grep: add --max-count command line option
-
- "git grep -m<max-hits>" is a way to limit the hits shown per file.
- source: <pull.1278.v4.git.git.1655927252899.gitgitgadget@gmail.com>
-
-
-* dr/i18n-die-warn-error-usage (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-08 at 6f639750a1)
- + i18n: mark message helpers prefix for translation
-
- Give _() markings to fatal/warning/usage: labels that are shown in
- front of these messages.
- source: <pull.1279.v2.git.git.1655819877758.gitgitgadget@gmail.com>
+ Further preparation to turn git-submodule.sh into a builtin.
+ source: <cover-v4-00.12-00000000000-20220628T095914Z-avarab@gmail.com>
 
 
-* ds/git-rebase-doc-markup (2022-06-30) 1 commit
-  (merged to 'next' on 2022-07-08 at 24a0b80b71)
- + git-rebase.txt: use back-ticks consistently
+* en/merge-tree (2022-06-22) 17 commits
+  (merged to 'next' on 2022-07-08 at a29b4896ab)
+ + git-merge-tree.txt: add a section on potentional usage mistakes
+ + merge-tree: add a --allow-unrelated-histories flag
+ + merge-tree: allow `ls-files -u` style info to be NUL terminated
+ + merge-ort: optionally produce machine-readable output
+ + merge-ort: store more specific conflict information
+ + merge-ort: make `path_messages` a strmap to a string_list
+ + merge-ort: store messages in a list, not in a single strbuf
+ + merge-tree: provide easy access to `ls-files -u` style info
+ + merge-tree: provide a list of which files have conflicts
+ + merge-ort: remove command-line-centric submodule message from merge-ort
+ + merge-ort: provide a merge_get_conflicted_files() helper function
+ + merge-tree: support including merge messages in output
+ + merge-ort: split out a separate display_update_messages() function
+ + merge-tree: implement real merges
+ + merge-tree: add option parsing and initial shell for real merge function
+ + merge-tree: move logic for existing merge into new function
+ + merge-tree: rename merge_trees() to trivial_merge_trees()
 
- References to commands-to-be-typed-literally in "git rebase"
- documentation mark-up have been corrected.
- source: <pull.1270.v3.git.1656508868146.gitgitgadget@gmail.com>
-
-
-* ds/t5510-brokequote (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-06 at 2776bed385)
- + t5510: replace 'origin' with URL more carefully
-
- Test fix.
- source: <484a330e-0902-6e1b-8189-63c72dcea494@github.com>
-
-
-* en/t6429-test-must-be-empty-fix (2022-06-30) 1 commit
-  (merged to 'next' on 2022-07-06 at 627c51773c)
- + t6429: fix use of non-existent function
-
- A test fix.
- source: <pull.1276.git.1656652799863.gitgitgadget@gmail.com>
-
-
-* jk/remote-show-with-negative-refspecs (2022-06-17) 1 commit
-  (merged to 'next' on 2022-07-08 at d4e49ad22a)
- + remote: handle negative refspecs in git remote show
- (this branch is used by jk/t5505-restructure.)
-
- "git remote show [-n] frotz" now pays attention to negative
- pathspec.
- source: <20220617002036.1577-2-jacob.keller@gmail.com>
+ "git merge-tree" learned a new mode where it takes two commits and
+ computes a tree that would result in the merge commit, if the
+ histories leading to these two commits were to be merged.
+ source: <pull.1122.v7.git.1655511660.gitgitgadget@gmail.com>
 
 
-* ll/ls-files-tests-update (2022-07-06) 1 commit
-  (merged to 'next' on 2022-07-06 at 444d1eabd0)
- + ls-files: update test style
+* gg/worktree-from-the-above (2022-06-21) 2 commits
+  (merged to 'next' on 2022-07-08 at fa0e71ba39)
+ + dir: minor refactoring / clean-up
+ + dir: traverse into repository
 
- Test update.
- source: <pull.1269.v6.git.1656863349926.gitgitgadget@gmail.com>
-
-
-* ro/mktree-allow-missing-fix (2022-06-21) 1 commit
-  (merged to 'next' on 2022-07-08 at 599ed6fb84)
- + mktree: do not check type of remote objects
-
- "git mktree --missing" lazily fetched objects that are missing from
- the local object store, which was totally unnecessary for the purpose
- of creating the tree object(s) from its input.
- source: <748f39a9-65aa-2110-cf92-7ddf81b5f507@roku.com>
+ In a non-bare repository, the behavior of Git when the
+ core.worktree configuration variable points at a directory that has
+ a repository as its subdirectory, regressed in Git 2.27 days.
+ source: <20220616234433.225-1-gg.oss@outlook.com>
+ source: <20220616231956.154-1-gg.oss@outlook.com>
 
 
-* tb/pack-objects-remove-pahole-comment (2022-06-28) 1 commit
-  (merged to 'next' on 2022-07-06 at d7494fbdef)
- + pack-objects.h: remove outdated pahole results
+* hx/unpack-streaming (2022-06-13) 6 commits
+  (merged to 'next' on 2022-07-08 at 4eb375ec2f)
+ + unpack-objects: use stream_loose_object() to unpack large objects
+ + core doc: modernize core.bigFileThreshold documentation
+ + object-file.c: add "stream_loose_object()" to handle large object
+ + object-file.c: factor out deflate part of write_loose_object()
+ + object-file.c: refactor write_loose_object() to several steps
+ + unpack-objects: low memory footprint for get_data() in dry_run mode
 
- Comment fix.
- source: <1379af2e9d271b501ef3942398e7f159a9c77973.1656440978.git.me@ttaylorr.com>
+ Allow large objects read from a packstream to be streamed into a
+ loose object file straight, without having to keep it in-core as a
+ whole.
+ source: <cover.1654914555.git.chiyutianyi@gmail.com>
 
 
-* tk/rev-parse-doc-clarify-at-u (2022-06-23) 1 commit
-  (merged to 'next' on 2022-07-08 at 1075452f32)
- + rev-parse: documentation adjustment - mention remote tracking with @{u}
+* sy/mv-out-of-cone (2022-07-01) 8 commits
+  (merged to 'next' on 2022-07-08 at 654970fdb7)
+ + mv: add check_dir_in_index() and solve general dir check issue
+ + mv: use flags mode for update_mode
+ + mv: check if <destination> exists in index to handle overwriting
+ + mv: check if out-of-cone file exists in index with SKIP_WORKTREE bit
+ + mv: decouple if/else-if checks using goto
+ + mv: update sparsity after moving from out-of-cone to in-cone
+ + t1092: mv directory from out-of-cone to in-cone
+ + t7002: add tests for moving out-of-cone file/directory
 
- Doc update.
- source: <pull.1265.v2.git.1655960512385.gitgitgadget@gmail.com>
-
-
-* zk/push-use-bitmaps (2022-06-17) 1 commit
-  (merged to 'next' on 2022-07-08 at 8aa1f94fad)
- + send-pack.c: add config push.useBitmaps
-
- "git push" sometimes perform poorly when reachability bitmaps are
- used, even in a repository where other operations are helped by
- bitmaps.  The push.useBitmaps configuration variable is introduced
- to allow disabling use of reachability bitmaps only for "git push".
- source: <pull.1263.v4.git.1655492779228.gitgitgadget@gmail.com>
+ "git mv A B" in a sparsely populated working tree can be asked to
+ move a path between directories that are "in cone" (i.e. expected
+ to be materialized in the working tree) and "out of cone"
+ (i.e. expected to be hidden).  The handling of such cases has been
+ improved.
+ source: <20220630023737.473690-1-shaoxuan.yuan02@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* jk/diff-files-cleanup-fix (2022-07-12) 1 commit
-  (merged to 'next' on 2022-07-13 at 9db5235d01)
- + diff-files: move misplaced cleanup label
+* js/ci-github-workflow-markup (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 196166f671)
+ + tests: fix incorrect --write-junit-xml code
 
- An earlier attempt to plug leaks placed a clean-up label to jump to
- at a bogus place, which as been corrected.
+ A fix for a regression in test framework.
 
  Will merge to 'master'.
- source: <Ys0c0ePxPOqZ/5ck@coredump.intra.peff.net>
+ source: <pull.1288.git.1657789234416.gitgitgadget@gmail.com>
 
 
-* cw/submodule-merge-messages (2022-07-13) 1 commit
- - submodule merge: update conflict error message
+* js/shortlog-sort-stably (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 75e4efe678)
+ + shortlog: use a stable sort
 
- Update the message given when "git merge" sees conflicts at a path
- with a submodule while merging a superproject.
+ "git shortlog -n" relied on the underlying qsort() to be stable,
+ which shouldn't have.  Fixed.
 
- Needs review.
- source: <20220712231935.2979727-1-calvinwan@google.com>
-
-
-* ds/doc-allowlist (2022-07-13) 3 commits
- - *: use allowlist and denylist
- - t/*: use allowlist
- - Documentation: use allowlist and denylist
-
- Mechanical replacement of s/whitelist/allowlist/.
-
- Expecting a reroll.
- source: <pull.1274.git.1657718450.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1290.git.1657813429221.gitgitgadget@gmail.com>
 
 
-* js/vimdiff-quotepath-fix (2022-07-13) 2 commits
- - SQUASH???
- - mergetool(vimdiff): allow paths to contain spaces again
+* mt/doc-config (2022-07-14) 3 commits
+ - doc: notes: unify configuration variables definitions
+ - doc: apply: unify configuration variables definitions
+ - doc: grep: unify configuration variables definitions
 
- Variable quoting fix in the vimdiff driver of "git mergetool"
+ Unify description of configuration variables used by individual
+ commands in the documentation of the commands and the documentation
+ of the "git config".
 
- Expecting a reroll.
- cf. <xmqqa69cabhq.fsf@gitster.g>
- source: <pull.1287.git.1657726969774.gitgitgadget@gmail.com>
+ Retracted?.
+ cf. <CAHd-oW4zHA1YLX-5B1vYTA1f8PocziUCi0WxvSEkFUuf2GqKxg@mail.gmail.com>
+ source: <cover.1657819649.git.matheus.bernardino@usp.br>
 
 
-* mt/checkout-count-fix (2022-07-13) 3 commits
- - checkout: fix two bugs on the final count of updated entries
- - checkout: show bug about failed entries being included in final report
- - checkout: document bug where delayed checkout counts entries twice
+* rs/mingw-tighten-mkstemp (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 4dd4a117ec)
+ + mingw: avoid mktemp() in mkstemp() implementation
 
- "git checkout" miscounted the paths it updated, which has been
- corrected.
+ mkstemp() emulation on Windows has been improved.
+
+ Will merge to 'master'.
+ source: <7265e37f-fd29-3579-b840-19a1df52a59f@web.de>
+
+
+* jt/fetch-pack-trace2-filter-spec (2022-07-15) 1 commit
+ - fetch-pack: write effective filter to trace2
+
+ "git fetch" client logs the partial clone filter used in the trace2
+ output.
 
  Will merge to 'next'?
- source: <cover.1657685948.git.matheus.bernardino@usp.br>
+ source: <20220715172943.2681492-1-jonathantanmy@google.com>
 
 
-* tb/commit-graph-genv2-upgrade-fix (2022-07-13) 3 commits
- - commit-graph: fix corrupt upgrade from generation v1 to v2
- - commit-graph: introduce `repo_find_commit_pos_in_graph()`
- - t5318: demonstrate commit-graph generation v2 corruption
+* mb/doc-rerere-autoupdate (2022-07-15) 1 commit
+ - cherry-pick doc: clarify no-rerere-autoupdate still allows rerere
 
- There was a bug in the codepath to upgrade generation information
- in commit-graph from v1 to v2 format, which has been corrected.
+ Clarifies that the "--no-rerere-autoupdate" option does not disable
+ the "rerere" mechanism (nor does "--rerere-autoupdate" enable it).
 
- Needs review.
- source: <cover.1657667404.git.me@ttaylorr.com>
+ Will merge to 'next'?
+ source: <20220715092527.1567837-1-mail@beyermatthias.de>
 
 
-* js/safe-directory-plus (2022-07-13) 3 commits
- - mingw: be more informative when ownership check fails on FAT32
- - mingw: handle a file owned by the Administrators group correctly
- - Allow debugging unsafe directories' ownership
+* rs/mergesort (2022-07-17) 10 commits
+ - mergesort: remove llist_mergesort()
+ - packfile: use DEFINE_LIST_SORT
+ - fetch-pack: use DEFINE_LIST_SORT
+ - commit: use DEFINE_LIST_SORT
+ - blame: use DEFINE_LIST_SORT
+ - test-mergesort: use DEFINE_LIST_SORT
+ - test-mergesort: use DEFINE_LIST_SORT_DEBUG
+ - mergesort: add macros for typed sort of linked lists
+ - mergesort: tighten merge loop
+ - mergesort: unify ranks loops
 
- Needs review.
- source: <pull.1286.git.1657700238.gitgitgadget@gmail.com>
+ source: <4d7cd286-398e-215c-f2bd-aa7e8207be4f@web.de>
 
 --------------------------------------------------
 [Stalled]
@@ -279,6 +265,81 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jk/diff-files-cleanup-fix (2022-07-12) 1 commit
+  (merged to 'next' on 2022-07-13 at 9db5235d01)
+ + diff-files: move misplaced cleanup label
+
+ An earlier attempt to plug leaks placed a clean-up label to jump to
+ at a bogus place, which as been corrected.
+
+ Will merge to 'master'.
+ source: <Ys0c0ePxPOqZ/5ck@coredump.intra.peff.net>
+
+
+* cw/submodule-merge-messages (2022-07-13) 1 commit
+ - submodule merge: update conflict error message
+
+ Update the message given when "git merge" sees conflicts at a path
+ with a submodule while merging a superproject.
+
+ Needs review.
+ source: <20220712231935.2979727-1-calvinwan@google.com>
+
+
+* ds/doc-wo-whitelist (2022-07-14) 3 commits
+ - *: avoid "whitelist"
+ - t/*: avoid "whitelist"
+ - Documentation: remove use of whitelist
+
+ Avoid "white/black-list" in documentation and code comments.
+
+ Will merge to 'next'?
+ source: <pull.1274.v2.git.1657852722.gitgitgadget@gmail.com>
+
+
+* js/vimdiff-quotepath-fix (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 4273bbd4b4)
+ + mergetool(vimdiff): allow paths to contain spaces again
+
+ Variable quoting fix in the vimdiff driver of "git mergetool"
+
+ Will merge to 'master'.
+ source: <pull.1287.v2.git.1657809063728.gitgitgadget@gmail.com>
+
+
+* mt/checkout-count-fix (2022-07-14) 3 commits
+ - checkout: fix two bugs on the final count of updated entries
+ - checkout: show bug about failed entries being included in final report
+ - checkout: document bug where delayed checkout counts entries twice
+
+ "git checkout" miscounted the paths it updated, which has been
+ corrected.
+
+ Will merge to 'next'?
+ source: <cover.1657799213.git.matheus.bernardino@usp.br>
+
+
+* tb/commit-graph-genv2-upgrade-fix (2022-07-15) 3 commits
+ - commit-graph: fix corrupt upgrade from generation v1 to v2
+ - commit-graph: introduce `repo_find_commit_pos_in_graph()`
+ - t5318: demonstrate commit-graph generation v2 corruption
+
+ There was a bug in the codepath to upgrade generation information
+ in commit-graph from v1 to v2 format, which has been corrected.
+
+ Will merge to 'next'?
+ source: <cover.1657667404.git.me@ttaylorr.com>
+
+
+* js/safe-directory-plus (2022-07-13) 3 commits
+ - mingw: be more informative when ownership check fails on FAT32
+ - mingw: handle a file owned by the Administrators group correctly
+ - Allow debugging unsafe directories' ownership
+
+ Needs review.
+ source: <pull.1286.git.1657700238.gitgitgadget@gmail.com>
+
 
 * po/doc-add-renormalize (2022-07-09) 1 commit
  - doc add: renormalize is not idempotent for CRCRLF
@@ -424,7 +485,7 @@ Release tarballs are available at:
  source: <pull.1285.git.git.1657267260405.gitgitgadget@gmail.com>
 
 
-* sa/cat-file-mailmap (2022-07-13) 4 commits
+* sa/cat-file-mailmap (2022-07-17) 4 commits
  - cat-file: add mailmap support
  - ident: rename commit_rewrite_person() to apply_mailmap_to_header()
  - ident: move commit_rewrite_person() to ident.c
@@ -433,8 +494,9 @@ Release tarballs are available at:
  "git cat-file" learned an option to use the mailmap when showing
  commit and tag objects.
 
- Will merge to 'next'?
- source: <20220712160634.213956-1-siddharthasthana31@gmail.com>
+ Expecting a reroll; I think this is almost there.
+ cf. <xmqqo7xnv17x.fsf@gitster.g>
+ source: <20220716074055.1786231-1-siddharthasthana31@gmail.com>
 
 
 * fr/vimdiff-layout-fix (2022-07-08) 1 commit
@@ -466,8 +528,7 @@ Release tarballs are available at:
  "git rebase -i" learns to update branches whose tip appear in the
  rebased range.
 
- Expecting a reroll.
- cf. <15631ea2-6722-fd24-c8a6-0cee638b0602@github.com>
+ Will merge to 'next'?
  source: <pull.1247.v4.git.1657631225.gitgitgadget@gmail.com>
 
 
@@ -519,7 +580,6 @@ Release tarballs are available at:
  + submodule--helper update: use display path helper
  + submodule--helper tests: add missing "display path" coverage
  + Merge branch 'ab/submodule-cleanup' into gc/submodule-use-super-prefix
- (this branch uses ab/submodule-cleanup.)
 
  Another step to rewrite more parts of "git submodule" in C.
 
@@ -553,27 +613,6 @@ Release tarballs are available at:
  source: <pull.1272.v2.git.1657297519.gitgitgadget@gmail.com>
 
 
-* sy/mv-out-of-cone (2022-07-01) 8 commits
-  (merged to 'next' on 2022-07-08 at 654970fdb7)
- + mv: add check_dir_in_index() and solve general dir check issue
- + mv: use flags mode for update_mode
- + mv: check if <destination> exists in index to handle overwriting
- + mv: check if out-of-cone file exists in index with SKIP_WORKTREE bit
- + mv: decouple if/else-if checks using goto
- + mv: update sparsity after moving from out-of-cone to in-cone
- + t1092: mv directory from out-of-cone to in-cone
- + t7002: add tests for moving out-of-cone file/directory
-
- "git mv A B" in a sparsely populated working tree can be asked to
- move a path between directories that are "in cone" (i.e. expected
- to be materialized in the working tree) and "out of cone"
- (i.e. expected to be hidden).  The handling of such cases has been
- improved.
-
- Will merge to 'master'.
- source: <20220630023737.473690-1-shaoxuan.yuan02@gmail.com>
-
-
 * ab/squelch-empty-fsync-traces (2022-06-30) 1 commit
  . trace2: don't include "fsync" events in all trace2 logs
 
@@ -581,35 +620,6 @@ Release tarballs are available at:
 
  Breaks tests in hx/unpack-streaming with an interesting interaction.
  source: <patch-v2-1.1-a1fc37de947-20220630T084607Z-avarab@gmail.com>
-
-
-* en/merge-tree (2022-06-22) 17 commits
-  (merged to 'next' on 2022-07-08 at a29b4896ab)
- + git-merge-tree.txt: add a section on potentional usage mistakes
- + merge-tree: add a --allow-unrelated-histories flag
- + merge-tree: allow `ls-files -u` style info to be NUL terminated
- + merge-ort: optionally produce machine-readable output
- + merge-ort: store more specific conflict information
- + merge-ort: make `path_messages` a strmap to a string_list
- + merge-ort: store messages in a list, not in a single strbuf
- + merge-tree: provide easy access to `ls-files -u` style info
- + merge-tree: provide a list of which files have conflicts
- + merge-ort: remove command-line-centric submodule message from merge-ort
- + merge-ort: provide a merge_get_conflicted_files() helper function
- + merge-tree: support including merge messages in output
- + merge-ort: split out a separate display_update_messages() function
- + merge-tree: implement real merges
- + merge-tree: add option parsing and initial shell for real merge function
- + merge-tree: move logic for existing merge into new function
- + merge-tree: rename merge_trees() to trivial_merge_trees()
-
- A new command is introduced that takes two commits and computes a
- tree that would be contained in the resulting merge commit, if the
- histories leading to these two commits were to be merged, and is
- added as a new mode of "git merge-tree" subcommand.
-
- Will merge to 'master'.
- source: <pull.1122.v7.git.1655511660.gitgitgadget@gmail.com>
 
 
 * en/merge-restore-to-pristine (2022-06-21) 6 commits
@@ -664,11 +674,13 @@ Release tarballs are available at:
  source: <pull.1268.v4.git.1656984823.gitgitgadget@gmail.com>
 
 
-* js/commit-graph-parsing-without-repo-settings (2022-06-15) 1 commit
- - commit-graph: refactor to avoid prepare_repo_settings
+* js/commit-graph-parsing-without-repo-settings (2022-07-14) 1 commit
+ - commit-graph: pass repo_settings instead of repository
 
- Expecting a reroll.
- source: <9b56496b0809cc8a25af877ea97042e2cb7f2af6.1655246092.git.steadmon@google.com>
+ API tweak to make it easier to run fuzz testing on commit-graph parser.
+
+ Will merge to 'next'.
+ source: <fd70b6119153b165a62ee4f693dbe47031cfb2be.1657834657.git.steadmon@google.com>
 
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
@@ -682,28 +694,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20220610195247.1177549-1-jonathantanmy@google.com>
-
-
-* ab/submodule-cleanup (2022-06-28) 12 commits
-  (merged to 'next' on 2022-07-08 at 6f3886aa03)
- + git-sh-setup.sh: remove "say" function, change last users
- + git-submodule.sh: use "$quiet", not "$GIT_QUIET"
- + submodule--helper: eliminate internal "--update" option
- + submodule--helper: understand --checkout, --merge and --rebase synonyms
- + submodule--helper: report "submodule" as our name in some "-h" output
- + submodule--helper: rename "absorb-git-dirs" to "absorbgitdirs"
- + submodule update: remove "-v" option
- + submodule--helper: have --require-init imply --init
- + git-submodule.sh: remove unused top-level "--branch" argument
- + git-submodule.sh: make the "$cached" variable a boolean
- + git-submodule.sh: remove unused $prefix variable
- + git-submodule.sh: remove unused sanitize_submodule_env()
- (this branch is used by gc/submodule-use-super-prefix.)
-
- Further preparation to turn git-submodule.sh into a builtin.
-
- Will merge to 'master'.
- source: <cover-v4-00.12-00000000000-20220628T095914Z-avarab@gmail.com>
 
 
 * jc/resolve-undo (2022-07-11) 2 commits
@@ -751,23 +741,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover-v2-0.7-00000000000-20220603T110506Z-avarab@gmail.com>
-
-
-* hx/unpack-streaming (2022-06-13) 6 commits
-  (merged to 'next' on 2022-07-08 at 4eb375ec2f)
- + unpack-objects: use stream_loose_object() to unpack large objects
- + core doc: modernize core.bigFileThreshold documentation
- + object-file.c: add "stream_loose_object()" to handle large object
- + object-file.c: factor out deflate part of write_loose_object()
- + object-file.c: refactor write_loose_object() to several steps
- + unpack-objects: low memory footprint for get_data() in dry_run mode
-
- Allow large objects read from a packstream to be streamed into a
- loose object file straight, without having to keep it in-core as a
- whole.
-
- Will merge to 'master'.
- source: <cover.1654914555.git.chiyutianyi@gmail.com>
 
 
 * tb/show-ref-count (2022-06-06) 2 commits
@@ -821,33 +794,19 @@ Release tarballs are available at:
  source: <pull.1132.v4.git.1656354677.gitgitgadget@gmail.com>
 
 
-* gc/bare-repo-discovery (2022-07-07) 5 commits
- - setup.c: create `discovery.bare`
- - safe.directory: use git_protected_config()
- - config: learn `git_protected_config()`
- - Documentation: define protected configuration
- - Documentation/git-config.txt: add SCOPES section
+* gc/bare-repo-discovery (2022-07-14) 5 commits
+  (merged to 'next' on 2022-07-15 at 5206577852)
+ + setup.c: create `safe.bareRepository`
+ + safe.directory: use git_protected_config()
+ + config: learn `git_protected_config()`
+ + Documentation: define protected configuration
+ + Documentation/git-config.txt: add SCOPES section
 
  Introduce a discovery.barerepository configuration variable that
  allows users to forbid discovery of bare repositories.
 
- Expecting a reroll.
- cf. <kl6lpmia55ys.fsf@chooglen-macbookpro.roam.corp.google.com>
- source: <pull.1261.v7.git.git.1657234914.gitgitgadget@gmail.com>
-
-
-* gg/worktree-from-the-above (2022-06-21) 2 commits
-  (merged to 'next' on 2022-07-08 at fa0e71ba39)
- + dir: minor refactoring / clean-up
- + dir: traverse into repository
-
- In a non-bare repository, the behavior of Git when the
- core.worktree configuration variable points at a directory that has
- a repository as its subdirectory, regressed in Git 2.27 days.
-
  Will merge to 'master'.
- source: <20220616234433.225-1-gg.oss@outlook.com>
- source: <20220616231956.154-1-gg.oss@outlook.com>
+ source: <pull.1261.v8.git.git.1657834081.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Discarded]
