@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test conversion filters on large files'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 set_attr() {

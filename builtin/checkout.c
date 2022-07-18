@@ -710,6 +710,26 @@ static void setup_branch_path(struct branch_info *branch)
 	branch->path = strbuf_detach(&buf, NULL);
 }
 
+static void init_topts(struct unpack_trees_options *topts, int merge,
+		       int show_progress, int overwrite_ignore,
+		       struct commit *old_commit)
+{
+	memset(topts, 0, sizeof(*topts));
+	topts->head_idx = -1;
+	topts->src_index = &the_index;
+	topts->dst_index = &the_index;
+
+	setup_unpack_trees_porcelain(topts, "checkout");
+
+	topts->initial_checkout = is_cache_unborn();
+	topts->update = 1;
+	topts->merge = 1;
+	topts->quiet = merge && old_commit;
+	topts->verbose_update = show_progress;
+	topts->fn = twoway_merge;
+	topts->preserve_ignored = !overwrite_ignore;
+}
+
 static int merge_working_tree(const struct checkout_opts *opts,
 			      struct branch_info *old_branch_info,
 			      struct branch_info *new_branch_info,
@@ -740,13 +760,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		struct unpack_trees_options topts;
 		const struct object_id *old_commit_oid;
 
-		memset(&topts, 0, sizeof(topts));
-		topts.head_idx = -1;
-		topts.src_index = &the_index;
-		topts.dst_index = &the_index;
-
-		setup_unpack_trees_porcelain(&topts, "checkout");
-
 		refresh_cache(REFRESH_QUIET);
 
 		if (unmerged_cache()) {
@@ -755,17 +768,12 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		}
 
 		/* 2-way merge to the new branch */
-		topts.initial_checkout = is_cache_unborn();
-		topts.update = 1;
-		topts.merge = 1;
-		topts.quiet = opts->merge && old_branch_info->commit;
-		topts.verbose_update = opts->show_progress;
-		topts.fn = twoway_merge;
+		init_topts(&topts, opts->merge, opts->show_progress,
+			   opts->overwrite_ignore, old_branch_info->commit);
 		init_checkout_metadata(&topts.meta, new_branch_info->refname,
 				       new_branch_info->commit ?
 				       &new_branch_info->commit->object.oid :
 				       &new_branch_info->oid, NULL);
-		topts.preserve_ignored = !opts->overwrite_ignore;
 
 		old_commit_oid = old_branch_info->commit ?
 			&old_branch_info->commit->object.oid :
