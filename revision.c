@@ -3755,24 +3755,17 @@ int rewrite_parents(struct rev_info *revs, struct commit *commit,
 	return 0;
 }
 
-static int commit_rewrite_person(struct strbuf *buf, const char *what, struct string_list *mailmap)
+/*
+ * Returns the difference between the new and old length of the ident line.
+ */
+static ssize_t rewrite_ident_line(const char *person, size_t len,
+				   struct strbuf *buf,
+				   struct string_list *mailmap)
 {
-	char *person, *endp;
-	size_t len, namelen, maillen;
+	size_t namelen, maillen;
 	const char *name;
 	const char *mail;
 	struct ident_split ident;
-
-	person = strstr(buf->buf, what);
-	if (!person)
-		return 0;
-
-	person += strlen(what);
-	endp = strchr(person, '\n');
-	if (!endp)
-		return 0;
-
-	len = endp - person;
 
 	if (split_ident_line(&ident, person, len))
 		return 0;
@@ -3784,6 +3777,7 @@ static int commit_rewrite_person(struct strbuf *buf, const char *what, struct st
 
 	if (map_user(mailmap, &mail, &maillen, &name, &namelen)) {
 		struct strbuf namemail = STRBUF_INIT;
+		size_t newlen;
 
 		strbuf_addf(&namemail, "%.*s <%.*s>",
 			    (int)namelen, name, (int)maillen, mail);
@@ -3791,13 +3785,48 @@ static int commit_rewrite_person(struct strbuf *buf, const char *what, struct st
 		strbuf_splice(buf, ident.name_begin - buf->buf,
 			      ident.mail_end - ident.name_begin + 1,
 			      namemail.buf, namemail.len);
+		newlen = namemail.len;
 
 		strbuf_release(&namemail);
 
-		return 1;
+		return newlen - (ident.mail_end - ident.name_begin);
 	}
 
 	return 0;
+}
+
+static void commit_rewrite_person(struct strbuf *buf, const char **header,
+				   struct string_list *mailmap)
+{
+	size_t buf_offset = 0;
+
+	if (!mailmap)
+		return;
+
+	for (;;) {
+		const char *person, *line;
+		size_t i;
+		int found_header = 0;
+
+		line = buf->buf + buf_offset;
+		if (!*line || *line == '\n')
+			return; /* End of headers */
+
+		for (i = 0; header[i]; i++)
+			if (skip_prefix(line, header[i], &person)) {
+				const char *endp = strchrnul(person, '\n');
+				found_header = 1;
+				buf_offset += endp - line;
+				buf_offset += rewrite_ident_line(person, endp - person, buf, mailmap);
+				break;
+			}
+
+		if (!found_header) {
+			buf_offset = strchrnul(line, '\n') - buf->buf;
+			if (buf->buf[buf_offset] == '\n')
+				buf_offset++;
+		}
+	}
 }
 
 static int commit_match(struct commit *commit, struct rev_info *opt)
@@ -3832,11 +3861,12 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		strbuf_addstr(&buf, message);
 
 	if (opt->grep_filter.header_list && opt->mailmap) {
+		const char *commit_headers[] = { "author ", "committer ", NULL };
+
 		if (!buf.len)
 			strbuf_addstr(&buf, message);
 
-		commit_rewrite_person(&buf, "\nauthor ", opt->mailmap);
-		commit_rewrite_person(&buf, "\ncommitter ", opt->mailmap);
+		commit_rewrite_person(&buf, commit_headers, opt->mailmap);
 	}
 
 	/* Append "fake" message parts as needed */
