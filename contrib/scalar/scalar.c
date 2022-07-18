@@ -687,7 +687,7 @@ static int cmd_diagnose(int argc, const char **argv)
 	int stdout_fd = -1, archiver_fd = -1;
 	time_t now = time(NULL);
 	struct tm tm;
-	struct strbuf path = STRBUF_INIT, buf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
 	int res = 0;
 
 	argc = parse_options(argc, argv, NULL, options,
@@ -779,7 +779,6 @@ diagnose_cleanup:
 	free(argv_copy);
 	strvec_clear(&archiver_args);
 	strbuf_release(&zip_path);
-	strbuf_release(&path);
 	strbuf_release(&buf);
 
 	return res;
