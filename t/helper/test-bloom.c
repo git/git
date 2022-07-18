@@ -16,6 +16,7 @@ static void add_string_to_filter(const char *data, struct bloom_filter *filter) 
 		}
 		printf("\n");
 		add_key_to_filter(&key, filter, &settings);
+		clear_bloom_key(&key);
 }
 
 static void print_bloom_filter(struct bloom_filter *filter) {
@@ -80,6 +81,7 @@ int cmd__bloom(int argc, const char **argv)
 		}
 
 		print_bloom_filter(&filter);
+		free(filter.data);
 	}
 
 	if (!strcmp(argv[1], "get_filter_for_commit")) {
