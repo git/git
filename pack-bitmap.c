@@ -317,10 +317,13 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	char *bitmap_name = midx_bitmap_filename(midx);
 	int fd = git_open(bitmap_name);
 
-	free(bitmap_name);
-
-	if (fd < 0)
+	if (fd < 0) {
+		if (errno != ENOENT)
+			warning_errno("cannot open '%s'", bitmap_name);
+		free(bitmap_name);
 		return -1;
+	}
+	free(bitmap_name);
 
 	if (fstat(fd, &st)) {
 		close(fd);
@@ -376,10 +379,14 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 
 	bitmap_name = pack_bitmap_filename(packfile);
 	fd = git_open(bitmap_name);
-	free(bitmap_name);
 
-	if (fd < 0)
+	if (fd < 0) {
+		if (errno != ENOENT)
+			warning_errno("cannot open '%s'", bitmap_name);
+		free(bitmap_name);
 		return -1;
+	}
+	free(bitmap_name);
 
 	if (fstat(fd, &st)) {
 		close(fd);
