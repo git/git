@@ -3,6 +3,7 @@
 test_description=gitattributes
 
 TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 attr_check_basic () {
@@ -284,7 +285,7 @@ test_expect_success 'using --git-dir and --work-tree' '
 '
 
 test_expect_success 'setup bare' '
-	git clone --bare . bare.git
+	git clone --template= --bare . bare.git
 '
 
 test_expect_success 'bare repository: check that .gitattribute is ignored' '
@@ -315,6 +316,7 @@ test_expect_success 'bare repository: check that --cached honors index' '
 test_expect_success 'bare repository: test info/attributes' '
 	(
 		cd bare.git &&
+		mkdir info &&
 		(
 			echo "f	test=f" &&
 			echo "a/i test=a/i"
@@ -360,6 +362,7 @@ test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
 
 test_expect_success SYMLINKS 'symlinks respected in info/attributes' '
 	test_when_finished "rm .git/info/attributes" &&
+	mkdir .git/info &&
 	ln -s ../../attr .git/info/attributes &&
 	attr_check file set
 '
