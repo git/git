@@ -1689,6 +1689,12 @@ struct ident_split {
 int split_ident_line(struct ident_split *, const char *, int);
 
 /*
+ * Given a commit object buffer and the commit headers, replaces the idents
+ * in the headers with their canonical versions using the mailmap mechanism.
+ */
+void commit_rewrite_person(struct strbuf *, const char **, struct string_list *);
+
+/*
  * Compare split idents for equality or strict ordering. Note that we
  * compare only the ident part of the line, ignoring any timestamp.
  *
