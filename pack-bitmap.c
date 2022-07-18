@@ -139,7 +139,7 @@ static struct ewah_bitmap *read_bitmap_1(struct bitmap_index *index)
 		index->map_size - index->map_pos);
 
 	if (bitmap_size < 0) {
-		error("failed to load bitmap index (corrupted?)");
+		error(_("failed to load bitmap index (corrupted?)"));
 		ewah_pool_free(b);
 		return NULL;
 	}
@@ -161,14 +161,14 @@ static int load_bitmap_header(struct bitmap_index *index)
 	size_t header_size = sizeof(*header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz;
 
 	if (index->map_size < header_size + the_hash_algo->rawsz)
-		return error("corrupted bitmap index (too small)");
+		return error(_("corrupted bitmap index (too small)"));
 
 	if (memcmp(header->magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE)) != 0)
-		return error("corrupted bitmap index file (wrong header)");
+		return error(_("corrupted bitmap index file (wrong header)"));
 
 	index->version = ntohs(header->version);
 	if (index->version != 1)
-		return error("unsupported version '%d' for bitmap index file", index->version);
+		return error(_("unsupported version '%d' for bitmap index file"), index->version);
 
 	/* Parse known bitmap format options */
 	{
@@ -182,7 +182,7 @@ static int load_bitmap_header(struct bitmap_index *index)
 
 		if (flags & BITMAP_OPT_HASH_CACHE) {
 			if (cache_size > index_end - index->map - header_size)
-				return error("corrupted bitmap index file (too short to fit hash cache)");
+				return error(_("corrupted bitmap index file (too short to fit hash cache)"));
 			index->hashes = (void *)(index_end - cache_size);
 			index_end -= cache_size;
 		}
@@ -216,7 +216,7 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	 * because the SHA1 already existed on the map. this is bad, there
 	 * shouldn't be duplicated commits in the index */
 	if (ret == 0) {
-		error("duplicate entry in bitmap index: '%s'", oid_to_hex(oid));
+		error(_("duplicate entry in bitmap index: '%s'"), oid_to_hex(oid));
 		return NULL;
 	}
 
@@ -260,14 +260,14 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		struct object_id oid;
 
 		if (index->map_size - index->map_pos < 6)
-			return error("corrupt ewah bitmap: truncated header for entry %d", i);
+			return error(_("corrupt ewah bitmap: truncated header for entry %d"), i);
 
 		commit_idx_pos = read_be32(index->map, &index->map_pos);
 		xor_offset = read_u8(index->map, &index->map_pos);
 		flags = read_u8(index->map, &index->map_pos);
 
 		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
-			return error("corrupt ewah bitmap: commit index %u out of range",
+			return error(_("corrupt ewah bitmap: commit index %u out of range"),
 				     (unsigned)commit_idx_pos);
 
 		bitmap = read_bitmap_1(index);
@@ -275,13 +275,13 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 			return -1;
 
 		if (xor_offset > MAX_XOR_OFFSET || xor_offset > i)
-			return error("corrupted bitmap pack index");
+			return error(_("corrupted bitmap pack index"));
 
 		if (xor_offset > 0) {
 			xor_bitmap = recent_bitmaps[(i - xor_offset) % MAX_XOR_OFFSET];
 
 			if (xor_bitmap == NULL)
-				return error("invalid XOR offset in bitmap pack index");
+				return error(_("invalid XOR offset in bitmap pack index"));
 		}
 
 		recent_bitmaps[i % MAX_XOR_OFFSET] = store_bitmap(
@@ -331,7 +331,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		struct strbuf buf = STRBUF_INIT;
 		get_midx_filename(&buf, midx->object_dir);
 		/* ignore extra bitmap file; we can only handle one */
-		warning("ignoring extra bitmap file: '%s'", buf.buf);
+		warning(_("ignoring extra bitmap file: '%s'"), buf.buf);
 		close(fd);
 		strbuf_release(&buf);
 		return -1;
@@ -388,7 +388,7 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 
 	if (bitmap_git->pack || bitmap_git->midx) {
 		/* ignore extra bitmap file; we can only handle one */
-		warning("ignoring extra bitmap file: '%s'", packfile->pack_name);
+		warning(_("ignoring extra bitmap file: '%s'"), packfile->pack_name);
 		close(fd);
 		return -1;
 	}
@@ -818,7 +818,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		revs->include_check_data = &incdata;
 
 		if (prepare_revision_walk(revs))
-			die("revision walk setup failed");
+			die(_("revision walk setup failed"));
 
 		show_data.bitmap_git = bitmap_git;
 		show_data.base = base;
@@ -1627,15 +1627,15 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 	}
 
 	if (bitmap_type == OBJ_NONE)
-		die("object '%s' not found in type bitmaps",
+		die(_("object '%s' not found in type bitmaps"),
 		    oid_to_hex(&obj->oid));
 
 	if (bitmaps_nr > 1)
-		die("object '%s' does not have a unique type",
+		die(_("object '%s' does not have a unique type"),
 		    oid_to_hex(&obj->oid));
 
 	if (bitmap_type != obj->type)
-		die("object '%s': real type '%s', expected: '%s'",
+		die(_("object '%s': real type '%s', expected: '%s'"),
 		    oid_to_hex(&obj->oid),
 		    type_name(obj->type),
 		    type_name(bitmap_type));
@@ -1649,7 +1649,7 @@ static void test_show_object(struct object *object, const char *name,
 
 	bitmap_pos = bitmap_position(tdata->bitmap_git, &object->oid);
 	if (bitmap_pos < 0)
-		die("object not in bitmap: '%s'", oid_to_hex(&object->oid));
+		die(_("object not in bitmap: '%s'"), oid_to_hex(&object->oid));
 	test_bitmap_type(tdata, object, bitmap_pos);
 
 	bitmap_set(tdata->base, bitmap_pos);
@@ -1664,7 +1664,7 @@ static void test_show_commit(struct commit *commit, void *data)
 	bitmap_pos = bitmap_position(tdata->bitmap_git,
 				     &commit->object.oid);
 	if (bitmap_pos < 0)
-		die("object not in bitmap: '%s'", oid_to_hex(&commit->object.oid));
+		die(_("object not in bitmap: '%s'"), oid_to_hex(&commit->object.oid));
 	test_bitmap_type(tdata, &commit->object, bitmap_pos);
 
 	bitmap_set(tdata->base, bitmap_pos);
@@ -1681,10 +1681,10 @@ void test_bitmap_walk(struct rev_info *revs)
 	struct ewah_bitmap *bm;
 
 	if (!(bitmap_git = prepare_bitmap_git(revs->repo)))
-		die("failed to load bitmap indexes");
+		die(_("failed to load bitmap indexes"));
 
 	if (revs->pending.nr != 1)
-		die("you must specify exactly one commit to test");
+		die(_("you must specify exactly one commit to test"));
 
 	fprintf_ln(stderr, "Bitmap v%d test (%d entries loaded)",
 		bitmap_git->version, bitmap_git->entry_count);
@@ -1700,7 +1700,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	}
 
 	if (result == NULL)
-		die("commit '%s' doesn't have an indexed bitmap", oid_to_hex(&root->oid));
+		die(_("commit '%s' doesn't have an indexed bitmap"), oid_to_hex(&root->oid));
 
 	revs->tag_objects = 1;
 	revs->tree_objects = 1;
@@ -1709,7 +1709,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	result_popcnt = bitmap_popcount(result);
 
 	if (prepare_revision_walk(revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	tdata.bitmap_git = bitmap_git;
 	tdata.base = bitmap_new();
@@ -1727,7 +1727,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	if (bitmap_equals(result, tdata.base))
 		fprintf_ln(stderr, "OK!");
 	else
-		die("mismatch in bitmap results");
+		die(_("mismatch in bitmap results"));
 
 	bitmap_free(result);
 	bitmap_free(tdata.base);
@@ -1745,7 +1745,7 @@ int test_bitmap_commits(struct repository *r)
 	MAYBE_UNUSED void *value;
 
 	if (!bitmap_git)
-		die("failed to load bitmap indexes");
+		die(_("failed to load bitmap indexes"));
 
 	kh_foreach(bitmap_git->bitmaps, oid, value, {
 		printf_ln("%s", oid_to_hex(&oid));
