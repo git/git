@@ -1918,7 +1918,6 @@ struct update_data {
 	const char *prefix;
 	char *displaypath;
 	enum submodule_update_type update_default;
-	struct object_id suboid;
 	struct string_list references;
 	struct submodule_update_strategy update_strategy;
 	struct list_objects_filter_options *filter_options;
@@ -2346,7 +2345,7 @@ static int run_update_command(const struct update_data *ud, int subforce)
 
 static int run_update_procedure(const struct update_data *ud)
 {
-	int subforce = is_null_oid(&ud->suboid) || ud->force;
+	int subforce = ud->just_cloned || ud->force;
 
 	if (!ud->nofetch) {
 		/*
@@ -2523,6 +2522,7 @@ static int update_submodule(struct update_data *update_data)
 {
 	int submodule_up_to_date;
 	int ret;
+	struct object_id suboid;
 
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
@@ -2532,10 +2532,8 @@ static int update_submodule(struct update_data *update_data)
 	if (ret)
 		return ret;
 
-	if (update_data->just_cloned)
-		oidcpy(&update_data->suboid, null_oid());
-	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD",
-				     &update_data->suboid, NULL))
+	if (!update_data->just_cloned &&
+	    resolve_gitlink_ref(update_data->sm_path, "HEAD", &suboid, NULL))
 		return die_message(_("Unable to find current revision in submodule path '%s'"),
 				   update_data->displaypath);
 
@@ -2570,7 +2568,8 @@ static int update_submodule(struct update_data *update_data)
 		free(remote_ref);
 	}
 
-	submodule_up_to_date = oideq(&update_data->oid, &update_data->suboid);
+	submodule_up_to_date = !update_data->just_cloned &&
+		oideq(&update_data->oid, &suboid);
 	if (!submodule_up_to_date || update_data->force) {
 		ret = run_update_procedure(update_data);
 		if (ret)
@@ -2583,7 +2582,6 @@ static int update_submodule(struct update_data *update_data)
 
 		next.prefix = NULL;
 		oidcpy(&next.oid, null_oid());
-		oidcpy(&next.suboid, null_oid());
 
 		cp.dir = update_data->sm_path;
 		cp.git_cmd = 1;
