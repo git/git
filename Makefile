@@ -309,6 +309,11 @@ include shared.mak
 # distributions that want to use their packaged versions of Perl
 # modules, instead of the fallbacks shipped with Git.
 #
+# Define NO_GITWEB if you do not want to build or install
+# 'gitweb'. Note that defining NO_PERL currently has the same effect
+# on not installing gitweb, but not on whether it's built in the
+# gitweb/ directory.
+#
 # Define PYTHON_PATH to the path of your Python binary (often /usr/bin/python
 # but /usr/bin/python2.7 or /usr/bin/python3 on some platforms).
 #
@@ -544,6 +549,7 @@ gitexecdir = libexec/git-core
 mergetoolsdir = $(gitexecdir)/mergetools
 sharedir = $(prefix)/share
 gitwebdir = $(sharedir)/gitweb
+gitwebstaticdir = $(gitwebdir)/static
 perllibdir = $(sharedir)/perl5
 localedir = $(sharedir)/locale
 template_dir = share/git-core/templates
@@ -562,7 +568,7 @@ localedir_relative = $(patsubst $(prefix)/%,%,$(localedir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
 perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
-export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
+export prefix bindir sharedir sysconfdir perllibdir localedir
 
 # Set our default programs
 CC = cc
@@ -2089,6 +2095,7 @@ htmldir_relative_SQ = $(subst ','\'',$(htmldir_relative))
 prefix_SQ = $(subst ','\'',$(prefix))
 perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
 gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
+gitwebstaticdir_SQ = $(subst ','\'',$(gitwebstaticdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
@@ -2416,10 +2423,6 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 .PHONY: perllibdir
 perllibdir:
 	@echo '$(perllibdir_SQ)'
-
-.PHONY: gitweb
-gitweb:
-	$(QUIET_SUBDIR0)gitweb $(QUIET_SUBDIR1) all
 
 git-instaweb: git-instaweb.sh GIT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
@@ -3149,6 +3152,18 @@ coccicheck-pending: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.pending.c
 
 .PHONY: coccicheck coccicheck-pending
 
+# "Sub"-Makefiles, not really because they can't be run stand-alone,
+# only there to contain directory-specific rules and variables
+## gitweb/Makefile inclusion:
+MAK_DIR_GITWEB = gitweb/
+include gitweb/Makefile
+
+.PHONY: gitweb
+gitweb: $(MAK_DIR_GITWEB_ALL)
+ifndef NO_GITWEB
+all:: gitweb
+endif
+
 ### Installation rules
 
 ifneq ($(filter /%,$(firstword $(template_dir))),)
@@ -3221,7 +3236,6 @@ ifndef NO_PERL
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perllibdir_SQ)'
 	(cd perl/build/lib && $(TAR) cf - .) | \
 	(cd '$(DESTDIR_SQ)$(perllibdir_SQ)' && umask 022 && $(TAR) xof -)
-	$(MAKE) -C gitweb install
 endif
 ifndef NO_TCLTK
 	$(MAKE) -C gitk-git install
@@ -3276,10 +3290,8 @@ endif
 		  cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; } \
 	done
 
-.PHONY: install-gitweb install-doc install-man install-man-perl install-html install-info install-pdf
+.PHONY: install-doc install-man install-man-perl install-html install-info install-pdf
 .PHONY: quick-install-doc quick-install-man quick-install-html
-install-gitweb:
-	$(MAKE) -C gitweb install
 
 install-doc: install-man-perl
 	$(MAKE) -C Documentation install
@@ -3425,7 +3437,6 @@ clean: profile-clean coverage-clean cocciclean
 	$(MAKE) -C Documentation/ clean
 	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
 ifndef NO_PERL
-	$(MAKE) -C gitweb clean
 	$(RM) -r perl/build/
 endif
 	$(MAKE) -C templates/ clean
