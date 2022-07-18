@@ -326,6 +326,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	free(bitmap_name);
 
 	if (fstat(fd, &st)) {
+		error_errno(_("cannot fstat bitmap file"));
 		close(fd);
 		return -1;
 	}
@@ -350,8 +351,10 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	if (load_bitmap_header(bitmap_git) < 0)
 		goto cleanup;
 
-	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum))
+	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum)) {
+		error(_("checksum doesn't match in MIDX and bitmap"));
 		goto cleanup;
+	}
 
 	if (load_midx_revindex(bitmap_git->midx) < 0) {
 		warning(_("multi-pack bitmap is missing required reverse index"));
@@ -389,6 +392,7 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 	free(bitmap_name);
 
 	if (fstat(fd, &st)) {
+		error_errno(_("cannot fstat bitmap file"));
 		close(fd);
 		return -1;
 	}
