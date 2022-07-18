@@ -45,6 +45,26 @@ Performance, Internal Implementation, Development Support etc.
  * Further preparation to turn git-submodule.sh into a builtin
    continues.
 
+ * Apply Coccinelle rule to turn raw memmove() into MOVE_ARRAY() cpp
+   macro, which would improve maintainability and readability.
+
+ * Teach "make all" to build gitweb as well.
+
+ * Tweak tests so that they still work when the "git init" template
+   did not create .git/info directory.
+
+ * Add Coccinelle rules to detect the pattern of initializing and then
+   finalizing a structure without using it in between at all, which
+   happens after code restructuring and the compilers fail to
+   recognize as an unused variable.
+
+ * The code to convert between GPG trust level strings and internal
+   constants we use to represent them have been cleaned up.
+
+ * Support for libnettle as SHA256 implementation has been added.
+
+ * The way "git multi-pack" uses parse-options API has been improved.
+
 
 Fixes since v2.37
 -----------------
@@ -82,6 +102,20 @@ Fixes since v2.37
    core.worktree configuration variable points at a directory that has
    a repository as its subdirectory, regressed in Git 2.27 days.
    (merge d6c9a71755 gg/worktree-from-the-above later to maint).
+
+ * Recent update to vimdiff layout code has been made more robust
+   against different end-user vim settings.
+   (merge f3d7623a13 fr/vimdiff-layout-fix later to maint).
+
+ * Plug various memory leaks.
+   (merge ece3974ba6 ab/leakfix later to maint).
+
+ * Plug various memory leaks in test-tool commands.
+   (merge f40a693450 ab/test-tool-leakfix later to maint).
+
+ * Fixes a long-standing corner case bug around directory renames in
+   the merge-ort strategy.
+   (merge 751e165424 en/merge-dual-dir-renames-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
