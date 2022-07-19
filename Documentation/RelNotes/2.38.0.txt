@@ -23,6 +23,10 @@ UI, Workflows & Features
    (i.e. expected to be hidden).  The handling of such cases has been
    improved.
 
+ * Earlier, HTTP transport clients learned to tell the server side
+   what locale they are in by sending Accept-Language HTTP header, but
+   this was done only for some requests but not others.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -64,6 +68,9 @@ Performance, Internal Implementation, Development Support etc.
  * Support for libnettle as SHA256 implementation has been added.
 
  * The way "git multi-pack" uses parse-options API has been improved.
+
+ * A coccinelle rule (in contrib/) to encourage use of COPY_ARRAY
+   macro has been improved.
 
 
 Fixes since v2.37
@@ -116,6 +123,23 @@ Fixes since v2.37
  * Fixes a long-standing corner case bug around directory renames in
    the merge-ort strategy.
    (merge 751e165424 en/merge-dual-dir-renames-fix later to maint).
+
+ * The resolve-undo information in the index was not protected against
+   GC, which has been corrected.
+   (merge e0ad13977a jc/resolve-undo later to maint).
+
+ * A corner case bug where lazily fetching objects from a promisor
+   remote resulted in infinite recursion has been corrected.
+   (merge cb88b37cb9 hx/lookup-commit-in-graph-fix later to maint).
+
+ * "git clone" from a repository with some ref whose HEAD is unborn
+   did not set the HEAD in the resulting repository correctly, which
+   has been corrected.
+   (merge daf7898abb jk/clone-unborn-confusion later to maint).
+
+ * An earlier attempt to plug leaks placed a clean-up label to jump to
+   at a bogus place, which as been corrected.
+   (merge 04393ae7f7 jk/diff-files-cleanup-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
