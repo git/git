@@ -152,7 +152,7 @@ $state->{allowed_roots} = [ @ARGV ];
 
 # don't export the whole system unless the users requests it
 if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
-    die "--export-all can only be used together with an explicit whitelist\n";
+    die "--export-all can only be used together with an explicit '<directory>...' list\n";
 }
 
 # Environment handling for running under git-shell
