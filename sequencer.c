@@ -4286,26 +4286,54 @@ static int do_update_ref(struct repository *r, const char *refname)
 	return 0;
 }
 
-static int do_update_refs(struct repository *r)
+static int do_update_refs(struct repository *r, int quiet)
 {
 	int res = 0;
 	struct string_list_item *item;
 	struct string_list refs_to_oids = STRING_LIST_INIT_DUP;
 	struct ref_store *refs = get_main_ref_store(r);
+	struct strbuf update_msg = STRBUF_INIT;
+	struct strbuf error_msg = STRBUF_INIT;
 
 	if ((res = sequencer_get_update_refs_state(r->gitdir, &refs_to_oids)))
 		return res;
 
 	for_each_string_list_item(item, &refs_to_oids) {
 		struct update_ref_record *rec = item->util;
+		int loop_res;
 
-		res |= refs_update_ref(refs, "rewritten during rebase",
-				       item->string,
-				       &rec->after, &rec->before,
-				       0, UPDATE_REFS_MSG_ON_ERR);
+		loop_res = refs_update_ref(refs, "rewritten during rebase",
+					   item->string,
+					   &rec->after, &rec->before,
+					   0, UPDATE_REFS_MSG_ON_ERR);
+		res |= loop_res;
+
+		if (quiet)
+			continue;
+
+		if (loop_res)
+			strbuf_addf(&error_msg, "\t%s\n", item->string);
+		else
+			strbuf_addf(&update_msg, "\t%s\n", item->string);
+	}
+
+	if (!quiet &&
+	    (update_msg.len || error_msg.len)) {
+		fprintf(stderr,
+			_("Updated the following refs with %s:\n%s"),
+			"--update-refs",
+			update_msg.buf);
+
+		if (res)
+			fprintf(stderr,
+				_("Failed to update the following refs with %s:\n%s"),
+				"--update-refs",
+				error_msg.buf);
 	}
 
 	string_list_clear(&refs_to_oids, 1);
+	strbuf_release(&update_msg);
+	strbuf_release(&error_msg);
 	return res;
 }
 
@@ -4826,7 +4854,7 @@ cleanup_head_ref:
 		strbuf_release(&buf);
 		strbuf_release(&head_ref);
 
-		if (do_update_refs(r))
+		if (do_update_refs(r, opts->quiet))
 			return -1;
 	}
 

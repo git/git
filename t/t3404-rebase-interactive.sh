@@ -1840,12 +1840,26 @@ test_expect_success '--update-refs updates refs correctly' '
 	test_commit extra2 fileX &&
 	git commit --amend --fixup=L &&
 
-	git rebase -i --autosquash --update-refs primary &&
+	git rebase -i --autosquash --update-refs primary 2>err &&
 
 	test_cmp_rev HEAD~3 refs/heads/first &&
 	test_cmp_rev HEAD~3 refs/heads/second &&
 	test_cmp_rev HEAD~1 refs/heads/third &&
-	test_cmp_rev HEAD refs/heads/no-conflict-branch
+	test_cmp_rev HEAD refs/heads/no-conflict-branch &&
+
+	cat >expect <<-\EOF &&
+	Successfully rebased and updated refs/heads/update-refs.
+	Updated the following refs with --update-refs:
+		refs/heads/first
+		refs/heads/no-conflict-branch
+		refs/heads/second
+		refs/heads/third
+	EOF
+
+	# Clear "Rebasing (X/Y)" progress lines and drop leading tabs.
+	sed -e "s/Rebasing.*Successfully/Successfully/g" -e "s/^\t//g" \
+		<err >err.trimmed &&
+	test_cmp expect err.trimmed
 '
 
 test_expect_success 'respect user edits to update-ref steps' '
@@ -1983,8 +1997,23 @@ test_expect_success '--update-refs: check failed ref update' '
 	# the lock in the update-refs file.
 	git rev-parse third >.git/refs/heads/second &&
 
-	git rebase --continue 2>err &&
-	grep "update_ref failed for ref '\''refs/heads/second'\''" err
+	test_must_fail git rebase --continue 2>err &&
+	grep "update_ref failed for ref '\''refs/heads/second'\''" err &&
+
+	cat >expect <<-\EOF &&
+	Updated the following refs with --update-refs:
+		refs/heads/first
+		refs/heads/no-conflict-branch
+		refs/heads/third
+	Failed to update the following refs with --update-refs:
+		refs/heads/second
+	EOF
+
+	# Clear "Rebasing (X/Y)" progress lines and drop leading tabs.
+	tail -n 6 err >err.last &&
+	sed -e "s/Rebasing.*Successfully/Successfully/g" -e "s/^\t//g" \
+		<err.last >err.trimmed &&
+	test_cmp expect err.trimmed
 '
 
 # This must be the last test in this file
