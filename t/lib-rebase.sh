@@ -207,3 +207,18 @@ check_reworded_commits () {
 		>reword-log &&
 	test_cmp reword-expected reword-log
 }
+
+# usage: set_replace_editor <file>
+#
+# Replace the todo file with the exact contents of the given file.
+set_replace_editor () {
+	cat >script <<-\EOF &&
+	cat FILENAME >"$1"
+
+	echo 'rebase -i script after editing:'
+	cat "$1"
+	EOF
+
+	sed -e "s/FILENAME/$1/g" <script | write_script fake-editor.sh &&
+	test_set_editor "$(pwd)/fake-editor.sh"
+}

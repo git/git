@@ -1834,6 +1834,145 @@ test_expect_success '--update-refs updates refs correctly' '
 	test_cmp_rev HEAD refs/heads/no-conflict-branch
 '
 
+test_expect_success 'respect user edits to update-ref steps' '
+	git checkout -B update-refs-break no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f unseen base &&
+
+	# First, we will add breaks to the expected todo file
+	cat >fake-todo-1 <<-EOF &&
+	pick $(git rev-parse HEAD~3)
+	break
+	update-ref refs/heads/second
+	update-ref refs/heads/first
+
+	pick $(git rev-parse HEAD~2)
+	pick $(git rev-parse HEAD~1)
+	update-ref refs/heads/third
+
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/no-conflict-branch
+	EOF
+
+	# Second, we will drop some update-refs commands (and move one)
+	cat >fake-todo-2 <<-EOF &&
+	update-ref refs/heads/second
+
+	pick $(git rev-parse HEAD~2)
+	update-ref refs/heads/third
+	pick $(git rev-parse HEAD~1)
+	break
+
+	pick $(git rev-parse HEAD)
+	EOF
+
+	# Third, we will:
+	# * insert a new one (new-branch),
+	# * re-add an old one (first), and
+	# * add a second instance of a previously-stored one (second)
+	cat >fake-todo-3 <<-EOF &&
+	update-ref refs/heads/unseen
+	update-ref refs/heads/new-branch
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/first
+	update-ref refs/heads/second
+	EOF
+
+	(
+		set_replace_editor fake-todo-1 &&
+		git rebase -i --update-refs primary &&
+
+		# These branches are currently locked.
+		for b in first second third no-conflict-branch
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		set_replace_editor fake-todo-2 &&
+		git rebase --edit-todo &&
+
+		# These branches are currently locked.
+		for b in second third
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		# These branches are currently unlocked for checkout.
+		for b in first no-conflict-branch
+		do
+			git worktree add wt-$b $b &&
+			git worktree remove wt-$b || return 1
+		done &&
+
+		git rebase --continue &&
+
+		set_replace_editor fake-todo-3 &&
+		git rebase --edit-todo &&
+
+		# These branches are currently locked.
+		for b in second third first unseen
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		# These branches are currently unlocked for checkout.
+		for b in no-conflict-branch
+		do
+			git worktree add wt-$b $b &&
+			git worktree remove wt-$b || return 1
+		done &&
+
+		git rebase --continue
+	) &&
+
+	test_cmp_rev HEAD~2 refs/heads/third &&
+	test_cmp_rev HEAD~1 refs/heads/unseen &&
+	test_cmp_rev HEAD~1 refs/heads/new-branch &&
+	test_cmp_rev HEAD refs/heads/first &&
+	test_cmp_rev HEAD refs/heads/second &&
+	test_cmp_rev HEAD refs/heads/no-conflict-branch
+'
+
+test_expect_success '--update-refs: check failed ref update' '
+	git checkout -B update-refs-error no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~2 &&
+	git branch -f third HEAD~1 &&
+
+	cat >fake-todo <<-EOF &&
+	pick $(git rev-parse HEAD~3)
+	break
+	update-ref refs/heads/first
+
+	pick $(git rev-parse HEAD~2)
+	update-ref refs/heads/second
+
+	pick $(git rev-parse HEAD~1)
+	update-ref refs/heads/third
+
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/no-conflict-branch
+	EOF
+
+	(
+		set_replace_editor fake-todo &&
+		git rebase -i --update-refs base
+	) &&
+
+	# At this point, the values of first, second, and third are
+	# recorded in the update-refs file. We will force-update the
+	# "second" ref, but "git branch -f" will not work because of
+	# the lock in the update-refs file.
+	git rev-parse third >.git/refs/heads/second &&
+
+	git rebase --continue 2>err &&
+	grep "update_ref failed for ref '\''refs/heads/second'\''" err
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged

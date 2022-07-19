@@ -133,6 +133,18 @@ void todo_list_release(struct todo_list *todo_list);
 const char *todo_item_get_arg(struct todo_list *todo_list,
 			      struct todo_item *item);
 
+/*
+ * Parse the update-refs file for the current rebase, then remove the
+ * refs that do not appear in the todo_list (and have not had updated
+ * values stored) and add refs that are in the todo_list but not
+ * represented in the update-refs file.
+ *
+ * If there are changes to the update-refs list, then write the new state
+ * to disk.
+ */
+void todo_list_filter_update_refs(struct repository *r,
+				  struct todo_list *todo_list);
+
 /* Call this to setup defaults before parsing command line options */
 void sequencer_init_config(struct replay_opts *opts);
 int sequencer_pick_revisions(struct repository *repo,

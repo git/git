@@ -4168,6 +4168,102 @@ cleanup:
 	return result;
 }
 
+/*
+ * Parse the update-refs file for the current rebase, then remove the
+ * refs that do not appear in the todo_list (and have not had updated
+ * values stored) and add refs that are in the todo_list but not
+ * represented in the update-refs file.
+ *
+ * If there are changes to the update-refs list, then write the new state
+ * to disk.
+ */
+void todo_list_filter_update_refs(struct repository *r,
+				  struct todo_list *todo_list)
+{
+	int i;
+	int updated = 0;
+	struct string_list update_refs = STRING_LIST_INIT_DUP;
+
+	sequencer_get_update_refs_state(r->gitdir, &update_refs);
+
+	/*
+	 * For each item in the update_refs list, if it has no updated
+	 * value and does not appear in the todo_list, then remove it
+	 * from the update_refs list.
+	 */
+	for (i = 0; i < update_refs.nr; i++) {
+		int j;
+		int found = 0;
+		const char *ref = update_refs.items[i].string;
+		size_t reflen = strlen(ref);
+		struct update_ref_record *rec = update_refs.items[i].util;
+
+		/* OID already stored as updated. */
+		if (!is_null_oid(&rec->after))
+			continue;
+
+		for (j = 0; !found && j < todo_list->total_nr; j++) {
+			struct todo_item *item = &todo_list->items[j];
+			const char *arg = todo_list->buf.buf + item->arg_offset;
+
+			if (item->command != TODO_UPDATE_REF)
+				continue;
+
+			if (item->arg_len != reflen ||
+			    strncmp(arg, ref, reflen))
+				continue;
+
+			found = 1;
+		}
+
+		if (!found) {
+			free(update_refs.items[i].string);
+			free(update_refs.items[i].util);
+
+			update_refs.nr--;
+			MOVE_ARRAY(update_refs.items + i, update_refs.items + i + 1, update_refs.nr - i);
+
+			updated = 1;
+			i--;
+		}
+	}
+
+	/*
+	 * For each todo_item, check if its ref is in the update_refs list.
+	 * If not, then add it as an un-updated ref.
+	 */
+	for (i = 0; i < todo_list->total_nr; i++) {
+		struct todo_item *item = &todo_list->items[i];
+		const char *arg = todo_list->buf.buf + item->arg_offset;
+		int j, found = 0;
+
+		if (item->command != TODO_UPDATE_REF)
+			continue;
+
+		for (j = 0; !found && j < update_refs.nr; j++) {
+			const char *ref = update_refs.items[j].string;
+
+			found = strlen(ref) == item->arg_len &&
+				!strncmp(ref, arg, item->arg_len);
+		}
+
+		if (!found) {
+			struct string_list_item *inserted;
+			struct strbuf argref = STRBUF_INIT;
+
+			strbuf_add(&argref, arg, item->arg_len);
+			inserted = string_list_insert(&update_refs, argref.buf);
+			inserted->util = init_update_ref_record(argref.buf);
+			strbuf_release(&argref);
+			updated = 1;
+		}
+	}
+
+	if (updated)
+		write_update_refs_state(&update_refs);
+	string_list_clear(&update_refs, 1);
+}
+
 static int do_update_ref(struct repository *r, const char *refname)
 {
 	struct string_list_item *item;

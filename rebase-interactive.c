@@ -146,6 +146,12 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 		return -4;
 	}
 
+	/*
+	 * See if branches need to be added or removed from the update-refs
+	 * file based on the new todo list.
+	 */
+	todo_list_filter_update_refs(r, new_todo);
+
 	return 0;
 }
 
