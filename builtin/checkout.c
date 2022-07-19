@@ -1224,6 +1224,10 @@ static const char *parse_remote_branch(const char *arg,
 			     "\n"
 			     "    git checkout --track origin/<name>\n"
 			     "\n"
+			     "or\n"
+			     "\n"
+			     "    git switch -c <name> --track origin/<name>\n"
+			     "\n"
 			     "If you'd like to always have checkouts of an ambiguous <name> prefer\n"
 			     "one remote, e.g. the 'origin' remote, consider setting\n"
 			     "checkout.defaultRemote=origin in your config."));
