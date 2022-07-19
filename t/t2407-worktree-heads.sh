@@ -61,7 +61,17 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in bisect' '
 	grep "cannot force update the branch '\''wt-4'\'' checked out at.*wt-4" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase' '
+test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (apply)' '
+	test_when_finished git -C wt-2 rebase --abort &&
+
+	# This will fail part-way through due to a conflict.
+	test_must_fail git -C wt-2 rebase --apply conflict-2 &&
+
+	test_must_fail git branch -f wt-2 HEAD 2>err &&
+	grep "cannot force update the branch '\''wt-2'\'' checked out at.*wt-2" err
+'
+
+test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (merge)' '
 	test_when_finished git -C wt-2 rebase --abort &&
 
 	# This will fail part-way through due to a conflict.
