@@ -81,25 +81,16 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (mer
 	grep "cannot force update the branch '\''wt-2'\'' checked out at.*wt-2" err
 '
 
-test_expect_success 'refuse to overwrite: worktree in rebase with --update-refs' '
-	test_when_finished rm -rf .git/worktrees/wt-3/rebase-merge &&
+test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase with --update-refs' '
+	test_when_finished git -C wt-3 rebase --abort &&
 
-	mkdir -p .git/worktrees/wt-3/rebase-merge &&
-	touch .git/worktrees/wt-3/rebase-merge/interactive &&
-
-	cat >.git/worktrees/wt-3/rebase-merge/update-refs <<-EOF &&
-	refs/heads/fake-3
-	$(git rev-parse HEAD~1)
-	$(git rev-parse HEAD)
-	refs/heads/fake-4
-	$(git rev-parse HEAD)
-	$(git rev-parse HEAD)
-	EOF
+	git branch -f can-be-updated wt-3 &&
+	test_must_fail git -C wt-3 rebase --update-refs conflict-3 &&
 
 	for i in 3 4
 	do
-		test_must_fail git branch -f fake-$i HEAD 2>err &&
-		grep "cannot force update the branch '\''fake-$i'\'' checked out at.*wt-3" err ||
+		test_must_fail git branch -f can-be-updated HEAD 2>err &&
+		grep "cannot force update the branch '\''can-be-updated'\'' checked out at.*wt-3" err ||
 			return 1
 	done
 '
