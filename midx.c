@@ -1451,6 +1451,15 @@ static int write_midx_internal(const char *object_dir,
 
 		commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, &ctx);
 
+		/*
+		 * The previous steps translated the information from
+		 * 'entries' into information suitable for constructing
+		 * bitmaps. We no longer need that array, so clear it to
+		 * reduce memory pressure.
+		 */
+		FREE_AND_NULL(ctx.entries);
+		ctx.entries_nr = 0;
+
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &pdata,
 				      commits, commits_nr, ctx.pack_order,
 				      refs_snapshot, flags) < 0) {
@@ -1459,6 +1468,10 @@ static int write_midx_internal(const char *object_dir,
 			goto cleanup;
 		}
 	}
+	/*
+	 * NOTE: Do not use ctx.entries beyond this point, since it might
+	 * have been freed in the previous if block.
+	 */
 
 	if (ctx.m)
 		close_object_store(the_repository->objects);
