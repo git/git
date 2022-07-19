@@ -1772,6 +1772,12 @@ test_expect_success '--update-refs adds label and update-ref commands' '
 		EOF
 
 		test_must_fail git rebase -i --autosquash --update-refs primary >todo &&
+		test_cmp expect todo &&
+
+		test_must_fail git -c rebase.autosquash=true \
+				   -c rebase.updaterefs=true \
+				   rebase -i primary >todo &&
+
 		test_cmp expect todo
 	)
 '
@@ -1812,6 +1818,14 @@ test_expect_success '--update-refs adds commands with --rebase-merges' '
 		test_must_fail git rebase -i --autosquash \
 				   --rebase-merges=rebase-cousins \
 				   --update-refs primary >todo &&
+
+		test_cmp expect todo &&
+
+		test_must_fail git -c rebase.autosquash=true \
+				   -c rebase.updaterefs=true \
+				   rebase -i \
+				   --rebase-merges=rebase-cousins \
+				   primary >todo &&
 
 		test_cmp expect todo
 	)
