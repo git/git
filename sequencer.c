@@ -5888,11 +5888,24 @@ static int add_decorations_to_list(const struct commit *commit,
 				   struct todo_add_branch_context *ctx)
 {
 	const struct name_decoration *decoration = get_name_decoration(&commit->object);
+	const char *head_ref = resolve_ref_unsafe("HEAD",
+						  RESOLVE_REF_READING,
+						  NULL,
+						  NULL);
 
 	while (decoration) {
 		struct todo_item *item;
 		const char *path;
 		size_t base_offset = ctx->buf->len;
+
+		/*
+		 * If the branch is the current HEAD, then it will be
+		 * updated by the default rebase behavior.
+		 */
+		if (head_ref && !strcmp(head_ref, decoration->name)) {
+			decoration = decoration->next;
+			continue;
+		}
 
 		ALLOC_GROW(ctx->items,
 			ctx->items_nr + 1,
