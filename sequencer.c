@@ -148,6 +148,20 @@ static GIT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
 static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
 
 /*
+ * The update-refs file stores a list of refs that will be updated at the end
+ * of the rebase sequence. The 'update-ref <ref>' commands in the todo file
+ * update the OIDs for the refs in this file, but the refs are not updated
+ * until the end of the rebase sequence.
+ *
+ * rebase_path_update_refs() returns the path to this file for a given
+ * worktree directory. For the current worktree, pass the_repository->gitdir.
+ */
+static char *rebase_path_update_refs(const char *wt_git_dir)
+{
+	return xstrfmt("%s/rebase-merge/update-refs", wt_git_dir);
+}
+
+/*
  * The following files are written by git-rebase just after parsing the
  * command-line.
  */
@@ -168,6 +182,15 @@ static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedul
 static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-reschedule-failed-exec")
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
+
+/**
+ * A 'struct update_refs_record' represents a value in the update-refs
+ * list. We use a string_list to map refs to these (before, after) pairs.
+ */
+struct update_ref_record {
+	struct object_id before;
+	struct object_id after;
+};
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
 {
@@ -5935,4 +5958,55 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 	}
 
 	return 0;
+}
+
+int sequencer_get_update_refs_state(const char *wt_dir,
+				    struct string_list *refs)
+{
+	int result = 0;
+	FILE *fp = NULL;
+	struct strbuf ref = STRBUF_INIT;
+	struct strbuf hash = STRBUF_INIT;
+	struct update_ref_record *rec = NULL;
+
+	char *path = rebase_path_update_refs(wt_dir);
+
+	fp = fopen(path, "r");
+	if (!fp)
+		goto cleanup;
+
+	while (strbuf_getline(&ref, fp) != EOF) {
+		struct string_list_item *item;
+
+		CALLOC_ARRAY(rec, 1);
+
+		if (strbuf_getline(&hash, fp) == EOF ||
+		    get_oid_hex(hash.buf, &rec->before)) {
+			warning(_("update-refs file at '%s' is invalid"),
+				  path);
+			result = -1;
+			goto cleanup;
+		}
+
+		if (strbuf_getline(&hash, fp) == EOF ||
+		    get_oid_hex(hash.buf, &rec->after)) {
+			warning(_("update-refs file at '%s' is invalid"),
+				  path);
+			result = -1;
+			goto cleanup;
+		}
+
+		item = string_list_insert(refs, ref.buf);
+		item->util = rec;
+		rec = NULL;
+	}
+
+cleanup:
+	if (fp)
+		fclose(fp);
+	free(path);
+	free(rec);
+	strbuf_release(&ref);
+	strbuf_release(&hash);
+	return result;
 }

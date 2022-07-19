@@ -388,6 +388,7 @@ static void prepare_checked_out_branches(void)
 		char *old;
 		struct wt_status_state state = { 0 };
 		struct worktree *wt = worktrees[i++];
+		struct string_list update_refs = STRING_LIST_INIT_DUP;
 
 		if (wt->is_bare)
 			continue;
@@ -423,6 +424,18 @@ static void prepare_checked_out_branches(void)
 			strbuf_release(&ref);
 		}
 		wt_status_state_free_buffers(&state);
+
+		if (!sequencer_get_update_refs_state(get_worktree_git_dir(wt),
+						     &update_refs)) {
+			struct string_list_item *item;
+			for_each_string_list_item(item, &update_refs) {
+				old = strmap_put(&current_checked_out_branches,
+						 item->string,
+						 xstrdup(wt->path));
+				free(old);
+			}
+			string_list_clear(&update_refs, 1);
+		}
 	}
 
 	free_worktrees(worktrees);

@@ -233,4 +233,13 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose);
 int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
+
+/**
+ * Append the set of ref-OID pairs that are currently stored for the 'git
+ * rebase --update-refs' feature if such a rebase is currently happening.
+ *
+ * Localized to a worktree's git dir.
+ */
+int sequencer_get_update_refs_state(const char *wt_dir, struct string_list *refs);
+
 #endif /* SEQUENCER_H */
