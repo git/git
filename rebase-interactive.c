@@ -57,6 +57,9 @@ void append_todo_help(int command_count,
 "        create a merge commit using the original merge commit's\n"
 "        message (or the oneline, if no original merge commit was\n"
 "        specified); use -c <commit> to reword the commit message\n"
+"u, update-ref <ref> = track a placeholder for the <ref> to be updated\n"
+"                      to this position in the new commits. The <ref> is\n"
+"                      updated at the end of the rebase\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n");
 	unsigned edit_todo = !(shortrevisions && shortonto);
