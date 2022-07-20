@@ -445,6 +445,8 @@ include::config/i18n.txt[]
 
 include::config/imap.txt[]
 
+include::config/includeif.txt[]
+
 include::config/index.txt[]
 
 include::config/init.txt[]
