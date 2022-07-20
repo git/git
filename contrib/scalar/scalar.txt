@@ -3,7 +3,7 @@ scalar(1)
 
 NAME
 ----
-scalar - an opinionated repository management tool
+scalar - A tool for managing large Git repositories
 
 SYNOPSIS
 --------
@@ -20,10 +20,9 @@ scalar delete <enlistment>
 DESCRIPTION
 -----------
 
-Scalar is an opinionated repository management tool. By creating new
-repositories or registering existing repositories with Scalar, your Git
-experience will speed up. Scalar sets advanced Git config settings,
-maintains your repositories in the background, and helps reduce data sent
+Scalar is a repository management tool that optimizes Git for use in large
+repositories. Scalar improves performance by configuring advanced Git settings,
+maintaining repositories in the background, and helping to reduce data sent
 across the network.
 
 An important Scalar concept is the enlistment: this is the top-level directory
