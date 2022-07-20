@@ -4369,19 +4369,16 @@ class P4Unshelve(Command):
     def renameBranch(self, branch_name):
         """Rename the existing branch to branch_name.N ."""
 
-        found = True
         for i in range(0, 1000):
             backup_branch_name = "{0}.{1}".format(branch_name, i)
             if not gitBranchExists(backup_branch_name):
                 # Copy ref to backup
                 gitUpdateRef(backup_branch_name, branch_name)
                 gitDeleteRef(branch_name)
-                found = True
                 print("renamed old unshelve branch to {0}".format(backup_branch_name))
                 break
-
-        if not found:
-            sys.exit("gave up trying to rename existing branch {0}".format(sync.branch))
+        else:
+            sys.exit("gave up trying to rename existing branch {0}".format(branch_name))
 
     def findLastP4Revision(self, starting_point):
         """Look back from starting_point for the first commit created by git-p4
