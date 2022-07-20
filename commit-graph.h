@@ -93,7 +93,12 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
-struct commit_graph *parse_commit_graph(struct repository *r,
+
+/*
+ * Callers should initialize the repo_settings with prepare_repo_settings()
+ * prior to calling parse_commit_graph().
+ */
+struct commit_graph *parse_commit_graph(struct repo_settings *s,
 					void *graph_map, size_t graph_size);
 
 /*
