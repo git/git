@@ -48,13 +48,33 @@ test_expect_success 'unpack big object in stream' '
 	test_dir_is_empty dest.git/objects/pack
 '
 
+check_fsync_events () {
+	local trace="$1" &&
+	shift &&
+
+	cat >expect &&
+	sed -n \
+		-e '/^{"event":"data",.*"category":"fsync",/ {
+			s/.*"category":"fsync",//;
+			s/}$//;
+			p;
+		}' \
+		<"$trace" >actual &&
+	test_cmp expect actual
+}
+
 BATCH_CONFIGURATION='-c core.fsync=loose-object -c core.fsyncmethod=batch'
 
 test_expect_success 'unpack big object in stream (core.fsyncmethod=batch)' '
 	prepare_dest 1m &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+	GIT_TEST_FSYNC=true \
 		git -C dest.git $BATCH_CONFIGURATION unpack-objects <pack-$PACK.pack &&
-	grep fsync/hardware-flush trace2.txt &&
+	check_fsync_events trace2.txt <<-\EOF &&
+	"key":"fsync/writeout-only","value":"6"
+	"key":"fsync/hardware-flush","value":"1"
+	EOF
+
 	test_dir_is_empty dest.git/objects/pack &&
 	git -C dest.git cat-file --batch-check="%(objectname)" <obj-list >current &&
 	cmp obj-list current
