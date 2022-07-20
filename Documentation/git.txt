@@ -885,9 +885,7 @@ for full details.
 	If set to a colon-separated list of protocols, behave as if
 	`protocol.allow` is set to `never`, and each of the listed
 	protocols has `protocol.<name>.allow` set to `always`
-	(overriding any existing configuration). In other words, any
-	protocol not mentioned will be disallowed (i.e., this is a
-	whitelist, not a blacklist). See the description of
+	(overriding any existing configuration). See the description of
 	`protocol.allow` in linkgit:git-config[1] for more details.
 
 `GIT_PROTOCOL_FROM_USER`::
