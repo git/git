@@ -49,14 +49,6 @@ void packet_fflush(FILE *f);
  * Read a packetized line into the buffer, which must be at least size bytes
  * long. The return value specifies the number of bytes read into the buffer.
  *
- * If src_buffer and *src_buffer are not NULL, it should point to a buffer
- * containing the packet data to parse, of at least *src_len bytes.  After the
- * function returns, src_buf will be incremented and src_len decremented by the
- * number of bytes consumed.
- *
- * If src_buffer (or *src_buffer) is NULL, then data is read from the
- * descriptor "fd".
- *
  * If options does not contain PACKET_READ_GENTLE_ON_EOF, we will die under any
  * of the following conditions:
  *
@@ -104,6 +96,14 @@ int packet_length(const char lenbuf_hex[4]);
  * returns an 'enum packet_read_status' which indicates the status of the read.
  * The number of bytes read will be assigned to *pktlen if the status of the
  * read was 'PACKET_READ_NORMAL'.
+ *
+ * If src_buffer and *src_buffer are not NULL, it should point to a buffer
+ * containing the packet data to parse, of at least *src_len bytes.  After the
+ * function returns, src_buf will be incremented and src_len decremented by the
+ * number of bytes consumed.
+ *
+ * If src_buffer (or *src_buffer) is NULL, then data is read from the
+ * descriptor "fd".
  */
 enum packet_read_status {
 	PACKET_READ_EOF,
