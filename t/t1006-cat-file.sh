@@ -418,6 +418,12 @@ test_expect_success "--batch-check with multiple sha1s gives correct format" '
     "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
 '
 
+batch_command_multiple_info="info $hello_sha1
+info $tree_sha1
+info $commit_sha1
+info $tag_sha1
+info deadbeef"
+
 test_expect_success '--batch-command with multiple info calls gives correct format' '
 	cat >expect <<-EOF &&
 	$hello_sha1 blob $hello_size
@@ -427,16 +433,17 @@ test_expect_success '--batch-command with multiple info calls gives correct form
 	deadbeef missing
 	EOF
 
-	git cat-file --batch-command --buffer >actual <<-EOF &&
-	info $hello_sha1
-	info $tree_sha1
-	info $commit_sha1
-	info $tag_sha1
-	info deadbeef
-	EOF
+	echo "$batch_command_multiple_info" >in &&
+	git cat-file --batch-command --buffer <in >actual &&
 
 	test_cmp expect actual
 '
+
+batch_command_multiple_contents="contents $hello_sha1
+contents $commit_sha1
+contents $tag_sha1
+contents deadbeef
+flush"
 
 test_expect_success '--batch-command with multiple command calls gives correct format' '
 	remove_timestamp >expect <<-EOF &&
@@ -449,13 +456,8 @@ test_expect_success '--batch-command with multiple command calls gives correct f
 	deadbeef missing
 	EOF
 
-	git cat-file --batch-command --buffer >actual_raw <<-EOF &&
-	contents $hello_sha1
-	contents $commit_sha1
-	contents $tag_sha1
-	contents deadbeef
-	flush
-	EOF
+	echo "$batch_command_multiple_contents" >in &&
+	git cat-file --batch-command --buffer <in >actual_raw &&
 
 	remove_timestamp <actual_raw >actual &&
 	test_cmp expect actual
