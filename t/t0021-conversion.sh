@@ -1132,4 +1132,26 @@ do
 	'
 done
 
+test_expect_success PERL 'delayed checkout correctly reports the number of updated entries' '
+	rm -rf repo &&
+	git init repo &&
+	(
+		cd repo &&
+		git config filter.delay.process "../rot13-filter.pl delayed.log clean smudge delay" &&
+		git config filter.delay.required true &&
+
+		echo "*.a filter=delay" >.gitattributes &&
+		echo a >test-delay10.a &&
+		echo a >test-delay11.a &&
+		git add . &&
+		git commit -m files &&
+
+		rm *.a &&
+		git checkout . 2>err &&
+		grep "IN: smudge test-delay10.a .* \\[DELAYED\\]" delayed.log &&
+		grep "IN: smudge test-delay11.a .* \\[DELAYED\\]" delayed.log &&
+		grep "Updated 2 paths from the index" err
+	)
+'
+
 test_done
