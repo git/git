@@ -1,3 +1,22 @@
+safe.bareRepository::
+	Specifies which bare repositories Git will work with. The currently
+	supported values are:
++
+* `all`: Git works with all bare repositories. This is the default.
+* `explicit`: Git only works with bare repositories specified via
+  the top-level `--git-dir` command-line option, or the `GIT_DIR`
+  environment variable (see linkgit:git[1]).
++
+If you do not use bare repositories in your workflow, then it may be
+beneficial to set `safe.bareRepository` to `explicit` in your global
+config. This will protect you from attacks that involve cloning a
+repository that contains a bare repository and running a Git command
+within that directory.
++
+This config setting is only respected in protected configuration (see
+<<SCOPES>>). This prevents the untrusted repository from tampering with
+this value.
+
 safe.directory::
 	These config entries specify Git-tracked directories that are
 	considered safe even if they are owned by someone other than the
@@ -12,9 +31,9 @@ via `git config --add`. To reset the list of safe directories (e.g. to
 override any such directories specified in the system config), add a
 `safe.directory` entry with an empty value.
 +
-This config setting is only respected when specified in a system or global
-config, not when it is specified in a repository config, via the command
-line option `-c safe.directory=<path>`, or in environment variables.
+This config setting is only respected in protected configuration (see
+<<SCOPES>>). This prevents the untrusted repository from tampering with this
+value.
 +
 The value of this setting is interpolated, i.e. `~/<path>` expands to a
 path relative to the home directory and `%(prefix)/<path>` expands to a
