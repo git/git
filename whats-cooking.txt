@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2022, #06; Tue, 19)
-X-master-at: e72d93e88cb20b06e88e6e7d81bd1dc4effe453f
-X-next-at: a122caa7aef2a7df25e111e06a49b1727cd52b08
+Subject: What's cooking in git.git (Jul 2022, #07; Fri, 22)
+X-master-at: 6a475b71f8c4ce708d69fdc9317aefbde3769e25
+X-next-at: a8f742fd52ac1e242fca73527be643aa60514c94
 
-What's cooking in git.git (Jul 2022, #06; Tue, 19)
+What's cooking in git.git (Jul 2022, #07; Fri, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -41,18 +41,199 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* gc/bare-repo-discovery (2022-07-14) 5 commits
+  (merged to 'next' on 2022-07-15 at 5206577852)
+ + setup.c: create `safe.bareRepository`
+ + safe.directory: use git_protected_config()
+ + config: learn `git_protected_config()`
+ + Documentation: define protected configuration
+ + Documentation/git-config.txt: add SCOPES section
+
+ Introduce a discovery.barerepository configuration variable that
+ allows users to forbid discovery of bare repositories.
+ source: <pull.1261.v8.git.git.1657834081.gitgitgadget@gmail.com>
+
+
+* js/ci-github-workflow-markup (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 196166f671)
+ + tests: fix incorrect --write-junit-xml code
+
+ A fix for a regression in test framework.
+ source: <pull.1288.git.1657789234416.gitgitgadget@gmail.com>
+
+
+* js/shortlog-sort-stably (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 75e4efe678)
+ + shortlog: use a stable sort
+
+ "git shortlog -n" relied on the underlying qsort() to be stable,
+ which shouldn't have.  Fixed.
+ source: <pull.1290.git.1657813429221.gitgitgadget@gmail.com>
+
+
+* js/vimdiff-quotepath-fix (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 4273bbd4b4)
+ + mergetool(vimdiff): allow paths to contain spaces again
+
+ Variable quoting fix in the vimdiff driver of "git mergetool"
+ source: <pull.1287.v2.git.1657809063728.gitgitgadget@gmail.com>
+
+
+* rs/mingw-tighten-mkstemp (2022-07-14) 1 commit
+  (merged to 'next' on 2022-07-15 at 4dd4a117ec)
+ + mingw: avoid mktemp() in mkstemp() implementation
+
+ mkstemp() emulation on Windows has been improved.
+ source: <7265e37f-fd29-3579-b840-19a1df52a59f@web.de>
+
+--------------------------------------------------
 [New Topics]
 
+* ab/leak-check (2022-07-20) 14 commits
+ - CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
+ - upload-pack: fix a memory leak in create_pack_file()
+ - leak tests: mark passing SANITIZE=leak tests as leak-free
+ - test-lib: have the "check" mode for SANITIZE=leak consider leak logs
+ - test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
+ - test-lib: simplify by removing test_external
+ - tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
+ - t/Makefile: don't remove test-results in "clean-except-prove-cache"
+ - test-lib: add a SANITIZE=leak logging mode
+ - t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
+ - test-lib: add a --invert-exit-code switch
+ - test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
+ - test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
+ - test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
+
+ Plugging more leaks.
+ source: <cover-v2-00.14-00000000000-20220720T211221Z-avarab@gmail.com>
+
+
+* mb/p4-fixes (2022-07-20) 2 commits
+  (merged to 'next' on 2022-07-20 at 7942d72b1c)
+ + git-p4: fix error handling in P4Unshelve.renameBranch()
+ + git-p4: fix typo in P4Submit.applyCommit()
+
+ Fix a few issues in "git p4".
+
+ Will merge to 'master'.
+ source: <pull.1297.v2.git.git.1658343330.gitgitgadget@gmail.com>
+
+
+* mb/p4-utf16-crlf (2022-07-20) 1 commit
+  (merged to 'next' on 2022-07-20 at c2fedd2fc2)
+ + git-p4: fix CR LF handling for utf16 files
+
+ "git p4" working on UTF-16 files on Windows did not implement
+ CRLF-to-LF conversion correctly, which has been corrected.
+
+ Will merge to 'master'.
+ source: <pull.1294.v2.git.git.1658341065221.gitgitgadget@gmail.com>
+
+
+* jc/string-list-cleanup (2022-07-20) 1 commit
+ - builtin/remote.c: use the right kind of STRING_LIST_INIT
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <xmqq7d471dns.fsf@gitster.g>
+
+
+* mt/pkt-line-comment-tweak (2022-07-22) 1 commit
+  (merged to 'next' on 2022-07-22 at 4004fa75eb)
+ + pkt-line.h: move comment closer to the associated code
+
+ In-code comment clarification.
+
+ Will merge to 'master'.
+ source: <6a14443c101fa132498297af6d7a483520688d75.1658488203.git.matheus.bernardino@usp.br>
+
+
+* mt/rot13-in-c (2022-07-22) 3 commits
+ - t/t0021: replace old rot13-filter.pl uses with new test-tool cmd
+ - t/t0021: convert the rot13-filter.pl script to C
+ - Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
+ (this branch uses mt/checkout-count-fix.)
+
+ Test portability improvements.
+
+ Needs review.
+ source: <cover.1658518769.git.matheus.bernardino@usp.br>
+
+
+* tk/untracked-cache-with-uall (2022-07-22) 1 commit
+ - read-cache: make `do_read_index()` always set up `istate->repo`
+
+ Fix for a bug that makes write-tree to faile to write out a
+ non-existent index as a tree, introduced in 2.37.
+
+ Will merge to 'next'.
+ source: <20220722212232.833188-1-martin.agren@gmail.com>
+
+--------------------------------------------------
+[Stalled]
+
+* tk/apply-case-insensitive (2022-06-21) 3 commits
+ - apply: support case-only renames in case-insensitive filesystems
+ - reset: new failing test for reset of case-insensitive duplicate in index
+ - t4141: test "git apply" with core.ignorecase
+
+ "git apply" barfed on a patch that makes a case-only rename on a
+ case-insensitive filesystem.
+
+ Needs review.
+ source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
+
+
+* bc/stash-export (2022-04-08) 4 commits
+ - builtin/stash: provide a way to import stashes from a ref
+ - builtin/stash: provide a way to export stashes to a ref
+ - builtin/stash: factor out revision parsing into a function
+ - object-name: make get_oid quietly return an error
+
+ A mechanism to export and import stash entries to and from a normal
+ commit to transfer it across repositories has been introduced.
+
+ Expecting a reroll.
+ cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
+ source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
+
+
+* cw/remote-object-info (2022-05-06) 11 commits
+ - SQUASH??? coccicheck
+ - SQUASH??? ensure that coccicheck is happy
+ - SQUASH??? compilation fix
+ - cat-file: add --batch-command remote-object-info command
+ - cat-file: move parse_cmd and DEFAULT_FORMAT up
+ - transport: add object-info fallback to fetch
+ - transport: add client side capability to request object-info
+ - object-info: send attribute packet regardless of object ids
+ - object-store: add function to free object_info contents
+ - fetch-pack: move fetch default settings
+ - fetch-pack: refactor packet writing
+
+ A client component to talk with the object-info endpoint.
+
+ Expecting a reroll.
+ source: <20220502170904.2770649-1-calvinwan@google.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ds/midx-with-less-memory (2022-07-19) 3 commits
- - midx: reduce memory pressure while writing bitmaps
- - midx: extract bitmap write setup
- - pack-bitmap-write: use const for hashes
+  (merged to 'next' on 2022-07-20 at 250d257c3e)
+ + midx: reduce memory pressure while writing bitmaps
+ + midx: extract bitmap write setup
+ + pack-bitmap-write: use const for hashes
 
  The codepath to write multi-pack index has been taught to release a
  large chunk of memory that holds an array of objects in the packs,
  as soon as it is done with the array, to reduce memory consumption.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1292.v2.git.1658244366.gitgitgadget@gmail.com>
 
 
@@ -113,56 +294,60 @@ Release tarballs are available at:
  source: <cover.1658159745.git.dyroneteng@gmail.com>
 
 
-* tl/trace2-config-scope (2022-07-18) 1 commit
- - tr2: dump names if config exist in multiple scopes
+* tl/trace2-config-scope (2022-07-22) 2 commits
+ - tr2: shows scope unconditionally in addition to key-value pair
+ - api-trace2.txt: print config key-value pair
 
  Tweak trace2 output about configuration variables.
 
- Expecting a reroll.
- cf. <20220719074053.37282-1-tenglong.tl@tenglongtldeMacBook-Pro.local>
- source: <a01ae8478d3a8545241c5b064b6d369a330ee59f.1658159746.git.dyroneteng@gmail.com>
+ Will merge to 'next'?
+ source: <cover.1658472474.git.dyroneteng@gmail.com>
 
 
 * vd/scalar-doc (2022-07-18) 2 commits
- - scalar: convert README.md into a technical design doc
- - scalar: reword command documentation to clarify purpose
+  (merged to 'next' on 2022-07-20 at fab0234da4)
+ + scalar: convert README.md into a technical design doc
+ + scalar: reword command documentation to clarify purpose
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1275.v2.git.1657584367.gitgitgadget@gmail.com>
 
 
 * cl/rerere-train-with-no-sign (2022-07-19) 1 commit
- - contrib/rerere-train: avoid useless gpg sign in training
+  (merged to 'next' on 2022-07-20 at fbb9414d09)
+ + contrib/rerere-train: avoid useless gpg sign in training
 
  "rerere-train" script (in contrib/) used to honor commit.gpgSign
  while recreating the throw-away merges.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <PH7PR14MB5594A27B9295E95ACA4D6A69CE8F9@PH7PR14MB5594.namprd14.prod.outlook.com>
 
 
 * ds/win-syslog-compiler-fix (2022-07-19) 1 commit
- - compat/win32: correct for incorrect compiler warning
+  (merged to 'next' on 2022-07-20 at d38b649b18)
+ + compat/win32: correct for incorrect compiler warning
 
  Workaround for a false positive compiler warning.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1294.git.1658256354725.gitgitgadget@gmail.com>
 
 
 * ld/osx-keychain-usage-fix (2022-07-19) 1 commit
- - osx-keychain: fix compiler warning
+  (merged to 'next' on 2022-07-20 at eebd316ef6)
+ + osx-keychain: fix compiler warning
 
  Workaround for a compiler warning against use of die() in
  osx-keychain (in contrib/).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1293.git.1658251503775.gitgitgadget@gmail.com>
 
 
-* ab/submodule-helper-leakfix (2022-07-19) 24 commits
+* ab/submodule-helper-leakfix (2022-07-21) 26 commits
  - submodule--helper: fix a configure_added_submodule() leak
  - submodule--helper: fix bad config API usage
  - submodule--helper: free rest of "displaypath" in "struct update_data"
@@ -186,294 +371,14 @@ Release tarballs are available at:
  - submodule--helper: fix most "struct pathspec" memory leaks
  - submodule--helper: fix trivial get_default_remote_submodule() leak
  - submodule--helper: fix a leak in "clone_submodule"
+ - submodule--helper: pass a "const struct module_clone_data" to clone_submodule()
+ - submodule--helper: stop conflating "sb" in clone_submodule()
  - submodule--helper: replace memset() with { 0 }-initialization
 
  Plugging leaks in submodule--helper.
 
- Needs review.
- source: <cover-v2-00.24-00000000000-20220719T204458Z-avarab@gmail.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ab/build-gitweb (2022-06-28) 8 commits
-  (merged to 'next' on 2022-07-11 at 731e354ff0)
- + gitweb/Makefile: add a "NO_GITWEB" parameter
- + Makefile: build 'gitweb' in the default target
- + gitweb/Makefile: include in top-level Makefile
- + gitweb: remove "test" and "test-installed" targets
- + gitweb/Makefile: prepare to merge into top-level Makefile
- + gitweb/Makefile: clear up and de-duplicate the gitweb.{css,js} vars
- + gitweb/Makefile: add a $(GITWEB_ALL) variable
- + gitweb/Makefile: define all .PHONY prerequisites inline
-
- Teach "make all" to build gitweb as well.
- source: <cover-v3-0.8-00000000000-20220628T100936Z-avarab@gmail.com>
-
-
-* ab/cocci-unused (2022-07-06) 6 commits
-  (merged to 'next' on 2022-07-11 at 7fa60d2a5b)
- + cocci: generalize "unused" rule to cover more than "strbuf"
- + cocci: add and apply a rule to find "unused" strbufs
- + cocci: have "coccicheck{,-pending}" depend on "coccicheck-test"
- + cocci: add a "coccicheck-test" target and test *.cocci rules
- + Makefile & .gitignore: ignore & clean "git.res", not "*.res"
- + Makefile: remove mandatory "spatch" arguments from SPATCH_FLAGS
-
- Add Coccinelle rules to detect the pattern of initializing and then
- finalizing a structure without using it in between at all, which
- happens after code restructuring and the compilers fail to
- recognize as an unused variable.
- source: <cover-v4-0.6-00000000000-20220705T134033Z-avarab@gmail.com>
-
-
-* ab/leakfix (2022-07-01) 11 commits
-  (merged to 'next' on 2022-07-11 at 0b107fffcf)
- + pull: fix a "struct oid_array" memory leak
- + cat-file: fix a common "struct object_context" memory leak
- + gc: fix a memory leak
- + checkout: avoid "struct unpack_trees_options" leak
- + merge-file: fix memory leaks on error path
- + merge-file: refactor for subsequent memory leak fix
- + cat-file: fix a memory leak in --batch-command mode
- + revert: free "struct replay_opts" members
- + submodule.c: free() memory from xgetcwd()
- + clone: fix memory leak in wanted_peer_refs()
- + check-ref-format: fix trivial memory leak
-
- Plug various memory leaks.
- source: <cover-v2-00.11-00000000000-20220701T104017Z-avarab@gmail.com>
-
-
-* ab/test-tool-leakfix (2022-07-01) 9 commits
-  (merged to 'next' on 2022-07-11 at db7a724694)
- + test-tool delta: fix a memory leak
- + test-tool ref-store: fix a memory leak
- + test-tool bloom: fix memory leaks
- + test-tool json-writer: fix memory leaks
- + test-tool regex: call regfree(), fix memory leaks
- + test-tool urlmatch-normalization: fix a memory leak
- + test-tool {dump,scrap}-cache-tree: fix memory leaks
- + test-tool path-utils: fix a memory leak
- + test-tool test-hash: fix a memory leak
-
- Plug various memory leaks in test-tool commands.
- source: <cover-v2-0.9-00000000000-20220701T103503Z-avarab@gmail.com>
-
-
-* ab/test-without-templates (2022-06-06) 7 commits
-  (merged to 'next' on 2022-07-11 at afab6c1918)
- + tests: don't assume a .git/info for .git/info/sparse-checkout
- + tests: don't assume a .git/info for .git/info/exclude
- + tests: don't assume a .git/info for .git/info/refs
- + tests: don't assume a .git/info for .git/info/attributes
- + tests: don't assume a .git/info for .git/info/grafts
- + tests: don't depend on template-created .git/branches
- + t0008: don't rely on default ".git/info/exclude"
-
- Tweak tests so that they still work when the "git init" template
- did not create .git/info directory.
- source: <cover-v2-0.7-00000000000-20220603T110506Z-avarab@gmail.com>
-
-
-* bc/nettle-sha256 (2022-07-10) 1 commit
-  (merged to 'next' on 2022-07-11 at cf9595d8ca)
- + sha256: add support for Nettle
-
- Support for libnettle as SHA256 implementation has been added.
- source: <20220710132907.1499365-1-sandals@crustytoothpaste.net>
-
-
-* en/merge-dual-dir-renames-fix (2022-07-06) 5 commits
-  (merged to 'next' on 2022-07-11 at 5f8dadf87b)
- + merge-ort: fix issue with dual rename and add/add conflict
- + merge-ort: shuffle the computation and cleanup of potential collisions
- + merge-ort: make a separate function for freeing struct collisions
- + merge-ort: small cleanups of check_for_directory_rename
- + t6423: add tests of dual directory rename plus add/add conflict
-
- Fixes a long-standing corner case bug around directory renames in
- the merge-ort strategy.
- source: <pull.1268.v4.git.1656984823.gitgitgadget@gmail.com>
-
-
-* fr/vimdiff-layout-fix (2022-07-08) 1 commit
-  (merged to 'next' on 2022-07-09 at d8461bd236)
- + vimdiff: make layout engine more robust against user vim settings
-
- Recent update to vimdiff layout code has been made more robust
- against different end-user vim settings.
- source: <20220708181024.45839-1-greenfoo@u92.eu>
-
-
-* gc/submodule-use-super-prefix (2022-06-30) 8 commits
-  (merged to 'next' on 2022-07-11 at 0d9cf172f9)
- + submodule--helper: remove display path helper
- + submodule--helper update: use --super-prefix
- + submodule--helper: remove unused SUPPORT_SUPER_PREFIX flags
- + submodule--helper: use correct display path helper
- + submodule--helper: don't recreate recursive prefix
- + submodule--helper update: use display path helper
- + submodule--helper tests: add missing "display path" coverage
- + Merge branch 'ab/submodule-cleanup' into gc/submodule-use-super-prefix
-
- Another step to rewrite more parts of "git submodule" in C.
- source: <20220701021157.88858-1-chooglen@google.com>
-
-
-* hx/lookup-commit-in-graph-fix (2022-07-12) 2 commits
-  (merged to 'next' on 2022-07-13 at 4489696814)
- + t5330: remove run_with_limited_processses()
-  (merged to 'next' on 2022-07-08 at cef32db0b6)
- + commit-graph.c: no lazy fetch in lookup_commit_in_graph()
-
- A corner case bug where lazily fetching objects from a promisor
- remote resulted in infinite recursion has been corrected.
- source: <cover.1656593279.git.hanxin.hx@bytedance.com>
-
-
-* jc/builtin-mv-move-array (2022-07-09) 1 commit
-  (merged to 'next' on 2022-07-09 at 0d3b3f62e5)
- + builtin/mv.c: use the MOVE_ARRAY() macro instead of memmove()
-
- Apply Coccinelle rule to turn raw memmove() into MOVE_ARRAY() cpp
- macro, which would improve maintainability and readability.
- source: <xmqq4jzpu4xp.fsf_-_@gitster.g>
-
-
-* jc/resolve-undo (2022-07-11) 2 commits
-  (merged to 'next' on 2022-07-13 at b9ef9482e8)
- + fsck: do not dereference NULL while checking resolve-undo data
-  (merged to 'next' on 2022-06-15 at c195e5a2d9)
- + revision: mark blobs needed for resolve-undo as reachable
-
- The resolve-undo information in the index was not protected against
- GC, which has been corrected.
- source: <xmqq35f7kzad.fsf@gitster.g>
-
-
-* jd/gpg-interface-trust-level-string (2022-07-10) 1 commit
-  (merged to 'next' on 2022-07-11 at 7b3cca73a8)
- + gpg-interface: add function for converting trust level to string
-
- The code to convert between GPG trust level strings and internal
- constants we use to represent them have been cleaned up.
- source: <pull.1281.v4.git.1657515650587.gitgitgadget@gmail.com>
-
-
-* jk/clone-unborn-confusion (2022-07-11) 4 commits
-  (merged to 'next' on 2022-07-13 at a7ae8cb4b5)
- + clone: move unborn head creation to update_head()
- + clone: use remote branch if it matches default HEAD
- + clone: propagate empty remote HEAD even with other branches
- + clone: drop extra newline from warning message
-
- "git clone" from a repository with some ref whose HEAD is unborn
- did not set the HEAD in the resulting repository correctly, which
- has been corrected.
- source: <YsdyLS4UFzj0j/wB@coredump.intra.peff.net>
-
-
-* jk/diff-files-cleanup-fix (2022-07-12) 1 commit
-  (merged to 'next' on 2022-07-13 at 9db5235d01)
- + diff-files: move misplaced cleanup label
-
- An earlier attempt to plug leaks placed a clean-up label to jump to
- at a bogus place, which as been corrected.
- source: <Ys0c0ePxPOqZ/5ck@coredump.intra.peff.net>
-
-
-* jk/ref-filter-discard-commit-buffer (2022-07-11) 1 commit
-  (merged to 'next' on 2022-07-13 at d1521724db)
- + ref-filter: disable save_commit_buffer while traversing
-
- Will merge to 'master'.
- source: <Ysw4JtoHW1vWmqhz@coredump.intra.peff.net>
-
-
-* ll/curl-accept-language (2022-07-11) 1 commit
-  (merged to 'next' on 2022-07-13 at 076aba7421)
- + remote-curl: send Accept-Language header to server
-
- Earlier, HTTP transport clients learned to tell the server side
- what locale they are in by sending Accept-Language HTTP header, but
- this was done only for some requests but not others.
- source: <pull.1251.v4.git.1657519134336.gitgitgadget@gmail.com>
-
-
-* rs/cocci-array-copy (2022-07-10) 1 commit
-  (merged to 'next' on 2022-07-13 at f21dec0f71)
- + cocci: avoid normalization rules for memcpy
-
- A coccinelle rule (in contrib/) to encourage use of COPY_ARRAY
- macro has been improved.
- source: <ded153d4-4aea-d4da-11cb-ec66d181e4c9@web.de>
-
-
-* sg/multi-pack-index-parse-options-fix (2022-07-10) 1 commit
-  (merged to 'next' on 2022-07-11 at 1e14685680)
- + multi-pack-index: simplify handling of unknown --options
-
- The way "git multi-pack" uses parse-options API has been improved.
- source: <20220710151645.GA2038@szeder.dev>
-
---------------------------------------------------
-[Stalled]
-
-* bc/stash-export (2022-04-08) 4 commits
- - builtin/stash: provide a way to import stashes from a ref
- - builtin/stash: provide a way to export stashes to a ref
- - builtin/stash: factor out revision parsing into a function
- - object-name: make get_oid quietly return an error
-
- A mechanism to export and import stash entries to and from a normal
- commit to transfer it across repositories has been introduced.
-
- Expecting a reroll.
- cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
- source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
-
-
-* cw/remote-object-info (2022-05-06) 11 commits
- - SQUASH??? coccicheck
- - SQUASH??? ensure that coccicheck is happy
- - SQUASH??? compilation fix
- - cat-file: add --batch-command remote-object-info command
- - cat-file: move parse_cmd and DEFAULT_FORMAT up
- - transport: add object-info fallback to fetch
- - transport: add client side capability to request object-info
- - object-info: send attribute packet regardless of object ids
- - object-store: add function to free object_info contents
- - fetch-pack: move fetch default settings
- - fetch-pack: refactor packet writing
-
- A client component to talk with the object-info endpoint.
-
- Expecting a reroll.
- source: <20220502170904.2770649-1-calvinwan@google.com>
-
---------------------------------------------------
-[Cooking]
-
-* js/ci-github-workflow-markup (2022-07-14) 1 commit
-  (merged to 'next' on 2022-07-15 at 196166f671)
- + tests: fix incorrect --write-junit-xml code
-
- A fix for a regression in test framework.
-
- Will merge to 'master'.
- source: <pull.1288.git.1657789234416.gitgitgadget@gmail.com>
-
-
-* js/shortlog-sort-stably (2022-07-14) 1 commit
-  (merged to 'next' on 2022-07-15 at 75e4efe678)
- + shortlog: use a stable sort
-
- "git shortlog -n" relied on the underlying qsort() to be stable,
- which shouldn't have.  Fixed.
-
- Will merge to 'master'.
- source: <pull.1290.git.1657813429221.gitgitgadget@gmail.com>
+ Getting there.
+ source: <cover-v3-00.26-00000000000-20220721T191249Z-avarab@gmail.com>
 
 
 * mt/doc-config (2022-07-14) 3 commits
@@ -488,16 +393,6 @@ Release tarballs are available at:
  Will discard (Retracted?).
  cf. <CAHd-oW4zHA1YLX-5B1vYTA1f8PocziUCi0WxvSEkFUuf2GqKxg@mail.gmail.com>
  source: <cover.1657819649.git.matheus.bernardino@usp.br>
-
-
-* rs/mingw-tighten-mkstemp (2022-07-14) 1 commit
-  (merged to 'next' on 2022-07-15 at 4dd4a117ec)
- + mingw: avoid mktemp() in mkstemp() implementation
-
- mkstemp() emulation on Windows has been improved.
-
- Will merge to 'master'.
- source: <7265e37f-fd29-3579-b840-19a1df52a59f@web.de>
 
 
 * jt/fetch-pack-trace2-filter-spec (2022-07-18) 1 commit
@@ -549,37 +444,30 @@ Release tarballs are available at:
 
 
 * ds/doc-wo-whitelist (2022-07-19) 5 commits
- - transport.c: avoid "whitelist"
- - t: avoid "whitelist"
- - git.txt: remove redundant language
- - git-cvsserver: clarify directory list
- - daemon: clarify directory arguments
+  (merged to 'next' on 2022-07-20 at ec51c6269a)
+ + transport.c: avoid "whitelist"
+ + t: avoid "whitelist"
+ + git.txt: remove redundant language
+ + git-cvsserver: clarify directory list
+ + daemon: clarify directory arguments
 
  Avoid "white/black-list" in documentation and code comments.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1274.v3.git.1658255537.gitgitgadget@gmail.com>
 
 
-* js/vimdiff-quotepath-fix (2022-07-14) 1 commit
-  (merged to 'next' on 2022-07-15 at 4273bbd4b4)
- + mergetool(vimdiff): allow paths to contain spaces again
-
- Variable quoting fix in the vimdiff driver of "git mergetool"
-
- Will merge to 'master'.
- source: <pull.1287.v2.git.1657809063728.gitgitgadget@gmail.com>
-
-
 * mt/checkout-count-fix (2022-07-14) 3 commits
- - checkout: fix two bugs on the final count of updated entries
- - checkout: show bug about failed entries being included in final report
- - checkout: document bug where delayed checkout counts entries twice
+  (merged to 'next' on 2022-07-22 at 60c73a6b0b)
+ + checkout: fix two bugs on the final count of updated entries
+ + checkout: show bug about failed entries being included in final report
+ + checkout: document bug where delayed checkout counts entries twice
+ (this branch is used by mt/rot13-in-c.)
 
  "git checkout" miscounted the paths it updated, which has been
  corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1657799213.git.matheus.bernardino@usp.br>
 
 
@@ -627,9 +515,9 @@ Release tarballs are available at:
  source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
 
 
-* ac/bitmap-lookup-table (2022-07-06) 6 commits
- - p5310-pack-bitmaps.sh: remove pack.writeReverseIndex
+* ac/bitmap-lookup-table (2022-07-20) 6 commits
  - bitmap-lookup-table: add performance tests for lookup table
+ - p5310-pack-bitmaps.sh: enable `pack.writeReverseIndex`
  - pack-bitmap: prepare to read lookup table extension
  - pack-bitmap-write: learn pack.writeBitmapLookupTable and add tests
  - pack-bitmap-write.c: write lookup table extension
@@ -640,19 +528,20 @@ Release tarballs are available at:
 
  Waiting for a more thorough review.
  cf. <Ys4DjW9JjQFx5Bhb@nand.local>
- source: <pull.1266.v3.git.1656924376.gitgitgadget@gmail.com>
+ source: <pull.1266.v4.git.1658325913.gitgitgadget@gmail.com>
 
 
-* kk/p4-client-name-encoding-fix (2022-07-08) 1 commit
+* kk/p4-client-name-encoding-fix (2022-07-21) 2 commits
+  (merged to 'next' on 2022-07-21 at 008518b4e5)
+ + git-p4: refactoring of p4CmdList()
   (merged to 'next' on 2022-07-11 at 9c18616f76)
  + git-p4: fix bug with encoding of p4 client name
 
  "git p4" did not handle non-ASCII client name well, which has been
  corrected.
 
- On hold, waiting for a follow-up.
- cf. <xmqqcze2s7h0.fsf@gitster.g>
- source: <pull.1285.git.git.1657267260405.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1285.v3.git.git.1658394440.gitgitgadget@gmail.com>
 
 
 * sa/cat-file-mailmap (2022-07-18) 4 commits
@@ -669,24 +558,25 @@ Release tarballs are available at:
 
 
 * ds/rebase-update-ref (2022-07-19) 13 commits
- - sequencer: notify user of --update-refs activity
- - sequencer: ignore HEAD ref under --update-refs
- - rebase: add rebase.updateRefs config option
- - sequencer: rewrite update-refs as user edits todo list
- - rebase: update refs from 'update-ref' commands
- - rebase: add --update-refs option
- - sequencer: add update-ref command
- - sequencer: define array with enum values
- - rebase-interactive: update 'merge' description
- - branch: consider refs under 'update-refs'
- - t2407: test branches currently using apply backend
- - t2407: test bisect and rebase as black-boxes
- - Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
+  (merged to 'next' on 2022-07-20 at 9f4bf9ef6c)
+ + sequencer: notify user of --update-refs activity
+ + sequencer: ignore HEAD ref under --update-refs
+ + rebase: add rebase.updateRefs config option
+ + sequencer: rewrite update-refs as user edits todo list
+ + rebase: update refs from 'update-ref' commands
+ + rebase: add --update-refs option
+ + sequencer: add update-ref command
+ + sequencer: define array with enum values
+ + rebase-interactive: update 'merge' description
+ + branch: consider refs under 'update-refs'
+ + t2407: test branches currently using apply backend
+ + t2407: test bisect and rebase as black-boxes
+ + Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
 
  "git rebase -i" learns to update branches whose tip appear in the
  rebased range.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1247.v5.git.1658255624.gitgitgadget@gmail.com>
 
 
@@ -713,41 +603,30 @@ Release tarballs are available at:
  source: <patch-v3-1.1-979dea5956a-20220718T102747Z-avarab@gmail.com>
 
 
-* en/merge-restore-to-pristine (2022-06-21) 6 commits
+* en/merge-restore-to-pristine (2022-07-21) 7 commits
  - merge: do not exit restore_state() prematurely
  - merge: ensure we can actually restore pre-merge state
  - merge: make restore_state() restore staged state too
- - merge: fix save_state() to work when there are racy-dirty files
- - merge: remove unused variable
- - t6424: make sure a failed merge preserves local changes
+ - merge: fix save_state() to work when there are stat-dirty files
+ - merge: do not abort early if one strategy fails to handle the merge
+ - merge-resolve: abort if index does not match HEAD
+ - merge-ort-wrappers: make printed message match the one from recursive
 
  When "git merge" finds that it cannot perform a merge, it should
  restore the working tree to the state before the command was
  initiated, but in some corner cases it didn't.
 
- Under review.
- source: <pull.1231.v2.git.1655621424.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1231.v3.git.1658391391.gitgitgadget@gmail.com>
 
 
-* tk/apply-case-insensitive (2022-06-21) 3 commits
- - apply: support case-only renames in case-insensitive filesystems
- - reset: new failing test for reset of case-insensitive duplicate in index
- - t4141: test "git apply" with core.ignorecase
-
- "git apply" barfed on a patch that makes a case-only rename on a
- case-insensitive filesystem.
-
- Needs review.
- source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
-
-
-* zh/ls-files-format (2022-07-13) 1 commit
+* zh/ls-files-format (2022-07-20) 1 commit
  - ls-files: introduce "--format" option
 
  "git ls-files" learns the "--format" option to tweak its output.
 
  Will merge to 'next'?
- source: <pull.1262.v7.git.1657692472994.gitgitgadget@gmail.com>
+ source: <pull.1262.v8.git.1658334983053.gitgitgadget@gmail.com>
 
 
 * js/commit-graph-parsing-without-repo-settings (2022-07-14) 1 commit
@@ -822,21 +701,6 @@ Release tarballs are available at:
  Expecting a (hopefully final) reroll.
  cf. <20627.86ilolhnnn.gmgdl@evledraar.gmail.com>
  source: <pull.1132.v4.git.1656354677.gitgitgadget@gmail.com>
-
-
-* gc/bare-repo-discovery (2022-07-14) 5 commits
-  (merged to 'next' on 2022-07-15 at 5206577852)
- + setup.c: create `safe.bareRepository`
- + safe.directory: use git_protected_config()
- + config: learn `git_protected_config()`
- + Documentation: define protected configuration
- + Documentation/git-config.txt: add SCOPES section
-
- Introduce a discovery.barerepository configuration variable that
- allows users to forbid discovery of bare repositories.
-
- Will merge to 'master'.
- source: <pull.1261.v8.git.git.1657834081.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Discarded]
