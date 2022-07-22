@@ -27,6 +27,9 @@ UI, Workflows & Features
    what locale they are in by sending Accept-Language HTTP header, but
    this was done only for some requests but not others.
 
+ * Introduce a discovery.barerepository configuration variable that
+   allows users to forbid discovery of bare repositories.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -78,7 +81,6 @@ Fixes since v2.37
 
  * Rewrite of "git add -i" in C that appeared in Git 2.25 didn't
    correctly record a removed file to the index, which was fixed.
-   (merge 4788e8b256 js/add-i-delete later to maint).
 
  * Certain diff options are currently ignored when combined-diff is
    shown; mark them as incompatible with the feature.
@@ -140,6 +142,19 @@ Fixes since v2.37
  * An earlier attempt to plug leaks placed a clean-up label to jump to
    at a bogus place, which as been corrected.
    (merge 04393ae7f7 jk/diff-files-cleanup-fix later to maint).
+
+ * Variable quoting fix in the vimdiff driver of "git mergetool"
+   (merge ccc7b5148b js/vimdiff-quotepath-fix later to maint).
+
+ * "git shortlog -n" relied on the underlying qsort() to be stable,
+   which shouldn't have.  Fixed.
+   (merge df534dcbaa js/shortlog-sort-stably later to maint).
+
+ * A fix for a regression in test framework.
+   (merge 7253f7ca9f js/ci-github-workflow-markup later to maint).
+
+ * mkstemp() emulation on Windows has been improved.
+   (merge ae25974de3 rs/mingw-tighten-mkstemp later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
