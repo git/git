@@ -2268,8 +2268,11 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->timestamp.nsec = 0;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (!must_exist && errno == ENOENT)
+		if (!must_exist && errno == ENOENT) {
+			if (!istate->repo)
+				istate->repo = the_repository;
 			return 0;
+		}
 		die_errno(_("%s: index file open failed"), path);
 	}
 
