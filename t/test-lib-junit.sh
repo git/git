@@ -46,7 +46,7 @@ finalize_test_case_output () {
 	shift
 	case "$test_case_result" in
 	ok)
-		set "$*"
+		set -- "$*"
 		;;
 	failure)
 		junit_insert="<failure message=\"not ok $test_count -"
@@ -65,17 +65,17 @@ finalize_test_case_output () {
 			junit_insert="$junit_insert<system-err>$(xml_attr_encode \
 				"$(cat "$GIT_TEST_TEE_OUTPUT_FILE")")</system-err>"
 		fi
-		set "$1" "      $junit_insert"
+		set -- "$1" "      $junit_insert"
 		;;
 	fixed)
-		set "$* (breakage fixed)"
+		set -- "$* (breakage fixed)"
 		;;
 	broken)
-		set "$* (known breakage)"
+		set -- "$* (known breakage)"
 		;;
 	skip)
 		message="$(xml_attr_encode --no-lf "$skipped_reason")"
-		set "$1" "      <skipped message=\"$message\" />"
+		set -- "$1" "      <skipped message=\"$message\" />"
 		;;
 	esac
 
