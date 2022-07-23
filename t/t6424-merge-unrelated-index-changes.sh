@@ -114,6 +114,19 @@ test_expect_success 'resolve, non-trivial' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_success 'resolve, trivial, related file removed' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	git rm a &&
+	test_path_is_missing a &&
+
+	test_must_fail git merge -s resolve C^0 &&
+
+	test_path_is_missing a &&
+	test_path_is_missing .git/MERGE_HEAD
+'
+
 test_expect_success 'resolve, non-trivial, related file removed' '
 	git reset --hard &&
 	git checkout B^0 &&
@@ -121,7 +134,14 @@ test_expect_success 'resolve, non-trivial, related file removed' '
 	git rm a &&
 	test_path_is_missing a &&
 
-	test_must_fail git merge -s resolve D^0 &&
+	# We also ask for recursive in order to turn off the "allow_trivial"
+	# setting in builtin/merge.c, and ensure that resolve really does
+	# correctly fail the merge (I guess this also tests that recursive
+	# correctly fails the merge, but the main thing we are attempting
+	# to test here is resolve and are just using the side effect of
+	# adding recursive to ensure that resolve is actually tested rather
+	# than the trivial merge codepath)
+	test_must_fail git merge -s resolve -s recursive D^0 &&
 
 	test_path_is_missing a &&
 	test_path_is_missing .git/MERGE_HEAD
