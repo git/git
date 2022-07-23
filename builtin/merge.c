@@ -385,10 +385,10 @@ static void restore_state(const struct object_id *head,
 {
 	struct strvec args = STRVEC_INIT;
 
-	if (is_null_oid(stash))
-		return;
-
 	reset_hard(head, 1);
+
+	if (is_null_oid(stash))
+		goto refresh_cache;
 
 	strvec_pushl(&args, "stash", "apply", "--index", "--quiet", NULL);
 	strvec_push(&args, oid_to_hex(stash));
@@ -400,7 +400,9 @@ static void restore_state(const struct object_id *head,
 	run_command_v_opt(args.v, RUN_GIT_CMD);
 	strvec_clear(&args);
 
-	refresh_cache(REFRESH_QUIET);
+refresh_cache:
+	if (discard_cache() < 0 || read_cache() < 0)
+		die(_("could not read index"));
 }
 
 /* This is called when no merge was necessary. */
