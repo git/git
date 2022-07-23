@@ -292,6 +292,7 @@ test_expect_success 'with multiple strategies, recursive or ort failure do not e
 
 	test_seq 0 10 >a &&
 	git add a &&
+	git rev-parse :a >expect &&
 
 	sane_unset GIT_TEST_MERGE_ALGORITHM &&
 	test_must_fail git merge -s recursive -s ort -s octopus C^0 >output 2>&1 &&
@@ -299,7 +300,11 @@ test_expect_success 'with multiple strategies, recursive or ort failure do not e
 	grep "Trying merge strategy recursive..." output &&
 	grep "Trying merge strategy ort..." output &&
 	grep "Trying merge strategy octopus..." output &&
-	grep "No merge strategy handled the merge." output
+	grep "No merge strategy handled the merge." output &&
+
+	# Changes to "a" should remain staged
+	git rev-parse :a >actual &&
+	test_cmp expect actual
 '
 
 test_done

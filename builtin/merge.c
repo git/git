@@ -383,20 +383,22 @@ static void reset_hard(const struct object_id *oid, int verbose)
 static void restore_state(const struct object_id *head,
 			  const struct object_id *stash)
 {
-	const char *args[] = { "stash", "apply", NULL, NULL };
+	struct strvec args = STRVEC_INIT;
 
 	if (is_null_oid(stash))
 		return;
 
 	reset_hard(head, 1);
 
-	args[2] = oid_to_hex(stash);
+	strvec_pushl(&args, "stash", "apply", "--index", "--quiet", NULL);
+	strvec_push(&args, oid_to_hex(stash));
 
 	/*
 	 * It is OK to ignore error here, for example when there was
 	 * nothing to restore.
 	 */
-	run_command_v_opt(args, RUN_GIT_CMD);
+	run_command_v_opt(args.v, RUN_GIT_CMD);
+	strvec_clear(&args);
 
 	refresh_cache(REFRESH_QUIET);
 }
