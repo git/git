@@ -313,7 +313,15 @@ static int save_state(struct object_id *stash)
 	int len;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buffer = STRBUF_INIT;
+	struct lock_file lock_file = LOCK_INIT;
+	int fd;
 	int rc = -1;
+
+	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
+	refresh_cache(REFRESH_QUIET);
+	if (0 <= fd)
+		repo_update_index_if_able(the_repository, &lock_file);
+	rollback_lock_file(&lock_file);
 
 	strvec_pushl(&cp.args, "stash", "create", NULL);
 	cp.out = -1;

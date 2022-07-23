@@ -275,6 +275,17 @@ test_expect_success 'subtree' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_success 'avoid failure due to stat-dirty files' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	# Make "a" be stat-dirty
+	test-tool chmtime =+1 a &&
+
+	# stat-dirty file should not prevent stash creation in builtin/merge.c
+	git merge -s resolve -s recursive D^0
+'
+
 test_expect_success 'with multiple strategies, recursive or ort failure do not early abort' '
 	git reset --hard &&
 	git checkout B^0 &&
