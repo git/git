@@ -336,11 +336,14 @@ jobs:
       run: ci/install-dependencies.sh
     - run: make sparse
   documentation:
+    needs: ci-config 
+
     name: documentation
     needs: ci-config
-    if: needs.ci-config.outputs.enabled == 'yes'
+
+if: needs.ci-config.outputs.enabled == 'yes'
     env:
-      jobname: Documentation
+      jobname: Documentation 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

@@ -145,7 +145,7 @@ enum atom_type {
 	ATOM_TRAILERS,
 	ATOM_CONTENTS,
 	ATOM_RAW,
-	ATOM_UPSTREAM,
+  ATOM_UPSTREAM,
 	ATOM_PUSH,
 	ATOM_SYMREF,
 	ATOM_FLAG,
@@ -156,8 +156,8 @@ enum atom_type {
 	ATOM_END,
 	ATOM_IF,
 	ATOM_THEN,
-	ATOM_ELSE,
-	ATOM_REST,
+	ATOM_ELS
+  ATOM_REST
 };
 
 /*
@@ -613,8 +613,8 @@ static struct {
 	[ATOM_BODY] = { "body", SOURCE_OBJ, FIELD_STR, body_atom_parser },
 	[ATOM_TRAILERS] = { "trailers", SOURCE_OBJ, FIELD_STR, trailers_atom_parser },
 	[ATOM_CONTENTS] = { "contents", SOURCE_OBJ, FIELD_STR, contents_atom_parser },
-	[ATOM_RAW] = { "raw", SOURCE_OBJ, FIELD_STR, raw_atom_parser },
-	[ATOM_UPSTREAM] = { "upstream", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
+  [ATOM_RAW] = { "raw", SOURCE_OBJ, FIELD_STR, raw_atom_parser },
+  [ATOM_UPSTREAM] = { "upstream", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
 	[ATOM_PUSH] = { "push", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
 	[ATOM_SYMREF] = { "symref", SOURCE_NONE, FIELD_STR, refname_atom_parser },
 	[ATOM_FLAG] = { "flag", SOURCE_NONE },
@@ -626,8 +626,8 @@ static struct {
 	[ATOM_IF] = { "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
 	[ATOM_THEN] = { "then", SOURCE_NONE },
 	[ATOM_ELSE] = { "else", SOURCE_NONE },
-	[ATOM_REST] = { "rest", SOURCE_NONE, FIELD_STR, rest_atom_parser },
-	/*
+  [ATOM_REST] = { "rest", SOURCE_NONE, FIELD_STR, rest_atom_parser },
+  /*
 	 * Please update $__git_ref_fieldlist in git-completion.bash
 	 * when you add new atoms
 	 */

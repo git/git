@@ -7,7 +7,7 @@ Here are some guidelines for people who want to contribute their code to this
 software. There is also a link:MyFirstContribution.html[step-by-step tutorial]
 available which covers many of these same guidelines.
 
-[[base-branch]]
+[[base-branch]] 
 === Decide what to base your work on.
 
 In general, always base your work on the oldest branch that your
