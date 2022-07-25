@@ -103,6 +103,36 @@ static size_t expand_show_tree(struct strbuf *sb, const char *start,
 	return len;
 }
 
+static int show_recursive(const char *base, size_t baselen, const char *pathname)
+{
+	int i;
+
+	if (ls_options & LS_RECURSIVE)
+		return 1;
+
+	if (!pathspec.nr)
+		return 0;
+
+	for (i = 0; i < pathspec.nr; i++) {
+		const char *spec = pathspec.items[i].match;
+		size_t len, speclen;
+
+		if (strncmp(base, spec, baselen))
+			continue;
+		len = strlen(pathname);
+		spec += baselen;
+		speclen = strlen(spec);
+		if (speclen <= len)
+			continue;
+		if (spec[len] && spec[len] != '/')
+			continue;
+		if (memcmp(pathname, spec, len))
+			continue;
+		return 1;
+	}
+	return 0;
+}
+
 static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 			 const char *pathname, unsigned mode, void *context)
 {
@@ -119,7 +149,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 		.base = base,
 	};
 
-	if (type == OBJ_TREE && show_recursive(base->buf, base->len, pathname, pathspec, ls_options))
+	if (type == OBJ_TREE && show_recursive(base->buf, base->len, pathname))
 		recurse = READ_TREE_RECURSIVE;
 	if (type == OBJ_TREE && recurse && !(ls_options & LS_SHOW_TREES))
 		return recurse;
@@ -264,7 +294,6 @@ static struct ls_tree_cmdmode_to_fmt ls_tree_cmdmode_format[] = {
 
 int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 {
-	struct strbuf buf = STRBUF_INIT;
 	struct object_id oid;
 	struct tree *tree;
 	int i, full_tree = 0;

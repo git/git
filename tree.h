@@ -61,10 +61,6 @@ int show_tree_common(struct show_tree_data *data, int *recurse,
 			    const struct object_id *oid, struct strbuf *base,
 			    const char *pathname, unsigned mode, struct pathspec pathspec, int ls_options);
 
-int show_recursive(const char *base, size_t baselen, const char *pathname, struct pathspec pathspec, int ls_options);
-
-int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
-			       const char *pathname, unsigned mode, void *context);
 #define LS_RECURSIVE 1
 #define LS_TREE_ONLY (1 << 1)
 #define LS_SHOW_TREES (1 << 2)
