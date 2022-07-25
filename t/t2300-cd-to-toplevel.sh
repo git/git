@@ -17,7 +17,7 @@ test_cd_to_toplevel () {
 	test_expect_success $3 "$2" '
 		(
 			cd '"'$1'"' &&
-			PATH="$EXEC_PATH$PATH_SEP$PATH" &&
+			PATH="$EXEC_PATH:$PATH" &&
 			. git-sh-setup &&
 			cd_to_toplevel &&
 			[ "$(pwd -P)" = "$TOPLEVEL" ]

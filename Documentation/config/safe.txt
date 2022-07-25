@@ -40,9 +40,3 @@ which id the original user has.
 If that is not what you would prefer and want git to only trust
 repositories that are owned by root instead, then you can remove
 the `SUDO_UID` variable from root's environment before invoking git.
-+
-Due to the permission model on Windows where ACLs are used instead of
-Unix' simpler permission model, it can be a bit tricky to figure out why
-a directory is considered unsafe. To help with this, Git will provide
-more detailed information when the environment variable
-`GIT_TEST_DEBUG_UNSAFE_DIRECTORIES` is set to `true`.

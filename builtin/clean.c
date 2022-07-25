@@ -34,10 +34,6 @@ static const char *msg_remove = N_("Removing %s\n");
 static const char *msg_would_remove = N_("Would remove %s\n");
 static const char *msg_skip_git_dir = N_("Skipping repository %s\n");
 static const char *msg_would_skip_git_dir = N_("Would skip repository %s\n");
-#ifndef CAN_UNLINK_MOUNT_POINTS
-static const char *msg_skip_mount_point = N_("Skipping mount point %s\n");
-static const char *msg_would_skip_mount_point = N_("Would skip mount point %s\n");
-#endif
 static const char *msg_warn_remove_failed = N_("failed to remove %s");
 static const char *msg_warn_lstat_failed = N_("could not lstat %s\n");
 static const char *msg_skip_cwd = N_("Refusing to remove current working directory\n");
@@ -179,29 +175,6 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		goto out;
 	}
 
-	if (is_mount_point(path)) {
-#ifndef CAN_UNLINK_MOUNT_POINTS
-		if (!quiet) {
-			quote_path(path->buf, prefix, &quoted, 0);
-			printf(dry_run ?
-			       _(msg_would_skip_mount_point) :
-			       _(msg_skip_mount_point), quoted.buf);
-		}
-		*dir_gone = 0;
-#else
-		if (!dry_run && unlink(path->buf)) {
-			int saved_errno = errno;
-			quote_path(path->buf, prefix, &quoted, 0);
-			errno = saved_errno;
-			warning_errno(_(msg_warn_remove_failed), quoted.buf);
-			*dir_gone = 0;
-			ret = -1;
-		}
-#endif
-
-		goto out;
-	}
-
 	dir = opendir(path->buf);
 	if (!dir) {
 		/* an empty dir could be removed even if it is unreadble */
@@ -211,9 +184,6 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 			quote_path(path->buf, prefix, &quoted, 0);
 			errno = saved_errno;
 			warning_errno(_(msg_warn_remove_failed), quoted.buf);
-			if (saved_errno == ENAMETOOLONG) {
-				advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
-			}
 			*dir_gone = 0;
 		}
 		ret = res;
@@ -249,9 +219,6 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 				quote_path(path->buf, prefix, &quoted, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), quoted.buf);
-				if (saved_errno == ENAMETOOLONG) {
-					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
-				}
 				*dir_gone = 0;
 				ret = 1;
 			}
@@ -295,9 +262,6 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 				quote_path(path->buf, prefix, &quoted, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), quoted.buf);
-				if (saved_errno == ENAMETOOLONG) {
-					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
-				}
 				*dir_gone = 0;
 				ret = 1;
 			}
@@ -1050,7 +1014,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
-	enable_fscache(active_nr);
 
 	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++)
@@ -1117,9 +1080,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				qname = quote_path(item->string, NULL, &buf, 0);
 				errno = saved_errno;
 				warning_errno(_(msg_warn_remove_failed), qname);
-				if (saved_errno == ENAMETOOLONG) {
-					advise_if_enabled(ADVICE_NAME_TOO_LONG, _("Setting `core.longPaths` may allow the deletion to succeed."));
-				}
 				errors++;
 			} else if (!quiet) {
 				qname = quote_path(item->string, NULL, &buf, 0);
@@ -1128,7 +1088,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	disable_fscache();
 	strbuf_release(&abs_path);
 	strbuf_release(&buf);
 	string_list_clear(&del_list, 0);

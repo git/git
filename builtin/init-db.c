@@ -78,7 +78,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			if (strbuf_readlink(&lnk, template_path->buf,
 					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
-			if (create_symlink(NULL, lnk.buf, path->buf))
+			if (symlink(lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
@@ -300,7 +300,7 @@ static int create_default_files(const char *template_path,
 		path = git_path_buf(&buf, "tXXXXXX");
 		if (!close(xmkstemp(path)) &&
 		    !unlink(path) &&
-		    !create_symlink(NULL, "testing", path) &&
+		    !symlink("testing", path) &&
 		    !lstat(path, &st1) &&
 		    S_ISLNK(st1.st_mode))
 			unlink(path); /* good */
@@ -410,7 +410,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	startup_info->have_repository = 1;
 
 	/* Ensure `core.hidedotfiles` is processed */
-	git_config(git_default_core_config, NULL);
+	git_config(platform_core_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 

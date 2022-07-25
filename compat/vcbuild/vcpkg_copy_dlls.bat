@@ -15,12 +15,7 @@ REM ================================================================
 	@FOR /F "delims=" %%D IN ("%~dp0") DO @SET cwd=%%~fD
 	cd %cwd%
 
-	SET arch=%2
-	IF NOT DEFINED arch (
-		echo defaulting to 'x64-windows`. Invoke %0 with 'x86-windows', 'x64-windows', or 'arm64-windows'
-		set arch=x64-windows
-	)
-
+	SET arch=x64-windows
 	SET inst=%cwd%vcpkg\installed\%arch%
 
 	IF [%1]==[release] (

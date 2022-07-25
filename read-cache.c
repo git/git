@@ -479,17 +479,6 @@ int ie_modified(struct index_state *istate,
 	 * then we know it is.
 	 */
 	if ((changed & DATA_CHANGED) &&
-#ifdef GIT_WINDOWS_NATIVE
-	    /*
-	     * Work around Git for Windows v2.27.0 fixing a bug where symlinks'
-	     * target path lengths were not read at all, and instead recorded
-	     * as 4096: now, all symlinks would appear as modified.
-	     *
-	     * So let's just special-case symlinks with a target path length
-	     * (i.e. `sd_size`) of 4096 and force them to be re-checked.
-	     */
-	    (!S_ISLNK(st->st_mode) || ce->ce_stat_data.sd_size != MAX_LONG_PATH) &&
-#endif
 	    (S_ISGITLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0))
 		return changed;
 
@@ -1636,7 +1625,6 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	typechange_fmt = in_porcelain ? "T\t%s\n" : "%s: needs update\n";
 	added_fmt      = in_porcelain ? "A\t%s\n" : "%s: needs update\n";
 	unmerged_fmt   = in_porcelain ? "U\t%s\n" : "%s: needs merge\n";
-	enable_fscache(0);
 	/*
 	 * Use the multi-threaded preload_index() to refresh most of the
 	 * cache entries quickly then in the single threaded loop below,
@@ -1731,7 +1719,6 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	display_progress(progress, istate->cache_nr);
 	stop_progress(&progress);
 	trace_performance_leave("refresh index");
-	disable_fscache();
 	return has_errors;
 }
 

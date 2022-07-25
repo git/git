@@ -214,7 +214,7 @@ setup_ext_wrapper () {
 		cd "$TRASH_DIRECTORY/remote" &&
 		eval "$*"
 		EOF
-		PATH=$TRASH_DIRECTORY$PATH_SEP$PATH &&
+		PATH=$TRASH_DIRECTORY:$PATH &&
 		export TRASH_DIRECTORY
 	'
 }

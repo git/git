@@ -165,7 +165,7 @@ sub parseMakeOutput
             next;
         }
 
-        if($text =~ / -c / || $text =~ / -i \S+\.rc /) {
+        if($text =~ / -c /) {
             # compilation
             handleCompileLine($text, $line);
 
@@ -263,15 +263,16 @@ sub handleCompileLine
         if ("$part" eq "-o") {
             # ignore object file
             shift @parts;
-        } elsif ("$part" eq "-c" || "$part" eq "-i" || "$part" =~ /^-fno-/ || "$part" eq '-pedantic') {
+        } elsif ("$part" eq "-c") {
             # ignore compile flag
+        } elsif ("$part" eq "-c") {
         } elsif ($part =~ /^.?-I/) {
             push(@incpaths, $part);
         } elsif ($part =~ /^.?-D/) {
             push(@defines, $part);
         } elsif ($part =~ /^-/) {
             push(@cflags, $part);
-        } elsif ($part =~ /\.(c|cc|cpp|rc)$/) {
+        } elsif ($part =~ /\.(c|cc|cpp)$/) {
             $sourcefile = $part;
         } else {
             die "Unhandled compiler option @ line $lineno: $part";
@@ -358,7 +359,7 @@ sub handleLinkLine
             push(@libs, $part);
         } elsif ($part eq 'invalidcontinue.obj') {
             # ignore - known to MSVC
-        } elsif ($part =~ /\.(o|res)$/) {
+        } elsif ($part =~ /\.o$/) {
             push(@objfiles, $part);
         } elsif ($part =~ /\.obj$/) {
             # do nothing, 'make' should not be producing .obj, only .o files
@@ -370,9 +371,7 @@ sub handleLinkLine
 #    exit(1);
     foreach (@objfiles) {
         my $sourcefile = $_;
-        $sourcefile =~ s/^headless-git\.o$/compat\/win32\/headless.c/;
         $sourcefile =~ s/\.o$/.c/;
-        $sourcefile =~ s/\.res$/.rc/;
         push(@sources, $sourcefile);
         push(@cflags, @{$compile_options{"${sourcefile}_CFLAGS"}});
         push(@defines, @{$compile_options{"${sourcefile}_DEFINES"}});

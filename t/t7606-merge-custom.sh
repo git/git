@@ -23,7 +23,7 @@ test_expect_success 'set up custom strategy' '
 	EOF
 
 	chmod +x git-merge-theirs &&
-	PATH=.$PATH_SEP$PATH &&
+	PATH=.:$PATH &&
 	export PATH
 '
 

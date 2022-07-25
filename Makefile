@@ -715,7 +715,6 @@ TEST_BUILTINS_OBJS += test-advise.o
 TEST_BUILTINS_OBJS += test-bitmap.o
 TEST_BUILTINS_OBJS += test-bloom.o
 TEST_BUILTINS_OBJS += test-chmtime.o
-TEST_BUILTINS_OBJS += test-cmp.o
 TEST_BUILTINS_OBJS += test-config.o
 TEST_BUILTINS_OBJS += test-crontab.o
 TEST_BUILTINS_OBJS += test-csprng.o
@@ -738,7 +737,6 @@ TEST_BUILTINS_OBJS += test-hash-speed.o
 TEST_BUILTINS_OBJS += test-hash.o
 TEST_BUILTINS_OBJS += test-hashmap.o
 TEST_BUILTINS_OBJS += test-hexdump.o
-TEST_BUILTINS_OBJS += test-iconv.o
 TEST_BUILTINS_OBJS += test-index-version.o
 TEST_BUILTINS_OBJS += test-json-writer.o
 TEST_BUILTINS_OBJS += test-lazy-init-name-hash.o
@@ -2656,13 +2654,6 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
-headless-git.o: compat/win32/headless.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
-		-fno-stack-protector -o $@ -c -Wall -Wwrite-strings $<
-
-headless-git$X: headless-git.o git.res GIT-LDFLAGS
-	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -mwindows -o $@ $< git.res
-
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
@@ -3419,7 +3410,6 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) *.res
 	$(RM) $(OBJECTS)
-	$(RM) headless-git.o
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
@@ -3449,17 +3439,13 @@ endif
 	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
 ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
-	$(RM) headless-git.o.pdb
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
-	$(RM) $(patsubst %.exe,%.ilk,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
-	$(RM) $(patsubst %.exe,%.ilk,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
-	$(RM) $(patsubst %.exe,%.ilk,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
 	$(RM) compat/vcbuild/MSVC-DEFS-GEN

@@ -1540,7 +1540,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_FULL,
 		       prefix, argv);
 
-	enable_fscache(0);
 	if (status_format != STATUS_FORMAT_PORCELAIN &&
 	    status_format != STATUS_FORMAT_PORCELAIN_V2)
 		progress_flag = REFRESH_PROGRESS;
@@ -1581,7 +1580,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	wt_status_print(&s);
 	wt_status_collect_free_buffers(&s);
 
-	disable_fscache();
 	return 0;
 }
 

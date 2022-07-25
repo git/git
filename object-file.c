@@ -1785,9 +1785,9 @@ void *read_object_with_reference(struct repository *r,
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
-			     const void *buf, size_t len,
+			     const void *buf, unsigned long len,
 			     struct object_id *oid,
-			     char *hdr, size_t *hdrlen)
+			     char *hdr, int *hdrlen)
 {
 	algo->init_fn(c);
 	algo->update_fn(c, hdr, *hdrlen);
@@ -1796,23 +1796,23 @@ static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
-				      const void *buf, size_t len,
+				      const void *buf, unsigned long len,
 				      enum object_type type, struct object_id *oid,
-				      char *hdr, size_t *hdrlen)
+				      char *hdr, int *hdrlen)
 {
 	git_hash_ctx c;
 
 	/* Generate the header */
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
 
-	/* Hash (function pointers) computation */
+	/* Sha1.. */
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
 static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
-				      const void *buf, size_t len,
+				      const void *buf, unsigned long len,
 				      const char *type, struct object_id *oid,
-				      char *hdr, size_t *hdrlen)
+				      char *hdr, int *hdrlen)
 {
 	git_hash_ctx c;
 
@@ -1871,17 +1871,17 @@ static int write_buffer(int fd, const void *buf, size_t len)
 }
 
 static void hash_object_file_literally(const struct git_hash_algo *algo,
-				       const void *buf, size_t len,
+				       const void *buf, unsigned long len,
 				       const char *type, struct object_id *oid)
 {
 	char hdr[MAX_HEADER_LEN];
-	size_t hdrlen = sizeof(hdr);
+	int hdrlen = sizeof(hdr);
 
 	write_object_file_prepare_literally(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      size_t len, enum object_type type,
+		      unsigned long len, enum object_type type,
 		      struct object_id *oid)
 {
 	hash_object_file_literally(algo, buf, len, type_name(type), oid);
@@ -2050,12 +2050,12 @@ static int freshen_packed_object(const struct object_id *oid)
 	return 1;
 }
 
-int write_object_file_flags(const void *buf, size_t len,
+int write_object_file_flags(const void *buf, unsigned long len,
 			    enum object_type type, struct object_id *oid,
 			    unsigned flags)
 {
 	char hdr[MAX_HEADER_LEN];
-	size_t hdrlen = sizeof(hdr);
+	int hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -2067,13 +2067,12 @@ int write_object_file_flags(const void *buf, size_t len,
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags);
 }
 
-int write_object_file_literally(const void *buf, size_t len,
+int write_object_file_literally(const void *buf, unsigned long len,
 				const char *type, struct object_id *oid,
 				unsigned flags)
 {
 	char *header;
-	size_t hdrlen;
-	int status = 0;
+	int hdrlen, status = 0;
 
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + MAX_HEADER_LEN;
