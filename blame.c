@@ -1,4 +1,6 @@
 #include "cache.h"
+
+#include "pathspec.h"
 #include "refs.h"
 #include "object-store.h"
 #include "cache-tree.h"
@@ -14,6 +16,7 @@
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
+static struct pathspec pathspec;
 
 struct blame_origin *get_blame_suspects(struct commit *commit)
 {
@@ -167,6 +170,36 @@ static void set_commit_buffer_from_strbuf(struct repository *r,
 	size_t len;
 	void *buf = strbuf_detach(sb, &len);
 	set_commit_buffer(r, c, buf, len);
+}
+
+int show_tree_file(const struct object_id *oid, struct strbuf *base,
+			     const char *pathname, unsigned mode,
+			     void *context)
+{
+	int early;
+	int recurse;
+	struct show_tree_data data = { 0 };
+	struct strbuf *buf = context;
+	int ls_options = LS_TREE_ONLY || LS_SHOW_TREES;
+
+	early = show_tree_common(
+			&data,
+			&recurse,
+			oid, base,
+			pathname,
+			mode,
+			pathspec,
+			ls_options);
+	if (early >= 0)
+		return early;
+
+	strbuf_addf(buf,
+		    "%06o %s %s\n",
+		    data.mode,
+		    type_name(data.type),
+		    pathname);
+
+	return recurse;
 }
 
 /*
