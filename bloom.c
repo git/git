@@ -30,10 +30,9 @@ static inline unsigned char get_bitmask(uint32_t pos)
 
 static int load_bloom_filter_from_graph(struct commit_graph *g,
 					struct bloom_filter *filter,
-					struct commit *c)
+					uint32_t graph_pos)
 {
 	uint32_t lex_pos, start_index, end_index;
-	uint32_t graph_pos = commit_graph_position(c);
 
 	while (graph_pos < g->num_commits_in_base)
 		g = g->base_graph;
@@ -203,9 +202,10 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 	filter = bloom_filter_slab_at(&bloom_filters, c);
 
 	if (!filter->data) {
-		load_commit_graph_info(r, c);
-		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH)
-			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c);
+		uint32_t graph_pos;
+		if (repo_find_commit_pos_in_graph(r, c, &graph_pos))
+			load_bloom_filter_from_graph(r->objects->commit_graph,
+						     filter, graph_pos);
 	}
 
 	if (filter->data && filter->len)

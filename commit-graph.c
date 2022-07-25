@@ -888,6 +888,14 @@ static int find_commit_pos_in_graph(struct commit *item, struct commit_graph *g,
 	}
 }
 
+int repo_find_commit_pos_in_graph(struct repository *r, struct commit *c,
+				  uint32_t *pos)
+{
+	if (!prepare_commit_graph(r))
+		return 0;
+	return find_commit_pos_in_graph(c, r->objects->commit_graph, pos);
+}
+
 struct commit *lookup_commit_in_graph(struct repository *repo, const struct object_id *id)
 {
 	struct commit *commit;
@@ -945,9 +953,7 @@ int parse_commit_in_graph(struct repository *r, struct commit *item)
 void load_commit_graph_info(struct repository *r, struct commit *item)
 {
 	uint32_t pos;
-	if (!prepare_commit_graph(r))
-		return;
-	if (find_commit_pos_in_graph(item, r->objects->commit_graph, &pos))
+	if (repo_find_commit_pos_in_graph(r, item, &pos))
 		fill_commit_graph_info(item, r->objects->commit_graph, pos);
 }
 
