@@ -49,5 +49,23 @@ do { \
 		((unsigned long) __p[2]) << 16 | ((unsigned long) __p[3]) << 24; \
 } while (0)
 
+/* Allocate an array of nr elements, returns NULL on failure */
+#define XDL_ALLOC_ARRAY(p, nr)				\
+	((p) = SIZE_MAX / sizeof(*(p)) >= (size_t)(nr)	\
+		? xdl_malloc((nr) * sizeof(*(p)))	\
+		: NULL)
+
+/* Allocate an array of nr zeroed out elements, returns NULL on failure */
+#define XDL_CALLOC_ARRAY(p, nr)	((p) = xdl_calloc(nr, sizeof(*(p))))
+
+/*
+ * Ensure array p can accommodate at least nr elements, growing the
+ * array and updating alloc (which is the number of allocated
+ * elements) as necessary. Frees p and returns -1 on failure, returns
+ * 0 on success
+ */
+#define XDL_ALLOC_GROW(p, nr, alloc)	\
+	(-!((nr) <= (alloc) ||		\
+	    ((p) = xdl_alloc_grow_helper((p), (nr), &(alloc), sizeof(*(p))))))
 
 #endif /* #if !defined(XMACROS_H) */

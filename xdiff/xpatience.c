@@ -151,11 +151,8 @@ static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
 
 	/* We know exactly how large we want the hash map */
 	result->alloc = count1 * 2;
-	result->entries = (struct entry *)
-		xdl_malloc(result->alloc * sizeof(struct entry));
-	if (!result->entries)
+	if (!XDL_CALLOC_ARRAY(result->entries, result->alloc))
 		return -1;
-	memset(result->entries, 0, result->alloc * sizeof(struct entry));
 
 	/* First, fill with entries from the first file */
 	while (count1--)
@@ -200,7 +197,7 @@ static int binary_search(struct entry **sequence, int longest,
  */
 static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 {
-	struct entry **sequence = xdl_malloc(map->nr * sizeof(struct entry *));
+	struct entry **sequence;
 	int longest = 0, i;
 	struct entry *entry;
 
@@ -211,7 +208,7 @@ static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 	 */
 	int anchor_i = -1;
 
-	if (!sequence)
+	if (!XDL_ALLOC_ARRAY(sequence, map->nr))
 		return -1;
 
 	for (entry = map->first; entry; entry = entry->next) {
