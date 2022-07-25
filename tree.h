@@ -2,6 +2,7 @@
 #define TREE_H
 
 #include "object.h"
+#include "pathspec.h"
 
 struct repository;
 struct strbuf;
@@ -12,9 +13,22 @@ struct tree {
 	unsigned long size;
 };
 
+struct show_tree_data {
+	unsigned mode;
+	enum object_type type;
+	const struct object_id *oid;
+	const char *pathname;
+	struct strbuf *base;
+};
+
 extern const char *tree_type;
 
 struct tree *lookup_tree(struct repository *r, const struct object_id *oid);
+
+struct tree *lookup_tree_by_path(struct repository *r,
+				 struct object_id *commit_oid,
+				 struct pathspec *pathspec,
+				 const char *path);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 
@@ -42,5 +56,17 @@ int read_tree(struct repository *r,
 	      struct tree *tree,
 	      const struct pathspec *pathspec,
 	      read_tree_fn_t fn, void *context);
+
+int show_tree_common(struct show_tree_data *data, int *recurse,
+			    const struct object_id *oid, struct strbuf *base,
+			    const char *pathname, unsigned mode, struct pathspec pathspec, int ls_options);
+
+int show_recursive(const char *base, size_t baselen, const char *pathname, struct pathspec pathspec, int ls_options);
+
+int show_tree_name_only(const struct object_id *oid, struct strbuf *base,
+			       const char *pathname, unsigned mode, void *context);
+#define LS_RECURSIVE 1
+#define LS_TREE_ONLY (1 << 1)
+#define LS_SHOW_TREES (1 << 2)
 
 #endif /* TREE_H */

@@ -8,6 +8,7 @@
 #include "alloc.h"
 #include "tree-walk.h"
 #include "repository.h"
+#include "pathspec.h"
 
 const char *tree_type = "tree";
 
@@ -110,6 +111,32 @@ struct tree *lookup_tree(struct repository *r, const struct object_id *oid)
 	return object_as_type(obj, OBJ_TREE, 0);
 }
 
+struct tree *lookup_tree_by_path(struct repository *r,
+				 struct object_id *commit_oid,
+				 struct pathspec *pathspec,
+				 const char *path)
+{
+	int i;
+	struct tree *tree;
+	const char *paths[2];
+
+	paths[0] = path;
+	paths[1] = NULL;
+
+	parse_pathspec(pathspec, PATHSPEC_ALL_MAGIC &
+		~(PATHSPEC_FROMTOP | PATHSPEC_LITERAL),
+		PATHSPEC_PREFER_CWD,
+		NULL, paths);
+
+	for (i = 0; i < pathspec->nr; i++)
+		pathspec->items[i].nowildcard_len = pathspec->items[i].len;
+	pathspec->has_wildcard = 0;
+
+	tree = parse_tree_indirect(commit_oid);
+
+	return tree;
+}
+
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
 	if (item->object.parsed)
@@ -155,3 +182,63 @@ struct tree *parse_tree_indirect(const struct object_id *oid)
 	struct object *obj = parse_object(r, oid);
 	return (struct tree *)repo_peel_to_type(r, NULL, 0, obj, OBJ_TREE);
 }
+
+int show_recursive(const char *base, size_t baselen, const char *pathname, struct pathspec pathspec, int ls_options)
+{
+	int i;
+
+	if (ls_options & LS_RECURSIVE)
+		return 1;
+
+	if (!pathspec.nr)
+		return 0;
+
+	for (i = 0; i < pathspec.nr; i++) {
+		const char *spec = pathspec.items[i].match;
+		size_t len, speclen;
+
+		if (strncmp(base, spec, baselen))
+			continue;
+		len = strlen(pathname);
+		spec += baselen;
+		speclen = strlen(spec);
+		if (speclen <= len)
+			continue;
+		if (spec[len] && spec[len] != '/')
+			continue;
+		if (memcmp(pathname, spec, len))
+			continue;
+		return 1;
+	}
+	return 0;
+}
+
+int show_tree_common(struct show_tree_data *data, int *recurse,
+			    const struct object_id *oid, struct strbuf *base,
+			    const char *pathname, unsigned mode, struct pathspec pathspec, int ls_options)
+{
+	enum object_type type = object_type(mode);
+	int ret = -1;
+
+	*recurse = 0;
+	data->mode = mode;
+	data->type = type;
+	data->oid = oid;
+	data->pathname = pathname;
+	data->base = base;
+
+	if (type == OBJ_BLOB) {
+		// TODO: figure out how to extract this
+		if (ls_options & LS_TREE_ONLY)
+			ret = 0;
+	} else if (type == OBJ_TREE &&
+		   show_recursive(base->buf, base->len, pathname, pathspec, ls_options)) {
+		*recurse = READ_TREE_RECURSIVE;
+		if (!(ls_options & LS_SHOW_TREES))
+			ret = *recurse;
+	}
+
+	return ret;
+}
+
+
