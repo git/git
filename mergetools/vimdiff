@@ -623,7 +623,7 @@ run_unit_tests () {
 		done
 	}
 
-	base_present=1
+	base_present=false
 	LOCAL='lo cal'
 	BASE='ba se'
 	REMOTE="' '"
