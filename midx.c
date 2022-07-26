@@ -1059,7 +1059,6 @@ static int write_midx_bitmap(const char *midx_name,
 			     struct commit **commits,
 			     uint32_t commits_nr,
 			     uint32_t *pack_order,
-			     const char *refs_snapshot,
 			     unsigned flags)
 {
 	int ret, i;
@@ -1462,7 +1461,7 @@ static int write_midx_internal(const char *object_dir,
 
 		if (write_midx_bitmap(midx_name.buf, midx_hash, &pdata,
 				      commits, commits_nr, ctx.pack_order,
-				      refs_snapshot, flags) < 0) {
+				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
 			goto cleanup;
