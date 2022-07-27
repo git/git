@@ -385,6 +385,12 @@ GIT_TEST_SANITIZE_LEAK_LOG=true will log memory leaks to
 "dedup_token" (see +"ASAN_OPTIONS=help=1 ./git") and other options to
 make logs +machine-readable.
 
+With GIT_TEST_SANITIZE_LEAK_LOG=true we'll look at the leak logs
+before exiting and exit on failure if the logs showed that we had a
+memory leak, even if the test itself would have otherwise passed. This
+allows us to catch e.g. missing &&-chaining. This is especially useful
+when combined with "GIT_TEST_PASSING_SANITIZE_LEAK", see below.
+
 GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
 will run to completion faster, and result in the same failing
 tests. The only practical reason to run
@@ -392,6 +398,15 @@ GIT_TEST_PASSING_SANITIZE_LEAK=check without "--immediate" is to
 combine it with "GIT_TEST_SANITIZE_LEAK_LOG=true". If we stop at the
 first failing test case our leak logs won't show subsequent leaks we
 might have run into.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=(true|check) will not catch all memory
+leaks unless combined with GIT_TEST_SANITIZE_LEAK_LOG=true. Some tests
+run "git" (or "test-tool" etc.) without properly checking the exit
+code, or git will invoke itself and fail to ferry the abort() exit
+code to the original caller. When the two modes are combined we'll
+look at the "test-results/$TEST_NAME.leak/trace.*" files at the end of
+the test run to see if had memory leaks which the test itself didn't
+catch.
 
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
