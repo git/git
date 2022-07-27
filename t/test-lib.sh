@@ -305,6 +305,10 @@ TEST_NUMBER="${TEST_NAME%%-*}"
 TEST_NUMBER="${TEST_NUMBER#t}"
 TEST_RESULTS_DIR="$TEST_OUTPUT_DIRECTORY/test-results"
 TEST_RESULTS_BASE="$TEST_RESULTS_DIR/$TEST_NAME$TEST_STRESS_JOB_SFX"
+TEST_RESULTS_SAN_FILE_PFX=trace
+TEST_RESULTS_SAN_DIR_SFX=leak
+TEST_RESULTS_SAN_FILE=
+TEST_RESULTS_SAN_DIR="$TEST_RESULTS_DIR/$TEST_NAME.$TEST_RESULTS_SAN_DIR_SFX"
 TRASH_DIRECTORY="trash directory.$TEST_NAME$TEST_STRESS_JOB_SFX"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 case "$TRASH_DIRECTORY" in
@@ -1447,6 +1451,10 @@ then
 	test_done
 fi
 
+BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK () {
+	BAIL_OUT "$1 has no effect except when compiled with SANITIZE=leak"
+}
+
 if test -n "$SANITIZE_LEAK"
 then
 	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
@@ -1461,9 +1469,29 @@ then
 			test_done
 		fi
 	fi
+
+	if test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false
+	then
+		if ! mkdir -p "$TEST_RESULTS_SAN_DIR"
+		then
+			BAIL_OUT "cannot create $TEST_RESULTS_SAN_DIR"
+		fi &&
+		TEST_RESULTS_SAN_FILE="$TEST_RESULTS_SAN_DIR/$TEST_RESULTS_SAN_FILE_PFX"
+
+		# Don't litter *.leak dirs if there was nothing to report
+		test_atexit "rmdir \"$TEST_RESULTS_SAN_DIR\" 2>/dev/null || :"
+
+		prepend_var LSAN_OPTIONS : dedup_token_length=9999
+		prepend_var LSAN_OPTIONS : log_exe_name=1
+		prepend_var LSAN_OPTIONS : log_path=\"$TEST_RESULTS_SAN_FILE\"
+		export LSAN_OPTIONS
+	fi
 elif test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
 then
-	BAIL_OUT "GIT_TEST_PASSING_SANITIZE_LEAK=true has no effect except when compiled with SANITIZE=leak"
+	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_PASSING_SANITIZE_LEAK=true"
+elif test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false
+then
+	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_SANITIZE_LEAK_LOG=true"
 fi
 
 # Last-minute variable setup
