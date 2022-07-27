@@ -455,6 +455,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	return;
 
  fail:
+	free(output_state);
 	send_client_data(3, abort_msg, sizeof(abort_msg),
 			 pack_data->use_sideband);
 	die("git upload-pack: %s", abort_msg);
