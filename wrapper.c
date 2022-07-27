@@ -616,10 +616,16 @@ int git_fsync(int fd, enum fsync_action action)
 	}
 }
 
+static void log_trace_fsync_if(const char *key, intmax_t value)
+{
+	if (value)
+		trace2_data_intmax("fsync", the_repository, key, value);
+}
+
 void trace_git_fsync_stats(void)
 {
-	trace2_data_intmax("fsync", the_repository, "fsync/writeout-only", count_fsync_writeout_only);
-	trace2_data_intmax("fsync", the_repository, "fsync/hardware-flush", count_fsync_hardware_flush);
+	log_trace_fsync_if("fsync/writeout-only", count_fsync_writeout_only);
+	log_trace_fsync_if("fsync/hardware-flush", count_fsync_hardware_flush);
 }
 
 static int warn_if_unremovable(const char *op, const char *file, int rc)
