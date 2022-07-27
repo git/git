@@ -30,6 +30,9 @@ UI, Workflows & Features
  * Introduce a discovery.barerepository configuration variable that
    allows users to forbid discovery of bare repositories.
 
+ * Various messages that come from the pack-bitmap codepaths have been
+   tweaked.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -74,6 +77,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * A coccinelle rule (in contrib/) to encourage use of COPY_ARRAY
    macro has been improved.
+
+ * API tweak to make it easier to run fuzz testing on commit-graph parser.
+
+ * Omit fsync-related trace2 entries when their values are all zero.
 
 
 Fixes since v2.37
@@ -156,6 +163,25 @@ Fixes since v2.37
  * mkstemp() emulation on Windows has been improved.
    (merge ae25974de3 rs/mingw-tighten-mkstemp later to maint).
 
+ * Add missing documentation for "include" and "includeIf" features in
+   "git config" file format, which incidentally teaches the command
+   line completion to include them in its offerings.
+   (merge 07aed58017 mb/config-document-include later to maint).
+
+ * Avoid "white/black-list" in documentation and code comments.
+   (merge f5adaa5cc3 ds/doc-wo-whitelist later to maint).
+
+ * Workaround for a compiler warning against use of die() in
+   osx-keychain (in contrib/).
+   (merge f2fc531585 ld/osx-keychain-usage-fix later to maint).
+
+ * Workaround for a false positive compiler warning.
+   (merge b4f52f09ae ds/win-syslog-compiler-fix later to maint).
+
+ * "git p4" working on UTF-16 files on Windows did not implement
+   CRLF-to-LF conversion correctly, which has been corrected.
+   (merge 4d35f74421 mb/p4-utf16-crlf later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
    (merge 1971510c35 pb/diff-doc-raw-format later to maint).
@@ -166,3 +192,6 @@ Fixes since v2.37
    (merge 2ffb7d13ee ds/t5510-brokequote later to maint).
    (merge 18337d406f ll/ls-files-tests-update later to maint).
    (merge 8cdab69d96 tk/rev-parse-doc-clarify-at-u later to maint).
+   (merge a700395eaf ma/t4200-update later to maint).
+   (merge ae436f283c ma/sparse-checkout-cone-doc-fix later to maint).
+   (merge a10f6e2bda sg/index-format-doc-update later to maint).
