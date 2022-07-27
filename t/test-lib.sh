@@ -804,14 +804,14 @@ test_failure_ () {
 
 test_known_broken_ok_ () {
 	test_fixed=$(($test_fixed+1))
-	say_color error "ok $test_count - $@ # TODO known breakage vanished"
-	finalize_test_case_output fixed "$@"
+	say_color error "ok $test_count - $1 # TODO known breakage vanished"
+	finalize_test_case_output fixed "$1"
 }
 
 test_known_broken_failure_ () {
 	test_broken=$(($test_broken+1))
-	say_color warn "not ok $test_count - $@ # TODO known breakage"
-	finalize_test_case_output broken "$@"
+	say_color warn "not ok $test_count - $1 # TODO known breakage"
+	finalize_test_case_output broken "$1"
 }
 
 test_debug () {
