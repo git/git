@@ -105,10 +105,14 @@ static void verify_working_tree_path(struct repository *r,
 		const struct object_id *commit_oid = &parents->item->object.oid;
 		struct object_id blob_oid;
 		unsigned short mode;
+		int obj_type;
 
-		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
-			return;
+		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode)) {
+			obj_type = oid_object_info(r, &blob_oid, NULL);
+			if (obj_type == OBJ_BLOB || obj_type == OBJ_TREE) {
+				return;
+			}
+		}
 	}
 
 	pos = index_name_pos(r->index, path, strlen(path));
@@ -259,6 +263,8 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		const char *read_from;
 		char *buf_ptr;
 		unsigned long buf_len;
+		struct tree *tree;
+		struct object_id oid;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
@@ -284,6 +290,15 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 			if (strbuf_readlink(&buf, read_from, st.st_size) < 0)
 				die_errno("cannot readlink '%s'", read_from);
 			break;
+		case S_IFDIR:
+			if (get_oid("HEAD", &oid))
+				die("not a valid object %s", "HEAD");
+
+			tree = lookup_tree_by_path(the_repository, &oid, &pathspec, path);
+			read_tree(the_repository, tree, &pathspec, show_tree_file, &buf);
+			origin->blob_oid = tree->object.oid;
+			origin->is_tree = 1;
+			break;
 		default:
 			die("unsupported file type %s", read_from);
 		}
@@ -297,7 +312,9 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
+
+	if (is_null_oid(&origin->blob_oid))
+		pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -1381,22 +1398,25 @@ static struct blame_origin *find_origin(struct repository *r,
 		       PATHSPEC_LITERAL_PATH, "", paths);
 	diff_setup_done(&diff_opts);
 
-	if (is_null_oid(&origin->commit->object.oid))
+	if (is_null_oid(&origin->commit->object.oid)) {
 		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
-	else {
+	} else {
 		int compute_diff = 1;
 		if (origin->commit->parents &&
 		    oideq(&parent->object.oid,
 			  &origin->commit->parents->item->object.oid))
 			compute_diff = maybe_changed_path(r, origin, bd);
 
-		if (compute_diff)
+		if (compute_diff) {
 			diff_tree_oid(get_commit_tree_oid(parent),
 				      get_commit_tree_oid(origin->commit),
 				      "", &diff_opts);
+		}
 	}
 	diffcore_std(&diff_opts);
 
+	
+	//if (!diff_queued_diff.nr || origin->is_tree) {
 	if (!diff_queued_diff.nr) {
 		/* The path is the same as parent */
 		porigin = get_origin(parent, origin->path);
@@ -2640,7 +2660,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		parse_commit(commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
-		     !(revs->max_age != -1 && commit->date < revs->max_age)))
+		     !(revs->max_age != -1 && commit->date < revs->max_age))) {
 			pass_blame(sb, suspect, opt);
 		else {
 			commit->object.flags |= UNINTERESTING;
@@ -2894,8 +2914,11 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	sb->num_read_blob++;
 	prepare_lines(sb);
 
-	if (orig)
+	if (orig) {
 		*orig = o;
+		sb->is_tree = o->is_tree;
+	}
+
 
 	free((char *)final_commit_name);
 }
