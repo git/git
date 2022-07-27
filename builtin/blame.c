@@ -1090,7 +1090,10 @@ parse_done:
 	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
+
+	trace_printf("==============SETUP SCOREBOARD");
 	setup_scoreboard(&sb, &o);
+	trace_printf("==============END SETUP SCOREBOARD");
 
 	/*
 	 * Changed-path Bloom filters are disabled when looking
@@ -1164,7 +1167,9 @@ parse_done:
 	if (show_progress)
 		pi.progress = start_delayed_progress(_("Blaming lines"), num_lines);
 
+	trace_printf("==============ASSIGN BLAME");
 	assign_blame(&sb, opt);
+	trace_printf("==============FINISH ASSIGN BLAME");
 
 	stop_progress(&pi.progress);
 

@@ -20,6 +20,7 @@ static struct pathspec pathspec;
 
 struct blame_origin *get_blame_suspects(struct commit *commit)
 {
+	trace_printf("get blame suspect %s", oid_to_hex(&commit->object.oid));
 	struct blame_origin **result;
 
 	result = blame_suspects_peek(&blame_suspects, commit);
@@ -29,6 +30,7 @@ struct blame_origin *get_blame_suspects(struct commit *commit)
 
 static void set_blame_suspects(struct commit *commit, struct blame_origin *origin)
 {
+	trace_printf("set blame suspect %s", oid_to_hex(&commit->object.oid));
 	*blame_suspects_at(&blame_suspects, commit) = origin;
 }
 
@@ -62,12 +64,14 @@ void blame_origin_decref(struct blame_origin *o)
  */
 static struct blame_origin *make_origin(struct commit *commit, const char *path)
 {
+	trace_printf("Make origin");
 	struct blame_origin *o;
 	FLEX_ALLOC_STR(o, path, path);
 	o->commit = commit;
 	o->refcnt = 1;
 	o->next = get_blame_suspects(commit);
 	set_blame_suspects(commit, o);
+
 	return o;
 }
 
@@ -79,6 +83,7 @@ static struct blame_origin *get_origin(struct commit *commit, const char *path)
 {
 	struct blame_origin *o, *l;
 
+	trace_printf("get origin");
 	for (o = get_blame_suspects(commit), l = NULL; o; l = o, o = o->next) {
 		if (!strcmp(o->path, path)) {
 			/* bump to front */
@@ -1373,6 +1378,7 @@ static struct blame_origin *find_origin(struct repository *r,
 	const char *paths[2];
 
 	/* First check any existing origins */
+	trace_printf("find_origin %s", oid_to_hex(&parent->object.oid));
 	for (porigin = get_blame_suspects(parent); porigin; porigin = porigin->next)
 		if (!strcmp(porigin->path, origin->path)) {
 			/*
@@ -2638,6 +2644,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 	struct commit *commit = prio_queue_get(&sb->commits);
 
 	while (commit) {
+		trace_printf("assign_blame loop: %s", oid_to_hex(&commit->object.oid));
 		struct blame_entry *ent;
 		struct blame_origin *suspect = get_blame_suspects(commit);
 
@@ -2656,13 +2663,16 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * We will use this suspect later in the loop,
 		 * so hold onto it in the meantime.
 		 */
+		trace_printf("blame origin incref");
 		blame_origin_incref(suspect);
+		trace_printf("blame origin incref end");
 		parse_commit(commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age))) {
+			trace_printf("pass blame");
 			pass_blame(sb, suspect, opt);
-		else {
+		} else {
 			commit->object.flags |= UNINTERESTING;
 			if (commit->object.parsed)
 				mark_parents_uninteresting(sb->revs, commit);
