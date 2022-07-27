@@ -1169,11 +1169,11 @@ test_atexit_handler () {
 }
 
 test_done () {
-	GIT_EXIT_OK=t
-
 	# Run the atexit commands _before_ the trash directory is
 	# removed, so the commands can access pidfiles and socket files.
 	test_atexit_handler
+
+	GIT_EXIT_OK=t
 
 	finalize_test_output
 
