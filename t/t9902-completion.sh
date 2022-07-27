@@ -2485,11 +2485,24 @@ test_expect_success 'git config - section' '
 	EOF
 '
 
+test_expect_success 'git config - section include, includeIf' '
+	test_completion "git config inclu" <<-\EOF
+	include.Z
+	includeIf.Z
+	EOF
+'
+
 test_expect_success 'git config - variable name' '
 	test_completion "git config log.d" <<-\EOF
 	log.date Z
 	log.decorate Z
 	log.diffMerges Z
+	EOF
+'
+
+test_expect_success 'git config - variable name include' '
+	test_completion "git config include.p" <<-\EOF
+	include.path Z
 	EOF
 '
 
