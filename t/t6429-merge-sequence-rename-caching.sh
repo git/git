@@ -760,7 +760,7 @@ test_expect_success 'avoid assuming we detected renames' '
 		test_must_fail git -c merge.renameLimit=1 rebase upstream &&
 
 		git ls-files -u >actual &&
-		! test_file_is_empty actual
+		test_line_count = 2 actual
 	)
 '
 
