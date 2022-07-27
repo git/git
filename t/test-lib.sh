@@ -238,6 +238,9 @@ parse_option () {
 			;;
 		esac
 		;;
+	--invert-exit-code)
+		invert_exit_code=t
+		;;
 	*)
 		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
 	esac
@@ -788,15 +791,31 @@ test_ok_ () {
 	finalize_test_case_output ok "$@"
 }
 
+_invert_exit_code_failure_end_blurb () {
+	say_color warn "# faked up failures as TODO & now exiting with 0 due to --invert-exit-code"
+}
+
 test_failure_ () {
 	failure_label=$1
 	test_failure=$(($test_failure + 1))
-	say_color error "not ok $test_count - $1"
+	local pfx=""
+	if test -n "$invert_exit_code" # && test -n "$HARNESS_ACTIVE"
+	then
+		pfx="# TODO induced breakage (--invert-exit-code):"
+	fi
+	say_color error "not ok $test_count - ${pfx:+$pfx }$1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
 	if test -n "$immediate"
 	then
 		say_color error "1..$test_count"
+		if test -n "$invert_exit_code"
+		then
+			finalize_test_output
+			_invert_exit_code_failure_end_blurb
+			GIT_EXIT_OK=t
+			exit 0
+		fi
 		_error_exit
 	fi
 	finalize_test_case_output failure "$failure_label" "$@"
@@ -1229,7 +1248,14 @@ test_done () {
 			esac
 		fi
 
-		if test -z "$debug" && test -n "$remove_trash"
+		if test -n "$stress" && test -n "$invert_exit_code"
+		then
+			# We're about to move our "$TRASH_DIRECTORY"
+			# to "$TRASH_DIRECTORY.stress-failed" if
+			# --stress is combined with
+			# --invert-exit-code.
+			say "with --stress and --invert-exit-code we're not removing '$TRASH_DIRECTORY'"
+		elif test -z "$debug" && test -n "$remove_trash"
 		then
 			test -d "$TRASH_DIRECTORY" ||
 			error "Tests passed but trash directory already removed before test cleanup; aborting"
@@ -1242,6 +1268,14 @@ test_done () {
 			} ||
 			error "Tests passed but test cleanup failed; aborting"
 		fi
+
+		if test -z "$skip_all" && test -n "$invert_exit_code"
+		then
+			say_color warn "# faking up non-zero exit with --invert-exit-code"
+			GIT_EXIT_OK=t
+			exit 1
+		fi
+
 		test_at_end_hook_
 
 		GIT_EXIT_OK=t
@@ -1252,6 +1286,13 @@ test_done () {
 		then
 			say_color error "# failed $test_failure among $msg"
 			say "1..$test_count"
+		fi
+
+		if test -n "$invert_exit_code"
+		then
+			_invert_exit_code_failure_end_blurb
+			GIT_EXIT_OK=t
+			exit 0
 		fi
 
 		GIT_EXIT_OK=t
