@@ -651,8 +651,7 @@ test_set_prereq () {
 		# test_unset_prereq()
 		!*)
 			;;
-		# (Temporary?) whitelist of things we can't easily
-		# pretend not to support
+		# List of things we can't easily pretend to not support
 		SYMLINKS)
 			;;
 		# Inspecting whether GIT_TEST_FAIL_PREREQS is on

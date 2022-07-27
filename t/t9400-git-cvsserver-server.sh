@@ -221,7 +221,7 @@ test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | git-cvsserver --export-all pserver "$WORKDIR" >log 2>&1 &&
    sed -ne \$p log | grep "^I LOVE YOU\$"'
 
-test_expect_success 'req_Root failure (export-all w/o whitelist)' \
+test_expect_success 'req_Root failure (export-all w/o directory list)' \
   '! (cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 || false)'
 
 test_expect_success 'req_Root (everything together)' \
