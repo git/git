@@ -2,6 +2,7 @@
 
 test_description='git merge-tree --write-tree'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This test is ort-specific

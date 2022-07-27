@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Testing the various Bloom filter computations in bloom.c'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'compute unseeded murmur3 hash for empty string' '

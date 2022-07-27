@@ -4,6 +4,8 @@
 #
 
 test_description='perl interface (Git.pm)'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-perl.sh
 
