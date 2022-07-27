@@ -693,7 +693,7 @@ ifeq ($(uname_S),MINGW)
 	DEFAULT_HELP_FORMAT = html
 	HAVE_PLATFORM_PROCINFO = YesPlease
 	CSPRNG_METHOD = rtlgenrandom
-	BASIC_LDFLAGS += -municode
+	BASIC_LDFLAGS += -municode -Wl,--tsaware
 	COMPAT_CFLAGS += -DNOGDI -Icompat -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/winansi.o \
