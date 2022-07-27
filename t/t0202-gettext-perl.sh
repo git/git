@@ -7,16 +7,8 @@ test_description='Perl gettext interface (Git::I18N)'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
-
-if ! test_have_prereq PERL; then
-	skip_all='skipping perl interface tests, perl not available'
-	test_done
-fi
-
-perl -MTest::More -e 0 2>/dev/null || {
-	skip_all="Perl Test::More unavailable, skipping test"
-	test_done
-}
+. "$TEST_DIRECTORY"/lib-perl.sh
+skip_all_if_no_Test_More
 
 # The external test will outputs its own plan
 test_external_has_tap=1

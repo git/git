@@ -3,16 +3,9 @@
 	cd ../../../t
 	test_description='git-credential-netrc'
 	. ./test-lib.sh
+	. "$TEST_DIRECTORY"/lib-perl.sh
 
-	if ! test_have_prereq PERL; then
-		skip_all='skipping perl interface tests, perl not available'
-		test_done
-	fi
-
-	perl -MTest::More -e 0 2>/dev/null || {
-		skip_all="Perl Test::More unavailable, skipping test"
-		test_done
-	}
+	skip_all_if_no_Test_More
 
 	# set up test repository
 
