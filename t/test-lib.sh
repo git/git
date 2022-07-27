@@ -1451,17 +1451,34 @@ BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK () {
 
 if test -n "$SANITIZE_LEAK"
 then
-	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
-	then
-		# We need to see it in "git env--helper" (via
-		# test_bool_env)
-		export TEST_PASSES_SANITIZE_LEAK
+	# Normalize with test_bool_env
+	passes_sanitize_leak=
 
-		if ! test_bool_env TEST_PASSES_SANITIZE_LEAK false
+	# We need to see TEST_PASSES_SANITIZE_LEAK in "git
+	# env--helper" (via test_bool_env)
+	export TEST_PASSES_SANITIZE_LEAK
+	if test_bool_env TEST_PASSES_SANITIZE_LEAK false
+	then
+		passes_sanitize_leak=t
+	fi
+
+	if test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check"
+	then
+		if test -n "$invert_exit_code"
 		then
-			skip_all="skipping $this_test under GIT_TEST_PASSING_SANITIZE_LEAK=true"
-			test_done
+			BAIL_OUT "cannot use --invert-exit-code under GIT_TEST_PASSING_SANITIZE_LEAK=check"
 		fi
+
+		if test -z "$passes_sanitize_leak"
+		then
+			say "in GIT_TEST_PASSING_SANITIZE_LEAK=check mode, setting --invert-exit-code for TEST_PASSES_SANITIZE_LEAK != true"
+			invert_exit_code=t
+		fi
+	elif test -z "$passes_sanitize_leak" &&
+	     test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+	then
+		skip_all="skipping $this_test under GIT_TEST_PASSING_SANITIZE_LEAK=true"
+		test_done
 	fi
 
 	if test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false
@@ -1480,7 +1497,8 @@ then
 		prepend_var LSAN_OPTIONS : log_path=\"$TEST_RESULTS_SAN_FILE\"
 		export LSAN_OPTIONS
 	fi
-elif test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
+elif test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check" ||
+     test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
 then
 	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_PASSING_SANITIZE_LEAK=true"
 elif test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false

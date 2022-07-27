@@ -371,10 +371,27 @@ declared themselves as leak-free by setting
 "TEST_PASSES_SANITIZE_LEAK=true" before sourcing "test-lib.sh". This
 test mode is used by the "linux-leaks" CI target.
 
+GIT_TEST_PASSING_SANITIZE_LEAK=check checks that our
+"TEST_PASSES_SANITIZE_LEAK=true" markings are current. Rather than
+skipping those tests that haven't set "TEST_PASSES_SANITIZE_LEAK=true"
+before sourcing "test-lib.sh" this mode runs them with
+"--invert-exit-code". This is used to check that there's a one-to-one
+mapping between "TEST_PASSES_SANITIZE_LEAK=true" and those tests that
+pass under "SANITIZE=leak". This is especially useful when testing a
+series that fixes various memory leaks with "git rebase -x".
+
 GIT_TEST_SANITIZE_LEAK_LOG=true will log memory leaks to
 "test-results/$TEST_NAME.leak/trace.*" files. The logs include a
 "dedup_token" (see +"ASAN_OPTIONS=help=1 ./git") and other options to
 make logs +machine-readable.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
+will run to completion faster, and result in the same failing
+tests. The only practical reason to run
+GIT_TEST_PASSING_SANITIZE_LEAK=check without "--immediate" is to
+combine it with "GIT_TEST_SANITIZE_LEAK_LOG=true". If we stop at the
+first failing test case our leak logs won't show subsequent leaks we
+might have run into.
 
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
