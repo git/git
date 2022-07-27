@@ -43,11 +43,9 @@ test_expect_success \
      git config --add test.pathmulti bar
      '
 
-# The external test will outputs its own plan
-test_external_has_tap=1
-
-test_external_without_stderr \
-    'Perl API' \
-    perl "$TEST_DIRECTORY"/t9700/test.pl
+test_expect_success 'use t9700/test.pl to test Git.pm' '
+	"$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl 2>stderr &&
+	test_must_be_empty stderr
+'
 
 test_done
