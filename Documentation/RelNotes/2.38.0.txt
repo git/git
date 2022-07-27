@@ -91,37 +91,29 @@ Fixes since v2.37
 
  * Certain diff options are currently ignored when combined-diff is
    shown; mark them as incompatible with the feature.
-   (merge cfb19ae05f rs/combine-diff-with-incompatible-options later to maint).
 
  * Adjust technical/bitmap-format to be formatted by AsciiDoc, and
    add some missing information to the documentation.
-   (merge ac7667bd44 ac/bitmap-format-doc later to maint).
 
  * Fixes for tests when the source directory has unusual characters in
    its path, e.g. whitespaces, double-quotes, etc.
-   (merge eb1cd60290 ab/test-quoting-fix later to maint).
 
  * "git mktree --missing" lazily fetched objects that are missing from
    the local object store, which was totally unnecessary for the purpose
    of creating the tree object(s) from its input.
-   (merge 817b0f6027 ro/mktree-allow-missing-fix later to maint).
 
  * Give _() markings to fatal/warning/usage: labels that are shown in
    front of these messages.
-   (merge a1fd2cf8cd dr/i18n-die-warn-error-usage later to maint).
 
  * References to commands-to-be-typed-literally in "git rebase"
    documentation mark-up have been corrected.
-   (merge 54e51e559e ds/git-rebase-doc-markup later to maint).
 
  * In a non-bare repository, the behavior of Git when the
    core.worktree configuration variable points at a directory that has
    a repository as its subdirectory, regressed in Git 2.27 days.
-   (merge d6c9a71755 gg/worktree-from-the-above later to maint).
 
  * Recent update to vimdiff layout code has been made more robust
    against different end-user vim settings.
-   (merge f3d7623a13 fr/vimdiff-layout-fix later to maint).
 
  * Plug various memory leaks.
    (merge ece3974ba6 ab/leakfix later to maint).
@@ -131,7 +123,6 @@ Fixes since v2.37
 
  * Fixes a long-standing corner case bug around directory renames in
    the merge-ort strategy.
-   (merge 751e165424 en/merge-dual-dir-renames-fix later to maint).
 
  * The resolve-undo information in the index was not protected against
    GC, which has been corrected.
@@ -148,17 +139,13 @@ Fixes since v2.37
 
  * An earlier attempt to plug leaks placed a clean-up label to jump to
    at a bogus place, which as been corrected.
-   (merge 04393ae7f7 jk/diff-files-cleanup-fix later to maint).
 
  * Variable quoting fix in the vimdiff driver of "git mergetool"
-   (merge ccc7b5148b js/vimdiff-quotepath-fix later to maint).
 
  * "git shortlog -n" relied on the underlying qsort() to be stable,
    which shouldn't have.  Fixed.
-   (merge df534dcbaa js/shortlog-sort-stably later to maint).
 
  * A fix for a regression in test framework.
-   (merge 7253f7ca9f js/ci-github-workflow-markup later to maint).
 
  * mkstemp() emulation on Windows has been improved.
    (merge ae25974de3 rs/mingw-tighten-mkstemp later to maint).
@@ -183,15 +170,6 @@ Fixes since v2.37
    (merge 4d35f74421 mb/p4-utf16-crlf later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 5fd9d1738e jk/revisions-doc-markup-fix later to maint).
-   (merge 1971510c35 pb/diff-doc-raw-format later to maint).
-   (merge a3ba4fa715 cr/setup-bug-typo later to maint).
-   (merge 85845580d9 ds/vscode-settings later to maint).
-   (merge ec2f6c0cca en/t6429-test-must-be-empty-fix later to maint).
-   (merge 14deb585fb tb/pack-objects-remove-pahole-comment later to maint).
-   (merge 2ffb7d13ee ds/t5510-brokequote later to maint).
-   (merge 18337d406f ll/ls-files-tests-update later to maint).
-   (merge 8cdab69d96 tk/rev-parse-doc-clarify-at-u later to maint).
    (merge a700395eaf ma/t4200-update later to maint).
    (merge ae436f283c ma/sparse-checkout-cone-doc-fix later to maint).
    (merge a10f6e2bda sg/index-format-doc-update later to maint).
