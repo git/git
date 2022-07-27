@@ -1447,7 +1447,6 @@ then
 	test_done
 fi
 
-# skip non-whitelisted tests when compiled with SANITIZE=leak
 if test -n "$SANITIZE_LEAK"
 then
 	if test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
