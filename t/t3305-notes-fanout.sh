@@ -51,7 +51,7 @@ test_expect_success 'creating many notes with git-notes' '
 	done
 '
 
-test_expect_success !SANITIZE_LEAK 'many notes created correctly with git-notes' '
+test_expect_success 'many notes created correctly with git-notes' '
 	git log >output.raw &&
 	grep "^    " output.raw >output &&
 	i=$num_notes &&
