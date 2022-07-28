@@ -17,6 +17,7 @@ struct fetch_pack_args {
 	const struct string_list *deepen_not;
 	struct list_objects_filter_options filter_options;
 	const struct string_list *server_options;
+	struct object_info **object_info_data;
 
 	/*
 	 * If not NULL, during packfile negotiation, fetch-pack will send "have"
@@ -43,6 +44,7 @@ struct fetch_pack_args {
 	unsigned reject_shallow_remote:1;
 	unsigned deepen:1;
 	unsigned refetch:1;
+	unsigned object_info:1;
 
 	/*
 	 * Indicate that the remote of this request is a promisor remote. The
@@ -67,6 +69,12 @@ struct fetch_pack_args {
 	 * latter doesn't.
 	 */
 	unsigned connectivity_checked:1;
+};
+
+struct object_info_args {
+	struct string_list *object_info_options;
+	const struct string_list *server_options;
+	struct oid_array *oids;
 };
 
 /*
@@ -101,5 +109,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
  * matched.  Return 0 if all sought refs were matched, otherwise 1.
  */
 int report_unmatched_refs(struct ref **sought, int nr_sought);
+
+void send_object_info_request(int fd_out, struct object_info_args *args);
 
 #endif
