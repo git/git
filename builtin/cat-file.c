@@ -17,6 +17,9 @@
 #include "object-store.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
+#include "alias.h"
+#include "remote.h"
+#include "transport.h"
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,
@@ -34,9 +37,14 @@ struct batch_options {
 	int transform_mode; /* may be 'w' or 'c' for --filters or --textconv */
 	int nul_terminated;
 	const char *format;
+	int use_remote_info;
 };
 
+#define DEFAULT_FORMAT "%(objectname) %(objecttype) %(objectsize)"
+
 static const char *force_path;
+static struct object_info *remote_object_info;
+static struct oid_array object_info_oids = OID_ARRAY_INIT;
 
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 static int use_mailmap;
@@ -472,46 +480,113 @@ static void batch_one_object(const char *obj_name,
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
 	enum get_oid_result result;
 
-	result = get_oid_with_context(the_repository, obj_name,
-				      flags, &data->oid, &ctx);
-	if (result != FOUND) {
-		switch (result) {
-		case MISSING_OBJECT:
-			printf("%s missing\n", obj_name);
-			break;
-		case SHORT_NAME_AMBIGUOUS:
-			printf("%s ambiguous\n", obj_name);
-			break;
-		case DANGLING_SYMLINK:
-			printf("dangling %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
-			break;
-		case SYMLINK_LOOP:
-			printf("loop %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
-			break;
-		case NOT_DIR:
-			printf("notdir %"PRIuMAX"\n%s\n",
-			       (uintmax_t)strlen(obj_name), obj_name);
-			break;
-		default:
-			BUG("unknown get_sha1_with_context result %d\n",
-			       result);
-			break;
+	if (!opt->use_remote_info) {
+		result = get_oid_with_context(the_repository, obj_name,
+						flags, &data->oid, &ctx);
+		if (result != FOUND) {
+			switch (result) {
+			case MISSING_OBJECT:
+				printf("%s missing\n", obj_name);
+				break;
+			case SHORT_NAME_AMBIGUOUS:
+				printf("%s ambiguous\n", obj_name);
+				break;
+			case DANGLING_SYMLINK:
+				printf("dangling %"PRIuMAX"\n%s\n",
+					(uintmax_t)strlen(obj_name), obj_name);
+				break;
+			case SYMLINK_LOOP:
+				printf("loop %"PRIuMAX"\n%s\n",
+					(uintmax_t)strlen(obj_name), obj_name);
+				break;
+			case NOT_DIR:
+				printf("notdir %"PRIuMAX"\n%s\n",
+					(uintmax_t)strlen(obj_name), obj_name);
+				break;
+			default:
+				BUG("unknown get_sha1_with_context result %d\n",
+					result);
+				break;
+			}
+			fflush(stdout);
+			return;
 		}
-		fflush(stdout);
-		return;
-	}
 
-	if (ctx.mode == 0) {
-		printf("symlink %"PRIuMAX"\n%s\n",
-		       (uintmax_t)ctx.symlink_path.len,
-		       ctx.symlink_path.buf);
-		fflush(stdout);
-		return;
+		if (ctx.mode == 0) {
+			printf("symlink %"PRIuMAX"\n%s\n",
+				(uintmax_t)ctx.symlink_path.len,
+				ctx.symlink_path.buf);
+			fflush(stdout);
+			return;
+		}
 	}
 
 	batch_object_write(obj_name, scratch, opt, data, NULL, 0);
+}
+
+static int get_remote_info(struct batch_options *opt, int argc, const char **argv)
+{
+	int retval = 0;
+	size_t i;
+	struct remote *remote = NULL;
+	struct object_id oid;
+	struct string_list object_info_options = STRING_LIST_INIT_NODUP;
+	static struct transport *gtransport;
+	char *format = DEFAULT_FORMAT;
+
+	if (opt->format)
+		format = xstrdup(opt->format);
+
+	remote = remote_get(argv[0]);
+	if (!remote)
+		die(_("must supply valid remote when using --object-info"));
+	oid_array_clear(&object_info_oids);
+	for (i = 1; i < argc; i++) {
+		if (get_oid(argv[i], &oid))
+			die(_("malformed object id '%s'"), argv[i]);
+		oid_array_append(&object_info_oids, &oid);
+	}
+
+	gtransport = transport_get(remote, NULL);
+	if (gtransport->smart_options) {
+		size_t j;
+		int include_size = 0, include_type = 0;
+
+		remote_object_info = xcalloc(object_info_oids.nr, sizeof(struct object_info));
+		gtransport->smart_options->object_info = 1;
+		gtransport->smart_options->object_info_oids = &object_info_oids;
+		/**
+		 * 'size' is the only option currently supported.
+		 * Other options that are passed in the format will fallback to a
+		 * standard fetch request rather than object-info.
+		 */
+		if (strstr(format, "%(objectsize)")) {
+			string_list_append(&object_info_options, "size");
+			include_size = 1;
+		}
+		if (strstr(format, "%(objecttype)")) {
+			string_list_append(&object_info_options, "type");
+			include_type = 1;
+		}
+		if (strstr(format, "%(objectsize:disk)"))
+			die(_("objectsize:disk is currently not supported with remote-object-info"));
+		if (strstr(format, "%(deltabase)"))
+			die(_("deltabase is currently not supported with remote-object-info"));
+		if (object_info_options.nr > 0) {
+			gtransport->smart_options->object_info_options = &object_info_options;
+			for (j = 0; j < object_info_oids.nr; j++) {
+				if (include_size)
+					remote_object_info[j].sizep = xcalloc(1, sizeof(long));
+				if (include_type)
+					remote_object_info[j].typep = xcalloc(1, sizeof(enum object_type));
+			}
+			gtransport->smart_options->object_info_data = &remote_object_info;
+			retval = transport_fetch_refs(gtransport, NULL);
+		}
+	} else {
+		retval = -1;
+	}
+	return retval;
 }
 
 struct object_cb_data {
@@ -585,6 +660,7 @@ typedef void (*parse_cmd_fn_t)(struct batch_options *, const char *,
 struct queued_cmd {
 	parse_cmd_fn_t fn;
 	char *line;
+	const char *name;
 };
 
 static void parse_cmd_contents(struct batch_options *opt,
@@ -605,6 +681,56 @@ static void parse_cmd_info(struct batch_options *opt,
 	batch_one_object(line, output, opt, data);
 }
 
+static const struct parse_cmd {
+	const char *name;
+	parse_cmd_fn_t fn;
+	unsigned takes_args;
+} commands[] = {
+	{ "contents", parse_cmd_contents, 1},
+	{ "info", parse_cmd_info, 1},
+	{ "remote-object-info", parse_cmd_info, 1},
+	{ "flush", NULL, 0},
+};
+
+static void parse_remote_info(struct batch_options *opt,
+			   char *line,
+			   struct strbuf *output,
+			   struct expand_data *data,
+			   const struct parse_cmd *p_cmd,
+			   struct queued_cmd *q_cmd)
+{
+	int count;
+	size_t i;
+	const char **argv;
+
+	count = split_cmdline(line, &argv);
+	if (get_remote_info(opt, count, argv))
+		goto cleanup;
+	opt->use_remote_info = 1;
+	data->skip_object_info = 1;
+	data->mark_query = 0;
+	for (i = 0; i < object_info_oids.nr; i++) {
+		if (remote_object_info[i].sizep)
+			data->size = *remote_object_info[i].sizep;
+		if (remote_object_info[i].typep)
+			data->type = *remote_object_info[i].typep;
+
+		data->oid = object_info_oids.oid[i];
+		if (p_cmd)
+			p_cmd->fn(opt, argv[i+1], output, data);
+		else
+			q_cmd->fn(opt, argv[i+1], output, data);
+	}
+	opt->use_remote_info = 0;
+	data->skip_object_info = 0;
+	data->mark_query = 1;
+
+cleanup:
+	for (i = 0; i < object_info_oids.nr; i++)
+		free_object_info_contents(&remote_object_info[i]);
+	free(remote_object_info);
+}
+
 static void dispatch_calls(struct batch_options *opt,
 		struct strbuf *output,
 		struct expand_data *data,
@@ -616,8 +742,12 @@ static void dispatch_calls(struct batch_options *opt,
 	if (!opt->buffer_output)
 		die(_("flush is only for --buffer mode"));
 
-	for (i = 0; i < nr; i++)
-		cmd[i].fn(opt, cmd[i].line, output, data);
+	for (i = 0; i < nr; i++) {
+		if (!strcmp(cmd[i].name, "remote-object-info"))
+			parse_remote_info(opt, cmd[i].line, output, data, NULL, &cmd[i]);
+		else
+			cmd[i].fn(opt, cmd[i].line, output, data);
+	}
 
 	fflush(stdout);
 }
@@ -631,17 +761,6 @@ static void free_cmds(struct queued_cmd *cmd, size_t *nr)
 
 	*nr = 0;
 }
-
-
-static const struct parse_cmd {
-	const char *name;
-	parse_cmd_fn_t fn;
-	unsigned takes_args;
-} commands[] = {
-	{ "contents", parse_cmd_contents, 1},
-	{ "info", parse_cmd_info, 1},
-	{ "flush", NULL, 0},
-};
 
 static void batch_objects_command(struct batch_options *opt,
 				    struct strbuf *output,
@@ -696,11 +815,17 @@ static void batch_objects_command(struct batch_options *opt,
 			dispatch_calls(opt, output, data, queued_cmd, nr);
 			free_cmds(queued_cmd, &nr);
 		} else if (!opt->buffer_output) {
-			cmd->fn(opt, p, output, data);
+			if (!strcmp(cmd->name, "remote-object-info")) {
+				char *line = xstrdup_or_null(p);
+				parse_remote_info(opt, line, output, data, cmd, NULL);
+			} else {
+				cmd->fn(opt, p, output, data);
+			}
 		} else {
 			ALLOC_GROW(queued_cmd, nr + 1, alloc);
 			call.fn = cmd->fn;
 			call.line = xstrdup_or_null(p);
+			call.name = cmd->name;
 			queued_cmd[nr++] = call;
 		}
 	}
@@ -716,8 +841,6 @@ static void batch_objects_command(struct batch_options *opt,
 	free(queued_cmd);
 	strbuf_release(&input);
 }
-
-#define DEFAULT_FORMAT "%(objectname) %(objecttype) %(objectsize)"
 
 static int batch_objects(struct batch_options *opt)
 {
