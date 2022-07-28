@@ -56,6 +56,14 @@ static int session_id_advertise(struct repository *r, struct strbuf *value)
 	return 1;
 }
 
+static int object_info_advertise(struct repository *r,
+				   struct strbuf *value)
+{
+	if (value)
+		strbuf_addstr(value, "size");
+	return 1;
+}
+
 static void session_id_receive(struct repository *r,
 			       const char *client_sid)
 {
@@ -132,7 +140,7 @@ static struct protocol_capability capabilities[] = {
 	},
 	{
 		.name = "object-info",
-		.advertise = always_advertise,
+		.advertise = object_info_advertise,
 		.command = cap_object_info,
 	},
 };
