@@ -93,7 +93,7 @@ test_expect_success 'do not unpack existing large objects' '
 
 	# The destination came up with the exact same pack...
 	DEST_PACK=$(echo dest.git/objects/pack/pack-*.pack) &&
-	test_cmp pack-$PACK.pack $DEST_PACK &&
+	cmp pack-$PACK.pack $DEST_PACK &&
 
 	# ...and wrote no loose objects
 	test_stdout_line_count = 0 find dest.git/objects -type f ! -name "pack-*"
