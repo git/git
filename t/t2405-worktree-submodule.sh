@@ -7,6 +7,7 @@ test_description='Combination of submodules and multiple worktrees'
 base_path=$(pwd -P)
 
 test_expect_success 'setup: create origin repos'  '
+	git config --global protocol.file.allow always &&
 	git init origin/sub &&
 	test_commit -C origin/sub file1 &&
 	git init origin/main &&
