@@ -38,7 +38,7 @@ test_description="merge cases"
 #   Expected: b_2
 
 test_setup_1a () {
-	test_create_repo 1a_$1 &&
+	git init 1a_$1 &&
 	(
 		cd 1a_$1 &&
 
@@ -136,7 +136,7 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 #   Expected: c_2
 
 test_setup_2a () {
-	test_create_repo 2a_$1 &&
+	git init 2a_$1 &&
 	(
 		cd 2a_$1 &&
 
@@ -229,7 +229,7 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 #   Expected: c_2
 
 test_setup_2b () {
-	test_create_repo 2b_$1 &&
+	git init 2b_$1 &&
 	(
 		cd 2b_$1 &&
 
@@ -336,7 +336,7 @@ test_expect_success '2b-R: Rename+Mod(A)/Mod(B), B mods subset of A' '
 #         not make that particular mistake.
 
 test_setup_2c () {
-	test_create_repo 2c &&
+	git init 2c &&
 	(
 		cd 2c &&
 
@@ -437,7 +437,7 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 #   Expected: bar/{bq_2, whatever}
 
 test_setup_3a () {
-	test_create_repo 3a_$1 &&
+	git init 3a_$1 &&
 	(
 		cd 3a_$1 &&
 
@@ -537,7 +537,7 @@ test_expect_success '3a-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 #   Expected: bar/{bq_2, whatever}
 
 test_setup_3b () {
-	test_create_repo 3b_$1 &&
+	git init 3b_$1 &&
 	(
 		cd 3b_$1 &&
 
@@ -642,7 +642,7 @@ test_expect_success '3b-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 #   Expected: b_2 for merge, b_4 in working copy
 
 test_setup_4a () {
-	test_create_repo 4a &&
+	git init 4a &&
 	(
 		cd 4a &&
 
@@ -714,7 +714,7 @@ test_expect_merge_algorithm failure success '4a: Change on A, change on B subset
 #   Expected: c_2
 
 test_setup_4b () {
-	test_create_repo 4b &&
+	git init 4b &&
 	(
 		cd 4b &&
 
