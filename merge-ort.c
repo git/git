@@ -4226,6 +4226,7 @@ void merge_switch_to_result(struct merge_options *opt,
 			/* failure to function */
 			result->clean = -1;
 			merge_finalize(opt, result);
+			trace2_region_leave("merge", "checkout", opt->repo);
 			return;
 		}
 		trace2_region_leave("merge", "checkout", opt->repo);
@@ -4237,6 +4238,8 @@ void merge_switch_to_result(struct merge_options *opt,
 			opt->priv = NULL;
 			result->clean = -1;
 			merge_finalize(opt, result);
+			trace2_region_leave("merge", "record_conflicted",
+					    opt->repo);
 			return;
 		}
 		opt->priv = NULL;
