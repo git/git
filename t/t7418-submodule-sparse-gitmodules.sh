@@ -14,6 +14,10 @@ also by committing .gitmodules and then just removing it from the filesystem.
 
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'sparse checkout setup which hides .gitmodules' '
 	git init upstream &&
 	git init submodule &&

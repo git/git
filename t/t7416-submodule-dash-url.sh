@@ -3,6 +3,10 @@
 test_description='check handling of disallowed .gitmodule urls'
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'create submodule with protected dash in url' '
 	git init upstream &&
 	git -C upstream commit --allow-empty -m base &&

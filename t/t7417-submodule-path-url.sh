@@ -3,6 +3,10 @@
 test_description='check handling of .gitmodule path with dash'
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
+
 test_expect_success 'create submodule with dash in path' '
 	git init upstream &&
 	git -C upstream commit --allow-empty -m base &&

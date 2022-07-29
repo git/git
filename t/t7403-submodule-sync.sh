@@ -11,6 +11,8 @@ These tests exercise the "git submodule sync" subcommand.
 . ./test-lib.sh
 
 test_expect_success setup '
+	git config --global protocol.file.allow always &&
+
 	echo file >file &&
 	git add file &&
 	test_tick &&
