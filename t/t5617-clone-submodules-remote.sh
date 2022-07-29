@@ -7,6 +7,7 @@ test_description='Test cloning repos with submodules using remote-tracking branc
 pwd=$(pwd)
 
 test_expect_success 'setup' '
+	git config --global protocol.file.allow always &&
 	git checkout -b master &&
 	test_commit commit1 &&
 	mkdir sub &&
