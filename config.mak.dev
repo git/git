@@ -59,9 +59,13 @@ endif
 
 # uninitialized warnings on gcc 4.9.2 in xdiff/xdiffi.c and config.c
 # not worth fixing since newer compilers correctly stop complaining
+#
+# Likewise, gcc older than 4.9 complains about initializing a
+# struct-within-a-struct using just "{ 0 }"
 ifneq ($(filter gcc4,$(COMPILER_FEATURES)),)
 ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-uninitialized
+DEVELOPER_CFLAGS += -Wno-missing-braces
 endif
 endif
 
