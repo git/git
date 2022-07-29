@@ -719,7 +719,6 @@ else
 		HAVE_LIBCHARSET_H = YesPlease
 		USE_GETTEXT_SCHEME = fallthrough
 		USE_LIBPCRE = YesPlease
-		NO_CURL =
 		USE_NED_ALLOCATOR = YesPlease
 		ifeq (/mingw64,$(subst 32,64,$(prefix)))
 			# Move system config into top-level /etc/
