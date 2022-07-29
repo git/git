@@ -768,8 +768,8 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 		wfilename[n] = L'\0';
 		attributes = GetFileAttributesW(wfilename);
 		wfilename[n] = c;
-		if (attributes == FILE_ATTRIBUTE_DIRECTORY ||
-				attributes == FILE_ATTRIBUTE_DEVICE)
+		if (attributes &
+		    (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE))
 			return 1;
 		if (attributes == INVALID_FILE_ATTRIBUTES)
 			switch (GetLastError()) {
