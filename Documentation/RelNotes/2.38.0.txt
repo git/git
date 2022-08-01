@@ -33,6 +33,9 @@ UI, Workflows & Features
  * Various messages that come from the pack-bitmap codepaths have been
    tweaked.
 
+ * "git rebase -i" learns to update branches whose tip appear in the
+   rebased range with "--update-refs" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -169,7 +172,20 @@ Fixes since v2.37
    CRLF-to-LF conversion correctly, which has been corrected.
    (merge 4d35f74421 mb/p4-utf16-crlf later to maint).
 
+ * "git p4" did not handle non-ASCII client name well, which has been
+   corrected.
+   (merge d205483695 kk/p4-client-name-encoding-fix later to maint).
+
+ * "rerere-train" script (in contrib/) used to honor commit.gpgSign
+   while recreating the throw-away merges.
+   (merge cc391fc886 cl/rerere-train-with-no-sign later to maint).
+
+ * "git checkout" miscounted the paths it updated, which has been
+   corrected.
+   (merge 611c7785e8 mt/checkout-count-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a700395eaf ma/t4200-update later to maint).
    (merge ae436f283c ma/sparse-checkout-cone-doc-fix later to maint).
    (merge a10f6e2bda sg/index-format-doc-update later to maint).
+   (merge ce5f07983d mt/pkt-line-comment-tweak later to maint).
