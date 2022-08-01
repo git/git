@@ -70,9 +70,15 @@ test_expect_success 'unpack big object in stream (core.fsyncmethod=batch)' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 	GIT_TEST_FSYNC=true \
 		git -C dest.git $BATCH_CONFIGURATION unpack-objects <pack-$PACK.pack &&
-	check_fsync_events trace2.txt <<-\EOF &&
+	if grep "core.fsyncMethod = batch is unsupported" trace2.txt
+	then
+		flush_count=7
+	else
+		flush_count=1
+	fi &&
+	check_fsync_events trace2.txt <<-EOF &&
 	"key":"fsync/writeout-only","value":"6"
-	"key":"fsync/hardware-flush","value":"1"
+	"key":"fsync/hardware-flush","value":"$flush_count"
 	EOF
 
 	test_dir_is_empty dest.git/objects/pack &&
@@ -87,7 +93,7 @@ test_expect_success 'do not unpack existing large objects' '
 
 	# The destination came up with the exact same pack...
 	DEST_PACK=$(echo dest.git/objects/pack/pack-*.pack) &&
-	test_cmp pack-$PACK.pack $DEST_PACK &&
+	cmp pack-$PACK.pack $DEST_PACK &&
 
 	# ...and wrote no loose objects
 	test_stdout_line_count = 0 find dest.git/objects -type f ! -name "pack-*"
