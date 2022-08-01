@@ -822,6 +822,42 @@ def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
 
+def p4KeysContainingNonUtf8Chars():
+    """Returns all keys which may contain non UTF-8 encoded strings
+       for which a fallback strategy has to be applied.
+       """
+    return ['desc', 'client', 'FullName']
+
+
+def p4KeysContainingBinaryData():
+    """Returns all keys which may contain arbitrary binary data
+       """
+    return ['data']
+
+
+def p4KeyContainsFilePaths(key):
+    """Returns True if the key contains file paths. These are handled by decode_path().
+       Otherwise False.
+       """
+    return key.startswith('depotFile') or key in ['path', 'clientFile']
+
+
+def p4KeyWhichCanBeDirectlyDecoded(key):
+    """Returns True if the key can be directly decoded as UTF-8 string
+       Otherwise False.
+
+       Keys which can not be encoded directly:
+         - `data` which may contain arbitrary binary data
+         - `desc` or `client` or `FullName` which may contain non-UTF8 encoded text
+         - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text, handled by decode_path()
+       """
+    if key in p4KeysContainingNonUtf8Chars() or \
+       key in p4KeysContainingBinaryData() or  \
+       p4KeyContainsFilePaths(key):
+        return False
+    return True
+
+
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
         errors_as_exceptions=False, *k, **kw):
 
@@ -851,15 +887,13 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
     try:
         while True:
             entry = marshal.load(p4.stdout)
+
             if bytes is not str:
-                # Decode unmarshalled dict to use str keys and values, except for:
-                #   - `data` which may contain arbitrary binary data
-                #   - `desc` or `FullName` which may contain non-UTF8 encoded text handled below, eagerly converted to bytes
-                #   - `depotFile[0-9]*`, `path`, or `clientFile` which may contain non-UTF8 encoded text, handled by decode_path()
+                # Decode unmarshalled dict to use str keys and values. Special cases are handled below.
                 decoded_entry = {}
                 for key, value in entry.items():
                     key = key.decode()
-                    if isinstance(value, bytes) and not (key in ('data', 'desc', 'FullName', 'path', 'clientFile') or key.startswith('depotFile')):
+                    if isinstance(value, bytes) and p4KeyWhichCanBeDirectlyDecoded(key):
                         value = value.decode()
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
@@ -869,10 +903,9 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             if skip_info:
                 if 'code' in entry and entry['code'] == 'info':
                     continue
-            if 'desc' in entry:
-                entry['desc'] = metadata_stream_to_writable_bytes(entry['desc'])
-            if 'FullName' in entry:
-                entry['FullName'] = metadata_stream_to_writable_bytes(entry['FullName'])
+            for key in p4KeysContainingNonUtf8Chars():
+                if key in entry:
+                    entry[key] = metadata_stream_to_writable_bytes(entry[key])
             if cb is not None:
                 cb(entry)
             else:
