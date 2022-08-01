@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2022, #08; Fri, 29)
-X-master-at: 23b219f8e3f2adfb0441e135f0a880e6124f766c
-X-next-at: 78731f0fdbef5bf997eda274d67cbd79ffaaf815
+Subject: What's cooking in git.git (Aug 2022, #01; Mon, 1)
+X-master-at: 350dc9f0e8974b6fcbdeb3808186c5a79c3e7386
+X-next-at: 60a89aff129e69125857350fd1eaa291c90d2ab1
 
-What's cooking in git.git (Jul 2022, #08; Fri, 29)
+What's cooking in git.git (Aug 2022, #01; Mon, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -11,6 +11,10 @@ prefixed with '+' are in 'next' (being in 'next' is a sign that a
 topic is stable enough to be used and are candidate to be in a
 future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
+
+A handful of topics have graduated to the 'master' track, and half a
+dozen topics are now in 'next' to cook.  We are starting Week #4 of
+a 12-week cycle.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -43,126 +47,96 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ab/squelch-empty-fsync-traces (2022-07-18) 1 commit
-  (merged to 'next' on 2022-07-19 at f77cd40c29)
- + trace2: only include "fsync" events if we git_fsync()
+* cl/rerere-train-with-no-sign (2022-07-19) 1 commit
+  (merged to 'next' on 2022-07-20 at fbb9414d09)
+ + contrib/rerere-train: avoid useless gpg sign in training
 
- Omit fsync-related trace2 entries when their values are all zero.
- source: <patch-v3-1.1-979dea5956a-20220718T102747Z-avarab@gmail.com>
-
-
-* ds/doc-wo-whitelist (2022-07-19) 5 commits
-  (merged to 'next' on 2022-07-20 at ec51c6269a)
- + transport.c: avoid "whitelist"
- + t: avoid "whitelist"
- + git.txt: remove redundant language
- + git-cvsserver: clarify directory list
- + daemon: clarify directory arguments
-
- Avoid "white/black-list" in documentation and code comments.
- source: <pull.1274.v3.git.1658255537.gitgitgadget@gmail.com>
+ "rerere-train" script (in contrib/) used to honor commit.gpgSign
+ while recreating the throw-away merges.
+ source: <PH7PR14MB5594A27B9295E95ACA4D6A69CE8F9@PH7PR14MB5594.namprd14.prod.outlook.com>
 
 
-* ds/win-syslog-compiler-fix (2022-07-19) 1 commit
-  (merged to 'next' on 2022-07-20 at d38b649b18)
- + compat/win32: correct for incorrect compiler warning
+* ds/rebase-update-ref (2022-07-19) 13 commits
+  (merged to 'next' on 2022-07-20 at 9f4bf9ef6c)
+ + sequencer: notify user of --update-refs activity
+ + sequencer: ignore HEAD ref under --update-refs
+ + rebase: add rebase.updateRefs config option
+ + sequencer: rewrite update-refs as user edits todo list
+ + rebase: update refs from 'update-ref' commands
+ + rebase: add --update-refs option
+ + sequencer: add update-ref command
+ + sequencer: define array with enum values
+ + rebase-interactive: update 'merge' description
+ + branch: consider refs under 'update-refs'
+ + t2407: test branches currently using apply backend
+ + t2407: test bisect and rebase as black-boxes
+ + Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
 
- Workaround for a false positive compiler warning.
- source: <pull.1294.git.1658256354725.gitgitgadget@gmail.com>
-
-
-* js/commit-graph-parsing-without-repo-settings (2022-07-14) 1 commit
-  (merged to 'next' on 2022-07-19 at bcc29d823d)
- + commit-graph: pass repo_settings instead of repository
-
- API tweak to make it easier to run fuzz testing on commit-graph parser.
- source: <fd70b6119153b165a62ee4f693dbe47031cfb2be.1657834657.git.steadmon@google.com>
-
-
-* ld/osx-keychain-usage-fix (2022-07-19) 1 commit
-  (merged to 'next' on 2022-07-20 at eebd316ef6)
- + osx-keychain: fix compiler warning
-
- Workaround for a compiler warning against use of die() in
- osx-keychain (in contrib/).
- source: <pull.1293.git.1658251503775.gitgitgadget@gmail.com>
+ "git rebase -i" learns to update branches whose tip appear in the
+ rebased range with "--update-refs" option.
+ source: <pull.1247.v5.git.1658255624.gitgitgadget@gmail.com>
 
 
-* ma/sparse-checkout-cone-doc-fix (2022-07-18) 1 commit
-  (merged to 'next' on 2022-07-19 at c259b61b0e)
- + config/core.txt: fix minor issues for `core.sparseCheckoutCone`
+* kk/p4-client-name-encoding-fix (2022-07-21) 2 commits
+  (merged to 'next' on 2022-07-21 at 008518b4e5)
+ + git-p4: refactoring of p4CmdList()
+  (merged to 'next' on 2022-07-11 at 9c18616f76)
+ + git-p4: fix bug with encoding of p4 client name
 
- Docfix.
- source: <20220718100530.2068354-1-martin.agren@gmail.com>
-
-
-* ma/t4200-update (2022-07-18) 1 commit
-  (merged to 'next' on 2022-07-19 at 710d0cafd9)
- + t4200: drop irrelevant code
-
- Test fix.
- source: <20220718154322.2177166-1-martin.agren@gmail.com>
+ "git p4" did not handle non-ASCII client name well, which has been
+ corrected.
+ source: <pull.1285.v3.git.git.1658394440.gitgitgadget@gmail.com>
 
 
-* mb/config-document-include (2022-07-17) 1 commit
-  (merged to 'next' on 2022-07-19 at 8267b80aa2)
- + config.txt: document include, includeIf
+* mt/checkout-count-fix (2022-07-14) 3 commits
+  (merged to 'next' on 2022-07-22 at 60c73a6b0b)
+ + checkout: fix two bugs on the final count of updated entries
+ + checkout: show bug about failed entries being included in final report
+ + checkout: document bug where delayed checkout counts entries twice
+ (this branch is used by mt/rot13-in-c.)
 
- Add missing documentation for "include" and "includeIf" features in
- "git config" file format, which incidentally teaches the command
- line completion to include them in its offerings.
- source: <pull.1285.v2.git.1658002423864.gitgitgadget@gmail.com>
-
-
-* mb/p4-fixes (2022-07-20) 2 commits
-  (merged to 'next' on 2022-07-20 at 7942d72b1c)
- + git-p4: fix error handling in P4Unshelve.renameBranch()
- + git-p4: fix typo in P4Submit.applyCommit()
-
- Fix a few issues in "git p4".
- source: <pull.1297.v2.git.git.1658343330.gitgitgadget@gmail.com>
+ "git checkout" miscounted the paths it updated, which has been
+ corrected.
+ source: <cover.1657799213.git.matheus.bernardino@usp.br>
 
 
-* mb/p4-utf16-crlf (2022-07-20) 1 commit
-  (merged to 'next' on 2022-07-20 at c2fedd2fc2)
- + git-p4: fix CR LF handling for utf16 files
+* mt/pkt-line-comment-tweak (2022-07-22) 1 commit
+  (merged to 'next' on 2022-07-22 at 4004fa75eb)
+ + pkt-line.h: move comment closer to the associated code
 
- "git p4" working on UTF-16 files on Windows did not implement
- CRLF-to-LF conversion correctly, which has been corrected.
- source: <pull.1294.v2.git.git.1658341065221.gitgitgadget@gmail.com>
-
-
-* sg/index-format-doc-update (2022-07-18) 1 commit
-  (merged to 'next' on 2022-07-19 at ccc384be5e)
- + index-format.txt: remove outdated list of supported extensions
-
- Docfix.
- source: <20220718085640.7395-1-szeder.dev@gmail.com>
-
-
-* tl/pack-bitmap-error-messages (2022-07-18) 6 commits
-  (merged to 'next' on 2022-07-19 at 3f9565653a)
- + pack-bitmap.c: continue looping when first MIDX bitmap is found
- + pack-bitmap.c: using error() instead of silently returning -1
- + pack-bitmap.c: do not ignore error when opening a bitmap file
- + pack-bitmap.c: rename "idx_name" to "bitmap_name"
- + pack-bitmap.c: mark more strings for translations
- + pack-bitmap.c: fix formatting of error messages
-
- Tweak various messages that come from the pack-bitmap codepaths.
- source: <cover.1658159745.git.dyroneteng@gmail.com>
-
-
-* vd/scalar-doc (2022-07-18) 2 commits
-  (merged to 'next' on 2022-07-20 at fab0234da4)
- + scalar: convert README.md into a technical design doc
- + scalar: reword command documentation to clarify purpose
-
- Doc update.
- source: <pull.1275.v2.git.1657584367.gitgitgadget@gmail.com>
+ In-code comment clarification.
+ source: <6a14443c101fa132498297af6d7a483520688d75.1658488203.git.matheus.bernardino@usp.br>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* tk/apply-case-insensitive (2022-06-21) 3 commits
+ - apply: support case-only renames in case-insensitive filesystems
+ - reset: new failing test for reset of case-insensitive duplicate in index
+ - t4141: test "git apply" with core.ignorecase
+
+ "git apply" barfed on a patch that makes a case-only rename on a
+ case-insensitive filesystem.
+
+ Needs review.
+ source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
+
+
+* bc/stash-export (2022-04-08) 4 commits
+ - builtin/stash: provide a way to import stashes from a ref
+ - builtin/stash: provide a way to export stashes to a ref
+ - builtin/stash: factor out revision parsing into a function
+ - object-name: make get_oid quietly return an error
+
+ A mechanism to export and import stash entries to and from a normal
+ commit to transfer it across repositories has been introduced.
+
+ Expecting a reroll.
+ cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
+ source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
+
+--------------------------------------------------
+[Cooking]
 
 * tb/cat-file-z (2022-07-22) 2 commits
   (merged to 'next' on 2022-07-28 at 78731f0fdb)
@@ -230,12 +204,13 @@ Release tarballs are available at:
 
 
 * ca/unignore-local-installation-on-windows (2022-07-27) 1 commit
- - cmake: support local installations of git
+  (merged to 'next' on 2022-08-01 at 1d4f4c32a6)
+ + cmake: support local installations of git
 
  Fix build procedure for Windows that uses CMake so that it can pick
  up the shell interpreter from local installation location.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1304.git.1658912756815.gitgitgadget@gmail.com>
 
 
@@ -287,22 +262,24 @@ Release tarballs are available at:
 
 
 * js/lstat-mingw-enotdir-fix (2022-07-29) 1 commit
- - lstat(mingw): correctly detect ENOTDIR scenarios
+  (merged to 'next' on 2022-08-01 at 10499943b7)
+ + lstat(mingw): correctly detect ENOTDIR scenarios
 
  Fix to lstat() emulation on Windows.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1291.v3.git.1659089152877.gitgitgadget@gmail.com>
 
 
 * js/mingw-with-python (2022-07-29) 3 commits
- - mingw: remove unneeded `NO_CURL` directive
- - mingw: remove unneeded `NO_GETTEXT` directive
- - windows: include the Python bits when building Git for Windows
+  (merged to 'next' on 2022-08-01 at 73b8f06182)
+ + mingw: remove unneeded `NO_CURL` directive
+ + mingw: remove unneeded `NO_GETTEXT` directive
+ + windows: include the Python bits when building Git for Windows
 
  Conditionally allow building Python interpreter on Windows
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1306.v2.git.1659109272.gitgitgadget@gmail.com>
 
 
@@ -350,69 +327,42 @@ Release tarballs are available at:
  source: <cover-v2-0.9-00000000000-20220729T081959Z-avarab@gmail.com>
 
 
-* jk/struct-zero-init-with-older-gcc (2022-07-29) 1 commit
- - config.mak.dev: squelch -Wno-missing-braces for older gcc
+* jk/struct-zero-init-with-older-gcc (2022-07-31) 1 commit
+  (merged to 'next' on 2022-08-01 at cde4f95964)
+ + config.mak.dev: squelch -Wno-missing-braces for older gcc
 
  Older gcc with -Wall complains about the universal zero initializer
  "struct s = { 0 };" idiom, which makes developers' lives
  inconvenient (as -Werror is enabled by DEVELOPER=YesPlease).  The
- build procedure has been tweaked to help them with thes compilers.
+ build procedure has been tweaked to help these compilers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <YuQ60ZUPBHAVETD7@coredump.intra.peff.net>
 
 
-* js/ort-clean-up-after-failed-merge (2022-07-29) 2 commits
- - merge-ort: do leave trace2 region even if checkout fails
- - merge-ort: clean up after failed merge
+* js/ort-clean-up-after-failed-merge (2022-07-31) 2 commits
+  (merged to 'next' on 2022-08-01 at 0c9f02f3ec)
+ + merge-ort: do leave trace2 region even if checkout fails
+ + merge-ort: clean up after failed merge
 
  Plug memory leaks in the failure code path in the "merge-ort" merge
  strategy backend.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1307.v2.git.1659114727.gitgitgadget@gmail.com>
 
 
 * js/t5351-freebsd-fix (2022-07-29) 2 commits
- - t5351: avoid using `test_cmp` for binary data
- - t5351: avoid relying on `core.fsyncMethod = batch` to be supported
+  (merged to 'next' on 2022-08-01 at b47609e891)
+ + t5351: avoid using `test_cmp` for binary data
+ + t5351: avoid relying on `core.fsyncMethod = batch` to be supported
 
  Some tests assumed that core.fsyncMethod=batch is supported
  everywhere, which broke FreeBSD.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1308.git.1659097724.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* tk/apply-case-insensitive (2022-06-21) 3 commits
- - apply: support case-only renames in case-insensitive filesystems
- - reset: new failing test for reset of case-insensitive duplicate in index
- - t4141: test "git apply" with core.ignorecase
-
- "git apply" barfed on a patch that makes a case-only rename on a
- case-insensitive filesystem.
-
- Needs review.
- source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
-
-
-* bc/stash-export (2022-04-08) 4 commits
- - builtin/stash: provide a way to import stashes from a ref
- - builtin/stash: provide a way to export stashes to a ref
- - builtin/stash: factor out revision parsing into a function
- - object-name: make get_oid quietly return an error
-
- A mechanism to export and import stash entries to and from a normal
- commit to transfer it across repositories has been introduced.
-
- Expecting a reroll.
- cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
- source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
-
---------------------------------------------------
-[Cooking]
 
 * cw/remote-object-info (2022-07-28) 6 commits
  - cat-file: add remote-object-info to batch-command
@@ -443,7 +393,9 @@ Release tarballs are available at:
  - test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
  - test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
 
- Plugging more leaks.
+ Extend SANITIZE=leak checking and declare more tests "currently leak-free".
+
+ Will merge to 'next'?
  source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
 
 
@@ -457,25 +409,14 @@ Release tarballs are available at:
  source: <xmqq7d471dns.fsf@gitster.g>
 
 
-* mt/pkt-line-comment-tweak (2022-07-22) 1 commit
-  (merged to 'next' on 2022-07-22 at 4004fa75eb)
- + pkt-line.h: move comment closer to the associated code
-
- In-code comment clarification.
-
- Will merge to 'master'.
- source: <6a14443c101fa132498297af6d7a483520688d75.1658488203.git.matheus.bernardino@usp.br>
-
-
-* mt/rot13-in-c (2022-07-24) 2 commits
- - t/t0021: convert the rot13-filter.pl script to C
+* mt/rot13-in-c (2022-07-31) 4 commits
+ - tests: use the new C rot13-filter helper to avoid PERL prereq
+ - t0021: implementation the rot13-filter.pl script in C
+ - t0021: avoid grepping for a Perl-specific string at filter output
  - Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
- (this branch uses mt/checkout-count-fix.)
 
  Test portability improvements.
-
- Needs review.
- source: <f38f722de7c3323207eda5ea632b5acd3765c285.1658675222.git.matheus.bernardino@usp.br>
+ source: <cover.1659291025.git.matheus.bernardino@usp.br>
 
 
 * tk/untracked-cache-with-uall (2022-07-22) 1 commit
@@ -514,17 +455,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <220722.86fsits91m.gmgdl@evledraar.gmail.com>
  source: <cover.1658472474.git.dyroneteng@gmail.com>
-
-
-* cl/rerere-train-with-no-sign (2022-07-19) 1 commit
-  (merged to 'next' on 2022-07-20 at fbb9414d09)
- + contrib/rerere-train: avoid useless gpg sign in training
-
- "rerere-train" script (in contrib/) used to honor commit.gpgSign
- while recreating the throw-away merges.
-
- Will merge to 'master'.
- source: <PH7PR14MB5594A27B9295E95ACA4D6A69CE8F9@PH7PR14MB5594.namprd14.prod.outlook.com>
 
 
 * ab/submodule-helper-leakfix (2022-07-28) 18 commits
@@ -603,20 +533,6 @@ Release tarballs are available at:
  source: <20220728211221.2913928-1-calvinwan@google.com>
 
 
-* mt/checkout-count-fix (2022-07-14) 3 commits
-  (merged to 'next' on 2022-07-22 at 60c73a6b0b)
- + checkout: fix two bugs on the final count of updated entries
- + checkout: show bug about failed entries being included in final report
- + checkout: document bug where delayed checkout counts entries twice
- (this branch is used by mt/rot13-in-c.)
-
- "git checkout" miscounted the paths it updated, which has been
- corrected.
-
- Will merge to 'master'.
- source: <cover.1657799213.git.matheus.bernardino@usp.br>
-
-
 * tb/commit-graph-genv2-upgrade-fix (2022-07-15) 3 commits
   (merged to 'next' on 2022-07-25 at e3464c2c1d)
  + commit-graph: fix corrupt upgrade from generation v1 to v2
@@ -679,19 +595,6 @@ Release tarballs are available at:
  source: <pull.1266.v5.git.1658342304.gitgitgadget@gmail.com>
 
 
-* kk/p4-client-name-encoding-fix (2022-07-21) 2 commits
-  (merged to 'next' on 2022-07-21 at 008518b4e5)
- + git-p4: refactoring of p4CmdList()
-  (merged to 'next' on 2022-07-11 at 9c18616f76)
- + git-p4: fix bug with encoding of p4 client name
-
- "git p4" did not handle non-ASCII client name well, which has been
- corrected.
-
- Will merge to 'master'.
- source: <pull.1285.v3.git.git.1658394440.gitgitgadget@gmail.com>
-
-
 * sa/cat-file-mailmap (2022-07-18) 4 commits
   (merged to 'next' on 2022-07-27 at 59c4eb32b3)
  + cat-file: add mailmap support
@@ -704,29 +607,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20220718195102.66321-1-siddharthasthana31@gmail.com>
-
-
-* ds/rebase-update-ref (2022-07-19) 13 commits
-  (merged to 'next' on 2022-07-20 at 9f4bf9ef6c)
- + sequencer: notify user of --update-refs activity
- + sequencer: ignore HEAD ref under --update-refs
- + rebase: add rebase.updateRefs config option
- + sequencer: rewrite update-refs as user edits todo list
- + rebase: update refs from 'update-ref' commands
- + rebase: add --update-refs option
- + sequencer: add update-ref command
- + sequencer: define array with enum values
- + rebase-interactive: update 'merge' description
- + branch: consider refs under 'update-refs'
- + t2407: test branches currently using apply backend
- + t2407: test bisect and rebase as black-boxes
- + Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
-
- "git rebase -i" learns to update branches whose tip appear in the
- rebased range.
-
- Will merge to 'master'.
- source: <pull.1247.v5.git.1658255624.gitgitgadget@gmail.com>
 
 
 * pw/xdiff-alloc (2022-07-08) 4 commits
