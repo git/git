@@ -165,4 +165,14 @@ test_expect_success 'symbolic-ref can resolve d/f name (ENOTDIR)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic-ref refuses invalid target for non-HEAD' '
+	test_must_fail git symbolic-ref refs/heads/invalid foo..bar
+'
+
+test_expect_success 'symbolic-ref allows top-level target for non-HEAD' '
+	git symbolic-ref refs/heads/top-level FETCH_HEAD &&
+	git update-ref FETCH_HEAD HEAD &&
+	test_cmp_rev top-level HEAD
+'
+
 test_done

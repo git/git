@@ -2112,9 +2112,9 @@ test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
 	test_i18ngrep broken stderr
 '
 
-test_expect_success 'log diagnoses bogus HEAD symref' '
+test_expect_success REFFILES 'log diagnoses bogus HEAD symref' '
 	git init empty &&
-	git --git-dir empty/.git symbolic-ref HEAD refs/heads/invalid.lock &&
+	echo "ref: refs/heads/invalid.lock" > empty/.git/HEAD &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_i18ngrep broken stderr &&
 	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
