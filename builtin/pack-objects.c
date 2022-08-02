@@ -202,6 +202,7 @@ static int have_non_local_packs;
 static int incremental;
 static int ignore_packed_keep_on_disk;
 static int ignore_packed_keep_in_core;
+static int verify_excluded_objects;
 static int allow_ofs_delta;
 static struct pack_idx_option pack_idx_opts;
 static const char *base_name;
@@ -4240,6 +4241,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("create packs suitable for shallow fetches")),
 		OPT_BOOL(0, "honor-pack-keep", &ignore_packed_keep_on_disk,
 			 N_("ignore packs that have companion .keep file")),
+		OPT_BOOL(0, "verify-excluded-objects", &verify_excluded_objects,
+			 N_("verify that excluded objects can be reached from a remote")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("ignore this pack")),
 		OPT_INTEGER(0, "compression", &pack_compression_level,
@@ -4255,6 +4258,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			      &write_bitmap_index,
 			      N_("write a bitmap index if possible"),
 			      WRITE_BITMAP_QUIET, PARSE_OPT_HIDDEN),
+		OPT_BOOL(0, "verify-excluded-objects", &verify_excluded_objects,
+			 N_("verify that excluded objects can be reached from a remote")),	
 		OPT_PARSE_LIST_OBJECTS_FILTER_INIT(&pfd, po_filter_revs_init),
 		OPT_CALLBACK_F(0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
@@ -4345,6 +4350,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
 		use_internal_rev_list = 1;
+
+	if (verify_excluded_objects)
+		strvec_push(&rp, "--verify-excluded-objects");
 
 	if (!reuse_object)
 		reuse_delta = 0;
