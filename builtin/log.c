@@ -743,11 +743,17 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			rev.shown_one = 1;
 			break;
 		case OBJ_COMMIT:
+		{
+			struct object_array old;
+
+			memcpy(&old, &rev.pending, sizeof(old));
 			rev.pending.nr = rev.pending.alloc = 0;
 			rev.pending.objects = NULL;
 			add_object_array(o, name, &rev.pending);
 			ret = cmd_log_walk_no_free(&rev);
+			memcpy(&rev.pending, &old, sizeof(rev.pending));
 			break;
+		}
 		default:
 			ret = error(_("unknown type: %d"), o->type);
 		}
