@@ -1054,7 +1054,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		 */
 		res = error_if_skipped_commits(tried, NULL);
 		if (res < 0)
-			return res;
+			goto cleanup;
 		printf(_("%s was both %s and %s\n"),
 		       oid_to_hex(current_bad_oid),
 		       term_good,
