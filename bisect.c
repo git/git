@@ -653,6 +653,9 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
+	struct setup_revision_opt opt = {
+		.free_removed_argv_elements = 1,
+	};
 	int i;
 
 	repo_init_revisions(r, revs, prefix);
@@ -669,8 +672,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	if (read_paths)
 		read_bisect_paths(rev_argv);
 
-	setup_revisions(rev_argv->nr, rev_argv->v, revs, NULL);
-	/* XXX leak rev_argv, as "revs" may still be pointing to it */
+	setup_revisions(rev_argv->nr, rev_argv->v, revs, &opt);
 }
 
 static void bisect_common(struct rev_info *revs)
