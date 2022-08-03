@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "config.h"
 #include "date.h"
+#include "mailmap.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
@@ -346,6 +347,79 @@ person_only:
 	return 0;
 }
 
+/*
+ * Returns the difference between the new and old length of the ident line.
+ */
+static ssize_t rewrite_ident_line(const char *person, size_t len,
+				   struct strbuf *buf,
+				   struct string_list *mailmap)
+{
+	size_t namelen, maillen;
+	const char *name;
+	const char *mail;
+	struct ident_split ident;
+
+	if (split_ident_line(&ident, person, len))
+		return 0;
+
+	mail = ident.mail_begin;
+	maillen = ident.mail_end - ident.mail_begin;
+	name = ident.name_begin;
+	namelen = ident.name_end - ident.name_begin;
+
+	if (map_user(mailmap, &mail, &maillen, &name, &namelen)) {
+		struct strbuf namemail = STRBUF_INIT;
+		size_t newlen;
+
+		strbuf_addf(&namemail, "%.*s <%.*s>",
+			    (int)namelen, name, (int)maillen, mail);
+
+		strbuf_splice(buf, ident.name_begin - buf->buf,
+			      ident.mail_end - ident.name_begin + 1,
+			      namemail.buf, namemail.len);
+		newlen = namemail.len;
+
+		strbuf_release(&namemail);
+
+		return newlen - (ident.mail_end - ident.name_begin);
+	}
+
+	return 0;
+}
+
+void apply_mailmap_to_header(struct strbuf *buf, const char **header,
+			       struct string_list *mailmap)
+{
+	size_t buf_offset = 0;
+
+	if (!mailmap)
+		return;
+
+	for (;;) {
+		const char *person, *line;
+		size_t i;
+		int found_header = 0;
+
+		line = buf->buf + buf_offset;
+		if (!*line || *line == '\n')
+			return; /* End of headers */
+
+		for (i = 0; header[i]; i++)
+			if (skip_prefix(line, header[i], &person)) {
+				const char *endp = strchrnul(person, '\n');
+				found_header = 1;
+				buf_offset += endp - line;
+				buf_offset += rewrite_ident_line(person, endp - person, buf, mailmap);
+				break;
+			}
+
+		if (!found_header) {
+			buf_offset = strchrnul(line, '\n') - buf->buf;
+			if (buf->buf[buf_offset] == '\n')
+				buf_offset++;
+		}
+	}
+}
 
 static void ident_env_hint(enum want_ident whose_ident)
 {
