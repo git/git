@@ -36,6 +36,15 @@ UI, Workflows & Features
  * "git rebase -i" learns to update branches whose tip appear in the
    rebased range with "--update-refs" option.
 
+ * "git ls-files" learns the "--format" option to tweak its output.
+
+ * "git cat-file" learned an option to use the mailmap when showing
+   commit and tag objects.
+
+ * When "git merge" finds that it cannot perform a merge, it should
+   restore the working tree to the state before the command was
+   initiated, but in some corner cases it didn't.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -84,6 +93,13 @@ Performance, Internal Implementation, Development Support etc.
  * API tweak to make it easier to run fuzz testing on commit-graph parser.
 
  * Omit fsync-related trace2 entries when their values are all zero.
+
+ * The codepath to write multi-pack index has been taught to release a
+   large chunk of memory that holds an array of objects in the packs,
+   as soon as it is done with the array, to reduce memory consumption.
+
+ * Add a level of redirection to array allocation API in xdiff part,
+   to make it easier to share with the libgit2 project.
 
 
 Fixes since v2.37
@@ -184,8 +200,17 @@ Fixes since v2.37
    corrected.
    (merge 611c7785e8 mt/checkout-count-fix later to maint).
 
+ * Fix for a bug that makes write-tree to fail to write out a
+   non-existent index as a tree, introduced in 2.37.
+   (merge 4447d4129d tk/untracked-cache-with-uall later to maint).
+
+ * There was a bug in the codepath to upgrade generation information
+   in commit-graph from v1 to v2 format, which has been corrected.
+   (merge 9550f6c16a tb/commit-graph-genv2-upgrade-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a700395eaf ma/t4200-update later to maint).
    (merge ae436f283c ma/sparse-checkout-cone-doc-fix later to maint).
    (merge a10f6e2bda sg/index-format-doc-update later to maint).
    (merge ce5f07983d mt/pkt-line-comment-tweak later to maint).
+   (merge 1e11fab59c jc/string-list-cleanup later to maint).
