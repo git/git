@@ -78,15 +78,14 @@ static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 
 		return -1;
 	}
-	if (!(cf->rchash = (xdlclass_t **) xdl_malloc(cf->hsize * sizeof(xdlclass_t *)))) {
+	if (!XDL_CALLOC_ARRAY(cf->rchash, cf->hsize)) {
 
 		xdl_cha_free(&cf->ncha);
 		return -1;
 	}
-	memset(cf->rchash, 0, cf->hsize * sizeof(xdlclass_t *));
 
 	cf->alloc = size;
-	if (!(cf->rcrecs = (xdlclass_t **) xdl_malloc(cf->alloc * sizeof(xdlclass_t *)))) {
+	if (!XDL_ALLOC_ARRAY(cf->rcrecs, cf->alloc)) {
 
 		xdl_free(cf->rchash);
 		xdl_cha_free(&cf->ncha);
@@ -112,7 +111,6 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 	long hi;
 	char const *line;
 	xdlclass_t *rcrec;
-	xdlclass_t **rcrecs;
 
 	line = rec->ptr;
 	hi = (long) XDL_HASHLONG(rec->ha, cf->hbits);
@@ -128,14 +126,8 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 			return -1;
 		}
 		rcrec->idx = cf->count++;
-		if (cf->count > cf->alloc) {
-			cf->alloc *= 2;
-			if (!(rcrecs = (xdlclass_t **) xdl_realloc(cf->rcrecs, cf->alloc * sizeof(xdlclass_t *)))) {
-
+		if (XDL_ALLOC_GROW(cf->rcrecs, cf->count, cf->alloc))
 				return -1;
-			}
-			cf->rcrecs = rcrecs;
-		}
 		cf->rcrecs[rcrec->idx] = rcrec;
 		rcrec->line = line;
 		rcrec->size = rec->size;
@@ -164,7 +156,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	unsigned long hav;
 	char const *blk, *cur, *top, *prev;
 	xrecord_t *crec;
-	xrecord_t **recs, **rrecs;
+	xrecord_t **recs;
 	xrecord_t **rhash;
 	unsigned long *ha;
 	char *rchg;
@@ -178,26 +170,21 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 
 	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0)
 		goto abort;
-	if (!(recs = (xrecord_t **) xdl_malloc(narec * sizeof(xrecord_t *))))
+	if (!XDL_ALLOC_ARRAY(recs, narec))
 		goto abort;
 
 	hbits = xdl_hashbits((unsigned int) narec);
 	hsize = 1 << hbits;
-	if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *))))
+	if (!XDL_CALLOC_ARRAY(rhash, hsize))
 		goto abort;
-	memset(rhash, 0, hsize * sizeof(xrecord_t *));
 
 	nrec = 0;
 	if ((cur = blk = xdl_mmfile_first(mf, &bsize))) {
 		for (top = blk + bsize; cur < top; ) {
 			prev = cur;
 			hav = xdl_hash_record(&cur, top, xpp->flags);
-			if (nrec >= narec) {
-				narec *= 2;
-				if (!(rrecs = (xrecord_t **) xdl_realloc(recs, narec * sizeof(xrecord_t *))))
-					goto abort;
-				recs = rrecs;
-			}
+			if (XDL_ALLOC_GROW(recs, nrec + 1, narec))
+				goto abort;
 			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
 				goto abort;
 			crec->ptr = prev;
@@ -209,15 +196,14 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		}
 	}
 
-	if (!(rchg = (char *) xdl_malloc((nrec + 2) * sizeof(char))))
+	if (!XDL_CALLOC_ARRAY(rchg, nrec + 2))
 		goto abort;
-	memset(rchg, 0, (nrec + 2) * sizeof(char));
 
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
 	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
-		if (!(rindex = xdl_malloc((nrec + 1) * sizeof(*rindex))))
+		if (!XDL_ALLOC_ARRAY(rindex, nrec + 1))
 			goto abort;
-		if (!(ha = xdl_malloc((nrec + 1) * sizeof(*ha))))
+		if (!XDL_ALLOC_ARRAY(ha, nrec + 1))
 			goto abort;
 	}
 
@@ -383,11 +369,8 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xdlclass_t *rcrec;
 	char *dis, *dis1, *dis2;
 
-	if (!(dis = (char *) xdl_malloc(xdf1->nrec + xdf2->nrec + 2))) {
-
+	if (!XDL_CALLOC_ARRAY(dis, xdf1->nrec + xdf2->nrec + 2))
 		return -1;
-	}
-	memset(dis, 0, xdf1->nrec + xdf2->nrec + 2);
 	dis1 = dis;
 	dis2 = dis1 + xdf1->nrec + 1;
 
