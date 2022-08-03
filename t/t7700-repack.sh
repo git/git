@@ -237,7 +237,7 @@ test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'repack with filter does not fetch from remote' '
+test_expect_success 'repack with filter removes objects' '
 	rm -rf server client &&
 	test_create_repo server &&
 	git -C server config uploadpack.allowFilter true &&
