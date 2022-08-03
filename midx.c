@@ -1053,40 +1053,34 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	return cb.commits;
 }
 
-static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
-			     struct write_midx_context *ctx,
-			     const char *refs_snapshot,
+static int write_midx_bitmap(const char *midx_name,
+			     const unsigned char *midx_hash,
+			     struct packing_data *pdata,
+			     struct commit **commits,
+			     uint32_t commits_nr,
+			     uint32_t *pack_order,
 			     unsigned flags)
 {
-	struct packing_data pdata;
-	struct pack_idx_entry **index;
-	struct commit **commits = NULL;
-	uint32_t i, commits_nr;
+	int ret, i;
 	uint16_t options = 0;
-	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
-	int ret;
-
-	if (!ctx->entries_nr)
-		BUG("cannot write a bitmap without any objects");
+	struct pack_idx_entry **index;
+	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
+					hash_to_hex(midx_hash));
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
-
-	prepare_midx_packing_data(&pdata, ctx);
-
-	commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, ctx);
 
 	/*
 	 * Build the MIDX-order index based on pdata.objects (which is already
 	 * in MIDX order; c.f., 'midx_pack_order_cmp()' for the definition of
 	 * this order).
 	 */
-	ALLOC_ARRAY(index, pdata.nr_objects);
-	for (i = 0; i < pdata.nr_objects; i++)
-		index[i] = &pdata.objects[i].idx;
+	ALLOC_ARRAY(index, pdata->nr_objects);
+	for (i = 0; i < pdata->nr_objects; i++)
+		index[i] = &pdata->objects[i].idx;
 
 	bitmap_writer_show_progress(flags & MIDX_PROGRESS);
-	bitmap_writer_build_type_index(&pdata, index, pdata.nr_objects);
+	bitmap_writer_build_type_index(pdata, index, pdata->nr_objects);
 
 	/*
 	 * bitmap_writer_finish expects objects in lex order, but pack_order
@@ -1101,16 +1095,16 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	 * happens between bitmap_writer_build_type_index() and
 	 * bitmap_writer_finish().
 	 */
-	for (i = 0; i < pdata.nr_objects; i++)
-		index[ctx->pack_order[i]] = &pdata.objects[i].idx;
+	for (i = 0; i < pdata->nr_objects; i++)
+		index[pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(commits, commits_nr, -1);
-	ret = bitmap_writer_build(&pdata);
+	ret = bitmap_writer_build(pdata);
 	if (ret < 0)
 		goto cleanup;
 
 	bitmap_writer_set_checksum(midx_hash);
-	bitmap_writer_finish(index, pdata.nr_objects, bitmap_name, options);
+	bitmap_writer_finish(index, pdata->nr_objects, bitmap_name, options);
 
 cleanup:
 	free(index);
@@ -1443,14 +1437,40 @@ static int write_midx_internal(const char *object_dir,
 	if (flags & MIDX_WRITE_REV_INDEX &&
 	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
 		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
+
 	if (flags & MIDX_WRITE_BITMAP) {
-		if (write_midx_bitmap(midx_name.buf, midx_hash, &ctx,
-				      refs_snapshot, flags) < 0) {
+		struct packing_data pdata;
+		struct commit **commits;
+		uint32_t commits_nr;
+
+		if (!ctx.entries_nr)
+			BUG("cannot write a bitmap without any objects");
+
+		prepare_midx_packing_data(&pdata, &ctx);
+
+		commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, &ctx);
+
+		/*
+		 * The previous steps translated the information from
+		 * 'entries' into information suitable for constructing
+		 * bitmaps. We no longer need that array, so clear it to
+		 * reduce memory pressure.
+		 */
+		FREE_AND_NULL(ctx.entries);
+		ctx.entries_nr = 0;
+
+		if (write_midx_bitmap(midx_name.buf, midx_hash, &pdata,
+				      commits, commits_nr, ctx.pack_order,
+				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
 			goto cleanup;
 		}
 	}
+	/*
+	 * NOTE: Do not use ctx.entries beyond this point, since it might
+	 * have been freed in the previous if block.
+	 */
 
 	if (ctx.m)
 		close_object_store(the_repository->objects);
