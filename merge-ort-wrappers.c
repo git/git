@@ -10,8 +10,8 @@ static int unclean(struct merge_options *opt, struct tree *head)
 	struct strbuf sb = STRBUF_INIT;
 
 	if (head && repo_index_has_changes(opt->repo, head, &sb)) {
-		fprintf(stderr, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
-		    sb.buf);
+		error(_("Your local changes to the following files would be overwritten by merge:\n  %s"),
+		      sb.buf);
 		strbuf_release(&sb);
 		return -1;
 	}
