@@ -26,6 +26,7 @@
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "sigchain.h"
+#include "mergesort.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -1024,6 +1025,13 @@ static int get_pack(struct fetch_pack_args *args,
 
 	return 0;
 }
+
+static int ref_compare_name(const struct ref *a, const struct ref *b)
+{
+	return strcmp(a->name, b->name);
+}
+
+DEFINE_LIST_SORT(static, sort_ref_list, struct ref, next);
 
 static int cmp_ref_by_name(const void *a_, const void *b_)
 {

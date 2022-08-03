@@ -941,20 +941,10 @@ unsigned long repo_approximate_object_count(struct repository *r)
 	return r->objects->approximate_object_count;
 }
 
-static void *get_next_packed_git(const void *p)
-{
-	return ((const struct packed_git *)p)->next;
-}
+DEFINE_LIST_SORT(static, sort_packs, struct packed_git, next);
 
-static void set_next_packed_git(void *p, void *next)
+static int sort_pack(const struct packed_git *a, const struct packed_git *b)
 {
-	((struct packed_git *)p)->next = next;
-}
-
-static int sort_pack(const void *a_, const void *b_)
-{
-	const struct packed_git *a = a_;
-	const struct packed_git *b = b_;
 	int st;
 
 	/*
@@ -981,9 +971,7 @@ static int sort_pack(const void *a_, const void *b_)
 
 static void rearrange_packed_git(struct repository *r)
 {
-	r->objects->packed_git = llist_mergesort(
-		r->objects->packed_git, get_next_packed_git,
-		set_next_packed_git, sort_pack);
+	sort_packs(&r->objects->packed_git, sort_pack);
 }
 
 static void prepare_packed_git_mru(struct repository *r)
