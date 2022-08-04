@@ -211,6 +211,7 @@ giteveryday                             guide
 gitfaq                                  guide
 gitformat-bundle                        developerinterfaces
 gitformat-commit-graph                  developerinterfaces
+gitformat-index                         developerinterfaces
 gitglossary                             guide
 githooks                                userinterfaces
 gitignore                               userinterfaces

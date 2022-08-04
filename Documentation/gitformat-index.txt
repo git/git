@@ -1,5 +1,19 @@
+gitformat-index(5)
+==================
+
+NAME
+----
+gitformat-index - Git index format
+
+SYNOPSIS
+--------
+[verse]
+$GIT_DIR/index
+
+DESCRIPTION
+-----------
+
 Git index format
-================
 
 == The Git index file has the following format
 
@@ -404,3 +418,7 @@ The remaining data of each directory block is grouped by type:
   with signature { 's', 'd', 'i', 'r' }. Like the split-index extension,
   tools should avoid interacting with a sparse index unless they understand
   this extension.
+
+GIT
+---
+Part of the linkgit:git[1] suite
