@@ -1,7 +1,18 @@
-Git signature format
-====================
+gitformat-signature(5)
+======================
 
-== Overview
+NAME
+----
+gitformat-signature - Git cryptographic signature formats
+
+SYNOPSIS
+--------
+[verse]
+<[tag|commit] object header(s)>
+<over-the-wire protocol>
+
+DESCRIPTION
+-----------
 
 Git uses cryptographic signatures in various places, currently objects (tags,
 commits, mergetags) and transactions (pushes). In every case, the command which
@@ -200,3 +211,7 @@ Date:   Wed Jun 15 09:13:29 2016 +0000
     # gpg:          There is no indication that the signature belongs to the owner.
     # Primary key fingerprint: D4BE 2231 1AD3 131E 5EDA  29A4 6109 2E85 B722 7189
 ----
+
+GIT
+---
+Part of the linkgit:git[1] suite

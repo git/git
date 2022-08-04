@@ -212,6 +212,7 @@ gitfaq                                  guide
 gitformat-bundle                        developerinterfaces
 gitformat-commit-graph                  developerinterfaces
 gitformat-index                         developerinterfaces
+gitformat-signature                     developerinterfaces
 gitglossary                             guide
 githooks                                userinterfaces
 gitignore                               userinterfaces
