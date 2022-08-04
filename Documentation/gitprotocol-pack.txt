@@ -1,5 +1,17 @@
-Packfile transfer protocols
-===========================
+gitprotocol-pack(5)
+===================
+
+NAME
+----
+gitprotocol-pack - How packs are transferred over-the-wire
+
+SYNOPSIS
+--------
+[verse]
+<over-the-wire-protocol>
+
+DESCRIPTION
+-----------
 
 Git supports transferring data in packfiles over the ssh://, git://, http:// and
 file:// transports.  There exist two sets of protocols, one for pushing
@@ -18,7 +30,7 @@ pkt-line Format
 ---------------
 
 The descriptions below build on the pkt-line format described in
-protocol-common.txt. When the grammar indicate `PKT-LINE(...)`, unless
+linkgit:gitprotocol-common[5]. When the grammar indicate `PKT-LINE(...)`, unless
 otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
 include a LF, but the receiver MUST NOT complain if it is not present.
 
@@ -60,7 +72,7 @@ Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
 
 Servers that receive any such Extra Parameters MUST ignore all
 unrecognized keys. Currently, the only Extra Parameter recognized is
-"version" with a value of '1' or '2'.  See protocol-v2.txt for more
+"version" with a value of '1' or '2'.  See linkgit:gitprotocol-v2[5] for more
 information on protocol version 2.
 
 Git Transport
@@ -707,3 +719,7 @@ An example client/server communication might look like this:
    S: 0018ok refs/heads/debug\n
    S: 002ang refs/heads/master non-fast-forward\n
 ----
+
+GIT
+---
+Part of the linkgit:git[1] suite

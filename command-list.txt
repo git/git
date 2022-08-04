@@ -218,6 +218,10 @@ gitk                                    mainporcelain
 gitmailmap                              userinterfaces
 gitmodules                              userinterfaces
 gitnamespaces                           guide
+gitprotocol-capabilities                developerinterfaces
+gitprotocol-common                      developerinterfaces
+gitprotocol-pack                        developerinterfaces
+gitprotocol-v2                          developerinterfaces
 gitremote-helpers                       guide
 gitrepository-layout                    userinterfaces
 gitrevisions                            userinterfaces

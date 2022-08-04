@@ -222,7 +222,7 @@ smart server reply:
    S: 0000
 
 The client may send Extra Parameters (see
-Documentation/technical/pack-protocol.txt) as a colon-separated string
+linkgit:gitprotocol-pack[5]) as a colon-separated string
 in the Git-Protocol HTTP header.
 
 Uses the `--http-backend-info-refs` option to
@@ -518,5 +518,5 @@ References
 
 http://www.ietf.org/rfc/rfc1738.txt[RFC 1738: Uniform Resource Locators (URL)]
 http://www.ietf.org/rfc/rfc2616.txt[RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1]
-link:technical/pack-protocol.html
-link:technical/protocol-capabilities.html
+linkgit:gitprotocol-pack[5]
+linkgit:gitprotocol-capabilities[5]

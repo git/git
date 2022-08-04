@@ -27,7 +27,7 @@ FORMAT
 ------
 
 We will use ABNF notation to define the Git bundle format. See
-link:technical/protocol-common.html for the details.
+linkgit:gitprotocol-common[5] for the details.
 
 A v2 bundle looks like this:
 

@@ -1,5 +1,17 @@
-Git Wire Protocol, Version 2
-============================
+gitprotocol-v2(5)
+=================
+
+NAME
+----
+gitprotocol-v2 - Git Wire Protocol, Version 2
+
+SYNOPSIS
+--------
+[verse]
+<over-the-wire-protocol>
+
+DESCRIPTION
+-----------
 
 This document presents a specification for a version 2 of Git's wire
 protocol.  Protocol v2 will improve upon v1 in the following ways:
@@ -26,8 +38,7 @@ Packet-Line Framing
 -------------------
 
 All communication is done using packet-line framing, just as in v1.  See
-`Documentation/technical/pack-protocol.txt` and
-`Documentation/technical/protocol-common.txt` for more information.
+linkgit:gitprotocol-pack[5] and linkgit:gitprotocol-common[5] for more information.
 
 In protocol v2 these special packets will have the following semantics:
 
@@ -42,7 +53,7 @@ Initial Client Request
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
-found in `pack-protocol.txt` and `http-protocol.txt`, as well as the
+found in linkgit:gitprotocol-pack[5] and `http-protocol.txt`, as well as the
 `GIT_PROTOCOL` definition in `git.txt`. In all cases the
 response from the server is the capability advertisement.
 
@@ -566,3 +577,7 @@ and associated requested information, each separated by a single space.
 	attr = "size"
 
 	obj-info = obj-id SP obj-size
+
+GIT
+---
+Part of the linkgit:git[1] suite

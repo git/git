@@ -79,7 +79,7 @@ Design Details
   upload-pack negotiation.
 +
 This uses the existing capability discovery mechanism.
-See "filter" in Documentation/technical/pack-protocol.txt.
+See "filter" in linkgit:gitprotocol-pack[5].
 
 - Clients pass a "filter-spec" to clone and fetch which is passed to the
   server to request filtering during packfile construction.
