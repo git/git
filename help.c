@@ -44,13 +44,19 @@ static struct category_description main_categories[] = {
 static const char *drop_prefix(const char *name, uint32_t category)
 {
 	const char *new_name;
+	const char *prefix = NULL;
 
 	if (skip_prefix(name, "git-", &new_name))
 		return new_name;
-	if (category == CAT_guide && skip_prefix(name, "git", &new_name))
+	switch (category) {
+	case CAT_guide:
+		prefix = "git";
+		break;
+	}
+	if (prefix && skip_prefix(name, prefix, &new_name))
 		return new_name;
-	return name;
 
+	return name;
 }
 
 static void extract_cmds(struct cmdname_help **p_cmds, uint32_t mask)
