@@ -44,6 +44,7 @@ static enum help_action {
 	HELP_ACTION_GUIDES,
 	HELP_ACTION_CONFIG,
 	HELP_ACTION_USER_INTERFACES,
+	HELP_ACTION_DEVELOPER_INTERFACES,
 	HELP_ACTION_CONFIG_FOR_COMPLETION,
 	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
 } cmd_mode;
@@ -73,6 +74,9 @@ static struct option builtin_help_options[] = {
 	OPT_CMDMODE(0, "user-interfaces", &cmd_mode,
 		    N_("print list of user-facing repository, command and file interfaces"),
 		    HELP_ACTION_USER_INTERFACES),
+	OPT_CMDMODE(0, "developer-interfaces", &cmd_mode,
+		    N_("print list of file formats, protocols and other developer interfaces"),
+		    HELP_ACTION_DEVELOPER_INTERFACES),
 	OPT_CMDMODE('c', "config", &cmd_mode, N_("print all configuration variable names"),
 		    HELP_ACTION_CONFIG),
 	OPT_CMDMODE_F(0, "config-for-completion", &cmd_mode, "",
@@ -89,6 +93,7 @@ static const char * const builtin_help_usage[] = {
 	"git help [-g|--guides]",
 	"git help [-c|--config]",
 	"git help [--user-interfaces]",
+	"git help [--developer-interfaces]",
 	NULL
 };
 
@@ -662,6 +667,10 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	case HELP_ACTION_USER_INTERFACES:
 		opt_mode_usage(argc, "--user-interfaces", help_format);
 		list_user_interfaces_help();
+		return 0;
+	case HELP_ACTION_DEVELOPER_INTERFACES:
+		opt_mode_usage(argc, "--developer-interfaces", help_format);
+		list_developer_interfaces_help();
 		return 0;
 	case HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION:
 		opt_mode_usage(argc, "--config-sections-for-completion",

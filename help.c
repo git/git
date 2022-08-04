@@ -39,6 +39,7 @@ static struct category_description main_categories[] = {
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
 	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
+	{ CAT_developerinterfaces, N_("Developer-facing file file formats, protocols and interfaces") },
 	{ 0, NULL }
 };
 
@@ -50,6 +51,7 @@ static const char *drop_prefix(const char *name, uint32_t category)
 	switch (category) {
 	case CAT_guide:
 	case CAT_userinterfaces:
+	case CAT_developerinterfaces:
 		prefix = "git";
 		break;
 	default:
@@ -439,6 +441,16 @@ void list_user_interfaces_help(void)
 {
 	struct category_description catdesc[] = {
 		{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+void list_developer_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_developerinterfaces, N_("File formats, protocols and other developer interfaces:") },
 		{ 0, NULL }
 	};
 	print_cmd_by_category(catdesc, NULL);

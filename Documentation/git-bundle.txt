@@ -56,10 +56,9 @@ using "thin packs", bundles created using exclusions are smaller in
 size. That they're "thin" under the hood is merely noted here as a
 curiosity, and as a reference to other documentation.
 
-See link:technical/bundle-format.html[the `bundle-format`
-documentation] for more details and the discussion of "thin pack" in
-link:technical/pack-format.html[the pack format documentation] for
-further details.
+See linkgit:gitformat-bundle[5] for more details and the discussion of
+"thin pack" in link:technical/pack-format.html[the pack format
+documentation] for further details.
 
 OPTIONS
 -------
@@ -77,7 +76,7 @@ verify <file>::
 	commits exist and are fully linked in the current repository.
 	Then, 'git bundle' prints a list of missing commits, if any.
 	Finally, information about additional capabilities, such as "object
-	filter", is printed. See "Capabilities" in link:technical/bundle-format.html
+	filter", is printed. See "Capabilities" in linkgit:gitformat-bundle[5]
 	for more information. The exit code is zero for success, but will
 	be nonzero if the bundle file is invalid.
 
@@ -336,6 +335,11 @@ You can also see what references it offers:
 ----------------
 $ git ls-remote mybundle
 ----------------
+
+FILE FORMAT
+-----------
+
+See linkgit:gitformat-bundle[5].
 
 GIT
 ---

@@ -13,6 +13,7 @@ SYNOPSIS
 'git help' [-g|--guides]
 'git help' [-c|--config]
 'git help' [--user-interfaces]
+'git help' [--developer-interfaces]
 
 DESCRIPTION
 -----------
@@ -82,6 +83,10 @@ This section of the documentation also covers general or widespread
 user-interface conventions (e.g. linkgit:gitcli[7]), and
 pseudo-configuration such as the file-based `.git/hooks/*` interface
 described in linkgit:githooks[5].
+
+--developer-interfaces::
+	Print list of file formats, protocols and other developer
+	interfaces documentation on the standard output.
 
 -i::
 --info::
