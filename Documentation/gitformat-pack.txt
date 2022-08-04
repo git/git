@@ -1,5 +1,29 @@
-Git pack format
-===============
+gitformat-pack(5)
+=================
+
+NAME
+----
+gitformat-pack - Git pack format
+
+
+SYNOPSIS
+--------
+[verse]
+$GIT_DIR/objects/pack/pack-*.{pack,idx}
+$GIT_DIR/objects/pack/pack-*.rev
+$GIT_DIR/objects/pack/multi-pack-index
+
+DESCRIPTION
+-----------
+
+The Git pack format is now Git stores most of its primary repository
+data. Over the lietime af a repository loose objects (if any) and
+smaller packs are consolidated into larger pack(s). See
+linkgit:git-gc[1] and linkgit:git-pack-objects[1].
+
+The pack format is also used over-the-wire, see
+e.g. linkgit:gitprotocol-v2[5], as well as being a part of
+other container formats in the case of linkgit:gitformat-bundle[5].
 
 == Checksums and object IDs
 
@@ -356,7 +380,7 @@ CHUNK LOOKUP:
 	    using the next chunk position if necessary.)
 
 	The CHUNK LOOKUP matches the table of contents from
-	link:technical/chunk-format.html[the chunk-based file format].
+	the chunk-based file format, see linkgit:gitformat-chunk[5].
 
 	The remaining data in the body is described one chunk at a time, and
 	these chunks may be given in any order. Chunks are required unless
@@ -482,3 +506,7 @@ packs arranged in MIDX order (with the preferred pack coming first).
 
 The MIDX's reverse index is stored in the optional 'RIDX' chunk within
 the MIDX itself.
+
+GIT
+---
+Part of the linkgit:git[1] suite

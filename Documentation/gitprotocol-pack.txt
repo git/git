@@ -467,7 +467,7 @@ Now that the client and server have finished negotiation about what
 the minimal amount of data that needs to be sent to the client is, the server
 will construct and send the required data in packfile format.
 
-See pack-format.txt for what the packfile itself actually looks like.
+See linkgit:gitformat-pack[5] for what the packfile itself actually looks like.
 
 If 'side-band' or 'side-band-64k' capabilities have been specified by
 the client, the server will send the packfile data multiplexed.

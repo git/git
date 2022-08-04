@@ -141,7 +141,7 @@ Git index format
     entry is encoded as if the path name for the previous entry is an
     empty string).  At the beginning of an entry, an integer N in the
     variable width encoding (the same encoding as the offset is encoded
-    for OFS_DELTA pack entries; see pack-format.txt) is stored, followed
+    for OFS_DELTA pack entries; see linkgit:gitformat-pack[5]) is stored, followed
     by a NUL-terminated string S.  Removing N bytes from the end of the
     path name for the previous entry, and replacing it with the string S
     yields the path name for this entry.

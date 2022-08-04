@@ -57,8 +57,7 @@ size. That they're "thin" under the hood is merely noted here as a
 curiosity, and as a reference to other documentation.
 
 See linkgit:gitformat-bundle[5] for more details and the discussion of
-"thin pack" in link:technical/pack-format.html[the pack format
-documentation] for further details.
+"thin pack" in linkgit:gitformat-pack[5] for further details.
 
 OPTIONS
 -------
