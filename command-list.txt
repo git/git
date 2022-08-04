@@ -224,6 +224,7 @@ gitmodules                              userinterfaces
 gitnamespaces                           guide
 gitprotocol-capabilities                developerinterfaces
 gitprotocol-common                      developerinterfaces
+gitprotocol-http                        developerinterfaces
 gitprotocol-pack                        developerinterfaces
 gitprotocol-v2                          developerinterfaces
 gitremote-helpers                       guide

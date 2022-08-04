@@ -39,9 +39,9 @@ OPTIONS
 --http-backend-info-refs::
 	Used by linkgit:git-http-backend[1] to serve up
 	`$GIT_URL/info/refs?service=git-upload-pack` requests. See
-	"Smart Clients" in link:technical/http-protocol.html[the HTTP
-	transfer protocols] documentation and "HTTP Transport" in the
-	linkgit:gitprotocol-v2[5] documentation. Also understood by
+	"Smart Clients" in linkgit:gitprotocol-http[5] and "HTTP
+	Transport" in in the linkgit:gitprotocol-v2[5]
+	documentation. Also understood by
 	linkgit:git-receive-pack[1].
 
 <directory>::
