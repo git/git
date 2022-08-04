@@ -12,6 +12,7 @@ SYNOPSIS
 'git help' [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]
 'git help' [-g|--guides]
 'git help' [-c|--config]
+'git help' [--user-interfaces]
 
 DESCRIPTION
 -----------
@@ -68,6 +69,19 @@ OPTIONS
 -g::
 --guides::
 	Prints a list of the Git concept guides on the standard output.
+
+--user-interfaces::
+	Prints a list of the repository, command and file interfaces
+	documentation on the standard output.
++
+In-repository file interfaces such as `.git/info/exclude` are
+documented here (see linkgit:gitrepository-layout[5]), as well as
+in-tree configuration such as `.mailmap` (see linkgit:gitmailmap[5]).
++
+This section of the documentation also covers general or widespread
+user-interface conventions (e.g. linkgit:gitcli[7]), and
+pseudo-configuration such as the file-based `.git/hooks/*` interface
+described in linkgit:githooks[5].
 
 -i::
 --info::

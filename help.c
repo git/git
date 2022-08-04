@@ -38,6 +38,7 @@ static struct category_description main_categories[] = {
 	{ CAT_plumbinginterrogators, N_("Low-level Commands / Interrogators") },
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
+	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
 	{ 0, NULL }
 };
 
@@ -48,6 +49,7 @@ static const char *drop_prefix(const char *name, uint32_t category)
 
 	switch (category) {
 	case CAT_guide:
+	case CAT_userinterfaces:
 		prefix = "git";
 		break;
 	default:
@@ -427,6 +429,16 @@ void list_guides_help(void)
 {
 	struct category_description catdesc[] = {
 		{ CAT_guide, N_("The Git concept guides are:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+void list_user_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces:") },
 		{ 0, NULL }
 	};
 	print_cmd_by_category(catdesc, NULL);
