@@ -26,8 +26,6 @@ Git index format
      Extensions are identified by signature. Optional extensions can
      be ignored if Git does not understand them.
 
-     Git currently supports cache tree and resolve undo extensions.
-
      4-byte extension signature. If the first byte is 'A'..'Z' the
      extension is optional and can be ignored.
 
