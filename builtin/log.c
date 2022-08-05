@@ -162,6 +162,37 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 		parse_date_format(default_date_mode, &rev->date_mode);
 }
 
+static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
+{
+	int i;
+	struct string_list *include = decoration_filter->include_ref_pattern;
+	const struct string_list *config_exclude =
+			git_config_get_value_multi("log.excludeDecoration");
+
+	if (config_exclude) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, config_exclude)
+			string_list_append(decoration_filter->exclude_ref_config_pattern,
+					   item->string);
+	}
+
+	if (decoration_filter->exclude_ref_pattern->nr ||
+	    decoration_filter->include_ref_pattern->nr ||
+	    decoration_filter->exclude_ref_config_pattern->nr)
+		return;
+
+	/*
+	 * No command-line or config options were given, so
+	 * populate with sensible defaults.
+	 */
+	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+		if (!ref_namespace[i].decoration)
+			continue;
+
+		string_list_append(include, ref_namespace[i].ref);
+	}
+}
+
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
@@ -171,9 +202,11 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
 	static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
 	static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
-	struct decoration_filter decoration_filter = {&decorate_refs_include,
-						      &decorate_refs_exclude,
-						      &decorate_refs_exclude_config};
+	struct decoration_filter decoration_filter = {
+		.exclude_ref_pattern = &decorate_refs_exclude,
+		.include_ref_pattern = &decorate_refs_include,
+		.exclude_ref_config_pattern = &decorate_refs_exclude_config,
+	};
 	static struct revision_sources revision_sources;
 
 	const struct option builtin_log_options[] = {
@@ -265,16 +298,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	}
 
 	if (decoration_style || rev->simplify_by_decoration) {
-		const struct string_list *config_exclude =
-			repo_config_get_value_multi(the_repository,
-						    "log.excludeDecoration");
-
-		if (config_exclude) {
-			struct string_list_item *item;
-			for_each_string_list_item(item, config_exclude)
-				string_list_append(&decorate_refs_exclude_config,
-						   item->string);
-		}
+		set_default_decoration_filter(&decoration_filter);
 
 		if (decoration_style)
 			rev->show_decorations = 1;

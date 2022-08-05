@@ -1031,6 +1031,12 @@ test_expect_success 'decorate-refs-exclude HEAD' '
 	! grep HEAD actual
 '
 
+test_expect_success 'decorate-refs focus from default' '
+	git log --decorate=full --oneline \
+		--decorate-refs="refs/heads" >actual &&
+	! grep HEAD actual
+'
+
 test_expect_success 'log.decorate config parsing' '
 	git log --oneline --decorate=full >expect.full &&
 	git log --oneline --decorate=short >expect.short &&
@@ -2196,6 +2202,20 @@ test_expect_success 'log --decorate includes all levels of tag annotated tags' '
 	EOF
 	git log -1 --format="%D" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log --decorate does not include things outside filter' '
+	reflist="refs/prefetch refs/rebase-merge refs/bundle" &&
+
+	for ref in $reflist
+	do
+		git update-ref $ref/fake HEAD || return 1
+	done &&
+
+	git log --decorate=full --oneline >actual &&
+
+	# None of the refs are visible:
+	! grep /fake actual
 '
 
 test_expect_success 'log --end-of-options' '
