@@ -59,7 +59,9 @@ used as decoration if they match `HEAD`, `refs/heads/`, `refs/remotes/`,
 --clear-decorations::
 	When specified, this option clears all previous `--decorate-refs`
 	or `--decorate-refs-exclude` options and relaxes the default
-	decoration filter to include all references.
+	decoration filter to include all references. This option is
+	assumed if the config value `log.initialDecorationSet` is set to
+	`all`.
 
 --source::
 	Print out the ref name given on the command line by which each

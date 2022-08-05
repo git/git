@@ -179,6 +179,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
 {
 	int i;
+	char *value = NULL;
 	struct string_list *include = decoration_filter->include_ref_pattern;
 	const struct string_list *config_exclude =
 			git_config_get_value_multi("log.excludeDecoration");
@@ -189,6 +190,17 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 			string_list_append(decoration_filter->exclude_ref_config_pattern,
 					   item->string);
 	}
+
+	/*
+	 * By default, decorate_all is disabled. Enable it if
+	 * log.initialDecorationSet=all. Don't ever disable it by config,
+	 * since the command-line takes precedent.
+	 */
+	if (use_default_decoration_filter &&
+	    !git_config_get_string("log.initialdecorationset", &value) &&
+	    !strcmp("all", value))
+		use_default_decoration_filter = 0;
+	free(value);
 
 	if (!use_default_decoration_filter ||
 	    decoration_filter->exclude_ref_pattern->nr ||

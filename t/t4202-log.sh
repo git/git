@@ -1090,6 +1090,9 @@ test_expect_success '--clear-decorations overrides defaults' '
 	EOF
 	git log --decorate=full --pretty="tformat:%f%d" \
 		--clear-decorations >actual &&
+	test_cmp expect.all actual &&
+	git -c log.initialDecorationSet=all log \
+		--decorate=full --pretty="tformat:%f%d" >actual &&
 	test_cmp expect.all actual
 '
 
