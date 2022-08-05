@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #01; Mon, 1)
-X-master-at: 350dc9f0e8974b6fcbdeb3808186c5a79c3e7386
-X-next-at: 60a89aff129e69125857350fd1eaa291c90d2ab1
+Subject: What's cooking in git.git (Aug 2022, #02; Fri, 5)
+X-master-at: 679aad9e82d0dfd8ef3d1f98fa4629665496cec9
+X-next-at: 8b5581f2bb185e8784b9bfb4e62049927bff10d8
 
-What's cooking in git.git (Aug 2022, #01; Mon, 1)
+What's cooking in git.git (Aug 2022, #02; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,8 +13,8 @@ future release).  Commits prefixed with '-' are only in 'seen',
 and aren't considered "accepted" at all.
 
 A handful of topics have graduated to the 'master' track, and half a
-dozen topics are now in 'next' to cook.  We are starting Week #4 of
-a 12-week cycle.
+dozen topics are now in 'next' to cook.  We are at the end of Week
+#4 of a 12-week cycle (cf. https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -47,65 +47,273 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cl/rerere-train-with-no-sign (2022-07-19) 1 commit
-  (merged to 'next' on 2022-07-20 at fbb9414d09)
- + contrib/rerere-train: avoid useless gpg sign in training
+* ds/midx-with-less-memory (2022-07-27) 4 commits
+  (merged to 'next' on 2022-07-27 at 9ac7aed9f6)
+ + write_midx_bitmap(): drop unused refs_snapshot parameter
+  (merged to 'next' on 2022-07-20 at 250d257c3e)
+ + midx: reduce memory pressure while writing bitmaps
+ + midx: extract bitmap write setup
+ + pack-bitmap-write: use const for hashes
 
- "rerere-train" script (in contrib/) used to honor commit.gpgSign
- while recreating the throw-away merges.
- source: <PH7PR14MB5594A27B9295E95ACA4D6A69CE8F9@PH7PR14MB5594.namprd14.prod.outlook.com>
-
-
-* ds/rebase-update-ref (2022-07-19) 13 commits
-  (merged to 'next' on 2022-07-20 at 9f4bf9ef6c)
- + sequencer: notify user of --update-refs activity
- + sequencer: ignore HEAD ref under --update-refs
- + rebase: add rebase.updateRefs config option
- + sequencer: rewrite update-refs as user edits todo list
- + rebase: update refs from 'update-ref' commands
- + rebase: add --update-refs option
- + sequencer: add update-ref command
- + sequencer: define array with enum values
- + rebase-interactive: update 'merge' description
- + branch: consider refs under 'update-refs'
- + t2407: test branches currently using apply backend
- + t2407: test bisect and rebase as black-boxes
- + Merge branch 'ds/branch-checked-out' into ds/rebase-update-ref
-
- "git rebase -i" learns to update branches whose tip appear in the
- rebased range with "--update-refs" option.
- source: <pull.1247.v5.git.1658255624.gitgitgadget@gmail.com>
+ The codepath to write multi-pack index has been taught to release a
+ large chunk of memory that holds an array of objects in the packs,
+ as soon as it is done with the array, to reduce memory consumption.
+ source: <pull.1292.v2.git.1658244366.gitgitgadget@gmail.com>
 
 
-* kk/p4-client-name-encoding-fix (2022-07-21) 2 commits
-  (merged to 'next' on 2022-07-21 at 008518b4e5)
- + git-p4: refactoring of p4CmdList()
-  (merged to 'next' on 2022-07-11 at 9c18616f76)
- + git-p4: fix bug with encoding of p4 client name
+* en/merge-restore-to-pristine (2022-07-22) 8 commits
+  (merged to 'next' on 2022-07-27 at daafc50c15)
+ + merge: do not exit restore_state() prematurely
+ + merge: ensure we can actually restore pre-merge state
+ + merge: make restore_state() restore staged state too
+ + merge: fix save_state() to work when there are stat-dirty files
+ + merge: do not abort early if one strategy fails to handle the merge
+ + merge: abort if index does not match HEAD for trivial merges
+ + merge-resolve: abort if index does not match HEAD
+ + merge-ort-wrappers: make printed message match the one from recursive
 
- "git p4" did not handle non-ASCII client name well, which has been
- corrected.
- source: <pull.1285.v3.git.git.1658394440.gitgitgadget@gmail.com>
-
-
-* mt/checkout-count-fix (2022-07-14) 3 commits
-  (merged to 'next' on 2022-07-22 at 60c73a6b0b)
- + checkout: fix two bugs on the final count of updated entries
- + checkout: show bug about failed entries being included in final report
- + checkout: document bug where delayed checkout counts entries twice
- (this branch is used by mt/rot13-in-c.)
-
- "git checkout" miscounted the paths it updated, which has been
- corrected.
- source: <cover.1657799213.git.matheus.bernardino@usp.br>
+ When "git merge" finds that it cannot perform a merge, it should
+ restore the working tree to the state before the command was
+ initiated, but in some corner cases it didn't.
+ source: <pull.1231.v5.git.1658541198.gitgitgadget@gmail.com>
 
 
-* mt/pkt-line-comment-tweak (2022-07-22) 1 commit
-  (merged to 'next' on 2022-07-22 at 4004fa75eb)
- + pkt-line.h: move comment closer to the associated code
+* gc/bare-repo-discovery (2022-07-26) 1 commit
+  (merged to 'next' on 2022-07-28 at 1d2bef98f6)
+ + config.c: NULL check when reading protected config
 
- In-code comment clarification.
- source: <6a14443c101fa132498297af6d7a483520688d75.1658488203.git.matheus.bernardino@usp.br>
+ Fix-up for what has been merged to 'master' recently.
+ source: <pull.1299.v2.git.git.1658874067077.gitgitgadget@gmail.com>
+
+
+* jc/string-list-cleanup (2022-07-20) 1 commit
+  (merged to 'next' on 2022-07-27 at 858a0b2a28)
+ + builtin/remote.c: use the right kind of STRING_LIST_INIT
+
+ Code clean-up.
+ source: <xmqq7d471dns.fsf@gitster.g>
+
+
+* jr/gitweb-title-shortening (2022-07-26) 1 commit
+  (merged to 'next' on 2022-07-28 at 7528e87220)
+ + gitweb: remove title shortening heuristics
+
+ Gitweb had legacy URL shortener that is specific to the way
+ projects hosted on kernel.org used to (but no longer) work, which
+ has been removed.
+ source: <20220726135911.ycvgwbkixb3ei6w3@jrouhaud>
+
+
+* jt/fetch-pack-trace2-filter-spec (2022-07-26) 1 commit
+  (merged to 'next' on 2022-07-28 at 8e6237d6b0)
+ + fetch-pack: write effective filter to trace2
+
+ "git fetch" client logs the partial clone filter used in the trace2
+ output.
+ source: <20220726162712.1774355-1-jonathantanmy@google.com>
+
+
+* pw/xdiff-alloc (2022-07-08) 4 commits
+  (merged to 'next' on 2022-07-25 at 92a39a5ff2)
+ + xdiff: introduce XDL_ALLOC_GROW()
+ + xdiff: introduce XDL_CALLOC_ARRAY()
+ + xdiff: introduce xdl_calloc
+ + xdiff: introduce XDL_ALLOC_ARRAY()
+
+ Add a level of redirection to array allocation API in xdiff part,
+ to make it easier to share with the libgit2 project.
+ source: <pull.1272.v2.git.1657297519.gitgitgadget@gmail.com>
+
+
+* rs/mergesort (2022-07-17) 10 commits
+  (merged to 'next' on 2022-07-27 at 42607a44bb)
+ + mergesort: remove llist_mergesort()
+ + packfile: use DEFINE_LIST_SORT
+ + fetch-pack: use DEFINE_LIST_SORT
+ + commit: use DEFINE_LIST_SORT
+ + blame: use DEFINE_LIST_SORT
+ + test-mergesort: use DEFINE_LIST_SORT
+ + test-mergesort: use DEFINE_LIST_SORT_DEBUG
+ + mergesort: add macros for typed sort of linked lists
+ + mergesort: tighten merge loop
+ + mergesort: unify ranks loops
+
+ Make our mergesort implementation type-safe.
+ source: <4d7cd286-398e-215c-f2bd-aa7e8207be4f@web.de>
+
+
+* sa/cat-file-mailmap (2022-07-18) 4 commits
+  (merged to 'next' on 2022-07-27 at 59c4eb32b3)
+ + cat-file: add mailmap support
+ + ident: rename commit_rewrite_person() to apply_mailmap_to_header()
+ + ident: move commit_rewrite_person() to ident.c
+ + revision: improve commit_rewrite_person()
+
+ "git cat-file" learned an option to use the mailmap when showing
+ commit and tag objects.
+ source: <20220718195102.66321-1-siddharthasthana31@gmail.com>
+
+
+* tb/cat-file-z (2022-07-22) 2 commits
+  (merged to 'next' on 2022-07-28 at 78731f0fdb)
+ + builtin/cat-file.c: support NUL-delimited input with `-z`
+ + t1006: extract --batch-command inputs to variables
+
+ Operating modes like "--batch" of "git cat-file" command learned to
+ take NUL-terminated input, instead of one-item-per-line.
+ source: <cover.1658532524.git.me@ttaylorr.com>
+
+
+* tb/commit-graph-genv2-upgrade-fix (2022-07-15) 3 commits
+  (merged to 'next' on 2022-07-25 at e3464c2c1d)
+ + commit-graph: fix corrupt upgrade from generation v1 to v2
+ + commit-graph: introduce `repo_find_commit_pos_in_graph()`
+ + t5318: demonstrate commit-graph generation v2 corruption
+
+ There was a bug in the codepath to upgrade generation information
+ in commit-graph from v1 to v2 format, which has been corrected.
+ source: <cover.1657667404.git.me@ttaylorr.com>
+
+
+* tk/untracked-cache-with-uall (2022-07-22) 1 commit
+  (merged to 'next' on 2022-07-25 at b792dd5012)
+ + read-cache: make `do_read_index()` always set up `istate->repo`
+
+ Fix for a bug that makes write-tree to fail to write out a
+ non-existent index as a tree, introduced in 2.37.
+ source: <20220722212232.833188-1-martin.agren@gmail.com>
+
+
+* zh/ls-files-format (2022-07-23) 1 commit
+  (merged to 'next' on 2022-07-27 at b7301f16ce)
+ + ls-files: introduce "--format" option
+
+ "git ls-files" learns the "--format" option to tweak its output.
+ source: <pull.1262.v9.git.1658558685407.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* lt/symbolic-ref-sanity (2022-08-01) 1 commit
+  (merged to 'next' on 2022-08-03 at 443647b94a)
+ + symbolic-ref: refuse to set syntactically invalid target
+
+ "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
+
+ Will merge to 'master'.
+ source: <YugYNzQYWqDCmOqN@coredump.intra.peff.net>
+
+
+* vd/scalar-generalize-diagnose (2022-08-03) 10 commits
+ - scalar: update technical doc roadmap
+ - scalar-diagnose: use 'git diagnose --all'
+ - builtin/bugreport.c: create '--diagnose' option
+ - builtin/diagnose.c: gate certain data behind '--all'
+ - builtin/diagnose.c: create 'git diagnose' builtin
+ - scalar-diagnose: move functionality to common location
+ - scalar-diagnose: move 'get_disk_info()' to 'compat/'
+ - scalar-diagnose: add directory to archiver more gently
+ - scalar-diagnose: avoid 32-bit overflow of size_t
+ - scalar-diagnose: use "$GIT_UNZIP" in test
+
+ The "diagnose" feature to create a zip archive for diagnostic
+ material has been lifted from "scalar" and made into a feature of
+ "git bugreport".
+ source: <pull.1310.v2.git.1659577543.gitgitgadget@gmail.com>
+
+
+* gc/git-reflog-doc-markup (2022-08-01) 1 commit
+  (merged to 'next' on 2022-08-05 at f2d8721ab2)
+ + Documentation/git-reflog: remove unneeded \ from \{
+
+ Doc mark-up fix.
+
+ Will merge to 'master'.
+ source: <pull.1304.git.git.1659387885711.gitgitgadget@gmail.com>
+
+
+* jk/pipe-command-nonblock (2022-08-03) 1 commit
+ - pipe_command(): mark stdin descriptor as non-blocking
+
+ Fix deadlocks between main Git process and subprocess spawned via
+ the pipe_command() API, that can kill "git add -p" that was
+ reimplemented in C recently.
+
+ Needs waiting for corresponding change to Windows to put the pipe
+ into nonblock mode.
+ cf. <YulFTSTbVaTwuQtt@coredump.intra.peff.net>
+ source: <YunxHOa2sJeEpJxd@coredump.intra.peff.net>
+
+
+* ab/plug-revisions-leak (2022-08-03) 6 commits
+  (merged to 'next' on 2022-08-05 at d1ca88976f)
+ + revisions API: don't leak memory on argv elements that need free()-ing
+ + bisect.c: partially fix bisect_rev_setup() memory leak
+ + log: refactor "rev.pending" code in cmd_show()
+ + log: fix a memory leak in "git show <revision>..."
+ + test-fast-rebase helper: use release_revisions() (again)
+ + bisect.c: add missing "goto" for release_revisions()
+
+ Plug a bit more leaks in the revisions API.
+
+ Will merge to 'master'.
+ source: <cover-v3-0.6-00000000000-20220802T152925Z-avarab@gmail.com>
+
+
+* jc/rerere-autoupdate-doc (2022-08-03) 2 commits
+ - doc: clarify rerere-autoupdate
+ - doc: consolidate --rerere-autoupdate description
+
+ Update documentation on the "--[no-]rerere-autoupdate" option.
+
+ Will merge to 'next'.
+ source: <xmqq35f2ysd9.fsf@gitster.g>
+
+
+* es/mark-gc-cruft-as-experimental (2022-08-03) 2 commits
+ - config: let feature.experimental imply gc.cruftPacks=true
+ - gc: add tests for --cruft and friends
+
+ Enable gc.cruftpacks by default for those who opt into
+ feature.experimental setting.
+
+ Expecting a reroll.
+ cf. <220804.86a68ke9d5.gmgdl@evledraar.gmail.com>
+ cf. <6803b725-526e-a1c8-f15c-a9ed4a144d4c@github.com>
+ source: <20220803205721.3686361-1-emilyshaffer@google.com>
+
+
+* pw/use-glibc-tunable-for-malloc-optim (2022-08-04) 1 commit
+ - tests: cache glibc version check
+
+ Avoid repeatedly running getconf to ask libc version in the test
+ suite, and instead just as it once per script.
+
+ Will merge to 'next'?
+ source: <pull.1311.git.1659620305757.gitgitgadget@gmail.com>
+
+
+* vd/sparse-reset-checkout-fixes (2022-08-04) 4 commits
+ - unpack-trees: handle missing sparse directories
+ - cache.h: replace 'index_entry_exists()' with 'index_name_pos_sparse()'
+ - oneway_diff: handle removed sparse directories
+ - checkout: fix nested sparse directory diff in sparse index
+
+ Fixes to sparse index compatibility work for "reset" and "checkout"
+ commands.
+
+ Expecting a reroll to further clarify [4/4].
+ cf. <3825ef9a-4c71-21ed-6452-bbd322ca839c@github.com>
+ source: <pull.1312.git.1659645967.gitgitgadget@gmail.com>
+
+
+* ab/hooks-regression-fix (2022-08-05) 1 commit
+ - hook API: don't segfault on strbuf_addf() to NULL "out"
+
+ A follow-up fix to a fix for a regression in 2.36.
+
+ Will merge to 'next' and then to 'master'.
+ source: <patch-1.1-2450e3e65cf-20220805T141402Z-avarab@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -138,31 +346,24 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
-* tb/cat-file-z (2022-07-22) 2 commits
-  (merged to 'next' on 2022-07-28 at 78731f0fdb)
- + builtin/cat-file.c: support NUL-delimited input with `-z`
- + t1006: extract --batch-command inputs to variables
-
- Operating modes like "--batch" of "git cat-file" command learned to
- take NUL-terminated input, instead of one-item-per-line.
-
- Will merge to 'master'.
- source: <cover.1658532524.git.me@ttaylorr.com>
-
-
-* ab/tech-docs-to-help (2022-07-23) 9 commits
- - docs: move multi-pack-index docs to man section 5
+* ab/tech-docs-to-help (2022-08-04) 12 commits
  - docs: move http-protocol docs to man section 5
+ - docs: move cruft pack docs to gitformat-pack
  - docs: move pack format docs to man section 5
+ - docs: move signature docs to man section 5
+ - docs: move index format docs to man section 5
  - docs: move protocol-related docs to man section 5
  - docs: move commit-graph format docs to man section 5
  - git docs: add a category for file formats, protocols and interfaces
  - git docs: add a category for user-facing file, repo and command UX
  - git help doc: use "<doc>" instead of "<guide>"
- - help.c: BUG() out if "help --guides" can't remove "git" prefixes
+ - help.c: remove common category behavior from drop_prefix() behavior
+ - help.c: refactor drop_prefix() to use a "switch" statement"
 
  Expose a lot of "tech docs" via "git help" interface.
- source: <cover-v5-0.9-00000000000-20220721T160721Z-avarab@gmail.com>
+
+ Will merge to 'next'?
+ source: <cover-v8-00.12-00000000000-20220804T162138Z-avarab@gmail.com>
 
 
 * sg/parse-options-subcommand (2022-07-25) 20 commits
@@ -192,7 +393,7 @@ Release tarballs are available at:
  source: <20220725123857.2773963-1-szeder.dev@gmail.com>
 
 
-* ds/bundle-uri-clone (2022-07-25) 5 commits
+* ds/bundle-uri-clone (2022-08-02) 5 commits
  - clone: --bundle-uri cannot be combined with --depth
  - bundle-uri: add support for http(s):// and file://
  - clone: add --bundle-uri option
@@ -200,7 +401,7 @@ Release tarballs are available at:
  - remote-curl: add 'get' capability
 
  Implement "git clone --bundle-uri".
- source: <pull.1300.git.1658781277.gitgitgadget@gmail.com>
+ source: <pull.1300.v2.git.1659443384.gitgitgadget@gmail.com>
 
 
 * ca/unignore-local-installation-on-windows (2022-07-27) 1 commit
@@ -214,43 +415,22 @@ Release tarballs are available at:
  source: <pull.1304.git.1658912756815.gitgitgadget@gmail.com>
 
 
-* ds/decorate-filter-tweak (2022-07-29) 10 commits
+* ds/decorate-filter-tweak (2022-08-05) 11 commits
  - fetch: use ref_namespaces during prefetch
  - maintenance: stop writing log.excludeDecoration
- - log: create log.decorateFilter=all
- - log: add --decorate-all option
+ - log: create log.initialDecorationSet=all
+ - log: add --clear-decorations option
  - log: add default decoration filter
  - log-tree: use ref_namespaces instead of if/else-if
  - refs: use ref_namespaces for replace refs base
  - refs: add array of ref namespaces
  - t4207: test coloring of grafted decorations
+ - t4207: modernize test
  - refs: allow "HEAD" as decoration filter
 
  The namespaces used by "log --decorate" from "refs/" hierarchy by
  default has been tightened.
- source: <pull.1301.v2.git.1659122979.gitgitgadget@gmail.com>
-
-
-* gc/bare-repo-discovery (2022-07-26) 1 commit
-  (merged to 'next' on 2022-07-28 at 1d2bef98f6)
- + config.c: NULL check when reading protected config
-
- Fix-up for what has been merged to 'master' recently.
-
- Will merge to 'master'.
- source: <pull.1299.v2.git.git.1658874067077.gitgitgadget@gmail.com>
-
-
-* jr/gitweb-title-shortening (2022-07-26) 1 commit
-  (merged to 'next' on 2022-07-28 at 7528e87220)
- + gitweb: remove title shortening heuristics
-
- Gitweb had legacy URL shortener that is specific to the way
- projects hosted on kernel.org used to (but no longer) work, which
- has been removed.
-
- Will merge to 'master'.
- source: <20220726135911.ycvgwbkixb3ei6w3@jrouhaud>
+ source: <pull.1301.v3.git.1659722323.gitgitgadget@gmail.com>
 
 
 * es/doc-creation-factor-fix (2022-07-28) 2 commits
@@ -283,16 +463,24 @@ Release tarballs are available at:
  source: <pull.1306.v2.git.1659109272.gitgitgadget@gmail.com>
 
 
-* ab/submodule-helper-prep (2022-07-28) 20 commits
+* ab/submodule-helper-prep (2022-08-03) 28 commits
  - submodule--helper: fix bad config API usage
+ - submodule--helper: libify "must_die_on_failure" code paths (for die)
+ - submodule--helper: libify "must_die_on_failure" code paths
+ - submodule--helper: libify determine_submodule_update_strategy()
  - submodule--helper: don't exit() on failure, return
- - submodule--helper: add skeleton "goto cleanup" to update_submodule()
+ - submodule--helper: use "code" in run_update_command()
+ - submodule--helper: move submodule_strategy_to_string() to only user
+ - submodule--helper: don't call submodule_strategy_to_string() in BUG()
+ - submodule--helper: add missing braces to "else" arm
+ - submodule--helper: return "ret", not "1" from update_submodule()
  - submodule--helper: rename "int res" to "int ret"
+ - submodule--helper: don't redundantly check "else if (res)"
  - submodule--helper: refactor "errmsg_str" to be a "struct strbuf"
  - submodule--helper: add "const" to copy of "update_data"
  - submodule--helper: pass a "const struct module_clone_data" to clone_submodule()
- - submodule--helper: stop conflating "sb" in clone_submodule()
- - submodule--helper: convert a strbuf_detach() to xstrfmt()
+ - submodule--helper: move "sb" in clone_submodule() to its own scope
+ - submodule--helper: use xstrfmt() in clone_submodule()
  - submodule--helper: replace memset() with { 0 }-initialization
  - submodule--helper style: add \n\n after variable declarations
  - submodule--helper style: don't separate declared variables with \n\n
@@ -306,7 +494,7 @@ Release tarballs are available at:
  - submodule tests: test usage behavior
  (this branch is used by ab/submodule-helper-leakfix.)
 
- source: <cover-00.20-00000000000-20220728T161116Z-avarab@gmail.com>
+ source: <cover-v2-00.28-00000000000-20220802T154036Z-avarab@gmail.com>
 
 
 * ab/dedup-config-and-command-docs (2022-07-29) 9 commits
@@ -323,7 +511,10 @@ Release tarballs are available at:
  Share the text used to explain configuration variables used by "git
  <subcmd>" in "git help <subcmd>" with the text from "git help config".
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <CAHd-oW5mD-H1kvuF9VEVb8KjaSkUSUpBH-WAkpCn6_Ci8o888w@mail.gmail.com>
+ cf. <CAHd-oW7s6Hu24uTjCW9ROBbJkA5+7TCu32a4L_BXVLhcvw5kSw@mail.gmail.com>
+ cf. <xmqqlesb4lwh.fsf@gitster.g>
  source: <cover-v2-0.9-00000000000-20220729T081959Z-avarab@gmail.com>
 
 
@@ -377,36 +568,27 @@ Release tarballs are available at:
 
 
 * ab/leak-check (2022-07-27) 15 commits
- - CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
- - upload-pack: fix a memory leak in create_pack_file()
- - leak tests: mark passing SANITIZE=leak tests as leak-free
- - leak tests: don't skip some tests under SANITIZE=leak
- - test-lib: have the "check" mode for SANITIZE=leak consider leak logs
- - test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
- - test-lib: simplify by removing test_external
- - tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
- - t/Makefile: don't remove test-results in "clean-except-prove-cache"
- - test-lib: add a SANITIZE=leak logging mode
- - t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
- - test-lib: add a --invert-exit-code switch
- - test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
- - test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
- - test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
+  (merged to 'next' on 2022-08-05 at 2a6b9c8432)
+ + CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
+ + upload-pack: fix a memory leak in create_pack_file()
+ + leak tests: mark passing SANITIZE=leak tests as leak-free
+ + leak tests: don't skip some tests under SANITIZE=leak
+ + test-lib: have the "check" mode for SANITIZE=leak consider leak logs
+ + test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
+ + test-lib: simplify by removing test_external
+ + tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
+ + t/Makefile: don't remove test-results in "clean-except-prove-cache"
+ + test-lib: add a SANITIZE=leak logging mode
+ + t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
+ + test-lib: add a --invert-exit-code switch
+ + test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
+ + test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
+ + test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
 
  Extend SANITIZE=leak checking and declare more tests "currently leak-free".
 
- Will merge to 'next'?
- source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
-
-
-* jc/string-list-cleanup (2022-07-20) 1 commit
-  (merged to 'next' on 2022-07-27 at 858a0b2a28)
- + builtin/remote.c: use the right kind of STRING_LIST_INIT
-
- Code clean-up.
-
  Will merge to 'master'.
- source: <xmqq7d471dns.fsf@gitster.g>
+ source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
 
 
 * mt/rot13-in-c (2022-07-31) 4 commits
@@ -419,45 +601,18 @@ Release tarballs are available at:
  source: <cover.1659291025.git.matheus.bernardino@usp.br>
 
 
-* tk/untracked-cache-with-uall (2022-07-22) 1 commit
-  (merged to 'next' on 2022-07-25 at b792dd5012)
- + read-cache: make `do_read_index()` always set up `istate->repo`
-
- Fix for a bug that makes write-tree to fail to write out a
- non-existent index as a tree, introduced in 2.37.
-
- Will merge to 'master'.
- source: <20220722212232.833188-1-martin.agren@gmail.com>
-
-
-* ds/midx-with-less-memory (2022-07-27) 4 commits
-  (merged to 'next' on 2022-07-27 at 9ac7aed9f6)
- + write_midx_bitmap(): drop unused refs_snapshot parameter
-  (merged to 'next' on 2022-07-20 at 250d257c3e)
- + midx: reduce memory pressure while writing bitmaps
- + midx: extract bitmap write setup
- + pack-bitmap-write: use const for hashes
-
- The codepath to write multi-pack index has been taught to release a
- large chunk of memory that holds an array of objects in the packs,
- as soon as it is done with the array, to reduce memory consumption.
-
- Will merge to 'master'.
- source: <pull.1292.v2.git.1658244366.gitgitgadget@gmail.com>
-
-
 * tl/trace2-config-scope (2022-07-22) 2 commits
  - tr2: shows scope unconditionally in addition to key-value pair
  - api-trace2.txt: print config key-value pair
 
  Tweak trace2 output about configuration variables.
 
- Expecting a reroll.
- cf. <220722.86fsits91m.gmgdl@evledraar.gmail.com>
+ Needs reviewer response
+ cf. <20220801122515.23146-1-tenglong.tl@alibaba-inc.com>
  source: <cover.1658472474.git.dyroneteng@gmail.com>
 
 
-* ab/submodule-helper-leakfix (2022-07-28) 18 commits
+* ab/submodule-helper-leakfix (2022-08-03) 18 commits
  - submodule--helper: fix a configure_added_submodule() leak
  - submodule--helper: free rest of "displaypath" in "struct update_data"
  - submodule--helper: free some "displaypath" in "struct update_data"
@@ -481,69 +636,17 @@ Release tarballs are available at:
  Plugging leaks in submodule--helper.
 
  Getting there.
- source: <cover-v4-00.17-00000000000-20220728T162442Z-avarab@gmail.com>
+ source: <cover-v5-00.17-00000000000-20220802T155002Z-avarab@gmail.com>
 
 
-* jt/fetch-pack-trace2-filter-spec (2022-07-26) 1 commit
-  (merged to 'next' on 2022-07-28 at 8e6237d6b0)
- + fetch-pack: write effective filter to trace2
-
- "git fetch" client logs the partial clone filter used in the trace2
- output.
-
- Will merge to 'master'.
- source: <20220726162712.1774355-1-jonathantanmy@google.com>
-
-
-* mb/doc-rerere-autoupdate (2022-07-15) 1 commit
- - cherry-pick doc: clarify no-rerere-autoupdate still allows rerere
-
- Clarifies that the "--no-rerere-autoupdate" option does not disable
- the "rerere" mechanism (nor does "--rerere-autoupdate" enable it).
-
- Needs updating, at least for other commands with the same option.
- cf. <xmqq35f2ysd9.fsf@gitster.g>
- source: <20220715092527.1567837-1-mail@beyermatthias.de>
-
-
-* rs/mergesort (2022-07-17) 10 commits
-  (merged to 'next' on 2022-07-27 at 42607a44bb)
- + mergesort: remove llist_mergesort()
- + packfile: use DEFINE_LIST_SORT
- + fetch-pack: use DEFINE_LIST_SORT
- + commit: use DEFINE_LIST_SORT
- + blame: use DEFINE_LIST_SORT
- + test-mergesort: use DEFINE_LIST_SORT
- + test-mergesort: use DEFINE_LIST_SORT_DEBUG
- + mergesort: add macros for typed sort of linked lists
- + mergesort: tighten merge loop
- + mergesort: unify ranks loops
-
- Make our mergesort implementation type-safe.
-
- Will merge to 'master'.
- source: <4d7cd286-398e-215c-f2bd-aa7e8207be4f@web.de>
-
-
-* cw/submodule-merge-messages (2022-07-28) 1 commit
+* cw/submodule-merge-messages (2022-08-04) 1 commit
  - submodule merge: update conflict error message
 
  Update the message given when "git merge" sees conflicts at a path
  with a submodule while merging a superproject.
- source: <20220728211221.2913928-1-calvinwan@google.com>
 
-
-* tb/commit-graph-genv2-upgrade-fix (2022-07-15) 3 commits
-  (merged to 'next' on 2022-07-25 at e3464c2c1d)
- + commit-graph: fix corrupt upgrade from generation v1 to v2
- + commit-graph: introduce `repo_find_commit_pos_in_graph()`
- + t5318: demonstrate commit-graph generation v2 corruption
-
- There was a bug in the codepath to upgrade generation information
- in commit-graph from v1 to v2 format, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1657667404.git.me@ttaylorr.com>
+ Getting closer?
+ source: <20220804195105.1303455-1-calvinwan@google.com>
 
 
 * js/safe-directory-plus (2022-07-13) 3 commits
@@ -593,63 +696,6 @@ Release tarballs are available at:
  Seems to be flaky-broken under SHA-256.
  cf. <p3r70610-8n52-s8q0-n641-onp4ps01330n@tzk.qr>
  source: <pull.1266.v5.git.1658342304.gitgitgadget@gmail.com>
-
-
-* sa/cat-file-mailmap (2022-07-18) 4 commits
-  (merged to 'next' on 2022-07-27 at 59c4eb32b3)
- + cat-file: add mailmap support
- + ident: rename commit_rewrite_person() to apply_mailmap_to_header()
- + ident: move commit_rewrite_person() to ident.c
- + revision: improve commit_rewrite_person()
-
- "git cat-file" learned an option to use the mailmap when showing
- commit and tag objects.
-
- Will merge to 'master'.
- source: <20220718195102.66321-1-siddharthasthana31@gmail.com>
-
-
-* pw/xdiff-alloc (2022-07-08) 4 commits
-  (merged to 'next' on 2022-07-25 at 92a39a5ff2)
- + xdiff: introduce XDL_ALLOC_GROW()
- + xdiff: introduce XDL_CALLOC_ARRAY()
- + xdiff: introduce xdl_calloc
- + xdiff: introduce XDL_ALLOC_ARRAY()
-
- Add a level of redirection to array allocation API in xdiff part,
- to make it easier to share with the libgit2 project.
-
- Will merge to 'master'.
- source: <pull.1272.v2.git.1657297519.gitgitgadget@gmail.com>
-
-
-* en/merge-restore-to-pristine (2022-07-22) 8 commits
-  (merged to 'next' on 2022-07-27 at daafc50c15)
- + merge: do not exit restore_state() prematurely
- + merge: ensure we can actually restore pre-merge state
- + merge: make restore_state() restore staged state too
- + merge: fix save_state() to work when there are stat-dirty files
- + merge: do not abort early if one strategy fails to handle the merge
- + merge: abort if index does not match HEAD for trivial merges
- + merge-resolve: abort if index does not match HEAD
- + merge-ort-wrappers: make printed message match the one from recursive
-
- When "git merge" finds that it cannot perform a merge, it should
- restore the working tree to the state before the command was
- initiated, but in some corner cases it didn't.
-
- Will merge to 'master'.
- source: <pull.1231.v5.git.1658541198.gitgitgadget@gmail.com>
-
-
-* zh/ls-files-format (2022-07-23) 1 commit
-  (merged to 'next' on 2022-07-27 at b7301f16ce)
- + ls-files: introduce "--format" option
-
- "git ls-files" learns the "--format" option to tweak its output.
-
- Will merge to 'master'.
- source: <pull.1262.v9.git.1658558685407.gitgitgadget@gmail.com>
 
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
@@ -739,3 +785,11 @@ Release tarballs are available at:
  Retracted.
  cf. <20220723134834.9693-1-matheus.bernardino@usp.br>
  source: <cover.1657819649.git.matheus.bernardino@usp.br>
+
+
+* mb/doc-rerere-autoupdate (2022-07-15) 1 commit
+ . cherry-pick doc: clarify no-rerere-autoupdate still allows rerere
+
+ Clarifies that the "--no-rerere-autoupdate" option does not disable
+ the "rerere" mechanism (nor does "--rerere-autoupdate" enable it).
+ source: <20220715092527.1567837-1-mail@beyermatthias.de>
