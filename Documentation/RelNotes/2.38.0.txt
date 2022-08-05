@@ -45,6 +45,9 @@ UI, Workflows & Features
    restore the working tree to the state before the command was
    initiated, but in some corner cases it didn't.
 
+ * Operating modes like "--batch" of "git cat-file" command learned to
+   take NUL-terminated input, instead of one-item-per-line.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -101,6 +104,9 @@ Performance, Internal Implementation, Development Support etc.
  * Add a level of redirection to array allocation API in xdiff part,
    to make it easier to share with the libgit2 project.
 
+ * "git fetch" client logs the partial clone filter used in the trace2
+   output.
+
 
 Fixes since v2.37
 -----------------
@@ -154,7 +160,6 @@ Fixes since v2.37
  * "git clone" from a repository with some ref whose HEAD is unborn
    did not set the HEAD in the resulting repository correctly, which
    has been corrected.
-   (merge daf7898abb jk/clone-unborn-confusion later to maint).
 
  * An earlier attempt to plug leaks placed a clean-up label to jump to
    at a bogus place, which as been corrected.
@@ -167,22 +172,17 @@ Fixes since v2.37
  * A fix for a regression in test framework.
 
  * mkstemp() emulation on Windows has been improved.
-   (merge ae25974de3 rs/mingw-tighten-mkstemp later to maint).
 
  * Add missing documentation for "include" and "includeIf" features in
    "git config" file format, which incidentally teaches the command
    line completion to include them in its offerings.
-   (merge 07aed58017 mb/config-document-include later to maint).
 
  * Avoid "white/black-list" in documentation and code comments.
-   (merge f5adaa5cc3 ds/doc-wo-whitelist later to maint).
 
  * Workaround for a compiler warning against use of die() in
    osx-keychain (in contrib/).
-   (merge f2fc531585 ld/osx-keychain-usage-fix later to maint).
 
  * Workaround for a false positive compiler warning.
-   (merge b4f52f09ae ds/win-syslog-compiler-fix later to maint).
 
  * "git p4" working on UTF-16 files on Windows did not implement
    CRLF-to-LF conversion correctly, which has been corrected.
@@ -208,9 +208,12 @@ Fixes since v2.37
    in commit-graph from v1 to v2 format, which has been corrected.
    (merge 9550f6c16a tb/commit-graph-genv2-upgrade-fix later to maint).
 
+ * Gitweb had legacy URL shortener that is specific to the way
+   projects hosted on kernel.org used to (but no longer) work, which
+   has been removed.
+   (merge 75707da4fa jr/gitweb-title-shortening later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a700395eaf ma/t4200-update later to maint).
-   (merge ae436f283c ma/sparse-checkout-cone-doc-fix later to maint).
-   (merge a10f6e2bda sg/index-format-doc-update later to maint).
    (merge ce5f07983d mt/pkt-line-comment-tweak later to maint).
    (merge 1e11fab59c jc/string-list-cleanup later to maint).
