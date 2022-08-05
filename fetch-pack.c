@@ -293,6 +293,29 @@ static void mark_tips(struct fetch_negotiator *negotiator,
 	return;
 }
 
+static void send_filter(struct fetch_pack_args *args,
+			struct strbuf *req_buf,
+			int server_supports_filter)
+{
+	if (args->filter_options.choice) {
+		const char *spec =
+			expand_list_objects_filter_spec(&args->filter_options);
+		if (server_supports_filter) {
+			print_verbose(args, _("Server supports filter"));
+			packet_buf_write(req_buf, "filter %s", spec);
+			trace2_data_string("fetch", the_repository,
+					   "filter/effective", spec);
+		} else {
+			warning("filtering not recognized by server, ignoring");
+			trace2_data_string("fetch", the_repository,
+					   "filter/unsupported", spec);
+		}
+	} else {
+		trace2_data_string("fetch", the_repository,
+				   "filter/none", "");
+	}
+}
+
 static int find_common(struct fetch_negotiator *negotiator,
 		       struct fetch_pack_args *args,
 		       int fd[2], struct object_id *result_oid,
@@ -390,11 +413,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 			packet_buf_write(&req_buf, "deepen-not %s", s->string);
 		}
 	}
-	if (server_supports_filtering && args->filter_options.choice) {
-		const char *spec =
-			expand_list_objects_filter_spec(&args->filter_options);
-		packet_buf_write(&req_buf, "filter %s", spec);
-	}
+	send_filter(args, &req_buf, server_supports_filtering);
 	packet_buf_flush(&req_buf);
 	state_len = req_buf.len;
 
@@ -1331,15 +1350,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		die(_("Server does not support shallow requests"));
 
 	/* Add filter */
-	if (server_supports_feature("fetch", "filter", 0) &&
-	    args->filter_options.choice) {
-		const char *spec =
-			expand_list_objects_filter_spec(&args->filter_options);
-		print_verbose(args, _("Server supports filter"));
-		packet_buf_write(&req_buf, "filter %s", spec);
-	} else if (args->filter_options.choice) {
-		warning("filtering not recognized by server, ignoring");
-	}
+	send_filter(args, &req_buf,
+		    server_supports_feature("fetch", "filter", 0));
 
 	if (server_supports_feature("fetch", "packfile-uris", 0)) {
 		int i;
