@@ -44,4 +44,21 @@ Fixes since v2.37.1
  * Certain diff options are currently ignored when combined-diff is
    shown; mark them as incompatible with the feature.
 
+ * "git clone" from a repository with some ref whose HEAD is unborn
+   did not set the HEAD in the resulting repository correctly, which
+   has been corrected.
+
+ * mkstemp() emulation on Windows has been improved.
+
+ * Add missing documentation for "include" and "includeIf" features in
+   "git config" file format, which incidentally teaches the command
+   line completion to include them in its offerings.
+
+ * Avoid "white/black-list" in documentation and code comments.
+
+ * Workaround for a compiler warning against use of die() in
+   osx-keychain (in contrib/).
+
+ * Workaround for a false positive compiler warning.
+
 Also contains minor documentation updates and code clean-ups.
