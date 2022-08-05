@@ -141,6 +141,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	enum object_type objtype;
 	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
 	if (filter && !ref_filter_match(refname, filter))
 		return 0;

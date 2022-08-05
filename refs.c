@@ -1612,6 +1612,7 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
 {
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 	return do_for_each_repo_ref(r, git_replace_ref_base, fn,
 				    strlen(git_replace_ref_base),
 				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
