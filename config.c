@@ -1979,6 +1979,8 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 	int ret = -1;
 	FILE *f;
 
+	if (!filename)
+		BUG("filename cannot be NULL");
 	f = fopen_or_warn(filename, "r");
 	if (f) {
 		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename,
@@ -2645,9 +2647,12 @@ static void read_protected_config(void)
 	system_config = git_system_config();
 	git_global_config(&user_config, &xdg_config);
 
-	git_configset_add_file(&protected_config, system_config);
-	git_configset_add_file(&protected_config, xdg_config);
-	git_configset_add_file(&protected_config, user_config);
+	if (system_config)
+		git_configset_add_file(&protected_config, system_config);
+	if (xdg_config)
+		git_configset_add_file(&protected_config, xdg_config);
+	if (user_config)
+		git_configset_add_file(&protected_config, user_config);
 	git_configset_add_parameters(&protected_config);
 
 	free(system_config);
