@@ -32,6 +32,7 @@ struct batch_options {
 	int all_objects;
 	int unordered;
 	int transform_mode; /* may be 'w' or 'c' for --filters or --textconv */
+	int nul_terminated;
 	const char *format;
 };
 
@@ -650,11 +651,19 @@ static void batch_objects_command(struct batch_options *opt,
 	struct queued_cmd *queued_cmd = NULL;
 	size_t alloc = 0, nr = 0;
 
-	while (!strbuf_getline(&input, stdin)) {
-		int i;
+	while (1) {
+		int i, ret;
 		const struct parse_cmd *cmd = NULL;
 		const char *p = NULL, *cmd_end;
 		struct queued_cmd call = {0};
+
+		if (opt->nul_terminated)
+			ret = strbuf_getline_nul(&input, stdin);
+		else
+			ret = strbuf_getline(&input, stdin);
+
+		if (ret)
+			break;
 
 		if (!input.len)
 			die(_("empty command in input"));
@@ -799,7 +808,16 @@ static int batch_objects(struct batch_options *opt)
 		goto cleanup;
 	}
 
-	while (strbuf_getline(&input, stdin) != EOF) {
+	while (1) {
+		int ret;
+		if (opt->nul_terminated)
+			ret = strbuf_getline_nul(&input, stdin);
+		else
+			ret = strbuf_getline(&input, stdin);
+
+		if (ret == EOF)
+			break;
+
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
@@ -904,6 +922,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			N_("like --batch, but don't emit <contents>"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			batch_option_callback),
+		OPT_BOOL('z', NULL, &batch.nul_terminated, N_("stdin is NUL-terminated")),
 		OPT_CALLBACK_F(0, "batch-command", &batch, N_("format"),
 			N_("read commands from stdin"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
@@ -962,6 +981,9 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	else if (batch.all_objects)
 		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
 			       "--batch-all-objects");
+	else if (batch.nul_terminated)
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "-z");
 
 	/* Batch defaults */
 	if (batch.buffer_output < 0)

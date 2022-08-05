@@ -14,7 +14,7 @@ SYNOPSIS
 'git cat-file' (-t | -s) [--allow-unknown-type] <object>
 'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
 	     [--buffer] [--follow-symlinks] [--unordered]
-	     [--textconv | --filters]
+	     [--textconv | --filters] [-z]
 'git cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 
@@ -212,6 +212,11 @@ respectively print:
 	symlink 11
 	/etc/passwd
 --
+
+-z::
+	Only meaningful with `--batch`, `--batch-check`, or
+	`--batch-command`; input is NUL-delimited instead of
+	newline-delimited.
 
 
 OUTPUT
