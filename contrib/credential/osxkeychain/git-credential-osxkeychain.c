@@ -168,7 +168,7 @@ int main(int argc, const char **argv)
 		"usage: git credential-osxkeychain <get|store|erase>";
 
 	if (!argv[1])
-		die(usage);
+		die("%s", usage);
 
 	read_credential();
 
