@@ -56,6 +56,11 @@ If none of these options or config settings are given, then references are
 used as decoration if they match `HEAD`, `refs/heads/`, `refs/remotes/`,
 `refs/stash/`, or `refs/tags/`.
 
+--clear-decorations::
+	When specified, this option clears all previous `--decorate-refs`
+	or `--decorate-refs-exclude` options and relaxes the default
+	decoration filter to include all references.
+
 --source::
 	Print out the ref name given on the command line by which each
 	commit was reached.
