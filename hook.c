@@ -62,9 +62,6 @@ static int pick_next_hook(struct child_process *cp,
 	strvec_push(&cp->args, hook_path);
 	strvec_pushv(&cp->args, hook_cb->options->args.v);
 
-	/* Provide context for errors if necessary */
-	*pp_task_cb = (char *)hook_path;
-
 	/*
 	 * This pick_next_hook() will be called again, we're only
 	 * running one hook, so indicate that no more work will be
@@ -80,12 +77,8 @@ static int notify_start_failure(struct strbuf *out,
 				void *pp_task_cp)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
-	const char *hook_path = pp_task_cp;
 
 	hook_cb->rc |= 1;
-
-	strbuf_addf(out, _("Couldn't start hook '%s'\n"),
-		    hook_path);
 
 	return 1;
 }
