@@ -2,6 +2,7 @@
 
 test_description='CRLF conversion all combinations'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 compare_files () {

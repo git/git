@@ -132,7 +132,7 @@ test_expect_success 'use --default' '
 	test_must_fail git rev-parse --verify --default bar
 '
 
-test_expect_success !SANITIZE_LEAK 'main@{n} for various n' '
+test_expect_success 'main@{n} for various n' '
 	git reflog >out &&
 	N=$(wc -l <out) &&
 	Nm1=$(($N-1)) &&
