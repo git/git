@@ -455,11 +455,16 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	if (*pattern == '/')
 		BUG("pattern must not start with '/'");
 
-	if (prefix) {
+	if (prefix)
 		strbuf_addstr(&normalized_pattern, prefix);
-	}
-	else if (!starts_with(pattern, "refs/"))
+	else if (!starts_with(pattern, "refs/") &&
+		   strcmp(pattern, "HEAD"))
 		strbuf_addstr(&normalized_pattern, "refs/");
+	/*
+	 * NEEDSWORK: Special case other symrefs such as REBASE_HEAD,
+	 * MERGE_HEAD, etc.
+	 */
+
 	strbuf_addstr(&normalized_pattern, pattern);
 	strbuf_strip_suffix(&normalized_pattern, "/");
 

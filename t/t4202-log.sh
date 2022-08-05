@@ -1025,6 +1025,12 @@ test_expect_success 'decorate-refs and simplify-by-decoration without output' '
 	test_cmp expect actual
 '
 
+test_expect_success 'decorate-refs-exclude HEAD' '
+	git log --decorate=full --oneline \
+		--decorate-refs-exclude="HEAD" >actual &&
+	! grep HEAD actual
+'
+
 test_expect_success 'log.decorate config parsing' '
 	git log --oneline --decorate=full >expect.full &&
 	git log --oneline --decorate=short >expect.short &&
