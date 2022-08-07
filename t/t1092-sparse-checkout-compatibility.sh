@@ -937,7 +937,7 @@ test_expect_success 'read-tree --prefix' '
 	test_all_match git read-tree --prefix=deep/deeper1/deepest -u deepest &&
 	test_all_match git status --porcelain=v2 &&
 
-	test_all_match git rm -rf --sparse folder1/ &&
+	run_on_all git rm -rf --sparse folder1/ &&
 	test_all_match git read-tree --prefix=folder1/ -u update-folder1 &&
 	test_all_match git status --porcelain=v2 &&
 
@@ -1899,7 +1899,7 @@ test_expect_success 'rm pathspec inside sparse definition' '
 	test_all_match git status --porcelain=v2
 '
 
-test_expect_failure 'rm pathspec outside sparse definition' '
+test_expect_success 'rm pathspec outside sparse definition' '
 	init_repos &&
 
 	for file in folder1/a folder1/0/1
@@ -1939,7 +1939,7 @@ test_expect_failure 'rm pathspec outside sparse definition' '
 	test_sparse_match git status --porcelain=v2
 '
 
-test_expect_failure 'rm pathspec expands index when necessary' '
+test_expect_success 'rm pathspec expands index when necessary' '
 	init_repos &&
 
 	# in-cone pathspec (do not expand)
@@ -1956,6 +1956,20 @@ test_expect_failure 'rm pathspec expands index when necessary' '
 
 	! ensure_not_expanded rm "**a" &&
 	test_must_be_empty sparse-index-err
+'
+
+test_expect_success 'sparse index is not expanded: rm' '
+	init_repos &&
+
+	ensure_not_expanded rm deep/a &&
+
+	# test in-cone wildcard
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded rm deep/* &&
+
+	# test recursive rm
+	git -C sparse-index reset --hard &&
+	ensure_not_expanded rm -r deep
 '
 
 test_done

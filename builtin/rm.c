@@ -287,6 +287,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (!index_only)
 		setup_work_tree();
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	if (read_cache() < 0)
