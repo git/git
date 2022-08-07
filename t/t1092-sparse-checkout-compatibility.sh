@@ -1365,10 +1365,14 @@ ensure_not_expanded () {
 		shift &&
 		test_must_fail env \
 			GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
-			git -C sparse-index "$@" || return 1
+			git -C sparse-index "$@" \
+			>sparse-index-out \
+			2>sparse-index-error || return 1
 	else
 		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
-			git -C sparse-index "$@" || return 1
+			git -C sparse-index "$@" \
+			>sparse-index-out \
+			2>sparse-index-error || return 1
 	fi &&
 	test_region ! index ensure_full_index trace2.txt
 }
@@ -1933,6 +1937,25 @@ test_expect_failure 'rm pathspec outside sparse definition' '
 	test_cmp folder1-full sparse-checkout-out &&
 	test_cmp folder1-sparse sparse-index-out &&
 	test_sparse_match git status --porcelain=v2
+'
+
+test_expect_failure 'rm pathspec expands index when necessary' '
+	init_repos &&
+
+	# in-cone pathspec (do not expand)
+	ensure_not_expanded rm "deep/deep*" &&
+	test_must_be_empty sparse-index-err &&
+
+	# out-of-cone pathspec (expand)
+	! ensure_not_expanded rm --sparse "folder1/a*" &&
+	test_must_be_empty sparse-index-err &&
+
+	# pathspec that should expand index
+	! ensure_not_expanded rm "*/a" &&
+	test_must_be_empty sparse-index-err &&
+
+	! ensure_not_expanded rm "**a" &&
+	test_must_be_empty sparse-index-err
 '
 
 test_done
