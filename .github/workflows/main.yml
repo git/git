@@ -37,7 +37,7 @@ jobs:
           echo "::set-output name=enabled::$enabled"
       - name: skip if the commit or tree was already tested
         id: skip-if-redundant
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         if: steps.check-ref.outputs.enabled == 'yes'
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
