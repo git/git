@@ -1878,4 +1878,61 @@ test_expect_success 'mv directory from out-of-cone to in-cone' '
 	grep -e "H deep/0/1" actual
 '
 
+test_expect_success 'rm pathspec inside sparse definition' '
+	init_repos &&
+
+	test_all_match git rm deep/a &&
+	test_all_match git status --porcelain=v2 &&
+
+	# test wildcard
+	run_on_all git reset --hard &&
+	test_all_match git rm deep/* &&
+	test_all_match git status --porcelain=v2 &&
+
+	# test recursive rm
+	run_on_all git reset --hard &&
+	test_all_match git rm -r deep &&
+	test_all_match git status --porcelain=v2
+'
+
+test_expect_failure 'rm pathspec outside sparse definition' '
+	init_repos &&
+
+	for file in folder1/a folder1/0/1
+	do
+		test_sparse_match test_must_fail git rm $file &&
+		test_sparse_match test_must_fail git rm --cached $file &&
+		test_sparse_match git rm --sparse $file &&
+		test_sparse_match git status --porcelain=v2
+	done &&
+
+	cat >folder1-full <<-EOF &&
+	rm ${SQ}folder1/0/0/0${SQ}
+	rm ${SQ}folder1/0/1${SQ}
+	rm ${SQ}folder1/a${SQ}
+	EOF
+
+	cat >folder1-sparse <<-EOF &&
+	rm ${SQ}folder1/${SQ}
+	EOF
+
+	# test wildcard
+	run_on_sparse git reset --hard &&
+	run_on_sparse git sparse-checkout reapply &&
+	test_sparse_match test_must_fail git rm folder1/* &&
+	run_on_sparse git rm --sparse folder1/* &&
+	test_cmp folder1-full sparse-checkout-out &&
+	test_cmp folder1-sparse sparse-index-out &&
+	test_sparse_match git status --porcelain=v2 &&
+
+	# test recursive rm
+	run_on_sparse git reset --hard &&
+	run_on_sparse git sparse-checkout reapply &&
+	test_sparse_match test_must_fail git rm --sparse folder1 &&
+	run_on_sparse git rm --sparse -r folder1 &&
+	test_cmp folder1-full sparse-checkout-out &&
+	test_cmp folder1-sparse sparse-index-out &&
+	test_sparse_match git status --porcelain=v2
+'
+
 test_done
