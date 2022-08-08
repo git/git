@@ -695,6 +695,23 @@ test_expect_success 'reset with wildcard pathspec' '
 	test_all_match git ls-files -s -- folder1
 '
 
+test_expect_success 'reset hard with removed sparse dir' '
+	init_repos &&
+
+	run_on_all git rm -r --sparse folder1 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard &&
+	test_all_match git status --porcelain=v2 &&
+
+	cat >expect <<-\EOF &&
+	folder1/
+	EOF
+
+	git -C sparse-index ls-files --sparse folder1 >out &&
+	test_cmp expect out
+'
+
 test_expect_success 'update-index modify outside sparse definition' '
 	init_repos &&
 
