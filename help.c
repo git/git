@@ -38,19 +38,30 @@ static struct category_description main_categories[] = {
 	{ CAT_plumbinginterrogators, N_("Low-level Commands / Interrogators") },
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
+	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
+	{ CAT_developerinterfaces, N_("Developer-facing file file formats, protocols and interfaces") },
 	{ 0, NULL }
 };
 
 static const char *drop_prefix(const char *name, uint32_t category)
 {
 	const char *new_name;
+	const char *prefix;
 
-	if (skip_prefix(name, "git-", &new_name))
+	switch (category) {
+	case CAT_guide:
+	case CAT_userinterfaces:
+	case CAT_developerinterfaces:
+		prefix = "git";
+		break;
+	default:
+		prefix = "git-";
+		break;
+	}
+	if (skip_prefix(name, prefix, &new_name))
 		return new_name;
-	if (category == CAT_guide && skip_prefix(name, "git", &new_name))
-		return new_name;
+
 	return name;
-
 }
 
 static void extract_cmds(struct cmdname_help **p_cmds, uint32_t mask)
@@ -420,6 +431,26 @@ void list_guides_help(void)
 {
 	struct category_description catdesc[] = {
 		{ CAT_guide, N_("The Git concept guides are:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+void list_user_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+void list_developer_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_developerinterfaces, N_("File formats, protocols and other developer interfaces:") },
 		{ 0, NULL }
 	};
 	print_cmd_by_category(catdesc, NULL);
