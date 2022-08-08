@@ -372,6 +372,14 @@ test_expect_success 'deep changes during checkout' '
 	test_all_match git checkout base
 '
 
+test_expect_success 'checkout with modified sparse directory' '
+	init_repos &&
+
+	test_all_match git checkout rename-in-to-out -- . &&
+	test_sparse_match git sparse-checkout reapply &&
+	test_all_match git checkout base
+'
+
 test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
