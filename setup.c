@@ -1138,7 +1138,7 @@ static int safe_directory_cb(const char *key, const char *value, void *d)
  * added, for bare ones their git directory.
  */
 static int ensure_valid_ownership(const char *gitfile,
-				const char *worktree, const char *gitdir)
+				  const char *worktree, const char *gitdir)
 {
 	struct safe_directory_data data = {
 		.path = worktree ? worktree : gitdir
@@ -1271,10 +1271,11 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		strbuf_setlen(dir, offset);
 		if (gitdirenv) {
 			enum discovery_result ret;
+			const char *gitdir_candidate =
+				gitdir_path ? gitdir_path : gitdirenv;
 
-			if (ensure_valid_ownership(gitfile,
-						 dir->buf,
-				 (gitdir_path ? gitdir_path : gitdirenv))) {
+			if (ensure_valid_ownership(gitfile, dir->buf,
+						   gitdir_candidate)) {
 				strbuf_addstr(gitdir, gitdirenv);
 				ret = GIT_DIR_DISCOVERED;
 			} else
