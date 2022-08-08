@@ -1138,16 +1138,17 @@ static int safe_directory_cb(const char *key, const char *value, void *d)
  * added, for bare ones their git directory.
  */
 static int ensure_valid_ownership(const char *gitfile,
-				  const char *worktree, const char *gitdir)
+				  const char *worktree, const char *gitdir,
+				  struct strbuf *report)
 {
 	struct safe_directory_data data = {
 		.path = worktree ? worktree : gitdir
 	};
 
 	if (!git_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
-	   (!gitfile || is_path_owned_by_current_user(gitfile)) &&
-	   (!worktree || is_path_owned_by_current_user(worktree)) &&
-	   (!gitdir || is_path_owned_by_current_user(gitdir)))
+	    (!gitfile || is_path_owned_by_current_user(gitfile, report)) &&
+	    (!worktree || is_path_owned_by_current_user(worktree, report)) &&
+	    (!gitdir || is_path_owned_by_current_user(gitdir, report)))
 		return 1;
 
 	/*
@@ -1187,6 +1188,7 @@ enum discovery_result {
  */
 static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 							  struct strbuf *gitdir,
+							  struct strbuf *report,
 							  int die_on_error)
 {
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
@@ -1275,7 +1277,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 				gitdir_path ? gitdir_path : gitdirenv;
 
 			if (ensure_valid_ownership(gitfile, dir->buf,
-						   gitdir_candidate)) {
+						   gitdir_candidate, report)) {
 				strbuf_addstr(gitdir, gitdirenv);
 				ret = GIT_DIR_DISCOVERED;
 			} else
@@ -1298,7 +1300,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		}
 
 		if (is_git_directory(dir->buf)) {
-			if (!ensure_valid_ownership(NULL, NULL, dir->buf))
+			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))
 				return GIT_DIR_INVALID_OWNERSHIP;
 			strbuf_addstr(gitdir, ".");
 			return GIT_DIR_BARE;
@@ -1331,7 +1333,7 @@ int discover_git_directory(struct strbuf *commondir,
 		return -1;
 
 	cwd_len = dir.len;
-	if (setup_git_directory_gently_1(&dir, gitdir, 0) <= 0) {
+	if (setup_git_directory_gently_1(&dir, gitdir, NULL, 0) <= 0) {
 		strbuf_release(&dir);
 		return -1;
 	}
@@ -1378,7 +1380,7 @@ int discover_git_directory(struct strbuf *commondir,
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static struct strbuf cwd = STRBUF_INIT;
-	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT;
+	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT, report = STRBUF_INIT;
 	const char *prefix = NULL;
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 
@@ -1403,7 +1405,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die_errno(_("Unable to read current working directory"));
 	strbuf_addbuf(&dir, &cwd);
 
-	switch (setup_git_directory_gently_1(&dir, &gitdir, 1)) {
+	switch (setup_git_directory_gently_1(&dir, &gitdir, &report, 1)) {
 	case GIT_DIR_EXPLICIT:
 		prefix = setup_explicit_git_dir(gitdir.buf, &cwd, &repo_fmt, nongit_ok);
 		break;
@@ -1435,12 +1437,14 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		if (!nongit_ok) {
 			struct strbuf quoted = STRBUF_INIT;
 
+			strbuf_complete(&report, '\n');
 			sq_quote_buf_pretty(&quoted, dir.buf);
 			die(_("detected dubious ownership in repository at '%s'\n"
+			      "%s"
 			      "To add an exception for this directory, call:\n"
 			      "\n"
 			      "\tgit config --global --add safe.directory %s"),
-			    dir.buf, quoted.buf);
+			    dir.buf, report.buf, quoted.buf);
 		}
 		*nongit_ok = 1;
 		break;
@@ -1519,6 +1523,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	strbuf_release(&dir);
 	strbuf_release(&gitdir);
+	strbuf_release(&report);
 	clear_repository_format(&repo_fmt);
 
 	return prefix;

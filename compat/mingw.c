@@ -2673,7 +2673,7 @@ static PSID get_current_user_sid(void)
 	return result;
 }
 
-int is_path_owned_by_current_sid(const char *path)
+int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 {
 	WCHAR wpath[MAX_PATH];
 	PSID sid = NULL;
