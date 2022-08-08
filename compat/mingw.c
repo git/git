@@ -2674,6 +2674,21 @@ static PSID get_current_user_sid(void)
 	return result;
 }
 
+static int acls_supported(const char *path)
+{
+	size_t offset = offset_1st_component(path);
+	WCHAR wroot[MAX_PATH];
+	DWORD file_system_flags;
+
+	if (offset &&
+	    xutftowcsn(wroot, path, MAX_PATH, offset) > 0 &&
+	    GetVolumeInformationW(wroot, NULL, 0, NULL, NULL,
+				  &file_system_flags, NULL, 0))
+		return !!(file_system_flags & FILE_PERSISTENT_ACLS);
+
+	return 0;
+}
+
 int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 {
 	WCHAR wpath[MAX_PATH];
@@ -2721,7 +2736,15 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
 			result = 1;
-		else if (report) {
+		else if (report &&
+			 IsWellKnownSid(sid, WinWorldSid) &&
+			 !acls_supported(path)) {
+			/*
+			 * On FAT32 volumes, ownership is not actually recorded.
+			 */
+			strbuf_addf(report, "'%s' is on a file system that does"
+				    "not record ownership\n", path);
+		} else if (report) {
 			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
 
 			if (ConvertSidToStringSidA(sid, &str1))
