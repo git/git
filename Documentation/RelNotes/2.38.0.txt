@@ -213,6 +213,26 @@ Fixes since v2.37
    has been removed.
    (merge 75707da4fa jr/gitweb-title-shortening later to maint).
 
+ * Fix build procedure for Windows that uses CMake so that it can pick
+   up the shell interpreter from local installation location.
+   (merge 476e54b1c6 ca/unignore-local-installation-on-windows later to maint).
+
+ * Conditionally allow building Python interpreter on Windows
+   (merge 2f0623aaa7 js/mingw-with-python later to maint).
+
+ * Fix to lstat() emulation on Windows.
+   (merge 82ba1191ff js/lstat-mingw-enotdir-fix later to maint).
+
+ * Older gcc with -Wall complains about the universal zero initializer
+   "struct s = { 0 };" idiom, which makes developers' lives
+   inconvenient (as -Werror is enabled by DEVELOPER=YesPlease).  The
+   build procedure has been tweaked to help these compilers.
+   (merge b53a5f2416 jk/struct-zero-init-with-older-gcc later to maint).
+
+ * Plug memory leaks in the failure code path in the "merge-ort" merge
+   strategy backend.
+   (merge 1250dff32b js/ort-clean-up-after-failed-merge later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a700395eaf ma/t4200-update later to maint).
    (merge ce5f07983d mt/pkt-line-comment-tweak later to maint).
