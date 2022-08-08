@@ -620,6 +620,11 @@ int index_name_pos(struct index_state *istate, const char *name, int namelen)
 	return index_name_stage_pos(istate, name, namelen, 0, EXPAND_SPARSE);
 }
 
+int index_name_pos_sparse(struct index_state *istate, const char *name, int namelen)
+{
+	return index_name_stage_pos(istate, name, namelen, 0, NO_EXPAND_SPARSE);
+}
+
 int index_entry_exists(struct index_state *istate, const char *name, int namelen)
 {
 	return index_name_stage_pos(istate, name, namelen, 0, NO_EXPAND_SPARSE) >= 0;
