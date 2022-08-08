@@ -372,6 +372,14 @@ test_expect_success 'deep changes during checkout' '
 	test_all_match git checkout base
 '
 
+test_expect_success 'checkout with modified sparse directory' '
+	init_repos &&
+
+	test_all_match git checkout rename-in-to-out -- . &&
+	test_sparse_match git sparse-checkout reapply &&
+	test_all_match git checkout base
+'
+
 test_expect_success 'add outside sparse cone' '
 	init_repos &&
 
@@ -685,6 +693,23 @@ test_expect_success 'reset with wildcard pathspec' '
 	test_sparse_match git reset base -- folder1/\* &&
 	git -C full-checkout reset base -- folder1/\* &&
 	test_all_match git ls-files -s -- folder1
+'
+
+test_expect_success 'reset hard with removed sparse dir' '
+	init_repos &&
+
+	run_on_all git rm -r --sparse folder1 &&
+	test_all_match git status --porcelain=v2 &&
+
+	test_all_match git reset --hard &&
+	test_all_match git status --porcelain=v2 &&
+
+	cat >expect <<-\EOF &&
+	folder1/
+	EOF
+
+	git -C sparse-index ls-files --sparse folder1 >out &&
+	test_cmp expect out
 '
 
 test_expect_success 'update-index modify outside sparse definition' '
