@@ -327,7 +327,8 @@ or `--mirror` is given)
 	Before fetching from the remote, fetch a bundle from the given
 	`<uri>` and unbundle the data into the local repository. The refs
 	in the bundle will be stored under the hidden `refs/bundle/*`
-	namespace.
+	namespace. This option is incompatible with `--depth`,
+	`--shallow-since`, and `--shallow-exclude`.
 
 :git-clone: 1
 include::urls.txt[]

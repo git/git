@@ -937,6 +937,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_no_checkout = 1;
 	}
 
+	if (bundle_uri && deepen)
+		die(_("--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-exclude"));
+
 	repo_name = argv[0];
 
 	path = get_repo_path(repo_name, &is_bundle);
