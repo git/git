@@ -21,7 +21,6 @@ static const char * const builtin_mv_usage[] = {
 };
 
 enum update_mode {
-	BOTH = 0,
 	WORKING_DIRECTORY = (1 << 1),
 	INDEX = (1 << 2),
 	SPARSE = (1 << 3),
