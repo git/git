@@ -290,4 +290,202 @@ test_expect_success 'move sparse file to existing destination with --force and -
 	test_cmp expect sub/file1
 '
 
+test_expect_failure 'move clean path from in-cone to out-of-cone' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	test_must_fail git mv sub/d folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/d" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse sub/d folder1 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_missing sub/d &&
+	test_path_is_missing folder1/d &&
+	git ls-files -t >actual &&
+	! grep "^H sub/d\$" actual &&
+	grep "S folder1/d" actual
+'
+
+test_expect_failure 'move clean path from in-cone to out-of-cone overwrite' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+	echo "sub/file1 overwrite" >sub/file1 &&
+	git add sub/file1 &&
+
+	test_must_fail git mv sub/file1 folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/file1" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	test_must_fail git mv --sparse sub/file1 folder1 2>stderr &&
+	echo "fatal: destination exists in the index, source=sub/file1, destination=folder1/file1" \
+	>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse -f sub/file1 folder1 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_missing sub/file1 &&
+	test_path_is_missing folder1/file1 &&
+	git ls-files -t >actual &&
+	! grep "H sub/file1" actual &&
+	grep "S folder1/file1" actual &&
+
+	# compare file content before move and after move
+	echo "sub/file1 overwrite" >expect &&
+	git ls-files -s -- folder1/file1 | awk "{print \$2}" >oid &&
+	git cat-file blob $(cat oid) >actual &&
+	test_cmp expect actual
+'
+
+# This test is testing the same behavior as the
+# "move clean path from in-cone to out-of-cone overwrite" above.
+# The only difference is the <destination> changes from "folder1" to "folder1/file1"
+test_expect_failure 'move clean path from in-cone to out-of-cone file overwrite' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+	echo "sub/file1 overwrite" >sub/file1 &&
+	git add sub/file1 &&
+
+	test_must_fail git mv sub/file1 folder1/file1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/file1" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	test_must_fail git mv --sparse sub/file1 folder1/file1 2>stderr &&
+	echo "fatal: destination exists in the index, source=sub/file1, destination=folder1/file1" \
+	>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse -f sub/file1 folder1/file1 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_missing sub/file1 &&
+	test_path_is_missing folder1/file1 &&
+	git ls-files -t >actual &&
+	! grep "H sub/file1" actual &&
+	grep "S folder1/file1" actual &&
+
+	# compare file content before move and after move
+	echo "sub/file1 overwrite" >expect &&
+	git ls-files -s -- folder1/file1 | awk "{print \$2}" >oid &&
+	git cat-file blob $(cat oid) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'move directory with one of the files overwrite' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	mkdir -p folder1/dir &&
+	touch folder1/dir/file1 &&
+	git add folder1 &&
+	git sparse-checkout set --cone sub &&
+
+	echo test >sub/dir/file1 &&
+	git add sub/dir/file1 &&
+
+	test_must_fail git mv sub/dir folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/dir/e" >>expect &&
+	echo "folder1/dir/file1" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	test_must_fail git mv --sparse sub/dir folder1 2>stderr &&
+	echo "fatal: destination exists in the index, source=sub/dir/file1, destination=folder1/dir/file1" \
+	>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse -f sub/dir folder1 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_missing sub/dir/file1 &&
+	test_path_is_missing sub/dir/e &&
+	test_path_is_missing folder1/file1 &&
+	git ls-files -t >actual &&
+	! grep "H sub/dir/file1" actual &&
+	! grep "H sub/dir/e" actual &&
+	grep "S folder1/dir/file1" actual &&
+
+	# compare file content before move and after move
+	echo test >expect &&
+	git ls-files -s -- folder1/dir/file1 | awk "{print \$2}" >oid &&
+	git cat-file blob $(cat oid) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'move dirty path from in-cone to out-of-cone' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+	echo "modified" >>sub/d &&
+
+	test_must_fail git mv sub/d folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/d" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse sub/d folder1 2>stderr &&
+
+	test_path_is_missing sub/d &&
+	test_path_is_file folder1/d &&
+	git ls-files -t >actual &&
+	! grep "^H sub/d\$" actual &&
+	grep "H folder1/d" actual
+'
+
+test_expect_failure 'move dir from in-cone to out-of-cone' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+
+	test_must_fail git mv sub/dir folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/dir/e" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse sub/dir folder1 2>stderr &&
+	test_must_be_empty stderr &&
+
+	test_path_is_missing folder1 &&
+	git ls-files -t >actual &&
+	! grep "H sub/dir/e" actual &&
+	grep "S folder1/dir/e" actual
+'
+
+test_expect_failure 'move partially-dirty dir from in-cone to out-of-cone' '
+	test_when_finished "cleanup_sparse_checkout" &&
+	setup_sparse_checkout &&
+	touch sub/dir/e2 sub/dir/e3 &&
+	git add sub/dir/e2 sub/dir/e3 &&
+	echo "modified" >>sub/dir/e2 &&
+	echo "modified" >>sub/dir/e3 &&
+
+	test_must_fail git mv sub/dir folder1 2>stderr &&
+	cat sparse_error_header >expect &&
+	echo "folder1/dir/e" >>expect &&
+	echo "folder1/dir/e2" >>expect &&
+	echo "folder1/dir/e3" >>expect &&
+	cat sparse_hint >>expect &&
+	test_cmp expect stderr &&
+
+	git mv --sparse sub/dir folder1 2>stderr &&
+
+	test_path_is_missing folder1/dir/e &&
+	test_path_is_file folder1/dir/e2 &&
+	test_path_is_file folder1/dir/e3 &&
+	git ls-files -t >actual &&
+	! grep "H sub/dir/e" actual &&
+	! grep "H sub/dir/e2" actual &&
+	! grep "H sub/dir/e3" actual &&
+	grep "S folder1/dir/e" actual &&
+	grep "H folder1/dir/e2" actual &&
+	grep "H folder1/dir/e3" actual
+'
+
 test_done
