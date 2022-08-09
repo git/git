@@ -349,6 +349,111 @@ error conditions:
   should not use bundle URIs for fetch unless the server has explicitly
   recommended it through a `bundle.heuristic` value.
 
+Example Bundle Provider organization
+------------------------------------
+
+The bundle URI feature is intentionally designed to be flexible to
+different ways a bundle provider wants to organize the object data.
+However, it can be helpful to have a complete organization model described
+here so providers can start from that base.
+
+This example organization is a simplified model of what is used by the
+GVFS Cache Servers (see section near the end of this document) which have
+been beneficial in speeding up clones and fetches for very large
+repositories, although using extra software outside of Git.
+
+The bundle provider deploys servers across multiple geographies. Each
+server manages its own bundle set. The server can track a number of Git
+repositories, but provides a bundle list for each based on a pattern. For
+example, when mirroring a repository at `https://<domain>/<org>/<repo>`
+the bundle server could have its bundle list available at
+`https://<server-url>/<domain>/<org>/<repo>`. The origin Git server can
+list all of these servers under the "any" mode:
+
+	[bundle]
+		version = 1
+		mode = any
+
+	[bundle "eastus"]
+		uri = https://eastus.example.com/<domain>/<org>/<repo>
+
+	[bundle "europe"]
+		uri = https://europe.example.com/<domain>/<org>/<repo>
+
+	[bundle "apac"]
+		uri = https://apac.example.com/<domain>/<org>/<repo>
+
+This "list of lists" is static and only changes if a bundle server is
+added or removed.
+
+Each bundle server manages its own set of bundles. The initial bundle list
+contains only a single bundle, containing all of the objects received from
+cloning the repository from the origin server. The list uses the
+`creationToken` heuristic and a `creationToken` is made for the bundle
+based on the server's timestamp.
+
+The bundle server runs regularly-scheduled updates for the bundle list,
+such as once a day. During this task, the server fetches the latest
+contents from the origin server and generates a bundle containing the
+objects reachable from the latest origin refs, but not contained in a
+previously-computed bundle. This bundle is added to the list, with care
+that the `creationToken` is strictly greater than the previous maximum
+`creationToken`.
+
+When the bundle list grows too large, say more than 30 bundles, then the
+oldest "_N_ minus 30" bundles are combined into a single bundle. This
+bundle's `creationToken` is equal to the maximum `creationToken` among the
+merged bundles.
+
+An example bundle list is provided here, although it only has two daily
+bundles and not a full list of 30:
+
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "2022-02-13-1644770820-daily"]
+		uri = https://eastus.example.com/<domain>/<org>/<repo>/2022-02-09-1644770820-daily.bundle
+		creationToken = 1644770820
+
+	[bundle "2022-02-09-1644442601-daily"]
+		uri = https://eastus.example.com/<domain>/<org>/<repo>/2022-02-09-1644442601-daily.bundle
+		creationToken = 1644442601
+
+	[bundle "2022-02-02-1643842562"]
+		uri = https://eastus.example.com/<domain>/<org>/<repo>/2022-02-02-1643842562.bundle
+		creationToken = 1643842562
+
+To avoid storing and serving object data in perpetuity despite becoming
+unreachable in the origin server, this bundle merge can be more careful.
+Instead of taking an absolute union of the old bundles, instead the bundle
+can be created by looking at the newer bundles and ensuring that their
+necessary commits are all available in this merged bundle (or in another
+one of the newer bundles). This allows "expiring" object data that is not
+being used by new commits in this window of time. That data could be
+reintroduced by a later push.
+
+The intention of this data organization has two main goals. First, initial
+clones of the repository become faster by downloading precomputed object
+data from a closer source. Second, `git fetch` commands can be faster,
+especially if the client has not fetched for a few days. However, if a
+client does not fetch for 30 days, then the bundle list organization would
+cause redownloading a large amount of object data.
+
+One way to make this organization more useful to users who fetch frequently
+is to have more frequent bundle creation. For example, bundles could be
+created every hour, and then once a day those "hourly" bundles could be
+merged into a "daily" bundle. The daily bundles are merged into the
+oldest bundle after 30 days.
+
+It is recommened that this bundle strategy is repeated with the `blob:none`
+filter if clients of this repository are expecting to use blobless partial
+clones. This list of blobless bundles stays in the same list as the full
+bundles, but uses the `bundle.<id>.filter` key to separate the two groups.
+For very large repositories, the bundle provider may want to _only_ provide
+blobless bundles.
+
 Implementation Plan
 -------------------
 
