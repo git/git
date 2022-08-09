@@ -125,15 +125,13 @@ static int index_range_of_same_dir(const char *src, int length,
 }
 
 /*
- * Check if an out-of-cone directory should be in the index. Imagine this case
- * that all the files under a directory are marked with 'CE_SKIP_WORKTREE' bit
- * and thus the directory is sparsified.
- *
- * Return 0 if such directory exist (i.e. with any of its contained files not
- * marked with CE_SKIP_WORKTREE, the directory would be present in working tree).
- * Return 1 otherwise.
+ * Given the path of a directory that does not exist on-disk, check whether the
+ * directory contains any entries in the index with the SKIP_WORKTREE flag
+ * enabled.
+ * Return 1 if such index entries exist.
+ * Return 0 otherwise.
  */
-static int check_dir_in_index(const char *name)
+static int empty_dir_has_sparse_contents(const char *name)
 {
 	const char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
@@ -144,14 +142,14 @@ static int check_dir_in_index(const char *name)
 	if (pos < 0) {
 		pos = -pos - 1;
 		if (pos >= the_index.cache_nr)
-			return 1;
+			return 0;
 		ce = active_cache[pos];
 		if (strncmp(with_slash, ce->name, length))
-			return 1;
-		if (ce_skip_worktree(ce))
 			return 0;
+		if (ce_skip_worktree(ce))
+			return 1;
 	}
-	return 1;
+	return 0;
 }
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
@@ -231,7 +229,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			if (pos < 0) {
 				const char *src_w_slash = add_slash(src);
 				if (!path_in_sparse_checkout(src_w_slash, &the_index) &&
-				    !check_dir_in_index(src)) {
+				    empty_dir_has_sparse_contents(src)) {
 					modes[i] |= SKIP_WORKTREE_DIR;
 					goto dir_check;
 				}
