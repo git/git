@@ -376,6 +376,18 @@ dir_check:
 			goto act_on_entry;
 		}
 
+		if (ignore_sparse &&
+		    (dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
+		    index_entry_exists(&the_index, dst, strlen(dst))) {
+			bad = _("destination exists in the index");
+			if (force) {
+				if (verbose)
+					warning(_("overwriting '%s'"), dst);
+				bad = NULL;
+			} else {
+				goto act_on_entry;
+			}
+		}
 		/*
 		 * We check if the paths are in the sparse-checkout
 		 * definition as a very final check, since that

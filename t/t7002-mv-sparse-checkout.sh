@@ -323,7 +323,7 @@ test_expect_success 'move clean path from in-cone to out-of-cone' '
 	grep "S folder1/d" actual
 '
 
-test_expect_failure 'move clean path from in-cone to out-of-cone overwrite' '
+test_expect_success 'move clean path from in-cone to out-of-cone overwrite' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
 	echo "sub/file1 overwrite" >sub/file1 &&
@@ -359,7 +359,7 @@ test_expect_failure 'move clean path from in-cone to out-of-cone overwrite' '
 # This test is testing the same behavior as the
 # "move clean path from in-cone to out-of-cone overwrite" above.
 # The only difference is the <destination> changes from "folder1" to "folder1/file1"
-test_expect_failure 'move clean path from in-cone to out-of-cone file overwrite' '
+test_expect_success 'move clean path from in-cone to out-of-cone file overwrite' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
 	echo "sub/file1 overwrite" >sub/file1 &&
@@ -392,7 +392,7 @@ test_expect_failure 'move clean path from in-cone to out-of-cone file overwrite'
 	test_cmp expect actual
 '
 
-test_expect_failure 'move directory with one of the files overwrite' '
+test_expect_success 'move directory with one of the files overwrite' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	mkdir -p folder1/dir &&
 	touch folder1/dir/file1 &&
