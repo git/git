@@ -442,6 +442,7 @@ test_expect_success 'move dirty path from in-cone to out-of-cone' '
 test_expect_success 'move dir from in-cone to out-of-cone' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
+	mkdir sub/dir/deep &&
 
 	test_must_fail git mv sub/dir folder1 2>stderr &&
 	cat sparse_error_header >expect &&
@@ -452,6 +453,7 @@ test_expect_success 'move dir from in-cone to out-of-cone' '
 	git mv --sparse sub/dir folder1 2>stderr &&
 	test_must_be_empty stderr &&
 
+	test_path_is_missing sub/dir &&
 	test_path_is_missing folder1 &&
 	git ls-files -t >actual &&
 	! grep "H sub/dir/e" actual &&
@@ -461,6 +463,7 @@ test_expect_success 'move dir from in-cone to out-of-cone' '
 test_expect_success 'move partially-dirty dir from in-cone to out-of-cone' '
 	test_when_finished "cleanup_sparse_checkout" &&
 	setup_sparse_checkout &&
+	mkdir sub/dir/deep &&
 	touch sub/dir/e2 sub/dir/e3 &&
 	git add sub/dir/e2 sub/dir/e3 &&
 	echo "modified" >>sub/dir/e2 &&
@@ -476,6 +479,7 @@ test_expect_success 'move partially-dirty dir from in-cone to out-of-cone' '
 
 	git mv --sparse sub/dir folder1 2>stderr &&
 
+	test_path_is_missing sub/dir &&
 	test_path_is_missing folder1/dir/e &&
 	test_path_is_file folder1/dir/e2 &&
 	test_path_is_file folder1/dir/e3 &&

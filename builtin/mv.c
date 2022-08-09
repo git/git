@@ -171,6 +171,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	};
 	const char **source, **destination, **dest_path, **submodule_gitfile;
 	const char *dst_w_slash;
+	const char **src_dir = NULL;
+	int src_dir_nr = 0, src_dir_alloc = 0;
+	struct strbuf a_src_dir = STRBUF_INIT;
 	enum update_mode *modes, dst_mode = 0;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
@@ -313,6 +316,10 @@ dir_check:
 
 			/* last - first >= 1 */
 			modes[i] |= WORKING_DIRECTORY;
+
+			ALLOC_GROW(src_dir, src_dir_nr + 1, src_dir_alloc);
+			src_dir[src_dir_nr++] = src;
+
 			n = argc + last - first;
 			REALLOC_ARRAY(source, n);
 			REALLOC_ARRAY(destination, n);
@@ -504,6 +511,26 @@ remove_entry:
 			}
 		}
 	}
+
+	/*
+	 * cleanup the empty src_dirs
+	 */
+	for (i = 0; i < src_dir_nr; i++) {
+		int dummy;
+		strbuf_addstr(&a_src_dir, src_dir[i]);
+		/*
+		 * if entries under a_src_dir are all moved away,
+		 * recursively remove a_src_dir to cleanup
+		 */
+		if (index_range_of_same_dir(a_src_dir.buf, a_src_dir.len,
+					    &dummy, &dummy) < 1) {
+			remove_dir_recursively(&a_src_dir, 0);
+		}
+		strbuf_reset(&a_src_dir);
+	}
+
+	strbuf_release(&a_src_dir);
+	free(src_dir);
 
 	if (gitmodules_modified)
 		stage_updated_gitmodules(&the_index);
