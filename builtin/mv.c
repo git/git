@@ -133,6 +133,7 @@ static int index_range_of_same_dir(const char *src, int length,
  */
 static int empty_dir_has_sparse_contents(const char *name)
 {
+	int ret = 0;
 	const char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
 
@@ -142,14 +143,18 @@ static int empty_dir_has_sparse_contents(const char *name)
 	if (pos < 0) {
 		pos = -pos - 1;
 		if (pos >= the_index.cache_nr)
-			return 0;
+			goto free_return;
 		ce = active_cache[pos];
 		if (strncmp(with_slash, ce->name, length))
-			return 0;
+			goto free_return;
 		if (ce_skip_worktree(ce))
-			return 1;
+			ret = 1;
 	}
-	return 0;
+
+free_return:
+	if (with_slash != name)
+		free((char *)with_slash);
+	return ret;
 }
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
