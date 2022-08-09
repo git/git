@@ -566,6 +566,14 @@ test_expect_success MINGW 'MSYSTEM/PATH is adjusted if necessary' '
 		pretend/mingw64/libexec/git-core pretend/usr/bin &&
 	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/bin/ &&
 	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/libexec/git-core/ &&
+	# copy the .dll files, if any (happens when building via CMake)
+	case "$GIT_EXEC_PATH"/*.dll in
+	*/"*.dll") ;; # no `.dll` files to be copied
+	*)
+		cp "$GIT_EXEC_PATH"/*.dll pretend/mingw64/bin/ &&
+		cp "$GIT_EXEC_PATH"/*.dll pretend/mingw64/libexec/git-core/
+		;;
+	esac &&
 	echo "env | grep MSYSTEM=" | write_script "$HOME"/bin/git-test-home &&
 	echo "echo mingw64" | write_script pretend/mingw64/bin/git-test-bin &&
 	echo "echo usr" | write_script pretend/usr/bin/git-test-bin2 &&
