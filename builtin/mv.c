@@ -532,6 +532,9 @@ remove_entry:
 	strbuf_release(&a_src_dir);
 	free(src_dir);
 
+	if (dirty_paths.nr)
+		advise_on_moving_dirty_path(&dirty_paths);
+
 	if (gitmodules_modified)
 		stage_updated_gitmodules(&the_index);
 

@@ -28,10 +28,23 @@ test_expect_success 'setup' "
 	updated in the index:
 	EOF
 
-	cat >sparse_hint <<-EOF
+	cat >sparse_hint <<-EOF &&
 	hint: If you intend to update such entries, try one of the following:
 	hint: * Use the --sparse option.
 	hint: * Disable or modify the sparsity rules.
+	hint: Disable this message with \"git config advice.updateSparsePath false\"
+	EOF
+
+	cat >dirty_error_header <<-EOF &&
+	The following paths have been moved outside the
+	sparse-checkout definition but are not sparse due to local
+	modifications.
+	EOF
+
+	cat >dirty_hint <<-EOF
+	hint: To correct the sparsity of these paths, do the following:
+	hint: * Use \"git add --sparse <paths>\" to update the index
+	hint: * Use \"git sparse-checkout reapply\" to apply the sparsity rules
 	hint: Disable this message with \"git config advice.updateSparsePath false\"
 	EOF
 "
@@ -431,6 +444,10 @@ test_expect_success 'move dirty path from in-cone to out-of-cone' '
 	test_cmp expect stderr &&
 
 	git mv --sparse sub/d folder1 2>stderr &&
+	cat dirty_error_header >expect &&
+	echo "folder1/d" >>expect &&
+	cat dirty_hint >>expect &&
+	test_cmp expect stderr &&
 
 	test_path_is_missing sub/d &&
 	test_path_is_file folder1/d &&
@@ -478,6 +495,11 @@ test_expect_success 'move partially-dirty dir from in-cone to out-of-cone' '
 	test_cmp expect stderr &&
 
 	git mv --sparse sub/dir folder1 2>stderr &&
+	cat dirty_error_header >expect &&
+	echo "folder1/dir/e2" >>expect &&
+	echo "folder1/dir/e3" >>expect &&
+	cat dirty_hint >>expect &&
+	test_cmp expect stderr &&
 
 	test_path_is_missing sub/dir &&
 	test_path_is_missing folder1/dir/e &&
