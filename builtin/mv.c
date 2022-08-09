@@ -171,12 +171,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	};
 	const char **source, **destination, **dest_path, **submodule_gitfile;
 	const char *dst_w_slash;
-	enum update_mode *modes;
+	enum update_mode *modes, dst_mode = 0;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 	struct lock_file lock_file = LOCK_INIT;
 	struct cache_entry *ce;
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
+	struct string_list dirty_paths = STRING_LIST_INIT_NODUP;
 
 	git_config(git_default_config, NULL);
 
@@ -213,10 +214,21 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (!path_in_sparse_checkout(dst_w_slash, &the_index) &&
 		    empty_dir_has_sparse_contents(dst_w_slash)) {
 			destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
+			dst_mode = SKIP_WORKTREE_DIR;
 		} else if (argc != 1) {
 			die(_("destination '%s' is not a directory"), dest_path[0]);
 		} else {
 			destination = dest_path;
+			/*
+			 * <destination> is a file outside of sparse-checkout
+			 * cone. Insist on cone mode here for backward
+			 * compatibility. We don't want dst_mode to be assigned
+			 * for a file when the repo is using no-cone mode (which
+			 * is deprecated at this point) sparse-checkout. As
+			 * SPARSE here is only considering cone-mode situation.
+			 */
+			if (!path_in_cone_mode_sparse_checkout(destination[0], &the_index))
+				dst_mode = SPARSE;
 		}
 	}
 	if (dst_w_slash != dest_path[0]) {
@@ -410,6 +422,7 @@ remove_entry:
 		const char *src = source[i], *dst = destination[i];
 		enum update_mode mode = modes[i];
 		int pos;
+		int sparse_and_dirty = 0;
 		struct checkout state = CHECKOUT_INIT;
 		state.istate = &the_index;
 
@@ -420,6 +433,7 @@ remove_entry:
 		if (show_only)
 			continue;
 		if (!(mode & (INDEX | SPARSE | SKIP_WORKTREE_DIR)) &&
+		    !(dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
 		    rename(src, dst) < 0) {
 			if (ignore_errors)
 				continue;
@@ -439,17 +453,55 @@ remove_entry:
 
 		pos = cache_name_pos(src, strlen(src));
 		assert(pos >= 0);
+		if (!(mode & SPARSE) && !lstat(src, &st))
+			sparse_and_dirty = ce_modified(active_cache[pos], &st, 0);
 		rename_cache_entry_at(pos, dst);
 
-		if ((mode & SPARSE) &&
-		    (path_in_sparse_checkout(dst, &the_index))) {
-			int dst_pos;
+		if (ignore_sparse &&
+		    core_apply_sparse_checkout &&
+		    core_sparse_checkout_cone) {
+			/*
+			 * NEEDSWORK: we are *not* paying attention to
+			 * "out-to-out" move (<source> is out-of-cone and
+			 * <destination> is out-of-cone) at this point. It
+			 * should be added in a future patch.
+			 */
+			if ((mode & SPARSE) &&
+			    path_in_sparse_checkout(dst, &the_index)) {
+				/* from out-of-cone to in-cone */
+				int dst_pos = cache_name_pos(dst, strlen(dst));
+				struct cache_entry *dst_ce = active_cache[dst_pos];
 
-			dst_pos = cache_name_pos(dst, strlen(dst));
-			active_cache[dst_pos]->ce_flags &= ~CE_SKIP_WORKTREE;
+				dst_ce->ce_flags &= ~CE_SKIP_WORKTREE;
 
-			if (checkout_entry(active_cache[dst_pos], &state, NULL, NULL))
-				die(_("cannot checkout %s"), active_cache[dst_pos]->name);
+				if (checkout_entry(dst_ce, &state, NULL, NULL))
+					die(_("cannot checkout %s"), dst_ce->name);
+			} else if ((dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
+				   !(mode & SPARSE) &&
+				   !path_in_sparse_checkout(dst, &the_index)) {
+				/* from in-cone to out-of-cone */
+				int dst_pos = cache_name_pos(dst, strlen(dst));
+				struct cache_entry *dst_ce = active_cache[dst_pos];
+
+				/*
+				 * if src is clean, it will suffice to remove it
+				 */
+				if (!sparse_and_dirty) {
+					dst_ce->ce_flags |= CE_SKIP_WORKTREE;
+					unlink_or_warn(src);
+				} else {
+					/*
+					 * if src is dirty, move it to the
+					 * destination and create leading
+					 * dirs if necessary
+					 */
+					char *dst_dup = xstrdup(dst);
+					string_list_append(&dirty_paths, dst);
+					safe_create_leading_directories(dst_dup);
+					FREE_AND_NULL(dst_dup);
+					rename(src, dst);
+				}
+			}
 		}
 	}
 
@@ -461,6 +513,7 @@ remove_entry:
 		die(_("Unable to write new index file"));
 
 	string_list_clear(&src_for_dst, 0);
+	string_list_clear(&dirty_paths, 0);
 	UNLEAK(source);
 	UNLEAK(dest_path);
 	free(submodule_gitfile);
