@@ -171,6 +171,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 	const char **source, **destination, **dest_path, **submodule_gitfile;
+	const char *dst_w_slash;
 	enum update_mode *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
@@ -200,6 +201,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (argc == 1 && is_directory(argv[0]) && !is_directory(argv[1]))
 		flags = 0;
 	dest_path = internal_prefix_pathspec(prefix, argv + argc, 1, flags);
+	dst_w_slash = add_slash(dest_path[0]);
 	submodule_gitfile = xcalloc(argc, sizeof(char *));
 
 	if (dest_path[0][0] == '\0')
@@ -207,12 +209,20 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		destination = internal_prefix_pathspec(dest_path[0], argv, argc, DUP_BASENAME);
 	else if (!lstat(dest_path[0], &st) &&
 			S_ISDIR(st.st_mode)) {
-		dest_path[0] = add_slash(dest_path[0]);
-		destination = internal_prefix_pathspec(dest_path[0], argv, argc, DUP_BASENAME);
+		destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
 	} else {
-		if (argc != 1)
+		if (!path_in_sparse_checkout(dst_w_slash, &the_index) &&
+		    empty_dir_has_sparse_contents(dst_w_slash)) {
+			destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
+		} else if (argc != 1) {
 			die(_("destination '%s' is not a directory"), dest_path[0]);
-		destination = dest_path;
+		} else {
+			destination = dest_path;
+		}
+	}
+	if (dst_w_slash != dest_path[0]) {
+		free((char *)dst_w_slash);
+		dst_w_slash = NULL;
 	}
 
 	/* Checking */
