@@ -23,10 +23,74 @@ static int find_temp_filename(struct strbuf *name)
 	return 0;
 }
 
-static int copy_uri_to_file(const char *file, const char *uri)
+static int download_https_uri_to_file(const char *file, const char *uri)
 {
-	/* File-based URIs only for now. */
-	return copy_file(file, uri, 0);
+	int result = 0;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	FILE *child_in = NULL, *child_out = NULL;
+	struct strbuf line = STRBUF_INIT;
+	int found_get = 0;
+
+	strvec_pushl(&cp.args, "git-remote-https", uri, NULL);
+	cp.in = -1;
+	cp.out = -1;
+
+	if (start_command(&cp))
+		return 1;
+
+	child_in = fdopen(cp.in, "w");
+	if (!child_in) {
+		result = 1;
+		goto cleanup;
+	}
+
+	child_out = fdopen(cp.out, "r");
+	if (!child_out) {
+		result = 1;
+		goto cleanup;
+	}
+
+	fprintf(child_in, "capabilities\n");
+	fflush(child_in);
+
+	while (!strbuf_getline(&line, child_out)) {
+		if (!line.len)
+			break;
+		if (!strcmp(line.buf, "get"))
+			found_get = 1;
+	}
+	strbuf_release(&line);
+
+	if (!found_get) {
+		result = error(_("insufficient capabilities"));
+		goto cleanup;
+	}
+
+	fprintf(child_in, "get %s %s\n\n", uri, file);
+
+cleanup:
+	if (child_in)
+		fclose(child_in);
+	if (finish_command(&cp))
+		return 1;
+	if (child_out)
+		fclose(child_out);
+	return result;
+}
+
+static int copy_uri_to_file(const char *filename, const char *uri)
+{
+	const char *out;
+
+	if (starts_with(uri, "https:") ||
+	    starts_with(uri, "http:"))
+		return download_https_uri_to_file(filename, uri);
+
+	if (skip_prefix(uri, "file://", &out))
+		uri = out;
+
+	/* Copy as a file */
+	return copy_file(filename, uri, 0);
 }
 
 static int unbundle_from_file(struct repository *r, const char *file)
