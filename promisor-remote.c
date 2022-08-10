@@ -265,3 +265,46 @@ int promisor_remote_get_direct(struct repository *repo,
 
 	return res;
 }
+
+int promisor_remote_verify(struct repository *repo,
+			   struct oidset *to_verify)
+{
+	struct promisor_remote *pr;
+	struct oidset_iter iter;
+	struct object_id *oid;
+	static struct oid_array object_info_oids = OID_ARRAY_INIT;
+
+	oidset_iter_init(to_verify, &iter);
+
+	promisor_remote_init(repo);
+
+	for (pr = repo->promisor_remote_config->promisors; pr; pr = pr->next) {
+		struct remote *r = remote_get(pr->name);
+		struct transport *transport = transport_get(r, NULL);
+		struct string_list object_info_options = STRING_LIST_INIT_NODUP;
+		static struct object_info *remote_object_info;
+		int i;
+
+		remote_object_info = xcalloc(object_info_oids.nr, sizeof(struct object_info));
+
+		while ((oid = oidset_iter_next(&iter)))
+			oid_array_append(&object_info_oids, oid);
+
+		transport->smart_options->object_info = 1;
+		transport->smart_options->allow_missing_objects = 1;
+		transport->smart_options->object_info_oids = &object_info_oids;
+		transport->smart_options->object_info_options = &object_info_options;
+		transport->smart_options->object_info_data = &remote_object_info;
+
+		if (transport_fetch_refs(transport, NULL))
+			die(_("promisor-remote: unable to verify objects"));
+
+		for (i = 0 ; i < object_info_oids.nr ; i++) {
+			if (&remote_object_info[i]) {
+				oidset_remove(to_verify, &object_info_oids.oid[i]);
+			}
+		}
+	}
+
+	return oidset_size(to_verify);
+}

@@ -2,6 +2,7 @@
 #define PROMISOR_REMOTE_H
 
 #include "repository.h"
+#include "oidset.h"
 
 struct object_id;
 
@@ -47,5 +48,7 @@ static inline int has_promisor_remote(void)
 int promisor_remote_get_direct(struct repository *repo,
 			       const struct object_id *oids,
 			       int oid_nr);
+int promisor_remote_verify(struct repository *repo,
+			   struct oidset *to_verify);
 
 #endif /* PROMISOR_REMOTE_H */
