@@ -65,6 +65,7 @@ struct git_transport_options {
 	struct oid_array *object_info_oids;
 	struct object_info **object_info_data;
 	struct string_list *object_info_options;
+	int allow_missing_objects;
 };
 
 enum transport_family {
