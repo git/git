@@ -4042,9 +4042,21 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list(revs,
-			     show_commit, fn_show_object,
-			     NULL);
+
+	if (revs->verify_excluded_objects){
+		struct oidset omitted = OIDSET_INIT;
+
+		traverse_commit_list_filtered(revs,
+		     show_commit, fn_show_object,
+		     NULL, &omitted);
+
+		if (promisor_remote_verify(the_repository, &omitted))
+			die(_("excluded objects not found on promisor remotes"));
+	} else {
+		traverse_commit_list(revs,
+		     show_commit, fn_show_object,
+		     NULL);
+	}
 
 	if (unpack_unreachable_expiration) {
 		revs->ignore_missing_links = 1;
