@@ -23,6 +23,9 @@
 #include <crtdbg.h>
 #endif
 
+struct strbuf;
+
+
 #define _FILE_OFFSET_BITS 64
 
 
@@ -487,7 +490,7 @@ static inline void extract_id_from_env(const char *env, uid_t *id)
 	}
 }
 
-static inline int is_path_owned_by_current_uid(const char *path)
+static inline int is_path_owned_by_current_uid(const char *path, struct strbuf *report)
 {
 	struct stat st;
 	uid_t euid;
