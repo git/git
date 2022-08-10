@@ -353,7 +353,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 	return refs;
 }
 
-static int fetch_object_info(struct transport *transport, struct object_info **object_info_data)
+static int fetch_object_info(struct transport *transport, struct object_info **object_info_data, int allow_missing)
 {
 	size_t i;
 	int size_index = -1;
@@ -414,14 +414,20 @@ static int fetch_object_info(struct transport *transport, struct object_info **o
 		struct string_list object_info_values = STRING_LIST_INIT_DUP;
 
 		string_list_split(&object_info_values, reader.line, ' ', -1);
-		if (0 <= size_index) {
-			if (!strcmp(object_info_values.items[1 + size_index].string, ""))
+
+		if (object_info_values.items[0].string[0] == '?') {
+			if (allow_missing)
+				object_info_data[i] = NULL;
+			else
 				die("object-info: not our ref %s",
 					object_info_values.items[0].string);
+		} else if (0 <= size_index) {
 			*(*object_info_data)[i].sizep = strtoul(object_info_values.items[1 + size_index].string, NULL, 10);
 		}
+
 		i++;
 	}
+
 	check_stateless_delimiter(transport->stateless_rpc, &reader, "stateless delimiter expected");
 
 	return 0;
@@ -473,7 +479,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	if (transport->smart_options && transport->smart_options->object_info) {
 		struct ref *ref = object_info_refs;
 
-		if (!fetch_object_info(transport, data->options.object_info_data))
+		if (!fetch_object_info(transport, data->options.object_info_data, data->options.allow_missing_objects))
 			goto cleanup;
 		args.object_info_data = data->options.object_info_data;
 		args.quiet = 1;
