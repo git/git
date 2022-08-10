@@ -19,7 +19,7 @@ rebase.autoStash::
 	successful rebase might result in non-trivial conflicts.
 	This option can be overridden by the `--no-autostash` and
 	`--autostash` options of linkgit:git-rebase[1].
-	Defaults to false.
+	Defaults to true.
 
 rebase.updateRefs::
 	If set to true enable `--update-refs` option by default.
