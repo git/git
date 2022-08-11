@@ -985,4 +985,9 @@ test_expect_success '"status" after file replacement should be clean with UC=fal
 	status_is_clean
 '
 
+test_expect_success 'empty repo (no index) and core.untrackedCache' '
+	git init emptyrepo &&
+	git -C emptyrepo -c core.untrackedCache=true write-tree
+'
+
 test_done
