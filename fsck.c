@@ -308,7 +308,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		return -1;
 
 	name = fsck_get_object_name(options, &tree->object.oid);
-	if (init_tree_desc_gently(&desc, tree->buffer, tree->size))
+	if (init_tree_desc_gently(&desc, tree->buffer, tree->size, 0))
 		return -1;
 	while (tree_entry_gently(&desc, &entry)) {
 		struct object *obj;
@@ -578,7 +578,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 	const char *o_name;
 	struct name_stack df_dup_candidates = { NULL };
 
-	if (init_tree_desc_gently(&desc, buffer, size)) {
+	if (init_tree_desc_gently(&desc, buffer, size, TREE_DESC_RAW_MODES)) {
 		retval += report(options, tree_oid, OBJ_TREE,
 				 FSCK_MSG_BAD_TREE,
 				 "cannot be parsed as a tree");
