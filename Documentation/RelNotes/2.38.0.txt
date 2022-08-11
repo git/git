@@ -151,11 +151,9 @@ Fixes since v2.37
 
  * The resolve-undo information in the index was not protected against
    GC, which has been corrected.
-   (merge e0ad13977a jc/resolve-undo later to maint).
 
  * A corner case bug where lazily fetching objects from a promisor
    remote resulted in infinite recursion has been corrected.
-   (merge cb88b37cb9 hx/lookup-commit-in-graph-fix later to maint).
 
  * "git clone" from a repository with some ref whose HEAD is unborn
    did not set the HEAD in the resulting repository correctly, which
@@ -186,27 +184,21 @@ Fixes since v2.37
 
  * "git p4" working on UTF-16 files on Windows did not implement
    CRLF-to-LF conversion correctly, which has been corrected.
-   (merge 4d35f74421 mb/p4-utf16-crlf later to maint).
 
  * "git p4" did not handle non-ASCII client name well, which has been
    corrected.
-   (merge d205483695 kk/p4-client-name-encoding-fix later to maint).
 
  * "rerere-train" script (in contrib/) used to honor commit.gpgSign
    while recreating the throw-away merges.
-   (merge cc391fc886 cl/rerere-train-with-no-sign later to maint).
 
  * "git checkout" miscounted the paths it updated, which has been
    corrected.
-   (merge 611c7785e8 mt/checkout-count-fix later to maint).
 
  * Fix for a bug that makes write-tree to fail to write out a
    non-existent index as a tree, introduced in 2.37.
-   (merge 4447d4129d tk/untracked-cache-with-uall later to maint).
 
  * There was a bug in the codepath to upgrade generation information
    in commit-graph from v1 to v2 format, which has been corrected.
-   (merge 9550f6c16a tb/commit-graph-genv2-upgrade-fix later to maint).
 
  * Gitweb had legacy URL shortener that is specific to the way
    projects hosted on kernel.org used to (but no longer) work, which
@@ -234,6 +226,3 @@ Fixes since v2.37
    (merge 1250dff32b js/ort-clean-up-after-failed-merge later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge a700395eaf ma/t4200-update later to maint).
-   (merge ce5f07983d mt/pkt-line-comment-tweak later to maint).
-   (merge 1e11fab59c jc/string-list-cleanup later to maint).

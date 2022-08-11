@@ -61,4 +61,28 @@ Fixes since v2.37.1
 
  * Workaround for a false positive compiler warning.
 
+ * The resolve-undo information in the index was not protected against
+   GC, which has been corrected.
+
+ * A corner case bug where lazily fetching objects from a promisor
+   remote resulted in infinite recursion has been corrected.
+
+ * "git p4" working on UTF-16 files on Windows did not implement
+   CRLF-to-LF conversion correctly, which has been corrected.
+
+ * "git p4" did not handle non-ASCII client name well, which has been
+   corrected.
+
+ * "rerere-train" script (in contrib/) used to honor commit.gpgSign
+   while recreating the throw-away merges.
+
+ * "git checkout" miscounted the paths it updated, which has been
+   corrected.
+
+ * Fix for a bug that makes write-tree to fail to write out a
+   non-existent index as a tree, introduced in 2.37.
+
+ * There was a bug in the codepath to upgrade generation information
+   in commit-graph from v1 to v2 format, which has been corrected.
+
 Also contains minor documentation updates and code clean-ups.
