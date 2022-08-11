@@ -3148,7 +3148,7 @@ class P4Sync(Command, P4UserMap):
                     raise e
             else:
                 if p4_version_string().find('/NT') >= 0:
-                    text = text.replace(b'\r\n', b'\n')
+                    text = text.replace(b'\x0d\x00\x0a\x00', b'\x0a\x00')
                 contents = [text]
 
         if type_base == "apple":
