@@ -1,20 +1,26 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #03; Mon, 8)
-X-master-at: c50926e1f48891e2671e1830dbcd2912a4563450
-X-next-at: c1821dd516c3fe71ff8009bcb7fca5764e49a4b9
+Subject: What's cooking in git.git (Aug 2022, #04; Thu, 11)
+X-master-at: 5502f77b6944eda8e26813d8f542cffe7d110aea
+X-next-at: 219fe53025fdf5c3fb79d289a36eb2cad3f38a04
 
-What's cooking in git.git (Aug 2022, #03; Mon, 8)
+What's cooking in git.git (Aug 2022, #04; Thu, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
-topic is stable enough to be used and are candidate to be in a
-future release).  Commits prefixed with '-' are only in 'seen',
-and aren't considered "accepted" at all.
+topic is stable enough to be used and are candidate to be in a future
+release).  Commits prefixed with '-' are only in 'seen', and aren't
+considered "accepted" at all.  A topic without enough support may be
+discarded after a long period of no activity.
 
-A handful of topics have graduated to the 'master' track, and half a
-dozen topics are now in 'next' to cook.  We are starting the week #5
-of a 12-week cycle (cf. https://tinyurl.com/gitCal).
+A maintenance release, Git 2.37.2, has been tagged.  There wasn't
+any reason why it had to be done on this day, and there isn't any
+security-sensitive fixes in there, but as we have accumulated a few
+fixes on the 'master' front, it was a good time to flush them down
+to the maintenance track.  Those who are running 'master' or better
+have been running with all these fixes for more than a week and do
+not have to worry about it.  We are in the week #5 of a 12-week
+cycle (cf. https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -45,76 +51,71 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ca/unignore-local-installation-on-windows (2022-07-27) 1 commit
-  (merged to 'next' on 2022-08-01 at 1d4f4c32a6)
- + cmake: support local installations of git
-
- Fix build procedure for Windows that uses CMake so that it can pick
- up the shell interpreter from local installation location.
- source: <pull.1304.git.1658912756815.gitgitgadget@gmail.com>
-
-
-* jk/struct-zero-init-with-older-gcc (2022-07-31) 1 commit
-  (merged to 'next' on 2022-08-01 at cde4f95964)
- + config.mak.dev: squelch -Wno-missing-braces for older gcc
-
- Older gcc with -Wall complains about the universal zero initializer
- "struct s = { 0 };" idiom, which makes developers' lives
- inconvenient (as -Werror is enabled by DEVELOPER=YesPlease).  The
- build procedure has been tweaked to help these compilers.
- source: <YuQ60ZUPBHAVETD7@coredump.intra.peff.net>
-
-
-* js/lstat-mingw-enotdir-fix (2022-07-29) 1 commit
-  (merged to 'next' on 2022-08-01 at 10499943b7)
- + lstat(mingw): correctly detect ENOTDIR scenarios
-
- Fix to lstat() emulation on Windows.
- source: <pull.1291.v3.git.1659089152877.gitgitgadget@gmail.com>
-
-
-* js/mingw-with-python (2022-07-29) 3 commits
-  (merged to 'next' on 2022-08-01 at 73b8f06182)
- + mingw: remove unneeded `NO_CURL` directive
- + mingw: remove unneeded `NO_GETTEXT` directive
- + windows: include the Python bits when building Git for Windows
-
- Conditionally allow building Python interpreter on Windows
- source: <pull.1306.v2.git.1659109272.gitgitgadget@gmail.com>
-
-
-* js/ort-clean-up-after-failed-merge (2022-07-31) 2 commits
-  (merged to 'next' on 2022-08-01 at 0c9f02f3ec)
- + merge-ort: do leave trace2 region even if checkout fails
- + merge-ort: clean up after failed merge
-
- Plug memory leaks in the failure code path in the "merge-ort" merge
- strategy backend.
- source: <pull.1307.v2.git.1659114727.gitgitgadget@gmail.com>
-
-
-* js/t5351-freebsd-fix (2022-07-29) 2 commits
-  (merged to 'next' on 2022-08-01 at b47609e891)
- + t5351: avoid using `test_cmp` for binary data
- + t5351: avoid relying on `core.fsyncMethod = batch` to be supported
-
- Some tests assumed that core.fsyncMethod=batch is supported
- everywhere, which broke FreeBSD.
- source: <pull.1308.git.1659097724.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* sy/mv-into-cone (2022-08-05) 9 commits
+* fc/vimdiff-layout-vimdiff3-fix (2022-08-10) 7 commits
+  (merged to 'next' on 2022-08-11 at a14fec292f)
+ + mergetools: vimdiff: simplify tabfirst
+ + mergetools: vimdiff: fix single window layouts
+ + mergetools: vimdiff: rework tab logic
+ + mergetools: vimdiff: fix for diffopt
+ + mergetools: vimdiff: silence annoying messages
+ + mergetools: vimdiff: make vimdiff3 actually work
+ + mergetools: vimdiff: fix comment
+
+ "vimdiff3" regression fix.
+
+ Will merge to 'master'.
+ source: <20220810154618.307275-1-felipe.contreras@gmail.com>
+
+
+* jk/fsck-tree-mode-bits-fix (2022-08-10) 3 commits
+  (merged to 'next' on 2022-08-11 at 219fe53025)
+ + fsck: downgrade tree badFilemode to "info"
+ + fsck: actually detect bad file modes in trees
+ + tree-walk: add a mechanism for getting non-canonicalized modes
+
+ "git fsck" reads mode from tree objects but canonicalizes the mode
+ before passing it to the logic to check object sanity, which has
+ hid broken tree objects from the checking logic.  This has been
+ corrected, but to help exiting projects with broken tree objects
+ that they cannot fix retroactively, the severity of anomalies this
+ code detects has been demoted to "info" for now.
+
+ Will merge to 'master'.
+ source: <YvQcNpizy9uOZiAz@coredump.intra.peff.net>
+
+
+* ag/merge-strategies-in-c (2022-08-10) 14 commits
+ - sequencer: use the "octopus" strategy without forking
+ - sequencer: use the "resolve" strategy without forking
+ - merge: use the "octopus" strategy without forking
+ - merge: use the "resolve" strategy without forking
+ - merge-octopus: rewrite in C
+ - merge-recursive: move better_branch_name() to merge.c
+ - merge-resolve: rewrite in C
+ - merge-one-file: rewrite in C
+ - update-index: move add_cacheinfo() to read-cache.c
+ - merge-index: add a new way to invoke `git-merge-one-file'
+ - merge-index: drop the index
+ - merge-index: libify merge_one_path() and merge_all()
+ - t6060: add tests for removed files
+ - t6060: modify multiple files to expose a possible issue with merge-index
+
+ An attempt to rewrite remaining merge strategies from shell to C.
+ source: <20220809185429.20098-1-alban.gruin@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* sy/mv-out-of-cone (2022-08-10) 9 commits
  - mv: check overwrite for in-to-out move
  - advice.h: add advise_on_moving_dirty_path()
  - mv: cleanup empty WORKING_DIRECTORY
  - mv: from in-cone to out-of-cone
  - mv: remove BOTH from enum update_mode
  - mv: check if <destination> is a SKIP_WORKTREE_DIR
- - mv: free the *with_slash in check_dir_in_index()
+ - mv: free the with_slash in check_dir_in_index()
  - mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
  - t7002: add tests for moving from in-cone to out-of-cone
 
@@ -123,18 +124,7 @@ Release tarballs are available at:
  that is "out of cone".  Handling of such a case has been improved.
 
  Will merge to 'next'?
- source: <20220805030528.1535376-1-shaoxuan.yuan02@gmail.com>
-
-
-* fr/vimdiff-layout-colors-fix (2022-08-07) 3 commits
- - mergetools: vimdiff: update unit tests
- - mergetools: vimdiff: fix single tab mode, single window mode and colors
- - mergetools: vimdiff: fix comment
-
- "vimdiff3" regression fix.
-
- Will merge to 'next'?
- source: <20220808053459.184367-1-greenfoo@u92.eu>
+ source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
 
 
 * sy/sparse-rm (2022-08-08) 5 commits
@@ -150,36 +140,6 @@ Release tarballs are available at:
  Will merge to 'next'?
  source: <20220807041335.1790658-1-shaoxuan.yuan02@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* tk/apply-case-insensitive (2022-06-21) 3 commits
- - apply: support case-only renames in case-insensitive filesystems
- - reset: new failing test for reset of case-insensitive duplicate in index
- - t4141: test "git apply" with core.ignorecase
-
- "git apply" barfed on a patch that makes a case-only rename on a
- case-insensitive filesystem.
-
- Needs review.
- source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
-
-
-* bc/stash-export (2022-04-08) 4 commits
- - builtin/stash: provide a way to import stashes from a ref
- - builtin/stash: provide a way to export stashes to a ref
- - builtin/stash: factor out revision parsing into a function
- - object-name: make get_oid quietly return an error
-
- A mechanism to export and import stash entries to and from a normal
- commit to transfer it across repositories has been introduced.
-
- Expecting a reroll.
- cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
- source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
-
---------------------------------------------------
-[Cooking]
 
 * lt/symbolic-ref-sanity (2022-08-01) 1 commit
   (merged to 'next' on 2022-08-03 at 443647b94a)
@@ -191,12 +151,13 @@ Release tarballs are available at:
  source: <YugYNzQYWqDCmOqN@coredump.intra.peff.net>
 
 
-* vd/scalar-generalize-diagnose (2022-08-03) 10 commits
+* vd/scalar-generalize-diagnose (2022-08-10) 11 commits
  - scalar: update technical doc roadmap
- - scalar-diagnose: use 'git diagnose --all'
+ - scalar-diagnose: use 'git diagnose --mode=all'
  - builtin/bugreport.c: create '--diagnose' option
- - builtin/diagnose.c: gate certain data behind '--all'
+ - builtin/diagnose.c: add '--mode' option
  - builtin/diagnose.c: create 'git diagnose' builtin
+ - diagnose.c: add option to configure archive contents
  - scalar-diagnose: move functionality to common location
  - scalar-diagnose: move 'get_disk_info()' to 'compat/'
  - scalar-diagnose: add directory to archiver more gently
@@ -207,8 +168,8 @@ Release tarballs are available at:
  material has been lifted from "scalar" and made into a feature of
  "git bugreport".
 
- Expecting responses to reviews.
- source: <pull.1310.v2.git.1659577543.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1310.v3.git.1660174473.gitgitgadget@gmail.com>
 
 
 * gc/git-reflog-doc-markup (2022-08-01) 1 commit
@@ -360,7 +321,7 @@ Release tarballs are available at:
  source: <20220725123857.2773963-1-szeder.dev@gmail.com>
 
 
-* ds/bundle-uri-clone (2022-08-02) 5 commits
+* ds/bundle-uri-clone (2022-08-10) 5 commits
  - clone: --bundle-uri cannot be combined with --depth
  - bundle-uri: add support for http(s):// and file://
  - clone: add --bundle-uri option
@@ -368,10 +329,7 @@ Release tarballs are available at:
  - remote-curl: add 'get' capability
 
  Implement "git clone --bundle-uri".
-
- Expecting a reroll.
- cf. <9afd5eb2-44a0-6342-6006-5dbdefba9947@github.com>
- source: <pull.1300.v2.git.1659443384.gitgitgadget@gmail.com>
+ source: <pull.1300.v3.git.1660050703.gitgitgadget@gmail.com>
 
 
 * ds/decorate-filter-tweak (2022-08-05) 11 commits
@@ -563,28 +521,29 @@ Release tarballs are available at:
 
 
 * js/safe-directory-plus (2022-08-08) 5 commits
- - mingw: handle a file owned by the Administrators group correctly
- - mingw: be more informative when ownership check fails on FAT32
- - mingw: provide details about unsafe directories' ownership
- - setup: prepare for more detailed "dubious ownership" messages
- - setup: fix some formatting
+  (merged to 'next' on 2022-08-10 at 3d32a87210)
+ + mingw: handle a file owned by the Administrators group correctly
+ + mingw: be more informative when ownership check fails on FAT32
+ + mingw: provide details about unsafe directories' ownership
+ + setup: prepare for more detailed "dubious ownership" messages
+ + setup: fix some formatting
 
  Platform-specific code that determines if a directory is OK to use
  as a repository has been taught to report more details, especially
  on Windows.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1286.v2.git.1659965270.gitgitgadget@gmail.com>
 
 
-* po/doc-add-renormalize (2022-07-09) 1 commit
- - doc add: renormalize is not idempotent for CRCRLF
+* po/doc-add-renormalize (2022-08-10) 1 commit
+  (merged to 'next' on 2022-08-11 at 53851663eb)
+ + doc add: renormalize is not idempotent for CRCRLF
 
  Documentation for "git add --renormalize" has been improved.
 
- Expecting a reroll.
- cf. <dfe0c1ab-33f8-f13e-71ce-1829bb0d2d7f@iee.email>
- source: <d3b8ed97a105ea1d7e656c964b7eee378e11ede6.1657385781.git.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20220810144450.470-2-philipoakley@iee.email>
 
 
 * po/glossary-around-traversal (2022-07-09) 3 commits
@@ -642,14 +601,14 @@ Release tarballs are available at:
  source: <cover.1654552560.git.me@ttaylorr.com>
 
 
-* ds/bundle-uri-more (2022-07-25) 2 commits
+* ds/bundle-uri-more (2022-08-10) 2 commits
  - bundle-uri: add example bundle organization
  - docs: document bundle URI standard
 
- The "bundle URI" topic.
+ The "bundle URI" design gets documented.
 
- Needs review.
- source: <pull.1248.v3.git.1658757188.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1248.v4.git.1660050761.gitgitgadget@gmail.com>
 
 
 * js/bisect-in-c (2022-06-27) 16 commits
@@ -679,36 +638,48 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* ar/send-email-confirm-by-default (2022-04-22) 1 commit
- . send-email: always confirm by default
-
- "git send-email" is changed so that by default it asks for
- confirmation before sending each message out.
-
- Discarded.
- I wanted to like this, and had it in the version of Git I use
- myself for daily work, but the prompting turned out to be somewhat
- distracting.
- source: <20220422083629.1404989-1-hi@alyssa.is>
-
-
-* mt/doc-config (2022-07-14) 3 commits
- . doc: notes: unify configuration variables definitions
- . doc: apply: unify configuration variables definitions
- . doc: grep: unify configuration variables definitions
-
- Unify description of configuration variables used by individual
- commands in the documentation of the commands and the documentation
- of the "git config".
-
- Retracted.
- cf. <20220723134834.9693-1-matheus.bernardino@usp.br>
- source: <cover.1657819649.git.matheus.bernardino@usp.br>
-
-
 * mb/doc-rerere-autoupdate (2022-07-15) 1 commit
  . cherry-pick doc: clarify no-rerere-autoupdate still allows rerere
 
  Clarifies that the "--no-rerere-autoupdate" option does not disable
  the "rerere" mechanism (nor does "--rerere-autoupdate" enable it).
+
+ Superseded by jc/rerere-autoupdate-doc
  source: <20220715092527.1567837-1-mail@beyermatthias.de>
+
+
+* fr/vimdiff-layout-colors-fix (2022-08-07) 3 commits
+ . mergetools: vimdiff: update unit tests
+ . mergetools: vimdiff: fix single tab mode, single window mode and colors
+ . mergetools: vimdiff: fix comment
+
+ "vimdiff3" regression fix.
+
+ Superseded by fc/vimdiff-layout-vimdiff3-fix
+ source: <20220808053459.184367-1-greenfoo@u92.eu>
+
+
+* tk/apply-case-insensitive (2022-06-21) 3 commits
+ . apply: support case-only renames in case-insensitive filesystems
+ . reset: new failing test for reset of case-insensitive duplicate in index
+ . t4141: test "git apply" with core.ignorecase
+
+ "git apply" barfed on a patch that makes a case-only rename on a
+ case-insensitive filesystem.
+
+ In stalled state for too long.
+ source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
+
+
+* bc/stash-export (2022-04-08) 4 commits
+ . builtin/stash: provide a way to import stashes from a ref
+ . builtin/stash: provide a way to export stashes to a ref
+ . builtin/stash: factor out revision parsing into a function
+ . object-name: make get_oid quietly return an error
+
+ A mechanism to export and import stash entries to and from a normal
+ commit to transfer it across repositories has been introduced.
+
+ In stalled state for too long.
+ cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
+ source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
