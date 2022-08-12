@@ -2784,6 +2784,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			const char *arg = argv[i];
 			if (strcmp(arg, "--"))
 				continue;
+			if (opt && opt->free_removed_argv_elements)
+				free((char *)argv[i]);
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])

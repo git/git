@@ -6,6 +6,7 @@
 test_description='Try various core-level commands in subdirectory.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 

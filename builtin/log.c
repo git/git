@@ -668,10 +668,10 @@ static void show_setup_revisions_tweak(struct rev_info *rev,
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	struct object_array_entry *objects;
+	unsigned int i;
 	struct setup_revision_opt opt;
 	struct pathspec match_all;
-	int i, count, ret = 0;
+	int ret = 0;
 
 	init_log_defaults();
 	git_config(git_log_config, NULL);
@@ -698,12 +698,10 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	if (!rev.no_walk)
 		return cmd_log_deinit(cmd_log_walk(&rev), &rev);
 
-	count = rev.pending.nr;
-	objects = rev.pending.objects;
 	rev.diffopt.no_free = 1;
-	for (i = 0; i < count && !ret; i++) {
-		struct object *o = objects[i].item;
-		const char *name = objects[i].name;
+	for (i = 0; i < rev.pending.nr && !ret; i++) {
+		struct object *o = rev.pending.objects[i].item;
+		const char *name = rev.pending.objects[i].name;
 		switch (o->type) {
 		case OBJ_BLOB:
 			ret = show_blob_object(&o->oid, &rev, name);
@@ -726,7 +724,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (!o)
 				ret = error(_("could not read object %s"),
 					    oid_to_hex(oid));
-			objects[i].item = o;
+			rev.pending.objects[i].item = o;
 			i--;
 			break;
 		}
@@ -743,11 +741,24 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			rev.shown_one = 1;
 			break;
 		case OBJ_COMMIT:
-			rev.pending.nr = rev.pending.alloc = 0;
-			rev.pending.objects = NULL;
+		{
+			struct object_array old;
+			struct object_array blank = OBJECT_ARRAY_INIT;
+
+			memcpy(&old, &rev.pending, sizeof(old));
+			memcpy(&rev.pending, &blank, sizeof(rev.pending));
+
 			add_object_array(o, name, &rev.pending);
 			ret = cmd_log_walk_no_free(&rev);
+
+			/*
+			 * No need for
+			 * object_array_clear(&pending). It was
+			 * cleared already in prepare_revision_walk()
+			 */
+			memcpy(&rev.pending, &old, sizeof(rev.pending));
 			break;
+		}
 		default:
 			ret = error(_("unknown type: %d"), o->type);
 		}
