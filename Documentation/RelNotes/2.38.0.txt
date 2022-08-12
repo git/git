@@ -225,4 +225,8 @@ Fixes since v2.37
    strategy backend.
    (merge 1250dff32b js/ort-clean-up-after-failed-merge later to maint).
 
+ * "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
+   (merge 04ede97211 lt/symbolic-ref-sanity later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge 94955d576b gc/git-reflog-doc-markup later to maint).
