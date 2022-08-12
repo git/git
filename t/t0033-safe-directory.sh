@@ -2,6 +2,7 @@
 
 test_description='verify safe.directory checks'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_TEST_ASSUME_DIFFERENT_OWNER=1

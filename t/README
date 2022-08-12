@@ -366,12 +366,47 @@ excluded as so much relies on it, but this might change in the future.
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by git-config.
 
-GIT_TEST_PASSING_SANITIZE_LEAK=<boolean> when compiled with
-SANITIZE=leak will run only those tests that have whitelisted
-themselves as passing with no memory leaks. Tests can be whitelisted
-by setting "TEST_PASSES_SANITIZE_LEAK=true" before sourcing
-"test-lib.sh" itself at the top of the test script. This test mode is
-used by the "linux-leaks" CI target.
+GIT_TEST_PASSING_SANITIZE_LEAK=true skips those tests that haven't
+declared themselves as leak-free by setting
+"TEST_PASSES_SANITIZE_LEAK=true" before sourcing "test-lib.sh". This
+test mode is used by the "linux-leaks" CI target.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=check checks that our
+"TEST_PASSES_SANITIZE_LEAK=true" markings are current. Rather than
+skipping those tests that haven't set "TEST_PASSES_SANITIZE_LEAK=true"
+before sourcing "test-lib.sh" this mode runs them with
+"--invert-exit-code". This is used to check that there's a one-to-one
+mapping between "TEST_PASSES_SANITIZE_LEAK=true" and those tests that
+pass under "SANITIZE=leak". This is especially useful when testing a
+series that fixes various memory leaks with "git rebase -x".
+
+GIT_TEST_SANITIZE_LEAK_LOG=true will log memory leaks to
+"test-results/$TEST_NAME.leak/trace.*" files. The logs include a
+"dedup_token" (see +"ASAN_OPTIONS=help=1 ./git") and other options to
+make logs +machine-readable.
+
+With GIT_TEST_SANITIZE_LEAK_LOG=true we'll look at the leak logs
+before exiting and exit on failure if the logs showed that we had a
+memory leak, even if the test itself would have otherwise passed. This
+allows us to catch e.g. missing &&-chaining. This is especially useful
+when combined with "GIT_TEST_PASSING_SANITIZE_LEAK", see below.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
+will run to completion faster, and result in the same failing
+tests. The only practical reason to run
+GIT_TEST_PASSING_SANITIZE_LEAK=check without "--immediate" is to
+combine it with "GIT_TEST_SANITIZE_LEAK_LOG=true". If we stop at the
+first failing test case our leak logs won't show subsequent leaks we
+might have run into.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=(true|check) will not catch all memory
+leaks unless combined with GIT_TEST_SANITIZE_LEAK_LOG=true. Some tests
+run "git" (or "test-tool" etc.) without properly checking the exit
+code, or git will invoke itself and fail to ferry the abort() exit
+code to the original caller. When the two modes are combined we'll
+look at the "test-results/$TEST_NAME.leak/trace.*" files at the end of
+the test run to see if had memory leaks which the test itself didn't
+catch.
 
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
@@ -934,32 +969,6 @@ see test-lib-functions.sh for the full list and their options.
 	    skip_all='skipping perl interface tests, perl not available'
 	    test_done
 	fi
-
- - test_external [<prereq>] <message> <external> <script>
-
-   Execute a <script> with an <external> interpreter (like perl). This
-   was added for tests like t9700-perl-git.sh which do most of their
-   work in an external test script.
-
-	test_external \
-	    'GitwebCache::*FileCache*' \
-	    perl "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
-
-   If the test is outputting its own TAP you should set the
-   test_external_has_tap variable somewhere before calling the first
-   test_external* function. See t9700-perl-git.sh for an example.
-
-	# The external test will outputs its own plan
-	test_external_has_tap=1
-
- - test_external_without_stderr [<prereq>] <message> <external> <script>
-
-   Like test_external but fail if there's any output on stderr,
-   instead of checking the exit code.
-
-	test_external_without_stderr \
-	    'Perl API' \
-	    perl "$TEST_DIRECTORY"/t9700/test.pl
 
  - test_expect_code <exit-code> <command>
 
