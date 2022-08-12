@@ -287,6 +287,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (!index_only)
 		setup_work_tree();
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	if (read_cache() < 0)
@@ -296,8 +298,9 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	seen = xcalloc(pathspec.nr, 1);
 
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(&the_index);
+	if (pathspec_needs_expanded_index(&the_index, &pathspec))
+		ensure_full_index(&the_index);
+
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
 
