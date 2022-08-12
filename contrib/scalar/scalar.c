@@ -348,7 +348,7 @@ static int get_disk_info(struct strbuf *out)
 	}
 
 	strbuf_addf(out, "Available space on '%s': ", buf.buf);
-	strbuf_humanise_bytes(out, st_mult(stat.f_bsize, stat.f_bavail));
+	strbuf_humanise_bytes(out, (off_t)stat.f_bsize * (off_t)stat.f_bavail);
 	strbuf_addf(out, " (mount flags 0x%lx)\n", stat.f_flag);
 	strbuf_release(&buf);
 #endif
