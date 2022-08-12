@@ -266,14 +266,20 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 					  const char *path, int recurse)
 {
 	int at_root = !*path;
-	DIR *dir = opendir(at_root ? "." : path);
+	DIR *dir;
 	struct dirent *e;
 	struct strbuf buf = STRBUF_INIT;
 	size_t len;
 	int res = 0;
 
-	if (!dir)
+	dir = opendir(at_root ? "." : path);
+	if (!dir) {
+		if (errno == ENOENT) {
+			warning(_("could not archive missing directory '%s'"), path);
+			return 0;
+		}
 		return error_errno(_("could not open directory '%s'"), path);
+	}
 
 	if (!at_root)
 		strbuf_addf(&buf, "%s/", path);
