@@ -11,7 +11,6 @@
 #include "dir.h"
 #include "packfile.h"
 #include "help.h"
-#include "diagnose.h"
 
 /*
  * Remove the deepest subdirectory in the provided path string. Path must not
@@ -510,34 +509,19 @@ static int cmd_diagnose(int argc, const char **argv)
 		N_("scalar diagnose [<enlistment>]"),
 		NULL
 	};
-	struct strbuf zip_path = STRBUF_INIT;
-	time_t now = time(NULL);
-	struct tm tm;
+	struct strbuf diagnostics_root = STRBUF_INIT;
 	int res = 0;
 
 	argc = parse_options(argc, argv, NULL, options,
 			     usage, 0);
 
-	setup_enlistment_directory(argc, argv, usage, options, &zip_path);
+	setup_enlistment_directory(argc, argv, usage, options, &diagnostics_root);
+	strbuf_addstr(&diagnostics_root, "/.scalarDiagnostics");
 
-	strbuf_addstr(&zip_path, "/.scalarDiagnostics/scalar_");
-	strbuf_addftime(&zip_path,
-			"%Y%m%d_%H%M%S", localtime_r(&now, &tm), 0, 0);
-	strbuf_addstr(&zip_path, ".zip");
-	switch (safe_create_leading_directories(zip_path.buf)) {
-	case SCLD_EXISTS:
-	case SCLD_OK:
-		break;
-	default:
-		error_errno(_("could not create directory for '%s'"),
-			    zip_path.buf);
-		goto diagnose_cleanup;
-	}
+	res = run_git("diagnose", "--mode=all", "-s", "%Y%m%d_%H%M%S",
+		      "-o", diagnostics_root.buf, NULL);
 
-	res = create_diagnostics_archive(&zip_path, DIAGNOSE_ALL);
-
-diagnose_cleanup:
-	strbuf_release(&zip_path);
+	strbuf_release(&diagnostics_root);
 	return res;
 }
 
