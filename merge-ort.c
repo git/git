@@ -387,7 +387,23 @@ struct merge_options_internal {
 
 	/* call_depth: recursion level counter for merging merge bases */
 	int call_depth;
+
+	/* field that holds submodule conflict information */
+	struct string_list conflicted_submodules;
 };
+
+struct conflicted_submodule_item {
+	char *abbrev;
+	int flag;
+};
+
+static void conflicted_submodule_item_free(void *util, const char *str)
+{
+	struct conflicted_submodule_item *item = util;
+
+	free(item->abbrev);
+	free(item);
+}
 
 struct version_info {
 	struct object_id oid;
@@ -517,6 +533,7 @@ enum conflict_and_info_types {
 	CONFLICT_SUBMODULE_NOT_INITIALIZED,
 	CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE,
 	CONFLICT_SUBMODULE_MAY_HAVE_REWINDS,
+	CONFLICT_SUBMODULE_NULL_MERGE_BASE,
 
 	/* Keep this entry _last_ in the list */
 	NB_CONFLICT_TYPES,
@@ -570,6 +587,8 @@ static const char *type_short_descriptions[] = {
 		"CONFLICT (submodule history not available)",
 	[CONFLICT_SUBMODULE_MAY_HAVE_REWINDS] =
 		"CONFLICT (submodule may have rewinds)",
+	[CONFLICT_SUBMODULE_NULL_MERGE_BASE] =
+		"CONFLICT (submodule lacks merge base)"
 };
 
 struct logical_conflict_info {
@@ -685,6 +704,9 @@ static void clear_or_reinit_internal_opts(struct merge_options_internal *opti,
 	}
 
 	mem_pool_discard(&opti->pool, 0);
+
+	string_list_clear_func(&opti->conflicted_submodules,
+					conflicted_submodule_item_free);
 
 	/* Clean out callback_data as well. */
 	FREE_AND_NULL(renames->callback_data);
@@ -1744,24 +1766,32 @@ static int merge_submodule(struct merge_options *opt,
 
 	int i;
 	int search = !opt->priv->call_depth;
+	int sub_not_initialized = 1;
+	int sub_flag = -1;
 
 	/* store fallback answer in result in case we fail */
 	oidcpy(result, opt->priv->call_depth ? o : a);
 
 	/* we can not handle deletion conflicts */
-	if (is_null_oid(o))
-		return 0;
-	if (is_null_oid(a))
-		return 0;
-	if (is_null_oid(b))
-		return 0;
+	if (is_null_oid(a) || is_null_oid(b))
+		BUG("submodule deleted on one side; this should be handled outside of merge_submodule()");
 
-	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
+	if ((sub_not_initialized = repo_submodule_init(&subrepo,
+		opt->repo, path, null_oid()))) {
 		path_msg(opt, CONFLICT_SUBMODULE_NOT_INITIALIZED, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (not checked out)"),
 			 path);
-		return 0;
+		sub_flag = CONFLICT_SUBMODULE_NOT_INITIALIZED;
+		goto cleanup;
+	}
+
+	if (is_null_oid(o)) {
+		path_msg(opt, CONFLICT_SUBMODULE_NULL_MERGE_BASE, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s (no merge base)"),
+			 path);
+		goto cleanup;
 	}
 
 	if (!(commit_o = lookup_commit_reference(&subrepo, o)) ||
@@ -1771,6 +1801,7 @@ static int merge_submodule(struct merge_options *opt,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (commits not present)"),
 			 path);
+		sub_flag = CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE;
 		goto cleanup;
 	}
 
@@ -1849,7 +1880,23 @@ static int merge_submodule(struct merge_options *opt,
 
 	object_array_clear(&merges);
 cleanup:
-	repo_clear(&subrepo);
+	if (!opt->priv->call_depth && !ret) {
+		struct string_list *csub = &opt->priv->conflicted_submodules;
+		struct conflicted_submodule_item *util;
+		const char *abbrev;
+
+		util = xmalloc(sizeof(*util));
+		util->flag = sub_flag;
+		util->abbrev = NULL;
+		if (!sub_not_initialized) {
+			abbrev = repo_find_unique_abbrev(&subrepo, b, DEFAULT_ABBREV);
+			util->abbrev = xstrdup(abbrev);
+		}
+		string_list_append(csub, path)->util = util;
+	}
+
+	if (!sub_not_initialized)
+		repo_clear(&subrepo);
 	return ret;
 }
 
@@ -4434,6 +4481,99 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 	return errs;
 }
 
+static void format_submodule_conflict_suggestion(struct strbuf *msg) {
+	struct strbuf tmp = STRBUF_INIT;
+	struct string_list msg_list = STRING_LIST_INIT_DUP;
+	int i;
+
+	string_list_split(&msg_list, msg->buf, '\n', -1);
+	for (i = 0; i < msg_list.nr; i++) {
+		if (!i)
+			/*
+			 * TRANSLATORS: This is line item of submodule conflict message
+			 * from print_submodule_conflict_suggestion() below. For RTL
+			 * languages, the following swap is suggested:
+			 *      " - %s\n" -> "%s - \n"
+			 */
+			strbuf_addf(&tmp, _(" - %s\n"), msg_list.items[i].string);
+		else
+			/*
+			 * TRANSLATORS: This is line item of submodule conflict message
+			 * from print_submodule_conflict_suggestion() below. For RTL
+			 * languages, the following swap is suggested:
+			 *      "   %s\n" -> "%s   \n"
+			 */
+			strbuf_addf(&tmp, _("   %s\n"), msg_list.items[i].string);
+	}
+	strbuf_reset(msg);
+	strbuf_add(msg, tmp.buf, tmp.len);
+}
+
+static void print_submodule_conflict_suggestion(struct string_list *csub) {
+	struct string_list_item *item;
+	struct strbuf msg = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
+	struct strbuf subs = STRBUF_INIT;
+
+	if (!csub->nr)
+		return;
+
+	/*
+	 * NEEDSWORK: The steps to resolve these errors deserve a more
+	 * detailed explanation than what is currently printed below.
+	 */
+	for_each_string_list_item(item, csub) {
+		struct conflicted_submodule_item *util = item->util;
+
+		if (util->flag == CONFLICT_SUBMODULE_NOT_INITIALIZED ||
+			util->flag == CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE)
+			return;
+	}
+
+	printf(_("Recursive merging with submodules currently only supports "
+		"trivial cases.\nPlease manually handle the merging of each "
+		"conflicted submodule.\nThis can be accomplished with the following "
+		"steps:"));
+	putchar('\n');
+
+	for_each_string_list_item(item, csub) {
+		struct conflicted_submodule_item *util = item->util;
+		/*
+		 * TRANSLATORS: This is a line of advice to resolve a merge conflict
+		 * in a submodule. The second argument is the abbreviated id of the
+		 * commit that needs to be merged.
+		 * E.g. - go to submodule (sub), and either merge commit abc1234"
+		 */
+		strbuf_addf(&tmp, _("go to submodule (%s), and either merge commit %s\n"
+			"or update to an existing commit which has merged those changes"),
+			item->string, util->abbrev);
+		format_submodule_conflict_suggestion(&tmp);
+		strbuf_add(&msg, tmp.buf, tmp.len);
+		strbuf_reset(&tmp);
+	}
+	strbuf_add_separated_string_list(&subs, " ", csub);
+	strbuf_addstr(&tmp, _("come back to superproject and run:"));
+	strbuf_addf(&tmp, "\n\ngit add %s\n\n", subs.buf);
+	strbuf_addstr(&tmp, _("to record the above merge or update"));
+	format_submodule_conflict_suggestion(&tmp);
+	strbuf_add(&msg, tmp.buf, tmp.len);
+	strbuf_reset(&tmp);
+
+	strbuf_addstr(&tmp, _("resolve any other conflicts in the superproject"));
+	format_submodule_conflict_suggestion(&tmp);
+	strbuf_add(&msg, tmp.buf, tmp.len);
+	strbuf_reset(&tmp);
+
+	strbuf_addstr(&tmp, _("commit the resulting index in the superproject"));
+	format_submodule_conflict_suggestion(&tmp);
+	strbuf_add(&msg, tmp.buf, tmp.len);
+
+	printf("%s", msg.buf);
+	strbuf_release(&subs);
+	strbuf_release(&tmp);
+	strbuf_release(&msg);
+}
+
 void merge_display_update_messages(struct merge_options *opt,
 				   int detailed,
 				   struct merge_result *result)
@@ -4482,6 +4622,8 @@ void merge_display_update_messages(struct merge_options *opt,
 		}
 	}
 	string_list_clear(&olist, 0);
+
+	print_submodule_conflict_suggestion(&opti->conflicted_submodules);
 
 	/* Also include needed rename limit adjustment now */
 	diff_warn_rename_limit("merge.renamelimit",
@@ -4684,6 +4826,7 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	trace2_region_enter("merge", "allocate/init", opt->repo);
 	if (opt->priv) {
 		clear_or_reinit_internal_opts(opt->priv, 1);
+		string_list_init_nodup(&opt->priv->conflicted_submodules);
 		trace2_region_leave("merge", "allocate/init", opt->repo);
 		return;
 	}
