@@ -26,7 +26,35 @@ test_expect_success UNZIP 'creates diagnostics zip archive' '
 
 	# Should not include .git directory contents by default
 	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
-	grep "^Total: [0-9][0-9]*" out
+'
+
+test_expect_success UNZIP '--mode=stats excludes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git diagnose -o report -s test --mode=stats >out &&
+
+	# Includes pack quantity/size info
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	# Does not include .git directory contents
+	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
+'
+
+test_expect_success UNZIP '--mode=all includes .git dir contents' '
+	test_when_finished rm -rf report &&
+
+	git diagnose -o report -s test --mode=all >out &&
+
+	# Includes pack quantity/size info
+	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
+	grep ".git/objects" out &&
+
+	# Includes .git directory contents
+	"$GIT_UNZIP" -l "$zip_path" | grep ".git/" &&
+
+	"$GIT_UNZIP" -p "$zip_path" .git/HEAD >out &&
+	test_file_not_empty out
 '
 
 test_done

@@ -13,6 +13,36 @@ struct archive_dir {
 	int recursive;
 };
 
+struct diagnose_option {
+	enum diagnose_mode mode;
+	const char *option_name;
+};
+
+static struct diagnose_option diagnose_options[] = {
+	{ DIAGNOSE_STATS, "stats" },
+	{ DIAGNOSE_ALL, "all" },
+};
+
+int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
+{
+	int i;
+	enum diagnose_mode *diagnose = opt->value;
+
+	if (!arg) {
+		*diagnose = unset ? DIAGNOSE_NONE : DIAGNOSE_STATS;
+		return 0;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(diagnose_options); i++) {
+		if (!strcmp(arg, diagnose_options[i].option_name)) {
+			*diagnose = diagnose_options[i].mode;
+			return 0;
+		}
+	}
+
+	return error(_("invalid --%s value '%s'"), opt->long_name, arg);
+}
+
 static void dir_file_stats_objects(const char *full_path, size_t full_path_len,
 				   const char *file_name, void *data)
 {
