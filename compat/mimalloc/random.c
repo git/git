@@ -185,9 +185,15 @@ static bool os_random_buf(void* buf, size_t buf_len) {
   return (RtlGenRandom(buf, (ULONG)buf_len) != 0);
 }
 #else
-#pragma comment (lib,"bcrypt.lib")
-#include <bcrypt.h>
+#include "compat/win32/lazyload.h"
+#ifndef BCRYPT_USE_SYSTEM_PREFERRED_RNG
+#define BCRYPT_USE_SYSTEM_PREFERRED_RNG 0x00000002
+#endif
+
 static bool os_random_buf(void* buf, size_t buf_len) {
+  DECLARE_PROC_ADDR(bcrypt, LONG, NTAPI, BCryptGenRandom, HANDLE, PUCHAR, ULONG, ULONG);
+  if (!INIT_PROC_ADDR(BCryptGenRandom))
+    return 0;
   return (BCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
 }
 #endif
