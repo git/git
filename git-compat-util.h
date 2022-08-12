@@ -201,7 +201,9 @@ DISABLE_WARNING(-Wsign-compare)
 #define _ALL_SOURCE 1
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE 1
+#endif
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
