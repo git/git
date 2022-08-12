@@ -179,8 +179,15 @@ static void mi_out_stderr(const char* msg, void* arg) {
   if (!_mi_preloading()) {
     // _cputs(msg);  // _cputs cannot be used at is aborts if it fails to lock the console
     static HANDLE hcon = INVALID_HANDLE_VALUE;
+    static int write_to_console;
     if (hcon == INVALID_HANDLE_VALUE) {
+      CONSOLE_SCREEN_BUFFER_INFO sbi;
       hcon = GetStdHandle(STD_ERROR_HANDLE);
+      write_to_console = GetConsoleScreenBufferInfo(hcon, &sbi) ? 1 : 0;
+    }
+    if (!write_to_console) {
+      fputs(msg, stderr);
+      return;
     }
     const size_t len = strlen(msg);
     if (hcon != INVALID_HANDLE_VALUE && len > 0 && len < UINT32_MAX) {
