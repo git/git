@@ -8,6 +8,11 @@
 #include "object-store.h"
 #include "packfile.h"
 
+struct archive_dir {
+	const char *path;
+	int recursive;
+};
+
 static void dir_file_stats_objects(const char *full_path, size_t full_path_len,
 				   const char *file_name, void *data)
 {
@@ -132,13 +137,25 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 	return res;
 }
 
-int create_diagnostics_archive(struct strbuf *zip_path)
+int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 {
 	struct strvec archiver_args = STRVEC_INIT;
 	char **argv_copy = NULL;
 	int stdout_fd = -1, archiver_fd = -1;
 	struct strbuf buf = STRBUF_INIT;
-	int res;
+	int res, i;
+	struct archive_dir archive_dirs[] = {
+		{ ".git", 0 },
+		{ ".git/hooks", 0 },
+		{ ".git/info", 0 },
+		{ ".git/logs", 1 },
+		{ ".git/objects/info", 0 }
+	};
+
+	if (mode == DIAGNOSE_NONE) {
+		res = 0;
+		goto diagnose_cleanup;
+	}
 
 	stdout_fd = dup(STDOUT_FILENO);
 	if (stdout_fd < 0) {
@@ -177,12 +194,18 @@ int create_diagnostics_archive(struct strbuf *zip_path)
 	loose_objs_stats(&buf, ".git/objects");
 	strvec_push(&archiver_args, buf.buf);
 
-	if ((res = add_directory_to_archiver(&archiver_args, ".git", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/hooks", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/info", 0)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/logs", 1)) ||
-	    (res = add_directory_to_archiver(&archiver_args, ".git/objects/info", 0)))
-		goto diagnose_cleanup;
+	/* Only include this if explicitly requested */
+	if (mode == DIAGNOSE_ALL) {
+		for (i = 0; i < ARRAY_SIZE(archive_dirs); i++) {
+			if (add_directory_to_archiver(&archiver_args,
+						      archive_dirs[i].path,
+						      archive_dirs[i].recursive)) {
+				res = error_errno(_("could not add directory '%s' to archiver"),
+						  archive_dirs[i].path);
+				goto diagnose_cleanup;
+			}
+		}
+	}
 
 	strvec_pushl(&archiver_args, "--prefix=",
 		     oid_to_hex(the_hash_algo->empty_tree), "--", NULL);
