@@ -17,7 +17,8 @@ env:
 jobs:
   job:
     runs-on: ubuntu-latest
-    environment: monitor-components
+    permissions:
+      issues: write
     strategy:
       matrix:
         component:
@@ -79,7 +80,7 @@ jobs:
           feed: ${{matrix.component.feed}}
           prefix: "[New ${{matrix.component.label}} version]"
           labels: component-update
-          github-token: ${{ secrets.MONITOR_COMPONENTS_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           character-limit: ${{ env.CHARACTER_LIMIT }}
           max-age: ${{ env.MAX_AGE }}
           aggregate: ${{matrix.component.aggregate}}
