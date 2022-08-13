@@ -12,7 +12,7 @@ on:
 
 env:
   CHARACTER_LIMIT: 5000
-  MAX_AGE: 48h
+  MAX_AGE: 7d
 
 jobs:
   job:
