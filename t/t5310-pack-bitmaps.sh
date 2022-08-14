@@ -258,6 +258,7 @@ test_bitmap_cases () {
 
 	test_expect_success 'truncated bitmap fails gracefully (ewah)' '
 		test_config pack.writebitmaphashcache false &&
+		test_config pack.writebitmaplookuptable false &&
 		git repack -ad &&
 		git rev-list --use-bitmap-index --count --all >expect &&
 		bitmap=$(ls .git/objects/pack/*.bitmap) &&
@@ -270,6 +271,7 @@ test_bitmap_cases () {
 	'
 
 	test_expect_success 'truncated bitmap fails gracefully (cache)' '
+		git config pack.writeBitmapLookupTable '"$writeLookupTable"' &&
 		git repack -ad &&
 		git rev-list --use-bitmap-index --count --all >expect &&
 		bitmap=$(ls .git/objects/pack/*.bitmap) &&
@@ -451,6 +453,26 @@ test_expect_success 'verify writing bitmap lookup table when enabled' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2" \
 		git repack -ad &&
 	grep "\"label\":\"writing_lookup_table\"" trace2
+'
+
+test_expect_success 'lookup table is actually used to traverse objects' '
+	git repack -adb &&
+	GIT_TRACE2_EVENT="$(pwd)/trace3" \
+		git rev-list --use-bitmap-index --count --all &&
+	grep "\"label\":\"reading_lookup_table\"" trace3
+'
+
+test_expect_success 'truncated bitmap fails gracefully (lookup table)' '
+	test_config pack.writebitmaphashcache false &&
+	git repack -adb &&
+	git rev-list --use-bitmap-index --count --all >expect &&
+	bitmap=$(ls .git/objects/pack/*.bitmap) &&
+	test_when_finished "rm -f $bitmap" &&
+	test_copy_bytes 512 <$bitmap >$bitmap.tmp &&
+	mv -f $bitmap.tmp $bitmap &&
+	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_i18ngrep corrupted.bitmap.index stderr
 '
 
 test_done
