@@ -205,7 +205,7 @@ SHA-1 content.
 Object storage
 ~~~~~~~~~~~~~~
 Loose objects use zlib compression and packed objects use the packed
-format described in Documentation/technical/pack-format.txt, just like
+format described in linkgit:gitformat-pack[5], just like
 today. The content that is compressed and stored uses SHA-256 content
 instead of SHA-1 content.
 

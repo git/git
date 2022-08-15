@@ -339,6 +339,23 @@ The following documentation pages are guides about Git concepts.
 
 include::cmds-guide.txt[]
 
+Repository, command and file interfaces
+---------------------------------------
+
+This documentation discusses repository and command interfaces which
+users are expected to interact with directly. See `--user-formats` in
+linkgit:git-help[1] for more details on the critera.
+
+include::cmds-userinterfaces.txt[]
+
+File formats, protocols and other developer interfaces
+------------------------------------------------------
+
+This documentation discusses file formats, over-the-wire protocols and
+other git developer interfaces. See `--developer-interfaces` in
+linkgit:git-help[1].
+
+include::cmds-developerinterfaces.txt[]
 
 Configuration Mechanism
 -----------------------

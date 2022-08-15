@@ -24,10 +24,21 @@ MAN1_TXT += gitweb.txt
 
 # man5 / man7 guides (note: new guides should also be added to command-list.txt)
 MAN5_TXT += gitattributes.txt
+MAN5_TXT += gitformat-bundle.txt
+MAN5_TXT += gitformat-chunk.txt
+MAN5_TXT += gitformat-commit-graph.txt
+MAN5_TXT += gitformat-index.txt
+MAN5_TXT += gitformat-pack.txt
+MAN5_TXT += gitformat-signature.txt
 MAN5_TXT += githooks.txt
 MAN5_TXT += gitignore.txt
 MAN5_TXT += gitmailmap.txt
 MAN5_TXT += gitmodules.txt
+MAN5_TXT += gitprotocol-capabilities.txt
+MAN5_TXT += gitprotocol-common.txt
+MAN5_TXT += gitprotocol-http.txt
+MAN5_TXT += gitprotocol-pack.txt
+MAN5_TXT += gitprotocol-v2.txt
 MAN5_TXT += gitrepository-layout.txt
 MAN5_TXT += gitweb.conf.txt
 
@@ -95,26 +106,16 @@ TECH_DOCS += MyFirstObjectWalk
 TECH_DOCS += SubmittingPatches
 TECH_DOCS += ToolsForGit
 TECH_DOCS += technical/bitmap-format
-TECH_DOCS += technical/bundle-format
-TECH_DOCS += technical/cruft-packs
 TECH_DOCS += technical/hash-function-transition
-TECH_DOCS += technical/http-protocol
-TECH_DOCS += technical/index-format
 TECH_DOCS += technical/long-running-process-protocol
 TECH_DOCS += technical/multi-pack-index
-TECH_DOCS += technical/pack-format
 TECH_DOCS += technical/pack-heuristics
-TECH_DOCS += technical/pack-protocol
 TECH_DOCS += technical/parallel-checkout
 TECH_DOCS += technical/partial-clone
-TECH_DOCS += technical/protocol-capabilities
-TECH_DOCS += technical/protocol-common
-TECH_DOCS += technical/protocol-v2
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/reftable
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
-TECH_DOCS += technical/signature-format
 TECH_DOCS += technical/trivial-merge
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
@@ -290,6 +291,8 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 	cmds-synchingrepositories.txt \
 	cmds-synchelpers.txt \
 	cmds-guide.txt \
+	cmds-developerinterfaces.txt \
+	cmds-userinterfaces.txt \
 	cmds-purehelpers.txt \
 	cmds-foreignscminterface.txt
 

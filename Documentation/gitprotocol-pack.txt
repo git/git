@@ -1,11 +1,23 @@
-Packfile transfer protocols
-===========================
+gitprotocol-pack(5)
+===================
+
+NAME
+----
+gitprotocol-pack - How packs are transferred over-the-wire
+
+SYNOPSIS
+--------
+[verse]
+<over-the-wire-protocol>
+
+DESCRIPTION
+-----------
 
 Git supports transferring data in packfiles over the ssh://, git://, http:// and
 file:// transports.  There exist two sets of protocols, one for pushing
 data from a client to a server and another for fetching data from a
 server to a client.  The three transports (ssh, git, file) use the same
-protocol to transfer data. http is documented in http-protocol.txt.
+protocol to transfer data. http is documented in linkgit:gitprotocol-http[5].
 
 The processes invoked in the canonical Git implementation are 'upload-pack'
 on the server side and 'fetch-pack' on the client side for fetching data;
@@ -18,7 +30,7 @@ pkt-line Format
 ---------------
 
 The descriptions below build on the pkt-line format described in
-protocol-common.txt. When the grammar indicate `PKT-LINE(...)`, unless
+linkgit:gitprotocol-common[5]. When the grammar indicate `PKT-LINE(...)`, unless
 otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
 include a LF, but the receiver MUST NOT complain if it is not present.
 
@@ -60,7 +72,7 @@ Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
 
 Servers that receive any such Extra Parameters MUST ignore all
 unrecognized keys. Currently, the only Extra Parameter recognized is
-"version" with a value of '1' or '2'.  See protocol-v2.txt for more
+"version" with a value of '1' or '2'.  See linkgit:gitprotocol-v2[5] for more
 information on protocol version 2.
 
 Git Transport
@@ -455,7 +467,7 @@ Now that the client and server have finished negotiation about what
 the minimal amount of data that needs to be sent to the client is, the server
 will construct and send the required data in packfile format.
 
-See pack-format.txt for what the packfile itself actually looks like.
+See linkgit:gitformat-pack[5] for what the packfile itself actually looks like.
 
 If 'side-band' or 'side-band-64k' capabilities have been specified by
 the client, the server will send the packfile data multiplexed.
@@ -707,3 +719,7 @@ An example client/server communication might look like this:
    S: 0018ok refs/heads/debug\n
    S: 002ang refs/heads/master non-fast-forward\n
 ----
+
+GIT
+---
+Part of the linkgit:git[1] suite

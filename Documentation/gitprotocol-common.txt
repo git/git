@@ -1,5 +1,20 @@
-Documentation Common to Pack and Http Protocols
-===============================================
+gitprotocol-common(5)
+=====================
+
+NAME
+----
+gitprotocol-common - Things common to various protocols
+
+SYNOPSIS
+--------
+[verse]
+<over-the-wire-protocol>
+
+DESCRIPTION
+-----------
+
+This document sets defines things common to various over-the-wire
+protocols and file formats used in Git.
 
 ABNF Notation
 -------------
@@ -97,3 +112,7 @@ Examples (as C-style strings):
   "000bfoobar\n"    "foobar\n"
   "0004"            ""
 ----
+
+GIT
+---
+Part of the linkgit:git[1] suite

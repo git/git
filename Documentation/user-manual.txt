@@ -3133,7 +3133,7 @@ those "loose" objects.
 You can save space and make Git faster by moving these loose objects in
 to a "pack file", which stores a group of objects in an efficient
 compressed format; the details of how pack files are formatted can be
-found in link:technical/pack-format.html[pack format].
+found in link:gitformat-pack[5].
 
 To put the loose objects into a pack, just run git repack:
 
