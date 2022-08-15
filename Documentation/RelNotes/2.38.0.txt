@@ -228,5 +228,17 @@ Fixes since v2.37
  * "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
    (merge 04ede97211 lt/symbolic-ref-sanity later to maint).
 
+ * A follow-up fix to a fix for a regression in 2.36.
+   (merge 99ddc24672 ab/hooks-regression-fix later to maint).
+
+ * Avoid repeatedly running getconf to ask libc version in the test
+   suite, and instead just as it once per script.
+   (merge a6a58f7801 pw/use-glibc-tunable-for-malloc-optim later to maint).
+
+ * Platform-specific code that determines if a directory is OK to use
+   as a repository has been taught to report more details, especially
+   on Windows.
+   (merge 3f7207e2ea js/safe-directory-plus later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 94955d576b gc/git-reflog-doc-markup later to maint).
