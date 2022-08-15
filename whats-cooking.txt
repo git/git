@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #04; Thu, 11)
-X-master-at: 5502f77b6944eda8e26813d8f542cffe7d110aea
-X-next-at: 219fe53025fdf5c3fb79d289a36eb2cad3f38a04
+Subject: What's cooking in git.git (Aug 2022, #05; Mon, 15)
+X-master-at: 9bf691b78cf906751e65d65ba0c6ffdcd9a5a12c
+X-next-at: c19287026c9b940f7f43d34e6dacbd5c34e4a2e0
 
-What's cooking in git.git (Aug 2022, #04; Thu, 11)
+What's cooking in git.git (Aug 2022, #05; Mon, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,14 +13,8 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-A maintenance release, Git 2.37.2, has been tagged.  There wasn't
-any reason why it had to be done on this day, and there isn't any
-security-sensitive fixes in there, but as we have accumulated a few
-fixes on the 'master' front, it was a good time to flush them down
-to the maintenance track.  Those who are running 'master' or better
-have been running with all these fixes for more than a week and do
-not have to worry about it.  We are in the week #5 of a 12-week
-cycle (cf. https://tinyurl.com/gitCal).
+We are at the beginning of the week #6 of a 12-week cycle (cf.
+https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,7 +45,183 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ab/hooks-regression-fix (2022-08-05) 1 commit
+  (merged to 'next' on 2022-08-08 at f5a3f88983)
+ + hook API: don't segfault on strbuf_addf() to NULL "out"
+
+ A follow-up fix to a fix for a regression in 2.36.
+ source: <patch-1.1-2450e3e65cf-20220805T141402Z-avarab@gmail.com>
+
+
+* ab/leak-check (2022-07-27) 15 commits
+  (merged to 'next' on 2022-08-05 at 2a6b9c8432)
+ + CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
+ + upload-pack: fix a memory leak in create_pack_file()
+ + leak tests: mark passing SANITIZE=leak tests as leak-free
+ + leak tests: don't skip some tests under SANITIZE=leak
+ + test-lib: have the "check" mode for SANITIZE=leak consider leak logs
+ + test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
+ + test-lib: simplify by removing test_external
+ + tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
+ + t/Makefile: don't remove test-results in "clean-except-prove-cache"
+ + test-lib: add a SANITIZE=leak logging mode
+ + t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
+ + test-lib: add a --invert-exit-code switch
+ + test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
+ + test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
+ + test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
+
+ Extend SANITIZE=leak checking and declare more tests "currently leak-free".
+ source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
+
+
+* ab/plug-revisions-leak (2022-08-03) 6 commits
+  (merged to 'next' on 2022-08-05 at d1ca88976f)
+ + revisions API: don't leak memory on argv elements that need free()-ing
+ + bisect.c: partially fix bisect_rev_setup() memory leak
+ + log: refactor "rev.pending" code in cmd_show()
+ + log: fix a memory leak in "git show <revision>..."
+ + test-fast-rebase helper: use release_revisions() (again)
+ + bisect.c: add missing "goto" for release_revisions()
+
+ Plug a bit more leaks in the revisions API.
+ source: <cover-v3-0.6-00000000000-20220802T152925Z-avarab@gmail.com>
+
+
+* ab/tech-docs-to-help (2022-08-04) 12 commits
+  (merged to 'next' on 2022-08-08 at 65c9ec7308)
+ + docs: move http-protocol docs to man section 5
+ + docs: move cruft pack docs to gitformat-pack
+ + docs: move pack format docs to man section 5
+ + docs: move signature docs to man section 5
+ + docs: move index format docs to man section 5
+ + docs: move protocol-related docs to man section 5
+ + docs: move commit-graph format docs to man section 5
+ + git docs: add a category for file formats, protocols and interfaces
+ + git docs: add a category for user-facing file, repo and command UX
+ + git help doc: use "<doc>" instead of "<guide>"
+ + help.c: remove common category behavior from drop_prefix() behavior
+ + help.c: refactor drop_prefix() to use a "switch" statement"
+
+ Expose a lot of "tech docs" via "git help" interface.
+ source: <cover-v8-00.12-00000000000-20220804T162138Z-avarab@gmail.com>
+
+
+* gc/git-reflog-doc-markup (2022-08-01) 1 commit
+  (merged to 'next' on 2022-08-05 at f2d8721ab2)
+ + Documentation/git-reflog: remove unneeded \ from \{
+
+ Doc mark-up fix.
+ source: <pull.1304.git.git.1659387885711.gitgitgadget@gmail.com>
+
+
+* jc/rerere-autoupdate-doc (2022-08-03) 2 commits
+  (merged to 'next' on 2022-08-08 at 6407091d13)
+ + doc: clarify rerere-autoupdate
+ + doc: consolidate --rerere-autoupdate description
+
+ Update documentation on the "--[no-]rerere-autoupdate" option.
+ source: <xmqq35f2ysd9.fsf@gitster.g>
+
+
+* js/safe-directory-plus (2022-08-08) 5 commits
+  (merged to 'next' on 2022-08-10 at 3d32a87210)
+ + mingw: handle a file owned by the Administrators group correctly
+ + mingw: be more informative when ownership check fails on FAT32
+ + mingw: provide details about unsafe directories' ownership
+ + setup: prepare for more detailed "dubious ownership" messages
+ + setup: fix some formatting
+
+ Platform-specific code that determines if a directory is OK to use
+ as a repository has been taught to report more details, especially
+ on Windows.
+ source: <pull.1286.v2.git.1659965270.gitgitgadget@gmail.com>
+
+
+* lt/symbolic-ref-sanity (2022-08-01) 1 commit
+  (merged to 'next' on 2022-08-03 at 443647b94a)
+ + symbolic-ref: refuse to set syntactically invalid target
+
+ "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
+ source: <YugYNzQYWqDCmOqN@coredump.intra.peff.net>
+
+
+* pw/use-glibc-tunable-for-malloc-optim (2022-08-04) 1 commit
+  (merged to 'next' on 2022-08-08 at 1300f84dc4)
+ + tests: cache glibc version check
+
+ Avoid repeatedly running getconf to ask libc version in the test
+ suite, and instead just as it once per script.
+ source: <pull.1311.git.1659620305757.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* ll/disk-usage-humanise (2022-08-11) 1 commit
+  (merged to 'next' on 2022-08-14 at 3873a83f90)
+ + rev-list: support human-readable output for `--disk-usage`
+
+ "git rev-list --disk-usage" learned to take an optional value
+ "human" to show the reported value in human-readable format, like
+ "3.40MiB".
+
+ Will merge to 'master'.
+ source: <pull.1313.v5.git.1660193274336.gitgitgadget@gmail.com>
+
+
+* ed/fsmonitor-on-network-disk (2022-08-11) 1 commit
+  (merged to 'next' on 2022-08-14 at 637d458d9c)
+ + fsmonitor: option to allow fsmonitor to run against network-mounted repos
+
+ The built-in fsmonitor refuses to work on a network mounted
+ repositories; a configuration knob for users to override this has
+ been introduced.
+
+ Will merge to 'master'.
+ source: <pull.1317.v4.git.1660262231357.gitgitgadget@gmail.com>
+
+
+* jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
+ - is_promisor_object(): fix use-after-free of tree buffer
+
+ An earlier optimization discarded a tree-object buffer that is
+ still in use, which has been corrected.
+
+ Will merge to 'next'.
+ source: <YviWO9Bhz5PU1HaL@coredump.intra.peff.net>
+
+
+* js/fetch-negotiation-trace (2022-08-15) 1 commit
+ - fetch-pack: add tracing for negotiation rounds
+
+ The common ancestor negotiation exchange during a "git fetch"
+ session now leaves trace log.
+
+ Will merge to 'next'.
+ source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
+
+
+* pw/rebase-keep-base-fixes (2022-08-15) 5 commits
+ - rebase --keep-base: imply --no-fork-point
+ - rebase --keep-base: imply --reapply-cherry-picks
+ - rebase: factor out merge_base calculation
+ - rebase: store orig_head as a commit
+ - t3416: set $EDITOR in subshell
+
+ "git rebase --keep-base" used to discard the commits that are
+ already cherry-picked to the upstream, even when "keep-base" meant
+ that the base, on top of which the history is being rebuilt, does
+ not yet include these cherry-picked commits.  The --keep-base
+ option now implies --reapply-cherry-picks and --no-fork-point
+ options.
+
+ Needs review.
+ source: <pull.1323.git.1660576283.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * fc/vimdiff-layout-vimdiff3-fix (2022-08-10) 7 commits
   (merged to 'next' on 2022-08-11 at a14fec292f)
@@ -105,8 +275,6 @@ Release tarballs are available at:
  An attempt to rewrite remaining merge strategies from shell to C.
  source: <20220809185429.20098-1-alban.gruin@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * sy/mv-out-of-cone (2022-08-10) 9 commits
  - mv: check overwrite for in-to-out move
@@ -128,30 +296,21 @@ Release tarballs are available at:
 
 
 * sy/sparse-rm (2022-08-08) 5 commits
- - rm: integrate with sparse-index
- - rm: expand the index only when necessary
- - pathspec.h: move pathspec_needs_expanded_index() from reset.c to here
- - t1092: add tests for `git-rm`
- - Merge branch 'vd/sparse-reset-checkout-fixes' into sy/sparse-rm
+  (merged to 'next' on 2022-08-12 at 5bf10965fb)
+ + rm: integrate with sparse-index
+ + rm: expand the index only when necessary
+ + pathspec.h: move pathspec_needs_expanded_index() from reset.c to here
+ + t1092: add tests for `git-rm`
+ + Merge branch 'vd/sparse-reset-checkout-fixes' into sy/sparse-rm
  (this branch uses vd/sparse-reset-checkout-fixes.)
 
  "git rm" has become more aware of the sparse-index feature.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20220807041335.1790658-1-shaoxuan.yuan02@gmail.com>
 
 
-* lt/symbolic-ref-sanity (2022-08-01) 1 commit
-  (merged to 'next' on 2022-08-03 at 443647b94a)
- + symbolic-ref: refuse to set syntactically invalid target
-
- "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
-
- Will merge to 'master'.
- source: <YugYNzQYWqDCmOqN@coredump.intra.peff.net>
-
-
-* vd/scalar-generalize-diagnose (2022-08-10) 11 commits
+* vd/scalar-generalize-diagnose (2022-08-12) 11 commits
  - scalar: update technical doc roadmap
  - scalar-diagnose: use 'git diagnose --mode=all'
  - builtin/bugreport.c: create '--diagnose' option
@@ -169,17 +328,7 @@ Release tarballs are available at:
  "git bugreport".
 
  Will merge to 'next'?
- source: <pull.1310.v3.git.1660174473.gitgitgadget@gmail.com>
-
-
-* gc/git-reflog-doc-markup (2022-08-01) 1 commit
-  (merged to 'next' on 2022-08-05 at f2d8721ab2)
- + Documentation/git-reflog: remove unneeded \ from \{
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <pull.1304.git.git.1659387885711.gitgitgadget@gmail.com>
+ source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
 
 
 * jk/pipe-command-nonblock (2022-08-03) 1 commit
@@ -195,32 +344,6 @@ Release tarballs are available at:
  source: <YunxHOa2sJeEpJxd@coredump.intra.peff.net>
 
 
-* ab/plug-revisions-leak (2022-08-03) 6 commits
-  (merged to 'next' on 2022-08-05 at d1ca88976f)
- + revisions API: don't leak memory on argv elements that need free()-ing
- + bisect.c: partially fix bisect_rev_setup() memory leak
- + log: refactor "rev.pending" code in cmd_show()
- + log: fix a memory leak in "git show <revision>..."
- + test-fast-rebase helper: use release_revisions() (again)
- + bisect.c: add missing "goto" for release_revisions()
-
- Plug a bit more leaks in the revisions API.
-
- Will merge to 'master'.
- source: <cover-v3-0.6-00000000000-20220802T152925Z-avarab@gmail.com>
-
-
-* jc/rerere-autoupdate-doc (2022-08-03) 2 commits
-  (merged to 'next' on 2022-08-08 at 6407091d13)
- + doc: clarify rerere-autoupdate
- + doc: consolidate --rerere-autoupdate description
-
- Update documentation on the "--[no-]rerere-autoupdate" option.
-
- Will merge to 'master'.
- source: <xmqq35f2ysd9.fsf@gitster.g>
-
-
 * es/mark-gc-cruft-as-experimental (2022-08-03) 2 commits
  - config: let feature.experimental imply gc.cruftPacks=true
  - gc: add tests for --cruft and friends
@@ -234,60 +357,19 @@ Release tarballs are available at:
  source: <20220803205721.3686361-1-emilyshaffer@google.com>
 
 
-* pw/use-glibc-tunable-for-malloc-optim (2022-08-04) 1 commit
-  (merged to 'next' on 2022-08-08 at 1300f84dc4)
- + tests: cache glibc version check
-
- Avoid repeatedly running getconf to ask libc version in the test
- suite, and instead just as it once per script.
-
- Will merge to 'master'.
- source: <pull.1311.git.1659620305757.gitgitgadget@gmail.com>
-
-
 * vd/sparse-reset-checkout-fixes (2022-08-08) 4 commits
- - unpack-trees: unpack new trees as sparse directories
- - cache.h: create 'index_name_pos_sparse()'
- - oneway_diff: handle removed sparse directories
- - checkout: fix nested sparse directory diff in sparse index
+  (merged to 'next' on 2022-08-12 at 755d6ecdb8)
+ + unpack-trees: unpack new trees as sparse directories
+ + cache.h: create 'index_name_pos_sparse()'
+ + oneway_diff: handle removed sparse directories
+ + checkout: fix nested sparse directory diff in sparse index
  (this branch is used by sy/sparse-rm.)
 
  Fixes to sparse index compatibility work for "reset" and "checkout"
  commands.
 
- Will merge to 'next'?
- source: <pull.1312.v3.git.1659985672.gitgitgadget@gmail.com>
-
-
-* ab/hooks-regression-fix (2022-08-05) 1 commit
-  (merged to 'next' on 2022-08-08 at f5a3f88983)
- + hook API: don't segfault on strbuf_addf() to NULL "out"
-
- A follow-up fix to a fix for a regression in 2.36.
-
- Will merge to 'master' and then to 'maint'.
- source: <patch-1.1-2450e3e65cf-20220805T141402Z-avarab@gmail.com>
-
-
-* ab/tech-docs-to-help (2022-08-04) 12 commits
-  (merged to 'next' on 2022-08-08 at 65c9ec7308)
- + docs: move http-protocol docs to man section 5
- + docs: move cruft pack docs to gitformat-pack
- + docs: move pack format docs to man section 5
- + docs: move signature docs to man section 5
- + docs: move index format docs to man section 5
- + docs: move protocol-related docs to man section 5
- + docs: move commit-graph format docs to man section 5
- + git docs: add a category for file formats, protocols and interfaces
- + git docs: add a category for user-facing file, repo and command UX
- + git help doc: use "<doc>" instead of "<guide>"
- + help.c: remove common category behavior from drop_prefix() behavior
- + help.c: refactor drop_prefix() to use a "switch" statement"
-
- Expose a lot of "tech docs" via "git help" interface.
-
  Will merge to 'master'.
- source: <cover-v8-00.12-00000000000-20220804T162138Z-avarab@gmail.com>
+ source: <pull.1312.v3.git.1659985672.gitgitgadget@gmail.com>
 
 
 * sg/parse-options-subcommand (2022-07-25) 20 commits
@@ -315,9 +397,8 @@ Release tarballs are available at:
  Introduce the "subcommand" mode to parse-options API and update the
  command line parser of Git commands with subcommands.
 
- Will merge to 'next'?
- There are some nits on how the changes are explained, but nothing major.
- cf. <xmqqa68x5c1i.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <20220812152837.GC3790@szeder.dev>
  source: <20220725123857.2773963-1-szeder.dev@gmail.com>
 
 
@@ -419,7 +500,8 @@ Release tarballs are available at:
  source: <cover-v2-0.9-00000000000-20220729T081959Z-avarab@gmail.com>
 
 
-* cw/remote-object-info (2022-07-28) 6 commits
+* cw/remote-object-info (2022-08-13) 7 commits
+ - SQUASH???
  - cat-file: add remote-object-info to batch-command
  - transport: add client support for object-info
  - serve: advertise object-info feature
@@ -435,31 +517,7 @@ Release tarballs are available at:
  source: <20220728230210.2952731-1-calvinwan@google.com>
 
 
-* ab/leak-check (2022-07-27) 15 commits
-  (merged to 'next' on 2022-08-05 at 2a6b9c8432)
- + CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
- + upload-pack: fix a memory leak in create_pack_file()
- + leak tests: mark passing SANITIZE=leak tests as leak-free
- + leak tests: don't skip some tests under SANITIZE=leak
- + test-lib: have the "check" mode for SANITIZE=leak consider leak logs
- + test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
- + test-lib: simplify by removing test_external
- + tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
- + t/Makefile: don't remove test-results in "clean-except-prove-cache"
- + test-lib: add a SANITIZE=leak logging mode
- + t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
- + test-lib: add a --invert-exit-code switch
- + test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
- + test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
- + test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
-
- Extend SANITIZE=leak checking and declare more tests "currently leak-free".
-
- Will merge to 'master'.
- source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
-
-
-* mt/rot13-in-c (2022-07-31) 4 commits
+* mt/rot13-in-c (2022-08-14) 4 commits
  - tests: use the new C rot13-filter helper to avoid PERL prereq
  - t0021: implementation the rot13-filter.pl script in C
  - t0021: avoid grepping for a Perl-specific string at filter output
@@ -467,20 +525,16 @@ Release tarballs are available at:
 
  Test portability improvements.
 
- Expecting a reroll.
- cf. <CAHd-oW6GLf=4VxAvMy6c9jrGx1zcSHbe_NKbAUg7wvNBPOmEXw@mail.gmail.com>
- source: <cover.1659291025.git.matheus.bernardino@usp.br>
+ Will merge to 'next'?
+ source: <cover.1660522524.git.matheus.bernardino@usp.br>
 
 
-* tl/trace2-config-scope (2022-07-22) 2 commits
+* tl/trace2-config-scope (2022-08-11) 2 commits
  - tr2: shows scope unconditionally in addition to key-value pair
  - api-trace2.txt: print config key-value pair
 
  Tweak trace2 output about configuration variables.
-
- Needs reviewer response
- cf. <20220801122515.23146-1-tenglong.tl@alibaba-inc.com>
- source: <cover.1658472474.git.dyroneteng@gmail.com>
+ source: <cover.1660272404.git.dyroneteng@gmail.com>
 
 
 * ab/submodule-helper-leakfix (2022-08-03) 18 commits
@@ -511,29 +565,14 @@ Release tarballs are available at:
 
 
 * cw/submodule-merge-messages (2022-08-04) 1 commit
- - submodule merge: update conflict error message
+  (merged to 'next' on 2022-08-12 at ede0890319)
+ + submodule merge: update conflict error message
 
  Update the message given when "git merge" sees conflicts at a path
  with a submodule while merging a superproject.
 
- Will merge to 'next'?
- source: <20220804195105.1303455-1-calvinwan@google.com>
-
-
-* js/safe-directory-plus (2022-08-08) 5 commits
-  (merged to 'next' on 2022-08-10 at 3d32a87210)
- + mingw: handle a file owned by the Administrators group correctly
- + mingw: be more informative when ownership check fails on FAT32
- + mingw: provide details about unsafe directories' ownership
- + setup: prepare for more detailed "dubious ownership" messages
- + setup: fix some formatting
-
- Platform-specific code that determines if a directory is OK to use
- as a repository has been taught to report more details, especially
- on Windows.
-
  Will merge to 'master'.
- source: <pull.1286.v2.git.1659965270.gitgitgadget@gmail.com>
+ source: <20220804195105.1303455-1-calvinwan@google.com>
 
 
 * po/doc-add-renormalize (2022-08-10) 1 commit
@@ -559,21 +598,18 @@ Release tarballs are available at:
  source: <pull.1282.git.1657385781.gitgitgadget@gmail.com>
 
 
-* ac/bitmap-lookup-table (2022-07-20) 6 commits
+* ac/bitmap-lookup-table (2022-08-14) 6 commits
  - bitmap-lookup-table: add performance tests for lookup table
- - p5310-pack-bitmaps.sh: enable `pack.writeReverseIndex`
  - pack-bitmap: prepare to read lookup table extension
  - pack-bitmap-write: learn pack.writeBitmapLookupTable and add tests
  - pack-bitmap-write.c: write lookup table extension
+ - bitmap: move `get commit positions` code to `bitmap_writer_finish`
  - Documentation/technical: describe bitmap lookup table extension
 
  The pack bitmap file gained a bitmap-lookup table to speed up
  locating the necessary bitmap for a given commit.
 
- Expecting a reroll.
- Seems to be flaky-broken under SHA-256.
- cf. <p3r70610-8n52-s8q0-n641-onp4ps01330n@tzk.qr>
- source: <pull.1266.v5.git.1658342304.gitgitgadget@gmail.com>
+ source: <pull.1266.v6.git.1660496112.gitgitgadget@gmail.com>
 
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
@@ -602,12 +638,13 @@ Release tarballs are available at:
 
 
 * ds/bundle-uri-more (2022-08-10) 2 commits
- - bundle-uri: add example bundle organization
- - docs: document bundle URI standard
+  (merged to 'next' on 2022-08-12 at 4f445a058d)
+ + bundle-uri: add example bundle organization
+ + docs: document bundle URI standard
 
  The "bundle URI" design gets documented.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1248.v4.git.1660050761.gitgitgadget@gmail.com>
 
 
