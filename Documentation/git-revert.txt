@@ -112,10 +112,7 @@ effect to your index in a row.
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
 
---rerere-autoupdate::
---no-rerere-autoupdate::
-	Allow the rerere mechanism to update the index with the
-	result of auto-conflict resolution if possible.
+include::rerere-options.txt[]
 
 --reference::
 	Instead of starting the body of the log message with "This
