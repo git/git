@@ -2217,7 +2217,17 @@ static int add_promisor_object(const struct object_id *oid,
 			       void *set_)
 {
 	struct oidset *set = set_;
-	struct object *obj = parse_object(the_repository, oid);
+	struct object *obj;
+	int we_parsed_object;
+
+	obj = lookup_object(the_repository, oid);
+	if (obj && obj->parsed) {
+		we_parsed_object = 0;
+	} else {
+		we_parsed_object = 1;
+		obj = parse_object(the_repository, oid);
+	}
+
 	if (!obj)
 		return 1;
 
@@ -2239,7 +2249,8 @@ static int add_promisor_object(const struct object_id *oid,
 			return 0;
 		while (tree_entry_gently(&desc, &entry))
 			oidset_insert(set, &entry.oid);
-		free_tree_buffer(tree);
+		if (we_parsed_object)
+			free_tree_buffer(tree);
 	} else if (obj->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *) obj;
 		struct commit_list *parents = commit->parents;
