@@ -10,6 +10,7 @@
 #include "config.h"
 #include "packfile.h"
 #include "hook.h"
+#include "compat/nonblock.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -1451,6 +1452,15 @@ int pipe_command(struct child_process *cmd,
 		return -1;
 
 	if (in) {
+		if (enable_pipe_nonblock(cmd->in) < 0) {
+			error_errno("unable to make pipe non-blocking");
+			close(cmd->in);
+			if (out)
+				close(cmd->out);
+			if (err)
+				close(cmd->err);
+			return -1;
+		}
 		io[nr].fd = cmd->in;
 		io[nr].type = POLLOUT;
 		io[nr].u.out.buf = in;
