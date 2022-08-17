@@ -1364,12 +1364,24 @@ static int pump_io_round(struct io_pump *slots, int nr, struct pollfd *pfd)
 			continue;
 
 		if (io->type == POLLOUT) {
-			ssize_t len = xwrite(io->fd,
-					     io->u.out.buf, io->u.out.len);
+			ssize_t len;
+
+			/*
+			 * Don't use xwrite() here. It loops forever on EAGAIN,
+			 * and we're in our own poll() loop here.
+			 *
+			 * Note that we lose xwrite()'s handling of MAX_IO_SIZE
+			 * and EINTR, so we have to implement those ourselves.
+			 */
+			len = write(io->fd, io->u.out.buf,
+				    io->u.out.len <= MAX_IO_SIZE ?
+				    io->u.out.len : MAX_IO_SIZE);
 			if (len < 0) {
-				io->error = errno;
-				close(io->fd);
-				io->fd = -1;
+				if (errno != EINTR && errno != EAGAIN) {
+					io->error = errno;
+					close(io->fd);
+					io->fd = -1;
+				}
 			} else {
 				io->u.out.buf += len;
 				io->u.out.len -= len;
