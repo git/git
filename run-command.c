@@ -1377,7 +1377,8 @@ static int pump_io_round(struct io_pump *slots, int nr, struct pollfd *pfd)
 				    io->u.out.len <= MAX_IO_SIZE ?
 				    io->u.out.len : MAX_IO_SIZE);
 			if (len < 0) {
-				if (errno != EINTR && errno != EAGAIN) {
+				if (errno != EINTR && errno != EAGAIN &&
+				    errno != ENOSPC) {
 					io->error = errno;
 					close(io->fd);
 					io->fd = -1;
