@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #05; Mon, 15)
+Subject: What's cooking in git.git (Aug 2022, #06; Wed, 17)
 X-master-at: 9bf691b78cf906751e65d65ba0c6ffdcd9a5a12c
-X-next-at: c19287026c9b940f7f43d34e6dacbd5c34e4a2e0
+X-next-at: 91fe8e635439f67be8837601cbf4bd61eddc41b4
 
-What's cooking in git.git (Aug 2022, #05; Mon, 15)
+What's cooking in git.git (Aug 2022, #06; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are at the beginning of the week #6 of a 12-week cycle (cf.
+We are in the middle of the week #6 of a 12-week cycle (cf.
 https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
@@ -45,119 +45,48 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ab/hooks-regression-fix (2022-08-05) 1 commit
-  (merged to 'next' on 2022-08-08 at f5a3f88983)
- + hook API: don't segfault on strbuf_addf() to NULL "out"
+* vd/scalar-enables-fsmonitor (2022-08-16) 5 commits
+ - scalar: update technical doc roadmap with FSMonitor support
+ - scalar unregister: stop FSMonitor daemon
+ - scalar: enable built-in FSMonitor on `register`
+ - scalar-[un]register: clearly indicate source of error
+ - scalar-unregister: handle error codes greater than 0
 
- A follow-up fix to a fix for a regression in 2.36.
- source: <patch-1.1-2450e3e65cf-20220805T141402Z-avarab@gmail.com>
+ "scalar" now enables built-in fsmonitor on enlisted repositories,
+ when able.
 
-
-* ab/leak-check (2022-07-27) 15 commits
-  (merged to 'next' on 2022-08-05 at 2a6b9c8432)
- + CI: use "GIT_TEST_SANITIZE_LEAK_LOG=true" in linux-leaks
- + upload-pack: fix a memory leak in create_pack_file()
- + leak tests: mark passing SANITIZE=leak tests as leak-free
- + leak tests: don't skip some tests under SANITIZE=leak
- + test-lib: have the "check" mode for SANITIZE=leak consider leak logs
- + test-lib: add a GIT_TEST_PASSING_SANITIZE_LEAK=check mode
- + test-lib: simplify by removing test_external
- + tests: move copy/pasted PERL + Test::More checks to a lib-perl.sh
- + t/Makefile: don't remove test-results in "clean-except-prove-cache"
- + test-lib: add a SANITIZE=leak logging mode
- + t/README: reword the "GIT_TEST_PASSING_SANITIZE_LEAK" description
- + test-lib: add a --invert-exit-code switch
- + test-lib: fix GIT_EXIT_OK logic errors, use BAIL_OUT
- + test-lib: don't set GIT_EXIT_OK before calling test_atexit_handler
- + test-lib: use $1, not $@ in test_known_broken_{ok,failure}_
-
- Extend SANITIZE=leak checking and declare more tests "currently leak-free".
- source: <cover-v3-00.15-00000000000-20220727T230800Z-avarab@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1324.v2.git.1660694290.gitgitgadget@gmail.com>
 
 
-* ab/plug-revisions-leak (2022-08-03) 6 commits
-  (merged to 'next' on 2022-08-05 at d1ca88976f)
- + revisions API: don't leak memory on argv elements that need free()-ing
- + bisect.c: partially fix bisect_rev_setup() memory leak
- + log: refactor "rev.pending" code in cmd_show()
- + log: fix a memory leak in "git show <revision>..."
- + test-fast-rebase helper: use release_revisions() (again)
- + bisect.c: add missing "goto" for release_revisions()
+* en/ancestry-path-in-a-range (2022-08-17) 2 commits
+ - revision: allow --ancestry-path to take an argument
+ - rev-list-options.txt: fix simple typo
 
- Plug a bit more leaks in the revisions API.
- source: <cover-v3-0.6-00000000000-20220802T152925Z-avarab@gmail.com>
+ "git rev-list --ancestry-path=C A..B" is a natural extension of
+ "git rev-list A..B"; instead of choosing a subset of A..B to those
+ that have ancestry relationship with A, it lets a subset with
+ ancestry relationship with C.
 
-
-* ab/tech-docs-to-help (2022-08-04) 12 commits
-  (merged to 'next' on 2022-08-08 at 65c9ec7308)
- + docs: move http-protocol docs to man section 5
- + docs: move cruft pack docs to gitformat-pack
- + docs: move pack format docs to man section 5
- + docs: move signature docs to man section 5
- + docs: move index format docs to man section 5
- + docs: move protocol-related docs to man section 5
- + docs: move commit-graph format docs to man section 5
- + git docs: add a category for file formats, protocols and interfaces
- + git docs: add a category for user-facing file, repo and command UX
- + git help doc: use "<doc>" instead of "<guide>"
- + help.c: remove common category behavior from drop_prefix() behavior
- + help.c: refactor drop_prefix() to use a "switch" statement"
-
- Expose a lot of "tech docs" via "git help" interface.
- source: <cover-v8-00.12-00000000000-20220804T162138Z-avarab@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1303.git.1660704498.gitgitgadget@gmail.com>
 
 
-* gc/git-reflog-doc-markup (2022-08-01) 1 commit
-  (merged to 'next' on 2022-08-05 at f2d8721ab2)
- + Documentation/git-reflog: remove unneeded \ from \{
+* en/submodule-merge-messages-fixes (2022-08-17) 3 commits
+ - merge-ort: provide helpful submodule update message when possible
+ - merge-ort: add comment to avoid surprise with new sub_flag variable
+ - merge-ort: remove translator lego in new "submodule conflict suggestion"
+ (this branch uses cw/submodule-merge-messages.)
 
- Doc mark-up fix.
- source: <pull.1304.git.git.1659387885711.gitgitgadget@gmail.com>
+ Further update the help messages given while merging submodules.
 
-
-* jc/rerere-autoupdate-doc (2022-08-03) 2 commits
-  (merged to 'next' on 2022-08-08 at 6407091d13)
- + doc: clarify rerere-autoupdate
- + doc: consolidate --rerere-autoupdate description
-
- Update documentation on the "--[no-]rerere-autoupdate" option.
- source: <xmqq35f2ysd9.fsf@gitster.g>
-
-
-* js/safe-directory-plus (2022-08-08) 5 commits
-  (merged to 'next' on 2022-08-10 at 3d32a87210)
- + mingw: handle a file owned by the Administrators group correctly
- + mingw: be more informative when ownership check fails on FAT32
- + mingw: provide details about unsafe directories' ownership
- + setup: prepare for more detailed "dubious ownership" messages
- + setup: fix some formatting
-
- Platform-specific code that determines if a directory is OK to use
- as a repository has been taught to report more details, especially
- on Windows.
- source: <pull.1286.v2.git.1659965270.gitgitgadget@gmail.com>
-
-
-* lt/symbolic-ref-sanity (2022-08-01) 1 commit
-  (merged to 'next' on 2022-08-03 at 443647b94a)
- + symbolic-ref: refuse to set syntactically invalid target
-
- "git symbolic-ref symref non..sen..se" is now diagnosed as an error.
- source: <YugYNzQYWqDCmOqN@coredump.intra.peff.net>
-
-
-* pw/use-glibc-tunable-for-malloc-optim (2022-08-04) 1 commit
-  (merged to 'next' on 2022-08-08 at 1300f84dc4)
- + tests: cache glibc version check
-
- Avoid repeatedly running getconf to ask libc version in the test
- suite, and instead just as it once per script.
- source: <pull.1311.git.1659620305757.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1325.v2.git.1660718028.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ll/disk-usage-humanise (2022-08-11) 1 commit
   (merged to 'next' on 2022-08-14 at 3873a83f90)
@@ -184,22 +113,24 @@ Release tarballs are available at:
 
 
 * jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
- - is_promisor_object(): fix use-after-free of tree buffer
+  (merged to 'next' on 2022-08-17 at 96033ff88d)
+ + is_promisor_object(): fix use-after-free of tree buffer
 
  An earlier optimization discarded a tree-object buffer that is
  still in use, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <YviWO9Bhz5PU1HaL@coredump.intra.peff.net>
 
 
 * js/fetch-negotiation-trace (2022-08-15) 1 commit
- - fetch-pack: add tracing for negotiation rounds
+  (merged to 'next' on 2022-08-17 at 2c9e07b617)
+ + fetch-pack: add tracing for negotiation rounds
 
  The common ancestor negotiation exchange during a "git fetch"
  session now leaves trace log.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
 
 
@@ -220,8 +151,6 @@ Release tarballs are available at:
  Needs review.
  source: <pull.1323.git.1660576283.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * fc/vimdiff-layout-vimdiff3-fix (2022-08-10) 7 commits
   (merged to 'next' on 2022-08-11 at a14fec292f)
@@ -277,21 +206,22 @@ Release tarballs are available at:
 
 
 * sy/mv-out-of-cone (2022-08-10) 9 commits
- - mv: check overwrite for in-to-out move
- - advice.h: add advise_on_moving_dirty_path()
- - mv: cleanup empty WORKING_DIRECTORY
- - mv: from in-cone to out-of-cone
- - mv: remove BOTH from enum update_mode
- - mv: check if <destination> is a SKIP_WORKTREE_DIR
- - mv: free the with_slash in check_dir_in_index()
- - mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
- - t7002: add tests for moving from in-cone to out-of-cone
+  (merged to 'next' on 2022-08-17 at 2316d9ce4d)
+ + mv: check overwrite for in-to-out move
+ + advice.h: add advise_on_moving_dirty_path()
+ + mv: cleanup empty WORKING_DIRECTORY
+ + mv: from in-cone to out-of-cone
+ + mv: remove BOTH from enum update_mode
+ + mv: check if <destination> is a SKIP_WORKTREE_DIR
+ + mv: free the with_slash in check_dir_in_index()
+ + mv: rename check_dir_in_index() to empty_dir_has_sparse_contents()
+ + t7002: add tests for moving from in-cone to out-of-cone
 
  "git mv A B" in a sparsely populated working tree can be asked to
  move a path from a directory that is "in cone" to another directory
  that is "out of cone".  Handling of such a case has been improved.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
 
 
@@ -331,17 +261,21 @@ Release tarballs are available at:
  source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
 
 
-* jk/pipe-command-nonblock (2022-08-03) 1 commit
- - pipe_command(): mark stdin descriptor as non-blocking
+* jk/pipe-command-nonblock (2022-08-17) 6 commits
+  (merged to 'next' on 2022-08-17 at 91fe8e6354)
+ + pipe_command(): mark stdin descriptor as non-blocking
+ + pipe_command(): handle ENOSPC when writing to a pipe
+ + pipe_command(): avoid xwrite() for writing to pipe
+ + git-compat-util: make MAX_IO_SIZE define globally available
+ + nonblock: support Windows
+ + compat: add function to enable nonblocking pipes
 
  Fix deadlocks between main Git process and subprocess spawned via
  the pipe_command() API, that can kill "git add -p" that was
  reimplemented in C recently.
 
- Needs waiting for corresponding change to Windows to put the pipe
- into nonblock mode.
- cf. <YulFTSTbVaTwuQtt@coredump.intra.peff.net>
- source: <YunxHOa2sJeEpJxd@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <YvyE1RDFVAg4uQo1@coredump.intra.peff.net>
 
 
 * es/mark-gc-cruft-as-experimental (2022-08-03) 2 commits
@@ -560,18 +494,19 @@ Release tarballs are available at:
 
  Plugging leaks in submodule--helper.
 
- Getting there.
+ Waiting for the "prep" step.
  source: <cover-v5-00.17-00000000000-20220802T155002Z-avarab@gmail.com>
 
 
 * cw/submodule-merge-messages (2022-08-04) 1 commit
   (merged to 'next' on 2022-08-12 at ede0890319)
  + submodule merge: update conflict error message
+ (this branch is used by en/submodule-merge-messages-fixes.)
 
  Update the message given when "git merge" sees conflicts at a path
  with a submodule while merging a superproject.
 
- Will merge to 'master'.
+ Will wait for en/submodule-merge-messages-fixes to mature.
  source: <20220804195105.1303455-1-calvinwan@google.com>
 
 
@@ -608,21 +543,7 @@ Release tarballs are available at:
 
  The pack bitmap file gained a bitmap-lookup table to speed up
  locating the necessary bitmap for a given commit.
-
  source: <pull.1266.v6.git.1660496112.gitgitgadget@gmail.com>
-
-
-* jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
- - fetch,fetch-pack: clarify connectivity check error
-
- We may find an object missing after a "git fetch" stores the
- objects it obtained from the other side, but it is not necessarily
- because the remote failed to send necessary objects.  Reword the
- messages in an attempt to help users explore other possibilities
- when they hit this error.
-
- Expecting a reroll.
- source: <20220610195247.1177549-1-jonathantanmy@google.com>
 
 
 * tb/show-ref-count (2022-06-06) 2 commits
@@ -720,3 +641,17 @@ Release tarballs are available at:
  In stalled state for too long.
  cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
  source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
+
+
+* jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
+ . fetch,fetch-pack: clarify connectivity check error
+
+ We may find an object missing after a "git fetch" stores the
+ objects it obtained from the other side, but it is not necessarily
+ because the remote failed to send necessary objects.  Reword the
+ messages in an attempt to help users explore other possibilities
+ when they hit this error.
+
+ In stalled state for too long.
+ Also it seems to break t5326 with sha256.
+ source: <20220610195247.1177549-1-jonathantanmy@google.com>
