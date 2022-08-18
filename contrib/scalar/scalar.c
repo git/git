@@ -14,29 +14,14 @@
 #include "archive.h"
 #include "object-store.h"
 
-/*
- * Remove the deepest subdirectory in the provided path string. Path must not
- * include a trailing path separator. Returns 1 if parent directory found,
- * otherwise 0.
- */
-static int strbuf_parent_directory(struct strbuf *buf)
-{
-	size_t len = buf->len;
-	size_t offset = offset_1st_component(buf->buf);
-	char *path_sep = find_last_dir_sep(buf->buf + offset);
-	strbuf_setlen(buf, path_sep ? path_sep - buf->buf : offset);
-
-	return buf->len < len;
-}
-
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
 				       const struct option *options,
 				       struct strbuf *enlistment_root)
 {
 	struct strbuf path = STRBUF_INIT;
-	char *root;
-	int enlistment_found = 0;
+	int enlistment_is_repo_parent = 0;
+	size_t len;
 
 	if (startup_info->have_repository)
 		BUG("gitdir already set up?!?");
@@ -49,51 +34,36 @@ static void setup_enlistment_directory(int argc, const char **argv,
 		strbuf_add_absolute_path(&path, argv[0]);
 		if (!is_directory(path.buf))
 			die(_("'%s' does not exist"), path.buf);
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
 	} else if (strbuf_getcwd(&path) < 0)
 		die(_("need a working directory"));
 
 	strbuf_trim_trailing_dir_sep(&path);
-	do {
-		const size_t len = path.len;
 
-		/* check if currently in enlistment root with src/ workdir */
-		strbuf_addstr(&path, "/src");
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root)
-				strbuf_add(enlistment_root, path.buf, len);
+	/* check if currently in enlistment root with src/ workdir */
+	len = path.len;
+	strbuf_addstr(&path, "/src");
+	if (is_nonbare_repository_dir(&path)) {
+		enlistment_is_repo_parent = 1;
+		if (chdir(path.buf) < 0)
+			die_errno(_("could not switch to '%s'"), path.buf);
+	}
+	strbuf_setlen(&path, len);
 
-			enlistment_found = 1;
-			break;
-		}
+	setup_git_directory();
 
-		/* reset to original path */
-		strbuf_setlen(&path, len);
+	if (!the_repository->worktree)
+		die(_("Scalar enlistments require a worktree"));
 
-		/* check if currently in workdir */
-		if (is_nonbare_repository_dir(&path)) {
-			if (enlistment_root) {
-				/*
-				 * If the worktree's directory's name is `src`, the enlistment is the
-				 * parent directory, otherwise it is identical to the worktree.
-				 */
-				root = strip_path_suffix(path.buf, "src");
-				strbuf_addstr(enlistment_root, root ? root : path.buf);
-				free(root);
-			}
-
-			enlistment_found = 1;
-			break;
-		}
-	} while (strbuf_parent_directory(&path));
-
-	if (!enlistment_found)
-		die(_("could not find enlistment root"));
-
-	if (chdir(path.buf) < 0)
-		die_errno(_("could not switch to '%s'"), path.buf);
+	if (enlistment_root) {
+		if (enlistment_is_repo_parent)
+			strbuf_addbuf(enlistment_root, &path);
+		else
+			strbuf_addstr(enlistment_root, the_repository->worktree);
+	}
 
 	strbuf_release(&path);
-	setup_git_directory();
 }
 
 static int run_git(const char *arg, ...)
@@ -431,6 +401,8 @@ static int delete_enlistment(struct strbuf *enlistment)
 {
 #ifdef WIN32
 	struct strbuf parent = STRBUF_INIT;
+	size_t offset;
+	char *path_sep;
 #endif
 
 	if (unregister_dir())
@@ -441,8 +413,10 @@ static int delete_enlistment(struct strbuf *enlistment)
 	 * Change the current directory to one outside of the enlistment so
 	 * that we may delete everything underneath it.
 	 */
-	strbuf_addbuf(&parent, enlistment);
-	strbuf_parent_directory(&parent);
+	offset = offset_1st_component(enlistment->buf);
+	path_sep = find_last_dir_sep(enlistment->buf + offset);
+	strbuf_add(&parent, enlistment->buf,
+		   path_sep ? path_sep - enlistment->buf : offset);
 	if (chdir(parent.buf) < 0)
 		die_errno(_("could not switch to '%s'"), parent.buf);
 	strbuf_release(&parent);
