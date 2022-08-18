@@ -4490,21 +4490,17 @@ static void print_submodule_conflict_suggestion(struct string_list *csub) {
 	if (!csub->nr)
 		return;
 
-	/*
-	 * NEEDSWORK: The steps to resolve these errors deserve a more
-	 * detailed explanation than what is currently printed below.
-	 */
-	for_each_string_list_item(item, csub) {
-		struct conflicted_submodule_item *util = item->util;
-
-		if (util->flag == CONFLICT_SUBMODULE_NOT_INITIALIZED ||
-			util->flag == CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE)
-			return;
-	}
-
 	strbuf_add_separated_string_list(&subs, " ", csub);
 	for_each_string_list_item(item, csub) {
 		struct conflicted_submodule_item *util = item->util;
+
+		/*
+		 * NEEDSWORK: The steps to resolve these errors deserve a more
+		 * detailed explanation than what is currently printed below.
+		 */
+		if (util->flag == CONFLICT_SUBMODULE_NOT_INITIALIZED ||
+		    util->flag == CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE)
+			continue;
 
 		/*
 		 * TRANSLATORS: This is a line of advice to resolve a merge
