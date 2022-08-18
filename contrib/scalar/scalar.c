@@ -208,15 +208,16 @@ static int add_or_remove_enlistment(int add)
 
 static int register_dir(void)
 {
-	int res = add_or_remove_enlistment(1);
+	if (add_or_remove_enlistment(1))
+		return error(_("could not add enlistment"));
 
-	if (!res)
-		res = set_recommended_config(0);
+	if (set_recommended_config(0))
+		return error(_("could not set recommended config"));
 
-	if (!res)
-		res = toggle_maintenance(1);
+	if (toggle_maintenance(1))
+		return error(_("could not turn on maintenance"));
 
-	return res;
+	return 0;
 }
 
 static int unregister_dir(void)
@@ -224,10 +225,10 @@ static int unregister_dir(void)
 	int res = 0;
 
 	if (toggle_maintenance(0))
-		res = -1;
+		res = error(_("could not turn off maintenance"));
 
 	if (add_or_remove_enlistment(0))
-		res = -1;
+		res = error(_("could not remove enlistment"));
 
 	return res;
 }
