@@ -102,6 +102,14 @@ test_expect_success 'scalar enlistments need a worktree' '
 	grep "Scalar enlistments require a worktree" err
 '
 
+test_expect_success FSMONITOR_DAEMON 'scalar register starts fsmon daemon' '
+	git init test/src &&
+	test_must_fail git -C test/src fsmonitor--daemon status &&
+	scalar register test/src &&
+	git -C test/src fsmonitor--daemon status &&
+	test_cmp_config -C test/src true core.fsmonitor
+'
+
 test_expect_success 'scalar unregister' '
 	git init vanish/src &&
 	scalar register vanish/src &&

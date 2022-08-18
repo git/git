@@ -7,6 +7,9 @@
 #include "parse-options.h"
 #include "config.h"
 #include "run-command.h"
+#include "simple-ipc.h"
+#include "fsmonitor-ipc.h"
+#include "fsmonitor-settings.h"
 #include "refs.h"
 #include "dir.h"
 #include "packfile.h"
@@ -109,6 +112,12 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	return res;
 }
 
+static int have_fsmonitor_support(void)
+{
+	return fsmonitor_ipc__is_supported() &&
+	       fsm_settings__get_reason(the_repository) == FSMONITOR_REASON_OK;
+}
+
 static int set_recommended_config(int reconfigure)
 {
 	struct scalar_config config[] = {
@@ -170,6 +179,13 @@ static int set_recommended_config(int reconfigure)
 				     config[i].key, config[i].value);
 	}
 
+	if (have_fsmonitor_support()) {
+		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
+		if (set_scalar_config(&fsmonitor, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     fsmonitor.key, fsmonitor.value);
+	}
+
 	/*
 	 * The `log.excludeDecoration` setting is special because it allows
 	 * for multiple values.
@@ -218,6 +234,16 @@ static int add_or_remove_enlistment(int add)
 		       "scalar.repo", the_repository->worktree, NULL);
 }
 
+static int start_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() != IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "start", NULL);
+
+	return 0;
+}
+
 static int register_dir(void)
 {
 	if (add_or_remove_enlistment(1))
@@ -228,6 +254,10 @@ static int register_dir(void)
 
 	if (toggle_maintenance(1))
 		return error(_("could not turn on maintenance"));
+
+	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
+		return error(_("could not start the FSMonitor daemon"));
+	}
 
 	return 0;
 }
