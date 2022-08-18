@@ -242,6 +242,7 @@ ifdef::git-rev-list[]
 	to `/dev/null` as the output does not have to be formatted.
 
 --disk-usage::
+--disk-usage=human::
 	Suppress normal output; instead, print the sum of the bytes used
 	for on-disk storage by the selected commits or objects. This is
 	equivalent to piping the output into `git cat-file
@@ -249,6 +250,8 @@ ifdef::git-rev-list[]
 	faster (especially with `--use-bitmap-index`). See the `CAVEATS`
 	section in linkgit:git-cat-file[1] for the limitations of what
 	"on-disk storage" means.
+	With the optional value `human`, on-disk storage size is shown
+	in human-readable string(e.g. 12.24 Kib, 3.50 Mib).
 endif::git-rev-list[]
 
 --cherry-mark::
