@@ -1767,7 +1767,7 @@ static int merge_submodule(struct merge_options *opt,
 	int i;
 	int search = !opt->priv->call_depth;
 	int sub_not_initialized = 1;
-	int sub_flag = -1;
+	int sub_flag = CONFLICT_SUBMODULE_FAILED_TO_MERGE;
 
 	/* store fallback answer in result in case we fail */
 	oidcpy(result, opt->priv->call_depth ? o : a);
