@@ -364,6 +364,20 @@ test_expect_success 'tree entry with type mismatch' '
 	test_i18ngrep ! "dangling blob" out
 '
 
+test_expect_success 'tree entry with bogus mode' '
+	test_when_finished "remove_object \$blob" &&
+	test_when_finished "remove_object \$tree" &&
+	blob=$(echo blob | git hash-object -w --stdin) &&
+	blob_oct=$(echo $blob | hex2oct) &&
+	tree=$(printf "100000 foo\0${blob_oct}" |
+	       git hash-object -t tree --stdin -w --literally) &&
+	git fsck 2>err &&
+	cat >expect <<-EOF &&
+	warning in tree $tree: badFilemode: contains bad file modes
+	EOF
+	test_cmp expect err
+'
+
 test_expect_success 'tag pointing to nonexistent' '
 	badoid=$(test_oid deadbeef) &&
 	cat >invalid-tag <<-EOF &&
