@@ -407,7 +407,7 @@ static int delete_enlistment(struct strbuf *enlistment)
 #endif
 
 	if (unregister_dir())
-		die(_("failed to unregister repository"));
+		return error(_("failed to unregister repository"));
 
 #ifdef WIN32
 	/*
@@ -418,13 +418,16 @@ static int delete_enlistment(struct strbuf *enlistment)
 	path_sep = find_last_dir_sep(enlistment->buf + offset);
 	strbuf_add(&parent, enlistment->buf,
 		   path_sep ? path_sep - enlistment->buf : offset);
-	if (chdir(parent.buf) < 0)
-		die_errno(_("could not switch to '%s'"), parent.buf);
+	if (chdir(parent.buf) < 0) {
+		int res = error_errno(_("could not switch to '%s'"), parent.buf);
+		strbuf_release(&parent);
+		return res;
+	}
 	strbuf_release(&parent);
 #endif
 
 	if (remove_dir_recursively(enlistment, 0))
-		die(_("failed to delete enlistment directory"));
+		return error(_("failed to delete enlistment directory"));
 
 	return 0;
 }
