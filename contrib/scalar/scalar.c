@@ -244,6 +244,16 @@ static int start_fsmonitor_daemon(void)
 	return 0;
 }
 
+static int stop_fsmonitor_daemon(void)
+{
+	assert(have_fsmonitor_support());
+
+	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
+		return run_git("fsmonitor--daemon", "stop", NULL);
+
+	return 0;
+}
+
 static int register_dir(void)
 {
 	if (add_or_remove_enlistment(1))
@@ -467,6 +477,9 @@ static int delete_enlistment(struct strbuf *enlistment)
 	}
 	strbuf_release(&parent);
 #endif
+
+	if (have_fsmonitor_support() && stop_fsmonitor_daemon())
+		return error(_("failed to stop the FSMonitor daemon"));
 
 	if (remove_dir_recursively(enlistment, 0))
 		return error(_("failed to delete enlistment directory"));
