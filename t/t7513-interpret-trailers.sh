@@ -1481,6 +1481,46 @@ test_expect_success 'only-trailers omits non-trailer in middle of block' '
 	test_cmp expected actual
 '
 
+test_expect_success 'supports spaces inside token' '
+	git config --unset trailer.sign.command &&
+	cat >expected <<-\EOF &&
+		Signed-off-by: nobody <nobody@nowhere>
+		some other trailer: a value
+		Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	echo "wrote to expected" 1>&2 &&
+	git interpret-trailers --only-trailers >actual <<-\EOF &&
+		subject
+
+		it is important that the trailers below are signed-off-by
+		so that they meet the "25% trailers Git knows about" heuristic
+
+		Signed-off-by: nobody <nobody@nowhere>
+		some other trailer: a value
+		Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'does not support space at beginning of token' '
+	cat >expected <<-\EOF &&
+		Signed-off-by: nobody <nobody@nowhere> not a trailer: thing
+		Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	echo "wrote to expected" 1>&2 &&
+	git interpret-trailers --only-trailers --unfold >actual <<-\EOF &&
+		subject
+
+		it is important that the trailers below are signed-off-by
+		so that they meet the "25% trailers Git knows about" heuristic
+
+		Signed-off-by: nobody <nobody@nowhere>
+		 not a trailer: thing
+		Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'only input' '
 	git config trailer.sign.command "echo config-value" &&
 	cat >expected <<-\EOF &&

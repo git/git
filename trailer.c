@@ -618,17 +618,12 @@ static int token_matches_item(const char *tok, struct arg_item *item, size_t tok
  */
 static ssize_t find_separator(const char *line, const char *separators)
 {
-	int whitespace_found = 0;
 	const char *c;
 	for (c = line; *c; c++) {
 		if (strchr(separators, *c))
 			return c - line;
-		if (!whitespace_found && (isalnum(*c) || *c == '-'))
+		if (isalnum(*c) || *c == '-' || (c != line && (*c == ' ' || *c == '\t')))
 			continue;
-		if (c != line && (*c == ' ' || *c == '\t')) {
-			whitespace_found = 1;
-			continue;
-		}
 		break;
 	}
 	return -1;
