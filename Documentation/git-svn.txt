@@ -389,16 +389,16 @@ environment). This command has the same behaviour.
 +
 Any other arguments are passed directly to 'git log'
 
-'blame'::
+'sleuth'::
 	Show what revision and author last modified each line of a file. The
 	output of this mode is format-compatible with the output of
-	`svn blame' by default. Like the SVN blame command,
+	`svn sleuth' by default. Like the SVN sleuth command,
 	local uncommitted changes in the working tree are ignored;
 	the version of the file in the HEAD revision is annotated. Unknown
-	arguments are passed directly to 'git blame'.
+	arguments are passed directly to 'git sleuth'.
 +
 --git-format;;
-	Produce output in the same format as 'git blame', but with
+	Produce output in the same format as 'git sleuth', but with
 	SVN revision numbers instead of Git commit hashes. In this mode,
 	changes that haven't been committed to SVN (including local
 	working-copy edits) are shown as revision 0.

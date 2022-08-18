@@ -48,7 +48,7 @@
 #
 #   Anglès           |  Català
 #   -----------------+---------------------------------
-#   blame            |  «blame»
+#   sleuth            |  «sleuth»
 #   HEAD             |  HEAD (f, la branca actual) - (no s'apostrofa)
 #   cherry pick      |  «cherry pick»
 #   promisor         |  «promisor»
@@ -2620,8 +2620,8 @@ msgstr "--bisect-log no requereix cap argument"
 msgid "no logfile given"
 msgstr "no s'ha donat cap fitxer de registre"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<opcions>] [<opcions-de-revisió>] [<revisió>] [--] fitxer"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<opcions>] [<opcions-de-revisió>] [<revisió>] [--] fitxer"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "es documenten les <opcions-de-revisió> en git-rev-list(1)"
@@ -2637,8 +2637,8 @@ msgstr "ha d'acabar amb un color"
 msgid "cannot find revision %s to ignore"
 msgstr "no s'ha pogut trobar la revisió %s a ignorar"
 
-msgid "show blame entries as we find them, incrementally"
-msgstr "mostra les entrades «blame» mentre les trobem, incrementalment"
+msgid "show sleuth entries as we find them, incrementally"
+msgstr "mostra les entrades «sleuth» mentre les trobem, incrementalment"
 
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr ""
@@ -2655,8 +2655,8 @@ msgstr "mostra les estadístiques de preu de treball"
 msgid "force progress reporting"
 msgstr "força l'informe de progrés"
 
-msgid "show output score for blame entries"
-msgstr "mostra la puntuació de sortida de les entrades «blame»"
+msgid "show output score for sleuth entries"
+msgstr "mostra la puntuació de sortida de les entrades «sleuth»"
 
 msgid "show original filename (Default: auto)"
 msgstr "mostra el nom de fitxer original (per defecte: automàtic)"
@@ -2695,7 +2695,7 @@ msgid "rev"
 msgstr "rev"
 
 msgid "ignore <rev> when blaming"
-msgstr "ignora <rev> en fer «blame»"
+msgstr "ignora <rev> en fer «sleuth»"
 
 msgid "ignore revisions from <file>"
 msgstr "ignora les revisions de <fitxer>"
@@ -2737,7 +2737,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
@@ -2753,7 +2753,7 @@ msgstr[0] "el fitxer %s té només %lu línia"
 msgstr[1] "el fitxer %s té només %lu línies"
 
 msgid "Blaming lines"
-msgstr "S'està fent un «blame»"
+msgstr "S'està fent un «sleuth»"
 
 msgid "git branch [<options>] [-r | -a] [--merged] [--no-merged]"
 msgstr "git branch [<opcions>] [-r | -a] [--merged | --no-merged]"
@@ -22223,11 +22223,11 @@ msgstr "Esteu segur que voleu enviar %s? [y|N]: "
 #~ msgstr "git bisect--helper --bisect-visualize"
 
 #, c-format
-#~ msgid "invalid color '%s' in color.blame.repeatedLines"
-#~ msgstr "color «%s» no vàlid en «color.blame.repeatedLines»"
+#~ msgid "invalid color '%s' in color.sleuth.repeatedLines"
+#~ msgstr "color «%s» no vàlid en «color.sleuth.repeatedLines»"
 
-#~ msgid "invalid value for blame.coloring"
-#~ msgstr "valor no vàlid per a «blame.coloring»"
+#~ msgid "invalid value for sleuth.coloring"
+#~ msgstr "valor no vàlid per a «sleuth.coloring»"
 
 #~ msgid ""
 #~ "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e "

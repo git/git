@@ -136,9 +136,9 @@ included in this release.
    credentials.
    (merge deba493 jk/http-auth later to maint).
 
- * "git blame" was aborted if started from an uncommitted content and
+ * "git sleuth" was aborted if started from an uncommitted content and
    the path had the textconv filter in effect.
-   (merge 8518088 ss/blame-textconv-fake-working-tree later to maint).
+   (merge 8518088 ss/sleuth-textconv-fake-working-tree later to maint).
 
  * Adding many refs to the local repository in one go (e.g. "git fetch"
    that fetches many tags) and looking up a ref by name in a repository

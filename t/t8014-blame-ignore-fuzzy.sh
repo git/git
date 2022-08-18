@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git blame ignore fuzzy heuristic'
+test_description='git sleuth ignore fuzzy heuristic'
 . ./test-lib.sh
 
 pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'
@@ -9,7 +9,7 @@ pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'
 # titleN - the test name
 # aN - the initial content
 # bN - the final content
-# expectedN - the line numbers from aN that we expect git blame
+# expectedN - the line numbers from aN that we expect git sleuth
 #             on bN to identify, or "Final" if bN itself should
 #             be identified as the origin of that line.
 
@@ -301,7 +301,7 @@ test_expect_success setup '
 	for i in $(test_seq 2 $last_test)
 	do
 		# Append each line in a separate commit to make it easy to
-		# check which original line the blame output relates to.
+		# check which original line the sleuth output relates to.
 
 		line_count=0 &&
 		while IFS= read line
@@ -332,7 +332,7 @@ test_expect_success setup '
 for i in $(test_seq 2 $last_test); do
 	eval title="\$title$i"
 	test_expect_success "$title" \
-	"git blame -M9 --ignore-rev $IGNOREME $i >output &&
+	"git sleuth -M9 --ignore-rev $IGNOREME $i >output &&
 	sed -e \"$pick_author\" output >actual &&
 	test_cmp expected$i actual"
 done
@@ -359,7 +359,7 @@ test_expect_success 'Diff chunks with no suspects' '
 
 	test_write_lines 1 1 >expected &&
 
-	git blame --ignore-rev $REV_2 --ignore-rev $REV_3 file >output &&
+	git sleuth --ignore-rev $REV_2 --ignore-rev $REV_3 file >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual
@@ -390,13 +390,13 @@ test_expect_success 'position matching' '
 
 	test_write_lines 1 1 2 2 >expected &&
 
-	git blame --ignore-rev $REV_3 --ignore-rev $REV_4 file2 >output &&
+	git sleuth --ignore-rev $REV_3 --ignore-rev $REV_4 file2 >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual
 	'
 
-# This fails if each blame entry is processed independently instead of
+# This fails if each sleuth entry is processed independently instead of
 # processing each diff change in full.
 test_expect_success 'preserve order' '
 	test_write_lines bcde >file3 &&
@@ -428,7 +428,7 @@ test_expect_success 'preserve order' '
 
 	test_write_lines 1 2 3 >expected &&
 
-	git blame --ignore-rev $REV_4 --ignore-rev $REV_5 file3 >output &&
+	git sleuth --ignore-rev $REV_4 --ignore-rev $REV_5 file3 >output &&
 	sed -e "$pick_author" output >actual &&
 
 	test_cmp expected actual

@@ -9,7 +9,7 @@ Fixes since v1.6.5.2
  * Packages generated on newer FC were unreadable by older versions of
    RPM as the new default is to use stronger hash.
 
- * output from "git blame" was unreadable when the file ended in an
+ * output from "git sleuth" was unreadable when the file ended in an
    incomplete line.
 
  * "git add -i/-p" didn't handle deletion of empty files correctly.

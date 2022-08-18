@@ -44,7 +44,7 @@ Fixes since v2.15
 
  * Command line completion (in contrib/) update.
 
- * Description of blame.{showroot,blankboundary,showemail,date}
+ * Description of sleuth.{showroot,blankboundary,showemail,date}
    configuration variables have been added to "git config --help".
 
  * After an error from lstat(), diff_populate_filespec() function

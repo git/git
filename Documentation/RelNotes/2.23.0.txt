@@ -80,7 +80,7 @@ UI, Workflows & Features
 
  * "git multi-pack-index" learned expire and repack subcommands.
 
- * "git blame" learned to "ignore" commits in the history, whose
+ * "git sleuth" learned to "ignore" commits in the history, whose
    effects (as well as their presence) get ignored.
 
  * "git cherry-pick/revert" learned a new "--skip" action.

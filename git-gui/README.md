@@ -2,7 +2,7 @@
 
 Git GUI allows you to use the [Git source control management
 tools](https://git-scm.com/) via a GUI. This includes staging, committing,
-adding, pushing, etc. It can also be used as a blame viewer, a tree browser,
+adding, pushing, etc. It can also be used as a sleuth viewer, a tree browser,
 and a citool (make exactly one commit before exiting and returning to shell).
 More details about Git GUI can be found in its manual page by either running
 `man git-gui`, or by visiting the [online manual

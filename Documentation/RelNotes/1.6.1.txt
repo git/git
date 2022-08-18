@@ -13,8 +13,8 @@ on.
 
 (subsystems)
 
-* gitk can call out to git-gui to view "git blame" output; git-gui in turn
-  can run gitk from its blame view.
+* gitk can call out to git-gui to view "git sleuth" output; git-gui in turn
+  can run gitk from its sleuth view.
 
 * Various git-gui updates including updated translations.
 
@@ -39,7 +39,7 @@ on.
   environments with weak metadata caching (e.g. NFS).
 
 * The underlying diff machinery to produce textual output has been
-  optimized, which would result in faster "git blame" processing.
+  optimized, which would result in faster "git sleuth" processing.
 
 * Most of the test scripts (but not the ones that try to run servers)
   can be run in parallel.
@@ -81,7 +81,7 @@ on.
 
 * "git bisect skip" can take a range of commits.
 
-* "git blame" re-encodes the commit metainfo to UTF-8 from i18n.commitEncoding
+* "git sleuth" re-encodes the commit metainfo to UTF-8 from i18n.commitEncoding
   by default.
 
 * "git check-attr --stdin" can check attributes for multiple paths.

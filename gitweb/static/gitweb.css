@@ -227,11 +227,11 @@ table.combined.diff_tree td.nochange a:visited {
 	color: #d06666;
 }
 
-table.blame {
+table.sleuth {
 	border-collapse: collapse;
 }
 
-table.blame td {
+table.sleuth td {
 	padding: 0px 5px;
 	font-size: 100%;
 	vertical-align: top;
@@ -243,14 +243,14 @@ th {
 	text-align: left;
 }
 
-/* do not change row style on hover for 'blame' view */
+/* do not change row style on hover for 'sleuth' view */
 tr.light,
-table.blame .light:hover {
+table.sleuth .light:hover {
 	background-color: #ffffff;
 }
 
 tr.dark,
-table.blame .dark:hover {
+table.sleuth .dark:hover {
 	background-color: #f6f6f0;
 }
 
@@ -260,14 +260,14 @@ tr.dark:hover {
 	background-color: #edece6;
 }
 
-/* boundary commits in 'blame' view */
+/* boundary commits in 'sleuth' view */
 /* and commits without "previous" */
 tr.boundary td.sha1,
 tr.no-previous td.linenr {
 	font-weight: bold;
 }
 
-/* for 'blame_incremental', during processing */
+/* for 'sleuth_incremental', during processing */
 tr.color1 { background-color: #f6fff6; }
 tr.color2 { background-color: #f6f6ff; }
 tr.color3 { background-color: #fff6f6; }
@@ -332,7 +332,7 @@ table.project_list td.noage {
 }
 
 /* age2: 60*60*24*2 <= age */
-table.project_list td.age2, table.blame td.age2 {
+table.project_list td.age2, table.sleuth td.age2 {
 	font-style: italic;
 }
 
@@ -342,7 +342,7 @@ table.project_list td.age1 {
 	font-style: italic;
 }
 
-table.blame td.age1 {
+table.sleuth td.age1 {
 	color: #009900;
 	background: transparent;
 }
@@ -354,7 +354,7 @@ table.project_list td.age0 {
 	font-weight: bold;
 }
 
-table.blame td.age0 {
+table.sleuth td.age0 {
 	color: #009900;
 	background: transparent;
 	font-weight: bold;
@@ -370,7 +370,7 @@ td.mode {
 	font-family: monospace;
 }
 
-/* progress of blame_interactive */
+/* progress of sleuth_interactive */
 div#progress_bar {
 	height: 2px;
 	margin-bottom: -2px;

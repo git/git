@@ -10,7 +10,7 @@ Fixes since v2.3.1
  * "git fast-import" used to crash when it could not close and
    conclude the resulting packfile cleanly.
 
- * "git blame" died, trying to free an uninitialized piece of memory.
+ * "git sleuth" died, trying to free an uninitialized piece of memory.
 
  * "git merge-file" did not work correctly in a subdirectory.
 

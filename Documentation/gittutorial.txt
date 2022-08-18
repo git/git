@@ -649,7 +649,7 @@ digressions that may be interesting at this point are:
 
   * linkgit:git-bisect[1]: When there is a regression in your
     project, one way to track down the bug is by searching through
-    the history to find the exact commit that's to blame.  Git bisect
+    the history to find the exact commit that's to sleuth.  Git bisect
     can help you perform a binary search for that commit.  It is
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.

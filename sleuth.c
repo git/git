@@ -6,65 +6,65 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "tag.h"
-#include "blame.h"
+#include "sleuth.h"
 #include "alloc.h"
 #include "commit-slab.h"
 #include "bloom.h"
 #include "commit-graph.h"
 
-define_commit_slab(blame_suspects, struct blame_origin *);
-static struct blame_suspects blame_suspects;
+define_commit_slab(sleuth_suspects, struct sleuth_origin *);
+static struct sleuth_suspects sleuth_suspects;
 
-struct blame_origin *get_blame_suspects(struct commit *commit)
+struct sleuth_origin *get_sleuth_suspects(struct commit *commit)
 {
-	struct blame_origin **result;
+	struct sleuth_origin **result;
 
-	result = blame_suspects_peek(&blame_suspects, commit);
+	result = sleuth_suspects_peek(&sleuth_suspects, commit);
 
 	return result ? *result : NULL;
 }
 
-static void set_blame_suspects(struct commit *commit, struct blame_origin *origin)
+static void set_sleuth_suspects(struct commit *commit, struct sleuth_origin *origin)
 {
-	*blame_suspects_at(&blame_suspects, commit) = origin;
+	*sleuth_suspects_at(&sleuth_suspects, commit) = origin;
 }
 
-void blame_origin_decref(struct blame_origin *o)
+void sleuth_origin_decref(struct sleuth_origin *o)
 {
 	if (o && --o->refcnt <= 0) {
-		struct blame_origin *p, *l = NULL;
+		struct sleuth_origin *p, *l = NULL;
 		if (o->previous)
-			blame_origin_decref(o->previous);
+			sleuth_origin_decref(o->previous);
 		free(o->file.ptr);
 		/* Should be present exactly once in commit chain */
-		for (p = get_blame_suspects(o->commit); p; l = p, p = p->next) {
+		for (p = get_sleuth_suspects(o->commit); p; l = p, p = p->next) {
 			if (p == o) {
 				if (l)
 					l->next = p->next;
 				else
-					set_blame_suspects(o->commit, p->next);
+					set_sleuth_suspects(o->commit, p->next);
 				free(o);
 				return;
 			}
 		}
-		die("internal error in blame_origin_decref");
+		die("internal error in sleuth_origin_decref");
 	}
 }
 
 /*
  * Given a commit and a path in it, create a new origin structure.
- * The callers that add blame to the scoreboard should use
+ * The callers that add sleuth to the scoreboard should use
  * get_origin() to obtain shared, refcounted copy instead of calling
  * this function directly.
  */
-static struct blame_origin *make_origin(struct commit *commit, const char *path)
+static struct sleuth_origin *make_origin(struct commit *commit, const char *path)
 {
-	struct blame_origin *o;
+	struct sleuth_origin *o;
 	FLEX_ALLOC_STR(o, path, path);
 	o->commit = commit;
 	o->refcnt = 1;
-	o->next = get_blame_suspects(commit);
-	set_blame_suspects(commit, o);
+	o->next = get_sleuth_suspects(commit);
+	set_sleuth_suspects(commit, o);
 	return o;
 }
 
@@ -72,19 +72,19 @@ static struct blame_origin *make_origin(struct commit *commit, const char *path)
  * Locate an existing origin or create a new one.
  * This moves the origin to front position in the commit util list.
  */
-static struct blame_origin *get_origin(struct commit *commit, const char *path)
+static struct sleuth_origin *get_origin(struct commit *commit, const char *path)
 {
-	struct blame_origin *o, *l;
+	struct sleuth_origin *o, *l;
 
-	for (o = get_blame_suspects(commit), l = NULL; o; l = o, o = o->next) {
+	for (o = get_sleuth_suspects(commit), l = NULL; o; l = o, o = o->next) {
 		if (!strcmp(o->path, path)) {
 			/* bump to front */
 			if (l) {
 				l->next = o->next;
-				o->next = get_blame_suspects(commit);
-				set_blame_suspects(commit, o);
+				o->next = get_sleuth_suspects(commit);
+				set_sleuth_suspects(commit, o);
 			}
-			return blame_origin_incref(o);
+			return sleuth_origin_incref(o);
 		}
 	}
 	return make_origin(commit, path);
@@ -179,7 +179,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 					       const char *contents_from)
 {
 	struct commit *commit;
-	struct blame_origin *origin;
+	struct sleuth_origin *origin;
 	struct commit_list **parent_tail, *parent;
 	struct object_id head_oid;
 	struct strbuf buf = STRBUF_INIT;
@@ -901,15 +901,15 @@ static void fuzzy_find_matching_lines_recurse(
 
 /* Find the lines in the parent line range that most closely match the lines in
  * the target line range. This is accomplished by matching fingerprints in each
- * blame_origin, and choosing the best matches that preserve the line ordering.
+ * sleuth_origin, and choosing the best matches that preserve the line ordering.
  * See struct fingerprint for details of fingerprint matching, and
  * fuzzy_find_matching_lines_recurse for details of preserving line ordering.
  *
  * The performance is believed to be O(n log n) in the typical case and O(n^2)
  * in a pathological case, where n is the number of lines in the target range.
  */
-static int *fuzzy_find_matching_lines(struct blame_origin *parent,
-				      struct blame_origin *target,
+static int *fuzzy_find_matching_lines(struct sleuth_origin *parent,
+				      struct sleuth_origin *target,
 				      int tlno, int parent_slno, int same,
 				      int parent_len)
 {
@@ -987,7 +987,7 @@ static int *fuzzy_find_matching_lines(struct blame_origin *parent,
 	return result;
 }
 
-static void fill_origin_fingerprints(struct blame_origin *o)
+static void fill_origin_fingerprints(struct sleuth_origin *o)
 {
 	int *line_starts;
 
@@ -1001,7 +1001,7 @@ static void fill_origin_fingerprints(struct blame_origin *o)
 	free(line_starts);
 }
 
-static void drop_origin_fingerprints(struct blame_origin *o)
+static void drop_origin_fingerprints(struct sleuth_origin *o)
 {
 	if (o->fingerprints) {
 		free_line_fingerprints(o->fingerprints, o->num_lines);
@@ -1015,7 +1015,7 @@ static void drop_origin_fingerprints(struct blame_origin *o)
  * diff machinery
  */
 static void fill_origin_blob(struct diff_options *opt,
-			     struct blame_origin *o, mmfile_t *file,
+			     struct sleuth_origin *o, mmfile_t *file,
 			     int *num_read_blob, int fill_fingerprints)
 {
 	if (!o->file.ptr) {
@@ -1044,24 +1044,24 @@ static void fill_origin_blob(struct diff_options *opt,
 		fill_origin_fingerprints(o);
 }
 
-static void drop_origin_blob(struct blame_origin *o)
+static void drop_origin_blob(struct sleuth_origin *o)
 {
 	FREE_AND_NULL(o->file.ptr);
 	drop_origin_fingerprints(o);
 }
 
 /*
- * Any merge of blames happens on lists of blames that arrived via
+ * Any merge of sleuths happens on lists of sleuths that arrived via
  * different parents in a single suspect.  In this case, we want to
  * sort according to the suspect line numbers as opposed to the final
  * image line numbers.  The function body is somewhat longish because
  * it avoids unnecessary writes.
  */
 
-static struct blame_entry *blame_merge(struct blame_entry *list1,
-				       struct blame_entry *list2)
+static struct sleuth_entry *sleuth_merge(struct sleuth_entry *list1,
+				       struct sleuth_entry *list2)
 {
-	struct blame_entry *p1 = list1, *p2 = list2,
+	struct sleuth_entry *p1 = list1, *p2 = list2,
 		**tail = &list1;
 
 	if (!p1)
@@ -1098,21 +1098,21 @@ static struct blame_entry *blame_merge(struct blame_entry *list1,
 	}
 }
 
-DEFINE_LIST_SORT(static, sort_blame_entries, struct blame_entry, next);
+DEFINE_LIST_SORT(static, sort_sleuth_entries, struct sleuth_entry, next);
 
 /*
  * Final image line numbers are all different, so we don't need a
  * three-way comparison here.
  */
 
-static int compare_blame_final(const struct blame_entry *e1,
-			       const struct blame_entry *e2)
+static int compare_sleuth_final(const struct sleuth_entry *e1,
+			       const struct sleuth_entry *e2)
 {
 	return e1->lno > e2->lno ? 1 : -1;
 }
 
-static int compare_blame_suspect(const struct blame_entry *s1,
-				 const struct blame_entry *s2)
+static int compare_sleuth_suspect(const struct sleuth_entry *s1,
+				 const struct sleuth_entry *s2)
 {
 	/*
 	 * to allow for collating suspects, we sort according to the
@@ -1128,9 +1128,9 @@ static int compare_blame_suspect(const struct blame_entry *s1,
 	return s1->s_lno > s2->s_lno ? 1 : -1;
 }
 
-void blame_sort_final(struct blame_scoreboard *sb)
+void sleuth_sort_final(struct sleuth_scoreboard *sb)
 {
-	sort_blame_entries(&sb->ent, compare_blame_final);
+	sort_sleuth_entries(&sb->ent, compare_sleuth_final);
 }
 
 static int compare_commits_by_reverse_commit_date(const void *a,
@@ -1144,10 +1144,10 @@ static int compare_commits_by_reverse_commit_date(const void *a,
  * For debugging -- origin is refcounted, and this asserts that
  * we do not underflow.
  */
-static void sanity_check_refcnt(struct blame_scoreboard *sb)
+static void sanity_check_refcnt(struct sleuth_scoreboard *sb)
 {
 	int baa = 0;
-	struct blame_entry *ent;
+	struct sleuth_entry *ent;
 
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* Nobody should have zero or negative refcnt */
@@ -1164,13 +1164,13 @@ static void sanity_check_refcnt(struct blame_scoreboard *sb)
 }
 
 /*
- * If two blame entries that are next to each other came from
+ * If two sleuth entries that are next to each other came from
  * contiguous lines in the same origin (i.e. <commit, path> pair),
  * merge them together.
  */
-void blame_coalesce(struct blame_scoreboard *sb)
+void sleuth_coalesce(struct sleuth_scoreboard *sb)
 {
-	struct blame_entry *ent, *next;
+	struct sleuth_entry *ent, *next;
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
 		if (ent->suspect == next->suspect &&
@@ -1180,7 +1180,7 @@ void blame_coalesce(struct blame_scoreboard *sb)
 		    ent->unblamable == next->unblamable) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
-			blame_origin_decref(next->suspect);
+			sleuth_origin_decref(next->suspect);
 			free(next);
 			ent->score = 0;
 			next = ent; /* again */
@@ -1192,19 +1192,19 @@ void blame_coalesce(struct blame_scoreboard *sb)
 }
 
 /*
- * Merge the given sorted list of blames into a preexisting origin.
- * If there were no previous blames to that commit, it is entered into
+ * Merge the given sorted list of sleuths into a preexisting origin.
+ * If there were no previous sleuths to that commit, it is entered into
  * the commit priority queue of the score board.
  */
 
-static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porigin,
-			 struct blame_entry *sorted)
+static void queue_sleuths(struct sleuth_scoreboard *sb, struct sleuth_origin *porigin,
+			 struct sleuth_entry *sorted)
 {
 	if (porigin->suspects)
-		porigin->suspects = blame_merge(porigin->suspects, sorted);
+		porigin->suspects = sleuth_merge(porigin->suspects, sorted);
 	else {
-		struct blame_origin *o;
-		for (o = get_blame_suspects(porigin->commit); o; o = o->next) {
+		struct sleuth_origin *o;
+		for (o = get_sleuth_suspects(porigin->commit); o; o = o->next) {
 			if (o->suspects) {
 				porigin->suspects = sorted;
 				return;
@@ -1218,14 +1218,14 @@ static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porig
 /*
  * Fill the blob_sha1 field of an origin if it hasn't, so that later
  * call to fill_origin_blob() can use it to locate the data.  blob_sha1
- * for an origin is also used to pass the blame for the entire file to
+ * for an origin is also used to pass the sleuth for the entire file to
  * the parent to detect the case where a child's blob is identical to
  * that of its parent's.
  *
  * This also fills origin->mode for corresponding tree path.
  */
 static int fill_blob_sha1_and_mode(struct repository *r,
-				   struct blame_origin *origin)
+				   struct sleuth_origin *origin)
 {
 	if (!is_null_oid(&origin->blob_oid))
 		return 0;
@@ -1240,7 +1240,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 	return -1;
 }
 
-struct blame_bloom_data {
+struct sleuth_bloom_data {
 	/*
 	 * Changed-path Bloom filter keys. These can help prevent
 	 * computing diffs against first parents, but we need to
@@ -1255,8 +1255,8 @@ struct blame_bloom_data {
 static int bloom_count_queries = 0;
 static int bloom_count_no = 0;
 static int maybe_changed_path(struct repository *r,
-			      struct blame_origin *origin,
-			      struct blame_bloom_data *bd)
+			      struct sleuth_origin *origin,
+			      struct sleuth_bloom_data *bd)
 {
 	int i;
 	struct bloom_filter *filter;
@@ -1284,7 +1284,7 @@ static int maybe_changed_path(struct repository *r,
 	return 0;
 }
 
-static void add_bloom_key(struct blame_bloom_data *bd,
+static void add_bloom_key(struct sleuth_bloom_data *bd,
 			  const char *path)
 {
 	if (!bd)
@@ -1304,23 +1304,23 @@ static void add_bloom_key(struct blame_bloom_data *bd,
  * We have an origin -- check if the same path exists in the
  * parent and return an origin structure to represent it.
  */
-static struct blame_origin *find_origin(struct repository *r,
+static struct sleuth_origin *find_origin(struct repository *r,
 					struct commit *parent,
-					struct blame_origin *origin,
-					struct blame_bloom_data *bd)
+					struct sleuth_origin *origin,
+					struct sleuth_bloom_data *bd)
 {
-	struct blame_origin *porigin;
+	struct sleuth_origin *porigin;
 	struct diff_options diff_opts;
 	const char *paths[2];
 
 	/* First check any existing origins */
-	for (porigin = get_blame_suspects(parent); porigin; porigin = porigin->next)
+	for (porigin = get_sleuth_suspects(parent); porigin; porigin = porigin->next)
 		if (!strcmp(porigin->path, origin->path)) {
 			/*
 			 * The same path between origin and its parent
 			 * without renaming -- the most common case.
 			 */
-			return blame_origin_incref (porigin);
+			return sleuth_origin_incref (porigin);
 		}
 
 	/* See if the origin->path is different between parent
@@ -1377,10 +1377,10 @@ static struct blame_origin *find_origin(struct repository *r,
 				break;
 		}
 		if (!p)
-			die("internal error in blame::find_origin");
+			die("internal error in sleuth::find_origin");
 		switch (p->status) {
 		default:
-			die("internal error in blame::find_origin (%c)",
+			die("internal error in sleuth::find_origin (%c)",
 			    p->status);
 		case 'M':
 			porigin = get_origin(parent, origin->path);
@@ -1401,12 +1401,12 @@ static struct blame_origin *find_origin(struct repository *r,
  * We have an origin -- find the path that corresponds to it in its
  * parent and return an origin structure to represent it.
  */
-static struct blame_origin *find_rename(struct repository *r,
+static struct sleuth_origin *find_rename(struct repository *r,
 					struct commit *parent,
-					struct blame_origin *origin,
-					struct blame_bloom_data *bd)
+					struct sleuth_origin *origin,
+					struct sleuth_bloom_data *bd)
 {
-	struct blame_origin *porigin = NULL;
+	struct sleuth_origin *porigin = NULL;
 	struct diff_options diff_opts;
 	int i;
 
@@ -1441,14 +1441,14 @@ static struct blame_origin *find_rename(struct repository *r,
 }
 
 /*
- * Append a new blame entry to a given output queue.
+ * Append a new sleuth entry to a given output queue.
  */
-static void add_blame_entry(struct blame_entry ***queue,
-			    const struct blame_entry *src)
+static void add_sleuth_entry(struct sleuth_entry ***queue,
+			    const struct sleuth_entry *src)
 {
-	struct blame_entry *e = xmalloc(sizeof(*e));
+	struct sleuth_entry *e = xmalloc(sizeof(*e));
 	memcpy(e, src, sizeof(*e));
-	blame_origin_incref(e->suspect);
+	sleuth_origin_incref(e->suspect);
 
 	e->next = **queue;
 	**queue = e;
@@ -1457,21 +1457,21 @@ static void add_blame_entry(struct blame_entry ***queue,
 
 /*
  * src typically is on-stack; we want to copy the information in it to
- * a malloced blame_entry that gets added to the given queue.  The
+ * a malloced sleuth_entry that gets added to the given queue.  The
  * origin of dst loses a refcnt.
  */
-static void dup_entry(struct blame_entry ***queue,
-		      struct blame_entry *dst, struct blame_entry *src)
+static void dup_entry(struct sleuth_entry ***queue,
+		      struct sleuth_entry *dst, struct sleuth_entry *src)
 {
-	blame_origin_incref(src->suspect);
-	blame_origin_decref(dst->suspect);
+	sleuth_origin_incref(src->suspect);
+	sleuth_origin_decref(dst->suspect);
 	memcpy(dst, src, sizeof(*src));
 	dst->next = **queue;
 	**queue = dst;
 	*queue = &dst->next;
 }
 
-const char *blame_nth_line(struct blame_scoreboard *sb, long lno)
+const char *sleuth_nth_line(struct sleuth_scoreboard *sb, long lno)
 {
 	return sb->final_buf + sb->lineno[lno];
 }
@@ -1488,16 +1488,16 @@ const char *blame_nth_line(struct blame_scoreboard *sb, long lno)
  *             <------------------>
  *
  * Split e into potentially three parts; before this chunk, the chunk
- * to be blamed for the parent, and after that portion.
+ * to be sleuthd for the parent, and after that portion.
  */
-static void split_overlap(struct blame_entry *split,
-			  struct blame_entry *e,
+static void split_overlap(struct sleuth_entry *split,
+			  struct sleuth_entry *e,
 			  int tlno, int plno, int same,
-			  struct blame_origin *parent)
+			  struct sleuth_origin *parent)
 {
 	int chunk_end_lno;
 	int i;
-	memset(split, 0, sizeof(struct blame_entry [3]));
+	memset(split, 0, sizeof(struct sleuth_entry [3]));
 
 	for (i = 0; i < 3; i++) {
 		split[i].ignored = e->ignored;
@@ -1505,8 +1505,8 @@ static void split_overlap(struct blame_entry *split,
 	}
 
 	if (e->s_lno < tlno) {
-		/* there is a pre-chunk part not blamed on parent */
-		split[0].suspect = blame_origin_incref(e->suspect);
+		/* there is a pre-chunk part not sleuthd on parent */
+		split[0].suspect = sleuth_origin_incref(e->suspect);
 		split[0].lno = e->lno;
 		split[0].s_lno = e->s_lno;
 		split[0].num_lines = tlno - e->s_lno;
@@ -1519,8 +1519,8 @@ static void split_overlap(struct blame_entry *split,
 	}
 
 	if (same < e->s_lno + e->num_lines) {
-		/* there is a post-chunk part not blamed on parent */
-		split[2].suspect = blame_origin_incref(e->suspect);
+		/* there is a post-chunk part not sleuthd on parent */
+		split[2].suspect = sleuth_origin_incref(e->suspect);
 		split[2].lno = e->lno + (same - e->s_lno);
 		split[2].s_lno = e->s_lno + (same - e->s_lno);
 		split[2].num_lines = e->s_lno + e->num_lines - same;
@@ -1531,66 +1531,66 @@ static void split_overlap(struct blame_entry *split,
 	split[1].num_lines = chunk_end_lno - split[1].lno;
 
 	/*
-	 * if it turns out there is nothing to blame the parent for,
+	 * if it turns out there is nothing to sleuth the parent for,
 	 * forget about the splitting.  !split[1].suspect signals this.
 	 */
 	if (split[1].num_lines < 1)
 		return;
-	split[1].suspect = blame_origin_incref(parent);
+	split[1].suspect = sleuth_origin_incref(parent);
 }
 
 /*
- * split_overlap() divided an existing blame e into up to three parts
- * in split.  Any assigned blame is moved to queue to
+ * split_overlap() divided an existing sleuth e into up to three parts
+ * in split.  Any assigned sleuth is moved to queue to
  * reflect the split.
  */
-static void split_blame(struct blame_entry ***blamed,
-			struct blame_entry ***unblamed,
-			struct blame_entry *split,
-			struct blame_entry *e)
+static void split_sleuth(struct sleuth_entry ***sleuthd,
+			struct sleuth_entry ***unsleuthd,
+			struct sleuth_entry *split,
+			struct sleuth_entry *e)
 {
 	if (split[0].suspect && split[2].suspect) {
 		/* The first part (reuse storage for the existing entry e) */
-		dup_entry(unblamed, e, &split[0]);
+		dup_entry(unsleuthd, e, &split[0]);
 
 		/* The last part -- me */
-		add_blame_entry(unblamed, &split[2]);
+		add_sleuth_entry(unsleuthd, &split[2]);
 
 		/* ... and the middle part -- parent */
-		add_blame_entry(blamed, &split[1]);
+		add_sleuth_entry(sleuthd, &split[1]);
 	}
 	else if (!split[0].suspect && !split[2].suspect)
 		/*
 		 * The parent covers the entire area; reuse storage for
 		 * e and replace it with the parent.
 		 */
-		dup_entry(blamed, e, &split[1]);
+		dup_entry(sleuthd, e, &split[1]);
 	else if (split[0].suspect) {
 		/* me and then parent */
-		dup_entry(unblamed, e, &split[0]);
-		add_blame_entry(blamed, &split[1]);
+		dup_entry(unsleuthd, e, &split[0]);
+		add_sleuth_entry(sleuthd, &split[1]);
 	}
 	else {
 		/* parent and then me */
-		dup_entry(blamed, e, &split[1]);
-		add_blame_entry(unblamed, &split[2]);
+		dup_entry(sleuthd, e, &split[1]);
+		add_sleuth_entry(unsleuthd, &split[2]);
 	}
 }
 
 /*
- * After splitting the blame, the origins used by the
- * on-stack blame_entry should lose one refcnt each.
+ * After splitting the sleuth, the origins used by the
+ * on-stack sleuth_entry should lose one refcnt each.
  */
-static void decref_split(struct blame_entry *split)
+static void decref_split(struct sleuth_entry *split)
 {
 	int i;
 
 	for (i = 0; i < 3; i++)
-		blame_origin_decref(split[i].suspect);
+		sleuth_origin_decref(split[i].suspect);
 }
 
 /*
- * reverse_blame reverses the list given in head, appending tail.
+ * reverse_sleuth reverses the list given in head, appending tail.
  * That allows us to build lists in reverse order, then reverse them
  * afterwards.  This can be faster than building the list in proper
  * order right away.  The reason is that building in proper order
@@ -1599,11 +1599,11 @@ static void decref_split(struct blame_entry *split)
  * _current_ element.
  */
 
-static struct blame_entry *reverse_blame(struct blame_entry *head,
-					 struct blame_entry *tail)
+static struct sleuth_entry *reverse_sleuth(struct sleuth_entry *head,
+					 struct sleuth_entry *tail)
 {
 	while (head) {
-		struct blame_entry *next = head->next;
+		struct sleuth_entry *next = head->next;
 		head->next = tail;
 		tail = head;
 		head = next;
@@ -1612,16 +1612,16 @@ static struct blame_entry *reverse_blame(struct blame_entry *head,
 }
 
 /*
- * Splits a blame entry into two entries at 'len' lines.  The original 'e'
+ * Splits a sleuth entry into two entries at 'len' lines.  The original 'e'
  * consists of len lines, i.e. [e->lno, e->lno + len), and the second part,
  * which is returned, consists of the remainder: [e->lno + len, e->lno +
  * e->num_lines).  The caller needs to sort out the reference counting for the
  * new entry's suspect.
  */
-static struct blame_entry *split_blame_at(struct blame_entry *e, int len,
-					  struct blame_origin *new_suspect)
+static struct sleuth_entry *split_sleuth_at(struct sleuth_entry *e, int len,
+					  struct sleuth_origin *new_suspect)
 {
-	struct blame_entry *n = xcalloc(1, sizeof(struct blame_entry));
+	struct sleuth_entry *n = xcalloc(1, sizeof(struct sleuth_entry));
 
 	n->suspect = new_suspect;
 	n->ignored = e->ignored;
@@ -1634,13 +1634,13 @@ static struct blame_entry *split_blame_at(struct blame_entry *e, int len,
 	return n;
 }
 
-struct blame_line_tracker {
+struct sleuth_line_tracker {
 	int is_parent;
 	int s_lno;
 };
 
-static int are_lines_adjacent(struct blame_line_tracker *first,
-			      struct blame_line_tracker *second)
+static int are_lines_adjacent(struct sleuth_line_tracker *first,
+			      struct sleuth_line_tracker *second)
 {
 	return first->is_parent == second->is_parent &&
 	       first->s_lno + 1 == second->s_lno;
@@ -1670,15 +1670,15 @@ static int scan_parent_range(struct fingerprint *p_fps,
 }
 
 /*
- * The first pass checks the blame entry (from the target) against the parent's
+ * The first pass checks the sleuth entry (from the target) against the parent's
  * diff chunk.  If that fails for a line, the second pass tries to match that
  * line to any part of parent file.  That catches cases where a change was
  * broken into two chunks by 'context.'
  */
-static void guess_line_blames(struct blame_origin *parent,
-			      struct blame_origin *target,
+static void guess_line_sleuths(struct sleuth_origin *parent,
+			      struct sleuth_origin *target,
 			      int tlno, int offset, int same, int parent_len,
-			      struct blame_line_tracker *line_blames)
+			      struct sleuth_line_tracker *line_sleuths)
 {
 	int i, best_idx, target_idx;
 	int parent_slno = tlno + offset;
@@ -1698,31 +1698,31 @@ static void guess_line_blames(struct blame_origin *parent,
 						     parent->num_lines);
 		}
 		if (best_idx >= 0) {
-			line_blames[i].is_parent = 1;
-			line_blames[i].s_lno = best_idx;
+			line_sleuths[i].is_parent = 1;
+			line_sleuths[i].s_lno = best_idx;
 		} else {
-			line_blames[i].is_parent = 0;
-			line_blames[i].s_lno = target_idx;
+			line_sleuths[i].is_parent = 0;
+			line_sleuths[i].s_lno = target_idx;
 		}
 	}
 	free(fuzzy_matches);
 }
 
 /*
- * This decides which parts of a blame entry go to the parent (added to the
+ * This decides which parts of a sleuth entry go to the parent (added to the
  * ignoredp list) and which stay with the target (added to the diffp list).  The
  * actual decision was made in a separate heuristic function, and those answers
- * for the lines in 'e' are in line_blames.  This consumes e, essentially
+ * for the lines in 'e' are in line_sleuths.  This consumes e, essentially
  * putting it on a list.
  *
- * Note that the blame entries on the ignoredp list are not necessarily sorted
+ * Note that the sleuth entries on the ignoredp list are not necessarily sorted
  * with respect to the parent's line numbers yet.
  */
-static void ignore_blame_entry(struct blame_entry *e,
-			       struct blame_origin *parent,
-			       struct blame_entry **diffp,
-			       struct blame_entry **ignoredp,
-			       struct blame_line_tracker *line_blames)
+static void ignore_sleuth_entry(struct sleuth_entry *e,
+			       struct sleuth_origin *parent,
+			       struct sleuth_entry **diffp,
+			       struct sleuth_entry **ignoredp,
+			       struct sleuth_line_tracker *line_sleuths)
 {
 	int entry_len, nr_lines, i;
 
@@ -1734,26 +1734,26 @@ static void ignore_blame_entry(struct blame_entry *e,
 	entry_len = 1;
 	nr_lines = e->num_lines;	/* e changes in the loop */
 	for (i = 0; i < nr_lines; i++) {
-		struct blame_entry *next = NULL;
+		struct sleuth_entry *next = NULL;
 
 		/*
-		 * We are often adjacent to the next line - only split the blame
+		 * We are often adjacent to the next line - only split the sleuth
 		 * entry when we have to.
 		 */
 		if (i + 1 < nr_lines) {
-			if (are_lines_adjacent(&line_blames[i],
-					       &line_blames[i + 1])) {
+			if (are_lines_adjacent(&line_sleuths[i],
+					       &line_sleuths[i + 1])) {
 				entry_len++;
 				continue;
 			}
-			next = split_blame_at(e, entry_len,
-					      blame_origin_incref(e->suspect));
+			next = split_sleuth_at(e, entry_len,
+					      sleuth_origin_incref(e->suspect));
 		}
-		if (line_blames[i].is_parent) {
+		if (line_sleuths[i].is_parent) {
 			e->ignored = 1;
-			blame_origin_decref(e->suspect);
-			e->suspect = blame_origin_incref(parent);
-			e->s_lno = line_blames[i - entry_len + 1].s_lno;
+			sleuth_origin_decref(e->suspect);
+			e->suspect = sleuth_origin_incref(parent);
+			e->s_lno = line_sleuths[i - entry_len + 1].s_lno;
 			e->next = *ignoredp;
 			*ignoredp = e;
 		} else {
@@ -1771,9 +1771,9 @@ static void ignore_blame_entry(struct blame_entry *e,
 
 /*
  * Process one hunk from the patch between the current suspect for
- * blame_entry e and its parent.  This first blames any unfinished
+ * sleuth_entry e and its parent.  This first sleuths any unfinished
  * entries before the chunk (which is where target and parent start
- * differing) on the parent, and then splits blame entries at the
+ * differing) on the parent, and then splits sleuth entries at the
  * start and at the end of the difference region.  Since use of -M and
  * -C options may lead to overlapping/duplicate source line number
  * ranges, all we can rely on from sorting/merging is the order of the
@@ -1784,17 +1784,17 @@ static void ignore_blame_entry(struct blame_entry *e,
  * offset: add to tlno to get the chunk starting point in the parent
  * parent_len: number of lines in the parent chunk
  */
-static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
+static void sleuth_chunk(struct sleuth_entry ***dstq, struct sleuth_entry ***srcq,
 			int tlno, int offset, int same, int parent_len,
-			struct blame_origin *parent,
-			struct blame_origin *target, int ignore_diffs)
+			struct sleuth_origin *parent,
+			struct sleuth_origin *target, int ignore_diffs)
 {
-	struct blame_entry *e = **srcq;
-	struct blame_entry *samep = NULL, *diffp = NULL, *ignoredp = NULL;
-	struct blame_line_tracker *line_blames = NULL;
+	struct sleuth_entry *e = **srcq;
+	struct sleuth_entry *samep = NULL, *diffp = NULL, *ignoredp = NULL;
+	struct sleuth_line_tracker *line_sleuths = NULL;
 
 	while (e && e->s_lno < tlno) {
-		struct blame_entry *next = e->next;
+		struct sleuth_entry *next = e->next;
 		/*
 		 * current record starts before differing portion.  If
 		 * it reaches into it, we need to split it up and
@@ -1802,17 +1802,17 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 		 */
 		if (e->s_lno + e->num_lines > tlno) {
 			/* Move second half to a new record */
-			struct blame_entry *n;
+			struct sleuth_entry *n;
 
-			n = split_blame_at(e, tlno - e->s_lno, e->suspect);
+			n = split_sleuth_at(e, tlno - e->s_lno, e->suspect);
 			/* Push new record to diffp */
 			n->next = diffp;
 			diffp = n;
 		} else
-			blame_origin_decref(e->suspect);
-		/* Pass blame for everything before the differing
+			sleuth_origin_decref(e->suspect);
+		/* Pass sleuth for everything before the differing
 		 * chunk to the parent */
-		e->suspect = blame_origin_incref(parent);
+		e->suspect = sleuth_origin_incref(parent);
 		e->s_lno += offset;
 		e->next = samep;
 		samep = e;
@@ -1820,19 +1820,19 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	}
 	/*
 	 * As we don't know how much of a common stretch after this
-	 * diff will occur, the currently blamed parts are all that we
+	 * diff will occur, the currently sleuthd parts are all that we
 	 * can assign to the parent for now.
 	 */
 
 	if (samep) {
-		**dstq = reverse_blame(samep, **dstq);
+		**dstq = reverse_sleuth(samep, **dstq);
 		*dstq = &samep->next;
 	}
 	/*
 	 * Prepend the split off portions: everything after e starts
-	 * after the blameable portion.
+	 * after the sleuthable portion.
 	 */
-	e = reverse_blame(diffp, e);
+	e = reverse_sleuth(diffp, e);
 
 	/*
 	 * Now retain records on the target while parts are different
@@ -1842,13 +1842,13 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	diffp = NULL;
 
 	if (ignore_diffs && same - tlno > 0) {
-		CALLOC_ARRAY(line_blames, same - tlno);
-		guess_line_blames(parent, target, tlno, offset, same,
-				  parent_len, line_blames);
+		CALLOC_ARRAY(line_sleuths, same - tlno);
+		guess_line_sleuths(parent, target, tlno, offset, same,
+				  parent_len, line_sleuths);
 	}
 
 	while (e && e->s_lno < same) {
-		struct blame_entry *next = e->next;
+		struct sleuth_entry *next = e->next;
 
 		/*
 		 * If current record extends into sameness, need to split.
@@ -1858,60 +1858,60 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 			 * Move second half to a new record to be
 			 * processed by later chunks
 			 */
-			struct blame_entry *n;
+			struct sleuth_entry *n;
 
-			n = split_blame_at(e, same - e->s_lno,
-					   blame_origin_incref(e->suspect));
+			n = split_sleuth_at(e, same - e->s_lno,
+					   sleuth_origin_incref(e->suspect));
 			/* Push new record to samep */
 			n->next = samep;
 			samep = n;
 		}
 		if (ignore_diffs) {
-			ignore_blame_entry(e, parent, &diffp, &ignoredp,
-					   line_blames + e->s_lno - tlno);
+			ignore_sleuth_entry(e, parent, &diffp, &ignoredp,
+					   line_sleuths + e->s_lno - tlno);
 		} else {
 			e->next = diffp;
 			diffp = e;
 		}
 		e = next;
 	}
-	free(line_blames);
+	free(line_sleuths);
 	if (ignoredp) {
 		/*
 		 * Note ignoredp is not sorted yet, and thus neither is dstq.
-		 * That list must be sorted before we queue_blames().  We defer
+		 * That list must be sorted before we queue_sleuths().  We defer
 		 * sorting until after all diff hunks are processed, so that
-		 * guess_line_blames() can pick *any* line in the parent.  The
-		 * slight drawback is that we end up sorting all blame entries
+		 * guess_line_sleuths() can pick *any* line in the parent.  The
+		 * slight drawback is that we end up sorting all sleuth entries
 		 * passed to the parent, including those that are unrelated to
 		 * changes made by the ignored commit.
 		 */
-		**dstq = reverse_blame(ignoredp, **dstq);
+		**dstq = reverse_sleuth(ignoredp, **dstq);
 		*dstq = &ignoredp->next;
 	}
-	**srcq = reverse_blame(diffp, reverse_blame(samep, e));
+	**srcq = reverse_sleuth(diffp, reverse_sleuth(samep, e));
 	/* Move across elements that are in the unblamable portion */
 	if (diffp)
 		*srcq = &diffp->next;
 }
 
-struct blame_chunk_cb_data {
-	struct blame_origin *parent;
-	struct blame_origin *target;
+struct sleuth_chunk_cb_data {
+	struct sleuth_origin *parent;
+	struct sleuth_origin *target;
 	long offset;
 	int ignore_diffs;
-	struct blame_entry **dstq;
-	struct blame_entry **srcq;
+	struct sleuth_entry **dstq;
+	struct sleuth_entry **srcq;
 };
 
 /* diff chunks are from parent to target */
-static int blame_chunk_cb(long start_a, long count_a,
+static int sleuth_chunk_cb(long start_a, long count_a,
 			  long start_b, long count_b, void *data)
 {
-	struct blame_chunk_cb_data *d = data;
+	struct sleuth_chunk_cb_data *d = data;
 	if (start_a - start_b != d->offset)
-		die("internal error in blame::blame_chunk_cb");
-	blame_chunk(&d->dstq, &d->srcq, start_b, start_a - start_b,
+		die("internal error in sleuth::sleuth_chunk_cb");
+	sleuth_chunk(&d->dstq, &d->srcq, start_b, start_a - start_b,
 		    start_b + count_b, count_a, d->parent, d->target,
 		    d->ignore_diffs);
 	d->offset = start_a + count_a - (start_b + count_b);
@@ -1919,17 +1919,17 @@ static int blame_chunk_cb(long start_a, long count_a,
 }
 
 /*
- * We are looking at the origin 'target' and aiming to pass blame
+ * We are looking at the origin 'target' and aiming to pass sleuth
  * for the lines it is suspected to its parent.  Run diff to find
- * which lines came from parent and pass blame for them.
+ * which lines came from parent and pass sleuth for them.
  */
-static void pass_blame_to_parent(struct blame_scoreboard *sb,
-				 struct blame_origin *target,
-				 struct blame_origin *parent, int ignore_diffs)
+static void pass_sleuth_to_parent(struct sleuth_scoreboard *sb,
+				 struct sleuth_origin *target,
+				 struct sleuth_origin *parent, int ignore_diffs)
 {
 	mmfile_t file_p, file_o;
-	struct blame_chunk_cb_data d;
-	struct blame_entry *newdest = NULL;
+	struct sleuth_chunk_cb_data d;
+	struct sleuth_entry *newdest = NULL;
 
 	if (!target->suspects)
 		return; /* nothing remains for this target */
@@ -1946,31 +1946,31 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 			 &sb->num_read_blob, ignore_diffs);
 	sb->num_get_patch++;
 
-	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
+	if (diff_hunks(&file_p, &file_o, sleuth_chunk_cb, &d, sb->xdl_opts))
 		die("unable to generate diff (%s -> %s)",
 		    oid_to_hex(&parent->commit->object.oid),
 		    oid_to_hex(&target->commit->object.oid));
 	/* The rest are the same as the parent */
-	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, 0,
+	sleuth_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, 0,
 		    parent, target, 0);
 	*d.dstq = NULL;
 	if (ignore_diffs)
-		sort_blame_entries(&newdest, compare_blame_suspect);
-	queue_blames(sb, parent, newdest);
+		sort_sleuth_entries(&newdest, compare_sleuth_suspect);
+	queue_sleuths(sb, parent, newdest);
 
 	return;
 }
 
 /*
- * The lines in blame_entry after splitting blames many times can become
+ * The lines in sleuth_entry after splitting sleuths many times can become
  * very small and trivial, and at some point it becomes pointless to
- * blame the parents.  E.g. "\t\t}\n\t}\n\n" appears everywhere in any
+ * sleuth the parents.  E.g. "\t\t}\n\t}\n\n" appears everywhere in any
  * ordinary C program, and it is not worth to say it was copied from
  * totally unrelated file in the parent.
  *
- * Compute how trivial the lines in the blame_entry are.
+ * Compute how trivial the lines in the sleuth_entry are.
  */
-unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e)
+unsigned sleuth_entry_score(struct sleuth_scoreboard *sb, struct sleuth_entry *e)
 {
 	unsigned score;
 	const char *cp, *ep;
@@ -1979,8 +1979,8 @@ unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e)
 		return e->score;
 
 	score = 1;
-	cp = blame_nth_line(sb, e->lno);
-	ep = blame_nth_line(sb, e->lno + e->num_lines);
+	cp = sleuth_nth_line(sb, e->lno);
+	ep = sleuth_nth_line(sb, e->lno + e->num_lines);
 	while (cp < ep) {
 		unsigned ch = *((unsigned char *)cp);
 		if (isalnum(ch))
@@ -1992,29 +1992,29 @@ unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e)
 }
 
 /*
- * best_so_far[] and potential[] are both a split of an existing blame_entry
- * that passes blame to the parent.  Maintain best_so_far the best split so
+ * best_so_far[] and potential[] are both a split of an existing sleuth_entry
+ * that passes sleuth to the parent.  Maintain best_so_far the best split so
  * far, by comparing potential and best_so_far and copying potential into
  * bst_so_far as needed.
  */
-static void copy_split_if_better(struct blame_scoreboard *sb,
-				 struct blame_entry *best_so_far,
-				 struct blame_entry *potential)
+static void copy_split_if_better(struct sleuth_scoreboard *sb,
+				 struct sleuth_entry *best_so_far,
+				 struct sleuth_entry *potential)
 {
 	int i;
 
 	if (!potential[1].suspect)
 		return;
 	if (best_so_far[1].suspect) {
-		if (blame_entry_score(sb, &potential[1]) <
-		    blame_entry_score(sb, &best_so_far[1]))
+		if (sleuth_entry_score(sb, &potential[1]) <
+		    sleuth_entry_score(sb, &best_so_far[1]))
 			return;
 	}
 
 	for (i = 0; i < 3; i++)
-		blame_origin_incref(potential[i].suspect);
+		sleuth_origin_incref(potential[i].suspect);
 	decref_split(best_so_far);
-	memcpy(best_so_far, potential, sizeof(struct blame_entry[3]));
+	memcpy(best_so_far, potential, sizeof(struct sleuth_entry[3]));
 }
 
 /*
@@ -2032,16 +2032,16 @@ static void copy_split_if_better(struct blame_scoreboard *sb,
  *
  * All line numbers are 0-based.
  */
-static void handle_split(struct blame_scoreboard *sb,
-			 struct blame_entry *ent,
+static void handle_split(struct sleuth_scoreboard *sb,
+			 struct sleuth_entry *ent,
 			 int tlno, int plno, int same,
-			 struct blame_origin *parent,
-			 struct blame_entry *split)
+			 struct sleuth_origin *parent,
+			 struct sleuth_entry *split)
 {
 	if (ent->num_lines <= tlno)
 		return;
 	if (tlno < same) {
-		struct blame_entry potential[3];
+		struct sleuth_entry potential[3];
 		tlno += ent->s_lno;
 		same += ent->s_lno;
 		split_overlap(potential, ent, tlno, plno, same, parent);
@@ -2051,10 +2051,10 @@ static void handle_split(struct blame_scoreboard *sb,
 }
 
 struct handle_split_cb_data {
-	struct blame_scoreboard *sb;
-	struct blame_entry *ent;
-	struct blame_origin *parent;
-	struct blame_entry *split;
+	struct sleuth_scoreboard *sb;
+	struct sleuth_entry *ent;
+	struct sleuth_origin *parent;
+	struct sleuth_entry *split;
 	long plno;
 	long tlno;
 };
@@ -2072,13 +2072,13 @@ static int handle_split_cb(long start_a, long count_a,
 
 /*
  * Find the lines from parent that are the same as ent so that
- * we can pass blames to it.  file_p has the blob contents for
+ * we can pass sleuths to it.  file_p has the blob contents for
  * the parent.
  */
-static void find_copy_in_blob(struct blame_scoreboard *sb,
-			      struct blame_entry *ent,
-			      struct blame_origin *parent,
-			      struct blame_entry *split,
+static void find_copy_in_blob(struct sleuth_scoreboard *sb,
+			      struct sleuth_entry *ent,
+			      struct sleuth_origin *parent,
+			      struct sleuth_entry *split,
 			      mmfile_t *file_p)
 {
 	const char *cp;
@@ -2090,15 +2090,15 @@ static void find_copy_in_blob(struct blame_scoreboard *sb,
 	/*
 	 * Prepare mmfile that contains only the lines in ent.
 	 */
-	cp = blame_nth_line(sb, ent->lno);
+	cp = sleuth_nth_line(sb, ent->lno);
 	file_o.ptr = (char *) cp;
-	file_o.size = blame_nth_line(sb, ent->lno + ent->num_lines) - cp;
+	file_o.size = sleuth_nth_line(sb, ent->lno + ent->num_lines) - cp;
 
 	/*
 	 * file_o is a part of final image we are annotating.
 	 * file_p partially may match that image.
 	 */
-	memset(split, 0, sizeof(struct blame_entry [3]));
+	memset(split, 0, sizeof(struct sleuth_entry [3]));
 	if (diff_hunks(file_p, &file_o, handle_split_cb, &d, sb->xdl_opts))
 		die("unable to generate diff (%s)",
 		    oid_to_hex(&parent->commit->object.oid));
@@ -2106,20 +2106,20 @@ static void find_copy_in_blob(struct blame_scoreboard *sb,
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
 
-/* Move all blame entries from list *source that have a score smaller
+/* Move all sleuth entries from list *source that have a score smaller
  * than score_min to the front of list *small.
  * Returns a pointer to the link pointing to the old head of the small list.
  */
 
-static struct blame_entry **filter_small(struct blame_scoreboard *sb,
-					 struct blame_entry **small,
-					 struct blame_entry **source,
+static struct sleuth_entry **filter_small(struct sleuth_scoreboard *sb,
+					 struct sleuth_entry **small,
+					 struct sleuth_entry **source,
 					 unsigned score_min)
 {
-	struct blame_entry *p = *source;
-	struct blame_entry *oldsmall = *small;
+	struct sleuth_entry *p = *source;
+	struct sleuth_entry *oldsmall = *small;
 	while (p) {
-		if (blame_entry_score(sb, p) <= score_min) {
+		if (sleuth_entry_score(sb, p) <= score_min) {
 			*small = p;
 			small = &p->next;
 			p = *small;
@@ -2138,18 +2138,18 @@ static struct blame_entry **filter_small(struct blame_scoreboard *sb,
  * See if lines currently target is suspected for can be attributed to
  * parent.
  */
-static void find_move_in_parent(struct blame_scoreboard *sb,
-				struct blame_entry ***blamed,
-				struct blame_entry **toosmall,
-				struct blame_origin *target,
-				struct blame_origin *parent)
+static void find_move_in_parent(struct sleuth_scoreboard *sb,
+				struct sleuth_entry ***sleuthd,
+				struct sleuth_entry **toosmall,
+				struct sleuth_origin *target,
+				struct sleuth_origin *parent)
 {
-	struct blame_entry *e, split[3];
-	struct blame_entry *unblamed = target->suspects;
-	struct blame_entry *leftover = NULL;
+	struct sleuth_entry *e, split[3];
+	struct sleuth_entry *unsleuthd = target->suspects;
+	struct sleuth_entry *leftover = NULL;
 	mmfile_t file_p;
 
-	if (!unblamed)
+	if (!unsleuthd)
 		return; /* nothing remains for this target */
 
 	fill_origin_blob(&sb->revs->diffopt, parent, &file_p,
@@ -2157,57 +2157,57 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 	if (!file_p.ptr)
 		return;
 
-	/* At each iteration, unblamed has a NULL-terminated list of
-	 * entries that have not yet been tested for blame.  leftover
+	/* At each iteration, unsleuthd has a NULL-terminated list of
+	 * entries that have not yet been tested for sleuth.  leftover
 	 * contains the reversed list of entries that have been tested
 	 * without being assignable to the parent.
 	 */
 	do {
-		struct blame_entry **unblamedtail = &unblamed;
-		struct blame_entry *next;
-		for (e = unblamed; e; e = next) {
+		struct sleuth_entry **unsleuthdtail = &unsleuthd;
+		struct sleuth_entry *next;
+		for (e = unsleuthd; e; e = next) {
 			next = e->next;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
-			    sb->move_score < blame_entry_score(sb, &split[1])) {
-				split_blame(blamed, &unblamedtail, split, e);
+			    sb->move_score < sleuth_entry_score(sb, &split[1])) {
+				split_sleuth(sleuthd, &unsleuthdtail, split, e);
 			} else {
 				e->next = leftover;
 				leftover = e;
 			}
 			decref_split(split);
 		}
-		*unblamedtail = NULL;
-		toosmall = filter_small(sb, toosmall, &unblamed, sb->move_score);
-	} while (unblamed);
-	target->suspects = reverse_blame(leftover, NULL);
+		*unsleuthdtail = NULL;
+		toosmall = filter_small(sb, toosmall, &unsleuthd, sb->move_score);
+	} while (unsleuthd);
+	target->suspects = reverse_sleuth(leftover, NULL);
 }
 
-struct blame_list {
-	struct blame_entry *ent;
-	struct blame_entry split[3];
+struct sleuth_list {
+	struct sleuth_entry *ent;
+	struct sleuth_entry split[3];
 };
 
 /*
  * Count the number of entries the target is suspected for,
  * and prepare a list of entry and the best split.
  */
-static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
+static struct sleuth_list *setup_sleuth_list(struct sleuth_entry *unsleuthd,
 					   int *num_ents_p)
 {
-	struct blame_entry *e;
+	struct sleuth_entry *e;
 	int num_ents, i;
-	struct blame_list *blame_list = NULL;
+	struct sleuth_list *sleuth_list = NULL;
 
-	for (e = unblamed, num_ents = 0; e; e = e->next)
+	for (e = unsleuthd, num_ents = 0; e; e = e->next)
 		num_ents++;
 	if (num_ents) {
-		CALLOC_ARRAY(blame_list, num_ents);
-		for (e = unblamed, i = 0; e; e = e->next)
-			blame_list[i++].ent = e;
+		CALLOC_ARRAY(sleuth_list, num_ents);
+		for (e = unsleuthd, i = 0; e; e = e->next)
+			sleuth_list[i++].ent = e;
 	}
 	*num_ents_p = num_ents;
-	return blame_list;
+	return sleuth_list;
 }
 
 /*
@@ -2215,22 +2215,22 @@ static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
  * across file boundary from the parent commit.  porigin is the path
  * in the parent we already tried.
  */
-static void find_copy_in_parent(struct blame_scoreboard *sb,
-				struct blame_entry ***blamed,
-				struct blame_entry **toosmall,
-				struct blame_origin *target,
+static void find_copy_in_parent(struct sleuth_scoreboard *sb,
+				struct sleuth_entry ***sleuthd,
+				struct sleuth_entry **toosmall,
+				struct sleuth_origin *target,
 				struct commit *parent,
-				struct blame_origin *porigin,
+				struct sleuth_origin *porigin,
 				int opt)
 {
 	struct diff_options diff_opts;
 	int i, j;
-	struct blame_list *blame_list;
+	struct sleuth_list *sleuth_list;
 	int num_ents;
-	struct blame_entry *unblamed = target->suspects;
-	struct blame_entry *leftover = NULL;
+	struct sleuth_entry *unsleuthd = target->suspects;
+	struct sleuth_entry *leftover = NULL;
 
-	if (!unblamed)
+	if (!unsleuthd)
 		return; /* nothing remains for this target */
 
 	repo_diff_setup(sb->repo, &diff_opts);
@@ -2246,8 +2246,8 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	 * and this code needs to be after diff_setup_done(), which
 	 * usually makes find-copies-harder imply copy detection.
 	 */
-	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
-	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
+	if ((opt & PICKAXE_sleuth_COPY_HARDEST)
+	    || ((opt & PICKAXE_sleuth_COPY_HARDER)
 		&& (!porigin || strcmp(target->path, porigin->path))))
 		diff_opts.flags.find_copies_harder = 1;
 
@@ -2262,14 +2262,14 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		diffcore_std(&diff_opts);
 
 	do {
-		struct blame_entry **unblamedtail = &unblamed;
-		blame_list = setup_blame_list(unblamed, &num_ents);
+		struct sleuth_entry **unsleuthdtail = &unsleuthd;
+		sleuth_list = setup_sleuth_list(unsleuthd, &num_ents);
 
 		for (i = 0; i < diff_queued_diff.nr; i++) {
 			struct diff_filepair *p = diff_queued_diff.queue[i];
-			struct blame_origin *norigin;
+			struct sleuth_origin *norigin;
 			mmfile_t file_p;
-			struct blame_entry potential[3];
+			struct sleuth_entry potential[3];
 
 			if (!DIFF_FILE_VALID(p->one))
 				continue; /* does not exist in parent */
@@ -2288,43 +2288,43 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 				continue;
 
 			for (j = 0; j < num_ents; j++) {
-				find_copy_in_blob(sb, blame_list[j].ent,
+				find_copy_in_blob(sb, sleuth_list[j].ent,
 						  norigin, potential, &file_p);
-				copy_split_if_better(sb, blame_list[j].split,
+				copy_split_if_better(sb, sleuth_list[j].split,
 						     potential);
 				decref_split(potential);
 			}
-			blame_origin_decref(norigin);
+			sleuth_origin_decref(norigin);
 		}
 
 		for (j = 0; j < num_ents; j++) {
-			struct blame_entry *split = blame_list[j].split;
+			struct sleuth_entry *split = sleuth_list[j].split;
 			if (split[1].suspect &&
-			    sb->copy_score < blame_entry_score(sb, &split[1])) {
-				split_blame(blamed, &unblamedtail, split,
-					    blame_list[j].ent);
+			    sb->copy_score < sleuth_entry_score(sb, &split[1])) {
+				split_sleuth(sleuthd, &unsleuthdtail, split,
+					    sleuth_list[j].ent);
 			} else {
-				blame_list[j].ent->next = leftover;
-				leftover = blame_list[j].ent;
+				sleuth_list[j].ent->next = leftover;
+				leftover = sleuth_list[j].ent;
 			}
 			decref_split(split);
 		}
-		free(blame_list);
-		*unblamedtail = NULL;
-		toosmall = filter_small(sb, toosmall, &unblamed, sb->copy_score);
-	} while (unblamed);
-	target->suspects = reverse_blame(leftover, NULL);
+		free(sleuth_list);
+		*unsleuthdtail = NULL;
+		toosmall = filter_small(sb, toosmall, &unsleuthd, sb->copy_score);
+	} while (unsleuthd);
+	target->suspects = reverse_sleuth(leftover, NULL);
 	diff_flush(&diff_opts);
 }
 
 /*
  * The blobs of origin and porigin exactly match, so everything
- * origin is suspected for can be blamed on the parent.
+ * origin is suspected for can be sleuthd on the parent.
  */
-static void pass_whole_blame(struct blame_scoreboard *sb,
-			     struct blame_origin *origin, struct blame_origin *porigin)
+static void pass_whole_sleuth(struct sleuth_scoreboard *sb,
+			     struct sleuth_origin *origin, struct sleuth_origin *porigin)
 {
-	struct blame_entry *e, *suspects;
+	struct sleuth_entry *e, *suspects;
 
 	if (!porigin->file.ptr && origin->file.ptr) {
 		/* Steal its file */
@@ -2334,15 +2334,15 @@ static void pass_whole_blame(struct blame_scoreboard *sb,
 	suspects = origin->suspects;
 	origin->suspects = NULL;
 	for (e = suspects; e; e = e->next) {
-		blame_origin_incref(porigin);
-		blame_origin_decref(e->suspect);
+		sleuth_origin_incref(porigin);
+		sleuth_origin_decref(e->suspect);
 		e->suspect = porigin;
 	}
-	queue_blames(sb, porigin, suspects);
+	queue_sleuths(sb, porigin, suspects);
 }
 
 /*
- * We pass blame from the current commit to its parents.  We keep saying
+ * We pass sleuth from the current commit to its parents.  We keep saying
  * "parent" (and "porigin"), but what we mean is to find scapegoat to
  * exonerate ourselves.
  */
@@ -2367,44 +2367,44 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reve
 	return commit_list_count(l);
 }
 
-/* Distribute collected unsorted blames to the respected sorted lists
+/* Distribute collected unsorted sleuths to the respected sorted lists
  * in the various origins.
  */
-static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *blamed)
+static void distribute_sleuth(struct sleuth_scoreboard *sb, struct sleuth_entry *sleuthd)
 {
-	sort_blame_entries(&blamed, compare_blame_suspect);
-	while (blamed)
+	sort_sleuth_entries(&sleuthd, compare_sleuth_suspect);
+	while (sleuthd)
 	{
-		struct blame_origin *porigin = blamed->suspect;
-		struct blame_entry *suspects = NULL;
+		struct sleuth_origin *porigin = sleuthd->suspect;
+		struct sleuth_entry *suspects = NULL;
 		do {
-			struct blame_entry *next = blamed->next;
-			blamed->next = suspects;
-			suspects = blamed;
-			blamed = next;
-		} while (blamed && blamed->suspect == porigin);
-		suspects = reverse_blame(suspects, NULL);
-		queue_blames(sb, porigin, suspects);
+			struct sleuth_entry *next = sleuthd->next;
+			sleuthd->next = suspects;
+			suspects = sleuthd;
+			sleuthd = next;
+		} while (sleuthd && sleuthd->suspect == porigin);
+		suspects = reverse_sleuth(suspects, NULL);
+		queue_sleuths(sb, porigin, suspects);
 	}
 }
 
 #define MAXSG 16
 
-typedef struct blame_origin *(*blame_find_alg)(struct repository *,
+typedef struct sleuth_origin *(*sleuth_find_alg)(struct repository *,
 					       struct commit *,
-					       struct blame_origin *,
-					       struct blame_bloom_data *);
+					       struct sleuth_origin *,
+					       struct sleuth_bloom_data *);
 
-static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin, int opt)
+static void pass_sleuth(struct sleuth_scoreboard *sb, struct sleuth_origin *origin, int opt)
 {
 	struct rev_info *revs = sb->revs;
 	int i, pass, num_sg;
 	struct commit *commit = origin->commit;
 	struct commit_list *sg;
-	struct blame_origin *sg_buf[MAXSG];
-	struct blame_origin *porigin, **sg_origin = sg_buf;
-	struct blame_entry *toosmall = NULL;
-	struct blame_entry *blames, **blametail = &blames;
+	struct sleuth_origin *sg_buf[MAXSG];
+	struct sleuth_origin *porigin, **sg_origin = sg_buf;
+	struct sleuth_entry *toosmall = NULL;
+	struct sleuth_entry *sleuths, **sleuthtail = &sleuths;
 
 	num_sg = num_scapegoats(revs, commit, sb->reverse);
 	if (!num_sg)
@@ -2419,7 +2419,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	 * common cases, then we look for renames in the second pass.
 	 */
 	for (pass = 0; pass < 2 - sb->no_whole_file_rename; pass++) {
-		blame_find_alg find = pass ? find_rename : find_origin;
+		sleuth_find_alg find = pass ? find_rename : find_origin;
 
 		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
@@ -2435,8 +2435,8 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			if (!porigin)
 				continue;
 			if (oideq(&porigin->blob_oid, &origin->blob_oid)) {
-				pass_whole_blame(sb, origin, porigin);
-				blame_origin_decref(porigin);
+				pass_whole_sleuth(sb, origin, porigin);
+				sleuth_origin_decref(porigin);
 				goto finish;
 			}
 			for (j = same = 0; j < i; j++)
@@ -2448,7 +2448,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			if (!same)
 				sg_origin[i] = porigin;
 			else
-				blame_origin_decref(porigin);
+				sleuth_origin_decref(porigin);
 		}
 	}
 
@@ -2456,14 +2456,14 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 	     i < num_sg && sg;
 	     sg = sg->next, i++) {
-		struct blame_origin *porigin = sg_origin[i];
+		struct sleuth_origin *porigin = sg_origin[i];
 		if (!porigin)
 			continue;
 		if (!origin->previous) {
-			blame_origin_incref(porigin);
+			sleuth_origin_incref(porigin);
 			origin->previous = porigin;
 		}
-		pass_blame_to_parent(sb, origin, porigin, 0);
+		pass_sleuth_to_parent(sb, origin, porigin, 0);
 		if (!origin->suspects)
 			goto finish;
 	}
@@ -2475,11 +2475,11 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
-			struct blame_origin *porigin = sg_origin[i];
+			struct sleuth_origin *porigin = sg_origin[i];
 
 			if (!porigin)
 				continue;
-			pass_blame_to_parent(sb, origin, porigin, 1);
+			pass_sleuth_to_parent(sb, origin, porigin, 1);
 			/*
 			 * Preemptively drop porigin so we can refresh the
 			 * fingerprints if we use the parent again, which can
@@ -2494,16 +2494,16 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	/*
 	 * Optionally find moves in parents' files.
 	 */
-	if (opt & PICKAXE_BLAME_MOVE) {
+	if (opt & PICKAXE_sleuth_MOVE) {
 		filter_small(sb, &toosmall, &origin->suspects, sb->move_score);
 		if (origin->suspects) {
 			for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 			     i < num_sg && sg;
 			     sg = sg->next, i++) {
-				struct blame_origin *porigin = sg_origin[i];
+				struct sleuth_origin *porigin = sg_origin[i];
 				if (!porigin)
 					continue;
-				find_move_in_parent(sb, &blametail, &toosmall, origin, porigin);
+				find_move_in_parent(sb, &sleuthtail, &toosmall, origin, porigin);
 				if (!origin->suspects)
 					break;
 			}
@@ -2513,11 +2513,11 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	/*
 	 * Optionally find copies from parents' files.
 	 */
-	if (opt & PICKAXE_BLAME_COPY) {
+	if (opt & PICKAXE_sleuth_COPY) {
 		if (sb->copy_score > sb->move_score)
 			filter_small(sb, &toosmall, &origin->suspects, sb->copy_score);
 		else if (sb->copy_score < sb->move_score) {
-			origin->suspects = blame_merge(origin->suspects, toosmall);
+			origin->suspects = sleuth_merge(origin->suspects, toosmall);
 			toosmall = NULL;
 			filter_small(sb, &toosmall, &origin->suspects, sb->copy_score);
 		}
@@ -2527,8 +2527,8 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
-			struct blame_origin *porigin = sg_origin[i];
-			find_copy_in_parent(sb, &blametail, &toosmall,
+			struct sleuth_origin *porigin = sg_origin[i];
+			find_copy_in_parent(sb, &sleuthtail, &toosmall,
 					    origin, sg->item, porigin, opt);
 			if (!origin->suspects)
 				goto finish;
@@ -2536,8 +2536,8 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	}
 
 finish:
-	*blametail = NULL;
-	distribute_blame(sb, blames);
+	*sleuthtail = NULL;
+	distribute_sleuth(sb, sleuths);
 	/*
 	 * prepend toosmall to origin->suspects
 	 *
@@ -2545,7 +2545,7 @@ finish:
 	 * unsorted list in the caller anyway.
 	 */
 	if (toosmall) {
-		struct blame_entry **tail = &toosmall;
+		struct sleuth_entry **tail = &toosmall;
 		while (*tail)
 			tail = &(*tail)->next;
 		*tail = origin->suspects;
@@ -2555,7 +2555,7 @@ finish:
 		if (sg_origin[i]) {
 			if (!sg_origin[i]->suspects)
 				drop_origin_blob(sg_origin[i]);
-			blame_origin_decref(sg_origin[i]);
+			sleuth_origin_decref(sg_origin[i]);
 		}
 	}
 	drop_origin_blob(origin);
@@ -2565,16 +2565,16 @@ finish:
 
 /*
  * The main loop -- while we have blobs with lines whose true origin
- * is still unknown, pick one blob, and allow its lines to pass blames
+ * is still unknown, pick one blob, and allow its lines to pass sleuths
  * to its parents. */
-void assign_blame(struct blame_scoreboard *sb, int opt)
+void assign_sleuth(struct sleuth_scoreboard *sb, int opt)
 {
 	struct rev_info *revs = sb->revs;
 	struct commit *commit = prio_queue_get(&sb->commits);
 
 	while (commit) {
-		struct blame_entry *ent;
-		struct blame_origin *suspect = get_blame_suspects(commit);
+		struct sleuth_entry *ent;
+		struct sleuth_origin *suspect = get_sleuth_suspects(commit);
 
 		/* find one suspect to break down */
 		while (suspect && !suspect->suspects)
@@ -2591,12 +2591,12 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * We will use this suspect later in the loop,
 		 * so hold onto it in the meantime.
 		 */
-		blame_origin_incref(suspect);
+		sleuth_origin_incref(suspect);
 		parse_commit(commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))
-			pass_blame(sb, suspect, opt);
+			pass_sleuth(sb, suspect, opt);
 		else {
 			commit->object.flags |= UNINTERESTING;
 			if (commit->object.parsed)
@@ -2611,7 +2611,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		if (ent) {
 			suspect->guilty = 1;
 			for (;;) {
-				struct blame_entry *next = ent->next;
+				struct sleuth_entry *next = ent->next;
 				if (sb->found_guilty_entry)
 					sb->found_guilty_entry(ent, sb->found_guilty_entry_data);
 				if (next) {
@@ -2624,7 +2624,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 				break;
 			}
 		}
-		blame_origin_decref(suspect);
+		sleuth_origin_decref(suspect);
 
 		if (sb->debug) /* sanity */
 			sanity_check_refcnt(sb);
@@ -2635,7 +2635,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
  * To allow quick access to the contents of nth line in the
  * final image, prepare an index in the scoreboard.
  */
-static int prepare_lines(struct blame_scoreboard *sb)
+static int prepare_lines(struct sleuth_scoreboard *sb)
 {
 	sb->num_lines = find_line_starts(&sb->lineno, sb->final_buf,
 					 sb->final_buf_size);
@@ -2671,8 +2671,8 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 					   const char **name_p)
 {
 	/*
-	 * DWIM "git blame --reverse ONE -- PATH" as
-	 * "git blame --reverse ONE..HEAD -- PATH" but only do so
+	 * DWIM "git sleuth --reverse ONE -- PATH" as
+	 * "git sleuth --reverse ONE..HEAD -- PATH" but only do so
 	 * when it makes sense.
 	 */
 	struct object *obj;
@@ -2740,22 +2740,22 @@ static struct commit *find_single_initial(struct rev_info *revs,
 	return found;
 }
 
-void init_scoreboard(struct blame_scoreboard *sb)
+void init_scoreboard(struct sleuth_scoreboard *sb)
 {
-	memset(sb, 0, sizeof(struct blame_scoreboard));
-	sb->move_score = BLAME_DEFAULT_MOVE_SCORE;
-	sb->copy_score = BLAME_DEFAULT_COPY_SCORE;
+	memset(sb, 0, sizeof(struct sleuth_scoreboard));
+	sb->move_score = sleuth_DEFAULT_MOVE_SCORE;
+	sb->copy_score = sleuth_DEFAULT_COPY_SCORE;
 }
 
-void setup_scoreboard(struct blame_scoreboard *sb,
-		      struct blame_origin **orig)
+void setup_scoreboard(struct sleuth_scoreboard *sb,
+		      struct sleuth_origin **orig)
 {
 	const char *final_commit_name = NULL;
-	struct blame_origin *o;
+	struct sleuth_origin *o;
 	struct commit *final_commit = NULL;
 	enum object_type type;
 
-	init_blame_suspects(&blame_suspects);
+	init_sleuth_suspects(&sleuth_suspects);
 
 	if (sb->reverse && sb->contents_from)
 		die(_("--contents and --reverse do not blend well."));
@@ -2824,7 +2824,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	}
 
 	if (is_null_oid(&sb->final->object.oid)) {
-		o = get_blame_suspects(sb->final);
+		o = get_sleuth_suspects(sb->final);
 		sb->final_buf = xmemdupz(o->file.ptr, o->file.size);
 		sb->final_buf_size = o->file.size;
 	}
@@ -2857,23 +2857,23 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 
 
 
-struct blame_entry *blame_entry_prepend(struct blame_entry *head,
+struct sleuth_entry *sleuth_entry_prepend(struct sleuth_entry *head,
 					long start, long end,
-					struct blame_origin *o)
+					struct sleuth_origin *o)
 {
-	struct blame_entry *new_head = xcalloc(1, sizeof(struct blame_entry));
+	struct sleuth_entry *new_head = xcalloc(1, sizeof(struct sleuth_entry));
 	new_head->lno = start;
 	new_head->num_lines = end - start;
 	new_head->suspect = o;
 	new_head->s_lno = start;
 	new_head->next = head;
-	blame_origin_incref(o);
+	sleuth_origin_incref(o);
 	return new_head;
 }
 
-void setup_blame_bloom_data(struct blame_scoreboard *sb)
+void setup_sleuth_bloom_data(struct sleuth_scoreboard *sb)
 {
-	struct blame_bloom_data *bd;
+	struct sleuth_bloom_data *bd;
 	struct bloom_filter_settings *bs;
 
 	if (!sb->repo->objects->commit_graph)
@@ -2883,7 +2883,7 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb)
 	if (!bs)
 		return;
 
-	bd = xmalloc(sizeof(struct blame_bloom_data));
+	bd = xmalloc(sizeof(struct sleuth_bloom_data));
 
 	bd->settings = bs;
 
@@ -2896,7 +2896,7 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb)
 	sb->bloom_data = bd;
 }
 
-void cleanup_scoreboard(struct blame_scoreboard *sb)
+void cleanup_scoreboard(struct sleuth_scoreboard *sb)
 {
 	if (sb->bloom_data) {
 		int i;
@@ -2907,9 +2907,9 @@ void cleanup_scoreboard(struct blame_scoreboard *sb)
 		free(sb->bloom_data->keys);
 		FREE_AND_NULL(sb->bloom_data);
 
-		trace2_data_intmax("blame", sb->repo,
+		trace2_data_intmax("sleuth", sb->repo,
 				   "bloom/queries", bloom_count_queries);
-		trace2_data_intmax("blame", sb->repo,
+		trace2_data_intmax("sleuth", sb->repo,
 				   "bloom/response-no", bloom_count_no);
 	}
 }

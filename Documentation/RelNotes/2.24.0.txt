@@ -395,4 +395,4 @@ Fixes since v2.23
    (merge 3444ec2eb2 wb/fsmonitor-bitmap-fix later to maint).
    (merge 10da030ab7 cb/pcre2-chartables-leakfix later to maint).
    (merge 60e6569a12 js/mingw-needs-hiding-fix later to maint).
-   (merge 52bd3e4657 rl/gitweb-blame-prev-fix later to maint).
+   (merge 52bd3e4657 rl/gitweb-sleuth-prev-fix later to maint).

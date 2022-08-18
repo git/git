@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git blame corner cases'
+test_description='git sleuth corner cases'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -50,67 +50,67 @@ test_expect_success setup '
 
 test_expect_success 'straight copy without -C' '
 
-	git blame uno | grep Second
+	git sleuth uno | grep Second
 
 '
 
 test_expect_success 'straight move without -C' '
 
-	git blame dos | grep Initial
+	git sleuth dos | grep Initial
 
 '
 
 test_expect_success 'straight copy with -C' '
 
-	git blame -C1 uno | grep Second
+	git sleuth -C1 uno | grep Second
 
 '
 
 test_expect_success 'straight move with -C' '
 
-	git blame -C1 dos | grep Initial
+	git sleuth -C1 dos | grep Initial
 
 '
 
 test_expect_success 'straight copy with -C -C' '
 
-	git blame -C -C1 uno | grep Initial
+	git sleuth -C -C1 uno | grep Initial
 
 '
 
 test_expect_success 'straight move with -C -C' '
 
-	git blame -C -C1 dos | grep Initial
+	git sleuth -C -C1 dos | grep Initial
 
 '
 
 test_expect_success 'append without -C' '
 
-	git blame -L2 tres | grep Second
+	git sleuth -L2 tres | grep Second
 
 '
 
 test_expect_success 'append with -C' '
 
-	git blame -L2 -C1 tres | grep Second
+	git sleuth -L2 -C1 tres | grep Second
 
 '
 
 test_expect_success 'append with -C -C' '
 
-	git blame -L2 -C -C1 tres | grep Second
+	git sleuth -L2 -C -C1 tres | grep Second
 
 '
 
 test_expect_success 'append with -C -C -C' '
 
-	git blame -L2 -C -C -C1 tres | grep Initial
+	git sleuth -L2 -C -C -C1 tres | grep Initial
 
 '
 
-test_expect_success 'blame wholesale copy' '
+test_expect_success 'sleuth wholesale copy' '
 
-	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
+	git sleuth -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -120,9 +120,9 @@ test_expect_success 'blame wholesale copy' '
 
 '
 
-test_expect_success 'blame wholesale copy and more' '
+test_expect_success 'sleuth wholesale copy and more' '
 
-	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
+	git sleuth -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -133,7 +133,7 @@ test_expect_success 'blame wholesale copy and more' '
 
 '
 
-test_expect_success 'blame wholesale copy and more in the index' '
+test_expect_success 'sleuth wholesale copy and more in the index' '
 
 	cat >horse <<-\EOF &&
 	ABC
@@ -144,7 +144,7 @@ test_expect_success 'blame wholesale copy and more in the index' '
 	EOF
 	git add horse &&
 	test_when_finished "git rm -f horse" &&
-	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	git sleuth -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -156,7 +156,7 @@ test_expect_success 'blame wholesale copy and more in the index' '
 
 '
 
-test_expect_success 'blame during cherry-pick with file rename conflict' '
+test_expect_success 'sleuth during cherry-pick with file rename conflict' '
 
 	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout HEAD~3 &&
@@ -168,7 +168,7 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
-	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	git sleuth -f -C -C1 rodent | sed -e "$pick_fc" >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -177,7 +177,7 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	test_cmp expected current
 '
 
-test_expect_success 'blame path that used to be a directory' '
+test_expect_success 'sleuth path that used to be a directory' '
 	mkdir path &&
 	echo A A A A A >path/file &&
 	echo B B B B B >path/elif &&
@@ -189,10 +189,10 @@ test_expect_success 'blame path that used to be a directory' '
 	git add path &&
 	test_tick &&
 	git commit -m "path is a regular file" &&
-	git blame HEAD^.. -- path
+	git sleuth HEAD^.. -- path
 '
 
-test_expect_success 'blame to a commit with no author name' '
+test_expect_success 'sleuth to a commit with no author name' '
   TREE=$(git rev-parse HEAD:) &&
   cat >badcommit <<EOF &&
 tree $TREE
@@ -202,36 +202,36 @@ committer David Reiss <dreiss@facebook.com> 1234567890 +0000
 some message
 EOF
   COMMIT=$(git hash-object -t commit -w badcommit) &&
-  git --no-pager blame $COMMIT -- uno >/dev/null
+  git --no-pager sleuth $COMMIT -- uno >/dev/null
 '
 
-test_expect_success 'blame -L with invalid start' '
-	test_must_fail git blame -L5 tres 2>errors &&
+test_expect_success 'sleuth -L with invalid start' '
+	test_must_fail git sleuth -L5 tres 2>errors &&
 	test_i18ngrep "has only 2 lines" errors
 '
 
-test_expect_success 'blame -L with invalid end' '
-	git blame -L1,5 tres >out &&
+test_expect_success 'sleuth -L with invalid end' '
+	git sleuth -L1,5 tres >out &&
 	test_line_count = 2 out
 '
 
-test_expect_success 'blame parses <end> part of -L' '
-	git blame -L1,1 tres >out &&
+test_expect_success 'sleuth parses <end> part of -L' '
+	git sleuth -L1,1 tres >out &&
 	test_line_count = 1 out
 '
 
-test_expect_success 'blame -Ln,-(n+1)' '
-	git blame -L3,-4 nine_lines >out &&
+test_expect_success 'sleuth -Ln,-(n+1)' '
+	git sleuth -L3,-4 nine_lines >out &&
 	test_line_count = 3 out
 '
 
 test_expect_success 'indent of line numbers, nine lines' '
-	git blame nine_lines >actual &&
+	git sleuth nine_lines >actual &&
 	test $(grep -c "  " actual) = 0
 '
 
 test_expect_success 'indent of line numbers, ten lines' '
-	git blame ten_lines >actual &&
+	git sleuth ten_lines >actual &&
 	test $(grep -c "  " actual) = 9
 '
 
@@ -243,20 +243,20 @@ test_expect_success 'setup file with CRLF newlines' '
 	printf "testcase\r\n" >crlffile
 '
 
-test_expect_success 'blame file with CRLF core.autocrlf true' '
+test_expect_success 'sleuth file with CRLF core.autocrlf true' '
 	git config core.autocrlf true &&
-	git blame crlffile >actual &&
+	git sleuth crlffile >actual &&
 	grep "A U Thor" actual
 '
 
-test_expect_success 'blame file with CRLF attributes text' '
+test_expect_success 'sleuth file with CRLF attributes text' '
 	git config core.autocrlf false &&
 	echo "crlffile text" >.gitattributes &&
-	git blame crlffile >actual &&
+	git sleuth crlffile >actual &&
 	grep "A U Thor" actual
 '
 
-test_expect_success 'blame file with CRLF core.autocrlf=true' '
+test_expect_success 'sleuth file with CRLF core.autocrlf=true' '
 	git config core.autocrlf false &&
 	printf "testcase\r\n" >crlfinrepo &&
 	>.gitattributes &&
@@ -266,7 +266,7 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	mv crlfinrepo tmp &&
 	git checkout crlfinrepo &&
 	rm tmp &&
-	git blame crlfinrepo >actual &&
+	git sleuth crlfinrepo >actual &&
 	grep "A U Thor" actual
 '
 
@@ -297,22 +297,22 @@ test_expect_success 'setup coalesce tests' '
 	final=$(git rev-parse HEAD)
 '
 
-test_expect_success 'blame coalesce' '
+test_expect_success 'sleuth coalesce' '
 	cat >expect <<-EOF &&
 	$orig 1 1 2
 	$orig 2 2
 	EOF
-	git blame --porcelain $final giraffe >actual.raw &&
+	git sleuth --porcelain $final giraffe >actual.raw &&
 	grep "^$orig" actual.raw >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'blame does not coalesce non-adjacent result lines' '
+test_expect_success 'sleuth does not coalesce non-adjacent result lines' '
 	cat >expect <<-EOF &&
 	$orig 1) ABC
 	$orig 3) DEF
 	EOF
-	git blame --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
+	git sleuth --no-abbrev -s -L1,1 -L3,3 $split giraffe >actual &&
 	test_cmp expect actual
 '
 

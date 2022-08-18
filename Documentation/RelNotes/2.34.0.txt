@@ -342,9 +342,9 @@ Fixes since v2.33
    with trailing slashes to the index, which has been corrected.
    (merge c8ad9d04c6 rs/make-verify-path-really-verify-again later to maint).
 
- * The "--color-lines" and "--color-by-age" options of "git blame"
+ * The "--color-lines" and "--color-by-age" options of "git sleuth"
    have been missing, which are now documented.
-   (merge 8c32856133 bs/doc-blame-color-lines later to maint).
+   (merge 8c32856133 bs/doc-sleuth-color-lines later to maint).
 
  * The PATH used in CI job may be too wide and let incompatible dlls
    to be grabbed, which can cause the build&test to fail.  Tighten it.

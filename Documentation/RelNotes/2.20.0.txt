@@ -281,7 +281,7 @@ Performance, Internal Implementation, Development Support etc.
    the project convention has been added.
    (merge b548d698a0 bc/editorconfig later to maint).
 
- * The result of coverage test can be combined with "git blame" to
+ * The result of coverage test can be combined with "git sleuth" to
    check the test coverage of code introduced recently with a new
    'coverage-diff' tool (in contrib/).
    (merge 783faedd65 ds/coverage-diff later to maint).

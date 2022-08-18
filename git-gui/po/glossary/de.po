@@ -69,7 +69,7 @@ msgid "bisect"
 msgstr "binäre Suche [noun], binäre Suche benutzen [verb]"
 
 #. "get the authors responsible for each line in a file"
-msgid "blame"
+msgid "sleuth"
 msgstr "annotieren"
 
 #.      ""

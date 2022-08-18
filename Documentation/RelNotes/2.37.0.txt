@@ -156,9 +156,9 @@ Fixes since v2.36
  * Various cleanups to "git p4".
    (merge 4ff0108d9e jh/p4-various-fixups later to maint).
 
- * The progress meter of "git blame" was showing incorrect numbers
+ * The progress meter of "git sleuth" was showing incorrect numbers
    when processing only parts of the file.
-   (merge e5f5d7d42e ea/progress-partial-blame later to maint).
+   (merge e5f5d7d42e ea/progress-partial-sleuth later to maint).
 
  * "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
    commit to rebase onto incorrectly, which has been corrected.

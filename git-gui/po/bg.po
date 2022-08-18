@@ -415,7 +415,7 @@ msgstr "употреба:"
 msgid "Usage"
 msgstr "Употреба"
 
-#: git-gui.sh:3117 lib/blame.tcl:573
+#: git-gui.sh:3117 lib/sleuth.tcl:573
 msgid "Error"
 msgstr "Грешка"
 
@@ -474,7 +474,7 @@ msgstr "Съобщение при подаване:"
 msgid "Copy All"
 msgstr "Копиране на всичко"
 
-#: git-gui.sh:3439 lib/blame.tcl:105
+#: git-gui.sh:3439 lib/sleuth.tcl:105
 msgid "File:"
 msgstr "Файл:"
 
@@ -490,7 +490,7 @@ msgstr "По-едър шрифт"
 msgid "Increase Font Size"
 msgstr "По-дребен шрифт"
 
-#: git-gui.sh:3591 lib/blame.tcl:294
+#: git-gui.sh:3591 lib/sleuth.tcl:294
 msgid "Encoding"
 msgstr "Кодиране"
 
@@ -609,113 +609,113 @@ msgstr ""
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui — графичен интерфейс за Git."
 
-#: lib/blame.tcl:73
+#: lib/sleuth.tcl:73
 #, tcl-format
 msgid "%s (%s): File Viewer"
 msgstr "%s (%s): Преглед на файлове"
 
-#: lib/blame.tcl:79
+#: lib/sleuth.tcl:79
 msgid "Commit:"
 msgstr "Подаване:"
 
-#: lib/blame.tcl:280
+#: lib/sleuth.tcl:280
 msgid "Copy Commit"
 msgstr "Копиране на подаване"
 
-#: lib/blame.tcl:284
+#: lib/sleuth.tcl:284
 msgid "Find Text..."
 msgstr "Търсене на текст…"
 
-#: lib/blame.tcl:288
+#: lib/sleuth.tcl:288
 msgid "Goto Line..."
 msgstr "Към ред…"
 
-#: lib/blame.tcl:297
+#: lib/sleuth.tcl:297
 msgid "Do Full Copy Detection"
 msgstr "Пълно търсене на копиране"
 
-#: lib/blame.tcl:301
+#: lib/sleuth.tcl:301
 msgid "Show History Context"
 msgstr "Показване на контекста от историята"
 
-#: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:304
+msgid "sleuth Parent Commit"
 msgstr "Анотиране на родителското подаване"
 
-#: lib/blame.tcl:466
+#: lib/sleuth.tcl:466
 #, tcl-format
 msgid "Reading %s..."
 msgstr "Чете се „%s“…"
 
-#: lib/blame.tcl:594
+#: lib/sleuth.tcl:594
 msgid "Loading copy/move tracking annotations..."
 msgstr "Зареждане на анотациите за проследяване на копирането/преместването…"
 
-#: lib/blame.tcl:614
+#: lib/sleuth.tcl:614
 msgid "lines annotated"
 msgstr "реда анотирани"
 
-#: lib/blame.tcl:806
+#: lib/sleuth.tcl:806
 msgid "Loading original location annotations..."
 msgstr "Зареждане на анотациите за първоначалното местоположение…"
 
-#: lib/blame.tcl:809
+#: lib/sleuth.tcl:809
 msgid "Annotation complete."
 msgstr "Анотирането завърши."
 
-#: lib/blame.tcl:839
+#: lib/sleuth.tcl:839
 msgid "Busy"
 msgstr "Операцията не е завършила"
 
-#: lib/blame.tcl:840
+#: lib/sleuth.tcl:840
 msgid "Annotation process is already running."
 msgstr "В момента тече процес на анотиране."
 
-#: lib/blame.tcl:879
+#: lib/sleuth.tcl:879
 msgid "Running thorough copy detection..."
 msgstr "Изпълнява се цялостен процес на откриване на копиране…"
 
-#: lib/blame.tcl:947
+#: lib/sleuth.tcl:947
 msgid "Loading annotation..."
 msgstr "Зареждане на анотации…"
 
-#: lib/blame.tcl:1000
+#: lib/sleuth.tcl:1000
 msgid "Author:"
 msgstr "Автор:"
 
-#: lib/blame.tcl:1004
+#: lib/sleuth.tcl:1004
 msgid "Committer:"
 msgstr "Подал:"
 
-#: lib/blame.tcl:1009
+#: lib/sleuth.tcl:1009
 msgid "Original File:"
 msgstr "Първоначален файл:"
 
-#: lib/blame.tcl:1057
+#: lib/sleuth.tcl:1057
 msgid "Cannot find HEAD commit:"
 msgstr "Подаването за връх „HEAD“ не може да се открие:"
 
-#: lib/blame.tcl:1112
+#: lib/sleuth.tcl:1112
 msgid "Cannot find parent commit:"
 msgstr "Родителското подаване не може да бъде открито"
 
-#: lib/blame.tcl:1127
+#: lib/sleuth.tcl:1127
 msgid "Unable to display parent"
 msgstr "Родителят не може да бъде показан"
 
-#: lib/blame.tcl:1128 lib/diff.tcl:358
+#: lib/sleuth.tcl:1128 lib/diff.tcl:358
 msgid "Error loading diff:"
 msgstr "Грешка при зареждане на разлика:"
 
-#: lib/blame.tcl:1269
+#: lib/sleuth.tcl:1269
 msgid "Originally By:"
 msgstr "Първоначално от:"
 
-#: lib/blame.tcl:1275
+#: lib/sleuth.tcl:1275
 msgid "In File:"
 msgstr "Във файл:"
 
-#: lib/blame.tcl:1280
+#: lib/sleuth.tcl:1280
 msgid "Copied Or Moved Here By:"
 msgstr "Копирано или преместено тук от:"
 
@@ -2208,11 +2208,11 @@ msgid "Match Tracking Branches"
 msgstr "Напасване на следящите клонове"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
+msgid "Use Textconv For Diffs and sleuths"
 msgstr "Използване на „textconv“ за разликите и анотирането"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "Анотиране на копието само по променените файлове"
 
 #: lib/option.tcl:153
@@ -2220,11 +2220,11 @@ msgid "Maximum Length of Recent Repositories List"
 msgstr "Максимален брой на списъка „Скоро ползвани“ хранилища"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "Минимален брой знаци за анотиране на копието"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "Исторически обхват за анотиране в дни"
 
 #: lib/option.tcl:156

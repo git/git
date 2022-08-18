@@ -3144,7 +3144,7 @@ _git_svn ()
 	local subcommands="
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
-		proplist show-ignore show-externals branch tag blame
+		proplist show-ignore show-externals branch tag sleuth
 		migrate mkdirs reset gc
 		"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
@@ -3220,7 +3220,7 @@ _git_svn ()
 		tag,--*)
 			__gitcomp "--dry-run --message"
 			;;
-		blame,--*)
+		sleuth,--*)
 			__gitcomp "--git-format"
 			;;
 		migrate,--*)

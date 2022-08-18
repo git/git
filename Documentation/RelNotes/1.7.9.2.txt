@@ -29,7 +29,7 @@ Fixes since v1.7.9.1
    they are invoked with the pager, i.e. "git -p cmd".
 
  * map_user() was not rewriting its output correctly, which resulted
-   in the user visible symptom that "git blame -e" sometimes showed
+   in the user visible symptom that "git sleuth -e" sometimes showed
    excess '>' at the end of email addresses.
 
  * "git checkout -b" did not allow switching out of an unborn branch.

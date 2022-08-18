@@ -331,7 +331,7 @@ Updates since v1.5.3
    the work tree can be had by setting status.relativepaths
    configuration variable to false.
 
- * "git blame" kept text for each annotated revision in core needlessly;
+ * "git sleuth" kept text for each annotated revision in core needlessly;
    this has been corrected.
 
  * "git shortlog" learned to default to HEAD when the standard input is

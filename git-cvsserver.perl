@@ -4742,7 +4742,7 @@ sub getMetaFromCommithash
     #     similar to "git notes", and carefully structured to take
     #     advantage same-sha1-is-same-contents, to roll the same
     #     unmodified subdirectory data onto multiple commits?
-    #   - Write and use a C tool that is like git-blame, but
+    #   - Write and use a C tool that is like git-sleuth, but
     #     operates on multiple files with file granularity, instead
     #     of one file with line granularity.  Cache
     #     most-recently-modified in $self->{commitRefCache}{$revCommit}.

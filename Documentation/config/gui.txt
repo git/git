@@ -40,18 +40,18 @@ gui.spellingDictionary::
 	the linkgit:git-gui[1]. When set to "none" spell checking is turned
 	off.
 
-gui.fastCopyBlame::
-	If true, 'git gui blame' uses `-C` instead of `-C -C` for original
-	location detection. It makes blame significantly faster on huge
+gui.fastCopysleuth::
+	If true, 'git gui sleuth' uses `-C` instead of `-C -C` for original
+	location detection. It makes sleuth significantly faster on huge
 	repositories at the expense of less thorough copy detection.
 
-gui.copyBlameThreshold::
-	Specifies the threshold to use in 'git gui blame' original location
+gui.copysleuthThreshold::
+	Specifies the threshold to use in 'git gui sleuth' original location
 	detection, measured in alphanumeric characters. See the
-	linkgit:git-blame[1] manual for more information on copy detection.
+	linkgit:git-sleuth[1] manual for more information on copy detection.
 
-gui.blamehistoryctx::
+gui.sleuthhistoryctx::
 	Specifies the radius of history context in days to show in
 	linkgit:gitk[1] for the selected commit, when the `Show History
-	Context` menu item is invoked from 'git gui blame'. If this
+	Context` menu item is invoked from 'git gui sleuth'. If this
 	variable is set to zero, the whole history is shown.

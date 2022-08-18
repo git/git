@@ -9,7 +9,7 @@ Fixes since v1.7.0.2
 
  * "git add -i" didn't handle a deleted path very well.
 
- * "git blame" padded line numbers with one extra SP when the total number
+ * "git sleuth" padded line numbers with one extra SP when the total number
    of lines was one less than multiple of ten due to an off-by-one error.
 
  * "git fetch --all/--multi" used to discard information for remotes that

@@ -881,10 +881,10 @@ set default_config(gui.matchtrackingbranch) false
 set default_config(gui.textconv) true
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
-set default_config(gui.fastcopyblame) false
+set default_config(gui.fastcopysleuth) false
 set default_config(gui.maxrecentrepo) 10
-set default_config(gui.copyblamethreshold) 40
-set default_config(gui.blamehistoryctx) 7
+set default_config(gui.copysleuththreshold) 40
+set default_config(gui.sleuthhistoryctx) 7
 set default_config(gui.diffcontext) 5
 set default_config(gui.diffopts) {}
 set default_config(gui.commitmsgwidth) 75
@@ -1182,7 +1182,7 @@ disable_option bare
 
 switch -- $subcommand {
 browser -
-blame {
+sleuth {
 	enable_option bare
 
 	disable_option multicommit
@@ -3131,8 +3131,8 @@ proc normalize_relpath {path} {
 #
 switch -- $subcommand {
 browser -
-blame {
-	if {$subcommand eq "blame"} {
+sleuth {
+	if {$subcommand eq "sleuth"} {
 		set subcommand_args {[--line=<num>] rev? path}
 	} else {
 		set subcommand_args {rev? path}
@@ -3211,7 +3211,7 @@ blame {
 		}
 		browser::new $head $path
 	}
-	blame   {
+	sleuth   {
 		if {$head eq {} && ![file exists $path]} {
 			catch {wm withdraw .}
 			tk_messageBox \
@@ -3221,7 +3221,7 @@ blame {
 				-message [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
-		blame::new $head $path $jump_spec
+		sleuth::new $head $path $jump_spec
 	}
 	}
 	return
@@ -3234,7 +3234,7 @@ gui {
 	# fall through to setup UI for commits
 }
 default {
-	set err "[mc usage:] $argv0 \[{blame|browser|citool}\]"
+	set err "[mc usage:] $argv0 \[{sleuth|browser|citool}\]"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon error -message $err \

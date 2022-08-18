@@ -350,8 +350,8 @@ msgid "External diff"
 msgstr "外部diffツール"
 
 #: gitk:2660
-msgid "Blame parent commit"
-msgstr "親コミットから blame をかける"
+msgid "sleuth parent commit"
+msgstr "親コミットから sleuth をかける"
 
 #: gitk:2661
 msgid "Copy path"
@@ -362,8 +362,8 @@ msgid "Show origin of this line"
 msgstr "この行の出自を表示する"
 
 #: gitk:2669
-msgid "Run git gui blame on this line"
-msgstr "この行に git gui で blame をかける"
+msgid "Run git gui sleuth on this line"
+msgstr "この行に git gui で sleuth をかける"
 
 #: gitk:3013
 msgid "About gitk"
@@ -585,8 +585,8 @@ msgid "No such commit"
 msgstr "そのようなコミットはありません"
 
 #: gitk:3799
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: コマンド失敗:"
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth: コマンド失敗:"
 
 #: gitk:3830
 #, tcl-format
@@ -600,8 +600,8 @@ msgstr "インデックス読み込みエラー: %s"
 
 #: gitk:3863
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "git blame を始められません: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "git sleuth を始められません: %s"
 
 #: gitk:3866 gitk:6755
 msgid "Searching"
@@ -609,8 +609,8 @@ msgstr "検索中"
 
 #: gitk:3898
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "git blame 実行エラー: %s"
+msgid "Error running git sleuth: %s"
+msgstr "git sleuth 実行エラー: %s"
 
 #: gitk:3926
 #, tcl-format

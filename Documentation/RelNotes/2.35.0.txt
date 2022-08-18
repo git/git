@@ -162,7 +162,7 @@ Performance, Internal Implementation, Development Support etc.
  * Weather balloon to find compilers that do not grok variable
    declaration in the for() loop.
 
- * diff and blame commands have been taught to work better with sparse
+ * diff and sleuth commands have been taught to work better with sparse
    index.
 
  * The chainlint test script linter in the test suite has been updated.

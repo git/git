@@ -1,26 +1,26 @@
 #!/bin/sh
 
-test_description='git blame'
+test_description='git sleuth'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
-PROG='git blame -c'
+PROG='git sleuth -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 
 test_expect_success 'setup' '
 	hexsz=$(test_oid hexsz)
 '
 
-test_expect_success 'blame untracked file in empty repo' '
+test_expect_success 'sleuth untracked file in empty repo' '
 	>untracked &&
-	test_must_fail git blame untracked
+	test_must_fail git sleuth untracked
 '
 
-PROG='git blame -c -e'
-test_expect_success 'blame --show-email' '
+PROG='git sleuth -c -e'
+test_expect_success 'sleuth --show-email' '
 	check_count \
 		"<A@test.git>" 1 \
 		"<B@test.git>" 1 \
@@ -46,51 +46,51 @@ test_expect_success 'setup showEmail tests' '
 	EOF
 '
 
-find_blame () {
+find_sleuth () {
 	sed -e 's/^[^(]*//'
 }
 
-test_expect_success 'blame with no options and no config' '
-	git blame one >blame &&
-	find_blame <blame >result &&
+test_expect_success 'sleuth with no options and no config' '
+	git sleuth one >sleuth &&
+	find_sleuth <sleuth >result &&
 	test_cmp expected_n result
 '
 
-test_expect_success 'blame with showemail options' '
-	git blame --show-email one >blame1 &&
-	find_blame <blame1 >result &&
+test_expect_success 'sleuth with showemail options' '
+	git sleuth --show-email one >sleuth1 &&
+	find_sleuth <sleuth1 >result &&
 	test_cmp expected_e result &&
-	git blame -e one >blame2 &&
-	find_blame <blame2 >result &&
+	git sleuth -e one >sleuth2 &&
+	find_sleuth <sleuth2 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame3 &&
-	find_blame <blame3 >result &&
+	git sleuth --no-show-email one >sleuth3 &&
+	find_sleuth <sleuth3 >result &&
 	test_cmp expected_n result
 '
 
-test_expect_success 'blame with showEmail config false' '
-	git config blame.showEmail false &&
-	git blame one >blame1 &&
-	find_blame <blame1 >result &&
+test_expect_success 'sleuth with showEmail config false' '
+	git config sleuth.showEmail false &&
+	git sleuth one >sleuth1 &&
+	find_sleuth <sleuth1 >result &&
 	test_cmp expected_n result &&
-	git blame --show-email one >blame2 &&
-	find_blame <blame2 >result &&
+	git sleuth --show-email one >sleuth2 &&
+	find_sleuth <sleuth2 >result &&
 	test_cmp expected_e result &&
-	git blame -e one >blame3 &&
-	find_blame <blame3 >result &&
+	git sleuth -e one >sleuth3 &&
+	find_sleuth <sleuth3 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame4 &&
-	find_blame <blame4 >result &&
+	git sleuth --no-show-email one >sleuth4 &&
+	find_sleuth <sleuth4 >result &&
 	test_cmp expected_n result
 '
 
-test_expect_success 'blame with showEmail config true' '
-	git config blame.showEmail true &&
-	git blame one >blame1 &&
-	find_blame <blame1 >result &&
+test_expect_success 'sleuth with showEmail config true' '
+	git config sleuth.showEmail true &&
+	git sleuth one >sleuth1 &&
+	find_sleuth <sleuth1 >result &&
 	test_cmp expected_e result &&
-	git blame --no-show-email one >blame2 &&
-	find_blame <blame2 >result &&
+	git sleuth --no-show-email one >sleuth2 &&
+	find_sleuth <sleuth2 >result &&
 	test_cmp expected_n result
 '
 
@@ -100,24 +100,24 @@ test_expect_success 'set up abbrev tests' '
 	check_abbrev () {
 		expect=$1 && shift &&
 		echo $sha1 | cut -c 1-$expect >expect &&
-		git blame "$@" abbrev.t >actual &&
+		git sleuth "$@" abbrev.t >actual &&
 		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&
 		test_cmp expect actual.sha
 	}
 '
 
-test_expect_success 'blame --abbrev=<n> works' '
+test_expect_success 'sleuth --abbrev=<n> works' '
 	# non-boundary commits get +1 for alignment
 	check_abbrev 31 --abbrev=30 HEAD &&
 	check_abbrev 30 --abbrev=30 ^HEAD
 '
 
-test_expect_success 'blame -l aligns regular and boundary commits' '
+test_expect_success 'sleuth -l aligns regular and boundary commits' '
 	check_abbrev $hexsz         -l HEAD &&
 	check_abbrev $((hexsz - 1)) -l ^HEAD
 '
 
-test_expect_success 'blame --abbrev with full length behaves like -l' '
+test_expect_success 'sleuth --abbrev with full length behaves like -l' '
 	check_abbrev $hexsz         --abbrev=$hexsz HEAD &&
 	check_abbrev $((hexsz - 1)) --abbrev=$hexsz ^HEAD
 '
@@ -127,10 +127,10 @@ test_expect_success '--no-abbrev works like --abbrev with full length' '
 '
 
 test_expect_success '--exclude-promisor-objects does not BUG-crash' '
-	test_must_fail git blame --exclude-promisor-objects one
+	test_must_fail git sleuth --exclude-promisor-objects one
 '
 
-test_expect_success 'blame with uncommitted edits in partial clone does not crash' '
+test_expect_success 'sleuth with uncommitted edits in partial clone does not crash' '
 	git init server &&
 	echo foo >server/file.txt &&
 	git -C server add file.txt &&
@@ -138,7 +138,7 @@ test_expect_success 'blame with uncommitted edits in partial clone does not cras
 
 	git clone --filter=blob:none "file://$(pwd)/server" client &&
 	echo bar >>client/file.txt &&
-	git -C client blame file.txt
+	git -C client sleuth file.txt
 '
 
 test_done

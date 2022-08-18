@@ -8,8 +8,8 @@ color.advice::
 color.advice.hint::
 	Use customized color for hints.
 
-color.blame.highlightRecent::
-	Specify the line annotation color for `git blame --color-by-age`
+color.sleuth.highlightRecent::
+	Specify the line annotation color for `git sleuth --color-by-age`
 	depending upon the age of the line.
 +
 This setting should be set to a comma-separated list of color and
@@ -26,9 +26,9 @@ colors everything older than one year blue, recent changes between
 one month and one year old are kept white, and lines introduced
 within the last month are colored red.
 
-color.blame.repeatedLines::
+color.sleuth.repeatedLines::
 	Use the specified color to colorize line annotations for
-	`git blame --color-lines`, if they come from the same commit as the
+	`git sleuth --color-lines`, if they come from the same commit as the
 	preceding line. Defaults to cyan.
 
 color.branch::

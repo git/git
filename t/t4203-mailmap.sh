@@ -728,7 +728,7 @@ test_expect_success 'Only grep replaced author with --use-mailmap' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'Blame --porcelain output (complex mapping)' '
+test_expect_success 'sleuth --porcelain output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 
 	cat >expect <<-EOF &&
@@ -748,18 +748,18 @@ test_expect_success 'Blame --porcelain output (complex mapping)' '
 	CTO
 	EOF
 
-	git blame --porcelain one >actual.blame &&
+	git sleuth --porcelain one >actual.sleuth &&
 
 	NUM="[0-9][0-9]*" &&
-	sed -n <actual.blame >actual.fuzz \
+	sed -n <actual.sleuth >actual.fuzz \
 		-e "s/^author //p" \
 		-e "s/^$OID_REGEX \\($NUM $NUM $NUM\\)$/\\1/p"  &&
 	test_cmp expect actual.fuzz
 '
 
-test_expect_success 'Blame output (complex mapping)' '
-	git -c mailmap.file=complex.map blame one >a &&
-	git blame one >b &&
+test_expect_success 'sleuth output (complex mapping)' '
+	git -c mailmap.file=complex.map sleuth one >a &&
+	git sleuth one >b &&
 	test_file_not_empty a &&
 	! cmp a b
 '

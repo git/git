@@ -163,7 +163,7 @@ Performance, Internal Implementation, Development Support etc.
  * Code restructuring and a small fix to transport protocol v2 during
    fetching.
 
- * Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
+ * Parsing of -L[<N>][,[<M>]] parameters "git sleuth" and "git log"
    take has been tweaked.
 
  * lookup_commit_reference() and friends have been updated to find
@@ -583,7 +583,7 @@ Fixes since v2.18
    (merge a9aa3c0927 ds/commit-graph later to maint).
    (merge 5cf8e06474 js/enhanced-version-info later to maint).
    (merge 6aaded5509 tb/config-default later to maint).
-   (merge 022d2ac1f3 sb/blame-color later to maint).
+   (merge 022d2ac1f3 sb/sleuth-color later to maint).
    (merge 5a06a20e0c bp/test-drop-caches-for-windows later to maint).
    (merge dd61cc1c2e jk/ui-color-always-to-auto later to maint).
    (merge 1e83b9bfdd sb/trailers-docfix later to maint).
@@ -593,7 +593,7 @@ Fixes since v2.18
    (merge e9dac7be60 es/mw-to-git-chain-fix later to maint).
    (merge fe583c6c7a rs/remote-mv-leakfix later to maint).
    (merge 69885ab015 en/t3031-title-fix later to maint).
-   (merge 8578037bed nd/config-blame-sort later to maint).
+   (merge 8578037bed nd/config-sleuth-sort later to maint).
    (merge 8ad169c4ba hn/config-in-code-comment later to maint).
    (merge b7446fcfdf ar/t4150-am-scissors-test-fix later to maint).
    (merge a8132410ee js/typofixes later to maint).

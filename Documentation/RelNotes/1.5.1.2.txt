@@ -26,7 +26,7 @@ Fixes since v1.5.1.1
   - Sample update hook incorrectly always refused requests to
     delete branches through push.
 
-  - git-blame on a very long working tree path had buffer
+  - git-sleuth on a very long working tree path had buffer
     overrun problem.
 
   - git-apply did not like to be fed two patches in a row that created

@@ -1,4 +1,4 @@
-(error "git-blame.el no longer ships with git. It's recommended
+(error "git-sleuth.el no longer ships with git. It's recommended
 to replace its use with Emacs's own vc-annotate. See
 contrib/emacs/README in git's
 sources (https://github.com/git/git/blob/master/contrib/emacs/README)

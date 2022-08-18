@@ -116,7 +116,7 @@ Updates since v1.5.2
 
   - "git cvsimport" can optionally use the separate-remote layout.
 
-  - "git blame" can be told to see through commits that change
+  - "git sleuth" can be told to see through commits that change
     whitespaces and indentation levels with "-w" option.
 
   - "git send-email" can be told not to thread the messages when
@@ -267,7 +267,7 @@ Updates since v1.5.2
 
   - "git mergetool" learned to use gvimdiff.
 
-  - "gitview" (in contrib) has a better blame interface.
+  - "gitview" (in contrib) has a better sleuth interface.
 
   - "git log" and friends did not handle a commit log message
     that is larger than 16kB; they do now.

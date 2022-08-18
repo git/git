@@ -61,7 +61,7 @@ UI, Workflows & Features
  * "git clone --dissociate" learned that it can be used even when
    "--reference" was not used at the same time.
 
- * "git blame" learnt to take "--first-parent" and "--reverse" at the
+ * "git sleuth" learnt to take "--first-parent" and "--reverse" at the
    same time when it makes sense.
 
  * "git checkout" did not follow the usual "--[no-]progress"
@@ -190,8 +190,8 @@ notes for details).
    of the command line).  Add notice to documentation of each and
    every one of them.
 
- * "git blame --first-parent v1.0..v2.0" was not rejected but did not
-   limit the blame to commits on the first parent chain.
+ * "git sleuth --first-parent v1.0..v2.0" was not rejected but did not
+   limit the sleuth to commits on the first parent chain.
 
  * "git subtree" (in contrib/) now can take whitespaces in the
    pathnames, not only in the in-tree pathname but the name of the
@@ -321,7 +321,7 @@ notes for details).
  * "git merge-file" tried to signal how many conflicts it found, which
    obviously would not work well when there are too many of them.
 
- * The error message from "git blame --contents --reverse" incorrectly
+ * The error message from "git sleuth --contents --reverse" incorrectly
    talked about "--contents --children".
 
  * "git imap-send" did not compile well with older version of cURL library.

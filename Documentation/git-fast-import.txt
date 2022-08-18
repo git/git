@@ -1396,7 +1396,7 @@ is not `refs/heads/TAG_FIXUP`).
 
 When committing fixups, consider using `merge` to connect the
 commit(s) which are supplying file revisions to the fixup branch.
-Doing so will allow tools such as 'git blame' to track
+Doing so will allow tools such as 'git sleuth' to track
 through the real commit history and properly annotate the source
 files.
 

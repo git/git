@@ -1079,7 +1079,7 @@ static void fill_potential_moved_blocks(struct diff_options *o,
  * Returns 0 if the last block is empty or is unset by this function, non zero
  * otherwise.
  *
- * NEEDSWORK: This uses the same heuristic as blame_entry_score() in blame.c.
+ * NEEDSWORK: This uses the same heuristic as sleuth_entry_score() in sleuth.c.
  * Think of a way to unify them.
  */
 #define DIFF_SYMBOL_MOVED_LINE_ZEBRA_MASK \

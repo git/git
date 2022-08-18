@@ -17,9 +17,9 @@ compare_diff () {
 	test_cmp .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
 }
 
-# Compare blame output using the expectation for a diff as reference.
+# Compare sleuth output using the expectation for a diff as reference.
 # Only look for the lines coming from non-boundary commits.
-compare_blame () {
+compare_sleuth () {
 	sed -n -e "1,4d" -e "s/^+//p" <"$1" >.tmp-1
 	sed -ne "s/^[^^][^)]*) *//p" <"$2" >.tmp-2
 	test_cmp .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
@@ -197,37 +197,37 @@ test_expect_success 'diff: nice functions with --indent-heuristic' '
 	compare_diff functions-compacted-expect out-compacted
 '
 
-# --- blame tests ---------------------------------------------------------
+# --- sleuth tests ---------------------------------------------------------
 
-test_expect_success 'blame: nice spaces with --indent-heuristic' '
-	git blame --indent-heuristic old..new -- spaces.txt >out-blame-compacted &&
-	compare_blame spaces-compacted-expect out-blame-compacted
+test_expect_success 'sleuth: nice spaces with --indent-heuristic' '
+	git sleuth --indent-heuristic old..new -- spaces.txt >out-sleuth-compacted &&
+	compare_sleuth spaces-compacted-expect out-sleuth-compacted
 '
 
-test_expect_success 'blame: nice spaces with diff.indentHeuristic=true' '
-	git -c diff.indentHeuristic=true blame old..new -- spaces.txt >out-blame-compacted2 &&
-	compare_blame spaces-compacted-expect out-blame-compacted2
+test_expect_success 'sleuth: nice spaces with diff.indentHeuristic=true' '
+	git -c diff.indentHeuristic=true sleuth old..new -- spaces.txt >out-sleuth-compacted2 &&
+	compare_sleuth spaces-compacted-expect out-sleuth-compacted2
 '
 
-test_expect_success 'blame: ugly spaces with --no-indent-heuristic' '
-	git blame --no-indent-heuristic old..new -- spaces.txt >out-blame &&
-	compare_blame spaces-expect out-blame
+test_expect_success 'sleuth: ugly spaces with --no-indent-heuristic' '
+	git sleuth --no-indent-heuristic old..new -- spaces.txt >out-sleuth &&
+	compare_sleuth spaces-expect out-sleuth
 '
 
-test_expect_success 'blame: ugly spaces with diff.indentHeuristic=false' '
-	git -c diff.indentHeuristic=false blame old..new -- spaces.txt >out-blame2 &&
-	compare_blame spaces-expect out-blame2
+test_expect_success 'sleuth: ugly spaces with diff.indentHeuristic=false' '
+	git -c diff.indentHeuristic=false sleuth old..new -- spaces.txt >out-sleuth2 &&
+	compare_sleuth spaces-expect out-sleuth2
 '
 
-test_expect_success 'blame: --no-indent-heuristic overrides config' '
-	git -c diff.indentHeuristic=true blame --no-indent-heuristic old..new -- spaces.txt >out-blame3 &&
-	git blame old..new -- spaces.txt >out-blame &&
-	compare_blame spaces-expect out-blame3
+test_expect_success 'sleuth: --no-indent-heuristic overrides config' '
+	git -c diff.indentHeuristic=true sleuth --no-indent-heuristic old..new -- spaces.txt >out-sleuth3 &&
+	git sleuth old..new -- spaces.txt >out-sleuth &&
+	compare_sleuth spaces-expect out-sleuth3
 '
 
-test_expect_success 'blame: --indent-heuristic overrides config' '
-	git -c diff.indentHeuristic=false blame --indent-heuristic old..new -- spaces.txt >out-blame-compacted3 &&
-	compare_blame spaces-compacted-expect out-blame-compacted2
+test_expect_success 'sleuth: --indent-heuristic overrides config' '
+	git -c diff.indentHeuristic=false sleuth --indent-heuristic old..new -- spaces.txt >out-sleuth-compacted3 &&
+	compare_sleuth spaces-compacted-expect out-sleuth-compacted2
 '
 
 # --- diff-tree tests -----------------------------------------------------

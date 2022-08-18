@@ -176,7 +176,7 @@ Performance, Internal Implementation, Development Support etc.
  * The implementation of "ref" API around the "packed refs" have been
    cleaned up, in preparation for further changes.
 
- * The internal logic used in "git blame" has been libified to make it
+ * The internal logic used in "git sleuth" has been libified to make it
    easier to use by cgit.
 
  * Our code often opens a path to an optional file, to work on its

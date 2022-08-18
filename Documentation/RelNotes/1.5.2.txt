@@ -118,7 +118,7 @@ Updates since v1.5.1
     repository created with "git clone -l -s") avoids
     downloading objects unnecessarily.
 
-  - "git blame" uses .mailmap to canonicalize the author name
+  - "git sleuth" uses .mailmap to canonicalize the author name
     just like "git shortlog" does.
 
   - "git pack-objects" pays attention to pack.depth

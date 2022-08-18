@@ -110,7 +110,7 @@ Updates since v1.6.5
 (subsystems)
 
  * various gitk updates including use of themed widgets under Tk 8.5,
-   Japanese translation, a fix to a bug when running "gui blame" from
+   Japanese translation, a fix to a bug when running "gui sleuth" from
    a subdirectory, etc.
 
  * various git-gui updates including new translations, wm states fixes,
@@ -211,7 +211,7 @@ Updates since v1.6.5
 
  * "git svn" learned to recreate empty directories tracked only by SVN.
 
- * "gitweb" can optionally render its "blame" output incrementally (this
+ * "gitweb" can optionally render its "sleuth" output incrementally (this
    requires JavaScript on the client side).
 
  * Author names shown in gitweb output are links to search commits by the

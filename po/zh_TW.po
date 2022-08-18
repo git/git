@@ -1588,7 +1588,7 @@ msgstr "前綴"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "為歸檔中每個路徑名加上前綴"
 
-#: archive.c builtin/blame.c builtin/commit-tree.c builtin/config.c
+#: archive.c builtin/sleuth.c builtin/commit-tree.c builtin/config.c
 #: builtin/fast-export.c builtin/grep.c builtin/hash-object.c
 #: builtin/ls-files.c builtin/notes.c builtin/read-tree.c parse-options.h
 msgid "file"
@@ -1799,35 +1799,35 @@ msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] "二分搜尋中：在此之後，還剩 %d 個版本待測試 %s\n"
 
-#: blame.c
+#: sleuth.c
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents 和 --reverse 不能混用。"
 
-#: blame.c
+#: sleuth.c
 msgid "cannot use --contents with final commit object name"
 msgstr "不能將 --contents 和最終的提交物件名共用"
 
-#: blame.c
+#: sleuth.c
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr "--reverse 和 --first-parent 共用，需要指定最新的提交"
 
-#: blame.c builtin/commit.c builtin/log.c builtin/merge.c
+#: sleuth.c builtin/commit.c builtin/log.c builtin/merge.c
 #: builtin/pack-objects.c builtin/shortlog.c bundle.c midx.c ref-filter.c
 #: remote.c sequencer.c submodule.c
 msgid "revision walk setup failed"
 msgstr "版本遍歷設定失敗"
 
-#: blame.c
+#: sleuth.c
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr "--reverse 和 --first-parent 共用，需要第一祖先鏈上的提交範圍"
 
-#: blame.c
+#: sleuth.c
 #, c-format
 msgid "no such path %s in %s"
 msgstr "在 %2$s 中無此路徑 %1$s"
 
-#: blame.c
+#: sleuth.c
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "不能為路徑 %2$s 讀取資料物件 %1$s"
@@ -2227,7 +2227,7 @@ msgstr "索引檔案損壞"
 msgid "bad action '%s' for '%s'"
 msgstr "「%s」動作對「%s」無效"
 
-#: builtin/am.c builtin/blame.c builtin/fetch.c builtin/pack-objects.c
+#: builtin/am.c builtin/sleuth.c builtin/fetch.c builtin/pack-objects.c
 #: builtin/pull.c diff-merges.c gpg-interface.c ls-refs.c parallel-checkout.c
 #: sequencer.c setup.c
 #, c-format
@@ -3084,169 +3084,169 @@ msgstr "--bisect-log 需要 0 個引數"
 msgid "no logfile given"
 msgstr "未提供日誌檔案"
 
-#: builtin/blame.c
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<選項>] [<版本選項>] [<版本>] [--] <檔案>"
+#: builtin/sleuth.c
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<選項>] [<版本選項>] [<版本>] [--] <檔案>"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<版本選項> 的檔案記錄在 git-rev-list(1) 中"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "expecting a color: %s"
 msgstr "期望一個顏色：%s"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "must end with a color"
 msgstr "必須以一個顏色結尾"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "cannot find revision %s to ignore"
 msgstr "不能找到要忽略的版本 %s"
 
-#: builtin/blame.c
-msgid "show blame entries as we find them, incrementally"
-msgstr "增量式顯示發現的 blame 條目"
+#: builtin/sleuth.c
+msgid "show sleuth entries as we find them, incrementally"
+msgstr "增量式顯示發現的 sleuth 條目"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr "不要顯示邊界提交的物件名稱（預設值: off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "do not treat root commits as boundaries (Default: off)"
 msgstr "不將根提交看作邊界（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show work cost statistics"
 msgstr "顯示工作量統計"
 
-#: builtin/blame.c builtin/checkout.c builtin/clone.c builtin/commit-graph.c
+#: builtin/sleuth.c builtin/checkout.c builtin/clone.c builtin/commit-graph.c
 #: builtin/fetch.c builtin/merge.c builtin/multi-pack-index.c builtin/pull.c
 #: builtin/push.c builtin/remote.c builtin/send-pack.c
 msgid "force progress reporting"
 msgstr "強制顯示進度報告"
 
-#: builtin/blame.c
-msgid "show output score for blame entries"
-msgstr "顯示判斷 blame 條目位移的得分診斷訊息"
+#: builtin/sleuth.c
+msgid "show output score for sleuth entries"
+msgstr "顯示判斷 sleuth 條目位移的得分診斷訊息"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show original filename (Default: auto)"
 msgstr "顯示原始檔案名稱（預設值：auto）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show original linenumber (Default: off)"
 msgstr "顯示原始檔案名稱（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show in a format designed for machine consumption"
 msgstr "顯示成適合機器讀取的格式"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show porcelain format with per-line commit information"
 msgstr "顯示每一列適合機器的提交說明"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use the same output mode as git-annotate (Default: off)"
 msgstr "使用和 git-annotate 相同的輸出模式（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show raw timestamp (Default: off)"
 msgstr "顯示原始時間戳（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show long commit SHA1 (Default: off)"
 msgstr "顯示較長的 SHA1 提交編號（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "suppress author name and timestamp (Default: off)"
 msgstr "隱藏作者名字及時間戳（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show author email instead of name (Default: off)"
 msgstr "顯示作者信箱而非名稱（預設值：off）"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore whitespace differences"
 msgstr "忽略空白差異"
 
-#: builtin/blame.c builtin/log.c
+#: builtin/sleuth.c builtin/log.c
 msgid "rev"
 msgstr "版本"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore <rev> when blaming"
-msgstr "在執行 blame 動作時忽略 <修訂版>"
+msgstr "在執行 sleuth 動作時忽略 <修訂版>"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore revisions from <file>"
 msgstr "忽略 <檔案> 中的修訂版"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "color redundant metadata from previous line differently"
 msgstr "使用顏色間隔輸出與前一行不同的重複中介資料"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "color lines by age"
 msgstr "依據時間著色"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "spend extra cycles to find better match"
 msgstr "循環更多次以找到更佳符合"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use revisions from <file> instead of calling git-rev-list"
 msgstr "使用來自 <檔案> 的修訂集而不是呼叫 git-rev-list"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use <file>'s contents as the final image"
 msgstr "將 <檔案> 的內容當成是最終 image"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "score"
 msgstr "得分"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "find line copies within and across files"
 msgstr "找到檔案內及跨檔案的複製列"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "find line movements within and across files"
 msgstr "找到檔案內及跨檔案的移動列"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "range"
 msgstr "range"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "process only line range <start>,<end> or function :<funcname>"
 msgstr "只處理範圍在 <開始>,<結尾> 的列，或是 :<函數名稱> 函數"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr "--progress 不能跟 --incremental 或 porcelain 格式同時使用"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "4 years, 11 months ago"
 msgstr "4 年 11 個月前"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] "檔案 %s 只有 %lu 行"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "Blaming lines"
 msgstr "追蹤程式碼行"
 

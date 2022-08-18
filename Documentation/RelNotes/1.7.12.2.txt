@@ -7,12 +7,12 @@ Fixes since v1.7.12.1
  * When "git am" is fed an input that has multiple "Content-type: ..."
    header, it did not grok charset= attribute correctly.
 
- * Even during a conflicted merge, "git blame $path" always meant to
-   blame uncommitted changes to the "working tree" version; make it
+ * Even during a conflicted merge, "git sleuth $path" always meant to
+   sleuth uncommitted changes to the "working tree" version; make it
    more useful by showing cleanly merged parts as coming from the other
    branch that is being merged.
 
- * "git blame MAKEFILE" run in a history that has "Makefile" but not
+ * "git sleuth MAKEFILE" run in a history that has "Makefile" but not
    "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
    confused on a case insensitive filesystem and failed to do so.
 

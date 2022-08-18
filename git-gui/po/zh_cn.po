@@ -409,7 +409,7 @@ msgstr "提交描述:"
 msgid "Copy All"
 msgstr "全部复制"
 
-#: git-gui.sh:2483 lib/blame.tcl:107
+#: git-gui.sh:2483 lib/sleuth.tcl:107
 msgid "File:"
 msgstr "文件:"
 
@@ -493,64 +493,64 @@ msgstr ""
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - Git 的图形化用户界面"
 
-#: lib/blame.tcl:77
+#: lib/sleuth.tcl:77
 msgid "File Viewer"
 msgstr "文件查看器"
 
-#: lib/blame.tcl:81
+#: lib/sleuth.tcl:81
 msgid "Commit:"
 msgstr "提交:"
 
-#: lib/blame.tcl:264
+#: lib/sleuth.tcl:264
 msgid "Copy Commit"
 msgstr "复制提交"
 
-#: lib/blame.tcl:384
+#: lib/sleuth.tcl:384
 #, tcl-format
 msgid "Reading %s..."
 msgstr "读取 %s..."
 
-#: lib/blame.tcl:488
+#: lib/sleuth.tcl:488
 msgid "Loading copy/move tracking annotations..."
 msgstr "装载复制/移动跟踪标注..."
 
-#: lib/blame.tcl:508
+#: lib/sleuth.tcl:508
 msgid "lines annotated"
 msgstr "标注行"
 
-#: lib/blame.tcl:689
+#: lib/sleuth.tcl:689
 msgid "Loading original location annotations..."
 msgstr "装载原始位置标注..."
 
-#: lib/blame.tcl:692
+#: lib/sleuth.tcl:692
 msgid "Annotation complete."
 msgstr "标注完成."
 
-#: lib/blame.tcl:746
+#: lib/sleuth.tcl:746
 msgid "Loading annotation..."
 msgstr "裝載标注..."
 
-#: lib/blame.tcl:802
+#: lib/sleuth.tcl:802
 msgid "Author:"
 msgstr "作者:"
 
-#: lib/blame.tcl:806
+#: lib/sleuth.tcl:806
 msgid "Committer:"
 msgstr "提交者:"
 
-#: lib/blame.tcl:811
+#: lib/sleuth.tcl:811
 msgid "Original File:"
 msgstr "原始文件:"
 
-#: lib/blame.tcl:925
+#: lib/sleuth.tcl:925
 msgid "Originally By:"
 msgstr "最初由:"
 
-#: lib/blame.tcl:931
+#: lib/sleuth.tcl:931
 msgid "In File:"
 msgstr "在文件:"
 
-#: lib/blame.tcl:936
+#: lib/sleuth.tcl:936
 msgid "Copied Or Moved Here By:"
 msgstr "由复制或移动至此:"
 

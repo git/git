@@ -108,11 +108,11 @@ test_expect_success 'no-glob environment variable works' '
 	test_cmp expect actual
 '
 
-test_expect_success 'blame takes global pathspec flags' '
-	git --literal-pathspecs blame -- foo &&
-	git --icase-pathspecs   blame -- foo &&
-	git --glob-pathspecs    blame -- foo &&
-	git --noglob-pathspecs  blame -- foo
+test_expect_success 'sleuth takes global pathspec flags' '
+	git --literal-pathspecs sleuth -- foo &&
+	git --icase-pathspecs   sleuth -- foo &&
+	git --glob-pathspecs    sleuth -- foo &&
+	git --noglob-pathspecs  sleuth -- foo
 '
 
 test_expect_success 'setup xxx/bar' '

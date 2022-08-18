@@ -46,7 +46,7 @@ Fixes since v2.3
    not correctly signal errors when told to update the working tree
    files and failed to do so for whatever reason.
 
- * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
+ * "git sleuth HEAD -- missing" failed to correctly say "HEAD" when it
    tried to say "No such path 'missing' in HEAD".
 
 Also contains typofixes, documentation updates and trivial code clean-ups.

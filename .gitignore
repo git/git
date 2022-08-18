@@ -23,7 +23,7 @@
 /git-archive
 /git-bisect
 /git-bisect--helper
-/git-blame
+/git-sleuth
 /git-branch
 /git-bugreport
 /git-bundle

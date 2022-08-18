@@ -328,8 +328,8 @@ notes for details).
    from the documentation, because format-patch is about showing the
    diff, and the documentation now hides these options as well.
 
- * When running "git blame $path" with unnormalized data in the index
-   for the path, the data in the working tree was blamed, even though
+ * When running "git sleuth $path" with unnormalized data in the index
+   for the path, the data in the working tree was sleuthd, even though
    "git add" would not have changed what is already in the index, due
    to "safe crlf" that disables the line-end conversion.  It has been
    corrected.

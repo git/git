@@ -413,7 +413,7 @@ msgstr "Mostrar chave SSH"
 msgid "Usage"
 msgstr "Utilização"
 
-#: git-gui.sh:3095 lib/blame.tcl:573
+#: git-gui.sh:3095 lib/sleuth.tcl:573
 msgid "Error"
 msgstr "Erro"
 
@@ -472,7 +472,7 @@ msgstr "Mensagem de commit:"
 msgid "Copy All"
 msgstr "Copiar tudo"
 
-#: git-gui.sh:3408 lib/blame.tcl:105
+#: git-gui.sh:3408 lib/sleuth.tcl:105
 msgid "File:"
 msgstr "Ficheiro:"
 
@@ -488,7 +488,7 @@ msgstr "Diminuir tamanho de letra"
 msgid "Increase Font Size"
 msgstr "Aumentar tamanho de letra"
 
-#: git-gui.sh:3559 lib/blame.tcl:294
+#: git-gui.sh:3559 lib/sleuth.tcl:294
 msgid "Encoding"
 msgstr "Codificação"
 
@@ -1164,7 +1164,7 @@ msgstr ""
 "* Ficheiro não controlado recortado aqui por %s.\n"
 "* Para ver o ficheiro inteiro, use um editor externo.\n"
 
-#: lib/diff.tcl:356 lib/blame.tcl:1128
+#: lib/diff.tcl:356 lib/sleuth.tcl:1128
 msgid "Error loading diff:"
 msgstr "Erro ao carregar diferenças:"
 
@@ -1288,11 +1288,11 @@ msgid "Match Tracking Branches"
 msgstr "Corresponder ramos de monitorização"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
+msgid "Use Textconv For Diffs and sleuths"
 msgstr "Usar textconv para mostrar diferenças e culpar"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "Detetar cópia apenas em ficheiros modificados"
 
 #: lib/option.tcl:153
@@ -1300,11 +1300,11 @@ msgid "Maximum Length of Recent Repositories List"
 msgstr "Comprimento máximo da lista de repositórios recentes"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "Número mínimo de letras para detetar cópia"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "Raio de contexto histórico para culpar (dias)"
 
 #: lib/option.tcl:156
@@ -1939,108 +1939,108 @@ msgstr "Falha ao abrir o repositório %s:"
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - uma interface gráfica do Git."
 
-#: lib/blame.tcl:73
+#: lib/sleuth.tcl:73
 msgid "File Viewer"
 msgstr "Visualizador de ficheiros"
 
-#: lib/blame.tcl:79
+#: lib/sleuth.tcl:79
 msgid "Commit:"
 msgstr "Commit:"
 
-#: lib/blame.tcl:280
+#: lib/sleuth.tcl:280
 msgid "Copy Commit"
 msgstr "Copiar commit"
 
-#: lib/blame.tcl:284
+#: lib/sleuth.tcl:284
 msgid "Find Text..."
 msgstr "Procurar texto..."
 
-#: lib/blame.tcl:288
+#: lib/sleuth.tcl:288
 msgid "Goto Line..."
 msgstr "Ir para a linha..."
 
-#: lib/blame.tcl:297
+#: lib/sleuth.tcl:297
 msgid "Do Full Copy Detection"
 msgstr "Efetuar deteção de cópia integral"
 
-#: lib/blame.tcl:301
+#: lib/sleuth.tcl:301
 msgid "Show History Context"
 msgstr "Mostrar contexto histórico"
 
-#: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:304
+msgid "sleuth Parent Commit"
 msgstr "Culpar commit pai"
 
-#: lib/blame.tcl:466
+#: lib/sleuth.tcl:466
 #, tcl-format
 msgid "Reading %s..."
 msgstr "A ler %s..."
 
-#: lib/blame.tcl:594
+#: lib/sleuth.tcl:594
 msgid "Loading copy/move tracking annotations..."
 msgstr "A carregar anotações de cópia/movimento..."
 
-#: lib/blame.tcl:614
+#: lib/sleuth.tcl:614
 msgid "lines annotated"
 msgstr "linhas anotadas"
 
-#: lib/blame.tcl:806
+#: lib/sleuth.tcl:806
 msgid "Loading original location annotations..."
 msgstr "A carregar anotações da localização original..."
 
-#: lib/blame.tcl:809
+#: lib/sleuth.tcl:809
 msgid "Annotation complete."
 msgstr "Anotação concluída."
 
-#: lib/blame.tcl:839
+#: lib/sleuth.tcl:839
 msgid "Busy"
 msgstr "A processar"
 
-#: lib/blame.tcl:840
+#: lib/sleuth.tcl:840
 msgid "Annotation process is already running."
 msgstr "O processo de anotação já está em execução."
 
-#: lib/blame.tcl:879
+#: lib/sleuth.tcl:879
 msgid "Running thorough copy detection..."
 msgstr "A executar deteção de cópia integral..."
 
-#: lib/blame.tcl:947
+#: lib/sleuth.tcl:947
 msgid "Loading annotation..."
 msgstr "A carregar anotação..."
 
-#: lib/blame.tcl:1000
+#: lib/sleuth.tcl:1000
 msgid "Author:"
 msgstr "Autor:"
 
-#: lib/blame.tcl:1004
+#: lib/sleuth.tcl:1004
 msgid "Committer:"
 msgstr "Committer:"
 
-#: lib/blame.tcl:1009
+#: lib/sleuth.tcl:1009
 msgid "Original File:"
 msgstr "Ficheiro original:"
 
-#: lib/blame.tcl:1057
+#: lib/sleuth.tcl:1057
 msgid "Cannot find HEAD commit:"
 msgstr "Não é possível encontrar commit HEAD:"
 
-#: lib/blame.tcl:1112
+#: lib/sleuth.tcl:1112
 msgid "Cannot find parent commit:"
 msgstr "Não é possível encontrar commit pai:"
 
-#: lib/blame.tcl:1127
+#: lib/sleuth.tcl:1127
 msgid "Unable to display parent"
 msgstr "Não é possível mostrar pai"
 
-#: lib/blame.tcl:1269
+#: lib/sleuth.tcl:1269
 msgid "Originally By:"
 msgstr "Originalmente por:"
 
-#: lib/blame.tcl:1275
+#: lib/sleuth.tcl:1275
 msgid "In File:"
 msgstr "No ficheiro:"
 
-#: lib/blame.tcl:1280
+#: lib/sleuth.tcl:1280
 msgid "Copied Or Moved Here By:"
 msgstr "Copiado ou Movido para aqui por:"
 

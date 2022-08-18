@@ -6,7 +6,7 @@ Fixes since v1.5.2.1
 
 * Usability fix
 
-  - git-gui is shipped with its updated blame interface.  It is
+  - git-gui is shipped with its updated sleuth interface.  It is
     rumored that the older one was not just unusable but was
     active health hazard, but this one is actually pretty.
     Please see for yourself.

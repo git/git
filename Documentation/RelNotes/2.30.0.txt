@@ -267,16 +267,16 @@ Fixes since v2.29
  * "git rebase -i" did not store ORIG_HEAD correctly.
    (merge 8843302307 pw/rebase-i-orig-head later to maint).
 
- * "git blame -L :funcname -- path" did not work well for a path for
+ * "git sleuth -L :funcname -- path" did not work well for a path for
    which a userdiff driver is defined.
 
  * "make DEVELOPER=1 sparse" used to run sparse and let it emit
    warnings; now such warnings will cause an error.
    (merge 521dc56270 jc/sparse-error-for-developer-build later to maint).
 
- * "git blame --ignore-revs-file=<file>" learned to ignore a
+ * "git sleuth --ignore-revs-file=<file>" learned to ignore a
    non-existent object name in the input, instead of complaining.
-   (merge c714d05875 jc/blame-ignore-fix later to maint).
+   (merge c714d05875 jc/sleuth-ignore-fix later to maint).
 
  * Running "git diff" while allowing external diff in a state with
    unmerged paths used to segfault, which has been corrected.

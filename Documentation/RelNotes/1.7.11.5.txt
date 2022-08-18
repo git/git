@@ -19,7 +19,7 @@ Fixes since v1.7.11.4
    address is spelled as "[HOST]:PORT", we did not parse the address
    correctly and failed to connect.
 
- * git-blame.el (in compat/) have been updated to use Elisp more
+ * git-sleuth.el (in compat/) have been updated to use Elisp more
    correctly.
 
  * "git checkout <branchname>" to come back from a detached HEAD state

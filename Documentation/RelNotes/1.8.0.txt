@@ -158,16 +158,16 @@ to them for details).
    (e.g. not text/*); Content-Transfer-Encoding (e.g. base64) was not
    honored correctly.
 
- * "git blame MAKEFILE" run in a history that has "Makefile" but not
+ * "git sleuth MAKEFILE" run in a history that has "Makefile" but not
    "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
    confused on a case insensitive filesystem and failed to do so.
 
- * Even during a conflicted merge, "git blame $path" always meant to
-   blame uncommitted changes to the "working tree" version; make it
+ * Even during a conflicted merge, "git sleuth $path" always meant to
+   sleuth uncommitted changes to the "working tree" version; make it
    more useful by showing cleanly merged parts as coming from the other
    branch that is being merged.
 
- * It was unclear in the documentation for "git blame" that it is
+ * It was unclear in the documentation for "git sleuth" that it is
    unnecessary for users to use the "--follow" option.
 
  * Output from "git branch -v" contains "(no branch)" that could be

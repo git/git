@@ -33,7 +33,7 @@ logical steps, and commit each of them.  They should be consistent,
 working independently of any later commits, pass the test suite, etc.
 This makes the review process much easier, and the history much more
 useful for later inspection and analysis, for example with
-linkgit:git-blame[1] and linkgit:git-bisect[1].
+linkgit:git-sleuth[1] and linkgit:git-bisect[1].
 
 To achieve this, try to split your work into small steps from the very
 beginning. It is always easier to squash a few commits together than

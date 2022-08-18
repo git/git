@@ -29,14 +29,14 @@ a fairly native interface for users.
 
 COMMANDS
 --------
-blame::
-	Start a blame viewer on the specified file on the given
+sleuth::
+	Start a sleuth viewer on the specified file on the given
 	version (or working directory if not specified).
 
 browser::
 	Start a tree browser showing all files in the specified
 	commit.  Files selected through the
-	browser are opened in the blame viewer.
+	browser are opened in the sleuth viewer.
 
 citool::
 	Start 'git gui' and arrange to make exactly one commit before
@@ -50,7 +50,7 @@ version::
 
 Examples
 --------
-`git gui blame Makefile`::
+`git gui sleuth Makefile`::
 
 	Show the contents of the file 'Makefile' in the current
 	working directory, and provide annotations for both the
@@ -59,14 +59,14 @@ Examples
 	uncommitted changes (if any) are explicitly attributed to
 	'Not Yet Committed'.
 
-`git gui blame v0.99.8 Makefile`::
+`git gui sleuth v0.99.8 Makefile`::
 
 	Show the contents of 'Makefile' in revision 'v0.99.8'
 	and provide annotations for each line.  Unlike the above
 	example the file is read from the object database and not
 	the working directory.
 
-`git gui blame --line=100 Makefile`::
+`git gui sleuth --line=100 Makefile`::
 
 	Loads annotations as described above and automatically
 	scrolls the view to center on line '100'.
@@ -97,7 +97,7 @@ Examples
 
 	Show a browser for the tree of the 'maint' branch.  Files
 	selected in the browser can be viewed with the internal
-	blame viewer.
+	sleuth viewer.
 
 SEE ALSO
 --------

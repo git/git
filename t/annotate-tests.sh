@@ -1,5 +1,5 @@
 # This file isn't used as a test script directly, instead it is
-# sourced from t8001-annotate.sh and t8002-blame.sh.
+# sourced from t8001-annotate.sh and t8002-sleuth.sh.
 
 if test_have_prereq MINGW
 then
@@ -68,11 +68,11 @@ test_expect_success 'setup A lines' '
 	git commit -a -m "Initial."
 '
 
-test_expect_success 'blame 1 author' '
+test_expect_success 'sleuth 1 author' '
 	check_count A 2
 '
 
-test_expect_success 'blame in a bare repo without starting commit' '
+test_expect_success 'sleuth in a bare repo without starting commit' '
 	git clone --bare . bare.git &&
 	(
 		cd bare.git &&
@@ -80,7 +80,7 @@ test_expect_success 'blame in a bare repo without starting commit' '
 	)
 '
 
-test_expect_success 'blame by tag objects' '
+test_expect_success 'sleuth by tag objects' '
 	git tag -m "test tag" testTag &&
 	git tag -m "test tag #2" testTag2 testTag &&
 	check_count -h testTag A 2 &&
@@ -94,7 +94,7 @@ test_expect_success 'setup B lines' '
 	git commit -a -m "Second."
 '
 
-test_expect_success 'blame 2 authors' '
+test_expect_success 'sleuth 2 authors' '
 	check_count A 2 B 2
 '
 
@@ -106,7 +106,7 @@ test_expect_success 'setup B1 lines (branch1)' '
 	git commit -a -m "Branch1-1"
 '
 
-test_expect_success 'blame 2 authors + 1 branch1 author' '
+test_expect_success 'sleuth 2 authors + 1 branch1 author' '
 	check_count A 2 B 2 B1 2
 '
 
@@ -118,7 +118,7 @@ test_expect_success 'setup B2 lines (branch2)' '
 	git commit -a -m "Branch2-1"
 '
 
-test_expect_success 'blame 2 authors + 1 branch2 author' '
+test_expect_success 'sleuth 2 authors + 1 branch2 author' '
 	check_count A 2 B 1 B2 1
 '
 
@@ -126,19 +126,19 @@ test_expect_success 'merge branch1 & branch2' '
 	git merge branch1
 '
 
-test_expect_success 'blame 2 authors + 2 merged-in authors' '
+test_expect_success 'sleuth 2 authors + 2 merged-in authors' '
 	check_count A 2 B 1 B1 2 B2 1
 '
 
-test_expect_success 'blame --first-parent blames merge for branch1' '
+test_expect_success 'sleuth --first-parent sleuths merge for branch1' '
 	check_count --first-parent A 2 B 1 "A U Thor" 2 B2 1
 '
 
-test_expect_success 'blame ancestor' '
+test_expect_success 'sleuth ancestor' '
 	check_count -h main A 2 B 2
 '
 
-test_expect_success 'blame great-ancestor' '
+test_expect_success 'sleuth great-ancestor' '
 	check_count -h main^ A 2
 '
 
@@ -147,11 +147,11 @@ test_expect_success 'setup evil merge' '
 	git commit -a --amend
 '
 
-test_expect_success 'blame evil merge' '
+test_expect_success 'sleuth evil merge' '
 	check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1
 '
 
-test_expect_success 'blame huge graft' '
+test_expect_success 'sleuth huge graft' '
 	test_when_finished "git checkout branch2" &&
 	test_when_finished "rm -rf .git/info" &&
 	graft= &&
@@ -179,7 +179,7 @@ test_expect_success 'setup incomplete line' '
 	git commit -a -m "Incomplete"
 '
 
-test_expect_success 'blame incomplete line' '
+test_expect_success 'sleuth incomplete line' '
 	check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1 C 1
 '
 
@@ -194,7 +194,7 @@ test_expect_success 'setup edits' '
 	git commit -a -m "edit"
 '
 
-test_expect_success 'blame edits' '
+test_expect_success 'sleuth edits' '
 	check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1
 '
 
@@ -206,205 +206,205 @@ test_expect_success 'setup obfuscated email' '
 	git commit -a -m "norobots"
 '
 
-test_expect_success 'blame obfuscated email' '
+test_expect_success 'sleuth obfuscated email' '
 	check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L 1 (all)' '
+test_expect_success 'sleuth -L 1 (all)' '
 	check_count -L1 A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L , (all)' '
+test_expect_success 'sleuth -L , (all)' '
 	check_count -L, A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L X (X to end)' '
+test_expect_success 'sleuth -L X (X to end)' '
 	check_count -L5 B1 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L X, (X to end)' '
+test_expect_success 'sleuth -L X, (X to end)' '
 	check_count -L5, B1 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L ,Y (up to Y)' '
+test_expect_success 'sleuth -L ,Y (up to Y)' '
 	check_count -L,3 A 1 B2 1 E 1
 '
 
-test_expect_success 'blame -L X,X' '
+test_expect_success 'sleuth -L X,X' '
 	check_count -L3,3 B2 1
 '
 
-test_expect_success 'blame -L X,Y' '
+test_expect_success 'sleuth -L X,Y' '
 	check_count -L3,6 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L Y,X (undocumented)' '
+test_expect_success 'sleuth -L Y,X (undocumented)' '
 	check_count -L6,3 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L -X' '
+test_expect_success 'sleuth -L -X' '
 	test_must_fail $PROG -L-1 file
 '
 
-test_expect_success 'blame -L 0' '
+test_expect_success 'sleuth -L 0' '
 	test_must_fail $PROG -L0 file
 '
 
-test_expect_success 'blame -L ,0' '
+test_expect_success 'sleuth -L ,0' '
 	test_must_fail $PROG -L,0 file
 '
 
-test_expect_success 'blame -L ,+0' '
+test_expect_success 'sleuth -L ,+0' '
 	test_must_fail $PROG -L,+0 file
 '
 
-test_expect_success 'blame -L X,+0' '
+test_expect_success 'sleuth -L X,+0' '
 	test_must_fail $PROG -L1,+0 file
 '
 
-test_expect_success 'blame -L X,+1' '
+test_expect_success 'sleuth -L X,+1' '
 	check_count -L3,+1 B2 1
 '
 
-test_expect_success 'blame -L X,+N' '
+test_expect_success 'sleuth -L X,+N' '
 	check_count -L3,+4 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L ,-0' '
+test_expect_success 'sleuth -L ,-0' '
 	test_must_fail $PROG -L,-0 file
 '
 
-test_expect_success 'blame -L X,-0' '
+test_expect_success 'sleuth -L X,-0' '
 	test_must_fail $PROG -L1,-0 file
 '
 
-test_expect_success 'blame -L X,-1' '
+test_expect_success 'sleuth -L X,-1' '
 	check_count -L3,-1 B2 1
 '
 
-test_expect_success 'blame -L X,-N' '
+test_expect_success 'sleuth -L X,-N' '
 	check_count -L6,-4 B 1 B1 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L /RE/ (RE to end)' '
+test_expect_success 'sleuth -L /RE/ (RE to end)' '
 	check_count -L/evil/ C 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/,/RE2/' '
+test_expect_success 'sleuth -L /RE/,/RE2/' '
 	check_count -L/robot/,/green/ A 1 B 1 B2 1 D 1 E 1
 '
 
-test_expect_success 'blame -L X,/RE/' '
+test_expect_success 'sleuth -L X,/RE/' '
 	check_count -L5,/evil/ B1 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/,Y' '
+test_expect_success 'sleuth -L /RE/,Y' '
 	check_count -L/99/,7 B1 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/,+N' '
+test_expect_success 'sleuth -L /RE/,+N' '
 	check_count -L/99/,+3 B1 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/,-N' '
+test_expect_success 'sleuth -L /RE/,-N' '
 	check_count -L/99/,-3 B 1 B2 1 D 1
 '
 
 # 'file' ends with an incomplete line, so 'wc' reports one fewer lines than
-# git-blame sees, hence the last line is actually $(wc...)+1.
-test_expect_success 'blame -L X (X == nlines)' '
+# git-sleuth sees, hence the last line is actually $(wc...)+1.
+test_expect_success 'sleuth -L X (X == nlines)' '
 	n=$(expr $(wc -l <file) + 1) &&
 	check_count -L$n C 1
 '
 
-test_expect_success 'blame -L X (X == nlines + 1)' '
+test_expect_success 'sleuth -L X (X == nlines + 1)' '
 	n=$(expr $(wc -l <file) + 2) &&
 	test_must_fail $PROG -L$n file
 '
 
-test_expect_success 'blame -L X (X > nlines)' '
+test_expect_success 'sleuth -L X (X > nlines)' '
 	test_must_fail $PROG -L12345 file
 '
 
-test_expect_success 'blame -L ,Y (Y == nlines)' '
+test_expect_success 'sleuth -L ,Y (Y == nlines)' '
 	n=$(expr $(wc -l <file) + 1) &&
 	check_count -L,$n A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L ,Y (Y == nlines + 1)' '
+test_expect_success 'sleuth -L ,Y (Y == nlines + 1)' '
 	n=$(expr $(wc -l <file) + 2) &&
 	check_count -L,$n A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L ,Y (Y > nlines)' '
+test_expect_success 'sleuth -L ,Y (Y > nlines)' '
 	check_count -L,12345 A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1
 '
 
-test_expect_success 'blame -L multiple (disjoint)' '
+test_expect_success 'sleuth -L multiple (disjoint)' '
 	check_count -L2,3 -L6,7 A 1 B1 1 B2 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L multiple (disjoint: unordered)' '
+test_expect_success 'sleuth -L multiple (disjoint: unordered)' '
 	check_count -L6,7 -L2,3 A 1 B1 1 B2 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L multiple (adjacent)' '
+test_expect_success 'sleuth -L multiple (adjacent)' '
 	check_count -L2,3 -L4,5 A 1 B 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L multiple (adjacent: unordered)' '
+test_expect_success 'sleuth -L multiple (adjacent: unordered)' '
 	check_count -L4,5 -L2,3 A 1 B 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L multiple (overlapping)' '
+test_expect_success 'sleuth -L multiple (overlapping)' '
 	check_count -L2,4 -L3,5 A 1 B 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L multiple (overlapping: unordered)' '
+test_expect_success 'sleuth -L multiple (overlapping: unordered)' '
 	check_count -L3,5 -L2,4 A 1 B 1 B2 1 D 1
 '
 
-test_expect_success 'blame -L multiple (superset/subset)' '
+test_expect_success 'sleuth -L multiple (superset/subset)' '
 	check_count -L2,8 -L3,5 A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L multiple (superset/subset: unordered)' '
+test_expect_success 'sleuth -L multiple (superset/subset: unordered)' '
 	check_count -L3,5 -L2,8 A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/ (relative)' '
+test_expect_success 'sleuth -L /RE/ (relative)' '
 	check_count -L3,3 -L/fox/ B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/ (relative: no preceding range)' '
+test_expect_success 'sleuth -L /RE/ (relative: no preceding range)' '
 	check_count -L/dog/ A 1 B 1 B1 1 B2 1 C 1 D 1 "A U Thor" 1
 '
 
-test_expect_success 'blame -L /RE/ (relative: adjacent)' '
+test_expect_success 'sleuth -L /RE/ (relative: adjacent)' '
 	check_count -L1,1 -L/dog/,+1 A 1 E 1
 '
 
-test_expect_success 'blame -L /RE/ (relative: not found)' '
+test_expect_success 'sleuth -L /RE/ (relative: not found)' '
 	test_must_fail $PROG -L4,4 -L/dog/ file
 '
 
-test_expect_success 'blame -L /RE/ (relative: end-of-file)' '
+test_expect_success 'sleuth -L /RE/ (relative: end-of-file)' '
 	test_must_fail $PROG -L, -L/$/ file
 '
 
-test_expect_success 'blame -L ^/RE/ (absolute)' '
+test_expect_success 'sleuth -L ^/RE/ (absolute)' '
 	check_count -L3,3 -L^/dog/,+2 A 1 B2 1
 '
 
-test_expect_success 'blame -L ^/RE/ (absolute: no preceding range)' '
+test_expect_success 'sleuth -L ^/RE/ (absolute: no preceding range)' '
 	check_count -L^/dog/,+2 A 1 B2 1
 '
 
-test_expect_success 'blame -L ^/RE/ (absolute: not found)' '
+test_expect_success 'sleuth -L ^/RE/ (absolute: not found)' '
 	test_must_fail $PROG -L4,4 -L^/tambourine/ file
 '
 
-test_expect_success 'blame -L ^/RE/ (absolute: end-of-file)' '
+test_expect_success 'sleuth -L ^/RE/ (absolute: end-of-file)' '
 	n=$(expr $(wc -l <file) + 1) &&
 	check_count -L$n -L^/$/,+2 A 1 C 1 E 1
 '
@@ -439,52 +439,52 @@ test_expect_success 'setup -L :regex' '
 	git commit -a -m "mail"
 '
 
-test_expect_success 'blame -L :literal' '
+test_expect_success 'sleuth -L :literal' '
 	check_count -f hello.c -L:main F 4 G 1
 '
 
-test_expect_success 'blame -L :regex' '
+test_expect_success 'sleuth -L :regex' '
 	check_count -f hello.c "-L:m[a-z][a-z]l" H 4
 '
 
-test_expect_success 'blame -L :nomatch' '
+test_expect_success 'sleuth -L :nomatch' '
 	test_must_fail $PROG -L:nomatch hello.c
 '
 
-test_expect_success 'blame -L :RE (relative)' '
+test_expect_success 'sleuth -L :RE (relative)' '
 	check_count -f hello.c -L3,3 -L:ma.. F 1 H 4
 '
 
-test_expect_success 'blame -L :RE (relative: no preceding range)' '
+test_expect_success 'sleuth -L :RE (relative: no preceding range)' '
 	check_count -f hello.c -L:ma.. F 4 G 1
 '
 
-test_expect_success 'blame -L :RE (relative: not found)' '
+test_expect_success 'sleuth -L :RE (relative: not found)' '
 	test_must_fail $PROG -L3,3 -L:tambourine hello.c
 '
 
-test_expect_success 'blame -L :RE (relative: end-of-file)' '
+test_expect_success 'sleuth -L :RE (relative: end-of-file)' '
 	test_must_fail $PROG -L, -L:main hello.c
 '
 
-test_expect_success 'blame -L ^:RE (absolute)' '
+test_expect_success 'sleuth -L ^:RE (absolute)' '
 	check_count -f hello.c -L3,3 -L^:ma.. F 4 G 1
 '
 
-test_expect_success 'blame -L ^:RE (absolute: no preceding range)' '
+test_expect_success 'sleuth -L ^:RE (absolute: no preceding range)' '
 	check_count -f hello.c -L^:ma.. F 4 G 1
 '
 
-test_expect_success 'blame -L ^:RE (absolute: not found)' '
+test_expect_success 'sleuth -L ^:RE (absolute: not found)' '
 	test_must_fail $PROG -L4,4 -L^:tambourine hello.c
 '
 
-test_expect_success 'blame -L ^:RE (absolute: end-of-file)' '
+test_expect_success 'sleuth -L ^:RE (absolute: end-of-file)' '
 	n=$(printf "%d" $(wc -l <hello.c)) &&
 	check_count -f hello.c -L$n -L^:ma.. F 4 G 1 H 1
 '
 
-test_expect_success 'blame -L :funcname with userdiff driver' '
+test_expect_success 'sleuth -L :funcname with userdiff driver' '
 	cat >file.template <<-\EOF &&
 	DO NOT MATCH THIS LINE
 	function RIGHT(a, b) result(c)
@@ -522,125 +522,125 @@ test_expect_success 'setup incremental' '
 	)
 '
 
-test_expect_success 'blame empty' '
+test_expect_success 'sleuth empty' '
 	check_count -h HEAD^^ -f incremental
 '
 
-test_expect_success 'blame -L 0 empty' '
+test_expect_success 'sleuth -L 0 empty' '
 	test_must_fail $PROG -L0 incremental HEAD^^
 '
 
-test_expect_success 'blame -L 1 empty' '
+test_expect_success 'sleuth -L 1 empty' '
 	test_must_fail $PROG -L1 incremental HEAD^^
 '
 
-test_expect_success 'blame -L 2 empty' '
+test_expect_success 'sleuth -L 2 empty' '
 	test_must_fail $PROG -L2 incremental HEAD^^
 '
 
-test_expect_success 'blame half' '
+test_expect_success 'sleuth half' '
 	check_count -h HEAD^ -f incremental I 1
 '
 
-test_expect_success 'blame -L 0 half' '
+test_expect_success 'sleuth -L 0 half' '
 	test_must_fail $PROG -L0 incremental HEAD^
 '
 
-test_expect_success 'blame -L 1 half' '
+test_expect_success 'sleuth -L 1 half' '
 	check_count -h HEAD^ -f incremental -L1 I 1
 '
 
-test_expect_success 'blame -L 2 half' '
+test_expect_success 'sleuth -L 2 half' '
 	test_must_fail $PROG -L2 incremental HEAD^
 '
 
-test_expect_success 'blame -L 3 half' '
+test_expect_success 'sleuth -L 3 half' '
 	test_must_fail $PROG -L3 incremental HEAD^
 '
 
-test_expect_success 'blame full' '
+test_expect_success 'sleuth full' '
 	check_count -f incremental I 1
 '
 
-test_expect_success 'blame -L 0 full' '
+test_expect_success 'sleuth -L 0 full' '
 	test_must_fail $PROG -L0 incremental
 '
 
-test_expect_success 'blame -L 1 full' '
+test_expect_success 'sleuth -L 1 full' '
 	check_count -f incremental -L1 I 1
 '
 
-test_expect_success 'blame -L 2 full' '
+test_expect_success 'sleuth -L 2 full' '
 	test_must_fail $PROG -L2 incremental
 '
 
-test_expect_success 'blame -L 3 full' '
+test_expect_success 'sleuth -L 3 full' '
 	test_must_fail $PROG -L3 incremental
 '
 
-test_expect_success 'blame -L' '
+test_expect_success 'sleuth -L' '
 	test_must_fail $PROG -L file
 '
 
-test_expect_success 'blame -L X,+' '
+test_expect_success 'sleuth -L X,+' '
 	test_must_fail $PROG -L1,+ file
 '
 
-test_expect_success 'blame -L X,-' '
+test_expect_success 'sleuth -L X,-' '
 	test_must_fail $PROG -L1,- file
 '
 
-test_expect_success 'blame -L X (non-numeric X)' '
+test_expect_success 'sleuth -L X (non-numeric X)' '
 	test_must_fail $PROG -LX file
 '
 
-test_expect_success 'blame -L X,Y (non-numeric Y)' '
+test_expect_success 'sleuth -L X,Y (non-numeric Y)' '
 	test_must_fail $PROG -L1,Y file
 '
 
-test_expect_success 'blame -L X,+N (non-numeric N)' '
+test_expect_success 'sleuth -L X,+N (non-numeric N)' '
 	test_must_fail $PROG -L1,+N file
 '
 
-test_expect_success 'blame -L X,-N (non-numeric N)' '
+test_expect_success 'sleuth -L X,-N (non-numeric N)' '
 	test_must_fail $PROG -L1,-N file
 '
 
-test_expect_success 'blame -L ,^/RE/' '
+test_expect_success 'sleuth -L ,^/RE/' '
 	test_must_fail $PROG -L1,^/99/ file
 '
 
-test_expect_success 'blame progress on a full file' '
+test_expect_success 'sleuth progress on a full file' '
 	cat >expect <<-\EOF &&
 	Blaming lines: 100% (10/10), done.
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress hello.c 2>stderr &&
+	git sleuth --progress hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'blame progress on a single range' '
+test_expect_success 'sleuth progress on a single range' '
 	cat >expect <<-\EOF &&
 	Blaming lines: 100% (4/4), done.
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress -L 3,6 hello.c 2>stderr &&
+	git sleuth --progress -L 3,6 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'blame progress on multiple ranges' '
+test_expect_success 'sleuth progress on multiple ranges' '
 	cat >expect <<-\EOF &&
 	Blaming lines: 100% (7/7), done.
 	EOF
 
 	GIT_PROGRESS_DELAY=0 \
-	git blame --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
+	git sleuth --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
 
 	get_progress_result <stderr >actual &&
 	test_cmp expect actual

@@ -63,7 +63,7 @@ Fixes since v2.4.3
  * Git 2.4 broke setting verbosity and progress levels on "git clone"
    with native transports.
 
- * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+ * Some time ago, "git sleuth" (incorrectly) lost the convert_to_git()
    call when synthesizing a fake "tip" commit that represents the
    state in the working tree, which broke folks who record the history
    with LF line ending to make their project portable across

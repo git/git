@@ -273,9 +273,9 @@ Fixes since v2.28
  * Doc cleanup around "worktree".
    (merge dc9c144be5 es/worktree-doc-cleanups later to maint).
 
- * The "git blame --first-parent" option was not documented, but now
+ * The "git sleuth --first-parent" option was not documented, but now
    it is.
-   (merge 11bc12ae1e rp/blame-first-parent-doc later to maint).
+   (merge 11bc12ae1e rp/sleuth-first-parent-doc later to maint).
 
  * The logic to find the ref transaction hook script attempted to
    cache the path to the found hook without realizing that it needed
@@ -299,10 +299,10 @@ Fixes since v2.28
    corrected.
    (merge 5da69c0dac ak/sequencer-fix-find-uniq-abbrev later to maint).
 
- * When given more than one target line ranges, "git blame -La,b
+ * When given more than one target line ranges, "git sleuth -La,b
    -Lc,d" was over-eager to coalesce groups of original lines and
    showed incorrect results, which has been corrected.
-   (merge c2ebaa27d6 jk/blame-coalesce-fix later to maint).
+   (merge c2ebaa27d6 jk/sleuth-coalesce-fix later to maint).
 
  * The regexp to identify the function boundary for FORTRAN programs
    has been updated.
@@ -444,11 +444,11 @@ Fixes since v2.28
  * Compilation fix around type punning.
    (merge 176380fd11 jk/drop-unaligned-loads later to maint).
 
- * "git blame --ignore-rev/--ignore-revs-file" failed to validate
+ * "git sleuth --ignore-rev/--ignore-revs-file" failed to validate
    their input are valid revision, and failed to take into account
    that the user may want to give an annotated tag instead of a
    commit, which has been corrected.
-   (merge 610e2b9240 jc/blame-ignore-fix later to maint).
+   (merge 610e2b9240 jc/sleuth-ignore-fix later to maint).
 
  * "git bisect start X Y", when X and Y are not valid committish
    object names, should take X and Y as pathspec, but didn't.
@@ -504,7 +504,7 @@ Fixes since v2.28
    (merge 3100fd5588 jc/post-checkout-doc later to maint).
    (merge 17bae89476 pb/doc-external-diff-env later to maint).
    (merge 27ed6ccc12 jk/worktree-check-clean-leakfix later to maint).
-   (merge 1302badd16 ea/blame-use-oideq later to maint).
+   (merge 1302badd16 ea/sleuth-use-oideq later to maint).
    (merge e6d5a11fed al/t3200-back-on-a-branch later to maint).
    (merge 324efcf6b6 pw/add-p-leakfix later to maint).
    (merge 1c6ffb546b jk/add-i-fixes later to maint).

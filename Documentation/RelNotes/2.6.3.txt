@@ -4,7 +4,7 @@ Git v2.6.3 Release Notes
 Fixes since v2.6.2
 ------------------
 
- * The error message from "git blame --contents --reverse" incorrectly
+ * The error message from "git sleuth --contents --reverse" incorrectly
    talked about "--contents --children".
 
  * "git merge-file" tried to signal how many conflicts it found, which

@@ -105,7 +105,7 @@ UI, Workflows & Features
    subdirectory they are in.  Use ":/" (everything from the top) or
    "." (everything from the $cwd) to disambiguate.
 
- * "git blame" (and "git diff") learned the "--no-follow" option.
+ * "git sleuth" (and "git diff") learned the "--no-follow" option.
 
  * "git branch" now rejects some nonsense combinations of command line
    arguments (e.g. giving more than one branch name to rename) with

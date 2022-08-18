@@ -17,7 +17,7 @@ Fixes since v1.7.3.2
 
  * Running "git cherry-pick --ff" on a root commit segfaulted.
 
- * "diff", "blame" and friends incorrectly applied textconv filters to
+ * "diff", "sleuth" and friends incorrectly applied textconv filters to
    symlinks.
 
  * Highlighting of whitespace breakage in "diff" output was showing
@@ -45,7 +45,7 @@ Fixes since v1.7.3.2
  * The completion script (in contrib/completion) ignored lightweight tags
    in __git_ps1().
 
- * "git-blame" mode (in contrib/emacs) didn't say (require 'format-spec)
+ * "git-sleuth" mode (in contrib/emacs) didn't say (require 'format-spec)
    even though it depends on it; it didn't work with Emacs 22 or older
    unless Gnus is used.
 

@@ -18,7 +18,7 @@ Fixes since v1.5.3.4
  * "git-config", "git-diff", "git-apply" failed if run from a
    subdirectory with relative GIT_DIR and GIT_WORK_TREE set.
 
- * "git-blame" crashed if run during a merge conflict.
+ * "git-sleuth" crashed if run during a merge conflict.
 
  * "git-add -i" did not handle single line hunks correctly.
 

@@ -142,7 +142,7 @@
 # incremental file нарастващ файл
 # split (commit-graphr) раздробен (граф с подавания)
 # clobber (a tag) презаписвам (етикет)
-# blame извеждане на авторство
+# sleuth извеждане на авторство
 # refname име на указател
 # cone pattern matching пътеводно напасване
 # sparse-checkout cone пътеводен сегмент на частичното изтегляне
@@ -2819,8 +2819,8 @@ msgstr "опцията „--bisect-log“ не приема аргументи"
 msgid "no logfile given"
 msgstr "не е зададен журнален файл"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [ОПЦИЯ…] [ОПЦИЯ_ЗА_ВЕРСИЯТА…] [ВЕРСИЯ] [--] ФАЙЛ"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [ОПЦИЯ…] [ОПЦИЯ_ЗА_ВЕРСИЯТА…] [ВЕРСИЯ] [--] ФАЙЛ"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "ОПЦИИте_ЗА_ВЕРСИЯТА са документирани в ръководството git-rev-list(1)"
@@ -2836,7 +2836,7 @@ msgstr "трябва да завършва с цвят"
 msgid "cannot find revision %s to ignore"
 msgstr "версията за прескачане „%s“ не може да бъде открита"
 
-msgid "show blame entries as we find them, incrementally"
+msgid "show sleuth entries as we find them, incrementally"
 msgstr "извеждане на авторството с намирането му, последователно"
 
 msgid "do not show object names of boundary commits (Default: off)"
@@ -2855,7 +2855,7 @@ msgstr "извеждане на статистика за извършените
 msgid "force progress reporting"
 msgstr "извеждане на напредъка"
 
-msgid "show output score for blame entries"
+msgid "show output score for sleuth entries"
 msgstr "извеждане на допълнителна информация за определянето на авторството"
 
 msgid "show original filename (Default: auto)"
@@ -2950,7 +2950,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

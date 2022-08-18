@@ -53,8 +53,8 @@ Fixes since v2.6.1
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.
 
- * "git blame --first-parent v1.0..v2.0" was not rejected but did not
-   limit the blame to commits on the first parent chain.
+ * "git sleuth --first-parent v1.0..v2.0" was not rejected but did not
+   limit the sleuth to commits on the first parent chain.
 
  * Very small number of options take a parameter that is optional
    (which is not a great UI element as they can only appear at the end

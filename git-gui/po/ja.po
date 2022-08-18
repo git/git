@@ -412,7 +412,7 @@ msgstr "SSH キーを表示"
 msgid "Usage"
 msgstr "使い方"
 
-#: git-gui.sh:3095 lib/blame.tcl:573
+#: git-gui.sh:3095 lib/sleuth.tcl:573
 msgid "Error"
 msgstr "エラー"
 
@@ -471,7 +471,7 @@ msgstr "コミットメッセージ:"
 msgid "Copy All"
 msgstr "全てコピー"
 
-#: git-gui.sh:3408 lib/blame.tcl:105
+#: git-gui.sh:3408 lib/sleuth.tcl:105
 msgid "File:"
 msgstr "ファイル:"
 
@@ -487,7 +487,7 @@ msgstr "フォントを小さく"
 msgid "Increase Font Size"
 msgstr "フォントを大きく"
 
-#: git-gui.sh:3559 lib/blame.tcl:294
+#: git-gui.sh:3559 lib/sleuth.tcl:294
 msgid "Encoding"
 msgstr "エンコーディング"
 
@@ -1096,112 +1096,112 @@ msgstr ""
 "ましたが、 Git の内部データを更新できませんでした。\n"
 "起こるはずのないエラーです。あきらめて %s を終了します。"
 
-#: lib/blame.tcl:73
+#: lib/sleuth.tcl:73
 msgid "File Viewer"
 msgstr "ファイルピューワ"
 
-#: lib/blame.tcl:79
+#: lib/sleuth.tcl:79
 msgid "Commit:"
 msgstr "コミット:"
 
-#: lib/blame.tcl:280
+#: lib/sleuth.tcl:280
 msgid "Copy Commit"
 msgstr "コミットをコピー"
 
-#: lib/blame.tcl:284
+#: lib/sleuth.tcl:284
 msgid "Find Text..."
 msgstr "テキストを検索"
 
-#: lib/blame.tcl:288
+#: lib/sleuth.tcl:288
 msgid "Goto Line..."
 msgstr "指定行に移動…"
 
-#: lib/blame.tcl:297
+#: lib/sleuth.tcl:297
 msgid "Do Full Copy Detection"
 msgstr "コピー検知"
 
-#: lib/blame.tcl:301
+#: lib/sleuth.tcl:301
 msgid "Show History Context"
 msgstr "文脈を見せる"
 
-#: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:304
+msgid "sleuth Parent Commit"
 msgstr "親コミットを注釈"
 
-#: lib/blame.tcl:466
+#: lib/sleuth.tcl:466
 #, tcl-format
 msgid "Reading %s..."
 msgstr "%s を読んでいます…"
 
-#: lib/blame.tcl:594
+#: lib/sleuth.tcl:594
 msgid "Loading copy/move tracking annotations..."
 msgstr "コピー・移動追跡データを読んでいます…"
 
-#: lib/blame.tcl:614
+#: lib/sleuth.tcl:614
 msgid "lines annotated"
 msgstr "行を注釈しました"
 
-#: lib/blame.tcl:806
+#: lib/sleuth.tcl:806
 msgid "Loading original location annotations..."
 msgstr "元位置行の注釈データを読んでいます…"
 
-#: lib/blame.tcl:809
+#: lib/sleuth.tcl:809
 msgid "Annotation complete."
 msgstr "注釈完了しました"
 
-#: lib/blame.tcl:839
+#: lib/sleuth.tcl:839
 msgid "Busy"
 msgstr "実行中"
 
-#: lib/blame.tcl:840
+#: lib/sleuth.tcl:840
 msgid "Annotation process is already running."
-msgstr "すでに blame プロセスを実行中です。"
+msgstr "すでに sleuth プロセスを実行中です。"
 
-#: lib/blame.tcl:879
+#: lib/sleuth.tcl:879
 msgid "Running thorough copy detection..."
 msgstr "コピー検知を実行中…"
 
-#: lib/blame.tcl:947
+#: lib/sleuth.tcl:947
 msgid "Loading annotation..."
 msgstr "注釈を読み込んでいます…"
 
-#: lib/blame.tcl:1000
+#: lib/sleuth.tcl:1000
 msgid "Author:"
 msgstr "作者:"
 
-#: lib/blame.tcl:1004
+#: lib/sleuth.tcl:1004
 msgid "Committer:"
 msgstr "コミット者:"
 
-#: lib/blame.tcl:1009
+#: lib/sleuth.tcl:1009
 msgid "Original File:"
 msgstr "元ファイル"
 
-#: lib/blame.tcl:1057
+#: lib/sleuth.tcl:1057
 msgid "Cannot find HEAD commit:"
 msgstr "HEAD コミットが見つかりません"
 
-#: lib/blame.tcl:1112
+#: lib/sleuth.tcl:1112
 msgid "Cannot find parent commit:"
 msgstr "親コミットが見つかりません:"
 
-#: lib/blame.tcl:1127
+#: lib/sleuth.tcl:1127
 msgid "Unable to display parent"
 msgstr "親を表示できません"
 
-#: lib/blame.tcl:1128 lib/diff.tcl:356
+#: lib/sleuth.tcl:1128 lib/diff.tcl:356
 msgid "Error loading diff:"
 msgstr "diff を読む際のエラーです:"
 
-#: lib/blame.tcl:1269
+#: lib/sleuth.tcl:1269
 msgid "Originally By:"
 msgstr "原作者:"
 
-#: lib/blame.tcl:1275
+#: lib/sleuth.tcl:1275
 msgid "In File:"
 msgstr "ファイル:"
 
-#: lib/blame.tcl:1280
+#: lib/sleuth.tcl:1280
 msgid "Copied Or Moved Here By:"
 msgstr "複写・移動者:"
 
@@ -1815,11 +1815,11 @@ msgid "Match Tracking Branches"
 msgstr "トラッキングブランチを合わせる"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
+msgid "Use Textconv For Diffs and sleuths"
 msgstr "diff と注釈に textconv を使う"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "変更されたファイルのみコピー検知を行なう"
 
 #: lib/option.tcl:153
@@ -1827,11 +1827,11 @@ msgid "Maximum Length of Recent Repositories List"
 msgstr "最近使ったリポジトリ一覧の上限"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "コピーを検知する最少文字数"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "注釈する履歴半径（日数）"
 
 #: lib/option.tcl:156

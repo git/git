@@ -344,11 +344,11 @@ Updates in v1.5.0 since v1.4.4 series
  - git-describe with --abbrev=0 can be used to show only the
    name of the base ref.
 
- - git-blame learned a new option, --incremental, that tells it
-   to output the blames as they are assigned.  A sample script
-   to use it is also included as contrib/blameview.
+ - git-sleuth learned a new option, --incremental, that tells it
+   to output the sleuths as they are assigned.  A sample script
+   to use it is also included as contrib/sleuthview.
 
- - git-blame starts annotating from the working tree by default.
+ - git-sleuth starts annotating from the working tree by default.
 
 
 * Less external dependency

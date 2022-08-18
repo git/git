@@ -90,7 +90,7 @@ Updates since v1.6.2
 * git-bisect shows not just the number of remaining commits whose goodness
   is unknown, but also shows the estimated number of remaining rounds.
 
-* You can give --date=<format> option to git-blame.
+* You can give --date=<format> option to git-sleuth.
 
 * "git-branch -r" shows HEAD symref that points at a remote branch in
   interest of each tracked remote repository.

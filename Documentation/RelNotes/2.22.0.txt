@@ -387,9 +387,9 @@ Fixes since v2.21
  * Protocol v2 support in "git fetch-pack" of shallow clones has been
    corrected.
 
- * Performance fix around "git blame", especially in a linear history
+ * Performance fix around "git sleuth", especially in a linear history
    (which is the norm we should optimize for).
-   (merge f892014943 dk/blame-keep-origin-blob later to maint).
+   (merge f892014943 dk/sleuth-keep-origin-blob later to maint).
 
  * Performance fix for "rev-list --parents -- pathspec".
    (merge 8320b1dbe7 jk/revision-rewritten-parents-in-prio-queue later to maint).
@@ -398,12 +398,12 @@ Fixes since v2.21
    deal better with overlong messages.
    (merge 545dc345eb sg/overlong-progress-fix later to maint).
 
- * "git blame -- path" in a non-bare repository starts blaming from
+ * "git sleuth -- path" in a non-bare repository starts blaming from
    the working tree, and the same command in a bare repository errors
    out because there is no working tree by definition.  The command
    has been taught to instead start blaming from the commit at HEAD,
    which is more useful.
-   (merge a544fb08f8 sg/blame-in-bare-start-at-head later to maint).
+   (merge a544fb08f8 sg/sleuth-in-bare-start-at-head later to maint).
 
  * An underallocation in the code to read the untracked cache
    extension has been corrected.

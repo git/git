@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git blame encoding conversion'
+test_description='git sleuth encoding conversion'
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/t8005/utf8.txt
@@ -38,8 +38,8 @@ filter_author_summary () {
 }
 
 test_expect_success !MINGW \
-	'blame respects i18n.commitencoding' '
-	git blame --incremental file >output &&
+	'sleuth respects i18n.commitencoding' '
+	git sleuth --incremental file >output &&
 	filter_author_summary output >actual &&
 	test_cmp expected actual
 '
@@ -54,9 +54,9 @@ summary $EUC_JAPAN_MSG
 EOF
 
 test_expect_success !MINGW \
-	'blame respects i18n.logoutputencoding' '
+	'sleuth respects i18n.logoutputencoding' '
 	git config i18n.logoutputencoding eucJP &&
-	git blame --incremental file >output &&
+	git sleuth --incremental file >output &&
 	filter_author_summary output >actual &&
 	test_cmp expected actual
 '
@@ -71,8 +71,8 @@ summary $UTF8_MSG
 EOF
 
 test_expect_success !MINGW \
-	'blame respects --encoding=UTF-8' '
-	git blame --incremental --encoding=UTF-8 file >output &&
+	'sleuth respects --encoding=UTF-8' '
+	git sleuth --incremental --encoding=UTF-8 file >output &&
 	filter_author_summary output >actual &&
 	test_cmp expected actual
 '
@@ -87,8 +87,8 @@ summary $UTF8_MSG
 EOF
 
 test_expect_success !MINGW \
-	'blame respects --encoding=none' '
-	git blame --incremental --encoding=none file >output &&
+	'sleuth respects --encoding=none' '
+	git sleuth --incremental --encoding=none file >output &&
 	filter_author_summary output >actual &&
 	test_cmp expected actual
 '

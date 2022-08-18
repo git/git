@@ -311,16 +311,16 @@ our %feature = (
 	# (an array) or gitweb_check_feature(<feature>) to check if <feature>
 	# is enabled
 
-	# Enable the 'blame' blob view, showing the last commit that modified
+	# Enable the 'sleuth' blob view, showing the last commit that modified
 	# each line in the file. This can be very CPU-intensive.
 
 	# To enable system wide have in $GITWEB_CONFIG
-	# $feature{'blame'}{'default'} = [1];
+	# $feature{'sleuth'}{'default'} = [1];
 	# To have project specific config enable override in $GITWEB_CONFIG
-	# $feature{'blame'}{'override'} = 1;
-	# and in project config gitweb.blame = 0|1;
-	'blame' => {
-		'sub' => sub { feature_bool('blame', @_) },
+	# $feature{'sleuth'}{'override'} = 1;
+	# and in project config gitweb.sleuth = 0|1;
+	'sleuth' => {
+		'sub' => sub { feature_bool('sleuth', @_) },
 		'override' => 0,
 		'default' => [0]},
 
@@ -369,7 +369,7 @@ our %feature = (
 
 	# Enable the pickaxe search, which will list the commits that modified
 	# a given string in a file. This can be practical and quite faster
-	# alternative to 'blame', but still potentially CPU-intensive.
+	# alternative to 'sleuth', but still potentially CPU-intensive.
 	# Note that you need to have 'search' feature enabled too.
 
 	# To enable system wide have in $GITWEB_CONFIG
@@ -513,7 +513,7 @@ our %feature = (
 		'default' => [0]},
 
 	# Enable turning some links into links to actions which require
-	# JavaScript to run (like 'blame_incremental').  Not enabled by
+	# JavaScript to run (like 'sleuth_incremental').  Not enabled by
 	# default.  Project specific override is currently not supported.
 	'javascript-actions' => {
 		'override' => 0,
@@ -870,9 +870,9 @@ our %cgi_param_mapping = @cgi_param_mapping;
 
 # we will also need to know the possible actions, for validation
 our %actions = (
-	"blame" => \&git_blame,
-	"blame_incremental" => \&git_blame_incremental,
-	"blame_data" => \&git_blame_data,
+	"sleuth" => \&git_sleuth,
+	"sleuth_incremental" => \&git_sleuth_incremental,
+	"sleuth_data" => \&git_sleuth_data,
 	"blobdiff" => \&git_blobdiff,
 	"blobdiff_plain" => \&git_blobdiff_plain,
 	"blob" => \&git_blob,
@@ -4303,9 +4303,9 @@ sub git_footer_html {
 
 	print qq!<script type="text/javascript" src="!.esc_url($javascript).qq!"></script>\n!;
 	if (defined $action &&
-	    $action eq 'blame_incremental') {
+	    $action eq 'sleuth_incremental') {
 		print qq!<script type="text/javascript">\n!.
-		      qq!startBlame("!. esc_attr(href(action=>"blame_data", -replay=>1)) .qq!",\n!.
+		      qq!startsleuth("!. esc_attr(href(action=>"sleuth_data", -replay=>1)) .qq!",\n!.
 		      qq!           "!. esc_attr(href()) .qq!");\n!.
 		      qq!</script>\n!;
 	} else {
@@ -4739,7 +4739,7 @@ sub normalize_link_target {
 
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
-	my ($t, $basedir, $hash_base, $have_blame) = @_;
+	my ($t, $basedir, $hash_base, $have_sleuth) = @_;
 
 	my %base_key = ();
 	$base_key{'hash_base'} = $hash_base if defined $hash_base;
@@ -4776,11 +4776,11 @@ sub git_print_tree_entry {
 		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
 		                             file_name=>"$basedir$t->{'name'}", %base_key)},
 		              "blob");
-		if ($have_blame) {
+		if ($have_sleuth) {
 			print " | " .
-			      $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+			      $cgi->a({-href => href(action=>"sleuth", hash=>$t->{'hash'},
 			                             file_name=>"$basedir$t->{'name'}", %base_key)},
-			              "blame");
+			              "sleuth");
 		}
 		if (defined $hash_base) {
 			print " | " .
@@ -4872,7 +4872,7 @@ sub is_patch_split {
 sub git_difftree_body {
 	my ($difftree, $hash, @parents) = @_;
 	my ($parent) = $parents[0];
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_sleuth = gitweb_check_feature('sleuth');
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
 		print(($#{$difftree} + 1) . " files changed:\n");
@@ -5063,10 +5063,10 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff->{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff->{'file'})},
 			              "blob") . " | ";
-			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+			if ($have_sleuth) {
+				print $cgi->a({-href => href(action=>"sleuth", hash_base=>$parent,
 				                             file_name=>$diff->{'file'})},
-				              "blame") . " | ";
+				              "sleuth") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
 			                             file_name=>$diff->{'file'})},
@@ -5114,10 +5114,10 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff->{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff->{'file'})},
 			               "blob") . " | ";
-			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+			if ($have_sleuth) {
+				print $cgi->a({-href => href(action=>"sleuth", hash_base=>$hash,
 				                             file_name=>$diff->{'file'})},
-				              "blame") . " | ";
+				              "sleuth") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
 			                             file_name=>$diff->{'file'})},
@@ -5160,10 +5160,10 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff->{'to_id'},
 			                             hash_base=>$parent, file_name=>$diff->{'to_file'})},
 			              "blob") . " | ";
-			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+			if ($have_sleuth) {
+				print $cgi->a({-href => href(action=>"sleuth", hash_base=>$hash,
 				                             file_name=>$diff->{'to_file'})},
-				              "blame") . " | ";
+				              "sleuth") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
 			                            file_name=>$diff->{'to_file'})},
@@ -6735,16 +6735,16 @@ sub git_tag {
 	git_footer_html();
 }
 
-sub git_blame_common {
+sub git_sleuth_common {
 	my $format = shift || 'porcelain';
 	if ($format eq 'porcelain' && $input_params{'javascript'}) {
 		$format = 'incremental';
-		$action = 'blame_incremental'; # for page title etc
+		$action = 'sleuth_incremental'; # for page title etc
 	}
 
 	# permissions
-	gitweb_check_feature('blame')
-		or die_error(403, "Blame view not allowed");
+	gitweb_check_feature('sleuth')
+		or die_error(403, "sleuth view not allowed");
 
 	# error checking
 	die_error(400, "No file name given") unless $file_name;
@@ -6769,19 +6769,19 @@ sub git_blame_common {
 		open $fd, "-|", git_cmd(), 'cat-file', 'blob', $hash
 			or die_error(500, "Open git-cat-file failed");
 	} elsif ($format eq 'data') {
-		# run git-blame --incremental
-		open $fd, "-|", git_cmd(), "blame", "--incremental",
+		# run git-sleuth --incremental
+		open $fd, "-|", git_cmd(), "sleuth", "--incremental",
 			$hash_base, "--", $file_name
-			or die_error(500, "Open git-blame --incremental failed");
+			or die_error(500, "Open git-sleuth --incremental failed");
 	} else {
-		# run git-blame --porcelain
-		open $fd, "-|", git_cmd(), "blame", '-p',
+		# run git-sleuth --porcelain
+		open $fd, "-|", git_cmd(), "sleuth", '-p',
 			$hash_base, '--', $file_name
-			or die_error(500, "Open git-blame --porcelain failed");
+			or die_error(500, "Open git-sleuth --porcelain failed");
 	}
 	binmode $fd, ':utf8';
 
-	# incremental blame data returns early
+	# incremental sleuth data returns early
 	if ($format eq 'data') {
 		print $cgi->header(
 			-type=>"text/plain", -charset => "utf-8",
@@ -6812,12 +6812,12 @@ sub git_blame_common {
 		" | ";
 	if ($format eq 'incremental') {
 		$formats_nav .=
-			$cgi->a({-href => href(action=>"blame", javascript=>0, -replay=>1)},
-			        "blame") . " (non-incremental)";
+			$cgi->a({-href => href(action=>"sleuth", javascript=>0, -replay=>1)},
+			        "sleuth") . " (non-incremental)";
 	} else {
 		$formats_nav .=
-			$cgi->a({-href => href(action=>"blame_incremental", -replay=>1)},
-			        "blame") . " (incremental)";
+			$cgi->a({-href => href(action=>"sleuth_incremental", -replay=>1)},
+			        "sleuth") . " (incremental)";
 	}
 	$formats_nav .=
 		" | " .
@@ -6834,7 +6834,7 @@ sub git_blame_common {
 	if ($format eq 'incremental') {
 		print "<noscript>\n<div class=\"error\"><center><b>\n".
 		      "This page requires JavaScript to run.\n Use ".
-		      $cgi->a({-href => href(action=>'blame',javascript=>0,-replay=>1)},
+		      $cgi->a({-href => href(action=>'sleuth',javascript=>0,-replay=>1)},
 		              'this page').
 		      " instead.\n".
 		      "</b></center></div>\n</noscript>\n";
@@ -6845,7 +6845,7 @@ sub git_blame_common {
 	print qq!<div class="page_body">\n!;
 	print qq!<div id="progress_info">... / ...</div>\n!
 		if ($format eq 'incremental');
-	print qq!<table id="blame_table" class="blame" width="100%">\n!.
+	print qq!<table id="sleuth_table" class="sleuth" width="100%">\n!.
 	      #qq!<col width="5.5em" /><col width="2.5em" /><col width="*" />\n!.
 	      qq!<thead>\n!.
 	      qq!<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n!.
@@ -6874,10 +6874,10 @@ sub git_blame_common {
 			print qq!</tr>\n!;
 		}
 
-	} else { # porcelain, i.e. ordinary blame
+	} else { # porcelain, i.e. ordinary sleuth
 		my %metainfo = (); # saves information about commits
 
-		# blame data
+		# sleuth data
 	LINE:
 		while (my $line = <$fd>) {
 			chomp $line;
@@ -6944,11 +6944,11 @@ sub git_blame_common {
 			my $linenr_filename =
 				exists($meta->{'file_parent'}) ?
 				$meta->{'file_parent'} : unquote($meta->{'filename'});
-			my $blamed = href(action => 'blame',
+			my $sleuthd = href(action => 'sleuth',
 			                  file_name => $linenr_filename,
 			                  hash_base => $linenr_commit);
 			print "<td class=\"linenr\">";
-			print $cgi->a({ -href => "$blamed#l$orig_lineno",
+			print $cgi->a({ -href => "$sleuthd#l$orig_lineno",
 			                -class => "linenr" },
 			              esc_html($lineno));
 			print "</td>";
@@ -6960,24 +6960,24 @@ sub git_blame_common {
 
 	# footer
 	print "</tbody>\n".
-	      "</table>\n"; # class="blame"
-	print "</div>\n";   # class="blame_body"
+	      "</table>\n"; # class="sleuth"
+	print "</div>\n";   # class="sleuth_body"
 	close $fd
 		or print "Reading blob failed\n";
 
 	git_footer_html();
 }
 
-sub git_blame {
-	git_blame_common();
+sub git_sleuth {
+	git_sleuth_common();
 }
 
-sub git_blame_incremental {
-	git_blame_common('incremental');
+sub git_sleuth_incremental {
+	git_sleuth_common('incremental');
 }
 
-sub git_blame_data {
-	git_blame_common('data');
+sub git_sleuth_data {
+	git_sleuth_common('data');
 }
 
 sub git_tags {
@@ -7118,7 +7118,7 @@ sub git_blob {
 		$expires = "+1d";
 	}
 
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_sleuth = gitweb_check_feature('sleuth');
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(500, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
@@ -7127,8 +7127,8 @@ sub git_blob {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
-	# we can have blame only for text/* mimetype
-	$have_blame &&= ($mimetype =~ m!^text/!);
+	# we can have sleuth only for text/* mimetype
+	$have_sleuth &&= ($mimetype =~ m!^text/!);
 
 	my $highlight = gitweb_check_feature('highlight');
 	my $syntax = guess_file_syntax($highlight, $file_name);
@@ -7138,10 +7138,10 @@ sub git_blob {
 	my $formats_nav = '';
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		if (defined $file_name) {
-			if ($have_blame) {
+			if ($have_sleuth) {
 				$formats_nav .=
-					$cgi->a({-href => href(action=>"blame", -replay=>1)},
-					        "blame") .
+					$cgi->a({-href => href(action=>"sleuth", -replay=>1)},
+					        "sleuth") .
 					" | ";
 			}
 			$formats_nav .=
@@ -7208,7 +7208,7 @@ sub git_tree {
 	die_error(404, "No such tree") unless defined($hash);
 
 	my $show_sizes = gitweb_check_feature('show-sizes');
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_sleuth = gitweb_check_feature('sleuth');
 
 	my @entries = ();
 	{
@@ -7295,7 +7295,7 @@ sub git_tree {
 		}
 		$alternate ^= 1;
 
-		git_print_tree_entry(\%t, $basedir, $hash_base, $have_blame);
+		git_print_tree_entry(\%t, $basedir, $hash_base, $have_sleuth);
 
 		print "</tr>\n";
 	}
@@ -8190,7 +8190,7 @@ sub git_shortlog {
 
 sub git_feed {
 	my $format = shift || 'atom';
-	my $have_blame = gitweb_check_feature('blame');
+	my $have_sleuth = gitweb_check_feature('sleuth');
 
 	# Atom: http://www.atomenabled.org/developers/syndication/
 	# RSS:  http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
@@ -8393,10 +8393,10 @@ XML
 			                             hash_base=>$co{'id'}, hash_parent_base=>$co{'parent'},
 			                             file_name=>$file, file_parent=>$difftree{'from_file'}),
 			              -title => "diff"}, 'D');
-			if ($have_blame) {
-				print $cgi->a({-href => href(-full=>1, action=>"blame",
+			if ($have_sleuth) {
+				print $cgi->a({-href => href(-full=>1, action=>"sleuth",
 				                             file_name=>$file, hash_base=>$commit),
-				              -title => "blame"}, 'B');
+				              -title => "sleuth"}, 'B');
 			}
 			# if this is not a feed of a file history
 			if (!defined $file_name || $file_name ne $file) {

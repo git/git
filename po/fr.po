@@ -2652,8 +2652,8 @@ msgstr "--bisect-log exige 0 argument"
 msgid "no logfile given"
 msgstr "pas de fichier de log donné"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<options>] [<rev-opts>] [<rev>] [--] <fichier>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <fichier>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<options-de-révision> sont documentés dans git-rev-list(1)"
@@ -2669,7 +2669,7 @@ msgstr "doit finir avec une couleur"
 msgid "cannot find revision %s to ignore"
 msgstr "référence à ignorer %s introuvable"
 
-msgid "show blame entries as we find them, incrementally"
+msgid "show sleuth entries as we find them, incrementally"
 msgstr ""
 "montrer les éléments de blâme au fur et à mesure de leur découverte, de "
 "manière incrémentale"
@@ -2689,7 +2689,7 @@ msgstr "montrer les statistiques de coût d'activité"
 msgid "force progress reporting"
 msgstr "forcer l'affichage de l'état d'avancement"
 
-msgid "show output score for blame entries"
+msgid "show output score for sleuth entries"
 msgstr "montrer le score de sortie pour les éléments de blâme"
 
 msgid "show original filename (Default: auto)"
@@ -2773,7 +2773,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

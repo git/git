@@ -7,7 +7,7 @@
 "bare repository"	"a repository with only .git directory, without working directory"
 "base"	"a parent version of the current file"
 "bisect"	""
-"blame"	"get the authors responsible for each line in a file"
+"sleuth"	"get the authors responsible for each line in a file"
 "blob"	     ""
 "branch [noun]"	"A 'branch' is an active line of development."
 "branch [verb]"	""

@@ -2543,8 +2543,8 @@ msgstr ""
 msgid "no logfile given"
 msgstr ""
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<опции>] [<опции-редакции>] [<редакция>] [--] <файл>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<опции>] [<опции-редакции>] [<редакция>] [--] <файл>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<опции-rev-list> документированы в git-rev-list(1)"
@@ -2560,7 +2560,7 @@ msgstr "должно заканчиваться на цвет"
 msgid "cannot find revision %s to ignore"
 msgstr ""
 
-msgid "show blame entries as we find them, incrementally"
+msgid "show sleuth entries as we find them, incrementally"
 msgstr ""
 
 msgid "do not show object names of boundary commits (Default: off)"
@@ -2575,7 +2575,7 @@ msgstr ""
 msgid "force progress reporting"
 msgstr "принудительно выводить прогресс"
 
-msgid "show output score for blame entries"
+msgid "show output score for sleuth entries"
 msgstr ""
 
 msgid "show original filename (Default: auto)"
@@ -2654,7 +2654,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

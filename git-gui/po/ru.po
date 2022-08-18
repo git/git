@@ -403,7 +403,7 @@ msgstr "использование:"
 msgid "Usage"
 msgstr "Использование"
 
-#: git-gui.sh:3182 lib/blame.tcl:575
+#: git-gui.sh:3182 lib/sleuth.tcl:575
 msgid "Error"
 msgstr "Ошибка"
 
@@ -460,7 +460,7 @@ msgstr "Сообщение коммита:"
 msgid "Copy All"
 msgstr "Копировать все"
 
-#: git-gui.sh:3501 lib/blame.tcl:106
+#: git-gui.sh:3501 lib/sleuth.tcl:106
 msgid "File:"
 msgstr "Файл:"
 
@@ -480,7 +480,7 @@ msgstr "Уменьшить размер шрифта"
 msgid "Increase Font Size"
 msgstr "Увеличить размер шрифта"
 
-#: git-gui.sh:3662 lib/blame.tcl:296
+#: git-gui.sh:3662 lib/sleuth.tcl:296
 msgid "Encoding"
 msgstr "Кодировка"
 
@@ -1272,11 +1272,11 @@ msgid "Match Tracking Branches"
 msgstr "Такое же имя, как и у отслеживаемой ветки"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
+msgid "Use Textconv For Diffs and sleuths"
 msgstr "Использовать Textconv для просмотра различий и авторства"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "Поиск копий только в изменённых файлах"
 
 #: lib/option.tcl:153
@@ -1284,11 +1284,11 @@ msgid "Maximum Length of Recent Repositories List"
 msgstr "Максимальная длинна списка недавних репозиториев"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "Минимальное количество символов для поиска копий"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "Радиус исторического контекста (в днях)"
 
 #: lib/option.tcl:156
@@ -1927,113 +1927,113 @@ msgstr "Не удалось открыть репозиторий %s:"
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - графический пользовательский интерфейс к Git."
 
-#: lib/blame.tcl:74
+#: lib/sleuth.tcl:74
 #, tcl-format
 msgid "%s (%s): File Viewer"
 msgstr "%s (%s): Просмотр файла"
 
-#: lib/blame.tcl:80
+#: lib/sleuth.tcl:80
 msgid "Commit:"
 msgstr "Коммит:"
 
-#: lib/blame.tcl:282
+#: lib/sleuth.tcl:282
 msgid "Copy Commit"
 msgstr "Копировать SHA-1"
 
-#: lib/blame.tcl:286
+#: lib/sleuth.tcl:286
 msgid "Find Text..."
 msgstr "Найти текст…"
 
-#: lib/blame.tcl:290
+#: lib/sleuth.tcl:290
 msgid "Goto Line..."
 msgstr "Перейти на строку…"
 
-#: lib/blame.tcl:299
+#: lib/sleuth.tcl:299
 msgid "Do Full Copy Detection"
 msgstr "Провести полный поиск копий"
 
-#: lib/blame.tcl:303
+#: lib/sleuth.tcl:303
 msgid "Show History Context"
 msgstr "Показать исторический контекст"
 
-#: lib/blame.tcl:306
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:306
+msgid "sleuth Parent Commit"
 msgstr "Авторы родительского коммита"
 
-#: lib/blame.tcl:468
+#: lib/sleuth.tcl:468
 #, tcl-format
 msgid "Reading %s..."
 msgstr "Чтение %s…"
 
-#: lib/blame.tcl:596
+#: lib/sleuth.tcl:596
 msgid "Loading copy/move tracking annotations..."
 msgstr "Загрузка аннотации копирований/переименований…"
 
-#: lib/blame.tcl:613
+#: lib/sleuth.tcl:613
 msgid "lines annotated"
 msgstr "строк прокомментировано"
 
-#: lib/blame.tcl:815
+#: lib/sleuth.tcl:815
 msgid "Loading original location annotations..."
 msgstr "Загрузка аннотаций первоначального положения объекта…"
 
-#: lib/blame.tcl:818
+#: lib/sleuth.tcl:818
 msgid "Annotation complete."
 msgstr "Аннотация завершена."
 
-#: lib/blame.tcl:849
+#: lib/sleuth.tcl:849
 msgid "Busy"
 msgstr "Занят"
 
-#: lib/blame.tcl:850
+#: lib/sleuth.tcl:850
 msgid "Annotation process is already running."
 msgstr "Аннотация уже запущена"
 
-#: lib/blame.tcl:889
+#: lib/sleuth.tcl:889
 msgid "Running thorough copy detection..."
 msgstr "Выполнение полного поиска копий…"
 
-#: lib/blame.tcl:957
+#: lib/sleuth.tcl:957
 msgid "Loading annotation..."
 msgstr "Загрузка аннотации…"
 
-#: lib/blame.tcl:1010
+#: lib/sleuth.tcl:1010
 msgid "Author:"
 msgstr "Автор:"
 
-#: lib/blame.tcl:1014
+#: lib/sleuth.tcl:1014
 msgid "Committer:"
 msgstr "Коммитер:"
 
-#: lib/blame.tcl:1019
+#: lib/sleuth.tcl:1019
 msgid "Original File:"
 msgstr "Исходный файл:"
 
-#: lib/blame.tcl:1067
+#: lib/sleuth.tcl:1067
 msgid "Cannot find HEAD commit:"
 msgstr "Не удалось найти текущее состояние:"
 
-#: lib/blame.tcl:1122
+#: lib/sleuth.tcl:1122
 msgid "Cannot find parent commit:"
 msgstr "Не удалось найти родительское состояние:"
 
-#: lib/blame.tcl:1137
+#: lib/sleuth.tcl:1137
 msgid "Unable to display parent"
 msgstr "Не могу показать предка"
 
-#: lib/blame.tcl:1138 lib/diff.tcl:345
+#: lib/sleuth.tcl:1138 lib/diff.tcl:345
 msgid "Error loading diff:"
 msgstr "Ошибка загрузки изменений:"
 
-#: lib/blame.tcl:1279
+#: lib/sleuth.tcl:1279
 msgid "Originally By:"
 msgstr "Источник:"
 
-#: lib/blame.tcl:1285
+#: lib/sleuth.tcl:1285
 msgid "In File:"
 msgstr "Файл:"
 
-#: lib/blame.tcl:1290
+#: lib/sleuth.tcl:1290
 msgid "Copied Or Moved Here By:"
 msgstr "Скопировано/перемещено в:"
 

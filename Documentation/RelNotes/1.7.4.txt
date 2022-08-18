@@ -46,7 +46,7 @@ Updates since v1.7.3
    lookup.  Similarly, ":../Makefile" from a subdirectory would mean
    "the Makefile of the parent directory in the index".
 
- * "git blame" learned the --show-email option to display the e-mail
+ * "git sleuth" learned the --show-email option to display the e-mail
    addresses instead of the names of authors.
 
  * "git commit" learned the --fixup and --squash options to help later invocation

@@ -16,7 +16,7 @@ Fixes since v1.7.11.1
  * "git archive" incorrectly computed the header checksum; the symptom
    was observed only when using pathnames with hi-bit set.
 
- * "git blame" did not try to make sure that the abbreviated commit
+ * "git sleuth" did not try to make sure that the abbreviated commit
    object names in its output are unique.
 
  * Running "git bundle verify" on a bundle that records a complete

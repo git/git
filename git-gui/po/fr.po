@@ -444,7 +444,7 @@ msgstr "Message de commit :"
 msgid "Copy All"
 msgstr "Copier tout"
 
-#: git-gui.sh:3149 lib/blame.tcl:104
+#: git-gui.sh:3149 lib/sleuth.tcl:104
 msgid "File:"
 msgstr "Fichier :"
 
@@ -460,7 +460,7 @@ msgstr "Diminuer la police"
 msgid "Increase Font Size"
 msgstr "Agrandir la police"
 
-#: git-gui.sh:3288 lib/blame.tcl:281
+#: git-gui.sh:3288 lib/sleuth.tcl:281
 msgid "Encoding"
 msgstr "Codage des caractères"
 
@@ -580,108 +580,108 @@ msgstr ""
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - une interface graphique utilisateur pour Git"
 
-#: lib/blame.tcl:72
+#: lib/sleuth.tcl:72
 msgid "File Viewer"
 msgstr "Visionneur de fichier"
 
-#: lib/blame.tcl:78
+#: lib/sleuth.tcl:78
 msgid "Commit:"
 msgstr "Commit :"
 
-#: lib/blame.tcl:271
+#: lib/sleuth.tcl:271
 msgid "Copy Commit"
 msgstr "Copier commit"
 
-#: lib/blame.tcl:275
+#: lib/sleuth.tcl:275
 msgid "Find Text..."
 msgstr "Chercher texte..."
 
-#: lib/blame.tcl:284
+#: lib/sleuth.tcl:284
 msgid "Do Full Copy Detection"
 msgstr "Lancer la détection approfondie des copies"
 
-#: lib/blame.tcl:288
+#: lib/sleuth.tcl:288
 msgid "Show History Context"
 msgstr "Montrer l'historique"
 
-#: lib/blame.tcl:291
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:291
+msgid "sleuth Parent Commit"
 msgstr "Blâmer le commit parent"
 
-#: lib/blame.tcl:450
+#: lib/sleuth.tcl:450
 #, tcl-format
 msgid "Reading %s..."
 msgstr "Lecture de %s..."
 
-#: lib/blame.tcl:557
+#: lib/sleuth.tcl:557
 msgid "Loading copy/move tracking annotations..."
 msgstr "Chargement des annotations de suivi des copies/déplacements..."
 
-#: lib/blame.tcl:577
+#: lib/sleuth.tcl:577
 msgid "lines annotated"
 msgstr "lignes annotées"
 
-#: lib/blame.tcl:769
+#: lib/sleuth.tcl:769
 msgid "Loading original location annotations..."
 msgstr "Chargement des annotations d'emplacement original"
 
-#: lib/blame.tcl:772
+#: lib/sleuth.tcl:772
 msgid "Annotation complete."
 msgstr "Annotation terminée."
 
-#: lib/blame.tcl:802
+#: lib/sleuth.tcl:802
 msgid "Busy"
 msgstr "Occupé"
 
-#: lib/blame.tcl:803
+#: lib/sleuth.tcl:803
 msgid "Annotation process is already running."
 msgstr "Annotation en cours d'exécution."
 
-#: lib/blame.tcl:842
+#: lib/sleuth.tcl:842
 msgid "Running thorough copy detection..."
 msgstr "Recherche de copie approfondie en cours..."
 
-#: lib/blame.tcl:910
+#: lib/sleuth.tcl:910
 msgid "Loading annotation..."
 msgstr "Chargement des annotations..."
 
-#: lib/blame.tcl:963
+#: lib/sleuth.tcl:963
 msgid "Author:"
 msgstr "Auteur :"
 
-#: lib/blame.tcl:967
+#: lib/sleuth.tcl:967
 msgid "Committer:"
 msgstr "Commiteur :"
 
-#: lib/blame.tcl:972
+#: lib/sleuth.tcl:972
 msgid "Original File:"
 msgstr "Fichier original :"
 
-#: lib/blame.tcl:1020
+#: lib/sleuth.tcl:1020
 msgid "Cannot find HEAD commit:"
 msgstr "Impossible de trouver le commit HEAD :"
 
-#: lib/blame.tcl:1075
+#: lib/sleuth.tcl:1075
 msgid "Cannot find parent commit:"
 msgstr "Impossible de trouver le commit parent :"
 
-#: lib/blame.tcl:1090
+#: lib/sleuth.tcl:1090
 msgid "Unable to display parent"
 msgstr "Impossible d'afficher le parent"
 
-#: lib/blame.tcl:1091 lib/diff.tcl:320
+#: lib/sleuth.tcl:1091 lib/diff.tcl:320
 msgid "Error loading diff:"
 msgstr "Erreur lors du chargement des différences :"
 
-#: lib/blame.tcl:1231
+#: lib/sleuth.tcl:1231
 msgid "Originally By:"
 msgstr "À l'origine par :"
 
-#: lib/blame.tcl:1237
+#: lib/sleuth.tcl:1237
 msgid "In File:"
 msgstr "Dans le fichier :"
 
-#: lib/blame.tcl:1242
+#: lib/sleuth.tcl:1242
 msgid "Copied Or Moved Here By:"
 msgstr "Copié ou déplacé ici par :"
 
@@ -2078,15 +2078,15 @@ msgid "Match Tracking Branches"
 msgstr "Faire correspondre les branches de suivi"
 
 #: lib/option.tcl:149
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "Annoter les copies seulement sur fichiers modifiés"
 
 #: lib/option.tcl:150
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "Minimum de caratères pour annoter une copie"
 
 #: lib/option.tcl:151
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "Distance de blâme dans l'historique (jours)"
 
 #: lib/option.tcl:152

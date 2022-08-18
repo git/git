@@ -345,7 +345,7 @@ msgid "External diff"
 msgstr "Diferència externa"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "sleuth parent commit"
 msgstr "Culpabilitat de la comissió mare"
 
 #: gitk:2660
@@ -357,8 +357,8 @@ msgid "Show origin of this line"
 msgstr "Mostra l'origen d'aquesta línia"
 
 #: gitk:2668
-msgid "Run git gui blame on this line"
-msgstr "Executa git gui blame en aquesta línia"
+msgid "Run git gui sleuth on this line"
+msgstr "Executa git gui sleuth en aquesta línia"
 
 #: gitk:3014
 msgid ""
@@ -577,8 +577,8 @@ msgid "No such commit"
 msgstr "Cap comissió així"
 
 #: gitk:3798
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: l'ordre ha fallat:"
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth: l'ordre ha fallat:"
 
 #: gitk:3829
 #, tcl-format
@@ -592,8 +592,8 @@ msgstr "Error en llegir l'índex: %s"
 
 #: gitk:3862
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "No s'ha pogut iniciar el git blame: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "No s'ha pogut iniciar el git sleuth: %s"
 
 #: gitk:3865 gitk:6754
 msgid "Searching"
@@ -601,8 +601,8 @@ msgstr "Cercant"
 
 #: gitk:3897
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Error en executar el git blame: %s"
+msgid "Error running git sleuth: %s"
+msgstr "Error en executar el git sleuth: %s"
 
 #: gitk:3925
 #, tcl-format

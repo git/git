@@ -6,8 +6,8 @@ multiple other files, and those individual files were modified in the same
 commits. That means that we will see the same commit in multiple contexts,
 and each one should be attributed to the correct file.
 
-Note that we need to use "blame -C" to find the commit for all lines. We will
-not bother testing that the non-C case fails to find it. That is how blame
+Note that we need to use "sleuth -C" to find the commit for all lines. We will
+not bother testing that the non-C case fails to find it. That is how sleuth
 behaves now, but it is not a property we want to make sure is retained.
 '
 . ./test-lib.sh
@@ -77,7 +77,7 @@ test_expect_success 'setup simulated porcelain' '
 for output in porcelain line-porcelain
 do
 	test_expect_success "generate --$output output" '
-		git blame --root -C --$output combined >output
+		git sleuth --root -C --$output combined >output
 	'
 
 	test_expect_success "$output output finds correct commits" '

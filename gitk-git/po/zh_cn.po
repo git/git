@@ -346,8 +346,8 @@ msgid "External diff"
 msgstr "外部diff"
 
 #: gitk:2683
-msgid "Blame parent commit"
-msgstr "Blame父提交"
+msgid "sleuth parent commit"
+msgstr "sleuth父提交"
 
 #: gitk:2684
 msgid "Copy path"
@@ -358,8 +358,8 @@ msgid "Show origin of this line"
 msgstr "显示此行原始提交"
 
 #: gitk:2692
-msgid "Run git gui blame on this line"
-msgstr "在此行运行git gui客户端的blame"
+msgid "Run git gui sleuth on this line"
+msgstr "在此行运行git gui客户端的sleuth"
 
 #: gitk:3036
 msgid "About gitk"
@@ -575,8 +575,8 @@ msgid "No such commit"
 msgstr "无此提交"
 
 #: gitk:3822
-msgid "git gui blame: command failed:"
-msgstr "git gui blame：执行命令失败："
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth：执行命令失败："
 
 #: gitk:3853
 #, tcl-format
@@ -590,8 +590,8 @@ msgstr "读取索引出错：%s"
 
 #: gitk:3886
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "不能执行git blame：%s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "不能执行git sleuth：%s"
 
 #: gitk:3889 gitk:6778
 msgid "Searching"
@@ -599,8 +599,8 @@ msgstr "搜索中"
 
 #: gitk:3921
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "运行git blame出错：%s"
+msgid "Error running git sleuth: %s"
+msgstr "运行git sleuth出错：%s"
 
 #: gitk:3949
 #, tcl-format

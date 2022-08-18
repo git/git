@@ -8,7 +8,7 @@ Fixes since v1.5.0.2
 
   - 'git.el' honors the commit coding system from the configuration.
 
-  - 'blameview' in contrib/ correctly digs deeper when a line is
+  - 'sleuthview' in contrib/ correctly digs deeper when a line is
     clicked.
 
   - 'http-push' correctly makes sure the remote side has leading

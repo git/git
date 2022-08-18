@@ -125,9 +125,9 @@ test_expect_success 'log using absolute path names' '
 	test_cmp f1.txt f2.txt
 '
 
-test_expect_success 'blame using absolute path names' '
-	git blame a/b/c/d >f1.txt &&
-	git blame "$(pwd)/a/b/c/d" >f2.txt &&
+test_expect_success 'sleuth using absolute path names' '
+	git sleuth a/b/c/d >f1.txt &&
+	git sleuth "$(pwd)/a/b/c/d" >f2.txt &&
 	test_cmp f1.txt f2.txt
 '
 

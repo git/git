@@ -25,7 +25,7 @@
 #   backward compatibility           |  retrocompatibilidade
 #   bare repository                  |  repositório nu
 #   bisect                           |  bisseção
-#   blame                            |  culpar
+#   sleuth                            |  culpar
 #   blob object                      |  objeto-blob
 #   branch                           |  ramo
 #   bug                              |  bug
@@ -1865,8 +1865,8 @@ msgstr "prefixo"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "preceder o prefixo a cada nome de caminho dentro do arquivo"
 
-#: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: archive.c:554 archive.c:557 builtin/sleuth.c:881 builtin/sleuth.c:885
+#: builtin/sleuth.c:886 builtin/commit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -2082,20 +2082,20 @@ msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] "Bissetando: falta %d revisão para testar depois desta %s\n"
 msgstr[1] "Bissetando: faltam %d revisões para testar depois desta %s\n"
 
-#: blame.c:2773
+#: sleuth.c:2773
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents e --reverse são imiscíveis."
 
-#: blame.c:2787
+#: sleuth.c:2787
 msgid "cannot use --contents with final commit object name"
 msgstr "incapaz usar --contents com nome de objeto de memória final"
 
-#: blame.c:2808
+#: sleuth.c:2808
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 "--reverse e --first-parent juntos exige que se especifique a última memória"
 
-#: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
+#: sleuth.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
 #: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
@@ -2104,19 +2104,19 @@ msgstr ""
 msgid "revision walk setup failed"
 msgstr "falha ao configurar percurso de revisões"
 
-#: blame.c:2835
+#: sleuth.c:2835
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 "--reverse --first-parent juntos requer intervalo ao longo da série primeiro-"
 "parente"
 
-#: blame.c:2846
+#: sleuth.c:2846
 #, c-format
 msgid "no such path %s in %s"
 msgstr "path %s inexistente em %s"
 
-#: blame.c:2857
+#: sleuth.c:2857
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "incapaz ler blob %s para path %s"
@@ -3554,7 +3554,7 @@ msgstr ""
 
 #: diff-merges.c:81 gpg-interface.c:719 gpg-interface.c:734 ls-refs.c:37
 #: parallel-checkout.c:42 sequencer.c:2805 setup.c:563 builtin/am.c:203
-#: builtin/am.c:2243 builtin/am.c:2287 builtin/blame.c:724 builtin/blame.c:742
+#: builtin/am.c:2243 builtin/am.c:2287 builtin/sleuth.c:724 builtin/sleuth.c:742
 #: builtin/fetch.c:792 builtin/pack-objects.c:3515 builtin/pull.c:45
 #: builtin/pull.c:47 builtin/pull.c:321
 #, c-format
@@ -11630,49 +11630,49 @@ msgstr "--bisect-log exige 0 argumentos"
 msgid "no logfile given"
 msgstr "nenhum ficheiro-registo fornecido"
 
-#: builtin/blame.c:32
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<opções>] [<rev-opts>] [<rev>] [--] <ficheiro>"
+#: builtin/sleuth.c:32
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<opções>] [<rev-opts>] [<rev>] [--] <ficheiro>"
 
-#: builtin/blame.c:37
+#: builtin/sleuth.c:37
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-opts> estão documentadas em git-rev-list(1)"
 
-#: builtin/blame.c:406
+#: builtin/sleuth.c:406
 #, c-format
 msgid "expecting a color: %s"
 msgstr "esperando cor: %s"
 
-#: builtin/blame.c:413
+#: builtin/sleuth.c:413
 msgid "must end with a color"
 msgstr ""
 
-#: builtin/blame.c:842
+#: builtin/sleuth.c:842
 #, c-format
 msgid "cannot find revision %s to ignore"
 msgstr "incapaz encontrar revisão %s para ignorar"
 
-#: builtin/blame.c:864
-msgid "show blame entries as we find them, incrementally"
+#: builtin/sleuth.c:864
+msgid "show sleuth entries as we find them, incrementally"
 msgstr ""
 "mostrar entradas de culpa à medida que forem encontradas, incrementalmente"
 
-#: builtin/blame.c:865
+#: builtin/sleuth.c:865
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr ""
 "mostrar nenhuns nomes de objeto de memórias fronteira (Predefinição: "
 "desativado)"
 
-#: builtin/blame.c:866
+#: builtin/sleuth.c:866
 msgid "do not treat root commits as boundaries (Default: off)"
 msgstr ""
 "tratar nenhumas memórias raiz como fronteira (Predefinição: desativado)"
 
-#: builtin/blame.c:867
+#: builtin/sleuth.c:867
 msgid "show work cost statistics"
 msgstr "mostrar estatísticas de custo de trabalho"
 
-#: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
+#: builtin/sleuth.c:868 builtin/checkout.c:1554 builtin/clone.c:98
 #: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
@@ -11681,128 +11681,128 @@ msgstr "mostrar estatísticas de custo de trabalho"
 msgid "force progress reporting"
 msgstr "forçar informação de progresso"
 
-#: builtin/blame.c:869
-msgid "show output score for blame entries"
+#: builtin/sleuth.c:869
+msgid "show output score for sleuth entries"
 msgstr "mostrar a pontuação das entradas de culpa"
 
-#: builtin/blame.c:870
+#: builtin/sleuth.c:870
 msgid "show original filename (Default: auto)"
 msgstr "mostrar nome do ficheiro original (Predefinição: auto)"
 
-#: builtin/blame.c:871
+#: builtin/sleuth.c:871
 msgid "show original linenumber (Default: off)"
 msgstr "mostrar números de linha originais (Predefinição: desativado)"
 
-#: builtin/blame.c:872
+#: builtin/sleuth.c:872
 msgid "show in a format designed for machine consumption"
 msgstr "mostrar em formato próprio para consumo por máquina"
 
-#: builtin/blame.c:873
+#: builtin/sleuth.c:873
 msgid "show porcelain format with per-line commit information"
 msgstr "mostrar em formato de porcelana com informações de memória por linha"
 
-#: builtin/blame.c:874
+#: builtin/sleuth.c:874
 msgid "use the same output mode as git-annotate (Default: off)"
 msgstr "usar o mesmo modo de saída que git-annotate (Predefinição: desativado)"
 
-#: builtin/blame.c:875
+#: builtin/sleuth.c:875
 msgid "show raw timestamp (Default: off)"
 msgstr "mostrar carimbo cronológico em bruto (Predefinição: desativado)"
 
-#: builtin/blame.c:876
+#: builtin/sleuth.c:876
 msgid "show long commit SHA1 (Default: off)"
 msgstr "mostrar SHA1 longo de memória (Predefinição: desativado)"
 
-#: builtin/blame.c:877
+#: builtin/sleuth.c:877
 msgid "suppress author name and timestamp (Default: off)"
 msgstr ""
 "suprimir nome de autor e carimbo cronológico (Predefinição: desativado)"
 
-#: builtin/blame.c:878
+#: builtin/sleuth.c:878
 msgid "show author email instead of name (Default: off)"
 msgstr "mostrar email de autor em vez do nome (Predefinição: desativado)"
 
-#: builtin/blame.c:879
+#: builtin/sleuth.c:879
 msgid "ignore whitespace differences"
 msgstr "Ignorar as diferenças de espaço em branco"
 
-#: builtin/blame.c:880 builtin/log.c:1857
+#: builtin/sleuth.c:880 builtin/log.c:1857
 msgid "rev"
 msgstr "rev"
 
-#: builtin/blame.c:880
+#: builtin/sleuth.c:880
 msgid "ignore <rev> when blaming"
 msgstr "ignorar <rev> ao culpar"
 
-#: builtin/blame.c:881
+#: builtin/sleuth.c:881
 msgid "ignore revisions from <file>"
 msgstr "ignorar revisões de <ficheiro>"
 
-#: builtin/blame.c:882
+#: builtin/sleuth.c:882
 msgid "color redundant metadata from previous line differently"
 msgstr ""
 
-#: builtin/blame.c:883
+#: builtin/sleuth.c:883
 msgid "color lines by age"
 msgstr "cor de linhas por idade"
 
-#: builtin/blame.c:884
+#: builtin/sleuth.c:884
 msgid "spend extra cycles to find better match"
 msgstr "gastar ciclos extra para encontrar uma melhor correspondência"
 
-#: builtin/blame.c:885
+#: builtin/sleuth.c:885
 msgid "use revisions from <file> instead of calling git-rev-list"
 msgstr "usar revisões de <ficheiro> em vez de invocar git-rev-list"
 
-#: builtin/blame.c:886
+#: builtin/sleuth.c:886
 msgid "use <file>'s contents as the final image"
 msgstr "usar o conteúdo de <ficheiro> como imagem final"
 
-#: builtin/blame.c:887 builtin/blame.c:888
+#: builtin/sleuth.c:887 builtin/sleuth.c:888
 msgid "score"
 msgstr "pontuação"
 
-#: builtin/blame.c:887
+#: builtin/sleuth.c:887
 msgid "find line copies within and across files"
 msgstr "encontrar linhas copiadas dentro e entre ficheiros"
 
-#: builtin/blame.c:888
+#: builtin/sleuth.c:888
 msgid "find line movements within and across files"
 msgstr "encontrar linhas movidas dentro e entre ficheiros"
 
-#: builtin/blame.c:889
+#: builtin/sleuth.c:889
 msgid "range"
 msgstr "intervalo"
 
-#: builtin/blame.c:890
+#: builtin/sleuth.c:890
 msgid "process only line range <start>,<end> or function :<funcname>"
 msgstr ""
 "processar apenas intervalo de linhas <início>,<fim> ou função :<nome-função>"
 
-#: builtin/blame.c:949
+#: builtin/sleuth.c:949
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr "proibido usar --progress com --incremental ou formatos porcelana"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c:1000
+#: builtin/sleuth.c:1000
 msgid "4 years, 11 months ago"
 msgstr "há 4 anos e 11 meses atrás"
 
-#: builtin/blame.c:1116
+#: builtin/sleuth.c:1116
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] "ficheiro %s só tem %lu linha"
 msgstr[1] "ficheiro %s só tem %lu linhas"
 
-#: builtin/blame.c:1161
+#: builtin/sleuth.c:1161
 msgid "Blaming lines"
 msgstr "Linhas de culpa"
 

@@ -23,7 +23,7 @@ var jsExceptionsRe = /[;?]js=[01](#.*)?$/;
  * that doesn't have 'js' query parameter set already.
  *
  * Links with 'js=1' lead to JavaScript version of given action, if it
- * exists (currently there is only 'blame_incremental' for 'blame')
+ * exists (currently there is only 'sleuth_incremental' for 'sleuth')
  *
  * To be used as `window.onload` handler
  *

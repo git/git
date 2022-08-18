@@ -39,7 +39,7 @@ Updates since v1.5.0
     tree-level difference.
 
   - Textual patch generation with "git diff" without -w/-b
-    option has been significantly optimized.  "git blame" got
+    option has been significantly optimized.  "git sleuth" got
     faster because of the same change.
 
   - "git log" and "git rev-list" has been optimized
@@ -245,7 +245,7 @@ These are all in v1.5.0.x series.
   - git-daemon marks the listening sockets with FD_CLOEXEC so
     that it won't be leaked into the children.
 
-  - segfault from git-blame when the mandatory pathname
+  - segfault from git-sleuth when the mandatory pathname
     parameter was missing was fixed; usage() message is given
     instead.
 
@@ -303,7 +303,7 @@ These are all in v1.5.0.x series.
 
   - 'git.el' honors the commit coding system from the configuration.
 
-  - 'blameview' in contrib/ correctly digs deeper when a line is
+  - 'sleuthview' in contrib/ correctly digs deeper when a line is
     clicked.
 
   - 'http-push' correctly makes sure the remote side has leading

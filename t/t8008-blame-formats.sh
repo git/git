@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='blame output in various formats on a simple case'
+test_description='sleuth output in various formats on a simple case'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -25,8 +25,8 @@ $shortID2 (A U Thor 2005-04-07 15:14:13 -0700 2) b
 $shortID2 (A U Thor 2005-04-07 15:14:13 -0700 3) c
 $shortID2 (A U Thor 2005-04-07 15:14:13 -0700 4) d
 EOF
-test_expect_success 'normal blame output' '
-	git blame --abbrev=17 file >actual &&
+test_expect_success 'normal sleuth output' '
+	git sleuth --abbrev=17 file >actual &&
 	test_cmp expect actual
 '
 
@@ -65,8 +65,8 @@ $ID2 3 3
 $ID2 4 4
 	d
 EOF
-test_expect_success 'blame --porcelain output' '
-	git blame --porcelain file >actual &&
+test_expect_success 'sleuth --porcelain output' '
+	git sleuth --porcelain file >actual &&
 	test_cmp expect actual
 '
 
@@ -84,8 +84,8 @@ $ID2 4 4
 $COMMIT2
 	d
 EOF
-test_expect_success 'blame --line-porcelain output' '
-	git blame --line-porcelain file >actual &&
+test_expect_success 'sleuth --line-porcelain output' '
+	git sleuth --line-porcelain file >actual &&
 	test_cmp expect actual
 '
 
@@ -101,7 +101,7 @@ test_expect_success '--porcelain detects first non-blank line as subject' '
 			"author A <a@b.c> 123456789 +0000" \
 			"committer C <c@d.e> 123456789 +0000" |
 		git hash-object -w -t commit --stdin) &&
-		git blame --porcelain $commit -- single-file >output &&
+		git sleuth --porcelain $commit -- single-file >output &&
 		grep "^summary oneline$" output
 	)
 '

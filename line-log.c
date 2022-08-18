@@ -446,7 +446,7 @@ static void range_set_shift_diff(struct range_set *out,
 /*
  * Given a diff and the set of interesting ranges, map the ranges
  * across the diff.  That is: observe that the target commit takes
- * blame for all the + (target-side) ranges.  So for every pair of
+ * sleuth for all the + (target-side) ranges.  So for every pair of
  * ranges in the diff that was touched, we remove the latter and add
  * its parent side.
  */
@@ -1228,7 +1228,7 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 		changed = process_all_files(&cand[i], rev, &diffqueues[i], range);
 		if (!changed) {
 			/*
-			 * This parent can take all the blame, so we
+			 * This parent can take all the sleuth, so we
 			 * don't follow any other path in history
 			 */
 			add_line_range(rev, parents[i], cand[i]);
@@ -1243,7 +1243,7 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	}
 
 	/*
-	 * No single parent took the blame.  We add the candidates
+	 * No single parent took the sleuth.  We add the candidates
 	 * from the above loop to the parents.
 	 */
 	for (i = 0; i < nparents; i++) {

@@ -41,10 +41,10 @@ Updates since v1.7.5
    current subdirectory whose unusual name begins with ":/", you can
    name it by "./:/that/path" or by "\:/that/path".
 
- * "git blame" learned "--abbrev[=<n>]" option to control the minimum
+ * "git sleuth" learned "--abbrev[=<n>]" option to control the minimum
    number of hexdigits shown for commit object names.
 
- * "git blame" learned "--line-porcelain" that is less efficient but is
+ * "git sleuth" learned "--line-porcelain" that is less efficient but is
    easier to parse.
 
  * Aborting "git commit --interactive" discards updates to the index

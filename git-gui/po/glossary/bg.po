@@ -187,7 +187,7 @@ msgid "base"
 msgstr "родителска версия"
 
 #. "get the authors responsible for each line in a file"
-msgid "blame"
+msgid "sleuth"
 msgstr "анотирам/анотиране"
 
 #. "to select and apply a single commit without merging"

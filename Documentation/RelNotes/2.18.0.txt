@@ -122,7 +122,7 @@ UI, Workflows & Features
  * Command line completion (in contrib/) learned to complete pathnames
    for various commands better.
 
- * "git blame" learns to unhighlight uninteresting metadata from the
+ * "git sleuth" learns to unhighlight uninteresting metadata from the
    originating commit on lines that are the same as the previous one,
    and also paint lines in different colors depending on the age of
    the commit.

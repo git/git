@@ -1,14 +1,14 @@
-git-blame(1)
+git-sleuth(1)
 ============
 
 NAME
 ----
-git-blame - Show what revision and author last modified each line of a file
+git-sleuth - Show what revision and author last modified each line of a file
 
 SYNOPSIS
 --------
 [verse]
-'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
+'git sleuth' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental]
 	    [-L <range>] [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
 	    [--ignore-rev <rev>] [--ignore-revs-file <file>]
 	    [--color-lines] [--color-by-age] [--progress] [--abbrev=<n>]
@@ -38,17 +38,17 @@ development history for when a code snippet occurred in a change. This makes it
 possible to track when a code snippet was added to a file, moved or copied
 between files, and eventually deleted or replaced. It works by searching for
 a text string in the diff. A small example of the pickaxe interface
-that searches for `blame_usage`:
+that searches for `sleuth_usage`:
 
 -----------------------------------------------------------------------------
-$ git log --pretty=oneline -S'blame_usage'
-5040f17eba15504bad66b14a645bddd9b015ebb7 blame -S <ancestry-file>
-ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 git-blame: Make the output
+$ git log --pretty=oneline -S'sleuth_usage'
+5040f17eba15504bad66b14a645bddd9b015ebb7 sleuth -S <ancestry-file>
+ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 git-sleuth: Make the output
 -----------------------------------------------------------------------------
 
 OPTIONS
 -------
-include::blame-options.txt[]
+include::sleuth-options.txt[]
 
 -c::
 	Use the same output mode as linkgit:git-annotate[1] (Default: off).
@@ -59,7 +59,7 @@ include::blame-options.txt[]
 	file (see `-M`).  The first number listed is the score.
 	This is the number of alphanumeric characters detected
 	as having been moved between or within files.  This must be above
-	a certain threshold for 'git blame' to consider those lines
+	a certain threshold for 'git sleuth' to consider those lines
 	of code to have been moved.
 
 -f::
@@ -78,7 +78,7 @@ include::blame-options.txt[]
 -e::
 --show-email::
 	Show the author email instead of author name (Default: off).
-	This can also be controlled via the `blame.showEmail` config
+	This can also be controlled via the `sleuth.showEmail` config
 	option.
 
 -w::
@@ -97,7 +97,7 @@ THE DEFAULT FORMAT
 ------------------
 
 When neither `--porcelain` nor `--incremental` option is specified,
-`git blame` will output annotation for each line with:
+`git sleuth` will output annotation for each line with:
 
 - abbreviated object name for the commit the line came from;
 - author ident (by default author name and date, unless `-s` or `-e`
@@ -133,7 +133,7 @@ header, prefixed by a TAB. This is to allow adding more
 header elements later.
 
 The porcelain format generally suppresses commit information that has
-already been seen. For example, two lines that are blamed to the same
+already been seen. For example, two lines that are sleuthd to the same
 commit will both be shown, but the details for that commit will be shown
 only once. This is more efficient, but may require more state be kept by
 the reader. The `--line-porcelain` option can be used to output full
@@ -141,7 +141,7 @@ commit information for each line, allowing simpler (but less efficient)
 usage like:
 
 	# count the number of lines attributed to each author
-	git blame --line-porcelain file |
+	git sleuth --line-porcelain file |
 	sed -n 's/^author //p' |
 	sort | uniq -c | sort -rn
 
@@ -149,7 +149,7 @@ usage like:
 SPECIFYING RANGES
 -----------------
 
-Unlike 'git blame' and 'git annotate' in older versions of git, the extent
+Unlike 'git sleuth' and 'git annotate' in older versions of git, the extent
 of the annotation can be limited to both line ranges and revision
 ranges. The `-L` option, which limits annotation to a range of lines, may be
 specified multiple times.
@@ -159,12 +159,12 @@ lines 40-60 for file `foo`, you can use the `-L` option like so
 (they mean the same thing -- both ask for 21 lines starting at
 line 40):
 
-	git blame -L 40,60 foo
-	git blame -L 40,+21 foo
+	git sleuth -L 40,60 foo
+	git sleuth -L 40,+21 foo
 
 Also you can use a regular expression to specify the line range:
 
-	git blame -L '/^sub hello {/,/^}$/' foo
+	git sleuth -L '/^sub hello {/,/^}$/' foo
 
 which limits the annotation to the body of the `hello` subroutine.
 
@@ -172,13 +172,13 @@ When you are not interested in changes older than version
 v2.6.18, or changes older than 3 weeks, you can use revision
 range specifiers  similar to 'git rev-list':
 
-	git blame v2.6.18.. -- foo
-	git blame --since=3.weeks -- foo
+	git sleuth v2.6.18.. -- foo
+	git sleuth --since=3.weeks -- foo
 
 When revision range specifiers are used to limit the annotation,
 lines that have not changed since the range boundary (either the
 commit v2.6.18 or the most recent commit that is more than 3
-weeks old in the above example) are blamed for that range
+weeks old in the above example) are sleuthd for that range
 boundary commit.
 
 A particularly useful way is to see if an added file has lines
@@ -192,7 +192,7 @@ introduced the file with:
 and then annotate the change between the commit and its
 parents, using `commit^!` notation:
 
-	git blame -C -C -f $commit^! -- foo
+	git sleuth -C -C -f $commit^! -- foo
 
 
 INCREMENTAL OUTPUT
@@ -208,7 +208,7 @@ The output format is similar to the Porcelain format, but it
 does not contain the actual lines from the file that is being
 annotated.
 
-. Each blame entry always starts with a line of:
+. Each sleuth entry always starts with a line of:
 
 	<40-byte hex sha1> <sourceline> <resultline> <num_lines>
 +
@@ -233,7 +233,7 @@ lines between the first and last one ("<sha1>" and "filename" lines)
 where you do not recognize the tag words (or care about that particular
 one) at the beginning of the "extended information" lines. That way, if
 there is ever added information (like the commit encoding or extended
-commit commentary), a blame viewer will not care.
+commit commentary), a sleuth viewer will not care.
 
 
 MAPPING AUTHORS

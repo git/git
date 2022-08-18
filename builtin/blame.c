@@ -1,5 +1,5 @@
 /*
- * Blame
+ * sleuth
  *
  * Copyright (c) 2006, 2014 by its authors
  * See COPYING for licensing conditions
@@ -25,14 +25,14 @@
 #include "dir.h"
 #include "progress.h"
 #include "object-store.h"
-#include "blame.h"
+#include "sleuth.h"
 #include "refs.h"
 #include "tag.h"
 
-static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
+static char sleuth_usage[] = N_("git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
-static const char *blame_opt_usage[] = {
-	blame_usage,
+static const char *sleuth_opt_usage[] = {
+	sleuth_usage,
 	"",
 	N_("<rev-opts> are documented in git-rev-list(1)"),
 	NULL
@@ -57,17 +57,17 @@ static struct string_list ignore_revs_file_list = STRING_LIST_INIT_NODUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
 
-static struct date_mode blame_date_mode = { DATE_ISO8601 };
-static size_t blame_date_width;
+static struct date_mode sleuth_date_mode = { DATE_ISO8601 };
+static size_t sleuth_date_width;
 
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
-#ifndef DEBUG_BLAME
-#define DEBUG_BLAME 0
+#ifndef DEBUG_sleuth
+#define DEBUG_sleuth 0
 #endif
 
-static unsigned blame_move_score;
-static unsigned blame_copy_score;
+static unsigned sleuth_move_score;
+static unsigned sleuth_copy_score;
 
 /* Remember to update object flag allocation in object.h */
 #define METAINFO_SHOWN		(1u<<12)
@@ -75,12 +75,12 @@ static unsigned blame_copy_score;
 
 struct progress_info {
 	struct progress *progress;
-	int blamed_lines;
+	int sleuthd_lines;
 };
 
 static const char *nth_line_cb(void *data, long lno)
 {
-	return blame_nth_line((struct blame_scoreboard *)data, lno);
+	return sleuth_nth_line((struct sleuth_scoreboard *)data, lno);
 }
 
 /*
@@ -223,10 +223,10 @@ static void get_commit_info(struct commit *commit,
  * To allow LF and other nonportable characters in pathnames,
  * they are c-style quoted as needed.
  */
-static void write_filename_info(struct blame_origin *suspect)
+static void write_filename_info(struct sleuth_origin *suspect)
 {
 	if (suspect->previous) {
-		struct blame_origin *prev = suspect->previous;
+		struct sleuth_origin *prev = suspect->previous;
 		printf("previous %s ", oid_to_hex(&prev->commit->object.oid));
 		write_name_quoted(prev->path, stdout, '\n');
 	}
@@ -240,7 +240,7 @@ static void write_filename_info(struct blame_origin *suspect)
  * the first time each commit appears in the output (unless the
  * user has specifically asked for us to repeat).
  */
-static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
+static int emit_one_suspect_detail(struct sleuth_origin *suspect, int repeat)
 {
 	struct commit_info ci = COMMIT_INFO_INIT;
 
@@ -267,15 +267,15 @@ static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 }
 
 /*
- * The blame_entry is found to be guilty for the range.
+ * The sleuth_entry is found to be guilty for the range.
  * Show it in incremental output.
  */
-static void found_guilty_entry(struct blame_entry *ent, void *data)
+static void found_guilty_entry(struct sleuth_entry *ent, void *data)
 {
 	struct progress_info *pi = (struct progress_info *)data;
 
 	if (incremental) {
-		struct blame_origin *suspect = ent->suspect;
+		struct sleuth_origin *suspect = ent->suspect;
 
 		printf("%s %d %d %d\n",
 		       oid_to_hex(&suspect->commit->object.oid),
@@ -284,8 +284,8 @@ static void found_guilty_entry(struct blame_entry *ent, void *data)
 		write_filename_info(suspect);
 		maybe_flush_or_die(stdout, "stdout");
 	}
-	pi->blamed_lines += ent->num_lines;
-	display_progress(pi->progress, pi->blamed_lines);
+	pi->sleuthd_lines += ent->num_lines;
+	display_progress(pi->progress, pi->sleuthd_lines);
 }
 
 static const char *format_time(timestamp_t time, const char *tz_str,
@@ -302,14 +302,14 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 		size_t time_width;
 		int tz;
 		tz = atoi(tz_str);
-		time_str = show_date(time, tz, &blame_date_mode);
+		time_str = show_date(time, tz, &sleuth_date_mode);
 		strbuf_addstr(&time_buf, time_str);
 		/*
 		 * Add space paddings to time_buf to display a fixed width
 		 * string, and use time_width for display width calibration.
 		 */
 		for (time_width = utf8_strwidth(time_str);
-		     time_width < blame_date_width;
+		     time_width < sleuth_date_width;
 		     time_width++)
 			strbuf_addch(&time_buf, ' ');
 	}
@@ -329,20 +329,20 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 #define OUTPUT_COLOR_LINE           (1U<<10)
 #define OUTPUT_SHOW_AGE_WITH_COLOR  (1U<<11)
 
-static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
+static void emit_porcelain_details(struct sleuth_origin *suspect, int repeat)
 {
 	if (emit_one_suspect_detail(suspect, repeat) ||
 	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
 		write_filename_info(suspect);
 }
 
-static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
+static void emit_porcelain(struct sleuth_scoreboard *sb, struct sleuth_entry *ent,
 			   int opt)
 {
 	int repeat = opt & OUTPUT_LINE_PORCELAIN;
 	int cnt;
 	const char *cp;
-	struct blame_origin *suspect = ent->suspect;
+	struct sleuth_origin *suspect = ent->suspect;
 	char hex[GIT_MAX_HEXSZ + 1];
 
 	oid_to_hex_r(hex, &suspect->commit->object.oid);
@@ -353,7 +353,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	       ent->num_lines);
 	emit_porcelain_details(suspect, repeat);
 
-	cp = blame_nth_line(sb, ent->lno);
+	cp = sleuth_nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
 		if (cnt) {
@@ -431,11 +431,11 @@ static void determine_line_heat(struct commit_info *ci, const char **dest_color)
 	*dest_color = colorfield[i].col;
 }
 
-static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int opt)
+static void emit_other(struct sleuth_scoreboard *sb, struct sleuth_entry *ent, int opt)
 {
 	int cnt;
 	const char *cp;
-	struct blame_origin *suspect = ent->suspect;
+	struct sleuth_origin *suspect = ent->suspect;
 	struct commit_info ci = COMMIT_INFO_INIT;
 	char hex[GIT_MAX_HEXSZ + 1];
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
@@ -444,7 +444,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	get_commit_info(suspect->commit, &ci, 1);
 	oid_to_hex_r(hex, &suspect->commit->object.oid);
 
-	cp = blame_nth_line(sb, ent->lno);
+	cp = sleuth_nth_line(sb, ent->lno);
 
 	if (opt & OUTPUT_SHOW_AGE_WITH_COLOR) {
 		determine_line_heat(&ci, &default_color);
@@ -540,18 +540,18 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	commit_info_destroy(&ci);
 }
 
-static void output(struct blame_scoreboard *sb, int option)
+static void output(struct sleuth_scoreboard *sb, int option)
 {
-	struct blame_entry *ent;
+	struct sleuth_entry *ent;
 
 	if (option & OUTPUT_PORCELAIN) {
 		for (ent = sb->ent; ent; ent = ent->next) {
 			int count = 0;
-			struct blame_origin *suspect;
+			struct sleuth_origin *suspect;
 			struct commit *commit = ent->suspect->commit;
 			if (commit->object.flags & MORE_THAN_ONE_PATH)
 				continue;
-			for (suspect = get_blame_suspects(commit); suspect; suspect = suspect->next) {
+			for (suspect = get_sleuth_suspects(commit); suspect; suspect = suspect->next) {
 				if (suspect->guilty && count++) {
 					commit->object.flags |= MORE_THAN_ONE_PATH;
 					break;
@@ -591,7 +591,7 @@ static int read_ancestry(const char *graft_file)
 	return 0;
 }
 
-static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
+static int update_auto_abbrev(int auto_abbrev, struct sleuth_origin *suspect)
 {
 	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
 					      auto_abbrev);
@@ -605,17 +605,17 @@ static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
  * How many columns do we need to show line numbers, authors,
  * and filenames?
  */
-static void find_alignment(struct blame_scoreboard *sb, int *option)
+static void find_alignment(struct sleuth_scoreboard *sb, int *option)
 {
 	int longest_src_lines = 0;
 	int longest_dst_lines = 0;
 	unsigned largest_score = 0;
-	struct blame_entry *e;
+	struct sleuth_entry *e;
 	int compute_auto_abbrev = (abbrev < 0);
 	int auto_abbrev = DEFAULT_ABBREV;
 
 	for (e = sb->ent; e; e = e->next) {
-		struct blame_origin *suspect = e->suspect;
+		struct sleuth_origin *suspect = e->suspect;
 		int num;
 
 		if (compute_auto_abbrev)
@@ -643,8 +643,8 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		num = e->lno + e->num_lines;
 		if (longest_dst_lines < num)
 			longest_dst_lines = num;
-		if (largest_score < blame_entry_score(sb, e))
-			largest_score = blame_entry_score(sb, e);
+		if (largest_score < sleuth_entry_score(sb, e))
+			largest_score = sleuth_entry_score(sb, e);
 	}
 	max_orig_digits = decimal_width(longest_src_lines);
 	max_digits = decimal_width(longest_dst_lines);
@@ -655,7 +655,7 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		abbrev = auto_abbrev + 1;
 }
 
-static void sanity_check_on_fail(struct blame_scoreboard *sb, int baa)
+static void sanity_check_on_fail(struct sleuth_scoreboard *sb, int baa)
 {
 	int opt = OUTPUT_SHOW_SCORE | OUTPUT_SHOW_NUMBER | OUTPUT_SHOW_NAME;
 	find_alignment(sb, &opt);
@@ -677,17 +677,17 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
-static int git_blame_config(const char *var, const char *value, void *cb)
+static int git_sleuth_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "blame.showroot")) {
+	if (!strcmp(var, "sleuth.showroot")) {
 		show_root = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "blame.blankboundary")) {
+	if (!strcmp(var, "sleuth.blankboundary")) {
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "blame.showemail")) {
+	if (!strcmp(var, "sleuth.showemail")) {
 		int *output_option = cb;
 		if (git_config_bool(var, value))
 			*output_option |= OUTPUT_SHOW_EMAIL;
@@ -695,13 +695,13 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 			*output_option &= ~OUTPUT_SHOW_EMAIL;
 		return 0;
 	}
-	if (!strcmp(var, "blame.date")) {
+	if (!strcmp(var, "sleuth.date")) {
 		if (!value)
 			return config_error_nonbool(var);
-		parse_date_format(value, &blame_date_mode);
+		parse_date_format(value, &sleuth_date_mode);
 		return 0;
 	}
-	if (!strcmp(var, "blame.ignorerevsfile")) {
+	if (!strcmp(var, "sleuth.ignorerevsfile")) {
 		const char *str;
 		int ret;
 
@@ -711,26 +711,26 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		string_list_insert(&ignore_revs_file_list, str);
 		return 0;
 	}
-	if (!strcmp(var, "blame.markunblamablelines")) {
+	if (!strcmp(var, "sleuth.markunblamablelines")) {
 		mark_unblamable_lines = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "blame.markignoredlines")) {
+	if (!strcmp(var, "sleuth.markignoredlines")) {
 		mark_ignored_lines = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "color.blame.repeatedlines")) {
+	if (!strcmp(var, "color.sleuth.repeatedlines")) {
 		if (color_parse_mem(value, strlen(value), repeated_meta_color))
 			warning(_("invalid value for '%s': '%s'"),
-				"color.blame.repeatedLines", value);
+				"color.sleuth.repeatedLines", value);
 		return 0;
 	}
-	if (!strcmp(var, "color.blame.highlightrecent")) {
+	if (!strcmp(var, "color.sleuth.highlightrecent")) {
 		parse_color_fields(value);
 		return 0;
 	}
 
-	if (!strcmp(var, "blame.coloring")) {
+	if (!strcmp(var, "sleuth.coloring")) {
 		if (!strcmp(value, "repeatedLines")) {
 			coloring_mode |= OUTPUT_COLOR_LINE;
 		} else if (!strcmp(value, "highlightRecent")) {
@@ -740,7 +740,7 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 					    OUTPUT_SHOW_AGE_WITH_COLOR);
 		} else {
 			warning(_("invalid value for '%s': '%s'"),
-				"blame.coloring", value);
+				"sleuth.coloring", value);
 			return 0;
 		}
 	}
@@ -753,7 +753,7 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static int blame_copy_callback(const struct option *option, const char *arg, int unset)
+static int sleuth_copy_callback(const struct option *option, const char *arg, int unset)
 {
 	int *opt = option->value;
 
@@ -766,27 +766,27 @@ static int blame_copy_callback(const struct option *option, const char *arg, int
 	 * -C -C -C enables copy from existing files for
 	 *          everybody
 	 */
-	if (*opt & PICKAXE_BLAME_COPY_HARDER)
-		*opt |= PICKAXE_BLAME_COPY_HARDEST;
-	if (*opt & PICKAXE_BLAME_COPY)
-		*opt |= PICKAXE_BLAME_COPY_HARDER;
-	*opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
+	if (*opt & PICKAXE_sleuth_COPY_HARDER)
+		*opt |= PICKAXE_sleuth_COPY_HARDEST;
+	if (*opt & PICKAXE_sleuth_COPY)
+		*opt |= PICKAXE_sleuth_COPY_HARDER;
+	*opt |= PICKAXE_sleuth_COPY | PICKAXE_sleuth_MOVE;
 
 	if (arg)
-		blame_copy_score = parse_score(arg);
+		sleuth_copy_score = parse_score(arg);
 	return 0;
 }
 
-static int blame_move_callback(const struct option *option, const char *arg, int unset)
+static int sleuth_move_callback(const struct option *option, const char *arg, int unset)
 {
 	int *opt = option->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	*opt |= PICKAXE_BLAME_MOVE;
+	*opt |= PICKAXE_sleuth_MOVE;
 
 	if (arg)
-		blame_move_score = parse_score(arg);
+		sleuth_move_score = parse_score(arg);
 	return 0;
 }
 
@@ -801,7 +801,7 @@ static int is_a_rev(const char *name)
 
 static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 {
-	struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
+	struct repository *r = ((struct sleuth_scoreboard *)cbdata)->repo;
 	struct object_id oid;
 
 	oidcpy(&oid, oid_ret);
@@ -821,7 +821,7 @@ static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 	}
 }
 
-static void build_ignorelist(struct blame_scoreboard *sb,
+static void build_ignorelist(struct sleuth_scoreboard *sb,
 			     struct string_list *ignore_revs_file_list,
 			     struct string_list *ignore_rev_list)
 {
@@ -844,13 +844,13 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 	}
 }
 
-int cmd_blame(int argc, const char **argv, const char *prefix)
+int cmd_sleuth(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	const char *path;
-	struct blame_scoreboard sb;
-	struct blame_origin *o;
-	struct blame_entry *ent = NULL;
+	struct sleuth_scoreboard sb;
+	struct sleuth_origin *o;
+	struct sleuth_entry *ent = NULL;
 	long dashdash_pos, lno;
 	struct progress_info pi = { NULL, 0 };
 
@@ -861,12 +861,12 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	const char *revs_file = NULL;
 	const char *contents_from = NULL;
 	const struct option options[] = {
-		OPT_BOOL(0, "incremental", &incremental, N_("show blame entries as we find them, incrementally")),
+		OPT_BOOL(0, "incremental", &incremental, N_("show sleuth entries as we find them, incrementally")),
 		OPT_BOOL('b', NULL, &blank_boundary, N_("do not show object names of boundary commits (Default: off)")),
 		OPT_BOOL(0, "root", &show_root, N_("do not treat root commits as boundaries (Default: off)")),
 		OPT_BOOL(0, "show-stats", &show_stats, N_("show work cost statistics")),
 		OPT_BOOL(0, "progress", &show_progress, N_("force progress reporting")),
-		OPT_BIT(0, "score-debug", &output_option, N_("show output score for blame entries"), OUTPUT_SHOW_SCORE),
+		OPT_BIT(0, "score-debug", &output_option, N_("show output score for sleuth entries"), OUTPUT_SHOW_SCORE),
 		OPT_BIT('f', "show-name", &output_option, N_("show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
@@ -884,8 +884,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "minimal", &xdl_opts, N_("spend extra cycles to find better match"), XDF_NEED_MINIMAL),
 		OPT_STRING('S', NULL, &revs_file, N_("file"), N_("use revisions from <file> instead of calling git-rev-list")),
 		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("use <file>'s contents as the final image")),
-		OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback),
-		OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback),
+		OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("find line copies within and across files"), PARSE_OPT_OPTARG, sleuth_copy_callback),
+		OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("find line movements within and across files"), PARSE_OPT_OPTARG, sleuth_move_callback),
 		OPT_STRING_LIST('L', NULL, &range_list, N_("range"),
 				N_("process only line range <start>,<end> or function :<funcname>")),
 		OPT__ABBREV(&abbrev),
@@ -901,9 +901,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	long num_lines = 0;
 
 	setup_default_color_by_age();
-	git_config(git_blame_config, &output_option);
+	git_config(git_sleuth_config, &output_option);
 	repo_init_revisions(the_repository, &revs, NULL);
-	revs.date_mode = blame_date_mode;
+	revs.date_mode = sleuth_date_mode;
 	revs.diffopt.flags.allow_textconv = 1;
 	revs.diffopt.flags.follow_renames = 1;
 
@@ -914,7 +914,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	parse_options_start(&ctx, argc, argv, prefix, options,
 			    PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0);
 	for (;;) {
-		switch (parse_options_step(&ctx, options, blame_opt_usage)) {
+		switch (parse_options_step(&ctx, options, sleuth_opt_usage)) {
 		case PARSE_OPT_NON_OPTION:
 		case PARSE_OPT_UNKNOWN:
 			break;
@@ -933,7 +933,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			ctx.argv[0] = "--children";
 			reverse = 1;
 		}
-		parse_revision_opt(&revs, &ctx, options, blame_opt_usage);
+		parse_revision_opt(&revs, &ctx, options, sleuth_opt_usage);
 	}
 parse_done:
 	revision_opts_finish(&revs);
@@ -963,59 +963,59 @@ parse_done:
 
 	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
-		blame_date_mode.type = DATE_ISO8601;
+		sleuth_date_mode.type = DATE_ISO8601;
 	} else {
-		blame_date_mode = revs.date_mode;
+		sleuth_date_mode = revs.date_mode;
 	}
 
 	/* The maximum width used to show the dates */
-	switch (blame_date_mode.type) {
+	switch (sleuth_date_mode.type) {
 	case DATE_RFC2822:
-		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
+		sleuth_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
 		break;
 	case DATE_ISO8601_STRICT:
-		blame_date_width = sizeof("2006-10-19T16:00:04-07:00");
+		sleuth_date_width = sizeof("2006-10-19T16:00:04-07:00");
 		break;
 	case DATE_ISO8601:
-		blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
+		sleuth_date_width = sizeof("2006-10-19 16:00:04 -0700");
 		break;
 	case DATE_RAW:
-		blame_date_width = sizeof("1161298804 -0700");
+		sleuth_date_width = sizeof("1161298804 -0700");
 		break;
 	case DATE_UNIX:
-		blame_date_width = sizeof("1161298804");
+		sleuth_date_width = sizeof("1161298804");
 		break;
 	case DATE_SHORT:
-		blame_date_width = sizeof("2006-10-19");
+		sleuth_date_width = sizeof("2006-10-19");
 		break;
 	case DATE_RELATIVE:
 		/*
 		 * TRANSLATORS: This string is used to tell us the
 		 * maximum display width for a relative timestamp in
-		 * "git blame" output.  For C locale, "4 years, 11
+		 * "git sleuth" output.  For C locale, "4 years, 11
 		 * months ago", which takes 22 places, is the longest
 		 * among various forms of relative timestamps, but
 		 * your language may need more or fewer display
 		 * columns.
 		 */
-		blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
+		sleuth_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
 		break;
 	case DATE_HUMAN:
 		/* If the year is shown, no time is shown */
-		blame_date_width = sizeof("Thu Oct 19 16:00");
+		sleuth_date_width = sizeof("Thu Oct 19 16:00");
 		break;
 	case DATE_NORMAL:
-		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
+		sleuth_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
 	case DATE_STRFTIME:
-		blame_date_width = strlen(show_date(0, 0, &blame_date_mode)) + 1; /* add the null */
+		sleuth_date_width = strlen(show_date(0, 0, &sleuth_date_mode)) + 1; /* add the null */
 		break;
 	}
-	blame_date_width -= 1; /* strip the null */
+	sleuth_date_width -= 1; /* strip the null */
 
 	if (revs.diffopt.flags.find_copies_harder)
-		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
-			PICKAXE_BLAME_COPY_HARDER);
+		opt |= (PICKAXE_sleuth_COPY | PICKAXE_sleuth_MOVE |
+			PICKAXE_sleuth_COPY_HARDER);
 
 	/*
 	 * We have collected options unknown to us in argv[1..unk]
@@ -1025,12 +1025,12 @@ parse_done:
 	 * The remaining are:
 	 *
 	 * (1) if dashdash_pos != 0, it is either
-	 *     "blame [revisions] -- <path>" or
-	 *     "blame -- <path> <rev>"
+	 *     "sleuth [revisions] -- <path>" or
+	 *     "sleuth -- <path> <rev>"
 	 *
 	 * (2) otherwise, it is one of the two:
-	 *     "blame [revisions] <path>"
-	 *     "blame <path> <rev>"
+	 *     "sleuth [revisions] <path>"
+	 *     "sleuth <path> <rev>"
 	 *
 	 * Note that we must strip out <path> from the arguments: we do not
 	 * want the path pruning but we may want "bottom" processing.
@@ -1039,7 +1039,7 @@ parse_done:
 		switch (argc - dashdash_pos - 1) {
 		case 2: /* (1b) */
 			if (argc != 4)
-				usage_with_options(blame_opt_usage, options);
+				usage_with_options(sleuth_opt_usage, options);
 			/* reorder for the new way: <rev> -- <path> */
 			argv[1] = argv[3];
 			argv[3] = argv[2];
@@ -1050,17 +1050,17 @@ parse_done:
 			argv[argc] = NULL;
 			break;
 		default:
-			usage_with_options(blame_opt_usage, options);
+			usage_with_options(sleuth_opt_usage, options);
 		}
 	} else {
 		if (argc < 2)
-			usage_with_options(blame_opt_usage, options);
+			usage_with_options(sleuth_opt_usage, options);
 		if (argc == 3 && is_a_rev(argv[argc - 1])) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		} else {	/* (2a) */
 			if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
-				die("missing <path> to blame");
+				die("missing <path> to sleuth");
 			path = add_prefix(prefix, argv[argc - 1]);
 		}
 		argv[argc - 1] = "--";
@@ -1096,8 +1096,8 @@ parse_done:
 	 * Changed-path Bloom filters are disabled when looking
 	 * for copies.
 	 */
-	if (!(opt & PICKAXE_BLAME_COPY))
-		setup_blame_bloom_data(&sb);
+	if (!(opt & PICKAXE_sleuth_COPY))
+		setup_sleuth_bloom_data(&sb);
 
 	lno = sb.num_lines;
 
@@ -1112,7 +1112,7 @@ parse_done:
 				    nth_line_cb, &sb, lno, anchor,
 				    &bottom, &top, sb.path,
 				    the_repository->index))
-			usage(blame_usage);
+			usage(sleuth_usage);
 		if ((!lno && (top || bottom)) || lno < bottom)
 			die(Q_("file %s has only %lu line",
 			       "file %s has only %lu lines",
@@ -1129,7 +1129,7 @@ parse_done:
 
 	for (range_i = ranges.nr; range_i > 0; --range_i) {
 		const struct range *r = &ranges.ranges[range_i - 1];
-		ent = blame_entry_prepend(ent, r->start, r->end, o);
+		ent = sleuth_entry_prepend(ent, r->start, r->end, o);
 		num_lines += (r->end - r->start);
 	}
 	if (!num_lines)
@@ -1138,19 +1138,19 @@ parse_done:
 	o->suspects = ent;
 	prio_queue_put(&sb.commits, o->commit);
 
-	blame_origin_decref(o);
+	sleuth_origin_decref(o);
 
 	range_set_release(&ranges);
 	string_list_clear(&range_list, 0);
 
 	sb.ent = NULL;
 
-	if (blame_move_score)
-		sb.move_score = blame_move_score;
-	if (blame_copy_score)
-		sb.copy_score = blame_copy_score;
+	if (sleuth_move_score)
+		sb.move_score = sleuth_move_score;
+	if (sleuth_copy_score)
+		sb.copy_score = sleuth_copy_score;
 
-	sb.debug = DEBUG_BLAME;
+	sb.debug = DEBUG_sleuth;
 	sb.on_sanity_fail = &sanity_check_on_fail;
 
 	sb.show_root = show_root;
@@ -1164,7 +1164,7 @@ parse_done:
 	if (show_progress)
 		pi.progress = start_delayed_progress(_("Blaming lines"), num_lines);
 
-	assign_blame(&sb, opt);
+	assign_sleuth(&sb, opt);
 
 	stop_progress(&pi.progress);
 
@@ -1173,9 +1173,9 @@ parse_done:
 	else
 		goto cleanup;
 
-	blame_sort_final(&sb);
+	sleuth_sort_final(&sb);
 
-	blame_coalesce(&sb);
+	sleuth_coalesce(&sb);
 
 	if (!(output_option & (OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR)))
 		output_option |= coloring_mode;
@@ -1194,7 +1194,7 @@ parse_done:
 	output(&sb, output_option);
 	free((void *)sb.final_buf);
 	for (ent = sb.ent; ent; ) {
-		struct blame_entry *e = ent->next;
+		struct sleuth_entry *e = ent->next;
 		free(ent);
 		ent = e;
 	}

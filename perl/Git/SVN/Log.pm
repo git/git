@@ -336,7 +336,7 @@ out:
 	print commit_log_separator unless $incremental || $oneline;
 }
 
-sub cmd_blame {
+sub cmd_sleuth {
 	my $path = pop;
 
 	config_pager();
@@ -345,7 +345,7 @@ sub cmd_blame {
 	my ($fh, $ctx, $rev);
 
 	if ($_git_format) {
-		($fh, $ctx) = command_output_pipe('blame', @_, $path);
+		($fh, $ctx) = command_output_pipe('sleuth', @_, $path);
 		while (my $line = <$fh>) {
 			if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
 				# Uncommitted edits show up as a rev ID of
@@ -364,7 +364,7 @@ sub cmd_blame {
 			print $line;
 		}
 	} else {
-		($fh, $ctx) = command_output_pipe('blame', '-p', @_, 'HEAD',
+		($fh, $ctx) = command_output_pipe('sleuth', '-p', @_, 'HEAD',
 						  '--', $path);
 		my ($sha1);
 		my %authors;

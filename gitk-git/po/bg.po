@@ -351,7 +351,7 @@ msgid "External diff"
 msgstr "Външна програма за разлики"
 
 #: gitk:2683
-msgid "Blame parent commit"
+msgid "sleuth parent commit"
 msgstr "Анотиране на родителското подаване"
 
 #: gitk:2684
@@ -363,8 +363,8 @@ msgid "Show origin of this line"
 msgstr "Показване на произхода на този ред"
 
 #: gitk:2692
-msgid "Run git gui blame on this line"
-msgstr "Изпълнение на „git gui blame“ върху този ред"
+msgid "Run git gui sleuth on this line"
+msgstr "Изпълнение на „git gui sleuth“ върху този ред"
 
 #: gitk:3036
 msgid "About gitk"
@@ -587,8 +587,8 @@ msgid "No such commit"
 msgstr "Такова подаване няма"
 
 #: gitk:3822
-msgid "git gui blame: command failed:"
-msgstr "„git gui blame“: неуспешно изпълнение на команда:"
+msgid "git gui sleuth: command failed:"
+msgstr "„git gui sleuth“: неуспешно изпълнение на команда:"
 
 #: gitk:3853
 #, tcl-format
@@ -602,8 +602,8 @@ msgstr "Грешка при прочитане на индекса: %s"
 
 #: gitk:3886
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "Командата „git blame“ не може да бъде стартирана: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "Командата „git sleuth“ не може да бъде стартирана: %s"
 
 #: gitk:3889 gitk:6778
 msgid "Searching"
@@ -611,8 +611,8 @@ msgstr "Търсене"
 
 #: gitk:3921
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Грешка при изпълнението на „git blame“: %s"
+msgid "Error running git sleuth: %s"
+msgstr "Грешка при изпълнението на „git sleuth“: %s"
 
 #: gitk:3949
 #, tcl-format

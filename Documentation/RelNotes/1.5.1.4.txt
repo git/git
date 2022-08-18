@@ -21,7 +21,7 @@ Fixes since v1.5.1.3
   - gitweb sometimes tried incorrectly to apply function to
     decode utf8 twice, resulting in corrupt output.
 
-  - "git blame -C" mishandled text at the end of a group of
+  - "git sleuth -C" mishandled text at the end of a group of
     lines.
 
   - "git log/rev-list --boundary" did not produce output

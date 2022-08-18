@@ -5,7 +5,7 @@ gitweb.url::
 	See linkgit:gitweb[1] for description.
 
 gitweb.avatar::
-gitweb.blame::
+gitweb.sleuth::
 gitweb.grep::
 gitweb.highlight::
 gitweb.patches::

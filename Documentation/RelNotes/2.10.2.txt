@@ -13,7 +13,7 @@ Fixes since v2.10.1
    tried to write anything after the padding on such a line, though.
 
  * Almost everybody uses DEFAULT_ABBREV to refer to the default
-   setting for the abbreviation, but "git blame" peeked into
+   setting for the abbreviation, but "git sleuth" peeked into
    underlying variable bypassing the macro for no good reason.
 
  * Doc update to clarify what "log -3 --reverse" does.

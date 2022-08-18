@@ -446,7 +446,7 @@ notes for details).
    logic does not apply to "git grep", i.e. searching in the working
    tree files.  But we did so by mistake, which has been corrected.
 
- * "git blame -M" missed a single line that was moved within the file.
+ * "git sleuth -M" missed a single line that was moved within the file.
 
  * Fix recently introduced codepaths that are involved in parallel
    submodule operations, which gave up on reading too early, and
@@ -481,7 +481,7 @@ notes for details).
    the system where outside stuff is usually called "theirs" in
    contrast to "ours".
 
- * "git blame file" allowed the lineage of lines in the uncommitted,
+ * "git sleuth file" allowed the lineage of lines in the uncommitted,
    unadded contents of "file" to be inspected, but it refused when
    "file" did not appear in the current commit.  When "file" was
    created by renaming an existing file (but the change has not been
@@ -573,7 +573,7 @@ notes for details).
 
  * Squelch compiler warnings for nedmalloc (in compat/) library.
 
- * A small memory leak in the command line parsing of "git blame"
+ * A small memory leak in the command line parsing of "git sleuth"
    has been plugged.
 
  * The API documentation for hashmap was unclear if hashmap_entry

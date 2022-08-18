@@ -148,11 +148,11 @@ proc do_options {} {
 		{b gui.trustmtime  {mc "Trust File Modification Timestamps"}}
 		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
 		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
-		{b gui.textconv {mc "Use Textconv For Diffs and Blames"}}
-		{b gui.fastcopyblame {mc "Blame Copy Only On Changed Files"}}
+		{b gui.textconv {mc "Use Textconv For Diffs and sleuths"}}
+		{b gui.fastcopysleuth {mc "sleuth Copy Only On Changed Files"}}
 		{i-0..100 gui.maxrecentrepo {mc "Maximum Length of Recent Repositories List"}}
-		{i-20..200 gui.copyblamethreshold {mc "Minimum Letters To Blame Copy On"}}
-		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
+		{i-20..200 gui.copysleuththreshold {mc "Minimum Letters To sleuth Copy On"}}
+		{i-0..300 gui.sleuthhistoryctx {mc "sleuth History Context Radius (days)"}}
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{t gui.diffopts {mc "Additional Diff Parameters"}}
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}

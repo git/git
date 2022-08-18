@@ -3,7 +3,7 @@
 //          2008-2011, Jakub Narebski <jnareb@gmail.com>
 
 /**
- * @fileOverview JavaScript side of Ajax-y 'blame_incremental' view in gitweb
+ * @fileOverview JavaScript side of Ajax-y 'sleuth_incremental' view in gitweb
  * @license GPLv2 or later
  */
 
@@ -35,8 +35,8 @@ var projectUrl; // partial query + separator ('?' or ';')
 var commits = {};
 
 /**
- * constructor for Commit objects, used in 'blame'
- * @class Represents a blamed commit
+ * constructor for Commit objects, used in 'sleuth'
+ * @class Represents a sleuthd commit
  * @param {String} sha1: SHA-1 identifier of a commit
  */
 function Commit(sha1) {
@@ -51,20 +51,20 @@ function Commit(sha1) {
 /* ............................................................ */
 /* progress info, timing, error reporting */
 
-var blamedLines = 0;
+var sleuthdLines = 0;
 var totalLines  = '???';
 var div_progress_bar;
 var div_progress_info;
 
 /**
- * Detects how many lines does a blamed file have,
+ * Detects how many lines does a sleuthd file have,
  * This information is used in progress info
  *
  * @returns {Number|String} Number of lines in file, or string '...'
  */
 function countLines() {
 	var table =
-		document.getElementById('blame_table') ||
+		document.getElementById('sleuth_table') ||
 		document.getElementsByTagName('table')[0];
 
 	if (table) {
@@ -77,7 +77,7 @@ function countLines() {
 /**
  * update progress info and length (width) of progress bar
  *
- * @globals div_progress_info, div_progress_bar, blamedLines, totalLines
+ * @globals div_progress_info, div_progress_bar, sleuthdLines, totalLines
  */
 function updateProgressInfo() {
 	if (!div_progress_info) {
@@ -90,10 +90,10 @@ function updateProgressInfo() {
 		return;
 	}
 
-	var percentage = Math.floor(100.0*blamedLines/totalLines);
+	var percentage = Math.floor(100.0*sleuthdLines/totalLines);
 
 	if (div_progress_info) {
-		div_progress_info.firstChild.data  = blamedLines + ' / ' + totalLines +
+		div_progress_info.firstChild.data  = sleuthdLines + ' / ' + totalLines +
 			' (' + padLeftStr(percentage, 3, '\u00A0') + '%)';
 	}
 
@@ -120,7 +120,7 @@ function writeTimeInterval() {
 	}
 	var t1 = new Date();
 	info_time.firstChild.data += ' + (' +
-		t_interval_server + ' sec server blame_data / ' +
+		t_interval_server + ' sec server sleuth_data / ' +
 		(t1.getTime() - t0.getTime())/1000 + ' sec client JavaScript)';
 
 	var info_cmds = document.getElementById('generating_cmd');
@@ -147,7 +147,7 @@ function errorInfo(str) {
 }
 
 /* ............................................................ */
-/* coloring rows during blame_data (git blame --incremental) run */
+/* coloring rows during sleuth_data (git sleuth --incremental) run */
 
 /**
  * used to extract N from 'colorN', where N is a number,
@@ -203,7 +203,7 @@ function chooseColorNoFrom() {
 
 /**
  * given two neighbor <tr> elements, find color which would be different
- * from color of both of neighbors; used to 3-color blame table
+ * from color of both of neighbors; used to 3-color sleuth table
  *
  * @param {HTMLElement} tr_prev
  * @param {HTMLElement} tr_next
@@ -242,11 +242,11 @@ function findColorNo(tr_prev, tr_next) {
 }
 
 /* ............................................................ */
-/* coloring rows like 'blame' after 'blame_data' finishes */
+/* coloring rows like 'sleuth' after 'sleuth_data' finishes */
 
 /**
  * returns true if given row element (tr) is first in commit group
- * to be used only after 'blame_data' finishes (after processing)
+ * to be used only after 'sleuth_data' finishes (after processing)
  *
  * @param {HTMLElement} tr: table row
  * @returns {Boolean} true if TR is first in commit group
@@ -267,7 +267,7 @@ function fixColorsAndGroups() {
 	var tr, prev_group;
 	var colorClass = 0;
 	var table =
-		document.getElementById('blame_table') ||
+		document.getElementById('sleuth_table') ||
 		document.getElementsByTagName('table')[0];
 
 	while ((tr = document.getElementById('l'+linenum))) {
@@ -299,14 +299,14 @@ function fixColorsAndGroups() {
 /* main part: parsing response */
 
 /**
- * Function called for each blame entry, as soon as it finishes.
+ * Function called for each sleuth entry, as soon as it finishes.
  * It updates page via DOM manipulation, adding sha1 info, etc.
  *
- * @param {Commit} commit: blamed commit
+ * @param {Commit} commit: sleuthd commit
  * @param {Object} group: object representing group of lines,
- *                        which blame the same commit (blame entry)
+ *                        which sleuth the same commit (sleuth entry)
  *
- * @globals blamedLines
+ * @globals sleuthdLines
  */
 function handleLine(commit, group) {
 	/*
@@ -329,7 +329,7 @@ function handleLine(commit, group) {
 			formatDateISOLocal(commit.authorTime, commit.authorTimezone);
 	}
 
-	// color depends on group of lines, not only on blamed commit
+	// color depends on group of lines, not only on sleuthd commit
 	var colorNo = findColorNo(
 		document.getElementById('l'+(resline-1)),
 		document.getElementById('l'+(resline+group.numlines))
@@ -406,12 +406,12 @@ function handleLine(commit, group) {
 			('previous' in commit ? commit.previous : commit.sha1);
 		var linenr_filename =
 			('file_parent' in commit ? commit.file_parent : commit.filename);
-		a_linenr.href = projectUrl + 'a=blame_incremental' +
+		a_linenr.href = projectUrl + 'a=sleuth_incremental' +
 			';hb=' + linenr_commit +
 			';f='  + encodeURIComponent(linenr_filename) +
 			'#l' + (group.srcline + i);
 
-		blamedLines++;
+		sleuthdLines++;
 
 		//updateProgressInfo();
 	}
@@ -431,16 +431,16 @@ var curCommit = new Commit();
 var curGroup  = {};
 
 /**
- * Parse output from 'git blame --incremental [...]', received via
- * XMLHttpRequest from server (blamedataUrl), and call handleLine
- * (which updates page) as soon as blame entry is completed.
+ * Parse output from 'git sleuth --incremental [...]', received via
+ * XMLHttpRequest from server (sleuthdataUrl), and call handleLine
+ * (which updates page) as soon as sleuth entry is completed.
  *
- * @param {String[]} lines: new complete lines from blamedata server
+ * @param {String[]} lines: new complete lines from sleuthdata server
  *
  * @globals commits, curCommit, curGroup, t_interval_server, cmds_server
  * @globals sha1Re, infoRe, endRe
  */
-function processBlameLines(lines) {
+function processsleuthLines(lines) {
 	var match;
 
 	for (var i = 0, len = lines.length; i < len; i++) {
@@ -520,7 +520,7 @@ function processData(unprocessed, nextReadPos) {
 		var lines = unprocessed.substring(0, lastLineEnd).split('\n');
 		nextReadPos += lastLineEnd + 1 /* 1 == '\n'.length */;
 
-		processBlameLines(lines);
+		processsleuthLines(lines);
 	} // end if
 
 	return nextReadPos;
@@ -566,7 +566,7 @@ function responseLoaded(xhr) {
 
 /**
  * handler for XMLHttpRequest onreadystatechange event
- * @see startBlame
+ * @see startsleuth
  *
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object
  * @param {Number} xhr.prevDataLength: previous value of xhr.responseText.length
@@ -643,17 +643,17 @@ function handleResponse(xhr, fromTimer) {
 // ------------------------------------------------------------
 
 /**
- * Incrementally update line data in blame_incremental view in gitweb.
+ * Incrementally update line data in sleuth_incremental view in gitweb.
  *
- * @param {String} blamedataUrl: URL to server script generating blame data.
+ * @param {String} sleuthdataUrl: URL to server script generating sleuth data.
  * @param {String} bUrl: partial URL to project, used to generate links.
  *
- * Called from 'blame_incremental' view after loading table with
- * file contents, a base for blame view.
+ * Called from 'sleuth_incremental' view after loading table with
+ * file contents, a base for sleuth view.
  *
  * @globals t0, projectUrl, div_progress_bar, totalLines
 */
-function startBlame(blamedataUrl, bUrl) {
+function startsleuth(sleuthdataUrl, bUrl) {
 
 	var xhr = createRequestObject();
 	if (!xhr) {
@@ -678,7 +678,7 @@ function startBlame(blamedataUrl, bUrl) {
 		handleResponse(xhr, false);
 	};
 
-	xhr.open('GET', blamedataUrl);
+	xhr.open('GET', sleuthdataUrl);
 	xhr.setRequestHeader('Accept', 'text/plain');
 	xhr.send(null);
 
@@ -689,4 +689,4 @@ function startBlame(blamedataUrl, bUrl) {
 	}, 1000);
 }
 
-/* end of blame_incremental.js */
+/* end of sleuth_incremental.js */

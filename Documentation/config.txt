@@ -381,7 +381,7 @@ include::config/am.txt[]
 
 include::config/apply.txt[]
 
-include::config/blame.txt[]
+include::config/sleuth.txt[]
 
 include::config/branch.txt[]
 

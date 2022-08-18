@@ -9,7 +9,7 @@ Fixes since v1.6.5.7
 
 * "git rebase -i" did not abort cleanly if it failed to launch the editor.
 
-* "git blame" did not work well when commit lacked the author name.
+* "git sleuth" did not work well when commit lacked the author name.
 
 * "git fast-import" choked when handling a tag that points at an object
   that is not a commit.

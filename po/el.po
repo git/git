@@ -904,7 +904,7 @@ msgstr "πρόθεμα"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "προσθήκη του προθέματος σε κάθε όνομα διαδρομής στην αρχειοθήκη"
 
-#: archive.c:458 builtin/blame.c:820 builtin/blame.c:821 builtin/config.c:129
+#: archive.c:458 builtin/sleuth.c:820 builtin/sleuth.c:821 builtin/config.c:129
 #: builtin/fast-export.c:1091 builtin/fast-export.c:1093 builtin/grep.c:895
 #: builtin/hash-object.c:105 builtin/ls-files.c:560 builtin/ls-files.c:563
 #: builtin/notes.c:412 builtin/notes.c:578 builtin/read-tree.c:123
@@ -1150,19 +1150,19 @@ msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] ""
 msgstr[1] ""
 
-#: blame.c:1792
+#: sleuth.c:1792
 msgid "--contents and --reverse do not blend well."
 msgstr ""
 
-#: blame.c:1806
+#: sleuth.c:1806
 msgid "cannot use --contents with final commit object name"
 msgstr ""
 
-#: blame.c:1827
+#: sleuth.c:1827
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 
-#: blame.c:1836 bundle.c:164 ref-filter.c:2071 remote.c:1948 sequencer.c:1993
+#: sleuth.c:1836 bundle.c:164 ref-filter.c:2071 remote.c:1948 sequencer.c:1993
 #: sequencer.c:4064 builtin/commit.c:1004 builtin/log.c:378 builtin/log.c:936
 #: builtin/log.c:1420 builtin/log.c:1796 builtin/log.c:2086 builtin/merge.c:407
 #: builtin/pack-objects.c:3137 builtin/pack-objects.c:3152
@@ -1170,17 +1170,17 @@ msgstr ""
 msgid "revision walk setup failed"
 msgstr "η αρχικοποίηση του μονοπατιού εκδόσεων απέτυχε"
 
-#: blame.c:1854
+#: sleuth.c:1854
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 
-#: blame.c:1865
+#: sleuth.c:1865
 #, c-format
 msgid "no such path %s in %s"
 msgstr "δεν υπάρχει τέτοια διαδρομή %s στο %s"
 
-#: blame.c:1876
+#: sleuth.c:1876
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "δεν είναι δυνατή η ανάγνωση του blob %s για τη διαδρομή %s"
@@ -8328,141 +8328,141 @@ msgstr ""
 msgid "--bisect-terms requires 0 or 1 argument"
 msgstr ""
 
-#: builtin/blame.c:31
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<επιλογές>] [<επιλογές έκδ.>] [<έκδ.>] [--] <αρχείο>"
+#: builtin/sleuth.c:31
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<επιλογές>] [<επιλογές έκδ.>] [<έκδ.>] [--] <αρχείο>"
 
-#: builtin/blame.c:36
+#: builtin/sleuth.c:36
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr ""
 
-#: builtin/blame.c:406
+#: builtin/sleuth.c:406
 #, c-format
 msgid "expecting a color: %s"
 msgstr ""
 
-#: builtin/blame.c:413
+#: builtin/sleuth.c:413
 msgid "must end with a color"
 msgstr ""
 
-#: builtin/blame.c:700
+#: builtin/sleuth.c:700
 #, c-format
-msgid "invalid color '%s' in color.blame.repeatedLines"
+msgid "invalid color '%s' in color.sleuth.repeatedLines"
 msgstr ""
 
-#: builtin/blame.c:718
-msgid "invalid value for blame.coloring"
+#: builtin/sleuth.c:718
+msgid "invalid value for sleuth.coloring"
 msgstr ""
 
-#: builtin/blame.c:793
-msgid "Show blame entries as we find them, incrementally"
+#: builtin/sleuth.c:793
+msgid "Show sleuth entries as we find them, incrementally"
 msgstr ""
 
-#: builtin/blame.c:794
+#: builtin/sleuth.c:794
 msgid "Show blank SHA-1 for boundary commits (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:795
+#: builtin/sleuth.c:795
 msgid "Do not treat root commits as boundaries (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:796
+#: builtin/sleuth.c:796
 msgid "Show work cost statistics"
 msgstr ""
 
-#: builtin/blame.c:797
+#: builtin/sleuth.c:797
 msgid "Force progress reporting"
 msgstr ""
 
-#: builtin/blame.c:798
-msgid "Show output score for blame entries"
+#: builtin/sleuth.c:798
+msgid "Show output score for sleuth entries"
 msgstr ""
 
-#: builtin/blame.c:799
+#: builtin/sleuth.c:799
 msgid "Show original filename (Default: auto)"
 msgstr ""
 
-#: builtin/blame.c:800
+#: builtin/sleuth.c:800
 msgid "Show original linenumber (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:801
+#: builtin/sleuth.c:801
 msgid "Show in a format designed for machine consumption"
 msgstr ""
 
-#: builtin/blame.c:802
+#: builtin/sleuth.c:802
 msgid "Show porcelain format with per-line commit information"
 msgstr "Προβολή μορφής εντολών porcelain με πληροφορίες υποβολής ανά γραμμή"
 
-#: builtin/blame.c:803
+#: builtin/sleuth.c:803
 msgid "Use the same output mode as git-annotate (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:804
+#: builtin/sleuth.c:804
 msgid "Show raw timestamp (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:805
+#: builtin/sleuth.c:805
 msgid "Show long commit SHA1 (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:806
+#: builtin/sleuth.c:806
 msgid "Suppress author name and timestamp (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:807
+#: builtin/sleuth.c:807
 msgid "Show author email instead of name (Default: off)"
 msgstr ""
 
-#: builtin/blame.c:808
+#: builtin/sleuth.c:808
 msgid "Ignore whitespace differences"
 msgstr ""
 
-#: builtin/blame.c:809
+#: builtin/sleuth.c:809
 msgid "color redundant metadata from previous line differently"
 msgstr ""
 
-#: builtin/blame.c:810
+#: builtin/sleuth.c:810
 msgid "color lines by age"
 msgstr ""
 
-#: builtin/blame.c:817
+#: builtin/sleuth.c:817
 msgid "Use an experimental heuristic to improve diffs"
 msgstr ""
 
-#: builtin/blame.c:819
+#: builtin/sleuth.c:819
 msgid "Spend extra cycles to find better match"
 msgstr ""
 
-#: builtin/blame.c:820
+#: builtin/sleuth.c:820
 msgid "Use revisions from <file> instead of calling git-rev-list"
 msgstr ""
 
-#: builtin/blame.c:821
+#: builtin/sleuth.c:821
 msgid "Use <file>'s contents as the final image"
 msgstr ""
 
-#: builtin/blame.c:822 builtin/blame.c:823
+#: builtin/sleuth.c:822 builtin/sleuth.c:823
 msgid "score"
 msgstr ""
 
-#: builtin/blame.c:822
+#: builtin/sleuth.c:822
 msgid "Find line copies within and across files"
 msgstr ""
 
-#: builtin/blame.c:823
+#: builtin/sleuth.c:823
 msgid "Find line movements within and across files"
 msgstr ""
 
-#: builtin/blame.c:824
+#: builtin/sleuth.c:824
 msgid "n,m"
 msgstr "n,m"
 
-#: builtin/blame.c:824
+#: builtin/sleuth.c:824
 msgid "Process only line range n,m, counting from 1"
 msgstr ""
 
-#: builtin/blame.c:875
+#: builtin/sleuth.c:875
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr ""
 "το --progress δε γίνεται να χρησιμοποιηθεί με το --incremental ή με μορφές "
@@ -8470,24 +8470,24 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c:926
+#: builtin/sleuth.c:926
 msgid "4 years, 11 months ago"
 msgstr "πριν από 4 χρόνια και 11 μήνες"
 
-#: builtin/blame.c:1018
+#: builtin/sleuth.c:1018
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/blame.c:1064
+#: builtin/sleuth.c:1064
 msgid "Blaming lines"
 msgstr ""
 

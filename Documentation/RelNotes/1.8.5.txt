@@ -173,7 +173,7 @@ UI, Workflows & Features
    relocate the submodule's working tree and to adjust the paths in the
    .gitmodules file.
 
- * "git blame" can now take more than one -L option to discover the
+ * "git sleuth" can now take more than one -L option to discover the
    origin of multiple blocks of lines.
 
  * The http transport clients can optionally ask to save cookies

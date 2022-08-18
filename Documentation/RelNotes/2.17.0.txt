@@ -259,8 +259,8 @@ Fixes since v2.16
    (merge 0cacebf099 nd/fix-untracked-cache-invalidation later to maint).
    (merge 7bf0be7501 ab/untracked-cache-invalidation-docs later to maint).
 
- * "git blame HEAD COPYING" in a bare repository failed to run, while
-   "git blame HEAD -- COPYING" run just fine.  This has been corrected.
+ * "git sleuth HEAD COPYING" in a bare repository failed to run, while
+   "git sleuth HEAD -- COPYING" run just fine.  This has been corrected.
 
  * "git add" files in the same directory, but spelling the directory
    path in different cases on case insensitive filesystem, corrupted

@@ -64,7 +64,7 @@ struct object_array {
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11-----14  16-----19
- * builtin/blame.c:                        12-13
+ * builtin/sleuth.c:                        12-13
  * bisect.c:                                        16
  * bundle.c:                                        16
  * http-push.c:                          11-----14

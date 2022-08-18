@@ -2562,8 +2562,8 @@ msgstr "--bisect-log requiere 0 argumentos"
 msgid "no logfile given"
 msgstr "ningún logfile proporcionado"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<opciones>] [<opciones-de-rev>] [<revisión>] [--] <archivo>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<opciones>] [<opciones-de-rev>] [<revisión>] [--] <archivo>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<opciones-de-rev> están documentadas en git-rev-list(1)"
@@ -2579,8 +2579,8 @@ msgstr "tiene que terminar con un color"
 msgid "cannot find revision %s to ignore"
 msgstr "no se pudo encontrar revisión %s para ignorar"
 
-msgid "show blame entries as we find them, incrementally"
-msgstr "mostrar las entradas blame como las encontramos, incrementalmente"
+msgid "show sleuth entries as we find them, incrementally"
+msgstr "mostrar las entradas sleuth como las encontramos, incrementalmente"
 
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr "no mostrar nombres de objetos de commits extremos (Default: off)"
@@ -2594,8 +2594,8 @@ msgstr "mostrar estadísticas de costo de trabajo"
 msgid "force progress reporting"
 msgstr "forzar el reporte de progreso"
 
-msgid "show output score for blame entries"
-msgstr "mostrar la puntuación de salida de las entradas de blame"
+msgid "show output score for sleuth entries"
+msgstr "mostrar la puntuación de salida de las entradas de sleuth"
 
 msgid "show original filename (Default: auto)"
 msgstr "mostrar nombre original del archivo (Default: auto)"
@@ -2631,7 +2631,7 @@ msgid "rev"
 msgstr "rev"
 
 msgid "ignore <rev> when blaming"
-msgstr "ignorar <rev> durante el blame"
+msgstr "ignorar <rev> durante el sleuth"
 
 msgid "ignore revisions from <file>"
 msgstr "ignorar revisiones de <archivo>"
@@ -2674,7 +2674,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

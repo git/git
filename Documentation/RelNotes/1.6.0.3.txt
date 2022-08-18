@@ -75,7 +75,7 @@ Fixes since v1.6.0.2
 * "git merge" did not allocate enough memory for the structure itself when
   enumerating the parents of the resulting commit.
 
-* "git blame -C -C" no longer segfaults while trying to pass blame if
+* "git sleuth -C -C" no longer segfaults while trying to pass sleuth if
    it encounters a submodule reference.
 
 * "git rm" incorrectly claimed that you have local modifications when a

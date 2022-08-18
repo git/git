@@ -10,7 +10,7 @@ Fixes since v1.6.6.2
  * "git bisect $path" did not correctly diagnose an error when given a
    non-existent path.
 
- * "git blame -L $start,$end" segfaulted when too large $start was given.
+ * "git sleuth -L $start,$end" segfaulted when too large $start was given.
 
  * "git imap-send" did not write draft box with CRLF line endings per RFC.
 

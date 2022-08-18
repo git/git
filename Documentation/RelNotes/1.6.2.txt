@@ -75,7 +75,7 @@ Updates since v1.6.1
 
 * "git am" learned --ignore-date option.
 
-* "git blame" aligns author names better when they are spelled in
+* "git sleuth" aligns author names better when they are spelled in
   non US-ASCII encoding.
 
 * "git clone" now makes its best effort when cloning from an empty

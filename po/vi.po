@@ -2561,8 +2561,8 @@ msgstr "--bisect-log cần 0 tham số"
 msgid "no logfile given"
 msgstr "chưa chỉ ra tập tin ghi nhật ký"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<các tùy chọn>] [<rev-opts>] [<rev>] [--] <tập-tin>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<các tùy chọn>] [<rev-opts>] [<rev>] [--] <tập-tin>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-opts> được mô tả trong tài liệu git-rev-list(1)"
@@ -2578,8 +2578,8 @@ msgstr "phải kết thúc bằng một màu"
 msgid "cannot find revision %s to ignore"
 msgstr "không thể tìm thấy điểm xét duyệt %s để mà bỏ qua"
 
-msgid "show blame entries as we find them, incrementally"
-msgstr "hiển thị các mục “blame” như là chúng ta thấy chúng, tăng dần"
+msgid "show sleuth entries as we find them, incrementally"
+msgstr "hiển thị các mục “sleuth” như là chúng ta thấy chúng, tăng dần"
 
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr ""
@@ -2595,8 +2595,8 @@ msgstr "hiển thị thống kê công sức làm việc"
 msgid "force progress reporting"
 msgstr "ép buộc báo cáo tiến triển công việc"
 
-msgid "show output score for blame entries"
-msgstr "hiển thị kết xuất điểm số cho các mục tin “blame”"
+msgid "show output score for sleuth entries"
+msgstr "hiển thị kết xuất điểm số cho các mục tin “sleuth”"
 
 msgid "show original filename (Default: auto)"
 msgstr "hiển thị tên tập tin gốc (Mặc định: auto)"
@@ -2632,7 +2632,7 @@ msgid "rev"
 msgstr "rev"
 
 msgid "ignore <rev> when blaming"
-msgstr "bỏ qua <rev> khi blame"
+msgstr "bỏ qua <rev> khi sleuth"
 
 msgid "ignore revisions from <file>"
 msgstr "bỏ qua các điểm xét duyệt từ <tập tin>"
@@ -2674,7 +2674,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
@@ -2689,7 +2689,7 @@ msgid_plural "file %s has only %lu lines"
 msgstr[0] "tập tin %s chỉ có %lu dòng"
 
 msgid "Blaming lines"
-msgstr "Các dòng blame"
+msgstr "Các dòng sleuth"
 
 msgid "git branch [<options>] [-r | -a] [--merged] [--no-merged]"
 msgstr "git branch [<các tùy chọn>] [-r | -a] [--merged] [ --no-merged]"
@@ -21940,11 +21940,11 @@ msgstr "Bạn có thực sự muốn gửi %s? [y|N](có/KHÔNG): "
 #~ msgstr "git bisect--helper --bisect-visualize"
 
 #, c-format
-#~ msgid "invalid color '%s' in color.blame.repeatedLines"
-#~ msgstr "màu không hợp lệ “%s” trong color.blame.repeatedLines"
+#~ msgid "invalid color '%s' in color.sleuth.repeatedLines"
+#~ msgstr "màu không hợp lệ “%s” trong color.sleuth.repeatedLines"
 
-#~ msgid "invalid value for blame.coloring"
-#~ msgstr "màu không hợp lệ cho blame.coloring"
+#~ msgid "invalid value for sleuth.coloring"
+#~ msgstr "màu không hợp lệ cho sleuth.coloring"
 
 #~ msgid ""
 #~ "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e "

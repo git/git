@@ -28,7 +28,7 @@ Fixes since v1.5.0
   - git-daemon marks the listening sockets with FD_CLOEXEC so
     that it won't be leaked into the children.
 
-  - segfault from git-blame when the mandatory pathname
+  - segfault from git-sleuth when the mandatory pathname
     parameter was missing was fixed; usage() message is given
     instead.
 

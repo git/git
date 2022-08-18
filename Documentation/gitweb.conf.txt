@@ -632,7 +632,7 @@ Note that it is currently *always* an array reference, even if
 feature doesn't accept any configuration parameters, and \'default'
 is used only to turn it on or off.  In such case you turn feature on
 by setting this element to `[1]`, and torn it off by setting it to
-`[0]`.  See also the passage about the "blame" feature in the "Examples"
+`[0]`.  See also the passage about the "sleuth" feature in the "Examples"
 section.
 +
 To disable features that accept parameters (are configurable), you
@@ -663,13 +663,13 @@ below.  This should be a complete list, but ultimately the authoritative
 and complete list is in gitweb.cgi source code, with features described
 in the comments.
 
-blame::
-	Enable the "blame" and "blame_incremental" blob views, showing for
-	each line the last commit that modified it; see linkgit:git-blame[1].
+sleuth::
+	Enable the "sleuth" and "sleuth_incremental" blob views, showing for
+	each line the last commit that modified it; see linkgit:git-sleuth[1].
 	This can be very CPU-intensive and is therefore disabled by default.
 +
 This feature can be configured on a per-repository basis via
-repository's `gitweb.blame` configuration variable (boolean).
+repository's `gitweb.sleuth` configuration variable (boolean).
 
 snapshot::
 	Enable and configure the "snapshot" action, which allows user to
@@ -699,7 +699,7 @@ repository's `gitweb.grep` configuration variable (boolean).
 pickaxe::
 	Enable the so called pickaxe search, which will list the commits
 	that introduced or removed a given string in a file.  This can be
-	practical and quite faster alternative to "blame" action, but it is
+	practical and quite faster alternative to "sleuth" action, but it is
 	still potentially CPU-intensive.  Enabled by default.
 +
 The pickaxe search is described in linkgit:git-log[1] (the
@@ -911,13 +911,13 @@ scrutiny. Duplicated values are filtered.
 EXAMPLES
 --------
 
-To enable blame, pickaxe search, and snapshot support (allowing "tar.gz" and
+To enable sleuth, pickaxe search, and snapshot support (allowing "tar.gz" and
 "zip" snapshots), while allowing individual projects to turn them off, put
 the following in your GITWEB_CONFIG file:
 
 --------------------------------------------------------------------------------
-$feature{'blame'}{'default'} = [1];
-$feature{'blame'}{'override'} = 1;
+$feature{'sleuth'}{'default'} = [1];
+$feature{'sleuth'}{'override'} = 1;
 
 $feature{'pickaxe'}{'default'} = [1];
 $feature{'pickaxe'}{'override'} = 1;

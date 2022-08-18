@@ -88,7 +88,7 @@ UI, Workflows & Features
  * Sample "post-receive-email" hook script got an enhanced replacement
    "multimail" (in contrib/).
 
- * Also in contrib/ is a new "contacts" script that runs "git blame"
+ * Also in contrib/ is a new "contacts" script that runs "git sleuth"
    to find out the people who may be interested in a set of changes.
 
  * "git clean" command learned an interactive mode.

@@ -716,7 +716,7 @@ test_expect_success 'fsck --name-objects' '
 	)
 '
 
-test_expect_success 'alternate objects are correctly blamed' '
+test_expect_success 'alternate objects are correctly sleuthd' '
 	test_when_finished "rm -rf alt.git .git/objects/info/alternates" &&
 	name=$(test_oid numeric) &&
 	path=$(test_oid_to_path "$name") &&

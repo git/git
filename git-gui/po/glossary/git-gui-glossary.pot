@@ -51,7 +51,7 @@ msgid "bisect"
 msgstr ""
 
 #. "get the authors responsible for each line in a file"
-msgid "blame"
+msgid "sleuth"
 msgstr ""
 
 #.      ""

@@ -540,7 +540,7 @@ test_expect_success 'log with pathspec outside sparse definition' '
 	test_all_match git log -- folder1/a
 '
 
-test_expect_success 'blame with pathspec inside sparse definition' '
+test_expect_success 'sleuth with pathspec inside sparse definition' '
 	init_repos &&
 
 	for file in a \
@@ -548,14 +548,14 @@ test_expect_success 'blame with pathspec inside sparse definition' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		test_all_match git blame $file
+		test_all_match git sleuth $file
 	done
 '
 
-# Without a revision specified, blame will error if passed any file that
+# Without a revision specified, sleuth will error if passed any file that
 # is not present in the working directory (even if the file is tracked).
 # Here we just verify that this is also true with sparse checkouts.
-test_expect_success 'blame with pathspec outside sparse definition' '
+test_expect_success 'sleuth with pathspec outside sparse definition' '
 	init_repos &&
 	test_sparse_match git sparse-checkout set &&
 
@@ -564,7 +564,7 @@ test_expect_success 'blame with pathspec outside sparse definition' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		test_sparse_match test_must_fail git blame $file &&
+		test_sparse_match test_must_fail git sleuth $file &&
 		cat >expect <<-EOF &&
 		fatal: Cannot lstat '"'"'$file'"'"': No such file or directory
 		EOF
@@ -1534,7 +1534,7 @@ test_expect_success 'sparse index is not expanded: update-index' '
 	ensure_not_expanded update-index --add --remove --again
 '
 
-test_expect_success 'sparse index is not expanded: blame' '
+test_expect_success 'sparse index is not expanded: sleuth' '
 	init_repos &&
 
 	for file in a \
@@ -1542,7 +1542,7 @@ test_expect_success 'sparse index is not expanded: blame' '
 			deep/deeper1/a \
 			deep/deeper1/deepest/a
 	do
-		ensure_not_expanded blame $file
+		ensure_not_expanded sleuth $file
 	done
 '
 

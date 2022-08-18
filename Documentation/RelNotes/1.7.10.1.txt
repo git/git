@@ -13,7 +13,7 @@ Fixes since v1.7.10
  * "git add -p" is not designed to deal with unmerged paths but did
    not exclude them and tried to apply funny patches only to fail.
 
- * "git blame" started missing quite a few changes from the origin
+ * "git sleuth" started missing quite a few changes from the origin
    since we stopped using the diff minimization by default in v1.7.2
    era.
 

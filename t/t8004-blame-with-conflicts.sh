@@ -2,7 +2,7 @@
 
 # Based on a test case submitted by Björn Steinbrink.
 
-test_description='git blame on conflicted files'
+test_description='git sleuth on conflicted files'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
@@ -65,12 +65,12 @@ Even more" > file2 &&
 '
 
 test_expect_success \
-	'blame runs on unconflicted file while other file has conflicts' '
-	git blame file2
+	'sleuth runs on unconflicted file while other file has conflicts' '
+	git sleuth file2
 '
 
-test_expect_success 'blame does not crash with conflicted file in stages 1,3' '
-	git blame file1
+test_expect_success 'sleuth does not crash with conflicted file in stages 1,3' '
+	git sleuth file1
 '
 
 test_done

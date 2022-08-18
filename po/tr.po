@@ -11,7 +11,7 @@
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
 # 3-way merge                 | 3 yönlü birleştirme         #
 # bare repository             | çıplak depo                 #
-# blame                       | genel bakış                 #
+# sleuth                       | genel bakış                 #
 # blob object                 | ikili nesne                 #
 # branch                      | dal                         #
 # bundle                      | demet                       #
@@ -2615,8 +2615,8 @@ msgstr "--bisect-log 0 argüman gerektiriyor"
 msgid "no logfile given"
 msgstr "hiçbir günlük dosyası verilmedi"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<seçenekler>] [<rev-sçnk>] [<rev>] [--] <dosya>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<seçenekler>] [<rev-sçnk>] [<rev>] [--] <dosya>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-sçnk>, git-rev-list(1) içinde belgelendirilmiştir"
@@ -2632,7 +2632,7 @@ msgstr "bir renk ile bitmeli"
 msgid "cannot find revision %s to ignore"
 msgstr "yok saymak için %s revizyonu bulunamıyor"
 
-msgid "show blame entries as we find them, incrementally"
+msgid "show sleuth entries as we find them, incrementally"
 msgstr "genel bakış girdilerini biz buldukça artan biçimde göster"
 
 msgid "do not show object names of boundary commits (Default: off)"
@@ -2647,7 +2647,7 @@ msgstr "iş maliyet istatistiklerini göster"
 msgid "force progress reporting"
 msgstr "durum belirtmeyi zorla"
 
-msgid "show output score for blame entries"
+msgid "show output score for sleuth entries"
 msgstr "genel bakış girdileri için çıktı skorunu göster"
 
 msgid "show original filename (Default: auto)"
@@ -2725,7 +2725,7 @@ msgstr "--progress, --incremental veya okunabilir biçimlerle kullanılamaz"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

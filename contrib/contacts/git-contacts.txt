@@ -35,8 +35,8 @@ contacts` can be used as the argument to `git send-email`'s `--cc-cmd` option.
 DISCUSSION
 ----------
 
-`git blame` is invoked for each hunk in a patch file or revision.  For each
-commit mentioned by `git blame`, the commit message is consulted for people who
+`git sleuth` is invoked for each hunk in a patch file or revision.  For each
+commit mentioned by `git sleuth`, the commit message is consulted for people who
 authored, reviewed, signed, acknowledged, or were Cc:'d.  Once the list of
 participants is known, each person's relevance is computed by considering how
 many commits mentioned that person compared with the total number of commits
@@ -84,7 +84,7 @@ LIMITATIONS
 -----------
 
 Several conditions controlling a person's significance are currently
-hard-coded, such as minimum participation level (10%), blame date-limiting (5
+hard-coded, such as minimum participation level (10%), sleuth date-limiting (5
 years), and `-C` level for detecting moved and copied lines (a single `-C`). In
 the future, these conditions may become configurable.
 

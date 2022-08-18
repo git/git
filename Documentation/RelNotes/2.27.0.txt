@@ -167,7 +167,7 @@ Performance, Internal Implementation, Development Support etc.
    made its performance characteristics exponential with respect to
    the depth of the tree, which was corrected.
 
- * "git blame" learns to take advantage of the "changed-paths" Bloom
+ * "git sleuth" learns to take advantage of the "changed-paths" Bloom
    filter stored in the commit-graph file.
 
  * The "bugreport" tool has been added.

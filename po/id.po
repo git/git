@@ -1614,7 +1614,7 @@ msgstr "prefiks"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "tambahkan prefiks di depan setiap nama jalur dalam arsip"
 
-#: archive.c builtin/blame.c builtin/commit-tree.c builtin/config.c
+#: archive.c builtin/sleuth.c builtin/commit-tree.c builtin/config.c
 #: builtin/fast-export.c builtin/grep.c builtin/hash-object.c
 #: builtin/ls-files.c builtin/notes.c builtin/read-tree.c parse-options.h
 msgid "file"
@@ -1827,38 +1827,38 @@ msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] "Membagi dua: %d revisi tersisa untuk diuji setelah ini %s\n"
 msgstr[1] "Membagi dua: %d revisi tersisa untuk diuji setelah ini %s\n"
 
-#: blame.c
+#: sleuth.c
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents dan --reverse tidak dapat dipadu dengan baik."
 
-#: blame.c
+#: sleuth.c
 msgid "cannot use --contents with final commit object name"
 msgstr "tidak dapat menggunakan --contents dengan nama objek komit final"
 
-#: blame.c
+#: sleuth.c
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 "--reverse dan --first-parent bersama-sama butuh komit terbaru yang disebutkan"
 
-#: blame.c builtin/commit.c builtin/log.c builtin/merge.c
+#: sleuth.c builtin/commit.c builtin/log.c builtin/merge.c
 #: builtin/pack-objects.c builtin/shortlog.c bundle.c midx.c ref-filter.c
 #: remote.c sequencer.c submodule.c
 msgid "revision walk setup failed"
 msgstr "persiapan jalan revisi gagal"
 
-#: blame.c
+#: sleuth.c
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 "--reverse --first-parent bersama-sama butuh rentang bersama rantai induk "
 "pertama"
 
-#: blame.c
+#: sleuth.c
 #, c-format
 msgid "no such path %s in %s"
 msgstr "tidak ada jalur seperti %s di %s"
 
-#: blame.c
+#: sleuth.c
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "tidak dapat membaca blob %s untuk jalur %s"
@@ -2255,7 +2255,7 @@ msgstr ""
 msgid "bad action '%s' for '%s'"
 msgstr ""
 
-#: builtin/am.c builtin/blame.c builtin/fetch.c builtin/pack-objects.c
+#: builtin/am.c builtin/sleuth.c builtin/fetch.c builtin/pack-objects.c
 #: builtin/pull.c diff-merges.c gpg-interface.c ls-refs.c parallel-checkout.c
 #: sequencer.c setup.c
 #, c-format
@@ -3133,171 +3133,171 @@ msgstr "--bisect-log butuh 0 argumen"
 msgid "no logfile given"
 msgstr "tidak ada berkas log yang diberikan"
 
-#: builtin/blame.c
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<opsi>] [<opsi revisi>] [<revisi>] [--] <berkas>"
+#: builtin/sleuth.c
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<opsi>] [<opsi revisi>] [<revisi>] [--] <berkas>"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<opsi revisi> didokumentasikan dalam git-rev-list(1)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "expecting a color: %s"
 msgstr "mengharapkan warna: %s"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "must end with a color"
 msgstr "harus berakhir dengan warna"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "cannot find revision %s to ignore"
 msgstr "tidak dapat menemukan revisi %s untuk diabaikan"
 
-#: builtin/blame.c
-msgid "show blame entries as we find them, incrementally"
+#: builtin/sleuth.c
+msgid "show sleuth entries as we find them, incrementally"
 msgstr "perlihatkan entri penyalahan seperti yang kami temukan secara bertahap"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr "jangan perlihatkan nama objek dari komit perbatasan (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "do not treat root commits as boundaries (Default: off)"
 msgstr "jangan perlakukan komit akar sebagai perbatasan (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show work cost statistics"
 msgstr "perlihatkan statistik biaya usaha"
 
-#: builtin/blame.c builtin/checkout.c builtin/clone.c builtin/commit-graph.c
+#: builtin/sleuth.c builtin/checkout.c builtin/clone.c builtin/commit-graph.c
 #: builtin/fetch.c builtin/merge.c builtin/multi-pack-index.c builtin/pull.c
 #: builtin/push.c builtin/remote.c builtin/send-pack.c
 msgid "force progress reporting"
 msgstr "paksa laporkan perkembangan"
 
-#: builtin/blame.c
-msgid "show output score for blame entries"
+#: builtin/sleuth.c
+msgid "show output score for sleuth entries"
 msgstr "perlihatkan nilai keluaran untuk entri penyalahan"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show original filename (Default: auto)"
 msgstr "perlihatkan nama berkas asli (asali: auto)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show original linenumber (Default: off)"
 msgstr "perlihatkan nomor baris asli (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show in a format designed for machine consumption"
 msgstr "perlihatkan dalam format yang didesain untuk konsumsi mesin"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show porcelain format with per-line commit information"
 msgstr "perlihatkan format porselen dengan informasi komit per baris"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use the same output mode as git-annotate (Default: off)"
 msgstr "gunakan mode keluaran yang sama dengan git-annotate (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show raw timestamp (Default: off)"
 msgstr "perlihatkan stempel waktu mentah (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show long commit SHA1 (Default: off)"
 msgstr "perlihatkan SHA1 komit panjang (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "suppress author name and timestamp (Default: off)"
 msgstr "sembunyikan nama pengarang dan stempel waktu (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "show author email instead of name (Default: off)"
 msgstr "perlihatkan email pengarang daripada nama (asali: off)"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore whitespace differences"
 msgstr "abaikan perbedaan spasi putih"
 
-#: builtin/blame.c builtin/log.c
+#: builtin/sleuth.c builtin/log.c
 msgid "rev"
 msgstr "revisi"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore <rev> when blaming"
 msgstr "abaikan <revisi> ketika menyalahkan"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "ignore revisions from <file>"
 msgstr "abaikan revisi dari <berkas>"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "color redundant metadata from previous line differently"
 msgstr "metadata warna berlebihan dari baris sebelumnya secara berbeda"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "color lines by age"
 msgstr "warnai baris oleh umur"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "spend extra cycles to find better match"
 msgstr "perlihatkan siklus ekstra untuk menemukan cocokan yang lebih baik"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use revisions from <file> instead of calling git-rev-list"
 msgstr "gunakan revisi dari <berkas> daripada memanggil git-rev-list"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "use <file>'s contents as the final image"
 msgstr "gunakan konten <berkas> sebagai citra final"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "score"
 msgstr "nilai"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "find line copies within and across files"
 msgstr "temukan salinan baris di dalam dan di seluruh berkas"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "find line movements within and across files"
 msgstr "temukan gerakan baris di dalam dan di seluruh baris"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "range"
 msgstr "rentang"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "process only line range <start>,<end> or function :<funcname>"
 msgstr "hanya proses rentang baris <awal>,<akhir> atau fungsi :<nama fungsi>"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr ""
 "--progress tidak dapat digunakan dengan --incremental atau format porselen"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "4 years, 11 months ago"
 msgstr "4 tahun, 11 bulan yang lalu"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] "berkas %s hanya punya %lu baris"
 msgstr[1] "berkas %s hanya punya %lu baris"
 
-#: builtin/blame.c
+#: builtin/sleuth.c
 msgid "Blaming lines"
 msgstr "Menyalahkan baris"
 

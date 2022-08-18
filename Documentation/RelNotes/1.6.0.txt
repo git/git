@@ -95,7 +95,7 @@ Updates since v1.5.6
   repack -a -f" can be used to fix such a corruption as long as necessary
   objects are available.
 
-* Performance of "git-blame -C -C" operation is vastly improved.
+* Performance of "git-sleuth -C -C" operation is vastly improved.
 
 * git-clone does not create refs in loose form anymore (it behaves as
   if you immediately ran git-pack-refs after cloning).  This will help

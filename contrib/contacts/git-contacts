@@ -58,11 +58,11 @@ sub import_commits {
 	die "git-cat-file error: $?\n" if $?;
 }
 
-sub get_blame {
+sub get_sleuth {
 	my ($commits, $source, $from, $ranges) = @_;
 	return unless @$ranges;
 	open my $f, '-|',
-		qw(git blame --porcelain -C),
+		qw(git sleuth --porcelain -C),
 		map({"-L$_->[0],+$_->[1]"} @$ranges),
 		'--since', $since, "$from^", '--', $source or die;
 	while (<$f>) {
@@ -76,11 +76,11 @@ sub get_blame {
 	close $f;
 }
 
-sub blame_sources {
+sub sleuth_sources {
 	my ($sources, $commits) = @_;
 	for my $s (keys %$sources) {
 		for my $id (keys %{$sources->{$s}}) {
-			get_blame($commits, $s, $id, $sources->{$s}{$id});
+			get_sleuth($commits, $s, $id, $sources->{$s}{$id});
 		}
 	}
 }
@@ -184,7 +184,7 @@ chomp $toplevel;
 chdir($toplevel) or die "chdir failure: $toplevel: $!\n";
 
 my %commits;
-blame_sources(\%sources, \%commits);
+sleuth_sources(\%sources, \%commits);
 import_commits(\%commits);
 
 my $contacts = {};

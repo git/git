@@ -20,7 +20,7 @@ UI, Workflows & Features
    "-d", just like "branch --delete" and "branch -d" are the same
    thing.
 
- * "git blame" learned to produce the progress eye-candy when it takes
+ * "git sleuth" learned to produce the progress eye-candy when it takes
    too much time before emitting the first line of the result.
 
  * "git grep" can now be configured (or told from the command line)

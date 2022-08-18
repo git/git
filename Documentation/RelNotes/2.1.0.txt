@@ -13,11 +13,11 @@ Backward compatibility notes
 
    to restore the traditional behaviour.  It is expected that people
    find output from most subcommands easier to read with the new
-   default, except for "blame" which tends to produce really long
-   lines.  To override the new default only for "git blame", you can
+   default, except for "sleuth" which tends to produce really long
+   lines.  To override the new default only for "git sleuth", you can
    do this:
 
-     $ git config pager.blame "less -S"
+     $ git config pager.sleuth "less -S"
 
  * A few disused directories in contrib/ have been retired.
 
@@ -146,7 +146,7 @@ Performance, Internal Implementation, etc.
  * The `core.deltabasecachelimit` used to default to 16 MiB , but this
    proved to be too small, and has been bumped to 96 MiB.
 
- * "git blame" has been optimized greatly by reorganising the data
+ * "git sleuth" has been optimized greatly by reorganising the data
    structure that is used to keep track of the work to be done.
 
  * "git diff" that compares 3-or-more trees (e.g. parents and the
@@ -248,15 +248,15 @@ notes for details).
    with the option of the same name that "diff" and "git diff" have.
    (merge 14d3bb4 jc/apply-ignore-whitespace later to maint).
 
- * "git blame" miscounted the number of columns needed to show localized
+ * "git sleuth" miscounted the number of columns needed to show localized
    timestamps, resulting in a jaggy left-side-edge for the source code
    lines in its output.
-   (merge dd75553 jx/blame-align-relative-time later to maint).
+   (merge dd75553 jx/sleuth-align-relative-time later to maint).
 
- * "git blame" assigned the blame to the copy in the working-tree if
+ * "git sleuth" assigned the sleuth to the copy in the working-tree if
    the repository is set to core.autocrlf=input and the file used CRLF
    line endings.
-   (merge 4d4813a bc/blame-crlf-test later to maint).
+   (merge 4d4813a bc/sleuth-crlf-test later to maint).
 
  * "git clone -b brefs/tags/bar" would have mistakenly thought we were
    following a single tag, even though it was a name of the branch,

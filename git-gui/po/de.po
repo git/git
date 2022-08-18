@@ -411,7 +411,7 @@ msgstr "Verwendung:"
 msgid "Usage"
 msgstr "Verwendung"
 
-#: git-gui.sh:3182 lib/blame.tcl:575
+#: git-gui.sh:3182 lib/sleuth.tcl:575
 msgid "Error"
 msgstr "Fehler"
 
@@ -470,7 +470,7 @@ msgstr "Commit-Beschreibung:"
 msgid "Copy All"
 msgstr "Alle kopieren"
 
-#: git-gui.sh:3501 lib/blame.tcl:106
+#: git-gui.sh:3501 lib/sleuth.tcl:106
 msgid "File:"
 msgstr "Datei:"
 
@@ -490,7 +490,7 @@ msgstr "Schriftgröße verkleinern"
 msgid "Increase Font Size"
 msgstr "Schriftgröße vergrößern"
 
-#: git-gui.sh:3662 lib/blame.tcl:296
+#: git-gui.sh:3662 lib/sleuth.tcl:296
 msgid "Encoding"
 msgstr "Zeichenkodierung"
 
@@ -1332,11 +1332,11 @@ msgid "Match Tracking Branches"
 msgstr "Neue Branches automatisch als Trackingbranch"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
+msgid "Use Textconv For Diffs and sleuths"
 msgstr "Benutze »textconv« für Vergleich und Annotieren"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
+msgid "sleuth Copy Only On Changed Files"
 msgstr "Kopie-Annotieren nur bei geänderten Dateien"
 
 #: lib/option.tcl:153
@@ -1344,11 +1344,11 @@ msgid "Maximum Length of Recent Repositories List"
 msgstr "Anzahl Einträge in »Letzte Repositories«"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
+msgid "Minimum Letters To sleuth Copy On"
 msgstr "Mindestzahl Zeichen für Kopie-Annotieren"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
+msgid "sleuth History Context Radius (days)"
 msgstr "Anzahl Tage für Annotieren-Historien-Kontext"
 
 #: lib/option.tcl:156
@@ -2019,113 +2019,113 @@ msgstr "Repository »%s« konnte nicht geöffnet werden."
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - eine grafische Oberfläche für Git."
 
-#: lib/blame.tcl:74
+#: lib/sleuth.tcl:74
 #, tcl-format
 msgid "%s (%s): File Viewer"
 msgstr "%s (%s): Datei-Browser"
 
-#: lib/blame.tcl:80
+#: lib/sleuth.tcl:80
 msgid "Commit:"
 msgstr "Commit:"
 
-#: lib/blame.tcl:282
+#: lib/sleuth.tcl:282
 msgid "Copy Commit"
 msgstr "Commit kopieren"
 
-#: lib/blame.tcl:286
+#: lib/sleuth.tcl:286
 msgid "Find Text..."
 msgstr "Text suchen..."
 
-#: lib/blame.tcl:290
+#: lib/sleuth.tcl:290
 msgid "Goto Line..."
 msgstr "Gehe zu Zeile..."
 
-#: lib/blame.tcl:299
+#: lib/sleuth.tcl:299
 msgid "Do Full Copy Detection"
 msgstr "Volle Kopie-Erkennung"
 
-#: lib/blame.tcl:303
+#: lib/sleuth.tcl:303
 msgid "Show History Context"
 msgstr "Historien-Kontext anzeigen"
 
-#: lib/blame.tcl:306
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:306
+msgid "sleuth Parent Commit"
 msgstr "Elterncommit annotieren"
 
-#: lib/blame.tcl:468
+#: lib/sleuth.tcl:468
 #, tcl-format
 msgid "Reading %s..."
 msgstr "%s lesen..."
 
-#: lib/blame.tcl:596
+#: lib/sleuth.tcl:596
 msgid "Loading copy/move tracking annotations..."
 msgstr "Annotierungen für Kopieren/Verschieben werden geladen..."
 
-#: lib/blame.tcl:613
+#: lib/sleuth.tcl:613
 msgid "lines annotated"
 msgstr "Zeilen annotiert"
 
-#: lib/blame.tcl:815
+#: lib/sleuth.tcl:815
 msgid "Loading original location annotations..."
 msgstr "Annotierungen für ursprünglichen Ort werden geladen..."
 
-#: lib/blame.tcl:818
+#: lib/sleuth.tcl:818
 msgid "Annotation complete."
 msgstr "Annotierung vollständig."
 
-#: lib/blame.tcl:849
+#: lib/sleuth.tcl:849
 msgid "Busy"
 msgstr "Verarbeitung läuft"
 
-#: lib/blame.tcl:850
+#: lib/sleuth.tcl:850
 msgid "Annotation process is already running."
 msgstr "Annotierung läuft bereits."
 
-#: lib/blame.tcl:889
+#: lib/sleuth.tcl:889
 msgid "Running thorough copy detection..."
 msgstr "Intensive Kopie-Erkennung läuft..."
 
-#: lib/blame.tcl:957
+#: lib/sleuth.tcl:957
 msgid "Loading annotation..."
 msgstr "Annotierung laden..."
 
-#: lib/blame.tcl:1010
+#: lib/sleuth.tcl:1010
 msgid "Author:"
 msgstr "Autor:"
 
-#: lib/blame.tcl:1014
+#: lib/sleuth.tcl:1014
 msgid "Committer:"
 msgstr "Committer:"
 
-#: lib/blame.tcl:1019
+#: lib/sleuth.tcl:1019
 msgid "Original File:"
 msgstr "Ursprüngliche Datei:"
 
-#: lib/blame.tcl:1067
+#: lib/sleuth.tcl:1067
 msgid "Cannot find HEAD commit:"
 msgstr "Branchspitze (»HEAD commit«) kann nicht gefunden werden:"
 
-#: lib/blame.tcl:1122
+#: lib/sleuth.tcl:1122
 msgid "Cannot find parent commit:"
 msgstr "Elterncommit kann nicht gefunden werden:"
 
-#: lib/blame.tcl:1137
+#: lib/sleuth.tcl:1137
 msgid "Unable to display parent"
 msgstr "Elterncommit kann nicht angezeigt werden"
 
-#: lib/blame.tcl:1138 lib/diff.tcl:345
+#: lib/sleuth.tcl:1138 lib/diff.tcl:345
 msgid "Error loading diff:"
 msgstr "Fehler beim Laden des Vergleichs:"
 
-#: lib/blame.tcl:1279
+#: lib/sleuth.tcl:1279
 msgid "Originally By:"
 msgstr "Ursprünglich von:"
 
-#: lib/blame.tcl:1285
+#: lib/sleuth.tcl:1285
 msgid "In File:"
 msgstr "In Datei:"
 
-#: lib/blame.tcl:1290
+#: lib/sleuth.tcl:1290
 msgid "Copied Or Moved Here By:"
 msgstr "Kopiert oder verschoben durch:"
 

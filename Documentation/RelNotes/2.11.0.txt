@@ -442,7 +442,7 @@ notes for details).
  * Doc update to clarify what "log -3 --reverse" does.
 
  * Almost everybody uses DEFAULT_ABBREV to refer to the default
-   setting for the abbreviation, but "git blame" peeked into
+   setting for the abbreviation, but "git sleuth" peeked into
    underlying variable bypassing the macro for no good reason.
 
  * The "graph" API used in "git log --graph" miscounted the number of
@@ -474,10 +474,10 @@ notes for details).
    "Give me only the history since that version".
    (merge cccf74e2da nd/shallow-deepen later to maint).
 
- * "git blame --reverse OLD path" is now DWIMmed to show how lines
+ * "git sleuth --reverse OLD path" is now DWIMmed to show how lines
    in path in an old revision OLD have survived up to the current
    commit.
-   (merge e1d09701a4 jc/blame-reverse later to maint).
+   (merge e1d09701a4 jc/sleuth-reverse later to maint).
 
  * The http.emptyauth configuration variable is a way to allow an empty username to
    pass when attempting to authenticate using mechanisms like

@@ -193,7 +193,7 @@ msgid "base"
 msgstr "base"
 
 #. "get the authors responsible for each line in a file"
-msgid "blame"
+msgid "sleuth"
 msgstr "culpar"
 
 #. "to select and apply a single commit without merging"

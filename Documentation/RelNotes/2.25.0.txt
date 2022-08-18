@@ -329,7 +329,7 @@ Fixes since v2.24
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
    (merge 6c02042139 mr/clone-dir-exists-to-path-exists later to maint).
-   (merge 44ae131e38 sg/blame-indent-heuristics-is-now-the-default later to maint).
+   (merge 44ae131e38 sg/sleuth-indent-heuristics-is-now-the-default later to maint).
    (merge 0115e5d929 dl/doc-diff-no-index-implies-exit-code later to maint).
    (merge 270de6acbe en/t6024-style later to maint).
    (merge 14c4776d75 ns/test-desc-typofix later to maint).

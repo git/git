@@ -414,7 +414,7 @@ msgstr "Hiện khoá SSH"
 msgid "Usage"
 msgstr "Cách dùng"
 
-#: git-gui.sh:3089 lib/blame.tcl:573
+#: git-gui.sh:3089 lib/sleuth.tcl:573
 msgid "Error"
 msgstr "Lỗi"
 
@@ -473,7 +473,7 @@ msgstr "Chú thích của lần chuyển giao:"
 msgid "Copy All"
 msgstr "Chép tất cả"
 
-#: git-gui.sh:3402 lib/blame.tcl:105
+#: git-gui.sh:3402 lib/sleuth.tcl:105
 msgid "File:"
 msgstr "Tập tin:"
 
@@ -489,7 +489,7 @@ msgstr "Giảm kích cỡ phông"
 msgid "Increase Font Size"
 msgstr "Tăng kích cỡ phông"
 
-#: git-gui.sh:3553 lib/blame.tcl:294
+#: git-gui.sh:3553 lib/sleuth.tcl:294
 msgid "Encoding"
 msgstr "Bảng mã"
 
@@ -608,112 +608,112 @@ msgstr ""
 msgid "git-gui - a graphical user interface for Git."
 msgstr "git-gui - công cụ đồ họa dành cho Git."
 
-#: lib/blame.tcl:73
+#: lib/sleuth.tcl:73
 msgid "File Viewer"
 msgstr "Bộ Xem Tập Tin"
 
-#: lib/blame.tcl:79
+#: lib/sleuth.tcl:79
 msgid "Commit:"
 msgstr "Lần chuyển giao:"
 
-#: lib/blame.tcl:280
+#: lib/sleuth.tcl:280
 msgid "Copy Commit"
 msgstr "Chép lần chuyển giao"
 
-#: lib/blame.tcl:284
+#: lib/sleuth.tcl:284
 msgid "Find Text..."
 msgstr "Tìm chữ..."
 
-#: lib/blame.tcl:288
+#: lib/sleuth.tcl:288
 msgid "Goto Line..."
 msgstr "Nhảy đến dòng..."
 
-#: lib/blame.tcl:297
+#: lib/sleuth.tcl:297
 msgid "Do Full Copy Detection"
 msgstr "Thực hiện dò tìm chép toàn bộ"
 
-#: lib/blame.tcl:301
+#: lib/sleuth.tcl:301
 msgid "Show History Context"
 msgstr "Hiển thị nội dung của lịch sử"
 
-#: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+#: lib/sleuth.tcl:304
+msgid "sleuth Parent Commit"
 msgstr "Xem công trạng của lần chuyển giao cha mẹ"
 
-#: lib/blame.tcl:466
+#: lib/sleuth.tcl:466
 #, tcl-format
 msgid "Reading %s..."
 msgstr "Đang đọc %s..."
 
-#: lib/blame.tcl:594
+#: lib/sleuth.tcl:594
 msgid "Loading copy/move tracking annotations..."
 msgstr "Đang tải phần chú giải theo dõi chép/chuyển..."
 
-#: lib/blame.tcl:614
+#: lib/sleuth.tcl:614
 msgid "lines annotated"
 msgstr "dòng chú giải"
 
-#: lib/blame.tcl:806
+#: lib/sleuth.tcl:806
 msgid "Loading original location annotations..."
 msgstr "Đang tải các chú giải vị trí nguyên gốc..."
 
-#: lib/blame.tcl:809
+#: lib/sleuth.tcl:809
 msgid "Annotation complete."
 msgstr "Chú giải hoàn tất."
 
-#: lib/blame.tcl:839
+#: lib/sleuth.tcl:839
 msgid "Busy"
 msgstr "Bận"
 
-#: lib/blame.tcl:840
+#: lib/sleuth.tcl:840
 msgid "Annotation process is already running."
 msgstr "Tiến trình chú giải đang diễn ra."
 
-#: lib/blame.tcl:879
+#: lib/sleuth.tcl:879
 msgid "Running thorough copy detection..."
 msgstr "Đang chạy dò tìm sao chép toàn diện..."
 
-#: lib/blame.tcl:947
+#: lib/sleuth.tcl:947
 msgid "Loading annotation..."
 msgstr "Đang tải phần chú giải..."
 
-#: lib/blame.tcl:1000
+#: lib/sleuth.tcl:1000
 msgid "Author:"
 msgstr "Tác giả:"
 
-#: lib/blame.tcl:1004
+#: lib/sleuth.tcl:1004
 msgid "Committer:"
 msgstr "Người chuyển giao:"
 
-#: lib/blame.tcl:1009
+#: lib/sleuth.tcl:1009
 msgid "Original File:"
 msgstr "Tập tin gốc:"
 
-#: lib/blame.tcl:1057
+#: lib/sleuth.tcl:1057
 msgid "Cannot find HEAD commit:"
 msgstr "Không thể tìm thấy HEAD của lần chuyển giao:"
 
-#: lib/blame.tcl:1112
+#: lib/sleuth.tcl:1112
 msgid "Cannot find parent commit:"
 msgstr "Không thể tìm thấy lần chuyển giao mẹ:"
 
-#: lib/blame.tcl:1127
+#: lib/sleuth.tcl:1127
 msgid "Unable to display parent"
 msgstr "Không thể hiển thị cha mẹ"
 
-#: lib/blame.tcl:1128 lib/diff.tcl:341
+#: lib/sleuth.tcl:1128 lib/diff.tcl:341
 msgid "Error loading diff:"
 msgstr "Gặp lỗi khi tải diff:"
 
-#: lib/blame.tcl:1269
+#: lib/sleuth.tcl:1269
 msgid "Originally By:"
 msgstr "Nguyên gốc bởi:"
 
-#: lib/blame.tcl:1275
+#: lib/sleuth.tcl:1275
 msgid "In File:"
 msgstr "Trong tập tin:"
 
-#: lib/blame.tcl:1280
+#: lib/sleuth.tcl:1280
 msgid "Copied Or Moved Here By:"
 msgstr "Đã chép hoặc Di chuyển đến đây bởi:"
 
@@ -2125,24 +2125,24 @@ msgid "Match Tracking Branches"
 msgstr "Khớp nhánh theo dõi"
 
 #: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
-msgstr "Dùng Textconv Cho Diffs và Blames"
+msgid "Use Textconv For Diffs and sleuths"
+msgstr "Dùng Textconv Cho Diffs và sleuths"
 
 #: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
-msgstr "Chỉ chép blame trên các tập tin thay đổi"
+msgid "sleuth Copy Only On Changed Files"
+msgstr "Chỉ chép sleuth trên các tập tin thay đổi"
 
 #: lib/option.tcl:153
 msgid "Maximum Length of Recent Repositories List"
 msgstr "Số lượng kho mới dùng tối đa được lưu trữ"
 
 #: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
-msgstr "Chữ tối thiểu để blame chép vào"
+msgid "Minimum Letters To sleuth Copy On"
+msgstr "Chữ tối thiểu để sleuth chép vào"
 
 #: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
-msgstr "Bán kính ngữ cảnh lịch sử blame (ngày)"
+msgid "sleuth History Context Radius (days)"
+msgstr "Bán kính ngữ cảnh lịch sử sleuth (ngày)"
 
 #: lib/option.tcl:156
 msgid "Number of Diff Context Lines"

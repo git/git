@@ -284,7 +284,7 @@ my %cmd = (
 		    "Show info about the latest SVN revision
 		     on the current branch",
 		    { 'url' => \$_url, } ],
-	'blame' => [ \&Git::SVN::Log::cmd_blame,
+	'sleuth' => [ \&Git::SVN::Log::cmd_sleuth,
 	            "Show what revision and author last modified each line of a file",
 		    { 'git-format' => \$Git::SVN::Log::_git_format } ],
 	'reset' => [ \&cmd_reset,
@@ -360,7 +360,7 @@ if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_git_config(\%opts) if $ENV{GIT_DIR};
-if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
+if ($cmd && ($cmd eq 'log' || $cmd eq 'sleuth')) {
 	Getopt::Long::Configure('pass_through');
 }
 my $rv = GetOptions(%opts, 'h|H' => \$_help, 'version|V' => \$_version,

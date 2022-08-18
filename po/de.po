@@ -2616,8 +2616,8 @@ msgstr "--bisect-log benötigt 0 Argumente"
 msgid "no logfile given"
 msgstr "keine Log-Datei angegeben"
 
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<Optionen>] [<rev-opts>] [<Commit>] [--] <Datei>"
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<Optionen>] [<rev-opts>] [<Commit>] [--] <Datei>"
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<rev-opts> sind dokumentiert in git-rev-list(1)"
@@ -2633,8 +2633,8 @@ msgstr "muss mit einer Farbe enden"
 msgid "cannot find revision %s to ignore"
 msgstr "konnte Commit %s zum Ignorieren nicht finden"
 
-msgid "show blame entries as we find them, incrementally"
-msgstr "\"blame\"-Einträge schrittweise anzeigen, während wir sie finden"
+msgid "show sleuth entries as we find them, incrementally"
+msgstr "\"sleuth\"-Einträge schrittweise anzeigen, während wir sie finden"
 
 msgid "do not show object names of boundary commits (Default: off)"
 msgstr "keine Objektnamen für Grenz-Commits anzeigen (Standard: aus)"
@@ -2648,8 +2648,8 @@ msgstr "Statistiken zum Arbeitsaufwand anzeigen"
 msgid "force progress reporting"
 msgstr "Fortschrittsanzeige erzwingen"
 
-msgid "show output score for blame entries"
-msgstr "Ausgabebewertung für \"blame\"-Einträge anzeigen"
+msgid "show output score for sleuth entries"
+msgstr "Ausgabebewertung für \"sleuth\"-Einträge anzeigen"
 
 msgid "show original filename (Default: auto)"
 msgstr "ursprünglichen Dateinamen anzeigen (Standard: auto)"
@@ -2688,7 +2688,7 @@ msgid "rev"
 msgstr "Commit"
 
 msgid "ignore <rev> when blaming"
-msgstr "ignoriere <Commit> beim Ausführen von 'blame'"
+msgstr "ignoriere <Commit> beim Ausführen von 'sleuth'"
 
 msgid "ignore revisions from <file>"
 msgstr "ignoriere Commits aus <Datei>"
@@ -2733,7 +2733,7 @@ msgstr ""
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display

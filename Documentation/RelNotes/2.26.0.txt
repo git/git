@@ -332,7 +332,7 @@ Fixes since v2.25
    (merge a2dc43414c es/doc-mentoring later to maint).
    (merge 02bbbe9df9 es/worktree-cleanup later to maint).
    (merge 2ce6d075fa rs/micro-cleanups later to maint).
-   (merge 27f182b3fc rs/blame-typefix-for-fingerprint later to maint).
+   (merge 27f182b3fc rs/sleuth-typefix-for-fingerprint later to maint).
    (merge 3c29e21eb0 ma/test-cleanup later to maint).
    (merge 240fc04f81 ag/rebase-remove-redundant-code later to maint).
    (merge d68ce906c7 rs/commit-graph-code-simplification later to maint).

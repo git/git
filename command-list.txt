@@ -61,7 +61,7 @@ git-apply                               plumbingmanipulators            complete
 git-archimport                          foreignscminterface
 git-archive                             mainporcelain
 git-bisect                              mainporcelain           info
-git-blame                               ancillaryinterrogators          complete
+git-sleuth                               ancillaryinterrogators          complete
 git-branch                              mainporcelain           history
 git-bugreport                           ancillaryinterrogators
 git-bundle                              mainporcelain

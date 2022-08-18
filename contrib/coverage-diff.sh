@@ -79,7 +79,7 @@ do
 
 	grep -q '[^[:space:]]' <uncovered_new_lines.txt &&
 	echo $file >>coverage-data.txt &&
-	git blame -s "$V2" -- "$file" |
+	git sleuth -s "$V2" -- "$file" |
 	sed 's/\t//g' |
 	grep -f uncovered_new_lines.txt >>coverage-data.txt &&
 	echo >>coverage-data.txt

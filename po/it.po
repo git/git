@@ -1649,8 +1649,8 @@ msgstr "prefisso"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "anteponi <prefisso> a ogni nome percorso nell'archivio"
 
-#: archive.c:556 archive.c:559 builtin/blame.c:884 builtin/blame.c:888
-#: builtin/blame.c:889 builtin/commit-tree.c:117 builtin/config.c:133
+#: archive.c:556 archive.c:559 builtin/sleuth.c:884 builtin/sleuth.c:888
+#: builtin/sleuth.c:889 builtin/commit-tree.c:117 builtin/config.c:133
 #: builtin/fast-export.c:1208 builtin/fast-export.c:1210
 #: builtin/fast-export.c:1214 builtin/grep.c:908 builtin/hash-object.c:105
 #: builtin/ls-files.c:561 builtin/ls-files.c:564 builtin/notes.c:412
@@ -1873,21 +1873,21 @@ msgstr[0] ""
 msgstr[1] ""
 "Bisezione in corso: %d revisioni rimanenti da testare dopo questa %s\n"
 
-#: blame.c:2778
+#: sleuth.c:2778
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents e --reverse non sono compatibili."
 
-#: blame.c:2792
+#: sleuth.c:2792
 msgid "cannot use --contents with final commit object name"
 msgstr "impossibile usare --contents con il nome oggetto del commit finale"
 
-#: blame.c:2813
+#: sleuth.c:2813
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 "le opzioni --reverse e --first-parent se usate insieme richiedono che sia "
 "specificato l'ultimo commit"
 
-#: blame.c:2822 bundle.c:213 ref-filter.c:2264 remote.c:2020 sequencer.c:2105
+#: sleuth.c:2822 bundle.c:213 ref-filter.c:2264 remote.c:2020 sequencer.c:2105
 #: sequencer.c:4606 submodule.c:855 builtin/commit.c:1045 builtin/log.c:404
 #: builtin/log.c:1020 builtin/log.c:1622 builtin/log.c:2029 builtin/log.c:2319
 #: builtin/merge.c:414 builtin/pack-objects.c:3380 builtin/pack-objects.c:3395
@@ -1895,19 +1895,19 @@ msgstr ""
 msgid "revision walk setup failed"
 msgstr "impostazione percorso revisioni non riuscita"
 
-#: blame.c:2840
+#: sleuth.c:2840
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 "le opzioni --reverse e --first-parent se usate insieme richiedono che sia "
 "specificato un intervallo nella catena del primo commit genitore"
 
-#: blame.c:2851
+#: sleuth.c:2851
 #, c-format
 msgid "no such path %s in %s"
 msgstr "il percorso %s in %s non esiste"
 
-#: blame.c:2862
+#: sleuth.c:2862
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "impossibile leggere il blob %s per il percorso %s"
@@ -10864,198 +10864,198 @@ msgstr "--bisect-auto-next richiede zero argomenti"
 msgid "--bisect-autostart does not accept arguments"
 msgstr "--bisect-autostart non accetta argomenti"
 
-#: builtin/blame.c:32
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<opzioni>] [<opzioni revisione>] [<revisione>] [--] <file>"
+#: builtin/sleuth.c:32
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<opzioni>] [<opzioni revisione>] [<revisione>] [--] <file>"
 
-#: builtin/blame.c:37
+#: builtin/sleuth.c:37
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "le <opzioni revisione> sono documentate in git-rev-list(1)"
 
-#: builtin/blame.c:410
+#: builtin/sleuth.c:410
 #, c-format
 msgid "expecting a color: %s"
 msgstr "atteso colore: %s"
 
-#: builtin/blame.c:417
+#: builtin/sleuth.c:417
 msgid "must end with a color"
 msgstr "deve terminare con un colore"
 
-#: builtin/blame.c:730
+#: builtin/sleuth.c:730
 #, c-format
-msgid "invalid color '%s' in color.blame.repeatedLines"
-msgstr "colore '%s' non valido in color.blame.repeatedLines"
+msgid "invalid color '%s' in color.sleuth.repeatedLines"
+msgstr "colore '%s' non valido in color.sleuth.repeatedLines"
 
-#: builtin/blame.c:748
-msgid "invalid value for blame.coloring"
-msgstr "valore non valido per blame.coloring"
+#: builtin/sleuth.c:748
+msgid "invalid value for sleuth.coloring"
+msgstr "valore non valido per sleuth.coloring"
 
-#: builtin/blame.c:845
+#: builtin/sleuth.c:845
 #, c-format
 msgid "cannot find revision %s to ignore"
 msgstr "impossibile trovare la revisione %s da ignorare"
 
-#: builtin/blame.c:867
-msgid "Show blame entries as we find them, incrementally"
+#: builtin/sleuth.c:867
+msgid "Show sleuth entries as we find them, incrementally"
 msgstr ""
-"Visualizza le voci blame incrementalmente, a mano a mano che le troviamo"
+"Visualizza le voci sleuth incrementalmente, a mano a mano che le troviamo"
 
-#: builtin/blame.c:868
+#: builtin/sleuth.c:868
 msgid "Do not show object names of boundary commits (Default: off)"
 msgstr ""
 "Non visualizzare i nomi degli oggetti dei commit limite (impostazione "
 "predefinita: off)"
 
-#: builtin/blame.c:869
+#: builtin/sleuth.c:869
 msgid "Do not treat root commits as boundaries (Default: off)"
 msgstr ""
 "Non gestire i commit radice come commit limite (impostazione predefinita: "
 "off)"
 
-#: builtin/blame.c:870
+#: builtin/sleuth.c:870
 msgid "Show work cost statistics"
 msgstr "Visualizza le statistiche sul costo dell'operazione"
 
-#: builtin/blame.c:871
+#: builtin/sleuth.c:871
 msgid "Force progress reporting"
 msgstr "Forza l'indicazione d'avanzamento dell'operazione"
 
-#: builtin/blame.c:872
-msgid "Show output score for blame entries"
-msgstr "Visualizza il punteggio di output per le voci blame"
+#: builtin/sleuth.c:872
+msgid "Show output score for sleuth entries"
+msgstr "Visualizza il punteggio di output per le voci sleuth"
 
-#: builtin/blame.c:873
+#: builtin/sleuth.c:873
 msgid "Show original filename (Default: auto)"
 msgstr ""
 "Visualizza il nome file originario (impostazione predefinita: automatico)"
 
-#: builtin/blame.c:874
+#: builtin/sleuth.c:874
 msgid "Show original linenumber (Default: off)"
 msgstr ""
 "Visualizza il numero di riga originario (impostazione predefinita: off)"
 
-#: builtin/blame.c:875
+#: builtin/sleuth.c:875
 msgid "Show in a format designed for machine consumption"
 msgstr ""
 "Visualizza l'output in un formato progettato per l'utilizzo da parte di una "
 "macchina"
 
-#: builtin/blame.c:876
+#: builtin/sleuth.c:876
 msgid "Show porcelain format with per-line commit information"
 msgstr ""
 "Visualizza il formato porcelain con le informazioni sul commit per ogni riga"
 
-#: builtin/blame.c:877
+#: builtin/sleuth.c:877
 msgid "Use the same output mode as git-annotate (Default: off)"
 msgstr ""
 "Usa la stessa modalità di output di git-annotate (impostazione predefinita: "
 "off)"
 
-#: builtin/blame.c:878
+#: builtin/sleuth.c:878
 msgid "Show raw timestamp (Default: off)"
 msgstr "Visualizza il timestamp grezzo (impostazione predefinita: off)"
 
-#: builtin/blame.c:879
+#: builtin/sleuth.c:879
 msgid "Show long commit SHA1 (Default: off)"
 msgstr ""
 "Visualizza l'hash SHA1 del commit in forma lunga (impostazione predefinita: "
 "off)"
 
-#: builtin/blame.c:880
+#: builtin/sleuth.c:880
 msgid "Suppress author name and timestamp (Default: off)"
 msgstr ""
 "Non visualizzare il nome autore e il timestamp (impostazione predefinita: "
 "off)"
 
-#: builtin/blame.c:881
+#: builtin/sleuth.c:881
 msgid "Show author email instead of name (Default: off)"
 msgstr ""
 "Visualizza l'indirizzo e-mail dell'autore invece del nome (impostazione "
 "predefinita: off)"
 
-#: builtin/blame.c:882
+#: builtin/sleuth.c:882
 msgid "Ignore whitespace differences"
 msgstr "Ignora le differenze relative agli spazi bianchi"
 
-#: builtin/blame.c:883 builtin/log.c:1808
+#: builtin/sleuth.c:883 builtin/log.c:1808
 msgid "rev"
 msgstr "revisione"
 
-#: builtin/blame.c:883
+#: builtin/sleuth.c:883
 msgid "Ignore <rev> when blaming"
-msgstr "Ignora <revisione> durante l'esecuzione del blame"
+msgstr "Ignora <revisione> durante l'esecuzione del sleuth"
 
-#: builtin/blame.c:884
+#: builtin/sleuth.c:884
 msgid "Ignore revisions from <file>"
 msgstr "Ignora le revisioni specificate in <file>"
 
-#: builtin/blame.c:885
+#: builtin/sleuth.c:885
 msgid "color redundant metadata from previous line differently"
 msgstr "colora in modo differente i metadati ridondanti della riga precedente"
 
-#: builtin/blame.c:886
+#: builtin/sleuth.c:886
 msgid "color lines by age"
 msgstr "colora le righe in base all'età"
 
-#: builtin/blame.c:887
+#: builtin/sleuth.c:887
 msgid "Spend extra cycles to find better match"
 msgstr "Usa cicli extra per trovare una corrispondenza migliore"
 
-#: builtin/blame.c:888
+#: builtin/sleuth.c:888
 msgid "Use revisions from <file> instead of calling git-rev-list"
 msgstr "Usa le revisioni salvate in <file> anziché richiamare git-rev-list"
 
-#: builtin/blame.c:889
+#: builtin/sleuth.c:889
 msgid "Use <file>'s contents as the final image"
 msgstr "Usa i contenuti di <file> come immagine finale"
 
-#: builtin/blame.c:890 builtin/blame.c:891
+#: builtin/sleuth.c:890 builtin/sleuth.c:891
 msgid "score"
 msgstr "punteggio"
 
-#: builtin/blame.c:890
+#: builtin/sleuth.c:890
 msgid "Find line copies within and across files"
 msgstr "Trova copie delle righe all'interno e fra file"
 
-#: builtin/blame.c:891
+#: builtin/sleuth.c:891
 msgid "Find line movements within and across files"
 msgstr "Trova righe spostate all'interno e fra file"
 
-#: builtin/blame.c:892
+#: builtin/sleuth.c:892
 msgid "n,m"
 msgstr "n,m"
 
-#: builtin/blame.c:892
+#: builtin/sleuth.c:892
 msgid "Process only line range n,m, counting from 1"
 msgstr "Elabora solo l'intervallo righe n,m, contandole da 1"
 
-#: builtin/blame.c:944
+#: builtin/sleuth.c:944
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr ""
 "--progress non può essere usato con --incremental o con i formati porcelain"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c:995
+#: builtin/sleuth.c:995
 msgid "4 years, 11 months ago"
 msgstr "4 anni, 11 giorni fa"
 
-#: builtin/blame.c:1110
+#: builtin/sleuth.c:1110
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] "il file %s ha solo %lu riga"
 msgstr[1] "il file %s ha solo %lu righe"
 
-#: builtin/blame.c:1156
+#: builtin/sleuth.c:1156
 msgid "Blaming lines"
-msgstr "Eseguo il blame sulle righe"
+msgstr "Eseguo il sleuth sulle righe"
 
 #: builtin/branch.c:29
 msgid "git branch [<options>] [-r | -a] [--merged] [--no-merged]"

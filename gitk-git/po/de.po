@@ -343,7 +343,7 @@ msgid "External diff"
 msgstr "Externes Diff-Programm"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "sleuth parent commit"
 msgstr "Annotieren der Elternversion"
 
 #: gitk:2660
@@ -355,8 +355,8 @@ msgid "Show origin of this line"
 msgstr "Herkunft dieser Zeile anzeigen"
 
 #: gitk:2668
-msgid "Run git gui blame on this line"
-msgstr "Diese Zeile annotieren (»git gui blame«)"
+msgid "Run git gui sleuth on this line"
+msgstr "Diese Zeile annotieren (»git gui sleuth«)"
 
 #: gitk:3014
 msgid ""
@@ -575,8 +575,8 @@ msgid "No such commit"
 msgstr "Version nicht gefunden"
 
 #: gitk:3798
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: Kommando fehlgeschlagen:"
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth: Kommando fehlgeschlagen:"
 
 #: gitk:3829
 #, tcl-format
@@ -590,8 +590,8 @@ msgstr "Fehler beim Lesen der Bereitstellung (»index«): %s"
 
 #: gitk:3862
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "»git blame« konnte nicht gestartet werden: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "»git sleuth« konnte nicht gestartet werden: %s"
 
 #: gitk:3865 gitk:6754
 msgid "Searching"
@@ -599,8 +599,8 @@ msgstr "Suchen"
 
 #: gitk:3897
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Fehler beim Ausführen von »git blame«: %s"
+msgid "Error running git sleuth: %s"
+msgstr "Fehler beim Ausführen von »git sleuth«: %s"
 
 #: gitk:3925
 #, tcl-format

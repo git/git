@@ -225,7 +225,7 @@ will be looking for the first commit that has a version like
 "2.6.26-something", that is the commit that has a "SUBLEVEL = 26" line
 in the top level Makefile. This is a toy example because there are
 better ways to find this commit with Git than using "git bisect" (for
-example "git blame" or "git log -S<string>").
+example "git sleuth" or "git log -S<string>").
 
 Driving a bisection manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

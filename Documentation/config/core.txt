@@ -558,8 +558,8 @@ long lines. Similarly, setting `core.pager` to `less -+F` will
 deactivate the `F` option specified by the environment from the
 command-line, deactivating the "quit if one screen" behavior of
 `less`.  One can specifically activate some flags for particular
-commands: for example, setting `pager.blame` to `less -S` enables
-line truncation only for `git blame`.
+commands: for example, setting `pager.sleuth` to `less -S` enables
+line truncation only for `git sleuth`.
 +
 Likewise, when the `LV` environment variable is unset, Git sets it
 to `-c`.  You can override this setting by exporting `LV` with

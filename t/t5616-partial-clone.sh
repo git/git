@@ -66,7 +66,7 @@ test_expect_success 'verify checkout with dynamic object fetch' '
 	test_line_count = 0 observed
 '
 
-# create new commits in "src" repo to establish a blame history on file.1.txt
+# create new commits in "src" repo to establish a sleuth history on file.1.txt
 # and push to "srv.bare".
 test_expect_success 'push new commits to server' '
 	git -C src remote add srv "file://$(pwd)/srv.bare" &&
@@ -76,7 +76,7 @@ test_expect_success 'push new commits to server' '
 		git -C src add file.1.txt &&
 		git -C src commit -m "mod $x" || return 1
 	done &&
-	git -C src blame main -- file.1.txt >expect.blame &&
+	git -C src sleuth main -- file.1.txt >expect.sleuth &&
 	git -C src push -u srv main
 '
 
@@ -99,11 +99,11 @@ test_expect_success 'verify diff causes dynamic object fetch' '
 	test_line_count = 4 observed
 '
 
-# force full dynamic object fetch of the file's history using blame.
+# force full dynamic object fetch of the file's history using sleuth.
 # we should get the intermediate blobs for the file.
-test_expect_success 'verify blame causes dynamic object fetch' '
-	git -C pc1 blame origin/main -- file.1.txt >observed.blame &&
-	test_cmp expect.blame observed.blame &&
+test_expect_success 'verify sleuth causes dynamic object fetch' '
+	git -C pc1 sleuth origin/main -- file.1.txt >observed.sleuth &&
+	test_cmp expect.sleuth observed.sleuth &&
 	git -C pc1 rev-list --quiet --objects --missing=print \
 		main..origin/main >observed &&
 	test_line_count = 0 observed

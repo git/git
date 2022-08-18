@@ -7,7 +7,7 @@ Fixes since v1.7.2.1
  * Object transfer over smart http transport deadlocked the client when
    the remote HTTP server returned a failure, instead of erroring it out.
 
- * git-gui honors custom textconv filters when showing diff and blame;
+ * git-gui honors custom textconv filters when showing diff and sleuth;
 
  * git diff --relative=subdir (without the necessary trailing /) did not
    work well;

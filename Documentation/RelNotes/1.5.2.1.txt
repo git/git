@@ -16,7 +16,7 @@ Fixes since v1.5.2
     git-add did.
 
   - git-annotate did not work from a subdirectory while
-    git-blame did.
+    git-sleuth did.
 
   - git-cvsserver should have disabled access to a repository
     with "gitcvs.pserver.enabled = false" set even when

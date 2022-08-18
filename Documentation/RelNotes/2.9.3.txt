@@ -42,7 +42,7 @@ Fixes since v2.9.2
  * The test framework learned a new helper test_match_signal to
    check an exit code from getting killed by an expected signal.
 
- * "git blame -M" missed a single line that was moved within the file.
+ * "git sleuth -M" missed a single line that was moved within the file.
 
  * Fix recently introduced codepaths that are involved in parallel
    submodule operations, which gave up on reading too early, and
@@ -55,7 +55,7 @@ Fixes since v2.9.2
  * A test that unconditionally used "mktemp" learned that the command
    is not necessarily available everywhere.
 
- * "git blame file" allowed the lineage of lines in the uncommitted,
+ * "git sleuth file" allowed the lineage of lines in the uncommitted,
    unadded contents of "file" to be inspected, but it refused when
    "file" did not appear in the current commit.  When "file" was
    created by renaming an existing file (but the change has not been

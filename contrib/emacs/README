@@ -15,10 +15,10 @@ history:
   Modern alternatives to this include Magit, and VC mode that ships
   with Emacs.
 
-* git-blame.el:
+* git-sleuth.el:
 
-  A wrapper for "git blame" written before Emacs's own vc-annotate
-  mode learned to invoke git-blame, which can be done via C-x v g.
+  A wrapper for "git sleuth" written before Emacs's own vc-annotate
+  mode learned to invoke git-sleuth, which can be done via C-x v g.
 
 * vc-git.el:
 

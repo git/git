@@ -345,8 +345,8 @@ msgid "External diff"
 msgstr "Külső diff"
 
 #: gitk:2659
-msgid "Blame parent commit"
-msgstr "Blame szülő kommitra"
+msgid "sleuth parent commit"
+msgstr "sleuth szülő kommitra"
 
 #: gitk:2660
 msgid "Copy path"
@@ -357,8 +357,8 @@ msgid "Show origin of this line"
 msgstr "Mutasd meg ennek a sornak az eredetét"
 
 #: gitk:2668
-msgid "Run git gui blame on this line"
-msgstr "Futtasd a git gui blame-t ezen a soron"
+msgid "Run git gui sleuth on this line"
+msgstr "Futtasd a git gui sleuth-t ezen a soron"
 
 #: gitk:3014
 #, fuzzy
@@ -581,8 +581,8 @@ msgid "No such commit"
 msgstr "Nincs ilyen commit"
 
 #: gitk:3798
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: parancs hiba:"
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth: parancs hiba:"
 
 #: gitk:3829
 #, tcl-format
@@ -596,8 +596,8 @@ msgstr "Hiba történt az index olvasása közben: %s"
 
 #: gitk:3862
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "Nem sikerült a git blame indítása: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "Nem sikerült a git sleuth indítása: %s"
 
 #: gitk:3865 gitk:6754
 msgid "Searching"
@@ -605,8 +605,8 @@ msgstr "Keresés"
 
 #: gitk:3897
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Hiba történt a git blame futtatása közben: %s"
+msgid "Error running git sleuth: %s"
+msgstr "Hiba történt a git sleuth futtatása közben: %s"
 
 #: gitk:3925
 #, tcl-format

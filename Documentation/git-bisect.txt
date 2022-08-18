@@ -503,7 +503,7 @@ help` or `git bisect -h` to get a long usage description.
 SEE ALSO
 --------
 link:git-bisect-lk2009.html[Fighting regressions with git bisect],
-linkgit:git-blame[1].
+linkgit:git-sleuth[1].
 
 GIT
 ---

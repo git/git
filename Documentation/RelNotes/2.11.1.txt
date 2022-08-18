@@ -149,7 +149,7 @@ Fixes since v2.11
    failed to notice a file that is marked as binary via the userdiff
    driver configuration.
 
- * "git blame --porcelain" misidentified the "previous" <commit, path>
+ * "git sleuth --porcelain" misidentified the "previous" <commit, path>
    pair (aka "source") when contents came from two or more files.
 
  * "git rebase -i" with a recent update started showing an incorrect

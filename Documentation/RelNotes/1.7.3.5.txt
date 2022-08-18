@@ -17,7 +17,7 @@ Git 1.7.3.5 Release Notes
    that may have been made since then.  Now it refrains from doing so and
    instead issues a warning.
 
- * "git blame" incorrectly reused bogusly cached result of textconv
+ * "git sleuth" incorrectly reused bogusly cached result of textconv
    filter for files from the working tree.
 
  * "git commit" used to abort after the user edited the log message

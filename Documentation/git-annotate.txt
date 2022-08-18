@@ -15,18 +15,18 @@ DESCRIPTION
 Annotates each line in the given file with information from the commit
 which introduced the line. Optionally annotates from a given revision.
 
-The only difference between this command and linkgit:git-blame[1] is that
+The only difference between this command and linkgit:git-sleuth[1] is that
 they use slightly different output formats, and this command exists only
 for backward compatibility to support existing scripts, and provide a more
 familiar command name for people coming from other SCM systems.
 
 OPTIONS
 -------
-include::blame-options.txt[]
+include::sleuth-options.txt[]
 
 SEE ALSO
 --------
-linkgit:git-blame[1]
+linkgit:git-sleuth[1]
 
 GIT
 ---

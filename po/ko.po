@@ -818,7 +818,7 @@ msgstr "접두어"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "아카이브의 각 경로 이름의 앞에 지정한 경로를 붙입니다"
 
-#: archive.c:437 builtin/blame.c:813 builtin/blame.c:814 builtin/config.c:127
+#: archive.c:437 builtin/sleuth.c:813 builtin/sleuth.c:814 builtin/config.c:127
 #: builtin/fast-export.c:1007 builtin/fast-export.c:1009 builtin/grep.c:869
 #: builtin/hash-object.c:103 builtin/ls-files.c:551 builtin/ls-files.c:554
 #: builtin/notes.c:405 builtin/notes.c:568 builtin/read-tree.c:119
@@ -1023,39 +1023,39 @@ msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] "이등분: %2$s 뒤에 시험할 리비전이 %1$d개 남았습니다\n"
 
-#: blame.c:1756
+#: sleuth.c:1756
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents 및 --reverse 옵션은 호환되지 않습니다."
 
-#: blame.c:1767
+#: sleuth.c:1767
 msgid "cannot use --contents with final commit object name"
 msgstr "--contents 옵션을 마지막 오브젝트 이름에 사용할 수 없습니다"
 
-#: blame.c:1787
+#: sleuth.c:1787
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 "--reverse 및 --first-parent 옵션을 같이 쓰면 최근 커밋을 지정해야 합니다"
 
-#: blame.c:1796 bundle.c:160 ref-filter.c:2075 sequencer.c:1861
+#: sleuth.c:1796 bundle.c:160 ref-filter.c:2075 sequencer.c:1861
 #: sequencer.c:3632 builtin/commit.c:981 builtin/log.c:366 builtin/log.c:920
 #: builtin/log.c:1371 builtin/log.c:1702 builtin/log.c:1950 builtin/merge.c:372
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
 msgstr "리비전 walk 준비가 실패했습니다"
 
-#: blame.c:1814
+#: sleuth.c:1814
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 "--reverse 및 --first-parent 옵션을 같이 쓰면 최초-상위 체인과 범위가 필요합니"
 "다"
 
-#: blame.c:1825
+#: sleuth.c:1825
 #, c-format
 msgid "no such path %s in %s"
 msgstr "%s 경로가 %s 안에 없습니다"
 
-#: blame.c:1836
+#: sleuth.c:1836
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr "%s 경로에 대해 %s 블롭을 읽을 수 없음"
@@ -6003,164 +6003,164 @@ msgstr "--write-terms 옵션은 두 인자가 필요합니다"
 msgid "--bisect-clean-state requires no arguments"
 msgstr "--bisect-clean-state 옵션은 인자가 필요하지 않습니다"
 
-#: builtin/blame.c:29
-msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
-msgstr "git blame [<옵션>] [<리비전-옵션>] [<리비전>] [--] <파일>"
+#: builtin/sleuth.c:29
+msgid "git sleuth [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr "git sleuth [<옵션>] [<리비전-옵션>] [<리비전>] [--] <파일>"
 
-#: builtin/blame.c:34
+#: builtin/sleuth.c:34
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<리비전-옵션>은 git-rev-list(1)에 설명되어 있습니다"
 
-#: builtin/blame.c:404
+#: builtin/sleuth.c:404
 #, c-format
 msgid "expecting a color: %s"
 msgstr "색을 예상합니다: %s"
 
-#: builtin/blame.c:411
+#: builtin/sleuth.c:411
 msgid "must end with a color"
 msgstr "색으로 끝나야 합니다"
 
-#: builtin/blame.c:697
+#: builtin/sleuth.c:697
 #, c-format
-msgid "invalid color '%s' in color.blame.repeatedLines"
-msgstr "color.blame.repeatedLines에 잘못된 색을 ('%s') 무시합니다"
+msgid "invalid color '%s' in color.sleuth.repeatedLines"
+msgstr "color.sleuth.repeatedLines에 잘못된 색을 ('%s') 무시합니다"
 
-#: builtin/blame.c:715
-msgid "invalid value for blame.coloring"
-msgstr "blame.coloring의 값이 올바르지 않습니다"
+#: builtin/sleuth.c:715
+msgid "invalid value for sleuth.coloring"
+msgstr "sleuth.coloring의 값이 올바르지 않습니다"
 
-#: builtin/blame.c:786
-msgid "Show blame entries as we find them, incrementally"
+#: builtin/sleuth.c:786
+msgid "Show sleuth entries as we find them, incrementally"
 msgstr "블레임 항목을 찾자마자 점진적으로 표시합니다"
 
-#: builtin/blame.c:787
+#: builtin/sleuth.c:787
 msgid "Show blank SHA-1 for boundary commits (Default: off)"
 msgstr "가장자리 커밋에 대해 빈 SHA-1을 표시합니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:788
+#: builtin/sleuth.c:788
 msgid "Do not treat root commits as boundaries (Default: off)"
 msgstr "최상위 커밋을 가장자리 커밋으로 취급하지 않습니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:789
+#: builtin/sleuth.c:789
 msgid "Show work cost statistics"
 msgstr "작업 비용 통계를 표시합니다"
 
-#: builtin/blame.c:790
+#: builtin/sleuth.c:790
 msgid "Force progress reporting"
 msgstr "강제로 진행 상황을 표시합니다"
 
-#: builtin/blame.c:791
-msgid "Show output score for blame entries"
+#: builtin/sleuth.c:791
+msgid "Show output score for sleuth entries"
 msgstr "블레임 항목에 대해 출력 점수를 표시합니다"
 
-#: builtin/blame.c:792
+#: builtin/sleuth.c:792
 msgid "Show original filename (Default: auto)"
 msgstr "원래 파일 이름 표시 (기본값: 자동)"
 
-#: builtin/blame.c:793
+#: builtin/sleuth.c:793
 msgid "Show original linenumber (Default: off)"
 msgstr "원래 줄 번호 표시 (기본값: 하지 않음)"
 
-#: builtin/blame.c:794
+#: builtin/sleuth.c:794
 msgid "Show in a format designed for machine consumption"
 msgstr "컴퓨터 처리용으로 설계된 형식으로 표시합니다"
 
-#: builtin/blame.c:795
+#: builtin/sleuth.c:795
 msgid "Show porcelain format with per-line commit information"
 msgstr "줄마다 커밋 정보가 표시되는 사용자용 형식으로 표시합니다"
 
-#: builtin/blame.c:796
+#: builtin/sleuth.c:796
 msgid "Use the same output mode as git-annotate (Default: off)"
 msgstr "git-annotate와 동일한 형식을 사용합니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:797
+#: builtin/sleuth.c:797
 msgid "Show raw timestamp (Default: off)"
 msgstr "내부 형식으로 시각을 표시합니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:798
+#: builtin/sleuth.c:798
 msgid "Show long commit SHA1 (Default: off)"
 msgstr "길게 커밋 SHA1을 표시합니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:799
+#: builtin/sleuth.c:799
 msgid "Suppress author name and timestamp (Default: off)"
 msgstr "작성자 이름과 시각을 표시하지 않습니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:800
+#: builtin/sleuth.c:800
 msgid "Show author email instead of name (Default: off)"
 msgstr "작성자 이름 대신에 전자메일을 표시합니다 (기본값: 꺼짐)"
 
-#: builtin/blame.c:801
+#: builtin/sleuth.c:801
 msgid "Ignore whitespace differences"
 msgstr "공백 문자 차이점을 무시합니다"
 
-#: builtin/blame.c:802
+#: builtin/sleuth.c:802
 msgid "color redundant metadata from previous line differently"
 msgstr "불필요한 메타데이터를 앞의 줄과 다르게 색을 칠합니다"
 
-#: builtin/blame.c:803
+#: builtin/sleuth.c:803
 msgid "color lines by age"
 msgstr "줄이 얼마나 오래 됐느냐에 따라 다르게 색을 칠합니다"
 
-#: builtin/blame.c:810
+#: builtin/sleuth.c:810
 msgid "Use an experimental heuristic to improve diffs"
 msgstr "diff를 향상하는데 실험적인 휴리스틱을 사용합니다"
 
-#: builtin/blame.c:812
+#: builtin/sleuth.c:812
 msgid "Spend extra cycles to find better match"
 msgstr "더 일치하는 항목을 찾는데 더 시간을 소모합니다"
 
-#: builtin/blame.c:813
+#: builtin/sleuth.c:813
 msgid "Use revisions from <file> instead of calling git-rev-list"
 msgstr "git-rev-list를 호출하는 대신 <파일>에서 리비전을 사용합니다"
 
-#: builtin/blame.c:814
+#: builtin/sleuth.c:814
 msgid "Use <file>'s contents as the final image"
 msgstr "<파일>의 내용을 최종 이미지로 사용합니다"
 
-#: builtin/blame.c:815 builtin/blame.c:816
+#: builtin/sleuth.c:815 builtin/sleuth.c:816
 msgid "score"
 msgstr "점수"
 
-#: builtin/blame.c:815
+#: builtin/sleuth.c:815
 msgid "Find line copies within and across files"
 msgstr "파일 내부와 파일 사이의 복사된 줄을 찾습니다"
 
-#: builtin/blame.c:816
+#: builtin/sleuth.c:816
 msgid "Find line movements within and across files"
 msgstr "파일 내부와 파일 사이의 옮겨진 줄을 찾습니다"
 
-#: builtin/blame.c:817
+#: builtin/sleuth.c:817
 msgid "n,m"
 msgstr "n,m"
 
-#: builtin/blame.c:817
+#: builtin/sleuth.c:817
 msgid "Process only line range n,m, counting from 1"
 msgstr "n,m줄 (1번 줄부터 시작) 사이의 범위만 처리"
 
-#: builtin/blame.c:866
+#: builtin/sleuth.c:866
 msgid "--progress can't be used with --incremental or porcelain formats"
 msgstr ""
 "--progress 옵션은 --incremental 옵션이나 포스레인 형식에서 사용할 수 없습니다"
 
 #. TRANSLATORS: This string is used to tell us the
 #. maximum display width for a relative timestamp in
-#. "git blame" output.  For C locale, "4 years, 11
+#. "git sleuth" output.  For C locale, "4 years, 11
 #. months ago", which takes 22 places, is the longest
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
 #.
-#: builtin/blame.c:917
+#: builtin/sleuth.c:917
 msgid "4 years, 11 months ago"
 msgstr "4년 11달 전"
 
-#: builtin/blame.c:1003
+#: builtin/sleuth.c:1003
 #, c-format
 msgid "file %s has only %lu line"
 msgid_plural "file %s has only %lu lines"
 msgstr[0] "%s 파일에는 줄이 %lu개 뿐입니다"
 
-#: builtin/blame.c:1049
+#: builtin/sleuth.c:1049
 msgid "Blaming lines"
 msgstr "블레임 줄"
 

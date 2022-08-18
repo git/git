@@ -18,5 +18,5 @@ int cmd_annotate(int argc, const char **argv, const char *prefix)
 		strvec_push(&args, argv[i]);
 	}
 
-	return cmd_blame(args.nr, args.v, prefix);
+	return cmd_sleuth(args.nr, args.v, prefix);
 }

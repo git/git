@@ -350,7 +350,7 @@ msgid "External diff"
 msgstr "Extern diff"
 
 #: gitk:2660
-msgid "Blame parent commit"
+msgid "sleuth parent commit"
 msgstr "Klandra föräldraincheckning"
 
 #: gitk:2661
@@ -362,8 +362,8 @@ msgid "Show origin of this line"
 msgstr "Visa ursprunget för den här raden"
 
 #: gitk:2669
-msgid "Run git gui blame on this line"
-msgstr "Kör git gui blame på den här raden"
+msgid "Run git gui sleuth on this line"
+msgstr "Kör git gui sleuth på den här raden"
 
 #: gitk:3013
 msgid "About gitk"
@@ -585,8 +585,8 @@ msgid "No such commit"
 msgstr "Incheckning saknas"
 
 #: gitk:3799
-msgid "git gui blame: command failed:"
-msgstr "git gui blame: kommando misslyckades:"
+msgid "git gui sleuth: command failed:"
+msgstr "git gui sleuth: kommando misslyckades:"
 
 #: gitk:3830
 #, tcl-format
@@ -600,8 +600,8 @@ msgstr "Fel vid läsning av index: %s"
 
 #: gitk:3863
 #, tcl-format
-msgid "Couldn't start git blame: %s"
-msgstr "Kunde inte starta git blame: %s"
+msgid "Couldn't start git sleuth: %s"
+msgstr "Kunde inte starta git sleuth: %s"
 
 #: gitk:3866 gitk:6755
 msgid "Searching"
@@ -609,8 +609,8 @@ msgstr "Söker"
 
 #: gitk:3898
 #, tcl-format
-msgid "Error running git blame: %s"
-msgstr "Fel vid körning av git blame: %s"
+msgid "Error running git sleuth: %s"
+msgstr "Fel vid körning av git sleuth: %s"
 
 #: gitk:3926
 #, tcl-format

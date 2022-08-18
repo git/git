@@ -209,9 +209,9 @@ Unless otherwise noted, all the fixes since v2.3 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
+ * "git sleuth HEAD -- missing" failed to correctly say "HEAD" when it
    tried to say "No such path 'missing' in HEAD".
-   (merge a46442f jk/blame-commit-label later to maint).
+   (merge a46442f jk/sleuth-commit-label later to maint).
 
  * "git rerere" (invoked internally from many mergy operations) did
    not correctly signal errors when it attempted to update the working
@@ -346,9 +346,9 @@ notes for details).
    subdirectory.
    (merge 204a8ff ab/merge-file-prefix later to maint).
 
- * "git blame" could die trying to free an uninitialized piece of
+ * "git sleuth" could die trying to free an uninitialized piece of
    memory.
-   (merge e600592 es/blame-commit-info-fix later to maint).
+   (merge e600592 es/sleuth-commit-info-fix later to maint).
 
  * "git fast-import" used to crash when it could not close and
    finalize the resulting packfile cleanly.
