@@ -575,7 +575,7 @@ static int fast_forward_to(struct repository *r,
 	if (checkout_fast_forward(r, from, to, 1))
 		return -1; /* the callee should have complained already */
 
-	strbuf_addf(&sb, _("%s: fast-forward"), _(action_name(opts)));
+	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
