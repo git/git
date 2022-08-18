@@ -84,18 +84,15 @@ series have been accepted:
 
 - `scalar-diagnose`: The `scalar` command is taught the `diagnose` subcommand.
 
+- `scalar-generalize-diagnose`: Move the functionality of `scalar diagnose`
+  into `git diagnose` and `git bugreport --diagnose`.
+
 Roughly speaking (and subject to change), the following series are needed to
 "finish" this initial version of Scalar:
 
 - Finish Scalar features: Enable the built-in FSMonitor in Scalar enlistments
   and implement `scalar help`. At the end of this series, Scalar should be
   feature-complete from the perspective of a user.
-
-- Generalize features not specific to Scalar: In the spirit of making Scalar
-  configure only what is needed for large repo performance, move common
-  utilities into other parts of Git. Some of this will be internal-only, but one
-  major change will be generalizing `scalar diagnose` for use with any Git
-  repository.
 
 - Move Scalar to toplevel: Move Scalar out of `contrib/` and into the root of
   `git`, including updates to build and install it with the rest of Git. This

@@ -261,6 +261,7 @@ static inline int is_xplatform_dir_sep(int c)
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/statvfs.h>
 #include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
