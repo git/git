@@ -4481,34 +4481,6 @@ static int record_conflicted_index_entries(struct merge_options *opt)
 	return errs;
 }
 
-static void format_submodule_conflict_suggestion(struct strbuf *msg) {
-	struct strbuf tmp = STRBUF_INIT;
-	struct string_list msg_list = STRING_LIST_INIT_DUP;
-	int i;
-
-	string_list_split(&msg_list, msg->buf, '\n', -1);
-	for (i = 0; i < msg_list.nr; i++) {
-		if (!i)
-			/*
-			 * TRANSLATORS: This is line item of submodule conflict message
-			 * from print_submodule_conflict_suggestion() below. For RTL
-			 * languages, the following swap is suggested:
-			 *      " - %s\n" -> "%s - \n"
-			 */
-			strbuf_addf(&tmp, _(" - %s\n"), msg_list.items[i].string);
-		else
-			/*
-			 * TRANSLATORS: This is line item of submodule conflict message
-			 * from print_submodule_conflict_suggestion() below. For RTL
-			 * languages, the following swap is suggested:
-			 *      "   %s\n" -> "%s   \n"
-			 */
-			strbuf_addf(&tmp, _("   %s\n"), msg_list.items[i].string);
-	}
-	strbuf_reset(msg);
-	strbuf_add(msg, tmp.buf, tmp.len);
-}
-
 static void print_submodule_conflict_suggestion(struct string_list *csub) {
 	struct string_list_item *item;
 	struct strbuf msg = STRBUF_INIT;
@@ -4530,45 +4502,41 @@ static void print_submodule_conflict_suggestion(struct string_list *csub) {
 			return;
 	}
 
-	printf(_("Recursive merging with submodules currently only supports "
-		"trivial cases.\nPlease manually handle the merging of each "
-		"conflicted submodule.\nThis can be accomplished with the following "
-		"steps:"));
-	putchar('\n');
-
+	strbuf_add_separated_string_list(&subs, " ", csub);
 	for_each_string_list_item(item, csub) {
 		struct conflicted_submodule_item *util = item->util;
+
 		/*
-		 * TRANSLATORS: This is a line of advice to resolve a merge conflict
-		 * in a submodule. The second argument is the abbreviated id of the
-		 * commit that needs to be merged.
-		 * E.g. - go to submodule (sub), and either merge commit abc1234"
+		 * TRANSLATORS: This is a line of advice to resolve a merge
+		 * conflict in a submodule. The first argument is the submodule
+		 * name, and the second argument is the abbreviated id of the
+		 * commit that needs to be merged.  For example:
+		 *  - go to submodule (mysubmodule), and either merge commit abc1234"
 		 */
-		strbuf_addf(&tmp, _("go to submodule (%s), and either merge commit %s\n"
-			"or update to an existing commit which has merged those changes"),
-			item->string, util->abbrev);
-		format_submodule_conflict_suggestion(&tmp);
-		strbuf_add(&msg, tmp.buf, tmp.len);
-		strbuf_reset(&tmp);
+		strbuf_addf(&tmp, _(" - go to submodule (%s), and either merge commit %s\n"
+				    "   or update to an existing commit which has merged those changes\n"),
+			    item->string, util->abbrev);
 	}
-	strbuf_add_separated_string_list(&subs, " ", csub);
-	strbuf_addstr(&tmp, _("come back to superproject and run:"));
-	strbuf_addf(&tmp, "\n\ngit add %s\n\n", subs.buf);
-	strbuf_addstr(&tmp, _("to record the above merge or update"));
-	format_submodule_conflict_suggestion(&tmp);
-	strbuf_add(&msg, tmp.buf, tmp.len);
-	strbuf_reset(&tmp);
 
-	strbuf_addstr(&tmp, _("resolve any other conflicts in the superproject"));
-	format_submodule_conflict_suggestion(&tmp);
-	strbuf_add(&msg, tmp.buf, tmp.len);
-	strbuf_reset(&tmp);
-
-	strbuf_addstr(&tmp, _("commit the resulting index in the superproject"));
-	format_submodule_conflict_suggestion(&tmp);
-	strbuf_add(&msg, tmp.buf, tmp.len);
+	/*
+	 * TRANSLATORS: This is a detailed message for resolving submodule
+	 * conflicts.  The first argument is string containing one step per
+	 * submodule.  The second is a space-separated list of submodule names.
+	 */
+	strbuf_addf(&msg,
+		    _("Recursive merging with submodules currently only supports trivial cases.\n"
+		      "Please manually handle the merging of each conflicted submodule.\n"
+		      "This can be accomplished with the following steps:\n"
+		      "%s"
+		      " - come back to superproject and run:\n\n"
+		      "      git add %s\n\n"
+		      "   to record the above merge or update\n"
+		      " - resolve any other conflicts in the superproject\n"
+		      " - commit the resulting index in the superproject\n"),
+		    tmp.buf, subs.buf);
 
 	printf("%s", msg.buf);
+
 	strbuf_release(&subs);
 	strbuf_release(&tmp);
 	strbuf_release(&msg);
