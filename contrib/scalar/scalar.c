@@ -85,13 +85,33 @@ static int run_git(const char *arg, ...)
 	return res;
 }
 
+struct scalar_config {
+	const char *key;
+	const char *value;
+	int overwrite_on_reconfigure;
+};
+
+static int set_scalar_config(const struct scalar_config *config, int reconfigure)
+{
+	char *value = NULL;
+	int res;
+
+	if ((reconfigure && config->overwrite_on_reconfigure) ||
+	    git_config_get_string(config->key, &value)) {
+		trace2_data_string("scalar", the_repository, config->key, "created");
+		res = git_config_set_gently(config->key, config->value);
+	} else {
+		trace2_data_string("scalar", the_repository, config->key, "exists");
+		res = 0;
+	}
+
+	free(value);
+	return res;
+}
+
 static int set_recommended_config(int reconfigure)
 {
-	struct {
-		const char *key;
-		const char *value;
-		int overwrite_on_reconfigure;
-	} config[] = {
+	struct scalar_config config[] = {
 		/* Required */
 		{ "am.keepCR", "true", 1 },
 		{ "core.FSCache", "true", 1 },
@@ -145,17 +165,9 @@ static int set_recommended_config(int reconfigure)
 	char *value;
 
 	for (i = 0; config[i].key; i++) {
-		if ((reconfigure && config[i].overwrite_on_reconfigure) ||
-		    git_config_get_string(config[i].key, &value)) {
-			trace2_data_string("scalar", the_repository, config[i].key, "created");
-			if (git_config_set_gently(config[i].key,
-						  config[i].value) < 0)
-				return error(_("could not configure %s=%s"),
-					     config[i].key, config[i].value);
-		} else {
-			trace2_data_string("scalar", the_repository, config[i].key, "exists");
-			free(value);
-		}
+		if (set_scalar_config(config + i, reconfigure))
+			return error(_("could not configure %s=%s"),
+				     config[i].key, config[i].value);
 	}
 
 	/*
