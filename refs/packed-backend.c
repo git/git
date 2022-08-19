@@ -726,7 +726,7 @@ static struct snapshot *get_snapshot(struct packed_ref_store *refs)
 }
 
 static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
-			       struct object_id *oid, struct strbuf *referent,
+			       struct object_id *oid, struct strbuf *UNUSED(referent),
 			       unsigned int *type, int *failure_errno)
 {
 	struct packed_ref_store *refs =
@@ -1078,7 +1078,8 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled sorted \n";
 
-static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)
+static int packed_init_db(struct ref_store *UNUSED(ref_store),
+			  struct strbuf *UNUSED(err))
 {
 	/* Nothing to do. */
 	return 0;
@@ -1473,7 +1474,7 @@ failure:
 
 static int packed_transaction_abort(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
-				    struct strbuf *err)
+				    struct strbuf *UNUSED(err))
 {
 	struct packed_ref_store *refs = packed_downcast(
 			ref_store,
@@ -1512,7 +1513,7 @@ cleanup:
 	return ret;
 }
 
-static int packed_initial_transaction_commit(struct ref_store *ref_store,
+static int packed_initial_transaction_commit(struct ref_store *UNUSED(ref_store),
 					    struct ref_transaction *transaction,
 					    struct strbuf *err)
 {
@@ -1568,7 +1569,8 @@ static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
 	return ret;
 }
 
-static int packed_pack_refs(struct ref_store *ref_store, unsigned int flags)
+static int packed_pack_refs(struct ref_store *UNUSED(ref_store),
+			    unsigned int UNUSED(flags))
 {
 	/*
 	 * Packed refs are already packed. It might be that loose refs
@@ -1578,7 +1580,7 @@ static int packed_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	return 0;
 }
 
-static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
+static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *UNUSED(ref_store))
 {
 	return empty_ref_iterator_begin();
 }
