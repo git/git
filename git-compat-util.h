@@ -498,7 +498,8 @@ static inline void extract_id_from_env(const char *env, uid_t *id)
 	}
 }
 
-static inline int is_path_owned_by_current_uid(const char *path, struct strbuf *report)
+static inline int is_path_owned_by_current_uid(const char *path,
+					       struct strbuf *UNUSED(report))
 {
 	struct stat st;
 	uid_t euid;
