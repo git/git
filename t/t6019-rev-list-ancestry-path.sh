@@ -50,73 +50,36 @@ test_expect_success setup '
 	test_commit M
 '
 
-test_expect_success 'rev-list D..M' '
-	test_write_lines E F G H I J K L M >expect &&
-	git rev-list --format=%s D..M |
-	sed -e "/^commit /d" |
-	sort >actual &&
-	test_cmp expect actual
-'
+test_ancestry () {
+	args=$1
+	expected=$2
+	test_expect_success "log $args" "
+		test_write_lines $expected >expect &&
+		git log --format=%s $args >raw &&
 
-test_expect_success 'rev-list --ancestry-path D..M' '
-	test_write_lines E F H I J L M >expect &&
-	git rev-list --ancestry-path --format=%s D..M |
-	sed -e "/^commit /d" |
-	sort >actual &&
-	test_cmp expect actual
-'
+		if test -n \"$expected\"
+		then
+			sort raw >actual &&
+			test_cmp expect actual
+		else
+			test_must_be_empty raw
+		fi
+	"
+}
 
-test_expect_success 'rev-list D..M -- M.t' '
-	echo M >expect &&
-	git rev-list --format=%s D..M -- M.t |
-	sed -e "/^commit /d" >actual &&
-	test_cmp expect actual
-'
+test_ancestry "D..M" "E F G H I J K L M"
 
-test_expect_success 'rev-list --ancestry-path D..M -- M.t' '
-	echo M >expect &&
-	git rev-list --ancestry-path --format=%s D..M -- M.t |
-	sed -e "/^commit /d" >actual &&
-	test_cmp expect actual
-'
+test_ancestry "--ancestry-path D..M" "E F H I J L M"
 
-test_expect_success 'rev-list F...I' '
-	test_write_lines F G H I >expect &&
-	git rev-list --format=%s F...I |
-	sed -e "/^commit /d" |
-	sort >actual &&
-	test_cmp expect actual
-'
+test_ancestry "D..M -- M.t" "M"
+test_ancestry "--ancestry-path D..M -- M.t" "M"
 
-test_expect_success 'rev-list --ancestry-path F...I' '
-	test_write_lines F H I >expect &&
-	git rev-list --ancestry-path --format=%s F...I |
-	sed -e "/^commit /d" |
-	sort >actual &&
-	test_cmp expect actual
-'
+test_ancestry "F...I" "F G H I"
+test_ancestry "--ancestry-path F...I" "F H I"
 
-# G.t is dropped in an "-s ours" merge
-test_expect_success 'rev-list G..M -- G.t' '
-	git rev-list --format=%s G..M -- G.t |
-	sed -e "/^commit /d" >actual &&
-	test_must_be_empty actual
-'
-
-test_expect_success 'rev-list --ancestry-path G..M -- G.t' '
-	echo L >expect &&
-	git rev-list --ancestry-path --format=%s G..M -- G.t |
-	sed -e "/^commit /d" >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'rev-list --ancestry-path --simplify-merges G^..M -- G.t' '
-	test_write_lines G L >expect &&
-	git rev-list --ancestry-path --simplify-merges --format=%s G^..M -- G.t |
-	sed -e "/^commit /d" |
-	sort >actual &&
-	test_cmp expect actual
-'
+test_ancestry "G..M -- G.t" ""
+test_ancestry "--ancestry-path G..M -- G.t" "L"
+test_ancestry "--ancestry-path --simplify-merges G^..M -- G.t" "G L"
 
 #   b---bc
 #  / \ /
