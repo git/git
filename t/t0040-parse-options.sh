@@ -488,8 +488,8 @@ test_expect_success 'STOP_AT_NON_OPTION works' '
 	test_cmp expect actual
 '
 
-test_expect_success 'KEEP_UNKNOWN works' '
-	test-tool parse-options-flags --keep-unknown cmd --unknown=1 --opt=6 -u2 >actual &&
+test_expect_success 'KEEP_UNKNOWN_OPT works' '
+	test-tool parse-options-flags --keep-unknown-opt cmd --unknown=1 --opt=6 -u2 >actual &&
 	cat >expect <<-\EOF &&
 	opt: 6
 	arg 00: --unknown=1
@@ -515,8 +515,8 @@ do
 	"
 done
 
-test_expect_success 'KEEP_UNKNOWN | NO_INTERNAL_HELP works' '
-	test-tool parse-options-flags --keep-unknown --no-internal-help cmd -h --help --help-all >actual &&
+test_expect_success 'KEEP_UNKNOWN_OPT | NO_INTERNAL_HELP works' '
+	test-tool parse-options-flags --keep-unknown-opt --no-internal-help cmd -h --help --help-all >actual &&
 	cat >expect <<-\EOF &&
 	opt: 0
 	arg 00: -h

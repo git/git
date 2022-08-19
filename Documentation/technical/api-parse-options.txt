@@ -90,8 +90,8 @@ Flags are the bitwise-or of:
 	Keep the first argument, which contains the program name.  It's
 	removed from argv[] by default.
 
-`PARSE_OPT_KEEP_UNKNOWN`::
-	Keep unknown arguments instead of erroring out.  This doesn't
+`PARSE_OPT_KEEP_UNKNOWN_OPT`::
+	Keep unknown options instead of erroring out.  This doesn't
 	work for all combinations of arguments as users might expect
 	it to do.  E.g. if the first argument in `--unknown --known`
 	takes a value (which we can't know), the second one is
@@ -101,6 +101,8 @@ Flags are the bitwise-or of:
 	non-option, not as a value belonging to the unknown option,
 	the parser early.  That's why parse_options() errors out if
 	both options are set.
+	Note that non-option arguments are always kept, even without
+	this flag.
 
 `PARSE_OPT_NO_INTERNAL_HELP`::
 	By default, parse_options() handles `-h`, `--help` and

@@ -5661,7 +5661,7 @@ int diff_opt_parse(struct diff_options *options,
 
 	ac = parse_options(ac, av, prefix, options->parseopts, NULL,
 			   PARSE_OPT_KEEP_DASHDASH |
-			   PARSE_OPT_KEEP_UNKNOWN |
+			   PARSE_OPT_KEEP_UNKNOWN_OPT |
 			   PARSE_OPT_NO_INTERNAL_HELP |
 			   PARSE_OPT_ONE_SHOT |
 			   PARSE_OPT_STOP_AT_NON_OPTION);
