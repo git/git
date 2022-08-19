@@ -258,7 +258,7 @@ test_expect_success 'without subcommand accepts -v' '
 
 test_expect_success 'without subcommand does not take arguments' '
 	test_expect_code 129 git -C test remote origin 2>err &&
-	grep "^error: Unknown subcommand:" err
+	grep "^error: unknown subcommand:" err
 '
 
 cat >test/expect <<EOF
