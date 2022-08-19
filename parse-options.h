@@ -109,7 +109,8 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *				is last on the command line. If the option is
  *				not last it will require an argument.
  *				Should not be used with PARSE_OPT_OPTARG.
- *   PARSE_OPT_NODASH: this option doesn't start with a dash.
+ *   PARSE_OPT_NODASH: this option doesn't start with a dash; can only be a
+ *		       short option and can't accept arguments.
  *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
  *				(i.e. '<argh>') in the help message.
  *				Useful for options with multiple parameters.
