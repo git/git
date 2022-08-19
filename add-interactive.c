@@ -430,7 +430,7 @@ struct pathname_entry {
 	struct file_item *item;
 };
 
-static int pathname_entry_cmp(const void *unused_cmp_data,
+static int pathname_entry_cmp(const void *UNUSED(cmp_data),
 			      const struct hashmap_entry *he1,
 			      const struct hashmap_entry *he2,
 			      const void *name)

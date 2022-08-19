@@ -917,7 +917,7 @@ struct interned_diff_symbol {
 static int interned_diff_symbol_cmp(const void *hashmap_cmp_fn_data,
 				    const struct hashmap_entry *eptr,
 				    const struct hashmap_entry *entry_or_key,
-				    const void *keydata)
+				    const void *UNUSED(keydata))
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
 	const struct emitted_diff_symbol *a, *b;

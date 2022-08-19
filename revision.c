@@ -119,10 +119,10 @@ struct path_and_oids_entry {
 	struct oidset trees;
 };
 
-static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
+static int path_and_oids_cmp(const void *UNUSED(hashmap_cmp_fn_data),
 			     const struct hashmap_entry *eptr,
 			     const struct hashmap_entry *entry_or_key,
-			     const void *keydata)
+			     const void *UNUSED(keydata))
 {
 	const struct path_and_oids_entry *e1, *e2;
 

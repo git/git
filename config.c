@@ -2338,10 +2338,10 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const void *unused_cmp_data,
+static int config_set_element_cmp(const void *UNUSED(cmp_data),
 				  const struct hashmap_entry *eptr,
 				  const struct hashmap_entry *entry_or_key,
-				  const void *unused_keydata)
+				  const void *UNUSED(keydata))
 {
 	const struct config_set_element *e1, *e2;
 

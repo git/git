@@ -45,7 +45,7 @@ struct path_hashmap_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_hashmap_cmp(const void *cmp_data,
+static int path_hashmap_cmp(const void *UNUSED(cmp_data),
 			    const struct hashmap_entry *eptr,
 			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
@@ -89,10 +89,10 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
-static int dir_rename_cmp(const void *unused_cmp_data,
+static int dir_rename_cmp(const void *UNUSED(cmp_data),
 			  const struct hashmap_entry *eptr,
 			  const struct hashmap_entry *entry_or_key,
-			  const void *unused_keydata)
+			  const void *UNUSED(keydata))
 {
 	const struct dir_rename_entry *e1, *e2;
 
@@ -134,10 +134,10 @@ static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
-static int collision_cmp(const void *unused_cmp_data,
+static int collision_cmp(const void *UNUSED(cmp_data),
 			 const struct hashmap_entry *eptr,
 			 const struct hashmap_entry *entry_or_key,
-			 const void *unused_keydata)
+			 const void *UNUSED(keydata))
 {
 	const struct collision_entry *e1, *e2;
 

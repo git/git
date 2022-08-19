@@ -46,7 +46,7 @@ struct object_entry {
 		depth : DEPTH_BITS;
 };
 
-static int object_entry_hashcmp(const void *map_data,
+static int object_entry_hashcmp(const void *UNUSED(map_data),
 				const struct hashmap_entry *eptr,
 				const struct hashmap_entry *entry_or_key,
 				const void *keydata)

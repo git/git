@@ -86,7 +86,7 @@ struct remotes_hash_key {
 	int len;
 };
 
-static int remotes_hash_cmp(const void *unused_cmp_data,
+static int remotes_hash_cmp(const void *UNUSED(cmp_data),
 			    const struct hashmap_entry *eptr,
 			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
@@ -170,7 +170,7 @@ struct branches_hash_key {
 	int len;
 };
 
-static int branches_hash_cmp(const void *unused_cmp_data,
+static int branches_hash_cmp(const void *UNUSED(cmp_data),
 			     const struct hashmap_entry *eptr,
 			     const struct hashmap_entry *entry_or_key,
 			     const void *keydata)
