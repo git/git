@@ -1112,31 +1112,24 @@ static int repair(int ac, const char **av, const char *prefix)
 
 int cmd_worktree(int ac, const char **av, const char *prefix)
 {
+	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
+		OPT_SUBCOMMAND("add", &fn, add),
+		OPT_SUBCOMMAND("prune", &fn, prune),
+		OPT_SUBCOMMAND("list", &fn, list),
+		OPT_SUBCOMMAND("lock", &fn, lock_worktree),
+		OPT_SUBCOMMAND("unlock", &fn, unlock_worktree),
+		OPT_SUBCOMMAND("move", &fn, move_worktree),
+		OPT_SUBCOMMAND("remove", &fn, remove_worktree),
+		OPT_SUBCOMMAND("repair", &fn, repair),
 		OPT_END()
 	};
 
 	git_config(git_worktree_config, NULL);
 
-	if (ac < 2)
-		usage_with_options(worktree_usage, options);
 	if (!prefix)
 		prefix = "";
-	if (!strcmp(av[1], "add"))
-		return add(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "prune"))
-		return prune(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "list"))
-		return list(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "lock"))
-		return lock_worktree(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "unlock"))
-		return unlock_worktree(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "move"))
-		return move_worktree(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "remove"))
-		return remove_worktree(ac - 1, av + 1, prefix);
-	if (!strcmp(av[1], "repair"))
-		return repair(ac - 1, av + 1, prefix);
-	usage_with_options(worktree_usage, options);
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	return fn(ac, av, prefix);
 }
