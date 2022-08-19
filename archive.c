@@ -382,7 +382,8 @@ struct path_exists_context {
 	struct archiver_args *args;
 };
 
-static int reject_entry(const struct object_id *oid, struct strbuf *base,
+static int reject_entry(const struct object_id *UNUSED(oid),
+			struct strbuf *base,
 			const char *filename, unsigned mode,
 			void *context)
 {

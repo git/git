@@ -456,7 +456,7 @@ static void unpack_trees_finish(struct merge_options *opt)
 	clear_unpack_trees_porcelain(&opt->priv->unpack_opts);
 }
 
-static int save_files_dirs(const struct object_id *oid,
+static int save_files_dirs(const struct object_id *UNUSED(oid),
 			   struct strbuf *base, const char *path,
 			   unsigned int mode, void *context)
 {
