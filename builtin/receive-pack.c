@@ -465,7 +465,7 @@ static void rp_error(const char *err, ...)
 	va_end(params);
 }
 
-static int copy_to_sideband(int in, int out, void *arg)
+static int copy_to_sideband(int in, int UNUSED(out), void *UNUSED(arg))
 {
 	char data[128];
 	int keepalive_active = 0;

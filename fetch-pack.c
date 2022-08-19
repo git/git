@@ -823,7 +823,7 @@ static int everything_local(struct fetch_pack_args *args,
 	return retval;
 }
 
-static int sideband_demux(int in, int out, void *data)
+static int sideband_demux(int UNUSED(in), int out, void *data)
 {
 	int *xd = data;
 	int ret;

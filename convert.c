@@ -619,7 +619,7 @@ struct filter_params {
 	const char *path;
 };
 
-static int filter_buffer_or_fd(int in, int out, void *data)
+static int filter_buffer_or_fd(int UNUSED(in), int out, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
