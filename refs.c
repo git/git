@@ -358,7 +358,8 @@ struct warn_if_dangling_data {
 	const char *msg_fmt;
 };
 
-static int warn_if_dangling_symref(const char *refname, const struct object_id *oid,
+static int warn_if_dangling_symref(const char *refname,
+				   const struct object_id *UNUSED(oid),
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
@@ -934,9 +935,11 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 	return cb->found_it;
 }
 
-static int read_ref_at_ent_newest(struct object_id *ooid, struct object_id *noid,
-				  const char *email, timestamp_t timestamp,
-				  int tz, const char *message, void *cb_data)
+static int read_ref_at_ent_newest(struct object_id *UNUSED(ooid),
+				  struct object_id *noid,
+				  const char *UNUSED(email),
+				  timestamp_t timestamp, int tz,
+				  const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
 

@@ -329,7 +329,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 
 static int add_one_refname(const char *refname,
 			   const struct object_id *oid,
-			   int flag, void *cbdata)
+			   int UNUSED(flag), void *cbdata)
 {
 	struct hashmap *refname_map = cbdata;
 
@@ -1462,8 +1462,9 @@ static void set_option(struct transport *transport, const char *name, const char
 }
 
 
-static int add_oid(const char *refname, const struct object_id *oid, int flags,
-		   void *cb_data)
+static int add_oid(const char *UNUSED(refname),
+		   const struct object_id *oid,
+		   int UNUSED(flags), void *cb_data)
 {
 	struct oid_array *oids = cb_data;
 

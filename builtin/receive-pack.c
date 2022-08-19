@@ -291,7 +291,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 }
 
 static int show_ref_cb(const char *path_full, const struct object_id *oid,
-		       int flag, void *data)
+		       int UNUSED(flag), void *data)
 {
 	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);

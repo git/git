@@ -404,7 +404,7 @@ static int append_ref(const char *refname, const struct object_id *oid,
 }
 
 static int append_head_ref(const char *refname, const struct object_id *oid,
-			   int flag, void *cb_data)
+			   int UNUSED(flag), void *UNUSED(cb_data))
 {
 	struct object_id tmp;
 	int ofs = 11;
@@ -419,7 +419,7 @@ static int append_head_ref(const char *refname, const struct object_id *oid,
 }
 
 static int append_remote_ref(const char *refname, const struct object_id *oid,
-			     int flag, void *cb_data)
+			     int UNUSED(flag), void *UNUSED(cb_data))
 {
 	struct object_id tmp;
 	int ofs = 13;
@@ -434,7 +434,7 @@ static int append_remote_ref(const char *refname, const struct object_id *oid,
 }
 
 static int append_tag_ref(const char *refname, const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int UNUSED(flag), void *UNUSED(cb_data))
 {
 	if (!starts_with(refname, "refs/tags/"))
 		return 0;
