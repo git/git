@@ -2577,19 +2577,22 @@ struct check_and_collect_until_cb_data {
 };
 
 /* Get the timestamp of the latest entry. */
-static int peek_reflog(struct object_id *o_oid, struct object_id *n_oid,
-		       const char *ident, timestamp_t timestamp,
-		       int tz, const char *message, void *cb_data)
+static int peek_reflog(struct object_id *UNUSED(o_oid),
+		       struct object_id *UNUSED(n_oid),
+		       const char *UNUSED(ident),
+		       timestamp_t timestamp, int UNUSED(tz),
+		       const char *UNUSED(message), void *cb_data)
 {
 	timestamp_t *ts = cb_data;
 	*ts = timestamp;
 	return 1;
 }
 
-static int check_and_collect_until(struct object_id *o_oid,
+static int check_and_collect_until(struct object_id *UNUSED(o_oid),
 				   struct object_id *n_oid,
-				   const char *ident, timestamp_t timestamp,
-				   int tz, const char *message, void *cb_data)
+				   const char *UNUSED(ident),
+				   timestamp_t timestamp, int UNUSED(tz),
+				   const char *UNUSED(message), void *cb_data)
 {
 	struct commit *commit;
 	struct check_and_collect_until_cb_data *cb = cb_data;

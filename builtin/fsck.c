@@ -488,8 +488,9 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 }
 
 static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+				  const char *UNUSED(email),
+				  timestamp_t timestamp, int UNUSED(tz),
+				  const char *UNUSED(message), void *cb_data)
 {
 	const char *refname = cb_data;
 
