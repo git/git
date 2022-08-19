@@ -1486,7 +1486,7 @@ static int prune(int argc, const char **argv)
 	return result;
 }
 
-static int get_remote_default(const char *key, const char *value, void *priv)
+static int get_remote_default(const char *key, const char *UNUSED(value), void *priv)
 {
 	if (strcmp(key, "remotes.default") == 0) {
 		int *found = priv;

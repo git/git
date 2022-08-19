@@ -366,7 +366,8 @@ static struct archiver *find_tar_filter(const char *name, size_t len)
 	return NULL;
 }
 
-static int tar_filter_config(const char *var, const char *value, void *data)
+static int tar_filter_config(const char *var, const char *value,
+			     void *UNUSED(data))
 {
 	struct archiver *ar;
 	const char *name;

@@ -37,7 +37,7 @@
  *
  */
 
-static int iterate_cb(const char *var, const char *value, void *data)
+static int iterate_cb(const char *var, const char *value, void *UNUSED(data))
 {
 	static int nr;
 

@@ -316,7 +316,7 @@ static regex_t *island_regexes;
 static unsigned int island_regexes_alloc, island_regexes_nr;
 static const char *core_island_name;
 
-static int island_config_callback(const char *k, const char *v, void *cb)
+static int island_config_callback(const char *k, const char *v, void *UNUSED(cb))
 {
 	if (!strcmp(k, "pack.island")) {
 		struct strbuf re = STRBUF_INIT;

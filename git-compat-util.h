@@ -403,7 +403,9 @@ typedef uintmax_t timestamp_t;
 #endif
 
 #ifndef platform_core_config
-static inline int noop_core_config(const char *var, const char *value, void *cb)
+static inline int noop_core_config(const char *UNUSED(var),
+				   const char *UNUSED(value),
+				   void *UNUSED(cb))
 {
 	return 0;
 }

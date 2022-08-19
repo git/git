@@ -362,7 +362,8 @@ static void populate_remote_urls(struct config_include_data *inc)
 	current_parsing_scope = store_scope;
 }
 
-static int forbid_remote_url(const char *var, const char *value, void *data)
+static int forbid_remote_url(const char *var, const char *UNUSED(value),
+			     void *UNUSED(data))
 {
 	const char *remote_name;
 	size_t remote_name_len;
