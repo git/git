@@ -620,7 +620,8 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			suffix = "=";
 		if (starts_with(opts->long_name, "no-"))
 			nr_noopts++;
-		printf(" --%s%s", opts->long_name, suffix);
+		printf("%s--%s%s", opts == original_opts ? "" : " ",
+		       opts->long_name, suffix);
 	}
 	show_negated_gitcomp(original_opts, show_all, -1);
 	show_negated_gitcomp(original_opts, show_all, nr_noopts);
