@@ -193,6 +193,8 @@ static int expire_unreachable_callback(const struct option *opt,
 {
 	struct cmd_reflog_expire_cb *cmd = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (parse_expiry_date(arg, &cmd->expire_unreachable))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
@@ -206,6 +208,8 @@ static int expire_total_callback(const struct option *opt,
 				 int unset)
 {
 	struct cmd_reflog_expire_cb *cmd = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (parse_expiry_date(arg, &cmd->expire_total))
 		die(_("invalid timestamp '%s' given to '--%s'"),
