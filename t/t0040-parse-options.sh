@@ -456,4 +456,74 @@ test_expect_success '--end-of-options treats remainder as args' '
 	    --end-of-options --verbose
 '
 
+test_expect_success 'KEEP_DASHDASH works' '
+	test-tool parse-options-flags --keep-dashdash cmd --opt=1 -- --opt=2 --unknown >actual &&
+	cat >expect <<-\EOF &&
+	opt: 1
+	arg 00: --
+	arg 01: --opt=2
+	arg 02: --unknown
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'KEEP_ARGV0 works' '
+	test-tool parse-options-flags --keep-argv0 cmd arg0 --opt=3 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 3
+	arg 00: cmd
+	arg 01: arg0
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'STOP_AT_NON_OPTION works' '
+	test-tool parse-options-flags --stop-at-non-option cmd --opt=4 arg0 --opt=5 --unknown >actual &&
+	cat >expect <<-\EOF &&
+	opt: 4
+	arg 00: arg0
+	arg 01: --opt=5
+	arg 02: --unknown
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'KEEP_UNKNOWN works' '
+	test-tool parse-options-flags --keep-unknown cmd --unknown=1 --opt=6 -u2 >actual &&
+	cat >expect <<-\EOF &&
+	opt: 6
+	arg 00: --unknown=1
+	arg 01: -u2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'NO_INTERNAL_HELP works for -h' '
+	test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd -h 2>err &&
+	cat err &&
+	grep "^error: unknown switch \`h$SQ" err &&
+	grep "^usage: " err
+'
+
+for help_opt in help help-all
+do
+	test_expect_success "NO_INTERNAL_HELP works for --$help_opt" "
+		test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd --$help_opt 2>err &&
+		cat err &&
+		grep '^error: unknown option \`'$help_opt\' err &&
+		grep '^usage: ' err
+	"
+done
+
+test_expect_success 'KEEP_UNKNOWN | NO_INTERNAL_HELP works' '
+	test-tool parse-options-flags --keep-unknown --no-internal-help cmd -h --help --help-all >actual &&
+	cat >expect <<-\EOF &&
+	opt: 0
+	arg 00: -h
+	arg 01: --help
+	arg 02: --help-all
+	EOF
+	test_cmp expect actual
+'
+
 test_done
