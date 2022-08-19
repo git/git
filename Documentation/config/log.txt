@@ -18,6 +18,11 @@ log.decorate::
 	names are shown. This is the same as the `--decorate` option
 	of the `git log`.
 
+log.initialDecorationSet::
+	By default, `git log` only shows decorations for certain known ref
+	namespaces. If 'all' is specified, then show all refs as
+	decorations.
+
 log.excludeDecoration::
 	Exclude the specified patterns from the log decorations. This is
 	similar to the `--decorate-refs-exclude` command-line option, but

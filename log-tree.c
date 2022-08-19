@@ -137,10 +137,12 @@ static int ref_filter_match(const char *refname,
 static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
+	int i;
 	struct object *obj;
 	enum object_type objtype;
 	enum decoration_type deco_type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
 	if (filter && !ref_filter_match(refname, filter))
 		return 0;
@@ -165,16 +167,21 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		return 0;
 	obj = lookup_object_by_type(the_repository, oid, objtype);
 
-	if (starts_with(refname, "refs/heads/"))
-		deco_type = DECORATION_REF_LOCAL;
-	else if (starts_with(refname, "refs/remotes/"))
-		deco_type = DECORATION_REF_REMOTE;
-	else if (starts_with(refname, "refs/tags/"))
-		deco_type = DECORATION_REF_TAG;
-	else if (!strcmp(refname, "refs/stash"))
-		deco_type = DECORATION_REF_STASH;
-	else if (!strcmp(refname, "HEAD"))
-		deco_type = DECORATION_REF_HEAD;
+	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+		struct ref_namespace_info *info = &ref_namespace[i];
+
+		if (!info->decoration)
+			continue;
+		if (info->exact) {
+			if (!strcmp(refname, info->ref)) {
+				deco_type = info->decoration;
+				break;
+			}
+		} else if (starts_with(refname, info->ref)) {
+			deco_type = info->decoration;
+			break;
+		}
+	}
 
 	add_name_decoration(deco_type, refname, obj);
 	while (obj->type == OBJ_TAG) {

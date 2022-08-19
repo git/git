@@ -45,13 +45,23 @@ OPTIONS
 
 --decorate-refs=<pattern>::
 --decorate-refs-exclude=<pattern>::
-	If no `--decorate-refs` is given, pretend as if all refs were
-	included.  For each candidate, do not use it for decoration if it
+	For each candidate reference, do not use it for decoration if it
 	matches any patterns given to `--decorate-refs-exclude` or if it
 	doesn't match any of the patterns given to `--decorate-refs`. The
 	`log.excludeDecoration` config option allows excluding refs from
 	the decorations, but an explicit `--decorate-refs` pattern will
 	override a match in `log.excludeDecoration`.
++
+If none of these options or config settings are given, then references are
+used as decoration if they match `HEAD`, `refs/heads/`, `refs/remotes/`,
+`refs/stash/`, or `refs/tags/`.
+
+--clear-decorations::
+	When specified, this option clears all previous `--decorate-refs`
+	or `--decorate-refs-exclude` options and relaxes the default
+	decoration filter to include all references. This option is
+	assumed if the config value `log.initialDecorationSet` is set to
+	`all`.
 
 --source::
 	Print out the ref name given on the command line by which each

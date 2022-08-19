@@ -1,4 +1,4 @@
-$ git log --decorate=full --all
+$ git log --decorate=full --decorate-all --all
 commit b7e0bc69303b488b47deca799a7d723971dfa6cd (refs/heads/mode)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
@@ -20,7 +20,7 @@ Date:   Mon Jun 26 00:06:00 2006 +0000
 
     Rearranged lines in dir/sub
 
-commit cbacedd14cb8b89255a2c02b59e77a2e9a8021a0
+commit cbacedd14cb8b89255a2c02b59e77a2e9a8021a0 (refs/notes/commits)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 

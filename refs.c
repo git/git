@@ -20,6 +20,7 @@
 #include "repository.h"
 #include "sigchain.h"
 #include "date.h"
+#include "commit.h"
 
 /*
  * List of all available backends
@@ -55,6 +56,88 @@ static unsigned char refname_disposition[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 4
 };
+
+struct ref_namespace_info ref_namespace[] = {
+	[NAMESPACE_HEAD] = {
+		.ref = "HEAD",
+		.decoration = DECORATION_REF_HEAD,
+		.exact = 1,
+	},
+	[NAMESPACE_BRANCHES] = {
+		.ref = "refs/heads/",
+		.decoration = DECORATION_REF_LOCAL,
+	},
+	[NAMESPACE_TAGS] = {
+		.ref = "refs/tags/",
+		.decoration = DECORATION_REF_TAG,
+	},
+	[NAMESPACE_REMOTE_REFS] = {
+		/*
+		 * The default refspec for new remotes copies refs from
+		 * refs/heads/ on the remote into refs/remotes/<remote>/.
+		 * As such, "refs/remotes/" has special handling.
+		 */
+		.ref = "refs/remotes/",
+		.decoration = DECORATION_REF_REMOTE,
+	},
+	[NAMESPACE_STASH] = {
+		/*
+		 * The single ref "refs/stash" stores the latest stash.
+		 * Older stashes can be found in the reflog.
+		 */
+		.ref = "refs/stash",
+		.exact = 1,
+		.decoration = DECORATION_REF_STASH,
+	},
+	[NAMESPACE_REPLACE] = {
+		/*
+		 * This namespace allows Git to act as if one object ID
+		 * points to the content of another. Unlike the other
+		 * ref namespaces, this one can be changed by the
+		 * GIT_REPLACE_REF_BASE environment variable. This
+		 * .namespace value will be overwritten in setup_git_env().
+		 */
+		.ref = "refs/replace/",
+		.decoration = DECORATION_GRAFTED,
+	},
+	[NAMESPACE_NOTES] = {
+		/*
+		 * The refs/notes/commit ref points to the tip of a
+		 * parallel commit history that adds metadata to commits
+		 * in the normal history. This ref can be overwritten
+		 * by the core.notesRef config variable or the
+		 * GIT_NOTES_REFS environment variable.
+		 */
+		.ref = "refs/notes/commit",
+		.exact = 1,
+	},
+	[NAMESPACE_PREFETCH] = {
+		/*
+		 * Prefetch refs are written by the background 'fetch'
+		 * maintenance task. It allows faster foreground fetches
+		 * by advertising these previously-downloaded tips without
+		 * updating refs/remotes/ without user intervention.
+		 */
+		.ref = "refs/prefetch/",
+	},
+	[NAMESPACE_REWRITTEN] = {
+		/*
+		 * Rewritten refs are used by the 'label' command in the
+		 * sequencer. These are particularly useful during an
+		 * interactive rebase that uses the 'merge' command.
+		 */
+		.ref = "refs/rewritten/",
+	},
+};
+
+void update_ref_namespace(enum ref_namespace namespace, char *ref)
+{
+	struct ref_namespace_info *info = &ref_namespace[namespace];
+	if (info->ref_updated)
+		free(info->ref);
+	info->ref = ref;
+	info->ref_updated = 1;
+}
 
 /*
  * Try to read one refname component from the front of refname.
@@ -455,11 +538,16 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	if (*pattern == '/')
 		BUG("pattern must not start with '/'");
 
-	if (prefix) {
+	if (prefix)
 		strbuf_addstr(&normalized_pattern, prefix);
-	}
-	else if (!starts_with(pattern, "refs/"))
+	else if (!starts_with(pattern, "refs/") &&
+		   strcmp(pattern, "HEAD"))
 		strbuf_addstr(&normalized_pattern, "refs/");
+	/*
+	 * NEEDSWORK: Special case other symrefs such as REBASE_HEAD,
+	 * MERGE_HEAD, etc.
+	 */
+
 	strbuf_addstr(&normalized_pattern, pattern);
 	strbuf_strip_suffix(&normalized_pattern, "/");
 
@@ -1524,6 +1612,7 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
 {
+	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 	return do_for_each_repo_ref(r, git_replace_ref_base, fn,
 				    strlen(git_replace_ref_base),
 				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
