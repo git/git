@@ -87,17 +87,20 @@ series have been accepted:
 - `scalar-generalize-diagnose`: Move the functionality of `scalar diagnose`
   into `git diagnose` and `git bugreport --diagnose`.
 
+- 'scalar-add-fsmonitor: Enable the built-in FSMonitor in Scalar
+  enlistments. At the end of this series, Scalar should be feature-complete
+  from the perspective of a user.
+
 Roughly speaking (and subject to change), the following series are needed to
 "finish" this initial version of Scalar:
 
-- Finish Scalar features: Enable the built-in FSMonitor in Scalar enlistments
-  and implement `scalar help`. At the end of this series, Scalar should be
-  feature-complete from the perspective of a user.
-
 - Move Scalar to toplevel: Move Scalar out of `contrib/` and into the root of
-  `git`, including updates to build and install it with the rest of Git. This
-  change will incorporate Scalar into the Git CI and test framework, as well as
-  expand regression and performance testing to ensure the tool is stable.
+  `git`. This includes a variety of related updates, including:
+    - building & installing Scalar in the Git root-level 'make [install]'.
+    - builing & testing Scalar as part of CI.
+    - moving and expanding test coverage of Scalar (including perf tests).
+    - implementing 'scalar help'/'git help scalar' to display scalar
+      documentation.
 
 Finally, there are two additional patch series that exist in Microsoft's fork of
 Git, but there is no current plan to upstream them. There are some interesting
