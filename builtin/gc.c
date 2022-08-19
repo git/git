@@ -1465,7 +1465,7 @@ static char *get_maintpath(void)
 	return strbuf_detach(&sb, NULL);
 }
 
-static int maintenance_register(void)
+static int maintenance_register(int argc, const char **argv, const char *prefix)
 {
 	int rc;
 	char *config_value;
@@ -1509,7 +1509,7 @@ done:
 	return rc;
 }
 
-static int maintenance_unregister(void)
+static int maintenance_unregister(int argc, const char **argv, const char *prefix)
 {
 	int rc;
 	struct child_process config_unset = CHILD_PROCESS_INIT;
@@ -2505,34 +2505,34 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 	opts.scheduler = resolve_scheduler(opts.scheduler);
 	validate_scheduler(opts.scheduler);
 
-	if (maintenance_register())
+	if (maintenance_register(0, NULL, NULL)) /* It doesn't take any args */
 		warning(_("failed to add repo to global config"));
 	return update_background_schedule(&opts, 1);
 }
 
-static int maintenance_stop(void)
+static int maintenance_stop(int argc, const char **argv, const char *prefix)
 {
 	return update_background_schedule(NULL, 0);
 }
 
-static const char builtin_maintenance_usage[] =	N_("git maintenance <subcommand> [<options>]");
+static const char * const builtin_maintenance_usage[] = {
+	N_("git maintenance <subcommand> [<options>]"),
+	NULL,
+};
 
 int cmd_maintenance(int argc, const char **argv, const char *prefix)
 {
-	if (argc < 2 ||
-	    (argc == 2 && !strcmp(argv[1], "-h")))
-		usage(builtin_maintenance_usage);
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option builtin_maintenance_options[] = {
+		OPT_SUBCOMMAND("run", &fn, maintenance_run),
+		OPT_SUBCOMMAND("start", &fn, maintenance_start),
+		OPT_SUBCOMMAND("stop", &fn, maintenance_stop),
+		OPT_SUBCOMMAND("register", &fn, maintenance_register),
+		OPT_SUBCOMMAND("unregister", &fn, maintenance_unregister),
+		OPT_END(),
+	};
 
-	if (!strcmp(argv[1], "run"))
-		return maintenance_run(argc - 1, argv + 1, prefix);
-	if (!strcmp(argv[1], "start"))
-		return maintenance_start(argc - 1, argv + 1, prefix);
-	if (!strcmp(argv[1], "stop"))
-		return maintenance_stop();
-	if (!strcmp(argv[1], "register"))
-		return maintenance_register();
-	if (!strcmp(argv[1], "unregister"))
-		return maintenance_unregister();
-
-	die(_("invalid subcommand: %s"), argv[1]);
+	argc = parse_options(argc, argv, prefix, builtin_maintenance_options,
+			     builtin_maintenance_usage, 0);
+	return fn(argc, argv, prefix);
 }

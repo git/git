@@ -32,11 +32,13 @@ test_systemd_analyze_verify () {
 }
 
 test_expect_success 'help text' '
-	test_expect_code 129 git maintenance -h 2>err &&
-	test_i18ngrep "usage: git maintenance <subcommand>" err &&
-	test_expect_code 128 git maintenance barf 2>err &&
-	test_i18ngrep "invalid subcommand: barf" err &&
+	test_expect_code 129 git maintenance -h >actual &&
+	test_i18ngrep "usage: git maintenance <subcommand>" actual &&
+	test_expect_code 129 git maintenance barf 2>err &&
+	test_i18ngrep "unknown subcommand: \`barf'\''" err &&
+	test_i18ngrep "usage: git maintenance" err &&
 	test_expect_code 129 git maintenance 2>err &&
+	test_i18ngrep "error: need a subcommand" err &&
 	test_i18ngrep "usage: git maintenance" err
 '
 
