@@ -48,6 +48,7 @@
  */
 #define NOT_USER_GIVEN	(1u<<25)
 #define TRACK_LINEAR	(1u<<26)
+#define ANCESTRY_PATH	(1u<<27)
 #define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR | PULL_MERGE)
 
 #define DECORATE_SHORT_REFS	1
@@ -164,6 +165,13 @@ struct rev_info {
 			cherry_mark:1,
 			bisect:1,
 			ancestry_path:1,
+
+			/* True if --ancestry-path was specified without an
+			 * argument. The bottom revisions are implicitly
+			 * the arguments in this case.
+			 */
+			ancestry_path_implicit_bottoms:1,
+
 			first_parent_only:1,
 			exclude_first_parent_only:1,
 			line_level_traverse:1,
@@ -306,6 +314,7 @@ struct rev_info {
 	struct saved_parents *saved_parents_slab;
 
 	struct commit_list *previous_parents;
+	struct commit_list *ancestry_path_bottoms;
 	const char *break_bar;
 
 	struct revision_sources *sources;
