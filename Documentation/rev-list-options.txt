@@ -659,7 +659,7 @@ Here, the merge commits `O` and `P` contribute extra noise, as they did
 not actually contribute a change to `file.txt`. They only merged a topic
 that was based on an older version of `file.txt`. This is a common
 issue in repositories using a workflow where many contributors work in
-parallel and merge their topic branches along a single trunk: manu
+parallel and merge their topic branches along a single trunk: many
 unrelated merges appear in the `--full-history` results.
 
 When using the `--simplify-merges` option, the commits `O` and `P`
