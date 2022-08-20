@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2022, #06; Wed, 17)
-X-master-at: 9bf691b78cf906751e65d65ba0c6ffdcd9a5a12c
-X-next-at: 91fe8e635439f67be8837601cbf4bd61eddc41b4
+Subject: What's cooking in git.git (Aug 2022, #07; Fri, 19)
+X-master-at: 795ea8776befc95ea2becd8020c7a284677b4161
+X-next-at: 83af4878235c0b991658350560d398d4e8edb8a9
 
-What's cooking in git.git (Aug 2022, #06; Wed, 17)
+What's cooking in git.git (Aug 2022, #07; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -13,7 +13,7 @@ release).  Commits prefixed with '-' are only in 'seen', and aren't
 considered "accepted" at all.  A topic without enough support may be
 discarded after a long period of no activity.
 
-We are in the middle of the week #6 of a 12-week cycle (cf.
+We are at the end of the week #6 of a 12-week cycle (cf.
 https://tinyurl.com/gitCal).
 
 Copies of the source code to Git live in many repositories, and the
@@ -47,46 +47,147 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* vd/scalar-enables-fsmonitor (2022-08-16) 5 commits
- - scalar: update technical doc roadmap with FSMonitor support
- - scalar unregister: stop FSMonitor daemon
- - scalar: enable built-in FSMonitor on `register`
- - scalar-[un]register: clearly indicate source of error
- - scalar-unregister: handle error codes greater than 0
+* en/ort-unused-code-removal (2022-08-19) 1 commit
+ - merge-ort: remove code obsoleted by other changes
 
- "scalar" now enables built-in fsmonitor on enlisted repositories,
- when able.
+ Code clean-up.
 
  Will merge to 'next'?
- source: <pull.1324.v2.git.1660694290.gitgitgadget@gmail.com>
+ source: <pull.1302.git.git.1660884355643.gitgitgadget@gmail.com>
 
 
-* en/ancestry-path-in-a-range (2022-08-17) 2 commits
- - revision: allow --ancestry-path to take an argument
- - rev-list-options.txt: fix simple typo
+* jd/prompt-show-conflict (2022-08-19) 1 commit
+  (merged to 'next' on 2022-08-19 at 83af487823)
+ + git-prompt: show presence of unresolved conflicts at command prompt
 
- "git rev-list --ancestry-path=C A..B" is a natural extension of
- "git rev-list A..B"; instead of choosing a subset of A..B to those
- that have ancestry relationship with A, it lets a subset with
- ancestry relationship with C.
+ The bash prompt (in contrib/) learned to optionally indicate when
+ the index is unmerged.
 
- Will merge to 'next'?
- source: <pull.1303.git.1660704498.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1302.v3.git.1660695492382.gitgitgadget@gmail.com>
 
 
-* en/submodule-merge-messages-fixes (2022-08-17) 3 commits
- - merge-ort: provide helpful submodule update message when possible
- - merge-ort: add comment to avoid surprise with new sub_flag variable
- - merge-ort: remove translator lego in new "submodule conflict suggestion"
- (this branch uses cw/submodule-merge-messages.)
+* jk/unused-annotation (2022-08-19) 11 commits
+ - is_path_owned_by_current_uid(): mark "report" parameter as unused
+ - run-command: mark unused async callback parameters
+ - mark unused read_tree_recursive() callback parameters
+ - hashmap: mark unused callback parameters
+ - config: mark unused callback parameters
+ - streaming: mark unused virtual method parameters
+ - transport: mark bundle transport_options as unused
+ - refs: mark unused virtual method parameters
+ - refs: mark unused reflog callback parameters
+ - refs: mark unused each_ref_fn parameters
+ - git-compat-util: add UNUSED macro
 
- Further update the help messages given while merging submodules.
+ Annotate function parameters that are not used (but cannot be
+ removed for structural reasons), to prepare us to later compile
+ with -Wunused warning turned on.
 
- Will merge to 'next'?
- source: <pull.1325.v2.git.1660718028.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <Yv9gxqH6nK2KYnNj@coredump.intra.peff.net>
+
+
+* jk/unused-fixes (2022-08-19) 6 commits
+ - reflog: assert PARSE_OPT_NONEG in parse-options callbacks
+ - reftable: drop unused parameter from reader_seek_linear()
+ - verify_one_sparse(): drop unused repository parameter
+ - match_pathname(): drop unused "flags" parameter
+ - log-tree: drop unused commit param in remerge_diff()
+ - xdiff: drop unused mmfile parameters from xdl_do_histogram_diff()
+
+ Code clean-up to remove unused function parameters.
+
+ Will merge to 'next'.
+ source: <Yv9Oay+tNqhLDqVl@coredump.intra.peff.net>
+
+
+* js/merge-tree-without-munging-filenames (2022-08-19) 3 commits
+ - t4301: add a test case involving a rename, type change & modification
+ - merge-tree: show the original file names in the conflict output
+ - merge-tree -z: always show the original file name first
+
+ "git merge-tree" output was improved to help "merging without
+ working tree" usecase better in a few ways.
+ source: <pull.1327.git.1660892256.gitgitgadget@gmail.com>
+
+
+* mg/sequencer-untranslate-reflog (2022-08-19) 3 commits
+ - sequencer: do not translate command names
+ - sequencer: do not translate parameters to error_resolve_conflict()
+ - sequencer: do not translate reflog messages
+
+ The sequencer machinery translated messages left in the reflog by
+ mistake, which has been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1660828108.git.git@grubix.eu>
+
+
+* tb/midx-with-changing-preferred-pack-fix (2022-08-19) 6 commits
+ - midx.c: include preferred pack correctly with existing MIDX
+ - midx.c: extract `midx_fanout_add_pack_fanout()`
+ - midx.c: extract `midx_fanout_add_midx_fanout()`
+ - midx.c: extract `struct midx_fanout`
+ - t/lib-bitmap.sh: avoid silencing stderr
+ - t5326: demonstrate potential bitmap corruption
+
+ Multi-pack index got corrupted when preferred pack changed from one
+ pack to another in a certain way, which has been corrected.
+
+ Needs review.
+ source: <cover.1660944574.git.me@ttaylorr.com>
+
+
+* vd/fix-perf-tests (2022-08-19) 2 commits
+ - p0006: fix 'read-tree' argument ordering
+ - p0004: fix prereq declaration
+
+ Rather trivial perf-test code fixes.
+
+ Will merge to 'next'.
+ source: <pull.1330.git.1660942149.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[Cooking]
+[Graduated to 'master']
+
+* ds/bundle-uri-more (2022-08-10) 2 commits
+  (merged to 'next' on 2022-08-12 at 4f445a058d)
+ + bundle-uri: add example bundle organization
+ + docs: document bundle URI standard
+
+ The "bundle URI" design gets documented.
+ source: <pull.1248.v4.git.1660050761.gitgitgadget@gmail.com>
+
+
+* fc/vimdiff-layout-vimdiff3-fix (2022-08-10) 7 commits
+  (merged to 'next' on 2022-08-11 at a14fec292f)
+ + mergetools: vimdiff: simplify tabfirst
+ + mergetools: vimdiff: fix single window layouts
+ + mergetools: vimdiff: rework tab logic
+ + mergetools: vimdiff: fix for diffopt
+ + mergetools: vimdiff: silence annoying messages
+ + mergetools: vimdiff: make vimdiff3 actually work
+ + mergetools: vimdiff: fix comment
+
+ "vimdiff3" regression fix.
+ source: <20220810154618.307275-1-felipe.contreras@gmail.com>
+
+
+* jk/fsck-tree-mode-bits-fix (2022-08-10) 3 commits
+  (merged to 'next' on 2022-08-11 at 219fe53025)
+ + fsck: downgrade tree badFilemode to "info"
+ + fsck: actually detect bad file modes in trees
+ + tree-walk: add a mechanism for getting non-canonicalized modes
+
+ "git fsck" reads mode from tree objects but canonicalizes the mode
+ before passing it to the logic to check object sanity, which has
+ hid broken tree objects from the checking logic.  This has been
+ corrected, but to help exiting projects with broken tree objects
+ that they cannot fix retroactively, the severity of anomalies this
+ code detects has been demoted to "info" for now.
+ source: <YvQcNpizy9uOZiAz@coredump.intra.peff.net>
+
 
 * ll/disk-usage-humanise (2022-08-11) 1 commit
   (merged to 'next' on 2022-08-14 at 3873a83f90)
@@ -95,12 +196,93 @@ Release tarballs are available at:
  "git rev-list --disk-usage" learned to take an optional value
  "human" to show the reported value in human-readable format, like
  "3.40MiB".
-
- Will merge to 'master'.
  source: <pull.1313.v5.git.1660193274336.gitgitgadget@gmail.com>
 
 
-* ed/fsmonitor-on-network-disk (2022-08-11) 1 commit
+* po/doc-add-renormalize (2022-08-10) 1 commit
+  (merged to 'next' on 2022-08-11 at 53851663eb)
+ + doc add: renormalize is not idempotent for CRCRLF
+
+ Documentation for "git add --renormalize" has been improved.
+ source: <20220810144450.470-2-philipoakley@iee.email>
+
+
+* sy/sparse-rm (2022-08-08) 5 commits
+  (merged to 'next' on 2022-08-12 at 5bf10965fb)
+ + rm: integrate with sparse-index
+ + rm: expand the index only when necessary
+ + pathspec.h: move pathspec_needs_expanded_index() from reset.c to here
+ + t1092: add tests for `git-rm`
+ + Merge branch 'vd/sparse-reset-checkout-fixes' into sy/sparse-rm
+ (this branch uses vd/sparse-reset-checkout-fixes.)
+
+ "git rm" has become more aware of the sparse-index feature.
+ source: <20220807041335.1790658-1-shaoxuan.yuan02@gmail.com>
+
+
+* vd/sparse-reset-checkout-fixes (2022-08-08) 4 commits
+  (merged to 'next' on 2022-08-12 at 755d6ecdb8)
+ + unpack-trees: unpack new trees as sparse directories
+ + cache.h: create 'index_name_pos_sparse()'
+ + oneway_diff: handle removed sparse directories
+ + checkout: fix nested sparse directory diff in sparse index
+ (this branch is used by sy/sparse-rm.)
+
+ Fixes to sparse index compatibility work for "reset" and "checkout"
+ commands.
+ source: <pull.1312.v3.git.1659985672.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* vd/scalar-enables-fsmonitor (2022-08-18) 8 commits
+  (merged to 'next' on 2022-08-19 at 1e172e5647)
+ + scalar: update technical doc roadmap with FSMonitor support
+ + scalar unregister: stop FSMonitor daemon
+ + scalar: enable built-in FSMonitor on `register`
+ + scalar: move config setting logic into its own function
+ + scalar-delete: do not 'die()' in 'delete_enlistment()'
+ + scalar-[un]register: clearly indicate source of error
+ + scalar-unregister: handle error codes greater than 0
+ + scalar: constrain enlistment search
+
+ "scalar" now enables built-in fsmonitor on enlisted repositories,
+ when able.
+
+ Will merge to 'master'.
+ source: <pull.1324.v3.git.1660858853.gitgitgadget@gmail.com>
+
+
+* en/ancestry-path-in-a-range (2022-08-19) 3 commits
+  (merged to 'next' on 2022-08-19 at 4fce3015b3)
+ + revision: allow --ancestry-path to take an argument
+ + t6019: modernize tests with helper
+ + rev-list-options.txt: fix simple typo
+
+ "git rev-list --ancestry-path=C A..B" is a natural extension of
+ "git rev-list A..B"; instead of choosing a subset of A..B to those
+ that have ancestry relationship with A, it lets a subset with
+ ancestry relationship with C.
+
+ Will merge to 'master'.
+ source: <pull.1303.v3.git.1660883290.gitgitgadget@gmail.com>
+
+
+* en/submodule-merge-messages-fixes (2022-08-18) 3 commits
+  (merged to 'next' on 2022-08-18 at eb89a1e70f)
+ + merge-ort: provide helpful submodule update message when possible
+ + merge-ort: avoid surprise with new sub_flag variable
+ + merge-ort: remove translator lego in new "submodule conflict suggestion"
+ (this branch uses cw/submodule-merge-messages.)
+
+ Further update the help messages given while merging submodules.
+
+ Will merge to 'master'.
+ source: <pull.1325.v3.git.1660806927.gitgitgadget@gmail.com>
+
+
+* ed/fsmonitor-on-network-disk (2022-08-18) 2 commits
+ - fsmonitor: option to allow fsmonitor to run against network-mounted repos
   (merged to 'next' on 2022-08-14 at 637d458d9c)
  + fsmonitor: option to allow fsmonitor to run against network-mounted repos
 
@@ -108,8 +290,10 @@ Release tarballs are available at:
  repositories; a configuration knob for users to override this has
  been introduced.
 
- Will merge to 'master'.
- source: <pull.1317.v4.git.1660262231357.gitgitgadget@gmail.com>
+ The second one needs more work.
+ cf. <4q6248n0-nqr5-p5pp-64s3-qq7nr53q01op@tzk.qr>
+ cf. <20220819185847.ulr5yjcfsahydeff@tb-raspi4>
+ source: <pull.1317.v3.git.1660242752495.gitgitgadget@gmail.com>
 
 
 * jk/is-promisor-object-keep-tree-in-use (2022-08-14) 1 commit
@@ -134,7 +318,7 @@ Release tarballs are available at:
  source: <4390677ec75d51487142adf7c2ab821cbd24a53e.1659477669.git.steadmon@google.com>
 
 
-* pw/rebase-keep-base-fixes (2022-08-15) 5 commits
+* pw/rebase-keep-base-fixes (2022-08-18) 5 commits
  - rebase --keep-base: imply --no-fork-point
  - rebase --keep-base: imply --reapply-cherry-picks
  - rebase: factor out merge_base calculation
@@ -150,39 +334,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1323.git.1660576283.gitgitgadget@gmail.com>
-
-
-* fc/vimdiff-layout-vimdiff3-fix (2022-08-10) 7 commits
-  (merged to 'next' on 2022-08-11 at a14fec292f)
- + mergetools: vimdiff: simplify tabfirst
- + mergetools: vimdiff: fix single window layouts
- + mergetools: vimdiff: rework tab logic
- + mergetools: vimdiff: fix for diffopt
- + mergetools: vimdiff: silence annoying messages
- + mergetools: vimdiff: make vimdiff3 actually work
- + mergetools: vimdiff: fix comment
-
- "vimdiff3" regression fix.
-
- Will merge to 'master'.
- source: <20220810154618.307275-1-felipe.contreras@gmail.com>
-
-
-* jk/fsck-tree-mode-bits-fix (2022-08-10) 3 commits
-  (merged to 'next' on 2022-08-11 at 219fe53025)
- + fsck: downgrade tree badFilemode to "info"
- + fsck: actually detect bad file modes in trees
- + tree-walk: add a mechanism for getting non-canonicalized modes
-
- "git fsck" reads mode from tree objects but canonicalizes the mode
- before passing it to the logic to check object sanity, which has
- hid broken tree objects from the checking logic.  This has been
- corrected, but to help exiting projects with broken tree objects
- that they cannot fix retroactively, the severity of anomalies this
- code detects has been demoted to "info" for now.
-
- Will merge to 'master'.
- source: <YvQcNpizy9uOZiAz@coredump.intra.peff.net>
 
 
 * ag/merge-strategies-in-c (2022-08-10) 14 commits
@@ -225,39 +376,25 @@ Release tarballs are available at:
  source: <20220809120910.2021413-1-shaoxuan.yuan02@gmail.com>
 
 
-* sy/sparse-rm (2022-08-08) 5 commits
-  (merged to 'next' on 2022-08-12 at 5bf10965fb)
- + rm: integrate with sparse-index
- + rm: expand the index only when necessary
- + pathspec.h: move pathspec_needs_expanded_index() from reset.c to here
- + t1092: add tests for `git-rm`
- + Merge branch 'vd/sparse-reset-checkout-fixes' into sy/sparse-rm
- (this branch uses vd/sparse-reset-checkout-fixes.)
-
- "git rm" has become more aware of the sparse-index feature.
-
- Will merge to 'master'.
- source: <20220807041335.1790658-1-shaoxuan.yuan02@gmail.com>
-
-
 * vd/scalar-generalize-diagnose (2022-08-12) 11 commits
- - scalar: update technical doc roadmap
- - scalar-diagnose: use 'git diagnose --mode=all'
- - builtin/bugreport.c: create '--diagnose' option
- - builtin/diagnose.c: add '--mode' option
- - builtin/diagnose.c: create 'git diagnose' builtin
- - diagnose.c: add option to configure archive contents
- - scalar-diagnose: move functionality to common location
- - scalar-diagnose: move 'get_disk_info()' to 'compat/'
- - scalar-diagnose: add directory to archiver more gently
- - scalar-diagnose: avoid 32-bit overflow of size_t
- - scalar-diagnose: use "$GIT_UNZIP" in test
+  (merged to 'next' on 2022-08-18 at bd8e574713)
+ + scalar: update technical doc roadmap
+ + scalar-diagnose: use 'git diagnose --mode=all'
+ + builtin/bugreport.c: create '--diagnose' option
+ + builtin/diagnose.c: add '--mode' option
+ + builtin/diagnose.c: create 'git diagnose' builtin
+ + diagnose.c: add option to configure archive contents
+ + scalar-diagnose: move functionality to common location
+ + scalar-diagnose: move 'get_disk_info()' to 'compat/'
+ + scalar-diagnose: add directory to archiver more gently
+ + scalar-diagnose: avoid 32-bit overflow of size_t
+ + scalar-diagnose: use "$GIT_UNZIP" in test
 
  The "diagnose" feature to create a zip archive for diagnostic
  material has been lifted from "scalar" and made into a feature of
  "git bugreport".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1310.v4.git.1660335019.gitgitgadget@gmail.com>
 
 
@@ -291,22 +428,7 @@ Release tarballs are available at:
  source: <20220803205721.3686361-1-emilyshaffer@google.com>
 
 
-* vd/sparse-reset-checkout-fixes (2022-08-08) 4 commits
-  (merged to 'next' on 2022-08-12 at 755d6ecdb8)
- + unpack-trees: unpack new trees as sparse directories
- + cache.h: create 'index_name_pos_sparse()'
- + oneway_diff: handle removed sparse directories
- + checkout: fix nested sparse directory diff in sparse index
- (this branch is used by sy/sparse-rm.)
-
- Fixes to sparse index compatibility work for "reset" and "checkout"
- commands.
-
- Will merge to 'master'.
- source: <pull.1312.v3.git.1659985672.gitgitgadget@gmail.com>
-
-
-* sg/parse-options-subcommand (2022-07-25) 20 commits
+* sg/parse-options-subcommand (2022-08-19) 20 commits
  - builtin/worktree.c: let parse-options parse subcommands
  - builtin/stash.c: let parse-options parse subcommands
  - builtin/sparse-checkout.c: let parse-options parse subcommands
@@ -314,7 +436,7 @@ Release tarballs are available at:
  - builtin/reflog.c: let parse-options parse subcommands
  - builtin/notes.c: let parse-options parse subcommands
  - builtin/multi-pack-index.c: let parse-options parse subcommands
- - builtin/hook.c: let parse-option parse subcommands
+ - builtin/hook.c: let parse-options parse subcommands
  - builtin/gc.c: let parse-options parse 'git maintenance's subcommands
  - builtin/commit-graph.c: let parse-options parse subcommands
  - builtin/bundle.c: let parse-options parse subcommands
@@ -331,39 +453,42 @@ Release tarballs are available at:
  Introduce the "subcommand" mode to parse-options API and update the
  command line parser of Git commands with subcommands.
 
- Expecting a reroll.
- cf. <20220812152837.GC3790@szeder.dev>
- source: <20220725123857.2773963-1-szeder.dev@gmail.com>
+ Will merge to 'next'?
+ source: <20220819160411.1791200-1-szeder.dev@gmail.com>
 
 
 * ds/bundle-uri-clone (2022-08-10) 5 commits
- - clone: --bundle-uri cannot be combined with --depth
- - bundle-uri: add support for http(s):// and file://
- - clone: add --bundle-uri option
- - bundle-uri: create basic file-copy logic
- - remote-curl: add 'get' capability
+  (merged to 'next' on 2022-08-18 at 5e8a3ec71e)
+ + clone: --bundle-uri cannot be combined with --depth
+ + bundle-uri: add support for http(s):// and file://
+ + clone: add --bundle-uri option
+ + bundle-uri: create basic file-copy logic
+ + remote-curl: add 'get' capability
 
  Implement "git clone --bundle-uri".
+
+ Will merge to 'master'.
  source: <pull.1300.v3.git.1660050703.gitgitgadget@gmail.com>
 
 
 * ds/decorate-filter-tweak (2022-08-05) 11 commits
- - fetch: use ref_namespaces during prefetch
- - maintenance: stop writing log.excludeDecoration
- - log: create log.initialDecorationSet=all
- - log: add --clear-decorations option
- - log: add default decoration filter
- - log-tree: use ref_namespaces instead of if/else-if
- - refs: use ref_namespaces for replace refs base
- - refs: add array of ref namespaces
- - t4207: test coloring of grafted decorations
- - t4207: modernize test
- - refs: allow "HEAD" as decoration filter
+  (merged to 'next' on 2022-08-19 at 064b9daa85)
+ + fetch: use ref_namespaces during prefetch
+ + maintenance: stop writing log.excludeDecoration
+ + log: create log.initialDecorationSet=all
+ + log: add --clear-decorations option
+ + log: add default decoration filter
+ + log-tree: use ref_namespaces instead of if/else-if
+ + refs: use ref_namespaces for replace refs base
+ + refs: add array of ref namespaces
+ + t4207: test coloring of grafted decorations
+ + t4207: modernize test
+ + refs: allow "HEAD" as decoration filter
 
  The namespaces used by "log --decorate" from "refs/" hierarchy by
  default has been tightened.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1301.v3.git.1659722323.gitgitgadget@gmail.com>
 
 
@@ -452,14 +577,15 @@ Release tarballs are available at:
 
 
 * mt/rot13-in-c (2022-08-14) 4 commits
- - tests: use the new C rot13-filter helper to avoid PERL prereq
- - t0021: implementation the rot13-filter.pl script in C
- - t0021: avoid grepping for a Perl-specific string at filter output
- - Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
+  (merged to 'next' on 2022-08-19 at 22152a150c)
+ + tests: use the new C rot13-filter helper to avoid PERL prereq
+ + t0021: implementation the rot13-filter.pl script in C
+ + t0021: avoid grepping for a Perl-specific string at filter output
+ + Merge branch 'mt/checkout-count-fix' into mt/rot13-in-c
 
  Test portability improvements.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1660522524.git.matheus.bernardino@usp.br>
 
 
@@ -468,6 +594,8 @@ Release tarballs are available at:
  - api-trace2.txt: print config key-value pair
 
  Tweak trace2 output about configuration variables.
+
+ Will merge to 'next'?
  source: <cover.1660272404.git.dyroneteng@gmail.com>
 
 
@@ -510,16 +638,6 @@ Release tarballs are available at:
  source: <20220804195105.1303455-1-calvinwan@google.com>
 
 
-* po/doc-add-renormalize (2022-08-10) 1 commit
-  (merged to 'next' on 2022-08-11 at 53851663eb)
- + doc add: renormalize is not idempotent for CRCRLF
-
- Documentation for "git add --renormalize" has been improved.
-
- Will merge to 'master'.
- source: <20220810144450.470-2-philipoakley@iee.email>
-
-
 * po/glossary-around-traversal (2022-07-09) 3 commits
  - glossary: add reachability bitmap description
  - glossary: add commit graph description
@@ -558,17 +676,6 @@ Release tarballs are available at:
  source: <cover.1654552560.git.me@ttaylorr.com>
 
 
-* ds/bundle-uri-more (2022-08-10) 2 commits
-  (merged to 'next' on 2022-08-12 at 4f445a058d)
- + bundle-uri: add example bundle organization
- + docs: document bundle URI standard
-
- The "bundle URI" design gets documented.
-
- Will merge to 'master'.
- source: <pull.1248.v4.git.1660050761.gitgitgadget@gmail.com>
-
-
 * js/bisect-in-c (2022-06-27) 16 commits
  - bisect: no longer try to clean up left-over `.git/head-name` files
  - bisect: remove Cogito-related code
@@ -595,53 +702,6 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Discarded]
-
-* mb/doc-rerere-autoupdate (2022-07-15) 1 commit
- . cherry-pick doc: clarify no-rerere-autoupdate still allows rerere
-
- Clarifies that the "--no-rerere-autoupdate" option does not disable
- the "rerere" mechanism (nor does "--rerere-autoupdate" enable it).
-
- Superseded by jc/rerere-autoupdate-doc
- source: <20220715092527.1567837-1-mail@beyermatthias.de>
-
-
-* fr/vimdiff-layout-colors-fix (2022-08-07) 3 commits
- . mergetools: vimdiff: update unit tests
- . mergetools: vimdiff: fix single tab mode, single window mode and colors
- . mergetools: vimdiff: fix comment
-
- "vimdiff3" regression fix.
-
- Superseded by fc/vimdiff-layout-vimdiff3-fix
- source: <20220808053459.184367-1-greenfoo@u92.eu>
-
-
-* tk/apply-case-insensitive (2022-06-21) 3 commits
- . apply: support case-only renames in case-insensitive filesystems
- . reset: new failing test for reset of case-insensitive duplicate in index
- . t4141: test "git apply" with core.ignorecase
-
- "git apply" barfed on a patch that makes a case-only rename on a
- case-insensitive filesystem.
-
- In stalled state for too long.
- source: <pull.1257.v2.git.1655655027.gitgitgadget@gmail.com>
-
-
-* bc/stash-export (2022-04-08) 4 commits
- . builtin/stash: provide a way to import stashes from a ref
- . builtin/stash: provide a way to export stashes to a ref
- . builtin/stash: factor out revision parsing into a function
- . object-name: make get_oid quietly return an error
-
- A mechanism to export and import stash entries to and from a normal
- commit to transfer it across repositories has been introduced.
-
- In stalled state for too long.
- cf. <YnL2d4Vr9Vr7W4Hj@camp.crustytoothpaste.net>
- source: <20220407215352.3491567-1-sandals@crustytoothpaste.net>
-
 
 * jt/connected-show-missing-from-which-side (2022-06-10) 1 commit
  . fetch,fetch-pack: clarify connectivity check error
